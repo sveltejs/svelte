@@ -1,3 +1,4 @@
+/** @import { TemplateNode } from '#client' */
 import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
@@ -5,18 +6,18 @@ import {
 	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED,
-	HYDRATION_END_ELSE,
-	HYDRATION_START
+	HYDRATION_END,
+	HYDRATION_START_ELSE
 } from '../../../../constants.js';
 import {
-	hydrate_anchor,
-	hydrate_nodes,
-	hydrate_start,
+	hydrate_next,
+	hydrate_node,
 	hydrating,
+	remove_nodes,
+	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
 import { clear_text_content, empty } from '../operations.js';
-import { remove } from '../reconciler.js';
 import {
 	block,
 	branch,
@@ -96,7 +97,7 @@ function pause_effects(state, items, controlled_anchor, items_map) {
 
 /**
  * @template V
- * @param {Element | Comment} anchor The next sibling node, or the parent node if this is a 'controlled' block
+ * @param {Element | Comment} node The next sibling node, or the parent node if this is a 'controlled' block
  * @param {number} flags
  * @param {() => V[]} get_collection
  * @param {(value: V, index: number) => any} get_key
@@ -104,20 +105,24 @@ function pause_effects(state, items, controlled_anchor, items_map) {
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
-export function each(anchor, flags, get_collection, get_key, render_fn, fallback_fn = null) {
+export function each(node, flags, get_collection, get_key, render_fn, fallback_fn = null) {
+	var anchor = node;
+
 	/** @type {import('#client').EachState} */
 	var state = { flags, items: new Map(), first: null };
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
 	if (is_controlled) {
-		var parent_node = /** @type {Element} */ (anchor);
+		var parent_node = /** @type {Element} */ (node);
 
 		anchor = hydrating
-			? /** @type {Comment | Text} */ (
-					hydrate_anchor(/** @type {Comment | Text} */ (parent_node.firstChild))
-				)
+			? set_hydrate_node(/** @type {Comment | Text} */ (parent_node.firstChild))
 			: parent_node.appendChild(empty());
+	}
+
+	if (hydrating) {
+		hydrate_next();
 	}
 
 	/** @type {import('#client').Effect | null} */
@@ -155,11 +160,13 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 		let mismatch = false;
 
 		if (hydrating) {
-			var is_else = /** @type {Comment} */ (anchor).data === HYDRATION_END_ELSE;
+			var is_else = /** @type {Comment} */ (anchor).data === HYDRATION_START_ELSE;
 
-			if (is_else !== (length === 0) || hydrate_start === undefined) {
+			if (is_else !== (length === 0)) {
 				// hydration mismatch — remove the server-rendered DOM and start over
-				remove(hydrate_nodes);
+				anchor = remove_nodes();
+
+				set_hydrate_node(anchor);
 				set_hydrating(false);
 				mismatch = true;
 			}
@@ -167,9 +174,6 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 
 		// this is separate to the previous block because `hydrating` might change
 		if (hydrating) {
-			/** @type {Node} */
-			var child_anchor = hydrate_start;
-
 			/** @type {import('#client').EachItem | null} */
 			var prev = null;
 
@@ -178,33 +182,28 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 
 			for (var i = 0; i < length; i++) {
 				if (
-					child_anchor.nodeType !== 8 ||
-					/** @type {Comment} */ (child_anchor).data !== HYDRATION_START
+					hydrate_node.nodeType === 8 &&
+					/** @type {Comment} */ (hydrate_node).data === HYDRATION_END
 				) {
-					// If `nodes` is null, then that means that the server rendered fewer items than what
-					// expected, so break out and continue appending non-hydrated items
+					// The server rendered fewer items than expected,
+					// so break out and continue appending non-hydrated items
+					anchor = /** @type {Comment} */ (hydrate_node);
 					mismatch = true;
 					set_hydrating(false);
 					break;
 				}
 
-				child_anchor = hydrate_anchor(child_anchor);
 				var value = array[i];
 				var key = get_key(value, i);
-				item = create_item(child_anchor, state, prev, null, value, key, i, render_fn, flags);
+				item = create_item(hydrate_node, state, prev, null, value, key, i, render_fn, flags);
 				state.items.set(key, item);
-				child_anchor = /** @type {Comment} */ (child_anchor.nextSibling);
 
 				prev = item;
 			}
 
 			// remove excess nodes
 			if (length > 0) {
-				while (child_anchor !== anchor) {
-					var next = /** @type {import('#client').TemplateNode} */ (child_anchor.nextSibling);
-					/** @type {import('#client').TemplateNode} */ (child_anchor).remove();
-					child_anchor = next;
-				}
+				set_hydrate_node(remove_nodes());
 			}
 		}
 
@@ -231,6 +230,10 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 			set_hydrating(true);
 		}
 	});
+
+	if (hydrating) {
+		anchor = hydrate_node;
+	}
 }
 
 /**

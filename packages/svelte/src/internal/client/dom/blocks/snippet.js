@@ -6,15 +6,18 @@ import {
 	dev_current_component_function,
 	set_dev_current_component_function
 } from '../../runtime.js';
+import { hydrate_node, hydrating } from '../hydration.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
- * @param {TemplateNode} anchor
+ * @param {TemplateNode} node
  * @param {() => SnippetFn | null | undefined} get_snippet
  * @param {(() => any)[]} args
  * @returns {void}
  */
-export function snippet(anchor, get_snippet, ...args) {
+export function snippet(node, get_snippet, ...args) {
+	var anchor = node;
+
 	/** @type {SnippetFn | null | undefined} */
 	var snippet;
 
@@ -33,6 +36,10 @@ export function snippet(anchor, get_snippet, ...args) {
 			snippet_effect = branch(() => /** @type {SnippetFn} */ (snippet)(anchor, ...args));
 		}
 	}, EFFECT_TRANSPARENT);
+
+	if (hydrating) {
+		anchor = hydrate_node;
+	}
 }
 
 /**

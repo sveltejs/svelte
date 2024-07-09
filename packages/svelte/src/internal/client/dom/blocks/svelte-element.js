@@ -1,5 +1,12 @@
+/** @import { Effect, EffectNodes, TemplateNode } from '#client' */
 import { namespace_svg } from '../../../../constants.js';
-import { hydrating, set_hydrate_nodes } from '../hydration.js';
+import {
+	hydrate_next,
+	hydrate_node,
+	hydrating,
+	set_hydrate_node,
+	set_hydrating
+} from '../hydration.js';
 import { empty } from '../operations.js';
 import {
 	block,
@@ -10,10 +17,10 @@ import {
 } from '../../reactivity/effects.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
-import { current_component_context } from '../../runtime.js';
+import { current_component_context, current_effect } from '../../runtime.js';
 import { DEV } from 'esm-env';
-import { assign_nodes } from '../template.js';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
+import { assign_nodes } from '../template.js';
 
 /**
  * @param {Comment | Element} node
@@ -25,36 +32,43 @@ import { EFFECT_TRANSPARENT } from '../../constants.js';
  * @returns {void}
  */
 export function element(node, get_tag, is_svg, render_fn, get_namespace, location) {
-	const filename = DEV && location && current_component_context?.function.filename;
+	let was_hydrating = hydrating;
+
+	if (hydrating) {
+		hydrate_next();
+	}
+
+	var filename = DEV && location && current_component_context?.function.filename;
 
 	/** @type {string | null} */
-	let tag;
+	var tag;
 
 	/** @type {string | null} */
-	let current_tag;
+	var current_tag;
 
 	/** @type {null | Element} */
-	let element = hydrating && node.nodeType === 1 ? /** @type {Element} */ (node) : null;
+	var element = null;
 
-	let anchor = /** @type {Comment} */ (hydrating && element ? element.nextSibling : node);
+	if (hydrating && hydrate_node.nodeType === 1) {
+		element = /** @type {Element} */ (hydrate_node);
+		hydrate_next();
+	}
 
-	/** @type {import('#client').Effect | null} */
-	let effect;
+	var anchor = /** @type {TemplateNode} */ (hydrating ? hydrate_node : node);
+
+	/** @type {Effect | null} */
+	var effect;
 
 	/**
 	 * The keyed `{#each ...}` item block, if any, that this element is inside.
 	 * We track this so we can set it when changing the element, allowing any
 	 * `animate:` directive to bind itself to the correct block
 	 */
-	let each_item_block = current_each_item;
+	var each_item_block = current_each_item;
 
 	block(() => {
 		const next_tag = get_tag() || null;
-		const ns = get_namespace
-			? get_namespace()
-			: is_svg || next_tag === 'svg'
-				? namespace_svg
-				: null;
+		var ns = get_namespace ? get_namespace() : is_svg || next_tag === 'svg' ? namespace_svg : null;
 
 		// Assumption: Noone changes the namespace but not the tag (what would that even mean?)
 		if (next_tag === tag) return;
@@ -88,8 +102,6 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 						? document.createElementNS(ns, next_tag)
 						: document.createElement(next_tag);
 
-				assign_nodes(element, element);
-
 				if (DEV && location) {
 					// @ts-expect-error
 					element.__svelte_meta = {
@@ -101,15 +113,21 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					};
 				}
 
+				assign_nodes(element, element);
+
 				if (render_fn) {
 					// If hydrating, use the existing ssr comment as the anchor so that the
 					// inner open and close methods can pick up the existing nodes correctly
-					var child_anchor = hydrating ? element.lastChild : element.appendChild(empty());
+					var child_anchor = /** @type {TemplateNode} */ (
+						hydrating ? element.firstChild : element.appendChild(empty())
+					);
 
-					if (hydrating && child_anchor) {
-						set_hydrate_nodes(
-							/** @type {import('#client').TemplateNode[]} */ ([...element.childNodes]).slice(0, -1)
-						);
+					if (hydrating) {
+						if (child_anchor === null) {
+							set_hydrating(false);
+						} else {
+							set_hydrate_node(child_anchor);
+						}
 					}
 
 					// `child_anchor` is undefined if this is a void element, but we still
@@ -118,6 +136,9 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					// and the DOM will be silently discarded
 					render_fn(element, child_anchor);
 				}
+
+				// we do this after calling `render_fn` so that child effects don't override `nodes.end`
+				/** @type {Effect & { nodes: EffectNodes }} */ (current_effect).nodes.end = element;
 
 				anchor.before(element);
 			});
@@ -129,4 +150,9 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 		set_current_each_item(previous_each_item);
 	}, EFFECT_TRANSPARENT);
+
+	if (was_hydrating) {
+		set_hydrating(true);
+		set_hydrate_node(anchor);
+	}
 }

@@ -1,6 +1,6 @@
 /** @import { TemplateNode } from '#client' */
-import { hydrating, set_hydrate_nodes } from '../hydration.js';
 import { render_effect, teardown } from '../../reactivity/effects.js';
+import { hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
 
 /**
  * @param {HTMLDivElement | SVGGElement} element
@@ -9,7 +9,7 @@ import { render_effect, teardown } from '../../reactivity/effects.js';
  */
 export function css_props(element, get_styles) {
 	if (hydrating) {
-		set_hydrate_nodes(/** @type {TemplateNode[]} */ ([...element.childNodes]).slice(0, -1));
+		set_hydrate_node(/** @type {TemplateNode} */ (element.firstChild));
 	}
 
 	render_effect(() => {

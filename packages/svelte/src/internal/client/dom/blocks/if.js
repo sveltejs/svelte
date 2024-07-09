@@ -1,24 +1,31 @@
+/** @import { TemplateNode } from '#client' */
 import { EFFECT_TRANSPARENT } from '../../constants.js';
-import { hydrate_nodes, hydrating, set_hydrating } from '../hydration.js';
-import { remove } from '../reconciler.js';
+import {
+	hydrate_next,
+	hydrate_node,
+	hydrating,
+	remove_nodes,
+	set_hydrate_node,
+	set_hydrating
+} from '../hydration.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
-import { HYDRATION_END_ELSE } from '../../../../constants.js';
+import { HYDRATION_START_ELSE } from '../../../../constants.js';
 
 /**
- * @param {Comment} anchor
+ * @param {TemplateNode} node
  * @param {() => boolean} get_condition
  * @param {(anchor: Node) => import('#client').Dom} consequent_fn
  * @param {null | ((anchor: Node) => import('#client').Dom)} [alternate_fn]
  * @param {boolean} [elseif] True if this is an `{:else if ...}` block rather than an `{#if ...}`, as that affects which transitions are considered 'local'
  * @returns {void}
  */
-export function if_block(
-	anchor,
-	get_condition,
-	consequent_fn,
-	alternate_fn = null,
-	elseif = false
-) {
+export function if_block(node, get_condition, consequent_fn, alternate_fn = null, elseif = false) {
+	if (hydrating) {
+		hydrate_next();
+	}
+
+	var anchor = node;
+
 	/** @type {import('#client').Effect | null} */
 	var consequent_effect = null;
 
@@ -37,12 +44,14 @@ export function if_block(
 		let mismatch = false;
 
 		if (hydrating) {
-			const is_else = anchor.data === HYDRATION_END_ELSE;
+			const is_else = /** @type {Comment} */ (anchor).data === HYDRATION_START_ELSE;
 
 			if (condition === is_else) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
 				// This could happen with `{#if browser}...{/if}`, for example
-				remove(hydrate_nodes);
+				anchor = remove_nodes();
+
+				set_hydrate_node(anchor);
 				set_hydrating(false);
 				mismatch = true;
 			}
@@ -79,4 +88,8 @@ export function if_block(
 			set_hydrating(true);
 		}
 	}, flags);
+
+	if (hydrating) {
+		anchor = hydrate_node;
+	}
 }

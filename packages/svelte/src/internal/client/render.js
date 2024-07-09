@@ -1,12 +1,18 @@
 import { DEV } from 'esm-env';
 import { clear_text_content, empty, init_operations } from './dom/operations.js';
-import { HYDRATION_ERROR, HYDRATION_START, PassiveDelegatedEvents } from '../../constants.js';
-import { flush_sync, push, pop, current_component_context } from './runtime.js';
+import {
+	HYDRATION_END,
+	HYDRATION_ERROR,
+	HYDRATION_START,
+	PassiveDelegatedEvents
+} from '../../constants.js';
+import { flush_sync, push, pop, current_component_context, current_effect } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
 import {
-	hydrate_anchor,
-	hydrate_nodes,
-	set_hydrate_nodes,
+	hydrate_next,
+	hydrate_node,
+	hydrating,
+	set_hydrate_node,
 	set_hydrating
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
@@ -15,6 +21,7 @@ import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 import { validate_component } from '../shared/validate.js';
+import { assign_nodes } from './dom/template.js';
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -113,27 +120,36 @@ export function hydrate(component, options) {
 
 	options.intro = options.intro ?? false;
 	const target = options.target;
-	const previous_hydrate_nodes = hydrate_nodes;
+	const was_hydrating = hydrating;
 
 	try {
 		// Don't flush previous effects to ensure order of outer effects stays consistent
 		return flush_sync(() => {
-			set_hydrating(true);
-
-			var node = target.firstChild;
+			var anchor = /** @type {import('#client').TemplateNode} */ (target.firstChild);
 			while (
-				node &&
-				(node.nodeType !== 8 || /** @type {Comment} */ (node).data !== HYDRATION_START)
+				anchor &&
+				(anchor.nodeType !== 8 || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
 			) {
-				node = node.nextSibling;
+				anchor = /** @type {import('#client').TemplateNode} */ (anchor.nextSibling);
 			}
 
-			if (!node) {
+			if (!anchor) {
 				throw HYDRATION_ERROR;
 			}
 
-			const anchor = hydrate_anchor(node);
+			set_hydrating(true);
+			set_hydrate_node(/** @type {Comment} */ (anchor));
+			hydrate_next();
+
 			const instance = _mount(component, { ...options, anchor });
+
+			if (
+				hydrate_node.nodeType !== 8 ||
+				/** @type {Comment} */ (hydrate_node).data !== HYDRATION_END
+			) {
+				w.hydration_mismatch();
+				throw HYDRATION_ERROR;
+			}
 
 			// flush_sync will run this callback and then synchronously run any pending effects,
 			// which don't belong to the hydration phase anymore - therefore reset it here
@@ -143,6 +159,9 @@ export function hydrate(component, options) {
 		}, false);
 	} catch (error) {
 		if (error === HYDRATION_ERROR) {
+			// TODO it's possible for event listeners to have been added and
+			// not removed, e.g. with `<svelte:window>` or `<svelte:document>`
+
 			if (options.recover === false) {
 				e.hydration_failed();
 			}
@@ -157,8 +176,7 @@ export function hydrate(component, options) {
 
 		throw error;
 	} finally {
-		set_hydrating(!!previous_hydrate_nodes);
-		set_hydrate_nodes(previous_hydrate_nodes);
+		set_hydrating(was_hydrating);
 		reset_head_anchor();
 	}
 }
@@ -222,10 +240,20 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 				/** @type {any} */ (props).$$events = events;
 			}
 
+			if (hydrating) {
+				assign_nodes(/** @type {import('#client').TemplateNode} */ (anchor), null);
+			}
+
 			should_intro = intro;
 			// @ts-expect-error the public typings are not what the actual function looks like
 			component = Component(anchor, props) || {};
 			should_intro = true;
+
+			if (hydrating) {
+				/** @type {import('#client').Effect & { nodes: import('#client').EffectNodes }} */ (
+					current_effect
+				).nodes.end = hydrate_node;
+			}
 
 			if (context) {
 				pop();
