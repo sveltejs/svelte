@@ -550,6 +550,40 @@ describe('signals', () => {
 		};
 	});
 
+	test('deriveds update upon reconnection #3', () => {
+		let a = source(false);
+		let b = source(false);
+
+		let c = derived(() => $.get(a) || $.get(b));
+		let d = derived(() => $.get(c));
+		let e = derived(() => $.get(d));
+
+		return () => {
+			const log: string[] = [];
+			let destroy = effect_root(() => {
+				render_effect(() => {
+					$.get(e);
+					log.push('init');
+				});
+			});
+			destroy();
+
+			destroy = effect_root(() => {
+				render_effect(() => {
+					$.get(e);
+					log.push('update');
+				});
+			});
+
+			assert.deepEqual(log, ['init', 'update']);
+
+			set(a, true);
+			flushSync();
+
+			assert.deepEqual(log, ['init', 'update', 'update']);
+		};
+	});
+
 	test('unowned deriveds are not added as reactions', () => {
 		var count = source(0);
 

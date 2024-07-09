@@ -180,8 +180,6 @@ export interface ProxyMetadata<T = Record<string | symbol, any>> {
 	v: Source<number>;
 	/** `true` if the proxified object is an array */
 	a: boolean;
-	/** Immutable: Whether to use a source or mutable source under the hood */
-	i: boolean;
 	/** The associated proxy */
 	p: ProxyStateObject<T>;
 	/** The original target this proxy was created for */

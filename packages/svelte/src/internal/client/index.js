@@ -15,6 +15,7 @@ export { key_block as key } from './dom/blocks/key.js';
 export { css_props } from './dom/blocks/css-props.js';
 export { index, each } from './dom/blocks/each.js';
 export { html } from './dom/blocks/html.js';
+export { sanitize_slots, slot } from './dom/blocks/slot.js';
 export { snippet, wrap_snippet } from './dom/blocks/snippet.js';
 export { component } from './dom/blocks/svelte-component.js';
 export { element } from './dom/blocks/svelte-element.js';
@@ -62,6 +63,7 @@ export {
 	bind_focused
 } from './dom/elements/bindings/universal.js';
 export { bind_window_scroll, bind_window_size } from './dom/elements/bindings/window.js';
+export { next, reset } from './dom/hydration.js';
 export {
 	once,
 	preventDefault,
@@ -118,7 +120,7 @@ export {
 	update_pre_store,
 	update_store
 } from './reactivity/store.js';
-export { append_styles, sanitize_slots, set_text, slot } from './render.js';
+export { append_styles, set_text } from './render.js';
 export {
 	get,
 	invalidate_inner_signals,

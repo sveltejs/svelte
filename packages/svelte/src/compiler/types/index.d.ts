@@ -6,13 +6,12 @@ import type {
 	Identifier,
 	ImportDeclaration
 } from 'estree';
-import type { Location } from 'locate-character';
 import type { SourceMap } from 'magic-string';
 import type { Context } from 'zimmerframe';
 import type { Scope } from '../phases/scope.js';
 import type { Css } from './css.js';
 import type { EachBlock, Namespace, SvelteNode, SvelteOptions } from './template.js';
-import type { InternalCompileError } from '../errors.js';
+import type { ICompileDiagnostic } from '../utils/compile_diagnostic.js';
 
 /** The return value of `compile` from `svelte/compiler` */
 export interface CompileResult {
@@ -51,16 +50,9 @@ export interface CompileResult {
 	ast: any;
 }
 
-export interface Warning {
-	start?: Location;
-	end?: Location;
-	// TODO there was pos: number in Svelte 4 - do we want to add it back?
-	code: string;
-	message: string;
-	filename?: string;
-}
+export interface Warning extends ICompileDiagnostic {}
 
-export interface CompileError extends InternalCompileError {}
+export interface CompileError extends ICompileDiagnostic {}
 
 export type CssHashGetter = (args: {
 	name: string;

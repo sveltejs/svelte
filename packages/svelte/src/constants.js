@@ -20,9 +20,9 @@ export const TEMPLATE_FRAGMENT = 1;
 export const TEMPLATE_USE_IMPORT_NODE = 1 << 1;
 
 export const HYDRATION_START = '[';
+/** used to indicate that an `{:else}...` block was rendered */
+export const HYDRATION_START_ELSE = '[!';
 export const HYDRATION_END = ']';
-export const HYDRATION_ANCHOR = '';
-export const HYDRATION_END_ELSE = `${HYDRATION_END}!`; // used to indicate that an `{:else}...` block was rendered
 export const HYDRATION_ERROR = {};
 
 export const ELEMENT_IS_NAMESPACED = 1;
@@ -292,4 +292,79 @@ export function is_capture_event(name, mode = 'exclude-on') {
 	return mode == 'exclude-on'
 		? name !== 'gotpointercapture' && name !== 'lostpointercapture'
 		: name !== 'ongotpointercapture' && name !== 'onlostpointercapture';
+}
+
+export const reserved = [
+	'arguments',
+	'await',
+	'break',
+	'case',
+	'catch',
+	'class',
+	'const',
+	'continue',
+	'debugger',
+	'default',
+	'delete',
+	'do',
+	'else',
+	'enum',
+	'eval',
+	'export',
+	'extends',
+	'false',
+	'finally',
+	'for',
+	'function',
+	'if',
+	'implements',
+	'import',
+	'in',
+	'instanceof',
+	'interface',
+	'let',
+	'new',
+	'null',
+	'package',
+	'private',
+	'protected',
+	'public',
+	'return',
+	'static',
+	'super',
+	'switch',
+	'this',
+	'throw',
+	'true',
+	'try',
+	'typeof',
+	'var',
+	'void',
+	'while',
+	'with',
+	'yield'
+];
+
+const void_element_names = [
+	'area',
+	'base',
+	'br',
+	'col',
+	'command',
+	'embed',
+	'hr',
+	'img',
+	'input',
+	'keygen',
+	'link',
+	'meta',
+	'param',
+	'source',
+	'track',
+	'wbr'
+];
+
+/** @param {string} name */
+export function is_void(name) {
+	return void_element_names.includes(name) || name.toLowerCase() === '!doctype';
 }

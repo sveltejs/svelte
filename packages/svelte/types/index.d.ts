@@ -366,7 +366,8 @@ declare module 'svelte' {
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
 	/**
-	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
+	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
+	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
 	 *
 	 * */
 	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
@@ -562,9 +563,9 @@ declare module 'svelte/animate' {
 
 declare module 'svelte/compiler' {
 	import type { AssignmentExpression, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, MemberExpression, ObjectExpression, Pattern, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, FunctionExpression, Node, Program, ChainExpression, SimpleCallExpression } from 'estree';
-	import type { Location } from 'locate-character';
 	import type { SourceMap } from 'magic-string';
 	import type { Context } from 'zimmerframe';
+	import type { Location } from 'locate-character';
 	/**
 	 * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
 	 *
@@ -714,16 +715,9 @@ declare module 'svelte/compiler' {
 		ast: any;
 	}
 
-	export interface Warning {
-		start?: Location;
-		end?: Location;
-		// TODO there was pos: number in Svelte 4 - do we want to add it back?
-		code: string;
-		message: string;
-		filename?: string;
-	}
+	export interface Warning extends ICompileDiagnostic {}
 
-	export interface CompileError extends InternalCompileError {}
+	export interface CompileError extends ICompileDiagnostic {}
 
 	type CssHashGetter = (args: {
 		name: string;
@@ -1888,18 +1882,15 @@ declare module 'svelte/compiler' {
 		content: Program;
 		attributes: Attribute[];
 	}
-	class InternalCompileError extends Error {
-		
-		constructor(code: string, message: string, position: [number, number] | undefined);
-		filename: string | undefined;
-		
-		position: [number, number] | undefined;
-		
-		start: Location | undefined;
-		
-		end: Location | undefined;
+	type ICompileDiagnostic = {
 		code: string;
-	}
+		message: string;
+		filename?: string;
+		start?: Location;
+		end?: Location;
+		position?: [number, number];
+		frame?: string;
+	};
 
 	export {};
 }
@@ -2090,7 +2081,7 @@ declare module 'svelte/motion' {
 		 * @param run subscription callback
 		 * @param invalidate cleanup callback
 		 */
-		subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
+		subscribe(this: void, run: Subscriber<T>, invalidate?: () => void): Unsubscriber;
 	}
 	interface SpringOpts {
 		stiffness?: number;
@@ -2111,8 +2102,6 @@ declare module 'svelte/motion' {
 		easing?: (t: number) => number;
 		interpolate?: (a: T, b: T) => (t: number) => T;
 	}
-	/** Cleanup logic callback. */
-	type Invalidator<T> = (value?: T) => void;
 	/**
 	 * The spring function in Svelte creates a store whose value is animated, with a motion that simulates the behavior of a spring. This means when the value changes, instead of transitioning at a steady rate, it "bounces" like a spring would, depending on the physics parameters provided. This adds a level of realism to the transitions and can enhance the user experience.
 	 *
@@ -2238,7 +2227,7 @@ declare module 'svelte/store' {
 		 * @param run subscription callback
 		 * @param invalidate cleanup callback
 		 */
-		subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
+		subscribe(this: void, run: Subscriber<T>, invalidate?: () => void): Unsubscriber;
 	}
 
 	/** Writable interface for both updating and subscribing. */
@@ -2255,15 +2244,6 @@ declare module 'svelte/store' {
 		 */
 		update(this: void, updater: Updater<T>): void;
 	}
-	/** Cleanup logic callback. */
-	type Invalidator<T> = (value?: T) => void;
-
-	/** One or more `Readable`s. */
-	type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
-
-	/** One or more values from `Readable` stores. */
-	type StoresValues<T> =
-		T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 	/**
 	 * Creates a `Readable` store that allows reading by subscription.
 	 *
@@ -2305,6 +2285,12 @@ declare module 'svelte/store' {
 	 * https://svelte.dev/docs/svelte-store#get
 	 * */
 	export function get<T>(store: Readable<T>): T;
+	/** One or more `Readable`s. */
+	type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
+
+	/** One or more values from `Readable` stores. */
+	type StoresValues<T> =
+		T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 
 	export { Subscriber, Unsubscriber, Updater, StartStopNotifier, Readable, Writable };
 }
@@ -2547,14 +2533,7 @@ declare module 'svelte/types/compiler/interfaces' {
 	export type CompileOptions = CompileOptions_1;
 	/** @deprecated import this from 'svelte' instead */
 	export type Warning = Warning_1;
-	interface Warning_1 {
-		start?: Location;
-		end?: Location;
-		// TODO there was pos: number in Svelte 4 - do we want to add it back?
-		code: string;
-		message: string;
-		filename?: string;
-	}
+	interface Warning_1 extends ICompileDiagnostic {}
 
 	type CssHashGetter = (args: {
 		name: string;
@@ -2723,6 +2702,15 @@ declare module 'svelte/types/compiler/interfaces' {
 	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
 	 */
 	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
+	type ICompileDiagnostic = {
+		code: string;
+		message: string;
+		filename?: string;
+		start?: Location;
+		end?: Location;
+		position?: [number, number];
+		frame?: string;
+	};
 
 	export {};
 }declare module '*.svelte' {

@@ -617,7 +617,16 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 
 	if (is_reactive) {
 		const id = state.scope.generate(`${node_id.name}_value`);
-		serialize_update_assignment(state, id, undefined, value, update);
+		serialize_update_assignment(
+			state,
+			id,
+			// `<option>` is a special case: The value property reflects to the DOM. If the value is set to undefined,
+			// that means the value should be set to the empty string. To be able to do that when the value is
+			// initially undefined, we need to set a value that is guaranteed to be different.
+			element === 'option' ? b.object([]) : undefined,
+			value,
+			update
+		);
 		return true;
 	} else {
 		state.init.push(update);
@@ -883,7 +892,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 				b.init(
 					'children',
 					context.state.options.dev
-						? b.call('$.wrap_snippet', slot_fn, b.id(context.state.analysis.name))
+						? b.call('$.wrap_snippet', b.id(context.state.analysis.name), slot_fn)
 						: slot_fn
 				)
 			);
@@ -971,7 +980,8 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 
 		statements.push(
 			b.stmt(b.call('$.css_props', anchor, b.thunk(b.object(custom_css_props)))),
-			b.stmt(fn(b.member(anchor, b.id('lastChild'))))
+			b.stmt(fn(b.member(anchor, b.id('lastChild')))),
+			b.stmt(b.call('$.reset', anchor))
 		);
 	} else {
 		context.state.template.push('<!>');
@@ -1051,7 +1061,7 @@ function serialize_bind_this(bind_this, context, node) {
 }
 
 /**
- * @param {import('../types.js').SourceLocation[]} locations
+ * @param {import('#shared').SourceLocation[]} locations
  */
 function serialize_locations(locations) {
 	return b.array(
@@ -1432,6 +1442,12 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 	}
 
 	if (sequence.length > 0) {
+		// if the final item in a fragment is static text,
+		// we need to force `hydrate_node` to advance
+		if (sequence.length === 1 && sequence[0].type === 'Text' && nodes.length > 1) {
+			state.init.push(b.stmt(b.call('$.next')));
+		}
+
 		flush_sequence(sequence);
 	}
 }
@@ -1560,7 +1576,7 @@ export const template_visitors = {
 
 		const namespace = infer_namespace(context.state.metadata.namespace, parent, node.nodes);
 
-		const { hoisted, trimmed, is_standalone } = clean_nodes(
+		const { hoisted, trimmed, is_standalone, is_text_first } = clean_nodes(
 			parent,
 			node.nodes,
 			context.path,
@@ -1608,6 +1624,11 @@ export const template_visitors = {
 
 		for (const node of hoisted) {
 			context.visit(node, state);
+		}
+
+		if (is_text_first) {
+			// skip over inserted comment
+			body.push(b.stmt(b.call('$.next')));
 		}
 
 		/**
@@ -1668,11 +1689,7 @@ export const template_visitors = {
 					state
 				});
 
-				body.push(
-					b.var(id, b.call('$.text', b.id('$$anchor'))),
-					...state.before_init,
-					...state.init
-				);
+				body.push(b.var(id, b.call('$.text')), ...state.before_init, ...state.init);
 				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 			} else {
 				if (is_standalone) {
@@ -1680,8 +1697,7 @@ export const template_visitors = {
 					process_children(trimmed, () => b.id('$$anchor'), false, { ...context, state });
 				} else {
 					/** @type {(is_text: boolean) => import('estree').Expression} */
-					const expression = (is_text) =>
-						is_text ? b.call('$.first_child', id, b.true) : b.call('$.first_child', id);
+					const expression = (is_text) => b.call('$.first_child', id, is_text && b.true);
 
 					process_children(trimmed, expression, false, { ...context, state });
 
@@ -1905,7 +1921,7 @@ export const template_visitors = {
 		state.init.push(b.stmt(b.call('$.transition', ...args)));
 	},
 	RegularElement(node, context) {
-		/** @type {import('../types.js').SourceLocation} */
+		/** @type {import('#shared').SourceLocation} */
 		let location = [-1, -1];
 
 		if (context.state.options.dev) {
@@ -2133,7 +2149,7 @@ export const template_visitors = {
 
 		context.state.template.push('>');
 
-		/** @type {import('../types.js').SourceLocation[]} */
+		/** @type {import('#shared').SourceLocation[]} */
 		const child_locations = [];
 
 		/** @type {import('../types').ComponentClientTransformState} */
@@ -2171,18 +2187,30 @@ export const template_visitors = {
 			context.visit(node, child_state);
 		}
 
-		process_children(
-			trimmed,
-			() =>
-				b.call(
-					'$.child',
-					node.name === 'template'
-						? b.member(context.state.node, b.id('content'))
-						: context.state.node
-				),
-			true,
-			{ ...context, state: child_state }
-		);
+		/** @type {import('estree').Expression} */
+		let arg = context.state.node;
+
+		// If `hydrate_node` is set inside the element, we need to reset it
+		// after the element has been hydrated
+		let needs_reset = trimmed.some((node) => node.type !== 'Text');
+
+		// The same applies if it's a `<template>` element, since we need to
+		// set the value of `hydrate_node` to `node.content`
+		if (node.name === 'template') {
+			needs_reset = true;
+
+			arg = b.member(arg, b.id('content'));
+			child_state.init.push(b.stmt(b.call('$.reset', arg)));
+		}
+
+		process_children(trimmed, () => b.call('$.child', arg), true, {
+			...context,
+			state: child_state
+		});
+
+		if (needs_reset) {
+			child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
+		}
 
 		if (has_declaration) {
 			context.state.init.push(
@@ -2752,7 +2780,7 @@ export const template_visitors = {
 		let snippet = b.arrow(args, body);
 
 		if (context.state.options.dev) {
-			snippet = b.call('$.wrap_snippet', snippet, b.id(context.state.analysis.name));
+			snippet = b.call('$.wrap_snippet', b.id(context.state.analysis.name), snippet);
 		}
 
 		const declaration = b.const(node.expression, snippet);

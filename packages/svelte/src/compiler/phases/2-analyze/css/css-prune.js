@@ -71,7 +71,7 @@ const visitors = {
 		const selectors = truncate(node);
 		const inner = selectors[selectors.length - 1];
 
-		if (node.metadata.rule?.metadata.parent_rule) {
+		if (node.metadata.rule?.metadata.parent_rule && selectors.length > 0) {
 			const has_explicit_nesting_selector = selectors.some((selector) =>
 				selector.selectors.some((s) => s.type === 'NestingSelector')
 			);
