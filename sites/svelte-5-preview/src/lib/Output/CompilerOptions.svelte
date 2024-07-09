@@ -18,6 +18,16 @@
 		<label for="server"><span class="string">"server"</span>,</label>
 	</div>
 
+	<div class="option">
+		<span class="key">css:</span>
+
+		<input id="injected" type="radio" bind:group={$compile_options.css} value="injected" />
+		<label for="injected"><span class="string">"injected"</span></label>
+
+		<input id="external" type="radio" bind:group={$compile_options.css} value="external" />
+		<label for="external"><span class="string">"external"</span>,</label>
+	</div>
+
 	<label class="option">
 		<span class="key">dev:</span>
 		<Checkbox bind:checked={$compile_options.dev} />
