@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: remove event listeners on hydration error
+fix: destroy effects that error on creation
