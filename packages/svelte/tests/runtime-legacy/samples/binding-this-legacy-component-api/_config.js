@@ -4,7 +4,7 @@ import { test } from '../../test';
 export default test({
 	compileOptions: {
 		compatibility: {
-			legacyComponent: true
+			componentApi: 4
 		}
 	},
 	html: '<button>0</button>',

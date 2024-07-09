@@ -813,9 +813,9 @@ declare module 'svelte/compiler' {
 			 * Applies a transformation so that the default export of Svelte files can still be instantiated the same way as in Svelte 4 —
 			 * as a class when compiling for the browser (as though using `createClassComponent(MyComponent, {...})` from `svelte/legacy`)
 			 * or as an object with a `.render(...)` method when compiling for the server
-			 * @default false
+			 * @default 5
 			 */
-			legacyComponent?: boolean;
+			componentApi?: 4 | 5;
 		};
 		/**
 		 * An initial sourcemap that will be merged into the final output sourcemap.
@@ -2636,9 +2636,9 @@ declare module 'svelte/types/compiler/interfaces' {
 			 * Applies a transformation so that the default export of Svelte files can still be instantiated the same way as in Svelte 4 —
 			 * as a class when compiling for the browser (as though using `createClassComponent(MyComponent, {...})` from `svelte/legacy`)
 			 * or as an object with a `.render(...)` method when compiling for the server
-			 * @default false
+			 * @default 5
 			 */
-			legacyComponent?: boolean;
+			componentApi?: 4 | 5;
 		};
 		/**
 		 * An initial sourcemap that will be merged into the final output sourcemap.
