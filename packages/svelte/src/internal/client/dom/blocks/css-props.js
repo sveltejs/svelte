@@ -1,6 +1,6 @@
 /** @import { TemplateNode } from '#client' */
 import { render_effect, teardown } from '../../reactivity/effects.js';
-import { hydrating, set_hydrate_node } from '../hydration.js';
+import { hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
 
 /**
  * @param {HTMLDivElement | SVGGElement} element

@@ -1007,11 +1007,16 @@ function serialize_inline_component(node, expression, context) {
 					b.id('$$payload'),
 					b.literal(context.state.namespace === 'svg' ? false : true),
 					b.object(custom_css_props),
-					b.thunk(b.block([statement]))
+					b.thunk(b.block([statement])),
+					dynamic && b.true
 				)
 			)
 		);
 	} else {
+		if (dynamic) {
+			context.state.template.push(block_open);
+		}
+
 		context.state.template.push(statement);
 
 		if (!context.state.skip_hydration_boundaries) {
