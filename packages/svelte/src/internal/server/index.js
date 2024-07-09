@@ -446,11 +446,15 @@ export function sanitize_props(props) {
 
 /**
  * @param {Record<string, any>} props
- * @returns {Record<string, any>}
+ * @returns {Record<string, boolean>}
  */
 export function sanitize_slots(props) {
-	const sanitized = { ...props.$$slots };
-	if (props.children) sanitized.default = props.children;
+	/** @type {Record<string, boolean>} */
+	const sanitized = {};
+	if (props.children) sanitized.default = true;
+	for (const key in props.$$slots) {
+		sanitized[key] = true;
+	}
 	return sanitized;
 }
 

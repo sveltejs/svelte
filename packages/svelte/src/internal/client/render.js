@@ -268,16 +268,6 @@ export function unmount(component) {
 }
 
 /**
- * @param {Record<string, any>} props
- * @returns {Record<string, any>}
- */
-export function sanitize_slots(props) {
-	const sanitized = { ...props.$$slots };
-	if (props.children) sanitized.default = props.children;
-	return sanitized;
-}
-
-/**
  * @param {Node} target
  * @param {string} style_sheet_id
  * @param {string} styles
