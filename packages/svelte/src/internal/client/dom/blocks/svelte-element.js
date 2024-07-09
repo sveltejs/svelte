@@ -1,4 +1,4 @@
-/** @import { Effect, TemplateNode } from '#client' */
+/** @import { Effect, EffectNodes, TemplateNode } from '#client' */
 import { namespace_svg } from '../../../../constants.js';
 import {
 	hydrate_next,
@@ -20,6 +20,7 @@ import { current_each_item, set_current_each_item } from './each.js';
 import { current_component_context, current_effect } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
+import { assign_nodes } from '../template.js';
 
 /**
  * @param {Comment | Element} node
@@ -116,6 +117,8 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					};
 				}
 
+				assign_nodes(element, element);
+
 				if (render_fn) {
 					// If hydrating, use the existing ssr comment as the anchor so that the
 					// inner open and close methods can pick up the existing nodes correctly
@@ -138,8 +141,8 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					render_fn(element, child_anchor);
 				}
 
-				// we do this after calling `render_fn` so that child effects don't override `nodes`
-				/** @type {Effect} */ (current_effect).nodes = { start: element, end: element };
+				// we do this after calling `render_fn` so that child effects don't override `nodes.end`
+				/** @type {Effect & { nodes: EffectNodes }} */ (current_effect).nodes.end = element;
 
 				anchor.before(element);
 			});
