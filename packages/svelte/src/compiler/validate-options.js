@@ -83,7 +83,7 @@ export const validate_component_options =
 			),
 
 			compatibility: object({
-				componentApi: list([4, 5])
+				componentApi: list([4, 5], 5)
 			}),
 
 			loopGuardTimeout: warn_removed(w.options_removed_loop_guard_timeout),
