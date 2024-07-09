@@ -16,18 +16,17 @@ import {
 	set_hydrating
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
-import { handle_event_propagation } from './dom/elements/events.js';
+import {
+	all_registered_events,
+	event_handles_to_remove_on_error,
+	handle_event_propagation,
+	root_event_handles
+} from './dom/elements/events.js';
 import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 import { validate_component } from '../shared/validate.js';
 import { assign_nodes } from './dom/template.js';
-
-/** @type {Set<string>} */
-export const all_registered_events = new Set();
-
-/** @type {Set<(events: Array<string>) => void>} */
-export const root_event_handles = new Set();
 
 /**
  * This is normally true — block effects should run their intro transitions —
@@ -159,9 +158,6 @@ export function hydrate(component, options) {
 		}, false);
 	} catch (error) {
 		if (error === HYDRATION_ERROR) {
-			// TODO it's possible for event listeners to have been added and
-			// not removed, e.g. with `<svelte:window>` or `<svelte:document>`
-
 			if (options.recover === false) {
 				e.hydration_failed();
 			}
@@ -178,6 +174,7 @@ export function hydrate(component, options) {
 	} finally {
 		set_hydrating(was_hydrating);
 		reset_head_anchor();
+		event_handles_to_remove_on_error.length = 0;
 	}
 }
 
@@ -245,8 +242,27 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			}
 
 			should_intro = intro;
-			// @ts-expect-error the public typings are not what the actual function looks like
-			component = Component(anchor, props) || {};
+
+			try {
+				// @ts-expect-error the public typings are not what the actual function looks like
+				component = Component(anchor, props) || {};
+			} catch (e) {
+				for (const event_name of registered_events) {
+					target.removeEventListener(event_name, handle_event_propagation);
+					document.removeEventListener(event_name, handle_event_propagation);
+				}
+
+				if (hydrating) {
+					for (const remove of event_handles_to_remove_on_error) {
+						remove();
+					}
+					event_handles_to_remove_on_error.length = 0;
+				}
+
+				root_event_handles.delete(event_handle);
+				throw e;
+			}
+
 			should_intro = true;
 
 			if (hydrating) {
