@@ -13,7 +13,13 @@ export function set_hydrating(value) {
 	hydrating = value;
 }
 
-/** @type {TemplateNode} */
+/**
+ * The node that is currently being hydrated. This starts out as the first node inside the opening
+ * <!--[--> comment, and updates each time a component calls `$.child(...)` or `$.sibling(...)`.
+ * When entering a block (e.g. `{#if ...}`), `hydrate_node` is the block opening comment; by the
+ * time we leave the block it is the closing comment, which serves as the block's anchor.
+ * @type {TemplateNode}
+ */
 export let hydrate_node;
 
 /** @param {TemplateNode} node */

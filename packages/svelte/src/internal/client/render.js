@@ -125,8 +125,6 @@ export function hydrate(component, options) {
 	try {
 		// Don't flush previous effects to ensure order of outer effects stays consistent
 		return flush_sync(() => {
-			set_hydrating(true);
-
 			var anchor = /** @type {import('#client').TemplateNode} */ (target.firstChild);
 			while (
 				anchor &&
@@ -139,6 +137,7 @@ export function hydrate(component, options) {
 				throw HYDRATION_ERROR;
 			}
 
+			set_hydrating(true);
 			set_hydrate_node(/** @type {Comment} */ (anchor));
 			hydrate_next();
 
