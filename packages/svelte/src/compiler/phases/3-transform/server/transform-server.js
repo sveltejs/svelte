@@ -2159,7 +2159,7 @@ export function server_component(analysis, options) {
 
 	const body = [...state.hoisted, ...module.body];
 
-	if (options.cssRenderOnServer) {
+	if (options.css === 'injected') {
 		body.push(
 			b.const(
 				'$$css',

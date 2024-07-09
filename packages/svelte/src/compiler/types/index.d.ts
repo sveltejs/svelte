@@ -99,8 +99,8 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	immutable?: boolean;
 	/**
-	 * - `'injected'`: styles will be included in the JavaScript class and injected at runtime for the components actually rendered.
-	 * - `'external'`: the CSS will be returned in the `css` field of the compilation result. Most Svelte bundler plugins will set this to `'external'` and use the CSS that is statically generated for better performance, as it will result in smaller JavaScript bundles and the output can be served as cacheable `.css` files.
+	 * - `'injected'`: styles will be included in the `head` when using `render(...)`, and injected into the document (if not already present) when the component mounts. For components compiled as custom elements, styles are injected to the shadow root.
+	 * - `'external'`: the CSS will only be returned in the `css` field of the compilation result. Most Svelte bundler plugins will set this to `'external'` and use the CSS that is statically generated for better performance, as it will result in smaller JavaScript bundles and the output can be served as cacheable `.css` files.
 	 * This is always `'injected'` when compiling with `customElement` mode.
 	 */
 	css?: 'injected' | 'external';
@@ -111,12 +111,6 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * @default undefined
 	 */
 	cssHash?: CssHashGetter;
-	/**
-	 * Whether or not to include the CSS in the compiled server output, so that it's added to the `css` output of `render` from `svelte/server`.
-	 *
-	 * @default false
-	 */
-	cssRenderOnServer?: boolean;
 	/**
 	 * If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.
 	 *

@@ -219,7 +219,7 @@ css = css.replace(/:where\((.+?)\)/, '$1');
 
 ### CSS no longer returned from server render by default
 
-In Svelte 4, rendering a component to a string also returned the CSS of all components. In Svelte 5, this is no longer the case by default because most of the time you're using a tooling chain that takes care of it in other ways (like SvelteKit). If you need the CSS string returned from `render`, you can enable it via the `cssRenderOnServer` option.
+In Svelte 4, rendering a component to a string also returned the CSS of all components. In Svelte 5, this is no longer the case by default because most of the time you're using a tooling chain that takes care of it in other ways (like SvelteKit). If you need the CSS string returned from `render`, you can enable it by setting the `css` compiler option to `'injected'`.
 
 ### Error/warning codes have been renamed
 

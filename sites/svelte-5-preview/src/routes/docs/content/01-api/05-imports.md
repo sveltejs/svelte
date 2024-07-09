@@ -155,7 +155,7 @@ const result = render(App, {
 });
 ```
 
-`render` also returns a `css` string property, which is populated with the CSS from all components which were compiled with the `cssRenderOnServer` option.
+If the `css` compiler option was set to `'injected'`, `<style>` elements will be included in the `head`.
 
 ## `svelte/elements`
 
