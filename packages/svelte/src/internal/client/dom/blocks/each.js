@@ -6,7 +6,8 @@ import {
 	EACH_IS_STRICT_EQUALS,
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED,
-	HYDRATION_END
+	HYDRATION_END,
+	HYDRATION_START_ELSE
 } from '../../../../constants.js';
 import {
 	hydrate_next,
@@ -159,9 +160,9 @@ export function each(anchor, flags, get_collection, get_key, render_fn, fallback
 		let mismatch = false;
 
 		if (hydrating) {
-			var is_else = /** @type {Comment} */ (anchor).data === '#each!';
+			var is_else = /** @type {Comment} */ (anchor).data === HYDRATION_START_ELSE;
 
-			if (is_else !== (length === 0) || hydrate_node === undefined) {
+			if (is_else !== (length === 0)) {
 				// hydration mismatch — remove the server-rendered DOM and start over
 				anchor = remove_nodes();
 
