@@ -20,7 +20,8 @@ export const TEMPLATE_FRAGMENT = 1;
 export const TEMPLATE_USE_IMPORT_NODE = 1 << 1;
 
 export const HYDRATION_START = '[';
-export const HYDRATION_START_ELSE = '[!'; // used to indicate that an `{:else}...` block was rendered
+/** used to indicate that an `{:else}...` block was rendered */
+export const HYDRATION_START_ELSE = '[!';
 export const HYDRATION_END = ']';
 export const HYDRATION_ANCHOR = '';
 export const HYDRATION_ERROR = {};
