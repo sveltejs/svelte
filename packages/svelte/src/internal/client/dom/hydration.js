@@ -44,6 +44,9 @@ export function next() {
 	}
 }
 
+/**
+ * Removes all nodes starting at `hydrate_node` up until the next hydration end comment
+ */
 export function remove_nodes() {
 	var depth = 0;
 	var node = hydrate_node;

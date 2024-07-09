@@ -11,7 +11,7 @@ export default defineConfig({
 		inspect(),
 		svelte({
 			compilerOptions: {
-				hmr: false
+				hmr: true
 			}
 		})
 	],
