@@ -1,5 +1,5 @@
 import { DEV } from 'esm-env';
-import { hash } from '../dev.js';
+import { hash } from '../../../utils.js';
 
 /**
  * @param {string} value
