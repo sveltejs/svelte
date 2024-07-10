@@ -2158,10 +2158,7 @@ declare module 'svelte/reactivity' {
 		#private;
 	}
 	const REPLACE: unique symbol;
-	const onChange: unique symbol;
 	export class SvelteURLSearchParams extends URLSearchParams {
-		
-		[onChange]: ((command: "set" | "append" | "delete" | "sort", ...args: any[]) => void) | null;
 		
 		[REPLACE](params: URLSearchParams): void;
 		#private;
