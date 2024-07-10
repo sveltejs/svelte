@@ -15,7 +15,7 @@ import { dev_current_component_function } from '../../runtime.js';
  * @param {string} value
  */
 function check_hash(element, server_hash, value) {
-	if (!server_hash || server_hash === hash(value)) return;
+	if (!server_hash || server_hash === hash(String(value ?? ''))) return;
 
 	let location;
 

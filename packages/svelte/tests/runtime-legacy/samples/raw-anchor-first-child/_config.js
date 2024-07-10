@@ -11,7 +11,7 @@ export default test({
 		if (variant === 'dom') {
 			assert.ok(!span.previousSibling);
 		} else {
-			assert.ok(span.previousSibling?.textContent === ''); // ssr commment node
+			assert.equal(span.previousSibling?.textContent, '1tbe2lq'); // hash of the value
 		}
 
 		component.raw = '<span>bar</span>';
