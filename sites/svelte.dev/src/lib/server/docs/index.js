@@ -122,8 +122,7 @@ export async function get_sections(markdown) {
 		title: 'Root',
 		slug: 'root',
 		sections: [],
-		breadcrumbs: [''],
-		text: ''
+		breadcrumbs: ['']
 	});
 	let currentNodes = [root];
 
@@ -140,8 +139,7 @@ export async function get_sections(markdown) {
 				title: text,
 				slug,
 				sections: [],
-				breadcrumbs: [...currentNodes[level].breadcrumbs, text],
-				text: ''
+				breadcrumbs: [...currentNodes[level].breadcrumbs, text]
 			};
 
 			// Add the new node to the tree
@@ -152,9 +150,6 @@ export async function get_sections(markdown) {
 			// Prepare for potential children of the new node
 			currentNodes = currentNodes.slice(0, level + 1);
 			currentNodes.push(newNode);
-		} else if (line.trim() !== '') {
-			// Add non-heading line to the text of the current section
-			currentNodes[currentNodes.length - 1].text += line + '\n';
 		}
 	}
 
