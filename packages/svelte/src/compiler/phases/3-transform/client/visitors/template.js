@@ -1753,8 +1753,6 @@ export const template_visitors = {
 		// push into init, so that bindings run afterwards, which might trigger another run and override hydration
 		context.state.init.push(
 			b.stmt(
-				// Even if the {@html } block seems static, it should be preserved as such, because it could be dynamic originally
-				// (like {@html browser ? 'foo' : 'bar'} which is then different between client and server.
 				b.call(
 					'$.html',
 					context.state.node,
