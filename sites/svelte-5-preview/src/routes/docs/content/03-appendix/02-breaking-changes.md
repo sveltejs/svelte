@@ -95,7 +95,7 @@ import App from './App.svelte';
 + const { html, head } = render(App, { props: { message: 'hello' } });
 ```
 
-`render` also no longer returns CSS; it should be served separately from a CSS file.
+In Svelte 4, rendering a component to a string also returned the CSS of all components. In Svelte 5, this is no longer the case by default because most of the time you're using a tooling chain that takes care of it in other ways (like SvelteKit). If you need CSS to be returned from `render`, you can set the `css` compiler option to `'injected'` and it will add `<style>` elements to the `head`.
 
 ### Component typing changes
 

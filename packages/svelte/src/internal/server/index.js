@@ -43,9 +43,10 @@ export const VoidElements = new Set([
  * @param {Payload} to_copy
  * @returns {Payload}
  */
-export function copy_payload({ out, head }) {
+export function copy_payload({ out, css, head }) {
 	return {
 		out,
+		css: new Set(css),
 		head: {
 			title: head.title,
 			out: head.out
@@ -107,7 +108,7 @@ export let on_destroy = [];
  */
 export function render(component, options = {}) {
 	/** @type {Payload} */
-	const payload = { out: '', head: { title: '', out: '' } };
+	const payload = { out: '', css: new Set(), head: { title: '', out: '' } };
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
@@ -129,8 +130,14 @@ export function render(component, options = {}) {
 	for (const cleanup of on_destroy) cleanup();
 	on_destroy = prev_on_destroy;
 
+	let head = payload.head.out + payload.head.title;
+
+	for (const { hash, code } of payload.css) {
+		head += `<style id="${hash}">${code}</style>`;
+	}
+
 	return {
-		head: payload.head.out || payload.head.title ? payload.head.out + payload.head.title : '',
+		head,
 		html: payload.out,
 		body: payload.out
 	};

@@ -13,6 +13,7 @@ export interface Component {
 
 export interface Payload {
 	out: string;
+	css: Set<{ hash: string; code: string }>;
 	head: {
 		title: string;
 		out: string;
