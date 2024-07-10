@@ -16,7 +16,8 @@ function check_hash_in_dev_hydration(server_hash, value) {
 	if (!DEV) return;
 	if (!server_hash || server_hash === hash(value)) return;
 
-	w.hydration_html_changed(String(value));
+	// limit the length of the value shown in the error as this might get lengthy
+	w.hydration_html_changed(`${value.slice(0, 25)}${value.length > 25 ? '...' : ''}`);
 }
 
 /**
