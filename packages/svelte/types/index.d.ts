@@ -2146,12 +2146,12 @@ declare module 'svelte/reactivity' {
 		get searchParams(): SvelteURLSearchParams;
 		#private;
 	}
+	const REPLACE: unique symbol;
 	export class SvelteURLSearchParams extends URLSearchParams {
 		
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
-	const REPLACE: unique symbol;
 
 	export { Date_1 as Date, Set_1 as Set, Map_1 as Map, URL_1 as URL, URLSearchParams_1 as URLSearchParams };
 }
