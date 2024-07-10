@@ -327,7 +327,7 @@ function animate(element, options, counterpart, t2, callback) {
 		if (is_intro && delay > 0) {
 			let m = Math.ceil(delay / (1000 / 60));
 			let keyframe = css_to_keyframe(css(0, 1));
-			for (let i = 0; i <= m; i += 1) {
+			for (let i = 0; i < m; i += 1) {
 				keyframes.push(keyframe);
 			}
 		}
