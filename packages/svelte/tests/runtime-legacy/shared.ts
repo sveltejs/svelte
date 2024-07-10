@@ -104,7 +104,10 @@ export function runtime_suite(runes: boolean) {
 				if (config.skip_mode?.includes('hydrate')) return true;
 			}
 
-			if (variant === 'dom' && config.skip_mode?.includes('client')) {
+			if (
+				variant === 'dom' &&
+				(config.skip_mode?.includes('client') || (config.mode && !config.mode.includes('client')))
+			) {
 				return 'no-test';
 			}
 
