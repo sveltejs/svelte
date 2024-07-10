@@ -11,8 +11,8 @@ Let's dive in!
 
 ## What's new in Svelte
 
-- Custom events can now be cancelled in the `createEventDispatcher` function (**3.48.0**, [Docs](https://svelte.dev/docs#run-time-svelte-createeventdispatcher), [PR](https://github.com/sveltejs/svelte/pull/7064))
-- The `{@const}` tag can now be used in `{#if}` blocks to conditionally define variables (**3.48.0**, [Docs](https://svelte.dev/docs#template-syntax-const), [PR](https://github.com/sveltejs/svelte/pull/7451))
+- Custom events can now be cancelled in the `createEventDispatcher` function (**3.48.0**, [Docs](/docs/svelte#createeventdispatcher), [PR](https://github.com/sveltejs/svelte/pull/7064))
+- The `{@const}` tag can now be used in `{#if}` blocks to conditionally define variables (**3.48.0**, [Docs](/docs/special-tags#const), [PR](https://github.com/sveltejs/svelte/pull/7451))
 - Lots of bug fixes across `<svelte:element>`, animations and various DOM elements. Check out the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md#3480) for a deeper dive!
 
 ## What's new in SvelteKit

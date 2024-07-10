@@ -29,7 +29,7 @@ export const load: PageServerLoad = () => {
 };
 ```
 
-SvelteKit will automatically await the `fetchPost` call before it starts rendering the page, since it’s at the top level. However, it won’t wait for the nested `fetchComments` call to complete – the page will render and `data.streamed.comments` will be a promise that will resolve as the request completes. We can show a loading state in the corresponding `+page.svelte` using Svelte’s [await block](https://svelte.dev/docs#template-syntax-await):
+SvelteKit will automatically await the `fetchPost` call before it starts rendering the page, since it’s at the top level. However, it won’t wait for the nested `fetchComments` call to complete – the page will render and `data.streamed.comments` will be a promise that will resolve as the request completes. We can show a loading state in the corresponding `+page.svelte` using Svelte’s [await block](/docs/logic-blocks#await):
 
 ```svelte
 <script lang="ts">

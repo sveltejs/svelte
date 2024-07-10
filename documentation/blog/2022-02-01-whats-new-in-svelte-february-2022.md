@@ -11,8 +11,8 @@ Let's take a look...
 
 ## Highlights from the Svelte changelog
 
-- **3.45.0** brought a [new a11y warning `a11y-no-redundant-roles`](https://svelte.dev/docs#accessibility-warnings-a11y-no-redundant-roles), destructuring and caching fixes
-- **3.46.0** added the much requested [`{@const}` tag](https://svelte.dev/docs#template-syntax-const) and [`style:` directive](https://svelte.dev/docs#template-syntax-element-directives-style-property)
+- **3.45.0** brought a [new a11y warning `a11y-no-redundant-roles`](/docs/accessibility-warnings#a11y-no-redundant-roles), destructuring and caching fixes
+- **3.46.0** added the much requested [`{@const}` tag](/docs/special-tags#const) and [`style:` directive](/docs/element-directives#style-property)
 - Check out **3.46.1 - 3.46.3** for fixes to the `{@const}` tag and `style:` directive, along with a number of fixes to animations
 - [AST output is now available in the Svelte REPL](https://svelte.dev/repl/hello-world)
 
