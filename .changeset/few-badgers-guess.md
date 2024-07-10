@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-feat: runtime dev warn for mismatched `@html`
+feat: warn in dev on `{@html ...}` block hydration mismatch
