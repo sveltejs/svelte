@@ -43,7 +43,10 @@
 </div>
 
 <div class="note">
-	<p>note: these options affect the JS output tab, but not the bundle that executes in the Result tab.</p>
+	<p>
+		note: these options affect the JS output tab, but not the bundle that executes in the Result
+		tab.
+	</p>
 </div>
 
 <style>
