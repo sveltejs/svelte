@@ -288,30 +288,29 @@ The `mount` function used to render a component tree plays transitions by defaul
 
 ### `<img src={...}>` and `{@html ...}` hydration mismatches are not repaired
 
-In Svelte 4, when the value of an `<img src={...}>` attribute or a `{@html ...}` tag were different between the server and the client (i.e. there was a hydration mismatch), that mismatch was repaired. This is very costly though, and therefore is no longer done in Svelte 5. Instead, you'll now get a warning at DEV time when a mismatch is detected. If you know the value can be different between server and client, you can do something like this:
+In Svelte 4, if the value of a `src` attribute or `{@html ...}` tag differ between server and client (a.k.a. a hydration mismatch), the mismatch is repaired. This is very costly: setting a `src` attribute (even if it evaluates to the same thing) causes images and iframes to be reloaded, and reinserting a large blob of HTML is slow.
+
+Since these mismatches are extremely rare, Svelte 5 assumes that the values are unchanged, but in development will warn you if they are not. To force an update you can do something like this:
 
 ```svelte
 <script>
-	import { onMount, tick } from 'svelte';
+	let { markup, src } = $props();
 
-	let server = typeof window === 'undefined';
+	if (typeof window !== 'undefined') {
+		// stash the values...
+		const initial = { markup, src };
 
-	let markup = $state(
-		server ? '<h1>Server</h1>' : '<h1>Client</h1>'
-	);
-	let src = $state(server ? '/server.jpg' : '/client.jpg');
+		// unset them...
+		markup = src = undefined;
 
-	onMount(async () => {
-		// force update
-		raw_html = '';
-		src = '';
-		await tick();
-		// set client values
-		raw_html = '<h1>Client</h1>';
-		src = '/client.jpg';
-	});
+		$effect(() => {
+			// ...and reset after we've mounted
+			markup = initial.markup;
+			src = initial.src;
+		});
+	}
 </script>
 
-{@html raw_html}
+{@html markup}
 <img {src} />
 ```
