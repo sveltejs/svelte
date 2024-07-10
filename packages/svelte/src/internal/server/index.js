@@ -137,7 +137,7 @@ export function render(component, options = {}) {
 	}
 
 	return {
-		head: head,
+		head,
 		html: payload.out,
 		body: payload.out
 	};
