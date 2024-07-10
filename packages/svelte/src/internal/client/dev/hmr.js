@@ -1,4 +1,5 @@
 /** @import { Source, Effect } from '#client' */
+import { EFFECT_TRANSPARENT } from '../constants.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { set_should_intro } from '../render.js';
 import { get } from '../runtime.js';
@@ -44,7 +45,7 @@ export function hmr(source) {
 
 				if (ran) set_should_intro(true);
 			});
-		});
+		}, EFFECT_TRANSPARENT);
 
 		ran = true;
 
