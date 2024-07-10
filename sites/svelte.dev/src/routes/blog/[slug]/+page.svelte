@@ -53,9 +53,6 @@
 	</article>
 </div>
 
-<!-- the crawler doesn't understand twitter:image etc, so we have to add this hack. TODO fix in sveltekit -->
-<img hidden src="/blog/{$page.params.slug}/card.png" alt="Social card for {data.post.title}" />
-
 <style>
 	.post {
 		padding: var(--sk-page-padding-top) var(--sk-page-padding-side) 6rem var(--sk-page-padding-side);
