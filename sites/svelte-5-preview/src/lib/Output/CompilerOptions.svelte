@@ -33,7 +33,20 @@
 		<Checkbox bind:checked={$compile_options.dev} />
 		<span class="boolean">{$compile_options.dev}</span>,
 	</label>
+
+	<label class="option">
+		<span class="key">hmr:</span>
+		<Checkbox bind:checked={$compile_options.hmr} />
+		<span class="boolean">{$compile_options.hmr}</span>,
+	</label>
 	});
+</div>
+
+<div class="note">
+	<p>
+		note: these options affect the JS output tab, but not the bundle that executes in the Result
+		tab.
+	</p>
 </div>
 
 <style>
@@ -131,5 +144,14 @@
 		box-shadow: inset 0 0 0 0.15em rgba(255, 255, 255, 0.95);
 		border: 1px solid var(--sk-theme-2);
 		transition: box-shadow 0.2s ease-out;
+	}
+
+	.note {
+		padding: 10px;
+	}
+
+	.note p {
+		font-size: 1.4rem;
+		text-wrap: balance;
 	}
 </style>

@@ -78,6 +78,7 @@
 	const DEFAULT_COMPILE_OPTIONS = {
 		generate: 'client',
 		dev: false,
+		hmr: false,
 		css: 'external'
 	};
 
