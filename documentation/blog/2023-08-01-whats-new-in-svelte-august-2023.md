@@ -12,7 +12,7 @@ More on all that down below...
 ## What's new in Svelte & Language Tools
 There's been a bunch of minor bugfixes since the Svelte 4 release. You can find them in the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/packages/svelte/CHANGELOG.md).
 
-The **4.1.0 release** added the ability to further customize the custom element class that wraps the underlying Svelte component. Check out the [Custom Elements API docs](https://svelte.dev/docs/custom-elements-api) or the [PR](https://github.com/sveltejs/svelte/pull/8991) for more info!
+The **4.1.0 release** added the ability to further customize the custom element class that wraps the underlying Svelte component. Check out the [Custom Elements API docs](/docs/custom-elements-api) or the [PR](https://github.com/sveltejs/svelte/pull/8991) for more info!
 
 In addition to supporting SvelteKit's new `HEAD` server method, Svelte's language tools now support Prettier v3 (**extensions-107.9.0**) and workspace trust settings are now used to support all settings in workspace (**extensions-107.8.0**).
 
@@ -37,7 +37,7 @@ For all the patches and performance updates from this month, check out the [Svel
 - [Maktaba](https://www.maktaba.digital/) is a bookmark manager that "you will actually use"
 - [Whispering](https://github.com/braden-w/whispering-extension) is a Chrome extension that lets you access OpenAI's Whisper API for fast transcription in the browser (including ChatGPT)
 - [DocuTalk](https://docutalk.co/) is an AI Customer Support chatbot for your website
-- [Krello](https://github.com/iamrishupatel/trello-clone) is a Trello clone built with Svelte, Appwrite and Flowbite 
+- [Krello](https://github.com/iamrishupatel/trello-clone) is a Trello clone built with Svelte, Appwrite and Flowbite
 - [Been](https://beeneverywhere.net/) is a map builder with travel stats like visited countries, extreme visited points, etc.
 - [image-to-social-media-thumbnail](https://brody.fyi/tools/image-to-social-media-thumbnail) lets you convert any image to a social media thumbnail
 - [Svelte Capacitor Store](https://github.com/sdekna/svelte-capacitor-store) is a persistent store that uses capacitor (preferences) storage on native devices, and localStorage otherwise, making it ideal for multi-platform projects
@@ -85,7 +85,7 @@ _To Read_
 - [better-svelte-writable](https://github.com/tnthung/better-svelte-writable) provides a type-safe writable which gives you more control over the container
 - [Svetch.ts](https://github.com/Bewinxed/svetch#readme) is a client/types/schema/docs generator for your API endpoints
 - [sveltekit-localize-url](https://github.com/rinart73/sveltekit-localize-url) handles URL localization and routing
-- [elegua](https://github.com/howesteve/elegua) is a small, reactive PWA router for Svelte 
+- [elegua](https://github.com/howesteve/elegua) is a small, reactive PWA router for Svelte
 - [Molly](https://github.com/renefournier/molly/tree/main) is a bash script and npm module that helps you clean up unused Svelte components in your project
 - [sveltekit-bot](https://github.com/begoon/sveltekit-bot) is a Telegram bot made with SvelteKit and Vercel
 

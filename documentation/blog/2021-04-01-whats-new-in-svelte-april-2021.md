@@ -15,7 +15,7 @@ Want to learn more about how to get started, what's different compared to Sapper
 
 ## New in Svelte & Language Tools
 
-- Slotted components, including `<svelte:fragment slot="...">` lets component consumers target specific slots with rich content (**Svelte 3.35.0, Language Tools [104.5.0](https://github.com/sveltejs/language-tools/releases/tag/extensions-104.5.0)**, check out the [docs](https://svelte.dev/docs#template-syntax-svelte-fragment) and the [tutorial](https://svelte.dev/tutorial/svelte-fragment))
+- Slotted components, including `<svelte:fragment slot="...">` lets component consumers target specific slots with rich content (**Svelte 3.35.0, Language Tools [104.5.0](https://github.com/sveltejs/language-tools/releases/tag/extensions-104.5.0)**, check out the [docs](/docs/special-elements#svelte-fragment) and the [tutorial](https://svelte.dev/tutorial/svelte-fragment))
 - Linked editing now works for HTML in Svelte files (**Language Tools, [104.6.0](https://github.com/sveltejs/language-tools/releases/tag/extensions-104.6.0)**)
 - Type definitions `svelte.d.ts` are now resolved in order, allowing library authors to ship type definitions with their svelte components (**Language Tools, [104.7.0](https://github.com/sveltejs/language-tools/releases/tag/extensions-104.7.0)**)
 - [vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte) is available for general use of Svelte in Vite. `npm init @vitejs/app` includes Svelte options using this plugin.

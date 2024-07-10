@@ -16,18 +16,18 @@ Now let's jump into this month's changes...
 ## What's new in Svelte
 
 - A bunch of new features are now available as of **3.56.0**!
-  - Add `|stopImmediatePropagation` event modifier for `on:eventname` ([#5085](https://github.com/sveltejs/svelte/issues/5085), [Docs](https://svelte.dev/docs#template-syntax-element-directives-on-eventname))
-  - Add `axis` parameter to `slide` transition ([#6182](https://github.com/sveltejs/svelte/issues/6182), [Docs](https://svelte.dev/docs#run-time-svelte-transition-slide))
-  - Add `readonly` utility to convert `writable` store to readonly ([#6518](https://github.com/sveltejs/svelte/pull/6518), [Docs](https://svelte.dev/docs#run-time-svelte-store-writable))
-  - Add `readyState` binding for media elements ([#6666](https://github.com/sveltejs/svelte/issues/6666), [Docs](https://svelte.dev/docs#template-syntax-element-directives-bind-property-media-element-bindings))
-  - Add `naturalWidth` and `naturalHeight` bindings to images ([#7771](https://github.com/sveltejs/svelte/issues/7771), [Docs](https://svelte.dev/docs#template-syntax-element-directives-bind-property-image-element-bindings))
+  - Add `|stopImmediatePropagation` event modifier for `on:eventname` ([#5085](https://github.com/sveltejs/svelte/issues/5085), [Docs](/docs/element-directives#on-eventname))
+  - Add `axis` parameter to `slide` transition ([#6182](https://github.com/sveltejs/svelte/issues/6182), [Docs](/docs/svelte-transition#slide))
+  - Add `readonly` utility to convert `writable` store to readonly ([#6518](https://github.com/sveltejs/svelte/pull/6518), [Docs](/docs/svelte-store#writable))
+  - Add `readyState` binding for media elements ([#6666](https://github.com/sveltejs/svelte/issues/6666), [Docs](/docs/element-directives#media-element-bindings))
+  - Add `naturalWidth` and `naturalHeight` bindings to images ([#7771](https://github.com/sveltejs/svelte/issues/7771), [Docs](/docs/element-directives#image-element-bindings))
 - Support `<!-- svelte-ignore ... -->` on components ([#8082](https://github.com/sveltejs/svelte/issues/8082))
 - Inputs in a `bind:group` will clear when their value is set to `undefined` (**3.56.0**, [#8214](https://github.com/sveltejs/svelte/issues/8214))
 - `<input>` values will now persist when swapping elements with spread attributes in an `{#each}` block (**3.56.0**, [#7578](https://github.com/sveltejs/svelte/issues/7578))
 - Better warnings across the board - from `noreferrer` to `aria` rules (**3.56.0**)
 - Add <svelte:document> (**3.57.0**, [#3310](https://github.com/sveltejs/svelte/issues/3310))
 - The `style:` directive will now take precedence over a `style=` attribute (**3.57.0**, [#7475](https://github.com/sveltejs/svelte/issues/7475))
-- CSS units are now supported in the `fly` and `blur` transitions (**3.57.0**, [#7623](https://github.com/sveltejs/svelte/pull/7623), [Docs](https://svelte.dev/docs#run-time-svelte-transition))
+- CSS units are now supported in the `fly` and `blur` transitions (**3.57.0**, [#7623](https://github.com/sveltejs/svelte/pull/7623), [Docs](/docs/svelte-transition))
 
 For all the changes to the Svelte compiler, including unreleased changes, check out the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md).
 

@@ -10,7 +10,7 @@ Svelte 4 is out and folks have been building! There's a bunch of new showcases, 
 ## What's new in Svelte
 The big news this month was the release of Svelte 4.0! You can read all about it in the [Announcing Svelte 4 post](https://svelte.dev/blog/svelte-4). From performance fixes and developer experience improvements to [a brand new site, docs and tutorial](https://svelte.dev/blog/svelte-dev-overhaul)... this new release sets the stage for Svelte 5 with minimal breaking changes.
 
-If you're already on Node.js 16, it's possible you won't see any breaking changes in your project. But be sure to read the [migration guide](https://svelte.dev/docs/v4-migration-guide) for all the details.
+If you're already on Node.js 16, it's possible you won't see any breaking changes in your project. But be sure to read the [migration guide](/docs/v4-migration-guide) for all the details.
 
 For a full list of all the changes to the Svelte compiler, including unreleased changes, check out the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/packages/svelte/CHANGELOG.md).
 

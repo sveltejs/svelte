@@ -9,7 +9,7 @@ With yesterday's Svelte Summit behind us, we've got a lot of news to share! Chec
 
 ## What's new in Svelte
 
-- The `<svelte:element>` element lets you render an element of a dynamically specified type. This is useful, for example, when rendering rich text content from a CMS. Check out the [docs](https://svelte.dev/docs#template-syntax-svelte-element) or the [tutorial](https://svelte.dev/tutorial/svelte-element) for more info (**3.47.0**)!
+- The `<svelte:element>` element lets you render an element of a dynamically specified type. This is useful, for example, when rendering rich text content from a CMS. Check out the [docs](/docs/special-elements#svelte-element) or the [tutorial](https://learn.svelte.dev/tutorial/svelte-element) for more info (**3.47.0**)!
 
 ## Language Tools updates
 
