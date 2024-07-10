@@ -296,7 +296,9 @@ In Svelte 4, when the value of an `<img src={...}>` attribute or a `{@html ...}`
 
 	let server = typeof window === 'undefined';
 
-	let markup = $state(server ? '<h1>Server</h1>' : '<h1>Client</h1>');
+	let markup = $state(
+		server ? '<h1>Server</h1>' : '<h1>Client</h1>'
+	);
 	let src = $state(server ? '/server.jpg' : '/client.jpg');
 
 	onMount(async () => {
