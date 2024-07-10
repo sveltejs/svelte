@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.181
+
+### Patch Changes
+
+- fix: reflect SvelteURLSearchParams changes to SvelteURL ([#12285](https://github.com/sveltejs/svelte/pull/12285))
+
+- fix: ensure hmr block effects are transparent for transitions ([#12384](https://github.com/sveltejs/svelte/pull/12384))
+
+- feat: simpler HMR logic ([#12391](https://github.com/sveltejs/svelte/pull/12391))
+
 ## 5.0.0-next.180
 
 ### Patch Changes
