@@ -437,36 +437,15 @@ export function client_component(source, analysis, options) {
 			);
 		}
 
-		body.push(
-			component,
-			b.if(
-				b.id('import.meta.hot'),
-				b.block([
-					b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
-					b.const(b.id('filename'), b.member(b.id(analysis.name), b.id('filename'))),
-					b.const(b.id('accept'), b.arrow([b.id('module')], b.block(accept_fn_body))),
-					b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
-					b.stmt(
-						b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.id('filename'))
-					),
-					b.if(
-						b.id('import.meta.hot.acceptExports'),
-						b.block([
-							b.stmt(
-								b.call(
-									'import.meta.hot.acceptExports',
-									b.array([b.literal('default')]),
-									b.id('accept')
-								)
-							)
-						]),
-						b.block([b.stmt(b.call('import.meta.hot.accept', b.id('accept')))])
-					)
-				])
-			),
+		const hmr = b.block([
+			b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
+			b.const(b.id('filename'), b.member(b.id(analysis.name), b.id('filename'))),
+			b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
+			b.stmt(b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.id('filename'))),
+			b.stmt(b.call('import.meta.hot.accept', b.arrow([b.id('module')], b.block(accept_fn_body))))
+		]);
 
-			b.export_default(b.id(analysis.name))
-		);
+		body.push(component, b.if(b.id('import.meta.hot'), hmr), b.export_default(b.id(analysis.name)));
 	} else {
 		body.push(b.export_default(component));
 	}
