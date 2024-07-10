@@ -4,6 +4,7 @@ import {
 	is_tag_valid_with_parent
 } from '../../constants.js';
 import { current_component } from './context.js';
+export { hash } from '../../utils.js';
 
 /**
  * @typedef {{

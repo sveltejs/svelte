@@ -5,6 +5,19 @@ import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydr
 import { create_fragment_from_html } from '../reconciler.js';
 import { assign_nodes } from '../template.js';
 import * as w from '../../warnings.js';
+import { hash } from '../../../../utils.js';
+import { DEV } from 'esm-env';
+
+/**
+ * @param {string | null} server_hash
+ * @param {string} value
+ */
+function check_hash_in_dev_hydration(server_hash, value) {
+	if (!DEV) return;
+	if (!server_hash || server_hash === hash(value)) return;
+
+	w.hydration_html_changed(String(value));
+}
 
 /**
  * @param {Element | Text | Comment} node
@@ -31,6 +44,8 @@ export function html(node, get_value, svg, mathml) {
 
 		if (value === '') return;
 
+		const hashed = hydrate_node ? /** @type {Comment} */ (hydrate_node).data : null;
+
 		effect = branch(() => {
 			if (hydrating) {
 				var next = hydrate_next();
@@ -48,6 +63,8 @@ export function html(node, get_value, svg, mathml) {
 					w.hydration_mismatch();
 					throw HYDRATION_ERROR;
 				}
+
+				check_hash_in_dev_hydration(hashed, value);
 
 				assign_nodes(hydrate_node, last);
 				anchor = set_hydrate_node(next);
