@@ -674,7 +674,18 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		TransitionDirective: SvelteDirective,
 		AnimateDirective: SvelteDirective,
-		UseDirective: SvelteDirective
+		UseDirective: SvelteDirective,
+		// using it's own function instead of `SvelteDirective` because
+		// StyleDirective doesn't have expressions and are generally already
+		// handled by `Identifier`. This is the special case for the shorthand
+		// eg <button style:height /> where the variable has the same name of
+		// the css property
+		StyleDirective(node, { path, state, next }) {
+			if (node.value === true) {
+				state.scope.reference(b.id(node.name), path);
+			}
+			next();
+		}
 
 		// TODO others
 	});
