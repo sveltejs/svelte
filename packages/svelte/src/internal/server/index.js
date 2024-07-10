@@ -549,7 +549,7 @@ export { html } from './blocks/html.js';
 
 export { push, pop } from './context.js';
 
-export { push_element, pop_element, hash } from './dev.js';
+export { push_element, pop_element } from './dev.js';
 
 export {
 	add_snippet_symbol,
