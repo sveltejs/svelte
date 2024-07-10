@@ -1169,7 +1169,7 @@ const template_visitors = {
 	},
 	HtmlTag(node, context) {
 		const expression = /** @type {import('estree').Expression} */ (context.visit(node.expression));
-		context.state.template.push(empty_comment, expression, empty_comment);
+		context.state.template.push(b.call('$.html', expression));
 	},
 	ConstTag(node, { state, visit }) {
 		const declaration = node.declaration.declarations[0];

@@ -545,6 +545,8 @@ export function once(get_value) {
 	};
 }
 
+export { html } from './blocks/html.js';
+
 export { push, pop } from './context.js';
 
 export { push_element, pop_element } from './dev.js';
