@@ -1280,7 +1280,12 @@ function serialize_event(node, context) {
 	}
 
 	const parent = /** @type {import('#compiler').SvelteNode} */ (context.path.at(-1));
-	if (parent.type === 'SvelteDocument' || parent.type === 'SvelteWindow') {
+	if (
+		parent.type === 'SvelteDocument' ||
+		parent.type === 'SvelteWindow' ||
+		parent.type === 'SvelteBody'
+	) {
+		// These nodes are above the component tree, and its events should run parent first
 		state.before_init.push(statement);
 	} else {
 		state.after_update.push(statement);

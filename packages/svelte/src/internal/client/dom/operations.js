@@ -1,8 +1,7 @@
-/** @import { Effect, TemplateNode } from '#client' */
+/** @import { TemplateNode } from '#client' */
 import { hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
-import { current_effect } from '../runtime.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */

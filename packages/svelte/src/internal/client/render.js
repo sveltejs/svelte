@@ -16,18 +16,16 @@ import {
 	set_hydrating
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
-import { handle_event_propagation } from './dom/elements/events.js';
+import {
+	all_registered_events,
+	handle_event_propagation,
+	root_event_handles
+} from './dom/elements/events.js';
 import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 import { validate_component } from '../shared/validate.js';
 import { assign_nodes } from './dom/template.js';
-
-/** @type {Set<string>} */
-export const all_registered_events = new Set();
-
-/** @type {Set<(events: Array<string>) => void>} */
-export const root_event_handles = new Set();
 
 /**
  * This is normally true — block effects should run their intro transitions —
@@ -181,6 +179,8 @@ export function hydrate(component, options) {
 	}
 }
 
+const document_listeners = new Set();
+
 /**
  * @template {Record<string, any>} Exports
  * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<any>> | import('../../index.js').Component<any>} Component
@@ -213,9 +213,13 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 				// the outer content stops propagation of the event.
 				target.addEventListener(event_name, handle_event_propagation, { passive });
 
-				// The document listener ensures we catch events that originate from elements that were
-				// manually moved outside of the container (e.g. via manual portals).
-				document.addEventListener(event_name, handle_event_propagation, { passive });
+				if (!document_listeners.has(event_name)) {
+					document_listeners.add(event_name);
+
+					// The document listener ensures we catch events that originate from elements that were
+					// manually moved outside of the container (e.g. via manual portals).
+					document.addEventListener(event_name, handle_event_propagation, { passive });
+				}
 			}
 		}
 	};
@@ -263,7 +267,8 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 		return () => {
 			for (const event_name of registered_events) {
 				target.removeEventListener(event_name, handle_event_propagation);
-				document.removeEventListener(event_name, handle_event_propagation);
+				// Don't remove document event listeners, they're global per runtime,
+				// and we don't know whether or not there are other components still using them
 			}
 
 			root_event_handles.delete(event_handle);
