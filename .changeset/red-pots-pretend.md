@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: style shorthand not referencing variables
+fix: mark variables in shorthand style directives as referenced
