@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.180
+
+### Patch Changes
+
+- fix: handle nested `:global(...)` selectors ([#12365](https://github.com/sveltejs/svelte/pull/12365))
+
+- feat: include CSS in `<head>` when `css: 'injected'` ([#12374](https://github.com/sveltejs/svelte/pull/12374))
+
+- fix: destroy effects that error on creation ([#12376](https://github.com/sveltejs/svelte/pull/12376))
+
+- breaking: rename `legacy.componentApi` to `compatibility.componentApi` ([#12370](https://github.com/sveltejs/svelte/pull/12370))
+
+- fix: correctly validate `<svelte:component>` with `bind:this` ([#12368](https://github.com/sveltejs/svelte/pull/12368))
+
 ## 5.0.0-next.179
 
 ### Patch Changes
