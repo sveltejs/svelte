@@ -7,17 +7,29 @@ import { assign_nodes } from '../template.js';
 import * as w from '../../warnings.js';
 import { hash } from '../../../../utils.js';
 import { DEV } from 'esm-env';
+import { dev_current_component_function } from '../../runtime.js';
 
 /**
+ * @param {Element} element
  * @param {string | null} server_hash
  * @param {string} value
  */
-function check_hash_in_dev_hydration(server_hash, value) {
-	if (!DEV) return;
+function check_hash(element, server_hash, value) {
 	if (!server_hash || server_hash === hash(value)) return;
 
-	// limit the length of the value shown in the error as this might get lengthy
-	w.hydration_html_changed(`${value.slice(0, 25)}${value.length > 25 ? '...' : ''}`);
+	let location;
+
+	// @ts-expect-error
+	const loc = element.__svelte_meta?.loc;
+	if (loc) {
+		location = `near ${loc.file}:${loc.line}:${loc.column}`;
+	} else if (dev_current_component_function.filename) {
+		location = `in ${dev_current_component_function.filename}`;
+	}
+
+	w.hydration_html_changed(
+		location?.replace(/\//g, '/\u200b') // prevent devtools trying to make it a clickable link by inserting a zero-width space
+	);
 }
 
 /**
@@ -45,10 +57,9 @@ export function html(node, get_value, svg, mathml) {
 
 		if (value === '') return;
 
-		const hashed = hydrate_node ? /** @type {Comment} */ (hydrate_node).data : null;
-
 		effect = branch(() => {
 			if (hydrating) {
+				var hash = /** @type {Comment} */ (hydrate_node).data;
 				var next = hydrate_next();
 				var last = next;
 
@@ -65,7 +76,9 @@ export function html(node, get_value, svg, mathml) {
 					throw HYDRATION_ERROR;
 				}
 
-				check_hash_in_dev_hydration(hashed, value);
+				if (DEV) {
+					check_hash(/** @type {Element} */ (next.parentNode), hash, value);
+				}
 
 				assign_nodes(hydrate_node, last);
 				anchor = set_hydrate_node(next);

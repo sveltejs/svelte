@@ -4,7 +4,9 @@
 
 ## hydration_html_changed
 
-> The value of the `{@html}` block changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
+> The value of an `{@html ...}` block changed between server and client renders. The client value will be ignored in favour of the server value
+
+> The value of an `{@html ...}` block %location% changed between server and client renders. The client value will be ignored in favour of the server value
 
 ## hydration_mismatch
 
