@@ -13,14 +13,19 @@ export class SvelteURLSearchParams extends URLSearchParams {
 
 	#update_url() {
 		if (!this.#url || this.#updating) return;
+		this.#updating = true;
+
 		const search = this.toString();
 		this.#url.search = search && `?${search}`;
+
+		this.#updating = false;
 	}
 
 	/**
 	 * @param {URLSearchParams} params
 	 */
 	[REPLACE](params) {
+		if (this.#updating) return;
 		this.#updating = true;
 
 		for (const key of [...super.keys()]) {
@@ -32,7 +37,6 @@ export class SvelteURLSearchParams extends URLSearchParams {
 		}
 
 		increment(this.#version);
-
 		this.#updating = false;
 	}
 
