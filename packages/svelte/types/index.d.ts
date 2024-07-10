@@ -760,8 +760,8 @@ declare module 'svelte/compiler' {
 		 */
 		immutable?: boolean;
 		/**
-		 * - `'injected'`: styles will be included in the JavaScript class and injected at runtime for the components actually rendered.
-		 * - `'external'`: the CSS will be returned in the `css` field of the compilation result. Most Svelte bundler plugins will set this to `'external'` and use the CSS that is statically generated for better performance, as it will result in smaller JavaScript bundles and the output can be served as cacheable `.css` files.
+		 * - `'injected'`: styles will be included in the `head` when using `render(...)`, and injected into the document (if not already present) when the component mounts. For components compiled as custom elements, styles are injected to the shadow root.
+		 * - `'external'`: the CSS will only be returned in the `css` field of the compilation result. Most Svelte bundler plugins will set this to `'external'` and use the CSS that is statically generated for better performance, as it will result in smaller JavaScript bundles and the output can be served as cacheable `.css` files.
 		 * This is always `'injected'` when compiling with `customElement` mode.
 		 */
 		css?: 'injected' | 'external';
@@ -802,14 +802,14 @@ declare module 'svelte/compiler' {
 		/**
 		 * @deprecated Use these only as a temporary solution before migrating your code
 		 */
-		legacy?: {
+		compatibility?: {
 			/**
 			 * Applies a transformation so that the default export of Svelte files can still be instantiated the same way as in Svelte 4 —
 			 * as a class when compiling for the browser (as though using `createClassComponent(MyComponent, {...})` from `svelte/legacy`)
 			 * or as an object with a `.render(...)` method when compiling for the server
-			 * @default false
+			 * @default 5
 			 */
-			componentApi?: boolean;
+			componentApi?: 4 | 5;
 		};
 		/**
 		 * An initial sourcemap that will be merged into the final output sourcemap.
@@ -2146,12 +2146,12 @@ declare module 'svelte/reactivity' {
 		get searchParams(): SvelteURLSearchParams;
 		#private;
 	}
+	const REPLACE: unique symbol;
 	export class SvelteURLSearchParams extends URLSearchParams {
 		
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
-	const REPLACE: unique symbol;
 
 	export { Date_1 as Date, Set_1 as Set, Map_1 as Map, URL_1 as URL, URLSearchParams_1 as URLSearchParams };
 }
@@ -2568,8 +2568,8 @@ declare module 'svelte/types/compiler/interfaces' {
 		 */
 		immutable?: boolean;
 		/**
-		 * - `'injected'`: styles will be included in the JavaScript class and injected at runtime for the components actually rendered.
-		 * - `'external'`: the CSS will be returned in the `css` field of the compilation result. Most Svelte bundler plugins will set this to `'external'` and use the CSS that is statically generated for better performance, as it will result in smaller JavaScript bundles and the output can be served as cacheable `.css` files.
+		 * - `'injected'`: styles will be included in the `head` when using `render(...)`, and injected into the document (if not already present) when the component mounts. For components compiled as custom elements, styles are injected to the shadow root.
+		 * - `'external'`: the CSS will only be returned in the `css` field of the compilation result. Most Svelte bundler plugins will set this to `'external'` and use the CSS that is statically generated for better performance, as it will result in smaller JavaScript bundles and the output can be served as cacheable `.css` files.
 		 * This is always `'injected'` when compiling with `customElement` mode.
 		 */
 		css?: 'injected' | 'external';
@@ -2610,14 +2610,14 @@ declare module 'svelte/types/compiler/interfaces' {
 		/**
 		 * @deprecated Use these only as a temporary solution before migrating your code
 		 */
-		legacy?: {
+		compatibility?: {
 			/**
 			 * Applies a transformation so that the default export of Svelte files can still be instantiated the same way as in Svelte 4 —
 			 * as a class when compiling for the browser (as though using `createClassComponent(MyComponent, {...})` from `svelte/legacy`)
 			 * or as an object with a `.render(...)` method when compiling for the server
-			 * @default false
+			 * @default 5
 			 */
-			componentApi?: boolean;
+			componentApi?: 4 | 5;
 		};
 		/**
 		 * An initial sourcemap that will be merged into the final output sourcemap.

@@ -39,6 +39,7 @@ import {
 	BLOCK_OPEN_ELSE
 } from '../../../../internal/server/hydration.js';
 import { filename, locator } from '../../../state.js';
+import { render_stylesheet } from '../css/index.js';
 
 /** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
 const block_open = b.literal(BLOCK_OPEN);
@@ -1168,7 +1169,7 @@ const template_visitors = {
 	},
 	HtmlTag(node, context) {
 		const expression = /** @type {import('estree').Expression} */ (context.visit(node.expression));
-		context.state.template.push(empty_comment, expression, empty_comment);
+		context.state.template.push(b.call('$.html', expression));
 	},
 	ConstTag(node, { state, visit }) {
 		const declaration = node.declaration.declarations[0];
@@ -2158,6 +2159,14 @@ export function server_component(analysis, options) {
 
 	const body = [...state.hoisted, ...module.body];
 
+	if (analysis.css.ast !== null && options.css === 'injected' && !options.customElement) {
+		const hash = b.literal(analysis.css.hash);
+		const code = b.literal(render_stylesheet(analysis.source, analysis, options).code);
+
+		body.push(b.const('$$css', b.object([b.init('hash', hash), b.init('code', code)])));
+		component_block.body.unshift(b.stmt(b.call('$$payload.css.add', b.id('$$css'))));
+	}
+
 	let should_inject_props =
 		should_inject_context ||
 		props.length > 0 ||
@@ -2172,7 +2181,7 @@ export function server_component(analysis, options) {
 		should_inject_props ? [b.id('$$payload'), b.id('$$props')] : [b.id('$$payload')],
 		component_block
 	);
-	if (options.legacy.componentApi) {
+	if (options.compatibility.componentApi === 4) {
 		body.unshift(b.imports([['render', '$$_render']], 'svelte/server'));
 		body.push(
 			component_function,

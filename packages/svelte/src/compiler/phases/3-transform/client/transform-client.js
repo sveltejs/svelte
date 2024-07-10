@@ -283,7 +283,7 @@ export function client_component(source, analysis, options) {
 		}
 	}
 
-	if (options.legacy.componentApi) {
+	if (options.compatibility.componentApi === 4) {
 		component_returned_object.push(
 			b.init('$set', b.id('$.update_legacy_props')),
 			b.init(
@@ -332,22 +332,16 @@ export function client_component(source, analysis, options) {
 		}
 	}
 
-	const append_styles =
-		analysis.inject_styles && analysis.css.ast
-			? () =>
-					component_block.body.push(
-						b.stmt(
-							b.call(
-								'$.append_styles',
-								b.id('$$anchor'),
-								b.literal(analysis.css.hash),
-								b.literal(render_stylesheet(source, analysis, options).code)
-							)
-						)
-					)
-			: () => {};
+	if (analysis.css.ast !== null && analysis.inject_styles) {
+		const hash = b.literal(analysis.css.hash);
+		const code = b.literal(render_stylesheet(analysis.source, analysis, options).code);
 
-	append_styles();
+		state.hoisted.push(b.const('$$css', b.object([b.init('hash', hash), b.init('code', code)])));
+
+		component_block.body.unshift(
+			b.stmt(b.call('$.append_styles', b.id('$$anchor'), b.id('$$css')))
+		);
+	}
 
 	const should_inject_context =
 		analysis.needs_context ||
@@ -423,35 +417,35 @@ export function client_component(source, analysis, options) {
 	);
 
 	if (options.hmr) {
-		const accept_fn = b.arrow(
-			[b.id('module')],
-			b.block([b.stmt(b.call('$.set', b.id('s'), b.member(b.id('module'), b.id('default'))))])
-		);
-		body.push(
-			component,
-			b.if(
-				b.id('import.meta.hot'),
-				b.block([
-					b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
-					b.const(b.id('filename'), b.member(b.id(analysis.name), b.id('filename'))),
-					b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
-					b.stmt(
-						b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.id('filename'))
-					),
-					b.if(
-						b.id('import.meta.hot.acceptExports'),
-						b.block([
-							b.stmt(
-								b.call('import.meta.hot.acceptExports', b.array([b.literal('default')]), accept_fn)
-							)
-						]),
-						b.block([b.stmt(b.call('import.meta.hot.accept', accept_fn))])
-					)
-				])
-			),
+		const accept_fn_body = [
+			b.stmt(b.call('$.set', b.id('s'), b.member(b.id('module'), b.id('default'))))
+		];
 
-			b.export_default(b.id(analysis.name))
-		);
+		if (analysis.css.hash) {
+			// remove existing `<style>` element, in case CSS changed
+			accept_fn_body.unshift(
+				b.stmt(
+					b.call(
+						b.member(
+							b.call('document.querySelector', b.literal('#' + analysis.css.hash)),
+							b.id('remove'),
+							false,
+							true
+						)
+					)
+				)
+			);
+		}
+
+		const hmr = b.block([
+			b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
+			b.const(b.id('filename'), b.member(b.id(analysis.name), b.id('filename'))),
+			b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
+			b.stmt(b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.id('filename'))),
+			b.stmt(b.call('import.meta.hot.accept', b.arrow([b.id('module')], b.block(accept_fn_body))))
+		]);
+
+		body.push(component, b.if(b.id('import.meta.hot'), hmr), b.export_default(b.id(analysis.name)));
 	} else {
 		body.push(b.export_default(component));
 	}
@@ -474,7 +468,7 @@ export function client_component(source, analysis, options) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}
 
-	if (options.legacy.componentApi) {
+	if (options.compatibility.componentApi === 4) {
 		body.unshift(b.imports([['createClassComponent', '$$_createClassComponent']], 'svelte/legacy'));
 		component_block.body.unshift(
 			b.if(

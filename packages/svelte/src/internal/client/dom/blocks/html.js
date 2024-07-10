@@ -5,6 +5,32 @@ import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydr
 import { create_fragment_from_html } from '../reconciler.js';
 import { assign_nodes } from '../template.js';
 import * as w from '../../warnings.js';
+import { hash } from '../../../../utils.js';
+import { DEV } from 'esm-env';
+import { dev_current_component_function } from '../../runtime.js';
+
+/**
+ * @param {Element} element
+ * @param {string | null} server_hash
+ * @param {string} value
+ */
+function check_hash(element, server_hash, value) {
+	if (!server_hash || server_hash === hash(String(value ?? ''))) return;
+
+	let location;
+
+	// @ts-expect-error
+	const loc = element.__svelte_meta?.loc;
+	if (loc) {
+		location = `near ${loc.file}:${loc.line}:${loc.column}`;
+	} else if (dev_current_component_function.filename) {
+		location = `in ${dev_current_component_function.filename}`;
+	}
+
+	w.hydration_html_changed(
+		location?.replace(/\//g, '/\u200b') // prevent devtools trying to make it a clickable link by inserting a zero-width space
+	);
+}
 
 /**
  * @param {Element | Text | Comment} node
@@ -35,6 +61,7 @@ export function html(node, get_value, svg, mathml) {
 			if (hydrating) {
 				// We're deliberately not trying to repair mismatches between server and client,
 				// as it's costly and error-prone (and it's an edge case to have a mismatch anyway)
+				var hash = /** @type {Comment} */ (hydrate_node).data;
 				var next = hydrate_next();
 				var last = next;
 
@@ -49,6 +76,10 @@ export function html(node, get_value, svg, mathml) {
 				if (next === null) {
 					w.hydration_mismatch();
 					throw HYDRATION_ERROR;
+				}
+
+				if (DEV) {
+					check_hash(/** @type {Element} */ (next.parentNode), hash, value);
 				}
 
 				assign_nodes(hydrate_node, last);

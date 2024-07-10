@@ -41,7 +41,7 @@ export function bubble_event($$props, event) {
 }
 
 /**
- * Used to simulate `$on` on a component instance when `legacy.componentApi` is `true`
+ * Used to simulate `$on` on a component instance when `compatibility.componentApi === 4`
  * @param {Record<string, any>} $$props
  * @param {string} event_name
  * @param {Function} event_callback
@@ -53,7 +53,7 @@ export function add_legacy_event_listener($$props, event_name, event_callback) {
 }
 
 /**
- * Used to simulate `$set` on a component instance when `legacy.componentApi` is `true`.
+ * Used to simulate `$set` on a component instance when `compatibility.componentApi === 4`.
  * Needs component accessors so that it can call the setter of the prop. Therefore doesn't
  * work for updating props in `$$props` or `$$restProps`.
  * @this {Record<string, any>}

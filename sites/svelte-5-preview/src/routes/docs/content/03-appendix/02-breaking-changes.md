@@ -70,13 +70,15 @@ import App from './App.svelte'
 export default app;
 ```
 
-If this component is not under your control, you can use the `legacy.componentApi` compiler option for auto-applied backwards compatibility, which means code using `new Component(...)` keeps working without adjustments (note that this adds a bit of overhead to each component). This will also add `$set` and `$on` methods for all component instances you get through `bind:this`.
+If this component is not under your control, you can use the `compatibility.componentApi` compiler option for auto-applied backwards compatibility, which means code using `new Component(...)` keeps working without adjustments (note that this adds a bit of overhead to each component). This will also add `$set` and `$on` methods for all component instances you get through `bind:this`.
 
 ```js
 /// svelte.config.js
 export default {
 	compilerOptions: {
-		legacy: { componentApi: true }
+		compatibility: {
+			componentApi: 4
+		}
 	}
 };
 ```
@@ -93,7 +95,7 @@ import App from './App.svelte';
 + const { html, head } = render(App, { props: { message: 'hello' } });
 ```
 
-`render` also no longer returns CSS; it should be served separately from a CSS file.
+In Svelte 4, rendering a component to a string also returned the CSS of all components. In Svelte 5, this is no longer the case by default because most of the time you're using a tooling chain that takes care of it in other ways (like SvelteKit). If you need CSS to be returned from `render`, you can set the `css` compiler option to `'injected'` and it will add `<style>` elements to the `head`.
 
 ### Component typing changes
 

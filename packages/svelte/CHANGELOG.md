@@ -1,5 +1,29 @@
 # svelte
 
+## 5.0.0-next.181
+
+### Patch Changes
+
+- fix: reflect SvelteURLSearchParams changes to SvelteURL ([#12285](https://github.com/sveltejs/svelte/pull/12285))
+
+- fix: ensure hmr block effects are transparent for transitions ([#12384](https://github.com/sveltejs/svelte/pull/12384))
+
+- feat: simpler HMR logic ([#12391](https://github.com/sveltejs/svelte/pull/12391))
+
+## 5.0.0-next.180
+
+### Patch Changes
+
+- fix: handle nested `:global(...)` selectors ([#12365](https://github.com/sveltejs/svelte/pull/12365))
+
+- feat: include CSS in `<head>` when `css: 'injected'` ([#12374](https://github.com/sveltejs/svelte/pull/12374))
+
+- fix: destroy effects that error on creation ([#12376](https://github.com/sveltejs/svelte/pull/12376))
+
+- breaking: rename `legacy.componentApi` to `compatibility.componentApi` ([#12370](https://github.com/sveltejs/svelte/pull/12370))
+
+- fix: correctly validate `<svelte:component>` with `bind:this` ([#12368](https://github.com/sveltejs/svelte/pull/12368))
+
 ## 5.0.0-next.179
 
 ### Patch Changes
