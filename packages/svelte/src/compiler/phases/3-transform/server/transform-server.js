@@ -1169,18 +1169,7 @@ const template_visitors = {
 	},
 	HtmlTag(node, context) {
 		const expression = /** @type {import('estree').Expression} */ (context.visit(node.expression));
-
-		/**
-		 * @type {import("estree").Literal | import("estree").TemplateLiteral}
-		 */
-		let first_comment = empty_comment;
-		if (context.state.options.dev) {
-			first_comment = b.template(
-				[b.quasi('<!--'), b.quasi('-->', true)],
-				[b.call('$.hash', expression)]
-			);
-		}
-		context.state.template.push(first_comment, expression, empty_comment);
+		context.state.template.push(b.call('$.html', expression));
 	},
 	ConstTag(node, { state, visit }) {
 		const declaration = node.declaration.declarations[0];
