@@ -1,21 +1,20 @@
+/** @import { Snapshot } from './types' */
 import { get_prototype_of, is_array, object_prototype } from './utils.js';
 
 /**
  * @template T
  * @param {T} value
- * @returns {T}
+ * @returns {Snapshot<T>}
  */
 export function snapshot(value) {
-	return /** @type {T} */ (
-		clone(/** @type {import('#client').ProxyStateObject} */ (value), new Map())
-	);
+	return clone(value, new Map());
 }
 
 /**
- * @template {import('#client').ProxyStateObject} T
+ * @template T
  * @param {T} value
- * @param {Map<T, Record<string | symbol, any>>} cloned
- * @returns {Record<string | symbol, any>}
+ * @param {Map<T, Snapshot<T>>} cloned
+ * @returns {Snapshot<T>}
  */
 function clone(value, cloned) {
 	if (typeof value === 'object' && value !== null) {
@@ -23,8 +22,7 @@ function clone(value, cloned) {
 		if (unwrapped !== undefined) return unwrapped;
 
 		if (is_array(value)) {
-			/** @type {Record<string | symbol, any>} */
-			const copy = [];
+			const copy = /** @type {Snapshot<any>} */ ([]);
 			cloned.set(value, copy);
 
 			for (const element of value) {
@@ -35,21 +33,22 @@ function clone(value, cloned) {
 		}
 
 		if (get_prototype_of(value) === object_prototype) {
-			/** @type {Record<string | symbol, any>} */
+			/** @type {Snapshot<any>} */
 			const copy = {};
 			cloned.set(value, copy);
 
 			for (var key in value) {
+				// @ts-expect-error
 				copy[key] = clone(value[key], cloned);
 			}
 
 			return copy;
 		}
 
-		if (typeof value.toJSON === 'function') {
-			return clone(value.toJSON(), cloned);
+		if (typeof (/** @type {T & { toJSON?: any } } */ (value).toJSON) === 'function') {
+			return clone(/** @type {T & { toJSON(): any } } */ (value).toJSON(), cloned);
 		}
 	}
 
-	return structuredClone(value);
+	return /** @type {Snapshot<T>} */ (structuredClone(value));
 }

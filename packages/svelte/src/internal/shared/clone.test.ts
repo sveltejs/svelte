@@ -60,6 +60,7 @@ test('class with state field', () => {
 
 	const copy = snapshot(new Foo());
 
+	// @ts-expect-error I can't figure out a way to exclude prototype properties
 	assert.deepEqual(copy, { x: 1 });
 });
 
