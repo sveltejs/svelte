@@ -94,7 +94,8 @@ function create_effect(type, fn, sync, push = true) {
 		parent: is_root ? null : current_effect,
 		prev: null,
 		teardown: null,
-		transitions: null
+		transitions: null,
+		version: 0
 	};
 
 	if (DEV) {
@@ -108,6 +109,9 @@ function create_effect(type, fn, sync, push = true) {
 			set_is_flushing_effect(true);
 			update_effect(effect);
 			effect.f |= EFFECT_RAN;
+		} catch (e) {
+			destroy_effect(effect);
+			throw e;
 		} finally {
 			set_is_flushing_effect(previously_flushing_effect);
 		}

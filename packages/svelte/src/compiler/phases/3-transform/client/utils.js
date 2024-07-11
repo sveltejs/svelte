@@ -345,7 +345,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 				}
 
 				if (state.scope.get(`$${left.name}`)?.kind === 'store_sub') {
-					return b.call('$.store_unsub', call, b.literal(`$${left.name}`), b.id('$$subscriptions'));
+					return b.call('$.store_unsub', call, b.literal(`$${left.name}`), b.id('$$stores'));
 				} else {
 					return call;
 				}
@@ -454,7 +454,6 @@ export function serialize_proxy_reassignment(value, proxy_reference, state) {
 		? b.call(
 				'$.proxy',
 				value,
-				b.true,
 				b.null,
 				typeof proxy_reference === 'string'
 					? b.id(proxy_reference)
@@ -547,6 +546,11 @@ function get_hoistable_params(node, context) {
 			} else {
 				// create a copy to remove start/end tags which would mess up source maps
 				push_unique(b.id(binding.node.name));
+				// rest props are often accessed through the $$props object for optimization reasons,
+				// but we can't know if the delegated event handler will use it, so we need to add both as params
+				if (binding.kind === 'rest_prop' && context.state.analysis.runes) {
+					push_unique(b.id('$$props'));
+				}
 			}
 		}
 	}

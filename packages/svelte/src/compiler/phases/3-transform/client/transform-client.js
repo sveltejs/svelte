@@ -154,19 +154,12 @@ export function client_component(source, analysis, options) {
 		}
 		if (binding.kind === 'store_sub') {
 			if (store_setup.length === 0) {
-				store_setup.push(
-					b.const('$$subscriptions', b.object([])),
-					b.stmt(b.call('$.unsubscribe_on_destroy', b.id('$$subscriptions')))
-				);
+				store_setup.push(b.const('$$stores', b.call('$.setup_stores')));
 			}
+
 			// We're creating an arrow function that gets the store value which minifies better for two or more references
 			const store_reference = serialize_get_binding(b.id(name.slice(1)), instance_state);
-			const store_get = b.call(
-				'$.store_get',
-				store_reference,
-				b.literal(name),
-				b.id('$$subscriptions')
-			);
+			const store_get = b.call('$.store_get', store_reference, b.literal(name), b.id('$$stores'));
 			store_setup.push(
 				b.const(
 					binding.node,
@@ -205,14 +198,38 @@ export function client_component(source, analysis, options) {
 	}
 
 	/** @type {Array<ESTree.Property | ESTree.SpreadElement>} */
-	const component_returned_object = analysis.exports.map(({ name, alias }) => {
+	const component_returned_object = analysis.exports.flatMap(({ name, alias }) => {
+		const binding = instance_state.scope.get(name);
 		const expression = serialize_get_binding(b.id(name), instance_state);
+		const getter = b.get(alias ?? name, [b.return(expression)]);
 
-		if (expression.type === 'Identifier' && !options.dev) {
-			return b.init(alias ?? name, expression);
+		if (expression.type === 'Identifier') {
+			if (binding?.declaration_kind === 'let' || binding?.declaration_kind === 'var') {
+				return [
+					getter,
+					b.set(alias ?? name, [b.stmt(b.assignment('=', expression, b.id('$$value')))])
+				];
+			} else if (!options.dev) {
+				return b.init(alias ?? name, expression);
+			}
 		}
 
-		return b.get(alias ?? name, [b.return(expression)]);
+		if (binding?.kind === 'state' || binding?.kind === 'frozen_state') {
+			return [
+				getter,
+				b.set(alias ?? name, [
+					b.stmt(
+						b.call(
+							'$.set',
+							b.id(name),
+							b.call(binding.kind === 'state' ? '$.proxy' : '$.freeze', b.id('$$value'))
+						)
+					)
+				])
+			];
+		}
+
+		return getter;
 	});
 
 	const properties = [...analysis.instance.scope.declarations].filter(
@@ -266,7 +283,7 @@ export function client_component(source, analysis, options) {
 		}
 	}
 
-	if (options.legacy.componentApi) {
+	if (options.compatibility.componentApi === 4) {
 		component_returned_object.push(
 			b.init('$set', b.id('$.update_legacy_props')),
 			b.init(
@@ -315,22 +332,16 @@ export function client_component(source, analysis, options) {
 		}
 	}
 
-	const append_styles =
-		analysis.inject_styles && analysis.css.ast
-			? () =>
-					component_block.body.push(
-						b.stmt(
-							b.call(
-								'$.append_styles',
-								b.id('$$anchor'),
-								b.literal(analysis.css.hash),
-								b.literal(render_stylesheet(source, analysis, options).code)
-							)
-						)
-					)
-			: () => {};
+	if (analysis.css.ast !== null && analysis.inject_styles) {
+		const hash = b.literal(analysis.css.hash);
+		const code = b.literal(render_stylesheet(analysis.source, analysis, options).code);
 
-	append_styles();
+		state.hoisted.push(b.const('$$css', b.object([b.init('hash', hash), b.init('code', code)])));
+
+		component_block.body.unshift(
+			b.stmt(b.call('$.append_styles', b.id('$$anchor'), b.id('$$css')))
+		);
+	}
 
 	const should_inject_context =
 		analysis.needs_context ||
@@ -406,35 +417,35 @@ export function client_component(source, analysis, options) {
 	);
 
 	if (options.hmr) {
-		const accept_fn = b.arrow(
-			[b.id('module')],
-			b.block([b.stmt(b.call('$.set', b.id('s'), b.member(b.id('module'), b.id('default'))))])
-		);
-		body.push(
-			component,
-			b.if(
-				b.id('import.meta.hot'),
-				b.block([
-					b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
-					b.const(b.id('filename'), b.member(b.id(analysis.name), b.id('filename'))),
-					b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
-					b.stmt(
-						b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.id('filename'))
-					),
-					b.if(
-						b.id('import.meta.hot.acceptExports'),
-						b.block([
-							b.stmt(
-								b.call('import.meta.hot.acceptExports', b.array([b.literal('default')]), accept_fn)
-							)
-						]),
-						b.block([b.stmt(b.call('import.meta.hot.accept', accept_fn))])
-					)
-				])
-			),
+		const accept_fn_body = [
+			b.stmt(b.call('$.set', b.id('s'), b.member(b.id('module'), b.id('default'))))
+		];
 
-			b.export_default(b.id(analysis.name))
-		);
+		if (analysis.css.hash) {
+			// remove existing `<style>` element, in case CSS changed
+			accept_fn_body.unshift(
+				b.stmt(
+					b.call(
+						b.member(
+							b.call('document.querySelector', b.literal('#' + analysis.css.hash)),
+							b.id('remove'),
+							false,
+							true
+						)
+					)
+				)
+			);
+		}
+
+		const hmr = b.block([
+			b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
+			b.const(b.id('filename'), b.member(b.id(analysis.name), b.id('filename'))),
+			b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
+			b.stmt(b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.id('filename'))),
+			b.stmt(b.call('import.meta.hot.accept', b.arrow([b.id('module')], b.block(accept_fn_body))))
+		]);
+
+		body.push(component, b.if(b.id('import.meta.hot'), hmr), b.export_default(b.id(analysis.name)));
 	} else {
 		body.push(b.export_default(component));
 	}
@@ -457,7 +468,7 @@ export function client_component(source, analysis, options) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}
 
-	if (options.legacy.componentApi) {
+	if (options.compatibility.componentApi === 4) {
 		body.unshift(b.imports([['createClassComponent', '$$_createClassComponent']], 'svelte/legacy'));
 		component_block.body.unshift(
 			b.if(

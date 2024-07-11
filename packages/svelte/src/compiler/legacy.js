@@ -353,11 +353,16 @@ export function convert(source, ast) {
 					};
 				}
 
+				const start = node.elseif
+					? node.consequent.nodes[0]?.start ??
+						source.lastIndexOf('{', /** @type {number} */ (node.end) - 1)
+					: node.start;
+
 				remove_surrounding_whitespace_nodes(node.consequent.nodes);
 
 				return {
 					type: 'IfBlock',
-					start: node.start,
+					start,
 					end: node.end,
 					expression: node.test,
 					children: node.consequent.nodes.map(

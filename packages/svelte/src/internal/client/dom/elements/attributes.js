@@ -155,6 +155,7 @@ export function set_custom_element_data(node, prop, value) {
 export function set_attributes(element, prev, next, lowercase_attributes, css_hash) {
 	var has_hash = css_hash.length !== 0;
 	var current = prev || {};
+	var is_option_element = element.tagName === 'OPTION';
 
 	for (var key in prev) {
 		if (!(key in next)) {
@@ -178,6 +179,26 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 	for (const key in next) {
 		// let instead of var because referenced in a closure
 		let value = next[key];
+
+		// Up here because we want to do this for the initial value, too, even if it's undefined,
+		// and this wouldn't be reached in case of undefined because of the equality check below
+		if (is_option_element && key === 'value' && value == null) {
+			// The <option> element is a special case because removing the value attribute means
+			// the value is set to the text content of the option element, and setting the value
+			// to null or undefined means the value is set to the string "null" or "undefined".
+			// To align with how we handle this case in non-spread-scenarios, this logic is needed.
+			// There's a super-edge-case bug here that is left in in favor of smaller code size:
+			// Because of the "set missing props to null" logic above, we can't differentiate
+			// between a missing value and an explicitly set value of null or undefined. That means
+			// that once set, the value attribute of an <option> element can't be removed. This is
+			// a very rare edge case, and removing the attribute altogether isn't possible either
+			// for the <option value={undefined}> case, so we're not losing any functionality here.
+			// @ts-ignore
+			element.value = element.__value = '';
+			current[key] = value;
+			continue;
+		}
+
 		var prev_value = current[key];
 		if (value === prev_value) continue;
 

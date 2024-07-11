@@ -1,8 +1,13 @@
 import { teardown } from '../../reactivity/effects.js';
-import { all_registered_events, root_event_handles } from '../../render.js';
 import { define_property, is_array } from '../../utils.js';
 import { hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
+
+/** @type {Set<string>} */
+export const all_registered_events = new Set();
+
+/** @type {Set<(events: Array<string>) => void>} */
+export const root_event_handles = new Set();
 
 /**
  * SSR adds onload and onerror attributes to catch those events before the hydration.

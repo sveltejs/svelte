@@ -12,8 +12,9 @@ function is_void(tag) {
 }
 
 /**
- * @param {() => any} component_fn
- * @returns {any}
+ * @template Component
+ * @param {() => Component} component_fn
+ * @returns {Component}
  */
 export function validate_dynamic_component(component_fn) {
 	try {

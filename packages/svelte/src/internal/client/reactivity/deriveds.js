@@ -4,7 +4,6 @@ import {
 	current_effect,
 	remove_reactions,
 	set_signal_status,
-	mark_reactions,
 	current_skip_reaction,
 	update_reaction,
 	destroy_effect_children,
@@ -39,7 +38,7 @@ export function derived(fn) {
 	};
 
 	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
-		var current_derived = /** @type {import('#client').Derived<V>} */ (current_reaction);
+		var current_derived = /** @type {import('#client').Derived} */ (current_reaction);
 		if (current_derived.deriveds === null) {
 			current_derived.deriveds = [signal];
 		} else {
@@ -100,7 +99,6 @@ export function update_derived(derived) {
 	if (!derived.equals(value)) {
 		derived.v = value;
 		derived.version = increment_version();
-		mark_reactions(derived, DIRTY, false);
 	}
 }
 

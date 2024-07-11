@@ -69,7 +69,7 @@ export async function compile_directory(
 
 	fs.rmSync(output_dir, { recursive: true, force: true });
 
-	for (const file of glob('**', { cwd, filesOnly: true })) {
+	for (let file of glob('**', { cwd, filesOnly: true })) {
 		if (file.startsWith('_')) continue;
 
 		let text = fs.readFileSync(`${cwd}/${file}`, 'utf-8').replace(/\r\n/g, '\n');
@@ -101,7 +101,17 @@ export async function compile_directory(
 
 				write(out, result);
 			}
-		} else if (file.endsWith('.svelte')) {
+		} else if (
+			file.endsWith('.svelte') &&
+			// Make it possible to compile separate versions for client and server to simulate
+			// cases where `{browser ? 'foo' : 'bar'}` is turning into `{'foo'}` on the server
+			// and `{bar}` on the client, assuming we have sophisticated enough treeshaking
+			// in the future to make this a thing.
+			(!file.endsWith('.server.svelte') || generate === 'server') &&
+			(!file.endsWith('.client.svelte') || generate === 'client')
+		) {
+			file = file.replace(/\.client\.svelte$/, '.svelte').replace(/\.server\.svelte$/, '.svelte');
+
 			if (preprocessor?.preprocess) {
 				const preprocessed = await preprocess(
 					text,

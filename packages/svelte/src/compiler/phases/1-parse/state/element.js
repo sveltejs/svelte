@@ -1,6 +1,6 @@
 /** @import { Parser } from '../index.js' */
 /** @import * as Compiler from '#compiler' */
-import { is_void } from '../utils/names.js';
+import { is_void } from '../../../../constants.js';
 import read_expression from '../read/expression.js';
 import { read_script } from '../read/script.js';
 import read_style from '../read/style.js';

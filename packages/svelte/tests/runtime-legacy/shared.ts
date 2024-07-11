@@ -61,7 +61,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 		warnings: any[];
 		hydrate: Function;
 	}) => void | Promise<void>;
-	test_ssr?: (args: { assert: Assert }) => void | Promise<void>;
+	test_ssr?: (args: { logs: any[]; assert: Assert }) => void | Promise<void>;
 	accessors?: boolean;
 	immutable?: boolean;
 	intro?: boolean;
@@ -104,7 +104,10 @@ export function runtime_suite(runes: boolean) {
 				if (config.skip_mode?.includes('hydrate')) return true;
 			}
 
-			if (variant === 'dom' && config.skip_mode?.includes('client')) {
+			if (
+				variant === 'dom' &&
+				(config.skip_mode?.includes('client') || (config.mode && !config.mode.includes('client')))
+			) {
 				return 'no-test';
 			}
 
@@ -114,7 +117,9 @@ export function runtime_suite(runes: boolean) {
 					(!config.test_ssr &&
 						config.html === undefined &&
 						config.ssrHtml === undefined &&
-						config.error === undefined)
+						config.error === undefined &&
+						config.runtime_error === undefined &&
+						!config.mode?.includes('server'))
 				) {
 					return 'no-test';
 				}
@@ -285,6 +290,7 @@ async function run_test_variant(
 
 			if (config.test_ssr) {
 				await config.test_ssr({
+					logs,
 					// @ts-expect-error
 					assert: {
 						...assert,

@@ -3,9 +3,9 @@ import adapter from '@sveltejs/adapter-vercel';
 /** @type {import('@sveltejs/kit').Config} */
 export default {
 	compilerOptions: {
-		legacy: {
+		compatibility: {
 			// site-kit manually instantiates components inside an action
-			componentApi: true
+			componentApi: 4
 		}
 	},
 	kit: {
