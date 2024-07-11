@@ -170,7 +170,7 @@ Using it together with `<svelte:component>` to restrict what kinds of component 
 	interface Props {
 		// only components that have at most the "prop"
 		// property required can be passed
-		component: Component<{ prop: string }>
+		component: Component<{ prop: string }>;
 	}
 
 	let { component }: Props = $props();

@@ -25,10 +25,7 @@
 		},
 		{
 			"text": "Runes",
-			"items": [
-				{ "file": "runes/state.md" },
-				{ "file": "runes/side-effects.md" }
-			]
+			"items": [{ "file": "runes/state.md" }, { "file": "runes/side-effects.md" }]
 		},
 		{
 			"text": "Runtime",
@@ -47,7 +44,7 @@
 				{ "file": "misc/typescript.md" },
 				{ "file": "misc/custom-elements.md" },
 				{ "file": "misc/reactivity-indepth.md" },
-				{ "file": "misc/svelte-5-migration-guide.md" },
+				{ "file": "misc/svelte-5-migration-guide.md" }
 			]
 		},
 		{
