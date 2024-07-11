@@ -117,7 +117,9 @@ export function runtime_suite(runes: boolean) {
 					(!config.test_ssr &&
 						config.html === undefined &&
 						config.ssrHtml === undefined &&
-						config.error === undefined)
+						config.error === undefined &&
+						config.runtime_error === undefined &&
+						!config.mode?.includes('server'))
 				) {
 					return 'no-test';
 				}
