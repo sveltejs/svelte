@@ -179,7 +179,8 @@ export function hydrate(component, options) {
 	}
 }
 
-const document_listeners = new Set();
+/** @type {Map<string, number>} */
+const document_listeners = new Map();
 
 /**
  * @template {Record<string, any>} Exports
@@ -197,29 +198,32 @@ const document_listeners = new Set();
 function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
 	init_operations();
 
-	const registered_events = new Set();
+	var registered_events = new Set();
 
 	/** @param {Array<string>} events */
-	const event_handle = (events) => {
-		for (let i = 0; i < events.length; i++) {
-			const event_name = events[i];
-			const passive = PassiveDelegatedEvents.includes(event_name);
+	var event_handle = (events) => {
+		for (var i = 0; i < events.length; i++) {
+			var event_name = events[i];
 
-			if (!registered_events.has(event_name)) {
-				registered_events.add(event_name);
+			if (registered_events.has(event_name)) continue;
+			registered_events.add(event_name);
 
-				// Add the event listener to both the container and the document.
-				// The container listener ensures we catch events from within in case
-				// the outer content stops propagation of the event.
-				target.addEventListener(event_name, handle_event_propagation, { passive });
+			var passive = PassiveDelegatedEvents.includes(event_name);
 
-				if (!document_listeners.has(event_name)) {
-					document_listeners.add(event_name);
+			// Add the event listener to both the container and the document.
+			// The container listener ensures we catch events from within in case
+			// the outer content stops propagation of the event.
+			target.addEventListener(event_name, handle_event_propagation, { passive });
 
-					// The document listener ensures we catch events that originate from elements that were
-					// manually moved outside of the container (e.g. via manual portals).
-					document.addEventListener(event_name, handle_event_propagation, { passive });
-				}
+			var n = document_listeners.get(event_name);
+
+			if (n === undefined) {
+				// The document listener ensures we catch events that originate from elements that were
+				// manually moved outside of the container (e.g. via manual portals).
+				document.addEventListener(event_name, handle_event_propagation, { passive });
+				document_listeners.set(event_name, 1);
+			} else {
+				document_listeners.set(event_name, n + 1);
 			}
 		}
 	};
@@ -229,9 +233,9 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
-	let component = undefined;
+	var component = undefined;
 
-	const unmount = effect_root(() => {
+	var unmount = effect_root(() => {
 		branch(() => {
 			if (context) {
 				push({});
@@ -265,10 +269,17 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 		});
 
 		return () => {
-			for (const event_name of registered_events) {
+			for (var event_name of registered_events) {
 				target.removeEventListener(event_name, handle_event_propagation);
-				// Don't remove document event listeners, they're global per runtime,
-				// and we don't know whether or not there are other components still using them
+
+				var n = /** @type {number} */ (document_listeners.get(event_name));
+
+				if (--n === 0) {
+					document.removeEventListener(event_name, handle_event_propagation);
+					document_listeners.delete(event_name);
+				} else {
+					document_listeners.set(event_name, n);
+				}
 			}
 
 			root_event_handles.delete(event_handle);
