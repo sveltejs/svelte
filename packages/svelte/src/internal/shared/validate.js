@@ -1,3 +1,4 @@
+/** @import { TemplateNode } from '#client' */
 import { is_void } from '../../constants.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
@@ -5,10 +6,13 @@ import * as e from './errors.js';
 const snippet_symbol = Symbol.for('svelte.snippet');
 
 /**
- * @param {any} fn
+ * @param {(anchor: TemplateNode, ...args: any[]) => void} fn
+ * @returns {import('svelte').Snippet}
  */
 export function add_snippet_symbol(fn) {
+	// @ts-expect-error
 	fn[snippet_symbol] = true;
+	// @ts-expect-error
 	return fn;
 }
 

@@ -368,11 +368,12 @@ declare module 'svelte' {
 	/**
 	 * Create a snippet imperatively using mount, hyrdate and render functions.
 	 * */
-	export function createRawSnippet({ mount, hydrate }: {
-		mount: (...params: any[]) => Element;
-		hydrate?: (element: Element, ...params: any[]) => void;
-		render: (...params: any[]) => string;
-	}): (anchor: TemplateNode, ...params: any[]) => void;
+	export function createRawSnippet<Params extends unknown[]>({ mount, hydrate }: {
+		mount: (...params: LazyParams<Params>) => Element;
+		hydrate?: (element: Element, ...params: LazyParams<Params>) => void;
+		render: (...params: Params) => string;
+	}): import("svelte").Snippet<Params>;
+	type LazyParams<T> = { [K in keyof T]: () => T[K]; };
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
 	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
@@ -458,7 +459,6 @@ declare module 'svelte' {
 	 * https://svelte.dev/docs/svelte#getallcontexts
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
-	type TemplateNode = Text | Element | Comment;
 
 	export { hydrate_1 as hydrate, mount_1 as mount };
 }
