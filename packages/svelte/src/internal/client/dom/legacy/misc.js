@@ -1,6 +1,6 @@
 import { set, source } from '../../reactivity/sources.js';
 import { get } from '../../runtime.js';
-import { is_array } from '../../utils.js';
+import { is_array } from '../../../shared/utils.js';
 
 /**
  * Under some circumstances, imports may be reactive in legacy mode. In that case,

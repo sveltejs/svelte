@@ -424,7 +424,7 @@ const global_visitors = {
 
 		if (rune === '$state.snapshot') {
 			return b.call(
-				'structuredClone',
+				'$.snapshot',
 				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
 			);
 		}

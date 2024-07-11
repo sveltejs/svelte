@@ -5,8 +5,8 @@ import {
 	get_prototype_of,
 	is_frozen,
 	object_freeze
-} from './utils.js';
-import { snapshot } from './proxy.js';
+} from '../shared/utils.js';
+import { snapshot } from '../shared/clone.js';
 import {
 	destroy_effect,
 	effect,

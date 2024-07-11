@@ -1,6 +1,6 @@
-import { snapshot } from '../proxy.js';
+import { snapshot } from '../../shared/clone.js';
 import { inspect_effect, validate_effect } from '../reactivity/effects.js';
-import { array_prototype, get_prototype_of, object_prototype } from '../utils.js';
+import { array_prototype, get_prototype_of, object_prototype } from '../../shared/utils.js';
 
 /**
  * @param {() => any[]} get_value
@@ -17,6 +17,8 @@ export function inspect(get_value, inspector = console.log) {
 		initial = false;
 	});
 }
+
+// TODO do we still need this?
 
 /**
  * Like `snapshot`, but recursively traverses into normal arrays/objects to find potential states in them.

@@ -8,7 +8,7 @@ import {
 	is_array,
 	is_frozen,
 	object_prototype
-} from './utils.js';
+} from '../shared/utils.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
 import { source, set } from './reactivity/sources.js';
 import { STATE_FROZEN_SYMBOL, STATE_SYMBOL } from './constants.js';

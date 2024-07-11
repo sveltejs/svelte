@@ -2,8 +2,7 @@
 import { mutable_source, get, set } from 'svelte/internal/client';
 import { user_pre_effect } from '../internal/client/reactivity/effects.js';
 import { hydrate, mount, unmount } from '../internal/client/render.js';
-import { define_property } from '../internal/client/utils.js';
-import { safe_not_equal } from '../internal/client/reactivity/equality.js';
+import { define_property } from '../internal/shared/utils.js';
 
 /**
  * Takes the same options as a Svelte 4 component and the component function and returns a Svelte 4 compatible component.

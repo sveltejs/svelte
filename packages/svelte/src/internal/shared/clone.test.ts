@@ -1,6 +1,6 @@
 import { snapshot } from './clone';
 import { assert, test } from 'vitest';
-import { proxy } from './proxy';
+import { proxy } from '../client/proxy';
 
 test('primitive', () => {
 	assert.equal(42, snapshot(42));

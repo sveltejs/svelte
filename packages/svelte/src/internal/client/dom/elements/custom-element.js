@@ -1,7 +1,7 @@
 import { createClassComponent } from '../../../../legacy/legacy-client.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
 import { append } from '../template.js';
-import { define_property, object_keys } from '../../utils.js';
+import { define_property, object_keys } from '../../../shared/utils.js';
 
 /**
  * @typedef {Object} CustomElementPropDefinition

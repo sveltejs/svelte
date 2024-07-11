@@ -150,7 +150,7 @@ export {
 	validate_prop_bindings
 } from './validate.js';
 export { raf } from './timing.js';
-export { proxy, snapshot, is } from './proxy.js';
+export { proxy, is } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
 export {
 	child,
@@ -159,6 +159,7 @@ export {
 	$window as window,
 	$document as document
 } from './dom/operations.js';
+export { snapshot } from '../shared/clone.js';
 export { noop } from '../shared/utils.js';
 export {
 	validate_component,
