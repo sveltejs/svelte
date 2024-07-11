@@ -23,7 +23,7 @@ function check_hash(element, server_hash, value) {
 	const loc = element.__svelte_meta?.loc;
 	if (loc) {
 		location = `near ${loc.file}:${loc.line}:${loc.column}`;
-	} else if (dev_current_component_function.filename) {
+	} else if (dev_current_component_function?.filename) {
 		location = `in ${dev_current_component_function.filename}`;
 	}
 
