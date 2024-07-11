@@ -54,23 +54,33 @@ export function is_event_attribute(attribute) {
 }
 
 /**
- * Extracts all identifiers from a pattern.
+ * Extracts all identifiers from a pattern. By default only those which can be newly declared as part of an assignment expression are included.
  * @param {ESTree.Pattern} param
  * @param {ESTree.Identifier[]} [nodes]
+ * @param {boolean} [include_member_expressions] If `true`, will also include member expressions which can be important in a case like `[a, b] = [c, d]`
  * @returns {ESTree.Identifier[]}
  */
-export function extract_identifiers(param, nodes = []) {
+export function extract_identifiers(param, nodes = [], include_member_expressions = false) {
 	switch (param.type) {
 		case 'Identifier':
 			nodes.push(param);
 			break;
 
+		case 'MemberExpression':
+			if (
+				include_member_expressions &&
+				(param.object.type === 'Identifier' || param.object.type === 'MemberExpression')
+			) {
+				extract_identifiers(param.object, nodes, include_member_expressions);
+			}
+			break;
+
 		case 'ObjectPattern':
 			for (const prop of param.properties) {
 				if (prop.type === 'RestElement') {
-					extract_identifiers(prop.argument, nodes);
+					extract_identifiers(prop.argument, nodes, include_member_expressions);
 				} else {
-					extract_identifiers(prop.value, nodes);
+					extract_identifiers(prop.value, nodes, include_member_expressions);
 				}
 			}
 
@@ -78,17 +88,17 @@ export function extract_identifiers(param, nodes = []) {
 
 		case 'ArrayPattern':
 			for (const element of param.elements) {
-				if (element) extract_identifiers(element, nodes);
+				if (element) extract_identifiers(element, nodes, include_member_expressions);
 			}
 
 			break;
 
 		case 'RestElement':
-			extract_identifiers(param.argument, nodes);
+			extract_identifiers(param.argument, nodes, include_member_expressions);
 			break;
 
 		case 'AssignmentPattern':
-			extract_identifiers(param.left, nodes);
+			extract_identifiers(param.left, nodes, include_member_expressions);
 			break;
 	}
 

@@ -713,7 +713,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			const binding = scope.get(/** @type {import('estree').Identifier} */ (object).name);
 			if (binding) binding.mutated = true;
 		} else {
-			extract_identifiers(node).forEach((identifier) => {
+			extract_identifiers(node, [], true).forEach((identifier) => {
 				const binding = scope.get(identifier.name);
 				if (binding && identifier !== binding.node) {
 					binding.mutated = true;

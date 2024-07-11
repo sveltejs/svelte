@@ -769,8 +769,7 @@ const legacy_scope_tweaker = {
 			}
 
 			if (
-				binding !== null &&
-				binding.kind === 'normal' &&
+				binding?.kind === 'normal' &&
 				((binding.scope === state.instance_scope && binding.declaration_kind !== 'function') ||
 					binding.declaration_kind === 'import')
 			) {
@@ -795,23 +794,24 @@ const legacy_scope_tweaker = {
 					parent.left === binding.node
 				) {
 					binding.kind = 'derived';
-				} else {
-					let idx = -1;
-					let ancestor = path.at(idx);
-					while (ancestor) {
-						if (ancestor.type === 'EachBlock') {
-							// Ensures that the array is reactive when only its entries are mutated
-							// TODO: this doesn't seem correct. We should be checking at the points where
-							// the identifier (the each expression) is used in a way that makes it reactive.
-							// This just forces the collection identifier to always be reactive even if it's
-							// not.
-							if (ancestor.expression === (idx === -1 ? node : path.at(idx + 1))) {
-								binding.kind = 'state';
-								break;
+				}
+			} else if (binding?.kind === 'each' && binding.mutated) {
+				// Ensure that the array is marked as reactive even when only its entries are mutated
+				let idx = -1;
+				let ancestor = path.at(idx);
+				while (ancestor) {
+					if (
+						ancestor.type === 'EachBlock' &&
+						state.analysis.template.scopes.get(ancestor)?.declarations.get(node.name) === binding
+					) {
+						for (const reference of ancestor.metadata.references) {
+							if (reference.kind === 'normal') {
+								reference.kind = 'state';
 							}
 						}
-						ancestor = path.at(--idx);
+						break;
 					}
+					ancestor = path.at(--idx);
 				}
 			}
 		}
