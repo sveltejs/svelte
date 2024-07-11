@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-feat: use structuredClone inside `$state.snapshot`
+breaking: use structuredClone inside `$state.snapshot`
