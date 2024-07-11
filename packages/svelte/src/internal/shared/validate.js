@@ -15,9 +15,10 @@ export function add_snippet_symbol(fn) {
 /**
  * Validate that the function handed to `{@render ...}` is a snippet function, and not some other kind of function.
  * @param {any} snippet_fn
+ * @param {Record<string, any> | undefined} $$props Only passed if render tag receives arguments
  */
-export function validate_snippet(snippet_fn) {
-	if (snippet_fn && snippet_fn[snippet_symbol] !== true) {
+export function validate_snippet(snippet_fn, $$props) {
+	if ($$props?.$$slots?.default || (snippet_fn && snippet_fn[snippet_symbol] !== true)) {
 		e.render_tag_invalid_argument();
 	}
 

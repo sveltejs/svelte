@@ -1864,7 +1864,11 @@ export const template_visitors = {
 
 		let snippet_function = /** @type {import('estree').Expression} */ (context.visit(callee));
 		if (context.state.options.dev) {
-			snippet_function = b.call('$.validate_snippet', snippet_function);
+			snippet_function = b.call(
+				'$.validate_snippet',
+				snippet_function,
+				args.length ? b.id('$$props') : undefined
+			);
 		}
 
 		if (node.metadata.dynamic) {
