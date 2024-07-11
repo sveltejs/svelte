@@ -32,7 +32,7 @@ export default test({
 		if (variant === 'hydrate') {
 			assert.equal(
 				log[0],
-				'`<h1>` (Component.svelte:1:0) cannot contain `<p>` (main.svelte:5:0)\n\n' +
+				'`<p>` (main.svelte:5:0) cannot contain `<h1>` (Component.svelte:1:0)\n\n' +
 					'This can cause content to shift around as the browser repairs the HTML, and will likely result in a `hydration_mismatch` warning.'
 			);
 		}

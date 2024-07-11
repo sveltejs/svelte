@@ -1,20 +1,27 @@
 /** @import { TemplateNode, Dom, Effect } from '#client' */
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
+import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 
 /**
  * @template P
  * @template {(props: P) => void} C
- * @param {TemplateNode} anchor
+ * @param {TemplateNode} node
  * @param {() => C} get_component
  * @param {(anchor: TemplateNode, component: C) => Dom | void} render_fn
  * @returns {void}
  */
-export function component(anchor, get_component, render_fn) {
+export function component(node, get_component, render_fn) {
+	if (hydrating) {
+		hydrate_next();
+	}
+
+	var anchor = node;
+
 	/** @type {C} */
-	let component;
+	var component;
 
 	/** @type {Effect | null} */
-	let effect;
+	var effect;
 
 	block(() => {
 		if (component === (component = get_component())) return;
@@ -28,4 +35,8 @@ export function component(anchor, get_component, render_fn) {
 			effect = branch(() => render_fn(anchor, component));
 		}
 	});
+
+	if (hydrating) {
+		anchor = hydrate_node;
+	}
 }

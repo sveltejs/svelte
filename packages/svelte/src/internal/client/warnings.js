@@ -21,6 +21,19 @@ export function hydration_attribute_changed(attribute, html, value) {
 }
 
 /**
+ * The value of an `{@html ...}` block %location% changed between server and client renders. The client value will be ignored in favour of the server value
+ * @param {string | undefined | null} [location]
+ */
+export function hydration_html_changed(location) {
+	if (DEV) {
+		console.warn(`%c[svelte] hydration_html_changed\n%c${location ? `The value of an \`{@html ...}\` block ${location} changed between server and client renders. The client value will be ignored in favour of the server value` : "The value of an `{@html ...}` block changed between server and client renders. The client value will be ignored in favour of the server value"}`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("hydration_html_changed");
+	}
+}
+
+/**
  * Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near %location%
  * @param {string | undefined | null} [location]
  */

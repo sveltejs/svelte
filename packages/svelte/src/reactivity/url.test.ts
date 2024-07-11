@@ -1,10 +1,10 @@
 import { render_effect, effect_root } from '../internal/client/reactivity/effects.js';
 import { flushSync } from '../index-client.js';
-import { SvelteURL, SvelteURLSearchParams } from './url.js';
+import { SvelteURL } from './url.js';
 import { assert, test } from 'vitest';
 
 test('url.hash', () => {
-	const url = new SvelteURL('http://google.com');
+	const url = new SvelteURL('https://svelte.dev');
 	const log: any = [];
 
 	const cleanup = effect_root(() => {
@@ -18,7 +18,7 @@ test('url.hash', () => {
 	});
 
 	flushSync(() => {
-		url.href = 'http://google.com/a/b/c#def';
+		url.href = 'https://svelte.dev/a/b/c#def';
 	});
 
 	flushSync(() => {
@@ -27,6 +27,44 @@ test('url.hash', () => {
 	});
 
 	assert.deepEqual(log, ['', '#abc', '#def']);
+
+	cleanup();
+});
+
+test('url.href', () => {
+	const url = new SvelteURL('https://svelte.dev?foo=bar&t=123');
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(url.href);
+		});
+	});
+
+	flushSync(() => {
+		url.search = '?q=kit&foo=baz';
+	});
+
+	flushSync(() => {
+		// changes from searchParams should be synced to URL instance as well
+		url.searchParams.append('foo', 'qux');
+	});
+
+	flushSync(() => {
+		url.searchParams.delete('foo');
+	});
+
+	flushSync(() => {
+		url.searchParams.set('love', 'svelte5');
+	});
+
+	assert.deepEqual(log, [
+		'https://svelte.dev/?foo=bar&t=123',
+		'https://svelte.dev/?q=kit&foo=baz',
+		'https://svelte.dev/?q=kit&foo=baz&foo=qux',
+		'https://svelte.dev/?q=kit',
+		'https://svelte.dev/?q=kit&love=svelte5'
+	]);
 
 	cleanup();
 });
@@ -77,25 +115,6 @@ test('url.searchParams', () => {
 	cleanup();
 });
 
-test('URLSearchParams', () => {
-	const params = new SvelteURLSearchParams();
-	const log: any = [];
-
-	const cleanup = effect_root(() => {
-		render_effect(() => {
-			log.push(params.toString());
-		});
-	});
-
-	flushSync(() => {
-		params.set('a', 'b');
-	});
-
-	flushSync(() => {
-		params.append('a', 'c');
-	});
-
-	assert.deepEqual(log, ['', 'a=b', 'a=b&a=c']);
-
-	cleanup();
+test('SvelteURL instanceof URL', () => {
+	assert.ok(new SvelteURL('https://svelte.dev') instanceof URL);
 });

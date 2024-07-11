@@ -3,7 +3,7 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
 import { regex_whitespace } from '../patterns.js';
-import { reserved } from './utils/names.js';
+import { reserved } from '../../../constants.js';
 import full_char_code_at from './utils/full_char_code_at.js';
 import * as e from '../../errors.js';
 import { create_fragment } from './utils/create.js';

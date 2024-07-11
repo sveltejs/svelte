@@ -1,10 +1,21 @@
 import { test } from '../../test';
 
 export default test({
-	// Even if the {@html } block seems static, it should be preserved as such, because it could be dynamic originally
-	// (like {@html browser ? 'foo' : 'bar'} which is then different between client and server.
-	// Question is whether that's actually something someone would do in practise, and why, so it's probably better to not
-	// slow down hydration just for supporting this edge case - so far we've said no. If someone really needs this we could
-	// add something like {@html dynamic ...}
-	skip: true
+	server_props: {
+		html: 'Server'
+	},
+
+	props: {
+		html: 'Client'
+	},
+
+	test(assert, target) {
+		// We deliberately don't slow down hydration just for supporting this edge case mismatch.
+		// If someone really needs this and workarounds are insufficient we could add something like {@html dynamic ...}
+		assert.htmlEqual(target.innerHTML, 'Server');
+	},
+
+	errors: [
+		'The value of an `{@html ...}` block changed between server and client renders. The client value will be ignored in favour of the server value'
+	]
 });

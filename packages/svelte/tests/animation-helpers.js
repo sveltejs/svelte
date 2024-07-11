@@ -35,6 +35,7 @@ class Animation {
 	#target;
 	#keyframes;
 	#duration;
+	#delay;
 
 	#offset = raf.time;
 
@@ -47,12 +48,13 @@ class Animation {
 	/**
 	 * @param {HTMLElement} target
 	 * @param {Keyframe[]} keyframes
-	 * @param {{ duration: number }} options // TODO add delay
+	 * @param {{ duration: number, delay: number }} options
 	 */
-	constructor(target, keyframes, { duration }) {
+	constructor(target, keyframes, { duration, delay }) {
 		this.#target = target;
 		this.#keyframes = keyframes;
 		this.#duration = duration;
+		this.#delay = delay ?? 0;
 
 		// Promise-like semantics, but call callbacks immediately on raf.tick
 		this.finished = {
@@ -73,7 +75,9 @@ class Animation {
 	}
 
 	_update() {
-		this.currentTime = raf.time - this.#offset;
+		this.currentTime = raf.time - this.#offset - this.#delay;
+		if (this.currentTime < 0) return;
+
 		const target_frame = this.currentTime / this.#duration;
 		this.#apply_keyframe(target_frame);
 
@@ -168,7 +172,7 @@ function interpolate(a, b, p) {
 
 /**
  * @param {Keyframe[]} keyframes
- * @param {{duration: number}} options
+ * @param {{duration: number, delay: number}} options
  * @returns {globalThis.Animation}
  */
 HTMLElement.prototype.animate = function (keyframes, options) {

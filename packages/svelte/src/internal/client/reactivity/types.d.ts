@@ -36,7 +36,7 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 
 export interface EffectNodes {
 	start: TemplateNode;
-	end: TemplateNode;
+	end: null | TemplateNode;
 }
 
 export interface Effect extends Reaction {

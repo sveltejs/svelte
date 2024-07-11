@@ -13,11 +13,10 @@ export interface Component {
 
 export interface Payload {
 	out: string;
-	anchor: number;
+	css: Set<{ hash: string; code: string }>;
 	head: {
 		title: string;
 		out: string;
-		anchor: number;
 	};
 }
 

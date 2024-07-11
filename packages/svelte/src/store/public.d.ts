@@ -1,5 +1,3 @@
-import type { Invalidator } from './private.js';
-
 /** Callback to inform of a value updates. */
 type Subscriber<T> = (value: T) => void;
 
@@ -30,7 +28,7 @@ interface Readable<T> {
 	 * @param run subscription callback
 	 * @param invalidate cleanup callback
 	 */
-	subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
+	subscribe(this: void, run: Subscriber<T>, invalidate?: () => void): Unsubscriber;
 }
 
 /** Writable interface for both updating and subscribing. */

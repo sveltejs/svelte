@@ -15,7 +15,7 @@ export default function Function_prop_no_getter($$anchor) {
 		onmouseup,
 		onmouseenter: () => $.set(count, $.proxy(plusOne($.get(count)))),
 		children: ($$anchor, $$slotProps) => {
-			var text = $.text($$anchor);
+			var text = $.text();
 
 			$.template_effect(() => $.set_text(text, `clicks: ${$.get(count) ?? ""}`));
 			$.append($$anchor, text);
