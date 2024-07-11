@@ -172,7 +172,7 @@ function interpolate(a, b, p) {
 
 /**
  * @param {Keyframe[]} keyframes
- * @param {{duration: number}} options
+ * @param {{duration: number, delay: number}} options
  * @returns {globalThis.Animation}
  */
 HTMLElement.prototype.animate = function (keyframes, options) {
