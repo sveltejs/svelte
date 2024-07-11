@@ -16,19 +16,17 @@ import {
 	set_hydrating
 } from './dom/hydration.js';
 import { array_from } from './utils.js';
-import { handle_event_propagation } from './dom/elements/events.js';
+import {
+	all_registered_events,
+	handle_event_propagation,
+	root_event_handles
+} from './dom/elements/events.js';
 import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 import { validate_component } from '../shared/validate.js';
 import { assign_nodes } from './dom/template.js';
 import { queue_micro_task } from './dom/task.js';
-
-/** @type {Set<string>} */
-export const all_registered_events = new Set();
-
-/** @type {Set<(events: Array<string>) => void>} */
-export const root_event_handles = new Set();
 
 /**
  * This is normally true — block effects should run their intro transitions —
@@ -182,6 +180,9 @@ export function hydrate(component, options) {
 	}
 }
 
+/** @type {Map<string, number>} */
+const document_listeners = new Map();
+
 /**
  * @template {Record<string, any>} Exports
  * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<any>> | import('../../index.js').Component<any>} Component
@@ -198,25 +199,32 @@ export function hydrate(component, options) {
 function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
 	init_operations();
 
-	const registered_events = new Set();
+	var registered_events = new Set();
 
 	/** @param {Array<string>} events */
-	const event_handle = (events) => {
-		for (let i = 0; i < events.length; i++) {
-			const event_name = events[i];
-			const passive = PassiveDelegatedEvents.includes(event_name);
+	var event_handle = (events) => {
+		for (var i = 0; i < events.length; i++) {
+			var event_name = events[i];
 
-			if (!registered_events.has(event_name)) {
-				registered_events.add(event_name);
+			if (registered_events.has(event_name)) continue;
+			registered_events.add(event_name);
 
-				// Add the event listener to both the container and the document.
-				// The container listener ensures we catch events from within in case
-				// the outer content stops propagation of the event.
-				target.addEventListener(event_name, handle_event_propagation, { passive });
+			var passive = PassiveDelegatedEvents.includes(event_name);
 
+			// Add the event listener to both the container and the document.
+			// The container listener ensures we catch events from within in case
+			// the outer content stops propagation of the event.
+			target.addEventListener(event_name, handle_event_propagation, { passive });
+
+			var n = document_listeners.get(event_name);
+
+			if (n === undefined) {
 				// The document listener ensures we catch events that originate from elements that were
 				// manually moved outside of the container (e.g. via manual portals).
 				document.addEventListener(event_name, handle_event_propagation, { passive });
+				document_listeners.set(event_name, 1);
+			} else {
+				document_listeners.set(event_name, n + 1);
 			}
 		}
 	};
@@ -226,9 +234,9 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
-	let component = undefined;
+	var component = undefined;
 
-	const unmount = effect_root(() => {
+	var unmount = effect_root(() => {
 		branch(() => {
 			if (context) {
 				push({});
@@ -262,9 +270,17 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 		});
 
 		return () => {
-			for (const event_name of registered_events) {
+			for (var event_name of registered_events) {
 				target.removeEventListener(event_name, handle_event_propagation);
-				document.removeEventListener(event_name, handle_event_propagation);
+
+				var n = /** @type {number} */ (document_listeners.get(event_name));
+
+				if (--n === 0) {
+					document.removeEventListener(event_name, handle_event_propagation);
+					document_listeners.delete(event_name);
+				} else {
+					document_listeners.set(event_name, n);
+				}
 			}
 
 			root_event_handles.delete(event_handle);
