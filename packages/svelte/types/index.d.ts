@@ -870,14 +870,10 @@ declare module 'svelte/compiler' {
 		 */
 		rootDir?: string;
 		/**
-		 * Options related to Svelte's warnings
+		 * A function that gets a `Warning` as an argument and returns a boolean.
+		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
-		warnings?: {
-			/**
-			 * A list of warning codes to suppress. If a warning is emitted with a code in this list, it will be ignored.
-			 */
-			ignore?: string[];
-		};
+		filterWarnings?: (warning: Warning) => boolean;
 	}
 
 	type DeclarationKind =
@@ -2686,14 +2682,10 @@ declare module 'svelte/types/compiler/interfaces' {
 		 */
 		rootDir?: string;
 		/**
-		 * Options related to Svelte's warnings
+		 * A function that gets a `Warning` as an argument and returns a boolean.
+		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
-		warnings?: {
-			/**
-			 * A list of warning codes to suppress. If a warning is emitted with a code in this list, it will be ignored.
-			 */
-			ignore?: string[];
-		};
+		filterWarnings?: (warning: Warning_1) => boolean;
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`

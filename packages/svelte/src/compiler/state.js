@@ -1,4 +1,4 @@
-/** @import { SvelteNode } from './types' */
+/** @import { CompileOptions, SvelteNode } from './types' */
 /** @import { Warning } from '#compiler' */
 import { getLocator } from 'locate-character';
 
@@ -21,6 +21,9 @@ export let filename;
 export let source;
 
 export let locator = getLocator('', { offsetLine: 1 });
+
+/** @type {CompileOptions['filterWarnings']} */
+export let filter_warnings;
 
 /**
  * The current stack of ignored warnings
@@ -50,7 +53,7 @@ export function pop_ignore() {
 
 /**
  * @param {string} _source
- * @param {{ filename?: string, rootDir?: string }} options
+ * @param {{ filename?: string, rootDir?: string, filterWarnings?: CompileOptions['filterWarnings'] }} options
  */
 export function reset(_source, options) {
 	source = _source;
@@ -67,11 +70,8 @@ export function reset(_source, options) {
 	}
 
 	locator = getLocator(source, { offsetLine: 1 });
+	filter_warnings = options.filterWarnings;
 	warnings = [];
 	ignore_stack = [];
 	ignore_map.clear();
-
-	if (options.warnings?.ignore) {
-		push_ignore(options.warnings.ignore);
-	}
 }

@@ -209,14 +209,10 @@ export interface ModuleCompileOptions {
 	 */
 	rootDir?: string;
 	/**
-	 * Options related to Svelte's warnings
+	 * A function that gets a `Warning` as an argument and returns a boolean.
+	 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 	 */
-	warnings?: {
-		/**
-		 * A list of warning codes to suppress. If a warning is emitted with a code in this list, it will be ignored.
-		 */
-		ignore?: string[];
-	};
+	filterWarnings?: (warning: Warning) => boolean;
 }
 
 // The following two somewhat scary looking types ensure that certain types are required but can be undefined still

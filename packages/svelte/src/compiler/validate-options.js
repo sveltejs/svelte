@@ -104,9 +104,7 @@ export const validate_component_options =
 
 			hmr: boolean(false),
 
-			warnings: object({
-				ignore: string_array([])
-			}),
+			filterWarnings: fun(() => true),
 
 			sourcemap: validator(undefined, (input) => {
 				// Source maps can take on a variety of values, including string, JSON, map objects from magic-string and source-map,
