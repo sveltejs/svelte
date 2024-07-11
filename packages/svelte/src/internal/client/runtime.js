@@ -1226,18 +1226,21 @@ export function freeze(value) {
 		!(STATE_FROZEN_SYMBOL in value)
 	) {
 		// If the object is already proxified, then snapshot the value
-		if (STATE_SYMBOL in value) {
-			value = snapshot(value);
-		}
-		define_property(value, STATE_FROZEN_SYMBOL, {
+		var copy = STATE_SYMBOL in value ? snapshot(value) : value;
+
+		define_property(copy, STATE_FROZEN_SYMBOL, {
 			value: true,
 			writable: true,
 			enumerable: false
 		});
+
 		// Freeze the object in DEV
 		if (DEV) {
-			object_freeze(value);
+			object_freeze(copy);
 		}
+
+		return /** @type {Readonly<T>} */ (copy);
 	}
+
 	return value;
 }
