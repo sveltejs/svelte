@@ -6,7 +6,8 @@ import {
 	dev_current_component_function,
 	set_dev_current_component_function
 } from '../../runtime.js';
-import { hydrate_node, hydrating } from '../hydration.js';
+import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
+import { assign_nodes } from '../template.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
@@ -59,4 +60,30 @@ export function wrap_snippet(component, fn) {
 			set_dev_current_component_function(previous_component_function);
 		}
 	});
+}
+
+/**
+ * Create a snippet imperatively using mount, hyrdate and render functions.
+ * @param {{
+ * 	 mount: (...params: any[]) => Element,
+ *   hydrate?: (element: Element, ...params: any[]) => void,
+ *   render: (...params: any[]) => string
+ * }} options
+ */
+export function createRawSnippet({ mount, hydrate }) {
+	var snippet_fn = (/** @type {TemplateNode} */ anchor, /** @type {any[]} */ ...params) => {
+		var element;
+		if (hydrating) {
+			element = hydrate_node;
+			hydrate_next();
+			if (hydrate !== undefined) hydrate(/** @type {Element} */ (element), ...params);
+		} else {
+			element = mount(...params);
+			anchor.before(element);
+		}
+		assign_nodes(element, element);
+	};
+	add_snippet_symbol(snippet_fn);
+
+	return snippet_fn;
 }
