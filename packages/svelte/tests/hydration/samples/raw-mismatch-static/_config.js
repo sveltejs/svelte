@@ -7,5 +7,9 @@ export default test({
 		// (like {@html browser ? 'foo' : 'bar'} which is then different between client and server.
 		// Also see https://github.com/sveltejs/svelte/issues/8683 where this happened for Svelte 4.
 		assert.htmlEqual(target.innerHTML, 'Server');
-	}
+	},
+
+	errors: [
+		'The value of an `{@html ...}` block changed between server and client renders. The client value will be ignored in favour of the server value'
+	]
 });
