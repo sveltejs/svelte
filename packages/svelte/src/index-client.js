@@ -190,3 +190,5 @@ export {
 	tick,
 	untrack
 } from './internal/client/runtime.js';
+
+export { createRawSnippet } from './internal/client/dom/blocks/snippet.js';

@@ -366,11 +366,19 @@ declare module 'svelte' {
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
 	/**
+	 * Create a snippet imperatively using mount, hyrdate and render functions.
+	 * */
+	export function createRawSnippet({ mount, hydrate }: {
+		mount: (...params: any[]) => Element;
+		hydrate?: (element: Element, ...params: any[]) => void;
+		render: (...params: any[]) => string;
+	}): (anchor: TemplateNode, ...params: any[]) => void;
+	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
 	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
 	 *
 	 * */
-	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
+	function mount_1<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
 		target: Document | Element | ShadowRoot;
 		anchor?: Node;
 		props?: Props;
@@ -389,7 +397,7 @@ declare module 'svelte' {
 	 * Hydrates a component on the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *
 	 * */
-	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
+	function hydrate_1<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
 		target: Document | Element | ShadowRoot;
 		props?: Props;
 		events?: Record<string, (e: any) => any>;
@@ -450,8 +458,9 @@ declare module 'svelte' {
 	 * https://svelte.dev/docs/svelte#getallcontexts
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
+	type TemplateNode = Text | Element | Comment;
 
-	export {};
+	export { hydrate_1 as hydrate, mount_1 as mount };
 }
 
 declare module 'svelte/action' {
