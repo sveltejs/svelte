@@ -1,0 +1,72 @@
+{
+	"sidebar": [
+		{
+			"text": "Introduction",
+			"items": [
+				{ "file": "introduction/overview.md" },
+				{ "file": "introduction/getting-started.md" },
+				{ "file": "introduction/reactivity-fundamentals.md" }
+			]
+		},
+		{
+			"text": "Template syntax",
+			"items": [
+				{ "file": "template-syntax/component-fundamentals.md" },
+				{ "file": "template-syntax/basic-markup.md" },
+				{ "file": "template-syntax/control-flow.md" },
+				{ "file": "template-syntax/snippets.md" },
+				{ "file": "template-syntax/styles-and-classes.md" },
+				{ "file": "template-syntax/transitions-and-animations.md" },
+				{ "file": "template-syntax/actions.md" },
+				{ "file": "template-syntax/bindings.md" },
+				{ "file": "template-syntax/special-elements.md" },
+				{ "file": "template-syntax/data-fetching.md" }
+			]
+		},
+		{
+			"text": "Runes",
+			"items": [
+				{ "file": "runes/state.md" },
+				{ "file": "runes/side-effects.md" }
+			]
+		},
+		{
+			"text": "Runtime",
+			"items": [
+				{ "file": "runtime/stores.md" },
+				{ "file": "runtime/context.md" },
+				{ "file": "runtime/lifecycle-hooks.md" },
+				{ "file": "runtime/imperative-component-api.md" }
+			]
+		},
+		{
+			"text": "Misc",
+			"items": [
+				{ "file": "misc/debugging.md" },
+				{ "file": "misc/testing.md" },
+				{ "file": "misc/typescript.md" },
+				{ "file": "misc/custom-elements.md" },
+				{ "file": "misc/reactivity-indepth.md" },
+				{ "file": "misc/svelte-5-migration-guide.md" },
+			]
+		},
+		{
+			"text": "Reference",
+			"items": [
+				{ "file": "reference/state.md" },
+				{ "file": "reference/svelte.md" },
+				{ "file": "reference/svelte-action.md" },
+				{ "file": "reference/svelte-animate.md" },
+				{ "file": "reference/svelte-compiler.md" },
+				{ "file": "reference/svelte-easing.md" },
+				{ "file": "reference/svelte-events.md" },
+				{ "file": "reference/svelte-legacy.md" },
+				{ "file": "reference/svelte-motion.md" },
+				{ "file": "reference/svelte-reactivity.md" },
+				{ "file": "reference/svelte-server.md" },
+				{ "file": "reference/svelte-store.md" },
+				{ "file": "reference/svelte-transition.md" }
+			]
+		}
+	]
+}

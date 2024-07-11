@@ -1,3 +1,0 @@
----
-title: Template syntax
----
