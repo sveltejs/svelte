@@ -23,7 +23,7 @@ function check_hash(element, server_hash, value) {
 	const loc = element.__svelte_meta?.loc;
 	if (loc) {
 		location = `near ${loc.file}:${loc.line}:${loc.column}`;
-	} else if (dev_current_component_function.filename) {
+	} else if (dev_current_component_function?.filename) {
 		location = `in ${dev_current_component_function.filename}`;
 	}
 
@@ -59,6 +59,8 @@ export function html(node, get_value, svg, mathml) {
 
 		effect = branch(() => {
 			if (hydrating) {
+				// We're deliberately not trying to repair mismatches between server and client,
+				// as it's costly and error-prone (and it's an edge case to have a mismatch anyway)
 				var hash = /** @type {Comment} */ (hydrate_node).data;
 				var next = hydrate_next();
 				var last = next;
