@@ -67,11 +67,10 @@ export function extract_identifiers(param, nodes = [], include_member_expression
 			break;
 
 		case 'MemberExpression':
-			if (
-				include_member_expressions &&
-				(param.object.type === 'Identifier' || param.object.type === 'MemberExpression')
-			) {
-				extract_identifiers(param.object, nodes, include_member_expressions);
+			if (include_member_expressions) {
+				// Only the `a` from `[a.b[c].d]` is of interest to us here
+				const id = object(param);
+				if (id) nodes.push(id);
 			}
 			break;
 
