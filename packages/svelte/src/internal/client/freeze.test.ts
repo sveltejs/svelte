@@ -11,9 +11,6 @@ test('freezes an object', () => {
 	}, /Cannot assign to read only property/);
 });
 
-test('preserves classes', () => {
-	class Foo {}
-	const frozen = freeze(proxy([new Foo()]));
-
-	assert.ok(frozen[0] instanceof Foo);
+test('throws if argument is a state proxy', () => {
+	assert.throws(() => freeze(proxy({})), /state_frozen_invalid_argument/);
 });

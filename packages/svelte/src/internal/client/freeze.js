@@ -1,6 +1,7 @@
 import { DEV } from 'esm-env';
 import { define_property, is_array, is_frozen, object_freeze } from '../shared/utils.js';
 import { STATE_FROZEN_SYMBOL, STATE_SYMBOL } from './constants.js';
+import * as e from './errors.js';
 
 /**
  * Expects a value that was wrapped with `freeze` and makes it frozen in DEV.
@@ -17,9 +18,8 @@ export function freeze(value) {
 	) {
 		var copy = /** @type {T} */ (value);
 
-		// If the object is already proxified, then clone the value
 		if (STATE_SYMBOL in value) {
-			copy = /** @type {T} */ (is_array(value) ? [...value] : { ...value });
+			e.state_frozen_invalid_argument();
 		}
 
 		define_property(copy, STATE_FROZEN_SYMBOL, {
