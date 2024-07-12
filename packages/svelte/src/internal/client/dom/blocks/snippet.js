@@ -64,13 +64,6 @@ export function wrap_snippet(component, fn) {
 }
 
 /**
- * @template T
- * @typedef {{
- *   [K in keyof T]: () => T[K];
- * }} LazyParams
- */
-
-/**
  * Create a snippet imperatively using mount, hyrdate and render functions.
  * @template {unknown[]} Params
  * @param {{
