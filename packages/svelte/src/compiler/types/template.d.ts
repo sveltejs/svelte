@@ -154,6 +154,7 @@ export interface RenderTag extends BaseNode {
 	expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
 	metadata: {
 		dynamic: boolean;
+		args_with_call_expression: Set<number>;
 	};
 }
 

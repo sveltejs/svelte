@@ -600,7 +600,8 @@ function special(parser) {
 			end: parser.index,
 			expression: expression,
 			metadata: {
-				dynamic: false
+				dynamic: false,
+				args_with_call_expression: new Set()
 			}
 		});
 	}
