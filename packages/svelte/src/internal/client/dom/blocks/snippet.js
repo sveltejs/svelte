@@ -64,7 +64,7 @@ export function wrap_snippet(component, fn) {
 }
 
 /**
- * Create a snippet imperatively using mount, hyrdate and render functions.
+ * Create a snippet imperatively using mount, hydrate and render functions.
  * @template {unknown[]} Params
  * @param {{
  * 	 mount: (...params: Getters<Params>) => Element,
