@@ -34,14 +34,22 @@ export function hmr(source) {
 				// when the component is invalidated, replace it without transitions
 				if (ran) set_should_intro(false);
 
+				var descriptors = Object.getOwnPropertyDescriptors(
+					// @ts-expect-error
+					new.target ? new component(anchor, props) : component(anchor, props)
+				)
+
 				// preserve getters/setters
-				Object.defineProperties(
-					instance,
-					Object.getOwnPropertyDescriptors(
-						// @ts-expect-error
-						new.target ? new component(anchor, props) : component(anchor, props)
-					)
-				);
+				for (var desc in descriptors) {
+					debugger
+					if (descriptors[desc].enumerable) {
+						Object.defineProperty(
+							instance,
+							desc,
+							descriptors[desc]
+						);
+					}
+				}
 
 				if (ran) set_should_intro(true);
 			});

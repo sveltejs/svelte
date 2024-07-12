@@ -2,6 +2,10 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
+	compileOptions: {
+		dev: false,
+	},
+
 	html: `<button>Toggle</button><div>Hello\nworld</div>`,
 
 	async test({ assert, target, logs }) {

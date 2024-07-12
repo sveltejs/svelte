@@ -1,6 +1,10 @@
 import { test } from '../../test';
 
 export default test({
+	compileOptions: {
+		dev: false,
+	},
+
 	get props() {
 		return { componentName: 'Sub' };
 	},
