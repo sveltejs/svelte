@@ -1290,7 +1290,7 @@ const common_visitors = {
 		}
 	},
 	CallExpression(node, context) {
-		const { expression } = context.state;
+		const { expression, render_tag } = context.state;
 		if (
 			(expression?.type === 'ExpressionTag' || expression?.type === 'SpreadAttribute') &&
 			!is_known_safe_call(node, context)
@@ -1298,27 +1298,15 @@ const common_visitors = {
 			expression.metadata.contains_call_expression = true;
 		}
 
-		if (context.state.ast_type === 'template') {
-			// Find out if this is a call expression inside a render tag argument
-			let i = -1;
-			let parent = context.path.at(i);
+		if (render_tag) {
+			// Find out which of the render tag arguments contains this call expression
+			const arg_idx = unwrap_optional(render_tag.expression).arguments.findIndex(
+				(arg) => arg === node || context.path.includes(arg)
+			);
 
-			while (parent && parent.type !== 'RenderTag') {
-				i -= 1;
-				parent = context.path.at(i);
-			}
-
-			if (parent) {
-				const arg_path_idx = i + (parent.expression.type === 'CallExpression' ? 2 : 3);
-
-				if (arg_path_idx <= 0) {
-					const arg =
-						arg_path_idx === 0
-							? node
-							: /** @type {import('estree').Expression} */ (context.path.at(arg_path_idx));
-					const arg_idx = unwrap_optional(parent.expression).arguments.indexOf(arg);
-					parent.metadata.args_with_call_expression.add(arg_idx);
-				}
+			// -1 if this is the call expression of the render tag itself
+			if (arg_idx !== -1) {
+				render_tag.metadata.args_with_call_expression.add(arg_idx);
 			}
 		}
 
@@ -1548,6 +1536,9 @@ const common_visitors = {
 		);
 
 		node.metadata.dynamic = binding !== null && binding.kind !== 'normal';
+	},
+	RenderTag(node, context) {
+		context.next({ ...context.state, render_tag: node });
 	}
 };
 
