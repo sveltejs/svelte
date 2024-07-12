@@ -797,9 +797,9 @@ const legacy_scope_tweaker = {
 				}
 			} else if (binding?.kind === 'each' && binding.mutated) {
 				// Ensure that the array is marked as reactive even when only its entries are mutated
-				let idx = -1;
-				let ancestor = path.at(idx);
-				while (ancestor) {
+				let i = path.length;
+				while (i--) {
+					const ancestor = path[i];
 					if (
 						ancestor.type === 'EachBlock' &&
 						state.analysis.template.scopes.get(ancestor)?.declarations.get(node.name) === binding
@@ -811,7 +811,6 @@ const legacy_scope_tweaker = {
 						}
 						break;
 					}
-					ancestor = path.at(--idx);
 				}
 			}
 		}
