@@ -212,7 +212,7 @@ export interface ModuleCompileOptions {
 	 * A function that gets a `Warning` as an argument and returns a boolean.
 	 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 	 */
-	filterWarnings?: (warning: Warning) => boolean;
+	filterWarning?: (warning: Warning) => boolean;
 }
 
 // The following two somewhat scary looking types ensure that certain types are required but can be undefined still

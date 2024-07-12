@@ -22,8 +22,8 @@ export let source;
 
 export let locator = getLocator('', { offsetLine: 1 });
 
-/** @type {CompileOptions['filterWarnings']} */
-export let filter_warnings;
+/** @type {CompileOptions['filterWarning']} */
+export let filter_warning;
 
 /**
  * The current stack of ignored warnings
@@ -53,7 +53,7 @@ export function pop_ignore() {
 
 /**
  * @param {string} _source
- * @param {{ filename?: string, rootDir?: string, filterWarnings?: CompileOptions['filterWarnings'] }} options
+ * @param {{ filename?: string, rootDir?: string, filterWarning?: CompileOptions['filterWarning'] }} options
  */
 export function reset(_source, options) {
 	source = _source;
@@ -70,7 +70,7 @@ export function reset(_source, options) {
 	}
 
 	locator = getLocator(source, { offsetLine: 1 });
-	filter_warnings = options.filterWarnings;
+	filter_warning = options.filterWarning;
 	warnings = [];
 	ignore_stack = [];
 	ignore_map.clear();
