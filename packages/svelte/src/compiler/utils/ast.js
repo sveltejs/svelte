@@ -66,6 +66,8 @@ export function unwrap_pattern(pattern, nodes = []) {
 			break;
 
 		case 'MemberExpression':
+			// member expressions can be part of an assignment pattern, but not a binding pattern
+			// see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#binding_and_assignment
 			nodes.push(pattern);
 			break;
 
