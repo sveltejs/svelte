@@ -263,22 +263,6 @@ export function rune_outside_svelte(rune) {
 }
 
 /**
- * Snippets created with `createRawSnippet(...)` and used on the client must specify a `mount` function
- * @returns {never}
- */
-export function snippet_missing_mount() {
-	if (DEV) {
-		const error = new Error(`snippet_missing_mount\nSnippets created with \`createRawSnippet(...)\` and used on the client must specify a \`mount\` function`);
-
-		error.name = 'Svelte error';
-		throw error;
-	} else {
-		// TODO print a link to the documentation
-		throw new Error("snippet_missing_mount");
-	}
-}
-
-/**
  * Cannot set prototype of `$state` object
  * @returns {never}
  */

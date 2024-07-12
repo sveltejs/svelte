@@ -1,5 +1,6 @@
 /** @import { Effect, TemplateNode } from '#client' */
 /** @import { Getters } from '#shared' */
+import { run } from '../../../shared/utils.js';
 import { add_snippet_symbol } from '../../../shared/validate.js';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { branch, block, destroy_effect } from '../../reactivity/effects.js';
@@ -8,8 +9,8 @@ import {
 	set_dev_current_component_function
 } from '../../runtime.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
+import { create_fragment_from_html } from '../reconciler.js';
 import { assign_nodes } from '../template.js';
-import * as e from '../../errors.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
@@ -65,20 +66,15 @@ export function wrap_snippet(component, fn) {
 }
 
 /**
- * Create a snippet imperatively using mount, hydrate and render functions.
+ * Create a snippet programmatically
  * @template {unknown[]} Params
  * @param {{
- *   mount?: (...params: Getters<Params>) => Element,
- *   hydrate?: (element: Element, ...params: Getters<Params>) => void,
- *   render?: (...params: Params) => string
+ *   render: (...params: Params) => string
+ *   update?: (element: Element, ...params: Getters<Params>) => void,
  * }} options
  * @returns {import('svelte').Snippet<Params>}
  */
-export function createRawSnippet({ mount, hydrate }) {
-	if (mount === undefined) {
-		e.snippet_missing_mount();
-	}
-
+export function createRawSnippet({ render, update }) {
 	return add_snippet_symbol(
 		(/** @type {TemplateNode} */ anchor, /** @type {Getters<Params>} */ ...params) => {
 			/** @type {Element} */
@@ -87,17 +83,14 @@ export function createRawSnippet({ mount, hydrate }) {
 			if (hydrating) {
 				element = /** @type {Element} */ (hydrate_node);
 				hydrate_next();
-
-				if (hydrate === undefined) {
-					element.replaceWith((element = mount(...params)));
-				} else {
-					hydrate(element, ...params);
-				}
 			} else {
-				element = mount(...params);
+				var html = render(.../** @type {Params} */ (params.map(run)));
+				var fragment = create_fragment_from_html(html);
+				element = /** @type {Element} */ (fragment.firstChild);
 				anchor.before(element);
 			}
 
+			update?.(element, ...params);
 			assign_nodes(element, element);
 		}
 	);

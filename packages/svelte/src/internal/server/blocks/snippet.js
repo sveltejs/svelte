@@ -1,23 +1,21 @@
+/** @import { Snippet } from 'svelte' */
 /** @import { Payload } from '#server' */
+/** @import { Getters } from '#shared' */
 import { add_snippet_symbol } from '../../shared/validate.js';
-import * as e from '../errors.js';
 
 /**
- * Create a snippet imperatively using mount, hyrdate and render functions.
+ * Create a snippet programmatically
+ * @template {unknown[]} Params
  * @param {{
- * 	 mount?: (...params: any[]) => Element,
- *   hydrate?: (element: Element, ...params: any[]) => void,
- *   render?: (...params: any[]) => string
+ *   render: (...params: Params) => string
+ *   update?: (element: Element, ...params: Getters<Params>) => void,
  * }} options
+ * @returns {Snippet<Params>}
  */
 export function createRawSnippet({ render }) {
-	if (render === undefined) {
-		e.snippet_missing_render();
-	}
-
-	const snippet_fn = (/** @type {Payload} */ payload, /** @type {any[]} */ ...args) => {
+	const snippet_fn = (/** @type {Payload} */ payload, /** @type {Params} */ ...args) => {
 		payload.out += render(...args);
 	};
 	add_snippet_symbol(snippet_fn);
-	return snippet_fn;
+	return /** @type {Snippet} */ (snippet_fn);
 }

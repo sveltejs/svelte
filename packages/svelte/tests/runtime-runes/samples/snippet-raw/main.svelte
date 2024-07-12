@@ -4,17 +4,13 @@
 	let count = $state(0);
 
 	const hello = createRawSnippet({
-		mount(count) {
-			const p = document.createElement('p')
-
+		render(count) {
+			return `<p>clicks: ${count}</p>`;
+		},
+		update(p, count) {
 			$effect(() => {
 				p.textContent = `clicks: ${count()}`
 			});
-
-			return p;
-		},
-		render(count) {
-			return `<p>clicks: ${count}</p>`;
 		}
 	});
 </script>
