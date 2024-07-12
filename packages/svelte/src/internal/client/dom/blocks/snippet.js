@@ -81,24 +81,26 @@ export function wrap_snippet(component, fn) {
  * @returns {import('svelte').Snippet<Params>}
  */
 export function createRawSnippet({ mount, hydrate }) {
-	return add_snippet_symbol((anchor, ...params) => {
-		/** @type {Element} */
-		var element;
+	return add_snippet_symbol(
+		(/** @type {TemplateNode} */ anchor, /** @type {Getters<Params>} */ ...params) => {
+			/** @type {Element} */
+			var element;
 
-		if (hydrating) {
-			element = /** @type {Element} */ (hydrate_node);
-			hydrate_next();
+			if (hydrating) {
+				element = /** @type {Element} */ (hydrate_node);
+				hydrate_next();
 
-			if (hydrate === undefined) {
-				element.replaceWith((element = mount(...params)));
+				if (hydrate === undefined) {
+					element.replaceWith((element = mount(...params)));
+				} else {
+					hydrate(element, ...params);
+				}
 			} else {
-				hydrate(element, ...params);
+				element = mount(...params);
+				anchor.before(element);
 			}
-		} else {
-			element = mount(...params);
-			anchor.before(element);
-		}
 
-		assign_nodes(element, element);
-	});
+			assign_nodes(element, element);
+		}
+	);
 }

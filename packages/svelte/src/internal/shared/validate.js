@@ -7,14 +7,11 @@ import * as e from './errors.js';
 const snippet_symbol = Symbol.for('svelte.snippet');
 
 /**
- * @template {unknown[]} Params
- * @param {(anchor: TemplateNode, ...args: Getters<Params>) => void} fn
+ * @param {any} fn
  * @returns {import('svelte').Snippet}
  */
 export function add_snippet_symbol(fn) {
-	// @ts-expect-error
 	fn[snippet_symbol] = true;
-	// @ts-expect-error
 	return fn;
 }
 
