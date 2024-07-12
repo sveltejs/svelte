@@ -2,7 +2,7 @@ import { test } from '../../test';
 
 export default test({
 	compileOptions: {
-		dev: false,
+		dev: false
 	},
 
 	get props() {

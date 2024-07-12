@@ -3,7 +3,7 @@ import { test } from '../../test';
 
 export default test({
 	compileOptions: {
-		dev: false,
+		dev: false
 	},
 
 	html: `<button>Toggle</button><div>Hello\nworld</div>`,
