@@ -147,7 +147,7 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 		runes
 	};
 
-	if (process.env.HMR) {
+	if (process.env.HMR && compileOptions.dev !== false) {
 		compileOptions.dev = true;
 		compileOptions.hmr = true;
 	}
