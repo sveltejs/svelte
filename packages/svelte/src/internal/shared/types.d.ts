@@ -6,3 +6,7 @@ export type Store<V> = {
 export type SourceLocation =
 	| [line: number, column: number]
 	| [line: number, column: number, SourceLocation[]];
+
+export type Getters<T> = {
+	[K in keyof T]: () => T[K];
+};

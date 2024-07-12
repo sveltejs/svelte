@@ -1,4 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
+/** @import { Getters } from '#shared' */
 import { add_snippet_symbol } from '../../../shared/validate.js';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { branch, block, destroy_effect } from '../../reactivity/effects.js';
@@ -73,8 +74,8 @@ export function wrap_snippet(component, fn) {
  * Create a snippet imperatively using mount, hyrdate and render functions.
  * @template {unknown[]} Params
  * @param {{
- * 	 mount: (...params: LazyParams<Params>) => Element,
- *   hydrate?: (element: Element, ...params: LazyParams<Params>) => void,
+ * 	 mount: (...params: Getters<Params>) => Element,
+ *   hydrate?: (element: Element, ...params: Getters<Params>) => void,
  *   render: (...params: Params) => string
  * }} options
  * @returns {import('svelte').Snippet<Params>}

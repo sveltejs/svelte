@@ -1,4 +1,5 @@
 /** @import { TemplateNode } from '#client' */
+/** @import { Getters } from '#shared' */
 import { is_void } from '../../constants.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
@@ -6,7 +7,8 @@ import * as e from './errors.js';
 const snippet_symbol = Symbol.for('svelte.snippet');
 
 /**
- * @param {(anchor: TemplateNode, ...args: any[]) => void} fn
+ * @template {unknown[]} Params
+ * @param {(anchor: TemplateNode, ...args: Getters<Params>) => void} fn
  * @returns {import('svelte').Snippet}
  */
 export function add_snippet_symbol(fn) {
