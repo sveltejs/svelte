@@ -138,11 +138,13 @@ export function runtime_suite(runes: boolean) {
 }
 
 async function common_setup(cwd: string, runes: boolean | undefined, config: RuntimeTest) {
+	const force_hmr = process.env.HMR && config.compileOptions?.dev !== false && !config.error;
+
 	const compileOptions: CompileOptions = {
 		generate: 'client',
 		rootDir: cwd,
-		dev: process.env.HMR ? true : undefined,
-		hmr: process.env.HMR ? true : undefined,
+		dev: force_hmr ? true : undefined,
+		hmr: force_hmr ? true : undefined,
 		...config.compileOptions,
 		immutable: config.immutable,
 		accessors: 'accessors' in config ? config.accessors : true,
