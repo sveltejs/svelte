@@ -36,4 +36,4 @@ export async function tick() {}
 
 export { getAllContexts, getContext, hasContext, setContext } from './internal/server/context.js';
 
-export { createRawSnippet } from './internal/server/index.js';
+export { createRawSnippet } from './internal/server/blocks/snippet.js';
