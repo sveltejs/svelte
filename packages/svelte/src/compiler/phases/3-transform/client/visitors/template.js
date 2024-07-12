@@ -880,7 +880,12 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 			])
 		);
 
-		if (slot_name === 'default' && !has_children_prop) {
+		if (
+			slot_name === 'default' &&
+			!has_children_prop &&
+			lets.length === 0 &&
+			children.default.every((node) => node.type !== 'SvelteFragment')
+		) {
 			push_prop(
 				b.init(
 					'children',
@@ -1859,7 +1864,9 @@ export const template_visitors = {
 			snippet_function = b.call(
 				'$.validate_snippet',
 				snippet_function,
-				args.length ? b.id('$$props') : undefined
+				args.length && callee.type === 'Identifier' && callee.name === 'children'
+					? b.id('$$props')
+					: undefined
 			);
 		}
 
