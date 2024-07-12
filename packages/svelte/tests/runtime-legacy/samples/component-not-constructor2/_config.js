@@ -2,6 +2,7 @@ import { test } from '../../test';
 
 export default test({
 	compileOptions: {
+		// override process.env.HMR — this test only passes in prod mode because in dev mode we generate a helpful error
 		dev: false
 	},
 
