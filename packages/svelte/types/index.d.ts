@@ -366,7 +366,7 @@ declare module 'svelte' {
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
 	/**
-	 * Create a snippet imperatively using mount, hyrdate and render functions.
+	 * Create a snippet imperatively using mount, hydrate and render functions.
 	 * */
 	export function createRawSnippet<Params extends unknown[]>({ mount, hydrate }: {
 		mount: (...params: Getters<Params>) => Element;
