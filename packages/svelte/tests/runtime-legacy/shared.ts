@@ -141,16 +141,13 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 	const compileOptions: CompileOptions = {
 		generate: 'client',
 		rootDir: cwd,
+		dev: process.env.HMR ? true : undefined,
+		hmr: process.env.HMR ? true : undefined,
 		...config.compileOptions,
 		immutable: config.immutable,
 		accessors: 'accessors' in config ? config.accessors : true,
 		runes
 	};
-
-	if (process.env.HMR && compileOptions.dev !== false) {
-		compileOptions.dev = true;
-		compileOptions.hmr = true;
-	}
 
 	// load_compiled can be used for debugging a test. It means the compiler will not run on the input
 	// so you can manipulate the output manually to see what fixes it, adding console.logs etc.
