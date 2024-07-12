@@ -6,9 +6,7 @@
   "type": "module",
   "license": "MIT",
   "packageManager": "pnpm@9.4.0",
-  "engines": {
-    "pnpm": "^9.0.0"
-  },
+
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sveltejs/svelte.git"
