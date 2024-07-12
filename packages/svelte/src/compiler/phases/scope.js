@@ -3,7 +3,12 @@ import { walk } from 'zimmerframe';
 import { is_element_node } from './nodes.js';
 import * as b from '../utils/builders.js';
 import * as e from '../errors.js';
-import { extract_identifiers, extract_identifiers_from_destructuring } from '../utils/ast.js';
+import {
+	extract_identifiers,
+	extract_identifiers_from_destructuring,
+	object,
+	unwrap_pattern
+} from '../utils/ast.js';
 import { JsKeywords, Runes } from './constants.js';
 
 export class Scope {
@@ -361,8 +366,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 			if (
 				node.body.type === 'ExpressionStatement' &&
-				node.body.expression.type === 'AssignmentExpression' &&
-				node.body.expression.left.type !== 'MemberExpression'
+				node.body.expression.type === 'AssignmentExpression'
 			) {
 				for (const id of extract_identifiers(node.body.expression.left)) {
 					if (!id.name.startsWith('$')) {
@@ -714,11 +718,14 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			const binding = scope.get(/** @type {import('estree').Identifier} */ (object).name);
 			if (binding) binding.mutated = true;
 		} else {
-			extract_identifiers(node, [], true).forEach((identifier) => {
-				const binding = scope.get(identifier.name);
-				if (binding && identifier !== binding.node) {
+			unwrap_pattern(node).forEach((node) => {
+				let id = node.type === 'Identifier' ? node : object(node);
+				if (id === null) return;
+
+				const binding = scope.get(id.name);
+				if (binding && id !== binding.node) {
 					binding.mutated = true;
-					binding.reassigned = true;
+					binding.reassigned = node.type === 'Identifier';
 				}
 			});
 		}

@@ -54,51 +54,58 @@ export function is_event_attribute(attribute) {
 }
 
 /**
- * Extracts all identifiers from a pattern.
- * @param {ESTree.Pattern} param
- * @param {ESTree.Identifier[]} [nodes]
- * @returns {ESTree.Identifier[]}
+ * Extracts all identifiers and member expressions from a pattern.
+ * @param {ESTree.Pattern} pattern
+ * @param {Array<ESTree.Identifier | ESTree.MemberExpression>} [nodes]
+ * @returns {Array<ESTree.Identifier | ESTree.MemberExpression>}
  */
-export function extract_identifiers(param, nodes = []) {
-	switch (param.type) {
+export function unwrap_pattern(pattern, nodes = []) {
+	switch (pattern.type) {
 		case 'Identifier':
-			nodes.push(param);
+			nodes.push(pattern);
 			break;
 
 		case 'MemberExpression':
-			// Only the `a` from `[a.b[c].d]` is of interest to us here
-			const id = object(param);
-			if (id) nodes.push(id);
+			nodes.push(pattern);
 			break;
 
 		case 'ObjectPattern':
-			for (const prop of param.properties) {
+			for (const prop of pattern.properties) {
 				if (prop.type === 'RestElement') {
-					extract_identifiers(prop.argument, nodes);
+					unwrap_pattern(prop.argument, nodes);
 				} else {
-					extract_identifiers(prop.value, nodes);
+					unwrap_pattern(prop.value, nodes);
 				}
 			}
 
 			break;
 
 		case 'ArrayPattern':
-			for (const element of param.elements) {
-				if (element) extract_identifiers(element, nodes);
+			for (const element of pattern.elements) {
+				if (element) unwrap_pattern(element, nodes);
 			}
 
 			break;
 
 		case 'RestElement':
-			extract_identifiers(param.argument, nodes);
+			unwrap_pattern(pattern.argument, nodes);
 			break;
 
 		case 'AssignmentPattern':
-			extract_identifiers(param.left, nodes);
+			unwrap_pattern(pattern.left, nodes);
 			break;
 	}
 
 	return nodes;
+}
+
+/**
+ * Extracts all identifiers from a pattern.
+ * @param {ESTree.Pattern} pattern
+ * @returns {ESTree.Identifier[]}
+ */
+export function extract_identifiers(pattern) {
+	return unwrap_pattern(pattern, []).filter((node) => node.type === 'Identifier');
 }
 
 /**
