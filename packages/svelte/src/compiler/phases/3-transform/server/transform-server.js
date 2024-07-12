@@ -959,7 +959,12 @@ function serialize_inline_component(node, expression, context) {
 			])
 		);
 
-		if (slot_name === 'default' && !has_children_prop) {
+		if (
+			slot_name === 'default' &&
+			!has_children_prop &&
+			lets.length === 0 &&
+			children.default.every((node) => node.type !== 'SvelteFragment')
+		) {
 			push_prop(
 				b.prop(
 					'init',
@@ -1202,7 +1207,13 @@ const template_visitors = {
 
 		const expression = /** @type {import('estree').Expression} */ (context.visit(callee));
 		const snippet_function = context.state.options.dev
-			? b.call('$.validate_snippet', expression)
+			? b.call(
+					'$.validate_snippet',
+					expression,
+					raw_args.length && callee.type === 'Identifier' && callee.name === 'children'
+						? b.id('$$props')
+						: undefined
+				)
 			: expression;
 
 		const snippet_args = raw_args.map((arg) => {
