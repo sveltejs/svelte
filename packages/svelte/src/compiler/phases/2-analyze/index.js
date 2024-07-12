@@ -804,9 +804,9 @@ const legacy_scope_tweaker = {
 						ancestor.type === 'EachBlock' &&
 						state.analysis.template.scopes.get(ancestor)?.declarations.get(node.name) === binding
 					) {
-						for (const reference of ancestor.metadata.references) {
-							if (reference.kind === 'normal') {
-								reference.kind = 'state';
+						for (const binding of ancestor.metadata.references) {
+							if (binding.kind === 'normal') {
+								binding.kind = 'state';
 							}
 						}
 						break;
