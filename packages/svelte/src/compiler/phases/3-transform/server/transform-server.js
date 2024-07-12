@@ -2024,7 +2024,8 @@ export function server_component(analysis, options) {
 
 		if (
 			node.body.type === 'ExpressionStatement' &&
-			node.body.expression.type === 'AssignmentExpression'
+			node.body.expression.type === 'AssignmentExpression' &&
+			node.body.expression.left.type !== 'MemberExpression'
 		) {
 			for (const id of extract_identifiers(node.body.expression.left)) {
 				const binding = analysis.instance.scope.get(id.name);

@@ -361,7 +361,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 			if (
 				node.body.type === 'ExpressionStatement' &&
-				node.body.expression.type === 'AssignmentExpression'
+				node.body.expression.type === 'AssignmentExpression' &&
+				node.body.expression.left.type !== 'MemberExpression'
 			) {
 				for (const id of extract_identifiers(node.body.expression.left)) {
 					if (!id.name.startsWith('$')) {
