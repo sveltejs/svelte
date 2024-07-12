@@ -86,15 +86,13 @@ export function createRawSnippet({ mount, hydrate }) {
 
 		if (hydrating) {
 			element = /** @type {Element} */ (hydrate_node);
+			hydrate_next();
 
 			if (hydrate === undefined) {
-				element = mount(...params);
-				hydrate_node.replaceWith(element);
+				element.replaceWith((element = mount(...params)));
 			} else {
 				hydrate(element, ...params);
 			}
-
-			hydrate_next();
 		} else {
 			element = mount(...params);
 			anchor.before(element);
