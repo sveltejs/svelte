@@ -366,19 +366,18 @@ declare module 'svelte' {
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
 	/**
-	 * Create a snippet imperatively using mount, hydrate and render functions.
+	 * Create a snippet programmatically
 	 * */
-	export function createRawSnippet<Params extends unknown[]>({ mount, hydrate }: {
-		mount?: (...params: Getters<Params>) => Element;
-		hydrate?: (element: Element, ...params: Getters<Params>) => void;
-		render?: (...params: Params) => string;
+	export function createRawSnippet<Params extends unknown[]>({ render, update }: {
+		render: (...params: Params) => string;
+		update?: (element: Element, ...params: Getters<Params>) => void;
 	}): import("svelte").Snippet<Params>;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
 	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
 	 *
 	 * */
-	function mount_1<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
+	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
 		target: Document | Element | ShadowRoot;
 		anchor?: Node;
 		props?: Props;
@@ -397,7 +396,7 @@ declare module 'svelte' {
 	 * Hydrates a component on the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *
 	 * */
-	function hydrate_1<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
+	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
 		target: Document | Element | ShadowRoot;
 		props?: Props;
 		events?: Record<string, (e: any) => any>;
@@ -462,7 +461,7 @@ declare module 'svelte' {
 		[K in keyof T]: () => T[K];
 	};
 
-	export { hydrate_1 as hydrate, mount_1 as mount };
+	export {};
 }
 
 declare module 'svelte/action' {
