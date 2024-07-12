@@ -9,6 +9,7 @@ import {
 } from '../../runtime.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { assign_nodes } from '../template.js';
+import * as e from '../../errors.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
@@ -67,13 +68,17 @@ export function wrap_snippet(component, fn) {
  * Create a snippet imperatively using mount, hydrate and render functions.
  * @template {unknown[]} Params
  * @param {{
- * 	 mount: (...params: Getters<Params>) => Element,
+ *   mount?: (...params: Getters<Params>) => Element,
  *   hydrate?: (element: Element, ...params: Getters<Params>) => void,
- *   render: (...params: Params) => string
+ *   render?: (...params: Params) => string
  * }} options
  * @returns {import('svelte').Snippet<Params>}
  */
 export function createRawSnippet({ mount, hydrate }) {
+	if (mount === undefined) {
+		e.snippet_missing_mount();
+	}
+
 	return add_snippet_symbol(
 		(/** @type {TemplateNode} */ anchor, /** @type {Getters<Params>} */ ...params) => {
 			/** @type {Element} */

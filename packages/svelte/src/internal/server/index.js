@@ -14,6 +14,7 @@ import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
 import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { add_snippet_symbol, validate_store } from '../shared/validate.js';
+import * as e from './errors.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
@@ -158,12 +159,16 @@ export function head(payload, fn) {
 /**
  * Create a snippet imperatively using mount, hyrdate and render functions.
  * @param {{
- * 	 mount: (...params: any[]) => Element,
+ * 	 mount?: (...params: any[]) => Element,
  *   hydrate?: (element: Element, ...params: any[]) => void,
- *   render: (...params: any[]) => string
+ *   render?: (...params: any[]) => string
  * }} options
  */
 export function createRawSnippet({ render }) {
+	if (render === undefined) {
+		e.snippet_missing_render();
+	}
+
 	const snippet_fn = (/** @type {Payload} */ payload, /** @type {any[]} */ ...args) => {
 		payload.out += render(...args);
 	};

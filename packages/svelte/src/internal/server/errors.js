@@ -11,3 +11,14 @@ export function lifecycle_function_unavailable(name) {
 	error.name = 'Svelte error';
 	throw error;
 }
+
+/**
+ * Snippets created with `createRawSnippet(...)` and used on the server must specify a `render` function
+ * @returns {never}
+ */
+export function snippet_missing_render() {
+	const error = new Error(`snippet_missing_render\nSnippets created with \`createRawSnippet(...)\` and used on the server must specify a \`render\` function`);
+
+	error.name = 'Svelte error';
+	throw error;
+}

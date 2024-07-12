@@ -369,9 +369,9 @@ declare module 'svelte' {
 	 * Create a snippet imperatively using mount, hydrate and render functions.
 	 * */
 	export function createRawSnippet<Params extends unknown[]>({ mount, hydrate }: {
-		mount: (...params: Getters<Params>) => Element;
+		mount?: (...params: Getters<Params>) => Element;
 		hydrate?: (element: Element, ...params: Getters<Params>) => void;
-		render: (...params: Params) => string;
+		render?: (...params: Params) => string;
 	}): import("svelte").Snippet<Params>;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.

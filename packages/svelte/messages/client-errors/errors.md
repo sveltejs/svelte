@@ -60,6 +60,10 @@
 
 > The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
 
+## snippet_missing_mount
+
+> Snippets created with `createRawSnippet(...)` and used on the client must specify a `mount` function
+
 ## state_prototype_fixed
 
 > Cannot set prototype of `$state` object
