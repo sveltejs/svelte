@@ -1,16 +1,24 @@
 <script>
 	import { createRawSnippet } from 'svelte';
 
+	let count = $state(0);
+
 	const hello = createRawSnippet({
-		mount() {
+		mount(count) {
 			const p = document.createElement('p')
-			p.textContent = 'hello world';
+
+			$effect(() => {
+				p.textContent = `clicks: ${count()}`
+			});
+
 			return p;
 		},
-		render() {
-			return '<p>hello world</p>';
+		render(count) {
+			return `<p>clicks: ${count}</p>`;
 		}
 	});
 </script>
 
-{@render hello()}
+<button onclick={() => count += 1}>click</button>
+
+{@render hello(count)}
