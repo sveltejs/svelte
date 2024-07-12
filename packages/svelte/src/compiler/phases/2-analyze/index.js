@@ -8,7 +8,8 @@ import {
 	extract_paths,
 	is_event_attribute,
 	is_text_attribute,
-	object
+	object,
+	unwrap_optional
 } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
 import { MathMLElements, ReservedKeywords, Runes, SVGElements } from '../constants.js';
@@ -1295,6 +1296,30 @@ const common_visitors = {
 			!is_known_safe_call(node, context)
 		) {
 			expression.metadata.contains_call_expression = true;
+		}
+
+		if (context.state.ast_type === 'template') {
+			// Find out if this is a call expression inside a render tag argument
+			let i = -1;
+			let parent = context.path.at(i);
+
+			while (parent && parent.type !== 'RenderTag') {
+				i -= 1;
+				parent = context.path.at(i);
+			}
+
+			if (parent) {
+				const arg_path_idx = i + (parent.expression.type === 'CallExpression' ? 2 : 3);
+
+				if (arg_path_idx <= 0) {
+					const arg =
+						arg_path_idx === 0
+							? node
+							: /** @type {import('estree').Expression} */ (context.path.at(arg_path_idx));
+					const arg_idx = unwrap_optional(parent.expression).arguments.indexOf(arg);
+					parent.metadata.args_with_call_expression.add(arg_idx);
+				}
+			}
 		}
 
 		const callee = node.callee;
