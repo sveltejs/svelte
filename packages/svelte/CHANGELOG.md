@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.183
+
+### Patch Changes
+
+- fix: properly validate snippet/slot interop ([#12421](https://github.com/sveltejs/svelte/pull/12421))
+
+- fix: cache call expressions in render tag arguments ([#12418](https://github.com/sveltejs/svelte/pull/12418))
+
+- fix: optimize `bind:group` ([#12406](https://github.com/sveltejs/svelte/pull/12406))
+
 ## 5.0.0-next.182
 
 ### Patch Changes
