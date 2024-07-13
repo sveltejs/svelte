@@ -28,6 +28,8 @@ export const VoidElements = [
 
 export const PassiveEvents = ['wheel', 'touchstart', 'touchmove', 'touchend', 'touchcancel'];
 
+export const RenamedRunes = /** @type {const}*/({'$effect.active': '$effect.tracking'})
+
 export const Runes = /** @type {const} */ ([
 	'$state',
 	'$state.frozen',

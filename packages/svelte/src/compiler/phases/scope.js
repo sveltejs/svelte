@@ -4,7 +4,7 @@ import { is_element_node } from './nodes.js';
 import * as b from '../utils/builders.js';
 import * as e from '../errors.js';
 import { extract_identifiers, extract_identifiers_from_destructuring } from '../utils/ast.js';
-import { JsKeywords, Runes } from './constants.js';
+import { JsKeywords, RenamedRunes, Runes } from './constants.js';
 
 export class Scope {
 	/** @type {ScopeRoot} */
@@ -778,7 +778,15 @@ export function get_rune(node, scope) {
 
 	joined = n.name + joined;
 
-	if (!Runes.includes(/** @type {any} */ (joined))) return null;
+
+	if (!Runes.includes(/** @type {any} */ (joined)))
+	{
+			if(joined in RenamedRunes)
+				e.rune_renamed(node, joined, RenamedRunes[/** @type {keyof typeof RenamedRunes} */(joined)]);
+
+		  return null;
+	}
+
 
 	const binding = scope.get(n.name);
 	if (binding !== null) return null; // rune name, but references a variable or store

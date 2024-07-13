@@ -19,6 +19,7 @@ import { binding_properties } from '../bindings.js';
 import {
 	ContentEditableBindings,
 	EventModifiers,
+	RenamedRunes,
 	Runes,
 	SVGElements,
 	VoidElements
@@ -1175,8 +1176,8 @@ export const validation_runes = merge(validation, a11y_validators, {
 				parent = /** @type {import('estree').Expression} */ (path[--i]);
 
 				if (!Runes.includes(/** @type {Runes[number]} */ (name))) {
-					if (name === '$effect.active') {
-						e.rune_renamed(parent, '$effect.active', '$effect.tracking');
+					if (name in RenamedRunes) {
+						e.rune_renamed(parent, name, RenamedRunes[/** @type {keyof typeof RenamedRunes} */(name)]);
 					}
 
 					e.rune_invalid_name(parent, name);
