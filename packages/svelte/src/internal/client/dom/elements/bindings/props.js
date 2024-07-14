@@ -1,5 +1,5 @@
 import { teardown } from '../../../reactivity/effects.js';
-import { get_descriptor } from '../../../utils.js';
+import { get_descriptor } from '../../../../shared/utils.js';
 
 /**
  * Makes an `export`ed (non-prop) variable available on the `$$props` object

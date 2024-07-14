@@ -37,7 +37,7 @@ import {
 import { set } from './sources.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
-import { define_property } from '../utils.js';
+import { define_property } from '../../shared/utils.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune

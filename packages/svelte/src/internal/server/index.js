@@ -551,6 +551,8 @@ export { push, pop } from './context.js';
 
 export { push_element, pop_element } from './dev.js';
 
+export { snapshot } from '../shared/clone.js';
+
 export {
 	add_snippet_symbol,
 	validate_component,

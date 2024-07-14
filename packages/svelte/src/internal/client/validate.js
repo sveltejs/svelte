@@ -1,5 +1,5 @@
 import { untrack } from './runtime.js';
-import { get_descriptor, is_array } from './utils.js';
+import { get_descriptor, is_array } from '../shared/utils.js';
 import * as e from './errors.js';
 
 /** regex of all html void element names */

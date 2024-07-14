@@ -4,7 +4,7 @@
 import { STATE_SYMBOL } from '../constants.js';
 import { render_effect, user_pre_effect } from '../reactivity/effects.js';
 import { dev_current_component_function } from '../runtime.js';
-import { get_prototype_of } from '../utils.js';
+import { get_prototype_of } from '../../shared/utils.js';
 import * as w from '../warnings.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
