@@ -778,13 +778,13 @@ export function get_rune(node, scope) {
 
 	joined = n.name + joined;
 
-	const is_rune_obj = n.name !== '$host' && Runes.includes(/** @type {any} */(n.name));
+	const is_rune_obj = n.name !== '$host' && Runes.includes(/** @type {any} */(n.name)); // check if the object of the expression is a rune e.g. `$effect` in `$effect.pre`
 
 	const is_rune = Runes.includes(/** @type {any} */ (joined));
 
 	const is_renamed_rune = joined in RenamedRunes;
 
-	if(!is_rune && !is_renamed_rune && !is_rune_obj) return null;
+	if(!is_rune_obj && !is_rune && !is_renamed_rune) return null;
 
 	const binding = scope.get(n.name);
 
