@@ -1,16 +1,16 @@
+/** @import { Attribute, Text, ExpressionTag, SvelteNode } from '#compiler' */
+/** @import * as ESTree from 'estree' */
 import { walk } from 'zimmerframe';
 import * as b from '../utils/builders.js';
 
 /**
  * Gets the left-most identifier of a member expression or identifier.
- * @param {import('estree').MemberExpression | import('estree').Identifier} expression
- * @returns {import('estree').Identifier | null}
+ * @param {ESTree.MemberExpression | ESTree.Identifier} expression
+ * @returns {ESTree.Identifier | null}
  */
 export function object(expression) {
 	while (expression.type === 'MemberExpression') {
-		expression = /** @type {import('estree').MemberExpression | import('estree').Identifier} */ (
-			expression.object
-		);
+		expression = /** @type {ESTree.MemberExpression | ESTree.Identifier} */ (expression.object);
 	}
 
 	if (expression.type !== 'Identifier') {
@@ -22,8 +22,8 @@ export function object(expression) {
 
 /**
  * Returns true if the attribute contains a single static text node.
- * @param {import('#compiler').Attribute} attribute
- * @returns {attribute is import('#compiler').Attribute & { value: [import('#compiler').Text] }}
+ * @param {Attribute} attribute
+ * @returns {attribute is Attribute & { value: [Text] }}
  */
 export function is_text_attribute(attribute) {
 	return (
@@ -33,8 +33,8 @@ export function is_text_attribute(attribute) {
 
 /**
  * Returns true if the attribute contains a single expression node.
- * @param {import('#compiler').Attribute} attribute
- * @returns {attribute is import('#compiler').Attribute & { value: [import('#compiler').ExpressionTag] }}
+ * @param {Attribute} attribute
+ * @returns {attribute is Attribute & { value: [ExpressionTag] }}
  */
 export function is_expression_attribute(attribute) {
 	return (
@@ -46,8 +46,8 @@ export function is_expression_attribute(attribute) {
 
 /**
  * Returns true if the attribute starts with `on` and contains a single expression node.
- * @param {import('#compiler').Attribute} attribute
- * @returns {attribute is import('#compiler').Attribute & { value: [import('#compiler').ExpressionTag] }}
+ * @param {Attribute} attribute
+ * @returns {attribute is Attribute & { value: [ExpressionTag] }}
  */
 export function is_event_attribute(attribute) {
 	return is_expression_attribute(attribute) && attribute.name.startsWith('on');
@@ -55,9 +55,9 @@ export function is_event_attribute(attribute) {
 
 /**
  * Extracts all identifiers from a pattern.
- * @param {import('estree').Pattern} param
- * @param {import('estree').Identifier[]} [nodes]
- * @returns {import('estree').Identifier[]}
+ * @param {ESTree.Pattern} param
+ * @param {ESTree.Identifier[]} [nodes]
+ * @returns {ESTree.Identifier[]}
  */
 export function extract_identifiers(param, nodes = []) {
 	switch (param.type) {
@@ -97,11 +97,11 @@ export function extract_identifiers(param, nodes = []) {
 
 /**
  * Extracts all identifiers and a stringified keypath from an expression.
- * @param {import('estree').Expression} expr
- * @returns {[keypath: string, ids: import('estree').Identifier[]]}
+ * @param {ESTree.Expression} expr
+ * @returns {[keypath: string, ids: ESTree.Identifier[]]}
  */
 export function extract_all_identifiers_from_expression(expr) {
-	/** @type {import('estree').Identifier[]} */
+	/** @type {ESTree.Identifier[]} */
 	let nodes = [];
 	/** @type {string[]} */
 	let keypath = [];
@@ -143,8 +143,8 @@ export function extract_all_identifiers_from_expression(expr) {
 
 /**
  * Extracts all leaf identifiers from a destructuring expression.
- * @param {import('estree').Identifier | import('estree').ObjectExpression | import('estree').ArrayExpression} node
- * @param {import('estree').Identifier[]} [nodes]
+ * @param {ESTree.Identifier | ESTree.ObjectExpression | ESTree.ArrayExpression} node
+ * @param {ESTree.Identifier[]} [nodes]
  * @returns
  */
 export function extract_identifiers_from_destructuring(node, nodes = []) {
@@ -181,33 +181,33 @@ export function extract_identifiers_from_destructuring(node, nodes = []) {
  * or assignment expression. For example, given `const { foo: { bar: baz } } = quux`,
  * the path of `baz` is `foo.bar`
  * @typedef {Object} DestructuredAssignment
- * @property {import('estree').Identifier | import('estree').MemberExpression} node The node the destructuring path end in. Can be a member expression only for assignment expressions
+ * @property {ESTree.Identifier | ESTree.MemberExpression} node The node the destructuring path end in. Can be a member expression only for assignment expressions
  * @property {boolean} is_rest `true` if this is a `...rest` destructuring
  * @property {boolean} has_default_value `true` if this has a fallback value like `const { foo = 'bar } = ..`
- * @property {(expression: import('estree').Expression) => import('estree').Identifier | import('estree').MemberExpression | import('estree').CallExpression | import('estree').AwaitExpression} expression Returns an expression which walks the path starting at the given expression.
+ * @property {(expression: ESTree.Expression) => ESTree.Identifier | ESTree.MemberExpression | ESTree.CallExpression | ESTree.AwaitExpression} expression Returns an expression which walks the path starting at the given expression.
  * This will be a call expression if a rest element or default is involved — e.g. `const { foo: { bar: baz = 42 }, ...rest } = quux` — since we can't represent `baz` or `rest` purely as a path
  * Will be an await expression in case of an async default value (`const { foo = await bar } = ...`)
- * @property {(expression: import('estree').Expression) => import('estree').Identifier | import('estree').MemberExpression | import('estree').CallExpression | import('estree').AwaitExpression} update_expression Like `expression` but without default values.
+ * @property {(expression: ESTree.Expression) => ESTree.Identifier | ESTree.MemberExpression | ESTree.CallExpression | ESTree.AwaitExpression} update_expression Like `expression` but without default values.
  */
 
 /**
  * Extracts all destructured assignments from a pattern.
- * @param {import('estree').Node} param
+ * @param {ESTree.Node} param
  * @returns {DestructuredAssignment[]}
  */
 export function extract_paths(param) {
 	return _extract_paths(
 		[],
 		param,
-		(node) => /** @type {import('estree').Identifier | import('estree').MemberExpression} */ (node),
-		(node) => /** @type {import('estree').Identifier | import('estree').MemberExpression} */ (node),
+		(node) => /** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node),
+		(node) => /** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node),
 		false
 	);
 }
 
 /**
  * @param {DestructuredAssignment[]} assignments
- * @param {import('estree').Node} param
+ * @param {ESTree.Node} param
  * @param {DestructuredAssignment['expression']} expression
  * @param {DestructuredAssignment['update_expression']} update_expression
  * @param {boolean} has_default_value
@@ -231,7 +231,7 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 				if (prop.type === 'RestElement') {
 					/** @type {DestructuredAssignment['expression']} */
 					const rest_expression = (object) => {
-						/** @type {import('estree').Expression[]} */
+						/** @type {ESTree.Expression[]} */
 						const props = [];
 						for (const p of param.properties) {
 							if (p.type === 'Property' && p.key.type !== 'PrivateIdentifier') {
@@ -351,7 +351,7 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
  * Like `path.at(x)`, but skips over `TSNonNullExpression` and `TSAsExpression` nodes and eases assertions a bit
  * by removing the `| undefined` from the resulting type.
  *
- * @template {import('#compiler').SvelteNode} T
+ * @template {SvelteNode} T
  * @param {T[]} path
  * @param {number} at
  */
@@ -369,7 +369,7 @@ export function get_parent(path, at) {
  * or a logical expression that only contains simple expressions. Used to determine whether
  * something needs to be treated as though accessing it could have side-effects (i.e.
  * reading signals prematurely)
- * @param {import('estree').Expression} node
+ * @param {ESTree.Expression} node
  * @returns {boolean}
  */
 export function is_simple_expression(node) {
@@ -398,8 +398,8 @@ export function is_simple_expression(node) {
 }
 
 /**
- * @template {import('estree').SimpleCallExpression | import('estree').MemberExpression} T
- * @param {import('estree').ChainExpression & { expression : T } | T} node
+ * @template {ESTree.SimpleCallExpression | ESTree.MemberExpression} T
+ * @param {ESTree.ChainExpression & { expression : T } | T} node
  * @returns {T}
  */
 export function unwrap_optional(node) {
@@ -407,7 +407,7 @@ export function unwrap_optional(node) {
 }
 
 /**
- * @param {import('estree').Expression | import('estree').Pattern} expression
+ * @param {ESTree.Expression | ESTree.Pattern} expression
  * @returns {boolean}
  */
 export function is_expression_async(expression) {

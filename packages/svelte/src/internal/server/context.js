@@ -1,8 +1,9 @@
+/** @import { Component } from '#server' */
 import { DEV } from 'esm-env';
 import { on_destroy } from './index.js';
 import * as e from '../shared/errors.js';
 
-/** @type {import('#server').Component | null} */
+/** @type {Component | null} */
 export var current_component = null;
 
 /**
@@ -65,7 +66,7 @@ export function push(fn) {
 }
 
 export function pop() {
-	var component = /** @type {import('#server').Component} */ (current_component);
+	var component = /** @type {Component} */ (current_component);
 
 	var ondestroy = component.d;
 
@@ -77,7 +78,7 @@ export function pop() {
 }
 
 /**
- * @param {import('#server').Component} component_context
+ * @param {Component} component_context
  * @returns {Map<unknown, unknown> | null}
  */
 function get_parent_context(component_context) {

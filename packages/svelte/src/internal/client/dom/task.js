@@ -10,14 +10,14 @@ let is_micro_task_queued = false;
 let is_idle_task_queued = false;
 
 /** @type {Array<() => void>} */
-let current_queued_miro_tasks = [];
+let current_queued_micro_tasks = [];
 /** @type {Array<() => void>} */
 let current_queued_idle_tasks = [];
 
 function process_micro_tasks() {
 	is_micro_task_queued = false;
-	const tasks = current_queued_miro_tasks.slice();
-	current_queued_miro_tasks = [];
+	const tasks = current_queued_micro_tasks.slice();
+	current_queued_micro_tasks = [];
 	run_all(tasks);
 }
 
@@ -36,7 +36,7 @@ export function queue_micro_task(fn) {
 		is_micro_task_queued = true;
 		queueMicrotask(process_micro_tasks);
 	}
-	current_queued_miro_tasks.push(fn);
+	current_queued_micro_tasks.push(fn);
 }
 
 /**

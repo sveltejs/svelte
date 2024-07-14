@@ -14,6 +14,10 @@
 
 > %parent% called `%method%` on an instance of %component%, which is no longer valid in Svelte 5. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information
 
+## component_api_invalid_new
+
+> Attempted to instantiate %component% with `new %name%`, which is no longer valid in Svelte 5. If this component is not under your control, set the `compatibility.componentApi` compiler option to `4` to keep it working. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information
+
 ## each_key_duplicate
 
 > Keyed each block has duplicate key at indexes %a% and %b%
@@ -56,15 +60,17 @@
 
 > The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
 
+## state_frozen_invalid_argument
+
+> The argument to `$state.frozen(...)` cannot be an object created with `$state(...)`. You should create a copy of it first, for example with `$state.snapshot`
+
 ## state_prototype_fixed
 
 > Cannot set prototype of `$state` object
 
 ## state_unsafe_mutation
 
-> Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. This can lead to unexpected errors and possibly cause infinite loops.
->
-> If the object is not meant to be reactive, declare it without `$state`
+> Updating state inside a derived is forbidden. If the value should not be reactive, declare it without `$state`
 
 ## svelte_component_invalid_this_value
 

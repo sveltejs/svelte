@@ -1,3 +1,4 @@
+/** @import { PreprocessorGroup, Preprocessor } from '../../../../src/compiler/public' */
 import * as path from 'node:path';
 import MagicString from 'magic-string';
 import { test } from '../../test';
@@ -10,10 +11,10 @@ let comment_multi = true;
  * @param {'script' | 'style'} tag_name
  * @param {string} search
  * @param {string} replace
- * @returns {import('../../../../src/compiler/public').PreprocessorGroup}
+ * @returns {PreprocessorGroup}
  */
 function get_processor(tag_name, search, replace) {
-	/** @type {import('../../../../src/compiler/public').Preprocessor} */
+	/** @type {Preprocessor} */
 	const preprocessor = ({ content, filename = '' }) => {
 		let code = content.slice();
 		const ms = new MagicString(code);

@@ -1,20 +1,10 @@
+/** @import { FunctionDeclaration } from 'estree' */
+/** @import { ComponentVisitors } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
 import { function_visitor, serialize_hoistable_params } from '../utils.js';
 
-/** @type {import('../types.js').ComponentVisitors} */
+/** @type {ComponentVisitors} */
 export const javascript_visitors = {
-	Program(node, { visit }) {
-		return /** @type {import('estree').Program} */ ({
-			...node,
-			body: node.body.map((node) => /** @type {import('estree').Node} */ (visit(node)))
-		});
-	},
-	BlockStatement(node, { visit }) {
-		return /** @type {import('estree').BlockStatement} */ ({
-			...node,
-			body: node.body.map((node) => /** @type {import('estree').Node} */ (visit(node)))
-		});
-	},
 	FunctionExpression: function_visitor,
 	ArrowFunctionExpression: function_visitor,
 	FunctionDeclaration(node, context) {
@@ -26,7 +16,7 @@ export const javascript_visitors = {
 			const params = serialize_hoistable_params(node, context);
 
 			context.state.hoisted.push(
-				/** @type {import('estree').FunctionDeclaration} */ ({
+				/** @type {FunctionDeclaration} */ ({
 					...node,
 					id: node.id !== null ? context.visit(node.id, state) : null,
 					params,

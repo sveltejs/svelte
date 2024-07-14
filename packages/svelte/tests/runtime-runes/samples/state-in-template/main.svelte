@@ -1,6 +1,6 @@
 <script>
-	import { Set } from 'svelte/reactivity';
-	const set = new Set();
+	import { SvelteSet } from 'svelte/reactivity';
+	const set = new SvelteSet();
 </script>
 
 <form onsubmit={e => {

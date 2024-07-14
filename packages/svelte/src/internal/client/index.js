@@ -7,7 +7,7 @@ export {
 	mark_module_end,
 	add_owner_effect
 } from './dev/ownership.js';
-export { legacy_api } from './dev/legacy.js';
+export { check_target, legacy_api } from './dev/legacy.js';
 export { inspect } from './dev/inspect.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
@@ -15,13 +15,15 @@ export { key_block as key } from './dom/blocks/key.js';
 export { css_props } from './dom/blocks/css-props.js';
 export { index, each } from './dom/blocks/each.js';
 export { html } from './dom/blocks/html.js';
+export { sanitize_slots, slot } from './dom/blocks/slot.js';
 export { snippet, wrap_snippet } from './dom/blocks/snippet.js';
 export { component } from './dom/blocks/svelte-component.js';
 export { element } from './dom/blocks/svelte-element.js';
 export { head } from './dom/blocks/svelte-head.js';
+export { append_styles } from './dom/css.js';
 export { action } from './dom/elements/actions.js';
 export {
-	remove_input_attr_defaults,
+	remove_input_defaults,
 	set_attribute,
 	set_attributes,
 	set_custom_element_data,
@@ -36,6 +38,7 @@ export { event, delegate, replay_events } from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
 export { set_style } from './dom/elements/style.js';
 export { animation, transition } from './dom/elements/transitions.js';
+export { bind_active_element } from './dom/elements/bindings/document.js';
 export { bind_checked, bind_files, bind_group, bind_value } from './dom/elements/bindings/input.js';
 export {
 	bind_buffered,
@@ -61,6 +64,7 @@ export {
 	bind_focused
 } from './dom/elements/bindings/universal.js';
 export { bind_window_scroll, bind_window_size } from './dom/elements/bindings/window.js';
+export { next, reset } from './dom/hydration.js';
 export {
 	once,
 	preventDefault,
@@ -87,9 +91,10 @@ export {
 	template_with_script,
 	text
 } from './dom/template.js';
+export { freeze } from './freeze.js';
 export { derived, derived_safe_equal } from './reactivity/deriveds.js';
 export {
-	effect_active,
+	effect_tracking,
 	effect_root,
 	legacy_pre_effect,
 	legacy_pre_effect_reset,
@@ -110,14 +115,14 @@ export {
 export {
 	invalidate_store,
 	mutate_store,
+	setup_stores,
 	store_get,
 	store_set,
 	store_unsub,
-	unsubscribe_on_destroy,
 	update_pre_store,
 	update_store
 } from './reactivity/store.js';
-export { append_styles, sanitize_slots, set_text, slot, stringify } from './render.js';
+export { set_text } from './render.js';
 export {
 	get,
 	invalidate_inner_signals,
@@ -132,7 +137,6 @@ export {
 	pop,
 	push,
 	unwrap,
-	freeze,
 	deep_read,
 	deep_read_state,
 	getAllContexts,
@@ -146,7 +150,7 @@ export {
 	validate_prop_bindings
 } from './validate.js';
 export { raf } from './timing.js';
-export { proxy, snapshot, is } from './proxy.js';
+export { proxy, is } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
 export {
 	child,
@@ -155,6 +159,7 @@ export {
 	$window as window,
 	$document as document
 } from './dom/operations.js';
+export { snapshot } from '../shared/clone.js';
 export { noop } from '../shared/utils.js';
 export {
 	validate_component,

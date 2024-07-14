@@ -1,7 +1,7 @@
 <script>
 	let value = $state(false);
 	const fn = () => {
-		if ($effect.active()) {
+		if ($effect.tracking()) {
 			$effect(() => {
 				value = true;
 			});

@@ -87,7 +87,7 @@ function validate_component(node, context) {
 			validate_attribute_name(attribute);
 
 			if (attribute.name === 'slot') {
-				validate_slot_attribute(context, attribute);
+				validate_slot_attribute(context, attribute, true);
 			}
 		}
 	}
@@ -253,9 +253,18 @@ function validate_attribute_name(attribute) {
 /**
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
  * @param {import('#compiler').Attribute} attribute
+ * @param {boolean} is_component
  */
-function validate_slot_attribute(context, attribute) {
+function validate_slot_attribute(context, attribute, is_component = false) {
+	const parent = context.path.at(-2);
 	let owner = undefined;
+
+	if (parent?.type === 'SnippetBlock') {
+		if (!is_text_attribute(attribute)) {
+			e.slot_attribute_invalid(attribute);
+		}
+		return;
+	}
 
 	let i = context.path.length;
 	while (i--) {
@@ -282,7 +291,7 @@ function validate_slot_attribute(context, attribute) {
 			owner.type === 'SvelteComponent' ||
 			owner.type === 'SvelteSelf'
 		) {
-			if (owner !== context.path.at(-2)) {
+			if (owner !== parent) {
 				e.slot_attribute_invalid_placement(attribute);
 			}
 
@@ -310,7 +319,7 @@ function validate_slot_attribute(context, attribute) {
 				}
 			}
 		}
-	} else {
+	} else if (!is_component) {
 		e.slot_attribute_invalid_placement(attribute);
 	}
 }
@@ -332,6 +341,14 @@ function validate_block_not_empty(node, context) {
  * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
  */
 const validation = {
+	MemberExpression(node, context) {
+		if (node.object.type === 'Identifier' && node.property.type === 'Identifier') {
+			const binding = context.state.scope.get(node.object.name);
+			if (binding?.kind === 'rest_prop' && node.property.name.startsWith('$$')) {
+				e.props_illegal_name(node.property);
+			}
+		}
+	},
 	AssignmentExpression(node, context) {
 		validate_assignment(node, node.left, context.state);
 	},
@@ -420,7 +437,8 @@ const validation = {
 									!binding_property.invalid_elements?.includes(parent.name))
 							);
 						})
-						.map(([property_name]) => property_name);
+						.map(([property_name]) => property_name)
+						.sort();
 					e.bind_invalid_name(
 						node,
 						node.name,
@@ -567,6 +585,17 @@ const validation = {
 			}
 		}
 
+		// can't add form to interactive elements because those are also used by the parser
+		// to check for the last auto-closing parent.
+		if (node.name === 'form') {
+			const path = context.path;
+			for (let parent of path) {
+				if (parent.type === 'RegularElement' && parent.name === 'form') {
+					e.node_invalid_placement(node, `<${node.name}>`, parent.name);
+				}
+			}
+		}
+
 		if (interactive_elements.has(node.name)) {
 			const path = context.path;
 			for (let parent of path) {
@@ -604,6 +633,11 @@ const validation = {
 		});
 	},
 	RenderTag(node, context) {
+		const callee = unwrap_optional(node.expression).callee;
+
+		node.metadata.dynamic =
+			callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
+
 		context.state.analysis.uses_render_tags = true;
 
 		const raw_args = unwrap_optional(node.expression).arguments;
@@ -613,7 +647,6 @@ const validation = {
 			}
 		}
 
-		const callee = unwrap_optional(node.expression).callee;
 		if (
 			callee.type === 'MemberExpression' &&
 			callee.property.type === 'Identifier' &&
@@ -867,7 +900,7 @@ function validate_call_expression(node, scope, path) {
 		}
 	}
 
-	if (rune === '$effect.active') {
+	if (rune === '$effect.tracking') {
 		if (node.arguments.length !== 0) {
 			e.rune_invalid_arguments(node, rune);
 		}
@@ -1010,6 +1043,41 @@ export const validation_runes_js = {
 		if (node.callee.type === 'ClassExpression' && context.state.scope.function_depth > 0) {
 			w.perf_avoid_inline_class(node);
 		}
+	},
+	Identifier(node, { path, state }) {
+		let i = path.length;
+		let parent = /** @type {import('estree').Expression} */ (path[--i]);
+
+		if (
+			Runes.includes(/** @type {Runes[number]} */ (node.name)) &&
+			is_reference(node, parent) &&
+			state.scope.get(node.name) === null &&
+			state.scope.get(node.name.slice(1)) === null
+		) {
+			/** @type {import('estree').Expression} */
+			let current = node;
+			let name = node.name;
+
+			while (parent.type === 'MemberExpression') {
+				if (parent.computed) e.rune_invalid_computed_property(parent);
+				name += `.${/** @type {import('estree').Identifier} */ (parent.property).name}`;
+
+				current = parent;
+				parent = /** @type {import('estree').Expression} */ (path[--i]);
+
+				if (!Runes.includes(/** @type {Runes[number]} */ (name))) {
+					if (name === '$effect.active') {
+						e.rune_renamed(parent, '$effect.active', '$effect.tracking');
+					}
+
+					e.rune_invalid_name(parent, name);
+				}
+			}
+
+			if (parent.type !== 'CallExpression') {
+				e.rune_missing_parentheses(current);
+			}
+		}
 	}
 };
 
@@ -1054,6 +1122,20 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 				e.constant_assignment(node, thing);
 			}
 		}
+	}
+}
+
+/**
+ * Validates that the opening of a control flow block is `{` immediately followed by the expected character.
+ * In legacy mode whitespace is allowed inbetween. TODO remove once legacy mode is gone and move this into parser instead.
+ * @param {{start: number; end: number}} node
+ * @param {import('./types.js').AnalysisState} state
+ * @param {string} expected
+ */
+function validate_opening_tag(node, state, expected) {
+	if (state.analysis.source[node.start + 1] !== expected) {
+		// avoid a sea of red and only mark the first few characters
+		e.block_unexpected_character({ start: node.start, end: node.start + 5 }, expected);
 	}
 }
 
@@ -1106,37 +1188,6 @@ export const validation_runes = merge(validation, a11y_validators, {
 			e.import_svelte_internal_forbidden(node);
 		}
 	},
-	Identifier(node, { path, state }) {
-		let i = path.length;
-		let parent = /** @type {import('estree').Expression} */ (path[--i]);
-
-		if (
-			Runes.includes(/** @type {Runes[number]} */ (node.name)) &&
-			is_reference(node, parent) &&
-			state.scope.get(node.name) === null &&
-			state.scope.get(node.name.slice(1)) === null
-		) {
-			/** @type {import('estree').Expression} */
-			let current = node;
-			let name = node.name;
-
-			while (parent.type === 'MemberExpression') {
-				if (parent.computed) e.rune_invalid_computed_property(parent);
-				name += `.${/** @type {import('estree').Identifier} */ (parent.property).name}`;
-
-				current = parent;
-				parent = /** @type {import('estree').Expression} */ (path[--i]);
-
-				if (!Runes.includes(/** @type {Runes[number]} */ (name))) {
-					e.rune_invalid_name(parent, name);
-				}
-			}
-
-			if (parent.type !== 'CallExpression') {
-				e.rune_missing_parentheses(current);
-			}
-		}
-	},
 	LabeledStatement(node, { path }) {
 		if (node.label.name !== '$' || path.at(-1)?.type !== 'Program') return;
 		e.legacy_reactive_statement_invalid(node);
@@ -1180,6 +1231,8 @@ export const validation_runes = merge(validation, a11y_validators, {
 		validate_call_expression(node, state.scope, path);
 	},
 	EachBlock(node, { next, state }) {
+		validate_opening_tag(node, state, '#');
+
 		const context = node.context;
 		if (
 			context.type === 'Identifier' &&
@@ -1188,6 +1241,51 @@ export const validation_runes = merge(validation, a11y_validators, {
 			e.state_invalid_placement(node, context.name);
 		}
 		next({ ...state });
+	},
+	IfBlock(node, { state, path }) {
+		const parent = path.at(-1);
+		const expected =
+			path.at(-2)?.type === 'IfBlock' && parent?.type === 'Fragment' && parent.nodes.length === 1
+				? ':'
+				: '#';
+		validate_opening_tag(node, state, expected);
+	},
+	AwaitBlock(node, { state }) {
+		validate_opening_tag(node, state, '#');
+
+		if (node.value) {
+			const start = /** @type {number} */ (node.value.start);
+			const match = state.analysis.source.substring(start - 10, start).match(/{(\s*):then\s+$/);
+			if (match && match[1] !== '') {
+				e.block_unexpected_character({ start: start - 10, end: start }, ':');
+			}
+		}
+
+		if (node.error) {
+			const start = /** @type {number} */ (node.error.start);
+			const match = state.analysis.source.substring(start - 10, start).match(/{(\s*):catch\s+$/);
+			if (match && match[1] !== '') {
+				e.block_unexpected_character({ start: start - 10, end: start }, ':');
+			}
+		}
+	},
+	KeyBlock(node, { state }) {
+		validate_opening_tag(node, state, '#');
+	},
+	SnippetBlock(node, { state }) {
+		validate_opening_tag(node, state, '#');
+	},
+	ConstTag(node, { state }) {
+		validate_opening_tag(node, state, '@');
+	},
+	HtmlTag(node, { state }) {
+		validate_opening_tag(node, state, '@');
+	},
+	DebugTag(node, { state }) {
+		validate_opening_tag(node, state, '@');
+	},
+	RenderTag(node, { state }) {
+		validate_opening_tag(node, state, '@');
 	},
 	VariableDeclarator(node, { state }) {
 		ensure_no_module_import_conflict(node, state);
@@ -1215,7 +1313,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 				e.rune_invalid_arguments(node, rune);
 			}
 
-			if (node.id.type !== 'ObjectPattern') {
+			if (node.id.type !== 'ObjectPattern' && node.id.type !== 'Identifier') {
 				e.props_invalid_identifier(node);
 			}
 
@@ -1223,17 +1321,23 @@ export const validation_runes = merge(validation, a11y_validators, {
 				e.props_invalid_placement(node);
 			}
 
-			for (const property of node.id.properties) {
-				if (property.type === 'Property') {
-					if (property.computed) {
-						e.props_invalid_pattern(property);
-					}
+			if (node.id.type === 'ObjectPattern') {
+				for (const property of node.id.properties) {
+					if (property.type === 'Property') {
+						if (property.computed) {
+							e.props_invalid_pattern(property);
+						}
 
-					const value =
-						property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
+						if (property.key.type === 'Identifier' && property.key.name.startsWith('$$')) {
+							e.props_illegal_name(property);
+						}
 
-					if (value.type !== 'Identifier') {
-						e.props_invalid_pattern(property);
+						const value =
+							property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
+
+						if (value.type !== 'Identifier') {
+							e.props_invalid_pattern(property);
+						}
 					}
 				}
 			}
@@ -1264,5 +1368,6 @@ export const validation_runes = merge(validation, a11y_validators, {
 	// TODO this is a code smell. need to refactor this stuff
 	ClassBody: validation_runes_js.ClassBody,
 	ClassDeclaration: validation_runes_js.ClassDeclaration,
+	Identifier: validation_runes_js.Identifier,
 	NewExpression: validation_runes_js.NewExpression
 });

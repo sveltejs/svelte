@@ -119,7 +119,7 @@ const runes = [
 	{ snippet: '$effect.root(() => {\n\t${}\n})' },
 	{ snippet: '$state.snapshot(${})' },
 	{ snippet: '$state.is(${})' },
-	{ snippet: '$effect.active()' },
+	{ snippet: '$effect.tracking()' },
 	{ snippet: '$inspect(${});', test: is_statement }
 ];
 
@@ -145,6 +145,7 @@ export function autocomplete(context, selected, files) {
 			'svelte',
 			'svelte/animate',
 			'svelte/easing',
+			'svelte/events',
 			'svelte/legacy',
 			'svelte/motion',
 			'svelte/reactivity',

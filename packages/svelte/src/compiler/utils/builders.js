@@ -1,35 +1,36 @@
+/** @import * as ESTree from 'estree' */
 import { regex_is_valid_identifier } from '../phases/patterns.js';
 import { sanitize_template_string } from './sanitize_template_string.js';
 
 /**
- * @param {Array<import('estree').Expression | import('estree').SpreadElement | null>} elements
- * @returns {import('estree').ArrayExpression}
+ * @param {Array<ESTree.Expression | ESTree.SpreadElement | null>} elements
+ * @returns {ESTree.ArrayExpression}
  */
 export function array(elements = []) {
 	return { type: 'ArrayExpression', elements };
 }
 
 /**
- * @param {Array<import('estree').Pattern | null>} elements
- * @returns {import('estree').ArrayPattern}
+ * @param {Array<ESTree.Pattern | null>} elements
+ * @returns {ESTree.ArrayPattern}
  */
 export function array_pattern(elements) {
 	return { type: 'ArrayPattern', elements };
 }
 
 /**
- * @param {import('estree').Pattern} left
- * @param {import('estree').Expression} right
- * @returns {import('estree').AssignmentPattern}
+ * @param {ESTree.Pattern} left
+ * @param {ESTree.Expression} right
+ * @returns {ESTree.AssignmentPattern}
  */
 export function assignment_pattern(left, right) {
 	return { type: 'AssignmentPattern', left, right };
 }
 
 /**
- * @param {Array<import('estree').Pattern>} params
- * @param {import('estree').BlockStatement | import('estree').Expression} body
- * @returns {import('estree').ArrowFunctionExpression}
+ * @param {Array<ESTree.Pattern>} params
+ * @param {ESTree.BlockStatement | ESTree.Expression} body
+ * @returns {ESTree.ArrowFunctionExpression}
  */
 export function arrow(params, body) {
 	return {
@@ -44,10 +45,10 @@ export function arrow(params, body) {
 }
 
 /**
- * @param {import('estree').AssignmentOperator} operator
- * @param {import('estree').Pattern} left
- * @param {import('estree').Expression} right
- * @returns {import('estree').AssignmentExpression}
+ * @param {ESTree.AssignmentOperator} operator
+ * @param {ESTree.Pattern} left
+ * @param {ESTree.Expression} right
+ * @returns {ESTree.AssignmentExpression}
  */
 export function assignment(operator, left, right) {
 	return { type: 'AssignmentExpression', operator, left, right };
@@ -55,34 +56,34 @@ export function assignment(operator, left, right) {
 
 /**
  * @template T
- * @param {T & import('estree').BaseFunction} func
- * @returns {T & import('estree').BaseFunction}
+ * @param {T & ESTree.BaseFunction} func
+ * @returns {T & ESTree.BaseFunction}
  */
 export function async(func) {
 	return { ...func, async: true };
 }
 
 /**
- * @param {import('estree').Expression} argument
- * @returns {import('estree').AwaitExpression}
+ * @param {ESTree.Expression} argument
+ * @returns {ESTree.AwaitExpression}
  */
 function await_builder(argument) {
 	return { type: 'AwaitExpression', argument };
 }
 
 /**
- * @param {import('estree').BinaryOperator} operator
- * @param {import('estree').Expression} left
- * @param {import('estree').Expression} right
- * @returns {import('estree').BinaryExpression}
+ * @param {ESTree.BinaryOperator} operator
+ * @param {ESTree.Expression} left
+ * @param {ESTree.Expression} right
+ * @returns {ESTree.BinaryExpression}
  */
 export function binary(operator, left, right) {
 	return { type: 'BinaryExpression', operator, left, right };
 }
 
 /**
- * @param {import('estree').Statement[]} body
- * @returns {import('estree').BlockStatement}
+ * @param {ESTree.Statement[]} body
+ * @returns {ESTree.BlockStatement}
  */
 export function block(body) {
 	return { type: 'BlockStatement', body };
@@ -90,17 +91,17 @@ export function block(body) {
 
 /**
  * @param {string} name
- * @param {import('estree').Statement} body
- * @returns {import('estree').LabeledStatement}
+ * @param {ESTree.Statement} body
+ * @returns {ESTree.LabeledStatement}
  */
 export function labeled(name, body) {
 	return { type: 'LabeledStatement', label: id(name), body };
 }
 
 /**
- * @param {string | import('estree').Expression} callee
- * @param {...(import('estree').Expression | import('estree').SpreadElement | false | undefined)} args
- * @returns {import('estree').CallExpression}
+ * @param {string | ESTree.Expression} callee
+ * @param {...(ESTree.Expression | ESTree.SpreadElement | false | undefined)} args
+ * @returns {ESTree.CallExpression}
  */
 export function call(callee, ...args) {
 	if (typeof callee === 'string') callee = id(callee);
@@ -124,20 +125,18 @@ export function call(callee, ...args) {
 	return {
 		type: 'CallExpression',
 		callee,
-		arguments: /** @type {Array<import('estree').Expression | import('estree').SpreadElement>} */ (
-			args
-		),
+		arguments: /** @type {Array<ESTree.Expression | ESTree.SpreadElement>} */ (args),
 		optional: false
 	};
 }
 
 /**
- * @param {string | import('estree').Expression} callee
- * @param {...import('estree').Expression} args
- * @returns {import('estree').ChainExpression}
+ * @param {string | ESTree.Expression} callee
+ * @param {...ESTree.Expression} args
+ * @returns {ESTree.ChainExpression}
  */
 export function maybe_call(callee, ...args) {
-	const expression = /** @type {import('estree').SimpleCallExpression} */ (call(callee, ...args));
+	const expression = /** @type {ESTree.SimpleCallExpression} */ (call(callee, ...args));
 	expression.optional = true;
 
 	return {
@@ -147,29 +146,29 @@ export function maybe_call(callee, ...args) {
 }
 
 /**
- * @param {import('estree').UnaryOperator} operator
- * @param {import('estree').Expression} argument
- * @returns {import('estree').UnaryExpression}
+ * @param {ESTree.UnaryOperator} operator
+ * @param {ESTree.Expression} argument
+ * @returns {ESTree.UnaryExpression}
  */
 export function unary(operator, argument) {
 	return { type: 'UnaryExpression', argument, operator, prefix: true };
 }
 
 /**
- * @param {import('estree').Expression} test
- * @param {import('estree').Expression} consequent
- * @param {import('estree').Expression} alternate
- * @returns {import('estree').ConditionalExpression}
+ * @param {ESTree.Expression} test
+ * @param {ESTree.Expression} consequent
+ * @param {ESTree.Expression} alternate
+ * @returns {ESTree.ConditionalExpression}
  */
 export function conditional(test, consequent, alternate) {
 	return { type: 'ConditionalExpression', test, consequent, alternate };
 }
 
 /**
- * @param {import('estree').LogicalOperator} operator
- * @param {import('estree').Expression} left
- * @param {import('estree').Expression} right
- * @returns {import('estree').LogicalExpression}
+ * @param {ESTree.LogicalOperator} operator
+ * @param {ESTree.Expression} left
+ * @param {ESTree.Expression} right
+ * @returns {ESTree.LogicalExpression}
  */
 export function logical(operator, left, right) {
 	return { type: 'LogicalExpression', operator, left, right };
@@ -177,9 +176,9 @@ export function logical(operator, left, right) {
 
 /**
  * @param {'const' | 'let' | 'var'} kind
- * @param {string | import('estree').Pattern} pattern
- * @param {import('estree').Expression} [init]
- * @returns {import('estree').VariableDeclaration}
+ * @param {string | ESTree.Pattern} pattern
+ * @param {ESTree.Expression} [init]
+ * @returns {ESTree.VariableDeclaration}
  */
 export function declaration(kind, pattern, init) {
 	if (typeof pattern === 'string') pattern = id(pattern);
@@ -192,32 +191,32 @@ export function declaration(kind, pattern, init) {
 }
 
 /**
- * @param {import('estree').Pattern} id
- * @param {import('estree').Expression} [init]
- * @returns {import('estree').VariableDeclarator}
+ * @param {ESTree.Pattern} id
+ * @param {ESTree.Expression} [init]
+ * @returns {ESTree.VariableDeclarator}
  */
 export function declarator(id, init) {
 	return { type: 'VariableDeclarator', id, init };
 }
 
-/** @type {import('estree').EmptyStatement} */
+/** @type {ESTree.EmptyStatement} */
 export const empty = {
 	type: 'EmptyStatement'
 };
 
 /**
- * @param {import('estree').Expression | import('estree').MaybeNamedClassDeclaration | import('estree').MaybeNamedFunctionDeclaration} declaration
- * @returns {import('estree').ExportDefaultDeclaration}
+ * @param {ESTree.Expression | ESTree.MaybeNamedClassDeclaration | ESTree.MaybeNamedFunctionDeclaration} declaration
+ * @returns {ESTree.ExportDefaultDeclaration}
  */
 export function export_default(declaration) {
 	return { type: 'ExportDefaultDeclaration', declaration };
 }
 
 /**
- * @param {import('estree').Identifier} id
- * @param {import('estree').Pattern[]} params
- * @param {import('estree').BlockStatement} body
- * @returns {import('estree').FunctionDeclaration}
+ * @param {ESTree.Identifier} id
+ * @param {ESTree.Pattern[]} params
+ * @param {ESTree.BlockStatement} body
+ * @returns {ESTree.FunctionDeclaration}
  */
 export function function_declaration(id, params, body) {
 	return {
@@ -233,8 +232,8 @@ export function function_declaration(id, params, body) {
 
 /**
  * @param {string} name
- * @param {import('estree').Statement[]} body
- * @returns {import('estree').Property & { value: import('estree').FunctionExpression}}}
+ * @param {ESTree.Statement[]} body
+ * @returns {ESTree.Property & { value: ESTree.FunctionExpression}}}
  */
 export function get(name, body) {
 	return prop('get', key(name), function_builder(null, [], block(body)));
@@ -242,7 +241,7 @@ export function get(name, body) {
 
 /**
  * @param {string} name
- * @returns {import('estree').Identifier}
+ * @returns {ESTree.Identifier}
  */
 export function id(name) {
 	return { type: 'Identifier', name };
@@ -250,7 +249,7 @@ export function id(name) {
 
 /**
  * @param {string} name
- * @returns {import('estree').PrivateIdentifier}
+ * @returns {ESTree.PrivateIdentifier}
  */
 export function private_id(name) {
 	return { type: 'PrivateIdentifier', name };
@@ -258,7 +257,7 @@ export function private_id(name) {
 
 /**
  * @param {string} local
- * @returns {import('estree').ImportNamespaceSpecifier}
+ * @returns {ESTree.ImportNamespaceSpecifier}
  */
 function import_namespace(local) {
 	return {
@@ -269,8 +268,8 @@ function import_namespace(local) {
 
 /**
  * @param {string} name
- * @param {import('estree').Expression} value
- * @returns {import('estree').Property}
+ * @param {ESTree.Expression} value
+ * @returns {ESTree.Property}
  */
 export function init(name, value) {
 	return prop('init', key(name), value);
@@ -278,7 +277,7 @@ export function init(name, value) {
 
 /**
  * @param {string | boolean | null | number | RegExp} value
- * @returns {import('estree').Literal}
+ * @returns {ESTree.Literal}
  */
 export function literal(value) {
 	// @ts-expect-error we don't want to muck around with bigint here
@@ -286,11 +285,11 @@ export function literal(value) {
 }
 
 /**
- * @param {import('estree').Expression | import('estree').Super} object
- * @param {import('estree').Expression | import('estree').PrivateIdentifier} property
+ * @param {ESTree.Expression | ESTree.Super} object
+ * @param {ESTree.Expression | ESTree.PrivateIdentifier} property
  * @param {boolean} computed
  * @param {boolean} optional
- * @returns {import('estree').MemberExpression}
+ * @returns {ESTree.MemberExpression}
  */
 export function member(object, property, computed = false, optional = false) {
 	return { type: 'MemberExpression', object, property, computed, optional };
@@ -298,12 +297,12 @@ export function member(object, property, computed = false, optional = false) {
 
 /**
  * @param {string} path
- * @returns {import('estree').Identifier | import('estree').MemberExpression}
+ * @returns {ESTree.Identifier | ESTree.MemberExpression}
  */
 export function member_id(path) {
 	const parts = path.split('.');
 
-	/** @type {import('estree').Identifier | import('estree').MemberExpression} */
+	/** @type {ESTree.Identifier | ESTree.MemberExpression} */
 	let expression = id(parts[0]);
 
 	for (let i = 1; i < parts.length; i += 1) {
@@ -313,39 +312,39 @@ export function member_id(path) {
 }
 
 /**
- * @param {Array<import('estree').Property | import('estree').SpreadElement>} properties
- * @returns {import('estree').ObjectExpression}
+ * @param {Array<ESTree.Property | ESTree.SpreadElement>} properties
+ * @returns {ESTree.ObjectExpression}
  */
 export function object(properties) {
 	return { type: 'ObjectExpression', properties };
 }
 
 /**
- * @param {Array<import('estree').RestElement | import('estree').AssignmentProperty>} properties
- * @returns {import('estree').ObjectPattern}
+ * @param {Array<ESTree.RestElement | ESTree.AssignmentProperty>} properties
+ * @returns {ESTree.ObjectPattern}
  */
 export function object_pattern(properties) {
 	return { type: 'ObjectPattern', properties };
 }
 
 /**
- * @template {import('estree').Expression} Value
+ * @template {ESTree.Expression} Value
  * @param {'init' | 'get' | 'set'} kind
- * @param {import('estree').Expression} key
+ * @param {ESTree.Expression} key
  * @param {Value} value
  * @param {boolean} computed
- * @returns {import('estree').Property & { value: Value }}
+ * @returns {ESTree.Property & { value: Value }}
  */
 export function prop(kind, key, value, computed = false) {
 	return { type: 'Property', kind, key, value, method: false, shorthand: false, computed };
 }
 
 /**
- * @param {import('estree').Expression | import('estree').PrivateIdentifier} key
- * @param {import('estree').Expression | null | undefined} value
+ * @param {ESTree.Expression | ESTree.PrivateIdentifier} key
+ * @param {ESTree.Expression | null | undefined} value
  * @param {boolean} computed
  * @param {boolean} is_static
- * @returns {import('estree').PropertyDefinition}
+ * @returns {ESTree.PropertyDefinition}
  */
 export function prop_def(key, value, computed = false, is_static = false) {
 	return { type: 'PropertyDefinition', key, value, computed, static: is_static };
@@ -354,7 +353,7 @@ export function prop_def(key, value, computed = false, is_static = false) {
 /**
  * @param {string} cooked
  * @param {boolean} tail
- * @returns {import('estree').TemplateElement}
+ * @returns {ESTree.TemplateElement}
  */
 export function quasi(cooked, tail = false) {
 	const raw = sanitize_template_string(cooked);
@@ -362,16 +361,16 @@ export function quasi(cooked, tail = false) {
 }
 
 /**
- * @param {import('estree').Pattern} argument
- * @returns {import('estree').RestElement}
+ * @param {ESTree.Pattern} argument
+ * @returns {ESTree.RestElement}
  */
 export function rest(argument) {
 	return { type: 'RestElement', argument };
 }
 
 /**
- * @param {import('estree').Expression[]} expressions
- * @returns {import('estree').SequenceExpression}
+ * @param {ESTree.Expression[]} expressions
+ * @returns {ESTree.SequenceExpression}
  */
 export function sequence(expressions) {
 	return { type: 'SequenceExpression', expressions };
@@ -379,42 +378,42 @@ export function sequence(expressions) {
 
 /**
  * @param {string} name
- * @param {import('estree').Statement[]} body
- * @returns {import('estree').Property & { value: import('estree').FunctionExpression}}
+ * @param {ESTree.Statement[]} body
+ * @returns {ESTree.Property & { value: ESTree.FunctionExpression}}
  */
 export function set(name, body) {
 	return prop('set', key(name), function_builder(null, [id('$$value')], block(body)));
 }
 
 /**
- * @param {import('estree').Expression} argument
- * @returns {import('estree').SpreadElement}
+ * @param {ESTree.Expression} argument
+ * @returns {ESTree.SpreadElement}
  */
 export function spread(argument) {
 	return { type: 'SpreadElement', argument };
 }
 
 /**
- * @param {import('estree').Expression} expression
- * @returns {import('estree').ExpressionStatement}
+ * @param {ESTree.Expression} expression
+ * @returns {ESTree.ExpressionStatement}
  */
 export function stmt(expression) {
 	return { type: 'ExpressionStatement', expression };
 }
 
 /**
- * @param {import('estree').TemplateElement[]} elements
- * @param {import('estree').Expression[]} expressions
- * @returns {import('estree').TemplateLiteral}
+ * @param {ESTree.TemplateElement[]} elements
+ * @param {ESTree.Expression[]} expressions
+ * @returns {ESTree.TemplateLiteral}
  */
 export function template(elements, expressions) {
 	return { type: 'TemplateLiteral', quasis: elements, expressions };
 }
 
 /**
- * @param {import('estree').Expression | import('estree').BlockStatement} expression
+ * @param {ESTree.Expression | ESTree.BlockStatement} expression
  * @param {boolean} [async]
- * @returns {import('estree').Expression}
+ * @returns {ESTree.Expression}
  */
 export function thunk(expression, async = false) {
 	if (
@@ -434,9 +433,9 @@ export function thunk(expression, async = false) {
 
 /**
  *
- * @param {string | import('estree').Expression} expression
- * @param  {...import('estree').Expression} args
- * @returns {import('estree').NewExpression}
+ * @param {string | ESTree.Expression} expression
+ * @param  {...ESTree.Expression} args
+ * @returns {ESTree.NewExpression}
  */
 function new_builder(expression, ...args) {
 	if (typeof expression === 'string') expression = id(expression);
@@ -449,19 +448,19 @@ function new_builder(expression, ...args) {
 }
 
 /**
- * @param {import('estree').UpdateOperator} operator
- * @param {import('estree').Expression} argument
+ * @param {ESTree.UpdateOperator} operator
+ * @param {ESTree.Expression} argument
  * @param {boolean} prefix
- * @returns {import('estree').UpdateExpression}
+ * @returns {ESTree.UpdateExpression}
  */
 export function update(operator, argument, prefix = false) {
 	return { type: 'UpdateExpression', operator, argument, prefix };
 }
 
 /**
- * @param {import('estree').Expression} test
- * @param {import('estree').Statement} body
- * @returns {import('estree').DoWhileStatement}
+ * @param {ESTree.Expression} test
+ * @param {ESTree.Statement} body
+ * @returns {ESTree.DoWhileStatement}
  */
 export function do_while(test, body) {
 	return { type: 'DoWhileStatement', test, body };
@@ -471,38 +470,38 @@ const true_instance = literal(true);
 const false_instance = literal(false);
 const null_instane = literal(null);
 
-/** @type {import('estree').DebuggerStatement} */
+/** @type {ESTree.DebuggerStatement} */
 const debugger_builder = {
 	type: 'DebuggerStatement'
 };
 
-/** @type {import('estree').ThisExpression} */
+/** @type {ESTree.ThisExpression} */
 const this_instance = {
 	type: 'ThisExpression'
 };
 
 /**
- * @param {string | import('estree').Pattern} pattern
- * @param { import('estree').Expression} [init]
- * @returns {import('estree').VariableDeclaration}
+ * @param {string | ESTree.Pattern} pattern
+ * @param { ESTree.Expression} [init]
+ * @returns {ESTree.VariableDeclaration}
  */
 function let_builder(pattern, init) {
 	return declaration('let', pattern, init);
 }
 
 /**
- * @param {string | import('estree').Pattern} pattern
- * @param { import('estree').Expression} init
- * @returns {import('estree').VariableDeclaration}
+ * @param {string | ESTree.Pattern} pattern
+ * @param { ESTree.Expression} init
+ * @returns {ESTree.VariableDeclaration}
  */
 function const_builder(pattern, init) {
 	return declaration('const', pattern, init);
 }
 
 /**
- * @param {string | import('estree').Pattern} pattern
- * @param { import('estree').Expression} [init]
- * @returns {import('estree').VariableDeclaration}
+ * @param {string | ESTree.Pattern} pattern
+ * @param { ESTree.Expression} [init]
+ * @returns {ESTree.VariableDeclaration}
  */
 function var_builder(pattern, init) {
 	return declaration('var', pattern, init);
@@ -510,11 +509,11 @@ function var_builder(pattern, init) {
 
 /**
  *
- * @param {import('estree').VariableDeclaration | import('estree').Expression | null} init
- * @param {import('estree').Expression} test
- * @param {import('estree').Expression} update
- * @param {import('estree').Statement} body
- * @returns {import('estree').ForStatement}
+ * @param {ESTree.VariableDeclaration | ESTree.Expression | null} init
+ * @param {ESTree.Expression} test
+ * @param {ESTree.Expression} update
+ * @param {ESTree.Statement} body
+ * @returns {ESTree.ForStatement}
  */
 function for_builder(init, test, update, body) {
 	return { type: 'ForStatement', init, test, update, body };
@@ -523,12 +522,12 @@ function for_builder(init, test, update, body) {
 /**
  *
  * @param {'constructor' | 'method' | 'get' | 'set'} kind
- * @param {import('estree').Expression | import('estree').PrivateIdentifier} key
- * @param {import('estree').Pattern[]} params
- * @param {import('estree').Statement[]} body
+ * @param {ESTree.Expression | ESTree.PrivateIdentifier} key
+ * @param {ESTree.Pattern[]} params
+ * @param {ESTree.Statement[]} body
  * @param {boolean} computed
  * @param {boolean} is_static
- * @returns {import('estree').MethodDefinition}
+ * @returns {ESTree.MethodDefinition}
  */
 export function method(kind, key, params, body, computed = false, is_static = false) {
 	return {
@@ -543,10 +542,10 @@ export function method(kind, key, params, body, computed = false, is_static = fa
 
 /**
  *
- * @param {import('estree').Identifier | null} id
- * @param {import('estree').Pattern[]} params
- * @param {import('estree').BlockStatement} body
- * @returns {import('estree').FunctionExpression}
+ * @param {ESTree.Identifier | null} id
+ * @param {ESTree.Pattern[]} params
+ * @param {ESTree.BlockStatement} body
+ * @returns {ESTree.FunctionExpression}
  */
 function function_builder(id, params, body) {
 	return {
@@ -561,10 +560,10 @@ function function_builder(id, params, body) {
 }
 
 /**
- * @param {import('estree').Expression} test
- * @param {import('estree').Statement} consequent
- * @param {import('estree').Statement} [alternate]
- * @returns {import('estree').IfStatement}
+ * @param {ESTree.Expression} test
+ * @param {ESTree.Statement} consequent
+ * @param {ESTree.Statement} [alternate]
+ * @returns {ESTree.IfStatement}
  */
 function if_builder(test, consequent, alternate) {
 	return { type: 'IfStatement', test, consequent, alternate };
@@ -573,7 +572,7 @@ function if_builder(test, consequent, alternate) {
 /**
  * @param {string} as
  * @param {string} source
- * @returns {import('estree').ImportDeclaration}
+ * @returns {ESTree.ImportDeclaration}
  */
 export function import_all(as, source) {
 	return {
@@ -586,7 +585,7 @@ export function import_all(as, source) {
 /**
  * @param {Array<[string, string]>} parts
  * @param {string} source
- * @returns {import('estree').ImportDeclaration}
+ * @returns {ESTree.ImportDeclaration}
  */
 export function imports(parts, source) {
 	return {
@@ -601,8 +600,8 @@ export function imports(parts, source) {
 }
 
 /**
- * @param {import('estree').Expression | null} argument
- * @returns {import('estree').ReturnStatement}
+ * @param {ESTree.Expression | null} argument
+ * @returns {ESTree.ReturnStatement}
  */
 function return_builder(argument = null) {
 	return { type: 'ReturnStatement', argument };
@@ -610,7 +609,7 @@ function return_builder(argument = null) {
 
 /**
  * @param {string} str
- * @returns {import('estree').ThrowStatement}
+ * @returns {ESTree.ThrowStatement}
  */
 export function throw_error(str) {
 	return {
@@ -637,7 +636,7 @@ export {
 
 /**
  * @param {string} name
- * @returns {import('estree').Expression}
+ * @returns {ESTree.Expression}
  */
 export function key(name) {
 	return regex_is_valid_identifier.test(name) ? id(name) : literal(name);

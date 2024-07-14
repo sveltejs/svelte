@@ -1,9 +1,13 @@
-import { render_effect } from '../../reactivity/effects.js';
-import { all_registered_events, root_event_handles } from '../../render.js';
-import { yield_event_updates } from '../../runtime.js';
-import { define_property, is_array } from '../../utils.js';
+import { teardown } from '../../reactivity/effects.js';
+import { define_property, is_array } from '../../../shared/utils.js';
 import { hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
+
+/** @type {Set<string>} */
+export const all_registered_events = new Set();
+
+/** @type {Set<(events: Array<string>) => void>} */
+export const root_event_handles = new Set();
 
 /**
  * SSR adds onload and onerror attributes to catch those events before the hydration.
@@ -34,7 +38,7 @@ export function replay_events(dom) {
 
 /**
  * @param {string} event_name
- * @param {Element} dom
+ * @param {EventTarget} dom
  * @param {EventListener} handler
  * @param {AddEventListenerOptions} options
  */
@@ -45,10 +49,10 @@ export function create_event(event_name, dom, handler, options) {
 	function target_handler(/** @type {Event} */ event) {
 		if (!options.capture) {
 			// Only call in the bubble phase, else delegated events would be called before the capturing events
-			handle_event_propagation(dom, event);
+			handle_event_propagation.call(dom, event);
 		}
 		if (!event.cancelBubble) {
-			return yield_event_updates(() => handler.call(this, event));
+			return handler.call(this, event);
 		}
 	}
 
@@ -68,6 +72,48 @@ export function create_event(event_name, dom, handler, options) {
 }
 
 /**
+ * Attaches an event handler to an element and returns a function that removes the handler. Using this
+ * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
+ * (with attributes like `onclick`), which use event delegation for performance reasons
+ *
+ * @template {HTMLElement} Element
+ * @template {keyof HTMLElementEventMap} Type
+ * @overload
+ * @param {Element} element
+ * @param {Type} type
+ * @param {(this: Element, event: HTMLElementEventMap[Type]) => any} handler
+ * @param {AddEventListenerOptions} [options]
+ * @returns {() => void}
+ */
+
+/**
+ * Attaches an event handler to an element and returns a function that removes the handler. Using this
+ * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
+ * (with attributes like `onclick`), which use event delegation for performance reasons
+ *
+ * @overload
+ * @param {EventTarget} element
+ * @param {string} type
+ * @param {EventListener} handler
+ * @param {AddEventListenerOptions} [options]
+ * @returns {() => void}
+ */
+
+/**
+ * @param {EventTarget} element
+ * @param {string} type
+ * @param {EventListener} handler
+ * @param {AddEventListenerOptions} [options]
+ */
+export function on(element, type, handler, options = {}) {
+	var target_handler = create_event(type, element, handler, options);
+
+	return () => {
+		element.removeEventListener(type, target_handler, options);
+	};
+}
+
+/**
  * @param {string} event_name
  * @param {Element} dom
  * @param {EventListener} handler
@@ -81,10 +127,8 @@ export function event(event_name, dom, handler, capture, passive) {
 
 	// @ts-ignore
 	if (dom === document.body || dom === window || dom === document) {
-		render_effect(() => {
-			return () => {
-				dom.removeEventListener(event_name, target_handler, options);
-			};
+		teardown(() => {
+			dom.removeEventListener(event_name, target_handler, options);
 		});
 	}
 }
@@ -104,22 +148,16 @@ export function delegate(events) {
 }
 
 /**
- * @param {Node} handler_element
+ * @this {EventTarget}
  * @param {Event} event
  * @returns {void}
  */
-export function handle_event_propagation(handler_element, event) {
-	var owner_document = handler_element.ownerDocument;
+export function handle_event_propagation(event) {
+	var handler_element = this;
+	var owner_document = /** @type {Node} */ (handler_element).ownerDocument;
 	var event_name = event.type;
 	var path = event.composedPath?.() || [];
 	var current_target = /** @type {null | Element} */ (path[0] || event.target);
-
-	if (event.target !== current_target) {
-		define_property(event, 'target', {
-			configurable: true,
-			value: current_target
-		});
-	}
 
 	// composedPath contains list of nodes the event has propagated through.
 	// We check __root to skip all nodes below it in case this is a
@@ -157,13 +195,15 @@ export function handle_event_propagation(handler_element, event) {
 		}
 
 		if (at_idx <= handler_idx) {
-			// +1 because at_idx is the element which was already handled, and there can only be one delegated event per element.
-			// Avoids on:click and onclick on the same event resulting in onclick being fired twice.
-			path_idx = at_idx + 1;
+			path_idx = at_idx;
 		}
 	}
 
 	current_target = /** @type {Element} */ (path[path_idx] || event.target);
+	// there can only be one delegated event per element, and we either already handled the current target,
+	// or this is the very first target in the chain which has a non-delegated listener, in which case it's safe
+	// to handle a possible delegated event on it later (through the root delegation listener for example).
+	if (current_target === handler_element) return;
 
 	// Proxy currentTarget to correct target
 	define_property(event, 'currentTarget', {
@@ -173,38 +213,55 @@ export function handle_event_propagation(handler_element, event) {
 		}
 	});
 
-	/** @param {Element} next_target */
-	function next(next_target) {
-		current_target = next_target;
-		/** @type {null | Element} */
-		var parent_element = next_target.parentNode || /** @type {any} */ (next_target).host || null;
+	try {
+		/**
+		 * @type {unknown}
+		 */
+		var throw_error;
+		/**
+		 * @type {unknown[]}
+		 */
+		var other_errors = [];
 
-		try {
-			// @ts-expect-error
-			var delegated = next_target['__' + event_name];
+		while (current_target !== null) {
+			/** @type {null | Element} */
+			var parent_element =
+				current_target.parentNode || /** @type {any} */ (current_target).host || null;
 
-			if (delegated !== undefined && !(/** @type {any} */ (next_target).disabled)) {
-				if (is_array(delegated)) {
-					var [fn, ...data] = delegated;
-					fn.apply(next_target, [event, ...data]);
+			try {
+				// @ts-expect-error
+				var delegated = current_target['__' + event_name];
+
+				if (delegated !== undefined && !(/** @type {any} */ (current_target).disabled)) {
+					if (is_array(delegated)) {
+						var [fn, ...data] = delegated;
+						fn.apply(current_target, [event, ...data]);
+					} else {
+						delegated.call(current_target, event);
+					}
+				}
+			} catch (error) {
+				if (throw_error) {
+					other_errors.push(error);
 				} else {
-					delegated.call(next_target, event);
+					throw_error = error;
 				}
 			}
-		} finally {
-			if (
-				!event.cancelBubble &&
-				parent_element !== handler_element &&
-				parent_element !== null &&
-				next_target !== handler_element
-			) {
-				next(parent_element);
+			if (event.cancelBubble || parent_element === handler_element || parent_element === null) {
+				break;
 			}
+			current_target = parent_element;
 		}
-	}
 
-	try {
-		yield_event_updates(() => next(/** @type {Element} */ (current_target)));
+		if (throw_error) {
+			for (let error of other_errors) {
+				// Throw the rest of the errors, one-by-one on a microtask
+				queueMicrotask(() => {
+					throw error;
+				});
+			}
+			throw throw_error;
+		}
 	} finally {
 		// @ts-expect-error is used above
 		event.__root = handler_element;

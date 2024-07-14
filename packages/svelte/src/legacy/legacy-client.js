@@ -1,7 +1,9 @@
-import { proxy } from '../internal/client/proxy.js';
+/** @import { ComponentConstructorOptions, ComponentType, SvelteComponent, Component } from 'svelte' */
+import { mutable_source, set } from '../internal/client/reactivity/sources.js';
 import { user_pre_effect } from '../internal/client/reactivity/effects.js';
 import { hydrate, mount, unmount } from '../internal/client/render.js';
-import { define_property } from '../internal/client/utils.js';
+import { get } from '../internal/client/runtime.js';
+import { define_property } from '../internal/shared/utils.js';
 
 /**
  * Takes the same options as a Svelte 4 component and the component function and returns a Svelte 4 compatible component.
@@ -13,13 +15,13 @@ import { define_property } from '../internal/client/utils.js';
  * @template {Record<string, any>} Events
  * @template {Record<string, any>} Slots
  *
- * @param {import('svelte').ComponentConstructorOptions<Props> & {
- * 	component: import('svelte').ComponentType<import('svelte').SvelteComponent<Props, Events, Slots>> | import('svelte').Component<Props>;
+ * @param {ComponentConstructorOptions<Props> & {
+ * 	component: ComponentType<SvelteComponent<Props, Events, Slots>> | Component<Props>;
  * 	immutable?: boolean;
  * 	hydrate?: boolean;
  * 	recover?: boolean;
  * }} options
- * @returns {import('svelte').SvelteComponent<Props, Events, Slots> & Exports}
+ * @returns {SvelteComponent<Props, Events, Slots> & Exports}
  */
 export function createClassComponent(options) {
 	// @ts-expect-error $$prop_def etc are not actually defined
@@ -36,8 +38,8 @@ export function createClassComponent(options) {
  * @template {Record<string, any>} Events
  * @template {Record<string, any>} Slots
  *
- * @param {import('svelte').SvelteComponent<Props, Events, Slots> | import('svelte').Component<Props>} component
- * @returns {import('svelte').ComponentType<import('svelte').SvelteComponent<Props, Events, Slots> & Exports>}
+ * @param {SvelteComponent<Props, Events, Slots> | Component<Props>} component
+ * @returns {ComponentType<SvelteComponent<Props, Events, Slots> & Exports>}
  */
 export function asClassComponent(component) {
 	// @ts-expect-error $$prop_def etc are not actually defined
@@ -60,7 +62,7 @@ class Svelte4Component {
 	#instance;
 
 	/**
-	 * @param {import('svelte').ComponentConstructorOptions & {
+	 * @param {ComponentConstructorOptions & {
 	 *  component: any;
 	 * 	immutable?: boolean;
 	 * 	hydrate?: boolean;
@@ -68,15 +70,43 @@ class Svelte4Component {
 	 * }} options
 	 */
 	constructor(options) {
-		// Using proxy state here isn't completely mirroring the Svelte 4 behavior, because mutations to a property
-		// cause fine-grained updates to only the places where that property is used, and not the entire property.
-		// Reactive statements and actions (the things where this matters) are handling this properly regardless, so it should be fine in practise.
-		const props = proxy({ ...(options.props || {}), $$events: {} }, false);
+		var sources = new Map();
+
+		/**
+		 * @param {string | symbol} key
+		 * @param {unknown} value
+		 */
+		var add_source = (key, value) => {
+			var s = mutable_source(value);
+			sources.set(key, s);
+			return s;
+		};
+
+		// Replicate coarse-grained props through a proxy that has a version source for
+		// each property, which is increment on updates to the property itself. Do not
+		// use our $state proxy because that one has fine-grained reactivity.
+		const props = new Proxy(
+			{ ...(options.props || {}), $$events: {} },
+			{
+				get(target, prop) {
+					return get(sources.get(prop) ?? add_source(prop, Reflect.get(target, prop)));
+				},
+				has(target, prop) {
+					get(sources.get(prop) ?? add_source(prop, Reflect.get(target, prop)));
+					return Reflect.has(target, prop);
+				},
+				set(target, prop, value) {
+					set(sources.get(prop) ?? add_source(prop, value), value);
+					return Reflect.set(target, prop, value);
+				}
+			}
+		);
+
 		this.#instance = (options.hydrate ? hydrate : mount)(options.component, {
 			target: options.target,
 			props,
 			context: options.context,
-			intro: options.intro,
+			intro: options.intro ?? false,
 			recover: options.recover
 		});
 
@@ -99,6 +129,7 @@ class Svelte4Component {
 		this.#instance.$set = /** @param {Record<string, any>} next */ (next) => {
 			Object.assign(props, next);
 		};
+
 		this.#instance.$destroy = () => {
 			unmount(this.#instance);
 		};

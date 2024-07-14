@@ -1,10 +1,10 @@
 import { render_effect, effect_root } from '../internal/client/reactivity/effects.js';
 import { flushSync } from '../index-client.js';
-import { ReactiveMap } from './map.js';
+import { SvelteMap } from './map.js';
 import { assert, test } from 'vitest';
 
 test('map.values()', () => {
-	const map = new ReactiveMap([
+	const map = new SvelteMap([
 		[1, 1],
 		[2, 2],
 		[3, 3],
@@ -36,13 +36,36 @@ test('map.values()', () => {
 		map.clear();
 	});
 
-	assert.deepEqual(log, [5, true, [1, 2, 3, 4, 5], 4, false, [1, 2, 4, 5], 0, false, []]);
+	flushSync(() => {
+		map.set(3, 3);
+	});
+
+	flushSync(() => {
+		map.set(3, 4);
+	});
+
+	assert.deepEqual(log, [
+		5,
+		true,
+		[1, 2, 3, 4, 5],
+		4,
+		false,
+		[1, 2, 4, 5],
+		0,
+		false,
+		[],
+		1,
+		true,
+		[3],
+		true,
+		[4]
+	]);
 
 	cleanup();
 });
 
 test('map.get(...)', () => {
-	const map = new ReactiveMap([
+	const map = new SvelteMap([
 		[1, 1],
 		[2, 2],
 		[3, 3]
@@ -78,7 +101,7 @@ test('map.get(...)', () => {
 });
 
 test('map.has(...)', () => {
-	const map = new ReactiveMap([
+	const map = new SvelteMap([
 		[1, 1],
 		[2, 2],
 		[3, 3]
@@ -125,7 +148,7 @@ test('map.has(...)', () => {
 });
 
 test('map.forEach(...)', () => {
-	const map = new ReactiveMap([
+	const map = new SvelteMap([
 		[1, 1],
 		[2, 2],
 		[3, 3]
@@ -146,7 +169,7 @@ test('map.forEach(...)', () => {
 });
 
 test('map.delete(...)', () => {
-	const map = new ReactiveMap([
+	const map = new SvelteMap([
 		[1, 1],
 		[2, 2],
 		[3, 3]
@@ -159,7 +182,7 @@ test('map.delete(...)', () => {
 });
 
 test('map handling of undefined values', () => {
-	const map = new ReactiveMap();
+	const map = new SvelteMap();
 
 	const log: any = [];
 
@@ -182,4 +205,36 @@ test('map handling of undefined values', () => {
 	assert.deepEqual(log, [undefined, undefined, 1]);
 
 	cleanup();
+});
+
+test('not invoking reactivity when value is not in the map after changes', () => {
+	const map = new SvelteMap([[1, 1]]);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(map.get(1));
+		});
+
+		render_effect(() => {
+			log.push(map.get(2));
+		});
+
+		flushSync(() => {
+			map.delete(1);
+		});
+
+		flushSync(() => {
+			map.set(1, 1);
+		});
+	});
+
+	assert.deepEqual(log, [1, undefined, undefined, undefined, 1, undefined]);
+
+	cleanup();
+});
+
+test('Map.instanceOf', () => {
+	assert.equal(new SvelteMap() instanceof Map, true);
 });

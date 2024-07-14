@@ -1,4 +1,6 @@
-import { is_void } from '../utils/names.js';
+/** @import { Parser } from '../index.js' */
+/** @import * as Compiler from '#compiler' */
+import { is_void } from '../../../../constants.js';
 import read_expression from '../read/expression.js';
 import { read_script } from '../read/script.js';
 import read_style from '../read/style.js';
@@ -14,7 +16,7 @@ const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 /** Invalid attribute characters if the attribute is not surrounded by quotes */
 const regex_starts_with_invalid_attr_value = /^(\/>|[\s"'=<>`])/;
 
-/** @type {Map<string, import('#compiler').SvelteNode['type']>} */
+/** @type {Map<string, Compiler.ElementLike['type']>} */
 const root_only_meta_tags = new Map([
 	['svelte:head', 'SvelteHead'],
 	['svelte:options', 'SvelteOptions'],
@@ -23,7 +25,7 @@ const root_only_meta_tags = new Map([
 	['svelte:body', 'SvelteBody']
 ]);
 
-/** @type {Map<string, import('#compiler').SvelteNode['type']>} */
+/** @type {Map<string, Compiler.ElementLike['type']>} */
 const meta_tags = new Map([
 	...root_only_meta_tags,
 	['svelte:element', 'SvelteElement'],
@@ -39,7 +41,7 @@ const COMPONENT = /^svelte:component(?=[\s/>])/;
 const SLOT = /^svelte:fragment(?=[\s/>])/;
 const ELEMENT = /^svelte:element(?=[\s/>])/;
 
-/** @param {import('#compiler').TemplateNode[]} stack */
+/** @param {Compiler.TemplateNode[]} stack */
 function parent_is_head(stack) {
 	let i = stack.length;
 	while (i--) {
@@ -50,14 +52,14 @@ function parent_is_head(stack) {
 	return false;
 }
 
-/** @param {import('#compiler').TemplateNode[]} stack */
+/** @param {Compiler.TemplateNode[]} stack */
 function parent_is_shadowroot_template(stack) {
 	// https://developer.chrome.com/docs/css-ui/declarative-shadow-dom#building_a_declarative_shadow_root
 	let i = stack.length;
 	while (i--) {
 		if (
 			stack[i].type === 'RegularElement' &&
-			/** @type {import('#compiler').RegularElement} */ (stack[i]).attributes.some(
+			/** @type {Compiler.RegularElement} */ (stack[i]).attributes.some(
 				(a) => a.type === 'Attribute' && a.name === 'shadowrootmode'
 			)
 		) {
@@ -71,8 +73,8 @@ const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
 const regex_closing_comment = /-->/;
 const regex_capital_letter = /[A-Z]/;
 
-/** @param {import('../index.js').Parser} parser */
-export default function tag(parser) {
+/** @param {Parser} parser */
+export default function element(parser) {
 	const start = parser.index++;
 
 	let parent = parser.current();
@@ -81,7 +83,7 @@ export default function tag(parser) {
 		const data = parser.read_until(regex_closing_comment);
 		parser.eat('-->', true);
 
-		/** @type {ReturnType<typeof parser.append<import('#compiler').Comment>>} */
+		/** @type {ReturnType<typeof parser.append<Compiler.Comment>>} */
 		parser.append({
 			type: 'Comment',
 			start,
@@ -100,10 +102,10 @@ export default function tag(parser) {
 		if (is_closing_tag) {
 			if (
 				['svelte:options', 'svelte:window', 'svelte:body', 'svelte:document'].includes(name) &&
-				/** @type {import('#compiler').ElementLike} */ (parent).fragment.nodes.length
+				/** @type {Compiler.ElementLike} */ (parent).fragment.nodes.length
 			) {
 				e.svelte_meta_invalid_content(
-					/** @type {import('#compiler').ElementLike} */ (parent).fragment.nodes[0].start,
+					/** @type {Compiler.ElementLike} */ (parent).fragment.nodes[0].start,
 					name
 				);
 			}
@@ -131,12 +133,11 @@ export default function tag(parser) {
 					? 'SlotElement'
 					: 'RegularElement';
 
-	/** @type {import('#compiler').ElementLike} */
-	// @ts-expect-error TODO can't figure out this error
+	/** @type {Compiler.ElementLike} */
 	const element =
 		type === 'RegularElement'
 			? {
-					type: /** @type {import('#compiler').ElementLike['type']} */ (type),
+					type: type,
 					start,
 					end: -1,
 					name,
@@ -144,12 +145,14 @@ export default function tag(parser) {
 					fragment: create_fragment(true),
 					metadata: {
 						svg: false,
+						mathml: false,
+						scoped: false,
 						has_spread: false
 					},
 					parent: null
 				}
-			: {
-					type: /** @type {import('#compiler').ElementLike['type']} */ (type),
+			: /** @type {Compiler.ElementLike} */ ({
+					type,
 					start,
 					end: -1,
 					name,
@@ -159,7 +162,7 @@ export default function tag(parser) {
 					metadata: {
 						svg: false
 					}
-				};
+				});
 
 	parser.allow_whitespace();
 
@@ -171,7 +174,7 @@ export default function tag(parser) {
 		parser.eat('>', true);
 
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
-		while (/** @type {import('#compiler').RegularElement} */ (parent).name !== name) {
+		while (/** @type {Compiler.RegularElement} */ (parent).name !== name) {
 			if (parent.type !== 'RegularElement') {
 				if (parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name) {
 					e.element_invalid_closing_tag_autoclosed(start, name, parser.last_auto_closed_tag.reason);
@@ -237,9 +240,7 @@ export default function tag(parser) {
 			e.svelte_component_missing_this(start);
 		}
 
-		const definition = /** @type {import('#compiler').Attribute} */ (
-			element.attributes.splice(index, 1)[0]
-		);
+		const definition = /** @type {Compiler.Attribute} */ (element.attributes.splice(index, 1)[0]);
 		if (
 			definition.value === true ||
 			definition.value.length !== 1 ||
@@ -260,9 +261,7 @@ export default function tag(parser) {
 			e.svelte_element_missing_this(start);
 		}
 
-		const definition = /** @type {import('#compiler').Attribute} */ (
-			element.attributes.splice(index, 1)[0]
-		);
+		const definition = /** @type {Compiler.Attribute} */ (element.attributes.splice(index, 1)[0]);
 
 		if (definition.value === true) {
 			e.svelte_element_missing_this(definition);
@@ -295,7 +294,7 @@ export default function tag(parser) {
 	if (is_top_level_script_or_style) {
 		parser.eat('>', true);
 
-		/** @type {import('#compiler').Comment | null} */
+		/** @type {Compiler.Comment | null} */
 		let prev_comment = null;
 		for (let i = current.fragment.nodes.length - 1; i >= 0; i--) {
 			const node = current.fragment.nodes[i];
@@ -362,7 +361,7 @@ export default function tag(parser) {
 		const data = parser.read_until(new RegExp(`</${name}>`));
 		const end = parser.index;
 
-		/** @type {import('#compiler').Text} */
+		/** @type {Compiler.Text} */
 		const node = {
 			start,
 			end,
@@ -383,7 +382,7 @@ export default function tag(parser) {
 
 const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
 
-/** @param {import('../index.js').Parser} parser */
+/** @param {Parser} parser */
 function read_tag_name(parser) {
 	const start = parser.index;
 
@@ -440,8 +439,8 @@ const regex_starts_with_quote_characters = /^["']/;
 const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]+))/;
 
 /**
- * @param {import('../index.js').Parser} parser
- * @returns {import('#compiler').Attribute | null}
+ * @param {Parser} parser
+ * @returns {Compiler.Attribute | null}
  */
 function read_static_attribute(parser) {
 	const start = parser.index;
@@ -449,7 +448,7 @@ function read_static_attribute(parser) {
 	const name = parser.read_until(regex_token_ending_character);
 	if (!name) return null;
 
-	/** @type {true | Array<import('#compiler').Text | import('#compiler').ExpressionTag>} */
+	/** @type {true | Array<Compiler.Text | Compiler.ExpressionTag>} */
 	let value = true;
 
 	if (parser.eat('=')) {
@@ -486,8 +485,8 @@ function read_static_attribute(parser) {
 }
 
 /**
- * @param {import('../index.js').Parser} parser
- * @returns {import('#compiler').Attribute | import('#compiler').SpreadAttribute | import('#compiler').Directive | null}
+ * @param {Parser} parser
+ * @returns {Compiler.Attribute | Compiler.SpreadAttribute | Compiler.Directive | null}
  */
 function read_attribute(parser) {
 	const start = parser.index;
@@ -501,7 +500,7 @@ function read_attribute(parser) {
 			parser.allow_whitespace();
 			parser.eat('}', true);
 
-			/** @type {import('#compiler').SpreadAttribute} */
+			/** @type {Compiler.SpreadAttribute} */
 			const spread = {
 				type: 'SpreadAttribute',
 				start,
@@ -526,7 +525,7 @@ function read_attribute(parser) {
 			parser.allow_whitespace();
 			parser.eat('}', true);
 
-			/** @type {import('#compiler').ExpressionTag} */
+			/** @type {Compiler.ExpressionTag} */
 			const expression = {
 				type: 'ExpressionTag',
 				start: value_start,
@@ -558,7 +557,7 @@ function read_attribute(parser) {
 	const colon_index = name.indexOf(':');
 	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
 
-	/** @type {true | Array<import('#compiler').Text | import('#compiler').ExpressionTag>} */
+	/** @type {true | Array<Compiler.Text | Compiler.ExpressionTag>} */
 	let value = true;
 	if (parser.eat('=')) {
 		parser.allow_whitespace();
@@ -603,7 +602,7 @@ function read_attribute(parser) {
 			}
 		}
 
-		/** @type {import('#compiler').Directive} */
+		/** @type {Compiler.Directive} */
 		// @ts-expect-error TODO can't figure out this error
 		const directive = {
 			start,
@@ -662,7 +661,7 @@ function get_directive_type(name) {
 }
 
 /**
- * @param {import('../index.js').Parser} parser
+ * @param {Parser} parser
  */
 function read_attribute_value(parser) {
 	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
@@ -713,13 +712,13 @@ function read_attribute_value(parser) {
 }
 
 /**
- * @param {import('../index.js').Parser} parser
+ * @param {Parser} parser
  * @param {() => boolean} done
  * @param {string} location
  * @returns {any[]}
  */
 function read_sequence(parser, done, location) {
-	/** @type {import('#compiler').Text} */
+	/** @type {Compiler.Text} */
 	let current_chunk = {
 		start: parser.index,
 		end: -1,
@@ -729,7 +728,7 @@ function read_sequence(parser, done, location) {
 		parent: null
 	};
 
-	/** @type {Array<import('#compiler').Text | import('#compiler').ExpressionTag>} */
+	/** @type {Array<Compiler.Text | Compiler.ExpressionTag>} */
 	const chunks = [];
 
 	/** @param {number} end */
@@ -767,7 +766,7 @@ function read_sequence(parser, done, location) {
 			parser.allow_whitespace();
 			parser.eat('}', true);
 
-			/** @type {import('#compiler').ExpressionTag} */
+			/** @type {Compiler.ExpressionTag} */
 			const chunk = {
 				type: 'ExpressionTag',
 				start: index,

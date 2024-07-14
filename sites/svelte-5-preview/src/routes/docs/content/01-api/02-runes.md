@@ -19,7 +19,7 @@ Reactive state is declared with the `$state` rune:
 	let count = $state(0);
 </script>
 
-<button on:click={() => count++}>
+<button onclick={() => count++}>
 	clicks: {count}
 </button>
 ```
@@ -40,7 +40,7 @@ class Todo {
 
 > In this example, the compiler transforms `done` and `text` into `get`/`set` methods on the class prototype referencing private fields
 
-Objects and arrays [are made deeply reactive](/#H4sIAAAAAAAAE42QwWrDMBBEf2URhUhUNEl7c21DviPOwZY3jVpZEtIqUBz9e-UUt9BTj7M784bdmZ21wciq48xsPyGr2MF7Jhl9-kXEKxrCoqNLQS2TOqqgPbWd7cgggU3TgCFCAw-RekJ-3Et4lvByEq-drbe_dlsPichZcFYZrT6amQto2pXw5FO88FUYtG90gUfYi3zvWrYL75vxL57zfA07_zfr23k1vjtt-aZ0bQTcbrDL5ZifZcAxKeS8lzDc8X0xDhJ2ItdbX1jlOZMb9VnjyCoKCfMpfwG975NFVwEAAA==) by wrapping them with [`Proxies`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy):
+Only plain objects and arrays [are made deeply reactive](/#H4sIAAAAAAAAE42QwWrDMBBEf2URhUhUNEl7c21DviPOwZY3jVpZEtIqUBz9e-UUt9BTj7M784bdmZ21wciq48xsPyGr2MF7Jhl9-kXEKxrCoqNLQS2TOqqgPbWd7cgggU3TgCFCAw-RekJ-3Et4lvByEq-drbe_dlsPichZcFYZrT6amQto2pXw5FO88FUYtG90gUfYi3zvWrYL75vxL57zfA07_zfr23k1vjtt-aZ0bQTcbrDL5ZifZcAxKeS8lzDc8X0xDhJ2ItdbX1jlOZMb9VnjyCoKCfMpfwG975NFVwEAAA==) by wrapping them with [`Proxies`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy):
 
 ```svelte
 <script>
@@ -130,6 +130,8 @@ Sometimes you might need to compare two values, one of which is a reactive `$sta
 
 This is handy when you might want to check if the object exists within a deeply reactive object/array.
 
+> `$state.is` uses `Object.is` to check if two values are the same value.
+
 ## `$derived`
 
 Derived state is declared with the `$derived` rune:
@@ -140,7 +142,7 @@ Derived state is declared with the `$derived` rune:
 +	let doubled = $derived(count * 2);
 </script>
 
-<button on:click={() => count++}>
+<button onclick={() => count++}>
 	{doubled}
 </button>
 
@@ -187,7 +189,7 @@ Sometimes you need to create complex derivations that don't fit inside a short e
 	});
 </script>
 
-<button on:click={() => numbers.push(numbers.length + 1)}>
+<button onclick={() => numbers.push(numbers.length + 1)}>
 	{numbers.join(' + ')} = {total}
 </button>
 ```
@@ -250,40 +252,34 @@ $effect(() => {
 });
 ```
 
-An effect only reruns when the object it reads changes, not when a property inside it changes. If you want to react to _any_ change inside an object for inspection purposes at dev time, you may want to use [`inspect`](#$inspect).
+An effect only reruns when the object it reads changes, not when a property inside it changes. (If you want to observe changes _inside_ an object at dev time, you can use [`$inspect`](#$inspect).)
 
 ```svelte
 <script>
-	let object = $state({ count: 0 });
-	let derived_object = $derived({
-		doubled: object.count * 2
+	let state = $state({ value: 0 });
+	let derived = $derived({ value: state.value * 2 });
+
+	// this will run once, because `state` is never reassigned (only mutated)
+	$effect(() => {
+		state;
 	});
 
+	// this will run whenever `state.value` changes...
 	$effect(() => {
-		// never reruns, because object does not change,
-		// only its property changes
-		object;
-		console.log('object');
+		state.value;
 	});
 
+	// ...and so will this, because `derived` is a new object each time
 	$effect(() => {
-		// reruns, because object.count changes
-		object.count;
-		console.log('object.count');
-	});
-
-	$effect(() => {
-		// reruns, because $derived produces a new object on each rerun
-		derived_object;
-		console.log('derived_object');
+		derived;
 	});
 </script>
 
-<button on:click={() => object.count++}>
-	{derived_object.doubled}
+<button onclick={() => (state.value += 1)}>
+	{state.value}
 </button>
 
-<p>{object.count} doubled is {derived_object.doubled}</p>
+<p>{state.value} doubled is {derived.value}</p>
 ```
 
 You can return a function from `$effect`, which will run immediately before the effect re-runs, and before it is destroyed ([demo](/#H4sIAAAAAAAAE42SzW6DMBCEX2Vl5RDaVCQ9JoDUY--9lUox9lKsGBvZC1GEePcaKPnpqSe86_m0M2t6ViqNnu0_e2Z4jWzP3pqGbRhdmrHwHWrCUHvbOjF2Ei-caijLTU4aCYRtDUEKK0-ccL2NDstNrbRWHoU10t8Eu-121gTVCssSBa3XEaQZ9GMrpziGj0p5OAccCgSHwmEgJZwrNNihg6MyhK7j-gii4uYb_YyGUZ5guQwzPdL7b_U4ZNSOvp9T2B3m1rB5cLx4zMkhtc7AHz7YVCVwEFzrgosTBMuNs52SKDegaPbvWnMH8AhUXaNUIY6-hHCldQhUIcyLCFlfAuHvkCKaYk8iYevGGgy2wyyJnpy9oLwG0sjdNe2yhGhJN32HsUzi2xOapNpl_bSLIYnDeeoVLZE1YI3QSpzSfo7-8J5PKbwOmdf2jC6JZyD7HxpPaMk93aHhF6utVKVCyfbkWhy-hh9Z3o_2nQIAAA==)).
@@ -341,49 +337,100 @@ In general, `$effect` is best considered something of an escape hatch — useful
 
 > For things that are more complicated than a simple expression like `count * 2`, you can also use [`$derived.by`](#$derived-by).
 
-When reacting to a state change and writing to a different state as a result, think about if it's possible to use callback props instead.
+You might be tempted to do something convoluted with effects to link one value to another. The following example shows two inputs for "money spent" and "money left" that are connected to each other. If you update one, the other should update accordingly. Don't use effects for this ([demo](/#H4sIAAAAAAAACpVRQWrDMBD8ihA5ONDG7qEXxQ70HXUPir0KgrUsrHWIMf57pXWdlFIKPe6MZmZnNUtjEYJU77N0ugOp5Jv38knS5NMQroAEcQ79ODQJKUMzWE-n2tWEQIJ60igq8VIUxw0LHhxFbBdIE2TF_s4gmG8Ea5mM9A6MgYaybC-qk5gTlDT8fg15Xo3ZbPlTti2w6ZLNQ1bmjw6uRH0G5DqldX6MjWL1qpaDdheopThb16qrxhGqmX0X0elbNbP3InKWfjH5hvKYku7u_wtKC_-aw8Q9Jk0_UgJNCOvvJHC7SGuDRz0pYRBuxxW7aK9EcXiFbr0NX4bl8cO7vrXGQisVDSMsH8sniirsuSsCAAA=)):
 
 ```svelte
-<!-- Don't do this -->
 <script>
-	let value = $state();
-	let value_uppercase = $state();
+	let total = 100;
+	let spent = $state(0);
+	let left = $state(total);
+
 	$effect(() => {
-		value_uppercase = value.toUpperCase();
+		left = total - spent;
+	});
+
+	$effect(() => {
+		spent = total - left;
 	});
 </script>
 
-<Text bind:value />
+<label>
+	<input type="range" bind:value={spent} max={total} />
+	{spent}/{total} spent
+</label>
 
-<!-- Do this instead: -->
-<script>
-	let value = $state();
-	let value_uppercase = $state();
-	function onValueChange(new_text) {
-		value = new_text;
-		value_uppercase = new_text.toUpperCase();
-	}
-</script>
-
-<Text {value} {onValueChange}>
+<label>
+	<input type="range" bind:value={left} max={total} />
+	{left}/{total} left
+</label>
 ```
 
-If you want to have something update from above but also modify it from below (i.e. you want some kind of "writable `$derived`"), and events aren't an option, you can also use an object with getters and setters.
+Instead, use callbacks where possible ([demo](/#H4sIAAAAAAAACo1SMW6EMBD8imWluFNyQIo0HERKf13KkMKB5WTJGAsvp0OIv8deMEEJRcqdmZ1ZjzzyWiqwPP0YuRYN8JS_GcOfOA7GD_YGCsHNtu270iOZLTtp8LXQBSpAhi0KxXL2nCTngFkDGh32YFEgHJLjyiioNwTtEunoutclylaz3lSOfPceBziy0ZMFBs9HiFB0V8DoJlQP55ldfOdjTvMBRE275hcn33gv2_vWITh4e3GwzuKfNnSmxBcoKiaT2vSuG1diXvBO6CsUnJFrPpLhxFpNonzcvHdijbjnI0VNLCavRR8HlEYfvcb9O9mf_if4QuBOLqnXWD_9SrU4KJg_ggdDm5W0RokhZbWC-1LiVZiUJdELNJvqaN39raatZC2h4il2PUyf0zcIbC-7lgIAAA==)):
 
 ```svelte
 <script>
-	let { value } = $props();
-	let facade = {
+	let total = 100;
+	let spent = $state(0);
+	let left = $state(total);
+
+	function updateSpent(e) {
+		spent = +e.target.value;
+		left = total - spent;
+	}
+
+	function updateLeft(e) {
+		left = +e.target.value;
+		spent = total - left;
+	}
+</script>
+
+<label>
+	<input
+		type="range"
+		value={spent}
+		oninput={updateSpent}
+		max={total}
+	/>
+	{spent}/{total} spent
+</label>
+
+<label>
+	<input
+		type="range"
+		value={left}
+		oninput={updateLeft}
+		max={total}
+	/>
+	{left}/{total} left
+</label>
+```
+
+If you need to use bindings, for whatever reason (for example when you want some kind of "writable `$derived`"), consider using getters and setters to synchronise state ([demo](/#H4sIAAAAAAAACpVRQW7DIBD8CkI9JFIau4deiB2p7yg9kHhtIWGMYG3Fsvh7ARs3qnrpCWZGM8MuC22lAkfZ50K16IEy-mEMPVGcTQRuAoUQsBtGe49M5e5WGrxyzVEBEhxQKFKTt7K8ZM4Z0Bi4F4cC4VAeo7JpCtooLRFz7AIzCTXC4ZgpjhZwtHpLfl3TLqvoT-vpdt_0ZMy92TllVzx8AFXx83pdKXEDlQappDZjmCUMXXNqhe6AU3KTumGppV5StCe9eNRLivekSNZNKTKbYGza0_9XFPdzTvc_257kvTJyvxodzgrWP4pkXlEjnVFiZqRV8NiW0wnDSHl-hz4RPm0p2cO390MjWwkNZWhD5Zf_BkCCa6AxAgAA)):
+
+```svelte
+<script>
+	let total = 100;
+	let spent = $state(0);
+
+	let left = {
 		get value() {
-			return value.toUpperCase();
+			return total - spent;
 		},
-		set value(val) {
-			value = val.toLowerCase();
+		set value(v) {
+			spent = total - v;
 		}
 	};
 </script>
 
-<input bind:value={facade.value} />
+<label>
+	<input type="range" bind:value={spent} max={total} />
+	{spent}/{total} spent
+</label>
+
+<label>
+	<input type="range" bind:value={left.value} max={total} />
+	{left.value}/{total} left
+</label>
 ```
 
 If you absolutely have to update `$state` within an effect and run into an infinite loop because you read and write to the same `$state`, use [untrack](functions#untrack).
@@ -442,20 +489,20 @@ Apart from the timing, `$effect.pre` works exactly like [`$effect`](#$effect) �
 
 Previously, you would have used `beforeUpdate`, which — like `afterUpdate` — is deprecated in Svelte 5.
 
-## `$effect.active`
+## `$effect.tracking`
 
-The `$effect.active` rune is an advanced feature that tells you whether or not the code is running inside an effect or inside your template ([demo](/#H4sIAAAAAAAAE3XP0QrCMAwF0F-JRXAD595rLfgdzodRUyl0bVgzQcb-3VYFQfExl5tDMgvrPCYhT7MI_YBCiiOR2Aq-UxnSDT1jnlOcRlMSlczoiHUXOjYxpOhx5-O12rgAJg4UAwaGhDyR3Gxhjdai4V1v2N2wqus9tC3Y3ifMQjbehaqq4aBhLtEv_Or893icCsdLve-Caj8nBkU67zMO5HtGCfM3sKiWNKhV0zwVaBqd3x3ixVmHFyFLuJyXB-moOe8pAQAA)):
+The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template ([demo](/#H4sIAAAAAAAACn3PQWrDMBAF0KtMRSA2xPFeUQU5R92FUUZBVB4N1rgQjO9eKSlkEcjyfz6PmVX5EDEr_bUqGidUWp2Z1UHJjWvIvxgFS85pmV1tTHZzYLEDDeIS5RTxGNO12QcClyZOhCSQURbW-wPs0Ht0cpR5dD-Brk3bnqDvwY8xYzGK8j9pmhY-Lay1eqUfm3eizEsFZWtPA5n-eSYZtkUQnDiOghrWV2IzPVswH113d6DrbHl6SpfgA16UruX2vf0BWo7W2y8BAAA=)):
 
 ```svelte
 <script>
-	console.log('in component setup:', $effect.active()); // false
+	console.log('in component setup:', $effect.tracking()); // false
 
 	$effect(() => {
-		console.log('in effect:', $effect.active()); // true
+		console.log('in effect:', $effect.tracking()); // true
 	});
 </script>
 
-<p>in template: {$effect.active()}</p> <!-- true -->
+<p>in template: {$effect.tracking()}</p> <!-- true -->
 ```
 
 This allows you to (for example) add things like subscriptions without causing memory leaks, by putting them in child effects.
@@ -499,6 +546,12 @@ To get all properties, use rest syntax:
 
 ```js
 let { a, b, c, ...everythingElse } = $props();
+```
+
+You can also use an identifier:
+
+```js
+let props = $props();
 ```
 
 If you're using TypeScript, you can declare the prop types:

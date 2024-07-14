@@ -1,8 +1,9 @@
+/** @import { StoreReferencesContainer } from '#client' */
+/** @import { Store } from '#shared' */
 import { subscribe_to_store } from '../../../store/utils.js';
 import { noop } from '../../shared/utils.js';
-import { UNINITIALIZED } from '../../../constants.js';
-import { get, untrack } from '../runtime.js';
-import { effect } from './effects.js';
+import { get } from '../runtime.js';
+import { teardown } from './effects.js';
 import { mutable_source, set } from './sources.js';
 
 /**
@@ -10,48 +11,54 @@ import { mutable_source, set } from './sources.js';
  * signal that will be updated when the store is. The store references container is needed to
  * track reassignments to stores and to track the correct component context.
  * @template V
- * @param {import('#shared').Store<V> | null | undefined} store
+ * @param {Store<V> | null | undefined} store
  * @param {string} store_name
- * @param {import('#client').StoreReferencesContainer} stores
+ * @param {StoreReferencesContainer} stores
  * @returns {V}
  */
 export function store_get(store, store_name, stores) {
-	/** @type {import('#client').StoreReferencesContainer[''] | undefined} */
-	let entry = stores[store_name];
-	const is_new = entry === undefined;
+	const entry = (stores[store_name] ??= {
+		store: null,
+		source: mutable_source(undefined),
+		unsubscribe: noop
+	});
 
-	if (is_new) {
-		entry = {
-			store: null,
-			last_value: null,
-			value: mutable_source(UNINITIALIZED),
-			unsubscribe: noop
-		};
-		stores[store_name] = entry;
-	}
-
-	if (is_new || entry.store !== store) {
+	if (entry.store !== store) {
 		entry.unsubscribe();
 		entry.store = store ?? null;
-		entry.unsubscribe = connect_store_to_signal(store, entry.value);
+
+		if (store == null) {
+			set(entry.source, undefined);
+			entry.unsubscribe = noop;
+		} else {
+			var initial = true;
+
+			entry.unsubscribe = subscribe_to_store(store, (v) => {
+				if (initial) {
+					// if the first time the store value is read is inside a derived,
+					// we will hit the `state_unsafe_mutation` error if we `set` the value
+					entry.source.v = v;
+					initial = false;
+				} else {
+					set(entry.source, v);
+				}
+			});
+		}
 	}
 
-	const value = get(entry.value);
-	// This could happen if the store was cleaned up because the component was destroyed and there's a leak on the user side.
-	// In that case we don't want to fail with a cryptic Symbol error, but rather return the last value we got.
-	return value === UNINITIALIZED ? entry.last_value : value;
+	return get(entry.source);
 }
 
 /**
  * Unsubscribe from a store if it's not the same as the one in the store references container.
  * We need this in addition to `store_get` because someone could unsubscribe from a store but
  * then never subscribe to the new one (if any), causing the subscription to stay open wrongfully.
- * @param {import('#shared').Store<any> | null | undefined} store
+ * @param {Store<any> | null | undefined} store
  * @param {string} store_name
- * @param {import('#client').StoreReferencesContainer} stores
+ * @param {StoreReferencesContainer} stores
  */
 export function store_unsub(store, store_name, stores) {
-	/** @type {import('#client').StoreReferencesContainer[''] | undefined} */
+	/** @type {StoreReferencesContainer[''] | undefined} */
 	let entry = stores[store_name];
 
 	if (entry && entry.store !== store) {
@@ -64,23 +71,9 @@ export function store_unsub(store, store_name, stores) {
 }
 
 /**
- * @template V
- * @param {import('#shared').Store<V> | null | undefined} store
- * @param {import('#client').Source<V>} source
- */
-function connect_store_to_signal(store, source) {
-	if (store == null) {
-		set(source, undefined);
-		return noop;
-	}
-
-	return subscribe_to_store(store, (v) => set(source, v));
-}
-
-/**
  * Sets the new value of a store and returns that value.
  * @template V
- * @param {import('#shared').Store<V>} store
+ * @param {Store<V>} store
  * @param {V} value
  * @returns {V}
  */
@@ -90,33 +83,37 @@ export function store_set(store, value) {
 }
 
 /**
- * @param {import('#client').StoreReferencesContainer} stores
+ * @param {StoreReferencesContainer} stores
  * @param {string} store_name
  */
 export function invalidate_store(stores, store_name) {
-	const store = stores[store_name];
-	if (store.store) {
-		store_set(store.store, store.value.v);
+	var entry = stores[store_name];
+	if (entry.store !== null) {
+		store_set(entry.store, entry.source.v);
 	}
 }
 
 /**
  * Unsubscribes from all auto-subscribed stores on destroy
- * @param {import('#client').StoreReferencesContainer} stores
+ * @returns {StoreReferencesContainer}
  */
-export function unsubscribe_on_destroy(stores) {
-	on_destroy(() => {
-		let store_name;
-		for (store_name in stores) {
+export function setup_stores() {
+	/** @type {StoreReferencesContainer} */
+	const stores = {};
+
+	teardown(() => {
+		for (var store_name in stores) {
 			const ref = stores[store_name];
 			ref.unsubscribe();
 		}
 	});
+
+	return stores;
 }
 
 /**
  * Updates a store with a new value.
- * @param {import('#shared').Store<V>} store  the store to update
+ * @param {Store<V>} store  the store to update
  * @param {any} expression  the expression that mutates the store
  * @param {V} new_value  the new store value
  * @template V
@@ -127,7 +124,7 @@ export function mutate_store(store, expression, new_value) {
 }
 
 /**
- * @param {import('#shared').Store<number>} store
+ * @param {Store<number>} store
  * @param {number} store_value
  * @param {1 | -1} [d]
  * @returns {number}
@@ -138,7 +135,7 @@ export function update_store(store, store_value, d = 1) {
 }
 
 /**
- * @param {import('#shared').Store<number>} store
+ * @param {Store<number>} store
  * @param {number} store_value
  * @param {1 | -1} [d]
  * @returns {number}
@@ -147,13 +144,4 @@ export function update_pre_store(store, store_value, d = 1) {
 	const value = store_value + d;
 	store.set(value);
 	return value;
-}
-
-/**
- * Schedules a callback to run immediately before the component is unmounted.
- * @param {() => any} fn
- * @returns {void}
- */
-function on_destroy(fn) {
-	effect(() => () => untrack(fn));
 }

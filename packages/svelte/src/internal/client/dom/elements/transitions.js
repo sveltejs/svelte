@@ -1,13 +1,13 @@
-import { noop } from '../../../shared/utils.js';
+import { noop, is_function } from '../../../shared/utils.js';
 import { effect } from '../../reactivity/effects.js';
 import { current_effect, untrack } from '../../runtime.js';
 import { raf } from '../../timing.js';
 import { loop } from '../../loop.js';
 import { should_intro } from '../../render.js';
-import { is_function } from '../../utils.js';
 import { current_each_item } from '../blocks/each.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
 import { BLOCK_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '../../constants.js';
+import { queue_micro_task } from '../task.js';
 
 /**
  * @param {Element} element
@@ -189,6 +189,9 @@ export function transition(flags, element, get_fn, get_params) {
 		in() {
 			element.inert = inert;
 
+			// abort the outro to prevent overlap with the intro
+			outro?.abort();
+
 			if (is_intro) {
 				dispatch_event(element, 'introstart');
 				intro = animate(element, get_options(), outro, 1, () => {
@@ -196,7 +199,6 @@ export function transition(flags, element, get_fn, get_params) {
 					intro = current_options = undefined;
 				});
 			} else {
-				outro?.abort();
 				reset?.();
 			}
 		},
@@ -265,6 +267,8 @@ export function transition(flags, element, get_fn, get_params) {
  * @returns {import('#client').Animation}
  */
 function animate(element, options, counterpart, t2, callback) {
+	var is_intro = t2 === 1;
+
 	if (is_function(options)) {
 		// In the case of a deferred transition (such as `crossfade`), `option` will be
 		// a function rather than an `AnimationConfig`. We need to call this function
@@ -272,8 +276,8 @@ function animate(element, options, counterpart, t2, callback) {
 		/** @type {import('#client').Animation} */
 		var a;
 
-		effect(() => {
-			var o = untrack(() => options({ direction: t2 === 1 ? 'in' : 'out' }));
+		queue_micro_task(() => {
+			var o = options({ direction: is_intro ? 'in' : 'out' });
 			a = animate(element, o, counterpart, t2, callback);
 		});
 
@@ -319,6 +323,16 @@ function animate(element, options, counterpart, t2, callback) {
 		var keyframes = [];
 		var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
 
+		// In case of a delayed intro, apply the initial style for the duration of the delay;
+		// else in case of a fade-in for example the element would be visible until the animation starts
+		if (is_intro && delay > 0) {
+			let m = Math.ceil(delay / (1000 / 60));
+			let keyframe = css_to_keyframe(css(0, 1));
+			for (let i = 0; i < m; i += 1) {
+				keyframes.push(keyframe);
+			}
+		}
+
 		for (var i = 0; i <= n; i += 1) {
 			var t = t1 + delta * easing(i / n);
 			var styles = css(t, 1 - t);
@@ -326,8 +340,8 @@ function animate(element, options, counterpart, t2, callback) {
 		}
 
 		animation = element.animate(keyframes, {
-			delay,
-			duration,
+			delay: is_intro ? 0 : delay,
+			duration: duration + (is_intro ? delay : 0),
 			easing: 'linear',
 			fill: 'forwards'
 		});

@@ -113,6 +113,7 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:beforeinput'?: EventHandler<InputEvent, T> | undefined | null;
 	onbeforeinput?: EventHandler<InputEvent, T> | undefined | null;
 	onbeforeinputcapture?: EventHandler<InputEvent, T> | undefined | null;
+	// oninput can be either an InputEvent or an Event, depending on the target element (input, textarea etc).
 	'on:input'?: FormEventHandler<T> | undefined | null;
 	oninput?: FormEventHandler<T> | undefined | null;
 	oninputcapture?: FormEventHandler<T> | undefined | null;
@@ -1364,7 +1365,9 @@ export interface SvelteMediaTimeRange {
 }
 
 export interface SvelteDocumentAttributes extends HTMLAttributes<Document> {
+	readonly 'bind:activeElement'?: Document['activeElement'] | undefined | null;
 	readonly 'bind:fullscreenElement'?: Document['fullscreenElement'] | undefined | null;
+	readonly 'bind:pointerLockElement'?: Document['pointerLockElement'] | undefined | null;
 	readonly 'bind:visibilityState'?: Document['visibilityState'] | undefined | null;
 }
 

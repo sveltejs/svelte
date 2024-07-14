@@ -1,3 +1,8 @@
+/** @import { ValidatedCompileOptions } from '#compiler' */
+/** @import { Processed } from '../preprocess/public.js' */
+/** @import { SourceMap } from 'magic-string' */
+/** @import { Source } from '../preprocess/private.js' */
+/** @import { DecodedSourceMap, SourceMapSegment, RawSourceMap } from '@ampproject/remapping' */
 import remapping from '@ampproject/remapping';
 import { push_array } from './push_array.js';
 
@@ -10,7 +15,7 @@ function last_line_length(s) {
 // mutate map in-place
 
 /**
- * @param {import('@ampproject/remapping').DecodedSourceMap} map
+ * @param {DecodedSourceMap} map
  * @param {{ line: number; column: number; }} offset
  * @param {number} source_index
  */
@@ -74,13 +79,13 @@ export class MappedCode {
 	string = /** @type {any} */ (undefined);
 
 	/**
-	 * @type {import('@ampproject/remapping').DecodedSourceMap}
+	 * @type {DecodedSourceMap}
 	 */
 	map = /** @type {any} */ (undefined);
 
 	/**
 	 * @param {string} string
-	 * @param {import('@ampproject/remapping').DecodedSourceMap | null} map
+	 * @param {DecodedSourceMap | null} map
 	 */
 	constructor(string = '', map = null) {
 		this.string = string;
@@ -171,7 +176,7 @@ export class MappedCode {
 		// combine last line + first line
 		push_array(
 			m1.mappings[m1.mappings.length - 1],
-			/** @type {import('@ampproject/remapping').SourceMapSegment[]} */ (m2.mappings.shift())
+			/** @type {SourceMapSegment[]} */ (m2.mappings.shift())
 		);
 		// append other lines
 		push_array(m1.mappings, m2.mappings);
@@ -181,7 +186,7 @@ export class MappedCode {
 	/**
 	 * @static
 	 * @param {string} string
-	 * @param {import('@ampproject/remapping').DecodedSourceMap} [map]
+	 * @param {DecodedSourceMap} [map]
 	 * @returns {MappedCode}
 	 */
 	static from_processed(string, map) {
@@ -205,7 +210,7 @@ export class MappedCode {
 
 	/**
 	 * @static
-	 * @param {import('../preprocess/private.js').Source} opts
+	 * @param {Source} opts
 	 * @returns {MappedCode}
 	 */
 	static from_source({ source, file_basename, get_location }) {
@@ -216,7 +221,7 @@ export class MappedCode {
 		if (!offset) offset = { line: 0, column: 0 };
 
 		/**
-		 * @type {import('@ampproject/remapping').DecodedSourceMap}
+		 * @type {DecodedSourceMap}
 		 */
 		const map = { version: 3, names: [], sources: [file_basename], mappings: [] };
 		if (source == '') return new MappedCode(source, map);
@@ -255,7 +260,7 @@ const b64dec =
 
 /**
  * @param {string} filename Basename of the input file
- * @param {Array<import('@ampproject/remapping').DecodedSourceMap | import('@ampproject/remapping').RawSourceMap>} sourcemap_list
+ * @param {Array<DecodedSourceMap | RawSourceMap>} sourcemap_list
  */
 export function combine_sourcemaps(filename, sourcemap_list) {
 	if (sourcemap_list.length == 0) return null;
@@ -296,9 +301,9 @@ export function combine_sourcemaps(filename, sourcemap_list) {
 
 /**
  * @param {string} filename
- * @param {import('magic-string').SourceMap} svelte_map
- * @param {string | import('@ampproject/remapping').DecodedSourceMap | import('@ampproject/remapping').RawSourceMap} preprocessor_map_input
- * @returns {import('magic-string').SourceMap}
+ * @param {SourceMap} svelte_map
+ * @param {string | DecodedSourceMap | RawSourceMap} preprocessor_map_input
+ * @returns {SourceMap}
  */
 function apply_preprocessor_sourcemap(filename, svelte_map, preprocessor_map_input) {
 	if (!svelte_map || !preprocessor_map_input) return svelte_map;
@@ -323,13 +328,13 @@ function apply_preprocessor_sourcemap(filename, svelte_map, preprocessor_map_inp
 			}
 		}
 	});
-	return /** @type {import('magic-string').SourceMap} */ (result_map);
+	return /** @type {SourceMap} */ (result_map);
 }
 const regex_data_uri = /data:(?:application|text)\/json;(?:charset[:=]\S+?;)?base64,(\S*)/;
 // parse attached sourcemap in processed.code
 
 /**
- * @param {import('../preprocess/public.js').Processed} processed
+ * @param {Processed} processed
  * @param {'script' | 'style'} tag_name
  * @returns {void}
  */
@@ -382,8 +387,8 @@ export function parse_attached_sourcemap(processed, tag_name) {
 }
 
 /**
- * @param {{ code: string, map: import('magic-string').SourceMap}} result
- * @param {import('#compiler').ValidatedCompileOptions} options
+ * @param {{ code: string, map: SourceMap}} result
+ * @param {ValidatedCompileOptions} options
  * @param {string} source_name
  */
 export function merge_with_preprocessor_map(result, options, source_name) {

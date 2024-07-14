@@ -52,8 +52,10 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 		props: config.server_props ?? config.props ?? {}
 	});
 
+	const override = read(`${cwd}/_override.html`);
+
 	fs.writeFileSync(`${cwd}/_output/body.html`, rendered.html + '\n');
-	target.innerHTML = read(`${cwd}/_override.html`) ?? rendered.html;
+	target.innerHTML = override ?? rendered.html;
 
 	if (rendered.head) {
 		fs.writeFileSync(`${cwd}/_output/head.html`, rendered.head + '\n');
@@ -109,12 +111,14 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 			throw new Error(`Unexpected errors: ${errors.join('\n')}`);
 		}
 
-		const expected = read(`${cwd}/_expected.html`) ?? rendered.html;
-		assert_html_equal(target.innerHTML, expected);
+		if (!override) {
+			const expected = read(`${cwd}/_expected.html`) ?? rendered.html;
+			assert.equal(target.innerHTML.trim(), expected.trim());
+		}
 
 		if (rendered.head) {
 			const expected = read(`${cwd}/_expected_head.html`) ?? rendered.head;
-			assert_html_equal(head.innerHTML, expected);
+			assert.equal(head.innerHTML.trim(), expected.trim());
 		}
 
 		if (config.snapshot) {

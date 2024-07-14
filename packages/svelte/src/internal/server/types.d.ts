@@ -13,10 +13,18 @@ export interface Component {
 
 export interface Payload {
 	out: string;
-	anchor: number;
+	css: Set<{ hash: string; code: string }>;
 	head: {
 		title: string;
 		out: string;
-		anchor: number;
 	};
+}
+
+export interface RenderOutput {
+	/** HTML that goes into the `<head>` */
+	head: string;
+	/** @deprecated use `body` instead */
+	html: string;
+	/** HTML that goes somewhere into the `<body>` */
+	body: string;
 }

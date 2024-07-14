@@ -20,16 +20,16 @@ export async function run_ssr_test(
 		await compile_directory(test_dir, 'server', config.compileOptions);
 
 		const Component = (await import(`${test_dir}/_output/server/main.svelte.js`)).default;
-		const { html } = render(Component, { props: config.props || {} });
+		const { body } = render(Component, { props: config.props || {} });
 
-		fs.writeFileSync(`${test_dir}/_output/rendered.html`, html);
+		fs.writeFileSync(`${test_dir}/_output/rendered.html`, body);
 
 		if (config.ssrHtml) {
-			assert_html_equal_with_options(html, config.ssrHtml, {
+			assert_html_equal_with_options(body, config.ssrHtml, {
 				preserveComments: config.compileOptions?.preserveComments
 			});
 		} else if (config.html) {
-			assert_html_equal_with_options(html, config.html, {
+			assert_html_equal_with_options(body, config.html, {
 				preserveComments: config.compileOptions?.preserveComments
 			});
 		}

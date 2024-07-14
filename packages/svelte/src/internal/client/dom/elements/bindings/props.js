@@ -1,5 +1,5 @@
-import { render_effect } from '../../../reactivity/effects.js';
-import { get_descriptor } from '../../../utils.js';
+import { teardown } from '../../../reactivity/effects.js';
+import { get_descriptor } from '../../../../shared/utils.js';
 
 /**
  * Makes an `export`ed (non-prop) variable available on the `$$props` object
@@ -15,7 +15,7 @@ export function bind_prop(props, prop, value) {
 
 	if (desc && desc.set) {
 		props[prop] = value;
-		render_effect(() => () => {
+		teardown(() => {
 			props[prop] = null;
 		});
 	}

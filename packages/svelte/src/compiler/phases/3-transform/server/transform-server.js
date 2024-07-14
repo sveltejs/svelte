@@ -5,6 +5,7 @@ import {
 	extract_paths,
 	is_event_attribute,
 	is_expression_async,
+	is_text_attribute,
 	unwrap_optional
 } from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
@@ -27,49 +28,43 @@ import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patte
 import {
 	DOMBooleanAttributes,
 	ELEMENT_IS_NAMESPACED,
-	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
-	HYDRATION_END,
-	HYDRATION_START
+	ELEMENT_PRESERVE_ATTRIBUTE_CASE
 } from '../../../../constants.js';
 import { escape_html } from '../../../../escaping.js';
 import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
-import { BLOCK_CLOSE, BLOCK_CLOSE_ELSE } from '../../../../internal/server/hydration.js';
+import {
+	EMPTY_COMMENT,
+	BLOCK_CLOSE,
+	BLOCK_OPEN,
+	BLOCK_OPEN_ELSE
+} from '../../../../internal/server/hydration.js';
 import { filename, locator } from '../../../state.js';
+import { render_stylesheet } from '../css/index.js';
 
-export const block_open = t_string(`<!--${HYDRATION_START}-->`);
-export const block_close = t_string(`<!--${HYDRATION_END}-->`);
+/** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
+const block_open = b.literal(BLOCK_OPEN);
+
+/** Closes an if/each block, so that we can remove nodes in the case of a mismatch. Also serves as an anchor for these blocks */
+const block_close = b.literal(BLOCK_CLOSE);
+
+/** Empty comment to keep text nodes separate, or provide an anchor node for blocks */
+const empty_comment = b.literal(EMPTY_COMMENT);
 
 /**
- * @param {string} value
- * @returns {import('./types').TemplateString}
+ * @param {import('estree').Node} node
+ * @returns {node is import('estree').Statement}
  */
-function t_string(value) {
-	return { type: 'string', value };
+function is_statement(node) {
+	return node.type.endsWith('Statement') || node.type.endsWith('Declaration');
 }
 
 /**
- * @param {import('estree').Expression} value
- * @param {boolean} [needs_escaping]
- * @returns {import('./types').TemplateExpression}
- */
-function t_expression(value, needs_escaping = false) {
-	return { type: 'expression', value, needs_escaping };
-}
-
-/**
- * @param {import('estree').Statement} value
- * @returns {import('./types').TemplateStatement}
- */
-function t_statement(value) {
-	return { type: 'statement', value };
-}
-
-/**
- * @param {import('./types').Template[]} template
+ * @param {Array<import('estree').Statement | import('estree').Expression>} template
  * @param {import('estree').Identifier} out
+ * @param {import('estree').AssignmentOperator} operator
  * @returns {import('estree').Statement[]}
  */
-function serialize_template(template, out = b.id('out')) {
+function serialize_template(template, out = b.id('$$payload.out'), operator = '+=') {
 	/** @type {import('estree').TemplateElement[]} */
 	let quasis = [];
 
@@ -79,44 +74,41 @@ function serialize_template(template, out = b.id('out')) {
 	/** @type {import('estree').Statement[]} */
 	const statements = [];
 
-	const flush_payload = () => {
-		statements.push(
-			b.stmt(b.assignment('+=', b.member(b.id('$$payload'), out), b.template(quasis, expressions)))
-		);
+	const flush = () => {
+		statements.push(b.stmt(b.assignment(operator, out, b.template(quasis, expressions))));
 		quasis = [];
 		expressions = [];
 	};
 
 	for (let i = 0; i < template.length; i++) {
-		const template_item = template[i];
-		if (template_item.type === 'statement') {
+		const node = template[i];
+
+		if (is_statement(node)) {
 			if (quasis.length !== 0) {
-				flush_payload();
+				flush();
 			}
-			statements.push(template_item.value);
+
+			statements.push(node);
 		} else {
 			let last = quasis.at(-1);
 			if (!last) quasis.push((last = b.quasi('', false)));
 
-			if (template_item.type === 'string') {
-				last.value.raw += sanitize_template_string(template_item.value);
-			} else if (template_item.type === 'expression') {
-				const value = template_item.value;
-				if (value.type === 'TemplateLiteral') {
-					const raw = value.quasis[0].value.raw;
-					last.value.raw += template_item.needs_escaping ? sanitize_template_string(raw) : raw;
-					quasis.push(...value.quasis.slice(1));
-					expressions.push(...value.expressions);
-					continue;
-				}
-				expressions.push(value);
-				quasis.push(b.quasi('', i + 1 === template.length || template[i + 1].type === 'statement'));
+			if (node.type === 'Literal') {
+				last.value.raw +=
+					typeof node.value === 'string' ? sanitize_template_string(node.value) : node.value;
+			} else if (node.type === 'TemplateLiteral') {
+				last.value.raw += node.quasis[0].value.raw;
+				quasis.push(...node.quasis.slice(1));
+				expressions.push(...node.expressions);
+			} else {
+				expressions.push(node);
+				quasis.push(b.quasi('', i + 1 === template.length || is_statement(template[i + 1])));
 			}
 		}
 	}
 
 	if (quasis.length !== 0) {
-		flush_payload();
+		flush();
 	}
 
 	return statements;
@@ -125,174 +117,62 @@ function serialize_template(template, out = b.id('out')) {
 /**
  * Processes an array of template nodes, joining sibling text/expression nodes and
  * recursing into child nodes.
- * @param {Array<import('#compiler').SvelteNode | import('./types').Anchor>} nodes
- * @param {import('#compiler').SvelteNode} parent
+ * @param {Array<import('#compiler').SvelteNode>} nodes
  * @param {import('./types').ComponentContext} context
  */
-function process_children(nodes, parent, { visit, state }) {
-	/** @typedef {Array<import('#compiler').Text | import('#compiler').Comment | import('#compiler').ExpressionTag | import('./types').Anchor>} Sequence */
-
-	/** @type {Sequence} */
+function process_children(nodes, { visit, state }) {
+	/** @type {Array<import('#compiler').Text | import('#compiler').Comment | import('#compiler').ExpressionTag>} */
 	let sequence = [];
-	let did_flush = false;
 
-	/**
-	 * @param {Sequence} sequence
-	 * @param {boolean} final
-	 */
-	function flush_sequence(sequence, final) {
-		const is_single_flush = !did_flush && final;
-		did_flush = true;
-
-		if (sequence.length === 1) {
-			const node = sequence[0];
-
-			if (node.type === 'Text') {
-				if (
-					is_single_flush &&
-					parent.type === 'RegularElement' &&
-					(parent.name === 'script' || parent.name === 'style')
-				) {
-					state.template.push(t_string(node.data));
-				} else {
-					state.template.push(t_string(escape_html(node.data)));
-				}
-				return;
-			}
-
-			if (node.type === 'Comment') {
-				state.template.push(t_string(`<!--${escape_html(node.data)}-->`));
-				return;
-			}
-
-			if (node.type === 'Anchor') {
-				state.template.push(t_expression(node.id));
-				return;
-			}
-
-			const expression = b.call(
-				'$.escape',
-				/** @type {import('estree').Expression} */ (visit(node.expression))
-			);
-			state.template.push(t_expression(expression));
-
-			return;
-		}
-
-		/** @type {import('estree').TemplateElement[]} */
-		const quasis = [];
+	function flush() {
+		let quasi = b.quasi('', false);
+		const quasis = [quasi];
 
 		/** @type {import('estree').Expression[]} */
 		const expressions = [];
 
-		quasis.push(b.quasi('', false));
-
 		for (let i = 0; i < sequence.length; i++) {
 			const node = sequence[i];
+
 			if (node.type === 'Text' || node.type === 'Comment') {
-				let last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
-				last.value.raw += node.type === 'Comment' ? `<!--${node.data}-->` : escape_html(node.data);
+				quasi.value.raw += sanitize_template_string(
+					node.type === 'Comment' ? `<!--${node.data}-->` : escape_html(node.data)
+				);
 			} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
-				let last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
 				if (node.expression.value != null) {
-					last.value.raw += escape_html(node.expression.value + '');
+					quasi.value.raw += sanitize_template_string(escape_html(node.expression.value + ''));
 				}
-			} else if (node.type === 'Anchor') {
-				expressions.push(node.id);
-				quasis.push(b.quasi('', i + 1 === sequence.length));
 			} else {
 				expressions.push(
 					b.call('$.escape', /** @type {import('estree').Expression} */ (visit(node.expression)))
 				);
-				quasis.push(b.quasi('', i + 1 === sequence.length));
+
+				quasi = b.quasi('', i + 1 === sequence.length);
+				quasis.push(quasi);
 			}
 		}
 
-		state.template.push(t_expression(b.template(quasis, expressions), true));
+		state.template.push(b.template(quasis, expressions));
 	}
 
 	for (let i = 0; i < nodes.length; i += 1) {
 		const node = nodes[i];
 
-		if (
-			node.type === 'Text' ||
-			node.type === 'Comment' ||
-			node.type === 'ExpressionTag' ||
-			node.type === 'Anchor'
-		) {
+		if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
 			sequence.push(node);
 		} else {
 			if (sequence.length > 0) {
-				flush_sequence(sequence, false);
+				flush();
 				sequence = [];
 			}
 
-			visit(node, {
-				...state
-			});
+			visit(node, { ...state });
 		}
 	}
 
 	if (sequence.length > 0) {
-		flush_sequence(sequence, true);
+		flush();
 	}
-}
-
-/**
- * @param {import('#compiler').SvelteNode} parent
- * @param {import('#compiler').Fragment} fragment
- * @param {import('#compiler').SvelteNode[]} nodes
- * @param {import('./types').ComponentContext} context
- * @param {import('./types').Anchor} [anchor]
- * @returns {import('estree').Statement[]}
- */
-function create_block(parent, fragment, nodes, context, anchor) {
-	const namespace = infer_namespace(context.state.metadata.namespace, parent, nodes);
-
-	const { hoisted, trimmed } = clean_nodes(
-		parent,
-		nodes,
-		context.path,
-		namespace,
-		context.state.preserve_whitespace,
-		context.state.options.preserveComments
-	);
-
-	if (hoisted.length === 0 && trimmed.length === 0 && !anchor) {
-		return [];
-	}
-
-	/** @type {import('./types').ComponentServerTransformState} */
-	const state = {
-		...context.state,
-		scope: context.state.scopes.get(fragment) ?? context.state.scope,
-		init: [],
-		template: [],
-		metadata: {
-			namespace
-		}
-	};
-
-	for (const node of hoisted) {
-		context.visit(node, state);
-	}
-
-	process_children(anchor ? [anchor, ...trimmed, anchor] : trimmed, parent, {
-		...context,
-		state
-	});
-
-	/** @type {import('estree').Statement[]} */
-	const body = [];
-
-	if (state.template.length > 0) {
-		body.push(...state.init);
-		body.push(...serialize_template(state.template));
-	} else {
-		body.push(...state.init);
-	}
-
-	return body;
 }
 
 /**
@@ -362,9 +242,9 @@ function get_assignment_value(node, { state, visit }) {
 					serialize_get_binding(node.left, state),
 					/** @type {import('estree').Expression} */ (visit(node.right))
 				);
-	} else {
-		return /** @type {import('estree').Expression} */ (visit(node.right));
 	}
+
+	return /** @type {import('estree').Expression} */ (visit(node.right));
 }
 
 /**
@@ -485,15 +365,11 @@ function serialize_set_binding(node, context, fallback) {
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
  * @param {import('#compiler').Attribute} attribute
- * @param {{ state: { metadata: { namespace: import('#compiler').Namespace }}}} context
+ * @param {{ state: { namespace: import('#compiler').Namespace }}} context
  */
 function get_attribute_name(element, attribute, context) {
 	let name = attribute.name;
-	if (
-		!element.metadata.svg &&
-		!element.metadata.mathml &&
-		context.state.metadata.namespace !== 'foreign'
-	) {
+	if (!element.metadata.svg && !element.metadata.mathml && context.state.namespace !== 'foreign') {
 		name = name.toLowerCase();
 		// don't lookup boolean aliases here, the server runtime function does only
 		// check for the lowercase variants of boolean attributes
@@ -519,38 +395,53 @@ const global_visitors = {
 		const argument = node.argument;
 
 		if (argument.type === 'Identifier' && state.scope.get(argument.name)?.kind === 'store_sub') {
-			let fn = '$.update_store';
-			if (node.prefix) fn += '_pre';
-
-			/** @type {import('estree').Expression[]} */
-			const args = [
+			return b.call(
+				node.prefix ? '$.update_store_pre' : '$.update_store',
 				b.assignment('??=', b.id('$$store_subs'), b.object([])),
 				b.literal(argument.name),
-				b.id(argument.name.slice(1))
-			];
-			if (node.operator === '--') {
-				args.push(b.literal(-1));
-			}
-
-			return b.call(fn, ...args);
+				b.id(argument.name.slice(1)),
+				node.operator === '--' && b.literal(-1)
+			);
 		}
-		return next();
-	}
-};
 
-/** @type {import('./types').Visitors} */
-const javascript_visitors = {
-	Program(node, { visit }) {
-		return /** @type {import('estree').Program} */ ({
-			...node,
-			body: node.body.map((node) => /** @type {import('estree').Node} */ (visit(node)))
-		});
+		return next();
 	},
-	BlockStatement(node, { visit }) {
-		return /** @type {import('estree').BlockStatement} */ ({
-			...node,
-			body: node.body.map((node) => /** @type {import('estree').Node} */ (visit(node)))
-		});
+	CallExpression(node, context) {
+		const rune = get_rune(node, context.state.scope);
+
+		if (rune === '$host') {
+			return b.id('undefined');
+		}
+
+		if (rune === '$effect.tracking') {
+			return b.literal(false);
+		}
+
+		if (rune === '$effect.root') {
+			// ignore $effect.root() calls, just return a noop which mimics the cleanup function
+			return b.arrow([], b.block([]));
+		}
+
+		if (rune === '$state.snapshot') {
+			return b.call(
+				'$.snapshot',
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
+			);
+		}
+
+		if (rune === '$state.is') {
+			return b.call(
+				'Object.is',
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0])),
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[1]))
+			);
+		}
+
+		if (rune === '$inspect' || rune === '$inspect().with') {
+			return transform_inspect_rune(node, context);
+		}
+
+		context.next();
 	}
 };
 
@@ -694,7 +585,7 @@ const javascript_visitors_runes = {
 		for (const declarator of node.declarations) {
 			const init = declarator.init;
 			const rune = get_rune(init, state.scope);
-			if (!rune || rune === '$effect.active' || rune === '$inspect') {
+			if (!rune || rune === '$effect.tracking' || rune === '$inspect' || rune === '$effect.root') {
 				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
 				continue;
 			}
@@ -773,35 +664,6 @@ const javascript_visitors_runes = {
 		}
 		context.next();
 	},
-	CallExpression(node, context) {
-		const rune = get_rune(node, context.state.scope);
-
-		if (rune === '$host') {
-			return b.id('undefined');
-		}
-
-		if (rune === '$effect.active') {
-			return b.literal(false);
-		}
-
-		if (rune === '$state.snapshot') {
-			return /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]));
-		}
-
-		if (rune === '$state.is') {
-			return b.call(
-				'Object.is',
-				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0])),
-				/** @type {import('estree').Expression} */ (context.visit(node.arguments[1]))
-			);
-		}
-
-		if (rune === '$inspect' || rune === '$inspect().with') {
-			return transform_inspect_rune(node, context);
-		}
-
-		context.next();
-	},
 	MemberExpression(node, context) {
 		if (node.object.type === 'ThisExpression' && node.property.type === 'PrivateIdentifier') {
 			const field = context.state.private_derived.get(node.property.name);
@@ -816,59 +678,44 @@ const javascript_visitors_runes = {
 
 /**
  *
- * @param {true | Array<import('#compiler').Text | import('#compiler').ExpressionTag>} attribute_value
+ * @param {true | Array<import('#compiler').Text | import('#compiler').ExpressionTag>} value
  * @param {import('./types').ComponentContext} context
  * @param {boolean} trim_whitespace
  * @param {boolean} is_component
  * @returns {import('estree').Expression}
  */
-function serialize_attribute_value(
-	attribute_value,
-	context,
-	trim_whitespace = false,
-	is_component = false
-) {
-	if (attribute_value === true) {
+function serialize_attribute_value(value, context, trim_whitespace = false, is_component = false) {
+	if (value === true) {
 		return b.true;
 	}
 
-	if (attribute_value.length === 0) {
-		return b.literal(''); // is this even possible?
-	}
+	if (value.length === 1) {
+		const chunk = value[0];
 
-	if (attribute_value.length === 1) {
-		const value = attribute_value[0];
-		if (value.type === 'Text') {
-			let data = value.data;
-			if (trim_whitespace) {
-				data = data.replace(regex_whitespaces_strict, ' ').trim();
-			}
+		if (chunk.type === 'Text') {
+			const data = trim_whitespace
+				? chunk.data.replace(regex_whitespaces_strict, ' ').trim()
+				: chunk.data;
 
 			return b.literal(is_component ? data : escape_html(data, true));
-		} else {
-			return /** @type {import('estree').Expression} */ (context.visit(value.expression));
 		}
+
+		return /** @type {import('estree').Expression} */ (context.visit(chunk.expression));
 	}
 
-	/** @type {import('estree').TemplateElement[]} */
-	const quasis = [];
+	let quasi = b.quasi('', false);
+	const quasis = [quasi];
 
 	/** @type {import('estree').Expression[]} */
 	const expressions = [];
 
-	quasis.push(b.quasi('', false));
+	for (let i = 0; i < value.length; i++) {
+		const node = value[i];
 
-	let i = 0;
-	for (const node of attribute_value) {
-		i++;
 		if (node.type === 'Text') {
-			let data = node.data;
-			if (trim_whitespace) {
-				// don't trim, space could be important to separate from expression tag
-				data = data.replace(regex_whitespaces_strict, ' ');
-			}
-			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
-			last.value.raw += data;
+			quasi.value.raw += trim_whitespace
+				? node.data.replace(regex_whitespaces_strict, ' ')
+				: node.data;
 		} else {
 			expressions.push(
 				b.call(
@@ -876,7 +723,9 @@ function serialize_attribute_value(
 					/** @type {import('estree').Expression} */ (context.visit(node.expression))
 				)
 			);
-			quasis.push(b.quasi('', i + 1 === attribute_value.length));
+
+			quasi = b.quasi('', i + 1 === value.length);
+			quasis.push(quasi);
 		}
 	}
 
@@ -955,16 +804,15 @@ function serialize_element_spread_attributes(
 	);
 
 	const args = [object, classes, styles, flags ? b.literal(flags) : undefined];
-	context.state.template.push(t_expression(b.call('$.spread_attributes', ...args)));
+	context.state.template.push(b.call('$.spread_attributes', ...args));
 }
 
 /**
  * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node
- * @param {string | import('estree').Expression} component_name
+ * @param {import('estree').Expression} expression
  * @param {import('./types').ComponentContext} context
- * @returns {import('estree').Statement}
  */
-function serialize_inline_component(node, component_name, context) {
+function serialize_inline_component(node, expression, context) {
 	/** @type {Array<import('estree').Property[] | import('estree').Expression>} */
 	const props_and_spreads = [];
 
@@ -1088,15 +936,38 @@ function serialize_inline_component(node, component_name, context) {
 	const serialized_slots = [];
 
 	for (const slot_name of Object.keys(children)) {
-		const body = create_block(node, node.fragment, children[slot_name], context);
-		if (body.length === 0) continue;
+		const block = /** @type {import('estree').BlockStatement} */ (
+			context.visit(
+				{
+					...node.fragment,
+					// @ts-expect-error
+					nodes: children[slot_name]
+				},
+				{
+					...context.state,
+					scope:
+						context.state.scopes.get(slot_name === 'default' ? children[slot_name][0] : node) ??
+						context.state.scope
+				}
+			)
+		);
+
+		if (block.body.length === 0) continue;
 
 		const slot_fn = b.arrow(
 			[b.id('$$payload'), b.id('$$slotProps')],
-			b.block([...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []), ...body])
+			b.block([
+				...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []),
+				...block.body
+			])
 		);
 
-		if (slot_name === 'default' && !has_children_prop) {
+		if (
+			slot_name === 'default' &&
+			!has_children_prop &&
+			lets.length === 0 &&
+			children.default.every((node) => node.type !== 'SvelteFragment')
+		) {
 			push_prop(
 				b.prop(
 					'init',
@@ -1128,46 +999,44 @@ function serialize_inline_component(node, component_name, context) {
 
 	/** @type {import('estree').Statement} */
 	let statement = b.stmt(
-		(typeof component_name === 'string' ? b.call : b.maybe_call)(
-			context.state.options.dev
-				? b.call(
-						'$.validate_component',
-						typeof component_name === 'string' ? b.id(component_name) : component_name
-					)
-				: component_name,
+		(node.type === 'SvelteComponent' ? b.maybe_call : b.call)(
+			context.state.options.dev ? b.call('$.validate_component', expression) : expression,
 			b.id('$$payload'),
 			props_expression
 		)
 	);
 
-	if (custom_css_props.length > 0) {
-		statement = b.stmt(
-			b.call(
-				'$.css_props',
-				b.id('$$payload'),
-				b.literal(context.state.metadata.namespace === 'svg' ? false : true),
-				b.object(custom_css_props),
-				b.thunk(b.block([statement]))
-			)
-		);
-	}
-
 	if (snippet_declarations.length > 0) {
 		statement = b.block([...snippet_declarations, statement]);
 	}
 
-	return statement;
-}
+	const dynamic =
+		node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic);
 
-/**
- * Returns true if the attribute contains a single static text node.
- * @param {import('#compiler').Attribute} attribute
- * @returns {attribute is import('#compiler').Attribute & { value: [import('#compiler').Text] }}
- */
-function is_text_attribute(attribute) {
-	return (
-		attribute.value !== true && attribute.value.length === 1 && attribute.value[0].type === 'Text'
-	);
+	if (custom_css_props.length > 0) {
+		context.state.template.push(
+			b.stmt(
+				b.call(
+					'$.css_props',
+					b.id('$$payload'),
+					b.literal(context.state.namespace === 'svg' ? false : true),
+					b.object(custom_css_props),
+					b.thunk(b.block([statement])),
+					dynamic && b.true
+				)
+			)
+		);
+	} else {
+		if (dynamic) {
+			context.state.template.push(empty_comment);
+		}
+
+		context.state.template.push(statement);
+
+		if (!context.state.skip_hydration_boundaries) {
+			context.state.template.push(empty_comment);
+		}
+	}
 }
 
 /** @type {import('./types').Visitors} */
@@ -1271,15 +1140,44 @@ const javascript_visitors_legacy = {
 /** @type {import('./types').ComponentVisitors} */
 const template_visitors = {
 	Fragment(node, context) {
-		const body = create_block(context.path.at(-1) ?? node, node, node.nodes, context);
-		return b.block(body);
+		const parent = context.path.at(-1) ?? node;
+		const namespace = infer_namespace(context.state.namespace, parent, node.nodes);
+
+		const { hoisted, trimmed, is_standalone, is_text_first } = clean_nodes(
+			parent,
+			node.nodes,
+			context.path,
+			namespace,
+			context.state,
+			context.state.preserve_whitespace,
+			context.state.options.preserveComments
+		);
+
+		/** @type {import('./types').ComponentServerTransformState} */
+		const state = {
+			...context.state,
+			init: [],
+			template: [],
+			namespace,
+			skip_hydration_boundaries: is_standalone
+		};
+
+		for (const node of hoisted) {
+			context.visit(node, state);
+		}
+
+		if (is_text_first) {
+			// insert `<!---->` to prevent this from being glued to the previous fragment
+			state.template.push(empty_comment);
+		}
+
+		process_children(trimmed, { ...context, state });
+
+		return b.block([...state.init, ...serialize_template(state.template)]);
 	},
 	HtmlTag(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-		const raw = /** @type {import('estree').Expression} */ (context.visit(node.expression));
-		context.state.template.push(t_expression(raw));
-		state.template.push(block_close);
+		const expression = /** @type {import('estree').Expression} */ (context.visit(node.expression));
+		context.state.template.push(b.call('$.html', expression));
 	},
 	ConstTag(node, { state, visit }) {
 		const declaration = node.declaration.declarations[0];
@@ -1289,158 +1187,150 @@ const template_visitors = {
 	},
 	DebugTag(node, { state, visit }) {
 		state.template.push(
-			t_statement(
-				b.stmt(
-					b.call(
-						'console.log',
-						b.object(
-							node.identifiers.map((identifier) =>
-								b.prop(
-									'init',
-									identifier,
-									/** @type {import('estree').Expression} */ (visit(identifier))
-								)
+			b.stmt(
+				b.call(
+					'console.log',
+					b.object(
+						node.identifiers.map((identifier) =>
+							b.prop(
+								'init',
+								identifier,
+								/** @type {import('estree').Expression} */ (visit(identifier))
 							)
 						)
 					)
 				)
 			),
-			t_statement(b.debugger)
+			b.debugger
 		);
 	},
 	RenderTag(node, context) {
-		const state = context.state;
-
-		state.template.push(block_open);
-
 		const callee = unwrap_optional(node.expression).callee;
 		const raw_args = unwrap_optional(node.expression).arguments;
 
 		const expression = /** @type {import('estree').Expression} */ (context.visit(callee));
-		const snippet_function = state.options.dev
-			? b.call('$.validate_snippet', expression)
+		const snippet_function = context.state.options.dev
+			? b.call(
+					'$.validate_snippet',
+					expression,
+					raw_args.length && callee.type === 'Identifier' && callee.name === 'children'
+						? b.id('$$props')
+						: undefined
+				)
 			: expression;
 
 		const snippet_args = raw_args.map((arg) => {
 			return /** @type {import('estree').Expression} */ (context.visit(arg));
 		});
 
-		state.template.push(
-			t_statement(
-				b.stmt(
-					(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
-						snippet_function,
-						b.id('$$payload'),
-						...snippet_args
-					)
+		context.state.template.push(
+			b.stmt(
+				(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
+					snippet_function,
+					b.id('$$payload'),
+					...snippet_args
 				)
 			)
 		);
 
-		state.template.push(block_close);
+		if (!context.state.skip_hydration_boundaries) {
+			context.state.template.push(empty_comment);
+		}
 	},
-	ClassDirective(node) {
+	ClassDirective() {
 		throw new Error('Node should have been handled elsewhere');
 	},
-	StyleDirective(node) {
+	StyleDirective() {
 		throw new Error('Node should have been handled elsewhere');
 	},
 	RegularElement(node, context) {
-		const metadata = {
-			...context.state.metadata,
-			namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
-		};
+		context.state.template.push(b.literal(`<${node.name}`));
+		const body = serialize_element_attributes(node, context);
+		context.state.template.push(b.literal('>'));
 
-		context.state.template.push(t_string(`<${node.name}`));
-		const body_expression = serialize_element_attributes(node, context);
-		context.state.template.push(t_string('>'));
+		if ((node.name === 'script' || node.name === 'style') && node.fragment.nodes.length === 1) {
+			context.state.template.push(
+				b.literal(/** @type {import('#compiler').Text} */ (node.fragment.nodes[0]).data),
+				b.literal(`</${node.name}>`)
+			);
+
+			return;
+		}
+
+		const namespace = determine_namespace_for_children(node, context.state.namespace);
 
 		/** @type {import('./types').ComponentServerTransformState} */
 		const state = {
 			...context.state,
-			metadata,
+			namespace,
 			preserve_whitespace:
 				context.state.preserve_whitespace ||
-				((node.name === 'pre' || node.name === 'textarea') && metadata.namespace !== 'foreign')
+				((node.name === 'pre' || node.name === 'textarea') && namespace !== 'foreign')
 		};
-
-		/** @type {import('./types').ComponentContext} */
-		const inner_context =
-			body_expression !== null
-				? {
-						...context,
-						state: {
-							...state,
-							template: [],
-							init: []
-						}
-					}
-				: { ...context, state };
 
 		const { hoisted, trimmed } = clean_nodes(
 			node,
 			node.fragment.nodes,
-			inner_context.path,
-			metadata.namespace,
+			context.path,
+			namespace,
+			{
+				...state,
+				scope: /** @type {import('../../scope').Scope} */ (state.scopes.get(node.fragment))
+			},
 			state.preserve_whitespace,
 			state.options.preserveComments
 		);
 
 		for (const node of hoisted) {
-			inner_context.visit(node, state);
+			context.visit(node, state);
 		}
 
-		if (context.state.options.dev) {
+		if (state.options.dev) {
 			const location = /** @type {import('locate-character').Location} */ (locator(node.start));
-			context.state.template.push(
-				t_statement(
-					b.stmt(
-						b.call(
-							'$.push_element',
-							b.id('$$payload'),
-							b.literal(node.name),
-							b.literal(location.line),
-							b.literal(location.column)
-						)
+			state.template.push(
+				b.stmt(
+					b.call(
+						'$.push_element',
+						b.id('$$payload'),
+						b.literal(node.name),
+						b.literal(location.line),
+						b.literal(location.column)
 					)
 				)
 			);
 		}
 
-		process_children(trimmed, node, inner_context);
+		if (body === null) {
+			process_children(trimmed, { ...context, state });
+		} else {
+			let id = body;
 
-		if (body_expression !== null) {
-			let body_id;
-			const expression = body_expression.escape
-				? b.call('$.escape', body_expression.expression)
-				: body_expression.expression;
-			if (expression.type === 'Identifier') {
-				body_id = expression;
-			} else {
-				body_id = b.id(context.state.scope.generate('$$body'));
-				context.state.template.push(t_statement(b.const(body_id, expression)));
+			if (body.type !== 'Identifier') {
+				id = b.id(state.scope.generate('$$body'));
+				state.template.push(b.const(id, body));
 			}
 
+			// if this is a `<textarea>` value or a contenteditable binding, we only add
+			// the body if the attribute/binding is falsy
+			const inner_state = { ...state, template: [], init: [] };
+			process_children(trimmed, { ...context, state: inner_state });
+
 			// Use the body expression as the body if it's truthy, otherwise use the inner template
-			context.state.template.push(
-				t_statement(
-					b.if(
-						body_id,
-						b.block(serialize_template([t_expression(body_id)])),
-						b.block([
-							...inner_context.state.init,
-							...serialize_template(inner_context.state.template)
-						])
-					)
+			state.template.push(
+				b.if(
+					id,
+					b.block(serialize_template([id])),
+					b.block([...inner_state.init, ...serialize_template(inner_state.template)])
 				)
 			);
 		}
 
-		if (!VoidElements.includes(node.name) && metadata.namespace !== 'foreign') {
-			context.state.template.push(t_string(`</${node.name}>`));
+		if (!VoidElements.includes(node.name) && namespace !== 'foreign') {
+			state.template.push(b.literal(`</${node.name}>`));
 		}
-		if (context.state.options.dev) {
-			context.state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));
+
+		if (state.options.dev) {
+			state.template.push(b.stmt(b.call('$.pop_element')));
 		}
 	},
 	SvelteElement(node, context) {
@@ -1458,66 +1348,42 @@ const template_visitors = {
 			context.state.init.push(b.stmt(b.call('$.validate_dynamic_element_tag', b.thunk(tag))));
 		}
 
-		const metadata = {
-			...context.state.metadata,
-			namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
-		};
-		/** @type {import('./types').ComponentContext} */
-		const inner_context = {
-			...context,
-			state: {
-				...context.state,
-				metadata,
-				template: [],
-				init: []
-			}
+		const state = {
+			...context.state,
+			namespace: determine_namespace_for_children(node, context.state.namespace),
+			template: [],
+			init: []
 		};
 
-		context.state.template.push(block_open);
-
-		const main = create_block(node, node.fragment, node.fragment.nodes, {
-			...context,
-			state: { ...context.state, metadata }
-		});
-
-		serialize_element_attributes(node, inner_context);
+		serialize_element_attributes(node, { ...context, state });
 
 		if (context.state.options.dev) {
-			context.state.template.push(
-				t_statement(b.stmt(b.call('$.push_element', tag, b.id('$$payload'))))
-			);
+			context.state.template.push(b.stmt(b.call('$.push_element', tag, b.id('$$payload'))));
 		}
 
-		context.state.template.push(
-			t_statement(
-				b.if(
-					tag,
-
-					b.stmt(
-						b.call(
-							'$.element',
-							b.id('$$payload'),
-							tag,
-							b.thunk(
-								b.block([
-									...inner_context.state.init,
-									...serialize_template(inner_context.state.template)
-								])
-							),
-							b.thunk(b.block(main))
-						)
-					)
-				)
-			),
-			block_close
+		const attributes = b.block([...state.init, ...serialize_template(state.template)]);
+		const children = /** @type {import('estree').BlockStatement} */ (
+			context.visit(node.fragment, state)
 		);
+
+		context.state.template.push(
+			b.stmt(
+				b.call(
+					'$.element',
+					b.id('$$payload'),
+					tag,
+					attributes.body.length > 0 && b.thunk(attributes),
+					children.body.length > 0 && b.thunk(children)
+				)
+			)
+		);
+
 		if (context.state.options.dev) {
-			context.state.template.push(t_statement(b.stmt(b.call('$.pop_element'))));
+			context.state.template.push(b.stmt(b.call('$.pop_element')));
 		}
 	},
 	EachBlock(node, context) {
 		const state = context.state;
-		state.template.push(block_open);
 
 		const each_node_meta = node.metadata;
 		const collection = /** @type {import('estree').Expression} */ (context.visit(node.expression));
@@ -1526,7 +1392,6 @@ const template_visitors = {
 			each_node_meta.contains_group_binding || !node.index
 				? each_node_meta.index
 				: b.id(node.index);
-		const children = node.body.nodes;
 
 		const array_id = state.scope.root.unique('each_array');
 		state.init.push(b.const(array_id, b.call('$.ensure_array_like', collection)));
@@ -1541,15 +1406,7 @@ const template_visitors = {
 			each.push(b.let(node.index, index));
 		}
 
-		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(block_open.value))));
-
-		each.push(
-			.../** @type {import('estree').Statement[]} */ (
-				create_block(node, node.body, children, context)
-			)
-		);
-
-		each.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(block_close.value))));
+		each.push(.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body);
 
 		const for_loop = b.for(
 			b.let(index, b.literal(0)),
@@ -1558,92 +1415,80 @@ const template_visitors = {
 			b.block(each)
 		);
 
-		const close = b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE)));
-
 		if (node.fallback) {
-			const fallback = create_block(node, node.fallback, node.fallback.nodes, context);
+			const open = b.stmt(b.assignment('+=', b.id('$$payload.out'), block_open));
 
-			fallback.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE))));
+			const fallback = /** @type {import('estree').BlockStatement} */ (
+				context.visit(node.fallback)
+			);
+
+			fallback.body.unshift(
+				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN_ELSE)))
+			);
 
 			state.template.push(
-				t_statement(
-					b.if(
-						b.binary('!==', b.member(array_id, b.id('length')), b.literal(0)),
-						b.block([for_loop, close]),
-						b.block(fallback)
-					)
-				)
+				b.if(
+					b.binary('!==', b.member(array_id, b.id('length')), b.literal(0)),
+					b.block([open, for_loop]),
+					fallback
+				),
+				block_close
 			);
 		} else {
-			state.template.push(t_statement(for_loop), t_statement(close));
+			state.template.push(block_open, for_loop, block_close);
 		}
 	},
 	IfBlock(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
+		const test = /** @type {import('estree').Expression} */ (context.visit(node.test));
 
-		const consequent = create_block(node, node.consequent, node.consequent.nodes, context);
-		const alternate = node.alternate
-			? create_block(node, node.alternate, node.alternate.nodes, context)
-			: [];
-
-		consequent.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE))));
-		alternate.push(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_CLOSE_ELSE))));
-
-		state.template.push(
-			t_statement(
-				b.if(
-					/** @type {import('estree').Expression} */ (context.visit(node.test)),
-					b.block(consequent),
-					b.block(alternate)
-				)
-			)
+		const consequent = /** @type {import('estree').BlockStatement} */ (
+			context.visit(node.consequent)
 		);
+
+		const alternate = node.alternate
+			? /** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
+			: b.block([]);
+
+		consequent.body.unshift(b.stmt(b.assignment('+=', b.id('$$payload.out'), block_open)));
+
+		alternate.body.unshift(
+			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN_ELSE)))
+		);
+
+		context.state.template.push(b.if(test, consequent, alternate), block_close);
 	},
 	AwaitBlock(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-
-		state.template.push(
-			t_statement(
-				b.stmt(
-					b.call(
-						'$.await',
-						/** @type {import('estree').Expression} */ (context.visit(node.expression)),
-						b.thunk(
-							node.pending
-								? /** @type {import('estree').BlockStatement} */ (context.visit(node.pending))
-								: b.block([])
-						),
-						b.arrow(
-							node.value
-								? [/** @type {import('estree').Pattern} */ (context.visit(node.value))]
-								: [],
-							node.then
-								? /** @type {import('estree').BlockStatement} */ (context.visit(node.then))
-								: b.block([])
-						),
-						b.arrow(
-							node.error
-								? [/** @type {import('estree').Pattern} */ (context.visit(node.error))]
-								: [],
-							node.catch
-								? /** @type {import('estree').BlockStatement} */ (context.visit(node.catch))
-								: b.block([])
-						)
+		context.state.template.push(
+			empty_comment,
+			b.stmt(
+				b.call(
+					'$.await',
+					/** @type {import('estree').Expression} */ (context.visit(node.expression)),
+					b.thunk(
+						node.pending
+							? /** @type {import('estree').BlockStatement} */ (context.visit(node.pending))
+							: b.block([])
+					),
+					b.arrow(
+						node.value ? [/** @type {import('estree').Pattern} */ (context.visit(node.value))] : [],
+						node.then
+							? /** @type {import('estree').BlockStatement} */ (context.visit(node.then))
+							: b.block([])
+					),
+					b.arrow(
+						node.error ? [/** @type {import('estree').Pattern} */ (context.visit(node.error))] : [],
+						node.catch
+							? /** @type {import('estree').BlockStatement} */ (context.visit(node.catch))
+							: b.block([])
 					)
 				)
-			)
+			),
+			empty_comment
 		);
-
-		state.template.push(block_close);
 	},
 	KeyBlock(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-		const body = create_block(node, node.fragment, node.fragment.nodes, context);
-		state.template.push(t_statement(b.block(body)));
-		state.template.push(block_close);
+		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.fragment));
+		context.state.template.push(empty_comment, block, empty_comment);
 	},
 	SnippetBlock(node, context) {
 		const fn = b.function_declaration(
@@ -1661,61 +1506,49 @@ const template_visitors = {
 		}
 	},
 	Component(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-		const call = serialize_inline_component(node, node.name, context);
-		state.template.push(t_statement(call));
-		state.template.push(block_close);
+		serialize_inline_component(node, b.id(node.name), context);
 	},
 	SvelteSelf(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-		const call = serialize_inline_component(node, context.state.analysis.name, context);
-		state.template.push(t_statement(call));
-		state.template.push(block_close);
+		serialize_inline_component(node, b.id(context.state.analysis.name), context);
 	},
 	SvelteComponent(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-		const call = serialize_inline_component(
+		serialize_inline_component(
 			node,
 			/** @type {import('estree').Expression} */ (context.visit(node.expression)),
 			context
 		);
-		state.template.push(t_statement(call));
-		state.template.push(block_close);
 	},
 	LetDirective(node, { state }) {
-		if (node.expression && node.expression.type !== 'Identifier') {
-			const name = state.scope.generate(node.name);
-			const bindings = state.scope.get_bindings(node);
-
-			for (const binding of bindings) {
-				binding.expression = b.member(b.id(name), b.id(binding.node.name));
-			}
-
-			return b.const(
-				name,
-				b.call(
-					b.thunk(
-						b.block([
-							b.let(
-								node.expression.type === 'ObjectExpression'
-									? // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
-										b.object_pattern(node.expression.properties)
-									: // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
-										b.array_pattern(node.expression.elements),
-								b.member(b.id('$$slotProps'), b.id(node.name))
-							),
-							b.return(b.object(bindings.map((binding) => b.init(binding.node.name, binding.node))))
-						])
-					)
-				)
-			);
-		} else {
+		if (node.expression === null || node.expression.type === 'Identifier') {
 			const name = node.expression === null ? node.name : node.expression.name;
 			return b.const(name, b.member(b.id('$$slotProps'), b.id(node.name)));
 		}
+
+		const name = state.scope.generate(node.name);
+		const bindings = state.scope.get_bindings(node);
+
+		for (const binding of bindings) {
+			binding.expression = b.member(b.id(name), b.id(binding.node.name));
+		}
+
+		return b.const(
+			name,
+			b.call(
+				b.thunk(
+					b.block([
+						b.let(
+							node.expression.type === 'ObjectExpression'
+								? // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
+									b.object_pattern(node.expression.properties)
+								: // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
+									b.array_pattern(node.expression.elements),
+							b.member(b.id('$$slotProps'), b.id(node.name))
+						),
+						b.return(b.object(bindings.map((binding) => b.init(binding.node.name, binding.node))))
+					])
+				)
+			)
+		);
 	},
 	SpreadAttribute(node, { visit }) {
 		return visit(node.expression);
@@ -1724,42 +1557,24 @@ const template_visitors = {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'LetDirective') {
 				context.state.template.push(
-					t_statement(
-						/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute))
-					)
+					/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute))
 				);
 			}
 		}
 
-		const body = create_block(node, node.fragment, node.fragment.nodes, context);
+		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.fragment));
 
-		context.state.template.push(t_statement(b.block(body)));
+		context.state.template.push(block);
 	},
 	TitleElement(node, context) {
-		const state = context.state;
-
-		/** @type {import('./types').ComponentServerTransformState} */
-		const inner_state = {
-			...state,
-			init: [],
-			template: []
-		};
-
-		process_children(node.fragment.nodes, node, {
-			...context,
-			state: inner_state
-		});
-
-		// Use `=` so that later title changes override earlier ones
-		state.init.push(b.stmt(b.assignment('=', b.id('$$payload.title'), b.literal('<title>'))));
-		inner_state.template.push(t_string('</title>'));
 		// title is guaranteed to contain only text/expression tag children
-		state.init.push(...serialize_template(inner_state.template, b.id('title')));
+		const template = [b.literal('<title>')];
+		process_children(node.fragment.nodes, { ...context, state: { ...context.state, template } });
+		template.push(b.literal('</title>'));
+
+		context.state.init.push(...serialize_template(template, b.id('$$payload.title'), '='));
 	},
 	SlotElement(node, context) {
-		const state = context.state;
-		state.template.push(block_open);
-
 		/** @type {import('estree').Property[]} */
 		const props = [];
 
@@ -1777,6 +1592,7 @@ const template_visitors = {
 				spreads.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
 			} else if (attribute.type === 'Attribute') {
 				const value = serialize_attribute_value(attribute.value, context, false, true);
+
 				if (attribute.name === 'name') {
 					expression = b.member(b.member_id('$$props.$$slots'), value, true, true);
 				} else if (attribute.name !== 'slot') {
@@ -1798,26 +1614,23 @@ const template_visitors = {
 			spreads.length === 0
 				? b.object(props)
 				: b.call('$.spread_props', b.array([b.object(props), ...spreads]));
+
 		const fallback =
 			node.fragment.nodes.length === 0
 				? b.literal(null)
-				: b.thunk(b.block(create_block(node, node.fragment, node.fragment.nodes, context)));
+				: b.thunk(/** @type {import('estree').BlockStatement} */ (context.visit(node.fragment)));
+
 		const slot = b.call('$.slot', b.id('$$payload'), expression, props_expression, fallback);
 
-		state.template.push(t_statement(b.stmt(slot)));
-		state.template.push(block_close);
+		context.state.template.push(empty_comment, b.stmt(slot), empty_comment);
 	},
 	SvelteHead(node, context) {
-		const state = context.state;
-		const body = create_block(node, node.fragment, node.fragment.nodes, context);
-		state.template.push(
-			t_statement(
-				b.stmt(b.call('$.head', b.id('$$payload'), b.arrow([b.id('$$payload')], b.block(body))))
-			)
+		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.fragment));
+
+		context.state.template.push(
+			b.stmt(b.call('$.head', b.id('$$payload'), b.arrow([b.id('$$payload')], block)))
 		);
-	},
-	// @ts-ignore: need to extract this out somehow
-	CallExpression: javascript_visitors_runes.CallExpression
+	}
 };
 
 /**
@@ -1839,13 +1652,13 @@ function serialize_element_attributes(node, context) {
 	/** @type {import('estree').ExpressionStatement[]} */
 	const lets = [];
 
-	/** @type {{ escape: boolean; expression: import('estree').Expression } | null} */
+	/** @type {import('estree').Expression | null} */
 	let content = null;
 
 	let has_spread = false;
 	// Use the index to keep the attributes order which is important for spreading
-	let class_attribute_idx = -1;
-	let style_attribute_idx = -1;
+	let class_index = -1;
+	let style_index = -1;
 	let events_to_capture = new Set();
 
 	for (const attribute of node.attributes) {
@@ -1862,10 +1675,7 @@ function serialize_element_attributes(node, context) {
 						// also see related code in analysis phase
 						attribute.value[0].data = '\n' + attribute.value[0].data;
 					}
-					content = {
-						escape: true,
-						expression: serialize_attribute_value(attribute.value, context)
-					};
+					content = b.call('$.escape', serialize_attribute_value(attribute.value, context));
 				} else if (node.name !== 'select') {
 					// omit value attribute for select elements, it's irrelevant for the initially selected value and has no
 					// effect on the selected value after the user interacts with the select element (the value _property_ does, but not the attribute)
@@ -1882,9 +1692,9 @@ function serialize_element_attributes(node, context) {
 				}
 			} else {
 				if (attribute.name === 'class') {
-					class_attribute_idx = attributes.length;
+					class_index = attributes.length;
 				} else if (attribute.name === 'style') {
-					style_attribute_idx = attributes.length;
+					style_index = attributes.length;
 				}
 				attributes.push(attribute);
 			}
@@ -1908,19 +1718,12 @@ function serialize_element_attributes(node, context) {
 			if (binding?.omit_in_ssr) continue;
 
 			if (ContentEditableBindings.includes(attribute.name)) {
-				content = {
-					escape: false,
-					expression: /** @type {import('estree').Expression} */ (
-						context.visit(attribute.expression)
-					)
-				};
+				content = /** @type {import('estree').Expression} */ (context.visit(attribute.expression));
 			} else if (attribute.name === 'value' && node.name === 'textarea') {
-				content = {
-					escape: true,
-					expression: /** @type {import('estree').Expression} */ (
-						context.visit(attribute.expression)
-					)
-				};
+				content = b.call(
+					'$.escape',
+					/** @type {import('estree').Expression} */ (context.visit(attribute.expression))
+				);
 			} else if (attribute.name === 'group') {
 				const value_attribute = /** @type {import('#compiler').Attribute | undefined} */ (
 					node.attributes.find((attr) => attr.type === 'Attribute' && attr.name === 'value')
@@ -2001,9 +1804,9 @@ function serialize_element_attributes(node, context) {
 	if (class_directives.length > 0 && !has_spread) {
 		const class_attribute = serialize_class_directives(
 			class_directives,
-			/** @type {import('#compiler').Attribute | null} */ (attributes[class_attribute_idx] ?? null)
+			/** @type {import('#compiler').Attribute | null} */ (attributes[class_index] ?? null)
 		);
-		if (class_attribute_idx === -1) {
+		if (class_index === -1) {
 			attributes.push(class_attribute);
 		}
 	}
@@ -2011,11 +1814,11 @@ function serialize_element_attributes(node, context) {
 	if (style_directives.length > 0 && !has_spread) {
 		serialize_style_directives(
 			style_directives,
-			/** @type {import('#compiler').Attribute | null} */ (attributes[style_attribute_idx] ?? null),
+			/** @type {import('#compiler').Attribute | null} */ (attributes[style_index] ?? null),
 			context
 		);
-		if (style_attribute_idx > -1) {
-			attributes.splice(style_attribute_idx, 1);
+		if (style_index > -1) {
+			attributes.splice(style_index, 1);
 		}
 	}
 
@@ -2043,7 +1846,7 @@ function serialize_element_attributes(node, context) {
 				).value;
 				if (name !== 'class' || literal_value) {
 					context.state.template.push(
-						t_string(
+						b.literal(
 							` ${attribute.name}${
 								DOMBooleanAttributes.includes(name) && literal_value === true
 									? ''
@@ -2064,14 +1867,14 @@ function serialize_element_attributes(node, context) {
 			);
 
 			context.state.template.push(
-				t_expression(b.call('$.attr', b.literal(name), value, b.literal(is_boolean)))
+				b.call('$.attr', b.literal(name), value, is_boolean && b.literal(is_boolean))
 			);
 		}
 	}
 
 	if (events_to_capture.size !== 0) {
 		for (const event of events_to_capture) {
-			context.state.template.push(t_string(` ${event}="this.__e=event"`));
+			context.state.template.push(b.literal(` ${event}="this.__e=event"`));
 		}
 	}
 
@@ -2138,22 +1941,17 @@ function serialize_style_directives(style_directives, style_attribute, context) 
 		}
 		return b.init(directive.name, value);
 	});
-	if (style_attribute === null) {
-		context.state.template.push(t_expression(b.call('$.add_styles', b.object(styles))));
-	} else {
-		context.state.template.push(
-			t_expression(
-				b.call(
-					'$.add_styles',
-					b.call(
-						'$.merge_styles',
-						serialize_attribute_value(style_attribute.value, context, true),
-						b.object(styles)
-					)
-				)
-			)
-		);
-	}
+
+	const arg =
+		style_attribute === null
+			? b.object(styles)
+			: b.call(
+					'$.merge_styles',
+					serialize_attribute_value(style_attribute.value, context, true),
+					b.object(styles)
+				);
+
+	context.state.template.push(b.call('$.add_styles', arg));
 }
 
 /**
@@ -2170,28 +1968,13 @@ export function server_component(analysis, options) {
 		scopes: analysis.template.scopes,
 		hoisted: [b.import_all('$', 'svelte/internal/server')],
 		legacy_reactive_statements: new Map(),
-		// these should be set by create_block - if they're called outside, it's a bug
-		get init() {
-			/** @type {any[]} */
-			const a = [];
-			a.push = () => {
-				throw new Error('init.push should not be called outside create_block');
-			};
-			return a;
-		},
-		get template() {
-			/** @type {any[]} */
-			const a = [];
-			a.push = () => {
-				throw new Error('template.push should not be called outside create_block');
-			};
-			return a;
-		},
-		metadata: {
-			namespace: options.namespace
-		},
+		// these are set inside the `Fragment` visitor, and cannot be used until then
+		init: /** @type {any} */ (null),
+		template: /** @type {any} */ (null),
+		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
-		private_derived: new Map()
+		private_derived: new Map(),
+		skip_hydration_boundaries: false
 	};
 
 	const module = /** @type {import('estree').Program} */ (
@@ -2202,7 +1985,6 @@ export function server_component(analysis, options) {
 			{
 				...set_scope(analysis.module.scopes),
 				...global_visitors,
-				...javascript_visitors,
 				...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy)
 			}
 		)
@@ -2216,7 +1998,6 @@ export function server_component(analysis, options) {
 			{
 				...set_scope(analysis.instance.scopes),
 				...global_visitors,
-				...javascript_visitors,
 				...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy),
 				ImportDeclaration(node) {
 					state.hoisted.push(node);
@@ -2392,6 +2173,14 @@ export function server_component(analysis, options) {
 
 	const body = [...state.hoisted, ...module.body];
 
+	if (analysis.css.ast !== null && options.css === 'injected' && !options.customElement) {
+		const hash = b.literal(analysis.css.hash);
+		const code = b.literal(render_stylesheet(analysis.source, analysis, options).code);
+
+		body.push(b.const('$$css', b.object([b.init('hash', hash), b.init('code', code)])));
+		component_block.body.unshift(b.stmt(b.call('$$payload.css.add', b.id('$$css'))));
+	}
+
 	let should_inject_props =
 		should_inject_context ||
 		props.length > 0 ||
@@ -2406,7 +2195,7 @@ export function server_component(analysis, options) {
 		should_inject_props ? [b.id('$$payload'), b.id('$$props')] : [b.id('$$payload')],
 		component_block
 	);
-	if (options.legacy.componentApi) {
+	if (options.compatibility.componentApi === 4) {
 		body.unshift(b.imports([['render', '$$_render']], 'svelte/server'));
 		body.push(
 			component_function,
@@ -2488,7 +2277,7 @@ export function server_module(analysis, options) {
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
 		// this is an anomaly — it can only be used in components, but it needs
-		// to be present for `javascript_visitors` and so is included in module
+		// to be present for `javascript_visitors_legacy` and so is included in module
 		// transform state as well as component transform state
 		legacy_reactive_statements: new Map(),
 		private_derived: new Map()
@@ -2498,7 +2287,6 @@ export function server_module(analysis, options) {
 		walk(/** @type {import('#compiler').SvelteNode} */ (analysis.module.ast), state, {
 			...set_scope(analysis.module.scopes),
 			...global_visitors,
-			...javascript_visitors,
 			...javascript_visitors_runes
 		})
 	);

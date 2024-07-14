@@ -1,5 +1,12 @@
+/** @import { Effect, EffectNodes, TemplateNode } from '#client' */
 import { namespace_svg } from '../../../../constants.js';
-import { hydrate_anchor, hydrate_start, hydrating } from '../hydration.js';
+import {
+	hydrate_next,
+	hydrate_node,
+	hydrating,
+	set_hydrate_node,
+	set_hydrating
+} from '../hydration.js';
 import { empty } from '../operations.js';
 import {
 	block,
@@ -12,32 +19,11 @@ import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
 import { current_component_context, current_effect } from '../../runtime.js';
 import { DEV } from 'esm-env';
-import { is_array } from '../../utils.js';
-import { push_template_node } from '../template.js';
+import { EFFECT_TRANSPARENT } from '../../constants.js';
+import { assign_nodes } from '../template.js';
 
 /**
- * @param {import('#client').Effect} effect
- * @param {Element} from
- * @param {Element} to
- * @returns {void}
- */
-function swap_block_dom(effect, from, to) {
-	const dom = effect.dom;
-
-	if (is_array(dom)) {
-		for (let i = 0; i < dom.length; i++) {
-			if (dom[i] === from) {
-				dom[i] = to;
-				break;
-			}
-		}
-	} else if (dom === from) {
-		effect.dom = to;
-	}
-}
-
-/**
- * @param {Comment} anchor
+ * @param {Comment | Element} node
  * @param {() => string} get_tag
  * @param {boolean} is_svg
  * @param {undefined | ((element: Element, anchor: Node | null) => void)} render_fn,
@@ -45,36 +31,45 @@ function swap_block_dom(effect, from, to) {
  * @param {undefined | [number, number]} location
  * @returns {void}
  */
-export function element(anchor, get_tag, is_svg, render_fn, get_namespace, location) {
-	const parent_effect = /** @type {import('#client').Effect} */ (current_effect);
-	const filename = DEV && location && current_component_context?.function.filename;
+export function element(node, get_tag, is_svg, render_fn, get_namespace, location) {
+	let was_hydrating = hydrating;
+
+	if (hydrating) {
+		hydrate_next();
+	}
+
+	var filename = DEV && location && current_component_context?.function.filename;
 
 	/** @type {string | null} */
-	let tag;
+	var tag;
 
 	/** @type {string | null} */
-	let current_tag;
+	var current_tag;
 
 	/** @type {null | Element} */
-	let element = null;
+	var element = null;
 
-	/** @type {import('#client').Effect | null} */
-	let effect;
+	if (hydrating && hydrate_node.nodeType === 1) {
+		element = /** @type {Element} */ (hydrate_node);
+		hydrate_next();
+	}
+
+	var anchor = /** @type {TemplateNode} */ (hydrating ? hydrate_node : node);
+
+	/** @type {Effect | null} */
+	var effect;
 
 	/**
 	 * The keyed `{#each ...}` item block, if any, that this element is inside.
 	 * We track this so we can set it when changing the element, allowing any
 	 * `animate:` directive to bind itself to the correct block
 	 */
-	let each_item_block = current_each_item;
+	var each_item_block = current_each_item;
 
 	block(() => {
 		const next_tag = get_tag() || null;
-		const ns = get_namespace
-			? get_namespace()
-			: is_svg || next_tag === 'svg'
-				? namespace_svg
-				: null;
+		var ns = get_namespace ? get_namespace() : is_svg || next_tag === 'svg' ? namespace_svg : null;
+
 		// Assumption: Noone changes the namespace but not the tag (what would that even mean?)
 		if (next_tag === tag) return;
 
@@ -88,7 +83,6 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 				pause_effect(effect, () => {
 					effect = null;
 					current_tag = null;
-					element?.remove();
 				});
 			} else if (next_tag === current_tag) {
 				// same tag as is currently rendered — abort outro
@@ -102,9 +96,8 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 
 		if (next_tag && next_tag !== current_tag) {
 			effect = branch(() => {
-				const prev_element = element;
 				element = hydrating
-					? /** @type {Element} */ (hydrate_start)
+					? /** @type {Element} */ (element)
 					: ns
 						? document.createElementNS(ns, next_tag)
 						: document.createElement(next_tag);
@@ -120,12 +113,22 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 					};
 				}
 
+				assign_nodes(element, element);
+
 				if (render_fn) {
 					// If hydrating, use the existing ssr comment as the anchor so that the
 					// inner open and close methods can pick up the existing nodes correctly
-					var child_anchor = hydrating
-						? element.firstChild && hydrate_anchor(/** @type {Comment} */ (element.firstChild))
-						: element.appendChild(empty());
+					var child_anchor = /** @type {TemplateNode} */ (
+						hydrating ? element.firstChild : element.appendChild(empty())
+					);
+
+					if (hydrating) {
+						if (child_anchor === null) {
+							set_hydrating(false);
+						} else {
+							set_hydrate_node(child_anchor);
+						}
+					}
 
 					// `child_anchor` is undefined if this is a void element, but we still
 					// need to call `render_fn` in order to run actions etc. If the element
@@ -134,14 +137,10 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 					render_fn(element, child_anchor);
 				}
 
-				anchor.before(element);
+				// we do this after calling `render_fn` so that child effects don't override `nodes.end`
+				/** @type {Effect & { nodes: EffectNodes }} */ (current_effect).nodes.end = element;
 
-				if (prev_element) {
-					swap_block_dom(parent_effect, prev_element, element);
-					prev_element.remove();
-				} else if (!hydrating) {
-					push_template_node(element, parent_effect);
-				}
+				anchor.before(element);
 			});
 		}
 
@@ -150,5 +149,10 @@ export function element(anchor, get_tag, is_svg, render_fn, get_namespace, locat
 		set_should_intro(true);
 
 		set_current_each_item(previous_each_item);
-	});
+	}, EFFECT_TRANSPARENT);
+
+	if (was_hydrating) {
+		set_hydrating(true);
+		set_hydrate_node(anchor);
+	}
 }

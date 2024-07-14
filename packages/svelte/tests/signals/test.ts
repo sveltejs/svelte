@@ -2,14 +2,13 @@ import { describe, assert, it } from 'vitest';
 import { flushSync } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
 import {
-	destroy_effect,
 	effect,
 	effect_root,
 	render_effect,
 	user_effect
 } from '../../src/internal/client/reactivity/effects';
 import { source, set } from '../../src/internal/client/reactivity/sources';
-import type { Derived, Effect, Value } from '../../src/internal/client/types';
+import type { Derived, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
 
@@ -37,6 +36,16 @@ function test(text: string, fn: (runes: boolean) => any) {
 	it(`${text} (legacy mode)`, run_test(false, fn));
 	it(`${text} (runes mode)`, run_test(true, fn));
 }
+
+test.only = (text: string, fn: (runes: boolean) => any) => {
+	it.only(`${text} (legacy mode)`, run_test(false, fn));
+	it.only(`${text} (runes mode)`, run_test(true, fn));
+};
+
+test.skip = (text: string, fn: (runes: boolean) => any) => {
+	it.skip(`${text} (legacy mode)`, run_test(false, fn));
+	it.skip(`${text} (runes mode)`, run_test(true, fn));
+};
 
 describe('signals', () => {
 	test('effect with state and derived in it', () => {
@@ -206,7 +215,7 @@ describe('signals', () => {
 		};
 	});
 
-	test('correctly cleanup onowned nested derived values', () => {
+	test('correctly cleanup unowned nested derived values', () => {
 		return () => {
 			const nested: Derived<string>[] = [];
 
@@ -233,7 +242,7 @@ describe('signals', () => {
 			// Ensure we're not leaking dependencies
 			assert.deepEqual(
 				nested.slice(0, -2).map((s) => s.deps),
-				[null, null]
+				[null, null, null, null]
 			);
 		};
 	});
@@ -264,10 +273,12 @@ describe('signals', () => {
 			flushSync(() => set(count, 0));
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.reactions?.length, 1);
+			assert.deepEqual(calc.reactions?.length, 1);
 			assert.deepEqual(log, [0, 2, 'limit', 0]);
 			destroy();
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.reactions, null);
+			assert.deepEqual(calc.reactions, null);
 		};
 	});
 
@@ -275,7 +286,7 @@ describe('signals', () => {
 		return [];
 	});
 
-	test('two effects with an unowned derived that has no depedencies', () => {
+	test('two effects with an unowned derived that has no dependencies', () => {
 		const log: Array<Array<any>> = [];
 
 		render_effect(() => {
@@ -297,7 +308,7 @@ describe('signals', () => {
 		return [$.get(some_state)];
 	});
 
-	test('two effects with an unowned derived that has some depedencies', () => {
+	test('two effects with an unowned derived that has some dependencies', () => {
 		const log: Array<Array<any>> = [];
 
 		render_effect(() => {
@@ -445,6 +456,192 @@ describe('signals', () => {
 			destroy();
 			assert.equal(a?.deps?.length, 1);
 			assert.equal(state?.reactions, null);
+		};
+	});
+
+	test('deriveds update upon reconnection #1', () => {
+		let a = source(false);
+		let b = source(false);
+
+		let c = derived(() => $.get(a));
+		let d = derived(() => $.get(c));
+
+		let last: Record<string, boolean | null> = {};
+
+		render_effect(() => {
+			last = {
+				a: $.get(a),
+				b: $.get(b),
+				c: $.get(c),
+				d: $.get(a) || $.get(b) ? $.get(d) : null
+			};
+		});
+
+		return () => {
+			assert.deepEqual(last, { a: false, b: false, c: false, d: null });
+
+			flushSync(() => set(a, true));
+			flushSync(() => set(b, true));
+			assert.deepEqual(last, { a: true, b: true, c: true, d: true });
+
+			flushSync(() => set(a, false));
+			flushSync(() => set(b, false));
+			assert.deepEqual(last, { a: false, b: false, c: false, d: null });
+
+			flushSync(() => set(a, true));
+			flushSync(() => set(b, true));
+			assert.deepEqual(last, { a: true, b: true, c: true, d: true });
+
+			flushSync(() => set(a, false));
+			flushSync(() => set(b, false));
+			assert.deepEqual(last, { a: false, b: false, c: false, d: null });
+
+			flushSync(() => set(b, true));
+			assert.deepEqual(last, { a: false, b: true, c: false, d: false });
+		};
+	});
+
+	test('deriveds update upon reconnection #2', () => {
+		let a = source(false);
+		let b = source(false);
+		let c = source(false);
+
+		let d = derived(() => $.get(a) || $.get(b));
+
+		let branch = '';
+
+		render_effect(() => {
+			if ($.get(c) && !$.get(d)) {
+				branch = 'if';
+			} else {
+				branch = 'else';
+			}
+		});
+
+		return () => {
+			assert.deepEqual(branch, 'else');
+
+			flushSync(() => set(c, true));
+			assert.deepEqual(branch, 'if');
+
+			flushSync(() => set(a, true));
+			assert.deepEqual(branch, 'else');
+
+			set(a, false);
+			set(b, false);
+			set(c, false);
+			flushSync();
+			assert.deepEqual(branch, 'else');
+
+			flushSync(() => set(c, true));
+			assert.deepEqual(branch, 'if');
+
+			flushSync(() => set(b, true));
+			assert.deepEqual(branch, 'else');
+
+			set(a, false);
+			set(b, false);
+			set(c, false);
+			flushSync();
+			assert.deepEqual(branch, 'else');
+
+			flushSync(() => set(c, true));
+			assert.deepEqual(branch, 'if');
+		};
+	});
+
+	test('deriveds update upon reconnection #3', () => {
+		let a = source(false);
+		let b = source(false);
+
+		let c = derived(() => $.get(a) || $.get(b));
+		let d = derived(() => $.get(c));
+		let e = derived(() => $.get(d));
+
+		return () => {
+			const log: string[] = [];
+			let destroy = effect_root(() => {
+				render_effect(() => {
+					$.get(e);
+					log.push('init');
+				});
+			});
+			destroy();
+
+			destroy = effect_root(() => {
+				render_effect(() => {
+					$.get(e);
+					log.push('update');
+				});
+			});
+
+			assert.deepEqual(log, ['init', 'update']);
+
+			set(a, true);
+			flushSync();
+
+			assert.deepEqual(log, ['init', 'update', 'update']);
+		};
+	});
+
+	test('unowned deriveds are not added as reactions', () => {
+		var count = source(0);
+
+		function create_derived() {
+			return derived(() => $.get(count) * 2);
+		}
+
+		return () => {
+			let d = create_derived();
+			assert.equal($.get(d), 0);
+			assert.equal(count.reactions, null);
+			assert.equal(d.deps?.length, 1);
+
+			set(count, 1);
+			assert.equal($.get(d), 2);
+			assert.equal(count.reactions, null);
+			assert.equal(d.deps?.length, 1);
+
+			d = create_derived();
+			assert.equal($.get(d), 2);
+			assert.equal(count.reactions, null);
+			assert.equal(d.deps?.length, 1);
+		};
+	});
+
+	test('unowned deriveds are correctly connected and disconnected from the graph', () => {
+		var count = source(0);
+
+		function create_derived() {
+			return derived(() => $.get(count) * 2);
+		}
+
+		return () => {
+			let d = create_derived();
+
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					assert.equal($.get(d), 0);
+				});
+			});
+
+			assert.equal($.get(d), 0);
+			assert.equal(count.reactions?.length, 1);
+			assert.equal(d.deps?.length, 1);
+
+			set(count, 1);
+			assert.equal($.get(d), 2);
+			assert.equal(count.reactions?.length, 1);
+			assert.equal(d.deps?.length, 1);
+
+			destroy();
+
+			assert.equal(count.reactions, null);
+
+			set(count, 2);
+			assert.equal($.get(d), 4);
+			assert.equal(count.reactions, null);
+			assert.equal(d.deps?.length, 1);
 		};
 	});
 });

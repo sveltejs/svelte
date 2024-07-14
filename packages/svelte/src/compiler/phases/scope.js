@@ -613,7 +613,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					scopes.set(node.value, value_scope);
 					context.visit(node.value, { scope: value_scope });
 					for (const id of extract_identifiers(node.value)) {
-						then_scope.declare(id, 'normal', 'const');
+						then_scope.declare(id, 'derived', 'const');
 						value_scope.declare(id, 'normal', 'const');
 					}
 				}
@@ -627,7 +627,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					scopes.set(node.error, error_scope);
 					context.visit(node.error, { scope: error_scope });
 					for (const id of extract_identifiers(node.error)) {
-						catch_scope.declare(id, 'normal', 'const');
+						catch_scope.declare(id, 'derived', 'const');
 						error_scope.declare(id, 'normal', 'const');
 					}
 				}
@@ -674,7 +674,18 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		TransitionDirective: SvelteDirective,
 		AnimateDirective: SvelteDirective,
-		UseDirective: SvelteDirective
+		UseDirective: SvelteDirective,
+		// using it's own function instead of `SvelteDirective` because
+		// StyleDirective doesn't have expressions and are generally already
+		// handled by `Identifier`. This is the special case for the shorthand
+		// eg <button style:height /> where the variable has the same name of
+		// the css property
+		StyleDirective(node, { path, state, next }) {
+			if (node.value === true) {
+				state.scope.reference(b.id(node.name), path);
+			}
+			next();
+		}
 
 		// TODO others
 	});

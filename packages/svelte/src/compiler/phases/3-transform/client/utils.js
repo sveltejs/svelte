@@ -1,5 +1,6 @@
 import * as b from '../../../utils/builders.js';
 import {
+	extract_identifiers,
 	extract_paths,
 	is_expression_async,
 	is_simple_expression,
@@ -88,7 +89,7 @@ export function serialize_get_binding(node, state) {
 	}
 
 	if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
-		if (!state.analysis.runes || binding.reassigned || binding.initial) {
+		if (is_prop_source(binding, state)) {
 			return b.call(node);
 		}
 
@@ -119,10 +120,11 @@ export function serialize_get_binding(node, state) {
  * @param {import('estree').AssignmentExpression} node
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, State>} context
  * @param {() => any} fallback
+ * @param {boolean | null} [prefix] - If the assignment is a transformed update expression, set this. Else `null`
  * @param {{skip_proxy_and_freeze?: boolean}} [options]
  * @returns {import('estree').Expression}
  */
-export function serialize_set_binding(node, context, fallback, options) {
+export function serialize_set_binding(node, context, fallback, prefix, options) {
 	const { state, visit } = context;
 
 	const assignee = node.left;
@@ -146,7 +148,9 @@ export function serialize_set_binding(node, context, fallback, options) {
 			const value = path.expression?.(b.id(tmp_id));
 			const assignment = b.assignment('=', path.node, value);
 			original_assignments.push(assignment);
-			assignments.push(serialize_set_binding(assignment, context, () => assignment, options));
+			assignments.push(
+				serialize_set_binding(assignment, context, () => assignment, prefix, options)
+			);
 		}
 
 		if (assignments.every((assignment, i) => assignment === original_assignments[i])) {
@@ -292,7 +296,13 @@ export function serialize_set_binding(node, context, fallback, options) {
 
 	const serialize = () => {
 		if (left === node.left) {
-			if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
+			const is_initial_proxy =
+				binding.initial !== null &&
+				should_proxy_or_freeze(
+					/**@type {import("estree").Expression}*/ (binding.initial),
+					context.state.scope
+				);
+			if ((binding.kind === 'prop' || binding.kind === 'bindable_prop') && !is_initial_proxy) {
 				return b.call(left, value);
 			} else if (is_store) {
 				return b.call('$.store_set', serialize_get_binding(b.id(left_name), state), value);
@@ -318,12 +328,24 @@ export function serialize_set_binding(node, context, fallback, options) {
 							? b.call('$.freeze', value)
 							: value
 					);
+				} else if (
+					(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
+					is_initial_proxy
+				) {
+					call = b.call(
+						left,
+						context.state.analysis.runes &&
+							!options?.skip_proxy_and_freeze &&
+							should_proxy_or_freeze(value, context.state.scope)
+							? serialize_proxy_reassignment(value, left_name, state)
+							: value
+					);
 				} else {
 					call = b.call('$.set', b.id(left_name), value);
 				}
 
 				if (state.scope.get(`$${left.name}`)?.kind === 'store_sub') {
-					return b.call('$.store_unsub', call, b.literal(`$${left.name}`), b.id('$$subscriptions'));
+					return b.call('$.store_unsub', call, b.literal(`$${left.name}`), b.id('$$stores'));
 				} else {
 					return call;
 				}
@@ -369,18 +391,20 @@ export function serialize_set_binding(node, context, fallback, options) {
 					),
 					b.call('$.untrack', b.id('$' + left_name))
 				);
-			} else if (!state.analysis.runes) {
+			} else if (
+				!state.analysis.runes ||
+				// this condition can go away once legacy mode is gone; only necessary for interop with legacy parent bindings
+				(binding.mutated && binding.kind === 'bindable_prop')
+			) {
 				if (binding.kind === 'bindable_prop') {
 					return b.call(
 						left,
-						b.sequence([
-							b.assignment(
-								node.operator,
-								/** @type {import('estree').Pattern} */ (visit(node.left)),
-								value
-							),
-							b.call(left)
-						])
+						b.assignment(
+							node.operator,
+							/** @type {import('estree').Pattern} */ (visit(node.left)),
+							value
+						),
+						b.true
 					);
 				} else {
 					return b.call(
@@ -393,6 +417,16 @@ export function serialize_set_binding(node, context, fallback, options) {
 						)
 					);
 				}
+			} else if (
+				node.right.type === 'Literal' &&
+				prefix != null &&
+				(node.operator === '+=' || node.operator === '-=')
+			) {
+				return b.update(
+					node.operator === '+=' ? '++' : '--',
+					/** @type {import('estree').Expression} */ (visit(node.left)),
+					prefix
+				);
 			} else {
 				return b.assignment(
 					node.operator,
@@ -420,7 +454,6 @@ export function serialize_proxy_reassignment(value, proxy_reference, state) {
 		? b.call(
 				'$.proxy',
 				value,
-				b.true,
 				b.null,
 				typeof proxy_reference === 'string'
 					? b.id(proxy_reference)
@@ -507,14 +540,17 @@ function get_hoistable_params(node, context) {
 			} else if (
 				// If we are referencing a simple $$props value, then we need to reference the object property instead
 				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
-				!binding.reassigned &&
-				binding.initial === null &&
-				!context.state.analysis.accessors
+				!is_prop_source(binding, context.state)
 			) {
 				push_unique(b.id('$$props'));
 			} else {
 				// create a copy to remove start/end tags which would mess up source maps
 				push_unique(b.id(binding.node.name));
+				// rest props are often accessed through the $$props object for optimization reasons,
+				// but we can't know if the delegated event handler will use it, so we need to add both as params
+				if (binding.kind === 'rest_prop' && context.state.analysis.runes) {
+					push_unique(b.id('$$props'));
+				}
 			}
 		}
 	}
@@ -571,7 +607,9 @@ export function get_prop_source(binding, state, name, initial) {
 
 	if (
 		state.analysis.accessors ||
-		(state.analysis.immutable ? binding.reassigned : binding.mutated)
+		(state.analysis.immutable
+			? binding.reassigned || (state.analysis.runes && binding.mutated)
+			: binding.mutated)
 	) {
 		flags |= PROPS_IS_UPDATED;
 	}
@@ -604,6 +642,25 @@ export function get_prop_source(binding, state, name, initial) {
 	}
 
 	return b.call('$.prop', ...args);
+}
+
+/**
+ *
+ * @param {import('#compiler').Binding} binding
+ * @param {import('./types').ClientTransformState} state
+ * @returns
+ */
+export function is_prop_source(binding, state) {
+	return (
+		(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
+		(!state.analysis.runes ||
+			state.analysis.accessors ||
+			binding.reassigned ||
+			binding.initial ||
+			// Until legacy mode is gone, we also need to use the prop source when only mutated is true,
+			// because the parent could be a legacy component which needs coarse-grained reactivity
+			binding.mutated)
+	);
 }
 
 /**
@@ -653,4 +710,45 @@ export function with_loc(target, source) {
 		return { ...target, loc: source.loc };
 	}
 	return target;
+}
+
+/**
+ * @param {import("estree").Pattern} node
+ * @param {import("zimmerframe").Context<import("#compiler").SvelteNode, import("./types").ComponentClientTransformState>} context
+ * @returns {{ id: import("estree").Pattern, declarations: null | import("estree").Statement[] }}
+ */
+export function create_derived_block_argument(node, context) {
+	if (node.type === 'Identifier') {
+		return { id: node, declarations: null };
+	}
+
+	const pattern = /** @type {import('estree').Pattern} */ (context.visit(node));
+	const identifiers = extract_identifiers(node);
+
+	const id = b.id('$$source');
+	const value = b.id('$$value');
+
+	const block = b.block([
+		b.var(pattern, b.call('$.get', id)),
+		b.return(b.object(identifiers.map((identifier) => b.prop('init', identifier, identifier))))
+	]);
+
+	const declarations = [b.var(value, create_derived(context.state, b.thunk(block)))];
+
+	for (const id of identifiers) {
+		declarations.push(
+			b.var(id, create_derived(context.state, b.thunk(b.member(b.call('$.get', value), id))))
+		);
+	}
+
+	return { id, declarations };
+}
+
+/**
+ * Svelte legacy mode should use safe equals in most places, runes mode shouldn't
+ * @param {import('./types.js').ComponentClientTransformState} state
+ * @param {import('estree').Expression} arg
+ */
+export function create_derived(state, arg) {
+	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
 }

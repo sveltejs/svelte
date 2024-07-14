@@ -91,6 +91,27 @@ All other features, including stores, are still fully supported in runes mode.
 
 `beforeUpdate` and `afterUpdate` are deprecated — use `$effect.pre` and `$effect` instead, as these are more conservative about when they run code. Everything else will remain.
 
+### Prettier formatting is broken, what gives?
+
+`svelte-lsp` ships with a stable version of Svelte to support the largest number of people out of the box. To make the language server compatible with Svelte 5 you will need to install the latest versions of `prettier` and `prettier-plugin-svelte` in your project and create (or update) a `.prettierrc` file:
+
+```sh
+npm i --save-dev prettier-plugin-svelte prettier
+```
+
+```json
+/// file: .prettierrc
+{
+	"plugins": ["prettier-plugin-svelte"],
+	"overrides": [
+		{
+			"files": "*.svelte",
+			"options": { "parser": "svelte" }
+		}
+	]
+}
+```
+
 ## Schedule and future plans
 
 ### When is it coming out?

@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.0.0-next.145",
+  "version": "5.0.0-next.184",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -81,6 +81,10 @@
     "./transition": {
       "types": "./types/index.d.ts",
       "default": "./src/transition/index.js"
+    },
+    "./events": {
+      "types": "./types/index.d.ts",
+      "default": "./src/events/index.js"
     }
   },
   "repository": {
@@ -93,6 +97,7 @@
   },
   "homepage": "https://svelte.dev",
   "keywords": [
+    "svelte",
     "UI",
     "framework",
     "templates",
@@ -101,14 +106,14 @@
   "scripts": {
     "build": "node scripts/process-messages && rollup -c && pnpm generate:types && node scripts/check-treeshakeability.js",
     "dev": "node scripts/process-messages && rollup -cw",
-    "check": "tsc && cd ./tests/types && tsc",
+    "check": "tsc --project tsconfig.runtime.json && tsc && cd ./tests/types && tsc",
     "check:watch": "tsc --watch",
     "generate:version": "node ./scripts/generate-version.js",
     "generate:types": "node ./scripts/generate-types.js && tsc -p tsconfig.generated.json",
     "prepublishOnly": "pnpm build",
     "format": "prettier --check --write .",
     "lint": "prettier --check . && eslint",
-    "knip": "knip"
+    "knip": "pnpm dlx knip"
   },
   "devDependencies": {
     "@jridgewell/trace-mapping": "^0.3.22",
@@ -118,9 +123,8 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/aria-query": "^5.0.4",
-    "dts-buddy": "^0.4.7",
+    "dts-buddy": "^0.5.1",
     "esbuild": "^0.19.11",
-    "knip": "^4.2.1",
     "rollup": "^4.9.5",
     "source-map": "^0.7.4",
     "tiny-glob": "^0.2.9"

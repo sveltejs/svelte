@@ -1,19 +1,22 @@
+/** @import { ComponentAnalysis } from '../../types.js' */
+/** @import { Css } from '#compiler' */
+/** @import { Visitors } from 'zimmerframe' */
 import { walk } from 'zimmerframe';
 import * as e from '../../../errors.js';
 import { is_keyframes_node } from '../../css.js';
 import { merge } from '../../visitors.js';
 
 /**
- * @typedef {import('zimmerframe').Visitors<
- *   import('#compiler').Css.Node,
+ * @typedef {Visitors<
+ *   Css.Node,
  *   {
  *     keyframes: string[];
- *     rule: import('#compiler').Css.Rule | null;
+ *     rule: Css.Rule | null;
  *   }
- * >} Visitors
+ * >} CssVisitors
  */
 
-/** @param {import('#compiler').Css.RelativeSelector} relative_selector */
+/** @param {Css.RelativeSelector} relative_selector */
 function is_global(relative_selector) {
 	const first = relative_selector.selectors[0];
 
@@ -27,7 +30,7 @@ function is_global(relative_selector) {
 	);
 }
 
-/** @type {Visitors} */
+/** @type {CssVisitors} */
 const analysis_visitors = {
 	Atrule(node, context) {
 		if (is_keyframes_node(node)) {
@@ -102,7 +105,7 @@ const analysis_visitors = {
 	}
 };
 
-/** @type {Visitors} */
+/** @type {CssVisitors} */
 const validation_visitors = {
 	Rule(node, context) {
 		if (node.metadata.is_global_block) {
@@ -178,7 +181,7 @@ const validation_visitors = {
 		}
 	},
 	NestingSelector(node, context) {
-		const rule = /** @type {import('#compiler').Css.Rule} */ (context.state.rule);
+		const rule = /** @type {Css.Rule} */ (context.state.rule);
 		if (!rule.metadata.parent_rule) {
 			e.css_nesting_selector_invalid_placement(node);
 		}
@@ -188,8 +191,8 @@ const validation_visitors = {
 const css_visitors = merge(analysis_visitors, validation_visitors);
 
 /**
- * @param {import('#compiler').Css.StyleSheet} stylesheet
- * @param {import('../../types.js').ComponentAnalysis} analysis
+ * @param {Css.StyleSheet} stylesheet
+ * @param {ComponentAnalysis} analysis
  */
 export function analyze_css(stylesheet, analysis) {
 	walk(stylesheet, { keyframes: analysis.css.keyframes, rule: null }, css_visitors);

@@ -6,7 +6,9 @@ var root_1 = $.template(`Something`, 1);
 var root = $.template(`<!> `, 1);
 
 export default function Bind_component_snippet($$anchor) {
-	var snippet = ($$anchor) => {
+	const snippet = ($$anchor) => {
+		$.next();
+
 		var fragment = root_1();
 
 		$.append($$anchor, fragment);
@@ -28,6 +30,6 @@ export default function Bind_component_snippet($$anchor) {
 
 	var text = $.sibling(node, true);
 
-	$.template_effect(() => $.set_text(text, ` value: ${$.stringify($.get(value))}`));
+	$.template_effect(() => $.set_text(text, ` value: ${$.get(value) ?? ""}`));
 	$.append($$anchor, fragment_1);
 }

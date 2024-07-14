@@ -88,6 +88,10 @@
 
 > Block was left open
 
+## block_unexpected_character
+
+> Expected a `%character%` character immediately following the opening bracket
+
 ## block_unexpected_close
 
 > Unexpected block closing tag
@@ -95,6 +99,10 @@
 ## component_invalid_directive
 
 > This type of directive is not valid on components
+
+## const_tag_cycle
+
+> Cyclical dependency detected: %cycle%
 
 ## const_tag_invalid_expression
 

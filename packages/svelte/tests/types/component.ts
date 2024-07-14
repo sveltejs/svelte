@@ -8,6 +8,7 @@ import {
 	hydrate,
 	type Component
 } from 'svelte';
+import { render } from 'svelte/server';
 
 SvelteComponent.element === HTMLElement;
 
@@ -130,6 +131,13 @@ mount(NewComponent, {
 	intro: false,
 	recover: false
 });
+mount(
+	NewComponent,
+	// @ts-expect-error props missing
+	{ target: null as any }
+);
+// if component receives no args, props can be omitted
+mount(null as any as typeof SvelteComponent<{}>, { target: null as any });
 
 hydrate(NewComponent, {
 	target: null as any as Document | Element | ShadowRoot,
@@ -146,6 +154,29 @@ hydrate(NewComponent, {
 	immutable: true,
 	intro: false,
 	recover: false
+});
+hydrate(
+	NewComponent,
+	// @ts-expect-error props missing
+	{ target: null as any }
+);
+// if component receives no args, props can be omitted
+hydrate(null as any as typeof SvelteComponent<{}>, { target: null as any });
+
+render(NewComponent, {
+	props: {
+		prop: 'foo',
+		// @ts-expect-error
+		x: ''
+	}
+});
+// @ts-expect-error
+render(NewComponent);
+render(NewComponent, {
+	props: {
+		// @ts-expect-error
+		prop: 1
+	}
 });
 
 // --------------------------------------------------------------------------- interop
@@ -204,6 +235,8 @@ const functionComponent: Component<
 };
 functionComponent.element === HTMLElement;
 
+const bindingIsOkayToWiden: Component<any> = functionComponent;
+
 functionComponent(null as any, {
 	binding: true,
 	// @ts-expect-error
@@ -219,6 +252,13 @@ const functionComponentInstance = functionComponent(null as any, {
 functionComponentInstance.foo === 'bar';
 // @ts-expect-error
 functionComponentInstance.foo = 'foo';
+
+const functionComponentProps: ComponentProps<typeof functionComponent> = {
+	binding: true,
+	readonly: 'foo',
+	// @ts-expect-error
+	prop: 1
+};
 
 mount(functionComponent, {
 	target: null as any as Document | Element | ShadowRoot,
@@ -237,6 +277,13 @@ mount(functionComponent, {
 		readonly: 1
 	}
 });
+mount(
+	functionComponent,
+	// @ts-expect-error props missing
+	{ target: null as any }
+);
+// if component receives no args, props can be omitted
+mount(null as any as Component<{}>, { target: null as any });
 
 hydrate(functionComponent, {
 	target: null as any as Document | Element | ShadowRoot,
@@ -254,3 +301,42 @@ hydrate(functionComponent, {
 		binding: true
 	}
 });
+hydrate(
+	functionComponent,
+	// @ts-expect-error props missing
+	{ target: null as any }
+);
+// if component receives no args, props can be omitted
+hydrate(null as any as Component<{}>, { target: null as any });
+
+render(functionComponent, {
+	props: {
+		binding: true,
+		readonly: 'foo'
+	}
+});
+// @ts-expect-error
+render(functionComponent);
+render(functionComponent, {
+	// @ts-expect-error
+	props: {
+		binding: true
+	}
+});
+render(functionComponent, {
+	props: {
+		binding: true,
+		// @ts-expect-error
+		readonly: 1
+	}
+});
+
+// --------------------------------------------------------------------------- *.svelte components
+
+// import from a nonexistent file to trigger the declare module '*.svelte' in ambient.d.ts
+// this could show an error in the future in the editor (because language tools intercepts and knows this is an error)
+// but should always pass in tsc (because it will never know about this fact)
+import Foo from './doesntexist.svelte';
+
+Foo(null, { a: true });
+const f: Foo = new Foo({ target: document.body, props: { a: true } });

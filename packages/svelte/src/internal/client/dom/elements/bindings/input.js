@@ -1,10 +1,10 @@
 import { DEV } from 'esm-env';
-import { render_effect, effect } from '../../../reactivity/effects.js';
-import { stringify } from '../../../render.js';
+import { render_effect, teardown } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
 import { get_proxied_value, is } from '../../../proxy.js';
-import { yield_event_updates } from '../../../runtime.js';
+import { queue_micro_task } from '../../task.js';
+import { hydrating } from '../../hydration.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -19,9 +19,7 @@ export function bind_value(input, get_value, update) {
 			e.bind_invalid_checkbox_value();
 		}
 
-		yield_event_updates(() =>
-			update(is_numberlike_input(input) ? to_number(input.value) : input.value)
-		);
+		update(is_numberlike_input(input) ? to_number(input.value) : input.value);
 	});
 
 	render_effect(() => {
@@ -32,8 +30,12 @@ export function bind_value(input, get_value, update) {
 
 		var value = get_value();
 
-		// @ts-ignore
-		input.__value = value;
+		// If we are hydrating and the value has since changed, then use the update value
+		// from the input instead.
+		if (hydrating && input.defaultValue !== input.value) {
+			update(input.value);
+			return;
+		}
 
 		if (is_numberlike_input(input) && value === to_number(input.value)) {
 			// handles 0 vs 00 case (see https://github.com/sveltejs/svelte/issues/9959)
@@ -46,12 +48,16 @@ export function bind_value(input, get_value, update) {
 			return;
 		}
 
-		input.value = stringify(value);
+		// @ts-expect-error the value is coerced on assignment
+		input.value = value ?? '';
 	});
 }
 
+/** @type {Set<HTMLInputElement[]>} */
+const pending = new Set();
+
 /**
- * @param {Array<HTMLInputElement>} inputs
+ * @param {HTMLInputElement[]} inputs
  * @param {null | [number]} group_index
  * @param {HTMLInputElement} input
  * @param {() => unknown} get_value
@@ -61,6 +67,9 @@ export function bind_value(input, get_value, update) {
 export function bind_group(inputs, group_index, input, get_value, update) {
 	var is_checkbox = input.getAttribute('type') === 'checkbox';
 	var binding_group = inputs;
+
+	// needs to be let or related code isn't treeshaken out if it's always false
+	let hydration_mismatch = false;
 
 	if (group_index !== null) {
 		for (var index of group_index) {
@@ -87,14 +96,21 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 				value = get_binding_group_value(binding_group, value, input.checked);
 			}
 
-			yield_event_updates(() => update(value));
+			update(value);
 		},
 		// TODO better default value handling
-		() => yield_event_updates(() => update(is_checkbox ? [] : null))
+		() => update(is_checkbox ? [] : null)
 	);
 
 	render_effect(() => {
 		var value = get_value();
+
+		// If we are hydrating and the value has since changed, then use the update value
+		// from the input instead.
+		if (hydrating && input.defaultChecked !== input.checked) {
+			hydration_mismatch = true;
+			return;
+		}
 
 		if (is_checkbox) {
 			value = value || [];
@@ -106,19 +122,38 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 		}
 	});
 
-	render_effect(() => {
-		return () => {
-			var index = binding_group.indexOf(input);
+	teardown(() => {
+		var index = binding_group.indexOf(input);
 
-			if (index !== -1) {
-				binding_group.splice(index, 1);
-			}
-		};
+		if (index !== -1) {
+			binding_group.splice(index, 1);
+		}
 	});
 
-	effect(() => {
-		// necessary to maintain binding group order in all insertion scenarios. TODO optimise
-		binding_group.sort((a, b) => (a.compareDocumentPosition(b) === 4 ? -1 : 1));
+	if (!pending.has(binding_group)) {
+		pending.add(binding_group);
+
+		queue_micro_task(() => {
+			// necessary to maintain binding group order in all insertion scenarios
+			binding_group.sort((a, b) => (a.compareDocumentPosition(b) === 4 ? -1 : 1));
+			pending.delete(binding_group);
+		});
+	}
+
+	queue_micro_task(() => {
+		if (hydration_mismatch) {
+			var value;
+
+			if (is_checkbox) {
+				value = get_binding_group_value(binding_group, value, input.checked);
+			} else {
+				var hydration_input = binding_group.find((input) => input.checked);
+				// @ts-ignore
+				value = hydration_input?.__value;
+			}
+
+			update(value);
+		}
 	});
 }
 
@@ -131,7 +166,7 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 export function bind_checked(input, get_value, update) {
 	listen_to_event_and_reset_event(input, 'change', () => {
 		var value = input.checked;
-		yield_event_updates(() => update(value));
+		update(value);
 	});
 
 	if (get_value() == undefined) {
@@ -190,8 +225,9 @@ function to_number(value) {
  */
 export function bind_files(input, get_value, update) {
 	listen_to_event_and_reset_event(input, 'change', () => {
-		yield_event_updates(() => update(input.files));
+		update(input.files);
 	});
+
 	render_effect(() => {
 		input.files = get_value();
 	});

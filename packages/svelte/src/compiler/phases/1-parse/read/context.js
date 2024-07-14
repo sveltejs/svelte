@@ -1,3 +1,6 @@
+/** @import { Location } from 'locate-character' */
+/** @import { Pattern } from 'estree' */
+/** @import { Parser } from '../index.js' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart } from 'acorn';
 import full_char_code_at from '../utils/full_char_code_at.js';
@@ -13,26 +16,25 @@ import * as e from '../../../errors.js';
 import { locator } from '../../../state.js';
 
 /**
- * @param {import('../index.js').Parser} parser
- * @param {boolean} [optional_allowed]
- * @returns {import('estree').Pattern}
+ * @param {Parser} parser
+ * @returns {Pattern}
  */
-export default function read_pattern(parser, optional_allowed = false) {
+export default function read_pattern(parser) {
 	const start = parser.index;
 	let i = parser.index;
 
 	const code = full_char_code_at(parser.template, i);
 	if (isIdentifierStart(code, true)) {
 		const name = /** @type {string} */ (parser.read_identifier());
-		const annotation = read_type_annotation(parser, optional_allowed);
+		const annotation = read_type_annotation(parser);
 
 		return {
 			type: 'Identifier',
 			name,
 			start,
 			loc: {
-				start: /** @type {import('locate-character').Location} */ (locator(start)),
-				end: /** @type {import('locate-character').Location} */ (locator(parser.index))
+				start: /** @type {Location} */ (locator(start)),
+				end: /** @type {Location} */ (locator(parser.index))
 			},
 			end: parser.index,
 			typeAnnotation: annotation
@@ -84,7 +86,7 @@ export default function read_pattern(parser, optional_allowed = false) {
 			parse_expression_at(`${space_with_newline}(${pattern_string} = 1)`, parser.ts, start - 1)
 		).left;
 
-		expression.typeAnnotation = read_type_annotation(parser, optional_allowed);
+		expression.typeAnnotation = read_type_annotation(parser);
 		if (expression.typeAnnotation) {
 			expression.end = expression.typeAnnotation.end;
 		}
@@ -96,19 +98,12 @@ export default function read_pattern(parser, optional_allowed = false) {
 }
 
 /**
- * @param {import('../index.js').Parser} parser
- * @param {boolean} [optional_allowed]
+ * @param {Parser} parser
  * @returns {any}
  */
-function read_type_annotation(parser, optional_allowed = false) {
+function read_type_annotation(parser) {
 	const start = parser.index;
 	parser.allow_whitespace();
-
-	if (optional_allowed && parser.eat('?')) {
-		// Acorn-TS puts the optional info as a property on the surrounding node.
-		// We spare the work here because it doesn't matter for us anywhere else.
-		parser.allow_whitespace();
-	}
 
 	if (!parser.eat(':')) {
 		parser.index = start;

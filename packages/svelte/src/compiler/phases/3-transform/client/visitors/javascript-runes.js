@@ -4,6 +4,7 @@ import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
 import {
 	get_prop_source,
+	is_prop_source,
 	is_state_source,
 	serialize_proxy_reassignment,
 	should_proxy_or_freeze
@@ -215,7 +216,7 @@ export const javascript_visitors_runes = {
 			const rune = get_rune(init, state.scope);
 			if (
 				!rune ||
-				rune === '$effect.active' ||
+				rune === '$effect.tracking' ||
 				rune === '$effect.root' ||
 				rune === '$inspect' ||
 				rune === '$state.snapshot' ||
@@ -237,49 +238,65 @@ export const javascript_visitors_runes = {
 			}
 
 			if (rune === '$props') {
-				assert.equal(declarator.id.type, 'ObjectPattern');
-
 				/** @type {string[]} */
-				const seen = [];
+				const seen = ['$$slots', '$$events', '$$legacy'];
 
-				for (const property of declarator.id.properties) {
-					if (property.type === 'Property') {
-						const key = /** @type {import('estree').Identifier | import('estree').Literal} */ (
-							property.key
-						);
-						const name = key.type === 'Identifier' ? key.name : /** @type {string} */ (key.value);
+				if (state.analysis.custom_element) {
+					seen.push('$$host');
+				}
 
-						seen.push(name);
+				if (declarator.id.type === 'Identifier') {
+					/** @type {import('estree').Expression[]} */
+					const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
 
-						let id =
-							property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
-						assert.equal(id.type, 'Identifier');
-						const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
-						let initial =
-							binding.initial &&
-							/** @type {import('estree').Expression} */ (visit(binding.initial));
-						// We're adding proxy here on demand and not within the prop runtime function so that
-						// people not using proxied state anywhere in their code don't have to pay the additional bundle size cost
-						if (initial && binding.mutated && should_proxy_or_freeze(initial, state.scope)) {
-							initial = b.call('$.proxy', initial);
-						}
+					if (state.options.dev) {
+						// include rest name, so we can provide informative error messages
+						args.push(b.literal(declarator.id.name));
+					}
 
-						if (binding.reassigned || state.analysis.accessors || initial) {
-							declarations.push(b.declarator(id, get_prop_source(binding, state, name, initial)));
-						}
-					} else {
-						// RestElement
-						/** @type {import('estree').Expression[]} */
-						const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
+					declarations.push(b.declarator(declarator.id, b.call('$.rest_props', ...args)));
+				} else {
+					assert.equal(declarator.id.type, 'ObjectPattern');
 
-						if (state.options.dev) {
-							// include rest name, so we can provide informative error messages
-							args.push(
-								b.literal(/** @type {import('estree').Identifier} */ (property.argument).name)
+					for (const property of declarator.id.properties) {
+						if (property.type === 'Property') {
+							const key = /** @type {import('estree').Identifier | import('estree').Literal} */ (
+								property.key
 							);
-						}
+							const name = key.type === 'Identifier' ? key.name : /** @type {string} */ (key.value);
 
-						declarations.push(b.declarator(property.argument, b.call('$.rest_props', ...args)));
+							seen.push(name);
+
+							let id =
+								property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
+							assert.equal(id.type, 'Identifier');
+							const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
+							let initial =
+								binding.initial &&
+								/** @type {import('estree').Expression} */ (visit(binding.initial));
+							// We're adding proxy here on demand and not within the prop runtime function so that
+							// people not using proxied state anywhere in their code don't have to pay the additional bundle size cost
+							if (initial && binding.mutated && should_proxy_or_freeze(initial, state.scope)) {
+								initial = b.call('$.proxy', initial);
+							}
+
+							if (is_prop_source(binding, state)) {
+								declarations.push(b.declarator(id, get_prop_source(binding, state, name, initial)));
+							}
+						} else {
+							// RestElement
+							/** @type {import('estree').Expression[]} */
+							const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
+
+							if (state.options.dev) {
+								// include rest name, so we can provide informative error messages
+								args.push(
+									b.literal(/** @type {import('estree').Identifier} */ (property.argument).name)
+								);
+							}
+
+							declarations.push(b.declarator(property.argument, b.call('$.rest_props', ...args)));
+						}
 					}
 				}
 
@@ -434,8 +451,8 @@ export const javascript_visitors_runes = {
 			return b.id('$$props.$$host');
 		}
 
-		if (rune === '$effect.active') {
-			return b.call('$.effect_active');
+		if (rune === '$effect.tracking') {
+			return b.call('$.effect_tracking');
 		}
 
 		if (rune === '$state.snapshot') {

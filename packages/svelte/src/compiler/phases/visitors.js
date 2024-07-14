@@ -1,3 +1,4 @@
+/** @import { Visitors, Context } from 'zimmerframe' */
 const overrides = {
 	visit() {
 		throw new Error('Cannot call visit() during analysis');
@@ -10,7 +11,7 @@ const overrides = {
 /**
  * @template {{ type: string }} T
  * @template U
- * @param  {...import('zimmerframe').Visitors<T, U>} tasks
+ * @param  {...Visitors<T, U>} tasks
  * @returns
  */
 export function merge(...tasks) {
@@ -24,7 +25,7 @@ export function merge(...tasks) {
 		}
 	}
 
-	/** @type {import('zimmerframe').Visitors<T, U>} */
+	/** @type {Visitors<T, U>} */
 	// @ts-expect-error
 	const combined = {};
 
@@ -33,7 +34,7 @@ export function merge(...tasks) {
 
 		/**
 		 * @param {T} node
-		 * @param {import('zimmerframe').Context<T, U>} context
+		 * @param {Context<T, U>} context
 		 */
 		function visitor(node, context) {
 			/**

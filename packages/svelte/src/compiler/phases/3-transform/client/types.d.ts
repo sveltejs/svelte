@@ -8,7 +8,7 @@ import type {
 import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
-import type { Location } from 'locate-character';
+import type { SourceLocation } from '#shared';
 
 export interface ClientTransformState extends TransformState {
 	readonly private_state: Map<string, StateField>;
@@ -23,10 +23,6 @@ export interface ClientTransformState extends TransformState {
 	/** The $: calls, which will be ordered in the end */
 	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
 }
-
-export type SourceLocation =
-	| [line: number, column: number]
-	| [line: number, column: number, SourceLocation[]];
 
 export interface ComponentClientTransformState extends ClientTransformState {
 	readonly analysis: ComponentAnalysis;
@@ -49,9 +45,9 @@ export interface ComponentClientTransformState extends ClientTransformState {
 		namespace: Namespace;
 		bound_contenteditable: boolean;
 		/**
-		 * Stuff that is set within the children of one `create_block` that is relevant
-		 * to said `create_block`. Shouldn't be destructured or otherwise spread unless
-		 * inside `create_block` to keep the object reference intact (it's also nested
+		 * Stuff that is set within the children of one `Fragment` visitor that is relevant
+		 * to said fragment. Shouldn't be destructured or otherwise spread unless inside the
+		 * `Fragment` visitor to keep the object reference intact (it's also nested
 		 * within `metadata` for this reason).
 		 */
 		context: {

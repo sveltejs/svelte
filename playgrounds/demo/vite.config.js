@@ -6,7 +6,16 @@ export default defineConfig({
 	build: {
 		minify: false
 	},
-	plugins: [inspect(), svelte()],
+
+	plugins: [
+		inspect(),
+		svelte({
+			compilerOptions: {
+				hmr: true
+			}
+		})
+	],
+
 	optimizeDeps: {
 		// svelte is a local workspace package, optimizing it would require dev server restarts with --force for every change
 		exclude: ['svelte']

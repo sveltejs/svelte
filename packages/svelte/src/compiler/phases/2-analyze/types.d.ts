@@ -3,6 +3,7 @@ import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
 import type {
 	ClassDirective,
 	ExpressionTag,
+	RenderTag,
 	SpreadAttribute,
 	SvelteNode,
 	ValidatedCompileOptions
@@ -20,6 +21,8 @@ export interface AnalysisState {
 	component_slots: Set<string>;
 	/** The current {expression}, if any */
 	expression: ExpressionTag | ClassDirective | SpreadAttribute | null;
+	/** The current {@render ...} tag, if any */
+	render_tag: null | RenderTag;
 	private_derived_state: string[];
 	function_depth: number;
 }

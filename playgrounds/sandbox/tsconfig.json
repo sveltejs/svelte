@@ -13,5 +13,5 @@
 		"allowJs": true,
 		"checkJs": true
 	},
-	"include": ["./input"]
+	"include": ["./run.js", "./input"]
 }

@@ -1,5 +1,5 @@
 import { untrack } from './runtime.js';
-import { get_descriptor, is_array } from './utils.js';
+import { get_descriptor, is_array } from '../shared/utils.js';
 import * as e from './errors.js';
 
 /** regex of all html void element names */
@@ -12,8 +12,9 @@ function is_void(tag) {
 }
 
 /**
- * @param {() => any} component_fn
- * @returns {any}
+ * @template Component
+ * @param {() => Component} component_fn
+ * @returns {Component}
  */
 export function validate_dynamic_component(component_fn) {
 	try {

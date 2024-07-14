@@ -71,7 +71,7 @@ export type EachState = {
 	/** a key -> item lookup */
 	items: Map<any, EachItem>;
 	/** head of the linked list of items */
-	next: EachItem | null;
+	first: EachItem | null;
 };
 
 export type EachItem = {
@@ -85,9 +85,7 @@ export type EachItem = {
 	i: number | Source<number>;
 	/** key */
 	k: unknown;
-	/** anchor for items inserted before this */
-	o: Comment | Text;
-	prev: EachItem | EachState;
+	prev: EachItem | null;
 	next: EachItem | null;
 };
 
@@ -150,9 +148,8 @@ export type StoreReferencesContainer = Record<
 	string,
 	{
 		store: Store<any> | null;
-		last_value: any;
 		unsubscribe: Function;
-		value: Source<any>;
+		source: Source<any>;
 	}
 >;
 
@@ -183,8 +180,6 @@ export interface ProxyMetadata<T = Record<string | symbol, any>> {
 	v: Source<number>;
 	/** `true` if the proxified object is an array */
 	a: boolean;
-	/** Immutable: Whether to use a source or mutable source under the hood */
-	i: boolean;
 	/** The associated proxy */
 	p: ProxyStateObject<T>;
 	/** The original target this proxy was created for */

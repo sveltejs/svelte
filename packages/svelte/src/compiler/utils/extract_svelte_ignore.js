@@ -12,7 +12,8 @@ const replacements = {
 	'invalid-html-attribute': 'attribute_invalid_property_name',
 	'a11y-structure': 'a11y_figcaption_parent',
 	'illegal-attribute-character': 'attribute_illegal_colon',
-	'invalid-rest-eachblock-binding': 'bind_invalid_each_rest'
+	'invalid-rest-eachblock-binding': 'bind_invalid_each_rest',
+	'unused-export-let': 'export_let_unused'
 };
 
 /**

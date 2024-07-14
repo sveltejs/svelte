@@ -4,7 +4,7 @@ import './ambient.js';
 
 /**
  * @deprecated In Svelte 4, components are classes. In Svelte 5, they are functions.
- * Use `mount` or `createRoot` instead to instantiate components.
+ * Use `mount` instead to instantiate components.
  * See [breaking changes](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes)
  * for more info.
  */
@@ -36,7 +36,7 @@ type Properties<Props, Slots> = Props &
 /**
  * This was the base class for Svelte components in Svelte 4. Svelte 5+ components
  * are completely different under the hood. For typing, use `Component` instead.
- * To instantiate components, use `mount` or `createRoot`.
+ * To instantiate components, use `mount` instead`.
  * See [breaking changes documentation](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes) for more info.
  */
 export class SvelteComponent<
@@ -50,7 +50,7 @@ export class SvelteComponent<
 	[prop: string]: any;
 	/**
 	 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
-	 * is a stop-gap solution. Migrate towards using `mount` or `createRoot` instead. See
+	 * is a stop-gap solution. Migrate towards using `mount` instead. See
 	 * https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more info.
 	 */
 	constructor(options: ComponentConstructorOptions<Properties<Props, Slots>>);
@@ -113,7 +113,7 @@ export class SvelteComponent<
  * you export a component called `MyComponent`. For Svelte+TypeScript users,
  * you want to provide typings. Therefore you create a `index.d.ts`:
  * ```ts
- * import { Component } from "svelte";
+ * import type { Component } from 'svelte';
  * export declare const MyComponent: Component<{ foo: string }> {}
  * ```
  * Typing this makes it possible for IDEs like VS Code with the Svelte extension
@@ -129,7 +129,7 @@ export class SvelteComponent<
 export interface Component<
 	Props extends Record<string, any> = {},
 	Exports extends Record<string, any> = {},
-	Bindings extends keyof Props | '' = ''
+	Bindings extends keyof Props | '' = string
 > {
 	/**
 	 * @param internal An internal object used by Svelte. Do not use or modify.
@@ -170,6 +170,7 @@ export class SvelteComponentTyped<
 /**
  * @deprecated The new `Component` type does not have a dedicated Events type. Use `ComponentProps` instead.
  *
+ * @description
  * Convenience type to get the events the given component expects. Example:
  * ```html
  * <script lang="ts">
@@ -188,17 +189,34 @@ export type ComponentEvents<Comp extends SvelteComponent> =
 	Comp extends SvelteComponent<any, infer Events> ? Events : never;
 
 /**
- * Convenience type to get the props the given component expects. Example:
- * ```html
- * <script lang="ts">
- * 	import type { ComponentProps } from 'svelte';
- * 	import Component from './Component.svelte';
+ * Convenience type to get the props the given component expects.
  *
- * 	const props: ComponentProps<Component> = { foo: 'bar' }; // Errors if these aren't the correct props
- * </script>
+ * Example: Ensure a variable contains the props expected by `MyComponent`:
+ *
+ * ```ts
+ * import type { ComponentProps } from 'svelte';
+ * import MyComponent from './MyComponent.svelte';
+ *
+ * // Errors if these aren't the correct props expected by MyComponent.
+ * const props: ComponentProps<MyComponent> = { foo: 'bar' };
+ * ```
+ *
+ * Example: A generic function that accepts some component and infers the type of its props:
+ *
+ * ```ts
+ * import type { Component, ComponentProps } from 'svelte';
+ * import MyComponent from './MyComponent.svelte';
+ *
+ * function withProps<TComponent extends Component<any>>(
+ * 	component: TComponent,
+ * 	props: ComponentProps<TComponent>
+ * ) {};
+ *
+ * // Errors if the second argument is not the correct props expected by the component in the first argument.
+ * withProps(MyComponent, { foo: 'bar' });
  * ```
  */
-export type ComponentProps<Comp extends SvelteComponent | Component> =
+export type ComponentProps<Comp extends SvelteComponent | Component<any>> =
 	Comp extends SvelteComponent<infer Props>
 		? Props
 		: Comp extends Component<infer Props>
@@ -208,6 +226,7 @@ export type ComponentProps<Comp extends SvelteComponent | Component> =
 /**
  * @deprecated This type is obsolete when working with the new `Component` type.
  *
+ * @description
  * Convenience type to get the type of a Svelte component. Useful for example in combination with
  * dynamic components using `<svelte:component>`.
  *
@@ -237,27 +256,29 @@ export type ComponentType<Comp extends SvelteComponent = SvelteComponent> = (new
 
 declare const SnippetReturn: unique symbol;
 
+// Use an interface instead of a type, makes for better intellisense info because the type is named in more situations.
 /**
  * The type of a `#snippet` block. You can use it to (for example) express that your component expects a snippet of a certain type:
  * ```ts
- * let { banner }: { banner: Snippet<{ text: string }> } = $props();
+ * let { banner }: { banner: Snippet<[{ text: string }]> } = $props();
  * ```
  * You can only call a snippet through the `{@render ...}` tag.
+ *
+ * https://svelte-5-preview.vercel.app/docs/snippets
+ *
+ * @template Parameters the parameters that the snippet expects (if any) as a tuple.
  */
-export type Snippet<T extends unknown[] = []> =
-	// this conditional allows tuples but not arrays. Arrays would indicate a
-	// rest parameter type, which is not supported. If rest parameters are added
-	// in the future, the condition can be removed.
-	number extends T['length']
-		? never
-		: {
-				(
-					this: void,
-					...args: T
-				): typeof SnippetReturn & {
-					_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-				};
-			};
+export interface Snippet<Parameters extends unknown[] = []> {
+	(
+		this: void,
+		// this conditional allows tuples but not arrays. Arrays would indicate a
+		// rest parameter type, which is not supported. If rest parameters are added
+		// in the future, the condition can be removed.
+		...args: number extends Parameters['length'] ? never : Parameters
+	): typeof SnippetReturn & {
+		_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
+	};
+}
 
 interface DispatchOptions {
 	cancelable?: boolean;

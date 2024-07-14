@@ -1,5 +1,19 @@
 declare module '*.svelte' {
-	export { SvelteComponent as default } from 'svelte';
+	// use prettier-ignore for a while because of https://github.com/sveltejs/language-tools/commit/026111228b5814a9109cc4d779d37fb02955fb8b
+	// prettier-ignore
+	import { SvelteComponent, Component, type ComponentConstructorOptions } from 'svelte'
+
+	// Support using the component as both a class and function during the transition period
+	// prettier-ignore
+	interface ComponentType {
+		(
+			...args: Parameters<Component<Record<string, any>>>
+		): ReturnType<Component<Record<string, any>, Record<string, any>>>
+		new (o: ComponentConstructorOptions): SvelteComponent
+	}
+	const Comp: ComponentType;
+	type Comp = SvelteComponent;
+	export default Comp;
 }
 
 /**
@@ -18,6 +32,75 @@ declare function $state<T>(initial: T): T;
 declare function $state<T>(): T | undefined;
 
 declare namespace $state {
+	type Primitive = string | number | boolean | null | undefined;
+
+	type TypedArray =
+		| Int8Array
+		| Uint8Array
+		| Uint8ClampedArray
+		| Int16Array
+		| Uint16Array
+		| Int32Array
+		| Uint32Array
+		| Float32Array
+		| Float64Array
+		| BigInt64Array
+		| BigUint64Array;
+
+	/** The things that `structuredClone` can handle — https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm */
+	export type Cloneable =
+		| ArrayBuffer
+		| DataView
+		| Date
+		| Error
+		| Map<any, any>
+		| RegExp
+		| Set<any>
+		| TypedArray
+		// web APIs
+		| Blob
+		| CryptoKey
+		| DOMException
+		| DOMMatrix
+		| DOMMatrixReadOnly
+		| DOMPoint
+		| DOMPointReadOnly
+		| DOMQuad
+		| DOMRect
+		| DOMRectReadOnly
+		| File
+		| FileList
+		| FileSystemDirectoryHandle
+		| FileSystemFileHandle
+		| FileSystemHandle
+		| ImageBitmap
+		| ImageData
+		| RTCCertificate
+		| VideoFrame;
+
+	/** Turn `SvelteDate`, `SvelteMap` and `SvelteSet` into their non-reactive counterparts. (`URL` is uncloneable.) */
+	type NonReactive<T> = T extends Date
+		? Date
+		: T extends Map<infer K, infer V>
+			? Map<K, V>
+			: T extends Set<infer K>
+				? Set<K>
+				: T;
+
+	type Snapshot<T> = T extends Primitive
+		? T
+		: T extends Cloneable
+			? NonReactive<T>
+			: T extends { toJSON(): infer R }
+				? R
+				: T extends Array<infer U>
+					? Array<Snapshot<U>>
+					: T extends object
+						? T extends { [key: string]: any }
+							? { [K in keyof T]: Snapshot<T[K]> }
+							: never
+						: never;
+
 	/**
 	 * Declares reactive read-only state that is shallowly immutable.
 	 *
@@ -61,7 +144,7 @@ declare namespace $state {
 	 *
 	 * @param state The value to snapshot
 	 */
-	export function snapshot<T>(state: T): T;
+	export function snapshot<T>(state: T): Snapshot<T>;
 
 	/**
 	 * Compare two values, one or both of which is a reactive `$state(...)` proxy.
@@ -201,26 +284,26 @@ declare namespace $effect {
 	export function pre(fn: () => void | (() => void)): void;
 
 	/**
-	 * The `$effect.active` rune is an advanced feature that tells you whether or not the code is running inside an effect or inside your template.
+	 * The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template.
 	 *
 	 * Example:
 	 * ```svelte
 	 * <script>
-	 *   console.log('in component setup:', $effect.active()); // false
+	 *   console.log('in component setup:', $effect.tracking()); // false
 	 *
 	 *   $effect(() => {
-	 *     console.log('in effect:', $effect.active()); // true
+	 *     console.log('in effect:', $effect.tracking()); // true
 	 *   });
 	 * </script>
 	 *
-	 * <p>in template: {$effect.active()}</p> <!-- true -->
+	 * <p>in template: {$effect.tracking()}</p> <!-- true -->
 	 * ```
 	 *
 	 * This allows you to (for example) add things like subscriptions without causing memory leaks, by putting them in child effects.
 	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$effect-active
+	 * https://svelte-5-preview.vercel.app/docs/runes#$effect-tracking
 	 */
-	export function active(): boolean;
+	export function tracking(): boolean;
 
 	/**
 	 * The `$effect.root` rune is an advanced feature that creates a non-tracked scope that doesn't auto-cleanup. This is useful for
@@ -292,7 +375,7 @@ declare function $props(): any;
  *
  * https://svelte-5-preview.vercel.app/docs/runes#$bindable
  */
-declare function $bindable<T>(t?: T): T;
+declare function $bindable<T>(fallback?: T): T;
 
 /**
  * Inspects one or more values whenever they, or the properties they contain, change. Example:

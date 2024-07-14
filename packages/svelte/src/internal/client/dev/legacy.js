@@ -2,6 +2,13 @@ import * as e from '../errors.js';
 import { current_component_context } from '../runtime.js';
 import { get_component } from './ownership.js';
 
+/** @param {Function & { filename: string }} target */
+export function check_target(target) {
+	if (target) {
+		e.component_api_invalid_new(target.filename ?? 'a component', target.name);
+	}
+}
+
 export function legacy_api() {
 	const component = current_component_context?.function;
 

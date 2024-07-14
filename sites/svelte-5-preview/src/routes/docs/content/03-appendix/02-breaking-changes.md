@@ -70,7 +70,18 @@ import App from './App.svelte'
 export default app;
 ```
 
-If this component is not under your control, you can use the `legacy.componentApi` compiler option for auto-applied backwards compatibility (note that this adds a bit of overhead to each component). This will also add `$set` and `$on` methods for all component instances you get through `bind:this`.
+If this component is not under your control, you can use the `compatibility.componentApi` compiler option for auto-applied backwards compatibility, which means code using `new Component(...)` keeps working without adjustments (note that this adds a bit of overhead to each component). This will also add `$set` and `$on` methods for all component instances you get through `bind:this`.
+
+```js
+/// svelte.config.js
+export default {
+	compilerOptions: {
+		compatibility: {
+			componentApi: 4
+		}
+	}
+};
+```
 
 ### Server API changes
 
@@ -84,7 +95,7 @@ import App from './App.svelte';
 + const { html, head } = render(App, { props: { message: 'hello' } });
 ```
 
-`render` also no longer returns CSS; it should be served separately from a CSS file.
+In Svelte 4, rendering a component to a string also returned the CSS of all components. In Svelte 5, this is no longer the case by default because most of the time you're using a tooling chain that takes care of it in other ways (like SvelteKit). If you need CSS to be returned from `render`, you can set the `css` compiler option to `'injected'` and it will add `<style>` elements to the `head`.
 
 ### Component typing changes
 
@@ -160,6 +171,8 @@ Exports from runes mode components cannot be bound to directly. For example, hav
 
 In Svelte 4 syntax, every property (declared via `export let`) is bindable, meaning you can `bind:` to it. In runes mode, properties are not bindable by default: you need to denote bindable props with the [`$bindable`](/docs/runes#$bindable) rune.
 
+If a bindable property has a default value (e.g. `let { foo = $bindable('bar') } = $props();`), you need to pass a non-`undefined` value to that property if you're binding to it. This prevents ambiguous behavior — the parent and child must have the same value — and results in better performance (in Svelte 4, the default value was reflected back to the parent, resulting in wasteful additional render cycles).
+
 ### `accessors` option is ignored
 
 Setting the `accessors` option to `true` makes properties of a component directly accessible on the component instance. In runes mode, properties are never accessible on the component instance. You can use component exports instead if you need to expose them.
@@ -182,25 +195,6 @@ In Svelte 4, doing the following triggered reactivity:
 ```
 
 This is because the Svelte compiler treated the assignment to `foo.value` as an instruction to update anything that referenced `foo`. In Svelte 5, reactivity is determined at runtime rather than compile time, so you should define `value` as a reactive `$state` field on the `Foo` class. Wrapping `new Foo()` with `$state(...)` will have no effect — only vanilla objects and arrays are made deeply reactive.
-
-### Events and bindings use delegated handlers
-
-Event handlers added to elements with things like `onclick={...}` or `bind:value={...}` use _delegated_ handlers where possible. This means that Svelte attaches a single event handler to a root node rather than using `addEventListener` on each individual node, resulting in better performance and memory usage.
-
-Additionally, updates that happen inside event handlers will not be reflected in the DOM (or in `$effect(...)`) until the browser has had a chance to repaint. This ensures that your app stays responsive, and your Core Web Vitals (CWV) aren't penalised.
-
-In very rare cases you may need to force updates to happen immediately. You can do this with `flushSync`:
-
-```diff
-<script>
-+	import { flushSync } from 'svelte';
-
-	function onclick() {
--		update_something();
-+		flushSync(() => update_something());
-	}
-</script>
-```
 
 ## Other breaking changes
 
@@ -291,3 +285,36 @@ In Svelte 4, `<svelte:element this="div">` is valid code. This makes little sens
 ```
 
 Note that whereas Svelte 4 would treat `<svelte:element this="input">` (for example) identically to `<input>` for the purposes of determining which `bind:` directives could be applied, Svelte 5 does not.
+
+### `mount` plays transitions by default
+
+The `mount` function used to render a component tree plays transitions by default unless the `intro` option is set to `false`. This is different from legacy class components which, when manually instantiated, didn't play transitions by default.
+
+### `<img src={...}>` and `{@html ...}` hydration mismatches are not repaired
+
+In Svelte 4, if the value of a `src` attribute or `{@html ...}` tag differ between server and client (a.k.a. a hydration mismatch), the mismatch is repaired. This is very costly: setting a `src` attribute (even if it evaluates to the same thing) causes images and iframes to be reloaded, and reinserting a large blob of HTML is slow.
+
+Since these mismatches are extremely rare, Svelte 5 assumes that the values are unchanged, but in development will warn you if they are not. To force an update you can do something like this:
+
+```svelte
+<script>
+	let { markup, src } = $props();
+
+	if (typeof window !== 'undefined') {
+		// stash the values...
+		const initial = { markup, src };
+
+		// unset them...
+		markup = src = undefined;
+
+		$effect(() => {
+			// ...and reset after we've mounted
+			markup = initial.markup;
+			src = initial.src;
+		});
+	}
+</script>
+
+{@html markup}
+<img {src} />
+```

@@ -1,6 +1,6 @@
 import { effect } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
-import { untrack, yield_event_updates } from '../../../runtime.js';
+import { untrack } from '../../../runtime.js';
 import { is } from '../../../proxy.js';
 
 /**
@@ -39,10 +39,12 @@ export function select_option(select, value, mounting) {
  * @param {() => V} [get_value]
  */
 export function init_select(select, get_value) {
+	let mounting = true;
 	effect(() => {
 		if (get_value) {
-			select_option(select, untrack(get_value));
+			select_option(select, untrack(get_value), mounting);
 		}
+		mounting = false;
 
 		var observer = new MutationObserver(() => {
 			// @ts-ignore
@@ -90,7 +92,7 @@ export function bind_select_value(select, get_value, update) {
 			value = selected_option && get_option_value(selected_option);
 		}
 
-		yield_event_updates(() => update(value));
+		update(value);
 	});
 
 	// Needs to be an effect, not a render_effect, so that in case of each loops the logic runs after the each block has updated

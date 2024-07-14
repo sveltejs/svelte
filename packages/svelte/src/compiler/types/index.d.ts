@@ -6,12 +6,12 @@ import type {
 	Identifier,
 	ImportDeclaration
 } from 'estree';
-import type { Location } from 'locate-character';
 import type { SourceMap } from 'magic-string';
 import type { Context } from 'zimmerframe';
 import type { Scope } from '../phases/scope.js';
 import type { Css } from './css.js';
 import type { EachBlock, Namespace, SvelteNode, SvelteOptions } from './template.js';
+import type { ICompileDiagnostic } from '../utils/compile_diagnostic.js';
 
 /** The return value of `compile` from `svelte/compiler` */
 export interface CompileResult {
@@ -50,22 +50,9 @@ export interface CompileResult {
 	ast: any;
 }
 
-export interface Warning {
-	start?: Location;
-	end?: Location;
-	// TODO there was pos: number in Svelte 4 - do we want to add it back?
-	code: string;
-	message: string;
-	filename?: string;
-}
+export interface Warning extends ICompileDiagnostic {}
 
-export interface CompileError extends Error {
-	code: string;
-	filename?: string;
-	position?: [number, number];
-	start?: Location;
-	end?: Location;
-}
+export interface CompileError extends ICompileDiagnostic {}
 
 export type CssHashGetter = (args: {
 	name: string;
@@ -112,8 +99,8 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	immutable?: boolean;
 	/**
-	 * - `'injected'`: styles will be included in the JavaScript class and injected at runtime for the components actually rendered.
-	 * - `'external'`: the CSS will be returned in the `css` field of the compilation result. Most Svelte bundler plugins will set this to `'external'` and use the CSS that is statically generated for better performance, as it will result in smaller JavaScript bundles and the output can be served as cacheable `.css` files.
+	 * - `'injected'`: styles will be included in the `head` when using `render(...)`, and injected into the document (if not already present) when the component mounts. For components compiled as custom elements, styles are injected to the shadow root.
+	 * - `'external'`: the CSS will only be returned in the `css` field of the compilation result. Most Svelte bundler plugins will set this to `'external'` and use the CSS that is statically generated for better performance, as it will result in smaller JavaScript bundles and the output can be served as cacheable `.css` files.
 	 * This is always `'injected'` when compiling with `customElement` mode.
 	 */
 	css?: 'injected' | 'external';
@@ -154,14 +141,14 @@ export interface CompileOptions extends ModuleCompileOptions {
 	/**
 	 * @deprecated Use these only as a temporary solution before migrating your code
 	 */
-	legacy?: {
+	compatibility?: {
 		/**
 		 * Applies a transformation so that the default export of Svelte files can still be instantiated the same way as in Svelte 4 —
 		 * as a class when compiling for the browser (as though using `createClassComponent(MyComponent, {...})` from `svelte/legacy`)
 		 * or as an object with a `.render(...)` method when compiling for the server
-		 * @default false
+		 * @default 5
 		 */
-		componentApi?: boolean;
+		componentApi?: 4 | 5;
 	};
 	/**
 	 * An initial sourcemap that will be merged into the final output sourcemap.
@@ -239,7 +226,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		Required<CompileOptions>,
 		| keyof ModuleCompileOptions
 		| 'name'
-		| 'legacy'
+		| 'compatibility'
 		| 'outputFilename'
 		| 'cssOutputFilename'
 		| 'sourcemap'
@@ -249,7 +236,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		outputFilename: CompileOptions['outputFilename'];
 		cssOutputFilename: CompileOptions['cssOutputFilename'];
 		sourcemap: CompileOptions['sourcemap'];
-		legacy: Required<Required<CompileOptions>['legacy']>;
+		compatibility: Required<Required<CompileOptions>['compatibility']>;
 		runes: CompileOptions['runes'];
 		customElementOptions: SvelteOptions['customElement'];
 		hmr: CompileOptions['hmr'];

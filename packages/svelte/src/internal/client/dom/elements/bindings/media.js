@@ -1,7 +1,6 @@
 import { hydrating } from '../../hydration.js';
-import { render_effect, effect } from '../../../reactivity/effects.js';
+import { render_effect, effect, teardown } from '../../../reactivity/effects.js';
 import { listen } from './shared.js';
-import { yield_event_updates } from '../../../runtime.js';
 
 /** @param {TimeRanges} ranges */
 function time_ranges_to_array(ranges) {
@@ -23,7 +22,8 @@ function time_ranges_to_array(ranges) {
 export function bind_current_time(media, get_value, update) {
 	/** @type {number} */
 	var raf_id;
-	var updating = false;
+	/** @type {number} */
+	var value;
 
 	// Ideally, listening to timeupdate would be enough, but it fires too infrequently for the currentTime
 	// binding, which is why we use a raf loop, too. We additionally still listen to timeupdate because
@@ -35,25 +35,24 @@ export function bind_current_time(media, get_value, update) {
 			raf_id = requestAnimationFrame(callback);
 		}
 
-		updating = true;
-		yield_event_updates(() => update(media.currentTime));
+		var next_value = media.currentTime;
+		if (value !== next_value) {
+			update((value = next_value));
+		}
 	};
 
 	raf_id = requestAnimationFrame(callback);
 	media.addEventListener('timeupdate', callback);
 
 	render_effect(() => {
-		var value = get_value();
+		var next_value = Number(get_value());
 
-		// through isNaN we also allow number strings, which is more robust
-		if (!updating && !isNaN(/** @type {any} */ (value))) {
-			media.currentTime = /** @type {number} */ (value);
+		if (value !== next_value && !isNaN(/** @type {any} */ (next_value))) {
+			media.currentTime = value = next_value;
 		}
-
-		updating = false;
 	});
 
-	render_effect(() => () => cancelAnimationFrame(raf_id));
+	teardown(() => cancelAnimationFrame(raf_id));
 }
 
 /**
@@ -61,9 +60,7 @@ export function bind_current_time(media, get_value, update) {
  * @param {(array: Array<{ start: number; end: number }>) => void} update
  */
 export function bind_buffered(media, update) {
-	listen(media, ['loadedmetadata', 'progress'], () =>
-		yield_event_updates(() => update(time_ranges_to_array(media.buffered)))
-	);
+	listen(media, ['loadedmetadata', 'progress'], () => update(time_ranges_to_array(media.buffered)));
 }
 
 /**
@@ -79,9 +76,7 @@ export function bind_seekable(media, update) {
  * @param {(array: Array<{ start: number; end: number }>) => void} update
  */
 export function bind_played(media, update) {
-	listen(media, ['timeupdate'], () =>
-		yield_event_updates(() => update(time_ranges_to_array(media.played)))
-	);
+	listen(media, ['timeupdate'], () => update(time_ranges_to_array(media.played)));
 }
 
 /**
@@ -89,7 +84,7 @@ export function bind_played(media, update) {
  * @param {(seeking: boolean) => void} update
  */
 export function bind_seeking(media, update) {
-	listen(media, ['seeking', 'seeked'], () => yield_event_updates(() => update(media.seeking)));
+	listen(media, ['seeking', 'seeked'], () => update(media.seeking));
 }
 
 /**
@@ -97,7 +92,7 @@ export function bind_seeking(media, update) {
  * @param {(seeking: boolean) => void} update
  */
 export function bind_ended(media, update) {
-	listen(media, ['timeupdate', 'ended'], () => yield_event_updates(() => update(media.ended)));
+	listen(media, ['timeupdate', 'ended'], () => update(media.ended));
 }
 
 /**
@@ -108,7 +103,7 @@ export function bind_ready_state(media, update) {
 	listen(
 		media,
 		['loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough', 'playing', 'waiting', 'emptied'],
-		() => yield_event_updates(() => update(media.readyState))
+		() => update(media.readyState)
 	);
 }
 
@@ -118,22 +113,21 @@ export function bind_ready_state(media, update) {
  * @param {(playback_rate: number) => void} update
  */
 export function bind_playback_rate(media, get_value, update) {
-	var updating = false;
-
-	// Needs to happen after the element is inserted into the dom, else playback will be set back to 1 by the browser.
-	// For hydration we could do it immediately but the additional code is not worth the lost microtask.
+	// Needs to happen after element is inserted into the dom (which is guaranteed by using effect),
+	// else playback will be set back to 1 by the browser
 	effect(() => {
-		var value = get_value();
+		var value = Number(get_value());
 
-		// through isNaN we also allow number strings, which is more robust
-		if (!isNaN(/** @type {any} */ (value)) && value !== media.playbackRate) {
-			updating = true;
-			media.playbackRate = /** @type {number} */ (value);
+		if (value !== media.playbackRate && !isNaN(value)) {
+			media.playbackRate = value;
 		}
+	});
 
+	// Start listening to ratechange events after the element is inserted into the dom,
+	// else playback will be set to 1 by the browser
+	effect(() => {
 		listen(media, ['ratechange'], () => {
-			if (!updating) yield_event_updates(() => update(media.playbackRate));
-			updating = false;
+			update(media.playbackRate);
 		});
 	});
 }
@@ -150,7 +144,7 @@ export function bind_paused(media, get_value, update) {
 	var callback = () => {
 		if (paused !== media.paused) {
 			paused = media.paused;
-			yield_event_updates(() => update((paused = media.paused)));
+			update((paused = media.paused));
 		}
 	};
 
@@ -175,7 +169,7 @@ export function bind_paused(media, get_value, update) {
 					media.pause();
 				} else {
 					media.play().catch(() => {
-						yield_event_updates(() => update((paused = true)));
+						update((paused = true));
 					});
 				}
 			};
@@ -205,9 +199,7 @@ export function bind_paused(media, get_value, update) {
  * @param {(volume: number) => void} update
  */
 export function bind_volume(media, get_value, update) {
-	var updating = false;
 	var callback = () => {
-		updating = true;
 		update(media.volume);
 	};
 
@@ -218,14 +210,11 @@ export function bind_volume(media, get_value, update) {
 	listen(media, ['volumechange'], callback, false);
 
 	render_effect(() => {
-		var value = get_value();
+		var value = Number(get_value());
 
-		// through isNaN we also allow number strings, which is more robust
-		if (!updating && !isNaN(/** @type {any} */ (value))) {
-			media.volume = /** @type {number} */ (value);
+		if (value !== media.volume && !isNaN(value)) {
+			media.volume = value;
 		}
-
-		updating = false;
 	});
 }
 
@@ -235,11 +224,8 @@ export function bind_volume(media, get_value, update) {
  * @param {(muted: boolean) => void} update
  */
 export function bind_muted(media, get_value, update) {
-	var updating = false;
-
 	var callback = () => {
-		updating = true;
-		yield_event_updates(() => update(media.muted));
+		update(media.muted);
 	};
 
 	if (get_value() == null) {
@@ -249,9 +235,8 @@ export function bind_muted(media, get_value, update) {
 	listen(media, ['volumechange'], callback, false);
 
 	render_effect(() => {
-		var value = get_value();
+		var value = !!get_value();
 
-		if (!updating) media.muted = !!value;
-		updating = false;
+		if (media.muted !== value) media.muted = value;
 	});
 }

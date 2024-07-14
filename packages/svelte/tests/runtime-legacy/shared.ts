@@ -59,8 +59,9 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 		};
 		logs: any[];
 		warnings: any[];
+		hydrate: Function;
 	}) => void | Promise<void>;
-	test_ssr?: (args: { assert: Assert }) => void | Promise<void>;
+	test_ssr?: (args: { logs: any[]; assert: Assert }) => void | Promise<void>;
 	accessors?: boolean;
 	immutable?: boolean;
 	intro?: boolean;
@@ -103,13 +104,22 @@ export function runtime_suite(runes: boolean) {
 				if (config.skip_mode?.includes('hydrate')) return true;
 			}
 
+			if (
+				variant === 'dom' &&
+				(config.skip_mode?.includes('client') || (config.mode && !config.mode.includes('client')))
+			) {
+				return 'no-test';
+			}
+
 			if (variant === 'ssr') {
 				if (
 					(config.mode && !config.mode.includes('server')) ||
 					(!config.test_ssr &&
 						config.html === undefined &&
 						config.ssrHtml === undefined &&
-						config.error === undefined)
+						config.error === undefined &&
+						config.runtime_error === undefined &&
+						!config.mode?.includes('server'))
 				) {
 					return 'no-test';
 				}
@@ -128,9 +138,13 @@ export function runtime_suite(runes: boolean) {
 }
 
 async function common_setup(cwd: string, runes: boolean | undefined, config: RuntimeTest) {
+	const force_hmr = process.env.HMR && config.compileOptions?.dev !== false && !config.error;
+
 	const compileOptions: CompileOptions = {
 		generate: 'client',
 		rootDir: cwd,
+		dev: force_hmr ? true : undefined,
+		hmr: force_hmr ? true : undefined,
 		...config.compileOptions,
 		immutable: config.immutable,
 		accessors: 'accessors' in config ? config.accessors : true,
@@ -161,6 +175,7 @@ async function run_test_variant(
 
 	let logs: string[] = [];
 	let warnings: string[] = [];
+	let manual_hydrate = false;
 
 	{
 		// use some crude static analysis to determine if logs/warnings are intercepted.
@@ -177,7 +192,13 @@ async function run_test_variant(
 
 		if (str.slice(0, i).includes('logs')) {
 			// eslint-disable-next-line no-console
-			console.log = (...args) => logs.push(...args);
+			console.log = (...args) => {
+				logs.push(...args);
+			};
+		}
+
+		if (str.slice(0, i).includes('hydrate')) {
+			manual_hydrate = true;
 		}
 
 		if (str.slice(0, i).includes('warnings') || config.warnings) {
@@ -273,6 +294,7 @@ async function run_test_variant(
 
 			if (config.test_ssr) {
 				await config.test_ssr({
+					logs,
 					// @ts-expect-error
 					assert: {
 						...assert,
@@ -297,17 +319,30 @@ async function run_test_variant(
 
 			let instance: any;
 			let props: any;
+			let hydrate_fn: Function = () => {
+				throw new Error('Ensure dom mode is skipped');
+			};
 
 			if (runes) {
 				props = proxy({ ...(config.props || {}) });
-
-				const render = variant === 'hydrate' ? hydrate : mount;
-				instance = render(mod.default, {
-					target,
-					props,
-					intro: config.intro,
-					recover: config.recover ?? false
-				});
+				if (manual_hydrate) {
+					hydrate_fn = () => {
+						instance = hydrate(mod.default, {
+							target,
+							props,
+							intro: config.intro,
+							recover: config.recover ?? false
+						});
+					};
+				} else {
+					const render = variant === 'hydrate' ? hydrate : mount;
+					instance = render(mod.default, {
+						target,
+						props,
+						intro: config.intro,
+						recover: config.recover ?? false
+					});
+				}
 			} else {
 				instance = createClassComponent({
 					component: mod.default,
@@ -357,7 +392,8 @@ async function run_test_variant(
 						raf,
 						compileOptions,
 						logs,
-						warnings
+						warnings,
+						hydrate: hydrate_fn
 					});
 				}
 

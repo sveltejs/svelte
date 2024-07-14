@@ -1,37 +1,34 @@
 import { DEV } from 'esm-env';
-import {
-	get,
-	batch_inspect,
-	current_component_context,
-	untrack,
-	current_effect
-} from './runtime.js';
+import { get, current_component_context, untrack, current_effect } from './runtime.js';
 import {
 	array_prototype,
 	define_property,
 	get_descriptor,
-	get_descriptors,
 	get_prototype_of,
 	is_array,
 	is_frozen,
 	object_prototype
-} from './utils.js';
+} from '../shared/utils.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
-import { mutable_source, source, set } from './reactivity/sources.js';
-import { STATE_SYMBOL } from './constants.js';
+import { source, set } from './reactivity/sources.js';
+import { STATE_FROZEN_SYMBOL, STATE_SYMBOL } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 
 /**
  * @template T
  * @param {T} value
- * @param {boolean} [immutable]
  * @param {import('#client').ProxyMetadata | null} [parent]
  * @param {import('#client').Source<T>} [prev] dev mode only
  * @returns {import('#client').ProxyStateObject<T> | T}
  */
-export function proxy(value, immutable = true, parent = null, prev) {
-	if (typeof value === 'object' && value != null && !is_frozen(value)) {
+export function proxy(value, parent = null, prev) {
+	if (
+		typeof value === 'object' &&
+		value != null &&
+		!is_frozen(value) &&
+		!(STATE_FROZEN_SYMBOL in value)
+	) {
 		// If we have an existing proxy, return it...
 		if (STATE_SYMBOL in value) {
 			const metadata = /** @type {import('#client').ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
@@ -60,7 +57,6 @@ export function proxy(value, immutable = true, parent = null, prev) {
 					s: new Map(),
 					v: source(0),
 					a: is_array(value),
-					i: immutable,
 					p: proxy,
 					t: value
 				}),
@@ -98,63 +94,6 @@ export function proxy(value, immutable = true, parent = null, prev) {
 }
 
 /**
- * @template {import('#client').ProxyStateObject} T
- * @param {T} value
- * @param {Map<T, Record<string | symbol, any>>} already_unwrapped
- * @returns {Record<string | symbol, any>}
- */
-function unwrap(value, already_unwrapped) {
-	if (typeof value === 'object' && value != null && STATE_SYMBOL in value) {
-		const unwrapped = already_unwrapped.get(value);
-		if (unwrapped !== undefined) {
-			return unwrapped;
-		}
-
-		if (is_array(value)) {
-			/** @type {Record<string | symbol, any>} */
-			const array = [];
-			already_unwrapped.set(value, array);
-			for (const element of value) {
-				array.push(unwrap(element, already_unwrapped));
-			}
-			return array;
-		} else {
-			/** @type {Record<string | symbol, any>} */
-			const obj = {};
-			const keys = Reflect.ownKeys(value);
-			const descriptors = get_descriptors(value);
-			already_unwrapped.set(value, obj);
-
-			for (const key of keys) {
-				if (key === STATE_SYMBOL) continue;
-				if (descriptors[key].get) {
-					define_property(obj, key, descriptors[key]);
-				} else {
-					/** @type {T} */
-					const property = value[key];
-					obj[key] = unwrap(property, already_unwrapped);
-				}
-			}
-
-			return obj;
-		}
-	}
-
-	return value;
-}
-
-/**
- * @template T
- * @param {T} value
- * @returns {T}
- */
-export function snapshot(value) {
-	return /** @type {T} */ (
-		unwrap(/** @type {import('#client').ProxyStateObject} */ (value), new Map())
-	);
-}
-
-/**
  * @param {import('#client').Source<number>} signal
  * @param {1 | -1} [d]
  */
@@ -170,7 +109,7 @@ const state_proxy_handler = {
 			const metadata = target[STATE_SYMBOL];
 
 			const s = metadata.s.get(prop);
-			if (s !== undefined) set(s, proxy(descriptor.value, metadata.i, metadata));
+			if (s !== undefined) set(s, proxy(descriptor.value, metadata));
 		}
 
 		return Reflect.defineProperty(target, prop, descriptor);
@@ -216,7 +155,7 @@ const state_proxy_handler = {
 
 		// create a source, but only if it's an own property and not a prototype property
 		if (s === undefined && (!(prop in target) || get_descriptor(target, prop)?.writable)) {
-			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i, metadata));
+			s = source(proxy(target[prop], metadata));
 			metadata.s.set(prop, s);
 		}
 
@@ -225,11 +164,6 @@ const state_proxy_handler = {
 			return value === UNINITIALIZED ? undefined : value;
 		}
 
-		if (DEV) {
-			if (typeof target[prop] === 'function' && prop !== Symbol.iterator) {
-				return batch_inspect(target, prop, receiver);
-			}
-		}
 		return Reflect.get(target, prop, receiver);
 	},
 
@@ -262,9 +196,7 @@ const state_proxy_handler = {
 			(current_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 		) {
 			if (s === undefined) {
-				s = (metadata.i ? source : mutable_source)(
-					has ? proxy(target[prop], metadata.i, metadata) : UNINITIALIZED
-				);
+				s = source(has ? proxy(target[prop], metadata) : UNINITIALIZED);
 				metadata.s.set(prop, s);
 			}
 			const value = get(s);
@@ -289,7 +221,7 @@ const state_proxy_handler = {
 			s = metadata.s.get(prop);
 		}
 		if (s !== undefined) {
-			set(s, proxy(value, metadata.i, metadata));
+			set(s, proxy(value, metadata));
 		}
 		const is_array = metadata.a;
 		const not_has = !(prop in target);

@@ -11,5 +11,5 @@ export default function State_proxy_literal($$payload) {
 		tpl = ``;
 	}
 
-	$$payload.out += `<input${$.attr("value", str, false)}> <input${$.attr("value", tpl, false)}> <button>reset</button>`;
+	$$payload.out += `<input${$.attr("value", str)}> <input${$.attr("value", tpl)}> <button>reset</button>`;
 }
