@@ -1043,6 +1043,41 @@ export const validation_runes_js = {
 		if (node.callee.type === 'ClassExpression' && context.state.scope.function_depth > 0) {
 			w.perf_avoid_inline_class(node);
 		}
+	},
+	Identifier(node, { path, state }) {
+		let i = path.length;
+		let parent = /** @type {import('estree').Expression} */ (path[--i]);
+
+		if (
+			Runes.includes(/** @type {Runes[number]} */ (node.name)) &&
+			is_reference(node, parent) &&
+			state.scope.get(node.name) === null &&
+			state.scope.get(node.name.slice(1)) === null
+		) {
+			/** @type {import('estree').Expression} */
+			let current = node;
+			let name = node.name;
+
+			while (parent.type === 'MemberExpression') {
+				if (parent.computed) e.rune_invalid_computed_property(parent);
+				name += `.${/** @type {import('estree').Identifier} */ (parent.property).name}`;
+
+				current = parent;
+				parent = /** @type {import('estree').Expression} */ (path[--i]);
+
+				if (!Runes.includes(/** @type {Runes[number]} */ (name))) {
+					if (name === '$effect.active') {
+						e.rune_renamed(parent, '$effect.active', '$effect.tracking');
+					}
+
+					e.rune_invalid_name(parent, name);
+				}
+			}
+
+			if (parent.type !== 'CallExpression') {
+				e.rune_missing_parentheses(current);
+			}
+		}
 	}
 };
 
@@ -1151,41 +1186,6 @@ export const validation_runes = merge(validation, a11y_validators, {
 	ImportDeclaration(node) {
 		if (typeof node.source.value === 'string' && node.source.value.startsWith('svelte/internal')) {
 			e.import_svelte_internal_forbidden(node);
-		}
-	},
-	Identifier(node, { path, state }) {
-		let i = path.length;
-		let parent = /** @type {import('estree').Expression} */ (path[--i]);
-
-		if (
-			Runes.includes(/** @type {Runes[number]} */ (node.name)) &&
-			is_reference(node, parent) &&
-			state.scope.get(node.name) === null &&
-			state.scope.get(node.name.slice(1)) === null
-		) {
-			/** @type {import('estree').Expression} */
-			let current = node;
-			let name = node.name;
-
-			while (parent.type === 'MemberExpression') {
-				if (parent.computed) e.rune_invalid_computed_property(parent);
-				name += `.${/** @type {import('estree').Identifier} */ (parent.property).name}`;
-
-				current = parent;
-				parent = /** @type {import('estree').Expression} */ (path[--i]);
-
-				if (!Runes.includes(/** @type {Runes[number]} */ (name))) {
-					if (name === '$effect.active') {
-						e.rune_renamed(parent, '$effect.active', '$effect.tracking');
-					}
-
-					e.rune_invalid_name(parent, name);
-				}
-			}
-
-			if (parent.type !== 'CallExpression') {
-				e.rune_missing_parentheses(current);
-			}
 		}
 	},
 	LabeledStatement(node, { path }) {
@@ -1368,5 +1368,6 @@ export const validation_runes = merge(validation, a11y_validators, {
 	// TODO this is a code smell. need to refactor this stuff
 	ClassBody: validation_runes_js.ClassBody,
 	ClassDeclaration: validation_runes_js.ClassDeclaration,
+	Identifier: validation_runes_js.Identifier,
 	NewExpression: validation_runes_js.NewExpression
 });

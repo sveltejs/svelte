@@ -423,7 +423,10 @@ const global_visitors = {
 		}
 
 		if (rune === '$state.snapshot') {
-			return /** @type {import('estree').Expression} */ (context.visit(node.arguments[0]));
+			return b.call(
+				'$.snapshot',
+				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
+			);
 		}
 
 		if (rune === '$state.is') {

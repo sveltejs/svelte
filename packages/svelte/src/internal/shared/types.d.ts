@@ -6,3 +6,5 @@ export type Store<V> = {
 export type SourceLocation =
 	| [line: number, column: number]
 	| [line: number, column: number, SourceLocation[]];
+
+export type Snapshot<T> = ReturnType<typeof $state.snapshot<T>>;

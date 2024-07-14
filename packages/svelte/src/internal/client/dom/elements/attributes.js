@@ -1,6 +1,6 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
-import { get_descriptors, get_prototype_of } from '../../utils.js';
+import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
 import {
 	AttributeAliases,
 	DelegatedEvents,

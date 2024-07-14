@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.184
+
+### Patch Changes
+
+- fix: show correct errors for invalid runes in `.svelte.js` files ([#12432](https://github.com/sveltejs/svelte/pull/12432))
+
+- breaking: use structuredClone inside `$state.snapshot` ([#12413](https://github.com/sveltejs/svelte/pull/12413))
+
 ## 5.0.0-next.183
 
 ### Patch Changes
