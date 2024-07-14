@@ -20,7 +20,7 @@ export function append_styles(anchor, css) {
 
 		var target = /** @type {ShadowRoot} */ (root).host
 			? /** @type {ShadowRoot} */ (root)
-			: /** @type {Document} */ (root).head;
+			: /** @type {Document} */ (root).head ?? /** @type {Document} */ (root.ownerDocument).head;
 
 		if (!target.querySelector('#' + css.hash)) {
 			const style = document.createElement('style');

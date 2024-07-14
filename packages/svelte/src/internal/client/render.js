@@ -15,7 +15,7 @@ import {
 	set_hydrate_node,
 	set_hydrating
 } from './dom/hydration.js';
-import { array_from } from './utils.js';
+import { array_from } from '../shared/utils.js';
 import {
 	all_registered_events,
 	handle_event_propagation,
@@ -26,7 +26,6 @@ import * as w from './warnings.js';
 import * as e from './errors.js';
 import { validate_component } from '../shared/validate.js';
 import { assign_nodes } from './dom/template.js';
-import { queue_micro_task } from './dom/task.js';
 
 /**
  * This is normally true — block effects should run their intro transitions —

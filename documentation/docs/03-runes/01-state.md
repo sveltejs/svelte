@@ -91,7 +91,7 @@ State declared with `$state.frozen` cannot be mutated; it can only be _reassigne
 
 This can improve performance with large arrays and objects that you weren't planning to mutate anyway, since it avoids the cost of making them reactive. Note that frozen state can _contain_ reactive state (for example, a frozen array of reactive objects).
 
-> Objects and arrays passed to `$state.frozen` will be shallowly frozen using `Object.freeze()`. If you don't want this, pass in a clone of the object or array instead.
+> Objects and arrays passed to `$state.frozen` will be shallowly frozen using `Object.freeze()`. If you don't want this, pass in a clone of the object or array instead. The argument cannot be an existing state proxy created with `$state(...)`.
 
 ## `$state.snapshot`
 

@@ -4,12 +4,11 @@ import {
 	array_prototype,
 	define_property,
 	get_descriptor,
-	get_descriptors,
 	get_prototype_of,
 	is_array,
 	is_frozen,
 	object_prototype
-} from './utils.js';
+} from '../shared/utils.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
 import { source, set } from './reactivity/sources.js';
 import { STATE_FROZEN_SYMBOL, STATE_SYMBOL } from './constants.js';
@@ -92,63 +91,6 @@ export function proxy(value, parent = null, prev) {
 	}
 
 	return value;
-}
-
-/**
- * @template {import('#client').ProxyStateObject} T
- * @param {T} value
- * @param {Map<T, Record<string | symbol, any>>} already_unwrapped
- * @returns {Record<string | symbol, any>}
- */
-function unwrap(value, already_unwrapped) {
-	if (typeof value === 'object' && value != null && STATE_SYMBOL in value) {
-		const unwrapped = already_unwrapped.get(value);
-		if (unwrapped !== undefined) {
-			return unwrapped;
-		}
-
-		if (is_array(value)) {
-			/** @type {Record<string | symbol, any>} */
-			const array = [];
-			already_unwrapped.set(value, array);
-			for (const element of value) {
-				array.push(unwrap(element, already_unwrapped));
-			}
-			return array;
-		} else {
-			/** @type {Record<string | symbol, any>} */
-			const obj = {};
-			const keys = Reflect.ownKeys(value);
-			const descriptors = get_descriptors(value);
-			already_unwrapped.set(value, obj);
-
-			for (const key of keys) {
-				if (key === STATE_SYMBOL) continue;
-				if (descriptors[key].get) {
-					define_property(obj, key, descriptors[key]);
-				} else {
-					/** @type {T} */
-					const property = value[key];
-					obj[key] = unwrap(property, already_unwrapped);
-				}
-			}
-
-			return obj;
-		}
-	}
-
-	return value;
-}
-
-/**
- * @template T
- * @param {T} value
- * @returns {T}
- */
-export function snapshot(value) {
-	return /** @type {T} */ (
-		unwrap(/** @type {import('#client').ProxyStateObject} */ (value), new Map())
-	);
 }
 
 /**
