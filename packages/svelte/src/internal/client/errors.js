@@ -263,6 +263,22 @@ export function rune_outside_svelte(rune) {
 }
 
 /**
+ * The argument to `$state.frozen(...)` cannot be an object created with `$state(...)`. You should create a copy of it first, for example with `$state.snapshot`
+ * @returns {never}
+ */
+export function state_frozen_invalid_argument() {
+	if (DEV) {
+		const error = new Error(`state_frozen_invalid_argument\nThe argument to \`$state.frozen(...)\` cannot be an object created with \`$state(...)\`. You should create a copy of it first, for example with \`$state.snapshot\``);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("state_frozen_invalid_argument");
+	}
+}
+
+/**
  * Cannot set prototype of `$state` object
  * @returns {never}
  */

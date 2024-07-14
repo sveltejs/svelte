@@ -8,7 +8,8 @@ import {
 	extract_paths,
 	is_event_attribute,
 	is_text_attribute,
-	object
+	object,
+	unwrap_optional
 } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
 import { MathMLElements, ReservedKeywords, Runes, SVGElements } from '../constants.js';
@@ -441,6 +442,7 @@ export function analyze_component(root, source, options) {
 				has_props_rune: false,
 				component_slots: new Set(),
 				expression: null,
+				render_tag: null,
 				private_derived_state: [],
 				function_depth: scope.function_depth
 			};
@@ -512,6 +514,7 @@ export function analyze_component(root, source, options) {
 				reactive_statements: analysis.reactive_statements,
 				component_slots: new Set(),
 				expression: null,
+				render_tag: null,
 				private_derived_state: [],
 				function_depth: scope.function_depth
 			};
@@ -1289,12 +1292,24 @@ const common_visitors = {
 		}
 	},
 	CallExpression(node, context) {
-		const { expression } = context.state;
+		const { expression, render_tag } = context.state;
 		if (
 			(expression?.type === 'ExpressionTag' || expression?.type === 'SpreadAttribute') &&
 			!is_known_safe_call(node, context)
 		) {
 			expression.metadata.contains_call_expression = true;
+		}
+
+		if (render_tag) {
+			// Find out which of the render tag arguments contains this call expression
+			const arg_idx = unwrap_optional(render_tag.expression).arguments.findIndex(
+				(arg) => arg === node || context.path.includes(arg)
+			);
+
+			// -1 if this is the call expression of the render tag itself
+			if (arg_idx !== -1) {
+				render_tag.metadata.args_with_call_expression.add(arg_idx);
+			}
 		}
 
 		const callee = node.callee;
@@ -1523,6 +1538,9 @@ const common_visitors = {
 		);
 
 		node.metadata.dynamic = binding !== null && binding.kind !== 'normal';
+	},
+	RenderTag(node, context) {
+		context.next({ ...context.state, render_tag: node });
 	}
 };
 

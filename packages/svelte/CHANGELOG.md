@@ -1,5 +1,33 @@
 # svelte
 
+## 5.0.0-next.183
+
+### Patch Changes
+
+- fix: properly validate snippet/slot interop ([#12421](https://github.com/sveltejs/svelte/pull/12421))
+
+- fix: cache call expressions in render tag arguments ([#12418](https://github.com/sveltejs/svelte/pull/12418))
+
+- fix: optimize `bind:group` ([#12406](https://github.com/sveltejs/svelte/pull/12406))
+
+## 5.0.0-next.182
+
+### Patch Changes
+
+- fix: abort outro when intro starts ([#12321](https://github.com/sveltejs/svelte/pull/12321))
+
+- feat: warn in dev on `{@html ...}` block hydration mismatch ([#12396](https://github.com/sveltejs/svelte/pull/12396))
+
+- feat: only create a maximum of one document event listener per event ([#12383](https://github.com/sveltejs/svelte/pull/12383))
+
+- fix: disallow using `let:` directives with component render tags ([#12400](https://github.com/sveltejs/svelte/pull/12400))
+
+- fix: mark variables in shorthand style directives as referenced ([#12392](https://github.com/sveltejs/svelte/pull/12392))
+
+- fix: handle empty else if block in legacy AST ([#12397](https://github.com/sveltejs/svelte/pull/12397))
+
+- fix: properly delay intro transitions ([#12389](https://github.com/sveltejs/svelte/pull/12389))
+
 ## 5.0.0-next.181
 
 ### Patch Changes
