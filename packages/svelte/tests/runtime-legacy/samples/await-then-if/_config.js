@@ -12,10 +12,6 @@ export default test({
 		return { thePromise };
 	},
 
-	html: `
-		loading...
-	`,
-
 	async test({ assert, target }) {
 		fulfil([]);
 

@@ -1,9 +1,8 @@
 import { test } from '../../test';
 
 export default test({
-	html: '<p>wait for it...</p>',
 	test({ assert, component, target }) {
-		return component.promise.then(async () => {
+		return component.promise.then(() => {
 			assert.htmlEqual(
 				target.innerHTML,
 				`

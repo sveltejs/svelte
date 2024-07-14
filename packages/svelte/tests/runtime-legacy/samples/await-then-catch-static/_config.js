@@ -12,15 +12,11 @@ export default test({
 		return { promise };
 	},
 
-	html: `
-		<p>loading...</p>
-	`,
-
 	test({ assert, component, target }) {
 		fulfil(42);
 
 		return promise
-			.then(() => {
+			.then(async () => {
 				assert.htmlEqual(
 					target.innerHTML,
 					`
@@ -33,6 +29,7 @@ export default test({
 				});
 
 				component.promise = promise;
+				await Promise.resolve();
 
 				assert.htmlEqual(
 					target.innerHTML,
