@@ -4,7 +4,7 @@ import { is_element_node } from './nodes.js';
 import * as b from '../utils/builders.js';
 import * as e from '../errors.js';
 import { extract_identifiers, extract_identifiers_from_destructuring } from '../utils/ast.js';
-import { JsKeywords, RenamedRunes, Runes } from './constants.js';
+import { JsKeywords, Runes } from './constants.js';
 
 export class Scope {
 	/** @type {ScopeRoot} */
@@ -778,23 +778,10 @@ export function get_rune(node, scope) {
 
 	joined = n.name + joined;
 
-	const is_rune_obj =
-		n.name !== '$host' && Runes.includes(/** @type {typeof Runes[number]} */ (n.name)); // check if the object of the expression is a rune e.g. `$effect` in `$effect.pre`
-
-	const is_rune = Runes.includes(/** @type {typeof Runes[number]} */ (joined));
-
-	const is_renamed_rune = joined in RenamedRunes;
-
-	if (!is_rune_obj && !is_rune && !is_renamed_rune) return null;
+	if (!Runes.includes(/** @type {any} */ (joined))) return null;
 
 	const binding = scope.get(n.name);
+	if (binding !== null) return null; // rune name, but references a variable or store
 
-	if (binding !== null) return null; // rune name, but references a variable or
-
-	if (is_rune) return /** @type {typeof Runes[number] | null} */ (joined);
-
-	if (is_renamed_rune)
-		e.rune_renamed(node, joined, RenamedRunes[/** @type {keyof typeof RenamedRunes} */ (joined)]);
-
-	e.rune_invalid_name(node, joined);
+	return /** @type {typeof Runes[number] | null} */ (joined);
 }
