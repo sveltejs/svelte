@@ -778,21 +778,23 @@ export function get_rune(node, scope) {
 
 	joined = n.name + joined;
 
-	const is_rune_obj = n.name !== '$host' && Runes.includes(/** @type {any} */(n.name)); // check if the object of the expression is a rune e.g. `$effect` in `$effect.pre`
+	const is_rune_obj =
+		n.name !== '$host' && Runes.includes(/** @type {typeof Runes[number]} */ (n.name)); // check if the object of the expression is a rune e.g. `$effect` in `$effect.pre`
 
-	const is_rune = Runes.includes(/** @type {any} */ (joined));
+	const is_rune = Runes.includes(/** @type {typeof Runes[number]} */ (joined));
 
 	const is_renamed_rune = joined in RenamedRunes;
 
-	if(!is_rune_obj && !is_rune && !is_renamed_rune) return null;
+	if (!is_rune_obj && !is_rune && !is_renamed_rune) return null;
 
 	const binding = scope.get(n.name);
 
 	if (binding !== null) return null; // rune name, but references a variable or
 
-	if(is_rune) return /** @type {typeof Runes[number] | null} */ (joined);
+	if (is_rune) return /** @type {typeof Runes[number] | null} */ (joined);
 
-	else if(is_renamed_rune) e.rune_renamed(node, joined, RenamedRunes[/** @type {keyof typeof RenamedRunes} */(joined)]);
+	if (is_renamed_rune)
+		e.rune_renamed(node, joined, RenamedRunes[/** @type {keyof typeof RenamedRunes} */ (joined)]);
 
-  e.rune_invalid_name(node, joined);
+	e.rune_invalid_name(node, joined);
 }

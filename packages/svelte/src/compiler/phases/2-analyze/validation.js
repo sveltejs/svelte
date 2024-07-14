@@ -1177,7 +1177,11 @@ export const validation_runes = merge(validation, a11y_validators, {
 
 				if (!Runes.includes(/** @type {Runes[number]} */ (name))) {
 					if (name in RenamedRunes) {
-						e.rune_renamed(parent, name, RenamedRunes[/** @type {keyof typeof RenamedRunes} */(name)]);
+						e.rune_renamed(
+							parent,
+							name,
+							RenamedRunes[/** @type {keyof typeof RenamedRunes} */ (name)]
+						);
 					}
 
 					e.rune_invalid_name(parent, name);
