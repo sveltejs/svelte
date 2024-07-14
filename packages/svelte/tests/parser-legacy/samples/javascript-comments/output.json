@@ -2,7 +2,7 @@
 	"html": {
 		"type": "Fragment",
 		"start": 133,
-		"end": 342,
+		"end": 341,
 		"children": [
 			{
 				"type": "Text",
@@ -14,7 +14,7 @@
 			{
 				"type": "Element",
 				"start": 133,
-				"end": 252,
+				"end": 251,
 				"name": "button",
 				"attributes": [
 					{
@@ -130,26 +130,26 @@
 					{
 						"type": "Text",
 						"start": 209,
-						"end": 211,
-						"raw": "\n\t",
-						"data": "\n\t"
+						"end": 210,
+						"raw": "\n",
+						"data": "\n"
 					},
 					{
 						"type": "MustacheTag",
-						"start": 211,
-						"end": 242,
+						"start": 210,
+						"end": 241,
 						"expression": {
 							"type": "Identifier",
-							"start": 240,
-							"end": 241,
+							"start": 239,
+							"end": 240,
 							"loc": {
 								"start": {
 									"line": 19,
-									"column": 30
+									"column": 29
 								},
 								"end": {
 									"line": 19,
-									"column": 31
+									"column": 30
 								}
 							},
 							"name": "a",
@@ -157,16 +157,16 @@
 								{
 									"type": "Block",
 									"value": " leading block comment ",
-									"start": 212,
-									"end": 239
+									"start": 211,
+									"end": 238
 								}
 							]
 						}
 					},
 					{
 						"type": "Text",
-						"start": 242,
-						"end": 243,
+						"start": 241,
+						"end": 242,
 						"raw": "\n",
 						"data": "\n"
 					}
@@ -174,19 +174,19 @@
 			},
 			{
 				"type": "Text",
-				"start": 252,
-				"end": 253,
+				"start": 251,
+				"end": 252,
 				"raw": "\n",
 				"data": "\n"
 			},
 			{
 				"type": "MustacheTag",
-				"start": 253,
-				"end": 342,
+				"start": 252,
+				"end": 341,
 				"expression": {
 					"type": "BinaryExpression",
-					"start": 280,
-					"end": 285,
+					"start": 279,
+					"end": 284,
 					"loc": {
 						"start": {
 							"line": 22,
@@ -199,8 +199,8 @@
 					},
 					"left": {
 						"type": "Identifier",
-						"start": 280,
-						"end": 281,
+						"start": 279,
+						"end": 280,
 						"loc": {
 							"start": {
 								"line": 22,
@@ -216,8 +216,8 @@
 					"operator": "+",
 					"right": {
 						"type": "Identifier",
-						"start": 284,
-						"end": 285,
+						"start": 283,
+						"end": 284,
 						"loc": {
 							"start": {
 								"line": 22,
@@ -234,22 +234,22 @@
 						{
 							"type": "Line",
 							"value": " leading line comment",
-							"start": 255,
-							"end": 278
+							"start": 254,
+							"end": 277
 						}
 					],
 					"trailingComments": [
 						{
 							"type": "Line",
 							"value": " trailing line comment",
-							"start": 286,
-							"end": 310
+							"start": 285,
+							"end": 309
 						},
 						{
 							"type": "Block",
 							"value": " trailing block comment ",
-							"start": 312,
-							"end": 340
+							"start": 311,
+							"end": 339
 						}
 					]
 				}
