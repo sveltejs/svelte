@@ -1,1 +1,1 @@
-export const x = () => $effect.imnotarune();
+$effect.imnotarune();
