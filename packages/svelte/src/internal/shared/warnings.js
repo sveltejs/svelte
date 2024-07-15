@@ -17,3 +17,15 @@ export function dynamic_void_element_content(tag) {
 		console.warn("dynamic_void_element_content");
 	}
 }
+
+/**
+ * An object could not be cloned with $state.snapshot, the original value will be returned
+ */
+export function state_snapshot_uncloneable() {
+	if (DEV) {
+		console.warn(`%c[svelte] state_snapshot_uncloneable\n%cAn object could not be cloned with $state.snapshot, the original value will be returned`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("state_snapshot_uncloneable");
+	}
+}

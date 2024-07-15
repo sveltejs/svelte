@@ -1,4 +1,6 @@
 /** @import { Snapshot } from './types' */
+import { DEV } from 'esm-env';
+import * as w from './warnings.js';
 import { get_prototype_of, is_array, object_prototype } from './utils.js';
 
 /**
@@ -50,5 +52,18 @@ function clone(value, cloned) {
 		}
 	}
 
-	return /** @type {Snapshot<T>} */ (structuredClone(value));
+	if (value instanceof EventTarget) {
+		// can't be cloned
+		return /** @type {Snapshot<T>} */ (value);
+	}
+
+	try {
+		return /** @type {Snapshot<T>} */ (structuredClone(value));
+	} catch (e) {
+		if (DEV) {
+			w.state_snapshot_uncloneable();
+			console.warn(e);
+		}
+		return /** @type {Snapshot<T>} */ (value);
+	}
 }
