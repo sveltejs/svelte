@@ -1,6 +1,7 @@
 import { untrack } from './runtime.js';
 import { get_descriptor, is_array } from '../shared/utils.js';
 import * as e from './errors.js';
+import { validate_component } from '../shared/validate.js';
 
 /** regex of all html void element names */
 const void_element_names =
@@ -28,7 +29,10 @@ export function validate_dynamic_component(component_fn) {
 	} catch (err) {
 		const { message } = /** @type {Error} */ (err);
 
-		if (typeof message === 'string' && message.indexOf('is not a function') !== -1) {
+		if (
+			typeof message === 'string' &&
+			message.indexOf(`${validate_component.name}(...) is not a function`) !== -1
+		) {
 			e.svelte_component_invalid_this_value();
 		}
 
