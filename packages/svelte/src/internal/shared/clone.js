@@ -62,6 +62,7 @@ function clone(value, cloned) {
 	} catch (e) {
 		if (DEV) {
 			w.state_snapshot_uncloneable();
+			// eslint-disable-next-line no-console
 			console.warn(e);
 		}
 		return /** @type {Snapshot<T>} */ (value);
