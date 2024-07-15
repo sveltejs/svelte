@@ -15,9 +15,14 @@ export default function tag(parser) {
 	parser.allow_whitespace();
 
 	if (parser.eat('#')) return open(parser);
-	if (parser.eat('/')) return close(parser);
 	if (parser.eat(':')) return next(parser);
 	if (parser.eat('@')) return special(parser);
+	if (parser.match('/')) {
+		if (!parser.match('/*') && !parser.match('//')) {
+			parser.eat('/');
+			return close(parser);
+		}
+	}
 
 	const expression = read_expression(parser);
 
