@@ -66,32 +66,33 @@ Objects and arrays are made deeply reactive by wrapping them with [`Proxies`](ht
 <button onclick={() => (entries[1].text = 'baz')}>change second entry text</button>
 ```
 
-> Only POJOs (plain of JavaScript objects) are made deeply reactive. Reactivity will stop at class boundaries and leave those alone
+> Only POJOs (plain old JavaScript objects) are made deeply reactive. Reactivity will stop at class boundaries and leave those alone
 
 ## `$state.frozen`
 
 State declared with `$state.frozen` cannot be mutated; it can only be _reassigned_. In other words, rather than assigning to a property of an object, or using an array method like `push`, replace the object or array altogether if you'd like to update it:
 
-```svelte
-<script>
-	let entries = $state([
-		{ id: 1, text: 'foo' },
-		{ id: 2, text: 'bar' }
-	]);
-</script>
+```js
+let person = $state.frozen({
+	name: 'Heraclitus',
+	age: 49
+});
 
-{#each entries as entry (entry.id)}
-	{entry.text}
-{/each}
+// this will have no effect (and will throw an error in dev)
+person.age += 1;
 
-<button onclick={() => (entries = [entries[0], { id: entries[1].id, text: 'baz' }])}
-	>change second entry text</button
->
+// this will work, because we're creating a new person
+person = {
+	name: 'Heraclitus',
+	age: 50
+};
 ```
 
 This can improve performance with large arrays and objects that you weren't planning to mutate anyway, since it avoids the cost of making them reactive. Note that frozen state can _contain_ reactive state (for example, a frozen array of reactive objects).
 
-> Objects and arrays passed to `$state.frozen` will be shallowly frozen using `Object.freeze()`. If you don't want this, pass in a clone of the object or array instead. The argument cannot be an existing state proxy created with `$state(...)`.
+In development mode, the argument to `$state.frozen` will be shallowly frozen with `Object.freeze()`, to make it obvious if you accidentally mutate it.
+
+> Objects and arrays passed to `$state.frozen` will have a `Symbol` property added to them to signal to Svelte that they are frozen. If you don't want this, pass in a clone of the object or array instead. The argument cannot be an existing state proxy created with `$state(...)`.
 
 ## `$state.snapshot`
 
