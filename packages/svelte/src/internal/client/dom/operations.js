@@ -51,11 +51,11 @@ export function empty() {
 }
 
 /**
+ * Don't mark this as side-effect-free, hydration needs to walk all nodes
  * @template {Node} N
  * @param {N} node
  * @returns {Node | null}
  */
-/*#__NO_SIDE_EFFECTS__*/
 export function child(node) {
 	if (!hydrating) {
 		return node.firstChild;
@@ -73,11 +73,11 @@ export function child(node) {
 }
 
 /**
+ * Don't mark this as side-effect-free, hydration needs to walk all nodes
  * @param {DocumentFragment | TemplateNode[]} fragment
  * @param {boolean} is_text
  * @returns {Node | null}
  */
-/*#__NO_SIDE_EFFECTS__*/
 export function first_child(fragment, is_text) {
 	if (!hydrating) {
 		// when not hydrating, `fragment` is a `DocumentFragment` (the result of calling `open_frag`)
@@ -103,12 +103,12 @@ export function first_child(fragment, is_text) {
 }
 
 /**
+ * Don't mark this as side-effect-free, hydration needs to walk all nodes
  * @template {Node} N
  * @param {N} node
  * @param {boolean} is_text
  * @returns {Node | null}
  */
-/*#__NO_SIDE_EFFECTS__*/
 export function sibling(node, is_text = false) {
 	if (!hydrating) {
 		return /** @type {TemplateNode} */ (node.nextSibling);
