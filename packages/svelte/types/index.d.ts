@@ -873,7 +873,7 @@ declare module 'svelte/compiler' {
 		 * A function that gets a `Warning` as an argument and returns a boolean.
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
-		filterWarning?: (warning: Warning) => boolean;
+		warningFilter?: (warning: Warning) => boolean;
 	}
 
 	type DeclarationKind =
@@ -2685,7 +2685,7 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * A function that gets a `Warning` as an argument and returns a boolean.
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
-		filterWarning?: (warning: Warning_1) => boolean;
+		warningFilter?: (warning: Warning_1) => boolean;
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`

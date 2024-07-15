@@ -22,7 +22,7 @@ export let source;
 
 export let locator = getLocator('', { offsetLine: 1 });
 
-/** @type {CompileOptions['filterWarning']} */
+/** @type {CompileOptions['warningFilter']} */
 export let filter_warning;
 
 /**
@@ -53,7 +53,7 @@ export function pop_ignore() {
 
 /**
  * @param {string} _source
- * @param {{ filename?: string, rootDir?: string, filterWarning?: CompileOptions['filterWarning'] }} options
+ * @param {{ filename?: string, rootDir?: string, warningFilter?: CompileOptions['warningFilter'] }} options
  */
 export function reset(_source, options) {
 	source = _source;
@@ -70,7 +70,7 @@ export function reset(_source, options) {
 	}
 
 	locator = getLocator(source, { offsetLine: 1 });
-	filter_warning = options.filterWarning;
+	filter_warning = options.warningFilter;
 	warnings = [];
 	ignore_stack = [];
 	ignore_map.clear();
