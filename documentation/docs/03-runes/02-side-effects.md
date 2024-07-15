@@ -245,16 +245,16 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 <script>
 	import { tick } from 'svelte';
 
-	let div;
-	let messages = [];
+	let div = $state();
+	let messages = $state([]);
 
 	// ...
 
 	$effect.pre(() => {
 		if (!div) return; // not yet mounted
 
-		// reference `messages` so that this code re-runs whenever it changes
-		messages;
+		// reference `messages` array length so that this code re-runs whenever it changes
+		messages.length;
 
 		// autoscroll when new messages are added
 		if (div.offsetHeight + div.scrollTop > div.scrollHeight - 20) {
