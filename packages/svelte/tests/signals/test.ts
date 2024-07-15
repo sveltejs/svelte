@@ -144,6 +144,38 @@ describe('signals', () => {
 		};
 	});
 
+	test('state reset', () => {
+		const log: number[] = [];
+
+		let count = source(0);
+		let double = derived(() => $.get(count) * 2);
+
+		effect(() => {
+			log.push($.get(double));
+		});
+
+		return () => {
+			flushSync();
+			log.length = 0;
+
+			set(count, 1);
+			set(count, 0);
+
+			flushSync();
+
+			assert.deepEqual(log, []);
+
+			set(count, 1);
+			$.get(double);
+			set(count, 0);
+
+			flushSync();
+
+			// TODO: in an ideal world, the effect wouldn't fire here
+			assert.deepEqual(log, [0]);
+		};
+	});
+
 	test('https://perf.js.hyoo.ru/#!bench=9h2as6_u0mfnn', () => {
 		let res: number[] = [];
 
