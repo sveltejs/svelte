@@ -22,7 +22,7 @@ export let source;
 
 export let locator = getLocator('', { offsetLine: 1 });
 
-/** @type {CompileOptions['warningFilter']} */
+/** @type {NonNullable<CompileOptions['warningFilter']>} */
 export let filter_warning;
 
 /**
@@ -70,7 +70,7 @@ export function reset(_source, options) {
 	}
 
 	locator = getLocator(source, { offsetLine: 1 });
-	filter_warning = options.warningFilter;
+	filter_warning = options.warningFilter ?? (() => true);
 	warnings = [];
 	ignore_stack = [];
 	ignore_map.clear();

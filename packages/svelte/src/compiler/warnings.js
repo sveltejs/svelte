@@ -39,7 +39,7 @@ function w(node, code, message) {
 
 	const warning = new InternalCompileWarning(code, message, node && node.start !== undefined ? [node.start, node.end ?? node.start] : undefined);
 
-	if (filter_warning && !filter_warning(warning)) return;
+	if (!filter_warning(warning)) return;
 	warnings.push(warning);
 }
 
