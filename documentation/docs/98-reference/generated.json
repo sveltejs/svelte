@@ -1,0 +1,1707 @@
+[
+  {
+    "name": "$derived",
+    "comment": "",
+    "types": [],
+    "exports": [
+      {
+        "name": "apply",
+        "snippet": "const apply: never;",
+        "children": []
+      },
+      {
+        "name": "arguments",
+        "snippet": "const arguments: never;",
+        "children": []
+      },
+      {
+        "name": "bind",
+        "snippet": "const bind: never;",
+        "children": []
+      },
+      {
+        "name": "by",
+        "comment": "Sometimes you need to create complex derivations that don't fit inside a short expression.\nIn these cases, you can use `$derived.by` which accepts a function as its argument.\n\nExample:\n```ts\nlet total = $derived.by(() => {\n  let result = 0;\n for (const n of numbers) {\n   result += n;\n  }\n  return result;\n});\n```\n\nhttps://svelte-5-preview.vercel.app/docs/runes#$derived-by",
+        "snippet": "function by<T>(fn: () => T): T;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "call",
+        "snippet": "const call: never;",
+        "children": []
+      },
+      {
+        "name": "caller",
+        "snippet": "const caller: never;",
+        "children": []
+      },
+      {
+        "name": "length",
+        "snippet": "const length: never;",
+        "children": []
+      },
+      {
+        "name": "name",
+        "snippet": "const name: never;",
+        "children": []
+      },
+      {
+        "name": "prototype",
+        "snippet": "const prototype: never;",
+        "children": []
+      },
+      {
+        "name": "toString",
+        "snippet": "const toString: never;",
+        "children": []
+      }
+    ]
+  },
+  {
+    "name": "$effect",
+    "comment": "",
+    "types": [],
+    "exports": [
+      {
+        "name": "apply",
+        "snippet": "const apply: never;",
+        "children": []
+      },
+      {
+        "name": "arguments",
+        "snippet": "const arguments: never;",
+        "children": []
+      },
+      {
+        "name": "bind",
+        "snippet": "const bind: never;",
+        "children": []
+      },
+      {
+        "name": "call",
+        "snippet": "const call: never;",
+        "children": []
+      },
+      {
+        "name": "caller",
+        "snippet": "const caller: never;",
+        "children": []
+      },
+      {
+        "name": "length",
+        "snippet": "const length: never;",
+        "children": []
+      },
+      {
+        "name": "name",
+        "snippet": "const name: never;",
+        "children": []
+      },
+      {
+        "name": "pre",
+        "comment": "Runs code right before a component is mounted to the DOM, and then whenever its dependencies change, i.e. `$state` or `$derived` values.\nThe timing of the execution is right before the DOM is updated.\n\nExample:\n```ts\n$effect.pre(() => console.log('The count is now ' + count));\n```\n\nIf you return a function from the effect, it will be called right before the effect is run again, or when the component is unmounted.\n\nDoes not run during server side rendering.\n\nhttps://svelte-5-preview.vercel.app/docs/runes#$effect-pre",
+        "snippet": "function pre(fn: () => void | (() => void)): void;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "prototype",
+        "snippet": "const prototype: never;",
+        "children": []
+      },
+      {
+        "name": "root",
+        "comment": "The `$effect.root` rune is an advanced feature that creates a non-tracked scope that doesn't auto-cleanup. This is useful for\nnested effects that you want to manually control. This rune also allows for creation of effects outside of the component\ninitialisation phase.\n\nExample:\n```svelte\n<script>\n  let count = $state(0);\n\n  const cleanup = $effect.root(() => {\n    $effect(() => {\n\t\t\tconsole.log(count);\n\t\t})\n\n     return () => {\n       console.log('effect root cleanup');\n\t\t\t}\n  });\n</script>\n\n<button onclick={() => cleanup()}>cleanup</button>\n```\n\nhttps://svelte-5-preview.vercel.app/docs/runes#$effect-root",
+        "snippet": "function root(fn: () => void | (() => void)): () => void;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "toString",
+        "snippet": "const toString: never;",
+        "children": []
+      },
+      {
+        "name": "tracking",
+        "comment": "The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template.\n\nExample:\n```svelte\n<script>\n  console.log('in component setup:', $effect.tracking()); // false\n\n  $effect(() => {\n    console.log('in effect:', $effect.tracking()); // true\n  });\n</script>\n\n<p>in template: {$effect.tracking()}</p> <!-- true -->\n```\n\nThis allows you to (for example) add things like subscriptions without causing memory leaks, by putting them in child effects.\n\nhttps://svelte-5-preview.vercel.app/docs/runes#$effect-tracking",
+        "snippet": "function tracking(): boolean;",
+        "children": [],
+        "deprecated": null
+      }
+    ]
+  },
+  {
+    "name": "$state",
+    "comment": "",
+    "types": [
+      {
+        "name": "Cloneable",
+        "comment": "The things that `structuredClone` can handle — https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm",
+        "snippet": "type Cloneable =\n\t| ArrayBuffer\n\t| DataView\n\t| Date\n\t| Error\n\t| Map<any, any>\n\t| RegExp\n\t| Set<any>\n\t| TypedArray\n\t// web APIs\n\t| Blob\n\t| CryptoKey\n\t| DOMException\n\t| DOMMatrix\n\t| DOMMatrixReadOnly\n\t| DOMPoint\n\t| DOMPointReadOnly\n\t| DOMQuad\n\t| DOMRect\n\t| DOMRectReadOnly\n\t| File\n\t| FileList\n\t| FileSystemDirectoryHandle\n\t| FileSystemFileHandle\n\t| FileSystemHandle\n\t| ImageBitmap\n\t| ImageData\n\t| RTCCertificate\n\t| VideoFrame;",
+        "children": [],
+        "deprecated": null
+      }
+    ],
+    "exports": [
+      {
+        "name": "apply",
+        "snippet": "const apply: never;",
+        "children": []
+      },
+      {
+        "name": "arguments",
+        "snippet": "const arguments: never;",
+        "children": []
+      },
+      {
+        "name": "bind",
+        "snippet": "const bind: never;",
+        "children": []
+      },
+      {
+        "name": "call",
+        "snippet": "const call: never;",
+        "children": []
+      },
+      {
+        "name": "caller",
+        "snippet": "const caller: never;",
+        "children": []
+      },
+      {
+        "name": "frozen",
+        "comment": "Declares reactive read-only state that is shallowly immutable.\n\nExample:\n```ts\n<script>\n  let items = $state.frozen([0]);\n\n  const addItem = () => {\n    items = [...items, items.length];\n  };\n</script>\n\n<button on:click={addItem}>\n  {items.join(', ')}\n</button>\n```\n\nhttps://svelte-5-preview.vercel.app/docs/runes#$state-raw",
+        "snippet": "function frozen<T>(initial: T): Readonly<T>;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "frozen",
+        "comment": "",
+        "snippet": "function frozen<T>(): Readonly<T> | undefined;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "is",
+        "comment": "Compare two values, one or both of which is a reactive `$state(...)` proxy.\n\nExample:\n```ts\n<script>\n let foo = $state({});\n let bar = {};\n\n foo.bar = bar;\n\n console.log(foo.bar === bar); // false — `foo.bar` is a reactive proxy\n  console.log($state.is(foo.bar, bar)); // true\n</script>\n```\n\nhttps://svelte-5-preview.vercel.app/docs/runes#$state.is",
+        "snippet": "function is(a: any, b: any): boolean;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "length",
+        "snippet": "const length: never;",
+        "children": []
+      },
+      {
+        "name": "name",
+        "snippet": "const name: never;",
+        "children": []
+      },
+      {
+        "name": "prototype",
+        "snippet": "const prototype: never;",
+        "children": []
+      },
+      {
+        "name": "snapshot",
+        "comment": "To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:\n\nExample:\n```ts\n<script>\n  let counter = $state({ count: 0 });\n\n  function onclick() {\n    // Will log `{ count: ... }` rather than `Proxy { ... }`\n    console.log($state.snapshot(counter));\n  };\n</script>\n```\n\nhttps://svelte-5-preview.vercel.app/docs/runes#$state.snapshot",
+        "snippet": "function snapshot<T>(state: T): Snapshot<T>;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "toString",
+        "snippet": "const toString: never;",
+        "children": []
+      }
+    ]
+  },
+  {
+    "name": "svelte",
+    "comment": "",
+    "types": [
+      {
+        "name": "Component",
+        "comment": "Can be used to create strongly typed Svelte components.\n\n#### Example:\n\nYou have component library on npm called `component-library`, from which\nyou export a component called `MyComponent`. For Svelte+TypeScript users,\nyou want to provide typings. Therefore you create a `index.d.ts`:\n```ts\nimport type { Component } from 'svelte';\nexport declare const MyComponent: Component<{ foo: string }> {}\n```\nTyping this makes it possible for IDEs like VS Code with the Svelte extension\nto provide intellisense and to use the component like this in a Svelte file\nwith TypeScript:\n```svelte\n<script lang=\"ts\">\n\timport { MyComponent } from \"component-library\";\n</script>\n<MyComponent foo={'bar'} />\n```",
+        "snippet": "interface Component<\n\tProps extends Record<string, any> = {},\n\tExports extends Record<string, any> = {},\n\tBindings extends keyof Props | '' = string\n> {/*…*/}",
+        "children": [
+          {
+            "snippet": "(\n\tinternal: unknown,\n\tprops: Props\n): {\n\t/**\n\t * @deprecated This method only exists when using one of the legacy compatibility helpers, which\n\t * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes\n\t * for more info.\n\t */\n\t$on?(type: string, callback: (e: any) => void): () => void;\n\t/**\n\t * @deprecated This method only exists when using one of the legacy compatibility helpers, which\n\t * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes\n\t * for more info.\n\t */\n\t$set?(props: Partial<Props>): void;\n} & Exports;",
+            "comment": "",
+            "bullets": [
+              "- `internal` An internal object used by Svelte. Do not use or modify.",
+              "- `props` The props passed to the component."
+            ],
+            "children": []
+          },
+          {
+            "name": "element",
+            "snippet": "element?: typeof HTMLElement;",
+            "comment": "The custom element version of the component. Only present if compiled with the `customElement` compiler option",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      },
+      {
+        "name": "ComponentConstructorOptions",
+        "snippet": "interface ComponentConstructorOptions<\n\tProps extends Record<string, any> = Record<string, any>\n> {/*…*/}",
+        "children": [
+          {
+            "name": "target",
+            "snippet": "target: Element | Document | ShadowRoot;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "anchor",
+            "snippet": "anchor?: Element;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "props",
+            "snippet": "props?: Props;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "context",
+            "snippet": "context?: Map<any, any>;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "hydrate",
+            "snippet": "hydrate?: boolean;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "intro",
+            "snippet": "intro?: boolean;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "$$inline",
+            "snippet": "$$inline?: boolean;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": "In Svelte 4, components are classes. In Svelte 5, they are functions.\nUse `mount` instead to instantiate components.\nSee [breaking changes](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes)\nfor more info."
+      },
+      {
+        "name": "ComponentEvents",
+        "snippet": "type ComponentEvents<Comp extends SvelteComponent> =\n\tComp extends SvelteComponent<any, infer Events>\n\t\t? Events\n\t\t: never;",
+        "children": [],
+        "deprecated": "The new `Component` type does not have a dedicated Events type. Use `ComponentProps` instead."
+      },
+      {
+        "name": "ComponentProps",
+        "comment": "Convenience type to get the props the given component expects.\n\nExample: Ensure a variable contains the props expected by `MyComponent`:\n\n```ts\nimport type { ComponentProps } from 'svelte';\nimport MyComponent from './MyComponent.svelte';\n\n// Errors if these aren't the correct props expected by MyComponent.\nconst props: ComponentProps<MyComponent> = { foo: 'bar' };\n```\n\nExample: A generic function that accepts some component and infers the type of its props:\n\n```ts\nimport type { Component, ComponentProps } from 'svelte';\nimport MyComponent from './MyComponent.svelte';\n\nfunction withProps<TComponent extends Component<any>>(\n\tcomponent: TComponent,\n\tprops: ComponentProps<TComponent>\n) {};\n\n// Errors if the second argument is not the correct props expected by the component in the first argument.\nwithProps(MyComponent, { foo: 'bar' });\n```",
+        "snippet": "type ComponentProps<\n\tComp extends SvelteComponent | Component<any>\n> =\n\tComp extends SvelteComponent<infer Props>\n\t\t? Props\n\t\t: Comp extends Component<infer Props>\n\t\t\t? Props\n\t\t\t: never;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "ComponentType",
+        "snippet": "type ComponentType<\n\tComp extends SvelteComponent = SvelteComponent\n> = (new (\n\toptions: ComponentConstructorOptions<\n\t\tComp extends SvelteComponent<infer Props>\n\t\t\t? Props\n\t\t\t: Record<string, any>\n\t>\n) => Comp) & {\n\t/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */\n\telement?: typeof HTMLElement;\n};",
+        "children": [],
+        "deprecated": "This type is obsolete when working with the new `Component` type."
+      },
+      {
+        "name": "EventDispatcher",
+        "comment": "",
+        "snippet": "interface EventDispatcher<\n\tEventMap extends Record<string, any>\n> {/*…*/}",
+        "children": [
+          {
+            "snippet": "<Type extends keyof EventMap>(\n\t...args: null extends EventMap[Type]\n\t\t? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]\n\t\t: undefined extends EventMap[Type]\n\t\t\t? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]\n\t\t\t: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]\n): boolean;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      },
+      {
+        "name": "Snippet",
+        "comment": "The type of a `#snippet` block. You can use it to (for example) express that your component expects a snippet of a certain type:\n```ts\nlet { banner }: { banner: Snippet<[{ text: string }]> } = $props();\n```\nYou can only call a snippet through the `{@render ...}` tag.\n\nhttps://svelte-5-preview.vercel.app/docs/snippets",
+        "snippet": "interface Snippet<Parameters extends unknown[] = []> {/*…*/}",
+        "children": [
+          {
+            "snippet": "(\n\tthis: void,\n\t// this conditional allows tuples but not arrays. Arrays would indicate a\n\t// rest parameter type, which is not supported. If rest parameters are added\n\t// in the future, the condition can be removed.\n\t...args: number extends Parameters['length'] ? never : Parameters\n): typeof SnippetReturn & {\n\t_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from \"svelte\"';\n};",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      },
+      {
+        "name": "SvelteComponent",
+        "comment": "This was the base class for Svelte components in Svelte 4. Svelte 5+ components\nare completely different under the hood. For typing, use `Component` instead.\nTo instantiate components, use `mount` instead`.\nSee [breaking changes documentation](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes) for more info.",
+        "snippet": "class SvelteComponent<\n\tProps extends Record<string, any> = Record<string, any>,\n\tEvents extends Record<string, any> = any,\n\tSlots extends Record<string, any> = any\n> {/*…*/}",
+        "children": [
+          {
+            "name": "element",
+            "snippet": "static element?: typeof HTMLElement;",
+            "comment": "The custom element version of the component. Only present if compiled with the `customElement` compiler option",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "snippet": "[prop: string]: any;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "snippet": "constructor(options: ComponentConstructorOptions<Properties<Props, Slots>>);",
+            "comment": "",
+            "bullets": [
+              "- <span class=\"tag deprecated\">deprecated</span> This constructor only exists when using the `asClassComponent` compatibility helper, which\nis a stop-gap solution. Migrate towards using `mount` instead. See\nhttps://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more info."
+            ],
+            "children": []
+          },
+          {
+            "name": "$destroy",
+            "snippet": "$destroy(): void;",
+            "comment": "",
+            "bullets": [
+              "- <span class=\"tag deprecated\">deprecated</span> This method only exists when using one of the legacy compatibility helpers, which\nis a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes\nfor more info."
+            ],
+            "children": []
+          },
+          {
+            "name": "$on",
+            "snippet": "$on<K extends Extract<keyof Events, string>>(\n\ttype: K,\n\tcallback: (e: Events[K]) => void\n): () => void;",
+            "comment": "",
+            "bullets": [
+              "- <span class=\"tag deprecated\">deprecated</span> This method only exists when using one of the legacy compatibility helpers, which\nis a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes\nfor more info."
+            ],
+            "children": []
+          },
+          {
+            "name": "$set",
+            "snippet": "$set(props: Partial<Props>): void;",
+            "comment": "",
+            "bullets": [
+              "- <span class=\"tag deprecated\">deprecated</span> This method only exists when using one of the legacy compatibility helpers, which\nis a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes\nfor more info."
+            ],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      },
+      {
+        "name": "SvelteComponentTyped",
+        "snippet": "class SvelteComponentTyped<\n\tProps extends Record<string, any> = Record<string, any>,\n\tEvents extends Record<string, any> = any,\n\tSlots extends Record<string, any> = any\n> extends SvelteComponent<Props, Events, Slots> {}",
+        "children": [],
+        "deprecated": "Use `Component` instead. See [breaking changes documentation](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes) for more information."
+      }
+    ],
+    "exports": [
+      {
+        "name": "afterUpdate",
+        "comment": "Schedules a callback to run immediately after the component has been updated.\n\nThe first time the callback runs will be after the initial `onMount`.\n\nIn runes mode use `$effect` instead.\n\nhttps://svelte.dev/docs/svelte#afterupdate",
+        "snippet": "function afterUpdate(fn: () => void): void;",
+        "children": [],
+        "deprecated": "Use `$effect` instead — see https://svelte-5-preview.vercel.app/docs/deprecations#beforeupdate-and-afterupdate"
+      },
+      {
+        "name": "beforeUpdate",
+        "comment": "Schedules a callback to run immediately before the component is updated after any state change.\n\nThe first time the callback runs will be before the initial `onMount`.\n\nIn runes mode use `$effect.pre` instead.\n\nhttps://svelte.dev/docs/svelte#beforeupdate",
+        "snippet": "function beforeUpdate(fn: () => void): void;",
+        "children": [],
+        "deprecated": "Use `$effect.pre` instead — see https://svelte-5-preview.vercel.app/docs/deprecations#beforeupdate-and-afterupdate"
+      },
+      {
+        "name": "createEventDispatcher",
+        "comment": "Creates an event dispatcher that can be used to dispatch [component events](https://svelte.dev/docs#template-syntax-component-directives-on-eventname).\nEvent dispatchers are functions that can take two arguments: `name` and `detail`.\n\nComponent events created with `createEventDispatcher` create a\n[CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent).\nThese events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture).\nThe `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail)\nproperty and can contain any type of data.\n\nThe event dispatcher can be typed to narrow the allowed event names and the type of the `detail` argument:\n```ts\nconst dispatch = createEventDispatcher<{\n loaded: never; // does not take a detail argument\n change: string; // takes a detail argument of type string, which is required\n optional: number | null; // takes an optional detail argument of type number\n}>();\n```\n\nhttps://svelte.dev/docs/svelte#createeventdispatcher",
+        "snippet": "function createEventDispatcher<\n\tEventMap extends Record<string, any> = any\n>(): EventDispatcher<EventMap>;",
+        "children": [],
+        "deprecated": "Use callback props and/or the `$host()` rune instead — see https://svelte-5-preview.vercel.app/docs/deprecations#createeventdispatcher"
+      },
+      {
+        "name": "flushSync",
+        "comment": "Synchronously flushes any pending state changes and those that result from it.",
+        "snippet": "function flushSync(fn?: (() => void) | undefined): void;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "getAllContexts",
+        "comment": "Retrieves the whole context map that belongs to the closest parent component.\nMust be called during component initialisation. Useful, for example, if you\nprogrammatically create a component and want to pass the existing context to it.\n\nhttps://svelte.dev/docs/svelte#getallcontexts",
+        "snippet": "function getAllContexts<\n\tT extends Map<any, any> = Map<any, any>\n>(): T;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "getContext",
+        "comment": "Retrieves the context that belongs to the closest parent component with the specified `key`.\nMust be called during component initialisation.\n\nhttps://svelte.dev/docs/svelte#getcontext",
+        "snippet": "function getContext<T>(key: any): T;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "hasContext",
+        "comment": "Checks whether a given `key` has been set in the context of a parent component.\nMust be called during component initialisation.\n\nhttps://svelte.dev/docs/svelte#hascontext",
+        "snippet": "function hasContext(key: any): boolean;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "hydrate",
+        "comment": "Hydrates a component on the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component",
+        "snippet": "function hydrate<\n\tProps extends Record<string, any>,\n\tExports extends Record<string, any>\n>(\n\tcomponent:\n\t\t| ComponentType<SvelteComponent<Props>>\n\t\t| Component<Props, Exports, any>,\n\toptions: {} extends Props\n\t\t? {\n\t\t\t\ttarget: Document | Element | ShadowRoot;\n\t\t\t\tprops?: Props;\n\t\t\t\tevents?: Record<string, (e: any) => any>;\n\t\t\t\tcontext?: Map<any, any>;\n\t\t\t\tintro?: boolean;\n\t\t\t\trecover?: boolean;\n\t\t\t}\n\t\t: {\n\t\t\t\ttarget: Document | Element | ShadowRoot;\n\t\t\t\tprops: Props;\n\t\t\t\tevents?: Record<string, (e: any) => any>;\n\t\t\t\tcontext?: Map<any, any>;\n\t\t\t\tintro?: boolean;\n\t\t\t\trecover?: boolean;\n\t\t\t}\n): Exports;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "mount",
+        "comment": "Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.\nTransitions will play during the initial render unless the `intro` option is set to `false`.",
+        "snippet": "function mount<\n\tProps extends Record<string, any>,\n\tExports extends Record<string, any>\n>(\n\tcomponent:\n\t\t| ComponentType<SvelteComponent<Props>>\n\t\t| Component<Props, Exports, any>,\n\toptions: {} extends Props\n\t\t? {\n\t\t\t\ttarget: Document | Element | ShadowRoot;\n\t\t\t\tanchor?: Node;\n\t\t\t\tprops?: Props;\n\t\t\t\tevents?: Record<string, (e: any) => any>;\n\t\t\t\tcontext?: Map<any, any>;\n\t\t\t\tintro?: boolean;\n\t\t\t}\n\t\t: {\n\t\t\t\ttarget: Document | Element | ShadowRoot;\n\t\t\t\tprops: Props;\n\t\t\t\tanchor?: Node;\n\t\t\t\tevents?: Record<string, (e: any) => any>;\n\t\t\t\tcontext?: Map<any, any>;\n\t\t\t\tintro?: boolean;\n\t\t\t}\n): Exports;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "onDestroy",
+        "comment": "Schedules a callback to run immediately before the component is unmounted.\n\nOut of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the\nonly one that runs inside a server-side component.\n\nhttps://svelte.dev/docs/svelte#ondestroy",
+        "snippet": "function onDestroy(fn: () => any): void;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "onMount",
+        "comment": "The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.\nIt must be called during the component's initialisation (but doesn't need to live *inside* the component;\nit can be called from an external module).\n\nIf a function is returned _synchronously_ from `onMount`, it will be called when the component is unmounted.\n\n`onMount` does not run inside a [server-side component](https://svelte.dev/docs#run-time-server-side-component-api).\n\nhttps://svelte.dev/docs/svelte#onmount",
+        "snippet": "function onMount<T>(\n\tfn: () =>\n\t\t| NotFunction<T>\n\t\t| Promise<NotFunction<T>>\n\t\t| (() => any)\n): void;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "setContext",
+        "comment": "Associates an arbitrary `context` object with the current component and the specified `key`\nand returns that object. The context is then available to children of the component\n(including slotted content) with `getContext`.\n\nLike lifecycle functions, this must be called during component initialisation.\n\nhttps://svelte.dev/docs/svelte#setcontext",
+        "snippet": "function setContext<T>(key: any, context: T): T;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "tick",
+        "comment": "Returns a promise that resolves once any pending state changes have been applied.",
+        "snippet": "function tick(): Promise<void>;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "unmount",
+        "comment": "Unmounts a component that was previously mounted using `mount` or `hydrate`.",
+        "snippet": "function unmount(component: Record<string, any>): void;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "untrack",
+        "comment": "Use `untrack` to prevent something from being treated as an `$effect`/`$derived` dependency.\n\nhttps://svelte-5-preview.vercel.app/docs/functions#untrack",
+        "snippet": "function untrack<T>(fn: () => T): T;",
+        "children": [],
+        "deprecated": null
+      }
+    ]
+  },
+  {
+    "name": "svelte/action",
+    "comment": "",
+    "types": [
+      {
+        "name": "Action",
+        "comment": "Actions are functions that are called when an element is created.\nYou can use this interface to type such actions.\nThe following example defines an action that only works on `<div>` elements\nand optionally accepts a parameter which it has a default value for:\n```ts\nexport const myAction: Action<HTMLDivElement, { someProperty: boolean } | undefined> = (node, param = { someProperty: true }) => {\n  // ...\n}\n```\n`Action<HTMLDivElement>` and `Action<HTMLDiveElement, undefined>` both signal that the action accepts no parameters.\n\nYou can return an object with methods `update` and `destroy` from the function and type which additional attributes and events it has.\nSee interface `ActionReturn` for more details.\n\nDocs: https://svelte.dev/docs/svelte-action",
+        "snippet": "interface Action<\n\tElement = HTMLElement,\n\tParameter = undefined,\n\tAttributes extends Record<string, any> = Record<\n\t\tnever,\n\t\tany\n\t>\n> {/*…*/}",
+        "children": [
+          {
+            "snippet": "<Node extends Element>(\n\t...args: undefined extends Parameter\n\t\t? [node: Node, parameter?: Parameter]\n\t\t: [node: Node, parameter: Parameter]\n): void | ActionReturn<Parameter, Attributes>;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      },
+      {
+        "name": "ActionReturn",
+        "comment": "Actions can return an object containing the two properties defined in this interface. Both are optional.\n- update: An action can have a parameter. This method will be called whenever that parameter changes,\n  immediately after Svelte has applied updates to the markup. `ActionReturn` and `ActionReturn<undefined>` both\n  mean that the action accepts no parameters.\n- destroy: Method that is called after the element is unmounted\n\nAdditionally, you can specify which additional attributes and events the action enables on the applied element.\nThis applies to TypeScript typings only and has no effect at runtime.\n\nExample usage:\n```ts\ninterface Attributes {\n\tnewprop?: string;\n\t'on:event': (e: CustomEvent<boolean>) => void;\n}\n\nexport function myAction(node: HTMLElement, parameter: Parameter): ActionReturn<Parameter, Attributes> {\n\t// ...\n\treturn {\n\t\tupdate: (updatedParameter) => {...},\n\t\tdestroy: () => {...}\n\t};\n}\n```\n\nDocs: https://svelte.dev/docs/svelte-action",
+        "snippet": "interface ActionReturn<\n\tParameter = undefined,\n\tAttributes extends Record<string, any> = Record<\n\t\tnever,\n\t\tany\n\t>\n> {/*…*/}",
+        "children": [
+          {
+            "name": "update",
+            "snippet": "update?: (parameter: Parameter) => void;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "destroy",
+            "snippet": "destroy?: () => void;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      }
+    ],
+    "exports": []
+  },
+  {
+    "name": "svelte/animate",
+    "comment": "",
+    "types": [
+      {
+        "name": "AnimationConfig",
+        "comment": "",
+        "snippet": "interface AnimationConfig {/*…*/}",
+        "children": [
+          {
+            "name": "delay",
+            "snippet": "delay?: number;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "duration",
+            "snippet": "duration?: number;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "easing",
+            "snippet": "easing?: (t: number) => number;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "css",
+            "snippet": "css?: (t: number, u: number) => string;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "tick",
+            "snippet": "tick?: (t: number, u: number) => void;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      },
+      {
+        "name": "FlipParams",
+        "comment": "",
+        "snippet": "interface FlipParams {/*…*/}",
+        "children": [
+          {
+            "name": "delay",
+            "snippet": "delay?: number;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "duration",
+            "snippet": "duration?: number | ((len: number) => number);",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "easing",
+            "snippet": "easing?: (t: number) => number;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      }
+    ],
+    "exports": [
+      {
+        "name": "flip",
+        "comment": "The flip function calculates the start and end position of an element and animates between them, translating the x and y values.\n`flip` stands for [First, Last, Invert, Play](https://aerotwist.com/blog/flip-your-animations/).\n\nhttps://svelte.dev/docs/svelte-animate#flip",
+        "snippet": "function flip(\n\tnode: Element,\n\t{\n\t\tfrom,\n\t\tto\n\t}: {\n\t\tfrom: DOMRect;\n\t\tto: DOMRect;\n\t},\n\tparams?: FlipParams\n): AnimationConfig;",
+        "children": [],
+        "deprecated": null
+      }
+    ]
+  },
+  {
+    "name": "svelte/compiler",
+    "comment": "",
+    "types": [
+      {
+        "name": "CompileError",
+        "comment": "",
+        "snippet": "interface CompileError extends ICompileDiagnostic {}",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "CompileOptions",
+        "comment": "",
+        "snippet": "interface CompileOptions extends ModuleCompileOptions {/*…*/}",
+        "children": [
+          {
+            "name": "name",
+            "snippet": "name?: string;",
+            "comment": "Sets the name of the resulting JavaScript class (though the compiler will rename it if it would otherwise conflict with other variables in scope).\nIf unspecified, will be inferred from `filename`",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "customElement",
+            "snippet": "customElement?: boolean;",
+            "comment": "If `true`, tells the compiler to generate a custom element constructor instead of a regular Svelte component.",
+            "bullets": [
+              "- <span class=\"tag\">default</span> `false`"
+            ],
+            "children": []
+          },
+          {
+            "name": "accessors",
+            "snippet": "accessors?: boolean;",
+            "comment": "If `true`, getters and setters will be created for the component's props. If `false`, they will only be created for readonly exported values (i.e. those declared with `const`, `class` and `function`). If compiling with `customElement: true` this option defaults to `true`.",
+            "bullets": [
+              "- <span class=\"tag\">default</span> `false`",
+              "- <span class=\"tag deprecated\">deprecated</span> This will have no effect in runes mode"
+            ],
+            "children": []
+          },
+          {
+            "name": "namespace",
+            "snippet": "namespace?: Namespace;",
+            "comment": "The namespace of the element; e.g., `\"html\"`, `\"svg\"`, `\"foreign\"`.",
+            "bullets": [
+              "- <span class=\"tag\">default</span> `'html'`"
+            ],
+            "children": []
+          },
+          {
+            "name": "immutable",
+            "snippet": "immutable?: boolean;",
+            "comment": "If `true`, tells the compiler that you promise not to mutate any objects.\nThis allows it to be less conservative about checking whether values have changed.",
+            "bullets": [
+              "- <span class=\"tag\">default</span> `false`",
+              "- <span class=\"tag deprecated\">deprecated</span> This will have no effect in runes mode"
+            ],
+            "children": []
+          },
+          {
+            "name": "css",
+            "snippet": "css?: 'injected' | 'external';",
+            "comment": "- `'injected'`: styles will be included in the `head` when using `render(...)`, and injected into the document (if not already present) when the component mounts. For components compiled as custom elements, styles are injected to the shadow root.\n- `'external'`: the CSS will only be returned in the `css` field of the compilation result. Most Svelte bundler plugins will set this to `'external'` and use the CSS that is statically generated for better performance, as it will result in smaller JavaScript bundles and the output can be served as cacheable `.css` files.\nThis is always `'injected'` when compiling with `customElement` mode.",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "cssHash",
+            "snippet": "cssHash?: CssHashGetter;",
+            "comment": "A function that takes a `{ hash, css, name, filename }` argument and returns the string that is used as a classname for scoped CSS.\nIt defaults to returning `svelte-${hash(css)}`.",
+            "bullets": [
+              "- <span class=\"tag\">default</span> `undefined`"
+            ],
+            "children": []
+          },
+          {
+            "name": "preserveComments",
+            "snippet": "preserveComments?: boolean;",
+            "comment": "If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.",
+            "bullets": [
+              "- <span class=\"tag\">default</span> `false`"
+            ],
+            "children": []
+          },
+          {
+            "name": "preserveWhitespace",
+            "snippet": "preserveWhitespace?: boolean;",
+            "comment": "If `true`, whitespace inside and between elements is kept as you typed it, rather than removed or collapsed to a single space where possible.",
+            "bullets": [
+              "- <span class=\"tag\">default</span> `false`"
+            ],
+            "children": []
+          },
+          {
+            "name": "runes",
+            "snippet": "runes?: boolean | undefined;",
+            "comment": "Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.\nSet to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.\nSet to `undefined` (the default) to infer runes mode from the component code.\nIs always `true` for JS/TS modules compiled with Svelte.\nWill be `true` by default in Svelte 6.",
+            "bullets": [
+              "- <span class=\"tag\">default</span> `undefined`"
+            ],
+            "children": []
+          },
+          {
+            "name": "discloseVersion",
+            "snippet": "discloseVersion?: boolean;",
+            "comment": "If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `window.__svelte.v`.",
+            "bullets": [
+              "- <span class=\"tag\">default</span> `true`"
+            ],
+            "children": []
+          },
+          {
+            "name": "compatibility",
+            "snippet": "compatibility?: {/*…*/}",
+            "comment": "",
+            "bullets": [
+              "- <span class=\"tag deprecated\">deprecated</span> Use these only as a temporary solution before migrating your code"
+            ],
+            "children": [
+              {
+                "name": "componentApi",
+                "snippet": "componentApi?: 4 | 5;",
+                "comment": "Applies a transformation so that the default export of Svelte files can still be instantiated the same way as in Svelte 4 —\nas a class when compiling for the browser (as though using `createClassComponent(MyComponent, {...})` from `svelte/legacy`)\nor as an object with a `.render(...)` method when compiling for the server",
+                "bullets": [
+                  "- <span class=\"tag\">default</span> `5`"
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "name": "sourcemap",
+            "snippet": "sourcemap?: object | string;",
+            "comment": "An initial sourcemap that will be merged into the final output sourcemap.\nThis is usually the preprocessor sourcemap.",
+            "bullets": [
+              "- <span class=\"tag\">default</span> `null`"
+            ],
+            "children": []
+          },
+          {
+            "name": "outputFilename",
+            "snippet": "outputFilename?: string;",
+            "comment": "Used for your JavaScript sourcemap.",
+            "bullets": [
+              "- <span class=\"tag\">default</span> `null`"
+            ],
+            "children": []
+          },
+          {
+            "name": "cssOutputFilename",
+            "snippet": "cssOutputFilename?: string;",
+            "comment": "Used for your CSS sourcemap.",
+            "bullets": [
+              "- <span class=\"tag\">default</span> `null`"
+            ],
+            "children": []
+          },
+          {
+            "name": "hmr",
+            "snippet": "hmr?: boolean;",
+            "comment": "If `true`, compiles components with hot reloading support.",
+            "bullets": [
+              "- <span class=\"tag\">default</span> `false`"
+            ],
+            "children": []
+          },
+          {
+            "name": "modernAst",
+            "snippet": "modernAst?: boolean;",
+            "comment": "If `true`, returns the modern version of the AST.\nWill become `true` by default in Svelte 6, and the option will be removed in Svelte 7.",
+            "bullets": [
+              "- <span class=\"tag\">default</span> `false`"
+            ],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      },
+      {
+        "name": "CompileResult",
+        "comment": "The return value of `compile` from `svelte/compiler`",
+        "snippet": "interface CompileResult {/*…*/}",
+        "children": [
+          {
+            "name": "js",
+            "snippet": "js: {/*…*/}",
+            "comment": "The compiled JavaScript",
+            "bullets": [],
+            "children": [
+              {
+                "name": "code",
+                "snippet": "code: string;",
+                "comment": "The generated code",
+                "bullets": [],
+                "children": []
+              },
+              {
+                "name": "map",
+                "snippet": "map: SourceMap;",
+                "comment": "A source map",
+                "bullets": [],
+                "children": []
+              }
+            ]
+          },
+          {
+            "name": "css",
+            "snippet": "css: null | {\n\t/** The generated code */\n\tcode: string;\n\t/** A source map */\n\tmap: SourceMap;\n};",
+            "comment": "The compiled CSS",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "warnings",
+            "snippet": "warnings: Warning[];",
+            "comment": "An array of warning objects that were generated during compilation. Each warning has several properties:\n- `code` is a string identifying the category of warning\n- `message` describes the issue in human-readable terms\n- `start` and `end`, if the warning relates to a specific location, are objects with `line`, `column` and `character` properties",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "metadata",
+            "snippet": "metadata: {/*…*/}",
+            "comment": "Metadata about the compiled component",
+            "bullets": [],
+            "children": [
+              {
+                "name": "runes",
+                "snippet": "runes: boolean;",
+                "comment": "Whether the file was compiled in runes mode, either because of an explicit option or inferred from usage.\nFor `compileModule`, this is always `true`",
+                "bullets": [],
+                "children": []
+              }
+            ]
+          },
+          {
+            "name": "ast",
+            "snippet": "ast: any;",
+            "comment": "The AST",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      },
+      {
+        "name": "MarkupPreprocessor",
+        "comment": "A markup preprocessor that takes a string of code and returns a processed version.",
+        "snippet": "type MarkupPreprocessor = (options: {\n\t/**\n\t * The whole Svelte file content\n\t */\n\tcontent: string;\n\t/**\n\t * The filename of the Svelte file\n\t */\n\tfilename?: string;\n}) => Processed | void | Promise<Processed | void>;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "ModuleCompileOptions",
+        "comment": "",
+        "snippet": "interface ModuleCompileOptions {/*…*/}",
+        "children": [
+          {
+            "name": "dev",
+            "snippet": "dev?: boolean;",
+            "comment": "If `true`, causes extra code to be added that will perform runtime checks and provide debugging information during development.",
+            "bullets": [
+              "- <span class=\"tag\">default</span> `false`"
+            ],
+            "children": []
+          },
+          {
+            "name": "generate",
+            "snippet": "generate?: 'client' | 'server' | false;",
+            "comment": "If `\"client\"`, Svelte emits code designed to run in the browser.\nIf `\"server\"`, Svelte emits code suitable for server-side rendering.\nIf `false`, nothing is generated. Useful for tooling that is only interested in warnings.",
+            "bullets": [
+              "- <span class=\"tag\">default</span> `'client'`"
+            ],
+            "children": []
+          },
+          {
+            "name": "filename",
+            "snippet": "filename?: string;",
+            "comment": "Used for debugging hints and sourcemaps. Your bundler plugin will set it automatically.",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "rootDir",
+            "snippet": "rootDir?: string;",
+            "comment": "Used for ensuring filenames don't leak filesystem information. Your bundler plugin will set it automatically.",
+            "bullets": [
+              "- <span class=\"tag\">default</span> `process.cwd() on node-like environments, undefined elsewhere`"
+            ],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      },
+      {
+        "name": "Preprocessor",
+        "comment": "A script/style preprocessor that takes a string of code and returns a processed version.",
+        "snippet": "type Preprocessor = (options: {\n\t/**\n\t * The script/style tag content\n\t */\n\tcontent: string;\n\t/**\n\t * The attributes on the script/style tag\n\t */\n\tattributes: Record<string, string | boolean>;\n\t/**\n\t * The whole Svelte file content\n\t */\n\tmarkup: string;\n\t/**\n\t * The filename of the Svelte file\n\t */\n\tfilename?: string;\n}) => Processed | void | Promise<Processed | void>;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "PreprocessorGroup",
+        "comment": "A preprocessor group is a set of preprocessors that are applied to a Svelte file.",
+        "snippet": "interface PreprocessorGroup {/*…*/}",
+        "children": [
+          {
+            "name": "name",
+            "snippet": "name?: string;",
+            "comment": "Name of the preprocessor. Will be a required option in the next major version",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "markup",
+            "snippet": "markup?: MarkupPreprocessor;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "style",
+            "snippet": "style?: Preprocessor;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "script",
+            "snippet": "script?: Preprocessor;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      },
+      {
+        "name": "Processed",
+        "comment": "The result of a preprocessor run. If the preprocessor does not return a result, it is assumed that the code is unchanged.",
+        "snippet": "interface Processed {/*…*/}",
+        "children": [
+          {
+            "name": "code",
+            "snippet": "code: string;",
+            "comment": "The new code",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "map",
+            "snippet": "map?: string | object;",
+            "comment": "A source map mapping back to the original code",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "dependencies",
+            "snippet": "dependencies?: string[];",
+            "comment": "A list of additional files to watch for changes",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "attributes",
+            "snippet": "attributes?: Record<string, string | boolean>;",
+            "comment": "Only for script/style preprocessors: The updated attributes to set on the tag. If undefined, attributes stay unchanged.",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "toString",
+            "snippet": "toString?: () => string;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      },
+      {
+        "name": "Warning",
+        "comment": "",
+        "snippet": "interface Warning extends ICompileDiagnostic {}",
+        "children": [],
+        "deprecated": null
+      }
+    ],
+    "exports": [
+      {
+        "name": "VERSION",
+        "comment": "The current version, as set in package.json.\n\nhttps://svelte.dev/docs/svelte-compiler#svelte-version",
+        "snippet": "const VERSION: string;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "compile",
+        "comment": "`compile` converts your `.svelte` source code into a JavaScript module that exports a component\n\nhttps://svelte.dev/docs/svelte-compiler#svelte-compile",
+        "snippet": "function compile(\n\tsource: string,\n\toptions: CompileOptions\n): CompileResult;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "compileModule",
+        "comment": "`compileModule` takes your JavaScript source code containing runes, and turns it into a JavaScript module.\n\nhttps://svelte.dev/docs/svelte-compiler#svelte-compile",
+        "snippet": "function compileModule(\n\tsource: string,\n\toptions: ModuleCompileOptions\n): CompileResult;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "migrate",
+        "comment": "Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.\nMay throw an error if the code is too complex to migrate automatically.",
+        "snippet": "function migrate(source: string): {\n\tcode: string;\n};",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "parse",
+        "comment": "The parse function parses a component, returning only its abstract syntax tree.\n\nThe `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.\n`modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.\n\nhttps://svelte.dev/docs/svelte-compiler#svelte-parse",
+        "snippet": "function parse(\n\tsource: string,\n\toptions: {\n\t\tfilename?: string;\n\t\tmodern: true;\n\t}\n): Root;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "parse",
+        "comment": "The parse function parses a component, returning only its abstract syntax tree.\n\nThe `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.\n`modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.\n\nhttps://svelte.dev/docs/svelte-compiler#svelte-parse",
+        "snippet": "function parse(\n\tsource: string,\n\toptions?:\n\t\t| {\n\t\t\t\tfilename?: string;\n\t\t\t\tmodern?: false;\n\t\t  }\n\t\t| undefined\n): LegacyRoot;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "preprocess",
+        "comment": "The preprocess function provides convenient hooks for arbitrarily transforming component source code.\nFor example, it can be used to convert a <style lang=\"sass\"> block into vanilla CSS.\n\nhttps://svelte.dev/docs/svelte-compiler#svelte-preprocess",
+        "snippet": "function preprocess(\n\tsource: string,\n\tpreprocessor: PreprocessorGroup | PreprocessorGroup[],\n\toptions?:\n\t\t| {\n\t\t\t\tfilename?: string;\n\t\t  }\n\t\t| undefined\n): Promise<Processed>;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "walk",
+        "snippet": "function walk(): never;",
+        "children": [],
+        "deprecated": "Replace this with `import { walk } from 'estree-walker'`"
+      }
+    ]
+  },
+  {
+    "name": "svelte/easing",
+    "comment": "",
+    "types": [],
+    "exports": [
+      {
+        "name": "backIn",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function backIn(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "backInOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function backInOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "backOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function backOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "bounceIn",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function bounceIn(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "bounceInOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function bounceInOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "bounceOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function bounceOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "circIn",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function circIn(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "circInOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function circInOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "circOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function circOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "cubicIn",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function cubicIn(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "cubicInOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function cubicInOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "cubicOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function cubicOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "elasticIn",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function elasticIn(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "elasticInOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function elasticInOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "elasticOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function elasticOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "expoIn",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function expoIn(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "expoInOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function expoInOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "expoOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function expoOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "linear",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function linear(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "quadIn",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function quadIn(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "quadInOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function quadInOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "quadOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function quadOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "quartIn",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function quartIn(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "quartInOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function quartInOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "quartOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function quartOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "quintIn",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function quintIn(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "quintInOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function quintInOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "quintOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function quintOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "sineIn",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function sineIn(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "sineInOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function sineInOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "sineOut",
+        "comment": "https://svelte.dev/docs/svelte-easing",
+        "snippet": "function sineOut(t: number): number;",
+        "children": [],
+        "deprecated": null
+      }
+    ]
+  },
+  {
+    "name": "svelte/events",
+    "comment": "",
+    "types": [],
+    "exports": [
+      {
+        "name": "on",
+        "comment": "Attaches an event handler to an element and returns a function that removes the handler. Using this\nrather than `addEventListener` will preserve the correct order relative to handlers added declaratively\n(with attributes like `onclick`), which use event delegation for performance reasons",
+        "snippet": "function on<\n\tElement extends HTMLElement,\n\tType extends keyof HTMLElementEventMap\n>(\n\telement: Element,\n\ttype: Type,\n\thandler: (\n\t\tthis: Element,\n\t\tevent: HTMLElementEventMap[Type]\n\t) => any,\n\toptions?: AddEventListenerOptions | undefined\n): () => void;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "on",
+        "comment": "Attaches an event handler to an element and returns a function that removes the handler. Using this\nrather than `addEventListener` will preserve the correct order relative to handlers added declaratively\n(with attributes like `onclick`), which use event delegation for performance reasons",
+        "snippet": "function on(\n\telement: EventTarget,\n\ttype: string,\n\thandler: EventListener,\n\toptions?: AddEventListenerOptions | undefined\n): () => void;",
+        "children": [],
+        "deprecated": null
+      }
+    ]
+  },
+  {
+    "name": "svelte/legacy",
+    "comment": "",
+    "types": [],
+    "exports": [
+      {
+        "name": "asClassComponent",
+        "comment": "Takes the component function and returns a Svelte 4 compatible component constructor.",
+        "snippet": "function asClassComponent<\n\tProps extends Record<string, any>,\n\tExports extends Record<string, any>,\n\tEvents extends Record<string, any>,\n\tSlots extends Record<string, any>\n>(\n\tcomponent:\n\t\t| SvelteComponent<Props, Events, Slots>\n\t\t| Component<Props>\n): ComponentType<\n\tSvelteComponent<Props, Events, Slots> & Exports\n>;",
+        "children": [],
+        "deprecated": "Use this only as a temporary solution to migrate your imperative component code to Svelte 5."
+      },
+      {
+        "name": "createClassComponent",
+        "comment": "Takes the same options as a Svelte 4 component and the component function and returns a Svelte 4 compatible component.",
+        "snippet": "function createClassComponent<\n\tProps extends Record<string, any>,\n\tExports extends Record<string, any>,\n\tEvents extends Record<string, any>,\n\tSlots extends Record<string, any>\n>(\n\toptions: ComponentConstructorOptions<Props> & {\n\t\tcomponent:\n\t\t\t| ComponentType<SvelteComponent<Props, Events, Slots>>\n\t\t\t| Component<Props>;\n\t\timmutable?: boolean;\n\t\thydrate?: boolean;\n\t\trecover?: boolean;\n\t}\n): SvelteComponent<Props, Events, Slots> & Exports;",
+        "children": [],
+        "deprecated": "Use this only as a temporary solution to migrate your imperative component code to Svelte 5."
+      },
+      {
+        "name": "run",
+        "comment": "Runs the given function once immediately on the server, and works like `$effect.pre` on the client.",
+        "snippet": "function run(fn: () => void | (() => void)): void;",
+        "children": [],
+        "deprecated": "Use this only as a temporary solution to migrate your component code to Svelte 5."
+      }
+    ]
+  },
+  {
+    "name": "svelte/motion",
+    "comment": "",
+    "types": [
+      {
+        "name": "Spring",
+        "comment": "",
+        "snippet": "interface Spring<T> extends Readable<T> {/*…*/}",
+        "children": [
+          {
+            "name": "set",
+            "snippet": "set: (new_value: T, opts?: SpringUpdateOpts) => Promise<void>;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "update",
+            "snippet": "update: (fn: Updater<T>, opts?: SpringUpdateOpts) => Promise<void>;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "precision",
+            "snippet": "precision: number;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "damping",
+            "snippet": "damping: number;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "stiffness",
+            "snippet": "stiffness: number;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      },
+      {
+        "name": "Tweened",
+        "comment": "",
+        "snippet": "interface Tweened<T> extends Readable<T> {/*…*/}",
+        "children": [
+          {
+            "name": "set",
+            "snippet": "set(value: T, opts?: TweenedOptions<T>): Promise<void>;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "update",
+            "snippet": "update(updater: Updater<T>, opts?: TweenedOptions<T>): Promise<void>;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      }
+    ],
+    "exports": [
+      {
+        "name": "spring",
+        "comment": "The spring function in Svelte creates a store whose value is animated, with a motion that simulates the behavior of a spring. This means when the value changes, instead of transitioning at a steady rate, it \"bounces\" like a spring would, depending on the physics parameters provided. This adds a level of realism to the transitions and can enhance the user experience.\n\nhttps://svelte.dev/docs/svelte-motion#spring",
+        "snippet": "function spring<T = any>(\n\tvalue?: T | undefined,\n\topts?: SpringOpts | undefined\n): Spring<T>;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "tweened",
+        "comment": "A tweened store in Svelte is a special type of store that provides smooth transitions between state values over time.\n\nhttps://svelte.dev/docs/svelte-motion#tweened",
+        "snippet": "function tweened<T>(\n\tvalue?: T | undefined,\n\tdefaults?: TweenedOptions<T> | undefined\n): Tweened<T>;",
+        "children": [],
+        "deprecated": null
+      }
+    ]
+  },
+  {
+    "name": "svelte/reactivity",
+    "comment": "",
+    "types": [
+      {
+        "name": "SvelteDate",
+        "comment": "",
+        "snippet": "class SvelteDate extends Date {/*…*/}",
+        "children": [
+          {
+            "snippet": "constructor(...params: any[]);",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "#private",
+            "snippet": "#private;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      },
+      {
+        "name": "SvelteMap",
+        "comment": "",
+        "snippet": "class SvelteMap<K, V> extends Map<K, V> {/*…*/}",
+        "children": [
+          {
+            "snippet": "constructor(value?: Iterable<readonly [K, V]> | null | undefined);",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "set",
+            "snippet": "set(key: K, value: V): this;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "#private",
+            "snippet": "#private;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      },
+      {
+        "name": "SvelteSet",
+        "comment": "",
+        "snippet": "class SvelteSet<T> extends Set<T> {/*…*/}",
+        "children": [
+          {
+            "snippet": "constructor(value?: Iterable<T> | null | undefined);",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "add",
+            "snippet": "add(value: T): this;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "#private",
+            "snippet": "#private;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      },
+      {
+        "name": "SvelteURL",
+        "comment": "",
+        "snippet": "class SvelteURL extends URL {/*…*/}",
+        "children": [
+          {
+            "name": "searchParams",
+            "snippet": "get searchParams(): SvelteURLSearchParams;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "#private",
+            "snippet": "#private;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      },
+      {
+        "name": "SvelteURLSearchParams",
+        "comment": "",
+        "snippet": "class SvelteURLSearchParams extends URLSearchParams {/*…*/}",
+        "children": [
+          {
+            "snippet": "[REPLACE](params: URLSearchParams): void;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          },
+          {
+            "name": "#private",
+            "snippet": "#private;",
+            "comment": "",
+            "bullets": [],
+            "children": []
+          }
+        ],
+        "deprecated": null
+      }
+    ],
+    "exports": []
+  },
+  {
+    "name": "svelte/server",
+    "comment": "",
+    "types": [],
+    "exports": [
+      {
+        "name": "render",
+        "comment": "Only available on the server and when compiling with the `server` option.\nTakes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.",
+        "snippet": "function render<\n\tComp extends SvelteComponent<any> | Component<any>,\n\tProps extends ComponentProps<Comp> = ComponentProps<Comp>\n>(\n\t...args: {} extends Props\n\t\t? [\n\t\t\t\tcomponent: Comp extends SvelteComponent<any>\n\t\t\t\t\t? ComponentType<Comp>\n\t\t\t\t\t: Comp,\n\t\t\t\toptions?: {\n\t\t\t\t\tprops?: Omit<Props, '$$slots' | '$$events'>;\n\t\t\t\t\tcontext?: Map<any, any>;\n\t\t\t\t}\n\t\t\t]\n\t\t: [\n\t\t\t\tcomponent: Comp extends SvelteComponent<any>\n\t\t\t\t\t? ComponentType<Comp>\n\t\t\t\t\t: Comp,\n\t\t\t\toptions: {\n\t\t\t\t\tprops: Omit<Props, '$$slots' | '$$events'>;\n\t\t\t\t\tcontext?: Map<any, any>;\n\t\t\t\t}\n\t\t\t]\n): RenderOutput;",
+        "children": [],
+        "deprecated": null
+      }
+    ]
+  },
+  {
+    "name": "svelte/store",
+    "comment": "",
+    "types": [],
+    "exports": [
+      {
+        "name": "derived",
+        "comment": "Derived value store by synchronizing one or more readable stores and\napplying an aggregation function over its input values.\n\nhttps://svelte.dev/docs/svelte-store#derived",
+        "snippet": "function derived<S extends Stores, T>(\n\tstores: S,\n\tfn: (\n\t\tvalues: StoresValues<S>,\n\t\tset: (value: T) => void,\n\t\tupdate: (fn: Updater<T>) => void\n\t) => Unsubscriber | void,\n\tinitial_value?: T | undefined\n): Readable<T>;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "derived",
+        "comment": "Derived value store by synchronizing one or more readable stores and\napplying an aggregation function over its input values.\n\nhttps://svelte.dev/docs/svelte-store#derived",
+        "snippet": "function derived<S extends Stores, T>(\n\tstores: S,\n\tfn: (values: StoresValues<S>) => T,\n\tinitial_value?: T | undefined\n): Readable<T>;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "get",
+        "comment": "Get the current value from a store by subscribing and immediately unsubscribing.\n\nhttps://svelte.dev/docs/svelte-store#get",
+        "snippet": "function get<T>(store: Readable<T>): T;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "readable",
+        "comment": "Creates a `Readable` store that allows reading by subscription.\n\nhttps://svelte.dev/docs/svelte-store#readable",
+        "snippet": "function readable<T>(\n\tvalue?: T | undefined,\n\tstart?: StartStopNotifier<T> | undefined\n): Readable<T>;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "readonly",
+        "comment": "Takes a store and returns a new one derived from the old one that is readable.\n\nhttps://svelte.dev/docs/svelte-store#readonly",
+        "snippet": "function readonly<T>(store: Readable<T>): Readable<T>;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "writable",
+        "comment": "Create a `Writable` store that allows both updating and reading by subscription.\n\nhttps://svelte.dev/docs/svelte-store#writable",
+        "snippet": "function writable<T>(\n\tvalue?: T | undefined,\n\tstart?: StartStopNotifier<T> | undefined\n): Writable<T>;",
+        "children": [],
+        "deprecated": null
+      }
+    ]
+  },
+  {
+    "name": "svelte/transition",
+    "comment": "",
+    "types": [],
+    "exports": [
+      {
+        "name": "blur",
+        "comment": "Animates a `blur` filter alongside an element's opacity.\n\nhttps://svelte.dev/docs/svelte-transition#blur",
+        "snippet": "function blur(\n\tnode: Element,\n\t{\n\t\tdelay,\n\t\tduration,\n\t\teasing,\n\t\tamount,\n\t\topacity\n\t}?: BlurParams | undefined\n): TransitionConfig;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "crossfade",
+        "comment": "The `crossfade` function creates a pair of [transitions](https://svelte.dev/docs#template-syntax-element-directives-transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.\n\nhttps://svelte.dev/docs/svelte-transition#crossfade",
+        "snippet": "function crossfade({\n\tfallback,\n\t...defaults\n}: CrossfadeParams & {\n\tfallback?: (\n\t\tnode: Element,\n\t\tparams: CrossfadeParams,\n\t\tintro: boolean\n\t) => TransitionConfig;\n}): [\n\t(\n\t\tnode: any,\n\t\tparams: CrossfadeParams & {\n\t\t\tkey: any;\n\t\t}\n\t) => () => TransitionConfig,\n\t(\n\t\tnode: any,\n\t\tparams: CrossfadeParams & {\n\t\t\tkey: any;\n\t\t}\n\t) => () => TransitionConfig\n];",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "draw",
+        "comment": "Animates the stroke of an SVG element, like a snake in a tube. `in` transitions begin with the path invisible and draw the path to the screen over time. `out` transitions start in a visible state and gradually erase the path. `draw` only works with elements that have a `getTotalLength` method, like `<path>` and `<polyline>`.\n\nhttps://svelte.dev/docs/svelte-transition#draw",
+        "snippet": "function draw(\n\tnode: SVGElement & {\n\t\tgetTotalLength(): number;\n\t},\n\t{\n\t\tdelay,\n\t\tspeed,\n\t\tduration,\n\t\teasing\n\t}?: DrawParams | undefined\n): TransitionConfig;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "fade",
+        "comment": "Animates the opacity of an element from 0 to the current opacity for `in` transitions and from the current opacity to 0 for `out` transitions.\n\nhttps://svelte.dev/docs/svelte-transition#fade",
+        "snippet": "function fade(\n\tnode: Element,\n\t{ delay, duration, easing }?: FadeParams | undefined\n): TransitionConfig;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "fly",
+        "comment": "Animates the x and y positions and the opacity of an element. `in` transitions animate from the provided values, passed as parameters to the element's default values. `out` transitions animate from the element's default values to the provided values.\n\nhttps://svelte.dev/docs/svelte-transition#fly",
+        "snippet": "function fly(\n\tnode: Element,\n\t{\n\t\tdelay,\n\t\tduration,\n\t\teasing,\n\t\tx,\n\t\ty,\n\t\topacity\n\t}?: FlyParams | undefined\n): TransitionConfig;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "scale",
+        "comment": "Animates the opacity and scale of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.\n\nhttps://svelte.dev/docs/svelte-transition#scale",
+        "snippet": "function scale(\n\tnode: Element,\n\t{\n\t\tdelay,\n\t\tduration,\n\t\teasing,\n\t\tstart,\n\t\topacity\n\t}?: ScaleParams | undefined\n): TransitionConfig;",
+        "children": [],
+        "deprecated": null
+      },
+      {
+        "name": "slide",
+        "comment": "Slides an element in and out.\n\nhttps://svelte.dev/docs/svelte-transition#slide",
+        "snippet": "function slide(\n\tnode: Element,\n\t{\n\t\tdelay,\n\t\tduration,\n\t\teasing,\n\t\taxis\n\t}?: SlideParams | undefined\n): TransitionConfig;",
+        "children": [],
+        "deprecated": null
+      }
+    ]
+  }
+]
