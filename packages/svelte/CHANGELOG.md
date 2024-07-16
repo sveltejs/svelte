@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.186
+
+### Patch Changes
+
+- feat: skip pending block for already-resolved promises ([#12274](https://github.com/sveltejs/svelte/pull/12274))
+
+- feat: add ability to ignore warnings through `warningFilter` compiler option ([#12296](https://github.com/sveltejs/svelte/pull/12296))
+
+- fix: run animations in microtask so that deferred transitions can measure nodes correctly ([#12453](https://github.com/sveltejs/svelte/pull/12453))
+
 ## 5.0.0-next.185
 
 ### Patch Changes
