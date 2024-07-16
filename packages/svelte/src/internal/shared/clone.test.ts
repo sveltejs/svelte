@@ -4,10 +4,15 @@ import { proxy } from '../client/proxy';
 
 function capture_warnings() {
 	const warnings: string[] = [];
+
+	// eslint-disable-next-line no-console
 	const warn = console.warn;
+
+	// eslint-disable-next-line no-console
 	console.warn = (message) => warnings.push(message);
 
 	return () => {
+		// eslint-disable-next-line no-console
 		console.warn = warn;
 		return warnings;
 	};
