@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: more precise `validate_dynamic_component`
+fix: add symbol to components to properly validate them
