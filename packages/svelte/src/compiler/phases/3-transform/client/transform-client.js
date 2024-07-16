@@ -418,7 +418,7 @@ export function client_component(source, analysis, options) {
 
 	if (options.hmr) {
 		const accept_fn_body = [
-			b.stmt(b.call('$.set', b.id('s'), b.member(b.id('module'), b.id('default'))))
+			b.stmt(b.call('$.set', b.id('s'), b.member(b.id('module.default'), b.id('$.ORIGINAL'), true)))
 		];
 
 		if (analysis.css.hash) {
@@ -440,8 +440,18 @@ export function client_component(source, analysis, options) {
 		const hmr = b.block([
 			b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
 			b.const(b.id('filename'), b.member(b.id(analysis.name), b.id('filename'))),
+			b.const(b.id('$$original'), b.id(analysis.name)),
 			b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
 			b.stmt(b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.id('filename'))),
+			// Assign the original component to the wrapper so we can use it on hot reload patching,
+			// else we would call the HMR function two times
+			b.stmt(
+				b.assignment(
+					'=',
+					b.member(b.id(analysis.name), b.id('$.ORIGINAL'), true),
+					b.id('$$original')
+				)
+			),
 			b.stmt(b.call('import.meta.hot.accept', b.arrow([b.id('module')], b.block(accept_fn_body))))
 		]);
 
@@ -452,10 +462,14 @@ export function client_component(source, analysis, options) {
 
 	if (options.dev) {
 		if (filename) {
-			// add `App.filename = 'App.svelte'` so that we can print useful messages later
+			// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later
 			body.unshift(
 				b.stmt(
-					b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.literal(filename))
+					b.assignment(
+						'=',
+						b.member(b.id(analysis.name), b.id('$.FILENAME'), true),
+						b.literal(filename)
+					)
 				)
 			);
 		}

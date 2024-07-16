@@ -1,4 +1,4 @@
-/** @import { SvelteNode } from './types' */
+/** @import { CompileOptions, SvelteNode } from './types' */
 /** @import { Warning } from '#compiler' */
 import { getLocator } from 'locate-character';
 
@@ -21,6 +21,9 @@ export let filename;
 export let source;
 
 export let locator = getLocator('', { offsetLine: 1 });
+
+/** @type {NonNullable<CompileOptions['warningFilter']>} */
+export let warning_filter;
 
 /**
  * The current stack of ignored warnings
@@ -46,6 +49,14 @@ export function push_ignore(ignores) {
 
 export function pop_ignore() {
 	ignore_stack.pop();
+}
+
+/**
+ *
+ * @param {(warning: Warning) => boolean} fn
+ */
+export function reset_warning_filter(fn = () => true) {
+	warning_filter = fn;
 }
 
 /**

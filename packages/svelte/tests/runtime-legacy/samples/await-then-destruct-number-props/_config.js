@@ -7,10 +7,6 @@ export default test({
 		};
 	},
 
-	html: `
-		loading...
-	`,
-
 	async test({ assert, component, target }) {
 		await (component.thePromise = Promise.resolve([10, 11, 12, 13, 14, 15]));
 

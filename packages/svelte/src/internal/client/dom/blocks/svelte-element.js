@@ -1,5 +1,5 @@
 /** @import { Effect, EffectNodes, TemplateNode } from '#client' */
-import { namespace_svg } from '../../../../constants.js';
+import { FILENAME, namespace_svg } from '../../../../constants.js';
 import {
 	hydrate_next,
 	hydrate_node,
@@ -38,7 +38,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 		hydrate_next();
 	}
 
-	var filename = DEV && location && current_component_context?.function.filename;
+	var filename = DEV && location && current_component_context?.function[FILENAME];
 
 	/** @type {string | null} */
 	var tag;

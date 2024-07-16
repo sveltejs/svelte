@@ -1,5 +1,35 @@
 # svelte
 
+## 5.0.0-next.187
+
+### Patch Changes
+
+- fix: always pass original component to HMR wrapper ([#12454](https://github.com/sveltejs/svelte/pull/12454))
+
+- fix: ensure previous transitions are properly aborted ([#12460](https://github.com/sveltejs/svelte/pull/12460))
+
+## 5.0.0-next.186
+
+### Patch Changes
+
+- feat: skip pending block for already-resolved promises ([#12274](https://github.com/sveltejs/svelte/pull/12274))
+
+- feat: add ability to ignore warnings through `warningFilter` compiler option ([#12296](https://github.com/sveltejs/svelte/pull/12296))
+
+- fix: run animations in microtask so that deferred transitions can measure nodes correctly ([#12453](https://github.com/sveltejs/svelte/pull/12453))
+
+## 5.0.0-next.185
+
+### Patch Changes
+
+- fix: allow leading and trailing comments in mustache expression ([#11866](https://github.com/sveltejs/svelte/pull/11866))
+
+- fix: ensure hydration walks all nodes ([#12448](https://github.com/sveltejs/svelte/pull/12448))
+
+- fix: prevent whitespaces merging across component boundaries ([#12449](https://github.com/sveltejs/svelte/pull/12449))
+
+- fix: detect mutations within assignment expressions ([#12429](https://github.com/sveltejs/svelte/pull/12429))
+
 ## 5.0.0-next.184
 
 ### Patch Changes

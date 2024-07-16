@@ -96,10 +96,17 @@ export function animation(element, get_fn, get_params) {
 			) {
 				const options = get_fn()(this.element, { from, to }, get_params?.());
 
-				animation = animate(this.element, options, undefined, 1, () => {
-					animation?.abort();
-					animation = undefined;
-				});
+				animation = animate(
+					this.element,
+					options,
+					undefined,
+					1,
+					() => {
+						animation?.abort();
+						animation = undefined;
+					},
+					undefined
+				);
 			}
 		},
 		fix() {
@@ -157,10 +164,11 @@ export function animation(element, get_fn, get_params) {
 export function transition(flags, element, get_fn, get_params) {
 	var is_intro = (flags & TRANSITION_IN) !== 0;
 	var is_outro = (flags & TRANSITION_OUT) !== 0;
+	var is_both = is_intro && is_outro;
 	var is_global = (flags & TRANSITION_GLOBAL) !== 0;
 
 	/** @type {'in' | 'out' | 'both'} */
-	var direction = is_intro && is_outro ? 'both' : is_intro ? 'in' : 'out';
+	var direction = is_both ? 'both' : is_intro ? 'in' : 'out';
 
 	/** @type {import('#client').AnimationConfig | ((opts: { direction: 'in' | 'out' }) => import('#client').AnimationConfig) | undefined} */
 	var current_options;
@@ -191,27 +199,54 @@ export function transition(flags, element, get_fn, get_params) {
 
 			// abort the outro to prevent overlap with the intro
 			outro?.abort();
+			// abort previous intro (can happen if an element is intro'd, then outro'd, then intro'd again)
+			intro?.abort();
 
 			if (is_intro) {
 				dispatch_event(element, 'introstart');
-				intro = animate(element, get_options(), outro, 1, () => {
-					dispatch_event(element, 'introend');
-					intro = current_options = undefined;
-				});
+				intro = animate(
+					element,
+					get_options(),
+					outro,
+					1,
+					() => {
+						dispatch_event(element, 'introend');
+						intro = current_options = undefined;
+					},
+					is_both
+						? undefined
+						: () => {
+								intro = current_options = undefined;
+							}
+				);
 			} else {
 				reset?.();
 			}
 		},
 		out(fn) {
+			// abort previous outro (can happen if an element is outro'd, then intro'd, then outro'd again)
+			outro?.abort();
+
 			if (is_outro) {
 				element.inert = true;
 
 				dispatch_event(element, 'outrostart');
-				outro = animate(element, get_options(), intro, 0, () => {
-					dispatch_event(element, 'outroend');
-					outro = current_options = undefined;
-					fn?.();
-				});
+				outro = animate(
+					element,
+					get_options(),
+					intro,
+					0,
+					() => {
+						dispatch_event(element, 'outroend');
+						outro = current_options = undefined;
+						fn?.();
+					},
+					is_both
+						? undefined
+						: () => {
+								outro = current_options = undefined;
+							}
+				);
 
 				// TODO arguably the outro should never null itself out until _all_ outros for this effect have completed...
 				// in that case we wouldn't need to store `reset` separately
@@ -263,10 +298,11 @@ export function transition(flags, element, get_fn, get_params) {
  * @param {import('#client').AnimationConfig | ((opts: { direction: 'in' | 'out' }) => import('#client').AnimationConfig)} options
  * @param {import('#client').Animation | undefined} counterpart The corresponding intro/outro to this outro/intro
  * @param {number} t2 The target `t` value — `1` for intro, `0` for outro
- * @param {(() => void) | undefined} callback
+ * @param {(() => void) | undefined} on_finish Called after successfully completing the animation
+ * @param {(() => void) | undefined} on_abort Called if the animation is aborted
  * @returns {import('#client').Animation}
  */
-function animate(element, options, counterpart, t2, callback) {
+function animate(element, options, counterpart, t2, on_finish, on_abort) {
 	var is_intro = t2 === 1;
 
 	if (is_function(options)) {
@@ -278,7 +314,7 @@ function animate(element, options, counterpart, t2, callback) {
 
 		queue_micro_task(() => {
 			var o = options({ direction: is_intro ? 'in' : 'out' });
-			a = animate(element, o, counterpart, t2, callback);
+			a = animate(element, o, counterpart, t2, on_finish, on_abort);
 		});
 
 		// ...but we want to do so without using `async`/`await` everywhere, so
@@ -294,7 +330,7 @@ function animate(element, options, counterpart, t2, callback) {
 	counterpart?.deactivate();
 
 	if (!options?.duration) {
-		callback?.();
+		on_finish?.();
 		return {
 			abort: noop,
 			deactivate: noop,
@@ -303,13 +339,13 @@ function animate(element, options, counterpart, t2, callback) {
 		};
 	}
 
-	var { delay = 0, duration, css, tick, easing = linear } = options;
+	const { delay = 0, css, tick, easing = linear } = options;
 
 	var start = raf.now() + delay;
 	var t1 = counterpart?.t(start) ?? 1 - t2;
 	var delta = t2 - t1;
 
-	duration *= Math.abs(delta);
+	var duration = options.duration * Math.abs(delta);
 	var end = start + duration;
 
 	/** @type {Animation} */
@@ -319,52 +355,55 @@ function animate(element, options, counterpart, t2, callback) {
 	var task;
 
 	if (css) {
-		// WAAPI
-		var keyframes = [];
-		var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
+		// run after a micro task so that all transitions that are lining up and are about to run can correctly measure the DOM
+		queue_micro_task(() => {
+			// WAAPI
+			var keyframes = [];
+			var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
 
-		// In case of a delayed intro, apply the initial style for the duration of the delay;
-		// else in case of a fade-in for example the element would be visible until the animation starts
-		if (is_intro && delay > 0) {
-			let m = Math.ceil(delay / (1000 / 60));
-			let keyframe = css_to_keyframe(css(0, 1));
-			for (let i = 0; i < m; i += 1) {
-				keyframes.push(keyframe);
+			// In case of a delayed intro, apply the initial style for the duration of the delay;
+			// else in case of a fade-in for example the element would be visible until the animation starts
+			if (is_intro && delay > 0) {
+				let m = Math.ceil(delay / (1000 / 60));
+				let keyframe = css_to_keyframe(css(0, 1));
+				for (let i = 0; i < m; i += 1) {
+					keyframes.push(keyframe);
+				}
 			}
-		}
 
-		for (var i = 0; i <= n; i += 1) {
-			var t = t1 + delta * easing(i / n);
-			var styles = css(t, 1 - t);
-			keyframes.push(css_to_keyframe(styles));
-		}
+			for (var i = 0; i <= n; i += 1) {
+				var t = t1 + delta * easing(i / n);
+				var styles = css(t, 1 - t);
+				keyframes.push(css_to_keyframe(styles));
+			}
 
-		animation = element.animate(keyframes, {
-			delay: is_intro ? 0 : delay,
-			duration: duration + (is_intro ? delay : 0),
-			easing: 'linear',
-			fill: 'forwards'
-		});
-
-		animation.finished
-			.then(() => {
-				callback?.();
-
-				if (t2 === 1) {
-					animation.cancel();
-				}
-			})
-			.catch((e) => {
-				// Error for DOMException: The user aborted a request. This results in two things:
-				// - startTime is `null`
-				// - currentTime is `null`
-				// We can't use the existence of an AbortError as this error and error code is shared
-				// with other Web APIs such as fetch().
-
-				if (animation.startTime !== null && animation.currentTime !== null) {
-					throw e;
-				}
+			animation = element.animate(keyframes, {
+				delay: is_intro ? 0 : delay,
+				duration: duration + (is_intro ? delay : 0),
+				easing: 'linear',
+				fill: 'forwards'
 			});
+
+			animation.finished
+				.then(() => {
+					on_finish?.();
+
+					if (t2 === 1) {
+						animation.cancel();
+					}
+				})
+				.catch((e) => {
+					// Error for DOMException: The user aborted a request. This results in two things:
+					// - startTime is `null`
+					// - currentTime is `null`
+					// We can't use the existence of an AbortError as this error and error code is shared
+					// with other Web APIs such as fetch().
+
+					if (animation.startTime !== null && animation.currentTime !== null) {
+						throw e;
+					}
+				});
+		});
 	} else {
 		// Timer
 		if (t1 === 0) {
@@ -374,7 +413,7 @@ function animate(element, options, counterpart, t2, callback) {
 		task = loop((now) => {
 			if (now >= end) {
 				tick?.(t2, 1 - t2);
-				callback?.();
+				on_finish?.();
 				return false;
 			}
 
@@ -391,9 +430,11 @@ function animate(element, options, counterpart, t2, callback) {
 		abort: () => {
 			animation?.cancel();
 			task?.abort();
+			on_abort?.();
 		},
 		deactivate: () => {
-			callback = undefined;
+			on_finish = undefined;
+			on_abort = undefined;
 		},
 		reset: () => {
 			if (t2 === 0) {

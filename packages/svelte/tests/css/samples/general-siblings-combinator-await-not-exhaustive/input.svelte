@@ -1,7 +1,3 @@
-<script>
-	let promise = Promise.resolve();
-</script>
-
 <style>
 	.a ~ .b { color: green; }
 	.a ~ .c { color: green; }
@@ -20,19 +16,20 @@
 
 <div class="a"></div>
 
-{#await promise then value}
+<!-- non-promise, so that something renders initially -->
+{#await true then value}
 	<div class="b"></div>
 {:catch error}
 	<div class="c"></div>
 {/await}
 
-{#await promise}
+{#await true}
 	<div class="d"></div>
 {:catch error}
 	<div class="e"></div>
 {/await}
 
-{#await promise}
+{#await true}
 	<div class="f"></div>
 {:then error}
 	<div class="g"></div>

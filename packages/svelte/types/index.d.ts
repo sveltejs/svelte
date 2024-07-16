@@ -864,12 +864,16 @@ declare module 'svelte/compiler' {
 		 * Used for debugging hints and sourcemaps. Your bundler plugin will set it automatically.
 		 */
 		filename?: string;
-
 		/**
 		 * Used for ensuring filenames don't leak filesystem information. Your bundler plugin will set it automatically.
 		 * @default process.cwd() on node-like environments, undefined elsewhere
 		 */
 		rootDir?: string;
+		/**
+		 * A function that gets a `Warning` as an argument and returns a boolean.
+		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
+		 */
+		warningFilter?: (warning: Warning) => boolean;
 	}
 
 	type DeclarationKind =
@@ -2673,12 +2677,16 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * Used for debugging hints and sourcemaps. Your bundler plugin will set it automatically.
 		 */
 		filename?: string;
-
 		/**
 		 * Used for ensuring filenames don't leak filesystem information. Your bundler plugin will set it automatically.
 		 * @default process.cwd() on node-like environments, undefined elsewhere
 		 */
 		rootDir?: string;
+		/**
+		 * A function that gets a `Warning` as an argument and returns a boolean.
+		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
+		 */
+		warningFilter?: (warning: Warning_1) => boolean;
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`

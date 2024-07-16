@@ -8,10 +8,6 @@ export default test({
 		};
 	},
 
-	html: `
-		<div><p>loading...</p></div>
-	`,
-
 	async test({ assert, component, target }) {
 		await (component.thePromise = Promise.resolve({
 			value: 'success',
