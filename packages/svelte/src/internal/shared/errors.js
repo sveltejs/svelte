@@ -20,6 +20,22 @@ export function lifecycle_outside_component(name) {
 }
 
 /**
+ * You are trying to render something that is not a Svelte component
+ * @returns {never}
+ */
+export function not_a_svelte_component() {
+	if (DEV) {
+		const error = new Error(`not_a_svelte_component\nYou are trying to render something that is not a Svelte component`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("not_a_svelte_component");
+	}
+}
+
+/**
  * The argument to `{@render ...}` must be a snippet function, not a component or a slot with a `let:` directive or some other kind of function. If you want to dynamically render one snippet or another, use `$derived` and pass its result to `{@render ...}`
  * @returns {never}
  */
@@ -65,6 +81,22 @@ export function store_invalid_shape(name) {
 	} else {
 		// TODO print a link to the documentation
 		throw new Error("store_invalid_shape");
+	}
+}
+
+/**
+ * The `this={...}` property of a `<svelte:component>` must be a Svelte component, if defined
+ * @returns {never}
+ */
+export function svelte_component_invalid_this_value() {
+	if (DEV) {
+		const error = new Error(`svelte_component_invalid_this_value\nThe \`this={...}\` property of a \`<svelte:component>\` must be a Svelte component, if defined`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("svelte_component_invalid_this_value");
 	}
 }
 
