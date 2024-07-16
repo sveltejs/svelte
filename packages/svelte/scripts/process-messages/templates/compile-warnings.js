@@ -1,4 +1,4 @@
-import { warnings, ignore_stack, ignore_map } from './state.js';
+import { warnings, ignore_stack, ignore_map, warning_filter } from './state.js';
 import { CompileDiagnostic } from './utils/compile_diagnostic.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
@@ -28,13 +28,15 @@ function w(node, code, message) {
 	}
 	if (stack && stack.at(-1)?.has(code)) return;
 
-	warnings.push(
-		new InternalCompileWarning(
-			code,
-			message,
-			node && node.start !== undefined ? [node.start, node.end ?? node.start] : undefined
-		)
+	const warning = new InternalCompileWarning(
+		code,
+		message,
+		node && node.start !== undefined ? [node.start, node.end ?? node.start] : undefined
 	);
+
+	if (!warning_filter(warning)) return;
+
+	warnings.push(warning);
 }
 
 export const codes = CODES;

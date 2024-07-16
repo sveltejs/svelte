@@ -203,12 +203,16 @@ export interface ModuleCompileOptions {
 	 * Used for debugging hints and sourcemaps. Your bundler plugin will set it automatically.
 	 */
 	filename?: string;
-
 	/**
 	 * Used for ensuring filenames don't leak filesystem information. Your bundler plugin will set it automatically.
 	 * @default process.cwd() on node-like environments, undefined elsewhere
 	 */
 	rootDir?: string;
+	/**
+	 * A function that gets a `Warning` as an argument and returns a boolean.
+	 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
+	 */
+	warningFilter?: (warning: Warning) => boolean;
 }
 
 // The following two somewhat scary looking types ensure that certain types are required but can be undefined still
