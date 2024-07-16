@@ -4,4 +4,8 @@
 
 ## state_snapshot_uncloneable
 
-> An object could not be cloned with $state.snapshot, the original value will be returned
+> Value cannot be cloned with `$state.snapshot` — the original value was returned
+
+> The following properties cannot be cloned with `$state.snapshot` — the return value contains the originals:
+>
+> %properties%
