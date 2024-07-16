@@ -2,7 +2,16 @@ import { snapshot } from './clone';
 import { assert, test } from 'vitest';
 import { proxy } from '../client/proxy';
 
-const warn = console.warn;
+function capture_warnings() {
+	const warnings: string[] = [];
+	const warn = console.warn;
+	console.warn = (message) => warnings.push(message);
+
+	return () => {
+		console.warn = warn;
+		return warnings;
+	};
+}
 
 test('primitive', () => {
 	assert.equal(42, snapshot(42));
@@ -107,14 +116,11 @@ test('reactive class', () => {
 test('uncloneable value', () => {
 	const fn = () => {};
 
-	const warnings: string[] = [];
-	console.warn = (message) => warnings.push(message);
-
+	const warnings = capture_warnings();
 	const copy = snapshot(fn);
-	console.warn = warn;
 
 	assert.equal(fn, copy);
-	assert.deepEqual(warnings, [
+	assert.deepEqual(warnings(), [
 		'%c[svelte] state_snapshot_uncloneable\n%cValue cannot be cloned with `$state.snapshot` — the original value was returned'
 	]);
 });
@@ -126,11 +132,8 @@ test('uncloneable properties', () => {
 		c: [() => {}, () => {}, () => {}, () => {}, () => {}, () => {}, () => {}, () => {}]
 	};
 
-	const warnings: string[] = [];
-	console.warn = (message) => warnings.push(message);
-
+	const warnings = capture_warnings();
 	const copy = snapshot(object);
-	console.warn = warn;
 
 	assert.notEqual(object, copy);
 	assert.equal(object.a, copy.a);
@@ -139,7 +142,7 @@ test('uncloneable properties', () => {
 	assert.notEqual(object.c, copy.c);
 	assert.equal(object.c[0], copy.c[0]);
 
-	assert.deepEqual(warnings, [
+	assert.deepEqual(warnings(), [
 		`%c[svelte] state_snapshot_uncloneable
 %cThe following properties cannot be cloned with \`$state.snapshot\` — the return value contains the originals:
 
@@ -159,13 +162,10 @@ test('uncloneable properties', () => {
 test('many uncloneable properties', () => {
 	const array = Array.from({ length: 100 }, () => () => {});
 
-	const warnings: string[] = [];
-	console.warn = (message) => warnings.push(message);
-
+	const warnings = capture_warnings();
 	snapshot(array);
-	console.warn = warn;
 
-	assert.deepEqual(warnings, [
+	assert.deepEqual(warnings(), [
 		`%c[svelte] state_snapshot_uncloneable
 %cThe following properties cannot be cloned with \`$state.snapshot\` — the return value contains the originals:
 
