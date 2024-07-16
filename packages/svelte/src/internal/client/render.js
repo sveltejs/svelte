@@ -24,7 +24,7 @@ import {
 import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
-import { validate_component } from '../shared/validate.js';
+import { validate_component_is_not_a_snippet } from '../shared/validate.js';
 import { assign_nodes } from './dom/template.js';
 
 /**
@@ -80,7 +80,7 @@ export function set_text(text, value) {
  */
 export function mount(component, options) {
 	if (DEV) {
-		validate_component(component);
+		validate_component_is_not_a_snippet(component);
 	}
 
 	const anchor = options.anchor ?? options.target.appendChild(empty());
@@ -113,7 +113,7 @@ export function mount(component, options) {
  */
 export function hydrate(component, options) {
 	if (DEV) {
-		validate_component(component);
+		validate_component_is_not_a_snippet(component);
 	}
 
 	options.intro = options.intro ?? false;

@@ -1,4 +1,4 @@
-export { FILENAME, ORIGINAL } from '../../constants.js';
+export { FILENAME, ORIGINAL, IS_COMPONENT } from '../../constants.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
 export {
@@ -145,11 +145,7 @@ export {
 	setContext,
 	hasContext
 } from './runtime.js';
-export {
-	validate_dynamic_component,
-	validate_each_keys,
-	validate_prop_bindings
-} from './validate.js';
+export { validate_each_keys, validate_prop_bindings } from './validate.js';
 export { raf } from './timing.js';
 export { proxy, is } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';

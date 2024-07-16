@@ -452,6 +452,14 @@ export function client_component(source, analysis, options) {
 					b.id('$$original')
 				)
 			),
+			// mark the HMR'd component as IS_COMPONENT as well
+			b.stmt(
+				b.assignment(
+					'=',
+					b.member(b.id(analysis.name), b.id('$.IS_COMPONENT'), true),
+					b.literal(true)
+				)
+			),
 			b.stmt(b.call('import.meta.hot.accept', b.arrow([b.id('module')], b.block(accept_fn_body))))
 		]);
 
@@ -473,7 +481,16 @@ export function client_component(source, analysis, options) {
 				)
 			);
 		}
-
+		// add `App[$.IS_COMPONENT] = true` to easily check if it's actually a component
+		body.unshift(
+			b.stmt(
+				b.assignment(
+					'=',
+					b.member(b.id(analysis.name), b.id('$.IS_COMPONENT'), true),
+					b.literal(true)
+				)
+			)
+		);
 		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'))));
 		body.push(b.stmt(b.call(b.id('$.mark_module_end'), b.id(analysis.name))));
 	}

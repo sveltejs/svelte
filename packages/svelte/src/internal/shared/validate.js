@@ -1,4 +1,4 @@
-import { is_void } from '../../constants.js';
+import { is_void, IS_COMPONENT } from '../../constants.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 
@@ -32,9 +32,37 @@ export function validate_snippet(snippet_fn, $$props) {
  * Validate that the function behind `<Component />` isn't a snippet.
  * @param {any} component_fn
  */
-export function validate_component(component_fn) {
+export function validate_component_is_not_a_snippet(component_fn) {
 	if (component_fn?.[snippet_symbol] === true) {
 		e.snippet_used_as_component();
+	}
+}
+
+/**
+ * Validate that the function behind `<Component />` is a valid svelte component.
+ *
+ * If `dynamic` is true checks that `component_fn` isn't a snippet and that is actually a svelte component
+ * If `dynamic` is false checks that `component_fn` isn't a snippet, is not undefined and it's actually a svelte component
+ * @param {any} component_fn
+ * @param {boolean} dynamic
+ */
+export function validate_component(component_fn, dynamic) {
+	validate_component_is_not_a_snippet(component_fn);
+
+	// this is the case for both `<svelte:component>` with a wrong this and `<Something >`
+	// where Something is not a svelte component. In this case `component_fn` needs to be
+	// defined for the error to throw because you can do `<svelte:component this={undefined} />`
+	if (component_fn && !(IS_COMPONENT in component_fn)) {
+		if (dynamic) {
+			e.svelte_component_invalid_this_value();
+		}
+		e.not_a_svelte_component();
+	}
+
+	// if dynamic is false and component_fn is undefined we still throw to cover
+	// the case of `<Something />` where Something = undefined
+	if (!dynamic && !component_fn) {
+		e.not_a_svelte_component();
 	}
 
 	return component_fn;

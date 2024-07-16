@@ -33,6 +33,7 @@ export const UNINITIALIZED = Symbol();
 // Dev-time component properties
 export const FILENAME = Symbol('filename');
 export const ORIGINAL = Symbol('original');
+export const IS_COMPONENT = Symbol('is_component');
 
 /** List of elements that require raw contents and should not have SSR comments put in them */
 export const RawTextElements = ['textarea', 'script', 'style', 'title'];

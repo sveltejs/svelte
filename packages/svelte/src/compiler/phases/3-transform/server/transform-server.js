@@ -1000,7 +1000,13 @@ function serialize_inline_component(node, expression, context) {
 	/** @type {import('estree').Statement} */
 	let statement = b.stmt(
 		(node.type === 'SvelteComponent' ? b.maybe_call : b.call)(
-			context.state.options.dev ? b.call('$.validate_component', expression) : expression,
+			context.state.options.dev
+				? b.call(
+						'$.validate_component',
+						expression,
+						node.type === 'SvelteComponent' ? b.literal(true) : b.literal(false)
+					)
+				: expression,
 			b.id('$$payload'),
 			props_expression
 		)
@@ -2256,6 +2262,15 @@ export function server_component(analysis, options) {
 					'=',
 					b.member(b.id(analysis.name), b.id('$.FILENAME'), true),
 					b.literal(filename)
+				)
+			)
+		);
+		body.unshift(
+			b.stmt(
+				b.assignment(
+					'=',
+					b.member(b.id(analysis.name), b.id('$.IS_COMPONENT'), true),
+					b.literal(true)
 				)
 			)
 		);

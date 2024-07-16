@@ -17,6 +17,7 @@ if (import.meta.hot) {
 	Hmr = $.hmr(s);
 	Hmr.filename = filename;
 	Hmr[$.ORIGINAL] = $$original;
+	Hmr[$.IS_COMPONENT] = true;
 
 	import.meta.hot.accept((module) => {
 		$.set(s, module.default[$.ORIGINAL]);

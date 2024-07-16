@@ -923,7 +923,11 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 	let fn = (node_id) => {
 		return b.call(
 			context.state.options.dev
-				? b.call('$.validate_component', b.id(component_name))
+				? b.call(
+						'$.validate_component',
+						b.id(component_name),
+						node.type === 'SvelteComponent' ? b.literal(true) : b.literal(false)
+					)
 				: component_name,
 			node_id,
 			props_expression
@@ -954,14 +958,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 				b.thunk(/** @type {Expression} */ (context.visit(node.expression))),
 				b.arrow(
 					[b.id('$$anchor'), b.id(component_name)],
-					b.block([
-						...binding_initializers,
-						b.stmt(
-							context.state.options.dev
-								? b.call('$.validate_dynamic_component', b.thunk(prev(b.id('$$anchor'))))
-								: prev(b.id('$$anchor'))
-						)
-					])
+					b.block([...binding_initializers, b.stmt(prev(b.id('$$anchor')))])
 				)
 			);
 		};
