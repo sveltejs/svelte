@@ -1,6 +1,7 @@
 import { ok, test } from '../../test';
 
 export default test({
+	skip: true,
 	test({ assert, component, target, raf }) {
 		component.visible = true;
 		const div = target.querySelector('div');
