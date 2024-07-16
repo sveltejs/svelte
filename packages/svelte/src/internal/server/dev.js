@@ -1,9 +1,9 @@
 import {
+	FILENAME,
 	disallowed_paragraph_contents,
 	interactive_elements,
 	is_tag_valid_with_parent
 } from '../../constants.js';
-import { FILENAME } from '../../constants.js';
 import { current_component } from './context.js';
 
 /**

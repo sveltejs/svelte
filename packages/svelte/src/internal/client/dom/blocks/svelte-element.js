@@ -1,5 +1,5 @@
 /** @import { Effect, EffectNodes, TemplateNode } from '#client' */
-import { namespace_svg } from '../../../../constants.js';
+import { FILENAME, namespace_svg } from '../../../../constants.js';
 import {
 	hydrate_next,
 	hydrate_node,
@@ -21,7 +21,6 @@ import { current_component_context, current_effect } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { assign_nodes } from '../template.js';
-import { FILENAME } from '../../../../constants.js';
 
 /**
  * @param {Comment | Element} node

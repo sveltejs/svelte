@@ -1,5 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
-import { HYDRATION_ERROR } from '../../../../constants.js';
+import { FILENAME, HYDRATION_ERROR } from '../../../../constants.js';
 import { block, branch, destroy_effect } from '../../reactivity/effects.js';
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
 import { create_fragment_from_html } from '../reconciler.js';
@@ -8,7 +8,6 @@ import * as w from '../../warnings.js';
 import { hash } from '../../../../utils.js';
 import { DEV } from 'esm-env';
 import { dev_current_component_function } from '../../runtime.js';
-import { FILENAME } from '../../../../constants.js';
 
 /**
  * @param {Element} element
