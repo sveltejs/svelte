@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.185
+
+### Patch Changes
+
+- fix: allow leading and trailing comments in mustache expression ([#11866](https://github.com/sveltejs/svelte/pull/11866))
+
+- fix: ensure hydration walks all nodes ([#12448](https://github.com/sveltejs/svelte/pull/12448))
+
+- fix: prevent whitespaces merging across component boundaries ([#12449](https://github.com/sveltejs/svelte/pull/12449))
+
+- fix: detect mutations within assignment expressions ([#12429](https://github.com/sveltejs/svelte/pull/12429))
+
 ## 5.0.0-next.184
 
 ### Patch Changes
