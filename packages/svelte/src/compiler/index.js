@@ -20,6 +20,7 @@ export { default as preprocess } from './preprocess/index.js';
  * @returns {CompileResult}
  */
 export function compile(source, options) {
+	state.reset_warning_filter(options.warningFilter);
 	const validated = validate_component_options(options, '');
 	state.reset(source, validated);
 
@@ -58,6 +59,7 @@ export function compile(source, options) {
  * @returns {CompileResult}
  */
 export function compileModule(source, options) {
+	state.reset_warning_filter(options.warningFilter);
 	const validated = validate_module_options(options, '');
 	state.reset(source, validated);
 
@@ -103,6 +105,7 @@ export function compileModule(source, options) {
  * @returns {Root | LegacyRoot}
  */
 export function parse(source, { filename, rootDir, modern } = {}) {
+	state.reset_warning_filter(() => false);
 	state.reset(source, { filename, rootDir }); // TODO it's weird to require filename/rootDir here. reconsider the API
 
 	const ast = _parse(source);

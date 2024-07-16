@@ -1,4 +1,4 @@
-import { warnings, ignore_stack, ignore_map, filter_warning } from './state.js';
+import { warnings, ignore_stack, ignore_map, warning_filter } from './state.js';
 import { CompileDiagnostic } from './utils/compile_diagnostic.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
@@ -34,7 +34,7 @@ function w(node, code, message) {
 		node && node.start !== undefined ? [node.start, node.end ?? node.start] : undefined
 	);
 
-	if (!filter_warning(warning)) return;
+	if (!warning_filter(warning)) return;
 
 	warnings.push(warning);
 }

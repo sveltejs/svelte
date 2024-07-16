@@ -52,8 +52,16 @@ export function pop_ignore() {
 }
 
 /**
+ *
+ * @param {(warning: Warning) => boolean} fn
+ */
+export function reset_warning_filter(fn = () => true) {
+	warning_filter = fn;
+}
+
+/**
  * @param {string} _source
- * @param {{ filename?: string, rootDir?: string, warningFilter?: CompileOptions['warningFilter'] }} options
+ * @param {{ filename?: string, rootDir?: string }} options
  */
 export function reset(_source, options) {
 	source = _source;
@@ -70,7 +78,6 @@ export function reset(_source, options) {
 	}
 
 	locator = getLocator(source, { offsetLine: 1 });
-	warning_filter = options.warningFilter ?? (() => true);
 	warnings = [];
 	ignore_stack = [];
 	ignore_map.clear();
