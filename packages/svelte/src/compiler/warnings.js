@@ -4,7 +4,7 @@ import {
 	warnings,
 	ignore_stack,
 	ignore_map,
-	filter_warning
+	warning_filter
 } from './state.js';
 
 import { CompileDiagnostic } from './utils/compile_diagnostic.js';
@@ -39,7 +39,7 @@ function w(node, code, message) {
 
 	const warning = new InternalCompileWarning(code, message, node && node.start !== undefined ? [node.start, node.end ?? node.start] : undefined);
 
-	if (!filter_warning(warning)) return;
+	if (!warning_filter(warning)) return;
 	warnings.push(warning);
 }
 

@@ -23,7 +23,7 @@ export let source;
 export let locator = getLocator('', { offsetLine: 1 });
 
 /** @type {NonNullable<CompileOptions['warningFilter']>} */
-export let filter_warning;
+export let warning_filter;
 
 /**
  * The current stack of ignored warnings
@@ -70,7 +70,7 @@ export function reset(_source, options) {
 	}
 
 	locator = getLocator(source, { offsetLine: 1 });
-	filter_warning = options.warningFilter ?? (() => true);
+	warning_filter = options.warningFilter ?? (() => true);
 	warnings = [];
 	ignore_stack = [];
 	ignore_map.clear();
