@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.187
+
+### Patch Changes
+
+- fix: always pass original component to HMR wrapper ([#12454](https://github.com/sveltejs/svelte/pull/12454))
+
+- fix: ensure previous transitions are properly aborted ([#12460](https://github.com/sveltejs/svelte/pull/12460))
+
 ## 5.0.0-next.186
 
 ### Patch Changes
