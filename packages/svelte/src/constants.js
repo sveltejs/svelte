@@ -30,6 +30,10 @@ export const ELEMENT_PRESERVE_ATTRIBUTE_CASE = 1 << 1;
 
 export const UNINITIALIZED = Symbol();
 
+// Dev-time component properties
+export const FILENAME = Symbol('filename');
+export const ORIGINAL = Symbol('original');
+
 /** List of elements that require raw contents and should not have SSR comments put in them */
 export const RawTextElements = ['textarea', 'script', 'style', 'title'];
 

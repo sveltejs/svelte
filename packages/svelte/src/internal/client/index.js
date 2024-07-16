@@ -1,3 +1,4 @@
+export { FILENAME, ORIGINAL } from '../../constants.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
 export {

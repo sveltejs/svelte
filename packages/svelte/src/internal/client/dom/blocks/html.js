@@ -1,5 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
-import { HYDRATION_ERROR } from '../../../../constants.js';
+import { FILENAME, HYDRATION_ERROR } from '../../../../constants.js';
 import { block, branch, destroy_effect } from '../../reactivity/effects.js';
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
 import { create_fragment_from_html } from '../reconciler.js';
@@ -23,8 +23,8 @@ function check_hash(element, server_hash, value) {
 	const loc = element.__svelte_meta?.loc;
 	if (loc) {
 		location = `near ${loc.file}:${loc.line}:${loc.column}`;
-	} else if (dev_current_component_function?.filename) {
-		location = `in ${dev_current_component_function.filename}`;
+	} else if (dev_current_component_function?.[FILENAME]) {
+		location = `in ${dev_current_component_function[FILENAME]}`;
 	}
 
 	w.hydration_html_changed(

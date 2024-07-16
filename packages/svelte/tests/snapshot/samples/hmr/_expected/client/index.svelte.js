@@ -16,10 +16,10 @@ if (import.meta.hot) {
 
 	Hmr = $.hmr(s);
 	Hmr.filename = filename;
-	Hmr.original = $$original;
+	Hmr[$.ORIGINAL] = $$original;
 
 	import.meta.hot.accept((module) => {
-		$.set(s, module.default.original);
+		$.set(s, module.default[$.ORIGINAL]);
 	});
 }
 

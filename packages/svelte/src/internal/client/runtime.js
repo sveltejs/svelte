@@ -29,6 +29,7 @@ import { mutate, set, source } from './reactivity/sources.js';
 import { update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
+import { FILENAME } from '../../constants.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -226,7 +227,7 @@ function handle_error(error, effect, component_context) {
 
 	while (current_context !== null) {
 		/** @type {string} */
-		var filename = current_context.function?.filename;
+		var filename = current_context.function?.[FILENAME];
 
 		if (filename) {
 			const file = filename.split('/').pop();
