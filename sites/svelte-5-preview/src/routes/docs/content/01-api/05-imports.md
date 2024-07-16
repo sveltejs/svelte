@@ -105,9 +105,9 @@ const greet = createRawSnippet((name) => {
 		render: () => `
 			<h1>Hello ${name()}!</h1>
 		`,
-		setup: (h1) => {
+		setup: (node) => {
 			$effect(() => {
-				h1.textContent = `Hello ${name()}!`;
+				node.textContent = `Hello ${name()}!`;
 			});
 		}
 	};
