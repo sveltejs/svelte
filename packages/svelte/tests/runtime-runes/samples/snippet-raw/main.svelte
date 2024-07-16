@@ -3,16 +3,16 @@
 
 	let count = $state(0);
 
-	const hello = createRawSnippet({
-		render(count) {
-			return `<p>clicks: ${count}</p>`;
-		},
-		update(p, count) {
+	const hello = createRawSnippet((count) => ({
+		render: () => `
+			<p>clicks: ${count()}</p>
+		`,
+		setup(p) {
 			$effect(() => {
 				p.textContent = `clicks: ${count()}`
 			});
 		}
-	});
+	}));
 </script>
 
 <button onclick={() => count += 1}>click</button>

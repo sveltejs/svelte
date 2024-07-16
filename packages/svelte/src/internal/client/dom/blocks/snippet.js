@@ -1,6 +1,6 @@
+/** @import { Snippet } from 'svelte' */
 /** @import { Effect, TemplateNode } from '#client' */
 /** @import { Getters } from '#shared' */
-import { run } from '../../../shared/utils.js';
 import { add_snippet_symbol } from '../../../shared/validate.js';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { branch, block, destroy_effect } from '../../reactivity/effects.js';
@@ -68,15 +68,17 @@ export function wrap_snippet(component, fn) {
 /**
  * Create a snippet programmatically
  * @template {unknown[]} Params
- * @param {{
- *   render: (...params: Params) => string
- *   update?: (element: Element, ...params: Getters<Params>) => void,
- * }} options
- * @returns {import('svelte').Snippet<Params>}
+ * @param {(...params: Getters<Params>) => {
+ *   render: () => string
+ *   setup?: (element: Element) => void
+ * }} fn
+ * @returns {Snippet<Params>}
  */
-export function createRawSnippet({ render, update }) {
+export function createRawSnippet(fn) {
 	return add_snippet_symbol(
 		(/** @type {TemplateNode} */ anchor, /** @type {Getters<Params>} */ ...params) => {
+			var snippet = fn(...params);
+
 			/** @type {Element} */
 			var element;
 
@@ -84,13 +86,13 @@ export function createRawSnippet({ render, update }) {
 				element = /** @type {Element} */ (hydrate_node);
 				hydrate_next();
 			} else {
-				var html = render(.../** @type {Params} */ (params.map(run)));
+				var html = snippet.render().trim();
 				var fragment = create_fragment_from_html(html);
 				element = /** @type {Element} */ (fragment.firstChild);
 				anchor.before(element);
 			}
 
-			update?.(element, ...params);
+			snippet.setup?.(element);
 			assign_nodes(element, element);
 		}
 	);

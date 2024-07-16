@@ -6,16 +6,17 @@ import { add_snippet_symbol } from '../../shared/validate.js';
 /**
  * Create a snippet programmatically
  * @template {unknown[]} Params
- * @param {{
- *   render: (...params: Params) => string
- *   update?: (element: Element, ...params: Getters<Params>) => void,
- * }} options
+ * @param {(...params: Getters<Params>) => {
+ *   render: () => string
+ *   setup?: (element: Element) => void
+ * }} fn
  * @returns {Snippet<Params>}
  */
-export function createRawSnippet({ render }) {
-	const snippet_fn = (/** @type {Payload} */ payload, /** @type {Params} */ ...args) => {
-		payload.out += render(...args);
-	};
-	add_snippet_symbol(snippet_fn);
-	return /** @type {Snippet} */ (snippet_fn);
+export function createRawSnippet(fn) {
+	return add_snippet_symbol((/** @type {Payload} */ payload, /** @type {Params} */ ...args) => {
+		var getters = /** @type {Getters<Params>} */ (args.map((value) => () => value));
+		payload.out += fn(...getters)
+			.render()
+			.trim();
+	});
 }
