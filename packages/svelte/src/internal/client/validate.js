@@ -1,6 +1,7 @@
 import { untrack } from './runtime.js';
 import { get_descriptor, is_array } from '../shared/utils.js';
 import * as e from './errors.js';
+import { FILENAME } from '../../constants.js';
 
 /** regex of all html void element names */
 const void_element_names =
@@ -70,7 +71,7 @@ export function validate_each_keys(collection, key_fn) {
  * @param {Record<string, any>} $$props
  * @param {string[]} bindable
  * @param {string[]} exports
- * @param {Function & { filename: string }} component
+ * @param {Function & { [FILENAME]: string }} component
  */
 export function validate_prop_bindings($$props, bindable, exports, component) {
 	for (const key in $$props) {
@@ -79,11 +80,11 @@ export function validate_prop_bindings($$props, bindable, exports, component) {
 
 		if (setter) {
 			if (exports.includes(key)) {
-				e.bind_invalid_export(component.filename, key, name);
+				e.bind_invalid_export(component[FILENAME], key, name);
 			}
 
 			if (!bindable.includes(key)) {
-				e.bind_not_bindable(key, component.filename, name);
+				e.bind_not_bindable(key, component[FILENAME], name);
 			}
 		}
 	}

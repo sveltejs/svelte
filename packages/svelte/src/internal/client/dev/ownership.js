@@ -6,6 +6,7 @@ import { render_effect, user_pre_effect } from '../reactivity/effects.js';
 import { dev_current_component_function } from '../runtime.js';
 import { get_prototype_of } from '../../shared/utils.js';
 import * as w from '../warnings.js';
+import { FILENAME } from '../../../constants.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
 const boundaries = {};
@@ -115,8 +116,8 @@ export function add_owner(object, owner, global = false) {
 		if (metadata && !has_owner(metadata, component)) {
 			let original = get_owner(metadata);
 
-			if (owner.filename !== component.filename) {
-				w.ownership_invalid_binding(component.filename, owner.filename, original.filename);
+			if (owner[FILENAME] !== component[FILENAME]) {
+				w.ownership_invalid_binding(component[FILENAME], owner[FILENAME], original[FILENAME]);
 			}
 		}
 	}
@@ -236,9 +237,9 @@ export function check_ownership(metadata) {
 		let original = get_owner(metadata);
 
 		// @ts-expect-error
-		if (original.filename !== component.filename) {
+		if (original[FILENAME] !== component[FILENAME]) {
 			// @ts-expect-error
-			w.ownership_invalid_mutation(component.filename, original.filename);
+			w.ownership_invalid_mutation(component[FILENAME], original[FILENAME]);
 		} else {
 			w.ownership_invalid_mutation();
 		}

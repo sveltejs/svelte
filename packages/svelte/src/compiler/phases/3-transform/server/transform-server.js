@@ -2249,10 +2249,14 @@ export function server_component(analysis, options) {
 	}
 
 	if (options.dev && filename) {
-		// add `App.filename = 'App.svelte'` so that we can print useful messages later
+		// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later
 		body.unshift(
 			b.stmt(
-				b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.literal(filename))
+				b.assignment(
+					'=',
+					b.member(b.id(analysis.name), b.id('$.FILENAME'), true),
+					b.literal(filename)
+				)
 			)
 		);
 	}

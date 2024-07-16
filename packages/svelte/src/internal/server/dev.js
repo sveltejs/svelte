@@ -3,6 +3,7 @@ import {
 	interactive_elements,
 	is_tag_valid_with_parent
 } from '../../constants.js';
+import { FILENAME } from '../../constants.js';
 import { current_component } from './context.js';
 
 /**
@@ -56,7 +57,7 @@ function print_error(payload, parent, child) {
  * @param {number} column
  */
 export function push_element(payload, tag, line, column) {
-	var filename = /** @type {import('#server').Component} */ (current_component).function.filename;
+	var filename = /** @type {import('#server').Component} */ (current_component).function[FILENAME];
 	var child = { tag, parent, filename, line, column };
 
 	if (parent !== null && !is_tag_valid_with_parent(tag, parent.tag)) {

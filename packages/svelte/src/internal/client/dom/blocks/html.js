@@ -8,6 +8,7 @@ import * as w from '../../warnings.js';
 import { hash } from '../../../../utils.js';
 import { DEV } from 'esm-env';
 import { dev_current_component_function } from '../../runtime.js';
+import { FILENAME } from '../../../../constants.js';
 
 /**
  * @param {Element} element
@@ -23,8 +24,8 @@ function check_hash(element, server_hash, value) {
 	const loc = element.__svelte_meta?.loc;
 	if (loc) {
 		location = `near ${loc.file}:${loc.line}:${loc.column}`;
-	} else if (dev_current_component_function?.filename) {
-		location = `in ${dev_current_component_function.filename}`;
+	} else if (dev_current_component_function?.[FILENAME]) {
+		location = `in ${dev_current_component_function[FILENAME]}`;
 	}
 
 	w.hydration_html_changed(

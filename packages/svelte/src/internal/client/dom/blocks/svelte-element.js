@@ -21,6 +21,7 @@ import { current_component_context, current_effect } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { assign_nodes } from '../template.js';
+import { FILENAME } from '../../../../constants.js';
 
 /**
  * @param {Comment | Element} node
@@ -38,7 +39,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 		hydrate_next();
 	}
 
-	var filename = DEV && location && current_component_context?.function.filename;
+	var filename = DEV && location && current_component_context?.function[FILENAME];
 
 	/** @type {string | null} */
 	var tag;
