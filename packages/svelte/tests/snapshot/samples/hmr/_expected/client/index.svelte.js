@@ -12,12 +12,14 @@ function Hmr($$anchor) {
 if (import.meta.hot) {
 	const s = $.source(Hmr);
 	const filename = Hmr.filename;
+	const $$original = Hmr;
 
 	Hmr = $.hmr(s);
 	Hmr.filename = filename;
+	Hmr.original = $$original;
 
 	import.meta.hot.accept((module) => {
-		$.set(s, module.default);
+		$.set(s, module.default.original);
 	});
 }
 
