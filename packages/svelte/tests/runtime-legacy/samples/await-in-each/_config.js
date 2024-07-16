@@ -19,10 +19,6 @@ export default test({
 		return { items };
 	},
 
-	html: `
-		<p>a title: loading...</p>
-	`,
-
 	test({ assert, target }) {
 		fulfil(42);
 

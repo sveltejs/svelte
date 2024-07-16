@@ -207,7 +207,9 @@ function run_scripts(node) {
 	}
 }
 
-/*#__NO_SIDE_EFFECTS__*/
+/**
+ * Don't mark this as side-effect-free, hydration needs to walk all nodes
+ */
 export function text() {
 	if (!hydrating) {
 		var t = empty();

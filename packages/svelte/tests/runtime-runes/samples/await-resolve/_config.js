@@ -1,7 +1,7 @@
 import { test } from '../../test';
 
 export default test({
-	async test({ assert, target, logs }) {
+	async test({ assert, target, logs, variant }) {
 		const [b1, b2] = target.querySelectorAll('button');
 		b1.click();
 		await Promise.resolve();
@@ -22,6 +22,11 @@ export default test({
 			`<p>then b</p><button>Show Promise A</button><button>Show Promise B</button>`
 		);
 
-		assert.deepEqual(logs, ['rendering pending block', 'rendering then block']);
+		assert.deepEqual(
+			logs,
+			variant === 'hydrate'
+				? ['rendering pending block', 'rendering then block']
+				: ['rendering then block']
+		);
 	}
 });

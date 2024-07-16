@@ -1,5 +1,45 @@
 # svelte
 
+## 5.0.0-next.186
+
+### Patch Changes
+
+- feat: skip pending block for already-resolved promises ([#12274](https://github.com/sveltejs/svelte/pull/12274))
+
+- feat: add ability to ignore warnings through `warningFilter` compiler option ([#12296](https://github.com/sveltejs/svelte/pull/12296))
+
+- fix: run animations in microtask so that deferred transitions can measure nodes correctly ([#12453](https://github.com/sveltejs/svelte/pull/12453))
+
+## 5.0.0-next.185
+
+### Patch Changes
+
+- fix: allow leading and trailing comments in mustache expression ([#11866](https://github.com/sveltejs/svelte/pull/11866))
+
+- fix: ensure hydration walks all nodes ([#12448](https://github.com/sveltejs/svelte/pull/12448))
+
+- fix: prevent whitespaces merging across component boundaries ([#12449](https://github.com/sveltejs/svelte/pull/12449))
+
+- fix: detect mutations within assignment expressions ([#12429](https://github.com/sveltejs/svelte/pull/12429))
+
+## 5.0.0-next.184
+
+### Patch Changes
+
+- fix: show correct errors for invalid runes in `.svelte.js` files ([#12432](https://github.com/sveltejs/svelte/pull/12432))
+
+- breaking: use structuredClone inside `$state.snapshot` ([#12413](https://github.com/sveltejs/svelte/pull/12413))
+
+## 5.0.0-next.183
+
+### Patch Changes
+
+- fix: properly validate snippet/slot interop ([#12421](https://github.com/sveltejs/svelte/pull/12421))
+
+- fix: cache call expressions in render tag arguments ([#12418](https://github.com/sveltejs/svelte/pull/12418))
+
+- fix: optimize `bind:group` ([#12406](https://github.com/sveltejs/svelte/pull/12406))
+
 ## 5.0.0-next.182
 
 ### Patch Changes

@@ -171,6 +171,8 @@ Exports from runes mode components cannot be bound to directly. For example, hav
 
 In Svelte 4 syntax, every property (declared via `export let`) is bindable, meaning you can `bind:` to it. In runes mode, properties are not bindable by default: you need to denote bindable props with the [`$bindable`](/docs/runes#$bindable) rune.
 
+If a bindable property has a default value (e.g. `let { foo = $bindable('bar') } = $props();`), you need to pass a non-`undefined` value to that property if you're binding to it. This prevents ambiguous behavior — the parent and child must have the same value — and results in better performance (in Svelte 4, the default value was reflected back to the parent, resulting in wasteful additional render cycles).
+
 ### `accessors` option is ignored
 
 Setting the `accessors` option to `true` makes properties of a component directly accessible on the component instance. In runes mode, properties are never accessible on the component instance. You can use component exports instead if you need to expose them.
@@ -315,4 +317,25 @@ Since these mismatches are extremely rare, Svelte 5 assumes that the values are 
 
 {@html markup}
 <img {src} />
+```
+
+### `await` blocks delay render
+
+In Svelte 4, an `{#await ...}` block immediately renders the pending section. In some cases, this is wasteful, because the promise is already resolved.
+
+In Svelte 5 the block remains unrendered when mounting or updating the promise, until we know whether it is already resolved or not — if so, we initally render then `{:then ...}` or `{:catch ...}` section instead.
+
+This does _not_ apply during hydration, since the pending section was already server-rendered.
+
+To wait until the pending section has been rendered (for example during testing), use `await Promise.resolve()` after mounting or updating the promise:
+
+```diff
+let props = {
+	promise: getPromiseSomehow()
+};
+
+mount(App, { target, props });
+
++await Promise.resolve();
+assert.equal(target.innerHTML, '...');
 ```

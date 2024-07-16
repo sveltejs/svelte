@@ -874,12 +874,16 @@ declare module 'svelte/compiler' {
 		 * Used for debugging hints and sourcemaps. Your bundler plugin will set it automatically.
 		 */
 		filename?: string;
-
 		/**
 		 * Used for ensuring filenames don't leak filesystem information. Your bundler plugin will set it automatically.
 		 * @default process.cwd() on node-like environments, undefined elsewhere
 		 */
 		rootDir?: string;
+		/**
+		 * A function that gets a `Warning` as an argument and returns a boolean.
+		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
+		 */
+		warningFilter?: (warning: Warning) => boolean;
 	}
 
 	type DeclarationKind =
@@ -1558,6 +1562,7 @@ declare module 'svelte/compiler' {
 		expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
 		metadata: {
 			dynamic: boolean;
+			args_with_call_expression: Set<number>;
 		};
 	}
 
@@ -2682,12 +2687,16 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * Used for debugging hints and sourcemaps. Your bundler plugin will set it automatically.
 		 */
 		filename?: string;
-
 		/**
 		 * Used for ensuring filenames don't leak filesystem information. Your bundler plugin will set it automatically.
 		 * @default process.cwd() on node-like environments, undefined elsewhere
 		 */
 		rootDir?: string;
+		/**
+		 * A function that gets a `Warning` as an argument and returns a boolean.
+		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
+		 */
+		warningFilter?: (warning: Warning_1) => boolean;
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -2743,6 +2752,75 @@ declare function $state<T>(initial: T): T;
 declare function $state<T>(): T | undefined;
 
 declare namespace $state {
+	type Primitive = string | number | boolean | null | undefined;
+
+	type TypedArray =
+		| Int8Array
+		| Uint8Array
+		| Uint8ClampedArray
+		| Int16Array
+		| Uint16Array
+		| Int32Array
+		| Uint32Array
+		| Float32Array
+		| Float64Array
+		| BigInt64Array
+		| BigUint64Array;
+
+	/** The things that `structuredClone` can handle — https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm */
+	export type Cloneable =
+		| ArrayBuffer
+		| DataView
+		| Date
+		| Error
+		| Map<any, any>
+		| RegExp
+		| Set<any>
+		| TypedArray
+		// web APIs
+		| Blob
+		| CryptoKey
+		| DOMException
+		| DOMMatrix
+		| DOMMatrixReadOnly
+		| DOMPoint
+		| DOMPointReadOnly
+		| DOMQuad
+		| DOMRect
+		| DOMRectReadOnly
+		| File
+		| FileList
+		| FileSystemDirectoryHandle
+		| FileSystemFileHandle
+		| FileSystemHandle
+		| ImageBitmap
+		| ImageData
+		| RTCCertificate
+		| VideoFrame;
+
+	/** Turn `SvelteDate`, `SvelteMap` and `SvelteSet` into their non-reactive counterparts. (`URL` is uncloneable.) */
+	type NonReactive<T> = T extends Date
+		? Date
+		: T extends Map<infer K, infer V>
+			? Map<K, V>
+			: T extends Set<infer K>
+				? Set<K>
+				: T;
+
+	type Snapshot<T> = T extends Primitive
+		? T
+		: T extends Cloneable
+			? NonReactive<T>
+			: T extends { toJSON(): infer R }
+				? R
+				: T extends Array<infer U>
+					? Array<Snapshot<U>>
+					: T extends object
+						? T extends { [key: string]: any }
+							? { [K in keyof T]: Snapshot<T[K]> }
+							: never
+						: never;
+
 	/**
 	 * Declares reactive read-only state that is shallowly immutable.
 	 *
@@ -2786,7 +2864,7 @@ declare namespace $state {
 	 *
 	 * @param state The value to snapshot
 	 */
-	export function snapshot<T>(state: T): T;
+	export function snapshot<T>(state: T): Snapshot<T>;
 
 	/**
 	 * Compare two values, one or both of which is a reactive `$state(...)` proxy.

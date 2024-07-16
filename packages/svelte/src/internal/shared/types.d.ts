@@ -10,3 +10,5 @@ export type SourceLocation =
 export type Getters<T> = {
 	[K in keyof T]: () => T[K];
 };
+
+export type Snapshot<T> = ReturnType<typeof $state.snapshot<T>>;

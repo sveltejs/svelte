@@ -1,3 +1,4 @@
+/** @import { BlockStatement, CallExpression, Expression, ExpressionStatement, Identifier, Literal, MemberExpression, ObjectExpression, Pattern, Property, Statement, Super, TemplateElement, TemplateLiteral } from 'estree' */
 import {
 	extract_identifiers,
 	extract_paths,
@@ -72,7 +73,7 @@ function get_attribute_name(element, attribute, context) {
  * Serializes each style directive into something like `$.set_style(element, style_property, value)`
  * and adds it either to init or update, depending on whether or not the value or the attributes are dynamic.
  * @param {import('#compiler').StyleDirective[]} style_directives
- * @param {import('estree').Identifier} element_id
+ * @param {Identifier} element_id
  * @param {import('../types.js').ComponentContext} context
  * @param {boolean} is_attributes_reactive
  */
@@ -91,9 +92,7 @@ function serialize_style_directives(style_directives, element_id, context, is_at
 				element_id,
 				b.literal(directive.name),
 				value,
-				/** @type {import('estree').Expression} */ (
-					directive.modifiers.includes('important') ? b.true : undefined
-				)
+				/** @type {Expression} */ (directive.modifiers.includes('important') ? b.true : undefined)
 			)
 		);
 
@@ -123,7 +122,7 @@ function parse_directive_name(name) {
 	const parts = name.split('.');
 	let part = /** @type {string} */ (parts.shift());
 
-	/** @type {import('estree').Identifier | import('estree').MemberExpression} */
+	/** @type {Identifier | MemberExpression} */
 	let expression = b.id(part);
 
 	while ((part = /** @type {string} */ (parts.shift()))) {
@@ -138,14 +137,14 @@ function parse_directive_name(name) {
  * Serializes each class directive into something like `$.class_toogle(element, class_name, value)`
  * and adds it either to init or update, depending on whether or not the value or the attributes are dynamic.
  * @param {import('#compiler').ClassDirective[]} class_directives
- * @param {import('estree').Identifier} element_id
+ * @param {Identifier} element_id
  * @param {import('../types.js').ComponentContext} context
  * @param {boolean} is_attributes_reactive
  */
 function serialize_class_directives(class_directives, element_id, context, is_attributes_reactive) {
 	const state = context.state;
 	for (const directive of class_directives) {
-		const value = /** @type {import('estree').Expression} */ (context.visit(directive.expression));
+		const value = /** @type {Expression} */ (context.visit(directive.expression));
 		const update = b.stmt(b.call('$.toggle_class', element_id, b.literal(directive.name), value));
 		const contains_call_expression = directive.expression.type === 'CallExpression';
 
@@ -208,9 +207,7 @@ function setup_select_synchronization(value_binding, context) {
 
 	let bound = value_binding.expression;
 	while (bound.type === 'MemberExpression') {
-		bound = /** @type {import('estree').Identifier | import('estree').MemberExpression} */ (
-			bound.object
-		);
+		bound = /** @type {Identifier | MemberExpression} */ (bound.object);
 	}
 
 	/** @type {string[]} */
@@ -244,9 +241,7 @@ function setup_select_synchronization(value_binding, context) {
 				'$.template_effect',
 				b.thunk(
 					b.block([
-						b.stmt(
-							/** @type {import('estree').Expression} */ (context.visit(value_binding.expression))
-						),
+						b.stmt(/** @type {Expression} */ (context.visit(value_binding.expression))),
 						b.stmt(invalidator)
 					])
 				)
@@ -259,7 +254,7 @@ function setup_select_synchronization(value_binding, context) {
  * @param {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} attributes
  * @param {import('../types.js').ComponentContext} context
  * @param {import('#compiler').RegularElement} element
- * @param {import('estree').Identifier} element_id
+ * @param {Identifier} element_id
  * @param {boolean} needs_select_handling
  */
 function serialize_element_spread_attributes(
@@ -271,7 +266,7 @@ function serialize_element_spread_attributes(
 ) {
 	let needs_isolation = false;
 
-	/** @type {import('estree').ObjectExpression['properties']} */
+	/** @type {ObjectExpression['properties']} */
 	const values = [];
 
 	for (const attribute of attributes) {
@@ -302,7 +297,7 @@ function serialize_element_spread_attributes(
 				values.push(b.init(name, value));
 			}
 		} else {
-			values.push(b.spread(/** @type {import('estree').Expression} */ (context.visit(attribute))));
+			values.push(b.spread(/** @type {Expression} */ (context.visit(attribute))));
 		}
 
 		needs_isolation ||=
@@ -363,7 +358,7 @@ function serialize_element_spread_attributes(
  * Returns the `true` if spread is deemed reactive.
  * @param {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} attributes
  * @param {import('../types.js').ComponentContext} context
- * @param {import('estree').Identifier} element_id
+ * @param {Identifier} element_id
  * @returns {boolean}
  */
 function serialize_dynamic_element_attributes(attributes, context, element_id) {
@@ -381,7 +376,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 	let needs_isolation = false;
 	let is_reactive = false;
 
-	/** @type {import('estree').ObjectExpression['properties']} */
+	/** @type {ObjectExpression['properties']} */
 	const values = [];
 
 	for (const attribute of attributes) {
@@ -401,7 +396,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 				values.push(b.init(attribute.name, value));
 			}
 		} else {
-			values.push(b.spread(/** @type {import('estree').Expression} */ (context.visit(attribute))));
+			values.push(b.spread(/** @type {Expression} */ (context.visit(attribute))));
 		}
 
 		is_reactive ||=
@@ -476,7 +471,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
  * ```
  * Returns true if attribute is deemed reactive, false otherwise.
  * @param {import('#compiler').RegularElement} element
- * @param {import('estree').Identifier} node_id
+ * @param {Identifier} node_id
  * @param {import('#compiler').Attribute} attribute
  * @param {import('../types.js').ComponentContext} context
  * @returns {boolean}
@@ -507,7 +502,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		return false;
 	}
 
-	/** @type {import('estree').Statement} */
+	/** @type {Statement} */
 	let update;
 
 	if (name === 'class') {
@@ -544,7 +539,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 
 /**
  * Like `serialize_element_attribute_update_assignment` but without any special attribute treatment.
- * @param {import('estree').Identifier}	node_id
+ * @param {Identifier}	node_id
  * @param {import('#compiler').Attribute} attribute
  * @param {import('../types.js').ComponentContext} context
  * @returns {boolean}
@@ -574,7 +569,7 @@ function serialize_custom_element_attribute_update_assignment(node_id, attribute
  * that needs the hidden `__value` property.
  * Returns true if attribute is deemed reactive, false otherwise.
  * @param {string} element
- * @param {import('estree').Identifier} node_id
+ * @param {Identifier} node_id
  * @param {import('#compiler').Attribute} attribute
  * @param {import('../types.js').ComponentContext} context
  * @returns {boolean}
@@ -637,9 +632,9 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 /**
  * @param {import('../types.js').ComponentClientTransformState} state
  * @param {string} id
- * @param {import('estree').Expression | undefined} init
- * @param {import('estree').Expression} value
- * @param {import('estree').ExpressionStatement} update
+ * @param {Expression | undefined} init
+ * @param {Expression} value
+ * @param {ExpressionStatement} update
  */
 function serialize_update_assignment(state, id, init, value, update) {
 	state.init.push(b.var(id, init));
@@ -661,26 +656,26 @@ function collect_parent_each_blocks(context) {
  * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node
  * @param {string} component_name
  * @param {import('../types.js').ComponentContext} context
- * @param {import('estree').Expression} anchor
- * @returns {import('estree').Statement}
+ * @param {Expression} anchor
+ * @returns {Statement}
  */
 function serialize_inline_component(node, component_name, context, anchor = context.state.node) {
-	/** @type {Array<import('estree').Property[] | import('estree').Expression>} */
+	/** @type {Array<Property[] | Expression>} */
 	const props_and_spreads = [];
 
-	/** @type {import('estree').ExpressionStatement[]} */
+	/** @type {ExpressionStatement[]} */
 	const lets = [];
 
 	/** @type {Record<string, import('#compiler').TemplateNode[]>} */
 	const children = {};
 
-	/** @type {Record<string, import('estree').Expression[]>} */
+	/** @type {Record<string, Expression[]>} */
 	const events = {};
 
-	/** @type {import('estree').Property[]} */
+	/** @type {Property[]} */
 	const custom_css_props = [];
 
-	/** @type {import('estree').Identifier | import('estree').MemberExpression | null} */
+	/** @type {Identifier | MemberExpression | null} */
 	let bind_this = null;
 
 	/**
@@ -702,7 +697,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 	let has_children_prop = false;
 
 	/**
-	 * @param {import('estree').Property} prop
+	 * @param {Property} prop
 	 */
 	function push_prop(prop) {
 		const current = props_and_spreads.at(-1);
@@ -715,7 +710,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 	}
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute)));
+			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 		} else if (attribute.type === 'OnDirective') {
 			events[attribute.name] ||= [];
 			let handler = serialize_event_handler(attribute, context);
@@ -724,7 +719,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 			}
 			events[attribute.name].push(handler);
 		} else if (attribute.type === 'SpreadAttribute') {
-			const expression = /** @type {import('estree').Expression} */ (context.visit(attribute));
+			const expression = /** @type {Expression} */ (context.visit(attribute));
 			if (attribute.metadata.dynamic) {
 				let value = expression;
 
@@ -786,9 +781,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 			if (attribute.name === 'this') {
 				bind_this = attribute.expression;
 			} else {
-				const expression = /** @type {import('estree').Expression} */ (
-					context.visit(attribute.expression)
-				);
+				const expression = /** @type {Expression} */ (context.visit(attribute.expression));
 
 				if (context.state.options.dev) {
 					binding_initializers.push(
@@ -821,7 +814,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 		push_prop(b.init('$$events', events_expression));
 	}
 
-	/** @type {import('estree').Statement[]} */
+	/** @type {Statement[]} */
 	const snippet_declarations = [];
 
 	// Group children by slot
@@ -858,10 +851,10 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 	}
 
 	// Serialize each slot
-	/** @type {import('estree').Property[]} */
+	/** @type {Property[]} */
 	const serialized_slots = [];
 	for (const slot_name of Object.keys(children)) {
-		const block = /** @type {import('estree').BlockStatement} */ (
+		const block = /** @type {BlockStatement} */ (
 			context.visit(
 				{
 					...node.fragment,
@@ -887,7 +880,12 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 			])
 		);
 
-		if (slot_name === 'default' && !has_children_prop) {
+		if (
+			slot_name === 'default' &&
+			!has_children_prop &&
+			lets.length === 0 &&
+			children.default.every((node) => node.type !== 'SvelteFragment')
+		) {
 			push_prop(
 				b.init(
 					'children',
@@ -915,13 +913,13 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 	const props_expression =
 		props_and_spreads.length === 0 ||
 		(props_and_spreads.length === 1 && Array.isArray(props_and_spreads[0]))
-			? b.object(/** @type {import('estree').Property[]} */ (props_and_spreads[0]) || [])
+			? b.object(/** @type {Property[]} */ (props_and_spreads[0]) || [])
 			: b.call(
 					'$.spread_props',
 					...props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))
 				);
 
-	/** @param {import('estree').Expression} node_id */
+	/** @param {Expression} node_id */
 	let fn = (node_id) => {
 		return b.call(
 			context.state.options.dev
@@ -937,7 +935,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 
 		fn = (node_id) => {
 			return serialize_bind_this(
-				/** @type {import('estree').Identifier | import('estree').MemberExpression} */ (bind_this),
+				/** @type {Identifier | MemberExpression} */ (bind_this),
 				context,
 				prev(node_id)
 			);
@@ -953,7 +951,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 			return b.call(
 				'$.component',
 				node_id,
-				b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
+				b.thunk(/** @type {Expression} */ (context.visit(node.expression))),
 				b.arrow(
 					[b.id('$$anchor'), b.id(component_name)],
 					b.block([
@@ -993,14 +991,14 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 
 /**
  * Serializes `bind:this` for components and elements.
- * @param {import('estree').Identifier | import('estree').MemberExpression} bind_this
+ * @param {Identifier | MemberExpression} bind_this
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('../types.js').ComponentClientTransformState>} context
- * @param {import('estree').Expression} node
+ * @param {Expression} node
  * @returns
  */
 function serialize_bind_this(bind_this, context, node) {
 	let i = 0;
-	/** @type {Map<import('#compiler').Binding, [arg_idx: number, transformed: import('estree').Expression, expression: import('#compiler').Binding['expression']]>} */
+	/** @type {Map<import('#compiler').Binding, [arg_idx: number, transformed: Expression, expression: import('#compiler').Binding['expression']]>} */
 	const each_ids = new Map();
 	// Transform each reference to an each block context variable into a $$value_<i> variable
 	// by temporarily changing the `expression` of the corresponding binding.
@@ -1022,7 +1020,7 @@ function serialize_bind_this(bind_this, context, node) {
 				if (associated_node?.type === 'EachBlock') {
 					each_ids.set(binding, [
 						i,
-						/** @type {import('estree').Expression} */ (context.visit(node)),
+						/** @type {Expression} */ (context.visit(node)),
 						binding.expression
 					]);
 					binding.expression = b.id('$$value_' + i);
@@ -1032,7 +1030,7 @@ function serialize_bind_this(bind_this, context, node) {
 		}
 	);
 
-	const bind_this_id = /** @type {import('estree').Expression} */ (context.visit(bind_this));
+	const bind_this_id = /** @type {Expression} */ (context.visit(bind_this));
 	const ids = Array.from(each_ids.values()).map((id) => b.id('$$value_' + id[0]));
 	const assignment = b.assignment('=', bind_this, b.id('$$value'));
 	const update = serialize_set_binding(assignment, context, () => context.visit(assignment));
@@ -1042,11 +1040,11 @@ function serialize_bind_this(bind_this, context, node) {
 		binding.expression = expression;
 	}
 
-	/** @type {import('estree').Expression[]} */
+	/** @type {Expression[]} */
 	const args = [node, b.arrow([b.id('$$value'), ...ids], update), b.arrow([...ids], bind_this_id)];
 	// If we're mutating a property, then it might already be non-existent.
 	// If we make all the object nodes optional, then it avoids any runtime exceptions.
-	/** @type {import('estree').Expression | import('estree').Super} */
+	/** @type {Expression | Super} */
 	let bind_node = bind_this_id;
 
 	while (bind_node?.type === 'MemberExpression') {
@@ -1098,7 +1096,7 @@ function get_template_function(namespace, state) {
 
 /**
  *
- * @param {import('estree').Statement} statement
+ * @param {Statement} statement
  */
 function serialize_update(statement) {
 	const body =
@@ -1108,7 +1106,7 @@ function serialize_update(statement) {
 }
 
 /**
- * @param {import('estree').Statement[]} update
+ * @param {Statement[]} update
  */
 function serialize_render_stmt(update) {
 	return update.length === 1
@@ -1122,7 +1120,7 @@ function serialize_render_stmt(update) {
  * @param {import('../types.js').ComponentContext} context
  */
 function serialize_event_handler(node, { state, visit }) {
-	/** @type {import('estree').Expression} */
+	/** @type {Expression} */
 	let handler;
 
 	if (node.expression) {
@@ -1134,7 +1132,7 @@ function serialize_event_handler(node, { state, visit }) {
 				null,
 				[b.rest(b.id('$$args'))],
 				b.block([
-					b.const('$$callback', /** @type {import('estree').Expression} */ (visit(handler))),
+					b.const('$$callback', /** @type {Expression} */ (visit(handler))),
 					b.return(
 						b.call(b.member(b.id('$$callback'), b.id('apply'), false, true), b.this, b.id('$$args'))
 					)
@@ -1157,12 +1155,12 @@ function serialize_event_handler(node, { state, visit }) {
 			) {
 				handler = dynamic_handler();
 			} else {
-				handler = /** @type {import('estree').Expression} */ (visit(handler));
+				handler = /** @type {Expression} */ (visit(handler));
 			}
 		} else if (handler.type === 'ConditionalExpression' || handler.type === 'LogicalExpression') {
 			handler = dynamic_handler();
 		} else {
-			handler = /** @type {import('estree').Expression} */ (visit(handler));
+			handler = /** @type {Expression} */ (visit(handler));
 		}
 	} else {
 		state.analysis.needs_props = true;
@@ -1196,13 +1194,13 @@ function serialize_event_handler(node, { state, visit }) {
 
 /**
  * Serializes an event handler function of the `on:` directive or an attribute starting with `on`
- * @param {{name: string; modifiers: string[]; expression: import('estree').Expression | null; delegated?: import('#compiler').DelegatedEvent | null; }} node
+ * @param {{name: string; modifiers: string[]; expression: Expression | null; delegated?: import('#compiler').DelegatedEvent | null; }} node
  * @param {import('../types.js').ComponentContext} context
  */
 function serialize_event(node, context) {
 	const state = context.state;
 
-	/** @type {import('estree').Statement} */
+	/** @type {Statement} */
 	let statement;
 
 	if (node.expression) {
@@ -1226,7 +1224,7 @@ function serialize_event(node, context) {
 				if (node.modifiers.includes('once')) {
 					handler = b.call('$.once', handler);
 				}
-				const hoistable_params = /** @type {import('estree').Expression[]} */ (
+				const hoistable_params = /** @type {Expression[]} */ (
 					delegated.function.metadata.hoistable_params
 				);
 				// When we hoist a function we assign an array with the function and all
@@ -1322,7 +1320,7 @@ function serialize_event_attribute(node, context) {
  * (e.g. `{a} b {c}`) into a single update function. Along the way it creates
  * corresponding template node references these updates are applied to.
  * @param {import('#compiler').SvelteNode[]} nodes
- * @param {(is_text: boolean) => import('estree').Expression} expression
+ * @param {(is_text: boolean) => Expression} expression
  * @param {boolean} is_element
  * @param {import('../types.js').ComponentContext} context
  */
@@ -1353,11 +1351,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 			const text_id = get_node_id(expression(true), state, 'text');
 
 			const update = b.stmt(
-				b.call(
-					'$.set_text',
-					text_id,
-					/** @type {import('estree').Expression} */ (visit(node.expression))
-				)
+				b.call('$.set_text', text_id, /** @type {Expression} */ (visit(node.expression)))
 			);
 
 			if (node.metadata.contains_call_expression && !within_bound_contenteditable) {
@@ -1370,7 +1364,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 						b.assignment(
 							'=',
 							b.member(text_id, b.id('nodeValue')),
-							/** @type {import('estree').Expression} */ (visit(node.expression))
+							/** @type {Expression} */ (visit(node.expression))
 						)
 					)
 				);
@@ -1458,7 +1452,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 }
 
 /**
- * @param {import('estree').Expression} expression
+ * @param {Expression} expression
  * @param {import('../types.js').ComponentClientTransformState} state
  * @param {string} name
  */
@@ -1476,7 +1470,7 @@ function get_node_id(expression, state, name) {
 /**
  * @param {true | Array<import('#compiler').Text | import('#compiler').ExpressionTag>} value
  * @param {import('../types').ComponentContext} context
- * @returns {[contains_call_expression: boolean, import('estree').Expression]}
+ * @returns {[contains_call_expression: boolean, Expression]}
  */
 function serialize_attribute_value(value, context) {
 	if (value === true) {
@@ -1492,7 +1486,7 @@ function serialize_attribute_value(value, context) {
 
 		return [
 			chunk.metadata.contains_call_expression,
-			/** @type {import('estree').Expression} */ (context.visit(chunk.expression))
+			/** @type {Expression} */ (context.visit(chunk.expression))
 		];
 	}
 
@@ -1503,13 +1497,13 @@ function serialize_attribute_value(value, context) {
  * @param {Array<import('#compiler').Text | import('#compiler').ExpressionTag>} values
  * @param {(node: import('#compiler').SvelteNode, state: any) => any} visit
  * @param {import("../types.js").ComponentClientTransformState} state
- * @returns {[boolean, import('estree').TemplateLiteral]}
+ * @returns {[boolean, TemplateLiteral]}
  */
 function serialize_template_literal(values, visit, state) {
-	/** @type {import('estree').TemplateElement[]} */
+	/** @type {TemplateElement[]} */
 	const quasis = [];
 
-	/** @type {import('estree').Expression[]} */
+	/** @type {Expression[]} */
 	const expressions = [];
 	let contains_call_expression = false;
 	let contains_multiple_call_expression = false;
@@ -1530,10 +1524,10 @@ function serialize_template_literal(values, visit, state) {
 		const node = values[i];
 
 		if (node.type === 'Text') {
-			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
+			const last = /** @type {TemplateElement} */ (quasis.at(-1));
 			last.value.raw += sanitize_template_string(node.data);
 		} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
-			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
+			const last = /** @type {TemplateElement} */ (quasis.at(-1));
 			if (node.expression.value != null) {
 				last.value.raw += sanitize_template_string(node.expression.value + '');
 			}
@@ -1546,7 +1540,7 @@ function serialize_template_literal(values, visit, state) {
 						id,
 						create_derived(
 							state,
-							b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression, state)))
+							b.thunk(/** @type {Expression} */ (visit(node.expression, state)))
 						)
 					)
 				);
@@ -1602,10 +1596,10 @@ export const template_visitors = {
 
 		const template_name = context.state.scope.root.unique('root'); // TODO infer name from parent
 
-		/** @type {import('estree').Statement[]} */
+		/** @type {Statement[]} */
 		const body = [];
 
-		/** @type {import('estree').Statement | undefined} */
+		/** @type {Statement | undefined} */
 		let close = undefined;
 
 		/** @type {import('../types').ComponentClientTransformState} */
@@ -1637,8 +1631,8 @@ export const template_visitors = {
 		}
 
 		/**
-		 * @param {import('estree').Identifier} template_name
-		 * @param {import('estree').Expression[]} args
+		 * @param {Identifier} template_name
+		 * @param {Expression[]} args
 		 */
 		const add_template = (template_name, args) => {
 			let call = b.call(get_template_function(namespace, state), ...args);
@@ -1664,7 +1658,7 @@ export const template_visitors = {
 				node: id
 			});
 
-			/** @type {import('estree').Expression[]} */
+			/** @type {Expression[]} */
 			const args = [b.template([b.quasi(state.template.join(''), true)], [])];
 
 			if (state.metadata.context.template_needs_import_node) {
@@ -1701,7 +1695,7 @@ export const template_visitors = {
 					// no need to create a template, we can just use the existing block's anchor
 					process_children(trimmed, () => b.id('$$anchor'), false, { ...context, state });
 				} else {
-					/** @type {(is_text: boolean) => import('estree').Expression} */
+					/** @type {(is_text: boolean) => Expression} */
 					const expression = (is_text) => b.call('$.first_child', id, is_text && b.true);
 
 					process_children(trimmed, expression, false, { ...context, state });
@@ -1761,7 +1755,7 @@ export const template_visitors = {
 				b.call(
 					'$.html',
 					context.state.node,
-					b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
+					b.thunk(/** @type {Expression} */ (context.visit(node.expression))),
 					b.literal(context.state.metadata.namespace === 'svg'),
 					b.literal(context.state.metadata.namespace === 'mathml')
 				)
@@ -1775,10 +1769,7 @@ export const template_visitors = {
 			state.init.push(
 				b.const(
 					declaration.id,
-					create_derived(
-						state,
-						b.thunk(/** @type {import('estree').Expression} */ (visit(declaration.init)))
-					)
+					create_derived(state, b.thunk(/** @type {Expression} */ (visit(declaration.init))))
 				)
 			);
 
@@ -1804,8 +1795,8 @@ export const template_visitors = {
 				[],
 				b.block([
 					b.const(
-						/** @type {import('estree').Pattern} */ (visit(declaration.id)),
-						/** @type {import('estree').Expression} */ (visit(declaration.init))
+						/** @type {Pattern} */ (visit(declaration.id)),
+						/** @type {Expression} */ (visit(declaration.init))
 					),
 					b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
 				])
@@ -1837,11 +1828,7 @@ export const template_visitors = {
 									'console.log',
 									b.object(
 										node.identifiers.map((identifier) =>
-											b.prop(
-												'init',
-												identifier,
-												/** @type {import('estree').Expression} */ (visit(identifier))
-											)
+											b.prop('init', identifier, /** @type {Expression} */ (visit(identifier)))
 										)
 									)
 								)
@@ -1858,16 +1845,28 @@ export const template_visitors = {
 		const callee = unwrap_optional(node.expression).callee;
 		const raw_args = unwrap_optional(node.expression).arguments;
 
-		const args = raw_args.map((arg) =>
-			b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg)))
-		);
+		/** @type {Expression[]} */
+		let args = [];
+		for (let i = 0; i < raw_args.length; i++) {
+			const raw = raw_args[i];
+			const arg = /** @type {Expression} */ (context.visit(raw));
+			if (node.metadata.args_with_call_expression.has(i)) {
+				const id = b.id(context.state.scope.generate('render_arg'));
+				context.state.init.push(b.var(id, b.call('$.derived_safe_equal', b.thunk(arg))));
+				args.push(b.thunk(b.call('$.get', id)));
+			} else {
+				args.push(b.thunk(arg));
+			}
+		}
 
-		let snippet_function = /** @type {import('estree').Expression} */ (context.visit(callee));
+		let snippet_function = /** @type {Expression} */ (context.visit(callee));
 		if (context.state.options.dev) {
 			snippet_function = b.call(
 				'$.validate_snippet',
 				snippet_function,
-				args.length ? b.id('$$props') : undefined
+				args.length && callee.type === 'Identifier' && callee.name === 'children'
+					? b.id('$$props')
+					: undefined
 			);
 		}
 
@@ -1891,16 +1890,14 @@ export const template_visitors = {
 		const expression =
 			node.expression === null
 				? b.literal(null)
-				: b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression)));
+				: b.thunk(/** @type {Expression} */ (visit(node.expression)));
 
 		state.init.push(
 			b.stmt(
 				b.call(
 					'$.animation',
 					state.node,
-					b.thunk(
-						/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name)))
-					),
+					b.thunk(/** @type {Expression} */ (visit(parse_directive_name(node.name)))),
 					expression
 				)
 			)
@@ -1920,11 +1917,11 @@ export const template_visitors = {
 		const args = [
 			b.literal(flags),
 			state.node,
-			b.thunk(/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name))))
+			b.thunk(/** @type {Expression} */ (visit(parse_directive_name(node.name))))
 		];
 
 		if (node.expression) {
-			args.push(b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression))));
+			args.push(b.thunk(/** @type {Expression} */ (visit(node.expression))));
 		}
 
 		state.init.push(b.stmt(b.call('$.transition', ...args)));
@@ -1967,7 +1964,7 @@ export const template_visitors = {
 		/** @type {import('#compiler').StyleDirective[]} */
 		const style_directives = [];
 
-		/** @type {import('estree').ExpressionStatement[]} */
+		/** @type {ExpressionStatement[]} */
 		const lets = [];
 
 		const is_custom_element = is_custom_element_node(node);
@@ -2027,7 +2024,7 @@ export const template_visitors = {
 			} else if (attribute.type === 'StyleDirective') {
 				style_directives.push(attribute);
 			} else if (attribute.type === 'LetDirective') {
-				lets.push(/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute)));
+				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 			} else {
 				if (attribute.type === 'BindDirective') {
 					if (attribute.name === 'group' || attribute.name === 'checked') {
@@ -2118,7 +2115,7 @@ export const template_visitors = {
 					(attribute.value === true || is_text_attribute(attribute))
 				) {
 					const name = get_attribute_name(node, attribute, context);
-					const literal_value = /** @type {import('estree').Literal} */ (
+					const literal_value = /** @type {Literal} */ (
 						serialize_attribute_value(attribute.value, context)[1]
 					).value;
 					if (name !== 'class' || literal_value) {
@@ -2196,7 +2193,7 @@ export const template_visitors = {
 			context.visit(node, child_state);
 		}
 
-		/** @type {import('estree').Expression} */
+		/** @type {Expression} */
 		let arg = context.state.node;
 
 		// If `hydrate_node` is set inside the element, we need to reset it
@@ -2263,7 +2260,7 @@ export const template_visitors = {
 		/** @type {import('#compiler').StyleDirective[]} */
 		const style_directives = [];
 
-		/** @type {import('estree').ExpressionStatement[]} */
+		/** @type {ExpressionStatement[]} */
 		const lets = [];
 
 		// Create a temporary context which picks up the init/update statements.
@@ -2296,7 +2293,7 @@ export const template_visitors = {
 			} else if (attribute.type === 'StyleDirective') {
 				style_directives.push(attribute);
 			} else if (attribute.type === 'LetDirective') {
-				lets.push(/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute)));
+				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 			} else {
 				context.visit(attribute, inner_context.state);
 			}
@@ -2315,7 +2312,7 @@ export const template_visitors = {
 		serialize_class_directives(class_directives, element_id, inner_context, is_attributes_reactive);
 		serialize_style_directives(style_directives, element_id, inner_context, is_attributes_reactive);
 
-		const get_tag = b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.tag)));
+		const get_tag = b.thunk(/** @type {Expression} */ (context.visit(node.tag)));
 
 		if (context.state.options.dev && context.state.metadata.namespace !== 'foreign') {
 			if (node.fragment.nodes.length > 0) {
@@ -2324,14 +2321,14 @@ export const template_visitors = {
 			context.state.init.push(b.stmt(b.call('$.validate_dynamic_element_tag', get_tag)));
 		}
 
-		/** @type {import('estree').Statement[]} */
+		/** @type {Statement[]} */
 		const inner = inner_context.state.init;
 		if (inner_context.state.update.length > 0) {
 			inner.push(serialize_render_stmt(inner_context.state.update));
 		}
 		inner.push(...inner_context.state.after_update);
 		inner.push(
-			.../** @type {import('estree').BlockStatement} */ (
+			.../** @type {BlockStatement} */ (
 				context.visit(node.fragment, {
 					...context.state,
 					metadata: {
@@ -2360,7 +2357,7 @@ export const template_visitors = {
 	},
 	EachBlock(node, context) {
 		const each_node_meta = node.metadata;
-		const collection = /** @type {import('estree').Expression} */ (context.visit(node.expression));
+		const collection = /** @type {Expression} */ (context.visit(node.expression));
 		let each_item_is_reactive = true;
 
 		if (!each_node_meta.is_controlled) {
@@ -2439,7 +2436,7 @@ export const template_visitors = {
 
 		// Legacy mode: find the parent each blocks which contain the arrays to invalidate
 		const indirect_dependencies = collect_parent_each_blocks(context).flatMap((block) => {
-			const array = /** @type {import('estree').Expression} */ (context.visit(block.expression));
+			const array = /** @type {Expression} */ (context.visit(block.expression));
 			const transitive_dependencies = serialize_transitive_dependencies(
 				block.metadata.references,
 				context
@@ -2458,7 +2455,7 @@ export const template_visitors = {
 		}
 
 		/**
-		 * @param {import('estree').Pattern} expression_for_id
+		 * @param {Pattern} expression_for_id
 		 * @returns {import('#compiler').Binding['mutation']}
 		 */
 		const create_mutation = (expression_for_id) => {
@@ -2487,7 +2484,7 @@ export const template_visitors = {
 					sequence.unshift(assign);
 					return b.sequence(sequence);
 				} else {
-					const original_left = /** @type {import('estree').MemberExpression} */ (assignment.left);
+					const original_left = /** @type {MemberExpression} */ (assignment.left);
 					const left = context.visit(original_left);
 					const assign = b.assignment(assignment.operator, left, value);
 					sequence.unshift(assign);
@@ -2518,7 +2515,7 @@ export const template_visitors = {
 			};
 		}
 
-		/** @type {import('estree').Statement[]} */
+		/** @type {Statement[]} */
 		const declarations = [];
 
 		if (node.context.type === 'Identifier') {
@@ -2534,19 +2531,17 @@ export const template_visitors = {
 			const paths = extract_paths(node.context);
 
 			for (const path of paths) {
-				const name = /** @type {import('estree').Identifier} */ (path.node).name;
+				const name = /** @type {Identifier} */ (path.node).name;
 				const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(name));
 				const needs_derived = path.has_default_value; // to ensure that default value is only called once
-				const fn = b.thunk(
-					/** @type {import('estree').Expression} */ (context.visit(path.expression?.(unwrapped)))
-				);
+				const fn = b.thunk(/** @type {Expression} */ (context.visit(path.expression?.(unwrapped))));
 
 				declarations.push(
 					b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn)
 				);
 				binding.expression = needs_derived ? b.call('$.get', b.id(name)) : b.call(name);
 				binding.mutation = create_mutation(
-					/** @type {import('estree').Pattern} */ (path.update_expression(unwrapped))
+					/** @type {Pattern} */ (path.update_expression(unwrapped))
 				);
 
 				// we need to eagerly evaluate the expression in order to hit any
@@ -2557,18 +2552,16 @@ export const template_visitors = {
 			}
 		}
 
-		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.body));
+		const block = /** @type {BlockStatement} */ (context.visit(node.body));
 
 		const key_function = node.key
 			? b.arrow(
 					[node.context.type === 'Identifier' ? node.context : b.id('$$item'), index],
 					declarations.length > 0
 						? b.block(
-								declarations.concat(
-									b.return(/** @type {import('estree').Expression} */ (context.visit(node.key)))
-								)
+								declarations.concat(b.return(/** @type {Expression} */ (context.visit(node.key))))
 							)
-						: /** @type {import('estree').Expression} */ (context.visit(node.key))
+						: /** @type {Expression} */ (context.visit(node.key))
 				)
 			: b.id('$.index');
 
@@ -2584,7 +2577,7 @@ export const template_visitors = {
 			);
 		}
 
-		/** @type {import('estree').Expression[]} */
+		/** @type {Expression[]} */
 		const args = [
 			context.state.node,
 			b.literal(each_type),
@@ -2595,10 +2588,7 @@ export const template_visitors = {
 
 		if (node.fallback) {
 			args.push(
-				b.arrow(
-					[b.id('$$anchor')],
-					/** @type {import('estree').BlockStatement} */ (context.visit(node.fallback))
-				)
+				b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.fallback)))
 			);
 		}
 
@@ -2607,13 +2597,11 @@ export const template_visitors = {
 	IfBlock(node, context) {
 		context.state.template.push('<!>');
 
-		const consequent = /** @type {import('estree').BlockStatement} */ (
-			context.visit(node.consequent)
-		);
+		const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
 
 		const args = [
 			context.state.node,
-			b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.test))),
+			b.thunk(/** @type {Expression} */ (context.visit(node.test))),
 			b.arrow([b.id('$$anchor')], consequent)
 		];
 
@@ -2622,7 +2610,7 @@ export const template_visitors = {
 				node.alternate
 					? b.arrow(
 							[b.id('$$anchor')],
-							/** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
+							/** @type {BlockStatement} */ (context.visit(node.alternate))
 						)
 					: b.literal(null)
 			);
@@ -2662,9 +2650,9 @@ export const template_visitors = {
 		let catch_block;
 
 		if (node.then) {
-			/** @type {import('estree').Pattern[]} */
+			/** @type {Pattern[]} */
 			const args = [b.id('$$anchor')];
-			const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.then));
+			const block = /** @type {BlockStatement} */ (context.visit(node.then));
 
 			if (node.value) {
 				const argument = create_derived_block_argument(node.value, context);
@@ -2680,9 +2668,9 @@ export const template_visitors = {
 		}
 
 		if (node.catch) {
-			/** @type {import('estree').Pattern[]} */
+			/** @type {Pattern[]} */
 			const args = [b.id('$$anchor')];
-			const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.catch));
+			const block = /** @type {BlockStatement} */ (context.visit(node.catch));
 
 			if (node.error) {
 				const argument = create_derived_block_argument(node.error, context);
@@ -2702,11 +2690,11 @@ export const template_visitors = {
 				b.call(
 					'$.await',
 					context.state.node,
-					b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.expression))),
+					b.thunk(/** @type {Expression} */ (context.visit(node.expression))),
 					node.pending
 						? b.arrow(
 								[b.id('$$anchor')],
-								/** @type {import('estree').BlockStatement} */ (context.visit(node.pending))
+								/** @type {BlockStatement} */ (context.visit(node.pending))
 							)
 						: b.literal(null),
 					then_block,
@@ -2717,21 +2705,21 @@ export const template_visitors = {
 	},
 	KeyBlock(node, context) {
 		context.state.template.push('<!>');
-		const key = /** @type {import('estree').Expression} */ (context.visit(node.expression));
-		const body = /** @type {import('estree').Expression} */ (context.visit(node.fragment));
+		const key = /** @type {Expression} */ (context.visit(node.expression));
+		const body = /** @type {Expression} */ (context.visit(node.fragment));
 		context.state.init.push(
 			b.stmt(b.call('$.key', context.state.node, b.thunk(key), b.arrow([b.id('$$anchor')], body)))
 		);
 	},
 	SnippetBlock(node, context) {
 		// TODO hoist where possible
-		/** @type {import('estree').Pattern[]} */
+		/** @type {Pattern[]} */
 		const args = [b.id('$$anchor')];
 
-		/** @type {import('estree').BlockStatement} */
+		/** @type {BlockStatement} */
 		let body;
 
-		/** @type {import('estree').Statement[]} */
+		/** @type {Statement[]} */
 		const declarations = [];
 
 		for (let i = 0; i < node.parameters.length; i++) {
@@ -2758,11 +2746,11 @@ export const template_visitors = {
 			const paths = extract_paths(argument);
 
 			for (const path of paths) {
-				const name = /** @type {import('estree').Identifier} */ (path.node).name;
+				const name = /** @type {Identifier} */ (path.node).name;
 				const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(name));
 				const needs_derived = path.has_default_value; // to ensure that default value is only called once
 				const fn = b.thunk(
-					/** @type {import('estree').Expression} */ (
+					/** @type {Expression} */ (
 						context.visit(path.expression?.(b.maybe_call(b.id(arg_alias))))
 					)
 				);
@@ -2782,10 +2770,10 @@ export const template_visitors = {
 
 		body = b.block([
 			...declarations,
-			.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body
+			.../** @type {BlockStatement} */ (context.visit(node.body)).body
 		]);
 
-		/** @type {import('estree').Expression} */
+		/** @type {Expression} */
 		let snippet = b.arrow(args, body);
 
 		if (context.state.options.dev) {
@@ -2816,20 +2804,17 @@ export const template_visitors = {
 			params.push(b.id('$$action_arg'));
 		}
 
-		/** @type {import('estree').Expression[]} */
+		/** @type {Expression[]} */
 		const args = [
 			state.node,
 			b.arrow(
 				params,
-				b.call(
-					/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name))),
-					...params
-				)
+				b.call(/** @type {Expression} */ (visit(parse_directive_name(node.name))), ...params)
 			)
 		];
 
 		if (node.expression) {
-			args.push(b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression))));
+			args.push(b.thunk(/** @type {Expression} */ (visit(node.expression))));
 		}
 
 		// actions need to run after attribute updates in order with bindings/events
@@ -2839,14 +2824,14 @@ export const template_visitors = {
 	BindDirective(node, context) {
 		const { state, path, visit } = context;
 		const expression = node.expression;
-		const getter = b.thunk(/** @type {import('estree').Expression} */ (visit(expression)));
+		const getter = b.thunk(/** @type {Expression} */ (visit(expression)));
 		const assignment = b.assignment('=', expression, b.id('$$value'));
 		const setter = b.arrow(
 			[b.id('$$value')],
 			serialize_set_binding(
 				assignment,
 				context,
-				() => /** @type {import('estree').Expression} */ (visit(assignment)),
+				() => /** @type {Expression} */ (visit(assignment)),
 				null,
 				{
 					skip_proxy_and_freeze: true
@@ -2854,7 +2839,7 @@ export const template_visitors = {
 			)
 		);
 
-		/** @type {import('estree').CallExpression} */
+		/** @type {CallExpression} */
 		let call_expr;
 
 		const property = binding_properties[node.name];
@@ -2985,7 +2970,7 @@ export const template_visitors = {
 					call_expr = b.call(`$.bind_focused`, state.node, setter);
 					break;
 				case 'group': {
-					/** @type {import('estree').CallExpression[]} */
+					/** @type {CallExpression[]} */
 					const indexes = [];
 					for (const parent_each_block of node.metadata.parent_each_blocks) {
 						indexes.push(b.call('$.unwrap', parent_each_block.metadata.index));
@@ -3011,7 +2996,7 @@ export const template_visitors = {
 							group_getter = b.thunk(
 								b.block([
 									b.stmt(serialize_attribute_value(value, context)[1]),
-									b.return(/** @type {import('estree').Expression} */ (visit(expression)))
+									b.return(/** @type {Expression} */ (visit(expression)))
 								])
 							);
 						}
@@ -3052,9 +3037,7 @@ export const template_visitors = {
 						context.state.node,
 						// TODO use untrack here to not update when binding changes?
 						// Would align with Svelte 4 behavior, but it's arguably nicer/expected to update this
-						b.thunk(
-							/** @type {import('estree').Expression} */ (context.visit(b.member_id(node.name)))
-						),
+						b.thunk(/** @type {Expression} */ (context.visit(b.member_id(node.name)))),
 						b.arrow([b.id('$$anchor'), b.id('$$component')], b.block([component]))
 					)
 				)
@@ -3097,8 +3080,7 @@ export const template_visitors = {
 					b.thunk(
 						b.block([
 							b.let(
-								/** @type {import('estree').Expression} */ (node.expression).type ===
-									'ObjectExpression'
+								/** @type {Expression} */ (node.expression).type === 'ObjectExpression'
 									? // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
 										b.object_pattern(node.expression.properties)
 									: // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
@@ -3122,43 +3104,39 @@ export const template_visitors = {
 		return visit(node.expression);
 	},
 	SvelteFragment(node, context) {
-		/** @type {import('estree').Statement[]} */
+		/** @type {Statement[]} */
 		const lets = [];
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'LetDirective') {
-				lets.push(/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute)));
+				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 			}
 		}
 
 		context.state.init.push(...lets);
-		context.state.init.push(
-			.../** @type {import('estree').BlockStatement} */ (context.visit(node.fragment)).body
-		);
+		context.state.init.push(.../** @type {BlockStatement} */ (context.visit(node.fragment)).body);
 	},
 	SlotElement(node, context) {
 		// <slot {a}>fallback</slot>  -->   $.slot($$slots.default, { get a() { .. } }, () => ...fallback);
 		context.state.template.push('<!>');
 
-		/** @type {import('estree').Property[]} */
+		/** @type {Property[]} */
 		const props = [];
 
-		/** @type {import('estree').Expression[]} */
+		/** @type {Expression[]} */
 		const spreads = [];
 
-		/** @type {import('estree').ExpressionStatement[]} */
+		/** @type {ExpressionStatement[]} */
 		const lets = [];
 
 		let is_default = true;
 
-		/** @type {import('estree').Expression} */
+		/** @type {Expression} */
 		let name = b.literal('default');
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'SpreadAttribute') {
-				spreads.push(
-					b.thunk(/** @type {import('estree').Expression} */ (context.visit(attribute)))
-				);
+				spreads.push(b.thunk(/** @type {Expression} */ (context.visit(attribute))));
 			} else if (attribute.type === 'Attribute') {
 				const [, value] = serialize_attribute_value(attribute.value, context);
 				if (attribute.name === 'name') {
@@ -3172,7 +3150,7 @@ export const template_visitors = {
 					}
 				}
 			} else if (attribute.type === 'LetDirective') {
-				lets.push(/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute)));
+				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 			}
 		}
 
@@ -3187,10 +3165,7 @@ export const template_visitors = {
 		const fallback =
 			node.fragment.nodes.length === 0
 				? b.literal(null)
-				: b.arrow(
-						[b.id('$$anchor')],
-						/** @type {import('estree').BlockStatement} */ (context.visit(node.fragment))
-					);
+				: b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.fragment)));
 
 		const expression = is_default
 			? b.call('$.default_slot', b.id('$$props'))
@@ -3205,10 +3180,7 @@ export const template_visitors = {
 			b.stmt(
 				b.call(
 					'$.head',
-					b.arrow(
-						[b.id('$$anchor')],
-						/** @type {import('estree').BlockStatement} */ (context.visit(node.fragment))
-					)
+					b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.fragment)))
 				)
 			)
 		);

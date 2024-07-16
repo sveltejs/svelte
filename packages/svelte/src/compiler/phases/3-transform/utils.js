@@ -288,7 +288,11 @@ export function clean_nodes(
 					))),
 		/** if a component or snippet starts with text, we need to add an anchor comment so that its text node doesn't get fused with its surroundings */
 		is_text_first:
-			(parent.type === 'Fragment' || parent.type === 'SnippetBlock') &&
+			(parent.type === 'Fragment' ||
+				parent.type === 'SnippetBlock' ||
+				parent.type === 'SvelteComponent' ||
+				parent.type === 'Component' ||
+				parent.type === 'SvelteSelf') &&
 			first &&
 			(first?.type === 'Text' || first?.type === 'ExpressionTag')
 	};

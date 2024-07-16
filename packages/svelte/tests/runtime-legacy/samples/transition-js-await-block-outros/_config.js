@@ -14,6 +14,7 @@ export default test({
 	intro: true,
 
 	async test({ assert, target, component, raf }) {
+		await Promise.resolve();
 		assert.htmlEqual(target.innerHTML, '<p class="pending" foo="0.0">loading...</p>');
 
 		let time = 0;

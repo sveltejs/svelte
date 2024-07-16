@@ -19,7 +19,7 @@ export default test({
 		deferred.resolve(42);
 
 		return deferred.promise
-			.then(() => {
+			.then(async () => {
 				assert.htmlEqual(
 					target.innerHTML,
 					`
@@ -30,6 +30,7 @@ export default test({
 				deferred = create_deferred();
 
 				component.thePromise = deferred.promise;
+				await Promise.resolve();
 
 				assert.htmlEqual(target.innerHTML, '');
 

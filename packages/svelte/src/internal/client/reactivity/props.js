@@ -6,7 +6,7 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../../constants.js';
-import { get_descriptor, is_function } from '../utils.js';
+import { get_descriptor, is_function } from '../../shared/utils.js';
 import { mutable_source, set, source } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
 import { get, is_signals_recorded, untrack, update } from '../runtime.js';
@@ -165,7 +165,16 @@ const spread_props_handler = {
 		while (i--) {
 			let p = target.props[i];
 			if (is_function(p)) p = p();
-			if (typeof p === 'object' && p !== null && key in p) return get_descriptor(p, key);
+			if (typeof p === 'object' && p !== null && key in p) {
+				const descriptor = get_descriptor(p, key);
+				if (descriptor && !descriptor.configurable) {
+					// Prevent a "Non-configurability Report Error": The target is an array, it does
+					// not actually contain this property. If it is now described as non-configurable,
+					// the proxy throws a validation error. Setting it to true avoids that.
+					descriptor.configurable = true;
+				}
+				return descriptor;
+			}
 		}
 	},
 	has(target, key) {

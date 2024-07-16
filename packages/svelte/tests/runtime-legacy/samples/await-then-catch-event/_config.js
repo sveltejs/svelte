@@ -15,10 +15,6 @@ export default test({
 		};
 	},
 
-	html: `
-		<p>loading...</p>
-	`,
-
 	test({ assert, component, target, window }) {
 		deferred.resolve(42);
 

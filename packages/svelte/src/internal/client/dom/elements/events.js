@@ -1,5 +1,5 @@
 import { teardown } from '../../reactivity/effects.js';
-import { define_property, is_array } from '../../utils.js';
+import { define_property, is_array } from '../../../shared/utils.js';
 import { hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
 
