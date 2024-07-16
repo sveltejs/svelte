@@ -11,6 +11,7 @@ export default test({
 		let promise = new Promise((ok) => (resolve = ok));
 
 		component.promise = promise;
+		await Promise.resolve();
 		assert.htmlEqual(target.innerHTML, 'Loading...');
 
 		resolve(42);
@@ -19,6 +20,7 @@ export default test({
 
 		promise = new Promise((ok, fail) => (reject = fail));
 		component.promise = promise;
+		await Promise.resolve();
 		assert.htmlEqual(target.innerHTML, 'Loading...');
 
 		reject(99);
@@ -27,6 +29,7 @@ export default test({
 
 		promise = new Promise((ok) => (resolve = ok));
 		component.promise = promise;
+		await Promise.resolve();
 		assert.htmlEqual(target.innerHTML, 'Loading...');
 
 		resolve(1);
