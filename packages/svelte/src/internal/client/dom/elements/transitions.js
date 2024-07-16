@@ -303,13 +303,13 @@ function animate(element, options, counterpart, t2, callback) {
 		};
 	}
 
-	var { delay = 0, duration, css, tick, easing = linear } = options;
+	const { delay = 0, css, tick, easing = linear } = options;
 
 	var start = raf.now() + delay;
 	var t1 = counterpart?.t(start) ?? 1 - t2;
 	var delta = t2 - t1;
 
-	duration *= Math.abs(delta);
+	var duration = options.duration * Math.abs(delta);
 	var end = start + duration;
 
 	/** @type {Animation} */
@@ -319,52 +319,54 @@ function animate(element, options, counterpart, t2, callback) {
 	var task;
 
 	if (css) {
-		// WAAPI
-		var keyframes = [];
-		var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
+		queue_micro_task(() => {
+			// WAAPI
+			var keyframes = [];
+			var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
 
-		// In case of a delayed intro, apply the initial style for the duration of the delay;
-		// else in case of a fade-in for example the element would be visible until the animation starts
-		if (is_intro && delay > 0) {
-			let m = Math.ceil(delay / (1000 / 60));
-			let keyframe = css_to_keyframe(css(0, 1));
-			for (let i = 0; i < m; i += 1) {
-				keyframes.push(keyframe);
+			// In case of a delayed intro, apply the initial style for the duration of the delay;
+			// else in case of a fade-in for example the element would be visible until the animation starts
+			if (is_intro && delay > 0) {
+				let m = Math.ceil(delay / (1000 / 60));
+				let keyframe = css_to_keyframe(css(0, 1));
+				for (let i = 0; i < m; i += 1) {
+					keyframes.push(keyframe);
+				}
 			}
-		}
 
-		for (var i = 0; i <= n; i += 1) {
-			var t = t1 + delta * easing(i / n);
-			var styles = css(t, 1 - t);
-			keyframes.push(css_to_keyframe(styles));
-		}
+			for (var i = 0; i <= n; i += 1) {
+				var t = t1 + delta * easing(i / n);
+				var styles = css(t, 1 - t);
+				keyframes.push(css_to_keyframe(styles));
+			}
 
-		animation = element.animate(keyframes, {
-			delay: is_intro ? 0 : delay,
-			duration: duration + (is_intro ? delay : 0),
-			easing: 'linear',
-			fill: 'forwards'
-		});
-
-		animation.finished
-			.then(() => {
-				callback?.();
-
-				if (t2 === 1) {
-					animation.cancel();
-				}
-			})
-			.catch((e) => {
-				// Error for DOMException: The user aborted a request. This results in two things:
-				// - startTime is `null`
-				// - currentTime is `null`
-				// We can't use the existence of an AbortError as this error and error code is shared
-				// with other Web APIs such as fetch().
-
-				if (animation.startTime !== null && animation.currentTime !== null) {
-					throw e;
-				}
+			animation = element.animate(keyframes, {
+				delay: is_intro ? 0 : delay,
+				duration: duration + (is_intro ? delay : 0),
+				easing: 'linear',
+				fill: 'forwards'
 			});
+
+			animation.finished
+				.then(() => {
+					callback?.();
+
+					if (t2 === 1) {
+						animation.cancel();
+					}
+				})
+				.catch((e) => {
+					// Error for DOMException: The user aborted a request. This results in two things:
+					// - startTime is `null`
+					// - currentTime is `null`
+					// We can't use the existence of an AbortError as this error and error code is shared
+					// with other Web APIs such as fetch().
+
+					if (animation.startTime !== null && animation.currentTime !== null) {
+						throw e;
+					}
+				});
+		});
 	} else {
 		// Timer
 		if (t1 === 0) {
