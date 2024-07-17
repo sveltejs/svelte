@@ -116,7 +116,7 @@ npm i --save-dev prettier-plugin-svelte prettier
 
 ### When is it coming out?
 
-When it's done. The goal is sometime in early 2024.
+When it's done. The goal is sometime in late 2024.
 
 ### Should I prepare my code for Svelte 5?
 
