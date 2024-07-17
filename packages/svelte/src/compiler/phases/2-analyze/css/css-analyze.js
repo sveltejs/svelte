@@ -16,7 +16,11 @@ import { merge } from '../../visitors.js';
  * >} CssVisitors
  */
 
-/** @param {Css.RelativeSelector} relative_selector */
+/**
+ * True if is `:global(...)` or `:global`
+ * @param {Css.RelativeSelector} relative_selector
+ * @returns {relative_selector is Css.RelativeSelector & { selectors: [Css.PseudoClassSelector, ...Css.Selector[]] }}
+ */
 function is_global(relative_selector) {
 	const first = relative_selector.selectors[0];
 
@@ -135,17 +139,23 @@ const validation_visitors = {
 
 		context.next();
 	},
-	ComplexSelector(node, context) {
-		// ensure `:global(...)` is not used in the middle of a selector
+	ComplexSelector(node) {
 		{
-			const a = node.children.findIndex((child) => !is_global(child));
-			const b = node.children.findLastIndex((child) => !is_global(child));
+			const global = node.children.find(is_global);
 
-			if (a !== b) {
-				for (let i = a; i <= b; i += 1) {
-					if (is_global(node.children[i])) {
-						e.css_global_invalid_placement(node.children[i].selectors[0]);
-					}
+			if (global) {
+				const idx = node.children.indexOf(global);
+
+				// ensure `:global` is only at the end of a selector
+				if (global.selectors[0].args === null && idx !== node.children.length - 1) {
+					e.css_global_block_invalid_placement(global.selectors[0]);
+				} else if (
+					// ensure `:global(...)` is not used in the middle of a selector
+					global.selectors[0].args !== null &&
+					idx !== 0 &&
+					idx !== node.children.length - 1
+				) {
+					e.css_global_invalid_placement(global.selectors[0]);
 				}
 			}
 		}
