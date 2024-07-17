@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.188
+
+### Patch Changes
+
+- fix: ensure `$state.snapshot` never errors ([#12445](https://github.com/sveltejs/svelte/pull/12445))
+
+- feat: move dev-time component properties to private symbols' ([#12461](https://github.com/sveltejs/svelte/pull/12461))
+
 ## 5.0.0-next.187
 
 ### Patch Changes
