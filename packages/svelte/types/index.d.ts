@@ -366,6 +366,13 @@ declare module 'svelte' {
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
 	/**
+	 * Create a snippet programmatically
+	 * */
+	export function createRawSnippet<Params extends unknown[]>(fn: (...params: Getters<Params>) => {
+		render: () => string;
+		setup?: (element: Element) => void;
+	}): Snippet<Params>;
+	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
 	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
 	 *
@@ -450,6 +457,9 @@ declare module 'svelte' {
 	 * https://svelte.dev/docs/svelte#getallcontexts
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
+	type Getters<T> = {
+		[K in keyof T]: () => T[K];
+	};
 
 	export {};
 }

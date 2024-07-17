@@ -1108,12 +1108,12 @@ export function snippet_conflict(node) {
 }
 
 /**
- * snippets do not support rest parameters; use an array instead
+ * Snippets do not support rest parameters; use an array instead
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function snippet_invalid_rest_parameter(node) {
-	e(node, "snippet_invalid_rest_parameter", "snippets do not support rest parameters; use an array instead");
+	e(node, "snippet_invalid_rest_parameter", "Snippets do not support rest parameters; use an array instead");
 }
 
 /**

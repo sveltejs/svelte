@@ -1,12 +1,16 @@
+/** @import { Snippet } from 'svelte' */
 /** @import { Effect, TemplateNode } from '#client' */
+/** @import { Getters } from '#shared' */
 import { add_snippet_symbol } from '../../../shared/validate.js';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
-import { branch, block, destroy_effect } from '../../reactivity/effects.js';
+import { branch, block, destroy_effect, teardown } from '../../reactivity/effects.js';
 import {
 	dev_current_component_function,
 	set_dev_current_component_function
 } from '../../runtime.js';
-import { hydrate_node, hydrating } from '../hydration.js';
+import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
+import { create_fragment_from_html } from '../reconciler.js';
+import { assign_nodes } from '../template.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
@@ -59,4 +63,41 @@ export function wrap_snippet(component, fn) {
 			set_dev_current_component_function(previous_component_function);
 		}
 	});
+}
+
+/**
+ * Create a snippet programmatically
+ * @template {unknown[]} Params
+ * @param {(...params: Getters<Params>) => {
+ *   render: () => string
+ *   setup?: (element: Element) => void
+ * }} fn
+ * @returns {Snippet<Params>}
+ */
+export function createRawSnippet(fn) {
+	return add_snippet_symbol(
+		(/** @type {TemplateNode} */ anchor, /** @type {Getters<Params>} */ ...params) => {
+			var snippet = fn(...params);
+
+			/** @type {Element} */
+			var element;
+
+			if (hydrating) {
+				element = /** @type {Element} */ (hydrate_node);
+				hydrate_next();
+			} else {
+				var html = snippet.render().trim();
+				var fragment = create_fragment_from_html(html);
+				element = /** @type {Element} */ (fragment.firstChild);
+				anchor.before(element);
+			}
+
+			const result = snippet.setup?.(element);
+			assign_nodes(element, element);
+
+			if (typeof result === 'function') {
+				teardown(result);
+			}
+		}
+	);
 }

@@ -674,6 +674,12 @@ const validation = {
 	SnippetBlock(node, context) {
 		validate_block_not_empty(node.body, context);
 
+		for (const arg of node.parameters) {
+			if (arg.type === 'RestElement') {
+				e.snippet_invalid_rest_parameter(arg);
+			}
+		}
+
 		context.next({ ...context.state, parent_element: null });
 
 		const { path } = context;

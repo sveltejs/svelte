@@ -250,7 +250,7 @@
 
 ## snippet_invalid_rest_parameter
 
-> snippets do not support rest parameters; use an array instead
+> Snippets do not support rest parameters; use an array instead
 
 ## snippet_shadowing_prop
 
