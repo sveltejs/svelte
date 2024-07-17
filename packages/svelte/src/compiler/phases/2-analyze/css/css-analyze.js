@@ -19,7 +19,7 @@ import { merge } from '../../visitors.js';
 /**
  * True if is `:global(...)` or `:global`
  * @param {Css.RelativeSelector} relative_selector
- * @returns {relative_selector is Css.RelativeSelector & { selectors: [Css.PseudoClassSelector, ...Css.Selector[]] }}
+ * @returns {relative_selector is Css.RelativeSelector & { selectors: [Css.PseudoClassSelector, ...Array<Css.PseudoClassSelector | Css.PseudoElementSelector>] }}
  */
 function is_global(relative_selector) {
 	const first = relative_selector.selectors[0];
