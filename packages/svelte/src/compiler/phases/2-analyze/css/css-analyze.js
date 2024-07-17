@@ -157,7 +157,7 @@ const validation_visitors = {
 					// ensure `:global(...)` is not used in the middle of a selector (but multiple `global(...)` in sequence are ok)
 					for (let i = idx + 1; i < node.children.length; i++) {
 						if (!is_global(node.children[i])) {
-							e.css_global_invalid_placement(node.children[i].selectors[0]);
+							e.css_global_invalid_placement(global.selectors[0]);
 						}
 					}
 				}
