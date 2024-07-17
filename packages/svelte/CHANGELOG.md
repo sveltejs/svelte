@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.189
+
+### Patch Changes
+
+- feat: add createRawSnippet API ([#12425](https://github.com/sveltejs/svelte/pull/12425))
+
 ## 5.0.0-next.188
 
 ### Patch Changes
