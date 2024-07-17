@@ -122,7 +122,7 @@ The `setup` function is called during `mount` or `hydrate` with that same elemen
 {@render greet(name)}
 ```
 
-If the snippet is fully static, you can omit the `setup` function.
+If `setup` returns a function, it will be called when the snippet is unmounted. If the snippet is fully static, you can omit the `setup` function altogether.
 
 ## `svelte/reactivity`
 

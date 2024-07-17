@@ -3,7 +3,7 @@
 /** @import { Getters } from '#shared' */
 import { add_snippet_symbol } from '../../../shared/validate.js';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
-import { branch, block, destroy_effect } from '../../reactivity/effects.js';
+import { branch, block, destroy_effect, teardown } from '../../reactivity/effects.js';
 import {
 	dev_current_component_function,
 	set_dev_current_component_function
@@ -92,8 +92,12 @@ export function createRawSnippet(fn) {
 				anchor.before(element);
 			}
 
-			snippet.setup?.(element);
+			const result = snippet.setup?.(element);
 			assign_nodes(element, element);
+
+			if (typeof result === 'function') {
+				teardown(result);
+			}
 		}
 	);
 }
