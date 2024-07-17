@@ -5,7 +5,8 @@
 
 	/** a comment */
 	function asd() {
-
+		foo;
+		/* comment belonging to noone */
 	}
 </script>
 
@@ -13,7 +14,8 @@
 	on:click={// comment
 	() => {
 		/* another comment */
-		fn();
+		fn(); // a trailing comment
+		/* comment belonging to noone */
 	}}
 >
 {/* leading block comment */ a}

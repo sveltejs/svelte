@@ -105,17 +105,22 @@ function get_comment_handlers(source) {
 
 					if (comments[0]) {
 						const parent = path.at(-1);
+
 						if (parent === undefined || node.end !== parent.end) {
 							const slice = source.slice(node.end, comments[0].start);
 
-							if (/^[,) \t]*$/.test(slice)) {
+							if (node.end <= comments[0].start && /^[,) \t]*$/.test(slice)) {
 								node.trailingComments = [/** @type {CommentWithLocation} */ (comments.shift())];
 							}
 						}
 					}
 				}
 			});
-			if (comments.length > 0) {
+
+			// Special case: Trailing comments after the root node (which can only happen for expression tags) get added
+			// regardless of line breaks between the root node and the comments. This ensures that we can later detect
+			// the end of the expression tag correctly.
+			if (comments.length > 0 && comments[0].start >= ast.end) {
 				(ast.trailingComments ||= []).push(...comments.splice(0));
 			}
 		}
