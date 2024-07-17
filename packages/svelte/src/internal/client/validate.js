@@ -84,7 +84,7 @@ function is_possiblly_reactive_object(value) {
 		return true;
 	}
 	const prototype = get_prototype_of(value);
-	if (prototype !== array_prototype && prototype === object_prototype) {
+	if (prototype !== array_prototype && prototype !== object_prototype) {
 		return true;
 	}
 	const descriptors = get_descriptors(value);
