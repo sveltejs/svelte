@@ -4,6 +4,7 @@ export const DOMProperties = [
 	...Object.values(AttributeAliases),
 	'value',
 	'inert',
+	'volume',
 	...DOMBooleanAttributes
 ];
 
