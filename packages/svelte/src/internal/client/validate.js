@@ -120,6 +120,8 @@ export function validate_prop_bindings($$props, bindable, exports, component) {
 				e.bind_not_bindable(key, component[FILENAME], name);
 			}
 		}
+		if (key === '$$slots' || key === '$$events' || key === '$$legacy') return;
+
 		var value = $$props[key];
 		if (typeof value === 'object' && value !== null && !is_possiblly_reactive_object(value)) {
 			w.bindable_prop_not_reactive(key);
