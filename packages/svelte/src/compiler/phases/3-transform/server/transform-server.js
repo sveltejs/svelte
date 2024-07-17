@@ -3,6 +3,7 @@ import { set_scope, get_rune } from '../../scope.js';
 import {
 	extract_identifiers,
 	extract_paths,
+	get_attribute_chunks,
 	is_event_attribute,
 	is_expression_async,
 	is_text_attribute,
@@ -678,7 +679,7 @@ const javascript_visitors_runes = {
 
 /**
  *
- * @param {true | Array<import('#compiler').Text | import('#compiler').ExpressionTag>} value
+ * @param {import('#compiler').Attribute['value']} value
  * @param {import('./types').ComponentContext} context
  * @param {boolean} trim_whitespace
  * @param {boolean} is_component
@@ -689,8 +690,8 @@ function serialize_attribute_value(value, context, trim_whitespace = false, is_c
 		return b.true;
 	}
 
-	if (value.length === 1) {
-		const chunk = value[0];
+	if (!Array.isArray(value) || value.length === 1) {
+		const chunk = Array.isArray(value) ? value[0] : value;
 
 		if (chunk.type === 'Text') {
 			const data = trim_whitespace
@@ -1667,6 +1668,7 @@ function serialize_element_attributes(node, context) {
 				if (node.name === 'textarea') {
 					if (
 						attribute.value !== true &&
+						Array.isArray(attribute.value) &&
 						attribute.value[0].type === 'Text' &&
 						regex_starts_with_newline.test(attribute.value[0].data)
 					) {
@@ -1891,15 +1893,19 @@ function serialize_class_directives(class_directives, class_attribute) {
 	const expressions = class_directives.map((directive) =>
 		b.conditional(directive.expression, b.literal(directive.name), b.literal(''))
 	);
+
 	if (class_attribute === null) {
 		class_attribute = create_attribute('class', -1, -1, []);
 	}
-	const last = /** @type {any[]} */ (class_attribute.value).at(-1);
+
+	const chunks = get_attribute_chunks(class_attribute.value);
+	const last = chunks.at(-1);
+
 	if (last?.type === 'Text') {
 		last.data += ' ';
 		last.raw += ' ';
 	} else if (last) {
-		/** @type {import('#compiler').Text[]} */ (class_attribute.value).push({
+		chunks.push({
 			type: 'Text',
 			start: -1,
 			end: -1,
@@ -1908,7 +1914,8 @@ function serialize_class_directives(class_directives, class_attribute) {
 			raw: ' '
 		});
 	}
-	/** @type {import('#compiler').ExpressionTag[]} */ (class_attribute.value).push({
+
+	chunks.push({
 		type: 'ExpressionTag',
 		start: -1,
 		end: -1,
@@ -1922,6 +1929,8 @@ function serialize_class_directives(class_directives, class_attribute) {
 		),
 		metadata: { contains_call_expression: false, dynamic: false }
 	});
+
+	class_attribute.value = chunks;
 	return class_attribute;
 }
 

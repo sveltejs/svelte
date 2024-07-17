@@ -2,6 +2,8 @@
 import {
 	extract_identifiers,
 	extract_paths,
+	get_attribute_chunks,
+	get_attribute_expression,
 	is_event_attribute,
 	is_text_attribute,
 	object,
@@ -96,11 +98,9 @@ function serialize_style_directives(style_directives, element_id, context, is_at
 			)
 		);
 
-		const contains_call_expression =
-			Array.isArray(directive.value) &&
-			directive.value.some(
-				(v) => v.type === 'ExpressionTag' && v.metadata.contains_call_expression
-			);
+		const contains_call_expression = get_attribute_chunks(directive.value).some(
+			(v) => v.type === 'ExpressionTag' && v.metadata.contains_call_expression
+		);
 
 		if (!is_attributes_reactive && contains_call_expression) {
 			state.init.push(serialize_update(update));
@@ -286,8 +286,8 @@ function serialize_element_spread_attributes(
 
 			if (
 				is_event_attribute(attribute) &&
-				(attribute.value[0].expression.type === 'ArrowFunctionExpression' ||
-					attribute.value[0].expression.type === 'FunctionExpression')
+				(get_attribute_expression(attribute).type === 'ArrowFunctionExpression' ||
+					get_attribute_expression(attribute).type === 'FunctionExpression')
 			) {
 				// Give the event handler a stable ID so it isn't removed and readded on every update
 				const id = context.state.scope.generate('event_handler');
@@ -385,8 +385,8 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 
 			if (
 				is_event_attribute(attribute) &&
-				(attribute.value[0].expression.type === 'ArrowFunctionExpression' ||
-					attribute.value[0].expression.type === 'FunctionExpression')
+				(get_attribute_expression(attribute).type === 'ArrowFunctionExpression' ||
+					get_attribute_expression(attribute).type === 'FunctionExpression')
 			) {
 				// Give the event handler a stable ID so it isn't removed and readded on every update
 				const id = context.state.scope.generate('event_handler');
@@ -757,15 +757,13 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 				// When we have a non-simple computation, anything other than an Identifier or Member expression,
 				// then there's a good chance it needs to be memoized to avoid over-firing when read within the
 				// child component.
-				const should_wrap_in_derived =
-					Array.isArray(attribute.value) &&
-					attribute.value.some((n) => {
-						return (
-							n.type === 'ExpressionTag' &&
-							n.expression.type !== 'Identifier' &&
-							n.expression.type !== 'MemberExpression'
-						);
-					});
+				const should_wrap_in_derived = get_attribute_chunks(attribute.value).some((n) => {
+					return (
+						n.type === 'ExpressionTag' &&
+						n.expression.type !== 'Identifier' &&
+						n.expression.type !== 'MemberExpression'
+					);
+				});
 
 				if (should_wrap_in_derived) {
 					const id = b.id(context.state.scope.generate(attribute.name));
@@ -1291,7 +1289,7 @@ function serialize_event(node, context) {
 }
 
 /**
- * @param {import('#compiler').Attribute & { value: [import('#compiler').ExpressionTag] }} node
+ * @param {import('#compiler').Attribute & { value: import('#compiler').ExpressionTag | [import('#compiler').ExpressionTag] }} node
  * @param {import('../types').ComponentContext} context
  */
 function serialize_event_attribute(node, context) {
@@ -1307,7 +1305,7 @@ function serialize_event_attribute(node, context) {
 	serialize_event(
 		{
 			name: event_name,
-			expression: node.value[0].expression,
+			expression: get_attribute_expression(node),
 			modifiers,
 			delegated: node.metadata.delegated
 		},
@@ -1468,7 +1466,7 @@ function get_node_id(expression, state, name) {
 }
 
 /**
- * @param {true | Array<import('#compiler').Text | import('#compiler').ExpressionTag>} value
+ * @param {import('#compiler').Attribute['value']} value
  * @param {import('../types').ComponentContext} context
  * @returns {[contains_call_expression: boolean, Expression]}
  */
@@ -1477,8 +1475,8 @@ function serialize_attribute_value(value, context) {
 		return [false, b.literal(true)];
 	}
 
-	if (value.length === 1) {
-		const chunk = value[0];
+	if (!Array.isArray(value) || value.length === 1) {
+		const chunk = Array.isArray(value) ? value[0] : value;
 
 		if (chunk.type === 'Text') {
 			return [false, b.literal(chunk.data)];

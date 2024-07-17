@@ -1,4 +1,4 @@
-import type { StyleDirective as LegacyStyleDirective, Text, Css } from '#compiler';
+import type { Text, Css, ExpressionTag } from '#compiler';
 import type {
 	ArrayExpression,
 	AssignmentExpression,
@@ -192,6 +192,16 @@ export interface LegacyTransition extends BaseNode {
 	intro: boolean;
 	/** True if this is a `transition:` or `out:` directive */
 	outro: boolean;
+}
+
+/** A `style:` directive */
+export interface LegacyStyleDirective extends BaseNode {
+	type: 'StyleDirective';
+	/** The 'x' in `style:x` */
+	name: string;
+	/** The 'y' in `style:x={y}` */
+	value: true | Array<ExpressionTag | Text>;
+	modifiers: Array<'important'>;
 }
 
 export interface LegacyWindow extends BaseElement {

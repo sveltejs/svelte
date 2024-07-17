@@ -9,7 +9,9 @@ import {
 	is_event_attribute,
 	is_text_attribute,
 	object,
-	unwrap_optional
+	unwrap_optional,
+	get_attribute_expression,
+	get_attribute_chunks
 } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
 import { MathMLElements, ReservedKeywords, Runes, SVGElements } from '../constants.js';
@@ -597,19 +599,24 @@ export function analyze_component(root, source, options) {
 				}
 
 				if (class_attribute && class_attribute.value !== true) {
-					const chunks = class_attribute.value;
-
-					if (chunks.length === 1 && chunks[0].type === 'Text') {
-						chunks[0].data += ` ${analysis.css.hash}`;
+					if (is_text_attribute(class_attribute)) {
+						class_attribute.value[0].data += ` ${analysis.css.hash}`;
 					} else {
-						chunks.push({
+						/** @type {import('#compiler').Text} */
+						const css_text = {
 							type: 'Text',
 							data: ` ${analysis.css.hash}`,
 							raw: ` ${analysis.css.hash}`,
 							start: -1,
 							end: -1,
 							parent: null
-						});
+						};
+
+						if (Array.isArray(class_attribute.value)) {
+							class_attribute.value.push(css_text);
+						} else {
+							class_attribute.value = [class_attribute.value, css_text];
+						}
 					}
 				} else {
 					element.attributes.push(
@@ -1171,7 +1178,7 @@ const common_visitors = {
 
 		context.next();
 
-		node.metadata.dynamic = node.value.some((chunk) => {
+		node.metadata.dynamic = get_attribute_chunks(node.value).some((chunk) => {
 			if (chunk.type !== 'ExpressionTag') {
 				return false;
 			}
@@ -1192,8 +1199,7 @@ const common_visitors = {
 				context.state.analysis.uses_event_attributes = true;
 			}
 
-			const expression = node.value[0].expression;
-
+			const expression = get_attribute_expression(node);
 			const delegated_event = get_delegated_event(node.name.slice(2), expression, context);
 
 			if (delegated_event !== null) {
@@ -1228,7 +1234,7 @@ const common_visitors = {
 			}
 		} else {
 			context.next();
-			node.metadata.dynamic = node.value.some(
+			node.metadata.dynamic = get_attribute_chunks(node.value).some(
 				(node) => node.type === 'ExpressionTag' && node.metadata.dynamic
 			);
 		}

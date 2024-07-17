@@ -226,7 +226,7 @@ export interface StyleDirective extends BaseNode {
 	/** The 'x' in `style:x` */
 	name: string;
 	/** The 'y' in `style:x={y}` */
-	value: true | Array<ExpressionTag | Text>;
+	value: true | ExpressionTag | Array<ExpressionTag | Text>;
 	modifiers: Array<'important'>;
 	metadata: {
 		dynamic: boolean;
@@ -447,7 +447,7 @@ export type Block = EachBlock | IfBlock | AwaitBlock | KeyBlock | SnippetBlock;
 export interface Attribute extends BaseNode {
 	type: 'Attribute';
 	name: string;
-	value: true | Array<Text | ExpressionTag>;
+	value: true | ExpressionTag | Array<Text | ExpressionTag>;
 	metadata: {
 		dynamic: boolean;
 		/** May be set if this is an event attribute */

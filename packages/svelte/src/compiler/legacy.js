@@ -411,6 +411,34 @@ export function convert(source, ast) {
 					)
 				};
 			},
+			Attribute(node, { visit, next, path }) {
+				if (node.value !== true && !Array.isArray(node.value)) {
+					path.push(node);
+					const value = /** @type {Legacy.LegacyAttribute['value']} */ ([visit(node.value)]);
+					path.pop();
+
+					return {
+						...node,
+						value
+					};
+				} else {
+					return next();
+				}
+			},
+			StyleDirective(node, { visit, next, path }) {
+				if (node.value !== true && !Array.isArray(node.value)) {
+					path.push(node);
+					const value = /** @type {Legacy.LegacyStyleDirective['value']} */ ([visit(node.value)]);
+					path.pop();
+
+					return {
+						...node,
+						value
+					};
+				} else {
+					return next();
+				}
+			},
 			SpreadAttribute(node) {
 				return { ...node, type: 'Spread' };
 			},

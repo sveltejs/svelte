@@ -532,11 +532,13 @@ const template = {
 				if (attr.name === 'name') {
 					slot_name = /** @type {any} */ (attr.value)[0].data;
 				} else {
+					const attr_value =
+						attr.value === true || Array.isArray(attr.value) ? attr.value : [attr.value];
 					const value =
-						attr.value !== true
+						attr_value !== true
 							? state.str.original.substring(
-									attr.value[0].start,
-									attr.value[attr.value.length - 1].end
+									attr_value[0].start,
+									attr_value[attr_value.length - 1].end
 								)
 							: 'true';
 					slot_props += value === attr.name ? `${value}, ` : `${attr.name}: ${value}, `;

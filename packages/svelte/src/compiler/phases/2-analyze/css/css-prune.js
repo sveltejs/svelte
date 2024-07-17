@@ -3,6 +3,7 @@
 import { walk } from 'zimmerframe';
 import { get_possible_values } from './utils.js';
 import { regex_ends_with_whitespace, regex_starts_with_whitespace } from '../../patterns.js';
+import { get_attribute_chunks, is_text_attribute } from '../../../utils/ast.js';
 
 /**
  * @typedef {{
@@ -444,14 +445,11 @@ function attribute_matches(node, name, expected_value, operator, case_insensitiv
 		if (attribute.value === true) return operator === null;
 		if (expected_value === null) return true;
 
-		const chunks = attribute.value;
-		if (chunks.length === 1) {
-			const value = chunks[0];
-			if (value.type === 'Text') {
-				return test_attribute(operator, expected_value, case_insensitive, value.data);
-			}
+		if (is_text_attribute(attribute)) {
+			return test_attribute(operator, expected_value, case_insensitive, attribute.value[0].data);
 		}
 
+		const chunks = get_attribute_chunks(attribute.value);
 		const possible_values = new Set();
 
 		/** @type {string[]} */

@@ -27,27 +27,54 @@ export function object(expression) {
  */
 export function is_text_attribute(attribute) {
 	return (
-		attribute.value !== true && attribute.value.length === 1 && attribute.value[0].type === 'Text'
+		Array.isArray(attribute.value) &&
+		attribute.value.length === 1 &&
+		attribute.value[0].type === 'Text'
 	);
 }
 
 /**
  * Returns true if the attribute contains a single expression node.
+ * In Svelte 5, this also includes a single expression node wrapped in an array.
+ * TODO change that in a future version
  * @param {Attribute} attribute
- * @returns {attribute is Attribute & { value: [ExpressionTag] }}
+ * @returns {attribute is Attribute & { value: [ExpressionTag] | ExpressionTag }}
  */
 export function is_expression_attribute(attribute) {
 	return (
-		attribute.value !== true &&
-		attribute.value.length === 1 &&
-		attribute.value[0].type === 'ExpressionTag'
+		(attribute.value !== true && !Array.isArray(attribute.value)) ||
+		(Array.isArray(attribute.value) &&
+			attribute.value.length === 1 &&
+			attribute.value[0].type === 'ExpressionTag')
 	);
+}
+
+/**
+ * Returns the single attribute expression node.
+ * In Svelte 5, this also includes a single expression node wrapped in an array.
+ * TODO change that in a future version
+ * @param { Attribute & { value: [ExpressionTag] | ExpressionTag }} attribute
+ * @returns {ESTree.Expression}
+ */
+export function get_attribute_expression(attribute) {
+	return Array.isArray(attribute.value)
+		? /** @type {ExpressionTag} */ (attribute.value[0]).expression
+		: attribute.value.expression;
+}
+
+/**
+ * Returns the expression chunks of an attribute value
+ * @param {Attribute['value']} value
+ * @returns {Array<Text | ExpressionTag>}
+ */
+export function get_attribute_chunks(value) {
+	return Array.isArray(value) ? value : typeof value === 'boolean' ? [] : [value];
 }
 
 /**
  * Returns true if the attribute starts with `on` and contains a single expression node.
  * @param {Attribute} attribute
- * @returns {attribute is Attribute & { value: [ExpressionTag] }}
+ * @returns {attribute is Attribute & { value: [ExpressionTag] | ExpressionTag }}
  */
 export function is_event_attribute(attribute) {
 	return is_expression_attribute(attribute) && attribute.name.startsWith('on');

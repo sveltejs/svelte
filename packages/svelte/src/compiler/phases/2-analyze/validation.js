@@ -7,6 +7,7 @@ import {
 import * as e from '../../errors.js';
 import {
 	extract_identifiers,
+	get_attribute_expression,
 	get_parent,
 	is_expression_attribute,
 	is_text_attribute,
@@ -35,7 +36,9 @@ import { a11y_validators } from './a11y.js';
 
 /** @param {import('#compiler').Attribute} attribute */
 function validate_attribute(attribute) {
-	if (attribute.value === true || attribute.value.length === 1) return;
+	if (attribute.value === true || !Array.isArray(attribute.value) || attribute.value.length === 1) {
+		return;
+	}
 
 	const is_quoted = attribute.value.at(-1)?.end !== attribute.end;
 
@@ -72,7 +75,7 @@ function validate_component(node, context) {
 				validate_attribute(attribute);
 
 				if (is_expression_attribute(attribute)) {
-					const expression = attribute.value[0].expression;
+					const expression = get_attribute_expression(attribute);
 					if (expression.type === 'SequenceExpression') {
 						let i = /** @type {number} */ (expression.start);
 						while (--i > 0) {
@@ -125,7 +128,7 @@ function validate_element(node, context) {
 				validate_attribute(attribute);
 
 				if (is_expression) {
-					const expression = attribute.value[0].expression;
+					const expression = get_attribute_expression(attribute);
 					if (expression.type === 'SequenceExpression') {
 						let i = /** @type {number} */ (expression.start);
 						while (--i > 0) {
@@ -146,7 +149,7 @@ function validate_element(node, context) {
 					e.attribute_invalid_event_handler(attribute);
 				}
 
-				const value = attribute.value[0].expression;
+				const value = get_attribute_expression(attribute);
 				if (
 					value.type === 'Identifier' &&
 					value.name === attribute.name &&
