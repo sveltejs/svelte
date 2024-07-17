@@ -276,7 +276,11 @@ export const javascript_visitors_runes = {
 								/** @type {import('estree').Expression} */ (visit(binding.initial));
 							// We're adding proxy here on demand and not within the prop runtime function so that
 							// people not using proxied state anywhere in their code don't have to pay the additional bundle size cost
-							if (initial && binding.mutated && should_proxy_or_freeze(initial, state.scope)) {
+							if (
+								initial &&
+								binding.kind === 'bindable_prop' &&
+								should_proxy_or_freeze(initial, state.scope)
+							) {
 								initial = b.call('$.proxy', initial);
 							}
 

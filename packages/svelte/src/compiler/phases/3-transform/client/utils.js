@@ -336,7 +336,8 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 						left,
 						context.state.analysis.runes &&
 							!options?.skip_proxy_and_freeze &&
-							should_proxy_or_freeze(value, context.state.scope)
+							should_proxy_or_freeze(value, context.state.scope) &&
+							binding.kind === 'bindable_prop'
 							? serialize_proxy_reassignment(value, left_name, state)
 							: value
 					);
