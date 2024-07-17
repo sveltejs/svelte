@@ -154,8 +154,8 @@ We appreciate your enthusiasm! We welcome issues on the [sveltejs/svelte](https:
 
 ### How can I share feedback or cool examples of what this enables?
 
-You can use the `#svelte-5-alpha` channel on the [Discord server](https://svelte.dev/chat) or the tag `#svelte-5-alpha` on social media.
+You can use the `#svelte-5-rc` channel on the [Discord server](https://svelte.dev/chat) or the tag `#svelte-5-rc` on social media.
 
 ### My question wasn't answered. What gives?
 
-It must not have been asked frequently enough. To fix that, stop by the `#svelte-5-alpha` channel of the [Discord server](https://svelte.dev/chat).
+It must not have been asked frequently enough. To fix that, stop by the `#svelte-5-rc` channel of the [Discord server](https://svelte.dev/chat).
