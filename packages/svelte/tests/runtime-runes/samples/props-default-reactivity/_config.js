@@ -63,8 +63,8 @@ export default test({
 			`
 				<button>mutate: 3</button>
 				<button>reassign: 3</button>
-				<button>mutate: 1</button>
-				<button>reassign: 1</button>
+				<button>mutate: 0</button>
+				<button>reassign: 0</button>
 			`
 		);
 
@@ -91,8 +91,8 @@ export default test({
 			`
 				<button>mutate: 3</button>
 				<button>reassign: 3</button>
-				<button>mutate: 3</button>
-				<button>reassign: 3</button>
+				<button>mutate: 2</button>
+				<button>reassign: 2</button>
 			`
 		);
 	}
