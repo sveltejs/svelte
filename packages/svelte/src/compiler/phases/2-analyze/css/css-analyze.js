@@ -146,16 +146,20 @@ const validation_visitors = {
 			if (global) {
 				const idx = node.children.indexOf(global);
 
-				// ensure `:global` is only at the end of a selector
 				if (global.selectors[0].args === null && idx !== node.children.length - 1) {
+					// ensure `:global` is only at the end of a selector
 					e.css_global_block_invalid_placement(global.selectors[0]);
 				} else if (
-					// ensure `:global(...)` is not used in the middle of a selector
 					global.selectors[0].args !== null &&
 					idx !== 0 &&
 					idx !== node.children.length - 1
 				) {
-					e.css_global_invalid_placement(global.selectors[0]);
+					// ensure `:global(...)` is not used in the middle of a selector (but multiple `global(...)` in sequence are ok)
+					for (let i = idx + 1; i < node.children.length; i++) {
+						if (!is_global(node.children[i])) {
+							e.css_global_invalid_placement(node.children[i].selectors[0]);
+						}
+					}
 				}
 			}
 		}
