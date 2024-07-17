@@ -6,6 +6,19 @@ var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
 /**
+ * The `%name%` prop was passed an object that isn't reactive yet was marked as bindable. The object should be either made reactive using `$state` or should contain properties that have a `set` accessor.
+ * @param {string} name
+ */
+export function bindable_prop_not_reactive(name) {
+	if (DEV) {
+		console.warn(`%c[svelte] bindable_prop_not_reactive\n%cThe \`${name}\` prop was passed an object that isn't reactive yet was marked as bindable. The object should be either made reactive using \`$state\` or should contain properties that have a \`set\` accessor.`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("bindable_prop_not_reactive");
+	}
+}
+
+/**
  * The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
  * @param {string} attribute
  * @param {string} html

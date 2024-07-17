@@ -1,7 +1,16 @@
 import { untrack } from './runtime.js';
-import { get_descriptor, is_array } from '../shared/utils.js';
+import {
+	array_prototype,
+	get_descriptor,
+	get_descriptors,
+	get_prototype_of,
+	is_array,
+	object_prototype
+} from '../shared/utils.js';
 import * as e from './errors.js';
+import * as w from './warnings.js';
 import { FILENAME } from '../../constants.js';
+import { STATE_SYMBOL } from './constants.js';
 
 /** regex of all html void element names */
 const void_element_names =
@@ -68,6 +77,30 @@ export function validate_each_keys(collection, key_fn) {
 }
 
 /**
+ * @param {any} value
+ */
+function is_possiblly_reactive_object(value) {
+	if (STATE_SYMBOL in value) {
+		return true;
+	}
+	const prototype = get_prototype_of(value);
+	if (prototype === array_prototype || prototype === object_prototype) {
+		const descriptors = get_descriptors(value);
+		for (let key in descriptors) {
+			var prop_value = value[key];
+			if (
+				descriptors[key].set ||
+				(typeof prop_value === 'object' &&
+					prop_value !== null &&
+					is_possiblly_reactive_object(prop_value))
+			)
+				return true;
+		}
+	}
+	return false;
+}
+
+/**
  * @param {Record<string, any>} $$props
  * @param {string[]} bindable
  * @param {string[]} exports
@@ -86,6 +119,10 @@ export function validate_prop_bindings($$props, bindable, exports, component) {
 			if (!bindable.includes(key)) {
 				e.bind_not_bindable(key, component[FILENAME], name);
 			}
+		}
+		var value = $$props[key];
+		if (typeof value === 'object' && value !== null && !is_possiblly_reactive_object(value)) {
+			w.bindable_prop_not_reactive(key);
 		}
 	}
 }

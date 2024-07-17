@@ -1,3 +1,7 @@
+## bindable_prop_not_reactive
+
+> The `%name%` prop was passed an object that isn't reactive yet was marked as bindable. The object should be either made reactive using `$state` or should contain properties that have a `set` accessor.
+
 ## hydration_attribute_changed
 
 > The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
