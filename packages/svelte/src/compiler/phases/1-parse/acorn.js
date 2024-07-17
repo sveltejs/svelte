@@ -109,10 +109,12 @@ function get_comment_handlers(source) {
 						if (parent === undefined || node.end !== parent.end) {
 							const slice = source.slice(node.end, comments[0].start);
 							const is_last_in_body =
-								// BlockStatement and Program nodes have a body property
-								parent?.body?.length &&
-								Array.isArray(parent?.body) &&
-								parent.body.indexOf(node) === parent.body.length - 1;
+								((parent?.type === 'BlockStatement' || parent?.type === 'Program') &&
+									parent.body.indexOf(node) === parent.body.length - 1) ||
+								(parent?.type === 'ArrayExpression' &&
+									parent.elements.indexOf(node) === parent.elements.length - 1) ||
+								(parent?.type === 'ObjectExpression' &&
+									parent.properties.indexOf(node) === parent.properties.length - 1);
 
 							if (is_last_in_body) {
 								// Special case: There can be multiple trailing comments after the last node in a block,
@@ -121,10 +123,7 @@ function get_comment_handlers(source) {
 
 								while (comments.length) {
 									const comment = comments[0];
-									if (parent && comment.start > parent.end) break;
-
-									const slice = source.slice(end, comment.start);
-									if (node.end === end ? !/^[,)\s]*$/.test(slice) : slice.trim() !== '') break;
+									if (parent && comment.start >= parent.end) break;
 
 									(node.trailingComments ||= []).push(comment);
 									comments.shift();

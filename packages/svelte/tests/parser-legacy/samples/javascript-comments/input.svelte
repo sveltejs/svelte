@@ -14,6 +14,20 @@
 		/* trailing comment 2 */
 		/* trailing comment 3 */
 	}
+
+	const array = [
+		// leading comment 1
+		// leading comment 2
+		1, // trailing comment 1
+		/* trailing comment 2 */
+	];
+
+	const object = {
+		// leading comment 1
+		// leading comment 2
+		a: 1, // trailing comment 1
+		/* trailing comment 2 */
+	};
 </script>
 
 <button

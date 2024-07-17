@@ -1,39 +1,39 @@
 {
 	"html": {
 		"type": "Fragment",
-		"start": 317,
-		"end": 578,
+		"start": 565,
+		"end": 826,
 		"children": [
 			{
 				"type": "Text",
-				"start": 315,
-				"end": 317,
+				"start": 563,
+				"end": 565,
 				"raw": "\n\n",
 				"data": "\n\n"
 			},
 			{
 				"type": "Element",
-				"start": 317,
-				"end": 488,
+				"start": 565,
+				"end": 736,
 				"name": "button",
 				"attributes": [
 					{
-						"start": 326,
-						"end": 444,
+						"start": 574,
+						"end": 692,
 						"type": "EventHandler",
 						"name": "click",
 						"modifiers": [],
 						"expression": {
 							"type": "ArrowFunctionExpression",
-							"start": 348,
-							"end": 443,
+							"start": 596,
+							"end": 691,
 							"loc": {
 								"start": {
-									"line": 21,
+									"line": 35,
 									"column": 1
 								},
 								"end": {
-									"line": 25,
+									"line": 39,
 									"column": 2
 								}
 							},
@@ -44,58 +44,58 @@
 							"params": [],
 							"body": {
 								"type": "BlockStatement",
-								"start": 354,
-								"end": 443,
+								"start": 602,
+								"end": 691,
 								"loc": {
 									"start": {
-										"line": 21,
+										"line": 35,
 										"column": 7
 									},
 									"end": {
-										"line": 25,
+										"line": 39,
 										"column": 2
 									}
 								},
 								"body": [
 									{
 										"type": "ExpressionStatement",
-										"start": 382,
-										"end": 387,
+										"start": 630,
+										"end": 635,
 										"loc": {
 											"start": {
-												"line": 23,
+												"line": 37,
 												"column": 2
 											},
 											"end": {
-												"line": 23,
+												"line": 37,
 												"column": 7
 											}
 										},
 										"expression": {
 											"type": "CallExpression",
-											"start": 382,
-											"end": 386,
+											"start": 630,
+											"end": 634,
 											"loc": {
 												"start": {
-													"line": 23,
+													"line": 37,
 													"column": 2
 												},
 												"end": {
-													"line": 23,
+													"line": 37,
 													"column": 6
 												}
 											},
 											"callee": {
 												"type": "Identifier",
-												"start": 382,
-												"end": 384,
+												"start": 630,
+												"end": 632,
 												"loc": {
 													"start": {
-														"line": 23,
+														"line": 37,
 														"column": 2
 													},
 													"end": {
-														"line": 23,
+														"line": 37,
 														"column": 4
 													}
 												},
@@ -108,22 +108,22 @@
 											{
 												"type": "Block",
 												"value": " another comment ",
-												"start": 358,
-												"end": 379
+												"start": 606,
+												"end": 627
 											}
 										],
 										"trailingComments": [
 											{
 												"type": "Line",
 												"value": " a trailing comment",
-												"start": 388,
-												"end": 409
+												"start": 636,
+												"end": 657
 											},
 											{
 												"type": "Block",
 												"value": " trailing block comment ",
-												"start": 412,
-												"end": 440
+												"start": 660,
+												"end": 688
 											}
 										]
 									}
@@ -133,8 +133,8 @@
 								{
 									"type": "Line",
 									"value": " comment",
-									"start": 336,
-									"end": 346
+									"start": 584,
+									"end": 594
 								}
 							]
 						}
@@ -143,26 +143,26 @@
 				"children": [
 					{
 						"type": "Text",
-						"start": 446,
-						"end": 447,
+						"start": 694,
+						"end": 695,
 						"raw": "\n",
 						"data": "\n"
 					},
 					{
 						"type": "MustacheTag",
-						"start": 447,
-						"end": 478,
+						"start": 695,
+						"end": 726,
 						"expression": {
 							"type": "Identifier",
-							"start": 476,
-							"end": 477,
+							"start": 724,
+							"end": 725,
 							"loc": {
 								"start": {
-									"line": 27,
+									"line": 41,
 									"column": 29
 								},
 								"end": {
-									"line": 27,
+									"line": 41,
 									"column": 30
 								}
 							},
@@ -171,16 +171,16 @@
 								{
 									"type": "Block",
 									"value": " leading block comment ",
-									"start": 448,
-									"end": 475
+									"start": 696,
+									"end": 723
 								}
 							]
 						}
 					},
 					{
 						"type": "Text",
-						"start": 478,
-						"end": 479,
+						"start": 726,
+						"end": 727,
 						"raw": "\n",
 						"data": "\n"
 					}
@@ -188,40 +188,40 @@
 			},
 			{
 				"type": "Text",
-				"start": 488,
-				"end": 489,
+				"start": 736,
+				"end": 737,
 				"raw": "\n",
 				"data": "\n"
 			},
 			{
 				"type": "MustacheTag",
-				"start": 489,
-				"end": 578,
+				"start": 737,
+				"end": 826,
 				"expression": {
 					"type": "BinaryExpression",
-					"start": 516,
-					"end": 521,
+					"start": 764,
+					"end": 769,
 					"loc": {
 						"start": {
-							"line": 30,
+							"line": 44,
 							"column": 1
 						},
 						"end": {
-							"line": 30,
+							"line": 44,
 							"column": 6
 						}
 					},
 					"left": {
 						"type": "Identifier",
-						"start": 516,
-						"end": 517,
+						"start": 764,
+						"end": 765,
 						"loc": {
 							"start": {
-								"line": 30,
+								"line": 44,
 								"column": 1
 							},
 							"end": {
-								"line": 30,
+								"line": 44,
 								"column": 2
 							}
 						},
@@ -230,15 +230,15 @@
 					"operator": "+",
 					"right": {
 						"type": "Identifier",
-						"start": 520,
-						"end": 521,
+						"start": 768,
+						"end": 769,
 						"loc": {
 							"start": {
-								"line": 30,
+								"line": 44,
 								"column": 5
 							},
 							"end": {
-								"line": 30,
+								"line": 44,
 								"column": 6
 							}
 						},
@@ -248,22 +248,22 @@
 						{
 							"type": "Line",
 							"value": " leading line comment",
-							"start": 491,
-							"end": 514
+							"start": 739,
+							"end": 762
 						}
 					],
 					"trailingComments": [
 						{
 							"type": "Line",
 							"value": " trailing line comment",
-							"start": 522,
-							"end": 546
+							"start": 770,
+							"end": 794
 						},
 						{
 							"type": "Block",
 							"value": " trailing block comment ",
-							"start": 548,
-							"end": 576
+							"start": 796,
+							"end": 824
 						}
 					]
 				}
@@ -273,19 +273,19 @@
 	"instance": {
 		"type": "Script",
 		"start": 0,
-		"end": 315,
+		"end": 563,
 		"context": "default",
 		"content": {
 			"type": "Program",
 			"start": 8,
-			"end": 306,
+			"end": 554,
 			"loc": {
 				"start": {
 					"line": 1,
 					"column": 0
 				},
 				"end": {
-					"line": 17,
+					"line": 31,
 					"column": 0
 				}
 			},
@@ -607,6 +607,263 @@
 							"end": 99
 						}
 					]
+				},
+				{
+					"type": "VariableDeclaration",
+					"start": 308,
+					"end": 427,
+					"loc": {
+						"start": {
+							"line": 18,
+							"column": 1
+						},
+						"end": {
+							"line": 23,
+							"column": 3
+						}
+					},
+					"declarations": [
+						{
+							"type": "VariableDeclarator",
+							"start": 314,
+							"end": 426,
+							"loc": {
+								"start": {
+									"line": 18,
+									"column": 7
+								},
+								"end": {
+									"line": 23,
+									"column": 2
+								}
+							},
+							"id": {
+								"type": "Identifier",
+								"start": 314,
+								"end": 319,
+								"loc": {
+									"start": {
+										"line": 18,
+										"column": 7
+									},
+									"end": {
+										"line": 18,
+										"column": 12
+									}
+								},
+								"name": "array"
+							},
+							"init": {
+								"type": "ArrayExpression",
+								"start": 322,
+								"end": 426,
+								"loc": {
+									"start": {
+										"line": 18,
+										"column": 15
+									},
+									"end": {
+										"line": 23,
+										"column": 2
+									}
+								},
+								"elements": [
+									{
+										"type": "Literal",
+										"start": 372,
+										"end": 373,
+										"loc": {
+											"start": {
+												"line": 21,
+												"column": 2
+											},
+											"end": {
+												"line": 21,
+												"column": 3
+											}
+										},
+										"value": 1,
+										"raw": "1",
+										"leadingComments": [
+											{
+												"type": "Line",
+												"value": " leading comment 1",
+												"start": 326,
+												"end": 346
+											},
+											{
+												"type": "Line",
+												"value": " leading comment 2",
+												"start": 349,
+												"end": 369
+											}
+										],
+										"trailingComments": [
+											{
+												"type": "Line",
+												"value": " trailing comment 1",
+												"start": 375,
+												"end": 396
+											},
+											{
+												"type": "Block",
+												"value": " trailing comment 2 ",
+												"start": 399,
+												"end": 423
+											}
+										]
+									}
+								]
+							}
+						}
+					],
+					"kind": "const"
+				},
+				{
+					"type": "VariableDeclaration",
+					"start": 430,
+					"end": 553,
+					"loc": {
+						"start": {
+							"line": 25,
+							"column": 1
+						},
+						"end": {
+							"line": 30,
+							"column": 3
+						}
+					},
+					"declarations": [
+						{
+							"type": "VariableDeclarator",
+							"start": 436,
+							"end": 552,
+							"loc": {
+								"start": {
+									"line": 25,
+									"column": 7
+								},
+								"end": {
+									"line": 30,
+									"column": 2
+								}
+							},
+							"id": {
+								"type": "Identifier",
+								"start": 436,
+								"end": 442,
+								"loc": {
+									"start": {
+										"line": 25,
+										"column": 7
+									},
+									"end": {
+										"line": 25,
+										"column": 13
+									}
+								},
+								"name": "object"
+							},
+							"init": {
+								"type": "ObjectExpression",
+								"start": 445,
+								"end": 552,
+								"loc": {
+									"start": {
+										"line": 25,
+										"column": 16
+									},
+									"end": {
+										"line": 30,
+										"column": 2
+									}
+								},
+								"properties": [
+									{
+										"type": "Property",
+										"start": 495,
+										"end": 499,
+										"loc": {
+											"start": {
+												"line": 28,
+												"column": 2
+											},
+											"end": {
+												"line": 28,
+												"column": 6
+											}
+										},
+										"method": false,
+										"shorthand": false,
+										"computed": false,
+										"key": {
+											"type": "Identifier",
+											"start": 495,
+											"end": 496,
+											"loc": {
+												"start": {
+													"line": 28,
+													"column": 2
+												},
+												"end": {
+													"line": 28,
+													"column": 3
+												}
+											},
+											"name": "a"
+										},
+										"value": {
+											"type": "Literal",
+											"start": 498,
+											"end": 499,
+											"loc": {
+												"start": {
+													"line": 28,
+													"column": 5
+												},
+												"end": {
+													"line": 28,
+													"column": 6
+												}
+											},
+											"value": 1,
+											"raw": "1"
+										},
+										"kind": "init",
+										"leadingComments": [
+											{
+												"type": "Line",
+												"value": " leading comment 1",
+												"start": 449,
+												"end": 469
+											},
+											{
+												"type": "Line",
+												"value": " leading comment 2",
+												"start": 472,
+												"end": 492
+											}
+										],
+										"trailingComments": [
+											{
+												"type": "Line",
+												"value": " trailing comment 1",
+												"start": 501,
+												"end": 522
+											},
+											{
+												"type": "Block",
+												"value": " trailing comment 2 ",
+												"start": 525,
+												"end": 549
+											}
+										]
+									}
+								]
+							}
+						}
+					],
+					"kind": "const"
 				}
 			],
 			"sourceType": "module"
