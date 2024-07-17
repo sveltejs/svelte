@@ -43,6 +43,11 @@ export function store_get(store, store_name, stores) {
 					set(entry.source, v);
 				}
 			});
+
+			// also set initial to false right afterwards in case the store subscription callback is async,
+			// in which case the `state_unsafe_mutation` check is not relevant anymore and we would instead
+			// not get notified of the store value change
+			initial = false;
 		}
 	}
 
