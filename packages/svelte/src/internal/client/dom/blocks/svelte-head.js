@@ -51,6 +51,7 @@ export function head(render_fn) {
 		block(() => render_fn(anchor), HEAD_EFFECT);
 	} finally {
 		if (was_hydrating) {
+			head_anchor = hydrate_node; // so that next head block starts from the correct node
 			set_hydrate_node(/** @type {TemplateNode} */ (previous_hydrate_node));
 		}
 	}
