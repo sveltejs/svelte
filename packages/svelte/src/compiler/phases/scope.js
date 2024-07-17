@@ -386,16 +386,20 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		Component(node, { state, visit, path }) {
 			state.scope.reference(b.id(node.name), path);
 
-			for (const attribute of node.attributes) {
-				visit(attribute);
-			}
-
 			// let:x is super weird:
 			// - for the default slot, its scope only applies to children that are not slots themselves
 			// - for named slots, its scope applies to the component itself, too
 			const [scope, is_default_slot] = analyze_let_directives(node, state.scope);
-			if (!is_default_slot) {
+			if (is_default_slot) {
+				for (const attribute of node.attributes) {
+					visit(attribute);
+				}
+			} else {
 				scopes.set(node, scope);
+
+				for (const attribute of node.attributes) {
+					visit(attribute, { ...state, scope });
+				}
 			}
 
 			for (const child of node.fragment.nodes) {
