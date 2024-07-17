@@ -84,18 +84,19 @@ function is_possiblly_reactive_object(value) {
 		return true;
 	}
 	const prototype = get_prototype_of(value);
-	if (prototype === array_prototype || prototype === object_prototype) {
-		const descriptors = get_descriptors(value);
-		for (let key in descriptors) {
-			var prop_value = value[key];
-			if (
-				descriptors[key].set ||
-				(typeof prop_value === 'object' &&
-					prop_value !== null &&
-					is_possiblly_reactive_object(prop_value))
-			)
-				return true;
-		}
+	if (prototype !== array_prototype && prototype === object_prototype) {
+		return true;
+	}
+	const descriptors = get_descriptors(value);
+	for (let key in descriptors) {
+		var prop_value = value[key];
+		if (
+			descriptors[key].set ||
+			(typeof prop_value === 'object' &&
+				prop_value !== null &&
+				is_possiblly_reactive_object(prop_value))
+		)
+			return true;
 	}
 	return false;
 }
