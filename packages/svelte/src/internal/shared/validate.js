@@ -1,3 +1,5 @@
+/** @import { TemplateNode } from '#client' */
+/** @import { Getters } from '#shared' */
 import { is_void } from '../../constants.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
@@ -6,6 +8,7 @@ const snippet_symbol = Symbol.for('svelte.snippet');
 
 /**
  * @param {any} fn
+ * @returns {import('svelte').Snippet}
  */
 export function add_snippet_symbol(fn) {
 	fn[snippet_symbol] = true;

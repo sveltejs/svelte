@@ -93,6 +93,37 @@ To prevent something from being treated as an `$effect`/`$derived` dependency, u
 </script>
 ```
 
+### `createRawSnippet`
+
+An advanced API designed for people building frameworks that integrate with Svelte, `createRawSnippet` allows you to create [snippets](/docs/snippets) programmatically for use with `{@render ...}` tags:
+
+```js
+import { createRawSnippet } from 'svelte';
+
+const greet = createRawSnippet((name) => {
+	return {
+		render: () => `
+			<h1>Hello ${name()}!</h1>
+		`,
+		setup: (node) => {
+			$effect(() => {
+				node.textContent = `Hello ${name()}!`;
+			});
+		}
+	};
+});
+```
+
+The `render` function is called during server-side rendering, or during `mount` (but not during `hydrate`, because it already ran on the server), and must return HTML representing a single element.
+
+The `setup` function is called during `mount` or `hydrate` with that same element as its sole argument. It is responsible for ensuring that the DOM is updated when the arguments change their value — in this example, when `name` changes:
+
+```svelte
+{@render greet(name)}
+```
+
+If `setup` returns a function, it will be called when the snippet is unmounted. If the snippet is fully static, you can omit the `setup` function altogether.
+
 ## `svelte/reactivity`
 
 Svelte provides reactive `SvelteMap`, `SvelteSet`, `SvelteDate` and `SvelteURL` classes. These can be imported from `svelte/reactivity` and used just like their native counterparts. [Demo:](https://svelte-5-preview.vercel.app/#H4sIAAAAAAAAE32QwUrEMBBAf2XMpQrb9t7tFrx7UjxZYWM6NYFkEpJJ16X03yWK9OQeZ3iPecwqZmMxie5tFSQdik48hiAOgq-hDGlByygOIvkcVdn0SUUTeBhpZOOCjwwrvPxgr89PsMEcvYPqV2wjSsVmMXytjiMVR3lKDDlaOAHhZVfvK80cUte2-CVdsNgo79ogWVcPx5H6dj9M_V1dg9KSPjEBe2CNCZumgboeRuoNhczwYWjqFmkzntYcbROiZ6-83f5HtE9c3nADKUF_yEi9jnvQxVgLOUySEc464nwGSRMsRiEsGJO8mVeEbRAH4fxkZoOT6Dhm3N63b9_bGfOlAQAA)
