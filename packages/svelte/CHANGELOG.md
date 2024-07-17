@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.190
+
+### Patch Changes
+
+- fix: hydrate multiple `<svelte:head>` elements correctly ([#12475](https://github.com/sveltejs/svelte/pull/12475))
+
+- fix: assign correct scope to attributes of named slot ([#12476](https://github.com/sveltejs/svelte/pull/12476))
+
+- breaking: warn on quoted single-expression attributes in runes mode ([#12479](https://github.com/sveltejs/svelte/pull/12479))
+
 ## 5.0.0-next.189
 
 ### Patch Changes
