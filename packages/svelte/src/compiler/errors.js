@@ -471,6 +471,15 @@ export function css_global_block_invalid_modifier(node) {
 }
 
 /**
+ * A :global {...} block can only appear at the end of a selector sequence (did you mean to use :global(...) instead?)
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_global_block_invalid_placement(node) {
+	e(node, "css_global_block_invalid_placement", "A :global {...} block can only appear at the end of a selector sequence (did you mean to use :global(...) instead?)");
+}
+
+/**
  * :global(...) can be at the start or end of a selector sequence, but not in the middle
  * @param {null | number | NodeLike} node
  * @returns {never}
