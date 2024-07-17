@@ -776,7 +776,6 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 				push_prop(b.init(attribute.name, value));
 			}
 		} else if (attribute.type === 'BindDirective') {
-			debugger
 			if (attribute.name === 'this') {
 				bind_this = attribute.expression;
 			} else {
