@@ -108,6 +108,7 @@ export const codes = [
 	"attribute_global_event_reference",
 	"attribute_illegal_colon",
 	"attribute_invalid_property_name",
+	"attribute_quoted",
 	"bind_invalid_each_rest",
 	"block_empty",
 	"component_name_lowercase",
@@ -684,6 +685,14 @@ export function attribute_illegal_colon(node) {
  */
 export function attribute_invalid_property_name(node, wrong, right) {
 	w(node, "attribute_invalid_property_name", `'${wrong}' is not a valid HTML attribute. Did you mean '${right}'?`);
+}
+
+/**
+ * Quoted attributes on components and custom elements will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes
+ * @param {null | NodeLike} node
+ */
+export function attribute_quoted(node) {
+	w(node, "attribute_quoted", "Quoted attributes on components and custom elements will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes");
 }
 
 /**

@@ -33,7 +33,7 @@ export function is_custom_element_node(node) {
  * @param {string} name
  * @param {number} start
  * @param {number} end
- * @param {true | Array<Compiler.Text | Compiler.ExpressionTag>} value
+ * @param {Compiler.Attribute['value']} value
  * @returns {Compiler.Attribute}
  */
 export function create_attribute(name, start, end, value) {

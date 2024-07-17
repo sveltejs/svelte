@@ -41,8 +41,9 @@ export default function read_options(node) {
 			case 'customElement': {
 				/** @type {SvelteOptions['customElement']} */
 				const ce = { tag: '' };
+				const { value: v } = attribute;
+				const value = v === true || Array.isArray(v) ? v : [v];
 
-				const { value } = attribute;
 				if (value === true) {
 					e.svelte_options_invalid_customelement(attribute);
 				} else if (value[0].type === 'Text') {
@@ -199,7 +200,11 @@ export default function read_options(node) {
  */
 function get_static_value(attribute) {
 	const { value } = attribute;
-	const chunk = value[0];
+
+	if (value === true) return true;
+
+	const chunk = Array.isArray(value) ? value[0] : value;
+
 	if (!chunk) return true;
 	if (value.length > 1) {
 		return null;
@@ -208,6 +213,7 @@ function get_static_value(attribute) {
 	if (chunk.expression.type !== 'Literal') {
 		return null;
 	}
+
 	return chunk.expression.value;
 }
 

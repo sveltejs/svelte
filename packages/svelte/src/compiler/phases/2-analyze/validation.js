@@ -7,6 +7,7 @@ import {
 import * as e from '../../errors.js';
 import {
 	extract_identifiers,
+	get_attribute_expression,
 	get_parent,
 	is_expression_attribute,
 	is_text_attribute,
@@ -33,9 +34,26 @@ import { Scope, get_rune } from '../scope.js';
 import { merge } from '../visitors.js';
 import { a11y_validators } from './a11y.js';
 
-/** @param {import('#compiler').Attribute} attribute */
-function validate_attribute(attribute) {
-	if (attribute.value === true || attribute.value.length === 1) return;
+/**
+ * @param {import('#compiler').Attribute} attribute
+ * @param {import('#compiler').ElementLike} parent
+ */
+function validate_attribute(attribute, parent) {
+	if (
+		Array.isArray(attribute.value) &&
+		attribute.value.length === 1 &&
+		attribute.value[0].type === 'ExpressionTag' &&
+		(parent.type === 'Component' ||
+			parent.type === 'SvelteComponent' ||
+			parent.type === 'SvelteSelf' ||
+			(parent.type === 'RegularElement' && is_custom_element_node(parent)))
+	) {
+		w.attribute_quoted(attribute);
+	}
+
+	if (attribute.value === true || !Array.isArray(attribute.value) || attribute.value.length === 1) {
+		return;
+	}
 
 	const is_quoted = attribute.value.at(-1)?.end !== attribute.end;
 
@@ -69,10 +87,10 @@ function validate_component(node, context) {
 
 		if (attribute.type === 'Attribute') {
 			if (context.state.analysis.runes) {
-				validate_attribute(attribute);
+				validate_attribute(attribute, node);
 
 				if (is_expression_attribute(attribute)) {
-					const expression = attribute.value[0].expression;
+					const expression = get_attribute_expression(attribute);
 					if (expression.type === 'SequenceExpression') {
 						let i = /** @type {number} */ (expression.start);
 						while (--i > 0) {
@@ -122,10 +140,10 @@ function validate_element(node, context) {
 			const is_expression = is_expression_attribute(attribute);
 
 			if (context.state.analysis.runes) {
-				validate_attribute(attribute);
+				validate_attribute(attribute, node);
 
 				if (is_expression) {
-					const expression = attribute.value[0].expression;
+					const expression = get_attribute_expression(attribute);
 					if (expression.type === 'SequenceExpression') {
 						let i = /** @type {number} */ (expression.start);
 						while (--i > 0) {
@@ -146,7 +164,7 @@ function validate_element(node, context) {
 					e.attribute_invalid_event_handler(attribute);
 				}
 
-				const value = attribute.value[0].expression;
+				const value = get_attribute_expression(attribute);
 				if (
 					value.type === 'Identifier' &&
 					value.name === attribute.name &&

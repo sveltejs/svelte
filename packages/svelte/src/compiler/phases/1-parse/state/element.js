@@ -9,6 +9,7 @@ import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { create_fragment } from '../utils/create.js';
 import { create_attribute } from '../../nodes.js';
+import { get_attribute_expression, is_expression_attribute } from '../../../utils/ast.js';
 
 // eslint-disable-next-line no-useless-escape
 const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
@@ -241,15 +242,11 @@ export default function element(parser) {
 		}
 
 		const definition = /** @type {Compiler.Attribute} */ (element.attributes.splice(index, 1)[0]);
-		if (
-			definition.value === true ||
-			definition.value.length !== 1 ||
-			definition.value[0].type === 'Text'
-		) {
+		if (!is_expression_attribute(definition)) {
 			e.svelte_component_invalid_this(definition.start);
 		}
 
-		element.expression = definition.value[0].expression;
+		element.expression = get_attribute_expression(definition);
 	}
 
 	if (element.type === 'SvelteElement') {
@@ -267,15 +264,16 @@ export default function element(parser) {
 			e.svelte_element_missing_this(definition);
 		}
 
-		const chunk = definition.value[0];
-
-		if (definition.value.length !== 1 || chunk.type !== 'ExpressionTag') {
+		if (!is_expression_attribute(definition)) {
 			w.svelte_element_invalid_this(definition);
 
 			// note that this is wrong, in the case of e.g. `this="h{n}"` — it will result in `<h>`.
 			// it would be much better to just error here, but we are preserving the existing buggy
 			// Svelte 4 behaviour out of an overabundance of caution regarding breaking changes.
 			// TODO in 6.0, error
+			const chunk = /** @type {Array<Compiler.ExpressionTag | Compiler.Text>} */ (
+				definition.value
+			)[0];
 			element.tag =
 				chunk.type === 'Text'
 					? {
@@ -287,7 +285,7 @@ export default function element(parser) {
 						}
 					: chunk.expression;
 		} else {
-			element.tag = chunk.expression;
+			element.tag = get_attribute_expression(definition);
 		}
 	}
 
@@ -543,7 +541,7 @@ function read_attribute(parser) {
 				}
 			};
 
-			return create_attribute(name, start, parser.index, [expression]);
+			return create_attribute(name, start, parser.index, expression);
 		}
 	}
 
@@ -557,7 +555,7 @@ function read_attribute(parser) {
 	const colon_index = name.indexOf(':');
 	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
 
-	/** @type {true | Array<Compiler.Text | Compiler.ExpressionTag>} */
+	/** @type {true | Compiler.ExpressionTag | Array<Compiler.Text | Compiler.ExpressionTag>} */
 	let value = true;
 	if (parser.eat('=')) {
 		parser.allow_whitespace();
@@ -589,7 +587,9 @@ function read_attribute(parser) {
 			};
 		}
 
-		const first_value = value === true ? undefined : value[0];
+		const first_value = value === true ? undefined : Array.isArray(value) ? value[0] : value;
+
+		/** @type {import('estree').Expression | null} */
 		let expression = null;
 
 		if (first_value) {
@@ -598,6 +598,8 @@ function read_attribute(parser) {
 			if (attribute_contains_text) {
 				e.directive_invalid_value(/** @type {number} */ (first_value.start));
 			} else {
+				// TODO throw a parser error in a future version here if this `[ExpressionTag]` instead of `ExpressionTag`,
+				// which means stringified value, which isn't allowed for some directives?
 				expression = first_value.expression;
 			}
 		}
@@ -662,6 +664,7 @@ function get_directive_type(name) {
 
 /**
  * @param {Parser} parser
+ * @return {Compiler.ExpressionTag | Array<Compiler.ExpressionTag | Compiler.Text>}
  */
 function read_attribute_value(parser) {
 	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
@@ -678,6 +681,7 @@ function read_attribute_value(parser) {
 		];
 	}
 
+	/** @type {Array<Compiler.ExpressionTag | Compiler.Text>} */
 	let value;
 	try {
 		value = read_sequence(
@@ -708,7 +712,12 @@ function read_attribute_value(parser) {
 	}
 
 	if (quote_mark) parser.index += 1;
-	return value;
+
+	if (quote_mark || value.length > 1 || value[0].type === 'Text') {
+		return value;
+	} else {
+		return value[0];
+	}
 }
 
 /**

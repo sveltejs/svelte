@@ -54,35 +54,33 @@
 				"start": 50,
 				"end": 62,
 				"name": "runes",
-				"value": [
-					{
-						"type": "ExpressionTag",
-						"start": 56,
-						"end": 62,
-						"expression": {
-							"type": "Literal",
-							"start": 57,
-							"end": 61,
-							"loc": {
-								"start": {
-									"line": 1,
-									"column": 57
-								},
-								"end": {
-									"line": 1,
-									"column": 61
-								}
+				"value": {
+					"type": "ExpressionTag",
+					"start": 56,
+					"end": 62,
+					"expression": {
+						"type": "Literal",
+						"start": 57,
+						"end": 61,
+						"loc": {
+							"start": {
+								"line": 1,
+								"column": 57
 							},
-							"value": true,
-							"raw": "true"
+							"end": {
+								"line": 1,
+								"column": 61
+							}
 						},
-						"parent": null,
-						"metadata": {
-							"contains_call_expression": false,
-							"dynamic": false
-						}
+						"value": true,
+						"raw": "true"
+					},
+					"parent": null,
+					"metadata": {
+						"contains_call_expression": false,
+						"dynamic": false
 					}
-				],
+				},
 				"parent": null,
 				"metadata": {
 					"dynamic": false,

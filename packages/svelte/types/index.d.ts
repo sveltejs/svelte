@@ -1153,6 +1153,16 @@ declare module 'svelte/compiler' {
 		outro: boolean;
 	}
 
+	/** A `style:` directive */
+	interface LegacyStyleDirective extends BaseNode_1 {
+		type: 'StyleDirective';
+		/** The 'x' in `style:x` */
+		name: string;
+		/** The 'y' in `style:x={y}` */
+		value: true | Array<ExpressionTag | Text>;
+		modifiers: Array<'important'>;
+	}
+
 	interface LegacyWindow extends BaseElement_1 {
 		type: 'Window';
 	}
@@ -1171,7 +1181,7 @@ declare module 'svelte/compiler' {
 		| LegacyClass
 		| LegacyLet
 		| LegacyEventHandler
-		| StyleDirective
+		| LegacyStyleDirective
 		| LegacyTransition
 		| LegacyAction;
 
@@ -1634,7 +1644,7 @@ declare module 'svelte/compiler' {
 		/** The 'x' in `style:x` */
 		name: string;
 		/** The 'y' in `style:x={y}` */
-		value: true | Array<ExpressionTag | Text>;
+		value: true | ExpressionTag | Array<ExpressionTag | Text>;
 		modifiers: Array<'important'>;
 		metadata: {
 			dynamic: boolean;
@@ -1855,7 +1865,7 @@ declare module 'svelte/compiler' {
 	interface Attribute extends BaseNode {
 		type: 'Attribute';
 		name: string;
-		value: true | Array<Text | ExpressionTag>;
+		value: true | ExpressionTag | Array<Text | ExpressionTag>;
 		metadata: {
 			dynamic: boolean;
 			/** May be set if this is an event attribute */
