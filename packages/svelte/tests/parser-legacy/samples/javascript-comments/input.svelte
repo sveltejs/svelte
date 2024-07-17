@@ -5,8 +5,14 @@
 
 	/** a comment */
 	function asd() {
-		foo;
-		/* comment belonging to noone */
+		foo; // trailing
+		/* leading comment 1 */
+		/* leading comment 2 */
+		/* leading comment 3 */
+		bar;
+		/* trailing comment 1 */
+		/* trailing comment 2 */
+		/* trailing comment 3 */
 	}
 </script>
 
@@ -15,7 +21,7 @@
 	() => {
 		/* another comment */
 		fn(); // a trailing comment
-		/* comment belonging to noone */
+		/* trailing block comment */
 	}}
 >
 {/* leading block comment */ a}
