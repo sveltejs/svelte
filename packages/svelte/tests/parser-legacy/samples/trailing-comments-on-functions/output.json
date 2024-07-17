@@ -1,0 +1,75 @@
+{
+	"html": {
+		"type": "Fragment",
+		"start": 0,
+		"end": 61,
+		"children": [
+			{
+				"type": "Element",
+				"start": 0,
+				"end": 61,
+				"name": "button",
+				"attributes": [
+					{
+						"type": "Attribute",
+						"start": 9,
+						"end": 50,
+						"name": "onclick",
+						"value": [
+							{
+								"type": "MustacheTag",
+								"start": 17,
+								"end": 50,
+								"expression": {
+									"type": "ArrowFunctionExpression",
+									"start": 18,
+									"end": 49,
+									"loc": {
+										"start": {
+											"line": 2,
+											"column": 10
+										},
+										"end": {
+											"line": 4,
+											"column": 2
+										}
+									},
+									"id": null,
+									"expression": false,
+									"generator": false,
+									"async": false,
+									"params": [],
+									"body": {
+										"type": "BlockStatement",
+										"start": 24,
+										"end": 49,
+										"loc": {
+											"start": {
+												"line": 2,
+												"column": 16
+											},
+											"end": {
+												"line": 4,
+												"column": 2
+											}
+										},
+										"body": []
+									},
+									"trailingComments": [
+										{
+											"type": "Block",
+											"value": " some comment ",
+											"start": 28,
+											"end": 46
+										}
+									]
+								}
+							}
+						]
+					}
+				],
+				"children": []
+			}
+		]
+	}
+}

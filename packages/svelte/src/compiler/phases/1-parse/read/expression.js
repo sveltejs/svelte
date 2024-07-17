@@ -18,7 +18,12 @@ export default function read_expression(parser) {
 
 		let index = /** @type {number} */ (node.end);
 		if (node.trailingComments !== undefined && node.trailingComments.length > 0) {
-			index = node.trailingComments.at(-1).end;
+			// in simple expressions like {true/*this is literal*/} trailing comments are not included
+			// in the node end so we need them added to the index to keep the parser in check.
+			// but for arrow functions trailing comments are actually already included in the end
+			// and doesn't include whitespace in the end so if we set the parse index to that we
+			// will loose chars that we already read.
+			index = Math.max(node.trailingComments.at(-1).end, index);
 		}
 
 		while (num_parens > 0) {
