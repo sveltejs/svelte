@@ -34,8 +34,23 @@ import { Scope, get_rune } from '../scope.js';
 import { merge } from '../visitors.js';
 import { a11y_validators } from './a11y.js';
 
-/** @param {import('#compiler').Attribute} attribute */
-function validate_attribute(attribute) {
+/**
+ * @param {import('#compiler').Attribute} attribute
+ * @param {import('#compiler').ElementLike} parent
+ */
+function validate_attribute(attribute, parent) {
+	if (
+		Array.isArray(attribute.value) &&
+		attribute.value.length === 1 &&
+		attribute.value[0].type === 'ExpressionTag' &&
+		(parent.type === 'Component' ||
+			parent.type === 'SvelteComponent' ||
+			parent.type === 'SvelteSelf' ||
+			(parent.type === 'RegularElement' && is_custom_element_node(parent)))
+	) {
+		w.attribute_quoted(attribute);
+	}
+
 	if (attribute.value === true || !Array.isArray(attribute.value) || attribute.value.length === 1) {
 		return;
 	}
@@ -72,7 +87,7 @@ function validate_component(node, context) {
 
 		if (attribute.type === 'Attribute') {
 			if (context.state.analysis.runes) {
-				validate_attribute(attribute);
+				validate_attribute(attribute, node);
 
 				if (is_expression_attribute(attribute)) {
 					const expression = get_attribute_expression(attribute);
@@ -125,7 +140,7 @@ function validate_element(node, context) {
 			const is_expression = is_expression_attribute(attribute);
 
 			if (context.state.analysis.runes) {
-				validate_attribute(attribute);
+				validate_attribute(attribute, node);
 
 				if (is_expression) {
 					const expression = get_attribute_expression(attribute);

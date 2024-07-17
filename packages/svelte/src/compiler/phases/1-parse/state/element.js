@@ -541,7 +541,7 @@ function read_attribute(parser) {
 				}
 			};
 
-			return create_attribute(name, start, parser.index, [expression]);
+			return create_attribute(name, start, parser.index, expression);
 		}
 	}
 
