@@ -1,7 +1,7 @@
 [
 	{
 		"code": "attribute_quoted",
-		"message": "Quoted attributes on components and custom elements will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes.",
+		"message": "Quoted attributes on components and custom elements will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes",
 		"start": {
 			"column": 11,
 			"line": 13
@@ -13,7 +13,7 @@
 	},
 	{
 		"code": "attribute_quoted",
-		"message": "Quoted attributes on components and custom elements will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes.",
+		"message": "Quoted attributes on components and custom elements will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes",
 		"start": {
 			"column": 29,
 			"line": 15
