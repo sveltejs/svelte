@@ -1890,7 +1890,8 @@ export const template_visitors = {
 				? b.literal(null)
 				: b.thunk(/** @type {Expression} */ (visit(node.expression)));
 
-		state.init.push(
+		// in after_update to ensure it always happens after bind:this
+		state.after_update.push(
 			b.stmt(
 				b.call(
 					'$.animation',
@@ -1922,7 +1923,8 @@ export const template_visitors = {
 			args.push(b.thunk(/** @type {Expression} */ (visit(node.expression))));
 		}
 
-		state.init.push(b.stmt(b.call('$.transition', ...args)));
+		// in after_update to ensure it always happens after bind:this
+		state.after_update.push(b.stmt(b.call('$.transition', ...args)));
 	},
 	RegularElement(node, context) {
 		/** @type {import('#shared').SourceLocation} */
