@@ -102,29 +102,33 @@ export function validate_prop_bindings($$props, bindable, exports, component) {
 export function validate_binding(binding, get_object, get_property, line, column) {
 	var warned = false;
 
-	const filename = dev_current_component_function?.[FILENAME];
+	var filename = dev_current_component_function?.[FILENAME];
 
 	render_effect(() => {
 		if (warned) return;
 
-		const object = get_object();
-		const property = get_property();
+		var object = get_object();
+		var property = get_property();
+
+		var ran = false;
 
 		// by making the (possibly false, but it would be an extreme edge case) assumption
 		// that a getter has a corresponding setter, we can determine if a property is
 		// reactive by seeing if this effect has dependencies
-		const effect = render_effect(() => {
-			if (warned) return;
+		var effect = render_effect(() => {
+			if (ran) return;
+
+			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 			object[property];
 		});
 
-		if (effect.deps !== null && effect.deps.length > 0) {
-			return;
+		ran = true;
+
+		if (effect.deps === null) {
+			var location = filename && `${filename}:${line}:${column}`;
+			w.binding_property_non_reactive(binding, location);
+
+			warned = true;
 		}
-
-		var location = filename && `${filename}:${line}:${column}`;
-		w.binding_property_non_reactive(binding, location);
-
-		warned = true;
 	});
 }
