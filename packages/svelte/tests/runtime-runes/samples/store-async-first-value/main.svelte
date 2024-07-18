@@ -11,8 +11,9 @@
 		};
 	}
 
-	const value = store();
-	const derivedValue = $derived($value);
+	const value1 = store();
+	const value2 = store();
+	const derivedValue = $derived($value1);
 </script>
 
-{$value} / {derivedValue}
+{$value2} / {derivedValue}
