@@ -146,6 +146,7 @@ export {
 	hasContext
 } from './runtime.js';
 export {
+	validate_binding,
 	validate_dynamic_component,
 	validate_each_keys,
 	validate_prop_bindings

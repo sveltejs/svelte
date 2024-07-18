@@ -1,7 +1,9 @@
-import { untrack } from './runtime.js';
+import { dev_current_component_function, untrack } from './runtime.js';
 import { get_descriptor, is_array } from '../shared/utils.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
+import { render_effect } from './reactivity/effects.js';
+import * as w from './warnings.js';
 
 /** regex of all html void element names */
 const void_element_names =
@@ -88,4 +90,41 @@ export function validate_prop_bindings($$props, bindable, exports, component) {
 			}
 		}
 	}
+}
+
+/**
+ * @param {string} binding
+ * @param {() => Record<string, any>} get_object
+ * @param {() => string} get_property
+ * @param {number} line
+ * @param {number} column
+ */
+export function validate_binding(binding, get_object, get_property, line, column) {
+	var warned = false;
+
+	const filename = dev_current_component_function?.[FILENAME];
+
+	render_effect(() => {
+		if (warned) return;
+
+		const object = get_object();
+		const property = get_property();
+
+		// by making the (possibly false, but it would be an extreme edge case) assumption
+		// that a getter has a corresponding setter, we can determine if a property is
+		// reactive by seeing if this effect has dependencies
+		const effect = render_effect(() => {
+			if (warned) return;
+			object[property];
+		});
+
+		if (effect.deps !== null && effect.deps.length > 0) {
+			return;
+		}
+
+		var location = filename && `${filename}:${line}:${column}`;
+		w.binding_property_non_reactive(binding, location);
+
+		warned = true;
+	});
 }
