@@ -544,7 +544,10 @@ function get_hoistable_params(node, context) {
 				!is_prop_source(binding, context.state)
 			) {
 				push_unique(b.id('$$props'));
-			} else {
+			} else if (
+				// imports don't need to be hoisted
+				binding.declaration_kind !== 'import'
+			) {
 				// create a copy to remove start/end tags which would mess up source maps
 				push_unique(b.id(binding.node.name));
 				// rest props are often accessed through the $$props object for optimization reasons,
