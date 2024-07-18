@@ -32,7 +32,6 @@ function tick(time) {
 }
 
 class Animation {
-	#target;
 	#keyframes;
 	#duration;
 	#delay;
@@ -42,6 +41,7 @@ class Animation {
 	#finished = () => {};
 	#cancelled = () => {};
 
+	target;
 	currentTime = 0;
 	startTime = 0;
 
@@ -51,7 +51,7 @@ class Animation {
 	 * @param {{ duration: number, delay: number }} options
 	 */
 	constructor(target, keyframes, { duration, delay }) {
-		this.#target = target;
+		this.target = target;
 		this.#keyframes = keyframes;
 		this.#duration = duration;
 		this.#delay = delay ?? 0;
@@ -111,14 +111,14 @@ class Animation {
 
 		for (let prop in frame) {
 			// @ts-ignore
-			this.#target.style[prop] = frame[prop];
+			this.target.style[prop] = frame[prop];
 		}
 
 		if (this.currentTime >= this.#duration) {
 			this.currentTime = this.#duration;
 			for (let prop in frame) {
 				// @ts-ignore
-				this.#target.style[prop] = null;
+				this.target.style[prop] = null;
 			}
 		}
 	}
@@ -180,4 +180,8 @@ HTMLElement.prototype.animate = function (keyframes, options) {
 	raf.animations.add(animation);
 	// @ts-ignore
 	return animation;
+};
+
+HTMLElement.prototype.getAnimations = function () {
+	return Array.from(raf.animations).filter((animation) => animation.target === this);
 };

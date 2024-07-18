@@ -75,7 +75,7 @@ export function animation(element, get_fn, get_params) {
 	/** @type {import('#client').Animation | undefined} */
 	var animation;
 
-	/** @type {null | { position: string, width: string, height: string }} */
+	/** @type {null | { position: string, width: string, height: string, transform: string }} */
 	var original_styles = null;
 
 	item.a ??= {
@@ -110,20 +110,29 @@ export function animation(element, get_fn, get_params) {
 			}
 		},
 		fix() {
-			var computed_style = getComputedStyle(element);
+			// If an animation is already running, transforming the element is likely to fail,
+			// because the styles applied by the animation take precedence. In the case of crossfade,
+			// that means the `translate(...)` of the crossfade transition overrules the `translate(...)`
+			// we would apply below, leading to the element jumping somewhere to the top left.
+			if (element.getAnimations().length) return;
 
-			if (computed_style.position !== 'absolute' && computed_style.position !== 'fixed') {
+			// It's important to destructure these to get fixed values - the object itself has getters,
+			// and changing the style to 'absolute' can for example influence the width.
+			var { position, width, height } = getComputedStyle(element);
+
+			if (position !== 'absolute' && position !== 'fixed') {
 				var style = /** @type {HTMLElement | SVGElement} */ (element).style;
 
 				original_styles = {
 					position: style.position,
 					width: style.width,
-					height: style.height
+					height: style.height,
+					transform: style.transform
 				};
 
 				style.position = 'absolute';
-				style.width = computed_style.width;
-				style.height = computed_style.height;
+				style.width = width;
+				style.height = height;
 				var to = element.getBoundingClientRect();
 
 				if (from.left !== to.left || from.top !== to.top) {
@@ -139,6 +148,7 @@ export function animation(element, get_fn, get_params) {
 				style.position = original_styles.position;
 				style.width = original_styles.width;
 				style.height = original_styles.height;
+				style.transform = original_styles.transform;
 			}
 		}
 	};
