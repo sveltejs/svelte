@@ -1890,7 +1890,7 @@ export const template_visitors = {
 				? b.literal(null)
 				: b.thunk(/** @type {Expression} */ (visit(node.expression)));
 
-		// not in init, to ensure it always happens after bind:this
+		// in after_update to ensure it always happens after bind:this
 		state.after_update.push(
 			b.stmt(
 				b.call(
@@ -1923,7 +1923,7 @@ export const template_visitors = {
 			args.push(b.thunk(/** @type {Expression} */ (visit(node.expression))));
 		}
 
-		// not in init, to ensure it always happens after bind:this
+		// in after_update to ensure it always happens after bind:this
 		state.after_update.push(b.stmt(b.call('$.transition', ...args)));
 	},
 	RegularElement(node, context) {
