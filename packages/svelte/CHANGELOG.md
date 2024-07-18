@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.191
+
+### Patch Changes
+
+- fix: properly assign trailing comments ([#12471](https://github.com/sveltejs/svelte/pull/12471))
+
+- breaking: remove deep reactivity from non-bindable props ([#12484](https://github.com/sveltejs/svelte/pull/12484))
+
+- fix: ensure async initial store value is noticed ([#12486](https://github.com/sveltejs/svelte/pull/12486))
+
+- fix: don't add imports to hoisted event parameters ([#12493](https://github.com/sveltejs/svelte/pull/12493))
+
+- fix: set `volume` through DOM property rather than attribute ([#12485](https://github.com/sveltejs/svelte/pull/12485))
+
 ## 5.0.0-next.190
 
 ### Patch Changes
