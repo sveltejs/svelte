@@ -31,18 +31,19 @@ export function store_get(store, store_name, stores) {
 			set(entry.source, undefined);
 			entry.unsubscribe = noop;
 		} else {
-			var initial = true;
+			var is_synchronous_callback = true;
 
 			entry.unsubscribe = subscribe_to_store(store, (v) => {
-				if (initial) {
-					// if the first time the store value is read is inside a derived,
-					// we will hit the `state_unsafe_mutation` error if we `set` the value
+				if (is_synchronous_callback) {
+					// If the first updates to the store value (possibly multiple of them) are synchronously
+					// inside a derived, we will hit the `state_unsafe_mutation` error if we `set` the value
 					entry.source.v = v;
-					initial = false;
 				} else {
 					set(entry.source, v);
 				}
 			});
+
+			is_synchronous_callback = false;
 		}
 	}
 

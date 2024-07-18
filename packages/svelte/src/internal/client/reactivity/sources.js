@@ -97,11 +97,7 @@ export function set(source, value) {
 		// reactions as we only allocate and assign the reactions after the signal
 		// has fully executed. So in the case of ensuring it registers the reaction
 		// properly for itself, we need to ensure the current effect actually gets
-		// scheduled. i.e:
-		//
-		// $effect(() => x++)
-		//
-		// We additionally want to skip this logic when initialising store sources
+		// scheduled. i.e: `$effect(() => x++)`
 		if (
 			is_runes() &&
 			current_effect !== null &&
