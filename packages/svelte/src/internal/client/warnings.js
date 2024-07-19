@@ -6,6 +6,20 @@ var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
 /**
+ * `%binding%` (%location%) is binding to a non-reactive property
+ * @param {string} binding
+ * @param {string | undefined | null} [location]
+ */
+export function binding_property_non_reactive(binding, location) {
+	if (DEV) {
+		console.warn(`%c[svelte] binding_property_non_reactive\n%c${location ? `\`${binding}\` (${location}) is binding to a non-reactive property` : `\`${binding}\` is binding to a non-reactive property`}`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("binding_property_non_reactive");
+	}
+}
+
+/**
  * The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
  * @param {string} attribute
  * @param {string} html

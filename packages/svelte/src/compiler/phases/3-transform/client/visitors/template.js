@@ -1,4 +1,6 @@
 /** @import { BlockStatement, CallExpression, Expression, ExpressionStatement, Identifier, Literal, MemberExpression, ObjectExpression, Pattern, Property, Statement, Super, TemplateElement, TemplateLiteral } from 'estree' */
+/** @import { BindDirective } from '#compiler' */
+/** @import { ComponentClientTransformState } from '../types' */
 import {
 	extract_identifiers,
 	extract_paths,
@@ -776,11 +778,15 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 				push_prop(b.init(attribute.name, value));
 			}
 		} else if (attribute.type === 'BindDirective') {
+			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
+
+			if (expression.type === 'MemberExpression' && context.state.options.dev) {
+				context.state.init.push(serialize_validate_binding(context.state, attribute, expression));
+			}
+
 			if (attribute.name === 'this') {
 				bind_this = attribute.expression;
 			} else {
-				const expression = /** @type {Expression} */ (context.visit(attribute.expression));
-
 				if (context.state.options.dev) {
 					binding_initializers.push(
 						b.stmt(b.call(b.id('$.add_owner_effect'), b.thunk(expression), b.id(component_name)))
@@ -2824,6 +2830,17 @@ export const template_visitors = {
 	BindDirective(node, context) {
 		const { state, path, visit } = context;
 		const expression = node.expression;
+
+		if (expression.type === 'MemberExpression' && context.state.options.dev) {
+			context.state.init.push(
+				serialize_validate_binding(
+					context.state,
+					node,
+					/**@type {MemberExpression} */ (visit(expression))
+				)
+			);
+		}
+
 		const getter = b.thunk(/** @type {Expression} */ (visit(expression)));
 		const assignment = b.assignment('=', expression, b.id('$$value'));
 		const setter = b.arrow(
@@ -3230,3 +3247,34 @@ export const template_visitors = {
 	CallExpression: javascript_visitors_runes.CallExpression,
 	VariableDeclaration: javascript_visitors_runes.VariableDeclaration
 };
+
+/**
+ * @param {import('../types.js').ComponentClientTransformState} state
+ * @param {BindDirective} binding
+ * @param {MemberExpression} expression
+ */
+function serialize_validate_binding(state, binding, expression) {
+	const string = state.analysis.source.slice(binding.start, binding.end);
+
+	const get_object = b.thunk(/** @type {Expression} */ (expression.object));
+	const get_property = b.thunk(
+		/** @type {Expression} */ (
+			expression.computed
+				? expression.property
+				: b.literal(/** @type {Identifier} */ (expression.property).name)
+		)
+	);
+
+	const loc = locator(binding.start);
+
+	return b.stmt(
+		b.call(
+			'$.validate_binding',
+			b.literal(string),
+			get_object,
+			get_property,
+			loc && b.literal(loc.line),
+			loc && b.literal(loc.column)
+		)
+	);
+}
