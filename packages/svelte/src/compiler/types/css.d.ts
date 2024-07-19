@@ -56,7 +56,7 @@ export namespace Css {
 		combinator: null | Combinator;
 		selectors: SimpleSelector[];
 		metadata: {
-			/** :global(..) */
+			/** `:global(...)` or `:global` or `:global.x` (but not `.x:global`) */
 			is_global: boolean;
 			/** `:root`, `:host`, `::view-transition`, or selectors after a `:global` */
 			is_global_like: boolean;

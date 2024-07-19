@@ -57,11 +57,12 @@ const analysis_visitors = {
 			node.selectors.length >= 1 &&
 			node.selectors[0].type === 'PseudoClassSelector' &&
 			node.selectors[0].name === 'global' &&
-			node.selectors[0].args !== null && // we want :global(...), not :global
-			node.selectors.every(
-				(selector) =>
-					selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector'
-			);
+			// we want :global(...) and :global or :global.x, but not div:global
+			(node.selectors[0].args === null ||
+				node.selectors.every(
+					(selector) =>
+						selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector'
+				));
 
 		if (node.selectors.length === 1) {
 			const first = node.selectors[0];
@@ -95,6 +96,12 @@ const analysis_visitors = {
 					(s) => s.type === 'PseudoClassSelector' && s.name === 'global' && s.args === null
 				);
 
+				if (is_global_block) {
+					// Do this here, not after setting it to true:
+					// All selectors after :global are unscoped, but in e.g. div:global, div is still scoped
+					child.metadata.is_global_like = true;
+				}
+
 				if (idx !== -1) {
 					is_global_block = true;
 					for (let i = idx + 1; i < child.selectors.length; i++) {
@@ -104,11 +111,6 @@ const analysis_visitors = {
 							}
 						});
 					}
-				}
-
-				if (is_global_block) {
-					// TODO this needs to be more granular, the stuff before the :global selector should be scoped
-					child.metadata.is_global_like = true;
 				}
 			}
 

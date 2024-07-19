@@ -92,7 +92,7 @@ const visitors = {
 
 		next();
 	},
-	Declaration(node, { state, next }) {
+	Declaration(node, { state }) {
 		const property = node.property && remove_css_prefix(node.property.toLowerCase());
 		if (property === 'animation' || property === 'animation-name') {
 			let index = node.start + node.property.length + 1;
@@ -235,17 +235,6 @@ const visitors = {
 				continue;
 			}
 
-			// TODO make more efficient?
-			for (const selector of relative_selector.selectors) {
-				if (
-					selector.type === 'PseudoClassSelector' &&
-					selector.name === 'global' &&
-					selector.args === null
-				) {
-					remove_global_pseudo_class(selector);
-				}
-			}
-
 			if (relative_selector.metadata.scoped) {
 				if (relative_selector.selectors.length === 1) {
 					// skip standalone :is/:where/& selectors
@@ -258,7 +247,7 @@ const visitors = {
 					}
 				}
 
-				// for any :global() at the middle of compound selector
+				// for any :global() or :global at the middle of compound selector
 				for (const selector of relative_selector.selectors) {
 					if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
 						remove_global_pseudo_class(selector);
