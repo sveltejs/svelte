@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.192
+
+### Patch Changes
+
+- fix: make animations more robust to quick shuffling ([#12496](https://github.com/sveltejs/svelte/pull/12496))
+
+- feat: warn if binding to a non-reactive property ([#12500](https://github.com/sveltejs/svelte/pull/12500))
+
+- fix: ensure $state proxy invokes set accessor if present ([#12503](https://github.com/sveltejs/svelte/pull/12503))
+
 ## 5.0.0-next.191
 
 ### Patch Changes
