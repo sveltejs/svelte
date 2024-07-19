@@ -48,7 +48,7 @@ const analysis_visitors = {
 
 		node.metadata.rule = context.state.rule;
 
-		node.metadata.used = node.children.every(
+		node.metadata.used ||= node.children.every(
 			({ metadata }) => metadata.is_global || metadata.is_global_like
 		);
 	},
@@ -57,6 +57,7 @@ const analysis_visitors = {
 			node.selectors.length >= 1 &&
 			node.selectors[0].type === 'PseudoClassSelector' &&
 			node.selectors[0].name === 'global' &&
+			node.selectors[0].args !== null && // we want :global(...), not :global
 			node.selectors.every(
 				(selector) =>
 					selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector'
@@ -85,15 +86,33 @@ const analysis_visitors = {
 	Rule(node, context) {
 		node.metadata.parent_rule = context.state.rule;
 
-		// `:global {...}` or `div :global {...}`
+		// `:global {...}` or `div :global {...}` or `:global div`
 		node.metadata.is_global_block = node.prelude.children.some((selector) => {
-			const last = selector.children[selector.children.length - 1];
+			let is_global_block = false;
 
-			const s = last.selectors[last.selectors.length - 1];
+			for (const child of selector.children) {
+				const idx = child.selectors.findIndex(
+					(s) => s.type === 'PseudoClassSelector' && s.name === 'global' && s.args === null
+				);
 
-			if (s.type === 'PseudoClassSelector' && s.name === 'global' && s.args === null) {
-				return true;
+				if (idx !== -1) {
+					is_global_block = true;
+					for (let i = idx + 1; i < child.selectors.length; i++) {
+						walk(/** @type {Css.Node} */ (child.selectors[i]), null, {
+							ComplexSelector(node) {
+								node.metadata.used = true;
+							}
+						});
+					}
+				}
+
+				if (is_global_block) {
+					// TODO this needs to be more granular, the stuff before the :global selector should be scoped
+					child.metadata.is_global_like = true;
+				}
 			}
+
+			return is_global_block;
 		});
 
 		context.next({
@@ -120,19 +139,29 @@ const validation_visitors = {
 			const complex_selector = node.prelude.children[0];
 			const relative_selector = complex_selector.children[complex_selector.children.length - 1];
 
-			if (relative_selector.selectors.length > 1) {
-				e.css_global_block_invalid_modifier(
-					relative_selector.selectors[relative_selector.selectors.length - 1]
-				);
-			}
-
-			if (relative_selector.combinator && relative_selector.combinator.name !== ' ') {
-				e.css_global_block_invalid_combinator(relative_selector, relative_selector.combinator.name);
+			if (
+				relative_selector.combinator &&
+				relative_selector.combinator.name !== ' ' &&
+				relative_selector.selectors.length === 1
+			) {
+				const s = relative_selector.selectors[0];
+				if (s.type === 'PseudoClassSelector' && s.name === 'global' && s.args === null) {
+					e.css_global_block_invalid_combinator(
+						relative_selector,
+						relative_selector.combinator.name
+					);
+				}
 			}
 
 			const declaration = node.block.children.find((child) => child.type === 'Declaration');
 
-			if (declaration) {
+			if (
+				declaration &&
+				// :global { color: red; } is invalid, but foo :global { color: red; } or foo:global { color: red; } is valid
+				node.prelude.children.length === 1 &&
+				node.prelude.children[0].children.length === 1 &&
+				node.prelude.children[0].children[0].selectors.length === 1
+			) {
 				e.css_global_block_invalid_declaration(declaration);
 			}
 		}
@@ -146,14 +175,7 @@ const validation_visitors = {
 			if (global) {
 				const idx = node.children.indexOf(global);
 
-				if (global.selectors[0].args === null && idx !== node.children.length - 1) {
-					// ensure `:global` is only at the end of a selector
-					e.css_global_block_invalid_placement(global.selectors[0]);
-				} else if (
-					global.selectors[0].args !== null &&
-					idx !== 0 &&
-					idx !== node.children.length - 1
-				) {
+				if (global.selectors[0].args !== null && idx !== 0 && idx !== node.children.length - 1) {
 					// ensure `:global(...)` is not used in the middle of a selector (but multiple `global(...)` in sequence are ok)
 					for (let i = idx + 1; i < node.children.length; i++) {
 						if (!is_global(node.children[i])) {

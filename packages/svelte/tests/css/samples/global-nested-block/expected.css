@@ -10,7 +10,7 @@
 			color: green;
 		}
 
-		p:where(.svelte-xyz) {
+		p:where(.svelte-xyz)  {
 			.y {
 				color: green;
 			}

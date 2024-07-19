@@ -140,7 +140,7 @@ const visitors = {
 		if (node.metadata.is_global_block) {
 			const selector = node.prelude.children[0];
 
-			if (selector.children.length === 1) {
+			if (selector.children.length === 1 && selector.children[0].selectors.length === 1) {
 				// `:global {...}`
 				state.code.prependRight(node.start, '/* ');
 				state.code.appendLeft(node.block.start + 1, '*/');
@@ -216,17 +216,34 @@ const visitors = {
 	ComplexSelector(node, context) {
 		const before_bumped = context.state.specificity.bumped;
 
-		/** @param {Css.SimpleSelector} selector */
+		/** @param {Css.PseudoClassSelector} selector */
 		function remove_global_pseudo_class(selector) {
-			context.state.code
-				.remove(selector.start, selector.start + ':global('.length)
-				.remove(selector.end - 1, selector.end);
+			if (selector.args === null) {
+				context.state.code.remove(selector.start, selector.start + ':global'.length);
+			} else {
+				context.state.code
+					.remove(selector.start, selector.start + ':global('.length)
+					.remove(selector.end - 1, selector.end);
+			}
 		}
 
 		for (const relative_selector of node.children) {
 			if (relative_selector.metadata.is_global) {
-				remove_global_pseudo_class(relative_selector.selectors[0]);
+				remove_global_pseudo_class(
+					/** @type {Css.PseudoClassSelector} */ (relative_selector.selectors[0])
+				);
 				continue;
+			}
+
+			// TODO make more efficient?
+			for (const selector of relative_selector.selectors) {
+				if (
+					selector.type === 'PseudoClassSelector' &&
+					selector.name === 'global' &&
+					selector.args === null
+				) {
+					remove_global_pseudo_class(selector);
+				}
 			}
 
 			if (relative_selector.metadata.scoped) {

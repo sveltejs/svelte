@@ -18,14 +18,6 @@
 
 > A :global {...} block cannot be part of a selector list with more than one item
 
-## css_global_block_invalid_modifier
-
-> A :global {...} block cannot modify an existing selector
-
-## css_global_block_invalid_placement
-
-> A :global {...} block can only appear at the end of a selector sequence (did you mean to use :global(...) instead?)
-
 ## css_global_invalid_placement
 
 > :global(...) can be at the start or end of a selector sequence, but not in the middle

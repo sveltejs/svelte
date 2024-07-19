@@ -13,6 +13,31 @@
 		}
 	}
 
+	/* some css preprocessors de-nest :global blocks with a single child
+	   (e.g turn `:global { div { ... } }` into `:global div { ... }`),
+	   so we need to support it, too */
+	:global div {
+		.y {
+			color: green;
+		}
+	}
+
+	div :global p {
+		.y {
+			color: green;
+		}
+	}
+
+	/* div :global { &.x { ...} } is allowed, so div :global.x must be, too */
+	div :global.x {
+		color: green;
+	}
+
+	/* div { :global { &.x { ...} } } is allowed, so div:global.x must be, too */
+	div:global:is(html.dark-mode *) {
+		color: green;
+	}
+
 	.unused :global {
 		.z {
 			color: red;
