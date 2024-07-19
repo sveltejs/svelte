@@ -36,22 +36,6 @@ export function render_tag_invalid_argument() {
 }
 
 /**
- * A snippet must be rendered with `{@render ...}`
- * @returns {never}
- */
-export function snippet_used_as_component() {
-	if (DEV) {
-		const error = new Error(`snippet_used_as_component\nA snippet must be rendered with \`{@render ...}\``);
-
-		error.name = 'Svelte error';
-		throw error;
-	} else {
-		// TODO print a link to the documentation
-		throw new Error("snippet_used_as_component");
-	}
-}
-
-/**
  * `%name%` is not a store with a `subscribe` method
  * @param {string} name
  * @returns {never}
