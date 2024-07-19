@@ -110,6 +110,11 @@ type Brand<B> = { [brand]: B };
 type Branded<T, B> = T & Brand<B>;
 
 /**
+ * Internal implementation details that vary between environments
+ */
+export type ComponentInternals = Branded<{}, 'ComponentInternals'>;
+
+/**
  * Can be used to create strongly typed Svelte components.
  *
  * #### Example:
@@ -142,7 +147,7 @@ export interface Component<
 	 */
 	(
 		this: void,
-		internal: Branded<{}, 'ComponentInternals'>,
+		internals: ComponentInternals,
 		props: Props
 	): {
 		/**
@@ -260,7 +265,10 @@ export type ComponentType<Comp extends SvelteComponent = SvelteComponent> = (new
 	element?: typeof HTMLElement;
 };
 
-declare const SnippetReturn: unique symbol;
+/**
+ * Internal implementation details that vary between environments
+ */
+export type SnippetInternals = Branded<{}, 'SnippetInternals'>;
 
 // Use an interface instead of a type, makes for better intellisense info because the type is named in more situations.
 /**
@@ -277,7 +285,7 @@ declare const SnippetReturn: unique symbol;
 export interface Snippet<Parameters extends unknown[] = []> {
 	(
 		this: void,
-		internal: Branded<{}, 'SnippetInternals'>,
+		internal: SnippetInternals,
 		// this conditional allows tuples but not arrays. Arrays would indicate a
 		// rest parameter type, which is not supported. If rest parameters are added
 		// in the future, the condition can be removed.
