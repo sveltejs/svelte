@@ -243,9 +243,14 @@ const state_proxy_handler = {
 			}
 		}
 
+		var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
+
 		// Set the new value before updating any signals so that any listeners get the new value
-		// @ts-ignore
-		target[prop] = value;
+		if (descriptor?.set) {
+			descriptor.set.call(receiver, value);
+		} else {
+			target[prop] = value;
+		}
 
 		if (not_has) {
 			// If we have mutated an array directly, we might need to
