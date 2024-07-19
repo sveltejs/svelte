@@ -4,19 +4,6 @@ import { is_void } from '../../constants.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 
-/**
- * Validate that the function handed to `{@render ...}` is a snippet function, and not some other kind of function.
- * @param {any} snippet_fn
- * @param {Record<string, any> | undefined} $$props Only passed if render tag receives arguments and is for the children prop
- */
-export function validate_snippet(snippet_fn, $$props) {
-	if ($$props?.$$slots?.default && typeof $$props.$$slots.default !== 'boolean') {
-		e.render_tag_invalid_argument();
-	}
-
-	return snippet_fn;
-}
-
 export function invalid_children_snippet() {
 	e.invalid_default_snippet();
 }
