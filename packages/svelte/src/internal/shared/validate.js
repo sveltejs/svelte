@@ -17,6 +17,10 @@ export function validate_snippet(snippet_fn, $$props) {
 	return snippet_fn;
 }
 
+export function invalid_children_snippet() {
+	e.invalid_default_snippet();
+}
+
 /**
  * Validate that the function behind `<Component />` isn't a snippet.
  * @param {any} component_fn
