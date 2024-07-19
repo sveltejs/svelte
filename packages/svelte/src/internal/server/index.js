@@ -555,7 +555,7 @@ export { push_element, pop_element } from './dev.js';
 export { snapshot } from '../shared/clone.js';
 
 export {
-	invalid_children_snippet,
+	invalid_default_snippet,
 	validate_component,
 	validate_dynamic_element_tag,
 	validate_void_dynamic_element

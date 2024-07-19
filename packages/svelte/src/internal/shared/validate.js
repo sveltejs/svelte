@@ -4,9 +4,7 @@ import { is_void } from '../../constants.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 
-export function invalid_children_snippet() {
-	e.invalid_default_snippet();
-}
+export { invalid_default_snippet } from './errors.js';
 
 /**
  * Validate that the function behind `<Component />` isn't a snippet.

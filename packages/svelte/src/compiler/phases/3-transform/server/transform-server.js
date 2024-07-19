@@ -975,7 +975,7 @@ function serialize_inline_component(node, expression, context) {
 				serialized_slots.push(b.init(slot_name, slot_fn));
 
 				// and a `children` prop that errors
-				push_prop(b.init('children', b.id('$.invalid_children_snippet')));
+				push_prop(b.init('children', b.id('$.invalid_default_snippet')));
 			}
 		} else {
 			serialized_slots.push(b.init(slot_name, slot_fn));
