@@ -1,7 +1,6 @@
 /** @import { Snippet } from 'svelte' */
 /** @import { Payload } from '#server' */
 /** @import { Getters } from '#shared' */
-import { add_snippet_symbol } from '../../shared/validate.js';
 
 /**
  * Create a snippet programmatically
@@ -13,10 +12,10 @@ import { add_snippet_symbol } from '../../shared/validate.js';
  * @returns {Snippet<Params>}
  */
 export function createRawSnippet(fn) {
-	return add_snippet_symbol((/** @type {Payload} */ payload, /** @type {Params} */ ...args) => {
+	return (payload, ...args) => {
 		var getters = /** @type {Getters<Params>} */ (args.map((value) => () => value));
-		payload.out += fn(...getters)
+		/** @type {Payload} */ (/** @type {unknown} */ (payload)).out += fn(...getters)
 			.render()
 			.trim();
-	});
+	};
 }

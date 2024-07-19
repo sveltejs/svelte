@@ -969,13 +969,7 @@ function serialize_inline_component(node, expression, context) {
 			lets.length === 0 &&
 			children.default.every((node) => node.type !== 'SvelteFragment')
 		) {
-			push_prop(
-				b.prop(
-					'init',
-					b.id('children'),
-					context.state.options.dev ? b.call('$.add_snippet_symbol', slot_fn) : slot_fn
-				)
-			);
+			push_prop(b.prop('init', b.id('children'), slot_fn));
 			// We additionally add the default slot as a boolean, so that the slot render function on the other
 			// side knows it should get the content to render from $$props.children
 			serialized_slots.push(b.init('default', b.true));
@@ -1501,10 +1495,6 @@ const template_visitors = {
 		fn.___snippet = true;
 		// TODO hoist where possible
 		context.state.init.push(fn);
-
-		if (context.state.options.dev) {
-			context.state.init.push(b.stmt(b.call('$.add_snippet_symbol', node.expression)));
-		}
 	},
 	Component(node, context) {
 		serialize_inline_component(node, b.id(node.name), context);

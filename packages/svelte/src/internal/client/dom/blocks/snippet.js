@@ -1,7 +1,6 @@
 /** @import { Snippet } from 'svelte' */
 /** @import { Effect, TemplateNode } from '#client' */
 /** @import { Getters } from '#shared' */
-import { add_snippet_symbol } from '../../../shared/validate.js';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { branch, block, destroy_effect, teardown } from '../../reactivity/effects.js';
 import {
@@ -50,10 +49,11 @@ export function snippet(node, get_snippet, ...args) {
  * In development, wrap the snippet function so that it passes validation, and so that the
  * correct component context is set for ownership checks
  * @param {any} component
- * @param {(node: TemplateNode, ...args: any[]) => void} fn
+ * @param {Snippet} fn
+ * @returns {Snippet}
  */
 export function wrap_snippet(component, fn) {
-	return add_snippet_symbol((/** @type {TemplateNode} */ node, /** @type {any[]} */ ...args) => {
+	return (node, ...args) => {
 		var previous_component_function = dev_current_component_function;
 		set_dev_current_component_function(component);
 
@@ -62,7 +62,7 @@ export function wrap_snippet(component, fn) {
 		} finally {
 			set_dev_current_component_function(previous_component_function);
 		}
-	});
+	};
 }
 
 /**
@@ -75,29 +75,27 @@ export function wrap_snippet(component, fn) {
  * @returns {Snippet<Params>}
  */
 export function createRawSnippet(fn) {
-	return add_snippet_symbol(
-		(/** @type {TemplateNode} */ anchor, /** @type {Getters<Params>} */ ...params) => {
-			var snippet = fn(...params);
+	return (anchor, ...params) => {
+		var snippet = fn(...params);
 
-			/** @type {Element} */
-			var element;
+		/** @type {Element} */
+		var element;
 
-			if (hydrating) {
-				element = /** @type {Element} */ (hydrate_node);
-				hydrate_next();
-			} else {
-				var html = snippet.render().trim();
-				var fragment = create_fragment_from_html(html);
-				element = /** @type {Element} */ (fragment.firstChild);
-				anchor.before(element);
-			}
-
-			const result = snippet.setup?.(element);
-			assign_nodes(element, element);
-
-			if (typeof result === 'function') {
-				teardown(result);
-			}
+		if (hydrating) {
+			element = /** @type {Element} */ (hydrate_node);
+			hydrate_next();
+		} else {
+			var html = snippet.render().trim();
+			var fragment = create_fragment_from_html(html);
+			element = /** @type {Element} */ (fragment.firstChild);
+			/** @type {TemplateNode} */ (/** @type {unknown} */ (anchor)).before(element);
 		}
-	);
+
+		const result = snippet.setup?.(element);
+		assign_nodes(element, element);
+
+		if (typeof result === 'function') {
+			teardown(result);
+		}
+	};
 }

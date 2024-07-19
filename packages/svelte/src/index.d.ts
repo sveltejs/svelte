@@ -1,5 +1,6 @@
 // This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
 
+import type { Getters } from '#shared';
 import './ambient.js';
 
 /**
@@ -104,6 +105,10 @@ export class SvelteComponent<
 	$set(props: Partial<Props>): void;
 }
 
+declare const brand: unique symbol;
+type Brand<B> = { [brand]: B };
+type Branded<T, B> = T & Brand<B>;
+
 /**
  * Can be used to create strongly typed Svelte components.
  *
@@ -136,7 +141,8 @@ export interface Component<
 	 * @param props The props passed to the component.
 	 */
 	(
-		internal: unknown,
+		this: void,
+		internal: Branded<{}, 'ComponentInternals'>,
 		props: Props
 	): {
 		/**
@@ -271,13 +277,12 @@ declare const SnippetReturn: unique symbol;
 export interface Snippet<Parameters extends unknown[] = []> {
 	(
 		this: void,
+		internal: Branded<{}, 'SnippetInternals'>,
 		// this conditional allows tuples but not arrays. Arrays would indicate a
 		// rest parameter type, which is not supported. If rest parameters are added
 		// in the future, the condition can be removed.
-		...args: number extends Parameters['length'] ? never : Parameters
-	): typeof SnippetReturn & {
-		_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-	};
+		...args: number extends Parameters['length'] ? never : Getters<Parameters>
+	): void;
 }
 
 interface DispatchOptions {
