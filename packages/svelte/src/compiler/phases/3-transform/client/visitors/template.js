@@ -2378,16 +2378,16 @@ export const template_visitors = {
 		// We can guarantee this by knowing that in order for the item of the each block to change, they
 		// would need to mutate the key/item directly in the array. Given that in runes mode we use ===
 		// equality, we can apply a fast-path (as long as the index isn't reactive).
-		let each_type = 0;
+		let flags = 0;
 
 		if (
 			node.key &&
 			(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index)
 		) {
-			each_type |= EACH_KEYED;
+			flags |= EACH_KEYED;
 
 			if (node.index) {
-				each_type |= EACH_INDEX_REACTIVE;
+				flags |= EACH_INDEX_REACTIVE;
 			}
 
 			if (
@@ -2399,10 +2399,10 @@ export const template_visitors = {
 			) {
 				// Fast-path for when the key === item
 			} else {
-				each_type |= EACH_ITEM_REACTIVE;
+				flags |= EACH_ITEM_REACTIVE;
 			}
 		} else {
-			each_type |= EACH_ITEM_REACTIVE;
+			flags |= EACH_ITEM_REACTIVE;
 		}
 
 		// Since `animate:` can only appear on elements that are the sole child of a keyed each block,
@@ -2415,15 +2415,15 @@ export const template_visitors = {
 				return child.attributes.some((attr) => attr.type === 'AnimateDirective');
 			})
 		) {
-			each_type |= EACH_IS_ANIMATED;
+			flags |= EACH_IS_ANIMATED;
 		}
 
 		if (each_node_meta.is_controlled) {
-			each_type |= EACH_IS_CONTROLLED;
+			flags |= EACH_IS_CONTROLLED;
 		}
 
 		if (context.state.analysis.runes) {
-			each_type |= EACH_IS_STRICT_EQUALS;
+			flags |= EACH_IS_STRICT_EQUALS;
 		}
 
 		// If the array is a store expression, we need to invalidate it when the array is changed.
@@ -2576,7 +2576,7 @@ export const template_visitors = {
 			declarations.push(b.let(node.index, index));
 		}
 
-		if (context.state.options.dev && (each_type & EACH_KEYED) !== 0) {
+		if (context.state.options.dev && (flags & EACH_KEYED) !== 0) {
 			context.state.init.push(
 				b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
 			);
@@ -2585,7 +2585,7 @@ export const template_visitors = {
 		/** @type {Expression[]} */
 		const args = [
 			context.state.node,
-			b.literal(each_type),
+			b.literal(flags),
 			each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
 			key_function,
 			b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(block.body)))
