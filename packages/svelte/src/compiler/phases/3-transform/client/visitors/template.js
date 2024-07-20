@@ -2373,11 +2373,6 @@ export const template_visitors = {
 			context.state.init.push(b.const(each_node_meta.array_name, b.thunk(collection)));
 		}
 
-		// The runtime needs to know what kind of each block this is in order to optimize for the
-		// key === item (we avoid extra allocations). In that case, the item doesn't need to be reactive.
-		// We can guarantee this by knowing that in order for the item of the each block to change, they
-		// would need to mutate the key/item directly in the array. Given that in runes mode we use ===
-		// equality, we can apply a fast-path (as long as the index isn't reactive).
 		let flags = 0;
 
 		if (
@@ -2390,15 +2385,13 @@ export const template_visitors = {
 				flags |= EACH_INDEX_REACTIVE;
 			}
 
-			if (
-				context.state.analysis.runes &&
+			// In runes mode, if key === item, we don't need to wrap the item in a source
+			const key_is_item =
 				node.key.type === 'Identifier' &&
 				node.context.type === 'Identifier' &&
-				node.context.name === node.key.name &&
-				!node.index
-			) {
-				// Fast-path for when the key === item
-			} else {
+				node.context.name === node.key.name;
+
+			if (!context.state.analysis.runes || !key_is_item) {
 				flags |= EACH_ITEM_REACTIVE;
 			}
 		} else {
@@ -2448,10 +2441,12 @@ export const template_visitors = {
 			);
 			return [array, ...transitive_dependencies];
 		});
+
 		if (each_node_meta.array_name) {
 			indirect_dependencies.push(b.call(each_node_meta.array_name));
 		} else {
 			indirect_dependencies.push(collection);
+
 			const transitive_dependencies = serialize_transitive_dependencies(
 				each_node_meta.references,
 				context
@@ -2470,6 +2465,7 @@ export const template_visitors = {
 					// into separate expressions, at which point this is called again with an identifier or member expression
 					return serialize_set_binding(assignment, context, () => assignment);
 				}
+
 				const left = object(assignment.left);
 				const value = get_assignment_value(assignment, context);
 				const invalidate = b.call(
@@ -2510,10 +2506,12 @@ export const template_visitors = {
 			const item_with_loc = with_loc(item, id);
 			return b.call('$.unwrap', item_with_loc);
 		};
+
 		if (node.index) {
 			const index_binding = /** @type {import('#compiler').Binding} */ (
 				context.state.scope.get(node.index)
 			);
+
 			index_binding.expression = (id) => {
 				const index_with_loc = with_loc(index, id);
 				return b.call('$.unwrap', index_with_loc);
