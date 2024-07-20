@@ -29,7 +29,7 @@ import {
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen } from '../../../shared/utils.js';
-import { INERT, STATE_FROZEN_SYMBOL, STATE_SYMBOL } from '../../constants.js';
+import { INERT, STATE_SYMBOL } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
 import { current_effect } from '../../runtime.js';
 
@@ -142,12 +142,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
 		// are treated as reactive, so they get wrapped in a signal.
 		var flags = state.flags;
-		if (
-			(flags & EACH_IS_STRICT_EQUALS) !== 0 &&
-			!is_frozen(array) &&
-			!(STATE_FROZEN_SYMBOL in array) &&
-			!(STATE_SYMBOL in array)
-		) {
+		if ((flags & EACH_IS_STRICT_EQUALS) !== 0 && !is_frozen(array) && !(STATE_SYMBOL in array)) {
 			flags ^= EACH_IS_STRICT_EQUALS;
 
 			// Additionally if we're in an keyed each block, we'll need ensure the items are all wrapped in signals.

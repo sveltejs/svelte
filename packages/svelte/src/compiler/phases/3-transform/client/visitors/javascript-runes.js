@@ -42,7 +42,7 @@ export const javascript_visitors_runes = {
 					const rune = get_rune(definition.value, state.scope);
 					if (
 						rune === '$state' ||
-						rune === '$state.frozen' ||
+						rune === '$state.raw' ||
 						rune === '$derived' ||
 						rune === '$derived.by'
 					) {
@@ -51,7 +51,7 @@ export const javascript_visitors_runes = {
 							kind:
 								rune === '$state'
 									? 'state'
-									: rune === '$state.frozen'
+									: rune === '$state.raw'
 										? 'frozen_state'
 										: rune === '$derived.by'
 											? 'derived_call'
@@ -115,10 +115,7 @@ export const javascript_visitors_runes = {
 										should_proxy_or_freeze(init, state.scope) ? b.call('$.proxy', init) : init
 									)
 								: field.kind === 'frozen_state'
-									? b.call(
-											'$.source',
-											should_proxy_or_freeze(init, state.scope) ? b.call('$.freeze', init) : init
-										)
+									? b.call('$.source', init)
 									: field.kind === 'derived_call'
 										? b.call('$.derived', init)
 										: b.call('$.derived', b.thunk(init));
@@ -158,12 +155,7 @@ export const javascript_visitors_runes = {
 							// set foo(value) { this.#foo = value; }
 							const value = b.id('value');
 							body.push(
-								b.method(
-									'set',
-									definition.key,
-									[value],
-									[b.stmt(b.call('$.set', member, b.call('$.freeze', value)))]
-								)
+								b.method('set', definition.key, [value], [b.stmt(b.call('$.set', member, value))])
 							);
 						}
 
@@ -314,7 +306,7 @@ export const javascript_visitors_runes = {
 					? b.id('undefined')
 					: /** @type {import('estree').Expression} */ (visit(args[0]));
 
-			if (rune === '$state' || rune === '$state.frozen') {
+			if (rune === '$state' || rune === '$state.raw') {
 				/**
 				 * @param {import('estree').Identifier} id
 				 * @param {import('estree').Expression} value
@@ -322,7 +314,7 @@ export const javascript_visitors_runes = {
 				const create_state_declarator = (id, value) => {
 					const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
 					if (should_proxy_or_freeze(value, state.scope)) {
-						value = b.call(rune === '$state' ? '$.proxy' : '$.freeze', value);
+						value = rune === '$state' ? b.call('$.proxy', value) : value;
 					}
 					if (is_state_source(binding, state)) {
 						value = b.call('$.source', value);

@@ -903,12 +903,7 @@ function validate_call_expression(node, scope, path) {
 		e.bindable_invalid_location(node);
 	}
 
-	if (
-		rune === '$state' ||
-		rune === '$state.frozen' ||
-		rune === '$derived' ||
-		rune === '$derived.by'
-	) {
+	if (rune === '$state' || rune === '$state.raw' || rune === '$derived' || rune === '$derived.by') {
 		if (parent.type === 'VariableDeclarator') return;
 		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
 		e.state_invalid_placement(node, rune);

@@ -31,7 +31,7 @@ export const PassiveEvents = ['wheel', 'touchstart', 'touchmove', 'touchend', 't
 
 export const Runes = /** @type {const} */ ([
 	'$state',
-	'$state.frozen',
+	'$state.raw',
 	'$state.snapshot',
 	'$state.is',
 	'$props',

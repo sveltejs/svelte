@@ -206,7 +206,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 						if (assignment.type === 'AssignmentExpression') {
 							assignment.right =
 								private_state.kind === 'frozen_state'
-									? b.call('$.freeze', value)
+									? value
 									: serialize_proxy_reassignment(value, private_state.id, state);
 							return assignment;
 						}
@@ -219,7 +219,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 							!options?.skip_proxy_and_freeze &&
 							should_proxy_or_freeze(value, context.state.scope)
 							? private_state.kind === 'frozen_state'
-								? b.call('$.freeze', value)
+								? value
 								: serialize_proxy_reassignment(value, private_state.id, state)
 							: value
 					);
@@ -243,7 +243,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 				if (assignment.type === 'AssignmentExpression') {
 					assignment.right =
 						public_state.kind === 'frozen_state'
-							? b.call('$.freeze', value)
+							? value
 							: serialize_proxy_reassignment(value, public_state.id, state);
 					return assignment;
 				}
@@ -325,7 +325,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 						context.state.analysis.runes &&
 							!options?.skip_proxy_and_freeze &&
 							should_proxy_or_freeze(value, context.state.scope)
-							? b.call('$.freeze', value)
+							? value
 							: value
 					);
 				} else if (

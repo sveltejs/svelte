@@ -215,18 +215,8 @@ export function client_component(source, analysis, options) {
 		}
 
 		if (binding?.kind === 'state' || binding?.kind === 'frozen_state') {
-			return [
-				getter,
-				b.set(alias ?? name, [
-					b.stmt(
-						b.call(
-							'$.set',
-							b.id(name),
-							b.call(binding.kind === 'state' ? '$.proxy' : '$.freeze', b.id('$$value'))
-						)
-					)
-				])
-			];
+			const value = binding.kind === 'state' ? b.call('$.proxy', b.id('$$value')) : b.id('$$value');
+			return [getter, b.set(alias ?? name, [b.stmt(b.call('$.set', b.id(name), value))])];
 		}
 
 		return getter;

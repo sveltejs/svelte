@@ -559,7 +559,7 @@ const javascript_visitors_runes = {
 		if (node.value != null && node.value.type === 'CallExpression') {
 			const rune = get_rune(node.value, state.scope);
 
-			if (rune === '$state' || rune === '$state.frozen' || rune === '$derived') {
+			if (rune === '$state' || rune === '$state.raw' || rune === '$derived') {
 				return {
 					...node,
 					value:

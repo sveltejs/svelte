@@ -1,5 +1,5 @@
 <script>
-	let items = $state.frozen([0]);
+	let items = $state.raw([0]);
 
 	const addItem = () => {
 		items = [...items, items.length];

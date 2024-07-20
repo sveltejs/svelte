@@ -909,19 +909,14 @@ const runes_scope_js_tweaker = {
 		const callee = node.init.callee;
 		if (callee.type !== 'Identifier' && callee.type !== 'MemberExpression') return;
 
-		if (
-			rune !== '$state' &&
-			rune !== '$state.frozen' &&
-			rune !== '$derived' &&
-			rune !== '$derived.by'
-		)
+		if (rune !== '$state' && rune !== '$state.raw' && rune !== '$derived' && rune !== '$derived.by')
 			return;
 
 		for (const path of extract_paths(node.id)) {
 			// @ts-ignore this fails in CI for some insane reason
 			const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(path.node.name));
 			binding.kind =
-				rune === '$state' ? 'state' : rune === '$state.frozen' ? 'frozen_state' : 'derived';
+				rune === '$state' ? 'state' : rune === '$state.raw' ? 'frozen_state' : 'derived';
 		}
 	}
 };
@@ -947,7 +942,7 @@ const runes_scope_tweaker = {
 
 		if (
 			rune !== '$state' &&
-			rune !== '$state.frozen' &&
+			rune !== '$state.raw' &&
 			rune !== '$derived' &&
 			rune !== '$derived.by' &&
 			rune !== '$props'
@@ -960,7 +955,7 @@ const runes_scope_tweaker = {
 			binding.kind =
 				rune === '$state'
 					? 'state'
-					: rune === '$state.frozen'
+					: rune === '$state.raw'
 						? 'frozen_state'
 						: rune === '$derived' || rune === '$derived.by'
 							? 'derived'
