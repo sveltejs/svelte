@@ -2364,7 +2364,6 @@ export const template_visitors = {
 	EachBlock(node, context) {
 		const each_node_meta = node.metadata;
 		const collection = /** @type {Expression} */ (context.visit(node.expression));
-		let each_item_is_reactive = true;
 
 		if (!each_node_meta.is_controlled) {
 			context.state.template.push('<!>');
@@ -2386,19 +2385,19 @@ export const template_visitors = {
 			(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index)
 		) {
 			each_type |= EACH_KEYED;
-			// If there's a destructuring, then we likely need the generated $$index
-			if (node.index || node.context.type !== 'Identifier') {
+
+			if (node.index) {
 				each_type |= EACH_INDEX_REACTIVE;
 			}
+
 			if (
 				context.state.analysis.runes &&
 				node.key.type === 'Identifier' &&
 				node.context.type === 'Identifier' &&
 				node.context.name === node.key.name &&
-				(each_type & EACH_INDEX_REACTIVE) === 0
+				!node.index
 			) {
 				// Fast-path for when the key === item
-				each_item_is_reactive = false;
 			} else {
 				each_type |= EACH_ITEM_REACTIVE;
 			}
