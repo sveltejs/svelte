@@ -35,6 +35,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	ssrHtml?: string;
 	compileOptions?: Partial<CompileOptions>;
 	props?: Props;
+	server_props?: Props;
 	before_test?: () => void;
 	after_test?: () => void;
 	test?: (args: {
@@ -256,7 +257,9 @@ async function run_test_variant(
 			config.before_test?.();
 			// ssr into target
 			const SsrSvelteComponent = (await import(`${cwd}/_output/server/main.svelte.js`)).default;
-			const { html, head } = render(SsrSvelteComponent, { props: config.props || {} });
+			const { html, head } = render(SsrSvelteComponent, {
+				props: config.server_props ?? config.props ?? {}
+			});
 
 			fs.writeFileSync(`${cwd}/_output/rendered.html`, html);
 			target.innerHTML = html;
