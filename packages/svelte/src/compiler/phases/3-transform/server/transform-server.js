@@ -221,8 +221,8 @@ function serialize_get_binding(node, state) {
 		);
 	}
 
-	const getter = state.getters[binding.node.name];
-	if (getter) {
+	if (Object.hasOwn(state.getters, node.name)) {
+		const getter = state.getters[node.name];
 		return typeof getter === 'function' ? getter(node) : getter;
 	}
 
