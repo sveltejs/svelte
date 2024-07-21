@@ -42,7 +42,9 @@ Below, you'll find the highlights from the Svelte 5 release notes (currently in 
 - [opml-editor](https://github.com/imdj/opml-editor/) is an online OPML editor tailored for managing subscription lists more easily
 - [Praxis](https://praxis.trade/) is an AI-powered trading journal that analyzes your trades and uncovers patterns
 - [Lokal](https://lokal.so/) lets you share your localhost with Public and https .local Address
-- [Shootmail](https://shootmail.app/) is a template-first mail platform with scheduling and analytics.
+- [formcrafts](https://formcrafts.com/) lets you create incredible forms like application forms, lead generation forms, surveys, payment forms, and more 
+- [Shootmail](https://shootmail.app/) is a template-first mail platform with scheduling and analytics
+- [Supersaw](https://github.com/HelgeSverre/supersaw) is Open Source Web Based Digital Audio Workstation (DAW)
 
 
 **Learning Resources**
@@ -51,6 +53,8 @@ _Featuring Svelte Contributors and Ambassadors_
 - [Svelte Dev Vlog (with Rich) — June 2024](https://www.youtube.com/watch?v=4TGwlWFoGvM) on Svelte Society YouTube
 - [Svelte London — July 2024](https://www.youtube.com/watch?v=gujnZDyLDwU)
 - [Svelte Meets Vite: A Deep Dive with Matias Capeletto (patakdev)](https://www.svelteradio.com/episodes/svelte-meets-vite-a-deep-dive-with-matias-capeletto-patakdev) by Svelte Radio
+- [Unleashing the Power of Claude Artifacts with Svelte and Sonnet 3.5](https://www.youtube.com/watch?v=Q7q77c5j7bQ) and [Perfect AI development setup for any programming language with Sonnet 3.5 and Claude Projects](https://www.youtube.com/watch?v=zNkw5K2W8AQ) by Stanislav Khromov
+- [Local First from Scratch - How to make a web app with local data](https://www.youtube.com/watch?v=Qoqh9Mdmk80) by Syntax.
 - This Week in Svelte:
   - [Ep. 67](https://www.youtube.com/watch?v=9yy1s7TAvXE) — Changelog, Popover API, starting-style, resetting file inputs
   - [Ep. 68](https://www.youtube.com/watch?v=G6Z0l2plyIk) — Changelog, EATView, Capacitor
@@ -58,11 +62,19 @@ _Featuring Svelte Contributors and Ambassadors_
   - [Ep. 70](https://www.youtube.com/watch?v=Da-xOep6hcs) — Changelog, Taiwind CSS and Svelte Motion, when tu use $derived
 
 
-_To Read and Watch_
+_To Read_
 
 - [From React To Svelte - Our Experience as a Dev Shop](https://www.reddit.com/r/sveltejs/comments/1e5522o/from_react_to_svelte_our_experience_as_a_dev_shop/) by gimp3695
 - [Authentication in SvelteKit using SvelteKitAuth](https://blog.aakashgoplani.in/series/sveltekitauth-sveltekit) by Aakash Goplani
-- [Local First from Scratch - How to make a web app with local data](https://www.youtube.com/watch?v=Qoqh9Mdmk80) by Syntax
+- [SvelteKit (Svelte 5) and Supabase](https://www.thespatula.io/svelte/sveltekit_supabase/) by the spatula
+- [Firebase signInWithRedirect, localhost, and SvelteKit](https://captaincodeman.com/firebase-signinwithredirect-localhost-and-sveltekit), [Dealing with Dialogs in Svelte](https://www.captaincodeman.com/dealing-with-dialogs-in-svelte) and [Build a Docker Container from a pnpm monorepo](https://www.captaincodeman.com/build-a-docker-container-from-a-pnpm-monorepo) by Captain Codeman
+- [Introducing Svelte 5](https://frontendmasters.com/blog/introducing-svelte-5/) by Frontend Masters
+
+
+_To Watch_
+
+- [Introduction to Sveltekit (#1) Parahack's Let learn Sveltekit](https://www.youtube.com/watch?v=c2QqPuG6mw0&t=683s), [image optimization in sveltekit](https://www.youtube.com/watch?v=pUlWbIqdkYE) and [Deploy your sveltekit app to cloudflare pages](https://www.youtube.com/watch?v=pGS_07zP-no) by Lawal Adebola
+- [How Svelte runes syntax is better than plain JavaScript with signals](https://www.youtube.com/watch?v=IsJtmbvW2SI) by webdevladder
 
 
 **Libraries, Tools & Components**
