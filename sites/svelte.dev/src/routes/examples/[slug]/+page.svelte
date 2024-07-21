@@ -34,7 +34,7 @@
 
 	<meta name="twitter:title" content="Svelte examples" />
 	<meta name="twitter:description" content="Cybernetically enhanced web apps" />
-	<meta name="Description" content="Interactive example Svelte apps" />
+	<meta name="description" content="Interactive example Svelte apps" />
 </svelte:head>
 
 <h1 class="visually-hidden">Examples</h1>

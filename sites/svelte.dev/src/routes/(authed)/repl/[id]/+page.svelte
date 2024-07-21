@@ -70,7 +70,7 @@
 
 	<meta name="twitter:title" content="{data.gist.name} • REPL • Svelte" />
 	<meta name="twitter:description" content="Cybernetically enhanced web apps" />
-	<meta name="Description" content="Interactive Svelte playground" />
+	<meta name="description" content="Interactive Svelte playground" />
 </svelte:head>
 
 <div class="repl-outer {zen_mode ? 'zen-mode' : ''}">
