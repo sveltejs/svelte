@@ -164,6 +164,7 @@ export {
 export { snapshot } from '../shared/clone.js';
 export { noop } from '../shared/utils.js';
 export {
+	invalid_default_snippet,
 	validate_component,
 	validate_dynamic_element_tag,
 	validate_snippet,

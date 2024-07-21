@@ -884,23 +884,27 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 			])
 		);
 
-		if (
-			slot_name === 'default' &&
-			!has_children_prop &&
-			lets.length === 0 &&
-			children.default.every((node) => node.type !== 'SvelteFragment')
-		) {
-			push_prop(
-				b.init(
-					'children',
-					context.state.options.dev
-						? b.call('$.wrap_snippet', b.id(context.state.analysis.name), slot_fn)
-						: slot_fn
-				)
-			);
-			// We additionally add the default slot as a boolean, so that the slot render function on the other
-			// side knows it should get the content to render from $$props.children
-			serialized_slots.push(b.init(slot_name, b.true));
+		if (slot_name === 'default' && !has_children_prop) {
+			if (lets.length === 0 && children.default.every((node) => node.type !== 'SvelteFragment')) {
+				// create `children` prop...
+				push_prop(
+					b.init(
+						'children',
+						context.state.options.dev
+							? b.call('$.wrap_snippet', b.id(context.state.analysis.name), slot_fn)
+							: slot_fn
+					)
+				);
+
+				// and `$$slots.default: true` so that `<slot>` on the child works
+				serialized_slots.push(b.init(slot_name, b.true));
+			} else {
+				// create `$$slots.default`...
+				serialized_slots.push(b.init(slot_name, slot_fn));
+
+				// and a `children` prop that errors
+				push_prop(b.init('children', b.id('$.invalid_default_snippet')));
+			}
 		} else {
 			serialized_slots.push(b.init(slot_name, slot_fn));
 		}
@@ -1865,13 +1869,7 @@ export const template_visitors = {
 
 		let snippet_function = /** @type {Expression} */ (context.visit(callee));
 		if (context.state.options.dev) {
-			snippet_function = b.call(
-				'$.validate_snippet',
-				snippet_function,
-				args.length && callee.type === 'Identifier' && callee.name === 'children'
-					? b.id('$$props')
-					: undefined
-			);
+			snippet_function = b.call('$.validate_snippet', snippet_function);
 		}
 
 		if (node.metadata.dynamic) {

@@ -963,25 +963,28 @@ function serialize_inline_component(node, expression, context) {
 			])
 		);
 
-		if (
-			slot_name === 'default' &&
-			!has_children_prop &&
-			lets.length === 0 &&
-			children.default.every((node) => node.type !== 'SvelteFragment')
-		) {
-			push_prop(
-				b.prop(
-					'init',
-					b.id('children'),
-					context.state.options.dev ? b.call('$.add_snippet_symbol', slot_fn) : slot_fn
-				)
-			);
-			// We additionally add the default slot as a boolean, so that the slot render function on the other
-			// side knows it should get the content to render from $$props.children
-			serialized_slots.push(b.init('default', b.true));
+		if (slot_name === 'default' && !has_children_prop) {
+			if (lets.length === 0 && children.default.every((node) => node.type !== 'SvelteFragment')) {
+				// create `children` prop...
+				push_prop(
+					b.prop(
+						'init',
+						b.id('children'),
+						context.state.options.dev ? b.call('$.add_snippet_symbol', slot_fn) : slot_fn
+					)
+				);
+
+				// and `$$slots.default: true` so that `<slot>` on the child works
+				serialized_slots.push(b.init(slot_name, b.true));
+			} else {
+				// create `$$slots.default`...
+				serialized_slots.push(b.init(slot_name, slot_fn));
+
+				// and a `children` prop that errors
+				push_prop(b.init('children', b.id('$.invalid_default_snippet')));
+			}
 		} else {
-			const slot = b.prop('init', b.literal(slot_name), slot_fn);
-			serialized_slots.push(slot);
+			serialized_slots.push(b.init(slot_name, slot_fn));
 		}
 	}
 
@@ -1211,13 +1214,7 @@ const template_visitors = {
 
 		const expression = /** @type {import('estree').Expression} */ (context.visit(callee));
 		const snippet_function = context.state.options.dev
-			? b.call(
-					'$.validate_snippet',
-					expression,
-					raw_args.length && callee.type === 'Identifier' && callee.name === 'children'
-						? b.id('$$props')
-						: undefined
-				)
+			? b.call('$.validate_snippet', expression)
 			: expression;
 
 		const snippet_args = raw_args.map((arg) => {
