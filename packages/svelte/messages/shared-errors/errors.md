@@ -1,3 +1,7 @@
+## invalid_default_snippet
+
+> Cannot use `{@render children(...)}` if the parent component uses `let:` directives. Consider using a named snippet instead
+
 ## lifecycle_outside_component
 
 > `%name%(...)` can only be used during component initialisation
