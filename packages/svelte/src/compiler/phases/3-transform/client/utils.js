@@ -84,6 +84,11 @@ export function serialize_get_binding(node, state) {
 		return b.call(node);
 	}
 
+	const getter = state.getters.get(binding);
+	if (getter) {
+		return typeof getter === 'function' ? getter(node) : getter;
+	}
+
 	if (binding.expression) {
 		return typeof binding.expression === 'function' ? binding.expression(node) : binding.expression;
 	}

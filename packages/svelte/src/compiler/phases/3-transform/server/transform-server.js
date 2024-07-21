@@ -221,6 +221,11 @@ function serialize_get_binding(node, state) {
 		);
 	}
 
+	const getter = state.getters.get(binding);
+	if (getter) {
+		return typeof getter === 'function' ? getter(node) : getter;
+	}
+
 	if (binding.expression) {
 		return typeof binding.expression === 'function' ? binding.expression(node) : binding.expression;
 	}
@@ -1983,6 +1988,7 @@ export function server_component(analysis, options) {
 		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
 		private_derived: new Map(),
+		getters: new Map(),
 		skip_hydration_boundaries: false
 	};
 
@@ -2293,7 +2299,8 @@ export function server_module(analysis, options) {
 		// to be present for `javascript_visitors_legacy` and so is included in module
 		// transform state as well as component transform state
 		legacy_reactive_statements: new Map(),
-		private_derived: new Map()
+		private_derived: new Map(),
+		getters: new Map()
 	};
 
 	const module = /** @type {import('estree').Program} */ (

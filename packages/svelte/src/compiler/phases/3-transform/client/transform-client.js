@@ -65,6 +65,7 @@ export function client_component(source, analysis, options) {
 		preserve_whitespace: options.preserveWhitespace,
 		public_state: new Map(),
 		private_state: new Map(),
+		getters: new Map(),
 		in_constructor: false,
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
@@ -582,6 +583,7 @@ export function client_module(analysis, options) {
 		legacy_reactive_statements: new Map(),
 		public_state: new Map(),
 		private_state: new Map(),
+		getters: new Map(),
 		in_constructor: false
 	};
 
