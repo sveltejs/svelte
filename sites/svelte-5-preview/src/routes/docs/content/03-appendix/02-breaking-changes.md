@@ -99,7 +99,7 @@ In Svelte 4, rendering a component to a string also returned the CSS of all comp
 
 ### Component typing changes
 
-The change from classes towards functions is also reflected in the typings: `SvelteComponent`, the base class from Svelte 4, is deprecated in favor of the new `Component` type which defines the function shape of a Svelte component. To manually define a component shape in a `d.ts` file:
+The change from classes towards functions is also reflected in the typings: `SvelteComponent`, the base class from Svelte 4, is deprecated in favour of the new `Component` type which defines the function shape of a Svelte component. To manually define a component shape in a `d.ts` file:
 
 ```ts
 import type { Component } from 'svelte';
