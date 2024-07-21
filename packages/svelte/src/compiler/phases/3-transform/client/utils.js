@@ -84,7 +84,7 @@ export function serialize_get_binding(node, state) {
 		return b.call(node);
 	}
 
-	const getter = state.getters.get(binding);
+	const getter = state.getters[node.name];
 	if (getter) {
 		return typeof getter === 'function' ? getter(node) : getter;
 	}

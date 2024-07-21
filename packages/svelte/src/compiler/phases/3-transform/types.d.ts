@@ -8,5 +8,5 @@ export interface TransformState {
 	readonly options: ValidatedModuleCompileOptions;
 	readonly scope: Scope;
 	readonly scopes: Map<SvelteNode, Scope>;
-	readonly getters: Map<Binding, Expression | ((id: Identifier) => Expression)>;
+	readonly getters: Record<string, Expression | ((id: Identifier) => Expression)>;
 }

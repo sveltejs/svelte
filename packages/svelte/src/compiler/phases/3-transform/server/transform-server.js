@@ -221,7 +221,7 @@ function serialize_get_binding(node, state) {
 		);
 	}
 
-	const getter = state.getters.get(binding);
+	const getter = state.getters[binding.node.name];
 	if (getter) {
 		return typeof getter === 'function' ? getter(node) : getter;
 	}
@@ -1988,7 +1988,7 @@ export function server_component(analysis, options) {
 		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
 		private_derived: new Map(),
-		getters: new Map(),
+		getters: {},
 		skip_hydration_boundaries: false
 	};
 
@@ -2300,7 +2300,7 @@ export function server_module(analysis, options) {
 		// transform state as well as component transform state
 		legacy_reactive_statements: new Map(),
 		private_derived: new Map(),
-		getters: new Map()
+		getters: {}
 	};
 
 	const module = /** @type {import('estree').Program} */ (
