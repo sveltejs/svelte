@@ -3,6 +3,22 @@
 import { DEV } from 'esm-env';
 
 /**
+ * Cannot use `{@render children(...)}` if the parent component uses `let:` directives. Consider using a named snippet instead
+ * @returns {never}
+ */
+export function invalid_default_snippet() {
+	if (DEV) {
+		const error = new Error(`invalid_default_snippet\nCannot use \`{@render children(...)}\` if the parent component uses \`let:\` directives. Consider using a named snippet instead`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("invalid_default_snippet");
+	}
+}
+
+/**
  * `%name%(...)` can only be used during component initialisation
  * @param {string} name
  * @returns {never}

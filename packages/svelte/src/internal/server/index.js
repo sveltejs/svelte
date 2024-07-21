@@ -556,6 +556,7 @@ export { snapshot } from '../shared/clone.js';
 
 export {
 	add_snippet_symbol,
+	invalid_default_snippet,
 	validate_component,
 	validate_dynamic_element_tag,
 	validate_snippet,
