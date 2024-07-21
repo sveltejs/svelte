@@ -1143,8 +1143,19 @@ function serialize_event_handler(node, { state, visit }) {
 				])
 			);
 
-		if (handler.type === 'Identifier' || handler.type === 'MemberExpression') {
-			const id = object(handler);
+		if (
+			handler.type === 'Identifier' ||
+			handler.type === 'MemberExpression' ||
+			(handler.type === 'CallExpression' &&
+				(handler.callee.type === 'Identifier' || handler.callee.type === 'MemberExpression'))
+		) {
+			const id = object(
+				handler.type === 'CallExpression'
+					? /** @type {import("estree").Identifier | import("estree").MemberExpression} */ (
+							handler.callee
+						)
+					: handler
+			);
 			const binding = id === null ? null : state.scope.get(id.name);
 			if (
 				binding !== null &&
