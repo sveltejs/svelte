@@ -12,6 +12,7 @@ export const invalid_default_snippet = add_snippet_symbol(e.invalid_default_snip
  * @param {any} fn
  * @returns {import('svelte').Snippet}
  */
+/*@__NO_SIDE_EFFECTS__*/
 export function add_snippet_symbol(fn) {
 	fn[snippet_symbol] = true;
 	return fn;
