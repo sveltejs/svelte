@@ -1786,12 +1786,15 @@ export const template_visitors = {
 			const identifiers = extract_identifiers(declaration.id);
 			const tmp = b.id(state.scope.generate('computed_const'));
 
+			const getters = { ...state.getters };
+
 			// Make all identifiers that are declared within the following computed regular
 			// variables, as they are not signals in that context yet
 			for (const node of identifiers) {
-				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(node.name));
-				binding.expression = node;
+				getters[node.name] = node;
 			}
+
+			const child_state = { ...state, getters };
 
 			// TODO optimise the simple `{ x } = y` case — we can just return `y`
 			// instead of destructuring it only to return a new object
@@ -1799,8 +1802,8 @@ export const template_visitors = {
 				[],
 				b.block([
 					b.const(
-						/** @type {Pattern} */ (visit(declaration.id)),
-						/** @type {Expression} */ (visit(declaration.init))
+						/** @type {Pattern} */ (visit(declaration.id, child_state)),
+						/** @type {Expression} */ (visit(declaration.init, child_state))
 					),
 					b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
 				])
