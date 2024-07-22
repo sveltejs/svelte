@@ -556,17 +556,22 @@ let props = $props();
 
 If you're using TypeScript, you can declare the prop types:
 
+<!-- prettier-ignore -->
 ```ts
-type MyProps = any;
-// ---cut---
-let { a, b, c, ...everythingElse }: MyProps = $props();
+interface MyProps {
+	required: string;
+	optional?: number;
+	partOfEverythingElse?: boolean;
+};
+
+let { required, optional, ...everythingElse }: MyProps = $props();
 ```
 
 > In an earlier preview, `$props()` took a type argument. This caused bugs, since in a case like this...
 >
 > ```ts
 > // @errors: 2558
-> let { x = 42 } = $props<{ x: string }>();
+> let { x = 42 } = $props<{ x?: string }>();
 > ```
 >
 > ...TypeScript [widens the type](https://www.typescriptlang.org/play?#code/CYUwxgNghgTiAEAzArgOzAFwJYHtXwBIAHGHIgZwB4AVeAXnilQE8A+ACgEoAueagbgBQgiCAzwA3vAAe9eABYATPAC+c4qQqUp03uQwwsqAOaqOnIfCsB6a-AB6AfiA) of `x` to be `string | number`, instead of erroring.

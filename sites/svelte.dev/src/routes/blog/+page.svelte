@@ -13,7 +13,7 @@
 
 	<meta name="twitter:title" content="Svelte blog" />
 	<meta name="twitter:description" content="Articles about Svelte and UI development" />
-	<meta name="Description" content="Articles about Svelte and UI development" />
+	<meta name="description" content="Articles about Svelte and UI development" />
 </svelte:head>
 
 <h1 class="visually-hidden">Blog</h1>

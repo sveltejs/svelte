@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.193
+
+### Patch Changes
+
+- fix: improve validation error that occurs when using `{@render ...}` to render default slotted content ([#12521](https://github.com/sveltejs/svelte/pull/12521))
+
+- fix: reset hydrate node after `hydrate(...)` ([#12512](https://github.com/sveltejs/svelte/pull/12512))
+
 ## 5.0.0-next.192
 
 ### Patch Changes

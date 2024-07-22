@@ -10,6 +10,8 @@ import {
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { create_fragment_from_html } from '../reconciler.js';
 import { assign_nodes } from '../template.js';
+import * as w from '../../warnings.js';
+import { DEV } from 'esm-env';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
@@ -88,6 +90,11 @@ export function createRawSnippet(fn) {
 			var html = snippet.render().trim();
 			var fragment = create_fragment_from_html(html);
 			element = /** @type {Element} */ (fragment.firstChild);
+
+			if (DEV && (element.nextSibling !== null || element.nodeType !== 3)) {
+				w.invalid_raw_snippet_render();
+			}
+
 			/** @type {TemplateNode} */ (/** @type {unknown} */ (anchor)).before(element);
 		}
 
