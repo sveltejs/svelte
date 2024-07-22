@@ -1,19 +1,37 @@
-/** @import { Source, Effect } from '#client' */
+/** @import { Effect } from '#client' */
+import { FILENAME, ORIGINAL } from '../../../constants.js';
 import { EFFECT_TRANSPARENT } from '../constants.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
+import { set, source } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
 import { get } from '../runtime.js';
 
 /**
- * @template {(anchor: Comment, props: any) => any} Component
- * @param {Source<Component>} source
+ * For each original component, store a persistent reference to the HMR wrapper
+ * @type {Map<string, {wrapper: any, update: (update: any) => void}>}
  */
-export function hmr(source) {
+const registry = new Map();
+
+/**
+ * @template {(anchor: Comment, props: any) => any} Component
+ * @param {Component} original
+ */
+export function hmr(original) {
+	let result = registry.get(/** @type {any} */ (original)[FILENAME]);
+
+	if (result) {
+		// update the reference to the original component as it's now updated
+		result.wrapper[ORIGINAL] = original;
+		return result;
+	}
+
+	const component_source = source(original);
+
 	/**
 	 * @param {Comment} anchor
 	 * @param {any} props
 	 */
-	return function (anchor, props) {
+	const wrapper = function (anchor, props) {
 		let instance = {};
 
 		/** @type {Effect} */
@@ -22,7 +40,7 @@ export function hmr(source) {
 		let ran = false;
 
 		block(() => {
-			const component = get(source);
+			const component = get(component_source);
 
 			if (effect) {
 				// @ts-ignore
@@ -51,4 +69,15 @@ export function hmr(source) {
 
 		return instance;
 	};
+
+	// stash a reference to the original component to avoid adding more and more wrappers per HMR update
+	wrapper[ORIGINAL] = original;
+
+	result = {
+		wrapper,
+		update: (update) => set(component_source, update[ORIGINAL])
+	};
+	registry.set(/** @type {any} */ (original)[FILENAME], result);
+
+	return result;
 }
