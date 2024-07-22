@@ -62,11 +62,13 @@ export function hmr(original, get_source) {
 
 	// @ts-expect-error
 	wrapper[HMR] = {
+		// When we accept an update, we set the original source to the new component
 		original,
+		// The `get_source` parameter reads `wrapper[HMR].source`, but in the `accept`
+		// function we always replace it with `previous[HMR].source`, which in practice
+		// means we only ever update the original
 		source: source(original)
 	};
-
-	console.dir(wrapper);
 
 	return wrapper;
 }
