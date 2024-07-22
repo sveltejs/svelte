@@ -204,7 +204,7 @@ Assignments to destructured parts of a `@const` declaration are no longer allowe
 
 ### :is(...) and :where(...) are scoped
 
-Previously, Svelte did leave `:is(...)` and `:where(...)` selectors as is - it simply didn't know what to do with them. Svelte 5 is taking them into account when applying the scoping mechanism and "is this selector used" checks. As such, some rules may no longer work because they now appear unused. To fix this, apply the `:global(...)` selector within the `:is(...)/:where(...)` selectors. In the case of Tailwind and `@apply` rules using class variants (like `dark:bg-blue`) use the new `:global` pseudo class like this (this tells Svelte to not scope anything after the `main` selector):
+Previously, Svelte left `:is(...)` and `:where(...)` selectors untouched - it simply didn't know what to do with them. Svelte 5 takes them into account when applying the scoping mechanism and "is this selector used" checks. As such, some rules may no longer work because they now appear unused. To fix this, apply the `:global(...)` selector within the `:is(...)/:where(...)` selectors. In the case of Tailwind and `@apply` rules using class variants (like `dark:bg-blue`) use the new `:global` pseudo class like this (this tells Svelte to not scope anything after the `main` selector):
 
 ```diff
 - main {
