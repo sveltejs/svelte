@@ -10,16 +10,12 @@ function Hmr($$anchor) {
 }
 
 if (import.meta.hot) {
-	const s = $.source(Hmr);
-	const filename = Hmr.filename;
-	const $$original = Hmr;
+	const $$hmr = $.hmr(Hmr);
 
-	Hmr = $.hmr(s);
-	Hmr.filename = filename;
-	Hmr[$.ORIGINAL] = $$original;
+	Hmr = $$hmr.wrapper;
 
 	import.meta.hot.accept((module) => {
-		$.set(s, module.default[$.ORIGINAL]);
+		$$hmr.update(module.default);
 	});
 }
 
