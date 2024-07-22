@@ -20,6 +20,10 @@
 
 > Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near %location%
 
+## invalid_raw_snippet_render
+
+> The `render` function passed to `createRawSnippet` should return HTML for a single element
+
 ## lifecycle_double_unmount
 
 > Tried to unmount a component that was not mounted
