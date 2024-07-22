@@ -1,6 +1,5 @@
 /** @import { BlockStatement, CallExpression, Expression, ExpressionStatement, Identifier, Literal, MemberExpression, ObjectExpression, Pattern, Property, Statement, Super, TemplateElement, TemplateLiteral } from 'estree' */
 /** @import { BindDirective } from '#compiler' */
-/** @import { ComponentClientTransformState } from '../types' */
 import {
 	extract_identifiers,
 	extract_paths,

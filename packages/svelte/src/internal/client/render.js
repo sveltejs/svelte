@@ -119,6 +119,7 @@ export function hydrate(component, options) {
 	options.intro = options.intro ?? false;
 	const target = options.target;
 	const was_hydrating = hydrating;
+	const previous_hydrate_node = hydrate_node;
 
 	try {
 		// Don't flush previous effects to ensure order of outer effects stays consistent
@@ -175,6 +176,7 @@ export function hydrate(component, options) {
 		throw error;
 	} finally {
 		set_hydrating(was_hydrating);
+		set_hydrate_node(previous_hydrate_node);
 		reset_head_anchor();
 	}
 }
