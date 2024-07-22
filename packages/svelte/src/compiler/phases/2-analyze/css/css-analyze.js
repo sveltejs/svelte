@@ -27,10 +27,25 @@ function is_global(relative_selector) {
 	return (
 		first.type === 'PseudoClassSelector' &&
 		first.name === 'global' &&
-		relative_selector.selectors.every(
-			(selector) =>
-				selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector'
-		)
+		(first.args === null ||
+			// Only these two selector types keep the whole selector global, because e.g.
+			// :global(button).x means that the selector is still scoped because of the .x
+			relative_selector.selectors.every(
+				(selector) =>
+					selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector'
+			))
+	);
+}
+
+/**
+ * True if is `:global`
+ * @param {Css.SimpleSelector} simple_selector
+ */
+function is_global_block_selector(simple_selector) {
+	return (
+		simple_selector.type === 'PseudoClassSelector' &&
+		simple_selector.name === 'global' &&
+		simple_selector.args === null
 	);
 }
 
@@ -53,16 +68,7 @@ const analysis_visitors = {
 		);
 	},
 	RelativeSelector(node, context) {
-		node.metadata.is_global =
-			node.selectors.length >= 1 &&
-			node.selectors[0].type === 'PseudoClassSelector' &&
-			node.selectors[0].name === 'global' &&
-			// we want :global(...) and :global or :global.x, but not div:global
-			(node.selectors[0].args === null ||
-				node.selectors.every(
-					(selector) =>
-						selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector'
-				));
+		node.metadata.is_global = node.selectors.length >= 1 && is_global(node);
 
 		if (node.selectors.length === 1) {
 			const first = node.selectors[0];
@@ -87,18 +93,14 @@ const analysis_visitors = {
 	Rule(node, context) {
 		node.metadata.parent_rule = context.state.rule;
 
-		// `:global {...}` or `div :global {...}` or `:global div`
 		node.metadata.is_global_block = node.prelude.children.some((selector) => {
 			let is_global_block = false;
 
 			for (const child of selector.children) {
-				const idx = child.selectors.findIndex(
-					(s) => s.type === 'PseudoClassSelector' && s.name === 'global' && s.args === null
-				);
+				const idx = child.selectors.findIndex(is_global_block_selector);
 
 				if (is_global_block) {
-					// Do this here, not after setting it to true:
-					// All selectors after :global are unscoped, but in e.g. div:global, div is still scoped
+					// All selectors after :global are unscoped
 					child.metadata.is_global_like = true;
 				}
 
@@ -139,19 +141,44 @@ const validation_visitors = {
 			}
 
 			const complex_selector = node.prelude.children[0];
-			const relative_selector = complex_selector.children[complex_selector.children.length - 1];
+			const global_selector = complex_selector.children.find((r) => {
+				return r.selectors.some(is_global_block_selector);
+			});
+
+			if (!global_selector) {
+				throw new Error('Internal error: global block without :global selector');
+			}
+
+			const global_block_selector_idx =
+				global_selector.selectors.findIndex(is_global_block_selector);
+			const starts_with_nesting_selector =
+				complex_selector.children[0].selectors.length === 1 &&
+				complex_selector.children[0].selectors[0].type === 'NestingSelector';
 
 			if (
-				relative_selector.combinator &&
-				relative_selector.combinator.name !== ' ' &&
-				relative_selector.selectors.length === 1
+				(!global_selector.combinator &&
+					global_selector.selectors.length > 1 &&
+					(global_block_selector_idx === 0 ||
+						(global_block_selector_idx === 1 && starts_with_nesting_selector))) ||
+				(global_selector.combinator?.name === ' ' && starts_with_nesting_selector)
 			) {
-				const s = relative_selector.selectors[0];
-				if (s.type === 'PseudoClassSelector' && s.name === 'global' && s.args === null) {
-					e.css_global_block_invalid_combinator(
-						relative_selector,
-						relative_selector.combinator.name
-					);
+				// div { :global.x { ... } } desugars to div :global.x { ... } which results in div.svelte-hash.x { ... }
+				// but it would be very hard to code-mod that and certainly doesn't look like it to the user,
+				// therefore we make this an error
+				e.css_global_block_invalid_placement(global_selector);
+			}
+
+			if (
+				global_selector.combinator &&
+				// p :global {...} or p > :global.x {...} is valid
+				global_selector.combinator.name !== ' ' &&
+				global_selector.selectors.length === 1
+			) {
+				const next =
+					complex_selector.children[complex_selector.children.indexOf(global_selector) + 1];
+				// p > :global div {...} is valid, but p > :global > div {...} or p > :global {...} is not
+				if (!next || next.combinator?.name !== ' ') {
+					e.css_global_block_invalid_combinator(global_selector, global_selector.combinator.name);
 				}
 			}
 
@@ -159,7 +186,7 @@ const validation_visitors = {
 
 			if (
 				declaration &&
-				// :global { color: red; } is invalid, but foo :global { color: red; } or foo:global { color: red; } is valid
+				// :global { color: red; } is invalid, but foo :global { color: red; } is valid
 				node.prelude.children.length === 1 &&
 				node.prelude.children[0].children.length === 1 &&
 				node.prelude.children[0].children[0].selectors.length === 1

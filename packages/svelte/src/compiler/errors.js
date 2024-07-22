@@ -462,6 +462,24 @@ export function css_global_block_invalid_list(node) {
 }
 
 /**
+ * A :global {...} block cannot modify an existing selector
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_global_block_invalid_modifier(node) {
+	e(node, "css_global_block_invalid_modifier", "A :global {...} block cannot modify an existing selector");
+}
+
+/**
+ * :global at the start of a selector cannot have modifiers
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_global_block_invalid_placement(node) {
+	e(node, "css_global_block_invalid_placement", ":global at the start of a selector cannot have modifiers");
+}
+
+/**
  * :global(...) can be at the start or end of a selector sequence, but not in the middle
  * @param {null | number | NodeLike} node
  * @returns {never}

@@ -5,7 +5,7 @@
 		}
 	/*}*/
 
-	div.svelte-xyz  {
+	div.svelte-xyz {
 		.y {
 			color: green;
 		}
@@ -20,18 +20,30 @@
 		}
 	}
 
-	div.svelte-xyz  p {
+	div.svelte-xyz p {
 		.y {
 			color: green;
 		}
 	}
 
 	/* div :global { &.x { ...} } is allowed, so div :global.x must be, too */
-	div.svelte-xyz .x {
+	div.svelte-xyz {
+		&.x {
+			color: green;
+		}
+	}
+	div.svelte-xyz.x {
 		color: green;
 	}
 
 	/* div { :global { &.x { ...} } } is allowed, so div:global.x must be, too */
+	div.svelte-xyz {
+		/* :global {*/
+			&.x {
+				color: green;
+			}
+		/*}*/
+	}
 	div.svelte-xyz:is(html.dark-mode *) {
 		color: green;
 	}

@@ -216,10 +216,18 @@ const visitors = {
 	ComplexSelector(node, context) {
 		const before_bumped = context.state.specificity.bumped;
 
-		/** @param {Css.PseudoClassSelector} selector */
-		function remove_global_pseudo_class(selector) {
+		/**
+		 * @param {Css.PseudoClassSelector} selector
+		 * @param {Css.Combinator | null} combinator
+		 */
+		function remove_global_pseudo_class(selector, combinator) {
 			if (selector.args === null) {
-				context.state.code.remove(selector.start, selector.start + ':global'.length);
+				let start = selector.start;
+				if (combinator?.name === ' ') {
+					// div :global.x becomes div.x
+					while (/\s/.test(context.state.code.original[start - 1])) start--;
+				}
+				context.state.code.remove(start, selector.start + ':global'.length);
 			} else {
 				context.state.code
 					.remove(selector.start, selector.start + ':global('.length)
@@ -230,7 +238,8 @@ const visitors = {
 		for (const relative_selector of node.children) {
 			if (relative_selector.metadata.is_global) {
 				remove_global_pseudo_class(
-					/** @type {Css.PseudoClassSelector} */ (relative_selector.selectors[0])
+					/** @type {Css.PseudoClassSelector} */ (relative_selector.selectors[0]),
+					relative_selector.combinator
 				);
 				continue;
 			}
@@ -250,7 +259,7 @@ const visitors = {
 				// for any :global() or :global at the middle of compound selector
 				for (const selector of relative_selector.selectors) {
 					if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-						remove_global_pseudo_class(selector);
+						remove_global_pseudo_class(selector, null);
 					}
 				}
 
