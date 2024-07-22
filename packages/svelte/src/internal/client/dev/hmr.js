@@ -1,19 +1,22 @@
 /** @import { Source, Effect } from '#client' */
+import { FILENAME, HMR } from '../../../constants.js';
 import { EFFECT_TRANSPARENT } from '../constants.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
+import { source } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
 import { get } from '../runtime.js';
 
 /**
  * @template {(anchor: Comment, props: any) => any} Component
- * @param {Source<Component>} source
+ * @param {Component} original
+ * @param {() => Source<Component>} get_source
  */
-export function hmr(source) {
+export function hmr(original, get_source) {
 	/**
 	 * @param {Comment} anchor
 	 * @param {any} props
 	 */
-	return function (anchor, props) {
+	function wrapper(anchor, props) {
 		let instance = {};
 
 		/** @type {Effect} */
@@ -22,7 +25,9 @@ export function hmr(source) {
 		let ran = false;
 
 		block(() => {
+			const source = get_source();
 			const component = get(source);
+			console.log({ source, component });
 
 			if (effect) {
 				// @ts-ignore
@@ -50,5 +55,18 @@ export function hmr(source) {
 		ran = true;
 
 		return instance;
+	}
+
+	// @ts-expect-error
+	wrapper[FILENAME] = original[FILENAME];
+
+	// @ts-expect-error
+	wrapper[HMR] = {
+		original,
+		source: source(original)
 	};
+
+	console.dir(wrapper);
+
+	return wrapper;
 }
