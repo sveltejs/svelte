@@ -1139,17 +1139,16 @@ function serialize_event_handler(node, { state, visit }) {
 		handler = node.expression;
 
 		// Event handlers can be dynamic (source/store/prop/conditional etc)
-		const dynamic_handler = () =>
-			b.function(
-				null,
+		const dynamic_handler = () => {
+			return b.arrow(
 				[b.rest(b.id('$$args'))],
-				b.block([
-					b.const('$$callback', /** @type {Expression} */ (visit(handler))),
-					b.return(
-						b.call(b.member(b.id('$$callback'), b.id('apply'), false, true), b.this, b.id('$$args'))
-					)
-				])
+				b.call(
+					b.member(/** @type {Expression} */ (visit(handler)), b.id('apply'), false, true),
+					b.this,
+					b.id('$$args')
+				)
 			);
+		};
 
 		if (handler.type === 'Identifier' || handler.type === 'MemberExpression') {
 			const id = object(handler);
