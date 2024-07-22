@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.195
+
+### Patch Changes
+
+- fix: update original source in HMR update ([#12547](https://github.com/sveltejs/svelte/pull/12547))
+
 ## 5.0.0-next.194
 
 ### Patch Changes
