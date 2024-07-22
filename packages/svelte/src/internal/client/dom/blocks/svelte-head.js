@@ -42,7 +42,8 @@ export function head(render_fn) {
 			head_anchor = /** @type {TemplateNode} */ (head_anchor.nextSibling);
 		}
 
-		// If we don't encounter the hydration end, then skip hydration for head element
+		// If we can't find an opening hydration marker, skip hydration (this can happen
+		// if a framework rendered body but not head content)
 		if (head_anchor === null) {
 			set_hydrating(false);
 		} else {
