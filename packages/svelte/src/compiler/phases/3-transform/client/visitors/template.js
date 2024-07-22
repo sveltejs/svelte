@@ -2731,6 +2731,9 @@ export const template_visitors = {
 		/** @type {Statement[]} */
 		const declarations = [];
 
+		const getters = { ...context.state.getters };
+		const child_state = { ...context.state, getters };
+
 		for (let i = 0; i < node.parameters.length; i++) {
 			const argument = node.parameters[i];
 
@@ -2742,10 +2745,8 @@ export const template_visitors = {
 					left: argument,
 					right: b.id('$.noop')
 				});
-				const binding = /** @type {import('#compiler').Binding} */ (
-					context.state.scope.get(argument.name)
-				);
-				binding.expression = b.call(argument);
+
+				getters[argument.name] = b.call(argument);
 				continue;
 			}
 
@@ -2767,19 +2768,20 @@ export const template_visitors = {
 				declarations.push(
 					b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn)
 				);
-				binding.expression = needs_derived ? b.call('$.get', b.id(name)) : b.call(name);
+
+				getters[name] = needs_derived ? b.call('$.get', b.id(name)) : b.call(name);
 
 				// we need to eagerly evaluate the expression in order to hit any
 				// 'Cannot access x before initialization' errors
 				if (context.state.options.dev) {
-					declarations.push(b.stmt(binding.expression));
+					declarations.push(b.stmt(getters[name]));
 				}
 			}
 		}
 
 		body = b.block([
 			...declarations,
-			.../** @type {BlockStatement} */ (context.visit(node.body)).body
+			.../** @type {BlockStatement} */ (context.visit(node.body, child_state)).body
 		]);
 
 		/** @type {Expression} */
