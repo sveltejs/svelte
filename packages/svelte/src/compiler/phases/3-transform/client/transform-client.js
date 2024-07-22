@@ -420,20 +420,15 @@ export function client_component(source, analysis, options) {
 		const id = b.id(analysis.name);
 		const HMR = b.id('$.HMR');
 
+		const existing = b.member(id, HMR, true);
+		const incoming = b.member(b.id('module.default'), HMR, true);
+
 		const accept_fn_body = [
 			b.stmt(
-				b.assignment(
-					'=',
-					b.member(b.member(b.id('module.default'), HMR, true), b.id('source')),
-					b.member(b.member(id, HMR, true), b.id('source'))
-				)
+				b.assignment('=', b.member(incoming, b.id('source')), b.member(existing, b.id('source')))
 			),
 			b.stmt(
-				b.call(
-					'$.set',
-					b.member(b.member(id, HMR, true), b.id('source')),
-					b.member(b.member(b.id('module.default'), HMR, true), b.id('original'))
-				)
+				b.call('$.set', b.member(existing, b.id('source')), b.member(incoming, b.id('original')))
 			)
 		];
 
@@ -455,11 +450,7 @@ export function client_component(source, analysis, options) {
 
 		const hmr = b.block([
 			b.stmt(
-				b.assignment(
-					'=',
-					id,
-					b.call('$.hmr', id, b.thunk(b.member(b.member(id, b.id('$.HMR'), true), b.id('source'))))
-				)
+				b.assignment('=', id, b.call('$.hmr', id, b.thunk(b.member(existing, b.id('source')))))
 			),
 
 			b.stmt(b.call('import.meta.hot.accept', b.arrow([b.id('module')], b.block(accept_fn_body))))
