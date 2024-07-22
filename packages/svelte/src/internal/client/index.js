@@ -104,7 +104,14 @@ export {
 	user_effect,
 	user_pre_effect
 } from './reactivity/effects.js';
-export { mutable_source, mutate, source, set } from './reactivity/sources.js';
+export {
+	mutable_source,
+	mutate,
+	source,
+	source_link,
+	set,
+	update_link
+} from './reactivity/sources.js';
 export {
 	prop,
 	rest_props,

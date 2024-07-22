@@ -100,6 +100,10 @@ export function serialize_get_binding(node, state) {
 		return b.member(b.id('$$props'), node);
 	}
 
+	if (binding.kind === 'link_state') {
+		return b.call(node);
+	}
+
 	if (binding.kind === 'legacy_reactive_import') {
 		return b.call('$$_import_' + node.name);
 	}
@@ -282,6 +286,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 	if (
 		binding.kind !== 'state' &&
 		binding.kind !== 'frozen_state' &&
+		binding.kind !== 'link_state' &&
 		binding.kind !== 'prop' &&
 		binding.kind !== 'bindable_prop' &&
 		binding.kind !== 'each' &&
@@ -302,7 +307,12 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 					/**@type {import("estree").Expression}*/ (binding.initial),
 					context.state.scope
 				);
-			if ((binding.kind === 'prop' || binding.kind === 'bindable_prop') && !is_initial_proxy) {
+			if (
+				(binding.kind === 'prop' ||
+					binding.kind === 'bindable_prop' ||
+					binding.kind === 'link_state') &&
+				!is_initial_proxy
+			) {
 				return b.call(left, value);
 			} else if (is_store) {
 				return b.call('$.store_set', serialize_get_binding(b.id(left_name), state), value);
@@ -329,7 +339,9 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 							: value
 					);
 				} else if (
-					(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
+					(binding.kind === 'prop' ||
+						binding.kind === 'bindable_prop' ||
+						binding.kind === 'link_state') &&
 					is_initial_proxy
 				) {
 					call = b.call(
@@ -337,7 +349,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 						context.state.analysis.runes &&
 							!options?.skip_proxy_and_freeze &&
 							should_proxy_or_freeze(value, context.state.scope) &&
-							binding.kind === 'bindable_prop'
+							(binding.kind === 'bindable_prop' || binding.kind === 'link_state')
 							? serialize_proxy_reassignment(value, left_name, state)
 							: value
 					);

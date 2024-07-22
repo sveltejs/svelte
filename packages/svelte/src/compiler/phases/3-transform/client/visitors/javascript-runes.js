@@ -43,6 +43,7 @@ export const javascript_visitors_runes = {
 					if (
 						rune === '$state' ||
 						rune === '$state.frozen' ||
+						rune === '$state.link' ||
 						rune === '$derived' ||
 						rune === '$derived.by'
 					) {
@@ -53,9 +54,11 @@ export const javascript_visitors_runes = {
 									? 'state'
 									: rune === '$state.frozen'
 										? 'frozen_state'
-										: rune === '$derived.by'
-											? 'derived_call'
-											: 'derived',
+										: rune === '$state.link'
+											? 'link_state'
+											: rune === '$derived.by'
+												? 'derived_call'
+												: 'derived',
 							// @ts-expect-error this is set in the next pass
 							id: is_private ? definition.key : null
 						};
@@ -114,14 +117,21 @@ export const javascript_visitors_runes = {
 										'$.source',
 										should_proxy_or_freeze(init, state.scope) ? b.call('$.proxy', init) : init
 									)
-								: field.kind === 'frozen_state'
+								: field.kind === 'link_state'
 									? b.call(
-											'$.source',
-											should_proxy_or_freeze(init, state.scope) ? b.call('$.freeze', init) : init
+											'$.source_link',
+											should_proxy_or_freeze(init, state.scope)
+												? b.thunk(b.call('$.proxy', init))
+												: b.thunk(init)
 										)
-									: field.kind === 'derived_call'
-										? b.call('$.derived', init)
-										: b.call('$.derived', b.thunk(init));
+									: field.kind === 'frozen_state'
+										? b.call(
+												'$.source',
+												should_proxy_or_freeze(init, state.scope) ? b.call('$.freeze', init) : init
+											)
+										: field.kind === 'derived_call'
+											? b.call('$.derived', init)
+											: b.call('$.derived', b.thunk(init));
 					} else {
 						// if no arguments, we know it's state as `$derived()` is a compile error
 						value = b.call('$.source');
@@ -134,8 +144,24 @@ export const javascript_visitors_runes = {
 						const member = b.member(b.this, field.id);
 						body.push(b.prop_def(field.id, value));
 
-						// get foo() { return this.#foo; }
-						body.push(b.method('get', definition.key, [], [b.return(b.call('$.get', member))]));
+						if (field.kind === 'link_state') {
+							// get foo() { return this.#foo; }
+							body.push(b.method('get', definition.key, [], [b.return(b.call(member))]));
+
+							// set foo(value) { this.#foo = value; }
+							const value = b.id('value');
+							body.push(
+								b.method(
+									'set',
+									definition.key,
+									[value],
+									[b.stmt(b.call(member, serialize_proxy_reassignment(value, field.id, state)))]
+								)
+							);
+						} else {
+							// get foo() { return this.#foo; }
+							body.push(b.method('get', definition.key, [], [b.return(b.call('$.get', member))]));
+						}
 
 						if (field.kind === 'state') {
 							// set foo(value) { this.#foo = value; }
@@ -314,7 +340,7 @@ export const javascript_visitors_runes = {
 					? b.id('undefined')
 					: /** @type {import('estree').Expression} */ (visit(args[0]));
 
-			if (rune === '$state' || rune === '$state.frozen') {
+			if (rune === '$state' || rune === '$state.frozen' || rune === '$state.link') {
 				/**
 				 * @param {import('estree').Identifier} id
 				 * @param {import('estree').Expression} value
@@ -322,7 +348,13 @@ export const javascript_visitors_runes = {
 				const create_state_declarator = (id, value) => {
 					const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
 					if (should_proxy_or_freeze(value, state.scope)) {
-						value = b.call(rune === '$state' ? '$.proxy' : '$.freeze', value);
+						value = b.call(
+							rune === '$state' || rune === '$state.link' ? '$.proxy' : '$.freeze',
+							value
+						);
+					}
+					if (binding.kind === 'link_state') {
+						return b.call('$.source_link', b.thunk(value));
 					}
 					if (is_state_source(binding, state)) {
 						value = b.call('$.source', value);

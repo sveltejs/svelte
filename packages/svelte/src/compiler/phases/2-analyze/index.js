@@ -911,6 +911,7 @@ const runes_scope_js_tweaker = {
 
 		if (
 			rune !== '$state' &&
+			rune !== '$state.link' &&
 			rune !== '$state.frozen' &&
 			rune !== '$derived' &&
 			rune !== '$derived.by'
@@ -921,7 +922,13 @@ const runes_scope_js_tweaker = {
 			// @ts-ignore this fails in CI for some insane reason
 			const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(path.node.name));
 			binding.kind =
-				rune === '$state' ? 'state' : rune === '$state.frozen' ? 'frozen_state' : 'derived';
+				rune === '$state'
+					? 'state'
+					: rune === '$state.link'
+						? 'link_state'
+						: rune === '$state.frozen'
+							? 'frozen_state'
+							: 'derived';
 		}
 	}
 };
@@ -948,6 +955,7 @@ const runes_scope_tweaker = {
 		if (
 			rune !== '$state' &&
 			rune !== '$state.frozen' &&
+			rune !== '$state.link' &&
 			rune !== '$derived' &&
 			rune !== '$derived.by' &&
 			rune !== '$props'
@@ -962,11 +970,13 @@ const runes_scope_tweaker = {
 					? 'state'
 					: rune === '$state.frozen'
 						? 'frozen_state'
-						: rune === '$derived' || rune === '$derived.by'
-							? 'derived'
-							: path.is_rest
-								? 'rest_prop'
-								: 'prop';
+						: rune === '$state.link'
+							? 'link_state'
+							: rune === '$derived' || rune === '$derived.by'
+								? 'derived'
+								: path.is_rest
+									? 'rest_prop'
+									: 'prop';
 		}
 
 		if (rune === '$props') {
@@ -1279,7 +1289,7 @@ const common_visitors = {
 				context.state.function_depth === binding.scope.function_depth &&
 				// If we have $state that can be proxied or frozen and isn't re-assigned, then that means
 				// it's likely not using a primitive value and thus this warning isn't that helpful.
-				((binding.kind === 'state' &&
+				(((binding.kind === 'state' || binding.kind === 'link_state') &&
 					(binding.reassigned ||
 						(binding.initial?.type === 'CallExpression' &&
 							binding.initial.arguments.length === 1 &&
@@ -1297,6 +1307,7 @@ const common_visitors = {
 		}
 	},
 	CallExpression(node, context) {
+		debugger;
 		const { expression, render_tag } = context.state;
 		if (
 			(expression?.type === 'ExpressionTag' || expression?.type === 'SpreadAttribute') &&
@@ -1337,6 +1348,16 @@ const common_visitors = {
 
 				return;
 			}
+		}
+
+		if (rune === '$state.link') {
+			// Similar to $derived above, $state is treated as `$state(() => foo)`
+			context.next({
+				...context.state,
+				function_depth: context.state.function_depth + 1
+			});
+
+			return;
 		}
 
 		if (rune === '$effect' || rune === '$effect.pre') {

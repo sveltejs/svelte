@@ -918,6 +918,7 @@ declare module 'svelte/compiler' {
 			| 'rest_prop'
 			| 'state'
 			| 'frozen_state'
+			| 'link_state'
 			| 'derived'
 			| 'each'
 			| 'snippet'
@@ -2855,6 +2856,27 @@ declare namespace $state {
 	 */
 	export function frozen<T>(initial: T): Readonly<T>;
 	export function frozen<T>(): Readonly<T> | undefined;
+
+	/**
+	 * Declares reactive state that is linked to another value. Local mutations will override the linked value
+	 * until the linked value changes.
+	 *
+	 * Example:
+	 * ```ts
+	 * <script>
+	 *   let { text } = $props();
+	 *   let local_text = $state.link(text);
+	 * </script>
+	 *
+	 * <input type="text" bind:value={local_text} />
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$state-link
+	 *
+	 * @param value The linked value
+	 */
+		export function link<T>(value: T): T;
+
 	/**
 	 * To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
 	 *
