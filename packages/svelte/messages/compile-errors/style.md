@@ -18,13 +18,9 @@
 
 > A :global {...} block cannot be part of a selector list with more than one item
 
-## css_global_block_invalid_modifier
-
-> A :global {...} block cannot modify an existing selector
-
 ## css_global_block_invalid_placement
 
-> :global at the start of a selector cannot have modifiers
+> :global cannot be at the end of a selector with children starting with a `&` (aka nesting) selector. Either remove those nested child selectors, or append the :global selector to the end of the previous selector (e.g. `div:global` instead of `div :global`)
 
 ## css_global_invalid_placement
 

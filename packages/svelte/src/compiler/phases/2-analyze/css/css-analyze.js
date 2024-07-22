@@ -149,25 +149,6 @@ const validation_visitors = {
 				throw new Error('Internal error: global block without :global selector');
 			}
 
-			const global_block_selector_idx =
-				global_selector.selectors.findIndex(is_global_block_selector);
-			const starts_with_nesting_selector =
-				complex_selector.children[0].selectors.length === 1 &&
-				complex_selector.children[0].selectors[0].type === 'NestingSelector';
-
-			if (
-				(!global_selector.combinator &&
-					global_selector.selectors.length > 1 &&
-					(global_block_selector_idx === 0 ||
-						(global_block_selector_idx === 1 && starts_with_nesting_selector))) ||
-				(global_selector.combinator?.name === ' ' && starts_with_nesting_selector)
-			) {
-				// div { :global.x { ... } } desugars to div :global.x { ... } which results in div.svelte-hash.x { ... }
-				// but it would be very hard to code-mod that and certainly doesn't look like it to the user,
-				// therefore we make this an error
-				e.css_global_block_invalid_placement(global_selector);
-			}
-
 			if (
 				global_selector.combinator &&
 				// p :global {...} or p > :global.x {...} is valid
@@ -247,8 +228,21 @@ const validation_visitors = {
 	},
 	NestingSelector(node, context) {
 		const rule = /** @type {Css.Rule} */ (context.state.rule);
+
 		if (!rule.metadata.parent_rule) {
 			e.css_nesting_selector_invalid_placement(node);
+		}
+
+		if (rule.metadata.parent_rule.metadata.is_global_block) {
+			const last = rule.metadata.parent_rule.prelude.children[0].children.at(-1);
+			if (
+				last &&
+				is_global(last) &&
+				last.selectors[0].args === null &&
+				last.selectors.length === 1
+			) {
+				e.css_global_block_invalid_placement(last);
+			}
 		}
 	}
 };

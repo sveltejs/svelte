@@ -28,24 +28,10 @@
 		}
 	}
 
-	/* div :global { &.x { ...} } is allowed, so div :global.x must be, too */
-	div :global {
-		&.x {
-			color: green;
-		}
-	}
 	div :global.x {
 		color: green;
 	}
 
-	/* div { :global { &.x { ...} } } is allowed, so div:global.x must be, too */
-	div {
-		:global {
-			&.x {
-				color: green;
-			}
-		}
-	}
 	div:global:is(html.dark-mode *) {
 		color: green;
 	}
