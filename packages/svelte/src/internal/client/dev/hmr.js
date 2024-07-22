@@ -27,7 +27,6 @@ export function hmr(original, get_source) {
 		block(() => {
 			const source = get_source();
 			const component = get(source);
-			console.log({ source, component });
 
 			if (effect) {
 				// @ts-ignore
