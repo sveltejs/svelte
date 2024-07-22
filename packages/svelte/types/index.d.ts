@@ -261,10 +261,7 @@ declare module 'svelte' {
 		element?: typeof HTMLElement;
 	};
 
-	/**
-	 * Internal implementation details that vary between environments
-	 */
-	export type SnippetInternals = Branded<{}, 'SnippetInternals'>;
+	const SnippetReturn: unique symbol;
 
 	// Use an interface instead of a type, makes for better intellisense info because the type is named in more situations.
 	/**
@@ -281,12 +278,13 @@ declare module 'svelte' {
 	export interface Snippet<Parameters extends unknown[] = []> {
 		(
 			this: void,
-			internal: SnippetInternals,
 			// this conditional allows tuples but not arrays. Arrays would indicate a
 			// rest parameter type, which is not supported. If rest parameters are added
 			// in the future, the condition can be removed.
-			...args: number extends Parameters['length'] ? never : Getters<Parameters>
-		): void;
+			...args: number extends Parameters['length'] ? never : Parameters
+		): typeof SnippetReturn & {
+			_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
+		};
 	}
 
 	interface DispatchOptions {
