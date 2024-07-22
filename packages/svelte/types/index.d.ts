@@ -2875,7 +2875,7 @@ declare namespace $state {
 	 *
 	 * @param value The linked value
 	 */
-		export function link<T>(value: T): T;
+	export function link<T>(value: T): T;
 
 	/**
 	 * To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
