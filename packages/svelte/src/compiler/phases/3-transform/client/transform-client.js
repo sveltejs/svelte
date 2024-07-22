@@ -439,10 +439,16 @@ export function client_component(source, analysis, options) {
 
 		const hmr = b.block([
 			b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
-			b.const(b.id('filename'), b.member(b.id(analysis.name), b.id('filename'))),
+			b.const(b.id('$$filename'), b.member(b.id(analysis.name), b.id('$.FILENAME'), true)),
 			b.const(b.id('$$original'), b.id(analysis.name)),
 			b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
-			b.stmt(b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.id('filename'))),
+			b.stmt(
+				b.assignment(
+					'=',
+					b.member(b.id(analysis.name), b.id('$.FILENAME'), true),
+					b.id('$$filename')
+				)
+			),
 			// Assign the original component to the wrapper so we can use it on hot reload patching,
 			// else we would call the HMR function two times
 			b.stmt(

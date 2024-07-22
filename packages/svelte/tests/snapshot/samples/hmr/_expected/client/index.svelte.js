@@ -11,11 +11,11 @@ function Hmr($$anchor) {
 
 if (import.meta.hot) {
 	const s = $.source(Hmr);
-	const filename = Hmr.filename;
+	const $$filename = Hmr[$.FILENAME];
 	const $$original = Hmr;
 
 	Hmr = $.hmr(s);
-	Hmr.filename = filename;
+	Hmr[$.FILENAME] = $$filename;
 	Hmr[$.ORIGINAL] = $$original;
 
 	import.meta.hot.accept((module) => {
