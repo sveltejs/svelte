@@ -8,12 +8,12 @@ var normal = 'font-weight: normal';
 /**
  * The `render` function passed to `createRawSnippet` should return HTML for a single element
  */
-export function bad_raw_snippet_render() {
+export function invalid_raw_snippet_render() {
 	if (DEV) {
-		console.warn(`%c[svelte] bad_raw_snippet_render\n%cThe \`render\` function passed to \`createRawSnippet\` should return HTML for a single element`, bold, normal);
+		console.warn(`%c[svelte] invalid_raw_snippet_render\n%cThe \`render\` function passed to \`createRawSnippet\` should return HTML for a single element`, bold, normal);
 	} else {
 		// TODO print a link to the documentation
-		console.warn("bad_raw_snippet_render");
+		console.warn("invalid_raw_snippet_render");
 	}
 }
 

@@ -1,7 +1,3 @@
-## bad_raw_snippet_render
-
-> The `render` function passed to `createRawSnippet` should return HTML for a single element
-
 ## binding_property_non_reactive
 
 > `%binding%` is binding to a non-reactive property
@@ -23,6 +19,10 @@
 > Hydration failed because the initial UI does not match what was rendered on the server
 
 > Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near %location%
+
+## invalid_raw_snippet_render
+
+> The `render` function passed to `createRawSnippet` should return HTML for a single element
 
 ## lifecycle_double_unmount
 

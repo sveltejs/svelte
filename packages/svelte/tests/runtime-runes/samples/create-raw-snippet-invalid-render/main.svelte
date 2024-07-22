@@ -4,10 +4,7 @@
 	const snippet = createRawSnippet(() => ({
 		render: () => `
 			<!-- --><div>123</div>
-		`,
-		setup(target) {
-
-		}
+		`
 	}));
 </script>
 
