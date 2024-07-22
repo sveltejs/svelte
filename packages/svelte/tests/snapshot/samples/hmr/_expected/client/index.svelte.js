@@ -10,6 +10,7 @@ function Hmr($$anchor) {
 }
 
 if (import.meta.hot) {
+	import.meta.hot.data ??= {};
 	import.meta.hot.data.source ??= $.source(Hmr);
 
 	const $$filename = Hmr[$.FILENAME];

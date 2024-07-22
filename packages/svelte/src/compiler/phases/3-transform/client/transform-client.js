@@ -444,6 +444,7 @@ export function client_component(source, analysis, options) {
 		}
 
 		const hmr = b.block([
+			b.stmt(b.assignment('??=', b.id('import.meta.hot.data'), b.object([]))),
 			b.stmt(
 				b.assignment(
 					'??=',
