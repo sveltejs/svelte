@@ -1169,7 +1169,11 @@ function serialize_event_handler(node, { state, visit }) {
 			} else {
 				handler = /** @type {Expression} */ (visit(handler));
 			}
-		} else if (handler.type === 'ConditionalExpression' || handler.type === 'LogicalExpression') {
+		} else if (
+			handler.type === 'CallExpression' ||
+			handler.type === 'ConditionalExpression' ||
+			handler.type === 'LogicalExpression'
+		) {
 			handler = dynamic_handler();
 		} else {
 			handler = /** @type {Expression} */ (visit(handler));
