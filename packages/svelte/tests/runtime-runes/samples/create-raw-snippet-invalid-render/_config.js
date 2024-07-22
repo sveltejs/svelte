@@ -8,6 +8,6 @@ export default test({
 	skip_mode: ['hydrate'],
 
 	warnings: [
-		'The `render` function of `createRawSnippet` is expected to return the HTML for a single element. Ensure the HTML generated from `render` is correct.'
+		'The `render` function passed to `createRawSnippet` should return HTML for a single element'
 	]
 });

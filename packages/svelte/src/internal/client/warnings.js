@@ -6,11 +6,11 @@ var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
 /**
- * The `render` function of `createRawSnippet` is expected to return the HTML for a single element. Ensure the HTML generated from `render` is correct.
+ * The `render` function passed to `createRawSnippet` should return HTML for a single element
  */
 export function bad_raw_snippet_render() {
 	if (DEV) {
-		console.warn(`%c[svelte] bad_raw_snippet_render\n%cThe \`render\` function of \`createRawSnippet\` is expected to return the HTML for a single element. Ensure the HTML generated from \`render\` is correct.`, bold, normal);
+		console.warn(`%c[svelte] bad_raw_snippet_render\n%cThe \`render\` function passed to \`createRawSnippet\` should return HTML for a single element`, bold, normal);
 	} else {
 		// TODO print a link to the documentation
 		console.warn("bad_raw_snippet_render");
