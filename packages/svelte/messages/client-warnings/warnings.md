@@ -1,3 +1,7 @@
+## bad_raw_snippet_render
+
+> The `render` function of `createRawSnippet` is expected to return the HTML for a single element. Ensure the HTML generated from `render` is correct.
+
 ## binding_property_non_reactive
 
 > `%binding%` is binding to a non-reactive property

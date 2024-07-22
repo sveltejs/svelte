@@ -113,3 +113,15 @@ export function state_proxy_equality_mismatch(operator) {
 		console.warn("state_proxy_equality_mismatch");
 	}
 }
+
+/**
+ * The `render` function of `createRawSnippet` is expected to return the HTML for a single element. Ensure the HTML generated from `render` is correct.
+ */
+export function bad_raw_snippet_render() {
+	if (DEV) {
+		console.warn(`%c[svelte] bad_raw_snippet_render\n%cThe \`render\` function of \`createRawSnippet\` is expected to return the HTML for a single element. Ensure the HTML generated from \`render\` is correct.`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("bad_raw_snippet_render");
+	}
+}
