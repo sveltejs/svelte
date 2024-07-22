@@ -556,7 +556,6 @@ export { snapshot } from '../shared/clone.js';
 
 export {
 	invalid_default_snippet,
-	validate_component,
 	validate_dynamic_element_tag,
 	validate_void_dynamic_element
 } from '../shared/validate.js';

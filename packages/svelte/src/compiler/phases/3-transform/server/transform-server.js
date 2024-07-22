@@ -998,7 +998,7 @@ function serialize_inline_component(node, expression, context) {
 	/** @type {import('estree').Statement} */
 	let statement = b.stmt(
 		(node.type === 'SvelteComponent' ? b.maybe_call : b.call)(
-			context.state.options.dev ? b.call('$.validate_component', expression) : expression,
+			expression,
 			b.id('$$payload'),
 			props_expression
 		)

@@ -928,13 +928,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 
 	/** @param {Expression} node_id */
 	let fn = (node_id) => {
-		return b.call(
-			context.state.options.dev
-				? b.call('$.validate_component', b.id(component_name))
-				: component_name,
-			node_id,
-			props_expression
-		);
+		return b.call(component_name, node_id, props_expression);
 	};
 
 	if (bind_this !== null) {

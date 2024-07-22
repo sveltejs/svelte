@@ -7,14 +7,6 @@ import * as e from './errors.js';
 export { invalid_default_snippet } from './errors.js';
 
 /**
- * Validate that the function behind `<Component />` isn't a snippet.
- * @param {any} component_fn
- */
-export function validate_component(component_fn) {
-	return component_fn; // TODO get rid
-}
-
-/**
  * @param {() => string} tag_fn
  * @returns {void}
  */
