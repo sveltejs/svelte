@@ -25,7 +25,7 @@ This works by adding a class to affected elements, which is based on a hash of t
 </style>
 ```
 
-## :global
+## :global(...)
 
 To apply styles to a selector globally, use the `:global(...)` modifier.
 
@@ -65,6 +65,34 @@ The `-global-` part will be removed when compiled, and the keyframe will then be
 	}
 </style>
 ```
+
+## :global
+
+To apply all styles after a certain point to a selector globally, use the `:global` modifier.
+
+```svelte
+<style>
+	:global {
+		div {
+			/* this will apply to every <div> in your application */
+			margin: 0;
+		}
+		p {
+			/* this will apply to every <p> in your application */
+			color: blue;
+		}
+	}
+
+	div :global strong {
+		/* this will apply to all <strong> elements, in any
+			component, that are inside <div> elements belonging
+			to this component */
+		color: goldenrod;
+	}
+</style>
+```
+
+The difference between `:global` and `:global(...)` is that `:global(...)` only makes all styles within its braces global, whereas `:global` makes all styles coming after it global, including those in nested CSS.
 
 ## Nested style tags
 
