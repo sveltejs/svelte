@@ -1,19 +1,22 @@
 /** @import { Source, Effect } from '#client' */
+import { FILENAME, HMR } from '../../../constants.js';
 import { EFFECT_TRANSPARENT } from '../constants.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
+import { source } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
 import { get } from '../runtime.js';
 
 /**
  * @template {(anchor: Comment, props: any) => any} Component
- * @param {Source<Component>} source
+ * @param {Component} original
+ * @param {() => Source<Component>} get_source
  */
-export function hmr(source) {
+export function hmr(original, get_source) {
 	/**
 	 * @param {Comment} anchor
 	 * @param {any} props
 	 */
-	return function (anchor, props) {
+	function wrapper(anchor, props) {
 		let instance = {};
 
 		/** @type {Effect} */
@@ -22,6 +25,7 @@ export function hmr(source) {
 		let ran = false;
 
 		block(() => {
+			const source = get_source();
 			const component = get(source);
 
 			if (effect) {
@@ -50,5 +54,20 @@ export function hmr(source) {
 		ran = true;
 
 		return instance;
+	}
+
+	// @ts-expect-error
+	wrapper[FILENAME] = original[FILENAME];
+
+	// @ts-expect-error
+	wrapper[HMR] = {
+		// When we accept an update, we set the original source to the new component
+		original,
+		// The `get_source` parameter reads `wrapper[HMR].source`, but in the `accept`
+		// function we always replace it with `previous[HMR].source`, which in practice
+		// means we only ever update the original
+		source: source(original)
 	};
+
+	return wrapper;
 }
