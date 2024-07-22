@@ -51,11 +51,10 @@ export function snippet(node, get_snippet, ...args) {
  * In development, wrap the snippet function so that it passes validation, and so that the
  * correct component context is set for ownership checks
  * @param {any} component
- * @param {Snippet} fn
- * @returns {Snippet}
+ * @param {(node: TemplateNode, ...args: any[]) => void} fn
  */
 export function wrap_snippet(component, fn) {
-	return (node, ...args) => {
+	return (/** @type {TemplateNode} */ node, /** @type {any[]} */ ...args) => {
 		var previous_component_function = dev_current_component_function;
 		set_dev_current_component_function(component);
 
@@ -77,7 +76,8 @@ export function wrap_snippet(component, fn) {
  * @returns {Snippet<Params>}
  */
 export function createRawSnippet(fn) {
-	return (anchor, ...params) => {
+	// @ts-expect-error the types are a lie
+	return (/** @type {TemplateNode} */ anchor, /** @type {Getters<Params>} */ ...params) => {
 		var snippet = fn(...params);
 
 		/** @type {Element} */
@@ -95,7 +95,7 @@ export function createRawSnippet(fn) {
 				w.invalid_raw_snippet_render();
 			}
 
-			/** @type {TemplateNode} */ (/** @type {unknown} */ (anchor)).before(element);
+			anchor.before(element);
 		}
 
 		const result = snippet.setup?.(element);

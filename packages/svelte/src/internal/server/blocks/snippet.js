@@ -12,9 +12,10 @@
  * @returns {Snippet<Params>}
  */
 export function createRawSnippet(fn) {
-	return (payload, ...args) => {
+	// @ts-expect-error the types are a lie
+	return (/** @type {Payload} */ payload, /** @type {Params} */ ...args) => {
 		var getters = /** @type {Getters<Params>} */ (args.map((value) => () => value));
-		/** @type {Payload} */ (/** @type {unknown} */ (payload)).out += fn(...getters)
+		payload.out += fn(...getters)
 			.render()
 			.trim();
 	};
