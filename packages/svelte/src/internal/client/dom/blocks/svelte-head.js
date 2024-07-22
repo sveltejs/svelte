@@ -1,5 +1,5 @@
 /** @import { TemplateNode } from '#client' */
-import { hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
+import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from '../hydration.js';
 import { empty } from '../operations.js';
 import { block } from '../../reactivity/effects.js';
 import { HEAD_EFFECT } from '../../constants.js';
@@ -40,10 +40,16 @@ export function head(render_fn) {
 			/** @type {Comment} */ (head_anchor).data !== HYDRATION_START
 		) {
 			head_anchor = /** @type {TemplateNode} */ (head_anchor.nextSibling);
+			// If we don't encounter the hydration end, then skip hydration for head element
+			if (head_anchor === null) {
+				set_hydrating(false);
+			}
 		}
 
 		head_anchor = set_hydrate_node(/** @type {TemplateNode} */ (head_anchor.nextSibling));
-	} else {
+	}
+
+	if (!hydrating) {
 		anchor = document.head.appendChild(empty());
 	}
 
@@ -51,6 +57,7 @@ export function head(render_fn) {
 		block(() => render_fn(anchor), HEAD_EFFECT);
 	} finally {
 		if (was_hydrating) {
+			set_hydrating(true);
 			head_anchor = hydrate_node; // so that next head block starts from the correct node
 			set_hydrate_node(/** @type {TemplateNode} */ (previous_hydrate_node));
 		}
