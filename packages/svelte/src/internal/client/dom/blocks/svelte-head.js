@@ -36,17 +36,18 @@ export function head(render_fn) {
 		}
 
 		while (
-			head_anchor.nodeType !== 8 ||
-			/** @type {Comment} */ (head_anchor).data !== HYDRATION_START
+			head_anchor !== null &&
+			(head_anchor.nodeType !== 8 || /** @type {Comment} */ (head_anchor).data !== HYDRATION_START)
 		) {
 			head_anchor = /** @type {TemplateNode} */ (head_anchor.nextSibling);
-			// If we don't encounter the hydration end, then skip hydration for head element
-			if (head_anchor === null) {
-				set_hydrating(false);
-			}
 		}
 
-		head_anchor = set_hydrate_node(/** @type {TemplateNode} */ (head_anchor.nextSibling));
+		// If we don't encounter the hydration end, then skip hydration for head element
+		if (head_anchor === null) {
+			set_hydrating(false);
+		} else {
+			head_anchor = set_hydrate_node(/** @type {TemplateNode} */ (head_anchor.nextSibling));
+		}
 	}
 
 	if (!hydrating) {
