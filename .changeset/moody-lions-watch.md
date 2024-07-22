@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: update component/snippet types to more accurately reflect implementation
+fix: remove runtime validation of components/snippets, rely on types instead
