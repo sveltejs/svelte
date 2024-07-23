@@ -68,6 +68,32 @@ Objects and arrays are made deeply reactive by wrapping them with [`Proxies`](ht
 
 > Only POJOs (plain old JavaScript objects) are made deeply reactive. Reactivity will stop at class boundaries and leave those alone
 
+## `$state.link`
+
+State declared with `$state.link` behaves like `$state`, with the key difference being that rather than take an initial value, the value passed into `$state.link` maintains and persistant one-way link. Updating the `$state.link` directly will temporarily override the value until the linked state next updates.
+
+```svelte
+<script>
+	let { parent_value = $bindable() } = $props();
+
+	// `child_value` is linked to `parent_value`
+	let child_value = $state.link(parent_value);
+
+	parent_value = 10;
+
+	console.log(child_value); // 10
+
+	child_value = 20;
+
+	console.log(child_value); // 20
+
+	// `parent_value` remains the same
+	console.log(parent_value); // 10
+</script>
+```
+
+> The linked value will be proxied like `$state`, use `$state.snapshot` to clone the object if you want to avoid mutating the linked value directly.
+
 ## `$state.frozen`
 
 State declared with `$state.frozen` cannot be mutated; it can only be _reassigned_. In other words, rather than assigning to a property of an object, or using an array method like `push`, replace the object or array altogether if you'd like to update it:
@@ -93,6 +119,7 @@ This can improve performance with large arrays and objects that you weren't plan
 In development mode, the argument to `$state.frozen` will be shallowly frozen with `Object.freeze()`, to make it obvious if you accidentally mutate it.
 
 > Objects and arrays passed to `$state.frozen` will have a `Symbol` property added to them to signal to Svelte that they are frozen. If you don't want this, pass in a clone of the object or array instead. The argument cannot be an existing state proxy created with `$state(...)`.
+
 
 ## `$state.snapshot`
 

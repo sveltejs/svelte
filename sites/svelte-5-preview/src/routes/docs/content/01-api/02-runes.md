@@ -88,6 +88,8 @@ State declared with `$state.link` behaves like `$state`, with the key difference
 </script>
 ```
 
+> The linked value will be proxied like `$state`, use `$state.snapshot` to clone the object if you want to avoid mutating the linked value directly.
+
 ## `$state.frozen`
 
 State declared with `$state.frozen` cannot be mutated; it can only be _reassigned_. In other words, rather than assigning to a property of an object, or using an array method like `push`, replace the object or array altogether if you'd like to update it:
