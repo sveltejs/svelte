@@ -1,6 +1,5 @@
 /** @import { BlockStatement, CallExpression, Expression, ExpressionStatement, Identifier, Literal, MemberExpression, ObjectExpression, Pattern, Property, Statement, Super, TemplateElement, TemplateLiteral } from 'estree' */
 /** @import { BindDirective } from '#compiler' */
-/** @import { ComponentClientTransformState } from '../types' */
 import {
 	extract_identifiers,
 	extract_paths,
@@ -933,13 +932,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 
 	/** @param {Expression} node_id */
 	let fn = (node_id) => {
-		return b.call(
-			context.state.options.dev
-				? b.call('$.validate_component', b.id(component_name))
-				: component_name,
-			node_id,
-			props_expression
-		);
+		return b.call(component_name, node_id, props_expression);
 	};
 
 	if (bind_this !== null) {
@@ -1876,9 +1869,6 @@ export const template_visitors = {
 		}
 
 		let snippet_function = /** @type {Expression} */ (context.visit(callee));
-		if (context.state.options.dev) {
-			snippet_function = b.call('$.validate_snippet', snippet_function);
-		}
 
 		if (node.metadata.dynamic) {
 			context.state.init.push(
