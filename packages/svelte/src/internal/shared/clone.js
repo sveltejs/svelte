@@ -79,6 +79,10 @@ function clone(value, cloned, path, paths) {
 			return copy;
 		}
 
+		if (value instanceof Date) {
+			return /** @type {Snapshot<T>} */ (structuredClone(value));
+		}
+
 		if (typeof (/** @type {T & { toJSON?: any } } */ (value).toJSON) === 'function') {
 			return clone(
 				/** @type {T & { toJSON(): any } } */ (value).toJSON(),
