@@ -72,7 +72,7 @@ State declared with `$state.link` behaves like `$state`, with the key difference
 <script>
 	let { parent_value = $bindable() } = $props();
 
-  // `child_value` is linked to `parent_value`
+	// `child_value` is linked to `parent_value`
 	let child_value = $state.link(parent_value);
 
 	parent_value = 10;
