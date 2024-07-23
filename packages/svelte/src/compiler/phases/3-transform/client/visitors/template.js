@@ -1154,7 +1154,7 @@ function serialize_event_handler(node, { state, visit }) {
 			);
 		};
 
-		if (handler.type === 'Identifier' || handler.type === 'MemberExpression') {
+		if (handler.type === 'Identifier') {
 			const id = object(handler);
 			const binding = id === null ? null : state.scope.get(id.name);
 			if (
@@ -1173,6 +1173,7 @@ function serialize_event_handler(node, { state, visit }) {
 				handler = /** @type {Expression} */ (visit(handler));
 			}
 		} else if (
+			handler.type === 'MemberExpression' ||
 			handler.type === 'CallExpression' ||
 			handler.type === 'ConditionalExpression' ||
 			handler.type === 'LogicalExpression'
