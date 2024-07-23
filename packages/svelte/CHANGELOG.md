@@ -1,5 +1,21 @@
 # svelte
 
+## 5.0.0-next.196
+
+### Patch Changes
+
+- fix: ensure dynamic event handlers are wrapped in a derived ([#12563](https://github.com/sveltejs/svelte/pull/12563))
+
+- chore: tidy up dynamic event handler generated code ([#12553](https://github.com/sveltejs/svelte/pull/12553))
+
+- fix: dynamic event delegation for stateful call expressions ([#12549](https://github.com/sveltejs/svelte/pull/12549))
+
+- fix: ensure $state.snapshot correctly clones Date objects ([#12564](https://github.com/sveltejs/svelte/pull/12564))
+
+- fix: remove runtime validation of components/snippets, rely on types instead ([#12507](https://github.com/sveltejs/svelte/pull/12507))
+
+- fix: properly update store values ([#12562](https://github.com/sveltejs/svelte/pull/12562))
+
 ## 5.0.0-next.195
 
 ### Patch Changes
