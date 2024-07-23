@@ -1137,9 +1137,12 @@ function serialize_event_handler(node, { state, visit }) {
 				null,
 				[b.rest(b.id('$$args'))],
 				b.block([
-					b.const('$$callback', /** @type {Expression} */ (visit(handler))),
 					b.return(
-						b.call(b.member(b.id('$$callback'), b.id('apply'), false, true), b.this, b.id('$$args'))
+						b.call(
+							b.member(/** @type {Expression} */ (visit(handler)), b.id('apply'), false, true),
+							b.this,
+							b.id('$$args')
+						)
 					)
 				])
 			);
