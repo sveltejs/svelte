@@ -82,7 +82,7 @@ export namespace Css {
 		metadata: {
 			/**
 			 * `true` if the whole selector is unscoped, e.g. `:global(...)` or `:global` or `:global.x`.
-			 * Selectors like `:global(...).x` or `div:global` are not considered global, because they still need scoping.
+			 * Selectors like `:global(...).x` are not considered global, because they still need scoping.
 			 */
 			is_global: boolean;
 			/** `:root`, `:host`, `::view-transition`, or selectors after a `:global` */

@@ -208,7 +208,7 @@ Previously, Svelte left `:is(...)` and `:where(...)` selectors untouched - it si
 
 ```diff
 - main {
-+ main:global {
++ main :global {
 	@apply bg-blue-100 dark:bg-blue-900
 }
 ```

@@ -94,6 +94,8 @@ To apply all styles after a certain point to a selector globally, use the `:glob
 
 The difference between `:global` and `:global(...)` is that `:global(...)` only makes all styles within its braces global, whereas `:global` makes all styles coming after it global, including those in nested CSS.
 
+If `:global` is preceeded by a descendant combinator, the combinator is removed from the output. That means that `div :global.x` is equivalent to `div.svelte-hash.x`.
+
 ## Nested style tags
 
 There should only be 1 top-level `<style>` tag per component.

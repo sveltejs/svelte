@@ -142,7 +142,12 @@ const validation_visitors = {
 
 			const complex_selector = node.prelude.children[0];
 			const global_selector = complex_selector.children.find((r) => {
-				return r.selectors.some(is_global_block_selector);
+				const idx = r.selectors.findIndex(is_global_block_selector);
+				if (idx === 0) {
+					return true;
+				} else if (idx !== -1) {
+					e.css_global_block_invalid_modifier(r.selectors[idx]);
+				}
 			});
 
 			if (!global_selector) {
@@ -228,21 +233,8 @@ const validation_visitors = {
 	},
 	NestingSelector(node, context) {
 		const rule = /** @type {Css.Rule} */ (context.state.rule);
-
 		if (!rule.metadata.parent_rule) {
 			e.css_nesting_selector_invalid_placement(node);
-		}
-
-		if (rule.metadata.parent_rule.metadata.is_global_block) {
-			const last = rule.metadata.parent_rule.prelude.children[0].children.at(-1);
-			if (
-				last &&
-				is_global(last) &&
-				last.selectors[0].args === null &&
-				last.selectors.length === 1
-			) {
-				e.css_global_block_invalid_placement(last);
-			}
 		}
 	}
 };

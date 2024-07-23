@@ -28,11 +28,41 @@
 		}
 	}
 
+	/* `div { :global { &.x { ...} } }` is allowed ... */
+	div {
+		:global {
+			&.x {
+				color: green;
+			}
+		}
+	}
+
+	/* ...wich is equivalent to `div :global { &.x { ...} }` ... */
+	div :global {
+		&.x {
+			color: green;
+		}
+	}
+
+	/* ...so `div :global.x` must be, too ... */
 	div :global.x {
 		color: green;
 	}
 
-	div:global:is(html.dark-mode *) {
+	/* ...and therefore `div { :global.x { ... }` aswell */
+	div {
+		:global.x {
+			color: green;
+		}
+	}
+
+	div {
+		& :global.x {
+			color: green;
+		}
+	}
+
+	div :global:is(html.dark-mode *) {
 		color: green;
 	}
 
