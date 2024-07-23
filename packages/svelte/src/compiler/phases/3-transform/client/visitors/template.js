@@ -1148,25 +1148,7 @@ function serialize_event_handler(node, metadata, { state, visit }) {
 				])
 			);
 
-		if (handler.type === 'Identifier' || handler.type === 'MemberExpression') {
-			const id = object(handler);
-			const binding = id === null ? null : state.scope.get(id.name);
-			if (
-				binding !== null &&
-				(binding.kind === 'state' ||
-					binding.kind === 'frozen_state' ||
-					binding.declaration_kind === 'import' ||
-					binding.kind === 'legacy_reactive' ||
-					binding.kind === 'derived' ||
-					binding.kind === 'prop' ||
-					binding.kind === 'bindable_prop' ||
-					binding.kind === 'store_sub')
-			) {
-				handler = dynamic_handler();
-			} else {
-				handler = /** @type {Expression} */ (visit(handler));
-			}
-		} else if (
+		if (
 			metadata?.contains_call_expression &&
 			!(
 				(handler.type === 'ArrowFunctionExpression' || handler.type === 'FunctionExpression') &&
@@ -1193,6 +1175,24 @@ function serialize_event_handler(node, metadata, { state, visit }) {
 					)
 				])
 			);
+		} else if (handler.type === 'Identifier' || handler.type === 'MemberExpression') {
+			const id = object(handler);
+			const binding = id === null ? null : state.scope.get(id.name);
+			if (
+				binding !== null &&
+				(binding.kind === 'state' ||
+					binding.kind === 'frozen_state' ||
+					binding.declaration_kind === 'import' ||
+					binding.kind === 'legacy_reactive' ||
+					binding.kind === 'derived' ||
+					binding.kind === 'prop' ||
+					binding.kind === 'bindable_prop' ||
+					binding.kind === 'store_sub')
+			) {
+				handler = dynamic_handler();
+			} else {
+				handler = /** @type {Expression} */ (visit(handler));
+			}
 		} else if (handler.type === 'ConditionalExpression' || handler.type === 'LogicalExpression') {
 			handler = dynamic_handler();
 		} else {
