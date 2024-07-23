@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-feat: adds $state.link rune
+feat: add `$state.link` rune
