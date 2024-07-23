@@ -28,7 +28,7 @@ export function store_get(store, store_name, stores) {
 		entry.store = store ?? null;
 
 		if (store == null) {
-			set(entry.source, undefined);
+			entry.source.v = undefined; // see synchronous callback comment below
 			entry.unsubscribe = noop;
 		} else {
 			var is_synchronous_callback = true;
