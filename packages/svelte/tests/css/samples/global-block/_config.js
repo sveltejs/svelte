@@ -7,14 +7,14 @@ export default test({
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector ".unused :global"',
 			start: {
-				line: 63,
+				line: 69,
 				column: 1,
-				character: 871
+				character: 917
 			},
 			end: {
-				line: 63,
+				line: 69,
 				column: 16,
-				character: 886
+				character: 932
 			}
 		}
 	]
