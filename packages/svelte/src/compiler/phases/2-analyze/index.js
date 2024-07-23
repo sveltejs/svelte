@@ -1307,7 +1307,6 @@ const common_visitors = {
 		}
 	},
 	CallExpression(node, context) {
-		debugger;
 		const { expression, render_tag } = context.state;
 		if (
 			(expression?.type === 'ExpressionTag' || expression?.type === 'SpreadAttribute') &&
