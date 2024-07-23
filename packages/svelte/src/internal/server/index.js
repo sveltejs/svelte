@@ -1,6 +1,6 @@
 /** @import { Component, Payload, RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
-export { FILENAME, ORIGINAL } from '../../constants.js';
+export { FILENAME, HMR } from '../../constants.js';
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {

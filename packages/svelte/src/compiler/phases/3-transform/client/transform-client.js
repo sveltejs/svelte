@@ -417,8 +417,19 @@ export function client_component(source, analysis, options) {
 	);
 
 	if (options.hmr) {
+		const id = b.id(analysis.name);
+		const HMR = b.id('$.HMR');
+
+		const existing = b.member(id, HMR, true);
+		const incoming = b.member(b.id('module.default'), HMR, true);
+
 		const accept_fn_body = [
-			b.stmt(b.call('$.set', b.id('s'), b.member(b.id('module.default'), b.id('$.ORIGINAL'), true)))
+			b.stmt(
+				b.assignment('=', b.member(incoming, b.id('source')), b.member(existing, b.id('source')))
+			),
+			b.stmt(
+				b.call('$.set', b.member(existing, b.id('source')), b.member(incoming, b.id('original')))
+			)
 		];
 
 		if (analysis.css.hash) {
@@ -438,20 +449,10 @@ export function client_component(source, analysis, options) {
 		}
 
 		const hmr = b.block([
-			b.const(b.id('s'), b.call('$.source', b.id(analysis.name))),
-			b.const(b.id('filename'), b.member(b.id(analysis.name), b.id('filename'))),
-			b.const(b.id('$$original'), b.id(analysis.name)),
-			b.stmt(b.assignment('=', b.id(analysis.name), b.call('$.hmr', b.id('s')))),
-			b.stmt(b.assignment('=', b.member(b.id(analysis.name), b.id('filename')), b.id('filename'))),
-			// Assign the original component to the wrapper so we can use it on hot reload patching,
-			// else we would call the HMR function two times
 			b.stmt(
-				b.assignment(
-					'=',
-					b.member(b.id(analysis.name), b.id('$.ORIGINAL'), true),
-					b.id('$$original')
-				)
+				b.assignment('=', id, b.call('$.hmr', id, b.thunk(b.member(existing, b.id('source')))))
 			),
+
 			b.stmt(b.call('import.meta.hot.accept', b.arrow([b.id('module')], b.block(accept_fn_body))))
 		]);
 
