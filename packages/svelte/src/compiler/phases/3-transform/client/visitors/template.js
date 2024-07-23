@@ -2526,11 +2526,7 @@ export const template_visitors = {
 		child_state.getters[item.name] = getter;
 
 		if (node.index) {
-			const index_binding = /** @type {import('#compiler').Binding} */ (
-				context.state.scope.get(node.index)
-			);
-
-			index_binding.expression = (id) => {
+			child_state.getters[node.index] = (id) => {
 				const index_with_loc = with_loc(index, id);
 				return b.call('$.unwrap', index_with_loc);
 			};
