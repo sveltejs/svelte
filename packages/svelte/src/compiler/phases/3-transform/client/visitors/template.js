@@ -1355,7 +1355,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 			const text_id = get_node_id(expression(true), state, 'text');
 
 			const update = b.stmt(
-				b.call('$.set_text', text_id, /** @type {Expression} */ (visit(node.expression)))
+				b.call('$.set_text', text_id, /** @type {Expression} */ (visit(node.expression, state)))
 			);
 
 			if (node.metadata.contains_call_expression && !within_bound_contenteditable) {
@@ -1615,6 +1615,7 @@ export const template_visitors = {
 			after_update: [],
 			template: [],
 			locations: [],
+			getters: { ...context.state.getters },
 			metadata: {
 				context: {
 					template_needs_import_node: false,
@@ -1777,6 +1778,8 @@ export const template_visitors = {
 				)
 			);
 
+			state.getters[declaration.id.name] = b.call('$.get', declaration.id);
+
 			// we need to eagerly evaluate the expression in order to hit any
 			// 'Cannot access x before initialization' errors
 			if (state.options.dev) {
@@ -1818,8 +1821,7 @@ export const template_visitors = {
 			}
 
 			for (const node of identifiers) {
-				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(node.name));
-				binding.expression = b.member(b.call('$.get', tmp), node);
+				state.getters[node.name] = b.member(b.call('$.get', tmp), node);
 			}
 		}
 	},
