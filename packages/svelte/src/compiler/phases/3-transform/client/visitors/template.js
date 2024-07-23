@@ -2458,6 +2458,11 @@ export const template_visitors = {
 			indirect_dependencies.push(...transitive_dependencies);
 		}
 
+		const child_state = {
+			...context.state,
+			getters: { ...context.state.getters }
+		};
+
 		/**
 		 * @param {Pattern} expression_for_id
 		 * @returns {import('#compiler').Binding['mutation']}
@@ -2506,10 +2511,11 @@ export const template_visitors = {
 				: b.id(node.index);
 		const item = each_node_meta.item;
 		const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(item.name));
-		binding.expression = (/** @type {import("estree").Identifier} */ id) => {
+		const getter = (/** @type {import("estree").Identifier} */ id) => {
 			const item_with_loc = with_loc(item, id);
 			return b.call('$.unwrap', item_with_loc);
 		};
+		child_state.getters[item.name] = getter;
 
 		if (node.index) {
 			const index_binding = /** @type {import('#compiler').Binding} */ (
@@ -2534,14 +2540,16 @@ export const template_visitors = {
 				)
 			);
 		} else {
-			const unwrapped = binding.expression(binding.node);
+			const unwrapped = getter(binding.node);
 			const paths = extract_paths(node.context);
 
 			for (const path of paths) {
 				const name = /** @type {Identifier} */ (path.node).name;
 				const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(name));
 				const needs_derived = path.has_default_value; // to ensure that default value is only called once
-				const fn = b.thunk(/** @type {Expression} */ (context.visit(path.expression?.(unwrapped))));
+				const fn = b.thunk(
+					/** @type {Expression} */ (context.visit(path.expression?.(unwrapped), child_state))
+				);
 
 				declarations.push(
 					b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn)
@@ -2559,16 +2567,18 @@ export const template_visitors = {
 			}
 		}
 
-		const block = /** @type {BlockStatement} */ (context.visit(node.body));
+		const block = /** @type {BlockStatement} */ (context.visit(node.body, child_state));
 
 		const key_function = node.key
 			? b.arrow(
 					[node.context.type === 'Identifier' ? node.context : b.id('$$item'), index],
 					declarations.length > 0
 						? b.block(
-								declarations.concat(b.return(/** @type {Expression} */ (context.visit(node.key))))
+								declarations.concat(
+									b.return(/** @type {Expression} */ (context.visit(node.key, child_state)))
+								)
 							)
-						: /** @type {Expression} */ (context.visit(node.key))
+						: /** @type {Expression} */ (context.visit(node.key, child_state))
 				)
 			: b.id('$.index');
 
