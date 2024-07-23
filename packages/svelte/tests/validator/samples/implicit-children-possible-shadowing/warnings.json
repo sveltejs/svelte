@@ -1,0 +1,14 @@
+[
+	{
+		"code": "implicit_children_possible_shadowing",
+		"end": {
+			"column": 46,
+			"line": 6
+		},
+		"message": "if `Component` is using `{@render}` the attribute `children` will shadow the implicit snippet",
+		"start": {
+			"column": 0,
+			"line": 6
+		}
+	}
+]

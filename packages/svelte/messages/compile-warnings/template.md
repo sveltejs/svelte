@@ -38,6 +38,10 @@
 
 > Using `on:%name%` to listen to the %name% event is deprecated. Use the event attribute `on%name%` instead
 
+## implicit_children_possible_shadowing
+
+> if `%name%` is using `{@render}` the attribute `children` will shadow the implicit snippet
+
 ## slot_element_deprecated
 
 > Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead

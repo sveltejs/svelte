@@ -114,6 +114,7 @@ export const codes = [
 	"component_name_lowercase",
 	"element_invalid_self_closing_tag",
 	"event_directive_deprecated",
+	"implicit_children_possible_shadowing",
 	"slot_element_deprecated",
 	"svelte_element_invalid_this"
 ];
@@ -737,6 +738,15 @@ export function element_invalid_self_closing_tag(node, name) {
  */
 export function event_directive_deprecated(node, name) {
 	w(node, "event_directive_deprecated", `Using \`on:${name}\` to listen to the ${name} event is deprecated. Use the event attribute \`on${name}\` instead`);
+}
+
+/**
+ * if `%name%` is using `{@render}` the attribute `children` will shadow the implicit snippet
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function implicit_children_possible_shadowing(node, name) {
+	w(node, "implicit_children_possible_shadowing", `if \`${name}\` is using \`{@render}\` the attribute \`children\` will shadow the implicit snippet`);
 }
 
 /**

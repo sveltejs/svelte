@@ -107,6 +107,10 @@ function validate_component(node, context) {
 			if (attribute.name === 'slot') {
 				validate_slot_attribute(context, attribute, true);
 			}
+
+			if (attribute.name === 'children' && node.fragment.nodes.length > 0) {
+				w.implicit_children_possible_shadowing(node, node.name);
+			}
 		}
 	}
 
