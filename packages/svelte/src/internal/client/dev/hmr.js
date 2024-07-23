@@ -1,6 +1,7 @@
 /** @import { Source, Effect } from '#client' */
 import { FILENAME, HMR } from '../../../constants.js';
 import { EFFECT_TRANSPARENT } from '../constants.js';
+import { hydrate_node, hydrating } from '../dom/hydration.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { source } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
@@ -50,6 +51,12 @@ export function hmr(original, get_source) {
 				if (ran) set_should_intro(true);
 			});
 		}, EFFECT_TRANSPARENT);
+
+		if (hydrating) {
+			// The anchor is last because everything is prepended before it,
+			// and so we only come across it after hydrating the inner contents
+			anchor = /** @type {Comment} */ (hydrate_node);
+		}
 
 		ran = true;
 

@@ -35,7 +35,11 @@ export function template(content, flags) {
 
 	return () => {
 		if (hydrating) {
-			assign_nodes(hydrate_node, null);
+			assign_nodes(
+				// Within if/each/etc blocks, we're walking past the initial anchor, and need to revert that here
+				has_start ? hydrate_node : /** @type {TemplateNode} */ (hydrate_node.previousSibling),
+				null
+			);
 			return hydrate_node;
 		}
 
@@ -107,7 +111,11 @@ export function ns_template(content, flags, ns = 'svg') {
 
 	return () => {
 		if (hydrating) {
-			assign_nodes(hydrate_node, null);
+			assign_nodes(
+				// Within if/each/etc blocks, we're walking past the initial anchor, and need to revert that here
+				has_start ? hydrate_node : /** @type {TemplateNode} */ (hydrate_node.previousSibling),
+				null
+			);
 			return hydrate_node;
 		}
 
@@ -232,7 +240,8 @@ export function text() {
 export function comment() {
 	// we're not delegating to `template` here for performance reasons
 	if (hydrating) {
-		assign_nodes(hydrate_node, null);
+		// During hydration we already walked past the comment, so go back once
+		assign_nodes(/** @type {TemplateNode} */ (hydrate_node.previousSibling), null);
 		return hydrate_node;
 	}
 
