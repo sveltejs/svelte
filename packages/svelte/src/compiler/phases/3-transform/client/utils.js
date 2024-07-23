@@ -89,10 +89,6 @@ export function serialize_get_binding(node, state) {
 		return typeof getter === 'function' ? getter(node) : getter;
 	}
 
-	if (binding.expression) {
-		return typeof binding.expression === 'function' ? binding.expression(node) : binding.expression;
-	}
-
 	if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
 		if (is_prop_source(binding, state)) {
 			return b.call(node);
@@ -532,7 +528,7 @@ function get_hoistable_params(node, context) {
 				);
 			}
 
-			const expression = context.state.getters[reference] ?? binding.expression;
+			const expression = context.state.getters[reference];
 
 			if (
 				// If it's a destructured derived binding, then we can extract the derived signal reference and use that.

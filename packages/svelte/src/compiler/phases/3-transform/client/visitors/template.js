@@ -1003,7 +1003,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
  */
 function serialize_bind_this(bind_this, context, node) {
 	let i = 0;
-	/** @type {Map<import('#compiler').Binding, [arg_idx: number, transformed: Expression, expression: import('#compiler').Binding['expression'], name: string]>} */
+	/** @type {Map<import('#compiler').Binding, [arg_idx: number, transformed: Expression, expression: Expression | ((id: Identifier) => Expression), name: string]>} */
 	const each_ids = new Map();
 	// Transform each reference to an each block context variable into a $$value_<i> variable
 	// by temporarily changing the `expression` of the corresponding binding.
