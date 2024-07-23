@@ -1003,7 +1003,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
  */
 function serialize_bind_this(bind_this, context, node) {
 	let i = 0;
-	/** @type {Map<import('#compiler').Binding, [arg_idx: number, transformed: Expression, expression: import('#compiler').Binding['expression']]>} */
+	/** @type {Map<import('#compiler').Binding, [arg_idx: number, transformed: Expression, expression: import('#compiler').Binding['expression'], name: string]>} */
 	const each_ids = new Map();
 	// Transform each reference to an each block context variable into a $$value_<i> variable
 	// by temporarily changing the `expression` of the corresponding binding.
@@ -1026,9 +1026,10 @@ function serialize_bind_this(bind_this, context, node) {
 					each_ids.set(binding, [
 						i,
 						/** @type {Expression} */ (context.visit(node)),
-						binding.expression
+						context.state.getters[node.name] ?? binding.expression,
+						node.name
 					]);
-					binding.expression = b.id('$$value_' + i);
+					binding.expression = context.state.getters[node.name] = b.id('$$value_' + i);
 					i++;
 				}
 			}
@@ -1040,9 +1041,16 @@ function serialize_bind_this(bind_this, context, node) {
 	const assignment = b.assignment('=', bind_this, b.id('$$value'));
 	const update = serialize_set_binding(assignment, context, () => context.visit(assignment));
 
-	for (const [binding, [, , expression]] of each_ids) {
+	for (const [binding, [, , expression, name]] of each_ids) {
 		// reset expressions to what they were before
 		binding.expression = expression;
+
+		// TODO use state properly here rather than mutating stuff
+		if (expression !== null) {
+			context.state.getters[name] = expression;
+		} else {
+			delete context.state.getters[name];
+		}
 	}
 
 	/** @type {Expression[]} */
@@ -2554,7 +2562,9 @@ export const template_visitors = {
 				declarations.push(
 					b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn)
 				);
-				binding.expression = needs_derived ? b.call('$.get', b.id(name)) : b.call(name);
+
+				const getter = needs_derived ? b.call('$.get', b.id(name)) : b.call(name);
+				child_state.getters[name] = getter;
 				binding.mutation = create_mutation(
 					/** @type {Pattern} */ (path.update_expression(unwrapped))
 				);
@@ -2562,7 +2572,7 @@ export const template_visitors = {
 				// we need to eagerly evaluate the expression in order to hit any
 				// 'Cannot access x before initialization' errors
 				if (context.state.options.dev) {
-					declarations.push(b.stmt(binding.expression));
+					declarations.push(b.stmt(getter));
 				}
 			}
 		}
