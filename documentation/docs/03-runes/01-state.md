@@ -120,7 +120,6 @@ In development mode, the argument to `$state.frozen` will be shallowly frozen wi
 
 > Objects and arrays passed to `$state.frozen` will have a `Symbol` property added to them to signal to Svelte that they are frozen. If you don't want this, pass in a clone of the object or array instead. The argument cannot be an existing state proxy created with `$state(...)`.
 
-
 ## `$state.snapshot`
 
 To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
