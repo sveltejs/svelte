@@ -948,6 +948,7 @@ declare module 'svelte/compiler' {
 		/**
 		 * If this is set, all references should use this expression instead of the identifier name.
 		 * If a function is given, it will be called with the identifier at that location and should return the new expression.
+		 * @deprecated use `state.getters.get(binding)` instead
 		 */
 		expression: Expression | ((id: Identifier) => Expression) | null;
 		/** If this is set, all mutations should use this expression */
