@@ -1350,7 +1350,7 @@ const common_visitors = {
 		}
 
 		if (rune === '$state.link') {
-			// Similar to $derived above, $state is treated as `$state(() => foo)`
+			// Similar to $derived above, $state.link(foo) is treated as `$state.link(() => foo)`
 			context.next({
 				...context.state,
 				function_depth: context.state.function_depth + 1
