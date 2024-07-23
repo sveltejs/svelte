@@ -15,7 +15,8 @@ export const binding_properties = {
 	// media
 	currentTime: {
 		valid_elements: ['audio', 'video'],
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		bidirectional: true
 	},
 	duration: {
 		valid_elements: ['audio', 'video'],
@@ -25,7 +26,8 @@ export const binding_properties = {
 	focused: {},
 	paused: {
 		valid_elements: ['audio', 'video'],
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		bidirectional: true
 	},
 	buffered: {
 		valid_elements: ['audio', 'video'],
@@ -41,15 +43,18 @@ export const binding_properties = {
 	},
 	volume: {
 		valid_elements: ['audio', 'video'],
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		bidirectional: true
 	},
 	muted: {
 		valid_elements: ['audio', 'video'],
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		bidirectional: true
 	},
 	playbackRate: {
 		valid_elements: ['audio', 'video'],
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		bidirectional: true
 	},
 	seeking: {
 		valid_elements: ['audio', 'video'],
@@ -124,11 +129,13 @@ export const binding_properties = {
 	},
 	scrollX: {
 		valid_elements: ['svelte:window'],
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		bidirectional: true
 	},
 	scrollY: {
 		valid_elements: ['svelte:window'],
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		bidirectional: true
 	},
 	online: {
 		valid_elements: ['svelte:window'],
@@ -180,23 +187,28 @@ export const binding_properties = {
 		omit_in_ssr: true // no corresponding attribute
 	},
 	checked: {
-		valid_elements: ['input']
+		valid_elements: ['input'],
+		bidirectional: true
 	},
 	group: {
-		valid_elements: ['input']
+		valid_elements: ['input'],
+		bidirectional: true
 	},
 	// various
 	this: {
 		omit_in_ssr: true
 	},
 	innerText: {
-		invalid_elements: ['svelte:window', 'svelte:document']
+		invalid_elements: ['svelte:window', 'svelte:document'],
+		bidirectional: true
 	},
 	innerHTML: {
-		invalid_elements: ['svelte:window', 'svelte:document']
+		invalid_elements: ['svelte:window', 'svelte:document'],
+		bidirectional: true
 	},
 	textContent: {
-		invalid_elements: ['svelte:window', 'svelte:document']
+		invalid_elements: ['svelte:window', 'svelte:document'],
+		bidirectional: true
 	},
 	open: {
 		event: 'toggle',
@@ -204,10 +216,12 @@ export const binding_properties = {
 		valid_elements: ['details']
 	},
 	value: {
-		valid_elements: ['input', 'textarea', 'select']
+		valid_elements: ['input', 'textarea', 'select'],
+		bidirectional: true
 	},
 	files: {
 		valid_elements: ['input'],
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		bidirectional: true
 	}
 };
