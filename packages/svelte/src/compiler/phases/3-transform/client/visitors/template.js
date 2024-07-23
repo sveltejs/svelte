@@ -3114,7 +3114,10 @@ export const template_visitors = {
 			const bindings = state.scope.get_bindings(node);
 
 			for (const binding of bindings) {
-				binding.expression = b.member(b.call('$.get', b.id(name)), b.id(binding.node.name));
+				state.getters[binding.node.name] = b.member(
+					b.call('$.get', b.id(name)),
+					b.id(binding.node.name)
+				);
 			}
 
 			return b.const(
