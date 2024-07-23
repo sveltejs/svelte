@@ -1,5 +1,6 @@
 // This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
 
+import type { Getters } from '#shared';
 import './ambient.js';
 
 /**
@@ -104,6 +105,15 @@ export class SvelteComponent<
 	$set(props: Partial<Props>): void;
 }
 
+declare const brand: unique symbol;
+type Brand<B> = { [brand]: B };
+type Branded<T, B> = T & Brand<B>;
+
+/**
+ * Internal implementation details that vary between environments
+ */
+export type ComponentInternals = Branded<{}, 'ComponentInternals'>;
+
 /**
  * Can be used to create strongly typed Svelte components.
  *
@@ -136,7 +146,8 @@ export interface Component<
 	 * @param props The props passed to the component.
 	 */
 	(
-		internal: unknown,
+		this: void,
+		internals: ComponentInternals,
 		props: Props
 	): {
 		/**

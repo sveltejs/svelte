@@ -1,5 +1,31 @@
 # svelte
 
+## 5.0.0-next.195
+
+### Patch Changes
+
+- fix: update original source in HMR update ([#12547](https://github.com/sveltejs/svelte/pull/12547))
+
+## 5.0.0-next.194
+
+### Patch Changes
+
+- fix: bail-out of hydrating head if no anchor is found ([#12541](https://github.com/sveltejs/svelte/pull/12541))
+
+- chore: add warning for invalid render function of createRawSnippet ([#12535](https://github.com/sveltejs/svelte/pull/12535))
+
+- fix: correctly set filename on HMR wrappers ([#12543](https://github.com/sveltejs/svelte/pull/12543))
+
+- fix: only emit binding_property_non_reactive warning in runes mode ([#12544](https://github.com/sveltejs/svelte/pull/12544))
+
+## 5.0.0-next.193
+
+### Patch Changes
+
+- fix: improve validation error that occurs when using `{@render ...}` to render default slotted content ([#12521](https://github.com/sveltejs/svelte/pull/12521))
+
+- fix: reset hydrate node after `hydrate(...)` ([#12512](https://github.com/sveltejs/svelte/pull/12512))
+
 ## 5.0.0-next.192
 
 ### Patch Changes

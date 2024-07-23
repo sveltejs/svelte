@@ -72,13 +72,31 @@ If you're using TypeScript, you can declare the prop types:
 ```svelte
 <script lang="ts">
 	interface Props {
-		a: number;
-		b: boolean;
-		c: string;
+		required: string;
+		optional?: number;
 		[key: string]: unknown;
 	}
 
-	let { a, b, c, ...everythingElse }: Props = $props();
+	let { required, optional, ...everythingElse }: Props = $props();
+</script>
+```
+
+If you're using JavaScript, you can declare the prop types using JSDoc:
+
+```svelte
+<script>
+	/** @type {{ x: string }} */
+	let { x } = $props();
+
+	// or use @typedef if you want to document the properties:
+
+	/**
+	 * @typedef {Object} MyProps
+	 * @property {string} y Some documentation
+	 */
+
+	/** @type {MyProps} */
+	let { y } = $props();
 </script>
 ```
 

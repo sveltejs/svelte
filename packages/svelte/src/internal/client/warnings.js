@@ -61,6 +61,18 @@ export function hydration_mismatch(location) {
 }
 
 /**
+ * The `render` function passed to `createRawSnippet` should return HTML for a single element
+ */
+export function invalid_raw_snippet_render() {
+	if (DEV) {
+		console.warn(`%c[svelte] invalid_raw_snippet_render\n%cThe \`render\` function passed to \`createRawSnippet\` should return HTML for a single element`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("invalid_raw_snippet_render");
+	}
+}
+
+/**
  * Tried to unmount a component that was not mounted
  */
 export function lifecycle_double_unmount() {

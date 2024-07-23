@@ -1,6 +1,5 @@
 /** @import { BlockStatement, CallExpression, Expression, ExpressionStatement, Identifier, Literal, MemberExpression, ObjectExpression, Pattern, Property, Statement, Super, TemplateElement, TemplateLiteral } from 'estree' */
 /** @import { BindDirective } from '#compiler' */
-/** @import { ComponentClientTransformState } from '../types' */
 import {
 	extract_identifiers,
 	extract_paths,
@@ -780,7 +779,11 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 		} else if (attribute.type === 'BindDirective') {
 			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
 
-			if (expression.type === 'MemberExpression' && context.state.options.dev) {
+			if (
+				expression.type === 'MemberExpression' &&
+				context.state.options.dev &&
+				context.state.analysis.runes
+			) {
 				context.state.init.push(serialize_validate_binding(context.state, attribute, expression));
 			}
 
@@ -884,23 +887,27 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 			])
 		);
 
-		if (
-			slot_name === 'default' &&
-			!has_children_prop &&
-			lets.length === 0 &&
-			children.default.every((node) => node.type !== 'SvelteFragment')
-		) {
-			push_prop(
-				b.init(
-					'children',
-					context.state.options.dev
-						? b.call('$.wrap_snippet', b.id(context.state.analysis.name), slot_fn)
-						: slot_fn
-				)
-			);
-			// We additionally add the default slot as a boolean, so that the slot render function on the other
-			// side knows it should get the content to render from $$props.children
-			serialized_slots.push(b.init(slot_name, b.true));
+		if (slot_name === 'default' && !has_children_prop) {
+			if (lets.length === 0 && children.default.every((node) => node.type !== 'SvelteFragment')) {
+				// create `children` prop...
+				push_prop(
+					b.init(
+						'children',
+						context.state.options.dev
+							? b.call('$.wrap_snippet', b.id(context.state.analysis.name), slot_fn)
+							: slot_fn
+					)
+				);
+
+				// and `$$slots.default: true` so that `<slot>` on the child works
+				serialized_slots.push(b.init(slot_name, b.true));
+			} else {
+				// create `$$slots.default`...
+				serialized_slots.push(b.init(slot_name, slot_fn));
+
+				// and a `children` prop that errors
+				push_prop(b.init('children', b.id('$.invalid_default_snippet')));
+			}
 		} else {
 			serialized_slots.push(b.init(slot_name, slot_fn));
 		}
@@ -925,13 +932,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 
 	/** @param {Expression} node_id */
 	let fn = (node_id) => {
-		return b.call(
-			context.state.options.dev
-				? b.call('$.validate_component', b.id(component_name))
-				: component_name,
-			node_id,
-			props_expression
-		);
+		return b.call(component_name, node_id, props_expression);
 	};
 
 	if (bind_this !== null) {
@@ -1136,9 +1137,12 @@ function serialize_event_handler(node, { state, visit }) {
 				null,
 				[b.rest(b.id('$$args'))],
 				b.block([
-					b.const('$$callback', /** @type {Expression} */ (visit(handler))),
 					b.return(
-						b.call(b.member(b.id('$$callback'), b.id('apply'), false, true), b.this, b.id('$$args'))
+						b.call(
+							b.member(/** @type {Expression} */ (visit(handler)), b.id('apply'), false, true),
+							b.this,
+							b.id('$$args')
+						)
 					)
 				])
 			);
@@ -1161,7 +1165,11 @@ function serialize_event_handler(node, { state, visit }) {
 			} else {
 				handler = /** @type {Expression} */ (visit(handler));
 			}
-		} else if (handler.type === 'ConditionalExpression' || handler.type === 'LogicalExpression') {
+		} else if (
+			handler.type === 'CallExpression' ||
+			handler.type === 'ConditionalExpression' ||
+			handler.type === 'LogicalExpression'
+		) {
 			handler = dynamic_handler();
 		} else {
 			handler = /** @type {Expression} */ (visit(handler));
@@ -1869,15 +1877,6 @@ export const template_visitors = {
 		}
 
 		let snippet_function = /** @type {Expression} */ (context.visit(callee));
-		if (context.state.options.dev) {
-			snippet_function = b.call(
-				'$.validate_snippet',
-				snippet_function,
-				args.length && callee.type === 'Identifier' && callee.name === 'children'
-					? b.id('$$props')
-					: undefined
-			);
-		}
 
 		if (node.metadata.dynamic) {
 			context.state.init.push(
@@ -2369,7 +2368,6 @@ export const template_visitors = {
 	EachBlock(node, context) {
 		const each_node_meta = node.metadata;
 		const collection = /** @type {Expression} */ (context.visit(node.expression));
-		let each_item_is_reactive = true;
 
 		if (!each_node_meta.is_controlled) {
 			context.state.template.push('<!>');
@@ -2379,36 +2377,29 @@ export const template_visitors = {
 			context.state.init.push(b.const(each_node_meta.array_name, b.thunk(collection)));
 		}
 
-		// The runtime needs to know what kind of each block this is in order to optimize for the
-		// key === item (we avoid extra allocations). In that case, the item doesn't need to be reactive.
-		// We can guarantee this by knowing that in order for the item of the each block to change, they
-		// would need to mutate the key/item directly in the array. Given that in runes mode we use ===
-		// equality, we can apply a fast-path (as long as the index isn't reactive).
-		let each_type = 0;
+		let flags = 0;
 
 		if (
 			node.key &&
 			(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index)
 		) {
-			each_type |= EACH_KEYED;
-			// If there's a destructuring, then we likely need the generated $$index
-			if (node.index || node.context.type !== 'Identifier') {
-				each_type |= EACH_INDEX_REACTIVE;
+			flags |= EACH_KEYED;
+
+			if (node.index) {
+				flags |= EACH_INDEX_REACTIVE;
 			}
-			if (
-				context.state.analysis.runes &&
+
+			// In runes mode, if key === item, we don't need to wrap the item in a source
+			const key_is_item =
 				node.key.type === 'Identifier' &&
 				node.context.type === 'Identifier' &&
-				node.context.name === node.key.name &&
-				(each_type & EACH_INDEX_REACTIVE) === 0
-			) {
-				// Fast-path for when the key === item
-				each_item_is_reactive = false;
-			} else {
-				each_type |= EACH_ITEM_REACTIVE;
+				node.context.name === node.key.name;
+
+			if (!context.state.analysis.runes || !key_is_item) {
+				flags |= EACH_ITEM_REACTIVE;
 			}
 		} else {
-			each_type |= EACH_ITEM_REACTIVE;
+			flags |= EACH_ITEM_REACTIVE;
 		}
 
 		// Since `animate:` can only appear on elements that are the sole child of a keyed each block,
@@ -2421,15 +2412,15 @@ export const template_visitors = {
 				return child.attributes.some((attr) => attr.type === 'AnimateDirective');
 			})
 		) {
-			each_type |= EACH_IS_ANIMATED;
+			flags |= EACH_IS_ANIMATED;
 		}
 
 		if (each_node_meta.is_controlled) {
-			each_type |= EACH_IS_CONTROLLED;
+			flags |= EACH_IS_CONTROLLED;
 		}
 
 		if (context.state.analysis.runes) {
-			each_type |= EACH_IS_STRICT_EQUALS;
+			flags |= EACH_IS_STRICT_EQUALS;
 		}
 
 		// If the array is a store expression, we need to invalidate it when the array is changed.
@@ -2454,10 +2445,12 @@ export const template_visitors = {
 			);
 			return [array, ...transitive_dependencies];
 		});
+
 		if (each_node_meta.array_name) {
 			indirect_dependencies.push(b.call(each_node_meta.array_name));
 		} else {
 			indirect_dependencies.push(collection);
+
 			const transitive_dependencies = serialize_transitive_dependencies(
 				each_node_meta.references,
 				context
@@ -2476,6 +2469,7 @@ export const template_visitors = {
 					// into separate expressions, at which point this is called again with an identifier or member expression
 					return serialize_set_binding(assignment, context, () => assignment);
 				}
+
 				const left = object(assignment.left);
 				const value = get_assignment_value(assignment, context);
 				const invalidate = b.call(
@@ -2516,10 +2510,12 @@ export const template_visitors = {
 			const item_with_loc = with_loc(item, id);
 			return b.call('$.unwrap', item_with_loc);
 		};
+
 		if (node.index) {
 			const index_binding = /** @type {import('#compiler').Binding} */ (
 				context.state.scope.get(node.index)
 			);
+
 			index_binding.expression = (id) => {
 				const index_with_loc = with_loc(index, id);
 				return b.call('$.unwrap', index_with_loc);
@@ -2582,7 +2578,7 @@ export const template_visitors = {
 			declarations.push(b.let(node.index, index));
 		}
 
-		if (context.state.options.dev && (each_type & EACH_KEYED) !== 0) {
+		if (context.state.options.dev && (flags & EACH_KEYED) !== 0) {
 			context.state.init.push(
 				b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
 			);
@@ -2591,7 +2587,7 @@ export const template_visitors = {
 		/** @type {Expression[]} */
 		const args = [
 			context.state.node,
-			b.literal(each_type),
+			b.literal(flags),
 			each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
 			key_function,
 			b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(block.body)))
@@ -2838,7 +2834,11 @@ export const template_visitors = {
 		const { state, path, visit } = context;
 		const expression = node.expression;
 
-		if (expression.type === 'MemberExpression' && context.state.options.dev) {
+		if (
+			expression.type === 'MemberExpression' &&
+			context.state.options.dev &&
+			context.state.analysis.runes
+		) {
 			context.state.init.push(
 				serialize_validate_binding(
 					context.state,

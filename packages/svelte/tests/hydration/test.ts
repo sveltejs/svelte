@@ -53,13 +53,14 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 	});
 
 	const override = read(`${cwd}/_override.html`);
+	const override_head = read(`${cwd}/_override_head.html`);
 
 	fs.writeFileSync(`${cwd}/_output/body.html`, rendered.html + '\n');
 	target.innerHTML = override ?? rendered.html;
 
 	if (rendered.head) {
 		fs.writeFileSync(`${cwd}/_output/head.html`, rendered.head + '\n');
-		head.innerHTML = rendered.head;
+		head.innerHTML = override_head ?? rendered.head;
 	}
 
 	config.before_test?.();

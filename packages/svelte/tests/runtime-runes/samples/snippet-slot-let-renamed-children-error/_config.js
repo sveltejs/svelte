@@ -4,5 +4,5 @@ export default test({
 	compileOptions: {
 		dev: true
 	},
-	error: 'render_tag_invalid_argument'
+	runtime_error: 'invalid_default_snippet'
 });

@@ -968,25 +968,22 @@ function serialize_inline_component(node, expression, context) {
 			])
 		);
 
-		if (
-			slot_name === 'default' &&
-			!has_children_prop &&
-			lets.length === 0 &&
-			children.default.every((node) => node.type !== 'SvelteFragment')
-		) {
-			push_prop(
-				b.prop(
-					'init',
-					b.id('children'),
-					context.state.options.dev ? b.call('$.add_snippet_symbol', slot_fn) : slot_fn
-				)
-			);
-			// We additionally add the default slot as a boolean, so that the slot render function on the other
-			// side knows it should get the content to render from $$props.children
-			serialized_slots.push(b.init('default', b.true));
+		if (slot_name === 'default' && !has_children_prop) {
+			if (lets.length === 0 && children.default.every((node) => node.type !== 'SvelteFragment')) {
+				// create `children` prop...
+				push_prop(b.prop('init', b.id('children'), slot_fn));
+
+				// and `$$slots.default: true` so that `<slot>` on the child works
+				serialized_slots.push(b.init(slot_name, b.true));
+			} else {
+				// create `$$slots.default`...
+				serialized_slots.push(b.init(slot_name, slot_fn));
+
+				// and a `children` prop that errors
+				push_prop(b.init('children', b.id('$.invalid_default_snippet')));
+			}
 		} else {
-			const slot = b.prop('init', b.literal(slot_name), slot_fn);
-			serialized_slots.push(slot);
+			serialized_slots.push(b.init(slot_name, slot_fn));
 		}
 	}
 
@@ -1006,7 +1003,7 @@ function serialize_inline_component(node, expression, context) {
 	/** @type {import('estree').Statement} */
 	let statement = b.stmt(
 		(node.type === 'SvelteComponent' ? b.maybe_call : b.call)(
-			context.state.options.dev ? b.call('$.validate_component', expression) : expression,
+			expression,
 			b.id('$$payload'),
 			props_expression
 		)
@@ -1214,16 +1211,7 @@ const template_visitors = {
 		const callee = unwrap_optional(node.expression).callee;
 		const raw_args = unwrap_optional(node.expression).arguments;
 
-		const expression = /** @type {import('estree').Expression} */ (context.visit(callee));
-		const snippet_function = context.state.options.dev
-			? b.call(
-					'$.validate_snippet',
-					expression,
-					raw_args.length && callee.type === 'Identifier' && callee.name === 'children'
-						? b.id('$$props')
-						: undefined
-				)
-			: expression;
+		const snippet_function = /** @type {import('estree').Expression} */ (context.visit(callee));
 
 		const snippet_args = raw_args.map((arg) => {
 			return /** @type {import('estree').Expression} */ (context.visit(arg));
@@ -1506,10 +1494,6 @@ const template_visitors = {
 		fn.___snippet = true;
 		// TODO hoist where possible
 		context.state.init.push(fn);
-
-		if (context.state.options.dev) {
-			context.state.init.push(b.stmt(b.call('$.add_snippet_symbol', node.expression)));
-		}
 	},
 	Component(node, context) {
 		serialize_inline_component(node, b.id(node.name), context);

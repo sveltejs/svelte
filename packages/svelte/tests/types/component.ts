@@ -6,7 +6,8 @@ import {
 	type ComponentType,
 	mount,
 	hydrate,
-	type Component
+	type Component,
+	type ComponentInternals
 } from 'svelte';
 import { render } from 'svelte/server';
 
@@ -338,5 +339,5 @@ render(functionComponent, {
 // but should always pass in tsc (because it will never know about this fact)
 import Foo from './doesntexist.svelte';
 
-Foo(null, { a: true });
+Foo(null as unknown as ComponentInternals, { a: true });
 const f: Foo = new Foo({ target: document.body, props: { a: true } });

@@ -4,44 +4,7 @@ import { is_void } from '../../constants.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 
-const snippet_symbol = Symbol.for('svelte.snippet');
-
-/**
- * @param {any} fn
- * @returns {import('svelte').Snippet}
- */
-export function add_snippet_symbol(fn) {
-	fn[snippet_symbol] = true;
-	return fn;
-}
-
-/**
- * Validate that the function handed to `{@render ...}` is a snippet function, and not some other kind of function.
- * @param {any} snippet_fn
- * @param {Record<string, any> | undefined} $$props Only passed if render tag receives arguments and is for the children prop
- */
-export function validate_snippet(snippet_fn, $$props) {
-	if (
-		($$props?.$$slots?.default && typeof $$props.$$slots.default !== 'boolean') ||
-		(snippet_fn && snippet_fn[snippet_symbol] !== true)
-	) {
-		e.render_tag_invalid_argument();
-	}
-
-	return snippet_fn;
-}
-
-/**
- * Validate that the function behind `<Component />` isn't a snippet.
- * @param {any} component_fn
- */
-export function validate_component(component_fn) {
-	if (component_fn?.[snippet_symbol] === true) {
-		e.snippet_used_as_component();
-	}
-
-	return component_fn;
-}
+export { invalid_default_snippet } from './errors.js';
 
 /**
  * @param {() => string} tag_fn

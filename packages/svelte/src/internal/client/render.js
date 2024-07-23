@@ -24,7 +24,6 @@ import {
 import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
-import { validate_component } from '../shared/validate.js';
 import { assign_nodes } from './dom/template.js';
 
 /**
@@ -79,10 +78,6 @@ export function set_text(text, value) {
  * @returns {Exports}
  */
 export function mount(component, options) {
-	if (DEV) {
-		validate_component(component);
-	}
-
 	const anchor = options.anchor ?? options.target.appendChild(empty());
 	// Don't flush previous effects to ensure order of outer effects stays consistent
 	return flush_sync(() => _mount(component, { ...options, anchor }), false);
@@ -112,10 +107,6 @@ export function mount(component, options) {
  * @returns {Exports}
  */
 export function hydrate(component, options) {
-	if (DEV) {
-		validate_component(component);
-	}
-
 	options.intro = options.intro ?? false;
 	const target = options.target;
 	const was_hydrating = hydrating;

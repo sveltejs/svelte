@@ -11,7 +11,7 @@
 
 	<meta name="twitter:title" content="Svelte" />
 	<meta name="twitter:description" content="Cybernetically enhanced web apps" />
-	<meta name="Description" content="Cybernetically enhanced web apps" />
+	<meta name="description" content="Cybernetically enhanced web apps" />
 </svelte:head>
 
 <h1 class="visually-hidden">Svelte</h1>

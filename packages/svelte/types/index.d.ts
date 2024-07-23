@@ -101,6 +101,15 @@ declare module 'svelte' {
 		$set(props: Partial<Props>): void;
 	}
 
+	const brand: unique symbol;
+	type Brand<B> = { [brand]: B };
+	type Branded<T, B> = T & Brand<B>;
+
+	/**
+	 * Internal implementation details that vary between environments
+	 */
+	export type ComponentInternals = Branded<{}, 'ComponentInternals'>;
+
 	/**
 	 * Can be used to create strongly typed Svelte components.
 	 *
@@ -133,7 +142,8 @@ declare module 'svelte' {
 		 * @param props The props passed to the component.
 		 */
 		(
-			internal: unknown,
+			this: void,
+			internals: ComponentInternals,
 			props: Props
 		): {
 			/**
@@ -293,6 +303,9 @@ declare module 'svelte' {
 					: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
 		): boolean;
 	}
+	type Getters<T> = {
+		[K in keyof T]: () => T[K];
+	};
 	/**
 	 * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
 	 * It must be called during the component's initialisation (but doesn't need to live *inside* the component;
@@ -457,9 +470,6 @@ declare module 'svelte' {
 	 * https://svelte.dev/docs/svelte#getallcontexts
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
-	type Getters<T> = {
-		[K in keyof T]: () => T[K];
-	};
 
 	export {};
 }
