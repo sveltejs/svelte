@@ -1026,10 +1026,10 @@ function serialize_bind_this(bind_this, context, node) {
 					each_ids.set(binding, [
 						i,
 						/** @type {Expression} */ (context.visit(node)),
-						context.state.getters[node.name] ?? binding.expression,
+						context.state.getters[node.name],
 						node.name
 					]);
-					binding.expression = context.state.getters[node.name] = b.id('$$value_' + i);
+					context.state.getters[node.name] = b.id('$$value_' + i);
 					i++;
 				}
 			}
@@ -1043,8 +1043,6 @@ function serialize_bind_this(bind_this, context, node) {
 
 	for (const [binding, [, , expression, name]] of each_ids) {
 		// reset expressions to what they were before
-		binding.expression = expression;
-
 		// TODO use state properly here rather than mutating stuff
 		if (expression !== null) {
 			context.state.getters[name] = expression;
