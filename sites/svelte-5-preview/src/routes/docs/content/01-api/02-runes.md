@@ -66,7 +66,27 @@ In non-runes mode, a `let` declaration is treated as reactive state if it is upd
 
 ## `$state.link`
 
-TODO
+State declared with `$state.link` behaves like `$state`, with the key difference being that rather than take an initial value, the value passed into `$state.link` maintains and persistant one-way link. Updating the `$state.link` directly will temporarily override the value until the linked state next updates.
+
+```svelte
+<script>
+	let { parent_value = $bindable() } = $props();
+
+  // `child_value` is linked to `parent_value`
+	let child_value = $state.link(parent_value);
+
+	parent_value = 10;
+
+	console.log(child_value); // 10
+
+	child_value = 20;
+
+	console.log(child_value); // 20
+
+	// `parent_value` remains the same
+	console.log(parent_value); // 10
+</script>
+```
 
 ## `$state.frozen`
 
