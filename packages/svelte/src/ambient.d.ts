@@ -127,7 +127,7 @@ declare namespace $state {
 	export function frozen<T>(): Readonly<T> | undefined;
 
 	/**
-	 * Declares reactive state that is linked to another value. Local mutations will override the linked value
+	 * Declares reactive state that is linked to another value. Local reassignments will override the linked value
 	 * until the linked value changes.
 	 *
 	 * Example:
