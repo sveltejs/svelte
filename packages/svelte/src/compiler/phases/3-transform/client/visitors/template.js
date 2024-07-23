@@ -1132,20 +1132,27 @@ function serialize_event_handler(node, { state, visit }) {
 		handler = node.expression;
 
 		// Event handlers can be dynamic (source/store/prop/conditional etc)
-		const dynamic_handler = () =>
-			b.function(
+		const dynamic_handler = () => {
+			const id = b.id(state.scope.generate('event_handler'));
+
+			state.init.push(
+				b.var(id, b.call('$.derived', b.thunk(/** @type {Expression} */ (visit(handler)))))
+			);
+
+			return b.function(
 				null,
 				[b.rest(b.id('$$args'))],
 				b.block([
 					b.return(
 						b.call(
-							b.member(/** @type {Expression} */ (visit(handler)), b.id('apply'), false, true),
+							b.member(b.call('$.get', id), b.id('apply'), false, true),
 							b.this,
 							b.id('$$args')
 						)
 					)
 				])
 			);
+		};
 
 		if (handler.type === 'Identifier' || handler.type === 'MemberExpression') {
 			const id = object(handler);
