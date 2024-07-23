@@ -310,7 +310,7 @@ export interface Binding {
 	 * If a function is given, it will be called with the identifier at that location and should return the new expression.
 	 * @deprecated use `state.getters.get(binding)` instead
 	 */
-	expression: Expression | ((id: Identifier) => Expression) | null;
+	expression: Expression | null;
 	/** If this is set, all mutations should use this expression */
 	mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
 	/** Additional metadata, varies per binding type */

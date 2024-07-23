@@ -227,7 +227,7 @@ function serialize_get_binding(node, state) {
 	}
 
 	if (binding.expression) {
-		return typeof binding.expression === 'function' ? binding.expression(node) : binding.expression;
+		return binding.expression;
 	}
 
 	return node;
@@ -1518,7 +1518,7 @@ const template_visitors = {
 		const bindings = state.scope.get_bindings(node);
 
 		for (const binding of bindings) {
-			binding.expression = b.member(b.id(name), b.id(binding.node.name));
+			state.getters[name] = binding.expression = b.member(b.id(name), b.id(binding.node.name));
 		}
 
 		return b.const(
