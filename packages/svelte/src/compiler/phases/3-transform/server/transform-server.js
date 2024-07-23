@@ -226,10 +226,6 @@ function serialize_get_binding(node, state) {
 		return typeof getter === 'function' ? getter(node) : getter;
 	}
 
-	if (binding.expression) {
-		return binding.expression;
-	}
-
 	return node;
 }
 
@@ -1238,8 +1234,20 @@ const template_visitors = {
 		throw new Error('Node should have been handled elsewhere');
 	},
 	RegularElement(node, context) {
+		const namespace = determine_namespace_for_children(node, context.state.namespace);
+
+		/** @type {import('./types').ComponentServerTransformState} */
+		const state = {
+			...context.state,
+			getters: { ...context.state.getters },
+			namespace,
+			preserve_whitespace:
+				context.state.preserve_whitespace ||
+				((node.name === 'pre' || node.name === 'textarea') && namespace !== 'foreign')
+		};
+
 		context.state.template.push(b.literal(`<${node.name}`));
-		const body = serialize_element_attributes(node, context);
+		const body = serialize_element_attributes(node, { ...context, state });
 		context.state.template.push(b.literal('>'));
 
 		if ((node.name === 'script' || node.name === 'style') && node.fragment.nodes.length === 1) {
@@ -1250,17 +1258,6 @@ const template_visitors = {
 
 			return;
 		}
-
-		const namespace = determine_namespace_for_children(node, context.state.namespace);
-
-		/** @type {import('./types').ComponentServerTransformState} */
-		const state = {
-			...context.state,
-			namespace,
-			preserve_whitespace:
-				context.state.preserve_whitespace ||
-				((node.name === 'pre' || node.name === 'textarea') && namespace !== 'foreign')
-		};
 
 		const { hoisted, trimmed } = clean_nodes(
 			node,
@@ -1344,6 +1341,7 @@ const template_visitors = {
 
 		const state = {
 			...context.state,
+			getteres: { ...context.state.getters },
 			namespace: determine_namespace_for_children(node, context.state.namespace),
 			template: [],
 			init: []
@@ -1518,7 +1516,7 @@ const template_visitors = {
 		const bindings = state.scope.get_bindings(node);
 
 		for (const binding of bindings) {
-			state.getters[name] = binding.expression = b.member(b.id(name), b.id(binding.node.name));
+			state.getters[binding.node.name] = b.member(b.id(name), b.id(binding.node.name));
 		}
 
 		return b.const(
@@ -1544,15 +1542,24 @@ const template_visitors = {
 		return visit(node.expression);
 	},
 	SvelteFragment(node, context) {
+		const child_state = {
+			...context.state,
+			getters: { ...context.state.getters }
+		};
+
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'LetDirective') {
 				context.state.template.push(
-					/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute))
+					/** @type {import('estree').ExpressionStatement} */ (
+						context.visit(attribute, child_state)
+					)
 				);
 			}
 		}
 
-		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.fragment));
+		const block = /** @type {import('estree').BlockStatement} */ (
+			context.visit(node.fragment, child_state)
+		);
 
 		context.state.template.push(block);
 	},
