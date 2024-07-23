@@ -1,20 +1,18 @@
 import { test } from '../../test';
-import { log, handler, log_a } from './event.js';
 
 export default test({
-	before_test() {
-		log.length = 0;
-		handler.value = log_a;
-	},
-
-	async test({ assert, target }) {
-		const [b1, b2] = target.querySelectorAll('button');
+	async test({ assert, logs, target, component }) {
+		const [b1, b2, b3] = target.querySelectorAll('button');
 
 		b1?.click();
-		assert.deepEqual(log, ['a']);
+		assert.deepEqual(logs, ['a']);
 
 		b2?.click();
 		b1?.click();
-		assert.deepEqual(log, ['a', 'b']);
+
+		b3?.click();
+		b1?.click();
+
+		assert.deepEqual(logs, ['a', 'b', 'a']);
 	}
 });
