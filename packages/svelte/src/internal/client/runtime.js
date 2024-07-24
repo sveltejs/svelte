@@ -671,9 +671,10 @@ function process_effects(effect, collected_effects) {
  * Internal version of `flushSync` with the option to not flush previous effects.
  * Returns the result of the passed function, if given.
  * @param {() => any} [fn]
+ * @param {boolean} [flush_previous]
  * @returns {any}
  */
-export function flush_sync(fn) {
+export function flush_sync(fn, flush_previous = true) {
 	var previous_scheduler_mode = current_scheduler_mode;
 	var previous_queued_root_effects = current_queued_root_effects;
 
@@ -687,7 +688,9 @@ export function flush_sync(fn) {
 		current_queued_root_effects = root_effects;
 		is_micro_task_queued = false;
 
-		flush_queued_root_effects(previous_queued_root_effects);
+		if (flush_previous) {
+			flush_queued_root_effects(previous_queued_root_effects);
+		}
 
 		var result = fn?.();
 

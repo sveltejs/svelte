@@ -1,4 +1,3 @@
-import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -10,7 +9,6 @@ export default test({
 		input.dispatchEvent(new window.Event('input'));
 		// Hydration shouldn't reset the value to empty
 		hydrate();
-		flushSync();
 
 		assert.htmlEqual(target.innerHTML, '<input type="text">\nfoo');
 	}
