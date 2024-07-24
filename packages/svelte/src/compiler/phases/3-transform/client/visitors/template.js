@@ -2867,9 +2867,18 @@ export const template_visitors = {
 	BindDirective(node, context) {
 		const { state, path, visit } = context;
 		const expression = node.expression;
+		const property = binding_properties[node.name];
 
 		if (
 			expression.type === 'MemberExpression' &&
+			(node.name !== 'this' ||
+				path.some(
+					({ type }) =>
+						type === 'IfBlock' ||
+						type === 'EachBlock' ||
+						type === 'AwaitBlock' ||
+						type === 'KeyBlock'
+				)) &&
 			context.state.options.dev &&
 			context.state.analysis.runes
 		) {
@@ -2900,8 +2909,7 @@ export const template_visitors = {
 		/** @type {CallExpression} */
 		let call_expr;
 
-		const property = binding_properties[node.name];
-		if (property && property.event) {
+		if (property?.event) {
 			call_expr = b.call(
 				'$.bind_property',
 				b.literal(node.name),
