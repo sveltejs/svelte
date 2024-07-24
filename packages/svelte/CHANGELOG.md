@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.197
+
+### Patch Changes
+
+- fix: correctly set anchor inside HMR block ([#12575](https://github.com/sveltejs/svelte/pull/12575))
+
 ## 5.0.0-next.196
 
 ### Patch Changes
