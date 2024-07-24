@@ -51,6 +51,7 @@ import { javascript_visitors_runes } from './javascript-runes.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 import { walk } from 'zimmerframe';
 import { locator } from '../../../../state.js';
+import is_reference from 'is-reference';
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
@@ -1021,51 +1022,48 @@ function serialize_bind_this(bind_this, context, node) {
 	// some scenarios where the value is a member expression with changing computed parts or using a combination of multiple
 	// variables, but that was the same case in Svelte 4, too. Once legacy mode is gone completely, we can revisit this.
 	walk(bind_this, null, {
-		Identifier(node) {
+		Identifier(node, { path }) {
+			const parent = /** @type {Expression} */ (path.at(-1));
+			if (!is_reference(node, parent)) return;
+
 			const binding = child_state.scope.get(node.name);
 			if (!binding || seen.includes(node.name)) return;
 
-			const associated_node = Array.from(child_state.scopes.entries()).find(
-				([_, scope]) => scope === binding?.scope
-			)?.[0];
+			for (const [owner, scope] of child_state.scopes) {
+				if (owner.type === 'EachBlock' && scope === binding.scope) {
+					seen.push(node.name);
 
-			if (associated_node?.type === 'EachBlock') {
-				seen.push(node.name);
-
-				ids.push(node);
-				values.push(/** @type {Expression} */ (context.visit(node)));
-				child_state.getters[node.name] = node;
+					ids.push(node);
+					values.push(/** @type {Expression} */ (context.visit(node)));
+					child_state.getters[node.name] = node;
+					break;
+				}
 			}
 		}
 	});
 
-	const bind_this_id = /** @type {Expression} */ (context.visit(bind_this, child_state));
+	const expression = /** @type {Expression} */ (context.visit(bind_this, child_state));
 	const assignment = /** @type {Expression} */ (
 		context.visit(b.assignment('=', bind_this, b.id('$$value')), child_state)
 	);
 
-	/** @type {Expression[]} */
-	const args = [
-		node,
-		b.arrow([b.id('$$value'), ...ids], assignment),
-		b.arrow([...ids], bind_this_id)
-	];
-
 	// If we're mutating a property, then it might already be non-existent.
 	// If we make all the object nodes optional, then it avoids any runtime exceptions.
 	/** @type {Expression | Super} */
-	let bind_node = bind_this_id;
+	let bind_node = expression;
 
-	while (bind_node?.type === 'MemberExpression') {
+	while (bind_node.type === 'MemberExpression') {
 		bind_node.optional = true;
 		bind_node = bind_node.object;
 	}
 
-	if (values.length > 0) {
-		args.push(b.thunk(b.array(values)));
-	}
-
-	return b.call('$.bind_this', ...args);
+	return b.call(
+		'$.bind_this',
+		node,
+		b.arrow([b.id('$$value'), ...ids], assignment),
+		b.arrow([...ids], expression),
+		values.length > 0 && b.thunk(b.array(values))
+	);
 }
 
 /**
