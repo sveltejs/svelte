@@ -2,7 +2,7 @@
 /** @import { Location } from 'locate-character' */
 /** @import { Attribute, Binding, ClassDirective, Comment, Component, ExpressionTag, Namespace, RegularElement, SpreadAttribute, StyleDirective, SvelteComponent, SvelteElement, SvelteNode, SvelteSelf, TemplateNode, Text, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState, ComponentVisitors, ServerTransformState, Visitors } from './types.js' */
-/** @import { ComponentAnalysis } from '../../types.js' */
+/** @import { Analysis, ComponentAnalysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
 /** @import { StateField } from '../../3-transform/client/types.js' */ // TODO move this type
 import { walk } from 'zimmerframe';
