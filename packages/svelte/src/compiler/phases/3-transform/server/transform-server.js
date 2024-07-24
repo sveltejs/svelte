@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, BinaryOperator, CallExpression, Expression, ExpressionStatement, MethodDefinition, Pattern, Program, Property, PropertyDefinition, Statement, VariableDeclarator } from 'estree' */
+/** @import { Expression, ExpressionStatement, MethodDefinition, Pattern, Program, Property, PropertyDefinition, Statement, VariableDeclarator } from 'estree' */
 /** @import { Binding, Namespace, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { ComponentServerTransformState, ComponentVisitors, ServerTransformState, Visitors } from './types.js' */
 /** @import { Analysis, ComponentAnalysis } from '../../types.js' */
@@ -8,10 +8,12 @@ import { walk } from 'zimmerframe';
 import { set_scope, get_rune } from '../../scope.js';
 import { extract_identifiers, extract_paths, is_expression_async } from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
-import { transform_inspect_rune } from '../utils.js';
 import { filename } from '../../../state.js';
 import { render_stylesheet } from '../css/index.js';
+import { AssignmentExpression } from './visitors/javascript/AssignmentExpression.js';
+import { CallExpression } from './visitors/javascript/CallExpression.js';
 import { Identifier } from './visitors/javascript/Identifier.js';
+import { UpdateExpression } from './visitors/javascript/UpdateExpression.js';
 import { AwaitBlock } from './visitors/template/AwaitBlock.js';
 import { Component } from './visitors/template/Component.js';
 import { ConstTag } from './visitors/template/ConstTag.js';
@@ -33,7 +35,6 @@ import { SvelteFragment } from './visitors/template/SvelteFragment.js';
 import { SvelteHead } from './visitors/template/SvelteHead.js';
 import { SvelteSelf } from './visitors/template/SvelteSelf.js';
 import { TitleElement } from './visitors/template/TitleElement.js';
-import { serialize_get_binding } from './visitors/javascript/shared/utils.js';
 
 /**
  * @param {VariableDeclarator} declarator
@@ -57,193 +58,12 @@ function create_state_declarators(declarator, scope, value) {
 	];
 }
 
-/**
- * @param {AssignmentExpression} node
- * @param {Pick<import('zimmerframe').Context<SvelteNode, ServerTransformState>, 'visit' | 'state'>} context
- */
-function get_assignment_value(node, { state, visit }) {
-	if (node.left.type === 'Identifier') {
-		const operator = node.operator;
-		return operator === '='
-			? /** @type {Expression} */ (visit(node.right))
-			: // turn something like x += 1 into x = x + 1
-				b.binary(
-					/** @type {BinaryOperator} */ (operator.slice(0, -1)),
-					serialize_get_binding(node.left, state),
-					/** @type {Expression} */ (visit(node.right))
-				);
-	}
-
-	return /** @type {Expression} */ (visit(node.right));
-}
-
-/**
- * @param {string} name
- */
-function is_store_name(name) {
-	return name[0] === '$' && /[A-Za-z_]/.test(name[1]);
-}
-
-/**
- * @param {AssignmentExpression} node
- * @param {import('zimmerframe').Context<SvelteNode, ServerTransformState>} context
- * @param {() => any} fallback
- * @returns {Expression}
- */
-function serialize_set_binding(node, context, fallback) {
-	const { state, visit } = context;
-
-	if (
-		node.left.type === 'ArrayPattern' ||
-		node.left.type === 'ObjectPattern' ||
-		node.left.type === 'RestElement'
-	) {
-		// Turn assignment into an IIFE, so that `$.set` calls etc don't produce invalid code
-		const tmp_id = context.state.scope.generate('tmp');
-
-		/** @type {AssignmentExpression[]} */
-		const original_assignments = [];
-
-		/** @type {Expression[]} */
-		const assignments = [];
-
-		const paths = extract_paths(node.left);
-
-		for (const path of paths) {
-			const value = path.expression?.(b.id(tmp_id));
-			const assignment = b.assignment('=', path.node, value);
-			original_assignments.push(assignment);
-			assignments.push(serialize_set_binding(assignment, context, () => assignment));
-		}
-
-		if (assignments.every((assignment, i) => assignment === original_assignments[i])) {
-			// No change to output -> nothing to transform -> we can keep the original assignment
-			return fallback();
-		}
-
-		return b.call(
-			b.thunk(
-				b.block([
-					b.const(tmp_id, /** @type {Expression} */ (visit(node.right))),
-					b.stmt(b.sequence(assignments)),
-					b.return(b.id(tmp_id))
-				])
-			)
-		);
-	}
-
-	if (node.left.type !== 'Identifier' && node.left.type !== 'MemberExpression') {
-		throw new Error(`Unexpected assignment type ${node.left.type}`);
-	}
-
-	let left = node.left;
-
-	while (left.type === 'MemberExpression') {
-		// @ts-expect-error
-		left = left.object;
-	}
-
-	if (left.type !== 'Identifier') {
-		return fallback();
-	}
-
-	const is_store = is_store_name(left.name);
-	const left_name = is_store ? left.name.slice(1) : left.name;
-	const binding = state.scope.get(left_name);
-
-	if (!binding) return fallback();
-
-	if (binding.mutation !== null) {
-		return binding.mutation(node, context);
-	}
-
-	if (
-		binding.kind !== 'state' &&
-		binding.kind !== 'frozen_state' &&
-		binding.kind !== 'prop' &&
-		binding.kind !== 'bindable_prop' &&
-		binding.kind !== 'each' &&
-		binding.kind !== 'legacy_reactive' &&
-		!is_store
-	) {
-		// TODO error if it's a computed (or rest prop)? or does that already happen elsewhere?
-		return fallback();
-	}
-
-	const value = get_assignment_value(node, { state, visit });
-	if (left === node.left) {
-		if (is_store) {
-			return b.call('$.store_set', b.id(left_name), /** @type {Expression} */ (visit(node.right)));
-		}
-		return fallback();
-	} else if (is_store) {
-		return b.call(
-			'$.mutate_store',
-			b.assignment('??=', b.id('$$store_subs'), b.object([])),
-			b.literal(left.name),
-			b.id(left_name),
-			b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value)
-		);
-	}
-	return fallback();
-}
-
 /** @type {Visitors} */
 const global_visitors = {
+	AssignmentExpression,
 	Identifier,
-	AssignmentExpression(node, context) {
-		return serialize_set_binding(node, context, context.next);
-	},
-	UpdateExpression(node, context) {
-		const { state, next } = context;
-		const argument = node.argument;
-
-		if (argument.type === 'Identifier' && state.scope.get(argument.name)?.kind === 'store_sub') {
-			return b.call(
-				node.prefix ? '$.update_store_pre' : '$.update_store',
-				b.assignment('??=', b.id('$$store_subs'), b.object([])),
-				b.literal(argument.name),
-				b.id(argument.name.slice(1)),
-				node.operator === '--' && b.literal(-1)
-			);
-		}
-
-		return next();
-	},
-	CallExpression(node, context) {
-		const rune = get_rune(node, context.state.scope);
-
-		if (rune === '$host') {
-			return b.id('undefined');
-		}
-
-		if (rune === '$effect.tracking') {
-			return b.literal(false);
-		}
-
-		if (rune === '$effect.root') {
-			// ignore $effect.root() calls, just return a noop which mimics the cleanup function
-			return b.arrow([], b.block([]));
-		}
-
-		if (rune === '$state.snapshot') {
-			return b.call('$.snapshot', /** @type {Expression} */ (context.visit(node.arguments[0])));
-		}
-
-		if (rune === '$state.is') {
-			return b.call(
-				'Object.is',
-				/** @type {Expression} */ (context.visit(node.arguments[0])),
-				/** @type {Expression} */ (context.visit(node.arguments[1]))
-			);
-		}
-
-		if (rune === '$inspect' || rune === '$inspect().with') {
-			return transform_inspect_rune(node, context);
-		}
-
-		context.next();
-	}
+	UpdateExpression,
+	CallExpression
 };
 
 /** @type {Visitors} */
