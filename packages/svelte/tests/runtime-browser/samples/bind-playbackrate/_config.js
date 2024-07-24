@@ -1,8 +1,10 @@
+import { flushSync } from 'svelte';
 import { test, ok } from '../../assert';
 
 export default test({
 	mode: ['client'],
 	async test({ assert, target }) {
+		flushSync();
 		const audio = target.querySelector('audio');
 		const button = target.querySelector('button');
 		ok(audio);
