@@ -9,26 +9,25 @@ import { set_scope, get_rune } from '../../scope.js';
 import { extract_identifiers, extract_paths, is_expression_async } from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
 import is_reference from 'is-reference';
-import { determine_namespace_for_children, transform_inspect_rune } from '../utils.js';
+import { transform_inspect_rune } from '../utils.js';
 import { is_element_node } from '../../nodes.js';
-import { BLOCK_OPEN_ELSE } from '../../../../internal/server/hydration.js';
 import { filename } from '../../../state.js';
 import { render_stylesheet } from '../css/index.js';
 import { ConstTag } from './visitors/template/ConstTag.js';
 import { DebugTag } from './visitors/template/DebugTag.js';
+import { EachBlock } from './visitors/template/EachBlock.js';
 import { Fragment } from './visitors/template/Fragment.js';
 import { HtmlTag } from './visitors/template/HtmlTag.js';
+import { IfBlock } from './visitors/template/IfBlock.js';
 import { RegularElement } from './visitors/template/RegularElement.js';
 import { RenderTag } from './visitors/template/RenderTag.js';
+import { SvelteElement } from './visitors/template/SvelteElement.js';
 import {
-	block_close,
-	block_open,
 	empty_comment,
 	process_children,
 	serialize_attribute_value,
 	serialize_template
 } from './visitors/template/shared/utils.js';
-import { serialize_element_attributes } from './visitors/template/shared/element.js';
 
 /**
  * @param {VariableDeclarator} declarator
@@ -832,125 +831,9 @@ const template_visitors = {
 	DebugTag,
 	RenderTag,
 	RegularElement,
-	SvelteElement(node, context) {
-		let tag = /** @type {Expression} */ (context.visit(node.tag));
-		if (tag.type !== 'Identifier') {
-			const tag_id = context.state.scope.generate('$$tag');
-			context.state.init.push(b.const(tag_id, tag));
-			tag = b.id(tag_id);
-		}
-
-		if (context.state.options.dev) {
-			if (node.fragment.nodes.length > 0) {
-				context.state.init.push(b.stmt(b.call('$.validate_void_dynamic_element', b.thunk(tag))));
-			}
-			context.state.init.push(b.stmt(b.call('$.validate_dynamic_element_tag', b.thunk(tag))));
-		}
-
-		const state = {
-			...context.state,
-			getteres: { ...context.state.getters },
-			namespace: determine_namespace_for_children(node, context.state.namespace),
-			template: [],
-			init: []
-		};
-
-		serialize_element_attributes(node, { ...context, state });
-
-		if (context.state.options.dev) {
-			context.state.template.push(b.stmt(b.call('$.push_element', tag, b.id('$$payload'))));
-		}
-
-		const attributes = b.block([...state.init, ...serialize_template(state.template)]);
-		const children = /** @type {BlockStatement} */ (context.visit(node.fragment, state));
-
-		context.state.template.push(
-			b.stmt(
-				b.call(
-					'$.element',
-					b.id('$$payload'),
-					tag,
-					attributes.body.length > 0 && b.thunk(attributes),
-					children.body.length > 0 && b.thunk(children)
-				)
-			)
-		);
-
-		if (context.state.options.dev) {
-			context.state.template.push(b.stmt(b.call('$.pop_element')));
-		}
-	},
-	EachBlock(node, context) {
-		const state = context.state;
-
-		const each_node_meta = node.metadata;
-		const collection = /** @type {Expression} */ (context.visit(node.expression));
-		const item = each_node_meta.item;
-		const index =
-			each_node_meta.contains_group_binding || !node.index
-				? each_node_meta.index
-				: b.id(node.index);
-
-		const array_id = state.scope.root.unique('each_array');
-		state.init.push(b.const(array_id, b.call('$.ensure_array_like', collection)));
-
-		/** @type {Statement[]} */
-		const each = [b.const(item, b.member(array_id, index, true))];
-
-		if (node.context.type !== 'Identifier') {
-			each.push(b.const(/** @type {Pattern} */ (node.context), item));
-		}
-		if (index.name !== node.index && node.index != null) {
-			each.push(b.let(node.index, index));
-		}
-
-		each.push(.../** @type {BlockStatement} */ (context.visit(node.body)).body);
-
-		const for_loop = b.for(
-			b.let(index, b.literal(0)),
-			b.binary('<', index, b.member(array_id, b.id('length'))),
-			b.update('++', index, false),
-			b.block(each)
-		);
-
-		if (node.fallback) {
-			const open = b.stmt(b.assignment('+=', b.id('$$payload.out'), block_open));
-
-			const fallback = /** @type {BlockStatement} */ (context.visit(node.fallback));
-
-			fallback.body.unshift(
-				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN_ELSE)))
-			);
-
-			state.template.push(
-				b.if(
-					b.binary('!==', b.member(array_id, b.id('length')), b.literal(0)),
-					b.block([open, for_loop]),
-					fallback
-				),
-				block_close
-			);
-		} else {
-			state.template.push(block_open, for_loop, block_close);
-		}
-	},
-	IfBlock(node, context) {
-		const test = /** @type {Expression} */ (context.visit(node.test));
-
-		const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
-
-		const alternate = node.alternate
-			? /** @type {BlockStatement} */ (context.visit(node.alternate))
-			: b.block([]);
-
-		consequent.body.unshift(b.stmt(b.assignment('+=', b.id('$$payload.out'), block_open)));
-
-		alternate.body.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN_ELSE)))
-		);
-
-		context.state.template.push(b.if(test, consequent, alternate), block_close);
-	},
+	SvelteElement,
+	EachBlock,
+	IfBlock,
 	AwaitBlock(node, context) {
 		context.state.template.push(
 			empty_comment,
