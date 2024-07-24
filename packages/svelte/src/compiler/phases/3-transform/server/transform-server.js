@@ -21,18 +21,18 @@ import { Fragment } from './visitors/template/Fragment.js';
 import { HtmlTag } from './visitors/template/HtmlTag.js';
 import { IfBlock } from './visitors/template/IfBlock.js';
 import { KeyBlock } from './visitors/template/KeyBlock.js';
+import { LetDirective } from './visitors/template/LetDirective.js';
 import { RegularElement } from './visitors/template/RegularElement.js';
 import { RenderTag } from './visitors/template/RenderTag.js';
+import { SlotElement } from './visitors/template/SlotElement.js';
 import { SnippetBlock } from './visitors/template/SnippetBlock.js';
+import { SpreadAttribute } from './visitors/template/SpreadAttribute.js';
 import { SvelteComponent } from './visitors/template/SvelteComponent.js';
 import { SvelteElement } from './visitors/template/SvelteElement.js';
+import { SvelteFragment } from './visitors/template/SvelteFragment.js';
+import { SvelteHead } from './visitors/template/SvelteHead.js';
 import { SvelteSelf } from './visitors/template/SvelteSelf.js';
-import {
-	empty_comment,
-	process_children,
-	serialize_attribute_value,
-	serialize_template
-} from './visitors/template/shared/utils.js';
+import { TitleElement } from './visitors/template/TitleElement.js';
 
 /**
  * @param {VariableDeclarator} declarator
@@ -616,124 +616,12 @@ const template_visitors = {
 	Component,
 	SvelteSelf,
 	SvelteComponent,
-	LetDirective(node, { state }) {
-		if (node.expression === null || node.expression.type === 'Identifier') {
-			const name = node.expression === null ? node.name : node.expression.name;
-			return b.const(name, b.member(b.id('$$slotProps'), b.id(node.name)));
-		}
-
-		const name = state.scope.generate(node.name);
-		const bindings = state.scope.get_bindings(node);
-
-		for (const binding of bindings) {
-			state.getters[binding.node.name] = b.member(b.id(name), b.id(binding.node.name));
-		}
-
-		return b.const(
-			name,
-			b.call(
-				b.thunk(
-					b.block([
-						b.let(
-							node.expression.type === 'ObjectExpression'
-								? // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
-									b.object_pattern(node.expression.properties)
-								: // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
-									b.array_pattern(node.expression.elements),
-							b.member(b.id('$$slotProps'), b.id(node.name))
-						),
-						b.return(b.object(bindings.map((binding) => b.init(binding.node.name, binding.node))))
-					])
-				)
-			)
-		);
-	},
-	SpreadAttribute(node, { visit }) {
-		return visit(node.expression);
-	},
-	SvelteFragment(node, context) {
-		const child_state = {
-			...context.state,
-			getters: { ...context.state.getters }
-		};
-
-		for (const attribute of node.attributes) {
-			if (attribute.type === 'LetDirective') {
-				context.state.template.push(
-					/** @type {ExpressionStatement} */ (context.visit(attribute, child_state))
-				);
-			}
-		}
-
-		const block = /** @type {BlockStatement} */ (context.visit(node.fragment, child_state));
-
-		context.state.template.push(block);
-	},
-	TitleElement(node, context) {
-		// title is guaranteed to contain only text/expression tag children
-		const template = [b.literal('<title>')];
-		process_children(node.fragment.nodes, { ...context, state: { ...context.state, template } });
-		template.push(b.literal('</title>'));
-
-		context.state.init.push(...serialize_template(template, b.id('$$payload.title'), '='));
-	},
-	SlotElement(node, context) {
-		/** @type {Property[]} */
-		const props = [];
-
-		/** @type {Expression[]} */
-		const spreads = [];
-
-		/** @type {ExpressionStatement[]} */
-		const lets = [];
-
-		/** @type {Expression} */
-		let expression = b.call('$.default_slot', b.id('$$props'));
-
-		for (const attribute of node.attributes) {
-			if (attribute.type === 'SpreadAttribute') {
-				spreads.push(/** @type {Expression} */ (context.visit(attribute)));
-			} else if (attribute.type === 'Attribute') {
-				const value = serialize_attribute_value(attribute.value, context, false, true);
-
-				if (attribute.name === 'name') {
-					expression = b.member(b.member_id('$$props.$$slots'), value, true, true);
-				} else if (attribute.name !== 'slot') {
-					if (attribute.metadata.dynamic) {
-						props.push(b.get(attribute.name, [b.return(value)]));
-					} else {
-						props.push(b.init(attribute.name, value));
-					}
-				}
-			} else if (attribute.type === 'LetDirective') {
-				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
-			}
-		}
-
-		// Let bindings first, they can be used on attributes
-		context.state.init.push(...lets);
-
-		const props_expression =
-			spreads.length === 0
-				? b.object(props)
-				: b.call('$.spread_props', b.array([b.object(props), ...spreads]));
-
-		const fallback =
-			node.fragment.nodes.length === 0
-				? b.literal(null)
-				: b.thunk(/** @type {BlockStatement} */ (context.visit(node.fragment)));
-
-		const slot = b.call('$.slot', b.id('$$payload'), expression, props_expression, fallback);
-
-		context.state.template.push(empty_comment, b.stmt(slot), empty_comment);
-	},
-	SvelteHead(node, context) {
-		const block = /** @type {BlockStatement} */ (context.visit(node.fragment));
-
-		context.state.template.push(
-			b.stmt(b.call('$.head', b.id('$$payload'), b.arrow([b.id('$$payload')], block)))
-		);
-	}
+	LetDirective,
+	SpreadAttribute,
+	SvelteFragment,
+	TitleElement,
+	SlotElement,
+	SvelteHead
 };
 
 /**
