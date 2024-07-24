@@ -154,18 +154,8 @@ const validation_visitors = {
 				throw new Error('Internal error: global block without :global selector');
 			}
 
-			if (
-				global_selector.combinator &&
-				// p :global {...} or p > :global.x {...} is valid
-				global_selector.combinator.name !== ' ' &&
-				global_selector.selectors.length === 1
-			) {
-				const next =
-					complex_selector.children[complex_selector.children.indexOf(global_selector) + 1];
-				// p > :global div {...} is valid, but p > :global > div {...} or p > :global {...} is not
-				if (!next || next.combinator?.name !== ' ') {
-					e.css_global_block_invalid_combinator(global_selector, global_selector.combinator.name);
-				}
+			if (global_selector.combinator && global_selector.combinator.name !== ' ') {
+				e.css_global_block_invalid_combinator(global_selector, global_selector.combinator.name);
 			}
 
 			const declaration = node.block.children.find((child) => child.type === 'Declaration');

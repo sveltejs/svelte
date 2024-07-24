@@ -1,8 +1,6 @@
 <style>
 	/* ok */
-	.x > :global.x {
-	}
-	.x > :global p {
+	.x :global {
 	}
 
 	/* not ok */

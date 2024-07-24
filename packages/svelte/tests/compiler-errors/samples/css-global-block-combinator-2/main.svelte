@@ -1,11 +1,11 @@
 <style>
 	/* ok */
-	.x > :global.x > p {
+	.x :global.x p {
 	}
-	.x > :global p > p {
+	.x :global > p {
 	}
 
 	/* not ok */
-	.x > :global > p {
+	.x > :global p {
 	}
 </style>
