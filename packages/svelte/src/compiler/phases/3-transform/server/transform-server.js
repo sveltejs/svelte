@@ -24,12 +24,7 @@ import {
 	VoidElements,
 	WhitespaceInsensitiveAttributes
 } from '../../constants.js';
-import {
-	clean_nodes,
-	determine_namespace_for_children,
-	infer_namespace,
-	transform_inspect_rune
-} from '../utils.js';
+import { clean_nodes, determine_namespace_for_children, transform_inspect_rune } from '../utils.js';
 import { create_attribute, is_custom_element_node, is_element_node } from '../../nodes.js';
 import { binding_properties } from '../../bindings.js';
 import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patterns.js';
@@ -39,147 +34,19 @@ import {
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE
 } from '../../../../constants.js';
 import { escape_html } from '../../../../escaping.js';
-import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
-import {
-	EMPTY_COMMENT,
-	BLOCK_CLOSE,
-	BLOCK_OPEN,
-	BLOCK_OPEN_ELSE
-} from '../../../../internal/server/hydration.js';
+import { BLOCK_OPEN_ELSE } from '../../../../internal/server/hydration.js';
 import { filename, locator } from '../../../state.js';
 import { render_stylesheet } from '../css/index.js';
-
-/** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
-const block_open = b.literal(BLOCK_OPEN);
-
-/** Closes an if/each block, so that we can remove nodes in the case of a mismatch. Also serves as an anchor for these blocks */
-const block_close = b.literal(BLOCK_CLOSE);
-
-/** Empty comment to keep text nodes separate, or provide an anchor node for blocks */
-const empty_comment = b.literal(EMPTY_COMMENT);
-
-/**
- * @param {Node} node
- * @returns {node is Statement}
- */
-function is_statement(node) {
-	return node.type.endsWith('Statement') || node.type.endsWith('Declaration');
-}
-
-/**
- * @param {Array<Statement | Expression>} template
- * @param {Identifier} out
- * @param {AssignmentOperator} operator
- * @returns {Statement[]}
- */
-function serialize_template(template, out = b.id('$$payload.out'), operator = '+=') {
-	/** @type {TemplateElement[]} */
-	let quasis = [];
-
-	/** @type {Expression[]} */
-	let expressions = [];
-
-	/** @type {Statement[]} */
-	const statements = [];
-
-	const flush = () => {
-		statements.push(b.stmt(b.assignment(operator, out, b.template(quasis, expressions))));
-		quasis = [];
-		expressions = [];
-	};
-
-	for (let i = 0; i < template.length; i++) {
-		const node = template[i];
-
-		if (is_statement(node)) {
-			if (quasis.length !== 0) {
-				flush();
-			}
-
-			statements.push(node);
-		} else {
-			let last = quasis.at(-1);
-			if (!last) quasis.push((last = b.quasi('', false)));
-
-			if (node.type === 'Literal') {
-				last.value.raw +=
-					typeof node.value === 'string' ? sanitize_template_string(node.value) : node.value;
-			} else if (node.type === 'TemplateLiteral') {
-				last.value.raw += node.quasis[0].value.raw;
-				quasis.push(...node.quasis.slice(1));
-				expressions.push(...node.expressions);
-			} else {
-				expressions.push(node);
-				quasis.push(b.quasi('', i + 1 === template.length || is_statement(template[i + 1])));
-			}
-		}
-	}
-
-	if (quasis.length !== 0) {
-		flush();
-	}
-
-	return statements;
-}
-
-/**
- * Processes an array of template nodes, joining sibling text/expression nodes and
- * recursing into child nodes.
- * @param {Array<SvelteNode>} nodes
- * @param {ComponentContext} context
- */
-function process_children(nodes, { visit, state }) {
-	/** @type {Array<Text | Comment | ExpressionTag>} */
-	let sequence = [];
-
-	function flush() {
-		let quasi = b.quasi('', false);
-		const quasis = [quasi];
-
-		/** @type {Expression[]} */
-		const expressions = [];
-
-		for (let i = 0; i < sequence.length; i++) {
-			const node = sequence[i];
-
-			if (node.type === 'Text' || node.type === 'Comment') {
-				quasi.value.raw += sanitize_template_string(
-					node.type === 'Comment' ? `<!--${node.data}-->` : escape_html(node.data)
-				);
-			} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
-				if (node.expression.value != null) {
-					quasi.value.raw += sanitize_template_string(escape_html(node.expression.value + ''));
-				}
-			} else {
-				expressions.push(b.call('$.escape', /** @type {Expression} */ (visit(node.expression))));
-
-				quasi = b.quasi('', i + 1 === sequence.length);
-				quasis.push(quasi);
-			}
-		}
-
-		state.template.push(b.template(quasis, expressions));
-	}
-
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
-
-		if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
-			sequence.push(node);
-		} else {
-			if (sequence.length > 0) {
-				flush();
-				sequence = [];
-			}
-
-			visit(node, { ...state });
-		}
-	}
-
-	if (sequence.length > 0) {
-		flush();
-	}
-}
+import { ConstTag } from './visitors/template/ConstTag.js';
+import { Fragment } from './visitors/template/Fragment.js';
+import { HtmlTag } from './visitors/template/HtmlTag.js';
+import {
+	block_close,
+	block_open,
+	empty_comment,
+	process_children,
+	serialize_template
+} from './visitors/template/shared/utils.js';
 
 /**
  * @param {VariableDeclarator} declarator
@@ -1120,52 +987,9 @@ const javascript_visitors_legacy = {
 
 /** @type {ComponentVisitors} */
 const template_visitors = {
-	Fragment(node, context) {
-		const parent = context.path.at(-1) ?? node;
-		const namespace = infer_namespace(context.state.namespace, parent, node.nodes);
-
-		const { hoisted, trimmed, is_standalone, is_text_first } = clean_nodes(
-			parent,
-			node.nodes,
-			context.path,
-			namespace,
-			context.state,
-			context.state.preserve_whitespace,
-			context.state.options.preserveComments
-		);
-
-		/** @type {ComponentServerTransformState} */
-		const state = {
-			...context.state,
-			init: [],
-			template: [],
-			namespace,
-			skip_hydration_boundaries: is_standalone
-		};
-
-		for (const node of hoisted) {
-			context.visit(node, state);
-		}
-
-		if (is_text_first) {
-			// insert `<!---->` to prevent this from being glued to the previous fragment
-			state.template.push(empty_comment);
-		}
-
-		process_children(trimmed, { ...context, state });
-
-		return b.block([...state.init, ...serialize_template(state.template)]);
-	},
-	HtmlTag(node, context) {
-		const expression = /** @type {Expression} */ (context.visit(node.expression));
-		context.state.template.push(b.call('$.html', expression));
-	},
-	ConstTag(node, { state, visit }) {
-		const declaration = node.declaration.declarations[0];
-		const pattern = /** @type {Pattern} */ (visit(declaration.id));
-		const init = /** @type {Expression} */ (visit(declaration.init));
-		state.init.push(b.declaration('const', pattern, init));
-	},
+	Fragment,
+	HtmlTag,
+	ConstTag,
 	DebugTag(node, { state, visit }) {
 		state.template.push(
 			b.stmt(
