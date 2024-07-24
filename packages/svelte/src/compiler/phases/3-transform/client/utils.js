@@ -84,8 +84,9 @@ export function serialize_get_binding(node, state) {
 		return b.call(node);
 	}
 
-	if (binding.expression) {
-		return typeof binding.expression === 'function' ? binding.expression(node) : binding.expression;
+	if (Object.hasOwn(state.getters, node.name)) {
+		const getter = state.getters[node.name];
+		return typeof getter === 'function' ? getter(node) : getter;
 	}
 
 	if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
@@ -527,17 +528,20 @@ function get_hoistable_params(node, context) {
 				);
 			}
 
+			const expression = context.state.getters[reference];
+
 			if (
 				// If it's a destructured derived binding, then we can extract the derived signal reference and use that.
-				binding.expression !== null &&
-				typeof binding.expression !== 'function' &&
-				binding.expression.type === 'MemberExpression' &&
-				binding.expression.object.type === 'CallExpression' &&
-				binding.expression.object.callee.type === 'Identifier' &&
-				binding.expression.object.callee.name === '$.get' &&
-				binding.expression.object.arguments[0].type === 'Identifier'
+				// TODO this code is bad, we need to kill it
+				expression != null &&
+				typeof expression !== 'function' &&
+				expression.type === 'MemberExpression' &&
+				expression.object.type === 'CallExpression' &&
+				expression.object.callee.type === 'Identifier' &&
+				expression.object.callee.name === '$.get' &&
+				expression.object.arguments[0].type === 'Identifier'
 			) {
-				push_unique(b.id(binding.expression.object.arguments[0].name));
+				push_unique(b.id(expression.object.arguments[0].name));
 			} else if (
 				// If we are referencing a simple $$props value, then we need to reference the object property instead
 				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&

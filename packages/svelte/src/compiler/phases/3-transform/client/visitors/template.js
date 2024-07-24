@@ -51,6 +51,7 @@ import { javascript_visitors_runes } from './javascript-runes.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 import { walk } from 'zimmerframe';
 import { locator } from '../../../../state.js';
+import is_reference from 'is-reference';
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
@@ -939,11 +940,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 		const prev = fn;
 
 		fn = (node_id) => {
-			return serialize_bind_this(
-				/** @type {Identifier | MemberExpression} */ (bind_this),
-				context,
-				prev(node_id)
-			);
+			return serialize_bind_this(bind_this, prev(node_id), context);
 		};
 	}
 
@@ -996,71 +993,69 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 
 /**
  * Serializes `bind:this` for components and elements.
- * @param {Identifier | MemberExpression} bind_this
+ * @param {Identifier | MemberExpression} expression
+ * @param {Expression} value
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('../types.js').ComponentClientTransformState>} context
- * @param {Expression} node
- * @returns
  */
-function serialize_bind_this(bind_this, context, node) {
-	let i = 0;
-	/** @type {Map<import('#compiler').Binding, [arg_idx: number, transformed: Expression, expression: import('#compiler').Binding['expression']]>} */
-	const each_ids = new Map();
-	// Transform each reference to an each block context variable into a $$value_<i> variable
-	// by temporarily changing the `expression` of the corresponding binding.
-	// These $$value_<i> variables will be filled in by the bind_this runtime function through its last argument.
+function serialize_bind_this(expression, value, { state, visit }) {
+	/** @type {Identifier[]} */
+	const ids = [];
+
+	/** @type {Expression[]} */
+	const values = [];
+
+	/** @type {typeof state.getters} */
+	const getters = {};
+
+	// Pass in each context variables to the get/set functions, so that we can null out old values on teardown.
 	// Note that we only do this for each context variables, the consequence is that the value might be stale in
 	// some scenarios where the value is a member expression with changing computed parts or using a combination of multiple
 	// variables, but that was the same case in Svelte 4, too. Once legacy mode is gone completely, we can revisit this.
-	walk(
-		bind_this,
-		{},
-		{
-			Identifier(node) {
-				const binding = context.state.scope.get(node.name);
-				if (!binding || each_ids.has(binding)) return;
+	walk(expression, null, {
+		Identifier(node, { path }) {
+			if (Object.hasOwn(getters, node.name)) return;
 
-				const associated_node = Array.from(context.state.scopes.entries()).find(
-					([_, scope]) => scope === binding?.scope
-				)?.[0];
-				if (associated_node?.type === 'EachBlock') {
-					each_ids.set(binding, [
-						i,
-						/** @type {Expression} */ (context.visit(node)),
-						binding.expression
-					]);
-					binding.expression = b.id('$$value_' + i);
-					i++;
+			const parent = /** @type {Expression} */ (path.at(-1));
+			if (!is_reference(node, parent)) return;
+
+			const binding = state.scope.get(node.name);
+			if (!binding) return;
+
+			for (const [owner, scope] of state.scopes) {
+				if (owner.type === 'EachBlock' && scope === binding.scope) {
+					ids.push(node);
+					values.push(/** @type {Expression} */ (visit(node)));
+					getters[node.name] = node;
+					break;
 				}
 			}
 		}
+	});
+
+	const child_state = { ...state, getters: { ...state.getters, ...getters } };
+
+	const get = /** @type {Expression} */ (visit(expression, child_state));
+	const set = /** @type {Expression} */ (
+		visit(b.assignment('=', expression, b.id('$$value')), child_state)
 	);
 
-	const bind_this_id = /** @type {Expression} */ (context.visit(bind_this));
-	const ids = Array.from(each_ids.values()).map((id) => b.id('$$value_' + id[0]));
-	const assignment = b.assignment('=', bind_this, b.id('$$value'));
-	const update = serialize_set_binding(assignment, context, () => context.visit(assignment));
-
-	for (const [binding, [, , expression]] of each_ids) {
-		// reset expressions to what they were before
-		binding.expression = expression;
-	}
-
-	/** @type {Expression[]} */
-	const args = [node, b.arrow([b.id('$$value'), ...ids], update), b.arrow([...ids], bind_this_id)];
 	// If we're mutating a property, then it might already be non-existent.
 	// If we make all the object nodes optional, then it avoids any runtime exceptions.
 	/** @type {Expression | Super} */
-	let bind_node = bind_this_id;
+	let node = get;
 
-	while (bind_node?.type === 'MemberExpression') {
-		bind_node.optional = true;
-		bind_node = bind_node.object;
-	}
-	if (each_ids.size) {
-		args.push(b.thunk(b.array(Array.from(each_ids.values()).map((id) => id[1]))));
+	while (node.type === 'MemberExpression') {
+		node.optional = true;
+		node = node.object;
 	}
 
-	return b.call('$.bind_this', ...args);
+	return b.call(
+		'$.bind_this',
+		value,
+		b.arrow([b.id('$$value'), ...ids], set),
+		b.arrow([...ids], get),
+		values.length > 0 && b.thunk(b.array(values))
+	);
 }
 
 /**
@@ -1394,7 +1389,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 			const text_id = get_node_id(expression(true), state, 'text');
 
 			const update = b.stmt(
-				b.call('$.set_text', text_id, /** @type {Expression} */ (visit(node.expression)))
+				b.call('$.set_text', text_id, /** @type {Expression} */ (visit(node.expression, state)))
 			);
 
 			if (node.metadata.contains_call_expression && !within_bound_contenteditable) {
@@ -1654,6 +1649,7 @@ export const template_visitors = {
 			after_update: [],
 			template: [],
 			locations: [],
+			getters: { ...context.state.getters },
 			metadata: {
 				context: {
 					template_needs_import_node: false,
@@ -1816,6 +1812,8 @@ export const template_visitors = {
 				)
 			);
 
+			state.getters[declaration.id.name] = b.call('$.get', declaration.id);
+
 			// we need to eagerly evaluate the expression in order to hit any
 			// 'Cannot access x before initialization' errors
 			if (state.options.dev) {
@@ -1825,12 +1823,15 @@ export const template_visitors = {
 			const identifiers = extract_identifiers(declaration.id);
 			const tmp = b.id(state.scope.generate('computed_const'));
 
+			const getters = { ...state.getters };
+
 			// Make all identifiers that are declared within the following computed regular
 			// variables, as they are not signals in that context yet
 			for (const node of identifiers) {
-				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(node.name));
-				binding.expression = node;
+				getters[node.name] = node;
 			}
+
+			const child_state = { ...state, getters };
 
 			// TODO optimise the simple `{ x } = y` case — we can just return `y`
 			// instead of destructuring it only to return a new object
@@ -1838,8 +1839,8 @@ export const template_visitors = {
 				[],
 				b.block([
 					b.const(
-						/** @type {Pattern} */ (visit(declaration.id)),
-						/** @type {Expression} */ (visit(declaration.init))
+						/** @type {Pattern} */ (visit(declaration.id, child_state)),
+						/** @type {Expression} */ (visit(declaration.init, child_state))
 					),
 					b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
 				])
@@ -1854,8 +1855,7 @@ export const template_visitors = {
 			}
 
 			for (const node of identifiers) {
-				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(node.name));
-				binding.expression = b.member(b.call('$.get', tmp), node);
+				state.getters[node.name] = b.member(b.call('$.get', tmp), node);
 			}
 		}
 	},
@@ -2484,6 +2484,11 @@ export const template_visitors = {
 			indirect_dependencies.push(...transitive_dependencies);
 		}
 
+		const child_state = {
+			...context.state,
+			getters: { ...context.state.getters }
+		};
+
 		/**
 		 * @param {Pattern} expression_for_id
 		 * @returns {import('#compiler').Binding['mutation']}
@@ -2532,17 +2537,14 @@ export const template_visitors = {
 				: b.id(node.index);
 		const item = each_node_meta.item;
 		const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(item.name));
-		binding.expression = (/** @type {import("estree").Identifier} */ id) => {
+		const getter = (/** @type {import("estree").Identifier} */ id) => {
 			const item_with_loc = with_loc(item, id);
 			return b.call('$.unwrap', item_with_loc);
 		};
+		child_state.getters[item.name] = getter;
 
 		if (node.index) {
-			const index_binding = /** @type {import('#compiler').Binding} */ (
-				context.state.scope.get(node.index)
-			);
-
-			index_binding.expression = (id) => {
+			child_state.getters[node.index] = (id) => {
 				const index_with_loc = with_loc(index, id);
 				return b.call('$.unwrap', index_with_loc);
 			};
@@ -2560,19 +2562,23 @@ export const template_visitors = {
 				)
 			);
 		} else {
-			const unwrapped = binding.expression(binding.node);
+			const unwrapped = getter(binding.node);
 			const paths = extract_paths(node.context);
 
 			for (const path of paths) {
 				const name = /** @type {Identifier} */ (path.node).name;
 				const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(name));
 				const needs_derived = path.has_default_value; // to ensure that default value is only called once
-				const fn = b.thunk(/** @type {Expression} */ (context.visit(path.expression?.(unwrapped))));
+				const fn = b.thunk(
+					/** @type {Expression} */ (context.visit(path.expression?.(unwrapped), child_state))
+				);
 
 				declarations.push(
 					b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn)
 				);
-				binding.expression = needs_derived ? b.call('$.get', b.id(name)) : b.call(name);
+
+				const getter = needs_derived ? b.call('$.get', b.id(name)) : b.call(name);
+				child_state.getters[name] = getter;
 				binding.mutation = create_mutation(
 					/** @type {Pattern} */ (path.update_expression(unwrapped))
 				);
@@ -2580,21 +2586,23 @@ export const template_visitors = {
 				// we need to eagerly evaluate the expression in order to hit any
 				// 'Cannot access x before initialization' errors
 				if (context.state.options.dev) {
-					declarations.push(b.stmt(binding.expression));
+					declarations.push(b.stmt(getter));
 				}
 			}
 		}
 
-		const block = /** @type {BlockStatement} */ (context.visit(node.body));
+		const block = /** @type {BlockStatement} */ (context.visit(node.body, child_state));
 
 		const key_function = node.key
 			? b.arrow(
 					[node.context.type === 'Identifier' ? node.context : b.id('$$item'), index],
 					declarations.length > 0
 						? b.block(
-								declarations.concat(b.return(/** @type {Expression} */ (context.visit(node.key))))
+								declarations.concat(
+									b.return(/** @type {Expression} */ (context.visit(node.key, child_state)))
+								)
 							)
-						: /** @type {Expression} */ (context.visit(node.key))
+						: /** @type {Expression} */ (context.visit(node.key, child_state))
 				)
 			: b.id('$.index');
 
@@ -2755,6 +2763,9 @@ export const template_visitors = {
 		/** @type {Statement[]} */
 		const declarations = [];
 
+		const getters = { ...context.state.getters };
+		const child_state = { ...context.state, getters };
+
 		for (let i = 0; i < node.parameters.length; i++) {
 			const argument = node.parameters[i];
 
@@ -2766,10 +2777,8 @@ export const template_visitors = {
 					left: argument,
 					right: b.id('$.noop')
 				});
-				const binding = /** @type {import('#compiler').Binding} */ (
-					context.state.scope.get(argument.name)
-				);
-				binding.expression = b.call(argument);
+
+				getters[argument.name] = b.call(argument);
 				continue;
 			}
 
@@ -2791,19 +2800,20 @@ export const template_visitors = {
 				declarations.push(
 					b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn)
 				);
-				binding.expression = needs_derived ? b.call('$.get', b.id(name)) : b.call(name);
+
+				getters[name] = needs_derived ? b.call('$.get', b.id(name)) : b.call(name);
 
 				// we need to eagerly evaluate the expression in order to hit any
 				// 'Cannot access x before initialization' errors
 				if (context.state.options.dev) {
-					declarations.push(b.stmt(binding.expression));
+					declarations.push(b.stmt(getters[name]));
 				}
 			}
 		}
 
 		body = b.block([
 			...declarations,
-			.../** @type {BlockStatement} */ (context.visit(node.body)).body
+			.../** @type {BlockStatement} */ (context.visit(node.body, child_state)).body
 		]);
 
 		/** @type {Expression} */
@@ -2996,7 +3006,7 @@ export const template_visitors = {
 					break;
 
 				case 'this':
-					call_expr = serialize_bind_this(node.expression, context, state.node);
+					call_expr = serialize_bind_this(node.expression, state.node, context);
 					break;
 				case 'textContent':
 				case 'innerHTML':
@@ -3118,7 +3128,10 @@ export const template_visitors = {
 			const bindings = state.scope.get_bindings(node);
 
 			for (const binding of bindings) {
-				binding.expression = b.member(b.call('$.get', b.id(name)), b.id(binding.node.name));
+				state.getters[binding.node.name] = b.member(
+					b.call('$.get', b.id(name)),
+					b.id(binding.node.name)
+				);
 			}
 
 			return b.const(
