@@ -373,8 +373,6 @@ declare module 'svelte' {
 	 * Synchronously flushes any pending state changes and those that result from it.
 	 * */
 	export function flushSync(fn?: (() => void) | undefined): void;
-	/** Anything except a function */
-	type NotFunction<T> = T extends Function ? never : T;
 	/**
 	 * Create a snippet programmatically
 	 * */
@@ -382,6 +380,8 @@ declare module 'svelte' {
 		render: () => string;
 		setup?: (element: Element) => void;
 	}): Snippet<Params>;
+	/** Anything except a function */
+	type NotFunction<T> = T extends Function ? never : T;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
 	 * Transitions will play during the initial render unless the `intro` option is set to `false`.

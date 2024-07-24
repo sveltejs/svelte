@@ -1,3 +1,5 @@
+/** @import { ComponentContext, Effect, EffectNodes, TemplateNode } from '#client' */
+/** @import { Component, ComponentType, SvelteComponent } from '../../index.js' */
 import { DEV } from 'esm-env';
 import { clear_text_content, empty, init_operations } from './dom/operations.js';
 import {
@@ -59,7 +61,7 @@ export function set_text(text, value) {
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
- * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props>> | import('../../index.js').Component<Props, Exports, any>} component
+ * @param {ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>} component
  * @param {{} extends Props ? {
  * 		target: Document | Element | ShadowRoot;
  * 		anchor?: Node;
@@ -87,7 +89,7 @@ export function mount(component, options) {
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
- * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props>> | import('../../index.js').Component<Props, Exports, any>} component
+ * @param {ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>} component
  * @param {{} extends Props ? {
  * 		target: Document | Element | ShadowRoot;
  * 		props?: Props;
@@ -112,12 +114,12 @@ export function hydrate(component, options) {
 	const previous_hydrate_node = hydrate_node;
 
 	try {
-		var anchor = /** @type {import('#client').TemplateNode} */ (target.firstChild);
+		var anchor = /** @type {TemplateNode} */ (target.firstChild);
 		while (
 			anchor &&
 			(anchor.nodeType !== 8 || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
 		) {
-			anchor = /** @type {import('#client').TemplateNode} */ (anchor.nextSibling);
+			anchor = /** @type {TemplateNode} */ (anchor.nextSibling);
 		}
 
 		if (!anchor) {
@@ -171,7 +173,7 @@ const document_listeners = new Map();
 
 /**
  * @template {Record<string, any>} Exports
- * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<any>> | import('../../index.js').Component<any>} Component
+ * @param {ComponentType<SvelteComponent<any>> | Component<any>} Component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
  * 		anchor: Node;
@@ -226,7 +228,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 		branch(() => {
 			if (context) {
 				push({});
-				var ctx = /** @type {import('#client').ComponentContext} */ (current_component_context);
+				var ctx = /** @type {ComponentContext} */ (current_component_context);
 				ctx.c = context;
 			}
 
@@ -236,7 +238,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			}
 
 			if (hydrating) {
-				assign_nodes(/** @type {import('#client').TemplateNode} */ (anchor), null);
+				assign_nodes(/** @type {TemplateNode} */ (anchor), null);
 			}
 
 			should_intro = intro;
@@ -245,9 +247,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			should_intro = true;
 
 			if (hydrating) {
-				/** @type {import('#client').Effect & { nodes: import('#client').EffectNodes }} */ (
-					current_effect
-				).nodes.end = hydrate_node;
+				/** @type {Effect & { nodes: EffectNodes }} */ (current_effect).nodes.end = hydrate_node;
 			}
 
 			if (context) {

@@ -1,10 +1,11 @@
+/** @import { Component } from '#server' */
 import { current_component } from './internal/server/context.js';
 import { noop } from './internal/shared/utils.js';
 import * as e from './internal/server/errors.js';
 
 /** @param {() => void} fn */
 export function onDestroy(fn) {
-	var context = /** @type {import('#server').Component} */ (current_component);
+	var context = /** @type {Component} */ (current_component);
 	(context.d ??= []).push(fn);
 }
 
