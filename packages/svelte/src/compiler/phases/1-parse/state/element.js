@@ -612,7 +612,11 @@ function read_attribute(parser) {
 			type,
 			name: directive_name,
 			modifiers,
-			expression
+			expression,
+			metadata: {
+				dynamic: false,
+				contains_call_expression: false
+			}
 		};
 
 		if (directive.type === 'ClassDirective') {

@@ -2838,7 +2838,7 @@ export const template_visitors = {
 		context.next({ ...context.state, in_constructor: false });
 	},
 	OnDirective(node, context) {
-		serialize_event(node, null, context);
+		serialize_event(node, node.metadata, context);
 	},
 	UseDirective(node, { state, next, visit }) {
 		const params = [b.id('$$node')];

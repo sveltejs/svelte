@@ -1299,7 +1299,9 @@ const common_visitors = {
 	CallExpression(node, context) {
 		const { expression, render_tag } = context.state;
 		if (
-			(expression?.type === 'ExpressionTag' || expression?.type === 'SpreadAttribute') &&
+			(expression?.type === 'ExpressionTag' ||
+				expression?.type === 'SpreadAttribute' ||
+				expression?.type === 'OnDirective') &&
 			!is_known_safe_call(node, context)
 		) {
 			expression.metadata.contains_call_expression = true;
@@ -1367,7 +1369,7 @@ const common_visitors = {
 		if (parent?.type === 'SvelteElement' || parent?.type === 'RegularElement') {
 			state.analysis.event_directive_node ??= node;
 		}
-		next();
+		next({ ...state, expression: node });
 	},
 	BindDirective(node, context) {
 		let i = context.path.length;
