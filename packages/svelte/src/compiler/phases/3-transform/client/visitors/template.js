@@ -1003,7 +1003,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
  */
 function serialize_bind_this(bind_this, context, node) {
 	let i = 0;
-	/** @type {Map<import('#compiler').Binding, [arg_idx: number, transformed: Expression, expression: Expression | ((id: Identifier) => Expression), name: string]>} */
+	/** @type {Map<string, [arg_idx: number, transformed: Expression, expression: Expression | ((id: Identifier) => Expression)]>} */
 	const each_ids = new Map();
 	// Transform each reference to an each block context variable into a $$value_<i> variable
 	// by temporarily changing the `expression` of the corresponding binding.
@@ -1017,17 +1017,16 @@ function serialize_bind_this(bind_this, context, node) {
 		{
 			Identifier(node) {
 				const binding = context.state.scope.get(node.name);
-				if (!binding || each_ids.has(binding)) return;
+				if (!binding || each_ids.has(node.name)) return;
 
 				const associated_node = Array.from(context.state.scopes.entries()).find(
 					([_, scope]) => scope === binding?.scope
 				)?.[0];
 				if (associated_node?.type === 'EachBlock') {
-					each_ids.set(binding, [
+					each_ids.set(node.name, [
 						i,
 						/** @type {Expression} */ (context.visit(node)),
-						context.state.getters[node.name],
-						node.name
+						context.state.getters[node.name]
 					]);
 					context.state.getters[node.name] = b.id('$$value_' + i);
 					i++;
@@ -1041,7 +1040,7 @@ function serialize_bind_this(bind_this, context, node) {
 	const assignment = b.assignment('=', bind_this, b.id('$$value'));
 	const update = serialize_set_binding(assignment, context, () => context.visit(assignment));
 
-	for (const [binding, [, , expression, name]] of each_ids) {
+	for (const [name, [, , expression]] of each_ids) {
 		// reset expressions to what they were before
 		// TODO use state properly here rather than mutating stuff
 		if (expression !== null) {
