@@ -110,6 +110,7 @@
 			clear_logs();
 
 			if (!$bundle.error) {
+				debugger
 				await proxy?.eval(`
 					${injectedJS}
 
@@ -135,7 +136,7 @@
 
 					const __repl_exports = ${$bundle.client?.code};
 					{
-						const { mount, unmount, App, untrack } = __repl_exports;
+						const { mount, unmount, App, untrack, flushSync } = __repl_exports;
 
 						const console_methods = ['log', 'error', 'trace', 'assert', 'warn', 'table', 'group'];
 
@@ -153,6 +154,8 @@
 							}
 						}
 						const component = mount(App, { target: document.body });
+						flushSync();
+
 						window.__unmount_previous = () => {
 							for (const method of console_methods) {
 								console[method] = original[method];
