@@ -1002,43 +1002,44 @@ function serialize_inline_component(node, component_name, context, anchor = cont
  * @returns
  */
 function serialize_bind_this(bind_this, context, node) {
-	let i = 0;
-	/** @type {Map<string, [arg_idx: number, transformed: Expression, expression: Expression | ((id: Identifier) => Expression)]>} */
-	const each_ids = new Map();
-
 	const child_state = {
 		...context.state,
 		getters: { ...context.state.getters }
 	};
 
-	// Transform each reference to an each block context variable into a $$value_<i> variable
-	// by temporarily changing the `expression` of the corresponding binding.
-	// These $$value_<i> variables will be filled in by the bind_this runtime function through its last argument.
+	/** @type {Identifier[]} */
+	const ids = [];
+
+	/** @type {Expression[]} */
+	const values = [];
+
+	/** @type {string[]} */
+	const seen = [];
+
+	// Pass in each context variables to the get/set functions, so that we can null out old values on teardown.
 	// Note that we only do this for each context variables, the consequence is that the value might be stale in
 	// some scenarios where the value is a member expression with changing computed parts or using a combination of multiple
 	// variables, but that was the same case in Svelte 4, too. Once legacy mode is gone completely, we can revisit this.
 	walk(bind_this, null, {
 		Identifier(node) {
 			const binding = child_state.scope.get(node.name);
-			if (!binding || each_ids.has(node.name)) return;
+			if (!binding || seen.includes(node.name)) return;
 
 			const associated_node = Array.from(child_state.scopes.entries()).find(
 				([_, scope]) => scope === binding?.scope
 			)?.[0];
+
 			if (associated_node?.type === 'EachBlock') {
-				each_ids.set(node.name, [
-					i,
-					/** @type {Expression} */ (context.visit(node)),
-					child_state.getters[node.name]
-				]);
-				child_state.getters[node.name] = b.id('$$value_' + i);
-				i++;
+				seen.push(node.name);
+
+				ids.push(node);
+				values.push(/** @type {Expression} */ (context.visit(node)));
+				child_state.getters[node.name] = node;
 			}
 		}
 	});
 
 	const bind_this_id = /** @type {Expression} */ (context.visit(bind_this, child_state));
-	const ids = Array.from(each_ids.values()).map((id) => b.id('$$value_' + id[0]));
 	const assignment = /** @type {Expression} */ (
 		context.visit(b.assignment('=', bind_this, b.id('$$value')), child_state)
 	);
@@ -1060,8 +1061,8 @@ function serialize_bind_this(bind_this, context, node) {
 		bind_node = bind_node.object;
 	}
 
-	if (each_ids.size) {
-		args.push(b.thunk(b.array(Array.from(each_ids.values()).map((id) => id[1]))));
+	if (values.length > 0) {
+		args.push(b.thunk(b.array(values)));
 	}
 
 	return b.call('$.bind_this', ...args);
