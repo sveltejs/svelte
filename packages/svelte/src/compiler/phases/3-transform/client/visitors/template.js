@@ -940,11 +940,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 		const prev = fn;
 
 		fn = (node_id) => {
-			return serialize_bind_this(
-				/** @type {Identifier | MemberExpression} */ (bind_this),
-				context,
-				prev(node_id)
-			);
+			return serialize_bind_this(bind_this, prev(node_id), context);
 		};
 	}
 
@@ -997,71 +993,67 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 
 /**
  * Serializes `bind:this` for components and elements.
- * @param {Identifier | MemberExpression} bind_this
+ * @param {Identifier | MemberExpression} expression
+ * @param {Expression} value
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('../types.js').ComponentClientTransformState>} context
- * @param {Expression} node
- * @returns
  */
-function serialize_bind_this(bind_this, context, node) {
-	const child_state = {
-		...context.state,
-		getters: { ...context.state.getters }
-	};
-
+function serialize_bind_this(expression, value, { state, visit }) {
 	/** @type {Identifier[]} */
 	const ids = [];
 
 	/** @type {Expression[]} */
 	const values = [];
 
-	/** @type {string[]} */
-	const seen = [];
+	/** @type {typeof state.getters} */
+	const getters = {};
 
 	// Pass in each context variables to the get/set functions, so that we can null out old values on teardown.
 	// Note that we only do this for each context variables, the consequence is that the value might be stale in
 	// some scenarios where the value is a member expression with changing computed parts or using a combination of multiple
 	// variables, but that was the same case in Svelte 4, too. Once legacy mode is gone completely, we can revisit this.
-	walk(bind_this, null, {
+	walk(expression, null, {
 		Identifier(node, { path }) {
+			if (Object.hasOwn(getters, node.name)) return;
+
 			const parent = /** @type {Expression} */ (path.at(-1));
 			if (!is_reference(node, parent)) return;
 
-			const binding = child_state.scope.get(node.name);
-			if (!binding || seen.includes(node.name)) return;
+			const binding = state.scope.get(node.name);
+			if (!binding) return;
 
-			for (const [owner, scope] of child_state.scopes) {
+			for (const [owner, scope] of state.scopes) {
 				if (owner.type === 'EachBlock' && scope === binding.scope) {
-					seen.push(node.name);
-
 					ids.push(node);
-					values.push(/** @type {Expression} */ (context.visit(node)));
-					child_state.getters[node.name] = node;
+					values.push(/** @type {Expression} */ (visit(node)));
+					getters[node.name] = node;
 					break;
 				}
 			}
 		}
 	});
 
-	const expression = /** @type {Expression} */ (context.visit(bind_this, child_state));
-	const assignment = /** @type {Expression} */ (
-		context.visit(b.assignment('=', bind_this, b.id('$$value')), child_state)
+	const child_state = { ...state, getters: { ...state.getters, ...getters } };
+
+	const get = /** @type {Expression} */ (visit(expression, child_state));
+	const set = /** @type {Expression} */ (
+		visit(b.assignment('=', expression, b.id('$$value')), child_state)
 	);
 
 	// If we're mutating a property, then it might already be non-existent.
 	// If we make all the object nodes optional, then it avoids any runtime exceptions.
 	/** @type {Expression | Super} */
-	let bind_node = expression;
+	let node = get;
 
-	while (bind_node.type === 'MemberExpression') {
-		bind_node.optional = true;
-		bind_node = bind_node.object;
+	while (node.type === 'MemberExpression') {
+		node.optional = true;
+		node = node.object;
 	}
 
 	return b.call(
 		'$.bind_this',
-		node,
-		b.arrow([b.id('$$value'), ...ids], assignment),
-		b.arrow([...ids], expression),
+		value,
+		b.arrow([b.id('$$value'), ...ids], set),
+		b.arrow([...ids], get),
 		values.length > 0 && b.thunk(b.array(values))
 	);
 }
@@ -2983,7 +2975,7 @@ export const template_visitors = {
 					break;
 
 				case 'this':
-					call_expr = serialize_bind_this(node.expression, context, state.node);
+					call_expr = serialize_bind_this(node.expression, state.node, context);
 					break;
 				case 'textContent':
 				case 'innerHTML':
