@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, BinaryOperator, BlockStatement, CallExpression, Expression, ExpressionStatement, Identifier, MethodDefinition, Node, Pattern, Program, Property, PropertyDefinition, Statement, VariableDeclarator } from 'estree' */
+/** @import { AssignmentExpression, BinaryOperator, CallExpression, Expression, ExpressionStatement, MethodDefinition, Pattern, Program, Property, PropertyDefinition, Statement, VariableDeclarator } from 'estree' */
 /** @import { Binding, Namespace, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { ComponentServerTransformState, ComponentVisitors, ServerTransformState, Visitors } from './types.js' */
 /** @import { Analysis, ComponentAnalysis } from '../../types.js' */
@@ -8,10 +8,10 @@ import { walk } from 'zimmerframe';
 import { set_scope, get_rune } from '../../scope.js';
 import { extract_identifiers, extract_paths, is_expression_async } from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
-import is_reference from 'is-reference';
 import { transform_inspect_rune } from '../utils.js';
 import { filename } from '../../../state.js';
 import { render_stylesheet } from '../css/index.js';
+import { Identifier } from './visitors/javascript/Identifier.js';
 import { AwaitBlock } from './visitors/template/AwaitBlock.js';
 import { Component } from './visitors/template/Component.js';
 import { ConstTag } from './visitors/template/ConstTag.js';
@@ -33,6 +33,7 @@ import { SvelteFragment } from './visitors/template/SvelteFragment.js';
 import { SvelteHead } from './visitors/template/SvelteHead.js';
 import { SvelteSelf } from './visitors/template/SvelteSelf.js';
 import { TitleElement } from './visitors/template/TitleElement.js';
+import { serialize_get_binding } from './visitors/javascript/shared/utils.js';
 
 /**
  * @param {VariableDeclarator} declarator
@@ -54,37 +55,6 @@ function create_state_declarators(declarator, scope, value) {
 			return b.declarator(path.node, value);
 		})
 	];
-}
-
-/**
- * @param {Identifier} node
- * @param {ServerTransformState} state
- * @returns {Expression}
- */
-function serialize_get_binding(node, state) {
-	const binding = state.scope.get(node.name);
-
-	if (binding === null || node === binding.node) {
-		// No associated binding or the declaration itself which shouldn't be transformed
-		return node;
-	}
-
-	if (binding.kind === 'store_sub') {
-		const store_id = b.id(node.name.slice(1));
-		return b.call(
-			'$.store_get',
-			b.assignment('??=', b.id('$$store_subs'), b.object([])),
-			b.literal(node.name),
-			serialize_get_binding(store_id, state)
-		);
-	}
-
-	if (Object.hasOwn(state.getters, node.name)) {
-		const getter = state.getters[node.name];
-		return typeof getter === 'function' ? getter(node) : getter;
-	}
-
-	return node;
 }
 
 /**
@@ -220,14 +190,7 @@ function serialize_set_binding(node, context, fallback) {
 
 /** @type {Visitors} */
 const global_visitors = {
-	Identifier(node, { path, state }) {
-		if (is_reference(node, /** @type {Node} */ (path.at(-1)))) {
-			if (node.name === '$$props') {
-				return b.id('$$sanitized_props');
-			}
-			return serialize_get_binding(node, state);
-		}
-	},
+	Identifier,
 	AssignmentExpression(node, context) {
 		return serialize_set_binding(node, context, context.next);
 	},
