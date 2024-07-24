@@ -4,6 +4,6 @@ export default test({
 	error: {
 		code: 'css_global_block_invalid_declaration',
 		message: 'A :global {...} block can only contain rules, not declarations',
-		position: [140, 150]
+		position: [109, 119]
 	}
 });

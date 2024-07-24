@@ -22,6 +22,10 @@
 
 > A :global {...} block cannot modify an existing selector
 
+## css_global_block_invalid_modifier_start
+
+> A :global {...} block at the very beginning cannot be modified by other selectors
+
 ## css_global_invalid_placement
 
 > :global(...) can be at the start or end of a selector sequence, but not in the middle

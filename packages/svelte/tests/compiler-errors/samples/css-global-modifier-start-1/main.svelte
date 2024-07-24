@@ -5,7 +5,7 @@
 	}
 
 	/* not ok */
-	.x:global {
+	:global.x {
 		color: red;
 	}
 </style>

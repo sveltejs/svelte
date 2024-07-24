@@ -471,6 +471,15 @@ export function css_global_block_invalid_modifier(node) {
 }
 
 /**
+ * A :global {...} block at the very beginning cannot be modified by other selectors
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_global_block_invalid_modifier_start(node) {
+	e(node, "css_global_block_invalid_modifier_start", "A :global {...} block at the very beginning cannot be modified by other selectors");
+}
+
+/**
  * :global(...) can be at the start or end of a selector sequence, but not in the middle
  * @param {null | number | NodeLike} node
  * @returns {never}

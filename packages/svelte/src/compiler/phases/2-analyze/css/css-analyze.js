@@ -141,9 +141,12 @@ const validation_visitors = {
 			}
 
 			const complex_selector = node.prelude.children[0];
-			const global_selector = complex_selector.children.find((r) => {
+			const global_selector = complex_selector.children.find((r, selector_idx) => {
 				const idx = r.selectors.findIndex(is_global_block_selector);
 				if (idx === 0) {
+					if (r.selectors.length > 1 && selector_idx === 0 && node.metadata.parent_rule === null) {
+						e.css_global_block_invalid_modifier_start(r.selectors[1]);
+					}
 					return true;
 				} else if (idx !== -1) {
 					e.css_global_block_invalid_modifier(r.selectors[idx]);
@@ -223,8 +226,17 @@ const validation_visitors = {
 	},
 	NestingSelector(node, context) {
 		const rule = /** @type {Css.Rule} */ (context.state.rule);
-		if (!rule.metadata.parent_rule) {
+		const parent_rule = rule.metadata.parent_rule;
+		if (!parent_rule) {
 			e.css_nesting_selector_invalid_placement(node);
+		} else if (
+			// :global { &.foo { ... } } is invalid
+			parent_rule.metadata.is_global_block &&
+			!parent_rule.metadata.parent_rule &&
+			parent_rule.prelude.children[0].children.length === 1 &&
+			parent_rule.prelude.children[0].children[0].selectors.length === 1
+		) {
+			e.css_global_block_invalid_modifier_start(node);
 		}
 	}
 };
