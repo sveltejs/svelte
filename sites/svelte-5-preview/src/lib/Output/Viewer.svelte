@@ -110,7 +110,6 @@
 			clear_logs();
 
 			if (!$bundle.error) {
-				debugger
 				await proxy?.eval(`
 					${injectedJS}
 
