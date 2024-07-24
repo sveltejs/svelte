@@ -1,4 +1,3 @@
-import { flushSync } from 'svelte';
 import { test, ok } from '../../assert';
 
 export default test({
