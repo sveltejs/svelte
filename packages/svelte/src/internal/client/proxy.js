@@ -1,3 +1,4 @@
+/** @import { ProxyMetadata, ProxyStateObject, Source } from '#client' */
 import { DEV } from 'esm-env';
 import { get, current_component_context, untrack, current_effect } from './runtime.js';
 import {
@@ -18,9 +19,9 @@ import * as e from './errors.js';
 /**
  * @template T
  * @param {T} value
- * @param {import('#client').ProxyMetadata | null} [parent]
- * @param {import('#client').Source<T>} [prev] dev mode only
- * @returns {import('#client').ProxyStateObject<T> | T}
+ * @param {ProxyMetadata | null} [parent]
+ * @param {Source<T>} [prev] dev mode only
+ * @returns {ProxyStateObject<T> | T}
  */
 export function proxy(value, parent = null, prev) {
 	if (
@@ -31,7 +32,7 @@ export function proxy(value, parent = null, prev) {
 	) {
 		// If we have an existing proxy, return it...
 		if (STATE_SYMBOL in value) {
-			const metadata = /** @type {import('#client').ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
+			const metadata = /** @type {ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
 
 			// ...unless the proxy belonged to a different object, because
 			// someone copied the state symbol using `Reflect.ownKeys(...)`
@@ -53,7 +54,7 @@ export function proxy(value, parent = null, prev) {
 			const proxy = new Proxy(value, state_proxy_handler);
 
 			define_property(value, STATE_SYMBOL, {
-				value: /** @type {import('#client').ProxyMetadata} */ ({
+				value: /** @type {ProxyMetadata} */ ({
 					s: new Map(),
 					v: source(0),
 					a: is_array(value),
@@ -94,18 +95,18 @@ export function proxy(value, parent = null, prev) {
 }
 
 /**
- * @param {import('#client').Source<number>} signal
+ * @param {Source<number>} signal
  * @param {1 | -1} [d]
  */
 function update_version(signal, d = 1) {
 	set(signal, signal.v + d);
 }
 
-/** @type {ProxyHandler<import('#client').ProxyStateObject<any>>} */
+/** @type {ProxyHandler<ProxyStateObject<any>>} */
 const state_proxy_handler = {
 	defineProperty(target, prop, descriptor) {
 		if (descriptor.value) {
-			/** @type {import('#client').ProxyMetadata} */
+			/** @type {ProxyMetadata} */
 			const metadata = target[STATE_SYMBOL];
 
 			const s = metadata.s.get(prop);
@@ -116,7 +117,7 @@ const state_proxy_handler = {
 	},
 
 	deleteProperty(target, prop) {
-		/** @type {import('#client').ProxyMetadata} */
+		/** @type {ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 		const s = metadata.s.get(prop);
 		const is_array = metadata.a;
@@ -149,7 +150,7 @@ const state_proxy_handler = {
 			return Reflect.get(target, STATE_SYMBOL);
 		}
 
-		/** @type {import('#client').ProxyMetadata} */
+		/** @type {ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
 
@@ -170,7 +171,7 @@ const state_proxy_handler = {
 	getOwnPropertyDescriptor(target, prop) {
 		const descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
 		if (descriptor && 'value' in descriptor) {
-			/** @type {import('#client').ProxyMetadata} */
+			/** @type {ProxyMetadata} */
 			const metadata = target[STATE_SYMBOL];
 			const s = metadata.s.get(prop);
 
@@ -186,7 +187,7 @@ const state_proxy_handler = {
 		if (prop === STATE_SYMBOL) {
 			return true;
 		}
-		/** @type {import('#client').ProxyMetadata} */
+		/** @type {ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 		const has = Reflect.has(target, prop);
 
@@ -208,7 +209,7 @@ const state_proxy_handler = {
 	},
 
 	set(target, prop, value, receiver) {
-		/** @type {import('#client').ProxyMetadata} */
+		/** @type {ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
 		// If we haven't yet created a source for this property, we need to ensure
@@ -227,7 +228,7 @@ const state_proxy_handler = {
 		const not_has = !(prop in target);
 
 		if (DEV) {
-			/** @type {import('#client').ProxyMetadata | undefined} */
+			/** @type {ProxyMetadata | undefined} */
 			const prop_metadata = value?.[STATE_SYMBOL];
 			if (prop_metadata && prop_metadata?.parent !== metadata) {
 				widen_ownership(metadata, prop_metadata);
@@ -271,7 +272,7 @@ const state_proxy_handler = {
 	},
 
 	ownKeys(target) {
-		/** @type {import('#client').ProxyMetadata} */
+		/** @type {ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 
 		get(metadata.v);
