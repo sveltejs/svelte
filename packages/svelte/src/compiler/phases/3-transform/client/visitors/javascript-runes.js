@@ -1,3 +1,6 @@
+/** @import { CallExpression, Expression, Identifier, Literal, MethodDefinition, PrivateIdentifier, PropertyDefinition, VariableDeclarator } from 'estree' */
+/** @import { Binding } from '#compiler' */
+/** @import { ComponentVisitors, StateField } from '../types.js' */
 import { get_rune } from '../../../scope.js';
 import { is_hoistable_function, transform_inspect_rune } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
@@ -12,13 +15,13 @@ import {
 import { extract_paths } from '../../../../utils/ast.js';
 import { regex_invalid_identifier_chars } from '../../../patterns.js';
 
-/** @type {import('../types.js').ComponentVisitors} */
+/** @type {ComponentVisitors} */
 export const javascript_visitors_runes = {
 	ClassBody(node, { state, visit }) {
-		/** @type {Map<string, import('../types.js').StateField>} */
+		/** @type {Map<string, StateField>} */
 		const public_state = new Map();
 
-		/** @type {Map<string, import('../types.js').StateField>} */
+		/** @type {Map<string, StateField>} */
 		const private_state = new Map();
 
 		/** @type {string[]} */
@@ -46,7 +49,7 @@ export const javascript_visitors_runes = {
 						rune === '$derived' ||
 						rune === '$derived.by'
 					) {
-						/** @type {import('../types.js').StateField} */
+						/** @type {StateField} */
 						const field = {
 							kind:
 								rune === '$state'
@@ -81,7 +84,7 @@ export const javascript_visitors_runes = {
 			field.id = b.private_id(deconflicted);
 		}
 
-		/** @type {Array<import('estree').MethodDefinition | import('estree').PropertyDefinition>} */
+		/** @type {Array<MethodDefinition | PropertyDefinition>} */
 		const body = [];
 
 		const child_state = { ...state, public_state, private_state };
@@ -104,7 +107,7 @@ export const javascript_visitors_runes = {
 					let value = null;
 
 					if (definition.value.arguments.length > 0) {
-						const init = /** @type {import('estree').Expression} **/ (
+						const init = /** @type {Expression} **/ (
 							visit(definition.value.arguments[0], child_state)
 						);
 
@@ -182,7 +185,7 @@ export const javascript_visitors_runes = {
 				}
 			}
 
-			body.push(/** @type {import('estree').MethodDefinition} **/ (visit(definition, child_state)));
+			body.push(/** @type {MethodDefinition} **/ (visit(definition, child_state)));
 		}
 
 		if (state.options.dev && public_state.size > 0) {
@@ -225,15 +228,11 @@ export const javascript_visitors_runes = {
 				if (init != null && is_hoistable_function(init)) {
 					const hoistable_function = visit(init);
 					state.hoisted.push(
-						b.declaration(
-							'const',
-							declarator.id,
-							/** @type {import('estree').Expression} */ (hoistable_function)
-						)
+						b.declaration('const', declarator.id, /** @type {Expression} */ (hoistable_function))
 					);
 					continue;
 				}
-				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
+				declarations.push(/** @type {VariableDeclarator} */ (visit(declarator)));
 				continue;
 			}
 
@@ -246,7 +245,7 @@ export const javascript_visitors_runes = {
 				}
 
 				if (declarator.id.type === 'Identifier') {
-					/** @type {import('estree').Expression[]} */
+					/** @type {Expression[]} */
 					const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
 
 					if (state.options.dev) {
@@ -260,9 +259,7 @@ export const javascript_visitors_runes = {
 
 					for (const property of declarator.id.properties) {
 						if (property.type === 'Property') {
-							const key = /** @type {import('estree').Identifier | import('estree').Literal} */ (
-								property.key
-							);
+							const key = /** @type {Identifier | Literal} */ (property.key);
 							const name = key.type === 'Identifier' ? key.name : /** @type {string} */ (key.value);
 
 							seen.push(name);
@@ -270,10 +267,8 @@ export const javascript_visitors_runes = {
 							let id =
 								property.value.type === 'AssignmentPattern' ? property.value.left : property.value;
 							assert.equal(id.type, 'Identifier');
-							const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
-							let initial =
-								binding.initial &&
-								/** @type {import('estree').Expression} */ (visit(binding.initial));
+							const binding = /** @type {Binding} */ (state.scope.get(id.name));
+							let initial = binding.initial && /** @type {Expression} */ (visit(binding.initial));
 							// We're adding proxy here on demand and not within the prop runtime function so that
 							// people not using proxied state anywhere in their code don't have to pay the additional bundle size cost
 							if (
@@ -289,14 +284,12 @@ export const javascript_visitors_runes = {
 							}
 						} else {
 							// RestElement
-							/** @type {import('estree').Expression[]} */
+							/** @type {Expression[]} */
 							const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
 
 							if (state.options.dev) {
 								// include rest name, so we can provide informative error messages
-								args.push(
-									b.literal(/** @type {import('estree').Identifier} */ (property.argument).name)
-								);
+								args.push(b.literal(/** @type {Identifier} */ (property.argument).name));
 							}
 
 							declarations.push(b.declarator(property.argument, b.call('$.rest_props', ...args)));
@@ -308,19 +301,17 @@ export const javascript_visitors_runes = {
 				continue;
 			}
 
-			const args = /** @type {import('estree').CallExpression} */ (init).arguments;
+			const args = /** @type {CallExpression} */ (init).arguments;
 			const value =
-				args.length === 0
-					? b.id('undefined')
-					: /** @type {import('estree').Expression} */ (visit(args[0]));
+				args.length === 0 ? b.id('undefined') : /** @type {Expression} */ (visit(args[0]));
 
 			if (rune === '$state' || rune === '$state.frozen') {
 				/**
-				 * @param {import('estree').Identifier} id
-				 * @param {import('estree').Expression} value
+				 * @param {Identifier} id
+				 * @param {Expression} value
 				 */
 				const create_state_declarator = (id, value) => {
-					const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
+					const binding = /** @type {Binding} */ (state.scope.get(id.name));
 					if (should_proxy_or_freeze(value, state.scope)) {
 						value = b.call(rune === '$state' ? '$.proxy' : '$.freeze', value);
 					}
@@ -341,9 +332,7 @@ export const javascript_visitors_runes = {
 						b.declarator(b.id(tmp), value),
 						...paths.map((path) => {
 							const value = path.expression?.(b.id(tmp));
-							const binding = state.scope.get(
-								/** @type {import('estree').Identifier} */ (path.node).name
-							);
+							const binding = state.scope.get(/** @type {Identifier} */ (path.node).name);
 							return b.declarator(
 								path.node,
 								binding?.kind === 'state' || binding?.kind === 'frozen_state'
@@ -426,7 +415,7 @@ export const javascript_visitors_runes = {
 				const func = context.visit(node.expression.arguments[0]);
 				return {
 					...node,
-					expression: b.call('$.user_effect', /** @type {import('estree').Expression} */ (func))
+					expression: b.call('$.user_effect', /** @type {Expression} */ (func))
 				};
 			}
 
@@ -441,7 +430,7 @@ export const javascript_visitors_runes = {
 				const func = context.visit(node.expression.arguments[0]);
 				return {
 					...node,
-					expression: b.call('$.user_pre_effect', /** @type {import('estree').Expression} */ (func))
+					expression: b.call('$.user_pre_effect', /** @type {Expression} */ (func))
 				};
 			}
 		}
@@ -460,24 +449,19 @@ export const javascript_visitors_runes = {
 		}
 
 		if (rune === '$state.snapshot') {
-			return b.call(
-				'$.snapshot',
-				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
-			);
+			return b.call('$.snapshot', /** @type {Expression} */ (context.visit(node.arguments[0])));
 		}
 
 		if (rune === '$state.is') {
 			return b.call(
 				'$.is',
-				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0])),
-				/** @type {import('estree').Expression} */ (context.visit(node.arguments[1]))
+				/** @type {Expression} */ (context.visit(node.arguments[0])),
+				/** @type {Expression} */ (context.visit(node.arguments[1]))
 			);
 		}
 
 		if (rune === '$effect.root') {
-			const args = /** @type {import('estree').Expression[]} */ (
-				node.arguments.map((arg) => context.visit(arg))
-			);
+			const args = /** @type {Expression[]} */ (node.arguments.map((arg) => context.visit(arg)));
 			return b.call('$.effect_root', ...args);
 		}
 
@@ -494,8 +478,8 @@ export const javascript_visitors_runes = {
 			if (operator === '===' || operator === '!==') {
 				return b.call(
 					'$.strict_equals',
-					/** @type {import('estree').Expression} */ (visit(node.left)),
-					/** @type {import('estree').Expression} */ (visit(node.right)),
+					/** @type {Expression} */ (visit(node.left)),
+					/** @type {Expression} */ (visit(node.right)),
 					operator === '!==' && b.literal(false)
 				);
 			}
@@ -503,8 +487,8 @@ export const javascript_visitors_runes = {
 			if (operator === '==' || operator === '!=') {
 				return b.call(
 					'$.equals',
-					/** @type {import('estree').Expression} */ (visit(node.left)),
-					/** @type {import('estree').Expression} */ (visit(node.right)),
+					/** @type {Expression} */ (visit(node.left)),
+					/** @type {Expression} */ (visit(node.right)),
 					operator === '!=' && b.literal(false)
 				);
 			}
@@ -515,7 +499,7 @@ export const javascript_visitors_runes = {
 };
 
 /**
- * @param {import('estree').Identifier | import('estree').PrivateIdentifier | import('estree').Literal} node
+ * @param {Identifier | PrivateIdentifier | Literal} node
  */
 function get_name(node) {
 	if (node.type === 'Literal') {
