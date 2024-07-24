@@ -21,18 +21,16 @@ export default test({
 			flushSync();
 		}
 
-		// Svelte 5 breaking change, use:action now fires
-		// in effect phase. So they will occur AFTER the others.
 		assert.deepEqual(value, [
+			'1',
 			'2',
 			'3',
-			'1',
+			'4',
 			'5',
 			'6',
-			'4',
 			'7',
-			'9',
 			'8',
+			'9',
 			'10',
 			'11',
 			'12',
@@ -40,30 +38,8 @@ export default test({
 			'14',
 			'15',
 			'16',
-			'18',
-			'17'
+			'17',
+			'18'
 		]);
-
-		// Previously
-		// assert.deepEqual(value, [
-		// '1',
-		// '2',
-		// '3',
-		// '4',
-		// '5',
-		// '6',
-		// '7',
-		// '8',
-		// '9',
-		// '10',
-		// '11',
-		// '12',
-		// '13',
-		// '14',
-		// '15',
-		// '16',
-		// '17',
-		// '18',
-		// ]);
 	}
 });
