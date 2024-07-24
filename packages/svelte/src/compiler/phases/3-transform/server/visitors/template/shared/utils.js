@@ -1,5 +1,5 @@
 /** @import { AssignmentOperator, Expression, Identifier, Node, Statement, TemplateElement } from 'estree' */
-/** @import { Comment, ExpressionTag, SvelteNode, Text } from '#compiler' */
+/** @import { Attribute, Comment, ExpressionTag, SvelteNode, Text } from '#compiler' */
 /** @import { ComponentContext } from '../../../types.js' */
 import { escape_html } from '../../../../../../../escaping.js';
 import {
@@ -9,6 +9,7 @@ import {
 } from '../../../../../../../internal/server/hydration.js';
 import * as b from '../../../../../../utils/builders.js';
 import { sanitize_template_string } from '../../../../../../utils/sanitize_template_string.js';
+import { regex_whitespaces_strict } from '../../../../../patterns.js';
 
 /** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
 export const block_open = b.literal(BLOCK_OPEN);
@@ -140,4 +141,62 @@ export function serialize_template(template, out = b.id('$$payload.out'), operat
 	}
 
 	return statements;
+}
+
+/**
+ *
+ * @param {Attribute['value']} value
+ * @param {ComponentContext} context
+ * @param {boolean} trim_whitespace
+ * @param {boolean} is_component
+ * @returns {Expression}
+ */
+export function serialize_attribute_value(
+	value,
+	context,
+	trim_whitespace = false,
+	is_component = false
+) {
+	if (value === true) {
+		return b.true;
+	}
+
+	if (!Array.isArray(value) || value.length === 1) {
+		const chunk = Array.isArray(value) ? value[0] : value;
+
+		if (chunk.type === 'Text') {
+			const data = trim_whitespace
+				? chunk.data.replace(regex_whitespaces_strict, ' ').trim()
+				: chunk.data;
+
+			return b.literal(is_component ? data : escape_html(data, true));
+		}
+
+		return /** @type {Expression} */ (context.visit(chunk.expression));
+	}
+
+	let quasi = b.quasi('', false);
+	const quasis = [quasi];
+
+	/** @type {Expression[]} */
+	const expressions = [];
+
+	for (let i = 0; i < value.length; i++) {
+		const node = value[i];
+
+		if (node.type === 'Text') {
+			quasi.value.raw += trim_whitespace
+				? node.data.replace(regex_whitespaces_strict, ' ')
+				: node.data;
+		} else {
+			expressions.push(
+				b.call('$.stringify', /** @type {Expression} */ (context.visit(node.expression)))
+			);
+
+			quasi = b.quasi('', i + 1 === value.length);
+			quasis.push(quasi);
+		}
+	}
+
+	return b.template(quasis, expressions);
 }
