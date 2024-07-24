@@ -1,3 +1,6 @@
+/** @import { ComponentContext, ComponentContextLegacy } from '#client' */
+/** @import { EventDispatcher } from './index.js' */
+/** @import { NotFunction } from './internal/types.js' */
 import { current_component_context, flush_sync, untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/shared/utils.js';
 import { user_effect } from './internal/client/index.js';
@@ -15,7 +18,7 @@ import { lifecycle_outside_component } from './internal/shared/errors.js';
  *
  * https://svelte.dev/docs/svelte#onmount
  * @template T
- * @param {() => import('./internal/types').NotFunction<T> | Promise<import('./internal/types').NotFunction<T>> | (() => any)} fn
+ * @param {() => NotFunction<T> | Promise<NotFunction<T>> | (() => any)} fn
  * @returns {void}
  */
 export function onMount(fn) {
@@ -84,7 +87,7 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
  * https://svelte.dev/docs/svelte#createeventdispatcher
  * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte-5-preview.vercel.app/docs/deprecations#createeventdispatcher
  * @template {Record<string, any>} [EventMap = any]
- * @returns {import('./index.js').EventDispatcher<EventMap>}
+ * @returns {EventDispatcher<EventMap>}
  */
 export function createEventDispatcher() {
 	const component_context = current_component_context;
@@ -164,10 +167,10 @@ export function afterUpdate(fn) {
 
 /**
  * Legacy-mode: Init callbacks object for onMount/beforeUpdate/afterUpdate
- * @param {import('#client').ComponentContext} context
+ * @param {ComponentContext} context
  */
 function init_update_callbacks(context) {
-	var l = /** @type {import('#client').ComponentContextLegacy} */ (context).l;
+	var l = /** @type {ComponentContextLegacy} */ (context).l;
 	return (l.u ??= { a: [], b: [], m: [] });
 }
 

@@ -901,7 +901,7 @@ const legacy_scope_tweaker = {
 	}
 };
 
-/** @type {import('zimmerframe').Visitors<SvelteNode, { scope: Scope, analysis: { runes: true } }>} */
+/** @type {Visitors} */
 const runes_scope_js_tweaker = {
 	VariableDeclarator(node, { state }) {
 		if (node.init?.type !== 'CallExpression') return;
