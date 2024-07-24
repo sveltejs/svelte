@@ -51,39 +51,15 @@
 <input bind:value={frozen.value} />
 <Child bind:value={pojo.value} />
 <Child bind:value={frozen.value} />
+{#if value}
+	<div bind:this={pojo.value}></div>
+{/if}
 
-<!-- should not warn (because reactive value) -->
+<!-- should not warn -->
 <input bind:value={reactive.value} />
 <input bind:value={accessors.value} />
 <input bind:value={proxy.value} />
 <Child bind:value={reactive.value} />
 <Child bind:value={accessors.value} />
 <Child bind:value={proxy.value} />
-
-<!-- should not warn (because one-way binding) -->
-<svelte:window
-	bind:innerHeight={pojo.value}
-	bind:innerWidth={pojo.value}
-	bind:outerHeight={pojo.value}
-	bind:outerWidth={pojo.value}
-	bind:online={pojo.value}
-	bind:devicePixelRatio={pojo.value}
-/>
-<svelte:document
-	bind:activeElement={pojo.value}
-	bind:fullscreenElement={pojo.value}
-	bind:pointerLockElement={pojo.value}
-	bind:visibilityState={pojo.value}
-/>
-<!-- can't test size bindings because it's not available in JSDom https://github.com/jsdom/jsdom/issues/3368 -->
 <div bind:this={pojo.value}></div>
-<video
-	bind:duration={pojo.value}
-	bind:buffered={pojo.value}
-	bind:played={pojo.value}
-	bind:seeking={pojo.value}
-	bind:readyState={pojo.value}
-	bind:videoHeight={pojo.value}
-	bind:videoWidth={pojo.value}
-></video>
-<img bind:naturalHeight={pojo.value} bind:naturalWidth={pojo.value} />

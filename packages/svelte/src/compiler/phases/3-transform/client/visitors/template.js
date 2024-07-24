@@ -2830,7 +2830,14 @@ export const template_visitors = {
 
 		if (
 			expression.type === 'MemberExpression' &&
-			(!property || property.bidirectional) &&
+			(node.name !== 'this' ||
+				path.some(
+					({ type }) =>
+						type === 'IfBlock' ||
+						type === 'EachBlock' ||
+						type === 'AwaitBlock' ||
+						type === 'KeyBlock'
+				)) &&
 			context.state.options.dev &&
 			context.state.analysis.runes
 		) {
