@@ -1,5 +1,5 @@
 /** @import { BlockStatement, CallExpression, Expression, ExpressionStatement, Identifier, Literal, MemberExpression, ObjectExpression, Pattern, Property, Statement, Super, TemplateElement, TemplateLiteral } from 'estree' */
-/** @import { BindDirective } from '#compiler' */
+/** @import { BindDirective, RegularElement } from '#compiler' */
 import {
 	extract_identifiers,
 	extract_paths,
@@ -1232,8 +1232,8 @@ function serialize_event_handler(node, metadata, { state, visit }) {
 function serialize_event(node, metadata, context) {
 	const state = context.state;
 
-	/** @type {Statement} */
-	let statement;
+	/** @type {Expression} */
+	let expression;
 
 	if (node.expression) {
 		let handler = serialize_event_handler(node, metadata, context);
@@ -1302,19 +1302,23 @@ function serialize_event(node, metadata, context) {
 		}
 
 		// Events need to run in order with bindings/actions
-		statement = b.stmt(b.call('$.event', ...args));
+		expression = b.call('$.event', ...args);
 	} else {
-		statement = b.stmt(
-			b.call(
-				'$.event',
-				b.literal(node.name),
-				state.node,
-				serialize_event_handler(node, metadata, context)
-			)
+		expression = b.call(
+			'$.event',
+			b.literal(node.name),
+			state.node,
+			serialize_event_handler(node, metadata, context)
 		);
 	}
 
 	const parent = /** @type {import('#compiler').SvelteNode} */ (context.path.at(-1));
+	const has_action_directive =
+		parent.type === 'RegularElement' && parent.attributes.find((a) => a.type === 'UseDirective');
+	const statement = b.stmt(
+		has_action_directive ? b.call('$.effect', b.thunk(expression)) : expression
+	);
+
 	if (
 		parent.type === 'SvelteDocument' ||
 		parent.type === 'SvelteWindow' ||
@@ -3084,12 +3088,20 @@ export const template_visitors = {
 			}
 		}
 
+		const parent = /** @type {import('#compiler').SvelteNode} */ (context.path.at(-1));
+		const has_action_directive =
+			parent.type === 'RegularElement' && parent.attributes.find((a) => a.type === 'UseDirective');
+
 		// Bindings need to happen after attribute updates, therefore after the render effect, and in order with events/actions.
 		// bind:this is a special case as it's one-way and could influence the render effect.
 		if (node.name === 'this') {
-			state.init.push(b.stmt(call_expr));
+			state.init.push(
+				b.stmt(has_action_directive ? b.call('$.effect', b.thunk(call_expr)) : call_expr)
+			);
 		} else {
-			state.after_update.push(b.stmt(call_expr));
+			state.after_update.push(
+				b.stmt(has_action_directive ? b.call('$.effect', b.thunk(call_expr)) : call_expr)
+			);
 		}
 	},
 	Component(node, context) {
