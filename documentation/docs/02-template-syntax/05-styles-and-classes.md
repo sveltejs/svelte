@@ -88,7 +88,7 @@ To apply all styles after a certain point to a selector globally, use the `:glob
 </style>
 ```
 
-> The second example above could also be turned into a `.a :global .b .c .d` selector, where everything after the `:global` is unscoped. Both forms are semantically equal, and as such this form is also supported, but the nested form is recommended instead when writing styles.
+> The second example above could also be written as an equivalent `.a :global .b .c .d` selector, where everything after the `:global` is unscoped, though the nested form is preferred.
 
 ## Nested style tags
 
