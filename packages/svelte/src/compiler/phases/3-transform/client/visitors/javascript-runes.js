@@ -1,4 +1,4 @@
-/** @import { CallExpression, Expression, Identifier, Literal, MethodDefinition, PropertyDefinition, VariableDeclarator } from 'estree' */
+/** @import { CallExpression, Expression, Identifier, Literal, MethodDefinition, PrivateIdentifier, PropertyDefinition, VariableDeclarator } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentVisitors, StateField } from '../types.js' */
 import { get_rune } from '../../../scope.js';
