@@ -319,6 +319,10 @@ Since these mismatches are extremely rare, Svelte 5 assumes that the values are 
 <img {src} />
 ```
 
+### Hydration works differently
+
+Svelte 5 makes use of comments during server side rendering which are used for more robust and efficient hydration on the client. As such, you shouldn't remove comments from your HTML output if you intend to hydrate it, and if you manually authored HTML to be hydrated by a Svelte component, you need to adjust that HTML to include said comments at the correct positions.
+
 ### `await` blocks delay render
 
 In Svelte 4, an `{#await ...}` block immediately renders the pending section. In some cases, this is wasteful, because the promise is already resolved.
