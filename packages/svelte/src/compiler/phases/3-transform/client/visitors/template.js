@@ -1005,53 +1005,51 @@ function serialize_bind_this(bind_this, context, node) {
 	let i = 0;
 	/** @type {Map<string, [arg_idx: number, transformed: Expression, expression: Expression | ((id: Identifier) => Expression)]>} */
 	const each_ids = new Map();
+
+	const child_state = {
+		...context.state,
+		getters: { ...context.state.getters }
+	};
+
 	// Transform each reference to an each block context variable into a $$value_<i> variable
 	// by temporarily changing the `expression` of the corresponding binding.
 	// These $$value_<i> variables will be filled in by the bind_this runtime function through its last argument.
 	// Note that we only do this for each context variables, the consequence is that the value might be stale in
 	// some scenarios where the value is a member expression with changing computed parts or using a combination of multiple
 	// variables, but that was the same case in Svelte 4, too. Once legacy mode is gone completely, we can revisit this.
-	walk(
-		bind_this,
-		{},
-		{
-			Identifier(node) {
-				const binding = context.state.scope.get(node.name);
-				if (!binding || each_ids.has(node.name)) return;
+	walk(bind_this, null, {
+		Identifier(node) {
+			const binding = child_state.scope.get(node.name);
+			if (!binding || each_ids.has(node.name)) return;
 
-				const associated_node = Array.from(context.state.scopes.entries()).find(
-					([_, scope]) => scope === binding?.scope
-				)?.[0];
-				if (associated_node?.type === 'EachBlock') {
-					each_ids.set(node.name, [
-						i,
-						/** @type {Expression} */ (context.visit(node)),
-						context.state.getters[node.name]
-					]);
-					context.state.getters[node.name] = b.id('$$value_' + i);
-					i++;
-				}
+			const associated_node = Array.from(child_state.scopes.entries()).find(
+				([_, scope]) => scope === binding?.scope
+			)?.[0];
+			if (associated_node?.type === 'EachBlock') {
+				each_ids.set(node.name, [
+					i,
+					/** @type {Expression} */ (context.visit(node)),
+					child_state.getters[node.name]
+				]);
+				child_state.getters[node.name] = b.id('$$value_' + i);
+				i++;
 			}
 		}
+	});
+
+	const bind_this_id = /** @type {Expression} */ (context.visit(bind_this, child_state));
+	const ids = Array.from(each_ids.values()).map((id) => b.id('$$value_' + id[0]));
+	const assignment = /** @type {Expression} */ (
+		context.visit(b.assignment('=', bind_this, b.id('$$value')), child_state)
 	);
 
-	const bind_this_id = /** @type {Expression} */ (context.visit(bind_this));
-	const ids = Array.from(each_ids.values()).map((id) => b.id('$$value_' + id[0]));
-	const assignment = b.assignment('=', bind_this, b.id('$$value'));
-	const update = serialize_set_binding(assignment, context, () => context.visit(assignment));
-
-	for (const [name, [, , expression]] of each_ids) {
-		// reset expressions to what they were before
-		// TODO use state properly here rather than mutating stuff
-		if (expression !== null) {
-			context.state.getters[name] = expression;
-		} else {
-			delete context.state.getters[name];
-		}
-	}
-
 	/** @type {Expression[]} */
-	const args = [node, b.arrow([b.id('$$value'), ...ids], update), b.arrow([...ids], bind_this_id)];
+	const args = [
+		node,
+		b.arrow([b.id('$$value'), ...ids], assignment),
+		b.arrow([...ids], bind_this_id)
+	];
+
 	// If we're mutating a property, then it might already be non-existent.
 	// If we make all the object nodes optional, then it avoids any runtime exceptions.
 	/** @type {Expression | Super} */
@@ -1061,6 +1059,7 @@ function serialize_bind_this(bind_this, context, node) {
 		bind_node.optional = true;
 		bind_node = bind_node.object;
 	}
+
 	if (each_ids.size) {
 		args.push(b.thunk(b.array(Array.from(each_ids.values()).map((id) => id[1]))));
 	}
