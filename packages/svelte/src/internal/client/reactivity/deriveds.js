@@ -1,3 +1,4 @@
+/** @import { Derived } from '#client' */
 import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
 import {
 	current_reaction,
@@ -16,14 +17,14 @@ export let updating_derived = false;
 /**
  * @template V
  * @param {() => V} fn
- * @returns {import('#client').Derived<V>}
+ * @returns {Derived<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
 	let flags = DERIVED | DIRTY;
 	if (current_effect === null) flags |= UNOWNED;
 
-	/** @type {import('#client').Derived<V>} */
+	/** @type {Derived<V>} */
 	const signal = {
 		deps: null,
 		deriveds: null,
@@ -38,7 +39,7 @@ export function derived(fn) {
 	};
 
 	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
-		var current_derived = /** @type {import('#client').Derived} */ (current_reaction);
+		var current_derived = /** @type {Derived} */ (current_reaction);
 		if (current_derived.deriveds === null) {
 			current_derived.deriveds = [signal];
 		} else {
@@ -52,7 +53,7 @@ export function derived(fn) {
 /**
  * @template V
  * @param {() => V} fn
- * @returns {import('#client').Derived<V>}
+ * @returns {Derived<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived_safe_equal(fn) {
@@ -62,7 +63,7 @@ export function derived_safe_equal(fn) {
 }
 
 /**
- * @param {import('#client').Derived} derived
+ * @param {Derived} derived
  * @returns {void}
  */
 function destroy_derived_children(derived) {
@@ -79,7 +80,7 @@ function destroy_derived_children(derived) {
 }
 
 /**
- * @param {import('#client').Derived} derived
+ * @param {Derived} derived
  * @returns {void}
  */
 export function update_derived(derived) {
@@ -103,7 +104,7 @@ export function update_derived(derived) {
 }
 
 /**
- * @param {import('#client').Derived} signal
+ * @param {Derived} signal
  * @returns {void}
  */
 export function destroy_derived(signal) {

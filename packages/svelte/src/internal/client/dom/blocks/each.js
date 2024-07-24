@@ -59,7 +59,7 @@ export function index(_, i) {
  * @param {EachState} state
  * @param {EachItem[]} items
  * @param {null | Node} controlled_anchor
- * @param {Map<any, import("#client").EachItem>} items_map
+ * @param {Map<any, EachItem>} items_map
  */
 function pause_effects(state, items, controlled_anchor, items_map) {
 	/** @type {TransitionManager[]} */
