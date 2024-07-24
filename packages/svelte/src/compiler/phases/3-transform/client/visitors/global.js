@@ -1,11 +1,13 @@
+/** @import { Expression, Node, Pattern, Statement } from 'estree' */
+/** @import { Visitors } from '../types' */
 import is_reference from 'is-reference';
 import { serialize_get_binding, serialize_set_binding } from '../utils.js';
 import * as b from '../../../../utils/builders.js';
 
-/** @type {import('../types').Visitors} */
+/** @type {Visitors} */
 export const global_visitors = {
 	Identifier(node, { path, state }) {
-		if (is_reference(node, /** @type {import('estree').Node} */ (path.at(-1)))) {
+		if (is_reference(node, /** @type {Node} */ (path.at(-1)))) {
 			if (node.name === '$$props') {
 				return b.id('$$sanitized_props');
 			}
@@ -74,7 +76,7 @@ export const global_visitors = {
 				binding?.kind === 'bindable_prop' ||
 				is_store
 			) {
-				/** @type {import('estree').Expression[]} */
+				/** @type {Expression[]} */
 				const args = [];
 
 				let fn = '$.update';
@@ -105,7 +107,7 @@ export const global_visitors = {
 			let fn = '$.update';
 			if (node.prefix) fn += '_pre';
 
-			/** @type {import('estree').Expression[]} */
+			/** @type {Expression[]} */
 			const args = [argument];
 			if (node.operator === '--') {
 				args.push(b.literal(-1));
@@ -116,7 +118,7 @@ export const global_visitors = {
 			// turn it into an IIFEE assignment expression: i++ -> (() => { const $$value = i; i+=1; return $$value; })
 			const assignment = b.assignment(
 				node.operator === '++' ? '+=' : '-=',
-				/** @type {import('estree').Pattern} */ (argument),
+				/** @type {Pattern} */ (argument),
 				b.literal(1)
 			);
 			const serialized_assignment = serialize_set_binding(
@@ -125,14 +127,14 @@ export const global_visitors = {
 				() => assignment,
 				node.prefix
 			);
-			const value = /** @type {import('estree').Expression} */ (visit(argument));
+			const value = /** @type {Expression} */ (visit(argument));
 			if (serialized_assignment === assignment) {
 				// No change to output -> nothing to transform -> we can keep the original update expression
 				return next();
 			} else if (context.state.analysis.runes) {
 				return serialized_assignment;
 			} else {
-				/** @type {import('estree').Statement[]} */
+				/** @type {Statement[]} */
 				let statements;
 				if (node.prefix) {
 					statements = [b.stmt(serialized_assignment), b.return(value)];
