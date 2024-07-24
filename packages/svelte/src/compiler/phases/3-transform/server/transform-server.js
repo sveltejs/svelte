@@ -601,27 +601,27 @@ const javascript_visitors_legacy = {
 
 /** @type {ComponentVisitors} */
 const template_visitors = {
-	Fragment,
-	HtmlTag,
+	AwaitBlock,
+	Component,
 	ConstTag,
 	DebugTag,
-	RenderTag,
-	RegularElement,
-	SvelteElement,
 	EachBlock,
+	Fragment,
+	HtmlTag,
 	IfBlock,
-	AwaitBlock,
 	KeyBlock,
-	SnippetBlock,
-	Component,
-	SvelteSelf,
-	SvelteComponent,
 	LetDirective,
-	SpreadAttribute,
-	SvelteFragment,
-	TitleElement,
+	RegularElement,
+	RenderTag,
 	SlotElement,
-	SvelteHead
+	SnippetBlock,
+	SpreadAttribute,
+	SvelteComponent,
+	SvelteElement,
+	SvelteFragment,
+	SvelteHead,
+	SvelteSelf,
+	TitleElement
 };
 
 /**
