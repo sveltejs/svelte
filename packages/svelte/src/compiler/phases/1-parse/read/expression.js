@@ -1,10 +1,12 @@
+/** @import { Expression } from 'estree' */
+/** @import { Parser } from '../index.js' */
 import { parse_expression_at } from '../acorn.js';
 import { regex_whitespace } from '../../patterns.js';
 import * as e from '../../../errors.js';
 
 /**
- * @param {import('../index.js').Parser} parser
- * @returns {import('estree').Expression}
+ * @param {Parser} parser
+ * @returns {Expression}
  */
 export default function read_expression(parser) {
 	try {
@@ -35,7 +37,7 @@ export default function read_expression(parser) {
 
 		parser.index = index;
 
-		return /** @type {import('estree').Expression} */ (node);
+		return /** @type {Expression} */ (node);
 	} catch (err) {
 		parser.acorn_error(err);
 	}

@@ -1,5 +1,6 @@
-/** @import { Parser } from '../index.js' */
+/** @import { Expression } from 'estree' */
 /** @import * as Compiler from '#compiler' */
+/** @import { Parser } from '../index.js' */
 import { is_void } from '../../../../constants.js';
 import read_expression from '../read/expression.js';
 import { read_script } from '../read/script.js';
@@ -589,7 +590,7 @@ function read_attribute(parser) {
 
 		const first_value = value === true ? undefined : Array.isArray(value) ? value[0] : value;
 
-		/** @type {import('estree').Expression | null} */
+		/** @type {Expression | null} */
 		let expression = null;
 
 		if (first_value) {

@@ -1,3 +1,6 @@
+/** @import { ArrowFunctionExpression, Expression, Identifier } from 'estree' */
+/** @import { AwaitBlock, ConstTag, DebugTag, EachBlock, ExpressionTag, HtmlTag, IfBlock, KeyBlock, RenderTag, SnippetBlock } from '#compiler' */
+/** @import { Parser } from '../index.js' */
 import read_pattern from '../read/context.js';
 import read_expression from '../read/expression.js';
 import * as e from '../../../errors.js';
@@ -7,7 +10,7 @@ import { parse_expression_at } from '../acorn.js';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
-/** @param {import('../index.js').Parser} parser */
+/** @param {Parser} parser */
 export default function tag(parser) {
 	const start = parser.index;
 	parser.index += 1;
@@ -29,7 +32,7 @@ export default function tag(parser) {
 	parser.allow_whitespace();
 	parser.eat('}', true);
 
-	/** @type {ReturnType<typeof parser.append<import('#compiler').ExpressionTag>>} */
+	/** @type {ReturnType<typeof parser.append<ExpressionTag>>} */
 	parser.append({
 		type: 'ExpressionTag',
 		start,
@@ -42,7 +45,7 @@ export default function tag(parser) {
 	});
 }
 
-/** @param {import('../index.js').Parser} parser */
+/** @param {Parser} parser */
 function open(parser) {
 	let start = parser.index - 2;
 	while (parser.template[start] !== '{') start -= 1;
@@ -50,7 +53,7 @@ function open(parser) {
 	if (parser.eat('if')) {
 		parser.require_whitespace();
 
-		/** @type {ReturnType<typeof parser.append<import('#compiler').IfBlock>>} */
+		/** @type {ReturnType<typeof parser.append<IfBlock>>} */
 		const block = parser.append({
 			type: 'IfBlock',
 			elseif: false,
@@ -76,7 +79,7 @@ function open(parser) {
 		const template = parser.template;
 		let end = parser.template.length;
 
-		/** @type {import('estree').Expression | undefined} */
+		/** @type {Expression | undefined} */
 		let expression;
 
 		// we have to do this loop because `{#each x as { y = z }}` fails to parse —
@@ -119,7 +122,7 @@ function open(parser) {
 			expression = walk(expression, null, {
 				// @ts-expect-error
 				TSAsExpression(node, context) {
-					if (node.end === /** @type {import('estree').Expression} */ (expression).end) {
+					if (node.end === /** @type {Expression} */ (expression).end) {
 						assertion = node;
 						end = node.expression.end;
 						return node.expression;
@@ -171,7 +174,7 @@ function open(parser) {
 
 		parser.eat('}', true);
 
-		/** @type {ReturnType<typeof parser.append<import('#compiler').EachBlock>>} */
+		/** @type {ReturnType<typeof parser.append<EachBlock>>} */
 		const block = parser.append({
 			type: 'EachBlock',
 			start,
@@ -195,7 +198,7 @@ function open(parser) {
 		const expression = read_expression(parser);
 		parser.allow_whitespace();
 
-		/** @type {ReturnType<typeof parser.append<import('#compiler').AwaitBlock>>} */
+		/** @type {ReturnType<typeof parser.append<AwaitBlock>>} */
 		const block = parser.append({
 			type: 'AwaitBlock',
 			start,
@@ -249,7 +252,7 @@ function open(parser) {
 
 		parser.eat('}', true);
 
-		/** @type {ReturnType<typeof parser.append<import('#compiler').KeyBlock>>} */
+		/** @type {ReturnType<typeof parser.append<KeyBlock>>} */
 		const block = parser.append({
 			type: 'KeyBlock',
 			start,
@@ -293,14 +296,14 @@ function open(parser) {
 		const prelude = parser.template.slice(0, params_start).replace(/\S/g, ' ');
 		const params = parser.template.slice(params_start, parser.index);
 
-		let function_expression = /** @type {import('estree').ArrowFunctionExpression} */ (
+		let function_expression = /** @type {ArrowFunctionExpression} */ (
 			parse_expression_at(prelude + `${params} => {}`, parser.ts, params_start)
 		);
 
 		parser.allow_whitespace();
 		parser.eat('}', true);
 
-		/** @type {ReturnType<typeof parser.append<import('#compiler').SnippetBlock>>} */
+		/** @type {ReturnType<typeof parser.append<SnippetBlock>>} */
 		const block = parser.append({
 			type: 'SnippetBlock',
 			start,
@@ -323,7 +326,7 @@ function open(parser) {
 	e.expected_block_type(parser.index);
 }
 
-/** @param {import('../index.js').Parser} parser */
+/** @param {Parser} parser */
 function next(parser) {
 	const start = parser.index - 1;
 
@@ -352,7 +355,7 @@ function next(parser) {
 			let elseif_start = start - 1;
 			while (parser.template[elseif_start] !== '{') elseif_start -= 1;
 
-			/** @type {ReturnType<typeof parser.append<import('#compiler').IfBlock>>} */
+			/** @type {ReturnType<typeof parser.append<IfBlock>>} */
 			const child = parser.append({
 				start: elseif_start,
 				end: -1,
@@ -434,7 +437,7 @@ function next(parser) {
 	e.block_invalid_continuation_placement(start);
 }
 
-/** @param {import('../index.js').Parser} parser */
+/** @param {Parser} parser */
 function close(parser) {
 	const start = parser.index - 1;
 
@@ -448,7 +451,7 @@ function close(parser) {
 			while (block.elseif) {
 				block.end = parser.index;
 				parser.stack.pop();
-				block = /** @type {import('#compiler').IfBlock} */ (parser.current());
+				block = /** @type {IfBlock} */ (parser.current());
 			}
 			block.end = parser.index;
 			parser.pop();
@@ -482,7 +485,7 @@ function close(parser) {
 	parser.pop();
 }
 
-/** @param {import('../index.js').Parser} parser */
+/** @param {Parser} parser */
 function special(parser) {
 	let start = parser.index;
 	while (parser.template[start] !== '{') start -= 1;
@@ -496,7 +499,7 @@ function special(parser) {
 		parser.allow_whitespace();
 		parser.eat('}', true);
 
-		/** @type {ReturnType<typeof parser.append<import('#compiler').HtmlTag>>} */
+		/** @type {ReturnType<typeof parser.append<HtmlTag>>} */
 		parser.append({
 			type: 'HtmlTag',
 			start,
@@ -508,7 +511,7 @@ function special(parser) {
 	}
 
 	if (parser.eat('debug')) {
-		/** @type {import('estree').Identifier[]} */
+		/** @type {Identifier[]} */
 		let identifiers;
 
 		// Implies {@debug} which indicates "debug all"
@@ -519,8 +522,8 @@ function special(parser) {
 
 			identifiers =
 				expression.type === 'SequenceExpression'
-					? /** @type {import('estree').Identifier[]} */ (expression.expressions)
-					: [/** @type {import('estree').Identifier} */ (expression)];
+					? /** @type {Identifier[]} */ (expression.expressions)
+					: [/** @type {Identifier} */ (expression)];
 
 			identifiers.forEach(
 				/** @param {any} node */ (node) => {
@@ -534,7 +537,7 @@ function special(parser) {
 			parser.eat('}', true);
 		}
 
-		/** @type {ReturnType<typeof parser.append<import('#compiler').DebugTag>>} */
+		/** @type {ReturnType<typeof parser.append<DebugTag>>} */
 		parser.append({
 			type: 'DebugTag',
 			start,
@@ -567,7 +570,7 @@ function special(parser) {
 
 		parser.eat('}', true);
 
-		/** @type {ReturnType<typeof parser.append<import('#compiler').ConstTag>>} */
+		/** @type {ReturnType<typeof parser.append<ConstTag>>} */
 		parser.append({
 			type: 'ConstTag',
 			start,
@@ -598,7 +601,7 @@ function special(parser) {
 		parser.allow_whitespace();
 		parser.eat('}', true);
 
-		/** @type {ReturnType<typeof parser.append<import('#compiler').RenderTag>>} */
+		/** @type {ReturnType<typeof parser.append<RenderTag>>} */
 		parser.append({
 			type: 'RenderTag',
 			start,
