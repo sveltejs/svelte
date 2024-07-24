@@ -1,6 +1,7 @@
-/** @import { Source, Effect } from '#client' */
+/** @import { Source, Effect, TemplateNode } from '#client' */
 import { FILENAME, HMR } from '../../../constants.js';
 import { EFFECT_TRANSPARENT } from '../constants.js';
+import { hydrate_node, hydrating } from '../dom/hydration.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
 import { source } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
@@ -13,7 +14,7 @@ import { get } from '../runtime.js';
  */
 export function hmr(original, get_source) {
 	/**
-	 * @param {Comment} anchor
+	 * @param {TemplateNode} anchor
 	 * @param {any} props
 	 */
 	function wrapper(anchor, props) {
@@ -52,6 +53,10 @@ export function hmr(original, get_source) {
 		}, EFFECT_TRANSPARENT);
 
 		ran = true;
+
+		if (hydrating) {
+			anchor = hydrate_node;
+		}
 
 		return instance;
 	}
