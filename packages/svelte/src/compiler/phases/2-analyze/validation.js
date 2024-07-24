@@ -636,11 +636,14 @@ const validation = {
 			}
 		}
 
+		// Strip off any namespace from the beginning of the node name.
+		const node_name = node.name.replace(/[a-zA-Z-]*:/g, '');
+
 		if (
 			context.state.analysis.source[node.end - 2] === '/' &&
 			context.state.options.namespace !== 'foreign' &&
-			!VoidElements.includes(node.name) &&
-			!SVGElements.includes(node.name)
+			!VoidElements.includes(node_name) &&
+			!SVGElements.includes(node_name)
 		) {
 			w.element_invalid_self_closing_tag(node, node.name);
 		}
