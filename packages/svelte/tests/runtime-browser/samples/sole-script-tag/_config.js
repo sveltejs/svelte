@@ -6,7 +6,6 @@ export default test({
 	// Needs to be in this test suite because JSDOM does not quite get this right.
 	mode: ['client'],
 	test({ window, assert }) {
-		flushSync();
 		// In here to give effects etc time to execute
 		assert.htmlEqual(window.document.body.innerHTML, 'this should be executed');
 	}

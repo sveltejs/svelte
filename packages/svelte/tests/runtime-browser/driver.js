@@ -46,8 +46,9 @@ export default async function (target) {
 			} while (new Date().getTime() <= start + ms);
 		};
 
+		flushSync();
+
 		if (config.html) {
-			flushSync();
 			assert.htmlEqual(target.innerHTML, config.html);
 		}
 
