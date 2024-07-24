@@ -1636,6 +1636,10 @@ declare module 'svelte/compiler' {
 		/** The 'y' in `on:x={y}` */
 		expression: null | Expression;
 		modifiers: string[]; // TODO specify
+		metadata: {
+			contains_call_expression: boolean;
+			dynamic: boolean;
+		};
 	}
 
 	type DelegatedEvent =
