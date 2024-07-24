@@ -1,3 +1,4 @@
+/** @import { AnimateFn, Animation, AnimationConfig, EachItem, Effect, Task, TransitionFn, TransitionManager } from '#client' */
 import { noop, is_function } from '../../../shared/utils.js';
 import { effect } from '../../reactivity/effects.js';
 import { current_effect, untrack } from '../../runtime.js';
@@ -60,11 +61,11 @@ const linear = (t) => t;
  * and attaches it to the block, so that moves can be animated following reconciliation.
  * @template P
  * @param {Element} element
- * @param {() => import('#client').AnimateFn<P | undefined>} get_fn
+ * @param {() => AnimateFn<P | undefined>} get_fn
  * @param {(() => P) | null} get_params
  */
 export function animation(element, get_fn, get_params) {
-	var item = /** @type {import('#client').EachItem} */ (current_each_item);
+	var item = /** @type {EachItem} */ (current_each_item);
 
 	/** @type {DOMRect} */
 	var from;
@@ -72,7 +73,7 @@ export function animation(element, get_fn, get_params) {
 	/** @type {DOMRect} */
 	var to;
 
-	/** @type {import('#client').Animation | undefined} */
+	/** @type {Animation | undefined} */
 	var animation;
 
 	/** @type {null | { position: string, width: string, height: string, transform: string }} */
@@ -167,7 +168,7 @@ export function animation(element, get_fn, get_params) {
  * @template P
  * @param {number} flags
  * @param {HTMLElement} element
- * @param {() => import('#client').TransitionFn<P | undefined>} get_fn
+ * @param {() => TransitionFn<P | undefined>} get_fn
  * @param {(() => P) | null} get_params
  * @returns {void}
  */
@@ -180,15 +181,15 @@ export function transition(flags, element, get_fn, get_params) {
 	/** @type {'in' | 'out' | 'both'} */
 	var direction = is_both ? 'both' : is_intro ? 'in' : 'out';
 
-	/** @type {import('#client').AnimationConfig | ((opts: { direction: 'in' | 'out' }) => import('#client').AnimationConfig) | undefined} */
+	/** @type {AnimationConfig | ((opts: { direction: 'in' | 'out' }) => AnimationConfig) | undefined} */
 	var current_options;
 
 	var inert = element.inert;
 
-	/** @type {import('#client').Animation | undefined} */
+	/** @type {Animation | undefined} */
 	var intro;
 
-	/** @type {import('#client').Animation | undefined} */
+	/** @type {Animation | undefined} */
 	var outro;
 
 	/** @type {(() => void) | undefined} */
@@ -201,7 +202,7 @@ export function transition(flags, element, get_fn, get_params) {
 		return (current_options ??= get_fn()(element, get_params?.(), { direction }));
 	}
 
-	/** @type {import('#client').TransitionManager} */
+	/** @type {TransitionManager} */
 	var transition = {
 		is_global,
 		in() {
@@ -271,7 +272,7 @@ export function transition(flags, element, get_fn, get_params) {
 		}
 	};
 
-	var e = /** @type {import('#client').Effect} */ (current_effect);
+	var e = /** @type {Effect} */ (current_effect);
 
 	(e.transitions ??= []).push(transition);
 
@@ -282,7 +283,7 @@ export function transition(flags, element, get_fn, get_params) {
 		let run = is_global;
 
 		if (!run) {
-			var block = /** @type {import('#client').Effect | null} */ (e.parent);
+			var block = /** @type {Effect | null} */ (e.parent);
 
 			// skip over transparent blocks (e.g. snippets, else-if blocks)
 			while (block && (block.f & EFFECT_TRANSPARENT) !== 0) {
@@ -305,12 +306,12 @@ export function transition(flags, element, get_fn, get_params) {
 /**
  * Animates an element, according to the provided configuration
  * @param {Element} element
- * @param {import('#client').AnimationConfig | ((opts: { direction: 'in' | 'out' }) => import('#client').AnimationConfig)} options
- * @param {import('#client').Animation | undefined} counterpart The corresponding intro/outro to this outro/intro
+ * @param {AnimationConfig | ((opts: { direction: 'in' | 'out' }) => AnimationConfig)} options
+ * @param {Animation | undefined} counterpart The corresponding intro/outro to this outro/intro
  * @param {number} t2 The target `t` value — `1` for intro, `0` for outro
  * @param {(() => void) | undefined} on_finish Called after successfully completing the animation
  * @param {(() => void) | undefined} on_abort Called if the animation is aborted
- * @returns {import('#client').Animation}
+ * @returns {Animation}
  */
 function animate(element, options, counterpart, t2, on_finish, on_abort) {
 	var is_intro = t2 === 1;
@@ -319,7 +320,7 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 		// In the case of a deferred transition (such as `crossfade`), `option` will be
 		// a function rather than an `AnimationConfig`. We need to call this function
 		// once DOM has been updated...
-		/** @type {import('#client').Animation} */
+		/** @type {Animation} */
 		var a;
 
 		queue_micro_task(() => {
@@ -358,10 +359,10 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 	var duration = options.duration * Math.abs(delta);
 	var end = start + duration;
 
-	/** @type {Animation} */
+	/** @type {globalThis.Animation} */
 	var animation;
 
-	/** @type {import('#client').Task} */
+	/** @type {Task} */
 	var task;
 
 	if (css) {

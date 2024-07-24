@@ -1,3 +1,4 @@
+/** @import { ComponentType, SvelteComponent } from 'svelte' */
 /** @import { Component, Payload, RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
 export { FILENAME, HMR } from '../../constants.js';
@@ -103,7 +104,7 @@ export let on_destroy = [];
  * Only available on the server and when compiling with the `server` option.
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
- * @param {import('svelte').Component<Props> | import('svelte').ComponentType<import('svelte').SvelteComponent<Props>>} component
+ * @param {import('svelte').Component<Props> | ComponentType<SvelteComponent<Props>>} component
  * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }} [options]
  * @returns {RenderOutput}
  */

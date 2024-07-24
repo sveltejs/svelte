@@ -1,4 +1,4 @@
-/** @import { TemplateNode } from '#client' */
+/** @import { Effect, TemplateNode } from '#client' */
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import {
 	hydrate_next,
@@ -14,8 +14,8 @@ import { HYDRATION_START_ELSE } from '../../../../constants.js';
 /**
  * @param {TemplateNode} node
  * @param {() => boolean} get_condition
- * @param {(anchor: Node) => import('#client').Dom} consequent_fn
- * @param {null | ((anchor: Node) => import('#client').Dom)} [alternate_fn]
+ * @param {(anchor: Node) => void} consequent_fn
+ * @param {null | ((anchor: Node) => void)} [alternate_fn]
  * @param {boolean} [elseif] True if this is an `{:else if ...}` block rather than an `{#if ...}`, as that affects which transitions are considered 'local'
  * @returns {void}
  */
@@ -26,10 +26,10 @@ export function if_block(node, get_condition, consequent_fn, alternate_fn = null
 
 	var anchor = node;
 
-	/** @type {import('#client').Effect | null} */
+	/** @type {Effect | null} */
 	var consequent_effect = null;
 
-	/** @type {import('#client').Effect | null} */
+	/** @type {Effect | null} */
 	var alternate_effect = null;
 
 	/** @type {boolean | null} */
