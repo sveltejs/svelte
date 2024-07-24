@@ -1,3 +1,5 @@
+/** @import { Comment, Program } from 'estree' */
+/** @import { Node } from 'acorn' */
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from 'acorn-typescript';
@@ -23,7 +25,7 @@ export function parse(source, typescript) {
 	if (typescript) amend(source, ast);
 	add_comments(ast);
 
-	return /** @type {import('estree').Program} */ (ast);
+	return /** @type {Program} */ (ast);
 }
 
 /**
@@ -57,7 +59,7 @@ export function parse_expression_at(source, typescript, index) {
  */
 function get_comment_handlers(source) {
 	/**
-	 * @typedef {import('estree').Comment & {
+	 * @typedef {Comment & {
 	 *   start: number;
 	 *   end: number;
 	 * }} CommentWithLocation
@@ -149,7 +151,7 @@ function get_comment_handlers(source) {
 /**
  * Tidy up some stuff left behind by acorn-typescript
  * @param {string} source
- * @param {import('acorn').Node} node
+ * @param {Node} node
  */
 function amend(source, node) {
 	return walk(node, null, {
