@@ -138,8 +138,6 @@ export function hydrate(component, options) {
 			throw HYDRATION_ERROR;
 		}
 
-		// flush_sync will run this callback and then synchronously run any pending effects,
-		// which don't belong to the hydration phase anymore - therefore reset it here
 		set_hydrating(false);
 
 		return /**  @type {Exports} */ (instance);
