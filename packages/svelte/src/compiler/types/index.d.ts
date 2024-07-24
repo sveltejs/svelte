@@ -129,6 +129,8 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * Set to `undefined` (the default) to infer runes mode from the component code.
 	 * Is always `true` for JS/TS modules compiled with Svelte.
 	 * Will be `true` by default in Svelte 6.
+	 * Note that setting this to `true` in your `svelte.config.js` will force runes mode for your entire project, including components in `node_modules`,
+	 * which is likely not what you want. If you're using Vite, consider using [dynamicCompileOptions](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/config.md#dynamiccompileoptions) instead.
 	 * @default undefined
 	 */
 	runes?: boolean | undefined;
