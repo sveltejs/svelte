@@ -1,5 +1,8 @@
 /** @import { BlockStatement, CallExpression, Expression, ExpressionStatement, Identifier, Literal, MemberExpression, ObjectExpression, Pattern, Property, Statement, Super, TemplateElement, TemplateLiteral } from 'estree' */
-/** @import { BindDirective, RegularElement } from '#compiler' */
+/** @import { Attribute, BindDirective, Binding, ClassDirective, Component, DelegatedEvent, EachBlock, ExpressionTag, Namespace, OnDirective, RegularElement, SpreadAttribute, StyleDirective, SvelteComponent, SvelteElement, SvelteNode, SvelteSelf, TemplateNode, Text } from '#compiler' */
+/** @import { SourceLocation } from '#shared' */
+/** @import { Scope } from '../../../scope.js' */
+/** @import { ComponentClientTransformState, ComponentContext, ComponentVisitors } from '../types.js' */
 import {
 	extract_identifiers,
 	extract_paths,
@@ -54,9 +57,9 @@ import { locator } from '../../../../state.js';
 import is_reference from 'is-reference';
 
 /**
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
- * @param {import('#compiler').Attribute} attribute
- * @param {{ state: { metadata: { namespace: import('#compiler').Namespace }}}} context
+ * @param {RegularElement | SvelteElement} element
+ * @param {Attribute} attribute
+ * @param {{ state: { metadata: { namespace: Namespace }}}} context
  */
 function get_attribute_name(element, attribute, context) {
 	let name = attribute.name;
@@ -76,9 +79,9 @@ function get_attribute_name(element, attribute, context) {
 /**
  * Serializes each style directive into something like `$.set_style(element, style_property, value)`
  * and adds it either to init or update, depending on whether or not the value or the attributes are dynamic.
- * @param {import('#compiler').StyleDirective[]} style_directives
+ * @param {StyleDirective[]} style_directives
  * @param {Identifier} element_id
- * @param {import('../types.js').ComponentContext} context
+ * @param {ComponentContext} context
  * @param {boolean} is_attributes_reactive
  */
 function serialize_style_directives(style_directives, element_id, context, is_attributes_reactive) {
@@ -138,9 +141,9 @@ function parse_directive_name(name) {
 /**
  * Serializes each class directive into something like `$.class_toogle(element, class_name, value)`
  * and adds it either to init or update, depending on whether or not the value or the attributes are dynamic.
- * @param {import('#compiler').ClassDirective[]} class_directives
+ * @param {ClassDirective[]} class_directives
  * @param {Identifier} element_id
- * @param {import('../types.js').ComponentContext} context
+ * @param {ComponentContext} context
  * @param {boolean} is_attributes_reactive
  */
 function serialize_class_directives(class_directives, element_id, context, is_attributes_reactive) {
@@ -161,11 +164,11 @@ function serialize_class_directives(class_directives, element_id, context, is_at
 }
 
 /**
- * @param {import('#compiler').Binding[]} references
- * @param {import('../types.js').ComponentContext} context
+ * @param {Binding[]} references
+ * @param {ComponentContext} context
  */
 function serialize_transitive_dependencies(references, context) {
-	/** @type {Set<import('#compiler').Binding>} */
+	/** @type {Set<Binding>} */
 	const dependencies = new Set();
 
 	for (const ref of references) {
@@ -179,9 +182,9 @@ function serialize_transitive_dependencies(references, context) {
 }
 
 /**
- * @param {import('#compiler').Binding} binding
- * @param {Set<import('#compiler').Binding>} seen
- * @returns {import('#compiler').Binding[]}
+ * @param {Binding} binding
+ * @param {Set<Binding>} seen
+ * @returns {Binding[]}
  */
 function collect_transitive_dependencies(binding, seen = new Set()) {
 	if (binding.kind !== 'legacy_reactive') return [];
@@ -201,8 +204,8 @@ function collect_transitive_dependencies(binding, seen = new Set()) {
 /**
  * Special case: if we have a value binding on a select element, we need to set up synchronization
  * between the value binding and inner signals, for indirect updates
- * @param {import('#compiler').BindDirective} value_binding
- * @param {import('../types.js').ComponentContext} context
+ * @param {BindDirective} value_binding
+ * @param {ComponentContext} context
  */
 function setup_select_synchronization(value_binding, context) {
 	if (context.state.analysis.runes) return;
@@ -253,9 +256,9 @@ function setup_select_synchronization(value_binding, context) {
 }
 
 /**
- * @param {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} attributes
- * @param {import('../types.js').ComponentContext} context
- * @param {import('#compiler').RegularElement} element
+ * @param {Array<Attribute | SpreadAttribute>} attributes
+ * @param {ComponentContext} context
+ * @param {RegularElement} element
  * @param {Identifier} element_id
  * @param {boolean} needs_select_handling
  */
@@ -358,8 +361,8 @@ function serialize_element_spread_attributes(
 /**
  * Serializes dynamic element attribute assignments.
  * Returns the `true` if spread is deemed reactive.
- * @param {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} attributes
- * @param {import('../types.js').ComponentContext} context
+ * @param {Array<Attribute | SpreadAttribute>} attributes
+ * @param {ComponentContext} context
  * @param {Identifier} element_id
  * @returns {boolean}
  */
@@ -472,10 +475,10 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
  * });
  * ```
  * Returns true if attribute is deemed reactive, false otherwise.
- * @param {import('#compiler').RegularElement} element
+ * @param {RegularElement} element
  * @param {Identifier} node_id
- * @param {import('#compiler').Attribute} attribute
- * @param {import('../types.js').ComponentContext} context
+ * @param {Attribute} attribute
+ * @param {ComponentContext} context
  * @returns {boolean}
  */
 function serialize_element_attribute_update_assignment(element, node_id, attribute, context) {
@@ -542,8 +545,8 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 /**
  * Like `serialize_element_attribute_update_assignment` but without any special attribute treatment.
  * @param {Identifier}	node_id
- * @param {import('#compiler').Attribute} attribute
- * @param {import('../types.js').ComponentContext} context
+ * @param {Attribute} attribute
+ * @param {ComponentContext} context
  * @returns {boolean}
  */
 function serialize_custom_element_attribute_update_assignment(node_id, attribute, context) {
@@ -572,8 +575,8 @@ function serialize_custom_element_attribute_update_assignment(node_id, attribute
  * Returns true if attribute is deemed reactive, false otherwise.
  * @param {string} element
  * @param {Identifier} node_id
- * @param {import('#compiler').Attribute} attribute
- * @param {import('../types.js').ComponentContext} context
+ * @param {Attribute} attribute
+ * @param {ComponentContext} context
  * @returns {boolean}
  */
 function serialize_element_special_value_attribute(element, node_id, attribute, context) {
@@ -632,7 +635,7 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 }
 
 /**
- * @param {import('../types.js').ComponentClientTransformState} state
+ * @param {ComponentClientTransformState} state
  * @param {string} id
  * @param {Expression | undefined} init
  * @param {Expression} value
@@ -646,18 +649,16 @@ function serialize_update_assignment(state, id, init, value, update) {
 }
 
 /**
- * @param {import('../types.js').ComponentContext} context
+ * @param {ComponentContext} context
  */
 function collect_parent_each_blocks(context) {
-	return /** @type {import('#compiler').EachBlock[]} */ (
-		context.path.filter((node) => node.type === 'EachBlock')
-	);
+	return /** @type {EachBlock[]} */ (context.path.filter((node) => node.type === 'EachBlock'));
 }
 
 /**
- * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node
+ * @param {Component | SvelteComponent | SvelteSelf} node
  * @param {string} component_name
- * @param {import('../types.js').ComponentContext} context
+ * @param {ComponentContext} context
  * @param {Expression} anchor
  * @returns {Statement}
  */
@@ -668,7 +669,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 	/** @type {ExpressionStatement[]} */
 	const lets = [];
 
-	/** @type {Record<string, import('#compiler').TemplateNode[]>} */
+	/** @type {Record<string, TemplateNode[]>} */
 	const children = {};
 
 	/** @type {Record<string, Expression[]>} */
@@ -681,7 +682,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 	let bind_this = null;
 
 	/**
-	 * @type {import("estree").ExpressionStatement[]}
+	 * @type {ExpressionStatement[]}
 	 */
 	const binding_initializers = [];
 
@@ -844,14 +845,14 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 		let slot_name = 'default';
 
 		if (is_element_node(child)) {
-			const attribute = /** @type {import('#compiler').Attribute | undefined} */ (
+			const attribute = /** @type {Attribute | undefined} */ (
 				child.attributes.find(
 					(attribute) => attribute.type === 'Attribute' && attribute.name === 'slot'
 				)
 			);
 
 			if (attribute !== undefined) {
-				slot_name = /** @type {import('#compiler').Text[]} */ (attribute.value)[0].data;
+				slot_name = /** @type {Text[]} */ (attribute.value)[0].data;
 			}
 		}
 
@@ -995,7 +996,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
  * Serializes `bind:this` for components and elements.
  * @param {Identifier | MemberExpression} expression
  * @param {Expression} value
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('../types.js').ComponentClientTransformState>} context
+ * @param {import('zimmerframe').Context<SvelteNode, ComponentClientTransformState>} context
  */
 function serialize_bind_this(expression, value, { state, visit }) {
 	/** @type {Identifier[]} */
@@ -1059,7 +1060,7 @@ function serialize_bind_this(expression, value, { state, visit }) {
 }
 
 /**
- * @param {import('#shared').SourceLocation[]} locations
+ * @param {SourceLocation[]} locations
  */
 function serialize_locations(locations) {
 	return b.array(
@@ -1077,8 +1078,8 @@ function serialize_locations(locations) {
 
 /**
  *
- * @param {import('#compiler').Namespace} namespace
- * @param {import('../types.js').ComponentClientTransformState} state
+ * @param {Namespace} namespace
+ * @param {ComponentClientTransformState} state
  * @returns
  */
 function get_template_function(namespace, state) {
@@ -1116,9 +1117,9 @@ function serialize_render_stmt(update) {
 
 /**
  * Serializes the event handler function of the `on:` directive
- * @param {Pick<import('#compiler').OnDirective, 'name' | 'modifiers' | 'expression'>} node
+ * @param {Pick<OnDirective, 'name' | 'modifiers' | 'expression'>} node
  * @param {null | { contains_call_expression: boolean; dynamic: boolean; } | null} metadata
- * @param {import('../types.js').ComponentContext} context
+ * @param {ComponentContext} context
  */
 function serialize_event_handler(node, metadata, { state, visit }) {
 	/** @type {Expression} */
@@ -1225,9 +1226,9 @@ function serialize_event_handler(node, metadata, { state, visit }) {
 
 /**
  * Serializes an event handler function of the `on:` directive or an attribute starting with `on`
- * @param {{name: string;modifiers: string[];expression: Expression | null;delegated?: import('#compiler').DelegatedEvent | null;}} node
+ * @param {{name: string;modifiers: string[];expression: Expression | null;delegated?: DelegatedEvent | null;}} node
  * @param {null | { contains_call_expression: boolean; dynamic: boolean; }} metadata
- * @param {import('../types.js').ComponentContext} context
+ * @param {ComponentContext} context
  */
 function serialize_event(node, metadata, context) {
 	const state = context.state;
@@ -1312,7 +1313,7 @@ function serialize_event(node, metadata, context) {
 		);
 	}
 
-	const parent = /** @type {import('#compiler').SvelteNode} */ (context.path.at(-1));
+	const parent = /** @type {SvelteNode} */ (context.path.at(-1));
 	const has_action_directive =
 		parent.type === 'RegularElement' && parent.attributes.find((a) => a.type === 'UseDirective');
 	const statement = b.stmt(
@@ -1332,8 +1333,8 @@ function serialize_event(node, metadata, context) {
 }
 
 /**
- * @param {import('#compiler').Attribute & { value: import('#compiler').ExpressionTag | [import('#compiler').ExpressionTag] }} node
- * @param {import('../types').ComponentContext} context
+ * @param {Attribute & { value: ExpressionTag | [ExpressionTag] }} node
+ * @param {ComponentContext} context
  */
 function serialize_event_attribute(node, context) {
 	/** @type {string[]} */
@@ -1361,15 +1362,15 @@ function serialize_event_attribute(node, context) {
  * Processes an array of template nodes, joining sibling text/expression nodes
  * (e.g. `{a} b {c}`) into a single update function. Along the way it creates
  * corresponding template node references these updates are applied to.
- * @param {import('#compiler').SvelteNode[]} nodes
+ * @param {SvelteNode[]} nodes
  * @param {(is_text: boolean) => Expression} expression
  * @param {boolean} is_element
- * @param {import('../types.js').ComponentContext} context
+ * @param {ComponentContext} context
  */
 function process_children(nodes, expression, is_element, { visit, state }) {
 	const within_bound_contenteditable = state.metadata.bound_contenteditable;
 
-	/** @typedef {Array<import('#compiler').Text | import('#compiler').ExpressionTag>} Sequence */
+	/** @typedef {Array<Text | ExpressionTag>} Sequence */
 
 	/** @type {Sequence} */
 	let sequence = [];
@@ -1495,7 +1496,7 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 
 /**
  * @param {Expression} expression
- * @param {import('../types.js').ComponentClientTransformState} state
+ * @param {ComponentClientTransformState} state
  * @param {string} name
  */
 function get_node_id(expression, state, name) {
@@ -1510,8 +1511,8 @@ function get_node_id(expression, state, name) {
 }
 
 /**
- * @param {import('#compiler').Attribute['value']} value
- * @param {import('../types').ComponentContext} context
+ * @param {Attribute['value']} value
+ * @param {ComponentContext} context
  * @returns {[contains_call_expression: boolean, Expression]}
  */
 function serialize_attribute_value(value, context) {
@@ -1536,9 +1537,9 @@ function serialize_attribute_value(value, context) {
 }
 
 /**
- * @param {Array<import('#compiler').Text | import('#compiler').ExpressionTag>} values
- * @param {(node: import('#compiler').SvelteNode, state: any) => any} visit
- * @param {import("../types.js").ComponentClientTransformState} state
+ * @param {Array<Text | ExpressionTag>} values
+ * @param {(node: SvelteNode, state: any) => any} visit
+ * @param {ComponentClientTransformState} state
  * @returns {[boolean, TemplateLiteral]}
  */
 function serialize_template_literal(values, visit, state) {
@@ -1598,7 +1599,7 @@ function serialize_template_literal(values, visit, state) {
 	return [contains_call_expression, b.template(quasis, expressions)];
 }
 
-/** @type {import('../types').ComponentVisitors} */
+/** @type {ComponentVisitors} */
 export const template_visitors = {
 	Fragment(node, context) {
 		// Creates a new block which looks roughly like this:
@@ -1644,7 +1645,7 @@ export const template_visitors = {
 		/** @type {Statement | undefined} */
 		let close = undefined;
 
-		/** @type {import('../types').ComponentClientTransformState} */
+		/** @type {ComponentClientTransformState} */
 		const state = {
 			...context.state,
 			before_init: [],
@@ -1692,7 +1693,7 @@ export const template_visitors = {
 		};
 
 		if (is_single_element) {
-			const element = /** @type {import('#compiler').RegularElement} */ (trimmed[0]);
+			const element = /** @type {RegularElement} */ (trimmed[0]);
 
 			const id = b.id(context.state.scope.generate(element.name));
 
@@ -1967,7 +1968,7 @@ export const template_visitors = {
 		state.after_update.push(b.stmt(b.call('$.transition', ...args)));
 	},
 	RegularElement(node, context) {
-		/** @type {import('#shared').SourceLocation} */
+		/** @type {SourceLocation} */
 		let location = [-1, -1];
 
 		if (context.state.options.dev) {
@@ -1995,13 +1996,13 @@ export const template_visitors = {
 
 		context.state.template.push(`<${node.name}`);
 
-		/** @type {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} */
+		/** @type {Array<Attribute | SpreadAttribute>} */
 		const attributes = [];
 
-		/** @type {import('#compiler').ClassDirective[]} */
+		/** @type {ClassDirective[]} */
 		const class_directives = [];
 
-		/** @type {import('#compiler').StyleDirective[]} */
+		/** @type {StyleDirective[]} */
 		const style_directives = [];
 
 		/** @type {ExpressionStatement[]} */
@@ -2011,7 +2012,7 @@ export const template_visitors = {
 		let needs_input_reset = false;
 		let needs_content_reset = false;
 
-		/** @type {import('#compiler').BindDirective | null} */
+		/** @type {BindDirective | null} */
 		let value_binding = null;
 
 		/** If true, needs `__value` for inputs */
@@ -2133,7 +2134,7 @@ export const template_visitors = {
 			);
 			is_attributes_reactive = true;
 		} else {
-			for (const attribute of /** @type {import('#compiler').Attribute[]} */ (attributes)) {
+			for (const attribute of /** @type {Attribute[]} */ (attributes)) {
 				if (is_event_attribute(attribute)) {
 					if (
 						(attribute.name === 'onload' || attribute.name === 'onerror') &&
@@ -2195,17 +2196,15 @@ export const template_visitors = {
 
 		context.state.template.push('>');
 
-		/** @type {import('#shared').SourceLocation[]} */
+		/** @type {SourceLocation[]} */
 		const child_locations = [];
 
-		/** @type {import('../types').ComponentClientTransformState} */
+		/** @type {ComponentClientTransformState} */
 		const state = {
 			...context.state,
 			metadata: child_metadata,
 			locations: child_locations,
-			scope: /** @type {import('../../../scope').Scope} */ (
-				context.state.scopes.get(node.fragment)
-			),
+			scope: /** @type {Scope} */ (context.state.scopes.get(node.fragment)),
 			preserve_whitespace:
 				context.state.preserve_whitespace ||
 				((node.name === 'pre' || node.name === 'textarea') &&
@@ -2288,16 +2287,16 @@ export const template_visitors = {
 	SvelteElement(node, context) {
 		context.state.template.push(`<!>`);
 
-		/** @type {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} */
+		/** @type {Array<Attribute | SpreadAttribute>} */
 		const attributes = [];
 
-		/** @type {import('#compiler').Attribute['value'] | undefined} */
+		/** @type {Attribute['value'] | undefined} */
 		let dynamic_namespace = undefined;
 
-		/** @type {import('#compiler').ClassDirective[]} */
+		/** @type {ClassDirective[]} */
 		const class_directives = [];
 
-		/** @type {import('#compiler').StyleDirective[]} */
+		/** @type {StyleDirective[]} */
 		const style_directives = [];
 
 		/** @type {ExpressionStatement[]} */
@@ -2307,7 +2306,7 @@ export const template_visitors = {
 		// They'll then be added to the function parameter of $.element
 		const element_id = b.id(context.state.scope.generate('$$element'));
 
-		/** @type {import('../types').ComponentContext} */
+		/** @type {ComponentContext} */
 		const inner_context = {
 			...context,
 			state: {
@@ -2495,7 +2494,7 @@ export const template_visitors = {
 
 		/**
 		 * @param {Pattern} expression_for_id
-		 * @returns {import('#compiler').Binding['mutation']}
+		 * @returns {Binding['mutation']}
 		 */
 		const create_mutation = (expression_for_id) => {
 			return (assignment, context) => {
@@ -2540,8 +2539,8 @@ export const template_visitors = {
 				? each_node_meta.index
 				: b.id(node.index);
 		const item = each_node_meta.item;
-		const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(item.name));
-		const getter = (/** @type {import("estree").Identifier} */ id) => {
+		const binding = /** @type {Binding} */ (context.state.scope.get(item.name));
+		const getter = (/** @type {Identifier} */ id) => {
 			const item_with_loc = with_loc(item, id);
 			return b.call('$.unwrap', item_with_loc);
 		};
@@ -2571,7 +2570,7 @@ export const template_visitors = {
 
 			for (const path of paths) {
 				const name = /** @type {Identifier} */ (path.node).name;
-				const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(name));
+				const binding = /** @type {Binding} */ (context.state.scope.get(name));
 				const needs_derived = path.has_default_value; // to ensure that default value is only called once
 				const fn = b.thunk(
 					/** @type {Expression} */ (context.visit(path.expression?.(unwrapped), child_state))
@@ -2793,7 +2792,7 @@ export const template_visitors = {
 
 			for (const path of paths) {
 				const name = /** @type {Identifier} */ (path.node).name;
-				const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(name));
+				const binding = /** @type {Binding} */ (context.state.scope.get(name));
 				const needs_derived = path.has_default_value; // to ensure that default value is only called once
 				const fn = b.thunk(
 					/** @type {Expression} */ (
@@ -3052,7 +3051,7 @@ export const template_visitors = {
 					const parent = path.at(-1);
 					if (parent?.type === 'RegularElement') {
 						const value = /** @type {any[]} */ (
-							/** @type {import('#compiler').Attribute} */ (
+							/** @type {Attribute} */ (
 								parent.attributes.find(
 									(a) =>
 										a.type === 'Attribute' &&
@@ -3274,7 +3273,7 @@ export const template_visitors = {
 					b.assignment(
 						'=',
 						b.member(b.id('$.document'), b.id('title')),
-						b.literal(/** @type {import('#compiler').Text} */ (node.fragment.nodes[0]).data)
+						b.literal(/** @type {Text} */ (node.fragment.nodes[0]).data)
 					)
 				)
 			);
@@ -3313,7 +3312,7 @@ export const template_visitors = {
 };
 
 /**
- * @param {import('../types.js').ComponentClientTransformState} state
+ * @param {ComponentClientTransformState} state
  * @param {BindDirective} binding
  * @param {MemberExpression} expression
  */

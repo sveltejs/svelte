@@ -1,3 +1,4 @@
+/** @import { ComponentContext, Derived, Effect, Reaction, Signal, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import { define_property, get_descriptors, get_prototype_of } from '../shared/utils.js';
 import {
@@ -57,24 +58,24 @@ export function set_is_destroying_effect(value) {
 
 // Handle effect queues
 
-/** @type {import('#client').Effect[]} */
+/** @type {Effect[]} */
 let current_queued_root_effects = [];
 
 let flush_count = 0;
 // Handle signal reactivity tree dependencies and reactions
 
-/** @type {null | import('#client').Reaction} */
+/** @type {null | Reaction} */
 export let current_reaction = null;
 
-/** @param {null | import('#client').Reaction} reaction */
+/** @param {null | Reaction} reaction */
 export function set_current_reaction(reaction) {
 	current_reaction = reaction;
 }
 
-/** @type {null | import('#client').Effect} */
+/** @type {null | Effect} */
 export let current_effect = null;
 
-/** @param {null | import('#client').Effect} effect */
+/** @param {null | Effect} effect */
 export function set_current_effect(effect) {
 	current_effect = effect;
 }
@@ -83,7 +84,7 @@ export function set_current_effect(effect) {
  * The dependencies of the reaction that is currently being executed. In many cases,
  * the dependencies are unchanged between runs, and so this will be `null` unless
  * and until a new dependency is accessed — we track this via `skipped_deps`
- * @type {null | import('#client').Value[]}
+ * @type {null | Value[]}
  */
 export let new_deps = null;
 
@@ -92,11 +93,11 @@ let skipped_deps = 0;
 /**
  * Tracks writes that the effect it's executed in doesn't listen to yet,
  * so that the dependency can be added to the effect later on if it then reads it
- * @type {null | import('#client').Source[]}
+ * @type {null | Source[]}
  */
 export let current_untracked_writes = null;
 
-/** @param {null | import('#client').Source[]} value */
+/** @param {null | Source[]} value */
 export function set_current_untracked_writes(value) {
 	current_untracked_writes = value;
 }
@@ -112,10 +113,10 @@ export let is_signals_recorded = false;
 let captured_signals = new Set();
 
 // Handling runtime component context
-/** @type {import('#client').ComponentContext | null} */
+/** @type {ComponentContext | null} */
 export let current_component_context = null;
 
-/** @param {import('#client').ComponentContext | null} context */
+/** @param {ComponentContext | null} context */
 export function set_current_component_context(context) {
 	current_component_context = context;
 }
@@ -128,11 +129,11 @@ export function set_current_component_context(context) {
  *   <Bar /> <!-- context == Foo.svelte, function == App.svelte -->
  * </Foo>
  * ```
- * @type {import('#client').ComponentContext['function']}
+ * @type {ComponentContext['function']}
  */
 export let dev_current_component_function = null;
 
-/** @param {import('#client').ComponentContext['function']} fn */
+/** @param {ComponentContext['function']} fn */
 export function set_dev_current_component_function(fn) {
 	dev_current_component_function = fn;
 }
@@ -149,7 +150,7 @@ export function is_runes() {
 /**
  * Determines whether a derived or effect is dirty.
  * If it is MAYBE_DIRTY, will set the status to CLEAN
- * @param {import('#client').Reaction} reaction
+ * @param {Reaction} reaction
  * @returns {boolean}
  */
 export function check_dirtiness(reaction) {
@@ -177,8 +178,8 @@ export function check_dirtiness(reaction) {
 			for (i = 0; i < dependencies.length; i++) {
 				var dependency = dependencies[i];
 
-				if (check_dirtiness(/** @type {import('#client').Derived} */ (dependency))) {
-					update_derived(/** @type {import('#client').Derived} */ (dependency));
+				if (check_dirtiness(/** @type {Derived} */ (dependency))) {
+					update_derived(/** @type {Derived} */ (dependency));
 				}
 
 				if (dependency.version > reaction.version) {
@@ -205,8 +206,8 @@ export function check_dirtiness(reaction) {
 
 /**
  * @param {Error} error
- * @param {import("#client").Effect} effect
- * @param {import("#client").ComponentContext | null} component_context
+ * @param {Effect} effect
+ * @param {ComponentContext | null} component_context
  */
 function handle_error(error, effect, component_context) {
 	// Given we don't yet have error boundaries, we will just always throw.
@@ -222,7 +223,7 @@ function handle_error(error, effect, component_context) {
 		component_stack.push(effect_name);
 	}
 
-	/** @type {import("#client").ComponentContext | null} */
+	/** @type {ComponentContext | null} */
 	let current_context = component_context;
 
 	while (current_context !== null) {
@@ -266,7 +267,7 @@ function handle_error(error, effect, component_context) {
 
 /**
  * @template V
- * @param {import('#client').Reaction} reaction
+ * @param {Reaction} reaction
  * @returns {V}
  */
 export function update_reaction(reaction) {
@@ -276,7 +277,7 @@ export function update_reaction(reaction) {
 	var previous_reaction = current_reaction;
 	var previous_skip_reaction = current_skip_reaction;
 
-	new_deps = /** @type {null | import('#client').Value[]} */ (null);
+	new_deps = /** @type {null | Value[]} */ (null);
 	skipped_deps = 0;
 	current_untracked_writes = null;
 	current_reaction = (reaction.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
@@ -349,8 +350,8 @@ export function update_reaction(reaction) {
 
 /**
  * @template V
- * @param {import('#client').Reaction} signal
- * @param {import('#client').Value<V>} dependency
+ * @param {Reaction} signal
+ * @param {Value<V>} dependency
  * @returns {void}
  */
 function remove_reaction(signal, dependency) {
@@ -378,12 +379,12 @@ function remove_reaction(signal, dependency) {
 		if ((dependency.f & (UNOWNED | DISCONNECTED)) === 0) {
 			dependency.f ^= DISCONNECTED;
 		}
-		remove_reactions(/** @type {import('#client').Derived} **/ (dependency), 0);
+		remove_reactions(/** @type {Derived} **/ (dependency), 0);
 	}
 }
 
 /**
- * @param {import('#client').Reaction} signal
+ * @param {Reaction} signal
  * @param {number} start_index
  * @returns {void}
  */
@@ -408,7 +409,7 @@ export function remove_reactions(signal, start_index) {
 }
 
 /**
- * @param {import('#client').Reaction} signal
+ * @param {Reaction} signal
  * @param {boolean} remove_dom
  * @returns {void}
  */
@@ -424,7 +425,7 @@ export function destroy_effect_children(signal, remove_dom = false) {
 }
 
 /**
- * @param {import('#client').Effect} effect
+ * @param {Effect} effect
  * @returns {void}
  */
 export function update_effect(effect) {
@@ -480,7 +481,7 @@ function infinite_loop_guard() {
 }
 
 /**
- * @param {Array<import('#client').Effect>} root_effects
+ * @param {Array<Effect>} root_effects
  * @returns {void}
  */
 function flush_queued_root_effects(root_effects) {
@@ -501,7 +502,7 @@ function flush_queued_root_effects(root_effects) {
 			if (effect.first === null && (effect.f & BRANCH_EFFECT) === 0) {
 				flush_queued_effects([effect]);
 			} else {
-				/** @type {import('#client').Effect[]} */
+				/** @type {Effect[]} */
 				var collected_effects = [];
 
 				process_effects(effect, collected_effects);
@@ -514,7 +515,7 @@ function flush_queued_root_effects(root_effects) {
 }
 
 /**
- * @param {Array<import('#client').Effect>} effects
+ * @param {Array<Effect>} effects
  * @returns {void}
  */
 function flush_queued_effects(effects) {
@@ -559,7 +560,7 @@ function process_deferred() {
 }
 
 /**
- * @param {import('#client').Effect} signal
+ * @param {Effect} signal
  * @returns {void}
  */
 export function schedule_effect(signal) {
@@ -592,8 +593,8 @@ export function schedule_effect(signal) {
  * bitwise flag passed in only. The collected effects array will be populated with all the user
  * effects to be flushed.
  *
- * @param {import('#client').Effect} effect
- * @param {import('#client').Effect[]} collected_effects
+ * @param {Effect} effect
+ * @param {Effect[]} collected_effects
  * @returns {void}
  */
 function process_effects(effect, collected_effects) {
@@ -680,7 +681,7 @@ export function flush_sync(fn, flush_previous = true) {
 	try {
 		infinite_loop_guard();
 
-		/** @type {import('#client').Effect[]} */
+		/** @type {Effect[]} */
 		const root_effects = [];
 
 		current_scheduler_mode = FLUSH_SYNC;
@@ -720,7 +721,7 @@ export async function tick() {
 
 /**
  * @template V
- * @param {import('#client').Value<V>} signal
+ * @param {Value<V>} signal
  * @returns {V}
  */
 export function get(signal) {
@@ -768,7 +769,7 @@ export function get(signal) {
 	}
 
 	if ((flags & DERIVED) !== 0) {
-		var derived = /** @type {import('#client').Derived} */ (signal);
+		var derived = /** @type {Derived} */ (signal);
 
 		if (check_dirtiness(derived)) {
 			update_derived(derived);
@@ -804,7 +805,7 @@ export function invalidate_inner_signals(fn) {
 	for (signal of captured) {
 		// Go one level up because derived signals created as part of props in legacy mode
 		if ((signal.f & LEGACY_DERIVED_PROP) !== 0) {
-			for (const dep of /** @type {import('#client').Derived} */ (signal).deps || []) {
+			for (const dep of /** @type {Derived} */ (signal).deps || []) {
 				if ((dep.f & DERIVED) === 0) {
 					mutate(dep, null /* doesnt matter */);
 				}
@@ -836,7 +837,7 @@ export function untrack(fn) {
 const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
 
 /**
- * @param {import('#client').Signal} signal
+ * @param {Signal} signal
  * @param {number} status
  * @returns {void}
  */
@@ -846,14 +847,12 @@ export function set_signal_status(signal, status) {
 
 /**
  * @template V
- * @param {V | import('#client').Value<V>} val
- * @returns {val is import('#client').Value<V>}
+ * @param {V | Value<V>} val
+ * @returns {val is Value<V>}
  */
 export function is_signal(val) {
 	return (
-		typeof val === 'object' &&
-		val !== null &&
-		typeof (/** @type {import('#client').Value<V>} */ (val).f) === 'number'
+		typeof val === 'object' && val !== null && typeof (/** @type {Value<V>} */ (val).f) === 'number'
 	);
 }
 
@@ -871,8 +870,7 @@ export function getContext(key) {
 	const result = /** @type {T} */ (context_map.get(key));
 
 	if (DEV) {
-		const fn = /** @type {import('#client').ComponentContext} */ (current_component_context)
-			.function;
+		const fn = /** @type {ComponentContext} */ (current_component_context).function;
 		if (fn) {
 			add_owner(result, fn, true);
 		}
@@ -952,7 +950,7 @@ function get_or_init_context_map(name) {
 }
 
 /**
- * @param {import('#client').ComponentContext} component_context
+ * @param {ComponentContext} component_context
  * @returns {Map<unknown, unknown> | null}
  */
 function get_parent_context(component_context) {
@@ -968,7 +966,7 @@ function get_parent_context(component_context) {
 }
 
 /**
- * @param {import('#client').Value<number>} signal
+ * @param {Value<number>} signal
  * @param {1 | -1} [d]
  * @returns {number}
  */
@@ -979,7 +977,7 @@ export function update(signal, d = 1) {
 }
 
 /**
- * @param {import('#client').Value<number>} signal
+ * @param {Value<number>} signal
  * @param {1 | -1} [d]
  * @returns {number}
  */
@@ -1159,7 +1157,7 @@ export function deep_read(value, visited = new Set()) {
 
 /**
  * @template V
- * @param {V | import('#client').Value<V>} value
+ * @param {V | Value<V>} value
  * @returns {V}
  */
 export function unwrap(value) {

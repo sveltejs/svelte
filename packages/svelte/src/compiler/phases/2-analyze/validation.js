@@ -1,3 +1,7 @@
+/** @import { AssignmentExpression, CallExpression, Expression, Identifier, Node, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
+/** @import { Attribute, Component, ElementLike, Fragment, RegularElement, SvelteComponent, SvelteElement, SvelteNode, SvelteSelf, TransitionDirective } from '#compiler' */
+/** @import { NodeLike } from '../../errors.js' */
+/** @import { AnalysisState, Context, Visitors } from './types.js' */
 import is_reference from 'is-reference';
 import {
 	disallowed_paragraph_contents,
@@ -35,8 +39,8 @@ import { merge } from '../visitors.js';
 import { a11y_validators } from './a11y.js';
 
 /**
- * @param {import('#compiler').Attribute} attribute
- * @param {import('#compiler').ElementLike} parent
+ * @param {Attribute} attribute
+ * @param {ElementLike} parent
  */
 function validate_attribute(attribute, parent) {
 	if (
@@ -63,8 +67,8 @@ function validate_attribute(attribute, parent) {
 }
 
 /**
- * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
+ * @param {Component | SvelteComponent | SvelteSelf} node
+ * @param {Context} context
  */
 function validate_component(node, context) {
 	for (const attribute of node.attributes) {
@@ -123,16 +127,16 @@ const react_attributes = new Map([
 ]);
 
 /**
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
+ * @param {RegularElement | SvelteElement} node
+ * @param {Context} context
  */
 function validate_element(node, context) {
 	let has_animate_directive = false;
 
-	/** @type {import('#compiler').TransitionDirective | null} */
+	/** @type {TransitionDirective | null} */
 	let in_transition = null;
 
-	/** @type {import('#compiler').TransitionDirective | null} */
+	/** @type {TransitionDirective | null} */
 	let out_transition = null;
 
 	for (const attribute of node.attributes) {
@@ -175,7 +179,7 @@ function validate_element(node, context) {
 			}
 
 			if (attribute.name === 'slot') {
-				/** @type {import('#compiler').RegularElement | import('#compiler').SvelteElement | import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf | undefined} */
+				/** @type {RegularElement | SvelteElement | Component | SvelteComponent | SvelteSelf | undefined} */
 				validate_slot_attribute(context, attribute);
 			}
 
@@ -212,7 +216,7 @@ function validate_element(node, context) {
 				has_animate_directive = true;
 			}
 		} else if (attribute.type === 'TransitionDirective') {
-			const existing = /** @type {import('#compiler').TransitionDirective | null} */ (
+			const existing = /** @type {TransitionDirective | null} */ (
 				(attribute.intro && in_transition) || (attribute.outro && out_transition)
 			);
 
@@ -255,7 +259,7 @@ function validate_element(node, context) {
 }
 
 /**
- * @param {import('#compiler').Attribute} attribute
+ * @param {Attribute} attribute
  */
 function validate_attribute_name(attribute) {
 	if (
@@ -269,8 +273,8 @@ function validate_attribute_name(attribute) {
 }
 
 /**
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
- * @param {import('#compiler').Attribute} attribute
+ * @param {Context} context
+ * @param {Attribute} attribute
  * @param {boolean} is_component
  */
 function validate_slot_attribute(context, attribute, is_component = false) {
@@ -343,8 +347,8 @@ function validate_slot_attribute(context, attribute, is_component = false) {
 }
 
 /**
- * @param {import('#compiler').Fragment | null | undefined} node
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
+ * @param {Fragment | null | undefined} node
+ * @param {Context} context
  */
 function validate_block_not_empty(node, context) {
 	if (!node) return;
@@ -356,7 +360,7 @@ function validate_block_not_empty(node, context) {
 }
 
 /**
- * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
+ * @type {Visitors}
  */
 const validation = {
 	MemberExpression(node, context) {
@@ -465,7 +469,7 @@ const validation = {
 				}
 
 				if (parent.name === 'input' && node.name !== 'this') {
-					const type = /** @type {import('#compiler').Attribute | undefined} */ (
+					const type = /** @type {Attribute | undefined} */ (
 						parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'type')
 					);
 					if (type && !is_text_attribute(type)) {
@@ -506,7 +510,7 @@ const validation = {
 				}
 
 				if (ContentEditableBindings.includes(node.name)) {
-					const contenteditable = /** @type {import('#compiler').Attribute} */ (
+					const contenteditable = /** @type {Attribute} */ (
 						parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'contenteditable')
 					);
 					if (!contenteditable) {
@@ -636,11 +640,14 @@ const validation = {
 			}
 		}
 
+		// Strip off any namespace from the beginning of the node name.
+		const node_name = node.name.replace(/[a-zA-Z-]*:/g, '');
+
 		if (
 			context.state.analysis.source[node.end - 2] === '/' &&
 			context.state.options.namespace !== 'foreign' &&
-			!VoidElements.includes(node.name) &&
-			!SVGElements.includes(node.name)
+			!VoidElements.includes(node_name) &&
+			!SVGElements.includes(node_name)
 		) {
 			w.element_invalid_self_closing_tag(node, node.name);
 		}
@@ -843,8 +850,7 @@ export const validation_legacy = merge(validation, a11y_validators, {
 	LabeledStatement(node, { path, state }) {
 		if (
 			node.label.name === '$' &&
-			(state.ast_type !== 'instance' ||
-				/** @type {import('#compiler').SvelteNode} */ (path.at(-1)).type !== 'Program')
+			(state.ast_type !== 'instance' || /** @type {SvelteNode} */ (path.at(-1)).type !== 'Program')
 		) {
 			w.reactive_declaration_invalid_placement(node);
 		}
@@ -856,8 +862,8 @@ export const validation_legacy = merge(validation, a11y_validators, {
 
 /**
  *
- * @param {import('estree').Node} node
- * @param {import('../scope').Scope} scope
+ * @param {Node} node
+ * @param {Scope} scope
  * @param {string} name
  */
 function validate_export(node, scope, name) {
@@ -874,16 +880,16 @@ function validate_export(node, scope, name) {
 }
 
 /**
- * @param {import('estree').CallExpression} node
+ * @param {CallExpression} node
  * @param {Scope} scope
- * @param {import('#compiler').SvelteNode[]} path
+ * @param {SvelteNode[]} path
  * @returns
  */
 function validate_call_expression(node, scope, path) {
 	const rune = get_rune(node, scope);
 	if (rune === null) return;
 
-	const parent = /** @type {import('#compiler').SvelteNode} */ (get_parent(path, -1));
+	const parent = /** @type {SvelteNode} */ (get_parent(path, -1));
 
 	if (rune === '$props') {
 		if (parent.type === 'VariableDeclarator') return;
@@ -962,8 +968,8 @@ function validate_call_expression(node, scope, path) {
 }
 
 /**
- * @param {import('estree').VariableDeclarator} node
- * @param {import('./types.js').AnalysisState} state
+ * @param {VariableDeclarator} node
+ * @param {AnalysisState} state
  */
 function ensure_no_module_import_conflict(node, state) {
 	const ids = extract_identifiers(node.id);
@@ -978,7 +984,7 @@ function ensure_no_module_import_conflict(node, state) {
 }
 
 /**
- * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
+ * @type {Visitors}
  */
 export const validation_runes_js = {
 	ImportDeclaration(node) {
@@ -1013,7 +1019,7 @@ export const validation_runes_js = {
 
 		if (rune === null) return;
 
-		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
+		const args = /** @type {CallExpression} */ (init).arguments;
 
 		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
 			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
@@ -1070,7 +1076,7 @@ export const validation_runes_js = {
 	},
 	Identifier(node, { path, state }) {
 		let i = path.length;
-		let parent = /** @type {import('estree').Expression} */ (path[--i]);
+		let parent = /** @type {Expression} */ (path[--i]);
 
 		if (
 			Runes.includes(/** @type {Runes[number]} */ (node.name)) &&
@@ -1078,16 +1084,16 @@ export const validation_runes_js = {
 			state.scope.get(node.name) === null &&
 			state.scope.get(node.name.slice(1)) === null
 		) {
-			/** @type {import('estree').Expression} */
+			/** @type {Expression} */
 			let current = node;
 			let name = node.name;
 
 			while (parent.type === 'MemberExpression') {
 				if (parent.computed) e.rune_invalid_computed_property(parent);
-				name += `.${/** @type {import('estree').Identifier} */ (parent.property).name}`;
+				name += `.${/** @type {Identifier} */ (parent.property).name}`;
 
 				current = parent;
-				parent = /** @type {import('estree').Expression} */ (path[--i]);
+				parent = /** @type {Expression} */ (path[--i]);
 
 				if (!Runes.includes(/** @type {Runes[number]} */ (name))) {
 					if (name === '$effect.active') {
@@ -1106,8 +1112,8 @@ export const validation_runes_js = {
 };
 
 /**
- * @param {import('../../errors.js').NodeLike} node
- * @param {import('estree').Pattern | import('estree').Expression} argument
+ * @param {NodeLike} node
+ * @param {Pattern | Expression} argument
  * @param {Scope} scope
  * @param {boolean} is_binding
  */
@@ -1153,7 +1159,7 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
  * Validates that the opening of a control flow block is `{` immediately followed by the expected character.
  * In legacy mode whitespace is allowed inbetween. TODO remove once legacy mode is gone and move this into parser instead.
  * @param {{start: number; end: number}} node
- * @param {import('./types.js').AnalysisState} state
+ * @param {AnalysisState} state
  * @param {string} expected
  */
 function validate_opening_tag(node, state, expected) {
@@ -1164,9 +1170,9 @@ function validate_opening_tag(node, state, expected) {
 }
 
 /**
- * @param {import('estree').AssignmentExpression | import('estree').UpdateExpression} node
- * @param {import('estree').Pattern | import('estree').Expression} argument
- * @param {import('./types.js').AnalysisState} state
+ * @param {AssignmentExpression | UpdateExpression} node
+ * @param {Pattern | Expression} argument
+ * @param {AnalysisState} state
  */
 function validate_assignment(node, argument, state) {
 	validate_no_const_assignment(node, argument, state.scope, false);
@@ -1189,9 +1195,9 @@ function validate_assignment(node, argument, state) {
 		}
 	}
 
-	let object = /** @type {import('estree').Expression | import('estree').Super} */ (argument);
+	let object = /** @type {Expression | Super} */ (argument);
 
-	/** @type {import('estree').Expression | import('estree').PrivateIdentifier | null} */
+	/** @type {Expression | PrivateIdentifier | null} */
 	let property = null;
 
 	while (object.type === 'MemberExpression') {
@@ -1319,7 +1325,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 
 		if (rune === null) return;
 
-		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
+		const args = /** @type {CallExpression} */ (init).arguments;
 
 		// TODO some of this is duplicated with above, seems off
 		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {

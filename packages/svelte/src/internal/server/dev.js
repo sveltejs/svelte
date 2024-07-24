@@ -1,3 +1,4 @@
+/** @import { Component, Payload } from '#server' */
 import {
 	FILENAME,
 	disallowed_paragraph_contents,
@@ -33,7 +34,7 @@ function stringify(element) {
 }
 
 /**
- * @param {import('#server').Payload} payload
+ * @param {Payload} payload
  * @param {Element} parent
  * @param {Element} child
  */
@@ -51,13 +52,13 @@ function print_error(payload, parent, child) {
 }
 
 /**
- * @param {import('#server').Payload} payload
+ * @param {Payload} payload
  * @param {string} tag
  * @param {number} line
  * @param {number} column
  */
 export function push_element(payload, tag, line, column) {
-	var filename = /** @type {import('#server').Component} */ (current_component).function[FILENAME];
+	var filename = /** @type {Component} */ (current_component).function[FILENAME];
 	var child = { tag, parent, filename, line, column };
 
 	if (parent !== null && !is_tag_valid_with_parent(tag, parent.tag)) {

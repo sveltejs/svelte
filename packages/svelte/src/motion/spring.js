@@ -1,3 +1,6 @@
+/** @import { Task } from '#client' */
+/** @import { SpringOpts, SpringUpdateOpts, TickContext } from './private.js' */
+/** @import { Spring } from './public.js' */
 import { writable } from '../store/index.js';
 import { loop } from '../internal/client/loop.js';
 import { raf } from '../internal/client/timing.js';
@@ -5,7 +8,7 @@ import { is_date } from './utils.js';
 
 /**
  * @template T
- * @param {import('./private').TickContext<T>} ctx
+ * @param {TickContext<T>} ctx
  * @param {T} last_value
  * @param {T} current_value
  * @param {T} target_value
@@ -53,15 +56,15 @@ function tick_spring(ctx, last_value, current_value, target_value) {
  * https://svelte.dev/docs/svelte-motion#spring
  * @template [T=any]
  * @param {T} [value]
- * @param {import('./private').SpringOpts} [opts]
- * @returns {import('./public.js').Spring<T>}
+ * @param {SpringOpts} [opts]
+ * @returns {Spring<T>}
  */
 export function spring(value, opts = {}) {
 	const store = writable(value);
 	const { stiffness = 0.15, damping = 0.8, precision = 0.01 } = opts;
 	/** @type {number} */
 	let last_time;
-	/** @type {import('../internal/client/types').Task | null} */
+	/** @type {Task | null} */
 	let task;
 	/** @type {object} */
 	let current_token;
@@ -74,7 +77,7 @@ export function spring(value, opts = {}) {
 	let cancel_task = false;
 	/**
 	 * @param {T} new_value
-	 * @param {import('./private').SpringUpdateOpts} opts
+	 * @param {SpringUpdateOpts} opts
 	 * @returns {Promise<void>}
 	 */
 	function set(new_value, opts = {}) {
@@ -101,7 +104,7 @@ export function spring(value, opts = {}) {
 					return false;
 				}
 				inv_mass = Math.min(inv_mass + inv_mass_recovery_rate, 1);
-				/** @type {import('./private').TickContext<T>} */
+				/** @type {TickContext<T>} */
 				const ctx = {
 					inv_mass,
 					opts: spring,
@@ -120,12 +123,12 @@ export function spring(value, opts = {}) {
 			});
 		}
 		return new Promise((fulfil) => {
-			/** @type {import('../internal/client/types').Task} */ (task).promise.then(() => {
+			/** @type {Task} */ (task).promise.then(() => {
 				if (token === current_token) fulfil();
 			});
 		});
 	}
-	/** @type {import('./public.js').Spring<T>} */
+	/** @type {Spring<T>} */
 	const spring = {
 		set,
 		update: (fn, opts) => set(fn(/** @type {T} */ (target_value), /** @type {T} */ (value)), opts),

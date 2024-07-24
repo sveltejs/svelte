@@ -1,3 +1,7 @@
+/** @import { ArrowFunctionExpression, AssignmentExpression, BinaryOperator, Expression, FunctionDeclaration, FunctionExpression, Identifier, MemberExpression, Node, Pattern, PrivateIdentifier, Statement } from 'estree' */
+/** @import { Binding, SvelteNode } from '#compiler' */
+/** @import { ClientTransformState, ComponentClientTransformState, ComponentContext } from './types.js' */
+/** @import { Scope } from '../../scope.js' */
 import * as b from '../../../utils/builders.js';
 import {
 	extract_identifiers,
@@ -14,21 +18,21 @@ import {
 } from '../../../../constants.js';
 
 /**
- * @template {import('./types').ClientTransformState} State
- * @param {import('estree').AssignmentExpression} node
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, State>} context
+ * @template {ClientTransformState} State
+ * @param {AssignmentExpression} node
+ * @param {import('zimmerframe').Context<SvelteNode, State>} context
  * @returns
  */
 export function get_assignment_value(node, { state, visit }) {
 	if (node.left.type === 'Identifier') {
 		const operator = node.operator;
 		return operator === '='
-			? /** @type {import('estree').Expression} */ (visit(node.right))
+			? /** @type {Expression} */ (visit(node.right))
 			: // turn something like x += 1 into x = x + 1
 				b.binary(
-					/** @type {import('estree').BinaryOperator} */ (operator.slice(0, -1)),
+					/** @type {BinaryOperator} */ (operator.slice(0, -1)),
 					serialize_get_binding(node.left, state),
-					/** @type {import('estree').Expression} */ (visit(node.right))
+					/** @type {Expression} */ (visit(node.right))
 				);
 	} else if (
 		node.left.type === 'MemberExpression' &&
@@ -38,21 +42,21 @@ export function get_assignment_value(node, { state, visit }) {
 	) {
 		const operator = node.operator;
 		return operator === '='
-			? /** @type {import('estree').Expression} */ (visit(node.right))
+			? /** @type {Expression} */ (visit(node.right))
 			: // turn something like x += 1 into x = x + 1
 				b.binary(
-					/** @type {import('estree').BinaryOperator} */ (operator.slice(0, -1)),
-					/** @type {import('estree').Expression} */ (visit(node.left)),
-					/** @type {import('estree').Expression} */ (visit(node.right))
+					/** @type {BinaryOperator} */ (operator.slice(0, -1)),
+					/** @type {Expression} */ (visit(node.left)),
+					/** @type {Expression} */ (visit(node.right))
 				);
 	} else {
-		return /** @type {import('estree').Expression} */ (visit(node.right));
+		return /** @type {Expression} */ (visit(node.right));
 	}
 }
 
 /**
- * @param {import('#compiler').Binding} binding
- * @param {import('./types').ClientTransformState} state
+ * @param {Binding} binding
+ * @param {ClientTransformState} state
  * @returns {boolean}
  */
 export function is_state_source(binding, state) {
@@ -63,9 +67,9 @@ export function is_state_source(binding, state) {
 }
 
 /**
- * @param {import('estree').Identifier} node
- * @param {import('./types').ClientTransformState} state
- * @returns {import('estree').Expression}
+ * @param {Identifier} node
+ * @param {ClientTransformState} state
+ * @returns {Expression}
  */
 export function serialize_get_binding(node, state) {
 	const binding = state.scope.get(node.name);
@@ -117,13 +121,13 @@ export function serialize_get_binding(node, state) {
 }
 
 /**
- * @template {import('./types').ClientTransformState} State
- * @param {import('estree').AssignmentExpression} node
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, State>} context
+ * @template {ClientTransformState} State
+ * @param {AssignmentExpression} node
+ * @param {import('zimmerframe').Context<SvelteNode, State>} context
  * @param {() => any} fallback
  * @param {boolean | null} [prefix] - If the assignment is a transformed update expression, set this. Else `null`
  * @param {{skip_proxy_and_freeze?: boolean}} [options]
- * @returns {import('estree').Expression}
+ * @returns {Expression}
  */
 export function serialize_set_binding(node, context, fallback, prefix, options) {
 	const { state, visit } = context;
@@ -137,10 +141,10 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 		// Turn assignment into an IIFE, so that `$.set` calls etc don't produce invalid code
 		const tmp_id = context.state.scope.generate('tmp');
 
-		/** @type {import('estree').AssignmentExpression[]} */
+		/** @type {AssignmentExpression[]} */
 		const original_assignments = [];
 
-		/** @type {import('estree').Expression[]} */
+		/** @type {Expression[]} */
 		const assignments = [];
 
 		const paths = extract_paths(assignee);
@@ -159,7 +163,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 			return fallback();
 		}
 
-		const rhs_expression = /** @type {import('estree').Expression} */ (visit(node.right));
+		const rhs_expression = /** @type {Expression} */ (visit(node.right));
 
 		const iife_is_async =
 			is_expression_async(rhs_expression) ||
@@ -271,8 +275,8 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 			'$$_import_' + binding.node.name,
 			b.assignment(
 				node.operator,
-				/** @type {import('estree').Pattern} */ (visit(node.left)),
-				/** @type {import('estree').Expression} */ (visit(node.right))
+				/** @type {Pattern} */ (visit(node.left)),
+				/** @type {Expression} */ (visit(node.right))
 			)
 		);
 	}
@@ -299,10 +303,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 		if (left === node.left) {
 			const is_initial_proxy =
 				binding.initial !== null &&
-				should_proxy_or_freeze(
-					/**@type {import("estree").Expression}*/ (binding.initial),
-					context.state.scope
-				);
+				should_proxy_or_freeze(/**@type {Expression}*/ (binding.initial), context.state.scope);
 			if ((binding.kind === 'prop' || binding.kind === 'bindable_prop') && !is_initial_proxy) {
 				return b.call(left, value);
 			} else if (is_store) {
@@ -359,38 +360,31 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 				// keep consistency with how store $ shorthand reads work in Svelte 4.
 				/**
 				 *
-				 * @param {import("estree").Expression | import("estree").Pattern} node
-				 * @returns {import("estree").Expression}
+				 * @param {Expression | Pattern} node
+				 * @returns {Expression}
 				 */
 				function visit_node(node) {
 					if (node.type === 'MemberExpression') {
 						return {
 							...node,
-							object: visit_node(/** @type {import("estree").Expression} */ (node.object)),
-							property: /** @type {import("estree").MemberExpression} */ (visit(node)).property
+							object: visit_node(/** @type {Expression} */ (node.object)),
+							property: /** @type {MemberExpression} */ (visit(node)).property
 						};
 					}
 					if (node.type === 'Identifier') {
 						const binding = state.scope.get(node.name);
 
 						if (binding !== null && binding.kind === 'store_sub') {
-							return b.call(
-								'$.untrack',
-								b.thunk(/** @type {import('estree').Expression} */ (visit(node)))
-							);
+							return b.call('$.untrack', b.thunk(/** @type {Expression} */ (visit(node))));
 						}
 					}
-					return /** @type {import("estree").Expression} */ (visit(node));
+					return /** @type {Expression} */ (visit(node));
 				}
 
 				return b.call(
 					'$.mutate_store',
 					serialize_get_binding(b.id(left_name), state),
-					b.assignment(
-						node.operator,
-						/** @type {import("estree").Pattern}} */ (visit_node(node.left)),
-						value
-					),
+					b.assignment(node.operator, /** @type {Pattern}} */ (visit_node(node.left)), value),
 					b.call('$.untrack', b.id('$' + left_name))
 				);
 			} else if (
@@ -401,22 +395,14 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 				if (binding.kind === 'bindable_prop') {
 					return b.call(
 						left,
-						b.assignment(
-							node.operator,
-							/** @type {import('estree').Pattern} */ (visit(node.left)),
-							value
-						),
+						b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value),
 						b.true
 					);
 				} else {
 					return b.call(
 						'$.mutate',
 						b.id(left_name),
-						b.assignment(
-							node.operator,
-							/** @type {import('estree').Pattern} */ (visit(node.left)),
-							value
-						)
+						b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value)
 					);
 				}
 			} else if (
@@ -426,14 +412,14 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 			) {
 				return b.update(
 					node.operator === '+=' ? '++' : '--',
-					/** @type {import('estree').Expression} */ (visit(node.left)),
+					/** @type {Expression} */ (visit(node.left)),
 					prefix
 				);
 			} else {
 				return b.assignment(
 					node.operator,
-					/** @type {import('estree').Pattern} */ (visit(node.left)),
-					/** @type {import('estree').Expression} */ (visit(node.right))
+					/** @type {Pattern} */ (visit(node.left)),
+					/** @type {Expression} */ (visit(node.right))
 				);
 			}
 		}
@@ -447,9 +433,9 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 }
 
 /**
- * @param {import('estree').Expression} value
- * @param {import('estree').PrivateIdentifier | string} proxy_reference
- * @param {import('./types').ClientTransformState} state
+ * @param {Expression} value
+ * @param {PrivateIdentifier | string} proxy_reference
+ * @param {ClientTransformState} state
  */
 export function serialize_proxy_reassignment(value, proxy_reference, state) {
 	return state.options.dev
@@ -465,8 +451,8 @@ export function serialize_proxy_reassignment(value, proxy_reference, state) {
 }
 
 /**
- * @param {import('estree').ArrowFunctionExpression | import('estree').FunctionExpression} node
- * @param {import('./types').ComponentContext} context
+ * @param {ArrowFunctionExpression | FunctionExpression} node
+ * @param {ComponentContext} context
  */
 export const function_visitor = (node, context) => {
 	const metadata = node.metadata;
@@ -474,7 +460,7 @@ export const function_visitor = (node, context) => {
 	let state = context.state;
 
 	if (node.type === 'FunctionExpression') {
-		const parent = /** @type {import('estree').Node} */ (context.path.at(-1));
+		const parent = /** @type {Node} */ (context.path.at(-1));
 		const in_constructor = parent.type === 'MethodDefinition' && parent.kind === 'constructor';
 
 		state = { ...context.state, in_constructor };
@@ -485,7 +471,7 @@ export const function_visitor = (node, context) => {
 	if (metadata?.hoistable === true) {
 		const params = serialize_hoistable_params(node, context);
 
-		return /** @type {import('estree').FunctionExpression} */ ({
+		return /** @type {FunctionExpression} */ ({
 			...node,
 			params,
 			body: context.visit(node.body, state)
@@ -496,19 +482,19 @@ export const function_visitor = (node, context) => {
 };
 
 /**
- * @param {import('estree').FunctionDeclaration | import('estree').FunctionExpression | import('estree').ArrowFunctionExpression} node
- * @param {import('./types').ComponentContext} context
- * @returns {import('estree').Pattern[]}
+ * @param {FunctionDeclaration | FunctionExpression | ArrowFunctionExpression} node
+ * @param {ComponentContext} context
+ * @returns {Pattern[]}
  */
 function get_hoistable_params(node, context) {
 	const scope = context.state.scope;
 
-	/** @type {import('estree').Identifier[]} */
+	/** @type {Identifier[]} */
 	const params = [];
 
 	/**
 	 * We only want to push if it's not already present to avoid name clashing
-	 * @param {import('estree').Identifier} id
+	 * @param {Identifier} id
 	 */
 	function push_unique(id) {
 		if (!params.find((param) => param.name === id.name)) {
@@ -523,9 +509,7 @@ function get_hoistable_params(node, context) {
 			if (binding.kind === 'store_sub') {
 				// We need both the subscription for getting the value and the store for updating
 				push_unique(b.id(binding.node.name));
-				binding = /** @type {import('#compiler').Binding} */ (
-					scope.get(binding.node.name.slice(1))
-				);
+				binding = /** @type {Binding} */ (scope.get(binding.node.name.slice(1)));
 			}
 
 			const expression = context.state.getters[reference];
@@ -566,15 +550,15 @@ function get_hoistable_params(node, context) {
 }
 
 /**
- * @param {import('estree').FunctionDeclaration | import('estree').FunctionExpression | import('estree').ArrowFunctionExpression} node
- * @param {import('./types').ComponentContext} context
- * @returns {import('estree').Pattern[]}
+ * @param {FunctionDeclaration | FunctionExpression | ArrowFunctionExpression} node
+ * @param {ComponentContext} context
+ * @returns {Pattern[]}
  */
 export function serialize_hoistable_params(node, context) {
 	const hoistable_params = get_hoistable_params(node, context);
 	node.metadata.hoistable_params = hoistable_params;
 
-	/** @type {import('estree').Pattern[]} */
+	/** @type {Pattern[]} */
 	const params = [];
 
 	if (node.params.length === 0) {
@@ -584,7 +568,7 @@ export function serialize_hoistable_params(node, context) {
 		}
 	} else {
 		for (const param of node.params) {
-			params.push(/** @type {import('estree').Pattern} */ (context.visit(param)));
+			params.push(/** @type {Pattern} */ (context.visit(param)));
 		}
 	}
 
@@ -593,14 +577,14 @@ export function serialize_hoistable_params(node, context) {
 }
 
 /**
- * @param {import('#compiler').Binding} binding
- * @param {import('./types').ComponentClientTransformState} state
+ * @param {Binding} binding
+ * @param {ComponentClientTransformState} state
  * @param {string} name
- * @param {import('estree').Expression | null} [initial]
+ * @param {Expression | null} [initial]
  * @returns
  */
 export function get_prop_source(binding, state, name, initial) {
-	/** @type {import('estree').Expression[]} */
+	/** @type {Expression[]} */
 	const args = [b.id('$$props'), b.literal(name)];
 
 	let flags = 0;
@@ -622,7 +606,7 @@ export function get_prop_source(binding, state, name, initial) {
 		flags |= PROPS_IS_UPDATED;
 	}
 
-	/** @type {import('estree').Expression | undefined} */
+	/** @type {Expression | undefined} */
 	let arg;
 
 	if (initial) {
@@ -654,8 +638,8 @@ export function get_prop_source(binding, state, name, initial) {
 
 /**
  *
- * @param {import('#compiler').Binding} binding
- * @param {import('./types').ClientTransformState} state
+ * @param {Binding} binding
+ * @param {ClientTransformState} state
  * @returns
  */
 export function is_prop_source(binding, state) {
@@ -672,8 +656,8 @@ export function is_prop_source(binding, state) {
 }
 
 /**
- * @param {import('estree').Expression} node
- * @param {import("../../scope.js").Scope | null} scope
+ * @param {Expression} node
+ * @param {Scope | null} scope
  */
 export function should_proxy_or_freeze(node, scope) {
 	if (
@@ -710,8 +694,8 @@ export function should_proxy_or_freeze(node, scope) {
  * Port over the location information from the source to the target identifier.
  * but keep the target as-is (i.e. a new id is created).
  * This ensures esrap can generate accurate source maps.
- * @param {import('estree').Identifier} target
- * @param {import('estree').Identifier} source
+ * @param {Identifier} target
+ * @param {Identifier} source
  */
 export function with_loc(target, source) {
 	if (source.loc) {
@@ -721,16 +705,16 @@ export function with_loc(target, source) {
 }
 
 /**
- * @param {import("estree").Pattern} node
- * @param {import("zimmerframe").Context<import("#compiler").SvelteNode, import("./types").ComponentClientTransformState>} context
- * @returns {{ id: import("estree").Pattern, declarations: null | import("estree").Statement[] }}
+ * @param {Pattern} node
+ * @param {import('zimmerframe').Context<SvelteNode, ComponentClientTransformState>} context
+ * @returns {{ id: Pattern, declarations: null | Statement[] }}
  */
 export function create_derived_block_argument(node, context) {
 	if (node.type === 'Identifier') {
 		return { id: node, declarations: null };
 	}
 
-	const pattern = /** @type {import('estree').Pattern} */ (context.visit(node));
+	const pattern = /** @type {Pattern} */ (context.visit(node));
 	const identifiers = extract_identifiers(node);
 
 	const id = b.id('$$source');
@@ -754,8 +738,8 @@ export function create_derived_block_argument(node, context) {
 
 /**
  * Svelte legacy mode should use safe equals in most places, runes mode shouldn't
- * @param {import('./types.js').ComponentClientTransformState} state
- * @param {import('estree').Expression} arg
+ * @param {ComponentClientTransformState} state
+ * @param {Expression} arg
  */
 export function create_derived(state, arg) {
 	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);

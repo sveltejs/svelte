@@ -1,3 +1,10 @@
+/** @import { AssignmentExpression, AssignmentOperator, BinaryOperator, BlockStatement, CallExpression, Expression, ExpressionStatement, Identifier, Literal, MethodDefinition, Node, Pattern, Program, Property, PropertyDefinition, Statement, TemplateElement, VariableDeclarator } from 'estree' */
+/** @import { Location } from 'locate-character' */
+/** @import { Attribute, Binding, ClassDirective, Comment, Component, ExpressionTag, Namespace, RegularElement, SpreadAttribute, StyleDirective, SvelteComponent, SvelteElement, SvelteNode, SvelteSelf, TemplateNode, Text, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { ComponentContext, ComponentServerTransformState, ComponentVisitors, ServerTransformState, Visitors } from './types.js' */
+/** @import { Analysis, ComponentAnalysis } from '../../types.js' */
+/** @import { Scope } from '../../scope.js' */
+/** @import { StateField } from '../../3-transform/client/types.js' */ // TODO move this type
 import { walk } from 'zimmerframe';
 import { set_scope, get_rune } from '../../scope.js';
 import {
@@ -52,27 +59,27 @@ const block_close = b.literal(BLOCK_CLOSE);
 const empty_comment = b.literal(EMPTY_COMMENT);
 
 /**
- * @param {import('estree').Node} node
- * @returns {node is import('estree').Statement}
+ * @param {Node} node
+ * @returns {node is Statement}
  */
 function is_statement(node) {
 	return node.type.endsWith('Statement') || node.type.endsWith('Declaration');
 }
 
 /**
- * @param {Array<import('estree').Statement | import('estree').Expression>} template
- * @param {import('estree').Identifier} out
- * @param {import('estree').AssignmentOperator} operator
- * @returns {import('estree').Statement[]}
+ * @param {Array<Statement | Expression>} template
+ * @param {Identifier} out
+ * @param {AssignmentOperator} operator
+ * @returns {Statement[]}
  */
 function serialize_template(template, out = b.id('$$payload.out'), operator = '+=') {
-	/** @type {import('estree').TemplateElement[]} */
+	/** @type {TemplateElement[]} */
 	let quasis = [];
 
-	/** @type {import('estree').Expression[]} */
+	/** @type {Expression[]} */
 	let expressions = [];
 
-	/** @type {import('estree').Statement[]} */
+	/** @type {Statement[]} */
 	const statements = [];
 
 	const flush = () => {
@@ -118,18 +125,18 @@ function serialize_template(template, out = b.id('$$payload.out'), operator = '+
 /**
  * Processes an array of template nodes, joining sibling text/expression nodes and
  * recursing into child nodes.
- * @param {Array<import('#compiler').SvelteNode>} nodes
- * @param {import('./types').ComponentContext} context
+ * @param {Array<SvelteNode>} nodes
+ * @param {ComponentContext} context
  */
 function process_children(nodes, { visit, state }) {
-	/** @type {Array<import('#compiler').Text | import('#compiler').Comment | import('#compiler').ExpressionTag>} */
+	/** @type {Array<Text | Comment | ExpressionTag>} */
 	let sequence = [];
 
 	function flush() {
 		let quasi = b.quasi('', false);
 		const quasis = [quasi];
 
-		/** @type {import('estree').Expression[]} */
+		/** @type {Expression[]} */
 		const expressions = [];
 
 		for (let i = 0; i < sequence.length; i++) {
@@ -144,9 +151,7 @@ function process_children(nodes, { visit, state }) {
 					quasi.value.raw += sanitize_template_string(escape_html(node.expression.value + ''));
 				}
 			} else {
-				expressions.push(
-					b.call('$.escape', /** @type {import('estree').Expression} */ (visit(node.expression)))
-				);
+				expressions.push(b.call('$.escape', /** @type {Expression} */ (visit(node.expression))));
 
 				quasi = b.quasi('', i + 1 === sequence.length);
 				quasis.push(quasi);
@@ -177,10 +182,10 @@ function process_children(nodes, { visit, state }) {
 }
 
 /**
- * @param {import('estree').VariableDeclarator} declarator
- * @param {import('../../scope').Scope} scope
- * @param {import('estree').Expression} value
- * @returns {import('estree').VariableDeclarator[]}
+ * @param {VariableDeclarator} declarator
+ * @param {Scope} scope
+ * @param {Expression} value
+ * @returns {VariableDeclarator[]}
  */
 function create_state_declarators(declarator, scope, value) {
 	if (declarator.id.type === 'Identifier') {
@@ -199,9 +204,9 @@ function create_state_declarators(declarator, scope, value) {
 }
 
 /**
- * @param {import('estree').Identifier} node
- * @param {import('./types').ServerTransformState} state
- * @returns {import('estree').Expression}
+ * @param {Identifier} node
+ * @param {ServerTransformState} state
+ * @returns {Expression}
  */
 function serialize_get_binding(node, state) {
 	const binding = state.scope.get(node.name);
@@ -230,23 +235,23 @@ function serialize_get_binding(node, state) {
 }
 
 /**
- * @param {import('estree').AssignmentExpression} node
- * @param {Pick<import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types').ServerTransformState>, 'visit' | 'state'>} context
+ * @param {AssignmentExpression} node
+ * @param {Pick<import('zimmerframe').Context<SvelteNode, ServerTransformState>, 'visit' | 'state'>} context
  */
 function get_assignment_value(node, { state, visit }) {
 	if (node.left.type === 'Identifier') {
 		const operator = node.operator;
 		return operator === '='
-			? /** @type {import('estree').Expression} */ (visit(node.right))
+			? /** @type {Expression} */ (visit(node.right))
 			: // turn something like x += 1 into x = x + 1
 				b.binary(
-					/** @type {import('estree').BinaryOperator} */ (operator.slice(0, -1)),
+					/** @type {BinaryOperator} */ (operator.slice(0, -1)),
 					serialize_get_binding(node.left, state),
-					/** @type {import('estree').Expression} */ (visit(node.right))
+					/** @type {Expression} */ (visit(node.right))
 				);
 	}
 
-	return /** @type {import('estree').Expression} */ (visit(node.right));
+	return /** @type {Expression} */ (visit(node.right));
 }
 
 /**
@@ -257,10 +262,10 @@ function is_store_name(name) {
 }
 
 /**
- * @param {import('estree').AssignmentExpression} node
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types').ServerTransformState>} context
+ * @param {AssignmentExpression} node
+ * @param {import('zimmerframe').Context<SvelteNode, ServerTransformState>} context
  * @param {() => any} fallback
- * @returns {import('estree').Expression}
+ * @returns {Expression}
  */
 function serialize_set_binding(node, context, fallback) {
 	const { state, visit } = context;
@@ -273,10 +278,10 @@ function serialize_set_binding(node, context, fallback) {
 		// Turn assignment into an IIFE, so that `$.set` calls etc don't produce invalid code
 		const tmp_id = context.state.scope.generate('tmp');
 
-		/** @type {import('estree').AssignmentExpression[]} */
+		/** @type {AssignmentExpression[]} */
 		const original_assignments = [];
 
-		/** @type {import('estree').Expression[]} */
+		/** @type {Expression[]} */
 		const assignments = [];
 
 		const paths = extract_paths(node.left);
@@ -296,7 +301,7 @@ function serialize_set_binding(node, context, fallback) {
 		return b.call(
 			b.thunk(
 				b.block([
-					b.const(tmp_id, /** @type {import('estree').Expression} */ (visit(node.right))),
+					b.const(tmp_id, /** @type {Expression} */ (visit(node.right))),
 					b.stmt(b.sequence(assignments)),
 					b.return(b.id(tmp_id))
 				])
@@ -345,11 +350,7 @@ function serialize_set_binding(node, context, fallback) {
 	const value = get_assignment_value(node, { state, visit });
 	if (left === node.left) {
 		if (is_store) {
-			return b.call(
-				'$.store_set',
-				b.id(left_name),
-				/** @type {import('estree').Expression} */ (visit(node.right))
-			);
+			return b.call('$.store_set', b.id(left_name), /** @type {Expression} */ (visit(node.right)));
 		}
 		return fallback();
 	} else if (is_store) {
@@ -358,16 +359,16 @@ function serialize_set_binding(node, context, fallback) {
 			b.assignment('??=', b.id('$$store_subs'), b.object([])),
 			b.literal(left.name),
 			b.id(left_name),
-			b.assignment(node.operator, /** @type {import('estree').Pattern} */ (visit(node.left)), value)
+			b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value)
 		);
 	}
 	return fallback();
 }
 
 /**
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
- * @param {import('#compiler').Attribute} attribute
- * @param {{ state: { namespace: import('#compiler').Namespace }}} context
+ * @param {RegularElement | SvelteElement} element
+ * @param {Attribute} attribute
+ * @param {{ state: { namespace: Namespace }}} context
  */
 function get_attribute_name(element, attribute, context) {
 	let name = attribute.name;
@@ -379,10 +380,10 @@ function get_attribute_name(element, attribute, context) {
 	return name;
 }
 
-/** @type {import('./types').Visitors} */
+/** @type {Visitors} */
 const global_visitors = {
 	Identifier(node, { path, state }) {
-		if (is_reference(node, /** @type {import('estree').Node} */ (path.at(-1)))) {
+		if (is_reference(node, /** @type {Node} */ (path.at(-1)))) {
 			if (node.name === '$$props') {
 				return b.id('$$sanitized_props');
 			}
@@ -425,17 +426,14 @@ const global_visitors = {
 		}
 
 		if (rune === '$state.snapshot') {
-			return b.call(
-				'$.snapshot',
-				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0]))
-			);
+			return b.call('$.snapshot', /** @type {Expression} */ (context.visit(node.arguments[0])));
 		}
 
 		if (rune === '$state.is') {
 			return b.call(
 				'Object.is',
-				/** @type {import('estree').Expression} */ (context.visit(node.arguments[0])),
-				/** @type {import('estree').Expression} */ (context.visit(node.arguments[1]))
+				/** @type {Expression} */ (context.visit(node.arguments[0])),
+				/** @type {Expression} */ (context.visit(node.arguments[1]))
 			);
 		}
 
@@ -447,13 +445,13 @@ const global_visitors = {
 	}
 };
 
-/** @type {import('./types').Visitors} */
+/** @type {Visitors} */
 const javascript_visitors_runes = {
 	ClassBody(node, { state, visit }) {
-		/** @type {Map<string, import('../../3-transform/client/types.js').StateField>} */
+		/** @type {Map<string, StateField>} */
 		const public_derived = new Map();
 
-		/** @type {Map<string, import('../../3-transform/client/types.js').StateField>} */
+		/** @type {Map<string, StateField>} */
 		const private_derived = new Map();
 
 		/** @type {string[]} */
@@ -472,7 +470,7 @@ const javascript_visitors_runes = {
 				if (definition.value?.type === 'CallExpression') {
 					const rune = get_rune(definition.value, state.scope);
 					if (rune === '$derived' || rune === '$derived.by') {
-						/** @type {import('../../3-transform/client/types.js').StateField} */
+						/** @type {StateField} */
 						const field = {
 							kind: rune === '$derived.by' ? 'derived_call' : 'derived',
 							// @ts-expect-error this is set in the next pass
@@ -500,7 +498,7 @@ const javascript_visitors_runes = {
 			field.id = b.private_id(deconflicted);
 		}
 
-		/** @type {Array<import('estree').MethodDefinition | import('estree').PropertyDefinition>} */
+		/** @type {Array<MethodDefinition | PropertyDefinition>} */
 		const body = [];
 
 		const child_state = { ...state, private_derived };
@@ -517,7 +515,7 @@ const javascript_visitors_runes = {
 				const field = (is_private ? private_derived : public_derived).get(name);
 
 				if (definition.value?.type === 'CallExpression' && field !== undefined) {
-					const init = /** @type {import('estree').Expression} **/ (
+					const init = /** @type {Expression} **/ (
 						visit(definition.value.arguments[0], child_state)
 					);
 					const value =
@@ -551,7 +549,7 @@ const javascript_visitors_runes = {
 				}
 			}
 
-			body.push(/** @type {import('estree').MethodDefinition} **/ (visit(definition, child_state)));
+			body.push(/** @type {MethodDefinition} **/ (visit(definition, child_state)));
 		}
 
 		return { ...node, body };
@@ -566,7 +564,7 @@ const javascript_visitors_runes = {
 					value:
 						node.value.arguments.length === 0
 							? null
-							: /** @type {import('estree').Expression} */ (visit(node.value.arguments[0]))
+							: /** @type {Expression} */ (visit(node.value.arguments[0]))
 				};
 			}
 			if (rune === '$derived.by') {
@@ -575,7 +573,7 @@ const javascript_visitors_runes = {
 					value:
 						node.value.arguments.length === 0
 							? null
-							: b.call(/** @type {import('estree').Expression} */ (visit(node.value.arguments[0])))
+							: b.call(/** @type {Expression} */ (visit(node.value.arguments[0])))
 				};
 			}
 		}
@@ -588,7 +586,7 @@ const javascript_visitors_runes = {
 			const init = declarator.init;
 			const rune = get_rune(init, state.scope);
 			if (!rune || rune === '$effect.tracking' || rune === '$inspect' || rune === '$effect.root') {
-				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
+				declarations.push(/** @type {VariableDeclarator} */ (visit(declarator)));
 				continue;
 			}
 
@@ -601,7 +599,7 @@ const javascript_visitors_runes = {
 							get_rune(node.right, state.scope) === '$bindable'
 						) {
 							const right = node.right.arguments.length
-								? /** @type {import('estree').Expression} */ (visit(node.right.arguments[0]))
+								? /** @type {Expression} */ (visit(node.right.arguments[0]))
 								: b.id('undefined');
 							return b.assignment_pattern(node.left, right);
 						}
@@ -611,18 +609,13 @@ const javascript_visitors_runes = {
 				continue;
 			}
 
-			const args = /** @type {import('estree').CallExpression} */ (init).arguments;
+			const args = /** @type {CallExpression} */ (init).arguments;
 			const value =
-				args.length === 0
-					? b.id('undefined')
-					: /** @type {import('estree').Expression} */ (visit(args[0]));
+				args.length === 0 ? b.id('undefined') : /** @type {Expression} */ (visit(args[0]));
 
 			if (rune === '$derived.by') {
 				declarations.push(
-					b.declarator(
-						/** @type {import('estree').Pattern} */ (visit(declarator.id)),
-						b.call(value)
-					)
+					b.declarator(/** @type {Pattern} */ (visit(declarator.id)), b.call(value))
 				);
 				continue;
 			}
@@ -633,9 +626,7 @@ const javascript_visitors_runes = {
 			}
 
 			if (rune === '$derived') {
-				declarations.push(
-					b.declarator(/** @type {import('estree').Pattern} */ (visit(declarator.id)), value)
-				);
+				declarations.push(b.declarator(/** @type {Pattern} */ (visit(declarator.id)), value));
 				continue;
 			}
 
@@ -680,11 +671,11 @@ const javascript_visitors_runes = {
 
 /**
  *
- * @param {import('#compiler').Attribute['value']} value
- * @param {import('./types').ComponentContext} context
+ * @param {Attribute['value']} value
+ * @param {ComponentContext} context
  * @param {boolean} trim_whitespace
  * @param {boolean} is_component
- * @returns {import('estree').Expression}
+ * @returns {Expression}
  */
 function serialize_attribute_value(value, context, trim_whitespace = false, is_component = false) {
 	if (value === true) {
@@ -702,13 +693,13 @@ function serialize_attribute_value(value, context, trim_whitespace = false, is_c
 			return b.literal(is_component ? data : escape_html(data, true));
 		}
 
-		return /** @type {import('estree').Expression} */ (context.visit(chunk.expression));
+		return /** @type {Expression} */ (context.visit(chunk.expression));
 	}
 
 	let quasi = b.quasi('', false);
 	const quasis = [quasi];
 
-	/** @type {import('estree').Expression[]} */
+	/** @type {Expression[]} */
 	const expressions = [];
 
 	for (let i = 0; i < value.length; i++) {
@@ -720,10 +711,7 @@ function serialize_attribute_value(value, context, trim_whitespace = false, is_c
 				: node.data;
 		} else {
 			expressions.push(
-				b.call(
-					'$.stringify',
-					/** @type {import('estree').Expression} */ (context.visit(node.expression))
-				)
+				b.call('$.stringify', /** @type {Expression} */ (context.visit(node.expression)))
 			);
 
 			quasi = b.quasi('', i + 1 === value.length);
@@ -736,11 +724,11 @@ function serialize_attribute_value(value, context, trim_whitespace = false, is_c
 
 /**
  *
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
- * @param {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} attributes
- * @param {import('#compiler').StyleDirective[]} style_directives
- * @param {import('#compiler').ClassDirective[]} class_directives
- * @param {import('./types').ComponentContext} context
+ * @param {RegularElement | SvelteElement} element
+ * @param {Array<Attribute | SpreadAttribute>} attributes
+ * @param {StyleDirective[]} style_directives
+ * @param {ClassDirective[]} class_directives
+ * @param {ComponentContext} context
  */
 function serialize_element_spread_attributes(
 	element,
@@ -759,7 +747,7 @@ function serialize_element_spread_attributes(
 				directive.name,
 				directive.expression.type === 'Identifier' && directive.expression.name === directive.name
 					? b.id(directive.name)
-					: /** @type {import('estree').Expression} */ (context.visit(directive.expression))
+					: /** @type {Expression} */ (context.visit(directive.expression))
 			)
 		);
 
@@ -801,7 +789,7 @@ function serialize_element_spread_attributes(
 				return b.prop('init', b.key(name), value);
 			}
 
-			return b.spread(/** @type {import('estree').Expression} */ (context.visit(attribute)));
+			return b.spread(/** @type {Expression} */ (context.visit(attribute)));
 		})
 	);
 
@@ -810,21 +798,21 @@ function serialize_element_spread_attributes(
 }
 
 /**
- * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node
- * @param {import('estree').Expression} expression
- * @param {import('./types').ComponentContext} context
+ * @param {Component | SvelteComponent | SvelteSelf} node
+ * @param {Expression} expression
+ * @param {ComponentContext} context
  */
 function serialize_inline_component(node, expression, context) {
-	/** @type {Array<import('estree').Property[] | import('estree').Expression>} */
+	/** @type {Array<Property[] | Expression>} */
 	const props_and_spreads = [];
 
-	/** @type {import('estree').Property[]} */
+	/** @type {Property[]} */
 	const custom_css_props = [];
 
-	/** @type {import('estree').ExpressionStatement[]} */
+	/** @type {ExpressionStatement[]} */
 	const lets = [];
 
-	/** @type {Record<string, import('#compiler').TemplateNode[]>} */
+	/** @type {Record<string, TemplateNode[]>} */
 	const children = {};
 
 	/**
@@ -841,7 +829,7 @@ function serialize_inline_component(node, expression, context) {
 	let has_children_prop = false;
 
 	/**
-	 * @param {import('estree').Property} prop
+	 * @param {Property} prop
 	 */
 	function push_prop(prop) {
 		const current = props_and_spreads.at(-1);
@@ -854,9 +842,9 @@ function serialize_inline_component(node, expression, context) {
 	}
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute)));
+			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 		} else if (attribute.type === 'SpreadAttribute') {
-			props_and_spreads.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
+			props_and_spreads.push(/** @type {Expression} */ (context.visit(attribute)));
 		} else if (attribute.type === 'Attribute') {
 			if (attribute.name.startsWith('--')) {
 				const value = serialize_attribute_value(attribute.value, context, false, true);
@@ -878,13 +866,13 @@ function serialize_inline_component(node, expression, context) {
 			// TODO this needs to turn the whole thing into a while loop because the binding could be mutated eagerly in the child
 			push_prop(
 				b.get(attribute.name, [
-					b.return(/** @type {import('estree').Expression} */ (context.visit(attribute.expression)))
+					b.return(/** @type {Expression} */ (context.visit(attribute.expression)))
 				])
 			);
 			push_prop(
 				b.set(attribute.name, [
 					b.stmt(
-						/** @type {import('estree').Expression} */ (
+						/** @type {Expression} */ (
 							context.visit(b.assignment('=', attribute.expression, b.id('$$value')))
 						)
 					),
@@ -898,7 +886,7 @@ function serialize_inline_component(node, expression, context) {
 		context.state.init.push(...lets);
 	}
 
-	/** @type {import('estree').Statement[]} */
+	/** @type {Statement[]} */
 	const snippet_declarations = [];
 
 	// Group children by slot
@@ -919,13 +907,13 @@ function serialize_inline_component(node, expression, context) {
 
 		let slot_name = 'default';
 		if (is_element_node(child)) {
-			const attribute = /** @type {import('#compiler').Attribute | undefined} */ (
+			const attribute = /** @type {Attribute | undefined} */ (
 				child.attributes.find(
 					(attribute) => attribute.type === 'Attribute' && attribute.name === 'slot'
 				)
 			);
 			if (attribute !== undefined) {
-				slot_name = /** @type {import('#compiler').Text[]} */ (attribute.value)[0].data;
+				slot_name = /** @type {Text[]} */ (attribute.value)[0].data;
 			}
 		}
 
@@ -934,11 +922,11 @@ function serialize_inline_component(node, expression, context) {
 	}
 
 	// Serialize each slot
-	/** @type {import('estree').Property[]} */
+	/** @type {Property[]} */
 	const serialized_slots = [];
 
 	for (const slot_name of Object.keys(children)) {
-		const block = /** @type {import('estree').BlockStatement} */ (
+		const block = /** @type {BlockStatement} */ (
 			context.visit(
 				{
 					...node.fragment,
@@ -990,13 +978,13 @@ function serialize_inline_component(node, expression, context) {
 	const props_expression =
 		props_and_spreads.length === 0 ||
 		(props_and_spreads.length === 1 && Array.isArray(props_and_spreads[0]))
-			? b.object(/** @type {import('estree').Property[]} */ (props_and_spreads[0] || []))
+			? b.object(/** @type {Property[]} */ (props_and_spreads[0] || []))
 			: b.call(
 					'$.spread_props',
 					b.array(props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p)))
 				);
 
-	/** @type {import('estree').Statement} */
+	/** @type {Statement} */
 	let statement = b.stmt(
 		(node.type === 'SvelteComponent' ? b.maybe_call : b.call)(
 			expression,
@@ -1038,21 +1026,19 @@ function serialize_inline_component(node, expression, context) {
 	}
 }
 
-/** @type {import('./types').Visitors} */
+/** @type {Visitors} */
 const javascript_visitors_legacy = {
 	VariableDeclaration(node, { state, visit }) {
-		/** @type {import('estree').VariableDeclarator[]} */
+		/** @type {VariableDeclarator[]} */
 		const declarations = [];
 
 		for (const declarator of node.declarations) {
-			const bindings = /** @type {import('#compiler').Binding[]} */ (
-				state.scope.get_bindings(declarator)
-			);
+			const bindings = /** @type {Binding[]} */ (state.scope.get_bindings(declarator));
 			const has_state = bindings.some((binding) => binding.kind === 'state');
 			const has_props = bindings.some((binding) => binding.kind === 'bindable_prop');
 
 			if (!has_state && !has_props) {
-				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
+				declarations.push(/** @type {VariableDeclarator} */ (visit(declarator)));
 				continue;
 			}
 
@@ -1065,15 +1051,13 @@ const javascript_visitors_legacy = {
 					declarations.push(
 						b.declarator(
 							b.id(tmp),
-							/** @type {import('estree').Expression} */ (
-								visit(/** @type {import('estree').Expression} */ (declarator.init))
-							)
+							/** @type {Expression} */ (visit(/** @type {Expression} */ (declarator.init)))
 						)
 					);
 					for (const path of paths) {
 						const value = path.expression?.(b.id(tmp));
-						const name = /** @type {import('estree').Identifier} */ (path.node).name;
-						const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
+						const name = /** @type {Identifier} */ (path.node).name;
+						const binding = /** @type {Binding} */ (state.scope.get(name));
 						const prop = b.member(b.id('$$props'), b.literal(binding.prop_alias ?? name), true);
 						declarations.push(
 							b.declarator(path.node, b.call('$.value_or_fallback', prop, b.thunk(value)))
@@ -1082,19 +1066,17 @@ const javascript_visitors_legacy = {
 					continue;
 				}
 
-				const binding = /** @type {import('#compiler').Binding} */ (
-					state.scope.get(declarator.id.name)
-				);
+				const binding = /** @type {Binding} */ (state.scope.get(declarator.id.name));
 				const prop = b.member(
 					b.id('$$props'),
 					b.literal(binding.prop_alias ?? declarator.id.name),
 					true
 				);
 
-				/** @type {import('estree').Expression} */
+				/** @type {Expression} */
 				let init = prop;
 				if (declarator.init) {
-					const default_value = /** @type {import('estree').Expression} */ (visit(declarator.init));
+					const default_value = /** @type {Expression} */ (visit(declarator.init));
 					init = is_expression_async(default_value)
 						? b.await(b.call('$.value_or_fallback_async', prop, b.thunk(default_value, true)))
 						: b.call('$.value_or_fallback', prop, b.thunk(default_value));
@@ -1109,7 +1091,7 @@ const javascript_visitors_legacy = {
 				...create_state_declarators(
 					declarator,
 					state.scope,
-					/** @type {import('estree').Expression} */ (declarator.init && visit(declarator.init))
+					/** @type {Expression} */ (declarator.init && visit(declarator.init))
 				)
 			);
 		}
@@ -1129,14 +1111,14 @@ const javascript_visitors_legacy = {
 		context.state.legacy_reactive_statements.set(
 			node,
 			// people could do "break $" inside, so we need to keep the label
-			b.labeled('$', /** @type {import('estree').ExpressionStatement} */ (context.visit(node.body)))
+			b.labeled('$', /** @type {ExpressionStatement} */ (context.visit(node.body)))
 		);
 
 		return b.empty;
 	}
 };
 
-/** @type {import('./types').ComponentVisitors} */
+/** @type {ComponentVisitors} */
 const template_visitors = {
 	Fragment(node, context) {
 		const parent = context.path.at(-1) ?? node;
@@ -1152,7 +1134,7 @@ const template_visitors = {
 			context.state.options.preserveComments
 		);
 
-		/** @type {import('./types').ComponentServerTransformState} */
+		/** @type {ComponentServerTransformState} */
 		const state = {
 			...context.state,
 			init: [],
@@ -1175,13 +1157,13 @@ const template_visitors = {
 		return b.block([...state.init, ...serialize_template(state.template)]);
 	},
 	HtmlTag(node, context) {
-		const expression = /** @type {import('estree').Expression} */ (context.visit(node.expression));
+		const expression = /** @type {Expression} */ (context.visit(node.expression));
 		context.state.template.push(b.call('$.html', expression));
 	},
 	ConstTag(node, { state, visit }) {
 		const declaration = node.declaration.declarations[0];
-		const pattern = /** @type {import('estree').Pattern} */ (visit(declaration.id));
-		const init = /** @type {import('estree').Expression} */ (visit(declaration.init));
+		const pattern = /** @type {Pattern} */ (visit(declaration.id));
+		const init = /** @type {Expression} */ (visit(declaration.init));
 		state.init.push(b.declaration('const', pattern, init));
 	},
 	DebugTag(node, { state, visit }) {
@@ -1191,11 +1173,7 @@ const template_visitors = {
 					'console.log',
 					b.object(
 						node.identifiers.map((identifier) =>
-							b.prop(
-								'init',
-								identifier,
-								/** @type {import('estree').Expression} */ (visit(identifier))
-							)
+							b.prop('init', identifier, /** @type {Expression} */ (visit(identifier)))
 						)
 					)
 				)
@@ -1207,10 +1185,10 @@ const template_visitors = {
 		const callee = unwrap_optional(node.expression).callee;
 		const raw_args = unwrap_optional(node.expression).arguments;
 
-		const snippet_function = /** @type {import('estree').Expression} */ (context.visit(callee));
+		const snippet_function = /** @type {Expression} */ (context.visit(callee));
 
 		const snippet_args = raw_args.map((arg) => {
-			return /** @type {import('estree').Expression} */ (context.visit(arg));
+			return /** @type {Expression} */ (context.visit(arg));
 		});
 
 		context.state.template.push(
@@ -1236,7 +1214,7 @@ const template_visitors = {
 	RegularElement(node, context) {
 		const namespace = determine_namespace_for_children(node, context.state.namespace);
 
-		/** @type {import('./types').ComponentServerTransformState} */
+		/** @type {ComponentServerTransformState} */
 		const state = {
 			...context.state,
 			getters: { ...context.state.getters },
@@ -1252,7 +1230,7 @@ const template_visitors = {
 
 		if ((node.name === 'script' || node.name === 'style') && node.fragment.nodes.length === 1) {
 			context.state.template.push(
-				b.literal(/** @type {import('#compiler').Text} */ (node.fragment.nodes[0]).data),
+				b.literal(/** @type {Text} */ (node.fragment.nodes[0]).data),
 				b.literal(`</${node.name}>`)
 			);
 
@@ -1266,7 +1244,7 @@ const template_visitors = {
 			namespace,
 			{
 				...state,
-				scope: /** @type {import('../../scope').Scope} */ (state.scopes.get(node.fragment))
+				scope: /** @type {Scope} */ (state.scopes.get(node.fragment))
 			},
 			state.preserve_whitespace,
 			state.options.preserveComments
@@ -1277,7 +1255,7 @@ const template_visitors = {
 		}
 
 		if (state.options.dev) {
-			const location = /** @type {import('locate-character').Location} */ (locator(node.start));
+			const location = /** @type {Location} */ (locator(node.start));
 			state.template.push(
 				b.stmt(
 					b.call(
@@ -1325,7 +1303,7 @@ const template_visitors = {
 		}
 	},
 	SvelteElement(node, context) {
-		let tag = /** @type {import('estree').Expression} */ (context.visit(node.tag));
+		let tag = /** @type {Expression} */ (context.visit(node.tag));
 		if (tag.type !== 'Identifier') {
 			const tag_id = context.state.scope.generate('$$tag');
 			context.state.init.push(b.const(tag_id, tag));
@@ -1354,9 +1332,7 @@ const template_visitors = {
 		}
 
 		const attributes = b.block([...state.init, ...serialize_template(state.template)]);
-		const children = /** @type {import('estree').BlockStatement} */ (
-			context.visit(node.fragment, state)
-		);
+		const children = /** @type {BlockStatement} */ (context.visit(node.fragment, state));
 
 		context.state.template.push(
 			b.stmt(
@@ -1378,7 +1354,7 @@ const template_visitors = {
 		const state = context.state;
 
 		const each_node_meta = node.metadata;
-		const collection = /** @type {import('estree').Expression} */ (context.visit(node.expression));
+		const collection = /** @type {Expression} */ (context.visit(node.expression));
 		const item = each_node_meta.item;
 		const index =
 			each_node_meta.contains_group_binding || !node.index
@@ -1388,17 +1364,17 @@ const template_visitors = {
 		const array_id = state.scope.root.unique('each_array');
 		state.init.push(b.const(array_id, b.call('$.ensure_array_like', collection)));
 
-		/** @type {import('estree').Statement[]} */
+		/** @type {Statement[]} */
 		const each = [b.const(item, b.member(array_id, index, true))];
 
 		if (node.context.type !== 'Identifier') {
-			each.push(b.const(/** @type {import('estree').Pattern} */ (node.context), item));
+			each.push(b.const(/** @type {Pattern} */ (node.context), item));
 		}
 		if (index.name !== node.index && node.index != null) {
 			each.push(b.let(node.index, index));
 		}
 
-		each.push(.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body);
+		each.push(.../** @type {BlockStatement} */ (context.visit(node.body)).body);
 
 		const for_loop = b.for(
 			b.let(index, b.literal(0)),
@@ -1410,9 +1386,7 @@ const template_visitors = {
 		if (node.fallback) {
 			const open = b.stmt(b.assignment('+=', b.id('$$payload.out'), block_open));
 
-			const fallback = /** @type {import('estree').BlockStatement} */ (
-				context.visit(node.fallback)
-			);
+			const fallback = /** @type {BlockStatement} */ (context.visit(node.fallback));
 
 			fallback.body.unshift(
 				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN_ELSE)))
@@ -1431,14 +1405,12 @@ const template_visitors = {
 		}
 	},
 	IfBlock(node, context) {
-		const test = /** @type {import('estree').Expression} */ (context.visit(node.test));
+		const test = /** @type {Expression} */ (context.visit(node.test));
 
-		const consequent = /** @type {import('estree').BlockStatement} */ (
-			context.visit(node.consequent)
-		);
+		const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
 
 		const alternate = node.alternate
-			? /** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
+			? /** @type {BlockStatement} */ (context.visit(node.alternate))
 			: b.block([]);
 
 		consequent.body.unshift(b.stmt(b.assignment('+=', b.id('$$payload.out'), block_open)));
@@ -1455,23 +1427,17 @@ const template_visitors = {
 			b.stmt(
 				b.call(
 					'$.await',
-					/** @type {import('estree').Expression} */ (context.visit(node.expression)),
+					/** @type {Expression} */ (context.visit(node.expression)),
 					b.thunk(
-						node.pending
-							? /** @type {import('estree').BlockStatement} */ (context.visit(node.pending))
-							: b.block([])
+						node.pending ? /** @type {BlockStatement} */ (context.visit(node.pending)) : b.block([])
 					),
 					b.arrow(
-						node.value ? [/** @type {import('estree').Pattern} */ (context.visit(node.value))] : [],
-						node.then
-							? /** @type {import('estree').BlockStatement} */ (context.visit(node.then))
-							: b.block([])
+						node.value ? [/** @type {Pattern} */ (context.visit(node.value))] : [],
+						node.then ? /** @type {BlockStatement} */ (context.visit(node.then)) : b.block([])
 					),
 					b.arrow(
-						node.error ? [/** @type {import('estree').Pattern} */ (context.visit(node.error))] : [],
-						node.catch
-							? /** @type {import('estree').BlockStatement} */ (context.visit(node.catch))
-							: b.block([])
+						node.error ? [/** @type {Pattern} */ (context.visit(node.error))] : [],
+						node.catch ? /** @type {BlockStatement} */ (context.visit(node.catch)) : b.block([])
 					)
 				)
 			),
@@ -1479,14 +1445,14 @@ const template_visitors = {
 		);
 	},
 	KeyBlock(node, context) {
-		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.fragment));
+		const block = /** @type {BlockStatement} */ (context.visit(node.fragment));
 		context.state.template.push(empty_comment, block, empty_comment);
 	},
 	SnippetBlock(node, context) {
 		const fn = b.function_declaration(
 			node.expression,
 			[b.id('$$payload'), ...node.parameters],
-			/** @type {import('estree').BlockStatement} */ (context.visit(node.body))
+			/** @type {BlockStatement} */ (context.visit(node.body))
 		);
 		// @ts-expect-error - TODO remove this hack once $$render_inner for legacy bindings is gone
 		fn.___snippet = true;
@@ -1502,7 +1468,7 @@ const template_visitors = {
 	SvelteComponent(node, context) {
 		serialize_inline_component(
 			node,
-			/** @type {import('estree').Expression} */ (context.visit(node.expression)),
+			/** @type {Expression} */ (context.visit(node.expression)),
 			context
 		);
 	},
@@ -1550,16 +1516,12 @@ const template_visitors = {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'LetDirective') {
 				context.state.template.push(
-					/** @type {import('estree').ExpressionStatement} */ (
-						context.visit(attribute, child_state)
-					)
+					/** @type {ExpressionStatement} */ (context.visit(attribute, child_state))
 				);
 			}
 		}
 
-		const block = /** @type {import('estree').BlockStatement} */ (
-			context.visit(node.fragment, child_state)
-		);
+		const block = /** @type {BlockStatement} */ (context.visit(node.fragment, child_state));
 
 		context.state.template.push(block);
 	},
@@ -1572,21 +1534,21 @@ const template_visitors = {
 		context.state.init.push(...serialize_template(template, b.id('$$payload.title'), '='));
 	},
 	SlotElement(node, context) {
-		/** @type {import('estree').Property[]} */
+		/** @type {Property[]} */
 		const props = [];
 
-		/** @type {import('estree').Expression[]} */
+		/** @type {Expression[]} */
 		const spreads = [];
 
-		/** @type {import('estree').ExpressionStatement[]} */
+		/** @type {ExpressionStatement[]} */
 		const lets = [];
 
-		/** @type {import('estree').Expression} */
+		/** @type {Expression} */
 		let expression = b.call('$.default_slot', b.id('$$props'));
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'SpreadAttribute') {
-				spreads.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
+				spreads.push(/** @type {Expression} */ (context.visit(attribute)));
 			} else if (attribute.type === 'Attribute') {
 				const value = serialize_attribute_value(attribute.value, context, false, true);
 
@@ -1600,7 +1562,7 @@ const template_visitors = {
 					}
 				}
 			} else if (attribute.type === 'LetDirective') {
-				lets.push(/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute)));
+				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 			}
 		}
 
@@ -1615,14 +1577,14 @@ const template_visitors = {
 		const fallback =
 			node.fragment.nodes.length === 0
 				? b.literal(null)
-				: b.thunk(/** @type {import('estree').BlockStatement} */ (context.visit(node.fragment)));
+				: b.thunk(/** @type {BlockStatement} */ (context.visit(node.fragment)));
 
 		const slot = b.call('$.slot', b.id('$$payload'), expression, props_expression, fallback);
 
 		context.state.template.push(empty_comment, b.stmt(slot), empty_comment);
 	},
 	SvelteHead(node, context) {
-		const block = /** @type {import('estree').BlockStatement} */ (context.visit(node.fragment));
+		const block = /** @type {BlockStatement} */ (context.visit(node.fragment));
 
 		context.state.template.push(
 			b.stmt(b.call('$.head', b.id('$$payload'), b.arrow([b.id('$$payload')], block)))
@@ -1633,23 +1595,23 @@ const template_visitors = {
 /**
  * Writes the output to the template output. Some elements may have attributes on them that require the
  * their output to be the child content instead. In this case, an object is returned.
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types').ComponentServerTransformState>} context
+ * @param {RegularElement | SvelteElement} node
+ * @param {import('zimmerframe').Context<SvelteNode, ComponentServerTransformState>} context
  */
 function serialize_element_attributes(node, context) {
-	/** @type {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} */
+	/** @type {Array<Attribute | SpreadAttribute>} */
 	const attributes = [];
 
-	/** @type {import('#compiler').ClassDirective[]} */
+	/** @type {ClassDirective[]} */
 	const class_directives = [];
 
-	/** @type {import('#compiler').StyleDirective[]} */
+	/** @type {StyleDirective[]} */
 	const style_directives = [];
 
-	/** @type {import('estree').ExpressionStatement[]} */
+	/** @type {ExpressionStatement[]} */
 	const lets = [];
 
-	/** @type {import('estree').Expression | null} */
+	/** @type {Expression | null} */
 	let content = null;
 
 	let has_spread = false;
@@ -1716,14 +1678,14 @@ function serialize_element_attributes(node, context) {
 			if (binding?.omit_in_ssr) continue;
 
 			if (ContentEditableBindings.includes(attribute.name)) {
-				content = /** @type {import('estree').Expression} */ (context.visit(attribute.expression));
+				content = /** @type {Expression} */ (context.visit(attribute.expression));
 			} else if (attribute.name === 'value' && node.name === 'textarea') {
 				content = b.call(
 					'$.escape',
-					/** @type {import('estree').Expression} */ (context.visit(attribute.expression))
+					/** @type {Expression} */ (context.visit(attribute.expression))
 				);
 			} else if (attribute.name === 'group') {
-				const value_attribute = /** @type {import('#compiler').Attribute | undefined} */ (
+				const value_attribute = /** @type {Attribute | undefined} */ (
 					node.attributes.find((attr) => attr.type === 'Attribute' && attr.name === 'value')
 				);
 				if (!value_attribute) continue;
@@ -1793,7 +1755,7 @@ function serialize_element_attributes(node, context) {
 		} else if (attribute.type === 'StyleDirective') {
 			style_directives.push(attribute);
 		} else if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {import('estree').ExpressionStatement} */ (context.visit(attribute)));
+			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 		} else {
 			context.visit(attribute);
 		}
@@ -1802,7 +1764,7 @@ function serialize_element_attributes(node, context) {
 	if (class_directives.length > 0 && !has_spread) {
 		const class_attribute = serialize_class_directives(
 			class_directives,
-			/** @type {import('#compiler').Attribute | null} */ (attributes[class_index] ?? null)
+			/** @type {Attribute | null} */ (attributes[class_index] ?? null)
 		);
 		if (class_index === -1) {
 			attributes.push(class_attribute);
@@ -1812,7 +1774,7 @@ function serialize_element_attributes(node, context) {
 	if (style_directives.length > 0 && !has_spread) {
 		serialize_style_directives(
 			style_directives,
-			/** @type {import('#compiler').Attribute | null} */ (attributes[style_index] ?? null),
+			/** @type {Attribute | null} */ (attributes[style_index] ?? null),
 			context
 		);
 		if (style_index > -1) {
@@ -1832,10 +1794,10 @@ function serialize_element_attributes(node, context) {
 			context
 		);
 	} else {
-		for (const attribute of /** @type {import('#compiler').Attribute[]} */ (attributes)) {
+		for (const attribute of /** @type {Attribute[]} */ (attributes)) {
 			if (attribute.value === true || is_text_attribute(attribute)) {
 				const name = get_attribute_name(node, attribute, context);
-				const literal_value = /** @type {import('estree').Literal} */ (
+				const literal_value = /** @type {Literal} */ (
 					serialize_attribute_value(
 						attribute.value,
 						context,
@@ -1881,8 +1843,8 @@ function serialize_element_attributes(node, context) {
 
 /**
  *
- * @param {import('#compiler').ClassDirective[]} class_directives
- * @param {import('#compiler').Attribute | null} class_attribute
+ * @param {ClassDirective[]} class_directives
+ * @param {Attribute | null} class_attribute
  * @returns
  */
 function serialize_class_directives(class_directives, class_attribute) {
@@ -1931,9 +1893,9 @@ function serialize_class_directives(class_directives, class_attribute) {
 }
 
 /**
- * @param {import('#compiler').StyleDirective[]} style_directives
- * @param {import('#compiler').Attribute | null} style_attribute
- * @param {import('./types').ComponentContext} context
+ * @param {StyleDirective[]} style_directives
+ * @param {Attribute | null} style_attribute
+ * @param {ComponentContext} context
  */
 function serialize_style_directives(style_directives, style_attribute, context) {
 	const styles = style_directives.map((directive) => {
@@ -1960,12 +1922,12 @@ function serialize_style_directives(style_directives, style_attribute, context) 
 }
 
 /**
- * @param {import('../../types').ComponentAnalysis} analysis
- * @param {import('#compiler').ValidatedCompileOptions} options
- * @returns {import('estree').Program}
+ * @param {ComponentAnalysis} analysis
+ * @param {ValidatedCompileOptions} options
+ * @returns {Program}
  */
 export function server_component(analysis, options) {
-	/** @type {import('./types').ComponentServerTransformState} */
+	/** @type {ComponentServerTransformState} */
 	const state = {
 		analysis,
 		options,
@@ -1983,9 +1945,9 @@ export function server_component(analysis, options) {
 		skip_hydration_boundaries: false
 	};
 
-	const module = /** @type {import('estree').Program} */ (
+	const module = /** @type {Program} */ (
 		walk(
-			/** @type {import('#compiler').SvelteNode} */ (analysis.module.ast),
+			/** @type {SvelteNode} */ (analysis.module.ast),
 			state,
 			// @ts-expect-error TODO: zimmerframe types
 			{
@@ -1996,9 +1958,9 @@ export function server_component(analysis, options) {
 		)
 	);
 
-	const instance = /** @type {import('estree').Program} */ (
+	const instance = /** @type {Program} */ (
 		walk(
-			/** @type {import('#compiler').SvelteNode} */ (analysis.instance.ast),
+			/** @type {SvelteNode} */ (analysis.instance.ast),
 			{ ...state, scope: analysis.instance.scope },
 			// @ts-expect-error TODO: zimmerframe types
 			{
@@ -2020,9 +1982,9 @@ export function server_component(analysis, options) {
 		)
 	);
 
-	const template = /** @type {import('estree').Program} */ (
+	const template = /** @type {Program} */ (
 		walk(
-			/** @type {import('#compiler').SvelteNode} */ (analysis.template.ast),
+			/** @type {SvelteNode} */ (analysis.template.ast),
 			{ ...state, scope: analysis.template.scope },
 			// @ts-expect-error TODO: zimmerframe types
 			{
@@ -2033,7 +1995,7 @@ export function server_component(analysis, options) {
 		)
 	);
 
-	/** @type {import('estree').VariableDeclarator[]} */
+	/** @type {VariableDeclarator[]} */
 	const legacy_reactive_declarations = [];
 
 	for (const [node] of analysis.reactive_statements) {
@@ -2088,7 +2050,7 @@ export function server_component(analysis, options) {
 				b.function(
 					b.id('$$render_inner'),
 					[b.id('$$payload')],
-					b.block(/** @type {import('estree').Statement[]} */ (rest))
+					b.block(/** @type {Statement[]} */ (rest))
 				)
 			),
 			b.do_while(
@@ -2117,7 +2079,7 @@ export function server_component(analysis, options) {
 	}
 	// Propagate values of bound props upwards if they're undefined in the parent and have a value.
 	// Don't do this as part of the props retrieval because people could eagerly mutate the prop in the instance script.
-	/** @type {import('estree').Property[]} */
+	/** @type {Property[]} */
 	const props = [];
 	for (const [name, binding] of analysis.instance.scope.declarations) {
 		if (binding.kind === 'bindable_prop' && !name.startsWith('$$')) {
@@ -2132,13 +2094,13 @@ export function server_component(analysis, options) {
 		// undefined to a binding that has a default value.
 		template.body.push(b.stmt(b.call('$.bind_props', b.id('$$props'), b.object(props))));
 	}
-	/** @type {import('estree').Expression[]} */
+	/** @type {Expression[]} */
 	const push_args = [];
 	if (options.dev) push_args.push(b.id(analysis.name));
 
 	const component_block = b.block([
-		.../** @type {import('estree').Statement[]} */ (instance.body),
-		.../** @type {import('estree').Statement[]} */ (template.body)
+		.../** @type {Statement[]} */ (instance.body),
+		.../** @type {Statement[]} */ (template.body)
 	]);
 
 	let should_inject_context = analysis.needs_context || options.dev;
@@ -2275,12 +2237,12 @@ export function server_component(analysis, options) {
 }
 
 /**
- * @param {import('../../types').Analysis} analysis
- * @param {import('#compiler').ValidatedModuleCompileOptions} options
- * @returns {import('estree').Program}
+ * @param {Analysis} analysis
+ * @param {ValidatedModuleCompileOptions} options
+ * @returns {Program}
  */
 export function server_module(analysis, options) {
-	/** @type {import('./types').ServerTransformState} */
+	/** @type {ServerTransformState} */
 	const state = {
 		analysis,
 		options,
@@ -2294,8 +2256,8 @@ export function server_module(analysis, options) {
 		getters: {}
 	};
 
-	const module = /** @type {import('estree').Program} */ (
-		walk(/** @type {import('#compiler').SvelteNode} */ (analysis.module.ast), state, {
+	const module = /** @type {Program} */ (
+		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, {
 			...set_scope(analysis.module.scopes),
 			...global_visitors,
 			...javascript_visitors_runes
