@@ -303,9 +303,6 @@ declare module 'svelte' {
 					: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
 		): boolean;
 	}
-	type Getters<T> = {
-		[K in keyof T]: () => T[K];
-	};
 	/**
 	 * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
 	 * It must be called during the component's initialisation (but doesn't need to live *inside* the component;
@@ -470,6 +467,9 @@ declare module 'svelte' {
 	 * https://svelte.dev/docs/svelte#getallcontexts
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
+	type Getters<T> = {
+		[K in keyof T]: () => T[K];
+	};
 
 	export {};
 }
@@ -810,6 +810,8 @@ declare module 'svelte/compiler' {
 		 * Set to `undefined` (the default) to infer runes mode from the component code.
 		 * Is always `true` for JS/TS modules compiled with Svelte.
 		 * Will be `true` by default in Svelte 6.
+		 * Note that setting this to `true` in your `svelte.config.js` will force runes mode for your entire project, including components in `node_modules`,
+		 * which is likely not what you want. If you're using Vite, consider using [dynamicCompileOptions](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/config.md#dynamiccompileoptions) instead.
 		 * @default undefined
 		 */
 		runes?: boolean | undefined;
@@ -2628,6 +2630,8 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * Set to `undefined` (the default) to infer runes mode from the component code.
 		 * Is always `true` for JS/TS modules compiled with Svelte.
 		 * Will be `true` by default in Svelte 6.
+		 * Note that setting this to `true` in your `svelte.config.js` will force runes mode for your entire project, including components in `node_modules`,
+		 * which is likely not what you want. If you're using Vite, consider using [dynamicCompileOptions](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/config.md#dynamiccompileoptions) instead.
 		 * @default undefined
 		 */
 		runes?: boolean | undefined;

@@ -1,6 +1,5 @@
 // This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
 
-import type { Getters } from '#shared';
 import './ambient.js';
 
 /**
