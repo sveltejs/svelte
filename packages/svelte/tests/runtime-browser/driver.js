@@ -5,6 +5,7 @@ import config from '__CONFIG__';
 // @ts-expect-error
 import * as assert from 'assert.js';
 import { createClassComponent } from 'svelte/legacy';
+import { flushSync } from 'svelte';
 
 /** @param {HTMLElement} target */
 export default async function (target) {
@@ -46,6 +47,7 @@ export default async function (target) {
 		};
 
 		if (config.html) {
+			flushSync();
 			assert.htmlEqual(target.innerHTML, config.html);
 		}
 
