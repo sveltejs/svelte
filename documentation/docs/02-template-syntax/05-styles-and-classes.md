@@ -32,24 +32,24 @@ To apply styles to a selector globally, use the `:global(...)` modifier.
 ```svelte
 <style>
 	:global(body) {
-		/* this will apply to <body> */
+		/* applies to <body> */
 		margin: 0;
 	}
 
 	div :global(strong) {
-		/* this will apply to all <strong> elements, in any
-			 component, that are inside <div> elements belonging
-			 to this component */
+		/* applies to all <strong> elements, in any
+		   component, that are inside <div> elements belonging
+		   to this component */
 		color: goldenrod;
 	}
 
 	p:global(.red) {
-		/* this will apply to all <p> elements belonging to this
-			 component with a class of red, even if class="red" does
-			 not initially appear in the markup, and is instead
-			 added at runtime. This is useful when the class
-			 of the element is dynamically applied, for instance
-			 when updating the element's classList property directly. */
+		/* applies to all <p> elements belonging to this
+		   component with a class of red, even if class="red" does
+		   not initially appear in the markup, and is instead
+		   added at runtime. This is useful when the class
+		   of the element is dynamically applied, for instance
+		   when updating the element's classList property directly. */
 	}
 </style>
 ```
@@ -73,28 +73,22 @@ To apply all styles after a certain point to a selector globally, use the `:glob
 ```svelte
 <style>
 	:global {
-		div {
-			/* this will apply to every <div> in your application */
-			margin: 0;
-		}
-		p {
-			/* this will apply to every <p> in your application */
-			color: blue;
-		}
+		/* applies to every <div> in your application */
+		div { ... }
+
+		/* applies to every <p> in your application */
+		p { ... }
 	}
 
-	div :global strong {
-		/* this will apply to all <strong> elements, in any
-			component, that are inside <div> elements belonging
-			to this component */
-		color: goldenrod;
+	.a :global {
+		/* applies to every `.b .c .d` element, in any component,
+		   that is inside an `.a` element in this component */
+		.b .c .d {...}
 	}
 </style>
 ```
 
-The difference between `:global` and `:global(...)` is that `:global(...)` only makes all styles within its braces global, whereas `:global` makes all styles coming after it global, including those in nested CSS.
-
-If `:global` is preceeded by a descendant combinator, the combinator is removed from the output. That means that `div :global.x` is equivalent to `div.svelte-hash.x`.
+> The second example above could also be turned into a `.a :global .b .c .d` selector, where everything after the `:global` is unscoped. Both forms are semantically equal, and as such this form is also supported, but the nested form is recommended instead when writing styles.
 
 ## Nested style tags
 
