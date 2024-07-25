@@ -444,12 +444,12 @@ export function css_global_block_invalid_combinator(node, name) {
 }
 
 /**
- * A `:global {...}` block can only contain rules, not declarations
+ * A top-level `:global {...}` block can only contain rules, not declarations
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function css_global_block_invalid_declaration(node) {
-	e(node, "css_global_block_invalid_declaration", "A `:global {...}` block can only contain rules, not declarations");
+	e(node, "css_global_block_invalid_declaration", "A top-level `:global {...}` block can only contain rules, not declarations");
 }
 
 /**

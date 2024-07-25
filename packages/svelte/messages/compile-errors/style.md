@@ -12,7 +12,7 @@
 
 ## css_global_block_invalid_declaration
 
-> A `:global {...}` block can only contain rules, not declarations
+> A top-level `:global {...}` block can only contain rules, not declarations
 
 ## css_global_block_invalid_list
 
