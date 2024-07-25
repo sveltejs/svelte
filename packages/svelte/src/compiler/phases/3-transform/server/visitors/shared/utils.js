@@ -296,24 +296,26 @@ export function serialize_set_binding(node, context, fallback) {
 		return fallback();
 	}
 
-	const is_store = is_store_name(left.name);
-	const left_name = is_store ? left.name.slice(1) : left.name;
-	const binding = state.scope.get(left_name);
+	if (!is_store_name(left.name)) {
+		return fallback();
+	}
 
-	if (!binding || !is_store) {
+	const name = left.name.slice(1);
+
+	if (!state.scope.get(name)) {
 		// TODO error if it's a computed (or rest prop)? or does that already happen elsewhere?
 		return fallback();
 	}
 
 	if (left === node.left) {
-		return b.call('$.store_set', b.id(left_name), /** @type {Expression} */ (visit(node.right)));
+		return b.call('$.store_set', b.id(name), /** @type {Expression} */ (visit(node.right)));
 	}
 
 	return b.call(
 		'$.mutate_store',
 		b.assignment('??=', b.id('$$store_subs'), b.object([])),
 		b.literal(left.name),
-		b.id(left_name),
+		b.id(name),
 		b.assignment(
 			node.operator,
 			/** @type {Pattern} */ (visit(node.left)),
