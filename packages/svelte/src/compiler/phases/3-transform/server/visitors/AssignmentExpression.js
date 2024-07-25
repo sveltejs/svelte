@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, BinaryOperator, Expression, Node, Pattern } from 'estree' */
+/** @import { AssignmentExpression, AssignmentOperator, BinaryOperator, Expression, Node, Pattern } from 'estree' */
 /** @import { SvelteNode } from '#compiler' */
 /** @import { Context, ServerTransformState } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
@@ -25,9 +25,10 @@ export function AssignmentExpression(node, context) {
 		let unchanged = 0;
 
 		const assignments = extract_paths(node.left).map((path) => {
-			const assignment = b.assignment('=', path.node, path.expression?.(rhs));
+			const value = path.expression?.(rhs);
+			const assignment = b.assignment('=', path.node, value);
 
-			return serialize_assignment(assignment, context, () => {
+			return serialize_assignment('=', path.node, value, context, () => {
 				unchanged += 1;
 				return assignment;
 			});
@@ -53,42 +54,44 @@ export function AssignmentExpression(node, context) {
 		return sequence;
 	}
 
-	return serialize_assignment(node, context, context.next);
+	return serialize_assignment(node.operator, node.left, node.right, context, context.next);
 }
 
 /**
- * @param {AssignmentExpression} node
+ * @param {AssignmentOperator} operator
+ * @param {Pattern} left
+ * @param {Expression} right
  * @param {import('zimmerframe').Context<SvelteNode, ServerTransformState>} context
  * @param {() => any} fallback
  * @returns {Expression}
  */
-function serialize_assignment(node, context, fallback) {
-	let left = node.left;
+function serialize_assignment(operator, left, right, context, fallback) {
+	let object = left;
 
-	while (left.type === 'MemberExpression') {
+	while (object.type === 'MemberExpression') {
 		// @ts-expect-error
-		left = left.object;
+		object = object.object;
 	}
 
-	if (left.type !== 'Identifier' || !is_store_name(left.name)) {
+	if (object.type !== 'Identifier' || !is_store_name(object.name)) {
 		return fallback();
 	}
 
-	const name = left.name.slice(1);
+	const name = object.name.slice(1);
 
 	if (!context.state.scope.get(name)) {
 		return fallback();
 	}
 
-	if (left === node.left) {
+	if (object === left) {
 		const value =
-			node.operator === '='
-				? /** @type {Expression} */ (context.visit(node.right))
+			operator === '='
+				? /** @type {Expression} */ (context.visit(right))
 				: // turn something like x += 1 into x = x + 1
 					b.binary(
-						/** @type {BinaryOperator} */ (node.operator.slice(0, -1)),
-						serialize_get_binding(node.left, context.state),
-						/** @type {Expression} */ (context.visit(node.right))
+						/** @type {BinaryOperator} */ (operator.slice(0, -1)),
+						serialize_get_binding(left, context.state),
+						/** @type {Expression} */ (context.visit(right))
 					);
 
 		return b.call('$.store_set', b.id(name), value);
@@ -97,12 +100,12 @@ function serialize_assignment(node, context, fallback) {
 	return b.call(
 		'$.mutate_store',
 		b.assignment('??=', b.id('$$store_subs'), b.object([])),
-		b.literal(left.name),
+		b.literal(object.name),
 		b.id(name),
 		b.assignment(
-			node.operator,
-			/** @type {Pattern} */ (context.visit(node.left)),
-			/** @type {Expression} */ (context.visit(node.right))
+			operator,
+			/** @type {Pattern} */ (context.visit(left)),
+			/** @type {Expression} */ (context.visit(right))
 		)
 	);
 }
