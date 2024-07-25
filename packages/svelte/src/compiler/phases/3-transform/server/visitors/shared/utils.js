@@ -300,41 +300,26 @@ export function serialize_set_binding(node, context, fallback) {
 	const left_name = is_store ? left.name.slice(1) : left.name;
 	const binding = state.scope.get(left_name);
 
-	if (!binding) return fallback();
-
-	if (binding.mutation !== null) {
-		return binding.mutation(node, context);
-	}
-
-	if (
-		binding.kind !== 'state' &&
-		binding.kind !== 'frozen_state' &&
-		binding.kind !== 'prop' &&
-		binding.kind !== 'bindable_prop' &&
-		binding.kind !== 'each' &&
-		binding.kind !== 'legacy_reactive' &&
-		!is_store
-	) {
+	if (!binding || !is_store) {
 		// TODO error if it's a computed (or rest prop)? or does that already happen elsewhere?
 		return fallback();
 	}
 
-	const value = get_assignment_value(node, context);
 	if (left === node.left) {
-		if (is_store) {
-			return b.call('$.store_set', b.id(left_name), /** @type {Expression} */ (visit(node.right)));
-		}
-		return fallback();
-	} else if (is_store) {
-		return b.call(
-			'$.mutate_store',
-			b.assignment('??=', b.id('$$store_subs'), b.object([])),
-			b.literal(left.name),
-			b.id(left_name),
-			b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value)
-		);
+		return b.call('$.store_set', b.id(left_name), /** @type {Expression} */ (visit(node.right)));
 	}
-	return fallback();
+
+	return b.call(
+		'$.mutate_store',
+		b.assignment('??=', b.id('$$store_subs'), b.object([])),
+		b.literal(left.name),
+		b.id(left_name),
+		b.assignment(
+			node.operator,
+			/** @type {Pattern} */ (visit(node.left)),
+			get_assignment_value(node, context)
+		)
+	);
 }
 
 /**
