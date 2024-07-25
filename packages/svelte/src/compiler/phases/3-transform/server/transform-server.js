@@ -12,8 +12,10 @@ import { filename } from '../../../state.js';
 import { render_stylesheet } from '../css/index.js';
 import { AssignmentExpression } from './visitors/javascript/AssignmentExpression.js';
 import { CallExpression } from './visitors/javascript/CallExpression.js';
+import { ClassBodyRunes } from './visitors/javascript/ClassBody.js';
 import { Identifier } from './visitors/javascript/Identifier.js';
 import { UpdateExpression } from './visitors/javascript/UpdateExpression.js';
+import { PropertyDefinitionRunes } from './visitors/javascript/PropertyDefinition.js';
 import { AwaitBlock } from './visitors/template/AwaitBlock.js';
 import { Component } from './visitors/template/Component.js';
 import { ConstTag } from './visitors/template/ConstTag.js';
@@ -68,138 +70,8 @@ const global_visitors = {
 
 /** @type {Visitors} */
 const javascript_visitors_runes = {
-	ClassBody(node, { state, visit }) {
-		/** @type {Map<string, StateField>} */
-		const public_derived = new Map();
-
-		/** @type {Map<string, StateField>} */
-		const private_derived = new Map();
-
-		/** @type {string[]} */
-		const private_ids = [];
-
-		for (const definition of node.body) {
-			if (
-				definition.type === 'PropertyDefinition' &&
-				(definition.key.type === 'Identifier' || definition.key.type === 'PrivateIdentifier')
-			) {
-				const { type, name } = definition.key;
-
-				const is_private = type === 'PrivateIdentifier';
-				if (is_private) private_ids.push(name);
-
-				if (definition.value?.type === 'CallExpression') {
-					const rune = get_rune(definition.value, state.scope);
-					if (rune === '$derived' || rune === '$derived.by') {
-						/** @type {StateField} */
-						const field = {
-							kind: rune === '$derived.by' ? 'derived_call' : 'derived',
-							// @ts-expect-error this is set in the next pass
-							id: is_private ? definition.key : null
-						};
-
-						if (is_private) {
-							private_derived.set(name, field);
-						} else {
-							public_derived.set(name, field);
-						}
-					}
-				}
-			}
-		}
-
-		// each `foo = $derived()` needs a backing `#foo` field
-		for (const [name, field] of public_derived) {
-			let deconflicted = name;
-			while (private_ids.includes(deconflicted)) {
-				deconflicted = '_' + deconflicted;
-			}
-
-			private_ids.push(deconflicted);
-			field.id = b.private_id(deconflicted);
-		}
-
-		/** @type {Array<MethodDefinition | PropertyDefinition>} */
-		const body = [];
-
-		const child_state = { ...state, private_derived };
-
-		// Replace parts of the class body
-		for (const definition of node.body) {
-			if (
-				definition.type === 'PropertyDefinition' &&
-				(definition.key.type === 'Identifier' || definition.key.type === 'PrivateIdentifier')
-			) {
-				const name = definition.key.name;
-
-				const is_private = definition.key.type === 'PrivateIdentifier';
-				const field = (is_private ? private_derived : public_derived).get(name);
-
-				if (definition.value?.type === 'CallExpression' && field !== undefined) {
-					const init = /** @type {Expression} **/ (
-						visit(definition.value.arguments[0], child_state)
-					);
-					const value =
-						field.kind === 'derived_call'
-							? b.call('$.once', init)
-							: b.call('$.once', b.thunk(init));
-
-					if (is_private) {
-						body.push(b.prop_def(field.id, value));
-					} else {
-						// #foo;
-						const member = b.member(b.this, field.id);
-						body.push(b.prop_def(field.id, value));
-
-						// get foo() { return this.#foo; }
-						body.push(b.method('get', definition.key, [], [b.return(b.call(member))]));
-
-						if ((field.kind === 'derived' || field.kind === 'derived_call') && state.options.dev) {
-							body.push(
-								b.method(
-									'set',
-									definition.key,
-									[b.id('_')],
-									[b.throw_error(`Cannot update a derived property ('${name}')`)]
-								)
-							);
-						}
-					}
-
-					continue;
-				}
-			}
-
-			body.push(/** @type {MethodDefinition} **/ (visit(definition, child_state)));
-		}
-
-		return { ...node, body };
-	},
-	PropertyDefinition(node, { state, next, visit }) {
-		if (node.value != null && node.value.type === 'CallExpression') {
-			const rune = get_rune(node.value, state.scope);
-
-			if (rune === '$state' || rune === '$state.frozen' || rune === '$derived') {
-				return {
-					...node,
-					value:
-						node.value.arguments.length === 0
-							? null
-							: /** @type {Expression} */ (visit(node.value.arguments[0]))
-				};
-			}
-			if (rune === '$derived.by') {
-				return {
-					...node,
-					value:
-						node.value.arguments.length === 0
-							? null
-							: b.call(/** @type {Expression} */ (visit(node.value.arguments[0])))
-				};
-			}
-		}
-		next();
-	},
+	ClassBody: ClassBodyRunes,
+	PropertyDefinition: PropertyDefinitionRunes,
 	VariableDeclaration(node, { state, visit }) {
 		const declarations = [];
 
