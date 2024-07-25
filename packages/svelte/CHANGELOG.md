@@ -1,5 +1,21 @@
 # svelte
 
+## 5.0.0-next.199
+
+### Patch Changes
+
+- fix: add missing hydration mismatch call-site ([#12604](https://github.com/sveltejs/svelte/pull/12604))
+
+- fix: apply dynamic event fixes to OnDirective ([#12582](https://github.com/sveltejs/svelte/pull/12582))
+
+- fix: ensure directives run in sequential order ([#12591](https://github.com/sveltejs/svelte/pull/12591))
+
+- fix: tweak element_invalid_self_closing_tag to exclude namespace ([#12585](https://github.com/sveltejs/svelte/pull/12585))
+
+- breaking: avoid flushing queued updates on mount/hydrate ([#12602](https://github.com/sveltejs/svelte/pull/12602))
+
+- feat: allow `:global` in more places ([#12560](https://github.com/sveltejs/svelte/pull/12560))
+
 ## 5.0.0-next.198
 
 ### Patch Changes
