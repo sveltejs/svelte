@@ -46,26 +46,26 @@ import { TitleElement } from './visitors/template/TitleElement.js';
 /** @type {Visitors} */
 const global_visitors = {
 	AssignmentExpression,
+	CallExpression,
 	Identifier,
-	UpdateExpression,
-	CallExpression
+	UpdateExpression
 };
 
 /** @type {Visitors} */
 const javascript_visitors_runes = {
 	...global_visitors,
 	ClassBody: ClassBodyRunes,
-	PropertyDefinition: PropertyDefinitionRunes,
-	VariableDeclaration: VariableDeclarationRunes,
 	ExpressionStatement: ExpressionStatementRunes,
-	MemberExpression: MemberExpressionRunes
+	MemberExpression: MemberExpressionRunes,
+	PropertyDefinition: PropertyDefinitionRunes,
+	VariableDeclaration: VariableDeclarationRunes
 };
 
 /** @type {Visitors} */
 const javascript_visitors_legacy = {
 	...global_visitors,
-	VariableDeclaration: VariableDeclarationLegacy,
-	LabeledStatement: LabeledStatementLegacy
+	LabeledStatement: LabeledStatementLegacy,
+	VariableDeclaration: VariableDeclarationLegacy
 };
 
 /** @type {ComponentVisitors} */
