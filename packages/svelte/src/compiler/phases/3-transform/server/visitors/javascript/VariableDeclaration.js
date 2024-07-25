@@ -1,4 +1,5 @@
-/** @import { VariableDeclaration, Node, VariableDeclarator, Expression, CallExpression, Pattern } from 'estree' */
+/** @import { VariableDeclaration, VariableDeclarator, Expression, CallExpression, Pattern, Identifier } from 'estree' */
+/** @import { Binding } from '#compiler' */
 /** @import { Context } from '../../types' */
 /** @import { Scope } from '../../../../scope' */
 import { extract_paths, is_expression_async } from '../../../../../utils/ast.js';

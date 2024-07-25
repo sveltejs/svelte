@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, Expression, Identifier, Pattern } from 'estree' */
+/** @import { AssignmentExpression, BinaryOperator, Expression, Identifier, Pattern } from 'estree' */
 /** @import { SvelteNode } from '#compiler' */
 /** @import { ServerTransformState } from '../../../types' */
 import { extract_paths } from '../../../../../../utils/ast.js';
