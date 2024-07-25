@@ -40,4 +40,24 @@
 
 ## state_proxy_equality_mismatch
 
-> Reactive `$state(...)` proxies and the values they proxy have different identities. Because of this, comparisons with `%operator%` will produce unexpected results. Consider using `$state.is(a, b)` instead
+> Reactive `$state(...)` proxies and the values they proxy have different identities. Because of this, comparisons with `%operator%` will produce unexpected results. Consider using `$state.is(a, b)` instead%details%
+
+`$state(...)` does create a proxy of the value it is passed. Therefore, the resulting object has a different identity and equality checks will always return `false`:
+
+```svelte
+<script>
+    let object = { foo: 'bar' };
+    let state_object = $state(object);
+    object === state_object; // always false
+</script>
+```
+
+Most of the time this will not be a problem in practise because it is very rare to keep the original value around to later compare it against a state value. In case it happens, Svelte will warn you about it in development mode and suggest to use `$state.is` instead, which is able to unwrap the proxy and compare the original values:
+
+```svelte
+<script>
+    let object = { foo: 'bar' };
+    let state_object = $state(object);
+    $state.is(object, state_object); // true
+</script>
+```

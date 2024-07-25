@@ -33,7 +33,7 @@ for (const category of fs.readdirSync('messages')) {
 
 			const sections = text.trim().split('\n\n');
 			let details = null;
-			if (!sections[sections.length - 1].startsWith('> ')) {
+			while (!sections[sections.length - 1].startsWith('> ')) {
 				details = /** @type {string} */ (sections.pop());
 			}
 
