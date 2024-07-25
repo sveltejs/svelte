@@ -245,17 +245,16 @@ export function serialize_set_binding(node, context, fallback) {
 		node.left.type === 'ObjectPattern' ||
 		node.left.type === 'RestElement'
 	) {
-		// Turn assignment into an IIFE, so that `$.set` calls etc don't produce invalid code
-		const rhs = b.id('$$value');
+		const value = /** @type {Expression} */ (context.visit(node.right));
+
+		const should_cache = value.type !== 'Identifier';
+		const rhs = should_cache ? b.id('$$value') : value;
 
 		/** @type {Expression[]} */
 		const assignments = [];
-
-		const paths = extract_paths(node.left);
-
 		let should_transform = false;
 
-		for (const path of paths) {
+		for (const path of extract_paths(node.left)) {
 			const assignment = b.assignment('=', path.node, path.expression?.(rhs));
 			let changed = true;
 
@@ -274,10 +273,11 @@ export function serialize_set_binding(node, context, fallback) {
 			return fallback();
 		}
 
-		return b.call(
-			b.arrow([rhs], b.sequence([...assignments, rhs])),
-			/** @type {Expression} */ (context.visit(node.right))
-		);
+		if (should_cache) {
+			return b.call(b.arrow([rhs], b.sequence([...assignments, rhs])), value);
+		} else {
+			return b.call(b.thunk(b.sequence([...assignments, rhs])));
+		}
 	}
 
 	if (node.left.type !== 'Identifier' && node.left.type !== 'MemberExpression') {
