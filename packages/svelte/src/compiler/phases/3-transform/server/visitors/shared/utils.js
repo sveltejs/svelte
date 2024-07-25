@@ -240,44 +240,43 @@ export function serialize_get_binding(node, state) {
  * @returns {Expression}
  */
 export function serialize_set_binding(node, context, fallback) {
-	const { state, visit } = context;
-
 	if (
 		node.left.type === 'ArrayPattern' ||
 		node.left.type === 'ObjectPattern' ||
 		node.left.type === 'RestElement'
 	) {
 		// Turn assignment into an IIFE, so that `$.set` calls etc don't produce invalid code
-		const tmp_id = context.state.scope.generate('tmp');
-
-		/** @type {AssignmentExpression[]} */
-		const original_assignments = [];
+		const rhs = b.id('$$value');
 
 		/** @type {Expression[]} */
 		const assignments = [];
 
 		const paths = extract_paths(node.left);
 
+		let should_transform = false;
+
 		for (const path of paths) {
-			const value = path.expression?.(b.id(tmp_id));
-			const assignment = b.assignment('=', path.node, value);
-			original_assignments.push(assignment);
-			assignments.push(serialize_set_binding(assignment, context, () => assignment));
+			const assignment = b.assignment('=', path.node, path.expression?.(rhs));
+			let changed = true;
+
+			assignments.push(
+				serialize_set_binding(assignment, context, () => {
+					changed = false;
+					return assignment;
+				})
+			);
+
+			should_transform ||= changed;
 		}
 
-		if (assignments.every((assignment, i) => assignment === original_assignments[i])) {
+		if (!should_transform) {
 			// No change to output -> nothing to transform -> we can keep the original assignment
 			return fallback();
 		}
 
 		return b.call(
-			b.thunk(
-				b.block([
-					b.const(tmp_id, /** @type {Expression} */ (visit(node.right))),
-					b.stmt(b.sequence(assignments)),
-					b.return(b.id(tmp_id))
-				])
-			)
+			b.arrow([rhs], b.sequence([...assignments, rhs])),
+			/** @type {Expression} */ (context.visit(node.right))
 		);
 	}
 
@@ -292,23 +291,19 @@ export function serialize_set_binding(node, context, fallback) {
 		left = left.object;
 	}
 
-	if (left.type !== 'Identifier') {
-		return fallback();
-	}
-
-	if (!is_store_name(left.name)) {
+	if (left.type !== 'Identifier' || !is_store_name(left.name)) {
 		return fallback();
 	}
 
 	const name = left.name.slice(1);
 
-	if (!state.scope.get(name)) {
+	if (!context.state.scope.get(name)) {
 		// TODO error if it's a computed (or rest prop)? or does that already happen elsewhere?
 		return fallback();
 	}
 
 	if (left === node.left) {
-		return b.call('$.store_set', b.id(name), /** @type {Expression} */ (visit(node.right)));
+		return b.call('$.store_set', b.id(name), /** @type {Expression} */ (context.visit(node.right)));
 	}
 
 	return b.call(
@@ -318,7 +313,7 @@ export function serialize_set_binding(node, context, fallback) {
 		b.id(name),
 		b.assignment(
 			node.operator,
-			/** @type {Pattern} */ (visit(node.left)),
+			/** @type {Pattern} */ (context.visit(node.left)),
 			get_assignment_value(node, context)
 		)
 	);
