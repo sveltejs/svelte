@@ -27,7 +27,7 @@ This works by adding a class to affected elements, which is based on a hash of t
 
 ## :global(...)
 
-To apply styles to a single selector globally, use the `:global(...)` modifier.
+To apply styles to a single selector globally, use the `:global(...)` modifier:
 
 ```svelte
 <style>
@@ -65,7 +65,7 @@ The `-global-` part will be removed when compiled, and the keyframe will then be
 
 ## :global
 
-To apply all styles after a certain point to a selector globally, use the `:global` modifier.
+To apply styles to a group of selectors globally, create a `:global {...}` block:
 
 ```svelte
 <style>
