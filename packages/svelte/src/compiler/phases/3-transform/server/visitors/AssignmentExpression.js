@@ -1,8 +1,8 @@
 /** @import { AssignmentExpression, BinaryOperator, Expression, Node, Pattern } from 'estree' */
 /** @import { SvelteNode } from '#compiler' */
 /** @import { Context, ServerTransformState } from '../types.js' */
-import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
+import { extract_paths } from '../../../../utils/ast.js';
 import { serialize_get_binding } from './shared/utils.js';
 
 /**
@@ -12,6 +12,7 @@ import { serialize_get_binding } from './shared/utils.js';
 export function AssignmentExpression(node, context) {
 	const parent = /** @type {Node} */ (context.path.at(-1));
 	const is_standalone = parent.type.endsWith('Statement');
+
 	return serialize_assignment(node, context, is_standalone, context.next);
 }
 
@@ -61,10 +62,6 @@ function serialize_assignment(node, context, is_standalone, fallback) {
 		}
 
 		return sequence;
-	}
-
-	if (node.left.type !== 'Identifier' && node.left.type !== 'MemberExpression') {
-		throw new Error(`Unexpected assignment type ${node.left.type}`);
 	}
 
 	let left = node.left;
