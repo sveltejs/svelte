@@ -1,12 +1,10 @@
-/** @import { Expression, ExpressionStatement, MethodDefinition, Pattern, Program, Property, PropertyDefinition, Statement, VariableDeclarator } from 'estree' */
-/** @import { Binding, Namespace, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { Program, Property, Statement, VariableDeclarator } from 'estree' */
+/** @import { SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { ComponentServerTransformState, ComponentVisitors, ServerTransformState, Visitors } from './types.js' */
 /** @import { Analysis, ComponentAnalysis } from '../../types.js' */
-/** @import { Scope } from '../../scope.js' */
-/** @import { StateField } from '../../3-transform/client/types.js' */ // TODO move this type
 import { walk } from 'zimmerframe';
 import { set_scope } from '../../scope.js';
-import { extract_identifiers, extract_paths, is_expression_async } from '../../../utils/ast.js';
+import { extract_identifiers } from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
 import { filename } from '../../../state.js';
 import { render_stylesheet } from '../css/index.js';
@@ -15,6 +13,7 @@ import { CallExpression } from './visitors/javascript/CallExpression.js';
 import { ClassBodyRunes } from './visitors/javascript/ClassBody.js';
 import { ExpressionStatementRunes } from './visitors/javascript/ExpressionStatement.js';
 import { Identifier } from './visitors/javascript/Identifier.js';
+import { LabeledStatementLegacy } from './visitors/javascript/LabeledStatement.js';
 import { MemberExpressionRunes } from './visitors/javascript/MemberExpression.js';
 import { UpdateExpression } from './visitors/javascript/UpdateExpression.js';
 import { PropertyDefinitionRunes } from './visitors/javascript/PropertyDefinition.js';
@@ -54,6 +53,7 @@ const global_visitors = {
 
 /** @type {Visitors} */
 const javascript_visitors_runes = {
+	...global_visitors,
 	ClassBody: ClassBodyRunes,
 	PropertyDefinition: PropertyDefinitionRunes,
 	VariableDeclaration: VariableDeclarationRunes,
@@ -63,22 +63,9 @@ const javascript_visitors_runes = {
 
 /** @type {Visitors} */
 const javascript_visitors_legacy = {
+	...global_visitors,
 	VariableDeclaration: VariableDeclarationLegacy,
-	LabeledStatement(node, context) {
-		if (context.path.length > 1) return;
-		if (node.label.name !== '$') return;
-
-		// TODO bail out if we're in module context
-
-		// these statements will be topologically ordered later
-		context.state.legacy_reactive_statements.set(
-			node,
-			// people could do "break $" inside, so we need to keep the label
-			b.labeled('$', /** @type {ExpressionStatement} */ (context.visit(node.body)))
-		);
-
-		return b.empty;
-	}
+	LabeledStatement: LabeledStatementLegacy
 };
 
 /** @type {ComponentVisitors} */
@@ -137,7 +124,6 @@ export function server_component(analysis, options) {
 			// @ts-expect-error TODO: zimmerframe types
 			{
 				...set_scope(analysis.module.scopes),
-				...global_visitors,
 				...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy)
 			}
 		)
@@ -146,11 +132,10 @@ export function server_component(analysis, options) {
 	const instance = /** @type {Program} */ (
 		walk(
 			/** @type {SvelteNode} */ (analysis.instance.ast),
-			{ ...state, scope: analysis.instance.scope },
+			state,
 			// @ts-expect-error TODO: zimmerframe types
 			{
 				...set_scope(analysis.instance.scopes),
-				...global_visitors,
 				...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy),
 				ImportDeclaration(node) {
 					state.hoisted.push(node);
@@ -170,7 +155,7 @@ export function server_component(analysis, options) {
 	const template = /** @type {Program} */ (
 		walk(
 			/** @type {SvelteNode} */ (analysis.template.ast),
-			{ ...state, scope: analysis.template.scope },
+			state,
 			// @ts-expect-error TODO: zimmerframe types
 			{
 				...set_scope(analysis.template.scopes),
@@ -216,17 +201,15 @@ export function server_component(analysis, options) {
 	// We can remove this once the legacy syntax is gone.
 	if (analysis.uses_component_bindings) {
 		const snippets = template.body.filter(
-			(node) =>
-				node.type === 'FunctionDeclaration' &&
-				// @ts-expect-error
-				node.___snippet
+			// @ts-expect-error
+			(node) => node.type === 'FunctionDeclaration' && node.___snippet
 		);
+
 		const rest = template.body.filter(
-			(node) =>
-				node.type !== 'FunctionDeclaration' ||
-				// @ts-expect-error
-				!node.___snippet
+			// @ts-expect-error
+			(node) => node.type !== 'FunctionDeclaration' || !node.___snippet
 		);
+
 		template.body = [
 			...snippets,
 			b.let('$$settled', b.true),
@@ -262,26 +245,27 @@ export function server_component(analysis, options) {
 			b.if(b.id('$$store_subs'), b.stmt(b.call('$.unsubscribe_stores', b.id('$$store_subs'))))
 		);
 	}
+
 	// Propagate values of bound props upwards if they're undefined in the parent and have a value.
 	// Don't do this as part of the props retrieval because people could eagerly mutate the prop in the instance script.
 	/** @type {Property[]} */
 	const props = [];
+
 	for (const [name, binding] of analysis.instance.scope.declarations) {
 		if (binding.kind === 'bindable_prop' && !name.startsWith('$$')) {
 			props.push(b.init(binding.prop_alias ?? name, b.id(name)));
 		}
 	}
+
 	for (const { name, alias } of analysis.exports) {
 		props.push(b.init(alias ?? name, b.id(name)));
 	}
+
 	if (props.length > 0) {
 		// This has no effect in runes mode other than throwing an error when someone passes
 		// undefined to a binding that has a default value.
 		template.body.push(b.stmt(b.call('$.bind_props', b.id('$$props'), b.object(props))));
 	}
-	/** @type {Expression[]} */
-	const push_args = [];
-	if (options.dev) push_args.push(b.id(analysis.name));
 
 	const component_block = b.block([
 		.../** @type {Statement[]} */ (instance.body),
@@ -291,7 +275,7 @@ export function server_component(analysis, options) {
 	let should_inject_context = analysis.needs_context || options.dev;
 
 	if (should_inject_context) {
-		component_block.body.unshift(b.stmt(b.call('$.push', ...push_args)));
+		component_block.body.unshift(b.stmt(b.call('$.push', options.dev && b.id(analysis.name))));
 		component_block.body.push(b.stmt(b.call('$.pop')));
 	}
 
@@ -348,6 +332,7 @@ export function server_component(analysis, options) {
 		should_inject_props ? [b.id('$$payload'), b.id('$$props')] : [b.id('$$payload')],
 		component_block
 	);
+
 	if (options.compatibility.componentApi === 4) {
 		body.unshift(b.imports([['render', '$$_render']], 'svelte/server'));
 		body.push(
@@ -444,7 +429,6 @@ export function server_module(analysis, options) {
 	const module = /** @type {Program} */ (
 		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, {
 			...set_scope(analysis.module.scopes),
-			...global_visitors,
 			...javascript_visitors_runes
 		})
 	);
