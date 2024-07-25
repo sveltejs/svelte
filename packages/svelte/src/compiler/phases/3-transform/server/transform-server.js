@@ -1,12 +1,12 @@
-/** @import { Expression, ExpressionStatement, Program, Property, Statement, VariableDeclarator } from 'estree' */
-/** @import { Namespace, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { Expression, ExpressionStatement, MethodDefinition, Pattern, Program, Property, PropertyDefinition, Statement, VariableDeclarator } from 'estree' */
+/** @import { Binding, Namespace, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { ComponentServerTransformState, ComponentVisitors, ServerTransformState, Visitors } from './types.js' */
 /** @import { Analysis, ComponentAnalysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
 /** @import { StateField } from '../../3-transform/client/types.js' */ // TODO move this type
 import { walk } from 'zimmerframe';
 import { set_scope } from '../../scope.js';
-import { extract_identifiers } from '../../../utils/ast.js';
+import { extract_identifiers, extract_paths, is_expression_async } from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
 import { filename } from '../../../state.js';
 import { render_stylesheet } from '../css/index.js';
@@ -43,6 +43,28 @@ import { SvelteFragment } from './visitors/template/SvelteFragment.js';
 import { SvelteHead } from './visitors/template/SvelteHead.js';
 import { SvelteSelf } from './visitors/template/SvelteSelf.js';
 import { TitleElement } from './visitors/template/TitleElement.js';
+
+/**
+ * @param {VariableDeclarator} declarator
+ * @param {Scope} scope
+ * @param {Expression} value
+ * @returns {VariableDeclarator[]}
+ */
+function create_state_declarators(declarator, scope, value) {
+	if (declarator.id.type === 'Identifier') {
+		return [b.declarator(declarator.id, value)];
+	}
+
+	const tmp = scope.generate('tmp');
+	const paths = extract_paths(declarator.id);
+	return [
+		b.declarator(b.id(tmp), value), // TODO inject declarator for opts, so we can use it below
+		...paths.map((path) => {
+			const value = path.expression?.(b.id(tmp));
+			return b.declarator(path.node, value);
+		})
+	];
+}
 
 /** @type {Visitors} */
 const global_visitors = {
