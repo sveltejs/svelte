@@ -22,19 +22,18 @@ export function AssignmentExpression(node, context) {
 		const should_cache = value.type !== 'Identifier';
 		const rhs = should_cache ? b.id('$$value') : value;
 
-		let unchanged = 0;
+		let changed = false;
 
 		const assignments = extract_paths(node.left).map((path) => {
 			const value = path.expression?.(rhs);
-			const assignment = b.assignment('=', path.node, value);
 
-			return serialize_assignment('=', path.node, value, context, () => {
-				unchanged += 1;
-				return assignment;
-			});
+			let assignment = serialize_assignment('=', path.node, value, context);
+			if (assignment !== null) changed = true;
+
+			return assignment ?? b.assignment('=', path.node, value);
 		});
 
-		if (unchanged === assignments.length) {
+		if (!changed) {
 			// No change to output -> nothing to transform -> we can keep the original assignment
 			return context.next();
 		}
@@ -54,7 +53,7 @@ export function AssignmentExpression(node, context) {
 		return sequence;
 	}
 
-	return serialize_assignment(node.operator, node.left, node.right, context, context.next);
+	return serialize_assignment(node.operator, node.left, node.right, context) || context.next();
 }
 
 /**
@@ -62,10 +61,9 @@ export function AssignmentExpression(node, context) {
  * @param {Pattern} left
  * @param {Expression} right
  * @param {import('zimmerframe').Context<SvelteNode, ServerTransformState>} context
- * @param {() => any} fallback
- * @returns {Expression}
+ * @returns {Expression | null}
  */
-function serialize_assignment(operator, left, right, context, fallback) {
+function serialize_assignment(operator, left, right, context) {
 	let object = left;
 
 	while (object.type === 'MemberExpression') {
@@ -74,25 +72,26 @@ function serialize_assignment(operator, left, right, context, fallback) {
 	}
 
 	if (object.type !== 'Identifier' || !is_store_name(object.name)) {
-		return fallback();
+		return null;
 	}
 
 	const name = object.name.slice(1);
 
 	if (!context.state.scope.get(name)) {
-		return fallback();
+		return null;
 	}
 
 	if (object === left) {
-		const value =
-			operator === '='
-				? /** @type {Expression} */ (context.visit(right))
-				: // turn something like x += 1 into x = x + 1
-					b.binary(
-						/** @type {BinaryOperator} */ (operator.slice(0, -1)),
-						serialize_get_binding(left, context.state),
-						/** @type {Expression} */ (context.visit(right))
-					);
+		let value = /** @type {Expression} */ (context.visit(right));
+
+		if (operator !== '=') {
+			// turn `x += 1` into `x = x + 1`
+			value = b.binary(
+				/** @type {BinaryOperator} */ (operator.slice(0, -1)),
+				serialize_get_binding(left, context.state),
+				value
+			);
+		}
 
 		return b.call('$.store_set', b.id(name), value);
 	}
