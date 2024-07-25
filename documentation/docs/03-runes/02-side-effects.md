@@ -61,6 +61,8 @@ You can return a function from `$effect`, which will run immediately before the 
 <button onclick={() => (milliseconds /= 2)}>faster</button>
 ```
 
+When an effect is instantiated, it will tie itself to the current parent effect, and is destroyed when said parent is destroyed. In the case of instantiating `$effect` during component initialization (no matter where you actually place your `$effect` code), that means the effect is tied to the lifecycle of that component. If there is no parent effect, an error will be thrown - in this case, either adjust your code to run during a parent effect, or use [`$effect.root`](#effectroot).
+
 ## `$effect` dependencies
 
 `$effect` automatically picks up any reactivy values (`$state`, `$derived`, `$props`) that are _synchronously_ read inside its function body and registers them as dependencies. When those dependencies change, the `$effect` schedules a rerun.
