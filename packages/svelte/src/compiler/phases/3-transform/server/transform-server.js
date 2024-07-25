@@ -23,7 +23,6 @@ import { Identifier } from './visitors/Identifier.js';
 import { IfBlock } from './visitors/IfBlock.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatementLegacy } from './visitors/LabeledStatement.js';
-import { LetDirective } from './visitors/LetDirective.js';
 import { MemberExpressionRunes } from './visitors/MemberExpression.js';
 import { PropertyDefinitionRunes } from './visitors/PropertyDefinition.js';
 import { RegularElement } from './visitors/RegularElement.js';
@@ -79,7 +78,6 @@ const template_visitors = {
 	HtmlTag,
 	IfBlock,
 	KeyBlock,
-	LetDirective,
 	RegularElement,
 	RenderTag,
 	SlotElement,
