@@ -4,7 +4,7 @@ title: Testing
 
 Testing helps you write and maintain your code and guard against regressions. Testing frameworks help you with that, allowing you to describe assertions or expectations about how your code should behave. Svelte is unopinionated about which testing framework you use, so you can write unit tests, integration tests, and end-to-end tests using solutions like Vitest, Jasmine, Cypress and Playwright.
 
-## Unit/Integration testing using Vitest
+## Unit/Integration tests using Vitest
 
 Unit tests allow you to test small isolated parts of your code. Integration tests allow you to test parts of your application to see if they work together. If you're using Vite (including via SvelteKit), we recommend using [Vitest](https://vitest.dev/).
 
@@ -17,7 +17,7 @@ npm install -D vitest jsdom
 Then adjust your `vite.config.js`:
 
 ```js
-/// file: vitest.config.js
+/// file: vite.config.js
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
