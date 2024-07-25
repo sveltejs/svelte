@@ -81,8 +81,7 @@ export function set_text(text, value) {
  */
 export function mount(component, options) {
 	const anchor = options.anchor ?? options.target.appendChild(empty());
-	// Don't flush previous effects to ensure order of outer effects stays consistent
-	return flush_sync(() => _mount(component, { ...options, anchor }), false);
+	return _mount(component, { ...options, anchor });
 }
 
 /**
@@ -115,38 +114,35 @@ export function hydrate(component, options) {
 	const previous_hydrate_node = hydrate_node;
 
 	try {
-		// Don't flush previous effects to ensure order of outer effects stays consistent
-		return flush_sync(() => {
-			var anchor = /** @type {TemplateNode} */ (target.firstChild);
-			while (
-				anchor &&
-				(anchor.nodeType !== 8 || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
-			) {
-				anchor = /** @type {TemplateNode} */ (anchor.nextSibling);
-			}
+		var anchor = /** @type {TemplateNode} */ (target.firstChild);
+		while (
+			anchor &&
+			(anchor.nodeType !== 8 || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
+		) {
+			anchor = /** @type {TemplateNode} */ (anchor.nextSibling);
+		}
 
-			if (!anchor) {
-				throw HYDRATION_ERROR;
-			}
+		if (!anchor) {
+			throw HYDRATION_ERROR;
+		}
 
-			set_hydrating(true);
-			set_hydrate_node(/** @type {Comment} */ (anchor));
-			hydrate_next();
+		set_hydrating(true);
+		set_hydrate_node(/** @type {Comment} */ (anchor));
+		hydrate_next();
 
-			const instance = _mount(component, { ...options, anchor });
+		const instance = _mount(component, { ...options, anchor });
 
-			if (
-				hydrate_node.nodeType !== 8 ||
-				/** @type {Comment} */ (hydrate_node).data !== HYDRATION_END
-			) {
-				w.hydration_mismatch();
-				throw HYDRATION_ERROR;
-			}
+		if (
+			hydrate_node.nodeType !== 8 ||
+			/** @type {Comment} */ (hydrate_node).data !== HYDRATION_END
+		) {
+			w.hydration_mismatch();
+			throw HYDRATION_ERROR;
+		}
 
-			set_hydrating(false);
+		set_hydrating(false);
 
-			return instance;
-		}, false);
+		return /**  @type {Exports} */ (instance);
 	} catch (error) {
 		if (error === HYDRATION_ERROR) {
 			// TODO it's possible for event listeners to have been added and
