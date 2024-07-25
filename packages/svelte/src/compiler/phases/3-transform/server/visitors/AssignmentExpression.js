@@ -13,17 +13,6 @@ export function AssignmentExpression(node, context) {
 	const parent = /** @type {Node} */ (context.path.at(-1));
 	const is_standalone = parent.type.endsWith('Statement');
 
-	return serialize_assignment(node, context, is_standalone, context.next);
-}
-
-/**
- * @param {AssignmentExpression} node
- * @param {import('zimmerframe').Context<SvelteNode, ServerTransformState>} context
- * @param {boolean} is_standalone
- * @param {() => any} fallback
- * @returns {Expression}
- */
-function serialize_assignment(node, context, is_standalone, fallback) {
 	if (
 		node.left.type === 'ArrayPattern' ||
 		node.left.type === 'ObjectPattern' ||
@@ -38,7 +27,7 @@ function serialize_assignment(node, context, is_standalone, fallback) {
 		const assignments = extract_paths(node.left).map((path) => {
 			const assignment = b.assignment('=', path.node, path.expression?.(rhs));
 
-			return serialize_assignment(assignment, context, false, () => {
+			return serialize_assignment(assignment, context, () => {
 				unchanged += 1;
 				return assignment;
 			});
@@ -46,7 +35,7 @@ function serialize_assignment(node, context, is_standalone, fallback) {
 
 		if (unchanged === assignments.length) {
 			// No change to output -> nothing to transform -> we can keep the original assignment
-			return fallback();
+			return context.next();
 		}
 
 		const sequence = b.sequence(assignments);
@@ -64,6 +53,16 @@ function serialize_assignment(node, context, is_standalone, fallback) {
 		return sequence;
 	}
 
+	return serialize_assignment(node, context, context.next);
+}
+
+/**
+ * @param {AssignmentExpression} node
+ * @param {import('zimmerframe').Context<SvelteNode, ServerTransformState>} context
+ * @param {() => any} fallback
+ * @returns {Expression}
+ */
+function serialize_assignment(node, context, fallback) {
 	let left = node.left;
 
 	while (left.type === 'MemberExpression') {
