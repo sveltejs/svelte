@@ -1,15 +1,11 @@
 <style>
 	/* ok */
-	.x :global {
-		color: red;
-	}
-
-	:global .y {
+	div :global.x {
 		color: red;
 	}
 
 	/* not ok */
-	:global {
+	:global.x {
 		color: red;
 	}
 </style>

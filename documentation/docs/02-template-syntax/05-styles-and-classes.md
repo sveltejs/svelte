@@ -25,31 +25,28 @@ This works by adding a class to affected elements, which is based on a hash of t
 </style>
 ```
 
-## :global
+## :global(...)
 
-To apply styles to a selector globally, use the `:global(...)` modifier.
+To apply styles to a single selector globally, use the `:global(...)` modifier:
 
 ```svelte
 <style>
 	:global(body) {
-		/* this will apply to <body> */
+		/* applies to <body> */
 		margin: 0;
 	}
 
 	div :global(strong) {
-		/* this will apply to all <strong> elements, in any
-			 component, that are inside <div> elements belonging
-			 to this component */
+		/* applies to all <strong> elements, in any component,
+		   that are inside <div> elements belonging
+		   to this component */
 		color: goldenrod;
 	}
 
-	p:global(.red) {
-		/* this will apply to all <p> elements belonging to this
-			 component with a class of red, even if class="red" does
-			 not initially appear in the markup, and is instead
-			 added at runtime. This is useful when the class
-			 of the element is dynamically applied, for instance
-			 when updating the element's classList property directly. */
+	p:global(.big.red) {
+		/* applies to all <p> elements belonging to this component
+		   with `class="big red"`, even if it is applied
+		   programmatically (for example by a library) */
 	}
 </style>
 ```
@@ -65,6 +62,30 @@ The `-global-` part will be removed when compiled, and the keyframe will then be
 	}
 </style>
 ```
+
+## :global
+
+To apply styles to a group of selectors globally, create a `:global {...}` block:
+
+```svelte
+<style>
+	:global {
+		/* applies to every <div> in your application */
+		div { ... }
+
+		/* applies to every <p> in your application */
+		p { ... }
+	}
+
+	.a :global {
+		/* applies to every `.b .c .d` element, in any component,
+		   that is inside an `.a` element in this component */
+		.b .c .d {...}
+	}
+</style>
+```
+
+> The second example above could also be written as an equivalent `.a :global .b .c .d` selector, where everything after the `:global` is unscoped, though the nested form is preferred.
 
 ## Nested style tags
 

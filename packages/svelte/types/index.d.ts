@@ -1322,17 +1322,32 @@ declare module 'svelte/compiler' {
 			metadata: {
 				parent_rule: null | Rule;
 				has_local_selectors: boolean;
+				/**
+				 * `true` if the rule contains a `:global` selector, and therefore everything inside should be unscoped
+				 */
 				is_global_block: boolean;
 			};
 		}
 
+		/**
+		 * A list of selectors, e.g. `a, b, c {}`
+		 */
 		export interface SelectorList extends BaseNode {
 			type: 'SelectorList';
+			/**
+			 * The `a`, `b` and `c` in `a, b, c {}`
+			 */
 			children: ComplexSelector[];
 		}
 
+		/**
+		 * A complex selector, e.g. `a b c {}`
+		 */
 		export interface ComplexSelector extends BaseNode {
 			type: 'ComplexSelector';
+			/**
+			 * The `a`, `b` and `c` in `a b c {}`
+			 */
 			children: RelativeSelector[];
 			metadata: {
 				rule: null | Rule;
@@ -1340,14 +1355,26 @@ declare module 'svelte/compiler' {
 			};
 		}
 
+		/**
+		 * A relative selector, e.g the `a` and `> b` in `a > b {}`
+		 */
 		export interface RelativeSelector extends BaseNode {
 			type: 'RelativeSelector';
+			/**
+			 * In `a > b`, `> b` forms one relative selector, and `>` is the combinator. `null` for the first selector.
+			 */
 			combinator: null | Combinator;
+			/**
+			 * The `b:is(...)` in `> b:is(...)`
+			 */
 			selectors: SimpleSelector[];
 			metadata: {
-				/** :global(..) */
+				/**
+				 * `true` if the whole selector is unscoped, e.g. `:global(...)` or `:global` or `:global.x`.
+				 * Selectors like `:global(...).x` are not considered global, because they still need scoping.
+				 */
 				is_global: boolean;
-				/** :root, :host, ::view-transition */
+				/** `:root`, `:host`, `::view-transition`, or selectors after a `:global` */
 				is_global_like: boolean;
 				scoped: boolean;
 			};

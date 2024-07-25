@@ -295,11 +295,18 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 					return false;
 				}
 
-				if (name === 'global' && relative_selector.selectors.length === 1) {
-					const args = /** @type {Compiler.Css.SelectorList} */ (selector.args);
+				if (
+					name === 'global' &&
+					selector.args !== null &&
+					relative_selector.selectors.length === 1
+				) {
+					const args = selector.args;
 					const complex_selector = args.children[0];
 					return apply_selector(complex_selector.children, rule, element, stylesheet);
 				}
+
+				// We came across a :global, everything beyond it is global and therefore a potential match
+				if (name === 'global' && selector.args === null) return true;
 
 				if ((name === 'is' || name === 'where') && selector.args) {
 					let matched = false;
