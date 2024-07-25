@@ -77,7 +77,6 @@ function serialize_assignment(node, context, fallback) {
 	const name = left.name.slice(1);
 
 	if (!context.state.scope.get(name)) {
-		// TODO error if it's a computed (or rest prop)? or does that already happen elsewhere?
 		return fallback();
 	}
 
