@@ -166,12 +166,12 @@ export function serialize_inline_component(node, expression, context) {
 					}
 
 					if (node.expression.type === 'ObjectExpression') {
-						// @ts-expect-error TODO it should be an `ObjectPattern`, not an `ObjectExpression`
+						// @ts-expect-error it gets parsed as an `ObjectExpression` but is really an `ObjectPattern`
 						return b.init(node.name, b.object_pattern(node.expression.properties));
 					}
 
 					if (node.expression.type === 'ArrayExpression') {
-						// @ts-expect-error TODO ditto
+						// @ts-expect-error it gets parsed as an `ArrayExpression` but is really an `ArrayPattern`
 						return b.init(node.name, b.array_pattern(node.expression.elements));
 					}
 
