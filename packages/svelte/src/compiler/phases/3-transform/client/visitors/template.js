@@ -781,6 +781,9 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 		} else if (attribute.type === 'BindDirective') {
 			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
 
+			// serialize_validate_binding will add a function that specifically throw
+			// `binding_property_non_reactive` error. If there's a svelte ignore
+			// before we avoid adding this validation to avoid throwing the runtime warning
 			const to_ignore = ignore_map
 				.get(node)
 				?.some((code) => code.has('binding_property_non_reactive'));
@@ -2877,6 +2880,9 @@ export const template_visitors = {
 		const expression = node.expression;
 		const property = binding_properties[node.name];
 
+		// serialize_validate_binding will add a function that specifically throw
+		// `binding_property_non_reactive` error. If there's a svelte ignore
+		// before we avoid adding this validation to avoid throwing the runtime warning
 		const to_ignore = ignore_map
 			.get(node)
 			?.some((code) => code.has('binding_property_non_reactive'));
