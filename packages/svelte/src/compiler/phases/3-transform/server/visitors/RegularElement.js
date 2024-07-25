@@ -19,7 +19,6 @@ export function RegularElement(node, context) {
 	/** @type {ComponentServerTransformState} */
 	const state = {
 		...context.state,
-		getters: { ...context.state.getters },
 		namespace,
 		preserve_whitespace:
 			context.state.preserve_whitespace ||

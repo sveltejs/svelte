@@ -428,12 +428,10 @@ export async function value_or_fallback_async(value, fallback) {
  * @returns {void}
  */
 export function slot(payload, slot_fn, slot_props, fallback_fn) {
-	if (slot_fn === undefined) {
-		if (fallback_fn !== null) {
-			fallback_fn();
-		}
-	} else {
+	if (slot_fn !== undefined) {
 		slot_fn(payload, slot_props);
+	} else {
+		fallback_fn?.();
 	}
 }
 

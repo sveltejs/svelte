@@ -15,9 +15,6 @@ export function SlotElement(node, context) {
 	/** @type {Expression[]} */
 	const spreads = [];
 
-	/** @type {ExpressionStatement[]} */
-	const lets = [];
-
 	/** @type {Expression} */
 	let expression = b.call('$.default_slot', b.id('$$props'));
 
@@ -30,19 +27,10 @@ export function SlotElement(node, context) {
 			if (attribute.name === 'name') {
 				expression = b.member(b.member_id('$$props.$$slots'), value, true, true);
 			} else if (attribute.name !== 'slot') {
-				if (attribute.metadata.dynamic) {
-					props.push(b.get(attribute.name, [b.return(value)]));
-				} else {
-					props.push(b.init(attribute.name, value));
-				}
+				props.push(b.init(attribute.name, value));
 			}
-		} else if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 		}
 	}
-
-	// Let bindings first, they can be used on attributes
-	context.state.init.push(...lets);
 
 	const props_expression =
 		spreads.length === 0

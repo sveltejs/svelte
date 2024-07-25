@@ -1,5 +1,5 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Property, Statement } from 'estree' */
-/** @import { Attribute, Component, SvelteComponent, SvelteSelf, TemplateNode, Text } from '#compiler' */
+/** @import { BlockStatement, Expression, Pattern, Property, Statement } from 'estree' */
+/** @import { Attribute, Component, LetDirective, SvelteComponent, SvelteSelf, TemplateNode, Text } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { empty_comment, serialize_attribute_value } from './utils.js';
 import * as b from '../../../../../utils/builders.js';
@@ -17,8 +17,8 @@ export function serialize_inline_component(node, expression, context) {
 	/** @type {Property[]} */
 	const custom_css_props = [];
 
-	/** @type {ExpressionStatement[]} */
-	const lets = [];
+	/** @type {Record<string, LetDirective[]>} */
+	const lets = { default: [] };
 
 	/** @type {Record<string, TemplateNode[]>} */
 	const children = {};
@@ -27,7 +27,9 @@ export function serialize_inline_component(node, expression, context) {
 	 * If this component has a slot property, it is a named slot within another component. In this case
 	 * the slot scope applies to the component itself, too, and not just its children.
 	 */
-	let slot_scope_applies_to_itself = false;
+	const slot_scope_applies_to_itself = node.attributes.some(
+		(node) => node.type === 'Attribute' && node.name === 'slot'
+	);
 
 	/**
 	 * Components may have a children prop and also have child nodes. In this case, we assume
@@ -50,7 +52,9 @@ export function serialize_inline_component(node, expression, context) {
 	}
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+			if (!slot_scope_applies_to_itself) {
+				lets.default.push(attribute);
+			}
 		} else if (attribute.type === 'SpreadAttribute') {
 			props_and_spreads.push(/** @type {Expression} */ (context.visit(attribute)));
 		} else if (attribute.type === 'Attribute') {
@@ -58,10 +62,6 @@ export function serialize_inline_component(node, expression, context) {
 				const value = serialize_attribute_value(attribute.value, context, false, true);
 				custom_css_props.push(b.init(attribute.name, value));
 				continue;
-			}
-
-			if (attribute.name === 'slot') {
-				slot_scope_applies_to_itself = true;
 			}
 
 			if (attribute.name === 'children') {
@@ -90,10 +90,6 @@ export function serialize_inline_component(node, expression, context) {
 		}
 	}
 
-	if (slot_scope_applies_to_itself) {
-		context.state.init.push(...lets);
-	}
-
 	/** @type {Statement[]} */
 	const snippet_declarations = [];
 
@@ -115,13 +111,20 @@ export function serialize_inline_component(node, expression, context) {
 
 		let slot_name = 'default';
 		if (is_element_node(child)) {
-			const attribute = /** @type {Attribute | undefined} */ (
+			const slot = /** @type {Attribute | undefined} */ (
 				child.attributes.find(
 					(attribute) => attribute.type === 'Attribute' && attribute.name === 'slot'
 				)
 			);
-			if (attribute !== undefined) {
-				slot_name = /** @type {Text[]} */ (attribute.value)[0].data;
+
+			if (slot !== undefined) {
+				slot_name = /** @type {Text[]} */ (slot.value)[0].data;
+
+				lets[slot_name] = child.attributes.filter((attribute) => attribute.type === 'LetDirective');
+			} else if (child.type === 'SvelteFragment') {
+				lets.default.push(
+					...child.attributes.filter((attribute) => attribute.type === 'LetDirective')
+				);
 			}
 		}
 
@@ -152,16 +155,40 @@ export function serialize_inline_component(node, expression, context) {
 
 		if (block.body.length === 0) continue;
 
-		const slot_fn = b.arrow(
-			[b.id('$$payload'), b.id('$$slotProps')],
-			b.block([
-				...(slot_name === 'default' && !slot_scope_applies_to_itself ? lets : []),
-				...block.body
-			])
-		);
+		/** @type {Pattern[]} */
+		const params = [b.id('$$payload')];
+
+		if (lets[slot_name].length > 0) {
+			const pattern = b.object_pattern(
+				lets[slot_name].map((node) => {
+					if (node.expression === null) {
+						return b.init(node.name, b.id(node.name));
+					}
+
+					if (node.expression.type === 'ObjectExpression') {
+						// @ts-expect-error it gets parsed as an `ObjectExpression` but is really an `ObjectPattern`
+						return b.init(node.name, b.object_pattern(node.expression.properties));
+					}
+
+					if (node.expression.type === 'ArrayExpression') {
+						// @ts-expect-error it gets parsed as an `ArrayExpression` but is really an `ArrayPattern`
+						return b.init(node.name, b.array_pattern(node.expression.elements));
+					}
+
+					return b.init(node.name, node.expression);
+				})
+			);
+
+			params.push(pattern);
+		}
+
+		const slot_fn = b.arrow(params, b.block(block.body));
 
 		if (slot_name === 'default' && !has_children_prop) {
-			if (lets.length === 0 && children.default.every((node) => node.type !== 'SvelteFragment')) {
+			if (
+				lets.default.length === 0 &&
+				children.default.every((node) => node.type !== 'SvelteFragment')
+			) {
 				// create `children` prop...
 				push_prop(b.prop('init', b.id('children'), slot_fn));
 

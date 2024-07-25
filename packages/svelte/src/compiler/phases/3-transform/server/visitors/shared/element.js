@@ -38,9 +38,6 @@ export function serialize_element_attributes(node, context) {
 	/** @type {StyleDirective[]} */
 	const style_directives = [];
 
-	/** @type {ExpressionStatement[]} */
-	const lets = [];
-
 	/** @type {Expression | null} */
 	let content = null;
 
@@ -185,7 +182,7 @@ export function serialize_element_attributes(node, context) {
 		} else if (attribute.type === 'StyleDirective') {
 			style_directives.push(attribute);
 		} else if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+			// do nothing, these are handled inside `serialize_inline_component`
 		} else {
 			context.visit(attribute);
 		}
@@ -211,9 +208,6 @@ export function serialize_element_attributes(node, context) {
 			attributes.splice(style_index, 1);
 		}
 	}
-
-	// Let bindings first, they can be used on attributes
-	context.state.init.push(...lets);
 
 	if (has_spread) {
 		serialize_element_spread_attributes(

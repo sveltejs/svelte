@@ -23,7 +23,6 @@ import { Identifier } from './visitors/Identifier.js';
 import { IfBlock } from './visitors/IfBlock.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatementLegacy } from './visitors/LabeledStatement.js';
-import { LetDirective } from './visitors/LetDirective.js';
 import { MemberExpressionRunes } from './visitors/MemberExpression.js';
 import { PropertyDefinitionRunes } from './visitors/PropertyDefinition.js';
 import { RegularElement } from './visitors/RegularElement.js';
@@ -79,7 +78,6 @@ const template_visitors = {
 	HtmlTag,
 	IfBlock,
 	KeyBlock,
-	LetDirective,
 	RegularElement,
 	RenderTag,
 	SlotElement,
@@ -113,7 +111,6 @@ export function server_component(analysis, options) {
 		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
 		private_derived: new Map(),
-		getters: {},
 		skip_hydration_boundaries: false
 	};
 
@@ -422,8 +419,7 @@ export function server_module(analysis, options) {
 		// to be present for `javascript_visitors_legacy` and so is included in module
 		// transform state as well as component transform state
 		legacy_reactive_statements: new Map(),
-		private_derived: new Map(),
-		getters: {}
+		private_derived: new Map()
 	};
 
 	const module = /** @type {Program} */ (
