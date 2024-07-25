@@ -6,7 +6,7 @@ Testing helps you write and maintain your code and guard against regressions. Te
 
 ## Unit/Integration-testing using Vitest
 
-Unit tests allow you to test small isolated parts of your code. Integration tests allow you to test parts of your application to see if they work together. We recommend using [Vitest](https://vitest.dev/) for these kinds of tests (this assumes you use Vite for bundling your application).
+Unit tests allow you to test small isolated parts of your code. Integration tests allow you to test parts of your application to see if they work together. If you're using Vite (including via SvelteKit), we recommend using [Vitest](https://vitest.dev/).
 
 To get started, install Vitest and JSDOM (a library that shims DOM APIs):
 
