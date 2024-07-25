@@ -110,14 +110,16 @@ Because events are just attributes, the same rules as for attributes apply:
 - you can spread them: `<button {...thisSpreadContainsEventAttributes}>click me</button>`
 - component events are just (callback) properties and don't need a separate concept
 
+Timing-wise, event attributes always fire after events from bindings (e.g. `oninput` always fires after an update to `bind:value`). Under the hood, events are either listened to directly through `addEventListener`, or the event is delegated.
+
 ### Event delegation
 
 To reduce the memory footprint and increase performance, Svelte uses a technique called event delegation. This means that certain events are only listened to once at the application root, invoking a handler that then traverses the event call path and invokes listeners along the way.
 
 There are a few gotchas you need to be aware of when it comes to event delegation:
 
-- when you dispatch events manually, make sure to set the `{ bubbles: true }` option
-- when listening to events programmatically (i.e. not through `<button onclick={...}>` but through `node.addEventListener`), be careful to not call `stopPropagation` or else the delegated event handler won't be reached and handlers won't be invoked. For this reaon it's best to use `on` (which properly handles `stopPropagation`) from `svelte/events` instead of `addEventListener` to make sure the chain of events is preserved
+- when you manually dispatch an event with the same name as one of the delegated ones, make sure to set the `{ bubbles: true }` option
+- when listening to events programmatically (i.e. not through `<button onclick={...}>` but through `node.addEventListener`), be careful to not call `stopPropagation` or else the delegated event handler won't be reached and handlers won't be invoked. Similarly, event listeners added manually and higher up the DOM tree will be invoked _before_ events that are delegated and deeper down the DOM tree (because the actual event reaction happens in the delegated handler at the root). For these reasons it's best to use `on` (which properly handles `stopPropagation`) from `svelte/events` instead of `addEventListener` to make sure the chain of events is preserved
 
 The following events are delegated:
 
