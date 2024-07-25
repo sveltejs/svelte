@@ -7,6 +7,8 @@ import * as b from '../../../../utils/builders.js';
  * @param {ComponentContext} context
  */
 export function LetDirective(node, context) {
+	return b.empty;
+
 	if (node.expression === null || node.expression.type === 'Identifier') {
 		const name = node.expression === null ? node.name : node.expression.name;
 		return b.const(name, b.member(b.id('$$slotProps'), b.id(node.name)));

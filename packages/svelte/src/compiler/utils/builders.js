@@ -320,10 +320,11 @@ export function object(properties) {
 }
 
 /**
- * @param {Array<ESTree.RestElement | ESTree.AssignmentProperty>} properties
+ * @param {Array<ESTree.RestElement | ESTree.AssignmentProperty | ESTree.Property>} properties
  * @returns {ESTree.ObjectPattern}
  */
 export function object_pattern(properties) {
+	// @ts-expect-error the types appear to be wrong
 	return { type: 'ObjectPattern', properties };
 }
 
