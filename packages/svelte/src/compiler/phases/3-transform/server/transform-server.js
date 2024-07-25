@@ -44,28 +44,6 @@ import { SvelteHead } from './visitors/template/SvelteHead.js';
 import { SvelteSelf } from './visitors/template/SvelteSelf.js';
 import { TitleElement } from './visitors/template/TitleElement.js';
 
-/**
- * @param {VariableDeclarator} declarator
- * @param {Scope} scope
- * @param {Expression} value
- * @returns {VariableDeclarator[]}
- */
-function create_state_declarators(declarator, scope, value) {
-	if (declarator.id.type === 'Identifier') {
-		return [b.declarator(declarator.id, value)];
-	}
-
-	const tmp = scope.generate('tmp');
-	const paths = extract_paths(declarator.id);
-	return [
-		b.declarator(b.id(tmp), value), // TODO inject declarator for opts, so we can use it below
-		...paths.map((path) => {
-			const value = path.expression?.(b.id(tmp));
-			return b.declarator(path.node, value);
-		})
-	];
-}
-
 /** @type {Visitors} */
 const global_visitors = {
 	AssignmentExpression,
