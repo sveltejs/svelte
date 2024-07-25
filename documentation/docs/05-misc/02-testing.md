@@ -44,24 +44,24 @@ After that, you can create a test file in which you import the component to test
 
 ```js
 /// file: component.test.js
-import { flushSync, mount, unmount } from "svelte";
-import { expect, test } from "vitest";
-import Component from "./Component.svelte";
+import { flushSync, mount, unmount } from 'svelte';
+import { expect, test } from 'vitest';
+import Component from './Component.svelte';
 
-test("Component", () => {
+test('Component', () => {
 	// Instantiate the component using Svelte's mount API
 	const comp = mount(Component, {
 		target: document.body, // document.body is available thanks to JSDOM
 		props: { initial: 0 },
 	});
 
-	expect(document.body.innerHTML).toBe("<button>0</button>");
+	expect(document.body.innerHTML).toBe('<button>0</button>');
 
 	// Click the button, then flush the changes so you can synchronously write expectations
-	document.body.querySelector("button")!.click();
+	document.body.querySelector('button')!.click();
 	flushSync();
 
-	expect(document.body.innerHTML).toBe("<button>1</button>");
+	expect(document.body.innerHTML).toBe('<button>1</button>');
 
 	// Remove the component from the DOM
 	unmount(comp);
@@ -124,7 +124,7 @@ test('Effect', () => {
 
 ## E2E tests using Playwright
 
-E2E (short for "end to end") tests allow you to test your full application through the eyes of the user. This section uses [Playwright](https://playwright.dev/) as an example, but you can also use other solutions like [Cypress](https://www.cypress.io/) or [NightwatchJS](https://nightwatchjs.org/).
+E2E (short for 'end to end') tests allow you to test your full application through the eyes of the user. This section uses [Playwright](https://playwright.dev/) as an example, but you can also use other solutions like [Cypress](https://www.cypress.io/) or [NightwatchJS](https://nightwatchjs.org/).
 
 To get start with Playwright, either let you guide by [their VS Code extension](https://playwright.dev/docs/getting-started-vscode), or install it from the command line using `npm init playwright`. It is also part of the setup CLI when you run `npm create svelte`.
 
