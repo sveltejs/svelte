@@ -81,7 +81,17 @@ function serialize_assignment(node, context, fallback) {
 	}
 
 	if (left === node.left) {
-		return b.call('$.store_set', b.id(name), /** @type {Expression} */ (context.visit(node.right)));
+		const value =
+			node.operator === '='
+				? /** @type {Expression} */ (context.visit(node.right))
+				: // turn something like x += 1 into x = x + 1
+					b.binary(
+						/** @type {BinaryOperator} */ (node.operator.slice(0, -1)),
+						serialize_get_binding(node.left, context.state),
+						/** @type {Expression} */ (context.visit(node.right))
+					);
+
+		return b.call('$.store_set', b.id(name), value);
 	}
 
 	return b.call(
@@ -92,29 +102,9 @@ function serialize_assignment(node, context, fallback) {
 		b.assignment(
 			node.operator,
 			/** @type {Pattern} */ (context.visit(node.left)),
-			get_assignment_value(node, context)
+			/** @type {Expression} */ (context.visit(node.right))
 		)
 	);
-}
-
-/**
- * @param {AssignmentExpression} node
- * @param {Pick<import('zimmerframe').Context<SvelteNode, ServerTransformState>, 'visit' | 'state'>} context
- */
-function get_assignment_value(node, { state, visit }) {
-	if (node.left.type === 'Identifier') {
-		const operator = node.operator;
-		return operator === '='
-			? /** @type {Expression} */ (visit(node.right))
-			: // turn something like x += 1 into x = x + 1
-				b.binary(
-					/** @type {BinaryOperator} */ (operator.slice(0, -1)),
-					serialize_get_binding(node.left, state),
-					/** @type {Expression} */ (visit(node.right))
-				);
-	}
-
-	return /** @type {Expression} */ (visit(node.right));
 }
 
 /**
