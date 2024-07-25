@@ -64,6 +64,12 @@ If `this` is the name of a [void element](https://developer.mozilla.org/en-US/do
 <svelte:element this={tag} on:click={handler}>Foo</svelte:element>
 ```
 
+Svelte tries its best to infer the correct namespace from its surroundings, but that's not always possible to analyze statically. You can give a hint by adding a `xmlns` attribute:
+
+```svelte
+<svelte:element this={tag} xmlns="http://www.w3.org/2000/svg" />
+```
+
 ## `<svelte:window>`
 
 ```svelte
