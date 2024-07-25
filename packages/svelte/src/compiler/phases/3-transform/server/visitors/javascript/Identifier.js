@@ -8,12 +8,12 @@ import { serialize_get_binding } from './shared/utils.js';
  * @param {Identifier} node
  * @param {Context} context
  */
-export function Identifier(node, { path, state }) {
-	if (is_reference(node, /** @type {Node} */ (path.at(-1)))) {
+export function Identifier(node, context) {
+	if (is_reference(node, /** @type {Node} */ (context.path.at(-1)))) {
 		if (node.name === '$$props') {
 			return b.id('$$sanitized_props');
 		}
 
-		return serialize_get_binding(node, state);
+		return serialize_get_binding(node, context.state);
 	}
 }
