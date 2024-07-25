@@ -225,11 +225,6 @@ export function serialize_get_binding(node, state) {
 		);
 	}
 
-	if (Object.hasOwn(state.getters, node.name)) {
-		const getter = state.getters[node.name];
-		return typeof getter === 'function' ? getter(node) : getter;
-	}
-
 	return node;
 }
 

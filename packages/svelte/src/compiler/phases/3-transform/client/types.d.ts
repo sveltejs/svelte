@@ -3,7 +3,8 @@ import type {
 	Statement,
 	LabeledStatement,
 	Identifier,
-	PrivateIdentifier
+	PrivateIdentifier,
+	Expression
 } from 'estree';
 import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
@@ -22,6 +23,11 @@ export interface ClientTransformState extends TransformState {
 
 	/** The $: calls, which will be ordered in the end */
 	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
+	/**
+	 * A map of `[name, node]` pairs, where `Identifier` nodes matching `name`
+	 * will be replaced with `node` (e.g. `x` -> `$.get(x)`)
+	 */
+	readonly getters: Record<string, Expression | ((id: Identifier) => Expression)>;
 }
 
 export interface ComponentClientTransformState extends ClientTransformState {

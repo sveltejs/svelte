@@ -27,7 +27,6 @@ export function SvelteElement(node, context) {
 
 	const state = {
 		...context.state,
-		getteres: { ...context.state.getters },
 		namespace: determine_namespace_for_children(node, context.state.namespace),
 		template: [],
 		init: []
