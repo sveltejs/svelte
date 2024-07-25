@@ -27,11 +27,7 @@ export function SlotElement(node, context) {
 			if (attribute.name === 'name') {
 				expression = b.member(b.member_id('$$props.$$slots'), value, true, true);
 			} else if (attribute.name !== 'slot') {
-				if (attribute.metadata.dynamic) {
-					props.push(b.get(attribute.name, [b.return(value)]));
-				} else {
-					props.push(b.init(attribute.name, value));
-				}
+				props.push(b.init(attribute.name, value));
 			}
 		}
 	}
