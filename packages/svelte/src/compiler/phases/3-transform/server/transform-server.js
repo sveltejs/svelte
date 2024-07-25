@@ -9,28 +9,23 @@ import * as b from '../../../utils/builders.js';
 import { filename } from '../../../state.js';
 import { render_stylesheet } from '../css/index.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
+import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { CallExpression } from './visitors/CallExpression.js';
 import { ClassBodyRunes } from './visitors/ClassBody.js';
-import { ExpressionStatementRunes } from './visitors/ExpressionStatement.js';
-import { Identifier } from './visitors/Identifier.js';
-import { LabeledStatementLegacy } from './visitors/LabeledStatement.js';
-import { MemberExpressionRunes } from './visitors/MemberExpression.js';
-import { UpdateExpression } from './visitors/UpdateExpression.js';
-import { PropertyDefinitionRunes } from './visitors/PropertyDefinition.js';
-import {
-	VariableDeclarationLegacy,
-	VariableDeclarationRunes
-} from './visitors/VariableDeclaration.js';
-import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { Component } from './visitors/Component.js';
 import { ConstTag } from './visitors/ConstTag.js';
 import { DebugTag } from './visitors/DebugTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
+import { ExpressionStatementRunes } from './visitors/ExpressionStatement.js';
 import { Fragment } from './visitors/Fragment.js';
 import { HtmlTag } from './visitors/HtmlTag.js';
+import { Identifier } from './visitors/Identifier.js';
 import { IfBlock } from './visitors/IfBlock.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
+import { LabeledStatementLegacy } from './visitors/LabeledStatement.js';
 import { LetDirective } from './visitors/LetDirective.js';
+import { MemberExpressionRunes } from './visitors/MemberExpression.js';
+import { PropertyDefinitionRunes } from './visitors/PropertyDefinition.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
 import { SlotElement } from './visitors/SlotElement.js';
@@ -42,6 +37,11 @@ import { SvelteFragment } from './visitors/SvelteFragment.js';
 import { SvelteHead } from './visitors/SvelteHead.js';
 import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { TitleElement } from './visitors/TitleElement.js';
+import { UpdateExpression } from './visitors/UpdateExpression.js';
+import {
+	VariableDeclarationLegacy,
+	VariableDeclarationRunes
+} from './visitors/VariableDeclaration.js';
 
 /** @type {Visitors} */
 const global_visitors = {
