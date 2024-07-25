@@ -53,7 +53,7 @@ import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 import { walk } from 'zimmerframe';
-import { locator } from '../../../../state.js';
+import { ignore_map, locator } from '../../../../state.js';
 import is_reference from 'is-reference';
 
 /**
@@ -781,10 +781,15 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 		} else if (attribute.type === 'BindDirective') {
 			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
 
+			const to_ignore = ignore_map
+				.get(node)
+				?.some((code) => code.has('binding_property_non_reactive'));
+
 			if (
 				expression.type === 'MemberExpression' &&
 				context.state.options.dev &&
-				context.state.analysis.runes
+				context.state.analysis.runes &&
+				!to_ignore
 			) {
 				context.state.init.push(serialize_validate_binding(context.state, attribute, expression));
 			}
@@ -2872,6 +2877,10 @@ export const template_visitors = {
 		const expression = node.expression;
 		const property = binding_properties[node.name];
 
+		const to_ignore = ignore_map
+			.get(node)
+			?.some((code) => code.has('binding_property_non_reactive'));
+
 		if (
 			expression.type === 'MemberExpression' &&
 			(node.name !== 'this' ||
@@ -2883,7 +2892,8 @@ export const template_visitors = {
 						type === 'KeyBlock'
 				)) &&
 			context.state.options.dev &&
-			context.state.analysis.runes
+			context.state.analysis.runes &&
+			!to_ignore
 		) {
 			context.state.init.push(
 				serialize_validate_binding(

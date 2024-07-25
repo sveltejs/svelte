@@ -115,7 +115,8 @@ export const codes = [
 	"element_invalid_self_closing_tag",
 	"event_directive_deprecated",
 	"slot_element_deprecated",
-	"svelte_element_invalid_this"
+	"svelte_element_invalid_this",
+	"binding_property_non_reactive"
 ];
 
 /**
