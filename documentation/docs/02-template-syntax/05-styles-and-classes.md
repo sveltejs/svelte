@@ -27,7 +27,7 @@ This works by adding a class to affected elements, which is based on a hash of t
 
 ## :global(...)
 
-To apply styles to a selector globally, use the `:global(...)` modifier.
+To apply styles to a single selector globally, use the `:global(...)` modifier.
 
 ```svelte
 <style>
@@ -37,19 +37,16 @@ To apply styles to a selector globally, use the `:global(...)` modifier.
 	}
 
 	div :global(strong) {
-		/* applies to all <strong> elements, in any
-		   component, that are inside <div> elements belonging
+		/* applies to all <strong> elements, in any component,
+		   that are inside <div> elements belonging
 		   to this component */
 		color: goldenrod;
 	}
 
-	p:global(.red) {
-		/* applies to all <p> elements belonging to this
-		   component with a class of red, even if class="red" does
-		   not initially appear in the markup, and is instead
-		   added at runtime. This is useful when the class
-		   of the element is dynamically applied, for instance
-		   when updating the element's classList property directly. */
+	p:global(.big.red) {
+		/* applies to all <p> elements belonging to this component
+		   with `class="big red"`, even if it is applied
+		   programmatically (for example by a library) */
 	}
 </style>
 ```
