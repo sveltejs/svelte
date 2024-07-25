@@ -29,29 +29,21 @@ function serialize_assignment(node, context, is_standalone, fallback) {
 		node.left.type === 'RestElement'
 	) {
 		const value = /** @type {Expression} */ (context.visit(node.right));
-
 		const should_cache = value.type !== 'Identifier';
 		const rhs = should_cache ? b.id('$$value') : value;
 
-		/** @type {Expression[]} */
-		const assignments = [];
-		let should_transform = false;
+		let unchanged = 0;
 
-		for (const path of extract_paths(node.left)) {
+		const assignments = extract_paths(node.left).map((path) => {
 			const assignment = b.assignment('=', path.node, path.expression?.(rhs));
-			let changed = true;
 
-			assignments.push(
-				serialize_assignment(assignment, context, false, () => {
-					changed = false;
-					return assignment;
-				})
-			);
+			return serialize_assignment(assignment, context, false, () => {
+				unchanged += 1;
+				return assignment;
+			});
+		});
 
-			should_transform ||= changed;
-		}
-
-		if (!should_transform) {
+		if (unchanged === assignments.length) {
 			// No change to output -> nothing to transform -> we can keep the original assignment
 			return fallback();
 		}
@@ -64,6 +56,7 @@ function serialize_assignment(node, context, is_standalone, fallback) {
 		}
 
 		if (should_cache) {
+			// the right hand side is a complex expression, wrap in an IIFE to cache it
 			return b.call(b.arrow([rhs], sequence), value);
 		}
 
