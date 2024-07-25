@@ -67,54 +67,49 @@ While the process is very straightforward, it is also low level and somewhat bri
 
 ### Using runes inside your test files
 
-It is possible to use runes inside your test files. First ensure your bundler knows to route the file through the Svelte compiler before running the test by adding `.svelte` to the filename (e.g `counter.svelte.test.js`). After that, you can use runes inside your tests.
+It is possible to use runes inside your test files. First ensure your bundler knows to route the file through the Svelte compiler before running the test by adding `.svelte` to the filename (e.g `multiplier.svelte.test.js`). After that, you can use runes inside your tests.
 
 ```js
 /// file: counter.svelte.test.js
 import { flushSync, mount, unmount } from 'svelte';
 import { expect, test } from 'vitest';
+import { multiplier } from './multiplier.svelte.js';
 
-test('Counter', () => {
+test('Multiplier', () => {
 	let count = $state(0);
-	let double = $derived(count * 2);
+	let double = multiplier(() => count, 2);
 
-	expect(count).toEqual(0);
-	expect(double).toEqual(0);
+	expect(double.value).toEqual(0);
 
 	count = 5;
 
-	expect(count).toEqual(5);
-	expect(double).toEqual(10);
+	expect(double.value).toEqual(10);
 });
 ```
 
 If the tested code uses effects, you need to wrap the test inside `$effect.root` to create a scope in which these are properly captured.
 
 ```js
-/// file: counter.svelte.test.js
+/// file: logger.svelte.test.js
 import { flushSync, mount, unmount } from 'svelte';
 import { expect, test } from 'vitest';
+import { logger } from './logger.svelte.js';
 
 test('Effect', () => {
 	const cleanup = $effect.root(() => {
 		let count = $state(0);
-		let high = false;
-
-		$effect(() => {
-			if (count > 10) {
-				high = true;
-			}
-		});
+		// logger uses an $effect to log updates of its input
+		let log = logger(() => count);
 
 		// effects normally run after a microtask,
 		// use flushSync to execute all pending effects synchronously
 		flushSync();
-		expect(high).toEqual(false);
+		expect(log.value).toEqual([0]);
 
-		count = 15;
+		count = 1;
 		flushSync();
 
-		expect(high).toEqual(true);
+		expect(log.value).toEqual([0, 1]);
 	});
 
 	cleanup();
