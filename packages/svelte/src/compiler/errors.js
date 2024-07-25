@@ -471,12 +471,12 @@ export function css_global_block_invalid_modifier(node) {
 }
 
 /**
- * A `:global` selector at the very beginning cannot be modified by other selectors
+ * A `:global` selector can only be modified if it is a descendant of other selectors
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function css_global_block_invalid_modifier_start(node) {
-	e(node, "css_global_block_invalid_modifier_start", "A `:global` selector at the very beginning cannot be modified by other selectors");
+	e(node, "css_global_block_invalid_modifier_start", "A `:global` selector can only be modified if it is a descendant of other selectors");
 }
 
 /**
@@ -525,12 +525,12 @@ export function css_selector_invalid(node) {
 }
 
 /**
- * `:global(...)` must not be followed with a type selector
+ * `:global(...)` must not be followed by a type selector
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function css_type_selector_invalid_placement(node) {
-	e(node, "css_type_selector_invalid_placement", "`:global(...)` must not be followed with a type selector");
+	e(node, "css_type_selector_invalid_placement", "`:global(...)` must not be followed by a type selector");
 }
 
 /**

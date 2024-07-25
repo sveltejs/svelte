@@ -24,7 +24,7 @@
 
 ## css_global_block_invalid_modifier_start
 
-> A `:global` selector at the very beginning cannot be modified by other selectors
+> A `:global` selector can only be modified if it is a descendant of other selectors
 
 ## css_global_invalid_placement
 
@@ -48,4 +48,4 @@
 
 ## css_type_selector_invalid_placement
 
-> `:global(...)` must not be followed with a type selector
+> `:global(...)` must not be followed by a type selector
