@@ -133,6 +133,7 @@ export function hydrate(component, options) {
 		const instance = _mount(component, { ...options, anchor });
 
 		if (
+			hydrate_node === null ||
 			hydrate_node.nodeType !== 8 ||
 			/** @type {Comment} */ (hydrate_node).data !== HYDRATION_END
 		) {
