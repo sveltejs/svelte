@@ -14,6 +14,8 @@
 
 - breaking: avoid flushing queued updates on mount/hydrate ([#12602](https://github.com/sveltejs/svelte/pull/12602))
 
+- feat: allow `:global` in more places ([#12560](https://github.com/sveltejs/svelte/pull/12560))
+
 ## 5.0.0-next.198
 
 ### Patch Changes
