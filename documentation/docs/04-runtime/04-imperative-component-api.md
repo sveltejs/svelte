@@ -29,6 +29,8 @@ const app = mount(App, {
 
 You can mount multiple components per page, and you can also mount from within your application, for example when creating a tooltip component and attaching it to the hovered element.
 
+Note that unlike calling `new App(...)` in Svelte 4, things like effects (including `onMount` callbacks, and action functions) will not run during `mount`. If you need to force pending effects to run (in the context of a test, for example) you can do so with `flushSync()`.
+
 ## `unmount`
 
 Unmounts a component created with [`mount`](#mount) or [`hydrate`](#hydrate):
@@ -74,3 +76,5 @@ const app = hydrate(App, {
 	props: { some: 'property' }
 });
 ```
+
+As with `mount`, effects will not run during `hydrate` — use `flushSync()` immediately afterwards if you need them to.

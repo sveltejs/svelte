@@ -8,6 +8,7 @@ import { suite, assert_ok, type BaseTest } from '../suite.js';
 import { createClassComponent } from 'svelte/legacy';
 import { render } from 'svelte/server';
 import type { CompileOptions } from '#compiler';
+import { flushSync } from 'svelte';
 
 interface HydrationTest extends BaseTest {
 	load_compiled?: boolean;
@@ -114,6 +115,7 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 
 		if (!override) {
 			const expected = read(`${cwd}/_expected.html`) ?? rendered.html;
+			flushSync();
 			assert.equal(target.innerHTML.trim(), expected.trim());
 		}
 

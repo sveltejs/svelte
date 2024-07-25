@@ -5,6 +5,7 @@ import config from '__CONFIG__';
 // @ts-expect-error
 import * as assert from 'assert.js';
 import { createClassComponent } from 'svelte/legacy';
+import { flushSync } from 'svelte';
 
 /** @param {HTMLElement} target */
 export default async function (target) {
@@ -44,6 +45,8 @@ export default async function (target) {
 				await new Promise((resolve) => window.setTimeout(resolve, 1));
 			} while (new Date().getTime() <= start + ms);
 		};
+
+		flushSync();
 
 		if (config.html) {
 			assert.htmlEqual(target.innerHTML, config.html);
