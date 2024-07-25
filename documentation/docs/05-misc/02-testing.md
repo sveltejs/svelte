@@ -8,7 +8,7 @@ Testing helps you write and maintain your code and guard against regressions. Te
 
 Unit tests allow you to test small isolated parts of your code. Integration tests allow you to test parts of your application to see if they work together. If you're using Vite (including via SvelteKit), we recommend using [Vitest](https://vitest.dev/).
 
-To get started, install Vitest and JSDOM (a library that shims DOM APIs):
+To get started, install Vitest and jsdom (a library that shims DOM APIs):
 
 ```bash
 npm install -D vitest jsdom
