@@ -362,7 +362,7 @@ export function store_set(store, value) {
  * @param {Store<V>} store
  * @param {any} expression
  */
-export function mutate_store(store_values, store_name, store, expression) {
+export function store_mutate(store_values, store_name, store, expression) {
 	store_set(store, store_get(store_values, store_name, store));
 	return expression;
 }

@@ -97,7 +97,7 @@ function serialize_assignment(operator, left, right, context) {
 	}
 
 	return b.call(
-		'$.mutate_store',
+		'$.store_mutate',
 		b.assignment('??=', b.id('$$store_subs'), b.object([])),
 		b.literal(object.name),
 		b.id(name),
