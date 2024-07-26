@@ -39,6 +39,10 @@ export function RegularElement(node, context) {
 		return;
 	}
 
+	if (node.metadata.auto_opens !== null) {
+		context.state.template.push(b.literal(node.metadata.auto_opens));
+	}
+
 	const { hoisted, trimmed } = clean_nodes(
 		node,
 		node.fragment.nodes,

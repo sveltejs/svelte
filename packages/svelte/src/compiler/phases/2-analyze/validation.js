@@ -622,15 +622,23 @@ const validation = {
 						ancestor.type === 'RegularElement' &&
 						ancestor.name === context.state.parent_element
 					) {
+						past_parent = true;
+
 						if (!is_tag_valid_with_parent(node.name, context.state.parent_element)) {
-							if (only_warn) {
+							if (node.name === 'tr' && ancestor.name === 'table') {
+								// Handle this and do what the browser does: auto-open a <tbody> prior to the first child
+								ancestor.metadata.auto_opens = '<tbody>';
+								// Note that we don't properly handle cases like <table><tbody></tbody><tr><tr>, but that's a rare edge case
+							} else if (node.name === 'td' && ancestor.name === 'table') {
+								// Handle this and do what the browser does: auto-open a <tbody><tr> prior to the first child
+								ancestor.metadata.auto_opens = '<tbody><tr>';
+								// Note that we don't properly handle cases like <table><tr><tr><td></td></table>, but that's a rare edge case
+							} else if (only_warn) {
 								w.node_invalid_placement_ssr(node, `<${node.name}>`, context.state.parent_element);
 							} else {
 								e.node_invalid_placement(node, `<${node.name}>`, context.state.parent_element);
 							}
 						}
-
-						past_parent = true;
 					}
 				} else if (ancestor.type === 'RegularElement') {
 					if (!is_tag_valid_with_ancestor(node.name, ancestor.name)) {
