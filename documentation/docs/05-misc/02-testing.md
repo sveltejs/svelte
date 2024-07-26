@@ -76,6 +76,7 @@ import { logger } from './logger.svelte.js';
 test('Effect', () => {
 	const cleanup = $effect.root(() => {
 		let count = $state(0);
+
 		// logger uses an $effect to log updates of its input
 		let log = logger(() => count);
 
