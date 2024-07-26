@@ -1,7 +1,6 @@
 /** @import { Snippet } from 'svelte' */
 /** @import { Effect, TemplateNode } from '#client' */
 /** @import { Getters } from '#shared' */
-import { add_snippet_symbol } from '../../../shared/validate.js';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { branch, block, destroy_effect, teardown } from '../../reactivity/effects.js';
 import {
@@ -55,7 +54,7 @@ export function snippet(node, get_snippet, ...args) {
  * @param {(node: TemplateNode, ...args: any[]) => void} fn
  */
 export function wrap_snippet(component, fn) {
-	return add_snippet_symbol((/** @type {TemplateNode} */ node, /** @type {any[]} */ ...args) => {
+	return (/** @type {TemplateNode} */ node, /** @type {any[]} */ ...args) => {
 		var previous_component_function = dev_current_component_function;
 		set_dev_current_component_function(component);
 
@@ -64,7 +63,7 @@ export function wrap_snippet(component, fn) {
 		} finally {
 			set_dev_current_component_function(previous_component_function);
 		}
-	});
+	};
 }
 
 /**
@@ -77,32 +76,33 @@ export function wrap_snippet(component, fn) {
  * @returns {Snippet<Params>}
  */
 export function createRawSnippet(fn) {
-	return add_snippet_symbol(
-		(/** @type {TemplateNode} */ anchor, /** @type {Getters<Params>} */ ...params) => {
-			var snippet = fn(...params);
+	// @ts-expect-error the types are a lie
+	return (/** @type {TemplateNode} */ anchor, /** @type {Getters<Params>} */ ...params) => {
+		var snippet = fn(...params);
 
-			/** @type {Element} */
-			var element;
+		/** @type {Element} */
+		var element;
 
-			if (hydrating) {
-				element = /** @type {Element} */ (hydrate_node);
-				hydrate_next();
-			} else {
-				var html = snippet.render().trim();
-				var fragment = create_fragment_from_html(html);
-				element = /** @type {Element} */ (fragment.firstChild);
-				if (DEV && (element.nextSibling !== null || element.nodeType !== 1)) {
-					w.invalid_raw_snippet_render();
-				}
-				anchor.before(element);
+		if (hydrating) {
+			element = /** @type {Element} */ (hydrate_node);
+			hydrate_next();
+		} else {
+			var html = snippet.render().trim();
+			var fragment = create_fragment_from_html(html);
+			element = /** @type {Element} */ (fragment.firstChild);
+
+			if (DEV && (element.nextSibling !== null || element.nodeType !== 3)) {
+				w.invalid_raw_snippet_render();
 			}
 
-			const result = snippet.setup?.(element);
-			assign_nodes(element, element);
-
-			if (typeof result === 'function') {
-				teardown(result);
-			}
+			anchor.before(element);
 		}
-	);
+
+		const result = snippet.setup?.(element);
+		assign_nodes(element, element);
+
+		if (typeof result === 'function') {
+			teardown(result);
+		}
+	};
 }

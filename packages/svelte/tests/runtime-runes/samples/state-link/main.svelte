@@ -1,18 +1,14 @@
 <script>
-	class Instance {
-		a = $state(0);
-		b = $state.link(this.a)
-	}
-
-	const instance = new Instance();
+	let a = $state(0);
+	let b = $state.link(a);
 </script>
 
-<input type="number" bind:value={instance.a} />
-<input type="number" bind:value={instance.b} />
+<input type="number" bind:value={a} />
+<input type="number" bind:value={b} />
 
-<div>{instance.a}</div>
-<div>{instance.b}</div>
+<div>{a}</div>
+<div>{b}</div>
 
 <button onclick={() => {
-	instance.b++;
+	b++;
 }}>i+</button>

@@ -1,6 +1,12 @@
 /** @import { TemplateNode } from '#client' */
 
-import { HYDRATION_END, HYDRATION_START, HYDRATION_START_ELSE } from '../../../constants.js';
+import {
+	HYDRATION_END,
+	HYDRATION_ERROR,
+	HYDRATION_START,
+	HYDRATION_START_ELSE
+} from '../../../constants.js';
+import * as w from '../warnings.js';
 
 /**
  * Use this variable to guard everything related to hydration code so it can be treeshaken out
@@ -28,6 +34,10 @@ export function set_hydrate_node(node) {
 }
 
 export function hydrate_next() {
+	if (hydrate_node === null) {
+		w.hydration_mismatch();
+		throw HYDRATION_ERROR;
+	}
 	return (hydrate_node = /** @type {TemplateNode} */ (hydrate_node.nextSibling));
 }
 

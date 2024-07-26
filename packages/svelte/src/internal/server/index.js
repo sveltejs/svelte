@@ -1,3 +1,4 @@
+/** @import { ComponentType, SvelteComponent } from 'svelte' */
 /** @import { Component, Payload, RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
 export { FILENAME, HMR } from '../../constants.js';
@@ -103,7 +104,7 @@ export let on_destroy = [];
  * Only available on the server and when compiling with the `server` option.
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
- * @param {import('svelte').Component<Props> | import('svelte').ComponentType<import('svelte').SvelteComponent<Props>>} component
+ * @param {import('svelte').Component<Props> | ComponentType<SvelteComponent<Props>>} component
  * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }} [options]
  * @returns {RenderOutput}
  */
@@ -361,7 +362,7 @@ export function store_set(store, value) {
  * @param {Store<V>} store
  * @param {any} expression
  */
-export function mutate_store(store_values, store_name, store, expression) {
+export function store_mutate(store_values, store_name, store, expression) {
 	store_set(store, store_get(store_values, store_name, store));
 	return expression;
 }
@@ -427,12 +428,10 @@ export async function value_or_fallback_async(value, fallback) {
  * @returns {void}
  */
 export function slot(payload, slot_fn, slot_props, fallback_fn) {
-	if (slot_fn === undefined) {
-		if (fallback_fn !== null) {
-			fallback_fn();
-		}
-	} else {
+	if (slot_fn !== undefined) {
 		slot_fn(payload, slot_props);
+	} else {
+		fallback_fn?.();
 	}
 }
 
@@ -555,11 +554,8 @@ export { push_element, pop_element } from './dev.js';
 export { snapshot } from '../shared/clone.js';
 
 export {
-	add_snippet_symbol,
 	invalid_default_snippet,
-	validate_component,
 	validate_dynamic_element_tag,
-	validate_snippet,
 	validate_void_dynamic_element
 } from '../shared/validate.js';
 

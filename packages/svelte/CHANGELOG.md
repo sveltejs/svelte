@@ -1,5 +1,57 @@
 # svelte
 
+## 5.0.0-next.199
+
+### Patch Changes
+
+- fix: add missing hydration mismatch call-site ([#12604](https://github.com/sveltejs/svelte/pull/12604))
+
+- fix: apply dynamic event fixes to OnDirective ([#12582](https://github.com/sveltejs/svelte/pull/12582))
+
+- fix: ensure directives run in sequential order ([#12591](https://github.com/sveltejs/svelte/pull/12591))
+
+- fix: tweak element_invalid_self_closing_tag to exclude namespace ([#12585](https://github.com/sveltejs/svelte/pull/12585))
+
+- breaking: avoid flushing queued updates on mount/hydrate ([#12602](https://github.com/sveltejs/svelte/pull/12602))
+
+- feat: allow `:global` in more places ([#12560](https://github.com/sveltejs/svelte/pull/12560))
+
+## 5.0.0-next.198
+
+### Patch Changes
+
+- chore: remove internal `binding.expression` mechanism ([#12530](https://github.com/sveltejs/svelte/pull/12530))
+
+- fix: exclude `bind:this` from reactive state validation ([#12566](https://github.com/sveltejs/svelte/pull/12566))
+
+## 5.0.0-next.197
+
+### Patch Changes
+
+- fix: correctly set anchor inside HMR block ([#12575](https://github.com/sveltejs/svelte/pull/12575))
+
+## 5.0.0-next.196
+
+### Patch Changes
+
+- fix: ensure dynamic event handlers are wrapped in a derived ([#12563](https://github.com/sveltejs/svelte/pull/12563))
+
+- chore: tidy up dynamic event handler generated code ([#12553](https://github.com/sveltejs/svelte/pull/12553))
+
+- fix: dynamic event delegation for stateful call expressions ([#12549](https://github.com/sveltejs/svelte/pull/12549))
+
+- fix: ensure $state.snapshot correctly clones Date objects ([#12564](https://github.com/sveltejs/svelte/pull/12564))
+
+- fix: remove runtime validation of components/snippets, rely on types instead ([#12507](https://github.com/sveltejs/svelte/pull/12507))
+
+- fix: properly update store values ([#12562](https://github.com/sveltejs/svelte/pull/12562))
+
+## 5.0.0-next.195
+
+### Patch Changes
+
+- fix: update original source in HMR update ([#12547](https://github.com/sveltejs/svelte/pull/12547))
+
 ## 5.0.0-next.194
 
 ### Patch Changes

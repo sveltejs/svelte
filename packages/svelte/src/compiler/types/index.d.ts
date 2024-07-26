@@ -129,6 +129,8 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * Set to `undefined` (the default) to infer runes mode from the component code.
 	 * Is always `true` for JS/TS modules compiled with Svelte.
 	 * Will be `true` by default in Svelte 6.
+	 * Note that setting this to `true` in your `svelte.config.js` will force runes mode for your entire project, including components in `node_modules`,
+	 * which is likely not what you want. If you're using Vite, consider using [dynamicCompileOptions](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/config.md#dynamiccompileoptions) instead.
 	 * @default undefined
 	 */
 	runes?: boolean | undefined;
@@ -306,11 +308,6 @@ export interface Binding {
 	legacy_dependencies: Binding[];
 	/** Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props() */
 	prop_alias: string | null;
-	/**
-	 * If this is set, all references should use this expression instead of the identifier name.
-	 * If a function is given, it will be called with the identifier at that location and should return the new expression.
-	 */
-	expression: Expression | ((id: Identifier) => Expression) | null;
 	/** If this is set, all mutations should use this expression */
 	mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
 	/** Additional metadata, varies per binding type */

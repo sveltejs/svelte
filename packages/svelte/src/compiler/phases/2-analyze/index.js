@@ -1,3 +1,7 @@
+/** @import { ArrowFunctionExpression, CallExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, LabeledStatement, Literal, Node, Program, Super } from 'estree' */
+/** @import { Attribute, BindDirective, Binding, DelegatedEvent, RegularElement, Root, Script, SvelteNode, Text, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { AnalysisState, Context, LegacyAnalysisState, Visitors } from './types' */
+/** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import * as e from '../../errors.js';
@@ -37,14 +41,14 @@ import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.j
 import { equal } from '../../utils/assert.js';
 
 /**
- * @param {import('#compiler').Script | null} script
+ * @param {Script | null} script
  * @param {ScopeRoot} root
  * @param {boolean} allow_reactive_declarations
  * @param {Scope | null} parent
- * @returns {import('../types.js').Js}
+ * @returns {Js}
  */
 function js(script, root, allow_reactive_declarations, parent) {
-	/** @type {import('estree').Program} */
+	/** @type {Program} */
 	const ast = script?.content ?? {
 		type: 'Program',
 		sourceType: 'module',
@@ -75,9 +79,9 @@ function get_component_name(filename) {
 /**
  * Checks if given event attribute can be delegated/hoisted and returns the corresponding info if so
  * @param {string} event_name
- * @param {import('estree').Expression | null} handler
- * @param {import('./types').Context} context
- * @returns {null | import('#compiler').DelegatedEvent}
+ * @param {Expression | null} handler
+ * @param {Context} context
+ * @returns {null | DelegatedEvent}
  */
 function get_delegated_event(event_name, handler, context) {
 	// Handle delegated event handlers. Bail-out if not a delegated event.
@@ -91,9 +95,9 @@ function get_delegated_event(event_name, handler, context) {
 		return null;
 	}
 
-	/** @type {import('#compiler').DelegatedEvent} */
+	/** @type {DelegatedEvent} */
 	const non_hoistable = { type: 'non-hoistable' };
-	/** @type {import('estree').FunctionExpression | import('estree').FunctionDeclaration | import('estree').ArrowFunctionExpression | null} */
+	/** @type {FunctionExpression | FunctionDeclaration | ArrowFunctionExpression | null} */
 	let target_function = null;
 	let binding = null;
 
@@ -119,20 +123,20 @@ function get_delegated_event(event_name, handler, context) {
 
 				const grandparent = path.at(-2);
 
-				/** @type {import('#compiler').RegularElement | null} */
+				/** @type {RegularElement | null} */
 				let element = null;
 				/** @type {string | null} */
 				let event_name = null;
 				if (parent.type === 'OnDirective') {
-					element = /** @type {import('#compiler').RegularElement} */ (grandparent);
+					element = /** @type {RegularElement} */ (grandparent);
 					event_name = parent.name;
 				} else if (
 					parent.type === 'ExpressionTag' &&
 					grandparent?.type === 'Attribute' &&
 					is_event_attribute(grandparent)
 				) {
-					element = /** @type {import('#compiler').RegularElement} */ (path.at(-3));
-					const attribute = /** @type {import('#compiler').Attribute} */ (grandparent);
+					element = /** @type {RegularElement} */ (path.at(-3));
+					const attribute = /** @type {Attribute} */ (grandparent);
 					event_name = get_attribute_event_name(attribute.name);
 				}
 
@@ -224,9 +228,9 @@ function get_delegated_event(event_name, handler, context) {
 }
 
 /**
- * @param {import('estree').Program} ast
- * @param {import('#compiler').ValidatedModuleCompileOptions} options
- * @returns {import('../types.js').Analysis}
+ * @param {Program} ast
+ * @param {ValidatedModuleCompileOptions} options
+ * @returns {Analysis}
  */
 export function analyze_module(ast, options) {
 	const { scope, scopes } = create_scopes(ast, new ScopeRoot(), false, null);
@@ -239,7 +243,7 @@ export function analyze_module(ast, options) {
 	}
 
 	walk(
-		/** @type {import('estree').Node} */ (ast),
+		/** @type {Node} */ (ast),
 		{ scope, analysis: { runes: true } },
 		// @ts-expect-error TODO clean this mess up
 		merge(set_scope(scopes), validation_runes_js, runes_scope_js_tweaker)
@@ -255,10 +259,10 @@ export function analyze_module(ast, options) {
 }
 
 /**
- * @param {import('#compiler').Root} root
+ * @param {Root} root
  * @param {string} source
- * @param {import('#compiler').ValidatedCompileOptions} options
- * @returns {import('../types.js').ComponentAnalysis}
+ * @param {ValidatedCompileOptions} options
+ * @returns {ComponentAnalysis}
  */
 export function analyze_component(root, source, options) {
 	const scope_root = new ScopeRoot();
@@ -268,7 +272,7 @@ export function analyze_component(root, source, options) {
 
 	const { scope, scopes } = create_scopes(root.fragment, scope_root, false, instance.scope);
 
-	/** @type {import('../types.js').Template} */
+	/** @type {Template} */
 	const template = { ast: root.fragment, scope, scopes };
 
 	// create synthetic bindings for store subscriptions
@@ -339,7 +343,7 @@ export function analyze_component(root, source, options) {
 						/** @type {number} */ (node.start) > /** @type {number} */ (module.ast.start) &&
 						/** @type {number} */ (node.end) < /** @type {number} */ (module.ast.end) &&
 						// const state = $state(0) is valid
-						get_rune(/** @type {import('estree').Node} */ (path.at(-1)), module.scope) === null
+						get_rune(/** @type {Node} */ (path.at(-1)), module.scope) === null
 					) {
 						e.store_invalid_subscription(node);
 					}
@@ -360,7 +364,7 @@ export function analyze_component(root, source, options) {
 		Array.from(module.scope.references).some(([name]) => Runes.includes(/** @type {any} */ (name)));
 
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config
-	/** @type {import('../types.js').ComponentAnalysis} */
+	/** @type {ComponentAnalysis} */
 	const analysis = {
 		name: module.scope.generate(options.name ?? component_name),
 		root: scope_root,
@@ -434,7 +438,7 @@ export function analyze_component(root, source, options) {
 		}
 
 		for (const { ast, scope, scopes } of [module, instance, template]) {
-			/** @type {import('./types').AnalysisState} */
+			/** @type {AnalysisState} */
 			const state = {
 				scope,
 				analysis,
@@ -450,7 +454,7 @@ export function analyze_component(root, source, options) {
 			};
 
 			walk(
-				/** @type {import('#compiler').SvelteNode} */ (ast),
+				/** @type {SvelteNode} */ (ast),
 				state,
 				merge(set_scope(scopes), validation_runes, runes_scope_tweaker, common_visitors)
 			);
@@ -474,7 +478,7 @@ export function analyze_component(root, source, options) {
 							// bind:this doesn't need to be a state reference if it will never change
 							if (
 								type === 'BindDirective' &&
-								/** @type {import('#compiler').BindDirective} */ (path[i]).name === 'this'
+								/** @type {BindDirective} */ (path[i]).name === 'this'
 							) {
 								for (let j = i - 1; j >= 0; j -= 1) {
 									const type = path[j].type;
@@ -503,7 +507,7 @@ export function analyze_component(root, source, options) {
 		instance.scope.declare(b.id('$$restProps'), 'rest_prop', 'synthetic');
 
 		for (const { ast, scope, scopes } of [module, instance, template]) {
-			/** @type {import('./types').LegacyAnalysisState} */
+			/** @type {LegacyAnalysisState} */
 			const state = {
 				scope,
 				analysis,
@@ -522,7 +526,7 @@ export function analyze_component(root, source, options) {
 			};
 
 			walk(
-				/** @type {import('#compiler').SvelteNode} */ (ast),
+				/** @type {SvelteNode} */ (ast),
 				state,
 				// @ts-expect-error TODO
 				merge(set_scope(scopes), validation_legacy, legacy_scope_tweaker, common_visitors)
@@ -583,7 +587,7 @@ export function analyze_component(root, source, options) {
 				// TODO this happens during the analysis phase, which shouldn't know anything about client vs server
 				if (element.type === 'SvelteElement' && options.generate === 'client') continue;
 
-				/** @type {import('#compiler').Attribute | undefined} */
+				/** @type {Attribute | undefined} */
 				let class_attribute = undefined;
 
 				for (const attribute of element.attributes) {
@@ -602,7 +606,7 @@ export function analyze_component(root, source, options) {
 					if (is_text_attribute(class_attribute)) {
 						class_attribute.value[0].data += ` ${analysis.css.hash}`;
 					} else {
-						/** @type {import('#compiler').Text} */
+						/** @type {Text} */
 						const css_text = {
 							type: 'Text',
 							data: ` ${analysis.css.hash}`,
@@ -642,19 +646,19 @@ export function analyze_component(root, source, options) {
 	return analysis;
 }
 
-/** @type {import('./types').Visitors<import('./types').LegacyAnalysisState>} */
+/** @type {Visitors<LegacyAnalysisState>} */
 const legacy_scope_tweaker = {
 	LabeledStatement(node, { next, path, state }) {
 		if (
 			state.ast_type !== 'instance' ||
 			node.label.name !== '$' ||
-			/** @type {import('#compiler').SvelteNode} */ (path.at(-1)).type !== 'Program'
+			/** @type {SvelteNode} */ (path.at(-1)).type !== 'Program'
 		) {
 			return next();
 		}
 
 		// Find all dependencies of this `$: {...}` statement
-		/** @type {import('../types.js').ReactiveStatement} */
+		/** @type {ReactiveStatement} */
 		const reactive_statement = {
 			assignments: new Set(),
 			dependencies: []
@@ -669,14 +673,14 @@ const legacy_scope_tweaker = {
 			if (binding === null) continue;
 
 			for (const { node, path } of nodes) {
-				/** @type {import('estree').Expression} */
+				/** @type {Expression} */
 				let left = node;
 
 				let i = path.length - 1;
-				let parent = /** @type {import('estree').Expression} */ (path.at(i));
+				let parent = /** @type {Expression} */ (path.at(i));
 				while (parent.type === 'MemberExpression') {
 					left = parent;
-					parent = /** @type {import('estree').Expression} */ (path.at(--i));
+					parent = /** @type {Expression} */ (path.at(--i));
 				}
 
 				if (
@@ -757,7 +761,7 @@ const legacy_scope_tweaker = {
 		next();
 	},
 	Identifier(node, { state, path }) {
-		const parent = /** @type {import('estree').Node} */ (path.at(-1));
+		const parent = /** @type {Node} */ (path.at(-1));
 		if (is_reference(node, parent)) {
 			if (node.name === '$$props') {
 				state.analysis.uses_props = true;
@@ -834,9 +838,7 @@ const legacy_scope_tweaker = {
 
 		if (!node.declaration) {
 			for (const specifier of node.specifiers) {
-				const binding = /** @type {import('#compiler').Binding} */ (
-					state.scope.get(specifier.local.name)
-				);
+				const binding = /** @type {Binding} */ (state.scope.get(specifier.local.name));
 				if (
 					binding !== null &&
 					(binding.kind === 'state' ||
@@ -863,7 +865,7 @@ const legacy_scope_tweaker = {
 			node.declaration.type === 'ClassDeclaration'
 		) {
 			state.analysis.exports.push({
-				name: /** @type {import('estree').Identifier} */ (node.declaration.id).name,
+				name: /** @type {Identifier} */ (node.declaration.id).name,
 				alias: null
 			});
 			return next();
@@ -881,7 +883,7 @@ const legacy_scope_tweaker = {
 
 			for (const declarator of node.declaration.declarations) {
 				for (const id of extract_identifiers(declarator.id)) {
-					const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
+					const binding = /** @type {Binding} */ (state.scope.get(id.name));
 					binding.kind = 'bindable_prop';
 				}
 			}
@@ -899,7 +901,7 @@ const legacy_scope_tweaker = {
 	}
 };
 
-/** @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, { scope: Scope, analysis: { runes: true } }>} */
+/** @type {Visitors} */
 const runes_scope_js_tweaker = {
 	VariableDeclarator(node, { state }) {
 		if (node.init?.type !== 'CallExpression') return;
@@ -920,7 +922,7 @@ const runes_scope_js_tweaker = {
 
 		for (const path of extract_paths(node.id)) {
 			// @ts-ignore this fails in CI for some insane reason
-			const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(path.node.name));
+			const binding = /** @type {Binding} */ (state.scope.get(path.node.name));
 			binding.kind =
 				rune === '$state'
 					? 'state'
@@ -933,7 +935,7 @@ const runes_scope_js_tweaker = {
 	}
 };
 
-/** @type {import('./types').Visitors} */
+/** @type {Visitors} */
 const runes_scope_tweaker = {
 	CallExpression(node, { state, next }) {
 		const rune = get_rune(node, state.scope);
@@ -964,7 +966,7 @@ const runes_scope_tweaker = {
 
 		for (const path of extract_paths(node.id)) {
 			// @ts-ignore this fails in CI for some insane reason
-			const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(path.node.name));
+			const binding = /** @type {Binding} */ (state.scope.get(path.node.name));
 			binding.kind =
 				rune === '$state'
 					? 'state'
@@ -983,7 +985,7 @@ const runes_scope_tweaker = {
 			state.analysis.needs_props = true;
 
 			if (node.id.type === 'Identifier') {
-				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(node.id.name));
+				const binding = /** @type {Binding} */ (state.scope.get(node.id.name));
 				binding.initial = null; // else would be $props()
 				binding.kind = 'rest_prop';
 			} else {
@@ -994,15 +996,15 @@ const runes_scope_tweaker = {
 
 					const name =
 						property.value.type === 'AssignmentPattern'
-							? /** @type {import('estree').Identifier} */ (property.value.left).name
-							: /** @type {import('estree').Identifier} */ (property.value).name;
+							? /** @type {Identifier} */ (property.value.left).name
+							: /** @type {Identifier} */ (property.value).name;
 					const alias =
 						property.key.type === 'Identifier'
 							? property.key.name
-							: String(/** @type {import('estree').Literal} */ (property.key).value);
+							: String(/** @type {Literal} */ (property.key).value);
 					let initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
 
-					const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
+					const binding = /** @type {Binding} */ (state.scope.get(name));
 					binding.prop_alias = alias;
 
 					// rewire initial from $props() to the actual initial value, stripping $bindable() if necessary
@@ -1011,9 +1013,7 @@ const runes_scope_tweaker = {
 						initial.callee.type === 'Identifier' &&
 						initial.callee.name === '$bindable'
 					) {
-						binding.initial = /** @type {import('estree').Expression | null} */ (
-							initial.arguments[0] ?? null
-						);
+						binding.initial = /** @type {Expression | null} */ (initial.arguments[0] ?? null);
 						binding.kind = 'bindable_prop';
 					} else {
 						binding.initial = initial;
@@ -1043,7 +1043,7 @@ const runes_scope_tweaker = {
 			node.declaration.type === 'ClassDeclaration'
 		) {
 			state.analysis.exports.push({
-				name: /** @type {import('estree').Identifier} */ (node.declaration.id).name,
+				name: /** @type {Identifier} */ (node.declaration.id).name,
 				alias: null
 			});
 			return next();
@@ -1060,8 +1060,8 @@ const runes_scope_tweaker = {
 };
 
 /**
- * @param {import('estree').CallExpression} node
- * @param {import('./types').Context} context
+ * @param {CallExpression} node
+ * @param {Context} context
  * @returns {boolean}
  */
 function is_known_safe_call(node, context) {
@@ -1085,8 +1085,8 @@ function is_known_safe_call(node, context) {
 }
 
 /**
- * @param {import('estree').ArrowFunctionExpression | import('estree').FunctionExpression | import('estree').FunctionDeclaration} node
- * @param {import('./types').Context} context
+ * @param {ArrowFunctionExpression | FunctionExpression | FunctionDeclaration} node
+ * @param {Context} context
  */
 const function_visitor = (node, context) => {
 	// TODO retire this in favour of a more general solution based on bindings
@@ -1106,7 +1106,7 @@ const function_visitor = (node, context) => {
 /**
  * A 'safe' identifier means that the `foo` in `foo.bar` or `foo()` will not
  * call functions that require component context to exist
- * @param {import('estree').Expression | import('estree').Super} expression
+ * @param {Expression | Super} expression
  * @param {Scope} scope
  */
 function is_safe_identifier(expression, scope) {
@@ -1130,7 +1130,7 @@ function is_safe_identifier(expression, scope) {
 	);
 }
 
-/** @type {import('./types').Visitors} */
+/** @type {Visitors} */
 const common_visitors = {
 	_(node, { state, next, path }) {
 		ignore_map.set(node, structuredClone(ignore_stack));
@@ -1253,7 +1253,7 @@ const common_visitors = {
 		context.next({ ...context.state, expression: node });
 	},
 	Identifier(node, context) {
-		const parent = /** @type {import('estree').Node} */ (context.path.at(-1));
+		const parent = /** @type {Node} */ (context.path.at(-1));
 		if (!is_reference(node, parent)) return;
 
 		if (node.name === '$$slots') {
@@ -1280,8 +1280,7 @@ const common_visitors = {
 			// TODO it would be better to just bail out when we hit the ExportSpecifier node but that's
 			// not currently possibly because of our visitor merging, which I desperately want to nuke
 			const is_export_specifier =
-				/** @type {import('#compiler').SvelteNode} */ (context.path.at(-1)).type ===
-				'ExportSpecifier';
+				/** @type {SvelteNode} */ (context.path.at(-1)).type === 'ExportSpecifier';
 
 			if (
 				context.state.analysis.runes &&
@@ -1309,7 +1308,9 @@ const common_visitors = {
 	CallExpression(node, context) {
 		const { expression, render_tag } = context.state;
 		if (
-			(expression?.type === 'ExpressionTag' || expression?.type === 'SpreadAttribute') &&
+			(expression?.type === 'ExpressionTag' ||
+				expression?.type === 'SpreadAttribute' ||
+				expression?.type === 'OnDirective') &&
 			!is_known_safe_call(node, context)
 		) {
 			expression.metadata.contains_call_expression = true;
@@ -1387,7 +1388,7 @@ const common_visitors = {
 		if (parent?.type === 'SvelteElement' || parent?.type === 'RegularElement') {
 			state.analysis.event_directive_node ??= node;
 		}
-		next();
+		next({ ...state, expression: node });
 	},
 	BindDirective(node, context) {
 		let i = context.path.length;
@@ -1490,8 +1491,8 @@ const common_visitors = {
 				node.attributes.push(
 					create_attribute(
 						'value',
-						/** @type {import('#compiler').Text} */ (node.fragment.nodes.at(0)).start,
-						/** @type {import('#compiler').Text} */ (node.fragment.nodes.at(-1)).end,
+						/** @type {Text} */ (node.fragment.nodes.at(0)).start,
+						/** @type {Text} */ (node.fragment.nodes.at(-1)).end,
 						// @ts-ignore
 						node.fragment.nodes
 					)
@@ -1570,7 +1571,7 @@ const common_visitors = {
 };
 
 /**
- * @param {import('#compiler').RegularElement} node
+ * @param {RegularElement} node
  */
 function determine_element_spread(node) {
 	let has_spread = false;
@@ -1596,10 +1597,10 @@ function get_attribute_event_name(event_name) {
 }
 
 /**
- * @param {Map<import('estree').LabeledStatement, import('../types.js').ReactiveStatement>} unsorted_reactive_declarations
+ * @param {Map<LabeledStatement, ReactiveStatement>} unsorted_reactive_declarations
  */
 function order_reactive_statements(unsorted_reactive_declarations) {
-	/** @typedef {[import('estree').LabeledStatement, import('../types.js').ReactiveStatement]} Tuple */
+	/** @typedef {[LabeledStatement, ReactiveStatement]} Tuple */
 
 	/** @type {Map<string, Array<Tuple>>} */
 	const lookup = new Map();
@@ -1632,13 +1633,13 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	}
 
 	// We use a map and take advantage of the fact that the spec says insertion order is preserved when iterating
-	/** @type {Map<import('estree').LabeledStatement, import('../types.js').ReactiveStatement>} */
+	/** @type {Map<LabeledStatement, ReactiveStatement>} */
 	const reactive_declarations = new Map();
 
 	/**
 	 *
-	 * @param {import('estree').LabeledStatement} node
-	 * @param {import('../types.js').ReactiveStatement} declaration
+	 * @param {LabeledStatement} node
+	 * @param {ReactiveStatement} declaration
 	 * @returns
 	 */
 	const add_declaration = (node, declaration) => {

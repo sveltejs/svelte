@@ -101,6 +101,7 @@ export {
 	legacy_pre_effect_reset,
 	render_effect,
 	template_effect,
+	effect,
 	user_effect,
 	user_pre_effect
 } from './reactivity/effects.js';
@@ -122,7 +123,7 @@ export {
 } from './reactivity/props.js';
 export {
 	invalidate_store,
-	mutate_store,
+	store_mutate,
 	setup_stores,
 	store_get,
 	store_set,
@@ -172,9 +173,7 @@ export { snapshot } from '../shared/clone.js';
 export { noop } from '../shared/utils.js';
 export {
 	invalid_default_snippet,
-	validate_component,
 	validate_dynamic_element_tag,
-	validate_snippet,
 	validate_store,
 	validate_void_dynamic_element
 } from '../shared/validate.js';

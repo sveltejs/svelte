@@ -1,3 +1,5 @@
+/** @import { ComponentContext, Effect, EffectNodes, TemplateNode } from '#client' */
+/** @import { Component, ComponentType, SvelteComponent } from '../../index.js' */
 import { DEV } from 'esm-env';
 import { clear_text_content, empty, init_operations } from './dom/operations.js';
 import {
@@ -24,7 +26,6 @@ import {
 import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
-import { validate_component } from '../shared/validate.js';
 import { assign_nodes } from './dom/template.js';
 
 /**
@@ -60,7 +61,7 @@ export function set_text(text, value) {
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
- * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props>> | import('../../index.js').Component<Props, Exports, any>} component
+ * @param {ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>} component
  * @param {{} extends Props ? {
  * 		target: Document | Element | ShadowRoot;
  * 		anchor?: Node;
@@ -79,13 +80,8 @@ export function set_text(text, value) {
  * @returns {Exports}
  */
 export function mount(component, options) {
-	if (DEV) {
-		validate_component(component);
-	}
-
 	const anchor = options.anchor ?? options.target.appendChild(empty());
-	// Don't flush previous effects to ensure order of outer effects stays consistent
-	return flush_sync(() => _mount(component, { ...options, anchor }), false);
+	return _mount(component, { ...options, anchor });
 }
 
 /**
@@ -93,7 +89,7 @@ export function mount(component, options) {
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
- * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<Props>> | import('../../index.js').Component<Props, Exports, any>} component
+ * @param {ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>} component
  * @param {{} extends Props ? {
  * 		target: Document | Element | ShadowRoot;
  * 		props?: Props;
@@ -112,55 +108,44 @@ export function mount(component, options) {
  * @returns {Exports}
  */
 export function hydrate(component, options) {
-	if (DEV) {
-		validate_component(component);
-	}
-
 	options.intro = options.intro ?? false;
 	const target = options.target;
 	const was_hydrating = hydrating;
 	const previous_hydrate_node = hydrate_node;
 
 	try {
-		// Don't flush previous effects to ensure order of outer effects stays consistent
-		return flush_sync(() => {
-			var anchor = /** @type {import('#client').TemplateNode} */ (target.firstChild);
-			while (
-				anchor &&
-				(anchor.nodeType !== 8 || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
-			) {
-				anchor = /** @type {import('#client').TemplateNode} */ (anchor.nextSibling);
-			}
+		var anchor = /** @type {TemplateNode} */ (target.firstChild);
+		while (
+			anchor &&
+			(anchor.nodeType !== 8 || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
+		) {
+			anchor = /** @type {TemplateNode} */ (anchor.nextSibling);
+		}
 
-			if (!anchor) {
-				throw HYDRATION_ERROR;
-			}
+		if (!anchor) {
+			throw HYDRATION_ERROR;
+		}
 
-			set_hydrating(true);
-			set_hydrate_node(/** @type {Comment} */ (anchor));
-			hydrate_next();
+		set_hydrating(true);
+		set_hydrate_node(/** @type {Comment} */ (anchor));
+		hydrate_next();
 
-			const instance = _mount(component, { ...options, anchor });
+		const instance = _mount(component, { ...options, anchor });
 
-			if (
-				hydrate_node.nodeType !== 8 ||
-				/** @type {Comment} */ (hydrate_node).data !== HYDRATION_END
-			) {
-				w.hydration_mismatch();
-				throw HYDRATION_ERROR;
-			}
+		if (
+			hydrate_node === null ||
+			hydrate_node.nodeType !== 8 ||
+			/** @type {Comment} */ (hydrate_node).data !== HYDRATION_END
+		) {
+			w.hydration_mismatch();
+			throw HYDRATION_ERROR;
+		}
 
-			// flush_sync will run this callback and then synchronously run any pending effects,
-			// which don't belong to the hydration phase anymore - therefore reset it here
-			set_hydrating(false);
+		set_hydrating(false);
 
-			return instance;
-		}, false);
+		return /**  @type {Exports} */ (instance);
 	} catch (error) {
 		if (error === HYDRATION_ERROR) {
-			// TODO it's possible for event listeners to have been added and
-			// not removed, e.g. with `<svelte:window>` or `<svelte:document>`
-
 			if (options.recover === false) {
 				e.hydration_failed();
 			}
@@ -186,7 +171,7 @@ const document_listeners = new Map();
 
 /**
  * @template {Record<string, any>} Exports
- * @param {import('../../index.js').ComponentType<import('../../index.js').SvelteComponent<any>> | import('../../index.js').Component<any>} Component
+ * @param {ComponentType<SvelteComponent<any>> | Component<any>} Component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
  * 		anchor: Node;
@@ -241,7 +226,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 		branch(() => {
 			if (context) {
 				push({});
-				var ctx = /** @type {import('#client').ComponentContext} */ (current_component_context);
+				var ctx = /** @type {ComponentContext} */ (current_component_context);
 				ctx.c = context;
 			}
 
@@ -251,7 +236,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			}
 
 			if (hydrating) {
-				assign_nodes(/** @type {import('#client').TemplateNode} */ (anchor), null);
+				assign_nodes(/** @type {TemplateNode} */ (anchor), null);
 			}
 
 			should_intro = intro;
@@ -260,9 +245,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			should_intro = true;
 
 			if (hydrating) {
-				/** @type {import('#client').Effect & { nodes: import('#client').EffectNodes }} */ (
-					current_effect
-				).nodes.end = hydrate_node;
+				/** @type {Effect & { nodes: EffectNodes }} */ (current_effect).nodes.end = hydrate_node;
 			}
 
 			if (context) {

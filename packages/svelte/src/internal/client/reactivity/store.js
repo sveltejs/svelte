@@ -28,7 +28,7 @@ export function store_get(store, store_name, stores) {
 		entry.store = store ?? null;
 
 		if (store == null) {
-			set(entry.source, undefined);
+			entry.source.v = undefined; // see synchronous callback comment below
 			entry.unsubscribe = noop;
 		} else {
 			var is_synchronous_callback = true;
@@ -119,7 +119,7 @@ export function setup_stores() {
  * @param {V} new_value  the new store value
  * @template V
  */
-export function mutate_store(store, expression, new_value) {
+export function store_mutate(store, expression, new_value) {
 	store.set(new_value);
 	return expression;
 }

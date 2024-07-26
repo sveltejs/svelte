@@ -1,3 +1,4 @@
+/** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
@@ -9,7 +10,7 @@ import { increment } from './utils.js';
  * @extends {Map<K, V>}
  */
 export class SvelteMap extends Map {
-	/** @type {Map<K, import('#client').Source<number>>} */
+	/** @type {Map<K, Source<number>>} */
 	#sources = new Map();
 	#version = source(0);
 	#size = source(0);

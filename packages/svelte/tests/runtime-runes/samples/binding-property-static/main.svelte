@@ -51,6 +51,9 @@
 <input bind:value={frozen.value} />
 <Child bind:value={pojo.value} />
 <Child bind:value={frozen.value} />
+{#if value}
+	<div bind:this={pojo.value}></div>
+{/if}
 
 <!-- should not warn -->
 <input bind:value={reactive.value} />
@@ -59,3 +62,4 @@
 <Child bind:value={reactive.value} />
 <Child bind:value={accessors.value} />
 <Child bind:value={proxy.value} />
+<div bind:this={pojo.value}></div>

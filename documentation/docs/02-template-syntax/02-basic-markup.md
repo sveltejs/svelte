@@ -110,16 +110,18 @@ Because events are just attributes, the same rules as for attributes apply:
 - you can spread them: `<button {...thisSpreadContainsEventAttributes}>click me</button>`
 - component events are just (callback) properties and don't need a separate concept
 
+Timing-wise, event attributes always fire after events from bindings (e.g. `oninput` always fires after an update to `bind:value`). Under the hood, some event handlers are attached directly with `addEventListener`, while others are _delegated_.
+
 ### Event delegation
 
-To reduce the memory footprint and increase performance, Svelte uses a technique called event delegation. This means that certain events are only listened to once at the application root, invoking a handler that then traverses the event call path and invokes listeners along the way.
+To reduce memory footprint and increase performance, Svelte uses a technique called event delegation. This means that for certain events — see the list below — a single event listener at the application root takes responsibility for running any handlers on the event's path.
 
-There are a few gotchas you need to be aware of when it comes to event delegation:
+There are a few gotchas to be aware of:
 
-- when you dispatch events manually, make sure to set the `{ bubbles: true }` option
-- when listening to events programmatically (i.e. not through `<button onclick={...}>` but through `node.addEventListener`), be careful to not call `stopPropagation` or else the delegated event handler won't be reached and handlers won't be invoked. For this reaon it's best to use `on` (which properly handles `stopPropagation`) from `svelte/events` instead of `addEventListener` to make sure the chain of events is preserved
+- when you manually dispatch an event with a delegated listener, make sure to set the `{ bubbles: true }` option or it won't reach the application root
+- when using `addEventListener` directly, avoid calling `stopPropagation` or the event won't reach the application root and handlers won't be invoked. Similarly, handlers added manually inside the application root will run _before_ handlers added declaratively deeper in the DOM (with e.g. `onclick={...}`), in both capturing and bubbling phases. For these reasons it's better to use the `on` function imported from `svelte/events` rather than `addEventListener`, as it will ensure that order is preserved and `stopPropagation` is handled correctly.
 
-The following events are delegated:
+The following event handlers are delegated:
 
 - `beforeinput`
 - `click`

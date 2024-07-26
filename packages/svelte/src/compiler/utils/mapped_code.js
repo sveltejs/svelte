@@ -70,7 +70,7 @@ function merge_tables(this_table, other_table) {
 	}
 	return [new_table, idx_map, val_changed, idx_changed];
 }
-const regex_line_token = /([^\d\w\s]|\s+)/g;
+const regex_line_token = /([^\w\s]|\s+)/g;
 /** */
 export class MappedCode {
 	/**

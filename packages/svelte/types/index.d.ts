@@ -101,6 +101,15 @@ declare module 'svelte' {
 		$set(props: Partial<Props>): void;
 	}
 
+	const brand: unique symbol;
+	type Brand<B> = { [brand]: B };
+	type Branded<T, B> = T & Brand<B>;
+
+	/**
+	 * Internal implementation details that vary between environments
+	 */
+	export type ComponentInternals = Branded<{}, 'ComponentInternals'>;
+
 	/**
 	 * Can be used to create strongly typed Svelte components.
 	 *
@@ -133,7 +142,8 @@ declare module 'svelte' {
 		 * @param props The props passed to the component.
 		 */
 		(
-			internal: unknown,
+			this: void,
+			internals: ComponentInternals,
 			props: Props
 		): {
 			/**
@@ -363,8 +373,6 @@ declare module 'svelte' {
 	 * Synchronously flushes any pending state changes and those that result from it.
 	 * */
 	export function flushSync(fn?: (() => void) | undefined): void;
-	/** Anything except a function */
-	type NotFunction<T> = T extends Function ? never : T;
 	/**
 	 * Create a snippet programmatically
 	 * */
@@ -372,6 +380,8 @@ declare module 'svelte' {
 		render: () => string;
 		setup?: (element: Element) => void;
 	}): Snippet<Params>;
+	/** Anything except a function */
+	type NotFunction<T> = T extends Function ? never : T;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
 	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
@@ -572,7 +582,7 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { AssignmentExpression, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, MemberExpression, ObjectExpression, Pattern, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, FunctionExpression, Node, Program, ChainExpression, SimpleCallExpression } from 'estree';
+	import type { AssignmentExpression, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, MemberExpression, ObjectExpression, Pattern, Node, VariableDeclarator, ArrowFunctionExpression, VariableDeclaration, FunctionExpression, Program, ChainExpression, SimpleCallExpression } from 'estree';
 	import type { SourceMap } from 'magic-string';
 	import type { Context } from 'zimmerframe';
 	import type { Location } from 'locate-character';
@@ -800,6 +810,8 @@ declare module 'svelte/compiler' {
 		 * Set to `undefined` (the default) to infer runes mode from the component code.
 		 * Is always `true` for JS/TS modules compiled with Svelte.
 		 * Will be `true` by default in Svelte 6.
+		 * Note that setting this to `true` in your `svelte.config.js` will force runes mode for your entire project, including components in `node_modules`,
+		 * which is likely not what you want. If you're using Vite, consider using [dynamicCompileOptions](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/config.md#dynamiccompileoptions) instead.
 		 * @default undefined
 		 */
 		runes?: boolean | undefined;
@@ -946,11 +958,6 @@ declare module 'svelte/compiler' {
 		legacy_dependencies: Binding[];
 		/** Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props() */
 		prop_alias: string | null;
-		/**
-		 * If this is set, all references should use this expression instead of the identifier name.
-		 * If a function is given, it will be called with the identifier at that location and should return the new expression.
-		 */
-		expression: Expression | ((id: Identifier) => Expression) | null;
 		/** If this is set, all mutations should use this expression */
 		mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
 		/** Additional metadata, varies per binding type */
@@ -1248,13 +1255,13 @@ declare module 'svelte/compiler' {
 		/**
 		 * A map of declarators to the bindings they declare
 		 * */
-		declarators: Map<import("estree").VariableDeclarator | LetDirective, Binding[]>;
+		declarators: Map<VariableDeclarator | LetDirective, Binding[]>;
 		/**
 		 * A set of all the names referenced with this scope
 		 * — useful for generating unique names
 		 * */
 		references: Map<string, {
-			node: import("estree").Identifier;
+			node: Identifier;
 			path: SvelteNode[];
 		}[]>;
 		/**
@@ -1263,25 +1270,25 @@ declare module 'svelte/compiler' {
 		 */
 		function_depth: number;
 		
-		declare(node: import("estree").Identifier, kind: Binding["kind"], declaration_kind: DeclarationKind, initial?: null | import("estree").Expression | import("estree").FunctionDeclaration | import("estree").ClassDeclaration | import("estree").ImportDeclaration | EachBlock): Binding;
+		declare(node: Identifier, kind: Binding["kind"], declaration_kind: DeclarationKind, initial?: null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | EachBlock): Binding;
 		child(porous?: boolean): Scope;
 		
 		generate(preferred_name: string): string;
 		
 		get(name: string): Binding | null;
 		
-		get_bindings(node: import("estree").VariableDeclarator | LetDirective): Binding[];
+		get_bindings(node: VariableDeclarator | LetDirective): Binding[];
 		
 		owner(name: string): Scope | null;
 		
-		reference(node: import("estree").Identifier, path: SvelteNode[]): void;
+		reference(node: Identifier, path: SvelteNode[]): void;
 		#private;
 	}
 	class ScopeRoot {
 		
 		conflicts: Set<string>;
 		
-		unique(preferred_name: string): import("estree").Identifier;
+		unique(preferred_name: string): Identifier;
 	}
 	namespace Css {
 		export interface BaseNode {
@@ -1316,17 +1323,32 @@ declare module 'svelte/compiler' {
 			metadata: {
 				parent_rule: null | Rule;
 				has_local_selectors: boolean;
+				/**
+				 * `true` if the rule contains a `:global` selector, and therefore everything inside should be unscoped
+				 */
 				is_global_block: boolean;
 			};
 		}
 
+		/**
+		 * A list of selectors, e.g. `a, b, c {}`
+		 */
 		export interface SelectorList extends BaseNode {
 			type: 'SelectorList';
+			/**
+			 * The `a`, `b` and `c` in `a, b, c {}`
+			 */
 			children: ComplexSelector[];
 		}
 
+		/**
+		 * A complex selector, e.g. `a b c {}`
+		 */
 		export interface ComplexSelector extends BaseNode {
 			type: 'ComplexSelector';
+			/**
+			 * The `a`, `b` and `c` in `a b c {}`
+			 */
 			children: RelativeSelector[];
 			metadata: {
 				rule: null | Rule;
@@ -1334,14 +1356,26 @@ declare module 'svelte/compiler' {
 			};
 		}
 
+		/**
+		 * A relative selector, e.g the `a` and `> b` in `a > b {}`
+		 */
 		export interface RelativeSelector extends BaseNode {
 			type: 'RelativeSelector';
+			/**
+			 * In `a > b`, `> b` forms one relative selector, and `>` is the combinator. `null` for the first selector.
+			 */
 			combinator: null | Combinator;
+			/**
+			 * The `b:is(...)` in `> b:is(...)`
+			 */
 			selectors: SimpleSelector[];
 			metadata: {
-				/** :global(..) */
+				/**
+				 * `true` if the whole selector is unscoped, e.g. `:global(...)` or `:global` or `:global.x`.
+				 * Selectors like `:global(...).x` are not considered global, because they still need scoping.
+				 */
 				is_global: boolean;
-				/** :root, :host, ::view-transition */
+				/** `:root`, `:host`, `::view-transition`, or selectors after a `:global` */
 				is_global_like: boolean;
 				scoped: boolean;
 			};
@@ -1630,6 +1664,10 @@ declare module 'svelte/compiler' {
 		/** The 'y' in `on:x={y}` */
 		expression: null | Expression;
 		modifiers: string[]; // TODO specify
+		metadata: {
+			contains_call_expression: boolean;
+			dynamic: boolean;
+		};
 	}
 
 	type DelegatedEvent =
@@ -2624,6 +2662,8 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * Set to `undefined` (the default) to infer runes mode from the component code.
 		 * Is always `true` for JS/TS modules compiled with Svelte.
 		 * Will be `true` by default in Svelte 6.
+		 * Note that setting this to `true` in your `svelte.config.js` will force runes mode for your entire project, including components in `node_modules`,
+		 * which is likely not what you want. If you're using Vite, consider using [dynamicCompileOptions](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/config.md#dynamiccompileoptions) instead.
 		 * @default undefined
 		 */
 		runes?: boolean | undefined;

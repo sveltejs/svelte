@@ -1,4 +1,4 @@
-/** @import { TemplateNode } from '#client' */
+/** @import { EachItem, EachState, Effect, EffectNodes, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
 import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
@@ -36,11 +36,11 @@ import { current_effect } from '../../runtime.js';
 /**
  * The row of a keyed each block that is currently updating. We track this
  * so that `animate:` directives have something to attach themselves to
- * @type {import('#client').EachItem | null}
+ * @type {EachItem | null}
  */
 export let current_each_item = null;
 
-/** @param {import('#client').EachItem | null} item */
+/** @param {EachItem | null} item */
 export function set_current_each_item(item) {
 	current_each_item = item;
 }
@@ -56,13 +56,13 @@ export function index(_, i) {
 /**
  * Pause multiple effects simultaneously, and coordinate their
  * subsequent destruction. Used in each blocks
- * @param {import('#client').EachState} state
- * @param {import('#client').EachItem[]} items
+ * @param {EachState} state
+ * @param {EachItem[]} items
  * @param {null | Node} controlled_anchor
- * @param {Map<any, import("#client").EachItem>} items_map
+ * @param {Map<any, EachItem>} items_map
  */
 function pause_effects(state, items, controlled_anchor, items_map) {
-	/** @type {import('#client').TransitionManager[]} */
+	/** @type {TransitionManager[]} */
 	var transitions = [];
 	var length = items.length;
 
@@ -101,14 +101,14 @@ function pause_effects(state, items, controlled_anchor, items_map) {
  * @param {number} flags
  * @param {() => V[]} get_collection
  * @param {(value: V, index: number) => any} get_key
- * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: import('#client').MaybeSource<number>) => void} render_fn
+ * @param {(anchor: Node, item: MaybeSource<V>, index: MaybeSource<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
 export function each(node, flags, get_collection, get_key, render_fn, fallback_fn = null) {
 	var anchor = node;
 
-	/** @type {import('#client').EachState} */
+	/** @type {EachState} */
 	var state = { flags, items: new Map(), first: null };
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
@@ -125,7 +125,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		hydrate_next();
 	}
 
-	/** @type {import('#client').Effect | null} */
+	/** @type {Effect | null} */
 	var fallback = null;
 
 	block(() => {
@@ -174,10 +174,10 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 		// this is separate to the previous block because `hydrating` might change
 		if (hydrating) {
-			/** @type {import('#client').EachItem | null} */
+			/** @type {EachItem | null} */
 			var prev = null;
 
-			/** @type {import('#client').EachItem} */
+			/** @type {EachItem} */
 			var item;
 
 			for (var i = 0; i < length; i++) {
@@ -239,9 +239,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 /**
  * @template V
  * @param {Array<V>} array
- * @param {import('#client').EachState} state
+ * @param {EachState} state
  * @param {Element | Comment | Text} anchor
- * @param {(anchor: Node, item: import('#client').MaybeSource<V>, index: number | import('#client').Source<number>) => void} render_fn
+ * @param {(anchor: Node, item: MaybeSource<V>, index: number | Source<number>) => void} render_fn
  * @param {number} flags
  * @param {(value: V, index: number) => any} get_key
  * @returns {void}
@@ -255,19 +255,19 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	var first = state.first;
 	var current = first;
 
-	/** @type {Set<import('#client').EachItem>} */
+	/** @type {Set<EachItem>} */
 	var seen = new Set();
 
-	/** @type {import('#client').EachItem | null} */
+	/** @type {EachItem | null} */
 	var prev = null;
 
-	/** @type {Set<import('#client').EachItem>} */
+	/** @type {Set<EachItem>} */
 	var to_animate = new Set();
 
-	/** @type {import('#client').EachItem[]} */
+	/** @type {EachItem[]} */
 	var matched = [];
 
-	/** @type {import('#client').EachItem[]} */
+	/** @type {EachItem[]} */
 	var stashed = [];
 
 	/** @type {V} */
@@ -276,7 +276,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	/** @type {any} */
 	var key;
 
-	/** @type {import('#client').EachItem | undefined} */
+	/** @type {EachItem | undefined} */
 	var item;
 
 	/** @type {number} */
@@ -301,9 +301,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		item = items.get(key);
 
 		if (item === undefined) {
-			var child_anchor = current
-				? /** @type {import('#client').EffectNodes} */ (current.e.nodes).start
-				: anchor;
+			var child_anchor = current ? /** @type {EffectNodes} */ (current.e.nodes).start : anchor;
 
 			prev = create_item(
 				child_anchor,
@@ -436,12 +434,12 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		});
 	}
 
-	/** @type {import('#client').Effect} */ (current_effect).first = state.first && state.first.e;
-	/** @type {import('#client').Effect} */ (current_effect).last = prev && prev.e;
+	/** @type {Effect} */ (current_effect).first = state.first && state.first.e;
+	/** @type {Effect} */ (current_effect).last = prev && prev.e;
 }
 
 /**
- * @param {import('#client').EachItem} item
+ * @param {EachItem} item
  * @param {any} value
  * @param {number} index
  * @param {number} type
@@ -453,7 +451,7 @@ function update_item(item, value, index, type) {
 	}
 
 	if ((type & EACH_INDEX_REACTIVE) !== 0) {
-		set(/** @type {import('#client').Value<number>} */ (item.i), index);
+		set(/** @type {Value<number>} */ (item.i), index);
 	} else {
 		item.i = index;
 	}
@@ -462,15 +460,15 @@ function update_item(item, value, index, type) {
 /**
  * @template V
  * @param {Node} anchor
- * @param {import('#client').EachState} state
- * @param {import('#client').EachItem | null} prev
- * @param {import('#client').EachItem | null} next
+ * @param {EachState} state
+ * @param {EachItem | null} prev
+ * @param {EachItem | null} next
  * @param {V} value
  * @param {unknown} key
  * @param {number} index
- * @param {(anchor: Node, item: V | import('#client').Source<V>, index: number | import('#client').Value<number>) => void} render_fn
+ * @param {(anchor: Node, item: V | Source<V>, index: number | Value<number>) => void} render_fn
  * @param {number} flags
- * @returns {import('#client').EachItem}
+ * @returns {EachItem}
  */
 function create_item(anchor, state, prev, next, value, key, index, render_fn, flags) {
 	var previous_each_item = current_each_item;
@@ -482,7 +480,7 @@ function create_item(anchor, state, prev, next, value, key, index, render_fn, fl
 		var v = reactive ? (mutable ? mutable_source(value) : source(value)) : value;
 		var i = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
 
-		/** @type {import('#client').EachItem} */
+		/** @type {EachItem} */
 		var item = {
 			i,
 			v,
@@ -519,29 +517,27 @@ function create_item(anchor, state, prev, next, value, key, index, render_fn, fl
 }
 
 /**
- * @param {import('#client').EachItem} item
- * @param {import('#client').EachItem | null} next
+ * @param {EachItem} item
+ * @param {EachItem | null} next
  * @param {Text | Element | Comment} anchor
  */
 function move(item, next, anchor) {
-	var end = item.next
-		? /** @type {import('#client').EffectNodes} */ (item.next.e.nodes).start
-		: anchor;
+	var end = item.next ? /** @type {EffectNodes} */ (item.next.e.nodes).start : anchor;
 
-	var dest = next ? /** @type {import('#client').EffectNodes} */ (next.e.nodes).start : anchor;
-	var node = /** @type {import('#client').EffectNodes} */ (item.e.nodes).start;
+	var dest = next ? /** @type {EffectNodes} */ (next.e.nodes).start : anchor;
+	var node = /** @type {EffectNodes} */ (item.e.nodes).start;
 
 	while (node !== end) {
-		var next_node = /** @type {import('#client').TemplateNode} */ (node.nextSibling);
+		var next_node = /** @type {TemplateNode} */ (node.nextSibling);
 		dest.before(node);
 		node = next_node;
 	}
 }
 
 /**
- * @param {import('#client').EachState} state
- * @param {import('#client').EachItem | null} prev
- * @param {import('#client').EachItem | null} next
+ * @param {EachState} state
+ * @param {EachItem | null} prev
+ * @param {EachItem | null} next
  */
 function link(state, prev, next) {
 	if (prev === null) {

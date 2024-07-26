@@ -1,3 +1,4 @@
+/** @import { Derived, Effect, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	current_component_context,
@@ -32,7 +33,7 @@ let inspect_effects = new Set();
 /**
  * @template V
  * @param {V} v
- * @returns {import('#client').Source<V>}
+ * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function source(v) {
@@ -89,7 +90,7 @@ export function update_link(fn, d = 1) {
 /**
  * @template V
  * @param {V} initial_value
- * @returns {import('#client').Source<V>}
+ * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function mutable_source(initial_value) {
@@ -107,7 +108,7 @@ export function mutable_source(initial_value) {
 
 /**
  * @template V
- * @param {import('#client').Value<V>} source
+ * @param {Value<V>} source
  * @param {V} value
  */
 export function mutate(source, value) {
@@ -120,7 +121,7 @@ export function mutate(source, value) {
 
 /**
  * @template V
- * @param {import('#client').Source<V>} source
+ * @param {Source<V>} source
  * @param {V} value
  * @returns {V}
  */
@@ -171,7 +172,7 @@ export function set(source, value) {
 }
 
 /**
- * @param {import('#client').Value} signal
+ * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
  * @returns {void}
  */
@@ -203,9 +204,9 @@ function mark_reactions(signal, status) {
 		// If the signal a) was previously clean or b) is an unowned derived, then mark it
 		if ((flags & (CLEAN | UNOWNED)) !== 0) {
 			if ((flags & DERIVED) !== 0) {
-				mark_reactions(/** @type {import('#client').Derived} */ (reaction), MAYBE_DIRTY);
+				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
 			} else {
-				schedule_effect(/** @type {import('#client').Effect} */ (reaction));
+				schedule_effect(/** @type {Effect} */ (reaction));
 			}
 		}
 	}
