@@ -143,13 +143,13 @@ test('Component', () => {
 	// Instantiate the component using Svelte's `mount` API
 	const component = mount(Component, {
 		target: document.body, // `document` exists because of jsdom
-		props: { initial: 0 },
+		props: { initial: 0 }
 	});
 
 	expect(document.body.innerHTML).toBe('<button>0</button>');
 
 	// Click the button, then flush the changes so you can synchronously write expectations
-	document.body.querySelector('button')!.click();
+	document.body.querySelector('button').click();
 	flushSync();
 
 	expect(document.body.innerHTML).toBe('<button>1</button>');
@@ -157,7 +157,6 @@ test('Component', () => {
 	// Remove the component from the DOM
 	unmount(component);
 });
-
 ```
 
 While the process is very straightforward, it is also low level and somewhat brittle, as the precise structure of your component may change frequently. Tools like [@testing-library/svelte](https://testing-library.com/docs/svelte-testing-library/intro/) can help streamline your tests. The above test could be rewritten like this:
