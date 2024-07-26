@@ -382,7 +382,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 				}
 
 				return b.call(
-					'$.mutate_store',
+					'$.store_mutate',
 					serialize_get_binding(b.id(left_name), state),
 					b.assignment(node.operator, /** @type {Pattern}} */ (visit_node(node.left)), value),
 					b.call('$.untrack', b.id('$' + left_name))
