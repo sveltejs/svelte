@@ -57,6 +57,7 @@ export function AssignmentExpression(node, context) {
 }
 
 /**
+ * Only returns an expression if this is not a `$store` assignment, as others can be kept as-is
  * @param {AssignmentOperator} operator
  * @param {Pattern} left
  * @param {Expression} right
