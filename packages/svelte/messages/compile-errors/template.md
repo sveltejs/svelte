@@ -190,7 +190,7 @@
 
 ## node_invalid_placement
 
-> %thing% is invalid inside <%parent%>
+> %thing% is invalid inside `<%parent%>`
 
 HTML has some restrictions where certain elements can appear. For example, a `<div>` inside a `<p>` is invalid. Some violations "only" result in invalid HTML, others result in the HTML being repaired by the browser, resulting in content shifting around. Some examples:
 

@@ -40,7 +40,7 @@
 
 ## node_invalid_placement_ssr
 
-> %thing% is invalid inside <%parent%>. When rendering this component on the server, the resulting HTML will be modified by the browser, likely resulting in a `hydration_mismatch` warning
+> %thing% is invalid inside `<%parent%>`. When rendering this component on the server, the resulting HTML will be modified by the browser, likely resulting in a `hydration_mismatch` warning
 
 HTML has some restrictions where certain elements can appear. For example, a `<div>` inside a `<p>` is invalid. Some violations "only" result in invalid HTML, others result in the HTML being repaired by the browser, resulting in content shifting around. Some examples:
 

@@ -624,9 +624,13 @@ const validation = {
 					) {
 						if (!is_tag_valid_with_parent(node.name, context.state.parent_element)) {
 							if (only_warn) {
-								w.node_invalid_placement_ssr(node, `<${node.name}>`, context.state.parent_element);
+								w.node_invalid_placement_ssr(
+									node,
+									`\`<${node.name}>\``,
+									context.state.parent_element
+								);
 							} else {
-								e.node_invalid_placement(node, `<${node.name}>`, context.state.parent_element);
+								e.node_invalid_placement(node, `\`<${node.name}>\``, context.state.parent_element);
 							}
 						}
 
@@ -635,9 +639,9 @@ const validation = {
 				} else if (ancestor.type === 'RegularElement') {
 					if (!is_tag_valid_with_ancestor(node.name, ancestor.name)) {
 						if (only_warn) {
-							w.node_invalid_placement_ssr(node, `<${node.name}>`, ancestor.name);
+							w.node_invalid_placement_ssr(node, `\`<${node.name}>\``, ancestor.name);
 						} else {
-							e.node_invalid_placement(node, `<${node.name}>`, ancestor.name);
+							e.node_invalid_placement(node, `\`<${node.name}>\``, ancestor.name);
 						}
 					}
 				} else if (
@@ -830,7 +834,7 @@ const validation = {
 		if (!node.parent) return;
 		if (context.state.parent_element) {
 			if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
-				e.node_invalid_placement(node, '{expression}', context.state.parent_element);
+				e.node_invalid_placement(node, '`{expression}`', context.state.parent_element);
 			}
 		}
 	}
