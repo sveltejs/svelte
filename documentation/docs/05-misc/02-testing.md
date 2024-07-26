@@ -2,7 +2,7 @@
 title: Testing
 ---
 
-Testing helps you write and maintain your code and guard against regressions. Testing frameworks help you with that, allowing you to describe assertions or expectations about how your code should behave. Svelte is unopinionated about which testing framework you use — you can write unit tests, integration tests, and end-to-end tests using solutions like Vitest, Jasmine, Cypress and Playwright.
+Testing helps you write and maintain your code and guard against regressions. Testing frameworks help you with that, allowing you to describe assertions or expectations about how your code should behave. Svelte is unopinionated about which testing framework you use — you can write unit tests, integration tests, and end-to-end tests using solutions like [Vitest](https://vitest.dev/), [Jasmine](https://jasmine.github.io/), [Cypress](https://www.cypress.io/) and [Playwright](https://playwright.dev/).
 
 ## Unit and integration testing using Vitest
 
@@ -27,7 +27,7 @@ export default defineConfig({ /* ... */ })
 You can now write unit tests for code inside your `.js/.ts` files:
 
 ```js
-/// file: counter.svelte.test.js
+/// file: multiplier.svelte.test.js
 import { flushSync } from 'svelte';
 import { expect, test } from 'vitest';
 import { multiplier } from './multiplier.js';
@@ -48,7 +48,7 @@ test('Multiplier', () => {
 It is possible to use runes inside your test files. First ensure your bundler knows to route the file through the Svelte compiler before running the test by adding `.svelte` to the filename (e.g `multiplier.svelte.test.js`). After that, you can use runes inside your tests.
 
 ```js
-/// file: counter.svelte.test.js
+/// file: multiplier.svelte.test.js
 import { flushSync } from 'svelte';
 import { expect, test } from 'vitest';
 import { multiplier } from './multiplier.svelte.js';
@@ -65,7 +65,7 @@ test('Multiplier', () => {
 });
 ```
 
-If the tested code uses effects, you need to wrap the test inside `$effect.root` to create a scope in which these are properly captured.
+If the code being tested uses effects, you need to wrap the test inside `$effect.root`:
 
 ```js
 /// file: logger.svelte.test.js
@@ -181,7 +181,7 @@ test('Component', async () => {
 });
 ```
 
-When writing component tests that test two-way-bindings, context or snippet props, it's best to create a wrapper component for your specific test and interact with that. `@testing-library/svelte` contains some [examples](https://testing-library.com/docs/svelte-testing-library/example) on how to achieve that.
+When writing component tests that involve two-way bindings, context or snippet props, it's best to create a wrapper component for your specific test and interact with that. `@testing-library/svelte` contains some [examples](https://testing-library.com/docs/svelte-testing-library/example).
 
 ## E2E tests using Playwright
 
