@@ -2152,6 +2152,7 @@ export const template_visitors = {
 				}
 
 				if (
+					!is_custom_element &&
 					attribute.name !== 'autofocus' &&
 					(attribute.value === true || is_text_attribute(attribute))
 				) {
