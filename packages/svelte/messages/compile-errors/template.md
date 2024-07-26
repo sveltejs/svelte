@@ -192,6 +192,14 @@
 
 > %thing% is invalid inside <%parent%>
 
+HTML has some restrictions where certain elements can appear. For example, a `<div>` inside a `<p>` is invalid. Some violations "only" result in invalid HTML, others result in the HTML being repaired by the browser, resulting in content shifting around. Some examples:
+
+- `<p>hello <div>world</div></p>` will result in `<p>hello </p><div>world</div><p></p>` for example (the `<div>` autoclosed the `<p>`)
+- `<option><div>option a</div></select>` will result in `<option>option a</option>` (the `<div>` is removed)
+- `<table><tr><td>cell</td></tr></table>` will result in `<table><tbody><tr><td>cell</td></tr></tbody></table>` (a `<tbody>` is auto-inserted)
+
+Svelte throws a compiler error when it detects that it will generate the HTML in such a way that it will always be repaired and result in the runtime code not finding the nodes at the expected locations.
+
 ## render_tag_invalid_call_expression
 
 > Calling a snippet function using apply, bind or call is not allowed

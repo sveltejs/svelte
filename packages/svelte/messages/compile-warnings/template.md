@@ -38,6 +38,18 @@
 
 > Using `on:%name%` to listen to the %name% event is deprecated. Use the event attribute `on%name%` instead
 
+## node_invalid_placement_ssr
+
+> %thing% is invalid inside <%parent%>. When rendering this component on the server, the resulting HTML will be modified by the browser, likely resulting in a `hydration_mismatch` warning
+
+HTML has some restrictions where certain elements can appear. For example, a `<div>` inside a `<p>` is invalid. Some violations "only" result in invalid HTML, others result in the HTML being repaired by the browser, resulting in content shifting around. Some examples:
+
+- `<p>hello <div>world</div></p>` will result in `<p>hello </p><div>world</div><p></p>` for example (the `<div>` autoclosed the `<p>`)
+- `<option><div>option a</div></select>` will result in `<option>option a</option>` (the `<div>` is removed)
+- `<table><tr><td>cell</td></tr></table>` will result in `<table><tbody><tr><td>cell</td></tr></tbody></table>` (a `<tbody>` is auto-inserted)
+
+Svelte issues a compiler warning when it detects that it will generate the HTML in such a way that it will work on the client, but always fail when using server side rendering, because the resulting HTML will be repaired and result in the client runtime not finding the nodes at the expected locations when hydrating the DOM.
+
 ## slot_element_deprecated
 
 > Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead
