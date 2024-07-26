@@ -8,10 +8,102 @@ Testing helps you write and maintain your code and guard against regressions. Te
 
 Unit tests allow you to test small isolated parts of your code. Integration tests allow you to test parts of your application to see if they work together. If you're using Vite (including via SvelteKit), we recommend using [Vitest](https://vitest.dev/).
 
-To get started, install Vitest and jsdom (a library that shims DOM APIs):
+To get started, install Vitest:
 
 ```bash
-npm install -D vitest jsdom
+npm install -D vitest
+```
+
+Then adjust your `vite.config.js`:
+
+```diff
+/// file: vite.config.js
+- import { defineConfig } from 'vite';
++ import { defineConfig } from 'vitest/config';
+
+export default defineConfig({ /* ... */ })
+```
+
+You can now write unit tests for code inside your `.js/.ts` files:
+
+```js
+/// file: counter.svelte.test.js
+import { flushSync } from 'svelte';
+import { expect, test } from 'vitest';
+import { multiplier } from './multiplier.js';
+
+test('Multiplier', () => {
+	let double = multiplier(0, 2);
+
+	expect(double.value).toEqual(0);
+
+	double.set(5);
+
+	expect(double.value).toEqual(10);
+});
+```
+
+### Using runes inside your test files
+
+It is possible to use runes inside your test files. First ensure your bundler knows to route the file through the Svelte compiler before running the test by adding `.svelte` to the filename (e.g `multiplier.svelte.test.js`). After that, you can use runes inside your tests.
+
+```js
+/// file: counter.svelte.test.js
+import { flushSync } from 'svelte';
+import { expect, test } from 'vitest';
+import { multiplier } from './multiplier.svelte.js';
+
+test('Multiplier', () => {
+	let count = $state(0);
+	let double = multiplier(() => count, 2);
+
+	expect(double.value).toEqual(0);
+
+	count = 5;
+
+	expect(double.value).toEqual(10);
+});
+```
+
+If the tested code uses effects, you need to wrap the test inside `$effect.root` to create a scope in which these are properly captured.
+
+```js
+/// file: logger.svelte.test.js
+import { flushSync } from 'svelte';
+import { expect, test } from 'vitest';
+import { logger } from './logger.svelte.js';
+
+test('Effect', () => {
+	const cleanup = $effect.root(() => {
+		let count = $state(0);
+		// logger uses an $effect to log updates of its input
+		let log = logger(() => count);
+
+		// effects normally run after a microtask,
+		// use flushSync to execute all pending effects synchronously
+		flushSync();
+		expect(log.value).toEqual([0]);
+
+		count = 1;
+		flushSync();
+
+		expect(log.value).toEqual([0, 1]);
+	});
+
+	cleanup();
+});
+```
+
+### Component testing
+
+It is possible to test your components in isolation using Vitest.
+
+> Before writing component tests, think about whether you actually need to test the component, or if it's more about the logic _inside_ the component. If so, consider extracting out that logic to test it in isolation, without the overhead of a component
+
+To get started, install jsdom (a library that shims DOM APIs):
+
+```bash
+npm install -D jsdom
 ```
 
 Then adjust your `vite.config.js`:
@@ -90,59 +182,6 @@ test('Component', async () => {
 ```
 
 When writing component tests that test two-way-bindings, context or snippet props, it's best to create a wrapper component for your specific test and interact with that. `@testing-library/svelte` contains some [examples](https://testing-library.com/docs/svelte-testing-library/example) on how to achieve that.
-
-> If you find yourself writing lots of component tests, think about whether you actually need to test the component, or if it's more about the logic _inside_ the component. If so, consider extracting out that logic to test it in isolation, without the overhead of a component
-
-### Using runes inside your test files
-
-It is possible to use runes inside your test files. First ensure your bundler knows to route the file through the Svelte compiler before running the test by adding `.svelte` to the filename (e.g `multiplier.svelte.test.js`). After that, you can use runes inside your tests.
-
-```js
-/// file: counter.svelte.test.js
-import { flushSync, mount, unmount } from 'svelte';
-import { expect, test } from 'vitest';
-import { multiplier } from './multiplier.svelte.js';
-
-test('Multiplier', () => {
-	let count = $state(0);
-	let double = multiplier(() => count, 2);
-
-	expect(double.value).toEqual(0);
-
-	count = 5;
-
-	expect(double.value).toEqual(10);
-});
-```
-
-If the tested code uses effects, you need to wrap the test inside `$effect.root` to create a scope in which these are properly captured.
-
-```js
-/// file: logger.svelte.test.js
-import { flushSync, mount, unmount } from 'svelte';
-import { expect, test } from 'vitest';
-import { logger } from './logger.svelte.js';
-
-test('Effect', () => {
-	const cleanup = $effect.root(() => {
-		let count = $state(0);
-		// logger uses an $effect to log updates of its input
-		let log = logger(() => count);
-
-		// effects normally run after a microtask,
-		// use flushSync to execute all pending effects synchronously
-		flushSync();
-		expect(log.value).toEqual([0]);
-
-		count = 1;
-		flushSync();
-
-		expect(log.value).toEqual([0, 1]);
-	});
-
-	cleanup();
-});
-```
 
 ## E2E tests using Playwright
 
