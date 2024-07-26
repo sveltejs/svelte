@@ -2196,6 +2196,10 @@ export const template_visitors = {
 
 		context.state.template.push('>');
 
+		if (node.metadata.auto_opens !== null) {
+			context.state.template.push(node.metadata.auto_opens);
+		}
+
 		/** @type {SourceLocation[]} */
 		const child_locations = [];
 
@@ -2248,10 +2252,22 @@ export const template_visitors = {
 			child_state.init.push(b.stmt(b.call('$.reset', arg)));
 		}
 
-		process_children(trimmed, () => b.call('$.child', arg), true, {
-			...context,
-			state: child_state
-		});
+		process_children(
+			trimmed,
+			// TODO: this doesn't work when the table is a sibling, as the expression is then not used
+			() => {
+				let call = b.call('$.child', arg);
+				for (let i = (node.metadata.auto_opens?.split('<').length ?? 1) - 1; i > 0; i--) {
+					call = b.call('$.child', call);
+				}
+				return call;
+			},
+			true,
+			{
+				...context,
+				state: child_state
+			}
+		);
 
 		if (needs_reset) {
 			child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));

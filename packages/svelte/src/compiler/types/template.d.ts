@@ -303,7 +303,10 @@ export interface RegularElement extends BaseElement {
 		mathml: boolean;
 		/** `true` if contains a SpreadAttribute */
 		has_spread: boolean;
+		/** `true` if should get a hash on the `class` attribute  */
 		scoped: boolean;
+		/** Contains a string of the tag(s) that are implicitly opened after this element */
+		auto_opens: string | null;
 	};
 }
 
