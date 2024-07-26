@@ -89,142 +89,99 @@ export function closing_tag_omitted(current, next) {
 /**
  * Map of elements that have certain elements that are not allowed inside them, in the sense that the browser will somehow repair the HTML.
  * There are more elements that are invalid inside other elements, but they're not repaired and so don't break SSR and are therefore not listed here.
- * @type {Record<string, { direct: string[]} | { descendant: string[] } | { only: string[] }>}
+ * @type {Record<string, { direct: string[]} | { descendant: string[]; only?: string[] } | { only: string[] }>}
  */
 const disallowed_children = {
 	...autoclosing_children,
+	optgroup: { only: ['option', '#text'] },
+	// Strictly speaking, seeing an <option> doesn't mean we're in a <select>, but we assume it here
+	option: { only: ['#text'] },
 	form: { descendant: ['form'] },
 	a: { descendant: ['a'] },
 	button: { descendant: ['button'] },
-	select: { only: ['option', 'optgroup', '#text', 'hr', 'script', 'template'] }
+	h1: { descendant: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
+	h2: { descendant: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
+	h3: { descendant: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
+	h4: { descendant: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
+	h5: { descendant: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
+	h6: { descendant: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
+	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inselect
+	select: { only: ['option', 'optgroup', '#text', 'hr', 'script', 'template'] },
+
+	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intd
+	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-incaption
+	// No special behavior since these rules fall back to "in body" mode for
+	// all except special table nodes which cause bad parsing behavior anyway.
+
+	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intd
+	tr: { only: ['th', 'td', 'style', 'script', 'template'] },
+	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intbody
+	tbody: { only: ['tr', 'style', 'script', 'template'] },
+	thead: { only: ['tr', 'style', 'script', 'template'] },
+	tfoot: { only: ['tr', 'style', 'script', 'template'] },
+	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-incolgroup
+	colgroup: { only: ['col', 'template'] },
+	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intable
+	table: {
+		only: ['caption', 'colgroup', 'tbody', 'thead', 'tfoot', 'style', 'script', 'template']
+	},
+	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inhead
+	head: {
+		only: [
+			'base',
+			'basefont',
+			'bgsound',
+			'link',
+			'meta',
+			'title',
+			'noscript',
+			'noframes',
+			'style',
+			'script',
+			'template'
+		]
+	},
+	// https://html.spec.whatwg.org/multipage/semantics.html#the-html-element
+	html: { only: ['head', 'body', 'frameset'] },
+	frameset: { only: ['frame'] },
+	'#document': { only: ['html'] }
 };
 
 /**
  * Returns false if the tag is not allowed inside the ancestor tag (which is grandparent and above) such that it will result
  * in the browser repairing the HTML, which will likely result in an error during hydration.
  * @param {string} tag
- * @param {string | null} ancestor Must not be the parent, but higher up the tree
+ * @param {string} ancestor Must not be the parent, but higher up the tree
  * @returns {boolean}
  */
 export function is_tag_valid_with_ancestor(tag, ancestor) {
-	const disallowed = ancestor && autoclosing_children[ancestor];
+	const disallowed = disallowed_children[ancestor];
 	return !disallowed || ('descendant' in disallowed ? !disallowed.descendant.includes(tag) : true);
 }
-
-// https://html.spec.whatwg.org/multipage/syntax.html#generate-implied-end-tags
-const implied_end_tags = ['dd', 'dt', 'li', 'option', 'optgroup', 'p', 'rp', 'rt'];
 
 /**
  * Returns false if the tag is not allowed inside the parent tag such that it will result
  * in the browser repairing the HTML, which will likely result in an error during hydration.
  * @param {string} tag
- * @param {string | null} parent_tag
+ * @param {string} parent_tag
  * @returns {boolean}
  */
 export function is_tag_valid_with_parent(tag, parent_tag) {
-	const disallowed = parent_tag && autoclosing_children[parent_tag];
-	if (
-		disallowed &&
-		('direct' in disallowed ? disallowed.direct : disallowed.descendant).includes(tag)
-	) {
-		return false;
+	const disallowed = disallowed_children[parent_tag];
+
+	if (disallowed) {
+		if ('direct' in disallowed && disallowed.direct.includes(tag)) {
+			return false;
+		}
+		if ('descendant' in disallowed && disallowed.descendant.includes(tag)) {
+			return false;
+		}
+		if ('only' in disallowed && disallowed.only) {
+			return disallowed.only.includes(tag);
+		}
 	}
 
-	// First, let's check if we're in an unusual parsing mode...
-	switch (parent_tag) {
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inselect
-		case 'select':
-			return (
-				tag === 'option' ||
-				tag === 'optgroup' ||
-				tag === '#text' ||
-				tag === 'hr' ||
-				tag === 'script' ||
-				tag === 'template'
-			);
-		case 'optgroup':
-			return tag === 'option' || tag === '#text';
-		// Strictly speaking, seeing an <option> doesn't mean we're in a <select>
-		// but
-		case 'option':
-			return tag === '#text';
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intd
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-incaption
-		// No special behavior since these rules fall back to "in body" mode for
-		// all except special table nodes which cause bad parsing behavior anyway.
-
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intr
-		case 'tr':
-			return (
-				tag === 'th' || tag === 'td' || tag === 'style' || tag === 'script' || tag === 'template'
-			);
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intbody
-		case 'tbody':
-		case 'thead':
-		case 'tfoot':
-			return tag === 'tr' || tag === 'style' || tag === 'script' || tag === 'template';
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-incolgroup
-		case 'colgroup':
-			return tag === 'col' || tag === 'template';
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intable
-		case 'table':
-			return (
-				tag === 'caption' ||
-				tag === 'colgroup' ||
-				tag === 'tbody' ||
-				tag === 'tfoot' ||
-				tag === 'thead' ||
-				tag === 'style' ||
-				tag === 'script' ||
-				tag === 'template'
-			);
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inhead
-		case 'head':
-			return (
-				tag === 'base' ||
-				tag === 'basefont' ||
-				tag === 'bgsound' ||
-				tag === 'link' ||
-				tag === 'meta' ||
-				tag === 'title' ||
-				tag === 'noscript' ||
-				tag === 'noframes' ||
-				tag === 'style' ||
-				tag === 'script' ||
-				tag === 'template'
-			);
-		// https://html.spec.whatwg.org/multipage/semantics.html#the-html-element
-		case 'html':
-			return tag === 'head' || tag === 'body' || tag === 'frameset';
-		case 'frameset':
-			return tag === 'frame';
-		case '#document':
-			return tag === 'html';
-	}
-
-	// Probably in the "in body" parsing mode, so we outlaw only tag combos
-	// where the parsing rules cause implicit opens or closes to be added.
-	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inbody
 	switch (tag) {
-		case 'h1':
-		case 'h2':
-		case 'h3':
-		case 'h4':
-		case 'h5':
-		case 'h6':
-			return (
-				parent_tag !== 'h1' &&
-				parent_tag !== 'h2' &&
-				parent_tag !== 'h3' &&
-				parent_tag !== 'h4' &&
-				parent_tag !== 'h5' &&
-				parent_tag !== 'h6'
-			);
-
-		case 'rp':
-		case 'rt':
-			return parent_tag == null || implied_end_tags.indexOf(parent_tag) === -1;
-
 		case 'body':
 		case 'caption':
 		case 'col':
@@ -240,10 +197,10 @@ export function is_tag_valid_with_parent(tag, parent_tag) {
 		case 'thead':
 		case 'tr':
 			// These tags are only valid with a few parents that have special child
-			// parsing rules -- if we're down here, then none of those matched and
+			// parsing rules - if we're down here, then none of those matched and
 			// so we allow it only if we don't know what the parent is, as all other
-			// cases are invalid.
-			return parent_tag == null;
+			// cases are invalid (and we only get into this function if we know the parent).
+			return false;
 	}
 
 	return true;
