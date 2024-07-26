@@ -1,9 +1,6 @@
-// @ts-nocheck
 import { test } from '../../test';
 
 export default test({
-	skip: true, // TODO: needs fixing
-
 	get props() {
 		return {
 			things: [
@@ -27,7 +24,9 @@ export default test({
 	test({ assert, component, target, raf }) {
 		let divs = target.querySelectorAll('div');
 		divs.forEach((div) => {
+			// @ts-expect-error
 			div.getBoundingClientRect = function () {
+				// @ts-expect-error
 				const index = [...this.parentNode.children].indexOf(this);
 				const top = index * 30;
 
@@ -49,13 +48,13 @@ export default test({
 		];
 
 		divs = target.querySelectorAll('div');
-		assert.ok(~divs[0].style.animation.indexOf('__svelte'));
-		assert.equal(divs[1].style.animation, '');
-		assert.equal(divs[2].style.animation, '');
-		assert.equal(divs[3].style.animation, '');
-		assert.ok(~divs[4].style.animation.indexOf('__svelte'));
+		assert.ok(divs[0].getAnimations().length > 0);
+		assert.equal(divs[1].getAnimations().length, 0);
+		assert.equal(divs[2].getAnimations().length, 0);
+		assert.equal(divs[3].getAnimations().length, 0);
+		assert.ok(divs[4].getAnimations().length > 0);
 
 		raf.tick(100);
-		assert.deepEqual([divs[0].style.animation, divs[4].style.animation], ['', '']);
+		assert.deepEqual([divs[0].getAnimations().length, divs[4].getAnimations().length], [0, 0]);
 	}
 });
