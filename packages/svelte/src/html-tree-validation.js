@@ -52,20 +52,6 @@ const autoclosing_children = {
 	th: { direct: ['td', 'th', 'tr'] }
 };
 
-const interactive_elements = [
-	// while `input` is also an interactive element, it is never moved by the browser, so we don't need to check for it
-	'a',
-	'button',
-	'iframe',
-	'embed',
-	'select',
-	'textarea'
-];
-
-for (const interactive_element of interactive_elements) {
-	autoclosing_children[interactive_element] = { descendant: interactive_elements };
-}
-
 /**
  * Returns true if the tag is either the last in the list of siblings and will be autoclosed,
  * or not allowed inside the parent tag such that it will auto-close it. The latter results
