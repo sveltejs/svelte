@@ -146,9 +146,6 @@ export function hydrate(component, options) {
 		return /**  @type {Exports} */ (instance);
 	} catch (error) {
 		if (error === HYDRATION_ERROR) {
-			// TODO it's possible for event listeners to have been added and
-			// not removed, e.g. with `<svelte:window>` or `<svelte:document>`
-
 			if (options.recover === false) {
 				e.hydration_failed();
 			}
