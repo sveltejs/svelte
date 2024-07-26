@@ -30,8 +30,7 @@ export default defineConfig({
 		// `// @vitest-environment jsdom` comment at the top of the test files instead.
 		environment: 'jsdom'
 	},
-	// Tell Vitest to prefer the browser condition. Svelte uses a so-called exports map
-	// which loads different code depending on the environment - we want to load the browser environment.
+	// Tell Vitest to use the `browser` entry points in `package.json` files, even though it's running in Node
 	resolve: process.env.VITEST
 		? {
 				conditions: ['browser']
@@ -40,7 +39,7 @@ export default defineConfig({
 });
 ```
 
-After that, you can create a test file in which you import the component to test, then interact with it programmatically and write expectations about the results:
+After that, you can create a test file in which you import the component to test, interact with it programmatically and write expectations about the results:
 
 ```js
 /// file: component.test.js
@@ -49,9 +48,9 @@ import { expect, test } from 'vitest';
 import Component from './Component.svelte';
 
 test('Component', () => {
-	// Instantiate the component using Svelte's mount API
-	const comp = mount(Component, {
-		target: document.body, // document.body is available thanks to JSDOM
+	// Instantiate the component using Svelte's `mount` API
+	const component = mount(Component, {
+		target: document.body, // `document` exists because of jsdom
 		props: { initial: 0 },
 	});
 
@@ -64,12 +63,12 @@ test('Component', () => {
 	expect(document.body.innerHTML).toBe('<button>1</button>');
 
 	// Remove the component from the DOM
-	unmount(comp);
+	unmount(component);
 });
 
 ```
 
-While the process is very straightforward, it is also low level and somewhat brittle - the structure of your component might change and you then may need to adjust your query selectors more often than not. Solutions like [@testing-library/svelte](https://testing-library.com/docs/svelte-testing-library/intro/) can help you facilitate this problem.
+While the process is very straightforward, it is also low level and somewhat brittle, as the precise structure of your component may change frequently. Tools like [@testing-library/svelte](https://testing-library.com/docs/svelte-testing-library/intro/) can help streamline your tests.
 
 ### Using runes inside your test files
 
@@ -128,7 +127,7 @@ E2E (short for 'end to end') tests allow you to test your full application throu
 
 To get start with Playwright, either let you guide by [their VS Code extension](https://playwright.dev/docs/getting-started-vscode), or install it from the command line using `npm init playwright`. It is also part of the setup CLI when you run `npm create svelte`.
 
-After you've done that, you should have a `tests` folder and a playwright config. You may need to adjust that config to tell Playwright what to do before running the tests - mainly starting your application at a certain port:
+After you've done that, you should have a `tests` folder and a Playwright config. You may need to adjust that config to tell Playwright what to do before running the tests - mainly starting your application at a certain port:
 
 ```js
 /// file: playwright.config.js
