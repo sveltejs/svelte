@@ -68,7 +68,30 @@ test('Component', () => {
 
 ```
 
-While the process is very straightforward, it is also low level and somewhat brittle, as the precise structure of your component may change frequently. Tools like [@testing-library/svelte](https://testing-library.com/docs/svelte-testing-library/intro/) can help streamline your tests.
+While the process is very straightforward, it is also low level and somewhat brittle, as the precise structure of your component may change frequently. Tools like [@testing-library/svelte](https://testing-library.com/docs/svelte-testing-library/intro/) can help streamline your tests. The above test could be rewritten like this:
+
+```js
+/// file: component.test.js
+import { render, screen } from '@testing-library/svelte';
+import userEvent from '@testing-library/user-event';
+import { expect, test } from 'vitest';
+import Component from './Component.svelte';
+
+test('Component', async () => {
+	const user = userEvent.setup();
+	render(Component);
+
+	const button = screen.getByRole('button');
+	expect(button).toHaveTextContent(0);
+
+	await user.click(button);
+	expect(button).toHaveTextContent(1);
+});
+```
+
+When writing component tests that test two-way-bindings, context or snippet props, it's best to create a wrapper component for your specific test and interact with that. `@testing-library/svelte` contains some [examples](https://testing-library.com/docs/svelte-testing-library/example) on how to achieve that.
+
+> If you find yourself writing lots of component tests, think about whether you actually need to test the component, or if it's more about the logic _inside_ the component. If so, consider extracting out that logic to test it in isolation, without the overhead of a component
 
 ### Using runes inside your test files
 
