@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.200
+
+### Patch Changes
+
+- fix: never set custom element props as attributes inside templates ([#12622](https://github.com/sveltejs/svelte/pull/12622))
+
+- feat: better code generation for `let:` directives in SSR mode ([#12611](https://github.com/sveltejs/svelte/pull/12611))
+
+- fix: correctly update stores when reassigning with operator other than `=` ([#12614](https://github.com/sveltejs/svelte/pull/12614))
+
 ## 5.0.0-next.199
 
 ### Patch Changes
