@@ -95,7 +95,7 @@ export function RegularElement(node, context) {
 		);
 	}
 
-	if (!VoidElements.includes(node.name) && namespace !== 'foreign') {
+	if (!VoidElements.includes(node.name) || namespace === 'foreign') {
 		state.template.push(b.literal(`</${node.name}>`));
 	}
 
