@@ -58,7 +58,7 @@ export const javascript_visitors_runes = {
 									: rune === '$state.frozen'
 										? 'frozen_state'
 										: rune === '$state.link'
-											? 'link_state'
+											? 'linked_state'
 											: rune === '$derived.by'
 												? 'derived_call'
 												: 'derived',
@@ -120,7 +120,7 @@ export const javascript_visitors_runes = {
 										'$.source',
 										should_proxy_or_freeze(init, state.scope) ? b.call('$.proxy', init) : init
 									)
-								: field.kind === 'link_state'
+								: field.kind === 'linked_state'
 									? b.call(
 											'$.source_link',
 											should_proxy_or_freeze(init, state.scope)
@@ -147,7 +147,7 @@ export const javascript_visitors_runes = {
 						const member = b.member(b.this, field.id);
 						body.push(b.prop_def(field.id, value));
 
-						if (field.kind === 'link_state') {
+						if (field.kind === 'linked_state') {
 							// get foo() { return this.#foo; }
 							body.push(b.method('get', definition.key, [], [b.return(b.call(member))]));
 
@@ -344,7 +344,7 @@ export const javascript_visitors_runes = {
 							value
 						);
 					}
-					if (binding.kind === 'link_state') {
+					if (binding.kind === 'linked_state') {
 						return b.call('$.source_link', b.thunk(value));
 					}
 					if (is_state_source(binding, state)) {

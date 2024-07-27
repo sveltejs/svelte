@@ -927,7 +927,7 @@ const runes_scope_js_tweaker = {
 				rune === '$state'
 					? 'state'
 					: rune === '$state.link'
-						? 'link_state'
+						? 'linked_state'
 						: rune === '$state.frozen'
 							? 'frozen_state'
 							: 'derived';
@@ -973,7 +973,7 @@ const runes_scope_tweaker = {
 					: rune === '$state.frozen'
 						? 'frozen_state'
 						: rune === '$state.link'
-							? 'link_state'
+							? 'linked_state'
 							: rune === '$derived' || rune === '$derived.by'
 								? 'derived'
 								: path.is_rest
@@ -1288,7 +1288,7 @@ const common_visitors = {
 				context.state.function_depth === binding.scope.function_depth &&
 				// If we have $state that can be proxied or frozen and isn't re-assigned, then that means
 				// it's likely not using a primitive value and thus this warning isn't that helpful.
-				(((binding.kind === 'state' || binding.kind === 'link_state') &&
+				(((binding.kind === 'state' || binding.kind === 'linked_state') &&
 					(binding.reassigned ||
 						(binding.initial?.type === 'CallExpression' &&
 							binding.initial.arguments.length === 1 &&

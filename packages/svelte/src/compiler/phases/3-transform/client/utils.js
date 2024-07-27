@@ -105,7 +105,7 @@ export function serialize_get_binding(node, state) {
 		return b.member(b.id('$$props'), node);
 	}
 
-	if (binding.kind === 'link_state') {
+	if (binding.kind === 'linked_state') {
 		return b.call(node);
 	}
 
@@ -291,7 +291,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 	if (
 		binding.kind !== 'state' &&
 		binding.kind !== 'frozen_state' &&
-		binding.kind !== 'link_state' &&
+		binding.kind !== 'linked_state' &&
 		binding.kind !== 'prop' &&
 		binding.kind !== 'bindable_prop' &&
 		binding.kind !== 'each' &&
@@ -312,7 +312,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 			if (
 				(binding.kind === 'prop' ||
 					binding.kind === 'bindable_prop' ||
-					binding.kind === 'link_state') &&
+					binding.kind === 'linked_state') &&
 				!is_initial_proxy
 			) {
 				return b.call(left, value);
@@ -343,7 +343,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 				} else if (
 					(binding.kind === 'prop' ||
 						binding.kind === 'bindable_prop' ||
-						binding.kind === 'link_state') &&
+						binding.kind === 'linked_state') &&
 					is_initial_proxy
 				) {
 					call = b.call(
@@ -351,7 +351,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 						context.state.analysis.runes &&
 							!options?.skip_proxy_and_freeze &&
 							should_proxy_or_freeze(value, context.state.scope) &&
-							(binding.kind === 'bindable_prop' || binding.kind === 'link_state')
+							(binding.kind === 'bindable_prop' || binding.kind === 'linked_state')
 							? serialize_proxy_reassignment(value, left_name, state)
 							: value
 					);

@@ -70,7 +70,7 @@ export const global_visitors = {
 			if (
 				binding?.kind === 'state' ||
 				binding?.kind === 'frozen_state' ||
-				binding?.kind === 'link_state' ||
+				binding?.kind === 'linked_state' ||
 				binding?.kind === 'each' ||
 				binding?.kind === 'legacy_reactive' ||
 				binding?.kind === 'prop' ||
@@ -88,7 +88,7 @@ export const global_visitors = {
 					args.push(serialize_get_binding(b.id(name), state), b.call('$' + name));
 				} else {
 					if (binding.kind === 'prop' || binding.kind === 'bindable_prop') fn += '_prop';
-					if (binding.kind === 'link_state') fn += '_link';
+					if (binding.kind === 'linked_state') fn += '_link';
 					args.push(b.id(name));
 				}
 

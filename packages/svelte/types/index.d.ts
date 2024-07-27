@@ -930,7 +930,7 @@ declare module 'svelte/compiler' {
 			| 'rest_prop'
 			| 'state'
 			| 'frozen_state'
-			| 'link_state'
+			| 'linked_state'
 			| 'derived'
 			| 'each'
 			| 'snippet'
@@ -1239,9 +1239,9 @@ declare module 'svelte/compiler' {
 		| LegacyCssNode
 		| Text;
 	class Scope {
-		
+
 		constructor(root: ScopeRoot, parent: Scope | null, porous: boolean);
-		
+
 		root: ScopeRoot;
 		/**
 		 * The immediate parent scope
@@ -1269,25 +1269,25 @@ declare module 'svelte/compiler' {
 		 * which is usually an error. Block statements do not increase this value
 		 */
 		function_depth: number;
-		
+
 		declare(node: Identifier, kind: Binding["kind"], declaration_kind: DeclarationKind, initial?: null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | EachBlock): Binding;
 		child(porous?: boolean): Scope;
-		
+
 		generate(preferred_name: string): string;
-		
+
 		get(name: string): Binding | null;
-		
+
 		get_bindings(node: VariableDeclarator | LetDirective): Binding[];
-		
+
 		owner(name: string): Scope | null;
-		
+
 		reference(node: Identifier, path: SvelteNode[]): void;
 		#private;
 	}
 	class ScopeRoot {
-		
+
 		conflicts: Set<string>;
-		
+
 		unique(preferred_name: string): Identifier;
 	}
 	namespace Css {
@@ -2188,21 +2188,21 @@ declare module 'svelte/reactivity' {
 	/** @deprecated Use `SvelteURLSearchParams` instead */
 	function URLSearchParams_1(): void;
 	export class SvelteDate extends Date {
-		
+
 		constructor(...params: any[]);
 		#private;
 	}
 	export class SvelteSet<T> extends Set<T> {
-		
+
 		constructor(value?: Iterable<T> | null | undefined);
-		
+
 		add(value: T): this;
 		#private;
 	}
 	export class SvelteMap<K, V> extends Map<K, V> {
-		
+
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
-		
+
 		set(key: K, value: V): this;
 		#private;
 	}
@@ -2212,7 +2212,7 @@ declare module 'svelte/reactivity' {
 	}
 	const REPLACE: unique symbol;
 	export class SvelteURLSearchParams extends URLSearchParams {
-		
+
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
