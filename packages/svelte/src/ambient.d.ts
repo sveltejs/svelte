@@ -127,17 +127,22 @@ declare namespace $state {
 	export function frozen<T>(): Readonly<T> | undefined;
 
 	/**
-	 * Declares reactive state that is linked to another value. Local reassignments will override the linked value
-	 * until the linked value changes.
+	 * Declares reactive state that is linked to another value. Local reassignments
+	 * will override the linked value until the linked value changes.
 	 *
 	 * Example:
 	 * ```ts
-	 * <script>
-	 *   let { text } = $props();
-	 *   let local_text = $state.link(text);
-	 * </script>
+	 * let a = $state(0);
+	 * let b = $state.link(a);
+
+	 * a = 1;
+	 * console.log(a, b); // 1, 1
+
+	 * b = 2; // unlink
+	 * console.log(a, b); // 1, 2
 	 *
-	 * <input type="text" bind:value={local_text} />
+	 * a = 3; // relink
+	 * console.log(a, b); // 3, 3
 	 * ```
 	 *
 	 * https://svelte-5-preview.vercel.app/docs/runes#$state-link
