@@ -48,7 +48,7 @@ Once installed, you'll have access to three new commands:
 
 ## Installing a text editor
 
-To write code, you need a good editor. The most popular choice is [Visual Studio Code](https://code.visualstudio.com/) or VSCode, and justifiably so — it's well-designed and fully-featured, and has a wealth of extensions ([including one for Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode), which provides syntax highlighting and diagnostic messages when you're writing components).
+To write code, you need a good editor. The most popular choice is [Visual Studio Code](https://code.visualstudio.com/) or VS Code, and justifiably so — it's well-designed and fully-featured, and has a wealth of extensions ([including one for Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode), which provides syntax highlighting and diagnostic messages when you're writing components).
 
 ## Creating a project
 
