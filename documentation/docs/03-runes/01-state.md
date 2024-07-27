@@ -111,8 +111,6 @@ To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snaps
 
 This is handy when you want to pass some state to an external library or API that doesn't expect a proxy, such as `structuredClone`.
 
-> Note that `$state.snapshot` will clone the data when removing reactivity. If the value passed isn't a `$state` proxy, it will be returned as-is.
-
 ## `$state.is`
 
 Sometimes you might need to compare two values, one of which is a reactive `$state(...)` proxy but the other is not. For this you can use `$state.is(a, b)`:
