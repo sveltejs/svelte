@@ -29,7 +29,7 @@ For a complete list of changes, including bug fixes and links to PRs, check out 
 - HTML tags can now be renamed together
 - Mustache tags parsing is now more robust and will provide better intellisense in more situations
 
-Haven't tried the language-tools yet? Check out [Svelte Extension for VSCode](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) or find a plugin for your favorite IDE!
+Haven't tried the language-tools yet? Check out [Svelte Extension for VS Code](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) or find a plugin for your favorite IDE!
 
 ## Other changes from `sveltejs/*`
 
@@ -73,7 +73,7 @@ Haven't tried the language-tools yet? Check out [Svelte Extension for VSCode](ht
 - [svelte-virtualized-auto-sizer](https://github.com/micha-lmxt/svelte-virtualized-auto-sizer) is a high-order component that automatically adjusts the width and height of a single child.
 - [svelte-window](https://github.com/micha-lmxt/svelte-window) are components for efficiently rendering large, scrollable lists and tabular data.
 - [Svelte Persistent store](https://github.com/MacFJA/svelte-persistent-store) is a Svelte store that keep its value through pages and reloads
-- [Svelte Dark](https://marketplace.visualstudio.com/items?itemName=NickScialli.svelte-dark) is a VSCode theme inspired by the svelte.dev REPL
+- [Svelte Dark](https://marketplace.visualstudio.com/items?itemName=NickScialli.svelte-dark) is a VS Code theme inspired by the svelte.dev REPL
 - [Import Cost](https://marketplace.visualstudio.com/items?itemName=wix.vscode-import-cost) has been updated to support Svelte libraries and help developers keep their bundle size under control.
 - [Tree-sitter-svelte](https://github.com/Himujjal/tree-sitter-svelte) provides tree-sitter grammar for svelte
 - [Svelte Ripple](https://svelte.dev/repl/b73224a0fd4248178e3eab41943d41a9?version=3.31.2) is a Material Design ripple effect that doesn't depend on `@material/ripple` (made by @karakara in the Svelte Discord)
