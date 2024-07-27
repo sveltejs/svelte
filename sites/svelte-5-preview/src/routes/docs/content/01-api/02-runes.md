@@ -66,29 +66,30 @@ In non-runes mode, a `let` declaration is treated as reactive state if it is upd
 
 ## `$state.link`
 
-State declared with `$state.link` behaves like `$state`, with the key difference being that rather than take an initial value, the value passed into `$state.link` maintains and persistant one-way link. Updating the `$state.link` directly will temporarily override the value until the linked state next updates.
+Linked state stays up to date with its input:
 
-```svelte
-<script>
-	let { parent_value = $bindable() } = $props();
+```js
+let a = $state(0);
+let b = $state.link(a);
 
-	// `child_value` is linked to `parent_value`
-	let child_value = $state.link(parent_value);
-
-	parent_value = 10;
-
-	console.log(child_value); // 10
-
-	child_value = 20;
-
-	console.log(child_value); // 20
-
-	// `parent_value` remains the same
-	console.log(parent_value); // 10
-</script>
+a = 1;
+console.log(a, b); // 1, 1
 ```
 
-> The linked value will be proxied like `$state`, use `$state.snapshot` to clone the object if you want to avoid mutating the linked value directly.
+You can temporarily _unlink_ state. It will be _relinked_ when the input value changes:
+
+```js
+let a = 1;
+let b = 1;
+// ---cut---
+b = 2; // unlink
+console.log(a, b); // 1, 2
+
+a = 3; // relink
+console.log(a, b); // 3, 3
+```
+
+As with `$state`, if `$state.link` is passed a plain object or array it will be made deeply reactive. If passed an existing state proxy it will be reused, meaning that mutating the linked state will mutate the original. To clone a state proxy, you can use [`$state.snapshot`](#$state-snapshot).
 
 ## `$state.frozen`
 
