@@ -3,11 +3,6 @@
 /** @import { NodeLike } from '../../errors.js' */
 /** @import { AnalysisState, Context, Visitors } from './types.js' */
 import is_reference from 'is-reference';
-import {
-	disallowed_paragraph_contents,
-	interactive_elements,
-	is_tag_valid_with_parent
-} from '../../../constants.js';
 import * as e from '../../errors.js';
 import {
 	extract_identifiers,
@@ -37,6 +32,10 @@ import {
 import { Scope, get_rune } from '../scope.js';
 import { merge } from '../visitors.js';
 import { a11y_validators } from './a11y.js';
+import {
+	is_tag_valid_with_ancestor,
+	is_tag_valid_with_parent
+} from '../../../html-tree-validation.js';
 
 /**
  * @param {Attribute} attribute
@@ -602,40 +601,57 @@ const validation = {
 		validate_element(node, context);
 
 		if (context.state.parent_element) {
-			if (!is_tag_valid_with_parent(node.name, context.state.parent_element)) {
-				e.node_invalid_placement(node, `<${node.name}>`, context.state.parent_element);
-			}
-		}
+			let past_parent = false;
+			let only_warn = false;
 
-		// can't add form to interactive elements because those are also used by the parser
-		// to check for the last auto-closing parent.
-		if (node.name === 'form') {
-			const path = context.path;
-			for (let parent of path) {
-				if (parent.type === 'RegularElement' && parent.name === 'form') {
-					e.node_invalid_placement(node, `<${node.name}>`, parent.name);
-				}
-			}
-		}
+			for (let i = context.path.length - 1; i >= 0; i--) {
+				const ancestor = context.path[i];
 
-		if (interactive_elements.has(node.name)) {
-			const path = context.path;
-			for (let parent of path) {
 				if (
-					parent.type === 'RegularElement' &&
-					parent.name === node.name &&
-					interactive_elements.has(parent.name)
+					ancestor.type === 'IfBlock' ||
+					ancestor.type === 'EachBlock' ||
+					ancestor.type === 'AwaitBlock' ||
+					ancestor.type === 'KeyBlock'
 				) {
-					e.node_invalid_placement(node, `<${node.name}>`, parent.name);
+					// We're creating a separate template string inside blocks, which means client-side this would work
+					only_warn = true;
 				}
-			}
-		}
 
-		if (disallowed_paragraph_contents.includes(node.name)) {
-			const path = context.path;
-			for (let parent of path) {
-				if (parent.type === 'RegularElement' && parent.name === 'p') {
-					e.node_invalid_placement(node, `<${node.name}>`, parent.name);
+				if (!past_parent) {
+					if (
+						ancestor.type === 'RegularElement' &&
+						ancestor.name === context.state.parent_element
+					) {
+						if (!is_tag_valid_with_parent(node.name, context.state.parent_element)) {
+							if (only_warn) {
+								w.node_invalid_placement_ssr(
+									node,
+									`\`<${node.name}>\``,
+									context.state.parent_element
+								);
+							} else {
+								e.node_invalid_placement(node, `\`<${node.name}>\``, context.state.parent_element);
+							}
+						}
+
+						past_parent = true;
+					}
+				} else if (ancestor.type === 'RegularElement') {
+					if (!is_tag_valid_with_ancestor(node.name, ancestor.name)) {
+						if (only_warn) {
+							w.node_invalid_placement_ssr(node, `\`<${node.name}>\``, ancestor.name);
+						} else {
+							e.node_invalid_placement(node, `\`<${node.name}>\``, ancestor.name);
+						}
+					}
+				} else if (
+					ancestor.type === 'Component' ||
+					ancestor.type === 'SvelteComponent' ||
+					ancestor.type === 'SvelteElement' ||
+					ancestor.type === 'SvelteSelf' ||
+					ancestor.type === 'SnippetBlock'
+				) {
+					break;
 				}
 			}
 		}
@@ -818,7 +834,7 @@ const validation = {
 		if (!node.parent) return;
 		if (context.state.parent_element) {
 			if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
-				e.node_invalid_placement(node, '{expression}', context.state.parent_element);
+				e.node_invalid_placement(node, '`{expression}`', context.state.parent_element);
 			}
 		}
 	}

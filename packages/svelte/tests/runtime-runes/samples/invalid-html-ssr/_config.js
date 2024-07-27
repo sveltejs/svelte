@@ -12,7 +12,7 @@ export default test({
 		dev: true
 	},
 
-	html: `<p></p><h1>foo</h1><p></p>`,
+	html: `<p></p><h1>foo</h1><p></p><form></form>`,
 
 	recover: true,
 
@@ -27,13 +27,15 @@ export default test({
 		log.length = 0;
 	},
 
-	async test({ assert, target, variant }) {
-		await assert.htmlEqual(target.innerHTML, `<p></p><h1>foo</h1><p></p>`);
+	async test({ assert, variant }) {
 		if (variant === 'hydrate') {
 			assert.equal(
-				log[0],
-				'`<p>` (main.svelte:5:0) cannot contain `<h1>` (Component.svelte:1:0)\n\n' +
-					'This can cause content to shift around as the browser repairs the HTML, and will likely result in a `hydration_mismatch` warning.'
+				log[0].split('\n')[0],
+				'node_invalid_placement_ssr: `<p>` (main.svelte:6:0) cannot contain `<h1>` (h1.svelte:1:0)'
+			);
+			assert.equal(
+				log[1].split('\n')[0],
+				'node_invalid_placement_ssr: `<form>` (main.svelte:9:0) cannot contain `<form>` (form.svelte:1:0)'
 			);
 		}
 	}

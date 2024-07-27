@@ -1,10 +1,9 @@
 /** @import { Component, Payload } from '#server' */
+import { FILENAME } from '../../constants.js';
 import {
-	FILENAME,
-	disallowed_paragraph_contents,
-	interactive_elements,
+	is_tag_valid_with_ancestor,
 	is_tag_valid_with_parent
-} from '../../constants.js';
+} from '../../html-tree-validation.js';
 import { current_component } from './context.js';
 
 /**
@@ -40,7 +39,7 @@ function stringify(element) {
  */
 function print_error(payload, parent, child) {
 	var message =
-		`${stringify(parent)} cannot contain ${stringify(child)}\n\n` +
+		`node_invalid_placement_ssr: ${stringify(parent)} cannot contain ${stringify(child)}\n\n` +
 		'This can cause content to shift around as the browser repairs the HTML, and will likely result in a `hydration_mismatch` warning.';
 
 	if ((seen ??= new Set()).has(message)) return;
@@ -60,31 +59,17 @@ function print_error(payload, parent, child) {
 export function push_element(payload, tag, line, column) {
 	var filename = /** @type {Component} */ (current_component).function[FILENAME];
 	var child = { tag, parent, filename, line, column };
+	var ancestor = parent?.parent;
 
 	if (parent !== null && !is_tag_valid_with_parent(tag, parent.tag)) {
 		print_error(payload, parent, child);
 	}
 
-	if (interactive_elements.has(tag)) {
-		let element = parent;
-		while (element !== null) {
-			if (interactive_elements.has(element.tag)) {
-				print_error(payload, element, child);
-				break;
-			}
-			element = element.parent;
+	while (ancestor != null) {
+		if (!is_tag_valid_with_ancestor(tag, ancestor.tag)) {
+			print_error(payload, ancestor, child);
 		}
-	}
-
-	if (disallowed_paragraph_contents.includes(tag)) {
-		let element = parent;
-		while (element !== null) {
-			if (element.tag === 'p') {
-				print_error(payload, element, child);
-				break;
-			}
-			element = element.parent;
-		}
+		ancestor = ancestor.parent;
 	}
 
 	parent = child;
