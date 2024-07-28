@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.201
+
+### Patch Changes
+
+- feat: remove $.unwrap calls from each block indexes ([#12640](https://github.com/sveltejs/svelte/pull/12640))
+
+- fix: error on `bind:this` to each block parameter ([#12638](https://github.com/sveltejs/svelte/pull/12638))
+
+- feat: remove `$.unwrap` calls from `bind:group` ([#12642](https://github.com/sveltejs/svelte/pull/12642))
+
 ## 5.0.0-next.200
 
 ### Patch Changes
