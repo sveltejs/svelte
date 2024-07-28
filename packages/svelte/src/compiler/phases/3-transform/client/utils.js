@@ -79,6 +79,11 @@ export function serialize_get_binding(node, state) {
 		return node;
 	}
 
+	if (Object.hasOwn(state.getters, node.name)) {
+		const getter = state.getters[node.name];
+		return typeof getter === 'function' ? getter(node) : getter;
+	}
+
 	if (binding.node.name === '$$props') {
 		// Special case for $$props which only exists in the old world
 		return b.id('$$sanitized_props');
@@ -86,11 +91,6 @@ export function serialize_get_binding(node, state) {
 
 	if (binding.kind === 'store_sub') {
 		return b.call(node);
-	}
-
-	if (Object.hasOwn(state.getters, node.name)) {
-		const getter = state.getters[node.name];
-		return typeof getter === 'function' ? getter(node) : getter;
 	}
 
 	if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {

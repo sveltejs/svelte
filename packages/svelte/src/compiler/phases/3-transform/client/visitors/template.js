@@ -2493,6 +2493,12 @@ export const template_visitors = {
 			getters: { ...context.state.getters }
 		};
 
+		/** The state used when generating the key function, if necessary */
+		const key_state = {
+			...context.state,
+			getters: { ...context.state.getters }
+		};
+
 		/**
 		 * @param {Pattern} expression_for_id
 		 * @returns {Binding['mutation']}
@@ -2550,8 +2556,12 @@ export const template_visitors = {
 		if (node.index) {
 			child_state.getters[node.index] = (id) => {
 				const index_with_loc = with_loc(index, id);
-				return b.call('$.unwrap', index_with_loc);
+				return (flags & EACH_INDEX_REACTIVE) === 0
+					? index_with_loc
+					: b.call('$.get', index_with_loc);
 			};
+
+			key_state.getters[node.index] = b.id(node.index);
 		}
 
 		/** @type {Statement[]} */
@@ -2565,6 +2575,8 @@ export const template_visitors = {
 					true
 				)
 			);
+
+			key_state.getters[node.context.name] = node.context;
 		} else {
 			const unwrapped = getter(binding.node);
 			const paths = extract_paths(node.context);
@@ -2592,23 +2604,20 @@ export const template_visitors = {
 				if (context.state.options.dev) {
 					declarations.push(b.stmt(getter));
 				}
+
+				key_state.getters[name] = path.node;
 			}
 		}
 
 		const block = /** @type {BlockStatement} */ (context.visit(node.body, child_state));
 
-		const key_function = node.key
-			? b.arrow(
-					[node.context.type === 'Identifier' ? node.context : b.id('$$item'), index],
-					declarations.length > 0
-						? b.block(
-								declarations.concat(
-									b.return(/** @type {Expression} */ (context.visit(node.key, child_state)))
-								)
-							)
-						: /** @type {Expression} */ (context.visit(node.key, child_state))
-				)
-			: b.id('$.index');
+		/** @type {Expression} */
+		let key_function = b.id('$.index');
+
+		if (node.key) {
+			const expression = /** @type {Expression} */ (context.visit(node.key, key_state));
+			key_function = b.arrow([node.context, index], expression);
+		}
 
 		if (node.index && each_node_meta.contains_group_binding) {
 			// We needed to create a unique identifier for the index above, but we want to use the
