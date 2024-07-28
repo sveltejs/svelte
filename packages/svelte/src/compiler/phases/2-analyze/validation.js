@@ -385,33 +385,31 @@ const validation = {
 
 		const binding = context.state.scope.get(left.name);
 
-		if (
-			assignee.type === 'Identifier' &&
-			node.name !== 'this' // bind:this also works for regular variables
-		) {
+		if (assignee.type === 'Identifier') {
 			// reassignment
 			if (
-				!binding ||
-				(binding.kind !== 'state' &&
-					binding.kind !== 'frozen_state' &&
-					binding.kind !== 'prop' &&
-					binding.kind !== 'bindable_prop' &&
-					binding.kind !== 'each' &&
-					binding.kind !== 'store_sub' &&
-					!binding.mutated)
+				node.name !== 'this' && // bind:this also works for regular variables
+				(!binding ||
+					(binding.kind !== 'state' &&
+						binding.kind !== 'frozen_state' &&
+						binding.kind !== 'prop' &&
+						binding.kind !== 'bindable_prop' &&
+						binding.kind !== 'each' &&
+						binding.kind !== 'store_sub' &&
+						!binding.mutated))
 			) {
 				e.bind_invalid_value(node.expression);
 			}
 
-			if (binding.kind === 'derived') {
+			if (binding?.kind === 'derived') {
 				e.constant_binding(node.expression, 'derived state');
 			}
 
-			if (context.state.analysis.runes && binding.kind === 'each') {
+			if (context.state.analysis.runes && binding?.kind === 'each') {
 				e.each_item_invalid_assignment(node);
 			}
 
-			if (binding.kind === 'snippet') {
+			if (binding?.kind === 'snippet') {
 				e.snippet_parameter_assignment(node);
 			}
 		}
