@@ -24,7 +24,7 @@ Have a suggestion for a compiler feature or want to help implement new features/
 
 For the complete list of changes, check out the language-tools [Releases page](https://github.com/sveltejs/language-tools/releases).
 
-A great way to try the language tools is to download the [Svelte Extension for VSCode](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode). This extension provides syntax highlighting and rich intellisense for Svelte components in VS Code, using the svelte language server. Check your editor's extension sources to see if there's a Svelte plugin for your IDE or build your own (see [coc-svelte](https://github.com/coc-extensions/coc-svelte) for example)!
+A great way to try the language tools is to download the [Svelte Extension for VS Code](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode). This extension provides syntax highlighting and rich intellisense for Svelte components in VS Code, using the svelte language server. Check your editor's extension sources to see if there's a Svelte plugin for your IDE or build your own (see [coc-svelte](https://github.com/coc-extensions/coc-svelte) for example)!
 
 ## Big improvements across the Svelte ecosystem
 
@@ -77,7 +77,7 @@ New changes to the Svelte Society website include [a new cheat sheet](https://sv
 
 - [lihautan's Svelte Actions Playlist](https://www.youtube.com/watch?v=ciaMT_MswzE&list=PLoKaNN3BjQX3Gl14MBygFf8buPIw9pAeK) teaches how actions work and how they can help solve common problems when developing Svelte applications
 - [One-click Portfolio/Personal blog generator from dev.to API ](https://dev.to/shriji/one-click-portfolio-personal-blog-generator-from-dev-to-api-3apb) walks through creating a Sapper site that also fetches your articles from DEV.to using the API
-- [How to Code a VSCode Extension](https://www.youtube.com/watch?v=a5DX5pQ9p5M) features Svelte as a way to render a custom UI within VSCode
+- [How to Code a VS Code Extension](https://www.youtube.com/watch?v=a5DX5pQ9p5M) features Svelte as a way to render a custom UI within VS Code
 - [This YouTube series on Plenti](https://www.youtube.com/watch?v=wyNC7R_VVyQ&list=PLbWvcwWtuDm12y3Hye6oKDwI2gAS0ccHW) walks through the new static site generator in detail
 
 ## See you next month!

@@ -79,7 +79,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 - [sveltekit-netlify-cms](https://github.com/buhrmi/sveltekit-netlify-cms) is a SvelteKit skeleton app configured for use with Netlify CMS
 - [SvelteFireTS](https://github.com/jacobbowdoin/sveltefirets) is a SvelteKit + TypeScript + Firebase library inspired by Fireship.io
 - [stores-x](https://github.com/Anyass3/stores-x) lets you use Svelte stores just like vueX
-- [sveltekit-snippets](https://github.com/stordahl/sveltekit-snippets) is a VSCode extension that provides snippets for common patterns in SvelteKit & Vanilla Svelte
+- [sveltekit-snippets](https://github.com/stordahl/sveltekit-snippets) is a VS Code extension that provides snippets for common patterns in SvelteKit & Vanilla Svelte
 - [svelte-xactor](https://github.com/wobsoriano/svelte-xactor) is a middleware that allows you to easily convert your xactor machines into a global store that implements the store contract
 - [vite-plugin-pages-svelte](https://github.com/aldy505/vite-plugin-pages-svelte) is a vite plugin for automatic filesystem-based routing
 - [sveltio](https://www.npmjs.com/package/sveltio) is a Svelte wrapper for valtio - a proxy-state library
