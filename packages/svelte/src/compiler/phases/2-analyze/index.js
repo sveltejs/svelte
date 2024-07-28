@@ -1547,6 +1547,13 @@ const common_visitors = {
 	},
 	RenderTag(node, context) {
 		context.next({ ...context.state, render_tag: node });
+	},
+	EachBlock(node) {
+		if (node.key) {
+			// treat `{#each items as item, i (i)}` as a normal indexed block, everything else as keyed
+			node.metadata.keyed =
+				node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index;
+		}
 	}
 };
 
