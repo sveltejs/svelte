@@ -2409,10 +2409,7 @@ export const template_visitors = {
 
 		let flags = 0;
 
-		if (
-			node.key &&
-			(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index)
-		) {
+		if (node.metadata.keyed) {
 			flags |= EACH_KEYED;
 
 			if (node.index) {
@@ -2421,7 +2418,7 @@ export const template_visitors = {
 
 			// In runes mode, if key === item, we don't need to wrap the item in a source
 			const key_is_item =
-				node.key.type === 'Identifier' &&
+				/** @type {Expression} */ (node.key).type === 'Identifier' &&
 				node.context.type === 'Identifier' &&
 				node.context.name === node.key.name;
 
@@ -2614,8 +2611,11 @@ export const template_visitors = {
 		/** @type {Expression} */
 		let key_function = b.id('$.index');
 
-		if (node.key) {
-			const expression = /** @type {Expression} */ (context.visit(node.key, key_state));
+		if (node.metadata.keyed) {
+			const expression = /** @type {Expression} */ (
+				context.visit(/** @type {Expression} */ (node.key), key_state)
+			);
+
 			key_function = b.arrow([node.context, index], expression);
 		}
 

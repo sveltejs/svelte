@@ -592,6 +592,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			}
 
 			node.metadata = {
+				keyed: false,
 				contains_group_binding: false,
 				array_name: needs_array_deduplication ? state.scope.root.unique('$$array') : null,
 				index: scope.root.unique('$$index'),
