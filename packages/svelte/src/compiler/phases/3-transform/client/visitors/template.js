@@ -3049,11 +3049,9 @@ export const template_visitors = {
 					call_expr = b.call(`$.bind_focused`, state.node, setter);
 					break;
 				case 'group': {
-					/** @type {CallExpression[]} */
-					const indexes = [];
-					for (const parent_each_block of node.metadata.parent_each_blocks) {
-						indexes.push(b.call('$.unwrap', parent_each_block.metadata.index));
-					}
+					const indexes = node.metadata.parent_each_blocks.map((each) => {
+						return b.call('$.unwrap', each.metadata.index);
+					});
 
 					// We need to additionally invoke the value attribute signal to register it as a dependency,
 					// so that when the value is updated, the group binding is updated
