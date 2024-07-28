@@ -2556,7 +2556,9 @@ export const template_visitors = {
 		if (node.index) {
 			child_state.getters[node.index] = (id) => {
 				const index_with_loc = with_loc(index, id);
-				return b.call('$.unwrap', index_with_loc);
+				return (flags & EACH_INDEX_REACTIVE) === 0
+					? index_with_loc
+					: b.call('$.get', index_with_loc);
 			};
 
 			key_state.getters[node.index] = b.id(node.index);
