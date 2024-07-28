@@ -3050,7 +3050,10 @@ export const template_visitors = {
 					break;
 				case 'group': {
 					const indexes = node.metadata.parent_each_blocks.map((each) => {
-						return b.call('$.unwrap', each.metadata.index);
+						// if we have a keyed block with an index, the index is wrapped in a source
+						return each.metadata.keyed && each.index
+							? b.call('$.get', each.metadata.index)
+							: each.metadata.index;
 					});
 
 					// We need to additionally invoke the value attribute signal to register it as a dependency,
