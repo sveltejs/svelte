@@ -2615,10 +2615,8 @@ export const template_visitors = {
 		let key_function = b.id('$.index');
 
 		if (node.key) {
-			key_function = b.arrow(
-				[node.context, index],
-				/** @type {Expression} */ (context.visit(node.key, key_state))
-			);
+			const expression = /** @type {Expression} */ (context.visit(node.key, key_state));
+			key_function = b.arrow([node.context, index], expression);
 		}
 
 		if (node.index && each_node_meta.contains_group_binding) {
