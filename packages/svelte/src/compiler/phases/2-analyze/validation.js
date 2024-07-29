@@ -1,13 +1,8 @@
 /** @import { Expression, Identifier, VariableDeclarator } from 'estree' */
-/** @import { Component, SvelteComponent, SvelteSelf } from '#compiler' */
-/** @import { AnalysisState, Context, Visitors } from './types.js' */
+/** @import { AnalysisState, Visitors } from './types.js' */
 import is_reference from 'is-reference';
 import * as e from '../../errors.js';
-import {
-	extract_identifiers,
-	get_attribute_expression,
-	is_expression_attribute
-} from '../../utils/ast.js';
+import { extract_identifiers } from '../../utils/ast.js';
 import * as w from '../../warnings.js';
 import { Runes } from '../constants.js';
 import { regex_not_whitespace } from '../patterns.js';
@@ -19,6 +14,7 @@ import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { BindDirective } from './visitors/BindDirective.js';
 import { CallExpression } from './visitors/CallExpression.js';
+import { Component } from './visitors/Component.js';
 import { ConstTag } from './visitors/ConstTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
 import { ExportDefaultDeclaration } from './visitors/ExportDefaultDeclaration.js';
@@ -35,71 +31,13 @@ import { RenderTag } from './visitors/RenderTag.js';
 import { SlotElement } from './visitors/SlotElement.js';
 import { SnippetBlock } from './visitors/SnippetBlock.js';
 import { StyleDirective } from './visitors/StyleDirective.js';
+import { SvelteComponent } from './visitors/SvelteComponent.js';
 import { SvelteElement } from './visitors/SvelteElement.js';
 import { SvelteFragment } from './visitors/SvelteFragment.js';
 import { SvelteHead } from './visitors/SvelteHead.js';
+import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { validate_assignment, validate_opening_tag } from './visitors/shared/utils.js';
-import {
-	validate_attribute,
-	validate_attribute_name,
-	validate_slot_attribute
-} from './visitors/shared/attribute.js';
-
-/**
- * @param {Component | SvelteComponent | SvelteSelf} node
- * @param {Context} context
- */
-function validate_component(node, context) {
-	for (const attribute of node.attributes) {
-		if (
-			attribute.type !== 'Attribute' &&
-			attribute.type !== 'SpreadAttribute' &&
-			attribute.type !== 'LetDirective' &&
-			attribute.type !== 'OnDirective' &&
-			attribute.type !== 'BindDirective'
-		) {
-			e.component_invalid_directive(attribute);
-		}
-
-		if (
-			attribute.type === 'OnDirective' &&
-			(attribute.modifiers.length > 1 || attribute.modifiers.some((m) => m !== 'once'))
-		) {
-			e.event_handler_invalid_component_modifier(attribute);
-		}
-
-		if (attribute.type === 'Attribute') {
-			if (context.state.analysis.runes) {
-				validate_attribute(attribute, node);
-
-				if (is_expression_attribute(attribute)) {
-					const expression = get_attribute_expression(attribute);
-					if (expression.type === 'SequenceExpression') {
-						let i = /** @type {number} */ (expression.start);
-						while (--i > 0) {
-							const char = context.state.analysis.source[i];
-							if (char === '(') break; // parenthesized sequence expressions are ok
-							if (char === '{') e.attribute_invalid_sequence_expression(expression);
-						}
-					}
-				}
-			}
-
-			validate_attribute_name(attribute);
-
-			if (attribute.name === 'slot') {
-				validate_slot_attribute(context, attribute, true);
-			}
-		}
-	}
-
-	context.next({
-		...context.state,
-		parent_element: null,
-		component_slots: new Set()
-	});
-}
 
 /**
  * @type {Visitors}
@@ -125,9 +63,9 @@ const validation = {
 	SvelteElement,
 	SvelteFragment,
 	SlotElement,
-	Component: validate_component,
-	SvelteComponent: validate_component,
-	SvelteSelf: validate_component,
+	Component,
+	SvelteComponent,
+	SvelteSelf,
 	Text(node, context) {
 		if (!node.parent) return;
 		if (context.state.parent_element && regex_not_whitespace.test(node.data)) {
