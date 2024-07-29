@@ -1,5 +1,5 @@
 /** @import { Expression, Identifier, VariableDeclarator } from 'estree' */
-/** @import { Attribute, Component, ElementLike, SvelteComponent, SvelteElement, SvelteSelf, TransitionDirective } from '#compiler' */
+/** @import { Component, SvelteComponent, SvelteSelf } from '#compiler' */
 /** @import { AnalysisState, Context, Visitors } from './types.js' */
 import is_reference from 'is-reference';
 import * as e from '../../errors.js';
@@ -7,8 +7,7 @@ import {
 	extract_identifiers,
 	get_attribute_expression,
 	is_expression_attribute,
-	is_text_attribute,
-	unwrap_optional
+	is_text_attribute
 } from '../../utils/ast.js';
 import * as w from '../../warnings.js';
 import { Runes } from '../constants.js';
@@ -28,17 +27,15 @@ import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
 import { IfBlock } from './visitors/IfBlock.js';
 import { ImportDeclaration } from './visitors/ImportDeclaration.js';
+import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { LetDirective } from './visitors/LetDirective.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
+import { SnippetBlock } from './visitors/SnippetBlock.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
-import {
-	validate_assignment,
-	validate_block_not_empty,
-	validate_opening_tag
-} from './visitors/shared/utils.js';
+import { validate_assignment, validate_opening_tag } from './visitors/shared/utils.js';
 import {
 	validate_attribute,
 	validate_attribute_name,
@@ -118,51 +115,8 @@ const validation = {
 	IfBlock,
 	EachBlock,
 	AwaitBlock,
-	KeyBlock(node, context) {
-		validate_block_not_empty(node.fragment, context);
-	},
-	SnippetBlock(node, context) {
-		validate_block_not_empty(node.body, context);
-
-		for (const arg of node.parameters) {
-			if (arg.type === 'RestElement') {
-				e.snippet_invalid_rest_parameter(arg);
-			}
-		}
-
-		context.next({ ...context.state, parent_element: null });
-
-		const { path } = context;
-		const parent = path.at(-2);
-		if (!parent) return;
-
-		if (
-			parent.type === 'Component' &&
-			parent.attributes.some(
-				(attribute) =>
-					(attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
-					attribute.name === node.expression.name
-			)
-		) {
-			e.snippet_shadowing_prop(node, node.expression.name);
-		}
-
-		if (node.expression.name !== 'children') return;
-
-		if (
-			parent.type === 'Component' ||
-			parent.type === 'SvelteComponent' ||
-			parent.type === 'SvelteSelf'
-		) {
-			if (
-				parent.fragment.nodes.some(
-					(node) => node.type !== 'SnippetBlock' && (node.type !== 'Text' || node.data.trim())
-				)
-			) {
-				e.snippet_conflict(node);
-			}
-		}
-	},
+	KeyBlock,
+	SnippetBlock,
 	StyleDirective(node) {
 		if (node.modifiers.length > 1 || (node.modifiers.length && node.modifiers[0] !== 'important')) {
 			e.style_directive_invalid_modifier(node);
