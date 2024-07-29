@@ -42,7 +42,7 @@ import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
-import { ensure_no_module_import_conflict, validate_opening_tag } from './visitors/shared/utils.js';
+import { ensure_no_module_import_conflict } from './visitors/shared/utils.js';
 
 /**
  * @type {Visitors}
@@ -85,16 +85,16 @@ export const validation_legacy = merge(validation, a11y_validators);
  * @type {Visitors}
  */
 export const validation_runes_js = {
-	ImportDeclaration,
-	ExportNamedDeclaration,
-	CallExpression,
-	VariableDeclarator,
 	AssignmentExpression,
-	UpdateExpression,
+	CallExpression,
 	ClassBody,
 	ClassDeclaration,
+	ExportNamedDeclaration,
+	Identifier,
+	ImportDeclaration,
 	NewExpression,
-	Identifier
+	UpdateExpression,
+	VariableDeclarator
 };
 
 export const validation_runes = merge(validation, a11y_validators, {
