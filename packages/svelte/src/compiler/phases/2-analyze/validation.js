@@ -3,7 +3,6 @@ import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { get_rune } from '../scope.js';
 import { merge } from '../visitors.js';
-import { a11y_validators } from './visitors/shared/a11y.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { BindDirective } from './visitors/BindDirective.js';
@@ -79,7 +78,7 @@ const validation = {
 	VariableDeclarator
 };
 
-export const validation_legacy = merge(validation, a11y_validators);
+export const validation_legacy = validation;
 
 /**
  * @type {Visitors}
@@ -97,7 +96,7 @@ export const validation_runes_js = {
 	VariableDeclarator
 };
 
-export const validation_runes = merge(validation, a11y_validators, {
+export const validation_runes = merge(validation, {
 	ImportDeclaration,
 	LabeledStatement,
 	ExportNamedDeclaration,

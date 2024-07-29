@@ -686,7 +686,7 @@ function get_static_text_value(attribute) {
  * @param {RegularElement | SvelteElement} node
  * @param {AnalysisState} state
  */
-function check_element(node, state) {
+export function check_element(node, state) {
 	// foreign namespace means elements can have completely different meanings, therefore we don't check them
 	if (state.options.namespace === 'foreign') return;
 
@@ -1154,15 +1154,3 @@ function check_element(node, state) {
 		w.a11y_missing_content(node, node.name);
 	}
 }
-
-/**
- * @type {Visitors<SvelteNode, AnalysisState>}
- */
-export const a11y_validators = {
-	RegularElement(node, context) {
-		check_element(node, context.state);
-	},
-	SvelteElement(node, context) {
-		check_element(node, context.state);
-	}
-};

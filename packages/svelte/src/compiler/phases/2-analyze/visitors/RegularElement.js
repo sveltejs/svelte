@@ -7,6 +7,7 @@ import {
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { SVGElements, VoidElements } from '../../constants.js';
+import { check_element } from './shared/a11y.js';
 import { validate_element } from './shared/element.js';
 
 /**
@@ -32,6 +33,8 @@ export function RegularElement(node, context) {
 	}
 
 	validate_element(node, context);
+
+	check_element(node, context.state);
 
 	if (context.state.parent_element) {
 		let past_parent = false;
