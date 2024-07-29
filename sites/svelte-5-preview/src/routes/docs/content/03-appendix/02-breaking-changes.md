@@ -83,6 +83,8 @@ export default {
 };
 ```
 
+Note that `mount` and `hydrate` are _not_ synchronous, so things like `onMount` won't have been called by the time the function returns and the pending block of promises will not have been rendered yet (because `#await` waits a microtask to wait for a potentially immediately-resolved promise). If you need that guarantee, call `flushSync` (import from `'svelte'`) after calling `mount/hydrate`.
+
 ### Server API changes
 
 Similarly, components no longer have a `render` method when compiled for server side rendering. Instead, pass the function to `render` from `svelte/server`:
@@ -331,24 +333,3 @@ Since these mismatches are extremely rare, Svelte 5 assumes that the values are 
 ### Hydration works differently
 
 Svelte 5 makes use of comments during server side rendering which are used for more robust and efficient hydration on the client. As such, you shouldn't remove comments from your HTML output if you intend to hydrate it, and if you manually authored HTML to be hydrated by a Svelte component, you need to adjust that HTML to include said comments at the correct positions.
-
-### `await` blocks delay render
-
-In Svelte 4, an `{#await ...}` block immediately renders the pending section. In some cases, this is wasteful, because the promise is already resolved.
-
-In Svelte 5 the block remains unrendered when mounting or updating the promise, until we know whether it is already resolved or not — if so, we initally render then `{:then ...}` or `{:catch ...}` section instead.
-
-This does _not_ apply during hydration, since the pending section was already server-rendered.
-
-To wait until the pending section has been rendered (for example during testing), use `await Promise.resolve()` after mounting or updating the promise:
-
-```diff
-let props = {
-	promise: getPromiseSomehow()
-};
-
-mount(App, { target, props });
-
-+await Promise.resolve();
-assert.equal(target.innerHTML, '...');
-```

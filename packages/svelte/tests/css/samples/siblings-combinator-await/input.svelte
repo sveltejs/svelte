@@ -1,3 +1,7 @@
+<script>
+	let promise = Promise.resolve();
+</script>
+
 <style>
 	.a + .b { color: green; }
 	.a + .c { color: green; }
@@ -7,16 +11,15 @@
 	.d + .e { color: green; }
 
 	/* no match */
-	.a + .e { color: red; }
-	.b + .c { color: red; }
-	.c + .d { color: red; }
-	.b + .d { color: red; }
+	.a + .e { color: green; }
+	.b + .c { color: green; }
+	.c + .d { color: green; }
+	.b + .d { color: green; }
 </style>
 
 <div class="a"></div>
 
-<!-- non-promise, so that something renders initially -->
-{#await true}
+{#await promise}
 	<div class="b"></div>
 {:then value}
 	<div class="c"></div>
