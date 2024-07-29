@@ -12,7 +12,11 @@ import {
 	LoadErrorElements,
 	WhitespaceInsensitiveAttributes
 } from '../../../../constants.js';
-import { create_attribute, is_custom_element_node } from '../../../../nodes.js';
+import {
+	create_attribute,
+	create_expression_metadata,
+	is_custom_element_node
+} from '../../../../nodes.js';
 import { regex_starts_with_newline } from '../../../../patterns.js';
 import * as b from '../../../../../utils/builders.js';
 import {
@@ -142,8 +146,7 @@ export function serialize_element_attributes(node, context) {
 										serialize_attribute_value(value_attribute.value, context)
 									),
 							metadata: {
-								contains_call_expression: false,
-								dynamic: false
+								expression: create_expression_metadata()
 							}
 						}
 					])
@@ -158,8 +161,7 @@ export function serialize_element_attributes(node, context) {
 							parent: attribute,
 							expression: attribute.expression,
 							metadata: {
-								contains_call_expression: false,
-								dynamic: false
+								expression: create_expression_metadata()
 							}
 						}
 					])
@@ -399,7 +401,9 @@ function serialize_class_directives(class_directives, class_attribute) {
 			),
 			b.literal(' ')
 		),
-		metadata: { contains_call_expression: false, dynamic: false }
+		metadata: {
+			expression: create_expression_metadata()
+		}
 	});
 
 	class_attribute.value = chunks;
