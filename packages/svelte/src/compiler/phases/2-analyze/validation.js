@@ -903,25 +903,6 @@ export const validation_legacy = merge(validation, a11y_validators, {
 });
 
 /**
- *
- * @param {Node} node
- * @param {Scope} scope
- * @param {string} name
- */
-function validate_export(node, scope, name) {
-	const binding = scope.get(name);
-	if (!binding) return;
-
-	if (binding.kind === 'derived') {
-		e.derived_invalid_export(node);
-	}
-
-	if ((binding.kind === 'state' || binding.kind === 'frozen_state') && binding.reassigned) {
-		e.state_invalid_export(node);
-	}
-}
-
-/**
  * @param {CallExpression} node
  * @param {Scope} scope
  * @param {SvelteNode[]} path
