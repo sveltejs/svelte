@@ -149,11 +149,12 @@ function serialize_class_directives(class_directives, element_id, context, is_at
 	for (const directive of class_directives) {
 		const value = /** @type {Expression} */ (context.visit(directive.expression));
 		const update = b.stmt(b.call('$.toggle_class', element_id, b.literal(directive.name), value));
-		const has_call = directive.expression.type === 'CallExpression';
+
+		const { has_state, has_call } = directive.metadata.expression;
 
 		if (!is_attributes_reactive && has_call) {
 			state.init.push(serialize_update(update));
-		} else if (is_attributes_reactive || directive.metadata.expression.has_state || has_call) {
+		} else if (is_attributes_reactive || has_state || has_call) {
 			state.update.push(update);
 		} else {
 			state.init.push(update);
