@@ -965,6 +965,15 @@ declare module 'svelte/compiler' {
 			inside_rest?: boolean;
 		} | null;
 	}
+
+	interface ExpressionMetadata {
+		/** All the bindings that are referenced inside this expression */
+		dependencies: Set<Binding>;
+		/** True if the expression references state directly, or _might_ (via member/call expressions) */
+		has_state: boolean;
+		/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
+		has_call: boolean;
+	}
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
 	 * For example, it can be used to convert a <style lang="sass"> block into vanilla CSS.
@@ -1563,12 +1572,7 @@ declare module 'svelte/compiler' {
 		type: 'ExpressionTag';
 		expression: Expression;
 		metadata: {
-			contains_call_expression: boolean;
-			/**
-			 * Whether or not the expression contains any dynamic references —
-			 * determines whether it will be updated in a render effect or not
-			 */
-			dynamic: boolean;
+			expression: ExpressionMetadata;
 		};
 	}
 
@@ -1642,7 +1646,7 @@ declare module 'svelte/compiler' {
 		/** The 'y' in `class:x={y}`, or the `x` in `class:x` */
 		expression: Expression;
 		metadata: {
-			dynamic: false;
+			expression: ExpressionMetadata;
 		};
 	}
 
@@ -1664,8 +1668,7 @@ declare module 'svelte/compiler' {
 		expression: null | Expression;
 		modifiers: string[]; // TODO specify
 		metadata: {
-			contains_call_expression: boolean;
-			dynamic: boolean;
+			expression: ExpressionMetadata;
 		};
 	}
 
@@ -1685,7 +1688,7 @@ declare module 'svelte/compiler' {
 		value: true | ExpressionTag | Array<ExpressionTag | Text>;
 		modifiers: Array<'important'>;
 		metadata: {
-			dynamic: boolean;
+			expression: ExpressionMetadata;
 		};
 	}
 
@@ -1906,7 +1909,7 @@ declare module 'svelte/compiler' {
 		name: string;
 		value: true | ExpressionTag | Array<Text | ExpressionTag>;
 		metadata: {
-			dynamic: boolean;
+			expression: ExpressionMetadata;
 			/** May be set if this is an event attribute */
 			delegated: null | DelegatedEvent;
 		};
@@ -1916,8 +1919,7 @@ declare module 'svelte/compiler' {
 		type: 'SpreadAttribute';
 		expression: Expression;
 		metadata: {
-			contains_call_expression: boolean;
-			dynamic: boolean;
+			expression: ExpressionMetadata;
 		};
 	}
 
