@@ -728,14 +728,6 @@ export function analyze_component(root, source, options) {
 
 /** @type {Visitors} */
 const runes_scope_tweaker = {
-	// CallExpression(node, { state, next }) {
-	// 	const rune = get_rune(node, state.scope);
-
-	// 	// `$inspect(foo)` should not trigger the `static-state-reference` warning
-	// 	if (rune === '$inspect') {
-	// 		next({ ...state, function_depth: state.function_depth + 1 });
-	// 	}
-	// },
 	VariableDeclarator(node, { state }) {
 		const init = node.init;
 		if (!init || init.type !== 'CallExpression') return;
