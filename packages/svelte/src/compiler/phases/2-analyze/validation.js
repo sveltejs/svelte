@@ -88,30 +88,9 @@ export const validation_runes_js = {
 	ImportDeclaration,
 	ExportNamedDeclaration,
 	CallExpression,
-	VariableDeclarator(node, { state }) {
-		const init = node.init;
-		const rune = get_rune(init, state.scope);
-
-		if (rune === null) return;
-
-		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
-
-		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
-			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
-		} else if (rune === '$state' && args.length > 1) {
-			e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
-		} else if (rune === '$props') {
-			e.props_invalid_placement(node);
-		} else if (rune === '$bindable') {
-			e.bindable_invalid_location(node);
-		}
-	},
-	AssignmentExpression(node, { state }) {
-		validate_assignment(node, node.left, state);
-	},
-	UpdateExpression(node, { state }) {
-		validate_assignment(node, node.argument, state);
-	},
+	VariableDeclarator,
+	AssignmentExpression,
+	UpdateExpression,
 	ClassBody(node, context) {
 		/** @type {string[]} */
 		const private_derived_state = [];
@@ -265,10 +244,6 @@ export const validation_runes = merge(validation, a11y_validators, {
 
 			if (node.id.type !== 'ObjectPattern' && node.id.type !== 'Identifier') {
 				e.props_invalid_identifier(node);
-			}
-
-			if (state.scope !== state.analysis.instance.scope) {
-				e.props_invalid_placement(node);
 			}
 
 			if (node.id.type === 'ObjectPattern') {

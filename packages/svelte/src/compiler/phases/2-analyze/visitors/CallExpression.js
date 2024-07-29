@@ -43,12 +43,18 @@ export function CallExpression(node, context) {
 			} else if (context.state.ast_type === 'module' || !context.state.analysis.custom_element) {
 				e.host_invalid_placement(node);
 			}
+
 			break;
 
 		case '$props':
-			if (parent.type !== 'VariableDeclarator') {
+			if (
+				parent.type !== 'VariableDeclarator' ||
+				context.state.ast_type !== 'instance' ||
+				context.state.scope !== context.state.analysis.instance.scope
+			) {
 				e.props_invalid_placement(node);
 			}
+
 			break;
 
 		case '$state':
@@ -62,6 +68,12 @@ export function CallExpression(node, context) {
 				e.state_invalid_placement(node, rune);
 			}
 
+			if ((rune === '$derived' || rune === '$derived.by') && node.arguments.length !== 1) {
+				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+			} else if (rune === '$state' && node.arguments.length > 1) {
+				e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
+			}
+
 			break;
 
 		case '$effect':
@@ -73,42 +85,49 @@ export function CallExpression(node, context) {
 			if (node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 			}
+
 			break;
 
 		case '$effect.tracking':
 			if (node.arguments.length !== 0) {
 				e.rune_invalid_arguments(node, rune);
 			}
+
 			break;
 
 		case '$effect.root':
 			if (node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 			}
+
 			break;
 
 		case '$inspect':
 			if (node.arguments.length < 1) {
 				e.rune_invalid_arguments_length(node, rune, 'one or more arguments');
 			}
+
 			break;
 
 		case '$inspect().with':
 			if (node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 			}
+
 			break;
 
 		case '$state.snapshot':
 			if (node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 			}
+
 			break;
 
 		case '$state.is':
 			if (node.arguments.length !== 2) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly two arguments');
 			}
+
 			break;
 	}
 

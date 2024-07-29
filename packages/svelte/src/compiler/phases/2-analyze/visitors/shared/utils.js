@@ -129,6 +129,7 @@ export function ensure_no_module_import_conflict(node, state) {
 	const ids = extract_identifiers(node.id);
 	for (const id of ids) {
 		if (
+			state.ast_type === 'instance' &&
 			state.scope === state.analysis.instance.scope &&
 			state.analysis.module.scope.get(id.name)?.declaration_kind === 'import'
 		) {
