@@ -103,17 +103,13 @@ function serialize_style_directives(style_directives, element_id, context, is_at
 			)
 		);
 
-		const contains_call_expression = get_attribute_chunks(directive.value).some(
+		const has_call = get_attribute_chunks(directive.value).some(
 			(v) => v.type === 'ExpressionTag' && v.metadata.expression.has_call
 		);
 
-		if (!is_attributes_reactive && contains_call_expression) {
+		if (!is_attributes_reactive && has_call) {
 			state.init.push(serialize_update(update));
-		} else if (
-			is_attributes_reactive ||
-			directive.metadata.expression.has_state ||
-			contains_call_expression
-		) {
+		} else if (is_attributes_reactive || directive.metadata.expression.has_state || has_call) {
 			state.update.push(update);
 		} else {
 			state.init.push(update);
@@ -155,15 +151,11 @@ function serialize_class_directives(class_directives, element_id, context, is_at
 	for (const directive of class_directives) {
 		const value = /** @type {Expression} */ (context.visit(directive.expression));
 		const update = b.stmt(b.call('$.toggle_class', element_id, b.literal(directive.name), value));
-		const contains_call_expression = directive.expression.type === 'CallExpression';
+		const has_call = directive.expression.type === 'CallExpression';
 
-		if (!is_attributes_reactive && contains_call_expression) {
+		if (!is_attributes_reactive && has_call) {
 			state.init.push(serialize_update(update));
-		} else if (
-			is_attributes_reactive ||
-			directive.metadata.expression.has_state ||
-			contains_call_expression
-		) {
+		} else if (is_attributes_reactive || directive.metadata.expression.has_state || has_call) {
 			state.update.push(update);
 		} else {
 			state.init.push(update);
@@ -285,7 +277,7 @@ function serialize_element_spread_attributes(
 	for (const attribute of attributes) {
 		if (attribute.type === 'Attribute') {
 			const name = get_attribute_name(element, attribute, context);
-			// TODO: handle contains_call_expression
+			// TODO: handle has_call
 			const [, value] = serialize_attribute_value(attribute.value, context);
 
 			if (
@@ -494,7 +486,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 	const name = get_attribute_name(element, attribute, context);
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
-	let [contains_call_expression, value] = serialize_attribute_value(attribute.value, context);
+	let [has_call, value] = serialize_attribute_value(attribute.value, context);
 
 	// The foreign namespace doesn't have any special handling, everything goes through the attr function
 	if (context.state.metadata.namespace === 'foreign') {
@@ -538,7 +530,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 	}
 
 	if (attribute.metadata.expression.has_state) {
-		if (contains_call_expression) {
+		if (has_call) {
 			state.init.push(serialize_update(update));
 		} else {
 			state.update.push(update);
@@ -560,12 +552,12 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 function serialize_custom_element_attribute_update_assignment(node_id, attribute, context) {
 	const state = context.state;
 	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
-	let [contains_call_expression, value] = serialize_attribute_value(attribute.value, context);
+	let [has_call, value] = serialize_attribute_value(attribute.value, context);
 
 	const update = b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), value));
 
 	if (attribute.metadata.expression.has_state) {
-		if (contains_call_expression) {
+		if (has_call) {
 			state.init.push(serialize_update(update));
 		} else {
 			state.update.push(update);
@@ -1430,11 +1422,11 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 
 			state.template.push(' ');
 
-			const [contains_call_expression, value] = serialize_template_literal(sequence, visit, state);
+			const [has_call, value] = serialize_template_literal(sequence, visit, state);
 
 			const update = b.stmt(b.call('$.set_text', text_id, value));
 
-			if (contains_call_expression && !within_bound_contenteditable) {
+			if (has_call && !within_bound_contenteditable) {
 				state.init.push(serialize_update(update));
 			} else if (
 				sequence.some(
@@ -1525,7 +1517,7 @@ function get_node_id(expression, state, name) {
 /**
  * @param {Attribute['value']} value
  * @param {ComponentContext} context
- * @returns {[contains_call_expression: boolean, Expression]}
+ * @returns {[has_call: boolean, Expression]}
  */
 function serialize_attribute_value(value, context) {
 	if (value === true) {
@@ -1560,7 +1552,7 @@ function serialize_template_literal(values, visit, state) {
 
 	/** @type {Expression[]} */
 	const expressions = [];
-	let contains_call_expression = false;
+	let has_call = false;
 	let contains_multiple_call_expression = false;
 	quasis.push(b.quasi(''));
 
@@ -1568,10 +1560,10 @@ function serialize_template_literal(values, visit, state) {
 		const node = values[i];
 
 		if (node.type === 'ExpressionTag' && node.metadata.expression.has_call) {
-			if (contains_call_expression) {
+			if (has_call) {
 				contains_multiple_call_expression = true;
 			}
-			contains_call_expression = true;
+			has_call = true;
 		}
 	}
 
@@ -1608,7 +1600,7 @@ function serialize_template_literal(values, visit, state) {
 	}
 
 	// TODO instead of this tuple, return a `{ dynamic, complex, value }` object. will DRY stuff out
-	return [contains_call_expression, b.template(quasis, expressions)];
+	return [has_call, b.template(quasis, expressions)];
 }
 
 /** @type {ComponentVisitors} */
