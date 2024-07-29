@@ -233,8 +233,7 @@ export function serialize_inline_component(node, expression, context) {
 	}
 
 	const dynamic =
-		node.type === 'SvelteComponent' ||
-		(node.type === 'Component' && node.metadata.expression.has_state);
+		node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic);
 
 	if (custom_css_props.length > 0) {
 		context.state.template.push(

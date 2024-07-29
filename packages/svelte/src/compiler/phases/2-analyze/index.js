@@ -1540,7 +1540,7 @@ const common_visitors = {
 			node.name.includes('.') ? node.name.slice(0, node.name.indexOf('.')) : node.name
 		);
 
-		node.metadata.expression.has_state = binding !== null && binding.kind !== 'normal';
+		node.metadata.dynamic = binding !== null && binding.kind !== 'normal';
 	},
 	RenderTag(node, context) {
 		context.next({ ...context.state, render_tag: node });

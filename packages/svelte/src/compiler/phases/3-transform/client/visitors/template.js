@@ -3127,7 +3127,7 @@ export const template_visitors = {
 		}
 	},
 	Component(node, context) {
-		if (node.metadata.expression.has_state) {
+		if (node.metadata.dynamic) {
 			// Handle dynamic references to what seems like static inline components
 			const component = serialize_inline_component(node, '$$component', context, b.id('$$anchor'));
 			context.state.init.push(

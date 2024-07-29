@@ -274,7 +274,7 @@ interface BaseElement extends BaseNode {
 export interface Component extends BaseElement {
 	type: 'Component';
 	metadata: {
-		expression: ExpressionMetadata;
+		dynamic: boolean;
 	};
 }
 

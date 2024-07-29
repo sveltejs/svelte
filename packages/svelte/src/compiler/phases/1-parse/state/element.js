@@ -163,7 +163,7 @@ export default function element(parser) {
 					fragment: create_fragment(true),
 					parent: null,
 					metadata: {
-						expression: create_expression_metadata()
+						// unpopulated at first, differs between types
 					}
 				});
 
