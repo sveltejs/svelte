@@ -1,5 +1,5 @@
 /** @import { Expression, Identifier, VariableDeclarator } from 'estree' */
-/** @import { Attribute, Component, ElementLike, Fragment, RegularElement, SvelteComponent, SvelteElement, SvelteSelf, TransitionDirective } from '#compiler' */
+/** @import { Attribute, Component, ElementLike, SvelteComponent, SvelteElement, SvelteSelf, TransitionDirective } from '#compiler' */
 /** @import { AnalysisState, Context, Visitors } from './types.js' */
 import is_reference from 'is-reference';
 import * as e from '../../errors.js';
@@ -8,75 +8,40 @@ import {
 	get_attribute_expression,
 	is_expression_attribute,
 	is_text_attribute,
-	object,
 	unwrap_optional
 } from '../../utils/ast.js';
 import * as w from '../../warnings.js';
-import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
-import { binding_properties } from '../bindings.js';
-import {
-	ContentEditableBindings,
-	EventModifiers,
-	Runes,
-	SVGElements,
-	VoidElements
-} from '../constants.js';
-import { is_custom_element_node } from '../nodes.js';
-import {
-	regex_illegal_attribute_character,
-	regex_not_whitespace,
-	regex_only_whitespaces
-} from '../patterns.js';
+import { Runes } from '../constants.js';
+import { regex_not_whitespace } from '../patterns.js';
 import { get_rune } from '../scope.js';
 import { merge } from '../visitors.js';
 import { a11y_validators } from './visitors/shared/a11y.js';
-import {
-	is_tag_valid_with_ancestor,
-	is_tag_valid_with_parent
-} from '../../../html-tree-validation.js';
+import { is_tag_valid_with_parent } from '../../../html-tree-validation.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
+import { BindDirective } from './visitors/BindDirective.js';
 import { CallExpression } from './visitors/CallExpression.js';
+import { ConstTag } from './visitors/ConstTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
+import { ExportDefaultDeclaration } from './visitors/ExportDefaultDeclaration.js';
 import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
 import { ImportDeclaration } from './visitors/ImportDeclaration.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
+import { LetDirective } from './visitors/LetDirective.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
+import { RegularElement } from './visitors/RegularElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import {
 	validate_assignment,
 	validate_block_not_empty,
-	validate_no_const_assignment,
 	validate_opening_tag
 } from './visitors/shared/utils.js';
-
-/**
- * @param {Attribute} attribute
- * @param {ElementLike} parent
- */
-function validate_attribute(attribute, parent) {
-	if (
-		Array.isArray(attribute.value) &&
-		attribute.value.length === 1 &&
-		attribute.value[0].type === 'ExpressionTag' &&
-		(parent.type === 'Component' ||
-			parent.type === 'SvelteComponent' ||
-			parent.type === 'SvelteSelf' ||
-			(parent.type === 'RegularElement' && is_custom_element_node(parent)))
-	) {
-		w.attribute_quoted(attribute);
-	}
-
-	if (attribute.value === true || !Array.isArray(attribute.value) || attribute.value.length === 1) {
-		return;
-	}
-
-	const is_quoted = attribute.value.at(-1)?.end !== attribute.end;
-
-	if (!is_quoted) {
-		e.attribute_unquoted_sequence(attribute);
-	}
-}
+import {
+	validate_attribute,
+	validate_attribute_name,
+	validate_slot_attribute
+} from './visitors/shared/attribute.js';
+import { validate_element } from './visitors/shared/element.js';
 
 /**
  * @param {Component | SvelteComponent | SvelteSelf} node
@@ -133,231 +98,6 @@ function validate_component(node, context) {
 	});
 }
 
-const react_attributes = new Map([
-	['className', 'class'],
-	['htmlFor', 'for']
-]);
-
-/**
- * @param {RegularElement | SvelteElement} node
- * @param {Context} context
- */
-function validate_element(node, context) {
-	let has_animate_directive = false;
-
-	/** @type {TransitionDirective | null} */
-	let in_transition = null;
-
-	/** @type {TransitionDirective | null} */
-	let out_transition = null;
-
-	for (const attribute of node.attributes) {
-		if (attribute.type === 'Attribute') {
-			const is_expression = is_expression_attribute(attribute);
-
-			if (context.state.analysis.runes) {
-				validate_attribute(attribute, node);
-
-				if (is_expression) {
-					const expression = get_attribute_expression(attribute);
-					if (expression.type === 'SequenceExpression') {
-						let i = /** @type {number} */ (expression.start);
-						while (--i > 0) {
-							const char = context.state.analysis.source[i];
-							if (char === '(') break; // parenthesized sequence expressions are ok
-							if (char === '{') e.attribute_invalid_sequence_expression(expression);
-						}
-					}
-				}
-			}
-
-			if (regex_illegal_attribute_character.test(attribute.name)) {
-				e.attribute_invalid_name(attribute, attribute.name);
-			}
-
-			if (attribute.name.startsWith('on') && attribute.name.length > 2) {
-				if (!is_expression) {
-					e.attribute_invalid_event_handler(attribute);
-				}
-
-				const value = get_attribute_expression(attribute);
-				if (
-					value.type === 'Identifier' &&
-					value.name === attribute.name &&
-					!context.state.scope.get(value.name)
-				) {
-					w.attribute_global_event_reference(attribute, attribute.name);
-				}
-			}
-
-			if (attribute.name === 'slot') {
-				/** @type {RegularElement | SvelteElement | Component | SvelteComponent | SvelteSelf | undefined} */
-				validate_slot_attribute(context, attribute);
-			}
-
-			if (attribute.name === 'is' && context.state.options.namespace !== 'foreign') {
-				w.attribute_avoid_is(attribute);
-			}
-
-			const correct_name = react_attributes.get(attribute.name);
-			if (correct_name) {
-				w.attribute_invalid_property_name(attribute, attribute.name, correct_name);
-			}
-
-			validate_attribute_name(attribute);
-		} else if (attribute.type === 'AnimateDirective') {
-			const parent = context.path.at(-2);
-			if (parent?.type !== 'EachBlock') {
-				e.animation_invalid_placement(attribute);
-			} else if (!parent.key) {
-				e.animation_missing_key(attribute);
-			} else if (
-				parent.body.nodes.filter(
-					(n) =>
-						n.type !== 'Comment' &&
-						n.type !== 'ConstTag' &&
-						(n.type !== 'Text' || n.data.trim() !== '')
-				).length > 1
-			) {
-				e.animation_invalid_placement(attribute);
-			}
-
-			if (has_animate_directive) {
-				e.animation_duplicate(attribute);
-			} else {
-				has_animate_directive = true;
-			}
-		} else if (attribute.type === 'TransitionDirective') {
-			const existing = /** @type {TransitionDirective | null} */ (
-				(attribute.intro && in_transition) || (attribute.outro && out_transition)
-			);
-
-			if (existing) {
-				const a = existing.intro ? (existing.outro ? 'transition' : 'in') : 'out';
-				const b = attribute.intro ? (attribute.outro ? 'transition' : 'in') : 'out';
-
-				if (a === b) {
-					e.transition_duplicate(attribute, a);
-				} else {
-					e.transition_conflict(attribute, a, b);
-				}
-			}
-
-			if (attribute.intro) in_transition = attribute;
-			if (attribute.outro) out_transition = attribute;
-		} else if (attribute.type === 'OnDirective') {
-			let has_passive_modifier = false;
-			let conflicting_passive_modifier = '';
-			for (const modifier of attribute.modifiers) {
-				if (!EventModifiers.includes(modifier)) {
-					const list = `${EventModifiers.slice(0, -1).join(', ')} or ${EventModifiers.at(-1)}`;
-					e.event_handler_invalid_modifier(attribute, list);
-				}
-				if (modifier === 'passive') {
-					has_passive_modifier = true;
-				} else if (modifier === 'nonpassive' || modifier === 'preventDefault') {
-					conflicting_passive_modifier = modifier;
-				}
-				if (has_passive_modifier && conflicting_passive_modifier) {
-					e.event_handler_invalid_modifier_combination(
-						attribute,
-						'passive',
-						conflicting_passive_modifier
-					);
-				}
-			}
-		}
-	}
-}
-
-/**
- * @param {Attribute} attribute
- */
-function validate_attribute_name(attribute) {
-	if (
-		attribute.name.includes(':') &&
-		!attribute.name.startsWith('xmlns:') &&
-		!attribute.name.startsWith('xlink:') &&
-		!attribute.name.startsWith('xml:')
-	) {
-		w.attribute_illegal_colon(attribute);
-	}
-}
-
-/**
- * @param {Context} context
- * @param {Attribute} attribute
- * @param {boolean} is_component
- */
-function validate_slot_attribute(context, attribute, is_component = false) {
-	const parent = context.path.at(-2);
-	let owner = undefined;
-
-	if (parent?.type === 'SnippetBlock') {
-		if (!is_text_attribute(attribute)) {
-			e.slot_attribute_invalid(attribute);
-		}
-		return;
-	}
-
-	let i = context.path.length;
-	while (i--) {
-		const ancestor = context.path[i];
-		if (
-			!owner &&
-			(ancestor.type === 'Component' ||
-				ancestor.type === 'SvelteComponent' ||
-				ancestor.type === 'SvelteSelf' ||
-				ancestor.type === 'SvelteElement' ||
-				(ancestor.type === 'RegularElement' && is_custom_element_node(ancestor)))
-		) {
-			owner = ancestor;
-		}
-	}
-
-	if (owner) {
-		if (!is_text_attribute(attribute)) {
-			e.slot_attribute_invalid(attribute);
-		}
-
-		if (
-			owner.type === 'Component' ||
-			owner.type === 'SvelteComponent' ||
-			owner.type === 'SvelteSelf'
-		) {
-			if (owner !== parent) {
-				e.slot_attribute_invalid_placement(attribute);
-			}
-
-			const name = attribute.value[0].data;
-
-			if (context.state.component_slots.has(name)) {
-				e.slot_attribute_duplicate(attribute, name, owner.name);
-			}
-
-			context.state.component_slots.add(name);
-
-			if (name === 'default') {
-				for (const node of owner.fragment.nodes) {
-					if (node.type === 'Text' && regex_only_whitespaces.test(node.data)) {
-						continue;
-					}
-
-					if (node.type === 'RegularElement' || node.type === 'SvelteFragment') {
-						if (node.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')) {
-							continue;
-						}
-					}
-
-					e.slot_default_duplicate(node);
-				}
-			}
-		}
-	} else if (!is_component) {
-		e.slot_attribute_invalid_placement(attribute);
-	}
-}
-
 /**
  * @type {Visitors}
  */
@@ -365,304 +105,12 @@ const validation = {
 	ExpressionStatement,
 	MemberExpression,
 	AssignmentExpression,
-	BindDirective(node, context) {
-		validate_no_const_assignment(node, node.expression, context.state.scope, true);
-
-		const assignee = node.expression;
-		const left = object(assignee);
-
-		if (left === null) {
-			e.bind_invalid_expression(node);
-		}
-
-		const binding = context.state.scope.get(left.name);
-
-		if (assignee.type === 'Identifier') {
-			// reassignment
-			if (
-				node.name !== 'this' && // bind:this also works for regular variables
-				(!binding ||
-					(binding.kind !== 'state' &&
-						binding.kind !== 'frozen_state' &&
-						binding.kind !== 'prop' &&
-						binding.kind !== 'bindable_prop' &&
-						binding.kind !== 'each' &&
-						binding.kind !== 'store_sub' &&
-						!binding.mutated))
-			) {
-				e.bind_invalid_value(node.expression);
-			}
-
-			if (binding?.kind === 'derived') {
-				e.constant_binding(node.expression, 'derived state');
-			}
-
-			if (context.state.analysis.runes && binding?.kind === 'each') {
-				e.each_item_invalid_assignment(node);
-			}
-
-			if (binding?.kind === 'snippet') {
-				e.snippet_parameter_assignment(node);
-			}
-		}
-
-		if (node.name === 'group') {
-			if (!binding) {
-				throw new Error('Cannot find declaration for bind:group');
-			}
-		}
-
-		if (binding?.kind === 'each' && binding.metadata?.inside_rest) {
-			w.bind_invalid_each_rest(binding.node, binding.node.name);
-		}
-
-		const parent = context.path.at(-1);
-
-		if (
-			parent?.type === 'RegularElement' ||
-			parent?.type === 'SvelteElement' ||
-			parent?.type === 'SvelteWindow' ||
-			parent?.type === 'SvelteDocument' ||
-			parent?.type === 'SvelteBody'
-		) {
-			if (context.state.options.namespace === 'foreign' && node.name !== 'this') {
-				e.bind_invalid_name(node, node.name, 'Foreign elements only support `bind:this`');
-			}
-
-			if (node.name in binding_properties) {
-				const property = binding_properties[node.name];
-				if (property.valid_elements && !property.valid_elements.includes(parent.name)) {
-					e.bind_invalid_target(
-						node,
-						node.name,
-						property.valid_elements.map((valid_element) => `<${valid_element}>`).join(', ')
-					);
-				}
-
-				if (property.invalid_elements && property.invalid_elements.includes(parent.name)) {
-					const valid_bindings = Object.entries(binding_properties)
-						.filter(([_, binding_property]) => {
-							return (
-								binding_property.valid_elements?.includes(parent.name) ||
-								(!binding_property.valid_elements &&
-									!binding_property.invalid_elements?.includes(parent.name))
-							);
-						})
-						.map(([property_name]) => property_name)
-						.sort();
-					e.bind_invalid_name(
-						node,
-						node.name,
-						`Possible bindings for <${parent.name}> are ${valid_bindings.join(', ')}`
-					);
-				}
-
-				if (parent.name === 'input' && node.name !== 'this') {
-					const type = /** @type {Attribute | undefined} */ (
-						parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'type')
-					);
-					if (type && !is_text_attribute(type)) {
-						if (node.name !== 'value' || type.value === true) {
-							e.attribute_invalid_type(type);
-						}
-						return; // bind:value can handle dynamic `type` attributes
-					}
-
-					if (node.name === 'checked' && type?.value[0].data !== 'checkbox') {
-						e.bind_invalid_target(node, node.name, '<input type="checkbox">');
-					}
-
-					if (node.name === 'files' && type?.value[0].data !== 'file') {
-						e.bind_invalid_target(node, node.name, '<input type="file">');
-					}
-				}
-
-				if (parent.name === 'select' && node.name !== 'this') {
-					const multiple = parent.attributes.find(
-						(a) =>
-							a.type === 'Attribute' &&
-							a.name === 'multiple' &&
-							!is_text_attribute(a) &&
-							a.value !== true
-					);
-					if (multiple) {
-						e.attribute_invalid_multiple(multiple);
-					}
-				}
-
-				if (node.name === 'offsetWidth' && SVGElements.includes(parent.name)) {
-					e.bind_invalid_target(
-						node,
-						node.name,
-						`non-<svg> elements. Use 'clientWidth' for <svg> instead`
-					);
-				}
-
-				if (ContentEditableBindings.includes(node.name)) {
-					const contenteditable = /** @type {Attribute} */ (
-						parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'contenteditable')
-					);
-					if (!contenteditable) {
-						e.attribute_contenteditable_missing(node);
-					} else if (!is_text_attribute(contenteditable) && contenteditable.value !== true) {
-						e.attribute_contenteditable_dynamic(contenteditable);
-					}
-				}
-			} else {
-				const match = fuzzymatch(node.name, Object.keys(binding_properties));
-				if (match) {
-					const property = binding_properties[match];
-					if (!property.valid_elements || property.valid_elements.includes(parent.name)) {
-						e.bind_invalid_name(node, node.name, `Did you mean '${match}'?`);
-					}
-				}
-				e.bind_invalid_name(node, node.name);
-			}
-		}
-	},
-	ExportDefaultDeclaration(node) {
-		e.module_illegal_default_export(node);
-	},
-	ConstTag(node, context) {
-		const parent = context.path.at(-1);
-		const grand_parent = context.path.at(-2);
-		if (
-			parent?.type !== 'Fragment' ||
-			(grand_parent?.type !== 'IfBlock' &&
-				grand_parent?.type !== 'SvelteFragment' &&
-				grand_parent?.type !== 'Component' &&
-				grand_parent?.type !== 'SvelteComponent' &&
-				grand_parent?.type !== 'EachBlock' &&
-				grand_parent?.type !== 'AwaitBlock' &&
-				grand_parent?.type !== 'SnippetBlock' &&
-				((grand_parent?.type !== 'RegularElement' && grand_parent?.type !== 'SvelteElement') ||
-					!grand_parent.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')))
-		) {
-			e.const_tag_invalid_placement(node);
-		}
-	},
-	ImportDeclaration(node, context) {
-		if (node.source.value === 'svelte' && context.state.analysis.runes) {
-			for (const specifier of node.specifiers) {
-				if (specifier.type === 'ImportSpecifier') {
-					if (
-						specifier.imported.name === 'beforeUpdate' ||
-						specifier.imported.name === 'afterUpdate'
-					) {
-						e.runes_mode_invalid_import(specifier, specifier.imported.name);
-					}
-				}
-			}
-		}
-	},
-	LetDirective(node, context) {
-		const parent = context.path.at(-1);
-		if (
-			parent === undefined ||
-			(parent.type !== 'Component' &&
-				parent.type !== 'RegularElement' &&
-				parent.type !== 'SlotElement' &&
-				parent.type !== 'SvelteElement' &&
-				parent.type !== 'SvelteComponent' &&
-				parent.type !== 'SvelteSelf' &&
-				parent.type !== 'SvelteFragment')
-		) {
-			e.let_directive_invalid_placement(node);
-		}
-	},
-	RegularElement(node, context) {
-		if (node.name === 'textarea' && node.fragment.nodes.length > 0) {
-			for (const attribute of node.attributes) {
-				if (attribute.type === 'Attribute' && attribute.name === 'value') {
-					e.textarea_invalid_content(node);
-				}
-			}
-		}
-
-		const binding = context.state.scope.get(node.name);
-		if (
-			binding !== null &&
-			binding.declaration_kind === 'import' &&
-			binding.references.length === 0
-		) {
-			w.component_name_lowercase(node, node.name);
-		}
-
-		validate_element(node, context);
-
-		if (context.state.parent_element) {
-			let past_parent = false;
-			let only_warn = false;
-
-			for (let i = context.path.length - 1; i >= 0; i--) {
-				const ancestor = context.path[i];
-
-				if (
-					ancestor.type === 'IfBlock' ||
-					ancestor.type === 'EachBlock' ||
-					ancestor.type === 'AwaitBlock' ||
-					ancestor.type === 'KeyBlock'
-				) {
-					// We're creating a separate template string inside blocks, which means client-side this would work
-					only_warn = true;
-				}
-
-				if (!past_parent) {
-					if (
-						ancestor.type === 'RegularElement' &&
-						ancestor.name === context.state.parent_element
-					) {
-						if (!is_tag_valid_with_parent(node.name, context.state.parent_element)) {
-							if (only_warn) {
-								w.node_invalid_placement_ssr(
-									node,
-									`\`<${node.name}>\``,
-									context.state.parent_element
-								);
-							} else {
-								e.node_invalid_placement(node, `\`<${node.name}>\``, context.state.parent_element);
-							}
-						}
-
-						past_parent = true;
-					}
-				} else if (ancestor.type === 'RegularElement') {
-					if (!is_tag_valid_with_ancestor(node.name, ancestor.name)) {
-						if (only_warn) {
-							w.node_invalid_placement_ssr(node, `\`<${node.name}>\``, ancestor.name);
-						} else {
-							e.node_invalid_placement(node, `\`<${node.name}>\``, ancestor.name);
-						}
-					}
-				} else if (
-					ancestor.type === 'Component' ||
-					ancestor.type === 'SvelteComponent' ||
-					ancestor.type === 'SvelteElement' ||
-					ancestor.type === 'SvelteSelf' ||
-					ancestor.type === 'SnippetBlock'
-				) {
-					break;
-				}
-			}
-		}
-
-		// Strip off any namespace from the beginning of the node name.
-		const node_name = node.name.replace(/[a-zA-Z-]*:/g, '');
-
-		if (
-			context.state.analysis.source[node.end - 2] === '/' &&
-			context.state.options.namespace !== 'foreign' &&
-			!VoidElements.includes(node_name) &&
-			!SVGElements.includes(node_name)
-		) {
-			w.element_invalid_self_closing_tag(node, node.name);
-		}
-
-		context.next({
-			...context.state,
-			parent_element: node.name
-		});
-	},
+	BindDirective,
+	ExportDefaultDeclaration,
+	ConstTag,
+	ImportDeclaration,
+	LetDirective,
+	RegularElement,
 	RenderTag(node, context) {
 		const callee = unwrap_optional(node.expression).callee;
 
