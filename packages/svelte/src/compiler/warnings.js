@@ -96,6 +96,7 @@ export const codes = [
 	"options_renamed_ssr_dom",
 	"derived_iife",
 	"export_let_unused",
+	"legacy_component_creation",
 	"non_reactive_update",
 	"perf_avoid_inline_class",
 	"perf_avoid_nested_class",
@@ -584,6 +585,14 @@ export function derived_iife(node) {
  */
 export function export_let_unused(node, name) {
 	w(node, "export_let_unused", `Component has unused export property '${name}'. If it is for external reference only, please consider using \`export const ${name}\``);
+}
+
+/**
+ * Svelte 5 components are no longer classes. Instantiate them using `mount` or `hydrate` (imported from 'svelte') instead.
+ * @param {null | NodeLike} node
+ */
+export function legacy_component_creation(node) {
+	w(node, "legacy_component_creation", "Svelte 5 components are no longer classes. Instantiate them using `mount` or `hydrate` (imported from 'svelte') instead.");
 }
 
 /**
