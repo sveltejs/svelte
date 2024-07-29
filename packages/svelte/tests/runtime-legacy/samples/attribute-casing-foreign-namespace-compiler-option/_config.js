@@ -1,7 +1,9 @@
 import { test } from '../../test';
 
 export default test({
-	skip: true, // TODO: needs fixing
+	// TODO: needs fixing. Can only be fixed once we also support document.createElementNS-style creation of elements
+	// because the $.template('...') approach has no option to preserve attribute name casing
+	skip: true,
 
 	html: `
 		<page horizontalAlignment="center">
