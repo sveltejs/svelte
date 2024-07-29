@@ -366,7 +366,11 @@ const validation = {
 		if (
 			node.expression.type === 'NewExpression' &&
 			node.expression.callee.type === 'Identifier' &&
-			node.expression.arguments.length === 1
+			node.expression.arguments.length === 1 &&
+			node.expression.arguments[0].type === 'ObjectExpression' &&
+			node.expression.arguments[0].properties.some(
+				(p) => p.type === 'Property' && p.key.type === 'Identifier' && p.key.name === 'target'
+			)
 		) {
 			const binding = state.scope.get(node.expression.callee.name);
 			if (binding?.kind === 'normal' && binding.declaration_kind === 'import') {
