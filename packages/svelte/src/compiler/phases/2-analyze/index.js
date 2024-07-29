@@ -1264,6 +1264,14 @@ const common_visitors = {
 
 		const binding = context.state.scope.get(node.name);
 
+		if (binding && context.state.expression) {
+			context.state.expression.dependencies.add(binding);
+
+			if (binding.kind !== 'normal') {
+				context.state.expression.has_state = true;
+			}
+		}
+
 		// if no binding, means some global variable
 		if (binding && binding.kind !== 'normal') {
 			if (context.state.expression) {
