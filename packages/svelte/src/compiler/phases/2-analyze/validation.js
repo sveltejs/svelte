@@ -1,6 +1,5 @@
-/** @import { AssignmentExpression, CallExpression, Expression, Identifier, Node, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
+/** @import { Expression, Identifier, VariableDeclarator } from 'estree' */
 /** @import { Attribute, Component, ElementLike, Fragment, RegularElement, SvelteComponent, SvelteElement, SvelteNode, SvelteSelf, TransitionDirective } from '#compiler' */
-/** @import { NodeLike } from '../../errors.js' */
 /** @import { AnalysisState, Context, Visitors } from './types.js' */
 import is_reference from 'is-reference';
 import * as e from '../../errors.js';
@@ -36,10 +35,15 @@ import {
 	is_tag_valid_with_ancestor,
 	is_tag_valid_with_parent
 } from '../../../html-tree-validation.js';
+import { AssignmentExpression } from './visitors/AssignmentExpression.js';
+import { CallExpression } from './visitors/CallExpression.js';
 import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
 import { ImportDeclaration } from './visitors/ImportDeclaration.js';
+import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
+import { UpdateExpression } from './visitors/UpdateExpression.js';
+import { validate_assignment, validate_no_const_assignment } from './visitors/shared/utils.js';
 
 /**
  * @param {Attribute} attribute
@@ -368,9 +372,7 @@ function validate_block_not_empty(node, context) {
 const validation = {
 	ExpressionStatement,
 	MemberExpression,
-	AssignmentExpression(node, context) {
-		validate_assignment(node, node.left, context.state);
-	},
+	AssignmentExpression,
 	BindDirective(node, context) {
 		validate_no_const_assignment(node, node.expression, context.state.scope, true);
 
@@ -823,9 +825,7 @@ const validation = {
 			e.title_invalid_content(child);
 		}
 	},
-	UpdateExpression(node, context) {
-		validate_assignment(node, node.argument, context.state);
-	},
+	UpdateExpression,
 	ExpressionTag(node, context) {
 		if (!node.parent) return;
 		if (context.state.parent_element) {
@@ -859,106 +859,11 @@ export const validation_legacy = merge(validation, a11y_validators, {
 		if (parent && parent.type === 'ConstTag') return;
 		validate_assignment(node, node.left, state);
 	},
-	LabeledStatement(node, { path, state }) {
-		if (
-			node.label.name === '$' &&
-			(state.ast_type !== 'instance' || /** @type {SvelteNode} */ (path.at(-1)).type !== 'Program')
-		) {
-			w.reactive_declaration_invalid_placement(node);
-		}
-	},
+	LabeledStatement,
 	UpdateExpression(node, { state }) {
 		validate_assignment(node, node.argument, state);
 	}
 });
-
-/**
- * @param {CallExpression} node
- * @param {Scope} scope
- * @param {SvelteNode[]} path
- * @returns
- */
-function validate_call_expression(node, scope, path) {
-	const rune = get_rune(node, scope);
-	if (rune === null) return;
-
-	const parent = /** @type {SvelteNode} */ (get_parent(path, -1));
-
-	if (rune === '$props') {
-		if (parent.type === 'VariableDeclarator') return;
-		e.props_invalid_placement(node);
-	}
-
-	if (rune === '$bindable') {
-		if (parent.type === 'AssignmentPattern' && path.at(-3)?.type === 'ObjectPattern') {
-			const declarator = path.at(-4);
-			if (
-				declarator?.type === 'VariableDeclarator' &&
-				get_rune(declarator.init, scope) === '$props'
-			) {
-				return;
-			}
-		}
-		e.bindable_invalid_location(node);
-	}
-
-	if (
-		rune === '$state' ||
-		rune === '$state.frozen' ||
-		rune === '$derived' ||
-		rune === '$derived.by'
-	) {
-		if (parent.type === 'VariableDeclarator') return;
-		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
-		e.state_invalid_placement(node, rune);
-	}
-
-	if (rune === '$effect' || rune === '$effect.pre') {
-		if (parent.type !== 'ExpressionStatement') {
-			e.effect_invalid_placement(node);
-		}
-
-		if (node.arguments.length !== 1) {
-			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
-		}
-	}
-
-	if (rune === '$effect.tracking') {
-		if (node.arguments.length !== 0) {
-			e.rune_invalid_arguments(node, rune);
-		}
-	}
-
-	if (rune === '$effect.root') {
-		if (node.arguments.length !== 1) {
-			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
-		}
-	}
-
-	if (rune === '$inspect') {
-		if (node.arguments.length < 1) {
-			e.rune_invalid_arguments_length(node, rune, 'one or more arguments');
-		}
-	}
-
-	if (rune === '$inspect().with') {
-		if (node.arguments.length !== 1) {
-			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
-		}
-	}
-
-	if (rune === '$state.snapshot') {
-		if (node.arguments.length !== 1) {
-			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
-		}
-	}
-
-	if (rune === '$state.is') {
-		if (node.arguments.length !== 2) {
-			e.rune_invalid_arguments_length(node, rune, 'exactly two arguments');
-		}
-	}
-}
 
 /**
  * @param {VariableDeclarator} node
@@ -982,19 +887,14 @@ function ensure_no_module_import_conflict(node, state) {
 export const validation_runes_js = {
 	ImportDeclaration,
 	ExportNamedDeclaration,
-	CallExpression(node, { state, path }) {
-		if (get_rune(node, state.scope) === '$host') {
-			e.host_invalid_placement(node);
-		}
-		validate_call_expression(node, state.scope, path);
-	},
+	CallExpression,
 	VariableDeclarator(node, { state }) {
 		const init = node.init;
 		const rune = get_rune(init, state.scope);
 
 		if (rune === null) return;
 
-		const args = /** @type {CallExpression} */ (init).arguments;
+		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
 		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
 			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
@@ -1087,50 +987,6 @@ export const validation_runes_js = {
 };
 
 /**
- * @param {NodeLike} node
- * @param {Pattern | Expression} argument
- * @param {Scope} scope
- * @param {boolean} is_binding
- */
-function validate_no_const_assignment(node, argument, scope, is_binding) {
-	if (argument.type === 'ArrayPattern') {
-		for (const element of argument.elements) {
-			if (element) {
-				validate_no_const_assignment(node, element, scope, is_binding);
-			}
-		}
-	} else if (argument.type === 'ObjectPattern') {
-		for (const element of argument.properties) {
-			if (element.type === 'Property') {
-				validate_no_const_assignment(node, element.value, scope, is_binding);
-			}
-		}
-	} else if (argument.type === 'Identifier') {
-		const binding = scope.get(argument.name);
-		if (binding?.declaration_kind === 'const' && binding.kind !== 'each') {
-			// e.invalid_const_assignment(
-			// 	node,
-			// 	is_binding,
-			// 	// This takes advantage of the fact that we don't assign initial for let directives and then/catch variables.
-			// 	// If we start doing that, we need another property on the binding to differentiate, or give up on the more precise error message.
-			// 	binding.kind !== 'state' &&
-			// 		binding.kind !== 'frozen_state' &&
-			// 		(binding.kind !== 'normal' || !binding.initial)
-			// );
-
-			// TODO have a more specific error message for assignments to things like `{:then foo}`
-			const thing = 'constant';
-
-			if (is_binding) {
-				e.constant_binding(node, thing);
-			} else {
-				e.constant_assignment(node, thing);
-			}
-		}
-	}
-}
-
-/**
  * Validates that the opening of a control flow block is `{` immediately followed by the expected character.
  * In legacy mode whitespace is allowed inbetween. TODO remove once legacy mode is gone and move this into parser instead.
  * @param {{start: number; end: number}} node
@@ -1144,70 +1000,11 @@ function validate_opening_tag(node, state, expected) {
 	}
 }
 
-/**
- * @param {AssignmentExpression | UpdateExpression} node
- * @param {Pattern | Expression} argument
- * @param {AnalysisState} state
- */
-function validate_assignment(node, argument, state) {
-	validate_no_const_assignment(node, argument, state.scope, false);
-
-	if (argument.type === 'Identifier') {
-		const binding = state.scope.get(argument.name);
-
-		if (state.analysis.runes) {
-			if (binding?.kind === 'derived') {
-				e.constant_assignment(node, 'derived state');
-			}
-
-			if (binding?.kind === 'each') {
-				e.each_item_invalid_assignment(node);
-			}
-		}
-
-		if (binding?.kind === 'snippet') {
-			e.snippet_parameter_assignment(node);
-		}
-	}
-
-	let object = /** @type {Expression | Super} */ (argument);
-
-	/** @type {Expression | PrivateIdentifier | null} */
-	let property = null;
-
-	while (object.type === 'MemberExpression') {
-		property = object.property;
-		object = object.object;
-	}
-
-	if (object.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
-		if (state.private_derived_state.includes(property.name)) {
-			e.constant_assignment(node, 'derived state');
-		}
-	}
-}
-
 export const validation_runes = merge(validation, a11y_validators, {
 	ImportDeclaration,
-	LabeledStatement(node, { path }) {
-		if (node.label.name !== '$' || path.at(-1)?.type !== 'Program') return;
-		e.legacy_reactive_statement_invalid(node);
-	},
+	LabeledStatement,
 	ExportNamedDeclaration,
-	CallExpression(node, { state, path }) {
-		const rune = get_rune(node, state.scope);
-		if (rune === '$bindable' && node.arguments.length > 1) {
-			e.rune_invalid_arguments_length(node, '$bindable', 'zero or one arguments');
-		} else if (rune === '$host') {
-			if (node.arguments.length > 0) {
-				e.rune_invalid_arguments(node, '$host');
-			} else if (state.ast_type === 'module' || !state.analysis.custom_element) {
-				e.host_invalid_placement(node);
-			}
-		}
-
-		validate_call_expression(node, state.scope, path);
-	},
+	CallExpression,
 	EachBlock(node, { next, state }) {
 		validate_opening_tag(node, state, '#');
 
@@ -1273,7 +1070,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 
 		if (rune === null) return;
 
-		const args = /** @type {CallExpression} */ (init).arguments;
+		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
 		// TODO some of this is duplicated with above, seems off
 		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
