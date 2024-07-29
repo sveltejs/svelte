@@ -1,4 +1,6 @@
-
+<script>
+	let promise = Promise.resolve();
+</script>
 
 <style>
 	.a ~ .b { color: green; }
@@ -10,15 +12,14 @@
 	.a ~ .e { color: green; }
 
 	/* no match */
-	.b ~ .c { color: red; }
-	.c ~ .d { color: red; }
-	.b ~ .d { color: red; }
+	.b ~ .c { color: green; }
+	.c ~ .d { color: green; }
+	.b ~ .d { color: green; }
 </style>
 
 <div class="a"></div>
 
-<!-- non-promise, so that something renders initially -->
-{#await true}
+{#await promise}
 	<div class="b"></div>
 {:then value}
 	<div class="c"></div>
