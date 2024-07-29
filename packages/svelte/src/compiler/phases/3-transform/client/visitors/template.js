@@ -103,13 +103,11 @@ function serialize_style_directives(style_directives, element_id, context, is_at
 			)
 		);
 
-		const has_call = get_attribute_chunks(directive.value).some(
-			(v) => v.type === 'ExpressionTag' && v.metadata.expression.has_call
-		);
+		const { has_state, has_call } = directive.metadata.expression;
 
 		if (!is_attributes_reactive && has_call) {
 			state.init.push(serialize_update(update));
-		} else if (is_attributes_reactive || directive.metadata.expression.has_state || has_call) {
+		} else if (is_attributes_reactive || has_state || has_call) {
 			state.update.push(update);
 		} else {
 			state.init.push(update);

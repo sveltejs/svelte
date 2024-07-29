@@ -1178,20 +1178,19 @@ const common_visitors = {
 
 		context.next();
 
-		node.metadata.expression.has_state = get_attribute_chunks(node.value).some((chunk) => {
-			if (chunk.type !== 'ExpressionTag') {
-				return false;
-			}
+		for (const chunk of get_attribute_chunks(node.value)) {
+			if (chunk.type !== 'ExpressionTag') continue;
 
 			if (
 				chunk.expression.type === 'FunctionExpression' ||
 				chunk.expression.type === 'ArrowFunctionExpression'
 			) {
-				return false;
+				continue;
 			}
 
-			return chunk.metadata.expression.has_state;
-		});
+			node.metadata.expression.has_state ||= chunk.metadata.expression.has_state;
+			node.metadata.expression.has_call ||= chunk.metadata.expression.has_call;
+		}
 
 		if (is_event_attribute(node)) {
 			const parent = context.path.at(-1);
@@ -1234,9 +1233,13 @@ const common_visitors = {
 			}
 		} else {
 			context.next();
-			node.metadata.expression.has_state = get_attribute_chunks(node.value).some(
-				(node) => node.type === 'ExpressionTag' && node.metadata.expression.has_state
-			);
+
+			for (const chunk of get_attribute_chunks(node.value)) {
+				if (chunk.type !== 'ExpressionTag') continue;
+
+				node.metadata.expression.has_state ||= chunk.metadata.expression.has_state;
+				node.metadata.expression.has_call ||= chunk.metadata.expression.has_call;
+			}
 		}
 	},
 	ExpressionTag(node, context) {
