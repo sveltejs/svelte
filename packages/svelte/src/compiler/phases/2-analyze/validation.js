@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, CallExpression, Expression, ImportDeclaration, Identifier, Node, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
+/** @import { AssignmentExpression, CallExpression, Expression, Identifier, Node, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
 /** @import { Attribute, Component, ElementLike, Fragment, RegularElement, SvelteComponent, SvelteElement, SvelteNode, SvelteSelf, TransitionDirective } from '#compiler' */
 /** @import { NodeLike } from '../../errors.js' */
 /** @import { AnalysisState, Context, Visitors } from './types.js' */
@@ -36,6 +36,8 @@ import {
 	is_tag_valid_with_ancestor,
 	is_tag_valid_with_parent
 } from '../../../html-tree-validation.js';
+import { ImportDeclaration } from './visitors/ImportDeclaration.js';
+import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
 
 /**
  * @param {Attribute} attribute
@@ -374,7 +376,7 @@ const validation = {
 		) {
 			const binding = state.scope.get(node.expression.callee.name);
 			if (binding?.kind === 'normal' && binding.declaration_kind === 'import') {
-				const declaration = /** @type {ImportDeclaration} */ (binding.initial);
+				const declaration = /** @type {import('estree').ImportDeclaration} */ (binding.initial);
 
 				// Theoretically someone could import a class from a `.svelte.js` module, but that's too rare to worry about
 				if (
@@ -1027,26 +1029,8 @@ function ensure_no_module_import_conflict(node, state) {
  * @type {Visitors}
  */
 export const validation_runes_js = {
-	ImportDeclaration(node) {
-		if (typeof node.source.value === 'string' && node.source.value.startsWith('svelte/internal')) {
-			e.import_svelte_internal_forbidden(node);
-		}
-	},
-	ExportSpecifier(node, { state }) {
-		validate_export(node, state.scope, node.local.name);
-	},
-	ExportNamedDeclaration(node, { state, next }) {
-		if (node.declaration?.type !== 'VariableDeclaration') return;
-
-		// visit children, so bindings are correctly initialised
-		next();
-
-		for (const declarator of node.declaration.declarations) {
-			for (const id of extract_identifiers(declarator.id)) {
-				validate_export(node, state.scope, id.name);
-			}
-		}
-	},
+	ImportDeclaration,
+	ExportNamedDeclaration,
 	CallExpression(node, { state, path }) {
 		if (get_rune(node, state.scope) === '$host') {
 			e.host_invalid_placement(node);
@@ -1253,39 +1237,12 @@ function validate_assignment(node, argument, state) {
 }
 
 export const validation_runes = merge(validation, a11y_validators, {
-	ImportDeclaration(node) {
-		if (typeof node.source.value === 'string' && node.source.value.startsWith('svelte/internal')) {
-			e.import_svelte_internal_forbidden(node);
-		}
-	},
+	ImportDeclaration,
 	LabeledStatement(node, { path }) {
 		if (node.label.name !== '$' || path.at(-1)?.type !== 'Program') return;
 		e.legacy_reactive_statement_invalid(node);
 	},
-	ExportNamedDeclaration(node, { state, next }) {
-		if (state.ast_type === 'module') {
-			if (node.declaration?.type !== 'VariableDeclaration') return;
-
-			// visit children, so bindings are correctly initialised
-			next();
-
-			for (const declarator of node.declaration.declarations) {
-				for (const id of extract_identifiers(declarator.id)) {
-					validate_export(node, state.scope, id.name);
-				}
-			}
-		} else {
-			if (node.declaration?.type !== 'VariableDeclaration') return;
-			if (node.declaration.kind !== 'let') return;
-			if (state.analysis.instance.scope !== state.scope) return;
-			e.legacy_export_invalid(node);
-		}
-	},
-	ExportSpecifier(node, { state }) {
-		if (state.ast_type === 'module') {
-			validate_export(node, state.scope, node.local.name);
-		}
-	},
+	ExportNamedDeclaration,
 	CallExpression(node, { state, path }) {
 		const rune = get_rune(node, state.scope);
 		if (rune === '$bindable' && node.arguments.length > 1) {
