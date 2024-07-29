@@ -39,19 +39,9 @@
 						"end": 48,
 						"type": "Text",
 						"raw": "my-custom-element",
-						"data": "my-custom-element",
-						"parent": null
+						"data": "my-custom-element"
 					}
-				],
-				"parent": null,
-				"metadata": {
-					"expression": {
-						"dependencies": {},
-						"has_state": false,
-						"has_call": false
-					},
-					"delegated": null
-				}
+				]
 			},
 			{
 				"type": "Attribute",
@@ -78,24 +68,7 @@
 						},
 						"value": true,
 						"raw": "true"
-					},
-					"parent": null,
-					"metadata": {
-						"expression": {
-							"dependencies": {},
-							"has_state": false,
-							"has_call": false
-						}
 					}
-				},
-				"parent": null,
-				"metadata": {
-					"expression": {
-						"dependencies": {},
-						"has_state": false,
-						"has_call": false
-					},
-					"delegated": null
 				}
 			}
 		],
