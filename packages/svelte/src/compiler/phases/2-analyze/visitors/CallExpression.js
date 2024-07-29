@@ -61,6 +61,7 @@ export function CallExpression(node, context) {
 			) {
 				e.state_invalid_placement(node, rune);
 			}
+
 			break;
 
 		case '$effect':

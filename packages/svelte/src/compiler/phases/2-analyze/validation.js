@@ -1,12 +1,11 @@
 /** @import { Expression, Identifier, VariableDeclarator } from 'estree' */
-/** @import { Attribute, Component, ElementLike, Fragment, RegularElement, SvelteComponent, SvelteElement, SvelteNode, SvelteSelf, TransitionDirective } from '#compiler' */
+/** @import { Attribute, Component, ElementLike, Fragment, RegularElement, SvelteComponent, SvelteElement, SvelteSelf, TransitionDirective } from '#compiler' */
 /** @import { AnalysisState, Context, Visitors } from './types.js' */
 import is_reference from 'is-reference';
 import * as e from '../../errors.js';
 import {
 	extract_identifiers,
 	get_attribute_expression,
-	get_parent,
 	is_expression_attribute,
 	is_text_attribute,
 	object,
@@ -28,7 +27,7 @@ import {
 	regex_not_whitespace,
 	regex_only_whitespaces
 } from '../patterns.js';
-import { Scope, get_rune } from '../scope.js';
+import { get_rune } from '../scope.js';
 import { merge } from '../visitors.js';
 import { a11y_validators } from './visitors/shared/a11y.js';
 import {
@@ -37,13 +36,19 @@ import {
 } from '../../../html-tree-validation.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { CallExpression } from './visitors/CallExpression.js';
+import { EachBlock } from './visitors/EachBlock.js';
 import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
 import { ImportDeclaration } from './visitors/ImportDeclaration.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
-import { validate_assignment, validate_no_const_assignment } from './visitors/shared/utils.js';
+import {
+	validate_assignment,
+	validate_block_not_empty,
+	validate_no_const_assignment,
+	validate_opening_tag
+} from './visitors/shared/utils.js';
 
 /**
  * @param {Attribute} attribute
@@ -350,19 +355,6 @@ function validate_slot_attribute(context, attribute, is_component = false) {
 		}
 	} else if (!is_component) {
 		e.slot_attribute_invalid_placement(attribute);
-	}
-}
-
-/**
- * @param {Fragment | null | undefined} node
- * @param {Context} context
- */
-function validate_block_not_empty(node, context) {
-	if (!node) return;
-	// Assumption: If the block has zero elements, someone's in the middle of typing it out,
-	// so don't warn in that case because it would be distracting.
-	if (node.nodes.length === 1 && node.nodes[0].type === 'Text' && !node.nodes[0].raw.trim()) {
-		w.block_empty(node.nodes[0]);
 	}
 }
 
@@ -698,10 +690,7 @@ const validation = {
 		validate_block_not_empty(node.consequent, context);
 		validate_block_not_empty(node.alternate, context);
 	},
-	EachBlock(node, context) {
-		validate_block_not_empty(node.body, context);
-		validate_block_not_empty(node.fallback, context);
-	},
+	EachBlock,
 	AwaitBlock(node, context) {
 		validate_block_not_empty(node.pending, context);
 		validate_block_not_empty(node.then, context);
@@ -986,37 +975,12 @@ export const validation_runes_js = {
 	}
 };
 
-/**
- * Validates that the opening of a control flow block is `{` immediately followed by the expected character.
- * In legacy mode whitespace is allowed inbetween. TODO remove once legacy mode is gone and move this into parser instead.
- * @param {{start: number; end: number}} node
- * @param {AnalysisState} state
- * @param {string} expected
- */
-function validate_opening_tag(node, state, expected) {
-	if (state.analysis.source[node.start + 1] !== expected) {
-		// avoid a sea of red and only mark the first few characters
-		e.block_unexpected_character({ start: node.start, end: node.start + 5 }, expected);
-	}
-}
-
 export const validation_runes = merge(validation, a11y_validators, {
 	ImportDeclaration,
 	LabeledStatement,
 	ExportNamedDeclaration,
 	CallExpression,
-	EachBlock(node, { next, state }) {
-		validate_opening_tag(node, state, '#');
-
-		const context = node.context;
-		if (
-			context.type === 'Identifier' &&
-			(context.name === '$state' || context.name === '$derived')
-		) {
-			e.state_invalid_placement(node, context.name);
-		}
-		next({ ...state });
-	},
+	EachBlock,
 	IfBlock(node, { state, path }) {
 		const parent = path.at(-1);
 		const expected =

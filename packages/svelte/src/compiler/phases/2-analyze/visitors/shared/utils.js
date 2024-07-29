@@ -1,8 +1,10 @@
 /** @import { AssignmentExpression, Expression, Pattern, PrivateIdentifier, Super, UpdateExpression } from 'estree' */
-/** @import { AnalysisState } from '../../types' */
+/** @import { Fragment } from '#compiler' */
+/** @import { AnalysisState, Context } from '../../types' */
 /** @import { Scope } from '../../../scope' */
 /** @import { NodeLike } from '../../../../errors.js' */
 import * as e from '../../../../errors.js';
+import * as w from '../../../../warnings.js';
 
 /**
  * @param {AssignmentExpression | UpdateExpression} node
@@ -88,5 +90,32 @@ export function validate_no_const_assignment(node, argument, scope, is_binding) 
 				e.constant_assignment(node, thing);
 			}
 		}
+	}
+}
+
+/**
+ * Validates that the opening of a control flow block is `{` immediately followed by the expected character.
+ * In legacy mode whitespace is allowed inbetween. TODO remove once legacy mode is gone and move this into parser instead.
+ * @param {{start: number; end: number}} node
+ * @param {AnalysisState} state
+ * @param {string} expected
+ */
+export function validate_opening_tag(node, state, expected) {
+	if (state.analysis.source[node.start + 1] !== expected) {
+		// avoid a sea of red and only mark the first few characters
+		e.block_unexpected_character({ start: node.start, end: node.start + 5 }, expected);
+	}
+}
+
+/**
+ * @param {Fragment | null | undefined} node
+ * @param {Context} context
+ */
+export function validate_block_not_empty(node, context) {
+	if (!node) return;
+	// Assumption: If the block has zero elements, someone's in the middle of typing it out,
+	// so don't warn in that case because it would be distracting.
+	if (node.nodes.length === 1 && node.nodes[0].type === 'Text' && !node.nodes[0].raw.trim()) {
+		w.block_empty(node.nodes[0]);
 	}
 }
