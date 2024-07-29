@@ -37,9 +37,10 @@ function check_hash(element, server_hash, value) {
  * @param {() => string} get_value
  * @param {boolean} svg
  * @param {boolean} mathml
+ * @param {boolean} [skip_warning]
  * @returns {void}
  */
-export function html(node, get_value, svg, mathml) {
+export function html(node, get_value, svg, mathml, skip_warning) {
 	var anchor = node;
 
 	var value = '';
@@ -78,7 +79,7 @@ export function html(node, get_value, svg, mathml) {
 					throw HYDRATION_ERROR;
 				}
 
-				if (DEV) {
+				if (DEV && !skip_warning) {
 					check_hash(/** @type {Element} */ (next.parentNode), hash, value);
 				}
 

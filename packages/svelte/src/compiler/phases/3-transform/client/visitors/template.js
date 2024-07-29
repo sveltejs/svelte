@@ -1826,7 +1826,8 @@ export const template_visitors = {
 					context.state.node,
 					b.thunk(/** @type {Expression} */ (context.visit(node.expression))),
 					b.literal(context.state.metadata.namespace === 'svg'),
-					b.literal(context.state.metadata.namespace === 'mathml')
+					b.literal(context.state.metadata.namespace === 'mathml'),
+					b.literal(is_to_ignore(node, 'hydration_html_changed'))
 				)
 			)
 		);
