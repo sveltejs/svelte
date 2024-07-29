@@ -6,8 +6,7 @@ import * as e from '../../errors.js';
 import {
 	extract_identifiers,
 	get_attribute_expression,
-	is_expression_attribute,
-	is_text_attribute
+	is_expression_attribute
 } from '../../utils/ast.js';
 import * as w from '../../warnings.js';
 import { Runes } from '../constants.js';
@@ -33,7 +32,12 @@ import { LetDirective } from './visitors/LetDirective.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
+import { SlotElement } from './visitors/SlotElement.js';
 import { SnippetBlock } from './visitors/SnippetBlock.js';
+import { StyleDirective } from './visitors/StyleDirective.js';
+import { SvelteElement } from './visitors/SvelteElement.js';
+import { SvelteFragment } from './visitors/SvelteFragment.js';
+import { SvelteHead } from './visitors/SvelteHead.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { validate_assignment, validate_opening_tag } from './visitors/shared/utils.js';
 import {
@@ -41,7 +45,6 @@ import {
 	validate_attribute_name,
 	validate_slot_attribute
 } from './visitors/shared/attribute.js';
-import { validate_element } from './visitors/shared/element.js';
 
 /**
  * @param {Component | SvelteComponent | SvelteSelf} node
@@ -117,57 +120,11 @@ const validation = {
 	AwaitBlock,
 	KeyBlock,
 	SnippetBlock,
-	StyleDirective(node) {
-		if (node.modifiers.length > 1 || (node.modifiers.length && node.modifiers[0] !== 'important')) {
-			e.style_directive_invalid_modifier(node);
-		}
-	},
-	SvelteHead(node) {
-		const attribute = node.attributes[0];
-		if (attribute) {
-			e.svelte_head_illegal_attribute(attribute);
-		}
-	},
-	SvelteElement(node, context) {
-		validate_element(node, context);
-		context.next({
-			...context.state,
-			parent_element: null
-		});
-	},
-	SvelteFragment(node, context) {
-		const parent = context.path.at(-2);
-		if (parent?.type !== 'Component' && parent?.type !== 'SvelteComponent') {
-			e.svelte_fragment_invalid_placement(node);
-		}
-
-		for (const attribute of node.attributes) {
-			if (attribute.type === 'Attribute') {
-				if (attribute.name === 'slot') {
-					validate_slot_attribute(context, attribute);
-				}
-			} else if (attribute.type !== 'LetDirective') {
-				e.svelte_fragment_invalid_attribute(attribute);
-			}
-		}
-	},
-	SlotElement(node) {
-		for (const attribute of node.attributes) {
-			if (attribute.type === 'Attribute') {
-				if (attribute.name === 'name') {
-					if (!is_text_attribute(attribute)) {
-						e.slot_element_invalid_name(attribute);
-					}
-					const slot_name = attribute.value[0].data;
-					if (slot_name === 'default') {
-						e.slot_element_invalid_name_default(attribute);
-					}
-				}
-			} else if (attribute.type !== 'SpreadAttribute' && attribute.type !== 'LetDirective') {
-				e.slot_element_invalid_attribute(attribute);
-			}
-		}
-	},
+	StyleDirective,
+	SvelteHead,
+	SvelteElement,
+	SvelteFragment,
+	SlotElement,
 	Component: validate_component,
 	SvelteComponent: validate_component,
 	SvelteSelf: validate_component,
