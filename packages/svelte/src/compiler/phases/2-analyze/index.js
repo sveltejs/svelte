@@ -1,5 +1,5 @@
-/** @import { ArrowFunctionExpression, CallExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, LabeledStatement, Literal, Node, Program, Super } from 'estree' */
-/** @import { Attribute, BindDirective, Binding, DelegatedEvent, RegularElement, Root, Script, SvelteNode, Text, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression, Literal, Node, Program, Super } from 'estree' */
+/** @import { Attribute, Binding, DelegatedEvent, Root, Script, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Context, LegacyAnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import is_reference from 'is-reference';
@@ -21,7 +21,6 @@ import * as b from '../../utils/builders.js';
 import { MathMLElements, ReservedKeywords, Runes, SVGElements } from '../constants.js';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import { merge } from '../visitors.js';
-import { validation_legacy, validation_runes, validation_runes_js } from './validation.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
@@ -39,6 +38,88 @@ import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
 import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
 import { equal } from '../../utils/assert.js';
+import { AssignmentExpression } from './visitors/AssignmentExpression.js';
+import { AwaitBlock } from './visitors/AwaitBlock.js';
+import { BindDirective } from './visitors/BindDirective.js';
+import { CallExpression } from './visitors/CallExpression.js';
+import { ClassBody } from './visitors/ClassBody.js';
+import { ClassDeclaration } from './visitors/ClassDeclaration.js';
+import { Component } from './visitors/Component.js';
+import { ConstTag } from './visitors/ConstTag.js';
+import { DebugTag } from './visitors/DebugTag.js';
+import { EachBlock } from './visitors/EachBlock.js';
+import { ExportDefaultDeclaration } from './visitors/ExportDefaultDeclaration.js';
+import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
+import { ExpressionStatement } from './visitors/ExpressionStatement.js';
+import { ExpressionTag } from './visitors/ExpressionTag.js';
+import { HtmlTag } from './visitors/HtmlTag.js';
+import { Identifier } from './visitors/Identifier.js';
+import { IfBlock } from './visitors/IfBlock.js';
+import { ImportDeclaration } from './visitors/ImportDeclaration.js';
+import { KeyBlock } from './visitors/KeyBlock.js';
+import { LabeledStatement } from './visitors/LabeledStatement.js';
+import { LetDirective } from './visitors/LetDirective.js';
+import { MemberExpression } from './visitors/MemberExpression.js';
+import { NewExpression } from './visitors/NewExpression.js';
+import { OnDirective } from './visitors/OnDirective.js';
+import { RegularElement } from './visitors/RegularElement.js';
+import { RenderTag } from './visitors/RenderTag.js';
+import { SlotElement } from './visitors/SlotElement.js';
+import { SnippetBlock } from './visitors/SnippetBlock.js';
+import { StyleDirective } from './visitors/StyleDirective.js';
+import { SvelteComponent } from './visitors/SvelteComponent.js';
+import { SvelteElement } from './visitors/SvelteElement.js';
+import { SvelteFragment } from './visitors/SvelteFragment.js';
+import { SvelteHead } from './visitors/SvelteHead.js';
+import { SvelteSelf } from './visitors/SvelteSelf.js';
+import { Text } from './visitors/Text.js';
+import { TitleElement } from './visitors/TitleElement.js';
+import { UpdateExpression } from './visitors/UpdateExpression.js';
+import { VariableDeclarator } from './visitors/VariableDeclarator.js';
+
+/**
+ * @type {Visitors}
+ */
+const visitors = {
+	AssignmentExpression,
+	AwaitBlock,
+	BindDirective,
+	CallExpression,
+	ClassBody,
+	ClassDeclaration,
+	Component,
+	ConstTag,
+	DebugTag,
+	EachBlock,
+	ExportDefaultDeclaration,
+	ExportNamedDeclaration,
+	ExpressionStatement,
+	ExpressionTag,
+	HtmlTag,
+	Identifier,
+	IfBlock,
+	ImportDeclaration,
+	KeyBlock,
+	LabeledStatement,
+	LetDirective,
+	MemberExpression,
+	NewExpression,
+	OnDirective,
+	RegularElement,
+	RenderTag,
+	SlotElement,
+	SnippetBlock,
+	StyleDirective,
+	SvelteHead,
+	SvelteElement,
+	SvelteFragment,
+	SvelteComponent,
+	SvelteSelf,
+	Text,
+	TitleElement,
+	UpdateExpression,
+	VariableDeclarator
+};
 
 /**
  * @param {Script | null} script
@@ -246,7 +327,7 @@ export function analyze_module(ast, options) {
 		/** @type {Node} */ (ast),
 		{ scope, analysis: { runes: true } },
 		// @ts-expect-error TODO clean this mess up
-		merge(set_scope(scopes), validation_runes_js, runes_scope_js_tweaker)
+		merge(set_scope(scopes), visitors, runes_scope_js_tweaker)
 	);
 
 	return {
@@ -456,7 +537,7 @@ export function analyze_component(root, source, options) {
 			walk(
 				/** @type {SvelteNode} */ (ast),
 				state,
-				merge(set_scope(scopes), validation_runes, runes_scope_tweaker, common_visitors)
+				merge(set_scope(scopes), visitors, runes_scope_tweaker, common_visitors)
 			);
 		}
 
@@ -529,7 +610,7 @@ export function analyze_component(root, source, options) {
 				/** @type {SvelteNode} */ (ast),
 				state,
 				// @ts-expect-error TODO
-				merge(set_scope(scopes), validation_legacy, legacy_scope_tweaker, common_visitors)
+				merge(set_scope(scopes), visitors, legacy_scope_tweaker, common_visitors)
 			);
 		}
 
