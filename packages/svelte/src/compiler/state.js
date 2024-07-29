@@ -60,6 +60,16 @@ export function reset_warning_filter(fn = () => true) {
 }
 
 /**
+ *
+ * @param {SvelteNode | NodeLike} node
+ * @param {string} code
+ * @returns
+ */
+export function is_to_ignore(node, code) {
+	return !!ignore_map.get(node)?.some((code_set) => code_set.has(code));
+}
+
+/**
  * @param {string} _source
  * @param {{ filename?: string, rootDir?: string }} options
  */

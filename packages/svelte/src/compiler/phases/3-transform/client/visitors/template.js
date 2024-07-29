@@ -3,35 +3,8 @@
 /** @import { SourceLocation } from '#shared' */
 /** @import { Scope } from '../../../scope.js' */
 /** @import { ComponentClientTransformState, ComponentContext, ComponentVisitors } from '../types.js' */
-import {
-	extract_identifiers,
-	extract_paths,
-	get_attribute_chunks,
-	get_attribute_expression,
-	is_event_attribute,
-	is_text_attribute,
-	object,
-	unwrap_optional
-} from '../../../../utils/ast.js';
-import { binding_properties } from '../../../bindings.js';
-import { clean_nodes, determine_namespace_for_children, infer_namespace } from '../../utils.js';
-import {
-	DOMProperties,
-	LoadErrorElements,
-	PassiveEvents,
-	VoidElements
-} from '../../../constants.js';
-import { is_custom_element_node, is_element_node } from '../../../nodes.js';
-import * as b from '../../../../utils/builders.js';
-import {
-	with_loc,
-	function_visitor,
-	get_assignment_value,
-	serialize_get_binding,
-	serialize_set_binding,
-	create_derived,
-	create_derived_block_argument
-} from '../utils.js';
+import is_reference from 'is-reference';
+import { walk } from 'zimmerframe';
 import {
 	AttributeAliases,
 	DOMBooleanAttributes,
@@ -49,12 +22,39 @@ import {
 	TRANSITION_OUT
 } from '../../../../../constants.js';
 import { escape_html } from '../../../../../escaping.js';
-import { regex_is_valid_identifier } from '../../../patterns.js';
-import { javascript_visitors_runes } from './javascript-runes.js';
+import { is_to_ignore, locator } from '../../../../state.js';
+import {
+	extract_identifiers,
+	extract_paths,
+	get_attribute_chunks,
+	get_attribute_expression,
+	is_event_attribute,
+	is_text_attribute,
+	object,
+	unwrap_optional
+} from '../../../../utils/ast.js';
+import * as b from '../../../../utils/builders.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
-import { walk } from 'zimmerframe';
-import { ignore_map, locator } from '../../../../state.js';
-import is_reference from 'is-reference';
+import { binding_properties } from '../../../bindings.js';
+import {
+	DOMProperties,
+	LoadErrorElements,
+	PassiveEvents,
+	VoidElements
+} from '../../../constants.js';
+import { is_custom_element_node, is_element_node } from '../../../nodes.js';
+import { regex_is_valid_identifier } from '../../../patterns.js';
+import { clean_nodes, determine_namespace_for_children, infer_namespace } from '../../utils.js';
+import {
+	create_derived,
+	create_derived_block_argument,
+	function_visitor,
+	get_assignment_value,
+	serialize_get_binding,
+	serialize_set_binding,
+	with_loc
+} from '../utils.js';
+import { javascript_visitors_runes } from './javascript-runes.js';
 
 /**
  * @param {RegularElement | SvelteElement} element
@@ -781,18 +781,14 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 		} else if (attribute.type === 'BindDirective') {
 			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
 
-			// serialize_validate_binding will add a function that specifically throw
-			// `binding_property_non_reactive` error. If there's a svelte ignore
-			// before we avoid adding this validation to avoid throwing the runtime warning
-			const to_ignore = ignore_map
-				.get(node)
-				?.some((code) => code.has('binding_property_non_reactive'));
-
 			if (
 				expression.type === 'MemberExpression' &&
 				context.state.options.dev &&
 				context.state.analysis.runes &&
-				!to_ignore
+				// serialize_validate_binding will add a function that specifically throw
+				// `binding_property_non_reactive` error. If there's a svelte ignore
+				// before we avoid adding this validation to avoid throwing the runtime warning
+				!is_to_ignore(node, 'binding_property_non_reactive')
 			) {
 				context.state.init.push(serialize_validate_binding(context.state, attribute, expression));
 			}
@@ -2894,13 +2890,6 @@ export const template_visitors = {
 		const expression = node.expression;
 		const property = binding_properties[node.name];
 
-		// serialize_validate_binding will add a function that specifically throw
-		// `binding_property_non_reactive` error. If there's a svelte ignore
-		// before we avoid adding this validation to avoid throwing the runtime warning
-		const to_ignore = ignore_map
-			.get(node)
-			?.some((code) => code.has('binding_property_non_reactive'));
-
 		if (
 			expression.type === 'MemberExpression' &&
 			(node.name !== 'this' ||
@@ -2913,7 +2902,10 @@ export const template_visitors = {
 				)) &&
 			context.state.options.dev &&
 			context.state.analysis.runes &&
-			!to_ignore
+			// serialize_validate_binding will add a function that specifically throw
+			// `binding_property_non_reactive` error. If there's a svelte ignore
+			// before we avoid adding this validation to avoid throwing the runtime warning
+			!is_to_ignore(node, 'binding_property_non_reactive')
 		) {
 			context.state.init.push(
 				serialize_validate_binding(

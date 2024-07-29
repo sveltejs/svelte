@@ -1,10 +1,13 @@
 /** @import { CallExpression, Expression, Identifier, Literal, MethodDefinition, PrivateIdentifier, PropertyDefinition, VariableDeclarator } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentVisitors, StateField } from '../types.js' */
+import { is_to_ignore } from '../../../../state.js';
+import * as assert from '../../../../utils/assert.js';
+import { extract_paths } from '../../../../utils/ast.js';
+import * as b from '../../../../utils/builders.js';
+import { regex_invalid_identifier_chars } from '../../../patterns.js';
 import { get_rune } from '../../../scope.js';
 import { is_hoistable_function, transform_inspect_rune } from '../../utils.js';
-import * as b from '../../../../utils/builders.js';
-import * as assert from '../../../../utils/assert.js';
 import {
 	get_prop_source,
 	is_prop_source,
@@ -12,9 +15,6 @@ import {
 	serialize_proxy_reassignment,
 	should_proxy_or_freeze
 } from '../utils.js';
-import { extract_paths } from '../../../../utils/ast.js';
-import { regex_invalid_identifier_chars } from '../../../patterns.js';
-import { ignore_map } from '../../../../state.js';
 
 /** @type {ComponentVisitors} */
 export const javascript_visitors_runes = {
@@ -450,14 +450,10 @@ export const javascript_visitors_runes = {
 		}
 
 		if (rune === '$state.snapshot') {
-			const to_ignore = ignore_map
-				.get(node)
-				?.some((code) => code.has('state_snapshot_uncloneable'));
-
 			return b.call(
 				'$.snapshot',
 				/** @type {Expression} */ (context.visit(node.arguments[0])),
-				b.literal(!!to_ignore)
+				b.literal(is_to_ignore(node, 'state_snapshot_uncloneable'))
 			);
 		}
 
