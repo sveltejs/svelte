@@ -3,7 +3,7 @@
 import { get_rune } from '../../scope.js';
 import { ensure_no_module_import_conflict } from './shared/utils.js';
 import * as e from '../../../errors.js';
-import * as w from '../../../warnings.js';
+import { extract_paths } from '../../../utils/ast.js';
 
 /**
  * @param {VariableDeclarator} node
@@ -16,26 +16,7 @@ export function VariableDeclarator(node, context) {
 		const init = node.init;
 		const rune = get_rune(init, context.state.scope);
 
-		if (rune === null) return;
-
-		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
-
-		// TODO some of this is duplicated with above, seems off
-		if ((rune === '$derived' || rune === '$derived.by') && args.length !== 1) {
-			e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
-		} else if (rune === '$state' && args.length > 1) {
-			e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
-		} else if (rune === '$props') {
-			if (context.state.has_props_rune) {
-				e.props_duplicate(node);
-			}
-
-			context.state.has_props_rune = true;
-
-			if (args.length > 0) {
-				e.rune_invalid_arguments(node, rune);
-			}
-
+		if (rune === '$props') {
 			if (node.id.type !== 'ObjectPattern' && node.id.type !== 'Identifier') {
 				e.props_invalid_identifier(node);
 			}
@@ -62,13 +43,18 @@ export function VariableDeclarator(node, context) {
 			}
 		}
 
-		if (rune === '$derived') {
-			const arg = args[0];
-			if (
-				arg.type === 'CallExpression' &&
-				(arg.callee.type === 'ArrowFunctionExpression' || arg.callee.type === 'FunctionExpression')
-			) {
-				w.derived_iife(node);
+		// TODO feels like this should happen during scope creation?
+		if (
+			rune === '$state' ||
+			rune === '$state.frozen' ||
+			rune === '$derived' ||
+			rune === '$derived.by'
+		) {
+			for (const path of extract_paths(node.id)) {
+				// @ts-ignore this fails in CI for some insane reason
+				const binding = /** @type {Binding} */ (context.state.scope.get(path.node.name));
+				binding.kind =
+					rune === '$state' ? 'state' : rune === '$state.frozen' ? 'frozen_state' : 'derived';
 			}
 		}
 	} else {

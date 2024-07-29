@@ -326,7 +326,7 @@ export function analyze_module(ast, options) {
 		/** @type {Node} */ (ast),
 		{ scope, analysis: { runes: true } },
 		// @ts-expect-error TODO clean this mess up
-		merge(set_scope(scopes), visitors, runes_scope_js_tweaker)
+		merge(set_scope(scopes), visitors)
 	);
 
 	return {
@@ -725,33 +725,6 @@ export function analyze_component(root, source, options) {
 
 	return analysis;
 }
-
-/** @type {Visitors} */
-const runes_scope_js_tweaker = {
-	VariableDeclarator(node, { state }) {
-		if (node.init?.type !== 'CallExpression') return;
-		const rune = get_rune(node.init, state.scope);
-		if (rune === null) return;
-
-		const callee = node.init.callee;
-		if (callee.type !== 'Identifier' && callee.type !== 'MemberExpression') return;
-
-		if (
-			rune !== '$state' &&
-			rune !== '$state.frozen' &&
-			rune !== '$derived' &&
-			rune !== '$derived.by'
-		)
-			return;
-
-		for (const path of extract_paths(node.id)) {
-			// @ts-ignore this fails in CI for some insane reason
-			const binding = /** @type {Binding} */ (state.scope.get(path.node.name));
-			binding.kind =
-				rune === '$state' ? 'state' : rune === '$state.frozen' ? 'frozen_state' : 'derived';
-		}
-	}
-};
 
 /** @type {Visitors} */
 const runes_scope_tweaker = {

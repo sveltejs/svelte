@@ -47,12 +47,22 @@ export function CallExpression(node, context) {
 			break;
 
 		case '$props':
+			if (context.state.has_props_rune) {
+				e.props_duplicate(node);
+			}
+
+			context.state.has_props_rune = true;
+
 			if (
 				parent.type !== 'VariableDeclarator' ||
 				context.state.ast_type !== 'instance' ||
 				context.state.scope !== context.state.analysis.instance.scope
 			) {
 				e.props_invalid_placement(node);
+			}
+
+			if (node.arguments.length > 0) {
+				e.rune_invalid_arguments(node, rune);
 			}
 
 			break;
