@@ -1,4 +1,4 @@
-/** @import { CallExpression } from 'estree' */
+/** @import { CallExpression, VariableDeclarator } from 'estree' */
 /** @import { SvelteNode } from '#compiler' */
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
@@ -23,14 +23,14 @@ export function CallExpression(node, context) {
 				e.rune_invalid_arguments_length(node, '$bindable', 'zero or one arguments');
 			}
 
-			if (parent.type !== 'AssignmentPattern' || context.path.at(-3)?.type !== 'ObjectPattern') {
-				e.bindable_invalid_location(node);
-			}
-
-			const declarator = context.path.at(-4);
 			if (
-				declarator?.type !== 'VariableDeclarator' ||
-				get_rune(declarator.init, context.state.scope) !== '$props'
+				parent.type !== 'AssignmentPattern' ||
+				context.path.at(-3)?.type !== 'ObjectPattern' ||
+				context.path.at(-4)?.type !== 'VariableDeclarator' ||
+				get_rune(
+					/** @type {VariableDeclarator} */ (context.path.at(-4)).init,
+					context.state.scope
+				) !== '$props'
 			) {
 				e.bindable_invalid_location(node);
 			}
