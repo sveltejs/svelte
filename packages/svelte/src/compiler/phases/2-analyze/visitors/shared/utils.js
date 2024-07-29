@@ -1,9 +1,10 @@
-/** @import { AssignmentExpression, Expression, Pattern, PrivateIdentifier, Super, UpdateExpression } from 'estree' */
+/** @import { AssignmentExpression, Expression, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
 /** @import { Fragment } from '#compiler' */
 /** @import { AnalysisState, Context } from '../../types' */
 /** @import { Scope } from '../../../scope' */
 /** @import { NodeLike } from '../../../../errors.js' */
 import * as e from '../../../../errors.js';
+import { extract_identifiers } from '../../../../utils/ast.js';
 import * as w from '../../../../warnings.js';
 
 /**
@@ -117,5 +118,22 @@ export function validate_block_not_empty(node, context) {
 	// so don't warn in that case because it would be distracting.
 	if (node.nodes.length === 1 && node.nodes[0].type === 'Text' && !node.nodes[0].raw.trim()) {
 		w.block_empty(node.nodes[0]);
+	}
+}
+
+/**
+ * @param {VariableDeclarator} node
+ * @param {AnalysisState} state
+ */
+export function ensure_no_module_import_conflict(node, state) {
+	const ids = extract_identifiers(node.id);
+	for (const id of ids) {
+		if (
+			state.scope === state.analysis.instance.scope &&
+			state.analysis.module.scope.get(id.name)?.declaration_kind === 'import'
+		) {
+			// TODO fix the message here
+			e.declaration_duplicate_module_import(node.id);
+		}
 	}
 }

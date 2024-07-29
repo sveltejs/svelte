@@ -1,8 +1,7 @@
-/** @import { Expression, Identifier, VariableDeclarator } from 'estree' */
-/** @import { AnalysisState, Visitors } from './types.js' */
+/** @import { Expression, Identifier } from 'estree' */
+/** @import { Visitors } from './types.js' */
 import is_reference from 'is-reference';
 import * as e from '../../errors.js';
-import { extract_identifiers } from '../../utils/ast.js';
 import * as w from '../../warnings.js';
 import { Runes } from '../constants.js';
 import { get_rune } from '../scope.js';
@@ -38,85 +37,49 @@ import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
-import { validate_assignment, validate_opening_tag } from './visitors/shared/utils.js';
+import { VariableDeclarator } from './visitors/VariableDeclarator.js';
+import {
+	ensure_no_module_import_conflict,
+	validate_assignment,
+	validate_opening_tag
+} from './visitors/shared/utils.js';
 
 /**
  * @type {Visitors}
  */
 const validation = {
-	ExpressionStatement,
-	MemberExpression,
 	AssignmentExpression,
+	AwaitBlock,
 	BindDirective,
-	ExportDefaultDeclaration,
+	Component,
 	ConstTag,
+	EachBlock,
+	ExportDefaultDeclaration,
+	ExpressionStatement,
+	ExpressionTag,
+	IfBlock,
 	ImportDeclaration,
+	KeyBlock,
+	LabeledStatement,
 	LetDirective,
+	MemberExpression,
 	RegularElement,
 	RenderTag,
-	IfBlock,
-	EachBlock,
-	AwaitBlock,
-	KeyBlock,
+	SlotElement,
 	SnippetBlock,
 	StyleDirective,
 	SvelteHead,
 	SvelteElement,
 	SvelteFragment,
-	SlotElement,
-	Component,
 	SvelteComponent,
 	SvelteSelf,
 	Text,
 	TitleElement,
 	UpdateExpression,
-	ExpressionTag
+	VariableDeclarator
 };
 
-export const validation_legacy = merge(validation, a11y_validators, {
-	VariableDeclarator(node, { state }) {
-		ensure_no_module_import_conflict(node, state);
-
-		if (node.init?.type !== 'CallExpression') return;
-
-		const callee = node.init.callee;
-		if (
-			callee.type !== 'Identifier' ||
-			(callee.name !== '$state' && callee.name !== '$derived' && callee.name !== '$props')
-		) {
-			return;
-		}
-
-		if (state.scope.get(callee.name)?.kind !== 'store_sub') {
-			e.rune_invalid_usage(node.init, callee.name);
-		}
-	},
-	AssignmentExpression(node, { state, path }) {
-		const parent = path.at(-1);
-		if (parent && parent.type === 'ConstTag') return;
-		validate_assignment(node, node.left, state);
-	},
-	LabeledStatement,
-	UpdateExpression(node, { state }) {
-		validate_assignment(node, node.argument, state);
-	}
-});
-
-/**
- * @param {VariableDeclarator} node
- * @param {AnalysisState} state
- */
-function ensure_no_module_import_conflict(node, state) {
-	const ids = extract_identifiers(node.id);
-	for (const id of ids) {
-		if (
-			state.scope === state.analysis.instance.scope &&
-			state.analysis.module.scope.get(id.name)?.declaration_kind === 'import'
-		) {
-			e.declaration_duplicate_module_import(node.id);
-		}
-	}
-}
+export const validation_legacy = merge(validation, a11y_validators);
 
 /**
  * @type {Visitors}
