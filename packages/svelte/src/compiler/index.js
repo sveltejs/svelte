@@ -135,10 +135,7 @@ function to_public_ast(source, ast, modern) {
 		// remove things that we don't want to treat as public API
 		return zimmerframe_walk(ast, null, {
 			_(node, { next }) {
-				// @ts-ignore
-				delete node.parent;
-				// @ts-ignore
-				delete node.metadata;
+				clean(node);
 				next();
 			}
 		});
