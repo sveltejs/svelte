@@ -18,6 +18,7 @@ import { merge } from '../visitors.js';
 import { a11y_validators } from './visitors/shared/a11y.js';
 import { is_tag_valid_with_parent } from '../../../html-tree-validation.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
+import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { BindDirective } from './visitors/BindDirective.js';
 import { CallExpression } from './visitors/CallExpression.js';
 import { ConstTag } from './visitors/ConstTag.js';
@@ -25,11 +26,13 @@ import { EachBlock } from './visitors/EachBlock.js';
 import { ExportDefaultDeclaration } from './visitors/ExportDefaultDeclaration.js';
 import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
+import { IfBlock } from './visitors/IfBlock.js';
 import { ImportDeclaration } from './visitors/ImportDeclaration.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { LetDirective } from './visitors/LetDirective.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
 import { RegularElement } from './visitors/RegularElement.js';
+import { RenderTag } from './visitors/RenderTag.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import {
 	validate_assignment,
@@ -111,39 +114,10 @@ const validation = {
 	ImportDeclaration,
 	LetDirective,
 	RegularElement,
-	RenderTag(node, context) {
-		const callee = unwrap_optional(node.expression).callee;
-
-		node.metadata.dynamic =
-			callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
-
-		context.state.analysis.uses_render_tags = true;
-
-		const raw_args = unwrap_optional(node.expression).arguments;
-		for (const arg of raw_args) {
-			if (arg.type === 'SpreadElement') {
-				e.render_tag_invalid_spread_argument(arg);
-			}
-		}
-
-		if (
-			callee.type === 'MemberExpression' &&
-			callee.property.type === 'Identifier' &&
-			['bind', 'apply', 'call'].includes(callee.property.name)
-		) {
-			e.render_tag_invalid_call_expression(node);
-		}
-	},
-	IfBlock(node, context) {
-		validate_block_not_empty(node.consequent, context);
-		validate_block_not_empty(node.alternate, context);
-	},
+	RenderTag,
+	IfBlock,
 	EachBlock,
-	AwaitBlock(node, context) {
-		validate_block_not_empty(node.pending, context);
-		validate_block_not_empty(node.then, context);
-		validate_block_not_empty(node.catch, context);
-	},
+	AwaitBlock,
 	KeyBlock(node, context) {
 		validate_block_not_empty(node.fragment, context);
 	},
