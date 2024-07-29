@@ -14,6 +14,7 @@ import {
 } from '../utils.js';
 import { extract_paths } from '../../../../utils/ast.js';
 import { regex_invalid_identifier_chars } from '../../../patterns.js';
+import { ignore_map } from '../../../../state.js';
 
 /** @type {ComponentVisitors} */
 export const javascript_visitors_runes = {
@@ -449,7 +450,15 @@ export const javascript_visitors_runes = {
 		}
 
 		if (rune === '$state.snapshot') {
-			return b.call('$.snapshot', /** @type {Expression} */ (context.visit(node.arguments[0])));
+			const to_ignore = ignore_map
+				.get(node)
+				?.some((code) => code.has('state_snapshot_uncloneable'));
+
+			return b.call(
+				'$.snapshot',
+				/** @type {Expression} */ (context.visit(node.arguments[0])),
+				b.literal(!!to_ignore)
+			);
 		}
 
 		if (rune === '$state.is') {

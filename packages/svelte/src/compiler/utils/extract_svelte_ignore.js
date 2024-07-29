@@ -1,6 +1,7 @@
 import fuzzymatch from '../phases/1-parse/utils/fuzzymatch.js';
 import * as w from '../warnings.js';
 import { codes as client_codes } from '../../internal/client/warnings.js';
+import { codes as shared_codes } from '../../internal/shared/warnings.js';
 
 const regex_svelte_ignore = /^\s*svelte-ignore\s/;
 
@@ -16,6 +17,8 @@ const replacements = {
 	'invalid-rest-eachblock-binding': 'bind_invalid_each_rest',
 	'unused-export-let': 'export_let_unused'
 };
+
+const codes = w.codes.concat(client_codes).concat(shared_codes);
 
 /**
  * @param {number} offset
@@ -38,7 +41,7 @@ export function extract_svelte_ignore(offset, text, runes) {
 		for (const match of text.slice(length).matchAll(/([\w$-]+)(,)?/gm)) {
 			const code = match[1];
 
-			if (w.codes.includes(code) || client_codes.includes(code)) {
+			if (codes.includes(code)) {
 				ignores.push(code);
 			} else {
 				const replacement = replacements[code] ?? code.replace(/-/g, '_');
@@ -47,10 +50,10 @@ export function extract_svelte_ignore(offset, text, runes) {
 				const start = offset + /** @type {number} */ (match.index);
 				const end = start + code.length;
 
-				if (w.codes.includes(replacement) || client_codes.includes(replacement)) {
+				if (codes.includes(replacement)) {
 					w.legacy_code({ start, end }, code, replacement);
 				} else {
-					const suggestion = fuzzymatch(code, w.codes.concat(client_codes));
+					const suggestion = fuzzymatch(code, codes);
 					w.unknown_code({ start, end }, code, suggestion);
 				}
 			}
@@ -66,10 +69,10 @@ export function extract_svelte_ignore(offset, text, runes) {
 
 			ignores.push(code);
 
-			if (!w.codes.includes(code) || client_codes.includes(code)) {
+			if (!codes.includes(code)) {
 				const replacement = replacements[code] ?? code.replace(/-/g, '_');
 
-				if (w.codes.includes(replacement) || client_codes.includes(replacement)) {
+				if (codes.includes(replacement)) {
 					ignores.push(replacement);
 				}
 			}

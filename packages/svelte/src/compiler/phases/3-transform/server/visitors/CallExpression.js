@@ -3,6 +3,7 @@
 import { get_rune } from '../../../scope.js';
 import * as b from '../../../../utils/builders.js';
 import { transform_inspect_rune } from '../../utils.js';
+import { ignore_map } from '../../../../state.js';
 
 /**
  * @param {CallExpression} node
@@ -25,7 +26,13 @@ export function CallExpression(node, context) {
 	}
 
 	if (rune === '$state.snapshot') {
-		return b.call('$.snapshot', /** @type {Expression} */ (context.visit(node.arguments[0])));
+		const to_ignore = ignore_map.get(node)?.some((code) => code.has('state_snapshot_uncloneable'));
+
+		return b.call(
+			'$.snapshot',
+			/** @type {Expression} */ (context.visit(node.arguments[0])),
+			b.literal(!!to_ignore)
+		);
 	}
 
 	if (rune === '$state.is') {

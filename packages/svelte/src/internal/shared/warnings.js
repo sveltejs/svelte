@@ -5,6 +5,11 @@ import { DEV } from 'esm-env';
 var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
+export const codes = [
+	"dynamic_void_element_content",
+	"state_snapshot_uncloneable"
+];
+
 /**
  * `<svelte:element this="%tag%">` is a void element — it cannot have content
  * @param {string} tag

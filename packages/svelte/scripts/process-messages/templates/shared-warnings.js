@@ -15,3 +15,5 @@ export function CODE(PARAMETER) {
 		console.warn('CODE');
 	}
 }
+
+export const codes = CODES;
