@@ -45,7 +45,11 @@
 				],
 				"parent": null,
 				"metadata": {
-					"dynamic": false,
+					"expression": {
+						"dependencies": {},
+						"has_state": false,
+						"has_call": false
+					},
 					"delegated": null
 				}
 			},
@@ -77,13 +81,20 @@
 					},
 					"parent": null,
 					"metadata": {
-						"contains_call_expression": false,
-						"dynamic": false
+						"expression": {
+							"dependencies": {},
+							"has_state": false,
+							"has_call": false
+						}
 					}
 				},
 				"parent": null,
 				"metadata": {
-					"dynamic": false,
+					"expression": {
+						"dependencies": {},
+						"has_state": false,
+						"has_call": false
+					},
 					"delegated": null
 				}
 			}

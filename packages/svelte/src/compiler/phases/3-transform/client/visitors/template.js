@@ -1,5 +1,5 @@
 /** @import { BlockStatement, CallExpression, Expression, ExpressionStatement, Identifier, Literal, MemberExpression, ObjectExpression, Pattern, Property, Statement, Super, TemplateElement, TemplateLiteral } from 'estree' */
-/** @import { Attribute, BindDirective, Binding, ClassDirective, Component, DelegatedEvent, EachBlock, ExpressionTag, Namespace, OnDirective, RegularElement, SpreadAttribute, StyleDirective, SvelteComponent, SvelteElement, SvelteNode, SvelteSelf, TemplateNode, Text } from '#compiler' */
+/** @import { Attribute, BindDirective, Binding, ClassDirective, Component, DelegatedEvent, EachBlock, ExpressionMetadata, ExpressionTag, Namespace, OnDirective, RegularElement, SpreadAttribute, StyleDirective, SvelteComponent, SvelteElement, SvelteNode, SvelteSelf, TemplateNode, Text } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 /** @import { Scope } from '../../../scope.js' */
 /** @import { ComponentClientTransformState, ComponentContext, ComponentVisitors } from '../types.js' */
@@ -104,12 +104,16 @@ function serialize_style_directives(style_directives, element_id, context, is_at
 		);
 
 		const contains_call_expression = get_attribute_chunks(directive.value).some(
-			(v) => v.type === 'ExpressionTag' && v.metadata.contains_call_expression
+			(v) => v.type === 'ExpressionTag' && v.metadata.expression.has_call
 		);
 
 		if (!is_attributes_reactive && contains_call_expression) {
 			state.init.push(serialize_update(update));
-		} else if (is_attributes_reactive || directive.metadata.dynamic || contains_call_expression) {
+		} else if (
+			is_attributes_reactive ||
+			directive.metadata.expression.has_state ||
+			contains_call_expression
+		) {
 			state.update.push(update);
 		} else {
 			state.init.push(update);
@@ -155,7 +159,11 @@ function serialize_class_directives(class_directives, element_id, context, is_at
 
 		if (!is_attributes_reactive && contains_call_expression) {
 			state.init.push(serialize_update(update));
-		} else if (is_attributes_reactive || directive.metadata.dynamic || contains_call_expression) {
+		} else if (
+			is_attributes_reactive ||
+			directive.metadata.expression.has_state ||
+			contains_call_expression
+		) {
 			state.update.push(update);
 		} else {
 			state.init.push(update);
@@ -306,7 +314,7 @@ function serialize_element_spread_attributes(
 		}
 
 		needs_isolation ||=
-			attribute.type === 'SpreadAttribute' && attribute.metadata.contains_call_expression;
+			attribute.type === 'SpreadAttribute' && attribute.metadata.expression.has_call;
 	}
 
 	const lowercase_attributes =
@@ -405,11 +413,11 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 		}
 
 		is_reactive ||=
-			attribute.metadata.dynamic ||
+			attribute.metadata.expression.has_state ||
 			// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
 			attribute.type === 'SpreadAttribute';
 		needs_isolation ||=
-			attribute.type === 'SpreadAttribute' && attribute.metadata.contains_call_expression;
+			attribute.type === 'SpreadAttribute' && attribute.metadata.expression.has_call;
 	}
 
 	if (needs_isolation || is_reactive) {
@@ -492,7 +500,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 	if (context.state.metadata.namespace === 'foreign') {
 		const statement = b.stmt(b.call('$.set_attribute', node_id, b.literal(name), value));
 
-		if (attribute.metadata.dynamic) {
+		if (attribute.metadata.expression.has_state) {
 			const id = state.scope.generate(`${node_id.name}_${name}`);
 			serialize_update_assignment(state, id, undefined, value, statement);
 			return true;
@@ -529,7 +537,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		update = b.stmt(b.call(callee, node_id, b.literal(name), value));
 	}
 
-	if (attribute.metadata.dynamic) {
+	if (attribute.metadata.expression.has_state) {
 		if (contains_call_expression) {
 			state.init.push(serialize_update(update));
 		} else {
@@ -556,7 +564,7 @@ function serialize_custom_element_attribute_update_assignment(node_id, attribute
 
 	const update = b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), value));
 
-	if (attribute.metadata.dynamic) {
+	if (attribute.metadata.expression.has_state) {
 		if (contains_call_expression) {
 			state.init.push(serialize_update(update));
 		} else {
@@ -592,7 +600,7 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 			value
 		)
 	);
-	const is_reactive = attribute.metadata.dynamic;
+	const is_reactive = attribute.metadata.expression.has_state;
 	const is_select_with_value =
 		// attribute.metadata.dynamic would give false negatives because even if the value does not change,
 		// the inner options could still change, so we need to always treat it as reactive
@@ -723,10 +731,10 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 			events[attribute.name].push(handler);
 		} else if (attribute.type === 'SpreadAttribute') {
 			const expression = /** @type {Expression} */ (context.visit(attribute));
-			if (attribute.metadata.dynamic) {
+			if (attribute.metadata.expression.has_state) {
 				let value = expression;
 
-				if (attribute.metadata.contains_call_expression) {
+				if (attribute.metadata.expression.has_call) {
 					const id = b.id(context.state.scope.generate('spread_element'));
 					context.state.init.push(b.var(id, b.call('$.derived', b.thunk(value))));
 					value = b.call('$.get', id);
@@ -754,7 +762,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 
 			const [, value] = serialize_attribute_value(attribute.value, context);
 
-			if (attribute.metadata.dynamic) {
+			if (attribute.metadata.expression.has_state) {
 				let arg = value;
 
 				// When we have a non-simple computation, anything other than an Identifier or Member expression,
@@ -1118,7 +1126,7 @@ function serialize_render_stmt(update) {
 /**
  * Serializes the event handler function of the `on:` directive
  * @param {Pick<OnDirective, 'name' | 'modifiers' | 'expression'>} node
- * @param {null | { contains_call_expression: boolean; dynamic: boolean; } | null} metadata
+ * @param {null | ExpressionMetadata} metadata
  * @param {ComponentContext} context
  */
 function serialize_event_handler(node, metadata, { state, visit }) {
@@ -1145,7 +1153,7 @@ function serialize_event_handler(node, metadata, { state, visit }) {
 			);
 
 		if (
-			metadata?.contains_call_expression &&
+			metadata?.has_call &&
 			!(
 				(handler.type === 'ArrowFunctionExpression' || handler.type === 'FunctionExpression') &&
 				handler.metadata.hoistable
@@ -1227,7 +1235,7 @@ function serialize_event_handler(node, metadata, { state, visit }) {
 /**
  * Serializes an event handler function of the `on:` directive or an attribute starting with `on`
  * @param {{name: string;modifiers: string[];expression: Expression | null;delegated?: DelegatedEvent | null;}} node
- * @param {null | { contains_call_expression: boolean; dynamic: boolean; }} metadata
+ * @param {null | ExpressionMetadata} metadata
  * @param {ComponentContext} context
  */
 function serialize_event(node, metadata, context) {
@@ -1353,7 +1361,9 @@ function serialize_event_attribute(node, context) {
 			modifiers,
 			delegated: node.metadata.delegated
 		},
-		!Array.isArray(node.value) && node.value?.type === 'ExpressionTag' ? node.value.metadata : null,
+		!Array.isArray(node.value) && node.value?.type === 'ExpressionTag'
+			? node.value.metadata.expression
+			: null,
 		context
 	);
 }
@@ -1397,9 +1407,9 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 				b.call('$.set_text', text_id, /** @type {Expression} */ (visit(node.expression, state)))
 			);
 
-			if (node.metadata.contains_call_expression && !within_bound_contenteditable) {
+			if (node.metadata.expression.has_call && !within_bound_contenteditable) {
 				state.init.push(serialize_update(update));
-			} else if (node.metadata.dynamic && !within_bound_contenteditable) {
+			} else if (node.metadata.expression.has_state && !within_bound_contenteditable) {
 				state.update.push(update);
 			} else {
 				state.init.push(
@@ -1427,7 +1437,9 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 			if (contains_call_expression && !within_bound_contenteditable) {
 				state.init.push(serialize_update(update));
 			} else if (
-				sequence.some((node) => node.type === 'ExpressionTag' && node.metadata.dynamic) &&
+				sequence.some(
+					(node) => node.type === 'ExpressionTag' && node.metadata.expression.has_state
+				) &&
 				!within_bound_contenteditable
 			) {
 				state.update.push(update);
@@ -1528,7 +1540,7 @@ function serialize_attribute_value(value, context) {
 		}
 
 		return [
-			chunk.metadata.contains_call_expression,
+			chunk.metadata.expression.has_call,
 			/** @type {Expression} */ (context.visit(chunk.expression))
 		];
 	}
@@ -1555,7 +1567,7 @@ function serialize_template_literal(values, visit, state) {
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
 
-		if (node.type === 'ExpressionTag' && node.metadata.contains_call_expression) {
+		if (node.type === 'ExpressionTag' && node.metadata.expression.has_call) {
 			if (contains_call_expression) {
 				contains_multiple_call_expression = true;
 			}
@@ -2851,7 +2863,7 @@ export const template_visitors = {
 		context.next({ ...context.state, in_constructor: false });
 	},
 	OnDirective(node, context) {
-		serialize_event(node, node.metadata, context);
+		serialize_event(node, node.metadata.expression, context);
 	},
 	UseDirective(node, { state, next, visit }) {
 		const params = [b.id('$$node')];
@@ -3115,7 +3127,7 @@ export const template_visitors = {
 		}
 	},
 	Component(node, context) {
-		if (node.metadata.dynamic) {
+		if (node.metadata.expression.has_state) {
 			// Handle dynamic references to what seems like static inline components
 			const component = serialize_inline_component(node, '$$component', context, b.id('$$anchor'));
 			context.state.init.push(
@@ -3234,7 +3246,7 @@ export const template_visitors = {
 					name = value;
 					is_default = false;
 				} else if (attribute.name !== 'slot') {
-					if (attribute.metadata.dynamic) {
+					if (attribute.metadata.expression.has_state) {
 						props.push(b.get(attribute.name, [b.return(value)]));
 					} else {
 						props.push(b.init(attribute.name, value));

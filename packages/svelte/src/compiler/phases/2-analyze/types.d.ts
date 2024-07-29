@@ -2,6 +2,7 @@ import type { Scope } from '../scope.js';
 import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
 import type {
 	ClassDirective,
+	ExpressionMetadata,
 	ExpressionTag,
 	OnDirective,
 	RenderTag,
@@ -21,7 +22,7 @@ export interface AnalysisState {
 	/** Which slots the current parent component has */
 	component_slots: Set<string>;
 	/** The current {expression}, if any */
-	expression: ExpressionTag | ClassDirective | OnDirective | SpreadAttribute | null;
+	expression: ExpressionMetadata | null;
 	/** The current {@render ...} tag, if any */
 	render_tag: null | RenderTag;
 	private_derived_state: string[];

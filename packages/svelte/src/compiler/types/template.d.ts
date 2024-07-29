@@ -1,4 +1,4 @@
-import type { Binding, Css, EffectMetadata } from '#compiler';
+import type { Binding, Css, ExpressionMetadata } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
@@ -110,7 +110,9 @@ export interface Text extends BaseNode {
 export interface ExpressionTag extends BaseNode {
 	type: 'ExpressionTag';
 	expression: Expression;
-	effect: EffectMetadata;
+	metadata: {
+		expression: ExpressionMetadata;
+	};
 }
 
 /** A (possibly reactive) HTML template expression — `{@html ...}` */
@@ -183,7 +185,7 @@ export interface ClassDirective extends BaseNode {
 	/** The 'y' in `class:x={y}`, or the `x` in `class:x` */
 	expression: Expression;
 	metadata: {
-		dynamic: false;
+		expression: ExpressionMetadata;
 	};
 }
 
@@ -205,8 +207,7 @@ export interface OnDirective extends BaseNode {
 	expression: null | Expression;
 	modifiers: string[]; // TODO specify
 	metadata: {
-		contains_call_expression: boolean;
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 	};
 }
 
@@ -226,7 +227,7 @@ export interface StyleDirective extends BaseNode {
 	value: true | ExpressionTag | Array<ExpressionTag | Text>;
 	modifiers: Array<'important'>;
 	metadata: {
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 	};
 }
 
@@ -273,7 +274,7 @@ interface BaseElement extends BaseNode {
 export interface Component extends BaseElement {
 	type: 'Component';
 	metadata: {
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 	};
 }
 
@@ -447,7 +448,7 @@ export interface Attribute extends BaseNode {
 	name: string;
 	value: true | ExpressionTag | Array<Text | ExpressionTag>;
 	metadata: {
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 		/** May be set if this is an event attribute */
 		delegated: null | DelegatedEvent;
 	};
@@ -456,7 +457,9 @@ export interface Attribute extends BaseNode {
 export interface SpreadAttribute extends BaseNode {
 	type: 'SpreadAttribute';
 	expression: Expression;
-	effect: EffectMetadata;
+	metadata: {
+		expression: ExpressionMetadata;
+	};
 }
 
 export type TemplateNode =

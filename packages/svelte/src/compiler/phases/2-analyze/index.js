@@ -1178,7 +1178,7 @@ const common_visitors = {
 
 		context.next();
 
-		node.metadata.dynamic = get_attribute_chunks(node.value).some((chunk) => {
+		node.metadata.expression.has_state = get_attribute_chunks(node.value).some((chunk) => {
 			if (chunk.type !== 'ExpressionTag') {
 				return false;
 			}
@@ -1190,7 +1190,7 @@ const common_visitors = {
 				return false;
 			}
 
-			return chunk.metadata.dynamic || chunk.metadata.contains_call_expression;
+			return chunk.metadata.expression.has_state;
 		});
 
 		if (is_event_attribute(node)) {
@@ -1211,10 +1211,10 @@ const common_visitors = {
 		}
 	},
 	ClassDirective(node, context) {
-		context.next({ ...context.state, expression: node });
+		context.next({ ...context.state, expression: node.metadata.expression });
 	},
 	SpreadAttribute(node, context) {
-		context.next({ ...context.state, expression: node });
+		context.next({ ...context.state, expression: node.metadata.expression });
 	},
 	SlotElement(node, context) {
 		let name = 'default';
@@ -1230,17 +1230,17 @@ const common_visitors = {
 		if (node.value === true) {
 			const binding = context.state.scope.get(node.name);
 			if (binding?.kind !== 'normal') {
-				node.metadata.dynamic = true;
+				node.metadata.expression.has_state = true;
 			}
 		} else {
 			context.next();
-			node.metadata.dynamic = get_attribute_chunks(node.value).some(
-				(node) => node.type === 'ExpressionTag' && node.metadata.dynamic
+			node.metadata.expression.has_state = get_attribute_chunks(node.value).some(
+				(node) => node.type === 'ExpressionTag' && node.metadata.expression.has_state
 			);
 		}
 	},
 	ExpressionTag(node, context) {
-		context.next({ ...context.state, expression: node });
+		context.next({ ...context.state, expression: node.metadata.expression });
 	},
 	Identifier(node, context) {
 		const parent = /** @type {Node} */ (context.path.at(-1));
@@ -1264,7 +1264,7 @@ const common_visitors = {
 		// if no binding, means some global variable
 		if (binding && binding.kind !== 'normal') {
 			if (context.state.expression) {
-				context.state.expression.metadata.dynamic = true;
+				context.state.expression.has_state = true;
 			}
 
 			// TODO it would be better to just bail out when we hit the ExportSpecifier node but that's
@@ -1297,13 +1297,10 @@ const common_visitors = {
 	},
 	CallExpression(node, context) {
 		const { expression, render_tag } = context.state;
-		if (
-			(expression?.type === 'ExpressionTag' ||
-				expression?.type === 'SpreadAttribute' ||
-				expression?.type === 'OnDirective') &&
-			!is_known_safe_call(node, context)
-		) {
-			expression.metadata.contains_call_expression = true;
+
+		if (expression && !is_known_safe_call(node, context)) {
+			expression.has_call = true;
+			expression.has_state = true;
 		}
 
 		if (render_tag) {
@@ -1354,7 +1351,7 @@ const common_visitors = {
 	},
 	MemberExpression(node, context) {
 		if (context.state.expression) {
-			context.state.expression.metadata.dynamic = true;
+			context.state.expression.has_state = true;
 		}
 
 		if (!is_safe_identifier(node, context.state.scope)) {
@@ -1368,7 +1365,7 @@ const common_visitors = {
 		if (parent?.type === 'SvelteElement' || parent?.type === 'RegularElement') {
 			state.analysis.event_directive_node ??= node;
 		}
-		next({ ...state, expression: node });
+		next({ ...state, expression: node.metadata.expression });
 	},
 	BindDirective(node, context) {
 		let i = context.path.length;
@@ -1543,7 +1540,7 @@ const common_visitors = {
 			node.name.includes('.') ? node.name.slice(0, node.name.indexOf('.')) : node.name
 		);
 
-		node.metadata.dynamic = binding !== null && binding.kind !== 'normal';
+		node.metadata.expression.has_state = binding !== null && binding.kind !== 'normal';
 	},
 	RenderTag(node, context) {
 		context.next({ ...context.state, render_tag: node });
