@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: remove passive from OnDirective events
+fix: remove implicit passive behavior from OnDirective events
