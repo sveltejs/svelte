@@ -1298,7 +1298,11 @@ function serialize_event(node, metadata, context) {
 			args.push(b.literal(true));
 		} else if (node.modifiers.includes('nonpassive')) {
 			args.push(b.literal(false));
-		} else if (PassiveEvents.includes(node.name)) {
+		} else if (
+			PassiveEvents.includes(node.name) &&
+			/** @type {OnDirective} */ (node).type !== 'OnDirective'
+		) {
+			// For on:something events we don't apply passive behaviour to match Svelte 4.
 			args.push(b.literal(true));
 		}
 
