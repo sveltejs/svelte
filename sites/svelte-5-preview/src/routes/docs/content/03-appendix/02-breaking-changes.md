@@ -196,6 +196,25 @@ In Svelte 4, doing the following triggered reactivity:
 
 This is because the Svelte compiler treated the assignment to `foo.value` as an instruction to update anything that referenced `foo`. In Svelte 5, reactivity is determined at runtime rather than compile time, so you should define `value` as a reactive `$state` field on the `Foo` class. Wrapping `new Foo()` with `$state(...)` will have no effect — only vanilla objects and arrays are made deeply reactive.
 
+### Components can be switched without using `<svelte:component>`
+
+In Svelte 4, writing `<Component />` meant that the component instance is static. If you made the variable `Component` a reactive state variable and updated the component value, the component would not be reinstantiated with the new value - you had to use `<svelte:component>` for that. In runes mode, this is no longer necessary.
+
+```svelte
+<script>
+	import C1 from './C1.svelte';
+	import C2 from './C2.svelte';
+
+	let Component = $state(C1);
+</script>
+
+<button onclick={() => (Component = C2)}>switch</button>
+
+<!-- both of these update when clicking the button -->
+<Component />
+<svelte:component this={Component} />
+```
+
 ## Other breaking changes
 
 ### Stricter `@const` assignment validation

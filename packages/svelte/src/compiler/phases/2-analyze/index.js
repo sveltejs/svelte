@@ -1543,7 +1543,10 @@ const common_visitors = {
 			node.name.includes('.') ? node.name.slice(0, node.name.indexOf('.')) : node.name
 		);
 
-		node.metadata.dynamic = binding !== null && binding.kind !== 'normal';
+		node.metadata.dynamic =
+			context.state.analysis.runes && // Svelte 4 required you to use svelte:component to switch components
+			binding !== null &&
+			(binding.kind !== 'normal' || node.name.includes('.'));
 	},
 	RenderTag(node, context) {
 		context.next({ ...context.state, render_tag: node });

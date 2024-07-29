@@ -249,6 +249,24 @@ export function id(name) {
 
 /**
  * @param {string} name
+ * @returns {ESTree.Identifier | ESTree.MemberExpression}
+ */
+export function id_like(name) {
+	const parts = name.split('.');
+	if (parts.length === 1) return id(name);
+
+	/** @type {ESTree.Identifier | ESTree.MemberExpression} */
+	let expression = id(parts[0]);
+
+	for (let i = 1; i < parts.length; i++) {
+		expression = member(expression, id(parts[i]));
+	}
+
+	return expression;
+}
+
+/**
+ * @param {string} name
  * @returns {ESTree.PrivateIdentifier}
  */
 export function private_id(name) {
