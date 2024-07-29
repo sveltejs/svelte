@@ -73,6 +73,9 @@ export function animation(element, get_fn, get_params) {
 	/** @type {DOMRect} */
 	var to;
 
+	/** @type {P | undefined} */
+	var params;
+
 	/** @type {Animation | undefined} */
 	var animation;
 
@@ -83,6 +86,10 @@ export function animation(element, get_fn, get_params) {
 		element,
 		measure() {
 			from = this.element.getBoundingClientRect();
+			// get params now, in case they depend on the list item's position. Example:
+			// If A and B switch position and the animation is like `animate:flip={{ delay: itemIdx * 50 }}`
+			// then we want `itemIdx` to be the index before the switch for both A and B
+			params = get_params?.();
 		},
 		apply() {
 			animation?.abort();
@@ -95,7 +102,7 @@ export function animation(element, get_fn, get_params) {
 				from.top !== to.top ||
 				from.bottom !== to.bottom
 			) {
-				const options = get_fn()(this.element, { from, to }, get_params?.());
+				const options = get_fn()(this.element, { from, to }, params);
 
 				animation = animate(
 					this.element,
@@ -422,6 +429,7 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 		}
 
 		task = loop((now) => {
+			console.log(now, start, end, delay);
 			if (now >= end) {
 				tick?.(t2, 1 - t2);
 				on_finish?.();

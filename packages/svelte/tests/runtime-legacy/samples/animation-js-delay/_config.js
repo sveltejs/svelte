@@ -1,9 +1,6 @@
-// @ts-nocheck
-import { ok, test } from '../../test';
+import { test } from '../../test';
 
 export default test({
-	skip: true, // TODO: needs fixing
-
 	get props() {
 		return {
 			things: [
@@ -25,7 +22,7 @@ export default test({
 	`,
 
 	test({ assert, component, window, raf }) {
-		let divs = window.document.querySelectorAll('div');
+		let divs = /** @type {NodeListOf<any>} */ (window.document.querySelectorAll('div'));
 		divs.forEach((div) => {
 			div.getBoundingClientRect = function () {
 				const index = [...this.parentNode.children].indexOf(this);
@@ -52,6 +49,7 @@ export default test({
 		assert.equal(divs[0].dy, 120);
 		assert.equal(divs[4].dy, -120);
 
+		console.log('tick 50');
 		raf.tick(50);
 		assert.equal(divs[0].dy, 108);
 		assert.equal(divs[4].dy, -60);
