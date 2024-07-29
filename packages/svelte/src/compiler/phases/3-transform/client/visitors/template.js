@@ -325,7 +325,8 @@ function serialize_element_spread_attributes(
 				b.id(id),
 				b.object(values),
 				lowercase_attributes,
-				b.literal(context.state.analysis.css.hash)
+				b.literal(context.state.analysis.css.hash),
+				b.literal(is_to_ignore(element, 'hydration_attribute_changed'))
 			)
 		)
 	);
@@ -490,7 +491,15 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 
 	// The foreign namespace doesn't have any special handling, everything goes through the attr function
 	if (context.state.metadata.namespace === 'foreign') {
-		const statement = b.stmt(b.call('$.set_attribute', node_id, b.literal(name), value));
+		const statement = b.stmt(
+			b.call(
+				'$.set_attribute',
+				node_id,
+				b.literal(name),
+				value,
+				b.literal(is_to_ignore(element, 'hydration_attribute_changed'))
+			)
+		);
 
 		if (attribute.metadata.dynamic) {
 			const id = state.scope.generate(`${node_id.name}_${name}`);
@@ -526,7 +535,15 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		update = b.stmt(b.assignment('=', b.member(node_id, b.id(name)), value));
 	} else {
 		const callee = name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute';
-		update = b.stmt(b.call(callee, node_id, b.literal(name), value));
+		update = b.stmt(
+			b.call(
+				callee,
+				node_id,
+				b.literal(name),
+				value,
+				b.literal(is_to_ignore(element, 'hydration_attribute_changed'))
+			)
+		);
 	}
 
 	if (attribute.metadata.dynamic) {
