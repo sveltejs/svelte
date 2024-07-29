@@ -5,11 +5,9 @@ import * as e from '../../errors.js';
 import { extract_identifiers } from '../../utils/ast.js';
 import * as w from '../../warnings.js';
 import { Runes } from '../constants.js';
-import { regex_not_whitespace } from '../patterns.js';
 import { get_rune } from '../scope.js';
 import { merge } from '../visitors.js';
 import { a11y_validators } from './visitors/shared/a11y.js';
-import { is_tag_valid_with_parent } from '../../../html-tree-validation.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { BindDirective } from './visitors/BindDirective.js';
@@ -20,6 +18,7 @@ import { EachBlock } from './visitors/EachBlock.js';
 import { ExportDefaultDeclaration } from './visitors/ExportDefaultDeclaration.js';
 import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
+import { ExpressionTag } from './visitors/ExpressionTag.js';
 import { IfBlock } from './visitors/IfBlock.js';
 import { ImportDeclaration } from './visitors/ImportDeclaration.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
@@ -36,6 +35,8 @@ import { SvelteElement } from './visitors/SvelteElement.js';
 import { SvelteFragment } from './visitors/SvelteFragment.js';
 import { SvelteHead } from './visitors/SvelteHead.js';
 import { SvelteSelf } from './visitors/SvelteSelf.js';
+import { Text } from './visitors/Text.js';
+import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { validate_assignment, validate_opening_tag } from './visitors/shared/utils.js';
 
@@ -66,34 +67,10 @@ const validation = {
 	Component,
 	SvelteComponent,
 	SvelteSelf,
-	Text(node, context) {
-		if (!node.parent) return;
-		if (context.state.parent_element && regex_not_whitespace.test(node.data)) {
-			if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
-				e.node_invalid_placement(node, 'Text node', context.state.parent_element);
-			}
-		}
-	},
-	TitleElement(node) {
-		const attribute = node.attributes[0];
-		if (attribute) {
-			e.title_illegal_attribute(attribute);
-		}
-
-		const child = node.fragment.nodes.find((n) => n.type !== 'Text' && n.type !== 'ExpressionTag');
-		if (child) {
-			e.title_invalid_content(child);
-		}
-	},
+	Text,
+	TitleElement,
 	UpdateExpression,
-	ExpressionTag(node, context) {
-		if (!node.parent) return;
-		if (context.state.parent_element) {
-			if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
-				e.node_invalid_placement(node, '`{expression}`', context.state.parent_element);
-			}
-		}
-	}
+	ExpressionTag
 };
 
 export const validation_legacy = merge(validation, a11y_validators, {
