@@ -141,5 +141,10 @@ export function CallExpression(node, context) {
 			break;
 	}
 
-	context.next();
+	// `$inspect(foo)` should not trigger the `static-state-reference` warning
+	if (rune === '$inspect') {
+		context.next({ ...context.state, function_depth: context.state.function_depth + 1 });
+	} else {
+		context.next();
+	}
 }
