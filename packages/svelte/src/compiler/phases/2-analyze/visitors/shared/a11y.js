@@ -1,5 +1,5 @@
 /** @import { Visitors } from 'zimmerframe' */
-/** @import { AnalysisState } from './types.js' */
+/** @import { AnalysisState } from '../../types.js' */
 /** @import { Attribute, SvelteNode, TemplateNode, RegularElement, SvelteElement } from '#compiler' */
 /** @import { ARIARoleDefinitionKey, ARIARoleRelationConcept, ARIAProperty, ARIAPropertyDefinition, ARIARoleDefinition } from 'aria-query' */
 import { roles as roles_map, aria, elementRoles } from 'aria-query';
@@ -10,13 +10,13 @@ import {
 	regex_not_whitespace,
 	regex_starts_with_vowel,
 	regex_whitespaces
-} from '../patterns.js';
-import * as w from '../../warnings.js';
-import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
-import { is_event_attribute, is_text_attribute } from '../../utils/ast.js';
-import { ContentEditableBindings } from '../constants.js';
+} from '../../../patterns.js';
+import * as w from '../../../../warnings.js';
+import fuzzymatch from '../../../1-parse/utils/fuzzymatch.js';
+import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
+import { ContentEditableBindings } from '../../../constants.js';
 import { walk } from 'zimmerframe';
-import { list } from '../../utils/string.js';
+import { list } from '../../../../utils/string.js';
 
 const aria_roles = roles_map.keys();
 const abstract_roles = aria_roles.filter((role) => roles_map.get(role)?.abstract);

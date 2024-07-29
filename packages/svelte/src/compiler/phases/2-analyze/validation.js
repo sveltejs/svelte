@@ -31,13 +31,15 @@ import {
 } from '../patterns.js';
 import { Scope, get_rune } from '../scope.js';
 import { merge } from '../visitors.js';
-import { a11y_validators } from './a11y.js';
+import { a11y_validators } from './visitors/shared/a11y.js';
 import {
 	is_tag_valid_with_ancestor,
 	is_tag_valid_with_parent
 } from '../../../html-tree-validation.js';
-import { ImportDeclaration } from './visitors/ImportDeclaration.js';
 import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
+import { ExpressionStatement } from './visitors/ExpressionStatement.js';
+import { ImportDeclaration } from './visitors/ImportDeclaration.js';
+import { MemberExpression } from './visitors/MemberExpression.js';
 
 /**
  * @param {Attribute} attribute
@@ -364,40 +366,8 @@ function validate_block_not_empty(node, context) {
  * @type {Visitors}
  */
 const validation = {
-	ExpressionStatement(node, { state }) {
-		if (
-			node.expression.type === 'NewExpression' &&
-			node.expression.callee.type === 'Identifier' &&
-			node.expression.arguments.length === 1 &&
-			node.expression.arguments[0].type === 'ObjectExpression' &&
-			node.expression.arguments[0].properties.some(
-				(p) => p.type === 'Property' && p.key.type === 'Identifier' && p.key.name === 'target'
-			)
-		) {
-			const binding = state.scope.get(node.expression.callee.name);
-			if (binding?.kind === 'normal' && binding.declaration_kind === 'import') {
-				const declaration = /** @type {import('estree').ImportDeclaration} */ (binding.initial);
-
-				// Theoretically someone could import a class from a `.svelte.js` module, but that's too rare to worry about
-				if (
-					/** @type {string} */ (declaration.source.value)?.endsWith('.svelte') &&
-					declaration.specifiers.find(
-						(s) => s.local.name === binding.node.name && s.type === 'ImportDefaultSpecifier'
-					)
-				) {
-					w.legacy_component_creation(node.expression);
-				}
-			}
-		}
-	},
-	MemberExpression(node, context) {
-		if (node.object.type === 'Identifier' && node.property.type === 'Identifier') {
-			const binding = context.state.scope.get(node.object.name);
-			if (binding?.kind === 'rest_prop' && node.property.name.startsWith('$$')) {
-				e.props_illegal_name(node.property);
-			}
-		}
-	},
+	ExpressionStatement,
+	MemberExpression,
 	AssignmentExpression(node, context) {
 		validate_assignment(node, node.left, context.state);
 	},
