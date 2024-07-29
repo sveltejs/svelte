@@ -5,6 +5,18 @@ import { DEV } from 'esm-env';
 var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
+export const codes = [
+	"binding_property_non_reactive",
+	"hydration_attribute_changed",
+	"hydration_html_changed",
+	"hydration_mismatch",
+	"invalid_raw_snippet_render",
+	"lifecycle_double_unmount",
+	"ownership_invalid_binding",
+	"ownership_invalid_mutation",
+	"state_proxy_equality_mismatch"
+];
+
 /**
  * `%binding%` (%location%) is binding to a non-reactive property
  * @param {string} binding
