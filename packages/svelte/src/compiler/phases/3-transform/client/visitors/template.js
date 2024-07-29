@@ -1306,7 +1306,11 @@ function serialize_event(node, metadata, context) {
 			args.push(b.literal(true));
 		} else if (node.modifiers.includes('nonpassive')) {
 			args.push(b.literal(false));
-		} else if (PassiveEvents.includes(node.name)) {
+		} else if (
+			PassiveEvents.includes(node.name) &&
+			/** @type {OnDirective} */ (node).type !== 'OnDirective'
+		) {
+			// For on:something events we don't apply passive behaviour to match Svelte 4.
 			args.push(b.literal(true));
 		}
 
@@ -2160,6 +2164,7 @@ export const template_visitors = {
 				}
 
 				if (
+					!is_custom_element &&
 					attribute.name !== 'autofocus' &&
 					(attribute.value === true || is_text_attribute(attribute))
 				) {
@@ -2416,10 +2421,7 @@ export const template_visitors = {
 
 		let flags = 0;
 
-		if (
-			node.key &&
-			(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index)
-		) {
+		if (node.metadata.keyed) {
 			flags |= EACH_KEYED;
 
 			if (node.index) {
@@ -2428,7 +2430,7 @@ export const template_visitors = {
 
 			// In runes mode, if key === item, we don't need to wrap the item in a source
 			const key_is_item =
-				node.key.type === 'Identifier' &&
+				/** @type {Expression} */ (node.key).type === 'Identifier' &&
 				node.context.type === 'Identifier' &&
 				node.context.name === node.key.name;
 
@@ -2500,6 +2502,12 @@ export const template_visitors = {
 			getters: { ...context.state.getters }
 		};
 
+		/** The state used when generating the key function, if necessary */
+		const key_state = {
+			...context.state,
+			getters: { ...context.state.getters }
+		};
+
 		/**
 		 * @param {Pattern} expression_for_id
 		 * @returns {Binding['mutation']}
@@ -2557,8 +2565,12 @@ export const template_visitors = {
 		if (node.index) {
 			child_state.getters[node.index] = (id) => {
 				const index_with_loc = with_loc(index, id);
-				return b.call('$.unwrap', index_with_loc);
+				return (flags & EACH_INDEX_REACTIVE) === 0
+					? index_with_loc
+					: b.call('$.get', index_with_loc);
 			};
+
+			key_state.getters[node.index] = b.id(node.index);
 		}
 
 		/** @type {Statement[]} */
@@ -2572,6 +2584,8 @@ export const template_visitors = {
 					true
 				)
 			);
+
+			key_state.getters[node.context.name] = node.context;
 		} else {
 			const unwrapped = getter(binding.node);
 			const paths = extract_paths(node.context);
@@ -2599,23 +2613,23 @@ export const template_visitors = {
 				if (context.state.options.dev) {
 					declarations.push(b.stmt(getter));
 				}
+
+				key_state.getters[name] = path.node;
 			}
 		}
 
 		const block = /** @type {BlockStatement} */ (context.visit(node.body, child_state));
 
-		const key_function = node.key
-			? b.arrow(
-					[node.context.type === 'Identifier' ? node.context : b.id('$$item'), index],
-					declarations.length > 0
-						? b.block(
-								declarations.concat(
-									b.return(/** @type {Expression} */ (context.visit(node.key, child_state)))
-								)
-							)
-						: /** @type {Expression} */ (context.visit(node.key, child_state))
-				)
-			: b.id('$.index');
+		/** @type {Expression} */
+		let key_function = b.id('$.index');
+
+		if (node.metadata.keyed) {
+			const expression = /** @type {Expression} */ (
+				context.visit(/** @type {Expression} */ (node.key), key_state)
+			);
+
+			key_function = b.arrow([node.context, index], expression);
+		}
 
 		if (node.index && each_node_meta.contains_group_binding) {
 			// We needed to create a unique identifier for the index above, but we want to use the
@@ -3055,11 +3069,12 @@ export const template_visitors = {
 					call_expr = b.call(`$.bind_focused`, state.node, setter);
 					break;
 				case 'group': {
-					/** @type {CallExpression[]} */
-					const indexes = [];
-					for (const parent_each_block of node.metadata.parent_each_blocks) {
-						indexes.push(b.call('$.unwrap', parent_each_block.metadata.index));
-					}
+					const indexes = node.metadata.parent_each_blocks.map((each) => {
+						// if we have a keyed block with an index, the index is wrapped in a source
+						return each.metadata.keyed && each.index
+							? b.call('$.get', each.metadata.index)
+							: each.metadata.index;
+					});
 
 					// We need to additionally invoke the value attribute signal to register it as a dependency,
 					// so that when the value is updated, the group binding is updated

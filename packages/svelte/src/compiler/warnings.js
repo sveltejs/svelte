@@ -114,6 +114,7 @@ export const codes = [
 	"component_name_lowercase",
 	"element_invalid_self_closing_tag",
 	"event_directive_deprecated",
+	"node_invalid_placement_ssr",
 	"slot_element_deprecated",
 	"svelte_element_invalid_this"
 ];
@@ -737,6 +738,16 @@ export function element_invalid_self_closing_tag(node, name) {
  */
 export function event_directive_deprecated(node, name) {
 	w(node, "event_directive_deprecated", `Using \`on:${name}\` to listen to the ${name} event is deprecated. Use the event attribute \`on${name}\` instead`);
+}
+
+/**
+ * %thing% is invalid inside `<%parent%>`. When rendering this component on the server, the resulting HTML will be modified by the browser, likely resulting in a `hydration_mismatch` warning
+ * @param {null | NodeLike} node
+ * @param {string} thing
+ * @param {string} parent
+ */
+export function node_invalid_placement_ssr(node, thing, parent) {
+	w(node, "node_invalid_placement_ssr", `${thing} is invalid inside \`<${parent}>\`. When rendering this component on the server, the resulting HTML will be modified by the browser, likely resulting in a \`hydration_mismatch\` warning`);
 }
 
 /**

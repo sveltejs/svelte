@@ -362,7 +362,7 @@ export function store_set(store, value) {
  * @param {Store<V>} store
  * @param {any} expression
  */
-export function mutate_store(store_values, store_name, store, expression) {
+export function store_mutate(store_values, store_name, store, expression) {
 	store_set(store, store_get(store_values, store_name, store));
 	return expression;
 }
@@ -428,12 +428,10 @@ export async function value_or_fallback_async(value, fallback) {
  * @returns {void}
  */
 export function slot(payload, slot_fn, slot_props, fallback_fn) {
-	if (slot_fn === undefined) {
-		if (fallback_fn !== null) {
-			fallback_fn();
-		}
-	} else {
+	if (slot_fn !== undefined) {
 		slot_fn(payload, slot_props);
+	} else {
+		fallback_fn?.();
 	}
 }
 

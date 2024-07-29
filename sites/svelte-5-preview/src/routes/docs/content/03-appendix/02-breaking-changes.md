@@ -202,9 +202,18 @@ This is because the Svelte compiler treated the assignment to `foo.value` as an 
 
 Assignments to destructured parts of a `@const` declaration are no longer allowed. It was an oversight that this was ever allowed.
 
-### Stricter CSS `:global` selector validation
+### :is(...) and :where(...) are scoped
 
-Previously, a compound selector starting with a global modifier which has universal or type selectors (like `:global(span).foo`) was valid. In Svelte 5, this is a validation error instead. The reason is that in this selector the resulting CSS would be equivalent to one without `:global` - in other words, `:global` is ignored in this case.
+Previously, Svelte did not analyse selectors inside `:is(...)` and `:where(...)`, effectively treating them as global. Svelte 5 analyses them in the context of the current component. As such, some selectors may now be treated as unused if they were relying on this treatment. To fix this, use `:global(...)` inside the `:is(...)/:where(...)` selectors.
+
+When using Tailwind's `@apply` directive, add a `:global` selector to preserve rules that use Tailwind-generated `:is(...)` selectors:
+
+```diff
+- main {
++ main :global {
+	@apply bg-blue-100 dark:bg-blue-900
+}
+```
 
 ### CSS hash position no longer deterministic
 

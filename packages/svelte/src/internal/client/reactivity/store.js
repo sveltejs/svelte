@@ -119,7 +119,7 @@ export function setup_stores() {
  * @param {V} new_value  the new store value
  * @template V
  */
-export function mutate_store(store, expression, new_value) {
+export function store_mutate(store, expression, new_value) {
 	store.set(new_value);
 	return expression;
 }

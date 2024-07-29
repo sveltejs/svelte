@@ -2,7 +2,7 @@
 import { mutable_source, set } from '../internal/client/reactivity/sources.js';
 import { user_pre_effect } from '../internal/client/reactivity/effects.js';
 import { hydrate, mount, unmount } from '../internal/client/render.js';
-import { get } from '../internal/client/runtime.js';
+import { flush_sync, get } from '../internal/client/runtime.js';
 import { define_property } from '../internal/shared/utils.js';
 
 /**
@@ -109,6 +109,8 @@ class Svelte4Component {
 			intro: options.intro ?? false,
 			recover: options.recover
 		});
+
+		flush_sync();
 
 		this.#events = props.$$events;
 

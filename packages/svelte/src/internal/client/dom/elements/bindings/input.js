@@ -73,13 +73,8 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 
 	if (group_index !== null) {
 		for (var index of group_index) {
-			var group = binding_group;
-			// @ts-ignore
-			binding_group = group[index];
-			if (binding_group === undefined) {
-				// @ts-ignore
-				binding_group = group[index] = [];
-			}
+			// @ts-expect-error
+			binding_group = binding_group[index] ??= [];
 		}
 	}
 

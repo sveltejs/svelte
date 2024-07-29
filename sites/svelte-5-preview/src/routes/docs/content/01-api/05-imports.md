@@ -44,6 +44,8 @@ const app = mount(App, {
 });
 ```
 
+Note that unlike calling `new App(...)` in Svelte 4, things like effects (including `onMount` callbacks, and action functions) will not run during `mount`. If you need to force pending effects to run (in the context of a test, for example) you can do so with `flushSync()`.
+
 ### `hydrate`
 
 Like `mount`, but will reuse up any HTML rendered by Svelte's SSR output (from the [`render`](#svelte-server-render) function) inside the target and make it interactive:
@@ -58,6 +60,8 @@ const app = hydrate(App, {
 	props: { some: 'property' }
 });
 ```
+
+As with `mount`, effects will not run during `hydrate` — use `flushSync()` immediately afterwards if you need them to.
 
 ### `unmount`
 

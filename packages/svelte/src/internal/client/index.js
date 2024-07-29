@@ -116,7 +116,7 @@ export {
 } from './reactivity/props.js';
 export {
 	invalidate_store,
-	mutate_store,
+	store_mutate,
 	setup_stores,
 	store_get,
 	store_set,
