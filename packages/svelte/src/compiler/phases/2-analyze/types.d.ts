@@ -21,7 +21,7 @@ export interface AnalysisState {
 	has_props_rune: boolean;
 	/** Which slots the current parent component has */
 	component_slots: Set<string>;
-	/** The current {expression}, if any */
+	/** Information about the current expression/directive/block value */
 	expression: ExpressionMetadata | null;
 	/** The current {@render ...} tag, if any */
 	render_tag: null | RenderTag;
