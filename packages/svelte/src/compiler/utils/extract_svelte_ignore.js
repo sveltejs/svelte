@@ -1,7 +1,5 @@
 import fuzzymatch from '../phases/1-parse/utils/fuzzymatch.js';
 import * as w from '../warnings.js';
-import { codes as client_codes } from '../../internal/client/warnings.js';
-import { codes as shared_codes } from '../../internal/shared/warnings.js';
 
 const regex_svelte_ignore = /^\s*svelte-ignore\s/;
 
@@ -18,7 +16,18 @@ const replacements = {
 	'unused-export-let': 'export_let_unused'
 };
 
-const codes = w.codes.concat(client_codes).concat(shared_codes);
+// we use a list of ignorable runtime warnings because not every runtime warning
+// can be ignored and we want to keep the validation for svelte-ignore in place
+const ignorable_runtime_warnings = [
+	'state_snapshot_uncloneable',
+	'binding_property_non_reactive',
+	'hydration_attribute_changed',
+	'hydration_html_changed',
+	'ownership_invalid_binding',
+	'ownership_invalid_mutation'
+];
+
+const codes = w.codes.concat(ignorable_runtime_warnings);
 
 /**
  * @param {number} offset
