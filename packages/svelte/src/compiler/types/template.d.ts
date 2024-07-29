@@ -1,4 +1,4 @@
-import type { Binding, Css } from '#compiler';
+import type { Binding, Css, EffectMetadata } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
@@ -110,14 +110,7 @@ export interface Text extends BaseNode {
 export interface ExpressionTag extends BaseNode {
 	type: 'ExpressionTag';
 	expression: Expression;
-	metadata: {
-		contains_call_expression: boolean;
-		/**
-		 * Whether or not the expression contains any dynamic references —
-		 * determines whether it will be updated in a render effect or not
-		 */
-		dynamic: boolean;
-	};
+	effect: EffectMetadata;
 }
 
 /** A (possibly reactive) HTML template expression — `{@html ...}` */
@@ -463,10 +456,7 @@ export interface Attribute extends BaseNode {
 export interface SpreadAttribute extends BaseNode {
 	type: 'SpreadAttribute';
 	expression: Expression;
-	metadata: {
-		contains_call_expression: boolean;
-		dynamic: boolean;
-	};
+	effect: EffectMetadata;
 }
 
 export type TemplateNode =

@@ -316,6 +316,12 @@ export interface Binding {
 	} | null;
 }
 
+export interface ExpressionMetadata {
+	dependencies: Set<Binding>;
+	has_state: boolean;
+	has_call: boolean;
+}
+
 export * from './template.js';
 export { Css };
 

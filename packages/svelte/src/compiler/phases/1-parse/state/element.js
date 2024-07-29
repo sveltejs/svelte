@@ -507,9 +507,10 @@ function read_attribute(parser) {
 				end: parser.index,
 				expression,
 				parent: null,
-				metadata: {
-					contains_call_expression: false,
-					dynamic: false
+				effect: {
+					is_dynamic: false,
+					has_call_expression: false,
+					bindings: new Set()
 				}
 			};
 
@@ -537,9 +538,10 @@ function read_attribute(parser) {
 					name
 				},
 				parent: null,
-				metadata: {
-					dynamic: false,
-					contains_call_expression: false
+				effect: {
+					has_call_expression: false,
+					is_dynamic: false,
+					bindings: new Set()
 				}
 			};
 
