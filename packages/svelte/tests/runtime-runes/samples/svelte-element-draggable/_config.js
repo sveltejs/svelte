@@ -7,6 +7,7 @@ export default test({
 	async test({ assert, target, logs }) {
 		const [div, div2] = target.querySelectorAll('div');
 		ok(div);
+		ok(div2);
 
 		assert.deepEqual(div.getAttribute('draggable'), 'false');
 		assert.deepEqual(div.draggable, false);
