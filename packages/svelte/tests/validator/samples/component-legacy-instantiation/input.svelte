@@ -1,10 +1,11 @@
 <script>
-	import Foo from './Somewhere.svelte';
-	import Bar from './somewhereelse';
+	import Foo, { Bar } from './Somewhere.svelte';
+	import Baz from './somewhereelse';
 
-	let Baz;
+	let Buzz;
 
-	new Foo();
+	new Foo({});
 	new Bar();
 	new Baz();
+	new Buzz();
 </script>
