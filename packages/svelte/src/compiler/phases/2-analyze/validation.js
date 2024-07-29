@@ -1,8 +1,4 @@
 /** @import { Visitors } from './types.js' */
-import * as e from '../../errors.js';
-import * as w from '../../warnings.js';
-import { get_rune } from '../scope.js';
-import { merge } from '../visitors.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { BindDirective } from './visitors/BindDirective.js';
@@ -41,7 +37,6 @@ import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
-import { ensure_no_module_import_conflict } from './visitors/shared/utils.js';
 
 /**
  * @type {Visitors}
@@ -50,18 +45,27 @@ const validation = {
 	AssignmentExpression,
 	AwaitBlock,
 	BindDirective,
+	CallExpression,
+	ClassBody,
+	ClassDeclaration,
 	Component,
 	ConstTag,
+	DebugTag,
 	EachBlock,
 	ExportDefaultDeclaration,
+	ExportNamedDeclaration,
 	ExpressionStatement,
 	ExpressionTag,
+	HtmlTag,
+	Identifier,
 	IfBlock,
 	ImportDeclaration,
 	KeyBlock,
 	LabeledStatement,
 	LetDirective,
 	MemberExpression,
+	NewExpression,
+	OnDirective,
 	RegularElement,
 	RenderTag,
 	SlotElement,
@@ -80,39 +84,6 @@ const validation = {
 
 export const validation_legacy = validation;
 
-/**
- * @type {Visitors}
- */
-export const validation_runes_js = {
-	AssignmentExpression,
-	CallExpression,
-	ClassBody,
-	ClassDeclaration,
-	ExportNamedDeclaration,
-	Identifier,
-	ImportDeclaration,
-	NewExpression,
-	UpdateExpression,
-	VariableDeclarator
-};
+export const validation_runes_js = validation;
 
-export const validation_runes = merge(validation, {
-	ImportDeclaration,
-	LabeledStatement,
-	ExportNamedDeclaration,
-	CallExpression,
-	EachBlock,
-	IfBlock,
-	AwaitBlock,
-	KeyBlock,
-	SnippetBlock,
-	ConstTag,
-	HtmlTag,
-	DebugTag,
-	RenderTag,
-	OnDirective,
-	ClassBody,
-	ClassDeclaration,
-	Identifier,
-	NewExpression
-});
+export const validation_runes = validation;
