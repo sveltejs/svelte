@@ -12,7 +12,6 @@ import {
 	extract_paths,
 	is_event_attribute,
 	is_text_attribute,
-	object,
 	unwrap_optional,
 	get_attribute_expression,
 	get_attribute_chunks
@@ -610,7 +609,7 @@ export function analyze_component(root, source, options) {
 				/** @type {SvelteNode} */ (ast),
 				state,
 				// @ts-expect-error TODO
-				merge(set_scope(scopes), visitors, legacy_scope_tweaker, common_visitors)
+				merge(set_scope(scopes), visitors, common_visitors)
 			);
 		}
 
@@ -726,149 +725,6 @@ export function analyze_component(root, source, options) {
 
 	return analysis;
 }
-
-/** @type {Visitors<LegacyAnalysisState>} */
-const legacy_scope_tweaker = {
-	Identifier(node, { state, path }) {
-		const parent = /** @type {Node} */ (path.at(-1));
-		if (is_reference(node, parent)) {
-			if (node.name === '$$props') {
-				state.analysis.uses_props = true;
-			}
-
-			if (node.name === '$$restProps') {
-				state.analysis.uses_rest_props = true;
-			}
-
-			if (node.name === '$$slots') {
-				state.analysis.uses_slots = true;
-			}
-
-			let binding = state.scope.get(node.name);
-
-			if (binding?.kind === 'store_sub') {
-				// get the underlying store to mark it as reactive in case it's mutated
-				binding = state.scope.get(node.name.slice(1));
-			}
-
-			if (
-				binding?.kind === 'normal' &&
-				((binding.scope === state.instance_scope && binding.declaration_kind !== 'function') ||
-					binding.declaration_kind === 'import')
-			) {
-				if (binding.declaration_kind === 'import') {
-					if (
-						binding.mutated &&
-						// TODO could be more fine-grained - not every mention in the template implies a state binding
-						(state.reactive_statement || state.ast_type === 'template') &&
-						parent.type === 'MemberExpression'
-					) {
-						binding.kind = 'legacy_reactive_import';
-					}
-				} else if (
-					binding.mutated &&
-					// TODO could be more fine-grained - not every mention in the template implies a state binding
-					(state.reactive_statement || state.ast_type === 'template')
-				) {
-					binding.kind = 'state';
-				} else if (
-					state.reactive_statement &&
-					parent.type === 'AssignmentExpression' &&
-					parent.left === binding.node
-				) {
-					binding.kind = 'derived';
-				}
-			} else if (binding?.kind === 'each' && binding.mutated) {
-				// Ensure that the array is marked as reactive even when only its entries are mutated
-				let i = path.length;
-				while (i--) {
-					const ancestor = path[i];
-					if (
-						ancestor.type === 'EachBlock' &&
-						state.analysis.template.scopes.get(ancestor)?.declarations.get(node.name) === binding
-					) {
-						for (const binding of ancestor.metadata.references) {
-							if (binding.kind === 'normal') {
-								binding.kind = 'state';
-							}
-						}
-						break;
-					}
-				}
-			}
-		}
-	},
-	ExportNamedDeclaration(node, { next, state }) {
-		if (state.ast_type !== 'instance') {
-			return next();
-		}
-
-		state.analysis.needs_props = true;
-
-		if (!node.declaration) {
-			for (const specifier of node.specifiers) {
-				const binding = /** @type {Binding} */ (state.scope.get(specifier.local.name));
-				if (
-					binding !== null &&
-					(binding.kind === 'state' ||
-						binding.kind === 'frozen_state' ||
-						(binding.kind === 'normal' &&
-							(binding.declaration_kind === 'let' || binding.declaration_kind === 'var')))
-				) {
-					binding.kind = 'bindable_prop';
-					if (specifier.exported.name !== specifier.local.name) {
-						binding.prop_alias = specifier.exported.name;
-					}
-				} else {
-					state.analysis.exports.push({
-						name: specifier.local.name,
-						alias: specifier.exported.name
-					});
-				}
-			}
-			return next();
-		}
-
-		if (
-			node.declaration.type === 'FunctionDeclaration' ||
-			node.declaration.type === 'ClassDeclaration'
-		) {
-			state.analysis.exports.push({
-				name: /** @type {Identifier} */ (node.declaration.id).name,
-				alias: null
-			});
-			return next();
-		}
-
-		if (node.declaration.type === 'VariableDeclaration') {
-			if (node.declaration.kind === 'const') {
-				for (const declarator of node.declaration.declarations) {
-					for (const node of extract_identifiers(declarator.id)) {
-						state.analysis.exports.push({ name: node.name, alias: null });
-					}
-				}
-				return next();
-			}
-
-			for (const declarator of node.declaration.declarations) {
-				for (const id of extract_identifiers(declarator.id)) {
-					const binding = /** @type {Binding} */ (state.scope.get(id.name));
-					binding.kind = 'bindable_prop';
-				}
-			}
-		}
-	},
-	StyleDirective(node, { state }) {
-		// the case for node.value different from true is already covered by the Identifier visitor
-		if (node.value === true) {
-			// get the binding for node.name and change the binding to state
-			let binding = state.scope.get(node.name);
-			if (binding?.mutated && binding.kind === 'normal') {
-				binding.kind = 'state';
-			}
-		}
-	}
-};
 
 /** @type {Visitors} */
 const runes_scope_js_tweaker = {

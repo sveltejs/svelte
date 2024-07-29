@@ -1,4 +1,5 @@
-/** @import { ExportNamedDeclaration, Node } from 'estree' */
+/** @import { ExportNamedDeclaration, Identifier, Node } from 'estree' */
+/** @import { Binding } from '#compiler' */
 /** @import { Context } from '../types' */
 /** @import { Scope } from '../../scope' */
 import * as e from '../../../errors.js';
@@ -32,6 +33,58 @@ export function ExportNamedDeclaration(node, context) {
 	if (node.specifiers && context.state.ast_type !== 'instance') {
 		for (const specifier of node.specifiers) {
 			validate_export(specifier, context.state.scope, specifier.local.name);
+		}
+	}
+
+	if (context.state.ast_type === 'instance' && !context.state.analysis.runes) {
+		context.state.analysis.needs_props = true;
+
+		if (node.declaration) {
+			if (
+				node.declaration.type === 'FunctionDeclaration' ||
+				node.declaration.type === 'ClassDeclaration'
+			) {
+				context.state.analysis.exports.push({
+					name: /** @type {Identifier} */ (node.declaration.id).name,
+					alias: null
+				});
+			} else if (node.declaration.type === 'VariableDeclaration') {
+				if (node.declaration.kind === 'const') {
+					for (const declarator of node.declaration.declarations) {
+						for (const node of extract_identifiers(declarator.id)) {
+							context.state.analysis.exports.push({ name: node.name, alias: null });
+						}
+					}
+				} else {
+					for (const declarator of node.declaration.declarations) {
+						for (const id of extract_identifiers(declarator.id)) {
+							const binding = /** @type {Binding} */ (context.state.scope.get(id.name));
+							binding.kind = 'bindable_prop';
+						}
+					}
+				}
+			}
+		} else {
+			for (const specifier of node.specifiers) {
+				const binding = /** @type {Binding} */ (context.state.scope.get(specifier.local.name));
+				if (
+					binding !== null &&
+					(binding.kind === 'state' ||
+						binding.kind === 'frozen_state' ||
+						(binding.kind === 'normal' &&
+							(binding.declaration_kind === 'let' || binding.declaration_kind === 'var')))
+				) {
+					binding.kind = 'bindable_prop';
+					if (specifier.exported.name !== specifier.local.name) {
+						binding.prop_alias = specifier.exported.name;
+					}
+				} else {
+					context.state.analysis.exports.push({
+						name: specifier.local.name,
+						alias: specifier.exported.name
+					});
+				}
+			}
 		}
 	}
 }

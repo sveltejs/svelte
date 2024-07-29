@@ -1,13 +1,13 @@
 /** @import { Expression, LabeledStatement } from 'estree' */
 /** @import { ReactiveStatement, SvelteNode } from '#compiler' */
-/** @import { Context, LegacyAnalysisState } from '../types' */
+/** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import { extract_identifiers, object } from '../../../utils/ast.js';
 import * as w from '../../../warnings.js';
 
 /**
  * @param {LabeledStatement} node
- * @param {Context<LegacyAnalysisState>} context
+ * @param {Context} context
  */
 export function LabeledStatement(node, context) {
 	if (node.label.name === '$') {

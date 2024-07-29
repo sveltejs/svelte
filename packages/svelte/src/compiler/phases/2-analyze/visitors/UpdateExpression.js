@@ -1,11 +1,11 @@
 /** @import { UpdateExpression } from 'estree' */
-/** @import { Context, LegacyAnalysisState } from '../types' */
+/** @import { Context } from '../types' */
 import { object } from '../../../utils/ast.js';
 import { validate_assignment } from './shared/utils.js';
 
 /**
  * @param {UpdateExpression} node
- * @param {Context<LegacyAnalysisState>} context
+ * @param {Context} context
  */
 export function UpdateExpression(node, context) {
 	validate_assignment(node, node.argument, context.state);

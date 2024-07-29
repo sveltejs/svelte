@@ -35,12 +35,8 @@ export interface LegacyAnalysisState extends AnalysisState {
 	reactive_statements: Map<LabeledStatement, ReactiveStatement>;
 }
 
-export type Context<State extends AnalysisState = AnalysisState> = import('zimmerframe').Context<
-	SvelteNode,
-	State
->;
+export type Context<State extends AnalysisState = LegacyAnalysisState> =
+	import('zimmerframe').Context<SvelteNode, State>;
 
-export type Visitors<State extends AnalysisState = AnalysisState> = import('zimmerframe').Visitors<
-	SvelteNode,
-	State
->;
+export type Visitors<State extends AnalysisState = LegacyAnalysisState> =
+	import('zimmerframe').Visitors<SvelteNode, State>;
