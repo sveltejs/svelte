@@ -1,6 +1,6 @@
 /** @import { SnippetBlock } from '#compiler' */
 /** @import { Context } from '../types' */
-import { validate_block_not_empty } from './shared/utils.js';
+import { validate_block_not_empty, validate_opening_tag } from './shared/utils.js';
 import * as e from '../../../errors.js';
 
 /**
@@ -9,6 +9,10 @@ import * as e from '../../../errors.js';
  */
 export function SnippetBlock(node, context) {
 	validate_block_not_empty(node.body, context);
+
+	if (context.state.analysis.runes) {
+		validate_opening_tag(node, context.state, '#');
+	}
 
 	for (const arg of node.parameters) {
 		if (arg.type === 'RestElement') {

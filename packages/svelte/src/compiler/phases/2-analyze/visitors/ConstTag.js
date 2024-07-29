@@ -1,12 +1,17 @@
 /** @import { ConstTag } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
+import { validate_opening_tag } from './shared/utils.js';
 
 /**
  * @param {ConstTag} node
  * @param {Context} context
  */
 export function ConstTag(node, context) {
+	if (context.state.analysis.runes) {
+		validate_opening_tag(node, context.state, '@');
+	}
+
 	const parent = context.path.at(-1);
 	const grand_parent = context.path.at(-2);
 

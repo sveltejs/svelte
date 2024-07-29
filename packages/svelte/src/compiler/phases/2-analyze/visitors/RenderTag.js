@@ -2,12 +2,15 @@
 /** @import { Context } from '../types' */
 import { unwrap_optional } from '../../../utils/ast.js';
 import * as e from '../../../errors.js';
+import { validate_opening_tag } from './shared/utils.js';
 
 /**
  * @param {RenderTag} node
  * @param {Context} context
  */
 export function RenderTag(node, context) {
+	validate_opening_tag(node, context.state, '@');
+
 	const callee = unwrap_optional(node.expression).callee;
 
 	node.metadata.dynamic =
