@@ -201,7 +201,9 @@ export const javascript_visitors_runes = {
 							b.call(
 								'$.add_owner',
 								b.call('$.get', b.member(b.this, b.private_id(name))),
-								b.id('owner')
+								b.id('owner'),
+								b.literal(false),
+								b.literal(is_to_ignore(node, 'ownership_invalid_binding'))
 							)
 						)
 					),

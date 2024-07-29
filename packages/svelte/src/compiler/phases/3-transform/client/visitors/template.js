@@ -815,7 +815,14 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 			} else {
 				if (context.state.options.dev) {
 					binding_initializers.push(
-						b.stmt(b.call(b.id('$.add_owner_effect'), b.thunk(expression), b.id(component_name)))
+						b.stmt(
+							b.call(
+								b.id('$.add_owner_effect'),
+								b.thunk(expression),
+								b.id(component_name),
+								b.literal(is_to_ignore(node, 'ownership_invalid_binding'))
+							)
+						)
 					);
 				}
 
