@@ -83,8 +83,15 @@ function get_attribute_name(element, attribute, context) {
  * @param {Identifier} element_id
  * @param {ComponentContext} context
  * @param {boolean} is_attributes_reactive
+ * @param {boolean} force_check Should be `true` if we can't rely on our cached value, because for example there's also a `style` attribute
  */
-function serialize_style_directives(style_directives, element_id, context, is_attributes_reactive) {
+function serialize_style_directives(
+	style_directives,
+	element_id,
+	context,
+	is_attributes_reactive,
+	force_check
+) {
 	const state = context.state;
 
 	for (const directive of style_directives) {
@@ -99,7 +106,8 @@ function serialize_style_directives(style_directives, element_id, context, is_at
 				element_id,
 				b.literal(directive.name),
 				value,
-				/** @type {Expression} */ (directive.modifiers.includes('important') ? b.true : undefined)
+				/** @type {Expression} */ (directive.modifiers.includes('important') ? b.true : undefined),
+				force_check ? b.true : undefined
 			)
 		);
 
@@ -2029,6 +2037,7 @@ export const template_visitors = {
 		let img_might_be_lazy = false;
 		let might_need_event_replaying = false;
 		let has_direction_attribute = false;
+		let has_style_attribute = false;
 
 		if (is_custom_element) {
 			// cloneNode is faster, but it does not instantiate the underlying class of the
@@ -2046,6 +2055,9 @@ export const template_visitors = {
 				}
 				if (attribute.name === 'dir') {
 					has_direction_attribute = true;
+				}
+				if (attribute.name === 'style') {
+					has_style_attribute = true;
 				}
 				if (
 					(attribute.name === 'value' || attribute.name === 'checked') &&
@@ -2196,7 +2208,13 @@ export const template_visitors = {
 
 		// class/style directives must be applied last since they could override class/style attributes
 		serialize_class_directives(class_directives, node_id, context, is_attributes_reactive);
-		serialize_style_directives(style_directives, node_id, context, is_attributes_reactive);
+		serialize_style_directives(
+			style_directives,
+			node_id,
+			context,
+			is_attributes_reactive,
+			has_style_attribute || node.metadata.has_spread
+		);
 
 		if (might_need_event_replaying) {
 			context.state.after_update.push(b.stmt(b.call('$.replay_events', node_id)));
@@ -2357,7 +2375,13 @@ export const template_visitors = {
 
 		// class/style directives must be applied last since they could override class/style attributes
 		serialize_class_directives(class_directives, element_id, inner_context, is_attributes_reactive);
-		serialize_style_directives(style_directives, element_id, inner_context, is_attributes_reactive);
+		serialize_style_directives(
+			style_directives,
+			element_id,
+			inner_context,
+			is_attributes_reactive,
+			true
+		);
 
 		const get_tag = b.thunk(/** @type {Expression} */ (context.visit(node.tag)));
 
