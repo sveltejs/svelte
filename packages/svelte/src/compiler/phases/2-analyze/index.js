@@ -1,25 +1,18 @@
 /** @import { Node, Program } from 'estree' */
 /** @import { Root, Script, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
-/** @import { AnalysisState, Context, LegacyAnalysisState, Visitors } from './types' */
+/** @import { AnalysisState, LegacyAnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
-import {
-	extract_all_identifiers_from_expression,
-	is_text_attribute,
-	unwrap_optional
-} from '../../utils/ast.js';
+import { is_text_attribute } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
-import { MathMLElements, ReservedKeywords, Runes, SVGElements } from '../constants.js';
+import { ReservedKeywords, Runes } from '../constants.js';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import { merge } from '../visitors.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
-import { regex_starts_with_newline } from '../patterns.js';
-import { create_attribute, is_element_node } from '../nodes.js';
-import { namespace_mathml, namespace_svg } from '../../../constants.js';
-import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
+import { create_attribute } from '../nodes.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
 import { hash } from '../../../utils.js';
@@ -71,12 +64,62 @@ import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
-import { is_safe_identifier } from './visitors/shared/utils.js';
 
 /**
  * @type {Visitors}
  */
 const visitors = {
+	_(node, { state, next, path }) {
+		ignore_map.set(node, structuredClone(ignore_stack));
+		const parent = path.at(-1);
+		if (parent?.type === 'Fragment' && node.type !== 'Comment' && node.type !== 'Text') {
+			const idx = parent.nodes.indexOf(/** @type {any} */ (node));
+			/** @type {string[]} */
+			const ignores = [];
+			for (let i = idx - 1; i >= 0; i--) {
+				const prev = parent.nodes[i];
+				if (prev.type === 'Comment') {
+					ignores.push(
+						...extract_svelte_ignore(
+							prev.start + 4 /* '<!--'.length */,
+							prev.data,
+							state.analysis.runes
+						)
+					);
+				} else if (prev.type !== 'Text') {
+					break;
+				}
+			}
+
+			if (ignores.length > 0) {
+				push_ignore(ignores);
+				ignore_map.set(node, structuredClone(ignore_stack));
+				next();
+				pop_ignore();
+			}
+		} else {
+			const comments = /** @type {any} */ (node).leadingComments;
+			if (comments) {
+				/** @type {string[]} */
+				const ignores = [];
+				for (const comment of comments) {
+					ignores.push(
+						...extract_svelte_ignore(
+							comment.start + 2 /* '//'.length */,
+							comment.value,
+							state.analysis.runes
+						)
+					);
+				}
+				if (ignores.length > 0) {
+					push_ignore(ignores);
+					ignore_map.set(node, structuredClone(ignore_stack));
+					next();
+					pop_ignore();
+				}
+			}
+		}
+	},
 	ArrowFunctionExpression,
 	AssignmentExpression,
 	Attribute,
@@ -386,11 +429,7 @@ export function analyze_component(root, source, options) {
 				function_depth: scope.function_depth
 			};
 
-			walk(
-				/** @type {SvelteNode} */ (ast),
-				state,
-				merge(set_scope(scopes), visitors, common_visitors)
-			);
+			walk(/** @type {SvelteNode} */ (ast), state, merge(set_scope(scopes), visitors));
 		}
 
 		// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
@@ -462,7 +501,7 @@ export function analyze_component(root, source, options) {
 				/** @type {SvelteNode} */ (ast),
 				state,
 				// @ts-expect-error TODO
-				merge(set_scope(scopes), visitors, common_visitors)
+				merge(set_scope(scopes), visitors)
 			);
 		}
 
@@ -578,61 +617,6 @@ export function analyze_component(root, source, options) {
 
 	return analysis;
 }
-
-/** @type {Visitors} */
-const common_visitors = {
-	_(node, { state, next, path }) {
-		ignore_map.set(node, structuredClone(ignore_stack));
-		const parent = path.at(-1);
-		if (parent?.type === 'Fragment' && node.type !== 'Comment' && node.type !== 'Text') {
-			const idx = parent.nodes.indexOf(/** @type {any} */ (node));
-			/** @type {string[]} */
-			const ignores = [];
-			for (let i = idx - 1; i >= 0; i--) {
-				const prev = parent.nodes[i];
-				if (prev.type === 'Comment') {
-					ignores.push(
-						...extract_svelte_ignore(
-							prev.start + 4 /* '<!--'.length */,
-							prev.data,
-							state.analysis.runes
-						)
-					);
-				} else if (prev.type !== 'Text') {
-					break;
-				}
-			}
-
-			if (ignores.length > 0) {
-				push_ignore(ignores);
-				ignore_map.set(node, structuredClone(ignore_stack));
-				next();
-				pop_ignore();
-			}
-		} else {
-			const comments = /** @type {any} */ (node).leadingComments;
-			if (comments) {
-				/** @type {string[]} */
-				const ignores = [];
-				for (const comment of comments) {
-					ignores.push(
-						...extract_svelte_ignore(
-							comment.start + 2 /* '//'.length */,
-							comment.value,
-							state.analysis.runes
-						)
-					);
-				}
-				if (ignores.length > 0) {
-					push_ignore(ignores);
-					ignore_map.set(node, structuredClone(ignore_stack));
-					next();
-					pop_ignore();
-				}
-			}
-		}
-	}
-};
 
 /**
  * @param {Map<LabeledStatement, ReactiveStatement>} unsorted_reactive_declarations
