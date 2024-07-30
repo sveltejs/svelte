@@ -13,11 +13,15 @@ export default test({
 		return { thePromise: deferred.promise };
 	},
 
+	html: `
+		<div><p>loading...</p></div>
+	`,
+
 	test({ assert, component, target }) {
 		deferred.resolve(42);
 
 		return deferred.promise
-			.then(async () => {
+			.then(() => {
 				assert.htmlEqual(
 					target.innerHTML,
 					`
@@ -28,7 +32,6 @@ export default test({
 				deferred = create_deferred();
 
 				component.thePromise = deferred.promise;
-				await Promise.resolve();
 
 				assert.htmlEqual(target.innerHTML, '<div><p>loading...</p></div>');
 

@@ -1,5 +1,5 @@
 /** @import { Visitors } from 'zimmerframe' */
-/** @import { AnalysisState } from './types.js' */
+/** @import { AnalysisState } from '../../types.js' */
 /** @import { Attribute, SvelteNode, TemplateNode, RegularElement, SvelteElement } from '#compiler' */
 /** @import { ARIARoleDefinitionKey, ARIARoleRelationConcept, ARIAProperty, ARIAPropertyDefinition, ARIARoleDefinition } from 'aria-query' */
 import { roles as roles_map, aria, elementRoles } from 'aria-query';
@@ -10,13 +10,13 @@ import {
 	regex_not_whitespace,
 	regex_starts_with_vowel,
 	regex_whitespaces
-} from '../patterns.js';
-import * as w from '../../warnings.js';
-import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
-import { is_event_attribute, is_text_attribute } from '../../utils/ast.js';
-import { ContentEditableBindings } from '../constants.js';
+} from '../../../patterns.js';
+import * as w from '../../../../warnings.js';
+import fuzzymatch from '../../../1-parse/utils/fuzzymatch.js';
+import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
+import { ContentEditableBindings } from '../../../constants.js';
 import { walk } from 'zimmerframe';
-import { list } from '../../utils/string.js';
+import { list } from '../../../../utils/string.js';
 
 const aria_roles = roles_map.keys();
 const abstract_roles = aria_roles.filter((role) => roles_map.get(role)?.abstract);
@@ -686,7 +686,7 @@ function get_static_text_value(attribute) {
  * @param {RegularElement | SvelteElement} node
  * @param {AnalysisState} state
  */
-function check_element(node, state) {
+export function check_element(node, state) {
 	// foreign namespace means elements can have completely different meanings, therefore we don't check them
 	if (state.options.namespace === 'foreign') return;
 
@@ -1154,15 +1154,3 @@ function check_element(node, state) {
 		w.a11y_missing_content(node, node.name);
 	}
 }
-
-/**
- * @type {Visitors<SvelteNode, AnalysisState>}
- */
-export const a11y_validators = {
-	RegularElement(node, context) {
-		check_element(node, context.state);
-	},
-	SvelteElement(node, context) {
-		check_element(node, context.state);
-	}
-};

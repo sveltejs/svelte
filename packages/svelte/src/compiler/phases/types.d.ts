@@ -9,7 +9,7 @@ import type {
 	SvelteNode,
 	SvelteOptions
 } from '#compiler';
-import type { Identifier, LabeledStatement, Program, Statement, VariableDeclaration } from 'estree';
+import type { Identifier, LabeledStatement, Program, VariableDeclaration } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
 
 export interface Js {

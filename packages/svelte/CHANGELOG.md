@@ -1,5 +1,23 @@
 # svelte
 
+## 5.0.0-next.203
+
+### Patch Changes
+
+- chore: internal compiler refactoring ([#12651](https://github.com/sveltejs/svelte/pull/12651))
+
+- fix: widen `ComponentProps` constraint to accept more component shapes ([#12666](https://github.com/sveltejs/svelte/pull/12666))
+
+- feat: make `<svelte:component>` unnecessary in runes mode ([#12646](https://github.com/sveltejs/svelte/pull/12646))
+
+## 5.0.0-next.202
+
+### Patch Changes
+
+- fix: remove implicit passive behavior from OnDirective events ([#12645](https://github.com/sveltejs/svelte/pull/12645))
+
+- fix: always set draggable through `setAttribute` to avoid weird behavior ([#12649](https://github.com/sveltejs/svelte/pull/12649))
+
 ## 5.0.0-next.201
 
 ### Patch Changes

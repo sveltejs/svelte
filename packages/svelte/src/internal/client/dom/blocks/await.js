@@ -139,7 +139,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 			} else {
 				// Wait a microtask before checking if we should show the pending state as
 				// the promise might have resolved by the next microtask.
-				Promise.resolve().then(() => {
+				queue_micro_task(() => {
 					if (!resolved) update(PENDING, true);
 				});
 			}

@@ -119,13 +119,23 @@ export function parse(source, { filename, rootDir, modern } = {}) {
  */
 function to_public_ast(source, ast, modern) {
 	if (modern) {
+		const clean = (/** @type {any} */ node) => {
+			delete node.metadata;
+			delete node.parent;
+		};
+
+		ast.options?.attributes.forEach((attribute) => {
+			clean(attribute);
+			clean(attribute.value);
+			if (Array.isArray(attribute.value)) {
+				attribute.value.forEach(clean);
+			}
+		});
+
 		// remove things that we don't want to treat as public API
 		return zimmerframe_walk(ast, null, {
 			_(node, { next }) {
-				// @ts-ignore
-				delete node.parent;
-				// @ts-ignore
-				delete node.metadata;
+				clean(node);
 				next();
 			}
 		});

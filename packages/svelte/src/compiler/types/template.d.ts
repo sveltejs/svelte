@@ -1,4 +1,4 @@
-import type { Binding, Css } from '#compiler';
+import type { Binding, Css, ExpressionMetadata } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
@@ -111,12 +111,7 @@ export interface ExpressionTag extends BaseNode {
 	type: 'ExpressionTag';
 	expression: Expression;
 	metadata: {
-		contains_call_expression: boolean;
-		/**
-		 * Whether or not the expression contains any dynamic references —
-		 * determines whether it will be updated in a render effect or not
-		 */
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 	};
 }
 
@@ -190,7 +185,7 @@ export interface ClassDirective extends BaseNode {
 	/** The 'y' in `class:x={y}`, or the `x` in `class:x` */
 	expression: Expression;
 	metadata: {
-		dynamic: false;
+		expression: ExpressionMetadata;
 	};
 }
 
@@ -212,8 +207,7 @@ export interface OnDirective extends BaseNode {
 	expression: null | Expression;
 	modifiers: string[]; // TODO specify
 	metadata: {
-		contains_call_expression: boolean;
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 	};
 }
 
@@ -233,7 +227,7 @@ export interface StyleDirective extends BaseNode {
 	value: true | ExpressionTag | Array<ExpressionTag | Text>;
 	modifiers: Array<'important'>;
 	metadata: {
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 	};
 }
 
@@ -454,7 +448,7 @@ export interface Attribute extends BaseNode {
 	name: string;
 	value: true | ExpressionTag | Array<Text | ExpressionTag>;
 	metadata: {
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 		/** May be set if this is an event attribute */
 		delegated: null | DelegatedEvent;
 	};
@@ -464,8 +458,7 @@ export interface SpreadAttribute extends BaseNode {
 	type: 'SpreadAttribute';
 	expression: Expression;
 	metadata: {
-		contains_call_expression: boolean;
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 	};
 }
 

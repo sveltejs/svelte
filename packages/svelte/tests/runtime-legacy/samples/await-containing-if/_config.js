@@ -13,6 +13,10 @@ export default test({
 		return { thePromise: deferred.promise, show: true };
 	},
 
+	html: `
+		<div><p>loading...</p></div>
+	`,
+
 	test({ assert, component, target }) {
 		deferred.resolve(42);
 

@@ -39,15 +39,9 @@
 						"end": 48,
 						"type": "Text",
 						"raw": "my-custom-element",
-						"data": "my-custom-element",
-						"parent": null
+						"data": "my-custom-element"
 					}
-				],
-				"parent": null,
-				"metadata": {
-					"dynamic": false,
-					"delegated": null
-				}
+				]
 			},
 			{
 				"type": "Attribute",
@@ -74,17 +68,7 @@
 						},
 						"value": true,
 						"raw": "true"
-					},
-					"parent": null,
-					"metadata": {
-						"contains_call_expression": false,
-						"dynamic": false
 					}
-				},
-				"parent": null,
-				"metadata": {
-					"dynamic": false,
-					"delegated": null
 				}
 			}
 		],

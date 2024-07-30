@@ -9,7 +9,7 @@ import { decode_character_references } from '../utils/html.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { create_fragment } from '../utils/create.js';
-import { create_attribute } from '../../nodes.js';
+import { create_attribute, create_expression_metadata } from '../../nodes.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../utils/ast.js';
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 
@@ -127,7 +127,7 @@ export default function element(parser) {
 
 	const type = meta_tags.has(name)
 		? meta_tags.get(name)
-		: regex_capital_letter.test(name[0]) || name === 'svelte:self' || name === 'svelte:component'
+		: regex_capital_letter.test(name[0])
 			? 'Component'
 			: name === 'title' && parent_is_head(parser.stack)
 				? 'TitleElement'
@@ -140,7 +140,7 @@ export default function element(parser) {
 	const element =
 		type === 'RegularElement'
 			? {
-					type: type,
+					type,
 					start,
 					end: -1,
 					name,
@@ -163,7 +163,7 @@ export default function element(parser) {
 					fragment: create_fragment(true),
 					parent: null,
 					metadata: {
-						svg: false
+						// unpopulated at first, differs between types
 					}
 				});
 
@@ -508,8 +508,7 @@ function read_attribute(parser) {
 				expression,
 				parent: null,
 				metadata: {
-					contains_call_expression: false,
-					dynamic: false
+					expression: create_expression_metadata()
 				}
 			};
 
@@ -538,8 +537,7 @@ function read_attribute(parser) {
 				},
 				parent: null,
 				metadata: {
-					dynamic: false,
-					contains_call_expression: false
+					expression: create_expression_metadata()
 				}
 			};
 
@@ -584,7 +582,7 @@ function read_attribute(parser) {
 				value,
 				parent: null,
 				metadata: {
-					dynamic: false
+					expression: create_expression_metadata()
 				}
 			};
 		}
@@ -616,16 +614,9 @@ function read_attribute(parser) {
 			modifiers,
 			expression,
 			metadata: {
-				dynamic: false,
-				contains_call_expression: false
+				expression: create_expression_metadata()
 			}
 		};
-
-		if (directive.type === 'ClassDirective') {
-			directive.metadata = {
-				dynamic: false
-			};
-		}
 
 		if (directive.type === 'TransitionDirective') {
 			const direction = name.slice(0, colon_index);
@@ -789,8 +780,7 @@ function read_sequence(parser, done, location) {
 				expression,
 				parent: null,
 				metadata: {
-					contains_call_expression: false,
-					dynamic: false
+					expression: create_expression_metadata()
 				}
 			};
 

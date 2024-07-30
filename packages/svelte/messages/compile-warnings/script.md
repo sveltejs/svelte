@@ -6,6 +6,10 @@
 
 > Component has unused export property '%name%'. If it is for external reference only, please consider using `export const %name%`
 
+## legacy_component_creation
+
+> Svelte 5 components are no longer classes. Instantiate them using `mount` or `hydrate` (imported from 'svelte') instead.
+
 ## non_reactive_update
 
 > `%name%` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
