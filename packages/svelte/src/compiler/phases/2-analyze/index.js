@@ -232,12 +232,7 @@ export function analyze_module(ast, options) {
 		}
 	}
 
-	walk(
-		/** @type {Node} */ (ast),
-		{ scope, scopes, analysis: { runes: true } },
-		// @ts-expect-error TODO clean this mess up
-		merge(visitors)
-	);
+	walk(/** @type {Node} */ (ast), { scope, scopes, analysis: { runes: true } }, visitors);
 
 	return {
 		module: { ast, scope, scopes },
