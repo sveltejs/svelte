@@ -261,6 +261,11 @@ const functionComponentProps: ComponentProps<typeof functionComponent> = {
 	prop: 1
 };
 
+// Test that self-typed functions are correctly inferred, too (use case: language tools has its own shape for backwards compatibility)
+const functionComponentProps2: ComponentProps<(a: any, b: { a: true }) => { foo: string }> = {
+	a: true
+};
+
 mount(functionComponent, {
 	target: null as any as Document | Element | ShadowRoot,
 	props: {
