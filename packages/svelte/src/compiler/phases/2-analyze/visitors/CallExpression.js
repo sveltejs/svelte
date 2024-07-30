@@ -3,7 +3,8 @@
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
-import { get_parent } from '../../../utils/ast.js';
+import { get_parent, unwrap_optional } from '../../../utils/ast.js';
+import { is_safe_identifier } from './shared/utils.js';
 
 /**
  * @param {CallExpression} node
@@ -16,6 +17,10 @@ export function CallExpression(node, context) {
 
 	switch (rune) {
 		case null:
+			if (!is_safe_identifier(node.callee, context.state.scope)) {
+				context.state.analysis.needs_context = true;
+			}
+
 			break;
 
 		case '$bindable':
@@ -96,6 +101,10 @@ export function CallExpression(node, context) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 			}
 
+			// `$effect` needs context because Svelte needs to know whether it should re-run
+			// effects that invalidate themselves, and that's determined by whether we're in runes mode
+			context.state.analysis.needs_context = true;
+
 			break;
 
 		case '$effect.tracking':
@@ -141,10 +150,60 @@ export function CallExpression(node, context) {
 			break;
 	}
 
-	// `$inspect(foo)` should not trigger the `static-state-reference` warning
-	if (rune === '$inspect') {
+	if (context.state.expression && !is_known_safe_call(node, context)) {
+		context.state.expression.has_call = true;
+		context.state.expression.has_state = true;
+	}
+
+	if (context.state.render_tag) {
+		// Find out which of the render tag arguments contains this call expression
+		const arg_idx = unwrap_optional(context.state.render_tag.expression).arguments.findIndex(
+			(arg) => arg === node || context.path.includes(arg)
+		);
+
+		// -1 if this is the call expression of the render tag itself
+		if (arg_idx !== -1) {
+			context.state.render_tag.metadata.args_with_call_expression.add(arg_idx);
+		}
+	}
+
+	if (node.callee.type === 'Identifier') {
+		const binding = context.state.scope.get(node.callee.name);
+
+		if (binding !== null) {
+			binding.is_called = true;
+		}
+	}
+
+	// `$inspect(foo)` or `$derived(foo) should not trigger the `static-state-reference` warning
+	if (rune === '$inspect' || rune === '$derived') {
 		context.next({ ...context.state, function_depth: context.state.function_depth + 1 });
 	} else {
 		context.next();
 	}
+}
+
+/**
+ * @param {CallExpression} node
+ * @param {Context} context
+ * @returns {boolean}
+ */
+function is_known_safe_call(node, context) {
+	const callee = node.callee;
+
+	// String / Number / BigInt / Boolean casting calls
+	if (callee.type === 'Identifier') {
+		const name = callee.name;
+		const binding = context.state.scope.get(name);
+		if (
+			binding === null &&
+			(name === 'BigInt' || name === 'String' || name === 'Number' || name === 'Boolean')
+		) {
+			return true;
+		}
+	}
+
+	// TODO add more cases
+
+	return false;
 }

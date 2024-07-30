@@ -579,31 +579,6 @@ export function analyze_component(root, source, options) {
 	return analysis;
 }
 
-/**
- * @param {CallExpression} node
- * @param {Context} context
- * @returns {boolean}
- */
-function is_known_safe_call(node, context) {
-	const callee = node.callee;
-
-	// String / Number / BigInt / Boolean casting calls
-	if (callee.type === 'Identifier') {
-		const name = callee.name;
-		const binding = context.state.scope.get(name);
-		if (
-			binding === null &&
-			(name === 'BigInt' || name === 'String' || name === 'Number' || name === 'Boolean')
-		) {
-			return true;
-		}
-	}
-
-	// TODO add more cases
-
-	return false;
-}
-
 /** @type {Visitors} */
 const common_visitors = {
 	_(node, { state, next, path }) {
@@ -709,60 +684,6 @@ const common_visitors = {
 				w.state_referenced_locally(node);
 			}
 		}
-	},
-	CallExpression(node, context) {
-		const { expression, render_tag } = context.state;
-
-		if (expression && !is_known_safe_call(node, context)) {
-			expression.has_call = true;
-			expression.has_state = true;
-		}
-
-		if (render_tag) {
-			// Find out which of the render tag arguments contains this call expression
-			const arg_idx = unwrap_optional(render_tag.expression).arguments.findIndex(
-				(arg) => arg === node || context.path.includes(arg)
-			);
-
-			// -1 if this is the call expression of the render tag itself
-			if (arg_idx !== -1) {
-				render_tag.metadata.args_with_call_expression.add(arg_idx);
-			}
-		}
-
-		const callee = node.callee;
-		const rune = get_rune(node, context.state.scope);
-
-		if (callee.type === 'Identifier') {
-			const binding = context.state.scope.get(callee.name);
-
-			if (binding !== null) {
-				binding.is_called = true;
-			}
-
-			if (rune === '$derived') {
-				// special case — `$derived(foo)` is treated as `$derived(() => foo)`
-				// for the purposes of identifying static state references
-				context.next({
-					...context.state,
-					function_depth: context.state.function_depth + 1
-				});
-
-				return;
-			}
-		}
-
-		if (rune === '$effect' || rune === '$effect.pre') {
-			// `$effect` needs context because Svelte needs to know whether it should re-run
-			// effects that invalidate themselves, and that's determined by whether we're in runes mode
-			context.state.analysis.needs_context = true;
-		} else if (rune === null) {
-			if (!is_safe_identifier(callee, context.state.scope)) {
-				context.state.analysis.needs_context = true;
-			}
-		}
-
-		context.next();
 	}
 };
 
