@@ -816,7 +816,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 								b.id('$.add_owner_effect'),
 								b.thunk(expression),
 								b.id(component_name),
-								b.literal(is_ignored(node, 'ownership_invalid_binding'))
+								is_ignored(node, 'ownership_invalid_binding') && b.true
 							)
 						)
 					);
@@ -1843,7 +1843,7 @@ export const template_visitors = {
 					b.thunk(/** @type {Expression} */ (context.visit(node.expression))),
 					b.literal(context.state.metadata.namespace === 'svg'),
 					b.literal(context.state.metadata.namespace === 'mathml'),
-					b.literal(is_ignored(node, 'hydration_html_changed'))
+					is_ignored(node, 'hydration_html_changed') && b.true
 				)
 			)
 		);
@@ -2936,9 +2936,6 @@ export const template_visitors = {
 				)) &&
 			context.state.options.dev &&
 			context.state.analysis.runes &&
-			// serialize_validate_binding will add a function that specifically throw
-			// `binding_property_non_reactive` error. If there's a svelte ignore
-			// before we avoid adding this validation to avoid throwing the runtime warning
 			!is_ignored(node, 'binding_property_non_reactive')
 		) {
 			context.state.init.push(

@@ -29,7 +29,7 @@ export function CallExpression(node, context) {
 		return b.call(
 			'$.snapshot',
 			/** @type {Expression} */ (context.visit(node.arguments[0])),
-			b.literal(is_ignored(node, 'state_snapshot_uncloneable'))
+			is_ignored(node, 'state_snapshot_uncloneable') && b.true
 		);
 	}
 
