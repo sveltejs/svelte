@@ -70,6 +70,7 @@ import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
 import { determine_element_spread } from './visitors/shared/element.js';
+import { is_safe_identifier } from './visitors/shared/utils.js';
 
 /**
  * @type {Visitors}
@@ -618,33 +619,6 @@ const function_visitor = (node, context) => {
 	});
 };
 
-/**
- * A 'safe' identifier means that the `foo` in `foo.bar` or `foo()` will not
- * call functions that require component context to exist
- * @param {Expression | Super} expression
- * @param {Scope} scope
- */
-function is_safe_identifier(expression, scope) {
-	let node = expression;
-	while (node.type === 'MemberExpression') node = node.object;
-
-	if (node.type !== 'Identifier') return false;
-
-	const binding = scope.get(node.name);
-	if (!binding) return true;
-
-	if (binding.kind === 'store_sub') {
-		return is_safe_identifier({ name: node.name.slice(1), type: 'Identifier' }, scope);
-	}
-
-	return (
-		binding.declaration_kind !== 'import' &&
-		binding.kind !== 'prop' &&
-		binding.kind !== 'bindable_prop' &&
-		binding.kind !== 'rest_prop'
-	);
-}
-
 /** @type {Visitors} */
 const common_visitors = {
 	_(node, { state, next, path }) {
@@ -804,24 +778,6 @@ const common_visitors = {
 		}
 
 		context.next();
-	},
-	MemberExpression(node, context) {
-		if (context.state.expression) {
-			context.state.expression.has_state = true;
-		}
-
-		if (!is_safe_identifier(node, context.state.scope)) {
-			context.state.analysis.needs_context = true;
-		}
-
-		context.next();
-	},
-	OnDirective(node, { state, path, next }) {
-		const parent = path.at(-1);
-		if (parent?.type === 'SvelteElement' || parent?.type === 'RegularElement') {
-			state.analysis.event_directive_node ??= node;
-		}
-		next({ ...state, expression: node.metadata.expression });
 	},
 	BindDirective(node, context) {
 		let i = context.path.length;
@@ -989,23 +945,6 @@ const common_visitors = {
 						: ancestor.metadata.mathml;
 				return;
 			}
-		}
-	},
-	Component(node, context) {
-		const binding = context.state.scope.get(
-			node.name.includes('.') ? node.name.slice(0, node.name.indexOf('.')) : node.name
-		);
-
-		node.metadata.dynamic = binding !== null && binding.kind !== 'normal';
-	},
-	RenderTag(node, context) {
-		context.next({ ...context.state, render_tag: node });
-	},
-	EachBlock(node) {
-		if (node.key) {
-			// treat `{#each items as item, i (i)}` as a normal indexed block, everything else as keyed
-			node.metadata.keyed =
-				node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index;
 		}
 	}
 };

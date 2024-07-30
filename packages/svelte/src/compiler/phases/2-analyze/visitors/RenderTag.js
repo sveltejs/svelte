@@ -33,5 +33,5 @@ export function RenderTag(node, context) {
 		e.render_tag_invalid_call_expression(node);
 	}
 
-	context.next();
+	context.next({ ...context.state, render_tag: node });
 }

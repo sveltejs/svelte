@@ -19,5 +19,11 @@ export function EachBlock(node, context) {
 		e.state_invalid_placement(node, id.name);
 	}
 
+	if (node.key) {
+		// treat `{#each items as item, i (i)}` as a normal indexed block, everything else as keyed
+		node.metadata.keyed =
+			node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index;
+	}
+
 	context.next();
 }

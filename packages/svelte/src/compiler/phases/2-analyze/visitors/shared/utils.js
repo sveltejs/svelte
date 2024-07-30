@@ -138,3 +138,30 @@ export function ensure_no_module_import_conflict(node, state) {
 		}
 	}
 }
+
+/**
+ * A 'safe' identifier means that the `foo` in `foo.bar` or `foo()` will not
+ * call functions that require component context to exist
+ * @param {Expression | Super} expression
+ * @param {Scope} scope
+ */
+export function is_safe_identifier(expression, scope) {
+	let node = expression;
+	while (node.type === 'MemberExpression') node = node.object;
+
+	if (node.type !== 'Identifier') return false;
+
+	const binding = scope.get(node.name);
+	if (!binding) return true;
+
+	if (binding.kind === 'store_sub') {
+		return is_safe_identifier({ name: node.name.slice(1), type: 'Identifier' }, scope);
+	}
+
+	return (
+		binding.declaration_kind !== 'import' &&
+		binding.kind !== 'prop' &&
+		binding.kind !== 'bindable_prop' &&
+		binding.kind !== 'rest_prop'
+	);
+}

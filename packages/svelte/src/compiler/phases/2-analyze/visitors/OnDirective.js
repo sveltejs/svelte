@@ -16,5 +16,10 @@ export function OnDirective(node, context) {
 		}
 	}
 
-	context.next();
+	const parent = context.path.at(-1);
+	if (parent?.type === 'SvelteElement' || parent?.type === 'RegularElement') {
+		context.state.analysis.event_directive_node ??= node;
+	}
+
+	context.next({ ...context.state, expression: node.metadata.expression });
 }
