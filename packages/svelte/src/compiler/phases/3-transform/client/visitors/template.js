@@ -933,7 +933,16 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 
 	/** @param {Expression} node_id */
 	let fn = (node_id) => {
-		return b.call(component_name, node_id, props_expression);
+		return b.call(
+			// TODO We can remove this ternary once we remove legacy mode, since in runes mode dynamic components
+			// will be handled separately through the `$.component` function, and then the component name will
+			// always be referenced through just the identifier here.
+			node.type === 'SvelteComponent'
+				? component_name
+				: /** @type {Expression} */ (context.visit(b.member_id(component_name))),
+			node_id,
+			props_expression
+		);
 	};
 
 	if (bind_this !== null) {
