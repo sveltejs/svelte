@@ -1,5 +1,5 @@
-/** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression, Literal, Node, Program, Super } from 'estree' */
-/** @import { Attribute, Binding, DelegatedEvent, Root, Script, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression, Node, Program, Super } from 'estree' */
+/** @import { Root, Script, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Context, LegacyAnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import is_reference from 'is-reference';
@@ -7,13 +7,9 @@ import { walk } from 'zimmerframe';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import {
-	extract_identifiers,
 	extract_all_identifiers_from_expression,
-	extract_paths,
-	is_event_attribute,
 	is_text_attribute,
 	unwrap_optional,
-	get_attribute_expression,
 	get_attribute_chunks
 } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
@@ -23,12 +19,7 @@ import { merge } from '../visitors.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
-import {
-	DelegatedEvents,
-	is_capture_event,
-	namespace_mathml,
-	namespace_svg
-} from '../../../constants.js';
+import { is_capture_event, namespace_mathml, namespace_svg } from '../../../constants.js';
 import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
@@ -36,8 +27,8 @@ import { hash } from '../../../utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
 import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
-import { equal } from '../../utils/assert.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
+import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { BindDirective } from './visitors/BindDirective.js';
 import { CallExpression } from './visitors/CallExpression.js';
@@ -76,6 +67,7 @@ import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
+import { determine_element_spread } from './visitors/shared/element.js';
 
 /**
  * @type {Visitors}
@@ -156,157 +148,6 @@ function get_component_name(filename) {
 		name = last_dir;
 	}
 	return name[0].toUpperCase() + name.slice(1);
-}
-
-/**
- * Checks if given event attribute can be delegated/hoisted and returns the corresponding info if so
- * @param {string} event_name
- * @param {Expression | null} handler
- * @param {Context} context
- * @returns {null | DelegatedEvent}
- */
-function get_delegated_event(event_name, handler, context) {
-	// Handle delegated event handlers. Bail-out if not a delegated event.
-	if (!handler || !DelegatedEvents.includes(event_name)) {
-		return null;
-	}
-
-	// If we are not working with a RegularElement, then bail-out.
-	const element = context.path.at(-1);
-	if (element?.type !== 'RegularElement') {
-		return null;
-	}
-
-	/** @type {DelegatedEvent} */
-	const non_hoistable = { type: 'non-hoistable' };
-	/** @type {FunctionExpression | FunctionDeclaration | ArrowFunctionExpression | null} */
-	let target_function = null;
-	let binding = null;
-
-	if (element.metadata.has_spread) {
-		// event attribute becomes part of the dynamic spread array
-		return non_hoistable;
-	}
-
-	if (handler.type === 'ArrowFunctionExpression' || handler.type === 'FunctionExpression') {
-		target_function = handler;
-	} else if (handler.type === 'Identifier') {
-		binding = context.state.scope.get(handler.name);
-
-		if (context.state.analysis.module.scope.references.has(handler.name)) {
-			// If a binding with the same name is referenced in the module scope (even if not declared there), bail-out
-			return non_hoistable;
-		}
-
-		if (binding != null) {
-			for (const { path } of binding.references) {
-				const parent = path.at(-1);
-				if (parent == null) return non_hoistable;
-
-				const grandparent = path.at(-2);
-
-				/** @type {RegularElement | null} */
-				let element = null;
-				/** @type {string | null} */
-				let event_name = null;
-				if (parent.type === 'OnDirective') {
-					element = /** @type {RegularElement} */ (grandparent);
-					event_name = parent.name;
-				} else if (
-					parent.type === 'ExpressionTag' &&
-					grandparent?.type === 'Attribute' &&
-					is_event_attribute(grandparent)
-				) {
-					element = /** @type {RegularElement} */ (path.at(-3));
-					const attribute = /** @type {Attribute} */ (grandparent);
-					event_name = get_attribute_event_name(attribute.name);
-				}
-
-				if (element && event_name) {
-					if (
-						element.type !== 'RegularElement' ||
-						determine_element_spread(element).metadata.has_spread ||
-						!DelegatedEvents.includes(event_name)
-					) {
-						return non_hoistable;
-					}
-				} else if (parent.type !== 'FunctionDeclaration' && parent.type !== 'VariableDeclarator') {
-					return non_hoistable;
-				}
-			}
-		}
-
-		// If the binding is exported, bail-out
-		if (context.state.analysis.exports.find((node) => node.name === handler.name)) {
-			return non_hoistable;
-		}
-
-		if (binding !== null && binding.initial !== null && !binding.mutated && !binding.is_called) {
-			const binding_type = binding.initial.type;
-
-			if (
-				binding_type === 'ArrowFunctionExpression' ||
-				binding_type === 'FunctionDeclaration' ||
-				binding_type === 'FunctionExpression'
-			) {
-				target_function = binding.initial;
-			}
-		}
-	}
-
-	// If we can't find a function, bail-out
-	if (target_function == null) return non_hoistable;
-	// If the function is marked as non-hoistable, bail-out
-	if (target_function.metadata.hoistable === 'impossible') return non_hoistable;
-	// If the function has more than one arg, then bail-out
-	if (target_function.params.length > 1) return non_hoistable;
-
-	const visited_references = new Set();
-	const scope = target_function.metadata.scope;
-	for (const [reference] of scope.references) {
-		// Bail-out if the arguments keyword is used
-		if (reference === 'arguments') return non_hoistable;
-		// Bail-out if references a store subscription
-		if (scope.get(`$${reference}`)?.kind === 'store_sub') return non_hoistable;
-
-		const binding = scope.get(reference);
-		const local_binding = context.state.scope.get(reference);
-
-		// If we are referencing a binding that is shadowed in another scope then bail out.
-		if (local_binding !== null && binding !== null && local_binding.node !== binding.node) {
-			return non_hoistable;
-		}
-
-		// If we have multiple references to the same store using $ prefix, bail out.
-		if (
-			binding !== null &&
-			binding.kind === 'store_sub' &&
-			visited_references.has(reference.slice(1))
-		) {
-			return non_hoistable;
-		}
-
-		// If we reference the index within an each block, then bail-out.
-		if (binding !== null && binding.initial?.type === 'EachBlock') return non_hoistable;
-
-		if (
-			binding !== null &&
-			// Bail-out if the the binding is a rest param
-			(binding.declaration_kind === 'rest_param' ||
-				// Bail-out if we reference anything from the EachBlock (for now) that mutates in non-runes mode,
-				(((!context.state.analysis.runes && binding.kind === 'each') ||
-					// or any normal not reactive bindings that are mutated.
-					binding.kind === 'normal' ||
-					// or any reactive imports (those are rewritten) (can only happen in legacy mode)
-					binding.kind === 'legacy_reactive_import') &&
-					binding.mutated))
-		) {
-			return non_hoistable;
-		}
-		visited_references.add(reference);
-	}
-
-	return { type: 'hoistable', function: target_function };
 }
 
 /**
@@ -852,42 +693,7 @@ const common_visitors = {
 			}
 		}
 	},
-	Attribute(node, context) {
-		if (node.value === true) return;
-
-		context.next();
-
-		for (const chunk of get_attribute_chunks(node.value)) {
-			if (chunk.type !== 'ExpressionTag') continue;
-
-			if (
-				chunk.expression.type === 'FunctionExpression' ||
-				chunk.expression.type === 'ArrowFunctionExpression'
-			) {
-				continue;
-			}
-
-			node.metadata.expression.has_state ||= chunk.metadata.expression.has_state;
-			node.metadata.expression.has_call ||= chunk.metadata.expression.has_call;
-		}
-
-		if (is_event_attribute(node)) {
-			const parent = context.path.at(-1);
-			if (parent?.type === 'RegularElement' || parent?.type === 'SvelteElement') {
-				context.state.analysis.uses_event_attributes = true;
-			}
-
-			const expression = get_attribute_expression(node);
-			const delegated_event = get_delegated_event(node.name.slice(2), expression, context);
-
-			if (delegated_event !== null) {
-				if (delegated_event.type === 'hoistable') {
-					delegated_event.function.metadata.hoistable = true;
-				}
-				node.metadata.delegated = delegated_event;
-			}
-		}
-	},
+	Attribute,
 	ClassDirective(node, context) {
 		context.next({ ...context.state, expression: node.metadata.expression });
 	},
@@ -1158,8 +964,8 @@ const common_visitors = {
 				node.attributes.push(
 					create_attribute(
 						'value',
-						/** @type {Text} */ (node.fragment.nodes.at(0)).start,
-						/** @type {Text} */ (node.fragment.nodes.at(-1)).end,
+						/** @type {import('#compiler').Text} */ (node.fragment.nodes.at(0)).start,
+						/** @type {import('#compiler').Text} */ (node.fragment.nodes.at(-1)).end,
 						// @ts-ignore
 						node.fragment.nodes
 					)
@@ -1243,32 +1049,6 @@ const common_visitors = {
 		}
 	}
 };
-
-/**
- * @param {RegularElement} node
- */
-function determine_element_spread(node) {
-	let has_spread = false;
-	for (const attribute of node.attributes) {
-		if (!has_spread && attribute.type === 'SpreadAttribute') {
-			has_spread = true;
-		}
-	}
-	node.metadata.has_spread = has_spread;
-
-	return node;
-}
-
-/**
- * @param {string} event_name
- */
-function get_attribute_event_name(event_name) {
-	if (is_capture_event(event_name, 'include-on')) {
-		event_name = event_name.slice(0, -7);
-	}
-	event_name = event_name.slice(2);
-	return event_name;
-}
 
 /**
  * @param {Map<LabeledStatement, ReactiveStatement>} unsorted_reactive_declarations
