@@ -1,4 +1,4 @@
-/** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression, Node, Program, Super } from 'estree' */
+/** @import { Node, Program } from 'estree' */
 /** @import { Root, Script, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Context, LegacyAnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
@@ -9,8 +9,7 @@ import * as w from '../../warnings.js';
 import {
 	extract_all_identifiers_from_expression,
 	is_text_attribute,
-	unwrap_optional,
-	get_attribute_chunks
+	unwrap_optional
 } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
 import { MathMLElements, ReservedKeywords, Runes, SVGElements } from '../constants.js';
@@ -27,6 +26,7 @@ import { hash } from '../../../utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
 import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
+import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
@@ -44,6 +44,8 @@ import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
 import { ExportSpecifier } from './visitors/ExportSpecifier.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
 import { ExpressionTag } from './visitors/ExpressionTag.js';
+import { FunctionDeclaration } from './visitors/FunctionDeclaration.js';
+import { FunctionExpression } from './visitors/FunctionExpression.js';
 import { HtmlTag } from './visitors/HtmlTag.js';
 import { Identifier } from './visitors/Identifier.js';
 import { IfBlock } from './visitors/IfBlock.js';
@@ -76,6 +78,7 @@ import { is_safe_identifier } from './visitors/shared/utils.js';
  * @type {Visitors}
  */
 const visitors = {
+	ArrowFunctionExpression,
 	AssignmentExpression,
 	Attribute,
 	AwaitBlock,
@@ -93,6 +96,8 @@ const visitors = {
 	ExportSpecifier,
 	ExpressionStatement,
 	ExpressionTag,
+	FunctionDeclaration,
+	FunctionExpression,
 	HtmlTag,
 	Identifier,
 	IfBlock,
@@ -600,25 +605,6 @@ function is_known_safe_call(node, context) {
 	return false;
 }
 
-/**
- * @param {ArrowFunctionExpression | FunctionExpression | FunctionDeclaration} node
- * @param {Context} context
- */
-const function_visitor = (node, context) => {
-	// TODO retire this in favour of a more general solution based on bindings
-	node.metadata = {
-		// module context -> already hoisted
-		hoistable: context.state.ast_type === 'module' ? 'impossible' : false,
-		hoistable_params: [],
-		scope: context.state.scope
-	};
-
-	context.next({
-		...context.state,
-		function_depth: context.state.function_depth + 1
-	});
-};
-
 /** @type {Visitors} */
 const common_visitors = {
 	_(node, { state, next, path }) {
@@ -847,9 +833,6 @@ const common_visitors = {
 			parent_each_blocks: each_blocks
 		};
 	},
-	ArrowFunctionExpression: function_visitor,
-	FunctionExpression: function_visitor,
-	FunctionDeclaration: function_visitor,
 	RegularElement(node, context) {
 		if (context.state.options.namespace !== 'foreign') {
 			if (SVGElements.includes(node.name)) node.metadata.svg = true;
