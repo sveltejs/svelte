@@ -203,7 +203,7 @@ export const javascript_visitors_runes = {
 								b.call('$.get', b.member(b.this, b.private_id(name))),
 								b.id('owner'),
 								b.literal(false),
-								b.literal(is_ignored(node, 'ownership_invalid_binding'))
+								is_ignored(node, 'ownership_invalid_binding') && b.true
 							)
 						)
 					),
@@ -455,7 +455,7 @@ export const javascript_visitors_runes = {
 			return b.call(
 				'$.snapshot',
 				/** @type {Expression} */ (context.visit(node.arguments[0])),
-				b.literal(is_ignored(node, 'state_snapshot_uncloneable'))
+				is_ignored(node, 'state_snapshot_uncloneable') && b.true
 			);
 		}
 

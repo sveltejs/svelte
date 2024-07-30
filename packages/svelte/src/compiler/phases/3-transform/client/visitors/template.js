@@ -325,7 +325,7 @@ function serialize_element_spread_attributes(
 				b.object(values),
 				lowercase_attributes,
 				b.literal(context.state.analysis.css.hash),
-				b.literal(is_ignored(element, 'hydration_attribute_changed'))
+				is_ignored(element, 'hydration_attribute_changed') && b.true
 			)
 		)
 	);
@@ -496,7 +496,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 				node_id,
 				b.literal(name),
 				value,
-				b.literal(is_ignored(element, 'hydration_attribute_changed'))
+				is_ignored(element, 'hydration_attribute_changed') && b.true
 			)
 		);
 
@@ -540,7 +540,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 				node_id,
 				b.literal(name),
 				value,
-				b.literal(is_ignored(element, 'hydration_attribute_changed'))
+				is_ignored(element, 'hydration_attribute_changed') && b.true
 			)
 		);
 	}
