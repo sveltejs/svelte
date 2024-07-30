@@ -8,6 +8,7 @@ const overrides = {
 	}
 };
 
+// TODO get rid of this
 /**
  * @template {{ type: string }} T
  * @template U

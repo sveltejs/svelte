@@ -21,4 +21,6 @@ export function IfBlock(node, context) {
 
 		validate_opening_tag(node, context.state, expected);
 	}
+
+	context.next();
 }

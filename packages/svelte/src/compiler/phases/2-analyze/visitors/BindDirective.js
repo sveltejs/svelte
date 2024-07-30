@@ -164,15 +164,14 @@ export function BindDirective(node, context) {
 					if (node.name !== 'value' || type.value === true) {
 						e.attribute_invalid_type(type);
 					}
-					return; // bind:value can handle dynamic `type` attributes
-				}
+				} else {
+					if (node.name === 'checked' && type?.value[0].data !== 'checkbox') {
+						e.bind_invalid_target(node, node.name, '<input type="checkbox">');
+					}
 
-				if (node.name === 'checked' && type?.value[0].data !== 'checkbox') {
-					e.bind_invalid_target(node, node.name, '<input type="checkbox">');
-				}
-
-				if (node.name === 'files' && type?.value[0].data !== 'file') {
-					e.bind_invalid_target(node, node.name, '<input type="file">');
+					if (node.name === 'files' && type?.value[0].data !== 'file') {
+						e.bind_invalid_target(node, node.name, '<input type="file">');
+					}
 				}
 			}
 
@@ -218,4 +217,6 @@ export function BindDirective(node, context) {
 			e.bind_invalid_name(node, node.name);
 		}
 	}
+
+	context.next();
 }

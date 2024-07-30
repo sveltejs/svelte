@@ -2,15 +2,13 @@
 /** @import { Root, Script, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, LegacyAnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
-import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { is_text_attribute } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
 import { ReservedKeywords, Runes } from '../constants.js';
-import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
-import { merge } from '../visitors.js';
+import { Scope, ScopeRoot, create_scopes, get_rune } from '../scope.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { create_attribute } from '../nodes.js';
 import { analyze_css } from './css/css-analyze.js';
@@ -427,7 +425,7 @@ export function analyze_component(root, source, options) {
 				function_depth: scope.function_depth
 			};
 
-			walk(/** @type {SvelteNode} */ (ast), state, merge(set_scope(scopes), visitors));
+			walk(/** @type {SvelteNode} */ (ast), state, visitors);
 		}
 
 		// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
@@ -496,12 +494,7 @@ export function analyze_component(root, source, options) {
 				function_depth: scope.function_depth
 			};
 
-			walk(
-				/** @type {SvelteNode} */ (ast),
-				state,
-				// @ts-expect-error TODO
-				merge(set_scope(scopes), visitors)
-			);
+			walk(/** @type {SvelteNode} */ (ast), state, visitors);
 		}
 
 		for (const [name, binding] of instance.scope.declarations) {
