@@ -16,6 +16,14 @@ export function Identifier(node, context) {
 		return;
 	}
 
+	// If we are using arguments outside of a function, then throw an error
+	if (
+		node.name === 'arguments' &&
+		!context.path.some((n) => n.type === 'FunctionDeclaration' || n.type === 'FunctionExpression')
+	) {
+		e.invalid_arguments_usage(node);
+	}
+
 	if (context.state.analysis.runes) {
 		if (
 			Runes.includes(/** @type {Runes[number]} */ (node.name)) &&
@@ -46,7 +54,9 @@ export function Identifier(node, context) {
 				e.rune_missing_parentheses(current);
 			}
 		}
-	} else {
+	}
+
+	if (!context.state.analysis.runes) {
 		if (node.name === '$$props') {
 			context.state.analysis.uses_props = true;
 		}

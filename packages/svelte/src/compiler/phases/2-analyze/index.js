@@ -707,14 +707,6 @@ const common_visitors = {
 			return;
 		}
 
-		// If we are using arguments outside of a function, then throw an error
-		if (
-			node.name === 'arguments' &&
-			context.path.every((n) => n.type !== 'FunctionDeclaration' && n.type !== 'FunctionExpression')
-		) {
-			e.invalid_arguments_usage(node);
-		}
-
 		const binding = context.state.scope.get(node.name);
 
 		if (binding && context.state.expression) {
