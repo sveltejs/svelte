@@ -10,18 +10,20 @@ The ramp up to the Svelte 5 release has led to a bunch of huge improvements to b
 Let's dive in!
 
 ## What's new in Svelte
+
 Below, you'll find the highlights from the Svelte 5 release notes (currently in [Release Candidate](https://www.npmjs.com/package/svelte?activeTab=versions)):
 
-- Breaking: The names of the `svelte/reactivity` helpers have been updated to include `Svelte` prefix (**5.0.0-next.169**, [Docs](https://svelte-5-preview.vercel.app/docs/imports#svelte-reactivity) [#12248](https://github.com/sveltejs/svelte/pull/12248))
+- Breaking: The names of the `svelte/reactivity` helpers have been updated to include a `Svelte` prefix (**5.0.0-next.169**, [Docs](https://svelte-5-preview.vercel.app/docs/imports#svelte-reactivity) [#12248](https://github.com/sveltejs/svelte/pull/12248))
 - Branch effects now have better DOM boundaries - reducing bugs in `{#each}` blocks and during DOM manipulation (**5.0.0-next.171** and **5.0.0-next.182**, [#12215](https://github.com/sveltejs/svelte/pull/12215), [#12258](https://github.com/sveltejs/svelte/pull/12258), [#12383](https://github.com/sveltejs/svelte/pull/12383))
 - Single-pass hydration has reduced DOM size and significantly improved hydration speed (**5.0.0-next.179**, [#12335](https://github.com/sveltejs/svelte/pull/12335), [#12339](https://github.com/sveltejs/svelte/pull/12339))
 - Breaking: Transitions now play on mount by default (**5.0.0-next.177**, [#12351](https://github.com/sveltejs/svelte/pull/12351))
 - CSS can now be included in the `<head>` when the `css: 'injected'` compiler option is enabled. This makes it trivial to include styles when rendering things like emails and OG cards, as well as massively simplifying toy setups where you can't be bothered to figure out how to get CSS from the compiler into your server-rendered HTML (**5.0.0-next.180**, [Docs](https://svelte-5-preview.vercel.app/docs/imports#svelte-server-render), [#12374](https://github.com/sveltejs/svelte/pull/12374))
-- Svelte will now warn in dev on `{@html ...}` block hydration mismatch (**5.0.0-next.182**, [#12396](https://github.com/sveltejs/svelte/pull/12396))
+- Svelte will now warn in dev on `{@html ...}` block hydration mismatches (**5.0.0-next.182**, [#12396](https://github.com/sveltejs/svelte/pull/12396))
 - The new `warningFilter` compiler option lets you disable certain warnings for the whole application without having to add `svelte-ignore` comments everywhere (**5.0.0-next.186**, [#12296](https://github.com/sveltejs/svelte/pull/12296))
 - The new `createRawSnippet` API, allows low-level creation of programmatic snippets outside of Svelte templates (**5.0.0-next.189**, [Docs](https://svelte-5-preview.vercel.app/docs/imports#svelte-createrawsnippet), [#12425](https://github.com/sveltejs/svelte/pull/12425))
 
 ## What's new in SvelteKit and beyond
+
 - The HTML attributes `enctype` and `formenctype` are now respected for forms with `use:enhance` (plus, some other bug fixes in the [CHANGELOG](https://github.com/sveltejs/kit/blob/main/packages/kit/CHANGELOG.md))
 - The cloudflare, cloudflare-workers, netlify and vercel adapters have all been updated to copy `.eot`, `.otf`, .`ttf`, `.woff`, and `.woff2` font files when bundling ([CHANGELOGs](https://github.com/sveltejs/kit/tree/main/packages))
 - `svelte-preprocess`, the tool used in nearly every Svelte project, is now dependency free! The team has gradually reduced it from 44 dependencies in 5.0.0 down to zero in the latest release ([Tweet](https://x.com/BenjaminMcCann/status/1810698991820321028))
