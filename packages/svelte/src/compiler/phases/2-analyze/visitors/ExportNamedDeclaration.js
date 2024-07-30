@@ -60,6 +60,26 @@ export function ExportNamedDeclaration(node, context) {
 			}
 		}
 	}
+
+	if (context.state.analysis.runes) {
+		if (node.declaration && context.state.ast_type === 'instance') {
+			if (
+				node.declaration.type === 'FunctionDeclaration' ||
+				node.declaration.type === 'ClassDeclaration'
+			) {
+				context.state.analysis.exports.push({
+					name: /** @type {Identifier} */ (node.declaration.id).name,
+					alias: null
+				});
+			} else if (node.declaration.kind === 'const') {
+				for (const declarator of node.declaration.declarations) {
+					for (const node of extract_identifiers(declarator.id)) {
+						context.state.analysis.exports.push({ name: node.name, alias: null });
+					}
+				}
+			}
+		}
+	}
 }
 
 /**

@@ -803,30 +803,6 @@ const runes_scope_tweaker = {
 				}
 			}
 		}
-	},
-	ExportNamedDeclaration(node, { next, state }) {
-		if (!node.declaration || state.ast_type !== 'instance') {
-			return next();
-		}
-
-		if (
-			node.declaration.type === 'FunctionDeclaration' ||
-			node.declaration.type === 'ClassDeclaration'
-		) {
-			state.analysis.exports.push({
-				name: /** @type {Identifier} */ (node.declaration.id).name,
-				alias: null
-			});
-			return next();
-		}
-
-		if (node.declaration.type === 'VariableDeclaration' && node.declaration.kind === 'const') {
-			for (const declarator of node.declaration.declarations) {
-				for (const node of extract_identifiers(declarator.id)) {
-					state.analysis.exports.push({ name: node.name, alias: null });
-				}
-			}
-		}
 	}
 };
 
