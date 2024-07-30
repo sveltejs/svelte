@@ -198,6 +198,30 @@ In Svelte 4, doing the following triggered reactivity:
 
 This is because the Svelte compiler treated the assignment to `foo.value` as an instruction to update anything that referenced `foo`. In Svelte 5, reactivity is determined at runtime rather than compile time, so you should define `value` as a reactive `$state` field on the `Foo` class. Wrapping `new Foo()` with `$state(...)` will have no effect — only vanilla objects and arrays are made deeply reactive.
 
+### `<svelte:component>` is no longer necessary
+
+In Svelte 4, components are _static_ — if you render `<Thing>`, and the value of `Thing` changes, [nothing happens](https://svelte.dev/repl/7f1fa24f0ab44c1089dcbb03568f8dfa?version=4.2.18). To make it dynamic you must use `<svelte:component>`.
+
+This is [no longer true in Svelte 5](/#H4sIAAAAAAAAE4WQwU7DMAyGX8VESANpXe8lq9Q8AzfGobQujZQmWeJOQlXenaQB1sM0bnG-379_e2GDVOhZ9bYw3U7IKtZYy_aMvmwq_AUVYay9mV2XfrjvnLRUn_SJ5GSNI2hgcGaC3aFsDrlh97LB4g-LLY4ChQSvo9SfcIRHTy3h03NEvLzO0Nyjwo7gQ-q-urRqxuOy9oQ1AjeWpNHwQ5pQN7zMf7e4CLXY8Dhpdc-THooCaESP0DoEPM8ydqEmKIqkzUnL9MxrVJ2JG-qkoFH631xREg82mV4OEntWkZsx7K_3vXtdm_LbuwbiHwNx2-A9fANfmchv7QEAAA==):
+
+```svelte
+<script>
+	import A from './A.svelte';
+	import B from './B.svelte';
+
+	let Thing = $state();
+</script>
+
+<select bind:value={Thing}>
+	<option value={A}>A</option>
+	<option value={B}>B</option>
+</select>
+
+<!-- these are equivalent -->
+<Thing />
+<svelte:component this={Thing} />
+```
+
 ## Other breaking changes
 
 ### Stricter `@const` assignment validation

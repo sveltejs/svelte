@@ -623,7 +623,556 @@ export function analyze_component(root, source, options) {
 }
 
 /**
+<<<<<<< HEAD
  * @param {Map<import('estree').LabeledStatement, ReactiveStatement>} unsorted_reactive_declarations
+=======
+ * @param {CallExpression} node
+ * @param {Context} context
+ * @returns {boolean}
+ */
+function is_known_safe_call(node, context) {
+	const callee = node.callee;
+
+	// String / Number / BigInt / Boolean casting calls
+	if (callee.type === 'Identifier') {
+		const name = callee.name;
+		const binding = context.state.scope.get(name);
+		if (
+			binding === null &&
+			(name === 'BigInt' || name === 'String' || name === 'Number' || name === 'Boolean')
+		) {
+			return true;
+		}
+	}
+
+	// TODO add more cases
+
+	return false;
+}
+
+/**
+ * @param {ArrowFunctionExpression | FunctionExpression | FunctionDeclaration} node
+ * @param {Context} context
+ */
+const function_visitor = (node, context) => {
+	// TODO retire this in favour of a more general solution based on bindings
+	node.metadata = {
+		// module context -> already hoisted
+		hoistable: context.state.ast_type === 'module' ? 'impossible' : false,
+		hoistable_params: [],
+		scope: context.state.scope
+	};
+
+	context.next({
+		...context.state,
+		function_depth: context.state.function_depth + 1
+	});
+};
+
+/**
+ * A 'safe' identifier means that the `foo` in `foo.bar` or `foo()` will not
+ * call functions that require component context to exist
+ * @param {Expression | Super} expression
+ * @param {Scope} scope
+ */
+function is_safe_identifier(expression, scope) {
+	let node = expression;
+	while (node.type === 'MemberExpression') node = node.object;
+
+	if (node.type !== 'Identifier') return false;
+
+	const binding = scope.get(node.name);
+	if (!binding) return true;
+
+	if (binding.kind === 'store_sub') {
+		return is_safe_identifier({ name: node.name.slice(1), type: 'Identifier' }, scope);
+	}
+
+	return (
+		binding.declaration_kind !== 'import' &&
+		binding.kind !== 'prop' &&
+		binding.kind !== 'bindable_prop' &&
+		binding.kind !== 'rest_prop'
+	);
+}
+
+/** @type {Visitors} */
+const common_visitors = {
+	_(node, { state, next, path }) {
+		ignore_map.set(node, structuredClone(ignore_stack));
+		const parent = path.at(-1);
+		if (parent?.type === 'Fragment' && node.type !== 'Comment' && node.type !== 'Text') {
+			const idx = parent.nodes.indexOf(/** @type {any} */ (node));
+			/** @type {string[]} */
+			const ignores = [];
+			for (let i = idx - 1; i >= 0; i--) {
+				const prev = parent.nodes[i];
+				if (prev.type === 'Comment') {
+					ignores.push(
+						...extract_svelte_ignore(
+							prev.start + 4 /* '<!--'.length */,
+							prev.data,
+							state.analysis.runes
+						)
+					);
+				} else if (prev.type !== 'Text') {
+					break;
+				}
+			}
+
+			if (ignores.length > 0) {
+				push_ignore(ignores);
+				ignore_map.set(node, structuredClone(ignore_stack));
+				next();
+				pop_ignore();
+			}
+		} else {
+			const comments = /** @type {any} */ (node).leadingComments;
+			if (comments) {
+				/** @type {string[]} */
+				const ignores = [];
+				for (const comment of comments) {
+					ignores.push(
+						...extract_svelte_ignore(
+							comment.start + 2 /* '//'.length */,
+							comment.value,
+							state.analysis.runes
+						)
+					);
+				}
+				if (ignores.length > 0) {
+					push_ignore(ignores);
+					ignore_map.set(node, structuredClone(ignore_stack));
+					next();
+					pop_ignore();
+				}
+			}
+		}
+	},
+	Attribute(node, context) {
+		if (node.value === true) return;
+
+		context.next();
+
+		for (const chunk of get_attribute_chunks(node.value)) {
+			if (chunk.type !== 'ExpressionTag') continue;
+
+			if (
+				chunk.expression.type === 'FunctionExpression' ||
+				chunk.expression.type === 'ArrowFunctionExpression'
+			) {
+				continue;
+			}
+
+			node.metadata.expression.has_state ||= chunk.metadata.expression.has_state;
+			node.metadata.expression.has_call ||= chunk.metadata.expression.has_call;
+		}
+
+		if (is_event_attribute(node)) {
+			const parent = context.path.at(-1);
+			if (parent?.type === 'RegularElement' || parent?.type === 'SvelteElement') {
+				context.state.analysis.uses_event_attributes = true;
+			}
+
+			const expression = get_attribute_expression(node);
+			const delegated_event = get_delegated_event(node.name.slice(2), expression, context);
+
+			if (delegated_event !== null) {
+				if (delegated_event.type === 'hoistable') {
+					delegated_event.function.metadata.hoistable = true;
+				}
+				node.metadata.delegated = delegated_event;
+			}
+		}
+	},
+	ClassDirective(node, context) {
+		context.next({ ...context.state, expression: node.metadata.expression });
+	},
+	SpreadAttribute(node, context) {
+		context.next({ ...context.state, expression: node.metadata.expression });
+	},
+	SlotElement(node, context) {
+		let name = 'default';
+		for (const attr of node.attributes) {
+			if (attr.type === 'Attribute' && attr.name === 'name' && is_text_attribute(attr)) {
+				name = attr.value[0].data;
+				break;
+			}
+		}
+		context.state.analysis.slot_names.set(name, node);
+	},
+	StyleDirective(node, context) {
+		if (node.value === true) {
+			const binding = context.state.scope.get(node.name);
+			if (binding?.kind !== 'normal') {
+				node.metadata.expression.has_state = true;
+			}
+		} else {
+			context.next();
+
+			for (const chunk of get_attribute_chunks(node.value)) {
+				if (chunk.type !== 'ExpressionTag') continue;
+
+				node.metadata.expression.has_state ||= chunk.metadata.expression.has_state;
+				node.metadata.expression.has_call ||= chunk.metadata.expression.has_call;
+			}
+		}
+	},
+	ExpressionTag(node, context) {
+		context.next({ ...context.state, expression: node.metadata.expression });
+	},
+	Identifier(node, context) {
+		const parent = /** @type {Node} */ (context.path.at(-1));
+		if (!is_reference(node, parent)) return;
+
+		if (node.name === '$$slots') {
+			context.state.analysis.uses_slots = true;
+			return;
+		}
+
+		// If we are using arguments outside of a function, then throw an error
+		if (
+			node.name === 'arguments' &&
+			context.path.every((n) => n.type !== 'FunctionDeclaration' && n.type !== 'FunctionExpression')
+		) {
+			e.invalid_arguments_usage(node);
+		}
+
+		const binding = context.state.scope.get(node.name);
+
+		if (binding && context.state.expression) {
+			context.state.expression.dependencies.add(binding);
+
+			if (binding.kind !== 'normal') {
+				context.state.expression.has_state = true;
+			}
+		}
+
+		// if no binding, means some global variable
+		if (binding && binding.kind !== 'normal') {
+			if (context.state.expression) {
+				context.state.expression.has_state = true;
+			}
+
+			// TODO it would be better to just bail out when we hit the ExportSpecifier node but that's
+			// not currently possibly because of our visitor merging, which I desperately want to nuke
+			const is_export_specifier =
+				/** @type {SvelteNode} */ (context.path.at(-1)).type === 'ExportSpecifier';
+
+			if (
+				context.state.analysis.runes &&
+				node !== binding.node &&
+				context.state.function_depth === binding.scope.function_depth &&
+				// If we have $state that can be proxied or frozen and isn't re-assigned, then that means
+				// it's likely not using a primitive value and thus this warning isn't that helpful.
+				((binding.kind === 'state' &&
+					(binding.reassigned ||
+						(binding.initial?.type === 'CallExpression' &&
+							binding.initial.arguments.length === 1 &&
+							binding.initial.arguments[0].type !== 'SpreadElement' &&
+							!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
+					binding.kind === 'frozen_state' ||
+					binding.kind === 'derived') &&
+				!is_export_specifier &&
+				// We're only concerned with reads here
+				(parent.type !== 'AssignmentExpression' || parent.left !== node) &&
+				parent.type !== 'UpdateExpression'
+			) {
+				w.state_referenced_locally(node);
+			}
+		}
+	},
+	CallExpression(node, context) {
+		const { expression, render_tag } = context.state;
+
+		if (expression && !is_known_safe_call(node, context)) {
+			expression.has_call = true;
+			expression.has_state = true;
+		}
+
+		if (render_tag) {
+			// Find out which of the render tag arguments contains this call expression
+			const arg_idx = unwrap_optional(render_tag.expression).arguments.findIndex(
+				(arg) => arg === node || context.path.includes(arg)
+			);
+
+			// -1 if this is the call expression of the render tag itself
+			if (arg_idx !== -1) {
+				render_tag.metadata.args_with_call_expression.add(arg_idx);
+			}
+		}
+
+		const callee = node.callee;
+		const rune = get_rune(node, context.state.scope);
+
+		if (callee.type === 'Identifier') {
+			const binding = context.state.scope.get(callee.name);
+
+			if (binding !== null) {
+				binding.is_called = true;
+			}
+
+			if (rune === '$derived') {
+				// special case — `$derived(foo)` is treated as `$derived(() => foo)`
+				// for the purposes of identifying static state references
+				context.next({
+					...context.state,
+					function_depth: context.state.function_depth + 1
+				});
+
+				return;
+			}
+		}
+
+		if (rune === '$effect' || rune === '$effect.pre') {
+			// `$effect` needs context because Svelte needs to know whether it should re-run
+			// effects that invalidate themselves, and that's determined by whether we're in runes mode
+			context.state.analysis.needs_context = true;
+		} else if (rune === null) {
+			if (!is_safe_identifier(callee, context.state.scope)) {
+				context.state.analysis.needs_context = true;
+			}
+		}
+
+		context.next();
+	},
+	MemberExpression(node, context) {
+		if (context.state.expression) {
+			context.state.expression.has_state = true;
+		}
+
+		if (!is_safe_identifier(node, context.state.scope)) {
+			context.state.analysis.needs_context = true;
+		}
+
+		context.next();
+	},
+	OnDirective(node, { state, path, next }) {
+		const parent = path.at(-1);
+		if (parent?.type === 'SvelteElement' || parent?.type === 'RegularElement') {
+			state.analysis.event_directive_node ??= node;
+		}
+		next({ ...state, expression: node.metadata.expression });
+	},
+	BindDirective(node, context) {
+		let i = context.path.length;
+		while (i--) {
+			const parent = context.path[i];
+			if (
+				parent.type === 'Component' ||
+				parent.type === 'SvelteComponent' ||
+				parent.type === 'SvelteSelf'
+			) {
+				if (node.name !== 'this') {
+					context.state.analysis.uses_component_bindings = true;
+				}
+				break;
+			} else if (is_element_node(parent)) {
+				break;
+			}
+		}
+
+		if (node.name !== 'group') return;
+
+		// Traverse the path upwards and find all EachBlocks who are (indirectly) contributing to bind:group,
+		// i.e. one of their declarations is referenced in the binding. This allows group bindings to work
+		// correctly when referencing a variable declared in an EachBlock by using the index of the each block
+		// entries as keys.
+		i = context.path.length;
+		const each_blocks = [];
+		const [keypath, expression_ids] = extract_all_identifiers_from_expression(node.expression);
+		let ids = expression_ids;
+		while (i--) {
+			const parent = context.path[i];
+			if (parent.type === 'EachBlock') {
+				const references = ids.filter((id) => parent.metadata.declarations.has(id.name));
+				if (references.length > 0) {
+					parent.metadata.contains_group_binding = true;
+					for (const binding of parent.metadata.references) {
+						binding.mutated = true;
+					}
+					each_blocks.push(parent);
+					ids = ids.filter((id) => !references.includes(id));
+					ids.push(...extract_all_identifiers_from_expression(parent.expression)[1]);
+				}
+			}
+		}
+
+		// The identifiers that make up the binding expression form they key for the binding group.
+		// If the same identifiers in the same order are used in another bind:group, they will be in the same group.
+		// (there's an edge case where `bind:group={a[i]}` will be in a different group than `bind:group={a[j]}` even when i == j,
+		//  but this is a limitation of the current static analysis we do; it also never worked in Svelte 4)
+		const bindings = expression_ids.map((id) => context.state.scope.get(id.name));
+		let group_name;
+		outer: for (const [[key, b], group] of context.state.analysis.binding_groups) {
+			if (b.length !== bindings.length || key !== keypath) continue;
+			for (let i = 0; i < bindings.length; i++) {
+				if (bindings[i] !== b[i]) continue outer;
+			}
+			group_name = group;
+		}
+
+		if (!group_name) {
+			group_name = context.state.scope.root.unique('binding_group');
+			context.state.analysis.binding_groups.set([keypath, bindings], group_name);
+		}
+
+		node.metadata = {
+			binding_group_name: group_name,
+			parent_each_blocks: each_blocks
+		};
+	},
+	ArrowFunctionExpression: function_visitor,
+	FunctionExpression: function_visitor,
+	FunctionDeclaration: function_visitor,
+	RegularElement(node, context) {
+		if (context.state.options.namespace !== 'foreign') {
+			if (SVGElements.includes(node.name)) node.metadata.svg = true;
+			else if (MathMLElements.includes(node.name)) node.metadata.mathml = true;
+		}
+
+		determine_element_spread(node);
+
+		// Special case: Move the children of <textarea> into a value attribute if they are dynamic
+		if (
+			context.state.options.namespace !== 'foreign' &&
+			node.name === 'textarea' &&
+			node.fragment.nodes.length > 0
+		) {
+			if (node.fragment.nodes.length > 1 || node.fragment.nodes[0].type !== 'Text') {
+				const first = node.fragment.nodes[0];
+				if (first.type === 'Text') {
+					// The leading newline character needs to be stripped because of a qirk:
+					// It is ignored by browsers if the tag and its contents are set through
+					// innerHTML, but we're now setting it through the value property at which
+					// point it is _not_ ignored, so we need to strip it ourselves.
+					// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+					// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
+					first.data = first.data.replace(regex_starts_with_newline, '');
+					first.raw = first.raw.replace(regex_starts_with_newline, '');
+				}
+
+				node.attributes.push(
+					create_attribute(
+						'value',
+						/** @type {Text} */ (node.fragment.nodes.at(0)).start,
+						/** @type {Text} */ (node.fragment.nodes.at(-1)).end,
+						// @ts-ignore
+						node.fragment.nodes
+					)
+				);
+
+				node.fragment.nodes = [];
+			}
+		}
+
+		// Special case: single expression tag child of option element -> add "fake" attribute
+		// to ensure that value types are the same (else for example numbers would be strings)
+		if (
+			context.state.options.namespace !== 'foreign' &&
+			node.name === 'option' &&
+			node.fragment.nodes?.length === 1 &&
+			node.fragment.nodes[0].type === 'ExpressionTag' &&
+			!node.attributes.some(
+				(attribute) => attribute.type === 'Attribute' && attribute.name === 'value'
+			)
+		) {
+			const child = node.fragment.nodes[0];
+			node.attributes.push(create_attribute('value', child.start, child.end, [child]));
+		}
+
+		context.state.analysis.elements.push(node);
+	},
+	SvelteElement(node, context) {
+		context.state.analysis.elements.push(node);
+
+		for (const attribute of node.attributes) {
+			if (attribute.type === 'Attribute') {
+				if (attribute.name === 'xmlns' && is_text_attribute(attribute)) {
+					node.metadata.svg = attribute.value[0].data === namespace_svg;
+					node.metadata.mathml = attribute.value[0].data === namespace_mathml;
+					return;
+				}
+			}
+		}
+
+		for (let i = context.path.length - 1; i >= 0; i--) {
+			const ancestor = context.path[i];
+			if (
+				ancestor.type === 'Component' ||
+				ancestor.type === 'SvelteComponent' ||
+				ancestor.type === 'SvelteFragment' ||
+				ancestor.type === 'SnippetBlock'
+			) {
+				// Inside a slot or a snippet -> this resets the namespace, so assume the component namespace
+				node.metadata.svg = context.state.options.namespace === 'svg';
+				node.metadata.mathml = context.state.options.namespace === 'mathml';
+				return;
+			}
+			if (ancestor.type === 'SvelteElement' || ancestor.type === 'RegularElement') {
+				node.metadata.svg =
+					ancestor.type === 'RegularElement' && ancestor.name === 'foreignObject'
+						? false
+						: ancestor.metadata.svg;
+				node.metadata.mathml =
+					ancestor.type === 'RegularElement' && ancestor.name === 'foreignObject'
+						? false
+						: ancestor.metadata.mathml;
+				return;
+			}
+		}
+	},
+	Component(node, context) {
+		const binding = context.state.scope.get(
+			node.name.includes('.') ? node.name.slice(0, node.name.indexOf('.')) : node.name
+		);
+
+		node.metadata.dynamic =
+			context.state.analysis.runes && // Svelte 4 required you to use svelte:component to switch components
+			binding !== null &&
+			(binding.kind !== 'normal' || node.name.includes('.'));
+	},
+	RenderTag(node, context) {
+		context.next({ ...context.state, render_tag: node });
+	},
+	EachBlock(node) {
+		if (node.key) {
+			// treat `{#each items as item, i (i)}` as a normal indexed block, everything else as keyed
+			node.metadata.keyed =
+				node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index;
+		}
+	}
+};
+
+/**
+ * @param {RegularElement} node
+ */
+function determine_element_spread(node) {
+	let has_spread = false;
+	for (const attribute of node.attributes) {
+		if (!has_spread && attribute.type === 'SpreadAttribute') {
+			has_spread = true;
+		}
+	}
+	node.metadata.has_spread = has_spread;
+
+	return node;
+}
+
+/**
+ * @param {string} event_name
+ */
+function get_attribute_event_name(event_name) {
+	if (is_capture_event(event_name, 'include-on')) {
+		event_name = event_name.slice(0, -7);
+	}
+	event_name = event_name.slice(2);
+	return event_name;
+}
+
+/**
+ * @param {Map<LabeledStatement, ReactiveStatement>} unsorted_reactive_declarations
+>>>>>>> main
  */
 function order_reactive_statements(unsorted_reactive_declarations) {
 	/** @typedef {[import('estree').LabeledStatement, ReactiveStatement]} Tuple */

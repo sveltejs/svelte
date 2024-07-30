@@ -226,10 +226,10 @@ export type ComponentEvents<Comp extends SvelteComponent> =
  * withProps(MyComponent, { foo: 'bar' });
  * ```
  */
-export type ComponentProps<Comp extends SvelteComponent | Component<any>> =
+export type ComponentProps<Comp extends SvelteComponent | Component<any, any>> =
 	Comp extends SvelteComponent<infer Props>
 		? Props
-		: Comp extends Component<infer Props>
+		: Comp extends Component<infer Props, any>
 			? Props
 			: never;
 
