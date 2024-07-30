@@ -13,6 +13,9 @@ export function SlotElement(node, context) {
 		w.slot_element_deprecated(node);
 	}
 
+	/** @type {string} */
+	let name = 'default';
+
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute') {
 			if (attribute.name === 'name') {
@@ -20,8 +23,8 @@ export function SlotElement(node, context) {
 					e.slot_element_invalid_name(attribute);
 				}
 
-				const slot_name = attribute.value[0].data;
-				if (slot_name === 'default') {
+				name = attribute.value[0].data;
+				if (name === 'default') {
 					e.slot_element_invalid_name_default(attribute);
 				}
 			}
@@ -29,6 +32,8 @@ export function SlotElement(node, context) {
 			e.slot_element_invalid_attribute(attribute);
 		}
 	}
+
+	context.state.analysis.slot_names.set(name, node);
 
 	context.next();
 }

@@ -19,7 +19,7 @@ import { merge } from '../visitors.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
-import { is_capture_event, namespace_mathml, namespace_svg } from '../../../constants.js';
+import { namespace_mathml, namespace_svg } from '../../../constants.js';
 import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
@@ -34,6 +34,7 @@ import { BindDirective } from './visitors/BindDirective.js';
 import { CallExpression } from './visitors/CallExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
 import { ClassDeclaration } from './visitors/ClassDeclaration.js';
+import { ClassDirective } from './visitors/ClassDirective.js';
 import { Component } from './visitors/Component.js';
 import { ConstTag } from './visitors/ConstTag.js';
 import { DebugTag } from './visitors/DebugTag.js';
@@ -57,6 +58,7 @@ import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
 import { SlotElement } from './visitors/SlotElement.js';
 import { SnippetBlock } from './visitors/SnippetBlock.js';
+import { SpreadAttribute } from './visitors/SpreadAttribute.js';
 import { StyleDirective } from './visitors/StyleDirective.js';
 import { SvelteComponent } from './visitors/SvelteComponent.js';
 import { SvelteElement } from './visitors/SvelteElement.js';
@@ -74,11 +76,13 @@ import { determine_element_spread } from './visitors/shared/element.js';
  */
 const visitors = {
 	AssignmentExpression,
+	Attribute,
 	AwaitBlock,
 	BindDirective,
 	CallExpression,
 	ClassBody,
 	ClassDeclaration,
+	ClassDirective,
 	Component,
 	ConstTag,
 	DebugTag,
@@ -102,6 +106,7 @@ const visitors = {
 	RenderTag,
 	SlotElement,
 	SnippetBlock,
+	SpreadAttribute,
 	StyleDirective,
 	SvelteHead,
 	SvelteElement,
@@ -692,23 +697,6 @@ const common_visitors = {
 				}
 			}
 		}
-	},
-	Attribute,
-	ClassDirective(node, context) {
-		context.next({ ...context.state, expression: node.metadata.expression });
-	},
-	SpreadAttribute(node, context) {
-		context.next({ ...context.state, expression: node.metadata.expression });
-	},
-	SlotElement(node, context) {
-		let name = 'default';
-		for (const attr of node.attributes) {
-			if (attr.type === 'Attribute' && attr.name === 'name' && is_text_attribute(attr)) {
-				name = attr.value[0].data;
-				break;
-			}
-		}
-		context.state.analysis.slot_names.set(name, node);
 	},
 	StyleDirective(node, context) {
 		if (node.value === true) {
