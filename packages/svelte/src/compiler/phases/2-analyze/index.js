@@ -1,6 +1,6 @@
 /** @import { Node, Program } from 'estree' */
 /** @import { Root, Script, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
-/** @import { AnalysisState, LegacyAnalysisState, Visitors } from './types' */
+/** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import { walk } from 'zimmerframe';
 import * as e from '../../errors.js';
@@ -218,7 +218,16 @@ export function analyze_module(ast, options) {
 		}
 	}
 
-	walk(/** @type {Node} */ (ast), { scope, scopes, analysis: { runes: true } }, visitors);
+	walk(
+		/** @type {Node} */ (ast),
+		{
+			scope,
+			scopes,
+			// @ts-expect-error TODO
+			analysis: { runes: true }
+		},
+		visitors
+	);
 
 	return {
 		module: { ast, scope, scopes },
@@ -422,7 +431,10 @@ export function analyze_component(root, source, options) {
 				expression: null,
 				render_tag: null,
 				private_derived_state: [],
-				function_depth: scope.function_depth
+				function_depth: scope.function_depth,
+				instance_scope: instance.scope,
+				reactive_statement: null,
+				reactive_statements: new Map()
 			};
 
 			walk(/** @type {SvelteNode} */ (ast), state, visitors);
@@ -446,7 +458,7 @@ export function analyze_component(root, source, options) {
 							// bind:this doesn't need to be a state reference if it will never change
 							if (
 								type === 'BindDirective' &&
-								/** @type {BindDirective} */ (path[i]).name === 'this'
+								/** @type {import('#compiler').BindDirective} */ (path[i]).name === 'this'
 							) {
 								for (let j = i - 1; j >= 0; j -= 1) {
 									const type = path[j].type;
@@ -475,7 +487,7 @@ export function analyze_component(root, source, options) {
 		instance.scope.declare(b.id('$$restProps'), 'rest_prop', 'synthetic');
 
 		for (const { ast, scope, scopes } of [module, instance, template]) {
-			/** @type {LegacyAnalysisState} */
+			/** @type {AnalysisState} */
 			const state = {
 				scope,
 				scopes,
@@ -551,7 +563,7 @@ export function analyze_component(root, source, options) {
 				// TODO this happens during the analysis phase, which shouldn't know anything about client vs server
 				if (element.type === 'SvelteElement' && options.generate === 'client') continue;
 
-				/** @type {Attribute | undefined} */
+				/** @type {import('#compiler').Attribute | undefined} */
 				let class_attribute = undefined;
 
 				for (const attribute of element.attributes) {
@@ -570,7 +582,7 @@ export function analyze_component(root, source, options) {
 					if (is_text_attribute(class_attribute)) {
 						class_attribute.value[0].data += ` ${analysis.css.hash}`;
 					} else {
-						/** @type {Text} */
+						/** @type {import('#compiler').Text} */
 						const css_text = {
 							type: 'Text',
 							data: ` ${analysis.css.hash}`,
@@ -611,10 +623,10 @@ export function analyze_component(root, source, options) {
 }
 
 /**
- * @param {Map<LabeledStatement, ReactiveStatement>} unsorted_reactive_declarations
+ * @param {Map<import('estree').LabeledStatement, ReactiveStatement>} unsorted_reactive_declarations
  */
 function order_reactive_statements(unsorted_reactive_declarations) {
-	/** @typedef {[LabeledStatement, ReactiveStatement]} Tuple */
+	/** @typedef {[import('estree').LabeledStatement, ReactiveStatement]} Tuple */
 
 	/** @type {Map<string, Array<Tuple>>} */
 	const lookup = new Map();
@@ -647,12 +659,12 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	}
 
 	// We use a map and take advantage of the fact that the spec says insertion order is preserved when iterating
-	/** @type {Map<LabeledStatement, ReactiveStatement>} */
+	/** @type {Map<import('estree').LabeledStatement, ReactiveStatement>} */
 	const reactive_declarations = new Map();
 
 	/**
 	 *
-	 * @param {LabeledStatement} node
+	 * @param {import('estree').LabeledStatement} node
 	 * @param {ReactiveStatement} declaration
 	 * @returns
 	 */
