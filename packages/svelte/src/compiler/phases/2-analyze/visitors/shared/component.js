@@ -12,7 +12,7 @@ import {
  * @param {Component | SvelteComponent | SvelteSelf} node
  * @param {Context} context
  */
-export function validate_component(node, context) {
+export function visit_component(node, context) {
 	for (const attribute of node.attributes) {
 		if (
 			attribute.type !== 'Attribute' &&

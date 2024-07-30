@@ -23,8 +23,5 @@ export function SvelteFragment(node, context) {
 		}
 	}
 
-	context.next({
-		...context.state,
-		parent_element: null
-	});
+	context.next({ ...context.state, parent_element: null });
 }

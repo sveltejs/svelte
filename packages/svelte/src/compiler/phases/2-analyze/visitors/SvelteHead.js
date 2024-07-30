@@ -7,8 +7,7 @@ import * as e from '../../../errors.js';
  * @param {Context} context
  */
 export function SvelteHead(node, context) {
-	const attribute = node.attributes[0];
-	if (attribute) {
+	for (const attribute of node.attributes) {
 		e.svelte_head_illegal_attribute(attribute);
 	}
 

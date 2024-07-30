@@ -66,19 +66,24 @@ export function BindDirective(node, context) {
 		// i.e. one of their declarations is referenced in the binding. This allows group bindings to work
 		// correctly when referencing a variable declared in an EachBlock by using the index of the each block
 		// entries as keys.
-		let i = context.path.length;
 		const each_blocks = [];
 		const [keypath, expression_ids] = extract_all_identifiers_from_expression(node.expression);
 		let ids = expression_ids;
+
+		let i = context.path.length;
 		while (i--) {
 			const parent = context.path[i];
+
 			if (parent.type === 'EachBlock') {
 				const references = ids.filter((id) => parent.metadata.declarations.has(id.name));
+
 				if (references.length > 0) {
 					parent.metadata.contains_group_binding = true;
+
 					for (const binding of parent.metadata.references) {
 						binding.mutated = true;
 					}
+
 					each_blocks.push(parent);
 					ids = ids.filter((id) => !references.includes(id));
 					ids.push(...extract_all_identifiers_from_expression(parent.expression)[1]);
@@ -92,6 +97,7 @@ export function BindDirective(node, context) {
 		//  but this is a limitation of the current static analysis we do; it also never worked in Svelte 4)
 		const bindings = expression_ids.map((id) => context.state.scope.get(id.name));
 		let group_name;
+
 		outer: for (const [[key, b], group] of context.state.analysis.binding_groups) {
 			if (b.length !== bindings.length || key !== keypath) continue;
 			for (let i = 0; i < bindings.length; i++) {
@@ -149,6 +155,7 @@ export function BindDirective(node, context) {
 					})
 					.map(([property_name]) => property_name)
 					.sort();
+
 				e.bind_invalid_name(
 					node,
 					node.name,
@@ -160,6 +167,7 @@ export function BindDirective(node, context) {
 				const type = /** @type {Attribute | undefined} */ (
 					parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'type')
 				);
+
 				if (type && !is_text_attribute(type)) {
 					if (node.name !== 'value' || type.value === true) {
 						e.attribute_invalid_type(type);
@@ -183,6 +191,7 @@ export function BindDirective(node, context) {
 						!is_text_attribute(a) &&
 						a.value !== true
 				);
+
 				if (multiple) {
 					e.attribute_invalid_multiple(multiple);
 				}
@@ -200,6 +209,7 @@ export function BindDirective(node, context) {
 				const contenteditable = /** @type {Attribute} */ (
 					parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'contenteditable')
 				);
+
 				if (!contenteditable) {
 					e.attribute_contenteditable_missing(node);
 				} else if (!is_text_attribute(contenteditable) && contenteditable.value !== true) {
@@ -208,12 +218,14 @@ export function BindDirective(node, context) {
 			}
 		} else {
 			const match = fuzzymatch(node.name, Object.keys(binding_properties));
+
 			if (match) {
 				const property = binding_properties[match];
 				if (!property.valid_elements || property.valid_elements.includes(parent.name)) {
 					e.bind_invalid_name(node, node.name, `Did you mean '${match}'?`);
 				}
 			}
+
 			e.bind_invalid_name(node, node.name);
 		}
 	}

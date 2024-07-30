@@ -160,8 +160,5 @@ export function RegularElement(node, context) {
 		w.element_invalid_self_closing_tag(node, node.name);
 	}
 
-	context.next({
-		...context.state,
-		parent_element: node.name
-	});
+	context.next({ ...context.state, parent_element: node.name });
 }

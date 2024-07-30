@@ -1,6 +1,5 @@
 /** @import { ExportDefaultDeclaration, Node } from 'estree' */
 /** @import { Context } from '../types' */
-/** @import { Scope } from '../../scope' */
 import * as e from '../../../errors.js';
 
 /**

@@ -20,6 +20,7 @@ export function AwaitBlock(node, context) {
 			const match = context.state.analysis.source
 				.substring(start - 10, start)
 				.match(/{(\s*):then\s+$/);
+
 			if (match && match[1] !== '') {
 				e.block_unexpected_character({ start: start - 10, end: start }, ':');
 			}
@@ -30,6 +31,7 @@ export function AwaitBlock(node, context) {
 			const match = context.state.analysis.source
 				.substring(start - 10, start)
 				.match(/{(\s*):catch\s+$/);
+
 			if (match && match[1] !== '') {
 				e.block_unexpected_character({ start: start - 10, end: start }, ':');
 			}

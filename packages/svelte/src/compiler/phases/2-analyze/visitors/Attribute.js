@@ -1,7 +1,6 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression } from 'estree' */
 /** @import { Attribute, DelegatedEvent, RegularElement } from '#compiler' */
 /** @import { Context } from '../types' */
-
 import { DelegatedEvents, is_capture_event } from '../../../../constants.js';
 import {
 	get_attribute_chunks,
@@ -44,6 +43,7 @@ export function Attribute(node, context) {
 				if (delegated_event.type === 'hoistable') {
 					delegated_event.function.metadata.hoistable = true;
 				}
+
 				node.metadata.delegated = delegated_event;
 			}
 		}

@@ -22,6 +22,7 @@ export function ExportSpecifier(node, context) {
 			context.state.analysis.needs_props = true;
 
 			const binding = /** @type {Binding} */ (context.state.scope.get(node.local.name));
+
 			if (
 				binding !== null &&
 				(binding.kind === 'state' ||

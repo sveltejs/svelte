@@ -23,8 +23,5 @@ export function ClassBody(node, context) {
 		}
 	}
 
-	context.next({
-		...context.state,
-		private_derived_state
-	});
+	context.next({ ...context.state, private_derived_state });
 }

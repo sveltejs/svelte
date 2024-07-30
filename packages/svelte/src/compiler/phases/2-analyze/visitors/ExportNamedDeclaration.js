@@ -25,7 +25,16 @@ export function ExportNamedDeclaration(node, context) {
 
 		for (const declarator of node.declaration.declarations) {
 			for (const id of extract_identifiers(declarator.id)) {
-				validate_export(node, context.state.scope, id.name);
+				const binding = context.state.scope.get(id.name);
+				if (!binding) continue;
+
+				if (binding.kind === 'derived') {
+					e.derived_invalid_export(node);
+				}
+
+				if ((binding.kind === 'state' || binding.kind === 'frozen_state') && binding.reassigned) {
+					e.state_invalid_export(node);
+				}
 			}
 		}
 	}
@@ -79,24 +88,5 @@ export function ExportNamedDeclaration(node, context) {
 				}
 			}
 		}
-	}
-}
-
-/**
- *
- * @param {Node} node
- * @param {Scope} scope
- * @param {string} name
- */
-function validate_export(node, scope, name) {
-	const binding = scope.get(name);
-	if (!binding) return;
-
-	if (binding.kind === 'derived') {
-		e.derived_invalid_export(node);
-	}
-
-	if ((binding.kind === 'state' || binding.kind === 'frozen_state') && binding.reassigned) {
-		e.state_invalid_export(node);
 	}
 }

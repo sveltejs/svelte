@@ -18,6 +18,7 @@ export function ExpressionStatement(node, context) {
 		)
 	) {
 		const binding = context.state.scope.get(node.expression.callee.name);
+
 		if (binding?.kind === 'normal' && binding.declaration_kind === 'import') {
 			const declaration = /** @type {ImportDeclaration} */ (binding.initial);
 
