@@ -282,17 +282,16 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 		);
 	}
 
-	const ignore_invalid_mutation =
-		is_ignored(node, 'ownership_invalid_mutation') && context.state.options.dev;
-
 	/**
-	 *
 	 * @param {any} serialized
 	 * @returns
 	 */
 	function maybe_wrap_skip_ownership(serialized) {
-		if (!ignore_invalid_mutation) return serialized;
-		return b.call('$.skip_ownership_invalid_mutation', b.thunk(serialized));
+		if (context.state.options.dev && is_ignored(node, 'ownership_invalid_mutation')) {
+			return b.call('$.skip_ownership_invalid_mutation', b.thunk(serialized));
+		}
+
+		return serialized;
 	}
 
 	if (binding.kind === 'derived') {
