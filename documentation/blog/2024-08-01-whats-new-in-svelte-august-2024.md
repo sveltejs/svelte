@@ -12,14 +12,14 @@ Let's dive in!
 ## What's new in Svelte
 Below, you'll find the highlights from the Svelte 5 release notes (currently in [Release Candidate](https://www.npmjs.com/package/svelte?activeTab=versions)):
 
-- Breaking: The names of the `svelte/reactivity` helpers have been updated to include Svelte prefix (**5.0.0-next.169**, [Docs](https://svelte-5-preview.vercel.app/docs/imports#svelte-reactivity) [#12248](https://github.com/sveltejs/svelte/pull/12248))
+- Breaking: The names of the `svelte/reactivity` helpers have been updated to include `Svelte` prefix (**5.0.0-next.169**, [Docs](https://svelte-5-preview.vercel.app/docs/imports#svelte-reactivity) [#12248](https://github.com/sveltejs/svelte/pull/12248))
 - Branch effects now have better DOM boundaries - reducing bugs in `{#each}` blocks and during DOM manipulation (**5.0.0-next.171** and **5.0.0-next.182**, [#12215](https://github.com/sveltejs/svelte/pull/12215), [#12258](https://github.com/sveltejs/svelte/pull/12258), [#12383](https://github.com/sveltejs/svelte/pull/12383))
 - Single-pass hydration has reduced DOM size and significantly improved hydration speed (**5.0.0-next.179**, [#12335](https://github.com/sveltejs/svelte/pull/12335), [#12339](https://github.com/sveltejs/svelte/pull/12339))
 - Breaking: Transitions now play on mount by default (**5.0.0-next.177**, [#12351](https://github.com/sveltejs/svelte/pull/12351))
 - CSS can now be included in the `<head>` when the `css: 'injected'` compiler option is enabled. This makes it trivial to include styles when rendering things like emails and OG cards, as well as massively simplifying toy setups where you can't be bothered to figure out how to get CSS from the compiler into your server-rendered HTML (**5.0.0-next.180**, [Docs](https://svelte-5-preview.vercel.app/docs/imports#svelte-server-render), [#12374](https://github.com/sveltejs/svelte/pull/12374))
 - Svelte will now warn in dev on `{@html ...}` block hydration mismatch (**5.0.0-next.182**, [#12396](https://github.com/sveltejs/svelte/pull/12396))
-- The new `warningFilter` compiler option lets you disable certain warnings for their whole application without having to add `svelte-ignore` comments everywhere (**5.0.0-next.186**, [#12296](https://github.com/sveltejs/svelte/pull/12296))
-- The new `createRawSnippet` API, allowing for low-level creation of programmatic snippets outside of Svelte templates (**5.0.0-next.189**, [Docs](https://svelte-5-preview.vercel.app/docs/imports#svelte-createrawsnippet), [#12425](https://github.com/sveltejs/svelte/pull/12425))
+- The new `warningFilter` compiler option lets you disable certain warnings for the whole application without having to add `svelte-ignore` comments everywhere (**5.0.0-next.186**, [#12296](https://github.com/sveltejs/svelte/pull/12296))
+- The new `createRawSnippet` API, allows low-level creation of programmatic snippets outside of Svelte templates (**5.0.0-next.189**, [Docs](https://svelte-5-preview.vercel.app/docs/imports#svelte-createrawsnippet), [#12425](https://github.com/sveltejs/svelte/pull/12425))
 
 ## What's new in SvelteKit
 - The HTML attributes `enctype` and `formenctype` are now respected for forms with `use:enhance` (plus, some other bug fixes in the [CHANGELOG](https://github.com/sveltejs/kit/blob/main/packages/kit/CHANGELOG.md))
@@ -83,6 +83,7 @@ _To Watch_
 - [Svelte Magic UI](https://animation-svelte.vercel.app/) are componetns built using Tailwind CSS, Tweened, Spring and Svelte Motion
 - [Figblocks](https://figblocks.mohanvadivel.com/) is an open-source UI component library for building Figma plugins with Svelte
 - [VS Code Supports Custom Tab Labels](https://www.reddit.com/r/sveltejs/comments/1e26pfc/vs_code_supports_custom_tab_labels/) (a good reminder for folks who haven't sent it up yet)
+- Storybook did a prerelease of `@storybook/addon-svelte-csf` with support for Svelte v5. If you're using it, share your feedback on their RFC: [storybookjs/addon-svelte-csf#191](https://github.com/storybookjs/addon-svelte-csf/discussions/191)
 
 
 That's it for this month! Let us know if we missed anything on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.gg/svelte).
