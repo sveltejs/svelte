@@ -74,11 +74,11 @@ const visitors = {
 
 		const parent = path.at(-1);
 
+		/** @type {string[]} */
+		const ignores = [];
+
 		if (parent?.type === 'Fragment' && node.type !== 'Comment' && node.type !== 'Text') {
 			const idx = parent.nodes.indexOf(/** @type {any} */ (node));
-
-			/** @type {string[]} */
-			const ignores = [];
 
 			for (let i = idx - 1; i >= 0; i--) {
 				const prev = parent.nodes[i];
@@ -106,9 +106,6 @@ const visitors = {
 			const comments = /** @type {any} */ (node).leadingComments;
 
 			if (comments) {
-				/** @type {string[]} */
-				const ignores = [];
-
 				for (const comment of comments) {
 					ignores.push(
 						...extract_svelte_ignore(
