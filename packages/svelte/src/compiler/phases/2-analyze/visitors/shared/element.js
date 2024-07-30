@@ -143,21 +143,6 @@ export function validate_element(node, context) {
 	}
 }
 
-/**
- * @param {RegularElement} node
- */
-export function determine_element_spread(node) {
-	let has_spread = false;
-	for (const attribute of node.attributes) {
-		if (!has_spread && attribute.type === 'SpreadAttribute') {
-			has_spread = true;
-		}
-	}
-	node.metadata.has_spread = has_spread;
-
-	return node;
-}
-
 const react_attributes = new Map([
 	['className', 'class'],
 	['htmlFor', 'for']

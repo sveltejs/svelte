@@ -8,7 +8,6 @@ import {
 	get_attribute_expression,
 	is_event_attribute
 } from '../../../utils/ast.js';
-import { determine_element_spread } from './shared/element.js';
 
 /**
  * @param {Attribute} node
@@ -118,7 +117,7 @@ function get_delegated_event(event_name, handler, context) {
 				if (element && event_name) {
 					if (
 						element.type !== 'RegularElement' ||
-						determine_element_spread(element).metadata.has_spread ||
+						element.metadata.has_spread ||
 						!DelegatedEvents.includes(event_name)
 					) {
 						return non_hoistable;

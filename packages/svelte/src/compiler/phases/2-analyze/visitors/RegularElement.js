@@ -6,7 +6,7 @@ import {
 } from '../../../../html-tree-validation.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
-import { SVGElements, VoidElements } from '../../constants.js';
+import { MathMLElements, SVGElements, VoidElements } from '../../constants.js';
 import { check_element } from './shared/a11y.js';
 import { validate_element } from './shared/element.js';
 
@@ -35,6 +35,15 @@ export function RegularElement(node, context) {
 	validate_element(node, context);
 
 	check_element(node, context.state);
+
+	node.metadata.has_spread = node.attributes.some(
+		(attribute) => attribute.type === 'SpreadAttribute'
+	);
+
+	if (context.state.options.namespace !== 'foreign') {
+		if (SVGElements.includes(node.name)) node.metadata.svg = true;
+		else if (MathMLElements.includes(node.name)) node.metadata.mathml = true;
+	}
 
 	if (context.state.parent_element) {
 		let past_parent = false;

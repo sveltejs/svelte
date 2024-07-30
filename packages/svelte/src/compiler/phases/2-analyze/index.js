@@ -71,7 +71,6 @@ import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
-import { determine_element_spread } from './visitors/shared/element.js';
 import { is_safe_identifier } from './visitors/shared/utils.js';
 
 /**
@@ -834,13 +833,6 @@ const common_visitors = {
 		};
 	},
 	RegularElement(node, context) {
-		if (context.state.options.namespace !== 'foreign') {
-			if (SVGElements.includes(node.name)) node.metadata.svg = true;
-			else if (MathMLElements.includes(node.name)) node.metadata.mathml = true;
-		}
-
-		determine_element_spread(node);
-
 		// Special case: Move the children of <textarea> into a value attribute if they are dynamic
 		if (
 			context.state.options.namespace !== 'foreign' &&
