@@ -1,9 +1,9 @@
 <svelte:options css="injected" />
 
-<div class="foo">foo</div>
+<div class="bar">bar</div>
 
 <style>
-	.foo {
+	.bar {
 		color: red;
 	}
 </style>
