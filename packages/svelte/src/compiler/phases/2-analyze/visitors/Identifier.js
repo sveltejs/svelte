@@ -1,8 +1,11 @@
-/** @import { Expression, Identifier, Node } from 'estree' */
+/** @import { Expression, Identifier } from 'estree' */
+/** @import { SvelteNode } from '#compiler' */
 /** @import { Context } from '../types' */
 import is_reference from 'is-reference';
-import * as e from '../../../errors.js';
 import { Runes } from '../../constants.js';
+import { should_proxy_or_freeze } from '../../3-transform/client/utils.js';
+import * as e from '../../../errors.js';
+import * as w from '../../../warnings.js';
 
 /**
  * @param {Identifier} node
@@ -22,6 +25,11 @@ export function Identifier(node, context) {
 		!context.path.some((n) => n.type === 'FunctionDeclaration' || n.type === 'FunctionExpression')
 	) {
 		e.invalid_arguments_usage(node);
+	}
+
+	// `$$slots` exists even in runes mode
+	if (node.name === '$$slots') {
+		context.state.analysis.uses_slots = true;
 	}
 
 	if (context.state.analysis.runes) {
@@ -65,10 +73,6 @@ export function Identifier(node, context) {
 
 		if (node.name === '$$restProps') {
 			context.state.analysis.uses_rest_props = true;
-		}
-
-		if (node.name === '$$slots') {
-			context.state.analysis.uses_slots = true;
 		}
 
 		if (
@@ -120,11 +124,37 @@ export function Identifier(node, context) {
 		}
 	}
 
-	if (binding && context.state.expression) {
-		context.state.expression.dependencies.add(binding);
-
-		if (binding.kind !== 'normal') {
+	if (binding && binding.kind !== 'normal') {
+		if (context.state.expression) {
+			context.state.expression.dependencies.add(binding);
 			context.state.expression.has_state = true;
+		}
+
+		// TODO it would be better to just bail out when we hit the ExportSpecifier node but that's
+		// not currently possibly because of our visitor merging, which I desperately want to nuke
+		const is_export_specifier =
+			/** @type {SvelteNode} */ (context.path.at(-1)).type === 'ExportSpecifier';
+
+		if (
+			context.state.analysis.runes &&
+			node !== binding.node &&
+			context.state.function_depth === binding.scope.function_depth &&
+			// If we have $state that can be proxied or frozen and isn't re-assigned, then that means
+			// it's likely not using a primitive value and thus this warning isn't that helpful.
+			((binding.kind === 'state' &&
+				(binding.reassigned ||
+					(binding.initial?.type === 'CallExpression' &&
+						binding.initial.arguments.length === 1 &&
+						binding.initial.arguments[0].type !== 'SpreadElement' &&
+						!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
+				binding.kind === 'frozen_state' ||
+				binding.kind === 'derived') &&
+			!is_export_specifier &&
+			// We're only concerned with reads here
+			(parent.type !== 'AssignmentExpression' || parent.left !== node) &&
+			parent.type !== 'UpdateExpression'
+		) {
+			w.state_referenced_locally(node);
 		}
 	}
 }

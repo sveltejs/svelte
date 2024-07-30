@@ -631,47 +631,6 @@ const common_visitors = {
 				}
 			}
 		}
-	},
-	Identifier(node, context) {
-		const parent = /** @type {Node} */ (context.path.at(-1));
-		if (!is_reference(node, parent)) return;
-
-		if (node.name === '$$slots') {
-			context.state.analysis.uses_slots = true;
-			return;
-		}
-
-		const binding = context.state.scope.get(node.name);
-
-		// if no binding, means some global variable
-		if (binding && binding.kind !== 'normal') {
-			// TODO it would be better to just bail out when we hit the ExportSpecifier node but that's
-			// not currently possibly because of our visitor merging, which I desperately want to nuke
-			const is_export_specifier =
-				/** @type {SvelteNode} */ (context.path.at(-1)).type === 'ExportSpecifier';
-
-			if (
-				context.state.analysis.runes &&
-				node !== binding.node &&
-				context.state.function_depth === binding.scope.function_depth &&
-				// If we have $state that can be proxied or frozen and isn't re-assigned, then that means
-				// it's likely not using a primitive value and thus this warning isn't that helpful.
-				((binding.kind === 'state' &&
-					(binding.reassigned ||
-						(binding.initial?.type === 'CallExpression' &&
-							binding.initial.arguments.length === 1 &&
-							binding.initial.arguments[0].type !== 'SpreadElement' &&
-							!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
-					binding.kind === 'frozen_state' ||
-					binding.kind === 'derived') &&
-				!is_export_specifier &&
-				// We're only concerned with reads here
-				(parent.type !== 'AssignmentExpression' || parent.left !== node) &&
-				parent.type !== 'UpdateExpression'
-			) {
-				w.state_referenced_locally(node);
-			}
-		}
 	}
 };
 
