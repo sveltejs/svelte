@@ -58,14 +58,6 @@ export function Identifier(node, context) {
 
 	let binding = context.state.scope.get(node.name);
 
-	if (binding && context.state.expression) {
-		context.state.expression.dependencies.add(binding);
-
-		if (binding.kind !== 'normal') {
-			context.state.expression.has_state = true;
-		}
-	}
-
 	if (!context.state.analysis.runes) {
 		if (node.name === '$$props') {
 			context.state.analysis.uses_props = true;
@@ -77,11 +69,6 @@ export function Identifier(node, context) {
 
 		if (node.name === '$$slots') {
 			context.state.analysis.uses_slots = true;
-		}
-
-		if (binding?.kind === 'store_sub') {
-			// get the underlying store to mark it as reactive in case it's mutated
-			binding = context.state.scope.get(node.name.slice(1));
 		}
 
 		if (
@@ -130,6 +117,14 @@ export function Identifier(node, context) {
 					break;
 				}
 			}
+		}
+	}
+
+	if (binding && context.state.expression) {
+		context.state.expression.dependencies.add(binding);
+
+		if (binding.kind !== 'normal') {
+			context.state.expression.has_state = true;
 		}
 	}
 }

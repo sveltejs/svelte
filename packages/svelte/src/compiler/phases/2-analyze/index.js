@@ -645,10 +645,6 @@ const common_visitors = {
 
 		// if no binding, means some global variable
 		if (binding && binding.kind !== 'normal') {
-			if (context.state.expression) {
-				context.state.expression.has_state = true;
-			}
-
 			// TODO it would be better to just bail out when we hit the ExportSpecifier node but that's
 			// not currently possibly because of our visitor merging, which I desperately want to nuke
 			const is_export_specifier =
