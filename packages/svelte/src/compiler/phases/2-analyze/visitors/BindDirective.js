@@ -1,6 +1,10 @@
 /** @import { Attribute, BindDirective } from '#compiler' */
 /** @import { Context } from '../types' */
-import { is_text_attribute, object } from '../../../utils/ast.js';
+import {
+	extract_all_identifiers_from_expression,
+	is_text_attribute,
+	object
+} from '../../../utils/ast.js';
 import { validate_no_const_assignment } from './shared/utils.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
@@ -57,6 +61,54 @@ export function BindDirective(node, context) {
 		if (!binding) {
 			throw new Error('Cannot find declaration for bind:group');
 		}
+
+		// Traverse the path upwards and find all EachBlocks who are (indirectly) contributing to bind:group,
+		// i.e. one of their declarations is referenced in the binding. This allows group bindings to work
+		// correctly when referencing a variable declared in an EachBlock by using the index of the each block
+		// entries as keys.
+		let i = context.path.length;
+		const each_blocks = [];
+		const [keypath, expression_ids] = extract_all_identifiers_from_expression(node.expression);
+		let ids = expression_ids;
+		while (i--) {
+			const parent = context.path[i];
+			if (parent.type === 'EachBlock') {
+				const references = ids.filter((id) => parent.metadata.declarations.has(id.name));
+				if (references.length > 0) {
+					parent.metadata.contains_group_binding = true;
+					for (const binding of parent.metadata.references) {
+						binding.mutated = true;
+					}
+					each_blocks.push(parent);
+					ids = ids.filter((id) => !references.includes(id));
+					ids.push(...extract_all_identifiers_from_expression(parent.expression)[1]);
+				}
+			}
+		}
+
+		// The identifiers that make up the binding expression form they key for the binding group.
+		// If the same identifiers in the same order are used in another bind:group, they will be in the same group.
+		// (there's an edge case where `bind:group={a[i]}` will be in a different group than `bind:group={a[j]}` even when i == j,
+		//  but this is a limitation of the current static analysis we do; it also never worked in Svelte 4)
+		const bindings = expression_ids.map((id) => context.state.scope.get(id.name));
+		let group_name;
+		outer: for (const [[key, b], group] of context.state.analysis.binding_groups) {
+			if (b.length !== bindings.length || key !== keypath) continue;
+			for (let i = 0; i < bindings.length; i++) {
+				if (bindings[i] !== b[i]) continue outer;
+			}
+			group_name = group;
+		}
+
+		if (!group_name) {
+			group_name = context.state.scope.root.unique('binding_group');
+			context.state.analysis.binding_groups.set([keypath, bindings], group_name);
+		}
+
+		node.metadata = {
+			binding_group_name: group_name,
+			parent_each_blocks: each_blocks
+		};
 	}
 
 	if (binding?.kind === 'each' && binding.metadata?.inside_rest) {
