@@ -66,8 +66,6 @@ export function LabeledStatement(node, context) {
 
 			context.state.reactive_statements.set(node, reactive_statement);
 
-			// Ideally this would be in the validation file, but that isn't possible because this visitor
-			// calls "next" before setting the reactive statements.
 			if (
 				reactive_statement.dependencies.length &&
 				reactive_statement.dependencies.every(

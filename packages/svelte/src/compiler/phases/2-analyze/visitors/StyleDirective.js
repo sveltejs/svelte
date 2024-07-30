@@ -12,7 +12,6 @@ export function StyleDirective(node, context) {
 		e.style_directive_invalid_modifier(node);
 	}
 
-	// the case for node.value different from true is already covered by the Identifier visitor
 	if (node.value === true) {
 		// get the binding for node.name and change the binding to state
 		let binding = context.state.scope.get(node.name);
