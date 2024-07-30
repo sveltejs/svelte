@@ -801,9 +801,6 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 				expression.type === 'MemberExpression' &&
 				context.state.options.dev &&
 				context.state.analysis.runes &&
-				// serialize_validate_binding will add a function that specifically throw
-				// `binding_property_non_reactive` error. If there's a svelte ignore
-				// before we avoid adding this validation to avoid throwing the runtime warning
 				!is_ignored(node, 'binding_property_non_reactive')
 			) {
 				context.state.init.push(serialize_validate_binding(context.state, attribute, expression));
