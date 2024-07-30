@@ -49,6 +49,7 @@ import { DebugTag } from './visitors/DebugTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
 import { ExportDefaultDeclaration } from './visitors/ExportDefaultDeclaration.js';
 import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
+import { ExportSpecifier } from './visitors/ExportSpecifier.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
 import { ExpressionTag } from './visitors/ExpressionTag.js';
 import { HtmlTag } from './visitors/HtmlTag.js';
@@ -92,6 +93,7 @@ const visitors = {
 	EachBlock,
 	ExportDefaultDeclaration,
 	ExportNamedDeclaration,
+	ExportSpecifier,
 	ExpressionStatement,
 	ExpressionTag,
 	HtmlTag,
@@ -801,17 +803,6 @@ const runes_scope_tweaker = {
 				}
 			}
 		}
-	},
-	ExportSpecifier(node, { state }) {
-		if (state.ast_type !== 'instance') return;
-
-		state.analysis.exports.push({
-			name: node.local.name,
-			alias: node.exported.name
-		});
-
-		const binding = state.scope.get(node.local.name);
-		if (binding) binding.reassigned = true;
 	},
 	ExportNamedDeclaration(node, { next, state }) {
 		if (!node.declaration || state.ast_type !== 'instance') {

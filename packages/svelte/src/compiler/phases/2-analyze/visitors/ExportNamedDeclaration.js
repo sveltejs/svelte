@@ -30,12 +30,6 @@ export function ExportNamedDeclaration(node, context) {
 		}
 	}
 
-	if (node.specifiers && context.state.ast_type !== 'instance') {
-		for (const specifier of node.specifiers) {
-			validate_export(specifier, context.state.scope, specifier.local.name);
-		}
-	}
-
 	if (context.state.ast_type === 'instance' && !context.state.analysis.runes) {
 		context.state.analysis.needs_props = true;
 
@@ -62,27 +56,6 @@ export function ExportNamedDeclaration(node, context) {
 							binding.kind = 'bindable_prop';
 						}
 					}
-				}
-			}
-		} else {
-			for (const specifier of node.specifiers) {
-				const binding = /** @type {Binding} */ (context.state.scope.get(specifier.local.name));
-				if (
-					binding !== null &&
-					(binding.kind === 'state' ||
-						binding.kind === 'frozen_state' ||
-						(binding.kind === 'normal' &&
-							(binding.declaration_kind === 'let' || binding.declaration_kind === 'var')))
-				) {
-					binding.kind = 'bindable_prop';
-					if (specifier.exported.name !== specifier.local.name) {
-						binding.prop_alias = specifier.exported.name;
-					}
-				} else {
-					context.state.analysis.exports.push({
-						name: specifier.local.name,
-						alias: specifier.exported.name
-					});
 				}
 			}
 		}
