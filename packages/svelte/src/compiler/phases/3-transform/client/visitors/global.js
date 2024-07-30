@@ -3,6 +3,7 @@
 import is_reference from 'is-reference';
 import { serialize_get_binding, serialize_set_binding } from '../utils.js';
 import * as b from '../../../../utils/builders.js';
+import { is_to_ignore } from '../../../../state.js';
 
 /** @type {Visitors} */
 export const global_visitors = {
@@ -115,6 +116,19 @@ export const global_visitors = {
 
 			return b.call(fn, ...args);
 		} else {
+			const ignore_invalid_mutation =
+				is_to_ignore(node, 'ownership_invalid_mutation') && context.state.options.dev;
+
+			/**
+			 *
+			 * @param {any} serialized
+			 * @returns
+			 */
+			function maybe_wrap_skip_ownership(serialized) {
+				if (!ignore_invalid_mutation) return serialized;
+				return b.call('$.skip_ownership_invalid_mutation', b.thunk(serialized));
+			}
+
 			// turn it into an IIFEE assignment expression: i++ -> (() => { const $$value = i; i+=1; return $$value; })
 			const assignment = b.assignment(
 				node.operator === '++' ? '+=' : '-=',
@@ -130,9 +144,9 @@ export const global_visitors = {
 			const value = /** @type {Expression} */ (visit(argument));
 			if (serialized_assignment === assignment) {
 				// No change to output -> nothing to transform -> we can keep the original update expression
-				return next();
+				return maybe_wrap_skip_ownership(next());
 			} else if (context.state.analysis.runes) {
-				return serialized_assignment;
+				return maybe_wrap_skip_ownership(serialized_assignment);
 			} else {
 				/** @type {Statement[]} */
 				let statements;
@@ -146,7 +160,7 @@ export const global_visitors = {
 						b.return(b.id(tmp_id))
 					];
 				}
-				return b.call(b.thunk(b.block(statements)));
+				return maybe_wrap_skip_ownership(b.call(b.thunk(b.block(statements))));
 			}
 		}
 	}
