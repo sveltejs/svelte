@@ -139,6 +139,7 @@ export function extract_identifiers(pattern) {
 
 /**
  * Extracts all identifiers and a stringified keypath from an expression.
+ * TODO replace this with `expression.dependencies`
  * @param {ESTree.Expression} expr
  * @returns {[keypath: string, ids: ESTree.Identifier[]]}
  */
