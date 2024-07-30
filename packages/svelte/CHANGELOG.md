@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.203
+
+### Patch Changes
+
+- chore: internal compiler refactoring ([#12651](https://github.com/sveltejs/svelte/pull/12651))
+
+- fix: widen `ComponentProps` constraint to accept more component shapes ([#12666](https://github.com/sveltejs/svelte/pull/12666))
+
+- feat: make `<svelte:component>` unnecessary in runes mode ([#12646](https://github.com/sveltejs/svelte/pull/12646))
+
 ## 5.0.0-next.202
 
 ### Patch Changes
