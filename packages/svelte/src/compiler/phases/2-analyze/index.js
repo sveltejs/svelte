@@ -71,13 +71,18 @@ import { VariableDeclarator } from './visitors/VariableDeclarator.js';
 const visitors = {
 	_(node, { state, next, path }) {
 		ignore_map.set(node, structuredClone(ignore_stack));
+
 		const parent = path.at(-1);
+
 		if (parent?.type === 'Fragment' && node.type !== 'Comment' && node.type !== 'Text') {
 			const idx = parent.nodes.indexOf(/** @type {any} */ (node));
+
 			/** @type {string[]} */
 			const ignores = [];
+
 			for (let i = idx - 1; i >= 0; i--) {
 				const prev = parent.nodes[i];
+
 				if (prev.type === 'Comment') {
 					ignores.push(
 						...extract_svelte_ignore(
@@ -99,9 +104,11 @@ const visitors = {
 			}
 		} else {
 			const comments = /** @type {any} */ (node).leadingComments;
+
 			if (comments) {
 				/** @type {string[]} */
 				const ignores = [];
+
 				for (const comment of comments) {
 					ignores.push(
 						...extract_svelte_ignore(
@@ -111,6 +118,7 @@ const visitors = {
 						)
 					);
 				}
+
 				if (ignores.length > 0) {
 					push_ignore(ignores);
 					ignore_map.set(node, structuredClone(ignore_stack));
