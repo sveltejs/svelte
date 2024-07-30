@@ -1,19 +1,11 @@
 import type { Scope } from '../scope.js';
 import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
-import type {
-	ClassDirective,
-	ExpressionMetadata,
-	ExpressionTag,
-	OnDirective,
-	RenderTag,
-	SpreadAttribute,
-	SvelteNode,
-	ValidatedCompileOptions
-} from '#compiler';
+import type { ExpressionMetadata, RenderTag, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { LabeledStatement } from 'estree';
 
 export interface AnalysisState {
 	scope: Scope;
+	scopes: Map<SvelteNode, Scope>;
 	analysis: ComponentAnalysis;
 	options: ValidatedCompileOptions;
 	ast_type: 'instance' | 'template' | 'module';

@@ -127,6 +127,12 @@ const visitors = {
 				}
 			}
 		}
+
+		// TODO `if` is unnecessary
+		if (state.scopes) {
+			const scope = state.scopes.get(node);
+			next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
+		}
 	},
 	ArrowFunctionExpression,
 	AssignmentExpression,
@@ -228,9 +234,9 @@ export function analyze_module(ast, options) {
 
 	walk(
 		/** @type {Node} */ (ast),
-		{ scope, analysis: { runes: true } },
+		{ scope, scopes, analysis: { runes: true } },
 		// @ts-expect-error TODO clean this mess up
-		merge(set_scope(scopes), visitors)
+		merge(visitors)
 	);
 
 	return {
