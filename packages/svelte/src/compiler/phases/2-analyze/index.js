@@ -70,8 +70,6 @@ import { VariableDeclarator } from './visitors/VariableDeclarator.js';
  */
 const visitors = {
 	_(node, { state, next, path }) {
-		ignore_map.set(node, structuredClone(ignore_stack));
-
 		const parent = path.at(-1);
 
 		/** @type {string[]} */
@@ -113,15 +111,15 @@ const visitors = {
 
 		if (ignores.length > 0) {
 			push_ignore(ignores);
-			ignore_map.set(node, structuredClone(ignore_stack));
-			next();
-			pop_ignore();
 		}
 
-		// TODO `if` is unnecessary
-		if (state.scopes) {
-			const scope = state.scopes.get(node);
-			next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
+		ignore_map.set(node, structuredClone(ignore_stack));
+
+		const scope = state.scopes.get(node);
+		next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
+
+		if (ignores.length > 0) {
+			pop_ignore();
 		}
 	},
 	ArrowFunctionExpression,
@@ -416,6 +414,7 @@ export function analyze_component(root, source, options) {
 			/** @type {AnalysisState} */
 			const state = {
 				scope,
+				scopes,
 				analysis,
 				options,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
@@ -481,6 +480,7 @@ export function analyze_component(root, source, options) {
 			/** @type {LegacyAnalysisState} */
 			const state = {
 				scope,
+				scopes,
 				analysis,
 				options,
 				parent_element: null,
