@@ -95,13 +95,6 @@ const visitors = {
 					break;
 				}
 			}
-
-			if (ignores.length > 0) {
-				push_ignore(ignores);
-				ignore_map.set(node, structuredClone(ignore_stack));
-				next();
-				pop_ignore();
-			}
 		} else {
 			const comments = /** @type {any} */ (node).leadingComments;
 
@@ -115,14 +108,14 @@ const visitors = {
 						)
 					);
 				}
-
-				if (ignores.length > 0) {
-					push_ignore(ignores);
-					ignore_map.set(node, structuredClone(ignore_stack));
-					next();
-					pop_ignore();
-				}
 			}
+		}
+
+		if (ignores.length > 0) {
+			push_ignore(ignores);
+			ignore_map.set(node, structuredClone(ignore_stack));
+			next();
+			pop_ignore();
 		}
 
 		// TODO `if` is unnecessary
