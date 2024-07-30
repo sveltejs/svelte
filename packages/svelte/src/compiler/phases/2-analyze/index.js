@@ -730,10 +730,10 @@ export function analyze_component(root, source, options) {
 
 /** @type {Visitors} */
 const runes_scope_tweaker = {
-	VariableDeclarator(node, { state }) {
+	VariableDeclarator(node, context) {
 		const init = node.init;
 		if (!init || init.type !== 'CallExpression') return;
-		const rune = get_rune(init, state.scope);
+		const rune = get_rune(init, context.state.scope);
 		if (rune === null) return;
 
 		const callee = init.callee;
@@ -750,7 +750,7 @@ const runes_scope_tweaker = {
 
 		for (const path of extract_paths(node.id)) {
 			// @ts-ignore this fails in CI for some insane reason
-			const binding = /** @type {Binding} */ (state.scope.get(path.node.name));
+			const binding = /** @type {Binding} */ (context.state.scope.get(path.node.name));
 			binding.kind =
 				rune === '$state'
 					? 'state'
@@ -764,10 +764,10 @@ const runes_scope_tweaker = {
 		}
 
 		if (rune === '$props') {
-			state.analysis.needs_props = true;
+			context.state.analysis.needs_props = true;
 
 			if (node.id.type === 'Identifier') {
-				const binding = /** @type {Binding} */ (state.scope.get(node.id.name));
+				const binding = /** @type {Binding} */ (context.state.scope.get(node.id.name));
 				binding.initial = null; // else would be $props()
 				binding.kind = 'rest_prop';
 			} else {
@@ -786,7 +786,7 @@ const runes_scope_tweaker = {
 							: String(/** @type {Literal} */ (property.key).value);
 					let initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
 
-					const binding = /** @type {Binding} */ (state.scope.get(name));
+					const binding = /** @type {Binding} */ (context.state.scope.get(name));
 					binding.prop_alias = alias;
 
 					// rewire initial from $props() to the actual initial value, stripping $bindable() if necessary
