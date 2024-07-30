@@ -21,9 +21,11 @@ Below, you'll find the highlights from the Svelte 5 release notes (currently in 
 - The new `warningFilter` compiler option lets you disable certain warnings for the whole application without having to add `svelte-ignore` comments everywhere (**5.0.0-next.186**, [#12296](https://github.com/sveltejs/svelte/pull/12296))
 - The new `createRawSnippet` API, allows low-level creation of programmatic snippets outside of Svelte templates (**5.0.0-next.189**, [Docs](https://svelte-5-preview.vercel.app/docs/imports#svelte-createrawsnippet), [#12425](https://github.com/sveltejs/svelte/pull/12425))
 
-## What's new in SvelteKit
+## What's new in SvelteKit and beyond
 - The HTML attributes `enctype` and `formenctype` are now respected for forms with `use:enhance` (plus, some other bug fixes in the [CHANGELOG](https://github.com/sveltejs/kit/blob/main/packages/kit/CHANGELOG.md))
 - The cloudflare, cloudflare-workers, netlify and vercel adapters have all been updated to copy `.eot`, `.otf`, .`ttf`, `.woff`, and `.woff2` font files when bundling ([CHANGELOGs](https://github.com/sveltejs/kit/tree/main/packages))
+- `svelte-preprocess`, the tool used in nearly every Svelte project, is now dependency free! The team has gradually reduced it from 44 dependencies in 5.0.0 down to zero in the latest release ([Tweet](https://x.com/BenjaminMcCann/status/1810698991820321028))
+- prerendered redirects will now be appended to the `_redirects` file in the Cloudflare Pages adapter (**adapter-cloudflare@4.7.0**, [#12199](https://github.com/sveltejs/kit/pull/12199))
 
 ---
 
@@ -31,6 +33,7 @@ Below, you'll find the highlights from the Svelte 5 release notes (currently in 
 
 **Apps & Sites built with Svelte**
 
+- [The StackOverflow 2024 Developer Survey](https://stackoverflow.blog/2024/07/24/developers-want-more-more-more-the-2024-results-from-stack-overflow-s-annual-developer-survey/) results site was built using Svelte. Even better, the results show that 73% of developers that used it want to keep working with Svelte (More info in this [tweet](https://x.com/SvelteSociety/status/1816497535839858792))
 - [azigy](https://azigy.com/) is a live, multiplayer quiz and trivia application
 - [on-device-transcription](https://github.com/Hugo-Dz/on-device-transcription) is a ready-to-use, minimal app that converts any speech into text
 - [Whispering](https://github.com/braden-w/whispering) is an open-source transcription application that provides global speech-to-text functionality
