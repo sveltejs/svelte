@@ -116,17 +116,13 @@ export const global_visitors = {
 
 			return b.call(fn, ...args);
 		} else {
-			const ignore_invalid_mutation =
-				is_ignored(node, 'ownership_invalid_mutation') && context.state.options.dev;
+			/** @param {any} serialized */
+			function maybe_skip_ownership_validation(serialized) {
+				if (context.state.options.dev && is_ignored(node, 'ownership_invalid_mutation')) {
+					return b.call('$.skip_ownership_validation', b.thunk(serialized));
+				}
 
-			/**
-			 *
-			 * @param {any} serialized
-			 * @returns
-			 */
-			function maybe_wrap_skip_ownership(serialized) {
-				if (!ignore_invalid_mutation) return serialized;
-				return b.call('$.skip_ownership_validation', b.thunk(serialized));
+				return serialized;
 			}
 
 			// turn it into an IIFEE assignment expression: i++ -> (() => { const $$value = i; i+=1; return $$value; })
@@ -144,9 +140,9 @@ export const global_visitors = {
 			const value = /** @type {Expression} */ (visit(argument));
 			if (serialized_assignment === assignment) {
 				// No change to output -> nothing to transform -> we can keep the original update expression
-				return maybe_wrap_skip_ownership(next());
+				return maybe_skip_ownership_validation(next());
 			} else if (context.state.analysis.runes) {
-				return maybe_wrap_skip_ownership(serialized_assignment);
+				return maybe_skip_ownership_validation(serialized_assignment);
 			} else {
 				/** @type {Statement[]} */
 				let statements;
@@ -160,7 +156,7 @@ export const global_visitors = {
 						b.return(b.id(tmp_id))
 					];
 				}
-				return maybe_wrap_skip_ownership(b.call(b.thunk(b.block(statements))));
+				return maybe_skip_ownership_validation(b.call(b.thunk(b.block(statements))));
 			}
 		}
 	}
