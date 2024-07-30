@@ -940,7 +940,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 			// always be referenced through just the identifier here.
 			node.type === 'SvelteComponent'
 				? component_name
-				: /** @type {Expression} */ (context.visit(b.id_like(component_name))),
+				: /** @type {Expression} */ (context.visit(b.member_id(component_name))),
 			node_id,
 			props_expression
 		);
