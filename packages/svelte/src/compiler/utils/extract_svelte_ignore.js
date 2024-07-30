@@ -1,3 +1,4 @@
+import { IGNORABLE_RUNTIME_WARNINGS } from '../../constants.js';
 import fuzzymatch from '../phases/1-parse/utils/fuzzymatch.js';
 import * as w from '../warnings.js';
 
@@ -16,18 +17,7 @@ const replacements = {
 	'unused-export-let': 'export_let_unused'
 };
 
-// we use a list of ignorable runtime warnings because not every runtime warning
-// can be ignored and we want to keep the validation for svelte-ignore in place
-const ignorable_runtime_warnings = [
-	'state_snapshot_uncloneable',
-	'binding_property_non_reactive',
-	'hydration_attribute_changed',
-	'hydration_html_changed',
-	'ownership_invalid_binding',
-	'ownership_invalid_mutation'
-];
-
-const codes = w.codes.concat(ignorable_runtime_warnings);
+const codes = w.codes.concat(IGNORABLE_RUNTIME_WARNINGS);
 
 /**
  * @param {number} offset

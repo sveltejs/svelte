@@ -199,6 +199,17 @@ const void_element_names = [
 	'wbr'
 ];
 
+// we use a list of ignorable runtime warnings because not every runtime warning
+// can be ignored and we want to keep the validation for svelte-ignore in place
+export const IGNORABLE_RUNTIME_WARNINGS = /** @type {const} */ ([
+	'state_snapshot_uncloneable',
+	'binding_property_non_reactive',
+	'hydration_attribute_changed',
+	'hydration_html_changed',
+	'ownership_invalid_binding',
+	'ownership_invalid_mutation'
+]);
+
 /** @param {string} name */
 export function is_void(name) {
 	return void_element_names.includes(name) || name.toLowerCase() === '!doctype';
