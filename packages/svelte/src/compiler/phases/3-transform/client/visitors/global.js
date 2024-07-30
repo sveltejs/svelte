@@ -126,7 +126,7 @@ export const global_visitors = {
 			 */
 			function maybe_wrap_skip_ownership(serialized) {
 				if (!ignore_invalid_mutation) return serialized;
-				return b.call('$.skip_ownership_invalid_mutation', b.thunk(serialized));
+				return b.call('$.skip_ownership_validation', b.thunk(serialized));
 			}
 
 			// turn it into an IIFEE assignment expression: i++ -> (() => { const $$value = i; i+=1; return $$value; })

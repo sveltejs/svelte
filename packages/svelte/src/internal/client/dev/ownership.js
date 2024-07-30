@@ -229,22 +229,23 @@ function get_owner(metadata) {
 	);
 }
 
-let should_skip_ownership_invalid_mutation = false;
+let skip = false;
 
 /**
- * @param {()=>any} fn
+ * @param {() => any} fn
  */
-export function skip_ownership_invalid_mutation(fn) {
-	should_skip_ownership_invalid_mutation = true;
+export function skip_ownership_validation(fn) {
+	skip = true;
 	fn();
-	should_skip_ownership_invalid_mutation = false;
+	skip = false;
 }
 
 /**
  * @param {ProxyMetadata} metadata
  */
 export function check_ownership(metadata) {
-	if (should_skip_ownership_invalid_mutation) return;
+	if (skip) return;
+
 	const component = get_component();
 
 	if (component && !has_owner(metadata, component)) {

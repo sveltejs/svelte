@@ -286,16 +286,16 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 	 * @param {any} serialized
 	 * @returns
 	 */
-	function maybe_wrap_skip_ownership(serialized) {
+	function maybe_skip_ownership_validation(serialized) {
 		if (context.state.options.dev && is_ignored(node, 'ownership_invalid_mutation')) {
-			return b.call('$.skip_ownership_invalid_mutation', b.thunk(serialized));
+			return b.call('$.skip_ownership_validation', b.thunk(serialized));
 		}
 
 		return serialized;
 	}
 
 	if (binding.kind === 'derived') {
-		return maybe_wrap_skip_ownership(fallback());
+		return maybe_skip_ownership_validation(fallback());
 	}
 
 	const is_store = binding.kind === 'store_sub';
@@ -398,7 +398,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 					return /** @type {Expression} */ (visit(node));
 				}
 
-				return maybe_wrap_skip_ownership(
+				return maybe_skip_ownership_validation(
 					b.call(
 						'$.store_mutate',
 						serialize_get_binding(b.id(left_name), state),
@@ -412,7 +412,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 				(binding.mutated && binding.kind === 'bindable_prop')
 			) {
 				if (binding.kind === 'bindable_prop') {
-					return maybe_wrap_skip_ownership(
+					return maybe_skip_ownership_validation(
 						b.call(
 							left,
 							b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value),
@@ -420,7 +420,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 						)
 					);
 				} else {
-					return maybe_wrap_skip_ownership(
+					return maybe_skip_ownership_validation(
 						b.call(
 							'$.mutate',
 							b.id(left_name),
@@ -433,7 +433,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 				prefix != null &&
 				(node.operator === '+=' || node.operator === '-=')
 			) {
-				return maybe_wrap_skip_ownership(
+				return maybe_skip_ownership_validation(
 					b.update(
 						node.operator === '+=' ? '++' : '--',
 						/** @type {Expression} */ (visit(node.left)),
@@ -441,7 +441,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 					)
 				);
 			} else {
-				return maybe_wrap_skip_ownership(
+				return maybe_skip_ownership_validation(
 					b.assignment(
 						node.operator,
 						/** @type {Pattern} */ (visit(node.left)),
