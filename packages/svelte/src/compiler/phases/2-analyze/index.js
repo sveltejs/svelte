@@ -831,57 +831,6 @@ const common_visitors = {
 			binding_group_name: group_name,
 			parent_each_blocks: each_blocks
 		};
-	},
-	RegularElement(node, context) {
-		// Special case: Move the children of <textarea> into a value attribute if they are dynamic
-		if (
-			context.state.options.namespace !== 'foreign' &&
-			node.name === 'textarea' &&
-			node.fragment.nodes.length > 0
-		) {
-			if (node.fragment.nodes.length > 1 || node.fragment.nodes[0].type !== 'Text') {
-				const first = node.fragment.nodes[0];
-				if (first.type === 'Text') {
-					// The leading newline character needs to be stripped because of a qirk:
-					// It is ignored by browsers if the tag and its contents are set through
-					// innerHTML, but we're now setting it through the value property at which
-					// point it is _not_ ignored, so we need to strip it ourselves.
-					// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
-					// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
-					first.data = first.data.replace(regex_starts_with_newline, '');
-					first.raw = first.raw.replace(regex_starts_with_newline, '');
-				}
-
-				node.attributes.push(
-					create_attribute(
-						'value',
-						/** @type {import('#compiler').Text} */ (node.fragment.nodes.at(0)).start,
-						/** @type {import('#compiler').Text} */ (node.fragment.nodes.at(-1)).end,
-						// @ts-ignore
-						node.fragment.nodes
-					)
-				);
-
-				node.fragment.nodes = [];
-			}
-		}
-
-		// Special case: single expression tag child of option element -> add "fake" attribute
-		// to ensure that value types are the same (else for example numbers would be strings)
-		if (
-			context.state.options.namespace !== 'foreign' &&
-			node.name === 'option' &&
-			node.fragment.nodes?.length === 1 &&
-			node.fragment.nodes[0].type === 'ExpressionTag' &&
-			!node.attributes.some(
-				(attribute) => attribute.type === 'Attribute' && attribute.name === 'value'
-			)
-		) {
-			const child = node.fragment.nodes[0];
-			node.attributes.push(create_attribute('value', child.start, child.end, [child]));
-		}
-
-		context.state.analysis.elements.push(node);
 	}
 };
 

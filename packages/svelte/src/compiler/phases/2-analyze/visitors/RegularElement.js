@@ -7,6 +7,8 @@ import {
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { MathMLElements, SVGElements, VoidElements } from '../../constants.js';
+import { create_attribute } from '../../nodes.js';
+import { regex_starts_with_newline } from '../../patterns.js';
 import { check_element } from './shared/a11y.js';
 import { validate_element } from './shared/element.js';
 
@@ -15,12 +17,64 @@ import { validate_element } from './shared/element.js';
  * @param {Context} context
  */
 export function RegularElement(node, context) {
-	if (node.name === 'textarea' && node.fragment.nodes.length > 0) {
+	validate_element(node, context);
+
+	check_element(node, context.state);
+
+	context.state.analysis.elements.push(node);
+
+	// Special case: Move the children of <textarea> into a value attribute if they are dynamic
+	if (
+		context.state.options.namespace !== 'foreign' &&
+		node.name === 'textarea' &&
+		node.fragment.nodes.length > 0
+	) {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute' && attribute.name === 'value') {
 				e.textarea_invalid_content(node);
 			}
 		}
+
+		if (node.fragment.nodes.length > 1 || node.fragment.nodes[0].type !== 'Text') {
+			const first = node.fragment.nodes[0];
+			if (first.type === 'Text') {
+				// The leading newline character needs to be stripped because of a qirk:
+				// It is ignored by browsers if the tag and its contents are set through
+				// innerHTML, but we're now setting it through the value property at which
+				// point it is _not_ ignored, so we need to strip it ourselves.
+				// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+				// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
+				first.data = first.data.replace(regex_starts_with_newline, '');
+				first.raw = first.raw.replace(regex_starts_with_newline, '');
+			}
+
+			node.attributes.push(
+				create_attribute(
+					'value',
+					/** @type {import('#compiler').Text} */ (node.fragment.nodes.at(0)).start,
+					/** @type {import('#compiler').Text} */ (node.fragment.nodes.at(-1)).end,
+					// @ts-ignore
+					node.fragment.nodes
+				)
+			);
+
+			node.fragment.nodes = [];
+		}
+	}
+
+	// Special case: single expression tag child of option element -> add "fake" attribute
+	// to ensure that value types are the same (else for example numbers would be strings)
+	if (
+		context.state.options.namespace !== 'foreign' &&
+		node.name === 'option' &&
+		node.fragment.nodes?.length === 1 &&
+		node.fragment.nodes[0].type === 'ExpressionTag' &&
+		!node.attributes.some(
+			(attribute) => attribute.type === 'Attribute' && attribute.name === 'value'
+		)
+	) {
+		const child = node.fragment.nodes[0];
+		node.attributes.push(create_attribute('value', child.start, child.end, [child]));
 	}
 
 	const binding = context.state.scope.get(node.name);
@@ -31,10 +85,6 @@ export function RegularElement(node, context) {
 	) {
 		w.component_name_lowercase(node, node.name);
 	}
-
-	validate_element(node, context);
-
-	check_element(node, context.state);
 
 	node.metadata.has_spread = node.attributes.some(
 		(attribute) => attribute.type === 'SpreadAttribute'
