@@ -54,6 +54,10 @@ export function validate_component(node, context) {
 				validate_slot_attribute(context, attribute, true);
 			}
 		}
+
+		if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
+			context.state.analysis.uses_component_bindings = true;
+		}
 	}
 
 	context.next({
