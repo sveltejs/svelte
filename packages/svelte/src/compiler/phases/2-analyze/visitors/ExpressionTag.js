@@ -8,13 +8,11 @@ import * as e from '../../../errors.js';
  * @param {Context} context
  */
 export function ExpressionTag(node, context) {
-	if (!node.parent) {
-		return;
-	}
-
-	if (context.state.parent_element) {
+	if (node.parent && context.state.parent_element) {
 		if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
 			e.node_invalid_placement(node, '`{expression}`', context.state.parent_element);
 		}
 	}
+
+	context.next({ ...context.state, expression: node.metadata.expression });
 }

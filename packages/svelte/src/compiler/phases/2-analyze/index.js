@@ -698,9 +698,6 @@ const common_visitors = {
 			}
 		}
 	},
-	ExpressionTag(node, context) {
-		context.next({ ...context.state, expression: node.metadata.expression });
-	},
 	Identifier(node, context) {
 		const parent = /** @type {Node} */ (context.path.at(-1));
 		if (!is_reference(node, parent)) return;
