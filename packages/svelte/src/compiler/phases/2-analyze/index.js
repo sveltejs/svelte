@@ -538,7 +538,7 @@ export function analyze_component(root, source, options) {
 			walk(
 				/** @type {SvelteNode} */ (ast),
 				state,
-				merge(set_scope(scopes), visitors, runes_scope_tweaker, common_visitors)
+				merge(set_scope(scopes), visitors, common_visitors)
 			);
 		}
 
@@ -727,84 +727,6 @@ export function analyze_component(root, source, options) {
 
 	return analysis;
 }
-
-/** @type {Visitors} */
-const runes_scope_tweaker = {
-	VariableDeclarator(node, context) {
-		const init = node.init;
-		if (!init || init.type !== 'CallExpression') return;
-		const rune = get_rune(init, context.state.scope);
-		if (rune === null) return;
-
-		const callee = init.callee;
-		if (callee.type !== 'Identifier' && callee.type !== 'MemberExpression') return;
-
-		if (
-			rune !== '$state' &&
-			rune !== '$state.frozen' &&
-			rune !== '$derived' &&
-			rune !== '$derived.by' &&
-			rune !== '$props'
-		)
-			return;
-
-		for (const path of extract_paths(node.id)) {
-			// @ts-ignore this fails in CI for some insane reason
-			const binding = /** @type {Binding} */ (context.state.scope.get(path.node.name));
-			binding.kind =
-				rune === '$state'
-					? 'state'
-					: rune === '$state.frozen'
-						? 'frozen_state'
-						: rune === '$derived' || rune === '$derived.by'
-							? 'derived'
-							: path.is_rest
-								? 'rest_prop'
-								: 'prop';
-		}
-
-		if (rune === '$props') {
-			context.state.analysis.needs_props = true;
-
-			if (node.id.type === 'Identifier') {
-				const binding = /** @type {Binding} */ (context.state.scope.get(node.id.name));
-				binding.initial = null; // else would be $props()
-				binding.kind = 'rest_prop';
-			} else {
-				equal(node.id.type, 'ObjectPattern');
-
-				for (const property of node.id.properties) {
-					if (property.type !== 'Property') continue;
-
-					const name =
-						property.value.type === 'AssignmentPattern'
-							? /** @type {Identifier} */ (property.value.left).name
-							: /** @type {Identifier} */ (property.value).name;
-					const alias =
-						property.key.type === 'Identifier'
-							? property.key.name
-							: String(/** @type {Literal} */ (property.key).value);
-					let initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
-
-					const binding = /** @type {Binding} */ (context.state.scope.get(name));
-					binding.prop_alias = alias;
-
-					// rewire initial from $props() to the actual initial value, stripping $bindable() if necessary
-					if (
-						initial?.type === 'CallExpression' &&
-						initial.callee.type === 'Identifier' &&
-						initial.callee.name === '$bindable'
-					) {
-						binding.initial = /** @type {Expression | null} */ (initial.arguments[0] ?? null);
-						binding.kind = 'bindable_prop';
-					} else {
-						binding.initial = initial;
-					}
-				}
-			}
-		}
-	}
-};
 
 /**
  * @param {CallExpression} node
