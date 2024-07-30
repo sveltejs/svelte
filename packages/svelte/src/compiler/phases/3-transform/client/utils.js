@@ -16,7 +16,7 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../../../constants.js';
-import { is_to_ignore } from '../../../state.js';
+import { is_ignored } from '../../../state.js';
 
 /**
  * @template {ClientTransformState} State
@@ -283,7 +283,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 	}
 
 	const ignore_invalid_mutation =
-		is_to_ignore(node, 'ownership_invalid_mutation') && context.state.options.dev;
+		is_ignored(node, 'ownership_invalid_mutation') && context.state.options.dev;
 
 	/**
 	 *

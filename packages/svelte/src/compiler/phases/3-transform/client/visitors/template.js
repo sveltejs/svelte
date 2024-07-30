@@ -22,7 +22,7 @@ import {
 	TRANSITION_OUT
 } from '../../../../../constants.js';
 import { escape_html } from '../../../../../escaping.js';
-import { is_to_ignore, locator } from '../../../../state.js';
+import { is_ignored, locator } from '../../../../state.js';
 import {
 	extract_identifiers,
 	extract_paths,
@@ -325,7 +325,7 @@ function serialize_element_spread_attributes(
 				b.object(values),
 				lowercase_attributes,
 				b.literal(context.state.analysis.css.hash),
-				b.literal(is_to_ignore(element, 'hydration_attribute_changed'))
+				b.literal(is_ignored(element, 'hydration_attribute_changed'))
 			)
 		)
 	);
@@ -496,7 +496,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 				node_id,
 				b.literal(name),
 				value,
-				b.literal(is_to_ignore(element, 'hydration_attribute_changed'))
+				b.literal(is_ignored(element, 'hydration_attribute_changed'))
 			)
 		);
 
@@ -540,7 +540,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 				node_id,
 				b.literal(name),
 				value,
-				b.literal(is_to_ignore(element, 'hydration_attribute_changed'))
+				b.literal(is_ignored(element, 'hydration_attribute_changed'))
 			)
 		);
 	}
@@ -804,7 +804,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 				// serialize_validate_binding will add a function that specifically throw
 				// `binding_property_non_reactive` error. If there's a svelte ignore
 				// before we avoid adding this validation to avoid throwing the runtime warning
-				!is_to_ignore(node, 'binding_property_non_reactive')
+				!is_ignored(node, 'binding_property_non_reactive')
 			) {
 				context.state.init.push(serialize_validate_binding(context.state, attribute, expression));
 			}
@@ -819,7 +819,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 								b.id('$.add_owner_effect'),
 								b.thunk(expression),
 								b.id(component_name),
-								b.literal(is_to_ignore(node, 'ownership_invalid_binding'))
+								b.literal(is_ignored(node, 'ownership_invalid_binding'))
 							)
 						)
 					);
@@ -1846,7 +1846,7 @@ export const template_visitors = {
 					b.thunk(/** @type {Expression} */ (context.visit(node.expression))),
 					b.literal(context.state.metadata.namespace === 'svg'),
 					b.literal(context.state.metadata.namespace === 'mathml'),
-					b.literal(is_to_ignore(node, 'hydration_html_changed'))
+					b.literal(is_ignored(node, 'hydration_html_changed'))
 				)
 			)
 		);
@@ -2942,7 +2942,7 @@ export const template_visitors = {
 			// serialize_validate_binding will add a function that specifically throw
 			// `binding_property_non_reactive` error. If there's a svelte ignore
 			// before we avoid adding this validation to avoid throwing the runtime warning
-			!is_to_ignore(node, 'binding_property_non_reactive')
+			!is_ignored(node, 'binding_property_non_reactive')
 		) {
 			context.state.init.push(
 				serialize_validate_binding(

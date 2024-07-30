@@ -1,7 +1,7 @@
 /** @import { CallExpression, Expression, Identifier, Literal, MethodDefinition, PrivateIdentifier, PropertyDefinition, VariableDeclarator } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentVisitors, StateField } from '../types.js' */
-import { is_to_ignore } from '../../../../state.js';
+import { is_ignored } from '../../../../state.js';
 import * as assert from '../../../../utils/assert.js';
 import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
@@ -203,7 +203,7 @@ export const javascript_visitors_runes = {
 								b.call('$.get', b.member(b.this, b.private_id(name))),
 								b.id('owner'),
 								b.literal(false),
-								b.literal(is_to_ignore(node, 'ownership_invalid_binding'))
+								b.literal(is_ignored(node, 'ownership_invalid_binding'))
 							)
 						)
 					),
@@ -455,7 +455,7 @@ export const javascript_visitors_runes = {
 			return b.call(
 				'$.snapshot',
 				/** @type {Expression} */ (context.visit(node.arguments[0])),
-				b.literal(is_to_ignore(node, 'state_snapshot_uncloneable'))
+				b.literal(is_ignored(node, 'state_snapshot_uncloneable'))
 			);
 		}
 

@@ -3,7 +3,7 @@
 import is_reference from 'is-reference';
 import { serialize_get_binding, serialize_set_binding } from '../utils.js';
 import * as b from '../../../../utils/builders.js';
-import { is_to_ignore } from '../../../../state.js';
+import { is_ignored } from '../../../../state.js';
 
 /** @type {Visitors} */
 export const global_visitors = {
@@ -117,7 +117,7 @@ export const global_visitors = {
 			return b.call(fn, ...args);
 		} else {
 			const ignore_invalid_mutation =
-				is_to_ignore(node, 'ownership_invalid_mutation') && context.state.options.dev;
+				is_ignored(node, 'ownership_invalid_mutation') && context.state.options.dev;
 
 			/**
 			 *

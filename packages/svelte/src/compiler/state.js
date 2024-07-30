@@ -65,7 +65,7 @@ export function reset_warning_filter(fn = () => true) {
  * @param {string} code
  * @returns
  */
-export function is_to_ignore(node, code) {
+export function is_ignored(node, code) {
 	return !!ignore_map.get(node)?.some((code_set) => code_set.has(code));
 }
 
