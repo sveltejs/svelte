@@ -87,7 +87,8 @@ _To Watch_
 - [Figblocks](https://figblocks.mohanvadivel.com/) is an open-source UI component library for building Figma plugins with Svelte
 - [VS Code Supports Custom Tab Labels](https://www.reddit.com/r/sveltejs/comments/1e26pfc/vs_code_supports_custom_tab_labels/) (a good reminder for folks who haven't sent it up yet)
 - Storybook did a prerelease of `@storybook/addon-svelte-csf` with support for Svelte v5. If you're using it, share your feedback on their RFC: [storybookjs/addon-svelte-csf#191](https://github.com/storybookjs/addon-svelte-csf/discussions/191)
-
+- [sveltekit-search-params](https://github.com/paoloricciuti/sveltekit-search-params) released `v3.0.0` with better types
+- [optimistikit](https://github.com/paoloricciuti/optimistikit) got revamped to fully support runes in `v1.0.0` while keeping the `@legacy` tag if you still can't update from stores
 
 That's it for this month! Let us know if we missed anything on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.gg/svelte).
 
