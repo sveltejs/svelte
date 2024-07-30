@@ -698,23 +698,6 @@ const common_visitors = {
 			}
 		}
 	},
-	StyleDirective(node, context) {
-		if (node.value === true) {
-			const binding = context.state.scope.get(node.name);
-			if (binding?.kind !== 'normal') {
-				node.metadata.expression.has_state = true;
-			}
-		} else {
-			context.next();
-
-			for (const chunk of get_attribute_chunks(node.value)) {
-				if (chunk.type !== 'ExpressionTag') continue;
-
-				node.metadata.expression.has_state ||= chunk.metadata.expression.has_state;
-				node.metadata.expression.has_call ||= chunk.metadata.expression.has_call;
-			}
-		}
-	},
 	ExpressionTag(node, context) {
 		context.next({ ...context.state, expression: node.metadata.expression });
 	},
