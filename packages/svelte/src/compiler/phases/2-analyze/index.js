@@ -890,45 +890,6 @@ const common_visitors = {
 		}
 
 		context.state.analysis.elements.push(node);
-	},
-	SvelteElement(node, context) {
-		context.state.analysis.elements.push(node);
-
-		for (const attribute of node.attributes) {
-			if (attribute.type === 'Attribute') {
-				if (attribute.name === 'xmlns' && is_text_attribute(attribute)) {
-					node.metadata.svg = attribute.value[0].data === namespace_svg;
-					node.metadata.mathml = attribute.value[0].data === namespace_mathml;
-					return;
-				}
-			}
-		}
-
-		for (let i = context.path.length - 1; i >= 0; i--) {
-			const ancestor = context.path[i];
-			if (
-				ancestor.type === 'Component' ||
-				ancestor.type === 'SvelteComponent' ||
-				ancestor.type === 'SvelteFragment' ||
-				ancestor.type === 'SnippetBlock'
-			) {
-				// Inside a slot or a snippet -> this resets the namespace, so assume the component namespace
-				node.metadata.svg = context.state.options.namespace === 'svg';
-				node.metadata.mathml = context.state.options.namespace === 'mathml';
-				return;
-			}
-			if (ancestor.type === 'SvelteElement' || ancestor.type === 'RegularElement') {
-				node.metadata.svg =
-					ancestor.type === 'RegularElement' && ancestor.name === 'foreignObject'
-						? false
-						: ancestor.metadata.svg;
-				node.metadata.mathml =
-					ancestor.type === 'RegularElement' && ancestor.name === 'foreignObject'
-						? false
-						: ancestor.metadata.mathml;
-				return;
-			}
-		}
 	}
 };
 
