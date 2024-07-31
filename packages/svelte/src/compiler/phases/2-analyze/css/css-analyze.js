@@ -4,7 +4,6 @@
 import { walk } from 'zimmerframe';
 import * as e from '../../../errors.js';
 import { is_keyframes_node } from '../../css.js';
-import { merge } from '../../visitors.js';
 
 /**
  * @typedef {Visitors<
@@ -50,16 +49,65 @@ function is_global_block_selector(simple_selector) {
 }
 
 /** @type {CssVisitors} */
-const analysis_visitors = {
+const css_visitors = {
 	Atrule(node, context) {
 		if (is_keyframes_node(node)) {
 			if (!node.prelude.startsWith('-global-')) {
 				context.state.keyframes.push(node.prelude);
 			}
 		}
+
+		context.next();
 	},
 	ComplexSelector(node, context) {
 		context.next(); // analyse relevant selectors first
+
+		{
+			const global = node.children.find(is_global);
+
+			if (global) {
+				const idx = node.children.indexOf(global);
+
+				if (global.selectors[0].args !== null && idx !== 0 && idx !== node.children.length - 1) {
+					// ensure `:global(...)` is not used in the middle of a selector (but multiple `global(...)` in sequence are ok)
+					for (let i = idx + 1; i < node.children.length; i++) {
+						if (!is_global(node.children[i])) {
+							e.css_global_invalid_placement(global.selectors[0]);
+						}
+					}
+				}
+			}
+		}
+
+		// ensure `:global(...)` do not lead to invalid css after `:global()` is removed
+		for (const relative_selector of node.children) {
+			for (let i = 0; i < relative_selector.selectors.length; i++) {
+				const selector = relative_selector.selectors[i];
+
+				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
+					const child = selector.args?.children[0].children[0];
+					// ensure `:global(element)` to be at the first position in a compound selector
+					if (child?.selectors[0].type === 'TypeSelector' && i !== 0) {
+						e.css_global_invalid_selector_list(selector);
+					}
+
+					// ensure `:global(.class)` is not followed by a type selector, eg: `:global(.class)element`
+					if (relative_selector.selectors[i + 1]?.type === 'TypeSelector') {
+						e.css_type_selector_invalid_placement(relative_selector.selectors[i + 1]);
+					}
+
+					// ensure `:global(...)`contains a single selector
+					// (standalone :global() with multiple selectors is OK)
+					if (
+						selector.args !== null &&
+						selector.args.children.length > 1 &&
+						(node.children.length > 1 || relative_selector.selectors.length > 1)
+					) {
+						e.css_global_invalid_selector(selector);
+					}
+				}
+			}
+		}
 
 		node.metadata.rule = context.state.rule;
 
@@ -119,22 +167,6 @@ const analysis_visitors = {
 			return is_global_block;
 		});
 
-		context.next({
-			...context.state,
-			rule: node
-		});
-
-		node.metadata.has_local_selectors = node.prelude.children.some((selector) => {
-			return selector.children.some(
-				({ metadata }) => !metadata.is_global && !metadata.is_global_like
-			);
-		});
-	}
-};
-
-/** @type {CssVisitors} */
-const validation_visitors = {
-	Rule(node, context) {
 		if (node.metadata.is_global_block) {
 			if (node.prelude.children.length > 1) {
 				e.css_global_block_invalid_list(node.prelude);
@@ -174,59 +206,21 @@ const validation_visitors = {
 			}
 		}
 
-		context.next();
-	},
-	ComplexSelector(node) {
-		{
-			const global = node.children.find(is_global);
+		context.next({
+			...context.state,
+			rule: node
+		});
 
-			if (global) {
-				const idx = node.children.indexOf(global);
-
-				if (global.selectors[0].args !== null && idx !== 0 && idx !== node.children.length - 1) {
-					// ensure `:global(...)` is not used in the middle of a selector (but multiple `global(...)` in sequence are ok)
-					for (let i = idx + 1; i < node.children.length; i++) {
-						if (!is_global(node.children[i])) {
-							e.css_global_invalid_placement(global.selectors[0]);
-						}
-					}
-				}
-			}
-		}
-
-		// ensure `:global(...)` do not lead to invalid css after `:global()` is removed
-		for (const relative_selector of node.children) {
-			for (let i = 0; i < relative_selector.selectors.length; i++) {
-				const selector = relative_selector.selectors[i];
-
-				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-					const child = selector.args?.children[0].children[0];
-					// ensure `:global(element)` to be at the first position in a compound selector
-					if (child?.selectors[0].type === 'TypeSelector' && i !== 0) {
-						e.css_global_invalid_selector_list(selector);
-					}
-
-					// ensure `:global(.class)` is not followed by a type selector, eg: `:global(.class)element`
-					if (relative_selector.selectors[i + 1]?.type === 'TypeSelector') {
-						e.css_type_selector_invalid_placement(relative_selector.selectors[i + 1]);
-					}
-
-					// ensure `:global(...)`contains a single selector
-					// (standalone :global() with multiple selectors is OK)
-					if (
-						selector.args !== null &&
-						selector.args.children.length > 1 &&
-						(node.children.length > 1 || relative_selector.selectors.length > 1)
-					) {
-						e.css_global_invalid_selector(selector);
-					}
-				}
-			}
-		}
+		node.metadata.has_local_selectors = node.prelude.children.some((selector) => {
+			return selector.children.some(
+				({ metadata }) => !metadata.is_global && !metadata.is_global_like
+			);
+		});
 	},
 	NestingSelector(node, context) {
 		const rule = /** @type {Css.Rule} */ (context.state.rule);
 		const parent_rule = rule.metadata.parent_rule;
+
 		if (!parent_rule) {
 			e.css_nesting_selector_invalid_placement(node);
 		} else if (
@@ -238,10 +232,10 @@ const validation_visitors = {
 		) {
 			e.css_global_block_invalid_modifier_start(node);
 		}
+
+		context.next();
 	}
 };
-
-const css_visitors = merge(analysis_visitors, validation_visitors);
 
 /**
  * @param {Css.StyleSheet} stylesheet
