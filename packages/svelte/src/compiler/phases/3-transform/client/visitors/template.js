@@ -3164,16 +3164,15 @@ export const template_visitors = {
 		}
 
 		const parent = /** @type {import('#compiler').SvelteNode} */ (context.path.at(-1));
-		const has_action_directive =
-			parent.type === 'RegularElement' && parent.attributes.find((a) => a.type === 'UseDirective');
 
 		// Bindings need to happen after attribute updates, therefore after the render effect, and in order with events/actions.
 		// bind:this is a special case as it's one-way and could influence the render effect.
 		if (node.name === 'this') {
-			state.init.push(
-				b.stmt(has_action_directive ? b.call('$.effect', b.thunk(call_expr)) : call_expr)
-			);
+			state.init.push(b.stmt(call_expr));
 		} else {
+			const has_action_directive =
+				parent.type === 'RegularElement' &&
+				parent.attributes.find((a) => a.type === 'UseDirective');
 			state.after_update.push(
 				b.stmt(has_action_directive ? b.call('$.effect', b.thunk(call_expr)) : call_expr)
 			);
