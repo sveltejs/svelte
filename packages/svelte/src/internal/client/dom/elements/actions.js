@@ -1,5 +1,6 @@
 /** @import { ActionPayload } from '#client' */
 import { effect, render_effect } from '../../reactivity/effects.js';
+import { safe_not_equal } from '../../reactivity/equality.js';
 import { deep_read_state, untrack } from '../../runtime.js';
 
 /**
@@ -15,6 +16,8 @@ export function action(dom, action, get_value) {
 
 		if (get_value && payload?.update) {
 			var inited = false;
+			/** @type {P} */
+			var prev = /** @type {any} */ ({}); // initialize with something so it's never equal on first run
 
 			render_effect(() => {
 				var value = get_value();
@@ -24,7 +27,8 @@ export function action(dom, action, get_value) {
 				// together with actions and mutation, it wouldn't notice the change without a deep read.
 				deep_read_state(value);
 
-				if (inited) {
+				if (inited && safe_not_equal(prev, value)) {
+					prev = value;
 					/** @type {Function} */ (payload.update)(value);
 				}
 			});
