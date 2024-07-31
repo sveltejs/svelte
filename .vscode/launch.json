@@ -5,7 +5,8 @@
 			"type": "chrome",
 			"request": "launch",
 			"name": "Playground: Browser",
-			"url": "http://localhost:10001"
+			"url": "http://localhost:10001",
+			"webRoot": "${workspaceFolder}"
 		},
 		{
 			"type": "node",
@@ -13,9 +14,10 @@
 			"runtimeArgs": ["--watch"],
 			"name": "Playground: Server",
 			"outputCapture": "std",
-			"program": "start.js",
+			"program": "${workspaceFolder}/packages/playground/start.js",
 			"cwd": "${workspaceFolder}/packages/playground",
-			"cascadeTerminateToConfigurations": ["Playground: Browser"]
+			"restart": true,
+			"console": "integratedTerminal"
 		}
 	],
 	"compounds": [
