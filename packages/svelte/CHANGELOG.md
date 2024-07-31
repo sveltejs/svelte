@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.204
+
+### Patch Changes
+
+- feat: allow ignoring runtime warnings ([#12608](https://github.com/sveltejs/svelte/pull/12608))
+
+- feat: perf tweaks for actions/styles/classes ([#12654](https://github.com/sveltejs/svelte/pull/12654))
+
 ## 5.0.0-next.203
 
 ### Patch Changes
