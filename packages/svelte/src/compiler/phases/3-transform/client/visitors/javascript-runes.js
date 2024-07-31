@@ -167,7 +167,7 @@ export const javascript_visitors_runes = {
 							);
 						}
 
-						if ((field.kind === 'derived' || field.kind === 'derived_call') && dev) {
+						if (dev && (field.kind === 'derived' || field.kind === 'derived_call')) {
 							body.push(
 								b.method(
 									'set',

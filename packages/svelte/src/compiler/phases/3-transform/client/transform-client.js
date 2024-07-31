@@ -238,7 +238,7 @@ export function client_component(source, analysis, options) {
 			(binding.kind === 'prop' || binding.kind === 'bindable_prop') && !name.startsWith('$$')
 	);
 
-	if (analysis.runes && dev) {
+	if (dev && analysis.runes) {
 		const exports = analysis.exports.map(({ name, alias }) => b.literal(alias ?? name));
 		/** @type {ESTree.Literal[]} */
 		const bindable = [];
@@ -345,10 +345,10 @@ export function client_component(source, analysis, options) {
 	}
 
 	const should_inject_context =
+		dev ||
 		analysis.needs_context ||
 		analysis.reactive_statements.size > 0 ||
-		component_returned_object.length > 0 ||
-		dev;
+		component_returned_object.length > 0;
 
 	if (should_inject_context) {
 		component_block.body.unshift(b.stmt(b.call('$.push', ...push_args)));
