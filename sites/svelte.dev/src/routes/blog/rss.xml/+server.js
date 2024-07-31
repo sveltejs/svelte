@@ -1,4 +1,4 @@
-import { get_blog_data, get_blog_list } from '$lib/server/blog/index.js';
+import { get_blog_data, get_rss_contents } from '$lib/server/blog/index.js';
 
 export const prerender = true;
 
@@ -21,11 +21,13 @@ function escapeHTML(html) {
 		'>': 'gt'
 	};
 
-	return html.replace(/["'&<>]/g, (c) => `&${chars[c]};`);
+	return html
+		.replace(/<a[^>]*class="permalink"[^>]*>.*?<\/a>/gi, '') // remove anchor permalinks
+		.replace(/["'&<>]/g, (c) => `&${chars[c]};`);
 }
 
-/** @param {import('$lib/server/blog/types').BlogPostSummary[]} posts */
-const get_rss = (posts) =>
+/** @param {import('$lib/server/blog/types').BlogPostRSS[]} posts */
+const get_rss = (posts) => 
 	`
 <?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0">
@@ -46,7 +48,8 @@ const get_rss = (posts) =>
 		<item>
 			<title>${escapeHTML(post.title)}</title>
 			<link>https://svelte.dev/blog/${post.slug}</link>
-			<description>${escapeHTML(post.description)}</description>
+			<author>${escapeHTML(post.author.name)}</author>
+			<description>${escapeHTML(post.content)}</description>
 			<pubDate>${formatPubdate(post.date)}</pubDate>
 		</item>
 	`
@@ -61,7 +64,8 @@ const get_rss = (posts) =>
 		.trim();
 
 export async function GET() {
-	const posts = get_blog_list(await get_blog_data());
+	const blogData = await get_blog_data();
+	const posts = await get_rss_contents(blogData);
 
 	return new Response(get_rss(posts), {
 		headers: {
