@@ -20,6 +20,12 @@ export let filename;
  */
 export let source;
 
+/**
+ * True if compiling with `dev: true`
+ * @type {boolean}
+ */
+export let dev;
+
 export let locator = getLocator('', { offsetLine: 1 });
 
 /** @type {NonNullable<CompileOptions['warningFilter']>} */
@@ -61,12 +67,14 @@ export function reset_warning_filter(fn = () => true) {
 
 /**
  * @param {string} _source
- * @param {{ filename?: string, rootDir?: string }} options
+ * @param {{ dev?: boolean; filename?: string; rootDir?: string }} options
  */
 export function reset(_source, options) {
 	source = _source;
 	const root_dir = options.rootDir?.replace(/\\/g, '/');
 	filename = options.filename?.replace(/\\/g, '/');
+
+	dev = !!options.dev;
 
 	if (
 		typeof filename === 'string' &&

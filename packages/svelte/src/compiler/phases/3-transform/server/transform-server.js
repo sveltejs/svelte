@@ -6,7 +6,7 @@ import { walk } from 'zimmerframe';
 import { set_scope } from '../../scope.js';
 import { extract_identifiers } from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
-import { filename } from '../../../state.js';
+import { dev, filename } from '../../../state.js';
 import { render_stylesheet } from '../css/index.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
@@ -269,10 +269,10 @@ export function server_component(analysis, options) {
 		.../** @type {Statement[]} */ (template.body)
 	]);
 
-	let should_inject_context = analysis.needs_context || options.dev;
+	let should_inject_context = dev || analysis.needs_context;
 
 	if (should_inject_context) {
-		component_block.body.unshift(b.stmt(b.call('$.push', options.dev && b.id(analysis.name))));
+		component_block.body.unshift(b.stmt(b.call('$.push', dev && b.id(analysis.name))));
 		component_block.body.push(b.stmt(b.call('$.pop')));
 	}
 
@@ -358,7 +358,7 @@ export function server_component(analysis, options) {
 			),
 			b.export_default(b.id(analysis.name))
 		);
-	} else if (options.dev) {
+	} else if (dev) {
 		body.push(
 			component_function,
 			b.stmt(
@@ -383,7 +383,7 @@ export function server_component(analysis, options) {
 		body.push(b.export_default(component_function));
 	}
 
-	if (options.dev && filename) {
+	if (dev && filename) {
 		// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later
 		body.unshift(
 			b.stmt(

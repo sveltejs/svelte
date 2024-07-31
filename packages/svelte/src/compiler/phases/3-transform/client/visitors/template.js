@@ -53,7 +53,7 @@ import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 import { walk } from 'zimmerframe';
-import { locator } from '../../../../state.js';
+import { dev, locator } from '../../../../state.js';
 import is_reference from 'is-reference';
 
 /**
@@ -780,18 +780,14 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 		} else if (attribute.type === 'BindDirective') {
 			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
 
-			if (
-				expression.type === 'MemberExpression' &&
-				context.state.options.dev &&
-				context.state.analysis.runes
-			) {
+			if (dev && expression.type === 'MemberExpression' && context.state.analysis.runes) {
 				context.state.init.push(serialize_validate_binding(context.state, attribute, expression));
 			}
 
 			if (attribute.name === 'this') {
 				bind_this = attribute.expression;
 			} else {
-				if (context.state.options.dev) {
+				if (dev) {
 					binding_initializers.push(
 						b.stmt(b.call(b.id('$.add_owner_effect'), b.thunk(expression), b.id(component_name)))
 					);
@@ -894,9 +890,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 				push_prop(
 					b.init(
 						'children',
-						context.state.options.dev
-							? b.call('$.wrap_snippet', b.id(context.state.analysis.name), slot_fn)
-							: slot_fn
+						dev ? b.call('$.wrap_snippet', b.id(context.state.analysis.name), slot_fn) : slot_fn
 					)
 				);
 
@@ -968,7 +962,7 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 					b.block([
 						...binding_initializers,
 						b.stmt(
-							context.state.options.dev
+							dev
 								? b.call('$.validate_dynamic_component', b.thunk(prev(b.id('$$anchor'))))
 								: prev(b.id('$$anchor'))
 						)
@@ -1696,7 +1690,7 @@ export const template_visitors = {
 		 */
 		const add_template = (template_name, args) => {
 			let call = b.call(get_template_function(namespace, state), ...args);
-			if (context.state.options.dev) {
+			if (dev) {
 				call = b.call(
 					'$.add_locations',
 					call,
@@ -1837,7 +1831,7 @@ export const template_visitors = {
 
 			// we need to eagerly evaluate the expression in order to hit any
 			// 'Cannot access x before initialization' errors
-			if (state.options.dev) {
+			if (dev) {
 				state.init.push(b.stmt(b.call('$.get', declaration.id)));
 			}
 		} else {
@@ -1871,7 +1865,7 @@ export const template_visitors = {
 
 			// we need to eagerly evaluate the expression in order to hit any
 			// 'Cannot access x before initialization' errors
-			if (state.options.dev) {
+			if (dev) {
 				state.init.push(b.stmt(b.call('$.get', tmp)));
 			}
 
@@ -1987,7 +1981,7 @@ export const template_visitors = {
 		/** @type {SourceLocation} */
 		let location = [-1, -1];
 
-		if (context.state.options.dev) {
+		if (dev) {
 			const loc = locator(node.start);
 			if (loc) {
 				location[0] = loc.line;
@@ -2370,7 +2364,7 @@ export const template_visitors = {
 
 		const get_tag = b.thunk(/** @type {Expression} */ (context.visit(node.tag)));
 
-		if (context.state.options.dev && context.state.metadata.namespace !== 'foreign') {
+		if (dev && context.state.metadata.namespace !== 'foreign') {
 			if (node.fragment.nodes.length > 0) {
 				context.state.init.push(b.stmt(b.call('$.validate_void_dynamic_element', get_tag)));
 			}
@@ -2395,7 +2389,7 @@ export const template_visitors = {
 			).body
 		);
 
-		const location = context.state.options.dev && locator(node.start);
+		const location = dev && locator(node.start);
 
 		context.state.init.push(
 			b.stmt(
@@ -2614,7 +2608,7 @@ export const template_visitors = {
 
 				// we need to eagerly evaluate the expression in order to hit any
 				// 'Cannot access x before initialization' errors
-				if (context.state.options.dev) {
+				if (dev) {
 					declarations.push(b.stmt(getter));
 				}
 
@@ -2641,7 +2635,7 @@ export const template_visitors = {
 			declarations.push(b.let(node.index, index));
 		}
 
-		if (context.state.options.dev && (flags & EACH_KEYED) !== 0) {
+		if (dev && (flags & EACH_KEYED) !== 0) {
 			context.state.init.push(
 				b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
 			);
@@ -2834,7 +2828,7 @@ export const template_visitors = {
 
 				// we need to eagerly evaluate the expression in order to hit any
 				// 'Cannot access x before initialization' errors
-				if (context.state.options.dev) {
+				if (dev) {
 					declarations.push(b.stmt(getters[name]));
 				}
 			}
@@ -2848,7 +2842,7 @@ export const template_visitors = {
 		/** @type {Expression} */
 		let snippet = b.arrow(args, body);
 
-		if (context.state.options.dev) {
+		if (dev) {
 			snippet = b.call('$.wrap_snippet', b.id(context.state.analysis.name), snippet);
 		}
 
@@ -2908,7 +2902,7 @@ export const template_visitors = {
 						type === 'AwaitBlock' ||
 						type === 'KeyBlock'
 				)) &&
-			context.state.options.dev &&
+			dev &&
 			context.state.analysis.runes
 		) {
 			context.state.init.push(
