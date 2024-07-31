@@ -2,14 +2,14 @@
  * Map of elements that have certain elements that are not allowed inside them, in the sense that they will auto-close the parent/ancestor element.
  * Theoretically one could take advantage of it but most of the time it will just result in confusing behavior and break when SSR'd.
  * There are more elements that are invalid inside other elements, but they're not auto-closed and so don't break SSR and are therefore not listed here.
- * @type {Record<string, { direct: string[]} | { descendant: string[]; resets?: string[] }>}
+ * @type {Record<string, { direct: string[]} | { descendant: string[]; reset_by?: string[] }>}
  */
 const autoclosing_children = {
 	// based on http://developers.whatwg.org/syntax.html#syntax-tag-omission
 	li: { direct: ['li'] },
 	// https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dt#technical_summary
-	dt: { descendant: ['dt', 'dd'], resets: ['dl'] },
-	dd: { descendant: ['dt', 'dd'], resets: ['dl'] },
+	dt: { descendant: ['dt', 'dd'], reset_by: ['dl'] },
+	dd: { descendant: ['dt', 'dd'], reset_by: ['dl'] },
 	p: {
 		descendant: [
 			'address',
@@ -76,7 +76,7 @@ export function closing_tag_omitted(current, next) {
 /**
  * Map of elements that have certain elements that are not allowed inside them, in the sense that the browser will somehow repair the HTML.
  * There are more elements that are invalid inside other elements, but they're not repaired and so don't break SSR and are therefore not listed here.
- * @type {Record<string, { direct: string[]} | { descendant: string[]; resets?: string[]; only?: string[] } | { only: string[] }>}
+ * @type {Record<string, { direct: string[]} | { descendant: string[]; reset_by?: string[]; only?: string[] } | { only: string[] }>}
  */
 const disallowed_children = {
 	...autoclosing_children,
@@ -146,10 +146,10 @@ export function is_tag_valid_with_ancestor(tag, ancestors) {
 	const disallowed = disallowed_children[target];
 	if (!disallowed) return true;
 
-	if ('resets' in disallowed && disallowed.resets) {
+	if ('reset_by' in disallowed && disallowed.reset_by) {
 		for (let i = ancestors.length - 2; i >= 0; i--) {
 			// A reset means that forbidden descendants are allowed again
-			if (disallowed.resets.includes(ancestors[i])) {
+			if (disallowed.reset_by.includes(ancestors[i])) {
 				return true;
 			}
 		}
