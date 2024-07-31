@@ -5,11 +5,11 @@ import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
 import { is_keyframes_node, regex_css_name_boundary, remove_css_prefix } from '../../css.js';
 import { merge_with_preprocessor_map } from '../../../utils/mapped_code.js';
+import { dev } from '../../../state.js';
 
 /**
  * @typedef {{
  *   code: MagicString;
- *   dev: boolean;
  *   hash: string;
  *   selector: string;
  *   keyframes: string[];
@@ -31,7 +31,6 @@ export function render_stylesheet(source, analysis, options) {
 	/** @type {State} */
 	const state = {
 		code,
-		dev: options.dev,
 		hash: analysis.css.hash,
 		selector: `.${analysis.css.hash}`,
 		keyframes: analysis.css.keyframes,
@@ -60,7 +59,7 @@ export function render_stylesheet(source, analysis, options) {
 
 	merge_with_preprocessor_map(css, options, css.map.sources[0]);
 
-	if (options.dev && options.css === 'injected' && css.code) {
+	if (dev && options.css === 'injected' && css.code) {
 		css.code += `\n/*# sourceMappingURL=${css.map.toUrl()} */`;
 	}
 
@@ -122,7 +121,7 @@ const visitors = {
 	Rule(node, { state, next, visit }) {
 		// keep empty rules in dev, because it's convenient to
 		// see them in devtools
-		if (!state.dev && is_empty(node)) {
+		if (!dev && is_empty(node)) {
 			state.code.prependRight(node.start, '/* (empty) ');
 			state.code.appendLeft(node.end, '*/');
 			escape_comment_close(node, state.code);

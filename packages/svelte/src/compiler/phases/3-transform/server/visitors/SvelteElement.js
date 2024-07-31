@@ -1,6 +1,7 @@
 /** @import { BlockStatement, Expression } from 'estree' */
 /** @import { SvelteElement } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
+import { dev } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { determine_namespace_for_children } from '../../utils.js';
 import { serialize_element_attributes } from './shared/element.js';
@@ -18,7 +19,7 @@ export function SvelteElement(node, context) {
 		tag = b.id(tag_id);
 	}
 
-	if (context.state.options.dev) {
+	if (dev) {
 		if (node.fragment.nodes.length > 0) {
 			context.state.init.push(b.stmt(b.call('$.validate_void_dynamic_element', b.thunk(tag))));
 		}
@@ -34,7 +35,7 @@ export function SvelteElement(node, context) {
 
 	serialize_element_attributes(node, { ...context, state });
 
-	if (context.state.options.dev) {
+	if (dev) {
 		context.state.template.push(b.stmt(b.call('$.push_element', tag, b.id('$$payload'))));
 	}
 
@@ -53,7 +54,7 @@ export function SvelteElement(node, context) {
 		)
 	);
 
-	if (context.state.options.dev) {
+	if (dev) {
 		context.state.template.push(b.stmt(b.call('$.pop_element')));
 	}
 }

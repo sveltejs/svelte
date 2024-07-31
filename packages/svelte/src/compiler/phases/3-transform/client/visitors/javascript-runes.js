@@ -14,6 +14,7 @@ import {
 } from '../utils.js';
 import { extract_paths } from '../../../../utils/ast.js';
 import { regex_invalid_identifier_chars } from '../../../patterns.js';
+import { dev } from '../../../../state.js';
 
 /** @type {ComponentVisitors} */
 export const javascript_visitors_runes = {
@@ -148,11 +149,7 @@ export const javascript_visitors_runes = {
 									'set',
 									definition.key,
 									[value],
-									[
-										b.stmt(
-											b.call('$.set', member, serialize_proxy_reassignment(value, field.id, state))
-										)
-									]
+									[b.stmt(b.call('$.set', member, serialize_proxy_reassignment(value, field.id)))]
 								)
 							);
 						}
@@ -170,7 +167,7 @@ export const javascript_visitors_runes = {
 							);
 						}
 
-						if ((field.kind === 'derived' || field.kind === 'derived_call') && state.options.dev) {
+						if ((field.kind === 'derived' || field.kind === 'derived_call') && dev) {
 							body.push(
 								b.method(
 									'set',
@@ -188,7 +185,7 @@ export const javascript_visitors_runes = {
 			body.push(/** @type {MethodDefinition} **/ (visit(definition, child_state)));
 		}
 
-		if (state.options.dev && public_state.size > 0) {
+		if (dev && public_state.size > 0) {
 			// add an `[$.ADD_OWNER]` method so that a class with state fields can widen ownership
 			body.push(
 				b.method(
@@ -248,7 +245,7 @@ export const javascript_visitors_runes = {
 					/** @type {Expression[]} */
 					const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
 
-					if (state.options.dev) {
+					if (dev) {
 						// include rest name, so we can provide informative error messages
 						args.push(b.literal(declarator.id.name));
 					}
@@ -287,7 +284,7 @@ export const javascript_visitors_runes = {
 							/** @type {Expression[]} */
 							const args = [b.id('$$props'), b.array(seen.map((name) => b.literal(name)))];
 
-							if (state.options.dev) {
+							if (dev) {
 								// include rest name, so we can provide informative error messages
 								args.push(b.literal(/** @type {Identifier} */ (property.argument).name));
 							}
@@ -474,7 +471,7 @@ export const javascript_visitors_runes = {
 	BinaryExpression(node, { state, visit, next }) {
 		const operator = node.operator;
 
-		if (state.options.dev) {
+		if (dev) {
 			if (operator === '===' || operator === '!==') {
 				return b.call(
 					'$.strict_equals',

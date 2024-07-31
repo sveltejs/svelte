@@ -16,6 +16,7 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../../../constants.js';
+import { dev } from '../../../state.js';
 
 /**
  * @template {ClientTransformState} State
@@ -212,7 +213,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 							assignment.right =
 								private_state.kind === 'frozen_state'
 									? b.call('$.freeze', value)
-									: serialize_proxy_reassignment(value, private_state.id, state);
+									: serialize_proxy_reassignment(value, private_state.id);
 							return assignment;
 						}
 					}
@@ -225,7 +226,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 							should_proxy_or_freeze(value, context.state.scope)
 							? private_state.kind === 'frozen_state'
 								? b.call('$.freeze', value)
-								: serialize_proxy_reassignment(value, private_state.id, state)
+								: serialize_proxy_reassignment(value, private_state.id)
 							: value
 					);
 				}
@@ -249,7 +250,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 					assignment.right =
 						public_state.kind === 'frozen_state'
 							? b.call('$.freeze', value)
-							: serialize_proxy_reassignment(value, public_state.id, state);
+							: serialize_proxy_reassignment(value, public_state.id);
 					return assignment;
 				}
 			}
@@ -317,7 +318,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 						context.state.analysis.runes &&
 							!options?.skip_proxy_and_freeze &&
 							should_proxy_or_freeze(value, context.state.scope)
-							? serialize_proxy_reassignment(value, left_name, state)
+							? serialize_proxy_reassignment(value, left_name)
 							: value
 					);
 				} else if (binding.kind === 'frozen_state') {
@@ -340,7 +341,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 							!options?.skip_proxy_and_freeze &&
 							should_proxy_or_freeze(value, context.state.scope) &&
 							binding.kind === 'bindable_prop'
-							? serialize_proxy_reassignment(value, left_name, state)
+							? serialize_proxy_reassignment(value, left_name)
 							: value
 					);
 				} else {
@@ -435,10 +436,9 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 /**
  * @param {Expression} value
  * @param {PrivateIdentifier | string} proxy_reference
- * @param {ClientTransformState} state
  */
-export function serialize_proxy_reassignment(value, proxy_reference, state) {
-	return state.options.dev
+export function serialize_proxy_reassignment(value, proxy_reference) {
+	return dev
 		? b.call(
 				'$.proxy',
 				value,
