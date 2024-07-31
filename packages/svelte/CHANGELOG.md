@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.205
+
+### Patch Changes
+
+- fix: always synchronously call `bind:this` ([#12679](https://github.com/sveltejs/svelte/pull/12679))
+
 ## 5.0.0-next.204
 
 ### Patch Changes
