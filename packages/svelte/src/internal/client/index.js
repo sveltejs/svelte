@@ -6,7 +6,8 @@ export {
 	add_owner,
 	mark_module_start,
 	mark_module_end,
-	add_owner_effect
+	add_owner_effect,
+	skip_ownership_validation
 } from './dev/ownership.js';
 export { check_target, legacy_api } from './dev/legacy.js';
 export { inspect } from './dev/inspect.js';

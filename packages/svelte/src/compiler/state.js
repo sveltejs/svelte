@@ -66,6 +66,16 @@ export function reset_warning_filter(fn = () => true) {
 }
 
 /**
+ *
+ * @param {SvelteNode | NodeLike} node
+ * @param {import('../constants.js').IGNORABLE_RUNTIME_WARNINGS[number]} code
+ * @returns
+ */
+export function is_ignored(node, code) {
+	return dev && !!ignore_map.get(node)?.some((codes) => codes.has(code));
+}
+
+/**
  * @param {string} _source
  * @param {{ dev?: boolean; filename?: string; rootDir?: string }} options
  */

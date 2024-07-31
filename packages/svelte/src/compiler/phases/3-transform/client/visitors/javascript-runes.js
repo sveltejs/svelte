@@ -1,10 +1,13 @@
 /** @import { CallExpression, Expression, Identifier, Literal, MethodDefinition, PrivateIdentifier, PropertyDefinition, VariableDeclarator } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentVisitors, StateField } from '../types.js' */
+import { dev, is_ignored } from '../../../../state.js';
+import * as assert from '../../../../utils/assert.js';
+import { extract_paths } from '../../../../utils/ast.js';
+import * as b from '../../../../utils/builders.js';
+import { regex_invalid_identifier_chars } from '../../../patterns.js';
 import { get_rune } from '../../../scope.js';
 import { is_hoistable_function, transform_inspect_rune } from '../../utils.js';
-import * as b from '../../../../utils/builders.js';
-import * as assert from '../../../../utils/assert.js';
 import {
 	get_prop_source,
 	is_prop_source,
@@ -12,9 +15,6 @@ import {
 	serialize_proxy_reassignment,
 	should_proxy_or_freeze
 } from '../utils.js';
-import { extract_paths } from '../../../../utils/ast.js';
-import { regex_invalid_identifier_chars } from '../../../patterns.js';
-import { dev } from '../../../../state.js';
 
 /** @type {ComponentVisitors} */
 export const javascript_visitors_runes = {
@@ -197,7 +197,9 @@ export const javascript_visitors_runes = {
 							b.call(
 								'$.add_owner',
 								b.call('$.get', b.member(b.this, b.private_id(name))),
-								b.id('owner')
+								b.id('owner'),
+								b.literal(false),
+								is_ignored(node, 'ownership_invalid_binding') && b.true
 							)
 						)
 					),
@@ -446,7 +448,11 @@ export const javascript_visitors_runes = {
 		}
 
 		if (rune === '$state.snapshot') {
-			return b.call('$.snapshot', /** @type {Expression} */ (context.visit(node.arguments[0])));
+			return b.call(
+				'$.snapshot',
+				/** @type {Expression} */ (context.visit(node.arguments[0])),
+				is_ignored(node, 'state_snapshot_uncloneable') && b.true
+			);
 		}
 
 		if (rune === '$state.is') {

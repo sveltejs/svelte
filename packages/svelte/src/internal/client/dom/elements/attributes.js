@@ -82,8 +82,9 @@ export function set_checked(element, checked) {
  * @param {Element} element
  * @param {string} attribute
  * @param {string | null} value
+ * @param {boolean} [skip_warning]
  */
-export function set_attribute(element, attribute, value) {
+export function set_attribute(element, attribute, value, skip_warning) {
 	value = value == null ? null : value + '';
 
 	// @ts-expect-error
@@ -93,7 +94,9 @@ export function set_attribute(element, attribute, value) {
 		attributes[attribute] = element.getAttribute(attribute);
 
 		if (attribute === 'src' || attribute === 'href' || attribute === 'srcset') {
-			check_src_in_dev_hydration(element, attribute, value);
+			if (!skip_warning) {
+				check_src_in_dev_hydration(element, attribute, value);
+			}
 
 			// If we reset these attributes, they would result in another network request, which we want to avoid.
 			// We assume they are the same between client and server as checking if they are equal is expensive
@@ -150,9 +153,10 @@ export function set_custom_element_data(node, prop, value) {
  * @param {Record<string, any>} next New attributes - this function mutates this object
  * @param {boolean} lowercase_attributes
  * @param {string} css_hash
+ * @param {boolean} [skip_warning]
  * @returns {Record<string, any>}
  */
-export function set_attributes(element, prev, next, lowercase_attributes, css_hash) {
+export function set_attributes(element, prev, next, lowercase_attributes, css_hash, skip_warning) {
 	var has_hash = css_hash.length !== 0;
 	var current = prev || {};
 	var is_option_element = element.tagName === 'OPTION';
@@ -274,7 +278,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 
 			if (setters.includes(name)) {
 				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
-					check_src_in_dev_hydration(element, name, value);
+					if (!skip_warning) check_src_in_dev_hydration(element, name, value);
 				} else {
 					// @ts-ignore
 					element[name] = value;

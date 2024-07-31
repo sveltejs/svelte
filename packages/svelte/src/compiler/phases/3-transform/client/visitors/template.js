@@ -3,35 +3,8 @@
 /** @import { SourceLocation } from '#shared' */
 /** @import { Scope } from '../../../scope.js' */
 /** @import { ComponentClientTransformState, ComponentContext, ComponentVisitors } from '../types.js' */
-import {
-	extract_identifiers,
-	extract_paths,
-	get_attribute_chunks,
-	get_attribute_expression,
-	is_event_attribute,
-	is_text_attribute,
-	object,
-	unwrap_optional
-} from '../../../../utils/ast.js';
-import { binding_properties } from '../../../bindings.js';
-import { clean_nodes, determine_namespace_for_children, infer_namespace } from '../../utils.js';
-import {
-	DOMProperties,
-	LoadErrorElements,
-	PassiveEvents,
-	VoidElements
-} from '../../../constants.js';
-import { is_custom_element_node, is_element_node } from '../../../nodes.js';
-import * as b from '../../../../utils/builders.js';
-import {
-	with_loc,
-	function_visitor,
-	get_assignment_value,
-	serialize_get_binding,
-	serialize_set_binding,
-	create_derived,
-	create_derived_block_argument
-} from '../utils.js';
+import is_reference from 'is-reference';
+import { walk } from 'zimmerframe';
 import {
 	AttributeAliases,
 	DOMBooleanAttributes,
@@ -49,12 +22,39 @@ import {
 	TRANSITION_OUT
 } from '../../../../../constants.js';
 import { escape_html } from '../../../../../escaping.js';
-import { regex_is_valid_identifier } from '../../../patterns.js';
-import { javascript_visitors_runes } from './javascript-runes.js';
+import { dev, is_ignored, locator } from '../../../../state.js';
+import {
+	extract_identifiers,
+	extract_paths,
+	get_attribute_chunks,
+	get_attribute_expression,
+	is_event_attribute,
+	is_text_attribute,
+	object,
+	unwrap_optional
+} from '../../../../utils/ast.js';
+import * as b from '../../../../utils/builders.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
-import { walk } from 'zimmerframe';
-import { dev, locator } from '../../../../state.js';
-import is_reference from 'is-reference';
+import { binding_properties } from '../../../bindings.js';
+import {
+	DOMProperties,
+	LoadErrorElements,
+	PassiveEvents,
+	VoidElements
+} from '../../../constants.js';
+import { is_custom_element_node, is_element_node } from '../../../nodes.js';
+import { regex_is_valid_identifier } from '../../../patterns.js';
+import { clean_nodes, determine_namespace_for_children, infer_namespace } from '../../utils.js';
+import {
+	create_derived,
+	create_derived_block_argument,
+	function_visitor,
+	get_assignment_value,
+	serialize_get_binding,
+	serialize_set_binding,
+	with_loc
+} from '../utils.js';
+import { javascript_visitors_runes } from './javascript-runes.js';
 
 /**
  * @param {RegularElement | SvelteElement} element
@@ -324,7 +324,8 @@ function serialize_element_spread_attributes(
 				b.id(id),
 				b.object(values),
 				lowercase_attributes,
-				b.literal(context.state.analysis.css.hash)
+				b.literal(context.state.analysis.css.hash),
+				is_ignored(element, 'hydration_attribute_changed') && b.true
 			)
 		)
 	);
@@ -489,7 +490,15 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 
 	// The foreign namespace doesn't have any special handling, everything goes through the attr function
 	if (context.state.metadata.namespace === 'foreign') {
-		const statement = b.stmt(b.call('$.set_attribute', node_id, b.literal(name), value));
+		const statement = b.stmt(
+			b.call(
+				'$.set_attribute',
+				node_id,
+				b.literal(name),
+				value,
+				is_ignored(element, 'hydration_attribute_changed') && b.true
+			)
+		);
 
 		if (attribute.metadata.expression.has_state) {
 			const id = state.scope.generate(`${node_id.name}_${name}`);
@@ -525,7 +534,15 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		update = b.stmt(b.assignment('=', b.member(node_id, b.id(name)), value));
 	} else {
 		const callee = name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute';
-		update = b.stmt(b.call(callee, node_id, b.literal(name), value));
+		update = b.stmt(
+			b.call(
+				callee,
+				node_id,
+				b.literal(name),
+				value,
+				is_ignored(element, 'hydration_attribute_changed') && b.true
+			)
+		);
 	}
 
 	if (attribute.metadata.expression.has_state) {
@@ -780,7 +797,12 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 		} else if (attribute.type === 'BindDirective') {
 			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
 
-			if (dev && expression.type === 'MemberExpression' && context.state.analysis.runes) {
+			if (
+				dev &&
+				expression.type === 'MemberExpression' &&
+				context.state.analysis.runes &&
+				!is_ignored(node, 'binding_property_non_reactive')
+			) {
 				context.state.init.push(serialize_validate_binding(context.state, attribute, expression));
 			}
 
@@ -789,7 +811,14 @@ function serialize_inline_component(node, component_name, context, anchor = cont
 			} else {
 				if (dev) {
 					binding_initializers.push(
-						b.stmt(b.call(b.id('$.add_owner_effect'), b.thunk(expression), b.id(component_name)))
+						b.stmt(
+							b.call(
+								b.id('$.add_owner_effect'),
+								b.thunk(expression),
+								b.id(component_name),
+								is_ignored(node, 'ownership_invalid_binding') && b.true
+							)
+						)
 					);
 				}
 
@@ -1811,7 +1840,8 @@ export const template_visitors = {
 					context.state.node,
 					b.thunk(/** @type {Expression} */ (context.visit(node.expression))),
 					b.literal(context.state.metadata.namespace === 'svg'),
-					b.literal(context.state.metadata.namespace === 'mathml')
+					b.literal(context.state.metadata.namespace === 'mathml'),
+					is_ignored(node, 'hydration_html_changed') && b.true
 				)
 			)
 		);
@@ -2903,7 +2933,8 @@ export const template_visitors = {
 						type === 'KeyBlock'
 				)) &&
 			dev &&
-			context.state.analysis.runes
+			context.state.analysis.runes &&
+			!is_ignored(node, 'binding_property_non_reactive')
 		) {
 			context.state.init.push(
 				serialize_validate_binding(

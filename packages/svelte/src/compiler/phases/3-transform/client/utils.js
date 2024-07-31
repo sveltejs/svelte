@@ -16,7 +16,7 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../../../constants.js';
-import { dev } from '../../../state.js';
+import { is_ignored, dev } from '../../../state.js';
 
 /**
  * @template {ClientTransformState} State
@@ -282,6 +282,22 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 		);
 	}
 
+	/**
+	 * @param {any} serialized
+	 * @returns
+	 */
+	function maybe_skip_ownership_validation(serialized) {
+		if (is_ignored(node, 'ownership_invalid_mutation')) {
+			return b.call('$.skip_ownership_validation', b.thunk(serialized));
+		}
+
+		return serialized;
+	}
+
+	if (binding.kind === 'derived') {
+		return maybe_skip_ownership_validation(fallback());
+	}
+
 	const is_store = binding.kind === 'store_sub';
 	const left_name = is_store ? left.name.slice(1) : left.name;
 
@@ -382,11 +398,13 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 					return /** @type {Expression} */ (visit(node));
 				}
 
-				return b.call(
-					'$.store_mutate',
-					serialize_get_binding(b.id(left_name), state),
-					b.assignment(node.operator, /** @type {Pattern}} */ (visit_node(node.left)), value),
-					b.call('$.untrack', b.id('$' + left_name))
+				return maybe_skip_ownership_validation(
+					b.call(
+						'$.store_mutate',
+						serialize_get_binding(b.id(left_name), state),
+						b.assignment(node.operator, /** @type {Pattern}} */ (visit_node(node.left)), value),
+						b.call('$.untrack', b.id('$' + left_name))
+					)
 				);
 			} else if (
 				!state.analysis.runes ||
@@ -394,16 +412,20 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 				(binding.mutated && binding.kind === 'bindable_prop')
 			) {
 				if (binding.kind === 'bindable_prop') {
-					return b.call(
-						left,
-						b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value),
-						b.true
+					return maybe_skip_ownership_validation(
+						b.call(
+							left,
+							b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value),
+							b.true
+						)
 					);
 				} else {
-					return b.call(
-						'$.mutate',
-						b.id(left_name),
-						b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value)
+					return maybe_skip_ownership_validation(
+						b.call(
+							'$.mutate',
+							b.id(left_name),
+							b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value)
+						)
 					);
 				}
 			} else if (
@@ -411,16 +433,20 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 				prefix != null &&
 				(node.operator === '+=' || node.operator === '-=')
 			) {
-				return b.update(
-					node.operator === '+=' ? '++' : '--',
-					/** @type {Expression} */ (visit(node.left)),
-					prefix
+				return maybe_skip_ownership_validation(
+					b.update(
+						node.operator === '+=' ? '++' : '--',
+						/** @type {Expression} */ (visit(node.left)),
+						prefix
+					)
 				);
 			} else {
-				return b.assignment(
-					node.operator,
-					/** @type {Pattern} */ (visit(node.left)),
-					/** @type {Expression} */ (visit(node.right))
+				return maybe_skip_ownership_validation(
+					b.assignment(
+						node.operator,
+						/** @type {Pattern} */ (visit(node.left)),
+						/** @type {Expression} */ (visit(node.right))
+					)
 				);
 			}
 		}

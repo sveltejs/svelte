@@ -108,15 +108,16 @@ export function mark_module_end(component) {
  * @param {any} object
  * @param {any} owner
  * @param {boolean} [global]
+ * @param {boolean} [skip_warning]
  */
-export function add_owner(object, owner, global = false) {
+export function add_owner(object, owner, global = false, skip_warning = false) {
 	if (object && !global) {
 		const component = dev_current_component_function;
 		const metadata = object[STATE_SYMBOL];
 		if (metadata && !has_owner(metadata, component)) {
 			let original = get_owner(metadata);
 
-			if (owner[FILENAME] !== component[FILENAME]) {
+			if (owner[FILENAME] !== component[FILENAME] && !skip_warning) {
 				w.ownership_invalid_binding(component[FILENAME], owner[FILENAME], original[FILENAME]);
 			}
 		}
@@ -128,10 +129,11 @@ export function add_owner(object, owner, global = false) {
 /**
  * @param {() => unknown} get_object
  * @param {any} Component
+ * @param {boolean} [skip_warning]
  */
-export function add_owner_effect(get_object, Component) {
+export function add_owner_effect(get_object, Component, skip_warning = false) {
 	user_pre_effect(() => {
-		add_owner(get_object(), Component);
+		add_owner(get_object(), Component, false, skip_warning);
 	});
 }
 
@@ -227,10 +229,23 @@ function get_owner(metadata) {
 	);
 }
 
+let skip = false;
+
+/**
+ * @param {() => any} fn
+ */
+export function skip_ownership_validation(fn) {
+	skip = true;
+	fn();
+	skip = false;
+}
+
 /**
  * @param {ProxyMetadata} metadata
  */
 export function check_ownership(metadata) {
+	if (skip) return;
+
 	const component = get_component();
 
 	if (component && !has_owner(metadata, component)) {

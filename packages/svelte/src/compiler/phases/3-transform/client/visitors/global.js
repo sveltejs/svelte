@@ -3,6 +3,7 @@
 import is_reference from 'is-reference';
 import { serialize_get_binding, serialize_set_binding } from '../utils.js';
 import * as b from '../../../../utils/builders.js';
+import { is_ignored } from '../../../../state.js';
 
 /** @type {Visitors} */
 export const global_visitors = {
@@ -115,6 +116,15 @@ export const global_visitors = {
 
 			return b.call(fn, ...args);
 		} else {
+			/** @param {any} serialized */
+			function maybe_skip_ownership_validation(serialized) {
+				if (is_ignored(node, 'ownership_invalid_mutation')) {
+					return b.call('$.skip_ownership_validation', b.thunk(serialized));
+				}
+
+				return serialized;
+			}
+
 			// turn it into an IIFEE assignment expression: i++ -> (() => { const $$value = i; i+=1; return $$value; })
 			const assignment = b.assignment(
 				node.operator === '++' ? '+=' : '-=',
@@ -130,9 +140,9 @@ export const global_visitors = {
 			const value = /** @type {Expression} */ (visit(argument));
 			if (serialized_assignment === assignment) {
 				// No change to output -> nothing to transform -> we can keep the original update expression
-				return next();
+				return maybe_skip_ownership_validation(next());
 			} else if (context.state.analysis.runes) {
-				return serialized_assignment;
+				return maybe_skip_ownership_validation(serialized_assignment);
 			} else {
 				/** @type {Statement[]} */
 				let statements;
@@ -146,7 +156,7 @@ export const global_visitors = {
 						b.return(b.id(tmp_id))
 					];
 				}
-				return b.call(b.thunk(b.block(statements)));
+				return maybe_skip_ownership_validation(b.call(b.thunk(b.block(statements))));
 			}
 		}
 	}
