@@ -118,7 +118,7 @@ export const global_visitors = {
 		} else {
 			/** @param {any} serialized */
 			function maybe_skip_ownership_validation(serialized) {
-				if (context.state.options.dev && is_ignored(node, 'ownership_invalid_mutation')) {
+				if (is_ignored(node, 'ownership_invalid_mutation')) {
 					return b.call('$.skip_ownership_validation', b.thunk(serialized));
 				}
 

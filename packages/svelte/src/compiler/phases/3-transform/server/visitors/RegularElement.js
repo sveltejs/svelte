@@ -2,7 +2,7 @@
 /** @import { RegularElement, Text } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
 /** @import { Scope } from '../../../scope.js' */
-import { locator } from '../../../../state.js';
+import { dev, locator } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { VoidElements } from '../../../constants.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
@@ -55,7 +55,7 @@ export function RegularElement(node, context) {
 		context.visit(node, state);
 	}
 
-	if (state.options.dev) {
+	if (dev) {
 		const location = /** @type {Location} */ (locator(node.start));
 		state.template.push(
 			b.stmt(
@@ -99,7 +99,7 @@ export function RegularElement(node, context) {
 		state.template.push(b.literal(`</${node.name}>`));
 	}
 
-	if (state.options.dev) {
+	if (dev) {
 		state.template.push(b.stmt(b.call('$.pop_element')));
 	}
 }

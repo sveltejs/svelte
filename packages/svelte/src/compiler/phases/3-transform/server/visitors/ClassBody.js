@@ -1,6 +1,7 @@
 /** @import { ClassBody, Expression, MethodDefinition, PropertyDefinition } from 'estree' */
 /** @import { Context } from '../types.js' */
 /** @import { StateField } from '../../client/types.js' */
+import { dev } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { get_rune } from '../../../scope.js';
 
@@ -92,10 +93,7 @@ export function ClassBodyRunes(node, context) {
 					// get foo() { return this.#foo; }
 					body.push(b.method('get', definition.key, [], [b.return(b.call(member))]));
 
-					if (
-						(field.kind === 'derived' || field.kind === 'derived_call') &&
-						context.state.options.dev
-					) {
+					if (dev && (field.kind === 'derived' || field.kind === 'derived_call')) {
 						body.push(
 							b.method(
 								'set',

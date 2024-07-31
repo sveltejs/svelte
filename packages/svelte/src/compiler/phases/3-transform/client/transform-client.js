@@ -12,7 +12,7 @@ import { javascript_visitors_runes } from './visitors/javascript-runes.js';
 import { javascript_visitors_legacy } from './visitors/javascript-legacy.js';
 import { serialize_get_binding } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
-import { filename } from '../../../state.js';
+import { dev, filename } from '../../../state.js';
 
 /**
  * This function ensures visitor sets don't accidentally clobber each other
@@ -164,7 +164,7 @@ export function client_component(source, analysis, options) {
 			store_setup.push(
 				b.const(
 					binding.node,
-					options.dev
+					dev
 						? b.thunk(
 								b.sequence([
 									b.call('$.validate_store', store_reference, b.literal(name.slice(1))),
@@ -210,7 +210,7 @@ export function client_component(source, analysis, options) {
 					getter,
 					b.set(alias ?? name, [b.stmt(b.assignment('=', expression, b.id('$$value')))])
 				];
-			} else if (!options.dev) {
+			} else if (!dev) {
 				return b.init(alias ?? name, expression);
 			}
 		}
@@ -238,7 +238,7 @@ export function client_component(source, analysis, options) {
 			(binding.kind === 'prop' || binding.kind === 'bindable_prop') && !name.startsWith('$$')
 	);
 
-	if (analysis.runes && options.dev) {
+	if (dev && analysis.runes) {
 		const exports = analysis.exports.map(({ name, alias }) => b.literal(alias ?? name));
 		/** @type {ESTree.Literal[]} */
 		const bindable = [];
@@ -300,12 +300,12 @@ export function client_component(source, analysis, options) {
 				)
 			)
 		);
-	} else if (options.dev) {
+	} else if (dev) {
 		component_returned_object.push(b.spread(b.call(b.id('$.legacy_api'))));
 	}
 
 	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
-	if (options.dev) push_args.push(b.id(analysis.name));
+	if (dev) push_args.push(b.id(analysis.name));
 
 	const component_block = b.block([
 		...store_setup,
@@ -345,10 +345,10 @@ export function client_component(source, analysis, options) {
 	}
 
 	const should_inject_context =
+		dev ||
 		analysis.needs_context ||
 		analysis.reactive_statements.size > 0 ||
-		component_returned_object.length > 0 ||
-		options.dev;
+		component_returned_object.length > 0;
 
 	if (should_inject_context) {
 		component_block.body.unshift(b.stmt(b.call('$.push', ...push_args)));
@@ -462,7 +462,7 @@ export function client_component(source, analysis, options) {
 		body.push(b.export_default(component));
 	}
 
-	if (options.dev) {
+	if (dev) {
 		if (filename) {
 			// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later
 			body.unshift(
@@ -498,7 +498,7 @@ export function client_component(source, analysis, options) {
 				)
 			)
 		);
-	} else if (options.dev) {
+	} else if (dev) {
 		component_block.body.unshift(b.stmt(b.call('$.check_target', b.id('new.target'))));
 	}
 
