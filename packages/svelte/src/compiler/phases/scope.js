@@ -12,7 +12,8 @@ import {
 	object,
 	unwrap_pattern
 } from '../utils/ast.js';
-import { JsKeywords, Runes } from './constants.js';
+import { Runes } from './constants.js';
+import { is_reserved } from '../../utils.js';
 
 export class Scope {
 	/** @type {ScopeRoot} */
@@ -148,7 +149,7 @@ export class Scope {
 			this.references.has(name) ||
 			this.declarations.has(name) ||
 			this.root.conflicts.has(name) ||
-			JsKeywords.includes(name)
+			is_reserved(name)
 		) {
 			name = `${preferred_name}_${n++}`;
 		}
