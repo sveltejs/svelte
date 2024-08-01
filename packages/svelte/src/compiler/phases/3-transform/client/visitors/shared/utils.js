@@ -1,11 +1,14 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement, TemplateElement, TemplateLiteral } from 'estree' */
-/** @import { ExpressionMetadata, ExpressionTag, OnDirective, SvelteNode, Text } from '#compiler' */
+/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement, Super, TemplateElement, TemplateLiteral } from 'estree' */
+/** @import { BindDirective, ExpressionMetadata, ExpressionTag, OnDirective, SvelteNode, Text } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../../types' */
+import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import { create_derived } from '../../utils.js';
+import is_reference from 'is-reference';
+import { locator } from '../../../../../state.js';
 
 /**
  * @param {Array<Text | ExpressionTag>} values
@@ -231,4 +234,102 @@ export function serialize_event_handler(node, metadata, { state, visit }) {
 	}
 
 	return handler;
+}
+
+/**
+ * Serializes `bind:this` for components and elements.
+ * @param {Identifier | MemberExpression} expression
+ * @param {Expression} value
+ * @param {import('zimmerframe').Context<SvelteNode, ComponentClientTransformState>} context
+ */
+export function serialize_bind_this(expression, value, { state, visit }) {
+	/** @type {Identifier[]} */
+	const ids = [];
+
+	/** @type {Expression[]} */
+	const values = [];
+
+	/** @type {typeof state.getters} */
+	const getters = {};
+
+	// Pass in each context variables to the get/set functions, so that we can null out old values on teardown.
+	// Note that we only do this for each context variables, the consequence is that the value might be stale in
+	// some scenarios where the value is a member expression with changing computed parts or using a combination of multiple
+	// variables, but that was the same case in Svelte 4, too. Once legacy mode is gone completely, we can revisit this.
+	walk(expression, null, {
+		Identifier(node, { path }) {
+			if (Object.hasOwn(getters, node.name)) return;
+
+			const parent = /** @type {Expression} */ (path.at(-1));
+			if (!is_reference(node, parent)) return;
+
+			const binding = state.scope.get(node.name);
+			if (!binding) return;
+
+			for (const [owner, scope] of state.scopes) {
+				if (owner.type === 'EachBlock' && scope === binding.scope) {
+					ids.push(node);
+					values.push(/** @type {Expression} */ (visit(node)));
+					getters[node.name] = node;
+					break;
+				}
+			}
+		}
+	});
+
+	const child_state = { ...state, getters: { ...state.getters, ...getters } };
+
+	const get = /** @type {Expression} */ (visit(expression, child_state));
+	const set = /** @type {Expression} */ (
+		visit(b.assignment('=', expression, b.id('$$value')), child_state)
+	);
+
+	// If we're mutating a property, then it might already be non-existent.
+	// If we make all the object nodes optional, then it avoids any runtime exceptions.
+	/** @type {Expression | Super} */
+	let node = get;
+
+	while (node.type === 'MemberExpression') {
+		node.optional = true;
+		node = node.object;
+	}
+
+	return b.call(
+		'$.bind_this',
+		value,
+		b.arrow([b.id('$$value'), ...ids], set),
+		b.arrow([...ids], get),
+		values.length > 0 && b.thunk(b.array(values))
+	);
+}
+
+/**
+ * @param {ComponentClientTransformState} state
+ * @param {BindDirective} binding
+ * @param {MemberExpression} expression
+ */
+export function serialize_validate_binding(state, binding, expression) {
+	const string = state.analysis.source.slice(binding.start, binding.end);
+
+	const get_object = b.thunk(/** @type {Expression} */ (expression.object));
+	const get_property = b.thunk(
+		/** @type {Expression} */ (
+			expression.computed
+				? expression.property
+				: b.literal(/** @type {Identifier} */ (expression.property).name)
+		)
+	);
+
+	const loc = locator(binding.start);
+
+	return b.stmt(
+		b.call(
+			'$.validate_binding',
+			b.literal(string),
+			get_object,
+			get_property,
+			loc && b.literal(loc.line),
+			loc && b.literal(loc.column)
+		)
+	);
 }
