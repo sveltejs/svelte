@@ -9,7 +9,12 @@ import { get_rune } from '../../../scope.js';
  * @param {ClassBody} node
  * @param {Context} context
  */
-export function ClassBodyRunes(node, context) {
+export function ClassBody(node, context) {
+	if (!context.state.analysis.runes) {
+		context.next();
+		return;
+	}
+
 	/** @type {Map<string, StateField>} */
 	const public_derived = new Map();
 

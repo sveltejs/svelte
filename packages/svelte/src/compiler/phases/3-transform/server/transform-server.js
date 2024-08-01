@@ -11,7 +11,7 @@ import { render_stylesheet } from '../css/index.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { CallExpression } from './visitors/CallExpression.js';
-import { ClassBodyRunes } from './visitors/ClassBody.js';
+import { ClassBody } from './visitors/ClassBody.js';
 import { Component } from './visitors/Component.js';
 import { ConstTag } from './visitors/ConstTag.js';
 import { DebugTag } from './visitors/DebugTag.js';
@@ -23,8 +23,8 @@ import { Identifier } from './visitors/Identifier.js';
 import { IfBlock } from './visitors/IfBlock.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
-import { MemberExpressionRunes } from './visitors/MemberExpression.js';
-import { PropertyDefinitionRunes } from './visitors/PropertyDefinition.js';
+import { MemberExpression } from './visitors/MemberExpression.js';
+import { PropertyDefinition } from './visitors/PropertyDefinition.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
 import { SlotElement } from './visitors/SlotElement.js';
@@ -47,18 +47,18 @@ const global_visitors = {
 	_: set_scope,
 	AssignmentExpression,
 	CallExpression,
+	ClassBody,
 	ExpressionStatement,
 	Identifier,
 	LabeledStatement,
+	MemberExpression,
+	PropertyDefinition,
 	UpdateExpression
 };
 
 /** @type {Visitors} */
 const javascript_visitors_runes = {
 	...global_visitors,
-	ClassBody: ClassBodyRunes,
-	MemberExpression: MemberExpressionRunes,
-	PropertyDefinition: PropertyDefinitionRunes,
 	VariableDeclaration: VariableDeclarationRunes
 };
 
