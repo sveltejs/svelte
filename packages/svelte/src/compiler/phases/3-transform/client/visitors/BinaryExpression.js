@@ -8,9 +8,9 @@ import * as b from '../../../../utils/builders.js';
  * @param {ComponentContext} context
  */
 export function BinaryExpression(node, context) {
-	const operator = node.operator;
-
 	if (dev) {
+		const operator = node.operator;
+
 		if (operator === '===' || operator === '!==') {
 			return b.call(
 				'$.strict_equals',

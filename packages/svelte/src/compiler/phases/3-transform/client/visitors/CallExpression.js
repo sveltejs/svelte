@@ -10,39 +10,36 @@ import { transform_inspect_rune } from '../../utils.js';
  * @param {Context} context
  */
 export function CallExpression(node, context) {
-	const rune = get_rune(node, context.state.scope);
+	switch (get_rune(node, context.state.scope)) {
+		case '$host':
+			return b.id('$$props.$$host');
 
-	if (rune === '$host') {
-		return b.id('$$props.$$host');
-	}
+		case '$effect.tracking':
+			return b.call('$.effect_tracking');
 
-	if (rune === '$effect.tracking') {
-		return b.call('$.effect_tracking');
-	}
+		case '$state.snapshot':
+			return b.call(
+				'$.snapshot',
+				/** @type {Expression} */ (context.visit(node.arguments[0])),
+				is_ignored(node, 'state_snapshot_uncloneable') && b.true
+			);
 
-	if (rune === '$state.snapshot') {
-		return b.call(
-			'$.snapshot',
-			/** @type {Expression} */ (context.visit(node.arguments[0])),
-			is_ignored(node, 'state_snapshot_uncloneable') && b.true
-		);
-	}
+		case '$state.is':
+			return b.call(
+				'$.is',
+				/** @type {Expression} */ (context.visit(node.arguments[0])),
+				/** @type {Expression} */ (context.visit(node.arguments[1]))
+			);
 
-	if (rune === '$state.is') {
-		return b.call(
-			'$.is',
-			/** @type {Expression} */ (context.visit(node.arguments[0])),
-			/** @type {Expression} */ (context.visit(node.arguments[1]))
-		);
-	}
+		case '$effect.root':
+			return b.call(
+				'$.effect_root',
+				.../** @type {Expression[]} */ (node.arguments.map((arg) => context.visit(arg)))
+			);
 
-	if (rune === '$effect.root') {
-		const args = /** @type {Expression[]} */ (node.arguments.map((arg) => context.visit(arg)));
-		return b.call('$.effect_root', ...args);
-	}
-
-	if (rune === '$inspect' || rune === '$inspect().with') {
-		return transform_inspect_rune(node, context);
+		case '$inspect':
+		case '$inspect().with':
+			return transform_inspect_rune(node, context);
 	}
 
 	context.next();

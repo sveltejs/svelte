@@ -14,16 +14,13 @@ export function LabeledStatement(node, context) {
 		return;
 	}
 
-	const state = context.state;
 	// To recreate Svelte 4 behaviour, we track the dependencies
 	// the compiler can 'see', but we untrack the effect itself
-	const reactive_stmt = /** @type {ReactiveStatement} */ (
-		state.analysis.reactive_statements.get(node)
+	const reactive_statement = /** @type {ReactiveStatement} */ (
+		context.state.analysis.reactive_statements.get(node)
 	);
 
-	if (!reactive_stmt) return; // not the instance context
-
-	const { dependencies } = reactive_stmt;
+	if (!reactive_statement) return; // not the instance context
 
 	let serialized_body = /** @type {Statement} */ (context.visit(node.body));
 
@@ -35,11 +32,12 @@ export function LabeledStatement(node, context) {
 
 	/** @type {Expression[]} */
 	const sequence = [];
-	for (const binding of dependencies) {
+
+	for (const binding of reactive_statement.dependencies) {
 		if (binding.kind === 'normal') continue;
 
 		const name = binding.node.name;
-		let serialized = serialize_get_binding(b.id(name), state);
+		let serialized = serialize_get_binding(b.id(name), context.state);
 
 		// If the binding is a prop, we need to deep read it because it could be fine-grained $state
 		// from a runes-component, where mutations don't trigger an update on the prop as a whole.
@@ -51,7 +49,7 @@ export function LabeledStatement(node, context) {
 	}
 
 	// these statements will be topologically ordered later
-	state.legacy_reactive_statements.set(
+	context.state.legacy_reactive_statements.set(
 		node,
 		b.stmt(
 			b.call(
