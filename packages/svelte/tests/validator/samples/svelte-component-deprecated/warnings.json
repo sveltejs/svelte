@@ -1,0 +1,14 @@
+[
+	{
+		"code": "svelte_component_deprecated",
+		"message": "`svelte:component` has been deprecated, you can just render the component with `<Component />`",
+		"start": {
+			"line": 7,
+			"column": 0
+		},
+		"end": {
+			"line": 7,
+			"column": 29
+		}
+	}
+]

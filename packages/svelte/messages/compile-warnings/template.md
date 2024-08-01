@@ -54,6 +54,10 @@ This code will work when the component is rendered on the client (which is why t
 
 > Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead
 
+## svelte_component_deprecated
+
+> `svelte:component` has been deprecated, you can just render the component with `<Component />`
+
 ## svelte_element_invalid_this
 
 > `this` should be an `{expression}`. Using a string attribute value will cause an error in future versions of Svelte
