@@ -1,20 +1,10 @@
-/** @import { CallExpression, Expression, Identifier, Literal, MethodDefinition, PrivateIdentifier, PropertyDefinition, VariableDeclarator } from 'estree' */
-/** @import { Binding } from '#compiler' */
+/** @import { Expression, Identifier, Literal, MethodDefinition, PrivateIdentifier, PropertyDefinition } from 'estree' */
 /** @import { ComponentVisitors, StateField } from '../types.js' */
 import { dev, is_ignored } from '../../../../state.js';
-import * as assert from '../../../../utils/assert.js';
-import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { regex_invalid_identifier_chars } from '../../../patterns.js';
 import { get_rune } from '../../../scope.js';
-import { is_hoistable_function } from '../../utils.js';
-import {
-	get_prop_source,
-	is_prop_source,
-	is_state_source,
-	serialize_proxy_reassignment,
-	should_proxy_or_freeze
-} from '../utils.js';
+import { serialize_proxy_reassignment, should_proxy_or_freeze } from '../utils.js';
 
 /** @type {ComponentVisitors} */
 export const javascript_visitors_runes = {
