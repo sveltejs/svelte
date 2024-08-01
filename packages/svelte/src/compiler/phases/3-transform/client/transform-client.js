@@ -7,7 +7,6 @@ import * as b from '../../../utils/builders.js';
 import { set_scope } from '../../scope.js';
 import { global_visitors } from './visitors/global.js';
 import { javascript_visitors_runes } from './visitors/javascript-runes.js';
-import { javascript_visitors_legacy } from './visitors/javascript-legacy.js';
 import { serialize_get_binding } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
 import { dev, filename } from '../../../state.js';
@@ -82,7 +81,7 @@ export function client_component(source, analysis, options) {
 			combine_visitors(
 				set_scope(analysis.module.scopes),
 				global_visitors,
-				analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy
+				analysis.runes ? javascript_visitors_runes : {}
 			)
 		)
 	);
@@ -95,7 +94,7 @@ export function client_component(source, analysis, options) {
 			combine_visitors(
 				set_scope(analysis.instance.scopes),
 				global_visitors,
-				analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy,
+				analysis.runes ? javascript_visitors_runes : {},
 				{
 					ImportDeclaration(node) {
 						state.hoisted.push(node);

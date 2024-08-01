@@ -5,6 +5,7 @@ import { AssignmentExpression } from './AssignmentExpression.js';
 import { Attribute } from './Attribute.js';
 import { AwaitBlock } from './AwaitBlock.js';
 import { BindDirective } from './BindDirective.js';
+import { BreakStatement } from './BreakStatement.js';
 import { CallExpression } from './CallExpression.js';
 import { Comment } from './Comment.js';
 import { Component } from './Component.js';
@@ -18,6 +19,7 @@ import { HtmlTag } from './HtmlTag.js';
 import { Identifier } from './Identifier.js';
 import { IfBlock } from './IfBlock.js';
 import { KeyBlock } from './KeyBlock.js';
+import { LabeledStatement } from './LabeledStatement.js';
 import { LetDirective } from './LetDirective.js';
 import { MemberExpression } from './MemberExpression.js';
 import { OnDirective } from './OnDirective.js';
@@ -48,6 +50,7 @@ export const global_visitors = {
 	Attribute,
 	AwaitBlock,
 	BindDirective,
+	BreakStatement,
 	CallExpression,
 	Comment,
 	Component,
@@ -61,6 +64,7 @@ export const global_visitors = {
 	Identifier,
 	IfBlock,
 	KeyBlock,
+	LabeledStatement,
 	LetDirective,
 	MemberExpression,
 	OnDirective,
