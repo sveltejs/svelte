@@ -4,6 +4,7 @@ import { ArrowFunctionExpression } from './ArrowFunctionExpression.js';
 import { AssignmentExpression } from './AssignmentExpression.js';
 import { Attribute } from './Attribute.js';
 import { AwaitBlock } from './AwaitBlock.js';
+import { BinaryExpression } from './BinaryExpression.js';
 import { BindDirective } from './BindDirective.js';
 import { BreakStatement } from './BreakStatement.js';
 import { CallExpression } from './CallExpression.js';
@@ -13,6 +14,7 @@ import { Component } from './Component.js';
 import { ConstTag } from './ConstTag.js';
 import { DebugTag } from './DebugTag.js';
 import { EachBlock } from './EachBlock.js';
+import { ExpressionStatement } from './ExpressionStatement.js';
 import { Fragment } from './Fragment.js';
 import { FunctionDeclaration } from './FunctionDeclaration.js';
 import { FunctionExpression } from './FunctionExpression.js';
@@ -50,6 +52,7 @@ export const global_visitors = {
 	AssignmentExpression,
 	Attribute,
 	AwaitBlock,
+	BinaryExpression,
 	BindDirective,
 	BreakStatement,
 	CallExpression,
@@ -59,6 +62,7 @@ export const global_visitors = {
 	ConstTag,
 	DebugTag,
 	EachBlock,
+	ExpressionStatement,
 	Fragment,
 	FunctionDeclaration,
 	FunctionExpression,

@@ -6,7 +6,6 @@ import { walk } from 'zimmerframe';
 import * as b from '../../../utils/builders.js';
 import { set_scope } from '../../scope.js';
 import { global_visitors } from './visitors/global.js';
-import { javascript_visitors_runes } from './visitors/javascript-runes.js';
 import { serialize_get_binding } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
 import { dev, filename } from '../../../state.js';
@@ -78,11 +77,7 @@ export function client_component(source, analysis, options) {
 		walk(
 			/** @type {SvelteNode} */ (analysis.module.ast),
 			state,
-			combine_visitors(
-				set_scope(analysis.module.scopes),
-				global_visitors,
-				analysis.runes ? javascript_visitors_runes : {}
-			)
+			combine_visitors(set_scope(analysis.module.scopes), global_visitors)
 		)
 	);
 
@@ -91,24 +86,19 @@ export function client_component(source, analysis, options) {
 		walk(
 			/** @type {SvelteNode} */ (analysis.instance.ast),
 			instance_state,
-			combine_visitors(
-				set_scope(analysis.instance.scopes),
-				global_visitors,
-				analysis.runes ? javascript_visitors_runes : {},
-				{
-					ImportDeclaration(node) {
-						state.hoisted.push(node);
-						return b.empty;
-					},
-					ExportNamedDeclaration(node, context) {
-						if (node.declaration) {
-							return context.visit(node.declaration);
-						}
-
-						return b.empty;
+			combine_visitors(set_scope(analysis.instance.scopes), global_visitors, {
+				ImportDeclaration(node) {
+					state.hoisted.push(node);
+					return b.empty;
+				},
+				ExportNamedDeclaration(node, context) {
+					if (node.declaration) {
+						return context.visit(node.declaration);
 					}
+
+					return b.empty;
 				}
-			)
+			})
 		)
 	);
 
@@ -580,11 +570,7 @@ export function client_module(analysis, options) {
 		walk(
 			/** @type {SvelteNode} */ (analysis.module.ast),
 			state,
-			combine_visitors(
-				set_scope(analysis.module.scopes),
-				global_visitors,
-				javascript_visitors_runes
-			)
+			combine_visitors(set_scope(analysis.module.scopes), global_visitors)
 		)
 	);
 
