@@ -129,57 +129,6 @@ export function is_capture_event(name, mode = 'exclude-on') {
 		: name !== 'ongotpointercapture' && name !== 'onlostpointercapture';
 }
 
-export const reserved = [
-	'arguments',
-	'await',
-	'break',
-	'case',
-	'catch',
-	'class',
-	'const',
-	'continue',
-	'debugger',
-	'default',
-	'delete',
-	'do',
-	'else',
-	'enum',
-	'eval',
-	'export',
-	'extends',
-	'false',
-	'finally',
-	'for',
-	'function',
-	'if',
-	'implements',
-	'import',
-	'in',
-	'instanceof',
-	'interface',
-	'let',
-	'new',
-	'null',
-	'package',
-	'private',
-	'protected',
-	'public',
-	'return',
-	'static',
-	'super',
-	'switch',
-	'this',
-	'throw',
-	'true',
-	'try',
-	'typeof',
-	'var',
-	'void',
-	'while',
-	'with',
-	'yield'
-];
-
 // we use a list of ignorable runtime warnings because not every runtime warning
 // can be ignored and we want to keep the validation for svelte-ignore in place
 export const IGNORABLE_RUNTIME_WARNINGS = /** @type {const} */ ([
