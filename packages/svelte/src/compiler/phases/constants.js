@@ -22,14 +22,9 @@ export const Runes = /** @type {const} */ ([
  * list is almost certainly very incomplete)
  * TODO this is currently unused
  */
-export const ElementsWithoutText = ['audio', 'datalist', 'dl', 'optgroup', 'select', 'video'];
+export const ELEMENTS_WITHOUT_TEXT = ['audio', 'datalist', 'dl', 'optgroup', 'select', 'video'];
 
-export const ReservedKeywords = ['$$props', '$$restProps', '$$slots'];
-
-/** Attributes where whitespace can be compacted */
-export const WhitespaceInsensitiveAttributes = ['class', 'style'];
-
-export const ContentEditableBindings = ['textContent', 'innerHTML', 'innerText'];
+export const CONTENT_EDITABLE_BINDINGS = ['textContent', 'innerHTML', 'innerText'];
 
 export const LoadErrorElements = [
 	'body',

@@ -7,11 +7,7 @@ import {
 	is_text_attribute
 } from '../../../../../utils/ast.js';
 import { binding_properties } from '../../../../bindings.js';
-import {
-	ContentEditableBindings,
-	LoadErrorElements,
-	WhitespaceInsensitiveAttributes
-} from '../../../../constants.js';
+import { CONTENT_EDITABLE_BINDINGS, LoadErrorElements } from '../../../../constants.js';
 import {
 	create_attribute,
 	create_expression_metadata,
@@ -25,6 +21,8 @@ import {
 } from '../../../../../../constants.js';
 import { serialize_attribute_value } from './utils.js';
 import { is_boolean_attribute } from '../../../../../../utils.js';
+
+const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
 
 /**
  * Writes the output to the template output. Some elements may have attributes on them that require the
@@ -108,7 +106,7 @@ export function serialize_element_attributes(node, context) {
 			const binding = binding_properties[attribute.name];
 			if (binding?.omit_in_ssr) continue;
 
-			if (ContentEditableBindings.includes(attribute.name)) {
+			if (CONTENT_EDITABLE_BINDINGS.includes(attribute.name)) {
 				content = /** @type {Expression} */ (context.visit(attribute.expression));
 			} else if (attribute.name === 'value' && node.name === 'textarea') {
 				content = b.call(
@@ -227,7 +225,7 @@ export function serialize_element_attributes(node, context) {
 					serialize_attribute_value(
 						attribute.value,
 						context,
-						WhitespaceInsensitiveAttributes.includes(name)
+						WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 					)
 				).value;
 				if (name !== 'class' || literal_value) {
@@ -248,7 +246,7 @@ export function serialize_element_attributes(node, context) {
 			const value = serialize_attribute_value(
 				attribute.value,
 				context,
-				WhitespaceInsensitiveAttributes.includes(name)
+				WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 			);
 
 			context.state.template.push(
@@ -343,7 +341,7 @@ function serialize_element_spread_attributes(
 				const value = serialize_attribute_value(
 					attribute.value,
 					context,
-					WhitespaceInsensitiveAttributes.includes(name)
+					WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 				);
 				return b.prop('init', b.key(name), value);
 			}

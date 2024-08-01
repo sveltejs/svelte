@@ -14,7 +14,7 @@ import {
 import * as w from '../../../../warnings.js';
 import fuzzymatch from '../../../1-parse/utils/fuzzymatch.js';
 import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
-import { ContentEditableBindings } from '../../../constants.js';
+import { CONTENT_EDITABLE_BINDINGS } from '../../../constants.js';
 import { walk } from 'zimmerframe';
 import { list } from '../../../../utils/string.js';
 
@@ -722,7 +722,7 @@ export function check_element(node, state) {
 			}
 		} else if (
 			attribute.type === 'BindDirective' &&
-			ContentEditableBindings.includes(attribute.name)
+			CONTENT_EDITABLE_BINDINGS.includes(attribute.name)
 		) {
 			has_contenteditable_binding = true;
 		}

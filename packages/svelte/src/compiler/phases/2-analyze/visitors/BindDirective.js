@@ -9,7 +9,7 @@ import { validate_no_const_assignment } from './shared/utils.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { binding_properties } from '../../bindings.js';
-import { ContentEditableBindings, SVGElements } from '../../constants.js';
+import { CONTENT_EDITABLE_BINDINGS, SVGElements } from '../../constants.js';
 import fuzzymatch from '../../1-parse/utils/fuzzymatch.js';
 
 /**
@@ -205,7 +205,7 @@ export function BindDirective(node, context) {
 				);
 			}
 
-			if (ContentEditableBindings.includes(node.name)) {
+			if (CONTENT_EDITABLE_BINDINGS.includes(node.name)) {
 				const contenteditable = /** @type {Attribute} */ (
 					parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'contenteditable')
 				);

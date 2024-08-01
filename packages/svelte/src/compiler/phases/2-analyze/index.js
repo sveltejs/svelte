@@ -7,7 +7,7 @@ import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { is_text_attribute } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
-import { ReservedKeywords, Runes } from '../constants.js';
+import { Runes } from '../constants.js';
 import { Scope, ScopeRoot, create_scopes, get_rune } from '../scope.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { create_attribute } from '../nodes.js';
@@ -203,6 +203,8 @@ function get_component_name(filename) {
 	return name[0].toUpperCase() + name.slice(1);
 }
 
+const RESERVED = ['$$props', '$$restProps', '$$slots'];
+
 /**
  * @param {Program} ast
  * @param {ValidatedModuleCompileOptions} options
@@ -212,7 +214,7 @@ export function analyze_module(ast, options) {
 	const { scope, scopes } = create_scopes(ast, new ScopeRoot(), false, null);
 
 	for (const [name, references] of scope.references) {
-		if (name[0] !== '$' || ReservedKeywords.includes(name)) continue;
+		if (name[0] !== '$' || RESERVED.includes(name)) continue;
 		if (name === '$' || name[1] === '$') {
 			e.global_reference_invalid(references[0].node, name);
 		}
@@ -257,7 +259,7 @@ export function analyze_component(root, source, options) {
 
 	// create synthetic bindings for store subscriptions
 	for (const [name, references] of module.scope.references) {
-		if (name[0] !== '$' || ReservedKeywords.includes(name)) continue;
+		if (name[0] !== '$' || RESERVED.includes(name)) continue;
 		if (name === '$' || name[1] === '$') {
 			e.global_reference_invalid(references[0].node, name);
 		}

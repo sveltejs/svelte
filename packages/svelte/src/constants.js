@@ -34,21 +34,6 @@ export const UNINITIALIZED = Symbol();
 export const FILENAME = Symbol('filename');
 export const HMR = Symbol('hmr');
 
-/**
- * @type {Record<string, string>}
- * List of attribute names that should be aliased to their property names
- * because they behave differently between setting them as an attribute and
- * setting them as a property.
- */
-export const ATTRIBUTE_ALIASES = {
-	// no `class: 'className'` because we handle that separately
-	formnovalidate: 'formNoValidate',
-	ismap: 'isMap',
-	nomodule: 'noModule',
-	playsinline: 'playsInline',
-	readonly: 'readOnly'
-};
-
 export const NAMESPACE_SVG = 'http://www.w3.org/2000/svg';
 export const NAMESPACE_MATHML = 'http://www.w3.org/1998/Math/MathML';
 
