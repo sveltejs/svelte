@@ -5,10 +5,103 @@
 import { walk } from 'zimmerframe';
 import * as b from '../../../utils/builders.js';
 import { set_scope } from '../../scope.js';
-import { global_visitors } from './visitors/global.js';
 import { serialize_get_binding } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
 import { dev, filename } from '../../../state.js';
+import { AnimateDirective } from './visitors/AnimateDirective.js';
+import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
+import { AssignmentExpression } from './visitors/AssignmentExpression.js';
+import { Attribute } from './visitors/Attribute.js';
+import { AwaitBlock } from './visitors/AwaitBlock.js';
+import { BinaryExpression } from './visitors/BinaryExpression.js';
+import { BindDirective } from './visitors/BindDirective.js';
+import { BreakStatement } from './visitors/BreakStatement.js';
+import { CallExpression } from './visitors/CallExpression.js';
+import { ClassBody } from './visitors/ClassBody.js';
+import { Comment } from './visitors/Comment.js';
+import { Component } from './visitors/Component.js';
+import { ConstTag } from './visitors/ConstTag.js';
+import { DebugTag } from './visitors/DebugTag.js';
+import { EachBlock } from './visitors/EachBlock.js';
+import { ExpressionStatement } from './visitors/ExpressionStatement.js';
+import { Fragment } from './visitors/Fragment.js';
+import { FunctionDeclaration } from './visitors/FunctionDeclaration.js';
+import { FunctionExpression } from './visitors/FunctionExpression.js';
+import { HtmlTag } from './visitors/HtmlTag.js';
+import { Identifier } from './visitors/Identifier.js';
+import { IfBlock } from './visitors/IfBlock.js';
+import { KeyBlock } from './visitors/KeyBlock.js';
+import { LabeledStatement } from './visitors/LabeledStatement.js';
+import { LetDirective } from './visitors/LetDirective.js';
+import { MemberExpression } from './visitors/MemberExpression.js';
+import { OnDirective } from './visitors/OnDirective.js';
+import { RegularElement } from './visitors/RegularElement.js';
+import { RenderTag } from './visitors/RenderTag.js';
+import { SlotElement } from './visitors/SlotElement.js';
+import { SnippetBlock } from './visitors/SnippetBlock.js';
+import { SpreadAttribute } from './visitors/SpreadAttribute.js';
+import { SvelteBody } from './visitors/SvelteBody.js';
+import { SvelteComponent } from './visitors/SvelteComponent.js';
+import { SvelteDocument } from './visitors/SvelteDocument.js';
+import { SvelteElement } from './visitors/SvelteElement.js';
+import { SvelteFragment } from './visitors/SvelteFragment.js';
+import { SvelteHead } from './visitors/SvelteHead.js';
+import { SvelteSelf } from './visitors/SvelteSelf.js';
+import { SvelteWindow } from './visitors/SvelteWindow.js';
+import { TitleElement } from './visitors/TitleElement.js';
+import { TransitionDirective } from './visitors/TransitionDirective.js';
+import { UpdateExpression } from './visitors/UpdateExpression.js';
+import { UseDirective } from './visitors/UseDirective.js';
+import { VariableDeclaration } from './visitors/VariableDeclaration.js';
+
+/** @type {Visitors} */
+const visitors = {
+	AnimateDirective,
+	ArrowFunctionExpression,
+	AssignmentExpression,
+	Attribute,
+	AwaitBlock,
+	BinaryExpression,
+	BindDirective,
+	BreakStatement,
+	CallExpression,
+	ClassBody,
+	Comment,
+	Component,
+	ConstTag,
+	DebugTag,
+	EachBlock,
+	ExpressionStatement,
+	Fragment,
+	FunctionDeclaration,
+	FunctionExpression,
+	HtmlTag,
+	Identifier,
+	IfBlock,
+	KeyBlock,
+	LabeledStatement,
+	LetDirective,
+	MemberExpression,
+	OnDirective,
+	RegularElement,
+	RenderTag,
+	SlotElement,
+	SnippetBlock,
+	SpreadAttribute,
+	SvelteBody,
+	SvelteComponent,
+	SvelteDocument,
+	SvelteElement,
+	SvelteFragment,
+	SvelteHead,
+	SvelteSelf,
+	SvelteWindow,
+	TitleElement,
+	TransitionDirective,
+	UpdateExpression,
+	UseDirective,
+	VariableDeclaration
+};
 
 /**
  * This function ensures visitor sets don't accidentally clobber each other
@@ -34,12 +127,11 @@ function combine_visitors(...array) {
 }
 
 /**
- * @param {string} source
  * @param {ComponentAnalysis} analysis
  * @param {ValidatedCompileOptions} options
  * @returns {ESTree.Program}
  */
-export function client_component(source, analysis, options) {
+export function client_component(analysis, options) {
 	/** @type {ComponentClientTransformState} */
 	const state = {
 		analysis,
@@ -77,7 +169,7 @@ export function client_component(source, analysis, options) {
 		walk(
 			/** @type {SvelteNode} */ (analysis.module.ast),
 			state,
-			combine_visitors(set_scope(analysis.module.scopes), global_visitors)
+			combine_visitors(set_scope(analysis.module.scopes), visitors)
 		)
 	);
 
@@ -86,7 +178,7 @@ export function client_component(source, analysis, options) {
 		walk(
 			/** @type {SvelteNode} */ (analysis.instance.ast),
 			instance_state,
-			combine_visitors(set_scope(analysis.instance.scopes), global_visitors, {
+			combine_visitors(set_scope(analysis.instance.scopes), visitors, {
 				ImportDeclaration(node) {
 					state.hoisted.push(node);
 					return b.empty;
@@ -106,7 +198,7 @@ export function client_component(source, analysis, options) {
 		walk(
 			/** @type {SvelteNode} */ (analysis.template.ast),
 			{ ...state, scope: analysis.instance.scope },
-			combine_visitors(set_scope(analysis.template.scopes), global_visitors)
+			combine_visitors(set_scope(analysis.template.scopes), visitors)
 		)
 	);
 
@@ -570,7 +662,7 @@ export function client_module(analysis, options) {
 		walk(
 			/** @type {SvelteNode} */ (analysis.module.ast),
 			state,
-			combine_visitors(set_scope(analysis.module.scopes), global_visitors)
+			combine_visitors(set_scope(analysis.module.scopes), visitors)
 		)
 	);
 
