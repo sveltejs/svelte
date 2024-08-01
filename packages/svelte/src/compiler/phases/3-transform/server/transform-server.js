@@ -102,7 +102,7 @@ export function server_component(analysis, options) {
 		analysis,
 		options,
 		scope: analysis.module.scope,
-		scopes: analysis.template.scopes,
+		scopes: analysis.module.scopes,
 		hoisted: [b.import_all('$', 'svelte/internal/server')],
 		legacy_reactive_statements: new Map(),
 		// these are set inside the `Fragment` visitor, and cannot be used until then
@@ -129,7 +129,7 @@ export function server_component(analysis, options) {
 	const instance = /** @type {Program} */ (
 		walk(
 			/** @type {SvelteNode} */ (analysis.instance.ast),
-			state,
+			{ ...state, scopes: analysis.instance.scopes },
 			// @ts-expect-error TODO: zimmerframe types
 			{
 				...set_scope(analysis.instance.scopes),
@@ -152,7 +152,7 @@ export function server_component(analysis, options) {
 	const template = /** @type {Program} */ (
 		walk(
 			/** @type {SvelteNode} */ (analysis.template.ast),
-			state,
+			{ ...state, scopes: analysis.template.scopes },
 			// @ts-expect-error TODO: zimmerframe types
 			{
 				...set_scope(analysis.template.scopes),
