@@ -1,14 +1,3 @@
-import { ATTRIBUTE_ALIASES } from '../../constants.js';
-import { DOM_BOOLEAN_ATTRIBUTES } from '../../utils.js';
-
-export const DOMProperties = [
-	...Object.values(ATTRIBUTE_ALIASES),
-	'value',
-	'inert',
-	'volume',
-	...DOM_BOOLEAN_ATTRIBUTES
-];
-
 export const Runes = /** @type {const} */ ([
 	'$state',
 	'$state.frozen',

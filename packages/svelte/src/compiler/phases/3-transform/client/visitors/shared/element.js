@@ -1,8 +1,11 @@
 /** @import { Expression, Identifier } from 'estree' */
 /** @import { Attribute, ClassDirective, DelegatedEvent, ExpressionMetadata, ExpressionTag, Namespace, OnDirective, RegularElement, StyleDirective, SvelteElement, SvelteNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
-import { ATTRIBUTE_ALIASES } from '../../../../../../constants.js';
-import { is_capture_event, is_passive_event } from '../../../../../../utils.js';
+import {
+	is_capture_event,
+	is_passive_event,
+	normalize_attribute
+} from '../../../../../../utils.js';
 import { get_attribute_expression } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { serialize_get_binding } from '../../utils.js';
@@ -118,18 +121,15 @@ export function serialize_attribute_value(value, context) {
  * @param {{ state: { metadata: { namespace: Namespace }}}} context
  */
 export function get_attribute_name(element, attribute, context) {
-	let name = attribute.name;
 	if (
 		!element.metadata.svg &&
 		!element.metadata.mathml &&
 		context.state.metadata.namespace !== 'foreign'
 	) {
-		name = name.toLowerCase();
-		if (name in ATTRIBUTE_ALIASES) {
-			name = ATTRIBUTE_ALIASES[name];
-		}
+		return normalize_attribute(attribute.name);
 	}
-	return name;
+
+	return attribute.name;
 }
 
 /**

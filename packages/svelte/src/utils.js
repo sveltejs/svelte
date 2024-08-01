@@ -180,6 +180,44 @@ export function is_boolean_attribute(name) {
 	return DOM_BOOLEAN_ATTRIBUTES.includes(name);
 }
 
+/**
+ * @type {Record<string, string>}
+ * List of attribute names that should be aliased to their property names
+ * because they behave differently between setting them as an attribute and
+ * setting them as a property.
+ */
+const ATTRIBUTE_ALIASES = {
+	// no `class: 'className'` because we handle that separately
+	formnovalidate: 'formNoValidate',
+	ismap: 'isMap',
+	nomodule: 'noModule',
+	playsinline: 'playsInline',
+	readonly: 'readOnly'
+};
+
+/**
+ * @param {string} name
+ */
+export function normalize_attribute(name) {
+	name = name.toLowerCase();
+	return ATTRIBUTE_ALIASES[name] ?? name;
+}
+
+const DOM_PROPERTIES = [
+	...Object.values(ATTRIBUTE_ALIASES),
+	'value',
+	'inert',
+	'volume',
+	...DOM_BOOLEAN_ATTRIBUTES
+];
+
+/**
+ * @param {string} name
+ */
+export function is_dom_property(name) {
+	return DOM_PROPERTIES.includes(name);
+}
+
 const PASSIVE_EVENTS = ['wheel', 'touchstart', 'touchmove', 'touchend', 'touchcancel'];
 
 /**

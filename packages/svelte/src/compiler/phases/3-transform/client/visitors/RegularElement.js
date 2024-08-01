@@ -3,7 +3,7 @@
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
-import { is_boolean_attribute, is_void } from '../../../../../utils.js';
+import { is_boolean_attribute, is_dom_property, is_void } from '../../../../../utils.js';
 import { escape_html } from '../../../../../escaping.js';
 import { dev, is_ignored, locator } from '../../../../state.js';
 import {
@@ -12,7 +12,7 @@ import {
 	is_text_attribute
 } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
-import { DOMProperties, LoadErrorElements } from '../../../constants.js';
+import { LoadErrorElements } from '../../../constants.js';
 import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { serialize_get_binding } from '../utils.js';
@@ -598,7 +598,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		update = b.stmt(b.call('$.set_value', node_id, value));
 	} else if (name === 'checked') {
 		update = b.stmt(b.call('$.set_checked', node_id, value));
-	} else if (DOMProperties.includes(name)) {
+	} else if (is_dom_property(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, b.id(name)), value));
 	} else {
 		const callee = name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute';
