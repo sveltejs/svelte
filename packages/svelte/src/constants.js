@@ -180,25 +180,6 @@ export const reserved = [
 	'yield'
 ];
 
-const void_element_names = [
-	'area',
-	'base',
-	'br',
-	'col',
-	'command',
-	'embed',
-	'hr',
-	'img',
-	'input',
-	'keygen',
-	'link',
-	'meta',
-	'param',
-	'source',
-	'track',
-	'wbr'
-];
-
 // we use a list of ignorable runtime warnings because not every runtime warning
 // can be ignored and we want to keep the validation for svelte-ignore in place
 export const IGNORABLE_RUNTIME_WARNINGS = /** @type {const} */ ([
@@ -209,8 +190,3 @@ export const IGNORABLE_RUNTIME_WARNINGS = /** @type {const} */ ([
 	'ownership_invalid_binding',
 	'ownership_invalid_mutation'
 ]);
-
-/** @param {string} name */
-export function is_void(name) {
-	return void_element_names.includes(name) || name.toLowerCase() === '!doctype';
-}

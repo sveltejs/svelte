@@ -4,6 +4,7 @@
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
 import { DOMBooleanAttributes } from '../../../../../constants.js';
+import { is_void } from '../../../../../utils.js';
 import { escape_html } from '../../../../../escaping.js';
 import { dev, is_ignored, locator } from '../../../../state.js';
 import {
@@ -12,7 +13,7 @@ import {
 	is_text_attribute
 } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
-import { DOMProperties, LoadErrorElements, VoidElements } from '../../../constants.js';
+import { DOMProperties, LoadErrorElements } from '../../../constants.js';
 import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { serialize_get_binding } from '../utils.js';
@@ -358,7 +359,7 @@ export function RegularElement(node, context) {
 		location.push(child_locations);
 	}
 
-	if (!VoidElements.includes(node.name)) {
+	if (!is_void(node.name)) {
 		context.state.template.push(`</${node.name}>`);
 	}
 }

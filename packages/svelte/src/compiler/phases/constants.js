@@ -8,25 +8,6 @@ export const DOMProperties = [
 	...DOMBooleanAttributes
 ];
 
-export const VoidElements = [
-	'area',
-	'base',
-	'br',
-	'col',
-	'embed',
-	'hr',
-	'img',
-	'input',
-	'keygen',
-	'link',
-	'menuitem',
-	'meta',
-	'param',
-	'source',
-	'track',
-	'wbr'
-];
-
 export const PassiveEvents = ['wheel', 'touchstart', 'touchmove', 'touchend', 'touchcancel'];
 
 export const Runes = /** @type {const} */ ([
