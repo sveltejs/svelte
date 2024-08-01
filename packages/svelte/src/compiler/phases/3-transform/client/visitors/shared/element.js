@@ -1,18 +1,13 @@
 /** @import { Expression, Identifier } from 'estree' */
 /** @import { Attribute, ClassDirective, DelegatedEvent, ExpressionMetadata, ExpressionTag, Namespace, OnDirective, RegularElement, StyleDirective, SvelteElement, SvelteNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
-import { AttributeAliases, is_capture_event } from '../../../../../../constants.js';
-import { is_ignored } from '../../../../../state.js';
+import { AttributeAliases } from '../../../../../../constants.js';
+import { is_capture_event } from '../../../../../../utils.js';
 import { get_attribute_expression } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { DOMProperties, PassiveEvents } from '../../../../constants.js';
+import { PassiveEvents } from '../../../../constants.js';
 import { serialize_get_binding } from '../../utils.js';
-import {
-	serialize_event_handler,
-	serialize_template_literal,
-	serialize_update,
-	serialize_update_assignment
-} from './utils.js';
+import { serialize_event_handler, serialize_template_literal, serialize_update } from './utils.js';
 
 /**
  * Serializes each style directive into something like `$.set_style(element, style_property, value)`
