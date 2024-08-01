@@ -6,9 +6,10 @@ import * as b from '../../../../utils/builders.js';
  * @param {LabeledStatement} node
  * @param {Context} context
  */
-export function LabeledStatementLegacy(node, context) {
-	if (context.path.length > 1) return;
-	if (node.label.name !== '$') return;
+export function LabeledStatement(node, context) {
+	if (context.state.analysis.runes || context.path.length > 1 || node.label.name !== '$') {
+		return;
+	}
 
 	// TODO bail out if we're in module context
 
