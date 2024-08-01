@@ -109,29 +109,6 @@ const visitors = {
 };
 
 /**
- * This function ensures visitor sets don't accidentally clobber each other
- * @param  {...Visitors} array
- * @returns {Visitors}
- */
-function combine_visitors(...array) {
-	/** @type {Record<string, any>} */
-	const visitors = {};
-
-	for (const member of array) {
-		for (const key in member) {
-			if (visitors[key]) {
-				throw new Error(`Duplicate visitor: ${key}`);
-			}
-
-			// @ts-ignore
-			visitors[key] = member[key];
-		}
-	}
-
-	return visitors;
-}
-
-/**
  * @param {ComponentAnalysis} analysis
  * @param {ValidatedCompileOptions} options
  * @returns {ESTree.Program}
@@ -172,7 +149,7 @@ export function client_component(analysis, options) {
 	};
 
 	const module = /** @type {ESTree.Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, combine_visitors(visitors))
+		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, visitors)
 	);
 
 	const instance_state = {
@@ -181,19 +158,16 @@ export function client_component(analysis, options) {
 		scopes: analysis.instance.scopes,
 		is_instance: true
 	};
+
 	const instance = /** @type {ESTree.Program} */ (
-		walk(
-			/** @type {SvelteNode} */ (analysis.instance.ast),
-			instance_state,
-			combine_visitors(visitors)
-		)
+		walk(/** @type {SvelteNode} */ (analysis.instance.ast), instance_state, visitors)
 	);
 
 	const template = /** @type {ESTree.Program} */ (
 		walk(
 			/** @type {SvelteNode} */ (analysis.template.ast),
 			{ ...state, scope: analysis.instance.scope, scopes: analysis.template.scopes },
-			combine_visitors(visitors)
+			visitors
 		)
 	);
 
@@ -654,7 +628,7 @@ export function client_module(analysis, options) {
 	};
 
 	const module = /** @type {ESTree.Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, combine_visitors(visitors))
+		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, visitors)
 	);
 
 	return {
