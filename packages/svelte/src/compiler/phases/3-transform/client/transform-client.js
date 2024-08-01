@@ -141,7 +141,7 @@ export function client_component(analysis, options) {
 		analysis,
 		options,
 		scope: analysis.module.scope,
-		scopes: analysis.template.scopes,
+		scopes: analysis.module.scopes,
 		is_instance: false,
 		hoisted: [b.import_all('$', 'svelte/internal/client')],
 		node: /** @type {any} */ (null), // populated by the root node
@@ -178,7 +178,12 @@ export function client_component(analysis, options) {
 		)
 	);
 
-	const instance_state = { ...state, scope: analysis.instance.scope, is_instance: true };
+	const instance_state = {
+		...state,
+		scope: analysis.instance.scope,
+		scopes: analysis.instance.scopes,
+		is_instance: true
+	};
 	const instance = /** @type {ESTree.Program} */ (
 		walk(
 			/** @type {SvelteNode} */ (analysis.instance.ast),
@@ -190,7 +195,7 @@ export function client_component(analysis, options) {
 	const template = /** @type {ESTree.Program} */ (
 		walk(
 			/** @type {SvelteNode} */ (analysis.template.ast),
-			{ ...state, scope: analysis.instance.scope },
+			{ ...state, scope: analysis.instance.scope, scopes: analysis.template.scopes },
 			combine_visitors(set_scope(analysis.template.scopes), visitors)
 		)
 	);
