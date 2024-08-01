@@ -7,6 +7,7 @@ import { AwaitBlock } from './AwaitBlock.js';
 import { BindDirective } from './BindDirective.js';
 import { BreakStatement } from './BreakStatement.js';
 import { CallExpression } from './CallExpression.js';
+import { ClassBody } from './ClassBody.js';
 import { Comment } from './Comment.js';
 import { Component } from './Component.js';
 import { ConstTag } from './ConstTag.js';
@@ -52,6 +53,7 @@ export const global_visitors = {
 	BindDirective,
 	BreakStatement,
 	CallExpression,
+	ClassBody,
 	Comment,
 	Component,
 	ConstTag,
