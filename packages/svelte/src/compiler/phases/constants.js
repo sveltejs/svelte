@@ -1,4 +1,5 @@
-import { ATTRIBUTE_ALIASES, DOM_BOOLEAN_ATTRIBUTES } from '../../constants.js';
+import { ATTRIBUTE_ALIASES } from '../../constants.js';
+import { DOM_BOOLEAN_ATTRIBUTES } from '../../utils.js';
 
 export const DOMProperties = [
 	...Object.values(ATTRIBUTE_ALIASES),

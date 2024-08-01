@@ -3,8 +3,7 @@
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
-import { DOM_BOOLEAN_ATTRIBUTES } from '../../../../../constants.js';
-import { is_void } from '../../../../../utils.js';
+import { is_boolean_attribute, is_void } from '../../../../../utils.js';
 import { escape_html } from '../../../../../escaping.js';
 import { dev, is_ignored, locator } from '../../../../state.js';
 import {
@@ -238,7 +237,7 @@ export function RegularElement(node, context) {
 					// to create the elements it needs.
 					context.state.template.push(
 						` ${attribute.name}${
-							DOM_BOOLEAN_ATTRIBUTES.includes(name) && literal_value === true
+							is_boolean_attribute(name) && literal_value === true
 								? ''
 								: `="${literal_value === true ? '' : escape_html(literal_value, true)}"`
 						}`

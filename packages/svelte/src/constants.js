@@ -34,9 +34,6 @@ export const UNINITIALIZED = Symbol();
 export const FILENAME = Symbol('filename');
 export const HMR = Symbol('hmr');
 
-/** List of Element events that will be delegated and are passive */
-export const PASSIVE_DELEGATED_EVENTS = ['touchstart', 'touchmove', 'touchend'];
-
 /**
  * @type {Record<string, string>}
  * List of attribute names that should be aliased to their property names
@@ -51,37 +48,6 @@ export const ATTRIBUTE_ALIASES = {
 	playsinline: 'playsInline',
 	readonly: 'readOnly'
 };
-
-/**
- * Attributes that are boolean, i.e. they are present or not present.
- */
-export const DOM_BOOLEAN_ATTRIBUTES = [
-	'allowfullscreen',
-	'async',
-	'autofocus',
-	'autoplay',
-	'checked',
-	'controls',
-	'default',
-	'disabled',
-	'formnovalidate',
-	'hidden',
-	'indeterminate',
-	'ismap',
-	'loop',
-	'multiple',
-	'muted',
-	'nomodule',
-	'novalidate',
-	'open',
-	'playsinline',
-	'readonly',
-	'required',
-	'reversed',
-	'seamless',
-	'selected',
-	'webkitdirectory'
-];
 
 export const NAMESPACE_SVG = 'http://www.w3.org/2000/svg';
 export const NAMESPACE_MATHML = 'http://www.w3.org/1998/Math/MathML';

@@ -6,7 +6,6 @@ import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
 	UNINITIALIZED,
-	DOM_BOOLEAN_ATTRIBUTES,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
 	ELEMENT_IS_NAMESPACED
 } from '../../constants.js';
@@ -16,7 +15,7 @@ import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
 import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
-import { is_void } from '../../utils.js';
+import { is_boolean_attribute, is_void } from '../../utils.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
@@ -227,8 +226,7 @@ export function spread_attributes(attrs, classes, styles, flags = 0) {
 			name = name.toLowerCase();
 		}
 
-		const is_boolean = is_html && DOM_BOOLEAN_ATTRIBUTES.includes(name);
-		attr_str += attr(name, attrs[name], is_boolean);
+		attr_str += attr(name, attrs[name], is_html && is_boolean_attribute(name));
 	}
 
 	return attr_str;

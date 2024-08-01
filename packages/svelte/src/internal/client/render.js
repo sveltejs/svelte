@@ -2,12 +2,7 @@
 /** @import { Component, ComponentType, SvelteComponent } from '../../index.js' */
 import { DEV } from 'esm-env';
 import { clear_text_content, empty, init_operations } from './dom/operations.js';
-import {
-	HYDRATION_END,
-	HYDRATION_ERROR,
-	HYDRATION_START,
-	PASSIVE_DELEGATED_EVENTS
-} from '../../constants.js';
+import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
 import { push, pop, current_component_context, current_effect } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
 import {
@@ -27,6 +22,9 @@ import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
+
+/** List of Element events that will be delegated and are passive */
+const PASSIVE_DELEGATED_EVENTS = ['touchstart', 'touchmove', 'touchend'];
 
 /**
  * This is normally true — block effects should run their intro transitions —

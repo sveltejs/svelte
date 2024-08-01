@@ -20,11 +20,11 @@ import {
 import { regex_starts_with_newline } from '../../../../patterns.js';
 import * as b from '../../../../../utils/builders.js';
 import {
-	DOM_BOOLEAN_ATTRIBUTES,
 	ELEMENT_IS_NAMESPACED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE
 } from '../../../../../../constants.js';
 import { serialize_attribute_value } from './utils.js';
+import { is_boolean_attribute } from '../../../../../../utils.js';
 
 /**
  * Writes the output to the template output. Some elements may have attributes on them that require the
@@ -234,7 +234,7 @@ export function serialize_element_attributes(node, context) {
 					context.state.template.push(
 						b.literal(
 							` ${attribute.name}${
-								DOM_BOOLEAN_ATTRIBUTES.includes(name) && literal_value === true
+								is_boolean_attribute(name) && literal_value === true
 									? ''
 									: `="${literal_value === true ? '' : String(literal_value)}"`
 							}`
@@ -245,7 +245,6 @@ export function serialize_element_attributes(node, context) {
 			}
 
 			const name = get_attribute_name(node, attribute, context);
-			const is_boolean = DOM_BOOLEAN_ATTRIBUTES.includes(name);
 			const value = serialize_attribute_value(
 				attribute.value,
 				context,
@@ -253,7 +252,7 @@ export function serialize_element_attributes(node, context) {
 			);
 
 			context.state.template.push(
-				b.call('$.attr', b.literal(name), value, is_boolean && b.literal(is_boolean))
+				b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
 			);
 		}
 	}
