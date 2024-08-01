@@ -58,7 +58,7 @@ import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 
 /** @type {Visitors} */
 const visitors = {
-	_: set_scope()._,
+	_: set_scope,
 	AnimateDirective,
 	ArrowFunctionExpression,
 	AssignmentExpression,

@@ -739,20 +739,12 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 /**
  * @template {{ scope: Scope, scopes: Map<SvelteNode, Scope> }} State
- * @returns {Visitors<SvelteNode, State>}
+ * @param {SvelteNode} node
+ * @param {Context<SvelteNode, State>} context
  */
-export function set_scope() {
-	return {
-		/**
-		 *
-		 * @param {SvelteNode} node
-		 * @param {Context<SvelteNode, State>} context
-		 */
-		_(node, { next, state }) {
-			const scope = state.scopes.get(node);
-			next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
-		}
-	};
+export function set_scope(node, { next, state }) {
+	const scope = state.scopes.get(node);
+	next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
 }
 
 /**

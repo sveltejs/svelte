@@ -115,24 +115,20 @@ export function server_component(analysis, options) {
 	};
 
 	const module = /** @type {Program} */ (
-		walk(
-			/** @type {SvelteNode} */ (analysis.module.ast),
-			state,
-			// @ts-expect-error TODO: zimmerframe types
-			{
-				...set_scope(analysis.module.scopes),
-				...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy)
-			}
-		)
+		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, {
+			// @ts-expect-error don't know, don't care
+			_: set_scope,
+			...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy)
+		})
 	);
 
 	const instance = /** @type {Program} */ (
 		walk(
 			/** @type {SvelteNode} */ (analysis.instance.ast),
 			{ ...state, scopes: analysis.instance.scopes },
-			// @ts-expect-error TODO: zimmerframe types
 			{
-				...set_scope(analysis.instance.scopes),
+				// @ts-expect-error don't know, don't care
+				_: set_scope,
 				...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy),
 				ImportDeclaration(node) {
 					state.hoisted.push(node);
@@ -153,9 +149,9 @@ export function server_component(analysis, options) {
 		walk(
 			/** @type {SvelteNode} */ (analysis.template.ast),
 			{ ...state, scopes: analysis.template.scopes },
-			// @ts-expect-error TODO: zimmerframe types
 			{
-				...set_scope(analysis.template.scopes),
+				// @ts-expect-error don't know, don't care
+				_: set_scope,
 				...global_visitors,
 				...template_visitors
 			}
@@ -424,7 +420,7 @@ export function server_module(analysis, options) {
 
 	const module = /** @type {Program} */ (
 		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, {
-			...set_scope(analysis.module.scopes),
+			_: set_scope,
 			...javascript_visitors_runes
 		})
 	);
