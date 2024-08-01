@@ -227,3 +227,188 @@ const PASSIVE_EVENTS = ['wheel', 'touchstart', 'touchmove', 'touchend', 'touchca
 export function is_passive_event(name) {
 	return PASSIVE_EVENTS.includes(name);
 }
+
+const CONTENT_EDITABLE_BINDINGS = ['textContent', 'innerHTML', 'innerText'];
+
+/** @param {string} name */
+export function is_content_editable_binding(name) {
+	return CONTENT_EDITABLE_BINDINGS.includes(name);
+}
+
+const LOAD_ERROR_ELEMENTS = [
+	'body',
+	'embed',
+	'iframe',
+	'img',
+	'link',
+	'object',
+	'script',
+	'style',
+	'track'
+];
+
+/**
+ * Returns `true` if the element emits `load` and `error` events
+ * @param {string} name
+ */
+export function is_load_error_element(name) {
+	return LOAD_ERROR_ELEMENTS.includes(name);
+}
+
+const SVG_ELEMENTS = [
+	'altGlyph',
+	'altGlyphDef',
+	'altGlyphItem',
+	'animate',
+	'animateColor',
+	'animateMotion',
+	'animateTransform',
+	'circle',
+	'clipPath',
+	'color-profile',
+	'cursor',
+	'defs',
+	'desc',
+	'discard',
+	'ellipse',
+	'feBlend',
+	'feColorMatrix',
+	'feComponentTransfer',
+	'feComposite',
+	'feConvolveMatrix',
+	'feDiffuseLighting',
+	'feDisplacementMap',
+	'feDistantLight',
+	'feDropShadow',
+	'feFlood',
+	'feFuncA',
+	'feFuncB',
+	'feFuncG',
+	'feFuncR',
+	'feGaussianBlur',
+	'feImage',
+	'feMerge',
+	'feMergeNode',
+	'feMorphology',
+	'feOffset',
+	'fePointLight',
+	'feSpecularLighting',
+	'feSpotLight',
+	'feTile',
+	'feTurbulence',
+	'filter',
+	'font',
+	'font-face',
+	'font-face-format',
+	'font-face-name',
+	'font-face-src',
+	'font-face-uri',
+	'foreignObject',
+	'g',
+	'glyph',
+	'glyphRef',
+	'hatch',
+	'hatchpath',
+	'hkern',
+	'image',
+	'line',
+	'linearGradient',
+	'marker',
+	'mask',
+	'mesh',
+	'meshgradient',
+	'meshpatch',
+	'meshrow',
+	'metadata',
+	'missing-glyph',
+	'mpath',
+	'path',
+	'pattern',
+	'polygon',
+	'polyline',
+	'radialGradient',
+	'rect',
+	'set',
+	'solidcolor',
+	'stop',
+	'svg',
+	'switch',
+	'symbol',
+	'text',
+	'textPath',
+	'tref',
+	'tspan',
+	'unknown',
+	'use',
+	'view',
+	'vkern'
+];
+
+/** @param {string} name */
+export function is_svg(name) {
+	return SVG_ELEMENTS.includes(name);
+}
+
+const MATHML_ELEMENTS = [
+	'annotation',
+	'annotation-xml',
+	'maction',
+	'math',
+	'merror',
+	'mfrac',
+	'mi',
+	'mmultiscripts',
+	'mn',
+	'mo',
+	'mover',
+	'mpadded',
+	'mphantom',
+	'mprescripts',
+	'mroot',
+	'mrow',
+	'ms',
+	'mspace',
+	'msqrt',
+	'mstyle',
+	'msub',
+	'msubsup',
+	'msup',
+	'mtable',
+	'mtd',
+	'mtext',
+	'mtr',
+	'munder',
+	'munderover',
+	'semantics'
+];
+
+/** @param {string} name */
+export function is_mathml(name) {
+	return MATHML_ELEMENTS.includes(name);
+}
+
+const RUNES = /** @type {const} */ ([
+	'$state',
+	'$state.frozen',
+	'$state.snapshot',
+	'$state.is',
+	'$props',
+	'$bindable',
+	'$derived',
+	'$derived.by',
+	'$effect',
+	'$effect.pre',
+	'$effect.tracking',
+	'$effect.root',
+	'$inspect',
+	'$inspect().with',
+	'$host'
+]);
+
+/**
+ * @param {string} name
+ * @returns {name is RUNES[number]}
+ */
+export function is_rune(name) {
+	return RUNES.includes(/** @type {RUNES[number]} */ (name));
+}

@@ -4,12 +4,23 @@ import { get_attribute_expression, is_expression_attribute } from '../../../../u
 import { regex_illegal_attribute_character } from '../../../patterns.js';
 import * as e from '../../../../errors.js';
 import * as w from '../../../../warnings.js';
-import { EventModifiers } from '../../../constants.js';
 import {
 	validate_attribute,
 	validate_attribute_name,
 	validate_slot_attribute
 } from './attribute.js';
+
+const EVENT_MODIFIERS = [
+	'preventDefault',
+	'stopPropagation',
+	'stopImmediatePropagation',
+	'capture',
+	'once',
+	'passive',
+	'nonpassive',
+	'self',
+	'trusted'
+];
 
 /**
  * @param {import('#compiler').RegularElement | SvelteElement} node
@@ -122,8 +133,8 @@ export function validate_element(node, context) {
 			let has_passive_modifier = false;
 			let conflicting_passive_modifier = '';
 			for (const modifier of attribute.modifiers) {
-				if (!EventModifiers.includes(modifier)) {
-					const list = `${EventModifiers.slice(0, -1).join(', ')} or ${EventModifiers.at(-1)}`;
+				if (!EVENT_MODIFIERS.includes(modifier)) {
+					const list = `${EVENT_MODIFIERS.slice(0, -1).join(', ')} or ${EVENT_MODIFIERS.at(-1)}`;
 					e.event_handler_invalid_modifier(attribute, list);
 				}
 				if (modifier === 'passive') {

@@ -1,11 +1,10 @@
 /** @import { Expression, Identifier } from 'estree' */
-/** @import { SvelteNode } from '#compiler' */
 /** @import { Context } from '../types' */
 import is_reference from 'is-reference';
-import { Runes } from '../../constants.js';
 import { should_proxy_or_freeze } from '../../3-transform/client/utils.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
+import { is_rune } from '../../../../utils.js';
 
 /**
  * @param {Identifier} node
@@ -34,7 +33,7 @@ export function Identifier(node, context) {
 
 	if (context.state.analysis.runes) {
 		if (
-			Runes.includes(/** @type {Runes[number]} */ (node.name)) &&
+			is_rune(node.name) &&
 			context.state.scope.get(node.name) === null &&
 			context.state.scope.get(node.name.slice(1)) === null
 		) {
@@ -49,7 +48,7 @@ export function Identifier(node, context) {
 				current = parent;
 				parent = /** @type {Expression} */ (context.path[--i]);
 
-				if (!Runes.includes(/** @type {Runes[number]} */ (name))) {
+				if (!is_rune(name)) {
 					if (name === '$effect.active') {
 						e.rune_renamed(parent, '$effect.active', '$effect.tracking');
 					}

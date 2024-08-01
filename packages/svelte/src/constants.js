@@ -47,3 +47,11 @@ export const IGNORABLE_RUNTIME_WARNINGS = /** @type {const} */ ([
 	'ownership_invalid_binding',
 	'ownership_invalid_mutation'
 ]);
+
+/**
+ * Whitespace inside one of these elements will not result in
+ * a whitespace node being created in any circumstances. (This
+ * list is almost certainly very incomplete)
+ * TODO this is currently unused
+ */
+export const ELEMENTS_WITHOUT_TEXT = ['audio', 'datalist', 'dl', 'optgroup', 'select', 'video'];

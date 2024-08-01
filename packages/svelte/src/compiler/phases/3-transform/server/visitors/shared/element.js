@@ -7,7 +7,6 @@ import {
 	is_text_attribute
 } from '../../../../../utils/ast.js';
 import { binding_properties } from '../../../../bindings.js';
-import { CONTENT_EDITABLE_BINDINGS, LoadErrorElements } from '../../../../constants.js';
 import {
 	create_attribute,
 	create_expression_metadata,
@@ -20,7 +19,11 @@ import {
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE
 } from '../../../../../../constants.js';
 import { serialize_attribute_value } from './utils.js';
-import { is_boolean_attribute } from '../../../../../../utils.js';
+import {
+	is_boolean_attribute,
+	is_content_editable_binding,
+	is_load_error_element
+} from '../../../../../../utils.js';
 
 const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
 
@@ -75,7 +78,7 @@ export function serialize_element_attributes(node, context) {
 			} else if (is_event_attribute(attribute)) {
 				if (
 					(attribute.name === 'onload' || attribute.name === 'onerror') &&
-					LoadErrorElements.includes(node.name)
+					is_load_error_element(node.name)
 				) {
 					events_to_capture.add(attribute.name);
 				}
@@ -106,7 +109,7 @@ export function serialize_element_attributes(node, context) {
 			const binding = binding_properties[attribute.name];
 			if (binding?.omit_in_ssr) continue;
 
-			if (CONTENT_EDITABLE_BINDINGS.includes(attribute.name)) {
+			if (is_content_editable_binding(attribute.name)) {
 				content = /** @type {Expression} */ (context.visit(attribute.expression));
 			} else if (attribute.name === 'value' && node.name === 'textarea') {
 				content = b.call(
@@ -168,12 +171,12 @@ export function serialize_element_attributes(node, context) {
 		} else if (attribute.type === 'SpreadAttribute') {
 			attributes.push(attribute);
 			has_spread = true;
-			if (LoadErrorElements.includes(node.name)) {
+			if (is_load_error_element(node.name)) {
 				events_to_capture.add('onload');
 				events_to_capture.add('onerror');
 			}
 		} else if (attribute.type === 'UseDirective') {
-			if (LoadErrorElements.includes(node.name)) {
+			if (is_load_error_element(node.name)) {
 				events_to_capture.add('onload');
 				events_to_capture.add('onerror');
 			}
