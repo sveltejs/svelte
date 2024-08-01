@@ -5,6 +5,7 @@ import { AssignmentExpression } from './AssignmentExpression.js';
 import { Comment } from './Comment.js';
 import { ConstTag } from './ConstTag.js';
 import { DebugTag } from './DebugTag.js';
+import { EachBlock } from './EachBlock.js';
 import { Fragment } from './Fragment.js';
 import { FunctionDeclaration } from './FunctionDeclaration.js';
 import { FunctionExpression } from './FunctionExpression.js';
@@ -13,6 +14,7 @@ import { Identifier } from './Identifier.js';
 import { MemberExpression } from './MemberExpression.js';
 import { RegularElement } from './RegularElement.js';
 import { RenderTag } from './RenderTag.js';
+import { SvelteElement } from './SvelteElement.js';
 import { TransitionDirective } from './TransitionDirective.js';
 import { UpdateExpression } from './UpdateExpression.js';
 
@@ -24,6 +26,7 @@ export const global_visitors = {
 	Comment,
 	ConstTag,
 	DebugTag,
+	EachBlock,
 	Fragment,
 	FunctionDeclaration,
 	FunctionExpression,
@@ -32,6 +35,7 @@ export const global_visitors = {
 	MemberExpression,
 	RegularElement,
 	RenderTag,
+	SvelteElement,
 	TransitionDirective,
 	UpdateExpression
 };
