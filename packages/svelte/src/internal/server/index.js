@@ -9,14 +9,15 @@ import {
 	DOMBooleanAttributes,
 	RawTextElements,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
-	ELEMENT_IS_NAMESPACED,
-	is_void
+	ELEMENT_IS_NAMESPACED
 } from '../../constants.js';
+
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
 import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
+import { is_void } from '../../utils.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
