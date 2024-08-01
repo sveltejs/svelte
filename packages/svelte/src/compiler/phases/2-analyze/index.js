@@ -23,6 +23,7 @@ import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { BindDirective } from './visitors/BindDirective.js';
 import { CallExpression } from './visitors/CallExpression.js';
+import { TaggedTemplateExpression } from './visitors/TaggedTemplateExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
 import { ClassDeclaration } from './visitors/ClassDeclaration.js';
 import { ClassDirective } from './visitors/ClassDirective.js';
@@ -164,7 +165,8 @@ const visitors = {
 	Text,
 	TitleElement,
 	UpdateExpression,
-	VariableDeclarator
+	VariableDeclarator,
+	TaggedTemplateExpression
 };
 
 /**
