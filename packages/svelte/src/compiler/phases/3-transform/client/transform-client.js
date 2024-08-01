@@ -23,6 +23,7 @@ import { Component } from './visitors/Component.js';
 import { ConstTag } from './visitors/ConstTag.js';
 import { DebugTag } from './visitors/DebugTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
+import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
 import { Fragment } from './visitors/Fragment.js';
 import { FunctionDeclaration } from './visitors/FunctionDeclaration.js';
@@ -30,6 +31,7 @@ import { FunctionExpression } from './visitors/FunctionExpression.js';
 import { HtmlTag } from './visitors/HtmlTag.js';
 import { Identifier } from './visitors/Identifier.js';
 import { IfBlock } from './visitors/IfBlock.js';
+import { ImportDeclaration } from './visitors/ImportDeclaration.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { LetDirective } from './visitors/LetDirective.js';
@@ -71,6 +73,7 @@ const visitors = {
 	ConstTag,
 	DebugTag,
 	EachBlock,
+	ExportNamedDeclaration,
 	ExpressionStatement,
 	Fragment,
 	FunctionDeclaration,
@@ -78,6 +81,7 @@ const visitors = {
 	HtmlTag,
 	Identifier,
 	IfBlock,
+	ImportDeclaration,
 	KeyBlock,
 	LabeledStatement,
 	LetDirective,
@@ -138,6 +142,7 @@ export function client_component(analysis, options) {
 		options,
 		scope: analysis.module.scope,
 		scopes: analysis.template.scopes,
+		is_instance: false,
 		hoisted: [b.import_all('$', 'svelte/internal/client')],
 		node: /** @type {any} */ (null), // populated by the root node
 		legacy_reactive_statements: new Map(),
@@ -173,24 +178,12 @@ export function client_component(analysis, options) {
 		)
 	);
 
-	const instance_state = { ...state, scope: analysis.instance.scope };
+	const instance_state = { ...state, scope: analysis.instance.scope, is_instance: true };
 	const instance = /** @type {ESTree.Program} */ (
 		walk(
 			/** @type {SvelteNode} */ (analysis.instance.ast),
 			instance_state,
-			combine_visitors(set_scope(analysis.instance.scopes), visitors, {
-				ImportDeclaration(node) {
-					state.hoisted.push(node);
-					return b.empty;
-				},
-				ExportNamedDeclaration(node, context) {
-					if (node.declaration) {
-						return context.visit(node.declaration);
-					}
-
-					return b.empty;
-				}
-			})
+			combine_visitors(set_scope(analysis.instance.scopes), visitors)
 		)
 	);
 
