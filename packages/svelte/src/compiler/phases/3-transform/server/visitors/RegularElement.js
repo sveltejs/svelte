@@ -2,9 +2,9 @@
 /** @import { RegularElement, Text } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
 /** @import { Scope } from '../../../scope.js' */
+import { is_void } from '../../../../../utils.js';
 import { dev, locator } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
-import { VoidElements } from '../../../constants.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { serialize_element_attributes } from './shared/element.js';
 import { process_children, serialize_template } from './shared/utils.js';
@@ -95,7 +95,7 @@ export function RegularElement(node, context) {
 		);
 	}
 
-	if (!VoidElements.includes(node.name) || namespace === 'foreign') {
+	if (!is_void(node.name) || namespace === 'foreign') {
 		state.template.push(b.literal(`</${node.name}>`));
 	}
 

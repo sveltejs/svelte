@@ -1,12 +1,13 @@
 /** @import { RegularElement } from '#compiler' */
 /** @import { Context } from '../types' */
+import { is_void } from '../../../../utils.js';
 import {
 	is_tag_valid_with_ancestor,
 	is_tag_valid_with_parent
 } from '../../../../html-tree-validation.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
-import { MathMLElements, SVGElements, VoidElements } from '../../constants.js';
+import { MathMLElements, SVGElements } from '../../constants.js';
 import { create_attribute } from '../../nodes.js';
 import { regex_starts_with_newline } from '../../patterns.js';
 import { check_element } from './shared/a11y.js';
@@ -157,7 +158,7 @@ export function RegularElement(node, context) {
 	if (
 		context.state.analysis.source[node.end - 2] === '/' &&
 		context.state.options.namespace !== 'foreign' &&
-		!VoidElements.includes(node_name) &&
+		!is_void(node_name) &&
 		!SVGElements.includes(node_name)
 	) {
 		w.element_invalid_self_closing_tag(node, node.name);

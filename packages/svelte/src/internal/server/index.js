@@ -11,35 +11,18 @@ import {
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
 	ELEMENT_IS_NAMESPACED
 } from '../../constants.js';
+
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
 import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
+import { is_void } from '../../utils.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 const INVALID_ATTR_NAME_CHAR_REGEX =
 	/[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
-
-export const VoidElements = new Set([
-	'area',
-	'base',
-	'br',
-	'col',
-	'embed',
-	'hr',
-	'img',
-	'input',
-	'keygen',
-	'link',
-	'menuitem',
-	'meta',
-	'param',
-	'source',
-	'track',
-	'wbr'
-]);
 
 /**
  * @param {Payload} to_copy
@@ -82,7 +65,7 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
 		attributes_fn();
 		payload.out += `>`;
 
-		if (!VoidElements.has(tag)) {
+		if (!is_void(tag)) {
 			children_fn();
 			if (!RawTextElements.includes(tag)) {
 				payload.out += EMPTY_COMMENT;
