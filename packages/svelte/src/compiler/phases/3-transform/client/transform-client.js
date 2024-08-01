@@ -7,7 +7,6 @@ import * as b from '../../../utils/builders.js';
 import { set_scope } from '../../scope.js';
 import { template_visitors } from './visitors/template.js';
 import { global_visitors } from './visitors/global.js';
-import { javascript_visitors } from './visitors/javascript.js';
 import { javascript_visitors_runes } from './visitors/javascript-runes.js';
 import { javascript_visitors_legacy } from './visitors/javascript-legacy.js';
 import { serialize_get_binding } from './utils.js';

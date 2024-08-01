@@ -5,6 +5,7 @@ import { AssignmentExpression } from './AssignmentExpression.js';
 import { Attribute } from './Attribute.js';
 import { AwaitBlock } from './AwaitBlock.js';
 import { BindDirective } from './BindDirective.js';
+import { CallExpression } from './CallExpression.js';
 import { Comment } from './Comment.js';
 import { Component } from './Component.js';
 import { ConstTag } from './ConstTag.js';
@@ -25,14 +26,19 @@ import { RenderTag } from './RenderTag.js';
 import { SlotElement } from './SlotElement.js';
 import { SnippetBlock } from './SnippetBlock.js';
 import { SpreadAttribute } from './SpreadAttribute.js';
+import { SvelteBody } from './SvelteBody.js';
 import { SvelteComponent } from './SvelteComponent.js';
+import { SvelteDocument } from './SvelteDocument.js';
 import { SvelteElement } from './SvelteElement.js';
 import { SvelteFragment } from './SvelteFragment.js';
 import { SvelteHead } from './SvelteHead.js';
 import { SvelteSelf } from './SvelteSelf.js';
+import { SvelteWindow } from './SvelteWindow.js';
+import { TitleElement } from './TitleElement.js';
 import { TransitionDirective } from './TransitionDirective.js';
 import { UpdateExpression } from './UpdateExpression.js';
 import { UseDirective } from './UseDirective.js';
+import { VariableDeclaration } from './VariableDeclaration.js';
 
 /** @type {Visitors} */
 export const global_visitors = {
@@ -42,6 +48,7 @@ export const global_visitors = {
 	Attribute,
 	AwaitBlock,
 	BindDirective,
+	CallExpression,
 	Comment,
 	Component,
 	ConstTag,
@@ -62,12 +69,17 @@ export const global_visitors = {
 	SlotElement,
 	SnippetBlock,
 	SpreadAttribute,
+	SvelteBody,
 	SvelteComponent,
+	SvelteDocument,
 	SvelteElement,
 	SvelteFragment,
 	SvelteHead,
 	SvelteSelf,
+	SvelteWindow,
+	TitleElement,
 	TransitionDirective,
 	UpdateExpression,
-	UseDirective
+	UseDirective,
+	VariableDeclaration
 };
