@@ -84,8 +84,6 @@ export function client_component(source, analysis, options) {
 			combine_visitors(
 				set_scope(analysis.module.scopes),
 				global_visitors,
-				// @ts-expect-error TODO
-				javascript_visitors,
 				analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy
 			)
 		)
@@ -99,8 +97,6 @@ export function client_component(source, analysis, options) {
 			combine_visitors(
 				set_scope(analysis.instance.scopes),
 				global_visitors,
-				// @ts-expect-error TODO
-				javascript_visitors,
 				analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy,
 				{
 					ImportDeclaration(node) {
@@ -123,12 +119,7 @@ export function client_component(source, analysis, options) {
 		walk(
 			/** @type {SvelteNode} */ (analysis.template.ast),
 			{ ...state, scope: analysis.instance.scope },
-			combine_visitors(
-				set_scope(analysis.template.scopes),
-				global_visitors,
-				// @ts-expect-error TODO
-				template_visitors
-			)
+			combine_visitors(set_scope(analysis.template.scopes), global_visitors, template_visitors)
 		)
 	);
 
@@ -595,8 +586,6 @@ export function client_module(analysis, options) {
 			combine_visitors(
 				set_scope(analysis.module.scopes),
 				global_visitors,
-				// @ts-expect-error
-				javascript_visitors,
 				javascript_visitors_runes
 			)
 		)

@@ -2909,11 +2909,6 @@ export const template_visitors = {
 			context.state.init.push(declaration);
 		}
 	},
-	FunctionExpression: function_visitor,
-	ArrowFunctionExpression: function_visitor,
-	FunctionDeclaration(node, context) {
-		context.next({ ...context.state, in_constructor: false });
-	},
 	OnDirective(node, context) {
 		serialize_event(node, node.metadata.expression, context);
 	},

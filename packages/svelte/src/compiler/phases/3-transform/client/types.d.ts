@@ -78,7 +78,7 @@ export interface StateField {
 }
 
 export type Context = import('zimmerframe').Context<SvelteNode, ClientTransformState>;
-export type Visitors = import('zimmerframe').Visitors<SvelteNode, ClientTransformState>;
+export type Visitors = import('zimmerframe').Visitors<SvelteNode, any>;
 
 export type ComponentContext = import('zimmerframe').Context<
 	SvelteNode,
