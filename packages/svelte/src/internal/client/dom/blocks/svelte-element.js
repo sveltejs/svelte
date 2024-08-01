@@ -1,5 +1,5 @@
 /** @import { Effect, EffectNodes, TemplateNode } from '#client' */
-import { FILENAME, namespace_svg } from '../../../../constants.js';
+import { FILENAME, NAMESPACE_SVG } from '../../../../constants.js';
 import {
 	hydrate_next,
 	hydrate_node,
@@ -68,7 +68,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 	block(() => {
 		const next_tag = get_tag() || null;
-		var ns = get_namespace ? get_namespace() : is_svg || next_tag === 'svg' ? namespace_svg : null;
+		var ns = get_namespace ? get_namespace() : is_svg || next_tag === 'svg' ? NAMESPACE_SVG : null;
 
 		// Assumption: Noone changes the namespace but not the tag (what would that even mean?)
 		if (next_tag === tag) return;

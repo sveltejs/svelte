@@ -3,8 +3,12 @@
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
-import { DOMBooleanAttributes } from '../../../../../constants.js';
-import { is_void } from '../../../../../utils.js';
+import {
+	is_boolean_attribute,
+	is_dom_property,
+	is_load_error_element,
+	is_void
+} from '../../../../../utils.js';
 import { escape_html } from '../../../../../escaping.js';
 import { dev, is_ignored, locator } from '../../../../state.js';
 import {
@@ -13,7 +17,6 @@ import {
 	is_text_attribute
 } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
-import { DOMProperties, LoadErrorElements } from '../../../constants.js';
 import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { serialize_get_binding } from '../utils.js';
@@ -130,7 +133,7 @@ export function RegularElement(node, context) {
 			attributes.push(attribute);
 			needs_input_reset = true;
 			needs_content_reset = true;
-			if (LoadErrorElements.includes(node.name)) {
+			if (is_load_error_element(node.name)) {
 				might_need_event_replaying = true;
 			}
 		} else if (attribute.type === 'ClassDirective') {
@@ -155,7 +158,7 @@ export function RegularElement(node, context) {
 				) {
 					has_content_editable_binding = true;
 				}
-			} else if (attribute.type === 'UseDirective' && LoadErrorElements.includes(node.name)) {
+			} else if (attribute.type === 'UseDirective' && is_load_error_element(node.name)) {
 				might_need_event_replaying = true;
 			}
 			context.visit(attribute);
@@ -211,7 +214,7 @@ export function RegularElement(node, context) {
 			if (is_event_attribute(attribute)) {
 				if (
 					(attribute.name === 'onload' || attribute.name === 'onerror') &&
-					LoadErrorElements.includes(node.name)
+					is_load_error_element(node.name)
 				) {
 					might_need_event_replaying = true;
 				}
@@ -238,7 +241,7 @@ export function RegularElement(node, context) {
 					// to create the elements it needs.
 					context.state.template.push(
 						` ${attribute.name}${
-							DOMBooleanAttributes.includes(name) && literal_value === true
+							is_boolean_attribute(name) && literal_value === true
 								? ''
 								: `="${literal_value === true ? '' : escape_html(literal_value, true)}"`
 						}`
@@ -599,7 +602,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		update = b.stmt(b.call('$.set_value', node_id, value));
 	} else if (name === 'checked') {
 		update = b.stmt(b.call('$.set_checked', node_id, value));
-	} else if (DOMProperties.includes(name)) {
+	} else if (is_dom_property(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, b.id(name)), value));
 	} else {
 		const callee = name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute';

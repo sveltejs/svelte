@@ -7,13 +7,12 @@ import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { is_text_attribute } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
-import { ReservedKeywords, Runes } from '../constants.js';
 import { Scope, ScopeRoot, create_scopes, get_rune } from '../scope.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { create_attribute } from '../nodes.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
-import { hash } from '../../../utils.js';
+import { hash, is_rune } from '../../../utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
 import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
@@ -203,6 +202,8 @@ function get_component_name(filename) {
 	return name[0].toUpperCase() + name.slice(1);
 }
 
+const RESERVED = ['$$props', '$$restProps', '$$slots'];
+
 /**
  * @param {Program} ast
  * @param {ValidatedModuleCompileOptions} options
@@ -212,7 +213,7 @@ export function analyze_module(ast, options) {
 	const { scope, scopes } = create_scopes(ast, new ScopeRoot(), false, null);
 
 	for (const [name, references] of scope.references) {
-		if (name[0] !== '$' || ReservedKeywords.includes(name)) continue;
+		if (name[0] !== '$' || RESERVED.includes(name)) continue;
 		if (name === '$' || name[1] === '$') {
 			e.global_reference_invalid(references[0].node, name);
 		}
@@ -257,7 +258,7 @@ export function analyze_component(root, source, options) {
 
 	// create synthetic bindings for store subscriptions
 	for (const [name, references] of module.scope.references) {
-		if (name[0] !== '$' || ReservedKeywords.includes(name)) continue;
+		if (name[0] !== '$' || RESERVED.includes(name)) continue;
 		if (name === '$' || name[1] === '$') {
 			e.global_reference_invalid(references[0].node, name);
 		}
@@ -269,7 +270,7 @@ export function analyze_component(root, source, options) {
 		// is referencing a rune and not a global store.
 		if (
 			options.runes === false ||
-			!Runes.includes(/** @type {any} */ (name)) ||
+			!is_rune(name) ||
 			(declaration !== null &&
 				// const state = $state(0) is valid
 				(get_rune(declaration.initial, instance.scope) === null ||
@@ -307,7 +308,7 @@ export function analyze_component(root, source, options) {
 			if (options.runes !== false) {
 				if (declaration === null && /[a-z]/.test(store_name[0])) {
 					e.global_reference_invalid(references[0].node, name);
-				} else if (declaration !== null && Runes.includes(/** @type {any} */ (name))) {
+				} else if (declaration !== null && is_rune(name)) {
 					for (const { node, path } of references) {
 						if (path.at(-1)?.type === 'CallExpression') {
 							w.store_rune_conflict(node, store_name);
@@ -339,9 +340,7 @@ export function analyze_component(root, source, options) {
 
 	const component_name = get_component_name(options.filename ?? 'Component');
 
-	const runes =
-		options.runes ??
-		Array.from(module.scope.references).some(([name]) => Runes.includes(/** @type {any} */ (name)));
+	const runes = options.runes ?? Array.from(module.scope.references.keys()).some(is_rune);
 
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config
 	/** @type {ComponentAnalysis} */

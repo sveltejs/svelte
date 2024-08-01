@@ -8,11 +8,6 @@ import {
 } from '../../../../../utils/ast.js';
 import { binding_properties } from '../../../../bindings.js';
 import {
-	ContentEditableBindings,
-	LoadErrorElements,
-	WhitespaceInsensitiveAttributes
-} from '../../../../constants.js';
-import {
 	create_attribute,
 	create_expression_metadata,
 	is_custom_element_node
@@ -20,11 +15,17 @@ import {
 import { regex_starts_with_newline } from '../../../../patterns.js';
 import * as b from '../../../../../utils/builders.js';
 import {
-	DOMBooleanAttributes,
 	ELEMENT_IS_NAMESPACED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE
 } from '../../../../../../constants.js';
 import { serialize_attribute_value } from './utils.js';
+import {
+	is_boolean_attribute,
+	is_content_editable_binding,
+	is_load_error_element
+} from '../../../../../../utils.js';
+
+const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
 
 /**
  * Writes the output to the template output. Some elements may have attributes on them that require the
@@ -77,7 +78,7 @@ export function serialize_element_attributes(node, context) {
 			} else if (is_event_attribute(attribute)) {
 				if (
 					(attribute.name === 'onload' || attribute.name === 'onerror') &&
-					LoadErrorElements.includes(node.name)
+					is_load_error_element(node.name)
 				) {
 					events_to_capture.add(attribute.name);
 				}
@@ -108,7 +109,7 @@ export function serialize_element_attributes(node, context) {
 			const binding = binding_properties[attribute.name];
 			if (binding?.omit_in_ssr) continue;
 
-			if (ContentEditableBindings.includes(attribute.name)) {
+			if (is_content_editable_binding(attribute.name)) {
 				content = /** @type {Expression} */ (context.visit(attribute.expression));
 			} else if (attribute.name === 'value' && node.name === 'textarea') {
 				content = b.call(
@@ -170,12 +171,12 @@ export function serialize_element_attributes(node, context) {
 		} else if (attribute.type === 'SpreadAttribute') {
 			attributes.push(attribute);
 			has_spread = true;
-			if (LoadErrorElements.includes(node.name)) {
+			if (is_load_error_element(node.name)) {
 				events_to_capture.add('onload');
 				events_to_capture.add('onerror');
 			}
 		} else if (attribute.type === 'UseDirective') {
-			if (LoadErrorElements.includes(node.name)) {
+			if (is_load_error_element(node.name)) {
 				events_to_capture.add('onload');
 				events_to_capture.add('onerror');
 			}
@@ -227,14 +228,14 @@ export function serialize_element_attributes(node, context) {
 					serialize_attribute_value(
 						attribute.value,
 						context,
-						WhitespaceInsensitiveAttributes.includes(name)
+						WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 					)
 				).value;
 				if (name !== 'class' || literal_value) {
 					context.state.template.push(
 						b.literal(
 							` ${attribute.name}${
-								DOMBooleanAttributes.includes(name) && literal_value === true
+								is_boolean_attribute(name) && literal_value === true
 									? ''
 									: `="${literal_value === true ? '' : String(literal_value)}"`
 							}`
@@ -245,15 +246,14 @@ export function serialize_element_attributes(node, context) {
 			}
 
 			const name = get_attribute_name(node, attribute, context);
-			const is_boolean = DOMBooleanAttributes.includes(name);
 			const value = serialize_attribute_value(
 				attribute.value,
 				context,
-				WhitespaceInsensitiveAttributes.includes(name)
+				WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 			);
 
 			context.state.template.push(
-				b.call('$.attr', b.literal(name), value, is_boolean && b.literal(is_boolean))
+				b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
 			);
 		}
 	}
@@ -344,7 +344,7 @@ function serialize_element_spread_attributes(
 				const value = serialize_attribute_value(
 					attribute.value,
 					context,
-					WhitespaceInsensitiveAttributes.includes(name)
+					WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 				);
 				return b.prop('init', b.key(name), value);
 			}

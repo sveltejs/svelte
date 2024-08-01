@@ -9,8 +9,8 @@ import { validate_no_const_assignment } from './shared/utils.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { binding_properties } from '../../bindings.js';
-import { ContentEditableBindings, SVGElements } from '../../constants.js';
 import fuzzymatch from '../../1-parse/utils/fuzzymatch.js';
+import { is_content_editable_binding, is_svg } from '../../../../utils.js';
 
 /**
  * @param {BindDirective} node
@@ -197,7 +197,7 @@ export function BindDirective(node, context) {
 				}
 			}
 
-			if (node.name === 'offsetWidth' && SVGElements.includes(parent.name)) {
+			if (node.name === 'offsetWidth' && is_svg(parent.name)) {
 				e.bind_invalid_target(
 					node,
 					node.name,
@@ -205,7 +205,7 @@ export function BindDirective(node, context) {
 				);
 			}
 
-			if (ContentEditableBindings.includes(node.name)) {
+			if (is_content_editable_binding(node.name)) {
 				const contenteditable = /** @type {Attribute} */ (
 					parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'contenteditable')
 				);

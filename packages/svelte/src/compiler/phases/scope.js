@@ -1,5 +1,5 @@
 /** @import { ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
-/** @import { Context, Visitor, Visitors } from 'zimmerframe' */
+/** @import { Context, Visitor } from 'zimmerframe' */
 /** @import { AnimateDirective, Binding, DeclarationKind, EachBlock, ElementLike, LetDirective, SvelteNode, TransitionDirective, UseDirective } from '#compiler' */
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
@@ -12,8 +12,7 @@ import {
 	object,
 	unwrap_pattern
 } from '../utils/ast.js';
-import { Runes } from './constants.js';
-import { is_reserved } from '../../utils.js';
+import { is_reserved, is_rune } from '../../utils.js';
 
 export class Scope {
 	/** @type {ScopeRoot} */
@@ -752,7 +751,6 @@ export function set_scope(node, { next, state }) {
  * Returns the name of the rune if the given expression is a `CallExpression` using a rune.
  * @param {Node | EachBlock | null | undefined} node
  * @param {Scope} scope
- * @returns {Runes[number] | null}
  */
 export function get_rune(node, scope) {
 	if (!node) return null;
@@ -778,10 +776,10 @@ export function get_rune(node, scope) {
 
 	joined = n.name + joined;
 
-	if (!Runes.includes(/** @type {any} */ (joined))) return null;
+	if (!is_rune(joined)) return null;
 
 	const binding = scope.get(n.name);
 	if (binding !== null) return null; // rune name, but references a variable or store
 
-	return /** @type {typeof Runes[number] | null} */ (joined);
+	return joined;
 }
