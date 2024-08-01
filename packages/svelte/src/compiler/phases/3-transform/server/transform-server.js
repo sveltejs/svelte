@@ -37,10 +37,7 @@ import { SvelteHead } from './visitors/SvelteHead.js';
 import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
-import {
-	VariableDeclarationLegacy,
-	VariableDeclarationRunes
-} from './visitors/VariableDeclaration.js';
+import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 
 /** @type {Visitors} */
 const global_visitors = {
@@ -53,19 +50,8 @@ const global_visitors = {
 	LabeledStatement,
 	MemberExpression,
 	PropertyDefinition,
-	UpdateExpression
-};
-
-/** @type {Visitors} */
-const javascript_visitors_runes = {
-	...global_visitors,
-	VariableDeclaration: VariableDeclarationRunes
-};
-
-/** @type {Visitors} */
-const javascript_visitors_legacy = {
-	...global_visitors,
-	VariableDeclaration: VariableDeclarationLegacy
+	UpdateExpression,
+	VariableDeclaration
 };
 
 /** @type {ComponentVisitors} */
@@ -116,9 +102,7 @@ export function server_component(analysis, options) {
 	};
 
 	const module = /** @type {Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, {
-			...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy)
-		})
+		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, global_visitors)
 	);
 
 	const instance = /** @type {Program} */ (
@@ -126,7 +110,7 @@ export function server_component(analysis, options) {
 			/** @type {SvelteNode} */ (analysis.instance.ast),
 			{ ...state, scopes: analysis.instance.scopes },
 			{
-				...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy),
+				...global_visitors,
 				ImportDeclaration(node) {
 					state.hoisted.push(node);
 					return b.empty;
@@ -412,7 +396,7 @@ export function server_module(analysis, options) {
 	};
 
 	const module = /** @type {Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, javascript_visitors_runes)
+		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, global_visitors)
 	);
 
 	return {
