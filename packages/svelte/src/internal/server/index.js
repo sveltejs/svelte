@@ -6,8 +6,8 @@ import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
 	UNINITIALIZED,
-	DOMBooleanAttributes,
-	RawTextElements,
+	DOM_BOOLEAN_ATTRIBUTES,
+	RAW_TEXT_ELEMENTS,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
 	ELEMENT_IS_NAMESPACED
 } from '../../constants.js';
@@ -67,7 +67,7 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
 
 		if (!is_void(tag)) {
 			children_fn();
-			if (!RawTextElements.includes(tag)) {
+			if (!RAW_TEXT_ELEMENTS.includes(tag)) {
 				payload.out += EMPTY_COMMENT;
 			}
 			payload.out += `</${tag}>`;
@@ -225,7 +225,7 @@ export function spread_attributes(attrs, classes, styles, flags = 0) {
 			name = name.toLowerCase();
 		}
 
-		const is_boolean = is_html && DOMBooleanAttributes.includes(name);
+		const is_boolean = is_html && DOM_BOOLEAN_ATTRIBUTES.includes(name);
 		attr_str += attr(name, attrs[name], is_boolean);
 	}
 

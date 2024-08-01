@@ -1,11 +1,11 @@
-import { AttributeAliases, DOMBooleanAttributes } from '../../constants.js';
+import { ATTRIBUTE_ALIASES, DOM_BOOLEAN_ATTRIBUTES } from '../../constants.js';
 
 export const DOMProperties = [
-	...Object.values(AttributeAliases),
+	...Object.values(ATTRIBUTE_ALIASES),
 	'value',
 	'inert',
 	'volume',
-	...DOMBooleanAttributes
+	...DOM_BOOLEAN_ATTRIBUTES
 ];
 
 export const PassiveEvents = ['wheel', 'touchstart', 'touchmove', 'touchend', 'touchcancel'];

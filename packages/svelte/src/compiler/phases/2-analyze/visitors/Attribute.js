@@ -1,7 +1,7 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression } from 'estree' */
 /** @import { Attribute, DelegatedEvent, RegularElement } from '#compiler' */
 /** @import { Context } from '../types' */
-import { DelegatedEvents } from '../../../../constants.js';
+import { DELEGATED_EVENTS } from '../../../../constants.js';
 import { is_capture_event } from '../../../../utils.js';
 import {
 	get_attribute_chunks,
@@ -60,7 +60,7 @@ export function Attribute(node, context) {
  */
 function get_delegated_event(event_name, handler, context) {
 	// Handle delegated event handlers. Bail-out if not a delegated event.
-	if (!handler || !DelegatedEvents.includes(event_name)) {
+	if (!handler || !DELEGATED_EVENTS.includes(event_name)) {
 		return null;
 	}
 
@@ -119,7 +119,7 @@ function get_delegated_event(event_name, handler, context) {
 					if (
 						element.type !== 'RegularElement' ||
 						element.metadata.has_spread ||
-						!DelegatedEvents.includes(event_name)
+						!DELEGATED_EVENTS.includes(event_name)
 					) {
 						return non_hoistable;
 					}

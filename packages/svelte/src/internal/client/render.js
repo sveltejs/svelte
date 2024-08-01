@@ -6,7 +6,7 @@ import {
 	HYDRATION_END,
 	HYDRATION_ERROR,
 	HYDRATION_START,
-	PassiveDelegatedEvents
+	PASSIVE_DELEGATED_EVENTS
 } from '../../constants.js';
 import { flush_sync, push, pop, current_component_context, current_effect } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
@@ -195,7 +195,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			if (registered_events.has(event_name)) continue;
 			registered_events.add(event_name);
 
-			var passive = PassiveDelegatedEvents.includes(event_name);
+			var passive = PASSIVE_DELEGATED_EVENTS.includes(event_name);
 
 			// Add the event listener to both the container and the document.
 			// The container listener ensures we catch events from within in case

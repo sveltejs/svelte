@@ -1,7 +1,7 @@
 /** @import { Expression, Identifier } from 'estree' */
 /** @import { Attribute, ClassDirective, DelegatedEvent, ExpressionMetadata, ExpressionTag, Namespace, OnDirective, RegularElement, StyleDirective, SvelteElement, SvelteNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
-import { AttributeAliases } from '../../../../../../constants.js';
+import { ATTRIBUTE_ALIASES } from '../../../../../../constants.js';
 import { is_capture_event } from '../../../../../../utils.js';
 import { get_attribute_expression } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
@@ -126,8 +126,8 @@ export function get_attribute_name(element, attribute, context) {
 		context.state.metadata.namespace !== 'foreign'
 	) {
 		name = name.toLowerCase();
-		if (name in AttributeAliases) {
-			name = AttributeAliases[name];
+		if (name in ATTRIBUTE_ALIASES) {
+			name = ATTRIBUTE_ALIASES[name];
 		}
 	}
 	return name;

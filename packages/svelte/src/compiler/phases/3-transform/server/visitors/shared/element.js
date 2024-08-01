@@ -20,7 +20,7 @@ import {
 import { regex_starts_with_newline } from '../../../../patterns.js';
 import * as b from '../../../../../utils/builders.js';
 import {
-	DOMBooleanAttributes,
+	DOM_BOOLEAN_ATTRIBUTES,
 	ELEMENT_IS_NAMESPACED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE
 } from '../../../../../../constants.js';
@@ -234,7 +234,7 @@ export function serialize_element_attributes(node, context) {
 					context.state.template.push(
 						b.literal(
 							` ${attribute.name}${
-								DOMBooleanAttributes.includes(name) && literal_value === true
+								DOM_BOOLEAN_ATTRIBUTES.includes(name) && literal_value === true
 									? ''
 									: `="${literal_value === true ? '' : String(literal_value)}"`
 							}`
@@ -245,7 +245,7 @@ export function serialize_element_attributes(node, context) {
 			}
 
 			const name = get_attribute_name(node, attribute, context);
-			const is_boolean = DOMBooleanAttributes.includes(name);
+			const is_boolean = DOM_BOOLEAN_ATTRIBUTES.includes(name);
 			const value = serialize_attribute_value(
 				attribute.value,
 				context,

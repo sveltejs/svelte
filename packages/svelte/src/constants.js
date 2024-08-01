@@ -35,10 +35,10 @@ export const FILENAME = Symbol('filename');
 export const HMR = Symbol('hmr');
 
 /** List of elements that require raw contents and should not have SSR comments put in them */
-export const RawTextElements = ['textarea', 'script', 'style', 'title'];
+export const RAW_TEXT_ELEMENTS = ['textarea', 'script', 'style', 'title'];
 
 /** List of Element events that will be delegated */
-export const DelegatedEvents = [
+export const DELEGATED_EVENTS = [
 	'beforeinput',
 	'click',
 	'change',
@@ -65,7 +65,7 @@ export const DelegatedEvents = [
 ];
 
 /** List of Element events that will be delegated and are passive */
-export const PassiveDelegatedEvents = ['touchstart', 'touchmove', 'touchend'];
+export const PASSIVE_DELEGATED_EVENTS = ['touchstart', 'touchmove', 'touchend'];
 
 /**
  * @type {Record<string, string>}
@@ -73,7 +73,7 @@ export const PassiveDelegatedEvents = ['touchstart', 'touchmove', 'touchend'];
  * because they behave differently between setting them as an attribute and
  * setting them as a property.
  */
-export const AttributeAliases = {
+export const ATTRIBUTE_ALIASES = {
 	// no `class: 'className'` because we handle that separately
 	formnovalidate: 'formNoValidate',
 	ismap: 'isMap',
@@ -85,7 +85,7 @@ export const AttributeAliases = {
 /**
  * Attributes that are boolean, i.e. they are present or not present.
  */
-export const DOMBooleanAttributes = [
+export const DOM_BOOLEAN_ATTRIBUTES = [
 	'allowfullscreen',
 	'async',
 	'autofocus',
@@ -113,8 +113,8 @@ export const DOMBooleanAttributes = [
 	'webkitdirectory'
 ];
 
-export const namespace_svg = 'http://www.w3.org/2000/svg';
-export const namespace_mathml = 'http://www.w3.org/1998/Math/MathML';
+export const NAMESPACE_SVG = 'http://www.w3.org/2000/svg';
+export const NAMESPACE_MATHML = 'http://www.w3.org/1998/Math/MathML';
 
 // we use a list of ignorable runtime warnings because not every runtime warning
 // can be ignored and we want to keep the validation for svelte-ignore in place

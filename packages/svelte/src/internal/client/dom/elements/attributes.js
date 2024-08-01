@@ -1,7 +1,7 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
-import { AttributeAliases, DelegatedEvents, namespace_svg } from '../../../../constants.js';
+import { ATTRIBUTE_ALIASES, DELEGATED_EVENTS, NAMESPACE_SVG } from '../../../../constants.js';
 import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
@@ -212,7 +212,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 			const opts = {};
 			const event_handle_key = '$$' + key;
 			let event_name = key.slice(2);
-			var delegated = DelegatedEvents.includes(event_name);
+			var delegated = DELEGATED_EVENTS.includes(event_name);
 
 			if (is_capture_event(event_name)) {
 				event_name = event_name.slice(0, -7);
@@ -269,7 +269,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 			var name = key;
 			if (lowercase_attributes) {
 				name = name.toLowerCase();
-				name = AttributeAliases[name] || name;
+				name = ATTRIBUTE_ALIASES[name] || name;
 			}
 
 			if (setters.includes(name)) {
@@ -331,7 +331,7 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 		/** @type {Element & ElementCSSInlineStyle} */ (node),
 		prev,
 		next,
-		node.namespaceURI !== namespace_svg,
+		node.namespaceURI !== NAMESPACE_SVG,
 		css_hash
 	);
 }
