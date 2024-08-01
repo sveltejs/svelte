@@ -34,36 +34,6 @@ export const UNINITIALIZED = Symbol();
 export const FILENAME = Symbol('filename');
 export const HMR = Symbol('hmr');
 
-/** List of elements that require raw contents and should not have SSR comments put in them */
-export const RAW_TEXT_ELEMENTS = ['textarea', 'script', 'style', 'title'];
-
-/** List of Element events that will be delegated */
-export const DELEGATED_EVENTS = [
-	'beforeinput',
-	'click',
-	'change',
-	'dblclick',
-	'contextmenu',
-	'focusin',
-	'focusout',
-	'input',
-	'keydown',
-	'keyup',
-	'mousedown',
-	'mousemove',
-	'mouseout',
-	'mouseover',
-	'mouseup',
-	'pointerdown',
-	'pointermove',
-	'pointerout',
-	'pointerover',
-	'pointerup',
-	'touchend',
-	'touchmove',
-	'touchstart'
-];
-
 /** List of Element events that will be delegated and are passive */
 export const PASSIVE_DELEGATED_EVENTS = ['touchstart', 'touchmove', 'touchend'];
 

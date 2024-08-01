@@ -105,3 +105,38 @@ export function is_reserved(word) {
 export function is_capture_event(name) {
 	return name.endsWith('capture') && name !== 'gotpointercapture' && name !== 'lostpointercapture';
 }
+
+/** List of Element events that will be delegated */
+export const DELEGATED_EVENTS = [
+	'beforeinput',
+	'click',
+	'change',
+	'dblclick',
+	'contextmenu',
+	'focusin',
+	'focusout',
+	'input',
+	'keydown',
+	'keyup',
+	'mousedown',
+	'mousemove',
+	'mouseout',
+	'mouseover',
+	'mouseup',
+	'pointerdown',
+	'pointermove',
+	'pointerout',
+	'pointerover',
+	'pointerup',
+	'touchend',
+	'touchmove',
+	'touchstart'
+];
+
+/**
+ * Returns `true` if `event_name` is a delegated event
+ * @param {string} event_name
+ */
+export function is_delegated(event_name) {
+	return DELEGATED_EVENTS.includes(event_name);
+}

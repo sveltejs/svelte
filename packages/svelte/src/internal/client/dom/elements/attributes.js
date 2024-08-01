@@ -1,13 +1,13 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
-import { ATTRIBUTE_ALIASES, DELEGATED_EVENTS, NAMESPACE_SVG } from '../../../../constants.js';
+import { ATTRIBUTE_ALIASES, NAMESPACE_SVG } from '../../../../constants.js';
 import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '../../constants.js';
 import { queue_idle_task, queue_micro_task } from '../task.js';
-import { is_capture_event } from '../../../../utils.js';
+import { is_capture_event, is_delegated } from '../../../../utils.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -212,7 +212,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 			const opts = {};
 			const event_handle_key = '$$' + key;
 			let event_name = key.slice(2);
-			var delegated = DELEGATED_EVENTS.includes(event_name);
+			var delegated = is_delegated(event_name);
 
 			if (is_capture_event(event_name)) {
 				event_name = event_name.slice(0, -7);

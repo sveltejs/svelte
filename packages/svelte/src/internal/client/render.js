@@ -8,7 +8,7 @@ import {
 	HYDRATION_START,
 	PASSIVE_DELEGATED_EVENTS
 } from '../../constants.js';
-import { flush_sync, push, pop, current_component_context, current_effect } from './runtime.js';
+import { push, pop, current_component_context, current_effect } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
 import {
 	hydrate_next,
