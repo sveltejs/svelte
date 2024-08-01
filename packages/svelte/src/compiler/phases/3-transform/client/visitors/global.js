@@ -1,6 +1,7 @@
 /** @import { Visitors } from '../types' */
 import { ArrowFunctionExpression } from './ArrowFunctionExpression.js';
 import { AssignmentExpression } from './AssignmentExpression.js';
+import { Fragment } from './Fragment.js';
 import { FunctionDeclaration } from './FunctionDeclaration.js';
 import { FunctionExpression } from './FunctionExpression.js';
 import { Identifier } from './Identifier.js';
@@ -9,11 +10,12 @@ import { UpdateExpression } from './UpdateExpression.js';
 
 /** @type {Visitors} */
 export const global_visitors = {
-	Identifier,
-	MemberExpression,
+	ArrowFunctionExpression,
 	AssignmentExpression,
-	UpdateExpression,
+	Fragment,
 	FunctionDeclaration,
 	FunctionExpression,
-	ArrowFunctionExpression
+	Identifier,
+	MemberExpression,
+	UpdateExpression
 };
