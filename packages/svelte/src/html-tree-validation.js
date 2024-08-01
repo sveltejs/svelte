@@ -2,13 +2,14 @@
  * Map of elements that have certain elements that are not allowed inside them, in the sense that they will auto-close the parent/ancestor element.
  * Theoretically one could take advantage of it but most of the time it will just result in confusing behavior and break when SSR'd.
  * There are more elements that are invalid inside other elements, but they're not auto-closed and so don't break SSR and are therefore not listed here.
- * @type {Record<string, { direct: string[]} | { descendant: string[] }>}
+ * @type {Record<string, { direct: string[]} | { descendant: string[]; reset_by?: string[] }>}
  */
 const autoclosing_children = {
 	// based on http://developers.whatwg.org/syntax.html#syntax-tag-omission
 	li: { direct: ['li'] },
-	dt: { descendant: ['dt', 'dd'] },
-	dd: { descendant: ['dt', 'dd'] },
+	// https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dt#technical_summary
+	dt: { descendant: ['dt', 'dd'], reset_by: ['dl'] },
+	dd: { descendant: ['dt', 'dd'], reset_by: ['dl'] },
 	p: {
 		descendant: [
 			'address',
@@ -75,7 +76,7 @@ export function closing_tag_omitted(current, next) {
 /**
  * Map of elements that have certain elements that are not allowed inside them, in the sense that the browser will somehow repair the HTML.
  * There are more elements that are invalid inside other elements, but they're not repaired and so don't break SSR and are therefore not listed here.
- * @type {Record<string, { direct: string[]} | { descendant: string[]; only?: string[] } | { only: string[] }>}
+ * @type {Record<string, { direct: string[]} | { descendant: string[]; reset_by?: string[]; only?: string[] } | { only: string[] }>}
  */
 const disallowed_children = {
 	...autoclosing_children,
@@ -137,12 +138,24 @@ const disallowed_children = {
  * Returns false if the tag is not allowed inside the ancestor tag (which is grandparent and above) such that it will result
  * in the browser repairing the HTML, which will likely result in an error during hydration.
  * @param {string} tag
- * @param {string} ancestor Must not be the parent, but higher up the tree
+ * @param {string[]} ancestors All nodes starting with the parent, up until the ancestor, which means two entries minimum
  * @returns {boolean}
  */
-export function is_tag_valid_with_ancestor(tag, ancestor) {
-	const disallowed = disallowed_children[ancestor];
-	return !disallowed || ('descendant' in disallowed ? !disallowed.descendant.includes(tag) : true);
+export function is_tag_valid_with_ancestor(tag, ancestors) {
+	const target = ancestors[ancestors.length - 1];
+	const disallowed = disallowed_children[target];
+	if (!disallowed) return true;
+
+	if ('reset_by' in disallowed && disallowed.reset_by) {
+		for (let i = ancestors.length - 2; i >= 0; i--) {
+			// A reset means that forbidden descendants are allowed again
+			if (disallowed.reset_by.includes(ancestors[i])) {
+				return true;
+			}
+		}
+	}
+
+	return 'descendant' in disallowed ? !disallowed.descendant.includes(tag) : true;
 }
 
 /**

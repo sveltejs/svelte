@@ -98,6 +98,7 @@ export function RegularElement(node, context) {
 	if (context.state.parent_element) {
 		let past_parent = false;
 		let only_warn = false;
+		const ancestors = [context.state.parent_element];
 
 		for (let i = context.path.length - 1; i >= 0; i--) {
 			const ancestor = context.path[i];
@@ -129,7 +130,9 @@ export function RegularElement(node, context) {
 					past_parent = true;
 				}
 			} else if (ancestor.type === 'RegularElement') {
-				if (!is_tag_valid_with_ancestor(node.name, ancestor.name)) {
+				ancestors.push(ancestor.name);
+
+				if (!is_tag_valid_with_ancestor(node.name, ancestors)) {
 					if (only_warn) {
 						w.node_invalid_placement_ssr(node, `\`<${node.name}>\``, ancestor.name);
 					} else {

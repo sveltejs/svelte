@@ -59,17 +59,22 @@ function print_error(payload, parent, child) {
 export function push_element(payload, tag, line, column) {
 	var filename = /** @type {Component} */ (current_component).function[FILENAME];
 	var child = { tag, parent, filename, line, column };
-	var ancestor = parent?.parent;
 
-	if (parent !== null && !is_tag_valid_with_parent(tag, parent.tag)) {
-		print_error(payload, parent, child);
-	}
+	if (parent !== null) {
+		var ancestor = parent.parent;
+		var ancestors = [parent.tag];
 
-	while (ancestor != null) {
-		if (!is_tag_valid_with_ancestor(tag, ancestor.tag)) {
-			print_error(payload, ancestor, child);
+		if (!is_tag_valid_with_parent(tag, parent.tag)) {
+			print_error(payload, parent, child);
 		}
-		ancestor = ancestor.parent;
+
+		while (ancestor != null) {
+			ancestors.push(ancestor.tag);
+			if (!is_tag_valid_with_ancestor(tag, ancestors)) {
+				print_error(payload, ancestor, child);
+			}
+			ancestor = ancestor.parent;
+		}
 	}
 
 	parent = child;
