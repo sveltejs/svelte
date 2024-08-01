@@ -17,13 +17,18 @@ import { HtmlTag } from './HtmlTag.js';
 import { Identifier } from './Identifier.js';
 import { IfBlock } from './IfBlock.js';
 import { KeyBlock } from './KeyBlock.js';
+import { LetDirective } from './LetDirective.js';
 import { MemberExpression } from './MemberExpression.js';
 import { OnDirective } from './OnDirective.js';
 import { RegularElement } from './RegularElement.js';
 import { RenderTag } from './RenderTag.js';
+import { SlotElement } from './SlotElement.js';
 import { SnippetBlock } from './SnippetBlock.js';
+import { SpreadAttribute } from './SpreadAttribute.js';
 import { SvelteComponent } from './SvelteComponent.js';
 import { SvelteElement } from './SvelteElement.js';
+import { SvelteFragment } from './SvelteFragment.js';
+import { SvelteHead } from './SvelteHead.js';
 import { SvelteSelf } from './SvelteSelf.js';
 import { TransitionDirective } from './TransitionDirective.js';
 import { UpdateExpression } from './UpdateExpression.js';
@@ -49,13 +54,18 @@ export const global_visitors = {
 	Identifier,
 	IfBlock,
 	KeyBlock,
+	LetDirective,
 	MemberExpression,
 	OnDirective,
 	RegularElement,
 	RenderTag,
+	SlotElement,
 	SnippetBlock,
+	SpreadAttribute,
 	SvelteComponent,
 	SvelteElement,
+	SvelteFragment,
+	SvelteHead,
 	SvelteSelf,
 	TransitionDirective,
 	UpdateExpression,
