@@ -10,4 +10,5 @@
 		console.log('bar');
 	}
 	$: $count = 1;
+	$: foo.bar = 1;
 </script>

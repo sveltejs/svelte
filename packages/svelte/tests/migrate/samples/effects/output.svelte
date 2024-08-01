@@ -18,4 +18,7 @@
 	run(() => {
 		$count = 1;
 	});
+	run(() => {
+		foo.bar = 1;
+	});
 </script>

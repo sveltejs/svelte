@@ -412,7 +412,11 @@ const instance_script = {
 			const ids = extract_identifiers(node.body.expression.left);
 			const bindings = ids.map((id) => state.scope.get(id.name));
 			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
-			if (reassigned_bindings.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
+			if (
+				reassigned_bindings.length === 0 &&
+				!bindings.some((b) => b?.kind === 'store_sub') &&
+				node.body.expression.left.type !== 'MemberExpression'
+			) {
 				// $derived
 				state.str.update(
 					/** @type {number} */ (node.start),
