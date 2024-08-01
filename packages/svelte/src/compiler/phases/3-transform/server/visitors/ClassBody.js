@@ -39,7 +39,7 @@ export function ClassBody(node, context) {
 				if (rune === '$derived' || rune === '$derived.by') {
 					/** @type {StateField} */
 					const field = {
-						kind: rune === '$derived.by' ? 'derived_call' : 'derived',
+						kind: rune === '$derived.by' ? 'derived_by' : 'derived',
 						// @ts-expect-error this is set in the next pass
 						id: is_private ? definition.key : null
 					};
@@ -86,7 +86,7 @@ export function ClassBody(node, context) {
 					context.visit(definition.value.arguments[0], child_state)
 				);
 				const value =
-					field.kind === 'derived_call' ? b.call('$.once', init) : b.call('$.once', b.thunk(init));
+					field.kind === 'derived_by' ? b.call('$.once', init) : b.call('$.once', b.thunk(init));
 
 				if (is_private) {
 					body.push(b.prop_def(field.id, value));
@@ -98,7 +98,7 @@ export function ClassBody(node, context) {
 					// get foo() { return this.#foo; }
 					body.push(b.method('get', definition.key, [], [b.return(b.call(member))]));
 
-					if (dev && (field.kind === 'derived' || field.kind === 'derived_call')) {
+					if (dev && (field.kind === 'derived' || field.kind === 'derived_by')) {
 						body.push(
 							b.method(
 								'set',

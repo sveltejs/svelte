@@ -56,7 +56,7 @@ export function ClassBody(node, context) {
 								: rune === '$state.frozen'
 									? 'frozen_state'
 									: rune === '$derived.by'
-										? 'derived_call'
+										? 'derived_by'
 										: 'derived',
 						// @ts-expect-error this is set in the next pass
 						id: is_private ? definition.key : null
@@ -123,7 +123,7 @@ export function ClassBody(node, context) {
 											? b.call('$.freeze', init)
 											: init
 									)
-								: field.kind === 'derived_call'
+								: field.kind === 'derived_by'
 									? b.call('$.derived', init)
 									: b.call('$.derived', b.thunk(init));
 				} else {
@@ -167,7 +167,7 @@ export function ClassBody(node, context) {
 						);
 					}
 
-					if (dev && (field.kind === 'derived' || field.kind === 'derived_call')) {
+					if (dev && (field.kind === 'derived' || field.kind === 'derived_by')) {
 						body.push(
 							b.method(
 								'set',
