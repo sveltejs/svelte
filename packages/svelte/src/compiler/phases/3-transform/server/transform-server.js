@@ -44,6 +44,7 @@ import {
 
 /** @type {Visitors} */
 const global_visitors = {
+	_: set_scope,
 	AssignmentExpression,
 	CallExpression,
 	Identifier,
@@ -116,8 +117,6 @@ export function server_component(analysis, options) {
 
 	const module = /** @type {Program} */ (
 		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, {
-			// @ts-expect-error don't know, don't care
-			_: set_scope,
 			...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy)
 		})
 	);
@@ -127,8 +126,6 @@ export function server_component(analysis, options) {
 			/** @type {SvelteNode} */ (analysis.instance.ast),
 			{ ...state, scopes: analysis.instance.scopes },
 			{
-				// @ts-expect-error don't know, don't care
-				_: set_scope,
 				...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy),
 				ImportDeclaration(node) {
 					state.hoisted.push(node);
@@ -149,12 +146,8 @@ export function server_component(analysis, options) {
 		walk(
 			/** @type {SvelteNode} */ (analysis.template.ast),
 			{ ...state, scopes: analysis.template.scopes },
-			{
-				// @ts-expect-error don't know, don't care
-				_: set_scope,
-				...global_visitors,
-				...template_visitors
-			}
+			// @ts-expect-error don't know, don't care
+			{ ...global_visitors, ...template_visitors }
 		)
 	);
 
@@ -419,10 +412,7 @@ export function server_module(analysis, options) {
 	};
 
 	const module = /** @type {Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, {
-			_: set_scope,
-			...javascript_visitors_runes
-		})
+		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, javascript_visitors_runes)
 	);
 
 	return {
