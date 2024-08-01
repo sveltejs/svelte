@@ -739,10 +739,9 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 /**
  * @template {{ scope: Scope, scopes: Map<SvelteNode, Scope> }} State
- * @param {Map<SvelteNode, Scope>} scopes
  * @returns {Visitors<SvelteNode, State>}
  */
-export function set_scope(scopes) {
+export function set_scope() {
 	return {
 		/**
 		 *

@@ -49,7 +49,7 @@ function sort_const_tags(nodes, state) {
 	/** @type {Map<Compiler.Binding, Tag>} */
 	const tags = new Map();
 
-	const { _ } = set_scope(state.scopes);
+	const { _ } = set_scope();
 
 	for (const node of nodes) {
 		if (node.type === 'ConstTag') {

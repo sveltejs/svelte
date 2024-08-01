@@ -58,6 +58,7 @@ import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 
 /** @type {Visitors} */
 const visitors = {
+	_: set_scope()._,
 	AnimateDirective,
 	ArrowFunctionExpression,
 	AssignmentExpression,
@@ -171,11 +172,7 @@ export function client_component(analysis, options) {
 	};
 
 	const module = /** @type {ESTree.Program} */ (
-		walk(
-			/** @type {SvelteNode} */ (analysis.module.ast),
-			state,
-			combine_visitors(set_scope(analysis.module.scopes), visitors)
-		)
+		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, combine_visitors(visitors))
 	);
 
 	const instance_state = {
@@ -188,7 +185,7 @@ export function client_component(analysis, options) {
 		walk(
 			/** @type {SvelteNode} */ (analysis.instance.ast),
 			instance_state,
-			combine_visitors(set_scope(analysis.instance.scopes), visitors)
+			combine_visitors(visitors)
 		)
 	);
 
@@ -196,7 +193,7 @@ export function client_component(analysis, options) {
 		walk(
 			/** @type {SvelteNode} */ (analysis.template.ast),
 			{ ...state, scope: analysis.instance.scope, scopes: analysis.template.scopes },
-			combine_visitors(set_scope(analysis.template.scopes), visitors)
+			combine_visitors(visitors)
 		)
 	);
 
@@ -657,11 +654,7 @@ export function client_module(analysis, options) {
 	};
 
 	const module = /** @type {ESTree.Program} */ (
-		walk(
-			/** @type {SvelteNode} */ (analysis.module.ast),
-			state,
-			combine_visitors(set_scope(analysis.module.scopes), visitors)
-		)
+		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, combine_visitors(visitors))
 	);
 
 	return {
