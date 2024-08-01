@@ -2,9 +2,11 @@
 import { AnimateDirective } from './AnimateDirective.js';
 import { ArrowFunctionExpression } from './ArrowFunctionExpression.js';
 import { AssignmentExpression } from './AssignmentExpression.js';
+import { Attribute } from './Attribute.js';
 import { AwaitBlock } from './AwaitBlock.js';
 import { BindDirective } from './BindDirective.js';
 import { Comment } from './Comment.js';
+import { Component } from './Component.js';
 import { ConstTag } from './ConstTag.js';
 import { DebugTag } from './DebugTag.js';
 import { EachBlock } from './EachBlock.js';
@@ -20,7 +22,9 @@ import { OnDirective } from './OnDirective.js';
 import { RegularElement } from './RegularElement.js';
 import { RenderTag } from './RenderTag.js';
 import { SnippetBlock } from './SnippetBlock.js';
+import { SvelteComponent } from './SvelteComponent.js';
 import { SvelteElement } from './SvelteElement.js';
+import { SvelteSelf } from './SvelteSelf.js';
 import { TransitionDirective } from './TransitionDirective.js';
 import { UpdateExpression } from './UpdateExpression.js';
 import { UseDirective } from './UseDirective.js';
@@ -30,9 +34,11 @@ export const global_visitors = {
 	AnimateDirective,
 	ArrowFunctionExpression,
 	AssignmentExpression,
+	Attribute,
 	AwaitBlock,
 	BindDirective,
 	Comment,
+	Component,
 	ConstTag,
 	DebugTag,
 	EachBlock,
@@ -48,7 +54,9 @@ export const global_visitors = {
 	RegularElement,
 	RenderTag,
 	SnippetBlock,
+	SvelteComponent,
 	SvelteElement,
+	SvelteSelf,
 	TransitionDirective,
 	UpdateExpression,
 	UseDirective
