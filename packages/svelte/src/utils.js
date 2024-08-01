@@ -205,10 +205,10 @@ export function normalize_attribute(name) {
 
 const DOM_PROPERTIES = [
 	...Object.values(ATTRIBUTE_ALIASES),
+	...DOM_BOOLEAN_ATTRIBUTES,
 	'value',
 	'inert',
-	'volume',
-	...DOM_BOOLEAN_ATTRIBUTES
+	'volume'
 ];
 
 /**
