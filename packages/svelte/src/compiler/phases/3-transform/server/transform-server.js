@@ -16,13 +16,13 @@ import { Component } from './visitors/Component.js';
 import { ConstTag } from './visitors/ConstTag.js';
 import { DebugTag } from './visitors/DebugTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
-import { ExpressionStatementRunes } from './visitors/ExpressionStatement.js';
+import { ExpressionStatement } from './visitors/ExpressionStatement.js';
 import { Fragment } from './visitors/Fragment.js';
 import { HtmlTag } from './visitors/HtmlTag.js';
 import { Identifier } from './visitors/Identifier.js';
 import { IfBlock } from './visitors/IfBlock.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
-import { LabeledStatementLegacy } from './visitors/LabeledStatement.js';
+import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { MemberExpressionRunes } from './visitors/MemberExpression.js';
 import { PropertyDefinitionRunes } from './visitors/PropertyDefinition.js';
 import { RegularElement } from './visitors/RegularElement.js';
@@ -47,7 +47,9 @@ const global_visitors = {
 	_: set_scope,
 	AssignmentExpression,
 	CallExpression,
+	ExpressionStatement,
 	Identifier,
+	LabeledStatement,
 	UpdateExpression
 };
 
@@ -55,7 +57,6 @@ const global_visitors = {
 const javascript_visitors_runes = {
 	...global_visitors,
 	ClassBody: ClassBodyRunes,
-	ExpressionStatement: ExpressionStatementRunes,
 	MemberExpression: MemberExpressionRunes,
 	PropertyDefinition: PropertyDefinitionRunes,
 	VariableDeclaration: VariableDeclarationRunes
@@ -64,7 +65,6 @@ const javascript_visitors_runes = {
 /** @type {Visitors} */
 const javascript_visitors_legacy = {
 	...global_visitors,
-	LabeledStatement: LabeledStatementLegacy,
 	VariableDeclaration: VariableDeclarationLegacy
 };
 
