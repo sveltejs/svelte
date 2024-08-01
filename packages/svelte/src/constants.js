@@ -116,19 +116,6 @@ export const DOMBooleanAttributes = [
 export const namespace_svg = 'http://www.w3.org/2000/svg';
 export const namespace_mathml = 'http://www.w3.org/1998/Math/MathML';
 
-/**
- * @param {string} name
- * @param {"include-on" | "exclude-on"} [mode] - wether if name starts with `on` or `on` is excluded at this point
- */
-export function is_capture_event(name, mode = 'exclude-on') {
-	if (!name.endsWith('capture')) {
-		return false;
-	}
-	return mode == 'exclude-on'
-		? name !== 'gotpointercapture' && name !== 'lostpointercapture'
-		: name !== 'ongotpointercapture' && name !== 'onlostpointercapture';
-}
-
 // we use a list of ignorable runtime warnings because not every runtime warning
 // can be ignored and we want to keep the validation for svelte-ignore in place
 export const IGNORABLE_RUNTIME_WARNINGS = /** @type {const} */ ([

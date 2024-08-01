@@ -1,7 +1,8 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression } from 'estree' */
 /** @import { Attribute, DelegatedEvent, RegularElement } from '#compiler' */
 /** @import { Context } from '../types' */
-import { DelegatedEvents, is_capture_event } from '../../../../constants.js';
+import { DelegatedEvents } from '../../../../constants.js';
+import { is_capture_event } from '../../../../utils.js';
 import {
 	get_attribute_chunks,
 	get_attribute_expression,
@@ -205,9 +206,9 @@ function get_delegated_event(event_name, handler, context) {
  * @param {string} event_name
  */
 function get_attribute_event_name(event_name) {
-	if (is_capture_event(event_name, 'include-on')) {
+	event_name = event_name.slice(2);
+	if (is_capture_event(event_name)) {
 		event_name = event_name.slice(0, -7);
 	}
-	event_name = event_name.slice(2);
 	return event_name;
 }

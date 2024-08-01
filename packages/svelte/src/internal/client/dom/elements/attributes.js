@@ -1,17 +1,13 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
-import {
-	AttributeAliases,
-	DelegatedEvents,
-	is_capture_event,
-	namespace_svg
-} from '../../../../constants.js';
+import { AttributeAliases, DelegatedEvents, namespace_svg } from '../../../../constants.js';
 import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '../../constants.js';
 import { queue_idle_task, queue_micro_task } from '../task.js';
+import { is_capture_event } from '../../../../utils.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need

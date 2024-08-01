@@ -98,3 +98,10 @@ const RESERVED_WORDS = [
 export function is_reserved(word) {
 	return RESERVED_WORDS.includes(word);
 }
+
+/**
+ * @param {string} name
+ */
+export function is_capture_event(name) {
+	return name.endsWith('capture') && name !== 'gotpointercapture' && name !== 'lostpointercapture';
+}
