@@ -204,8 +204,12 @@ export function normalize_attribute(name) {
 }
 
 const DOM_PROPERTIES = [
-	...Object.values(ATTRIBUTE_ALIASES),
 	...DOM_BOOLEAN_ATTRIBUTES,
+	'formNoValidate',
+	'isMap',
+	'noModule',
+	'playsInline',
+	'readOnly',
 	'value',
 	'inert',
 	'volume'
