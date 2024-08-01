@@ -9,8 +9,6 @@ export const DOMProperties = [
 	...DOM_BOOLEAN_ATTRIBUTES
 ];
 
-export const PassiveEvents = ['wheel', 'touchstart', 'touchmove', 'touchend', 'touchcancel'];
-
 export const Runes = /** @type {const} */ ([
 	'$state',
 	'$state.frozen',

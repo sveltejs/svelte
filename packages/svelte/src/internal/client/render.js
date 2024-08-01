@@ -22,7 +22,7 @@ import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
-import { PassiveEvents } from '../../compiler/phases/constants.js';
+import { is_passive_event } from '../../utils.js';
 
 /**
  * This is normally true — block effects should run their intro transitions —
@@ -191,7 +191,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			if (registered_events.has(event_name)) continue;
 			registered_events.add(event_name);
 
-			var passive = PassiveEvents.includes(event_name);
+			var passive = is_passive_event(event_name);
 
 			// Add the event listener to both the container and the document.
 			// The container listener ensures we catch events from within in case

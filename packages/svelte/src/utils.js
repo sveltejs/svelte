@@ -179,3 +179,13 @@ export const DOM_BOOLEAN_ATTRIBUTES = [
 export function is_boolean_attribute(name) {
 	return DOM_BOOLEAN_ATTRIBUTES.includes(name);
 }
+
+const PASSIVE_EVENTS = ['wheel', 'touchstart', 'touchmove', 'touchend', 'touchcancel'];
+
+/**
+ * Returns `true` if `name` is a passive event
+ * @param {string} name
+ */
+export function is_passive_event(name) {
+	return PASSIVE_EVENTS.includes(name);
+}

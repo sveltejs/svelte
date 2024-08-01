@@ -2,10 +2,9 @@
 /** @import { Attribute, ClassDirective, DelegatedEvent, ExpressionMetadata, ExpressionTag, Namespace, OnDirective, RegularElement, StyleDirective, SvelteElement, SvelteNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { ATTRIBUTE_ALIASES } from '../../../../../../constants.js';
-import { is_capture_event } from '../../../../../../utils.js';
+import { is_capture_event, is_passive_event } from '../../../../../../utils.js';
 import { get_attribute_expression } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { PassiveEvents } from '../../../../constants.js';
 import { serialize_get_binding } from '../../utils.js';
 import { serialize_event_handler, serialize_template_literal, serialize_update } from './utils.js';
 
@@ -236,7 +235,7 @@ export function serialize_event(node, metadata, context) {
 		} else if (node.modifiers.includes('nonpassive')) {
 			args.push(b.literal(false));
 		} else if (
-			PassiveEvents.includes(node.name) &&
+			is_passive_event(node.name) &&
 			/** @type {OnDirective} */ (node).type !== 'OnDirective'
 		) {
 			// For on:something events we don't apply passive behaviour to match Svelte 4.
