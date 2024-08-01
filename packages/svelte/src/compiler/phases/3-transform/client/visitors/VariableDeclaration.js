@@ -20,12 +20,14 @@ import { is_hoistable_function } from '../../utils.js';
  * @param {ComponentContext} context
  */
 export function VariableDeclaration(node, context) {
-	if (context.state.analysis.runes) {
-		const declarations = [];
+	/** @type {VariableDeclarator[]} */
+	const declarations = [];
 
+	if (context.state.analysis.runes) {
 		for (const declarator of node.declarations) {
 			const init = declarator.init;
 			const rune = get_rune(init, context.state.scope);
+
 			if (
 				!rune ||
 				rune === '$effect.tracking' ||
@@ -156,6 +158,7 @@ export function VariableDeclaration(node, context) {
 						})
 					);
 				}
+
 				continue;
 			}
 
@@ -207,19 +210,7 @@ export function VariableDeclaration(node, context) {
 				continue;
 			}
 		}
-
-		if (declarations.length === 0) {
-			return b.empty;
-		}
-
-		return {
-			...node,
-			declarations
-		};
 	} else {
-		/** @type {VariableDeclarator[]} */
-		const declarations = [];
-
 		for (const declarator of node.declarations) {
 			const bindings = /** @type {Binding[]} */ (context.state.scope.get_bindings(declarator));
 			const has_state = bindings.some((binding) => binding.kind === 'state');
@@ -227,13 +218,17 @@ export function VariableDeclaration(node, context) {
 
 			if (!has_state && !has_props) {
 				const init = declarator.init;
+
 				if (init != null && is_hoistable_function(init)) {
 					const hoistable_function = context.visit(init);
+
 					context.state.hoisted.push(
 						b.declaration('const', declarator.id, /** @type {Expression} */ (hoistable_function))
 					);
+
 					continue;
 				}
+
 				declarations.push(/** @type {VariableDeclarator} */ (context.visit(declarator)));
 				continue;
 			}
@@ -244,12 +239,14 @@ export function VariableDeclaration(node, context) {
 					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
 					const tmp = context.state.scope.generate('tmp');
 					const paths = extract_paths(declarator.id);
+
 					declarations.push(
 						b.declarator(
 							b.id(tmp),
 							/** @type {Expression} */ (context.visit(/** @type {Expression} */ (declarator.init)))
 						)
 					);
+
 					for (const path of paths) {
 						const name = /** @type {Identifier} */ (path.node).name;
 						const binding = /** @type {Binding} */ (context.state.scope.get(name));
@@ -263,6 +260,7 @@ export function VariableDeclaration(node, context) {
 							)
 						);
 					}
+
 					continue;
 				}
 
@@ -291,16 +289,16 @@ export function VariableDeclaration(node, context) {
 				)
 			);
 		}
-
-		if (declarations.length === 0) {
-			return b.empty;
-		}
-
-		return {
-			...node,
-			declarations
-		};
 	}
+
+	if (declarations.length === 0) {
+		return b.empty;
+	}
+
+	return {
+		...node,
+		declarations
+	};
 }
 
 /**
