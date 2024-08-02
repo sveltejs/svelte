@@ -169,7 +169,6 @@ export function build_event_attribute(node, context) {
  * @param {DelegatedEvent | null} delegated
  * @param {null | ExpressionMetadata} metadata
  * @param {ComponentContext} context
- * @param {boolean} [is_on_directive]
  */
 export function build_event(
 	event_name,
@@ -177,8 +176,7 @@ export function build_event(
 	original_expression,
 	delegated,
 	metadata,
-	context,
-	is_on_directive = false // TODO
+	context
 ) {
 	const state = context.state;
 
@@ -186,21 +184,15 @@ export function build_event(
 	let expression;
 
 	if (original_expression) {
-		let handler = build_event_handler(
-			event_name,
-			modifiers,
-			original_expression,
-			delegated,
-			metadata,
-			context
-		);
+		let handler = build_event_handler(modifiers, original_expression, metadata, context);
 
-		if (delegated != null) {
+		if (delegated !== null) {
 			let delegated_assignment;
 
 			if (!state.events.has(event_name)) {
 				state.events.add(event_name);
 			}
+
 			// Hoist function if we can, otherwise we leave the function as is
 			if (delegated.type === 'hoistable') {
 				if (delegated.function === original_expression) {
@@ -267,7 +259,7 @@ export function build_event(
 			'$.event',
 			b.literal(event_name),
 			state.node,
-			build_event_handler(event_name, modifiers, original_expression, delegated, metadata, context)
+			build_event_handler(modifiers, original_expression, metadata, context)
 		);
 	}
 
@@ -278,6 +270,7 @@ export function build_event(
 		has_action_directive ? b.call('$.effect', b.thunk(expression)) : expression
 	);
 
+	// TODO put this logic in the parent visitor?
 	if (
 		parent.type === 'SvelteDocument' ||
 		parent.type === 'SvelteWindow' ||

@@ -134,21 +134,12 @@ export function build_update_assignment(state, id, init, value, update) {
 
 /**
  * Serializes the event handler function of the `on:` directive
- * @param {string} event_name
  * @param {string[]} modifiers
  * @param {Expression | null} original_expression
- * @param {DelegatedEvent | null} delegated
  * @param {null | ExpressionMetadata} metadata
  * @param {ComponentContext} context
  */
-export function build_event_handler(
-	event_name,
-	modifiers,
-	original_expression,
-	delegated,
-	metadata,
-	{ state, visit }
-) {
+export function build_event_handler(modifiers, original_expression, metadata, { state, visit }) {
 	/** @type {Expression} */
 	let handler;
 

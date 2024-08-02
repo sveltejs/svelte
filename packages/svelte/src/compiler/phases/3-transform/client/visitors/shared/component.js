@@ -70,14 +70,7 @@ export function build_component(node, component_name, context, anchor = context.
 			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 		} else if (attribute.type === 'OnDirective') {
 			events[attribute.name] ||= [];
-			let handler = build_event_handler(
-				attribute.name,
-				attribute.modifiers,
-				attribute.expression,
-				null,
-				null,
-				context
-			);
+			let handler = build_event_handler(attribute.modifiers, attribute.expression, null, context);
 			if (attribute.modifiers.includes('once')) {
 				handler = b.call('$.once', handler);
 			}
