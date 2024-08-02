@@ -66,18 +66,13 @@ export function process_children(nodes, expression, is_element, { visit, state }
 
 			state.template.push(' ');
 
-			const [has_call, value] = build_template_literal(sequence, visit, state);
+			const { has_state, has_call, value } = build_template_literal(sequence, visit, state);
 
 			const update = b.stmt(b.call('$.set_text', text_id, value));
 
 			if (has_call && !within_bound_contenteditable) {
 				state.init.push(build_update(update));
-			} else if (
-				sequence.some(
-					(node) => node.type === 'ExpressionTag' && node.metadata.expression.has_state
-				) &&
-				!within_bound_contenteditable
-			) {
+			} else if (has_state && !within_bound_contenteditable) {
 				state.update.push(update);
 			} else {
 				state.init.push(b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), value)));

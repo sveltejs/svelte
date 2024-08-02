@@ -30,7 +30,8 @@ export function SlotElement(node, context) {
 		if (attribute.type === 'SpreadAttribute') {
 			spreads.push(b.thunk(/** @type {Expression} */ (context.visit(attribute))));
 		} else if (attribute.type === 'Attribute') {
-			const [, value] = build_attribute_value(attribute.value, context);
+			const { value } = build_attribute_value(attribute.value, context);
+
 			if (attribute.name === 'name') {
 				name = value;
 				is_default = false;

@@ -209,10 +209,11 @@ export function BindDirective(node, context) {
 							)
 						)?.value
 					);
+
 					if (value !== undefined) {
 						group_getter = b.thunk(
 							b.block([
-								b.stmt(build_attribute_value(value, context)[1]),
+								b.stmt(build_attribute_value(value, context).value),
 								b.return(/** @type {Expression} */ (context.visit(expression)))
 							])
 						);

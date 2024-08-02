@@ -126,7 +126,7 @@ export function SvelteElement(node, context) {
 				get_tag,
 				node.metadata.svg || node.metadata.mathml ? b.true : b.false,
 				inner.length > 0 && b.arrow([element_id, b.id('$$anchor')], b.block(inner)),
-				dynamic_namespace && b.thunk(build_attribute_value(dynamic_namespace, context)[1]),
+				dynamic_namespace && b.thunk(build_attribute_value(dynamic_namespace, context).value),
 				location && b.array([b.literal(location.line), b.literal(location.column)])
 			)
 		)
@@ -161,7 +161,7 @@ function build_dynamic_element_attributes(attributes, context, element_id) {
 
 	for (const attribute of attributes) {
 		if (attribute.type === 'Attribute') {
-			const [, value] = build_attribute_value(attribute.value, context);
+			const { value } = build_attribute_value(attribute.value, context);
 
 			if (
 				is_event_attribute(attribute) &&

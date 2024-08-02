@@ -33,7 +33,7 @@ export function build_style_directives(
 		let value =
 			directive.value === true
 				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
-				: build_attribute_value(directive.value, context)[1];
+				: build_attribute_value(directive.value, context).value;
 
 		const update = b.stmt(
 			b.call(
@@ -92,24 +92,24 @@ export function build_class_directives(
 /**
  * @param {Attribute['value']} value
  * @param {ComponentContext} context
- * @returns {[has_call: boolean, Expression]}
  */
 export function build_attribute_value(value, context) {
 	if (value === true) {
-		return [false, b.literal(true)];
+		return { has_state: false, has_call: false, value: b.literal(true) };
 	}
 
 	if (!Array.isArray(value) || value.length === 1) {
 		const chunk = Array.isArray(value) ? value[0] : value;
 
 		if (chunk.type === 'Text') {
-			return [false, b.literal(chunk.data)];
+			return { has_state: false, has_call: false, value: b.literal(chunk.data) };
 		}
 
-		return [
-			chunk.metadata.expression.has_call,
-			/** @type {Expression} */ (context.visit(chunk.expression))
-		];
+		return {
+			has_state: chunk.metadata.expression.has_call,
+			has_call: chunk.metadata.expression.has_call,
+			value: /** @type {Expression} */ (context.visit(chunk.expression))
+		};
 	}
 
 	return build_template_literal(value, context.visit, context.state);
