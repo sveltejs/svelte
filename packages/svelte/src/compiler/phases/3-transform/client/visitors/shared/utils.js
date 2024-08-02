@@ -139,7 +139,7 @@ export function build_update_assignment(state, id, init, value, update) {
  * @param {null | ExpressionMetadata} metadata
  * @param {ComponentContext} context
  */
-export function build_event_handler(modifiers, expression, metadata, { state, visit }) {
+export function build_event_handler(modifiers, expression, metadata, context) {
 	/** @type {Expression} */
 	let handler;
 
@@ -154,7 +154,12 @@ export function build_event_handler(modifiers, expression, metadata, { state, vi
 				b.block([
 					b.return(
 						b.call(
-							b.member(/** @type {Expression} */ (visit(handler)), b.id('apply'), false, true),
+							b.member(
+								/** @type {Expression} */ (context.visit(handler)),
+								b.id('apply'),
+								false,
+								true
+							),
 							b.this,
 							b.id('$$args')
 						)
@@ -170,10 +175,10 @@ export function build_event_handler(modifiers, expression, metadata, { state, vi
 			)
 		) {
 			// Create a derived dynamic event handler
-			const id = b.id(state.scope.generate('event_handler'));
+			const id = b.id(context.state.scope.generate('event_handler'));
 
-			state.init.push(
-				b.var(id, b.call('$.derived', b.thunk(/** @type {Expression} */ (visit(handler)))))
+			context.state.init.push(
+				b.var(id, b.call('$.derived', b.thunk(/** @type {Expression} */ (context.visit(handler)))))
 			);
 
 			handler = b.function(
@@ -190,7 +195,7 @@ export function build_event_handler(modifiers, expression, metadata, { state, vi
 				])
 			);
 		} else if (handler.type === 'Identifier') {
-			const binding = state.scope.get(handler.name);
+			const binding = context.state.scope.get(handler.name);
 
 			if (
 				binding !== null &&
@@ -198,13 +203,13 @@ export function build_event_handler(modifiers, expression, metadata, { state, vi
 			) {
 				handler = dynamic_handler();
 			} else {
-				handler = /** @type {Expression} */ (visit(handler));
+				handler = /** @type {Expression} */ (context.visit(handler));
 			}
 		} else {
 			handler = dynamic_handler();
 		}
 	} else {
-		state.analysis.needs_props = true;
+		context.state.analysis.needs_props = true;
 
 		// Function + .call to preserve "this" context as much as possible
 		handler = b.function(

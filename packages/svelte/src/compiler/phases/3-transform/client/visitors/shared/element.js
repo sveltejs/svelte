@@ -161,7 +161,7 @@ export function build_event_attribute(node, context) {
 		}
 
 		// Hoist function if we can, otherwise we leave the function as is
-		if (node.metadata.delegated.type === 'hoistable') {
+		if (node.metadata.delegated.hoistable) {
 			if (node.metadata.delegated.function === tag.expression) {
 				const func_name = context.state.scope.root.unique('on_' + event_name);
 				context.state.hoisted.push(b.var(func_name, handler));

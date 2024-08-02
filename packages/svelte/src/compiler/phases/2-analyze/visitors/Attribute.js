@@ -40,7 +40,7 @@ export function Attribute(node, context) {
 			const delegated_event = get_delegated_event(node.name.slice(2), expression, context);
 
 			if (delegated_event !== null) {
-				if (delegated_event.type === 'hoistable') {
+				if (delegated_event.hoistable) {
 					delegated_event.function.metadata.hoistable = true;
 				}
 
@@ -70,7 +70,7 @@ function get_delegated_event(event_name, handler, context) {
 	}
 
 	/** @type {DelegatedEvent} */
-	const non_hoistable = { type: 'non-hoistable' };
+	const non_hoistable = { hoistable: false };
 	/** @type {FunctionExpression | FunctionDeclaration | ArrowFunctionExpression | null} */
 	let target_function = null;
 	let binding = null;
@@ -198,7 +198,7 @@ function get_delegated_event(event_name, handler, context) {
 		visited_references.add(reference);
 	}
 
-	return { type: 'hoistable', function: target_function };
+	return { hoistable: true, function: target_function };
 }
 
 /**
