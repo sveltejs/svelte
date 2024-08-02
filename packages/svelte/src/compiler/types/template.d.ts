@@ -75,7 +75,7 @@ export interface SvelteOptions {
 	accessors?: boolean;
 	preserveWhitespace?: boolean;
 	namespace?: Namespace;
-	css?: 'injected' | 'external';
+	css?: 'injected';
 	customElement?: {
 		tag: string;
 		shadow?: 'open' | 'none';
