@@ -66,7 +66,7 @@ export function process_children(nodes, expression, is_element, { visit, state }
 
 			state.template.push(' ');
 
-			const [has_call, value] = build_template_literal(sequence, visit, state);
+			const { has_call, value } = build_template_literal(sequence, visit, state);
 
 			const update = b.stmt(b.call('$.set_text', text_id, value));
 

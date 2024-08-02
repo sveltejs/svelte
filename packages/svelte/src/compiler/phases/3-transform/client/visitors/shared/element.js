@@ -112,7 +112,10 @@ export function build_attribute_value(value, context) {
 		];
 	}
 
-	return build_template_literal(value, context.visit, context.state);
+	const { has_call, value: v } = build_template_literal(value, context.visit, context.state);
+
+	// TODO return the same signature
+	return [has_call, v];
 }
 
 /**

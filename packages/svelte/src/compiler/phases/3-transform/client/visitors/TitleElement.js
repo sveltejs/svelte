@@ -8,15 +8,11 @@ import { build_template_literal } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function TitleElement(node, context) {
-	let has_state = node.fragment.nodes.some(
-		(node) => node.type === 'ExpressionTag' && node.metadata.expression.has_state
-	);
-
-	const value = build_template_literal(
+	const { has_state, value } = build_template_literal(
 		/** @type {any} */ (node.fragment.nodes),
 		context.visit,
 		context.state
-	)[1];
+	);
 
 	const statement = b.stmt(b.assignment('=', b.member(b.id('$.document'), b.id('title')), value));
 

@@ -14,26 +14,30 @@ import { locator } from '../../../../../state.js';
  * @param {Array<Text | ExpressionTag>} values
  * @param {(node: SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
- * @returns {[boolean, TemplateLiteral]}
  */
 export function build_template_literal(values, visit, state) {
-	/** @type {TemplateElement[]} */
-	const quasis = [];
-
 	/** @type {Expression[]} */
 	const expressions = [];
+
+	let quasi = b.quasi('');
+	const quasis = [quasi];
+
 	let has_call = false;
+	let has_state = false;
 	let contains_multiple_call_expression = false;
-	quasis.push(b.quasi(''));
 
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
 
-		if (node.type === 'ExpressionTag' && node.metadata.expression.has_call) {
-			if (has_call) {
-				contains_multiple_call_expression = true;
+		if (node.type === 'ExpressionTag') {
+			if (node.metadata.expression.has_call) {
+				if (has_call) {
+					contains_multiple_call_expression = true;
+				}
+				has_call = true;
 			}
-			has_call = true;
+
+			has_state ||= node.metadata.expression.has_state;
 		}
 	}
 
@@ -41,12 +45,10 @@ export function build_template_literal(values, visit, state) {
 		const node = values[i];
 
 		if (node.type === 'Text') {
-			const last = /** @type {TemplateElement} */ (quasis.at(-1));
-			last.value.raw += sanitize_template_string(node.data);
+			quasi.value.raw += sanitize_template_string(node.data);
 		} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
-			const last = /** @type {TemplateElement} */ (quasis.at(-1));
 			if (node.expression.value != null) {
-				last.value.raw += sanitize_template_string(node.expression.value + '');
+				quasi.value.raw += sanitize_template_string(node.expression.value + '');
 			}
 		} else {
 			if (contains_multiple_call_expression) {
@@ -65,12 +67,15 @@ export function build_template_literal(values, visit, state) {
 			} else {
 				expressions.push(b.logical('??', visit(node.expression, state), b.literal('')));
 			}
-			quasis.push(b.quasi('', i + 1 === values.length));
+
+			quasi = b.quasi('', i + 1 === values.length);
+			quasis.push(quasi);
 		}
 	}
 
-	// TODO instead of this tuple, return a `{ dynamic, complex, value }` object. will DRY stuff out
-	return [has_call, b.template(quasis, expressions)];
+	const value = b.template(quasis, expressions);
+
+	return { value, has_state, has_call };
 }
 
 /**
