@@ -135,16 +135,16 @@ export function build_update_assignment(state, id, init, value, update) {
 /**
  * Serializes the event handler function of the `on:` directive
  * @param {string[]} modifiers
- * @param {Expression | null} original_expression
+ * @param {Expression | null} expression
  * @param {null | ExpressionMetadata} metadata
  * @param {ComponentContext} context
  */
-export function build_event_handler(modifiers, original_expression, metadata, { state, visit }) {
+export function build_event_handler(modifiers, expression, metadata, { state, visit }) {
 	/** @type {Expression} */
 	let handler;
 
-	if (original_expression) {
-		handler = original_expression;
+	if (expression) {
+		handler = expression;
 
 		// Event handlers can be dynamic (source/store/prop/conditional etc)
 		const dynamic_handler = () =>

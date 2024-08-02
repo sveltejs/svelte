@@ -226,12 +226,12 @@ export function build_event_attribute(node, context) {
  * Serializes an event handler function of the `on:` directive or an attribute starting with `on`
  * @param {string} event_name
  * @param {string[]} modifiers
- * @param {Expression | null} original_expression
+ * @param {Expression | null} expression
  * @param {null | ExpressionMetadata} metadata
  * @param {ComponentContext} context
  */
-export function build_event(event_name, modifiers, original_expression, metadata, context) {
-	let handler = build_event_handler(modifiers, original_expression, metadata, context);
+export function build_event(event_name, modifiers, expression, metadata, context) {
+	let handler = build_event_handler(modifiers, expression, metadata, context);
 
 	if (modifiers.includes('once')) {
 		handler = b.call('$.once', handler);
