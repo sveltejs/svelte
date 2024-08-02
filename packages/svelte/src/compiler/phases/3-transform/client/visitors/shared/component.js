@@ -93,7 +93,7 @@ export function build_component(node, component_name, context, anchor = context.
 		} else if (attribute.type === 'Attribute') {
 			if (attribute.name.startsWith('--')) {
 				custom_css_props.push(
-					b.init(attribute.name, build_attribute_value(attribute.value, context)[1])
+					b.init(attribute.name, build_attribute_value(attribute.value, context).value)
 				);
 				continue;
 			}
@@ -106,7 +106,7 @@ export function build_component(node, component_name, context, anchor = context.
 				has_children_prop = true;
 			}
 
-			const [, value] = build_attribute_value(attribute.value, context);
+			const { value } = build_attribute_value(attribute.value, context);
 
 			if (attribute.metadata.expression.has_state) {
 				let arg = value;

@@ -230,7 +230,7 @@ export function RegularElement(node, context) {
 			) {
 				const name = get_attribute_name(node, attribute, context);
 				const literal_value = /** @type {Literal} */ (
-					build_attribute_value(attribute.value, context)[1]
+					build_attribute_value(attribute.value, context).value
 				).value;
 				if (name !== 'class' || literal_value) {
 					// TODO namespace=foreign probably doesn't want to do template stuff at all and instead use programmatic methods
@@ -440,7 +440,7 @@ function build_element_spread_attributes(
 		if (attribute.type === 'Attribute') {
 			const name = get_attribute_name(element, attribute, context);
 			// TODO: handle has_call
-			const [, value] = build_attribute_value(attribute.value, context);
+			const { value } = build_attribute_value(attribute.value, context);
 
 			if (
 				name === 'is' &&
@@ -554,7 +554,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 	const name = get_attribute_name(element, attribute, context);
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
-	let [has_call, value] = build_attribute_value(attribute.value, context);
+	let { has_call, value } = build_attribute_value(attribute.value, context);
 
 	// The foreign namespace doesn't have any special handling, everything goes through the attr function
 	if (context.state.metadata.namespace === 'foreign') {
@@ -636,7 +636,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 function build_custom_element_attribute_update_assignment(node_id, attribute, context) {
 	const state = context.state;
 	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
-	let [has_call, value] = build_attribute_value(attribute.value, context);
+	let { has_call, value } = build_attribute_value(attribute.value, context);
 
 	const update = b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), value));
 
@@ -665,7 +665,7 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
  */
 function build_element_special_value_attribute(element, node_id, attribute, context) {
 	const state = context.state;
-	const [, value] = build_attribute_value(attribute.value, context);
+	const { value } = build_attribute_value(attribute.value, context);
 
 	const inner_assignment = b.assignment(
 		'=',
