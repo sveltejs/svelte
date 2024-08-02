@@ -196,79 +196,69 @@ export function build_event(
 	metadata,
 	context
 ) {
-	// TODO put the alternate logic directly in OnDirective
-	if (original_expression) {
-		let handler = build_event_handler(modifiers, original_expression, metadata, context);
+	let handler = build_event_handler(modifiers, original_expression, metadata, context);
 
-		if (delegated !== null) {
-			let delegated_assignment;
+	if (delegated !== null) {
+		let delegated_assignment;
 
-			if (!context.state.events.has(event_name)) {
-				context.state.events.add(event_name);
+		if (!context.state.events.has(event_name)) {
+			context.state.events.add(event_name);
+		}
+
+		// Hoist function if we can, otherwise we leave the function as is
+		if (delegated.type === 'hoistable') {
+			if (delegated.function === original_expression) {
+				const func_name = context.state.scope.root.unique('on_' + event_name);
+				context.state.hoisted.push(b.var(func_name, handler));
+				handler = func_name;
 			}
-
-			// Hoist function if we can, otherwise we leave the function as is
-			if (delegated.type === 'hoistable') {
-				if (delegated.function === original_expression) {
-					const func_name = context.state.scope.root.unique('on_' + event_name);
-					context.state.hoisted.push(b.var(func_name, handler));
-					handler = func_name;
-				}
-				if (modifiers.includes('once')) {
-					handler = b.call('$.once', handler);
-				}
-				const hoistable_params = /** @type {Expression[]} */ (
-					delegated.function.metadata.hoistable_params
-				);
-				// When we hoist a function we assign an array with the function and all
-				// hoisted closure params.
-				const args = [handler, ...hoistable_params];
-				delegated_assignment = b.array(args);
-			} else {
-				if (modifiers.includes('once')) {
-					handler = b.call('$.once', handler);
-				}
-				delegated_assignment = handler;
+			if (modifiers.includes('once')) {
+				handler = b.call('$.once', handler);
 			}
-
-			return b.assignment(
-				'=',
-				b.member(context.state.node, b.id('__' + event_name)),
-				delegated_assignment
+			const hoistable_params = /** @type {Expression[]} */ (
+				delegated.function.metadata.hoistable_params
 			);
+			// When we hoist a function we assign an array with the function and all
+			// hoisted closure params.
+			const args = [handler, ...hoistable_params];
+			delegated_assignment = b.array(args);
+		} else {
+			if (modifiers.includes('once')) {
+				handler = b.call('$.once', handler);
+			}
+			delegated_assignment = handler;
 		}
 
-		if (modifiers.includes('once')) {
-			handler = b.call('$.once', handler);
-		}
-
-		const args = [
-			b.literal(event_name),
-			context.state.node,
-			handler,
-			b.literal(modifiers.includes('capture'))
-		];
-
-		if (modifiers.includes('passive')) {
-			args.push(b.literal(true));
-		} else if (modifiers.includes('nonpassive')) {
-			args.push(b.literal(false));
-		} else if (
-			is_passive_event(event_name) &&
-			/** @type {OnDirective} */ (node).type !== 'OnDirective'
-		) {
-			// For on:something events we don't apply passive behaviour to match Svelte 4.
-			args.push(b.literal(true));
-		}
-
-		// Events need to run in order with bindings/actions
-		return b.call('$.event', ...args);
-	} else {
-		return b.call(
-			'$.event',
-			b.literal(event_name),
-			context.state.node,
-			build_event_handler(modifiers, original_expression, metadata, context)
+		return b.assignment(
+			'=',
+			b.member(context.state.node, b.id('__' + event_name)),
+			delegated_assignment
 		);
 	}
+
+	if (modifiers.includes('once')) {
+		handler = b.call('$.once', handler);
+	}
+
+	const args = [
+		b.literal(event_name),
+		context.state.node,
+		handler,
+		b.literal(modifiers.includes('capture'))
+	];
+
+	if (modifiers.includes('passive')) {
+		args.push(b.literal(true));
+	} else if (modifiers.includes('nonpassive')) {
+		args.push(b.literal(false));
+	} else if (
+		is_passive_event(event_name) &&
+		/** @type {OnDirective} */ (node).type !== 'OnDirective'
+	) {
+		// For on:something events we don't apply passive behaviour to match Svelte 4.
+		args.push(b.literal(true));
+	}
+
+	// Events need to run in order with bindings/actions
+	return b.call('$.event', ...args);
 }
