@@ -150,7 +150,7 @@ export function CallExpression(node, context) {
 			break;
 	}
 
-	if (context.state.expression && !is_known_safe_call(node, context)) {
+	if (context.state.expression && !is_known_safe_call(node.callee, context)) {
 		context.state.expression.has_call = true;
 		context.state.expression.has_state = true;
 	}

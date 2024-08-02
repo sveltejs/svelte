@@ -167,13 +167,11 @@ export function is_safe_identifier(expression, scope) {
 }
 
 /**
- * @param {TaggedTemplateExpression | CallExpression} node
+ * @param {Expression | Super} callee
  * @param {Context} context
  * @returns {boolean}
  */
-export function is_known_safe_call(node, context) {
-	const callee = node.type === 'TaggedTemplateExpression' ? node.tag : node.callee;
-
+export function is_known_safe_call(callee, context) {
 	// String / Number / BigInt / Boolean casting calls
 	if (callee.type === 'Identifier') {
 		const name = callee.name;
