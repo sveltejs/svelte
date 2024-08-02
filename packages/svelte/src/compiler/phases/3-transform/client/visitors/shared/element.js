@@ -151,7 +151,7 @@ export function build_event_attribute(node, context) {
 		? /** @type {ExpressionTag} */ (node.value[0])
 		: /** @type {ExpressionTag} */ (node.value);
 
-	build_event(
+	const handler = build_event(
 		event_name,
 		modifiers,
 		tag.expression,
@@ -159,6 +159,24 @@ export function build_event_attribute(node, context) {
 		tag.metadata.expression,
 		context
 	);
+
+	// TODO this is duplicated with OnDirective
+	const parent = /** @type {SvelteNode} */ (context.path.at(-1));
+	const has_action_directive =
+		parent.type === 'RegularElement' && parent.attributes.find((a) => a.type === 'UseDirective');
+	const statement = b.stmt(has_action_directive ? b.call('$.effect', b.thunk(handler)) : handler);
+
+	// TODO put this logic in the parent visitor?
+	if (
+		parent.type === 'SvelteDocument' ||
+		parent.type === 'SvelteWindow' ||
+		parent.type === 'SvelteBody'
+	) {
+		// These nodes are above the component tree, and its events should run parent first
+		context.state.before_init.push(statement);
+	} else {
+		context.state.after_update.push(statement);
+	}
 }
 
 /**
@@ -178,26 +196,22 @@ export function build_event(
 	metadata,
 	context
 ) {
-	const state = context.state;
-
-	/** @type {Expression} */
-	let expression;
-
+	// TODO put the alternate logic directly in OnDirective
 	if (original_expression) {
 		let handler = build_event_handler(modifiers, original_expression, metadata, context);
 
 		if (delegated !== null) {
 			let delegated_assignment;
 
-			if (!state.events.has(event_name)) {
-				state.events.add(event_name);
+			if (!context.state.events.has(event_name)) {
+				context.state.events.add(event_name);
 			}
 
 			// Hoist function if we can, otherwise we leave the function as is
 			if (delegated.type === 'hoistable') {
 				if (delegated.function === original_expression) {
 					const func_name = context.state.scope.root.unique('on_' + event_name);
-					state.hoisted.push(b.var(func_name, handler));
+					context.state.hoisted.push(b.var(func_name, handler));
 					handler = func_name;
 				}
 				if (modifiers.includes('once')) {
@@ -217,16 +231,11 @@ export function build_event(
 				delegated_assignment = handler;
 			}
 
-			state.init.push(
-				b.stmt(
-					b.assignment(
-						'=',
-						b.member(context.state.node, b.id('__' + event_name)),
-						delegated_assignment
-					)
-				)
+			return b.assignment(
+				'=',
+				b.member(context.state.node, b.id('__' + event_name)),
+				delegated_assignment
 			);
-			return;
 		}
 
 		if (modifiers.includes('once')) {
@@ -253,32 +262,13 @@ export function build_event(
 		}
 
 		// Events need to run in order with bindings/actions
-		expression = b.call('$.event', ...args);
+		return b.call('$.event', ...args);
 	} else {
-		expression = b.call(
+		return b.call(
 			'$.event',
 			b.literal(event_name),
-			state.node,
+			context.state.node,
 			build_event_handler(modifiers, original_expression, metadata, context)
 		);
-	}
-
-	const parent = /** @type {SvelteNode} */ (context.path.at(-1));
-	const has_action_directive =
-		parent.type === 'RegularElement' && parent.attributes.find((a) => a.type === 'UseDirective');
-	const statement = b.stmt(
-		has_action_directive ? b.call('$.effect', b.thunk(expression)) : expression
-	);
-
-	// TODO put this logic in the parent visitor?
-	if (
-		parent.type === 'SvelteDocument' ||
-		parent.type === 'SvelteWindow' ||
-		parent.type === 'SvelteBody'
-	) {
-		// These nodes are above the component tree, and its events should run parent first
-		state.before_init.push(statement);
-	} else {
-		state.after_update.push(statement);
 	}
 }
