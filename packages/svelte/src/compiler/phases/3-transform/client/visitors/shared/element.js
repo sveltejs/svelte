@@ -133,7 +133,7 @@ export function get_attribute_name(element, attribute, context) {
 }
 
 /**
- * @param {Attribute & { value: ExpressionTag | [ExpressionTag] }} node
+ * @param {Attribute} node
  * @param {ComponentContext} context
  */
 export function build_event_attribute(node, context) {
@@ -146,16 +146,19 @@ export function build_event_attribute(node, context) {
 		modifiers.push('capture');
 	}
 
+	// we still need to support the weird `onclick="{() => {...}}" form
+	const tag = Array.isArray(node.value)
+		? /** @type {ExpressionTag} */ (node.value[0])
+		: /** @type {ExpressionTag} */ (node.value);
+
 	build_event(
 		{
 			name: event_name,
-			expression: get_attribute_expression(node),
+			expression: tag.expression,
 			modifiers,
 			delegated: node.metadata.delegated
 		},
-		!Array.isArray(node.value) && node.value?.type === 'ExpressionTag'
-			? node.value.metadata.expression
-			: null,
+		tag.metadata.expression,
 		context
 	);
 }
