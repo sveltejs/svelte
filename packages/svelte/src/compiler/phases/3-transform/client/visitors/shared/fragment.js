@@ -2,7 +2,7 @@
 /** @import { ExpressionTag, SvelteNode, Text } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../../types' */
 import * as b from '../../../../../utils/builders.js';
-import { serialize_template_literal, serialize_update } from './utils.js';
+import { build_template_literal, build_update } from './utils.js';
 
 /**
  * Processes an array of template nodes, joining sibling text/expression nodes
@@ -44,7 +44,7 @@ export function process_children(nodes, expression, is_element, { visit, state }
 			);
 
 			if (node.metadata.expression.has_call && !within_bound_contenteditable) {
-				state.init.push(serialize_update(update));
+				state.init.push(build_update(update));
 			} else if (node.metadata.expression.has_state && !within_bound_contenteditable) {
 				state.update.push(update);
 			} else {
@@ -66,12 +66,12 @@ export function process_children(nodes, expression, is_element, { visit, state }
 
 			state.template.push(' ');
 
-			const [has_call, value] = serialize_template_literal(sequence, visit, state);
+			const [has_call, value] = build_template_literal(sequence, visit, state);
 
 			const update = b.stmt(b.call('$.set_text', text_id, value));
 
 			if (has_call && !within_bound_contenteditable) {
-				state.init.push(serialize_update(update));
+				state.init.push(build_update(update));
 			} else if (
 				sequence.some(
 					(node) => node.type === 'ExpressionTag' && node.metadata.expression.has_state

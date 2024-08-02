@@ -2,7 +2,7 @@
 /** @import { Component } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
-import { serialize_component } from './shared/component.js';
+import { build_component } from './shared/component.js';
 
 /**
  * @param {Component} node
@@ -11,7 +11,7 @@ import { serialize_component } from './shared/component.js';
 export function Component(node, context) {
 	if (node.metadata.dynamic) {
 		// Handle dynamic references to what seems like static inline components
-		const component = serialize_component(node, '$$component', context, b.id('$$anchor'));
+		const component = build_component(node, '$$component', context, b.id('$$anchor'));
 		context.state.init.push(
 			b.stmt(
 				b.call(
@@ -27,6 +27,6 @@ export function Component(node, context) {
 		return;
 	}
 
-	const component = serialize_component(node, node.name, context);
+	const component = build_component(node, node.name, context);
 	context.state.init.push(component);
 }

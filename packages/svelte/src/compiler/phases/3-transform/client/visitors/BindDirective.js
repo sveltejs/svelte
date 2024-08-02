@@ -5,9 +5,9 @@ import { dev, is_ignored } from '../../../../state.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { binding_properties } from '../../../bindings.js';
-import { serialize_set_binding } from '../utils.js';
-import { serialize_attribute_value } from './shared/element.js';
-import { serialize_bind_this, serialize_validate_binding } from './shared/utils.js';
+import { build_setter } from '../utils.js';
+import { build_attribute_value } from './shared/element.js';
+import { build_bind_this, build_validate_binding } from './shared/utils.js';
 
 /**
  * @param {BindDirective} node
@@ -31,7 +31,7 @@ export function BindDirective(node, context) {
 		!is_ignored(node, 'binding_property_non_reactive')
 	) {
 		context.state.init.push(
-			serialize_validate_binding(
+			build_validate_binding(
 				context.state,
 				node,
 				/**@type {MemberExpression} */ (context.visit(expression))
@@ -43,7 +43,7 @@ export function BindDirective(node, context) {
 	const assignment = b.assignment('=', expression, b.id('$$value'));
 	const setter = b.arrow(
 		[b.id('$$value')],
-		serialize_set_binding(
+		build_setter(
 			assignment,
 			context,
 			() => /** @type {Expression} */ (context.visit(assignment)),
@@ -161,7 +161,7 @@ export function BindDirective(node, context) {
 				break;
 
 			case 'this':
-				call = serialize_bind_this(expression, context.state.node, context);
+				call = build_bind_this(expression, context.state.node, context);
 				break;
 
 			case 'textContent':
@@ -212,7 +212,7 @@ export function BindDirective(node, context) {
 					if (value !== undefined) {
 						group_getter = b.thunk(
 							b.block([
-								b.stmt(serialize_attribute_value(value, context)[1]),
+								b.stmt(build_attribute_value(value, context)[1]),
 								b.return(/** @type {Expression} */ (context.visit(expression)))
 							])
 						);

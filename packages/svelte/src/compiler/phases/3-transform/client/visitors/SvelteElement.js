@@ -12,11 +12,11 @@ import {
 import * as b from '../../../../utils/builders.js';
 import { determine_namespace_for_children } from '../../utils.js';
 import {
-	serialize_attribute_value,
-	serialize_class_directives,
-	serialize_style_directives
+	build_attribute_value,
+	build_class_directives,
+	build_style_directives
 } from './shared/element.js';
-import { serialize_render_stmt, serialize_update } from './shared/utils.js';
+import { build_render_statement, build_update } from './shared/utils.js';
 
 /**
  * @param {SvelteElement} node
@@ -83,17 +83,11 @@ export function SvelteElement(node, context) {
 	// Always use spread because we don't know whether the element is a custom element or not,
 	// therefore we need to do the "how to set an attribute" logic at runtime.
 	const is_attributes_reactive =
-		serialize_dynamic_element_attributes(attributes, inner_context, element_id) !== null;
+		build_dynamic_element_attributes(attributes, inner_context, element_id) !== null;
 
 	// class/style directives must be applied last since they could override class/style attributes
-	serialize_class_directives(class_directives, element_id, inner_context, is_attributes_reactive);
-	serialize_style_directives(
-		style_directives,
-		element_id,
-		inner_context,
-		is_attributes_reactive,
-		true
-	);
+	build_class_directives(class_directives, element_id, inner_context, is_attributes_reactive);
+	build_style_directives(style_directives, element_id, inner_context, is_attributes_reactive, true);
 
 	const get_tag = b.thunk(/** @type {Expression} */ (context.visit(node.tag)));
 
@@ -107,7 +101,7 @@ export function SvelteElement(node, context) {
 	/** @type {Statement[]} */
 	const inner = inner_context.state.init;
 	if (inner_context.state.update.length > 0) {
-		inner.push(serialize_render_stmt(inner_context.state.update));
+		inner.push(build_render_statement(inner_context.state.update));
 	}
 	inner.push(...inner_context.state.after_update);
 	inner.push(
@@ -132,7 +126,7 @@ export function SvelteElement(node, context) {
 				get_tag,
 				node.metadata.svg || node.metadata.mathml ? b.true : b.false,
 				inner.length > 0 && b.arrow([element_id, b.id('$$anchor')], b.block(inner)),
-				dynamic_namespace && b.thunk(serialize_attribute_value(dynamic_namespace, context)[1]),
+				dynamic_namespace && b.thunk(build_attribute_value(dynamic_namespace, context)[1]),
 				location && b.array([b.literal(location.line), b.literal(location.column)])
 			)
 		)
@@ -147,7 +141,7 @@ export function SvelteElement(node, context) {
  * @param {Identifier} element_id
  * @returns {boolean}
  */
-function serialize_dynamic_element_attributes(attributes, context, element_id) {
+function build_dynamic_element_attributes(attributes, context, element_id) {
 	if (attributes.length === 0) {
 		if (context.state.analysis.css.hash) {
 			context.state.init.push(
@@ -167,7 +161,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 
 	for (const attribute of attributes) {
 		if (attribute.type === 'Attribute') {
-			const [, value] = serialize_attribute_value(attribute.value, context);
+			const [, value] = build_attribute_value(attribute.value, context);
 
 			if (
 				is_event_attribute(attribute) &&
@@ -212,7 +206,7 @@ function serialize_dynamic_element_attributes(attributes, context, element_id) {
 		);
 
 		if (needs_isolation) {
-			context.state.init.push(serialize_update(update));
+			context.state.init.push(build_update(update));
 			return false;
 		}
 

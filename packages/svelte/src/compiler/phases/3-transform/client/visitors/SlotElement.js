@@ -2,7 +2,7 @@
 /** @import { SlotElement } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
-import { serialize_attribute_value } from './shared/element.js';
+import { build_attribute_value } from './shared/element.js';
 
 /**
  * @param {SlotElement} node
@@ -30,7 +30,7 @@ export function SlotElement(node, context) {
 		if (attribute.type === 'SpreadAttribute') {
 			spreads.push(b.thunk(/** @type {Expression} */ (context.visit(attribute))));
 		} else if (attribute.type === 'Attribute') {
-			const [, value] = serialize_attribute_value(attribute.value, context);
+			const [, value] = build_attribute_value(attribute.value, context);
 			if (attribute.name === 'name') {
 				name = value;
 				is_default = false;

@@ -2,7 +2,7 @@
 /** @import { ReactiveStatement } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
-import { serialize_get_binding } from '../utils.js';
+import { build_getter } from '../utils.js';
 
 /**
  * @param {LabeledStatement} node
@@ -37,7 +37,7 @@ export function LabeledStatement(node, context) {
 		if (binding.kind === 'normal') continue;
 
 		const name = binding.node.name;
-		let serialized = serialize_get_binding(b.id(name), context.state);
+		let serialized = build_getter(b.id(name), context.state);
 
 		// If the binding is a prop, we need to deep read it because it could be fine-grained $state
 		// from a runes-component, where mutations don't trigger an update on the prop as a whole.

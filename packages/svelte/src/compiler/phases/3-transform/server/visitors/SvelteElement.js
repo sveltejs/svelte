@@ -4,8 +4,8 @@
 import { dev } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { determine_namespace_for_children } from '../../utils.js';
-import { serialize_element_attributes } from './shared/element.js';
-import { serialize_template } from './shared/utils.js';
+import { build_element_attributes } from './shared/element.js';
+import { build_template } from './shared/utils.js';
 
 /**
  * @param {SvelteElement} node
@@ -33,13 +33,13 @@ export function SvelteElement(node, context) {
 		init: []
 	};
 
-	serialize_element_attributes(node, { ...context, state });
+	build_element_attributes(node, { ...context, state });
 
 	if (dev) {
 		context.state.template.push(b.stmt(b.call('$.push_element', tag, b.id('$$payload'))));
 	}
 
-	const attributes = b.block([...state.init, ...serialize_template(state.template)]);
+	const attributes = b.block([...state.init, ...build_template(state.template)]);
 	const children = /** @type {BlockStatement} */ (context.visit(node.fragment, state));
 
 	context.state.template.push(

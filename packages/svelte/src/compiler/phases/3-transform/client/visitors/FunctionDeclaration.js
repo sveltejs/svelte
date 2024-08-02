@@ -1,6 +1,6 @@
 /** @import { FunctionDeclaration } from 'estree' */
 /** @import { ComponentContext } from '../types' */
-import { serialize_hoistable_params } from '../utils.js';
+import { build_hoistable_params } from '../utils.js';
 import * as b from '../../../../utils/builders.js';
 
 /**
@@ -13,7 +13,7 @@ export function FunctionDeclaration(node, context) {
 	const state = { ...context.state, in_constructor: false };
 
 	if (metadata?.hoistable === true) {
-		const params = serialize_hoistable_params(node, context);
+		const params = build_hoistable_params(node, context);
 
 		context.state.hoisted.push(
 			/** @type {FunctionDeclaration} */ ({

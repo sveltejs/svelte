@@ -2,7 +2,7 @@
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
 import { clean_nodes, infer_namespace } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
-import { empty_comment, process_children, serialize_template } from './shared/utils.js';
+import { empty_comment, process_children, build_template } from './shared/utils.js';
 
 /**
  * @param {Fragment} node
@@ -42,5 +42,5 @@ export function Fragment(node, context) {
 
 	process_children(trimmed, { ...context, state });
 
-	return b.block([...state.init, ...serialize_template(state.template)]);
+	return b.block([...state.init, ...build_template(state.template)]);
 }

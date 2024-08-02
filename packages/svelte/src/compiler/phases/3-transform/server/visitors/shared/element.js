@@ -18,7 +18,7 @@ import {
 	ELEMENT_IS_NAMESPACED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE
 } from '../../../../../../constants.js';
-import { serialize_attribute_value } from './utils.js';
+import { build_attribute_value } from './utils.js';
 import {
 	is_boolean_attribute,
 	is_content_editable_binding,
@@ -33,7 +33,7 @@ const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
  * @param {RegularElement | SvelteElement} node
  * @param {import('zimmerframe').Context<SvelteNode, ComponentServerTransformState>} context
  */
-export function serialize_element_attributes(node, context) {
+export function build_element_attributes(node, context) {
 	/** @type {Array<Attribute | SpreadAttribute>} */
 	const attributes = [];
 
@@ -67,7 +67,7 @@ export function serialize_element_attributes(node, context) {
 						// also see related code in analysis phase
 						attribute.value[0].data = '\n' + attribute.value[0].data;
 					}
-					content = b.call('$.escape', serialize_attribute_value(attribute.value, context));
+					content = b.call('$.escape', build_attribute_value(attribute.value, context));
 				} else if (node.name !== 'select') {
 					// omit value attribute for select elements, it's irrelevant for the initially selected value and has no
 					// effect on the selected value after the user interacts with the select element (the value _property_ does, but not the attribute)
@@ -139,12 +139,12 @@ export function serialize_element_attributes(node, context) {
 							expression: is_checkbox
 								? b.call(
 										b.member(attribute.expression, b.id('includes')),
-										serialize_attribute_value(value_attribute.value, context)
+										build_attribute_value(value_attribute.value, context)
 									)
 								: b.binary(
 										'===',
 										attribute.expression,
-										serialize_attribute_value(value_attribute.value, context)
+										build_attribute_value(value_attribute.value, context)
 									),
 							metadata: {
 								expression: create_expression_metadata()
@@ -185,14 +185,14 @@ export function serialize_element_attributes(node, context) {
 		} else if (attribute.type === 'StyleDirective') {
 			style_directives.push(attribute);
 		} else if (attribute.type === 'LetDirective') {
-			// do nothing, these are handled inside `serialize_inline_component`
+			// do nothing, these are handled inside `build_inline_component`
 		} else {
 			context.visit(attribute);
 		}
 	}
 
 	if (class_directives.length > 0 && !has_spread) {
-		const class_attribute = serialize_class_directives(
+		const class_attribute = build_class_directives(
 			class_directives,
 			/** @type {Attribute | null} */ (attributes[class_index] ?? null)
 		);
@@ -202,7 +202,7 @@ export function serialize_element_attributes(node, context) {
 	}
 
 	if (style_directives.length > 0 && !has_spread) {
-		serialize_style_directives(
+		build_style_directives(
 			style_directives,
 			/** @type {Attribute | null} */ (attributes[style_index] ?? null),
 			context
@@ -213,19 +213,13 @@ export function serialize_element_attributes(node, context) {
 	}
 
 	if (has_spread) {
-		serialize_element_spread_attributes(
-			node,
-			attributes,
-			style_directives,
-			class_directives,
-			context
-		);
+		build_element_spread_attributes(node, attributes, style_directives, class_directives, context);
 	} else {
 		for (const attribute of /** @type {Attribute[]} */ (attributes)) {
 			if (attribute.value === true || is_text_attribute(attribute)) {
 				const name = get_attribute_name(node, attribute, context);
 				const literal_value = /** @type {Literal} */ (
-					serialize_attribute_value(
+					build_attribute_value(
 						attribute.value,
 						context,
 						WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
@@ -246,7 +240,7 @@ export function serialize_element_attributes(node, context) {
 			}
 
 			const name = get_attribute_name(node, attribute, context);
-			const value = serialize_attribute_value(
+			const value = build_attribute_value(
 				attribute.value,
 				context,
 				WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
@@ -290,7 +284,7 @@ function get_attribute_name(element, attribute, context) {
  * @param {ClassDirective[]} class_directives
  * @param {ComponentContext} context
  */
-function serialize_element_spread_attributes(
+function build_element_spread_attributes(
 	element,
 	attributes,
 	style_directives,
@@ -324,7 +318,7 @@ function serialize_element_spread_attributes(
 				directive.name,
 				directive.value === true
 					? b.id(directive.name)
-					: serialize_attribute_value(directive.value, context, true)
+					: build_attribute_value(directive.value, context, true)
 			)
 		);
 
@@ -341,7 +335,7 @@ function serialize_element_spread_attributes(
 		attributes.map((attribute) => {
 			if (attribute.type === 'Attribute') {
 				const name = get_attribute_name(element, attribute, context);
-				const value = serialize_attribute_value(
+				const value = build_attribute_value(
 					attribute.value,
 					context,
 					WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
@@ -363,7 +357,7 @@ function serialize_element_spread_attributes(
  * @param {Attribute | null} class_attribute
  * @returns
  */
-function serialize_class_directives(class_directives, class_attribute) {
+function build_class_directives(class_directives, class_attribute) {
 	const expressions = class_directives.map((directive) =>
 		b.conditional(directive.expression, b.literal(directive.name), b.literal(''))
 	);
@@ -415,12 +409,12 @@ function serialize_class_directives(class_directives, class_attribute) {
  * @param {Attribute | null} style_attribute
  * @param {ComponentContext} context
  */
-function serialize_style_directives(style_directives, style_attribute, context) {
+function build_style_directives(style_directives, style_attribute, context) {
 	const styles = style_directives.map((directive) => {
 		let value =
 			directive.value === true
 				? b.id(directive.name)
-				: serialize_attribute_value(directive.value, context, true);
+				: build_attribute_value(directive.value, context, true);
 		if (directive.modifiers.includes('important')) {
 			value = b.binary('+', value, b.literal(' !important'));
 		}
@@ -432,7 +426,7 @@ function serialize_style_directives(style_directives, style_attribute, context) 
 			? b.object(styles)
 			: b.call(
 					'$.merge_styles',
-					serialize_attribute_value(style_attribute.value, context, true),
+					build_attribute_value(style_attribute.value, context, true),
 					b.object(styles)
 				);
 

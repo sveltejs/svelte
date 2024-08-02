@@ -16,7 +16,7 @@ import { locator } from '../../../../../state.js';
  * @param {ComponentClientTransformState} state
  * @returns {[boolean, TemplateLiteral]}
  */
-export function serialize_template_literal(values, visit, state) {
+export function build_template_literal(values, visit, state) {
 	/** @type {TemplateElement[]} */
 	const quasis = [];
 
@@ -76,7 +76,7 @@ export function serialize_template_literal(values, visit, state) {
 /**
  * @param {Statement} statement
  */
-export function serialize_update(statement) {
+export function build_update(statement) {
 	const body =
 		statement.type === 'ExpressionStatement' ? statement.expression : b.block([statement]);
 
@@ -86,9 +86,9 @@ export function serialize_update(statement) {
 /**
  * @param {Statement[]} update
  */
-export function serialize_render_stmt(update) {
+export function build_render_statement(update) {
 	return update.length === 1
-		? serialize_update(update[0])
+		? build_update(update[0])
 		: b.stmt(b.call('$.template_effect', b.thunk(b.block(update))));
 }
 
@@ -120,7 +120,7 @@ export function parse_directive_name(name) {
  * @param {Expression} value
  * @param {ExpressionStatement} update
  */
-export function serialize_update_assignment(state, id, init, value, update) {
+export function build_update_assignment(state, id, init, value, update) {
 	state.init.push(b.var(id, init));
 	state.update.push(
 		b.if(b.binary('!==', b.id(id), b.assignment('=', b.id(id), value)), b.block([update]))
@@ -133,7 +133,7 @@ export function serialize_update_assignment(state, id, init, value, update) {
  * @param {null | ExpressionMetadata} metadata
  * @param {ComponentContext} context
  */
-export function serialize_event_handler(node, metadata, { state, visit }) {
+export function build_event_handler(node, metadata, { state, visit }) {
 	/** @type {Expression} */
 	let handler;
 
@@ -242,7 +242,7 @@ export function serialize_event_handler(node, metadata, { state, visit }) {
  * @param {Expression} value
  * @param {import('zimmerframe').Context<SvelteNode, ComponentClientTransformState>} context
  */
-export function serialize_bind_this(expression, value, { state, visit }) {
+export function build_bind_this(expression, value, { state, visit }) {
 	/** @type {Identifier[]} */
 	const ids = [];
 
@@ -308,7 +308,7 @@ export function serialize_bind_this(expression, value, { state, visit }) {
  * @param {BindDirective} binding
  * @param {MemberExpression} expression
  */
-export function serialize_validate_binding(state, binding, expression) {
+export function build_validate_binding(state, binding, expression) {
 	const string = state.analysis.source.slice(binding.start, binding.end);
 
 	const get_object = b.thunk(/** @type {Expression} */ (expression.object));

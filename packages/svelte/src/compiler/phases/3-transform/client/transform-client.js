@@ -5,7 +5,7 @@
 import { walk } from 'zimmerframe';
 import * as b from '../../../utils/builders.js';
 import { set_scope } from '../../scope.js';
-import { serialize_get_binding } from './utils.js';
+import { build_getter } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
 import { dev, filename } from '../../../state.js';
 import { AnimateDirective } from './visitors/AnimateDirective.js';
@@ -198,7 +198,7 @@ export function client_component(analysis, options) {
 			}
 
 			// We're creating an arrow function that gets the store value which minifies better for two or more references
-			const store_reference = serialize_get_binding(b.id(name.slice(1)), instance_state);
+			const store_reference = build_getter(b.id(name.slice(1)), instance_state);
 			const store_get = b.call('$.store_get', store_reference, b.literal(name), b.id('$$stores'));
 			store_setup.push(
 				b.const(
@@ -240,7 +240,7 @@ export function client_component(analysis, options) {
 	/** @type {Array<ESTree.Property | ESTree.SpreadElement>} */
 	const component_returned_object = analysis.exports.flatMap(({ name, alias }) => {
 		const binding = instance_state.scope.get(name);
-		const expression = serialize_get_binding(b.id(name), instance_state);
+		const expression = build_getter(b.id(name), instance_state);
 		const getter = b.get(alias ?? name, [b.return(expression)]);
 
 		if (expression.type === 'Identifier') {
@@ -365,7 +365,7 @@ export function client_component(analysis, options) {
 						'$.bind_prop',
 						b.id('$$props'),
 						b.literal(alias ?? name),
-						serialize_get_binding(b.id(name), instance_state)
+						build_getter(b.id(name), instance_state)
 					)
 				)
 			);

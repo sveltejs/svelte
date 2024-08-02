@@ -6,8 +6,8 @@ import { is_void } from '../../../../../utils.js';
 import { dev, locator } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { serialize_element_attributes } from './shared/element.js';
-import { process_children, serialize_template } from './shared/utils.js';
+import { build_element_attributes } from './shared/element.js';
+import { process_children, build_template } from './shared/utils.js';
 
 /**
  * @param {RegularElement} node
@@ -26,7 +26,7 @@ export function RegularElement(node, context) {
 	};
 
 	context.state.template.push(b.literal(`<${node.name}`));
-	const body = serialize_element_attributes(node, { ...context, state });
+	const body = build_element_attributes(node, { ...context, state });
 	context.state.template.push(b.literal('>'));
 
 	if ((node.name === 'script' || node.name === 'style') && node.fragment.nodes.length === 1) {
@@ -89,8 +89,8 @@ export function RegularElement(node, context) {
 		state.template.push(
 			b.if(
 				id,
-				b.block(serialize_template([id])),
-				b.block([...inner_state.init, ...serialize_template(inner_state.template)])
+				b.block(build_template([id])),
+				b.block([...inner_state.init, ...build_template(inner_state.template)])
 			)
 		);
 	}

@@ -94,7 +94,7 @@ function is_statement(node) {
  * @param {AssignmentOperator} operator
  * @returns {Statement[]}
  */
-export function serialize_template(template, out = b.id('$$payload.out'), operator = '+=') {
+export function build_template(template, out = b.id('$$payload.out'), operator = '+=') {
 	/** @type {TemplateElement[]} */
 	let quasis = [];
 
@@ -152,7 +152,7 @@ export function serialize_template(template, out = b.id('$$payload.out'), operat
  * @param {boolean} is_component
  * @returns {Expression}
  */
-export function serialize_attribute_value(
+export function build_attribute_value(
 	value,
 	context,
 	trim_whitespace = false,
@@ -207,7 +207,7 @@ export function serialize_attribute_value(
  * @param {ServerTransformState} state
  * @returns {Expression}
  */
-export function serialize_get_binding(node, state) {
+export function build_getter(node, state) {
 	const binding = state.scope.get(node.name);
 
 	if (binding === null || node === binding.node) {
@@ -221,7 +221,7 @@ export function serialize_get_binding(node, state) {
 			'$.store_get',
 			b.assignment('??=', b.id('$$store_subs'), b.object([])),
 			b.literal(node.name),
-			serialize_get_binding(store_id, state)
+			build_getter(store_id, state)
 		);
 	}
 

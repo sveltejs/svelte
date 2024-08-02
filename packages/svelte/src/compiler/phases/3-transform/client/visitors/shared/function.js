@@ -1,6 +1,6 @@
 /** @import { ArrowFunctionExpression, FunctionExpression, Node } from 'estree' */
 /** @import { ComponentContext } from '../../types' */
-import { serialize_hoistable_params } from '../../utils.js';
+import { build_hoistable_params } from '../../utils.js';
 
 /**
  * @param {ArrowFunctionExpression | FunctionExpression} node
@@ -21,7 +21,7 @@ export const visit_function = (node, context) => {
 	}
 
 	if (metadata?.hoistable === true) {
-		const params = serialize_hoistable_params(node, context);
+		const params = build_hoistable_params(node, context);
 
 		return /** @type {FunctionExpression} */ ({
 			...node,
