@@ -14,6 +14,7 @@ import { extract_identifiers } from '../../utils/ast.js';
 import check_graph_for_cycles from '../2-analyze/utils/check_graph_for_cycles.js';
 import is_reference from 'is-reference';
 import { set_scope } from '../scope.js';
+import { dev } from '../../state.js';
 
 /**
  * @param {Node} node
@@ -48,8 +49,6 @@ function sort_const_tags(nodes, state) {
 	/** @type {Map<Compiler.Binding, Tag>} */
 	const tags = new Map();
 
-	const { _ } = set_scope(state.scopes);
-
 	for (const node of nodes) {
 		if (node.type === 'ConstTag') {
 			const declaration = node.declaration.declarations[0];
@@ -62,7 +61,8 @@ function sort_const_tags(nodes, state) {
 			const deps = new Set();
 
 			walk(declaration.init, state, {
-				_,
+				// @ts-expect-error don't know, don't care
+				_: set_scope,
 				Identifier(node, context) {
 					const parent = /** @type {Expression} */ (context.path.at(-1));
 
@@ -424,7 +424,7 @@ export function transform_inspect_rune(node, context) {
 	const { state, visit } = context;
 	const as_fn = state.options.generate === 'client';
 
-	if (!state.options.dev) return b.unary('void', b.literal(0));
+	if (!dev) return b.unary('void', b.literal(0));
 
 	if (node.callee.type === 'MemberExpression') {
 		const raw_inspect_args = /** @type {CallExpression} */ (node.callee.object).arguments;

@@ -1,5 +1,71 @@
 # svelte
 
+## 5.0.0-next.207
+
+### Patch Changes
+
+- fix: only create `document.title` effect if value is dynamic ([#12698](https://github.com/sveltejs/svelte/pull/12698))
+
+## 5.0.0-next.206
+
+### Patch Changes
+
+- fix: allow nested `<dt>`/`<dd>` elements if they are within a `<dl>` element ([#12681](https://github.com/sveltejs/svelte/pull/12681))
+
+- chore: internal refactoring of client transform visitors ([#12683](https://github.com/sveltejs/svelte/pull/12683))
+
+## 5.0.0-next.205
+
+### Patch Changes
+
+- fix: always synchronously call `bind:this` ([#12679](https://github.com/sveltejs/svelte/pull/12679))
+
+## 5.0.0-next.204
+
+### Patch Changes
+
+- feat: allow ignoring runtime warnings ([#12608](https://github.com/sveltejs/svelte/pull/12608))
+
+- feat: perf tweaks for actions/styles/classes ([#12654](https://github.com/sveltejs/svelte/pull/12654))
+
+## 5.0.0-next.203
+
+### Patch Changes
+
+- chore: internal compiler refactoring ([#12651](https://github.com/sveltejs/svelte/pull/12651))
+
+- fix: widen `ComponentProps` constraint to accept more component shapes ([#12666](https://github.com/sveltejs/svelte/pull/12666))
+
+- feat: make `<svelte:component>` unnecessary in runes mode ([#12646](https://github.com/sveltejs/svelte/pull/12646))
+
+## 5.0.0-next.202
+
+### Patch Changes
+
+- fix: remove implicit passive behavior from OnDirective events ([#12645](https://github.com/sveltejs/svelte/pull/12645))
+
+- fix: always set draggable through `setAttribute` to avoid weird behavior ([#12649](https://github.com/sveltejs/svelte/pull/12649))
+
+## 5.0.0-next.201
+
+### Patch Changes
+
+- feat: remove $.unwrap calls from each block indexes ([#12640](https://github.com/sveltejs/svelte/pull/12640))
+
+- fix: error on `bind:this` to each block parameter ([#12638](https://github.com/sveltejs/svelte/pull/12638))
+
+- feat: remove `$.unwrap` calls from `bind:group` ([#12642](https://github.com/sveltejs/svelte/pull/12642))
+
+## 5.0.0-next.200
+
+### Patch Changes
+
+- fix: never set custom element props as attributes inside templates ([#12622](https://github.com/sveltejs/svelte/pull/12622))
+
+- feat: better code generation for `let:` directives in SSR mode ([#12611](https://github.com/sveltejs/svelte/pull/12611))
+
+- fix: correctly update stores when reassigning with operator other than `=` ([#12614](https://github.com/sveltejs/svelte/pull/12614))
+
 ## 5.0.0-next.199
 
 ### Patch Changes

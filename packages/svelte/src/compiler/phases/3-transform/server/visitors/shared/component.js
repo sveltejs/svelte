@@ -1,7 +1,7 @@
 /** @import { BlockStatement, Expression, Pattern, Property, Statement } from 'estree' */
 /** @import { Attribute, Component, LetDirective, SvelteComponent, SvelteSelf, TemplateNode, Text } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
-import { empty_comment, serialize_attribute_value } from './utils.js';
+import { empty_comment, build_attribute_value } from './utils.js';
 import * as b from '../../../../../utils/builders.js';
 import { is_element_node } from '../../../../nodes.js';
 
@@ -10,7 +10,7 @@ import { is_element_node } from '../../../../nodes.js';
  * @param {Expression} expression
  * @param {ComponentContext} context
  */
-export function serialize_inline_component(node, expression, context) {
+export function build_inline_component(node, expression, context) {
 	/** @type {Array<Property[] | Expression>} */
 	const props_and_spreads = [];
 
@@ -59,7 +59,7 @@ export function serialize_inline_component(node, expression, context) {
 			props_and_spreads.push(/** @type {Expression} */ (context.visit(attribute)));
 		} else if (attribute.type === 'Attribute') {
 			if (attribute.name.startsWith('--')) {
-				const value = serialize_attribute_value(attribute.value, context, false, true);
+				const value = build_attribute_value(attribute.value, context, false, true);
 				custom_css_props.push(b.init(attribute.name, value));
 				continue;
 			}
@@ -68,7 +68,7 @@ export function serialize_inline_component(node, expression, context) {
 				has_children_prop = true;
 			}
 
-			const value = serialize_attribute_value(attribute.value, context, false, true);
+			const value = build_attribute_value(attribute.value, context, false, true);
 			push_prop(b.prop('init', b.key(attribute.name), value));
 		} else if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
 			// TODO this needs to turn the whole thing into a while loop because the binding could be mutated eagerly in the child

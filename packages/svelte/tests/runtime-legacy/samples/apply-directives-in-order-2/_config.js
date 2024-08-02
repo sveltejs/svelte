@@ -22,6 +22,7 @@ export default test({
 		}
 
 		assert.deepEqual(value, [
+			'bind:this true',
 			'1',
 			'2',
 			'3',

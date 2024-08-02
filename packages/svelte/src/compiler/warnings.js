@@ -96,6 +96,7 @@ export const codes = [
 	"options_renamed_ssr_dom",
 	"derived_iife",
 	"export_let_unused",
+	"legacy_component_creation",
 	"non_reactive_update",
 	"perf_avoid_inline_class",
 	"perf_avoid_nested_class",
@@ -114,6 +115,7 @@ export const codes = [
 	"component_name_lowercase",
 	"element_invalid_self_closing_tag",
 	"event_directive_deprecated",
+	"node_invalid_placement_ssr",
 	"slot_element_deprecated",
 	"svelte_element_invalid_this"
 ];
@@ -586,6 +588,14 @@ export function export_let_unused(node, name) {
 }
 
 /**
+ * Svelte 5 components are no longer classes. Instantiate them using `mount` or `hydrate` (imported from 'svelte') instead.
+ * @param {null | NodeLike} node
+ */
+export function legacy_component_creation(node) {
+	w(node, "legacy_component_creation", "Svelte 5 components are no longer classes. Instantiate them using `mount` or `hydrate` (imported from 'svelte') instead.");
+}
+
+/**
  * `%name%` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
  * @param {null | NodeLike} node
  * @param {string} name
@@ -737,6 +747,16 @@ export function element_invalid_self_closing_tag(node, name) {
  */
 export function event_directive_deprecated(node, name) {
 	w(node, "event_directive_deprecated", `Using \`on:${name}\` to listen to the ${name} event is deprecated. Use the event attribute \`on${name}\` instead`);
+}
+
+/**
+ * %thing% is invalid inside `<%parent%>`. When rendering this component on the server, the resulting HTML will be modified by the browser, likely resulting in a `hydration_mismatch` warning
+ * @param {null | NodeLike} node
+ * @param {string} thing
+ * @param {string} parent
+ */
+export function node_invalid_placement_ssr(node, thing, parent) {
+	w(node, "node_invalid_placement_ssr", `${thing} is invalid inside \`<${parent}>\`. When rendering this component on the server, the resulting HTML will be modified by the browser, likely resulting in a \`hydration_mismatch\` warning`);
 }
 
 /**

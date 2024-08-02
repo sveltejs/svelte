@@ -3,11 +3,11 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
 import { regex_whitespace } from '../patterns.js';
-import { reserved } from '../../../constants.js';
 import full_char_code_at from './utils/full_char_code_at.js';
 import * as e from '../../errors.js';
 import { create_fragment } from './utils/create.js';
 import read_options from './read/options.js';
+import { is_reserved } from '../../../utils.js';
 
 const regex_position_indicator = / \(\d+:\d+\)$/;
 
@@ -219,7 +219,7 @@ export class Parser {
 
 		const identifier = this.template.slice(this.index, (this.index = i));
 
-		if (!allow_reserved && reserved.includes(identifier)) {
+		if (!allow_reserved && is_reserved(identifier)) {
 			e.unexpected_reserved_word(start, identifier);
 		}
 

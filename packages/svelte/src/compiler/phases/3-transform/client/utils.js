@@ -16,6 +16,7 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../../../constants.js';
+import { is_ignored, dev } from '../../../state.js';
 
 /**
  * @template {ClientTransformState} State
@@ -31,7 +32,7 @@ export function get_assignment_value(node, { state, visit }) {
 			: // turn something like x += 1 into x = x + 1
 				b.binary(
 					/** @type {BinaryOperator} */ (operator.slice(0, -1)),
-					serialize_get_binding(node.left, state),
+					build_getter(node.left, state),
 					/** @type {Expression} */ (visit(node.right))
 				);
 	} else if (
@@ -71,12 +72,17 @@ export function is_state_source(binding, state) {
  * @param {ClientTransformState} state
  * @returns {Expression}
  */
-export function serialize_get_binding(node, state) {
+export function build_getter(node, state) {
 	const binding = state.scope.get(node.name);
 
 	if (binding === null || node === binding.node) {
 		// No associated binding or the declaration itself which shouldn't be transformed
 		return node;
+	}
+
+	if (Object.hasOwn(state.getters, node.name)) {
+		const getter = state.getters[node.name];
+		return typeof getter === 'function' ? getter(node) : getter;
 	}
 
 	if (binding.node.name === '$$props') {
@@ -86,11 +92,6 @@ export function serialize_get_binding(node, state) {
 
 	if (binding.kind === 'store_sub') {
 		return b.call(node);
-	}
-
-	if (Object.hasOwn(state.getters, node.name)) {
-		const getter = state.getters[node.name];
-		return typeof getter === 'function' ? getter(node) : getter;
 	}
 
 	if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
@@ -133,7 +134,7 @@ export function serialize_get_binding(node, state) {
  * @param {{skip_proxy_and_freeze?: boolean}} [options]
  * @returns {Expression}
  */
-export function serialize_set_binding(node, context, fallback, prefix, options) {
+export function build_setter(node, context, fallback, prefix, options) {
 	const { state, visit } = context;
 
 	const assignee = node.left;
@@ -157,9 +158,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 			const value = path.expression?.(b.id(tmp_id));
 			const assignment = b.assignment('=', path.node, value);
 			original_assignments.push(assignment);
-			assignments.push(
-				serialize_set_binding(assignment, context, () => assignment, prefix, options)
-			);
+			assignments.push(build_setter(assignment, context, () => assignment, prefix, options));
 		}
 
 		if (assignments.every((assignment, i) => assignment === original_assignments[i])) {
@@ -216,7 +215,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 							assignment.right =
 								private_state.kind === 'frozen_state'
 									? b.call('$.freeze', value)
-									: serialize_proxy_reassignment(value, private_state.id, state);
+									: build_proxy_reassignment(value, private_state.id);
 							return assignment;
 						}
 					}
@@ -229,7 +228,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 							should_proxy_or_freeze(value, context.state.scope)
 							? private_state.kind === 'frozen_state'
 								? b.call('$.freeze', value)
-								: serialize_proxy_reassignment(value, private_state.id, state)
+								: build_proxy_reassignment(value, private_state.id)
 							: value
 					);
 				}
@@ -253,7 +252,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 					assignment.right =
 						public_state.kind === 'frozen_state'
 							? b.call('$.freeze', value)
-							: serialize_proxy_reassignment(value, public_state.id, state);
+							: build_proxy_reassignment(value, public_state.id);
 					return assignment;
 				}
 			}
@@ -270,8 +269,10 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 
 	if (!binding) return fallback();
 
-	if (binding.mutation !== null) {
-		return binding.mutation(node, context);
+	if (Object.hasOwn(state.setters, left.name)) {
+		const setter = state.setters[left.name];
+		// @ts-expect-error
+		return setter(node, context);
 	}
 
 	if (binding.kind === 'legacy_reactive_import') {
@@ -283,6 +284,22 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 				/** @type {Expression} */ (visit(node.right))
 			)
 		);
+	}
+
+	/**
+	 * @param {any} serialized
+	 * @returns
+	 */
+	function maybe_skip_ownership_validation(serialized) {
+		if (is_ignored(node, 'ownership_invalid_mutation')) {
+			return b.call('$.skip_ownership_validation', b.thunk(serialized));
+		}
+
+		return serialized;
+	}
+
+	if (binding.kind === 'derived') {
+		return maybe_skip_ownership_validation(fallback());
 	}
 
 	const is_store = binding.kind === 'store_sub';
@@ -317,7 +334,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 			) {
 				return b.call(left, value);
 			} else if (is_store) {
-				return b.call('$.store_set', serialize_get_binding(b.id(left_name), state), value);
+				return b.call('$.store_set', build_getter(b.id(left_name), state), value);
 			} else {
 				let call;
 				if (binding.kind === 'state') {
@@ -327,7 +344,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 						context.state.analysis.runes &&
 							!options?.skip_proxy_and_freeze &&
 							should_proxy_or_freeze(value, context.state.scope)
-							? serialize_proxy_reassignment(value, left_name, state)
+							? build_proxy_reassignment(value, left_name)
 							: value
 					);
 				} else if (binding.kind === 'frozen_state') {
@@ -352,7 +369,7 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 							!options?.skip_proxy_and_freeze &&
 							should_proxy_or_freeze(value, context.state.scope) &&
 							(binding.kind === 'bindable_prop' || binding.kind === 'linked_state')
-							? serialize_proxy_reassignment(value, left_name, state)
+							? build_proxy_reassignment(value, left_name)
 							: value
 					);
 				} else {
@@ -393,11 +410,13 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 					return /** @type {Expression} */ (visit(node));
 				}
 
-				return b.call(
-					'$.store_mutate',
-					serialize_get_binding(b.id(left_name), state),
-					b.assignment(node.operator, /** @type {Pattern}} */ (visit_node(node.left)), value),
-					b.call('$.untrack', b.id('$' + left_name))
+				return maybe_skip_ownership_validation(
+					b.call(
+						'$.store_mutate',
+						build_getter(b.id(left_name), state),
+						b.assignment(node.operator, /** @type {Pattern}} */ (visit_node(node.left)), value),
+						b.call('$.untrack', b.id('$' + left_name))
+					)
 				);
 			} else if (
 				!state.analysis.runes ||
@@ -405,16 +424,20 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 				(binding.mutated && binding.kind === 'bindable_prop')
 			) {
 				if (binding.kind === 'bindable_prop') {
-					return b.call(
-						left,
-						b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value),
-						b.true
+					return maybe_skip_ownership_validation(
+						b.call(
+							left,
+							b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value),
+							b.true
+						)
 					);
 				} else {
-					return b.call(
-						'$.mutate',
-						b.id(left_name),
-						b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value)
+					return maybe_skip_ownership_validation(
+						b.call(
+							'$.mutate',
+							b.id(left_name),
+							b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value)
+						)
 					);
 				}
 			} else if (
@@ -422,23 +445,27 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 				prefix != null &&
 				(node.operator === '+=' || node.operator === '-=')
 			) {
-				return b.update(
-					node.operator === '+=' ? '++' : '--',
-					/** @type {Expression} */ (visit(node.left)),
-					prefix
+				return maybe_skip_ownership_validation(
+					b.update(
+						node.operator === '+=' ? '++' : '--',
+						/** @type {Expression} */ (visit(node.left)),
+						prefix
+					)
 				);
 			} else {
-				return b.assignment(
-					node.operator,
-					/** @type {Pattern} */ (visit(node.left)),
-					/** @type {Expression} */ (visit(node.right))
+				return maybe_skip_ownership_validation(
+					b.assignment(
+						node.operator,
+						/** @type {Pattern} */ (visit(node.left)),
+						/** @type {Expression} */ (visit(node.right))
+					)
 				);
 			}
 		}
 	};
 
 	if (value.type === 'BinaryExpression' && /** @type {any} */ (value.operator) === '??') {
-		return b.logical('??', serialize_get_binding(b.id(left_name), state), serialize());
+		return b.logical('??', build_getter(b.id(left_name), state), serialize());
 	}
 
 	return serialize();
@@ -447,10 +474,9 @@ export function serialize_set_binding(node, context, fallback, prefix, options) 
 /**
  * @param {Expression} value
  * @param {PrivateIdentifier | string} proxy_reference
- * @param {ClientTransformState} state
  */
-export function serialize_proxy_reassignment(value, proxy_reference, state) {
-	return state.options.dev
+export function build_proxy_reassignment(value, proxy_reference) {
+	return dev
 		? b.call(
 				'$.proxy',
 				value,
@@ -461,37 +487,6 @@ export function serialize_proxy_reassignment(value, proxy_reference, state) {
 			)
 		: b.call('$.proxy', value);
 }
-
-/**
- * @param {ArrowFunctionExpression | FunctionExpression} node
- * @param {ComponentContext} context
- */
-export const function_visitor = (node, context) => {
-	const metadata = node.metadata;
-
-	let state = context.state;
-
-	if (node.type === 'FunctionExpression') {
-		const parent = /** @type {Node} */ (context.path.at(-1));
-		const in_constructor = parent.type === 'MethodDefinition' && parent.kind === 'constructor';
-
-		state = { ...context.state, in_constructor };
-	} else {
-		state = { ...context.state, in_constructor: false };
-	}
-
-	if (metadata?.hoistable === true) {
-		const params = serialize_hoistable_params(node, context);
-
-		return /** @type {FunctionExpression} */ ({
-			...node,
-			params,
-			body: context.visit(node.body, state)
-		});
-	}
-
-	context.next(state);
-};
 
 /**
  * @param {FunctionDeclaration | FunctionExpression | ArrowFunctionExpression} node
@@ -566,7 +561,7 @@ function get_hoistable_params(node, context) {
  * @param {ComponentContext} context
  * @returns {Pattern[]}
  */
-export function serialize_hoistable_params(node, context) {
+export function build_hoistable_params(node, context) {
 	const hoistable_params = get_hoistable_params(node, context);
 	node.metadata.hoistable_params = hoistable_params;
 

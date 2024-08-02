@@ -4,7 +4,8 @@ import type {
 	LabeledStatement,
 	Identifier,
 	PrivateIdentifier,
-	Expression
+	Expression,
+	AssignmentExpression
 } from 'estree';
 import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
@@ -28,6 +29,13 @@ export interface ClientTransformState extends TransformState {
 	 * will be replaced with `node` (e.g. `x` -> `$.get(x)`)
 	 */
 	readonly getters: Record<string, Expression | ((id: Identifier) => Expression)>;
+	/**
+	 * Counterpart to `getters`
+	 */
+	readonly setters: Record<
+		string,
+		(assignment: AssignmentExpression, context: Context) => Expression
+	>;
 }
 
 export interface ComponentClientTransformState extends ClientTransformState {
@@ -35,6 +43,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly options: ValidatedCompileOptions;
 	readonly hoisted: Array<Statement | ModuleDeclaration>;
 	readonly events: Set<string>;
+	readonly is_instance: boolean;
 
 	/** Stuff that happens before the render effect(s) */
 	readonly before_init: Statement[];
@@ -73,12 +82,12 @@ export interface ComponentClientTransformState extends ClientTransformState {
 }
 
 export interface StateField {
-	kind: 'state' | 'frozen_state' | 'linked_state' | 'derived' | 'derived_call';
+	kind: 'state' | 'frozen_state' | 'linked_state' | 'derived' | 'derived_by';
 	id: PrivateIdentifier;
 }
 
 export type Context = import('zimmerframe').Context<SvelteNode, ClientTransformState>;
-export type Visitors = import('zimmerframe').Visitors<SvelteNode, ClientTransformState>;
+export type Visitors = import('zimmerframe').Visitors<SvelteNode, any>;
 
 export type ComponentContext = import('zimmerframe').Context<
 	SvelteNode,

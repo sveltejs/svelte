@@ -13,6 +13,11 @@ export default test({
 		return { thePromise: deferred.promise };
 	},
 
+	html: `
+		<br />
+		<p>the promise is pending</p>
+	`,
+
 	async test({ assert, component, target }) {
 		deferred.resolve(42);
 
@@ -22,7 +27,6 @@ export default test({
 
 		deferred = create_deferred();
 		component.thePromise = deferred.promise;
-		await Promise.resolve();
 
 		assert.htmlEqual(target.innerHTML, '<br /><p>the promise is pending</p>');
 

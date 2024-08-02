@@ -1,17 +1,13 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
-import {
-	AttributeAliases,
-	DelegatedEvents,
-	is_capture_event,
-	namespace_svg
-} from '../../../../constants.js';
+import { NAMESPACE_SVG } from '../../../../constants.js';
 import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '../../constants.js';
 import { queue_idle_task, queue_micro_task } from '../task.js';
+import { is_capture_event, is_delegated, normalize_attribute } from '../../../../utils.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -82,8 +78,9 @@ export function set_checked(element, checked) {
  * @param {Element} element
  * @param {string} attribute
  * @param {string | null} value
+ * @param {boolean} [skip_warning]
  */
-export function set_attribute(element, attribute, value) {
+export function set_attribute(element, attribute, value, skip_warning) {
 	value = value == null ? null : value + '';
 
 	// @ts-expect-error
@@ -93,7 +90,9 @@ export function set_attribute(element, attribute, value) {
 		attributes[attribute] = element.getAttribute(attribute);
 
 		if (attribute === 'src' || attribute === 'href' || attribute === 'srcset') {
-			check_src_in_dev_hydration(element, attribute, value);
+			if (!skip_warning) {
+				check_src_in_dev_hydration(element, attribute, value);
+			}
 
 			// If we reset these attributes, they would result in another network request, which we want to avoid.
 			// We assume they are the same between client and server as checking if they are equal is expensive
@@ -150,9 +149,10 @@ export function set_custom_element_data(node, prop, value) {
  * @param {Record<string, any>} next New attributes - this function mutates this object
  * @param {boolean} lowercase_attributes
  * @param {string} css_hash
+ * @param {boolean} [skip_warning]
  * @returns {Record<string, any>}
  */
-export function set_attributes(element, prev, next, lowercase_attributes, css_hash) {
+export function set_attributes(element, prev, next, lowercase_attributes, css_hash, skip_warning) {
 	var has_hash = css_hash.length !== 0;
 	var current = prev || {};
 	var is_option_element = element.tagName === 'OPTION';
@@ -212,7 +212,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 			const opts = {};
 			const event_handle_key = '$$' + key;
 			let event_name = key.slice(2);
-			var delegated = DelegatedEvents.includes(event_name);
+			var delegated = is_delegated(event_name);
 
 			if (is_capture_event(event_name)) {
 				event_name = event_name.slice(0, -7);
@@ -268,13 +268,12 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 		} else {
 			var name = key;
 			if (lowercase_attributes) {
-				name = name.toLowerCase();
-				name = AttributeAliases[name] || name;
+				name = normalize_attribute(name);
 			}
 
 			if (setters.includes(name)) {
 				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
-					check_src_in_dev_hydration(element, name, value);
+					if (!skip_warning) check_src_in_dev_hydration(element, name, value);
 				} else {
 					// @ts-ignore
 					element[name] = value;
@@ -331,7 +330,7 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 		/** @type {Element & ElementCSSInlineStyle} */ (node),
 		prev,
 		next,
-		node.namespaceURI !== namespace_svg,
+		node.namespaceURI !== NAMESPACE_SVG,
 		css_hash
 	);
 }
@@ -341,9 +340,10 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
  * because updating them through the property setter doesn't work reliably.
  * In the example of `width`/`height`, the problem is that the setter only
  * accepts numeric values, but the attribute can also be set to a string like `50%`.
- * If this list becomes too big, rethink this approach.
+ * In case of draggable trying to set `element.draggable='false'` will actually set
+ * draggable to `true`. If this list becomes too big, rethink this approach.
  */
-var always_set_through_set_attribute = ['width', 'height'];
+var always_set_through_set_attribute = ['width', 'height', 'draggable'];
 
 /** @type {Map<string, string[]>} */
 var setters_cache = new Map();

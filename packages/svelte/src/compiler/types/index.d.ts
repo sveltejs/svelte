@@ -308,13 +308,20 @@ export interface Binding {
 	legacy_dependencies: Binding[];
 	/** Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props() */
 	prop_alias: string | null;
-	/** If this is set, all mutations should use this expression */
-	mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
 	/** Additional metadata, varies per binding type */
 	metadata: {
 		/** `true` if is (inside) a rest parameter */
 		inside_rest?: boolean;
 	} | null;
+}
+
+export interface ExpressionMetadata {
+	/** All the bindings that are referenced inside this expression */
+	dependencies: Set<Binding>;
+	/** True if the expression references state directly, or _might_ (via member/call expressions) */
+	has_state: boolean;
+	/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
+	has_call: boolean;
 }
 
 export * from './template.js';

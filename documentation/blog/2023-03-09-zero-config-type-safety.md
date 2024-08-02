@@ -13,7 +13,7 @@ As of today, yes: it can.
 
 <video src="https://sveltejs.github.io/assets/video/zero-config-types.mp4" controls muted playsinline></video>
 
-If you're using VSCode, just upgrade the Svelte extension to the latest version, and you'll never have to annotate your `load` functions or `data` props again. Extensions for other editors can also use this feature, as long as they support the Language Server Protocol and TypeScript plugins. It even works with the latest version of our CLI diagnostics tool `svelte-check`!
+If you're using VS Code, just upgrade the Svelte extension to the latest version, and you'll never have to annotate your `load` functions or `data` props again. Extensions for other editors can also use this feature, as long as they support the Language Server Protocol and TypeScript plugins. It even works with the latest version of our CLI diagnostics tool `svelte-check`!
 
 Before we dive in, let's recap how type safety works in SvelteKit.
 

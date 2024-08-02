@@ -3,6 +3,8 @@ import { ok, test } from '../../test';
 
 export default test({
 	async test({ assert, component, target }) {
+		assert.htmlEqual(target.innerHTML, 'Loading...');
+
 		await component.promise;
 		await Promise.resolve();
 		const span = target.querySelector('span');

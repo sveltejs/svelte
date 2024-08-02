@@ -1,7 +1,7 @@
 /** @import { TitleElement } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
-import { process_children, serialize_template } from './shared/utils.js';
+import { process_children, build_template } from './shared/utils.js';
 
 /**
  * @param {TitleElement} node
@@ -13,5 +13,5 @@ export function TitleElement(node, context) {
 	process_children(node.fragment.nodes, { ...context, state: { ...context.state, template } });
 	template.push(b.literal('</title>'));
 
-	context.state.init.push(...serialize_template(template, b.id('$$payload.title'), '='));
+	context.state.init.push(...build_template(template, b.id('$$payload.title'), '='));
 }

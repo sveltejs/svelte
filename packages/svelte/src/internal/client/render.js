@@ -2,13 +2,8 @@
 /** @import { Component, ComponentType, SvelteComponent } from '../../index.js' */
 import { DEV } from 'esm-env';
 import { clear_text_content, empty, init_operations } from './dom/operations.js';
-import {
-	HYDRATION_END,
-	HYDRATION_ERROR,
-	HYDRATION_START,
-	PassiveDelegatedEvents
-} from '../../constants.js';
-import { flush_sync, push, pop, current_component_context, current_effect } from './runtime.js';
+import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
+import { push, pop, current_component_context, current_effect } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
 import {
 	hydrate_next,
@@ -27,6 +22,7 @@ import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
+import { is_passive_event } from '../../utils.js';
 
 /**
  * This is normally true — block effects should run their intro transitions —
@@ -195,7 +191,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			if (registered_events.has(event_name)) continue;
 			registered_events.add(event_name);
 
-			var passive = PassiveDelegatedEvents.includes(event_name);
+			var passive = is_passive_event(event_name);
 
 			// Add the event listener to both the container and the document.
 			// The container listener ensures we catch events from within in case

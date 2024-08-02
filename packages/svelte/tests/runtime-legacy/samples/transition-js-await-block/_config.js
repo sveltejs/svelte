@@ -16,8 +16,7 @@ export default test({
 
 	intro: true,
 
-	async test({ assert, target, raf }) {
-		await Promise.resolve();
+	test({ assert, target, raf }) {
 		const p = /** @type {HTMLParagraphElement & { foo: number }} */ (target.querySelector('p'));
 
 		raf.tick(0);

@@ -223,10 +223,10 @@ declare module 'svelte' {
 	 * withProps(MyComponent, { foo: 'bar' });
 	 * ```
 	 */
-	export type ComponentProps<Comp extends SvelteComponent | Component<any>> =
+	export type ComponentProps<Comp extends SvelteComponent | Component<any, any>> =
 		Comp extends SvelteComponent<infer Props>
 			? Props
-			: Comp extends Component<infer Props>
+			: Comp extends Component<infer Props, any>
 				? Props
 				: never;
 
@@ -584,7 +584,6 @@ declare module 'svelte/animate' {
 declare module 'svelte/compiler' {
 	import type { AssignmentExpression, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, MemberExpression, ObjectExpression, Pattern, Node, VariableDeclarator, ArrowFunctionExpression, VariableDeclaration, FunctionExpression, Program, ChainExpression, SimpleCallExpression } from 'estree';
 	import type { SourceMap } from 'magic-string';
-	import type { Context } from 'zimmerframe';
 	import type { Location } from 'locate-character';
 	/**
 	 * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
@@ -958,13 +957,20 @@ declare module 'svelte/compiler' {
 		legacy_dependencies: Binding[];
 		/** Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props() */
 		prop_alias: string | null;
-		/** If this is set, all mutations should use this expression */
-		mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
 		/** Additional metadata, varies per binding type */
 		metadata: {
 			/** `true` if is (inside) a rest parameter */
 			inside_rest?: boolean;
 		} | null;
+	}
+
+	interface ExpressionMetadata {
+		/** All the bindings that are referenced inside this expression */
+		dependencies: Set<Binding>;
+		/** True if the expression references state directly, or _might_ (via member/call expressions) */
+		has_state: boolean;
+		/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
+		has_call: boolean;
 	}
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
@@ -1564,12 +1570,7 @@ declare module 'svelte/compiler' {
 		type: 'ExpressionTag';
 		expression: Expression;
 		metadata: {
-			contains_call_expression: boolean;
-			/**
-			 * Whether or not the expression contains any dynamic references —
-			 * determines whether it will be updated in a render effect or not
-			 */
-			dynamic: boolean;
+			expression: ExpressionMetadata;
 		};
 	}
 
@@ -1643,7 +1644,7 @@ declare module 'svelte/compiler' {
 		/** The 'y' in `class:x={y}`, or the `x` in `class:x` */
 		expression: Expression;
 		metadata: {
-			dynamic: false;
+			expression: ExpressionMetadata;
 		};
 	}
 
@@ -1665,8 +1666,7 @@ declare module 'svelte/compiler' {
 		expression: null | Expression;
 		modifiers: string[]; // TODO specify
 		metadata: {
-			contains_call_expression: boolean;
-			dynamic: boolean;
+			expression: ExpressionMetadata;
 		};
 	}
 
@@ -1686,7 +1686,7 @@ declare module 'svelte/compiler' {
 		value: true | ExpressionTag | Array<ExpressionTag | Text>;
 		modifiers: Array<'important'>;
 		metadata: {
-			dynamic: boolean;
+			expression: ExpressionMetadata;
 		};
 	}
 
@@ -1846,6 +1846,7 @@ declare module 'svelte/compiler' {
 		index?: string;
 		key?: Expression;
 		metadata: {
+			keyed: boolean;
 			contains_group_binding: boolean;
 			/** Set if something in the array expression is shadowed within the each block */
 			array_name: Identifier | null;
@@ -1906,7 +1907,7 @@ declare module 'svelte/compiler' {
 		name: string;
 		value: true | ExpressionTag | Array<Text | ExpressionTag>;
 		metadata: {
-			dynamic: boolean;
+			expression: ExpressionMetadata;
 			/** May be set if this is an event attribute */
 			delegated: null | DelegatedEvent;
 		};
@@ -1916,8 +1917,7 @@ declare module 'svelte/compiler' {
 		type: 'SpreadAttribute';
 		expression: Expression;
 		metadata: {
-			contains_call_expression: boolean;
-			dynamic: boolean;
+			expression: ExpressionMetadata;
 		};
 	}
 

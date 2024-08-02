@@ -45,8 +45,19 @@ export function create_attribute(name, start, end, value) {
 		value,
 		parent: null,
 		metadata: {
-			dynamic: false,
+			expression: create_expression_metadata(),
 			delegated: null
 		}
+	};
+}
+
+/**
+ * @returns {Compiler.ExpressionMetadata}
+ */
+export function create_expression_metadata() {
+	return {
+		dependencies: new Set(),
+		has_state: false,
+		has_call: false
 	};
 }

@@ -1,6 +1,6 @@
 /** @import { ObjectExpression } from 'estree' */
 /** @import { SvelteOptionsRaw, Root, SvelteOptions } from '#compiler' */
-import { namespace_mathml, namespace_svg } from '../../../../constants.js';
+import { NAMESPACE_MATHML, NAMESPACE_SVG } from '../../../../constants.js';
 import * as e from '../../../errors.js';
 
 const regex_valid_tag_name = /^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/;
@@ -155,9 +155,9 @@ export default function read_options(node) {
 			case 'namespace': {
 				const value = get_static_value(attribute);
 
-				if (value === namespace_svg) {
+				if (value === NAMESPACE_SVG) {
 					component_options.namespace = 'svg';
-				} else if (value === namespace_mathml) {
+				} else if (value === NAMESPACE_MATHML) {
 					component_options.namespace = 'mathml';
 				} else if (
 					value === 'html' ||

@@ -1,7 +1,8 @@
 /** @import { CallExpression, Expression } from 'estree' */
 /** @import { Context } from '../types.js' */
-import { get_rune } from '../../../scope.js';
+import { is_ignored } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
+import { get_rune } from '../../../scope.js';
 import { transform_inspect_rune } from '../../utils.js';
 
 /**
@@ -25,7 +26,11 @@ export function CallExpression(node, context) {
 	}
 
 	if (rune === '$state.snapshot') {
-		return b.call('$.snapshot', /** @type {Expression} */ (context.visit(node.arguments[0])));
+		return b.call(
+			'$.snapshot',
+			/** @type {Expression} */ (context.visit(node.arguments[0])),
+			is_ignored(node, 'state_snapshot_uncloneable') && b.true
+		);
 	}
 
 	if (rune === '$state.is') {
