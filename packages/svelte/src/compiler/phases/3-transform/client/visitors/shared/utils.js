@@ -193,14 +193,7 @@ export function build_event_handler(node, metadata, { state, visit }) {
 			const binding = id === null ? null : state.scope.get(id.name);
 			if (
 				binding !== null &&
-				(binding.kind === 'state' ||
-					binding.kind === 'frozen_state' ||
-					binding.declaration_kind === 'import' ||
-					binding.kind === 'legacy_reactive' ||
-					binding.kind === 'derived' ||
-					binding.kind === 'prop' ||
-					binding.kind === 'bindable_prop' ||
-					binding.kind === 'store_sub')
+				(binding.kind !== 'normal' || binding.declaration_kind === 'import')
 			) {
 				handler = dynamic_handler();
 			} else {
