@@ -8,32 +8,21 @@ import { build_template_literal } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function TitleElement(node, context) {
-	// TODO throw validation error when attributes present / when children something else than text/expression tags
-	// TODO only create update when expression is dynamic
+	let has_state = node.fragment.nodes.some(
+		(node) => node.type === 'ExpressionTag' && node.metadata.expression.has_state
+	);
 
-	if (node.fragment.nodes.length === 1 && node.fragment.nodes[0].type === 'Text') {
-		context.state.init.push(
-			b.stmt(
-				b.assignment(
-					'=',
-					b.member(b.id('$.document'), b.id('title')),
-					b.literal(/** @type {Text} */ (node.fragment.nodes[0]).data)
-				)
-			)
-		);
+	const value = build_template_literal(
+		/** @type {any} */ (node.fragment.nodes),
+		context.visit,
+		context.state
+	)[1];
+
+	const statement = b.stmt(b.assignment('=', b.member(b.id('$.document'), b.id('title')), value));
+
+	if (has_state) {
+		context.state.update.push(statement);
 	} else {
-		context.state.update.push(
-			b.stmt(
-				b.assignment(
-					'=',
-					b.member(b.id('$.document'), b.id('title')),
-					build_template_literal(
-						/** @type {any} */ (node.fragment.nodes),
-						context.visit,
-						context.state
-					)[1]
-				)
-			)
-		);
+		context.state.init.push(statement);
 	}
 }
