@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.207
+
+### Patch Changes
+
+- fix: only create `document.title` effect if value is dynamic ([#12698](https://github.com/sveltejs/svelte/pull/12698))
+
 ## 5.0.0-next.206
 
 ### Patch Changes
