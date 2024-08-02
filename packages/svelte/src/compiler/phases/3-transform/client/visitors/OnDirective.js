@@ -10,14 +10,7 @@ import { build_event_handler } from './shared/utils.js';
  */
 export function OnDirective(node, context) {
 	const handler = node.expression
-		? build_event(
-				node.name,
-				node.modifiers,
-				node.expression,
-				null,
-				node.metadata.expression,
-				context
-			)
+		? build_event(node.name, node.modifiers, node.expression, node.metadata.expression, context)
 		: b.call(
 				'$.event',
 				b.literal(node.name),

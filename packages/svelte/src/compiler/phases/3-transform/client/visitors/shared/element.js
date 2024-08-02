@@ -151,54 +151,9 @@ export function build_event_attribute(node, context) {
 		? /** @type {ExpressionTag} */ (node.value[0])
 		: /** @type {ExpressionTag} */ (node.value);
 
-	const handler = build_event(
-		event_name,
-		modifiers,
-		tag.expression,
-		node.metadata.delegated,
-		tag.metadata.expression,
-		context
-	);
+	if (node.metadata.delegated) {
+		let handler = build_event_handler(modifiers, tag.expression, tag.metadata.expression, context);
 
-	// TODO this is duplicated with OnDirective
-	const parent = /** @type {SvelteNode} */ (context.path.at(-1));
-	const has_action_directive =
-		parent.type === 'RegularElement' && parent.attributes.find((a) => a.type === 'UseDirective');
-	const statement = b.stmt(has_action_directive ? b.call('$.effect', b.thunk(handler)) : handler);
-
-	// TODO put this logic in the parent visitor?
-	if (
-		parent.type === 'SvelteDocument' ||
-		parent.type === 'SvelteWindow' ||
-		parent.type === 'SvelteBody'
-	) {
-		// These nodes are above the component tree, and its events should run parent first
-		context.state.before_init.push(statement);
-	} else {
-		context.state.after_update.push(statement);
-	}
-}
-
-/**
- * Serializes an event handler function of the `on:` directive or an attribute starting with `on`
- * @param {string} event_name
- * @param {string[]} modifiers
- * @param {Expression | null} original_expression
- * @param {DelegatedEvent | null} delegated
- * @param {null | ExpressionMetadata} metadata
- * @param {ComponentContext} context
- */
-export function build_event(
-	event_name,
-	modifiers,
-	original_expression,
-	delegated,
-	metadata,
-	context
-) {
-	let handler = build_event_handler(modifiers, original_expression, metadata, context);
-
-	if (delegated !== null) {
 		let delegated_assignment;
 
 		if (!context.state.events.has(event_name)) {
@@ -206,8 +161,8 @@ export function build_event(
 		}
 
 		// Hoist function if we can, otherwise we leave the function as is
-		if (delegated.type === 'hoistable') {
-			if (delegated.function === original_expression) {
+		if (node.metadata.delegated.type === 'hoistable') {
+			if (node.metadata.delegated.function === tag.expression) {
 				const func_name = context.state.scope.root.unique('on_' + event_name);
 				context.state.hoisted.push(b.var(func_name, handler));
 				handler = func_name;
@@ -216,7 +171,7 @@ export function build_event(
 				handler = b.call('$.once', handler);
 			}
 			const hoistable_params = /** @type {Expression[]} */ (
-				delegated.function.metadata.hoistable_params
+				node.metadata.delegated.function.metadata.hoistable_params
 			);
 			// When we hoist a function we assign an array with the function and all
 			// hoisted closure params.
@@ -229,12 +184,54 @@ export function build_event(
 			delegated_assignment = handler;
 		}
 
-		return b.assignment(
-			'=',
-			b.member(context.state.node, b.id('__' + event_name)),
-			delegated_assignment
+		context.state.init.push(
+			b.stmt(
+				b.assignment(
+					'=',
+					b.member(context.state.node, b.id('__' + event_name)),
+					delegated_assignment
+				)
+			)
 		);
+	} else {
+		const handler = build_event(
+			event_name,
+			modifiers,
+			tag.expression,
+			tag.metadata.expression,
+			context
+		);
+
+		// TODO this is duplicated with OnDirective
+		const parent = /** @type {SvelteNode} */ (context.path.at(-1));
+		const has_action_directive =
+			parent.type === 'RegularElement' && parent.attributes.find((a) => a.type === 'UseDirective');
+		const statement = b.stmt(has_action_directive ? b.call('$.effect', b.thunk(handler)) : handler);
+
+		// TODO put this logic in the parent visitor?
+		if (
+			parent.type === 'SvelteDocument' ||
+			parent.type === 'SvelteWindow' ||
+			parent.type === 'SvelteBody'
+		) {
+			// These nodes are above the component tree, and its events should run parent first
+			context.state.before_init.push(statement);
+		} else {
+			context.state.after_update.push(statement);
+		}
 	}
+}
+
+/**
+ * Serializes an event handler function of the `on:` directive or an attribute starting with `on`
+ * @param {string} event_name
+ * @param {string[]} modifiers
+ * @param {Expression | null} original_expression
+ * @param {null | ExpressionMetadata} metadata
+ * @param {ComponentContext} context
+ */
+export function build_event(event_name, modifiers, original_expression, metadata, context) {
+	let handler = build_event_handler(modifiers, original_expression, metadata, context);
 
 	if (modifiers.includes('once')) {
 		handler = b.call('$.once', handler);
