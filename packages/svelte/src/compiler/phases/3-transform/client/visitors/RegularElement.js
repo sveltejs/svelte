@@ -229,17 +229,16 @@ export function RegularElement(node, context) {
 				(attribute.value === true || is_text_attribute(attribute))
 			) {
 				const name = get_attribute_name(node, attribute, context);
-				const literal_value = /** @type {Literal} */ (
-					build_attribute_value(attribute.value, context).value
-				).value;
-				if (name !== 'class' || literal_value) {
+				const value = is_text_attribute(attribute) ? attribute.value[0].data : true;
+
+				if (name !== 'class' || value) {
 					// TODO namespace=foreign probably doesn't want to do template stuff at all and instead use programmatic methods
 					// to create the elements it needs.
 					context.state.template.push(
 						` ${attribute.name}${
-							is_boolean_attribute(name) && literal_value === true
+							is_boolean_attribute(name) && value === true
 								? ''
-								: `="${literal_value === true ? '' : escape_html(literal_value, true)}"`
+								: `="${value === true ? '' : escape_html(value, true)}"`
 						}`
 					);
 					continue;
