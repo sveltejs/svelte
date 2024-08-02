@@ -129,8 +129,9 @@ export function set_xlink_attribute(dom, attribute, value) {
  * @param {any} node
  * @param {string} prop
  * @param {any} value
+ * @param {string} [css_hash]
  */
-export function set_custom_element_data(node, prop, value) {
+export function set_custom_element_data(node, prop, value, css_hash) {
 	if (prop in node) {
 		var curr_val = node[prop];
 		var next_val = typeof curr_val === 'boolean' && value === '' ? true : value;
@@ -138,6 +139,10 @@ export function set_custom_element_data(node, prop, value) {
 			node[prop] = next_val;
 		}
 	} else {
+		if (css_hash && css_hash.length !== 0 && prop === 'class') {
+			if (value) value += ' ';
+			value += css_hash;
+		}
 		set_attribute(node, prop, value);
 	}
 }
@@ -320,7 +325,7 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 		}
 
 		for (key in next) {
-			set_custom_element_data(node, key, next[key]);
+			set_custom_element_data(node, key, next[key], css_hash);
 		}
 
 		return next;
