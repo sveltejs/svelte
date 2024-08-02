@@ -1,6 +1,6 @@
-/** @import { BlockStatement, Expression, Identifier, MemberExpression, Pattern, Statement } from 'estree' */
+/** @import { AssignmentExpression, BlockStatement, Expression, Identifier, MemberExpression, Pattern, Statement } from 'estree' */
 /** @import { Binding, EachBlock } from '#compiler' */
-/** @import { ComponentContext } from '../types' */
+/** @import { ComponentContext, Context } from '../types' */
 import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
@@ -110,7 +110,8 @@ export function EachBlock(node, context) {
 
 	const child_state = {
 		...context.state,
-		getters: { ...context.state.getters }
+		getters: { ...context.state.getters },
+		setters: { ...context.state.setters }
 	};
 
 	/** The state used when generating the key function, if necessary */
@@ -121,7 +122,7 @@ export function EachBlock(node, context) {
 
 	/**
 	 * @param {Pattern} expression_for_id
-	 * @returns {Binding['mutation']}
+	 * @returns {(assignment: AssignmentExpression, context: Context) => Expression}
 	 */
 	const create_mutation = (expression_for_id) => {
 		return (assignment, context) => {
@@ -151,7 +152,7 @@ export function EachBlock(node, context) {
 				return b.sequence(sequence);
 			} else {
 				const original_left = /** @type {MemberExpression} */ (assignment.left);
-				const left = context.visit(original_left);
+				const left = /** @type {Pattern} */ (context.visit(original_left));
 				const assign = b.assignment(assignment.operator, left, value);
 				sequence.unshift(assign);
 				return b.sequence(sequence);
@@ -184,7 +185,7 @@ export function EachBlock(node, context) {
 	const declarations = [];
 
 	if (node.context.type === 'Identifier') {
-		binding.mutation = create_mutation(
+		child_state.setters[node.context.name] = create_mutation(
 			b.member(
 				each_node_meta.array_name ? b.call(each_node_meta.array_name) : collection,
 				index,
@@ -209,7 +210,7 @@ export function EachBlock(node, context) {
 
 			const getter = needs_derived ? b.call('$.get', b.id(name)) : b.call(name);
 			child_state.getters[name] = getter;
-			binding.mutation = create_mutation(
+			child_state.setters[name] = create_mutation(
 				/** @type {Pattern} */ (path.update_expression(unwrapped))
 			);
 

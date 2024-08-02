@@ -4,7 +4,8 @@ import type {
 	LabeledStatement,
 	Identifier,
 	PrivateIdentifier,
-	Expression
+	Expression,
+	AssignmentExpression
 } from 'estree';
 import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
@@ -28,6 +29,13 @@ export interface ClientTransformState extends TransformState {
 	 * will be replaced with `node` (e.g. `x` -> `$.get(x)`)
 	 */
 	readonly getters: Record<string, Expression | ((id: Identifier) => Expression)>;
+	/**
+	 * Counterpart to `getters`
+	 */
+	readonly setters: Record<
+		string,
+		(assignment: AssignmentExpression, context: Context) => Expression
+	>;
 }
 
 export interface ComponentClientTransformState extends ClientTransformState {
