@@ -2,7 +2,7 @@
 /** @import { SlotElement } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
-import { empty_comment, serialize_attribute_value } from './shared/utils.js';
+import { empty_comment, build_attribute_value } from './shared/utils.js';
 
 /**
  * @param {SlotElement} node
@@ -22,7 +22,7 @@ export function SlotElement(node, context) {
 		if (attribute.type === 'SpreadAttribute') {
 			spreads.push(/** @type {Expression} */ (context.visit(attribute)));
 		} else if (attribute.type === 'Attribute') {
-			const value = serialize_attribute_value(attribute.value, context, false, true);
+			const value = build_attribute_value(attribute.value, context, false, true);
 
 			if (attribute.name === 'name') {
 				expression = b.member(b.member_id('$$props.$$slots'), value, true, true);

@@ -5,13 +5,9 @@ import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { is_element_node } from '../../../../nodes.js';
-import { create_derived, serialize_set_binding } from '../../utils.js';
-import {
-	serialize_bind_this,
-	serialize_event_handler,
-	serialize_validate_binding
-} from '../shared/utils.js';
-import { serialize_attribute_value } from '../shared/element.js';
+import { create_derived, build_setter } from '../../utils.js';
+import { build_bind_this, build_event_handler, build_validate_binding } from '../shared/utils.js';
+import { build_attribute_value } from '../shared/element.js';
 
 /**
  * @param {Component | SvelteComponent | SvelteSelf} node
@@ -20,7 +16,7 @@ import { serialize_attribute_value } from '../shared/element.js';
  * @param {Expression} anchor
  * @returns {Statement}
  */
-export function serialize_component(node, component_name, context, anchor = context.state.node) {
+export function build_component(node, component_name, context, anchor = context.state.node) {
 	/** @type {Array<Property[] | Expression>} */
 	const props_and_spreads = [];
 
@@ -74,7 +70,7 @@ export function serialize_component(node, component_name, context, anchor = cont
 			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 		} else if (attribute.type === 'OnDirective') {
 			events[attribute.name] ||= [];
-			let handler = serialize_event_handler(attribute, null, context);
+			let handler = build_event_handler(attribute, null, context);
 			if (attribute.modifiers.includes('once')) {
 				handler = b.call('$.once', handler);
 			}
@@ -97,7 +93,7 @@ export function serialize_component(node, component_name, context, anchor = cont
 		} else if (attribute.type === 'Attribute') {
 			if (attribute.name.startsWith('--')) {
 				custom_css_props.push(
-					b.init(attribute.name, serialize_attribute_value(attribute.value, context)[1])
+					b.init(attribute.name, build_attribute_value(attribute.value, context)[1])
 				);
 				continue;
 			}
@@ -110,7 +106,7 @@ export function serialize_component(node, component_name, context, anchor = cont
 				has_children_prop = true;
 			}
 
-			const [, value] = serialize_attribute_value(attribute.value, context);
+			const [, value] = build_attribute_value(attribute.value, context);
 
 			if (attribute.metadata.expression.has_state) {
 				let arg = value;
@@ -145,7 +141,7 @@ export function serialize_component(node, component_name, context, anchor = cont
 				context.state.analysis.runes &&
 				!is_ignored(node, 'binding_property_non_reactive')
 			) {
-				context.state.init.push(serialize_validate_binding(context.state, attribute, expression));
+				context.state.init.push(build_validate_binding(context.state, attribute, expression));
 			}
 
 			if (attribute.name === 'this') {
@@ -169,7 +165,7 @@ export function serialize_component(node, component_name, context, anchor = cont
 				const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
 				push_prop(
 					b.set(attribute.name, [
-						b.stmt(serialize_set_binding(assignment, context, () => context.visit(assignment)))
+						b.stmt(build_setter(assignment, context, () => context.visit(assignment)))
 					])
 				);
 			}
@@ -314,7 +310,7 @@ export function serialize_component(node, component_name, context, anchor = cont
 		const prev = fn;
 
 		fn = (node_id) => {
-			return serialize_bind_this(bind_this, prev(node_id), context);
+			return build_bind_this(bind_this, prev(node_id), context);
 		};
 	}
 

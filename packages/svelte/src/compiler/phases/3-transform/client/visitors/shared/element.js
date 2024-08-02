@@ -8,8 +8,8 @@ import {
 } from '../../../../../../utils.js';
 import { get_attribute_expression } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { serialize_get_binding } from '../../utils.js';
-import { serialize_event_handler, serialize_template_literal, serialize_update } from './utils.js';
+import { build_getter } from '../../utils.js';
+import { build_event_handler, build_template_literal, build_update } from './utils.js';
 
 /**
  * Serializes each style directive into something like `$.set_style(element, style_property, value)`
@@ -20,7 +20,7 @@ import { serialize_event_handler, serialize_template_literal, serialize_update }
  * @param {boolean} is_attributes_reactive
  * @param {boolean} force_check Should be `true` if we can't rely on our cached value, because for example there's also a `style` attribute
  */
-export function serialize_style_directives(
+export function build_style_directives(
 	style_directives,
 	element_id,
 	context,
@@ -32,8 +32,8 @@ export function serialize_style_directives(
 	for (const directive of style_directives) {
 		let value =
 			directive.value === true
-				? serialize_get_binding({ name: directive.name, type: 'Identifier' }, context.state)
-				: serialize_attribute_value(directive.value, context)[1];
+				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
+				: build_attribute_value(directive.value, context)[1];
 
 		const update = b.stmt(
 			b.call(
@@ -49,7 +49,7 @@ export function serialize_style_directives(
 		const { has_state, has_call } = directive.metadata.expression;
 
 		if (!is_attributes_reactive && has_call) {
-			state.init.push(serialize_update(update));
+			state.init.push(build_update(update));
 		} else if (is_attributes_reactive || has_state || has_call) {
 			state.update.push(update);
 		} else {
@@ -66,7 +66,7 @@ export function serialize_style_directives(
  * @param {ComponentContext} context
  * @param {boolean} is_attributes_reactive
  */
-export function serialize_class_directives(
+export function build_class_directives(
 	class_directives,
 	element_id,
 	context,
@@ -80,7 +80,7 @@ export function serialize_class_directives(
 		const { has_state, has_call } = directive.metadata.expression;
 
 		if (!is_attributes_reactive && has_call) {
-			state.init.push(serialize_update(update));
+			state.init.push(build_update(update));
 		} else if (is_attributes_reactive || has_state || has_call) {
 			state.update.push(update);
 		} else {
@@ -94,7 +94,7 @@ export function serialize_class_directives(
  * @param {ComponentContext} context
  * @returns {[has_call: boolean, Expression]}
  */
-export function serialize_attribute_value(value, context) {
+export function build_attribute_value(value, context) {
 	if (value === true) {
 		return [false, b.literal(true)];
 	}
@@ -112,7 +112,7 @@ export function serialize_attribute_value(value, context) {
 		];
 	}
 
-	return serialize_template_literal(value, context.visit, context.state);
+	return build_template_literal(value, context.visit, context.state);
 }
 
 /**
@@ -136,7 +136,7 @@ export function get_attribute_name(element, attribute, context) {
  * @param {Attribute & { value: ExpressionTag | [ExpressionTag] }} node
  * @param {ComponentContext} context
  */
-export function serialize_event_attribute(node, context) {
+export function build_event_attribute(node, context) {
 	/** @type {string[]} */
 	const modifiers = [];
 
@@ -146,7 +146,7 @@ export function serialize_event_attribute(node, context) {
 		modifiers.push('capture');
 	}
 
-	serialize_event(
+	build_event(
 		{
 			name: event_name,
 			expression: get_attribute_expression(node),
@@ -166,14 +166,14 @@ export function serialize_event_attribute(node, context) {
  * @param {null | ExpressionMetadata} metadata
  * @param {ComponentContext} context
  */
-export function serialize_event(node, metadata, context) {
+export function build_event(node, metadata, context) {
 	const state = context.state;
 
 	/** @type {Expression} */
 	let expression;
 
 	if (node.expression) {
-		let handler = serialize_event_handler(node, metadata, context);
+		let handler = build_event_handler(node, metadata, context);
 		const event_name = node.name;
 		const delegated = node.delegated;
 
@@ -249,7 +249,7 @@ export function serialize_event(node, metadata, context) {
 			'$.event',
 			b.literal(node.name),
 			state.node,
-			serialize_event_handler(node, metadata, context)
+			build_event_handler(node, metadata, context)
 		);
 	}
 

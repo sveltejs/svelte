@@ -2,7 +2,7 @@
 /** @import { Context } from '../types' */
 import { is_ignored } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
-import { serialize_get_binding, serialize_set_binding } from '../utils.js';
+import { build_getter, build_setter } from '../utils.js';
 
 /**
  * @param {UpdateExpression} node
@@ -34,7 +34,7 @@ export function UpdateExpression(node, context) {
 
 			if (is_store) {
 				fn += '_store';
-				args.push(serialize_get_binding(b.id(name), context.state), b.call('$' + name));
+				args.push(build_getter(b.id(name), context.state), b.call('$' + name));
 			} else {
 				if (binding.kind === 'prop' || binding.kind === 'bindable_prop') fn += '_prop';
 				args.push(b.id(name));
@@ -84,12 +84,7 @@ export function UpdateExpression(node, context) {
 		b.literal(1)
 	);
 
-	const serialized_assignment = serialize_set_binding(
-		assignment,
-		context,
-		() => assignment,
-		node.prefix
-	);
+	const serialized_assignment = build_setter(assignment, context, () => assignment, node.prefix);
 
 	const value = /** @type {Expression} */ (context.visit(argument));
 

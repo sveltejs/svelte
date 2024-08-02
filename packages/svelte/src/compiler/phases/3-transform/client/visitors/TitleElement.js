@@ -1,7 +1,7 @@
 /** @import { TitleElement, Text } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
-import { serialize_template_literal } from './shared/utils.js';
+import { build_template_literal } from './shared/utils.js';
 
 /**
  * @param {TitleElement} node
@@ -27,7 +27,7 @@ export function TitleElement(node, context) {
 				b.assignment(
 					'=',
 					b.member(b.id('$.document'), b.id('title')),
-					serialize_template_literal(
+					build_template_literal(
 						/** @type {any} */ (node.fragment.nodes),
 						context.visit,
 						context.state

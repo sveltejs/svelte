@@ -12,12 +12,7 @@ import {
 import { dev } from '../../../../state.js';
 import { extract_paths, object } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
-import {
-	get_assignment_value,
-	serialize_get_binding,
-	serialize_set_binding,
-	with_loc
-} from '../utils.js';
+import { get_assignment_value, build_getter, build_setter, with_loc } from '../utils.js';
 
 /**
  * @param {EachBlock} node
@@ -94,7 +89,7 @@ export function EachBlock(node, context) {
 	// Legacy mode: find the parent each blocks which contain the arrays to invalidate
 	const indirect_dependencies = collect_parent_each_blocks(context).flatMap((block) => {
 		const array = /** @type {Expression} */ (context.visit(block.expression));
-		const transitive_dependencies = serialize_transitive_dependencies(
+		const transitive_dependencies = build_transitive_dependencies(
 			block.metadata.references,
 			context
 		);
@@ -106,7 +101,7 @@ export function EachBlock(node, context) {
 	} else {
 		indirect_dependencies.push(collection);
 
-		const transitive_dependencies = serialize_transitive_dependencies(
+		const transitive_dependencies = build_transitive_dependencies(
 			each_node_meta.references,
 			context
 		);
@@ -131,9 +126,9 @@ export function EachBlock(node, context) {
 	const create_mutation = (expression_for_id) => {
 		return (assignment, context) => {
 			if (assignment.left.type !== 'Identifier' && assignment.left.type !== 'MemberExpression') {
-				// serialize_set_binding turns other patterns into IIFEs and separates the assignments
+				// build_setter turns other patterns into IIFEs and separates the assignments
 				// into separate expressions, at which point this is called again with an identifier or member expression
-				return serialize_set_binding(assignment, context, () => assignment);
+				return build_setter(assignment, context, () => assignment);
 			}
 
 			const left = object(assignment.left);
@@ -282,7 +277,7 @@ function collect_parent_each_blocks(context) {
  * @param {Binding[]} references
  * @param {ComponentContext} context
  */
-function serialize_transitive_dependencies(references, context) {
+function build_transitive_dependencies(references, context) {
 	/** @type {Set<Binding>} */
 	const dependencies = new Set();
 
@@ -293,7 +288,7 @@ function serialize_transitive_dependencies(references, context) {
 		}
 	}
 
-	return [...dependencies].map((dep) => serialize_get_binding({ ...dep.node }, context.state));
+	return [...dependencies].map((dep) => build_getter({ ...dep.node }, context.state));
 }
 
 /**

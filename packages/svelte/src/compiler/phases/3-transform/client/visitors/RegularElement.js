@@ -19,20 +19,16 @@ import {
 import * as b from '../../../../utils/builders.js';
 import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { serialize_get_binding } from '../utils.js';
+import { build_getter } from '../utils.js';
 import {
 	get_attribute_name,
-	serialize_attribute_value,
-	serialize_class_directives,
-	serialize_event_attribute,
-	serialize_style_directives
+	build_attribute_value,
+	build_class_directives,
+	build_event_attribute,
+	build_style_directives
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
-import {
-	serialize_render_stmt,
-	serialize_update,
-	serialize_update_assignment
-} from './shared/utils.js';
+import { build_render_statement, build_update, build_update_assignment } from './shared/utils.js';
 
 /**
  * @param {RegularElement} node
@@ -200,7 +196,7 @@ export function RegularElement(node, context) {
 		if (node.name === 'img') {
 			img_might_be_lazy = true;
 		}
-		serialize_element_spread_attributes(
+		build_element_spread_attributes(
 			attributes,
 			context,
 			node,
@@ -218,12 +214,12 @@ export function RegularElement(node, context) {
 				) {
 					might_need_event_replaying = true;
 				}
-				serialize_event_attribute(attribute, context);
+				build_event_attribute(attribute, context);
 				continue;
 			}
 
 			if (needs_special_value_handling && attribute.name === 'value') {
-				serialize_element_special_value_attribute(node.name, node_id, attribute, context);
+				build_element_special_value_attribute(node.name, node_id, attribute, context);
 				continue;
 			}
 
@@ -234,7 +230,7 @@ export function RegularElement(node, context) {
 			) {
 				const name = get_attribute_name(node, attribute, context);
 				const literal_value = /** @type {Literal} */ (
-					serialize_attribute_value(attribute.value, context)[1]
+					build_attribute_value(attribute.value, context)[1]
 				).value;
 				if (name !== 'class' || literal_value) {
 					// TODO namespace=foreign probably doesn't want to do template stuff at all and instead use programmatic methods
@@ -252,8 +248,8 @@ export function RegularElement(node, context) {
 
 			const is =
 				is_custom_element && child_metadata.namespace !== 'foreign'
-					? serialize_custom_element_attribute_update_assignment(node_id, attribute, context)
-					: serialize_element_attribute_update_assignment(node, node_id, attribute, context);
+					? build_custom_element_attribute_update_assignment(node_id, attribute, context)
+					: build_element_attribute_update_assignment(node, node_id, attribute, context);
 			if (is) is_attributes_reactive = true;
 		}
 	}
@@ -264,8 +260,8 @@ export function RegularElement(node, context) {
 	}
 
 	// class/style directives must be applied last since they could override class/style attributes
-	serialize_class_directives(class_directives, node_id, context, is_attributes_reactive);
-	serialize_style_directives(
+	build_class_directives(class_directives, node_id, context, is_attributes_reactive);
+	build_style_directives(
 		style_directives,
 		node_id,
 		context,
@@ -343,7 +339,7 @@ export function RegularElement(node, context) {
 		context.state.init.push(
 			b.block([
 				...child_state.init,
-				child_state.update.length > 0 ? serialize_render_stmt(child_state.update) : b.empty,
+				child_state.update.length > 0 ? build_render_statement(child_state.update) : b.empty,
 				...child_state.after_update
 			])
 		);
@@ -399,7 +395,7 @@ function setup_select_synchronization(value_binding, context) {
 		b.thunk(
 			b.block(
 				names.map((name) => {
-					const serialized = serialize_get_binding(b.id(name), context.state);
+					const serialized = build_getter(b.id(name), context.state);
 					return b.stmt(serialized);
 				})
 			)
@@ -428,7 +424,7 @@ function setup_select_synchronization(value_binding, context) {
  * @param {Identifier} element_id
  * @param {boolean} needs_select_handling
  */
-function serialize_element_spread_attributes(
+function build_element_spread_attributes(
 	attributes,
 	context,
 	element,
@@ -444,7 +440,7 @@ function serialize_element_spread_attributes(
 		if (attribute.type === 'Attribute') {
 			const name = get_attribute_name(element, attribute, context);
 			// TODO: handle has_call
-			const [, value] = serialize_attribute_value(attribute.value, context);
+			const [, value] = build_attribute_value(attribute.value, context);
 
 			if (
 				name === 'is' &&
@@ -501,7 +497,7 @@ function serialize_element_spread_attributes(
 
 	// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
 	if (needs_isolation) {
-		context.state.init.push(serialize_update(update));
+		context.state.init.push(build_update(update));
 	} else {
 		context.state.update.push(update);
 	}
@@ -553,12 +549,12 @@ function serialize_element_spread_attributes(
  * @param {ComponentContext} context
  * @returns {boolean}
  */
-function serialize_element_attribute_update_assignment(element, node_id, attribute, context) {
+function build_element_attribute_update_assignment(element, node_id, attribute, context) {
 	const state = context.state;
 	const name = get_attribute_name(element, attribute, context);
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
-	let [has_call, value] = serialize_attribute_value(attribute.value, context);
+	let [has_call, value] = build_attribute_value(attribute.value, context);
 
 	// The foreign namespace doesn't have any special handling, everything goes through the attr function
 	if (context.state.metadata.namespace === 'foreign') {
@@ -574,7 +570,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 
 		if (attribute.metadata.expression.has_state) {
 			const id = state.scope.generate(`${node_id.name}_${name}`);
-			serialize_update_assignment(state, id, undefined, value, statement);
+			build_update_assignment(state, id, undefined, value, statement);
 			return true;
 		} else {
 			state.init.push(statement);
@@ -619,7 +615,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 
 	if (attribute.metadata.expression.has_state) {
 		if (has_call) {
-			state.init.push(serialize_update(update));
+			state.init.push(build_update(update));
 		} else {
 			state.update.push(update);
 		}
@@ -631,22 +627,22 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 }
 
 /**
- * Like `serialize_element_attribute_update_assignment` but without any special attribute treatment.
+ * Like `build_element_attribute_update_assignment` but without any special attribute treatment.
  * @param {Identifier}	node_id
  * @param {Attribute} attribute
  * @param {ComponentContext} context
  * @returns {boolean}
  */
-function serialize_custom_element_attribute_update_assignment(node_id, attribute, context) {
+function build_custom_element_attribute_update_assignment(node_id, attribute, context) {
 	const state = context.state;
 	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
-	let [has_call, value] = serialize_attribute_value(attribute.value, context);
+	let [has_call, value] = build_attribute_value(attribute.value, context);
 
 	const update = b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), value));
 
 	if (attribute.metadata.expression.has_state) {
 		if (has_call) {
-			state.init.push(serialize_update(update));
+			state.init.push(build_update(update));
 		} else {
 			state.update.push(update);
 		}
@@ -667,9 +663,9 @@ function serialize_custom_element_attribute_update_assignment(node_id, attribute
  * @param {ComponentContext} context
  * @returns {boolean}
  */
-function serialize_element_special_value_attribute(element, node_id, attribute, context) {
+function build_element_special_value_attribute(element, node_id, attribute, context) {
 	const state = context.state;
-	const [, value] = serialize_attribute_value(attribute.value, context);
+	const [, value] = build_attribute_value(attribute.value, context);
 
 	const inner_assignment = b.assignment(
 		'=',
@@ -705,7 +701,7 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 
 	if (is_reactive) {
 		const id = state.scope.generate(`${node_id.name}_value`);
-		serialize_update_assignment(
+		build_update_assignment(
 			state,
 			id,
 			// `<option>` is a special case: The value property reflects to the DOM. If the value is set to undefined,

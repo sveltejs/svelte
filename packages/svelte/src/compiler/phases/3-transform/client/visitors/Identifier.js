@@ -2,7 +2,7 @@
 /** @import { Context } from '../types' */
 import is_reference from 'is-reference';
 import * as b from '../../../../utils/builders.js';
-import { serialize_get_binding } from '../utils.js';
+import { build_getter } from '../utils.js';
 
 /**
  * @param {Identifier} node
@@ -36,6 +36,6 @@ export function Identifier(node, context) {
 			}
 		}
 
-		return serialize_get_binding(node, context.state);
+		return build_getter(node, context.state);
 	}
 }

@@ -7,7 +7,7 @@ import { dev } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { clean_nodes, infer_namespace } from '../../utils.js';
 import { process_children } from './shared/fragment.js';
-import { serialize_render_stmt } from './shared/utils.js';
+import { build_render_statement } from './shared/utils.js';
 
 /**
  * @param {Fragment} node
@@ -97,7 +97,7 @@ export function Fragment(node, context) {
 				'$.add_locations',
 				call,
 				b.member(b.id(context.state.analysis.name), b.id('$.FILENAME'), true),
-				serialize_locations(state.locations)
+				build_locations(state.locations)
 			);
 		}
 
@@ -184,7 +184,7 @@ export function Fragment(node, context) {
 	}
 
 	if (state.update.length > 0) {
-		body.push(serialize_render_stmt(state.update));
+		body.push(build_render_statement(state.update));
 	}
 
 	body.push(...state.after_update);
@@ -221,13 +221,13 @@ function get_template_function(namespace, state) {
 /**
  * @param {SourceLocation[]} locations
  */
-function serialize_locations(locations) {
+function build_locations(locations) {
 	return b.array(
 		locations.map((loc) => {
 			const expression = b.array([b.literal(loc[0]), b.literal(loc[1])]);
 
 			if (loc.length === 3) {
-				expression.elements.push(serialize_locations(loc[2]));
+				expression.elements.push(build_locations(loc[2]));
 			}
 
 			return expression;

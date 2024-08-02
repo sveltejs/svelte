@@ -5,7 +5,7 @@ import { dev, is_ignored } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { regex_invalid_identifier_chars } from '../../../patterns.js';
 import { get_rune } from '../../../scope.js';
-import { serialize_proxy_reassignment, should_proxy_or_freeze } from '../utils.js';
+import { build_proxy_reassignment, should_proxy_or_freeze } from '../utils.js';
 
 /**
  * @param {ClassBody} node
@@ -149,7 +149,7 @@ export function ClassBody(node, context) {
 								'set',
 								definition.key,
 								[value],
-								[b.stmt(b.call('$.set', member, serialize_proxy_reassignment(value, field.id)))]
+								[b.stmt(b.call('$.set', member, build_proxy_reassignment(value, field.id)))]
 							)
 						);
 					}
