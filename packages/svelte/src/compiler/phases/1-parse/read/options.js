@@ -175,6 +175,17 @@ export default function read_options(node) {
 
 				break;
 			}
+			case 'css': {
+				const value = get_static_value(attribute);
+
+				if (value === 'injected') {
+					component_options.css = value;
+				} else {
+					e.svelte_options_invalid_attribute_value(attribute, `"injected"`);
+				}
+
+				break;
+			}
 			case 'immutable': {
 				component_options.immutable = get_boolean_value(attribute);
 				break;
