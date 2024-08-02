@@ -7,5 +7,13 @@ import { build_event } from './shared/element.js';
  * @param {ComponentContext} context
  */
 export function OnDirective(node, context) {
-	build_event(node, node.metadata.expression, context);
+	build_event(
+		node.name,
+		node.modifiers,
+		node.expression,
+		null,
+		node.metadata.expression,
+		context,
+		true
+	);
 }

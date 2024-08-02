@@ -152,12 +152,10 @@ export function build_event_attribute(node, context) {
 		: /** @type {ExpressionTag} */ (node.value);
 
 	build_event(
-		{
-			name: event_name,
-			expression: tag.expression,
-			modifiers,
-			delegated: node.metadata.delegated
-		},
+		event_name,
+		modifiers,
+		tag.expression,
+		node.metadata.delegated,
 		tag.metadata.expression,
 		context
 	);
@@ -165,20 +163,37 @@ export function build_event_attribute(node, context) {
 
 /**
  * Serializes an event handler function of the `on:` directive or an attribute starting with `on`
- * @param {{name: string;modifiers: string[];expression: Expression | null;delegated?: DelegatedEvent | null;}} node
+ * @param {string} event_name
+ * @param {string[]} modifiers
+ * @param {Expression | null} original_expression
+ * @param {DelegatedEvent | null} delegated
  * @param {null | ExpressionMetadata} metadata
  * @param {ComponentContext} context
+ * @param {boolean} [is_on_directive]
  */
-export function build_event(node, metadata, context) {
+export function build_event(
+	event_name,
+	modifiers,
+	original_expression,
+	delegated,
+	metadata,
+	context,
+	is_on_directive = false // TODO
+) {
 	const state = context.state;
 
 	/** @type {Expression} */
 	let expression;
 
-	if (node.expression) {
-		let handler = build_event_handler(node, metadata, context);
-		const event_name = node.name;
-		const delegated = node.delegated;
+	if (original_expression) {
+		let handler = build_event_handler(
+			event_name,
+			modifiers,
+			original_expression,
+			delegated,
+			metadata,
+			context
+		);
 
 		if (delegated != null) {
 			let delegated_assignment;
@@ -188,12 +203,12 @@ export function build_event(node, metadata, context) {
 			}
 			// Hoist function if we can, otherwise we leave the function as is
 			if (delegated.type === 'hoistable') {
-				if (delegated.function === node.expression) {
+				if (delegated.function === original_expression) {
 					const func_name = context.state.scope.root.unique('on_' + event_name);
 					state.hoisted.push(b.var(func_name, handler));
 					handler = func_name;
 				}
-				if (node.modifiers.includes('once')) {
+				if (modifiers.includes('once')) {
 					handler = b.call('$.once', handler);
 				}
 				const hoistable_params = /** @type {Expression[]} */ (
@@ -204,7 +219,7 @@ export function build_event(node, metadata, context) {
 				const args = [handler, ...hoistable_params];
 				delegated_assignment = b.array(args);
 			} else {
-				if (node.modifiers.includes('once')) {
+				if (modifiers.includes('once')) {
 					handler = b.call('$.once', handler);
 				}
 				delegated_assignment = handler;
@@ -222,7 +237,7 @@ export function build_event(node, metadata, context) {
 			return;
 		}
 
-		if (node.modifiers.includes('once')) {
+		if (modifiers.includes('once')) {
 			handler = b.call('$.once', handler);
 		}
 
@@ -230,15 +245,15 @@ export function build_event(node, metadata, context) {
 			b.literal(event_name),
 			context.state.node,
 			handler,
-			b.literal(node.modifiers.includes('capture'))
+			b.literal(modifiers.includes('capture'))
 		];
 
-		if (node.modifiers.includes('passive')) {
+		if (modifiers.includes('passive')) {
 			args.push(b.literal(true));
-		} else if (node.modifiers.includes('nonpassive')) {
+		} else if (modifiers.includes('nonpassive')) {
 			args.push(b.literal(false));
 		} else if (
-			is_passive_event(node.name) &&
+			is_passive_event(event_name) &&
 			/** @type {OnDirective} */ (node).type !== 'OnDirective'
 		) {
 			// For on:something events we don't apply passive behaviour to match Svelte 4.
@@ -250,9 +265,9 @@ export function build_event(node, metadata, context) {
 	} else {
 		expression = b.call(
 			'$.event',
-			b.literal(node.name),
+			b.literal(event_name),
 			state.node,
-			build_event_handler(node, metadata, context)
+			build_event_handler(event_name, modifiers, original_expression, delegated, metadata, context)
 		);
 	}
 

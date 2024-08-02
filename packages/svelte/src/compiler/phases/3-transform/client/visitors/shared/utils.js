@@ -1,5 +1,5 @@
 /** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement, Super, TemplateElement, TemplateLiteral } from 'estree' */
-/** @import { BindDirective, ExpressionMetadata, ExpressionTag, OnDirective, SvelteNode, Text } from '#compiler' */
+/** @import { BindDirective, DelegatedEvent, ExpressionMetadata, ExpressionTag, OnDirective, SvelteNode, Text } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
@@ -134,16 +134,26 @@ export function build_update_assignment(state, id, init, value, update) {
 
 /**
  * Serializes the event handler function of the `on:` directive
- * @param {Pick<OnDirective, 'name' | 'modifiers' | 'expression'>} node
+ * @param {string} event_name
+ * @param {string[]} modifiers
+ * @param {Expression | null} original_expression
+ * @param {DelegatedEvent | null} delegated
  * @param {null | ExpressionMetadata} metadata
  * @param {ComponentContext} context
  */
-export function build_event_handler(node, metadata, { state, visit }) {
+export function build_event_handler(
+	event_name,
+	modifiers,
+	original_expression,
+	delegated,
+	metadata,
+	{ state, visit }
+) {
 	/** @type {Expression} */
 	let handler;
 
-	if (node.expression) {
-		handler = node.expression;
+	if (original_expression) {
+		handler = original_expression;
 
 		// Event handlers can be dynamic (source/store/prop/conditional etc)
 		const dynamic_handler = () =>
@@ -213,19 +223,19 @@ export function build_event_handler(node, metadata, { state, visit }) {
 		);
 	}
 
-	if (node.modifiers.includes('stopPropagation')) {
+	if (modifiers.includes('stopPropagation')) {
 		handler = b.call('$.stopPropagation', handler);
 	}
-	if (node.modifiers.includes('stopImmediatePropagation')) {
+	if (modifiers.includes('stopImmediatePropagation')) {
 		handler = b.call('$.stopImmediatePropagation', handler);
 	}
-	if (node.modifiers.includes('preventDefault')) {
+	if (modifiers.includes('preventDefault')) {
 		handler = b.call('$.preventDefault', handler);
 	}
-	if (node.modifiers.includes('self')) {
+	if (modifiers.includes('self')) {
 		handler = b.call('$.self', handler);
 	}
-	if (node.modifiers.includes('trusted')) {
+	if (modifiers.includes('trusted')) {
 		handler = b.call('$.trusted', handler);
 	}
 
