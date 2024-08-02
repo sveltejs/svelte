@@ -4,7 +4,7 @@
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
 import { get_parent, unwrap_optional } from '../../../utils/ast.js';
-import { is_safe_identifier } from './shared/utils.js';
+import { is_known_safe_call, is_safe_identifier } from './shared/utils.js';
 
 /**
  * @param {CallExpression} node
@@ -150,7 +150,7 @@ export function CallExpression(node, context) {
 			break;
 	}
 
-	if (context.state.expression && !is_known_safe_call(node, context)) {
+	if (context.state.expression && !is_known_safe_call(node.callee, context)) {
 		context.state.expression.has_call = true;
 		context.state.expression.has_state = true;
 	}
@@ -181,29 +181,4 @@ export function CallExpression(node, context) {
 	} else {
 		context.next();
 	}
-}
-
-/**
- * @param {CallExpression} node
- * @param {Context} context
- * @returns {boolean}
- */
-function is_known_safe_call(node, context) {
-	const callee = node.callee;
-
-	// String / Number / BigInt / Boolean casting calls
-	if (callee.type === 'Identifier') {
-		const name = callee.name;
-		const binding = context.state.scope.get(name);
-		if (
-			binding === null &&
-			(name === 'BigInt' || name === 'String' || name === 'Number' || name === 'Boolean')
-		) {
-			return true;
-		}
-	}
-
-	// TODO add more cases
-
-	return false;
 }

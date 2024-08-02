@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, Expression, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
+/** @import { AssignmentExpression, CallExpression, Expression, Pattern, PrivateIdentifier, Super, TaggedTemplateExpression, UpdateExpression, VariableDeclarator } from 'estree' */
 /** @import { Fragment } from '#compiler' */
 /** @import { AnalysisState, Context } from '../../types' */
 /** @import { Scope } from '../../../scope' */
@@ -164,4 +164,27 @@ export function is_safe_identifier(expression, scope) {
 		binding.kind !== 'bindable_prop' &&
 		binding.kind !== 'rest_prop'
 	);
+}
+
+/**
+ * @param {Expression | Super} callee
+ * @param {Context} context
+ * @returns {boolean}
+ */
+export function is_known_safe_call(callee, context) {
+	// String / Number / BigInt / Boolean casting calls
+	if (callee.type === 'Identifier') {
+		const name = callee.name;
+		const binding = context.state.scope.get(name);
+		if (
+			binding === null &&
+			(name === 'BigInt' || name === 'String' || name === 'Number' || name === 'Boolean')
+		) {
+			return true;
+		}
+	}
+
+	// TODO add more cases
+
+	return false;
 }
