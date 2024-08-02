@@ -1,7 +1,7 @@
 /** @import { MemberExpression } from 'estree' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
-import { is_safe_identifier } from './shared/utils.js';
+import { is_pure, is_safe_identifier } from './shared/utils.js';
 
 /**
  * @param {MemberExpression} node
@@ -15,7 +15,7 @@ export function MemberExpression(node, context) {
 		}
 	}
 
-	if (context.state.expression) {
+	if (context.state.expression && !is_pure(node, context)) {
 		context.state.expression.has_state = true;
 	}
 
