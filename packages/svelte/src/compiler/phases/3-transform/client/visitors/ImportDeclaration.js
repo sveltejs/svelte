@@ -9,7 +9,8 @@ import * as b from '../../../../utils/builders.js';
 export function ImportDeclaration(node, context) {
 	if ('hoisted' in context.state) {
 		context.state.hoisted.push(node);
+		return b.empty;
 	}
 
-	return b.empty;
+	context.next();
 }
