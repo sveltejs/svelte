@@ -265,8 +265,10 @@ export function build_setter(node, context, fallback, prefix, options) {
 
 	if (!binding) return fallback();
 
-	if (binding.mutation !== null) {
-		return binding.mutation(node, context);
+	if (Object.hasOwn(state.setters, left.name)) {
+		const setter = state.setters[left.name];
+		// @ts-expect-error
+		return setter(node, context);
 	}
 
 	if (binding.kind === 'legacy_reactive_import') {

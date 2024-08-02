@@ -118,7 +118,6 @@ export class Scope {
 			declaration_kind,
 			is_called: false,
 			prop_alias: null,
-			mutation: null,
 			reassigned: false,
 			metadata: null
 		};
