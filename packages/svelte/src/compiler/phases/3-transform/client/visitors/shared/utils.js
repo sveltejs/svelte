@@ -188,9 +188,9 @@ export function build_event_handler(node, metadata, { state, visit }) {
 					)
 				])
 			);
-		} else if (handler.type === 'Identifier' || handler.type === 'MemberExpression') {
-			const id = object(handler);
-			const binding = id === null ? null : state.scope.get(id.name);
+		} else if (handler.type === 'Identifier') {
+			const binding = state.scope.get(handler.name);
+
 			if (
 				binding !== null &&
 				(binding.kind !== 'normal' || binding.declaration_kind === 'import')
@@ -199,10 +199,8 @@ export function build_event_handler(node, metadata, { state, visit }) {
 			} else {
 				handler = /** @type {Expression} */ (visit(handler));
 			}
-		} else if (handler.type === 'ConditionalExpression' || handler.type === 'LogicalExpression') {
-			handler = dynamic_handler();
 		} else {
-			handler = /** @type {Expression} */ (visit(handler));
+			handler = dynamic_handler();
 		}
 	} else {
 		state.analysis.needs_props = true;
