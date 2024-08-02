@@ -675,7 +675,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 			value
 		)
 	);
-	const is_reactive = attribute.metadata.expression.has_state;
+
 	const is_select_with_value =
 		// attribute.metadata.dynamic would give false negatives because even if the value does not change,
 		// the inner options could still change, so we need to always treat it as reactive
@@ -698,7 +698,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 		state.init.push(b.stmt(b.call('$.init_select', node_id, b.thunk(value))));
 	}
 
-	if (is_reactive) {
+	if (attribute.metadata.expression.has_state) {
 		const id = state.scope.generate(`${node_id.name}_value`);
 		build_update_assignment(
 			state,
