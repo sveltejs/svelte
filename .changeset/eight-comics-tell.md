@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-feat: allow for `svelte:options` css injected
+feat: add support for `<svelte:options css="injected" />`
