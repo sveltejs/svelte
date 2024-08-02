@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.208
+
+### Patch Changes
+
+- feat: add support for `<svelte:options css="injected" />` ([#12660](https://github.com/sveltejs/svelte/pull/12660))
+
+- feat: function called as tagged template literal is reactively called ([#12692](https://github.com/sveltejs/svelte/pull/12692))
+
 ## 5.0.0-next.207
 
 ### Patch Changes
