@@ -147,12 +147,19 @@ export function set_custom_element_data(node, prop, value) {
  * @param {Element & ElementCSSInlineStyle} element
  * @param {Record<string, any> | undefined} prev
  * @param {Record<string, any>} next New attributes - this function mutates this object
- * @param {boolean} lowercase_attributes
  * @param {string} [css_hash]
+ * @param {boolean} preserve_attribute_case
  * @param {boolean} [skip_warning]
  * @returns {Record<string, any>}
  */
-export function set_attributes(element, prev, next, lowercase_attributes, css_hash, skip_warning) {
+export function set_attributes(
+	element,
+	prev,
+	next,
+	css_hash,
+	preserve_attribute_case = false,
+	skip_warning
+) {
 	var current = prev || {};
 	var is_option_element = element.tagName === 'OPTION';
 
@@ -266,7 +273,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 			element.value = element[key] = element.__value = value;
 		} else {
 			var name = key;
-			if (lowercase_attributes) {
+			if (!preserve_attribute_case) {
 				name = normalize_attribute(name);
 			}
 
@@ -328,8 +335,8 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 		/** @type {Element & ElementCSSInlineStyle} */ (node),
 		prev,
 		next,
-		node.namespaceURI !== NAMESPACE_SVG,
-		css_hash
+		css_hash,
+		node.namespaceURI !== NAMESPACE_SVG
 	);
 }
 
