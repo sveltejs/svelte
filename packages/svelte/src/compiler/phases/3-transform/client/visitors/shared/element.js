@@ -137,13 +137,12 @@ export function get_attribute_name(element, attribute, context) {
  * @param {ComponentContext} context
  */
 export function build_event_attribute(node, context) {
-	/** @type {string[]} */
-	const modifiers = [];
+	let capture = false;
 
 	let event_name = node.name.slice(2);
 	if (is_capture_event(event_name)) {
 		event_name = event_name.slice(0, -7);
-		modifiers.push('capture');
+		capture = true;
 	}
 
 	// we still need to support the weird `onclick="{() => {...}}" form
@@ -167,9 +166,7 @@ export function build_event_attribute(node, context) {
 				context.state.hoisted.push(b.var(func_name, handler));
 				handler = func_name;
 			}
-			if (modifiers.includes('once')) {
-				handler = b.call('$.once', handler);
-			}
+
 			const hoistable_params = /** @type {Expression[]} */ (
 				node.metadata.delegated.function.metadata.hoistable_params
 			);
@@ -178,9 +175,6 @@ export function build_event_attribute(node, context) {
 			const args = [handler, ...hoistable_params];
 			delegated_assignment = b.array(args);
 		} else {
-			if (modifiers.includes('once')) {
-				handler = b.call('$.once', handler);
-			}
 			delegated_assignment = handler;
 		}
 
@@ -196,7 +190,7 @@ export function build_event_attribute(node, context) {
 	} else {
 		const handler = build_event(
 			event_name,
-			modifiers,
+			capture ? ['capture'] : [], // TODO
 			tag.expression,
 			tag.metadata.expression,
 			context
