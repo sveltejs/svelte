@@ -107,12 +107,13 @@ export function build_event(event_name, handler, capture, passive, context) {
 
 /**
  * Serializes the event handler function of the `on:` directive
- * @param {Expression | null} expression
+ * @param {Expression | null} node
  * @param {null | ExpressionMetadata} metadata
  * @param {ComponentContext} context
  */
-export function build_event_handler(expression, metadata, context) {
-	if (!expression) {
+export function build_event_handler(node, metadata, context) {
+	if (node === null) {
+		// bubble event
 		return b.function(
 			null,
 			[b.id('$$arg')],
@@ -120,63 +121,36 @@ export function build_event_handler(expression, metadata, context) {
 		);
 	}
 
-	let handler = expression;
+	if (node.type === 'Identifier') {
+		// common case — function declared in the script
+		const binding = context.state.scope.get(node.name);
+		if (!binding || (binding.kind === 'normal' && binding.declaration_kind !== 'import')) {
+			return node;
+		}
+	}
 
-	// Event handlers can be dynamic (source/store/prop/conditional etc)
-	const dynamic_handler = () =>
-		b.function(
-			null,
-			[b.rest(b.id('$$args'))],
-			b.block([
-				b.return(
-					b.call(
-						b.member(
-							/** @type {Expression} */ (context.visit(handler)),
-							b.id('apply'),
-							false,
-							true
-						),
-						b.this,
-						b.id('$$args')
-					)
-				)
-			])
-		);
+	let handler = /** @type {Expression} */ (context.visit(node));
 
 	if (
 		metadata?.has_call &&
 		!(
-			(handler.type === 'ArrowFunctionExpression' || handler.type === 'FunctionExpression') &&
-			handler.metadata.hoistable
+			(node.type === 'ArrowFunctionExpression' || node.type === 'FunctionExpression') &&
+			node.metadata.hoistable
 		)
 	) {
 		// Create a derived dynamic event handler
 		const id = b.id(context.state.scope.generate('event_handler'));
 
-		context.state.init.push(
-			b.var(id, b.call('$.derived', b.thunk(/** @type {Expression} */ (context.visit(handler)))))
-		);
+		context.state.init.push(b.var(id, b.call('$.derived', b.thunk(handler))));
 
-		handler = b.function(
-			null,
-			[b.rest(b.id('$$args'))],
-			b.block([
-				b.return(
-					b.call(b.member(b.call('$.get', id), b.id('apply'), false, true), b.this, b.id('$$args'))
-				)
-			])
-		);
-	} else if (handler.type === 'Identifier') {
-		const binding = context.state.scope.get(handler.name);
-
-		if (binding !== null && (binding.kind !== 'normal' || binding.declaration_kind === 'import')) {
-			handler = dynamic_handler();
-		} else {
-			handler = /** @type {Expression} */ (context.visit(handler));
-		}
-	} else {
-		handler = dynamic_handler();
+		handler = b.call('$.get', id);
 	}
 
-	return handler;
+	return b.function(
+		null,
+		[b.rest(b.id('$$args'))],
+		b.block([
+			b.return(b.call(b.member(handler, b.id('apply'), false, true), b.this, b.id('$$args')))
+		])
+	);
 }
