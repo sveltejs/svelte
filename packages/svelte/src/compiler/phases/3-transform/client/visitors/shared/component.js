@@ -70,6 +70,10 @@ export function build_component(node, component_name, context, anchor = context.
 		if (attribute.type === 'LetDirective') {
 			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 		} else if (attribute.type === 'OnDirective') {
+			if (!attribute.expression) {
+				context.state.analysis.needs_props = true;
+			}
+
 			let handler = build_event_handler(attribute.modifiers, attribute.expression, null, context);
 			(events[attribute.name] ||= []).push(handler);
 		} else if (attribute.type === 'SpreadAttribute') {

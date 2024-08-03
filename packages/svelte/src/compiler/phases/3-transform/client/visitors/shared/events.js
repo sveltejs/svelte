@@ -199,8 +199,6 @@ export function build_event_handler(modifiers, expression, metadata, context) {
 			handler = dynamic_handler();
 		}
 	} else {
-		context.state.analysis.needs_props = true;
-
 		// Function + .call to preserve "this" context as much as possible
 		handler = b.function(
 			null,

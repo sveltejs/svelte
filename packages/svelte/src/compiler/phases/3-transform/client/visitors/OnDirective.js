@@ -8,12 +8,16 @@ import { build_event, build_event_handler } from './shared/events.js';
  * @param {ComponentContext} context
  */
 export function OnDirective(node, context) {
-	return node.expression
-		? build_event(node.name, node.modifiers, node.expression, node.metadata.expression, context)
-		: b.call(
-				'$.event',
-				b.literal(node.name),
-				context.state.node,
-				build_event_handler(node.modifiers, node.expression, null, context)
-			);
+	if (!node.expression) {
+		context.state.analysis.needs_props = true;
+	}
+
+	let handler = build_event_handler(
+		node.modifiers,
+		node.expression,
+		node.metadata.expression,
+		context
+	);
+
+	return b.call('$.event', b.literal(node.name), context.state.node, handler);
 }
