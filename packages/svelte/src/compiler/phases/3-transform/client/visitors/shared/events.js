@@ -149,8 +149,6 @@ export function build_event_handler(node, metadata, context) {
 	return b.function(
 		null,
 		[b.rest(b.id('$$args'))],
-		b.block([
-			b.return(b.call(b.member(handler, b.id('apply'), false, true), b.this, b.id('$$args')))
-		])
+		b.block([b.stmt(b.call(b.member(handler, b.id('apply'), false, true), b.this, b.id('$$args')))])
 	);
 }
