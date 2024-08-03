@@ -1,8 +1,7 @@
 /** @import { OnDirective, SvelteNode } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
-import { build_event } from './shared/element.js';
-import { build_event_handler } from './shared/utils.js';
+import { build_event, build_event_handler } from './shared/events.js';
 
 /**
  * @param {OnDirective} node

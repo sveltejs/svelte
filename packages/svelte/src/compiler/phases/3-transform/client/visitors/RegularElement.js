@@ -24,11 +24,11 @@ import {
 	get_attribute_name,
 	build_attribute_value,
 	build_class_directives,
-	build_event_attribute,
 	build_style_directives
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
 import { build_render_statement, build_update, build_update_assignment } from './shared/utils.js';
+import { build_event_attribute } from './shared/events.js';
 
 /**
  * @param {RegularElement} node

@@ -1,7 +1,7 @@
 /** @import { Attribute } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { is_event_attribute } from '../../../../utils/ast.js';
-import { build_event_attribute } from './shared/element.js';
+import { build_event_attribute } from './shared/events.js';
 
 /**
  * @param {Attribute} node
