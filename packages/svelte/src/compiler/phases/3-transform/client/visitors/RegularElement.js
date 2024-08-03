@@ -470,10 +470,8 @@ function build_element_spread_attributes(
 			attribute.type === 'SpreadAttribute' && attribute.metadata.expression.has_call;
 	}
 
-	const lowercase_attributes =
-		element.metadata.svg || element.metadata.mathml || is_custom_element_node(element)
-			? b.false
-			: b.true;
+	const preserve_attribute_case =
+		element.metadata.svg || element.metadata.mathml || is_custom_element_node(element);
 	const id = context.state.scope.generate('attributes');
 
 	const update = b.stmt(
@@ -485,8 +483,8 @@ function build_element_spread_attributes(
 				element_id,
 				b.id(id),
 				b.object(values),
-				lowercase_attributes,
-				b.literal(context.state.analysis.css.hash),
+				context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
+				preserve_attribute_case && b.true,
 				is_ignored(element, 'hydration_attribute_changed') && b.true
 			)
 		)
