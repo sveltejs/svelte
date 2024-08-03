@@ -108,7 +108,7 @@ export function build_event(event_name, handler, capture, passive, context) {
 /**
  * Serializes the event handler function of the `on:` directive
  * @param {Expression | null} node
- * @param {null | ExpressionMetadata} metadata
+ * @param {ExpressionMetadata} metadata
  * @param {ComponentContext} context
  * @returns {Expression}
  */
@@ -133,7 +133,7 @@ export function build_event_handler(node, metadata, context) {
 	let handler = /** @type {Expression} */ (context.visit(node));
 
 	if (
-		metadata?.has_call &&
+		metadata.has_call &&
 		!(
 			(node.type === 'ArrowFunctionExpression' || node.type === 'FunctionExpression') &&
 			node.metadata.hoistable
