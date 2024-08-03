@@ -227,10 +227,6 @@ export function build_event_attribute(node, context) {
 export function build_event(event_name, modifiers, expression, metadata, context) {
 	let handler = build_event_handler(modifiers, expression, metadata, context);
 
-	if (modifiers.includes('once')) {
-		handler = b.call('$.once', handler);
-	}
-
 	const args = [
 		b.literal(event_name),
 		context.state.node,

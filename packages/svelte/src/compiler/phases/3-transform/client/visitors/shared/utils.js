@@ -234,6 +234,9 @@ export function build_event_handler(modifiers, expression, metadata, context) {
 	if (modifiers.includes('trusted')) {
 		handler = b.call('$.trusted', handler);
 	}
+	if (modifiers.includes('once')) {
+		handler = b.call('$.once', handler);
+	}
 
 	return handler;
 }

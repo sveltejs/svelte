@@ -69,12 +69,7 @@ export function build_component(node, component_name, context, anchor = context.
 		if (attribute.type === 'LetDirective') {
 			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 		} else if (attribute.type === 'OnDirective') {
-			let handler = build_event_handler([], attribute.expression, null, context);
-
-			if (attribute.modifiers.includes('once')) {
-				handler = b.call('$.once', handler);
-			}
-
+			let handler = build_event_handler(attribute.modifiers, attribute.expression, null, context);
 			(events[attribute.name] ||= []).push(handler);
 		} else if (attribute.type === 'SpreadAttribute') {
 			const expression = /** @type {Expression} */ (context.visit(attribute));
