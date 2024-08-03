@@ -93,16 +93,14 @@ export function build_event_attribute(node, context) {
  * @param {ComponentContext} context
  */
 export function build_event(event_name, handler, capture, passive, context) {
-	const args = [
+	return b.call(
+		'$.event',
 		b.literal(event_name),
 		context.state.node,
 		handler,
 		capture && b.true,
 		passive === undefined ? undefined : b.literal(passive)
-	];
-
-	// Events need to run in order with bindings/actions
-	return b.call('$.event', ...args);
+	);
 }
 
 /**
