@@ -152,7 +152,7 @@ export function build_event_attribute(node, context) {
 		: /** @type {ExpressionTag} */ (node.value);
 
 	if (node.metadata.delegated) {
-		let handler = build_event_handler(modifiers, tag.expression, tag.metadata.expression, context);
+		let handler = build_event_handler([], tag.expression, tag.metadata.expression, context);
 
 		let delegated_assignment;
 
