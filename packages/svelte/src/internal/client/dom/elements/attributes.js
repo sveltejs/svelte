@@ -129,9 +129,8 @@ export function set_xlink_attribute(dom, attribute, value) {
  * @param {any} node
  * @param {string} prop
  * @param {any} value
- * @param {string} [css_hash]
  */
-export function set_custom_element_data(node, prop, value, css_hash) {
+export function set_custom_element_data(node, prop, value) {
 	if (prop in node) {
 		var curr_val = node[prop];
 		var next_val = typeof curr_val === 'boolean' && value === '' ? true : value;
@@ -139,10 +138,6 @@ export function set_custom_element_data(node, prop, value, css_hash) {
 			node[prop] = next_val;
 		}
 	} else {
-		if (css_hash && css_hash.length !== 0 && prop === 'class') {
-			if (value) value += ' ';
-			value += css_hash;
-		}
 		set_attribute(node, prop, value);
 	}
 }
@@ -158,7 +153,6 @@ export function set_custom_element_data(node, prop, value, css_hash) {
  * @returns {Record<string, any>}
  */
 export function set_attributes(element, prev, next, lowercase_attributes, css_hash, skip_warning) {
-	var has_hash = css_hash.length !== 0;
 	var current = prev || {};
 	var is_option_element = element.tagName === 'OPTION';
 
@@ -168,8 +162,8 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 		}
 	}
 
-	if (has_hash && !next.class) {
-		next.class = '';
+	if (css_hash !== '') {
+		next.class = next.class ? next.class + ' ' + css_hash : css_hash;
 	}
 
 	var setters = setters_cache.get(element.nodeName);
@@ -284,11 +278,6 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 					element[name] = value;
 				}
 			} else if (typeof value !== 'function') {
-				if (has_hash && name === 'class') {
-					if (value) value += ' ';
-					value += css_hash;
-				}
-
 				set_attribute(element, name, value);
 			}
 		}
@@ -314,9 +303,9 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
  * @param {Element} node
  * @param {Record<string, any> | undefined} prev
  * @param {Record<string, any>} next The new attributes - this function mutates this object
- * @param {string} css_hash
+ * @param {string} [css_hash]
  */
-export function set_dynamic_element_attributes(node, prev, next, css_hash) {
+export function set_dynamic_element_attributes(node, prev, next, css_hash = '') {
 	if (node.tagName.includes('-')) {
 		for (var key in prev) {
 			if (!(key in next)) {
@@ -324,8 +313,12 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 			}
 		}
 
+		if (css_hash !== '') {
+			next.class = next.class ? next.class + ' ' + css_hash : css_hash;
+		}
+
 		for (key in next) {
-			set_custom_element_data(node, key, next[key], css_hash);
+			set_custom_element_data(node, key, next[key]);
 		}
 
 		return next;
