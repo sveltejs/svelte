@@ -112,81 +112,70 @@ export function build_event(event_name, handler, capture, passive, context) {
  * @param {ComponentContext} context
  */
 export function build_event_handler(expression, metadata, context) {
-	/** @type {Expression} */
-	let handler;
-
-	if (expression) {
-		handler = expression;
-
-		// Event handlers can be dynamic (source/store/prop/conditional etc)
-		const dynamic_handler = () =>
-			b.function(
-				null,
-				[b.rest(b.id('$$args'))],
-				b.block([
-					b.return(
-						b.call(
-							b.member(
-								/** @type {Expression} */ (context.visit(handler)),
-								b.id('apply'),
-								false,
-								true
-							),
-							b.this,
-							b.id('$$args')
-						)
-					)
-				])
-			);
-
-		if (
-			metadata?.has_call &&
-			!(
-				(handler.type === 'ArrowFunctionExpression' || handler.type === 'FunctionExpression') &&
-				handler.metadata.hoistable
-			)
-		) {
-			// Create a derived dynamic event handler
-			const id = b.id(context.state.scope.generate('event_handler'));
-
-			context.state.init.push(
-				b.var(id, b.call('$.derived', b.thunk(/** @type {Expression} */ (context.visit(handler)))))
-			);
-
-			handler = b.function(
-				null,
-				[b.rest(b.id('$$args'))],
-				b.block([
-					b.return(
-						b.call(
-							b.member(b.call('$.get', id), b.id('apply'), false, true),
-							b.this,
-							b.id('$$args')
-						)
-					)
-				])
-			);
-		} else if (handler.type === 'Identifier') {
-			const binding = context.state.scope.get(handler.name);
-
-			if (
-				binding !== null &&
-				(binding.kind !== 'normal' || binding.declaration_kind === 'import')
-			) {
-				handler = dynamic_handler();
-			} else {
-				handler = /** @type {Expression} */ (context.visit(handler));
-			}
-		} else {
-			handler = dynamic_handler();
-		}
-	} else {
-		// Function + .call to preserve "this" context as much as possible
-		handler = b.function(
+	if (!expression) {
+		return b.function(
 			null,
 			[b.id('$$arg')],
 			b.block([b.stmt(b.call('$.bubble_event.call', b.this, b.id('$$props'), b.id('$$arg')))])
 		);
+	}
+
+	let handler = expression;
+
+	// Event handlers can be dynamic (source/store/prop/conditional etc)
+	const dynamic_handler = () =>
+		b.function(
+			null,
+			[b.rest(b.id('$$args'))],
+			b.block([
+				b.return(
+					b.call(
+						b.member(
+							/** @type {Expression} */ (context.visit(handler)),
+							b.id('apply'),
+							false,
+							true
+						),
+						b.this,
+						b.id('$$args')
+					)
+				)
+			])
+		);
+
+	if (
+		metadata?.has_call &&
+		!(
+			(handler.type === 'ArrowFunctionExpression' || handler.type === 'FunctionExpression') &&
+			handler.metadata.hoistable
+		)
+	) {
+		// Create a derived dynamic event handler
+		const id = b.id(context.state.scope.generate('event_handler'));
+
+		context.state.init.push(
+			b.var(id, b.call('$.derived', b.thunk(/** @type {Expression} */ (context.visit(handler)))))
+		);
+
+		handler = b.function(
+			null,
+			[b.rest(b.id('$$args'))],
+			b.block([
+				b.return(
+					b.call(b.member(b.call('$.get', id), b.id('apply'), false, true), b.this, b.id('$$args'))
+				)
+			])
+		);
+	} else if (handler.type === 'Identifier') {
+		const binding = context.state.scope.get(handler.name);
+
+		if (binding !== null && (binding.kind !== 'normal' || binding.declaration_kind === 'import')) {
+			handler = dynamic_handler();
+		} else {
+			handler = /** @type {Expression} */ (context.visit(handler));
+		}
+	} else {
+		handler = dynamic_handler();
 	}
 
 	return handler;
