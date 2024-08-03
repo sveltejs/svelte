@@ -1,14 +1,11 @@
 /** @import { SvelteBody } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import * as b from '../../../../utils/builders.js';
+import { visit_special_element } from './shared/special_element.js';
 
 /**
  * @param {SvelteBody} node
  * @param {ComponentContext} context
  */
 export function SvelteBody(node, context) {
-	context.next({
-		...context.state,
-		node: b.id('$.document.body')
-	});
+	visit_special_element(node, '$.document.body', context);
 }

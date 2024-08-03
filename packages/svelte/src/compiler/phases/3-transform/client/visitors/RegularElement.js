@@ -138,6 +138,13 @@ export function RegularElement(node, context) {
 			style_directives.push(attribute);
 		} else if (attribute.type === 'LetDirective') {
 			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+		} else if (attribute.type === 'OnDirective') {
+			const handler = /** @type {Expression} */ (context.visit(attribute));
+			const has_action_directive = node.attributes.find((a) => a.type === 'UseDirective');
+
+			context.state.after_update.push(
+				b.stmt(has_action_directive ? b.call('$.effect', b.thunk(handler)) : handler)
+			);
 		} else {
 			if (attribute.type === 'BindDirective') {
 				if (attribute.name === 'group' || attribute.name === 'checked') {

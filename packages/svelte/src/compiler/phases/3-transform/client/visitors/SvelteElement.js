@@ -71,6 +71,9 @@ export function SvelteElement(node, context) {
 			style_directives.push(attribute);
 		} else if (attribute.type === 'LetDirective') {
 			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+		} else if (attribute.type === 'OnDirective') {
+			const handler = /** @type {Expression} */ (context.visit(attribute, inner_context.state));
+			inner_context.state.after_update.push(b.stmt(handler));
 		} else {
 			context.visit(attribute, inner_context.state);
 		}
