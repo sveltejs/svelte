@@ -19,5 +19,10 @@ export function OnDirective(node, context) {
 		context
 	);
 
-	return b.call('$.event', b.literal(node.name), context.state.node, handler);
+	const capture = node.modifiers.includes('capture');
+	const passive =
+		node.modifiers.includes('passive') ||
+		(node.modifiers.includes('nonpassive') ? false : undefined);
+
+	return build_event(node.name, handler, capture, passive, context);
 }

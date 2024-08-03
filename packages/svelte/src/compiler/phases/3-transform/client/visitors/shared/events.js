@@ -22,9 +22,9 @@ export function build_event_attribute(node, context) {
 		? /** @type {ExpressionTag} */ (node.value[0])
 		: /** @type {ExpressionTag} */ (node.value);
 
-	if (node.metadata.delegated) {
-		let handler = build_event_handler([], tag.expression, tag.metadata.expression, context);
+	let handler = build_event_handler([], tag.expression, tag.metadata.expression, context);
 
+	if (node.metadata.delegated) {
 		let delegated_assignment;
 
 		if (!context.state.events.has(event_name)) {
@@ -60,19 +60,15 @@ export function build_event_attribute(node, context) {
 			)
 		);
 	} else {
-		const handler = build_event(
-			event_name,
-			capture ? ['capture'] : [], // TODO
-			tag.expression,
-			tag.metadata.expression,
-			context
-		);
+		const expression = build_event(event_name, handler, capture, undefined, context);
 
 		// TODO this is duplicated with OnDirective
 		const parent = /** @type {SvelteNode} */ (context.path.at(-1));
 		const has_action_directive =
 			parent.type === 'RegularElement' && parent.attributes.find((a) => a.type === 'UseDirective');
-		const statement = b.stmt(has_action_directive ? b.call('$.effect', b.thunk(handler)) : handler);
+		const statement = b.stmt(
+			has_action_directive ? b.call('$.effect', b.thunk(expression)) : expression
+		);
 
 		// TODO put this logic in the parent visitor?
 		if (
@@ -91,32 +87,19 @@ export function build_event_attribute(node, context) {
 /**
  * Serializes an event handler function of the `on:` directive or an attribute starting with `on`
  * @param {string} event_name
- * @param {string[]} modifiers
- * @param {Expression | null} expression
- * @param {null | ExpressionMetadata} metadata
+ * @param {Expression} handler
+ * @param {boolean} capture
+ * @param {boolean | undefined} passive
  * @param {ComponentContext} context
  */
-export function build_event(event_name, modifiers, expression, metadata, context) {
-	let handler = build_event_handler(modifiers, expression, metadata, context);
-
+export function build_event(event_name, handler, capture, passive, context) {
 	const args = [
 		b.literal(event_name),
 		context.state.node,
 		handler,
-		b.literal(modifiers.includes('capture'))
+		capture && b.true,
+		passive === undefined ? undefined : b.literal(passive)
 	];
-
-	if (modifiers.includes('passive')) {
-		args.push(b.literal(true));
-	} else if (modifiers.includes('nonpassive')) {
-		args.push(b.literal(false));
-	} else if (
-		is_passive_event(event_name) &&
-		/** @type {OnDirective} */ (node).type !== 'OnDirective'
-	) {
-		// For on:something events we don't apply passive behaviour to match Svelte 4.
-		args.push(b.literal(true));
-	}
 
 	// Events need to run in order with bindings/actions
 	return b.call('$.event', ...args);
