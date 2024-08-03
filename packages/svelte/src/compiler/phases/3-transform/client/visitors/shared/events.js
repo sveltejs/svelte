@@ -110,6 +110,7 @@ export function build_event(event_name, handler, capture, passive, context) {
  * @param {Expression | null} node
  * @param {null | ExpressionMetadata} metadata
  * @param {ComponentContext} context
+ * @returns {Expression}
  */
 export function build_event_handler(node, metadata, context) {
 	if (node === null) {
