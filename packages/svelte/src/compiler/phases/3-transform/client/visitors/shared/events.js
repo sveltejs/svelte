@@ -22,7 +22,7 @@ export function build_event_attribute(node, context) {
 		? /** @type {ExpressionTag} */ (node.value[0])
 		: /** @type {ExpressionTag} */ (node.value);
 
-	let handler = build_event_handler([], tag.expression, tag.metadata.expression, context);
+	let handler = build_event_handler(tag.expression, tag.metadata.expression, context);
 
 	if (node.metadata.delegated) {
 		let delegated_assignment;
@@ -107,12 +107,11 @@ export function build_event(event_name, handler, capture, passive, context) {
 
 /**
  * Serializes the event handler function of the `on:` directive
- * @param {string[]} modifiers
  * @param {Expression | null} expression
  * @param {null | ExpressionMetadata} metadata
  * @param {ComponentContext} context
  */
-export function build_event_handler(modifiers, expression, metadata, context) {
+export function build_event_handler(expression, metadata, context) {
 	/** @type {Expression} */
 	let handler;
 
@@ -188,25 +187,6 @@ export function build_event_handler(modifiers, expression, metadata, context) {
 			[b.id('$$arg')],
 			b.block([b.stmt(b.call('$.bubble_event.call', b.this, b.id('$$props'), b.id('$$arg')))])
 		);
-	}
-
-	if (modifiers.includes('stopPropagation')) {
-		handler = b.call('$.stopPropagation', handler);
-	}
-	if (modifiers.includes('stopImmediatePropagation')) {
-		handler = b.call('$.stopImmediatePropagation', handler);
-	}
-	if (modifiers.includes('preventDefault')) {
-		handler = b.call('$.preventDefault', handler);
-	}
-	if (modifiers.includes('self')) {
-		handler = b.call('$.self', handler);
-	}
-	if (modifiers.includes('trusted')) {
-		handler = b.call('$.trusted', handler);
-	}
-	if (modifiers.includes('once')) {
-		handler = b.call('$.once', handler);
 	}
 
 	return handler;

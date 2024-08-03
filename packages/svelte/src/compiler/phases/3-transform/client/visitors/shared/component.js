@@ -74,7 +74,12 @@ export function build_component(node, component_name, context, anchor = context.
 				context.state.analysis.needs_props = true;
 			}
 
-			let handler = build_event_handler(attribute.modifiers, attribute.expression, null, context);
+			let handler = build_event_handler(attribute.expression, null, context);
+
+			if (attribute.modifiers.includes('once')) {
+				handler = b.call('$.once', handler);
+			}
+
 			(events[attribute.name] ||= []).push(handler);
 		} else if (attribute.type === 'SpreadAttribute') {
 			const expression = /** @type {Expression} */ (context.visit(attribute));
