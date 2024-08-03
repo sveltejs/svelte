@@ -486,7 +486,7 @@ function build_element_spread_attributes(
 				b.id(id),
 				b.object(values),
 				lowercase_attributes,
-				b.literal(context.state.analysis.css.hash),
+				context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
 				is_ignored(element, 'hydration_attribute_changed') && b.true
 			)
 		)
