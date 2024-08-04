@@ -111,30 +111,30 @@ export function build_event_handler(node, metadata, context) {
 		);
 	}
 
-	if (node.type === 'Identifier') {
-		// common case — function declared in the script
-		const binding = context.state.scope.get(node.name);
-		if (!binding || (binding.kind === 'normal' && binding.declaration_kind !== 'import')) {
-			return node;
-		}
-	}
-
 	let handler = /** @type {Expression} */ (context.visit(node));
 
+	// inline handler
+	if (handler.type === 'ArrowFunctionExpression' || handler.type === 'FunctionExpression') {
+		return handler;
+	}
+
+	// function declared in the script
 	if (
-		metadata.has_call &&
-		!(
-			(node.type === 'ArrowFunctionExpression' || node.type === 'FunctionExpression') &&
-			node.metadata.hoistable
-		)
+		handler.type === 'Identifier' &&
+		context.state.scope.get(handler.name)?.declaration_kind !== 'import'
 	) {
-		// Create a derived dynamic event handler
+		return handler;
+	}
+
+	if (metadata.has_call) {
+		// memoize where necessary
 		const id = b.id(context.state.scope.generate('event_handler'));
 
 		context.state.init.push(b.var(id, b.call('$.derived', b.thunk(handler))));
 		handler = b.call('$.get', id);
 	}
 
+	// wrap the handler in a function, so the expression is re-evaluated for each event
 	return b.function(
 		null,
 		[b.rest(b.id('$$args'))],
