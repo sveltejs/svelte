@@ -8,21 +8,13 @@ import * as b from '../../../../utils/builders.js';
  * @param {ComponentContext} context
  */
 export function FunctionDeclaration(node, context) {
-	const metadata = node.metadata;
-
 	const state = { ...context.state, in_constructor: false };
 
-	if (metadata?.hoistable === true) {
+	if (node.metadata?.hoistable === true) {
 		const params = build_hoistable_params(node, context);
+		const body = context.visit(node.body, state);
 
-		context.state.hoisted.push(
-			/** @type {FunctionDeclaration} */ ({
-				...node,
-				id: node.id !== null ? context.visit(node.id, state) : null,
-				params,
-				body: context.visit(node.body, state)
-			})
-		);
+		context.state.hoisted.push(/** @type {FunctionDeclaration} */ ({ ...node, params, body }));
 
 		return b.empty;
 	}
