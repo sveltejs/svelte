@@ -60,24 +60,12 @@ export function build_event_attribute(node, context) {
 			)
 		);
 	} else {
-		const expression = build_event(event_name, handler, capture, undefined, context);
+		const statement = b.stmt(build_event(event_name, handler, capture, undefined, context));
+		const type = /** @type {SvelteNode} */ (context.path.at(-1)).type;
 
-		// TODO this is duplicated with OnDirective
-		const parent = /** @type {SvelteNode} */ (context.path.at(-1));
-		const has_action_directive =
-			parent.type === 'RegularElement' && parent.attributes.find((a) => a.type === 'UseDirective');
-		const statement = b.stmt(
-			has_action_directive ? b.call('$.effect', b.thunk(expression)) : expression
-		);
-
-		// TODO put this logic in the parent visitor?
-		if (
-			parent.type === 'SvelteDocument' ||
-			parent.type === 'SvelteWindow' ||
-			parent.type === 'SvelteBody'
-		) {
+		if (type === 'SvelteDocument' || type === 'SvelteWindow' || type === 'SvelteBody') {
 			// These nodes are above the component tree, and its events should run parent first
-			context.state.before_init.push(statement);
+			context.state.init.push(statement);
 		} else {
 			context.state.after_update.push(statement);
 		}
