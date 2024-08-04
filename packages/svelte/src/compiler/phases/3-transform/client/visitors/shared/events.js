@@ -60,7 +60,10 @@ export function build_event_attribute(node, context) {
 			)
 		);
 	} else {
-		const statement = b.stmt(build_event(event_name, handler, capture, undefined, context));
+		const statement = b.stmt(
+			build_event(event_name, context.state.node, handler, capture, undefined)
+		);
+
 		const type = /** @type {SvelteNode} */ (context.path.at(-1)).type;
 
 		if (type === 'SvelteDocument' || type === 'SvelteWindow' || type === 'SvelteBody') {
@@ -75,16 +78,16 @@ export function build_event_attribute(node, context) {
 /**
  * Serializes an event handler function of the `on:` directive or an attribute starting with `on`
  * @param {string} event_name
+ * @param {Expression} node
  * @param {Expression} handler
  * @param {boolean} capture
  * @param {boolean | undefined} passive
- * @param {ComponentContext} context
  */
-export function build_event(event_name, handler, capture, passive, context) {
+export function build_event(event_name, node, handler, capture, passive) {
 	return b.call(
 		'$.event',
 		b.literal(event_name),
-		context.state.node,
+		node,
 		handler,
 		capture && b.true,
 		passive === undefined ? undefined : b.literal(passive)
