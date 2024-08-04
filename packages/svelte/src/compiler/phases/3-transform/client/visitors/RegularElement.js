@@ -28,7 +28,7 @@ import {
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
 import { build_render_statement, build_update, build_update_assignment } from './shared/utils.js';
-import { build_event_attribute } from './shared/events.js';
+import { visit_event_attribute } from './shared/events.js';
 
 /**
  * @param {RegularElement} node
@@ -221,7 +221,7 @@ export function RegularElement(node, context) {
 				) {
 					might_need_event_replaying = true;
 				}
-				build_event_attribute(attribute, context);
+				visit_event_attribute(attribute, context);
 				continue;
 			}
 

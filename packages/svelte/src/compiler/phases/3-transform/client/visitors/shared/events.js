@@ -8,7 +8,7 @@ import * as b from '../../../../../utils/builders.js';
  * @param {Attribute} node
  * @param {ComponentContext} context
  */
-export function build_event_attribute(node, context) {
+export function visit_event_attribute(node, context) {
 	let capture = false;
 
 	let event_name = node.name.slice(2);
@@ -76,7 +76,7 @@ export function build_event_attribute(node, context) {
 }
 
 /**
- * Serializes an event handler function of the `on:` directive or an attribute starting with `on`
+ * Creates a `$.event(...)` call for non-delegated event handlers
  * @param {string} event_name
  * @param {Expression} node
  * @param {Expression} handler
@@ -95,7 +95,7 @@ export function build_event(event_name, node, handler, capture, passive) {
 }
 
 /**
- * Serializes the event handler function of the `on:` directive
+ * Creates an event handler
  * @param {Expression | null} node
  * @param {ExpressionMetadata} metadata
  * @param {ComponentContext} context
@@ -132,7 +132,6 @@ export function build_event_handler(node, metadata, context) {
 		const id = b.id(context.state.scope.generate('event_handler'));
 
 		context.state.init.push(b.var(id, b.call('$.derived', b.thunk(handler))));
-
 		handler = b.call('$.get', id);
 	}
 
