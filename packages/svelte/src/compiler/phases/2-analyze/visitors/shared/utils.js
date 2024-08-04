@@ -4,7 +4,7 @@
 /** @import { Scope } from '../../../scope' */
 /** @import { NodeLike } from '../../../../errors.js' */
 import * as e from '../../../../errors.js';
-import { extract_identifiers } from '../../../../utils/ast.js';
+import { extract_identifiers, object } from '../../../../utils/ast.js';
 import * as w from '../../../../warnings.js';
 
 /**
@@ -167,24 +167,23 @@ export function is_safe_identifier(expression, scope) {
 }
 
 /**
- * @param {Expression | Super} callee
+ * @param {Expression | Super} node
  * @param {Context} context
  * @returns {boolean}
  */
-export function is_known_safe_call(callee, context) {
-	// String / Number / BigInt / Boolean casting calls
-	if (callee.type === 'Identifier') {
-		const name = callee.name;
-		const binding = context.state.scope.get(name);
-		if (
-			binding === null &&
-			(name === 'BigInt' || name === 'String' || name === 'Number' || name === 'Boolean')
-		) {
-			return true;
-		}
+export function is_pure(node, context) {
+	if (node.type !== 'Identifier' && node.type !== 'MemberExpression') {
+		return false;
 	}
 
-	// TODO add more cases
+	const left = object(node);
+	if (!left) return false;
 
+	if (left.type === 'Identifier') {
+		const binding = context.state.scope.get(left.name);
+		if (binding === null) return true; // globals are assumed to be safe
+	}
+
+	// TODO add more cases (safe Svelte imports, etc)
 	return false;
 }
