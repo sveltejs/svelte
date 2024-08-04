@@ -203,7 +203,7 @@ function build_dynamic_element_attributes(attributes, context, element_id) {
 					element_id,
 					b.id(id),
 					b.object(values),
-					b.literal(context.state.analysis.css.hash)
+					context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash)
 				)
 			)
 		);
@@ -224,7 +224,7 @@ function build_dynamic_element_attributes(attributes, context, element_id) {
 				element_id,
 				b.literal(null),
 				b.object(values),
-				b.literal(context.state.analysis.css.hash)
+				context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash)
 			)
 		)
 	);
