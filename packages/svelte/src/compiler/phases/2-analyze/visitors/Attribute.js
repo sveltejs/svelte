@@ -146,12 +146,10 @@ function get_delegated_event(event_name, handler, context) {
 		}
 	}
 
-	// If we can't find a function, bail-out
-	if (target_function == null) return non_hoistable;
-	// If the function is marked as non-hoistable, bail-out
-	if (target_function.metadata.hoistable === 'impossible') return non_hoistable;
-	// If the function has more than one arg, then bail-out
-	if (target_function.params.length > 1) return non_hoistable;
+	// If we can't find a function, or the function has multiple parameters, bail-out
+	if (target_function == null || target_function.params.length > 1) {
+		return non_hoistable;
+	}
 
 	const visited_references = new Set();
 	const scope = target_function.metadata.scope;
