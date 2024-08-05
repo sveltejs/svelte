@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.209
+
+### Patch Changes
+
+- fix: add css hash to custom element rendered with `svelte:element` ([#12715](https://github.com/sveltejs/svelte/pull/12715))
+
+- fix: correctly handle SvelteDate methods with arguments ([#12738](https://github.com/sveltejs/svelte/pull/12738))
+
+- fix: add touch events on microtask to avoid Chromium bug ([#12735](https://github.com/sveltejs/svelte/pull/12735))
+
+- fix: allow deletion of $restProps properties ([#12736](https://github.com/sveltejs/svelte/pull/12736))
+
+- feat: more efficient code generation when referencing globals ([#12712](https://github.com/sveltejs/svelte/pull/12712))
+
 ## 5.0.0-next.208
 
 ### Patch Changes
