@@ -32,9 +32,14 @@ export class SvelteDate extends Date {
 			if (method.startsWith('get') || method.startsWith('to')) {
 				// @ts-ignore
 				proto[method] = function (...args) {
+					// If we have no params, then don't cache or create a derived
 					// @ts-ignore
-					var can_cache = args.length === 0;
-					var d = can_cache ? this.#deriveds.get(method) : undefined;
+					if (args.length > 0) {
+						get(this.#time);
+						// @ts-ignore
+						return date_proto[method].apply(this, args);
+					}
+					var d = this.#deriveds.get(method);
 
 					if (d === undefined) {
 						d = derived(() => {
@@ -43,9 +48,7 @@ export class SvelteDate extends Date {
 							return date_proto[method].apply(this, args);
 						});
 
-						if (can_cache) {
-							this.#deriveds.set(method, d);
-						}
+						this.#deriveds.set(method, d);
 					}
 
 					return get(d);
