@@ -555,6 +555,30 @@ test('Date fine grained tests', () => {
 	cleanup();
 });
 
+test('Date.toLocaleString', () => {
+	const date = new SvelteDate(initial_date);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(date.toLocaleString(undefined, { month: 'long', year: 'numeric' }));
+		});
+		render_effect(() => {
+			log.push(date.toLocaleString(undefined, { month: 'long' }));
+		});
+	});
+
+	flushSync();
+
+	assert.deepEqual(log, [
+		initial_date.toLocaleString(undefined, { month: 'long', year: 'numeric' }),
+		initial_date.toLocaleString(undefined, { month: 'long' })
+	]);
+
+	cleanup();
+});
+
 test('Date.instanceOf', () => {
 	assert.equal(new SvelteDate() instanceof Date, true);
 });
