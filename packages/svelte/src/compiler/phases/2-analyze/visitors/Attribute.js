@@ -61,7 +61,7 @@ const unhoisted = { hoisted: false };
  * @returns {null | DelegatedEvent}
  */
 function get_delegated_event(event_name, handler, context) {
-	// Handle delegated event handlers. Bail-out if not a delegated event.
+	// Handle delegated event handlers. Bail out if not a delegated event.
 	if (!handler || !is_delegated(event_name)) {
 		return null;
 	}
@@ -155,9 +155,9 @@ function get_delegated_event(event_name, handler, context) {
 	const visited_references = new Set();
 	const scope = target_function.metadata.scope;
 	for (const [reference] of scope.references) {
-		// Bail-out if the arguments keyword is used
+		// Bail out if the arguments keyword is used
 		if (reference === 'arguments') return unhoisted;
-		// Bail-out if references a store subscription
+		// Bail out if references a store subscription
 		if (scope.get(`$${reference}`)?.kind === 'store_sub') return unhoisted;
 
 		const binding = scope.get(reference);
@@ -182,9 +182,9 @@ function get_delegated_event(event_name, handler, context) {
 
 		if (
 			binding !== null &&
-			// Bail-out if the the binding is a rest param
+			// Bail out if the the binding is a rest param
 			(binding.declaration_kind === 'rest_param' ||
-				// Bail-out if we reference anything from the EachBlock (for now) that mutates in non-runes mode,
+				// Bail out if we reference anything from the EachBlock (for now) that mutates in non-runes mode,
 				(((!context.state.analysis.runes && binding.kind === 'each') ||
 					// or any normal not reactive bindings that are mutated.
 					binding.kind === 'normal' ||
