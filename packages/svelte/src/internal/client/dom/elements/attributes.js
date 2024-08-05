@@ -345,9 +345,10 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
  * because updating them through the property setter doesn't work reliably.
  * In the example of `width`/`height`, the problem is that the setter only
  * accepts numeric values, but the attribute can also be set to a string like `50%`.
- * In case of draggable trying to set `element.draggable='false'` will actually set
- * draggable to `true`, same fore spellcheck and translate. If this list becomes
- * too big, rethink this approach.
+ * Some enumerated attributes (see https://developer.mozilla.org/en-US/docs/Glossary/Enumerated)
+ * correspond to boolean properties, like draggable/spellcheck/translate — setting
+ * something like `element.draggable='false'` will set `element.draggable` to `true.
+ * If this list becomes too big, rethink this approach.
  */
 var always_set_through_set_attribute = ['width', 'height', 'draggable', 'spellcheck', 'translate'];
 
