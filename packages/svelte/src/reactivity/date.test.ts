@@ -555,7 +555,7 @@ test('Date fine grained tests', () => {
 	cleanup();
 });
 
-test('Datae.toLocaleString', () => {
+test('Date.toLocaleString', () => {
 	const date = new SvelteDate(initial_date);
 
 	const log: any = [];
