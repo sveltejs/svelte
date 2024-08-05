@@ -159,12 +159,7 @@ export function EachBlock(node, context) {
 	const index =
 		each_node_meta.contains_group_binding || !node.index ? each_node_meta.index : b.id(node.index);
 	const item = each_node_meta.item;
-	const binding = /** @type {Binding} */ (context.state.scope.get(item.name));
-	const getter = (/** @type {Identifier} */ id) => {
-		const item_with_loc = with_loc(item, id);
-		return (flags & EACH_ITEM_REACTIVE) === 0 ? item_with_loc : b.call('$.unwrap', item_with_loc);
-	};
-	child_state.getters[item.name] = getter;
+	const unwrapped = (flags & EACH_ITEM_REACTIVE) === 0 ? item : b.call('$.get', item);
 
 	if (node.index) {
 		child_state.getters[node.index] = (id) => {
@@ -178,6 +173,8 @@ export function EachBlock(node, context) {
 	/** @type {Statement[]} */
 	const declarations = [];
 
+	child_state.getters[item.name] = unwrapped;
+
 	if (node.context.type === 'Identifier') {
 		child_state.setters[node.context.name] = create_mutation(
 			b.member(
@@ -189,15 +186,14 @@ export function EachBlock(node, context) {
 
 		key_state.getters[node.context.name] = node.context;
 	} else {
-		const unwrapped = getter(binding.node);
 		const paths = extract_paths(node.context);
 
 		for (const path of paths) {
 			const name = /** @type {Identifier} */ (path.node).name;
-			const binding = /** @type {Binding} */ (context.state.scope.get(name));
 			const needs_derived = path.has_default_value; // to ensure that default value is only called once
+
 			const fn = b.thunk(
-				/** @type {Expression} */ (context.visit(path.expression?.(unwrapped), child_state))
+				/** @type {Expression} */ (context.visit(path.expression?.(item), child_state))
 			);
 
 			declarations.push(b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn));
@@ -205,7 +201,7 @@ export function EachBlock(node, context) {
 			const getter = needs_derived ? b.call('$.get', b.id(name)) : b.call(name);
 			child_state.getters[name] = getter;
 			child_state.setters[name] = create_mutation(
-				/** @type {Pattern} */ (path.update_expression(unwrapped))
+				/** @type {Pattern} */ (context.visit(path.update_expression(item), child_state))
 			);
 
 			// we need to eagerly evaluate the expression in order to hit any
