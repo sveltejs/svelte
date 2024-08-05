@@ -63,7 +63,7 @@ function get_delegated_event(event_name, handler, context) {
 		return null;
 	}
 
-	// If we are not working with a RegularElement, then bail-out.
+	// If we are not working with a RegularElement, then bail out.
 	const element = context.path.at(-1);
 	if (element?.type !== 'RegularElement') {
 		return null;
@@ -86,7 +86,7 @@ function get_delegated_event(event_name, handler, context) {
 		binding = context.state.scope.get(handler.name);
 
 		if (context.state.analysis.module.scope.references.has(handler.name)) {
-			// If a binding with the same name is referenced in the module scope (even if not declared there), bail-out
+			// If a binding with the same name is referenced in the module scope (even if not declared there), bail out
 			return non_hoistable;
 		}
 
@@ -128,7 +128,7 @@ function get_delegated_event(event_name, handler, context) {
 			}
 		}
 
-		// If the binding is exported, bail-out
+		// If the binding is exported, bail out
 		if (context.state.analysis.exports.find((node) => node.name === handler.name)) {
 			return non_hoistable;
 		}
@@ -146,7 +146,7 @@ function get_delegated_event(event_name, handler, context) {
 		}
 	}
 
-	// If we can't find a function, or the function has multiple parameters, bail-out
+	// If we can't find a function, or the function has multiple parameters, bail out
 	if (target_function == null || target_function.params.length > 1) {
 		return non_hoistable;
 	}
@@ -176,7 +176,7 @@ function get_delegated_event(event_name, handler, context) {
 			return non_hoistable;
 		}
 
-		// If we reference the index within an each block, then bail-out.
+		// If we reference the index within an each block, then bail out.
 		if (binding !== null && binding.initial?.type === 'EachBlock') return non_hoistable;
 
 		if (
