@@ -40,8 +40,8 @@ export function Attribute(node, context) {
 			const delegated_event = get_delegated_event(node.name.slice(2), expression, context);
 
 			if (delegated_event !== null) {
-				if (delegated_event.hoistable) {
-					delegated_event.function.metadata.hoistable = true;
+				if (delegated_event.hoisted) {
+					delegated_event.function.metadata.hoisted = true;
 				}
 
 				node.metadata.delegated = delegated_event;
@@ -70,7 +70,7 @@ function get_delegated_event(event_name, handler, context) {
 	}
 
 	/** @type {DelegatedEvent} */
-	const non_hoistable = { hoistable: false };
+	const non_hoistable = { hoisted: false };
 	/** @type {FunctionExpression | FunctionDeclaration | ArrowFunctionExpression | null} */
 	let target_function = null;
 	let binding = null;
@@ -196,7 +196,7 @@ function get_delegated_event(event_name, handler, context) {
 		visited_references.add(reference);
 	}
 
-	return { hoistable: true, function: target_function };
+	return { hoisted: true, function: target_function };
 }
 
 /**

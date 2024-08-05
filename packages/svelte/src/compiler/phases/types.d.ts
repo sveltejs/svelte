@@ -82,24 +82,24 @@ export interface ComponentAnalysis extends Analysis {
 declare module 'estree' {
 	interface ArrowFunctionExpression {
 		metadata: {
-			hoistable: boolean | 'impossible';
-			hoistable_params: Pattern[];
+			hoisted: boolean;
+			hoisted_params: Pattern[];
 			scope: Scope;
 		};
 	}
 
 	interface FunctionExpression {
 		metadata: {
-			hoistable: boolean | 'impossible';
-			hoistable_params: Pattern[];
+			hoisted: boolean;
+			hoisted_params: Pattern[];
 			scope: Scope;
 		};
 	}
 
 	interface FunctionDeclaration {
 		metadata: {
-			hoistable: boolean | 'impossible';
-			hoistable_params: Pattern[];
+			hoisted: boolean;
+			hoisted_params: Pattern[];
 			scope: Scope;
 		};
 	}

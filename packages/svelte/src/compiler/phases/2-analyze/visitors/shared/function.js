@@ -8,9 +8,8 @@
 export function visit_function(node, context) {
 	// TODO retire this in favour of a more general solution based on bindings
 	node.metadata = {
-		// module context -> already hoisted
-		hoistable: context.state.ast_type === 'module' ? 'impossible' : false,
-		hoistable_params: [],
+		hoisted: false,
+		hoisted_params: [],
 		scope: context.state.scope
 	};
 

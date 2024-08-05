@@ -32,19 +32,20 @@ export function visit_event_attribute(node, context) {
 		}
 
 		// Hoist function if we can, otherwise we leave the function as is
-		if (node.metadata.delegated.hoistable) {
+		if (node.metadata.delegated.hoisted) {
 			if (node.metadata.delegated.function === tag.expression) {
 				const func_name = context.state.scope.root.unique('on_' + event_name);
 				context.state.hoisted.push(b.var(func_name, handler));
 				handler = func_name;
 			}
 
-			const hoistable_params = /** @type {Expression[]} */ (
-				node.metadata.delegated.function.metadata.hoistable_params
+			const hoisted_params = /** @type {Expression[]} */ (
+				node.metadata.delegated.function.metadata.hoisted_params
 			);
+
 			// When we hoist a function we assign an array with the function and all
 			// hoisted closure params.
-			const args = [handler, ...hoistable_params];
+			const args = [handler, ...hoisted_params];
 			delegated_assignment = b.array(args);
 		} else {
 			delegated_assignment = handler;

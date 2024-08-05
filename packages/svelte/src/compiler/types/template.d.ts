@@ -214,10 +214,10 @@ export interface OnDirective extends BaseNode {
 
 export type DelegatedEvent =
 	| {
-			hoistable: true;
+			hoisted: true;
 			function: ArrowFunctionExpression | FunctionExpression | FunctionDeclaration;
 	  }
-	| { hoistable: false };
+	| { hoisted: false };
 
 /** A `style:` directive */
 export interface StyleDirective extends BaseNode {

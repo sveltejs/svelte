@@ -481,7 +481,7 @@ export function build_proxy_reassignment(value, proxy_reference) {
  * @param {ComponentContext} context
  * @returns {Pattern[]}
  */
-function get_hoistable_params(node, context) {
+function get_hoisted_params(node, context) {
 	const scope = context.state.scope;
 
 	/** @type {Identifier[]} */
@@ -549,15 +549,15 @@ function get_hoistable_params(node, context) {
  * @param {ComponentContext} context
  * @returns {Pattern[]}
  */
-export function build_hoistable_params(node, context) {
-	const hoistable_params = get_hoistable_params(node, context);
-	node.metadata.hoistable_params = hoistable_params;
+export function build_hoisted_params(node, context) {
+	const hoisted_params = get_hoisted_params(node, context);
+	node.metadata.hoisted_params = hoisted_params;
 
 	/** @type {Pattern[]} */
 	const params = [];
 
 	if (node.params.length === 0) {
-		if (hoistable_params.length > 0) {
+		if (hoisted_params.length > 0) {
 			// For the event object
 			params.push(b.id('_'));
 		}
@@ -567,7 +567,7 @@ export function build_hoistable_params(node, context) {
 		}
 	}
 
-	params.push(...hoistable_params);
+	params.push(...hoisted_params);
 	return params;
 }
 
