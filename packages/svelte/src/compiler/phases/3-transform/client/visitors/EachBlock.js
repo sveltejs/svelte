@@ -41,6 +41,8 @@ export function EachBlock(node, context) {
 	}
 
 	if (node.metadata.expression.dependencies.size > 0) {
+		// TODO be more discerning — we should be able to detect things like
+		// a never-reassigned/mutated `let items = [...]`
 		flags |= EACH_ITEM_REACTIVE;
 	}
 
