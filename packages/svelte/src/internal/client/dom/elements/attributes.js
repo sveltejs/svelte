@@ -1,6 +1,6 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
-import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
+import { get_descriptor, get_descriptors, get_prototype_of } from '../../../shared/utils.js';
 import { NAMESPACE_SVG } from '../../../../constants.js';
 import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
@@ -81,7 +81,14 @@ export function set_checked(element, checked) {
  * @param {boolean} [skip_warning]
  */
 export function set_attribute(element, attribute, value, skip_warning) {
-	value = value == null ? null : value + '';
+	// we don't want to convert to string because we want to use the browser
+	// setter to get the actual string value for free
+
+	// eg. translate = true -> "yes"
+	// eg. draggable = true -> "true"
+	if (!enumerated_attributes.includes(attribute)) {
+		value = value == null ? null : value + '';
+	}
 
 	// @ts-expect-error
 	var attributes = (element.__attributes ??= {});
@@ -112,7 +119,14 @@ export function set_attribute(element, attribute, value, skip_warning) {
 	if (value === null) {
 		element.removeAttribute(attribute);
 	} else {
-		element.setAttribute(attribute, value);
+		// the value can be a string either if it was a boolean and it was converted because
+		// the attribute is not in `enumerated_attributes` the attribute is in `enumerated_attributes`
+		// but the value is actually a string
+		if (typeof value === 'string') {
+			element.setAttribute(attribute, value);
+		} else {
+			element[/** @type {never} */ (attribute)] = value;
+		}
 	}
 }
 
@@ -341,16 +355,21 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 }
 
 /**
- * List of attributes that should always be set through the attr method,
- * because updating them through the property setter doesn't work reliably.
- * In the example of `width`/`height`, the problem is that the setter only
- * accepts numeric values, but the attribute can also be set to a string like `50%`.
  * Some enumerated attributes (see https://developer.mozilla.org/en-US/docs/Glossary/Enumerated)
  * correspond to boolean properties, like draggable/spellcheck/translate — setting
  * something like `element.draggable='false'` will set `element.draggable` to `true.
  * If this list becomes too big, rethink this approach.
  */
-var always_set_through_set_attribute = ['width', 'height', 'draggable', 'spellcheck', 'translate'];
+var enumerated_attributes = ['draggable', 'spellcheck', 'translate'];
+
+/**
+ * List of attributes that should always be set through the attr method,
+ * because updating them through the property setter doesn't work reliably.
+ * In the example of `width`/`height`, the problem is that the setter only
+ * accepts numeric values, but the attribute can also be set to a string like `50%`.
+ * If this list becomes too big, rethink this approach.
+ */
+var always_set_through_set_attribute = ['width', 'height'];
 
 /** @type {Map<string, string[]>} */
 var setters_cache = new Map();
@@ -367,7 +386,10 @@ function get_setters(element) {
 		descriptors = get_descriptors(proto);
 
 		for (var key in descriptors) {
-			if (descriptors[key].set && !always_set_through_set_attribute.includes(key)) {
+			if (
+				descriptors[key].set &&
+				!(always_set_through_set_attribute.includes(key) || enumerated_attributes.includes(key))
+			) {
 				setters.push(key);
 			}
 		}
