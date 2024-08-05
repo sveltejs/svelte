@@ -12,7 +12,7 @@ import {
 } from '../shared/utils.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
 import { source, set } from './reactivity/sources.js';
-import { STATE_FROZEN_SYMBOL, STATE_SYMBOL } from './constants.js';
+import { STATE_SYMBOL } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 
@@ -24,12 +24,7 @@ import * as e from './errors.js';
  * @returns {ProxyStateObject<T> | T}
  */
 export function proxy(value, parent = null, prev) {
-	if (
-		typeof value === 'object' &&
-		value != null &&
-		!is_frozen(value) &&
-		!(STATE_FROZEN_SYMBOL in value)
-	) {
+	if (typeof value === 'object' && value != null && !is_frozen(value)) {
 		// If we have an existing proxy, return it...
 		if (STATE_SYMBOL in value) {
 			const metadata = /** @type {ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
