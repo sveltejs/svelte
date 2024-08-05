@@ -149,11 +149,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			!(STATE_SYMBOL in array)
 		) {
 			flags ^= EACH_IS_STRICT_EQUALS;
-
-			// Additionally if we're in an keyed each block, we'll need ensure the items are all wrapped in signals.
-			if ((flags & EACH_KEYED) !== 0 && (flags & EACH_ITEM_REACTIVE) === 0) {
-				flags ^= EACH_ITEM_REACTIVE;
-			}
 		}
 
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */

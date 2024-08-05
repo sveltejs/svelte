@@ -38,17 +38,9 @@ export function EachBlock(node, context) {
 		if (node.index) {
 			flags |= EACH_INDEX_REACTIVE;
 		}
+	}
 
-		// In runes mode, if key === item, we don't need to wrap the item in a source
-		const key_is_item =
-			/** @type {Expression} */ (node.key).type === 'Identifier' &&
-			node.context.type === 'Identifier' &&
-			node.context.name === node.key.name;
-
-		if (!context.state.analysis.runes || !key_is_item) {
-			flags |= EACH_ITEM_REACTIVE;
-		}
-	} else {
+	if (node.metadata.expression.dependencies.size > 0) {
 		flags |= EACH_ITEM_REACTIVE;
 	}
 
@@ -168,7 +160,7 @@ export function EachBlock(node, context) {
 	const binding = /** @type {Binding} */ (context.state.scope.get(item.name));
 	const getter = (/** @type {Identifier} */ id) => {
 		const item_with_loc = with_loc(item, id);
-		return b.call('$.unwrap', item_with_loc);
+		return (flags & EACH_ITEM_REACTIVE) === 0 ? item_with_loc : b.call('$.unwrap', item_with_loc);
 	};
 	child_state.getters[item.name] = getter;
 

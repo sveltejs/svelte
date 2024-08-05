@@ -3,7 +3,7 @@
 /** @import { AnimateDirective, Binding, DeclarationKind, EachBlock, ElementLike, LetDirective, SvelteNode, TransitionDirective, UseDirective } from '#compiler' */
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
-import { is_element_node } from './nodes.js';
+import { create_expression_metadata, is_element_node } from './nodes.js';
 import * as b from '../utils/builders.js';
 import * as e from '../errors.js';
 import {
@@ -591,6 +591,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			}
 
 			node.metadata = {
+				expression: create_expression_metadata(),
 				keyed: false,
 				contains_group_binding: false,
 				array_name: needs_array_deduplication ? state.scope.root.unique('$$array') : null,
