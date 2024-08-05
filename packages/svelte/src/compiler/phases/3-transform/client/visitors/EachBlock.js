@@ -159,7 +159,11 @@ export function EachBlock(node, context) {
 	const index =
 		each_node_meta.contains_group_binding || !node.index ? each_node_meta.index : b.id(node.index);
 	const item = each_node_meta.item;
-	const unwrapped = (flags & EACH_ITEM_REACTIVE) === 0 ? item : b.call('$.get', item);
+
+	child_state.getters[item.name] = (node) => {
+		const item_with_loc = with_loc(item, node);
+		return (flags & EACH_ITEM_REACTIVE) === 0 ? item_with_loc : b.call('$.get', item_with_loc);
+	};
 
 	if (node.index) {
 		child_state.getters[node.index] = (id) => {
@@ -172,8 +176,6 @@ export function EachBlock(node, context) {
 
 	/** @type {Statement[]} */
 	const declarations = [];
-
-	child_state.getters[item.name] = unwrapped;
 
 	if (node.context.type === 'Identifier') {
 		child_state.setters[node.context.name] = create_mutation(
