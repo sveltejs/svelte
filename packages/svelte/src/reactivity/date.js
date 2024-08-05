@@ -39,6 +39,7 @@ export class SvelteDate extends Date {
 						// @ts-ignore
 						return date_proto[method].apply(this, args);
 					}
+
 					var d = this.#deriveds.get(method);
 
 					if (d === undefined) {
