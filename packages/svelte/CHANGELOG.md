@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.210
+
+### Patch Changes
+
+- fix: avoid recreating handlers for component events ([#12722](https://github.com/sveltejs/svelte/pull/12722))
+
+- fix: call correct event handler for properties of non-reactive objects ([#12722](https://github.com/sveltejs/svelte/pull/12722))
+
 ## 5.0.0-next.209
 
 ### Patch Changes
