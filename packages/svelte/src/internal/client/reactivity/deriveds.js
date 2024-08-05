@@ -12,7 +12,8 @@ import {
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 
-export let updating_derived = false;
+/** @type {Derived[]} */
+export let updating_deriveds = [];
 
 /**
  * @template V
@@ -84,11 +85,15 @@ function destroy_derived_children(derived) {
  * @returns {void}
  */
 export function update_derived(derived) {
-	var previous_updating_derived = updating_derived;
-	updating_derived = true;
+	// If we're already updating this derived (recursively) then bail-out
+	// of re-calling the derived again to prevent a stack-overflow.
+	if (updating_deriveds.includes(derived)) {
+		return;
+	}
+	updating_deriveds.push(derived);
 	destroy_derived_children(derived);
 	var value = update_reaction(derived);
-	updating_derived = previous_updating_derived;
+	updating_deriveds.pop();
 
 	var status =
 		(current_skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null
