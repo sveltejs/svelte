@@ -1672,10 +1672,10 @@ declare module 'svelte/compiler' {
 
 	type DelegatedEvent =
 		| {
-				type: 'hoistable';
+				hoisted: true;
 				function: ArrowFunctionExpression | FunctionExpression | FunctionDeclaration;
 		  }
-		| { type: 'non-hoistable' };
+		| { hoisted: false };
 
 	/** A `style:` directive */
 	interface StyleDirective extends BaseNode {

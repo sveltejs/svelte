@@ -252,7 +252,7 @@ export function legacy_pre_effect(deps, fn) {
 		deps();
 
 		// If this legacy pre effect has already run before the end of the reset, then
-		// bail-out to emulate the same behavior.
+		// bail out to emulate the same behavior.
 		if (token.ran) return;
 
 		token.ran = true;

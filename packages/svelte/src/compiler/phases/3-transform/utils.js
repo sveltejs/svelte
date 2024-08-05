@@ -20,13 +20,13 @@ import { dev } from '../../state.js';
  * @param {Node} node
  * @returns {boolean}
  */
-export function is_hoistable_function(node) {
+export function is_hoisted_function(node) {
 	if (
 		node.type === 'ArrowFunctionExpression' ||
 		node.type === 'FunctionExpression' ||
 		node.type === 'FunctionDeclaration'
 	) {
-		return node.metadata?.hoistable === true;
+		return node.metadata?.hoisted === true;
 	}
 	return false;
 }

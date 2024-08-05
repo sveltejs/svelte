@@ -13,7 +13,7 @@ import {
 	is_state_source,
 	should_proxy_or_freeze
 } from '../utils.js';
-import { is_hoistable_function } from '../../utils.js';
+import { is_hoisted_function } from '../../utils.js';
 
 /**
  * @param {VariableDeclaration} node
@@ -36,11 +36,11 @@ export function VariableDeclaration(node, context) {
 				rune === '$state.snapshot' ||
 				rune === '$state.is'
 			) {
-				if (init != null && is_hoistable_function(init)) {
-					const hoistable_function = context.visit(init);
+				if (init != null && is_hoisted_function(init)) {
 					context.state.hoisted.push(
-						b.declaration('const', declarator.id, /** @type {Expression} */ (hoistable_function))
+						b.declaration('const', declarator.id, /** @type {Expression} */ (context.visit(init)))
 					);
+
 					continue;
 				}
 				declarations.push(/** @type {VariableDeclarator} */ (context.visit(declarator)));
@@ -219,11 +219,9 @@ export function VariableDeclaration(node, context) {
 			if (!has_state && !has_props) {
 				const init = declarator.init;
 
-				if (init != null && is_hoistable_function(init)) {
-					const hoistable_function = context.visit(init);
-
+				if (init != null && is_hoisted_function(init)) {
 					context.state.hoisted.push(
-						b.declaration('const', declarator.id, /** @type {Expression} */ (hoistable_function))
+						b.declaration('const', declarator.id, /** @type {Expression} */ (context.visit(init)))
 					);
 
 					continue;

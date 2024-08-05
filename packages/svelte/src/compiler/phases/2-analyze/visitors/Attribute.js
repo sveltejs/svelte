@@ -40,8 +40,8 @@ export function Attribute(node, context) {
 			const delegated_event = get_delegated_event(node.name.slice(2), expression, context);
 
 			if (delegated_event !== null) {
-				if (delegated_event.type === 'hoistable') {
-					delegated_event.function.metadata.hoistable = true;
+				if (delegated_event.hoisted) {
+					delegated_event.function.metadata.hoisted = true;
 				}
 
 				node.metadata.delegated = delegated_event;
@@ -49,6 +49,9 @@ export function Attribute(node, context) {
 		}
 	}
 }
+
+/** @type {DelegatedEvent} */
+const unhoisted = { hoisted: false };
 
 /**
  * Checks if given event attribute can be delegated/hoisted and returns the corresponding info if so
@@ -58,26 +61,24 @@ export function Attribute(node, context) {
  * @returns {null | DelegatedEvent}
  */
 function get_delegated_event(event_name, handler, context) {
-	// Handle delegated event handlers. Bail-out if not a delegated event.
+	// Handle delegated event handlers. Bail out if not a delegated event.
 	if (!handler || !is_delegated(event_name)) {
 		return null;
 	}
 
-	// If we are not working with a RegularElement, then bail-out.
+	// If we are not working with a RegularElement, then bail out.
 	const element = context.path.at(-1);
 	if (element?.type !== 'RegularElement') {
 		return null;
 	}
 
-	/** @type {DelegatedEvent} */
-	const non_hoistable = { type: 'non-hoistable' };
 	/** @type {FunctionExpression | FunctionDeclaration | ArrowFunctionExpression | null} */
 	let target_function = null;
 	let binding = null;
 
 	if (element.metadata.has_spread) {
 		// event attribute becomes part of the dynamic spread array
-		return non_hoistable;
+		return unhoisted;
 	}
 
 	if (handler.type === 'ArrowFunctionExpression' || handler.type === 'FunctionExpression') {
@@ -86,14 +87,14 @@ function get_delegated_event(event_name, handler, context) {
 		binding = context.state.scope.get(handler.name);
 
 		if (context.state.analysis.module.scope.references.has(handler.name)) {
-			// If a binding with the same name is referenced in the module scope (even if not declared there), bail-out
-			return non_hoistable;
+			// If a binding with the same name is referenced in the module scope (even if not declared there), bail out
+			return unhoisted;
 		}
 
 		if (binding != null) {
 			for (const { path } of binding.references) {
 				const parent = path.at(-1);
-				if (parent == null) return non_hoistable;
+				if (parent === undefined) return unhoisted;
 
 				const grandparent = path.at(-2);
 
@@ -120,17 +121,17 @@ function get_delegated_event(event_name, handler, context) {
 						element.metadata.has_spread ||
 						!is_delegated(event_name)
 					) {
-						return non_hoistable;
+						return unhoisted;
 					}
 				} else if (parent.type !== 'FunctionDeclaration' && parent.type !== 'VariableDeclarator') {
-					return non_hoistable;
+					return unhoisted;
 				}
 			}
 		}
 
-		// If the binding is exported, bail-out
+		// If the binding is exported, bail out
 		if (context.state.analysis.exports.find((node) => node.name === handler.name)) {
-			return non_hoistable;
+			return unhoisted;
 		}
 
 		if (binding !== null && binding.initial !== null && !binding.mutated && !binding.is_called) {
@@ -146,27 +147,25 @@ function get_delegated_event(event_name, handler, context) {
 		}
 	}
 
-	// If we can't find a function, bail-out
-	if (target_function == null) return non_hoistable;
-	// If the function is marked as non-hoistable, bail-out
-	if (target_function.metadata.hoistable === 'impossible') return non_hoistable;
-	// If the function has more than one arg, then bail-out
-	if (target_function.params.length > 1) return non_hoistable;
+	// If we can't find a function, or the function has multiple parameters, bail out
+	if (target_function == null || target_function.params.length > 1) {
+		return unhoisted;
+	}
 
 	const visited_references = new Set();
 	const scope = target_function.metadata.scope;
 	for (const [reference] of scope.references) {
-		// Bail-out if the arguments keyword is used
-		if (reference === 'arguments') return non_hoistable;
-		// Bail-out if references a store subscription
-		if (scope.get(`$${reference}`)?.kind === 'store_sub') return non_hoistable;
+		// Bail out if the arguments keyword is used
+		if (reference === 'arguments') return unhoisted;
+		// Bail out if references a store subscription
+		if (scope.get(`$${reference}`)?.kind === 'store_sub') return unhoisted;
 
 		const binding = scope.get(reference);
 		const local_binding = context.state.scope.get(reference);
 
 		// If we are referencing a binding that is shadowed in another scope then bail out.
 		if (local_binding !== null && binding !== null && local_binding.node !== binding.node) {
-			return non_hoistable;
+			return unhoisted;
 		}
 
 		// If we have multiple references to the same store using $ prefix, bail out.
@@ -175,17 +174,17 @@ function get_delegated_event(event_name, handler, context) {
 			binding.kind === 'store_sub' &&
 			visited_references.has(reference.slice(1))
 		) {
-			return non_hoistable;
+			return unhoisted;
 		}
 
-		// If we reference the index within an each block, then bail-out.
-		if (binding !== null && binding.initial?.type === 'EachBlock') return non_hoistable;
+		// If we reference the index within an each block, then bail out.
+		if (binding !== null && binding.initial?.type === 'EachBlock') return unhoisted;
 
 		if (
 			binding !== null &&
-			// Bail-out if the the binding is a rest param
+			// Bail out if the the binding is a rest param
 			(binding.declaration_kind === 'rest_param' ||
-				// Bail-out if we reference anything from the EachBlock (for now) that mutates in non-runes mode,
+				// Bail out if we reference anything from the EachBlock (for now) that mutates in non-runes mode,
 				(((!context.state.analysis.runes && binding.kind === 'each') ||
 					// or any normal not reactive bindings that are mutated.
 					binding.kind === 'normal' ||
@@ -193,12 +192,12 @@ function get_delegated_event(event_name, handler, context) {
 					binding.kind === 'legacy_reactive_import') &&
 					binding.mutated))
 		) {
-			return non_hoistable;
+			return unhoisted;
 		}
 		visited_references.add(reference);
 	}
 
-	return { type: 'hoistable', function: target_function };
+	return { hoisted: true, function: target_function };
 }
 
 /**

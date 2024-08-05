@@ -6,8 +6,9 @@ import { get_attribute_chunks } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { is_element_node } from '../../../../nodes.js';
 import { create_derived, build_setter } from '../../utils.js';
-import { build_bind_this, build_event_handler, build_validate_binding } from '../shared/utils.js';
+import { build_bind_this, build_validate_binding } from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
+import { build_event_handler } from './events.js';
 
 /**
  * @param {Component | SvelteComponent | SvelteSelf} node
@@ -69,12 +70,21 @@ export function build_component(node, component_name, context, anchor = context.
 		if (attribute.type === 'LetDirective') {
 			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 		} else if (attribute.type === 'OnDirective') {
-			events[attribute.name] ||= [];
-			let handler = build_event_handler(attribute, null, context);
+			if (!attribute.expression) {
+				context.state.analysis.needs_props = true;
+			}
+
+			let handler = build_event_handler(
+				attribute.expression,
+				attribute.metadata.expression,
+				context
+			);
+
 			if (attribute.modifiers.includes('once')) {
 				handler = b.call('$.once', handler);
 			}
-			events[attribute.name].push(handler);
+
+			(events[attribute.name] ||= []).push(handler);
 		} else if (attribute.type === 'SpreadAttribute') {
 			const expression = /** @type {Expression} */ (context.visit(attribute));
 			if (attribute.metadata.expression.has_state) {

@@ -24,11 +24,11 @@ import {
 	get_attribute_name,
 	build_attribute_value,
 	build_class_directives,
-	build_event_attribute,
 	build_style_directives
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
 import { build_render_statement, build_update, build_update_assignment } from './shared/utils.js';
+import { visit_event_attribute } from './shared/events.js';
 
 /**
  * @param {RegularElement} node
@@ -138,6 +138,13 @@ export function RegularElement(node, context) {
 			style_directives.push(attribute);
 		} else if (attribute.type === 'LetDirective') {
 			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+		} else if (attribute.type === 'OnDirective') {
+			const handler = /** @type {Expression} */ (context.visit(attribute));
+			const has_action_directive = node.attributes.find((a) => a.type === 'UseDirective');
+
+			context.state.after_update.push(
+				b.stmt(has_action_directive ? b.call('$.effect', b.thunk(handler)) : handler)
+			);
 		} else {
 			if (attribute.type === 'BindDirective') {
 				if (attribute.name === 'group' || attribute.name === 'checked') {
@@ -214,7 +221,7 @@ export function RegularElement(node, context) {
 				) {
 					might_need_event_replaying = true;
 				}
-				build_event_attribute(attribute, context);
+				visit_event_attribute(attribute, context);
 				continue;
 			}
 

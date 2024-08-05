@@ -1,14 +1,11 @@
 /** @import { SvelteDocument } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import * as b from '../../../../utils/builders.js';
+import { visit_special_element } from './shared/special_element.js';
 
 /**
  * @param {SvelteDocument} node
  * @param {ComponentContext} context
  */
 export function SvelteDocument(node, context) {
-	context.next({
-		...context.state,
-		node: b.id('$.document')
-	});
+	visit_special_element(node, '$.document', context);
 }
