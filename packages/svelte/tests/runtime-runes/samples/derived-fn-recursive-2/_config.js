@@ -10,11 +10,17 @@ export default test({
 		b1?.click();
 		flushSync();
 
-		assert.htmlEqual(target.innerHTML, `<p>Is odd</p><button>clicks: 1</button><button>disable</button>`);
+		assert.htmlEqual(
+			target.innerHTML,
+			`<p>Is odd</p><button>clicks: 1</button><button>disable</button>`
+		);
 
 		b2?.click();
 		flushSync();
 
-		assert.htmlEqual(target.innerHTML, `<p>Is odd</p><button>clicks: 1</button><button>disable</button>`);
+		assert.htmlEqual(
+			target.innerHTML,
+			`<p>Is odd</p><button>clicks: 1</button><button>disable</button>`
+		);
 	}
 });
