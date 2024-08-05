@@ -160,16 +160,12 @@ export function EachBlock(node, context) {
 		each_node_meta.contains_group_binding || !node.index ? each_node_meta.index : b.id(node.index);
 	const item = each_node_meta.item;
 
-	child_state.getters[item.name] = (node) => {
-		const item_with_loc = with_loc(item, node);
-		return (flags & EACH_ITEM_REACTIVE) === 0 ? item_with_loc : b.call('$.get', item_with_loc);
-	};
+	child_state.getters[item.name] =
+		(flags & EACH_ITEM_REACTIVE) === 0 ? (node) => node : (node) => b.call('$.get', node);
 
 	if (node.index) {
-		child_state.getters[node.index] = (id) => {
-			const index_with_loc = with_loc(index, id);
-			return (flags & EACH_INDEX_REACTIVE) === 0 ? index_with_loc : b.call('$.get', index_with_loc);
-		};
+		child_state.getters[node.index] =
+			(flags & EACH_INDEX_REACTIVE) === 0 ? (node) => node : (node) => b.call('$.get', node);
 
 		key_state.getters[node.index] = b.id(node.index);
 	}
