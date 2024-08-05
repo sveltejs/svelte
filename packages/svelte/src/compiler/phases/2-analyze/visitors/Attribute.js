@@ -94,7 +94,7 @@ function get_delegated_event(event_name, handler, context) {
 		if (binding != null) {
 			for (const { path } of binding.references) {
 				const parent = path.at(-1);
-				if (parent == null) return unhoisted;
+				if (parent === undefined) return unhoisted;
 
 				const grandparent = path.at(-2);
 
