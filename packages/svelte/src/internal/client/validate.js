@@ -4,6 +4,7 @@ import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
 import { render_effect } from './reactivity/effects.js';
 import * as w from './warnings.js';
+import { STATE_SYMBOL } from './constants.js';
 
 /** regex of all html void element names */
 const void_element_names =
@@ -109,6 +110,12 @@ export function validate_binding(binding, get_object, get_property, line, column
 
 		var object = get_object();
 		var property = get_property();
+		var value = untrack(() => object[property]);
+
+		// If we are binding to a state object, then we don't need to provide a warning
+		if (typeof value === 'object' && value !== null && STATE_SYMBOL in value) {
+			return;
+		}
 
 		var ran = false;
 
