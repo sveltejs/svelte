@@ -80,16 +80,8 @@ export function Identifier(node, context) {
 				binding.declaration_kind !== 'function') ||
 				binding.declaration_kind === 'import')
 		) {
-			if (binding.declaration_kind === 'import') {
-				if (
-					binding.mutated &&
-					// TODO could be more fine-grained - not every mention in the template implies a state binding
-					(context.state.reactive_statement || context.state.ast_type === 'template') &&
-					parent.type === 'MemberExpression'
-				) {
-					binding.kind = 'legacy_reactive_import';
-				}
-			} else if (
+			if (
+				binding.declaration_kind !== 'import' &&
 				binding.mutated &&
 				// TODO could be more fine-grained - not every mention in the template implies a state binding
 				(context.state.reactive_statement || context.state.ast_type === 'template')

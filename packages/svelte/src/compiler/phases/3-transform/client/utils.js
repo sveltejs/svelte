@@ -106,10 +106,6 @@ export function build_getter(node, state) {
 		return b.member(b.id('$$props'), node);
 	}
 
-	if (binding.kind === 'legacy_reactive_import') {
-		return b.call('$$_import_' + node.name);
-	}
-
 	if (
 		is_state_source(binding, state) ||
 		binding.kind === 'derived' ||
@@ -269,17 +265,6 @@ export function build_setter(node, context, fallback, prefix, options) {
 		const setter = state.setters[left.name];
 		// @ts-expect-error
 		return setter(node, context);
-	}
-
-	if (binding.kind === 'legacy_reactive_import') {
-		return b.call(
-			'$$_import_' + binding.node.name,
-			b.assignment(
-				node.operator,
-				/** @type {Pattern} */ (visit(node.left)),
-				/** @type {Expression} */ (visit(node.right))
-			)
-		);
 	}
 
 	/**

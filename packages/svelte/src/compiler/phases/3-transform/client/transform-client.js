@@ -165,6 +165,32 @@ export function client_component(analysis, options) {
 		locations: /** @type {any} */ (null)
 	};
 
+	/** @type {ESTree.Statement[]} */
+	const legacy_reactive_imports = [];
+
+	// Very very dirty way of making import statements reactive in legacy mode if needed
+	if (!analysis.runes) {
+		for (const [name, binding] of state.scope.declarations) {
+			if (binding.declaration_kind === 'import' && binding.mutated) {
+				state.getters[name] = (node) => b.call('$$_import_' + node.name);
+
+				state.setters[name] = (node, context) =>
+					b.call(
+						'$$_import_' + binding.node.name,
+						b.assignment(
+							node.operator,
+							/** @type {ESTree.Pattern} */ (context.visit(node.left)),
+							/** @type {ESTree.Expression} */ (context.visit(node.right))
+						)
+					);
+
+				legacy_reactive_imports.push(
+					b.var('$$_import_' + name, b.call('$.reactive_import', b.thunk(b.id(name))))
+				);
+			}
+		}
+	}
+
 	const module = /** @type {ESTree.Program} */ (
 		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, visitors)
 	);
@@ -188,16 +214,7 @@ export function client_component(analysis, options) {
 		)
 	);
 
-	// Very very dirty way of making import statements reactive in legacy mode if needed
-	if (!analysis.runes) {
-		for (const [name, binding] of analysis.module.scope.declarations) {
-			if (binding.kind === 'legacy_reactive_import') {
-				instance.body.unshift(
-					b.var('$$_import_' + name, b.call('$.reactive_import', b.thunk(b.id(name))))
-				);
-			}
-		}
-	}
+	instance.body.unshift(...legacy_reactive_imports);
 
 	/** @type {ESTree.Statement[]} */
 	const store_setup = [];
