@@ -16,9 +16,6 @@ import * as e from '../errors.js';
 
 export let updating_derived = false;
 
-/** @type {Derived[]} */
-export let deriveds_stack = [];
-
 /**
  * @template V
  * @param {() => V} fn
@@ -85,17 +82,23 @@ function destroy_derived_children(derived) {
 }
 
 /**
+ * The currently updating deriveds, used to detect infinite recursion
+ * in dev mode and provide a nicer error than 'too much recursion'
+ * @type {Derived[]}
+ */
+let stack = [];
+
+/**
  * @param {Derived} derived
  * @returns {void}
  */
 export function update_derived(derived) {
 	if (DEV) {
-		// Detect recursive derived references in the stack.
-		if (deriveds_stack.includes(derived)) {
+		if (stack.includes(derived)) {
 			e.derived_referenced_self();
 		}
 
-		deriveds_stack.push(derived);
+		stack.push(derived);
 	}
 
 	var previous_updating_derived = updating_derived;
@@ -105,7 +108,7 @@ export function update_derived(derived) {
 	updating_derived = previous_updating_derived;
 
 	if (DEV) {
-		deriveds_stack.pop();
+		stack.pop();
 	}
 
 	var status =
