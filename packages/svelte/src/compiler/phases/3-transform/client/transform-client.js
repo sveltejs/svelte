@@ -167,9 +167,11 @@ export function client_component(analysis, options) {
 	/** @type {ESTree.Statement[]} */
 	const legacy_reactive_imports = [];
 
-	// Very very dirty way of making import statements reactive in legacy mode if needed
 	if (!analysis.runes) {
+		state.getters['$$props'] = (node) => ({ ...node, name: '$$sanitized_props' });
+
 		for (const [name, binding] of state.scope.declarations) {
+			// Very very dirty way of making import statements reactive in legacy mode if needed
 			if (binding.declaration_kind === 'import' && binding.mutated) {
 				state.getters[name] = (node) => b.call('$$_import_' + node.name);
 

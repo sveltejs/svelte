@@ -85,11 +85,6 @@ export function build_getter(node, state) {
 		return typeof getter === 'function' ? getter(node) : getter;
 	}
 
-	if (binding.node.name === '$$props') {
-		// Special case for $$props which only exists in the old world
-		return b.id('$$sanitized_props');
-	}
-
 	if (binding.kind === 'store_sub') {
 		return b.call(node);
 	}
