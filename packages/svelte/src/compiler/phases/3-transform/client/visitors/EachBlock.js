@@ -1,6 +1,7 @@
 /** @import { AssignmentExpression, BlockStatement, Expression, Identifier, MemberExpression, Pattern, Statement } from 'estree' */
 /** @import { Binding, EachBlock } from '#compiler' */
 /** @import { ComponentContext, Context } from '../types' */
+/** @import { Scope } from '../../../scope' */
 import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
@@ -20,7 +21,15 @@ import { get_assignment_value, build_getter, build_setter, with_loc } from '../u
  */
 export function EachBlock(node, context) {
 	const each_node_meta = node.metadata;
-	const collection = /** @type {Expression} */ (context.visit(node.expression));
+
+	// expression should be evaluated in the parent scope, not the scope
+	// created by the each block itself
+	const collection = /** @type {Expression} */ (
+		context.visit(node.expression, {
+			...context.state,
+			scope: /** @type {Scope} */ (context.state.scope.parent)
+		})
+	);
 
 	if (!each_node_meta.is_controlled) {
 		context.state.template.push('<!>');
