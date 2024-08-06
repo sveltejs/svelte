@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-chore: add warning for derived self referencing
+chore: add error for derived self referencing
