@@ -95,6 +95,7 @@ export const codes = [
 	"options_removed_loop_guard_timeout",
 	"options_renamed_ssr_dom",
 	"derived_iife",
+	"derived_referenced_self",
 	"export_let_unused",
 	"legacy_component_creation",
 	"non_reactive_update",
@@ -103,7 +104,6 @@ export const codes = [
 	"reactive_declaration_invalid_placement",
 	"reactive_declaration_module_script",
 	"state_referenced_locally",
-	"derived_referenced_self",
 	"store_rune_conflict",
 	"css_unused_selector",
 	"attribute_avoid_is",
@@ -580,6 +580,14 @@ export function derived_iife(node) {
 }
 
 /**
+ * A derived value should not reference itself.
+ * @param {null | NodeLike} node
+ */
+export function derived_referenced_self(node) {
+	w(node, "derived_referenced_self", "A derived value should not reference itself.");
+}
+
+/**
  * Component has unused export property '%name%'. If it is for external reference only, please consider using `export const %name%`
  * @param {null | NodeLike} node
  * @param {string} name
@@ -643,14 +651,6 @@ export function reactive_declaration_module_script(node) {
  */
 export function state_referenced_locally(node) {
 	w(node, "state_referenced_locally", "State referenced in its own scope will never update. Did you mean to reference it inside a closure?");
-}
-
-/**
- * A derived value should not reference itself.
- * @param {null | NodeLike} node
- */
-export function derived_referenced_self(node) {
-	w(node, "derived_referenced_self", "A derived value should not reference itself.");
 }
 
 /**
