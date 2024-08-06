@@ -1535,7 +1535,7 @@ declare module 'svelte/compiler' {
 		namespace?: Namespace;
 		css?: 'injected';
 		customElement?: {
-			tag: string;
+			tag?: string;
 			shadow?: 'open' | 'none';
 			props?: Record<
 				string,
