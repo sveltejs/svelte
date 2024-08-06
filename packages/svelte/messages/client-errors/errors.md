@@ -20,7 +20,7 @@
 
 ## derived_referenced_self
 
-> A derived value cannot not reference itself recursively.
+> A derived value cannot not reference itself recursively
 
 ## each_key_duplicate
 
