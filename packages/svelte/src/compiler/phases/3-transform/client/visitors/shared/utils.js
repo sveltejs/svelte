@@ -207,6 +207,7 @@ export function build_bind_this(expression, value, { state, visit }) {
 export function build_validate_binding(state, binding, expression) {
 	const string = state.analysis.source.slice(binding.start, binding.end);
 
+	// If we are referencing a $store.foo then we don't need to add validation
 	if (
 		binding.expression.type === 'MemberExpression' &&
 		binding.expression.object.type === 'Identifier'
