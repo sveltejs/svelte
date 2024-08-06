@@ -207,6 +207,17 @@ export function build_bind_this(expression, value, { state, visit }) {
 export function build_validate_binding(state, binding, expression) {
 	const string = state.analysis.source.slice(binding.start, binding.end);
 
+	if (
+		binding.expression.type === 'MemberExpression' &&
+		binding.expression.object.type === 'Identifier'
+	) {
+		var ref_binding = state.scope.get(binding.expression.object.name);
+
+		if (ref_binding?.kind === 'store_sub') {
+			return b.empty;
+		}
+	}
+
 	const get_object = b.thunk(/** @type {Expression} */ (expression.object));
 	const get_property = b.thunk(
 		/** @type {Expression} */ (
