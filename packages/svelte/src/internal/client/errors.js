@@ -94,6 +94,22 @@ export function component_api_invalid_new(component, name) {
 }
 
 /**
+ * A derived value cannot not reference itself recursively.
+ * @returns {never}
+ */
+export function derived_referenced_self() {
+	if (DEV) {
+		const error = new Error(`derived_referenced_self\nA derived value cannot not reference itself recursively.`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("derived_referenced_self");
+	}
+}
+
+/**
  * Keyed each block has duplicate key `%value%` at indexes %a% and %b%
  * @param {string} a
  * @param {string} b
@@ -159,22 +175,6 @@ export function effect_orphan(rune) {
 	} else {
 		// TODO print a link to the documentation
 		throw new Error("effect_orphan");
-	}
-}
-
-/**
- * A derived value cannot not reference itself recursively.
- * @returns {never}
- */
-export function derived_referenced_self() {
-	if (DEV) {
-		const error = new Error(`derived_referenced_self\nA derived value cannot not reference itself recursively.`);
-
-		error.name = 'Svelte error';
-		throw error;
-	} else {
-		// TODO print a link to the documentation
-		throw new Error("derived_referenced_self");
 	}
 }
 
