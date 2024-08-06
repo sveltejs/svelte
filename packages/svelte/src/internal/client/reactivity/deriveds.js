@@ -1,4 +1,5 @@
 /** @import { Derived } from '#client' */
+import { DEV } from 'esm-env';
 import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
 import {
 	current_reaction,
@@ -11,6 +12,7 @@ import {
 	increment_version
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
+import * as e from '../errors.js';
 
 export let updating_derived = false;
 
@@ -80,15 +82,34 @@ function destroy_derived_children(derived) {
 }
 
 /**
+ * The currently updating deriveds, used to detect infinite recursion
+ * in dev mode and provide a nicer error than 'too much recursion'
+ * @type {Derived[]}
+ */
+let stack = [];
+
+/**
  * @param {Derived} derived
  * @returns {void}
  */
 export function update_derived(derived) {
+	if (DEV) {
+		if (stack.includes(derived)) {
+			e.derived_references_self();
+		}
+
+		stack.push(derived);
+	}
+
 	var previous_updating_derived = updating_derived;
 	updating_derived = true;
 	destroy_derived_children(derived);
 	var value = update_reaction(derived);
 	updating_derived = previous_updating_derived;
+
+	if (DEV) {
+		stack.pop();
+	}
 
 	var status =
 		(current_skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null

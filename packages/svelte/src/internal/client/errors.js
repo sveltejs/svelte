@@ -94,6 +94,22 @@ export function component_api_invalid_new(component, name) {
 }
 
 /**
+ * A derived value cannot reference itself recursively
+ * @returns {never}
+ */
+export function derived_references_self() {
+	if (DEV) {
+		const error = new Error(`derived_references_self\nA derived value cannot reference itself recursively`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("derived_references_self");
+	}
+}
+
+/**
  * Keyed each block has duplicate key `%value%` at indexes %a% and %b%
  * @param {string} a
  * @param {string} b
