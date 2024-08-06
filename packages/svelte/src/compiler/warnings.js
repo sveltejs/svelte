@@ -103,6 +103,7 @@ export const codes = [
 	"reactive_declaration_invalid_placement",
 	"reactive_declaration_module_script",
 	"state_referenced_locally",
+	"derived_referenced_self",
 	"store_rune_conflict",
 	"css_unused_selector",
 	"attribute_avoid_is",
@@ -642,6 +643,14 @@ export function reactive_declaration_module_script(node) {
  */
 export function state_referenced_locally(node) {
 	w(node, "state_referenced_locally", "State referenced in its own scope will never update. Did you mean to reference it inside a closure?");
+}
+
+/**
+ * A derived value should not reference itself.
+ * @param {null | NodeLike} node
+ */
+export function derived_referenced_self(node) {
+	w(node, "derived_referenced_self", "A derived value should not reference itself.");
 }
 
 /**

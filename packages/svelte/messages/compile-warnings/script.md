@@ -2,6 +2,10 @@
 
 > Use `$derived.by(() => {...})` instead of `$derived((() => {...})())`
 
+## derived_referenced_self
+
+> A derived value should not reference itself.
+
 ## export_let_unused
 
 > Component has unused export property '%name%'. If it is for external reference only, please consider using `export const %name%`
