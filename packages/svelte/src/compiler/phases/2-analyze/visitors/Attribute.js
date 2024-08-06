@@ -1,7 +1,7 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression } from 'estree' */
 /** @import { Attribute, DelegatedEvent, RegularElement } from '#compiler' */
 /** @import { Context } from '../types' */
-import { DelegatedEvents, is_capture_event } from '../../../../constants.js';
+import { is_capture_event, is_delegated } from '../../../../utils.js';
 import {
 	get_attribute_chunks,
 	get_attribute_expression,
@@ -59,7 +59,7 @@ export function Attribute(node, context) {
  */
 function get_delegated_event(event_name, handler, context) {
 	// Handle delegated event handlers. Bail-out if not a delegated event.
-	if (!handler || !DelegatedEvents.includes(event_name)) {
+	if (!handler || !is_delegated(event_name)) {
 		return null;
 	}
 
@@ -118,7 +118,7 @@ function get_delegated_event(event_name, handler, context) {
 					if (
 						element.type !== 'RegularElement' ||
 						element.metadata.has_spread ||
-						!DelegatedEvents.includes(event_name)
+						!is_delegated(event_name)
 					) {
 						return non_hoistable;
 					}
@@ -205,9 +205,9 @@ function get_delegated_event(event_name, handler, context) {
  * @param {string} event_name
  */
 function get_attribute_event_name(event_name) {
-	if (is_capture_event(event_name, 'include-on')) {
+	event_name = event_name.slice(2);
+	if (is_capture_event(event_name)) {
 		event_name = event_name.slice(0, -7);
 	}
-	event_name = event_name.slice(2);
 	return event_name;
 }

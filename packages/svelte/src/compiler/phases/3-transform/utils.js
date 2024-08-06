@@ -49,8 +49,6 @@ function sort_const_tags(nodes, state) {
 	/** @type {Map<Compiler.Binding, Tag>} */
 	const tags = new Map();
 
-	const { _ } = set_scope(state.scopes);
-
 	for (const node of nodes) {
 		if (node.type === 'ConstTag') {
 			const declaration = node.declaration.declarations[0];
@@ -63,7 +61,8 @@ function sort_const_tags(nodes, state) {
 			const deps = new Set();
 
 			walk(declaration.init, state, {
-				_,
+				// @ts-expect-error don't know, don't care
+				_: set_scope,
 				Identifier(node, context) {
 					const parent = /** @type {Expression} */ (context.path.at(-1));
 

@@ -6,8 +6,12 @@ import * as b from '../../../../utils/builders.js';
  * @param {MemberExpression} node
  * @param {Context} context
  */
-export function MemberExpressionRunes(node, context) {
-	if (node.object.type === 'ThisExpression' && node.property.type === 'PrivateIdentifier') {
+export function MemberExpression(node, context) {
+	if (
+		context.state.analysis.runes &&
+		node.object.type === 'ThisExpression' &&
+		node.property.type === 'PrivateIdentifier'
+	) {
 		const field = context.state.private_derived.get(node.property.name);
 
 		if (field) {

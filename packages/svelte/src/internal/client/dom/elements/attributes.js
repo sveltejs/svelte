@@ -1,17 +1,13 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
-import {
-	AttributeAliases,
-	DelegatedEvents,
-	is_capture_event,
-	namespace_svg
-} from '../../../../constants.js';
+import { NAMESPACE_SVG } from '../../../../constants.js';
 import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '../../constants.js';
 import { queue_idle_task, queue_micro_task } from '../task.js';
+import { is_capture_event, is_delegated, normalize_attribute } from '../../../../utils.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -151,13 +147,19 @@ export function set_custom_element_data(node, prop, value) {
  * @param {Element & ElementCSSInlineStyle} element
  * @param {Record<string, any> | undefined} prev
  * @param {Record<string, any>} next New attributes - this function mutates this object
- * @param {boolean} lowercase_attributes
- * @param {string} css_hash
+ * @param {string} [css_hash]
+ * @param {boolean} preserve_attribute_case
  * @param {boolean} [skip_warning]
  * @returns {Record<string, any>}
  */
-export function set_attributes(element, prev, next, lowercase_attributes, css_hash, skip_warning) {
-	var has_hash = css_hash.length !== 0;
+export function set_attributes(
+	element,
+	prev,
+	next,
+	css_hash,
+	preserve_attribute_case = false,
+	skip_warning
+) {
 	var current = prev || {};
 	var is_option_element = element.tagName === 'OPTION';
 
@@ -167,8 +169,8 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 		}
 	}
 
-	if (has_hash && !next.class) {
-		next.class = '';
+	if (css_hash !== undefined) {
+		next.class = next.class ? next.class + ' ' + css_hash : css_hash;
 	}
 
 	var setters = setters_cache.get(element.nodeName);
@@ -216,7 +218,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 			const opts = {};
 			const event_handle_key = '$$' + key;
 			let event_name = key.slice(2);
-			var delegated = DelegatedEvents.includes(event_name);
+			var delegated = is_delegated(event_name);
 
 			if (is_capture_event(event_name)) {
 				event_name = event_name.slice(0, -7);
@@ -271,9 +273,8 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 			element.value = element[key] = element.__value = value;
 		} else {
 			var name = key;
-			if (lowercase_attributes) {
-				name = name.toLowerCase();
-				name = AttributeAliases[name] || name;
+			if (!preserve_attribute_case) {
+				name = normalize_attribute(name);
 			}
 
 			if (setters.includes(name)) {
@@ -284,11 +285,6 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 					element[name] = value;
 				}
 			} else if (typeof value !== 'function') {
-				if (has_hash && name === 'class') {
-					if (value) value += ' ';
-					value += css_hash;
-				}
-
 				set_attribute(element, name, value);
 			}
 		}
@@ -314,7 +310,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
  * @param {Element} node
  * @param {Record<string, any> | undefined} prev
  * @param {Record<string, any>} next The new attributes - this function mutates this object
- * @param {string} css_hash
+ * @param {string} [css_hash]
  */
 export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 	if (node.tagName.includes('-')) {
@@ -322,6 +318,10 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 			if (!(key in next)) {
 				next[key] = null;
 			}
+		}
+
+		if (css_hash !== undefined) {
+			next.class = next.class ? next.class + ' ' + css_hash : css_hash;
 		}
 
 		for (key in next) {
@@ -335,8 +335,8 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 		/** @type {Element & ElementCSSInlineStyle} */ (node),
 		prev,
 		next,
-		node.namespaceURI !== namespace_svg,
-		css_hash
+		css_hash,
+		node.namespaceURI !== NAMESPACE_SVG
 	);
 }
 

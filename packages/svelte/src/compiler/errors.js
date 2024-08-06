@@ -1275,13 +1275,13 @@ export function svelte_options_invalid_attribute(node) {
 }
 
 /**
- * Valid values are %list%
+ * Value must be %list%, if specified
  * @param {null | number | NodeLike} node
  * @param {string} list
  * @returns {never}
  */
 export function svelte_options_invalid_attribute_value(node, list) {
-	e(node, "svelte_options_invalid_attribute_value", `Valid values are ${list}`);
+	e(node, "svelte_options_invalid_attribute_value", `Value must be ${list}, if specified`);
 }
 
 /**

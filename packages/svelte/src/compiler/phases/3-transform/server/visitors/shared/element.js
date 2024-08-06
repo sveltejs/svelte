@@ -8,11 +8,6 @@ import {
 } from '../../../../../utils/ast.js';
 import { binding_properties } from '../../../../bindings.js';
 import {
-	ContentEditableBindings,
-	LoadErrorElements,
-	WhitespaceInsensitiveAttributes
-} from '../../../../constants.js';
-import {
 	create_attribute,
 	create_expression_metadata,
 	is_custom_element_node
@@ -20,11 +15,17 @@ import {
 import { regex_starts_with_newline } from '../../../../patterns.js';
 import * as b from '../../../../../utils/builders.js';
 import {
-	DOMBooleanAttributes,
 	ELEMENT_IS_NAMESPACED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE
 } from '../../../../../../constants.js';
-import { serialize_attribute_value } from './utils.js';
+import { build_attribute_value } from './utils.js';
+import {
+	is_boolean_attribute,
+	is_content_editable_binding,
+	is_load_error_element
+} from '../../../../../../utils.js';
+
+const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
 
 /**
  * Writes the output to the template output. Some elements may have attributes on them that require the
@@ -32,7 +33,7 @@ import { serialize_attribute_value } from './utils.js';
  * @param {RegularElement | SvelteElement} node
  * @param {import('zimmerframe').Context<SvelteNode, ComponentServerTransformState>} context
  */
-export function serialize_element_attributes(node, context) {
+export function build_element_attributes(node, context) {
 	/** @type {Array<Attribute | SpreadAttribute>} */
 	const attributes = [];
 
@@ -66,7 +67,7 @@ export function serialize_element_attributes(node, context) {
 						// also see related code in analysis phase
 						attribute.value[0].data = '\n' + attribute.value[0].data;
 					}
-					content = b.call('$.escape', serialize_attribute_value(attribute.value, context));
+					content = b.call('$.escape', build_attribute_value(attribute.value, context));
 				} else if (node.name !== 'select') {
 					// omit value attribute for select elements, it's irrelevant for the initially selected value and has no
 					// effect on the selected value after the user interacts with the select element (the value _property_ does, but not the attribute)
@@ -77,7 +78,7 @@ export function serialize_element_attributes(node, context) {
 			} else if (is_event_attribute(attribute)) {
 				if (
 					(attribute.name === 'onload' || attribute.name === 'onerror') &&
-					LoadErrorElements.includes(node.name)
+					is_load_error_element(node.name)
 				) {
 					events_to_capture.add(attribute.name);
 				}
@@ -108,7 +109,7 @@ export function serialize_element_attributes(node, context) {
 			const binding = binding_properties[attribute.name];
 			if (binding?.omit_in_ssr) continue;
 
-			if (ContentEditableBindings.includes(attribute.name)) {
+			if (is_content_editable_binding(attribute.name)) {
 				content = /** @type {Expression} */ (context.visit(attribute.expression));
 			} else if (attribute.name === 'value' && node.name === 'textarea') {
 				content = b.call(
@@ -138,12 +139,12 @@ export function serialize_element_attributes(node, context) {
 							expression: is_checkbox
 								? b.call(
 										b.member(attribute.expression, b.id('includes')),
-										serialize_attribute_value(value_attribute.value, context)
+										build_attribute_value(value_attribute.value, context)
 									)
 								: b.binary(
 										'===',
 										attribute.expression,
-										serialize_attribute_value(value_attribute.value, context)
+										build_attribute_value(value_attribute.value, context)
 									),
 							metadata: {
 								expression: create_expression_metadata()
@@ -170,12 +171,12 @@ export function serialize_element_attributes(node, context) {
 		} else if (attribute.type === 'SpreadAttribute') {
 			attributes.push(attribute);
 			has_spread = true;
-			if (LoadErrorElements.includes(node.name)) {
+			if (is_load_error_element(node.name)) {
 				events_to_capture.add('onload');
 				events_to_capture.add('onerror');
 			}
 		} else if (attribute.type === 'UseDirective') {
-			if (LoadErrorElements.includes(node.name)) {
+			if (is_load_error_element(node.name)) {
 				events_to_capture.add('onload');
 				events_to_capture.add('onerror');
 			}
@@ -184,14 +185,14 @@ export function serialize_element_attributes(node, context) {
 		} else if (attribute.type === 'StyleDirective') {
 			style_directives.push(attribute);
 		} else if (attribute.type === 'LetDirective') {
-			// do nothing, these are handled inside `serialize_inline_component`
+			// do nothing, these are handled inside `build_inline_component`
 		} else {
 			context.visit(attribute);
 		}
 	}
 
 	if (class_directives.length > 0 && !has_spread) {
-		const class_attribute = serialize_class_directives(
+		const class_attribute = build_class_directives(
 			class_directives,
 			/** @type {Attribute | null} */ (attributes[class_index] ?? null)
 		);
@@ -201,7 +202,7 @@ export function serialize_element_attributes(node, context) {
 	}
 
 	if (style_directives.length > 0 && !has_spread) {
-		serialize_style_directives(
+		build_style_directives(
 			style_directives,
 			/** @type {Attribute | null} */ (attributes[style_index] ?? null),
 			context
@@ -212,29 +213,23 @@ export function serialize_element_attributes(node, context) {
 	}
 
 	if (has_spread) {
-		serialize_element_spread_attributes(
-			node,
-			attributes,
-			style_directives,
-			class_directives,
-			context
-		);
+		build_element_spread_attributes(node, attributes, style_directives, class_directives, context);
 	} else {
 		for (const attribute of /** @type {Attribute[]} */ (attributes)) {
 			if (attribute.value === true || is_text_attribute(attribute)) {
 				const name = get_attribute_name(node, attribute, context);
 				const literal_value = /** @type {Literal} */ (
-					serialize_attribute_value(
+					build_attribute_value(
 						attribute.value,
 						context,
-						WhitespaceInsensitiveAttributes.includes(name)
+						WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 					)
 				).value;
 				if (name !== 'class' || literal_value) {
 					context.state.template.push(
 						b.literal(
 							` ${attribute.name}${
-								DOMBooleanAttributes.includes(name) && literal_value === true
+								is_boolean_attribute(name) && literal_value === true
 									? ''
 									: `="${literal_value === true ? '' : String(literal_value)}"`
 							}`
@@ -245,15 +240,14 @@ export function serialize_element_attributes(node, context) {
 			}
 
 			const name = get_attribute_name(node, attribute, context);
-			const is_boolean = DOMBooleanAttributes.includes(name);
-			const value = serialize_attribute_value(
+			const value = build_attribute_value(
 				attribute.value,
 				context,
-				WhitespaceInsensitiveAttributes.includes(name)
+				WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 			);
 
 			context.state.template.push(
-				b.call('$.attr', b.literal(name), value, is_boolean && b.literal(is_boolean))
+				b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
 			);
 		}
 	}
@@ -290,7 +284,7 @@ function get_attribute_name(element, attribute, context) {
  * @param {ClassDirective[]} class_directives
  * @param {ComponentContext} context
  */
-function serialize_element_spread_attributes(
+function build_element_spread_attributes(
 	element,
 	attributes,
 	style_directives,
@@ -324,7 +318,7 @@ function serialize_element_spread_attributes(
 				directive.name,
 				directive.value === true
 					? b.id(directive.name)
-					: serialize_attribute_value(directive.value, context, true)
+					: build_attribute_value(directive.value, context, true)
 			)
 		);
 
@@ -341,10 +335,10 @@ function serialize_element_spread_attributes(
 		attributes.map((attribute) => {
 			if (attribute.type === 'Attribute') {
 				const name = get_attribute_name(element, attribute, context);
-				const value = serialize_attribute_value(
+				const value = build_attribute_value(
 					attribute.value,
 					context,
-					WhitespaceInsensitiveAttributes.includes(name)
+					WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 				);
 				return b.prop('init', b.key(name), value);
 			}
@@ -363,7 +357,7 @@ function serialize_element_spread_attributes(
  * @param {Attribute | null} class_attribute
  * @returns
  */
-function serialize_class_directives(class_directives, class_attribute) {
+function build_class_directives(class_directives, class_attribute) {
 	const expressions = class_directives.map((directive) =>
 		b.conditional(directive.expression, b.literal(directive.name), b.literal(''))
 	);
@@ -415,12 +409,12 @@ function serialize_class_directives(class_directives, class_attribute) {
  * @param {Attribute | null} style_attribute
  * @param {ComponentContext} context
  */
-function serialize_style_directives(style_directives, style_attribute, context) {
+function build_style_directives(style_directives, style_attribute, context) {
 	const styles = style_directives.map((directive) => {
 		let value =
 			directive.value === true
 				? b.id(directive.name)
-				: serialize_attribute_value(directive.value, context, true);
+				: build_attribute_value(directive.value, context, true);
 		if (directive.modifiers.includes('important')) {
 			value = b.binary('+', value, b.literal(' !important'));
 		}
@@ -432,7 +426,7 @@ function serialize_style_directives(style_directives, style_attribute, context) 
 			? b.object(styles)
 			: b.call(
 					'$.merge_styles',
-					serialize_attribute_value(style_attribute.value, context, true),
+					build_attribute_value(style_attribute.value, context, true),
 					b.object(styles)
 				);
 

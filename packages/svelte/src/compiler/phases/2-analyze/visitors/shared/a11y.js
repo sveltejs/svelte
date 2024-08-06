@@ -14,9 +14,9 @@ import {
 import * as w from '../../../../warnings.js';
 import fuzzymatch from '../../../1-parse/utils/fuzzymatch.js';
 import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
-import { ContentEditableBindings } from '../../../constants.js';
 import { walk } from 'zimmerframe';
 import { list } from '../../../../utils/string.js';
+import { is_content_editable_binding } from '../../../../../utils.js';
 
 const aria_roles = roles_map.keys();
 const abstract_roles = aria_roles.filter((role) => roles_map.get(role)?.abstract);
@@ -720,10 +720,7 @@ export function check_element(node, state) {
 					has_contenteditable_attr = true;
 				}
 			}
-		} else if (
-			attribute.type === 'BindDirective' &&
-			ContentEditableBindings.includes(attribute.name)
-		) {
+		} else if (attribute.type === 'BindDirective' && is_content_editable_binding(attribute.name)) {
 			has_contenteditable_binding = true;
 		}
 	}

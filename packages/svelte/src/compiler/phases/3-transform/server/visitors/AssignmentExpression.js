@@ -3,7 +3,7 @@
 /** @import { Context, ServerTransformState } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
 import { extract_paths } from '../../../../utils/ast.js';
-import { serialize_get_binding } from './shared/utils.js';
+import { build_getter } from './shared/utils.js';
 
 /**
  * @param {AssignmentExpression} node
@@ -27,7 +27,7 @@ export function AssignmentExpression(node, context) {
 		const assignments = extract_paths(node.left).map((path) => {
 			const value = path.expression?.(rhs);
 
-			let assignment = serialize_assignment('=', path.node, value, context);
+			let assignment = build_assignment('=', path.node, value, context);
 			if (assignment !== null) changed = true;
 
 			return assignment ?? b.assignment('=', path.node, value);
@@ -53,7 +53,7 @@ export function AssignmentExpression(node, context) {
 		return sequence;
 	}
 
-	return serialize_assignment(node.operator, node.left, node.right, context) || context.next();
+	return build_assignment(node.operator, node.left, node.right, context) || context.next();
 }
 
 /**
@@ -64,7 +64,7 @@ export function AssignmentExpression(node, context) {
  * @param {import('zimmerframe').Context<SvelteNode, ServerTransformState>} context
  * @returns {Expression | null}
  */
-function serialize_assignment(operator, left, right, context) {
+function build_assignment(operator, left, right, context) {
 	let object = left;
 
 	while (object.type === 'MemberExpression') {
@@ -89,7 +89,7 @@ function serialize_assignment(operator, left, right, context) {
 			// turn `x += 1` into `x = x + 1`
 			value = b.binary(
 				/** @type {BinaryOperator} */ (operator.slice(0, -1)),
-				serialize_get_binding(left, context.state),
+				build_getter(left, context.state),
 				value
 			);
 		}

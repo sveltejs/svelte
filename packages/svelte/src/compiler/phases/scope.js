@@ -1,5 +1,5 @@
 /** @import { ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
-/** @import { Context, Visitor, Visitors } from 'zimmerframe' */
+/** @import { Context, Visitor } from 'zimmerframe' */
 /** @import { AnimateDirective, Binding, DeclarationKind, EachBlock, ElementLike, LetDirective, SvelteNode, TransitionDirective, UseDirective } from '#compiler' */
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
@@ -12,7 +12,7 @@ import {
 	object,
 	unwrap_pattern
 } from '../utils/ast.js';
-import { JsKeywords, Runes } from './constants.js';
+import { is_reserved, is_rune } from '../../utils.js';
 
 export class Scope {
 	/** @type {ScopeRoot} */
@@ -118,7 +118,6 @@ export class Scope {
 			declaration_kind,
 			is_called: false,
 			prop_alias: null,
-			mutation: null,
 			reassigned: false,
 			metadata: null
 		};
@@ -148,7 +147,7 @@ export class Scope {
 			this.references.has(name) ||
 			this.declarations.has(name) ||
 			this.root.conflicts.has(name) ||
-			JsKeywords.includes(name)
+			is_reserved(name)
 		) {
 			name = `${preferred_name}_${n++}`;
 		}
@@ -738,29 +737,19 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 }
 
 /**
- * @template {{ scope: Scope }} State
- * @param {Map<SvelteNode, Scope>} scopes
- * @returns {Visitors<SvelteNode, State>}
+ * @template {{ scope: Scope, scopes: Map<SvelteNode, Scope> }} State
+ * @param {SvelteNode} node
+ * @param {Context<SvelteNode, State>} context
  */
-export function set_scope(scopes) {
-	return {
-		/**
-		 *
-		 * @param {SvelteNode} node
-		 * @param {Context<SvelteNode, State>} context
-		 */
-		_(node, { next, state }) {
-			const scope = scopes.get(node);
-			next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
-		}
-	};
+export function set_scope(node, { next, state }) {
+	const scope = state.scopes.get(node);
+	next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
 }
 
 /**
  * Returns the name of the rune if the given expression is a `CallExpression` using a rune.
  * @param {Node | EachBlock | null | undefined} node
  * @param {Scope} scope
- * @returns {Runes[number] | null}
  */
 export function get_rune(node, scope) {
 	if (!node) return null;
@@ -786,10 +775,10 @@ export function get_rune(node, scope) {
 
 	joined = n.name + joined;
 
-	if (!Runes.includes(/** @type {any} */ (joined))) return null;
+	if (!is_rune(joined)) return null;
 
 	const binding = scope.get(n.name);
 	if (binding !== null) return null; // rune name, but references a variable or store
 
-	return /** @type {typeof Runes[number] | null} */ (joined);
+	return joined;
 }

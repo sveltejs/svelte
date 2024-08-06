@@ -584,7 +584,6 @@ declare module 'svelte/animate' {
 declare module 'svelte/compiler' {
 	import type { AssignmentExpression, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, MemberExpression, ObjectExpression, Pattern, Node, VariableDeclarator, ArrowFunctionExpression, VariableDeclaration, FunctionExpression, Program, ChainExpression, SimpleCallExpression } from 'estree';
 	import type { SourceMap } from 'magic-string';
-	import type { Context } from 'zimmerframe';
 	import type { Location } from 'locate-character';
 	/**
 	 * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
@@ -957,8 +956,6 @@ declare module 'svelte/compiler' {
 		legacy_dependencies: Binding[];
 		/** Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props() */
 		prop_alias: string | null;
-		/** If this is set, all mutations should use this expression */
-		mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
 		/** Additional metadata, varies per binding type */
 		metadata: {
 			/** `true` if is (inside) a rest parameter */
@@ -1536,6 +1533,7 @@ declare module 'svelte/compiler' {
 		accessors?: boolean;
 		preserveWhitespace?: boolean;
 		namespace?: Namespace;
+		css?: 'injected';
 		customElement?: {
 			tag: string;
 			shadow?: 'open' | 'none';

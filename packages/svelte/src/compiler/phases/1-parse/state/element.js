@@ -1,7 +1,7 @@
 /** @import { Expression } from 'estree' */
 /** @import * as Compiler from '#compiler' */
 /** @import { Parser } from '../index.js' */
-import { is_void } from '../../../../constants.js';
+import { is_void } from '../../../../utils.js';
 import read_expression from '../read/expression.js';
 import { read_script } from '../read/script.js';
 import read_style from '../read/style.js';

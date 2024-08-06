@@ -7,8 +7,8 @@ import { get_rune } from '../../../scope.js';
  * @param {PropertyDefinition} node
  * @param {Context} context
  */
-export function PropertyDefinitionRunes(node, context) {
-	if (node.value != null && node.value.type === 'CallExpression') {
+export function PropertyDefinition(node, context) {
+	if (context.state.analysis.runes && node.value != null && node.value.type === 'CallExpression') {
 		const rune = get_rune(node.value, context.state.scope);
 
 		if (rune === '$state' || rune === '$state.frozen' || rune === '$derived') {

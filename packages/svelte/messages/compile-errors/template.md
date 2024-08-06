@@ -324,7 +324,7 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 ## svelte_options_invalid_attribute_value
 
-> Valid values are %list%
+> Value must be %list%, if specified
 
 ## svelte_options_invalid_customelement
 

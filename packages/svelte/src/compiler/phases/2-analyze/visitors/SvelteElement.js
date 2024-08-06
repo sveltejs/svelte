@@ -1,6 +1,6 @@
 /** @import { Attribute, SvelteElement, Text } from '#compiler' */
 /** @import { Context } from '../types' */
-import { namespace_mathml, namespace_svg } from '../../../../constants.js';
+import { NAMESPACE_MATHML, NAMESPACE_SVG } from '../../../../constants.js';
 import { is_text_attribute } from '../../../utils/ast.js';
 import { check_element } from './shared/a11y.js';
 import { validate_element } from './shared/element.js';
@@ -23,8 +23,8 @@ export function SvelteElement(node, context) {
 	);
 
 	if (xmlns) {
-		node.metadata.svg = xmlns.value[0].data === namespace_svg;
-		node.metadata.mathml = xmlns.value[0].data === namespace_mathml;
+		node.metadata.svg = xmlns.value[0].data === NAMESPACE_SVG;
+		node.metadata.mathml = xmlns.value[0].data === NAMESPACE_MATHML;
 	} else {
 		let i = context.path.length;
 		while (i--) {

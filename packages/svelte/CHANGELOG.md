@@ -1,5 +1,27 @@
 # svelte
 
+## 5.0.0-next.208
+
+### Patch Changes
+
+- feat: add support for `<svelte:options css="injected" />` ([#12660](https://github.com/sveltejs/svelte/pull/12660))
+
+- feat: function called as tagged template literal is reactively called ([#12692](https://github.com/sveltejs/svelte/pull/12692))
+
+## 5.0.0-next.207
+
+### Patch Changes
+
+- fix: only create `document.title` effect if value is dynamic ([#12698](https://github.com/sveltejs/svelte/pull/12698))
+
+## 5.0.0-next.206
+
+### Patch Changes
+
+- fix: allow nested `<dt>`/`<dd>` elements if they are within a `<dl>` element ([#12681](https://github.com/sveltejs/svelte/pull/12681))
+
+- chore: internal refactoring of client transform visitors ([#12683](https://github.com/sveltejs/svelte/pull/12683))
+
 ## 5.0.0-next.205
 
 ### Patch Changes
