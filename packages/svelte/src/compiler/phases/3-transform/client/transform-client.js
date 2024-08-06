@@ -198,10 +198,17 @@ export function client_component(analysis, options) {
 
 	const instance_state = {
 		...state,
+		getters: { ...state.getters },
 		scope: analysis.instance.scope,
 		scopes: analysis.instance.scopes,
 		is_instance: true
 	};
+
+	for (const [name, binding] of instance_state.scope.declarations) {
+		if (binding.kind === 'store_sub') {
+			instance_state.getters[name] = (node) => b.call(node);
+		}
+	}
 
 	const instance = /** @type {ESTree.Program} */ (
 		walk(/** @type {SvelteNode} */ (analysis.instance.ast), instance_state, visitors)
@@ -210,7 +217,12 @@ export function client_component(analysis, options) {
 	const template = /** @type {ESTree.Program} */ (
 		walk(
 			/** @type {SvelteNode} */ (analysis.template.ast),
-			{ ...state, scope: analysis.instance.scope, scopes: analysis.template.scopes },
+			{
+				...state,
+				getters: instance_state.getters,
+				scope: analysis.instance.scope,
+				scopes: analysis.template.scopes
+			},
 			visitors
 		)
 	);

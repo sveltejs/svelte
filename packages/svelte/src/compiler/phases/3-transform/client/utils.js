@@ -85,10 +85,6 @@ export function build_getter(node, state) {
 		return typeof getter === 'function' ? getter(node) : getter;
 	}
 
-	if (binding.kind === 'store_sub') {
-		return b.call(node);
-	}
-
 	if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
 		if (is_prop_source(binding, state)) {
 			return b.call(node);
