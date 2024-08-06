@@ -95,7 +95,7 @@ let stack = [];
 export function update_derived(derived) {
 	if (DEV) {
 		if (stack.includes(derived)) {
-			e.derived_referenced_self();
+			e.derived_references_self();
 		}
 
 		stack.push(derived);

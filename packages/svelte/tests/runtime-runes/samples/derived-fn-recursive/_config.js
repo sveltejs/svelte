@@ -13,7 +13,7 @@ export default test({
 
 		assert.throws(
 			flushSync,
-			'derived_referenced_self\nA derived value cannot not reference itself recursively'
+			'derived_references_self\nA derived value cannot reference itself recursively'
 		);
 
 		assert.htmlEqual(target.innerHTML, `<button>increment</button>\n0`);
