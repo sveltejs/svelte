@@ -162,9 +162,9 @@ export function check_dirtiness(reaction) {
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
+		var is_unowned = (flags & UNOWNED) !== 0;
 
 		if (dependencies !== null) {
-			var is_unowned = (flags & UNOWNED) !== 0;
 			var i;
 
 			if ((flags & DISCONNECTED) !== 0) {
@@ -198,7 +198,10 @@ export function check_dirtiness(reaction) {
 			}
 		}
 
-		set_signal_status(reaction, CLEAN);
+		// Unowned signals should never be marked as clean.
+		if (!is_unowned) {
+			set_signal_status(reaction, CLEAN);
+		}
 	}
 
 	return false;
