@@ -1,5 +1,5 @@
 <script>
-	let { count = $bindable() } = $props();
+	let { value = $bindable() } = $props();
 </script>
 
-<input type="number" bind:value={count} />
+<input type="number" bind:value />

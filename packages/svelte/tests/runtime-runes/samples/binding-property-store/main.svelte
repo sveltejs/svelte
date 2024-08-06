@@ -2,8 +2,11 @@
 	import { writable } from 'svelte/store';
 	import Child from './Child.svelte';
 
-	let stuff = writable({ count: 0 });
+	let a = writable({ value: 0 });
+	let b = writable({ nested: { value: 0 } });
 </script>
 
-<Child bind:count={$stuff.count} />
-<p>{$stuff.count}</p>
+<Child bind:value={$a.value} />
+<Child bind:value={$b.nested.value} />
+<p>{$a.value}</p>
+<p>{$b.nested.value}</p>
