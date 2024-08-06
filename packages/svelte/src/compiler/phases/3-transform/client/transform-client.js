@@ -62,7 +62,7 @@ const visitors = {
 		const scope = state.scopes.get(node);
 
 		if (scope && scope !== state.scope) {
-			const getters = { ...state.getters };
+			const getters = node.type === 'LetDirective' ? state.getters : { ...state.getters };
 
 			for (const name of scope.declarations.keys()) {
 				delete getters[name];
