@@ -105,6 +105,7 @@ export function validate_binding(binding, get_object, get_property, line, column
 	var filename = dev_current_component_function?.[FILENAME];
 
 	render_effect(() => {
+		// @ts-ignore
 		if (warned || get_object.$is_store) return;
 
 		var object = get_object();
