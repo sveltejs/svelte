@@ -65,16 +65,7 @@ export function Identifier(node, context) {
 
 	let binding = context.state.scope.get(node.name);
 
-	if (context.state.analysis.runes) {
-		// Check for recursive references of a derived from within a derived and issue a warning.
-		if (
-			binding?.kind === 'derived' &&
-			node !== binding.node &&
-			context.path.find((n) => n.type === 'VariableDeclarator' && n.init === binding.initial)
-		) {
-			w.derived_referenced_self(node);
-		}
-	} else {
+	if (!context.state.analysis.runes) {
 		if (node.name === '$$props') {
 			context.state.analysis.uses_props = true;
 		}

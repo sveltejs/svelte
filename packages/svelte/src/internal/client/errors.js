@@ -163,6 +163,22 @@ export function effect_orphan(rune) {
 }
 
 /**
+ * A derived value cannot not reference itself recursively.
+ * @returns {never}
+ */
+export function derived_referenced_self() {
+	if (DEV) {
+		const error = new Error(`derived_referenced_self\nA derived value cannot not reference itself recursively.`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("derived_referenced_self");
+	}
+}
+
+/**
  * Maximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops
  * @returns {never}
  */
