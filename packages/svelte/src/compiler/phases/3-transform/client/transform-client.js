@@ -214,6 +214,11 @@ export function client_component(analysis, options) {
 						: b.thunk(store_get)
 				)
 			);
+			if (dev) {
+				store_setup.push(
+					b.stmt(b.assignment('=', b.member(binding.node, b.id('$is_store')), b.literal(true)))
+				);
+			}
 		}
 	}
 
