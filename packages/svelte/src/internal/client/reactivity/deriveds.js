@@ -94,13 +94,16 @@ export function update_derived(derived) {
 		if (deriveds_stack.includes(derived)) {
 			e.derived_referenced_self();
 		}
+
 		deriveds_stack.push(derived);
 	}
+
 	var previous_updating_derived = updating_derived;
 	updating_derived = true;
 	destroy_derived_children(derived);
 	var value = update_reaction(derived);
 	updating_derived = previous_updating_derived;
+
 	if (DEV) {
 		deriveds_stack.pop();
 	}
