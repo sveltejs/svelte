@@ -7,7 +7,7 @@ import * as b from '../../../../utils/builders.js';
 import { binding_properties } from '../../../bindings.js';
 import { build_setter } from '../utils.js';
 import { build_attribute_value } from './shared/element.js';
-import { build_bind_this, build_validate_binding } from './shared/utils.js';
+import { build_bind_this, validate_binding } from './shared/utils.js';
 
 /**
  * @param {BindDirective} node
@@ -30,12 +30,10 @@ export function BindDirective(node, context) {
 			)) &&
 		!is_ignored(node, 'binding_property_non_reactive')
 	) {
-		context.state.init.push(
-			build_validate_binding(
-				context.state,
-				node,
-				/**@type {MemberExpression} */ (context.visit(expression))
-			)
+		validate_binding(
+			context.state,
+			node,
+			/**@type {MemberExpression} */ (context.visit(expression))
 		);
 	}
 
