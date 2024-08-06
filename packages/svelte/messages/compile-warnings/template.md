@@ -38,6 +38,10 @@
 
 > Using `on:%name%` to listen to the %name% event is deprecated. Use the event attribute `on%name%` instead
 
+## lowercase_component_rendering
+
+> Are you trying to render `%component%`? Component names should be uppercase.
+
 ## node_invalid_placement_ssr
 
 > %thing% is invalid inside `<%parent%>`. When rendering this component on the server, the resulting HTML will be modified by the browser, likely resulting in a `hydration_mismatch` warning

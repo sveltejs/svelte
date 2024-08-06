@@ -1,0 +1,14 @@
+[
+	{
+		"code": "lowercase_component_rendering",
+		"message": "Are you trying to render `component.component`? Component names should be uppercase.",
+		"start": {
+			"line": 5,
+			"column": 0
+		},
+		"end": {
+			"line": 5,
+			"column": 43
+		}
+	}
+]

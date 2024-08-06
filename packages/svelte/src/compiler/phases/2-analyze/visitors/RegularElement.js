@@ -78,6 +78,16 @@ export function RegularElement(node, context) {
 	}
 
 	const binding = context.state.scope.get(node.name);
+
+	if (context.state.analysis.runes && node.name.includes('.')) {
+		const [maybe_object] = node.name.split('.');
+		const object_binding = context.state.scope.get(maybe_object);
+
+		if (object_binding) {
+			w.lowercase_component_rendering(node, node.name);
+		}
+	}
+
 	if (
 		binding !== null &&
 		binding.declaration_kind === 'import' &&
