@@ -58,7 +58,21 @@ import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 
 /** @type {Visitors} */
 const visitors = {
-	_: set_scope,
+	_: function set_scope(node, { next, state }) {
+		const scope = state.scopes.get(node);
+
+		if (scope && scope !== state.scope) {
+			const getters = { ...state.getters };
+
+			for (const name of scope.declarations.keys()) {
+				delete getters[name];
+			}
+
+			next({ ...state, getters, scope });
+		} else {
+			next();
+		}
+	},
 	AnimateDirective,
 	ArrowFunctionExpression,
 	AssignmentExpression,

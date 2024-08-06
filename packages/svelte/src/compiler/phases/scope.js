@@ -532,7 +532,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					references_within.add(id);
 				}
 			}
-			scopes.set(node.expression, state.scope);
 
 			// context and children are a new scope
 			const scope = state.scope.child();
