@@ -204,28 +204,30 @@ export function build_bind_this(expression, value, { state, visit }) {
  * @param {BindDirective} binding
  * @param {MemberExpression} expression
  */
-export function build_validate_binding(state, binding, expression) {
-	const string = state.analysis.source.slice(binding.start, binding.end);
-
-	const get_object = b.thunk(/** @type {Expression} */ (expression.object));
-	const get_property = b.thunk(
-		/** @type {Expression} */ (
-			expression.computed
-				? expression.property
-				: b.literal(/** @type {Identifier} */ (expression.property).name)
-		)
-	);
+export function validate_binding(state, binding, expression) {
+	// If we are referencing a $store.foo then we don't need to add validation
+	const left = object(binding.expression);
+	const left_binding = left && state.scope.get(left.name);
+	if (left_binding?.kind === 'store_sub') return;
 
 	const loc = locator(binding.start);
 
-	return b.stmt(
-		b.call(
-			'$.validate_binding',
-			b.literal(string),
-			get_object,
-			get_property,
-			loc && b.literal(loc.line),
-			loc && b.literal(loc.column)
+	state.init.push(
+		b.stmt(
+			b.call(
+				'$.validate_binding',
+				b.literal(state.analysis.source.slice(binding.start, binding.end)),
+				b.thunk(/** @type {Expression} */ (expression.object)),
+				b.thunk(
+					/** @type {Expression} */ (
+						expression.computed
+							? expression.property
+							: b.literal(/** @type {Identifier} */ (expression.property).name)
+					)
+				),
+				loc && b.literal(loc.line),
+				loc && b.literal(loc.column)
+			)
 		)
 	);
 }
