@@ -106,7 +106,7 @@ You can see a [community-maintained list of routers on sveltesociety.dev](https:
 
 The [most popular solution](https://bitrise.io/blog/post/the-state-of-mobile-app-development-in-2022) for building mobile apps is to use the Android and iOS SDKs directly, which makes building a mobile app completely independent of which JavaScript framework you use. Similarly, the cross-platform Flutter library, which uses the Dart programming language, is very popular as well and [often preferred to other solutions](https://survey.stackoverflow.co/2024/technology/#2-other-frameworks-and-libraries).
 
-If you'd like to leverage your existing Svelte components and knowledge of Svelte when building mobile apps, you can turn a SvelteKit SPA into a mobile app with [Capacitor](https://capacitorjs.com/solution/svelte). Mobile features like the camera, geolocation, and push notifications are available via [plugins](https://capacitorjs.com/docs/plugins).
+If you'd like to leverage your existing Svelte components and knowledge of Svelte when building mobile apps, you can turn a [SvelteKit SPA](https://kit.svelte.dev/docs/single-page-apps) into a mobile app with [Capacitor](https://capacitorjs.com/solution/svelte). Mobile features like the camera, geolocation, and push notifications are available via [plugins](https://capacitorjs.com/docs/plugins).
 
 Finally, Svelte Native lets you write NativeScript apps using Svelte components containing [NativeScript UI components](https://docs.nativescript.org/ui/) rather than DOM elements, which may be familiar for users coming from React Native.
 
