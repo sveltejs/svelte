@@ -326,8 +326,10 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 		// once DOM has been updated...
 		/** @type {Animation} */
 		var a;
+		var aborted = false;
 
 		queue_micro_task(() => {
+			if (aborted) return;
 			var o = options({ direction: is_intro ? 'in' : 'out' });
 			a = animate(element, o, counterpart, t2, on_finish, on_abort);
 		});
@@ -335,7 +337,10 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 		// ...but we want to do so without using `async`/`await` everywhere, so
 		// we return a facade that allows everything to remain synchronous
 		return {
-			abort: () => a?.abort(),
+			abort: () => {
+				aborted = true;
+				a?.abort();
+			},
 			deactivate: () => a.deactivate(),
 			reset: () => a.reset(),
 			t: (now) => a.t(now)
