@@ -9,6 +9,7 @@ import * as e from '../errors.js';
 import {
 	extract_identifiers,
 	extract_identifiers_from_destructuring,
+	is_text_attribute,
 	object,
 	unwrap_pattern
 } from '../utils/ast.js';
@@ -290,9 +291,79 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 * @type {Visitor<ElementLike, State, SvelteNode>}
 	 */
 	const SvelteFragment = (node, { state, next }) => {
-		const [scope] = analyze_let_directives(node, state.scope);
+		// const [scope] = analyze_let_directives(node, state.scope);
+		const scope = state.scope.child();
 		scopes.set(node, scope);
 		next({ scope });
+	};
+
+	/**
+	 * @type {Visitor<ElementLike, State, SvelteNode>}
+	 */
+	const Component = (node, context) => {
+		const scope = context.state.scope.child();
+		node.metadata.default_scope = scope;
+		// scopes.set(node, scope);
+
+		for (const attribute of node.attributes) {
+			if (attribute.type === 'LetDirective') {
+				context.visit(attribute, { scope });
+			} else {
+				context.visit(attribute);
+			}
+		}
+
+		for (const child of node.fragment.nodes) {
+			if (
+				is_element_node(child) &&
+				child.attributes.some(
+					(a) => a.type === 'Attribute' && a.name === 'slot' && is_text_attribute(a)
+				)
+			) {
+				context.visit(child);
+			} else {
+				context.visit(child, { scope });
+			}
+		}
+
+		// // let:x is super weird:
+		// // - for the default slot, its scope only applies to children that are not slots themselves
+		// // - for named slots, its scope applies to the component itself, too
+		// const [scope, is_default_slot] = analyze_let_directives(node, state.scope);
+		// if (is_default_slot) {
+		// 	for (const attribute of node.attributes) {
+		// 		visit(attribute);
+		// 	}
+		// } else {
+		// 	scopes.set(node, scope);
+
+		// 	for (const attribute of node.attributes) {
+		// 		visit(attribute, { ...state, scope });
+		// 	}
+		// }
+
+		// for (const child of node.fragment.nodes) {
+		// 	if (
+		// 		is_element_node(child) &&
+		// 		child.attributes.some(
+		// 			(attribute) => attribute.type === 'Attribute' && attribute.name === 'slot'
+		// 		)
+		// 	) {
+		// 		// <div slot="..."> inherits the scope above the component unless the component is a named slot itself, because slots are hella weird
+		// 		scopes.set(child, is_default_slot ? state.scope : scope);
+		// 		visit(child, { scope: is_default_slot ? state.scope : scope });
+		// 	} else {
+		// 		if (child.type === 'ExpressionTag') {
+		// 			// expression tag is a special case — we don't visit it directly, but via process_children,
+		// 			// so we need to set the scope on the expression rather than the tag itself
+		// 			scopes.set(child.expression, scope);
+		// 		} else {
+		// 			scopes.set(child, scope);
+		// 		}
+
+		// 		visit(child, { scope });
+		// 	}
+		// }
 	};
 
 	/**
@@ -384,48 +455,37 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		SvelteElement: SvelteFragment,
 		RegularElement: SvelteFragment,
 
-		Component(node, { state, visit, path }) {
-			state.scope.reference(b.id(node.name), path);
+		LetDirective(node, context) {
+			const scope = context.state.scope;
 
-			// let:x is super weird:
-			// - for the default slot, its scope only applies to children that are not slots themselves
-			// - for named slots, its scope applies to the component itself, too
-			const [scope, is_default_slot] = analyze_let_directives(node, state.scope);
-			if (is_default_slot) {
-				for (const attribute of node.attributes) {
-					visit(attribute);
+			/** @type {Binding[]} */
+			const bindings = [];
+			scope.declarators.set(node, bindings);
+
+			if (node.expression) {
+				for (const id of extract_identifiers_from_destructuring(node.expression)) {
+					const binding = scope.declare(id, 'derived', 'const');
+					bindings.push(binding);
 				}
 			} else {
-				scopes.set(node, scope);
-
-				for (const attribute of node.attributes) {
-					visit(attribute, { ...state, scope });
-				}
-			}
-
-			for (const child of node.fragment.nodes) {
-				if (
-					is_element_node(child) &&
-					child.attributes.some(
-						(attribute) => attribute.type === 'Attribute' && attribute.name === 'slot'
-					)
-				) {
-					// <div slot="..."> inherits the scope above the component unless the component is a named slot itself, because slots are hella weird
-					scopes.set(child, is_default_slot ? state.scope : scope);
-					visit(child, { scope: is_default_slot ? state.scope : scope });
-				} else {
-					if (child.type === 'ExpressionTag') {
-						// expression tag is a special case — we don't visit it directly, but via process_children,
-						// so we need to set the scope on the expression rather than the tag itself
-						scopes.set(child.expression, scope);
-					} else {
-						scopes.set(child, scope);
-					}
-
-					visit(child, { scope });
-				}
+				/** @type {Identifier} */
+				const id = {
+					name: node.name,
+					type: 'Identifier',
+					start: node.start,
+					end: node.end
+				};
+				const binding = scope.declare(id, 'derived', 'const');
+				bindings.push(binding);
 			}
 		},
+
+		Component: (node, context) => {
+			context.state.scope.reference(b.id(node.name), context.path);
+			Component(node, context);
+		},
+		SvelteSelf: Component,
+		SvelteComponent: Component,
 
 		// updates
 		AssignmentExpression(node, { state, next }) {

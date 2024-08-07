@@ -1,4 +1,4 @@
-/** @import { Attribute, ElementLike } from '#compiler' */
+/** @import { Attribute, ElementLike, SvelteNode } from '#compiler' */
 /** @import { Context } from '../../types' */
 import * as e from '../../../../errors.js';
 import { is_text_attribute } from '../../../../utils/ast.js';

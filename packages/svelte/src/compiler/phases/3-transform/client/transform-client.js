@@ -14,6 +14,7 @@ import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { BinaryExpression } from './visitors/BinaryExpression.js';
 import { BindDirective } from './visitors/BindDirective.js';
+import { BlockStatement } from './visitors/BlockStatement.js';
 import { BreakStatement } from './visitors/BreakStatement.js';
 import { CallExpression } from './visitors/CallExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
@@ -36,6 +37,7 @@ import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { LetDirective } from './visitors/LetDirective.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
 import { OnDirective } from './visitors/OnDirective.js';
+import { Program } from './visitors/Program.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
 import { SlotElement } from './visitors/SlotElement.js';
@@ -61,10 +63,11 @@ const visitors = {
 		const scope = state.scopes.get(node);
 
 		if (scope && scope !== state.scope) {
-			const getters = node.type === 'LetDirective' ? state.getters : { ...state.getters };
+			const getters = { ...state.getters };
 
-			if (node.type !== 'LetDirective') {
-				for (const name of scope.declarations.keys()) {
+			for (const [name, binding] of scope.declarations) {
+				// if (binding.kind === 'normal') {
+				if (binding.kind !== 'each') {
 					delete getters[name];
 				}
 			}
@@ -81,6 +84,7 @@ const visitors = {
 	AwaitBlock,
 	BinaryExpression,
 	BindDirective,
+	BlockStatement,
 	BreakStatement,
 	CallExpression,
 	ClassBody,
@@ -103,6 +107,7 @@ const visitors = {
 	LetDirective,
 	MemberExpression,
 	OnDirective,
+	Program,
 	RegularElement,
 	RenderTag,
 	SlotElement,
@@ -206,7 +211,7 @@ export function client_component(analysis, options) {
 
 	for (const [name, binding] of instance_state.scope.declarations) {
 		if (binding.kind === 'store_sub') {
-			instance_state.getters[name] = (node) => b.call(node);
+			// instance_state.getters[name] = (node) => b.call(node);
 		}
 	}
 

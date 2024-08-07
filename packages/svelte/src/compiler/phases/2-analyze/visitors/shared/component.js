@@ -1,7 +1,12 @@
 /** @import { Component, SvelteComponent, SvelteSelf } from '#compiler' */
 /** @import { Context } from '../../types' */
 import * as e from '../../../../errors.js';
-import { get_attribute_expression, is_expression_attribute } from '../../../../utils/ast.js';
+import {
+	get_attribute_expression,
+	is_expression_attribute,
+	is_text_attribute
+} from '../../../../utils/ast.js';
+import { is_element_node } from '../../../nodes.js';
 import {
 	validate_attribute,
 	validate_attribute_name,
@@ -60,9 +65,69 @@ export function visit_component(node, context) {
 		}
 	}
 
-	context.next({
+	const component_slots = new Set();
+
+	const default_state = {
+		...context.state,
+		scope: node.metadata.default_scope,
+		parent_element: null,
+		component_slots
+	};
+
+	const named_state = {
 		...context.state,
 		parent_element: null,
-		component_slots: new Set()
-	});
+		component_slots
+	};
+
+	for (const attribute of node.attributes) {
+		context.visit(attribute, attribute.type === 'LetDirective' ? default_state : named_state);
+	}
+
+	const default_slot_nodes = [];
+	const named_slot_nodes = [];
+
+	for (const child of node.fragment.nodes) {
+		const is_slotted_content =
+			is_element_node(child) &&
+			child.attributes.some(
+				(a) => a.type === 'Attribute' && a.name === 'slot' && is_text_attribute(a)
+			);
+
+		if (child.type === 'Comment') {
+			// ensure svelte-ignore comments are preserved in both cases
+			// TODO this is brittle
+			named_slot_nodes.push(child);
+			default_slot_nodes.push(child);
+		} else if (is_slotted_content) {
+			named_slot_nodes.push(child);
+		} else {
+			default_slot_nodes.push(child);
+		}
+	}
+
+	context.visit({ ...node.fragment, nodes: default_slot_nodes }, default_state);
+	context.visit({ ...node.fragment, nodes: named_slot_nodes }, named_state);
+
+	// context.visit(child, is_slotted_content ? named_state : default_state);
+
+	// if (
+	// 	is_element_node(child) &&
+	// 	child.attributes.some(
+	// 		(a) => a.type === 'Attribute' && a.name === 'slot' && is_text_attribute(a)
+	// 	)
+	// ) {
+	// 	context.visit(child);
+	// } else {
+	// 	context.visit(child, { scope });
+	// }
+
+	// context.visit(node, attribute.type === 'LetDirective' ? default_state : named_state);
+	// }
+
+	// context.next({
+	// 	...context.state,
+	// 	parent_element: null,
+	// 	component_slots: new Set()
+	// });
 }
