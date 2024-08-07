@@ -1,6 +1,6 @@
 /** @import { ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
-/** @import { AnimateDirective, Binding, DeclarationKind, EachBlock, ElementLike, LetDirective, SvelteNode, TransitionDirective, UseDirective } from '#compiler' */
+/** @import { AnimateDirective, Attribute, Binding, DeclarationKind, EachBlock, ElementLike, LetDirective, SvelteNode, TransitionDirective, UseDirective } from '#compiler' */
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { is_element_node } from './nodes.js';
@@ -14,6 +14,7 @@ import {
 	unwrap_pattern
 } from '../utils/ast.js';
 import { is_reserved, is_rune } from '../../utils.js';
+import { determine_slot } from '../utils/slot.js';
 
 export class Scope {
 	/** @type {ScopeRoot} */
@@ -301,29 +302,37 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 * @type {Visitor<ElementLike, State, SvelteNode>}
 	 */
 	const Component = (node, context) => {
-		const scope = context.state.scope.child();
-		node.metadata.default_scope = scope;
+		node.metadata.scopes = {
+			default: context.state.scope.child()
+		};
+
+		const default_state = !!determine_slot(node)
+			? context.state
+			: { scope: node.metadata.scopes.default };
 		// scopes.set(node, scope);
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'LetDirective') {
-				context.visit(attribute, { scope });
+				context.visit(attribute, default_state);
 			} else {
 				context.visit(attribute);
 			}
 		}
 
 		for (const child of node.fragment.nodes) {
-			if (
-				is_element_node(child) &&
-				child.attributes.some(
-					(a) => a.type === 'Attribute' && a.name === 'slot' && is_text_attribute(a)
-				)
-			) {
-				context.visit(child);
-			} else {
-				context.visit(child, { scope });
+			let state = default_state;
+
+			const slot_name = determine_slot(child);
+
+			if (slot_name !== null) {
+				node.metadata.scopes[slot_name] = context.state.scope.child();
+
+				state = {
+					scope: node.metadata.scopes[slot_name]
+				};
 			}
+
+			context.visit(child, state);
 		}
 
 		// // let:x is super weird:

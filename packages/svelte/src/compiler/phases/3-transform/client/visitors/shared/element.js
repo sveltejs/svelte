@@ -101,7 +101,7 @@ export function build_attribute_value(value, context) {
 		}
 
 		return {
-			has_state: chunk.metadata.expression.has_call,
+			has_state: chunk.metadata.expression.has_state,
 			has_call: chunk.metadata.expression.has_call,
 			value: /** @type {Expression} */ (context.visit(chunk.expression))
 		};

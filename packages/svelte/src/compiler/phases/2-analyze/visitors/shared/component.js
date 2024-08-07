@@ -6,6 +6,7 @@ import {
 	is_expression_attribute,
 	is_text_attribute
 } from '../../../../utils/ast.js';
+import { determine_slot } from '../../../../utils/slot.js';
 import { is_element_node } from '../../../nodes.js';
 import {
 	validate_attribute,
@@ -67,47 +68,55 @@ export function visit_component(node, context) {
 
 	const component_slots = new Set();
 
-	const default_state = {
-		...context.state,
-		scope: node.metadata.default_scope,
-		parent_element: null,
-		component_slots
-	};
+	const slot_scope_applies_to_itself = !!determine_slot(node);
 
-	const named_state = {
-		...context.state,
-		parent_element: null,
-		component_slots
-	};
+	const default_state = slot_scope_applies_to_itself
+		? context.state
+		: {
+				...context.state,
+				scope: node.metadata.scopes.default,
+				parent_element: null,
+				component_slots
+			};
 
 	for (const attribute of node.attributes) {
-		context.visit(attribute, attribute.type === 'LetDirective' ? default_state : named_state);
+		context.visit(attribute, attribute.type === 'LetDirective' ? default_state : context.state);
 	}
 
-	const default_slot_nodes = [];
-	const named_slot_nodes = [];
+	const comments = [];
+	const nodes = {
+		default: []
+	};
 
 	for (const child of node.fragment.nodes) {
-		const is_slotted_content =
-			is_element_node(child) &&
-			child.attributes.some(
-				(a) => a.type === 'Attribute' && a.name === 'slot' && is_text_attribute(a)
-			);
-
 		if (child.type === 'Comment') {
-			// ensure svelte-ignore comments are preserved in both cases
-			// TODO this is brittle
-			named_slot_nodes.push(child);
-			default_slot_nodes.push(child);
-		} else if (is_slotted_content) {
-			named_slot_nodes.push(child);
+			comments.push(child);
+			continue;
+		}
+
+		let slot_name = determine_slot(child);
+
+		if (slot_name) {
+			nodes[slot_name] = [...comments, child];
 		} else {
-			default_slot_nodes.push(child);
+			nodes.default.push(...comments, child);
 		}
 	}
 
-	context.visit({ ...node.fragment, nodes: default_slot_nodes }, default_state);
-	context.visit({ ...node.fragment, nodes: named_slot_nodes }, named_state);
+	for (const slot_name in nodes) {
+		context.visit(
+			{ ...node.fragment, nodes: nodes[slot_name] },
+			{
+				...context.state,
+				scope: node.metadata.scopes[slot_name],
+				parent_element: null,
+				component_slots
+			}
+		);
+	}
+
+	// context.visit({ ...node.fragment, nodes: default_slot_nodes }, default_state);
+	// context.visit({ ...node.fragment, nodes: named_slot_nodes }, named_state);
 
 	// context.visit(child, is_slotted_content ? named_state : default_state);
 

@@ -26,7 +26,7 @@ export function build_inline_component(node, expression, context) {
 	 */
 	const child_state = {
 		...context.state,
-		scope: node.metadata.default_scope
+		scope: node.metadata.scopes.default
 	};
 
 	/** @type {Record<string, TemplateNode[]>} */
@@ -153,7 +153,12 @@ export function build_inline_component(node, expression, context) {
 					// @ts-expect-error
 					nodes: children[slot_name]
 				},
-				slot_name === 'default' ? child_state : context.state
+				slot_name === 'default'
+					? child_state
+					: {
+							...context.state,
+							scope: node.metadata.scopes[slot_name]
+						}
 				// {
 				// 	...context.state,
 				// 	scope:

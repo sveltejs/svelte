@@ -9,6 +9,7 @@ import { create_derived, build_setter } from '../../utils.js';
 import { build_bind_this, validate_binding } from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
+import { determine_slot } from '../../../../../utils/slot.js';
 
 /**
  * @param {Component | SvelteComponent | SvelteSelf} node
@@ -24,14 +25,13 @@ export function build_component(node, component_name, context, anchor = context.
 	/** @type {ExpressionStatement[]} */
 	const lets = [];
 
-	/**
-	 * Children in the default slot are evaluated in the component scope,
-	 * children in named slots are evaluated in the parent scope
-	 */
-	const child_state = {
-		...context.state,
-		scope: node.metadata.default_scope,
-		getters: { ...context.state.getters }
+	/** @type {Record<string, typeof context.state>} */
+	const states = {
+		default: {
+			...context.state,
+			scope: node.metadata.scopes.default,
+			getters: { ...context.state.getters }
+		}
 	};
 
 	/** @type {Record<string, TemplateNode[]>} */
@@ -51,11 +51,13 @@ export function build_component(node, component_name, context, anchor = context.
 	 */
 	const binding_initializers = [];
 
+	const self_slot = determine_slot(node);
+
 	/**
 	 * If this component has a slot property, it is a named slot within another component. In this case
 	 * the slot scope applies to the component itself, too, and not just its children.
 	 */
-	let slot_scope_applies_to_itself = false;
+	let slot_scope_applies_to_itself = !!self_slot;
 
 	/**
 	 * Components may have a children prop and also have child nodes. In this case, we assume
@@ -77,9 +79,19 @@ export function build_component(node, component_name, context, anchor = context.
 		}
 	}
 
+	if (slot_scope_applies_to_itself) {
+		for (const attribute of node.attributes) {
+			if (attribute.type === 'LetDirective') {
+				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+			}
+		}
+	}
+
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute, child_state)));
+			if (!slot_scope_applies_to_itself) {
+				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute, states.default)));
+			}
 		} else if (attribute.type === 'OnDirective') {
 			if (!attribute.expression) {
 				context.state.analysis.needs_props = true;
@@ -225,19 +237,7 @@ export function build_component(node, component_name, context, anchor = context.
 			continue;
 		}
 
-		let slot_name = 'default';
-
-		if (is_element_node(child)) {
-			const attribute = /** @type {Attribute | undefined} */ (
-				child.attributes.find(
-					(attribute) => attribute.type === 'Attribute' && attribute.name === 'slot'
-				)
-			);
-
-			if (attribute !== undefined) {
-				slot_name = /** @type {Text[]} */ (attribute.value)[0].data;
-			}
-		}
+		let slot_name = determine_slot(child) ?? 'default';
 
 		(children[slot_name] ||= []).push(child);
 	}
@@ -253,7 +253,15 @@ export function build_component(node, component_name, context, anchor = context.
 					// @ts-expect-error
 					nodes: children[slot_name]
 				},
-				slot_name === 'default' ? child_state : context.state
+				slot_name === 'default'
+					? slot_scope_applies_to_itself
+						? context.state
+						: states.default
+					: {
+							...context.state,
+							scope: node.metadata.scopes[slot_name],
+							getters: { ...context.state.getters }
+						}
 				// {
 				// 	...context.state,
 				// 	scope:

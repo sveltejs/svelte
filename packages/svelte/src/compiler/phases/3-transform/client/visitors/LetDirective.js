@@ -42,10 +42,11 @@ export function LetDirective(node, context) {
 			)
 		);
 	} else {
-		context.state.getters[node.name] = (node) => b.call('$.get', node);
+		const name = node.expression === null ? node.name : node.expression.name;
+		context.state.getters[name] = (node) => b.call('$.get', node);
 
 		return b.const(
-			node.expression === null ? node.name : node.expression.name,
+			name,
 			create_derived(context.state, b.thunk(b.member(b.id('$$slotProps'), b.id(node.name))))
 		);
 	}
