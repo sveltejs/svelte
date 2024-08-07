@@ -36,7 +36,7 @@ export function SvelteElement(node, context) {
 	build_element_attributes(node, { ...context, state });
 
 	if (dev) {
-		context.state.template.push(b.stmt(b.call('$.push_element', tag, b.id('$$payload'))));
+		context.state.template.push(b.stmt(b.call('$.push_element', b.id('$$payload'), tag)));
 	}
 
 	const attributes = b.block([...state.init, ...build_template(state.template)]);
