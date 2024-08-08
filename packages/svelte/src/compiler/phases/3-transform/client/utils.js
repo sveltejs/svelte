@@ -74,16 +74,13 @@ export function is_state_source(binding, state) {
  * @returns {Expression}
  */
 export function build_getter(node, state) {
-	const binding = state.scope.get(node.name);
-
-	if (binding === null || node === binding.node) {
-		// No associated binding or the declaration itself which shouldn't be transformed
-		return node;
-	}
-
 	if (Object.hasOwn(state.getters, node.name)) {
-		const getter = state.getters[node.name];
-		return typeof getter === 'function' ? getter(node) : getter;
+		const binding = state.scope.get(node.name);
+
+		// don't transform the declaration itself
+		if (node !== binding?.node) {
+			return state.getters[node.name](node);
+		}
 	}
 
 	return node;
