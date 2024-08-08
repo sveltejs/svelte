@@ -210,7 +210,7 @@ export function build_setter(node, context, fallback, prefix, options) {
 						if (assignment.type === 'AssignmentExpression') {
 							assignment.right =
 								private_state.kind === 'frozen_state'
-									? b.call('$.freeze', value)
+									? value
 									: build_proxy_reassignment(value, private_state.id);
 							return assignment;
 						}
@@ -223,7 +223,7 @@ export function build_setter(node, context, fallback, prefix, options) {
 							!options?.skip_proxy_and_freeze &&
 							should_proxy_or_freeze(value, context.state.scope)
 							? private_state.kind === 'frozen_state'
-								? b.call('$.freeze', value)
+								? value
 								: build_proxy_reassignment(value, private_state.id)
 							: value
 					);
@@ -247,7 +247,7 @@ export function build_setter(node, context, fallback, prefix, options) {
 				if (assignment.type === 'AssignmentExpression') {
 					assignment.right =
 						public_state.kind === 'frozen_state'
-							? b.call('$.freeze', value)
+							? value
 							: build_proxy_reassignment(value, public_state.id);
 					return assignment;
 				}
@@ -344,7 +344,7 @@ export function build_setter(node, context, fallback, prefix, options) {
 						context.state.analysis.runes &&
 							!options?.skip_proxy_and_freeze &&
 							should_proxy_or_freeze(value, context.state.scope)
-							? b.call('$.freeze', value)
+							? value
 							: value
 					);
 				} else if (

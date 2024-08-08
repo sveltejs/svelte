@@ -11,7 +11,7 @@ export function PropertyDefinition(node, context) {
 	if (context.state.analysis.runes && node.value != null && node.value.type === 'CallExpression') {
 		const rune = get_rune(node.value, context.state.scope);
 
-		if (rune === '$state' || rune === '$state.frozen' || rune === '$derived') {
+		if (rune === '$state' || rune === '$state.raw' || rune === '$derived') {
 			return {
 				...node,
 				value:

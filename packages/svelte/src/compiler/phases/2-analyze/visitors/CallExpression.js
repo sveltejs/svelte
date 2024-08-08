@@ -73,7 +73,7 @@ export function CallExpression(node, context) {
 			break;
 
 		case '$state':
-		case '$state.frozen':
+		case '$state.raw':
 		case '$derived':
 		case '$derived.by':
 			if (

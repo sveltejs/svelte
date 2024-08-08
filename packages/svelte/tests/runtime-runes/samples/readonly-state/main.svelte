@@ -1,6 +1,6 @@
 <script>
-	let x = $state.frozen(0);
-	let y = $state.frozen(0);
+	let x = $state.raw(0);
+	let y = $state.raw(0);
 
 	$effect(() => {
 		console.log(x);

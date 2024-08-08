@@ -93,7 +93,6 @@ export {
 	template_with_script,
 	text
 } from './dom/template.js';
-export { freeze } from './freeze.js';
 export { derived, derived_safe_equal } from './reactivity/deriveds.js';
 export {
 	effect_tracking,

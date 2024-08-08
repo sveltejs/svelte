@@ -1,6 +1,6 @@
 <script>
 	class Counter {
-		#count = $state.frozen(0);
+		#count = $state.raw(0);
 
 		constructor(initial_count) {
 			this.#count = initial_count;
