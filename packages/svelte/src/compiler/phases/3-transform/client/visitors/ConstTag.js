@@ -5,6 +5,7 @@ import { dev } from '../../../../state.js';
 import { extract_identifiers } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { create_derived } from '../utils.js';
+import { get_value } from './shared/declarations.js';
 
 /**
  * @param {ConstTag} node
@@ -24,7 +25,7 @@ export function ConstTag(node, context) {
 			)
 		);
 
-		context.state.getters[declaration.id.name] = b.call('$.get', declaration.id);
+		context.state.getters[declaration.id.name] = get_value;
 
 		// we need to eagerly evaluate the expression in order to hit any
 		// 'Cannot access x before initialization' errors
@@ -40,7 +41,7 @@ export function ConstTag(node, context) {
 		// Make all identifiers that are declared within the following computed regular
 		// variables, as they are not signals in that context yet
 		for (const node of identifiers) {
-			getters[node.name] = node;
+			delete getters[node.name];
 		}
 
 		const child_state = { ...context.state, getters };
@@ -67,7 +68,7 @@ export function ConstTag(node, context) {
 		}
 
 		for (const node of identifiers) {
-			context.state.getters[node.name] = b.member(b.call('$.get', tmp), node);
+			context.state.getters[node.name] = (node) => b.member(b.call('$.get', tmp), node);
 		}
 	}
 }

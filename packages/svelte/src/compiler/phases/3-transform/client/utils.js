@@ -464,7 +464,7 @@ function get_hoisted_params(node, context) {
 				binding = /** @type {Binding} */ (scope.get(binding.node.name.slice(1)));
 			}
 
-			const expression = context.state.getters[reference];
+			let expression = context.state.getters[reference]?.(b.id(binding.node.name));
 
 			if (
 				// If it's a destructured derived binding, then we can extract the derived signal reference and use that.

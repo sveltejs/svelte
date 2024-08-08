@@ -14,6 +14,7 @@ import { dev } from '../../../../state.js';
 import { extract_paths, object } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { get_assignment_value, build_getter, build_setter, with_loc } from '../utils.js';
+import { get_value } from './shared/declarations.js';
 
 /**
  * @param {EachBlock} node
@@ -187,7 +188,7 @@ export function EachBlock(node, context) {
 			return (flags & EACH_INDEX_REACTIVE) === 0 ? index_with_loc : b.call('$.get', index_with_loc);
 		};
 
-		key_state.getters[node.index] = b.id(node.index);
+		delete key_state.getters[node.index];
 	}
 
 	/** @type {Statement[]} */
@@ -202,7 +203,7 @@ export function EachBlock(node, context) {
 			)
 		);
 
-		key_state.getters[node.context.name] = node.context;
+		delete key_state.getters[node.context.name];
 	} else {
 		const unwrapped = getter(binding.node);
 		const paths = extract_paths(node.context);
@@ -217,7 +218,7 @@ export function EachBlock(node, context) {
 
 			declarations.push(b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn));
 
-			const getter = needs_derived ? b.call('$.get', b.id(name)) : b.call(name);
+			const getter = needs_derived ? get_value : b.call;
 			child_state.getters[name] = getter;
 			child_state.setters[name] = create_mutation(
 				/** @type {Pattern} */ (path.update_expression(unwrapped))
@@ -226,10 +227,10 @@ export function EachBlock(node, context) {
 			// we need to eagerly evaluate the expression in order to hit any
 			// 'Cannot access x before initialization' errors
 			if (dev) {
-				declarations.push(b.stmt(getter));
+				declarations.push(b.stmt(getter(b.id(name))));
 			}
 
-			key_state.getters[name] = path.node;
+			key_state.getters[name] = () => path.node;
 		}
 	}
 

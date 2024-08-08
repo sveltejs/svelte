@@ -28,7 +28,7 @@ export interface ClientTransformState extends TransformState {
 	 * A map of `[name, node]` pairs, where `Identifier` nodes matching `name`
 	 * will be replaced with `node` (e.g. `x` -> `$.get(x)`)
 	 */
-	readonly getters: Record<string, Expression | ((id: Identifier) => Expression)>;
+	readonly getters: Record<string, (id: Identifier) => Expression>;
 	/**
 	 * Counterpart to `getters`
 	 */

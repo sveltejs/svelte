@@ -4,6 +4,7 @@ import { is_state_source } from '../../utils.js';
 import * as b from '../../../../../utils/builders.js';
 
 /**
+ * Turns `foo` into `$.get(foo)`
  * @param {Identifier} node
  */
 export function get_value(node) {

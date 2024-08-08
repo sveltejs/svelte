@@ -16,10 +16,8 @@ export function LetDirective(node, context) {
 		const bindings = context.state.scope.get_bindings(node);
 
 		for (const binding of bindings) {
-			context.state.getters[binding.node.name] = b.member(
-				b.call('$.get', b.id(name)),
-				b.id(binding.node.name)
-			);
+			context.state.getters[binding.node.name] = (node) =>
+				b.member(b.call('$.get', b.id(name)), node);
 		}
 
 		return b.const(
