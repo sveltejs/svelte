@@ -106,6 +106,10 @@ export function build_getter(node, state) {
 		return b.member(b.id('$$props'), node);
 	}
 
+	if (binding.kind === 'linked_state') {
+		return b.call(node);
+	}
+
 	if (binding.kind === 'legacy_reactive_import') {
 		return b.call('$$_import_' + node.name);
 	}
@@ -304,6 +308,7 @@ export function build_setter(node, context, fallback, prefix, options) {
 	if (
 		binding.kind !== 'state' &&
 		binding.kind !== 'frozen_state' &&
+		binding.kind !== 'linked_state' &&
 		binding.kind !== 'prop' &&
 		binding.kind !== 'bindable_prop' &&
 		binding.kind !== 'each' &&
@@ -321,7 +326,12 @@ export function build_setter(node, context, fallback, prefix, options) {
 			const is_initial_proxy =
 				binding.initial !== null &&
 				should_proxy_or_freeze(/**@type {Expression}*/ (binding.initial), context.state.scope);
-			if ((binding.kind === 'prop' || binding.kind === 'bindable_prop') && !is_initial_proxy) {
+			if (
+				(binding.kind === 'prop' ||
+					binding.kind === 'bindable_prop' ||
+					binding.kind === 'linked_state') &&
+				!is_initial_proxy
+			) {
 				return b.call(left, value);
 			} else if (is_store) {
 				return b.call('$.store_set', build_getter(b.id(left_name), state), value);
@@ -348,7 +358,9 @@ export function build_setter(node, context, fallback, prefix, options) {
 							: value
 					);
 				} else if (
-					(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
+					(binding.kind === 'prop' ||
+						binding.kind === 'bindable_prop' ||
+						binding.kind === 'linked_state') &&
 					is_initial_proxy
 				) {
 					call = b.call(
@@ -356,7 +368,7 @@ export function build_setter(node, context, fallback, prefix, options) {
 						context.state.analysis.runes &&
 							!options?.skip_proxy_and_freeze &&
 							should_proxy_or_freeze(value, context.state.scope) &&
-							binding.kind === 'bindable_prop'
+							(binding.kind === 'bindable_prop' || binding.kind === 'linked_state')
 							? build_proxy_reassignment(value, left_name)
 							: value
 					);

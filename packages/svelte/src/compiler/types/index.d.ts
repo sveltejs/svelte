@@ -280,6 +280,7 @@ export interface Binding {
 		| 'rest_prop'
 		| 'state'
 		| 'frozen_state'
+		| 'linked_state'
 		| 'derived'
 		| 'each'
 		| 'snippet'

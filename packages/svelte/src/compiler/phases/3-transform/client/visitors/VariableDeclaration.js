@@ -119,7 +119,7 @@ export function VariableDeclaration(node, context) {
 			const value =
 				args.length === 0 ? b.id('undefined') : /** @type {Expression} */ (context.visit(args[0]));
 
-			if (rune === '$state' || rune === '$state.frozen') {
+			if (rune === '$state' || rune === '$state.frozen' || rune === '$state.link') {
 				/**
 				 * @param {Identifier} id
 				 * @param {Expression} value
@@ -129,7 +129,13 @@ export function VariableDeclaration(node, context) {
 						context.state.scope.get(id.name)
 					);
 					if (should_proxy_or_freeze(value, context.state.scope)) {
-						value = b.call(rune === '$state' ? '$.proxy' : '$.freeze', value);
+						value = b.call(
+							rune === '$state' || rune === '$state.link' ? '$.proxy' : '$.freeze',
+							value
+						);
+					}
+					if (binding.kind === 'linked_state') {
+						return b.call('$.source_link', b.thunk(value));
 					}
 					if (is_state_source(binding, context.state)) {
 						value = b.call('$.source', value);

@@ -125,6 +125,32 @@ declare namespace $state {
 	 */
 	export function frozen<T>(initial: T): Readonly<T>;
 	export function frozen<T>(): Readonly<T> | undefined;
+
+	/**
+	 * Declares reactive state that is linked to another value. Local reassignments
+	 * will override the linked value until the linked value changes.
+	 *
+	 * Example:
+	 * ```ts
+	 * let a = $state(0);
+	 * let b = $state.link(a);
+
+	 * a = 1;
+	 * console.log(a, b); // 1, 1
+
+	 * b = 2; // unlink
+	 * console.log(a, b); // 1, 2
+	 *
+	 * a = 3; // relink
+	 * console.log(a, b); // 3, 3
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$state-link
+	 *
+	 * @param value The linked value
+	 */
+	export function link<T>(value: T): T;
+
 	/**
 	 * To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
 	 *

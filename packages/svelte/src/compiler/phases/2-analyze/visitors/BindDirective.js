@@ -35,6 +35,7 @@ export function BindDirective(node, context) {
 			(!binding ||
 				(binding.kind !== 'state' &&
 					binding.kind !== 'frozen_state' &&
+					binding.kind !== 'linked_state' &&
 					binding.kind !== 'prop' &&
 					binding.kind !== 'bindable_prop' &&
 					binding.kind !== 'each' &&

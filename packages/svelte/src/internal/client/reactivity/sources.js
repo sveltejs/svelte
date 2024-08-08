@@ -26,6 +26,7 @@ import {
 	MAYBE_DIRTY
 } from '../constants.js';
 import * as e from '../errors.js';
+import { derived } from './deriveds.js';
 
 let inspect_effects = new Set();
 
@@ -43,6 +44,50 @@ export function source(v) {
 		equals,
 		version: 0
 	};
+}
+
+/**
+ * @template V
+ * @param {() => V} get_value
+ * @returns {(value?: V) => V}
+ */
+export function source_link(get_value) {
+	var was_local = false;
+	var local_source = source(undefined);
+
+	var linked_derived = derived(() => {
+		var local_value = get(local_source);
+		var linked_value = get_value();
+
+		if (was_local) {
+			was_local = false;
+			return local_value;
+		}
+
+		return linked_value;
+	});
+
+	return function (/** @type {any} */ value) {
+		if (arguments.length > 0) {
+			was_local = true;
+			set(local_source, value);
+			get(linked_derived);
+			return value;
+		}
+
+		return get(linked_derived);
+	};
+}
+
+/**
+ * @param {((value?: number) => number)} fn
+ * @param {1 | -1} [d]
+ * @returns {number}
+ */
+export function update_link(fn, d = 1) {
+	const value = fn();
+	fn(value + d);
+	return value;
 }
 
 /**

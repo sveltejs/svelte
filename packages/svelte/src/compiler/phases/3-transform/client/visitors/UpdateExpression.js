@@ -20,6 +20,7 @@ export function UpdateExpression(node, context) {
 		if (
 			binding?.kind === 'state' ||
 			binding?.kind === 'frozen_state' ||
+			binding?.kind === 'linked_state' ||
 			binding?.kind === 'each' ||
 			binding?.kind === 'legacy_reactive' ||
 			binding?.kind === 'prop' ||
@@ -37,6 +38,7 @@ export function UpdateExpression(node, context) {
 				args.push(build_getter(b.id(name), context.state), b.call('$' + name));
 			} else {
 				if (binding.kind === 'prop' || binding.kind === 'bindable_prop') fn += '_prop';
+				if (binding.kind === 'linked_state') fn += '_link';
 				args.push(b.id(name));
 			}
 
