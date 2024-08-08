@@ -1,6 +1,7 @@
-/** @import { Component, SvelteComponent, SvelteSelf } from '#compiler' */
+/** @import { Attribute, Component, SvelteComponent, SvelteSelf } from '#compiler' */
 /** @import { Context } from '../../types' */
 import * as e from '../../../../errors.js';
+import * as w from '../../../../warnings.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../../utils/ast.js';
 import {
 	validate_attribute,
@@ -13,6 +14,10 @@ import {
  * @param {Context} context
  */
 export function visit_component(node, context) {
+	if (context.state.analysis.runes && node.type === 'SvelteComponent') {
+		w.svelte_component_deprecated(node);
+	}
+
 	for (const attribute of node.attributes) {
 		if (
 			attribute.type !== 'Attribute' &&
