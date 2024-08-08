@@ -448,12 +448,7 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 
 	return {
 		abort: () => {
-			if (animation) {
-				animation.cancel();
-				// Force cleanup on properties that can retain memory
-				animation.effect = null;
-				animation.timeline = null;
-			}
+			animation?.cancel();
 			task?.abort();
 			on_abort?.();
 		},
