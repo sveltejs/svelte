@@ -25,5 +25,11 @@ export function EachBlock(node, context) {
 			node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index;
 	}
 
-	context.next();
+	context.visit(node.expression, {
+		...context.state,
+		expression: node.metadata.expression
+	});
+
+	context.visit(node.body);
+	if (node.fallback) context.visit(node.fallback);
 }

@@ -38,17 +38,11 @@ export function EachBlock(node, context) {
 		if (node.index) {
 			flags |= EACH_INDEX_REACTIVE;
 		}
+	}
 
-		// In runes mode, if key === item, we don't need to wrap the item in a source
-		const key_is_item =
-			/** @type {Expression} */ (node.key).type === 'Identifier' &&
-			node.context.type === 'Identifier' &&
-			node.context.name === node.key.name;
-
-		if (!context.state.analysis.runes || !key_is_item) {
-			flags |= EACH_ITEM_REACTIVE;
-		}
-	} else {
+	if (node.metadata.expression.dependencies.size > 0) {
+		// TODO be more discerning — we should be able to detect things like
+		// a never-reassigned/mutated `let items = [...]`
 		flags |= EACH_ITEM_REACTIVE;
 	}
 
@@ -165,18 +159,13 @@ export function EachBlock(node, context) {
 	const index =
 		each_node_meta.contains_group_binding || !node.index ? each_node_meta.index : b.id(node.index);
 	const item = each_node_meta.item;
-	const binding = /** @type {Binding} */ (context.state.scope.get(item.name));
-	const getter = (/** @type {Identifier} */ id) => {
-		const item_with_loc = with_loc(item, id);
-		return b.call('$.unwrap', item_with_loc);
-	};
-	child_state.getters[item.name] = getter;
+
+	child_state.getters[item.name] =
+		(flags & EACH_ITEM_REACTIVE) === 0 ? (node) => node : (node) => b.call('$.get', node);
 
 	if (node.index) {
-		child_state.getters[node.index] = (id) => {
-			const index_with_loc = with_loc(index, id);
-			return (flags & EACH_INDEX_REACTIVE) === 0 ? index_with_loc : b.call('$.get', index_with_loc);
-		};
+		child_state.getters[node.index] =
+			(flags & EACH_INDEX_REACTIVE) === 0 ? (node) => node : (node) => b.call('$.get', node);
 
 		key_state.getters[node.index] = b.id(node.index);
 	}
@@ -195,15 +184,14 @@ export function EachBlock(node, context) {
 
 		key_state.getters[node.context.name] = node.context;
 	} else {
-		const unwrapped = getter(binding.node);
 		const paths = extract_paths(node.context);
 
 		for (const path of paths) {
 			const name = /** @type {Identifier} */ (path.node).name;
-			const binding = /** @type {Binding} */ (context.state.scope.get(name));
 			const needs_derived = path.has_default_value; // to ensure that default value is only called once
+
 			const fn = b.thunk(
-				/** @type {Expression} */ (context.visit(path.expression?.(unwrapped), child_state))
+				/** @type {Expression} */ (context.visit(path.expression?.(item), child_state))
 			);
 
 			declarations.push(b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn));
@@ -211,7 +199,7 @@ export function EachBlock(node, context) {
 			const getter = needs_derived ? b.call('$.get', b.id(name)) : b.call(name);
 			child_state.getters[name] = getter;
 			child_state.setters[name] = create_mutation(
-				/** @type {Pattern} */ (path.update_expression(unwrapped))
+				/** @type {Pattern} */ (context.visit(path.update_expression(item), child_state))
 			);
 
 			// we need to eagerly evaluate the expression in order to hit any

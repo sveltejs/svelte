@@ -139,7 +139,6 @@ export {
 	exclude_from_object,
 	pop,
 	push,
-	unwrap,
 	deep_read,
 	deep_read_state,
 	getAllContexts,

@@ -388,6 +388,7 @@ export interface EachBlock extends BaseNode {
 	index?: string;
 	key?: Expression;
 	metadata: {
+		expression: ExpressionMetadata;
 		keyed: boolean;
 		contains_group_binding: boolean;
 		/** Set if something in the array expression is shadowed within the each block */
