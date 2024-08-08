@@ -209,12 +209,6 @@ export function client_component(analysis, options) {
 		is_instance: true
 	};
 
-	for (const [name, binding] of instance_state.scope.declarations) {
-		if (binding.kind === 'store_sub') {
-			// instance_state.getters[name] = (node) => b.call(node);
-		}
-	}
-
 	const instance = /** @type {ESTree.Program} */ (
 		walk(/** @type {SvelteNode} */ (analysis.instance.ast), instance_state, visitors)
 	);
