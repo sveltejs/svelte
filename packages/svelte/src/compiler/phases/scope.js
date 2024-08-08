@@ -1,6 +1,6 @@
 /** @import { ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
-/** @import { AnimateDirective, Attribute, Binding, DeclarationKind, EachBlock, ElementLike, LetDirective, SvelteNode, TransitionDirective, UseDirective } from '#compiler' */
+/** @import { AnimateDirective, Attribute, Binding, Component, DeclarationKind, EachBlock, ElementLike, LetDirective, SvelteComponent, SvelteNode, SvelteSelf, TransitionDirective, UseDirective } from '#compiler' */
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { is_element_node } from './nodes.js';
@@ -299,7 +299,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<ElementLike, State, SvelteNode>}
+	 * @type {Visitor<Component | SvelteComponent | SvelteSelf, State, SvelteNode>}
 	 */
 	const Component = (node, context) => {
 		node.metadata.scopes = {

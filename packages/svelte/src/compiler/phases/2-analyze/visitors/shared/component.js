@@ -1,13 +1,8 @@
-/** @import { Component, SvelteComponent, SvelteSelf } from '#compiler' */
+/** @import { Component, Fragment, SvelteComponent, SvelteSelf } from '#compiler' */
 /** @import { Context } from '../../types' */
 import * as e from '../../../../errors.js';
-import {
-	get_attribute_expression,
-	is_expression_attribute,
-	is_text_attribute
-} from '../../../../utils/ast.js';
+import { get_attribute_expression, is_expression_attribute } from '../../../../utils/ast.js';
 import { determine_slot } from '../../../../utils/slot.js';
-import { is_element_node } from '../../../nodes.js';
 import {
 	validate_attribute,
 	validate_attribute_name,
@@ -84,6 +79,8 @@ export function visit_component(node, context) {
 	}
 
 	const comments = [];
+
+	/** @type {Record<string, Fragment['nodes']>} */
 	const nodes = {
 		default: []
 	};
