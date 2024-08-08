@@ -185,7 +185,7 @@ The `<svelte:options>` element provides a place to specify per-component compile
 - `accessors={true}` — adds getters and setters for the component's props
 - `accessors={false}` — the default
 - `namespace="..."` — the namespace where this component will be used, most commonly "svg"; use the "foreign" namespace to opt out of case-insensitive attribute names and HTML-specific warnings
-- `customElement="..."` — the name to use when compiling this component as a custom element
+- `customElement="..."` — the name or [fine grained settings](/docs/custom-elements-api#component-options) to use when compiling this component as a custom element.
 
 ```svelte
 <svelte:options customElement="my-custom-element" />
