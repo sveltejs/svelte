@@ -94,13 +94,9 @@ export function visit_component(node, context) {
 			continue;
 		}
 
-		let slot_name = determine_slot(child);
+		let slot_name = determine_slot(child) ?? 'default';
 
-		if (slot_name) {
-			nodes[slot_name] = [...comments, child];
-		} else {
-			nodes.default.push(...comments, child);
-		}
+		(nodes[slot_name] ??= []).push(...comments, child);
 	}
 
 	for (const slot_name in nodes) {
