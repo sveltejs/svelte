@@ -56,3 +56,6 @@ if (bad_links.length > 0) {
 
 	process.exit(1);
 }
+
+// generate json for reference docs from the types
+await import('./type-gen/index.js');
