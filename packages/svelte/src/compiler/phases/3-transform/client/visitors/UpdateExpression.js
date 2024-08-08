@@ -18,41 +18,6 @@ export function UpdateExpression(node, context) {
 			if (transformer) return transformer(node);
 		}
 
-		const binding = context.state.scope.get(argument.name);
-		const is_store = binding?.kind === 'store_sub';
-		const name = is_store ? argument.name.slice(1) : argument.name;
-
-		// use runtime functions for smaller output
-		if (
-			binding?.kind === 'state' ||
-			binding?.kind === 'frozen_state' ||
-			binding?.kind === 'each' ||
-			binding?.kind === 'legacy_reactive' ||
-			binding?.kind === 'prop' ||
-			binding?.kind === 'bindable_prop' ||
-			is_store
-		) {
-			/** @type {Expression[]} */
-			const args = [];
-
-			let fn = '$.update';
-			if (node.prefix) fn += '_pre';
-
-			if (is_store) {
-				fn += '_store';
-				args.push(build_getter(b.id(name), context.state), b.call('$' + name));
-			} else {
-				if (binding.kind === 'prop' || binding.kind === 'bindable_prop') fn += '_prop';
-				args.push(b.id(name));
-			}
-
-			if (node.operator === '--') {
-				args.push(b.literal(-1));
-			}
-
-			return b.call(fn, ...args);
-		}
-
 		return context.next();
 	}
 
