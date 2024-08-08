@@ -16,8 +16,9 @@ export function LetDirective(node, context) {
 		const bindings = context.state.scope.get_bindings(node);
 
 		for (const binding of bindings) {
-			context.state.getters[binding.node.name] = (node) =>
-				b.member(b.call('$.get', b.id(name)), node);
+			context.state.transformers[binding.node.name] = {
+				read: (node) => b.member(b.call('$.get', b.id(name)), node)
+			};
 		}
 
 		return b.const(
@@ -41,7 +42,9 @@ export function LetDirective(node, context) {
 		);
 	} else {
 		const name = node.expression === null ? node.name : node.expression.name;
-		context.state.getters[name] = (node) => b.call('$.get', node);
+		context.state.transformers[name] = {
+			read: (node) => b.call('$.get', node)
+		};
 
 		return b.const(
 			name,

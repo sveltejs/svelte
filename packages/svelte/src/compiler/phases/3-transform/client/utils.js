@@ -74,12 +74,12 @@ export function is_state_source(binding, state) {
  * @returns {Expression}
  */
 export function build_getter(node, state) {
-	if (Object.hasOwn(state.getters, node.name)) {
+	if (Object.hasOwn(state.transformers, node.name)) {
 		const binding = state.scope.get(node.name);
 
 		// don't transform the declaration itself
 		if (node !== binding?.node) {
-			return state.getters[node.name](node);
+			return state.transformers[node.name].read(node);
 		}
 	}
 
@@ -461,7 +461,7 @@ function get_hoisted_params(node, context) {
 				binding = /** @type {Binding} */ (scope.get(binding.node.name.slice(1)));
 			}
 
-			let expression = context.state.getters[reference]?.(b.id(binding.node.name));
+			let expression = context.state.transformers[reference]?.read(b.id(binding.node.name));
 
 			if (
 				// If it's a destructured derived binding, then we can extract the derived signal reference and use that.
@@ -660,7 +660,10 @@ export function with_loc(target, source) {
  */
 export function create_derived_block_argument(node, context) {
 	if (node.type === 'Identifier') {
-		context.state.getters[node.name] = get_value;
+		context.state.transformers[node.name] = {
+			read: get_value
+		};
+
 		return { id: node, declarations: null };
 	}
 
@@ -678,7 +681,7 @@ export function create_derived_block_argument(node, context) {
 	const declarations = [b.var(value, create_derived(context.state, b.thunk(block)))];
 
 	for (const id of identifiers) {
-		context.state.getters[id.name] = get_value;
+		context.state.transformers[id.name] = { read: get_value };
 
 		declarations.push(
 			b.var(id, create_derived(context.state, b.thunk(b.member(b.call('$.get', value), id))))

@@ -21,8 +21,8 @@ export function SnippetBlock(node, context) {
 	/** @type {Statement[]} */
 	const declarations = [];
 
-	const getters = { ...context.state.getters };
-	const child_state = { ...context.state, getters };
+	const transformers = { ...context.state.transformers };
+	const child_state = { ...context.state, transformers };
 
 	for (let i = 0; i < node.parameters.length; i++) {
 		const argument = node.parameters[i];
@@ -36,7 +36,10 @@ export function SnippetBlock(node, context) {
 				right: b.id('$.noop')
 			});
 
-			getters[argument.name] = b.call;
+			transformers[argument.name] = {
+				read: b.call
+			};
+
 			continue;
 		}
 
@@ -54,12 +57,14 @@ export function SnippetBlock(node, context) {
 
 			declarations.push(b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn));
 
-			getters[name] = needs_derived ? get_value : b.call;
+			transformers[name] = {
+				read: needs_derived ? get_value : b.call
+			};
 
 			// we need to eagerly evaluate the expression in order to hit any
 			// 'Cannot access x before initialization' errors
 			if (dev) {
-				declarations.push(b.stmt(getters[name](b.id(name))));
+				declarations.push(b.stmt(transformers[name].read(b.id(name))));
 			}
 		}
 	}

@@ -24,11 +24,13 @@ export interface ClientTransformState extends TransformState {
 
 	/** The $: calls, which will be ordered in the end */
 	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
-	/**
-	 * A map of `[name, node]` pairs, where `Identifier` nodes matching `name`
-	 * will be replaced with `node` (e.g. `x` -> `$.get(x)`)
-	 */
-	readonly getters: Record<string, (id: Identifier) => Expression>;
+	readonly transformers: Record<
+		string,
+		{
+			/** a function that turns `foo` into e.g. `$.get(foo)` */
+			read: (id: Identifier) => Expression;
+		}
+	>;
 	/**
 	 * Counterpart to `getters`
 	 */

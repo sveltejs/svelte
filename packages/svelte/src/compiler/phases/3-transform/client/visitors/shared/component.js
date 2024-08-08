@@ -30,7 +30,7 @@ export function build_component(node, component_name, context, anchor = context.
 		default: {
 			...context.state,
 			scope: node.metadata.scopes.default,
-			getters: { ...context.state.getters }
+			transformers: { ...context.state.transformers }
 		}
 	};
 
@@ -260,7 +260,7 @@ export function build_component(node, component_name, context, anchor = context.
 					: {
 							...context.state,
 							scope: node.metadata.scopes[slot_name],
-							getters: { ...context.state.getters }
+							transformers: { ...context.state.transformers }
 						}
 				// {
 				// 	...context.state,

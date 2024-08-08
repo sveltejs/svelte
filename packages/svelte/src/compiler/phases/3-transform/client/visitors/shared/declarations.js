@@ -22,7 +22,9 @@ export function add_state_transformers(context) {
 			binding.kind === 'derived' ||
 			binding.kind === 'legacy_reactive'
 		) {
-			context.state.getters[name] = get_value;
+			context.state.transformers[name] = {
+				read: get_value
+			};
 		}
 	}
 }

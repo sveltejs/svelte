@@ -148,7 +148,7 @@ export function build_bind_this(expression, value, { state, visit }) {
 	/** @type {string[]} */
 	const seen = [];
 
-	const getters = { ...state.getters };
+	const transformers = { ...state.transformers };
 
 	// Pass in each context variables to the get/set functions, so that we can null out old values on teardown.
 	// Note that we only do this for each context variables, the consequence is that the value might be stale in
@@ -169,14 +169,14 @@ export function build_bind_this(expression, value, { state, visit }) {
 				if (owner.type === 'EachBlock' && scope === binding.scope) {
 					ids.push(node);
 					values.push(/** @type {Expression} */ (visit(node)));
-					delete getters[node.name];
+					delete transformers[node.name];
 					break;
 				}
 			}
 		}
 	});
 
-	const child_state = { ...state, getters };
+	const child_state = { ...state, transformers };
 
 	const get = /** @type {Expression} */ (visit(expression, child_state));
 	const set = /** @type {Expression} */ (

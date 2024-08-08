@@ -120,14 +120,14 @@ export function EachBlock(node, context) {
 
 	const child_state = {
 		...context.state,
-		getters: { ...context.state.getters },
+		transformers: { ...context.state.transformers },
 		setters: { ...context.state.setters }
 	};
 
 	/** The state used when generating the key function, if necessary */
 	const key_state = {
 		...context.state,
-		getters: { ...context.state.getters }
+		transformers: { ...context.state.transformers }
 	};
 
 	/**
@@ -180,15 +180,21 @@ export function EachBlock(node, context) {
 		const item_with_loc = with_loc(item, id);
 		return b.call('$.unwrap', item_with_loc);
 	};
-	child_state.getters[item.name] = getter;
+	child_state.transformers[item.name] = {
+		read: getter
+	};
 
 	if (node.index) {
-		child_state.getters[node.index] = (id) => {
-			const index_with_loc = with_loc(index, id);
-			return (flags & EACH_INDEX_REACTIVE) === 0 ? index_with_loc : b.call('$.get', index_with_loc);
+		child_state.transformers[node.index] = {
+			read: (id) => {
+				const index_with_loc = with_loc(index, id);
+				return (flags & EACH_INDEX_REACTIVE) === 0
+					? index_with_loc
+					: b.call('$.get', index_with_loc);
+			}
 		};
 
-		delete key_state.getters[node.index];
+		delete key_state.transformers[node.index];
 	}
 
 	/** @type {Statement[]} */
@@ -203,14 +209,13 @@ export function EachBlock(node, context) {
 			)
 		);
 
-		delete key_state.getters[node.context.name];
+		delete key_state.transformers[node.context.name];
 	} else {
 		const unwrapped = getter(binding.node);
 		const paths = extract_paths(node.context);
 
 		for (const path of paths) {
 			const name = /** @type {Identifier} */ (path.node).name;
-			const binding = /** @type {Binding} */ (context.state.scope.get(name));
 			const needs_derived = path.has_default_value; // to ensure that default value is only called once
 			const fn = b.thunk(
 				/** @type {Expression} */ (context.visit(path.expression?.(unwrapped), child_state))
@@ -218,8 +223,8 @@ export function EachBlock(node, context) {
 
 			declarations.push(b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn));
 
-			const getter = needs_derived ? get_value : b.call;
-			child_state.getters[name] = getter;
+			const read = needs_derived ? get_value : b.call;
+			child_state.transformers[name] = { read };
 			child_state.setters[name] = create_mutation(
 				/** @type {Pattern} */ (path.update_expression(unwrapped))
 			);
@@ -227,10 +232,12 @@ export function EachBlock(node, context) {
 			// we need to eagerly evaluate the expression in order to hit any
 			// 'Cannot access x before initialization' errors
 			if (dev) {
-				declarations.push(b.stmt(getter(b.id(name))));
+				declarations.push(b.stmt(read(b.id(name))));
 			}
 
-			key_state.getters[name] = () => path.node;
+			key_state.transformers[name] = {
+				read: () => path.node
+			};
 		}
 	}
 

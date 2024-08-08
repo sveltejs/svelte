@@ -25,7 +25,9 @@ export function ConstTag(node, context) {
 			)
 		);
 
-		context.state.getters[declaration.id.name] = get_value;
+		context.state.transformers[declaration.id.name] = {
+			read: get_value
+		};
 
 		// we need to eagerly evaluate the expression in order to hit any
 		// 'Cannot access x before initialization' errors
@@ -36,15 +38,15 @@ export function ConstTag(node, context) {
 		const identifiers = extract_identifiers(declaration.id);
 		const tmp = b.id(context.state.scope.generate('computed_const'));
 
-		const getters = { ...context.state.getters };
+		const transformers = { ...context.state.transformers };
 
 		// Make all identifiers that are declared within the following computed regular
 		// variables, as they are not signals in that context yet
 		for (const node of identifiers) {
-			delete getters[node.name];
+			delete transformers[node.name];
 		}
 
-		const child_state = { ...context.state, getters };
+		const child_state = { ...context.state, transformers };
 
 		// TODO optimise the simple `{ x } = y` case — we can just return `y`
 		// instead of destructuring it only to return a new object
@@ -68,7 +70,9 @@ export function ConstTag(node, context) {
 		}
 
 		for (const node of identifiers) {
-			context.state.getters[node.name] = (node) => b.member(b.call('$.get', tmp), node);
+			context.state.transformers[node.name] = {
+				read: (node) => b.member(b.call('$.get', tmp), node)
+			};
 		}
 	}
 }
