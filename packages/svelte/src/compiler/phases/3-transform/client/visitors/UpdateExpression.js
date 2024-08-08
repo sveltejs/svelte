@@ -10,8 +10,14 @@ import { build_getter, build_setter } from '../utils.js';
  */
 export function UpdateExpression(node, context) {
 	const argument = node.argument;
+	const transformers = context.state.transformers;
 
 	if (argument.type === 'Identifier') {
+		if (Object.hasOwn(transformers, argument.name) && transformers[argument.name].update) {
+			const transformer = transformers[argument.name].update;
+			if (transformer) return transformer(node);
+		}
+
 		const binding = context.state.scope.get(argument.name);
 		const is_store = binding?.kind === 'store_sub';
 		const name = is_store ? argument.name.slice(1) : argument.name;

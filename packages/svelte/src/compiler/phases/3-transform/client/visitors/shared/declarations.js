@@ -23,7 +23,14 @@ export function add_state_transformers(context) {
 			binding.kind === 'legacy_reactive'
 		) {
 			context.state.transformers[name] = {
-				read: get_value
+				read: get_value,
+				update: (node) => {
+					return b.call(
+						node.prefix ? '$.update_pre' : '$.update',
+						node.argument,
+						node.operator === '--' && b.literal(-1)
+					);
+				}
 			};
 		}
 	}

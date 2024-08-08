@@ -5,7 +5,8 @@ import type {
 	Identifier,
 	PrivateIdentifier,
 	Expression,
-	AssignmentExpression
+	AssignmentExpression,
+	UpdateExpression
 } from 'estree';
 import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
@@ -27,8 +28,12 @@ export interface ClientTransformState extends TransformState {
 	readonly transformers: Record<
 		string,
 		{
-			/** a function that turns `foo` into e.g. `$.get(foo)` */
+			/** turn `foo` into e.g. `$.get(foo)` */
 			read: (id: Identifier) => Expression;
+			/** turn `foo++` into e.g. `$.update(foo)` */
+			update?: (node: UpdateExpression) => Expression;
+			/** turn `foo.bar++` into e.g. `$.mutate(foo, $.get(foo).bar += 1)` */
+			update_property?: (id: Identifier) => Expression;
 		}
 	>;
 	/**
