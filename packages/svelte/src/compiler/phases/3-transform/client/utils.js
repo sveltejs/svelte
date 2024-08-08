@@ -85,18 +85,6 @@ export function build_getter(node, state) {
 		return typeof getter === 'function' ? getter(node) : getter;
 	}
 
-	if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
-		if (is_prop_source(binding, state)) {
-			return b.call(node);
-		}
-
-		if (binding.prop_alias) {
-			const key = b.key(binding.prop_alias);
-			return b.member(b.id('$$props'), key, key.type === 'Literal');
-		}
-		return b.member(b.id('$$props'), node);
-	}
-
 	if (
 		is_state_source(binding, state) ||
 		binding.kind === 'derived' ||
