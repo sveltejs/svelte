@@ -65,9 +65,9 @@ const visitors = {
 		if (scope && scope !== state.scope) {
 			const getters = { ...state.getters };
 
+			// TODO do this in add_state_transformers and visit_function etc?
 			for (const [name, binding] of scope.declarations) {
-				// if (binding.kind === 'normal') {
-				if (binding.kind !== 'each') {
+				if (binding.kind === 'normal') {
 					delete getters[name];
 				}
 			}

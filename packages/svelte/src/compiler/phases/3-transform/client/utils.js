@@ -17,6 +17,7 @@ import {
 	PROPS_IS_UPDATED
 } from '../../../../constants.js';
 import { is_ignored, dev } from '../../../state.js';
+import { get_value } from './visitors/shared/declarations.js';
 
 /**
  * @template {ClientTransformState} State
@@ -83,14 +84,6 @@ export function build_getter(node, state) {
 	if (Object.hasOwn(state.getters, node.name)) {
 		const getter = state.getters[node.name];
 		return typeof getter === 'function' ? getter(node) : getter;
-	}
-
-	if (
-		is_state_source(binding, state) ||
-		binding.kind === 'derived' ||
-		binding.kind === 'legacy_reactive'
-	) {
-		return b.call('$.get', node);
 	}
 
 	return node;
@@ -670,6 +663,7 @@ export function with_loc(target, source) {
  */
 export function create_derived_block_argument(node, context) {
 	if (node.type === 'Identifier') {
+		context.state.getters[node.name] = get_value;
 		return { id: node, declarations: null };
 	}
 
@@ -687,6 +681,8 @@ export function create_derived_block_argument(node, context) {
 	const declarations = [b.var(value, create_derived(context.state, b.thunk(block)))];
 
 	for (const id of identifiers) {
+		context.state.getters[id.name] = get_value;
+
 		declarations.push(
 			b.var(id, create_derived(context.state, b.thunk(b.member(b.call('$.get', value), id))))
 		);

@@ -2,6 +2,7 @@
 /** @import { ComponentContext } from '../types' */
 import { is_prop_source } from '../utils.js';
 import * as b from '../../../../utils/builders.js';
+import { add_state_transformers } from './shared/declarations.js';
 
 /**
  * @param {Program} node
@@ -27,6 +28,8 @@ export function Program(node, context) {
 			}
 		}
 	}
+
+	add_state_transformers(context);
 
 	context.next();
 }
