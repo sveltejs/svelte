@@ -115,6 +115,7 @@ export const codes = [
 	"component_name_lowercase",
 	"element_invalid_self_closing_tag",
 	"event_directive_deprecated",
+	"lowercase_component_rendering",
 	"node_invalid_placement_ssr",
 	"slot_element_deprecated",
 	"svelte_element_invalid_this"
@@ -747,6 +748,15 @@ export function element_invalid_self_closing_tag(node, name) {
  */
 export function event_directive_deprecated(node, name) {
 	w(node, "event_directive_deprecated", `Using \`on:${name}\` to listen to the ${name} event is deprecated. Use the event attribute \`on${name}\` instead`);
+}
+
+/**
+ * Are you trying to render `%component%`? Component names should be uppercase.
+ * @param {null | NodeLike} node
+ * @param {string} component
+ */
+export function lowercase_component_rendering(node, component) {
+	w(node, "lowercase_component_rendering", `Are you trying to render \`${component}\`? Component names should be uppercase.`);
 }
 
 /**
