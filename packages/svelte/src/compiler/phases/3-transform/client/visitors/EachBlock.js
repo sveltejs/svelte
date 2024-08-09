@@ -120,8 +120,7 @@ export function EachBlock(node, context) {
 
 	const child_state = {
 		...context.state,
-		transformers: { ...context.state.transformers },
-		setters: { ...context.state.setters }
+		transformers: { ...context.state.transformers }
 	};
 
 	/** The state used when generating the key function, if necessary */
