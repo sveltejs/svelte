@@ -243,10 +243,6 @@ export function build_setter(node, context, fallback, prefix, options) {
 		return serialized;
 	}
 
-	if (binding.kind === 'derived') {
-		return maybe_skip_ownership_validation(fallback());
-	}
-
 	if (
 		binding.kind !== 'state' &&
 		binding.kind !== 'frozen_state' &&
@@ -254,7 +250,8 @@ export function build_setter(node, context, fallback, prefix, options) {
 		binding.kind !== 'bindable_prop' &&
 		binding.kind !== 'each' &&
 		binding.kind !== 'legacy_reactive' &&
-		binding.kind !== 'store_sub'
+		binding.kind !== 'store_sub' &&
+		binding.kind !== 'derived'
 	) {
 		// TODO error if it's a computed (or rest prop)? or does that already happen elsewhere?
 		return fallback();
