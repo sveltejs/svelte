@@ -222,12 +222,7 @@ export function build_setter(node, context, fallback, prefix, options) {
 
 	const left = object(assignee);
 
-	if (left === null) {
-		return fallback();
-	}
-
-	const binding = state.scope.get(left.name);
-
+	const binding = left && state.scope.get(left.name);
 	if (!binding) return fallback();
 
 	if (Object.hasOwn(state.setters, left.name)) {
@@ -252,9 +247,6 @@ export function build_setter(node, context, fallback, prefix, options) {
 		return maybe_skip_ownership_validation(fallback());
 	}
 
-	const is_store = binding.kind === 'store_sub';
-	const left_name = is_store ? left.name.slice(1) : left.name;
-
 	if (
 		binding.kind !== 'state' &&
 		binding.kind !== 'frozen_state' &&
@@ -262,7 +254,7 @@ export function build_setter(node, context, fallback, prefix, options) {
 		binding.kind !== 'bindable_prop' &&
 		binding.kind !== 'each' &&
 		binding.kind !== 'legacy_reactive' &&
-		!is_store
+		binding.kind !== 'store_sub'
 	) {
 		// TODO error if it's a computed (or rest prop)? or does that already happen elsewhere?
 		return fallback();
