@@ -208,6 +208,8 @@ export function EachBlock(node, context) {
 			)
 		);
 
+		// TODO handle `item++` (currently we don't invalidate inner signals)
+
 		delete key_state.transformers[node.context.name];
 	} else {
 		const unwrapped = getter(binding.node);
