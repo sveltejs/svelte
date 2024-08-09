@@ -355,28 +355,6 @@ export function build_setter(node, context, fallback, prefix, options) {
 					)
 				);
 			} else if (
-				!state.analysis.runes ||
-				// this condition can go away once legacy mode is gone; only necessary for interop with legacy parent bindings
-				(binding.mutated && binding.kind === 'bindable_prop')
-			) {
-				if (binding.kind === 'bindable_prop') {
-					return maybe_skip_ownership_validation(
-						b.call(
-							left,
-							b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value),
-							b.true
-						)
-					);
-				} else {
-					return maybe_skip_ownership_validation(
-						b.call(
-							'$.mutate',
-							b.id(left_name),
-							b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value)
-						)
-					);
-				}
-			} else if (
 				node.right.type === 'Literal' &&
 				prefix != null &&
 				(node.operator === '+=' || node.operator === '-=')

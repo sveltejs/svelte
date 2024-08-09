@@ -44,6 +44,14 @@ export function Program(node, context) {
 						assign: (node, value) => {
 							return b.call(node, value);
 						},
+						assign_property: (node, value) => {
+							if (binding.kind === 'bindable_prop') {
+								// only necessary for interop with legacy parent bindings
+								return b.call(node, value, b.true);
+							}
+
+							return value;
+						},
 						update: (node) => {
 							return b.call(
 								node.prefix ? '$.update_pre_prop' : '$.update_prop',
