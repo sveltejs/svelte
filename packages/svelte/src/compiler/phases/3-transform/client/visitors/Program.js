@@ -14,12 +14,12 @@ export function Program(node, context) {
 			if (binding.kind === 'store_sub') {
 				const store = /** @type {Expression} */ (context.visit(b.id(name.slice(1))));
 
-				context.state.transformers[name] = {
+				context.state.transform[name] = {
 					read: b.call,
 					assign: (node, value) => {
 						return b.call('$.store_set', store, value);
 					},
-					assign_property: (node, mutation) => {
+					mutate: (node, mutation) => {
 						// We need to untrack the store read, for consistency with Svelte 4
 						const untracked = b.call('$.untrack', node);
 
@@ -66,12 +66,12 @@ export function Program(node, context) {
 
 			if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
 				if (is_prop_source(binding, context.state)) {
-					context.state.transformers[name] = {
+					context.state.transform[name] = {
 						read: b.call,
 						assign: (node, value) => {
 							return b.call(node, value);
 						},
-						assign_property: (node, value) => {
+						mutate: (node, value) => {
 							if (binding.kind === 'bindable_prop') {
 								// only necessary for interop with legacy parent bindings
 								return b.call(node, value, b.true);
@@ -89,11 +89,11 @@ export function Program(node, context) {
 					};
 				} else if (binding.prop_alias) {
 					const key = b.key(binding.prop_alias);
-					context.state.transformers[name] = {
+					context.state.transform[name] = {
 						read: (node) => b.member(b.id('$$props'), key, key.type === 'Literal')
 					};
 				} else {
-					context.state.transformers[name] = {
+					context.state.transform[name] = {
 						read: (node) => b.member(b.id('$$props'), node)
 					};
 				}

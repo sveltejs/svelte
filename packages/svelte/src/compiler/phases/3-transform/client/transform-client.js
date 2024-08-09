@@ -63,16 +63,16 @@ const visitors = {
 		const scope = state.scopes.get(node);
 
 		if (scope && scope !== state.scope) {
-			const transformers = { ...state.transformers };
+			const transform = { ...state.transform };
 
 			// TODO do this in add_state_transformers and visit_function etc?
 			for (const [name, binding] of scope.declarations) {
 				if (binding.kind === 'normal') {
-					delete transformers[name];
+					delete transform[name];
 				}
 			}
 
-			next({ ...state, transformers, scope });
+			next({ ...state, transform, scope });
 		} else {
 			next();
 		}
@@ -156,7 +156,7 @@ export function client_component(analysis, options) {
 		preserve_whitespace: options.preserveWhitespace,
 		public_state: new Map(),
 		private_state: new Map(),
-		transformers: {},
+		transform: {},
 		in_constructor: false,
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
@@ -172,7 +172,7 @@ export function client_component(analysis, options) {
 	const legacy_reactive_imports = [];
 
 	if (!analysis.runes) {
-		state.transformers['$$props'] = {
+		state.transform['$$props'] = {
 			read: (node) => ({ ...node, name: '$$sanitized_props' })
 		};
 
@@ -182,9 +182,9 @@ export function client_component(analysis, options) {
 			if (binding.declaration_kind === 'import' && binding.mutated) {
 				const id = b.id('$$_import_' + name);
 
-				state.transformers[name] = {
+				state.transform[name] = {
 					read: (node) => b.call(id),
-					assign_property: (node, mutation) => {
+					mutate: (node, mutation) => {
 						return b.call(id, mutation);
 					}
 				};
@@ -200,7 +200,7 @@ export function client_component(analysis, options) {
 
 	const instance_state = {
 		...state,
-		transformers: { ...state.transformers },
+		transform: { ...state.transform },
 		scope: analysis.instance.scope,
 		scopes: analysis.instance.scopes,
 		is_instance: true
@@ -215,7 +215,7 @@ export function client_component(analysis, options) {
 			/** @type {SvelteNode} */ (analysis.template.ast),
 			{
 				...state,
-				transformers: instance_state.transformers,
+				transform: instance_state.transform,
 				scope: analysis.instance.scope,
 				scopes: analysis.template.scopes
 			},
@@ -666,7 +666,7 @@ export function client_module(analysis, options) {
 		legacy_reactive_statements: new Map(),
 		public_state: new Map(),
 		private_state: new Map(),
-		transformers: {},
+		transform: {},
 		in_constructor: false
 	};
 

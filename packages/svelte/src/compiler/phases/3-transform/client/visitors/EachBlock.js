@@ -120,13 +120,13 @@ export function EachBlock(node, context) {
 
 	const child_state = {
 		...context.state,
-		transformers: { ...context.state.transformers }
+		transform: { ...context.state.transform }
 	};
 
 	/** The state used when generating the key function, if necessary */
 	const key_state = {
 		...context.state,
-		transformers: { ...context.state.transformers }
+		transform: { ...context.state.transform }
 	};
 
 	// We need to generate a unique identifier in case there's a bind:group below
@@ -141,7 +141,7 @@ export function EachBlock(node, context) {
 	};
 
 	if (node.index) {
-		child_state.transformers[node.index] = {
+		child_state.transform[node.index] = {
 			read: (id) => {
 				const index_with_loc = with_loc(index, id);
 				return (flags & EACH_INDEX_REACTIVE) === 0
@@ -150,7 +150,7 @@ export function EachBlock(node, context) {
 			}
 		};
 
-		delete key_state.transformers[node.index];
+		delete key_state.transform[node.index];
 	}
 
 	/** @type {Statement[]} */
@@ -171,7 +171,7 @@ export function EachBlock(node, context) {
 	if (invalidate_store) sequence.push(invalidate_store);
 
 	if (node.context.type === 'Identifier') {
-		child_state.transformers[node.context.name] = {
+		child_state.transform[node.context.name] = {
 			read: getter,
 			assign: (node, value) => {
 				const left = b.member(
@@ -182,13 +182,13 @@ export function EachBlock(node, context) {
 
 				return b.sequence([b.assignment('=', left, value), ...sequence]);
 			},
-			assign_property: (node, mutation) => {
+			mutate: (node, mutation) => {
 				return b.sequence([mutation, ...sequence]);
 			}
-			// TODO update (`item++`) and update_property — these were unaccounted for previously
+			// TODO update (`item++`) — this was unaccounted for previously
 		};
 
-		delete key_state.transformers[node.context.name];
+		delete key_state.transform[node.context.name];
 	} else {
 		const unwrapped = getter(binding.node);
 		const paths = extract_paths(node.context);
@@ -204,16 +204,16 @@ export function EachBlock(node, context) {
 
 			const read = needs_derived ? get_value : b.call;
 
-			child_state.transformers[name] = {
+			child_state.transform[name] = {
 				read,
 				assign: (node, value) => {
 					const left = /** @type {Pattern} */ (path.update_expression(unwrapped));
 					return b.sequence([b.assignment('=', left, value), ...sequence]);
 				},
-				assign_property: (node, mutation) => {
+				mutate: (node, mutation) => {
 					return b.sequence([mutation, ...sequence]);
 				}
-				// TODO update (`item++`) and update_property — these were unaccounted for previously
+				// TODO update (`item++`) — this was unaccounted for previously
 			};
 
 			// we need to eagerly evaluate the expression in order to hit any
@@ -222,7 +222,7 @@ export function EachBlock(node, context) {
 				declarations.push(b.stmt(read(b.id(name))));
 			}
 
-			key_state.transformers[name] = {
+			key_state.transform[name] = {
 				read: () => path.node
 			};
 		}

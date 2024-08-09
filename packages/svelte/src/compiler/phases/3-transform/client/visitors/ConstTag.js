@@ -25,7 +25,7 @@ export function ConstTag(node, context) {
 			)
 		);
 
-		context.state.transformers[declaration.id.name] = {
+		context.state.transform[declaration.id.name] = {
 			read: get_value
 		};
 
@@ -38,15 +38,15 @@ export function ConstTag(node, context) {
 		const identifiers = extract_identifiers(declaration.id);
 		const tmp = b.id(context.state.scope.generate('computed_const'));
 
-		const transformers = { ...context.state.transformers };
+		const transform = { ...context.state.transform };
 
 		// Make all identifiers that are declared within the following computed regular
 		// variables, as they are not signals in that context yet
 		for (const node of identifiers) {
-			delete transformers[node.name];
+			delete transform[node.name];
 		}
 
-		const child_state = { ...context.state, transformers };
+		const child_state = { ...context.state, transform };
 
 		// TODO optimise the simple `{ x } = y` case — we can just return `y`
 		// instead of destructuring it only to return a new object
@@ -70,7 +70,7 @@ export function ConstTag(node, context) {
 		}
 
 		for (const node of identifiers) {
-			context.state.transformers[node.name] = {
+			context.state.transform[node.name] = {
 				read: (node) => b.member(b.call('$.get', tmp), node)
 			};
 		}

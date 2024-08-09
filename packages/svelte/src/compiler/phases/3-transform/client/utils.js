@@ -74,12 +74,12 @@ export function is_state_source(binding, state) {
  * @returns {Expression}
  */
 export function build_getter(node, state) {
-	if (Object.hasOwn(state.transformers, node.name)) {
+	if (Object.hasOwn(state.transform, node.name)) {
 		const binding = state.scope.get(node.name);
 
 		// don't transform the declaration itself
 		if (node !== binding?.node) {
-			return state.transformers[node.name].read(node);
+			return state.transform[node.name].read(node);
 		}
 	}
 
@@ -217,12 +217,12 @@ export function build_setter(node, context, fallback, prefix) {
 	const binding = left && state.scope.get(left.name);
 	if (!binding) return fallback();
 
-	const transformers = Object.hasOwn(context.state.transformers, left.name)
-		? context.state.transformers[left.name]
+	const transform = Object.hasOwn(context.state.transform, left.name)
+		? context.state.transform[left.name]
 		: null;
 
 	// reassignment
-	if (left === node.left && transformers?.assign) {
+	if (left === node.left && transform?.assign) {
 		let value = /** @type {Expression} */ (visit(node.right));
 
 		if (node.operator !== '=') {
@@ -250,7 +250,7 @@ export function build_setter(node, context, fallback, prefix) {
 			}
 		}
 
-		return transformers.assign(left, value);
+		return transform.assign(left, value);
 	}
 
 	/**
@@ -266,14 +266,14 @@ export function build_setter(node, context, fallback, prefix) {
 	};
 
 	// mutation
-	if (transformers?.assign_property) {
+	if (transform?.mutate) {
 		const mutation = b.assignment(
 			node.operator,
 			/** @type {Pattern} */ (context.visit(node.left)),
 			/** @type {Expression} */ (context.visit(node.right))
 		);
 
-		return maybe_skip_ownership_validation(transformers.assign_property(left, mutation));
+		return maybe_skip_ownership_validation(transform.mutate(left, mutation));
 	}
 
 	if (
@@ -360,7 +360,7 @@ function get_hoisted_params(node, context) {
 				binding = /** @type {Binding} */ (scope.get(binding.node.name.slice(1)));
 			}
 
-			let expression = context.state.transformers[reference]?.read(b.id(binding.node.name));
+			let expression = context.state.transform[reference]?.read(b.id(binding.node.name));
 
 			if (
 				// If it's a destructured derived binding, then we can extract the derived signal reference and use that.
@@ -559,7 +559,7 @@ export function with_loc(target, source) {
  */
 export function create_derived_block_argument(node, context) {
 	if (node.type === 'Identifier') {
-		context.state.transformers[node.name] = {
+		context.state.transform[node.name] = {
 			read: get_value
 		};
 
@@ -580,7 +580,7 @@ export function create_derived_block_argument(node, context) {
 	const declarations = [b.var(value, create_derived(context.state, b.thunk(block)))];
 
 	for (const id of identifiers) {
-		context.state.transformers[id.name] = { read: get_value };
+		context.state.transform[id.name] = { read: get_value };
 
 		declarations.push(
 			b.var(id, create_derived(context.state, b.thunk(b.member(b.call('$.get', value), id))))

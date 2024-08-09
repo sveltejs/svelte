@@ -25,7 +25,7 @@ export interface ClientTransformState extends TransformState {
 
 	/** The $: calls, which will be ordered in the end */
 	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
-	readonly transformers: Record<
+	readonly transform: Record<
 		string,
 		{
 			/** turn `foo` into e.g. `$.get(foo)` */
@@ -33,11 +33,9 @@ export interface ClientTransformState extends TransformState {
 			/** turn `foo = bar` into e.g. `$.set(foo, bar)` */
 			assign?: (node: Identifier, value: Expression) => Expression;
 			/** turn `foo.bar = baz` into e.g. `$.mutate(foo, $.get(foo).bar = baz);` */
-			assign_property?: (node: Identifier, mutation: AssignmentExpression) => Expression;
+			mutate?: (node: Identifier, mutation: AssignmentExpression) => Expression;
 			/** turn `foo++` into e.g. `$.update(foo)` */
 			update?: (node: UpdateExpression) => Expression;
-			/** turn `foo.bar++` into e.g. `$.mutate(foo, $.get(foo).bar += 1)` */
-			update_property?: (id: Identifier) => Expression;
 		}
 	>;
 }

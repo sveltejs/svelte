@@ -29,7 +29,7 @@ export function build_component(node, component_name, context, anchor = context.
 		default: {
 			...context.state,
 			scope: node.metadata.scopes.default,
-			transformers: { ...context.state.transformers }
+			transform: { ...context.state.transform }
 		}
 	};
 
@@ -257,7 +257,7 @@ export function build_component(node, component_name, context, anchor = context.
 					: {
 							...context.state,
 							scope: node.metadata.scopes[slot_name],
-							transformers: { ...context.state.transformers }
+							transform: { ...context.state.transform }
 						}
 				// {
 				// 	...context.state,

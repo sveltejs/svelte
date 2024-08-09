@@ -148,7 +148,7 @@ export function build_bind_this(expression, value, { state, visit }) {
 	/** @type {string[]} */
 	const seen = [];
 
-	const transformers = { ...state.transformers };
+	const transform = { ...state.transform };
 
 	// Pass in each context variables to the get/set functions, so that we can null out old values on teardown.
 	// Note that we only do this for each context variables, the consequence is that the value might be stale in
@@ -170,9 +170,9 @@ export function build_bind_this(expression, value, { state, visit }) {
 					ids.push(node);
 					values.push(/** @type {Expression} */ (visit(node)));
 
-					if (transformers[node.name]) {
-						transformers[node.name] = {
-							...transformers[node.name],
+					if (transform[node.name]) {
+						transform[node.name] = {
+							...transform[node.name],
 							read: (node) => node
 						};
 					}
@@ -183,7 +183,7 @@ export function build_bind_this(expression, value, { state, visit }) {
 		}
 	});
 
-	const child_state = { ...state, transformers };
+	const child_state = { ...state, transform };
 
 	const get = /** @type {Expression} */ (visit(expression, child_state));
 	const set = /** @type {Expression} */ (

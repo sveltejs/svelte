@@ -22,7 +22,7 @@ export function add_state_transformers(context) {
 			binding.kind === 'derived' ||
 			binding.kind === 'legacy_reactive'
 		) {
-			context.state.transformers[name] = {
+			context.state.transform[name] = {
 				read: get_value,
 				assign: (node, value) => {
 					let call = b.call('$.set', node, value);
@@ -33,7 +33,7 @@ export function add_state_transformers(context) {
 
 					return call;
 				},
-				assign_property: (node, mutation) => {
+				mutate: (node, mutation) => {
 					if (context.state.analysis.runes) {
 						return mutation;
 					}
