@@ -276,7 +276,30 @@ export function build_setter(node, context, fallback, prefix, options) {
 				const transformer = context.state.transformers[left.name]?.assign;
 
 				if (transformer) {
-					return transformer(node, context.visit, !!options?.skip_proxy_and_freeze);
+					let value = /** @type {Expression} */ (visit(node.right));
+
+					if (node.operator !== '=') {
+						value = b.binary(
+							/** @type {BinaryOperator} */ (node.operator.slice(0, -1)),
+							/** @type {Expression} */ (visit(left)),
+							value
+						);
+					}
+
+					if (
+						!options?.skip_proxy_and_freeze &&
+						binding.kind !== 'prop' &&
+						context.state.analysis.runes &&
+						should_proxy_or_freeze(value, context.state.scope)
+					) {
+						if (binding.kind === 'frozen_state') {
+							value = b.call('$.freeze', value);
+						} else {
+							value = build_proxy_reassignment(value, left.name);
+						}
+					}
+
+					return transformer(left, value);
 				}
 			}
 

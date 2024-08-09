@@ -31,11 +31,7 @@ export interface ClientTransformState extends TransformState {
 			/** turn `foo` into e.g. `$.get(foo)` */
 			read: (id: Identifier) => Expression;
 			/** turn `foo = bar` into e.g. `$.set(foo, bar)` */
-			assign?: (
-				node: AssignmentExpression,
-				visit: (node: SvelteNode) => SvelteNode,
-				is_primitive: boolean
-			) => Expression;
+			assign?: (node: Identifier, value: Expression) => Expression;
 			/** turn `foo++` into e.g. `$.update(foo)` */
 			update?: (node: UpdateExpression) => Expression;
 			/** turn `foo.bar++` into e.g. `$.mutate(foo, $.get(foo).bar += 1)` */
