@@ -19,10 +19,9 @@ export function AssignmentExpression(node, context) {
  * @param {AssignmentExpression} node
  * @param {import('zimmerframe').Context<SvelteNode, State>} context
  * @param {() => any} fallback
- * @param {boolean | null} [prefix] - If the assignment is a transformed update expression, set this. Else `null`
  * @returns {Expression}
  */
-export function build_setter(node, context, fallback, prefix) {
+export function build_setter(node, context, fallback) {
 	const { state, visit } = context;
 
 	const assignee = node.left;
@@ -46,7 +45,7 @@ export function build_setter(node, context, fallback, prefix) {
 			const value = path.expression?.(b.id(tmp_id));
 			const assignment = b.assignment('=', path.node, value);
 			original_assignments.push(assignment);
-			assignments.push(build_setter(assignment, context, () => assignment, prefix));
+			assignments.push(build_setter(assignment, context, () => assignment));
 		}
 
 		if (assignments.every((assignment, i) => assignment === original_assignments[i])) {
@@ -205,39 +204,26 @@ export function build_setter(node, context, fallback, prefix) {
 	}
 
 	if (
-		node.right.type === 'Literal' &&
-		prefix != null &&
-		(node.operator === '+=' || node.operator === '-=')
+		binding.kind !== 'state' &&
+		binding.kind !== 'frozen_state' &&
+		binding.kind !== 'prop' &&
+		binding.kind !== 'bindable_prop' &&
+		binding.kind !== 'each' &&
+		binding.kind !== 'legacy_reactive' &&
+		binding.kind !== 'store_sub' &&
+		binding.kind !== 'derived'
 	) {
-		return maybe_skip_ownership_validation(
-			b.update(
-				node.operator === '+=' ? '++' : '--',
-				/** @type {Expression} */ (visit(node.left)),
-				prefix
-			)
-		);
-	} else {
-		if (
-			binding.kind !== 'state' &&
-			binding.kind !== 'frozen_state' &&
-			binding.kind !== 'prop' &&
-			binding.kind !== 'bindable_prop' &&
-			binding.kind !== 'each' &&
-			binding.kind !== 'legacy_reactive' &&
-			binding.kind !== 'store_sub' &&
-			binding.kind !== 'derived'
-		) {
-			// TODO error if it's a computed (or rest prop)? or does that already happen elsewhere?
-			return fallback();
-		}
-		return maybe_skip_ownership_validation(
-			b.assignment(
-				node.operator,
-				/** @type {Pattern} */ (visit(node.left)),
-				/** @type {Expression} */ (visit(node.right))
-			)
-		);
+		// TODO error if it's a computed (or rest prop)? or does that already happen elsewhere?
+		return fallback();
 	}
+
+	return maybe_skip_ownership_validation(
+		b.assignment(
+			node.operator,
+			/** @type {Pattern} */ (visit(node.left)),
+			/** @type {Expression} */ (visit(node.right))
+		)
+	);
 }
 
 /**
