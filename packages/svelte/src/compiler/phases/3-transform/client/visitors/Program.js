@@ -1,11 +1,6 @@
-/** @import { BinaryOperator, Expression, Identifier, Program } from 'estree' */
+/** @import { Expression, MemberExpression, Program } from 'estree' */
 /** @import { ComponentContext } from '../types' */
-import {
-	build_getter,
-	build_proxy_reassignment,
-	is_prop_source,
-	should_proxy_or_freeze
-} from '../utils.js';
+import { build_getter, is_prop_source } from '../utils.js';
 import * as b from '../../../../utils/builders.js';
 import { add_state_transformers } from './shared/declarations.js';
 
@@ -17,13 +12,45 @@ export function Program(node, context) {
 	if (context.state.is_instance) {
 		for (const [name, binding] of context.state.scope.declarations) {
 			if (binding.kind === 'store_sub') {
+				const store = /** @type {Expression} */ (context.visit(b.id(name.slice(1))));
+
 				context.state.transformers[name] = {
 					read: b.call,
 					assign: (node, value) => {
+						return b.call('$.store_set', store, value);
+					},
+					assign_property: (node, mutation) => {
+						// We need to untrack the store read, for consistency with Svelte 4
+						const untracked = b.call('$.untrack', node);
+
+						/**
+						 *
+						 * @param {Expression} n
+						 * @returns {Expression}
+						 */
+						function replace(n) {
+							if (n.type === 'MemberExpression') {
+								return {
+									...n,
+									object: replace(/** @type {Expression} */ (n.object)),
+									property: n.property
+								};
+							}
+
+							return untracked;
+						}
+
 						return b.call(
-							'$.store_set',
-							/** @type {Expression} */ (context.visit(b.id(node.name.slice(1)))),
-							value
+							'$.store_mutate',
+							store,
+							b.assignment(
+								mutation.operator,
+								/** @type {MemberExpression} */ (
+									replace(/** @type {MemberExpression} */ (mutation.left))
+								),
+								mutation.right
+							),
+							untracked
 						);
 					},
 					update: (node) => {

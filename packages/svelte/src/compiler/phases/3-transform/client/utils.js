@@ -319,42 +319,7 @@ export function build_setter(node, context, fallback, prefix, options) {
 				return maybe_skip_ownership_validation(transformers.assign_property(left, mutation));
 			}
 
-			if (is_store) {
-				// If we are assigning to a store property, we need to ensure we don't
-				// capture the read for the store as part of the member expression to
-				// keep consistency with how store $ shorthand reads work in Svelte 4.
-				/**
-				 *
-				 * @param {Expression | Pattern} node
-				 * @returns {Expression}
-				 */
-				function visit_node(node) {
-					if (node.type === 'MemberExpression') {
-						return {
-							...node,
-							object: visit_node(/** @type {Expression} */ (node.object)),
-							property: /** @type {MemberExpression} */ (visit(node)).property
-						};
-					}
-					if (node.type === 'Identifier') {
-						const binding = state.scope.get(node.name);
-
-						if (binding !== null && binding.kind === 'store_sub') {
-							return b.call('$.untrack', b.thunk(/** @type {Expression} */ (visit(node))));
-						}
-					}
-					return /** @type {Expression} */ (visit(node));
-				}
-
-				return maybe_skip_ownership_validation(
-					b.call(
-						'$.store_mutate',
-						build_getter(b.id(left_name), state),
-						b.assignment(node.operator, /** @type {Pattern}} */ (visit_node(node.left)), value),
-						b.call('$.untrack', b.id('$' + left_name))
-					)
-				);
-			} else if (
+			if (
 				node.right.type === 'Literal' &&
 				prefix != null &&
 				(node.operator === '+=' || node.operator === '-=')
