@@ -2,7 +2,7 @@
 /** @import { Context } from '../types' */
 import { is_ignored } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
-import { build_getter, build_setter } from '../utils.js';
+import { build_setter } from '../utils.js';
 
 /**
  * @param {UpdateExpression} node
