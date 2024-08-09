@@ -24,7 +24,7 @@ export function add_state_transformers(context) {
 		) {
 			context.state.transformers[name] = {
 				read: get_value,
-				assign: (node, visit) => {
+				assign: (node, visit, is_primitive) => {
 					let left = /** @type {Identifier} */ (node.left);
 					let value = /** @type {Expression} */ (visit(node.right));
 
@@ -36,7 +36,11 @@ export function add_state_transformers(context) {
 						);
 					}
 
-					if (context.state.analysis.runes && should_proxy_or_freeze(value, context.state.scope)) {
+					if (
+						!is_primitive &&
+						context.state.analysis.runes &&
+						should_proxy_or_freeze(value, context.state.scope)
+					) {
 						if (binding.kind === 'frozen_state') {
 							value = b.call('$.freeze', value);
 						} else {

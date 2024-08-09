@@ -272,6 +272,14 @@ export function build_setter(node, context, fallback, prefix, options) {
 
 	const serialize = () => {
 		if (left === node.left) {
+			if (Object.hasOwn(context.state.transformers, left.name)) {
+				const transformer = context.state.transformers[left.name]?.assign;
+
+				if (transformer) {
+					return transformer(node, context.visit, !!options?.skip_proxy_and_freeze);
+				}
+			}
+
 			const is_initial_proxy =
 				binding.initial !== null &&
 				should_proxy_or_freeze(/**@type {Expression}*/ (binding.initial), context.state.scope);

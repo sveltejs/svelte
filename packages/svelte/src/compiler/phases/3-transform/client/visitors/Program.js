@@ -1,6 +1,11 @@
-/** @import { Program } from 'estree' */
+/** @import { BinaryOperator, Expression, Identifier, Program } from 'estree' */
 /** @import { ComponentContext } from '../types' */
-import { build_getter, is_prop_source } from '../utils.js';
+import {
+	build_getter,
+	build_proxy_reassignment,
+	is_prop_source,
+	should_proxy_or_freeze
+} from '../utils.js';
 import * as b from '../../../../utils/builders.js';
 import { add_state_transformers } from './shared/declarations.js';
 
@@ -29,6 +34,28 @@ export function Program(node, context) {
 				if (is_prop_source(binding, context.state)) {
 					context.state.transformers[name] = {
 						read: b.call,
+						assign: (node, visit) => {
+							let left = /** @type {Identifier} */ (node.left);
+							let value = /** @type {Expression} */ (visit(node.right));
+
+							if (node.operator !== '=') {
+								value = b.binary(
+									/** @type {BinaryOperator} */ (node.operator.slice(0, -1)),
+									/** @type {Expression} */ (visit(left)),
+									value
+								);
+							}
+
+							if (
+								context.state.analysis.runes &&
+								binding.kind === 'bindable_prop' &&
+								should_proxy_or_freeze(value, context.state.scope)
+							) {
+								value = build_proxy_reassignment(value, left.name);
+							}
+
+							return b.call(left, value);
+						},
 						update: (node) => {
 							return b.call(
 								node.prefix ? '$.update_pre_prop' : '$.update_prop',
