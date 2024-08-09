@@ -211,7 +211,7 @@ export function EachBlock(node, context) {
 	if (invalidate_store) sequence.push(invalidate_store);
 
 	if (node.context.type === 'Identifier') {
-		child_state.transformers[item.name] = {
+		child_state.transformers[node.context.name] = {
 			read: getter,
 			assign: (node, value) => {
 				const left = b.member(
