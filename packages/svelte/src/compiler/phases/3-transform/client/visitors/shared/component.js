@@ -197,9 +197,7 @@ export function build_component(node, component_name, context, anchor = context.
 
 				const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
 				push_prop(
-					b.set(attribute.name, [
-						b.stmt(build_setter(assignment, context, () => context.visit(assignment)))
-					])
+					b.set(attribute.name, [b.stmt(/** @type {Expression} */ (context.visit(assignment)))])
 				);
 			}
 		}
