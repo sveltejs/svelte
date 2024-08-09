@@ -271,40 +271,40 @@ export function build_setter(node, context, fallback, prefix, options) {
 	const value = get_assignment_value(node, context);
 
 	const serialize = () => {
+		const transformers = Object.hasOwn(context.state.transformers, left.name)
+			? context.state.transformers[left.name]
+			: null;
+
 		if (left === node.left) {
-			if (Object.hasOwn(context.state.transformers, left.name)) {
-				const transformer = context.state.transformers[left.name]?.assign;
+			if (transformers?.assign) {
+				let value = /** @type {Expression} */ (visit(node.right));
 
-				if (transformer) {
-					let value = /** @type {Expression} */ (visit(node.right));
-
-					if (node.operator !== '=') {
-						value = b.binary(
-							/** @type {BinaryOperator} */ (node.operator.slice(0, -1)),
-							/** @type {Expression} */ (visit(left)),
-							value
-						);
-					}
-
-					// special case — if an element binding, we know it's a primitive
-					const path = context.path.map((node) => node.type);
-					const is_primitive = path.at(-1) === 'BindDirective' && path.at(-2) === 'RegularElement';
-
-					if (
-						!is_primitive &&
-						binding.kind !== 'prop' &&
-						context.state.analysis.runes &&
-						should_proxy_or_freeze(value, context.state.scope)
-					) {
-						if (binding.kind === 'frozen_state') {
-							value = b.call('$.freeze', value);
-						} else {
-							value = build_proxy_reassignment(value, left.name);
-						}
-					}
-
-					return transformer(left, value);
+				if (node.operator !== '=') {
+					value = b.binary(
+						/** @type {BinaryOperator} */ (node.operator.slice(0, -1)),
+						/** @type {Expression} */ (visit(left)),
+						value
+					);
 				}
+
+				// special case — if an element binding, we know it's a primitive
+				const path = context.path.map((node) => node.type);
+				const is_primitive = path.at(-1) === 'BindDirective' && path.at(-2) === 'RegularElement';
+
+				if (
+					!is_primitive &&
+					binding.kind !== 'prop' &&
+					context.state.analysis.runes &&
+					should_proxy_or_freeze(value, context.state.scope)
+				) {
+					if (binding.kind === 'frozen_state') {
+						value = b.call('$.freeze', value);
+					} else {
+						value = build_proxy_reassignment(value, left.name);
+					}
+				}
+
+				return transformers.assign(left, value);
 			}
 
 			return node;
