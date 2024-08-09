@@ -268,86 +268,76 @@ export function build_setter(node, context, fallback, prefix, options) {
 		return fallback();
 	}
 
-	const value = get_assignment_value(node, context);
+	const transformers = Object.hasOwn(context.state.transformers, left.name)
+		? context.state.transformers[left.name]
+		: null;
 
-	const serialize = () => {
-		const transformers = Object.hasOwn(context.state.transformers, left.name)
-			? context.state.transformers[left.name]
-			: null;
+	if (left === node.left) {
+		if (transformers?.assign) {
+			let value = /** @type {Expression} */ (visit(node.right));
 
-		if (left === node.left) {
-			if (transformers?.assign) {
-				let value = /** @type {Expression} */ (visit(node.right));
-
-				if (node.operator !== '=') {
-					value = b.binary(
-						/** @type {BinaryOperator} */ (node.operator.slice(0, -1)),
-						/** @type {Expression} */ (visit(left)),
-						value
-					);
-				}
-
-				// special case — if an element binding, we know it's a primitive
-				const path = context.path.map((node) => node.type);
-				const is_primitive = path.at(-1) === 'BindDirective' && path.at(-2) === 'RegularElement';
-
-				if (
-					!is_primitive &&
-					binding.kind !== 'prop' &&
-					context.state.analysis.runes &&
-					should_proxy_or_freeze(value, context.state.scope)
-				) {
-					if (binding.kind === 'frozen_state') {
-						value = b.call('$.freeze', value);
-					} else {
-						value = build_proxy_reassignment(value, left.name);
-					}
-				}
-
-				return transformers.assign(left, value);
-			}
-
-			return node;
-		} else {
-			if (transformers?.assign_property) {
-				const mutation = b.assignment(
-					node.operator,
-					/** @type {Pattern} */ (context.visit(node.left)),
-					/** @type {Expression} */ (context.visit(node.right))
+			if (node.operator !== '=') {
+				value = b.binary(
+					/** @type {BinaryOperator} */ (node.operator.slice(0, -1)),
+					/** @type {Expression} */ (visit(left)),
+					value
 				);
-
-				return maybe_skip_ownership_validation(transformers.assign_property(left, mutation));
 			}
+
+			// special case — if an element binding, we know it's a primitive
+			const path = context.path.map((node) => node.type);
+			const is_primitive = path.at(-1) === 'BindDirective' && path.at(-2) === 'RegularElement';
 
 			if (
-				node.right.type === 'Literal' &&
-				prefix != null &&
-				(node.operator === '+=' || node.operator === '-=')
+				!is_primitive &&
+				binding.kind !== 'prop' &&
+				context.state.analysis.runes &&
+				should_proxy_or_freeze(value, context.state.scope)
 			) {
-				return maybe_skip_ownership_validation(
-					b.update(
-						node.operator === '+=' ? '++' : '--',
-						/** @type {Expression} */ (visit(node.left)),
-						prefix
-					)
-				);
-			} else {
-				return maybe_skip_ownership_validation(
-					b.assignment(
-						node.operator,
-						/** @type {Pattern} */ (visit(node.left)),
-						/** @type {Expression} */ (visit(node.right))
-					)
-				);
+				if (binding.kind === 'frozen_state') {
+					value = b.call('$.freeze', value);
+				} else {
+					value = build_proxy_reassignment(value, left.name);
+				}
 			}
+
+			return transformers.assign(left, value);
 		}
-	};
 
-	if (value.type === 'BinaryExpression' && /** @type {any} */ (value.operator) === '??') {
-		return b.logical('??', build_getter(b.id(left_name), state), serialize());
+		return node;
+	} else {
+		if (transformers?.assign_property) {
+			const mutation = b.assignment(
+				node.operator,
+				/** @type {Pattern} */ (context.visit(node.left)),
+				/** @type {Expression} */ (context.visit(node.right))
+			);
+
+			return maybe_skip_ownership_validation(transformers.assign_property(left, mutation));
+		}
+
+		if (
+			node.right.type === 'Literal' &&
+			prefix != null &&
+			(node.operator === '+=' || node.operator === '-=')
+		) {
+			return maybe_skip_ownership_validation(
+				b.update(
+					node.operator === '+=' ? '++' : '--',
+					/** @type {Expression} */ (visit(node.left)),
+					prefix
+				)
+			);
+		} else {
+			return maybe_skip_ownership_validation(
+				b.assignment(
+					node.operator,
+					/** @type {Pattern} */ (visit(node.left)),
+					/** @type {Expression} */ (visit(node.right))
+				)
+			);
+		}
 	}
-
-	return serialize();
 }
 
 /**
