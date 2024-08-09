@@ -303,58 +303,7 @@ export function build_setter(node, context, fallback, prefix, options) {
 				}
 			}
 
-			const is_initial_proxy =
-				binding.initial !== null &&
-				should_proxy_or_freeze(/**@type {Expression}*/ (binding.initial), context.state.scope);
-			if ((binding.kind === 'prop' || binding.kind === 'bindable_prop') && !is_initial_proxy) {
-				return b.call(left, value);
-			} else if (is_store) {
-				return b.call('$.store_set', build_getter(b.id(left_name), state), value);
-			} else {
-				let call;
-				if (binding.kind === 'state') {
-					call = b.call(
-						'$.set',
-						b.id(left_name),
-						context.state.analysis.runes &&
-							!options?.skip_proxy_and_freeze &&
-							should_proxy_or_freeze(value, context.state.scope)
-							? build_proxy_reassignment(value, left_name)
-							: value
-					);
-				} else if (binding.kind === 'frozen_state') {
-					call = b.call(
-						'$.set',
-						b.id(left_name),
-						context.state.analysis.runes &&
-							!options?.skip_proxy_and_freeze &&
-							should_proxy_or_freeze(value, context.state.scope)
-							? b.call('$.freeze', value)
-							: value
-					);
-				} else if (
-					(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
-					is_initial_proxy
-				) {
-					call = b.call(
-						left,
-						context.state.analysis.runes &&
-							!options?.skip_proxy_and_freeze &&
-							should_proxy_or_freeze(value, context.state.scope) &&
-							binding.kind === 'bindable_prop'
-							? build_proxy_reassignment(value, left_name)
-							: value
-					);
-				} else {
-					call = b.call('$.set', b.id(left_name), value);
-				}
-
-				if (state.scope.get(`$${left.name}`)?.kind === 'store_sub') {
-					return b.call('$.store_unsub', call, b.literal(`$${left.name}`), b.id('$$stores'));
-				} else {
-					return call;
-				}
-			}
+			return node;
 		} else {
 			if (is_store) {
 				// If we are assigning to a store property, we need to ensure we don't
