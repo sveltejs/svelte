@@ -231,20 +231,6 @@ export function build_setter(node, context, fallback, prefix, options) {
 		return setter(node, context);
 	}
 
-	if (
-		binding.kind !== 'state' &&
-		binding.kind !== 'frozen_state' &&
-		binding.kind !== 'prop' &&
-		binding.kind !== 'bindable_prop' &&
-		binding.kind !== 'each' &&
-		binding.kind !== 'legacy_reactive' &&
-		binding.kind !== 'store_sub' &&
-		binding.kind !== 'derived'
-	) {
-		// TODO error if it's a computed (or rest prop)? or does that already happen elsewhere?
-		return fallback();
-	}
-
 	const transformers = Object.hasOwn(context.state.transformers, left.name)
 		? context.state.transformers[left.name]
 		: null;
@@ -317,6 +303,19 @@ export function build_setter(node, context, fallback, prefix, options) {
 			)
 		);
 	} else {
+		if (
+			binding.kind !== 'state' &&
+			binding.kind !== 'frozen_state' &&
+			binding.kind !== 'prop' &&
+			binding.kind !== 'bindable_prop' &&
+			binding.kind !== 'each' &&
+			binding.kind !== 'legacy_reactive' &&
+			binding.kind !== 'store_sub' &&
+			binding.kind !== 'derived'
+		) {
+			// TODO error if it's a computed (or rest prop)? or does that already happen elsewhere?
+			return fallback();
+		}
 		return maybe_skip_ownership_validation(
 			b.assignment(
 				node.operator,

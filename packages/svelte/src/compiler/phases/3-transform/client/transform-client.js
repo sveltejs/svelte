@@ -179,24 +179,18 @@ export function client_component(analysis, options) {
 
 		for (const [name, binding] of state.scope.declarations) {
 			// Very very dirty way of making import statements reactive in legacy mode if needed
+			// TODO move this into the Program visitor
 			if (binding.declaration_kind === 'import' && binding.mutated) {
+				const id = b.id('$$_import_' + name);
+
 				state.transformers[name] = {
-					read: (node) => b.call('$$_import_' + node.name)
+					read: (node) => b.call(id),
+					assign_property: (node, mutation) => {
+						return b.call(id, mutation);
+					}
 				};
 
-				state.setters[name] = (node, context) =>
-					b.call(
-						'$$_import_' + binding.node.name,
-						b.assignment(
-							node.operator,
-							/** @type {ESTree.Pattern} */ (context.visit(node.left)),
-							/** @type {ESTree.Expression} */ (context.visit(node.right))
-						)
-					);
-
-				legacy_reactive_imports.push(
-					b.var('$$_import_' + name, b.call('$.reactive_import', b.thunk(b.id(name))))
-				);
+				legacy_reactive_imports.push(b.var(id, b.call('$.reactive_import', b.thunk(b.id(name)))));
 			}
 		}
 	}
