@@ -179,9 +179,6 @@ export function EachBlock(node, context) {
 		const item_with_loc = with_loc(item, id);
 		return b.call('$.unwrap', item_with_loc);
 	};
-	child_state.transformers[item.name] = {
-		read: getter
-	};
 
 	if (node.index) {
 		child_state.transformers[node.index] = {
@@ -200,6 +197,10 @@ export function EachBlock(node, context) {
 	const declarations = [];
 
 	if (node.context.type === 'Identifier') {
+		child_state.transformers[item.name] = {
+			read: getter
+		};
+
 		child_state.setters[node.context.name] = create_mutation(
 			b.member(
 				each_node_meta.array_name ? b.call(each_node_meta.array_name) : collection,
