@@ -1,11 +1,10 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Property, Statement } from 'estree' */
-/** @import { Attribute, Component, SvelteComponent, SvelteSelf, TemplateNode, Text } from '#compiler' */
+/** @import { Component, SvelteComponent, SvelteSelf, TemplateNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { is_element_node } from '../../../../nodes.js';
-import { create_derived, build_setter } from '../../utils.js';
+import { create_derived } from '../../utils.js';
 import { build_bind_this, validate_binding } from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';

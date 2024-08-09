@@ -1,6 +1,6 @@
-/** @import { AssignmentExpression, BlockStatement, Expression, Identifier, MemberExpression, Pattern, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, Identifier, Pattern, Statement } from 'estree' */
 /** @import { Binding, EachBlock } from '#compiler' */
-/** @import { ComponentContext, Context } from '../types' */
+/** @import { ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
 import {
 	EACH_INDEX_REACTIVE,
@@ -13,7 +13,7 @@ import {
 import { dev } from '../../../../state.js';
 import { extract_paths, object } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
-import { get_assignment_value, build_getter, build_setter, with_loc } from '../utils.js';
+import { build_getter, with_loc } from '../utils.js';
 import { get_value } from './shared/declarations.js';
 
 /**
