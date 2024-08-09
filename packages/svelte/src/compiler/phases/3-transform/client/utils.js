@@ -231,18 +231,6 @@ export function build_setter(node, context, fallback, prefix, options) {
 		return setter(node, context);
 	}
 
-	/**
-	 * @param {any} serialized
-	 * @returns
-	 */
-	function maybe_skip_ownership_validation(serialized) {
-		if (is_ignored(node, 'ownership_invalid_mutation')) {
-			return b.call('$.skip_ownership_validation', b.thunk(serialized));
-		}
-
-		return serialized;
-	}
-
 	if (
 		binding.kind !== 'state' &&
 		binding.kind !== 'frozen_state' &&
@@ -292,6 +280,18 @@ export function build_setter(node, context, fallback, prefix, options) {
 
 		return transformers.assign(left, value);
 	}
+
+	/**
+	 * @param {any} serialized
+	 * @returns
+	 */
+	const maybe_skip_ownership_validation = (serialized) => {
+		if (is_ignored(node, 'ownership_invalid_mutation')) {
+			return b.call('$.skip_ownership_validation', b.thunk(serialized));
+		}
+
+		return serialized;
+	};
 
 	// mutation
 	if (transformers?.assign_property) {
