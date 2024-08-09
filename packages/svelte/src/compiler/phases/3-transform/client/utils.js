@@ -92,10 +92,9 @@ export function build_getter(node, state) {
  * @param {import('zimmerframe').Context<SvelteNode, State>} context
  * @param {() => any} fallback
  * @param {boolean | null} [prefix] - If the assignment is a transformed update expression, set this. Else `null`
- * @param {{skip_proxy_and_freeze?: boolean}} [options]
  * @returns {Expression}
  */
-export function build_setter(node, context, fallback, prefix, options) {
+export function build_setter(node, context, fallback, prefix) {
 	const { state, visit } = context;
 
 	const assignee = node.left;
@@ -119,7 +118,7 @@ export function build_setter(node, context, fallback, prefix, options) {
 			const value = path.expression?.(b.id(tmp_id));
 			const assignment = b.assignment('=', path.node, value);
 			original_assignments.push(assignment);
-			assignments.push(build_setter(assignment, context, () => assignment, prefix, options));
+			assignments.push(build_setter(assignment, context, () => assignment, prefix));
 		}
 
 		if (assignments.every((assignment, i) => assignment === original_assignments[i])) {
@@ -166,11 +165,7 @@ export function build_setter(node, context, fallback, prefix, options) {
 			if (private_state !== undefined) {
 				if (state.in_constructor) {
 					// See if we should wrap value in $.proxy
-					if (
-						context.state.analysis.runes &&
-						!options?.skip_proxy_and_freeze &&
-						should_proxy_or_freeze(value, context.state.scope)
-					) {
+					if (context.state.analysis.runes && should_proxy_or_freeze(value, context.state.scope)) {
 						const assignment = fallback();
 						if (assignment.type === 'AssignmentExpression') {
 							assignment.right =
@@ -184,9 +179,7 @@ export function build_setter(node, context, fallback, prefix, options) {
 					return b.call(
 						'$.set',
 						assignee,
-						context.state.analysis.runes &&
-							!options?.skip_proxy_and_freeze &&
-							should_proxy_or_freeze(value, context.state.scope)
+						context.state.analysis.runes && should_proxy_or_freeze(value, context.state.scope)
 							? private_state.kind === 'frozen_state'
 								? b.call('$.freeze', value)
 								: build_proxy_reassignment(value, private_state.id)
@@ -205,7 +198,6 @@ export function build_setter(node, context, fallback, prefix, options) {
 			if (
 				context.state.analysis.runes &&
 				public_state !== undefined &&
-				!options?.skip_proxy_and_freeze &&
 				should_proxy_or_freeze(value, context.state.scope)
 			) {
 				const assignment = fallback();
