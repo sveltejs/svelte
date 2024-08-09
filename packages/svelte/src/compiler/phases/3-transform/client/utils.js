@@ -261,12 +261,6 @@ export function build_setter(node, context, fallback, prefix, options) {
 		return transformers.assign(left, value);
 	}
 
-	if (Object.hasOwn(state.setters, left.name)) {
-		const setter = state.setters[left.name];
-		// @ts-expect-error
-		return setter(node, context);
-	}
-
 	/**
 	 * @param {any} serialized
 	 * @returns

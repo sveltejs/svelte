@@ -40,13 +40,6 @@ export interface ClientTransformState extends TransformState {
 			update_property?: (id: Identifier) => Expression;
 		}
 	>;
-	/**
-	 * Counterpart to `getters`
-	 */
-	readonly setters: Record<
-		string,
-		(assignment: AssignmentExpression, context: Context) => Expression
-	>;
 }
 
 export interface ComponentClientTransformState extends ClientTransformState {

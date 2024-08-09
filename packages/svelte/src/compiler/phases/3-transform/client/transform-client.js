@@ -157,7 +157,6 @@ export function client_component(analysis, options) {
 		public_state: new Map(),
 		private_state: new Map(),
 		transformers: {},
-		setters: {},
 		in_constructor: false,
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
@@ -668,7 +667,6 @@ export function client_module(analysis, options) {
 		public_state: new Map(),
 		private_state: new Map(),
 		transformers: {},
-		setters: {},
 		in_constructor: false
 	};
 

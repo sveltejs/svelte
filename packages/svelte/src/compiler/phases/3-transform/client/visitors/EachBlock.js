@@ -129,46 +129,6 @@ export function EachBlock(node, context) {
 		transformers: { ...context.state.transformers }
 	};
 
-	/**
-	 * @param {Pattern} expression_for_id
-	 * @returns {(assignment: AssignmentExpression, context: Context) => Expression}
-	 */
-	const create_mutation = (expression_for_id) => {
-		return (assignment, context) => {
-			if (assignment.left.type !== 'Identifier' && assignment.left.type !== 'MemberExpression') {
-				// build_setter turns other patterns into IIFEs and separates the assignments
-				// into separate expressions, at which point this is called again with an identifier or member expression
-				return build_setter(assignment, context, () => assignment);
-			}
-
-			const left = object(assignment.left);
-			const value = get_assignment_value(assignment, context);
-			const invalidate = b.call(
-				'$.invalidate_inner_signals',
-				b.thunk(b.sequence(indirect_dependencies))
-			);
-			const invalidate_store = store_to_invalidate
-				? b.call('$.invalidate_store', b.id('$$stores'), b.literal(store_to_invalidate))
-				: undefined;
-
-			const sequence = [];
-			if (!context.state.analysis.runes) sequence.push(invalidate);
-			if (invalidate_store) sequence.push(invalidate_store);
-
-			if (left === assignment.left) {
-				const assign = b.assignment('=', expression_for_id, value);
-				sequence.unshift(assign);
-				return b.sequence(sequence);
-			} else {
-				const original_left = /** @type {MemberExpression} */ (assignment.left);
-				const left = /** @type {Pattern} */ (context.visit(original_left));
-				const assign = b.assignment(assignment.operator, left, value);
-				sequence.unshift(assign);
-				return b.sequence(sequence);
-			}
-		};
-	};
-
 	// We need to generate a unique identifier in case there's a bind:group below
 	// which needs a reference to the index
 	const index =
@@ -243,10 +203,18 @@ export function EachBlock(node, context) {
 			declarations.push(b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn));
 
 			const read = needs_derived ? get_value : b.call;
-			child_state.transformers[name] = { read };
-			child_state.setters[name] = create_mutation(
-				/** @type {Pattern} */ (path.update_expression(unwrapped))
-			);
+
+			child_state.transformers[name] = {
+				read,
+				assign: (node, value) => {
+					const left = /** @type {Pattern} */ (path.update_expression(unwrapped));
+					return b.sequence([b.assignment('=', left, value), ...sequence]);
+				},
+				assign_property: (node, mutation) => {
+					return b.sequence([mutation, ...sequence]);
+				}
+				// TODO update (`item++`) and update_property — these were unaccounted for previously
+			};
 
 			// we need to eagerly evaluate the expression in order to hit any
 			// 'Cannot access x before initialization' errors
