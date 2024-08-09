@@ -1,7 +1,7 @@
 import { createClassComponent } from '../../../../legacy/legacy-client.js';
 import { destroy_effect, render_effect } from '../../reactivity/effects.js';
 import { append } from '../template.js';
-import { define_property, object_keys } from '../../../shared/utils.js';
+import { define_property, get_descriptor, object_keys } from '../../../shared/utils.js';
 
 /**
  * @typedef {Object} CustomElementPropDefinition
@@ -305,7 +305,18 @@ export function create_custom_element(
 			set(value) {
 				value = get_custom_element_value(prop, value, props_definition);
 				this.$$d[prop] = value;
-				this.$$c?.$set({ [prop]: value });
+				var component = this.$$c;
+
+				if (component) {
+					// // If the instance has an accessor, use that instead
+					var setter = get_descriptor(component, prop)?.get;
+
+					if (setter) {
+						component[prop] = value;
+					} else {
+						component.$set({ [prop]: value });
+					}
+				}
 			}
 		});
 	});
