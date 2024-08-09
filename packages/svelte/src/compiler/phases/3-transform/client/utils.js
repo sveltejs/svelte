@@ -316,7 +316,7 @@ export function build_setter(node, context, fallback, prefix, options) {
 					/** @type {Expression} */ (context.visit(node.right))
 				);
 
-				return transformers.assign_property(left, mutation);
+				return maybe_skip_ownership_validation(transformers.assign_property(left, mutation));
 			}
 
 			if (is_store) {
