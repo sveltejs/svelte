@@ -225,6 +225,7 @@ export function EachBlock(node, context) {
 			assign_property: (node, mutation) => {
 				return b.sequence([mutation, ...sequence]);
 			}
+			// TODO update (`item++`) and update_property — these were unaccounted for previously
 		};
 
 		child_state.setters[node.context.name] = create_mutation(
@@ -234,8 +235,6 @@ export function EachBlock(node, context) {
 				true
 			)
 		);
-
-		// TODO handle `item++` (currently we don't invalidate inner signals)
 
 		delete key_state.transformers[node.context.name];
 	} else {
