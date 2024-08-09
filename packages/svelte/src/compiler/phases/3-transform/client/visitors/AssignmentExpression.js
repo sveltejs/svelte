@@ -84,17 +84,20 @@ export function build_setter(node, context, fallback) {
 	const assignee = /** @type {Identifier | MemberExpression} */ (node.left);
 
 	// Handle class private/public state assignment cases
-	if (assignee.type === 'MemberExpression') {
-		if (
-			assignee.object.type === 'ThisExpression' &&
-			assignee.property.type === 'PrivateIdentifier'
-		) {
+	if (
+		context.state.analysis.runes &&
+		assignee.type === 'MemberExpression' &&
+		assignee.object.type === 'ThisExpression'
+	) {
+		if (assignee.property.type === 'PrivateIdentifier') {
 			const private_state = context.state.private_state.get(assignee.property.name);
-			const value = get_assignment_value(node, context);
+
 			if (private_state !== undefined) {
+				const value = get_assignment_value(node, context);
+
 				if (state.in_constructor) {
 					// See if we should wrap value in $.proxy
-					if (context.state.analysis.runes && should_proxy_or_freeze(value, context.state.scope)) {
+					if (should_proxy_or_freeze(value, context.state.scope)) {
 						const assignment = fallback();
 						if (assignment.type === 'AssignmentExpression') {
 							assignment.right =
@@ -108,7 +111,7 @@ export function build_setter(node, context, fallback) {
 					return b.call(
 						'$.set',
 						assignee,
-						context.state.analysis.runes && should_proxy_or_freeze(value, context.state.scope)
+						should_proxy_or_freeze(value, context.state.scope)
 							? private_state.kind === 'frozen_state'
 								? b.call('$.freeze', value)
 								: build_proxy_reassignment(value, private_state.id)
@@ -116,19 +119,12 @@ export function build_setter(node, context, fallback) {
 					);
 				}
 			}
-		} else if (
-			assignee.object.type === 'ThisExpression' &&
-			assignee.property.type === 'Identifier' &&
-			state.in_constructor
-		) {
+		} else if (assignee.property.type === 'Identifier' && state.in_constructor) {
 			const public_state = context.state.public_state.get(assignee.property.name);
 			const value = get_assignment_value(node, context);
+
 			// See if we should wrap value in $.proxy
-			if (
-				context.state.analysis.runes &&
-				public_state !== undefined &&
-				should_proxy_or_freeze(value, context.state.scope)
-			) {
+			if (public_state !== undefined && should_proxy_or_freeze(value, context.state.scope)) {
 				const assignment = fallback();
 				if (assignment.type === 'AssignmentExpression') {
 					assignment.right =
