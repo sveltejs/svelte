@@ -228,14 +228,6 @@ export function EachBlock(node, context) {
 			// TODO update (`item++`) and update_property — these were unaccounted for previously
 		};
 
-		child_state.setters[node.context.name] = create_mutation(
-			b.member(
-				each_node_meta.array_name ? b.call(each_node_meta.array_name) : collection,
-				index,
-				true
-			)
-		);
-
 		delete key_state.transformers[node.context.name];
 	} else {
 		const unwrapped = getter(binding.node);

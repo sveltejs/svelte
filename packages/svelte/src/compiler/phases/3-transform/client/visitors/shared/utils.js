@@ -169,7 +169,14 @@ export function build_bind_this(expression, value, { state, visit }) {
 				if (owner.type === 'EachBlock' && scope === binding.scope) {
 					ids.push(node);
 					values.push(/** @type {Expression} */ (visit(node)));
-					delete transformers[node.name];
+
+					if (transformers[node.name]) {
+						transformers[node.name] = {
+							...transformers[node.name],
+							read: (node) => node
+						};
+					}
+
 					break;
 				}
 			}
