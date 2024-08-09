@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, BinaryOperator, Expression, Pattern } from 'estree' */
+/** @import { AssignmentExpression, BinaryOperator, Expression, Identifier, MemberExpression, Pattern } from 'estree' */
 /** @import { SvelteNode } from '#compiler' */
 /** @import { ClientTransformState, Context } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
@@ -11,19 +11,6 @@ import { build_getter, build_proxy_reassignment, should_proxy_or_freeze } from '
  * @param {Context} context
  */
 export function AssignmentExpression(node, context) {
-	return build_setter(node, context, context.next);
-}
-
-/**
- * @template {ClientTransformState} State
- * @param {AssignmentExpression} node
- * @param {import('zimmerframe').Context<SvelteNode, State>} context
- * @param {() => any} fallback
- * @returns {Expression}
- */
-export function build_setter(node, context, fallback) {
-	const { state, visit } = context;
-
 	const assignee = node.left;
 	if (
 		assignee.type === 'ArrayPattern' ||
@@ -50,10 +37,10 @@ export function build_setter(node, context, fallback) {
 
 		if (assignments.every((assignment, i) => assignment === original_assignments[i])) {
 			// No change to output -> nothing to transform -> we can keep the original assignment
-			return fallback();
+			return;
 		}
 
-		const rhs_expression = /** @type {Expression} */ (visit(node.right));
+		const rhs_expression = /** @type {Expression} */ (context.visit(node.right));
 
 		const iife_is_async =
 			is_expression_async(rhs_expression) ||
@@ -80,6 +67,21 @@ export function build_setter(node, context, fallback) {
 	if (assignee.type !== 'Identifier' && assignee.type !== 'MemberExpression') {
 		throw new Error(`Unexpected assignment type ${assignee.type}`);
 	}
+
+	return build_setter(node, context, context.next);
+}
+
+/**
+ * @template {ClientTransformState} State
+ * @param {AssignmentExpression} node
+ * @param {import('zimmerframe').Context<SvelteNode, State>} context
+ * @param {() => any} fallback
+ * @returns {Expression}
+ */
+export function build_setter(node, context, fallback) {
+	const { state, visit } = context;
+
+	const assignee = /** @type {Identifier | MemberExpression} */ (node.left);
 
 	// Handle class private/public state assignment cases
 	if (assignee.type === 'MemberExpression') {
