@@ -33,6 +33,13 @@ export function add_state_transformers(context) {
 
 					return call;
 				},
+				assign_property: (node, mutation) => {
+					if (context.state.analysis.runes) {
+						return mutation;
+					}
+
+					return b.call('$.mutate', node, mutation);
+				},
 				update: (node) => {
 					return b.call(
 						node.prefix ? '$.update_pre' : '$.update',

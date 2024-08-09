@@ -309,6 +309,16 @@ export function build_setter(node, context, fallback, prefix, options) {
 
 			return node;
 		} else {
+			if (transformers?.assign_property) {
+				const mutation = b.assignment(
+					node.operator,
+					/** @type {Pattern} */ (context.visit(node.left)),
+					/** @type {Expression} */ (context.visit(node.right))
+				);
+
+				return transformers.assign_property(left, mutation);
+			}
+
 			if (is_store) {
 				// If we are assigning to a store property, we need to ensure we don't
 				// capture the read for the store as part of the member expression to
