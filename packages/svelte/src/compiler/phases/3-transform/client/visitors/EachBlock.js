@@ -196,9 +196,35 @@ export function EachBlock(node, context) {
 	/** @type {Statement[]} */
 	const declarations = [];
 
+	const invalidate = b.call(
+		'$.invalidate_inner_signals',
+		b.thunk(b.sequence(indirect_dependencies))
+	);
+
+	const invalidate_store = store_to_invalidate
+		? b.call('$.invalidate_store', b.id('$$stores'), b.literal(store_to_invalidate))
+		: undefined;
+
+	/** @type {Expression[]} */
+	const sequence = [];
+	if (!context.state.analysis.runes) sequence.push(invalidate);
+	if (invalidate_store) sequence.push(invalidate_store);
+
 	if (node.context.type === 'Identifier') {
 		child_state.transformers[item.name] = {
-			read: getter
+			read: getter,
+			assign: (node, value) => {
+				const left = b.member(
+					each_node_meta.array_name ? b.call(each_node_meta.array_name) : collection,
+					index,
+					true
+				);
+
+				return b.sequence([b.assignment('=', left, value), ...sequence]);
+			},
+			assign_property: (node, mutation) => {
+				return b.sequence([mutation, ...sequence]);
+			}
 		};
 
 		child_state.setters[node.context.name] = create_mutation(

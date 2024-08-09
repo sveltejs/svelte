@@ -225,12 +225,6 @@ export function build_setter(node, context, fallback, prefix, options) {
 	const binding = left && state.scope.get(left.name);
 	if (!binding) return fallback();
 
-	if (Object.hasOwn(state.setters, left.name)) {
-		const setter = state.setters[left.name];
-		// @ts-expect-error
-		return setter(node, context);
-	}
-
 	const transformers = Object.hasOwn(context.state.transformers, left.name)
 		? context.state.transformers[left.name]
 		: null;
@@ -265,6 +259,12 @@ export function build_setter(node, context, fallback, prefix, options) {
 		}
 
 		return transformers.assign(left, value);
+	}
+
+	if (Object.hasOwn(state.setters, left.name)) {
+		const setter = state.setters[left.name];
+		// @ts-expect-error
+		return setter(node, context);
 	}
 
 	/**
