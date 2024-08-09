@@ -38,18 +38,10 @@ export function BindDirective(node, context) {
 	}
 
 	const getter = b.thunk(/** @type {Expression} */ (context.visit(expression)));
-	const assignment = b.assignment('=', expression, b.id('$$value'));
+
 	const setter = b.arrow(
 		[b.id('$$value')],
-		build_setter(
-			assignment,
-			context,
-			() => /** @type {Expression} */ (context.visit(assignment)),
-			null,
-			{
-				skip_proxy_and_freeze: true
-			}
-		)
+		/** @type {Expression} */ (context.visit(b.assignment('=', expression, b.id('$$value'))))
 	);
 
 	/** @type {CallExpression} */

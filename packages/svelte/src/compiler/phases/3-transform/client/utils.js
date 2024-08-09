@@ -286,8 +286,12 @@ export function build_setter(node, context, fallback, prefix, options) {
 						);
 					}
 
+					// special case — if an element binding, we know it's a primitive
+					const path = context.path.map((node) => node.type);
+					const is_primitive = path.at(-1) === 'BindDirective' && path.at(-2) === 'RegularElement';
+
 					if (
-						!options?.skip_proxy_and_freeze &&
+						!is_primitive &&
 						binding.kind !== 'prop' &&
 						context.state.analysis.runes &&
 						should_proxy_or_freeze(value, context.state.scope)
