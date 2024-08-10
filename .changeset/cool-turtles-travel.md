@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure Svelte4Components do not sync flush
+fix: ensure custom elements do not sync flush on mount
