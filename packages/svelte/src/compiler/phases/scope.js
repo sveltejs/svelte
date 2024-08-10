@@ -303,7 +303,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			default: context.state.scope.child()
 		};
 
-		const default_state = !!determine_slot(node)
+		const default_state = determine_slot(node)
 			? context.state
 			: { scope: node.metadata.scopes.default };
 

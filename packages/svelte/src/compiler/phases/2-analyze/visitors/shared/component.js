@@ -64,7 +64,7 @@ export function visit_component(node, context) {
 	// If the component has a slot attribute — `<Foo slot="whatever" .../>` —
 	// then `let:` directives apply to other attributes, instead of just the
 	// top-level contents of the component. Yes, this is very weird.
-	const default_state = !!determine_slot(node)
+	const default_state = determine_slot(node)
 		? context.state
 		: { ...context.state, scope: node.metadata.scopes.default };
 
