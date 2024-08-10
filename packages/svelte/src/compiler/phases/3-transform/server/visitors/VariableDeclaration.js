@@ -115,7 +115,7 @@ export function VariableDeclaration(node, context) {
 				if (declarator.init) {
 					const default_value = /** @type {Expression} */ (context.visit(declarator.init));
 					init = is_expression_async(default_value)
-						? b.await(b.call('$.value_or_fallback_async', prop, b.thunk(default_value, true)))
+						? b.await(b.call('$.value_or_fallback', prop, b.thunk(default_value, true)))
 						: b.call('$.value_or_fallback', prop, b.thunk(default_value));
 				}
 

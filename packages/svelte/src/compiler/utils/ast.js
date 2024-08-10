@@ -370,9 +370,7 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 			/** @type {DestructuredAssignment['expression']} */
 			const fallback_expression = (object) =>
 				is_expression_async(param.right)
-					? b.await(
-							b.call('$.value_or_fallback_async', expression(object), b.thunk(param.right, true))
-						)
+					? b.await(b.call('$.value_or_fallback', expression(object), b.thunk(param.right, true)))
 					: b.call('$.value_or_fallback', expression(object), b.thunk(param.right));
 
 			if (param.left.type === 'Identifier') {

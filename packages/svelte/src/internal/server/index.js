@@ -516,7 +516,7 @@ export { push_element, pop_element } from './dev.js';
 
 export { snapshot } from '../shared/clone.js';
 
-export { value_or_fallback, value_or_fallback_async } from '../shared/utils.js';
+export { value_or_fallback } from '../shared/utils.js';
 
 export {
 	invalid_default_snippet,
