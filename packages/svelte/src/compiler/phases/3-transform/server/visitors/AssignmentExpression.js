@@ -2,7 +2,7 @@
 /** @import { SvelteNode } from '#compiler' */
 /** @import { Context, ServerTransformState } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
-import { extract_paths } from '../../../../utils/ast.js';
+import { build_assignment_value, extract_paths } from '../../../../utils/ast.js';
 import { build_getter } from './shared/utils.js';
 
 /**
@@ -81,16 +81,9 @@ function build_assignment(operator, left, right, context) {
 	}
 
 	if (object === left) {
-		let value = /** @type {Expression} */ (context.visit(right));
-
-		if (operator !== '=') {
-			// turn `x += 1` into `x = x + 1`
-			value = b.binary(
-				/** @type {BinaryOperator} */ (operator.slice(0, -1)),
-				build_getter(left, context.state),
-				value
-			);
-		}
+		let value = /** @type {Expression} */ (
+			context.visit(build_assignment_value(operator, left, right))
+		);
 
 		return b.call('$.store_set', b.id(name), value);
 	}

@@ -2,7 +2,11 @@
 /** @import { SvelteNode } from '#compiler' */
 /** @import { ClientTransformState, Context } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
-import { extract_paths, is_expression_async } from '../../../../utils/ast.js';
+import {
+	build_assignment_value,
+	extract_paths,
+	is_expression_async
+} from '../../../../utils/ast.js';
 import { is_ignored } from '../../../../state.js';
 import { build_proxy_reassignment, should_proxy_or_freeze } from '../utils.js';
 
@@ -87,7 +91,9 @@ export function build_assignment(operator, left, right, context) {
 			const private_state = context.state.private_state.get(left.property.name);
 
 			if (private_state !== undefined) {
-				let value = get_assignment_value(operator, left, right, context);
+				let value = /** @type {Expression} */ (
+					context.visit(build_assignment_value(operator, left, right))
+				);
 				let transformed = false;
 
 				if (should_proxy_or_freeze(value, context.state.scope)) {
@@ -143,7 +149,9 @@ export function build_assignment(operator, left, right, context) {
 
 	// reassignment
 	if (object === left && transform?.assign) {
-		let value = get_assignment_value(operator, left, right, context);
+		let value = /** @type {Expression} */ (
+			context.visit(build_assignment_value(operator, left, right))
+		);
 
 		// special case — if an element binding, we know it's a primitive
 		const path = context.path.map((node) => node.type);
@@ -179,22 +187,4 @@ export function build_assignment(operator, left, right, context) {
 	return is_ignored(left, 'ownership_invalid_mutation')
 		? b.call('$.skip_ownership_validation', b.thunk(mutation))
 		: mutation;
-}
-
-/**
- * @template {ClientTransformState} State
- * @param {AssignmentOperator} operator
- * @param {Pattern} left
- * @param {Expression} right
- * @param {import('zimmerframe').Context<SvelteNode, State>} context
- */
-function get_assignment_value(operator, left, right, { visit }) {
-	return operator === '='
-		? /** @type {Expression} */ (visit(right))
-		: // turn something like x += 1 into x = x + 1
-			b.binary(
-				/** @type {BinaryOperator} */ (operator.slice(0, -1)),
-				/** @type {Expression} */ (visit(left)),
-				/** @type {Expression} */ (visit(right))
-			);
 }
