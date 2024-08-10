@@ -17,27 +17,22 @@ export function AssignmentExpression(node, context) {
 		assignee.type === 'ObjectPattern' ||
 		assignee.type === 'RestElement'
 	) {
-		// Turn assignment into an IIFE, so that `$.set` calls etc don't produce invalid code
-		const tmp_id = context.state.scope.generate('tmp');
+		const rhs = b.id('$$value');
 
-		/** @type {AssignmentExpression[]} */
-		const original_assignments = [];
+		let changed = false;
 
-		/** @type {Expression[]} */
-		const assignments = [];
+		const assignments = extract_paths(node.left).map((path) => {
+			const value = path.expression?.(rhs);
 
-		const paths = extract_paths(assignee);
+			let assignment = build_assignment('=', path.node, value, context);
+			if (assignment !== null) changed = true;
 
-		for (const path of paths) {
-			const value = path.expression?.(b.id(tmp_id));
-			const assignment = b.assignment('=', path.node, value);
-			original_assignments.push(assignment);
-			assignments.push(build_assignment('=', path.node, value, context, () => assignment));
-		}
+			return assignment ?? /** @type {Expression} */ (context.next());
+		});
 
-		if (assignments.every((assignment, i) => assignment === original_assignments[i])) {
+		if (!changed) {
 			// No change to output -> nothing to transform -> we can keep the original assignment
-			return;
+			return context.next();
 		}
 
 		const rhs_expression = /** @type {Expression} */ (context.visit(node.right));
@@ -49,11 +44,11 @@ export function AssignmentExpression(node, context) {
 		const iife = b.arrow(
 			[],
 			b.block([
-				b.const(tmp_id, rhs_expression),
+				b.const(rhs, rhs_expression),
 				b.stmt(b.sequence(assignments)),
 				// return because it could be used in a nested expression where the value is needed.
 				// example: { foo: ({ bar } = { bar: 1 })}
-				b.return(b.id(tmp_id))
+				b.return(rhs)
 			])
 		);
 
@@ -68,7 +63,10 @@ export function AssignmentExpression(node, context) {
 		throw new Error(`Unexpected assignment type ${assignee.type}`);
 	}
 
-	return build_assignment(node.operator, node.left, node.right, context, context.next);
+	return (
+		build_assignment(node.operator, node.left, node.right, context) ??
+		/** @type {Expression} */ (context.next())
+	);
 }
 
 /**
@@ -77,10 +75,9 @@ export function AssignmentExpression(node, context) {
  * @param {Pattern} left
  * @param {Expression} right
  * @param {import('zimmerframe').Context<SvelteNode, State>} context
- * @param {() => any} fallback
- * @returns {Expression}
+ * @returns {Expression | null}
  */
-export function build_assignment(operator, left, right, context, fallback) {
+export function build_assignment(operator, left, right, context) {
 	const assignee = /** @type {Identifier | MemberExpression} */ (left);
 
 	// Handle class private/public state assignment cases
@@ -136,11 +133,11 @@ export function build_assignment(operator, left, right, context, fallback) {
 	}
 
 	if (object.type !== 'Identifier') {
-		return fallback();
+		return null;
 	}
 
 	const binding = context.state.scope.get(object.name);
-	if (!binding) return fallback();
+	if (!binding) return null;
 
 	const transform = Object.hasOwn(context.state.transform, object.name)
 		? context.state.transform[object.name]
