@@ -61,17 +61,12 @@ export function visit_component(node, context) {
 		}
 	}
 
-	const component_slots = new Set();
-
 	// If the component has a slot attribute — `<Foo slot="whatever" .../>` —
 	// then `let:` directives apply to other attributes, instead of just the
 	// top-level contents of the component. Yes, this is very weird.
 	const default_state = !!determine_slot(node)
 		? context.state
-		: {
-				...context.state,
-				scope: node.metadata.scopes.default
-			};
+		: { ...context.state, scope: node.metadata.scopes.default };
 
 	for (const attribute of node.attributes) {
 		context.visit(attribute, attribute.type === 'LetDirective' ? default_state : context.state);
@@ -95,15 +90,16 @@ export function visit_component(node, context) {
 		comments = [];
 	}
 
+	const component_slots = new Set();
+
 	for (const slot_name in nodes) {
-		context.visit(
-			{ ...node.fragment, nodes: nodes[slot_name] },
-			{
-				...context.state,
-				scope: node.metadata.scopes[slot_name],
-				parent_element: null,
-				component_slots
-			}
-		);
+		const state = {
+			...context.state,
+			scope: node.metadata.scopes[slot_name],
+			parent_element: null,
+			component_slots
+		};
+
+		context.visit({ ...node.fragment, nodes: nodes[slot_name] }, state);
 	}
 }
