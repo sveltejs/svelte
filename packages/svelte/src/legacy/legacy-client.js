@@ -110,7 +110,6 @@ class Svelte4Component {
 			recover: options.recover
 		});
 
-
 		this.#events = props.$$events;
 
 		for (const key of Object.keys(this.#instance)) {
