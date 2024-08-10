@@ -172,7 +172,7 @@ export function VariableDeclaration(node, context) {
 					);
 				} else {
 					const bindings = extract_paths(declarator.id);
-					const object_id = context.state.scope.generate('derived_object');
+					const object_id = context.state.scope.generate('$$d');
 
 					declarations.push(
 						b.declarator(
