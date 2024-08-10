@@ -120,16 +120,14 @@ export function build_setter(node, context, fallback) {
 			const public_state = context.state.public_state.get(assignee.property.name);
 			const value = get_assignment_value(node, context);
 
-			// See if we should wrap value in $.proxy
 			if (public_state !== undefined && should_proxy_or_freeze(value, context.state.scope)) {
-				const assignment = fallback();
-				if (assignment.type === 'AssignmentExpression') {
-					assignment.right =
-						public_state.kind === 'frozen_state'
-							? b.call('$.freeze', value)
-							: build_proxy_reassignment(value, public_state.id);
-					return assignment;
-				}
+				return b.assignment(
+					node.operator,
+					/** @type {Pattern} */ (context.visit(node.left)),
+					public_state.kind === 'frozen_state'
+						? b.call('$.freeze', value)
+						: build_proxy_reassignment(value, public_state.id)
+				);
 			}
 		}
 	}
