@@ -639,7 +639,6 @@ export function client_module(analysis, options) {
 		options,
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
-		legacy_reactive_statements: new Map(),
 		public_state: new Map(),
 		private_state: new Map(),
 		transform: {},
