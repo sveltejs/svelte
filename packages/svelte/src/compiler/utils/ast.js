@@ -280,8 +280,10 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 							if (p.type === 'Property' && p.key.type !== 'PrivateIdentifier') {
 								if (p.key.type === 'Identifier' && !p.computed) {
 									props.push(b.literal(p.key.name));
+								} else if (p.key.type === 'Literal') {
+									props.push(b.literal(String(p.key.value)));
 								} else {
-									props.push(p.key);
+									props.push(b.call('String', p.key));
 								}
 							}
 						}

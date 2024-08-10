@@ -995,7 +995,7 @@ export function exclude_from_object(obj, keys) {
 	let res = {};
 	for (let key in obj) {
 		// Use == because keys could be numbers, and iterating turns them into strings
-		if (keys.find((k) => k == key)) continue;
+		if (keys.find((k) => k === key)) continue;
 		res[key] = obj[key];
 	}
 	return res;
