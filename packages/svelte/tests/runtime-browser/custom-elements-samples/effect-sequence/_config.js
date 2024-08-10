@@ -5,21 +5,15 @@ export default test({
 	async test({ assert, target }) {
 		let changed = false;
 
-		target.innerHTML = '<div id="root"><child-element></child-element></div>';
-		const root = target.querySelector('#root');
+		target.innerHTML = '<child-element></child-element>';
 
-		// Let the custom-elements load
-		await tick();
-
-		// Add `change` listener
-		root.addEventListener('change', () => {
+		target.addEventListener('change', () => {
 			changed = true;
 		});
 
-		// Let $effect flush
-		await tick();
+		await tick(); // wait for element to upgrade
+		await tick(); // wait for effect
 
-		// the `change` event should have been captured
 		assert.equal(changed, true);
 	}
 });
