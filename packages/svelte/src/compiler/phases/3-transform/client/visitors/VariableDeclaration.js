@@ -172,21 +172,28 @@ export function VariableDeclaration(node, context) {
 					);
 				} else {
 					const bindings = extract_paths(declarator.id);
-					const object_id = context.state.scope.generate('$$d');
 
-					declarations.push(
-						b.declarator(
-							b.id(object_id),
-							b.call('$.derived', rune === '$derived.by' ? value : b.thunk(value))
-						)
-					);
+					const init = /** @type {CallExpression} */ (declarator.init);
+
+					/** @type {Identifier} */
+					let id;
+					let rhs = value;
+
+					if (init.arguments[0].type === 'Identifier') {
+						id = init.arguments[0];
+					} else {
+						id = b.id(context.state.scope.generate('$$d'));
+						rhs = b.call('$.get', id);
+
+						declarations.push(
+							b.declarator(id, b.call('$.derived', rune === '$derived.by' ? value : b.thunk(value)))
+						);
+					}
+
 					for (let i = 0; i < bindings.length; i++) {
 						const binding = bindings[i];
 						declarations.push(
-							b.declarator(
-								binding.node,
-								b.call('$.derived', b.thunk(binding.expression(b.call('$.get', b.id(object_id)))))
-							)
+							b.declarator(binding.node, b.call('$.derived', b.thunk(binding.expression(rhs))))
 						);
 					}
 				}
