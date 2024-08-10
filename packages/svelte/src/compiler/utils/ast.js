@@ -551,7 +551,15 @@ export function is_expression_async(expression) {
  * @param {ESTree.Expression} fallback
  */
 export function build_fallback(expression, fallback) {
+	if (is_simple_expression(fallback)) {
+		return b.call('$.fallback', expression, fallback);
+	}
+
+	if (fallback.type === 'AwaitExpression' && is_simple_expression(fallback.argument)) {
+		return b.await(b.call('$.fallback', expression, fallback.argument));
+	}
+
 	return is_expression_async(fallback)
-		? b.await(b.call('$.fallback', expression, b.thunk(fallback, true)))
-		: b.call('$.fallback', expression, b.thunk(fallback));
+		? b.await(b.call('$.fallback', expression, b.thunk(fallback, true), b.true))
+		: b.call('$.fallback', expression, b.thunk(fallback), b.true);
 }
