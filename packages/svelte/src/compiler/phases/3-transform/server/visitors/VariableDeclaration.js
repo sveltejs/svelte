@@ -96,7 +96,7 @@ export function VariableDeclaration(node, context) {
 						const name = /** @type {Identifier} */ (path.node).name;
 						const binding = /** @type {Binding} */ (context.state.scope.get(name));
 						const prop = b.member(b.id('$$props'), b.literal(binding.prop_alias ?? name), true);
-						declarations.push(b.declarator(path.node, b.call('$.fallback', prop, b.thunk(value))));
+						declarations.push(b.declarator(path.node, build_fallback(prop, value)));
 					}
 					continue;
 				}
