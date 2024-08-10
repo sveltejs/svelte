@@ -1,4 +1,4 @@
-import { queue_micro_task } from './task';
+import { queue_micro_task } from './task.js';
 
 /**
  * @param {Node} anchor
