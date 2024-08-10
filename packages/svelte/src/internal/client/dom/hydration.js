@@ -30,21 +30,38 @@ export let hydrate_node;
 
 /** @param {TemplateNode} node */
 export function set_hydrate_node(node) {
+	if (node === null) {
+		w.hydration_mismatch();
+		throw HYDRATION_ERROR;
+	}
+
 	return (hydrate_node = node);
 }
 
 export function hydrate_next() {
-	if (hydrate_node === null) {
-		w.hydration_mismatch();
-		throw HYDRATION_ERROR;
-	}
-	return (hydrate_node = /** @type {TemplateNode} */ (hydrate_node.nextSibling));
+	return set_hydrate_node(/** @type {TemplateNode} */ (hydrate_node.nextSibling));
 }
 
 /** @param {TemplateNode} node */
 export function reset(node) {
+	if (!hydrating) return;
+
+	// If the node has remaining siblings, something has gone wrong
+	if (hydrate_node.nextSibling !== null) {
+		w.hydration_mismatch();
+		throw HYDRATION_ERROR;
+	}
+
+	hydrate_node = node;
+}
+
+/**
+ * @param {HTMLTemplateElement} template
+ */
+export function hydrate_template(template) {
 	if (hydrating) {
-		hydrate_node = node;
+		// @ts-expect-error TemplateNode doesn't include DocumentFragment, but it's actually fine
+		hydrate_node = template.content;
 	}
 }
 
