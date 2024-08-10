@@ -30,32 +30,30 @@ export let hydrate_node;
 
 /** @param {TemplateNode} node */
 export function set_hydrate_node(node) {
+	if (node === null) {
+		w.hydration_mismatch();
+		throw HYDRATION_ERROR;
+	}
+
 	return (hydrate_node = node);
 }
 
 export function hydrate_next() {
-	if (hydrate_node === null) {
-		w.hydration_mismatch();
-		throw HYDRATION_ERROR;
-	}
-	return (hydrate_node = /** @type {TemplateNode} */ (hydrate_node.nextSibling));
+	return set_hydrate_node(/** @type {TemplateNode} */ (hydrate_node.nextSibling));
 }
 
 /** @param {TemplateNode} node */
 export function reset(node) {
-	if (hydrating) {
-		// If we are resetting back to a parent, then we should be at the end of the current parent
-		// and thus have no more siblings to hydrate (except if we're inside a template).
-		if (
-			hydrate_node !== null &&
-			hydrate_node.nextSibling !== null &&
-			hydrate_node.nodeName !== 'TEMPLATE'
-		) {
-			w.hydration_mismatch();
-			throw HYDRATION_ERROR;
-		}
-		hydrate_node = node;
+	if (!hydrating) return;
+
+	// If we are resetting back to a parent, then we should be at the end of the current parent
+	// and thus have no more siblings to hydrate (except if we're inside a template).
+	if (hydrate_node.nextSibling !== null && hydrate_node.nodeName !== 'TEMPLATE') {
+		w.hydration_mismatch();
+		throw HYDRATION_ERROR;
 	}
+
+	hydrate_node = node;
 }
 
 export function next() {
