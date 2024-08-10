@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.211
+
+### Patch Changes
+
+- fix: improve prop binding warning validation for stores ([#12745](https://github.com/sveltejs/svelte/pull/12745))
+
+- chore: add error for derived self referencing ([#12746](https://github.com/sveltejs/svelte/pull/12746))
+
+- fix: skip `is_standalone` optimisation for dynamic components ([#12767](https://github.com/sveltejs/svelte/pull/12767))
+
+- fix: ensure unowned deriveds correctly update ([#12747](https://github.com/sveltejs/svelte/pull/12747))
+
+- fix: order of arguments for `push_element` in `svelte:element` ([#12763](https://github.com/sveltejs/svelte/pull/12763))
+
 ## 5.0.0-next.210
 
 ### Patch Changes
