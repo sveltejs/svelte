@@ -283,6 +283,7 @@ export function clean_nodes(
 			((first.type === 'RenderTag' && !first.metadata.dynamic) ||
 				(first.type === 'Component' &&
 					!state.options.hmr &&
+					!first.metadata.dynamic &&
 					!first.attributes.some(
 						(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
 					))),

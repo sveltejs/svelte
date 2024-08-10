@@ -1,7 +1,8 @@
+/** @import { Location } from 'locate-character' */
 /** @import { BlockStatement, Expression } from 'estree' */
 /** @import { SvelteElement } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
-import { dev } from '../../../../state.js';
+import { dev, locator } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { determine_namespace_for_children } from '../../utils.js';
 import { build_element_attributes } from './shared/element.js';
@@ -36,7 +37,18 @@ export function SvelteElement(node, context) {
 	build_element_attributes(node, { ...context, state });
 
 	if (dev) {
-		context.state.template.push(b.stmt(b.call('$.push_element', tag, b.id('$$payload'))));
+		const location = /** @type {Location} */ (locator(node.start));
+		context.state.template.push(
+			b.stmt(
+				b.call(
+					'$.push_element',
+					b.id('$$payload'),
+					tag,
+					b.literal(location.line),
+					b.literal(location.column)
+				)
+			)
+		);
 	}
 
 	const attributes = b.block([...state.init, ...build_template(state.template)]);

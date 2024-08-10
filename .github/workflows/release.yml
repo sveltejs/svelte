@@ -12,6 +12,7 @@ jobs:
     if: github.repository == 'sveltejs/svelte'
     permissions:
       contents: write # to create release (changesets/action)
+      id-token: write # OpenID Connect token needed for provenance
       pull-requests: write # to create pull request (changesets/action)
     name: Release
     runs-on: ubuntu-latest
