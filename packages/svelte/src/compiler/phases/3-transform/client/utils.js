@@ -290,10 +290,7 @@ export function with_loc(target, source) {
  */
 export function create_derived_block_argument(node, context) {
 	if (node.type === 'Identifier') {
-		context.state.transform[node.name] = {
-			read: get_value
-		};
-
+		context.state.transform[node.name] = { read: get_value };
 		return { id: node, declarations: null };
 	}
 
