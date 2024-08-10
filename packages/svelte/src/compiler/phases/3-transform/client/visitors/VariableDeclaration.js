@@ -171,27 +171,13 @@ export function VariableDeclaration(node, context) {
 						)
 					);
 				} else {
-					const bindings = context.state.scope.get_bindings(declarator);
+					const bindings = extract_paths(declarator.id);
 					const object_id = context.state.scope.generate('derived_object');
-					const values_id = context.state.scope.generate('derived_values');
+
 					declarations.push(
 						b.declarator(
 							b.id(object_id),
 							b.call('$.derived', rune === '$derived.by' ? value : b.thunk(value))
-						)
-					);
-					declarations.push(
-						b.declarator(
-							b.id(values_id),
-							b.call(
-								'$.derived',
-								b.thunk(
-									b.block([
-										b.let(declarator.id, b.call('$.get', b.id(object_id))),
-										b.return(b.array(bindings.map((binding) => binding.node)))
-									])
-								)
-							)
 						)
 					);
 					for (let i = 0; i < bindings.length; i++) {
@@ -199,10 +185,7 @@ export function VariableDeclaration(node, context) {
 						declarations.push(
 							b.declarator(
 								binding.node,
-								b.call(
-									'$.derived',
-									b.thunk(b.member(b.call('$.get', b.id(values_id)), b.literal(i), true))
-								)
+								b.call('$.derived', b.thunk(binding.expression(b.call('$.get', b.id(object_id)))))
 							)
 						);
 					}
