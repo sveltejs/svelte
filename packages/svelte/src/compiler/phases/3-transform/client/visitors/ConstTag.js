@@ -25,9 +25,7 @@ export function ConstTag(node, context) {
 			)
 		);
 
-		context.state.transform[declaration.id.name] = {
-			read: get_value
-		};
+		context.state.transform[declaration.id.name] = { read: get_value };
 
 		// we need to eagerly evaluate the expression in order to hit any
 		// 'Cannot access x before initialization' errors

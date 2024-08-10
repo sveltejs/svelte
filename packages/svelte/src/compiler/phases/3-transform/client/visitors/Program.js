@@ -5,10 +5,10 @@ import * as b from '../../../../utils/builders.js';
 import { add_state_transformers } from './shared/declarations.js';
 
 /**
- * @param {Program} node
+ * @param {Program} _
  * @param {ComponentContext} context
  */
-export function Program(node, context) {
+export function Program(_, context) {
 	if (!context.state.analysis.runes) {
 		context.state.transform['$$props'] = {
 			read: (node) => ({ ...node, name: '$$sanitized_props' })
@@ -19,10 +19,8 @@ export function Program(node, context) {
 				const id = b.id('$$_import_' + name);
 
 				context.state.transform[name] = {
-					read: (node) => b.call(id),
-					mutate: (node, mutation) => {
-						return b.call(id, mutation);
-					}
+					read: (_) => b.call(id),
+					mutate: (_, mutation) => b.call(id, mutation)
 				};
 
 				context.state.legacy_reactive_imports.push(
@@ -38,9 +36,7 @@ export function Program(node, context) {
 
 			context.state.transform[name] = {
 				read: b.call,
-				assign: (node, value) => {
-					return b.call('$.store_set', store, value);
-				},
+				assign: (_, value) => b.call('$.store_set', store, value),
 				mutate: (node, mutation) => {
 					// We need to untrack the store read, for consistency with Svelte 4
 					const untracked = b.call('$.untrack', node);
@@ -90,9 +86,7 @@ export function Program(node, context) {
 			if (is_prop_source(binding, context.state)) {
 				context.state.transform[name] = {
 					read: b.call,
-					assign: (node, value) => {
-						return b.call(node, value);
-					},
+					assign: (node, value) => b.call(node, value),
 					mutate: (node, value) => {
 						if (binding.kind === 'bindable_prop') {
 							// only necessary for interop with legacy parent bindings
@@ -113,7 +107,7 @@ export function Program(node, context) {
 				const key = b.key(binding.prop_alias);
 
 				context.state.transform[name] = {
-					read: (node) => b.member(b.id('$$props'), key, key.type === 'Literal')
+					read: (_) => b.member(b.id('$$props'), key, key.type === 'Literal')
 				};
 			} else {
 				context.state.transform[name] = {

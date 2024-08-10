@@ -222,9 +222,7 @@ export function EachBlock(node, context) {
 				declarations.push(b.stmt(read(b.id(name))));
 			}
 
-			key_state.transform[name] = {
-				read: () => path.node
-			};
+			delete key_state.transform[name];
 		}
 	}
 
