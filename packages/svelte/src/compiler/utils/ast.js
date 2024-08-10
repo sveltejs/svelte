@@ -276,6 +276,7 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 					const rest_expression = (object) => {
 						/** @type {ESTree.Expression[]} */
 						const props = [];
+
 						for (const p of param.properties) {
 							if (p.type === 'Property' && p.key.type !== 'PrivateIdentifier') {
 								if (p.key.type === 'Identifier' && !p.computed) {
@@ -287,6 +288,7 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 								}
 							}
 						}
+
 						return b.call('$.exclude_from_object', expression(object), b.array(props));
 					};
 

@@ -992,13 +992,15 @@ export function update_pre(signal, d = 1) {
  */
 export function exclude_from_object(obj, keys) {
 	/** @type {Record<string, unknown>} */
-	let res = {};
-	for (let key in obj) {
-		// Use == because keys could be numbers, and iterating turns them into strings
-		if (keys.find((k) => k === key)) continue;
-		res[key] = obj[key];
+	var result = {};
+
+	for (var key in obj) {
+		if (!keys.includes(key)) {
+			result[key] = obj[key];
+		}
 	}
-	return res;
+
+	return result;
 }
 
 /**
