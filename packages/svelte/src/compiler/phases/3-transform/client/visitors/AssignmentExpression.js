@@ -1,10 +1,10 @@
-/** @import { AssignmentExpression, AssignmentOperator, BinaryOperator, Expression, Identifier, MemberExpression, Pattern } from 'estree' */
+/** @import { AssignmentExpression, AssignmentOperator, BinaryOperator, Expression, Pattern } from 'estree' */
 /** @import { SvelteNode } from '#compiler' */
 /** @import { ClientTransformState, Context } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
-import { extract_paths, is_expression_async, object } from '../../../../utils/ast.js';
+import { extract_paths, is_expression_async } from '../../../../utils/ast.js';
 import { is_ignored } from '../../../../state.js';
-import { build_getter, build_proxy_reassignment, should_proxy_or_freeze } from '../utils.js';
+import { build_proxy_reassignment, should_proxy_or_freeze } from '../utils.js';
 
 /**
  * @param {AssignmentExpression} node
@@ -74,16 +74,14 @@ export function AssignmentExpression(node, context) {
  * @returns {Expression | null}
  */
 export function build_assignment(operator, left, right, context) {
-	const assignee = /** @type {Identifier | MemberExpression} */ (left);
-
 	// Handle class private/public state assignment cases
 	if (
 		context.state.analysis.runes &&
-		assignee.type === 'MemberExpression' &&
-		assignee.object.type === 'ThisExpression'
+		left.type === 'MemberExpression' &&
+		left.object.type === 'ThisExpression'
 	) {
-		if (assignee.property.type === 'PrivateIdentifier') {
-			const private_state = context.state.private_state.get(assignee.property.name);
+		if (left.property.type === 'PrivateIdentifier') {
+			const private_state = context.state.private_state.get(left.property.name);
 
 			if (private_state !== undefined) {
 				let value = get_assignment_value(operator, left, right, context);
@@ -102,11 +100,11 @@ export function build_assignment(operator, left, right, context) {
 						return b.assignment(operator, /** @type {Pattern} */ (context.visit(left)), value);
 					}
 				} else {
-					return b.call('$.set', assignee, value);
+					return b.call('$.set', left, value);
 				}
 			}
-		} else if (assignee.property.type === 'Identifier' && context.state.in_constructor) {
-			const public_state = context.state.public_state.get(assignee.property.name);
+		} else if (left.property.type === 'Identifier' && context.state.in_constructor) {
+			const public_state = context.state.public_state.get(left.property.name);
 
 			if (public_state !== undefined && should_proxy_or_freeze(right, context.state.scope)) {
 				const value = /** @type {Expression} */ (context.visit(right));
@@ -154,11 +152,10 @@ export function build_assignment(operator, left, right, context) {
 			context.state.analysis.runes &&
 			should_proxy_or_freeze(value, context.state.scope)
 		) {
-			if (binding.kind === 'frozen_state') {
-				value = b.call('$.freeze', value);
-			} else {
-				value = build_proxy_reassignment(value, object.name);
-			}
+			value =
+				binding.kind === 'frozen_state'
+					? b.call('$.freeze', value)
+					: build_proxy_reassignment(value, object.name);
 		}
 
 		return transform.assign(object, value);
