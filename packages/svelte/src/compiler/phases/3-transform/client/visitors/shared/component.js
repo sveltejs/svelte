@@ -1,14 +1,14 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Property, Statement } from 'estree' */
-/** @import { Attribute, Component, SvelteComponent, SvelteSelf, TemplateNode, Text } from '#compiler' */
+/** @import { Component, SvelteComponent, SvelteSelf, TemplateNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { is_element_node } from '../../../../nodes.js';
-import { create_derived, build_setter } from '../../utils.js';
+import { create_derived } from '../../utils.js';
 import { build_bind_this, validate_binding } from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
+import { determine_slot } from '../../../../../utils/slot.js';
 
 /**
  * @param {Component | SvelteComponent | SvelteSelf} node
@@ -23,6 +23,15 @@ export function build_component(node, component_name, context, anchor = context.
 
 	/** @type {ExpressionStatement[]} */
 	const lets = [];
+
+	/** @type {Record<string, typeof context.state>} */
+	const states = {
+		default: {
+			...context.state,
+			scope: node.metadata.scopes.default,
+			transform: { ...context.state.transform }
+		}
+	};
 
 	/** @type {Record<string, TemplateNode[]>} */
 	const children = {};
@@ -45,7 +54,7 @@ export function build_component(node, component_name, context, anchor = context.
 	 * If this component has a slot property, it is a named slot within another component. In this case
 	 * the slot scope applies to the component itself, too, and not just its children.
 	 */
-	let slot_scope_applies_to_itself = false;
+	let slot_scope_applies_to_itself = !!determine_slot(node);
 
 	/**
 	 * Components may have a children prop and also have child nodes. In this case, we assume
@@ -66,9 +75,20 @@ export function build_component(node, component_name, context, anchor = context.
 			props_and_spreads.push(props);
 		}
 	}
+
+	if (slot_scope_applies_to_itself) {
+		for (const attribute of node.attributes) {
+			if (attribute.type === 'LetDirective') {
+				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+			}
+		}
+	}
+
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+			if (!slot_scope_applies_to_itself) {
+				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute, states.default)));
+			}
 		} else if (attribute.type === 'OnDirective') {
 			if (!attribute.expression) {
 				context.state.analysis.needs_props = true;
@@ -174,9 +194,7 @@ export function build_component(node, component_name, context, anchor = context.
 
 				const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
 				push_prop(
-					b.set(attribute.name, [
-						b.stmt(build_setter(assignment, context, () => context.visit(assignment)))
-					])
+					b.set(attribute.name, [b.stmt(/** @type {Expression} */ (context.visit(assignment)))])
 				);
 			}
 		}
@@ -214,19 +232,7 @@ export function build_component(node, component_name, context, anchor = context.
 			continue;
 		}
 
-		let slot_name = 'default';
-
-		if (is_element_node(child)) {
-			const attribute = /** @type {Attribute | undefined} */ (
-				child.attributes.find(
-					(attribute) => attribute.type === 'Attribute' && attribute.name === 'slot'
-				)
-			);
-
-			if (attribute !== undefined) {
-				slot_name = /** @type {Text[]} */ (attribute.value)[0].data;
-			}
-		}
+		let slot_name = determine_slot(child) ?? 'default';
 
 		(children[slot_name] ||= []).push(child);
 	}
@@ -242,12 +248,15 @@ export function build_component(node, component_name, context, anchor = context.
 					// @ts-expect-error
 					nodes: children[slot_name]
 				},
-				{
-					...context.state,
-					scope:
-						context.state.scopes.get(slot_name === 'default' ? children[slot_name][0] : node) ??
-						context.state.scope
-				}
+				slot_name === 'default'
+					? slot_scope_applies_to_itself
+						? context.state
+						: states.default
+					: {
+							...context.state,
+							scope: node.metadata.scopes[slot_name],
+							transform: { ...context.state.transform }
+						}
 			)
 		);
 

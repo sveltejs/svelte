@@ -920,7 +920,6 @@ declare module 'svelte/compiler' {
 		 * - `snippet`: A snippet parameter
 		 * - `store_sub`: A $store value
 		 * - `legacy_reactive`: A `$:` declaration
-		 * - `legacy_reactive_import`: An imported binding that is mutated inside the component
 		 */
 		kind:
 			| 'normal'
@@ -933,8 +932,7 @@ declare module 'svelte/compiler' {
 			| 'each'
 			| 'snippet'
 			| 'store_sub'
-			| 'legacy_reactive'
-			| 'legacy_reactive_import';
+			| 'legacy_reactive';
 		declaration_kind: DeclarationKind;
 		/**
 		 * What the value was initialized with.
@@ -1733,6 +1731,7 @@ declare module 'svelte/compiler' {
 	interface Component extends BaseElement {
 		type: 'Component';
 		metadata: {
+			scopes: Record<string, Scope>;
 			dynamic: boolean;
 		};
 	}
@@ -1769,6 +1768,9 @@ declare module 'svelte/compiler' {
 		type: 'SvelteComponent';
 		name: 'svelte:component';
 		expression: Expression;
+		metadata: {
+			scopes: Record<string, Scope>;
+		};
 	}
 
 	interface SvelteDocument extends BaseElement {
@@ -1814,6 +1816,9 @@ declare module 'svelte/compiler' {
 	interface SvelteSelf extends BaseElement {
 		type: 'SvelteSelf';
 		name: 'svelte:self';
+		metadata: {
+			scopes: Record<string, Scope>;
+		};
 	}
 
 	interface SvelteWindow extends BaseElement {

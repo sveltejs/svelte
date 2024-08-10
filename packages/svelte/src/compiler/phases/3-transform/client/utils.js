@@ -1,59 +1,17 @@
-/** @import { ArrowFunctionExpression, AssignmentExpression, BinaryOperator, Expression, FunctionDeclaration, FunctionExpression, Identifier, MemberExpression, Node, Pattern, PrivateIdentifier, Statement } from 'estree' */
+/** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, Pattern, PrivateIdentifier, Statement } from 'estree' */
 /** @import { Binding, SvelteNode } from '#compiler' */
 /** @import { ClientTransformState, ComponentClientTransformState, ComponentContext } from './types.js' */
 /** @import { Scope } from '../../scope.js' */
 import * as b from '../../../utils/builders.js';
-import {
-	extract_identifiers,
-	extract_paths,
-	is_expression_async,
-	is_simple_expression,
-	object
-} from '../../../utils/ast.js';
+import { extract_identifiers, is_simple_expression } from '../../../utils/ast.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../../../constants.js';
-import { is_ignored, dev } from '../../../state.js';
-
-/**
- * @template {ClientTransformState} State
- * @param {AssignmentExpression} node
- * @param {import('zimmerframe').Context<SvelteNode, State>} context
- * @returns
- */
-export function get_assignment_value(node, { state, visit }) {
-	if (node.left.type === 'Identifier') {
-		const operator = node.operator;
-		return operator === '='
-			? /** @type {Expression} */ (visit(node.right))
-			: // turn something like x += 1 into x = x + 1
-				b.binary(
-					/** @type {BinaryOperator} */ (operator.slice(0, -1)),
-					build_getter(node.left, state),
-					/** @type {Expression} */ (visit(node.right))
-				);
-	} else if (
-		node.left.type === 'MemberExpression' &&
-		node.left.object.type === 'ThisExpression' &&
-		node.left.property.type === 'PrivateIdentifier' &&
-		state.private_state.has(node.left.property.name)
-	) {
-		const operator = node.operator;
-		return operator === '='
-			? /** @type {Expression} */ (visit(node.right))
-			: // turn something like x += 1 into x = x + 1
-				b.binary(
-					/** @type {BinaryOperator} */ (operator.slice(0, -1)),
-					/** @type {Expression} */ (visit(node.left)),
-					/** @type {Expression} */ (visit(node.right))
-				);
-	} else {
-		return /** @type {Expression} */ (visit(node.right));
-	}
-}
+import { dev } from '../../../state.js';
+import { get_value } from './visitors/shared/declarations.js';
 
 /**
  * @param {Binding} binding
@@ -73,390 +31,16 @@ export function is_state_source(binding, state) {
  * @returns {Expression}
  */
 export function build_getter(node, state) {
-	const binding = state.scope.get(node.name);
+	if (Object.hasOwn(state.transform, node.name)) {
+		const binding = state.scope.get(node.name);
 
-	if (binding === null || node === binding.node) {
-		// No associated binding or the declaration itself which shouldn't be transformed
-		return node;
-	}
-
-	if (Object.hasOwn(state.getters, node.name)) {
-		const getter = state.getters[node.name];
-		return typeof getter === 'function' ? getter(node) : getter;
-	}
-
-	if (binding.node.name === '$$props') {
-		// Special case for $$props which only exists in the old world
-		return b.id('$$sanitized_props');
-	}
-
-	if (binding.kind === 'store_sub') {
-		return b.call(node);
-	}
-
-	if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
-		if (is_prop_source(binding, state)) {
-			return b.call(node);
+		// don't transform the declaration itself
+		if (node !== binding?.node) {
+			return state.transform[node.name].read(node);
 		}
-
-		if (binding.prop_alias) {
-			const key = b.key(binding.prop_alias);
-			return b.member(b.id('$$props'), key, key.type === 'Literal');
-		}
-		return b.member(b.id('$$props'), node);
-	}
-
-	if (binding.kind === 'legacy_reactive_import') {
-		return b.call('$$_import_' + node.name);
-	}
-
-	if (
-		is_state_source(binding, state) ||
-		binding.kind === 'derived' ||
-		binding.kind === 'legacy_reactive'
-	) {
-		return b.call('$.get', node);
 	}
 
 	return node;
-}
-
-/**
- * @template {ClientTransformState} State
- * @param {AssignmentExpression} node
- * @param {import('zimmerframe').Context<SvelteNode, State>} context
- * @param {() => any} fallback
- * @param {boolean | null} [prefix] - If the assignment is a transformed update expression, set this. Else `null`
- * @param {{skip_proxy_and_freeze?: boolean}} [options]
- * @returns {Expression}
- */
-export function build_setter(node, context, fallback, prefix, options) {
-	const { state, visit } = context;
-
-	const assignee = node.left;
-	if (
-		assignee.type === 'ArrayPattern' ||
-		assignee.type === 'ObjectPattern' ||
-		assignee.type === 'RestElement'
-	) {
-		// Turn assignment into an IIFE, so that `$.set` calls etc don't produce invalid code
-		const tmp_id = context.state.scope.generate('tmp');
-
-		/** @type {AssignmentExpression[]} */
-		const original_assignments = [];
-
-		/** @type {Expression[]} */
-		const assignments = [];
-
-		const paths = extract_paths(assignee);
-
-		for (const path of paths) {
-			const value = path.expression?.(b.id(tmp_id));
-			const assignment = b.assignment('=', path.node, value);
-			original_assignments.push(assignment);
-			assignments.push(build_setter(assignment, context, () => assignment, prefix, options));
-		}
-
-		if (assignments.every((assignment, i) => assignment === original_assignments[i])) {
-			// No change to output -> nothing to transform -> we can keep the original assignment
-			return fallback();
-		}
-
-		const rhs_expression = /** @type {Expression} */ (visit(node.right));
-
-		const iife_is_async =
-			is_expression_async(rhs_expression) ||
-			assignments.some((assignment) => is_expression_async(assignment));
-
-		const iife = b.arrow(
-			[],
-			b.block([
-				b.const(tmp_id, rhs_expression),
-				b.stmt(b.sequence(assignments)),
-				// return because it could be used in a nested expression where the value is needed.
-				// example: { foo: ({ bar } = { bar: 1 })}
-				b.return(b.id(tmp_id))
-			])
-		);
-
-		if (iife_is_async) {
-			return b.await(b.call(b.async(iife)));
-		} else {
-			return b.call(iife);
-		}
-	}
-
-	if (assignee.type !== 'Identifier' && assignee.type !== 'MemberExpression') {
-		throw new Error(`Unexpected assignment type ${assignee.type}`);
-	}
-
-	// Handle class private/public state assignment cases
-	if (assignee.type === 'MemberExpression') {
-		if (
-			assignee.object.type === 'ThisExpression' &&
-			assignee.property.type === 'PrivateIdentifier'
-		) {
-			const private_state = context.state.private_state.get(assignee.property.name);
-			const value = get_assignment_value(node, context);
-			if (private_state !== undefined) {
-				if (state.in_constructor) {
-					// See if we should wrap value in $.proxy
-					if (
-						context.state.analysis.runes &&
-						!options?.skip_proxy_and_freeze &&
-						should_proxy_or_freeze(value, context.state.scope)
-					) {
-						const assignment = fallback();
-						if (assignment.type === 'AssignmentExpression') {
-							assignment.right =
-								private_state.kind === 'frozen_state'
-									? b.call('$.freeze', value)
-									: build_proxy_reassignment(value, private_state.id);
-							return assignment;
-						}
-					}
-				} else {
-					return b.call(
-						'$.set',
-						assignee,
-						context.state.analysis.runes &&
-							!options?.skip_proxy_and_freeze &&
-							should_proxy_or_freeze(value, context.state.scope)
-							? private_state.kind === 'frozen_state'
-								? b.call('$.freeze', value)
-								: build_proxy_reassignment(value, private_state.id)
-							: value
-					);
-				}
-			}
-		} else if (
-			assignee.object.type === 'ThisExpression' &&
-			assignee.property.type === 'Identifier' &&
-			state.in_constructor
-		) {
-			const public_state = context.state.public_state.get(assignee.property.name);
-			const value = get_assignment_value(node, context);
-			// See if we should wrap value in $.proxy
-			if (
-				context.state.analysis.runes &&
-				public_state !== undefined &&
-				!options?.skip_proxy_and_freeze &&
-				should_proxy_or_freeze(value, context.state.scope)
-			) {
-				const assignment = fallback();
-				if (assignment.type === 'AssignmentExpression') {
-					assignment.right =
-						public_state.kind === 'frozen_state'
-							? b.call('$.freeze', value)
-							: build_proxy_reassignment(value, public_state.id);
-					return assignment;
-				}
-			}
-		}
-	}
-
-	const left = object(assignee);
-
-	if (left === null) {
-		return fallback();
-	}
-
-	const binding = state.scope.get(left.name);
-
-	if (!binding) return fallback();
-
-	if (Object.hasOwn(state.setters, left.name)) {
-		const setter = state.setters[left.name];
-		// @ts-expect-error
-		return setter(node, context);
-	}
-
-	if (binding.kind === 'legacy_reactive_import') {
-		return b.call(
-			'$$_import_' + binding.node.name,
-			b.assignment(
-				node.operator,
-				/** @type {Pattern} */ (visit(node.left)),
-				/** @type {Expression} */ (visit(node.right))
-			)
-		);
-	}
-
-	/**
-	 * @param {any} serialized
-	 * @returns
-	 */
-	function maybe_skip_ownership_validation(serialized) {
-		if (is_ignored(node, 'ownership_invalid_mutation')) {
-			return b.call('$.skip_ownership_validation', b.thunk(serialized));
-		}
-
-		return serialized;
-	}
-
-	if (binding.kind === 'derived') {
-		return maybe_skip_ownership_validation(fallback());
-	}
-
-	const is_store = binding.kind === 'store_sub';
-	const left_name = is_store ? left.name.slice(1) : left.name;
-
-	if (
-		binding.kind !== 'state' &&
-		binding.kind !== 'frozen_state' &&
-		binding.kind !== 'prop' &&
-		binding.kind !== 'bindable_prop' &&
-		binding.kind !== 'each' &&
-		binding.kind !== 'legacy_reactive' &&
-		!is_store
-	) {
-		// TODO error if it's a computed (or rest prop)? or does that already happen elsewhere?
-		return fallback();
-	}
-
-	const value = get_assignment_value(node, context);
-
-	const serialize = () => {
-		if (left === node.left) {
-			const is_initial_proxy =
-				binding.initial !== null &&
-				should_proxy_or_freeze(/**@type {Expression}*/ (binding.initial), context.state.scope);
-			if ((binding.kind === 'prop' || binding.kind === 'bindable_prop') && !is_initial_proxy) {
-				return b.call(left, value);
-			} else if (is_store) {
-				return b.call('$.store_set', build_getter(b.id(left_name), state), value);
-			} else {
-				let call;
-				if (binding.kind === 'state') {
-					call = b.call(
-						'$.set',
-						b.id(left_name),
-						context.state.analysis.runes &&
-							!options?.skip_proxy_and_freeze &&
-							should_proxy_or_freeze(value, context.state.scope)
-							? build_proxy_reassignment(value, left_name)
-							: value
-					);
-				} else if (binding.kind === 'frozen_state') {
-					call = b.call(
-						'$.set',
-						b.id(left_name),
-						context.state.analysis.runes &&
-							!options?.skip_proxy_and_freeze &&
-							should_proxy_or_freeze(value, context.state.scope)
-							? b.call('$.freeze', value)
-							: value
-					);
-				} else if (
-					(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
-					is_initial_proxy
-				) {
-					call = b.call(
-						left,
-						context.state.analysis.runes &&
-							!options?.skip_proxy_and_freeze &&
-							should_proxy_or_freeze(value, context.state.scope) &&
-							binding.kind === 'bindable_prop'
-							? build_proxy_reassignment(value, left_name)
-							: value
-					);
-				} else {
-					call = b.call('$.set', b.id(left_name), value);
-				}
-
-				if (state.scope.get(`$${left.name}`)?.kind === 'store_sub') {
-					return b.call('$.store_unsub', call, b.literal(`$${left.name}`), b.id('$$stores'));
-				} else {
-					return call;
-				}
-			}
-		} else {
-			if (is_store) {
-				// If we are assigning to a store property, we need to ensure we don't
-				// capture the read for the store as part of the member expression to
-				// keep consistency with how store $ shorthand reads work in Svelte 4.
-				/**
-				 *
-				 * @param {Expression | Pattern} node
-				 * @returns {Expression}
-				 */
-				function visit_node(node) {
-					if (node.type === 'MemberExpression') {
-						return {
-							...node,
-							object: visit_node(/** @type {Expression} */ (node.object)),
-							property: /** @type {MemberExpression} */ (visit(node)).property
-						};
-					}
-					if (node.type === 'Identifier') {
-						const binding = state.scope.get(node.name);
-
-						if (binding !== null && binding.kind === 'store_sub') {
-							return b.call('$.untrack', b.thunk(/** @type {Expression} */ (visit(node))));
-						}
-					}
-					return /** @type {Expression} */ (visit(node));
-				}
-
-				return maybe_skip_ownership_validation(
-					b.call(
-						'$.store_mutate',
-						build_getter(b.id(left_name), state),
-						b.assignment(node.operator, /** @type {Pattern}} */ (visit_node(node.left)), value),
-						b.call('$.untrack', b.id('$' + left_name))
-					)
-				);
-			} else if (
-				!state.analysis.runes ||
-				// this condition can go away once legacy mode is gone; only necessary for interop with legacy parent bindings
-				(binding.mutated && binding.kind === 'bindable_prop')
-			) {
-				if (binding.kind === 'bindable_prop') {
-					return maybe_skip_ownership_validation(
-						b.call(
-							left,
-							b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value),
-							b.true
-						)
-					);
-				} else {
-					return maybe_skip_ownership_validation(
-						b.call(
-							'$.mutate',
-							b.id(left_name),
-							b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value)
-						)
-					);
-				}
-			} else if (
-				node.right.type === 'Literal' &&
-				prefix != null &&
-				(node.operator === '+=' || node.operator === '-=')
-			) {
-				return maybe_skip_ownership_validation(
-					b.update(
-						node.operator === '+=' ? '++' : '--',
-						/** @type {Expression} */ (visit(node.left)),
-						prefix
-					)
-				);
-			} else {
-				return maybe_skip_ownership_validation(
-					b.assignment(
-						node.operator,
-						/** @type {Pattern} */ (visit(node.left)),
-						/** @type {Expression} */ (visit(node.right))
-					)
-				);
-			}
-		}
-	};
-
-	if (value.type === 'BinaryExpression' && /** @type {any} */ (value.operator) === '??') {
-		return b.logical('??', build_getter(b.id(left_name), state), serialize());
-	}
-
-	return serialize();
 }
 
 /**
@@ -507,7 +91,7 @@ function get_hoisted_params(node, context) {
 				binding = /** @type {Binding} */ (scope.get(binding.node.name.slice(1)));
 			}
 
-			const expression = context.state.getters[reference];
+			let expression = context.state.transform[reference]?.read(b.id(binding.node.name));
 
 			if (
 				// If it's a destructured derived binding, then we can extract the derived signal reference and use that.
@@ -706,6 +290,7 @@ export function with_loc(target, source) {
  */
 export function create_derived_block_argument(node, context) {
 	if (node.type === 'Identifier') {
+		context.state.transform[node.name] = { read: get_value };
 		return { id: node, declarations: null };
 	}
 
@@ -723,6 +308,8 @@ export function create_derived_block_argument(node, context) {
 	const declarations = [b.var(value, create_derived(context.state, b.thunk(block)))];
 
 	for (const id of identifiers) {
+		context.state.transform[id.name] = { read: get_value };
+
 		declarations.push(
 			b.var(id, create_derived(context.state, b.thunk(b.member(b.call('$.get', value), id))))
 		);

@@ -563,3 +563,15 @@ export function build_fallback(expression, fallback) {
 		? b.await(b.call('$.fallback', expression, b.thunk(fallback, true), b.true))
 		: b.call('$.fallback', expression, b.thunk(fallback), b.true);
 }
+
+/**
+ * @param {ESTree.AssignmentOperator} operator
+ * @param {ESTree.Identifier | ESTree.MemberExpression} left
+ * @param {ESTree.Expression} right
+ */
+export function build_assignment_value(operator, left, right) {
+	return operator === '='
+		? right
+		: // turn something like x += 1 into x = x + 1
+			b.binary(/** @type {ESTree.BinaryOperator} */ (operator.slice(0, -1)), left, right);
+}

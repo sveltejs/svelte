@@ -4,6 +4,7 @@
 import { dev } from '../../../../state.js';
 import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
+import { get_value } from './shared/declarations.js';
 
 /**
  * @param {SnippetBlock} node
@@ -20,8 +21,8 @@ export function SnippetBlock(node, context) {
 	/** @type {Statement[]} */
 	const declarations = [];
 
-	const getters = { ...context.state.getters };
-	const child_state = { ...context.state, getters };
+	const transform = { ...context.state.transform };
+	const child_state = { ...context.state, transform };
 
 	for (let i = 0; i < node.parameters.length; i++) {
 		const argument = node.parameters[i];
@@ -35,7 +36,8 @@ export function SnippetBlock(node, context) {
 				right: b.id('$.noop')
 			});
 
-			getters[argument.name] = b.call(argument);
+			transform[argument.name] = { read: b.call };
+
 			continue;
 		}
 
@@ -53,12 +55,14 @@ export function SnippetBlock(node, context) {
 
 			declarations.push(b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn));
 
-			getters[name] = needs_derived ? b.call('$.get', b.id(name)) : b.call(name);
+			transform[name] = {
+				read: needs_derived ? get_value : b.call
+			};
 
 			// we need to eagerly evaluate the expression in order to hit any
 			// 'Cannot access x before initialization' errors
 			if (dev) {
-				declarations.push(b.stmt(getters[name]));
+				declarations.push(b.stmt(transform[name].read(b.id(name))));
 			}
 		}
 	}

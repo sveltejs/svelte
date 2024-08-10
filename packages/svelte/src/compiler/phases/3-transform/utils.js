@@ -425,7 +425,7 @@ export function transform_inspect_rune(node, context) {
 	const { state, visit } = context;
 	const as_fn = state.options.generate === 'client';
 
-	if (!dev) return b.unary('void', b.literal(0));
+	if (!dev) return b.empty;
 
 	if (node.callee.type === 'MemberExpression') {
 		const raw_inspect_args = /** @type {CallExpression} */ (node.callee.object).arguments;
