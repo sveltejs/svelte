@@ -87,7 +87,7 @@ export function visit_component(node, context) {
 		const slot_name = determine_slot(child) ?? 'default';
 		(nodes[slot_name] ??= []).push(...comments, child);
 
-		comments = [];
+		if (slot_name !== 'default') comments = [];
 	}
 
 	const component_slots = new Set();

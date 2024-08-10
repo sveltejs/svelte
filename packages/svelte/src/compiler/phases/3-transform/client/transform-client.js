@@ -65,7 +65,6 @@ const visitors = {
 		if (scope && scope !== state.scope) {
 			const transform = { ...state.transform };
 
-			// TODO do this in add_state_transformers and visit_function etc?
 			for (const [name, binding] of scope.declarations) {
 				if (binding.kind === 'normal') {
 					delete transform[name];
