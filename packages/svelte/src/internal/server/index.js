@@ -384,26 +384,6 @@ export function unsubscribe_stores(store_values) {
 }
 
 /**
- * @template V
- * @param {V} value
- * @param {() => V} fallback lazy because could contain side effects
- * @returns {V}
- */
-export function value_or_fallback(value, fallback) {
-	return value === undefined ? fallback() : value;
-}
-
-/**
- * @template V
- * @param {V} value
- * @param {() => Promise<V>} fallback lazy because could contain side effects
- * @returns {Promise<V>}
- */
-export async function value_or_fallback_async(value, fallback) {
-	return value === undefined ? fallback() : value;
-}
-
-/**
  * @param {Payload} payload
  * @param {void | ((payload: Payload, props: Record<string, unknown>) => void)} slot_fn
  * @param {Record<string, unknown>} slot_props
@@ -535,6 +515,8 @@ export { push, pop } from './context.js';
 export { push_element, pop_element } from './dev.js';
 
 export { snapshot } from '../shared/clone.js';
+
+export { fallback } from '../shared/utils.js';
 
 export {
 	invalid_default_snippet,

@@ -368,12 +368,7 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 
 		case 'AssignmentPattern': {
 			/** @type {DestructuredAssignment['expression']} */
-			const fallback_expression = (object) =>
-				is_expression_async(param.right)
-					? b.await(
-							b.call('$.value_or_fallback_async', expression(object), b.thunk(param.right, true))
-						)
-					: b.call('$.value_or_fallback', expression(object), b.thunk(param.right));
+			const fallback_expression = (object) => build_fallback(expression(object), param.right);
 
 			if (param.left.type === 'Identifier') {
 				assignments.push({
@@ -548,4 +543,23 @@ export function is_expression_async(expression) {
 		default:
 			return false;
 	}
+}
+
+/**
+ *
+ * @param {ESTree.Expression} expression
+ * @param {ESTree.Expression} fallback
+ */
+export function build_fallback(expression, fallback) {
+	if (is_simple_expression(fallback)) {
+		return b.call('$.fallback', expression, fallback);
+	}
+
+	if (fallback.type === 'AwaitExpression' && is_simple_expression(fallback.argument)) {
+		return b.await(b.call('$.fallback', expression, fallback.argument));
+	}
+
+	return is_expression_async(fallback)
+		? b.await(b.call('$.fallback', expression, b.thunk(fallback, true), b.true))
+		: b.call('$.fallback', expression, b.thunk(fallback), b.true);
 }
