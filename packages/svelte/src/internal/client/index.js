@@ -66,7 +66,7 @@ export {
 	bind_focused
 } from './dom/elements/bindings/universal.js';
 export { bind_window_scroll, bind_window_size } from './dom/elements/bindings/window.js';
-export { next, reset } from './dom/hydration.js';
+export { hydrate_template, next, reset } from './dom/hydration.js';
 export {
 	once,
 	preventDefault,
