@@ -107,9 +107,10 @@ export function build_assignment(operator, left, right, context) {
 			}
 		} else if (assignee.property.type === 'Identifier' && context.state.in_constructor) {
 			const public_state = context.state.public_state.get(assignee.property.name);
-			const value = get_assignment_value(operator, left, right, context);
 
-			if (public_state !== undefined && should_proxy_or_freeze(value, context.state.scope)) {
+			if (public_state !== undefined && should_proxy_or_freeze(right, context.state.scope)) {
+				const value = /** @type {Expression} */ (context.visit(right));
+
 				return b.assignment(
 					operator,
 					/** @type {Pattern} */ (context.visit(left)),
@@ -141,15 +142,7 @@ export function build_assignment(operator, left, right, context) {
 
 	// reassignment
 	if (object === left && transform?.assign) {
-		let value = /** @type {Expression} */ (context.visit(right));
-
-		if (operator !== '=') {
-			value = b.binary(
-				/** @type {BinaryOperator} */ (operator.slice(0, -1)),
-				/** @type {Expression} */ (context.visit(object)),
-				value
-			);
-		}
+		let value = get_assignment_value(operator, left, right, context);
 
 		// special case — if an element binding, we know it's a primitive
 		const path = context.path.map((node) => node.type);
@@ -194,35 +187,14 @@ export function build_assignment(operator, left, right, context) {
  * @param {Pattern} left
  * @param {Expression} right
  * @param {import('zimmerframe').Context<SvelteNode, State>} context
- * @returns
  */
-function get_assignment_value(operator, left, right, { state, visit }) {
-	if (left.type === 'Identifier') {
-		return operator === '='
-			? /** @type {Expression} */ (visit(right))
-			: // turn something like x += 1 into x = x + 1
-				b.binary(
-					/** @type {BinaryOperator} */ (operator.slice(0, -1)),
-					build_getter(left, state),
-					/** @type {Expression} */ (visit(right))
-				);
-	}
-
-	if (
-		left.type === 'MemberExpression' &&
-		left.object.type === 'ThisExpression' &&
-		left.property.type === 'PrivateIdentifier' &&
-		state.private_state.has(left.property.name)
-	) {
-		return operator === '='
-			? /** @type {Expression} */ (visit(right))
-			: // turn something like x += 1 into x = x + 1
-				b.binary(
-					/** @type {BinaryOperator} */ (operator.slice(0, -1)),
-					/** @type {Expression} */ (visit(left)),
-					/** @type {Expression} */ (visit(right))
-				);
-	}
-
-	return /** @type {Expression} */ (visit(right));
+function get_assignment_value(operator, left, right, { visit }) {
+	return operator === '='
+		? /** @type {Expression} */ (visit(right))
+		: // turn something like x += 1 into x = x + 1
+			b.binary(
+				/** @type {BinaryOperator} */ (operator.slice(0, -1)),
+				/** @type {Expression} */ (visit(left)),
+				/** @type {Expression} */ (visit(right))
+			);
 }
