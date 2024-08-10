@@ -7,11 +7,12 @@ export default test({
 
 		target.innerHTML = '<child-element></child-element>';
 
+		await tick(); // wait for element to upgrade
+
 		target.addEventListener('change', () => {
 			changed = true;
 		});
 
-		await tick(); // wait for element to upgrade
 		await tick(); // wait for effect
 
 		assert.equal(changed, true);
