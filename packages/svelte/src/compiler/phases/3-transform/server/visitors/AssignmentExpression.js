@@ -27,7 +27,14 @@ export function AssignmentExpression(node, context) {
 			let assignment = build_assignment('=', path.node, value, context);
 			if (assignment !== null) changed = true;
 
-			return assignment ?? b.assignment('=', path.node, value);
+			return (
+				assignment ??
+				b.assignment(
+					'=',
+					/** @type {Pattern} */ (context.visit(path.node)),
+					/** @type {Expression} */ (context.visit(value))
+				)
+			);
 		});
 
 		if (!changed) {
