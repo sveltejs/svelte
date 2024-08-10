@@ -93,30 +93,27 @@ export function build_setter(node, context, fallback) {
 			const private_state = context.state.private_state.get(assignee.property.name);
 
 			if (private_state !== undefined) {
-				const value = get_assignment_value(node, context);
+				let value = get_assignment_value(node, context);
+				let transformed = false;
+
+				if (should_proxy_or_freeze(value, context.state.scope)) {
+					transformed = true;
+					value =
+						private_state.kind === 'frozen_state'
+							? b.call('$.freeze', value)
+							: build_proxy_reassignment(value, private_state.id);
+				}
 
 				if (state.in_constructor) {
-					// See if we should wrap value in $.proxy
-					if (should_proxy_or_freeze(value, context.state.scope)) {
-						const assignment = fallback();
-						if (assignment.type === 'AssignmentExpression') {
-							assignment.right =
-								private_state.kind === 'frozen_state'
-									? b.call('$.freeze', value)
-									: build_proxy_reassignment(value, private_state.id);
-							return assignment;
-						}
+					if (transformed) {
+						return b.assignment(
+							node.operator,
+							/** @type {Pattern} */ (context.visit(node.left)),
+							value
+						);
 					}
 				} else {
-					return b.call(
-						'$.set',
-						assignee,
-						should_proxy_or_freeze(value, context.state.scope)
-							? private_state.kind === 'frozen_state'
-								? b.call('$.freeze', value)
-								: build_proxy_reassignment(value, private_state.id)
-							: value
-					);
+					return b.call('$.set', assignee, value);
 				}
 			}
 		} else if (assignee.property.type === 'Identifier' && state.in_constructor) {
@@ -241,7 +238,9 @@ function get_assignment_value(node, { state, visit }) {
 					build_getter(node.left, state),
 					/** @type {Expression} */ (visit(node.right))
 				);
-	} else if (
+	}
+
+	if (
 		node.left.type === 'MemberExpression' &&
 		node.left.object.type === 'ThisExpression' &&
 		node.left.property.type === 'PrivateIdentifier' &&
@@ -256,7 +255,7 @@ function get_assignment_value(node, { state, visit }) {
 					/** @type {Expression} */ (visit(node.left)),
 					/** @type {Expression} */ (visit(node.right))
 				);
-	} else {
-		return /** @type {Expression} */ (visit(node.right));
 	}
+
+	return /** @type {Expression} */ (visit(node.right));
 }
