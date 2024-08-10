@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.214
+
+### Patch Changes
+
+- fix: ensure custom element styles append correctly during prod ([#12777](https://github.com/sveltejs/svelte/pull/12777))
+
+- fix: invalidate signals following ++/-- inside each block ([#12780](https://github.com/sveltejs/svelte/pull/12780))
+
+- feat: better code generation for destructuring assignments ([#12780](https://github.com/sveltejs/svelte/pull/12780))
+
 ## 5.0.0-next.213
 
 ### Patch Changes
