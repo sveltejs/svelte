@@ -6,9 +6,9 @@ var seen = new Set();
 /**
  * @param {Node} anchor
  * @param {{ hash: string, code: string }} css
- * @param {boolean} is_custom_element
+ * @param {boolean} [is_custom_element]
  */
-export function append_styles(anchor, css, is_custom_element) {
+export function append_styles(anchor, css, is_custom_element = false) {
 	// in dev, always check the DOM, so that styles can be replaced with HMR
 	if (!DEV && !is_custom_element) {
 		if (seen.has(css)) return;
