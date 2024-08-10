@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, AssignmentOperator, BinaryOperator, Expression, Pattern } from 'estree' */
+/** @import { AssignmentExpression, AssignmentOperator, BinaryOperator, Expression, Node, Pattern } from 'estree' */
 /** @import { SvelteNode } from '#compiler' */
 /** @import { ClientTransformState, Context } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
@@ -11,13 +11,17 @@ import { build_proxy_reassignment, should_proxy_or_freeze } from '../utils.js';
  * @param {Context} context
  */
 export function AssignmentExpression(node, context) {
-	const assignee = node.left;
+	const parent = /** @type {Node} */ (context.path.at(-1));
+	const is_standalone = parent.type.endsWith('Statement');
+
 	if (
-		assignee.type === 'ArrayPattern' ||
-		assignee.type === 'ObjectPattern' ||
-		assignee.type === 'RestElement'
+		node.left.type === 'ArrayPattern' ||
+		node.left.type === 'ObjectPattern' ||
+		node.left.type === 'RestElement'
 	) {
-		const rhs = b.id('$$value');
+		const value = /** @type {Expression} */ (context.visit(node.right));
+		const should_cache = value.type !== 'Identifier';
+		const rhs = should_cache ? b.id('$$value') : value;
 
 		let changed = false;
 
@@ -35,28 +39,29 @@ export function AssignmentExpression(node, context) {
 			return context.next();
 		}
 
-		const rhs_expression = /** @type {Expression} */ (context.visit(node.right));
+		const sequence = b.sequence(assignments);
 
-		const iife_is_async =
-			is_expression_async(rhs_expression) ||
-			assignments.some((assignment) => is_expression_async(assignment));
+		if (!is_standalone) {
+			// this is part of an expression, we need the sequence to end with the value
+			sequence.expressions.push(rhs);
+		}
 
-		const iife = b.arrow(
-			[],
-			b.block([
-				b.const(rhs, rhs_expression),
-				b.stmt(b.sequence(assignments)),
-				// return because it could be used in a nested expression where the value is needed.
-				// example: { foo: ({ bar } = { bar: 1 })}
-				b.return(rhs)
-			])
-		);
+		if (should_cache) {
+			// the right hand side is a complex expression, wrap in an IIFE to cache it
+			const iife = b.arrow([rhs], sequence);
 
-		return iife_is_async ? b.await(b.call(b.async(iife))) : b.call(iife);
+			const iife_is_async =
+				is_expression_async(value) ||
+				assignments.some((assignment) => is_expression_async(assignment));
+
+			return iife_is_async ? b.await(b.call(b.async(iife), value)) : b.call(iife, value);
+		}
+
+		return sequence;
 	}
 
-	if (assignee.type !== 'Identifier' && assignee.type !== 'MemberExpression') {
-		throw new Error(`Unexpected assignment type ${assignee.type}`);
+	if (node.left.type !== 'Identifier' && node.left.type !== 'MemberExpression') {
+		throw new Error(`Unexpected assignment type ${node.left.type}`);
 	}
 
 	return (
