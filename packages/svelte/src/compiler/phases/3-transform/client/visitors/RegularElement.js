@@ -327,9 +327,8 @@ export function RegularElement(node, context) {
 	// set the value of `hydrate_node` to `node.content`
 	if (node.name === 'template') {
 		needs_reset = true;
-
+		child_state.init.push(b.stmt(b.call('$.hydrate_template', arg)));
 		arg = b.member(arg, b.id('content'));
-		child_state.init.push(b.stmt(b.call('$.reset', arg)));
 	}
 
 	process_children(trimmed, () => b.call('$.child', arg), true, {

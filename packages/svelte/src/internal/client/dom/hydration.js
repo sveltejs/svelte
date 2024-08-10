@@ -48,12 +48,22 @@ export function reset(node) {
 
 	// If we are resetting back to a parent, then we should be at the end of the current parent
 	// and thus have no more siblings to hydrate (except if we're inside a template).
-	if (hydrate_node.nextSibling !== null && hydrate_node.nodeName !== 'TEMPLATE') {
+	if (hydrate_node.nextSibling !== null) {
 		w.hydration_mismatch();
 		throw HYDRATION_ERROR;
 	}
 
 	hydrate_node = node;
+}
+
+/**
+ * @param {HTMLTemplateElement} template
+ */
+export function hydrate_template(template) {
+	if (hydrating) {
+		// @ts-expect-error TemplateNode doesn't include DocumentFragment, but it's actually fine
+		hydrate_node = template.content;
+	}
 }
 
 export function next() {
