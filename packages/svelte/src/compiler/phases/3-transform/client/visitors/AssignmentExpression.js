@@ -32,7 +32,7 @@ export function AssignmentExpression(node, context) {
 			const value = path.expression?.(b.id(tmp_id));
 			const assignment = b.assignment('=', path.node, value);
 			original_assignments.push(assignment);
-			assignments.push(build_assignment(assignment, context, () => assignment));
+			assignments.push(build_assignment('=', path.node, value, context, () => assignment));
 		}
 
 		if (assignments.every((assignment, i) => assignment === original_assignments[i])) {
@@ -68,19 +68,19 @@ export function AssignmentExpression(node, context) {
 		throw new Error(`Unexpected assignment type ${assignee.type}`);
 	}
 
-	return build_assignment(node, context, context.next);
+	return build_assignment(node.operator, node.left, node.right, context, context.next);
 }
 
 /**
  * @template {ClientTransformState} State
- * @param {AssignmentExpression} node
+ * @param {AssignmentOperator} operator
+ * @param {Pattern} left
+ * @param {Expression} right
  * @param {import('zimmerframe').Context<SvelteNode, State>} context
  * @param {() => any} fallback
  * @returns {Expression}
  */
-export function build_assignment(node, context, fallback) {
-	const { operator, left, right } = node;
-
+export function build_assignment(operator, left, right, context, fallback) {
 	const assignee = /** @type {Identifier | MemberExpression} */ (left);
 
 	// Handle class private/public state assignment cases
