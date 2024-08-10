@@ -128,7 +128,6 @@ export function EachBlock(node, context) {
 	const index =
 		each_node_meta.contains_group_binding || !node.index ? each_node_meta.index : b.id(node.index);
 	const item = each_node_meta.item;
-	const unwrapped = (flags & EACH_ITEM_REACTIVE) !== 0 ? b.call('$.get', item) : item;
 
 	if (node.index) {
 		if ((flags & EACH_INDEX_REACTIVE) !== 0) {
@@ -174,18 +173,14 @@ export function EachBlock(node, context) {
 
 		delete key_state.transform[node.context.name];
 	} else {
-		child_state.transform[item.name] = {
-			read: (flags & EACH_ITEM_REACTIVE) !== 0 ? get_value : (node) => node
-		};
+		const unwrapped = (flags & EACH_ITEM_REACTIVE) !== 0 ? b.call('$.get', item) : item;
 
-		const paths = extract_paths(node.context);
-
-		for (const path of paths) {
+		for (const path of extract_paths(node.context)) {
 			const name = /** @type {Identifier} */ (path.node).name;
 			const needs_derived = path.has_default_value; // to ensure that default value is only called once
 
 			const fn = b.thunk(
-				/** @type {Expression} */ (context.visit(path.expression?.(item), child_state))
+				/** @type {Expression} */ (context.visit(path.expression?.(unwrapped), child_state))
 			);
 
 			declarations.push(b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn));
@@ -194,11 +189,11 @@ export function EachBlock(node, context) {
 
 			child_state.transform[name] = {
 				read,
-				assign: (node, value) => {
+				assign: (_, value) => {
 					const left = /** @type {Pattern} */ (path.update_expression(unwrapped));
 					return b.sequence([b.assignment('=', left, value), ...sequence]);
 				},
-				mutate: (node, mutation) => {
+				mutate: (_, mutation) => {
 					return b.sequence([mutation, ...sequence]);
 				}
 			};
