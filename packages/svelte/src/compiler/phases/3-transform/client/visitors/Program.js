@@ -111,6 +111,7 @@ export function Program(node, context) {
 				};
 			} else if (binding.prop_alias) {
 				const key = b.key(binding.prop_alias);
+
 				context.state.transform[name] = {
 					read: (node) => b.member(b.id('$$props'), key, key.type === 'Literal')
 				};
