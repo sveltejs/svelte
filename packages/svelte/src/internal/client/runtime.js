@@ -991,12 +991,14 @@ export function update_pre(signal, d = 1) {
  * @returns {Record<string, unknown>}
  */
 export function exclude_from_object(obj, keys) {
-	obj = { ...obj };
-	let key;
-	for (key of keys) {
-		delete obj[key];
+	/** @type {Record<string, unknown>} */
+	let res = {};
+	for (let key in obj) {
+		// Use == because keys could be numbers, and iterating turns them into strings
+		if (keys.find((k) => k == key)) continue;
+		res[key] = obj[key];
 	}
-	return obj;
+	return res;
 }
 
 /**
