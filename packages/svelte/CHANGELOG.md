@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.213
+
+### Patch Changes
+
+- fix: ensure custom elements do not sync flush on mount ([#12787](https://github.com/sveltejs/svelte/pull/12787))
+
+- fix: ensure event handlers referencing $host are not hoisted ([#12775](https://github.com/sveltejs/svelte/pull/12775))
+
+- fix: provide more hydration mismatch coverage ([#12755](https://github.com/sveltejs/svelte/pull/12755))
+
+- chore: simpler fallback values ([#12788](https://github.com/sveltejs/svelte/pull/12788))
+
 ## 5.0.0-next.212
 
 ### Patch Changes
