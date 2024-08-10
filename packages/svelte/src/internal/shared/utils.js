@@ -53,6 +53,6 @@ export function run_all(arr) {
  * @param {() => V} fallback lazy because could contain side effects
  * @returns {V}
  */
-export function value_or_fallback(value, fallback) {
+export function fallback(value, fallback) {
 	return value === undefined ? fallback() : value;
 }

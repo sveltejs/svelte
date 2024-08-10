@@ -96,9 +96,7 @@ export function VariableDeclaration(node, context) {
 						const name = /** @type {Identifier} */ (path.node).name;
 						const binding = /** @type {Binding} */ (context.state.scope.get(name));
 						const prop = b.member(b.id('$$props'), b.literal(binding.prop_alias ?? name), true);
-						declarations.push(
-							b.declarator(path.node, b.call('$.value_or_fallback', prop, b.thunk(value)))
-						);
+						declarations.push(b.declarator(path.node, b.call('$.fallback', prop, b.thunk(value))));
 					}
 					continue;
 				}
@@ -115,8 +113,8 @@ export function VariableDeclaration(node, context) {
 				if (declarator.init) {
 					const default_value = /** @type {Expression} */ (context.visit(declarator.init));
 					init = is_expression_async(default_value)
-						? b.await(b.call('$.value_or_fallback', prop, b.thunk(default_value, true)))
-						: b.call('$.value_or_fallback', prop, b.thunk(default_value));
+						? b.await(b.call('$.fallback', prop, b.thunk(default_value, true)))
+						: b.call('$.fallback', prop, b.thunk(default_value));
 				}
 
 				declarations.push(b.declarator(declarator.id, init));
