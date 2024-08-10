@@ -155,8 +155,8 @@ function get_delegated_event(event_name, handler, context) {
 	const visited_references = new Set();
 	const scope = target_function.metadata.scope;
 	for (const [reference] of scope.references) {
-		// Bail out if the arguments keyword is used
-		if (reference === 'arguments') return unhoisted;
+		// Bail out if the arguments keyword is used or $host is referenced
+		if (reference === 'arguments' || reference === '$host') return unhoisted;
 		// Bail out if references a store subscription
 		if (scope.get(`$${reference}`)?.kind === 'store_sub') return unhoisted;
 
@@ -187,9 +187,7 @@ function get_delegated_event(event_name, handler, context) {
 				// Bail out if we reference anything from the EachBlock (for now) that mutates in non-runes mode,
 				(((!context.state.analysis.runes && binding.kind === 'each') ||
 					// or any normal not reactive bindings that are mutated.
-					binding.kind === 'normal' ||
-					// or any reactive imports (those are rewritten) (can only happen in legacy mode)
-					binding.kind === 'legacy_reactive_import') &&
+					binding.kind === 'normal') &&
 					binding.mutated))
 		) {
 			return unhoisted;

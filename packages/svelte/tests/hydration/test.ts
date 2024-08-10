@@ -113,15 +113,16 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 			throw new Error(`Unexpected errors: ${errors.join('\n')}`);
 		}
 
-		if (!override) {
-			const expected = read(`${cwd}/_expected.html`) ?? rendered.html;
-			flushSync();
-			assert.equal(target.innerHTML.trim(), expected.trim());
-		}
+		flushSync();
+
+		const normalize = (string: string) => string.trim().replace(/\r\n/g, '\n');
+
+		const expected = read(`${cwd}/_expected.html`) ?? rendered.html;
+		assert.equal(normalize(target.innerHTML), normalize(expected));
 
 		if (rendered.head) {
 			const expected = read(`${cwd}/_expected_head.html`) ?? rendered.head;
-			assert.equal(head.innerHTML.trim(), expected.trim());
+			assert.equal(normalize(head.innerHTML), normalize(expected));
 		}
 
 		if (config.snapshot) {

@@ -100,6 +100,13 @@ export function RegularElement(node, context) {
 		metadata.context.template_needs_import_node = true;
 	}
 
+	// visit let directives first, to set state
+	for (const attribute of node.attributes) {
+		if (attribute.type === 'LetDirective') {
+			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+		}
+	}
+
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute') {
 			attributes.push(attribute);
@@ -136,8 +143,6 @@ export function RegularElement(node, context) {
 			class_directives.push(attribute);
 		} else if (attribute.type === 'StyleDirective') {
 			style_directives.push(attribute);
-		} else if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 		} else if (attribute.type === 'OnDirective') {
 			const handler = /** @type {Expression} */ (context.visit(attribute));
 			const has_action_directive = node.attributes.find((a) => a.type === 'UseDirective');
@@ -145,7 +150,7 @@ export function RegularElement(node, context) {
 			context.state.after_update.push(
 				b.stmt(has_action_directive ? b.call('$.effect', b.thunk(handler)) : handler)
 			);
-		} else {
+		} else if (attribute.type !== 'LetDirective') {
 			if (attribute.type === 'BindDirective') {
 				if (attribute.name === 'group' || attribute.name === 'checked') {
 					needs_special_value_handling = true;
@@ -327,9 +332,8 @@ export function RegularElement(node, context) {
 	// set the value of `hydrate_node` to `node.content`
 	if (node.name === 'template') {
 		needs_reset = true;
-
+		child_state.init.push(b.stmt(b.call('$.hydrate_template', arg)));
 		arg = b.member(arg, b.id('content'));
-		child_state.init.push(b.stmt(b.call('$.reset', arg)));
 	}
 
 	process_children(trimmed, () => b.call('$.child', arg), true, {

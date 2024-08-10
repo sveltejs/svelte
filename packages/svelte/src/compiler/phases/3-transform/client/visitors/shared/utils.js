@@ -145,8 +145,10 @@ export function build_bind_this(expression, value, { state, visit }) {
 	/** @type {Expression[]} */
 	const values = [];
 
-	/** @type {typeof state.getters} */
-	const getters = {};
+	/** @type {string[]} */
+	const seen = [];
+
+	const transform = { ...state.transform };
 
 	// Pass in each context variables to the get/set functions, so that we can null out old values on teardown.
 	// Note that we only do this for each context variables, the consequence is that the value might be stale in
@@ -154,7 +156,8 @@ export function build_bind_this(expression, value, { state, visit }) {
 	// variables, but that was the same case in Svelte 4, too. Once legacy mode is gone completely, we can revisit this.
 	walk(expression, null, {
 		Identifier(node, { path }) {
-			if (Object.hasOwn(getters, node.name)) return;
+			if (seen.includes(node.name)) return;
+			seen.push(node.name);
 
 			const parent = /** @type {Expression} */ (path.at(-1));
 			if (!is_reference(node, parent)) return;
@@ -166,14 +169,21 @@ export function build_bind_this(expression, value, { state, visit }) {
 				if (owner.type === 'EachBlock' && scope === binding.scope) {
 					ids.push(node);
 					values.push(/** @type {Expression} */ (visit(node)));
-					getters[node.name] = node;
+
+					if (transform[node.name]) {
+						transform[node.name] = {
+							...transform[node.name],
+							read: (node) => node
+						};
+					}
+
 					break;
 				}
 			}
 		}
 	});
 
-	const child_state = { ...state, getters: { ...state.getters, ...getters } };
+	const child_state = { ...state, transform };
 
 	const get = /** @type {Expression} */ (visit(expression, child_state));
 	const set = /** @type {Expression} */ (
@@ -204,28 +214,30 @@ export function build_bind_this(expression, value, { state, visit }) {
  * @param {BindDirective} binding
  * @param {MemberExpression} expression
  */
-export function build_validate_binding(state, binding, expression) {
-	const string = state.analysis.source.slice(binding.start, binding.end);
-
-	const get_object = b.thunk(/** @type {Expression} */ (expression.object));
-	const get_property = b.thunk(
-		/** @type {Expression} */ (
-			expression.computed
-				? expression.property
-				: b.literal(/** @type {Identifier} */ (expression.property).name)
-		)
-	);
+export function validate_binding(state, binding, expression) {
+	// If we are referencing a $store.foo then we don't need to add validation
+	const left = object(binding.expression);
+	const left_binding = left && state.scope.get(left.name);
+	if (left_binding?.kind === 'store_sub') return;
 
 	const loc = locator(binding.start);
 
-	return b.stmt(
-		b.call(
-			'$.validate_binding',
-			b.literal(string),
-			get_object,
-			get_property,
-			loc && b.literal(loc.line),
-			loc && b.literal(loc.column)
+	state.init.push(
+		b.stmt(
+			b.call(
+				'$.validate_binding',
+				b.literal(state.analysis.source.slice(binding.start, binding.end)),
+				b.thunk(/** @type {Expression} */ (expression.object)),
+				b.thunk(
+					/** @type {Expression} */ (
+						expression.computed
+							? expression.property
+							: b.literal(/** @type {Identifier} */ (expression.property).name)
+					)
+				),
+				loc && b.literal(loc.line),
+				loc && b.literal(loc.column)
+			)
 		)
 	);
 }

@@ -1,8 +1,8 @@
-/** @import { Expression, Pattern, Statement, UpdateExpression } from 'estree' */
+/** @import { Expression, Node, Pattern, Statement, UpdateExpression } from 'estree' */
 /** @import { Context } from '../types' */
 import { is_ignored } from '../../../../state.js';
+import { object } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
-import { build_getter, build_setter } from '../utils.js';
 
 /**
  * @param {UpdateExpression} node
@@ -10,45 +10,6 @@ import { build_getter, build_setter } from '../utils.js';
  */
 export function UpdateExpression(node, context) {
 	const argument = node.argument;
-
-	if (argument.type === 'Identifier') {
-		const binding = context.state.scope.get(argument.name);
-		const is_store = binding?.kind === 'store_sub';
-		const name = is_store ? argument.name.slice(1) : argument.name;
-
-		// use runtime functions for smaller output
-		if (
-			binding?.kind === 'state' ||
-			binding?.kind === 'frozen_state' ||
-			binding?.kind === 'each' ||
-			binding?.kind === 'legacy_reactive' ||
-			binding?.kind === 'prop' ||
-			binding?.kind === 'bindable_prop' ||
-			is_store
-		) {
-			/** @type {Expression[]} */
-			const args = [];
-
-			let fn = '$.update';
-			if (node.prefix) fn += '_pre';
-
-			if (is_store) {
-				fn += '_store';
-				args.push(build_getter(b.id(name), context.state), b.call('$' + name));
-			} else {
-				if (binding.kind === 'prop' || binding.kind === 'bindable_prop') fn += '_prop';
-				args.push(b.id(name));
-			}
-
-			if (node.operator === '--') {
-				args.push(b.literal(-1));
-			}
-
-			return b.call(fn, ...args);
-		}
-
-		return context.next();
-	}
 
 	if (
 		argument.type === 'MemberExpression' &&
@@ -68,43 +29,41 @@ export function UpdateExpression(node, context) {
 		return b.call(fn, ...args);
 	}
 
-	/** @param {any} serialized */
-	function maybe_skip_ownership_validation(serialized) {
-		if (is_ignored(node, 'ownership_invalid_mutation')) {
-			return b.call('$.skip_ownership_validation', b.thunk(serialized));
-		}
-
-		return serialized;
+	if (argument.type !== 'Identifier' && argument.type !== 'MemberExpression') {
+		throw new Error('An impossible state was reached');
 	}
 
-	// turn it into an IIFE assignment expression: i++ -> (() => { const $$value = i; i+=1; return $$value; })
-	const assignment = b.assignment(
-		node.operator === '++' ? '+=' : '-=',
-		/** @type {Pattern} */ (argument),
-		b.literal(1)
+	const left = object(argument);
+	if (left === null) return context.next();
+
+	if (left === argument) {
+		const transform = context.state.transform;
+		const update = transform[left.name]?.update;
+
+		if (update && Object.hasOwn(transform, left.name)) {
+			return update(node);
+		}
+	}
+
+	const assignment = /** @type {Expression} */ (
+		context.visit(
+			b.assignment(
+				node.operator === '++' ? '+=' : '-=',
+				/** @type {Pattern} */ (argument),
+				b.literal(1)
+			)
+		)
 	);
 
-	const serialized_assignment = build_setter(assignment, context, () => assignment, node.prefix);
+	const parent = /** @type {Node} */ (context.path.at(-1));
+	const is_standalone = parent.type === 'ExpressionStatement'; // TODO and possibly others, but not e.g. the `test` of a WhileStatement
 
-	const value = /** @type {Expression} */ (context.visit(argument));
+	const update =
+		node.prefix || is_standalone
+			? assignment
+			: b.binary(node.operator === '++' ? '-' : '+', assignment, b.literal(1));
 
-	if (serialized_assignment === assignment) {
-		// No change to output -> nothing to transform -> we can keep the original update expression
-		return maybe_skip_ownership_validation(context.next());
-	}
-
-	if (context.state.analysis.runes) {
-		return maybe_skip_ownership_validation(serialized_assignment);
-	}
-
-	/** @type {Statement[]} */
-	let statements;
-	if (node.prefix) {
-		statements = [b.stmt(serialized_assignment), b.return(value)];
-	} else {
-		const tmp_id = context.state.scope.generate('$$value');
-		statements = [b.const(tmp_id, value), b.stmt(serialized_assignment), b.return(b.id(tmp_id))];
-	}
-
-	return maybe_skip_ownership_validation(b.call(b.thunk(b.block(statements))));
+	return is_ignored(node, 'ownership_invalid_mutation')
+		? b.call('$.skip_ownership_validation', b.thunk(update))
+		: update;
 }

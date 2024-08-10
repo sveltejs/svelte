@@ -5,9 +5,8 @@ import { dev, is_ignored } from '../../../../state.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { binding_properties } from '../../../bindings.js';
-import { build_setter } from '../utils.js';
 import { build_attribute_value } from './shared/element.js';
-import { build_bind_this, build_validate_binding } from './shared/utils.js';
+import { build_bind_this, validate_binding } from './shared/utils.js';
 
 /**
  * @param {BindDirective} node
@@ -30,28 +29,18 @@ export function BindDirective(node, context) {
 			)) &&
 		!is_ignored(node, 'binding_property_non_reactive')
 	) {
-		context.state.init.push(
-			build_validate_binding(
-				context.state,
-				node,
-				/**@type {MemberExpression} */ (context.visit(expression))
-			)
+		validate_binding(
+			context.state,
+			node,
+			/**@type {MemberExpression} */ (context.visit(expression))
 		);
 	}
 
 	const getter = b.thunk(/** @type {Expression} */ (context.visit(expression)));
-	const assignment = b.assignment('=', expression, b.id('$$value'));
+
 	const setter = b.arrow(
 		[b.id('$$value')],
-		build_setter(
-			assignment,
-			context,
-			() => /** @type {Expression} */ (context.visit(assignment)),
-			null,
-			{
-				skip_proxy_and_freeze: true
-			}
-		)
+		/** @type {Expression} */ (context.visit(b.assignment('=', expression, b.id('$$value'))))
 	);
 
 	/** @type {CallExpression} */

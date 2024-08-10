@@ -34,7 +34,7 @@ export function LabeledStatement(node, context) {
 	const sequence = [];
 
 	for (const binding of reactive_statement.dependencies) {
-		if (binding.kind === 'normal') continue;
+		if (binding.kind === 'normal' && binding.declaration_kind !== 'import') continue;
 
 		const name = binding.node.name;
 		let serialized = build_getter(b.id(name), context.state);

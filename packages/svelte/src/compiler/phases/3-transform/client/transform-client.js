@@ -4,7 +4,6 @@
 /** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';
 import * as b from '../../../utils/builders.js';
-import { set_scope } from '../../scope.js';
 import { build_getter } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
 import { dev, filename } from '../../../state.js';
@@ -15,6 +14,7 @@ import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { BinaryExpression } from './visitors/BinaryExpression.js';
 import { BindDirective } from './visitors/BindDirective.js';
+import { BlockStatement } from './visitors/BlockStatement.js';
 import { BreakStatement } from './visitors/BreakStatement.js';
 import { CallExpression } from './visitors/CallExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
@@ -37,6 +37,7 @@ import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { LetDirective } from './visitors/LetDirective.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
 import { OnDirective } from './visitors/OnDirective.js';
+import { Program } from './visitors/Program.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
 import { SlotElement } from './visitors/SlotElement.js';
@@ -58,7 +59,23 @@ import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 
 /** @type {Visitors} */
 const visitors = {
-	_: set_scope,
+	_: function set_scope(node, { next, state }) {
+		const scope = state.scopes.get(node);
+
+		if (scope && scope !== state.scope) {
+			const transform = { ...state.transform };
+
+			for (const [name, binding] of scope.declarations) {
+				if (binding.kind === 'normal') {
+					delete transform[name];
+				}
+			}
+
+			next({ ...state, transform, scope });
+		} else {
+			next();
+		}
+	},
 	AnimateDirective,
 	ArrowFunctionExpression,
 	AssignmentExpression,
@@ -66,6 +83,7 @@ const visitors = {
 	AwaitBlock,
 	BinaryExpression,
 	BindDirective,
+	BlockStatement,
 	BreakStatement,
 	CallExpression,
 	ClassBody,
@@ -88,6 +106,7 @@ const visitors = {
 	LetDirective,
 	MemberExpression,
 	OnDirective,
+	Program,
 	RegularElement,
 	RenderTag,
 	SlotElement,
@@ -123,6 +142,7 @@ export function client_component(analysis, options) {
 		is_instance: false,
 		hoisted: [b.import_all('$', 'svelte/internal/client')],
 		node: /** @type {any} */ (null), // populated by the root node
+		legacy_reactive_imports: [],
 		legacy_reactive_statements: new Map(),
 		metadata: {
 			context: {
@@ -136,8 +156,7 @@ export function client_component(analysis, options) {
 		preserve_whitespace: options.preserveWhitespace,
 		public_state: new Map(),
 		private_state: new Map(),
-		getters: {},
-		setters: {},
+		transform: {},
 		in_constructor: false,
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
@@ -155,6 +174,7 @@ export function client_component(analysis, options) {
 
 	const instance_state = {
 		...state,
+		transform: { ...state.transform },
 		scope: analysis.instance.scope,
 		scopes: analysis.instance.scopes,
 		is_instance: true
@@ -167,21 +187,17 @@ export function client_component(analysis, options) {
 	const template = /** @type {ESTree.Program} */ (
 		walk(
 			/** @type {SvelteNode} */ (analysis.template.ast),
-			{ ...state, scope: analysis.instance.scope, scopes: analysis.template.scopes },
+			{
+				...state,
+				transform: instance_state.transform,
+				scope: analysis.instance.scope,
+				scopes: analysis.template.scopes
+			},
 			visitors
 		)
 	);
 
-	// Very very dirty way of making import statements reactive in legacy mode if needed
-	if (!analysis.runes) {
-		for (const [name, binding] of analysis.module.scope.declarations) {
-			if (binding.kind === 'legacy_reactive_import') {
-				instance.body.unshift(
-					b.var('$$_import_' + name, b.call('$.reactive_import', b.thunk(b.id(name))))
-				);
-			}
-		}
-	}
+	instance.body.unshift(...state.legacy_reactive_imports);
 
 	/** @type {ESTree.Statement[]} */
 	const store_setup = [];
@@ -380,7 +396,9 @@ export function client_component(analysis, options) {
 		state.hoisted.push(b.const('$$css', b.object([b.init('hash', hash), b.init('code', code)])));
 
 		component_block.body.unshift(
-			b.stmt(b.call('$.append_styles', b.id('$$anchor'), b.id('$$css')))
+			b.stmt(
+				b.call('$.append_styles', b.id('$$anchor'), b.id('$$css'), options.customElement && b.true)
+			)
 		);
 	}
 
@@ -621,11 +639,9 @@ export function client_module(analysis, options) {
 		options,
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
-		legacy_reactive_statements: new Map(),
 		public_state: new Map(),
 		private_state: new Map(),
-		getters: {},
-		setters: {},
+		transform: {},
 		in_constructor: false
 	};
 

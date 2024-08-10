@@ -271,7 +271,6 @@ export interface Binding {
 	 * - `snippet`: A snippet parameter
 	 * - `store_sub`: A $store value
 	 * - `legacy_reactive`: A `$:` declaration
-	 * - `legacy_reactive_import`: An imported binding that is mutated inside the component
 	 */
 	kind:
 		| 'normal'
@@ -284,8 +283,7 @@ export interface Binding {
 		| 'each'
 		| 'snippet'
 		| 'store_sub'
-		| 'legacy_reactive'
-		| 'legacy_reactive_import';
+		| 'legacy_reactive';
 	declaration_kind: DeclarationKind;
 	/**
 	 * What the value was initialized with.

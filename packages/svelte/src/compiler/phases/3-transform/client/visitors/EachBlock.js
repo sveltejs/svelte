@@ -1,6 +1,7 @@
-/** @import { AssignmentExpression, BlockStatement, Expression, Identifier, MemberExpression, Pattern, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, Identifier, Pattern, Statement } from 'estree' */
 /** @import { Binding, EachBlock } from '#compiler' */
-/** @import { ComponentContext, Context } from '../types' */
+/** @import { ComponentContext } from '../types' */
+/** @import { Scope } from '../../../scope' */
 import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
@@ -12,7 +13,8 @@ import {
 import { dev } from '../../../../state.js';
 import { extract_paths, object } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
-import { get_assignment_value, build_getter, build_setter, with_loc } from '../utils.js';
+import { build_getter } from '../utils.js';
+import { get_value } from './shared/declarations.js';
 
 /**
  * @param {EachBlock} node
@@ -20,7 +22,15 @@ import { get_assignment_value, build_getter, build_setter, with_loc } from '../u
  */
 export function EachBlock(node, context) {
 	const each_node_meta = node.metadata;
-	const collection = /** @type {Expression} */ (context.visit(node.expression));
+
+	// expression should be evaluated in the parent scope, not the scope
+	// created by the each block itself
+	const collection = /** @type {Expression} */ (
+		context.visit(node.expression, {
+			...context.state,
+			scope: /** @type {Scope} */ (context.state.scope.parent)
+		})
+	);
 
 	if (!each_node_meta.is_controlled) {
 		context.state.template.push('<!>');
@@ -104,54 +114,13 @@ export function EachBlock(node, context) {
 
 	const child_state = {
 		...context.state,
-		getters: { ...context.state.getters },
-		setters: { ...context.state.setters }
+		transform: { ...context.state.transform }
 	};
 
 	/** The state used when generating the key function, if necessary */
 	const key_state = {
 		...context.state,
-		getters: { ...context.state.getters }
-	};
-
-	/**
-	 * @param {Pattern} expression_for_id
-	 * @returns {(assignment: AssignmentExpression, context: Context) => Expression}
-	 */
-	const create_mutation = (expression_for_id) => {
-		return (assignment, context) => {
-			if (assignment.left.type !== 'Identifier' && assignment.left.type !== 'MemberExpression') {
-				// build_setter turns other patterns into IIFEs and separates the assignments
-				// into separate expressions, at which point this is called again with an identifier or member expression
-				return build_setter(assignment, context, () => assignment);
-			}
-
-			const left = object(assignment.left);
-			const value = get_assignment_value(assignment, context);
-			const invalidate = b.call(
-				'$.invalidate_inner_signals',
-				b.thunk(b.sequence(indirect_dependencies))
-			);
-			const invalidate_store = store_to_invalidate
-				? b.call('$.invalidate_store', b.id('$$stores'), b.literal(store_to_invalidate))
-				: undefined;
-
-			const sequence = [];
-			if (!context.state.analysis.runes) sequence.push(invalidate);
-			if (invalidate_store) sequence.push(invalidate_store);
-
-			if (left === assignment.left) {
-				const assign = b.assignment('=', expression_for_id, value);
-				sequence.unshift(assign);
-				return b.sequence(sequence);
-			} else {
-				const original_left = /** @type {MemberExpression} */ (assignment.left);
-				const left = /** @type {Pattern} */ (context.visit(original_left));
-				const assign = b.assignment(assignment.operator, left, value);
-				sequence.unshift(assign);
-				return b.sequence(sequence);
-			}
-		};
+		transform: { ...context.state.transform }
 	};
 
 	// We need to generate a unique identifier in case there's a bind:group below
@@ -159,31 +128,56 @@ export function EachBlock(node, context) {
 	const index =
 		each_node_meta.contains_group_binding || !node.index ? each_node_meta.index : b.id(node.index);
 	const item = each_node_meta.item;
-
-	child_state.getters[item.name] =
-		(flags & EACH_ITEM_REACTIVE) === 0 ? (node) => node : (node) => b.call('$.get', node);
+	const unwrapped = (flags & EACH_ITEM_REACTIVE) !== 0 ? b.call('$.get', item) : item;
 
 	if (node.index) {
-		child_state.getters[node.index] =
-			(flags & EACH_INDEX_REACTIVE) === 0 ? (node) => node : (node) => b.call('$.get', node);
+		if ((flags & EACH_INDEX_REACTIVE) !== 0) {
+			child_state.transform[node.index] = { read: get_value };
+		} else {
+			delete child_state.transform[node.index];
+		}
 
-		key_state.getters[node.index] = b.id(node.index);
+		delete key_state.transform[node.index];
 	}
 
 	/** @type {Statement[]} */
 	const declarations = [];
 
-	if (node.context.type === 'Identifier') {
-		child_state.setters[node.context.name] = create_mutation(
-			b.member(
-				each_node_meta.array_name ? b.call(each_node_meta.array_name) : collection,
-				index,
-				true
-			)
-		);
+	const invalidate = b.call(
+		'$.invalidate_inner_signals',
+		b.thunk(b.sequence(indirect_dependencies))
+	);
 
-		key_state.getters[node.context.name] = node.context;
+	const invalidate_store = store_to_invalidate
+		? b.call('$.invalidate_store', b.id('$$stores'), b.literal(store_to_invalidate))
+		: undefined;
+
+	/** @type {Expression[]} */
+	const sequence = [];
+	if (!context.state.analysis.runes) sequence.push(invalidate);
+	if (invalidate_store) sequence.push(invalidate_store);
+
+	if (node.context.type === 'Identifier') {
+		child_state.transform[node.context.name] = {
+			read: (flags & EACH_ITEM_REACTIVE) !== 0 ? get_value : (node) => node,
+			assign: (_, value) => {
+				const left = b.member(
+					each_node_meta.array_name ? b.call(each_node_meta.array_name) : collection,
+					index,
+					true
+				);
+
+				return b.sequence([b.assignment('=', left, value), ...sequence]);
+			},
+			mutate: (_, mutation) => b.sequence([mutation, ...sequence])
+		};
+
+		delete key_state.transform[node.context.name];
 	} else {
+		child_state.transform[item.name] = {
+			read: (flags & EACH_ITEM_REACTIVE) !== 0 ? get_value : (node) => node
+		};
+
 		const paths = extract_paths(node.context);
 
 		for (const path of paths) {
@@ -196,19 +190,26 @@ export function EachBlock(node, context) {
 
 			declarations.push(b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn));
 
-			const getter = needs_derived ? b.call('$.get', b.id(name)) : b.call(name);
-			child_state.getters[name] = getter;
-			child_state.setters[name] = create_mutation(
-				/** @type {Pattern} */ (context.visit(path.update_expression(item), child_state))
-			);
+			const read = needs_derived ? get_value : b.call;
+
+			child_state.transform[name] = {
+				read,
+				assign: (node, value) => {
+					const left = /** @type {Pattern} */ (path.update_expression(unwrapped));
+					return b.sequence([b.assignment('=', left, value), ...sequence]);
+				},
+				mutate: (node, mutation) => {
+					return b.sequence([mutation, ...sequence]);
+				}
+			};
 
 			// we need to eagerly evaluate the expression in order to hit any
 			// 'Cannot access x before initialization' errors
 			if (dev) {
-				declarations.push(b.stmt(getter));
+				declarations.push(b.stmt(read(b.id(name))));
 			}
 
-			key_state.getters[name] = path.node;
+			delete key_state.transform[name];
 		}
 	}
 

@@ -1,7 +1,8 @@
-/** @import { Component, SvelteComponent, SvelteSelf } from '#compiler' */
+/** @import { Comment, Component, Fragment, SvelteComponent, SvelteSelf } from '#compiler' */
 /** @import { Context } from '../../types' */
 import * as e from '../../../../errors.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../../utils/ast.js';
+import { determine_slot } from '../../../../utils/slot.js';
 import {
 	validate_attribute,
 	validate_attribute_name,
@@ -60,9 +61,45 @@ export function visit_component(node, context) {
 		}
 	}
 
-	context.next({
-		...context.state,
-		parent_element: null,
-		component_slots: new Set()
-	});
+	// If the component has a slot attribute — `<Foo slot="whatever" .../>` —
+	// then `let:` directives apply to other attributes, instead of just the
+	// top-level contents of the component. Yes, this is very weird.
+	const default_state = determine_slot(node)
+		? context.state
+		: { ...context.state, scope: node.metadata.scopes.default };
+
+	for (const attribute of node.attributes) {
+		context.visit(attribute, attribute.type === 'LetDirective' ? default_state : context.state);
+	}
+
+	/** @type {Comment[]} */
+	let comments = [];
+
+	/** @type {Record<string, Fragment['nodes']>} */
+	const nodes = { default: [] };
+
+	for (const child of node.fragment.nodes) {
+		if (child.type === 'Comment') {
+			comments.push(child);
+			continue;
+		}
+
+		const slot_name = determine_slot(child) ?? 'default';
+		(nodes[slot_name] ??= []).push(...comments, child);
+
+		if (slot_name !== 'default') comments = [];
+	}
+
+	const component_slots = new Set();
+
+	for (const slot_name in nodes) {
+		const state = {
+			...context.state,
+			scope: node.metadata.scopes[slot_name],
+			parent_element: null,
+			component_slots
+		};
+
+		context.visit({ ...node.fragment, nodes: nodes[slot_name] }, state);
+	}
 }

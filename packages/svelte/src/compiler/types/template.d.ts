@@ -16,6 +16,7 @@ import type {
 	ChainExpression,
 	SimpleCallExpression
 } from 'estree';
+import type { Scope } from '../phases/scope';
 
 export interface BaseNode {
 	type: string;
@@ -275,6 +276,7 @@ interface BaseElement extends BaseNode {
 export interface Component extends BaseElement {
 	type: 'Component';
 	metadata: {
+		scopes: Record<string, Scope>;
 		dynamic: boolean;
 	};
 }
@@ -311,6 +313,9 @@ export interface SvelteComponent extends BaseElement {
 	type: 'SvelteComponent';
 	name: 'svelte:component';
 	expression: Expression;
+	metadata: {
+		scopes: Record<string, Scope>;
+	};
 }
 
 interface SvelteDocument extends BaseElement {
@@ -356,6 +361,9 @@ export interface SvelteOptionsRaw extends BaseElement {
 export interface SvelteSelf extends BaseElement {
 	type: 'SvelteSelf';
 	name: 'svelte:self';
+	metadata: {
+		scopes: Record<string, Scope>;
+	};
 }
 
 interface SvelteWindow extends BaseElement {
