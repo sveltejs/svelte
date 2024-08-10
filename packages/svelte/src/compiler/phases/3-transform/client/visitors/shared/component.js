@@ -259,12 +259,6 @@ export function build_component(node, component_name, context, anchor = context.
 							scope: node.metadata.scopes[slot_name],
 							transform: { ...context.state.transform }
 						}
-				// {
-				// 	...context.state,
-				// 	scope:
-				// 		context.state.scopes.get(slot_name === 'default' ? children[slot_name][0] : node) ??
-				// 		context.state.scope
-				// }
 			)
 		);
 

@@ -107,29 +107,4 @@ export function visit_component(node, context) {
 			}
 		);
 	}
-
-	// context.visit({ ...node.fragment, nodes: default_slot_nodes }, default_state);
-	// context.visit({ ...node.fragment, nodes: named_slot_nodes }, named_state);
-
-	// context.visit(child, is_slotted_content ? named_state : default_state);
-
-	// if (
-	// 	is_element_node(child) &&
-	// 	child.attributes.some(
-	// 		(a) => a.type === 'Attribute' && a.name === 'slot' && is_text_attribute(a)
-	// 	)
-	// ) {
-	// 	context.visit(child);
-	// } else {
-	// 	context.visit(child, { scope });
-	// }
-
-	// context.visit(node, attribute.type === 'LetDirective' ? default_state : named_state);
-	// }
-
-	// context.next({
-	// 	...context.state,
-	// 	parent_element: null,
-	// 	component_slots: new Set()
-	// });
 }

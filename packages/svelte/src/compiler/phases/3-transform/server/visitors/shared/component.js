@@ -159,26 +159,7 @@ export function build_inline_component(node, expression, context) {
 							...context.state,
 							scope: node.metadata.scopes[slot_name]
 						}
-				// {
-				// 	...context.state,
-				// 	scope:
-				// 		context.state.scopes.get(slot_name === 'default' ? children[slot_name][0] : node) ??
-				// 		context.state.scope
-				// }
 			)
-			// context.visit(
-			// 	{
-			// 		...node.fragment,
-			// 		// @ts-expect-error
-			// 		nodes: children[slot_name]
-			// 	},
-			// 	{
-			// 		...context.state,
-			// 		scope:
-			// 			context.state.scopes.get(slot_name === 'default' ? children[slot_name][0] : node) ??
-			// 			context.state.scope
-			// 	}
-			// )
 		);
 
 		if (block.body.length === 0) continue;
