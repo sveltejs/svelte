@@ -11,9 +11,6 @@ import { build_proxy_reassignment, should_proxy_or_freeze } from '../utils.js';
  * @param {Context} context
  */
 export function AssignmentExpression(node, context) {
-	const parent = /** @type {Node} */ (context.path.at(-1));
-	const is_standalone = parent.type.endsWith('Statement');
-
 	if (
 		node.left.type === 'ArrayPattern' ||
 		node.left.type === 'ObjectPattern' ||
@@ -39,6 +36,7 @@ export function AssignmentExpression(node, context) {
 			return context.next();
 		}
 
+		const is_standalone = /** @type {Node} */ (context.path.at(-1)).type.endsWith('Statement');
 		const sequence = b.sequence(assignments);
 
 		if (!is_standalone) {
