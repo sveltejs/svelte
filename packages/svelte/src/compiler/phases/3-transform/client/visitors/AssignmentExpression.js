@@ -79,7 +79,6 @@ export function AssignmentExpression(node, context) {
  * @returns {Expression}
  */
 export function build_assignment(node, context, fallback) {
-	const { state, visit } = context;
 	const { operator, left, right } = node;
 
 	const assignee = /** @type {Identifier | MemberExpression} */ (left);
@@ -105,7 +104,7 @@ export function build_assignment(node, context, fallback) {
 							: build_proxy_reassignment(value, private_state.id);
 				}
 
-				if (state.in_constructor) {
+				if (context.state.in_constructor) {
 					if (transformed) {
 						return b.assignment(operator, /** @type {Pattern} */ (context.visit(left)), value);
 					}
@@ -113,7 +112,7 @@ export function build_assignment(node, context, fallback) {
 					return b.call('$.set', assignee, value);
 				}
 			}
-		} else if (assignee.property.type === 'Identifier' && state.in_constructor) {
+		} else if (assignee.property.type === 'Identifier' && context.state.in_constructor) {
 			const public_state = context.state.public_state.get(assignee.property.name);
 			const value = get_assignment_value(node, context);
 
@@ -140,7 +139,7 @@ export function build_assignment(node, context, fallback) {
 		return fallback();
 	}
 
-	const binding = state.scope.get(object.name);
+	const binding = context.state.scope.get(object.name);
 	if (!binding) return fallback();
 
 	const transform = Object.hasOwn(context.state.transform, object.name)
@@ -149,12 +148,12 @@ export function build_assignment(node, context, fallback) {
 
 	// reassignment
 	if (object === left && transform?.assign) {
-		let value = /** @type {Expression} */ (visit(right));
+		let value = /** @type {Expression} */ (context.visit(right));
 
 		if (operator !== '=') {
 			value = b.binary(
 				/** @type {BinaryOperator} */ (operator.slice(0, -1)),
-				/** @type {Expression} */ (visit(object)),
+				/** @type {Expression} */ (context.visit(object)),
 				value
 			);
 		}
@@ -179,50 +178,21 @@ export function build_assignment(node, context, fallback) {
 		return transform.assign(object, value);
 	}
 
-	/**
-	 * @param {any} serialized
-	 * @returns
-	 */
-	const maybe_skip_ownership_validation = (serialized) => {
-		if (is_ignored(left, 'ownership_invalid_mutation')) {
-			return b.call('$.skip_ownership_validation', b.thunk(serialized));
-		}
-
-		return serialized;
-	};
+	/** @type {Expression} */
+	let mutation = b.assignment(
+		operator,
+		/** @type {Pattern} */ (context.visit(left)),
+		/** @type {Expression} */ (context.visit(right))
+	);
 
 	// mutation
 	if (transform?.mutate) {
-		const mutation = b.assignment(
-			operator,
-			/** @type {Pattern} */ (context.visit(left)),
-			/** @type {Expression} */ (context.visit(right))
-		);
-
-		return maybe_skip_ownership_validation(transform.mutate(object, mutation));
+		mutation = transform.mutate(object, mutation);
 	}
 
-	if (
-		binding.kind !== 'state' &&
-		binding.kind !== 'frozen_state' &&
-		binding.kind !== 'prop' &&
-		binding.kind !== 'bindable_prop' &&
-		binding.kind !== 'each' &&
-		binding.kind !== 'legacy_reactive' &&
-		binding.kind !== 'store_sub' &&
-		binding.kind !== 'derived'
-	) {
-		// TODO error if it's a computed (or rest prop)? or does that already happen elsewhere?
-		return fallback();
-	}
-
-	return maybe_skip_ownership_validation(
-		b.assignment(
-			operator,
-			/** @type {Pattern} */ (visit(left)),
-			/** @type {Expression} */ (visit(right))
-		)
-	);
+	return is_ignored(left, 'ownership_invalid_mutation')
+		? b.call('$.skip_ownership_validation', b.thunk(mutation))
+		: mutation;
 }
 
 /**
