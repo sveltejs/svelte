@@ -1,90 +1,24 @@
-/** @import { AssignmentExpression, AssignmentOperator, BinaryOperator, Expression, Node, Pattern } from 'estree' */
-/** @import { SvelteNode } from '#compiler' */
-/** @import { ClientTransformState, Context } from '../types.js' */
+/** @import { AssignmentExpression, AssignmentOperator, Expression, Pattern } from 'estree' */
+/** @import { Context } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
-import {
-	build_assignment_value,
-	extract_paths,
-	is_expression_async
-} from '../../../../utils/ast.js';
+import { build_assignment_value } from '../../../../utils/ast.js';
 import { is_ignored } from '../../../../state.js';
 import { build_proxy_reassignment, should_proxy_or_freeze } from '../utils.js';
+import { visit_assignment_expression } from '../../shared/assignments.js';
 
 /**
  * @param {AssignmentExpression} node
  * @param {Context} context
  */
 export function AssignmentExpression(node, context) {
-	if (
-		node.left.type === 'ArrayPattern' ||
-		node.left.type === 'ObjectPattern' ||
-		node.left.type === 'RestElement'
-	) {
-		const value = /** @type {Expression} */ (context.visit(node.right));
-		const should_cache = value.type !== 'Identifier';
-		const rhs = should_cache ? b.id('$$value') : value;
-
-		let changed = false;
-
-		const assignments = extract_paths(node.left).map((path) => {
-			const value = path.expression?.(rhs);
-
-			let assignment = build_assignment('=', path.node, value, context);
-			if (assignment !== null) changed = true;
-
-			return (
-				assignment ??
-				b.assignment(
-					'=',
-					/** @type {Pattern} */ (context.visit(path.node)),
-					/** @type {Expression} */ (context.visit(value))
-				)
-			);
-		});
-
-		if (!changed) {
-			// No change to output -> nothing to transform -> we can keep the original assignment
-			return context.next();
-		}
-
-		const is_standalone = /** @type {Node} */ (context.path.at(-1)).type.endsWith('Statement');
-		const sequence = b.sequence(assignments);
-
-		if (!is_standalone) {
-			// this is part of an expression, we need the sequence to end with the value
-			sequence.expressions.push(rhs);
-		}
-
-		if (should_cache) {
-			// the right hand side is a complex expression, wrap in an IIFE to cache it
-			const iife = b.arrow([rhs], sequence);
-
-			const iife_is_async =
-				is_expression_async(value) ||
-				assignments.some((assignment) => is_expression_async(assignment));
-
-			return iife_is_async ? b.await(b.call(b.async(iife), value)) : b.call(iife, value);
-		}
-
-		return sequence;
-	}
-
-	if (node.left.type !== 'Identifier' && node.left.type !== 'MemberExpression') {
-		throw new Error(`Unexpected assignment type ${node.left.type}`);
-	}
-
-	return (
-		build_assignment(node.operator, node.left, node.right, context) ??
-		/** @type {Expression} */ (context.next())
-	);
+	return visit_assignment_expression(node, context, build_assignment);
 }
 
 /**
- * @template {ClientTransformState} State
  * @param {AssignmentOperator} operator
  * @param {Pattern} left
  * @param {Expression} right
- * @param {import('zimmerframe').Context<SvelteNode, State>} context
+ * @param {Context} context
  * @returns {Expression | null}
  */
 export function build_assignment(operator, left, right, context) {
