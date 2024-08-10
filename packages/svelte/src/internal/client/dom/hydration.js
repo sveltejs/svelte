@@ -46,8 +46,7 @@ export function hydrate_next() {
 export function reset(node) {
 	if (!hydrating) return;
 
-	// If we are resetting back to a parent, then we should be at the end of the current parent
-	// and thus have no more siblings to hydrate (except if we're inside a template).
+	// If the node has remaining siblings, something has gone wrong
 	if (hydrate_node.nextSibling !== null) {
 		w.hydration_mismatch();
 		throw HYDRATION_ERROR;
