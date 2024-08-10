@@ -32,7 +32,7 @@ export function AssignmentExpression(node, context) {
 			const value = path.expression?.(b.id(tmp_id));
 			const assignment = b.assignment('=', path.node, value);
 			original_assignments.push(assignment);
-			assignments.push(build_setter(assignment, context, () => assignment));
+			assignments.push(build_assignment(assignment, context, () => assignment));
 		}
 
 		if (assignments.every((assignment, i) => assignment === original_assignments[i])) {
@@ -68,7 +68,7 @@ export function AssignmentExpression(node, context) {
 		throw new Error(`Unexpected assignment type ${assignee.type}`);
 	}
 
-	return build_setter(node, context, context.next);
+	return build_assignment(node, context, context.next);
 }
 
 /**
@@ -78,10 +78,11 @@ export function AssignmentExpression(node, context) {
  * @param {() => any} fallback
  * @returns {Expression}
  */
-export function build_setter(node, context, fallback) {
+export function build_assignment(node, context, fallback) {
 	const { state, visit } = context;
+	const { operator, left, right } = node;
 
-	const assignee = /** @type {Identifier | MemberExpression} */ (node.left);
+	const assignee = /** @type {Identifier | MemberExpression} */ (left);
 
 	// Handle class private/public state assignment cases
 	if (
@@ -106,11 +107,7 @@ export function build_setter(node, context, fallback) {
 
 				if (state.in_constructor) {
 					if (transformed) {
-						return b.assignment(
-							node.operator,
-							/** @type {Pattern} */ (context.visit(node.left)),
-							value
-						);
+						return b.assignment(operator, /** @type {Pattern} */ (context.visit(left)), value);
 					}
 				} else {
 					return b.call('$.set', assignee, value);
@@ -122,8 +119,8 @@ export function build_setter(node, context, fallback) {
 
 			if (public_state !== undefined && should_proxy_or_freeze(value, context.state.scope)) {
 				return b.assignment(
-					node.operator,
-					/** @type {Pattern} */ (context.visit(node.left)),
+					operator,
+					/** @type {Pattern} */ (context.visit(left)),
 					public_state.kind === 'frozen_state'
 						? b.call('$.freeze', value)
 						: build_proxy_reassignment(value, public_state.id)
@@ -132,23 +129,32 @@ export function build_setter(node, context, fallback) {
 		}
 	}
 
-	const left = object(assignee);
+	let object = left;
 
-	const binding = left && state.scope.get(left.name);
+	while (object.type === 'MemberExpression') {
+		// @ts-expect-error
+		object = object.object;
+	}
+
+	if (object.type !== 'Identifier') {
+		return fallback();
+	}
+
+	const binding = state.scope.get(object.name);
 	if (!binding) return fallback();
 
-	const transform = Object.hasOwn(context.state.transform, left.name)
-		? context.state.transform[left.name]
+	const transform = Object.hasOwn(context.state.transform, object.name)
+		? context.state.transform[object.name]
 		: null;
 
 	// reassignment
-	if (left === node.left && transform?.assign) {
-		let value = /** @type {Expression} */ (visit(node.right));
+	if (object === left && transform?.assign) {
+		let value = /** @type {Expression} */ (visit(right));
 
-		if (node.operator !== '=') {
+		if (operator !== '=') {
 			value = b.binary(
-				/** @type {BinaryOperator} */ (node.operator.slice(0, -1)),
-				/** @type {Expression} */ (visit(left)),
+				/** @type {BinaryOperator} */ (operator.slice(0, -1)),
+				/** @type {Expression} */ (visit(object)),
 				value
 			);
 		}
@@ -166,11 +172,11 @@ export function build_setter(node, context, fallback) {
 			if (binding.kind === 'frozen_state') {
 				value = b.call('$.freeze', value);
 			} else {
-				value = build_proxy_reassignment(value, left.name);
+				value = build_proxy_reassignment(value, object.name);
 			}
 		}
 
-		return transform.assign(left, value);
+		return transform.assign(object, value);
 	}
 
 	/**
@@ -178,7 +184,7 @@ export function build_setter(node, context, fallback) {
 	 * @returns
 	 */
 	const maybe_skip_ownership_validation = (serialized) => {
-		if (is_ignored(node, 'ownership_invalid_mutation')) {
+		if (is_ignored(left, 'ownership_invalid_mutation')) {
 			return b.call('$.skip_ownership_validation', b.thunk(serialized));
 		}
 
@@ -188,12 +194,12 @@ export function build_setter(node, context, fallback) {
 	// mutation
 	if (transform?.mutate) {
 		const mutation = b.assignment(
-			node.operator,
-			/** @type {Pattern} */ (context.visit(node.left)),
-			/** @type {Expression} */ (context.visit(node.right))
+			operator,
+			/** @type {Pattern} */ (context.visit(left)),
+			/** @type {Expression} */ (context.visit(right))
 		);
 
-		return maybe_skip_ownership_validation(transform.mutate(left, mutation));
+		return maybe_skip_ownership_validation(transform.mutate(object, mutation));
 	}
 
 	if (
@@ -212,9 +218,9 @@ export function build_setter(node, context, fallback) {
 
 	return maybe_skip_ownership_validation(
 		b.assignment(
-			node.operator,
-			/** @type {Pattern} */ (visit(node.left)),
-			/** @type {Expression} */ (visit(node.right))
+			operator,
+			/** @type {Pattern} */ (visit(left)),
+			/** @type {Expression} */ (visit(right))
 		)
 	);
 }
