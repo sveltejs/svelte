@@ -142,6 +142,7 @@ export function client_component(analysis, options) {
 		is_instance: false,
 		hoisted: [b.import_all('$', 'svelte/internal/client')],
 		node: /** @type {any} */ (null), // populated by the root node
+		legacy_reactive_imports: [],
 		legacy_reactive_statements: new Map(),
 		metadata: {
 			context: {
@@ -166,32 +167,6 @@ export function client_component(analysis, options) {
 		template: /** @type {any} */ (null),
 		locations: /** @type {any} */ (null)
 	};
-
-	/** @type {ESTree.Statement[]} */
-	const legacy_reactive_imports = [];
-
-	if (!analysis.runes) {
-		state.transform['$$props'] = {
-			read: (node) => ({ ...node, name: '$$sanitized_props' })
-		};
-
-		for (const [name, binding] of state.scope.declarations) {
-			// Very very dirty way of making import statements reactive in legacy mode if needed
-			// TODO move this into the Program visitor
-			if (binding.declaration_kind === 'import' && binding.mutated) {
-				const id = b.id('$$_import_' + name);
-
-				state.transform[name] = {
-					read: (node) => b.call(id),
-					mutate: (node, mutation) => {
-						return b.call(id, mutation);
-					}
-				};
-
-				legacy_reactive_imports.push(b.var(id, b.call('$.reactive_import', b.thunk(b.id(name)))));
-			}
-		}
-	}
 
 	const module = /** @type {ESTree.Program} */ (
 		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, visitors)
@@ -222,7 +197,7 @@ export function client_component(analysis, options) {
 		)
 	);
 
-	instance.body.unshift(...legacy_reactive_imports);
+	instance.body.unshift(...state.legacy_reactive_imports);
 
 	/** @type {ESTree.Statement[]} */
 	const store_setup = [];

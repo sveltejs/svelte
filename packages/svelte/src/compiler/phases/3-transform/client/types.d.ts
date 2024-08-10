@@ -23,6 +23,9 @@ export interface ClientTransformState extends TransformState {
 	 */
 	readonly in_constructor: boolean;
 
+	/** Imports that should be re-evaluated in legacy mode following a mutation */
+	readonly legacy_reactive_imports: Statement[];
+
 	/** The $: calls, which will be ordered in the end */
 	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
 	readonly transform: Record<
