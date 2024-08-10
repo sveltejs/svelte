@@ -173,7 +173,7 @@ export function EachBlock(node, context) {
 	if (node.context.type === 'Identifier') {
 		child_state.transform[node.context.name] = {
 			read: getter,
-			assign: (node, value) => {
+			assign: (_, value) => {
 				const left = b.member(
 					each_node_meta.array_name ? b.call(each_node_meta.array_name) : collection,
 					index,
@@ -182,10 +182,7 @@ export function EachBlock(node, context) {
 
 				return b.sequence([b.assignment('=', left, value), ...sequence]);
 			},
-			mutate: (node, mutation) => {
-				return b.sequence([mutation, ...sequence]);
-			}
-			// TODO update (`item++`) — this was unaccounted for previously
+			mutate: (_, mutation) => b.sequence([mutation, ...sequence])
 		};
 
 		delete key_state.transform[node.context.name];
@@ -213,7 +210,6 @@ export function EachBlock(node, context) {
 				mutate: (node, mutation) => {
 					return b.sequence([mutation, ...sequence]);
 				}
-				// TODO update (`item++`) — this was unaccounted for previously
 			};
 
 			// we need to eagerly evaluate the expression in order to hit any

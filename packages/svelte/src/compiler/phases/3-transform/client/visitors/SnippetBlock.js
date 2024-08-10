@@ -36,9 +36,7 @@ export function SnippetBlock(node, context) {
 				right: b.id('$.noop')
 			});
 
-			transform[argument.name] = {
-				read: b.call
-			};
+			transform[argument.name] = { read: b.call };
 
 			continue;
 		}

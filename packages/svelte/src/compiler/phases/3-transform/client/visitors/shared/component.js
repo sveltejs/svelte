@@ -50,13 +50,11 @@ export function build_component(node, component_name, context, anchor = context.
 	 */
 	const binding_initializers = [];
 
-	const self_slot = determine_slot(node);
-
 	/**
 	 * If this component has a slot property, it is a named slot within another component. In this case
 	 * the slot scope applies to the component itself, too, and not just its children.
 	 */
-	let slot_scope_applies_to_itself = !!self_slot;
+	let slot_scope_applies_to_itself = !!determine_slot(node);
 
 	/**
 	 * Components may have a children prop and also have child nodes. In this case, we assume

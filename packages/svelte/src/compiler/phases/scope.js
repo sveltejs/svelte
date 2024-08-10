@@ -306,7 +306,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		const default_state = !!determine_slot(node)
 			? context.state
 			: { scope: node.metadata.scopes.default };
-		// scopes.set(node, scope);
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'LetDirective') {
