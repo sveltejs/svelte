@@ -52,11 +52,7 @@ export function AssignmentExpression(node, context) {
 			])
 		);
 
-		if (iife_is_async) {
-			return b.await(b.call(b.async(iife)));
-		} else {
-			return b.call(iife);
-		}
+		return iife_is_async ? b.await(b.call(b.async(iife))) : b.call(iife);
 	}
 
 	if (assignee.type !== 'Identifier' && assignee.type !== 'MemberExpression') {
