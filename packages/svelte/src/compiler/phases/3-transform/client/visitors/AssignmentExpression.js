@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, BinaryOperator, Expression, Identifier, MemberExpression, Pattern } from 'estree' */
+/** @import { AssignmentExpression, AssignmentOperator, BinaryOperator, Expression, Identifier, MemberExpression, Pattern } from 'estree' */
 /** @import { SvelteNode } from '#compiler' */
 /** @import { ClientTransformState, Context } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
@@ -93,7 +93,7 @@ export function build_assignment(node, context, fallback) {
 			const private_state = context.state.private_state.get(assignee.property.name);
 
 			if (private_state !== undefined) {
-				let value = get_assignment_value(node, context);
+				let value = get_assignment_value(operator, left, right, context);
 				let transformed = false;
 
 				if (should_proxy_or_freeze(value, context.state.scope)) {
@@ -114,7 +114,7 @@ export function build_assignment(node, context, fallback) {
 			}
 		} else if (assignee.property.type === 'Identifier' && context.state.in_constructor) {
 			const public_state = context.state.public_state.get(assignee.property.name);
-			const value = get_assignment_value(node, context);
+			const value = get_assignment_value(operator, left, right, context);
 
 			if (public_state !== undefined && should_proxy_or_freeze(value, context.state.scope)) {
 				return b.assignment(
@@ -197,39 +197,39 @@ export function build_assignment(node, context, fallback) {
 
 /**
  * @template {ClientTransformState} State
- * @param {AssignmentExpression} node
+ * @param {AssignmentOperator} operator
+ * @param {Pattern} left
+ * @param {Expression} right
  * @param {import('zimmerframe').Context<SvelteNode, State>} context
  * @returns
  */
-function get_assignment_value(node, { state, visit }) {
-	if (node.left.type === 'Identifier') {
-		const operator = node.operator;
+function get_assignment_value(operator, left, right, { state, visit }) {
+	if (left.type === 'Identifier') {
 		return operator === '='
-			? /** @type {Expression} */ (visit(node.right))
+			? /** @type {Expression} */ (visit(right))
 			: // turn something like x += 1 into x = x + 1
 				b.binary(
 					/** @type {BinaryOperator} */ (operator.slice(0, -1)),
-					build_getter(node.left, state),
-					/** @type {Expression} */ (visit(node.right))
+					build_getter(left, state),
+					/** @type {Expression} */ (visit(right))
 				);
 	}
 
 	if (
-		node.left.type === 'MemberExpression' &&
-		node.left.object.type === 'ThisExpression' &&
-		node.left.property.type === 'PrivateIdentifier' &&
-		state.private_state.has(node.left.property.name)
+		left.type === 'MemberExpression' &&
+		left.object.type === 'ThisExpression' &&
+		left.property.type === 'PrivateIdentifier' &&
+		state.private_state.has(left.property.name)
 	) {
-		const operator = node.operator;
 		return operator === '='
-			? /** @type {Expression} */ (visit(node.right))
+			? /** @type {Expression} */ (visit(right))
 			: // turn something like x += 1 into x = x + 1
 				b.binary(
 					/** @type {BinaryOperator} */ (operator.slice(0, -1)),
-					/** @type {Expression} */ (visit(node.left)),
-					/** @type {Expression} */ (visit(node.right))
+					/** @type {Expression} */ (visit(left)),
+					/** @type {Expression} */ (visit(right))
 				);
 	}
 
-	return /** @type {Expression} */ (visit(node.right));
+	return /** @type {Expression} */ (visit(right));
 }
