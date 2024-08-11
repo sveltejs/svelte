@@ -9,21 +9,19 @@ export default function Function_prop_no_getter($$anchor) {
 	}
 
 	const plusOne = (num) => num + 1;
-	var fragment = $.comment(true);
-	var node = $.first_child(fragment);
 
-	Button(node, {
+	Button($$anchor, {
 		onmousedown: () => $.set(count, $.get(count) + 1),
 		onmouseup,
 		onmouseenter: () => $.set(count, $.proxy(plusOne($.get(count)))),
 		children: ($$anchor, $$slotProps) => {
-			var text = $.text($$anchor);
+			$.next();
+
+			var text = $.text();
 
 			$.template_effect(() => $.set_text(text, `clicks: ${$.get(count) ?? ""}`));
 			$.append($$anchor, text);
 		},
 		$$slots: { default: true }
 	});
-
-	$.append($$anchor, fragment);
 }

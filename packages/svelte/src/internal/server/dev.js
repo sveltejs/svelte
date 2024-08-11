@@ -1,8 +1,9 @@
+/** @import { Component, Payload } from '#server' */
+import { FILENAME } from '../../constants.js';
 import {
-	disallowed_paragraph_contents,
-	interactive_elements,
+	is_tag_valid_with_ancestor,
 	is_tag_valid_with_parent
-} from '../../constants.js';
+} from '../../html-tree-validation.js';
 import { current_component } from './context.js';
 
 /**
@@ -32,13 +33,13 @@ function stringify(element) {
 }
 
 /**
- * @param {import('#server').Payload} payload
+ * @param {Payload} payload
  * @param {Element} parent
  * @param {Element} child
  */
 function print_error(payload, parent, child) {
 	var message =
-		`${stringify(child)} cannot contain ${stringify(parent)}\n\n` +
+		`node_invalid_placement_ssr: ${stringify(parent)} cannot contain ${stringify(child)}\n\n` +
 		'This can cause content to shift around as the browser repairs the HTML, and will likely result in a `hydration_mismatch` warning.';
 
 	if ((seen ??= new Set()).has(message)) return;
@@ -50,38 +51,29 @@ function print_error(payload, parent, child) {
 }
 
 /**
- * @param {import('#server').Payload} payload
+ * @param {Payload} payload
  * @param {string} tag
  * @param {number} line
  * @param {number} column
  */
 export function push_element(payload, tag, line, column) {
-	var filename = /** @type {import('#server').Component} */ (current_component).function.filename;
+	var filename = /** @type {Component} */ (current_component).function[FILENAME];
 	var child = { tag, parent, filename, line, column };
 
-	if (parent !== null && !is_tag_valid_with_parent(tag, parent.tag)) {
-		print_error(payload, parent, child);
-	}
+	if (parent !== null) {
+		var ancestor = parent.parent;
+		var ancestors = [parent.tag];
 
-	if (interactive_elements.has(tag)) {
-		let element = parent;
-		while (element !== null) {
-			if (interactive_elements.has(element.tag)) {
-				print_error(payload, element, child);
-				break;
-			}
-			element = element.parent;
+		if (!is_tag_valid_with_parent(tag, parent.tag)) {
+			print_error(payload, parent, child);
 		}
-	}
 
-	if (disallowed_paragraph_contents.includes(tag)) {
-		let element = parent;
-		while (element !== null) {
-			if (element.tag === 'p') {
-				print_error(payload, element, child);
-				break;
+		while (ancestor != null) {
+			ancestors.push(ancestor.tag);
+			if (!is_tag_valid_with_ancestor(tag, ancestors)) {
+				print_error(payload, ancestor, child);
 			}
-			element = element.parent;
+			ancestor = ancestor.parent;
 		}
 	}
 

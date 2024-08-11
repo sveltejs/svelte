@@ -1,15 +1,17 @@
+/** @import { Visitors } from 'zimmerframe' */
+/** @import { Css } from '#compiler' */
 import { walk } from 'zimmerframe';
 import * as w from '../../../warnings.js';
 import { is_keyframes_node } from '../../css.js';
 
 /**
- * @param {import('#compiler').Css.StyleSheet} stylesheet
+ * @param {Css.StyleSheet} stylesheet
  */
 export function warn_unused(stylesheet) {
 	walk(stylesheet, { stylesheet }, visitors);
 }
 
-/** @type {import('zimmerframe').Visitors<import('#compiler').Css.Node, { stylesheet: import('#compiler').Css.StyleSheet }>} */
+/** @type {Visitors<Css.Node, { stylesheet: Css.StyleSheet }>} */
 const visitors = {
 	Atrule(node, context) {
 		if (!is_keyframes_node(node)) {

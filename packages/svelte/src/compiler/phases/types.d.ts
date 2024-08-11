@@ -9,7 +9,7 @@ import type {
 	SvelteNode,
 	SvelteOptions
 } from '#compiler';
-import type { Identifier, LabeledStatement, Program, Statement, VariableDeclaration } from 'estree';
+import type { Identifier, LabeledStatement, Program, VariableDeclaration } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
 
 export interface Js {
@@ -82,24 +82,24 @@ export interface ComponentAnalysis extends Analysis {
 declare module 'estree' {
 	interface ArrowFunctionExpression {
 		metadata: {
-			hoistable: boolean | 'impossible';
-			hoistable_params: Pattern[];
+			hoisted: boolean;
+			hoisted_params: Pattern[];
 			scope: Scope;
 		};
 	}
 
 	interface FunctionExpression {
 		metadata: {
-			hoistable: boolean | 'impossible';
-			hoistable_params: Pattern[];
+			hoisted: boolean;
+			hoisted_params: Pattern[];
 			scope: Scope;
 		};
 	}
 
 	interface FunctionDeclaration {
 		metadata: {
-			hoistable: boolean | 'impossible';
-			hoistable_params: Pattern[];
+			hoisted: boolean;
+			hoisted_params: Pattern[];
 			scope: Scope;
 		};
 	}

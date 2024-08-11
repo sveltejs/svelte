@@ -6,7 +6,8 @@ import {
 	type ComponentType,
 	mount,
 	hydrate,
-	type Component
+	type Component,
+	type ComponentInternals
 } from 'svelte';
 import { render } from 'svelte/server';
 
@@ -260,6 +261,11 @@ const functionComponentProps: ComponentProps<typeof functionComponent> = {
 	prop: 1
 };
 
+// Test that self-typed functions are correctly inferred, too (use case: language tools has its own shape for backwards compatibility)
+const functionComponentProps2: ComponentProps<(a: any, b: { a: true }) => { foo: string }> = {
+	a: true
+};
+
 mount(functionComponent, {
 	target: null as any as Document | Element | ShadowRoot,
 	props: {
@@ -338,5 +344,5 @@ render(functionComponent, {
 // but should always pass in tsc (because it will never know about this fact)
 import Foo from './doesntexist.svelte';
 
-Foo(null, { a: true });
+Foo(null as unknown as ComponentInternals, { a: true });
 const f: Foo = new Foo({ target: document.body, props: { a: true } });

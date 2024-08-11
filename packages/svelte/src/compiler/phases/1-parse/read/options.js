@@ -1,14 +1,16 @@
-import { namespace_mathml, namespace_svg } from '../../../../constants.js';
+/** @import { ObjectExpression } from 'estree' */
+/** @import { SvelteOptionsRaw, Root, SvelteOptions } from '#compiler' */
+import { NAMESPACE_MATHML, NAMESPACE_SVG } from '../../../../constants.js';
 import * as e from '../../../errors.js';
 
 const regex_valid_tag_name = /^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/;
 
 /**
- * @param {import('#compiler').SvelteOptionsRaw} node
- * @returns {import('#compiler').Root['options']}
+ * @param {SvelteOptionsRaw} node
+ * @returns {Root['options']}
  */
 export default function read_options(node) {
-	/** @type {import('#compiler').SvelteOptions} */
+	/** @type {SvelteOptions} */
 	const component_options = {
 		start: node.start,
 		end: node.end,
@@ -37,10 +39,11 @@ export default function read_options(node) {
 				break; // eslint doesn't know this is unnecessary
 			}
 			case 'customElement': {
-				/** @type {import('#compiler').SvelteOptions['customElement']} */
-				const ce = { tag: '' };
+				/** @type {SvelteOptions['customElement']} */
+				const ce = {};
+				const { value: v } = attribute;
+				const value = v === true || Array.isArray(v) ? v : [v];
 
-				const { value } = attribute;
 				if (value === true) {
 					e.svelte_options_invalid_customelement(attribute);
 				} else if (value[0].type === 'Text') {
@@ -76,8 +79,6 @@ export default function read_options(node) {
 					const tag_value = tag[1]?.value;
 					validate_tag(tag, tag_value);
 					ce.tag = tag_value;
-				} else {
-					e.svelte_options_invalid_customelement(attribute);
 				}
 
 				const props = properties.find(([name]) => name === 'props')?.[1];
@@ -86,8 +87,7 @@ export default function read_options(node) {
 						e.svelte_options_invalid_customelement_props(attribute);
 					}
 					ce.props = {};
-					for (const property of /** @type {import('estree').ObjectExpression} */ (props)
-						.properties) {
+					for (const property of /** @type {ObjectExpression} */ (props).properties) {
 						if (
 							property.type !== 'Property' ||
 							property.computed ||
@@ -153,9 +153,9 @@ export default function read_options(node) {
 			case 'namespace': {
 				const value = get_static_value(attribute);
 
-				if (value === namespace_svg) {
+				if (value === NAMESPACE_SVG) {
 					component_options.namespace = 'svg';
-				} else if (value === namespace_mathml) {
+				} else if (value === NAMESPACE_MATHML) {
 					component_options.namespace = 'mathml';
 				} else if (
 					value === 'html' ||
@@ -169,6 +169,17 @@ export default function read_options(node) {
 						attribute,
 						`"html", "mathml", "svg" or "foreign"`
 					);
+				}
+
+				break;
+			}
+			case 'css': {
+				const value = get_static_value(attribute);
+
+				if (value === 'injected') {
+					component_options.css = value;
+				} else {
+					e.svelte_options_invalid_attribute_value(attribute, `"injected"`);
 				}
 
 				break;
@@ -198,7 +209,11 @@ export default function read_options(node) {
  */
 function get_static_value(attribute) {
 	const { value } = attribute;
-	const chunk = value[0];
+
+	if (value === true) return true;
+
+	const chunk = Array.isArray(value) ? value[0] : value;
+
 	if (!chunk) return true;
 	if (value.length > 1) {
 		return null;
@@ -207,6 +222,7 @@ function get_static_value(attribute) {
 	if (chunk.expression.type !== 'Literal') {
 		return null;
 	}
+
 	return chunk.expression.value;
 }
 
@@ -233,8 +249,4 @@ function validate_tag(attribute, tag) {
 	if (tag && !regex_valid_tag_name.test(tag)) {
 		e.svelte_options_invalid_tagname(attribute);
 	}
-	// TODO do we still need this?
-	// if (tag && !component.compile_options.customElement) {
-	// 	component.warn(attribute, compiler_warnings.missing_custom_element_compile_options);
-	// }
 }

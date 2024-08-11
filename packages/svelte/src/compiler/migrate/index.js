@@ -1,10 +1,16 @@
+/** @import { VariableDeclarator, Node, Identifier } from 'estree' */
+/** @import { SvelteNode } from '../types/template.js' */
+/** @import { Visitors } from 'zimmerframe' */
+/** @import { ComponentAnalysis } from '../phases/types.js' */
+/** @import { Scope } from '../phases/scope.js' */
+/** @import * as Compiler from '#compiler' */
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
 import { parse } from '../phases/1-parse/index.js';
 import { analyze_component } from '../phases/2-analyze/index.js';
 import { validate_component_options } from '../validate-options.js';
 import { get_rune } from '../phases/scope.js';
-import { reset } from '../state.js';
+import { reset, reset_warning_filter } from '../state.js';
 import { extract_identifiers } from '../utils/ast.js';
 import { regex_is_valid_identifier } from '../phases/patterns.js';
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
@@ -18,13 +24,14 @@ import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
  */
 export function migrate(source) {
 	try {
+		reset_warning_filter(() => false);
 		reset(source, { filename: 'migrate.svelte' });
 
 		let parsed = parse(source);
 
 		const { customElement: customElementOptions, ...parsed_options } = parsed.options || {};
 
-		/** @type {import('#compiler').ValidatedCompileOptions} */
+		/** @type {Compiler.ValidatedCompileOptions} */
 		const combined_options = {
 			...validate_component_options({}, ''),
 			...parsed_options,
@@ -139,6 +146,47 @@ export function migrate(source) {
 			}
 		}
 
+		/**
+		 * If true, then we need to move all reactive statements to the end of the script block,
+		 * in their correct order. Svelte 4 reordered reactive statements, $derived/$effect.pre
+		 * don't have this behavior.
+		 */
+		let needs_reordering = false;
+
+		for (const [node, { dependencies }] of state.analysis.reactive_statements) {
+			/** @type {Compiler.Binding[]} */
+			let ids = [];
+			if (
+				node.body.type === 'ExpressionStatement' &&
+				node.body.expression.type === 'AssignmentExpression'
+			) {
+				ids = extract_identifiers(node.body.expression.left)
+					.map((id) => state.scope.get(id.name))
+					.filter((id) => !!id);
+			}
+
+			if (
+				dependencies.some(
+					(dep) =>
+						!ids.includes(dep) &&
+						/** @type {number} */ (dep.node.start) > /** @type {number} */ (node.start)
+				)
+			) {
+				needs_reordering = true;
+				break;
+			}
+		}
+
+		if (needs_reordering) {
+			const nodes = Array.from(state.analysis.reactive_statements.keys());
+			for (const node of nodes) {
+				const { start, end } = get_node_range(source, node);
+				str.appendLeft(end, '\n');
+				str.move(start, end, /** @type {number} */ (parsed.instance?.content.end));
+				str.remove(start - (source[start - 2] === '\r' ? 2 : 1), start);
+			}
+		}
+
 		if (state.needs_run && !added_legacy_import) {
 			if (parsed.instance) {
 				str.appendRight(
@@ -160,9 +208,9 @@ export function migrate(source) {
 
 /**
  * @typedef {{
- *  scope: import('../phases/scope.js').Scope;
+ *  scope: Scope;
  *  str: MagicString;
- *  analysis: import('../phases/types.js').ComponentAnalysis;
+ *  analysis: ComponentAnalysis;
  *  indent: string;
  *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string }>;
  *  props_insertion_point: number;
@@ -175,7 +223,7 @@ export function migrate(source) {
  * }} State
  */
 
-/** @type {import('zimmerframe').Visitors<import('../types/template.js').SvelteNode, State>} */
+/** @type {Visitors<SvelteNode, State>} */
 const instance_script = {
 	_(node, { state, next }) {
 		// @ts-expect-error
@@ -281,9 +329,7 @@ const instance_script = {
 					// }
 				}
 
-				const binding = /** @type {import('#compiler').Binding} */ (
-					state.scope.get(declarator.id.name)
-				);
+				const binding = /** @type {Compiler.Binding} */ (state.scope.get(declarator.id.name));
 
 				if (
 					state.analysis.uses_props &&
@@ -373,7 +419,7 @@ const instance_script = {
 					/** @type {number} */ (node.body.expression.start),
 					'let '
 				);
-				state.str.prependLeft(
+				state.str.prependRight(
 					/** @type {number} */ (node.body.expression.right.start),
 					'$derived('
 				);
@@ -384,14 +430,14 @@ const instance_script = {
 						');'
 					);
 				} else {
-					state.str.appendRight(/** @type {number} */ (node.end), ');');
+					state.str.appendLeft(/** @type {number} */ (node.end), ');');
 				}
 				return;
 			} else {
 				for (const binding of reassigned_bindings) {
 					if (binding && ids.includes(binding.node)) {
 						// implicitly-declared variable which we need to make explicit
-						state.str.prependLeft(
+						state.str.prependRight(
 							/** @type {number} */ (node.start),
 							`let ${binding.node.name}${binding.kind === 'state' ? ' = $state()' : ''};\n${state.indent}`
 						);
@@ -424,12 +470,12 @@ const instance_script = {
 					[/** @type {number} */ (node.body.end), state.end]
 				]
 			});
-			state.str.appendRight(/** @type {number} */ (node.end), `\n${state.indent}});`);
+			state.str.appendLeft(/** @type {number} */ (node.end), `\n${state.indent}});`);
 		}
 	}
 };
 
-/** @type {import('zimmerframe').Visitors<import('../types/template.js').SvelteNode, State>} */
+/** @type {Visitors<SvelteNode, State>} */
 const template = {
 	Identifier(node, { state, path }) {
 		handle_identifier(node, state, path);
@@ -486,11 +532,13 @@ const template = {
 				if (attr.name === 'name') {
 					slot_name = /** @type {any} */ (attr.value)[0].data;
 				} else {
+					const attr_value =
+						attr.value === true || Array.isArray(attr.value) ? attr.value : [attr.value];
 					const value =
-						attr.value !== true
+						attr_value !== true
 							? state.str.original.substring(
-									attr.value[0].start,
-									attr.value[attr.value.length - 1].end
+									attr_value[0].start,
+									attr_value[attr_value.length - 1].end
 								)
 							: 'true';
 					slot_props += value === attr.name ? `${value}, ` : `${attr.name}: ${value}, `;
@@ -543,15 +591,15 @@ const template = {
 };
 
 /**
- * @param {import('estree').VariableDeclarator} declarator
+ * @param {VariableDeclarator} declarator
  * @param {MagicString} str
- * @param {import('#compiler').SvelteNode[]} path
+ * @param {Compiler.SvelteNode[]} path
  */
 function extract_type_and_comment(declarator, str, path) {
 	const parent = path.at(-1);
 
 	// Try to find jsdoc above the declaration
-	let comment_node = /** @type {import('estree').Node} */ (parent)?.leadingComments?.at(-1);
+	let comment_node = /** @type {Node} */ (parent)?.leadingComments?.at(-1);
 	if (comment_node?.type !== 'Block') comment_node = undefined;
 
 	const comment_start = /** @type {any} */ (comment_node)?.start;
@@ -590,11 +638,11 @@ function extract_type_and_comment(declarator, str, path) {
 }
 
 /**
- * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | import('#compiler').SvelteWindow | import('#compiler').SvelteDocument | import('#compiler').SvelteBody} element
+ * @param {Compiler.RegularElement | Compiler.SvelteElement | Compiler.SvelteWindow | Compiler.SvelteDocument | Compiler.SvelteBody} element
  * @param {State} state
  */
 function handle_events(element, state) {
-	/** @type {Map<string, import('#compiler').OnDirective[]>} */
+	/** @type {Map<string, Compiler.OnDirective[]>} */
 	const handlers = new Map();
 	for (const attribute of element.attributes) {
 		if (attribute.type !== 'OnDirective') continue;
@@ -805,7 +853,31 @@ function get_indent(state, ...nodes) {
 }
 
 /**
- * @param {import('#compiler').OnDirective} last
+ * Returns start and end of the node. If the start is preceeded with white-space-only before a line break,
+ * the start will be the start of the line.
+ * @param {string} source
+ * @param {Node} node
+ */
+function get_node_range(source, node) {
+	let start = /** @type {number} */ (node.start);
+	let end = /** @type {number} */ (node.end);
+
+	let idx = start;
+	while (source[idx - 1] !== '\n' && source[idx - 1] !== '\r') {
+		idx--;
+		if (source[idx] !== ' ' && source[idx] !== '\t') {
+			idx = start;
+			break;
+		}
+	}
+
+	start = idx;
+
+	return { start, end };
+}
+
+/**
+ * @param {Compiler.OnDirective} last
  * @param {State} state
  */
 function generate_event_name(last, state) {
@@ -821,7 +893,7 @@ function generate_event_name(last, state) {
 }
 
 /**
- * @param {import('estree').Identifier} node
+ * @param {Identifier} node
  * @param {State} state
  * @param {any[]} path
  */

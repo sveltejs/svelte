@@ -62,9 +62,7 @@ function compile({ id, source, options, return_ast }) {
 
 		if (options.filename.endsWith('.svelte')) {
 			const compiled = svelte.compile(source, {
-				filename: options.filename,
-				generate: options.generate,
-				dev: options.dev,
+				...options,
 				discloseVersion: false // less visual noise in the output tab
 			});
 
@@ -78,7 +76,7 @@ function compile({ id, source, options, return_ast }) {
 					js: js.code,
 					css: css?.code || `/* Add a <sty` + `le> tag to see compiled CSS */`,
 					error: null,
-					warnings,
+					warnings: warnings.map((warning) => warning.toJSON()),
 					metadata,
 					ast
 				}
@@ -97,7 +95,7 @@ function compile({ id, source, options, return_ast }) {
 						js: compiled.js.code,
 						css,
 						error: null,
-						warnings: compiled.warnings,
+						warnings: compiled.warnings.map((warning) => warning.toJSON()),
 						metadata: compiled.metadata
 					}
 				};

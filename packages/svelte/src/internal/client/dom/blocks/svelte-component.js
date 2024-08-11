@@ -1,28 +1,29 @@
-import { DEV } from 'esm-env';
+/** @import { TemplateNode, Dom, Effect } from '#client' */
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
-import { empty } from '../operations.js';
+import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 
 /**
  * @template P
  * @template {(props: P) => void} C
- * @param {import('#client').TemplateNode} anchor
+ * @param {TemplateNode} node
  * @param {() => C} get_component
- * @param {(anchor: import('#client').TemplateNode, component: C) => import('#client').Dom | void} render_fn
+ * @param {(anchor: TemplateNode, component: C) => Dom | void} render_fn
  * @returns {void}
  */
-export function component(anchor, get_component, render_fn) {
+export function component(node, get_component, render_fn) {
+	if (hydrating) {
+		hydrate_next();
+	}
+
+	var anchor = node;
+
 	/** @type {C} */
-	let component;
+	var component;
 
-	/** @type {import('#client').Effect | null} */
-	let effect;
+	/** @type {Effect | null} */
+	var effect;
 
-	var component_anchor = anchor;
-
-	// create a dummy anchor for the HMR wrapper, if such there be
-	if (DEV) component_anchor = empty();
-
-	block(anchor, 0, () => {
+	block(() => {
 		if (component === (component = get_component())) return;
 
 		if (effect) {
@@ -31,8 +32,11 @@ export function component(anchor, get_component, render_fn) {
 		}
 
 		if (component) {
-			if (DEV) anchor.before(component_anchor);
-			effect = branch(() => render_fn(component_anchor, component));
+			effect = branch(() => render_fn(anchor, component));
 		}
 	});
+
+	if (hydrating) {
+		anchor = hydrate_node;
+	}
 }

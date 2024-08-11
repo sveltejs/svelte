@@ -104,6 +104,15 @@ export class SvelteComponent<
 	$set(props: Partial<Props>): void;
 }
 
+declare const brand: unique symbol;
+type Brand<B> = { [brand]: B };
+type Branded<T, B> = T & Brand<B>;
+
+/**
+ * Internal implementation details that vary between environments
+ */
+export type ComponentInternals = Branded<{}, 'ComponentInternals'>;
+
 /**
  * Can be used to create strongly typed Svelte components.
  *
@@ -136,7 +145,8 @@ export interface Component<
 	 * @param props The props passed to the component.
 	 */
 	(
-		internal: unknown,
+		this: void,
+		internals: ComponentInternals,
 		props: Props
 	): {
 		/**
@@ -216,10 +226,10 @@ export type ComponentEvents<Comp extends SvelteComponent> =
  * withProps(MyComponent, { foo: 'bar' });
  * ```
  */
-export type ComponentProps<Comp extends SvelteComponent | Component<any>> =
+export type ComponentProps<Comp extends SvelteComponent | Component<any, any>> =
 	Comp extends SvelteComponent<infer Props>
 		? Props
-		: Comp extends Component<infer Props>
+		: Comp extends Component<infer Props, any>
 			? Props
 			: never;
 
@@ -256,6 +266,7 @@ export type ComponentType<Comp extends SvelteComponent = SvelteComponent> = (new
 
 declare const SnippetReturn: unique symbol;
 
+// Use an interface instead of a type, makes for better intellisense info because the type is named in more situations.
 /**
  * The type of a `#snippet` block. You can use it to (for example) express that your component expects a snippet of a certain type:
  * ```ts
@@ -267,20 +278,17 @@ declare const SnippetReturn: unique symbol;
  *
  * @template Parameters the parameters that the snippet expects (if any) as a tuple.
  */
-export type Snippet<Parameters extends unknown[] = []> =
-	// this conditional allows tuples but not arrays. Arrays would indicate a
-	// rest parameter type, which is not supported. If rest parameters are added
-	// in the future, the condition can be removed.
-	number extends Parameters['length']
-		? never
-		: {
-				(
-					this: void,
-					...args: Parameters
-				): typeof SnippetReturn & {
-					_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-				};
-			};
+export interface Snippet<Parameters extends unknown[] = []> {
+	(
+		this: void,
+		// this conditional allows tuples but not arrays. Arrays would indicate a
+		// rest parameter type, which is not supported. If rest parameters are added
+		// in the future, the condition can be removed.
+		...args: number extends Parameters['length'] ? never : Parameters
+	): typeof SnippetReturn & {
+		_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
+	};
+}
 
 interface DispatchOptions {
 	cancelable?: boolean;

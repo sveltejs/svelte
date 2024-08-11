@@ -1,12 +1,15 @@
+/** @import { Visitors } from 'zimmerframe' */
+/** @import { ValidatedCompileOptions, Css } from '#compiler' */
+/** @import { ComponentAnalysis } from '../../types.js' */
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
 import { is_keyframes_node, regex_css_name_boundary, remove_css_prefix } from '../../css.js';
 import { merge_with_preprocessor_map } from '../../../utils/mapped_code.js';
+import { dev } from '../../../state.js';
 
 /**
  * @typedef {{
  *   code: MagicString;
- *   dev: boolean;
  *   hash: string;
  *   selector: string;
  *   keyframes: string[];
@@ -19,8 +22,8 @@ import { merge_with_preprocessor_map } from '../../../utils/mapped_code.js';
 /**
  *
  * @param {string} source
- * @param {import('../../types.js').ComponentAnalysis} analysis
- * @param {import('#compiler').ValidatedCompileOptions} options
+ * @param {ComponentAnalysis} analysis
+ * @param {ValidatedCompileOptions} options
  */
 export function render_stylesheet(source, analysis, options) {
 	const code = new MagicString(source);
@@ -28,7 +31,6 @@ export function render_stylesheet(source, analysis, options) {
 	/** @type {State} */
 	const state = {
 		code,
-		dev: options.dev,
 		hash: analysis.css.hash,
 		selector: `.${analysis.css.hash}`,
 		keyframes: analysis.css.keyframes,
@@ -37,9 +39,9 @@ export function render_stylesheet(source, analysis, options) {
 		}
 	};
 
-	const ast = /** @type {import('#compiler').Css.StyleSheet} */ (analysis.css.ast);
+	const ast = /** @type {Css.StyleSheet} */ (analysis.css.ast);
 
-	walk(/** @type {import('#compiler').Css.Node} */ (ast), state, visitors);
+	walk(/** @type {Css.Node} */ (ast), state, visitors);
 
 	code.remove(0, ast.content.start);
 	code.remove(/** @type {number} */ (ast.content.end), source.length);
@@ -57,14 +59,14 @@ export function render_stylesheet(source, analysis, options) {
 
 	merge_with_preprocessor_map(css, options, css.map.sources[0]);
 
-	if (options.dev && options.css === 'injected' && css.code) {
+	if (dev && options.css === 'injected' && css.code) {
 		css.code += `\n/*# sourceMappingURL=${css.map.toUrl()} */`;
 	}
 
 	return css;
 }
 
-/** @type {import('zimmerframe').Visitors<import('#compiler').Css.Node, State>} */
+/** @type {Visitors<Css.Node, State>} */
 const visitors = {
 	_: (node, context) => {
 		context.state.code.addSourcemapLocation(node.start);
@@ -89,7 +91,7 @@ const visitors = {
 
 		next();
 	},
-	Declaration(node, { state, next }) {
+	Declaration(node, { state }) {
 		const property = node.property && remove_css_prefix(node.property.toLowerCase());
 		if (property === 'animation' || property === 'animation-name') {
 			let index = node.start + node.property.length + 1;
@@ -119,7 +121,7 @@ const visitors = {
 	Rule(node, { state, next, visit }) {
 		// keep empty rules in dev, because it's convenient to
 		// see them in devtools
-		if (!state.dev && is_empty(node)) {
+		if (!dev && is_empty(node)) {
 			state.code.prependRight(node.start, '/* (empty) ');
 			state.code.appendLeft(node.end, '*/');
 			escape_comment_close(node, state.code);
@@ -137,7 +139,7 @@ const visitors = {
 		if (node.metadata.is_global_block) {
 			const selector = node.prelude.children[0];
 
-			if (selector.children.length === 1) {
+			if (selector.children.length === 1 && selector.children[0].selectors.length === 1) {
 				// `:global {...}`
 				state.code.prependRight(node.start, '/* ');
 				state.code.appendLeft(node.block.start + 1, '*/');
@@ -196,7 +198,7 @@ const visitors = {
 		if (parent?.type === 'Rule') {
 			specificity = { bumped: false };
 
-			/** @type {import('#compiler').Css.Rule | null} */
+			/** @type {Css.Rule | null} */
 			let rule = parent.metadata.parent_rule;
 
 			while (rule) {
@@ -213,16 +215,38 @@ const visitors = {
 	ComplexSelector(node, context) {
 		const before_bumped = context.state.specificity.bumped;
 
-		/** @param {import('#compiler').Css.SimpleSelector} selector */
-		function remove_global_pseudo_class(selector) {
-			context.state.code
-				.remove(selector.start, selector.start + ':global('.length)
-				.remove(selector.end - 1, selector.end);
+		/**
+		 * @param {Css.PseudoClassSelector} selector
+		 * @param {Css.Combinator | null} combinator
+		 */
+		function remove_global_pseudo_class(selector, combinator) {
+			if (selector.args === null) {
+				let start = selector.start;
+				if (combinator?.name === ' ') {
+					// div :global.x becomes div.x
+					while (/\s/.test(context.state.code.original[start - 1])) start--;
+				}
+				context.state.code.remove(start, selector.start + ':global'.length);
+			} else {
+				context.state.code
+					.remove(selector.start, selector.start + ':global('.length)
+					.remove(selector.end - 1, selector.end);
+			}
 		}
 
 		for (const relative_selector of node.children) {
 			if (relative_selector.metadata.is_global) {
-				remove_global_pseudo_class(relative_selector.selectors[0]);
+				const global = /** @type {Css.PseudoClassSelector} */ (relative_selector.selectors[0]);
+				remove_global_pseudo_class(global, relative_selector.combinator);
+
+				if (
+					node.metadata.rule?.metadata.parent_rule &&
+					global.args === null &&
+					relative_selector.combinator === null
+				) {
+					// div { :global.x { ... } } becomes div { &.x { ... } }
+					context.state.code.prependRight(global.start, '&');
+				}
 				continue;
 			}
 
@@ -238,10 +262,10 @@ const visitors = {
 					}
 				}
 
-				// for any :global() at the middle of compound selector
+				// for any :global() or :global at the middle of compound selector
 				for (const selector of relative_selector.selectors) {
 					if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-						remove_global_pseudo_class(selector);
+						remove_global_pseudo_class(selector, null);
 					}
 				}
 
@@ -293,7 +317,7 @@ const visitors = {
 	}
 };
 
-/** @param {import('#compiler').Css.Rule} rule */
+/** @param {Css.Rule} rule */
 function is_empty(rule) {
 	if (rule.metadata.is_global_block) {
 		return rule.block.children.length === 0;
@@ -316,7 +340,7 @@ function is_empty(rule) {
 	return true;
 }
 
-/** @param {import('#compiler').Css.Rule} rule */
+/** @param {Css.Rule} rule */
 function is_used(rule) {
 	for (const selector of rule.prelude.children) {
 		if (selector.metadata.used) return true;
@@ -335,7 +359,7 @@ function is_used(rule) {
 
 /**
  *
- * @param {import('#compiler').Css.Rule} node
+ * @param {Css.Rule} node
  * @param {MagicString} code
  */
 function escape_comment_close(node, code) {

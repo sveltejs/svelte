@@ -1,3 +1,4 @@
+/** @import { ComponentContext, ComponentContextLegacy, Effect, Reaction, TemplateNode, TransitionManager } from '#client' */
 import {
 	check_dirtiness,
 	current_component_context,
@@ -5,7 +6,7 @@ import {
 	current_reaction,
 	destroy_effect_children,
 	dev_current_component_function,
-	execute_effect,
+	update_effect,
 	get,
 	is_destroying_effect,
 	is_flushing_effect,
@@ -37,7 +38,7 @@ import {
 import { set } from './sources.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
-import { define_property } from '../utils.js';
+import { define_property } from '../../shared/utils.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -57,8 +58,8 @@ export function validate_effect(rune) {
 }
 
 /**
- * @param {import("#client").Effect} effect
- * @param {import("#client").Reaction} parent_effect
+ * @param {Effect} effect
+ * @param {Reaction} parent_effect
  */
 export function push_effect(effect, parent_effect) {
 	var parent_last = parent_effect.last;
@@ -76,12 +77,12 @@ export function push_effect(effect, parent_effect) {
  * @param {null | (() => void | (() => void))} fn
  * @param {boolean} sync
  * @param {boolean} push
- * @returns {import('#client').Effect}
+ * @returns {Effect}
  */
 function create_effect(type, fn, sync, push = true) {
 	var is_root = (type & ROOT_EFFECT) !== 0;
 
-	/** @type {import('#client').Effect} */
+	/** @type {Effect} */
 	var effect = {
 		ctx: current_component_context,
 		deps: null,
@@ -94,7 +95,8 @@ function create_effect(type, fn, sync, push = true) {
 		parent: is_root ? null : current_effect,
 		prev: null,
 		teardown: null,
-		transitions: null
+		transitions: null,
+		version: 0
 	};
 
 	if (DEV) {
@@ -106,8 +108,11 @@ function create_effect(type, fn, sync, push = true) {
 
 		try {
 			set_is_flushing_effect(true);
-			execute_effect(effect);
+			update_effect(effect);
 			effect.f |= EFFECT_RAN;
+		} catch (e) {
+			destroy_effect(effect);
+			throw e;
 		} finally {
 			set_is_flushing_effect(previously_flushing_effect);
 		}
@@ -183,7 +188,7 @@ export function user_effect(fn) {
 	}
 
 	if (defer) {
-		var context = /** @type {import('#client').ComponentContext} */ (current_component_context);
+		var context = /** @type {ComponentContext} */ (current_component_context);
 		(context.e ??= []).push(fn);
 	} else {
 		var signal = effect(fn);
@@ -194,7 +199,7 @@ export function user_effect(fn) {
 /**
  * Internal representation of `$effect.pre(...)`
  * @param {() => void | (() => void)} fn
- * @returns {import('#client').Effect}
+ * @returns {Effect}
  */
 export function user_pre_effect(fn) {
 	validate_effect('$effect.pre');
@@ -225,7 +230,7 @@ export function effect_root(fn) {
 
 /**
  * @param {() => void | (() => void)} fn
- * @returns {import('#client').Effect}
+ * @returns {Effect}
  */
 export function effect(fn) {
 	return create_effect(EFFECT, fn, false);
@@ -237,9 +242,9 @@ export function effect(fn) {
  * @param {() => void | (() => void)} fn
  */
 export function legacy_pre_effect(deps, fn) {
-	var context = /** @type {import('#client').ComponentContextLegacy} */ (current_component_context);
+	var context = /** @type {ComponentContextLegacy} */ (current_component_context);
 
-	/** @type {{ effect: null | import('#client').Effect, ran: boolean }} */
+	/** @type {{ effect: null | Effect, ran: boolean }} */
 	var token = { effect: null, ran: false };
 	context.l.r1.push(token);
 
@@ -247,7 +252,7 @@ export function legacy_pre_effect(deps, fn) {
 		deps();
 
 		// If this legacy pre effect has already run before the end of the reset, then
-		// bail-out to emulate the same behavior.
+		// bail out to emulate the same behavior.
 		if (token.ran) return;
 
 		token.ran = true;
@@ -257,7 +262,7 @@ export function legacy_pre_effect(deps, fn) {
 }
 
 export function legacy_pre_effect_reset() {
-	var context = /** @type {import('#client').ComponentContextLegacy} */ (current_component_context);
+	var context = /** @type {ComponentContextLegacy} */ (current_component_context);
 
 	render_effect(() => {
 		if (!get(context.l.r2)) return;
@@ -267,7 +272,7 @@ export function legacy_pre_effect_reset() {
 			var effect = token.effect;
 
 			if (check_dirtiness(effect)) {
-				execute_effect(effect);
+				update_effect(effect);
 			}
 
 			token.ran = false;
@@ -279,7 +284,7 @@ export function legacy_pre_effect_reset() {
 
 /**
  * @param {() => void | (() => void)} fn
- * @returns {import('#client').Effect}
+ * @returns {Effect}
  */
 export function render_effect(fn) {
 	return create_effect(RENDER_EFFECT, fn, true);
@@ -287,7 +292,7 @@ export function render_effect(fn) {
 
 /**
  * @param {() => void | (() => void)} fn
- * @returns {import('#client').Effect}
+ * @returns {Effect}
  */
 export function template_effect(fn) {
 	if (DEV) {
@@ -299,14 +304,11 @@ export function template_effect(fn) {
 }
 
 /**
- * @param {import('#client').TemplateNode | null} anchor
- * @param {number} flags
  * @param {(() => void)} fn
+ * @param {number} flags
  */
-export function block(anchor, flags, fn) {
-	const effect = create_effect(RENDER_EFFECT | BLOCK_EFFECT | flags, fn, true);
-	if (anchor !== null) effect.nodes = { start: null, anchor: null, end: anchor };
-	return effect;
+export function block(fn, flags = 0) {
+	return create_effect(RENDER_EFFECT | BLOCK_EFFECT | flags, fn, true);
 }
 
 /**
@@ -318,7 +320,7 @@ export function branch(fn, push = true) {
 }
 
 /**
- * @param {import("#client").Effect} effect
+ * @param {Effect} effect
  */
 export function execute_effect_teardown(effect) {
 	var teardown = effect.teardown;
@@ -337,7 +339,7 @@ export function execute_effect_teardown(effect) {
 }
 
 /**
- * @param {import('#client').Effect} effect
+ * @param {Effect} effect
  * @param {boolean} [remove_dom]
  * @returns {void}
  */
@@ -345,14 +347,13 @@ export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
 	if ((remove_dom || (effect.f & HEAD_EFFECT) !== 0) && effect.nodes !== null) {
-		/** @type {import('#client').TemplateNode | null} */
-		var node = get_first_node(effect);
+		/** @type {TemplateNode | null} */
+		var node = effect.nodes.start;
 		var end = effect.nodes.end;
 
 		while (node !== null) {
-			/** @type {import('#client').TemplateNode | null} */
-			var next =
-				node === end ? null : /** @type {import('#client').TemplateNode} */ (node.nextSibling);
+			/** @type {TemplateNode | null} */
+			var next = node === end ? null : /** @type {TemplateNode} */ (node.nextSibling);
 
 			node.remove();
 			node = next;
@@ -393,40 +394,9 @@ export function destroy_effect(effect, remove_dom = true) {
 }
 
 /**
- * @param {import('#client').Effect} effect
- * @returns {import('#client').TemplateNode}
- */
-export function get_first_node(effect) {
-	var nodes = /** @type {NonNullable<typeof effect.nodes>} */ (effect.nodes);
-	var start = nodes.start;
-
-	if (start === undefined) {
-		// edge case — a snippet or component was the first item inside the effect,
-		// but it didn't render any DOM. in this case, we return the item's anchor
-		return /** @type {import('#client').TemplateNode} */ (nodes.anchor);
-	}
-
-	if (start !== null) {
-		return start;
-	}
-
-	var child = effect.first;
-	while (child && (child.nodes === null || (child.f & HEAD_EFFECT) !== 0)) {
-		child = child.next;
-	}
-
-	if (child !== null && child.nodes !== null) {
-		return get_first_node(child);
-	}
-
-	// in the case that there's no DOM, return the first anchor
-	return nodes.end;
-}
-
-/**
  * Detach an effect from the effect tree, freeing up memory and
  * reducing the amount of work that happens on subsequent traversals
- * @param {import('#client').Effect} effect
+ * @param {Effect} effect
  */
 export function unlink_effect(effect) {
 	var parent = effect.parent;
@@ -448,11 +418,11 @@ export function unlink_effect(effect) {
  * It stays around (in memory, and in the DOM) until outro transitions have
  * completed, and if the state change is reversed then we _resume_ it.
  * A paused effect does not update, and the DOM subtree becomes inert.
- * @param {import('#client').Effect} effect
+ * @param {Effect} effect
  * @param {() => void} [callback]
  */
 export function pause_effect(effect, callback) {
-	/** @type {import('#client').TransitionManager[]} */
+	/** @type {TransitionManager[]} */
 	var transitions = [];
 
 	pause_children(effect, transitions, true);
@@ -464,7 +434,7 @@ export function pause_effect(effect, callback) {
 }
 
 /**
- * @param {import('#client').TransitionManager[]} transitions
+ * @param {TransitionManager[]} transitions
  * @param {() => void} fn
  */
 export function run_out_transitions(transitions, fn) {
@@ -480,8 +450,8 @@ export function run_out_transitions(transitions, fn) {
 }
 
 /**
- * @param {import('#client').Effect} effect
- * @param {import('#client').TransitionManager[]} transitions
+ * @param {Effect} effect
+ * @param {TransitionManager[]} transitions
  * @param {boolean} local
  */
 export function pause_children(effect, transitions, local) {
@@ -512,14 +482,14 @@ export function pause_children(effect, transitions, local) {
 /**
  * The opposite of `pause_effect`. We call this if (for example)
  * `x` becomes falsy then truthy: `{#if x}...{/if}`
- * @param {import('#client').Effect} effect
+ * @param {Effect} effect
  */
 export function resume_effect(effect) {
 	resume_children(effect, true);
 }
 
 /**
- * @param {import('#client').Effect} effect
+ * @param {Effect} effect
  * @param {boolean} local
  */
 function resume_children(effect, local) {
@@ -529,7 +499,7 @@ function resume_children(effect, local) {
 	// If a dependency of this effect changed while it was paused,
 	// apply the change now
 	if (check_dirtiness(effect)) {
-		execute_effect(effect);
+		update_effect(effect);
 	}
 
 	var child = effect.first;

@@ -1,3 +1,5 @@
+/** @import { assert } from 'vitest' */
+/** @import { CompileOptions, Warning } from '#compiler' */
 /**
  * @param {any} a
  * @param {any} b
@@ -118,9 +120,9 @@ function normalize_children(node) {
  *	html?: string;
  *	ssrHtml?: string;
  *	props?: Props;
- *	compileOptions?: Partial<import('#compiler').CompileOptions>;
+ *	compileOptions?: Partial<CompileOptions>;
  *	test?: (args: {
- *		assert: typeof import('vitest').assert & {
+ *		assert: typeof assert & {
  *			htmlEqual(a: string, b: string, description?: string): void;
  *			htmlEqualWithOptions(
  *				a: string,
@@ -129,7 +131,7 @@ function normalize_children(node) {
  *				description?: string
  *			): void;
  *		};
- *		compileOptions: import('#compiler').CompileOptions;
+ *		compileOptions: CompileOptions;
  *		component: Props & {
  *			[key: string]: any;
  *		};
@@ -150,7 +152,7 @@ function normalize_children(node) {
  *	accessors?: boolean;
  *	immutable?: boolean;
  *	dev?: boolean;
- *	warnings?: import('#compiler').Warning[];
+ *	warnings?: Warning[];
  *}} args
  */
 export function test(args) {

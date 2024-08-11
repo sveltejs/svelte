@@ -1,3 +1,6 @@
+/** @import { Processed, Preprocessor, MarkupPreprocessor, PreprocessorGroup } from './public.js' */
+/** @import { SourceUpdate, Source } from './private.js' */
+/** @import { DecodedSourceMap, RawSourceMap } from '@ampproject/remapping' */
 import { getLocator } from 'locate-character';
 import {
 	MappedCode,
@@ -26,7 +29,7 @@ class PreprocessResult {
 
 	/**
 	 * @default []
-	 * @type {Array<import('@ampproject/remapping').DecodedSourceMap | import('@ampproject/remapping').RawSourceMap>}
+	 * @type {Array<DecodedSourceMap | RawSourceMap>}
 	 */
 	sourcemap_list = [];
 
@@ -59,7 +62,7 @@ class PreprocessResult {
 	}
 
 	/**
-	 * @param {import('./private.js').SourceUpdate} opts
+	 * @param {SourceUpdate} opts
 	 */
 	update_source({ string: source, map, dependencies }) {
 		if (source != null) {
@@ -75,7 +78,7 @@ class PreprocessResult {
 	}
 
 	/**
-	 * @returns {import('./public.js').Processed}
+	 * @returns {Processed}
 	 */
 	to_processed() {
 		// Combine all the source maps for each preprocessor function into one
@@ -96,7 +99,7 @@ class PreprocessResult {
 }
 /**
  * Convert preprocessor output for the tag content into MappedCode
- * @param {import('./public.js').Processed} processed
+ * @param {Processed} processed
  * @param {{ line: number; column: number; }} location
  * @param {string} file_basename
  * @returns {MappedCode}
@@ -105,7 +108,7 @@ function processed_content_to_code(processed, location, file_basename) {
 	// Convert the preprocessed code and its sourcemap to a MappedCode
 
 	/**
-	 * @type {import('@ampproject/remapping').DecodedSourceMap | undefined}
+	 * @type {DecodedSourceMap | undefined}
 	 */
 	let decoded_map = undefined;
 	if (processed.map) {
@@ -124,11 +127,11 @@ function processed_content_to_code(processed, location, file_basename) {
 /**
  * Given the whole tag including content, return a `MappedCode`
  * representing the tag content replaced with `processed`.
- * @param {import('./public.js').Processed} processed
+ * @param {Processed} processed
  * @param {'style' | 'script'} tag_name
  * @param {string} original_attributes
  * @param {string} generated_attributes
- * @param {import('./private.js').Source} source
+ * @param {Source} source
  * @returns {MappedCode}
  */
 function processed_tag_to_code(
@@ -157,7 +160,7 @@ function processed_tag_to_code(
 
 	if (original_tag_open.length !== tag_open.length) {
 		// Generate a source map for the open tag
-		/** @type {import('@ampproject/remapping').DecodedSourceMap['mappings']} */
+		/** @type {DecodedSourceMap['mappings']} */
 		const mappings = [
 			[
 				// start of tag
@@ -183,7 +186,7 @@ function processed_tag_to_code(
 			original_tag_open.length - original_tag_open.lastIndexOf('\n') - 1
 		]);
 
-		/** @type {import('@ampproject/remapping').DecodedSourceMap} */
+		/** @type {DecodedSourceMap} */
 		const map = {
 			version: 3,
 			names: [],
@@ -255,9 +258,9 @@ const regex_script_tags =
 /**
  * Calculate the updates required to process all instances of the specified tag.
  * @param {'style' | 'script'} tag_name
- * @param {import('./public.js').Preprocessor} preprocessor
- * @param {import('./private.js').Source} source
- * @returns {Promise<import('./private.js').SourceUpdate>}
+ * @param {Preprocessor} preprocessor
+ * @param {Source} source
+ * @returns {Promise<SourceUpdate>}
  */
 async function process_tag(tag_name, preprocessor, source) {
 	const { filename, source: markup } = source;
@@ -299,8 +302,8 @@ async function process_tag(tag_name, preprocessor, source) {
 }
 
 /**
- * @param {import('./public.js').MarkupPreprocessor} process
- * @param {import('./private.js').Source} source
+ * @param {MarkupPreprocessor} process
+ * @param {Source} source
  */
 async function process_markup(process, source) {
 	const processed = await process({
@@ -329,9 +332,9 @@ async function process_markup(process, source) {
  *
  * https://svelte.dev/docs/svelte-compiler#svelte-preprocess
  * @param {string} source
- * @param {import('./public.js').PreprocessorGroup | import('./public.js').PreprocessorGroup[]} preprocessor
+ * @param {PreprocessorGroup | PreprocessorGroup[]} preprocessor
  * @param {{ filename?: string }} [options]
- * @returns {Promise<import('./public.js').Processed>}
+ * @returns {Promise<Processed>}
  */
 export default async function preprocess(source, preprocessor, options) {
 	/**

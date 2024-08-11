@@ -88,6 +88,10 @@
 
 > Block was left open
 
+## block_unexpected_character
+
+> Expected a `%character%` character immediately following the opening bracket
+
 ## block_unexpected_close
 
 > Unexpected block closing tag
@@ -186,7 +190,13 @@
 
 ## node_invalid_placement
 
-> %thing% is invalid inside <%parent%>
+> %thing% is invalid inside `<%parent%>`
+
+HTML restricts where certain elements can appear. In case of a violation the browser will 'repair' the HTML in a way that breaks Svelte's assumptions about the structure of your components. Some examples:
+
+- `<p>hello <div>world</div></p>` will result in `<p>hello </p><div>world</div><p></p>` for example (the `<div>` autoclosed the `<p>` because `<p>` cannot contain block-level elements)
+- `<option><div>option a</div></option>` will result in `<option>option a</option>` (the `<div>` is removed)
+- `<table><tr><td>cell</td></tr></table>` will result in `<table><tbody><tr><td>cell</td></tr></tbody></table>` (a `<tbody>` is auto-inserted)
 
 ## render_tag_invalid_call_expression
 
@@ -246,7 +256,7 @@
 
 ## snippet_invalid_rest_parameter
 
-> snippets do not support rest parameters; use an array instead
+> Snippets do not support rest parameters; use an array instead
 
 ## snippet_shadowing_prop
 
@@ -314,11 +324,11 @@
 
 ## svelte_options_invalid_attribute_value
 
-> Valid values are %list%
+> Value must be %list%, if specified
 
 ## svelte_options_invalid_customelement
 
-> "customElement" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
+> "customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
 
 ## svelte_options_invalid_customelement_props
 

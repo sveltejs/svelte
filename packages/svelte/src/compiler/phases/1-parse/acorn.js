@@ -1,3 +1,5 @@
+/** @import { Comment, Program } from 'estree' */
+/** @import { Node } from 'acorn' */
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from 'acorn-typescript';
@@ -23,13 +25,14 @@ export function parse(source, typescript) {
 	if (typescript) amend(source, ast);
 	add_comments(ast);
 
-	return /** @type {import('estree').Program} */ (ast);
+	return /** @type {Program} */ (ast);
 }
 
 /**
  * @param {string} source
  * @param {boolean} typescript
  * @param {number} index
+ * @returns {acorn.Expression & { leadingComments?: CommentWithLocation[]; trailingComments?: CommentWithLocation[]; }}
  */
 export function parse_expression_at(source, typescript, index) {
 	const parser = typescript ? ParserWithTS : acorn.Parser;
@@ -56,7 +59,7 @@ export function parse_expression_at(source, typescript, index) {
  */
 function get_comment_handlers(source) {
 	/**
-	 * @typedef {import('estree').Comment & {
+	 * @typedef {Comment & {
 	 *   start: number;
 	 *   end: number;
 	 * }} CommentWithLocation
@@ -92,7 +95,7 @@ function get_comment_handlers(source) {
 			if (comments.length === 0) return;
 
 			walk(ast, null, {
-				_(node, { next }) {
+				_(node, { next, path }) {
 					let comment;
 
 					while (comments[0] && comments[0].start < node.start) {
@@ -103,14 +106,44 @@ function get_comment_handlers(source) {
 					next();
 
 					if (comments[0]) {
-						const slice = source.slice(node.end, comments[0].start);
+						const parent = /** @type {any} */ (path.at(-1));
 
-						if (/^[,) \t]*$/.test(slice)) {
-							node.trailingComments = [/** @type {CommentWithLocation} */ (comments.shift())];
+						if (parent === undefined || node.end !== parent.end) {
+							const slice = source.slice(node.end, comments[0].start);
+							const is_last_in_body =
+								((parent?.type === 'BlockStatement' || parent?.type === 'Program') &&
+									parent.body.indexOf(node) === parent.body.length - 1) ||
+								(parent?.type === 'ArrayExpression' &&
+									parent.elements.indexOf(node) === parent.elements.length - 1) ||
+								(parent?.type === 'ObjectExpression' &&
+									parent.properties.indexOf(node) === parent.properties.length - 1);
+
+							if (is_last_in_body) {
+								// Special case: There can be multiple trailing comments after the last node in a block,
+								// and they can be separated by newlines
+								let end = node.end;
+
+								while (comments.length) {
+									const comment = comments[0];
+									if (parent && comment.start >= parent.end) break;
+
+									(node.trailingComments ||= []).push(comment);
+									comments.shift();
+									end = comment.end;
+								}
+							} else if (node.end <= comments[0].start && /^[,) \t]*$/.test(slice)) {
+								node.trailingComments = [/** @type {CommentWithLocation} */ (comments.shift())];
+							}
 						}
 					}
 				}
 			});
+
+			// Special case: Trailing comments after the root node (which can only happen for expression tags or for Program nodes).
+			// Adding them ensures that we can later detect the end of the expression tag correctly.
+			if (comments.length > 0 && (comments[0].start >= ast.end || ast.type === 'Program')) {
+				(ast.trailingComments ||= []).push(...comments.splice(0));
+			}
 		}
 	};
 }
@@ -118,7 +151,7 @@ function get_comment_handlers(source) {
 /**
  * Tidy up some stuff left behind by acorn-typescript
  * @param {string} source
- * @param {import('acorn').Node} node
+ * @param {Node} node
  */
 function amend(source, node) {
 	return walk(node, null, {

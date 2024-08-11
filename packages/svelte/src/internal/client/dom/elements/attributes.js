@@ -1,17 +1,13 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
-import { get_descriptors, get_prototype_of } from '../../utils.js';
-import {
-	AttributeAliases,
-	DelegatedEvents,
-	is_capture_event,
-	namespace_svg
-} from '../../../../constants.js';
+import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
+import { NAMESPACE_SVG } from '../../../../constants.js';
 import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '../../constants.js';
 import { queue_idle_task, queue_micro_task } from '../task.js';
+import { is_capture_event, is_delegated, normalize_attribute } from '../../../../utils.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -82,8 +78,9 @@ export function set_checked(element, checked) {
  * @param {Element} element
  * @param {string} attribute
  * @param {string | null} value
+ * @param {boolean} [skip_warning]
  */
-export function set_attribute(element, attribute, value) {
+export function set_attribute(element, attribute, value, skip_warning) {
 	value = value == null ? null : value + '';
 
 	// @ts-expect-error
@@ -93,7 +90,9 @@ export function set_attribute(element, attribute, value) {
 		attributes[attribute] = element.getAttribute(attribute);
 
 		if (attribute === 'src' || attribute === 'href' || attribute === 'srcset') {
-			check_src_in_dev_hydration(element, attribute, value);
+			if (!skip_warning) {
+				check_src_in_dev_hydration(element, attribute, value);
+			}
 
 			// If we reset these attributes, they would result in another network request, which we want to avoid.
 			// We assume they are the same between client and server as checking if they are equal is expensive
@@ -148,13 +147,21 @@ export function set_custom_element_data(node, prop, value) {
  * @param {Element & ElementCSSInlineStyle} element
  * @param {Record<string, any> | undefined} prev
  * @param {Record<string, any>} next New attributes - this function mutates this object
- * @param {boolean} lowercase_attributes
- * @param {string} css_hash
+ * @param {string} [css_hash]
+ * @param {boolean} preserve_attribute_case
+ * @param {boolean} [skip_warning]
  * @returns {Record<string, any>}
  */
-export function set_attributes(element, prev, next, lowercase_attributes, css_hash) {
-	var has_hash = css_hash.length !== 0;
+export function set_attributes(
+	element,
+	prev,
+	next,
+	css_hash,
+	preserve_attribute_case = false,
+	skip_warning
+) {
 	var current = prev || {};
+	var is_option_element = element.tagName === 'OPTION';
 
 	for (var key in prev) {
 		if (!(key in next)) {
@@ -162,8 +169,8 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 		}
 	}
 
-	if (has_hash && !next.class) {
-		next.class = '';
+	if (css_hash !== undefined) {
+		next.class = next.class ? next.class + ' ' + css_hash : css_hash;
 	}
 
 	var setters = setters_cache.get(element.nodeName);
@@ -178,6 +185,26 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 	for (const key in next) {
 		// let instead of var because referenced in a closure
 		let value = next[key];
+
+		// Up here because we want to do this for the initial value, too, even if it's undefined,
+		// and this wouldn't be reached in case of undefined because of the equality check below
+		if (is_option_element && key === 'value' && value == null) {
+			// The <option> element is a special case because removing the value attribute means
+			// the value is set to the text content of the option element, and setting the value
+			// to null or undefined means the value is set to the string "null" or "undefined".
+			// To align with how we handle this case in non-spread-scenarios, this logic is needed.
+			// There's a super-edge-case bug here that is left in in favor of smaller code size:
+			// Because of the "set missing props to null" logic above, we can't differentiate
+			// between a missing value and an explicitly set value of null or undefined. That means
+			// that once set, the value attribute of an <option> element can't be removed. This is
+			// a very rare edge case, and removing the attribute altogether isn't possible either
+			// for the <option value={undefined}> case, so we're not losing any functionality here.
+			// @ts-ignore
+			element.value = element.__value = '';
+			current[key] = value;
+			continue;
+		}
+
 		var prev_value = current[key];
 		if (value === prev_value) continue;
 
@@ -191,7 +218,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 			const opts = {};
 			const event_handle_key = '$$' + key;
 			let event_name = key.slice(2);
-			var delegated = DelegatedEvents.includes(event_name);
+			var delegated = is_delegated(event_name);
 
 			if (is_capture_event(event_name)) {
 				event_name = event_name.slice(0, -7);
@@ -246,24 +273,18 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
 			element.value = element[key] = element.__value = value;
 		} else {
 			var name = key;
-			if (lowercase_attributes) {
-				name = name.toLowerCase();
-				name = AttributeAliases[name] || name;
+			if (!preserve_attribute_case) {
+				name = normalize_attribute(name);
 			}
 
 			if (setters.includes(name)) {
 				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
-					check_src_in_dev_hydration(element, name, value);
+					if (!skip_warning) check_src_in_dev_hydration(element, name, value);
 				} else {
 					// @ts-ignore
 					element[name] = value;
 				}
 			} else if (typeof value !== 'function') {
-				if (has_hash && name === 'class') {
-					if (value) value += ' ';
-					value += css_hash;
-				}
-
 				set_attribute(element, name, value);
 			}
 		}
@@ -289,7 +310,7 @@ export function set_attributes(element, prev, next, lowercase_attributes, css_ha
  * @param {Element} node
  * @param {Record<string, any> | undefined} prev
  * @param {Record<string, any>} next The new attributes - this function mutates this object
- * @param {string} css_hash
+ * @param {string} [css_hash]
  */
 export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 	if (node.tagName.includes('-')) {
@@ -297,6 +318,10 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 			if (!(key in next)) {
 				next[key] = null;
 			}
+		}
+
+		if (css_hash !== undefined) {
+			next.class = next.class ? next.class + ' ' + css_hash : css_hash;
 		}
 
 		for (key in next) {
@@ -310,8 +335,8 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 		/** @type {Element & ElementCSSInlineStyle} */ (node),
 		prev,
 		next,
-		node.namespaceURI !== namespace_svg,
-		css_hash
+		css_hash,
+		node.namespaceURI !== NAMESPACE_SVG
 	);
 }
 
@@ -320,9 +345,10 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
  * because updating them through the property setter doesn't work reliably.
  * In the example of `width`/`height`, the problem is that the setter only
  * accepts numeric values, but the attribute can also be set to a string like `50%`.
- * If this list becomes too big, rethink this approach.
+ * In case of draggable trying to set `element.draggable='false'` will actually set
+ * draggable to `true`. If this list becomes too big, rethink this approach.
  */
-var always_set_through_set_attribute = ['width', 'height'];
+var always_set_through_set_attribute = ['width', 'height', 'draggable'];
 
 /** @type {Map<string, string[]>} */
 var setters_cache = new Map();

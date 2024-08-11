@@ -3,6 +3,8 @@ import type { ComponentContext, Dom, Equals, TemplateNode, TransitionManager } f
 export interface Signal {
 	/** Flags bitmask */
 	f: number;
+	/** Write version */
+	version: number;
 }
 
 export interface Value<V = unknown> extends Signal {
@@ -12,8 +14,6 @@ export interface Value<V = unknown> extends Signal {
 	equals: Equals;
 	/** The latest value for this signal */
 	v: V;
-	/** Write version */
-	version: number;
 }
 
 export interface Reaction extends Signal {
@@ -34,13 +34,20 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 	deriveds: null | Derived[];
 }
 
+export interface EffectNodes {
+	start: TemplateNode;
+	end: null | TemplateNode;
+}
+
 export interface Effect extends Reaction {
 	parent: Effect | null;
-	nodes: null | {
-		start: undefined | null | TemplateNode;
-		anchor: null | TemplateNode;
-		end: TemplateNode;
-	};
+	/**
+	 * Branch effects store their start/end nodes so that they can be
+	 * removed when the effect is destroyed, or moved when an `each`
+	 * block is reconciled. In the case of a single text/element node,
+	 * `start` and `end` will be the same.
+	 */
+	nodes: null | EffectNodes;
 	/** The associated component context */
 	ctx: null | ComponentContext;
 	/** The effect function */

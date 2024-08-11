@@ -1,3 +1,4 @@
+/** @import { Effect, Source, TemplateNode } from '#client' */
 import { is_promise, noop } from '../../../shared/utils.js';
 import {
 	current_component_context,
@@ -11,7 +12,7 @@ import {
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { DEV } from 'esm-env';
 import { queue_micro_task } from '../task.js';
-import { hydrating } from '../hydration.js';
+import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { mutable_source, set, source } from '../../reactivity/sources.js';
 
 const PENDING = 0;
@@ -20,14 +21,19 @@ const CATCH = 2;
 
 /**
  * @template V
- * @param {Comment} anchor
+ * @param {TemplateNode} node
  * @param {(() => Promise<V>)} get_input
  * @param {null | ((anchor: Node) => void)} pending_fn
- * @param {null | ((anchor: Node, value: import('#client').Source<V>) => void)} then_fn
+ * @param {null | ((anchor: Node, value: Source<V>) => void)} then_fn
  * @param {null | ((anchor: Node, error: unknown) => void)} catch_fn
  * @returns {void}
  */
-export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
+export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
+	if (hydrating) {
+		hydrate_next();
+	}
+
+	var anchor = node;
 	var runes = is_runes();
 	var component_context = current_component_context;
 
@@ -37,13 +43,13 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 	/** @type {V | Promise<V>} */
 	var input;
 
-	/** @type {import('#client').Effect | null} */
+	/** @type {Effect | null} */
 	var pending_effect;
 
-	/** @type {import('#client').Effect | null} */
+	/** @type {Effect | null} */
 	var then_effect;
 
-	/** @type {import('#client').Effect | null} */
+	/** @type {Effect | null} */
 	var catch_effect;
 
 	var input_source = runes
@@ -105,7 +111,7 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 		}
 	}
 
-	var effect = block(anchor, 0, () => {
+	var effect = block(() => {
 		if (input === (input = get_input())) return;
 
 		if (is_promise(input)) {
@@ -146,4 +152,8 @@ export function await_block(anchor, get_input, pending_fn, then_fn, catch_fn) {
 		// teardown function is an easy way to ensure that this is not discarded
 		return noop;
 	});
+
+	if (hydrating) {
+		anchor = hydrate_node;
+	}
 }

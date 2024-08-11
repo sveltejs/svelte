@@ -353,11 +353,16 @@ export function convert(source, ast) {
 					};
 				}
 
+				const start = node.elseif
+					? node.consequent.nodes[0]?.start ??
+						source.lastIndexOf('{', /** @type {number} */ (node.end) - 1)
+					: node.start;
+
 				remove_surrounding_whitespace_nodes(node.consequent.nodes);
 
 				return {
 					type: 'IfBlock',
-					start: node.start,
+					start,
 					end: node.end,
 					expression: node.test,
 					children: node.consequent.nodes.map(
@@ -405,6 +410,34 @@ export function convert(source, ast) {
 						(child) => /** @type {Legacy.LegacyElementLike} */ (visit(child))
 					)
 				};
+			},
+			Attribute(node, { visit, next, path }) {
+				if (node.value !== true && !Array.isArray(node.value)) {
+					path.push(node);
+					const value = /** @type {Legacy.LegacyAttribute['value']} */ ([visit(node.value)]);
+					path.pop();
+
+					return {
+						...node,
+						value
+					};
+				} else {
+					return next();
+				}
+			},
+			StyleDirective(node, { visit, next, path }) {
+				if (node.value !== true && !Array.isArray(node.value)) {
+					path.push(node);
+					const value = /** @type {Legacy.LegacyStyleDirective['value']} */ ([visit(node.value)]);
+					path.pop();
+
+					return {
+						...node,
+						value
+					};
+				} else {
+					return next();
+				}
 			},
 			SpreadAttribute(node) {
 				return { ...node, type: 'Spread' };

@@ -1,16 +1,16 @@
+/** @import { Attribute, Text, ExpressionTag, SvelteNode } from '#compiler' */
+/** @import * as ESTree from 'estree' */
 import { walk } from 'zimmerframe';
 import * as b from '../utils/builders.js';
 
 /**
  * Gets the left-most identifier of a member expression or identifier.
- * @param {import('estree').MemberExpression | import('estree').Identifier} expression
- * @returns {import('estree').Identifier | null}
+ * @param {ESTree.MemberExpression | ESTree.Identifier} expression
+ * @returns {ESTree.Identifier | null}
  */
 export function object(expression) {
 	while (expression.type === 'MemberExpression') {
-		expression = /** @type {import('estree').MemberExpression | import('estree').Identifier} */ (
-			expression.object
-		);
+		expression = /** @type {ESTree.MemberExpression | ESTree.Identifier} */ (expression.object);
 	}
 
 	if (expression.type !== 'Identifier') {
@@ -22,73 +22,106 @@ export function object(expression) {
 
 /**
  * Returns true if the attribute contains a single static text node.
- * @param {import('#compiler').Attribute} attribute
- * @returns {attribute is import('#compiler').Attribute & { value: [import('#compiler').Text] }}
+ * @param {Attribute} attribute
+ * @returns {attribute is Attribute & { value: [Text] }}
  */
 export function is_text_attribute(attribute) {
 	return (
-		attribute.value !== true && attribute.value.length === 1 && attribute.value[0].type === 'Text'
+		Array.isArray(attribute.value) &&
+		attribute.value.length === 1 &&
+		attribute.value[0].type === 'Text'
 	);
 }
 
 /**
  * Returns true if the attribute contains a single expression node.
- * @param {import('#compiler').Attribute} attribute
- * @returns {attribute is import('#compiler').Attribute & { value: [import('#compiler').ExpressionTag] }}
+ * In Svelte 5, this also includes a single expression node wrapped in an array.
+ * TODO change that in a future version
+ * @param {Attribute} attribute
+ * @returns {attribute is Attribute & { value: [ExpressionTag] | ExpressionTag }}
  */
 export function is_expression_attribute(attribute) {
 	return (
-		attribute.value !== true &&
-		attribute.value.length === 1 &&
-		attribute.value[0].type === 'ExpressionTag'
+		(attribute.value !== true && !Array.isArray(attribute.value)) ||
+		(Array.isArray(attribute.value) &&
+			attribute.value.length === 1 &&
+			attribute.value[0].type === 'ExpressionTag')
 	);
 }
 
 /**
+ * Returns the single attribute expression node.
+ * In Svelte 5, this also includes a single expression node wrapped in an array.
+ * TODO change that in a future version
+ * @param { Attribute & { value: [ExpressionTag] | ExpressionTag }} attribute
+ * @returns {ESTree.Expression}
+ */
+export function get_attribute_expression(attribute) {
+	return Array.isArray(attribute.value)
+		? /** @type {ExpressionTag} */ (attribute.value[0]).expression
+		: attribute.value.expression;
+}
+
+/**
+ * Returns the expression chunks of an attribute value
+ * @param {Attribute['value']} value
+ * @returns {Array<Text | ExpressionTag>}
+ */
+export function get_attribute_chunks(value) {
+	return Array.isArray(value) ? value : typeof value === 'boolean' ? [] : [value];
+}
+
+/**
  * Returns true if the attribute starts with `on` and contains a single expression node.
- * @param {import('#compiler').Attribute} attribute
- * @returns {attribute is import('#compiler').Attribute & { value: [import('#compiler').ExpressionTag] }}
+ * @param {Attribute} attribute
+ * @returns {attribute is Attribute & { value: [ExpressionTag] | ExpressionTag }}
  */
 export function is_event_attribute(attribute) {
 	return is_expression_attribute(attribute) && attribute.name.startsWith('on');
 }
 
 /**
- * Extracts all identifiers from a pattern.
- * @param {import('estree').Pattern} param
- * @param {import('estree').Identifier[]} [nodes]
- * @returns {import('estree').Identifier[]}
+ * Extracts all identifiers and member expressions from a pattern.
+ * @param {ESTree.Pattern} pattern
+ * @param {Array<ESTree.Identifier | ESTree.MemberExpression>} [nodes]
+ * @returns {Array<ESTree.Identifier | ESTree.MemberExpression>}
  */
-export function extract_identifiers(param, nodes = []) {
-	switch (param.type) {
+export function unwrap_pattern(pattern, nodes = []) {
+	switch (pattern.type) {
 		case 'Identifier':
-			nodes.push(param);
+			nodes.push(pattern);
+			break;
+
+		case 'MemberExpression':
+			// member expressions can be part of an assignment pattern, but not a binding pattern
+			// see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#binding_and_assignment
+			nodes.push(pattern);
 			break;
 
 		case 'ObjectPattern':
-			for (const prop of param.properties) {
+			for (const prop of pattern.properties) {
 				if (prop.type === 'RestElement') {
-					extract_identifiers(prop.argument, nodes);
+					unwrap_pattern(prop.argument, nodes);
 				} else {
-					extract_identifiers(prop.value, nodes);
+					unwrap_pattern(prop.value, nodes);
 				}
 			}
 
 			break;
 
 		case 'ArrayPattern':
-			for (const element of param.elements) {
-				if (element) extract_identifiers(element, nodes);
+			for (const element of pattern.elements) {
+				if (element) unwrap_pattern(element, nodes);
 			}
 
 			break;
 
 		case 'RestElement':
-			extract_identifiers(param.argument, nodes);
+			unwrap_pattern(pattern.argument, nodes);
 			break;
 
 		case 'AssignmentPattern':
-			extract_identifiers(param.left, nodes);
+			unwrap_pattern(pattern.left, nodes);
 			break;
 	}
 
@@ -96,12 +129,22 @@ export function extract_identifiers(param, nodes = []) {
 }
 
 /**
+ * Extracts all identifiers from a pattern.
+ * @param {ESTree.Pattern} pattern
+ * @returns {ESTree.Identifier[]}
+ */
+export function extract_identifiers(pattern) {
+	return unwrap_pattern(pattern, []).filter((node) => node.type === 'Identifier');
+}
+
+/**
  * Extracts all identifiers and a stringified keypath from an expression.
- * @param {import('estree').Expression} expr
- * @returns {[keypath: string, ids: import('estree').Identifier[]]}
+ * TODO replace this with `expression.dependencies`
+ * @param {ESTree.Expression} expr
+ * @returns {[keypath: string, ids: ESTree.Identifier[]]}
  */
 export function extract_all_identifiers_from_expression(expr) {
-	/** @type {import('estree').Identifier[]} */
+	/** @type {ESTree.Identifier[]} */
 	let nodes = [];
 	/** @type {string[]} */
 	let keypath = [];
@@ -143,8 +186,8 @@ export function extract_all_identifiers_from_expression(expr) {
 
 /**
  * Extracts all leaf identifiers from a destructuring expression.
- * @param {import('estree').Identifier | import('estree').ObjectExpression | import('estree').ArrayExpression} node
- * @param {import('estree').Identifier[]} [nodes]
+ * @param {ESTree.Identifier | ESTree.ObjectExpression | ESTree.ArrayExpression} node
+ * @param {ESTree.Identifier[]} [nodes]
  * @returns
  */
 export function extract_identifiers_from_destructuring(node, nodes = []) {
@@ -181,33 +224,33 @@ export function extract_identifiers_from_destructuring(node, nodes = []) {
  * or assignment expression. For example, given `const { foo: { bar: baz } } = quux`,
  * the path of `baz` is `foo.bar`
  * @typedef {Object} DestructuredAssignment
- * @property {import('estree').Identifier | import('estree').MemberExpression} node The node the destructuring path end in. Can be a member expression only for assignment expressions
+ * @property {ESTree.Identifier | ESTree.MemberExpression} node The node the destructuring path end in. Can be a member expression only for assignment expressions
  * @property {boolean} is_rest `true` if this is a `...rest` destructuring
  * @property {boolean} has_default_value `true` if this has a fallback value like `const { foo = 'bar } = ..`
- * @property {(expression: import('estree').Expression) => import('estree').Identifier | import('estree').MemberExpression | import('estree').CallExpression | import('estree').AwaitExpression} expression Returns an expression which walks the path starting at the given expression.
+ * @property {(expression: ESTree.Expression) => ESTree.Identifier | ESTree.MemberExpression | ESTree.CallExpression | ESTree.AwaitExpression} expression Returns an expression which walks the path starting at the given expression.
  * This will be a call expression if a rest element or default is involved — e.g. `const { foo: { bar: baz = 42 }, ...rest } = quux` — since we can't represent `baz` or `rest` purely as a path
  * Will be an await expression in case of an async default value (`const { foo = await bar } = ...`)
- * @property {(expression: import('estree').Expression) => import('estree').Identifier | import('estree').MemberExpression | import('estree').CallExpression | import('estree').AwaitExpression} update_expression Like `expression` but without default values.
+ * @property {(expression: ESTree.Expression) => ESTree.Identifier | ESTree.MemberExpression | ESTree.CallExpression | ESTree.AwaitExpression} update_expression Like `expression` but without default values.
  */
 
 /**
  * Extracts all destructured assignments from a pattern.
- * @param {import('estree').Node} param
+ * @param {ESTree.Node} param
  * @returns {DestructuredAssignment[]}
  */
 export function extract_paths(param) {
 	return _extract_paths(
 		[],
 		param,
-		(node) => /** @type {import('estree').Identifier | import('estree').MemberExpression} */ (node),
-		(node) => /** @type {import('estree').Identifier | import('estree').MemberExpression} */ (node),
+		(node) => /** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node),
+		(node) => /** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node),
 		false
 	);
 }
 
 /**
  * @param {DestructuredAssignment[]} assignments
- * @param {import('estree').Node} param
+ * @param {ESTree.Node} param
  * @param {DestructuredAssignment['expression']} expression
  * @param {DestructuredAssignment['update_expression']} update_expression
  * @param {boolean} has_default_value
@@ -231,17 +274,21 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 				if (prop.type === 'RestElement') {
 					/** @type {DestructuredAssignment['expression']} */
 					const rest_expression = (object) => {
-						/** @type {import('estree').Expression[]} */
+						/** @type {ESTree.Expression[]} */
 						const props = [];
+
 						for (const p of param.properties) {
 							if (p.type === 'Property' && p.key.type !== 'PrivateIdentifier') {
 								if (p.key.type === 'Identifier' && !p.computed) {
 									props.push(b.literal(p.key.name));
+								} else if (p.key.type === 'Literal') {
+									props.push(b.literal(String(p.key.value)));
 								} else {
-									props.push(p.key);
+									props.push(b.call('String', p.key));
 								}
 							}
 						}
+
 						return b.call('$.exclude_from_object', expression(object), b.array(props));
 					};
 
@@ -321,12 +368,7 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 
 		case 'AssignmentPattern': {
 			/** @type {DestructuredAssignment['expression']} */
-			const fallback_expression = (object) =>
-				is_expression_async(param.right)
-					? b.await(
-							b.call('$.value_or_fallback_async', expression(object), b.thunk(param.right, true))
-						)
-					: b.call('$.value_or_fallback', expression(object), b.thunk(param.right));
+			const fallback_expression = (object) => build_fallback(expression(object), param.right);
 
 			if (param.left.type === 'Identifier') {
 				assignments.push({
@@ -351,7 +393,7 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
  * Like `path.at(x)`, but skips over `TSNonNullExpression` and `TSAsExpression` nodes and eases assertions a bit
  * by removing the `| undefined` from the resulting type.
  *
- * @template {import('#compiler').SvelteNode} T
+ * @template {SvelteNode} T
  * @param {T[]} path
  * @param {number} at
  */
@@ -369,7 +411,7 @@ export function get_parent(path, at) {
  * or a logical expression that only contains simple expressions. Used to determine whether
  * something needs to be treated as though accessing it could have side-effects (i.e.
  * reading signals prematurely)
- * @param {import('estree').Expression} node
+ * @param {ESTree.Expression} node
  * @returns {boolean}
  */
 export function is_simple_expression(node) {
@@ -398,8 +440,8 @@ export function is_simple_expression(node) {
 }
 
 /**
- * @template {import('estree').SimpleCallExpression | import('estree').MemberExpression} T
- * @param {import('estree').ChainExpression & { expression : T } | T} node
+ * @template {ESTree.SimpleCallExpression | ESTree.MemberExpression} T
+ * @param {ESTree.ChainExpression & { expression : T } | T} node
  * @returns {T}
  */
 export function unwrap_optional(node) {
@@ -407,7 +449,7 @@ export function unwrap_optional(node) {
 }
 
 /**
- * @param {import('estree').Expression | import('estree').Pattern} expression
+ * @param {ESTree.Expression | ESTree.Pattern} expression
  * @returns {boolean}
  */
 export function is_expression_async(expression) {
@@ -501,4 +543,35 @@ export function is_expression_async(expression) {
 		default:
 			return false;
 	}
+}
+
+/**
+ *
+ * @param {ESTree.Expression} expression
+ * @param {ESTree.Expression} fallback
+ */
+export function build_fallback(expression, fallback) {
+	if (is_simple_expression(fallback)) {
+		return b.call('$.fallback', expression, fallback);
+	}
+
+	if (fallback.type === 'AwaitExpression' && is_simple_expression(fallback.argument)) {
+		return b.await(b.call('$.fallback', expression, fallback.argument));
+	}
+
+	return is_expression_async(fallback)
+		? b.await(b.call('$.fallback', expression, b.thunk(fallback, true), b.true))
+		: b.call('$.fallback', expression, b.thunk(fallback), b.true);
+}
+
+/**
+ * @param {ESTree.AssignmentOperator} operator
+ * @param {ESTree.Identifier | ESTree.MemberExpression} left
+ * @param {ESTree.Expression} right
+ */
+export function build_assignment_value(operator, left, right) {
+	return operator === '='
+		? right
+		: // turn something like x += 1 into x = x + 1
+			b.binary(/** @type {ESTree.BinaryOperator} */ (operator.slice(0, -1)), left, right);
 }

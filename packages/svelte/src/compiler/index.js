@@ -1,3 +1,5 @@
+/** @import { LegacyRoot } from './types/legacy-nodes.js' */
+/** @import { CompileOptions, CompileResult, ValidatedCompileOptions, ModuleCompileOptions, Root } from '#compiler' */
 import { walk as zimmerframe_walk } from 'zimmerframe';
 import { convert } from './legacy.js';
 import { parse as parse_acorn } from './phases/1-parse/acorn.js';
@@ -14,10 +16,11 @@ export { default as preprocess } from './preprocess/index.js';
  *
  * https://svelte.dev/docs/svelte-compiler#svelte-compile
  * @param {string} source The component source code
- * @param {import('#compiler').CompileOptions} options The compiler options
- * @returns {import('#compiler').CompileResult}
+ * @param {CompileOptions} options The compiler options
+ * @returns {CompileResult}
  */
 export function compile(source, options) {
+	state.reset_warning_filter(options.warningFilter);
 	const validated = validate_component_options(options, '');
 	state.reset(source, validated);
 
@@ -25,7 +28,7 @@ export function compile(source, options) {
 
 	const { customElement: customElementOptions, ...parsed_options } = parsed.options || {};
 
-	/** @type {import('#compiler').ValidatedCompileOptions} */
+	/** @type {ValidatedCompileOptions} */
 	const combined_options = {
 		...validated,
 		...parsed_options,
@@ -52,10 +55,11 @@ export function compile(source, options) {
  *
  * https://svelte.dev/docs/svelte-compiler#svelte-compile
  * @param {string} source The component source code
- * @param {import('#compiler').ModuleCompileOptions} options
- * @returns {import('#compiler').CompileResult}
+ * @param {ModuleCompileOptions} options
+ * @returns {CompileResult}
  */
 export function compileModule(source, options) {
+	state.reset_warning_filter(options.warningFilter);
 	const validated = validate_module_options(options, '');
 	state.reset(source, validated);
 
@@ -73,7 +77,7 @@ export function compileModule(source, options) {
  * @overload
  * @param {string} source
  * @param {{ filename?: string; modern: true }} options
- * @returns {import('#compiler').Root}
+ * @returns {Root}
  */
 
 /**
@@ -86,7 +90,7 @@ export function compileModule(source, options) {
  * @overload
  * @param {string} source
  * @param {{ filename?: string; modern?: false }} [options]
- * @returns {import('./types/legacy-nodes.js').LegacyRoot}
+ * @returns {LegacyRoot}
  */
 
 /**
@@ -98,9 +102,10 @@ export function compileModule(source, options) {
  * https://svelte.dev/docs/svelte-compiler#svelte-parse
  * @param {string} source
  * @param {{ filename?: string; rootDir?: string; modern?: boolean }} [options]
- * @returns {import('#compiler').Root | import('./types/legacy-nodes.js').LegacyRoot}
+ * @returns {Root | LegacyRoot}
  */
 export function parse(source, { filename, rootDir, modern } = {}) {
+	state.reset_warning_filter(() => false);
 	state.reset(source, { filename, rootDir }); // TODO it's weird to require filename/rootDir here. reconsider the API
 
 	const ast = _parse(source);
@@ -109,18 +114,28 @@ export function parse(source, { filename, rootDir, modern } = {}) {
 
 /**
  * @param {string} source
- * @param {import('#compiler').Root} ast
+ * @param {Root} ast
  * @param {boolean | undefined} modern
  */
 function to_public_ast(source, ast, modern) {
 	if (modern) {
+		const clean = (/** @type {any} */ node) => {
+			delete node.metadata;
+			delete node.parent;
+		};
+
+		ast.options?.attributes.forEach((attribute) => {
+			clean(attribute);
+			clean(attribute.value);
+			if (Array.isArray(attribute.value)) {
+				attribute.value.forEach(clean);
+			}
+		});
+
 		// remove things that we don't want to treat as public API
 		return zimmerframe_walk(ast, null, {
 			_(node, { next }) {
-				// @ts-ignore
-				delete node.parent;
-				// @ts-ignore
-				delete node.metadata;
+				clean(node);
 				next();
 			}
 		});

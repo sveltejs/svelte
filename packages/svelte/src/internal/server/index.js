@@ -1,89 +1,81 @@
+/** @import { ComponentType, SvelteComponent } from 'svelte' */
+/** @import { Component, Payload, RenderOutput } from '#server' */
+/** @import { Store } from '#shared' */
+export { FILENAME, HMR } from '../../constants.js';
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
 	UNINITIALIZED,
-	DOMBooleanAttributes,
-	RawTextElements,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
 	ELEMENT_IS_NAMESPACED
 } from '../../constants.js';
+
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
-import { BLOCK_ANCHOR, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
+import { is_boolean_attribute, is_void } from '../../utils.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 const INVALID_ATTR_NAME_CHAR_REGEX =
 	/[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
 
-export const VoidElements = new Set([
-	'area',
-	'base',
-	'br',
-	'col',
-	'embed',
-	'hr',
-	'img',
-	'input',
-	'keygen',
-	'link',
-	'menuitem',
-	'meta',
-	'param',
-	'source',
-	'track',
-	'wbr'
-]);
-
-/** @returns {import('#server').Payload} */
-function create_payload() {
-	return { out: '', head: { title: '', out: '', anchor: 0 }, anchor: 0 };
-}
+/** List of elements that require raw contents and should not have SSR comments put in them */
+const RAW_TEXT_ELEMENTS = ['textarea', 'script', 'style', 'title'];
 
 /**
- * @param {import('#server').Payload} to_copy
- * @returns {import('#server').Payload}
+ * @param {Payload} to_copy
+ * @returns {Payload}
  */
-export function copy_payload(to_copy) {
+export function copy_payload({ out, css, head }) {
 	return {
-		...to_copy,
-		head: { ...to_copy.head }
+		out,
+		css: new Set(css),
+		head: {
+			title: head.title,
+			out: head.out
+		}
 	};
 }
 
 /**
  * Assigns second payload to first
- * @param {import('#server').Payload} p1
- * @param {import('#server').Payload} p2
+ * @param {Payload} p1
+ * @param {Payload} p2
  * @returns {void}
  */
 export function assign_payload(p1, p2) {
 	p1.out = p2.out;
 	p1.head = p2.head;
-	p1.anchor = p2.anchor;
 }
 
 /**
- * @param {import('#server').Payload} payload
+ * @param {Payload} payload
  * @param {string} tag
  * @param {() => void} attributes_fn
  * @param {() => void} children_fn
  * @returns {void}
  */
-export function element(payload, tag, attributes_fn, children_fn) {
-	payload.out += `<${tag} `;
-	attributes_fn();
-	payload.out += `>`;
+export function element(payload, tag, attributes_fn = noop, children_fn = noop) {
+	payload.out += '<!---->';
 
-	if (!VoidElements.has(tag)) {
-		children_fn();
-		if (!RawTextElements.includes(tag)) {
-			payload.out += BLOCK_ANCHOR;
+	if (tag) {
+		payload.out += `<${tag} `;
+		attributes_fn();
+		payload.out += `>`;
+
+		if (!is_void(tag)) {
+			children_fn();
+			if (!RAW_TEXT_ELEMENTS.includes(tag)) {
+				payload.out += EMPTY_COMMENT;
+			}
+			payload.out += `</${tag}>`;
 		}
-		payload.out += `</${tag}>`;
 	}
+
+	payload.out += '<!---->';
 }
 
 /**
@@ -96,12 +88,13 @@ export let on_destroy = [];
  * Only available on the server and when compiling with the `server` option.
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
- * @param {import('svelte').Component<Props> | import('svelte').ComponentType<import('svelte').SvelteComponent<Props>>} component
+ * @param {import('svelte').Component<Props> | ComponentType<SvelteComponent<Props>>} component
  * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }} [options]
- * @returns {import('#server').RenderOutput}
+ * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
-	const payload = create_payload();
+	/** @type {Payload} */
+	const payload = { out: '', css: new Set(), head: { title: '', out: '' } };
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
@@ -109,11 +102,11 @@ export function render(component, options = {}) {
 
 	if (options.context) {
 		push();
-		/** @type {import('#server').Component} */ (current_component).c = options.context;
+		/** @type {Component} */ (current_component).c = options.context;
 	}
 
 	// @ts-expect-error
-	component(payload, options.props, {}, {});
+	component(payload, options.props ?? {}, {}, {});
 
 	if (options.context) {
 		pop();
@@ -123,23 +116,29 @@ export function render(component, options = {}) {
 	for (const cleanup of on_destroy) cleanup();
 	on_destroy = prev_on_destroy;
 
+	let head = payload.head.out + payload.head.title;
+
+	for (const { hash, code } of payload.css) {
+		head += `<style id="${hash}">${code}</style>`;
+	}
+
 	return {
-		head: payload.head.out || payload.head.title ? payload.head.out + payload.head.title : '',
+		head,
 		html: payload.out,
 		body: payload.out
 	};
 }
 
 /**
- * @param {import('#server').Payload} payload
- * @param {(head_payload: import('#server').Payload['head']) => void} fn
+ * @param {Payload} payload
+ * @param {(head_payload: Payload['head']) => void} fn
  * @returns {void}
  */
 export function head(payload, fn) {
 	const head_payload = payload.head;
-	payload.head.out += BLOCK_OPEN;
+	head_payload.out += BLOCK_OPEN;
 	fn(head_payload);
-	payload.head.out += BLOCK_CLOSE;
+	head_payload.out += BLOCK_CLOSE;
 }
 
 /**
@@ -156,20 +155,28 @@ export function attr(name, value, is_boolean = false) {
 }
 
 /**
- * @param {import('#server').Payload} payload
+ * @param {Payload} payload
  * @param {boolean} is_html
  * @param {Record<string, string>} props
  * @param {() => void} component
+ * @param {boolean} dynamic
  * @returns {void}
  */
-export function css_props(payload, is_html, props, component) {
+export function css_props(payload, is_html, props, component, dynamic = false) {
 	const styles = style_object_to_string(props);
+
 	if (is_html) {
 		payload.out += `<div style="display: contents; ${styles}">`;
 	} else {
 		payload.out += `<g style="${styles}">`;
 	}
+
+	if (dynamic) {
+		payload.out += '<!---->';
+	}
+
 	component();
+
 	if (is_html) {
 		payload.out += `<!----></div>`;
 	} else {
@@ -219,8 +226,7 @@ export function spread_attributes(attrs, classes, styles, flags = 0) {
 			name = name.toLowerCase();
 		}
 
-		const is_boolean = is_html && DOMBooleanAttributes.includes(name);
-		attr_str += attr(name, attrs[name], is_boolean);
+		attr_str += attr(name, attrs[name], is_html && is_boolean_attribute(name));
 	}
 
 	return attr_str;
@@ -295,7 +301,7 @@ export function merge_styles(attribute, styles) {
  * @template V
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('#shared').Store<V> | null | undefined} store
+ * @param {Store<V> | null | undefined} store
  * @returns {V}
  */
 export function store_get(store_values, store_name, store) {
@@ -322,7 +328,7 @@ export function store_get(store_values, store_name, store) {
 /**
  * Sets the new value of a store and returns that value.
  * @template V
- * @param {import('#shared').Store<V>} store
+ * @param {Store<V>} store
  * @param {V} value
  * @returns {V}
  */
@@ -336,10 +342,10 @@ export function store_set(store, value) {
  * @template V
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('#shared').Store<V>} store
+ * @param {Store<V>} store
  * @param {any} expression
  */
-export function mutate_store(store_values, store_name, store, expression) {
+export function store_mutate(store_values, store_name, store, expression) {
 	store_set(store, store_get(store_values, store_name, store));
 	return expression;
 }
@@ -347,7 +353,7 @@ export function mutate_store(store_values, store_name, store, expression) {
 /**
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('#shared').Store<number>} store
+ * @param {Store<number>} store
  * @param {1 | -1} [d]
  * @returns {number}
  */
@@ -360,7 +366,7 @@ export function update_store(store_values, store_name, store, d = 1) {
 /**
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('#shared').Store<number>} store
+ * @param {Store<number>} store
  * @param {1 | -1} [d]
  * @returns {number}
  */
@@ -378,39 +384,17 @@ export function unsubscribe_stores(store_values) {
 }
 
 /**
- * @template V
- * @param {V} value
- * @param {() => V} fallback lazy because could contain side effects
- * @returns {V}
- */
-export function value_or_fallback(value, fallback) {
-	return value === undefined ? fallback() : value;
-}
-
-/**
- * @template V
- * @param {V} value
- * @param {() => Promise<V>} fallback lazy because could contain side effects
- * @returns {Promise<V>}
- */
-export async function value_or_fallback_async(value, fallback) {
-	return value === undefined ? fallback() : value;
-}
-
-/**
- * @param {import('#server').Payload} payload
- * @param {void | ((payload: import('#server').Payload, props: Record<string, unknown>) => void)} slot_fn
+ * @param {Payload} payload
+ * @param {void | ((payload: Payload, props: Record<string, unknown>) => void)} slot_fn
  * @param {Record<string, unknown>} slot_props
  * @param {null | (() => void)} fallback_fn
  * @returns {void}
  */
 export function slot(payload, slot_fn, slot_props, fallback_fn) {
-	if (slot_fn === undefined) {
-		if (fallback_fn !== null) {
-			fallback_fn();
-		}
-	} else {
+	if (slot_fn !== undefined) {
 		slot_fn(payload, slot_props);
+	} else {
+		fallback_fn?.();
 	}
 }
 
@@ -442,11 +426,15 @@ export function sanitize_props(props) {
 
 /**
  * @param {Record<string, any>} props
- * @returns {Record<string, any>}
+ * @returns {Record<string, boolean>}
  */
 export function sanitize_slots(props) {
-	const sanitized = { ...props.$$slots };
-	if (props.children) sanitized.default = props.children;
+	/** @type {Record<string, boolean>} */
+	const sanitized = {};
+	if (props.children) sanitized.default = true;
+	for (const key in props.$$slots) {
+		sanitized[key] = true;
+	}
 	return sanitized;
 }
 
@@ -520,15 +508,19 @@ export function once(get_value) {
 	};
 }
 
+export { html } from './blocks/html.js';
+
 export { push, pop } from './context.js';
 
 export { push_element, pop_element } from './dev.js';
 
+export { snapshot } from '../shared/clone.js';
+
+export { fallback } from '../shared/utils.js';
+
 export {
-	add_snippet_symbol,
-	validate_component,
+	invalid_default_snippet,
 	validate_dynamic_element_tag,
-	validate_snippet,
 	validate_void_dynamic_element
 } from '../shared/validate.js';
 

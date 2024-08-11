@@ -1,3 +1,4 @@
+/** @import { Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
 	PROPS_IS_IMMUTABLE,
@@ -5,7 +6,7 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../../constants.js';
-import { get_descriptor, is_function } from '../utils.js';
+import { get_descriptor, is_function } from '../../shared/utils.js';
 import { mutable_source, set, source } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
 import { get, is_signals_recorded, untrack, update } from '../runtime.js';
@@ -88,7 +89,7 @@ export function rest_props(props, exclude, name) {
 
 /**
  * The proxy handler for legacy $$restProps and $$props
- * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, special: Record<string | symbol, (v?: unknown) => unknown>, version: import('./types.js').Source<number> }>}}
+ * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, special: Record<string | symbol, (v?: unknown) => unknown>, version: Source<number> }>}}
  */
 const legacy_rest_props_handler = {
 	get(target, key) {
@@ -124,6 +125,13 @@ const legacy_rest_props_handler = {
 				value: target.props[key]
 			};
 		}
+	},
+	deleteProperty(target, key) {
+		// Svelte 4 allowed for deletions on $$restProps
+		if (target.exclude.includes(key)) return false;
+		target.exclude.push(key);
+		update(target.version);
+		return true;
 	},
 	has(target, key) {
 		if (target.exclude.includes(key)) return false;
@@ -164,7 +172,16 @@ const spread_props_handler = {
 		while (i--) {
 			let p = target.props[i];
 			if (is_function(p)) p = p();
-			if (typeof p === 'object' && p !== null && key in p) return get_descriptor(p, key);
+			if (typeof p === 'object' && p !== null && key in p) {
+				const descriptor = get_descriptor(p, key);
+				if (descriptor && !descriptor.configurable) {
+					// Prevent a "Non-configurability Report Error": The target is an array, it does
+					// not actually contain this property. If it is now described as non-configurable,
+					// the proxy throws a validation error. Setting it to true avoids that.
+					descriptor.configurable = true;
+				}
+				return descriptor;
+			}
 		}
 	},
 	has(target, key) {

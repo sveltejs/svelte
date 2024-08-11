@@ -8,6 +8,7 @@ import { suite, assert_ok, type BaseTest } from '../suite.js';
 import { createClassComponent } from 'svelte/legacy';
 import { render } from 'svelte/server';
 import type { CompileOptions } from '#compiler';
+import { flushSync } from 'svelte';
 
 interface HydrationTest extends BaseTest {
 	load_compiled?: boolean;
@@ -52,12 +53,15 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 		props: config.server_props ?? config.props ?? {}
 	});
 
+	const override = read(`${cwd}/_override.html`);
+	const override_head = read(`${cwd}/_override_head.html`);
+
 	fs.writeFileSync(`${cwd}/_output/body.html`, rendered.html + '\n');
-	target.innerHTML = read(`${cwd}/_override.html`) ?? rendered.html;
+	target.innerHTML = override ?? rendered.html;
 
 	if (rendered.head) {
 		fs.writeFileSync(`${cwd}/_output/head.html`, rendered.head + '\n');
-		head.innerHTML = rendered.head;
+		head.innerHTML = override_head ?? rendered.head;
 	}
 
 	config.before_test?.();
@@ -109,12 +113,16 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 			throw new Error(`Unexpected errors: ${errors.join('\n')}`);
 		}
 
+		flushSync();
+
+		const normalize = (string: string) => string.trim().replace(/\r\n/g, '\n');
+
 		const expected = read(`${cwd}/_expected.html`) ?? rendered.html;
-		assert_html_equal(target.innerHTML, expected);
+		assert.equal(normalize(target.innerHTML), normalize(expected));
 
 		if (rendered.head) {
 			const expected = read(`${cwd}/_expected_head.html`) ?? rendered.head;
-			assert_html_equal(head.innerHTML, expected);
+			assert.equal(normalize(head.innerHTML), normalize(expected));
 		}
 
 		if (config.snapshot) {

@@ -1,30 +1,38 @@
+/** @import { Derived, Effect, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	current_component_context,
 	current_reaction,
-	current_dependencies,
+	new_deps,
 	current_effect,
 	current_untracked_writes,
 	get,
 	is_runes,
-	mark_reactions,
 	schedule_effect,
 	set_current_untracked_writes,
 	set_signal_status,
 	untrack,
 	increment_version,
-	execute_effect,
-	inspect_effects
+	update_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
-import { CLEAN, DERIVED, DIRTY, BRANCH_EFFECT } from '../constants.js';
-import { UNINITIALIZED } from '../../../constants.js';
+import {
+	CLEAN,
+	DERIVED,
+	DIRTY,
+	BRANCH_EFFECT,
+	INSPECT_EFFECT,
+	UNOWNED,
+	MAYBE_DIRTY
+} from '../constants.js';
 import * as e from '../errors.js';
+
+let inspect_effects = new Set();
 
 /**
  * @template V
  * @param {V} v
- * @returns {import('#client').Source<V>}
+ * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function source(v) {
@@ -40,7 +48,7 @@ export function source(v) {
 /**
  * @template V
  * @param {V} initial_value
- * @returns {import('#client').Source<V>}
+ * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function mutable_source(initial_value) {
@@ -58,7 +66,7 @@ export function mutable_source(initial_value) {
 
 /**
  * @template V
- * @param {import('#client').Value<V>} source
+ * @param {Value<V>} source
  * @param {V} value
  */
 export function mutate(source, value) {
@@ -71,19 +79,12 @@ export function mutate(source, value) {
 
 /**
  * @template V
- * @param {import('#client').Source<V>} source
+ * @param {Source<V>} source
  * @param {V} value
  * @returns {V}
  */
 export function set(source, value) {
-	var initialized = source.v !== UNINITIALIZED;
-
-	if (
-		initialized &&
-		current_reaction !== null &&
-		is_runes() &&
-		(current_reaction.f & DERIVED) !== 0
-	) {
+	if (current_reaction !== null && is_runes() && (current_reaction.f & DERIVED) !== 0) {
 		e.state_unsafe_mutation();
 	}
 
@@ -91,25 +92,20 @@ export function set(source, value) {
 		source.v = value;
 		source.version = increment_version();
 
-		mark_reactions(source, DIRTY, true);
+		mark_reactions(source, DIRTY);
 
 		// If the current signal is running for the first time, it won't have any
 		// reactions as we only allocate and assign the reactions after the signal
 		// has fully executed. So in the case of ensuring it registers the reaction
 		// properly for itself, we need to ensure the current effect actually gets
-		// scheduled. i.e:
-		//
-		// $effect(() => x++)
-		//
-		// We additionally want to skip this logic when initialising store sources
+		// scheduled. i.e: `$effect(() => x++)`
 		if (
 			is_runes() &&
-			initialized &&
 			current_effect !== null &&
 			(current_effect.f & CLEAN) !== 0 &&
 			(current_effect.f & BRANCH_EFFECT) === 0
 		) {
-			if (current_dependencies !== null && current_dependencies.includes(source)) {
+			if (new_deps !== null && new_deps.includes(source)) {
 				set_signal_status(current_effect, DIRTY);
 				schedule_effect(current_effect);
 			} else {
@@ -123,7 +119,7 @@ export function set(source, value) {
 
 		if (DEV) {
 			for (const effect of inspect_effects) {
-				execute_effect(effect);
+				update_effect(effect);
 			}
 
 			inspect_effects.clear();
@@ -131,4 +127,45 @@ export function set(source, value) {
 	}
 
 	return value;
+}
+
+/**
+ * @param {Value} signal
+ * @param {number} status should be DIRTY or MAYBE_DIRTY
+ * @returns {void}
+ */
+function mark_reactions(signal, status) {
+	var reactions = signal.reactions;
+	if (reactions === null) return;
+
+	var runes = is_runes();
+	var length = reactions.length;
+
+	for (var i = 0; i < length; i++) {
+		var reaction = reactions[i];
+		var flags = reaction.f;
+
+		// Skip any effects that are already dirty
+		if ((flags & DIRTY) !== 0) continue;
+
+		// In legacy mode, skip the current effect to prevent infinite loops
+		if (!runes && reaction === current_effect) continue;
+
+		// Inspect effects need to run immediately, so that the stack trace makes sense
+		if (DEV && (flags & INSPECT_EFFECT) !== 0) {
+			inspect_effects.add(reaction);
+			continue;
+		}
+
+		set_signal_status(reaction, status);
+
+		// If the signal a) was previously clean or b) is an unowned derived, then mark it
+		if ((flags & (CLEAN | UNOWNED)) !== 0) {
+			if ((flags & DERIVED) !== 0) {
+				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
+			} else {
+				schedule_effect(/** @type {Effect} */ (reaction));
+			}
+		}
+	}
 }

@@ -3,11 +3,11 @@
 		"code": "element_invalid_self_closing_tag",
 		"message": "Self-closing HTML tags for non-void elements are ambiguous — use `<div ...></div>` rather than `<div ... />`",
 		"start": {
-			"line": 6,
+			"line": 8,
 			"column": 0
 		},
 		"end": {
-			"line": 6,
+			"line": 8,
 			"column": 7
 		}
 	},
@@ -15,11 +15,11 @@
 		"code": "element_invalid_self_closing_tag",
 		"message": "Self-closing HTML tags for non-void elements are ambiguous — use `<my-thing ...></my-thing>` rather than `<my-thing ... />`",
 		"start": {
-			"line": 7,
+			"line": 9,
 			"column": 0
 		},
 		"end": {
-			"line": 7,
+			"line": 9,
 			"column": 12
 		}
 	}

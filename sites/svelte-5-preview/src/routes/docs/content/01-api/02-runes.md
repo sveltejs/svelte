@@ -110,8 +110,6 @@ To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snaps
 
 This is handy when you want to pass some state to an external library or API that doesn't expect a proxy, such as `structuredClone`.
 
-> Note that `$state.snapshot` will clone the data when removing reactivity. If the value passed isn't a `$state` proxy, it will be returned as-is.
-
 ## `$state.is`
 
 Sometimes you might need to compare two values, one of which is a reactive `$state(...)` proxy. For this you can use `$state.is(a, b)`:
@@ -453,16 +451,16 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 <script>
 	import { tick } from 'svelte';
 
-	let div;
-	let messages = [];
+	let div = $state();
+	let messages = $state([]);
 
 	// ...
 
 	$effect.pre(() => {
 		if (!div) return; // not yet mounted
 
-		// reference `messages` so that this code re-runs whenever it changes
-		messages;
+		// reference `messages` array length so that this code re-runs whenever it changes
+		messages.length;
 
 		// autoscroll when new messages are added
 		if (
@@ -556,17 +554,22 @@ let props = $props();
 
 If you're using TypeScript, you can declare the prop types:
 
+<!-- prettier-ignore -->
 ```ts
-type MyProps = any;
-// ---cut---
-let { a, b, c, ...everythingElse }: MyProps = $props();
+interface MyProps {
+	required: string;
+	optional?: number;
+	partOfEverythingElse?: boolean;
+};
+
+let { required, optional, ...everythingElse }: MyProps = $props();
 ```
 
 > In an earlier preview, `$props()` took a type argument. This caused bugs, since in a case like this...
 >
 > ```ts
 > // @errors: 2558
-> let { x = 42 } = $props<{ x: string }>();
+> let { x = 42 } = $props<{ x?: string }>();
 > ```
 >
 > ...TypeScript [widens the type](https://www.typescriptlang.org/play?#code/CYUwxgNghgTiAEAzArgOzAFwJYHtXwBIAHGHIgZwB4AVeAXnilQE8A+ACgEoAueagbgBQgiCAzwA3vAAe9eABYATPAC+c4qQqUp03uQwwsqAOaqOnIfCsB6a-AB6AfiA) of `x` to be `string | number`, instead of erroring.

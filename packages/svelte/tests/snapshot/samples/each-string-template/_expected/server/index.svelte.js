@@ -8,10 +8,8 @@ export default function Each_string_template($$payload) {
 	for (let $$index = 0; $$index < each_array.length; $$index++) {
 		const thing = each_array[$$index];
 
-		$$payload.out += "<!--[-->";
 		$$payload.out += `${$.escape(thing)}, `;
-		$$payload.out += "<!--]-->";
 	}
 
-	$$payload.out += "<!--]-->";
+	$$payload.out += `<!--]-->`;
 }

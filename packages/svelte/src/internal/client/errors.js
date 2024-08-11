@@ -76,20 +76,36 @@ export function component_api_changed(parent, method, component) {
 }
 
 /**
- * Attempted to instantiate %component% with `new %name%`, which is no longer valid in Svelte 5. If this component is not under your control, set the `legacy.componentApi` compiler option to keep it working. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information
+ * Attempted to instantiate %component% with `new %name%`, which is no longer valid in Svelte 5. If this component is not under your control, set the `compatibility.componentApi` compiler option to `4` to keep it working. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information
  * @param {string} component
  * @param {string} name
  * @returns {never}
  */
 export function component_api_invalid_new(component, name) {
 	if (DEV) {
-		const error = new Error(`component_api_invalid_new\nAttempted to instantiate ${component} with \`new ${name}\`, which is no longer valid in Svelte 5. If this component is not under your control, set the \`legacy.componentApi\` compiler option to keep it working. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information`);
+		const error = new Error(`component_api_invalid_new\nAttempted to instantiate ${component} with \`new ${name}\`, which is no longer valid in Svelte 5. If this component is not under your control, set the \`compatibility.componentApi\` compiler option to \`4\` to keep it working. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information`);
 
 		error.name = 'Svelte error';
 		throw error;
 	} else {
 		// TODO print a link to the documentation
 		throw new Error("component_api_invalid_new");
+	}
+}
+
+/**
+ * A derived value cannot reference itself recursively
+ * @returns {never}
+ */
+export function derived_references_self() {
+	if (DEV) {
+		const error = new Error(`derived_references_self\nA derived value cannot reference itself recursively`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("derived_references_self");
 	}
 }
 
@@ -259,6 +275,22 @@ export function rune_outside_svelte(rune) {
 	} else {
 		// TODO print a link to the documentation
 		throw new Error("rune_outside_svelte");
+	}
+}
+
+/**
+ * The argument to `$state.frozen(...)` cannot be an object created with `$state(...)`. You should create a copy of it first, for example with `$state.snapshot`
+ * @returns {never}
+ */
+export function state_frozen_invalid_argument() {
+	if (DEV) {
+		const error = new Error(`state_frozen_invalid_argument\nThe argument to \`$state.frozen(...)\` cannot be an object created with \`$state(...)\`. You should create a copy of it first, for example with \`$state.snapshot\``);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("state_frozen_invalid_argument");
 	}
 }
 

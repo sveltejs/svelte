@@ -6,13 +6,12 @@ import type {
 	Identifier,
 	ImportDeclaration
 } from 'estree';
-import type { Location } from 'locate-character';
 import type { SourceMap } from 'magic-string';
 import type { Context } from 'zimmerframe';
 import type { Scope } from '../phases/scope.js';
 import type { Css } from './css.js';
 import type { EachBlock, Namespace, SvelteNode, SvelteOptions } from './template.js';
-import type { InternalCompileError } from '../errors.js';
+import type { ICompileDiagnostic } from '../utils/compile_diagnostic.js';
 
 /** The return value of `compile` from `svelte/compiler` */
 export interface CompileResult {
@@ -51,16 +50,9 @@ export interface CompileResult {
 	ast: any;
 }
 
-export interface Warning {
-	start?: Location;
-	end?: Location;
-	// TODO there was pos: number in Svelte 4 - do we want to add it back?
-	code: string;
-	message: string;
-	filename?: string;
-}
+export interface Warning extends ICompileDiagnostic {}
 
-export interface CompileError extends InternalCompileError {}
+export interface CompileError extends ICompileDiagnostic {}
 
 export type CssHashGetter = (args: {
 	name: string;
@@ -107,8 +99,8 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	immutable?: boolean;
 	/**
-	 * - `'injected'`: styles will be included in the JavaScript class and injected at runtime for the components actually rendered.
-	 * - `'external'`: the CSS will be returned in the `css` field of the compilation result. Most Svelte bundler plugins will set this to `'external'` and use the CSS that is statically generated for better performance, as it will result in smaller JavaScript bundles and the output can be served as cacheable `.css` files.
+	 * - `'injected'`: styles will be included in the `head` when using `render(...)`, and injected into the document (if not already present) when the component mounts. For components compiled as custom elements, styles are injected to the shadow root.
+	 * - `'external'`: the CSS will only be returned in the `css` field of the compilation result. Most Svelte bundler plugins will set this to `'external'` and use the CSS that is statically generated for better performance, as it will result in smaller JavaScript bundles and the output can be served as cacheable `.css` files.
 	 * This is always `'injected'` when compiling with `customElement` mode.
 	 */
 	css?: 'injected' | 'external';
@@ -137,6 +129,8 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * Set to `undefined` (the default) to infer runes mode from the component code.
 	 * Is always `true` for JS/TS modules compiled with Svelte.
 	 * Will be `true` by default in Svelte 6.
+	 * Note that setting this to `true` in your `svelte.config.js` will force runes mode for your entire project, including components in `node_modules`,
+	 * which is likely not what you want. If you're using Vite, consider using [dynamicCompileOptions](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/config.md#dynamiccompileoptions) instead.
 	 * @default undefined
 	 */
 	runes?: boolean | undefined;
@@ -149,14 +143,14 @@ export interface CompileOptions extends ModuleCompileOptions {
 	/**
 	 * @deprecated Use these only as a temporary solution before migrating your code
 	 */
-	legacy?: {
+	compatibility?: {
 		/**
 		 * Applies a transformation so that the default export of Svelte files can still be instantiated the same way as in Svelte 4 —
 		 * as a class when compiling for the browser (as though using `createClassComponent(MyComponent, {...})` from `svelte/legacy`)
 		 * or as an object with a `.render(...)` method when compiling for the server
-		 * @default false
+		 * @default 5
 		 */
-		componentApi?: boolean;
+		componentApi?: 4 | 5;
 	};
 	/**
 	 * An initial sourcemap that will be merged into the final output sourcemap.
@@ -211,12 +205,16 @@ export interface ModuleCompileOptions {
 	 * Used for debugging hints and sourcemaps. Your bundler plugin will set it automatically.
 	 */
 	filename?: string;
-
 	/**
 	 * Used for ensuring filenames don't leak filesystem information. Your bundler plugin will set it automatically.
 	 * @default process.cwd() on node-like environments, undefined elsewhere
 	 */
 	rootDir?: string;
+	/**
+	 * A function that gets a `Warning` as an argument and returns a boolean.
+	 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
+	 */
+	warningFilter?: (warning: Warning) => boolean;
 }
 
 // The following two somewhat scary looking types ensure that certain types are required but can be undefined still
@@ -234,7 +232,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		Required<CompileOptions>,
 		| keyof ModuleCompileOptions
 		| 'name'
-		| 'legacy'
+		| 'compatibility'
 		| 'outputFilename'
 		| 'cssOutputFilename'
 		| 'sourcemap'
@@ -244,7 +242,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		outputFilename: CompileOptions['outputFilename'];
 		cssOutputFilename: CompileOptions['cssOutputFilename'];
 		sourcemap: CompileOptions['sourcemap'];
-		legacy: Required<Required<CompileOptions>['legacy']>;
+		compatibility: Required<Required<CompileOptions>['compatibility']>;
 		runes: CompileOptions['runes'];
 		customElementOptions: SvelteOptions['customElement'];
 		hmr: CompileOptions['hmr'];
@@ -273,7 +271,6 @@ export interface Binding {
 	 * - `snippet`: A snippet parameter
 	 * - `store_sub`: A $store value
 	 * - `legacy_reactive`: A `$:` declaration
-	 * - `legacy_reactive_import`: An imported binding that is mutated inside the component
 	 */
 	kind:
 		| 'normal'
@@ -286,8 +283,7 @@ export interface Binding {
 		| 'each'
 		| 'snippet'
 		| 'store_sub'
-		| 'legacy_reactive'
-		| 'legacy_reactive_import';
+		| 'legacy_reactive';
 	declaration_kind: DeclarationKind;
 	/**
 	 * What the value was initialized with.
@@ -309,18 +305,20 @@ export interface Binding {
 	legacy_dependencies: Binding[];
 	/** Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props() */
 	prop_alias: string | null;
-	/**
-	 * If this is set, all references should use this expression instead of the identifier name.
-	 * If a function is given, it will be called with the identifier at that location and should return the new expression.
-	 */
-	expression: Expression | ((id: Identifier) => Expression) | null;
-	/** If this is set, all mutations should use this expression */
-	mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
 	/** Additional metadata, varies per binding type */
 	metadata: {
 		/** `true` if is (inside) a rest parameter */
 		inside_rest?: boolean;
 	} | null;
+}
+
+export interface ExpressionMetadata {
+	/** All the bindings that are referenced inside this expression */
+	dependencies: Set<Binding>;
+	/** True if the expression references state directly, or _might_ (via member/call expressions) */
+	has_state: boolean;
+	/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
+	has_call: boolean;
 }
 
 export * from './template.js';

@@ -53,8 +53,11 @@ export function bind_value(input, get_value, update) {
 	});
 }
 
+/** @type {Set<HTMLInputElement[]>} */
+const pending = new Set();
+
 /**
- * @param {Array<HTMLInputElement>} inputs
+ * @param {HTMLInputElement[]} inputs
  * @param {null | [number]} group_index
  * @param {HTMLInputElement} input
  * @param {() => unknown} get_value
@@ -70,13 +73,8 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 
 	if (group_index !== null) {
 		for (var index of group_index) {
-			var group = binding_group;
-			// @ts-ignore
-			binding_group = group[index];
-			if (binding_group === undefined) {
-				// @ts-ignore
-				binding_group = group[index] = [];
-			}
+			// @ts-expect-error
+			binding_group = binding_group[index] ??= [];
 		}
 	}
 
@@ -127,10 +125,17 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 		}
 	});
 
-	queue_micro_task(() => {
-		// necessary to maintain binding group order in all insertion scenarios. TODO optimise
-		binding_group.sort((a, b) => (a.compareDocumentPosition(b) === 4 ? -1 : 1));
+	if (!pending.has(binding_group)) {
+		pending.add(binding_group);
 
+		queue_micro_task(() => {
+			// necessary to maintain binding group order in all insertion scenarios
+			binding_group.sort((a, b) => (a.compareDocumentPosition(b) === 4 ? -1 : 1));
+			pending.delete(binding_group);
+		});
+	}
+
+	queue_micro_task(() => {
 		if (hydration_mismatch) {
 			var value;
 

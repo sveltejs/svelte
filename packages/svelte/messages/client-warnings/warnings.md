@@ -1,12 +1,28 @@
+## binding_property_non_reactive
+
+> `%binding%` is binding to a non-reactive property
+
+> `%binding%` (%location%) is binding to a non-reactive property
+
 ## hydration_attribute_changed
 
 > The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
+
+## hydration_html_changed
+
+> The value of an `{@html ...}` block changed between server and client renders. The client value will be ignored in favour of the server value
+
+> The value of an `{@html ...}` block %location% changed between server and client renders. The client value will be ignored in favour of the server value
 
 ## hydration_mismatch
 
 > Hydration failed because the initial UI does not match what was rendered on the server
 
 > Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near %location%
+
+## invalid_raw_snippet_render
+
+> The `render` function passed to `createRawSnippet` should return HTML for a single element
 
 ## lifecycle_double_unmount
 
@@ -24,4 +40,28 @@
 
 ## state_proxy_equality_mismatch
 
-> Reactive `$state(...)` proxies and the values they proxy have different identities. Because of this, comparisons with `%operator%` will produce unexpected results. Consider using `$state.is(a, b)` instead
+> Reactive `$state(...)` proxies and the values they proxy have different identities. Because of this, comparisons with `%operator%` will produce unexpected results. Consider using `$state.is(a, b)` instead%details%
+
+`$state(...)` creates a [proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) of the value it is passed. The proxy and the value have different identities, meaning equality checks will always return `false`:
+
+```svelte
+<script>
+	let value = { foo: 'bar' };
+	let proxy = $state(value);
+
+	value === proxy; // always false
+</script>
+```
+
+In the rare case that you need to compare them, you can use `$state.is`, which unwraps proxies:
+
+```svelte
+<script>
+	let value = { foo: 'bar' };
+	let proxy = $state(value);
+
+	$state.is(value, proxy); // true
+</script>
+```
+
+During development, Svelte will warn you when comparing values with proxies.

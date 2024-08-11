@@ -6,6 +6,20 @@ var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
 /**
+ * `%binding%` (%location%) is binding to a non-reactive property
+ * @param {string} binding
+ * @param {string | undefined | null} [location]
+ */
+export function binding_property_non_reactive(binding, location) {
+	if (DEV) {
+		console.warn(`%c[svelte] binding_property_non_reactive\n%c${location ? `\`${binding}\` (${location}) is binding to a non-reactive property` : `\`${binding}\` is binding to a non-reactive property`}`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("binding_property_non_reactive");
+	}
+}
+
+/**
  * The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
  * @param {string} attribute
  * @param {string} html
@@ -21,6 +35,19 @@ export function hydration_attribute_changed(attribute, html, value) {
 }
 
 /**
+ * The value of an `{@html ...}` block %location% changed between server and client renders. The client value will be ignored in favour of the server value
+ * @param {string | undefined | null} [location]
+ */
+export function hydration_html_changed(location) {
+	if (DEV) {
+		console.warn(`%c[svelte] hydration_html_changed\n%c${location ? `The value of an \`{@html ...}\` block ${location} changed between server and client renders. The client value will be ignored in favour of the server value` : "The value of an `{@html ...}` block changed between server and client renders. The client value will be ignored in favour of the server value"}`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("hydration_html_changed");
+	}
+}
+
+/**
  * Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near %location%
  * @param {string | undefined | null} [location]
  */
@@ -30,6 +57,18 @@ export function hydration_mismatch(location) {
 	} else {
 		// TODO print a link to the documentation
 		console.warn("hydration_mismatch");
+	}
+}
+
+/**
+ * The `render` function passed to `createRawSnippet` should return HTML for a single element
+ */
+export function invalid_raw_snippet_render() {
+	if (DEV) {
+		console.warn(`%c[svelte] invalid_raw_snippet_render\n%cThe \`render\` function passed to \`createRawSnippet\` should return HTML for a single element`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("invalid_raw_snippet_render");
 	}
 }
 
@@ -75,12 +114,13 @@ export function ownership_invalid_mutation(component, owner) {
 }
 
 /**
- * Reactive `$state(...)` proxies and the values they proxy have different identities. Because of this, comparisons with `%operator%` will produce unexpected results. Consider using `$state.is(a, b)` instead
+ * Reactive `$state(...)` proxies and the values they proxy have different identities. Because of this, comparisons with `%operator%` will produce unexpected results. Consider using `$state.is(a, b)` instead%details%
  * @param {string} operator
+ * @param {string} details
  */
-export function state_proxy_equality_mismatch(operator) {
+export function state_proxy_equality_mismatch(operator, details) {
 	if (DEV) {
-		console.warn(`%c[svelte] state_proxy_equality_mismatch\n%cReactive \`$state(...)\` proxies and the values they proxy have different identities. Because of this, comparisons with \`${operator}\` will produce unexpected results. Consider using \`$state.is(a, b)\` instead`, bold, normal);
+		console.warn(`%c[svelte] state_proxy_equality_mismatch\n%cReactive \`$state(...)\` proxies and the values they proxy have different identities. Because of this, comparisons with \`${operator}\` will produce unexpected results. Consider using \`$state.is(a, b)\` instead${details}`, bold, normal);
 	} else {
 		// TODO print a link to the documentation
 		console.warn("state_proxy_equality_mismatch");

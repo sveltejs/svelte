@@ -1,3 +1,4 @@
+/** @import { Location } from 'locate-character' */
 import MagicString from 'magic-string';
 import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
 import { test } from '../../test';
@@ -29,10 +30,10 @@ export default test({
 	async test({ assert, code_client }) {
 		// Check that the css source map embedded in the js is accurate
 		const match = code_client.match(
-			/append_styles\(\$\$anchor, "svelte-.{6}", "(.*?)(?:\\n\/\*# sourceMappingURL=data:(.*?);charset=(.*?);base64,(.*?) \*\/)?"\);/
+			/code: "(.*?)(?:\\n\/\*# sourceMappingURL=data:(.*?);charset=(.*?);base64,(.*?) \*\/)?"/
 		);
 
-		assert.notEqual(match, null);
+		assert.ok(match);
 
 		const [css, mime_type, encoding, css_map_base64] = /** @type {RegExpMatchArray} */ (
 			match
@@ -54,10 +55,7 @@ export default test({
 			['--done-replace-twice: green', '--replace-me-twice', 10, 2]
 		]).forEach(([content, name, line, column]) => {
 			assert.deepEqual(
-				originalPositionFor(
-					map,
-					/** @type {import('locate-character').Location_1} */ (locate(content))
-				),
+				originalPositionFor(map, /** @type {Location} */ (locate(content))),
 				{
 					source: sourcefile,
 					name,

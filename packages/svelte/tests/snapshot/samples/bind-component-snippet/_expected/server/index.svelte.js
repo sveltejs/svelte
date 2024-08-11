@@ -6,15 +6,13 @@ export default function Bind_component_snippet($$payload) {
 	const _snippet = snippet;
 
 	function snippet($$payload) {
-		$$payload.out += `Something`;
+		$$payload.out += `<!---->Something`;
 	}
 
 	let $$settled = true;
 	let $$inner_payload;
 
 	function $$render_inner($$payload) {
-		$$payload.out += `<!--[-->`;
-
 		TextInput($$payload, {
 			get value() {
 				return value;
@@ -25,7 +23,7 @@ export default function Bind_component_snippet($$payload) {
 			}
 		});
 
-		$$payload.out += `<!--]--> value: ${$.escape(value)}`;
+		$$payload.out += `<!----> value: ${$.escape(value)}`;
 	};
 
 	do {

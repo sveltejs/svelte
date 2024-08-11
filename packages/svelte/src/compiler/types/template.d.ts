@@ -1,4 +1,4 @@
-import type { Binding, Css } from '#compiler';
+import type { Binding, Css, ExpressionMetadata } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
@@ -16,6 +16,7 @@ import type {
 	ChainExpression,
 	SimpleCallExpression
 } from 'estree';
+import type { Scope } from '../phases/scope';
 
 export interface BaseNode {
 	type: string;
@@ -75,8 +76,9 @@ export interface SvelteOptions {
 	accessors?: boolean;
 	preserveWhitespace?: boolean;
 	namespace?: Namespace;
+	css?: 'injected';
 	customElement?: {
-		tag: string;
+		tag?: string;
 		shadow?: 'open' | 'none';
 		props?: Record<
 			string,
@@ -111,12 +113,7 @@ export interface ExpressionTag extends BaseNode {
 	type: 'ExpressionTag';
 	expression: Expression;
 	metadata: {
-		contains_call_expression: boolean;
-		/**
-		 * Whether or not the expression contains any dynamic references —
-		 * determines whether it will be updated in a render effect or not
-		 */
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 	};
 }
 
@@ -154,6 +151,7 @@ export interface RenderTag extends BaseNode {
 	expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
 	metadata: {
 		dynamic: boolean;
+		args_with_call_expression: Set<number>;
 	};
 }
 
@@ -189,7 +187,7 @@ export interface ClassDirective extends BaseNode {
 	/** The 'y' in `class:x={y}`, or the `x` in `class:x` */
 	expression: Expression;
 	metadata: {
-		dynamic: false;
+		expression: ExpressionMetadata;
 	};
 }
 
@@ -210,14 +208,17 @@ export interface OnDirective extends BaseNode {
 	/** The 'y' in `on:x={y}` */
 	expression: null | Expression;
 	modifiers: string[]; // TODO specify
+	metadata: {
+		expression: ExpressionMetadata;
+	};
 }
 
 export type DelegatedEvent =
 	| {
-			type: 'hoistable';
+			hoisted: true;
 			function: ArrowFunctionExpression | FunctionExpression | FunctionDeclaration;
 	  }
-	| { type: 'non-hoistable' };
+	| { hoisted: false };
 
 /** A `style:` directive */
 export interface StyleDirective extends BaseNode {
@@ -225,10 +226,10 @@ export interface StyleDirective extends BaseNode {
 	/** The 'x' in `style:x` */
 	name: string;
 	/** The 'y' in `style:x={y}` */
-	value: true | Array<ExpressionTag | Text>;
+	value: true | ExpressionTag | Array<ExpressionTag | Text>;
 	modifiers: Array<'important'>;
 	metadata: {
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 	};
 }
 
@@ -275,6 +276,7 @@ interface BaseElement extends BaseNode {
 export interface Component extends BaseElement {
 	type: 'Component';
 	metadata: {
+		scopes: Record<string, Scope>;
 		dynamic: boolean;
 	};
 }
@@ -311,6 +313,9 @@ export interface SvelteComponent extends BaseElement {
 	type: 'SvelteComponent';
 	name: 'svelte:component';
 	expression: Expression;
+	metadata: {
+		scopes: Record<string, Scope>;
+	};
 }
 
 interface SvelteDocument extends BaseElement {
@@ -356,6 +361,9 @@ export interface SvelteOptionsRaw extends BaseElement {
 export interface SvelteSelf extends BaseElement {
 	type: 'SvelteSelf';
 	name: 'svelte:self';
+	metadata: {
+		scopes: Record<string, Scope>;
+	};
 }
 
 interface SvelteWindow extends BaseElement {
@@ -388,6 +396,7 @@ export interface EachBlock extends BaseNode {
 	index?: string;
 	key?: Expression;
 	metadata: {
+		keyed: boolean;
 		contains_group_binding: boolean;
 		/** Set if something in the array expression is shadowed within the each block */
 		array_name: Identifier | null;
@@ -446,9 +455,9 @@ export type Block = EachBlock | IfBlock | AwaitBlock | KeyBlock | SnippetBlock;
 export interface Attribute extends BaseNode {
 	type: 'Attribute';
 	name: string;
-	value: true | Array<Text | ExpressionTag>;
+	value: true | ExpressionTag | Array<Text | ExpressionTag>;
 	metadata: {
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 		/** May be set if this is an event attribute */
 		delegated: null | DelegatedEvent;
 	};
@@ -458,8 +467,7 @@ export interface SpreadAttribute extends BaseNode {
 	type: 'SpreadAttribute';
 	expression: Expression;
 	metadata: {
-		contains_call_expression: boolean;
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 	};
 }
 

@@ -44,6 +44,8 @@ const app = mount(App, {
 });
 ```
 
+Note that unlike calling `new App(...)` in Svelte 4, things like effects (including `onMount` callbacks, and action functions) will not run during `mount`. If you need to force pending effects to run (in the context of a test, for example) you can do so with `flushSync()`.
+
 ### `hydrate`
 
 Like `mount`, but will reuse up any HTML rendered by Svelte's SSR output (from the [`render`](#svelte-server-render) function) inside the target and make it interactive:
@@ -58,6 +60,8 @@ const app = hydrate(App, {
 	props: { some: 'property' }
 });
 ```
+
+As with `mount`, effects will not run during `hydrate` — use `flushSync()` immediately afterwards if you need them to.
 
 ### `unmount`
 
@@ -92,6 +96,37 @@ To prevent something from being treated as an `$effect`/`$derived` dependency, u
 	});
 </script>
 ```
+
+### `createRawSnippet`
+
+An advanced API designed for people building frameworks that integrate with Svelte, `createRawSnippet` allows you to create [snippets](/docs/snippets) programmatically for use with `{@render ...}` tags:
+
+```js
+import { createRawSnippet } from 'svelte';
+
+const greet = createRawSnippet((name) => {
+	return {
+		render: () => `
+			<h1>Hello ${name()}!</h1>
+		`,
+		setup: (node) => {
+			$effect(() => {
+				node.textContent = `Hello ${name()}!`;
+			});
+		}
+	};
+});
+```
+
+The `render` function is called during server-side rendering, or during `mount` (but not during `hydrate`, because it already ran on the server), and must return HTML representing a single element.
+
+The `setup` function is called during `mount` or `hydrate` with that same element as its sole argument. It is responsible for ensuring that the DOM is updated when the arguments change their value — in this example, when `name` changes:
+
+```svelte
+{@render greet(name)}
+```
+
+If `setup` returns a function, it will be called when the snippet is unmounted. If the snippet is fully static, you can omit the `setup` function altogether.
 
 ## `svelte/reactivity`
 
@@ -154,6 +189,8 @@ const result = render(App, {
 	props: { some: 'property' }
 });
 ```
+
+If the `css` compiler option was set to `'injected'`, `<style>` elements will be included in the `head`.
 
 ## `svelte/elements`
 

@@ -1,10 +1,11 @@
-import { HYDRATION_END, HYDRATION_START } from '../../../constants.js';
+/** @import { SourceLocation } from '#shared' */
+import { HYDRATION_END, HYDRATION_START, HYDRATION_START_ELSE } from '../../../constants.js';
 import { hydrating } from '../dom/hydration.js';
 
 /**
  * @param {any} fn
  * @param {string} filename
- * @param {import('../../../compiler/phases/3-transform/client/types.js').SourceLocation[]} locations
+ * @param {SourceLocation[]} locations
  * @returns {any}
  */
 export function add_locations(fn, filename, locations) {
@@ -21,7 +22,7 @@ export function add_locations(fn, filename, locations) {
 /**
  * @param {Element} element
  * @param {string} filename
- * @param {import('../../../compiler/phases/3-transform/client/types.js').SourceLocation} location
+ * @param {SourceLocation} location
  */
 function assign_location(element, filename, location) {
 	// @ts-expect-error
@@ -37,7 +38,7 @@ function assign_location(element, filename, location) {
 /**
  * @param {Node | null} node
  * @param {string} filename
- * @param {import('../../../compiler/phases/3-transform/client/types.js').SourceLocation[]} locations
+ * @param {SourceLocation[]} locations
  */
 function assign_locations(node, filename, locations) {
 	var i = 0;
@@ -46,7 +47,7 @@ function assign_locations(node, filename, locations) {
 	while (node && i < locations.length) {
 		if (hydrating && node.nodeType === 8) {
 			var comment = /** @type {Comment} */ (node);
-			if (comment.data === HYDRATION_START) depth += 1;
+			if (comment.data === HYDRATION_START || comment.data === HYDRATION_START_ELSE) depth += 1;
 			else if (comment.data[0] === HYDRATION_END) depth -= 1;
 		}
 

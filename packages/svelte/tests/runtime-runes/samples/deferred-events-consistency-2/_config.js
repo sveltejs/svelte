@@ -2,7 +2,9 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	skip: true, // need to make a browser test of this because calling click() sync will not let Svelte yield
+	// currently not testable in our test suide: click() will synchronously call submit which is not the case in a real browser
+	// (moving this test to runtime-browser doesn't help either for some reason)
+	skip: true,
 
 	async test({ assert, target, logs }) {
 		const [b1] = target.querySelectorAll('button');

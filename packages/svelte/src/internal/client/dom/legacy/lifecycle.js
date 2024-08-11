@@ -1,3 +1,4 @@
+/** @import { ComponentContextLegacy } from '#client' */
 import { run, run_all } from '../../../shared/utils.js';
 import { user_pre_effect, user_effect } from '../../reactivity/effects.js';
 import { current_component_context, deep_read_state, get, untrack } from '../../runtime.js';
@@ -6,9 +7,7 @@ import { current_component_context, deep_read_state, get, untrack } from '../../
  * Legacy-mode only: Call `onMount` callbacks and set up `beforeUpdate`/`afterUpdate` effects
  */
 export function init() {
-	const context = /** @type {import('#client').ComponentContextLegacy} */ (
-		current_component_context
-	);
+	const context = /** @type {ComponentContextLegacy} */ (current_component_context);
 
 	const callbacks = context.l.u;
 	if (!callbacks) return;
@@ -45,7 +44,7 @@ export function init() {
 /**
  * Invoke the getter of all signals associated with a component
  * so they can be registered to the effect this function is called in.
- * @param {import('#client').ComponentContextLegacy} context
+ * @param {ComponentContextLegacy} context
  */
 function observe_all(context) {
 	if (context.l.s) {

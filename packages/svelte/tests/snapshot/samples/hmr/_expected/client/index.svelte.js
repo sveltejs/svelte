@@ -10,21 +10,12 @@ function Hmr($$anchor) {
 }
 
 if (import.meta.hot) {
-	const s = $.source(Hmr);
-	const filename = Hmr.filename;
+	Hmr = $.hmr(Hmr, () => Hmr[$.HMR].source);
 
-	Hmr = $.hmr(s);
-	Hmr.filename = filename;
-
-	if (import.meta.hot.acceptExports) {
-		import.meta.hot.acceptExports(["default"], (module) => {
-			$.set(s, module.default);
-		});
-	} else {
-		import.meta.hot.accept((module) => {
-			$.set(s, module.default);
-		});
-	}
+	import.meta.hot.accept((module) => {
+		module.default[$.HMR].source = Hmr[$.HMR].source;
+		$.set(Hmr[$.HMR].source, module.default[$.HMR].original);
+	});
 }
 
 export default Hmr;

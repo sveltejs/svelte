@@ -32,27 +32,29 @@ function tick(time) {
 }
 
 class Animation {
-	#target;
 	#keyframes;
 	#duration;
+	#delay;
 
 	#offset = raf.time;
 
 	#finished = () => {};
 	#cancelled = () => {};
 
+	target;
 	currentTime = 0;
 	startTime = 0;
 
 	/**
 	 * @param {HTMLElement} target
 	 * @param {Keyframe[]} keyframes
-	 * @param {{ duration: number }} options // TODO add delay
+	 * @param {{ duration: number, delay: number }} options
 	 */
-	constructor(target, keyframes, { duration }) {
-		this.#target = target;
+	constructor(target, keyframes, { duration, delay }) {
+		this.target = target;
 		this.#keyframes = keyframes;
 		this.#duration = duration;
+		this.#delay = delay ?? 0;
 
 		// Promise-like semantics, but call callbacks immediately on raf.tick
 		this.finished = {
@@ -73,7 +75,9 @@ class Animation {
 	}
 
 	_update() {
-		this.currentTime = raf.time - this.#offset;
+		this.currentTime = raf.time - this.#offset - this.#delay;
+		if (this.currentTime < 0) return;
+
 		const target_frame = this.currentTime / this.#duration;
 		this.#apply_keyframe(target_frame);
 
@@ -107,14 +111,14 @@ class Animation {
 
 		for (let prop in frame) {
 			// @ts-ignore
-			this.#target.style[prop] = frame[prop];
+			this.target.style[prop] = frame[prop];
 		}
 
 		if (this.currentTime >= this.#duration) {
 			this.currentTime = this.#duration;
 			for (let prop in frame) {
 				// @ts-ignore
-				this.#target.style[prop] = null;
+				this.target.style[prop] = null;
 			}
 		}
 	}
@@ -168,7 +172,7 @@ function interpolate(a, b, p) {
 
 /**
  * @param {Keyframe[]} keyframes
- * @param {{duration: number}} options
+ * @param {{duration: number, delay: number}} options
  * @returns {globalThis.Animation}
  */
 HTMLElement.prototype.animate = function (keyframes, options) {
@@ -176,4 +180,8 @@ HTMLElement.prototype.animate = function (keyframes, options) {
 	raf.animations.add(animation);
 	// @ts-ignore
 	return animation;
+};
+
+HTMLElement.prototype.getAnimations = function () {
+	return Array.from(raf.animations).filter((animation) => animation.target === this);
 };

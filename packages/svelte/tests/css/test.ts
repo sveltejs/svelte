@@ -4,12 +4,14 @@ import * as fs from 'node:fs';
 import { assert } from 'vitest';
 import { compile_directory, try_read_file } from '../helpers.js';
 import { assert_html_equal } from '../html_equal.js';
-import { mount, unmount } from 'svelte';
+import { flushSync, mount, unmount } from 'svelte';
 import { suite, type BaseTest } from '../suite.js';
 import type { CompileOptions, Warning } from '#compiler';
 
 function normalize_warning(warning: Warning) {
 	delete warning.filename;
+	delete warning.position;
+	delete warning.frame;
 	return warning;
 }
 
@@ -58,6 +60,7 @@ const { test, run } = suite<CssTest>(async (config, cwd) => {
 		const target = window.document.createElement('main');
 
 		const component = mount(ClientComponent, { props: config.props ?? {}, target });
+		flushSync();
 
 		const html = target.innerHTML;
 

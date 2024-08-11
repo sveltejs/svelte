@@ -1,3 +1,6 @@
+/** @import { Location } from 'locate-character' */
+/** @import { Pattern } from 'estree' */
+/** @import { Parser } from '../index.js' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart } from 'acorn';
 import full_char_code_at from '../utils/full_char_code_at.js';
@@ -13,8 +16,8 @@ import * as e from '../../../errors.js';
 import { locator } from '../../../state.js';
 
 /**
- * @param {import('../index.js').Parser} parser
- * @returns {import('estree').Pattern}
+ * @param {Parser} parser
+ * @returns {Pattern}
  */
 export default function read_pattern(parser) {
 	const start = parser.index;
@@ -30,8 +33,8 @@ export default function read_pattern(parser) {
 			name,
 			start,
 			loc: {
-				start: /** @type {import('locate-character').Location} */ (locator(start)),
-				end: /** @type {import('locate-character').Location} */ (locator(parser.index))
+				start: /** @type {Location} */ (locator(start)),
+				end: /** @type {Location} */ (locator(parser.index))
 			},
 			end: parser.index,
 			typeAnnotation: annotation
@@ -95,7 +98,7 @@ export default function read_pattern(parser) {
 }
 
 /**
- * @param {import('../index.js').Parser} parser
+ * @param {Parser} parser
  * @returns {any}
  */
 function read_type_annotation(parser) {

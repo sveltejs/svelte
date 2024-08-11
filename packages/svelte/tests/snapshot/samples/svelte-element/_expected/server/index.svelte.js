@@ -3,6 +3,5 @@ import * as $ from "svelte/internal/server";
 export default function Svelte_element($$payload, $$props) {
 	let { tag = 'hr' } = $$props;
 
-	if (tag) $.element($$payload, tag, () => {}, () => {});
-	$$payload.out += `<!---->`;
+	$.element($$payload, tag);
 }

@@ -12,9 +12,9 @@ export type CompileMessageData = {
 		js: string;
 		css: string;
 		ast?: import('svelte/types/compiler/interfaces').Ast;
-	};
-	metadata?: {
-		runes: boolean;
+		metadata?: {
+			runes: boolean;
+		};
 	};
 };
 

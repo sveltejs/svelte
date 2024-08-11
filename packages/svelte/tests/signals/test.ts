@@ -144,6 +144,38 @@ describe('signals', () => {
 		};
 	});
 
+	test('state reset', () => {
+		const log: number[] = [];
+
+		let count = source(0);
+		let double = derived(() => $.get(count) * 2);
+
+		effect(() => {
+			log.push($.get(double));
+		});
+
+		return () => {
+			flushSync();
+			log.length = 0;
+
+			set(count, 1);
+			set(count, 0);
+
+			flushSync();
+
+			assert.deepEqual(log, []);
+
+			set(count, 1);
+			$.get(double);
+			set(count, 0);
+
+			flushSync();
+
+			// TODO: in an ideal world, the effect wouldn't fire here
+			assert.deepEqual(log, [0]);
+		};
+	});
+
 	test('https://perf.js.hyoo.ru/#!bench=9h2as6_u0mfnn', () => {
 		let res: number[] = [];
 
@@ -273,10 +305,12 @@ describe('signals', () => {
 			flushSync(() => set(count, 0));
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.reactions?.length, 1);
+			assert.deepEqual(calc.reactions?.length, 1);
 			assert.deepEqual(log, [0, 2, 'limit', 0]);
 			destroy();
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.reactions, null);
+			assert.deepEqual(calc.reactions, null);
 		};
 	});
 
@@ -548,6 +582,40 @@ describe('signals', () => {
 		};
 	});
 
+	test('deriveds update upon reconnection #3', () => {
+		let a = source(false);
+		let b = source(false);
+
+		let c = derived(() => $.get(a) || $.get(b));
+		let d = derived(() => $.get(c));
+		let e = derived(() => $.get(d));
+
+		return () => {
+			const log: string[] = [];
+			let destroy = effect_root(() => {
+				render_effect(() => {
+					$.get(e);
+					log.push('init');
+				});
+			});
+			destroy();
+
+			destroy = effect_root(() => {
+				render_effect(() => {
+					$.get(e);
+					log.push('update');
+				});
+			});
+
+			assert.deepEqual(log, ['init', 'update']);
+
+			set(a, true);
+			flushSync();
+
+			assert.deepEqual(log, ['init', 'update', 'update']);
+		};
+	});
+
 	test('unowned deriveds are not added as reactions', () => {
 		var count = source(0);
 
@@ -570,6 +638,59 @@ describe('signals', () => {
 			assert.equal($.get(d), 2);
 			assert.equal(count.reactions, null);
 			assert.equal(d.deps?.length, 1);
+		};
+	});
+
+	test('unowned deriveds are correctly connected and disconnected from the graph', () => {
+		var count = source(0);
+
+		function create_derived() {
+			return derived(() => $.get(count) * 2);
+		}
+
+		return () => {
+			let d = create_derived();
+
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					assert.equal($.get(d), 0);
+				});
+			});
+
+			assert.equal($.get(d), 0);
+			assert.equal(count.reactions?.length, 1);
+			assert.equal(d.deps?.length, 1);
+
+			set(count, 1);
+			assert.equal($.get(d), 2);
+			assert.equal(count.reactions?.length, 1);
+			assert.equal(d.deps?.length, 1);
+
+			destroy();
+
+			assert.equal(count.reactions, null);
+
+			set(count, 2);
+			assert.equal($.get(d), 4);
+			assert.equal(count.reactions, null);
+			assert.equal(d.deps?.length, 1);
+		};
+	});
+
+	test('unowned deriveds correctly update', () => {
+		return () => {
+			const arr1 = proxy<{ a: number }[]>([]);
+			const arr2 = proxy([]);
+			const combined = derived(() => [...arr1, ...arr2]);
+			const derived_length = derived(() => $.get(combined).length);
+
+			assert.deepEqual($.get(combined), []);
+			assert.equal($.get(derived_length), 0);
+
+			arr1.push({ a: 1 });
+
+			assert.deepEqual($.get(combined), [{ a: 1 }]);
+			assert.equal($.get(derived_length), 1);
 		};
 	});
 });

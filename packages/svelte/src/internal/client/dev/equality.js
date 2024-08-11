@@ -20,7 +20,10 @@ export function init_array_prototype_warnings() {
 			const test = indexOf.call(get_proxied_value(this), get_proxied_value(item), from_index);
 
 			if (test !== -1) {
-				w.state_proxy_equality_mismatch('array.indexOf(...)');
+				w.state_proxy_equality_mismatch(
+					'array.indexOf(...)',
+					': `array.findIndex(entry => $state.is(entry, item))`'
+				);
 			}
 		}
 
@@ -42,7 +45,10 @@ export function init_array_prototype_warnings() {
 			);
 
 			if (test !== -1) {
-				w.state_proxy_equality_mismatch('array.lastIndexOf(...)');
+				w.state_proxy_equality_mismatch(
+					'array.lastIndexOf(...)',
+					': `array.findLastIndex(entry => $state.is(entry, item))`'
+				);
 			}
 		}
 
@@ -56,7 +62,10 @@ export function init_array_prototype_warnings() {
 			const test = includes.call(get_proxied_value(this), get_proxied_value(item), from_index);
 
 			if (test) {
-				w.state_proxy_equality_mismatch('array.includes(...)');
+				w.state_proxy_equality_mismatch(
+					'array.includes(...)',
+					': `array.some(entry => $state.is(entry, item))`'
+				);
 			}
 		}
 
@@ -79,7 +88,7 @@ export function init_array_prototype_warnings() {
  */
 export function strict_equals(a, b, equal = true) {
 	if ((a === b) !== (get_proxied_value(a) === get_proxied_value(b))) {
-		w.state_proxy_equality_mismatch(equal ? '===' : '!==');
+		w.state_proxy_equality_mismatch(equal ? '===' : '!==', '');
 	}
 
 	return (a === b) === equal;
@@ -93,7 +102,7 @@ export function strict_equals(a, b, equal = true) {
  */
 export function equals(a, b, equal = true) {
 	if ((a == b) !== (get_proxied_value(a) == get_proxied_value(b))) {
-		w.state_proxy_equality_mismatch(equal ? '==' : '!=');
+		w.state_proxy_equality_mismatch(equal ? '==' : '!=', '');
 	}
 
 	return (a == b) === equal;

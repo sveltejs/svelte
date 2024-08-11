@@ -1,3 +1,6 @@
+/** @import { Task } from '../internal/client/types' */
+/** @import { Tweened } from './public' */
+/** @import { TweenedOptions } from './private' */
 import { writable } from '../store/index.js';
 import { raf } from '../internal/client/timing.js';
 import { loop } from '../internal/client/loop.js';
@@ -76,17 +79,17 @@ function get_interpolator(a, b) {
  * https://svelte.dev/docs/svelte-motion#tweened
  * @template T
  * @param {T} [value]
- * @param {import('./private').TweenedOptions<T>} [defaults]
- * @returns {import('./public').Tweened<T>}
+ * @param {TweenedOptions<T>} [defaults]
+ * @returns {Tweened<T>}
  */
 export function tweened(value, defaults = {}) {
 	const store = writable(value);
-	/** @type {import('../internal/client/types').Task} */
+	/** @type {Task} */
 	let task;
 	let target_value = value;
 	/**
 	 * @param {T} new_value
-	 * @param {import('./private').TweenedOptions<T>} [opts]
+	 * @param {TweenedOptions<T>} [opts]
 	 */
 	function set(new_value, opts) {
 		target_value = new_value;
@@ -96,7 +99,7 @@ export function tweened(value, defaults = {}) {
 			return Promise.resolve();
 		}
 
-		/** @type {import('../internal/client/types').Task | null} */
+		/** @type {Task | null} */
 		let previous_task = task;
 
 		let started = false;
