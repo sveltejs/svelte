@@ -2,4 +2,4 @@
 "svelte": minor
 ---
 
-feat: make customElement tag property optional (#12751)
+feat: make custom element `tag` property optional
