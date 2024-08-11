@@ -404,25 +404,13 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 				fill: 'forwards'
 			});
 
-			animation.finished
-				.then(() => {
-					on_finish?.();
+			animation.finished.then(() => {
+				on_finish?.();
 
-					if (t2 === 1) {
-						animation.cancel();
-					}
-				})
-				.catch((e) => {
-					// Error for DOMException: The user aborted a request. This results in two things:
-					// - startTime is `null`
-					// - currentTime is `null`
-					// We can't use the existence of an AbortError as this error and error code is shared
-					// with other Web APIs such as fetch().
-
-					if (animation.startTime !== null && animation.currentTime !== null) {
-						throw e;
-					}
-				});
+				if (t2 === 1) {
+					animation.cancel();
+				}
+			});
 		});
 	} else {
 		// Timer
@@ -448,9 +436,15 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 
 	return {
 		abort: () => {
-			animation?.cancel();
+			if (animation) {
+				animation.cancel();
+				// This prevents memory leaks in Chromium
+				animation.effect = null;
+			}
 			task?.abort();
 			on_abort?.();
+			on_finish = undefined;
+			on_abort = undefined;
 		},
 		deactivate: () => {
 			on_finish = undefined;
