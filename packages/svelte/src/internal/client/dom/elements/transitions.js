@@ -448,9 +448,15 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 
 	return {
 		abort: () => {
-			animation?.cancel();
+			if (animation) {
+				animation.cancel();
+				// This prevents memory leaks in Chromium
+				animation.effect = null;
+			}
 			task?.abort();
 			on_abort?.();
+			on_finish = undefined;
+			on_abort = undefined;
 		},
 		deactivate: () => {
 			on_finish = undefined;
