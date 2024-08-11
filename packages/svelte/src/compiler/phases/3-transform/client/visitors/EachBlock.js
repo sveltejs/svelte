@@ -50,10 +50,24 @@ export function EachBlock(node, context) {
 		}
 	}
 
-	if (node.metadata.expression.dependencies.size > 0) {
-		// TODO be more discerning — we should be able to detect things like
-		// a never-reassigned/mutated `let items = [...]`
-		flags |= EACH_ITEM_REACTIVE;
+	const key_is_item =
+		node.key?.type === 'Identifier' &&
+		node.context.type === 'Identifier' &&
+		node.context.name === node.key.name;
+
+	for (const binding of node.metadata.expression.dependencies) {
+		// if the expression doesn't reference any external state, we don't need to
+		// create a source for the item. TODO cover more cases (e.g. `x.filter(y)`
+		// should also qualify if `y` doesn't reference state, and non-state
+		// bindings should also be fine
+		if (binding.scope.function_depth >= context.state.scope.function_depth) {
+			continue;
+		}
+
+		if (!context.state.analysis.runes || !key_is_item || binding.kind === 'store_sub') {
+			flags |= EACH_ITEM_REACTIVE;
+			break;
+		}
 	}
 
 	// Since `animate:` can only appear on elements that are the sole child of a keyed each block,
