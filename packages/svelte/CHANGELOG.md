@@ -2,11 +2,9 @@
 
 ## 5.0.0-next.216
 
-### Minor Changes
+### Patch Changes
 
 - feat: make custom element `tag` property optional ([#12754](https://github.com/sveltejs/svelte/pull/12754))
-
-### Patch Changes
 
 - fix: improved memory profile for transitions/animations ([#12796](https://github.com/sveltejs/svelte/pull/12796))
 
