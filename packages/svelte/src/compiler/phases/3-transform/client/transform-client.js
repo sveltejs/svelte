@@ -611,9 +611,8 @@ export function client_component(analysis, options) {
 			/** @type {any} */ (typeof ce !== 'boolean' ? ce.extend : undefined)
 		);
 
-		// If customElement option is set, we define the custom element directly. Else we still create
-		// the custom element class so that the user may instantiate a custom element themselves later.
-		if (typeof ce !== 'boolean') {
+		// If a tag name is provided, call `customElements.define`, otherwise leave to the user
+		if (typeof ce !== 'boolean' && typeof ce.tag === 'string') {
 			body.push(b.stmt(b.call('customElements.define', b.literal(ce.tag), create_ce)));
 		} else {
 			body.push(b.stmt(create_ce));
