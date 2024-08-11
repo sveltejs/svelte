@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.215
+
+### Patch Changes
+
+- fix: propagate custom element component prop changes ([#12774](https://github.com/sveltejs/svelte/pull/12774))
+
+- fix: prevent numerous transition/animation memory leaks ([#12759](https://github.com/sveltejs/svelte/pull/12759))
+
 ## 5.0.0-next.214
 
 ### Patch Changes
