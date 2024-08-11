@@ -593,8 +593,7 @@ export function client_component(analysis, options) {
 			/** @type {any} */ (typeof ce !== 'boolean' ? ce.extend : undefined)
 		);
 
-		// If a tag name is set, we register the custom element directly. Else we still create
-		// the custom element class so that the user may instantiate/register a custom element themselves later.
+		// If a tag name is provided, call `customElements.define`, otherwise leave to the user
 		if (typeof ce !== 'boolean' && typeof ce.tag === 'string') {
 			body.push(b.stmt(b.call('customElements.define', b.literal(ce.tag), create_ce)));
 		} else {
