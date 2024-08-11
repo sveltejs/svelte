@@ -25,6 +25,6 @@ The options that can be set here are:
 - `accessors={true}` — adds getters and setters for the component's props
 - `accessors={false}` — the default
 - `namespace="..."` — the namespace where this component will be used, most commonly `"svg"`
-- `customElement="..."` — the name to use when compiling this component as a custom element
+- `customElement={...}` — the [options](/docs/custom-elements-api#component-options) to use when compiling this component as a custom element. If a string is passed, it is used as the `tag` option
 
 Consult the [API reference](/docs) for more information on these options.

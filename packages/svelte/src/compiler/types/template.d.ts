@@ -78,7 +78,7 @@ export interface SvelteOptions {
 	namespace?: Namespace;
 	css?: 'injected';
 	customElement?: {
-		tag: string;
+		tag?: string;
 		shadow?: 'open' | 'none';
 		props?: Record<
 			string,
