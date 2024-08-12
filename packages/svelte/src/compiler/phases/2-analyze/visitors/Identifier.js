@@ -115,10 +115,10 @@ export function Identifier(node, context) {
 		}
 	}
 
-	if (binding && binding.kind !== 'normal') {
+	if (binding) {
 		if (context.state.expression) {
 			context.state.expression.dependencies.add(binding);
-			context.state.expression.has_state = true;
+			context.state.expression.has_state ||= binding.kind !== 'normal';
 		}
 
 		if (

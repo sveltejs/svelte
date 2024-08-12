@@ -846,17 +846,6 @@ export function set_signal_status(signal, status) {
 }
 
 /**
- * @template V
- * @param {V | Value<V>} val
- * @returns {val is Value<V>}
- */
-export function is_signal(val) {
-	return (
-		typeof val === 'object' && val !== null && typeof (/** @type {Value<V>} */ (val).f) === 'number'
-	);
-}
-
-/**
  * Retrieves the context that belongs to the closest parent component with the specified `key`.
  * Must be called during component initialisation.
  *
@@ -1137,20 +1126,6 @@ export function deep_read(value, visited = new Set()) {
 			}
 		}
 	}
-}
-
-/**
- * @template V
- * @param {V | Value<V>} value
- * @returns {V}
- */
-export function unwrap(value) {
-	if (is_signal(value)) {
-		// @ts-ignore
-		return get(value);
-	}
-	// @ts-ignore
-	return value;
 }
 
 if (DEV) {

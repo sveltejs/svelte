@@ -29,6 +29,7 @@ export function EachBlock(node, context) {
 	// evaluate expression in parent scope
 	context.visit(node.expression, {
 		...context.state,
+		expression: node.metadata.expression,
 		scope: /** @type {Scope} */ (context.state.scope.parent)
 	});
 

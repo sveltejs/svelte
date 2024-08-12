@@ -270,20 +270,6 @@ export function should_proxy_or_freeze(node, scope) {
 }
 
 /**
- * Port over the location information from the source to the target identifier.
- * but keep the target as-is (i.e. a new id is created).
- * This ensures esrap can generate accurate source maps.
- * @param {Identifier} target
- * @param {Identifier} source
- */
-export function with_loc(target, source) {
-	if (source.loc) {
-		return { ...target, loc: source.loc };
-	}
-	return target;
-}
-
-/**
  * @param {Pattern} node
  * @param {import('zimmerframe').Context<SvelteNode, ComponentClientTransformState>} context
  * @returns {{ id: Pattern, declarations: null | Statement[] }}

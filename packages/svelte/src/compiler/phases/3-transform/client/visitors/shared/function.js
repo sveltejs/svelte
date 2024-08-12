@@ -9,15 +9,11 @@ import { build_hoisted_params } from '../../utils.js';
 export const visit_function = (node, context) => {
 	const metadata = node.metadata;
 
-	let state = context.state;
+	let state = { ...context.state, in_constructor: false };
 
 	if (node.type === 'FunctionExpression') {
 		const parent = /** @type {Node} */ (context.path.at(-1));
-		const in_constructor = parent.type === 'MethodDefinition' && parent.kind === 'constructor';
-
-		state = { ...context.state, in_constructor };
-	} else {
-		state = { ...context.state, in_constructor: false };
+		state.in_constructor = parent.type === 'MethodDefinition' && parent.kind === 'constructor';
 	}
 
 	if (metadata?.hoisted === true) {
