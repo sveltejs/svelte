@@ -68,7 +68,9 @@
 			{/if}
 		</code>
 	</pre>
-	<Message kind="info">The AST is not public API and may change at any point in time</Message>
+	<Message kind="info">
+		The AST is an internal API and may change at any point without warning.
+	</Message>
 </div>
 
 <style>
