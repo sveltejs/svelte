@@ -53,6 +53,10 @@ export function Identifier(node, context) {
 						e.rune_renamed(parent, '$effect.active', '$effect.tracking');
 					}
 
+					if (name === '$state.frozen') {
+						e.rune_renamed(parent, '$state.frozen', '$state.raw');
+					}
+
 					e.rune_invalid_name(parent, name);
 				}
 			}
