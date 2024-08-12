@@ -139,10 +139,13 @@ export function build_event_handler(node, metadata, context) {
 	// wrap the handler in a function, so the expression is re-evaluated for each event
 	let call = b.call(b.member(handler, b.id('apply'), false, true), b.this, b.id('$$args'));
 
-	if (dev && node.type === 'CallExpression') {
+	if (dev && has_side_effects(node)) {
 		const loc = locator(/** @type {number} */ (node.start));
 
-		const remove_parens = node.arguments.length === 0 && node.callee.type === 'Identifier';
+		const remove_parens =
+			node.type === 'CallExpression' &&
+			node.arguments.length === 0 &&
+			node.callee.type === 'Identifier';
 
 		call = b.call(
 			'$.apply',
@@ -156,4 +159,24 @@ export function build_event_handler(node, metadata, context) {
 	}
 
 	return b.function(null, [b.rest(b.id('$$args'))], b.block([b.stmt(call)]));
+}
+
+/**
+ * @param {Expression} node
+ */
+function has_side_effects(node) {
+	if (
+		node.type === 'CallExpression' ||
+		node.type === 'NewExpression' ||
+		node.type === 'AssignmentExpression' ||
+		node.type === 'UpdateExpression'
+	) {
+		return true;
+	}
+
+	if (node.type === 'SequenceExpression') {
+		return node.expressions.some(has_side_effects);
+	}
+
+	return false;
 }
