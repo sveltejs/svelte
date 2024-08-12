@@ -99,6 +99,7 @@ export function build_assignment(operator, left, right, context) {
 		if (
 			!is_primitive &&
 			binding.kind !== 'prop' &&
+			binding.kind !== 'bindable_prop' &&
 			context.state.analysis.runes &&
 			should_proxy(value, context.state.scope)
 		) {

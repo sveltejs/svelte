@@ -8,7 +8,8 @@ import {
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
 	PROPS_IS_RUNES,
-	PROPS_IS_UPDATED
+	PROPS_IS_UPDATED,
+	PROPS_IS_BINDABLE
 } from '../../../../constants.js';
 import { dev } from '../../../state.js';
 import { get_value } from './visitors/shared/declarations.js';
@@ -167,6 +168,10 @@ export function get_prop_source(binding, state, name, initial) {
 	const args = [b.id('$$props'), b.literal(name)];
 
 	let flags = 0;
+
+	if (binding.kind === 'bindable_prop') {
+		flags |= PROPS_IS_BINDABLE;
+	}
 
 	if (state.analysis.immutable) {
 		flags |= PROPS_IS_IMMUTABLE;
