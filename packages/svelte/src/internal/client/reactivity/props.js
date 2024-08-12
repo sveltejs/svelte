@@ -346,7 +346,7 @@ export function prop(props, key, flags, fallback) {
 		}
 
 		if (arguments.length > 0) {
-			const new_value = mutation ? get(current_value) : bindable ? proxy(value) : value;
+			const new_value = mutation ? get(current_value) : runes && bindable ? proxy(value) : value;
 
 			if (!current_value.equals(new_value)) {
 				from_child = true;
