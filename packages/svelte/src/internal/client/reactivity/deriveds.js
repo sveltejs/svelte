@@ -91,6 +91,8 @@ let stack = [];
  * @returns {void}
  */
 export function update_derived(derived) {
+	var value;
+
 	if (DEV) {
 		try {
 			if (stack.includes(derived)) {
@@ -100,13 +102,13 @@ export function update_derived(derived) {
 			stack.push(derived);
 
 			destroy_derived_children(derived);
-			var value = update_reaction(derived);
+			value = update_reaction(derived);
 		} finally {
 			stack.pop();
 		}
 	} else {
 		destroy_derived_children(derived);
-		var value = update_reaction(derived);
+		value = update_reaction(derived);
 	}
 
 	var status =
