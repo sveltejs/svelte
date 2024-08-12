@@ -256,9 +256,10 @@ export function should_proxy(node, scope) {
 	) {
 		return false;
 	}
+
 	if (node.type === 'Identifier' && scope !== null) {
 		const binding = scope.get(node.name);
-		// Let's see if the reference is something that can be proxied or frozen
+		// Let's see if the reference is something that can be proxied
 		if (
 			binding !== null &&
 			!binding.reassigned &&
@@ -271,6 +272,7 @@ export function should_proxy(node, scope) {
 			return should_proxy(binding.initial, null);
 		}
 	}
+
 	return true;
 }
 
