@@ -16,6 +16,7 @@ import type {
 	ChainExpression,
 	SimpleCallExpression
 } from 'estree';
+import type { Scope } from '../phases/scope';
 
 export interface BaseNode {
 	type: string;
@@ -77,7 +78,7 @@ export interface SvelteOptions {
 	namespace?: Namespace;
 	css?: 'injected';
 	customElement?: {
-		tag: string;
+		tag?: string;
 		shadow?: 'open' | 'none';
 		props?: Record<
 			string,
@@ -214,10 +215,10 @@ export interface OnDirective extends BaseNode {
 
 export type DelegatedEvent =
 	| {
-			type: 'hoistable';
+			hoisted: true;
 			function: ArrowFunctionExpression | FunctionExpression | FunctionDeclaration;
 	  }
-	| { type: 'non-hoistable' };
+	| { hoisted: false };
 
 /** A `style:` directive */
 export interface StyleDirective extends BaseNode {
@@ -275,6 +276,7 @@ interface BaseElement extends BaseNode {
 export interface Component extends BaseElement {
 	type: 'Component';
 	metadata: {
+		scopes: Record<string, Scope>;
 		dynamic: boolean;
 	};
 }
@@ -311,6 +313,9 @@ export interface SvelteComponent extends BaseElement {
 	type: 'SvelteComponent';
 	name: 'svelte:component';
 	expression: Expression;
+	metadata: {
+		scopes: Record<string, Scope>;
+	};
 }
 
 interface SvelteDocument extends BaseElement {
@@ -356,6 +361,9 @@ export interface SvelteOptionsRaw extends BaseElement {
 export interface SvelteSelf extends BaseElement {
 	type: 'SvelteSelf';
 	name: 'svelte:self';
+	metadata: {
+		scopes: Record<string, Scope>;
+	};
 }
 
 interface SvelteWindow extends BaseElement {

@@ -5,7 +5,8 @@ import type {
 	Identifier,
 	PrivateIdentifier,
 	Expression,
-	AssignmentExpression
+	AssignmentExpression,
+	UpdateExpression
 } from 'estree';
 import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
@@ -22,19 +23,18 @@ export interface ClientTransformState extends TransformState {
 	 */
 	readonly in_constructor: boolean;
 
-	/** The $: calls, which will be ordered in the end */
-	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
-	/**
-	 * A map of `[name, node]` pairs, where `Identifier` nodes matching `name`
-	 * will be replaced with `node` (e.g. `x` -> `$.get(x)`)
-	 */
-	readonly getters: Record<string, Expression | ((id: Identifier) => Expression)>;
-	/**
-	 * Counterpart to `getters`
-	 */
-	readonly setters: Record<
+	readonly transform: Record<
 		string,
-		(assignment: AssignmentExpression, context: Context) => Expression
+		{
+			/** turn `foo` into e.g. `$.get(foo)` */
+			read: (id: Identifier) => Expression;
+			/** turn `foo = bar` into e.g. `$.set(foo, bar)` */
+			assign?: (node: Identifier, value: Expression) => Expression;
+			/** turn `foo.bar = baz` into e.g. `$.mutate(foo, $.get(foo).bar = baz);` */
+			mutate?: (node: Identifier, mutation: AssignmentExpression) => Expression;
+			/** turn `foo++` into e.g. `$.update(foo)` */
+			update?: (node: UpdateExpression) => Expression;
+		}
 	>;
 }
 
@@ -79,6 +79,12 @@ export interface ComponentClientTransformState extends ClientTransformState {
 
 	/** The anchor node for the current context */
 	readonly node: Identifier;
+
+	/** Imports that should be re-evaluated in legacy mode following a mutation */
+	readonly legacy_reactive_imports: Statement[];
+
+	/** The $: calls, which will be ordered in the end */
+	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
 }
 
 export interface StateField {

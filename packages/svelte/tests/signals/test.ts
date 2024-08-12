@@ -676,4 +676,21 @@ describe('signals', () => {
 			assert.equal(d.deps?.length, 1);
 		};
 	});
+
+	test('unowned deriveds correctly update', () => {
+		return () => {
+			const arr1 = proxy<{ a: number }[]>([]);
+			const arr2 = proxy([]);
+			const combined = derived(() => [...arr1, ...arr2]);
+			const derived_length = derived(() => $.get(combined).length);
+
+			assert.deepEqual($.get(combined), []);
+			assert.equal($.get(derived_length), 0);
+
+			arr1.push({ a: 1 });
+
+			assert.deepEqual($.get(combined), [{ a: 1 }]);
+			assert.equal($.get(derived_length), 1);
+		};
+	});
 });

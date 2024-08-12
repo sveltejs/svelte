@@ -20,13 +20,13 @@ import { dev } from '../../state.js';
  * @param {Node} node
  * @returns {boolean}
  */
-export function is_hoistable_function(node) {
+export function is_hoisted_function(node) {
 	if (
 		node.type === 'ArrowFunctionExpression' ||
 		node.type === 'FunctionExpression' ||
 		node.type === 'FunctionDeclaration'
 	) {
-		return node.metadata?.hoistable === true;
+		return node.metadata?.hoisted === true;
 	}
 	return false;
 }
@@ -283,6 +283,7 @@ export function clean_nodes(
 			((first.type === 'RenderTag' && !first.metadata.dynamic) ||
 				(first.type === 'Component' &&
 					!state.options.hmr &&
+					!first.metadata.dynamic &&
 					!first.attributes.some(
 						(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
 					))),
@@ -424,7 +425,7 @@ export function transform_inspect_rune(node, context) {
 	const { state, visit } = context;
 	const as_fn = state.options.generate === 'client';
 
-	if (!dev) return b.unary('void', b.literal(0));
+	if (!dev) return b.empty;
 
 	if (node.callee.type === 'MemberExpression') {
 		const raw_inspect_args = /** @type {CallExpression} */ (node.callee.object).arguments;

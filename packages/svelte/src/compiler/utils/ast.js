@@ -276,15 +276,19 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 					const rest_expression = (object) => {
 						/** @type {ESTree.Expression[]} */
 						const props = [];
+
 						for (const p of param.properties) {
 							if (p.type === 'Property' && p.key.type !== 'PrivateIdentifier') {
 								if (p.key.type === 'Identifier' && !p.computed) {
 									props.push(b.literal(p.key.name));
+								} else if (p.key.type === 'Literal') {
+									props.push(b.literal(String(p.key.value)));
 								} else {
-									props.push(p.key);
+									props.push(b.call('String', p.key));
 								}
 							}
 						}
+
 						return b.call('$.exclude_from_object', expression(object), b.array(props));
 					};
 
@@ -364,12 +368,7 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 
 		case 'AssignmentPattern': {
 			/** @type {DestructuredAssignment['expression']} */
-			const fallback_expression = (object) =>
-				is_expression_async(param.right)
-					? b.await(
-							b.call('$.value_or_fallback_async', expression(object), b.thunk(param.right, true))
-						)
-					: b.call('$.value_or_fallback', expression(object), b.thunk(param.right));
+			const fallback_expression = (object) => build_fallback(expression(object), param.right);
 
 			if (param.left.type === 'Identifier') {
 				assignments.push({
@@ -544,4 +543,35 @@ export function is_expression_async(expression) {
 		default:
 			return false;
 	}
+}
+
+/**
+ *
+ * @param {ESTree.Expression} expression
+ * @param {ESTree.Expression} fallback
+ */
+export function build_fallback(expression, fallback) {
+	if (is_simple_expression(fallback)) {
+		return b.call('$.fallback', expression, fallback);
+	}
+
+	if (fallback.type === 'AwaitExpression' && is_simple_expression(fallback.argument)) {
+		return b.await(b.call('$.fallback', expression, fallback.argument));
+	}
+
+	return is_expression_async(fallback)
+		? b.await(b.call('$.fallback', expression, b.thunk(fallback, true), b.true))
+		: b.call('$.fallback', expression, b.thunk(fallback), b.true);
+}
+
+/**
+ * @param {ESTree.AssignmentOperator} operator
+ * @param {ESTree.Identifier | ESTree.MemberExpression} left
+ * @param {ESTree.Expression} right
+ */
+export function build_assignment_value(operator, left, right) {
+	return operator === '='
+		? right
+		: // turn something like x += 1 into x = x + 1
+			b.binary(/** @type {ESTree.BinaryOperator} */ (operator.slice(0, -1)), left, right);
 }

@@ -1,9 +1,8 @@
 /** @import { ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
-/** @import { AnimateDirective, Binding, DeclarationKind, EachBlock, ElementLike, LetDirective, SvelteNode, TransitionDirective, UseDirective } from '#compiler' */
+/** @import { AnimateDirective, Binding, Component, DeclarationKind, EachBlock, ElementLike, LetDirective, SvelteComponent, SvelteNode, SvelteSelf, TransitionDirective, UseDirective } from '#compiler' */
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
-import { is_element_node } from './nodes.js';
 import * as b from '../utils/builders.js';
 import * as e from '../errors.js';
 import {
@@ -13,6 +12,7 @@ import {
 	unwrap_pattern
 } from '../utils/ast.js';
 import { is_reserved, is_rune } from '../../utils.js';
+import { determine_slot } from '../utils/slot.js';
 
 export class Scope {
 	/** @type {ScopeRoot} */
@@ -290,52 +290,47 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 * @type {Visitor<ElementLike, State, SvelteNode>}
 	 */
 	const SvelteFragment = (node, { state, next }) => {
-		const [scope] = analyze_let_directives(node, state.scope);
+		const scope = state.scope.child();
 		scopes.set(node, scope);
 		next({ scope });
 	};
 
 	/**
-	 * @param {ElementLike} node
-	 * @param {Scope} parent
+	 * @type {Visitor<Component | SvelteComponent | SvelteSelf, State, SvelteNode>}
 	 */
-	function analyze_let_directives(node, parent) {
-		const scope = parent.child();
-		let is_default_slot = true;
+	const Component = (node, context) => {
+		node.metadata.scopes = {
+			default: context.state.scope.child()
+		};
+
+		const default_state = determine_slot(node)
+			? context.state
+			: { scope: node.metadata.scopes.default };
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'LetDirective') {
-				/** @type {Binding[]} */
-				const bindings = [];
-				scope.declarators.set(attribute, bindings);
-
-				// attach the scope to the directive itself, as well as the
-				// contents to which it applies
-				scopes.set(attribute, scope);
-
-				if (attribute.expression) {
-					for (const id of extract_identifiers_from_destructuring(attribute.expression)) {
-						const binding = scope.declare(id, 'derived', 'const');
-						bindings.push(binding);
-					}
-				} else {
-					/** @type {Identifier} */
-					const id = {
-						name: attribute.name,
-						type: 'Identifier',
-						start: attribute.start,
-						end: attribute.end
-					};
-					const binding = scope.declare(id, 'derived', 'const');
-					bindings.push(binding);
-				}
-			} else if (attribute.type === 'Attribute' && attribute.name === 'slot') {
-				is_default_slot = false;
+				context.visit(attribute, default_state);
+			} else {
+				context.visit(attribute);
 			}
 		}
 
-		return /** @type {const} */ ([scope, is_default_slot]);
-	}
+		for (const child of node.fragment.nodes) {
+			let state = default_state;
+
+			const slot_name = determine_slot(child);
+
+			if (slot_name !== null) {
+				node.metadata.scopes[slot_name] = context.state.scope.child();
+
+				state = {
+					scope: node.metadata.scopes[slot_name]
+				};
+			}
+
+			context.visit(child, state);
+		}
+	};
 
 	/**
 	 * @type {Visitor<AnimateDirective | TransitionDirective | UseDirective, State, SvelteNode>}
@@ -384,48 +379,37 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		SvelteElement: SvelteFragment,
 		RegularElement: SvelteFragment,
 
-		Component(node, { state, visit, path }) {
-			state.scope.reference(b.id(node.name), path);
+		LetDirective(node, context) {
+			const scope = context.state.scope;
 
-			// let:x is super weird:
-			// - for the default slot, its scope only applies to children that are not slots themselves
-			// - for named slots, its scope applies to the component itself, too
-			const [scope, is_default_slot] = analyze_let_directives(node, state.scope);
-			if (is_default_slot) {
-				for (const attribute of node.attributes) {
-					visit(attribute);
+			/** @type {Binding[]} */
+			const bindings = [];
+			scope.declarators.set(node, bindings);
+
+			if (node.expression) {
+				for (const id of extract_identifiers_from_destructuring(node.expression)) {
+					const binding = scope.declare(id, 'derived', 'const');
+					bindings.push(binding);
 				}
 			} else {
-				scopes.set(node, scope);
-
-				for (const attribute of node.attributes) {
-					visit(attribute, { ...state, scope });
-				}
-			}
-
-			for (const child of node.fragment.nodes) {
-				if (
-					is_element_node(child) &&
-					child.attributes.some(
-						(attribute) => attribute.type === 'Attribute' && attribute.name === 'slot'
-					)
-				) {
-					// <div slot="..."> inherits the scope above the component unless the component is a named slot itself, because slots are hella weird
-					scopes.set(child, is_default_slot ? state.scope : scope);
-					visit(child, { scope: is_default_slot ? state.scope : scope });
-				} else {
-					if (child.type === 'ExpressionTag') {
-						// expression tag is a special case — we don't visit it directly, but via process_children,
-						// so we need to set the scope on the expression rather than the tag itself
-						scopes.set(child.expression, scope);
-					} else {
-						scopes.set(child, scope);
-					}
-
-					visit(child, { scope });
-				}
+				/** @type {Identifier} */
+				const id = {
+					name: node.name,
+					type: 'Identifier',
+					start: node.start,
+					end: node.end
+				};
+				const binding = scope.declare(id, 'derived', 'const');
+				bindings.push(binding);
 			}
 		},
+
+		Component: (node, context) => {
+			context.state.scope.reference(b.id(node.name), context.path);
+			Component(node, context);
+		},
+		SvelteSelf: Component,
+		SvelteComponent: Component,
 
 		// updates
 		AssignmentExpression(node, { state, next }) {
@@ -532,7 +516,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					references_within.add(id);
 				}
 			}
-			scopes.set(node.expression, state.scope);
 
 			// context and children are a new scope
 			const scope = state.scope.child();

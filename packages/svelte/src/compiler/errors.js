@@ -1285,12 +1285,12 @@ export function svelte_options_invalid_attribute_value(node, list) {
 }
 
 /**
- * "customElement" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
+ * "customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function svelte_options_invalid_customelement(node) {
-	e(node, "svelte_options_invalid_customelement", "\"customElement\" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: \"open\" | \"none\"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }");
+	e(node, "svelte_options_invalid_customelement", "\"customElement\" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: \"open\" | \"none\"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }");
 }
 
 /**

@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, Pattern } from 'estree' */
+/** @import { BlockStatement, Expression, Pattern, Statement } from 'estree' */
 /** @import { AwaitBlock } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
@@ -15,39 +15,29 @@ export function AwaitBlock(node, context) {
 	let catch_block;
 
 	if (node.then) {
+		const argument = node.value && create_derived_block_argument(node.value, context);
+
 		/** @type {Pattern[]} */
 		const args = [b.id('$$anchor')];
+		if (argument) args.push(argument.id);
+
+		const declarations = argument?.declarations ?? [];
 		const block = /** @type {BlockStatement} */ (context.visit(node.then));
 
-		if (node.value) {
-			const argument = create_derived_block_argument(node.value, context);
-
-			args.push(argument.id);
-
-			if (argument.declarations !== null) {
-				block.body.unshift(...argument.declarations);
-			}
-		}
-
-		then_block = b.arrow(args, block);
+		then_block = b.arrow(args, b.block([...declarations, ...block.body]));
 	}
 
 	if (node.catch) {
+		const argument = node.error && create_derived_block_argument(node.error, context);
+
 		/** @type {Pattern[]} */
 		const args = [b.id('$$anchor')];
+		if (argument) args.push(argument.id);
+
+		const declarations = argument?.declarations ?? [];
 		const block = /** @type {BlockStatement} */ (context.visit(node.catch));
 
-		if (node.error) {
-			const argument = create_derived_block_argument(node.error, context);
-
-			args.push(argument.id);
-
-			if (argument.declarations !== null) {
-				block.body.unshift(...argument.declarations);
-			}
-		}
-
-		catch_block = b.arrow(args, block);
+		catch_block = b.arrow(args, b.block([...declarations, ...block.body]));
 	}
 
 	context.state.init.push(

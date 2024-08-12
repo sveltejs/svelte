@@ -2,7 +2,7 @@
 /** @import { Binding } from '#compiler' */
 /** @import { Context } from '../types.js' */
 /** @import { Scope } from '../../../scope.js' */
-import { extract_paths, is_expression_async } from '../../../../utils/ast.js';
+import { build_fallback, extract_paths } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { get_rune } from '../../../scope.js';
 import { walk } from 'zimmerframe';
@@ -96,9 +96,7 @@ export function VariableDeclaration(node, context) {
 						const name = /** @type {Identifier} */ (path.node).name;
 						const binding = /** @type {Binding} */ (context.state.scope.get(name));
 						const prop = b.member(b.id('$$props'), b.literal(binding.prop_alias ?? name), true);
-						declarations.push(
-							b.declarator(path.node, b.call('$.value_or_fallback', prop, b.thunk(value)))
-						);
+						declarations.push(b.declarator(path.node, build_fallback(prop, value)));
 					}
 					continue;
 				}
@@ -114,9 +112,7 @@ export function VariableDeclaration(node, context) {
 				let init = prop;
 				if (declarator.init) {
 					const default_value = /** @type {Expression} */ (context.visit(declarator.init));
-					init = is_expression_async(default_value)
-						? b.await(b.call('$.value_or_fallback_async', prop, b.thunk(default_value, true)))
-						: b.call('$.value_or_fallback', prop, b.thunk(default_value));
+					init = build_fallback(prop, default_value);
 				}
 
 				declarations.push(b.declarator(declarator.id, init));

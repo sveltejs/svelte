@@ -46,3 +46,18 @@ export function run_all(arr) {
 		arr[i]();
 	}
 }
+
+/**
+ * @template V
+ * @param {V} value
+ * @param {V | (() => V)} fallback
+ * @param {boolean} [lazy]
+ * @returns {V}
+ */
+export function fallback(value, fallback, lazy = false) {
+	return value === undefined
+		? lazy
+			? /** @type {() => V} */ (fallback)()
+			: /** @type {V} */ (fallback)
+		: value;
+}

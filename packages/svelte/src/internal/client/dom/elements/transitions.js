@@ -222,6 +222,8 @@ export function transition(flags, element, get_fn, get_params) {
 					1,
 					() => {
 						dispatch_event(element, 'introend');
+						// Ensure we cancel the animation to prevent leaking
+						intro?.abort();
 						intro = current_options = undefined;
 					},
 					is_both
@@ -249,6 +251,8 @@ export function transition(flags, element, get_fn, get_params) {
 					0,
 					() => {
 						dispatch_event(element, 'outroend');
+						// Ensure we cancel the animation to prevent leaking
+						outro?.abort();
 						outro = current_options = undefined;
 						fn?.();
 					},
@@ -322,8 +326,10 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 		// once DOM has been updated...
 		/** @type {Animation} */
 		var a;
+		var aborted = false;
 
 		queue_micro_task(() => {
+			if (aborted) return;
 			var o = options({ direction: is_intro ? 'in' : 'out' });
 			a = animate(element, o, counterpart, t2, on_finish, on_abort);
 		});
@@ -331,7 +337,10 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 		// ...but we want to do so without using `async`/`await` everywhere, so
 		// we return a facade that allows everything to remain synchronous
 		return {
-			abort: () => a.abort(),
+			abort: () => {
+				aborted = true;
+				a?.abort();
+			},
 			deactivate: () => a.deactivate(),
 			reset: () => a.reset(),
 			t: (now) => a.t(now)
@@ -439,9 +448,15 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 
 	return {
 		abort: () => {
-			animation?.cancel();
+			if (animation) {
+				animation.cancel();
+				// This prevents memory leaks in Chromium
+				animation.effect = null;
+			}
 			task?.abort();
 			on_abort?.();
+			on_finish = undefined;
+			on_abort = undefined;
 		},
 		deactivate: () => {
 			on_finish = undefined;

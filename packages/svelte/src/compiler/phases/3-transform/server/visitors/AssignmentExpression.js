@@ -1,59 +1,16 @@
-/** @import { AssignmentExpression, AssignmentOperator, BinaryOperator, Expression, Node, Pattern } from 'estree' */
+/** @import { AssignmentExpression, AssignmentOperator, Expression, Pattern } from 'estree' */
 /** @import { SvelteNode } from '#compiler' */
 /** @import { Context, ServerTransformState } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
-import { extract_paths } from '../../../../utils/ast.js';
-import { build_getter } from './shared/utils.js';
+import { build_assignment_value } from '../../../../utils/ast.js';
+import { visit_assignment_expression } from '../../shared/assignments.js';
 
 /**
  * @param {AssignmentExpression} node
  * @param {Context} context
  */
 export function AssignmentExpression(node, context) {
-	const parent = /** @type {Node} */ (context.path.at(-1));
-	const is_standalone = parent.type.endsWith('Statement');
-
-	if (
-		node.left.type === 'ArrayPattern' ||
-		node.left.type === 'ObjectPattern' ||
-		node.left.type === 'RestElement'
-	) {
-		const value = /** @type {Expression} */ (context.visit(node.right));
-		const should_cache = value.type !== 'Identifier';
-		const rhs = should_cache ? b.id('$$value') : value;
-
-		let changed = false;
-
-		const assignments = extract_paths(node.left).map((path) => {
-			const value = path.expression?.(rhs);
-
-			let assignment = build_assignment('=', path.node, value, context);
-			if (assignment !== null) changed = true;
-
-			return assignment ?? b.assignment('=', path.node, value);
-		});
-
-		if (!changed) {
-			// No change to output -> nothing to transform -> we can keep the original assignment
-			return context.next();
-		}
-
-		const sequence = b.sequence(assignments);
-
-		if (!is_standalone) {
-			// this is part of an expression, we need the sequence to end with the value
-			sequence.expressions.push(rhs);
-		}
-
-		if (should_cache) {
-			// the right hand side is a complex expression, wrap in an IIFE to cache it
-			return b.call(b.arrow([rhs], sequence), value);
-		}
-
-		return sequence;
-	}
-
-	return build_assignment(node.operator, node.left, node.right, context) || context.next();
+	return visit_assignment_expression(node, context, build_assignment);
 }
 
 /**
@@ -83,16 +40,9 @@ function build_assignment(operator, left, right, context) {
 	}
 
 	if (object === left) {
-		let value = /** @type {Expression} */ (context.visit(right));
-
-		if (operator !== '=') {
-			// turn `x += 1` into `x = x + 1`
-			value = b.binary(
-				/** @type {BinaryOperator} */ (operator.slice(0, -1)),
-				build_getter(left, context.state),
-				value
-			);
-		}
+		let value = /** @type {Expression} */ (
+			context.visit(build_assignment_value(operator, left, right))
+		);
 
 		return b.call('$.store_set', b.id(name), value);
 	}

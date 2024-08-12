@@ -21,7 +21,10 @@
 			"type": "node",
 			"request": "launch",
 			"name": "Run sandbox",
-			"program": "${workspaceFolder}/playgrounds/sandbox/run.js"
+			"program": "${workspaceFolder}/playgrounds/sandbox/run.js",
+			"env": {
+				"NODE_OPTIONS": "--stack-trace-limit=10000"
+			}
 		}
 	],
 	"compounds": [

@@ -59,8 +59,12 @@ export function create_event(event_name, dom, handler, options) {
 	// Chrome has a bug where pointer events don't work when attached to a DOM element that has been cloned
 	// with cloneNode() and the DOM element is disconnected from the document. To ensure the event works, we
 	// defer the attachment till after it's been appended to the document. TODO: remove this once Chrome fixes
-	// this bug. The same applies to wheel events.
-	if (event_name.startsWith('pointer') || event_name === 'wheel') {
+	// this bug. The same applies to wheel events and touch events.
+	if (
+		event_name.startsWith('pointer') ||
+		event_name.startsWith('touch') ||
+		event_name === 'wheel'
+	) {
 		queue_micro_task(() => {
 			dom.addEventListener(event_name, target_handler, options);
 		});

@@ -1,5 +1,6 @@
 /** @import { EachBlock } from '#compiler' */
 /** @import { Context } from '../types' */
+/** @import { Scope } from '../../scope' */
 import * as e from '../../../errors.js';
 import { validate_block_not_empty, validate_opening_tag } from './shared/utils.js';
 
@@ -25,5 +26,13 @@ export function EachBlock(node, context) {
 			node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index;
 	}
 
-	context.next();
+	// evaluate expression in parent scope
+	context.visit(node.expression, {
+		...context.state,
+		scope: /** @type {Scope} */ (context.state.scope.parent)
+	});
+
+	context.visit(node.body);
+	if (node.key) context.visit(node.key);
+	if (node.fallback) context.visit(node.fallback);
 }

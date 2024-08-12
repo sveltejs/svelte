@@ -40,7 +40,7 @@ export default function read_options(node) {
 			}
 			case 'customElement': {
 				/** @type {SvelteOptions['customElement']} */
-				const ce = { tag: '' };
+				const ce = {};
 				const { value: v } = attribute;
 				const value = v === true || Array.isArray(v) ? v : [v];
 
@@ -79,8 +79,6 @@ export default function read_options(node) {
 					const tag_value = tag[1]?.value;
 					validate_tag(tag, tag_value);
 					ce.tag = tag_value;
-				} else {
-					e.svelte_options_invalid_customelement(attribute);
 				}
 
 				const props = properties.find(([name]) => name === 'props')?.[1];
@@ -251,8 +249,4 @@ function validate_tag(attribute, tag) {
 	if (tag && !regex_valid_tag_name.test(tag)) {
 		e.svelte_options_invalid_tagname(attribute);
 	}
-	// TODO do we still need this?
-	// if (tag && !component.compile_options.customElement) {
-	// 	component.warn(attribute, compiler_warnings.missing_custom_element_compile_options);
-	// }
 }

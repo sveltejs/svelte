@@ -126,6 +126,13 @@ const legacy_rest_props_handler = {
 			};
 		}
 	},
+	deleteProperty(target, key) {
+		// Svelte 4 allowed for deletions on $$restProps
+		if (target.exclude.includes(key)) return false;
+		target.exclude.push(key);
+		update(target.version);
+		return true;
+	},
 	has(target, key) {
 		if (target.exclude.includes(key)) return false;
 		return key in target.props;

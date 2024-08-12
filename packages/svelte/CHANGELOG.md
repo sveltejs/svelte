@@ -1,5 +1,89 @@
 # svelte
 
+## 5.0.0-next.216
+
+### Patch Changes
+
+- feat: make custom element `tag` property optional ([#12754](https://github.com/sveltejs/svelte/pull/12754))
+
+- fix: improved memory profile for transitions/animations ([#12796](https://github.com/sveltejs/svelte/pull/12796))
+
+## 5.0.0-next.215
+
+### Patch Changes
+
+- fix: propagate custom element component prop changes ([#12774](https://github.com/sveltejs/svelte/pull/12774))
+
+- fix: prevent numerous transition/animation memory leaks ([#12759](https://github.com/sveltejs/svelte/pull/12759))
+
+## 5.0.0-next.214
+
+### Patch Changes
+
+- fix: ensure custom element styles append correctly during prod ([#12777](https://github.com/sveltejs/svelte/pull/12777))
+
+- fix: invalidate signals following ++/-- inside each block ([#12780](https://github.com/sveltejs/svelte/pull/12780))
+
+- feat: better code generation for destructuring assignments ([#12780](https://github.com/sveltejs/svelte/pull/12780))
+
+## 5.0.0-next.213
+
+### Patch Changes
+
+- fix: ensure custom elements do not sync flush on mount ([#12787](https://github.com/sveltejs/svelte/pull/12787))
+
+- fix: ensure event handlers referencing $host are not hoisted ([#12775](https://github.com/sveltejs/svelte/pull/12775))
+
+- fix: provide more hydration mismatch coverage ([#12755](https://github.com/sveltejs/svelte/pull/12755))
+
+- chore: simpler fallback values ([#12788](https://github.com/sveltejs/svelte/pull/12788))
+
+## 5.0.0-next.212
+
+### Patch Changes
+
+- perf: speed up $.exclude_from_object ([#12783](https://github.com/sveltejs/svelte/pull/12783))
+
+- chore: publish package provenance info ([#12779](https://github.com/sveltejs/svelte/pull/12779))
+
+- feat: simplify derived object destructuring ([#12781](https://github.com/sveltejs/svelte/pull/12781))
+
+## 5.0.0-next.211
+
+### Patch Changes
+
+- fix: improve prop binding warning validation for stores ([#12745](https://github.com/sveltejs/svelte/pull/12745))
+
+- chore: add error for derived self referencing ([#12746](https://github.com/sveltejs/svelte/pull/12746))
+
+- fix: skip `is_standalone` optimisation for dynamic components ([#12767](https://github.com/sveltejs/svelte/pull/12767))
+
+- fix: ensure unowned deriveds correctly update ([#12747](https://github.com/sveltejs/svelte/pull/12747))
+
+- fix: order of arguments for `push_element` in `svelte:element` ([#12763](https://github.com/sveltejs/svelte/pull/12763))
+
+## 5.0.0-next.210
+
+### Patch Changes
+
+- fix: avoid recreating handlers for component events ([#12722](https://github.com/sveltejs/svelte/pull/12722))
+
+- fix: call correct event handler for properties of non-reactive objects ([#12722](https://github.com/sveltejs/svelte/pull/12722))
+
+## 5.0.0-next.209
+
+### Patch Changes
+
+- fix: add css hash to custom element rendered with `svelte:element` ([#12715](https://github.com/sveltejs/svelte/pull/12715))
+
+- fix: correctly handle SvelteDate methods with arguments ([#12738](https://github.com/sveltejs/svelte/pull/12738))
+
+- fix: add touch events on microtask to avoid Chromium bug ([#12735](https://github.com/sveltejs/svelte/pull/12735))
+
+- fix: allow deletion of $restProps properties ([#12736](https://github.com/sveltejs/svelte/pull/12736))
+
+- feat: more efficient code generation when referencing globals ([#12712](https://github.com/sveltejs/svelte/pull/12712))
+
 ## 5.0.0-next.208
 
 ### Patch Changes

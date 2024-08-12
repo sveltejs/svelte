@@ -66,7 +66,7 @@ export function Fragment(node, context) {
 		after_update: [],
 		template: [],
 		locations: [],
-		getters: { ...context.state.getters },
+		transform: { ...context.state.transform },
 		metadata: {
 			context: {
 				template_needs_import_node: false,

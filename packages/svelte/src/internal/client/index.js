@@ -66,7 +66,7 @@ export {
 	bind_focused
 } from './dom/elements/bindings/universal.js';
 export { bind_window_scroll, bind_window_size } from './dom/elements/bindings/window.js';
-export { next, reset } from './dom/hydration.js';
+export { hydrate_template, next, reset } from './dom/hydration.js';
 export {
 	once,
 	preventDefault,
@@ -134,8 +134,6 @@ export {
 	untrack,
 	update,
 	update_pre,
-	value_or_fallback,
-	value_or_fallback_async,
 	exclude_from_object,
 	pop,
 	push,
@@ -164,7 +162,7 @@ export {
 	$document as document
 } from './dom/operations.js';
 export { snapshot } from '../shared/clone.js';
-export { noop } from '../shared/utils.js';
+export { noop, fallback } from '../shared/utils.js';
 export {
 	invalid_default_snippet,
 	validate_dynamic_element_tag,

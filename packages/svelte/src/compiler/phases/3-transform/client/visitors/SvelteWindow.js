@@ -1,14 +1,12 @@
+/** @import { Expression } from 'estree' */
 /** @import { SvelteWindow } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import * as b from '../../../../utils/builders.js';
+import { visit_special_element } from './shared/special_element.js';
 
 /**
  * @param {SvelteWindow} node
  * @param {ComponentContext} context
  */
 export function SvelteWindow(node, context) {
-	context.next({
-		...context.state,
-		node: b.id('$.window')
-	});
+	visit_special_element(node, '$.window', context);
 }
