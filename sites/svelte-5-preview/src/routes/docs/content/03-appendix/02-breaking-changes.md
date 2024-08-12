@@ -161,6 +161,16 @@ Svelte now use Mutation Observers instead of IFrames to measure dimensions for `
 
 Content inside component tags becomes a [snippet prop](/docs/snippets) called `children`. You cannot have a separate prop by that name.
 
+## Dot notation indicates a component
+
+In Svelte 4, `<foo.bar>` would create an element with a tag name of `"foo.bar"`. In Svelte 5, `foo.bar` is treated as a component instead. This is particularly useful inside `each` blocks:
+
+```svelte
+{#each items as item}
+	<item.component {...item.props} />
+{/each}
+```
+
 ## Breaking changes in runes mode
 
 Some breaking changes only apply once your component is in runes mode.
