@@ -5,7 +5,7 @@
 <input type="checkbox" bind:checked />
 
 <style>
-	input[type='checkbox'] {
+	input {
 		/* display: block; */
 		position: relative;
 		height: 1em;
@@ -20,7 +20,7 @@
 		margin: 0 0.6em 0 0;
 	}
 
-	input[type='checkbox']::before {
+	input::before {
 		content: '';
 		position: absolute;
 		display: block;
@@ -35,11 +35,11 @@
 		box-sizing: content-box;
 	}
 
-	input[type='checkbox']:checked::before {
+	input:checked::before {
 		background: var(--sk-theme-1);
 	}
 
-	input[type='checkbox']::after {
+	input::after {
 		content: '';
 		position: absolute;
 		display: block;
@@ -57,7 +57,7 @@
 			left 0.2s ease-out;
 	}
 
-	input[type='checkbox']:checked::after {
+	input:checked::after {
 		left: calc(100% - 1em + 2px);
 	}
 </style>
