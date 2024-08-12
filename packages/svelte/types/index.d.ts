@@ -927,7 +927,7 @@ declare module 'svelte/compiler' {
 			| 'bindable_prop'
 			| 'rest_prop'
 			| 'state'
-			| 'frozen_state'
+			| 'raw_state'
 			| 'derived'
 			| 'each'
 			| 'snippet'
