@@ -154,8 +154,5 @@
     "project": [
       "src/**"
     ]
-  },
-  "publishConfig": {
-    "provenance": true
   }
 }
