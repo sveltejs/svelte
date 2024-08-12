@@ -76,7 +76,8 @@
     },
     "./store": {
       "types": "./types/index.d.ts",
-      "default": "./src/store/index.js"
+      "browser": "./src/store/index-client.js",
+      "default": "./src/store/index-server.js"
     },
     "./transition": {
       "types": "./types/index.d.ts",

@@ -2305,6 +2305,17 @@ declare module 'svelte/store' {
 		 */
 		update(this: void, updater: Updater<T>): void;
 	}
+	export function toStore<V>(get: () => V, set: (v: V) => void): Writable<V>;
+
+	export function toStore<V>(get: () => V): Readable<V>;
+
+	export function fromStore<V>(store: Writable<V>): {
+		current: V;
+	};
+
+	export function fromStore<V>(store: Readable<V>): {
+		readonly current: V;
+	};
 	/**
 	 * Creates a `Readable` store that allows reading by subscription.
 	 *
@@ -2346,18 +2357,6 @@ declare module 'svelte/store' {
 	 * https://svelte.dev/docs/svelte-store#get
 	 * */
 	export function get<T>(store: Readable<T>): T;
-
-	export function toStore<V>(get: () => V, set: (v: V) => void): Writable<V>;
-
-	export function toStore<V>(get: () => V): Readable<V>;
-
-	export function fromStore<V>(store: Writable<V>): {
-		current: V;
-	};
-
-	export function fromStore<V>(store: Readable<V>): {
-		readonly current: V;
-	};
 	/** One or more `Readable`s. */
 	type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
 
