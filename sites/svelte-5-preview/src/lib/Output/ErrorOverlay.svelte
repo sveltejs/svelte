@@ -1,15 +1,15 @@
 <script>
 	import { get_repl_context } from '$lib/context';
 
-	/** @type {{error: import('svelte/compiler').CompileError}} */
-	let { error } = $props();
+	/** @type {{ error: {message: string, start?: {line: number, column: number, character: number}}, title: string }} */
+	let { error, title } = $props();
 
 	const { go_to_warning_pos } = get_repl_context();
 </script>
 
 <div class="error-overlay">
 	<div class="error">
-		<h2>Error compiling {error.filename ?? 'component'}</h2>
+		<h2>{title}</h2>
 		<pre><code>{error.message}</code></pre>
 
 		{#if error.start}

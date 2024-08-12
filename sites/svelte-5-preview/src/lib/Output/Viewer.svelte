@@ -42,10 +42,6 @@
 	let ready = false;
 	let inited = false;
 
-	let log_height = 90;
-	/** @type {number} */
-	let prev_height;
-
 	/** @type {import('./console/console').Log} */
 	let last_console_event;
 
@@ -234,15 +230,6 @@
 		}
 	}
 
-	function on_toggle_console() {
-		if (log_height < 90) {
-			prev_height = log_height;
-			log_height = 90;
-		} else {
-			log_height = prev_height || 45;
-		}
-	}
-
 	function clear_logs() {
 		current_log_group = logs = [];
 	}
@@ -271,7 +258,12 @@
 				></iframe>
 
 				{#if $bundle?.error}
-					<ErrorOverlay error={$bundle.error} />
+					<ErrorOverlay
+						error={$bundle.error}
+						title="Error compiling {$bundle.error.filename ?? 'component'}"
+					/>
+				{:else if error}
+					<ErrorOverlay {error} title="Runtime error" />
 				{/if}
 			</div>
 		{/snippet}
@@ -295,9 +287,7 @@
 	</PaneWithPanel>
 
 	<div class="overlay">
-		{#if error}
-			<Message kind="error" details={error} />
-		{:else if status || !$bundle}
+		{#if status || !$bundle}
 			<Message kind="info" truncate>{status || 'loading Svelte compiler...'}</Message>
 		{/if}
 	</div>
