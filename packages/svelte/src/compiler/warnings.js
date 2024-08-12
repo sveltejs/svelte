@@ -117,6 +117,7 @@ export const codes = [
 	"event_directive_deprecated",
 	"node_invalid_placement_ssr",
 	"slot_element_deprecated",
+	"svelte_component_deprecated",
 	"svelte_element_invalid_this"
 ];
 
@@ -765,6 +766,14 @@ export function node_invalid_placement_ssr(node, thing, parent) {
  */
 export function slot_element_deprecated(node) {
 	w(node, "slot_element_deprecated", "Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead");
+}
+
+/**
+ * `<svelte:component>` is deprecated in runes mode — components are dynamic by default
+ * @param {null | NodeLike} node
+ */
+export function svelte_component_deprecated(node) {
+	w(node, "svelte_component_deprecated", "`<svelte:component>` is deprecated in runes mode — components are dynamic by default");
 }
 
 /**

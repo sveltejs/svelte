@@ -54,6 +54,14 @@ This code will work when the component is rendered on the client (which is why t
 
 > Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead
 
+## svelte_component_deprecated
+
+> `<svelte:component>` is deprecated in runes mode — components are dynamic by default
+
+In previous versions of Svelte, the component constructor was fixed when the component was rendered. In other words, if you wanted `<X>` to re-render when `X` changed, you would either have to use `<svelte:component this={X}>` or put the component inside a `{#key X}...{/key}` block.
+
+In Svelte 5 this is no longer true — if `X` changes, `<X>` re-renders. For more complex expressions like `condition ? Y : Z` you can use a derived value instead.
+
 ## svelte_element_invalid_this
 
 > `this` should be an `{expression}`. Using a string attribute value will cause an error in future versions of Svelte
