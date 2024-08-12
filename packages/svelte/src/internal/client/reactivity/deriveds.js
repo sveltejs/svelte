@@ -14,8 +14,6 @@ import {
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 
-export let updating_derived = false;
-
 /**
  * @template V
  * @param {() => V} fn
@@ -101,11 +99,8 @@ export function update_derived(derived) {
 		stack.push(derived);
 	}
 
-	var previous_updating_derived = updating_derived;
-	updating_derived = true;
 	destroy_derived_children(derived);
 	var value = update_reaction(derived);
-	updating_derived = previous_updating_derived;
 
 	if (DEV) {
 		stack.pop();
@@ -128,7 +123,7 @@ export function update_derived(derived) {
  * @param {Derived} signal
  * @returns {void}
  */
-export function destroy_derived(signal) {
+function destroy_derived(signal) {
 	destroy_derived_children(signal);
 	remove_reactions(signal, 0);
 	set_signal_status(signal, DESTROYED);

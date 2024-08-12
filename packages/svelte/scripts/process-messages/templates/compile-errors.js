@@ -2,7 +2,7 @@ import { CompileDiagnostic } from './utils/compile_diagnostic.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
 
-export class InternalCompileError extends CompileDiagnostic {
+class InternalCompileError extends CompileDiagnostic {
 	name = 'CompileError';
 
 	/**

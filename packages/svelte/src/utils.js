@@ -107,7 +107,7 @@ export function is_capture_event(name) {
 }
 
 /** List of Element events that will be delegated */
-export const DELEGATED_EVENTS = [
+const DELEGATED_EVENTS = [
 	'beforeinput',
 	'click',
 	'change',
@@ -144,7 +144,7 @@ export function is_delegated(event_name) {
 /**
  * Attributes that are boolean, i.e. they are present or not present.
  */
-export const DOM_BOOLEAN_ATTRIBUTES = [
+const DOM_BOOLEAN_ATTRIBUTES = [
 	'allowfullscreen',
 	'async',
 	'autofocus',

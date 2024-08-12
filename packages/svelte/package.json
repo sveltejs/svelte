@@ -149,7 +149,9 @@
       "src/*/index.js",
       "src/index-client.ts",
       "src/index-server.ts",
-      "src/index.d.ts"
+      "src/index.d.ts",
+      "tests/**/*.js",
+      "tests/**/*.ts"
     ],
     "project": [
       "src/**"
