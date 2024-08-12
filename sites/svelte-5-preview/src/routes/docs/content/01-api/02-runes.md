@@ -64,14 +64,14 @@ Only plain objects and arrays [are made deeply reactive](/#H4sIAAAAAAAAE42QwWrDM
 
 In non-runes mode, a `let` declaration is treated as reactive state if it is updated at some point. Unlike `$state(...)`, which works anywhere in your app, `let` only behaves this way at the top level of a component.
 
-## `$state.frozen`
+## `$state.raw`
 
-State declared with `$state.frozen` cannot be mutated; it can only be _reassigned_. In other words, rather than assigning to a property of an object, or using an array method like `push`, replace the object or array altogether if you'd like to update it:
+State declared with `$state.raw` cannot be mutated; it can only be _reassigned_. In other words, rather than assigning to a property of an object, or using an array method like `push`, replace the object or array altogether if you'd like to update it:
 
 ```diff
 <script>
 -	let numbers = $state([1, 2, 3]);
-+	let numbers = $state.frozen([1, 2, 3]);
++	let numbers = $state.raw([1, 2, 3]);
 </script>
 
 -<button onclick={() => numbers.push(numbers.length + 1)}>
@@ -89,9 +89,7 @@ State declared with `$state.frozen` cannot be mutated; it can only be _reassigne
 </p>
 ```
 
-This can improve performance with large arrays and objects that you weren't planning to mutate anyway, since it avoids the cost of making them reactive. Note that frozen state can _contain_ reactive state (for example, a frozen array of reactive objects).
-
-> Objects and arrays passed to `$state.frozen` will be shallowly frozen using `Object.freeze()`. If you don't want this, pass in a clone of the object or array instead.
+This can improve performance with large arrays and objects that you weren't planning to mutate anyway, since it avoids the cost of making them reactive. Note that raw state can _contain_ reactive state (for example, a raw array of reactive objects).
 
 ## `$state.snapshot`
 

@@ -2,12 +2,6 @@
 title: State
 ---
 
-- `$state` (.frozen)
-- `$derived` (.by)
-- using classes
-- getters/setters (what to do to keep reactivity "alive")
-- universal reactivity
-
 Svelte 5 uses _runes_, a powerful set of primitives for controlling reactivity inside your Svelte components and inside `.svelte.js` and `.svelte.ts` modules.
 
 Runes are function-like symbols that provide instructions to the Svelte compiler. You don't need to import them from anywhere — when you use Svelte, they're part of the language. This page describes the runes that are concerned with managing state in your application.
@@ -68,12 +62,12 @@ Objects and arrays are made deeply reactive by wrapping them with [`Proxies`](ht
 
 > Only POJOs (plain old JavaScript objects) are made deeply reactive. Reactivity will stop at class boundaries and leave those alone
 
-## `$state.frozen`
+## `$state.raw`
 
-State declared with `$state.frozen` cannot be mutated; it can only be _reassigned_. In other words, rather than assigning to a property of an object, or using an array method like `push`, replace the object or array altogether if you'd like to update it:
+State declared with `$state.raw` cannot be mutated; it can only be _reassigned_. In other words, rather than assigning to a property of an object, or using an array method like `push`, replace the object or array altogether if you'd like to update it:
 
 ```js
-let person = $state.frozen({
+let person = $state.raw({
 	name: 'Heraclitus',
 	age: 49
 });
@@ -88,11 +82,7 @@ person = {
 };
 ```
 
-This can improve performance with large arrays and objects that you weren't planning to mutate anyway, since it avoids the cost of making them reactive. Note that frozen state can _contain_ reactive state (for example, a frozen array of reactive objects).
-
-In development mode, the argument to `$state.frozen` will be shallowly frozen with `Object.freeze()`, to make it obvious if you accidentally mutate it.
-
-> Objects and arrays passed to `$state.frozen` will have a `Symbol` property added to them to signal to Svelte that they are frozen. If you don't want this, pass in a clone of the object or array instead. The argument cannot be an existing state proxy created with `$state(...)`.
+This can improve performance with large arrays and objects that you weren't planning to mutate anyway, since it avoids the cost of making them reactive. Note that raw state can _contain_ reactive state (for example, a raw array of reactive objects).
 
 ## `$state.snapshot`
 
