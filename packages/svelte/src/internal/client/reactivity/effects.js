@@ -61,7 +61,7 @@ export function validate_effect(rune) {
  * @param {Effect} effect
  * @param {Reaction} parent_effect
  */
-export function push_effect(effect, parent_effect) {
+function push_effect(effect, parent_effect) {
 	var parent_last = parent_effect.last;
 	if (parent_last === null) {
 		parent_effect.last = parent_effect.first = effect;

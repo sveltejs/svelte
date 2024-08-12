@@ -21,7 +21,7 @@ export function AssignmentExpression(node, context) {
  * @param {Context} context
  * @returns {Expression | null}
  */
-export function build_assignment(operator, left, right, context) {
+function build_assignment(operator, left, right, context) {
 	// Handle class private/public state assignment cases
 	if (
 		context.state.analysis.runes &&
