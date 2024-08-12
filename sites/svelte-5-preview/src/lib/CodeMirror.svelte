@@ -17,7 +17,7 @@
 	import { svelteTheme } from './theme.js';
 	import { autocomplete } from './autocomplete.js';
 
-	/** @type {{ diagnostics: import('@codemirror/lint').LintSource | undefined, readonly?: boolean, tab?: boolean, onchange: (value: string) => void }} */
+	/** @type {{ diagnostics?: import('@codemirror/lint').LintSource, readonly?: boolean, tab?: boolean, onchange?: (value: string) => void }} */
 	const { diagnostics = undefined, readonly = false, tab = true, onchange } = $props();
 
 	let code = $state('');

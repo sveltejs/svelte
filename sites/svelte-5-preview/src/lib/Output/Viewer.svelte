@@ -249,43 +249,49 @@
 </script>
 
 <div class="iframe-container">
-	<PaneWithPanel pos="90%" panel="Console">
-		<div slot="main">
-			<iframe
-				title="Result"
-				class:inited
-				bind:this={iframe}
-				sandbox={[
-					'allow-popups-to-escape-sandbox',
-					'allow-scripts',
-					'allow-popups',
-					'allow-forms',
-					'allow-pointer-lock',
-					'allow-top-navigation',
-					'allow-modals',
-					relaxed ? 'allow-same-origin' : ''
-				].join(' ')}
-				class={error || pending || pending_imports ? 'greyed-out' : ''}
-				srcdoc={BROWSER ? srcdoc : ''}
-			></iframe>
+	<PaneWithPanel pos={90} title="Console">
+		{#snippet main()}
+			<div>
+				<iframe
+					title="Result"
+					class:inited
+					bind:this={iframe}
+					sandbox={[
+						'allow-popups-to-escape-sandbox',
+						'allow-scripts',
+						'allow-popups',
+						'allow-forms',
+						'allow-pointer-lock',
+						'allow-top-navigation',
+						'allow-modals',
+						relaxed ? 'allow-same-origin' : ''
+					].join(' ')}
+					class={error || pending || pending_imports ? 'greyed-out' : ''}
+					srcdoc={BROWSER ? srcdoc : ''}
+				></iframe>
 
-			{#if $bundle?.error}
-				<ErrorOverlay error={$bundle.error} />
-			{/if}
-		</div>
-
-		<div slot="panel-header">
-			<button on:click|stopPropagation={clear_logs}>
-				{#if logs.length > 0}
-					({logs.length})
+				{#if $bundle?.error}
+					<ErrorOverlay error={$bundle.error} />
 				{/if}
-				Clear
-			</button>
-		</div>
+			</div>
+		{/snippet}
 
-		<section slot="panel-body">
-			<Console {logs} />
-		</section>
+		{#snippet header()}
+			<div>
+				<button on:click|stopPropagation={clear_logs}>
+					{#if logs.length > 0}
+						({logs.length})
+					{/if}
+					Clear
+				</button>
+			</div>
+		{/snippet}
+
+		{#snippet body()}
+			<section>
+				<Console {logs} />
+			</section>
+		{/snippet}
 	</PaneWithPanel>
 
 	<div class="overlay">

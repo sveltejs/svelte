@@ -48,6 +48,9 @@
   "pnpm": {
     "overrides": {
       "xml2js": "^0.6.0"
+    },
+    "patchedDependencies": {
+      "@rich_harris/svelte-split-pane@1.1.3": "patches/@rich_harris__svelte-split-pane@1.1.3.patch"
     }
   }
 }

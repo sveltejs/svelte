@@ -1,57 +1,68 @@
 <script>
+	/** @import { Snippet } from 'svelte' */
 	import { spring } from 'svelte/motion';
 	import { SplitPane } from '@rich_harris/svelte-split-pane';
 
-	const UNIT_REGEX = /(\d+)(?:(px|rem|%|em))/i;
+	/** @type {{ title: string; pos: number, main?: Snippet, header?: Snippet, body?: Snippet }} */
+	let { title, pos, main, header, body } = $props();
 
-	/** @type {string} */
-	export let panel;
+	let expanded_pos = Math.min(pos, 70);
 
-	/** @type {Exclude<import('@rich_harris/svelte-split-pane/dist/SplitPane.svelte').SplitPaneProps['max'], undefined>} */
-	export let pos = '90%';
+	const max = 90;
 
-	$: previous_pos = Math.min(+pos.replace(UNIT_REGEX, '$1'), 70);
-
-	/** @type {Exclude<import('@rich_harris/svelte-split-pane/dist/SplitPane.svelte').SplitPaneProps['max'], undefined>} */
-	let max = '90%';
-
-	// we can't bind to the spring itself, but we
-	// can still use the spring to drive `pos`
-	const driver = spring(+pos.replace(UNIT_REGEX, '$1'), {
+	const driver = spring(pos, {
 		stiffness: 0.2,
 		damping: 0.5
 	});
 
-	// @ts-ignore
-	$: pos = $driver + '%';
+	const expanded = $derived(pos < 80);
 
 	const toggle = () => {
-		const numeric_pos = +pos.replace(UNIT_REGEX, '$1');
+		// The spring might be out of date, so snap it before animating the toggle
 
-		driver.set(numeric_pos, { hard: true });
-
-		if (numeric_pos > 80) {
-			driver.set(previous_pos);
+		if (expanded) {
+			expanded_pos = pos;
+			driver.set(max);
+			pos = max;
 		} else {
-			previous_pos = numeric_pos;
-			driver.set(+max.replace(UNIT_REGEX, '$1'));
+			driver.set(expanded_pos);
+			pos = expanded_pos;
 		}
 	};
 </script>
 
-<SplitPane {max} min="10%" type="vertical" bind:pos priority="max">
+<SplitPane
+	max="{max}%"
+	min="10%"
+	type="vertical"
+	pos="{$driver}%"
+	priority="max"
+	on:change={(ev) => {
+		pos = Number(ev.detail.substring(0, ev.detail.length - 1));
+	}}
+>
 	<section slot="a">
-		<slot name="main" />
+		{@render main?.()}
 	</section>
 
 	<section slot="b">
 		<div class="panel-header">
-			<button class="panel-heading" on:click={toggle}>{panel}</button>
-			<slot name="panel-header" />
+			<button class="panel-heading" onclick={toggle}>
+				<svg viewBox="0 0 20 20" fill="currentColor" class="chevron" class:expanded>
+					<path
+						fill-rule="evenodd"
+						d="M9.47 6.47a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 1 1-1.06 1.06L10 8.06l-3.72 3.72a.75.75 0 0 1-1.06-1.06l4.25-4.25Z"
+						clip-rule="evenodd"
+					/>
+				</svg>
+
+				{title}
+			</button>
+			{@render header?.()}
 		</div>
 
 		<div class="panel-body">
-			<slot name="panel-body" />
+			{@render body?.()}
 		</div>
 	</section>
 </SplitPane>
@@ -66,6 +77,13 @@
 		cursor: pointer;
 	}
 
+	.chevron {
+		transition: transform 0.2s ease-in-out;
+	}
+	.chevron.expanded {
+		transform: rotate(180deg);
+	}
+
 	.panel-body {
 		overflow: auto;
 	}
@@ -75,6 +93,8 @@
 		color: var(--sk-text-1, #333);
 		flex: 1;
 		text-align: left;
+		display: flex;
+		align-items: center;
 	}
 
 	section {

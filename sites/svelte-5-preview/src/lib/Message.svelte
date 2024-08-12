@@ -7,7 +7,7 @@
 	 *   details?: import('./types').MessageDetails | undefined,
 	 *   filename?: string | undefined,
 	 *   truncate?: boolean,
-	 *   children: import('svelte').Snippet,
+	 *   children?: import('svelte').Snippet,
 	 * }} */
 	const { kind = 'info', details = undefined, filename = undefined, truncate = false, children } = $props();
 
@@ -37,7 +37,7 @@
 			{message(details)}
 		</button>
 	{:else}
-		{@render children()}
+		{@render children?.()}
 	{/if}
 </div>
 
