@@ -2346,6 +2346,18 @@ declare module 'svelte/store' {
 	 * https://svelte.dev/docs/svelte-store#get
 	 * */
 	export function get<T>(store: Readable<T>): T;
+
+	export function fromState<V>(get: () => V, set: (v: V) => void): Writable<V>;
+
+	export function fromState<V>(get: () => V): Readable<V>;
+
+	export function toState<V>(store: Writable<V>): {
+		current: V;
+	};
+
+	export function toState<V>(store: Readable<V>): {
+		readonly current: V;
+	};
 	/** One or more `Readable`s. */
 	type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
 

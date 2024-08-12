@@ -665,4 +665,18 @@ describe('toState', () => {
 
 		teardown();
 	});
+
+	it('creates state from a readable store', () => {
+		const store = readable(0);
+
+		const count = toState(store);
+
+		assert.equal(count.current, 0);
+
+		assert.throws(
+			// @ts-expect-error property is readonly
+			() => (count.current += 1),
+			'Cannot set property current of #<Object> which has only a getter'
+		);
+	});
 });
