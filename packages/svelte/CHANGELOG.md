@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.217
+
+### Patch Changes
+
+- feat: deprecate `svelte:component` ([#12694](https://github.com/sveltejs/svelte/pull/12694))
+
+- feat: treat tag with `.` as a component, even if lowercase ([#12798](https://github.com/sveltejs/svelte/pull/12798))
+
 ## 5.0.0-next.216
 
 ### Patch Changes
