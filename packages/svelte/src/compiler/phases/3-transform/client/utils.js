@@ -20,7 +20,7 @@ import { get_value } from './visitors/shared/declarations.js';
  */
 export function is_state_source(binding, state) {
 	return (
-		(binding.kind === 'state' || binding.kind === 'frozen_state') &&
+		(binding.kind === 'state' || binding.kind === 'raw_state') &&
 		(!state.analysis.immutable || binding.reassigned || state.analysis.accessors)
 	);
 }

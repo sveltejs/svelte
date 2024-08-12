@@ -133,7 +133,7 @@ export function Identifier(node, context) {
 						binding.initial.arguments.length === 1 &&
 						binding.initial.arguments[0].type !== 'SpreadElement' &&
 						!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
-				binding.kind === 'frozen_state' ||
+				binding.kind === 'raw_state' ||
 				binding.kind === 'derived') &&
 			// We're only concerned with reads here
 			(parent.type !== 'AssignmentExpression' || parent.left !== node) &&

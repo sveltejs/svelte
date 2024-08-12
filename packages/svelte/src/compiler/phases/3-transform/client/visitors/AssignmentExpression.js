@@ -40,7 +40,7 @@ export function build_assignment(operator, left, right, context) {
 				if (should_proxy_or_freeze(value, context.state.scope)) {
 					transformed = true;
 					value =
-						private_state.kind === 'frozen_state'
+						private_state.kind === 'raw_state'
 							? value
 							: build_proxy_reassignment(value, private_state.id);
 				}
@@ -60,7 +60,7 @@ export function build_assignment(operator, left, right, context) {
 				return b.assignment(
 					operator,
 					/** @type {Pattern} */ (context.visit(left)),
-					public_state.kind === 'frozen_state'
+					public_state.kind === 'raw_state'
 						? value
 						: build_proxy_reassignment(value, public_state.id)
 				);
@@ -102,8 +102,7 @@ export function build_assignment(operator, left, right, context) {
 			context.state.analysis.runes &&
 			should_proxy_or_freeze(value, context.state.scope)
 		) {
-			value =
-				binding.kind === 'frozen_state' ? value : build_proxy_reassignment(value, object.name);
+			value = binding.kind === 'raw_state' ? value : build_proxy_reassignment(value, object.name);
 		}
 
 		return transform.assign(object, value);

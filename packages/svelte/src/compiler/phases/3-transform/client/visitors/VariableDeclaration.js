@@ -151,7 +151,7 @@ export function VariableDeclaration(node, context) {
 							const binding = context.state.scope.get(/** @type {Identifier} */ (path.node).name);
 							return b.declarator(
 								path.node,
-								binding?.kind === 'state' || binding?.kind === 'frozen_state'
+								binding?.kind === 'state' || binding?.kind === 'raw_state'
 									? create_state_declarator(binding.node, value)
 									: value
 							);

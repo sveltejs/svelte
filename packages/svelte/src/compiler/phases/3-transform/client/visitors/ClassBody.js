@@ -54,7 +54,7 @@ export function ClassBody(node, context) {
 							rune === '$state'
 								? 'state'
 								: rune === '$state.raw'
-									? 'frozen_state'
+									? 'raw_state'
 									: rune === '$derived.by'
 										? 'derived_by'
 										: 'derived',
@@ -116,7 +116,7 @@ export function ClassBody(node, context) {
 									'$.source',
 									should_proxy_or_freeze(init, context.state.scope) ? b.call('$.proxy', init) : init
 								)
-							: field.kind === 'frozen_state'
+							: field.kind === 'raw_state'
 								? b.call('$.source', init)
 								: field.kind === 'derived_by'
 									? b.call('$.derived', init)
@@ -149,7 +149,7 @@ export function ClassBody(node, context) {
 						);
 					}
 
-					if (field.kind === 'frozen_state') {
+					if (field.kind === 'raw_state') {
 						// set foo(value) { this.#foo = value; }
 						const value = b.id('value');
 						body.push(

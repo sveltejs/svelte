@@ -34,7 +34,7 @@ export function BindDirective(node, context) {
 			node.name !== 'this' && // bind:this also works for regular variables
 			(!binding ||
 				(binding.kind !== 'state' &&
-					binding.kind !== 'frozen_state' &&
+					binding.kind !== 'raw_state' &&
 					binding.kind !== 'prop' &&
 					binding.kind !== 'bindable_prop' &&
 					binding.kind !== 'each' &&

@@ -33,7 +33,7 @@ export function VariableDeclarator(node, context) {
 					rune === '$state'
 						? 'state'
 						: rune === '$state.raw'
-							? 'frozen_state'
+							? 'raw_state'
 							: rune === '$derived' || rune === '$derived.by'
 								? 'derived'
 								: path.is_rest
