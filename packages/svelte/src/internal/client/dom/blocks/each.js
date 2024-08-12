@@ -3,7 +3,7 @@ import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
 	EACH_IS_CONTROLLED,
-	EACH_IS_STRICT_EQUALS,
+	EACH_ITEM_IMMUTABLE,
 	EACH_ITEM_REACTIVE,
 	HYDRATION_END,
 	HYDRATION_START_ELSE
@@ -457,7 +457,7 @@ function create_item(anchor, state, prev, next, value, key, index, render_fn, fl
 
 	try {
 		var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
-		var mutable = (flags & EACH_IS_STRICT_EQUALS) === 0;
+		var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
 
 		var v = reactive ? (mutable ? mutable_source(value) : source(value)) : value;
 		var i = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);

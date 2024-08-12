@@ -6,7 +6,7 @@ import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
 	EACH_IS_CONTROLLED,
-	EACH_IS_STRICT_EQUALS,
+	EACH_ITEM_IMMUTABLE,
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED
 } from '../../../../../constants.js';
@@ -82,7 +82,7 @@ export function EachBlock(node, context) {
 	}
 
 	if (context.state.analysis.runes && !uses_store) {
-		flags |= EACH_IS_STRICT_EQUALS;
+		flags |= EACH_ITEM_IMMUTABLE;
 	}
 
 	// Since `animate:` can only appear on elements that are the sole child of a keyed each block,
