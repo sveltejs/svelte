@@ -241,7 +241,7 @@ export function get(store) {
  * @param {(v: V) => void} [set]
  * @returns {Writable<V> | Readable<V>}
  */
-export function fromState(get, set) {
+export function toStore(get, set) {
 	const store = writable(get(), (set) => {
 		let ran = false;
 
@@ -287,7 +287,7 @@ export function fromState(get, set) {
  * @template V
  * @param {Writable<V> | Readable<V>} store
  */
-export function toState(store) {
+export function fromStore(store) {
 	let value = /** @type {V} */ (undefined);
 	let version = source(0);
 	let subscribers = 0;

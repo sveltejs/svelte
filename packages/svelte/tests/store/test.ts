@@ -5,9 +5,9 @@ import {
 	derived,
 	get,
 	readonly,
-	fromState,
+	toStore,
 	type Readable,
-	toState
+	fromStore
 } from 'svelte/store';
 import { source, set } from '../../src/internal/client/reactivity/sources';
 import * as $ from '../../src/internal/client/runtime';
@@ -587,11 +587,11 @@ describe('readonly', () => {
 	});
 });
 
-describe('fromState', () => {
+describe('toStore', () => {
 	it('creates a readable store from state', () => {
 		const count = source(0);
 
-		const store = fromState(() => $.get(count));
+		const store = toStore(() => $.get(count));
 
 		const log: number[] = [];
 
@@ -611,7 +611,7 @@ describe('fromState', () => {
 	it('creates a writable store from state', () => {
 		const count = source(0);
 
-		const store = fromState(
+		const store = toStore(
 			() => $.get(count),
 			(v) => set(count, v)
 		);
@@ -635,11 +635,11 @@ describe('fromState', () => {
 	});
 });
 
-describe('toState', () => {
+describe('fromStore', () => {
 	it('creates state from a writable store', () => {
 		const store = writable(0);
 
-		const count = toState(store);
+		const count = fromStore(store);
 
 		assert.equal(count.current, 0);
 
@@ -669,7 +669,7 @@ describe('toState', () => {
 	it('creates state from a readable store', () => {
 		const store = readable(0);
 
-		const count = toState(store);
+		const count = fromStore(store);
 
 		assert.equal(count.current, 0);
 
