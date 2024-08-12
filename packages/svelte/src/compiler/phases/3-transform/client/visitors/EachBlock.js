@@ -7,8 +7,7 @@ import {
 	EACH_IS_ANIMATED,
 	EACH_IS_CONTROLLED,
 	EACH_ITEM_IMMUTABLE,
-	EACH_ITEM_REACTIVE,
-	EACH_KEYED
+	EACH_ITEM_REACTIVE
 } from '../../../../../constants.js';
 import { dev } from '../../../../state.js';
 import { extract_paths, object } from '../../../../utils/ast.js';
@@ -42,12 +41,8 @@ export function EachBlock(node, context) {
 
 	let flags = 0;
 
-	if (node.metadata.keyed) {
-		flags |= EACH_KEYED;
-
-		if (node.index) {
-			flags |= EACH_INDEX_REACTIVE;
-		}
+	if (node.metadata.keyed && node.index) {
+		flags |= EACH_INDEX_REACTIVE;
 	}
 
 	const key_is_item =
@@ -252,7 +247,7 @@ export function EachBlock(node, context) {
 		declarations.push(b.let(node.index, index));
 	}
 
-	if (dev && (flags & EACH_KEYED) !== 0) {
+	if (dev && node.metadata.keyed) {
 		context.state.init.push(
 			b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
 		);
