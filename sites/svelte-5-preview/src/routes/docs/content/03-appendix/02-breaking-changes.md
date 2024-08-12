@@ -144,9 +144,15 @@ Previously, Svelte employed a very complicated algorithm to determine if whitesp
 
 As before, you can disable whitespace trimming by setting the `preserveWhitespace` option in your compiler settings or on a per-component basis in `<svelte:options>`.
 
-## More recent browser required
+## Modern browser required
 
-Svelte now use Mutation Observers instead of IFrames to measure dimensions for `bind:clientWidth/clientHeight/offsetWidth/offsetHeight`. It also no longer listens to the `change` event on range inputs. Lastly, the `legacy` option was removed (or rather, replaced with a different set of settings).
+Svelte 5 requires a modern browser (in other words, not Internet Explorer) for various reasons:
+
+- it uses [`Proxies`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy)
+- elements with `clientWidth`/`clientHeight`/`offsetWidth`/`offsetHeight` bindings use a `ResizeObserver` rather than a convoluted `<iframe>` hack
+- `<input type="range" bind:value={...} />` only uses an `input` event listener, rather than also listening for `change` events as a fallback
+
+The `legacy` compiler option, which generated bulkier but IE-friendly code, no longer exists.
 
 ## Changes to compiler options
 
