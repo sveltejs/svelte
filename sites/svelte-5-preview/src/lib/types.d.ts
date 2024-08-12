@@ -68,6 +68,6 @@ export type ReplContext = {
 	migrate(): Promise<void>;
 	handle_select(filename: string): Promise<void>;
 	handle_change(value: string): Promise<void>;
-	go_to_warning_pos(item?: MessageDetails): Promise<void>;
+	go_to_warning_pos(item?: { start?: { character: number }; filename?: string }): Promise<void>;
 	clear_state(): void;
 };

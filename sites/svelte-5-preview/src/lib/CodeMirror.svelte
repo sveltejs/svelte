@@ -57,7 +57,9 @@
 
 	/** @param {number} pos */
 	export function setCursor(pos) {
-		cursor_pos = pos;
+		$cmInstance.view?.dispatch({
+			selection: { anchor: pos, head: pos }
+		});
 	}
 
 	/** @type {(...val: any) => void} */
@@ -161,8 +163,6 @@
 	/** @type {import('@codemirror/state').Extension[]} */
 	let extensions = [];
 
-	let cursor_pos = $state(0);
-
 	$effect(() => {
 		if ($cmInstance.view) {
 			fulfill_module_editor_ready();
@@ -209,7 +209,6 @@
 		tabSize: 2,
 		theme: svelteTheme,
 		readonly,
-		cursorPos: cursor_pos,
 		lang,
 		langMap: {
 			js: () => import('@codemirror/lang-javascript').then((m) => m.javascript()),
