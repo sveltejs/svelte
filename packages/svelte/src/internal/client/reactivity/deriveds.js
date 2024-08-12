@@ -92,18 +92,21 @@ let stack = [];
  */
 export function update_derived(derived) {
 	if (DEV) {
-		if (stack.includes(derived)) {
-			e.derived_references_self();
+		try {
+			if (stack.includes(derived)) {
+				e.derived_references_self();
+			}
+
+			stack.push(derived);
+
+			destroy_derived_children(derived);
+			var value = update_reaction(derived);
+		} finally {
+			stack.pop();
 		}
-
-		stack.push(derived);
-	}
-
-	destroy_derived_children(derived);
-	var value = update_reaction(derived);
-
-	if (DEV) {
-		stack.pop();
+	} else {
+		destroy_derived_children(derived);
+		var value = update_reaction(derived);
 	}
 
 	var status =
