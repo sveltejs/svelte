@@ -1,7 +1,7 @@
 /** @import { Expression, Identifier } from 'estree' */
 /** @import { Context } from '../types' */
 import is_reference from 'is-reference';
-import { should_proxy_or_freeze } from '../../3-transform/client/utils.js';
+import { should_proxy } from '../../3-transform/client/utils.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { is_rune } from '../../../../utils.js';
@@ -136,7 +136,7 @@ export function Identifier(node, context) {
 					(binding.initial?.type === 'CallExpression' &&
 						binding.initial.arguments.length === 1 &&
 						binding.initial.arguments[0].type !== 'SpreadElement' &&
-						!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
+						!should_proxy(binding.initial.arguments[0], context.state.scope)))) ||
 				binding.kind === 'raw_state' ||
 				binding.kind === 'derived') &&
 			// We're only concerned with reads here

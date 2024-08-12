@@ -3,7 +3,7 @@
 import * as b from '../../../../utils/builders.js';
 import { build_assignment_value } from '../../../../utils/ast.js';
 import { is_ignored } from '../../../../state.js';
-import { build_proxy_reassignment, should_proxy_or_freeze } from '../utils.js';
+import { build_proxy_reassignment, should_proxy } from '../utils.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
 
 /**
@@ -37,7 +37,7 @@ export function build_assignment(operator, left, right, context) {
 					context.visit(build_assignment_value(operator, left, right))
 				);
 
-				if (should_proxy_or_freeze(value, context.state.scope)) {
+				if (should_proxy(value, context.state.scope)) {
 					transformed = true;
 					value =
 						private_state.kind === 'raw_state'
@@ -54,7 +54,7 @@ export function build_assignment(operator, left, right, context) {
 		} else if (left.property.type === 'Identifier' && context.state.in_constructor) {
 			const public_state = context.state.public_state.get(left.property.name);
 
-			if (public_state !== undefined && should_proxy_or_freeze(right, context.state.scope)) {
+			if (public_state !== undefined && should_proxy(right, context.state.scope)) {
 				const value = /** @type {Expression} */ (context.visit(right));
 
 				return b.assignment(
@@ -100,7 +100,7 @@ export function build_assignment(operator, left, right, context) {
 			!is_primitive &&
 			binding.kind !== 'prop' &&
 			context.state.analysis.runes &&
-			should_proxy_or_freeze(value, context.state.scope)
+			should_proxy(value, context.state.scope)
 		) {
 			value = binding.kind === 'raw_state' ? value : build_proxy_reassignment(value, object.name);
 		}

@@ -238,7 +238,7 @@ export function is_prop_source(binding, state) {
  * @param {Expression} node
  * @param {Scope | null} scope
  */
-export function should_proxy_or_freeze(node, scope) {
+export function should_proxy(node, scope) {
 	if (
 		!node ||
 		node.type === 'Literal' ||
@@ -263,7 +263,7 @@ export function should_proxy_or_freeze(node, scope) {
 			binding.initial.type !== 'ImportDeclaration' &&
 			binding.initial.type !== 'EachBlock'
 		) {
-			return should_proxy_or_freeze(binding.initial, null);
+			return should_proxy(binding.initial, null);
 		}
 	}
 	return true;
