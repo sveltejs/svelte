@@ -14,7 +14,7 @@
 
 		{#if error.start}
 			<button class="position" onclick={() => go_to_warning_pos(error)}>
-				<small>line {error.start.line} column {error.start.column}</small>
+				<small>line {error.start.line} column {error.start.column + 1}</small>
 			</button>
 		{/if}
 	</div>

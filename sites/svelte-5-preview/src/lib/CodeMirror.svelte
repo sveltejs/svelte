@@ -102,7 +102,8 @@
 	}
 
 	/** @type {StateEffectType<Range<Decoration>[]>} */
-	const addMarksDecoration = StateEffect.define();
+	const setMarksDecoration = StateEffect.define();
+	const clearMarksDecoration = StateEffect.define();
 
 	// This value must be added to the set of extensions to enable this
 	const markField = StateField.define({
@@ -116,7 +117,11 @@
 			value = value.map(tr.changes);
 			// If this transaction adds or removes decorations, apply those changes
 			for (let effect of tr.effects) {
-				if (effect.is(addMarksDecoration)) value = value.update({ add: effect.value, sort: true });
+				if (effect.is(setMarksDecoration)) {
+					value = value.update({ filter: () => false, add: effect.value });
+				} else if (effect.is(clearMarksDecoration)) {
+					value = value.update({ filter: () => false });
+				}
 			}
 			return value;
 		},
@@ -136,16 +141,13 @@
 		});
 
 		$cmInstance.view?.dispatch({
-			effects: [
-				StateEffect.appendConfig.of(markField),
-				addMarksDecoration.of([executedMark.range(from, to)])
-			]
+			effects: [setMarksDecoration.of([executedMark.range(from, to)])]
 		});
 	}
 
 	export function unmarkText() {
 		$cmInstance.view?.dispatch({
-			effects: StateEffect.reconfigure.of($cmInstance.extensions ?? [])
+			effects: [clearMarksDecoration.of(null)]
 		});
 	}
 
@@ -220,7 +222,7 @@
 		lint: diagnostics,
 		lintOptions: { delay: 200 },
 		autocomplete: true,
-		extensions: [svelte_rune_completions, js_rune_completions, watcher],
+		extensions: [svelte_rune_completions, js_rune_completions, watcher, markField],
 		instanceStore: cmInstance
 	}}
 	oncodemirror:textChange={(/** @type {{ detail: string; }} */ event) => {

@@ -278,8 +278,6 @@
 	/** @type {import('./workers/workers').CompileMessageData | null} */
 	let compiled = $state(null);
 
-	$inspect(compiled);
-
 	/**
 	 * @param {File | null} $selected
 	 * @param {import('svelte/compiler').CompileOptions} $compile_options

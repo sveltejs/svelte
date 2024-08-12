@@ -3,20 +3,20 @@
 	import AstNode from './AstNode.svelte';
 	import { cursorIndex } from '../CodeMirror.svelte';
 
-	/** @type {import('svelte/types/compiler/interfaces').Ast} */
-	export let ast;
-	export let autoscroll = true;
+	/** @type {{ ast: unknown; autoscroll?: boolean }} */
+	const { ast, autoscroll = true } = $props();
 
 	// $cursor_index may go over the max since ast computation is usually slower.
 	// clamping this helps prevent the collapse view flashing
-	$: max_cursor_index = !ast ? $cursorIndex : Math.min($cursorIndex, get_ast_max_end(ast));
-
-	$: path_nodes = find_deepest_path(max_cursor_index, [ast]) || [];
+	const max_cursor_index = $derived(
+		!ast ? $cursorIndex : Math.min($cursorIndex, get_ast_max_end(ast))
+	);
+	const path_nodes = $derived(find_deepest_path(max_cursor_index, [ast]) || []);
 
 	/**
 	 * @param {number} cursor
-	 * @param {import('svelte/types/compiler/interfaces').Ast[]} paths
-	 * @returns {import('svelte/types/compiler/interfaces').Ast[] | undefined}
+	 * @param {unknown[]} paths
+	 * @returns {unknown[] | undefined}
 	 */
 	function find_deepest_path(cursor, paths) {
 		const value = paths[paths.length - 1];
@@ -31,6 +31,8 @@
 		}
 
 		if (
+			value !== null &&
+			typeof value === 'object' &&
 			'start' in value &&
 			'end' in value &&
 			typeof value.start === 'number' &&
@@ -42,9 +44,11 @@
 		}
 	}
 
-	/** @param {import('svelte/types/compiler/interfaces').Ast} ast */
+	/** @param {unknown} ast */
 	function get_ast_max_end(ast) {
 		let max_end = 0;
+
+		if (ast === null || typeof ast !== 'object') return max_end;
 
 		for (const node of Object.values(ast)) {
 			if (node && typeof node.end === 'number' && node.end > max_end) {
