@@ -81,6 +81,14 @@ export function push_effect(effect, parent_effect) {
  */
 function create_effect(type, fn, sync, push = true) {
 	var is_root = (type & ROOT_EFFECT) !== 0;
+	var parent_effect = current_effect;
+
+	if (DEV) {
+		// Ensure the parent is never an inspect effect
+		while (parent_effect !== null && (parent_effect.f & INSPECT_EFFECT) !== 0) {
+			parent_effect = parent_effect.parent;
+		}
+	}
 
 	/** @type {Effect} */
 	var effect = {
@@ -92,7 +100,7 @@ function create_effect(type, fn, sync, push = true) {
 		fn,
 		last: null,
 		next: null,
-		parent: is_root ? null : current_effect,
+		parent: is_root ? null : parent_effect,
 		prev: null,
 		teardown: null,
 		transitions: null,
@@ -130,8 +138,8 @@ function create_effect(type, fn, sync, push = true) {
 		effect.teardown === null;
 
 	if (!inert && !is_root && push) {
-		if (current_effect !== null) {
-			push_effect(effect, current_effect);
+		if (parent_effect !== null) {
+			push_effect(effect, parent_effect);
 		}
 
 		// if we're in a derived, add the effect there too
