@@ -5,7 +5,7 @@ import { dev, is_ignored } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { regex_invalid_identifier_chars } from '../../../patterns.js';
 import { get_rune } from '../../../scope.js';
-import { build_proxy_reassignment, should_proxy_or_freeze } from '../utils.js';
+import { build_proxy_reassignment, should_proxy } from '../utils.js';
 
 /**
  * @param {ClassBody} node
@@ -44,7 +44,7 @@ export function ClassBody(node, context) {
 				const rune = get_rune(definition.value, context.state.scope);
 				if (
 					rune === '$state' ||
-					rune === '$state.frozen' ||
+					rune === '$state.raw' ||
 					rune === '$derived' ||
 					rune === '$derived.by'
 				) {
@@ -53,8 +53,8 @@ export function ClassBody(node, context) {
 						kind:
 							rune === '$state'
 								? 'state'
-								: rune === '$state.frozen'
-									? 'frozen_state'
+								: rune === '$state.raw'
+									? 'raw_state'
 									: rune === '$derived.by'
 										? 'derived_by'
 										: 'derived',
@@ -114,15 +114,10 @@ export function ClassBody(node, context) {
 						field.kind === 'state'
 							? b.call(
 									'$.source',
-									should_proxy_or_freeze(init, context.state.scope) ? b.call('$.proxy', init) : init
+									should_proxy(init, context.state.scope) ? b.call('$.proxy', init) : init
 								)
-							: field.kind === 'frozen_state'
-								? b.call(
-										'$.source',
-										should_proxy_or_freeze(init, context.state.scope)
-											? b.call('$.freeze', init)
-											: init
-									)
+							: field.kind === 'raw_state'
+								? b.call('$.source', init)
 								: field.kind === 'derived_by'
 									? b.call('$.derived', init)
 									: b.call('$.derived', b.thunk(init));
@@ -154,16 +149,11 @@ export function ClassBody(node, context) {
 						);
 					}
 
-					if (field.kind === 'frozen_state') {
+					if (field.kind === 'raw_state') {
 						// set foo(value) { this.#foo = value; }
 						const value = b.id('value');
 						body.push(
-							b.method(
-								'set',
-								definition.key,
-								[value],
-								[b.stmt(b.call('$.set', member, b.call('$.freeze', value)))]
-							)
+							b.method('set', definition.key, [value], [b.stmt(b.call('$.set', member, value))])
 						);
 					}
 

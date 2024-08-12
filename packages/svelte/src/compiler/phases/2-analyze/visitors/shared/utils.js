@@ -78,7 +78,7 @@ export function validate_no_const_assignment(node, argument, scope, is_binding) 
 			// 	// This takes advantage of the fact that we don't assign initial for let directives and then/catch variables.
 			// 	// If we start doing that, we need another property on the binding to differentiate, or give up on the more precise error message.
 			// 	binding.kind !== 'state' &&
-			// 		binding.kind !== 'frozen_state' &&
+			// 		binding.kind !== 'raw_state' &&
 			// 		(binding.kind !== 'normal' || !binding.initial)
 			// );
 

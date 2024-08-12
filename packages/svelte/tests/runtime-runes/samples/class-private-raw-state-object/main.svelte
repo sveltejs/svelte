@@ -1,9 +1,9 @@
 <script>
 	class Counter {
-		#count = $state.frozen(0);
+		#count = $state.raw();
 
 		constructor(initial_count) {
-			this.#count = initial_count;
+			this.#count = { a: initial_count };
 		}
 
 		get count() {
@@ -16,4 +16,8 @@
 	const counter = new Counter(0);
 </script>
 
-<button on:click={() => counter.count++}>{counter.count}</button>
+<button
+	on:click={() => {
+		counter.count.a++;
+	}}>{counter.count.a}</button
+>

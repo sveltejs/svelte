@@ -7,12 +7,7 @@ import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
-import {
-	get_prop_source,
-	is_prop_source,
-	is_state_source,
-	should_proxy_or_freeze
-} from '../utils.js';
+import { get_prop_source, is_prop_source, is_state_source, should_proxy } from '../utils.js';
 import { is_hoisted_function } from '../../utils.js';
 
 /**
@@ -86,7 +81,7 @@ export function VariableDeclaration(node, context) {
 							if (
 								initial &&
 								binding.kind === 'bindable_prop' &&
-								should_proxy_or_freeze(initial, context.state.scope)
+								should_proxy(initial, context.state.scope)
 							) {
 								initial = b.call('$.proxy', initial);
 							}
@@ -119,7 +114,7 @@ export function VariableDeclaration(node, context) {
 			const value =
 				args.length === 0 ? b.id('undefined') : /** @type {Expression} */ (context.visit(args[0]));
 
-			if (rune === '$state' || rune === '$state.frozen') {
+			if (rune === '$state' || rune === '$state.raw') {
 				/**
 				 * @param {Identifier} id
 				 * @param {Expression} value
@@ -128,8 +123,8 @@ export function VariableDeclaration(node, context) {
 					const binding = /** @type {import('#compiler').Binding} */ (
 						context.state.scope.get(id.name)
 					);
-					if (should_proxy_or_freeze(value, context.state.scope)) {
-						value = b.call(rune === '$state' ? '$.proxy' : '$.freeze', value);
+					if (rune === '$state' && should_proxy(value, context.state.scope)) {
+						value = b.call('$.proxy', value);
 					}
 					if (is_state_source(binding, context.state)) {
 						value = b.call('$.source', value);
@@ -151,7 +146,7 @@ export function VariableDeclaration(node, context) {
 							const binding = context.state.scope.get(/** @type {Identifier} */ (path.node).name);
 							return b.declarator(
 								path.node,
-								binding?.kind === 'state' || binding?.kind === 'frozen_state'
+								binding?.kind === 'state' || binding?.kind === 'raw_state'
 									? create_state_declarator(binding.node, value)
 									: value
 							);

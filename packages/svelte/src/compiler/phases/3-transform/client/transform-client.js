@@ -271,19 +271,9 @@ export function client_component(analysis, options) {
 			}
 		}
 
-		if (binding?.kind === 'state' || binding?.kind === 'frozen_state') {
-			return [
-				getter,
-				b.set(alias ?? name, [
-					b.stmt(
-						b.call(
-							'$.set',
-							b.id(name),
-							b.call(binding.kind === 'state' ? '$.proxy' : '$.freeze', b.id('$$value'))
-						)
-					)
-				])
-			];
+		if (binding?.kind === 'state' || binding?.kind === 'raw_state') {
+			const value = binding.kind === 'state' ? b.call('$.proxy', b.id('$$value')) : b.id('$$value');
+			return [getter, b.set(alias ?? name, [b.stmt(b.call('$.set', b.id(name), value))])];
 		}
 
 		return getter;

@@ -26,7 +26,7 @@ export function ExportSpecifier(node, context) {
 			if (
 				binding !== null &&
 				(binding.kind === 'state' ||
-					binding.kind === 'frozen_state' ||
+					binding.kind === 'raw_state' ||
 					(binding.kind === 'normal' &&
 						(binding.declaration_kind === 'let' || binding.declaration_kind === 'var')))
 			) {
@@ -60,7 +60,7 @@ function validate_export(node, scope, name) {
 		e.derived_invalid_export(node);
 	}
 
-	if ((binding.kind === 'state' || binding.kind === 'frozen_state') && binding.reassigned) {
+	if ((binding.kind === 'state' || binding.kind === 'raw_state') && binding.reassigned) {
 		e.state_invalid_export(node);
 	}
 }

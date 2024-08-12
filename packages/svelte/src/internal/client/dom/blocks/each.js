@@ -3,9 +3,8 @@ import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
 	EACH_IS_CONTROLLED,
-	EACH_IS_STRICT_EQUALS,
+	EACH_ITEM_IMMUTABLE,
 	EACH_ITEM_REACTIVE,
-	EACH_KEYED,
 	HYDRATION_END,
 	HYDRATION_START_ELSE
 } from '../../../../constants.js';
@@ -29,7 +28,7 @@ import {
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen } from '../../../shared/utils.js';
-import { INERT, STATE_FROZEN_SYMBOL, STATE_SYMBOL } from '../../constants.js';
+import { INERT, STATE_SYMBOL } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
 import { current_effect } from '../../runtime.js';
 
@@ -138,18 +137,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				: Array.from(collection);
 
 		var length = array.length;
-
-		// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
-		// are treated as reactive, so they get wrapped in a signal.
-		var flags = state.flags;
-		if (
-			(flags & EACH_IS_STRICT_EQUALS) !== 0 &&
-			!is_frozen(array) &&
-			!(STATE_FROZEN_SYMBOL in array) &&
-			!(STATE_SYMBOL in array)
-		) {
-			flags ^= EACH_IS_STRICT_EQUALS;
-		}
 
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
@@ -470,7 +457,7 @@ function create_item(anchor, state, prev, next, value, key, index, render_fn, fl
 
 	try {
 		var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
-		var mutable = (flags & EACH_IS_STRICT_EQUALS) === 0;
+		var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
 
 		var v = reactive ? (mutable ? mutable_source(value) : source(value)) : value;
 		var i = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);

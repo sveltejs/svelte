@@ -64,10 +64,6 @@
 
 > The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
 
-## state_frozen_invalid_argument
-
-> The argument to `$state.frozen(...)` cannot be an object created with `$state(...)`. You should create a copy of it first, for example with `$state.snapshot`
-
 ## state_prototype_fixed
 
 > Cannot set prototype of `$state` object

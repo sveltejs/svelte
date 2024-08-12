@@ -1,6 +1,6 @@
-/** @import { BinaryOperator, Expression, Identifier } from 'estree' */
+/** @import { Identifier } from 'estree' */
 /** @import { ComponentContext, Context } from '../../types' */
-import { build_proxy_reassignment, is_state_source, should_proxy_or_freeze } from '../../utils.js';
+import { is_state_source } from '../../utils.js';
 import * as b from '../../../../../utils/builders.js';
 
 /**
