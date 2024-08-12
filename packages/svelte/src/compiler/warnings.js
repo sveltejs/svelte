@@ -769,11 +769,11 @@ export function slot_element_deprecated(node) {
 }
 
 /**
- * `svelte:component` has been deprecated, you can just render the component with `<Component />`
+ * `<svelte:component>` is deprecated in runes mode — components are dynamic by default
  * @param {null | NodeLike} node
  */
 export function svelte_component_deprecated(node) {
-	w(node, "svelte_component_deprecated", "`svelte:component` has been deprecated, you can just render the component with `<Component />`");
+	w(node, "svelte_component_deprecated", "`<svelte:component>` is deprecated in runes mode — components are dynamic by default");
 }
 
 /**

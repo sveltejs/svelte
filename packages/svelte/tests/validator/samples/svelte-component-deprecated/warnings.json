@@ -1,7 +1,7 @@
 [
 	{
 		"code": "svelte_component_deprecated",
-		"message": "`svelte:component` has been deprecated, you can just render the component with `<Component />`",
+		"message": "`<svelte:component>` is deprecated in runes mode — components are dynamic by default",
 		"start": {
 			"line": 7,
 			"column": 0

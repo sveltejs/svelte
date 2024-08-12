@@ -17,7 +17,7 @@
 			"column": 45,
 			"line": 15
 		},
-		"message": "`svelte:component` has been deprecated, you can just render the component with `<Component />`",
+		"message": "`<svelte:component>` is deprecated in runes mode — components are dynamic by default",
 		"start": {
 			"column": 0,
 			"line": 15
