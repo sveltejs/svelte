@@ -288,7 +288,15 @@ export function handle_event_propagation(event) {
  * @param {[number, number]} [loc]
  * @param {boolean} [remove_parens]
  */
-export function apply(thunk, element, args, component, loc, remove_parens = false) {
+export function apply(
+	thunk,
+	element,
+	args,
+	component,
+	loc,
+	has_side_effects = false,
+	remove_parens = false
+) {
 	let handler;
 	let error;
 
@@ -300,7 +308,7 @@ export function apply(thunk, element, args, component, loc, remove_parens = fals
 
 	if (typeof handler === 'function') {
 		handler.apply(element, args);
-	} else {
+	} else if (has_side_effects || handler != null) {
 		const filename = component?.[FILENAME];
 		const location = filename
 			? loc

@@ -139,7 +139,7 @@ export function build_event_handler(node, metadata, context) {
 	// wrap the handler in a function, so the expression is re-evaluated for each event
 	let call = b.call(b.member(handler, b.id('apply'), false, true), b.this, b.id('$$args'));
 
-	if (dev && has_side_effects(node)) {
+	if (dev) {
 		const loc = locator(/** @type {number} */ (node.start));
 
 		const remove_parens =
@@ -154,6 +154,7 @@ export function build_event_handler(node, metadata, context) {
 			b.id('$$args'),
 			b.id(context.state.analysis.name),
 			loc && b.array([b.literal(loc.line), b.literal(loc.column)]),
+			has_side_effects(node) && b.true,
 			remove_parens && b.true
 		);
 	}
