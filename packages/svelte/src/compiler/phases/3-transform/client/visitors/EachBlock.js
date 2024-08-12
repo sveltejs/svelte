@@ -56,7 +56,7 @@ export function EachBlock(node, context) {
 		node.context.name === node.key.name;
 
 	// if the each block expression references a store subscription, we need
-	// to us mutable stores internally
+	// to use mutable stores internally
 	let uses_store;
 
 	for (const binding of node.metadata.expression.dependencies) {
