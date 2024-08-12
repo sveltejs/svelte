@@ -55,6 +55,17 @@ export function EachBlock(node, context) {
 		node.context.type === 'Identifier' &&
 		node.context.name === node.key.name;
 
+	// if the each block expression references a store subscription, we need
+	// to us mutable stores internally
+	let uses_store;
+
+	for (const binding of node.metadata.expression.dependencies) {
+		if (binding.kind === 'store_sub') {
+			uses_store = true;
+			break;
+		}
+	}
+
 	for (const binding of node.metadata.expression.dependencies) {
 		// if the expression doesn't reference any external state, we don't need to
 		// create a source for the item. TODO cover more cases (e.g. `x.filter(y)`
@@ -64,10 +75,14 @@ export function EachBlock(node, context) {
 			continue;
 		}
 
-		if (!context.state.analysis.runes || !key_is_item || binding.kind === 'store_sub') {
+		if (!context.state.analysis.runes || !key_is_item || uses_store) {
 			flags |= EACH_ITEM_REACTIVE;
 			break;
 		}
+	}
+
+	if (context.state.analysis.runes && !uses_store) {
+		flags |= EACH_IS_STRICT_EQUALS;
 	}
 
 	// Since `animate:` can only appear on elements that are the sole child of a keyed each block,
@@ -85,10 +100,6 @@ export function EachBlock(node, context) {
 
 	if (each_node_meta.is_controlled) {
 		flags |= EACH_IS_CONTROLLED;
-	}
-
-	if (context.state.analysis.runes) {
-		flags |= EACH_IS_STRICT_EQUALS;
 	}
 
 	// If the array is a store expression, we need to invalidate it when the array is changed.

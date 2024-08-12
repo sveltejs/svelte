@@ -3,7 +3,7 @@
 	import ComponentB from './ComponentB.svelte';
 
 	let type = $state(ComponentA);
-	let elem = $state.frozen();
+	let elem = $state.raw();
 
 	$effect(() => {
 		console.log(elem);

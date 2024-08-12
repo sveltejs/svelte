@@ -44,7 +44,7 @@ export function ClassBody(node, context) {
 				const rune = get_rune(definition.value, context.state.scope);
 				if (
 					rune === '$state' ||
-					rune === '$state.frozen' ||
+					rune === '$state.raw' ||
 					rune === '$derived' ||
 					rune === '$derived.by'
 				) {
@@ -53,7 +53,7 @@ export function ClassBody(node, context) {
 						kind:
 							rune === '$state'
 								? 'state'
-								: rune === '$state.frozen'
+								: rune === '$state.raw'
 									? 'frozen_state'
 									: rune === '$derived.by'
 										? 'derived_by'
@@ -117,12 +117,7 @@ export function ClassBody(node, context) {
 									should_proxy_or_freeze(init, context.state.scope) ? b.call('$.proxy', init) : init
 								)
 							: field.kind === 'frozen_state'
-								? b.call(
-										'$.source',
-										should_proxy_or_freeze(init, context.state.scope)
-											? b.call('$.freeze', init)
-											: init
-									)
+								? b.call('$.source', init)
 								: field.kind === 'derived_by'
 									? b.call('$.derived', init)
 									: b.call('$.derived', b.thunk(init));
@@ -158,12 +153,7 @@ export function ClassBody(node, context) {
 						// set foo(value) { this.#foo = value; }
 						const value = b.id('value');
 						body.push(
-							b.method(
-								'set',
-								definition.key,
-								[value],
-								[b.stmt(b.call('$.set', member, b.call('$.freeze', value)))]
-							)
+							b.method('set', definition.key, [value], [b.stmt(b.call('$.set', member, value))])
 						);
 					}
 

@@ -1,6 +1,6 @@
 <script>
 	class Counter {
-		count = $state.frozen(0);
+		count = $state.raw(0);
 	}
 	const counter = new Counter();
 </script>

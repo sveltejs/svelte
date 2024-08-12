@@ -21,7 +21,7 @@ export function VariableDeclarator(node, context) {
 		// TODO feels like this should happen during scope creation?
 		if (
 			rune === '$state' ||
-			rune === '$state.frozen' ||
+			rune === '$state.raw' ||
 			rune === '$derived' ||
 			rune === '$derived.by' ||
 			rune === '$props'
@@ -32,7 +32,7 @@ export function VariableDeclarator(node, context) {
 				binding.kind =
 					rune === '$state'
 						? 'state'
-						: rune === '$state.frozen'
+						: rune === '$state.raw'
 							? 'frozen_state'
 							: rune === '$derived' || rune === '$derived.by'
 								? 'derived'

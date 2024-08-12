@@ -119,7 +119,7 @@ export function VariableDeclaration(node, context) {
 			const value =
 				args.length === 0 ? b.id('undefined') : /** @type {Expression} */ (context.visit(args[0]));
 
-			if (rune === '$state' || rune === '$state.frozen') {
+			if (rune === '$state' || rune === '$state.raw') {
 				/**
 				 * @param {Identifier} id
 				 * @param {Expression} value
@@ -128,8 +128,8 @@ export function VariableDeclaration(node, context) {
 					const binding = /** @type {import('#compiler').Binding} */ (
 						context.state.scope.get(id.name)
 					);
-					if (should_proxy_or_freeze(value, context.state.scope)) {
-						value = b.call(rune === '$state' ? '$.proxy' : '$.freeze', value);
+					if (rune === '$state' && should_proxy_or_freeze(value, context.state.scope)) {
+						value = b.call('$.proxy', value);
 					}
 					if (is_state_source(binding, context.state)) {
 						value = b.call('$.source', value);
