@@ -14,7 +14,7 @@ const regex_position_indicator = / \(\d+:\d+\)$/;
 const regex_lang_attribute =
 	/<!--[^]*?-->|<script\s+(?:[^>]*|(?:[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s]+)\s+)*)lang=(["'])?([^"' >]+)\1[^>]*>/g;
 
-class Parser {
+export class Parser {
 	/**
 	 * @readonly
 	 * @type {string}
