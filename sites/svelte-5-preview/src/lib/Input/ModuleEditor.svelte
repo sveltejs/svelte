@@ -2,14 +2,8 @@
 	import { get_repl_context } from '$lib/context.js';
 	import CodeMirror from '../CodeMirror.svelte';
 
-	/** @type {boolean} */
-	export let autocomplete;
-
-	/** @type {any} */ // TODO
-	export let error;
-
-	/** @type {any[]} */ // TODO
-	export let warnings;
+	/** @type {{ error: any; warnings: any[] }} */
+	const { error, warnings } = $props();
 
 	export function focus() {
 		$module_editor?.focus();
@@ -62,7 +56,7 @@
 
 				return [];
 			}}
-			on:change={handle_change}
+			onchange={handle_change}
 		/>
 	</div>
 </div>

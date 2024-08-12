@@ -19,7 +19,7 @@ const ready = new Promise((f) => {
 
 self.addEventListener(
 	'message',
-	/** @param {MessageEvent<import("../workers").CompileMessageData>} event */
+	/** @param {MessageEvent<import('../workers').CompileMessageData>} event */
 	async (event) => {
 		switch (event.data.type) {
 			case 'init':
@@ -55,7 +55,7 @@ const common_options = {
 	css: false
 };
 
-/** @param {import("../workers").CompileMessageData} param0 */
+/** @param {import('../workers').CompileMessageData} param0 */
 function compile({ id, source, options, return_ast }) {
 	try {
 		const css = `/* Select a component to see compiled CSS */`;
@@ -132,7 +132,7 @@ function compile({ id, source, options, return_ast }) {
 	}
 }
 
-/** @param {import("../workers").MigrateMessageData} param0 */
+/** @param {import('../workers').MigrateMessageData} param0 */
 function migrate({ id, source }) {
 	try {
 		const result = svelte.migrate(source);

@@ -3,43 +3,34 @@
 </script>
 
 <script>
+	/** @import { Lang } from './types' */
 	import { historyField } from '@codemirror/commands';
 	import { EditorState, Range, StateEffect, StateEffectType, StateField } from '@codemirror/state';
 	import { Decoration, EditorView } from '@codemirror/view';
 	import { codemirror, withCodemirrorInstance } from '@neocodemirror/svelte';
 	import { svelteLanguage } from '@replit/codemirror-lang-svelte';
 	import { javascriptLanguage } from '@codemirror/lang-javascript';
-	import { createEventDispatcher, tick } from 'svelte';
+	import { tick } from 'svelte';
 	import { writable } from 'svelte/store';
 	import { get_repl_context } from '$lib/context.js';
 	import Message from './Message.svelte';
 	import { svelteTheme } from './theme.js';
 	import { autocomplete } from './autocomplete.js';
 
-	/** @type {import('@codemirror/lint').LintSource | undefined} */
-	export let diagnostics = undefined;
+	/** @type {{ diagnostics: import('@codemirror/lint').LintSource | undefined, readonly?: boolean, tab?: boolean, onchange: (value: string) => void }} */
+	const { diagnostics = undefined, readonly = false, tab = true, onchange } = $props();
 
-	export let readonly = false;
-	export let tab = true;
+	let code = $state('');
 
-	/** @type {ReturnType<typeof createEventDispatcher<{ change: { value: string } }>>} */
-	const dispatch = createEventDispatcher();
+	/** @type {Lang} */
+	let lang = $state('svelte');
 
-	let code = '';
-
-	/** @type {import('./types').Lang} */
-	let lang = 'svelte';
-
-	/**
-	 * @param {{ code: string; lang: import('./types').Lang }} options
-	 */
+	/** @param {{ code: string; lang: Lang }} options */
 	export async function set(options) {
 		update(options);
 	}
 
-	/**
-	 * @param {{ code?: string; lang?: import('./types').Lang }} options
-	 */
+	/** @param {{ code?: string; lang?: Lang }} options */
 	export async function update(options) {
 		await isReady;
 
@@ -64,16 +55,14 @@
 		}
 	}
 
-	/**
-	 * @param {number} pos
-	 */
+	/** @param {number} pos */
 	export function setCursor(pos) {
 		cursor_pos = pos;
 	}
 
 	/** @type {(...val: any) => void} */
-	let fulfil_module_editor_ready;
-	export const isReady = new Promise((f) => (fulfil_module_editor_ready = f));
+	let fulfill_module_editor_ready;
+	export const isReady = new Promise((f) => (fulfill_module_editor_ready = f));
 
 	export function resize() {
 		$cmInstance.view?.requestMeasure();
@@ -87,9 +76,7 @@
 		return $cmInstance.view?.state.toJSON({ history: historyField });
 	}
 
-	/**
-	 * @param {any} state
-	 */
+	/** @param {any} state */
 	export function setEditorState(state) {
 		if (!$cmInstance.view) return;
 
@@ -174,18 +161,24 @@
 	/** @type {import('@codemirror/state').Extension[]} */
 	let extensions = [];
 
-	let cursor_pos = 0;
+	let cursor_pos = $state(0);
 
-	$: if ($cmInstance.view) {
-		fulfil_module_editor_ready();
-	}
+	$effect(() => {
+		if ($cmInstance.view) {
+			fulfill_module_editor_ready();
+		}
+	});
 
-	$: if ($cmInstance.view && w && h) resize();
+	$effect(() => {
+		if ($cmInstance.view && w && h) resize();
+	});
 
-	$: if (marked) {
-		unmarkText();
-		marked = false;
-	}
+	$effect(() => {
+		if (marked) {
+			unmarkText();
+			marked = false;
+		}
+	});
 
 	const watcher = EditorView.updateListener.of((viewUpdate) => {
 		if (viewUpdate.selectionSet) {
@@ -206,6 +199,7 @@
 	});
 </script>
 
+<!-- svelte-ignore attribute_illegal_colon - codemirror's custom events contain colons -->
 <div
 	class="codemirror-container"
 	use:codemirror={{
@@ -230,9 +224,9 @@
 		extensions: [svelte_rune_completions, js_rune_completions, watcher],
 		instanceStore: cmInstance
 	}}
-	on:codemirror:textChange={({ detail: value }) => {
-		code = value;
-		dispatch('change', { value: code });
+	oncodemirror:textChange={(/** @type {{ detail: string; }} */ event) => {
+		code = event.detail;
+		onchange?.(code);
 	}}
 >
 	{#if !$cmInstance.view}

@@ -134,10 +134,11 @@ const options = runes.map(({ snippet, test }, i) => ({
 
 /**
  * @param {import('@codemirror/autocomplete').CompletionContext} context
- * @param {import('./types.js').File} selected
+ * @param {import('./types.js').File | null} selected
  * @param {import('./types.js').File[]} files
  */
 export function autocomplete(context, selected, files) {
+	if (!selected) return false;
 	let node = syntaxTree(context.state).resolveInner(context.pos, -1);
 
 	if (node.name === 'String' && node.parent?.name === 'ImportDeclaration') {

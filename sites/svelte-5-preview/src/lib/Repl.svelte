@@ -1,9 +1,9 @@
 <script>
+	/** @import { File, ReplContext } from './types' */
 	import { EditorState } from '@codemirror/state';
 	import { SplitPane } from '@rich_harris/svelte-split-pane';
 	import { BROWSER } from 'esm-env';
-	import { createEventDispatcher } from 'svelte';
-	import { derived, writable } from 'svelte/store';
+	import { derived as derivedStore, writable } from 'svelte/store';
 	import Bundler from './Bundler.js';
 	import ComponentSelector from './Input/ComponentSelector.svelte';
 	import ModuleEditor from './Input/ModuleEditor.svelte';
@@ -13,23 +13,44 @@
 	import { get_full_filename } from './utils.js';
 	import Compiler from './Output/Compiler.js';
 
-	export let packagesUrl = 'https://unpkg.com';
-	export let svelteUrl = `${BROWSER ? location.origin : ''}/svelte`;
-	export let embedded = false;
-	/** @type {'columns' | 'rows'} */
-	export let orientation = 'columns';
-	export let relaxed = false;
-	export let fixed = false;
-	export let fixedPos = 50;
-	export let injectedJS = '';
-	export let injectedCSS = '';
-	/** @type {'light' | 'dark'} */
-	export let previewTheme = 'light';
-	export let showModified = false;
-	export let showAst = false;
-	export let autocomplete = true;
+	/** @type {{
+	 *   packagesUrl?: string;
+	 *   svelteUrl?: string;
+	 *   embedded?: boolean;
+	 *   orientation?: 'columns' | 'rows';
+	 *   relaxed?: boolean;
+	 *   fixed?: boolean;
+	 *   fixedPos?: number;
+	 *   injectedJS?: string;
+	 *   injectedCSS?: string;
+	 *   previewTheme?: 'light' | 'dark';
+	 *   showModified?: boolean;
+	 *   showAst?: boolean;
+	 *   autocomplete?: boolean;
+	 *   onchange?: (files: File[]) => void;
+	 *   onadd?: (event: { files: File[]; diff: File }) => void;
+	 *   onremove?: (event: { files: File[]; diff: File }) => void;
+	 * }} */
+	let {
+		packagesUrl = 'https://unpkg.com',
+		svelteUrl = `${BROWSER ? location.origin : ''}/svelte`,
+		embedded = false,
+		orientation = 'columns',
+		relaxed = false,
+		fixed = false,
+		fixedPos = 50,
+		injectedJS = '',
+		injectedCSS = '',
+		previewTheme = 'light',
+		showModified = false,
+		showAst = false,
+		autocomplete = true,
+		onchange,
+		onadd,
+		onremove
+	} = $props();
 
-	let runes = false;
+	let runes = $state(false);
 
 	export function toJSON() {
 		return {
@@ -39,7 +60,7 @@
 	}
 
 	/**
-	 * @param {{ files: import('./types').File[], css?: string }} data
+	 * @param {{ files: File[], css?: string }} data
 	 */
 	export async function set(data) {
 		$files = data.files;
@@ -60,19 +81,12 @@
 		// after having loaded the files externally
 		populate_editor_state();
 
-		dispatch('change', { files: $files });
+		onchange?.($files);
 	}
 
 	export function markSaved() {
 		$files = $files.map((val) => ({ ...val, modified: false }));
 	}
-
-	/** @type {ReturnType<typeof createEventDispatcher<{ change: { files: import('./types').File[] } }>>} */
-	const dispatch = createEventDispatcher();
-
-	/**
-	 * @typedef {import('./types').ReplContext} ReplContext
-	 */
 
 	/** @type {import('svelte/compiler').CompileOptions} */
 	const DEFAULT_COMPILE_OPTIONS = {
@@ -92,7 +106,7 @@
 	const selected_name = writable('App.svelte');
 
 	/** @type {ReplContext['selected']} */
-	const selected = derived([files, selected_name], ([$files, $selected_name]) => {
+	const selected = derivedStore([files, selected_name], ([$files, $selected_name]) => {
 		return (
 			$files.find((val) => get_full_filename(val) === $selected_name) ?? {
 				name: '',
@@ -154,7 +168,7 @@
 		$bundling = new Promise((resolve) => {
 			resolver = resolve;
 		});
-		const result = await $bundler?.bundle($files);
+		const result = await $bundler?.bundle($state.snapshot($files));
 		if (result && token === current_token) $bundle = result;
 		resolver();
 	}
@@ -162,7 +176,7 @@
 	async function migrate() {
 		if (!compiler || $selected?.type !== 'svelte') return;
 
-		const result = await compiler.migrate($selected);
+		const result = await compiler.migrate($state.snapshot($selected));
 		if (result.error) {
 			// TODO show somehow
 			return;
@@ -182,9 +196,7 @@
 
 	let is_select_changing = false;
 
-	/**
-	 * @param {string} filename
-	 */
+	/** @param {string} filename */
 	async function handle_select(filename) {
 		is_select_changing = true;
 
@@ -203,16 +215,14 @@
 		is_select_changing = false;
 	}
 
-	/**
-	 * @param {CustomEvent<{ value: string }>} event
-	 */
-	async function handle_change(event) {
+	/** @param {string} value */
+	async function handle_change(value) {
 		if (is_select_changing) return;
 
 		files.update(($files) => {
 			const file = { ...$selected };
 
-			file.source = event.detail.value;
+			file.source = value;
 			file.modified = true;
 
 			const idx = $files.findIndex((val) => get_full_filename(val) === $selected_name);
@@ -227,9 +237,7 @@
 
 		EDITOR_STATE_MAP.set(get_full_filename($selected), $module_editor?.getEditorState());
 
-		dispatch('change', {
-			files: $files
-		});
+		onchange?.($files);
 
 		rebundle();
 	}
@@ -268,35 +276,42 @@
 	const compiler = BROWSER ? new Compiler(svelteUrl) : null;
 
 	/** @type {import('./workers/workers').CompileMessageData | null} */
-	let compiled = null;
+	let compiled = $state(null);
+
+	$inspect(compiled);
 
 	/**
-	 * @param {import('./types').File | null} $selected
+	 * @param {File | null} $selected
 	 * @param {import('svelte/compiler').CompileOptions} $compile_options
 	 */
 	async function recompile($selected, $compile_options) {
 		if (!compiler || !$selected) return;
 
 		if ($selected.type === 'svelte' || $selected.type === 'js') {
-			compiled = await compiler.compile($selected, $compile_options, true);
+			compiled = await compiler.compile($state.snapshot($selected), $compile_options, true);
 			runes = compiled.result.metadata?.runes ?? false;
 		} else {
 			runes = false;
 		}
 	}
 
-	$: recompile($selected, $compile_options);
+	$effect(() => {
+		recompile($selected, $compile_options);
+	});
 
-	$: mobile = width < 540;
+	let width = $state(0);
 
-	$: $toggleable = mobile && orientation === 'columns';
+	const mobile = $derived(width < 540);
 
-	let width = 0;
-	let show_output = false;
+	$effect(() => {
+		toggleable.set(mobile && orientation === 'columns');
+	});
+
+	let show_output = $state(false);
 
 	/** @type {string | null} */
-	let status = null;
-	let status_visible = false;
+	let status = $state(null);
+	let status_visible = $state(false);
 
 	/** @type {NodeJS.Timeout | undefined} */
 	let status_timeout = undefined;
@@ -336,7 +351,7 @@
 	}
 </script>
 
-<svelte:window on:beforeunload={before_unload} />
+<svelte:window onbeforeunload={before_unload} />
 
 <div class="container" class:toggleable={$toggleable} bind:clientWidth={width}>
 	<div class="viewport" class:output={show_output}>
@@ -349,12 +364,8 @@
 			max="-4.1rem"
 		>
 			<section slot="a">
-				<ComponentSelector show_modified={showModified} {runes} on:add on:remove />
-				<ModuleEditor
-					{autocomplete}
-					error={compiled?.result.error}
-					warnings={compiled?.result.warnings ?? []}
-				/>
+				<ComponentSelector show_modified={showModified} {runes} {onadd} {onremove} />
+				<ModuleEditor error={compiled?.result.error} warnings={compiled?.result.warnings ?? []} />
 			</section>
 
 			<section slot="b" style="height: 100%;">

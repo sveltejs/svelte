@@ -1,10 +1,10 @@
 <script>
-	export let checked = false;
+	/** @type {{ checked: boolean }} */
+	let { checked = $bindable(false) } = $props();
 
 	import Checkbox from './Checkbox.svelte';
 </script>
 
-<!-- svelte-ignore a11y-label-has-associated-control -->
 <label class="input-output-toggle">
 	<span class:active={!checked} style="text-align: right">input</span>
 	<span style="display:grid; place-items: center">
