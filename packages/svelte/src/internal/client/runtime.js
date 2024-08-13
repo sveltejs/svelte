@@ -327,7 +327,7 @@ export function update_reaction(reaction) {
 					var reactions = dependency.reactions;
 
 					if (reactions === null) {
-						reactions = dependency.reactions = new Set()
+						reactions = dependency.reactions = new Set();
 					}
 					reactions.add(reaction);
 				}
