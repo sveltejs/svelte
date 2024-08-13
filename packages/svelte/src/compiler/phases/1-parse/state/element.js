@@ -74,7 +74,7 @@ function parent_is_shadowroot_template(stack) {
 
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
 const regex_closing_comment = /-->/;
-const regex_component_name = /^(?:[A-Z]|[A-Za-z][A-Za-z0-9_$]*\.)/;
+const regex_component_name = /^(?:[A-Z]|[A-Za-z][A-Za-z0-9_$]*(?:\.|\[))/;
 
 /** @param {Parser} parser */
 export default function element(parser) {
