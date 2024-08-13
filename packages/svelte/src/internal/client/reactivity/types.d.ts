@@ -9,7 +9,7 @@ export interface Signal {
 
 export interface Value<V = unknown> extends Signal {
 	/** Signals that read from this signal */
-	reactions: null | Reaction[];
+	reactions: null | Set<Reaction>;
 	/** Equality function */
 	equals: Equals;
 	/** The latest value for this signal */
