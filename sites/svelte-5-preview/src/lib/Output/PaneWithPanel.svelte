@@ -19,7 +19,7 @@
 
 	const toggle = () => {
 		// The spring might be out of date, so snap it before animating the toggle
-		driver.set(pos, {hard: true})
+		driver.set(pos, { hard: true });
 
 		if (expanded) {
 			expanded_pos = pos;

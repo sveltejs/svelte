@@ -9,7 +9,13 @@
 	 *   truncate?: boolean,
 	 *   children?: import('svelte').Snippet,
 	 * }} */
-	const { kind = 'info', details = undefined, filename = undefined, truncate = false, children } = $props();
+	const {
+		kind = 'info',
+		details = undefined,
+		filename = undefined,
+		truncate = false,
+		children
+	} = $props();
 
 	const { go_to_warning_pos } = get_repl_context();
 
