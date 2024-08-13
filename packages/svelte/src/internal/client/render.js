@@ -47,7 +47,8 @@ export function set_text(text, value) {
 
 	if (prev !== value) {
 		// @ts-expect-error
-		text.nodeValue = text.__t = value;
+		text.__t = value;
+		text.nodeValue = value + '';
 	}
 }
 
