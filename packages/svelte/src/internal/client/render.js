@@ -49,7 +49,7 @@ export function set_text(text, value) {
 		// @ts-expect-error
 		text.__t = value;
 		// It's faster to make the value a string rather than passing a non-string to nodeValue
-		text.nodeValue = value === undefined ? '' : value + '';
+		text.nodeValue = value == null ? '' : value + '';
 	}
 }
 
