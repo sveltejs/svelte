@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.219
+
+### Patch Changes
+
+- feat: add compiler error when encountering a $-prefixed store value outside a .svelte file ([#12799](https://github.com/sveltejs/svelte/pull/12799))
+
 ## 5.0.0-next.218
 
 ### Patch Changes
