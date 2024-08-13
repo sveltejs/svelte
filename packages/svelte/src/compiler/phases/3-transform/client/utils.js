@@ -1,6 +1,7 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, Pattern, PrivateIdentifier, Statement } from 'estree' */
 /** @import { Binding, SvelteNode } from '#compiler' */
 /** @import { ClientTransformState, ComponentClientTransformState, ComponentContext } from './types.js' */
+/** @import { Analysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
 import * as b from '../../../utils/builders.js';
 import { extract_identifiers, is_simple_expression } from '../../../utils/ast.js';
@@ -16,13 +17,13 @@ import { get_value } from './visitors/shared/declarations.js';
 
 /**
  * @param {Binding} binding
- * @param {ClientTransformState} state
+ * @param {Analysis} analysis
  * @returns {boolean}
  */
-export function is_state_source(binding, state) {
+export function is_state_source(binding, analysis) {
 	return (
 		(binding.kind === 'state' || binding.kind === 'raw_state') &&
-		(!state.analysis.immutable || binding.reassigned || state.analysis.accessors)
+		(!analysis.immutable || binding.reassigned || analysis.accessors)
 	);
 }
 

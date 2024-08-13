@@ -4,6 +4,7 @@
 import * as e from '../../../errors.js';
 import { extract_identifiers, object } from '../../../utils/ast.js';
 import * as w from '../../../warnings.js';
+import { is_state_source } from '../../3-transform/client/utils.js';
 
 /**
  * @param {LabeledStatement} node
@@ -65,15 +66,6 @@ export function LabeledStatement(node, context) {
 			}
 
 			context.state.reactive_statements.set(node, reactive_statement);
-
-			if (
-				reactive_statement.dependencies.length &&
-				reactive_statement.dependencies.every(
-					(d) => d.scope === context.state.analysis.module.scope && d.declaration_kind !== 'const'
-				)
-			) {
-				w.reactive_declaration_module_script(node);
-			}
 
 			if (
 				node.body.type === 'ExpressionStatement' &&
