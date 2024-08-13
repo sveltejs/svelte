@@ -1,12 +1,25 @@
 <script>
 	import { get_repl_context } from '$lib/context.js';
+	import { tick } from 'svelte';
 
 	/** @type {{ runes: boolean }} */
 	const { runes } = $props();
 
 	let open = $state(false);
 
-	const { selected_name } = get_repl_context();
+	const { selected_name, files, selected, handle_select, set_files } = get_repl_context();
+
+	/** @param {(update: import('$lib/types').File) => import('$lib/types').File} update */
+	function update_selected_file(update) {
+		const new_files = $files.map((file) => {
+			if (file.name === $selected?.name) {
+				return update(file);
+			}
+			return file;
+		});
+		set_files({ files: new_files });
+		open = false;
+	}
 </script>
 
 <svelte:window
@@ -48,6 +61,29 @@
 					</p>
 					<p>To disable runes mode, add the following to the top of your component:</p>
 					<pre><code>&lt;svelte:options runes={'{false}'} /&gt;</code></pre>
+					<button
+						class="mutate"
+						onclick={() => {
+							update_selected_file((file) => {
+								if (file.source.includes('<svelte:options runes={true}')) {
+									file.source = file.source.replace(
+										'<svelte:options runes={true}',
+										'<svelte:options runes={false}'
+									);
+								} else if (file.source.includes('<svelte:options runes')) {
+									file.source = file.source.replace(
+										'<svelte:options runes',
+										'<svelte:options runes={false}'
+									);
+								} else {
+									file.source = '<svelte:options runes={false} />\n' + file.source;
+								}
+								return file;
+							});
+						}}
+					>
+						Disable Runes
+					</button>
 				{:else}
 					<p>This component is not in <a href="https://svelte.dev/blog/runes">runes mode</a>.</p>
 					<p>
@@ -55,6 +91,24 @@
 						top of your component:
 					</p>
 					<pre><code>&lt;svelte:options runes /&gt;</code></pre>
+					<button
+						class="mutate"
+						onclick={() => {
+							update_selected_file((file) => {
+								if (file.source.includes('<svelte:options runes={false}')) {
+									file.source = file.source.replace(
+										'<svelte:options runes={false}',
+										'<svelte:options runes'
+									);
+								} else {
+									file.source = '<svelte:options runes />\n' + file.source;
+								}
+								return file;
+							});
+						}}
+					>
+						Enable Runes
+					</button>
 				{/if}
 			{:else}
 				<p>
@@ -80,6 +134,14 @@
 
 	button.open {
 		background: var(--sk-back-3);
+	}
+
+	.mutate {
+		color: #ff3e00;
+		margin-top: 2rem;
+	}
+	.mutate:hover {
+		background: #ff3e0030;
 	}
 
 	svg {

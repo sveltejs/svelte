@@ -64,6 +64,7 @@ export type ReplContext = {
 	EDITOR_STATE_MAP: Map<string, EditorState>;
 
 	// Methods
+	set_files(data: { files: File[]; css?: string }): void;
 	rebundle(): Promise<void>;
 	migrate(): Promise<void>;
 	handle_select(filename: string): Promise<void>;

@@ -157,7 +157,8 @@
 		clear_state,
 		go_to_warning_pos,
 		handle_change,
-		handle_select
+		handle_select,
+		set_files: set
 	});
 
 	/** @type {Symbol}  */
@@ -179,6 +180,7 @@
 		const result = await compiler.migrate($state.snapshot($selected));
 		if (result.error) {
 			// TODO show somehow
+			alert(result.error);
 			return;
 		}
 
