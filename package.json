@@ -1,56 +1,56 @@
 {
-	"name": "svelte-monorepo",
-	"version": "0.0.1",
-	"description": "monorepo for svelte and friends",
-	"private": true,
-	"type": "module",
-	"license": "MIT",
-	"packageManager": "pnpm@9.4.0",
-	"engines": {
-		"pnpm": "^9.0.0"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/sveltejs/svelte.git"
-	},
-	"scripts": {
-		"build": "pnpm -r --filter=./packages/* build",
-		"build:sites": "pnpm -r --filter=./sites/* build",
-		"preview-site": "npm run build --prefix sites/svelte-5-preview",
-		"check": "cd packages/svelte && pnpm build && cd ../../ && pnpm -r check",
-		"lint": "pnpm -r lint && prettier --check documentation",
-		"format": "pnpm -r format && prettier --check --write documentation",
-		"test": "vitest run",
-		"test-output": "vitest run --coverage --reporter=json --outputFile=sites/svelte-5-preview/src/routes/status/results.json",
-		"changeset:version": "changeset version && pnpm -r generate:version && git add --all",
-		"changeset:publish": "changeset publish",
-		"bench": "node --allow-natives-syntax ./benchmarking/run.js",
-		"bench:compare": "node --allow-natives-syntax ./benchmarking/compare/index.js",
-		"bench:debug": "node --allow-natives-syntax --inspect-brk ./benchmarking/run.js"
-	},
-	"devDependencies": {
-		"@changesets/cli": "^2.27.6",
-		"@sveltejs/eslint-config": "^8.0.1",
-		"@svitejs/changesets-changelog-github-compact": "^1.1.0",
-		"@types/node": "^20.11.5",
-		"@vitest/coverage-v8": "^1.2.1",
-		"eslint": "^9.6.0",
-		"eslint-plugin-lube": "^0.4.3",
-		"jsdom": "22.0.0",
-		"playwright": "^1.41.1",
-		"prettier": "^3.2.4",
-		"prettier-plugin-svelte": "^3.2.6",
-		"typescript": "^5.5.2",
-		"typescript-eslint": "^8.0.0-alpha.34",
-		"v8-natives": "^1.2.5",
-		"vitest": "^1.2.1"
-	},
-	"pnpm": {
-		"overrides": {
-			"xml2js": "^0.6.0"
-		},
-		"patchedDependencies": {
-			"@rich_harris/svelte-split-pane@1.1.3": "patches/@rich_harris__svelte-split-pane@1.1.3.patch"
-		}
-	}
+  "name": "svelte-monorepo",
+  "version": "0.0.1",
+  "description": "monorepo for svelte and friends",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "packageManager": "pnpm@9.4.0",
+  "engines": {
+    "pnpm": "^9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sveltejs/svelte.git"
+  },
+  "scripts": {
+    "build": "pnpm -r --filter=./packages/* build",
+    "build:sites": "pnpm -r --filter=./sites/* build",
+    "preview-site": "npm run build --prefix sites/svelte-5-preview",
+    "check": "cd packages/svelte && pnpm build && cd ../../ && pnpm -r check",
+    "lint": "pnpm -r lint && prettier --check documentation",
+    "format": "pnpm -r format && prettier --check --write documentation",
+    "test": "vitest run",
+    "test-output": "vitest run --coverage --reporter=json --outputFile=sites/svelte-5-preview/src/routes/status/results.json",
+    "changeset:version": "changeset version && pnpm -r generate:version && git add --all",
+    "changeset:publish": "changeset publish",
+    "bench": "node --allow-natives-syntax ./benchmarking/run.js",
+    "bench:compare": "node --allow-natives-syntax ./benchmarking/compare/index.js",
+    "bench:debug": "node --allow-natives-syntax --inspect-brk ./benchmarking/run.js"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.6",
+    "@sveltejs/eslint-config": "^8.0.1",
+    "@svitejs/changesets-changelog-github-compact": "^1.1.0",
+    "@types/node": "^20.11.5",
+    "@vitest/coverage-v8": "^1.2.1",
+    "eslint": "^9.6.0",
+    "eslint-plugin-lube": "^0.4.3",
+    "jsdom": "22.0.0",
+    "playwright": "^1.41.1",
+    "prettier": "^3.2.4",
+    "prettier-plugin-svelte": "^3.2.6",
+    "typescript": "^5.5.2",
+    "typescript-eslint": "^8.0.0-alpha.34",
+    "v8-natives": "^1.2.5",
+    "vitest": "^1.2.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "xml2js": "^0.6.0"
+    },
+    "patchedDependencies": {
+      "@rich_harris/svelte-split-pane@1.1.3": "patches/@rich_harris__svelte-split-pane@1.1.3.patch"
+    }
+  }
 }
