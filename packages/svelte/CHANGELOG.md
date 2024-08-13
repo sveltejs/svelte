@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.220
+
+### Patch Changes
+
+- feat: warn on invalid event handlers ([#12818](https://github.com/sveltejs/svelte/pull/12818))
+
 ## 5.0.0-next.219
 
 ### Patch Changes
