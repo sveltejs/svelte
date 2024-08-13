@@ -4,6 +4,10 @@
 
 > `%binding%` (%location%) is binding to a non-reactive property
 
+## event_handler_invalid
+
+> %handler% should be a function. Did you mean to %suggestion%?
+
 ## hydration_attribute_changed
 
 > The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
