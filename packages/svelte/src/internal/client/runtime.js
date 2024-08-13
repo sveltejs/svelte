@@ -327,10 +327,9 @@ export function update_reaction(reaction) {
 					var reactions = dependency.reactions;
 
 					if (reactions === null) {
-						(dependency.reactions = new Set()).add(reaction);
-					} else if (!reactions.has(reaction)) {
-						reactions.add(reaction);
+						reactions = dependency.reactions = new Set()
 					}
+					reactions.add(reaction);
 				}
 			}
 		} else if (deps !== null && skipped_deps < deps.length) {
