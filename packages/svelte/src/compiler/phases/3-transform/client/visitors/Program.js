@@ -25,8 +25,6 @@ export function Program(_, context) {
 					/** @type {number} */ (node.end) < /** @type {number} */ (end);
 
 				if (is_instance_import) {
-					context.state.analysis.module.ast;
-
 					const id = b.id('$$_import_' + name);
 
 					context.state.transform[name] = {
