@@ -691,10 +691,9 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		} else {
 			for (const expression of unwrap_pattern(node)) {
 				const left = object(expression);
-				if (left === null) return;
+				const binding = left && scope.get(left.name);
 
-				const binding = scope.get(left.name);
-				if (binding && left !== binding.node) {
+				if (binding !== null && left !== binding.node) {
 					// TODO we should probably distinguish between these?
 					binding.mutated = true;
 					binding.reassigned = left === expression;
