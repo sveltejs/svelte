@@ -169,7 +169,7 @@ export function check_dirtiness(reaction) {
 
 			if ((flags & DISCONNECTED) !== 0) {
 				for (i = 0; i < dependencies.length; i++) {
-					(dependencies[i].reactions ??= []).push(reaction);
+					(dependencies[i].reactions ??= new Set()).add(reaction);
 				}
 
 				reaction.f ^= DISCONNECTED;
@@ -188,11 +188,11 @@ export function check_dirtiness(reaction) {
 
 				if (is_unowned) {
 					// TODO is there a more logical place to do this work?
-					if (!current_skip_reaction && !dependency?.reactions?.includes(reaction)) {
+					if (!current_skip_reaction && !dependency?.reactions?.has(reaction)) {
 						// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
 						// and the version hasn't changed, we still need to check that this reaction
 						// if linked to the dependency source – otherwise future updates will not be caught.
-						(dependency.reactions ??= []).push(reaction);
+						(dependency.reactions ??= new Set()).add(reaction);
 					}
 				}
 			}
@@ -323,17 +323,7 @@ export function update_reaction(reaction) {
 
 			if (!current_skip_reaction) {
 				for (i = skipped_deps; i < deps.length; i++) {
-					dependency = deps[i];
-					var reactions = dependency.reactions;
-
-					if (reactions === null) {
-						dependency.reactions = [reaction];
-					} else if (
-						reactions[reactions.length - 1] !== reaction &&
-						!reactions.includes(reaction)
-					) {
-						reactions.push(reaction);
-					}
+					(deps[i].reactions ??= new Set()).add(reaction);
 				}
 			}
 		} else if (deps !== null && skipped_deps < deps.length) {
@@ -358,24 +348,16 @@ export function update_reaction(reaction) {
  * @returns {void}
  */
 function remove_reaction(signal, dependency) {
-	const reactions = dependency.reactions;
-	let reactions_length = 0;
+	let reactions = dependency.reactions;
 	if (reactions !== null) {
-		reactions_length = reactions.length - 1;
-		const index = reactions.indexOf(signal);
-		if (index !== -1) {
-			if (reactions_length === 0) {
-				dependency.reactions = null;
-			} else {
-				// Swap with last element and then remove.
-				reactions[index] = reactions[reactions_length];
-				reactions.pop();
-			}
+		reactions.delete(signal);
+		if (reactions.size === 0) {
+			reactions = dependency.reactions = null;
 		}
 	}
 	// If the derived has no reactions, then we can disconnect it from the graph,
 	// allowing it to either reconnect in the future, or be GC'd by the VM.
-	if (reactions_length === 0 && (dependency.f & DERIVED) !== 0) {
+	if (reactions === null && (dependency.f & DERIVED) !== 0) {
 		set_signal_status(dependency, MAYBE_DIRTY);
 		// If we are working with a derived that is owned by an effect, then mark it as being
 		// disconnected.

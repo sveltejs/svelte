@@ -139,10 +139,8 @@ function mark_reactions(signal, status) {
 	if (reactions === null) return;
 
 	var runes = is_runes();
-	var length = reactions.length;
 
-	for (var i = 0; i < length; i++) {
-		var reaction = reactions[i];
+	for (var reaction of reactions) {
 		var flags = reaction.f;
 
 		// Skip any effects that are already dirty
