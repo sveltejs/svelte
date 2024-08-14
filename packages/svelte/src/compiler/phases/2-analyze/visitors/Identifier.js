@@ -78,21 +78,7 @@ export function Identifier(node, context) {
 			context.state.analysis.uses_rest_props = true;
 		}
 
-		if (
-			binding?.kind === 'normal' &&
-			((binding.scope === context.state.instance_scope &&
-				binding.declaration_kind !== 'function') ||
-				binding.declaration_kind === 'import')
-		) {
-			if (
-				binding.declaration_kind !== 'import' &&
-				binding.mutated &&
-				// TODO could be more fine-grained - not every mention in the template implies a state binding
-				(context.state.reactive_statement || context.state.ast_type === 'template')
-			) {
-				binding.kind = 'state';
-			}
-		} else if (binding?.kind === 'each' && binding.mutated) {
+		if (binding?.kind === 'each' && binding.mutated) {
 			// Ensure that the array is marked as reactive even when only its entries are mutated
 			let i = context.path.length;
 			while (i--) {

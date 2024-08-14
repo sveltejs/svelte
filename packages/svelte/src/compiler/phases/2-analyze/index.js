@@ -455,9 +455,14 @@ export function analyze_component(root, source, options) {
 			for (const { node, path } of binding.references) {
 				if (node === binding.node) continue;
 
-				const types = path.map((node) => node.type);
-				if (types.at(-1) === 'StyleDirective' && (binding.reassigned || binding.mutated)) {
-					binding.kind = 'state';
+				if (binding.mutated) {
+					if (
+						path[path.length - 1].type === 'StyleDirective' ||
+						path.some((node) => node.type === 'Fragment') ||
+						(path[1].type === 'LabeledStatement' && path[1].label.name === '$')
+					) {
+						binding.kind = 'state';
+					}
 				}
 			}
 		}

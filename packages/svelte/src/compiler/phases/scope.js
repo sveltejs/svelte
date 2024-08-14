@@ -708,6 +708,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 				const binding = scope.get(id.name);
 				if (binding && id !== binding.node) {
+					// TODO we should probably distinguish between these?
 					binding.mutated = true;
 					binding.reassigned = node.type === 'Identifier';
 				}
