@@ -1,4 +1,5 @@
 /** @import { Expression, Identifier } from 'estree' */
+/** @import { EachBlock } from '#compiler' */
 /** @import { Context } from '../types' */
 import is_reference from 'is-reference';
 import { should_proxy } from '../../3-transform/client/utils.js';
@@ -80,20 +81,13 @@ export function Identifier(node, context) {
 
 		if (binding?.kind === 'each' && binding.mutated) {
 			// Ensure that the array is marked as reactive even when only its entries are mutated
-			let i = context.path.length;
-			while (i--) {
-				const ancestor = context.path[i];
-				if (
-					ancestor.type === 'EachBlock' &&
-					context.state.analysis.template.scopes.get(ancestor)?.declarations.get(node.name) ===
-						binding
-				) {
-					for (const binding of ancestor.metadata.expression.dependencies) {
-						if (binding.kind === 'normal') {
-							binding.kind = 'state';
-						}
-					}
-					break;
+			const each_block = /** @type {EachBlock} */ (
+				context.path.findLast((node) => node.type === 'EachBlock')
+			);
+
+			for (const binding of each_block.metadata.expression.dependencies) {
+				if (binding.kind === 'normal') {
+					binding.kind = 'state';
 				}
 			}
 		}
