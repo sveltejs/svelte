@@ -62,7 +62,7 @@ In previous versions of Svelte, the component constructor was fixed when the com
 
 In Svelte 5 this is no longer true — if `X` changes, `<X>` re-renders.
 
-In some cases `<object.property>` syntax can be used as a replacement; lowercase property access is recognized as a component in Svelte 5.
+In some cases `<object.property>` syntax can be used as a replacement; a lowercased variable with property access is recognized as a component in Svelte 5.
 
 For complex component resolution logic, an intermediary, capitalized variable may be necessary. E.g. in places where `@const` can be used:
 
@@ -74,7 +74,7 @@ For complex component resolution logic, an intermediary, capitalized variable ma
 {/each}
 ```
 
-In other contexts a derived value may be used:
+A derived value may be used in other contexts:
 
 ```diff
 <script>
