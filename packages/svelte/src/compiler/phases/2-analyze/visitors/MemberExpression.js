@@ -1,9 +1,8 @@
-/** @import { MemberExpression } from 'estree' */
+/** @import { MemberExpression, Node } from 'estree' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { object } from '../../../utils/ast.js';
-import { is_state_source } from '../../3-transform/client/utils.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
 
 /**
@@ -33,6 +32,8 @@ export function MemberExpression(node, context) {
 			const binding = context.state.scope.get(left.name);
 
 			if (binding && binding.kind === 'normal') {
+				const parent = /** @type {Node} */ (context.path.at(-1));
+
 				if (
 					binding.scope === context.state.analysis.module.scope ||
 					binding.declaration_kind === 'import' ||
@@ -40,7 +41,9 @@ export function MemberExpression(node, context) {
 						binding.initial.type !== 'ArrayExpression' &&
 						binding.initial.type !== 'ObjectExpression')
 				) {
-					w.reactive_declaration_non_reactive_property(node);
+					if (parent.type !== 'MemberExpression' && parent.type !== 'CallExpression') {
+						w.reactive_declaration_non_reactive_property(node);
+					}
 				}
 			}
 		}
