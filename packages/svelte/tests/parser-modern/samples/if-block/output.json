@@ -38,13 +38,11 @@
 							"raw": "bar",
 							"data": "bar"
 						}
-					],
-					"transparent": false
+					]
 				},
 				"alternate": null
 			}
-		],
-		"transparent": false
+		]
 	},
 	"options": null
 }

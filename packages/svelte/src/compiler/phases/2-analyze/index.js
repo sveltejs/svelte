@@ -61,6 +61,7 @@ import { TaggedTemplateExpression } from './visitors/TaggedTemplateExpression.js
 import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
+import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
 import is_reference from 'is-reference';
 
@@ -166,6 +167,7 @@ const visitors = {
 	Text,
 	TitleElement,
 	UpdateExpression,
+	UseDirective,
 	VariableDeclarator
 };
 

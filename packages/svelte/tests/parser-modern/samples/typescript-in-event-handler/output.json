@@ -350,12 +350,10 @@
 								"name": "count"
 							}
 						}
-					],
-					"transparent": true
+					]
 				}
 			}
-		],
-		"transparent": false
+		]
 	},
 	"options": null,
 	"instance": {

@@ -87,8 +87,7 @@
 										"raw": "x is greater than 10",
 										"data": "x is greater than 10"
 									}
-								],
-								"transparent": true
+								]
 							}
 						},
 						{
@@ -98,8 +97,7 @@
 							"raw": "\n",
 							"data": "\n"
 						}
-					],
-					"transparent": false
+					]
 				},
 				"alternate": {
 					"type": "Fragment",
@@ -184,8 +182,7 @@
 													"raw": "x is less than 5",
 													"data": "x is less than 5"
 												}
-											],
-											"transparent": true
+											]
 										}
 									},
 									{
@@ -195,17 +192,14 @@
 										"raw": "\n",
 										"data": "\n"
 									}
-								],
-								"transparent": false
+								]
 							},
 							"alternate": null
 						}
-					],
-					"transparent": false
+					]
 				}
 			}
-		],
-		"transparent": false
+		]
 	},
 	"options": null
 }
