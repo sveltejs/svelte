@@ -101,8 +101,8 @@ export const codes = [
 	"perf_avoid_inline_class",
 	"perf_avoid_nested_class",
 	"reactive_declaration_invalid_placement",
-	"reactive_declaration_non_reactive_property",
 	"reactive_declaration_module_script_dependency",
+	"reactive_declaration_non_reactive_property",
 	"state_referenced_locally",
 	"store_rune_conflict",
 	"css_unused_selector",
@@ -631,19 +631,19 @@ export function reactive_declaration_invalid_placement(node) {
 }
 
 /**
- * Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update
- * @param {null | NodeLike} node
- */
-export function reactive_declaration_non_reactive_property(node) {
-	w(node, "reactive_declaration_non_reactive_property", "Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update");
-}
-
-/**
  * Reassignments of module-level declarations will not cause reactive statements to update
  * @param {null | NodeLike} node
  */
 export function reactive_declaration_module_script_dependency(node) {
 	w(node, "reactive_declaration_module_script_dependency", "Reassignments of module-level declarations will not cause reactive statements to update");
+}
+
+/**
+ * Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update
+ * @param {null | NodeLike} node
+ */
+export function reactive_declaration_non_reactive_property(node) {
+	w(node, "reactive_declaration_non_reactive_property", "Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update");
 }
 
 /**
