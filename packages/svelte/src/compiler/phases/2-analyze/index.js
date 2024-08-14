@@ -1,11 +1,11 @@
 /** @import { Node, Program } from 'estree' */
-/** @import { Root, Script, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { Binding, Root, Script, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import { walk } from 'zimmerframe';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
-import { is_text_attribute } from '../../utils/ast.js';
+import { extract_identifiers, is_text_attribute } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
 import { Scope, ScopeRoot, create_scopes, get_rune } from '../scope.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
@@ -396,6 +396,42 @@ export function analyze_component(root, source, options) {
 		},
 		source
 	};
+
+	if (!runes) {
+		// every exported `let` or `var` declaration becomes a prop, everything else becomes an export
+		for (const node of instance.ast.body) {
+			if (node.type !== 'ExportNamedDeclaration') continue;
+
+			analysis.needs_props = true;
+
+			if (node.declaration) {
+				if (
+					node.declaration.type === 'FunctionDeclaration' ||
+					node.declaration.type === 'ClassDeclaration'
+				) {
+					analysis.exports.push({
+						name: /** @type {import('estree').Identifier} */ (node.declaration.id).name,
+						alias: null
+					});
+				} else if (node.declaration.type === 'VariableDeclaration') {
+					if (node.declaration.kind === 'const') {
+						for (const declarator of node.declaration.declarations) {
+							for (const node of extract_identifiers(declarator.id)) {
+								analysis.exports.push({ name: node.name, alias: null });
+							}
+						}
+					} else {
+						for (const declarator of node.declaration.declarations) {
+							for (const id of extract_identifiers(declarator.id)) {
+								const binding = /** @type {Binding} */ (instance.scope.get(id.name));
+								binding.kind = 'bindable_prop';
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 
 	if (root.options) {
 		for (const attribute of root.options.attributes) {
