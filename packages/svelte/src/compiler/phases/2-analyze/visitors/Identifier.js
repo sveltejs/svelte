@@ -91,12 +91,6 @@ export function Identifier(node, context) {
 				(context.state.reactive_statement || context.state.ast_type === 'template')
 			) {
 				binding.kind = 'state';
-			} else if (
-				context.state.reactive_statement &&
-				parent.type === 'AssignmentExpression' &&
-				parent.left === binding.node
-			) {
-				binding.kind = 'derived';
 			}
 		} else if (binding?.kind === 'each' && binding.mutated) {
 			// Ensure that the array is marked as reactive even when only its entries are mutated
