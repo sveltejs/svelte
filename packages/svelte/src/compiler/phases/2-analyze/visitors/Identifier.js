@@ -78,19 +78,6 @@ export function Identifier(node, context) {
 		if (node.name === '$$restProps') {
 			context.state.analysis.uses_rest_props = true;
 		}
-
-		if (binding?.kind === 'each' && binding.mutated) {
-			// Ensure that the array is marked as reactive even when only its entries are mutated
-			const each_block = /** @type {EachBlock} */ (
-				context.path.findLast((node) => node.type === 'EachBlock')
-			);
-
-			for (const binding of each_block.metadata.expression.dependencies) {
-				if (binding.kind === 'normal') {
-					binding.kind = 'state';
-				}
-			}
-		}
 	}
 
 	if (binding) {

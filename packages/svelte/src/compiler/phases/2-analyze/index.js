@@ -1,4 +1,4 @@
-/** @import { Node, Program } from 'estree' */
+/** @import { Expression, Node, Program } from 'estree' */
 /** @import { Binding, Root, Script, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
@@ -7,7 +7,7 @@ import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { extract_identifiers, is_text_attribute } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
-import { Scope, ScopeRoot, create_scopes, get_rune } from '../scope.js';
+import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { create_attribute } from '../nodes.js';
 import { analyze_css } from './css/css-analyze.js';
@@ -62,6 +62,7 @@ import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
+import is_reference from 'is-reference';
 
 /**
  * @type {Visitors}
@@ -449,6 +450,8 @@ export function analyze_component(root, source, options) {
 			}
 		}
 
+		// if reassigned/mutated bindings are referenced in `$:` blocks
+		// or the template, turn them into state
 		for (const binding of instance.scope.declarations.values()) {
 			if (binding.kind !== 'normal') continue;
 
@@ -466,6 +469,38 @@ export function analyze_component(root, source, options) {
 				}
 			}
 		}
+
+		// more legacy nonsense: if an `each` binding is reassigned/mutated,
+		// treat the expression as being mutated as well
+		walk(/** @type {SvelteNode} */ (template.ast), null, {
+			EachBlock(node) {
+				const scope = /** @type {Scope} */ (template.scopes.get(node));
+
+				for (const binding of scope.declarations.values()) {
+					if (binding.mutated) {
+						const state = { scope: /** @type {Scope} */ (scope.parent), scopes: template.scopes };
+
+						walk(node.expression, state, {
+							// @ts-expect-error
+							_: set_scope,
+							Identifier(node, context) {
+								const parent = /** @type {Expression} */ (context.path.at(-1));
+
+								if (is_reference(node, parent)) {
+									const binding = context.state.scope.get(node.name);
+
+									if (binding && binding.kind === 'normal') {
+										binding.kind = 'state';
+									}
+								}
+							}
+						});
+
+						break;
+					}
+				}
+			}
+		});
 	}
 
 	if (root.options) {
