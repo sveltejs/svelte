@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import { it, assert } from 'vitest';
-import { compile } from 'svelte/compiler';
+import { compile, compileModule } from 'svelte/compiler';
 import { try_load_json } from '../helpers.js';
 import { suite, type BaseTest } from '../suite.js';
 import type { CompileError } from '#compiler';
@@ -14,11 +14,6 @@ interface ValidatorTest extends BaseTest {
 }
 
 const { test, run } = suite<ValidatorTest>(async (config, cwd) => {
-	const input = fs
-		.readFileSync(`${cwd}/input.svelte`, 'utf-8')
-		.replace(/\s+$/, '')
-		.replace(/\r/g, '');
-
 	const expected_warnings = try_load_json(`${cwd}/warnings.json`) || [];
 	const expected_errors = try_load_json(`${cwd}/errors.json`);
 	const options = try_load_json(`${cwd}/options.json`);
@@ -26,7 +21,17 @@ const { test, run } = suite<ValidatorTest>(async (config, cwd) => {
 	let error;
 
 	try {
-		const { warnings } = compile(input, {
+		const module = fs.existsSync(`${cwd}/input.svelte.js`);
+
+		const input = (
+			module
+				? fs.readFileSync(`${cwd}/input.svelte.js`, 'utf-8')
+				: fs.readFileSync(`${cwd}/input.svelte`, 'utf-8')
+		)
+			.replace(/\s+$/, '')
+			.replace(/\r/g, '');
+
+		const { warnings } = (module ? compileModule : compile)(input, {
 			...config.compileOptions,
 			generate: false,
 			...options
