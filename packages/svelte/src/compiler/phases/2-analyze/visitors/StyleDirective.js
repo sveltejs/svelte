@@ -2,6 +2,7 @@
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import { get_attribute_chunks } from '../../../utils/ast.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
  * @param {StyleDirective} node
@@ -21,6 +22,8 @@ export function StyleDirective(node, context) {
 				node.metadata.expression.has_state = true;
 			}
 		}
+
+		mark_subtree_dynamic(context.path);
 	} else {
 		context.next();
 

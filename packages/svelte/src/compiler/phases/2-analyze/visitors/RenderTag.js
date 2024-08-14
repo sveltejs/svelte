@@ -3,6 +3,7 @@
 import { unwrap_optional } from '../../../utils/ast.js';
 import * as e from '../../../errors.js';
 import { validate_opening_tag } from './shared/utils.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
  * @param {RenderTag} node
@@ -32,6 +33,8 @@ export function RenderTag(node, context) {
 	) {
 		e.render_tag_invalid_call_expression(node);
 	}
+
+	mark_subtree_dynamic(context.path);
 
 	context.next({ ...context.state, render_tag: node });
 }
