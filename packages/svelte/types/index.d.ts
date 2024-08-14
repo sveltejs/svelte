@@ -949,6 +949,8 @@ declare module 'svelte/compiler' {
 		references: { node: Identifier; path: SvelteNode[] }[];
 		mutated: boolean;
 		reassigned: boolean;
+		/** `true` if mutated _or_ reassigned */
+		updated: boolean;
 		scope: Scope;
 		/** For `legacy_reactive`: its reactive dependencies */
 		legacy_dependencies: Binding[];
@@ -1859,8 +1861,6 @@ declare module 'svelte/compiler' {
 			index: Identifier;
 			item: Identifier;
 			declarations: Map<string, Binding>;
-			/** List of bindings that are referenced within the expression */
-			references: Binding[];
 			/**
 			 * Optimization path for each blocks: If the parent isn't a fragment and
 			 * it only has a single child, then we can classify the block as being "controlled".
