@@ -777,6 +777,16 @@ export function component_invalid_directive(node) {
 }
 
 /**
+ * `%name%` is not a valid component name. A component name can be an identifier, or a member expression with dot notation.
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function component_invalid_name(node, name) {
+	e(node, "component_invalid_name", `\`${name}\` is not a valid component name. A component name can be an identifier, or a member expression with dot notation.`);
+}
+
+/**
  * Cyclical dependency detected: %cycle%
  * @param {null | number | NodeLike} node
  * @param {string} cycle

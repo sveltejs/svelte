@@ -100,6 +100,10 @@
 
 > This type of directive is not valid on components
 
+## component_invalid_name
+
+> `%name%` is not a valid component name. A component name can be an identifier, or a member expression with dot notation.
+
 ## const_tag_cycle
 
 > Cyclical dependency detected: %cycle%

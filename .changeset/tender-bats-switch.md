@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-feat: treat tag with `[` as a component, even if lowercase
+feat: error on invalid component name
