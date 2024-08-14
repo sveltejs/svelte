@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: hoist reactive imports to the module
+fix: treat module-level imports as non-reactive in legacy mode
