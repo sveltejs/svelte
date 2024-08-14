@@ -1,4 +1,9 @@
 <script context="module">
-	import defaults from './defaults.js';
-	defaults.id++;
+	import state from './state.js';
+
+	function update() {
+		state.count += 1;
+	}
 </script>
+
+<button on:click={update}>{state.count}</button>
