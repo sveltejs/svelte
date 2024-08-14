@@ -429,6 +429,23 @@ export function analyze_component(root, source, options) {
 						}
 					}
 				}
+			} else {
+				for (const specifier of node.specifiers) {
+					const binding = instance.scope.get(specifier.local.name);
+
+					if (
+						binding &&
+						(binding.declaration_kind === 'var' || binding.declaration_kind === 'let')
+					) {
+						binding.kind = 'bindable_prop';
+
+						if (specifier.exported.name !== specifier.local.name) {
+							binding.prop_alias = specifier.exported.name;
+						}
+					} else {
+						analysis.exports.push({ name: specifier.local.name, alias: specifier.exported.name });
+					}
+				}
 			}
 		}
 	}
