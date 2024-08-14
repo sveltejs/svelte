@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.221
+
+### Patch Changes
+
+- fix: ensure onwheel is passive by default ([#12837](https://github.com/sveltejs/svelte/pull/12837))
+
+- chore: improve signal perf by using Set rather than array for reactions ([#12831](https://github.com/sveltejs/svelte/pull/12831))
+
+- fix: ensure each key validation occurs for updates ([#12836](https://github.com/sveltejs/svelte/pull/12836))
+
 ## 5.0.0-next.220
 
 ### Patch Changes
