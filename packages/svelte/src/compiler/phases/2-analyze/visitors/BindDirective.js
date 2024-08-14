@@ -80,10 +80,6 @@ export function BindDirective(node, context) {
 				if (references.length > 0) {
 					parent.metadata.contains_group_binding = true;
 
-					for (const binding of parent.metadata.references) {
-						binding.mutated = true;
-					}
-
 					each_blocks.push(parent);
 					ids = ids.filter((id) => !references.includes(id));
 					ids.push(...extract_all_identifiers_from_expression(parent.expression)[1]);
