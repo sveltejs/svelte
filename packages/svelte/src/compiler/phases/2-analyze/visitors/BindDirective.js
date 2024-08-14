@@ -39,7 +39,7 @@ export function BindDirective(node, context) {
 					binding.kind !== 'bindable_prop' &&
 					binding.kind !== 'each' &&
 					binding.kind !== 'store_sub' &&
-					!binding.mutated))
+					!binding.updated)) // TODO wut?
 		) {
 			e.bind_invalid_value(node.expression);
 		}

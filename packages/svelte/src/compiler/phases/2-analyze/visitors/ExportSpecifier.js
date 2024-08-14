@@ -17,7 +17,7 @@ export function ExportSpecifier(node, context) {
 			});
 
 			const binding = context.state.scope.get(node.local.name);
-			if (binding) binding.reassigned = true;
+			if (binding) binding.reassigned = binding.updated = true;
 		}
 	} else {
 		validate_export(node, context.state.scope, node.local.name);

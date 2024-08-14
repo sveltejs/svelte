@@ -685,9 +685,13 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			const binding = left && scope.get(left.name);
 
 			if (binding !== null && left !== binding.node) {
-				// TODO we should probably distinguish between these?
-				binding.mutated = true;
-				binding.reassigned ||= left === expression;
+				binding.updated = true;
+
+				if (left === expression) {
+					binding.reassigned = true;
+				} else {
+					binding.mutated = true;
+				}
 			}
 		}
 	}

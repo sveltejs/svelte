@@ -458,7 +458,7 @@ export function analyze_component(root, source, options) {
 			for (const { node, path } of binding.references) {
 				if (node === binding.node) continue;
 
-				if (binding.mutated) {
+				if (binding.updated) {
 					if (
 						path[path.length - 1].type === 'StyleDirective' ||
 						path.some((node) => node.type === 'Fragment') ||
@@ -477,7 +477,7 @@ export function analyze_component(root, source, options) {
 				const scope = /** @type {Scope} */ (template.scopes.get(node));
 
 				for (const binding of scope.declarations.values()) {
-					if (binding.mutated) {
+					if (binding.updated) {
 						const state = { scope: /** @type {Scope} */ (scope.parent), scopes: template.scopes };
 
 						walk(node.expression, state, {
@@ -491,6 +491,7 @@ export function analyze_component(root, source, options) {
 
 									if (binding && binding.kind === 'normal') {
 										binding.kind = 'state';
+										binding.mutated = binding.updated = true;
 									}
 								}
 							}

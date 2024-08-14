@@ -300,6 +300,8 @@ export interface Binding {
 	references: { node: Identifier; path: SvelteNode[] }[];
 	mutated: boolean;
 	reassigned: boolean;
+	/** `true` if mutated _or_ reassigned */
+	updated: boolean;
 	scope: Scope;
 	/** For `legacy_reactive`: its reactive dependencies */
 	legacy_dependencies: Binding[];
