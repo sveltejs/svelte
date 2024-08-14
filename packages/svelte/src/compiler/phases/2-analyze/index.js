@@ -448,6 +448,19 @@ export function analyze_component(root, source, options) {
 				}
 			}
 		}
+
+		for (const binding of instance.scope.declarations.values()) {
+			if (binding.kind !== 'normal') continue;
+
+			for (const { node, path } of binding.references) {
+				if (node === binding.node) continue;
+
+				const types = path.map((node) => node.type);
+				if (types.at(-1) === 'StyleDirective' && (binding.reassigned || binding.mutated)) {
+					binding.kind = 'state';
+				}
+			}
+		}
 	}
 
 	if (root.options) {

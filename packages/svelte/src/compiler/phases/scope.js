@@ -671,7 +671,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		// the css property
 		StyleDirective(node, { path, state, next }) {
 			if (node.value === true) {
-				state.scope.reference(b.id(node.name), path);
+				state.scope.reference(b.id(node.name), path.concat(node));
 			}
 			next();
 		}
