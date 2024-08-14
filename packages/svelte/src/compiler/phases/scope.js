@@ -689,17 +689,17 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			const binding = scope.get(/** @type {Identifier} */ (object).name);
 			if (binding) binding.mutated = true;
 		} else {
-			unwrap_pattern(node).forEach((node) => {
-				let id = node.type === 'Identifier' ? node : object(node);
-				if (id === null) return;
+			for (const expression of unwrap_pattern(node)) {
+				const left = object(expression);
+				if (left === null) return;
 
-				const binding = scope.get(id.name);
-				if (binding && id !== binding.node) {
+				const binding = scope.get(left.name);
+				if (binding && left !== binding.node) {
 					// TODO we should probably distinguish between these?
 					binding.mutated = true;
-					binding.reassigned = node.type === 'Identifier';
+					binding.reassigned = left === expression;
 				}
-			});
+			}
 		}
 	}
 
