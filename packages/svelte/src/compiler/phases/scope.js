@@ -113,13 +113,14 @@ export class Scope {
 			references: [],
 			legacy_dependencies: [],
 			initial,
+			reassigned: false,
 			mutated: false,
+			updated: false,
 			scope: this,
 			kind,
 			declaration_kind,
 			is_called: false,
 			prop_alias: null,
-			reassigned: false,
 			metadata: null
 		};
 		this.declarations.set(node.name, binding);
