@@ -134,7 +134,7 @@ function get_delegated_event(event_name, handler, context) {
 			return unhoisted;
 		}
 
-		if (binding !== null && binding.initial !== null && !binding.mutated && !binding.is_called) {
+		if (binding !== null && binding.initial !== null && !binding.updated && !binding.is_called) {
 			const binding_type = binding.initial.type;
 
 			if (
@@ -188,7 +188,7 @@ function get_delegated_event(event_name, handler, context) {
 				(((!context.state.analysis.runes && binding.kind === 'each') ||
 					// or any normal not reactive bindings that are mutated.
 					binding.kind === 'normal') &&
-					binding.mutated))
+					binding.updated))
 		) {
 			return unhoisted;
 		}

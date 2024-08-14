@@ -1,4 +1,5 @@
 /** @import { Expression, Identifier } from 'estree' */
+/** @import { EachBlock } from '#compiler' */
 /** @import { Context } from '../types' */
 import is_reference from 'is-reference';
 import { should_proxy } from '../../3-transform/client/utils.js';
@@ -76,46 +77,6 @@ export function Identifier(node, context) {
 
 		if (node.name === '$$restProps') {
 			context.state.analysis.uses_rest_props = true;
-		}
-
-		if (
-			binding?.kind === 'normal' &&
-			((binding.scope === context.state.instance_scope &&
-				binding.declaration_kind !== 'function') ||
-				binding.declaration_kind === 'import')
-		) {
-			if (
-				binding.declaration_kind !== 'import' &&
-				binding.mutated &&
-				// TODO could be more fine-grained - not every mention in the template implies a state binding
-				(context.state.reactive_statement || context.state.ast_type === 'template')
-			) {
-				binding.kind = 'state';
-			} else if (
-				context.state.reactive_statement &&
-				parent.type === 'AssignmentExpression' &&
-				parent.left === binding.node
-			) {
-				binding.kind = 'derived';
-			}
-		} else if (binding?.kind === 'each' && binding.mutated) {
-			// Ensure that the array is marked as reactive even when only its entries are mutated
-			let i = context.path.length;
-			while (i--) {
-				const ancestor = context.path[i];
-				if (
-					ancestor.type === 'EachBlock' &&
-					context.state.analysis.template.scopes.get(ancestor)?.declarations.get(node.name) ===
-						binding
-				) {
-					for (const binding of ancestor.metadata.references) {
-						if (binding.kind === 'normal') {
-							binding.kind = 'state';
-						}
-					}
-					break;
-				}
-			}
 		}
 	}
 

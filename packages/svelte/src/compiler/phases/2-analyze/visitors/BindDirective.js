@@ -39,7 +39,7 @@ export function BindDirective(node, context) {
 					binding.kind !== 'bindable_prop' &&
 					binding.kind !== 'each' &&
 					binding.kind !== 'store_sub' &&
-					!binding.mutated))
+					!binding.updated)) // TODO wut?
 		) {
 			e.bind_invalid_value(node.expression);
 		}
@@ -79,10 +79,6 @@ export function BindDirective(node, context) {
 
 				if (references.length > 0) {
 					parent.metadata.contains_group_binding = true;
-
-					for (const binding of parent.metadata.references) {
-						binding.mutated = true;
-					}
 
 					each_blocks.push(parent);
 					ids = ids.filter((id) => !references.includes(id));

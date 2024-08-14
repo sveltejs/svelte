@@ -114,7 +114,7 @@ export function EachBlock(node, context) {
 	const indirect_dependencies = collect_parent_each_blocks(context).flatMap((block) => {
 		const array = /** @type {Expression} */ (context.visit(block.expression));
 		const transitive_dependencies = build_transitive_dependencies(
-			block.metadata.references,
+			block.metadata.expression.dependencies,
 			context
 		);
 		return [array, ...transitive_dependencies];
@@ -126,7 +126,7 @@ export function EachBlock(node, context) {
 		indirect_dependencies.push(collection);
 
 		const transitive_dependencies = build_transitive_dependencies(
-			each_node_meta.references,
+			each_node_meta.expression.dependencies,
 			context
 		);
 		indirect_dependencies.push(...transitive_dependencies);
@@ -279,7 +279,7 @@ function collect_parent_each_blocks(context) {
 }
 
 /**
- * @param {Binding[]} references
+ * @param {Set<Binding>} references
  * @param {ComponentContext} context
  */
 function build_transitive_dependencies(references, context) {

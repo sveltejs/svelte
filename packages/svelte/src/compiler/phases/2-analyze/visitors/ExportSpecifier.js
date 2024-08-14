@@ -17,29 +17,7 @@ export function ExportSpecifier(node, context) {
 			});
 
 			const binding = context.state.scope.get(node.local.name);
-			if (binding) binding.reassigned = true;
-		} else {
-			context.state.analysis.needs_props = true;
-
-			const binding = /** @type {Binding} */ (context.state.scope.get(node.local.name));
-
-			if (
-				binding !== null &&
-				(binding.kind === 'state' ||
-					binding.kind === 'raw_state' ||
-					(binding.kind === 'normal' &&
-						(binding.declaration_kind === 'let' || binding.declaration_kind === 'var')))
-			) {
-				binding.kind = 'bindable_prop';
-				if (node.exported.name !== node.local.name) {
-					binding.prop_alias = node.exported.name;
-				}
-			} else {
-				context.state.analysis.exports.push({
-					name: node.local.name,
-					alias: node.exported.name
-				});
-			}
+			if (binding) binding.reassigned = binding.updated = true;
 		}
 	} else {
 		validate_export(node, context.state.scope, node.local.name);
