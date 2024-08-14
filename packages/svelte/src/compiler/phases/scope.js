@@ -14,6 +14,7 @@ import {
 } from '../utils/ast.js';
 import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
+import { filename } from '../state.js';
 
 export class Scope {
 	/** @type {ScopeRoot} */
@@ -680,24 +681,14 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	}
 
 	for (const [scope, node] of updates) {
-		if (node.type === 'MemberExpression') {
-			let object = node.object;
-			while (object.type === 'MemberExpression') {
-				object = object.object;
-			}
+		for (const expression of unwrap_pattern(node)) {
+			const left = object(expression);
+			const binding = left && scope.get(left.name);
 
-			const binding = scope.get(/** @type {Identifier} */ (object).name);
-			if (binding) binding.mutated = true;
-		} else {
-			for (const expression of unwrap_pattern(node)) {
-				const left = object(expression);
-				const binding = left && scope.get(left.name);
-
-				if (binding !== null && left !== binding.node) {
-					// TODO we should probably distinguish between these?
-					binding.mutated = true;
-					binding.reassigned = left === expression;
-				}
+			if (binding !== null && left !== binding.node) {
+				// TODO we should probably distinguish between these?
+				binding.mutated = true;
+				binding.reassigned ||= left === expression;
 			}
 		}
 	}
