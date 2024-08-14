@@ -506,17 +506,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		EachBlock(node, { state, visit }) {
-			// Array part is still from the scope above
-			/** @type {Set<Identifier>} */
-			const references_within = new Set();
-			const idx = references.length;
 			visit(node.expression);
-			for (let i = idx; i < references.length; i++) {
-				const [scope, { node: id }] = references[i];
-				if (scope === state.scope) {
-					references_within.add(id);
-				}
-			}
 
 			// context and children are a new scope
 			const scope = state.scope.child();
@@ -582,9 +572,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				index: scope.root.unique('$$index'),
 				item: node.context.type === 'Identifier' ? node.context : b.id('$$item'),
 				declarations: scope.declarations,
-				references: [...references_within]
-					.map((id) => /** @type {Binding} */ (state.scope.get(id.name)))
-					.filter(Boolean),
 				is_controlled: false
 			};
 		},

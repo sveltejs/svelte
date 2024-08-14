@@ -404,8 +404,6 @@ export interface EachBlock extends BaseNode {
 		index: Identifier;
 		item: Identifier;
 		declarations: Map<string, Binding>;
-		/** List of bindings that are referenced within the expression */
-		references: Binding[];
 		/**
 		 * Optimization path for each blocks: If the parent isn't a fragment and
 		 * it only has a single child, then we can classify the block as being "controlled".

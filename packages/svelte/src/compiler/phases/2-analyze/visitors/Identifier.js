@@ -88,7 +88,7 @@ export function Identifier(node, context) {
 					context.state.analysis.template.scopes.get(ancestor)?.declarations.get(node.name) ===
 						binding
 				) {
-					for (const binding of ancestor.metadata.references) {
+					for (const binding of ancestor.metadata.expression.dependencies) {
 						if (binding.kind === 'normal') {
 							binding.kind = 'state';
 						}
