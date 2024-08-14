@@ -60,7 +60,31 @@ This code will work when the component is rendered on the client (which is why t
 
 In previous versions of Svelte, the component constructor was fixed when the component was rendered. In other words, if you wanted `<X>` to re-render when `X` changed, you would either have to use `<svelte:component this={X}>` or put the component inside a `{#key X}...{/key}` block.
 
-In Svelte 5 this is no longer true — if `X` changes, `<X>` re-renders. For more complex expressions like `condition ? Y : Z` you can use a derived value instead.
+In Svelte 5 this is no longer true — if `X` changes, `<X>` re-renders.
+
+In some cases `<object.property>` syntax can be used as a replacement; a lowercased variable with property access is recognized as a component in Svelte 5.
+
+For complex component resolution logic, an intermediary, capitalized variable may be necessary. E.g. in places where `@const` can be used:
+
+```diff
+{#each items as item}
+-	<svelte:component this={item.condition ? Y : Z} />
++	{@const Component = item.condition ? Y : Z}
++	<Component />
+{/each}
+```
+
+A derived value may be used in other contexts:
+
+```diff
+<script>
+	...
+	let condition = $state(false);
++	const Component = $derived(condition ? Y : Z);
+</script>
+- <svelte:component this={condition ? Y : Z} />
++ <Component />
+```
 
 ## svelte_element_invalid_this
 
