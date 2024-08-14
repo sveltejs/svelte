@@ -1,6 +1,6 @@
 /** @import { ProxyMetadata, ProxyStateObject, Source } from '#client' */
 import { DEV } from 'esm-env';
-import { get, current_component_context, untrack, current_effect } from './runtime.js';
+import { get, current_component_context, current_effect } from './runtime.js';
 import {
 	array_prototype,
 	define_property,
@@ -15,6 +15,14 @@ import { source, set } from './reactivity/sources.js';
 import { STATE_SYMBOL } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
+
+/**
+ * @param {string | symbol} prop
+ */
+function is_prop_positive_integer(prop) {
+	// @ts-ignore
+	return typeof prop === 'string' && prop >>> 0 === parseFloat(prop);
+}
 
 /**
  * @template T
@@ -116,28 +124,21 @@ const state_proxy_handler = {
 		const metadata = target[STATE_SYMBOL];
 		const s = metadata.s.get(prop);
 		const is_array = metadata.a;
-		const boolean = delete target[prop];
+		const exists = (s !== undefined && s.v !== UNINITIALIZED) || prop in target;
 
-		// If we have mutated an array directly, and the deletion
-		// was successful we will also need to update the length
-		// before updating the field or the version. This is to
-		// ensure any effects observing length can execute before
-		// effects that listen to the fields – otherwise they will
-		// operate an an index that no longer exists.
-		if (is_array && boolean) {
-			const ls = metadata.s.get('length');
-			const length = target.length - 1;
-			if (ls !== undefined && ls.v !== length) {
-				set(ls, length);
+		if (s !== undefined) {
+			if (is_array) {
+				set(s, undefined);
+			} else {
+				set(s, UNINITIALIZED);
 			}
 		}
-		if (s !== undefined) set(s, UNINITIALIZED);
 
-		if (boolean) {
+		if (exists) {
 			update_version(metadata.v);
 		}
 
-		return boolean;
+		return exists;
 	},
 
 	get(target, prop, receiver) {
@@ -148,10 +149,11 @@ const state_proxy_handler = {
 		/** @type {ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
+		var exists = prop in target;
 
 		// create a source, but only if it's an own property and not a prototype property
-		if (s === undefined && (!(prop in target) || get_descriptor(target, prop)?.writable)) {
-			s = source(proxy(target[prop], metadata));
+		if (s === undefined && (!exists || get_descriptor(target, prop)?.writable)) {
+			s = source(proxy(exists ? target[prop] : UNINITIALIZED, metadata));
 			metadata.s.set(prop, s);
 		}
 
@@ -165,13 +167,26 @@ const state_proxy_handler = {
 
 	getOwnPropertyDescriptor(target, prop) {
 		const descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
+		/** @type {ProxyMetadata} */
+		const metadata = target[STATE_SYMBOL];
+
 		if (descriptor && 'value' in descriptor) {
-			/** @type {ProxyMetadata} */
-			const metadata = target[STATE_SYMBOL];
 			const s = metadata.s.get(prop);
 
 			if (s) {
 				descriptor.value = get(s);
+			}
+		} else if (descriptor === undefined) {
+			var source = metadata.s.get(prop);
+			var value = source?.v;
+
+			if (source !== undefined && value !== UNINITIALIZED) {
+				return {
+					enumerable: true,
+					configurable: true,
+					value,
+					writable: true
+				};
 			}
 		}
 
@@ -184,9 +199,9 @@ const state_proxy_handler = {
 		}
 		/** @type {ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
-		const has = Reflect.has(target, prop);
-
 		let s = metadata.s.get(prop);
+		const has = (s !== undefined && s.v !== UNINITIALIZED) || Reflect.has(target, prop);
+
 		if (
 			s !== undefined ||
 			(current_effect !== null && (!has || get_descriptor(target, prop)?.writable))
@@ -207,20 +222,22 @@ const state_proxy_handler = {
 		/** @type {ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
+		let not_has = !(prop in target);
 		// If we haven't yet created a source for this property, we need to ensure
 		// we do so otherwise if we read it later, then the write won't be tracked and
 		// the heuristics of effects will be different vs if we had read the proxied
 		// object property before writing to that property.
 		if (s === undefined) {
-			// the read creates a signal
-			untrack(() => receiver[prop]);
-			s = metadata.s.get(prop);
-		}
-		if (s !== undefined) {
+			if (!(prop in target) || get_descriptor(target, prop)?.writable) {
+				s = source(undefined);
+				set(s, proxy(value, metadata));
+				metadata.s.set(prop, s);
+			}
+		} else {
+			not_has = s.v === UNINITIALIZED;
 			set(s, proxy(value, metadata));
 		}
 		const is_array = metadata.a;
-		const not_has = !(prop in target);
 
 		if (DEV) {
 			/** @type {ProxyMetadata | undefined} */
@@ -244,8 +261,6 @@ const state_proxy_handler = {
 		// Set the new value before updating any signals so that any listeners get the new value
 		if (descriptor?.set) {
 			descriptor.set.call(receiver, value);
-		} else {
-			target[prop] = value;
 		}
 
 		if (not_has) {
@@ -254,10 +269,11 @@ const state_proxy_handler = {
 			// to ensure that iterating over the array as a result of a metadata update
 			// will not cause the length to be out of sync.
 			if (is_array) {
-				const ls = metadata.s.get('length');
-				const length = target.length;
-				if (ls !== undefined && ls.v !== length) {
-					set(ls, length);
+				var ls = metadata.s.get('length');
+				var prop_number = Number(prop);
+
+				if (ls !== undefined && is_prop_positive_integer(prop) && prop_number >= ls.v) {
+					set(ls, prop_number + 1);
 				}
 			}
 			update_version(metadata.v);
@@ -268,10 +284,22 @@ const state_proxy_handler = {
 
 	ownKeys(target) {
 		/** @type {ProxyMetadata} */
-		const metadata = target[STATE_SYMBOL];
+		var metadata = target[STATE_SYMBOL];
 
 		get(metadata.v);
-		return Reflect.ownKeys(target);
+
+		var own_keys = Reflect.ownKeys(target).filter((key) => {
+			var source = metadata.s.get(key);
+			return source === undefined || source.v !== UNINITIALIZED;
+		});
+
+		for (var [key, source] of metadata.s) {
+			if (source.v !== UNINITIALIZED && !(key in target)) {
+				own_keys.push(key);
+			}
+		}
+
+		return own_keys;
 	}
 };
 
