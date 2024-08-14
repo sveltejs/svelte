@@ -323,13 +323,7 @@ export function update_reaction(reaction) {
 
 			if (!current_skip_reaction) {
 				for (i = skipped_deps; i < deps.length; i++) {
-					dependency = deps[i];
-					var reactions = dependency.reactions;
-
-					if (reactions === null) {
-						reactions = dependency.reactions = new Set();
-					}
-					reactions.add(reaction);
+					(deps[i].reactions ??= new Set()).add(reaction);
 				}
 			}
 		} else if (deps !== null && skipped_deps < deps.length) {
@@ -354,18 +348,16 @@ export function update_reaction(reaction) {
  * @returns {void}
  */
 function remove_reaction(signal, dependency) {
-	const reactions = dependency.reactions;
-	let reactions_length = 0;
+	let reactions = dependency.reactions;
 	if (reactions !== null) {
 		reactions.delete(signal);
-		reactions_length = reactions.size;
-		if (reactions_length === 0) {
-			dependency.reactions = null;
+		if (reactions.size === 0) {
+			reactions = dependency.reactions = null;
 		}
 	}
 	// If the derived has no reactions, then we can disconnect it from the graph,
 	// allowing it to either reconnect in the future, or be GC'd by the VM.
-	if (reactions_length === 0 && (dependency.f & DERIVED) !== 0) {
+	if (reactions === null && (dependency.f & DERIVED) !== 0) {
 		set_signal_status(dependency, MAYBE_DIRTY);
 		// If we are working with a derived that is owned by an effect, then mark it as being
 		// disconnected.
