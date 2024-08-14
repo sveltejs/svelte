@@ -1,7 +1,7 @@
 /** @import { Expression } from 'estree' */
 /** @import { Attribute, ExpressionMetadata, ExpressionTag, SvelteNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
-import { is_capture_event } from '../../../../../../utils.js';
+import { is_capture_event, is_passive_event } from '../../../../../../utils.js';
 import { dev, locator } from '../../../../../state.js';
 import * as b from '../../../../../utils/builders.js';
 
@@ -63,7 +63,13 @@ export function visit_event_attribute(node, context) {
 		);
 	} else {
 		const statement = b.stmt(
-			build_event(event_name, context.state.node, handler, capture, undefined)
+			build_event(
+				event_name,
+				context.state.node,
+				handler,
+				capture,
+				is_passive_event(event_name) ? true : undefined
+			)
 		);
 
 		const type = /** @type {SvelteNode} */ (context.path.at(-1)).type;
