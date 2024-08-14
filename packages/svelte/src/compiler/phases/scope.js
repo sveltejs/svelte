@@ -14,7 +14,6 @@ import {
 } from '../utils/ast.js';
 import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
-import { filename } from '../state.js';
 
 export class Scope {
 	/** @type {ScopeRoot} */
