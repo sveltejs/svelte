@@ -68,8 +68,7 @@ export function validate_each_keys(collection, key_fn) {
 			}
 			keys.set(key, i);
 		}
-	})
-
+	});
 }
 
 /**
