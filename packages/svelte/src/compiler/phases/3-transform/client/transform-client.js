@@ -197,7 +197,7 @@ export function client_component(analysis, options) {
 		)
 	);
 
-	instance.body.unshift(...state.legacy_reactive_imports);
+	module.body.unshift(...state.legacy_reactive_imports);
 
 	/** @type {ESTree.Statement[]} */
 	const store_setup = [];
