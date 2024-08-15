@@ -223,7 +223,7 @@ export function analyze_module(ast, options) {
 
 		const binding = scope.get(name.slice(1));
 
-		if (binding !== null) {
+		if (binding !== null && !is_rune(name)) {
 			e.store_invalid_subscription_module(references[0].node);
 		}
 	}
