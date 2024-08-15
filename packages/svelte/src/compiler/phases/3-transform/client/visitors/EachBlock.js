@@ -149,14 +149,23 @@ export function EachBlock(node, context) {
 		each_node_meta.contains_group_binding || !node.index ? each_node_meta.index : b.id(node.index);
 	const item = each_node_meta.item;
 
-	if (node.index) {
-		if ((flags & EACH_INDEX_REACTIVE) !== 0) {
-			child_state.transform[node.index] = { read: get_value };
-		} else {
-			delete child_state.transform[node.index];
-		}
+	let uses_index = each_node_meta.contains_group_binding;
+	let key_uses_index = false;
 
-		delete key_state.transform[node.index];
+	if (node.index) {
+		child_state.transform[node.index] = {
+			read: (node) => {
+				uses_index = true;
+				return (flags & EACH_INDEX_REACTIVE) !== 0 ? get_value(node) : node;
+			}
+		};
+
+		key_state.transform[node.index] = {
+			read: (node) => {
+				key_uses_index = true;
+				return node;
+			}
+		};
 	}
 
 	/** @type {Statement[]} */
@@ -180,6 +189,8 @@ export function EachBlock(node, context) {
 		child_state.transform[node.context.name] = {
 			read: (flags & EACH_ITEM_REACTIVE) !== 0 ? get_value : (node) => node,
 			assign: (_, value) => {
+				uses_index = true;
+
 				const left = b.member(
 					each_node_meta.array_name ? b.call(each_node_meta.array_name) : collection,
 					index,
@@ -238,7 +249,7 @@ export function EachBlock(node, context) {
 			context.visit(/** @type {Expression} */ (node.key), key_state)
 		);
 
-		key_function = b.arrow([node.context, index], expression);
+		key_function = b.arrow(key_uses_index ? [node.context, index] : [node.context], expression);
 	}
 
 	if (node.index && each_node_meta.contains_group_binding) {
@@ -259,7 +270,10 @@ export function EachBlock(node, context) {
 		b.literal(flags),
 		each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
 		key_function,
-		b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(block.body)))
+		b.arrow(
+			uses_index ? [b.id('$$anchor'), item, index] : [b.id('$$anchor'), item],
+			b.block(declarations.concat(block.body))
+		)
 	];
 
 	if (node.fallback) {
