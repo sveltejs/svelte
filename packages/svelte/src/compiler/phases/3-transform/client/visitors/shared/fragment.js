@@ -34,53 +34,26 @@ export function process_children(nodes, expression, is_element, { visit, state }
 				state.template.push(node.raw);
 				return;
 			}
-
-			state.template.push(' ');
-
-			const text_id = get_node_id(expression(true), state, 'text');
-
-			const update = b.stmt(
-				b.call('$.set_text', text_id, /** @type {Expression} */ (visit(node.expression, state)))
-			);
-
-			if (node.metadata.expression.has_call && !within_bound_contenteditable) {
-				state.init.push(build_update(update));
-			} else if (node.metadata.expression.has_state && !within_bound_contenteditable) {
-				state.update.push(update);
-			} else {
-				state.init.push(
-					b.stmt(
-						b.assignment(
-							'=',
-							b.member(text_id, b.id('nodeValue')),
-							/** @type {Expression} */ (visit(node.expression))
-						)
-					)
-				);
-			}
-
-			expression = (is_text) =>
-				is_text ? b.call('$.sibling', text_id, b.true) : b.call('$.sibling', text_id);
-		} else {
-			const text_id = get_node_id(expression(true), state, 'text');
-
-			state.template.push(' ');
-
-			const { has_state, has_call, value } = build_template_literal(sequence, visit, state);
-
-			const update = b.stmt(b.call('$.set_text', text_id, value));
-
-			if (has_call && !within_bound_contenteditable) {
-				state.init.push(build_update(update));
-			} else if (has_state && !within_bound_contenteditable) {
-				state.update.push(update);
-			} else {
-				state.init.push(b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), value)));
-			}
-
-			expression = (is_text) =>
-				is_text ? b.call('$.sibling', text_id, b.true) : b.call('$.sibling', text_id);
 		}
+
+		const text_id = get_node_id(expression(true), state, 'text');
+
+		state.template.push(' ');
+
+		const { has_state, has_call, value } = build_template_literal(sequence, visit, state);
+
+		const update = b.stmt(b.call('$.set_text', text_id, value));
+
+		if (has_call && !within_bound_contenteditable) {
+			state.init.push(build_update(update));
+		} else if (has_state && !within_bound_contenteditable) {
+			state.update.push(update);
+		} else {
+			state.init.push(b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), value)));
+		}
+
+		expression = (is_text) =>
+			is_text ? b.call('$.sibling', text_id, b.true) : b.call('$.sibling', text_id);
 	}
 
 	for (let i = 0; i < nodes.length; i += 1) {

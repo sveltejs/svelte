@@ -16,7 +16,7 @@ import {
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
-import { clear_text_content, empty } from '../operations.js';
+import { clear_text_content, create_text } from '../operations.js';
 import {
 	block,
 	branch,
@@ -117,7 +117,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 		anchor = hydrating
 			? set_hydrate_node(/** @type {Comment | Text} */ (parent_node.firstChild))
-			: parent_node.appendChild(empty());
+			: parent_node.appendChild(create_text());
 	}
 
 	if (hydrating) {

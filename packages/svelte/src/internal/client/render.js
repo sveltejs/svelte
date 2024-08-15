@@ -1,7 +1,7 @@
 /** @import { ComponentContext, Effect, EffectNodes, TemplateNode } from '#client' */
 /** @import { Component, ComponentType, SvelteComponent } from '../../index.js' */
 import { DEV } from 'esm-env';
-import { clear_text_content, empty, init_operations } from './dom/operations.js';
+import { clear_text_content, create_text, init_operations } from './dom/operations.js';
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
 import { push, pop, current_component_context, current_effect } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
@@ -43,13 +43,9 @@ export function set_should_intro(value) {
  */
 export function set_text(text, value) {
 	// @ts-expect-error
-	const prev = (text.__t ??= text.nodeValue);
-
-	if (prev !== value) {
+	if (value !== (text.__t ??= text.nodeValue)) {
 		// @ts-expect-error
-		text.__t = value;
-		// It's faster to make the value a string rather than passing a non-string to nodeValue
-		text.nodeValue = value == null ? '' : value + '';
+		text.nodeValue = text.__t = value;
 	}
 }
 
@@ -78,7 +74,7 @@ export function set_text(text, value) {
  * @returns {Exports}
  */
 export function mount(component, options) {
-	const anchor = options.anchor ?? options.target.appendChild(empty());
+	const anchor = options.anchor ?? options.target.appendChild(create_text());
 	return _mount(component, { ...options, anchor });
 }
 

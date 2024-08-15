@@ -1,6 +1,6 @@
 /** @import { Effect, EffectNodes, TemplateNode } from '#client' */
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
-import { empty } from './operations.js';
+import { create_text } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
@@ -209,10 +209,11 @@ function run_scripts(node) {
 
 /**
  * Don't mark this as side-effect-free, hydration needs to walk all nodes
+ * @param {any} value
  */
-export function text() {
+export function text(value = '') {
 	if (!hydrating) {
-		var t = empty();
+		var t = create_text(value + '');
 		assign_nodes(t, t);
 		return t;
 	}
@@ -221,7 +222,7 @@ export function text() {
 
 	if (node.nodeType !== 3) {
 		// if an {expression} is empty during SSR, we need to insert an empty text node
-		node.before((node = empty()));
+		node.before((node = create_text()));
 		set_hydrate_node(node);
 	}
 
@@ -238,7 +239,7 @@ export function comment() {
 
 	var frag = document.createDocumentFragment();
 	var start = document.createComment('');
-	var anchor = empty();
+	var anchor = create_text();
 	frag.append(start, anchor);
 
 	assign_nodes(start, anchor);
