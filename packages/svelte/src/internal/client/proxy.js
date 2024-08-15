@@ -99,7 +99,6 @@ function update_version(signal, d = 1) {
 
 /** @type {ProxyHandler<ProxyStateObject<any>>} */
 const state_proxy_handler = {
-	// TODO needs fixing for non mutations
 	defineProperty(target, prop, descriptor) {
 		if (
 			!('value' in descriptor) ||
