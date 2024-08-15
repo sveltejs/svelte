@@ -27,7 +27,7 @@ export function proxy(value, parent = null, prev) {
 	if (typeof value === 'object' && value != null && !is_frozen(value)) {
 		// If we have an existing proxy, return it...
 		if (STATE_SYMBOL in value) {
-			const metadata = /** @type {ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
+			var metadata = /** @type {ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
 
 			// ...unless the proxy belonged to a different object, because
 			// someone copied the state symbol using `Reflect.ownKeys(...)`
@@ -43,10 +43,10 @@ export function proxy(value, parent = null, prev) {
 			}
 		}
 
-		const prototype = get_prototype_of(value);
+		var prototype = get_prototype_of(value);
 
 		if (prototype === object_prototype || prototype === array_prototype) {
-			const proxy = new Proxy(value, state_proxy_handler);
+			var proxy = new Proxy(value, state_proxy_handler);
 
 			define_property(value, STATE_SYMBOL, {
 				value: /** @type {ProxyMetadata} */ ({
@@ -68,7 +68,7 @@ export function proxy(value, parent = null, prev) {
 					// Reuse owners from previous state; necessary because reassignment is not guaranteed to have correct component context.
 					// If no previous proxy exists we play it safe and assume ownerless state
 					// @ts-expect-error
-					const prev_owners = prev?.v?.[STATE_SYMBOL]?.owners;
+					var prev_owners = prev?.v?.[STATE_SYMBOL]?.owners;
 					// @ts-expect-error
 					value[STATE_SYMBOL].owners = prev_owners ? new Set(prev_owners) : null;
 				} else {
@@ -101,22 +101,35 @@ function update_version(signal, d = 1) {
 const state_proxy_handler = {
 	// TODO needs fixing for non mutations
 	defineProperty(target, prop, descriptor) {
-		if (descriptor.value) {
-			/** @type {ProxyMetadata} */
-			const metadata = target[STATE_SYMBOL];
-
-			const s = metadata.s.get(prop);
-			if (s !== undefined) set(s, proxy(descriptor.value, metadata));
+		if (
+			!('value' in descriptor) ||
+			descriptor.configurable === false ||
+			descriptor.enumerable === false ||
+			descriptor.writable === false
+		) {
+			e.state_descriptors_fixed();
 		}
 
-		return Reflect.defineProperty(target, prop, descriptor);
+		/** @type {ProxyMetadata} */
+		var metadata = target[STATE_SYMBOL];
+		var value = descriptor.value;
+
+		var s = metadata.s.get(prop);
+		if (s === undefined) {
+			s = source(value);
+			metadata.s.set(prop, s);
+		} else {
+			set(s, proxy(value, metadata));
+		}
+
+		return true;
 	},
 
 	deleteProperty(target, prop) {
 		/** @type {ProxyMetadata} */
-		const metadata = target[STATE_SYMBOL];
-		const s = metadata.s.get(prop);
-		const exists = s !== undefined ? s.v !== UNINITIALIZED : prop in target;
+		var metadata = target[STATE_SYMBOL];
+		var s = metadata.s.get(prop);
+		var exists = s !== undefined ? s.v !== UNINITIALIZED : prop in target;
 
 		if (s !== undefined) {
 			set(s, UNINITIALIZED);
@@ -135,8 +148,8 @@ const state_proxy_handler = {
 		}
 
 		/** @type {ProxyMetadata} */
-		const metadata = target[STATE_SYMBOL];
-		let s = metadata.s.get(prop);
+		var metadata = target[STATE_SYMBOL];
+		var s = metadata.s.get(prop);
 		var exists = prop in target;
 
 		// create a source, but only if it's an own property and not a prototype property
@@ -146,7 +159,7 @@ const state_proxy_handler = {
 		}
 
 		if (s !== undefined) {
-			const value = get(s);
+			var value = get(s);
 			return value === UNINITIALIZED ? undefined : value;
 		}
 
@@ -154,12 +167,12 @@ const state_proxy_handler = {
 	},
 
 	getOwnPropertyDescriptor(target, prop) {
-		const descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
+		var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
 		/** @type {ProxyMetadata} */
-		const metadata = target[STATE_SYMBOL];
+		var metadata = target[STATE_SYMBOL];
 
 		if (descriptor && 'value' in descriptor) {
-			const s = metadata.s.get(prop);
+			var s = metadata.s.get(prop);
 
 			if (s) {
 				descriptor.value = get(s);
@@ -186,9 +199,9 @@ const state_proxy_handler = {
 			return true;
 		}
 		/** @type {ProxyMetadata} */
-		const metadata = target[STATE_SYMBOL];
-		let s = metadata.s.get(prop);
-		const has = (s !== undefined && s.v !== UNINITIALIZED) || Reflect.has(target, prop);
+		var metadata = target[STATE_SYMBOL];
+		var s = metadata.s.get(prop);
+		var has = (s !== undefined && s.v !== UNINITIALIZED) || Reflect.has(target, prop);
 
 		if (
 			s !== undefined ||
@@ -198,7 +211,7 @@ const state_proxy_handler = {
 				s = source(has ? proxy(target[prop], metadata) : UNINITIALIZED);
 				metadata.s.set(prop, s);
 			}
-			const value = get(s);
+			var value = get(s);
 			if (value === UNINITIALIZED) {
 				return false;
 			}
@@ -208,9 +221,9 @@ const state_proxy_handler = {
 
 	set(target, prop, value, receiver) {
 		/** @type {ProxyMetadata} */
-		const metadata = target[STATE_SYMBOL];
-		let s = metadata.s.get(prop);
-		let has = prop in target;
+		var metadata = target[STATE_SYMBOL];
+		var s = metadata.s.get(prop);
+		var has = prop in target;
 
 		// If we haven't yet created a source for this property, we need to ensure
 		// we do so otherwise if we read it later, then the write won't be tracked and
@@ -226,11 +239,11 @@ const state_proxy_handler = {
 			has = s.v !== UNINITIALIZED;
 			set(s, proxy(value, metadata));
 		}
-		const is_array = metadata.a;
+		var is_array = metadata.a;
 
 		if (DEV) {
 			/** @type {ProxyMetadata | undefined} */
-			const prop_metadata = value?.[STATE_SYMBOL];
+			var prop_metadata = value?.[STATE_SYMBOL];
 			if (prop_metadata && prop_metadata?.parent !== metadata) {
 				widen_ownership(metadata, prop_metadata);
 			}
@@ -239,9 +252,9 @@ const state_proxy_handler = {
 
 		// variable.length = value -> clear all signals with index >= value
 		if (is_array && prop === 'length') {
-			for (let i = value; i < target.length; i += 1) {
-				const s = metadata.s.get(i + '');
-				if (s !== undefined) set(s, UNINITIALIZED);
+			for (var i = value; i < target.length; i += 1) {
+				var other_s = metadata.s.get(i + '');
+				if (other_s !== undefined) set(other_s, UNINITIALIZED);
 			}
 		}
 

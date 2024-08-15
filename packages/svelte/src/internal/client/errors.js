@@ -295,6 +295,22 @@ export function state_prototype_fixed() {
 }
 
 /**
+ * Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
+ * @returns {never}
+ */
+export function state_descriptors_fixed() {
+	if (DEV) {
+		const error = new Error(`state_descriptors_fixed\nProperty descriptors defined on \`$state\` objects must contain \`value\` and always be \`enumerable\`, \`configurable\` and \`writable\`.`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("state_descriptors_fixed");
+	}
+}
+
+/**
  * Updating state inside a derived is forbidden. If the value should not be reactive, declare it without `$state`
  * @returns {never}
  */

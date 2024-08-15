@@ -24,7 +24,9 @@ test('preserves getters', () => {
 
 	const state = proxy(original);
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 	state.x;
+	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 	state.x;
 
 	assert.equal(original.count, 0);
@@ -34,21 +36,23 @@ test('preserves getters', () => {
 
 test('defines a property', () => {
 	const original = {};
-	const state = proxy(original);
+	const state = proxy<any>(original);
 
 	let value = 0;
 
 	Object.defineProperty(state, 'x', {
-		get: () => value,
-		set: (v) => (value = v)
+		value: 1
 	});
 
-	// @ts-ignore
-	state.x = 1;
-
-	// @ts-ignore
 	assert.equal(state.x, 1);
-	assert.equal(value, 1);
-
 	assert.ok(!('x' in original));
+
+	assert.throws(
+		() =>
+			Object.defineProperty(state, 'x', {
+				get: () => value,
+				set: (v) => (value = v)
+			}),
+		/state_descriptors_fixed/
+	);
 });
