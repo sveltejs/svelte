@@ -35,7 +35,7 @@ test('preserves getters', () => {
 });
 
 test('defines a property', () => {
-	const original = {};
+	const original = { y: 0 };
 	const state = proxy<any>(original);
 
 	let value = 0;
@@ -43,9 +43,25 @@ test('defines a property', () => {
 	Object.defineProperty(state, 'x', {
 		value: 1
 	});
+	Object.defineProperty(state, 'y', {
+		value: 1
+	});
 
 	assert.equal(state.x, 1);
+	assert.deepEqual(Object.getOwnPropertyDescriptor(state, 'x'), {
+		configurable: true,
+		writable: true,
+		value: 1,
+		enumerable: true
+	});
+
 	assert.ok(!('x' in original));
+	assert.deepEqual(Object.getOwnPropertyDescriptor(original, 'y'), {
+		configurable: true,
+		writable: true,
+		value: 0,
+		enumerable: true
+	});
 
 	assert.throws(
 		() =>
