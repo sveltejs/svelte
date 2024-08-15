@@ -181,17 +181,13 @@ export interface ProxyMetadata<T = Record<string | symbol, any>> {
 	/** `true` if the proxified object is an array */
 	a: boolean;
 	/** The associated proxy */
-	p: ProxyStateObject<T>;
+	p: T;
 	/** The original target this proxy was created for */
 	t: T;
 	/** Dev-only — the components that 'own' this state, if any. `null` means no owners, i.e. everyone can mutate this state. */
-	owners: null | Set<Function>;
+	owners?: null | Set<Function>;
 	/** Dev-only — the parent metadata object */
-	parent: null | ProxyMetadata;
+	parent?: null | ProxyMetadata;
 }
-
-export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
-	[STATE_SYMBOL]: ProxyMetadata;
-};
 
 export * from './reactivity/types';

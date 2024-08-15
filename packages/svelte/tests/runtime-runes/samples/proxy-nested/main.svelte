@@ -1,7 +1,7 @@
 <script>
 	const inner = $state({
 		count: 0
-	})
+	});
 
 	const object = $state({
 		outer: {
@@ -10,6 +10,6 @@
 	});
 </script>
 
-<button onclick={() => inner.count += 1}>
-	clicks: {object.outer.inner.count}
+<button onclick={() => (inner.count += 1)}>
+	clicks: {object.outer.inner.count}/{inner.count}
 </button>

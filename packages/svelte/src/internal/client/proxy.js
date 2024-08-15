@@ -1,9 +1,8 @@
-/** @import { ProxyMetadata, ProxyStateObject, Source } from '#client' */
+/** @import { ProxyMetadata, Source } from '#client' */
 import { DEV } from 'esm-env';
 import { get, current_component_context, current_effect } from './runtime.js';
 import {
 	array_prototype,
-	define_property,
 	get_descriptor,
 	get_prototype_of,
 	is_array,
@@ -21,59 +20,40 @@ import * as e from './errors.js';
  * @param {T} value
  * @param {ProxyMetadata | null} [parent]
  * @param {Source<T>} [prev] dev mode only
- * @returns {ProxyStateObject<T> | T}
+ * @returns {T}
  */
 export function proxy(value, parent = null, prev) {
 	if (typeof value === 'object' && value != null && !is_frozen(value)) {
-		// If we have an existing proxy, return it...
-		if (STATE_SYMBOL in value) {
-			var metadata = /** @type {ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
-
-			// ...unless the proxy belonged to a different object, because
-			// someone copied the state symbol using `Reflect.ownKeys(...)`
-			if (metadata.t === value || metadata.p === value) {
-				if (DEV) {
-					// Since original parent relationship gets lost, we need to copy over ancestor owners
-					// into current metadata. The object might still exist on both, so we need to widen it.
-					widen_ownership(metadata, metadata);
-					metadata.parent = parent;
-				}
-
-				return metadata.p;
-			}
-		}
-
 		var prototype = get_prototype_of(value);
 
 		if (prototype === object_prototype || prototype === array_prototype) {
-			var proxy = new Proxy(value, state_proxy_handler);
-
-			define_property(value, STATE_SYMBOL, {
-				value: /** @type {ProxyMetadata} */ ({
-					s: new Map(),
-					v: source(0),
-					a: is_array(value),
-					p: proxy,
-					t: value
-				}),
-				writable: true,
-				enumerable: false
+			var metadata = /** @type {ProxyMetadata<T>} */ ({
+				s: new Map(),
+				v: source(0),
+				a: is_array(value),
+				p: /** @type {any} */ (null),
+				t: value
 			});
 
+			if (prototype === array_prototype) {
+				// this is a truly shocking hack, but without it, `Array.isArray`
+				// always returns `false`, which breaks a lot of stuff
+				metadata = Object.assign([], metadata);
+			}
+
+			var proxy = new Proxy(metadata, state_proxy_handler);
+
 			if (DEV) {
-				// @ts-expect-error
-				value[STATE_SYMBOL].parent = parent;
+				metadata.parent = parent;
 
 				if (prev) {
 					// Reuse owners from previous state; necessary because reassignment is not guaranteed to have correct component context.
 					// If no previous proxy exists we play it safe and assume ownerless state
 					// @ts-expect-error
 					var prev_owners = prev?.v?.[STATE_SYMBOL]?.owners;
-					// @ts-expect-error
-					value[STATE_SYMBOL].owners = prev_owners ? new Set(prev_owners) : null;
+					metadata.owners = prev_owners ? new Set(prev_owners) : null;
 				} else {
-					// @ts-expect-error
-					value[STATE_SYMBOL].owners =
+					metadata.owners =
 						parent === null
 							? current_component_context !== null
 								? new Set([current_component_context.function])
@@ -82,6 +62,7 @@ export function proxy(value, parent = null, prev) {
 				}
 			}
 
+			// @ts-expect-error to the outside world, we are returning `T`
 			return proxy;
 		}
 	}
@@ -97,9 +78,9 @@ function update_version(signal, d = 1) {
 	set(signal, signal.v + d);
 }
 
-/** @type {ProxyHandler<ProxyStateObject<any>>} */
+/** @type {ProxyHandler<ProxyMetadata<any>>} */
 const state_proxy_handler = {
-	defineProperty(target, prop, descriptor) {
+	defineProperty(metadata, prop, descriptor) {
 		if (
 			!('value' in descriptor) ||
 			descriptor.configurable === false ||
@@ -109,8 +90,6 @@ const state_proxy_handler = {
 			e.state_descriptors_fixed();
 		}
 
-		/** @type {ProxyMetadata} */
-		var metadata = target[STATE_SYMBOL];
 		var value = descriptor.value;
 
 		var s = metadata.s.get(prop);
@@ -124,11 +103,9 @@ const state_proxy_handler = {
 		return true;
 	},
 
-	deleteProperty(target, prop) {
-		/** @type {ProxyMetadata} */
-		var metadata = target[STATE_SYMBOL];
+	deleteProperty(metadata, prop) {
 		var s = metadata.s.get(prop);
-		var exists = s !== undefined ? s.v !== UNINITIALIZED : prop in target;
+		var exists = s !== undefined ? s.v !== UNINITIALIZED : prop in metadata.t;
 
 		if (s !== undefined) {
 			set(s, UNINITIALIZED);
@@ -141,13 +118,12 @@ const state_proxy_handler = {
 		return exists;
 	},
 
-	get(target, prop, receiver) {
+	get(metadata, prop, receiver) {
 		if (prop === STATE_SYMBOL) {
-			return Reflect.get(target, STATE_SYMBOL);
+			return metadata;
 		}
 
-		/** @type {ProxyMetadata} */
-		var metadata = target[STATE_SYMBOL];
+		var target = metadata.t;
 		var s = metadata.s.get(prop);
 		var exists = prop in target;
 
@@ -165,10 +141,8 @@ const state_proxy_handler = {
 		return Reflect.get(target, prop, receiver);
 	},
 
-	getOwnPropertyDescriptor(target, prop) {
-		var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
-		/** @type {ProxyMetadata} */
-		var metadata = target[STATE_SYMBOL];
+	getOwnPropertyDescriptor(metadata, prop) {
+		var descriptor = Reflect.getOwnPropertyDescriptor(metadata.t, prop);
 
 		if (descriptor && 'value' in descriptor) {
 			var s = metadata.s.get(prop);
@@ -176,6 +150,12 @@ const state_proxy_handler = {
 			if (s) {
 				descriptor.value = get(s);
 			}
+
+			// abstraction leak: we need to make `configurable` always true,
+			// unless it's the `length` property and this is an array, because
+			// the underlying object might not contain this property and that
+			// will cause a confusing error
+			descriptor.configurable = !metadata.a || prop !== 'length';
 		} else if (descriptor === undefined) {
 			var source = metadata.s.get(prop);
 			var value = source?.v;
@@ -193,12 +173,12 @@ const state_proxy_handler = {
 		return descriptor;
 	},
 
-	has(target, prop) {
+	has(metadata, prop) {
 		if (prop === STATE_SYMBOL) {
 			return true;
 		}
-		/** @type {ProxyMetadata} */
-		var metadata = target[STATE_SYMBOL];
+
+		var target = metadata.t;
 		var s = metadata.s.get(prop);
 		var has = (s !== undefined && s.v !== UNINITIALIZED) || Reflect.has(target, prop);
 
@@ -215,12 +195,12 @@ const state_proxy_handler = {
 				return false;
 			}
 		}
+
 		return has;
 	},
 
-	set(target, prop, value, receiver) {
-		/** @type {ProxyMetadata} */
-		var metadata = target[STATE_SYMBOL];
+	set(metadata, prop, value, receiver) {
+		var target = metadata.t;
 		var s = metadata.s.get(prop);
 		var has = prop in target;
 
@@ -287,11 +267,10 @@ const state_proxy_handler = {
 		return true;
 	},
 
-	ownKeys(target) {
-		/** @type {ProxyMetadata} */
-		var metadata = target[STATE_SYMBOL];
-
+	ownKeys(metadata) {
 		get(metadata.v);
+
+		var target = metadata.t;
 
 		var own_keys = Reflect.ownKeys(target).filter((key) => {
 			var source = metadata.s.get(key);
@@ -321,7 +300,7 @@ export function get_proxied_value(value) {
 	if (value !== null && typeof value === 'object' && STATE_SYMBOL in value) {
 		var metadata = value[STATE_SYMBOL];
 		if (metadata) {
-			return metadata.p;
+			return metadata.t;
 		}
 	}
 	return value;

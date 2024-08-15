@@ -11,6 +11,6 @@ export default test({
 			btn?.click();
 		});
 
-		assert.htmlEqual(target.innerHTML, `<button>goodbye!</button>`);
+		assert.htmlEqual(target.innerHTML, `<button>hello!</button>`);
 	}
 });
