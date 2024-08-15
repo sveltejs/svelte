@@ -210,19 +210,20 @@ const state_proxy_handler = {
 		/** @type {ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
-		let not_has = !(prop in target);
+		let has = prop in target;
+
 		// If we haven't yet created a source for this property, we need to ensure
 		// we do so otherwise if we read it later, then the write won't be tracked and
 		// the heuristics of effects will be different vs if we had read the proxied
 		// object property before writing to that property.
 		if (s === undefined) {
-			if (!(prop in target) || get_descriptor(target, prop)?.writable) {
+			if (!has || get_descriptor(target, prop)?.writable) {
 				s = source(undefined);
 				set(s, proxy(value, metadata));
 				metadata.s.set(prop, s);
 			}
 		} else {
-			not_has = s.v === UNINITIALIZED;
+			has = s.v !== UNINITIALIZED;
 			set(s, proxy(value, metadata));
 		}
 		const is_array = metadata.a;
@@ -251,7 +252,7 @@ const state_proxy_handler = {
 			descriptor.set.call(receiver, value);
 		}
 
-		if (not_has) {
+		if (!has) {
 			// If we have mutated an array directly, we might need to
 			// signal that length has also changed. Do it before updating metadata
 			// to ensure that iterating over the array as a result of a metadata update
