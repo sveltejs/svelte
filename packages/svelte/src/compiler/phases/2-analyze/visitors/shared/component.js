@@ -8,12 +8,15 @@ import {
 	validate_attribute_name,
 	validate_slot_attribute
 } from './attribute.js';
+import { mark_subtree_dynamic } from './fragment.js';
 
 /**
  * @param {Component | SvelteComponent | SvelteSelf} node
  * @param {Context} context
  */
 export function visit_component(node, context) {
+	mark_subtree_dynamic(context.path);
+
 	for (const attribute of node.attributes) {
 		if (
 			attribute.type !== 'Attribute' &&

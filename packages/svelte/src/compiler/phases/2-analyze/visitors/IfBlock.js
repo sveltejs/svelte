@@ -1,5 +1,6 @@
 /** @import { IfBlock } from '#compiler' */
 /** @import { Context } from '../types' */
+import { mark_subtree_dynamic } from './shared/fragment.js';
 import { validate_block_not_empty, validate_opening_tag } from './shared/utils.js';
 
 /**
@@ -21,6 +22,8 @@ export function IfBlock(node, context) {
 
 		validate_opening_tag(node, context.state, expected);
 	}
+
+	mark_subtree_dynamic(context.path);
 
 	context.next();
 }

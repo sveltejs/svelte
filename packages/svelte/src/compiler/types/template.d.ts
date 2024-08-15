@@ -29,12 +29,18 @@ export interface BaseNode {
 export interface Fragment {
 	type: 'Fragment';
 	nodes: Array<Text | Tag | ElementLike | Block | Comment>;
-	/**
-	 * Fragments declare their own scopes. A transparent fragment is one whose scope
-	 * is not represented by a scope in the resulting JavaScript (e.g. an element scope),
-	 * and should therefore delegate to parent scopes when generating unique identifiers
-	 */
-	transparent: boolean;
+	metadata: {
+		/**
+		 * Fragments declare their own scopes. A transparent fragment is one whose scope
+		 * is not represented by a scope in the resulting JavaScript (e.g. an element scope),
+		 * and should therefore delegate to parent scopes when generating unique identifiers
+		 */
+		transparent: boolean;
+		/**
+		 * Whether or not we need to traverse into the fragment during mount/hydrate
+		 */
+		dynamic: boolean;
+	};
 }
 
 /**

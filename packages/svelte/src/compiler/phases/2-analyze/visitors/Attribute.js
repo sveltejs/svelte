@@ -1,5 +1,5 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression } from 'estree' */
-/** @import { Attribute, DelegatedEvent, RegularElement } from '#compiler' */
+/** @import { Attribute, DelegatedEvent, RegularElement, SvelteNode } from '#compiler' */
 /** @import { Context } from '../types' */
 import { is_capture_event, is_delegated } from '../../../../utils.js';
 import {
@@ -7,6 +7,7 @@ import {
 	get_attribute_expression,
 	is_event_attribute
 } from '../../../utils/ast.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
  * @param {Attribute} node
@@ -14,6 +15,14 @@ import {
  */
 export function Attribute(node, context) {
 	context.next();
+
+	// special case
+	if (node.name === 'value') {
+		const parent = /** @type {SvelteNode} */ (context.path.at(-1));
+		if (parent.type === 'RegularElement' && parent.name === 'option') {
+			mark_subtree_dynamic(context.path);
+		}
+	}
 
 	if (node.value !== true) {
 		for (const chunk of get_attribute_chunks(node.value)) {

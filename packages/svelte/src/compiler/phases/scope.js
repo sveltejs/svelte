@@ -636,7 +636,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		Fragment: (node, context) => {
-			const scope = context.state.scope.child(node.transparent);
+			const scope = context.state.scope.child(node.metadata.transparent);
 			scopes.set(node, scope);
 			context.next({ scope });
 		},

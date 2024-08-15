@@ -6,6 +6,7 @@ import { should_proxy } from '../../3-transform/client/utils.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { is_rune } from '../../../../utils.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
  * @param {Identifier} node
@@ -18,6 +19,8 @@ export function Identifier(node, context) {
 	if (!is_reference(node, parent)) {
 		return;
 	}
+
+	mark_subtree_dynamic(context.path);
 
 	// If we are using arguments outside of a function, then throw an error
 	if (

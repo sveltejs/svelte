@@ -2,6 +2,7 @@
 /** @import { Context } from '../types' */
 /** @import { Scope } from '../../scope' */
 import * as e from '../../../errors.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 import { validate_block_not_empty, validate_opening_tag } from './shared/utils.js';
 
 /**
@@ -36,4 +37,6 @@ export function EachBlock(node, context) {
 	context.visit(node.body);
 	if (node.key) context.visit(node.key);
 	if (node.fallback) context.visit(node.fallback);
+
+	mark_subtree_dynamic(context.path);
 }

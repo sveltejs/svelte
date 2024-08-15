@@ -313,9 +313,8 @@ export function RegularElement(node, context) {
 	/** Whether or not we need to wrap the children in `{...}` to avoid declaration conflicts */
 	const has_declaration = node.fragment.nodes.some((node) => node.type === 'SnippetBlock');
 
-	const child_state = has_declaration
-		? { ...state, init: [], update: [], after_update: [] }
-		: state;
+	/** @type {typeof state} */
+	const child_state = { ...state, init: [], update: [], after_update: [] };
 
 	for (const node of hoisted) {
 		context.visit(node, child_state);
@@ -353,6 +352,10 @@ export function RegularElement(node, context) {
 				...child_state.after_update
 			])
 		);
+	} else if (node.fragment.metadata.dynamic) {
+		context.state.init.push(...child_state.init);
+		context.state.update.push(...child_state.update);
+		context.state.after_update.push(...child_state.after_update);
 	}
 
 	if (has_direction_attribute) {
