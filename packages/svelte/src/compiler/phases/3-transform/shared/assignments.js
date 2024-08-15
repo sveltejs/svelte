@@ -41,7 +41,7 @@ export function visit_assignment_expression(node, context, build_assignment) {
 
 		if (!changed) {
 			// No change to output -> nothing to transform -> we can keep the original assignment
-			return context.next();
+			return null;
 		}
 
 		const is_standalone = /** @type {Node} */ (context.path.at(-1)).type.endsWith('Statement');
@@ -70,8 +70,5 @@ export function visit_assignment_expression(node, context, build_assignment) {
 		throw new Error(`Unexpected assignment type ${node.left.type}`);
 	}
 
-	return (
-		build_assignment(node.operator, node.left, node.right, context) ??
-		/** @type {Expression} */ (context.next())
-	);
+	return build_assignment(node.operator, node.left, node.right, context);
 }
