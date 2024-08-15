@@ -7,7 +7,7 @@ import {
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
-import { create_text } from '../operations.js';
+import { create_text, get_first_child } from '../operations.js';
 import {
 	block,
 	branch,
@@ -119,7 +119,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					// If hydrating, use the existing ssr comment as the anchor so that the
 					// inner open and close methods can pick up the existing nodes correctly
 					var child_anchor = /** @type {TemplateNode} */ (
-						hydrating ? element.firstChild : element.appendChild(create_text())
+						hydrating ? get_first_child(element) : element.appendChild(create_text())
 					);
 
 					if (hydrating) {

@@ -1,6 +1,6 @@
 /** @import { Effect, EffectNodes, TemplateNode } from '#client' */
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
-import { create_text } from './operations.js';
+import { create_text, get_first_child } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { current_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
@@ -41,7 +41,7 @@ export function template(content, flags) {
 
 		if (!node) {
 			node = create_fragment_from_html(has_start ? content : '<!>' + content);
-			if (!is_fragment) node = /** @type {Node} */ (node.firstChild);
+			if (!is_fragment) node = /** @type {Node} */ (get_first_child(node));
 		}
 
 		var clone = /** @type {TemplateNode} */ (
@@ -49,7 +49,7 @@ export function template(content, flags) {
 		);
 
 		if (is_fragment) {
-			var start = /** @type {TemplateNode} */ (clone.firstChild);
+			var start = /** @type {TemplateNode} */ (get_first_child(clone));
 			var end = /** @type {TemplateNode} */ (clone.lastChild);
 
 			assign_nodes(start, end);
@@ -113,22 +113,22 @@ export function ns_template(content, flags, ns = 'svg') {
 
 		if (!node) {
 			var fragment = /** @type {DocumentFragment} */ (create_fragment_from_html(wrapped));
-			var root = /** @type {Element} */ (fragment.firstChild);
+			var root = /** @type {Element} */ (get_first_child(fragment));
 
 			if (is_fragment) {
 				node = document.createDocumentFragment();
-				while (root.firstChild) {
-					node.appendChild(root.firstChild);
+				while (get_first_child(root)) {
+					node.appendChild(/** @type {Node} */ (get_first_child(root)));
 				}
 			} else {
-				node = /** @type {Element} */ (root.firstChild);
+				node = /** @type {Element} */ (get_first_child(root));
 			}
 		}
 
 		var clone = /** @type {TemplateNode} */ (node.cloneNode(true));
 
 		if (is_fragment) {
-			var start = /** @type {TemplateNode} */ (clone.firstChild);
+			var start = /** @type {TemplateNode} */ (get_first_child(clone));
 			var end = /** @type {TemplateNode} */ (clone.lastChild);
 
 			assign_nodes(start, end);

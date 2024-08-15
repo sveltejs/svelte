@@ -39,6 +39,7 @@ import { set } from './sources.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
+import { get_next_sibling } from '../dom/operations.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -361,7 +362,7 @@ export function destroy_effect(effect, remove_dom = true) {
 
 		while (node !== null) {
 			/** @type {TemplateNode | null} */
-			var next = node === end ? null : /** @type {TemplateNode} */ (node.nextSibling);
+			var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
 
 			node.remove();
 			node = next;

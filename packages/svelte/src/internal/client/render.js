@@ -1,7 +1,13 @@
 /** @import { ComponentContext, Effect, EffectNodes, TemplateNode } from '#client' */
 /** @import { Component, ComponentType, SvelteComponent } from '../../index.js' */
 import { DEV } from 'esm-env';
-import { clear_text_content, create_text, init_operations } from './dom/operations.js';
+import {
+	clear_text_content,
+	create_text,
+	get_first_child,
+	get_next_sibling,
+	init_operations
+} from './dom/operations.js';
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
 import { push, pop, current_component_context, current_effect } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
@@ -102,18 +108,19 @@ export function mount(component, options) {
  * @returns {Exports}
  */
 export function hydrate(component, options) {
+	init_operations();
 	options.intro = options.intro ?? false;
 	const target = options.target;
 	const was_hydrating = hydrating;
 	const previous_hydrate_node = hydrate_node;
 
 	try {
-		var anchor = /** @type {TemplateNode} */ (target.firstChild);
+		var anchor = /** @type {TemplateNode} */ (get_first_child(target));
 		while (
 			anchor &&
 			(anchor.nodeType !== 8 || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
 		) {
-			anchor = /** @type {TemplateNode} */ (anchor.nextSibling);
+			anchor = /** @type {TemplateNode} */ (get_next_sibling(anchor));
 		}
 
 		if (!anchor) {

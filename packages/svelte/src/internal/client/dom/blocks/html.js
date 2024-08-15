@@ -8,6 +8,7 @@ import * as w from '../../warnings.js';
 import { hash } from '../../../../utils.js';
 import { DEV } from 'esm-env';
 import { dev_current_component_function } from '../../runtime.js';
+import { get_first_child, get_next_sibling } from '../operations.js';
 
 /**
  * @param {Element} element
@@ -71,7 +72,7 @@ export function html(node, get_value, svg, mathml, skip_warning) {
 					(next.nodeType !== 8 || /** @type {Comment} */ (next).data !== '')
 				) {
 					last = next;
-					next = /** @type {TemplateNode} */ (next.nextSibling);
+					next = /** @type {TemplateNode} */ (get_next_sibling(next));
 				}
 
 				if (next === null) {
@@ -98,17 +99,17 @@ export function html(node, get_value, svg, mathml, skip_warning) {
 			var node = create_fragment_from_html(html);
 
 			if (svg || mathml) {
-				node = /** @type {Element} */ (node.firstChild);
+				node = /** @type {Element} */ (get_first_child(node));
 			}
 
 			assign_nodes(
-				/** @type {TemplateNode} */ (node.firstChild),
+				/** @type {TemplateNode} */ (get_first_child(node)),
 				/** @type {TemplateNode} */ (node.lastChild)
 			);
 
 			if (svg || mathml) {
-				while (node.firstChild) {
-					anchor.before(node.firstChild);
+				while (get_first_child(node)) {
+					anchor.before(/** @type {Node} */ (get_first_child(node)));
 				}
 			} else {
 				anchor.before(node);

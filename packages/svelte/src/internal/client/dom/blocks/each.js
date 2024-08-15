@@ -16,7 +16,12 @@ import {
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
-import { clear_text_content, create_text } from '../operations.js';
+import {
+	clear_text_content,
+	create_text,
+	get_first_child,
+	get_next_sibling
+} from '../operations.js';
 import {
 	block,
 	branch,
@@ -116,7 +121,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		var parent_node = /** @type {Element} */ (node);
 
 		anchor = hydrating
-			? set_hydrate_node(/** @type {Comment | Text} */ (parent_node.firstChild))
+			? set_hydrate_node(/** @type {Comment | Text} */ (get_first_child(parent_node)))
 			: parent_node.appendChild(create_text());
 	}
 
@@ -510,7 +515,7 @@ function move(item, next, anchor) {
 	var node = /** @type {EffectNodes} */ (item.e.nodes).start;
 
 	while (node !== end) {
-		var next_node = /** @type {TemplateNode} */ (node.nextSibling);
+		var next_node = /** @type {TemplateNode} */ (get_next_sibling(node));
 		dest.before(node);
 		node = next_node;
 	}
