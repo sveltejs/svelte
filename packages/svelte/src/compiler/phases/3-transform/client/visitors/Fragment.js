@@ -128,6 +128,14 @@ export function Fragment(node, context) {
 	} else if (is_single_child_not_needing_template) {
 		context.visit(trimmed[0], state);
 		body.push(...state.before_init, ...state.init);
+	} else if (trimmed.length === 1 && trimmed[0].type === 'Text') {
+		const id = b.id(context.state.scope.generate('text'));
+		body.push(
+			b.var(id, b.call('$.text', b.literal(trimmed[0].data))),
+			...state.before_init,
+			...state.init
+		);
+		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 	} else if (trimmed.length > 0) {
 		const id = b.id(context.state.scope.generate('fragment'));
 

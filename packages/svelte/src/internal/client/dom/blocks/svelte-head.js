@@ -1,6 +1,6 @@
 /** @import { TemplateNode } from '#client' */
 import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from '../hydration.js';
-import { empty } from '../operations.js';
+import { create_text } from '../operations.js';
 import { block } from '../../reactivity/effects.js';
 import { HEAD_EFFECT } from '../../constants.js';
 import { HYDRATION_START } from '../../../../constants.js';
@@ -52,7 +52,7 @@ export function head(render_fn) {
 	}
 
 	if (!hydrating) {
-		anchor = document.head.appendChild(empty());
+		anchor = document.head.appendChild(create_text());
 	}
 
 	try {
