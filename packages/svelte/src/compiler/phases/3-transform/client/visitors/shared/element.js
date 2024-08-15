@@ -116,11 +116,7 @@ export function build_attribute_value(value, context) {
  * @param {{ state: { metadata: { namespace: Namespace }}}} context
  */
 export function get_attribute_name(element, attribute, context) {
-	if (
-		!element.metadata.svg &&
-		!element.metadata.mathml &&
-		context.state.metadata.namespace !== 'foreign'
-	) {
+	if (!element.metadata.svg && !element.metadata.mathml) {
 		return normalize_attribute(attribute.name);
 	}
 

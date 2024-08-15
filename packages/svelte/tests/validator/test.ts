@@ -128,21 +128,5 @@ it('errors if namespace is provided but unrecognised', () => {
 			// @ts-expect-error
 			namespace: 'svefefe'
 		});
-	}, /namespace should be one of "html", "svg" or "foreign"/);
-});
-
-it("does not throw error if 'this' is bound for foreign element", () => {
-	assert.doesNotThrow(() => {
-		compile(
-			`
-		<script>
-			let whatever;
-		</script>
-		<div bind:this={whatever}></div>`,
-			{
-				name: 'test',
-				namespace: 'foreign'
-			}
-		);
-	});
+	}, /namespace should be one of "html", "mathml" or "svg"/);
 });

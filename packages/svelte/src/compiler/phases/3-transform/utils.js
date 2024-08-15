@@ -306,32 +306,30 @@ export function clean_nodes(
  * @param {Compiler.SvelteNode[]} nodes
  */
 export function infer_namespace(namespace, parent, nodes) {
-	if (namespace !== 'foreign') {
-		if (parent.type === 'RegularElement' && parent.name === 'foreignObject') {
-			return 'html';
-		}
+	if (parent.type === 'RegularElement' && parent.name === 'foreignObject') {
+		return 'html';
+	}
 
-		if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
-			if (parent.metadata.svg) {
-				return 'svg';
-			}
-			return parent.metadata.mathml ? 'mathml' : 'html';
+	if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
+		if (parent.metadata.svg) {
+			return 'svg';
 		}
+		return parent.metadata.mathml ? 'mathml' : 'html';
+	}
 
-		// Re-evaluate the namespace inside slot nodes that reset the namespace
-		if (
-			parent.type === 'Fragment' ||
-			parent.type === 'Root' ||
-			parent.type === 'Component' ||
-			parent.type === 'SvelteComponent' ||
-			parent.type === 'SvelteFragment' ||
-			parent.type === 'SnippetBlock' ||
-			parent.type === 'SlotElement'
-		) {
-			const new_namespace = check_nodes_for_namespace(nodes, 'keep');
-			if (new_namespace !== 'keep' && new_namespace !== 'maybe_html') {
-				return new_namespace;
-			}
+	// Re-evaluate the namespace inside slot nodes that reset the namespace
+	if (
+		parent.type === 'Fragment' ||
+		parent.type === 'Root' ||
+		parent.type === 'Component' ||
+		parent.type === 'SvelteComponent' ||
+		parent.type === 'SvelteFragment' ||
+		parent.type === 'SnippetBlock' ||
+		parent.type === 'SlotElement'
+	) {
+		const new_namespace = check_nodes_for_namespace(nodes, 'keep');
+		if (new_namespace !== 'keep' && new_namespace !== 'maybe_html') {
+			return new_namespace;
 		}
 	}
 
@@ -401,10 +399,6 @@ function check_nodes_for_namespace(nodes, namespace) {
  * @returns {Compiler.Namespace}
  */
 export function determine_namespace_for_children(node, namespace) {
-	if (namespace === 'foreign') {
-		return namespace;
-	}
-
 	if (node.name === 'foreignObject') {
 		return 'html';
 	}

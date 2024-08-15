@@ -94,7 +94,7 @@ export function SvelteElement(node, context) {
 
 	const get_tag = b.thunk(/** @type {Expression} */ (context.visit(node.tag)));
 
-	if (dev && context.state.metadata.namespace !== 'foreign') {
+	if (dev) {
 		if (node.fragment.nodes.length > 0) {
 			context.state.init.push(b.stmt(b.call('$.validate_void_dynamic_element', get_tag)));
 		}

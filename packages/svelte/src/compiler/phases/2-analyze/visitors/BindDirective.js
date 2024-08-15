@@ -126,10 +126,6 @@ export function BindDirective(node, context) {
 		parent?.type === 'SvelteDocument' ||
 		parent?.type === 'SvelteBody'
 	) {
-		if (context.state.options.namespace === 'foreign' && node.name !== 'this') {
-			e.bind_invalid_name(node, node.name, 'Foreign elements only support `bind:this`');
-		}
-
 		if (node.name in binding_properties) {
 			const property = binding_properties[node.name];
 			if (property.valid_elements && !property.valid_elements.includes(parent.name)) {
