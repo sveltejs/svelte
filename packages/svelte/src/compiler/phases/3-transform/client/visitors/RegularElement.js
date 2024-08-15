@@ -27,7 +27,12 @@ import {
 	build_style_directives
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
-import { build_render_statement, build_update, build_update_assignment } from './shared/utils.js';
+import {
+	build_render_statement,
+	build_template_literal,
+	build_update,
+	build_update_assignment
+} from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 
 /**
@@ -320,28 +325,43 @@ export function RegularElement(node, context) {
 		context.visit(node, child_state);
 	}
 
-	/** @type {Expression} */
-	let arg = context.state.node;
+	// special case — if an element that only contains text, we don't need
+	// to descend into it if the text is non-reactive
+	const text_content =
+		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
+		trimmed.some((node) => node.type === 'ExpressionTag') &&
+		build_template_literal(trimmed, context.visit, child_state);
 
-	// If `hydrate_node` is set inside the element, we need to reset it
-	// after the element has been hydrated
-	let needs_reset = trimmed.some((node) => node.type !== 'Text');
+	if (text_content && !text_content.has_state) {
+		child_state.init.push(
+			b.stmt(
+				b.assignment('=', b.member(context.state.node, b.id('textContent')), text_content.value)
+			)
+		);
+	} else {
+		/** @type {Expression} */
+		let arg = context.state.node;
 
-	// The same applies if it's a `<template>` element, since we need to
-	// set the value of `hydrate_node` to `node.content`
-	if (node.name === 'template') {
-		needs_reset = true;
-		child_state.init.push(b.stmt(b.call('$.hydrate_template', arg)));
-		arg = b.member(arg, b.id('content'));
-	}
+		// If `hydrate_node` is set inside the element, we need to reset it
+		// after the element has been hydrated
+		let needs_reset = trimmed.some((node) => node.type !== 'Text');
 
-	process_children(trimmed, () => b.call('$.child', arg), true, {
-		...context,
-		state: child_state
-	});
+		// The same applies if it's a `<template>` element, since we need to
+		// set the value of `hydrate_node` to `node.content`
+		if (node.name === 'template') {
+			needs_reset = true;
+			child_state.init.push(b.stmt(b.call('$.hydrate_template', arg)));
+			arg = b.member(arg, b.id('content'));
+		}
 
-	if (needs_reset) {
-		child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
+		process_children(trimmed, () => b.call('$.child', arg), true, {
+			...context,
+			state: child_state
+		});
+
+		if (needs_reset) {
+			child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
+		}
 	}
 
 	if (has_declaration) {
