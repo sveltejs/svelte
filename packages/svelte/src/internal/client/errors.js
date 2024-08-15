@@ -279,22 +279,6 @@ export function rune_outside_svelte(rune) {
 }
 
 /**
- * Cannot set prototype of `$state` object
- * @returns {never}
- */
-export function state_prototype_fixed() {
-	if (DEV) {
-		const error = new Error(`state_prototype_fixed\nCannot set prototype of \`$state\` object`);
-
-		error.name = 'Svelte error';
-		throw error;
-	} else {
-		// TODO print a link to the documentation
-		throw new Error("state_prototype_fixed");
-	}
-}
-
-/**
  * Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
  * @returns {never}
  */
@@ -307,6 +291,22 @@ export function state_descriptors_fixed() {
 	} else {
 		// TODO print a link to the documentation
 		throw new Error("state_descriptors_fixed");
+	}
+}
+
+/**
+ * Cannot set prototype of `$state` object
+ * @returns {never}
+ */
+export function state_prototype_fixed() {
+	if (DEV) {
+		const error = new Error(`state_prototype_fixed\nCannot set prototype of \`$state\` object`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("state_prototype_fixed");
 	}
 }
 
