@@ -1091,7 +1091,7 @@ export interface HTMLLiAttributes extends HTMLAttributes<HTMLLIElement> {
 
 export interface HTMLLinkAttributes extends HTMLAttributes<HTMLLinkElement> {
 	as?: string | undefined | null;
-	crossorigin?: string | undefined | null;
+	crossorigin?: 'anonymous' | 'use-credentials' | '' | undefined | null;
 	href?: string | undefined | null;
 	hreflang?: string | undefined | null;
 	integrity?: string | undefined | null;
@@ -1125,7 +1125,7 @@ export interface HTMLMediaAttributes<T extends HTMLMediaElement> extends HTMLAtt
 		| (string & {})
 		| undefined
 		| null;
-	crossorigin?: string | undefined | null;
+	crossorigin?: 'anonymous' | 'use-credentials' | '' | undefined | null;
 	currenttime?: number | undefined | null;
 	defaultmuted?: boolean | undefined | null;
 	defaultplaybackrate?: number | undefined | null;
@@ -1236,7 +1236,7 @@ export interface HTMLScriptAttributes extends HTMLAttributes<HTMLScriptElement> 
 	async?: boolean | undefined | null;
 	/** @deprecated */
 	charset?: string | undefined | null;
-	crossorigin?: string | undefined | null;
+	crossorigin?: 'anonymous' | 'use-credentials' | '' | undefined | null;
 	defer?: boolean | undefined | null;
 	fetchpriority?: 'auto' | 'high' | 'low' | undefined | null;
 	integrity?: string | undefined | null;
@@ -1306,7 +1306,7 @@ export interface HTMLTextareaAttributes extends HTMLAttributes<HTMLTextAreaEleme
 	required?: boolean | undefined | null;
 	rows?: number | undefined | null;
 	value?: string | string[] | number | undefined | null;
-	wrap?: string | undefined | null;
+	wrap?: 'hard' | 'soft' | undefined | null;
 
 	'on:change'?: ChangeEventHandler<HTMLTextAreaElement> | undefined | null;
 	onchange?: ChangeEventHandler<HTMLTextAreaElement> | undefined | null;
