@@ -109,5 +109,13 @@ export function Identifier(node, context) {
 		) {
 			w.state_referenced_locally(node);
 		}
+
+		if (
+			context.state.reactive_statement &&
+			binding.scope === context.state.analysis.module.scope &&
+			binding.reassigned
+		) {
+			w.reactive_declaration_module_script_dependency(node);
+		}
 	}
 }

@@ -126,7 +126,7 @@ export function VariableDeclaration(node, context) {
 					if (rune === '$state' && should_proxy(value, context.state.scope)) {
 						value = b.call('$.proxy', value);
 					}
-					if (is_state_source(binding, context.state)) {
+					if (is_state_source(binding, context.state.analysis)) {
 						value = b.call('$.source', value);
 					}
 					return value;

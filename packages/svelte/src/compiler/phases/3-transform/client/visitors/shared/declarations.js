@@ -18,7 +18,7 @@ export function get_value(node) {
 export function add_state_transformers(context) {
 	for (const [name, binding] of context.state.scope.declarations) {
 		if (
-			is_state_source(binding, context.state) ||
+			is_state_source(binding, context.state.analysis) ||
 			binding.kind === 'derived' ||
 			binding.kind === 'legacy_reactive'
 		) {

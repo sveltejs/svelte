@@ -26,9 +26,13 @@
 
 > Reactive declarations only exist at the top level of the instance script
 
-## reactive_declaration_module_script
+## reactive_declaration_module_script_dependency
 
-> All dependencies of the reactive declaration are declared in a module script and will not be reactive
+> Reassignments of module-level declarations will not cause reactive statements to update
+
+## reactive_declaration_non_reactive_property
+
+> Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update
 
 ## state_referenced_locally
 
