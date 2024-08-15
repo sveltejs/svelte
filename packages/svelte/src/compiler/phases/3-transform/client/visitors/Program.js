@@ -1,4 +1,4 @@
-/** @import { Expression, MemberExpression, Program } from 'estree' */
+/** @import { Expression, ImportDeclaration, MemberExpression, Program } from 'estree' */
 /** @import { ComponentContext } from '../types' */
 import { build_getter, is_prop_source } from '../utils.js';
 import * as b from '../../../../utils/builders.js';
@@ -16,16 +16,26 @@ export function Program(_, context) {
 
 		for (const [name, binding] of context.state.scope.declarations) {
 			if (binding.declaration_kind === 'import' && binding.mutated) {
-				const id = b.id('$$_import_' + name);
+				// the declaration itself is hoisted to the module scope, so we need
+				// to resort to cruder measures to differentiate instance/module imports
+				const { start, end } = context.state.analysis.instance.ast;
+				const node = /** @type {ImportDeclaration} */ (binding.initial);
+				const is_instance_import =
+					/** @type {number} */ (node.start) > /** @type {number} */ (start) &&
+					/** @type {number} */ (node.end) < /** @type {number} */ (end);
 
-				context.state.transform[name] = {
-					read: (_) => b.call(id),
-					mutate: (_, mutation) => b.call(id, mutation)
-				};
+				if (is_instance_import) {
+					const id = b.id('$$_import_' + name);
 
-				context.state.legacy_reactive_imports.push(
-					b.var(id, b.call('$.reactive_import', b.thunk(b.id(name))))
-				);
+					context.state.transform[name] = {
+						read: (_) => b.call(id),
+						mutate: (_, mutation) => b.call(id, mutation)
+					};
+
+					context.state.legacy_reactive_imports.push(
+						b.var(id, b.call('$.reactive_import', b.thunk(b.id(name))))
+					);
+				}
 			}
 		}
 	}

@@ -57,9 +57,12 @@ export function init_operations() {
 	}
 }
 
-/** @returns {Text} */
-export function empty() {
-	return document.createTextNode('');
+/**
+ * @param {string} value
+ * @returns {Text}
+ */
+export function create_text(value = '') {
+	return document.createTextNode(value);
 }
 
 /**
@@ -95,7 +98,7 @@ export function child(node) {
 
 	// Child can be null if we have an element with a single child, like `<p>{text}</p>`, where `text` is empty
 	if (child === null) {
-		child = hydrate_node.appendChild(empty());
+		child = hydrate_node.appendChild(create_text());
 	}
 
 	set_hydrate_node(child);
@@ -122,7 +125,7 @@ export function first_child(fragment, is_text) {
 	// if an {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one
 	if (is_text && hydrate_node?.nodeType !== 3) {
-		var text = empty();
+		var text = create_text();
 
 		hydrate_node?.before(text);
 		set_hydrate_node(text);
@@ -151,7 +154,7 @@ export function sibling(node, is_text = false) {
 	// if a sibling {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one
 	if (is_text && type !== 3) {
-		var text = empty();
+		var text = create_text();
 		next_sibling?.before(text);
 		set_hydrate_node(text);
 		return text;

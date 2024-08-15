@@ -3,7 +3,7 @@
 import { DEV } from 'esm-env';
 import {
 	clear_text_content,
-	empty,
+	create_text,
 	get_first_child,
 	get_next_sibling,
 	init_operations
@@ -49,13 +49,9 @@ export function set_should_intro(value) {
  */
 export function set_text(text, value) {
 	// @ts-expect-error
-	const prev = (text.__t ??= text.nodeValue);
-
-	if (prev !== value) {
+	if (value !== (text.__t ??= text.nodeValue)) {
 		// @ts-expect-error
-		text.__t = value;
-		// It's faster to make the value a string rather than passing a non-string to nodeValue
-		text.nodeValue = value == null ? '' : value + '';
+		text.nodeValue = text.__t = value;
 	}
 }
 
@@ -84,7 +80,7 @@ export function set_text(text, value) {
  * @returns {Exports}
  */
 export function mount(component, options) {
-	const anchor = options.anchor ?? options.target.appendChild(empty());
+	const anchor = options.anchor ?? options.target.appendChild(create_text());
 	return _mount(component, { ...options, anchor });
 }
 
