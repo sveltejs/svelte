@@ -298,7 +298,10 @@ export function build_component(node, component_name, context, anchor = context.
 		push_prop(b.init('$$slots', b.object(serialized_slots)));
 	}
 
-	if (!context.state.analysis.runes) {
+	if (
+		!context.state.analysis.runes &&
+		node.attributes.some((attribute) => attribute.type === 'BindDirective')
+	) {
 		push_prop(b.init('$$legacy', b.true));
 	}
 

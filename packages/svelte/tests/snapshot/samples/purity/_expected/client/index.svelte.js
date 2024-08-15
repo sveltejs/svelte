@@ -23,10 +23,6 @@ export default function Purity($$anchor) {
 
 	var node = $.sibling($.sibling(p_1, true));
 
-	Child(node, {
-		prop: encodeURIComponent(value),
-		$$legacy: true
-	});
-
+	Child(node, { prop: encodeURIComponent(value) });
 	$.append($$anchor, fragment);
 }
