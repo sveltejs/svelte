@@ -124,15 +124,10 @@ const state_proxy_handler = {
 		/** @type {ProxyMetadata} */
 		const metadata = target[STATE_SYMBOL];
 		const s = metadata.s.get(prop);
-		const is_array = metadata.a;
-		const exists = (s !== undefined && s.v !== UNINITIALIZED) || prop in target;
+		const exists = s !== undefined ? s.v !== UNINITIALIZED : prop in target;
 
 		if (s !== undefined) {
-			if (is_array) {
-				set(s, undefined);
-			} else {
-				set(s, UNINITIALIZED);
-			}
+			set(s, UNINITIALIZED);
 		}
 
 		if (exists) {
