@@ -264,14 +264,18 @@ const state_proxy_handler = {
 			// signal that length has also changed. Do it before updating metadata
 			// to ensure that iterating over the array as a result of a metadata update
 			// will not cause the length to be out of sync.
-			if (is_array) {
+			if (is_array && typeof prop === 'string') {
 				var ls = metadata.s.get('length');
-				var prop_number = Number(prop);
 
-				if (ls !== undefined && is_prop_positive_integer(prop) && prop_number >= ls.v) {
-					set(ls, prop_number + 1);
+				if (ls !== undefined) {
+					var n = Number(prop);
+
+					if (Number.isInteger(n) && n >= ls.v) {
+						set(ls, n + 1);
+					}
 				}
 			}
+
 			update_version(metadata.v);
 		}
 
