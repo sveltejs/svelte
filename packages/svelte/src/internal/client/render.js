@@ -43,13 +43,9 @@ export function set_should_intro(value) {
  */
 export function set_text(text, value) {
 	// @ts-expect-error
-	const prev = (text.__t ??= text.nodeValue);
-
-	if (prev !== value) {
+	if (value !== (text.__t ??= text.nodeValue)) {
 		// @ts-expect-error
-		text.__t = value;
-		// It's faster to make the value a string rather than passing a non-string to nodeValue
-		text.nodeValue = value == null ? '' : value + '';
+		text.nodeValue = text.__t = value;
 	}
 }
 
