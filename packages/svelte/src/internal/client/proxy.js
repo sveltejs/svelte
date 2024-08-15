@@ -17,14 +17,6 @@ import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 
 /**
- * @param {string | symbol} prop
- */
-function is_prop_positive_integer(prop) {
-	// @ts-ignore
-	return typeof prop === 'string' && prop >>> 0 === parseFloat(prop);
-}
-
-/**
  * @template T
  * @param {T} value
  * @param {ProxyMetadata | null} [parent]
