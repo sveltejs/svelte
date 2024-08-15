@@ -1,5 +1,21 @@
 # svelte
 
+## 5.0.0-next.222
+
+### Patch Changes
+
+- fix: avoid throwing `store_invalid_subscription_module` for runes ([#12848](https://github.com/sveltejs/svelte/pull/12848))
+
+- fix: omit `$index` parameter where possible ([#12851](https://github.com/sveltejs/svelte/pull/12851))
+
+- feat: skip over static subtrees ([#12849](https://github.com/sveltejs/svelte/pull/12849))
+
+- chore: set `binding.kind` before analysis ([#12843](https://github.com/sveltejs/svelte/pull/12843))
+
+- feat: better compiler warnings for non-reactive dependencies of reactive statements ([#12824](https://github.com/sveltejs/svelte/pull/12824))
+
+- fix: skip unnecessary `$legacy` flag ([#12850](https://github.com/sveltejs/svelte/pull/12850))
+
 ## 5.0.0-next.221
 
 ### Patch Changes
