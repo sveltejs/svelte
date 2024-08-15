@@ -9,11 +9,11 @@ import { build_template_literal, build_update } from './utils.js';
  * (e.g. `{a} b {c}`) into a single update function. Along the way it creates
  * corresponding template node references these updates are applied to.
  * @param {SvelteNode[]} nodes
- * @param {(is_text: boolean) => Expression} expression
+ * @param {(is_text: boolean, is_last?: boolean) => Expression} expression
  * @param {boolean} is_element
  * @param {ComponentContext} context
  */
-export function process_children(nodes, expression, is_element, { visit, state }) {
+export function process_children(nodes, expression, is_element, { visit, state, path }) {
 	const within_bound_contenteditable = state.metadata.bound_contenteditable;
 
 	/** @typedef {Array<Text | ExpressionTag>} Sequence */
@@ -30,7 +30,14 @@ export function process_children(nodes, expression, is_element, { visit, state }
 
 			if (node.type === 'Text') {
 				let prev = expression;
-				expression = () => b.call('$.sibling', prev(true));
+				expression = (_, is_last) =>
+					is_last
+						? b.conditional(
+								b.id('$.hydrating'),
+								b.call('$.sibling', prev(true)),
+								b.call('$.sibling_dangle', prev(true))
+							)
+						: b.call('$.sibling', prev(true));
 				state.template.push(node.raw);
 				return;
 			}
@@ -108,14 +115,30 @@ export function process_children(nodes, expression, is_element, { visit, state }
 					node.metadata.is_controlled = true;
 					visit(node, state);
 				} else {
+					const is_last =
+						node.type === 'RegularElement' &&
+						path.at(-1)?.type === 'Fragment' &&
+						!node.fragment.metadata.dynamic &&
+						nodes.length - 1 === i;
+
 					const id = get_node_id(
-						expression(false),
+						expression(false, is_last),
 						state,
 						node.type === 'RegularElement' ? node.name : 'node'
 					);
 
-					expression = (is_text) =>
-						is_text ? b.call('$.sibling', id, b.true) : b.call('$.sibling', id);
+					expression = (is_text, is_last) => {
+						if (is_text) {
+							return is_text ? b.call('$.sibling', id, b.true) : b.call('$.sibling', id);
+						}
+						return is_last
+							? b.conditional(
+									b.id('$.hydrating'),
+									b.call('$.sibling', id),
+									b.call('$.sibling_dangle', id)
+								)
+							: b.call('$.sibling', id);
+					};
 
 					visit(node, {
 						...state,

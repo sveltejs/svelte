@@ -134,6 +134,16 @@ export function sibling(node, is_text = false) {
 /**
  * @template {Node} N
  * @param {N} node
+ * @returns {Node | null}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function sibling_dangle(node) {
+	return node.nextSibling;
+}
+
+/**
+ * @template {Node} N
+ * @param {N} node
  * @returns {void}
  */
 export function clear_text_content(node) {

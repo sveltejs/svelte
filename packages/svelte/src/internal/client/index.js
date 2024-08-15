@@ -66,7 +66,7 @@ export {
 	bind_focused
 } from './dom/elements/bindings/universal.js';
 export { bind_window_scroll, bind_window_size } from './dom/elements/bindings/window.js';
-export { hydrate_template, next, reset } from './dom/hydration.js';
+export { hydrate_template, next, reset, hydrating } from './dom/hydration.js';
 export {
 	once,
 	preventDefault,
@@ -156,6 +156,7 @@ export {
 	child,
 	first_child,
 	sibling,
+	sibling_dangle,
 	$window as window,
 	$document as document
 } from './dom/operations.js';
