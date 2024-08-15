@@ -93,7 +93,7 @@ export function strict_equals(a, b, equal = true) {
  */
 export function equals(a, b, equal = true) {
 	if ((a == b) !== (get_proxied_value(a) == get_proxied_value(b))) {
-		w.state_proxy_equality_mismatch(equal ? '==' : '!=', '');
+		w.state_proxy_equality_mismatch(equal ? '==' : '!=');
 	}
 
 	return (a == b) === equal;
