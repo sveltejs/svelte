@@ -18,7 +18,6 @@ import {
 	DESTROYED,
 	INERT,
 	BRANCH_EFFECT,
-	STATE_SYMBOL,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
@@ -31,6 +30,7 @@ import { update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
+import { proxies } from './proxy.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -1047,12 +1047,12 @@ export function deep_read_state(value) {
 		return;
 	}
 
-	if (STATE_SYMBOL in value) {
+	if (proxies.has(value)) {
 		deep_read(value);
 	} else if (!Array.isArray(value)) {
 		for (let key in value) {
 			const prop = value[key];
-			if (typeof prop === 'object' && prop && STATE_SYMBOL in prop) {
+			if (typeof prop === 'object' && prop && proxies.has(prop)) {
 				deep_read(prop);
 			}
 		}

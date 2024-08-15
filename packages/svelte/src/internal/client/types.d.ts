@@ -1,5 +1,4 @@
 import type { Store } from '#shared';
-import { STATE_SYMBOL } from './constants.js';
 import type { Effect, Source, Value } from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
@@ -181,7 +180,7 @@ export interface ProxyMetadata<T = Record<string | symbol, any>> {
 	/** `true` if the proxified object is an array */
 	a: boolean;
 	/** The associated proxy */
-	p: ProxyStateObject<T>;
+	p: T;
 	/** The original target this proxy was created for */
 	t: T;
 	/** Dev-only — the components that 'own' this state, if any. `null` means no owners, i.e. everyone can mutate this state. */
@@ -189,9 +188,5 @@ export interface ProxyMetadata<T = Record<string | symbol, any>> {
 	/** Dev-only — the parent metadata object */
 	parent: null | ProxyMetadata;
 }
-
-export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
-	[STATE_SYMBOL]: ProxyMetadata;
-};
 
 export * from './reactivity/types';

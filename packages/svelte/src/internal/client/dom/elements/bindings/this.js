@@ -1,4 +1,4 @@
-import { STATE_SYMBOL } from '../../../constants.js';
+import { proxies } from '../../../proxy.js';
 import { effect, render_effect } from '../../../reactivity/effects.js';
 import { untrack } from '../../../runtime.js';
 import { queue_micro_task } from '../../task.js';
@@ -10,7 +10,7 @@ import { queue_micro_task } from '../../task.js';
  */
 function is_bound_this(bound_value, element_or_component) {
 	// Find the original target if the value is proxied.
-	var proxy_target = bound_value && bound_value[STATE_SYMBOL]?.t;
+	var proxy_target = bound_value && proxies.get(bound_value)?.t;
 	return bound_value === element_or_component || proxy_target === element_or_component;
 }
 

@@ -27,8 +27,8 @@ import {
 	resume_effect
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
-import { is_array, is_frozen } from '../../../shared/utils.js';
-import { INERT, STATE_SYMBOL } from '../../constants.js';
+import { is_array } from '../../../shared/utils.js';
+import { INERT } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
 import { current_effect } from '../../runtime.js';
 

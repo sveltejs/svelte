@@ -19,5 +19,4 @@ export const LEGACY_DERIVED_PROP = 1 << 16;
 export const INSPECT_EFFECT = 1 << 17;
 export const HEAD_EFFECT = 1 << 18;
 
-export const STATE_SYMBOL = Symbol('$state');
 export const LOADING_ATTR_SYMBOL = Symbol('');

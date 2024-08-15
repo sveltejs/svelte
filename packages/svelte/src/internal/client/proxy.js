@@ -1,34 +1,36 @@
-/** @import { ProxyMetadata, ProxyStateObject, Source } from '#client' */
+/** @import { ProxyMetadata, Source } from '#client' */
 import { DEV } from 'esm-env';
 import { get, current_component_context, current_effect } from './runtime.js';
 import {
 	array_prototype,
-	define_property,
 	get_descriptor,
 	get_prototype_of,
 	is_array,
-	is_frozen,
 	object_prototype
 } from '../shared/utils.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
 import { source, set } from './reactivity/sources.js';
-import { STATE_SYMBOL } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
+
+/**
+ * @type {WeakMap<any, ProxyMetadata<any>}
+ */
+export const proxies = new WeakMap();
 
 /**
  * @template T
  * @param {T} value
  * @param {ProxyMetadata | null} [parent]
  * @param {Source<T>} [prev] dev mode only
- * @returns {ProxyStateObject<T> | T}
+ * @returns {T}
  */
 export function proxy(value, parent = null, prev) {
-	if (typeof value === 'object' && value != null && !is_frozen(value)) {
-		// If we have an existing proxy, return it...
-		if (STATE_SYMBOL in value) {
-			var metadata = /** @type {ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
+	if (typeof value === 'object' && value != null) {
+		var metadata = /** @type {ProxyMetadata<any>} */ (proxies.get(value));
 
+		// If we have an existing proxy, return it...
+		if (metadata) {
 			// ...unless the proxy belonged to a different object, because
 			// someone copied the state symbol using `Reflect.ownKeys(...)`
 			if (metadata.t === value || metadata.p === value) {
@@ -48,32 +50,28 @@ export function proxy(value, parent = null, prev) {
 		if (prototype === object_prototype || prototype === array_prototype) {
 			var proxy = new Proxy(value, state_proxy_handler);
 
-			define_property(value, STATE_SYMBOL, {
-				value: /** @type {ProxyMetadata} */ ({
-					s: new Map(),
-					v: source(0),
-					a: is_array(value),
-					p: proxy,
-					t: value
-				}),
-				writable: true,
-				enumerable: false
-			});
+			// @ts-expect-error missing dev-only properties
+			metadata = {
+				s: new Map(),
+				v: source(0),
+				a: is_array(value),
+				p: proxy,
+				t: value
+			};
+
+			proxies.set(value, metadata);
+			proxies.set(proxy, metadata);
 
 			if (DEV) {
-				// @ts-expect-error
-				value[STATE_SYMBOL].parent = parent;
+				metadata.parent = parent;
 
 				if (prev) {
 					// Reuse owners from previous state; necessary because reassignment is not guaranteed to have correct component context.
 					// If no previous proxy exists we play it safe and assume ownerless state
-					// @ts-expect-error
-					var prev_owners = prev?.v?.[STATE_SYMBOL]?.owners;
-					// @ts-expect-error
-					value[STATE_SYMBOL].owners = prev_owners ? new Set(prev_owners) : null;
+					var prev_owners = proxies.get(prev?.v)?.owners;
+					metadata.owners = prev_owners ? new Set(prev_owners) : null;
 				} else {
-					// @ts-expect-error
-					value[STATE_SYMBOL].owners =
+					metadata.owners =
 						parent === null
 							? current_component_context !== null
 								? new Set([current_component_context.function])
@@ -97,7 +95,7 @@ function update_version(signal, d = 1) {
 	set(signal, signal.v + d);
 }
 
-/** @type {ProxyHandler<ProxyStateObject<any>>} */
+/** @type {ProxyHandler<any>} */
 const state_proxy_handler = {
 	defineProperty(target, prop, descriptor) {
 		if (
@@ -109,8 +107,7 @@ const state_proxy_handler = {
 			e.state_descriptors_fixed();
 		}
 
-		/** @type {ProxyMetadata} */
-		var metadata = target[STATE_SYMBOL];
+		var metadata = /** @type {ProxyMetadata} */ (proxies.get(target));
 		var value = descriptor.value;
 
 		var s = metadata.s.get(prop);
@@ -125,8 +122,7 @@ const state_proxy_handler = {
 	},
 
 	deleteProperty(target, prop) {
-		/** @type {ProxyMetadata} */
-		var metadata = target[STATE_SYMBOL];
+		var metadata = /** @type {ProxyMetadata} */ (proxies.get(target));
 		var s = metadata.s.get(prop);
 		var exists = s !== undefined ? s.v !== UNINITIALIZED : prop in target;
 
@@ -142,12 +138,7 @@ const state_proxy_handler = {
 	},
 
 	get(target, prop, receiver) {
-		if (prop === STATE_SYMBOL) {
-			return Reflect.get(target, STATE_SYMBOL);
-		}
-
-		/** @type {ProxyMetadata} */
-		var metadata = target[STATE_SYMBOL];
+		var metadata = /** @type {ProxyMetadata} */ (proxies.get(target));
 		var s = metadata.s.get(prop);
 		var exists = prop in target;
 
@@ -167,8 +158,7 @@ const state_proxy_handler = {
 
 	getOwnPropertyDescriptor(target, prop) {
 		var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
-		/** @type {ProxyMetadata} */
-		var metadata = target[STATE_SYMBOL];
+		var metadata = /** @type {ProxyMetadata} */ (proxies.get(target));
 
 		if (descriptor && 'value' in descriptor) {
 			var s = metadata.s.get(prop);
@@ -194,11 +184,7 @@ const state_proxy_handler = {
 	},
 
 	has(target, prop) {
-		if (prop === STATE_SYMBOL) {
-			return true;
-		}
-		/** @type {ProxyMetadata} */
-		var metadata = target[STATE_SYMBOL];
+		var metadata = /** @type {ProxyMetadata} */ (proxies.get(target));
 		var s = metadata.s.get(prop);
 		var has = (s !== undefined && s.v !== UNINITIALIZED) || Reflect.has(target, prop);
 
@@ -219,8 +205,7 @@ const state_proxy_handler = {
 	},
 
 	set(target, prop, value, receiver) {
-		/** @type {ProxyMetadata} */
-		var metadata = target[STATE_SYMBOL];
+		var metadata = /** @type {ProxyMetadata} */ (proxies.get(target));
 		var s = metadata.s.get(prop);
 		var has = prop in target;
 
@@ -242,7 +227,7 @@ const state_proxy_handler = {
 
 		if (DEV) {
 			/** @type {ProxyMetadata | undefined} */
-			var prop_metadata = value?.[STATE_SYMBOL];
+			var prop_metadata = proxies.get(value);
 			if (prop_metadata && prop_metadata?.parent !== metadata) {
 				widen_ownership(metadata, prop_metadata);
 			}
@@ -288,8 +273,7 @@ const state_proxy_handler = {
 	},
 
 	ownKeys(target) {
-		/** @type {ProxyMetadata} */
-		var metadata = target[STATE_SYMBOL];
+		var metadata = /** @type {ProxyMetadata} */ (proxies.get(target));
 
 		get(metadata.v);
 
@@ -318,13 +302,8 @@ if (DEV) {
  * @param {any} value
  */
 export function get_proxied_value(value) {
-	if (value !== null && typeof value === 'object' && STATE_SYMBOL in value) {
-		var metadata = value[STATE_SYMBOL];
-		if (metadata) {
-			return metadata.p;
-		}
-	}
-	return value;
+	var metadata = proxies.get(value);
+	return metadata ? metadata.p : value;
 }
 
 /**
