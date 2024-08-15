@@ -572,6 +572,53 @@ export function schedule_effect(signal) {
 }
 
 /**
+ * @param {Effect} effect
+ * @param {Effect[]} effects
+ */
+function process_effect_children(effect, effects) {
+	var current = effect.first;
+
+	while (current !== null) {
+		var next = current.next;
+		process_effect(current, effects);
+		current = next;
+	}
+}
+
+/**
+ * @param {Effect} effect
+ * @param {Effect[]} effects
+ */
+function process_effect(effect, effects) {
+	var flags = effect.f;
+	// TODO: we probably don't need to check for destroyed as it shouldn't be encountered?
+	var is_active = (flags & (DESTROYED | INERT)) === 0;
+	var is_branch = (flags & BRANCH_EFFECT) !== 0;
+	var is_clean = (flags & CLEAN) !== 0;
+
+	// Skip this branch if it's clean
+	if (is_active && (!is_branch || !is_clean)) {
+		if (is_branch) {
+			set_signal_status(effect, CLEAN);
+		}
+
+		if ((flags & RENDER_EFFECT) !== 0) {
+			if (!is_branch && check_dirtiness(effect)) {
+				update_effect(effect);
+			}
+
+			process_effect_children(effect, effects);
+		} else if ((flags & EFFECT) !== 0) {
+			if (is_branch || is_clean) {
+				process_effect_children(effect, effects);
+			} else {
+				effects.push(effect);
+			}
+		}
+	}
+}
+
+/**
  *
  * This function both runs render effects and collects user effects in topological order
  * from the starting effect passed in. Effects will be collected when they match the filtered
@@ -583,70 +630,13 @@ export function schedule_effect(signal) {
  * @returns {void}
  */
 function process_effects(effect, collected_effects) {
-	var current_effect = effect.first;
+	/** @type {Effect[]} */
 	var effects = [];
-
-	main_loop: while (current_effect !== null) {
-		var flags = current_effect.f;
-		// TODO: we probably don't need to check for destroyed as it shouldn't be encountered?
-		var is_active = (flags & (DESTROYED | INERT)) === 0;
-		var is_branch = flags & BRANCH_EFFECT;
-		var is_clean = (flags & CLEAN) !== 0;
-		var child = current_effect.first;
-
-		// Skip this branch if it's clean
-		if (is_active && (!is_branch || !is_clean)) {
-			if (is_branch) {
-				set_signal_status(current_effect, CLEAN);
-			}
-
-			if ((flags & RENDER_EFFECT) !== 0) {
-				if (!is_branch && check_dirtiness(current_effect)) {
-					update_effect(current_effect);
-					// Child might have been mutated since running the effect
-					child = current_effect.first;
-				}
-
-				if (child !== null) {
-					current_effect = child;
-					continue;
-				}
-			} else if ((flags & EFFECT) !== 0) {
-				if (is_branch || is_clean) {
-					if (child !== null) {
-						current_effect = child;
-						continue;
-					}
-				} else {
-					effects.push(current_effect);
-				}
-			}
-		}
-		var sibling = current_effect.next;
-
-		if (sibling === null) {
-			let parent = current_effect.parent;
-
-			while (parent !== null) {
-				if (effect === parent) {
-					break main_loop;
-				}
-				var parent_sibling = parent.next;
-				if (parent_sibling !== null) {
-					current_effect = parent_sibling;
-					continue main_loop;
-				}
-				parent = parent.parent;
-			}
-		}
-
-		current_effect = sibling;
-	}
-
+	process_effect_children(effect, effects);
 	// We might be dealing with many effects here, far more than can be spread into
 	// an array push call (callstack overflow). So let's deal with each effect in a loop.
 	for (var i = 0; i < effects.length; i++) {
-		child = effects[i];
+		var child = effects[i];
 		collected_effects.push(child);
 		process_effects(child, collected_effects);
 	}
