@@ -251,8 +251,6 @@ export function transition(flags, element, get_fn, get_params) {
 					0,
 					() => {
 						dispatch_event(element, 'outroend');
-						// Ensure we cancel the animation to prevent leaking
-						outro?.abort();
 						outro = current_options = undefined;
 						fn?.();
 					},
