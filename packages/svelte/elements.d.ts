@@ -1306,7 +1306,7 @@ export interface HTMLTextareaAttributes extends HTMLAttributes<HTMLTextAreaEleme
 	required?: boolean | undefined | null;
 	rows?: number | undefined | null;
 	value?: string | string[] | number | undefined | null;
-	wrap?: string | undefined | null;
+	wrap?: 'hard' | 'soft' | undefined | null;
 
 	'on:change'?: ChangeEventHandler<HTMLTextAreaElement> | undefined | null;
 	onchange?: ChangeEventHandler<HTMLTextAreaElement> | undefined | null;
