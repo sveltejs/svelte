@@ -1,6 +1,7 @@
 /** @import { SourceLocation } from '#shared' */
 import { HYDRATION_END, HYDRATION_START, HYDRATION_START_ELSE } from '../../../constants.js';
 import { hydrating } from '../dom/hydration.js';
+import { get_first_child, get_next_sibling } from '../dom/operations.js';
 
 /**
  * @param {any} fn
@@ -12,7 +13,7 @@ export function add_locations(fn, filename, locations) {
 	return (/** @type {any[]} */ ...args) => {
 		const dom = fn(...args);
 
-		var node = hydrating ? dom : dom.nodeType === 11 ? dom.firstChild : dom;
+		var node = hydrating ? dom : dom.nodeType === 11 ? get_first_child(dom) : dom;
 		assign_locations(node, filename, locations);
 
 		return dom;
@@ -31,7 +32,7 @@ function assign_location(element, filename, location) {
 	};
 
 	if (location[2]) {
-		assign_locations(element.firstChild, filename, location[2]);
+		assign_locations(get_first_child(element), filename, location[2]);
 	}
 }
 
@@ -55,6 +56,6 @@ function assign_locations(node, filename, locations) {
 			assign_location(/** @type {Element} */ (node), filename, locations[i++]);
 		}
 
-		node = node.nextSibling;
+		node = get_next_sibling(node);
 	}
 }

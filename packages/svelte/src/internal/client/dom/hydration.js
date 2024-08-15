@@ -7,6 +7,7 @@ import {
 	HYDRATION_START_ELSE
 } from '../../../constants.js';
 import * as w from '../warnings.js';
+import { get_next_sibling } from './operations.js';
 
 /**
  * Use this variable to guard everything related to hydration code so it can be treeshaken out
@@ -39,7 +40,7 @@ export function set_hydrate_node(node) {
 }
 
 export function hydrate_next() {
-	return set_hydrate_node(/** @type {TemplateNode} */ (hydrate_node.nextSibling));
+	return set_hydrate_node(/** @type {TemplateNode} */ (get_next_sibling(hydrate_node)));
 }
 
 /** @param {TemplateNode} node */
@@ -47,7 +48,7 @@ export function reset(node) {
 	if (!hydrating) return;
 
 	// If the node has remaining siblings, something has gone wrong
-	if (hydrate_node.nextSibling !== null) {
+	if (get_next_sibling(hydrate_node) !== null) {
 		w.hydration_mismatch();
 		throw HYDRATION_ERROR;
 	}
@@ -90,7 +91,7 @@ export function remove_nodes() {
 			}
 		}
 
-		var next = /** @type {TemplateNode} */ (node.nextSibling);
+		var next = /** @type {TemplateNode} */ (get_next_sibling(node));
 		node.remove();
 		node = next;
 	}
