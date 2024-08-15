@@ -14,7 +14,7 @@ import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 
 /**
- * @type {WeakMap<any, ProxyMetadata<any>}
+ * @type {WeakMap<any, ProxyMetadata<any>>}
  */
 export const proxies = new WeakMap();
 
