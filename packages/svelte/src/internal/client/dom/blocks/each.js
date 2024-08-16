@@ -242,14 +242,14 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	var first = state.first;
 	var current = first;
 
-	/** @type {Set<EachItem>} */
-	var seen = new Set();
+	/** @type {undefined | Set<EachItem>} */
+	var seen;;
 
 	/** @type {EachItem | null} */
 	var prev = null;
 
-	/** @type {Set<EachItem>} */
-	var to_animate = new Set();
+	/** @type {undefined | Set<EachItem>} */
+	var to_animate;
 
 	/** @type {EachItem[]} */
 	var matched = [];
@@ -277,6 +277,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 			if (item !== undefined) {
 				item.a?.measure();
+				if (to_animate === undefined) to_animate = new Set();
 				to_animate.add(item);
 			}
 		}
@@ -319,12 +320,13 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			resume_effect(item.e);
 			if (is_animated) {
 				item.a?.unfix();
+				if (to_animate === undefined) to_animate = new Set();
 				to_animate.delete(item);
 			}
 		}
 
 		if (item !== current) {
-			if (seen.has(item)) {
+			if (seen !== undefined && seen.has(item)) {
 				if (matched.length < stashed.length) {
 					// more efficient to move later items to the front
 					var start = stashed[0];
@@ -372,6 +374,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			stashed = [];
 
 			while (current !== null && current.k !== key) {
+				if (seen === undefined) seen = new Set();
 				seen.add(current);
 				stashed.push(current);
 				current = current.next;
@@ -389,8 +392,8 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		current = item.next;
 	}
 
-	if (current !== null || seen.size > 0) {
-		var to_destroy = array_from(seen);
+	if (current !== null || seen !== undefined) {
+		var to_destroy = seen === undefined ? [] : array_from(seen);
 
 		while (current !== null) {
 			to_destroy.push(current);
@@ -418,6 +421,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 	if (is_animated) {
 		queue_micro_task(() => {
+			if (to_animate === undefined) return;
 			for (item of to_animate) {
 				item.a?.apply();
 			}
