@@ -378,13 +378,9 @@ export function remove_reactions(signal, start_index) {
 	if (dependencies === null) return;
 
 	var active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
-	var seen = new Set();
 
 	for (var i = start_index; i < dependencies.length; i++) {
 		var dependency = dependencies[i];
-
-		if (seen.has(dependency)) continue;
-		seen.add(dependency);
 
 		// Avoid removing a reaction if we know that it is active (start_index will not be 0)
 		if (active_dependencies === null || !active_dependencies.includes(dependency)) {
