@@ -113,14 +113,13 @@ export class Scope {
 			references: [],
 			legacy_dependencies: [],
 			initial,
-			reassigned: false,
 			mutated: false,
-			updated: false,
 			scope: this,
 			kind,
 			declaration_kind,
 			is_called: false,
 			prop_alias: null,
+			reassigned: false,
 			metadata: null
 		};
 		this.declarations.set(node.name, binding);
@@ -507,7 +506,17 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		EachBlock(node, { state, visit }) {
+			// Array part is still from the scope above
+			/** @type {Set<Identifier>} */
+			const references_within = new Set();
+			const idx = references.length;
 			visit(node.expression);
+			for (let i = idx; i < references.length; i++) {
+				const [scope, { node: id }] = references[i];
+				if (scope === state.scope) {
+					references_within.add(id);
+				}
+			}
 
 			// context and children are a new scope
 			const scope = state.scope.child();
@@ -573,6 +582,9 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				index: scope.root.unique('$$index'),
 				item: node.context.type === 'Identifier' ? node.context : b.id('$$item'),
 				declarations: scope.declarations,
+				references: [...references_within]
+					.map((id) => /** @type {Binding} */ (state.scope.get(id.name)))
+					.filter(Boolean),
 				is_controlled: false
 			};
 		},
@@ -659,7 +671,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		// the css property
 		StyleDirective(node, { path, state, next }) {
 			if (node.value === true) {
-				state.scope.reference(b.id(node.name), path.concat(node));
+				state.scope.reference(b.id(node.name), path);
 			}
 			next();
 		}
@@ -681,19 +693,25 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	}
 
 	for (const [scope, node] of updates) {
-		for (const expression of unwrap_pattern(node)) {
-			const left = object(expression);
-			const binding = left && scope.get(left.name);
-
-			if (binding !== null && left !== binding.node) {
-				binding.updated = true;
-
-				if (left === expression) {
-					binding.reassigned = true;
-				} else {
-					binding.mutated = true;
-				}
+		if (node.type === 'MemberExpression') {
+			let object = node.object;
+			while (object.type === 'MemberExpression') {
+				object = object.object;
 			}
+
+			const binding = scope.get(/** @type {Identifier} */ (object).name);
+			if (binding) binding.mutated = true;
+		} else {
+			unwrap_pattern(node).forEach((node) => {
+				let id = node.type === 'Identifier' ? node : object(node);
+				if (id === null) return;
+
+				const binding = scope.get(id.name);
+				if (binding && id !== binding.node) {
+					binding.mutated = true;
+					binding.reassigned = node.type === 'Identifier';
+				}
+			});
 		}
 	}
 

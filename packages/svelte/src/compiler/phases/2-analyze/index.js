@@ -1,13 +1,13 @@
-/** @import { Expression, Node, Program } from 'estree' */
-/** @import { Binding, Root, Script, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { Node, Program } from 'estree' */
+/** @import { Root, Script, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import { walk } from 'zimmerframe';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
-import { extract_identifiers, is_text_attribute } from '../../utils/ast.js';
+import { is_text_attribute } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
-import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
+import { Scope, ScopeRoot, create_scopes, get_rune } from '../scope.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { create_attribute } from '../nodes.js';
 import { analyze_css } from './css/css-analyze.js';
@@ -63,7 +63,6 @@ import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
-import is_reference from 'is-reference';
 
 /**
  * @type {Visitors}
@@ -399,112 +398,6 @@ export function analyze_component(root, source, options) {
 		},
 		source
 	};
-
-	if (!runes) {
-		// every exported `let` or `var` declaration becomes a prop, everything else becomes an export
-		for (const node of instance.ast.body) {
-			if (node.type !== 'ExportNamedDeclaration') continue;
-
-			analysis.needs_props = true;
-
-			if (node.declaration) {
-				if (
-					node.declaration.type === 'FunctionDeclaration' ||
-					node.declaration.type === 'ClassDeclaration'
-				) {
-					analysis.exports.push({
-						name: /** @type {import('estree').Identifier} */ (node.declaration.id).name,
-						alias: null
-					});
-				} else if (node.declaration.type === 'VariableDeclaration') {
-					if (node.declaration.kind === 'const') {
-						for (const declarator of node.declaration.declarations) {
-							for (const node of extract_identifiers(declarator.id)) {
-								analysis.exports.push({ name: node.name, alias: null });
-							}
-						}
-					} else {
-						for (const declarator of node.declaration.declarations) {
-							for (const id of extract_identifiers(declarator.id)) {
-								const binding = /** @type {Binding} */ (instance.scope.get(id.name));
-								binding.kind = 'bindable_prop';
-							}
-						}
-					}
-				}
-			} else {
-				for (const specifier of node.specifiers) {
-					const binding = instance.scope.get(specifier.local.name);
-
-					if (
-						binding &&
-						(binding.declaration_kind === 'var' || binding.declaration_kind === 'let')
-					) {
-						binding.kind = 'bindable_prop';
-
-						if (specifier.exported.name !== specifier.local.name) {
-							binding.prop_alias = specifier.exported.name;
-						}
-					} else {
-						analysis.exports.push({ name: specifier.local.name, alias: specifier.exported.name });
-					}
-				}
-			}
-		}
-
-		// if reassigned/mutated bindings are referenced in `$:` blocks
-		// or the template, turn them into state
-		for (const binding of instance.scope.declarations.values()) {
-			if (binding.kind !== 'normal') continue;
-
-			for (const { node, path } of binding.references) {
-				if (node === binding.node) continue;
-
-				if (binding.updated) {
-					if (
-						path[path.length - 1].type === 'StyleDirective' ||
-						path.some((node) => node.type === 'Fragment') ||
-						(path[1].type === 'LabeledStatement' && path[1].label.name === '$')
-					) {
-						binding.kind = 'state';
-					}
-				}
-			}
-		}
-
-		// more legacy nonsense: if an `each` binding is reassigned/mutated,
-		// treat the expression as being mutated as well
-		walk(/** @type {SvelteNode} */ (template.ast), null, {
-			EachBlock(node) {
-				const scope = /** @type {Scope} */ (template.scopes.get(node));
-
-				for (const binding of scope.declarations.values()) {
-					if (binding.updated) {
-						const state = { scope: /** @type {Scope} */ (scope.parent), scopes: template.scopes };
-
-						walk(node.expression, state, {
-							// @ts-expect-error
-							_: set_scope,
-							Identifier(node, context) {
-								const parent = /** @type {Expression} */ (context.path.at(-1));
-
-								if (is_reference(node, parent)) {
-									const binding = context.state.scope.get(node.name);
-
-									if (binding && binding.kind === 'normal') {
-										binding.kind = 'state';
-										binding.mutated = binding.updated = true;
-									}
-								}
-							}
-						});
-
-						break;
-					}
-				}
-			}
-		});
-	}
 
 	if (root.options) {
 		for (const attribute of root.options.attributes) {

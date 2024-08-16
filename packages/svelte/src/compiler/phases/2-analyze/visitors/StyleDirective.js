@@ -18,6 +18,10 @@ export function StyleDirective(node, context) {
 		let binding = context.state.scope.get(node.name);
 
 		if (binding) {
+			if (!context.state.analysis.runes && binding.mutated) {
+				binding.kind = 'state';
+			}
+
 			if (binding.kind !== 'normal') {
 				node.metadata.expression.has_state = true;
 			}
