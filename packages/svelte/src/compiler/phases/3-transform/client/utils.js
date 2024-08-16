@@ -184,6 +184,7 @@ export function get_prop_source(binding, state, name, initial) {
 
 	if (
 		state.analysis.accessors ||
+		binding.updated ||
 		(state.analysis.immutable
 			? binding.reassigned || (state.analysis.runes && binding.mutated)
 			: binding.mutated)
