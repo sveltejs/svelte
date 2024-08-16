@@ -243,7 +243,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	var current = first;
 
 	/** @type {undefined | Set<EachItem>} */
-	var seen;;
+	var seen;
 
 	/** @type {EachItem | null} */
 	var prev = null;
