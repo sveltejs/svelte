@@ -1,4 +1,4 @@
-/** @import { Effect, EffectNodes, TemplateNode } from '#client' */
+/** @import { Effect, TemplateNode } from '#client' */
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { create_text, get_first_child } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
@@ -11,7 +11,10 @@ import { queue_micro_task } from './task.js';
  * @param {TemplateNode | null} end
  */
 export function assign_nodes(start, end) {
-	/** @type {Effect} */ (current_effect).nodes ??= { start, end };
+	if (/** @type {Effect} */ (current_effect).n_start === null) {
+		/** @type {Effect} */ (current_effect).n_start = start;
+		/** @type {Effect} */ (current_effect).n_end = end;
+	}
 }
 
 /**
@@ -255,7 +258,7 @@ export function comment() {
  */
 export function append(anchor, dom) {
 	if (hydrating) {
-		/** @type {Effect & { nodes: EffectNodes }} */ (current_effect).nodes.end = hydrate_node;
+		/** @type {Effect} */ (current_effect).n_end = hydrate_node;
 		hydrate_next();
 		return;
 	}

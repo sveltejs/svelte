@@ -518,7 +518,7 @@ function flush_queued_effects(effects) {
 			// don't know if we need to keep them until they are executed. Doing the check
 			// here (rather than in `update_effect`) allows us to skip the work for
 			// immediate effects.
-			if (effect.deps === null && effect.first === null && effect.nodes === null) {
+			if (effect.deps === null && effect.first === null && effect.n_start === null) {
 				if (effect.teardown === null) {
 					// remove this effect from the graph
 					unlink_effect(effect);
