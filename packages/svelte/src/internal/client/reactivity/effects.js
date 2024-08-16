@@ -375,8 +375,10 @@ export function destroy_effect(effect, remove_dom = true) {
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);
 
-	if (effect.transitions) {
-		for (const transition of effect.transitions) {
+	var transitions = effect.transitions;
+
+	if (transitions !== null) {
+		for (const transition of transitions) {
 			transition.stop();
 		}
 	}
