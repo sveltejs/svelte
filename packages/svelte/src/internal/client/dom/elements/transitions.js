@@ -422,22 +422,23 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 					}
 				});
 		});
-	} else {
+	}
+	if (tick) {
 		// Timer
 		if (t1 === 0) {
-			tick?.(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
+			tick(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
 		}
 
 		task = loop((now) => {
 			if (now >= end) {
-				tick?.(t2, 1 - t2);
-				on_finish?.();
+				tick(t2, 1 - t2);
+				on_finish?.(); // TODO is this supposed to not be called when tick == undefined?
 				return false;
 			}
 
 			if (now >= start) {
 				var p = t1 + delta * easing((now - start) / duration);
-				tick?.(p, 1 - p);
+				tick(p, 1 - p);
 			}
 
 			return true;
