@@ -32,8 +32,8 @@ import {
 	resume_effect
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
-import { is_array, is_frozen } from '../../../shared/utils.js';
-import { INERT, STATE_SYMBOL } from '../../constants.js';
+import { array_from, is_array } from '../../../shared/utils.js';
+import { INERT } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
 import { current_effect } from '../../runtime.js';
 
@@ -139,7 +139,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			? collection
 			: collection == null
 				? []
-				: Array.from(collection);
+				: array_from(collection);
 
 		var length = array.length;
 
@@ -389,28 +389,31 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		current = item.next;
 	}
 
-	const to_destroy = Array.from(seen);
+	if (current !== null || seen.size > 0) {
+		var to_destroy = array_from(seen);
 
-	while (current !== null) {
-		to_destroy.push(current);
-		current = current.next;
-	}
-	var destroy_length = to_destroy.length;
-
-	if (destroy_length > 0) {
-		var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
-
-		if (is_animated) {
-			for (i = 0; i < destroy_length; i += 1) {
-				to_destroy[i].a?.measure();
-			}
-
-			for (i = 0; i < destroy_length; i += 1) {
-				to_destroy[i].a?.fix();
-			}
+		while (current !== null) {
+			to_destroy.push(current);
+			current = current.next;
 		}
 
-		pause_effects(state, to_destroy, controlled_anchor, items);
+		var destroy_length = to_destroy.length;
+
+		if (destroy_length > 0) {
+			var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
+
+			if (is_animated) {
+				for (i = 0; i < destroy_length; i += 1) {
+					to_destroy[i].a?.measure();
+				}
+
+				for (i = 0; i < destroy_length; i += 1) {
+					to_destroy[i].a?.fix();
+				}
+			}
+
+			pause_effects(state, to_destroy, controlled_anchor, items);
+		}
 	}
 
 	if (is_animated) {
