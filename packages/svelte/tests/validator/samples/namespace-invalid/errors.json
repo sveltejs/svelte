@@ -1,7 +1,7 @@
 [
 	{
 		"code": "svelte_options_invalid_attribute_value",
-		"message": "Value must be \"html\", \"mathml\", \"svg\" or \"foreign\", if specified",
+		"message": "Value must be \"html\", \"mathml\" or \"svg\", if specified",
 		"start": {
 			"line": 1,
 			"column": 16

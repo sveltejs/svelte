@@ -268,7 +268,7 @@ export function build_element_attributes(node, context) {
  */
 function get_attribute_name(element, attribute, context) {
 	let name = attribute.name;
-	if (!element.metadata.svg && !element.metadata.mathml && context.state.namespace !== 'foreign') {
+	if (!element.metadata.svg && !element.metadata.mathml) {
 		name = name.toLowerCase();
 		// don't lookup boolean aliases here, the server runtime function does only
 		// check for the lowercase variants of boolean attributes

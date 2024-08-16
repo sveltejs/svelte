@@ -178,14 +178,6 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (child_metadata.namespace === 'foreign') {
-		// input/select etc could mean something completely different in foreign namespace, so don't special-case them
-		needs_content_reset = false;
-		needs_input_reset = false;
-		needs_special_value_handling = false;
-		value_binding = null;
-	}
-
 	if (is_content_editable && has_content_editable_binding) {
 		child_metadata.bound_contenteditable = true;
 	}
@@ -219,7 +211,7 @@ export function RegularElement(node, context) {
 			node,
 			node_id,
 			// If value binding exists, that one takes care of calling $.init_select
-			value_binding === null && node.name === 'select' && child_metadata.namespace !== 'foreign'
+			value_binding === null && node.name === 'select'
 		);
 		is_attributes_reactive = true;
 	} else {
@@ -249,8 +241,6 @@ export function RegularElement(node, context) {
 				const value = is_text_attribute(attribute) ? attribute.value[0].data : true;
 
 				if (name !== 'class' || value) {
-					// TODO namespace=foreign probably doesn't want to do template stuff at all and instead use programmatic methods
-					// to create the elements it needs.
 					context.state.template.push(
 						` ${attribute.name}${
 							is_boolean_attribute(name) && value === true
@@ -262,10 +252,9 @@ export function RegularElement(node, context) {
 				}
 			}
 
-			const is =
-				is_custom_element && child_metadata.namespace !== 'foreign'
-					? build_custom_element_attribute_update_assignment(node_id, attribute, context)
-					: build_element_attribute_update_assignment(node, node_id, attribute, context);
+			const is = is_custom_element
+				? build_custom_element_attribute_update_assignment(node_id, attribute, context)
+				: build_element_attribute_update_assignment(node, node_id, attribute, context);
 			if (is) is_attributes_reactive = true;
 		}
 	}
@@ -301,8 +290,7 @@ export function RegularElement(node, context) {
 		locations: child_locations,
 		scope: /** @type {Scope} */ (context.state.scopes.get(node.fragment)),
 		preserve_whitespace:
-			context.state.preserve_whitespace ||
-			((node.name === 'pre' || node.name === 'textarea') && child_metadata.namespace !== 'foreign')
+			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
 	};
 
 	const { hoisted, trimmed } = clean_nodes(
@@ -586,28 +574,6 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
 	let { has_call, value } = build_attribute_value(attribute.value, context);
-
-	// The foreign namespace doesn't have any special handling, everything goes through the attr function
-	if (context.state.metadata.namespace === 'foreign') {
-		const statement = b.stmt(
-			b.call(
-				'$.set_attribute',
-				node_id,
-				b.literal(name),
-				value,
-				is_ignored(element, 'hydration_attribute_changed') && b.true
-			)
-		);
-
-		if (attribute.metadata.expression.has_state) {
-			const id = state.scope.generate(`${node_id.name}_${name}`);
-			build_update_assignment(state, id, undefined, value, statement);
-			return true;
-		} else {
-			state.init.push(statement);
-			return false;
-		}
-	}
 
 	if (name === 'autofocus') {
 		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));

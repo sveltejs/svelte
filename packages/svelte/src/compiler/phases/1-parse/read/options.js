@@ -157,18 +157,10 @@ export default function read_options(node) {
 					component_options.namespace = 'svg';
 				} else if (value === NAMESPACE_MATHML) {
 					component_options.namespace = 'mathml';
-				} else if (
-					value === 'html' ||
-					value === 'mathml' ||
-					value === 'svg' ||
-					value === 'foreign'
-				) {
+				} else if (value === 'html' || value === 'mathml' || value === 'svg') {
 					component_options.namespace = value;
 				} else {
-					e.svelte_options_invalid_attribute_value(
-						attribute,
-						`"html", "mathml", "svg" or "foreign"`
-					);
+					e.svelte_options_invalid_attribute_value(attribute, `"html", "mathml" or "svg"`);
 				}
 
 				break;

@@ -85,7 +85,7 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	accessors?: boolean;
 	/**
-	 * The namespace of the element; e.g., `"html"`, `"svg"`, `"foreign"`.
+	 * The namespace of the element; e.g., `"html"`, `"svg"`, `"mathml"`.
 	 *
 	 * @default 'html'
 	 */

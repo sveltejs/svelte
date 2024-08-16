@@ -765,7 +765,7 @@ declare module 'svelte/compiler' {
 		 */
 		accessors?: boolean;
 		/**
-		 * The namespace of the element; e.g., `"html"`, `"svg"`, `"foreign"`.
+		 * The namespace of the element; e.g., `"html"`, `"svg"`, `"mathml"`.
 		 *
 		 * @default 'html'
 		 */
@@ -1504,11 +1504,8 @@ declare module 'svelte/compiler' {
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
 	 * - `svg`     — for e.g. `<svg>` or `<g>`
 	 * - `mathml`  — for e.g. `<math>` or `<mrow>`
-	 * - `foreign` — for other compilation targets than the web, e.g. Svelte Native.
-	 *               Disallows bindings other than bind:this, disables a11y checks, disables any special attribute handling
-	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
 	 */
-	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
+	type Namespace = 'html' | 'svg' | 'mathml';
 
 	interface Root extends BaseNode {
 		type: 'Root';
@@ -2641,7 +2638,7 @@ declare module 'svelte/types/compiler/interfaces' {
 		 */
 		accessors?: boolean;
 		/**
-		 * The namespace of the element; e.g., `"html"`, `"svg"`, `"foreign"`.
+		 * The namespace of the element; e.g., `"html"`, `"svg"`, `"mathml"`.
 		 *
 		 * @default 'html'
 		 */
@@ -2776,11 +2773,8 @@ declare module 'svelte/types/compiler/interfaces' {
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
 	 * - `svg`     — for e.g. `<svg>` or `<g>`
 	 * - `mathml`  — for e.g. `<math>` or `<mrow>`
-	 * - `foreign` — for other compilation targets than the web, e.g. Svelte Native.
-	 *               Disallows bindings other than bind:this, disables a11y checks, disables any special attribute handling
-	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
 	 */
-	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
+	type Namespace = 'html' | 'svg' | 'mathml';
 	type ICompileDiagnostic = {
 		code: string;
 		message: string;

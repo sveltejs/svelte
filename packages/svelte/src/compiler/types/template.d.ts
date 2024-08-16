@@ -47,11 +47,8 @@ export interface Fragment {
  * - `html`    — the default, for e.g. `<div>` or `<span>`
  * - `svg`     — for e.g. `<svg>` or `<g>`
  * - `mathml`  — for e.g. `<math>` or `<mrow>`
- * - `foreign` — for other compilation targets than the web, e.g. Svelte Native.
- *               Disallows bindings other than bind:this, disables a11y checks, disables any special attribute handling
- *               (also see https://github.com/sveltejs/svelte/pull/5652)
  */
-export type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
+export type Namespace = 'html' | 'svg' | 'mathml';
 
 export interface Root extends BaseNode {
 	type: 'Root';

@@ -90,7 +90,7 @@ export const validate_component_options =
 
 			name: string(undefined),
 
-			namespace: list(['html', 'svg', 'foreign']),
+			namespace: list(['html', 'mathml', 'svg']),
 
 			modernAst: boolean(false),
 

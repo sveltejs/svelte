@@ -79,7 +79,7 @@ export function validate_element(node, context) {
 				validate_slot_attribute(context, attribute);
 			}
 
-			if (attribute.name === 'is' && context.state.options.namespace !== 'foreign') {
+			if (attribute.name === 'is') {
 				w.attribute_avoid_is(attribute);
 			}
 
