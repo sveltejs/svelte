@@ -1,5 +1,23 @@
 # svelte
 
+## 5.0.0-next.223
+
+### Patch Changes
+
+- fix: treat module-level imports as non-reactive in legacy mode ([#12845](https://github.com/sveltejs/svelte/pull/12845))
+
+- breaking: remove foreign namespace ([#12869](https://github.com/sveltejs/svelte/pull/12869))
+
+- feat: more efficient text-only fragments ([#12864](https://github.com/sveltejs/svelte/pull/12864))
+
+- fix: ensure outro animation is not prematurely aborted ([#12865](https://github.com/sveltejs/svelte/pull/12865))
+
+- chore: improve performance of DOM traversal operations ([#12863](https://github.com/sveltejs/svelte/pull/12863))
+
+- feat: better destructuring assignments ([#12872](https://github.com/sveltejs/svelte/pull/12872))
+
+- fix: stricter `crossorigin` and `wrap` attributes types ([#12858](https://github.com/sveltejs/svelte/pull/12858))
+
 ## 5.0.0-next.222
 
 ### Patch Changes
