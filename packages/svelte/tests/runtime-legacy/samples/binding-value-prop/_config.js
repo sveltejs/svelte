@@ -2,6 +2,7 @@ import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
+	accessors: false,
 	html: `<input type="text">\naaa`,
 	ssrHtml: `<input type="text" value="aaa">\naaa`,
 
