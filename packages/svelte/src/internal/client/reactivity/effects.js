@@ -95,8 +95,8 @@ function create_effect(type, fn, sync, push = true) {
 	var effect = {
 		ctx: current_component_context,
 		deps: null,
-		n_start: null,
-		n_end: null,
+		nodes_start: null,
+		nodes_end: null,
 		f: type | DIRTY,
 		first: null,
 		fn,

@@ -11,9 +11,10 @@ import { queue_micro_task } from './task.js';
  * @param {TemplateNode | null} end
  */
 export function assign_nodes(start, end) {
-	if (/** @type {Effect} */ (current_effect).nodes_start === null) {
-		/** @type {Effect} */ (current_effect).nodes_start = start;
-		/** @type {Effect} */ (current_effect).nodes_end = end;
+	var effect = /** @type {Effect} */ (current_effect);
+	if (effect.nodes_start === null) {
+		effect.nodes_start = start;
+		effect.nodes_end = end;
 	}
 }
 
