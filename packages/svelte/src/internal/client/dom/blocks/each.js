@@ -319,8 +319,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			resume_effect(item.e);
 			if (is_animated) {
 				item.a?.unfix();
-				if (to_animate === undefined) to_animate = new Set();
-				to_animate.delete(item);
+				(to_animate ??= new Set()).delete(item);
 			}
 		}
 
