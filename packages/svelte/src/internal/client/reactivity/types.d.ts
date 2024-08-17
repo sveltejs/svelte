@@ -34,11 +34,6 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 	deriveds: null | Derived[];
 }
 
-export interface EffectNodes {
-	start: TemplateNode;
-	end: null | TemplateNode;
-}
-
 export interface Effect extends Reaction {
 	parent: Effect | null;
 	/**
@@ -47,7 +42,8 @@ export interface Effect extends Reaction {
 	 * block is reconciled. In the case of a single text/element node,
 	 * `start` and `end` will be the same.
 	 */
-	nodes: null | EffectNodes;
+	nodes_start: null | TemplateNode;
+	nodes_end: null | TemplateNode;
 	/** The associated component context */
 	ctx: null | ComponentContext;
 	/** The effect function */

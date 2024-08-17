@@ -36,24 +36,23 @@ export function process_children(nodes, expression, is_element, { visit, state }
 			}
 		}
 
-		const text_id = get_node_id(expression(true), state, 'text');
+		const id = get_node_id(expression(true), state, 'text');
 
 		state.template.push(' ');
 
 		const { has_state, has_call, value } = build_template_literal(sequence, visit, state);
 
-		const update = b.stmt(b.call('$.set_text', text_id, value));
+		const update = b.stmt(b.call('$.set_text', id, value));
 
 		if (has_call && !within_bound_contenteditable) {
 			state.init.push(build_update(update));
 		} else if (has_state && !within_bound_contenteditable) {
 			state.update.push(update);
 		} else {
-			state.init.push(b.stmt(b.assignment('=', b.member(text_id, 'nodeValue'), value)));
+			state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
 		}
 
-		expression = (is_text) =>
-			is_text ? b.call('$.sibling', text_id, b.true) : b.call('$.sibling', text_id);
+		expression = (is_text) => b.call('$.sibling', id, is_text && b.true);
 	}
 
 	for (let i = 0; i < nodes.length; i += 1) {
@@ -87,8 +86,7 @@ export function process_children(nodes, expression, is_element, { visit, state }
 						node.type === 'RegularElement' ? node.name : 'node'
 					);
 
-					expression = (is_text) =>
-						is_text ? b.call('$.sibling', id, b.true) : b.call('$.sibling', id);
+					expression = (is_text) => b.call('$.sibling', id, is_text && b.true);
 
 					visit(node, {
 						...state,

@@ -1,4 +1,4 @@
-/** @import { Effect, EffectNodes, TemplateNode } from '#client' */
+/** @import { Effect, TemplateNode } from '#client' */
 import { FILENAME, NAMESPACE_SVG } from '../../../../constants.js';
 import {
 	hydrate_next,
@@ -138,7 +138,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				}
 
 				// we do this after calling `render_fn` so that child effects don't override `nodes.end`
-				/** @type {Effect & { nodes: EffectNodes }} */ (current_effect).nodes.end = element;
+				/** @type {Effect} */ (current_effect).nodes_end = element;
 
 				anchor.before(element);
 			});

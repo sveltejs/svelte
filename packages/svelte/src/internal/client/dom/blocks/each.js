@@ -1,4 +1,4 @@
-/** @import { EachItem, EachState, Effect, EffectNodes, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
+/** @import { EachItem, EachState, Effect, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
 import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
@@ -288,7 +288,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		item = items.get(key);
 
 		if (item === undefined) {
-			var child_anchor = current ? /** @type {EffectNodes} */ (current.e.nodes).start : anchor;
+			var child_anchor = current ? /** @type {TemplateNode} */ (current.e.nodes_start) : anchor;
 
 			prev = create_item(
 				child_anchor,
@@ -513,10 +513,10 @@ function create_item(anchor, state, prev, next, value, key, index, render_fn, fl
  * @param {Text | Element | Comment} anchor
  */
 function move(item, next, anchor) {
-	var end = item.next ? /** @type {EffectNodes} */ (item.next.e.nodes).start : anchor;
+	var end = item.next ? /** @type {TemplateNode} */ (item.next.e.nodes_start) : anchor;
 
-	var dest = next ? /** @type {EffectNodes} */ (next.e.nodes).start : anchor;
-	var node = /** @type {EffectNodes} */ (item.e.nodes).start;
+	var dest = next ? /** @type {TemplateNode} */ (next.e.nodes_start) : anchor;
+	var node = /** @type {TemplateNode} */ (item.e.nodes_start);
 
 	while (node !== end) {
 		var next_node = /** @type {TemplateNode} */ (get_next_sibling(node));
