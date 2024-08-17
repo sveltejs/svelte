@@ -49,7 +49,7 @@ export function process_children(nodes, expression, is_element, { visit, state }
 		} else if (has_state && !within_bound_contenteditable) {
 			state.update.push(update);
 		} else {
-			state.init.push(b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), value)));
+			state.init.push(b.stmt(b.assignment('=', b.member(text_id, 'nodeValue'), value)));
 		}
 
 		expression = (is_text) =>

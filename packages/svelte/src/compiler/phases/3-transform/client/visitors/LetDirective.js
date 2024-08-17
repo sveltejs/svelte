@@ -33,7 +33,7 @@ export function LetDirective(node, context) {
 									b.object_pattern(node.expression.properties)
 								: // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
 									b.array_pattern(node.expression.elements),
-							b.member(b.id('$$slotProps'), b.id(node.name))
+							b.member(b.id('$$slotProps'), node.name)
 						),
 						b.return(b.object(bindings.map((binding) => b.init(binding.node.name, binding.node))))
 					])
@@ -48,7 +48,7 @@ export function LetDirective(node, context) {
 
 		return b.const(
 			name,
-			create_derived(context.state, b.thunk(b.member(b.id('$$slotProps'), b.id(node.name))))
+			create_derived(context.state, b.thunk(b.member(b.id('$$slotProps'), node.name)))
 		);
 	}
 }

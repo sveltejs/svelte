@@ -322,9 +322,7 @@ export function RegularElement(node, context) {
 
 	if (text_content && !text_content.has_state) {
 		child_state.init.push(
-			b.stmt(
-				b.assignment('=', b.member(context.state.node, b.id('textContent')), text_content.value)
-			)
+			b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), text_content.value))
 		);
 	} else {
 		/** @type {Expression} */
@@ -339,7 +337,7 @@ export function RegularElement(node, context) {
 		if (node.name === 'template') {
 			needs_reset = true;
 			child_state.init.push(b.stmt(b.call('$.hydrate_template', arg)));
-			arg = b.member(arg, b.id('content'));
+			arg = b.member(arg, 'content');
 		}
 
 		process_children(trimmed, () => b.call('$.child', arg), true, {
@@ -370,7 +368,7 @@ export function RegularElement(node, context) {
 		// This fixes an issue with Chromium where updates to text content within an element
 		// does not update the direction when set to auto. If we just re-assign the dir, this fixes it.
 		context.state.update.push(
-			b.stmt(b.assignment('=', b.member(node_id, b.id('dir')), b.member(node_id, b.id('dir'))))
+			b.stmt(b.assignment('=', b.member(node_id, 'dir'), b.member(node_id, 'dir')))
 		);
 	}
 
@@ -523,7 +521,7 @@ function build_element_spread_attributes(
 
 	if (needs_select_handling) {
 		context.state.init.push(
-			b.stmt(b.call('$.init_select', element_id, b.thunk(b.member(b.id(id), b.id('value')))))
+			b.stmt(b.call('$.init_select', element_id, b.thunk(b.member(b.id(id), 'value'))))
 		);
 		context.state.update.push(
 			b.if(
@@ -533,7 +531,7 @@ function build_element_spread_attributes(
 					// and not <select bind:value>. We need it in addition to $.init_select
 					// because the select value is not reflected as an attribute, so the
 					// mutation observer wouldn't notice.
-					b.stmt(b.call('$.select_option', element_id, b.member(b.id(id), b.id('value'))))
+					b.stmt(b.call('$.select_option', element_id, b.member(b.id(id), 'value')))
 				])
 			)
 		);
@@ -596,7 +594,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 	} else if (name === 'checked') {
 		update = b.stmt(b.call('$.set_checked', node_id, value));
 	} else if (is_dom_property(name)) {
-		update = b.stmt(b.assignment('=', b.member(node_id, b.id(name)), value));
+		update = b.stmt(b.assignment('=', b.member(node_id, name), value));
 	} else {
 		const callee = name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute';
 		update = b.stmt(
@@ -666,9 +664,9 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 
 	const inner_assignment = b.assignment(
 		'=',
-		b.member(node_id, b.id('value')),
+		b.member(node_id, 'value'),
 		b.conditional(
-			b.binary('==', b.literal(null), b.assignment('=', b.member(node_id, b.id('__value')), value)),
+			b.binary('==', b.literal(null), b.assignment('=', b.member(node_id, '__value'), value)),
 			b.literal(''), // render null/undefined values as empty string to support placeholder options
 			value
 		)

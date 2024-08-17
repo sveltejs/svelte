@@ -473,12 +473,8 @@ export function client_component(analysis, options) {
 		const incoming = b.member(b.id('module.default'), HMR, true);
 
 		const accept_fn_body = [
-			b.stmt(
-				b.assignment('=', b.member(incoming, b.id('source')), b.member(existing, b.id('source')))
-			),
-			b.stmt(
-				b.call('$.set', b.member(existing, b.id('source')), b.member(incoming, b.id('original')))
-			)
+			b.stmt(b.assignment('=', b.member(incoming, 'source'), b.member(existing, 'source'))),
+			b.stmt(b.call('$.set', b.member(existing, 'source'), b.member(incoming, 'original')))
 		];
 
 		if (analysis.css.hash) {
@@ -488,7 +484,7 @@ export function client_component(analysis, options) {
 					b.call(
 						b.member(
 							b.call('document.querySelector', b.literal('#' + analysis.css.hash)),
-							b.id('remove'),
+							'remove',
 							false,
 							true
 						)
@@ -498,9 +494,7 @@ export function client_component(analysis, options) {
 		}
 
 		const hmr = b.block([
-			b.stmt(
-				b.assignment('=', id, b.call('$.hmr', id, b.thunk(b.member(existing, b.id('source')))))
-			),
+			b.stmt(b.assignment('=', id, b.call('$.hmr', id, b.thunk(b.member(existing, 'source'))))),
 
 			b.stmt(b.call('import.meta.hot.accept', b.arrow([b.id('module')], b.block(accept_fn_body))))
 		]);
@@ -515,11 +509,7 @@ export function client_component(analysis, options) {
 			// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later
 			body.unshift(
 				b.stmt(
-					b.assignment(
-						'=',
-						b.member(b.id(analysis.name), b.id('$.FILENAME'), true),
-						b.literal(filename)
-					)
+					b.assignment('=', b.member(b.id(analysis.name), '$.FILENAME', true), b.literal(filename))
 				)
 			);
 		}

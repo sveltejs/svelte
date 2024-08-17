@@ -14,7 +14,7 @@ export function TitleElement(node, context) {
 		context.state
 	);
 
-	const statement = b.stmt(b.assignment('=', b.member(b.id('$.document'), b.id('title')), value));
+	const statement = b.stmt(b.assignment('=', b.id('$.document.title'), value));
 
 	if (has_state) {
 		context.state.update.push(statement);
