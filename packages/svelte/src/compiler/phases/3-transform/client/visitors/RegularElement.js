@@ -367,9 +367,8 @@ export function RegularElement(node, context) {
 	if (has_direction_attribute) {
 		// This fixes an issue with Chromium where updates to text content within an element
 		// does not update the direction when set to auto. If we just re-assign the dir, this fixes it.
-		context.state.update.push(
-			b.stmt(b.assignment('=', b.member(node_id, 'dir'), b.member(node_id, 'dir')))
-		);
+		const dir = b.member(node_id, 'dir');
+		context.state.update.push(b.stmt(b.assignment('=', dir, dir)));
 	}
 
 	if (child_locations.length > 0) {
