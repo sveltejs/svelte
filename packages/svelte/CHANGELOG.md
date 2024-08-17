@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.224
+
+### Patch Changes
+
+- chore: inline start and end node properties into effect ([#12878](https://github.com/sveltejs/svelte/pull/12878))
+
+- fix: correctly ensure prop bindings are reactive when bound ([#12879](https://github.com/sveltejs/svelte/pull/12879))
+
+- fix: remove sapper bindings ([#12875](https://github.com/sveltejs/svelte/pull/12875))
+
+- chore: refactor internal signal dependency heuristic ([#12881](https://github.com/sveltejs/svelte/pull/12881))
+
+- fix: allow store as initial value for props in ssr ([#12885](https://github.com/sveltejs/svelte/pull/12885))
+
 ## 5.0.0-next.223
 
 ### Patch Changes
