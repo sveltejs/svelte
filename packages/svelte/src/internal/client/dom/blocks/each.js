@@ -277,8 +277,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 			if (item !== undefined) {
 				item.a?.measure();
-				if (to_animate === undefined) to_animate = new Set();
-				to_animate.add(item);
+				(to_animate ??= new Set()).add(item);
 			}
 		}
 	}
