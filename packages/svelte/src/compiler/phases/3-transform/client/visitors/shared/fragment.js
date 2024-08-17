@@ -49,7 +49,7 @@ export function process_children(nodes, expression, is_element, { visit, state }
 		} else if (has_state && !within_bound_contenteditable) {
 			state.update.push(update);
 		} else {
-			state.init.push(b.stmt(b.assignment('=', b.member(id, b.id('nodeValue')), value)));
+			state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
 		}
 
 		expression = (is_text) => b.call('$.sibling', id, is_text && b.true);

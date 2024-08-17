@@ -54,11 +54,7 @@ export function visit_event_attribute(node, context) {
 
 		context.state.init.push(
 			b.stmt(
-				b.assignment(
-					'=',
-					b.member(context.state.node, b.id('__' + event_name)),
-					delegated_assignment
-				)
+				b.assignment('=', b.member(context.state.node, '__' + event_name), delegated_assignment)
 			)
 		);
 	} else {
@@ -143,7 +139,7 @@ export function build_event_handler(node, metadata, context) {
 	}
 
 	// wrap the handler in a function, so the expression is re-evaluated for each event
-	let call = b.call(b.member(handler, b.id('apply'), false, true), b.this, b.id('$$args'));
+	let call = b.call(b.member(handler, 'apply', false, true), b.this, b.id('$$args'));
 
 	if (dev) {
 		const loc = locator(/** @type {number} */ (node.start));

@@ -321,7 +321,7 @@ export function server_component(analysis, options) {
 									b.id(analysis.name),
 									b.object([
 										b.init('props', b.id('$$props')),
-										b.init('context', b.member(b.id('$$opts'), b.id('context'), false, true))
+										b.init('context', b.member(b.id('$$opts'), 'context', false, true))
 									])
 								)
 							)
@@ -360,11 +360,7 @@ export function server_component(analysis, options) {
 		// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later
 		body.unshift(
 			b.stmt(
-				b.assignment(
-					'=',
-					b.member(b.id(analysis.name), b.id('$.FILENAME'), true),
-					b.literal(filename)
-				)
+				b.assignment('=', b.member(b.id(analysis.name), '$.FILENAME', true), b.literal(filename))
 			)
 		);
 	}
