@@ -18,11 +18,11 @@ export default function State_proxy_literal($$anchor) {
 
 	$.remove_input_defaults(input);
 
-	var input_1 = $.sibling($.sibling(input, true));
+	var input_1 = $.sibling($.sibling(input));
 
 	$.remove_input_defaults(input_1);
 
-	var button = $.sibling($.sibling(input_1, true));
+	var button = $.sibling($.sibling(input_1));
 
 	button.__click = [reset, str, tpl];
 	$.bind_value(input, () => $.get(str), ($$value) => $.set(str, $$value));
