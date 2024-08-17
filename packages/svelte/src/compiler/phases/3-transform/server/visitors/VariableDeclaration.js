@@ -39,7 +39,9 @@ export function VariableDeclaration(node, context) {
 						}
 					}
 				});
-				declarations.push(b.declarator(id, b.id('$$props')));
+				declarations.push(
+					b.declarator(/** @type {Pattern} */ (context.visit(id)), b.id('$$props'))
+				);
 				continue;
 			}
 
