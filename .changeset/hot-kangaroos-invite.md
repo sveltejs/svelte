@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-chore: remove redundant signal logic
+chore: refactor internal signal dependency heuristic
