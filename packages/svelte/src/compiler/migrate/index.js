@@ -331,10 +331,7 @@ const instance_script = {
 
 				const binding = /** @type {Compiler.Binding} */ (state.scope.get(declarator.id.name));
 
-				if (
-					state.analysis.uses_props &&
-					(declarator.init || binding.mutated || binding.reassigned)
-				) {
+				if (state.analysis.uses_props && (declarator.init || binding.updated)) {
 					throw new Error(
 						'$$props is used together with named props in a way that cannot be automatically migrated.'
 					);
@@ -350,7 +347,7 @@ const instance_script = {
 							)
 						: '',
 					optional: !!declarator.init,
-					bindable: binding.mutated || binding.reassigned,
+					bindable: binding.updated,
 					...extract_type_and_comment(declarator, state.str, path)
 				});
 				state.props_insertion_point = /** @type {number} */ (declarator.end);
