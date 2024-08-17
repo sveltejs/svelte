@@ -39,7 +39,7 @@ export function template(content, flags) {
 			return hydrate_node;
 		}
 
-		if (!node) {
+		if (node === undefined) {
 			node = create_fragment_from_html(has_start ? content : '<!>' + content);
 			if (!is_fragment) node = /** @type {Node} */ (get_first_child(node));
 		}
