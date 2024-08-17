@@ -186,7 +186,7 @@ export function get_prop_source(binding, state, name, initial) {
 		state.analysis.accessors ||
 		(state.analysis.immutable
 			? binding.reassigned || (state.analysis.runes && binding.mutated)
-			: binding.mutated)
+			: binding.updated)
 	) {
 		flags |= PROPS_IS_UPDATED;
 	}
