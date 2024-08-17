@@ -3,7 +3,10 @@ import * as $ from "svelte/internal/server";
 
 let a = 1;
 let b = 2;
+let c = 3;
+let d = 4;
 
 export function update(array) {
 	[a, b] = array;
+	[c, d] = array;
 }

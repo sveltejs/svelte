@@ -82,6 +82,8 @@ When authoring custom elements, use the new [host rune](/docs/runes#$host) to di
 >greet</button>
 ```
 
+Note that using `$props` and `$host` will put you in [runes mode](/docs/runes) — be sure to update your props and state accordingly.
+
 ## `<svelte:component>` in runes mode
 
 In previous versions of Svelte, the component constructor was fixed when the component was rendered. In other words, if you wanted `<X>` to re-render when `X` changed, you would either have to use `<svelte:component this={X}>` or put the component inside a `{#key X}...{/key}` block.
@@ -111,8 +113,6 @@ A derived value may be used in other contexts:
 - <svelte:component this={condition ? Y : Z} />
 + <Component />
 ```
-
-Note that using `$props` and `$host` will put you in [runes mode](/docs/runes) — be sure to update your props and state accordingly.
 
 ## `immutable`
 

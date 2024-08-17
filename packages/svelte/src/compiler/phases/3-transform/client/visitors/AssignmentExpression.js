@@ -11,7 +11,13 @@ import { visit_assignment_expression } from '../../shared/assignments.js';
  * @param {Context} context
  */
 export function AssignmentExpression(node, context) {
-	return visit_assignment_expression(node, context, build_assignment);
+	const expression = /** @type {Expression} */ (
+		visit_assignment_expression(node, context, build_assignment) ?? context.next()
+	);
+
+	return is_ignored(node, 'ownership_invalid_mutation')
+		? b.call('$.skip_ownership_validation', b.thunk(expression))
+		: expression;
 }
 
 /**
@@ -109,19 +115,17 @@ function build_assignment(operator, left, right, context) {
 		return transform.assign(object, value);
 	}
 
-	/** @type {Expression} */
-	let mutation = b.assignment(
-		operator,
-		/** @type {Pattern} */ (context.visit(left)),
-		/** @type {Expression} */ (context.visit(right))
-	);
-
 	// mutation
 	if (transform?.mutate) {
-		mutation = transform.mutate(object, mutation);
+		return transform.mutate(
+			object,
+			b.assignment(
+				operator,
+				/** @type {Pattern} */ (context.visit(left)),
+				/** @type {Expression} */ (context.visit(right))
+			)
+		);
 	}
 
-	return is_ignored(left, 'ownership_invalid_mutation')
-		? b.call('$.skip_ownership_validation', b.thunk(mutation))
-		: mutation;
+	return null;
 }
