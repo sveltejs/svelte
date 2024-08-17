@@ -372,8 +372,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			stashed = [];
 
 			while (current !== null && current.k !== key) {
-				if (seen === undefined) seen = new Set();
-				seen.add(current);
+				(seen ??= new Set()).add(current);
 				stashed.push(current);
 				current = current.next;
 			}
