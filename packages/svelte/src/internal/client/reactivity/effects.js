@@ -136,7 +136,7 @@ function create_effect(type, fn, sync, push = true) {
 		sync &&
 		effect.deps === null &&
 		effect.first === null &&
-		effect.n_start === null &&
+		effect.nodes_start === null &&
 		effect.teardown === null;
 
 	if (!inert && !is_root && push) {
@@ -356,10 +356,10 @@ export function execute_effect_teardown(effect) {
 export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
-	if ((remove_dom || (effect.f & HEAD_EFFECT) !== 0) && effect.n_start !== null) {
+	if ((remove_dom || (effect.f & HEAD_EFFECT) !== 0) && effect.nodes_start !== null) {
 		/** @type {TemplateNode | null} */
-		var node = effect.n_start;
-		var end = effect.n_end;
+		var node = effect.nodes_start;
+		var end = effect.nodes_end;
 
 		while (node !== null) {
 			/** @type {TemplateNode | null} */
@@ -399,8 +399,8 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.deps =
 		effect.parent =
 		effect.fn =
-		effect.n_start =
-		effect.n_end =
+		effect.nodes_start =
+		effect.nodes_end =
 			null;
 }
 

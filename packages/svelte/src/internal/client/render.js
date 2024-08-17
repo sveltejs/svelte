@@ -246,7 +246,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			should_intro = true;
 
 			if (hydrating) {
-				/** @type {Effect} */ (current_effect).n_end = hydrate_node;
+				/** @type {Effect} */ (current_effect).nodes_end = hydrate_node;
 			}
 
 			if (context) {

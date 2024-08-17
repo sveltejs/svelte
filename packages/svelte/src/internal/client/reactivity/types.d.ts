@@ -42,8 +42,8 @@ export interface Effect extends Reaction {
 	 * block is reconciled. In the case of a single text/element node,
 	 * `start` and `end` will be the same.
 	 */
-	n_start: null | TemplateNode;
-	n_end: null | TemplateNode;
+	nodes_start: null | TemplateNode;
+	nodes_end: null | TemplateNode;
 	/** The associated component context */
 	ctx: null | ComponentContext;
 	/** The effect function */

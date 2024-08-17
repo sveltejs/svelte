@@ -11,9 +11,9 @@ import { queue_micro_task } from './task.js';
  * @param {TemplateNode | null} end
  */
 export function assign_nodes(start, end) {
-	if (/** @type {Effect} */ (current_effect).n_start === null) {
-		/** @type {Effect} */ (current_effect).n_start = start;
-		/** @type {Effect} */ (current_effect).n_end = end;
+	if (/** @type {Effect} */ (current_effect).nodes_start === null) {
+		/** @type {Effect} */ (current_effect).nodes_start = start;
+		/** @type {Effect} */ (current_effect).nodes_end = end;
 	}
 }
 
@@ -258,7 +258,7 @@ export function comment() {
  */
 export function append(anchor, dom) {
 	if (hydrating) {
-		/** @type {Effect} */ (current_effect).n_end = hydrate_node;
+		/** @type {Effect} */ (current_effect).nodes_end = hydrate_node;
 		hydrate_next();
 		return;
 	}
