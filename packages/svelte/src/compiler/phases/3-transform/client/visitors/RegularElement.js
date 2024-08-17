@@ -491,16 +491,16 @@ function build_element_spread_attributes(
 
 	const preserve_attribute_case =
 		element.metadata.svg || element.metadata.mathml || is_custom_element_node(element);
-	const id = context.state.scope.generate('attributes');
+	const id = b.id(context.state.scope.generate('attributes'));
 
 	const update = b.stmt(
 		b.assignment(
 			'=',
-			b.id(id),
+			id,
 			b.call(
 				'$.set_attributes',
 				element_id,
-				b.id(id),
+				id,
 				b.object(values),
 				context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
 				preserve_attribute_case && b.true,
@@ -520,17 +520,17 @@ function build_element_spread_attributes(
 
 	if (needs_select_handling) {
 		context.state.init.push(
-			b.stmt(b.call('$.init_select', element_id, b.thunk(b.member(b.id(id), 'value'))))
+			b.stmt(b.call('$.init_select', element_id, b.thunk(b.member(id, 'value'))))
 		);
 		context.state.update.push(
 			b.if(
-				b.binary('in', b.literal('value'), b.id(id)),
+				b.binary('in', b.literal('value'), id),
 				b.block([
 					// This ensures a one-way street to the DOM in case it's <select {value}>
 					// and not <select bind:value>. We need it in addition to $.init_select
 					// because the select value is not reflected as an attribute, so the
 					// mutation observer wouldn't notice.
-					b.stmt(b.call('$.select_option', element_id, b.member(b.id(id), 'value')))
+					b.stmt(b.call('$.select_option', element_id, b.member(id, 'value')))
 				])
 			)
 		);
