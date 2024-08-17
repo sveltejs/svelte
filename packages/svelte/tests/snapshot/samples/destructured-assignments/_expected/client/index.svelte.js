@@ -3,10 +3,14 @@ import * as $ from "svelte/internal/client";
 
 let a = $.source(1);
 let b = $.source(2);
+let c = 3;
+let d = 4;
 
 export function update(array) {
 	(
 		$.set(a, $.proxy(array[0])),
 		$.set(b, $.proxy(array[1]))
 	);
+
+	[c, d] = array;
 }
