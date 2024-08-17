@@ -1,6 +1,6 @@
 /** @import { TemplateNode } from '#client' */
 import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from '../hydration.js';
-import { empty } from '../operations.js';
+import { create_text, get_first_child, get_next_sibling } from '../operations.js';
 import { block } from '../../reactivity/effects.js';
 import { HEAD_EFFECT } from '../../constants.js';
 import { HYDRATION_START } from '../../../../constants.js';
@@ -32,14 +32,14 @@ export function head(render_fn) {
 
 		// There might be multiple head blocks in our app, so we need to account for each one needing independent hydration.
 		if (head_anchor === undefined) {
-			head_anchor = /** @type {TemplateNode} */ (document.head.firstChild);
+			head_anchor = /** @type {TemplateNode} */ (get_first_child(document.head));
 		}
 
 		while (
 			head_anchor !== null &&
 			(head_anchor.nodeType !== 8 || /** @type {Comment} */ (head_anchor).data !== HYDRATION_START)
 		) {
-			head_anchor = /** @type {TemplateNode} */ (head_anchor.nextSibling);
+			head_anchor = /** @type {TemplateNode} */ (get_next_sibling(head_anchor));
 		}
 
 		// If we can't find an opening hydration marker, skip hydration (this can happen
@@ -47,12 +47,12 @@ export function head(render_fn) {
 		if (head_anchor === null) {
 			set_hydrating(false);
 		} else {
-			head_anchor = set_hydrate_node(/** @type {TemplateNode} */ (head_anchor.nextSibling));
+			head_anchor = set_hydrate_node(/** @type {TemplateNode} */ (get_next_sibling(head_anchor)));
 		}
 	}
 
 	if (!hydrating) {
-		anchor = document.head.appendChild(empty());
+		anchor = document.head.appendChild(create_text());
 	}
 
 	try {

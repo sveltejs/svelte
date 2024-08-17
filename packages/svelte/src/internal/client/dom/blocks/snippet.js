@@ -12,6 +12,7 @@ import { create_fragment_from_html } from '../reconciler.js';
 import { assign_nodes } from '../template.js';
 import * as w from '../../warnings.js';
 import { DEV } from 'esm-env';
+import { get_first_child, get_next_sibling } from '../operations.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
@@ -89,9 +90,9 @@ export function createRawSnippet(fn) {
 		} else {
 			var html = snippet.render().trim();
 			var fragment = create_fragment_from_html(html);
-			element = /** @type {Element} */ (fragment.firstChild);
+			element = /** @type {Element} */ (get_first_child(fragment));
 
-			if (DEV && (element.nextSibling !== null || element.nodeType !== 3)) {
+			if (DEV && (get_next_sibling(element) !== null || element.nodeType !== 3)) {
 				w.invalid_raw_snippet_render();
 			}
 

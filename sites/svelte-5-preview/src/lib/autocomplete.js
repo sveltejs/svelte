@@ -68,7 +68,7 @@ function is_state(node) {
 
 /**
  * Returns `true` if we're already in a valid call expression, e.g.
- * changing an existing `$state()` to `$state.frozen()`
+ * changing an existing `$state()` to `$state.raw()`
  * @type {Test}
  */
 function is_state_call(node) {
@@ -113,8 +113,8 @@ const runes = [
 	{ snippet: '$derived.by', test: is_state_call },
 	{ snippet: '$effect(() => {\n\t${}\n});', test: is_statement },
 	{ snippet: '$effect.pre(() => {\n\t${}\n});', test: is_statement },
-	{ snippet: '$state.frozen(${});', test: is_state },
-	{ snippet: '$state.frozen', test: is_state_call },
+	{ snippet: '$state.raw(${});', test: is_state },
+	{ snippet: '$state.raw', test: is_state_call },
 	{ snippet: '$bindable()', test: is_bindable },
 	{ snippet: '$effect.root(() => {\n\t${}\n})' },
 	{ snippet: '$state.snapshot(${})' },

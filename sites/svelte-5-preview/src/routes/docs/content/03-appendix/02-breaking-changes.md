@@ -144,9 +144,15 @@ Previously, Svelte employed a very complicated algorithm to determine if whitesp
 
 As before, you can disable whitespace trimming by setting the `preserveWhitespace` option in your compiler settings or on a per-component basis in `<svelte:options>`.
 
-## More recent browser required
+## Modern browser required
 
-Svelte now use Mutation Observers instead of IFrames to measure dimensions for `bind:clientWidth/clientHeight/offsetWidth/offsetHeight`. It also no longer listens to the `change` event on range inputs. Lastly, the `legacy` option was removed (or rather, replaced with a different set of settings).
+Svelte 5 requires a modern browser (in other words, not Internet Explorer) for various reasons:
+
+- it uses [`Proxies`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy)
+- elements with `clientWidth`/`clientHeight`/`offsetWidth`/`offsetHeight` bindings use a [`ResizeObserver`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver) rather than a convoluted `<iframe>` hack
+- `<input type="range" bind:value={...} />` only uses an `input` event listener, rather than also listening for `change` events as a fallback
+
+The `legacy` compiler option, which generated bulkier but IE-friendly code, no longer exists.
 
 ## Changes to compiler options
 
@@ -160,6 +166,16 @@ Svelte now use Mutation Observers instead of IFrames to measure dimensions for `
 ## The `children` prop is reserved
 
 Content inside component tags becomes a [snippet prop](/docs/snippets) called `children`. You cannot have a separate prop by that name.
+
+## Dot notation indicates a component
+
+In Svelte 4, `<foo.bar>` would create an element with a tag name of `"foo.bar"`. In Svelte 5, `foo.bar` is treated as a component instead. This is particularly useful inside `each` blocks:
+
+```svelte
+{#each items as item}
+	<item.component {...item.props} />
+{/each}
+```
 
 ## Breaking changes in runes mode
 

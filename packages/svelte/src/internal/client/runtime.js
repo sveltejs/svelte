@@ -162,14 +162,14 @@ export function check_dirtiness(reaction) {
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
+		var is_unowned = (flags & UNOWNED) !== 0;
 
 		if (dependencies !== null) {
-			var is_unowned = (flags & UNOWNED) !== 0;
 			var i;
 
 			if ((flags & DISCONNECTED) !== 0) {
 				for (i = 0; i < dependencies.length; i++) {
-					(dependencies[i].reactions ??= []).push(reaction);
+					(dependencies[i].reactions ??= new Set()).add(reaction);
 				}
 
 				reaction.f ^= DISCONNECTED;
@@ -188,17 +188,20 @@ export function check_dirtiness(reaction) {
 
 				if (is_unowned) {
 					// TODO is there a more logical place to do this work?
-					if (!current_skip_reaction && !dependency?.reactions?.includes(reaction)) {
+					if (!current_skip_reaction && !dependency?.reactions?.has(reaction)) {
 						// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
 						// and the version hasn't changed, we still need to check that this reaction
 						// if linked to the dependency source – otherwise future updates will not be caught.
-						(dependency.reactions ??= []).push(reaction);
+						(dependency.reactions ??= new Set()).add(reaction);
 					}
 				}
 			}
 		}
 
-		set_signal_status(reaction, CLEAN);
+		// Unowned signals should never be marked as clean.
+		if (!is_unowned) {
+			set_signal_status(reaction, CLEAN);
+		}
 	}
 
 	return false;
@@ -320,17 +323,7 @@ export function update_reaction(reaction) {
 
 			if (!current_skip_reaction) {
 				for (i = skipped_deps; i < deps.length; i++) {
-					dependency = deps[i];
-					var reactions = dependency.reactions;
-
-					if (reactions === null) {
-						dependency.reactions = [reaction];
-					} else if (
-						reactions[reactions.length - 1] !== reaction &&
-						!reactions.includes(reaction)
-					) {
-						reactions.push(reaction);
-					}
+					(deps[i].reactions ??= new Set()).add(reaction);
 				}
 			}
 		} else if (deps !== null && skipped_deps < deps.length) {
@@ -355,24 +348,16 @@ export function update_reaction(reaction) {
  * @returns {void}
  */
 function remove_reaction(signal, dependency) {
-	const reactions = dependency.reactions;
-	let reactions_length = 0;
+	let reactions = dependency.reactions;
 	if (reactions !== null) {
-		reactions_length = reactions.length - 1;
-		const index = reactions.indexOf(signal);
-		if (index !== -1) {
-			if (reactions_length === 0) {
-				dependency.reactions = null;
-			} else {
-				// Swap with last element and then remove.
-				reactions[index] = reactions[reactions_length];
-				reactions.pop();
-			}
+		reactions.delete(signal);
+		if (reactions.size === 0) {
+			reactions = dependency.reactions = null;
 		}
 	}
 	// If the derived has no reactions, then we can disconnect it from the graph,
 	// allowing it to either reconnect in the future, or be GC'd by the VM.
-	if (reactions_length === 0 && (dependency.f & DERIVED) !== 0) {
+	if (reactions === null && (dependency.f & DERIVED) !== 0) {
 		set_signal_status(dependency, MAYBE_DIRTY);
 		// If we are working with a derived that is owned by an effect, then mark it as being
 		// disconnected.
@@ -605,7 +590,7 @@ function process_effects(effect, collected_effects) {
 		var flags = current_effect.f;
 		// TODO: we probably don't need to check for destroyed as it shouldn't be encountered?
 		var is_active = (flags & (DESTROYED | INERT)) === 0;
-		var is_branch = flags & BRANCH_EFFECT;
+		var is_branch = (flags & BRANCH_EFFECT) !== 0;
 		var is_clean = (flags & CLEAN) !== 0;
 		var child = current_effect.first;
 
@@ -843,17 +828,6 @@ export function set_signal_status(signal, status) {
 }
 
 /**
- * @template V
- * @param {V | Value<V>} val
- * @returns {val is Value<V>}
- */
-export function is_signal(val) {
-	return (
-		typeof val === 'object' && val !== null && typeof (/** @type {Value<V>} */ (val).f) === 'number'
-	);
-}
-
-/**
  * Retrieves the context that belongs to the closest parent component with the specified `key`.
  * Must be called during component initialisation.
  *
@@ -988,32 +962,16 @@ export function update_pre(signal, d = 1) {
  * @returns {Record<string, unknown>}
  */
 export function exclude_from_object(obj, keys) {
-	obj = { ...obj };
-	let key;
-	for (key of keys) {
-		delete obj[key];
+	/** @type {Record<string, unknown>} */
+	var result = {};
+
+	for (var key in obj) {
+		if (!keys.includes(key)) {
+			result[key] = obj[key];
+		}
 	}
-	return obj;
-}
 
-/**
- * @template V
- * @param {V} value
- * @param {() => V} fallback lazy because could contain side effects
- * @returns {V}
- */
-export function value_or_fallback(value, fallback) {
-	return value === undefined ? fallback() : value;
-}
-
-/**
- * @template V
- * @param {V} value
- * @param {() => Promise<V>} fallback lazy because could contain side effects
- * @returns {Promise<V>}
- */
-export async function value_or_fallback_async(value, fallback) {
-	return value === undefined ? fallback() : value;
+	return result;
 }
 
 /**
@@ -1150,20 +1108,6 @@ export function deep_read(value, visited = new Set()) {
 			}
 		}
 	}
-}
-
-/**
- * @template V
- * @param {V | Value<V>} value
- * @returns {V}
- */
-export function unwrap(value) {
-	if (is_signal(value)) {
-		// @ts-ignore
-		return get(value);
-	}
-	// @ts-ignore
-	return value;
 }
 
 if (DEV) {

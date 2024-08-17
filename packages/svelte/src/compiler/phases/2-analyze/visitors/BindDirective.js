@@ -34,13 +34,13 @@ export function BindDirective(node, context) {
 			node.name !== 'this' && // bind:this also works for regular variables
 			(!binding ||
 				(binding.kind !== 'state' &&
-					binding.kind !== 'frozen_state' &&
 					binding.kind !== 'linked_state' &&
+					binding.kind !== 'raw_state' &&
 					binding.kind !== 'prop' &&
 					binding.kind !== 'bindable_prop' &&
 					binding.kind !== 'each' &&
 					binding.kind !== 'store_sub' &&
-					!binding.mutated))
+					!binding.updated)) // TODO wut?
 		) {
 			e.bind_invalid_value(node.expression);
 		}
@@ -80,10 +80,6 @@ export function BindDirective(node, context) {
 
 				if (references.length > 0) {
 					parent.metadata.contains_group_binding = true;
-
-					for (const binding of parent.metadata.references) {
-						binding.mutated = true;
-					}
 
 					each_blocks.push(parent);
 					ids = ids.filter((id) => !references.includes(id));
@@ -131,10 +127,6 @@ export function BindDirective(node, context) {
 		parent?.type === 'SvelteDocument' ||
 		parent?.type === 'SvelteBody'
 	) {
-		if (context.state.options.namespace === 'foreign' && node.name !== 'this') {
-			e.bind_invalid_name(node, node.name, 'Foreign elements only support `bind:this`');
-		}
-
 		if (node.name in binding_properties) {
 			const property = binding_properties[node.name];
 			if (property.valid_elements && !property.valid_elements.includes(parent.name)) {

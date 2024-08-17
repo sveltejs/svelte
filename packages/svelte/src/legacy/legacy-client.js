@@ -110,7 +110,10 @@ class Svelte4Component {
 			recover: options.recover
 		});
 
-		flush_sync();
+		// We don't flush_sync for custom element wrappers
+		if (!options?.props?.$$host) {
+			flush_sync();
+		}
 
 		this.#events = props.$$events;
 

@@ -1,5 +1,5 @@
 /** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement, Super, TemplateElement, TemplateLiteral } from 'estree' */
-/** @import { BindDirective, ExpressionMetadata, ExpressionTag, OnDirective, SvelteNode, Text } from '#compiler' */
+/** @import { BindDirective, DelegatedEvent, ExpressionMetadata, ExpressionTag, OnDirective, SvelteNode, Text } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
@@ -133,115 +133,6 @@ export function build_update_assignment(state, id, init, value, update) {
 }
 
 /**
- * Serializes the event handler function of the `on:` directive
- * @param {Pick<OnDirective, 'name' | 'modifiers' | 'expression'>} node
- * @param {null | ExpressionMetadata} metadata
- * @param {ComponentContext} context
- */
-export function build_event_handler(node, metadata, { state, visit }) {
-	/** @type {Expression} */
-	let handler;
-
-	if (node.expression) {
-		handler = node.expression;
-
-		// Event handlers can be dynamic (source/store/prop/conditional etc)
-		const dynamic_handler = () =>
-			b.function(
-				null,
-				[b.rest(b.id('$$args'))],
-				b.block([
-					b.return(
-						b.call(
-							b.member(/** @type {Expression} */ (visit(handler)), b.id('apply'), false, true),
-							b.this,
-							b.id('$$args')
-						)
-					)
-				])
-			);
-
-		if (
-			metadata?.has_call &&
-			!(
-				(handler.type === 'ArrowFunctionExpression' || handler.type === 'FunctionExpression') &&
-				handler.metadata.hoistable
-			)
-		) {
-			// Create a derived dynamic event handler
-			const id = b.id(state.scope.generate('event_handler'));
-
-			state.init.push(
-				b.var(id, b.call('$.derived', b.thunk(/** @type {Expression} */ (visit(handler)))))
-			);
-
-			handler = b.function(
-				null,
-				[b.rest(b.id('$$args'))],
-				b.block([
-					b.return(
-						b.call(
-							b.member(b.call('$.get', id), b.id('apply'), false, true),
-							b.this,
-							b.id('$$args')
-						)
-					)
-				])
-			);
-		} else if (handler.type === 'Identifier' || handler.type === 'MemberExpression') {
-			const id = object(handler);
-			const binding = id === null ? null : state.scope.get(id.name);
-			if (
-				binding !== null &&
-				(binding.kind === 'state' ||
-					binding.kind === 'frozen_state' ||
-					binding.declaration_kind === 'import' ||
-					binding.kind === 'legacy_reactive' ||
-					binding.kind === 'derived' ||
-					binding.kind === 'prop' ||
-					binding.kind === 'bindable_prop' ||
-					binding.kind === 'store_sub')
-			) {
-				handler = dynamic_handler();
-			} else {
-				handler = /** @type {Expression} */ (visit(handler));
-			}
-		} else if (handler.type === 'ConditionalExpression' || handler.type === 'LogicalExpression') {
-			handler = dynamic_handler();
-		} else {
-			handler = /** @type {Expression} */ (visit(handler));
-		}
-	} else {
-		state.analysis.needs_props = true;
-
-		// Function + .call to preserve "this" context as much as possible
-		handler = b.function(
-			null,
-			[b.id('$$arg')],
-			b.block([b.stmt(b.call('$.bubble_event.call', b.this, b.id('$$props'), b.id('$$arg')))])
-		);
-	}
-
-	if (node.modifiers.includes('stopPropagation')) {
-		handler = b.call('$.stopPropagation', handler);
-	}
-	if (node.modifiers.includes('stopImmediatePropagation')) {
-		handler = b.call('$.stopImmediatePropagation', handler);
-	}
-	if (node.modifiers.includes('preventDefault')) {
-		handler = b.call('$.preventDefault', handler);
-	}
-	if (node.modifiers.includes('self')) {
-		handler = b.call('$.self', handler);
-	}
-	if (node.modifiers.includes('trusted')) {
-		handler = b.call('$.trusted', handler);
-	}
-
-	return handler;
-}
-
-/**
  * Serializes `bind:this` for components and elements.
  * @param {Identifier | MemberExpression} expression
  * @param {Expression} value
@@ -254,8 +145,10 @@ export function build_bind_this(expression, value, { state, visit }) {
 	/** @type {Expression[]} */
 	const values = [];
 
-	/** @type {typeof state.getters} */
-	const getters = {};
+	/** @type {string[]} */
+	const seen = [];
+
+	const transform = { ...state.transform };
 
 	// Pass in each context variables to the get/set functions, so that we can null out old values on teardown.
 	// Note that we only do this for each context variables, the consequence is that the value might be stale in
@@ -263,7 +156,8 @@ export function build_bind_this(expression, value, { state, visit }) {
 	// variables, but that was the same case in Svelte 4, too. Once legacy mode is gone completely, we can revisit this.
 	walk(expression, null, {
 		Identifier(node, { path }) {
-			if (Object.hasOwn(getters, node.name)) return;
+			if (seen.includes(node.name)) return;
+			seen.push(node.name);
 
 			const parent = /** @type {Expression} */ (path.at(-1));
 			if (!is_reference(node, parent)) return;
@@ -275,14 +169,21 @@ export function build_bind_this(expression, value, { state, visit }) {
 				if (owner.type === 'EachBlock' && scope === binding.scope) {
 					ids.push(node);
 					values.push(/** @type {Expression} */ (visit(node)));
-					getters[node.name] = node;
+
+					if (transform[node.name]) {
+						transform[node.name] = {
+							...transform[node.name],
+							read: (node) => node
+						};
+					}
+
 					break;
 				}
 			}
 		}
 	});
 
-	const child_state = { ...state, getters: { ...state.getters, ...getters } };
+	const child_state = { ...state, transform };
 
 	const get = /** @type {Expression} */ (visit(expression, child_state));
 	const set = /** @type {Expression} */ (
@@ -313,28 +214,30 @@ export function build_bind_this(expression, value, { state, visit }) {
  * @param {BindDirective} binding
  * @param {MemberExpression} expression
  */
-export function build_validate_binding(state, binding, expression) {
-	const string = state.analysis.source.slice(binding.start, binding.end);
-
-	const get_object = b.thunk(/** @type {Expression} */ (expression.object));
-	const get_property = b.thunk(
-		/** @type {Expression} */ (
-			expression.computed
-				? expression.property
-				: b.literal(/** @type {Identifier} */ (expression.property).name)
-		)
-	);
+export function validate_binding(state, binding, expression) {
+	// If we are referencing a $store.foo then we don't need to add validation
+	const left = object(binding.expression);
+	const left_binding = left && state.scope.get(left.name);
+	if (left_binding?.kind === 'store_sub') return;
 
 	const loc = locator(binding.start);
 
-	return b.stmt(
-		b.call(
-			'$.validate_binding',
-			b.literal(string),
-			get_object,
-			get_property,
-			loc && b.literal(loc.line),
-			loc && b.literal(loc.column)
+	state.init.push(
+		b.stmt(
+			b.call(
+				'$.validate_binding',
+				b.literal(state.analysis.source.slice(binding.start, binding.end)),
+				b.thunk(/** @type {Expression} */ (expression.object)),
+				b.thunk(
+					/** @type {Expression} */ (
+						expression.computed
+							? expression.property
+							: b.literal(/** @type {Identifier} */ (expression.property).name)
+					)
+				),
+				loc && b.literal(loc.line),
+				loc && b.literal(loc.column)
+			)
 		)
 	);
 }

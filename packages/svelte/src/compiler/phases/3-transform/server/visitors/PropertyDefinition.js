@@ -14,7 +14,7 @@ export function PropertyDefinition(node, context) {
 		if (
 			rune === '$state' ||
 			rune === '$state.link' ||
-			rune === '$state.frozen' ||
+			rune === '$state.raw' ||
 			rune === '$derived'
 		) {
 			return {

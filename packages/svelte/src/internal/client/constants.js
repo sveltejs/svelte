@@ -20,5 +20,4 @@ export const INSPECT_EFFECT = 1 << 17;
 export const HEAD_EFFECT = 1 << 18;
 
 export const STATE_SYMBOL = Symbol('$state');
-export const STATE_FROZEN_SYMBOL = Symbol('$state.frozen');
 export const LOADING_ATTR_SYMBOL = Symbol('');

@@ -39,6 +39,7 @@ import { set } from './sources.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
+import { get_next_sibling } from '../dom/operations.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -61,7 +62,7 @@ export function validate_effect(rune) {
  * @param {Effect} effect
  * @param {Reaction} parent_effect
  */
-export function push_effect(effect, parent_effect) {
+function push_effect(effect, parent_effect) {
 	var parent_last = parent_effect.last;
 	if (parent_last === null) {
 		parent_effect.last = parent_effect.first = effect;
@@ -81,6 +82,14 @@ export function push_effect(effect, parent_effect) {
  */
 function create_effect(type, fn, sync, push = true) {
 	var is_root = (type & ROOT_EFFECT) !== 0;
+	var parent_effect = current_effect;
+
+	if (DEV) {
+		// Ensure the parent is never an inspect effect
+		while (parent_effect !== null && (parent_effect.f & INSPECT_EFFECT) !== 0) {
+			parent_effect = parent_effect.parent;
+		}
+	}
 
 	/** @type {Effect} */
 	var effect = {
@@ -92,7 +101,7 @@ function create_effect(type, fn, sync, push = true) {
 		fn,
 		last: null,
 		next: null,
-		parent: is_root ? null : current_effect,
+		parent: is_root ? null : parent_effect,
 		prev: null,
 		teardown: null,
 		transitions: null,
@@ -130,8 +139,8 @@ function create_effect(type, fn, sync, push = true) {
 		effect.teardown === null;
 
 	if (!inert && !is_root && push) {
-		if (current_effect !== null) {
-			push_effect(effect, current_effect);
+		if (parent_effect !== null) {
+			push_effect(effect, parent_effect);
 		}
 
 		// if we're in a derived, add the effect there too
@@ -252,7 +261,7 @@ export function legacy_pre_effect(deps, fn) {
 		deps();
 
 		// If this legacy pre effect has already run before the end of the reset, then
-		// bail-out to emulate the same behavior.
+		// bail out to emulate the same behavior.
 		if (token.ran) return;
 
 		token.ran = true;
@@ -353,7 +362,7 @@ export function destroy_effect(effect, remove_dom = true) {
 
 		while (node !== null) {
 			/** @type {TemplateNode | null} */
-			var next = node === end ? null : /** @type {TemplateNode} */ (node.nextSibling);
+			var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
 
 			node.remove();
 			node = next;

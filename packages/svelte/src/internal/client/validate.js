@@ -45,28 +45,30 @@ export function validate_dynamic_component(component_fn) {
  * @returns {void}
  */
 export function validate_each_keys(collection, key_fn) {
-	const keys = new Map();
-	const maybe_array = untrack(() => collection());
-	const array = is_array(maybe_array)
-		? maybe_array
-		: maybe_array == null
-			? []
-			: Array.from(maybe_array);
-	const length = array.length;
-	for (let i = 0; i < length; i++) {
-		const key = key_fn(array[i], i);
-		if (keys.has(key)) {
-			const a = String(keys.get(key));
-			const b = String(i);
+	render_effect(() => {
+		const keys = new Map();
+		const maybe_array = collection();
+		const array = is_array(maybe_array)
+			? maybe_array
+			: maybe_array == null
+				? []
+				: Array.from(maybe_array);
+		const length = array.length;
+		for (let i = 0; i < length; i++) {
+			const key = key_fn(array[i], i);
+			if (keys.has(key)) {
+				const a = String(keys.get(key));
+				const b = String(i);
 
-			/** @type {string | null} */
-			let k = String(array[i]);
-			if (k.startsWith('[object ')) k = null;
+				/** @type {string | null} */
+				let k = String(array[i]);
+				if (k.startsWith('[object ')) k = null;
 
-			e.each_key_duplicate(a, b, k);
+				e.each_key_duplicate(a, b, k);
+			}
+			keys.set(key, i);
 		}
-		keys.set(key, i);
-	}
+	});
 }
 
 /**

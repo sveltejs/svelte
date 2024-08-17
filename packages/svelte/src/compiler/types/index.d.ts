@@ -85,7 +85,7 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	accessors?: boolean;
 	/**
-	 * The namespace of the element; e.g., `"html"`, `"svg"`, `"foreign"`.
+	 * The namespace of the element; e.g., `"html"`, `"svg"`, `"mathml"`.
 	 *
 	 * @default 'html'
 	 */
@@ -271,7 +271,6 @@ export interface Binding {
 	 * - `snippet`: A snippet parameter
 	 * - `store_sub`: A $store value
 	 * - `legacy_reactive`: A `$:` declaration
-	 * - `legacy_reactive_import`: An imported binding that is mutated inside the component
 	 */
 	kind:
 		| 'normal'
@@ -279,14 +278,13 @@ export interface Binding {
 		| 'bindable_prop'
 		| 'rest_prop'
 		| 'state'
-		| 'frozen_state'
 		| 'linked_state'
+		| 'raw_state'
 		| 'derived'
 		| 'each'
 		| 'snippet'
 		| 'store_sub'
-		| 'legacy_reactive'
-		| 'legacy_reactive_import';
+		| 'legacy_reactive';
 	declaration_kind: DeclarationKind;
 	/**
 	 * What the value was initialized with.
@@ -303,6 +301,8 @@ export interface Binding {
 	references: { node: Identifier; path: SvelteNode[] }[];
 	mutated: boolean;
 	reassigned: boolean;
+	/** `true` if mutated _or_ reassigned */
+	updated: boolean;
 	scope: Scope;
 	/** For `legacy_reactive`: its reactive dependencies */
 	legacy_dependencies: Binding[];

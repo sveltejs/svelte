@@ -24,11 +24,16 @@ import {
 	get_attribute_name,
 	build_attribute_value,
 	build_class_directives,
-	build_event_attribute,
 	build_style_directives
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
-import { build_render_statement, build_update, build_update_assignment } from './shared/utils.js';
+import {
+	build_render_statement,
+	build_template_literal,
+	build_update,
+	build_update_assignment
+} from './shared/utils.js';
+import { visit_event_attribute } from './shared/events.js';
 
 /**
  * @param {RegularElement} node
@@ -100,6 +105,13 @@ export function RegularElement(node, context) {
 		metadata.context.template_needs_import_node = true;
 	}
 
+	// visit let directives first, to set state
+	for (const attribute of node.attributes) {
+		if (attribute.type === 'LetDirective') {
+			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+		}
+	}
+
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute') {
 			attributes.push(attribute);
@@ -136,9 +148,14 @@ export function RegularElement(node, context) {
 			class_directives.push(attribute);
 		} else if (attribute.type === 'StyleDirective') {
 			style_directives.push(attribute);
-		} else if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
-		} else {
+		} else if (attribute.type === 'OnDirective') {
+			const handler = /** @type {Expression} */ (context.visit(attribute));
+			const has_action_directive = node.attributes.find((a) => a.type === 'UseDirective');
+
+			context.state.after_update.push(
+				b.stmt(has_action_directive ? b.call('$.effect', b.thunk(handler)) : handler)
+			);
+		} else if (attribute.type !== 'LetDirective') {
 			if (attribute.type === 'BindDirective') {
 				if (attribute.name === 'group' || attribute.name === 'checked') {
 					needs_special_value_handling = true;
@@ -159,14 +176,6 @@ export function RegularElement(node, context) {
 			}
 			context.visit(attribute);
 		}
-	}
-
-	if (child_metadata.namespace === 'foreign') {
-		// input/select etc could mean something completely different in foreign namespace, so don't special-case them
-		needs_content_reset = false;
-		needs_input_reset = false;
-		needs_special_value_handling = false;
-		value_binding = null;
 	}
 
 	if (is_content_editable && has_content_editable_binding) {
@@ -202,7 +211,7 @@ export function RegularElement(node, context) {
 			node,
 			node_id,
 			// If value binding exists, that one takes care of calling $.init_select
-			value_binding === null && node.name === 'select' && child_metadata.namespace !== 'foreign'
+			value_binding === null && node.name === 'select'
 		);
 		is_attributes_reactive = true;
 	} else {
@@ -214,7 +223,7 @@ export function RegularElement(node, context) {
 				) {
 					might_need_event_replaying = true;
 				}
-				build_event_attribute(attribute, context);
+				visit_event_attribute(attribute, context);
 				continue;
 			}
 
@@ -232,8 +241,6 @@ export function RegularElement(node, context) {
 				const value = is_text_attribute(attribute) ? attribute.value[0].data : true;
 
 				if (name !== 'class' || value) {
-					// TODO namespace=foreign probably doesn't want to do template stuff at all and instead use programmatic methods
-					// to create the elements it needs.
 					context.state.template.push(
 						` ${attribute.name}${
 							is_boolean_attribute(name) && value === true
@@ -245,10 +252,9 @@ export function RegularElement(node, context) {
 				}
 			}
 
-			const is =
-				is_custom_element && child_metadata.namespace !== 'foreign'
-					? build_custom_element_attribute_update_assignment(node_id, attribute, context)
-					: build_element_attribute_update_assignment(node, node_id, attribute, context);
+			const is = is_custom_element
+				? build_custom_element_attribute_update_assignment(node_id, attribute, context)
+				: build_element_attribute_update_assignment(node, node_id, attribute, context);
 			if (is) is_attributes_reactive = true;
 		}
 	}
@@ -284,8 +290,7 @@ export function RegularElement(node, context) {
 		locations: child_locations,
 		scope: /** @type {Scope} */ (context.state.scopes.get(node.fragment)),
 		preserve_whitespace:
-			context.state.preserve_whitespace ||
-			((node.name === 'pre' || node.name === 'textarea') && child_metadata.namespace !== 'foreign')
+			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
 	};
 
 	const { hoisted, trimmed } = clean_nodes(
@@ -301,37 +306,50 @@ export function RegularElement(node, context) {
 	/** Whether or not we need to wrap the children in `{...}` to avoid declaration conflicts */
 	const has_declaration = node.fragment.nodes.some((node) => node.type === 'SnippetBlock');
 
-	const child_state = has_declaration
-		? { ...state, init: [], update: [], after_update: [] }
-		: state;
+	/** @type {typeof state} */
+	const child_state = { ...state, init: [], update: [], after_update: [] };
 
 	for (const node of hoisted) {
 		context.visit(node, child_state);
 	}
 
-	/** @type {Expression} */
-	let arg = context.state.node;
+	// special case — if an element that only contains text, we don't need
+	// to descend into it if the text is non-reactive
+	const text_content =
+		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
+		trimmed.some((node) => node.type === 'ExpressionTag') &&
+		build_template_literal(trimmed, context.visit, child_state);
 
-	// If `hydrate_node` is set inside the element, we need to reset it
-	// after the element has been hydrated
-	let needs_reset = trimmed.some((node) => node.type !== 'Text');
+	if (text_content && !text_content.has_state) {
+		child_state.init.push(
+			b.stmt(
+				b.assignment('=', b.member(context.state.node, b.id('textContent')), text_content.value)
+			)
+		);
+	} else {
+		/** @type {Expression} */
+		let arg = context.state.node;
 
-	// The same applies if it's a `<template>` element, since we need to
-	// set the value of `hydrate_node` to `node.content`
-	if (node.name === 'template') {
-		needs_reset = true;
+		// If `hydrate_node` is set inside the element, we need to reset it
+		// after the element has been hydrated
+		let needs_reset = trimmed.some((node) => node.type !== 'Text');
 
-		arg = b.member(arg, b.id('content'));
-		child_state.init.push(b.stmt(b.call('$.reset', arg)));
-	}
+		// The same applies if it's a `<template>` element, since we need to
+		// set the value of `hydrate_node` to `node.content`
+		if (node.name === 'template') {
+			needs_reset = true;
+			child_state.init.push(b.stmt(b.call('$.hydrate_template', arg)));
+			arg = b.member(arg, b.id('content'));
+		}
 
-	process_children(trimmed, () => b.call('$.child', arg), true, {
-		...context,
-		state: child_state
-	});
+		process_children(trimmed, () => b.call('$.child', arg), true, {
+			...context,
+			state: child_state
+		});
 
-	if (needs_reset) {
-		child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
+		if (needs_reset) {
+			child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
+		}
 	}
 
 	if (has_declaration) {
@@ -342,6 +360,10 @@ export function RegularElement(node, context) {
 				...child_state.after_update
 			])
 		);
+	} else if (node.fragment.metadata.dynamic) {
+		context.state.init.push(...child_state.init);
+		context.state.update.push(...child_state.update);
+		context.state.after_update.push(...child_state.after_update);
 	}
 
 	if (has_direction_attribute) {
@@ -470,10 +492,8 @@ function build_element_spread_attributes(
 			attribute.type === 'SpreadAttribute' && attribute.metadata.expression.has_call;
 	}
 
-	const lowercase_attributes =
-		element.metadata.svg || element.metadata.mathml || is_custom_element_node(element)
-			? b.false
-			: b.true;
+	const preserve_attribute_case =
+		element.metadata.svg || element.metadata.mathml || is_custom_element_node(element);
 	const id = context.state.scope.generate('attributes');
 
 	const update = b.stmt(
@@ -485,8 +505,8 @@ function build_element_spread_attributes(
 				element_id,
 				b.id(id),
 				b.object(values),
-				lowercase_attributes,
-				b.literal(context.state.analysis.css.hash),
+				context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
+				preserve_attribute_case && b.true,
 				is_ignored(element, 'hydration_attribute_changed') && b.true
 			)
 		)
@@ -554,28 +574,6 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
 	let { has_call, value } = build_attribute_value(attribute.value, context);
-
-	// The foreign namespace doesn't have any special handling, everything goes through the attr function
-	if (context.state.metadata.namespace === 'foreign') {
-		const statement = b.stmt(
-			b.call(
-				'$.set_attribute',
-				node_id,
-				b.literal(name),
-				value,
-				is_ignored(element, 'hydration_attribute_changed') && b.true
-			)
-		);
-
-		if (attribute.metadata.expression.has_state) {
-			const id = state.scope.generate(`${node_id.name}_${name}`);
-			build_update_assignment(state, id, undefined, value, statement);
-			return true;
-		} else {
-			state.init.push(statement);
-			return false;
-		}
-	}
 
 	if (name === 'autofocus') {
 		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));

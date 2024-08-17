@@ -236,13 +236,13 @@ describe('signals', () => {
 		return () => {
 			flushSync(() => set(count, 1));
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.reactions?.length, 1);
+			assert.deepEqual(count.reactions?.size, 1);
 			flushSync(() => set(count, 2));
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.reactions?.length, 1);
+			assert.deepEqual(count.reactions?.size, 1);
 			flushSync(() => set(count, 3));
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.reactions?.length, 1);
+			assert.deepEqual(count.reactions?.size, 1);
 			assert.deepEqual(log, [0, 1, 2, 3]);
 		};
 	});
@@ -304,8 +304,8 @@ describe('signals', () => {
 			flushSync(() => set(count, 4));
 			flushSync(() => set(count, 0));
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.reactions?.length, 1);
-			assert.deepEqual(calc.reactions?.length, 1);
+			assert.deepEqual(count.reactions?.size, 1);
+			assert.deepEqual(calc.reactions?.size, 1);
 			assert.deepEqual(log, [0, 2, 'limit', 0]);
 			destroy();
 			// Ensure we're not leaking consumers
@@ -484,7 +484,7 @@ describe('signals', () => {
 		return () => {
 			flushSync();
 			assert.equal(a?.deps?.length, 1);
-			assert.equal(state?.reactions?.length, 1);
+			assert.equal(state?.reactions?.size, 1);
 			destroy();
 			assert.equal(a?.deps?.length, 1);
 			assert.equal(state?.reactions, null);
@@ -658,12 +658,12 @@ describe('signals', () => {
 			});
 
 			assert.equal($.get(d), 0);
-			assert.equal(count.reactions?.length, 1);
+			assert.equal(count.reactions?.size, 1);
 			assert.equal(d.deps?.length, 1);
 
 			set(count, 1);
 			assert.equal($.get(d), 2);
-			assert.equal(count.reactions?.length, 1);
+			assert.equal(count.reactions?.size, 1);
 			assert.equal(d.deps?.length, 1);
 
 			destroy();
@@ -674,6 +674,23 @@ describe('signals', () => {
 			assert.equal($.get(d), 4);
 			assert.equal(count.reactions, null);
 			assert.equal(d.deps?.length, 1);
+		};
+	});
+
+	test('unowned deriveds correctly update', () => {
+		return () => {
+			const arr1 = proxy<{ a: number }[]>([]);
+			const arr2 = proxy([]);
+			const combined = derived(() => [...arr1, ...arr2]);
+			const derived_length = derived(() => $.get(combined).length);
+
+			assert.deepEqual($.get(combined), []);
+			assert.equal($.get(derived_length), 0);
+
+			arr1.push({ a: 1 });
+
+			assert.deepEqual($.get(combined), [{ a: 1 }]);
+			assert.equal($.get(derived_length), 1);
 		};
 	});
 });

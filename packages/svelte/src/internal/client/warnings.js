@@ -20,6 +20,20 @@ export function binding_property_non_reactive(binding, location) {
 }
 
 /**
+ * %handler% should be a function. Did you mean to %suggestion%?
+ * @param {string} handler
+ * @param {string} suggestion
+ */
+export function event_handler_invalid(handler, suggestion) {
+	if (DEV) {
+		console.warn(`%c[svelte] event_handler_invalid\n%c${handler} should be a function. Did you mean to ${suggestion}?`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("event_handler_invalid");
+	}
+}
+
+/**
  * The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
  * @param {string} attribute
  * @param {string} html

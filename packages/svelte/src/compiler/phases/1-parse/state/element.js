@@ -74,7 +74,7 @@ function parent_is_shadowroot_template(stack) {
 
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
 const regex_closing_comment = /-->/;
-const regex_capital_letter = /[A-Z]/;
+const regex_component_name = /^(?:[A-Z]|[A-Za-z][A-Za-z0-9_$]*\.)/;
 
 /** @param {Parser} parser */
 export default function element(parser) {
@@ -127,7 +127,7 @@ export default function element(parser) {
 
 	const type = meta_tags.has(name)
 		? meta_tags.get(name)
-		: regex_capital_letter.test(name[0])
+		: regex_component_name.test(name)
 			? 'Component'
 			: name === 'title' && parent_is_head(parser.stack)
 				? 'TitleElement'

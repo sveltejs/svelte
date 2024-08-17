@@ -71,6 +71,9 @@ export function SvelteElement(node, context) {
 			style_directives.push(attribute);
 		} else if (attribute.type === 'LetDirective') {
 			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+		} else if (attribute.type === 'OnDirective') {
+			const handler = /** @type {Expression} */ (context.visit(attribute, inner_context.state));
+			inner_context.state.after_update.push(b.stmt(handler));
 		} else {
 			context.visit(attribute, inner_context.state);
 		}
@@ -91,7 +94,7 @@ export function SvelteElement(node, context) {
 
 	const get_tag = b.thunk(/** @type {Expression} */ (context.visit(node.tag)));
 
-	if (dev && context.state.metadata.namespace !== 'foreign') {
+	if (dev) {
 		if (node.fragment.nodes.length > 0) {
 			context.state.init.push(b.stmt(b.call('$.validate_void_dynamic_element', get_tag)));
 		}
@@ -200,7 +203,7 @@ function build_dynamic_element_attributes(attributes, context, element_id) {
 					element_id,
 					b.id(id),
 					b.object(values),
-					b.literal(context.state.analysis.css.hash)
+					context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash)
 				)
 			)
 		);
@@ -221,7 +224,7 @@ function build_dynamic_element_attributes(attributes, context, element_id) {
 				element_id,
 				b.literal(null),
 				b.object(values),
-				b.literal(context.state.analysis.css.hash)
+				context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash)
 			)
 		)
 	);

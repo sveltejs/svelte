@@ -765,7 +765,7 @@ declare module 'svelte/compiler' {
 		 */
 		accessors?: boolean;
 		/**
-		 * The namespace of the element; e.g., `"html"`, `"svg"`, `"foreign"`.
+		 * The namespace of the element; e.g., `"html"`, `"svg"`, `"mathml"`.
 		 *
 		 * @default 'html'
 		 */
@@ -920,7 +920,6 @@ declare module 'svelte/compiler' {
 		 * - `snippet`: A snippet parameter
 		 * - `store_sub`: A $store value
 		 * - `legacy_reactive`: A `$:` declaration
-		 * - `legacy_reactive_import`: An imported binding that is mutated inside the component
 		 */
 		kind:
 			| 'normal'
@@ -928,14 +927,13 @@ declare module 'svelte/compiler' {
 			| 'bindable_prop'
 			| 'rest_prop'
 			| 'state'
-			| 'frozen_state'
 			| 'linked_state'
+			| 'raw_state'
 			| 'derived'
 			| 'each'
 			| 'snippet'
 			| 'store_sub'
-			| 'legacy_reactive'
-			| 'legacy_reactive_import';
+			| 'legacy_reactive';
 		declaration_kind: DeclarationKind;
 		/**
 		 * What the value was initialized with.
@@ -952,6 +950,8 @@ declare module 'svelte/compiler' {
 		references: { node: Identifier; path: SvelteNode[] }[];
 		mutated: boolean;
 		reassigned: boolean;
+		/** `true` if mutated _or_ reassigned */
+		updated: boolean;
 		scope: Scope;
 		/** For `legacy_reactive`: its reactive dependencies */
 		legacy_dependencies: Binding[];
@@ -1487,23 +1487,26 @@ declare module 'svelte/compiler' {
 	interface Fragment {
 		type: 'Fragment';
 		nodes: Array<Text | Tag | ElementLike | Block | Comment>;
-		/**
-		 * Fragments declare their own scopes. A transparent fragment is one whose scope
-		 * is not represented by a scope in the resulting JavaScript (e.g. an element scope),
-		 * and should therefore delegate to parent scopes when generating unique identifiers
-		 */
-		transparent: boolean;
+		metadata: {
+			/**
+			 * Fragments declare their own scopes. A transparent fragment is one whose scope
+			 * is not represented by a scope in the resulting JavaScript (e.g. an element scope),
+			 * and should therefore delegate to parent scopes when generating unique identifiers
+			 */
+			transparent: boolean;
+			/**
+			 * Whether or not we need to traverse into the fragment during mount/hydrate
+			 */
+			dynamic: boolean;
+		};
 	}
 
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
 	 * - `svg`     — for e.g. `<svg>` or `<g>`
 	 * - `mathml`  — for e.g. `<math>` or `<mrow>`
-	 * - `foreign` — for other compilation targets than the web, e.g. Svelte Native.
-	 *               Disallows bindings other than bind:this, disables a11y checks, disables any special attribute handling
-	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
 	 */
-	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
+	type Namespace = 'html' | 'svg' | 'mathml';
 
 	interface Root extends BaseNode {
 		type: 'Root';
@@ -1534,8 +1537,9 @@ declare module 'svelte/compiler' {
 		accessors?: boolean;
 		preserveWhitespace?: boolean;
 		namespace?: Namespace;
+		css?: 'injected';
 		customElement?: {
-			tag: string;
+			tag?: string;
 			shadow?: 'open' | 'none';
 			props?: Record<
 				string,
@@ -1672,10 +1676,10 @@ declare module 'svelte/compiler' {
 
 	type DelegatedEvent =
 		| {
-				type: 'hoistable';
+				hoisted: true;
 				function: ArrowFunctionExpression | FunctionExpression | FunctionDeclaration;
 		  }
-		| { type: 'non-hoistable' };
+		| { hoisted: false };
 
 	/** A `style:` directive */
 	interface StyleDirective extends BaseNode {
@@ -1733,6 +1737,7 @@ declare module 'svelte/compiler' {
 	interface Component extends BaseElement {
 		type: 'Component';
 		metadata: {
+			scopes: Record<string, Scope>;
 			dynamic: boolean;
 		};
 	}
@@ -1769,6 +1774,9 @@ declare module 'svelte/compiler' {
 		type: 'SvelteComponent';
 		name: 'svelte:component';
 		expression: Expression;
+		metadata: {
+			scopes: Record<string, Scope>;
+		};
 	}
 
 	interface SvelteDocument extends BaseElement {
@@ -1814,6 +1822,9 @@ declare module 'svelte/compiler' {
 	interface SvelteSelf extends BaseElement {
 		type: 'SvelteSelf';
 		name: 'svelte:self';
+		metadata: {
+			scopes: Record<string, Scope>;
+		};
 	}
 
 	interface SvelteWindow extends BaseElement {
@@ -1846,6 +1857,7 @@ declare module 'svelte/compiler' {
 		index?: string;
 		key?: Expression;
 		metadata: {
+			expression: ExpressionMetadata;
 			keyed: boolean;
 			contains_group_binding: boolean;
 			/** Set if something in the array expression is shadowed within the each block */
@@ -1853,8 +1865,6 @@ declare module 'svelte/compiler' {
 			index: Identifier;
 			item: Identifier;
 			declarations: Map<string, Binding>;
-			/** List of bindings that are referenced within the expression */
-			references: Binding[];
 			/**
 			 * Optimization path for each blocks: If the parent isn't a fragment and
 			 * it only has a single child, then we can classify the block as being "controlled".
@@ -2300,6 +2310,17 @@ declare module 'svelte/store' {
 		 */
 		update(this: void, updater: Updater<T>): void;
 	}
+	export function toStore<V>(get: () => V, set: (v: V) => void): Writable<V>;
+
+	export function toStore<V>(get: () => V): Readable<V>;
+
+	export function fromStore<V>(store: Writable<V>): {
+		current: V;
+	};
+
+	export function fromStore<V>(store: Readable<V>): {
+		readonly current: V;
+	};
 	/**
 	 * Creates a `Readable` store that allows reading by subscription.
 	 *
@@ -2618,7 +2639,7 @@ declare module 'svelte/types/compiler/interfaces' {
 		 */
 		accessors?: boolean;
 		/**
-		 * The namespace of the element; e.g., `"html"`, `"svg"`, `"foreign"`.
+		 * The namespace of the element; e.g., `"html"`, `"svg"`, `"mathml"`.
 		 *
 		 * @default 'html'
 		 */
@@ -2753,11 +2774,8 @@ declare module 'svelte/types/compiler/interfaces' {
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
 	 * - `svg`     — for e.g. `<svg>` or `<g>`
 	 * - `mathml`  — for e.g. `<math>` or `<mrow>`
-	 * - `foreign` — for other compilation targets than the web, e.g. Svelte Native.
-	 *               Disallows bindings other than bind:this, disables a11y checks, disables any special attribute handling
-	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
 	 */
-	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
+	type Namespace = 'html' | 'svg' | 'mathml';
 	type ICompileDiagnostic = {
 		code: string;
 		message: string;
@@ -2873,12 +2891,13 @@ declare namespace $state {
 						: never;
 
 	/**
-	 * Declares reactive read-only state that is shallowly immutable.
+	 * Declares state that is _not_ made deeply reactive — instead of mutating it,
+	 * you must reassign it.
 	 *
 	 * Example:
 	 * ```ts
 	 * <script>
-	 *   let items = $state.frozen([0]);
+	 *   let items = $state.raw([0]);
 	 *
 	 *   const addItem = () => {
 	 *     items = [...items, items.length];
@@ -2894,8 +2913,6 @@ declare namespace $state {
 	 *
 	 * @param initial The initial value
 	 */
-	export function frozen<T>(initial: T): Readonly<T>;
-	export function frozen<T>(): Readonly<T> | undefined;
 
 	/**
 	 * Declares reactive state that is linked to another value. Local reassignments
@@ -2922,6 +2939,8 @@ declare namespace $state {
 	 */
 	export function link<T>(value: T): T;
 
+	export function raw<T>(initial: T): T;
+	export function raw<T>(): T | undefined;
 	/**
 	 * To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
 	 *

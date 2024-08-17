@@ -687,9 +687,6 @@ function get_static_text_value(attribute) {
  * @param {AnalysisState} state
  */
 export function check_element(node, state) {
-	// foreign namespace means elements can have completely different meanings, therefore we don't check them
-	if (state.options.namespace === 'foreign') return;
-
 	/** @type {Map<string, Attribute>} */
 	const attribute_map = new Map();
 

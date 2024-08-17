@@ -7,13 +7,8 @@ import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
-import {
-	get_prop_source,
-	is_prop_source,
-	is_state_source,
-	should_proxy_or_freeze
-} from '../utils.js';
-import { is_hoistable_function } from '../../utils.js';
+import { get_prop_source, is_prop_source, is_state_source, should_proxy } from '../utils.js';
+import { is_hoisted_function } from '../../utils.js';
 
 /**
  * @param {VariableDeclaration} node
@@ -36,11 +31,11 @@ export function VariableDeclaration(node, context) {
 				rune === '$state.snapshot' ||
 				rune === '$state.is'
 			) {
-				if (init != null && is_hoistable_function(init)) {
-					const hoistable_function = context.visit(init);
+				if (init != null && is_hoisted_function(init)) {
 					context.state.hoisted.push(
-						b.declaration('const', declarator.id, /** @type {Expression} */ (hoistable_function))
+						b.declaration('const', declarator.id, /** @type {Expression} */ (context.visit(init)))
 					);
+
 					continue;
 				}
 				declarations.push(/** @type {VariableDeclarator} */ (context.visit(declarator)));
@@ -86,7 +81,7 @@ export function VariableDeclaration(node, context) {
 							if (
 								initial &&
 								binding.kind === 'bindable_prop' &&
-								should_proxy_or_freeze(initial, context.state.scope)
+								should_proxy(initial, context.state.scope)
 							) {
 								initial = b.call('$.proxy', initial);
 							}
@@ -119,7 +114,7 @@ export function VariableDeclaration(node, context) {
 			const value =
 				args.length === 0 ? b.id('undefined') : /** @type {Expression} */ (context.visit(args[0]));
 
-			if (rune === '$state' || rune === '$state.frozen' || rune === '$state.link') {
+			if (rune === '$state' || rune === '$state.raw' || rune === '$state.link') {
 				/**
 				 * @param {Identifier} id
 				 * @param {Expression} value
@@ -128,18 +123,20 @@ export function VariableDeclaration(node, context) {
 					const binding = /** @type {import('#compiler').Binding} */ (
 						context.state.scope.get(id.name)
 					);
-					if (should_proxy_or_freeze(value, context.state.scope)) {
-						value = b.call(
-							rune === '$state' || rune === '$state.link' ? '$.proxy' : '$.freeze',
-							value
-						);
+
+					if (
+						(rune === '$state' || rune === '$state.link') &&
+						should_proxy(value, context.state.scope)
+					) {
+						value = b.call('$.proxy', value);
 					}
-					if (binding.kind === 'linked_state') {
-						return b.call('$.source_link', b.thunk(value));
-					}
-					if (is_state_source(binding, context.state)) {
+
+					if (rune === '$state.link') {
+						value = b.call('$.source_link', b.thunk(value));
+					} else if (is_state_source(binding, context.state.analysis)) {
 						value = b.call('$.source', value);
 					}
+
 					return value;
 				};
 
@@ -157,7 +154,7 @@ export function VariableDeclaration(node, context) {
 							const binding = context.state.scope.get(/** @type {Identifier} */ (path.node).name);
 							return b.declarator(
 								path.node,
-								binding?.kind === 'state' || binding?.kind === 'frozen_state'
+								binding?.kind === 'state' || binding?.kind === 'raw_state'
 									? create_state_declarator(binding.node, value)
 									: value
 							);
@@ -177,39 +174,29 @@ export function VariableDeclaration(node, context) {
 						)
 					);
 				} else {
-					const bindings = context.state.scope.get_bindings(declarator);
-					const object_id = context.state.scope.generate('derived_object');
-					const values_id = context.state.scope.generate('derived_values');
-					declarations.push(
-						b.declarator(
-							b.id(object_id),
-							b.call('$.derived', rune === '$derived.by' ? value : b.thunk(value))
-						)
-					);
-					declarations.push(
-						b.declarator(
-							b.id(values_id),
-							b.call(
-								'$.derived',
-								b.thunk(
-									b.block([
-										b.let(declarator.id, b.call('$.get', b.id(object_id))),
-										b.return(b.array(bindings.map((binding) => binding.node)))
-									])
-								)
-							)
-						)
-					);
+					const bindings = extract_paths(declarator.id);
+
+					const init = /** @type {CallExpression} */ (declarator.init);
+
+					/** @type {Identifier} */
+					let id;
+					let rhs = value;
+
+					if (init.arguments[0].type === 'Identifier') {
+						id = init.arguments[0];
+					} else {
+						id = b.id(context.state.scope.generate('$$d'));
+						rhs = b.call('$.get', id);
+
+						declarations.push(
+							b.declarator(id, b.call('$.derived', rune === '$derived.by' ? value : b.thunk(value)))
+						);
+					}
+
 					for (let i = 0; i < bindings.length; i++) {
 						const binding = bindings[i];
 						declarations.push(
-							b.declarator(
-								binding.node,
-								b.call(
-									'$.derived',
-									b.thunk(b.member(b.call('$.get', b.id(values_id)), b.literal(i), true))
-								)
-							)
+							b.declarator(binding.node, b.call('$.derived', b.thunk(binding.expression(rhs))))
 						);
 					}
 				}
@@ -225,11 +212,9 @@ export function VariableDeclaration(node, context) {
 			if (!has_state && !has_props) {
 				const init = declarator.init;
 
-				if (init != null && is_hoistable_function(init)) {
-					const hoistable_function = context.visit(init);
-
+				if (init != null && is_hoisted_function(init)) {
 					context.state.hoisted.push(
-						b.declaration('const', declarator.id, /** @type {Expression} */ (hoistable_function))
+						b.declaration('const', declarator.id, /** @type {Expression} */ (context.visit(init)))
 					);
 
 					continue;

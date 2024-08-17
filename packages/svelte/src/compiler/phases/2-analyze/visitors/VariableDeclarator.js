@@ -22,7 +22,7 @@ export function VariableDeclarator(node, context) {
 		if (
 			rune === '$state' ||
 			rune === '$state.link' ||
-			rune === '$state.frozen' ||
+			rune === '$state.raw' ||
 			rune === '$derived' ||
 			rune === '$derived.by' ||
 			rune === '$props'
@@ -35,8 +35,8 @@ export function VariableDeclarator(node, context) {
 						? 'state'
 						: rune === '$state.link'
 							? 'linked_state'
-							: rune === '$state.frozen'
-								? 'frozen_state'
+							: rune === '$state.raw'
+								? 'raw_state'
 								: rune === '$derived' || rune === '$derived.by'
 									? 'derived'
 									: path.is_rest

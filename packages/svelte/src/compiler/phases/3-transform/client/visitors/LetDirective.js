@@ -16,10 +16,9 @@ export function LetDirective(node, context) {
 		const bindings = context.state.scope.get_bindings(node);
 
 		for (const binding of bindings) {
-			context.state.getters[binding.node.name] = b.member(
-				b.call('$.get', b.id(name)),
-				b.id(binding.node.name)
-			);
+			context.state.transform[binding.node.name] = {
+				read: (node) => b.member(b.call('$.get', b.id(name)), node)
+			};
 		}
 
 		return b.const(
@@ -42,8 +41,13 @@ export function LetDirective(node, context) {
 			)
 		);
 	} else {
+		const name = node.expression === null ? node.name : node.expression.name;
+		context.state.transform[name] = {
+			read: (node) => b.call('$.get', node)
+		};
+
 		return b.const(
-			node.expression === null ? node.name : node.expression.name,
+			name,
 			create_derived(context.state, b.thunk(b.member(b.id('$$slotProps'), b.id(node.name))))
 		);
 	}

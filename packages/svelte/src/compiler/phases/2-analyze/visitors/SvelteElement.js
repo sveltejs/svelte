@@ -4,6 +4,7 @@ import { NAMESPACE_MATHML, NAMESPACE_SVG } from '../../../../constants.js';
 import { is_text_attribute } from '../../../utils/ast.js';
 import { check_element } from './shared/a11y.js';
 import { validate_element } from './shared/element.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
  * @param {SvelteElement} node
@@ -57,6 +58,8 @@ export function SvelteElement(node, context) {
 			}
 		}
 	}
+
+	mark_subtree_dynamic(context.path);
 
 	context.next({ ...context.state, parent_element: null });
 }

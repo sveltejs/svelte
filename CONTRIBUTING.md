@@ -160,6 +160,10 @@ When adding a new breaking change, follow this template in your pull request:
 - **Severity (number of people affected x effort)**:
 ```
 
+### Reviewing pull requests
+
+If you'd like to manually test a pull request in another pnpm project, you can do so by running `pnpm add -D "github:sveltejs/svelte#path:packages/svelte&branch-name"` in that project.
+
 ## License
 
 By contributing to Svelte, you agree that your contributions will be licensed under its [MIT license](https://github.com/sveltejs/svelte/blob/master/LICENSE.md).

@@ -10,7 +10,7 @@ import {
 import { CompileDiagnostic } from './utils/compile_diagnostic.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
-export class InternalCompileWarning extends CompileDiagnostic {
+class InternalCompileWarning extends CompileDiagnostic {
 	name = 'CompileWarning';
 
 	/**
@@ -101,7 +101,8 @@ export const codes = [
 	"perf_avoid_inline_class",
 	"perf_avoid_nested_class",
 	"reactive_declaration_invalid_placement",
-	"reactive_declaration_module_script",
+	"reactive_declaration_module_script_dependency",
+	"reactive_declaration_non_reactive_property",
 	"state_referenced_locally",
 	"store_rune_conflict",
 	"css_unused_selector",
@@ -117,6 +118,7 @@ export const codes = [
 	"event_directive_deprecated",
 	"node_invalid_placement_ssr",
 	"slot_element_deprecated",
+	"svelte_component_deprecated",
 	"svelte_element_invalid_this"
 ];
 
@@ -629,11 +631,19 @@ export function reactive_declaration_invalid_placement(node) {
 }
 
 /**
- * All dependencies of the reactive declaration are declared in a module script and will not be reactive
+ * Reassignments of module-level declarations will not cause reactive statements to update
  * @param {null | NodeLike} node
  */
-export function reactive_declaration_module_script(node) {
-	w(node, "reactive_declaration_module_script", "All dependencies of the reactive declaration are declared in a module script and will not be reactive");
+export function reactive_declaration_module_script_dependency(node) {
+	w(node, "reactive_declaration_module_script_dependency", "Reassignments of module-level declarations will not cause reactive statements to update");
+}
+
+/**
+ * Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update
+ * @param {null | NodeLike} node
+ */
+export function reactive_declaration_non_reactive_property(node) {
+	w(node, "reactive_declaration_non_reactive_property", "Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update");
 }
 
 /**
@@ -765,6 +775,14 @@ export function node_invalid_placement_ssr(node, thing, parent) {
  */
 export function slot_element_deprecated(node) {
 	w(node, "slot_element_deprecated", "Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead");
+}
+
+/**
+ * `<svelte:component>` is deprecated in runes mode — components are dynamic by default
+ * @param {null | NodeLike} node
+ */
+export function svelte_component_deprecated(node) {
+	w(node, "svelte_component_deprecated", "`<svelte:component>` is deprecated in runes mode — components are dynamic by default");
 }
 
 /**

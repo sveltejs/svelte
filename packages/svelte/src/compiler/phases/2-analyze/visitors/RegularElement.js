@@ -24,11 +24,7 @@ export function RegularElement(node, context) {
 	context.state.analysis.elements.push(node);
 
 	// Special case: Move the children of <textarea> into a value attribute if they are dynamic
-	if (
-		context.state.options.namespace !== 'foreign' &&
-		node.name === 'textarea' &&
-		node.fragment.nodes.length > 0
-	) {
+	if (node.name === 'textarea' && node.fragment.nodes.length > 0) {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute' && attribute.name === 'value') {
 				e.textarea_invalid_content(node);
@@ -65,7 +61,6 @@ export function RegularElement(node, context) {
 	// Special case: single expression tag child of option element -> add "fake" attribute
 	// to ensure that value types are the same (else for example numbers would be strings)
 	if (
-		context.state.options.namespace !== 'foreign' &&
 		node.name === 'option' &&
 		node.fragment.nodes?.length === 1 &&
 		node.fragment.nodes[0].type === 'ExpressionTag' &&
@@ -90,10 +85,8 @@ export function RegularElement(node, context) {
 		(attribute) => attribute.type === 'SpreadAttribute'
 	);
 
-	if (context.state.options.namespace !== 'foreign') {
-		node.metadata.svg = is_svg(node.name);
-		node.metadata.mathml = is_mathml(node.name);
-	}
+	node.metadata.svg = is_svg(node.name);
+	node.metadata.mathml = is_mathml(node.name);
 
 	if (context.state.parent_element) {
 		let past_parent = false;
@@ -156,7 +149,6 @@ export function RegularElement(node, context) {
 
 	if (
 		context.state.analysis.source[node.end - 2] === '/' &&
-		context.state.options.namespace !== 'foreign' &&
 		!is_void(node_name) &&
 		!is_svg(node_name)
 	) {

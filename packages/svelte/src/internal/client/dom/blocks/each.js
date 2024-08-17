@@ -3,9 +3,8 @@ import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
 	EACH_IS_CONTROLLED,
-	EACH_IS_STRICT_EQUALS,
+	EACH_ITEM_IMMUTABLE,
 	EACH_ITEM_REACTIVE,
-	EACH_KEYED,
 	HYDRATION_END,
 	HYDRATION_START_ELSE
 } from '../../../../constants.js';
@@ -17,7 +16,12 @@ import {
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
-import { clear_text_content, empty } from '../operations.js';
+import {
+	clear_text_content,
+	create_text,
+	get_first_child,
+	get_next_sibling
+} from '../operations.js';
 import {
 	block,
 	branch,
@@ -29,7 +33,7 @@ import {
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { is_array, is_frozen } from '../../../shared/utils.js';
-import { INERT, STATE_FROZEN_SYMBOL, STATE_SYMBOL } from '../../constants.js';
+import { INERT, STATE_SYMBOL } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
 import { current_effect } from '../../runtime.js';
 
@@ -117,8 +121,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		var parent_node = /** @type {Element} */ (node);
 
 		anchor = hydrating
-			? set_hydrate_node(/** @type {Comment | Text} */ (parent_node.firstChild))
-			: parent_node.appendChild(empty());
+			? set_hydrate_node(/** @type {Comment | Text} */ (get_first_child(parent_node)))
+			: parent_node.appendChild(create_text());
 	}
 
 	if (hydrating) {
@@ -138,23 +142,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				: Array.from(collection);
 
 		var length = array.length;
-
-		// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
-		// are treated as reactive, so they get wrapped in a signal.
-		var flags = state.flags;
-		if (
-			(flags & EACH_IS_STRICT_EQUALS) !== 0 &&
-			!is_frozen(array) &&
-			!(STATE_FROZEN_SYMBOL in array) &&
-			!(STATE_SYMBOL in array)
-		) {
-			flags ^= EACH_IS_STRICT_EQUALS;
-
-			// Additionally if we're in an keyed each block, we'll need ensure the items are all wrapped in signals.
-			if ((flags & EACH_KEYED) !== 0 && (flags & EACH_ITEM_REACTIVE) === 0) {
-				flags ^= EACH_ITEM_REACTIVE;
-			}
-		}
 
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
@@ -475,7 +462,7 @@ function create_item(anchor, state, prev, next, value, key, index, render_fn, fl
 
 	try {
 		var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
-		var mutable = (flags & EACH_IS_STRICT_EQUALS) === 0;
+		var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
 
 		var v = reactive ? (mutable ? mutable_source(value) : source(value)) : value;
 		var i = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
@@ -528,7 +515,7 @@ function move(item, next, anchor) {
 	var node = /** @type {EffectNodes} */ (item.e.nodes).start;
 
 	while (node !== end) {
-		var next_node = /** @type {TemplateNode} */ (node.nextSibling);
+		var next_node = /** @type {TemplateNode} */ (get_next_sibling(node));
 		dest.before(node);
 		node = next_node;
 	}

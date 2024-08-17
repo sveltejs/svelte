@@ -21,8 +21,7 @@ export function RegularElement(node, context) {
 		...context.state,
 		namespace,
 		preserve_whitespace:
-			context.state.preserve_whitespace ||
-			((node.name === 'pre' || node.name === 'textarea') && namespace !== 'foreign')
+			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
 	};
 
 	context.state.template.push(b.literal(`<${node.name}`));
@@ -95,7 +94,7 @@ export function RegularElement(node, context) {
 		);
 	}
 
-	if (!is_void(node.name) || namespace === 'foreign') {
+	if (!is_void(node.name)) {
 		state.template.push(b.literal(`</${node.name}>`));
 	}
 

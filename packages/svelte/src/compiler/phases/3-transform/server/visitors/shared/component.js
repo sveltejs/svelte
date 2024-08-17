@@ -20,6 +20,15 @@ export function build_inline_component(node, expression, context) {
 	/** @type {Record<string, LetDirective[]>} */
 	const lets = { default: [] };
 
+	/**
+	 * Children in the default slot are evaluated in the component scope,
+	 * children in named slots are evaluated in the parent scope
+	 */
+	const child_state = {
+		...context.state,
+		scope: node.metadata.scopes.default
+	};
+
 	/** @type {Record<string, TemplateNode[]>} */
 	const children = {};
 
@@ -144,12 +153,12 @@ export function build_inline_component(node, expression, context) {
 					// @ts-expect-error
 					nodes: children[slot_name]
 				},
-				{
-					...context.state,
-					scope:
-						context.state.scopes.get(slot_name === 'default' ? children[slot_name][0] : node) ??
-						context.state.scope
-				}
+				slot_name === 'default'
+					? child_state
+					: {
+							...context.state,
+							scope: node.metadata.scopes[slot_name]
+						}
 			)
 		);
 

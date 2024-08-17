@@ -324,11 +324,11 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 ## svelte_options_invalid_attribute_value
 
-> Valid values are %list%
+> Value must be %list%, if specified
 
 ## svelte_options_invalid_customelement
 
-> "customElement" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
+> "customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
 
 ## svelte_options_invalid_customelement_props
 
