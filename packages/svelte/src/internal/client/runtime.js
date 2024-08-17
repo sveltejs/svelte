@@ -695,12 +695,10 @@ export function get(signal) {
 		// rather than updating `new_deps`, which creates GC cost
 		if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
 			skipped_deps++;
+		} else if (new_deps === null) {
+			new_deps = [signal];
 		} else {
-			if (new_deps === null) {
-				new_deps = [signal];
-			} else {
-				new_deps.push(signal);
-			}
+			new_deps.push(signal);
 		}
 
 		if (
