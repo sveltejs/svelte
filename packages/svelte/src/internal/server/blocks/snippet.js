@@ -7,7 +7,7 @@
  * @template {unknown[]} Params
  * @param {(...params: Getters<Params>) => {
  *   render: () => string
- *   setup?: (element: Element) => void
+ *   setup?: (element: Element) => void | (() => void)
  * }} fn
  * @returns {Snippet<Params>}
  */
