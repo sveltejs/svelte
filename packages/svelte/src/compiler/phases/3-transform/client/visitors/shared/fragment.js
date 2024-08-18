@@ -30,13 +30,16 @@ export function process_children(nodes, expression, is_element, { visit, state }
 
 			if (node.type === 'Text') {
 				let prev = expression;
-				expression = () => b.call('$.sibling', prev(true));
+				expression = () => b.call('$.sibling', prev(false));
 				state.template.push(node.raw);
 				return;
 			}
 		}
 
-		const id = get_node_id(expression(true), state, 'text');
+		// if this is a standalone `{expression}`, make sure we handle the case where
+		// no text node was created because the expression was empty during SSR
+		const needs_hydration_check = sequence.length === 1;
+		const id = get_node_id(expression(needs_hydration_check), state, 'text');
 
 		state.template.push(' ');
 
