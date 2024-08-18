@@ -378,7 +378,7 @@ declare module 'svelte' {
 	 * */
 	export function createRawSnippet<Params extends unknown[]>(fn: (...params: Getters<Params>) => {
 		render: () => string;
-		setup?: (element: Element) => void;
+		setup?: (element: Element) => void | (() => void);
 	}): Snippet<Params>;
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
