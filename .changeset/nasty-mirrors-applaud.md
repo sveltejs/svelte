@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: add `?? ''` to memoized function cal
+fix: add `?? ''` to memoized function call
