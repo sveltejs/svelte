@@ -51,7 +51,8 @@ export function set_text(text, value) {
 	// @ts-expect-error
 	if (value !== (text.__t ??= text.nodeValue)) {
 		// @ts-expect-error
-		text.nodeValue = text.__t = value;
+		text.__t = value;
+		text.nodeValue = value == null ? '' : value + '';
 	}
 }
 

@@ -11,11 +11,11 @@ export default function Purity($$anchor) {
 	var fragment = root();
 	var p = $.first_child(fragment);
 
-	p.textContent = `${Math.max(min, Math.min(max, number)) ?? ""}`;
+	p.textContent = Math.max(min, Math.min(max, number));
 
 	var p_1 = $.sibling($.sibling(p, true));
 
-	p_1.textContent = `${location.href ?? ""}`;
+	p_1.textContent = location.href;
 
 	var node = $.sibling($.sibling(p_1, true));
 
