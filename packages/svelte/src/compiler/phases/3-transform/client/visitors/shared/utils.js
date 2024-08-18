@@ -59,7 +59,13 @@ export function build_template_literal(values, visit, state) {
 						id,
 						create_derived(
 							state,
-							b.thunk(/** @type {Expression} */ (visit(node.expression, state)))
+							b.thunk(
+								b.logical(
+									'??',
+									/** @type {Expression} */ (visit(node.expression, state)),
+									b.literal('')
+								)
+							)
 						)
 					)
 				);
