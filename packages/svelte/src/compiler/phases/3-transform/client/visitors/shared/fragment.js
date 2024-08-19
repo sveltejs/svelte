@@ -15,6 +15,8 @@ import { build_template_literal, build_update } from './utils.js';
  * @param {ComponentContext} context
  */
 export function process_children(nodes, initial, is_element, { visit, state }) {
+	let prev = initial;
+
 	const within_bound_contenteditable = state.metadata.bound_contenteditable;
 
 	/** @typedef {Array<Text | ExpressionTag>} Sequence */
@@ -25,40 +27,33 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	let skipped = 0;
 
 	/** @param {boolean} check */
-	let expression = (check) => {
+	function get_node(check) {
 		if (skipped === 0) {
-			return initial(check);
+			return prev(check);
 		}
 
 		return b.call(
 			'$.sibling',
-			initial(false),
+			prev(false),
 			(check || skipped !== 1) && b.literal(skipped),
 			check && b.true
 		);
-	};
+	}
 
 	/**
 	 * @param {boolean} check
 	 * @param {string} name
 	 */
 	function flush_node(check, name) {
-		let init = expression(check);
-		let id = init;
+		const expression = get_node(check);
+		let id = expression;
 
 		if (id.type !== 'Identifier') {
 			id = b.id(state.scope.generate(name));
-			state.init.push(b.var(id, init));
+			state.init.push(b.var(id, expression));
 		}
 
-		expression = (check) => {
-			return b.call(
-				'$.sibling',
-				id,
-				(check || skipped !== 1) && b.literal(skipped),
-				check && b.true
-			);
-		};
+		prev = () => id;
 
 		skipped = 1;
 
@@ -129,7 +124,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 	if (skipped > 1) {
 		skipped -= 1;
-		state.init.push(b.stmt(expression(false)));
+		state.init.push(b.stmt(get_node(false)));
 	}
 }
 
