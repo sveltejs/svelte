@@ -70,6 +70,7 @@ export function create_text(value = '') {
  * @param {N} node
  * @returns {Node | null}
  */
+/*@__NO_SIDE_EFFECTS__*/
 export function get_first_child(node) {
 	return first_child_getter.call(node);
 }
@@ -79,6 +80,7 @@ export function get_first_child(node) {
  * @param {N} node
  * @returns {Node | null}
  */
+/*@__NO_SIDE_EFFECTS__*/
 export function get_next_sibling(node) {
 	return next_sibling_getter.call(node);
 }
