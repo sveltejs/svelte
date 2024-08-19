@@ -18,7 +18,7 @@ export default test({
 			target.innerHTML,
 			`
 				<button>1</button>
-				<button>1</button>
+				<button>0</button>
 			`
 		);
 
@@ -29,8 +29,8 @@ export default test({
 		assert.htmlEqual(
 			target.innerHTML,
 			`
-				<button>2</button>
-				<button>2</button>
+				<button>1</button>
+				<button>1</button>
 			`
 		);
 	}
