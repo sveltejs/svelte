@@ -15,16 +15,13 @@ import { build_template_literal, build_update } from './utils.js';
  * @param {ComponentContext} context
  */
 export function process_children(nodes, initial, is_element, { visit, state }) {
-	let prev = initial;
-
 	const within_bound_contenteditable = state.metadata.bound_contenteditable;
+	let prev = initial;
+	let skipped = 0;
 
 	/** @typedef {Array<Text | ExpressionTag>} Sequence */
-
 	/** @type {Sequence} */
 	let sequence = [];
-
-	let skipped = 0;
 
 	/** @param {boolean} check */
 	function get_node(check) {
