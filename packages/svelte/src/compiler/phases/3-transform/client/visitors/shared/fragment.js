@@ -110,16 +110,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 				sequence = [];
 			}
 
-			if (
-				node.type === 'SvelteHead' ||
-				node.type === 'TitleElement' ||
-				node.type === 'SnippetBlock'
-			) {
-				// These nodes do not contribute to the sibling/child tree
-				// TODO what about e.g. ConstTag and all the other things that
-				// get hoisted inside clean_nodes?
-				visit(node, state);
-			} else if (is_static_element(node)) {
+			if (is_static_element(node)) {
 				visit(node, state);
 				skipped += 1;
 			} else {
