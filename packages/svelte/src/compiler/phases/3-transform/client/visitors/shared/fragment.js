@@ -22,6 +22,21 @@ export function process_children(nodes, expression, is_element, { visit, state }
 	let sequence = [];
 
 	/**
+	 * @param {Expression} expression
+	 * @param {string} name
+	 */
+	function flush_node(expression, name) {
+		let id = expression;
+
+		if (id.type !== 'Identifier') {
+			id = b.id(state.scope.generate(name));
+			state.init.push(b.var(id, expression));
+		}
+
+		return id;
+	}
+
+	/**
 	 * @param {Sequence} sequence
 	 */
 	function flush_sequence(sequence) {
@@ -39,7 +54,7 @@ export function process_children(nodes, expression, is_element, { visit, state }
 		// if this is a standalone `{expression}`, make sure we handle the case where
 		// no text node was created because the expression was empty during SSR
 		const needs_hydration_check = sequence.length === 1;
-		const id = get_node_id(expression(needs_hydration_check), state, 'text');
+		const id = flush_node(expression(needs_hydration_check), 'text');
 
 		state.template.push(' ');
 
@@ -83,9 +98,8 @@ export function process_children(nodes, expression, is_element, { visit, state }
 					node.metadata.is_controlled = true;
 					visit(node, state);
 				} else {
-					const id = get_node_id(
+					const id = flush_node(
 						expression(false),
-						state,
 						node.type === 'RegularElement' ? node.name : 'node'
 					);
 
@@ -109,20 +123,4 @@ export function process_children(nodes, expression, is_element, { visit, state }
 
 		flush_sequence(sequence);
 	}
-}
-
-/**
- * @param {Expression} expression
- * @param {ComponentClientTransformState} state
- * @param {string} name
- */
-function get_node_id(expression, state, name) {
-	let id = expression;
-
-	if (id.type !== 'Identifier') {
-		id = b.id(state.scope.generate(name));
-
-		state.init.push(b.var(id, expression));
-	}
-	return id;
 }
