@@ -21,17 +21,25 @@ export function process_children(nodes, expression, is_element, { visit, state }
 	/** @type {Sequence} */
 	let sequence = [];
 
+	let skipped = 0;
+
 	/**
-	 * @param {Expression} expression
+	 * @param {boolean} check
 	 * @param {string} name
 	 */
-	function flush_node(expression, name) {
-		let id = expression;
+	function flush_node(check, name) {
+		let init = expression(check);
+		let id = init;
 
 		if (id.type !== 'Identifier') {
 			id = b.id(state.scope.generate(name));
-			state.init.push(b.var(id, expression));
+			state.init.push(b.var(id, init));
 		}
+
+		console.log(skipped, id, init);
+
+		expression = (check) => b.call('$.sibling', id, b.literal(skipped), check && b.true);
+		skipped = 0;
 
 		return id;
 	}
@@ -44,8 +52,9 @@ export function process_children(nodes, expression, is_element, { visit, state }
 			const node = sequence[0];
 
 			if (node.type === 'Text') {
-				let prev = expression;
-				expression = () => b.call('$.sibling', prev(false));
+				// let prev = expression;
+				// expression = () => b.call('$.sibling', prev(false));
+				skipped += 1;
 				state.template.push(node.raw);
 				return;
 			}
@@ -54,7 +63,7 @@ export function process_children(nodes, expression, is_element, { visit, state }
 		// if this is a standalone `{expression}`, make sure we handle the case where
 		// no text node was created because the expression was empty during SSR
 		const needs_hydration_check = sequence.length === 1;
-		const id = flush_node(expression(needs_hydration_check), 'text');
+		const id = flush_node(needs_hydration_check, 'text');
 
 		state.template.push(' ');
 
@@ -70,7 +79,8 @@ export function process_children(nodes, expression, is_element, { visit, state }
 			state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
 		}
 
-		expression = (is_text) => b.call('$.sibling', id, is_text && b.true);
+		skipped += 1;
+		// expression = (is_text) => b.call('$.sibling', id, is_text && b.true);
 	}
 
 	for (let i = 0; i < nodes.length; i += 1) {
@@ -98,12 +108,10 @@ export function process_children(nodes, expression, is_element, { visit, state }
 					node.metadata.is_controlled = true;
 					visit(node, state);
 				} else {
-					const id = flush_node(
-						expression(false),
-						node.type === 'RegularElement' ? node.name : 'node'
-					);
+					const id = flush_node(false, node.type === 'RegularElement' ? node.name : 'node');
 
-					expression = (is_text) => b.call('$.sibling', id, is_text && b.true);
+					skipped += 1;
+					// expression = (is_text) => b.call('$.sibling', id, is_text && b.true);
 
 					visit(node, {
 						...state,

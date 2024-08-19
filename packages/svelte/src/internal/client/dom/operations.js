@@ -137,17 +137,21 @@ export function first_child(fragment, is_text) {
 
 /**
  * Don't mark this as side-effect-free, hydration needs to walk all nodes
- * @template {Node} N
- * @param {N} node
+ * @param {TemplateNode} node
+ * @param {number} count
  * @param {boolean} is_text
  * @returns {Node | null}
  */
-export function sibling(node, is_text = false) {
-	if (!hydrating) {
-		return /** @type {TemplateNode} */ (get_next_sibling(node));
+export function sibling(node, count = 1, is_text = false) {
+	let next_sibling = hydrating ? hydrate_node : node;
+
+	while (count--) {
+		next_sibling = /** @type {TemplateNode} */ (get_next_sibling(next_sibling));
 	}
 
-	var next_sibling = /** @type {TemplateNode} */ (get_next_sibling(hydrate_node));
+	if (!hydrating) {
+		return next_sibling;
+	}
 
 	var type = next_sibling.nodeType;
 
