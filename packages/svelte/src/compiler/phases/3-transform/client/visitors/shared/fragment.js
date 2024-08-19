@@ -54,7 +54,6 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 		}
 
 		prev = () => id;
-
 		skipped = 1;
 
 		return id;
@@ -64,33 +63,31 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	 * @param {Sequence} sequence
 	 */
 	function flush_sequence(sequence) {
-		if (sequence.length === 1) {
-			const node = sequence[0];
-
-			if (node.type === 'Text') {
-				skipped += 1;
-				state.template.push(node.raw);
-				return;
-			}
+		if (sequence.length === 1 && sequence[0].type === 'Text') {
+			skipped += 1;
+			state.template.push(sequence[0].raw);
+			return;
 		}
+
+		state.template.push(' ');
+
+		const { has_state, has_call, value } = build_template_literal(sequence, visit, state);
 
 		// if this is a standalone `{expression}`, make sure we handle the case where
 		// no text node was created because the expression was empty during SSR
 		const needs_hydration_check = sequence.length === 1;
 		const id = flush_node(needs_hydration_check, 'text');
 
-		state.template.push(' ');
-
-		const { has_state, has_call, value } = build_template_literal(sequence, visit, state);
-
-		const update = b.stmt(b.call('$.set_text', id, value));
-
-		if (has_call && !within_bound_contenteditable) {
-			state.init.push(build_update(update));
-		} else if (has_state && !within_bound_contenteditable) {
-			state.update.push(update);
-		} else {
+		if (within_bound_contenteditable || !has_state) {
 			state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
+		} else {
+			const update = b.stmt(b.call('$.set_text', id, value));
+
+			if (has_call && !within_bound_contenteditable) {
+				state.init.push(build_update(update));
+			} else if (has_state && !within_bound_contenteditable) {
+				state.update.push(update);
+			}
 		}
 	}
 
