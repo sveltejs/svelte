@@ -1,6 +1,7 @@
 /** @import { Expression } from 'estree' */
 /** @import { ExpressionTag, SvelteNode, Text } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../../types' */
+import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { build_template_literal, build_update } from './utils.js';
 
@@ -47,9 +48,16 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 			state.init.push(b.var(id, init));
 		}
 
-		expression = (check) =>
-			b.call('$.sibling', id, (check || skipped !== 1) && b.literal(skipped), check && b.true);
-		skipped = 0;
+		expression = (check) => {
+			return b.call(
+				'$.sibling',
+				id,
+				(check || skipped !== 1) && b.literal(skipped),
+				check && b.true
+			);
+		};
+
+		skipped = 1;
 
 		return id;
 	}
@@ -62,8 +70,6 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 			const node = sequence[0];
 
 			if (node.type === 'Text') {
-				// let prev = expression;
-				// expression = () => b.call('$.sibling', prev(false));
 				skipped += 1;
 				state.template.push(node.raw);
 				return;
@@ -88,9 +94,6 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 		} else {
 			state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
 		}
-
-		skipped += 1;
-		// expression = (is_text) => b.call('$.sibling', id, is_text && b.true);
 	}
 
 	for (let i = 0; i < nodes.length; i += 1) {
@@ -113,6 +116,9 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 				// TODO what about e.g. ConstTag and all the other things that
 				// get hoisted inside clean_nodes?
 				visit(node, state);
+			} else if (is_static_element(node)) {
+				visit(node, state);
+				skipped += 1;
 			} else {
 				if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
 					node.metadata.is_controlled = true;
@@ -120,25 +126,58 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 				} else {
 					const id = flush_node(false, node.type === 'RegularElement' ? node.name : 'node');
 
-					skipped += 1;
-					// expression = (is_text) => b.call('$.sibling', id, is_text && b.true);
-
-					visit(node, {
-						...state,
-						node: id
-					});
+					visit(node, { ...state, node: id });
 				}
 			}
 		}
 	}
 
 	if (sequence.length > 0) {
-		// if the final item in a fragment is static text,
-		// we need to force `hydrate_node` to advance
-		if (sequence.length === 1 && sequence[0].type === 'Text' && nodes.length > 1) {
-			state.init.push(b.stmt(b.call('$.next')));
-		}
+		// // if the final item in a fragment is static text,
+		// // we need to force `hydrate_node` to advance
+		// if (sequence.length === 1 && sequence[0].type === 'Text' && nodes.length > 1) {
+		// 	state.init.push(b.stmt(b.call('$.next')));
+		// }
 
 		flush_sequence(sequence);
 	}
+
+	skipped -= 1;
+
+	if (skipped > 0) {
+		state.init.push(b.stmt(expression(false)));
+	}
+}
+
+/**
+ *
+ * @param {SvelteNode} node
+ */
+function is_static_element(node) {
+	if (node.type !== 'RegularElement') return false;
+	if (node.fragment.metadata.dynamic) return false;
+
+	for (const attribute of node.attributes) {
+		if (attribute.type !== 'Attribute') {
+			return false;
+		}
+
+		if (is_event_attribute(attribute)) {
+			return false;
+		}
+
+		if (attribute.value !== true && !is_text_attribute(attribute)) {
+			return false;
+		}
+
+		if (node.name === 'option' && attribute.name === 'value') {
+			return false;
+		}
+
+		if (node.name.includes('-')) {
+			return false; // TODO this feels unnecessary, but tests break
+		}
+	}
+
+	return true;
 }
