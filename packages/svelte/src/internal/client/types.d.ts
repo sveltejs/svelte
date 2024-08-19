@@ -174,12 +174,8 @@ export type TaskCallback = (now: number) => boolean | void;
 export type TaskEntry = { c: TaskCallback; f: () => void };
 
 export interface ProxyMetadata<T = Record<string | symbol, any>> {
-	/** A map of signals associated to the properties that are reactive */
-	s: Map<string | symbol, Source<any>>;
 	/** A version counter, used within the proxy to signal changes in places where there's no other way to signal an update */
 	v: Source<number>;
-	/** `true` if the proxified object is an array */
-	a: boolean;
 	/** The associated proxy */
 	p: ProxyStateObject<T>;
 	/** The original target this proxy was created for */

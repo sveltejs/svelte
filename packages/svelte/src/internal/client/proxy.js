@@ -46,10 +46,12 @@ export function proxy(value, parent = null, prev) {
 		const prototype = get_prototype_of(value);
 
 		if (prototype === object_prototype || prototype === array_prototype) {
+			var sources = new Map();
+			var is_proxied_array = is_array(value);
+			var version = source(0);
+
 			let metadata = /** @type {ProxyMetadata} */ ({
-				s: new Map(),
-				v: source(0),
-				a: is_array(value),
+				// TODO we probably don't need this any more
 				p: /** @type {any} */ (null),
 				t: value
 			});
@@ -57,7 +59,7 @@ export function proxy(value, parent = null, prev) {
 			const p = new Proxy(/** @type {any} */ (value), {
 				defineProperty(target, prop, descriptor) {
 					if (descriptor.value) {
-						const s = metadata.s.get(prop);
+						const s = sources.get(prop);
 						if (s !== undefined) set(s, proxy(descriptor.value, metadata));
 					}
 
@@ -65,8 +67,7 @@ export function proxy(value, parent = null, prev) {
 				},
 
 				deleteProperty(target, prop) {
-					const s = metadata.s.get(prop);
-					const is_array = metadata.a;
+					const s = sources.get(prop);
 					const boolean = delete target[prop];
 
 					// If we have mutated an array directly, and the deletion
@@ -75,8 +76,8 @@ export function proxy(value, parent = null, prev) {
 					// ensure any effects observing length can execute before
 					// effects that listen to the fields – otherwise they will
 					// operate an an index that no longer exists.
-					if (is_array && boolean) {
-						const ls = metadata.s.get('length');
+					if (is_proxied_array && boolean) {
+						const ls = sources.get('length');
 						const length = target.length - 1;
 						if (ls !== undefined && ls.v !== length) {
 							set(ls, length);
@@ -86,7 +87,7 @@ export function proxy(value, parent = null, prev) {
 					if (s !== undefined) set(s, UNINITIALIZED);
 
 					if (boolean) {
-						update_version(metadata.v);
+						update_version(version);
 					}
 
 					return boolean;
@@ -97,12 +98,12 @@ export function proxy(value, parent = null, prev) {
 						return metadata;
 					}
 
-					let s = metadata.s.get(prop);
+					let s = sources.get(prop);
 
 					// create a source, but only if it's an own property and not a prototype property
 					if (s === undefined && (!(prop in target) || get_descriptor(target, prop)?.writable)) {
 						s = source(proxy(target[prop], metadata));
-						metadata.s.set(prop, s);
+						sources.set(prop, s);
 					}
 
 					if (s !== undefined) {
@@ -117,7 +118,7 @@ export function proxy(value, parent = null, prev) {
 					const descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
 
 					if (descriptor && 'value' in descriptor) {
-						const s = metadata.s.get(prop);
+						const s = sources.get(prop);
 
 						if (s) {
 							descriptor.value = get(s);
@@ -134,14 +135,14 @@ export function proxy(value, parent = null, prev) {
 
 					const has = Reflect.has(target, prop);
 
-					let s = metadata.s.get(prop);
+					let s = sources.get(prop);
 					if (
 						s !== undefined ||
 						(current_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 					) {
 						if (s === undefined) {
 							s = source(has ? proxy(target[prop], metadata) : UNINITIALIZED);
-							metadata.s.set(prop, s);
+							sources.set(prop, s);
 						}
 						const value = get(s);
 						if (value === UNINITIALIZED) {
@@ -152,7 +153,7 @@ export function proxy(value, parent = null, prev) {
 				},
 
 				set(target, prop, value, receiver) {
-					let s = metadata.s.get(prop);
+					let s = sources.get(prop);
 					// If we haven't yet created a source for this property, we need to ensure
 					// we do so otherwise if we read it later, then the write won't be tracked and
 					// the heuristics of effects will be different vs if we had read the proxied
@@ -160,12 +161,12 @@ export function proxy(value, parent = null, prev) {
 					if (s === undefined) {
 						// the read creates a signal
 						untrack(() => receiver[prop]);
-						s = metadata.s.get(prop);
+						s = sources.get(prop);
 					}
 					if (s !== undefined) {
 						set(s, proxy(value, metadata));
 					}
-					const is_array = metadata.a;
+
 					const not_has = !(prop in target);
 
 					if (DEV) {
@@ -178,9 +179,9 @@ export function proxy(value, parent = null, prev) {
 					}
 
 					// variable.length = value -> clear all signals with index >= value
-					if (is_array && prop === 'length') {
+					if (is_proxied_array && prop === 'length') {
 						for (let i = value; i < target.length; i += 1) {
-							const s = metadata.s.get(i + '');
+							const s = sources.get(i + '');
 							if (s !== undefined) set(s, UNINITIALIZED);
 						}
 					}
@@ -199,21 +200,21 @@ export function proxy(value, parent = null, prev) {
 						// signal that length has also changed. Do it before updating metadata
 						// to ensure that iterating over the array as a result of a metadata update
 						// will not cause the length to be out of sync.
-						if (is_array) {
-							const ls = metadata.s.get('length');
+						if (is_proxied_array) {
+							const ls = sources.get('length');
 							const length = target.length;
 							if (ls !== undefined && ls.v !== length) {
 								set(ls, length);
 							}
 						}
-						update_version(metadata.v);
+						update_version(version);
 					}
 
 					return true;
 				},
 
 				ownKeys(target) {
-					get(metadata.v);
+					get(version);
 					return Reflect.ownKeys(target);
 				},
 
