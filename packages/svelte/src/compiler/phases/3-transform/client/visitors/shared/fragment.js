@@ -9,11 +9,11 @@ import { build_template_literal, build_update } from './utils.js';
  * (e.g. `{a} b {c}`) into a single update function. Along the way it creates
  * corresponding template node references these updates are applied to.
  * @param {SvelteNode[]} nodes
- * @param {(is_text: boolean) => Expression} expression
+ * @param {(is_text: boolean) => Expression} initial
  * @param {boolean} is_element
  * @param {ComponentContext} context
  */
-export function process_children(nodes, expression, is_element, { visit, state }) {
+export function process_children(nodes, initial, is_element, { visit, state }) {
 	const within_bound_contenteditable = state.metadata.bound_contenteditable;
 
 	/** @typedef {Array<Text | ExpressionTag>} Sequence */
@@ -22,6 +22,12 @@ export function process_children(nodes, expression, is_element, { visit, state }
 	let sequence = [];
 
 	let skipped = 0;
+
+	/** @param {boolean} check */
+	let expression = (check) => {
+		if (skipped === 0) return initial(check);
+		return b.call('$.next', initial(false), b.literal(skipped), check && b.true);
+	};
 
 	/**
 	 * @param {boolean} check
@@ -38,7 +44,7 @@ export function process_children(nodes, expression, is_element, { visit, state }
 
 		console.log(skipped, id, init);
 
-		expression = (check) => b.call('$.sibling', id, b.literal(skipped), check && b.true);
+		expression = (check) => b.call('$.next', id, b.literal(skipped), check && b.true);
 		skipped = 0;
 
 		return id;
