@@ -99,9 +99,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 		}
 	}
 
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
-
+	for (const node of nodes) {
 		if (node.type === 'Text' || node.type === 'ExpressionTag') {
 			sequence.push(node);
 		} else {
@@ -129,9 +127,8 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 		flush_sequence(sequence);
 	}
 
-	skipped -= 1;
-
-	if (skipped > 0) {
+	if (skipped > 1) {
+		skipped -= 1;
 		state.init.push(b.stmt(expression(false)));
 	}
 }
