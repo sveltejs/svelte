@@ -9,17 +9,17 @@ export default function Main($$anchor) {
 	let y = () => 'test';
 	var fragment = root();
 	var div = $.first_child(fragment);
-	var svg = $.sibling($.sibling(div));
-	var custom_element = $.sibling($.sibling(svg));
-	var div_1 = $.sibling($.sibling(custom_element));
+	var svg = $.sibling(div, 2);
+	var custom_element = $.sibling(svg, 2);
+	var div_1 = $.sibling(custom_element, 2);
 
 	$.template_effect(() => $.set_attribute(div_1, "foobar", y()));
 
-	var svg_1 = $.sibling($.sibling(div_1));
+	var svg_1 = $.sibling(div_1, 2);
 
 	$.template_effect(() => $.set_attribute(svg_1, "viewBox", y()));
 
-	var custom_element_1 = $.sibling($.sibling(svg_1));
+	var custom_element_1 = $.sibling(svg_1, 2);
 
 	$.template_effect(() => $.set_custom_element_data(custom_element_1, "fooBar", y()));
 

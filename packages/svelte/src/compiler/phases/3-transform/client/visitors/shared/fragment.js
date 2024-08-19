@@ -26,7 +26,12 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	/** @param {boolean} check */
 	let expression = (check) => {
 		if (skipped === 0) return initial(check);
-		return b.call('$.sibling', initial(false), b.literal(skipped), check && b.true);
+		return b.call(
+			'$.sibling',
+			initial(false),
+			(check || skipped !== 1) && b.literal(skipped),
+			check && b.true
+		);
 	};
 
 	/**
@@ -42,7 +47,8 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 			state.init.push(b.var(id, init));
 		}
 
-		expression = (check) => b.call('$.sibling', id, b.literal(skipped), check && b.true);
+		expression = (check) =>
+			b.call('$.sibling', id, (check || skipped !== 1) && b.literal(skipped), check && b.true);
 		skipped = 0;
 
 		return id;
