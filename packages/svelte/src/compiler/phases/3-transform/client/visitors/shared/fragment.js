@@ -110,19 +110,18 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 				sequence = [];
 			}
 
-			if (is_static_element(node)) {
-				visit(node, state);
-				skipped += 1;
-			} else {
-				if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
-					node.metadata.is_controlled = true;
-					visit(node, state);
-				} else {
-					const id = flush_node(false, node.type === 'RegularElement' ? node.name : 'node');
+			let child_state = state;
 
-					visit(node, { ...state, node: id });
-				}
+			if (is_static_element(node)) {
+				skipped += 1;
+			} else if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
+				node.metadata.is_controlled = true;
+			} else {
+				const id = flush_node(false, node.type === 'RegularElement' ? node.name : 'node');
+				child_state = { ...state, node: id };
 			}
+
+			visit(node, child_state);
 		}
 	}
 
