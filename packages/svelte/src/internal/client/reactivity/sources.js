@@ -189,7 +189,6 @@ function mark_reactions(signal, status) {
 
 	var runes = is_runes();
 	var length = reactions.length;
-	var to_maybe_dirty = (status & MAYBE_DIRTY) !== 0;
 
 	for (var i = 0; i < length; i++) {
 		var reaction = reactions[i];
@@ -199,7 +198,7 @@ function mark_reactions(signal, status) {
 		if ((flags & DIRTY) !== 0) continue;
 
 		// We can skip this reaction if it's MAYBE_DIRTY and either UNOWNED or if we're setting the status to MAYBE_DIRTY
-		if ((flags & (CLEAN | UNOWNED)) === 0 && to_maybe_dirty) continue;
+		if ((flags & (CLEAN | UNOWNED)) === 0 && status === MAYBE_DIRTY) continue;
 
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === current_effect) continue;
