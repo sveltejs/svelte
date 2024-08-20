@@ -285,9 +285,9 @@ export interface Snippet<Parameters extends unknown[] = []> {
 		// rest parameter type, which is not supported. If rest parameters are added
 		// in the future, the condition can be removed.
 		...args: number extends Parameters['length'] ? never : Parameters
-	): typeof SnippetReturn & {
-		_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-	};
+	): {
+		'{@render ...} must be called with a Snippet': "import type { Snippet } from 'svelte'";
+	} & typeof SnippetReturn;
 }
 
 interface DispatchOptions {
