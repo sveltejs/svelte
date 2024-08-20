@@ -174,11 +174,11 @@ export type TaskCallback = (now: number) => boolean | void;
 export type TaskEntry = { c: TaskCallback; f: () => void };
 
 /** Dev-only */
-export interface ProxyOwnership {
+export interface ProxyMetadata {
 	/** The components that 'own' this state, if any. `null` means no owners, i.e. everyone can mutate this state. */
 	owners: null | Set<Function>;
 	/** The parent metadata object */
-	parent: null | ProxyOwnership;
+	parent: null | ProxyMetadata;
 }
 
 export type ProxyStateObject<T = Record<string | symbol, any>> = T & {

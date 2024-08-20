@@ -1,4 +1,4 @@
-/** @import { ProxyOwnership, ProxyStateObject, Source } from '#client' */
+/** @import { ProxyMetadata, ProxyStateObject, Source } from '#client' */
 import { DEV } from 'esm-env';
 import { get, current_component_context, untrack, current_effect } from './runtime.js';
 import {
@@ -18,7 +18,7 @@ import * as e from './errors.js';
 /**
  * @template T
  * @param {T} value
- * @param {ProxyOwnership | null} [parent]
+ * @param {ProxyMetadata | null} [parent]
  * @param {Source<T>} [prev] dev mode only
  * @returns {ProxyStateObject<T> | T}
  */
@@ -38,7 +38,7 @@ export function proxy(value, parent = null, prev) {
 	var is_proxied_array = is_array(value);
 	var version = source(0);
 
-	var ownership = /** @type {ProxyOwnership} */ ({
+	var ownership = /** @type {ProxyMetadata} */ ({
 		parent,
 		owners: null
 	});
@@ -182,7 +182,7 @@ export function proxy(value, parent = null, prev) {
 			const not_has = !(prop in target);
 
 			if (DEV) {
-				/** @type {ProxyOwnership | undefined} */
+				/** @type {ProxyMetadata | undefined} */
 				const prop_ownership = value?.[STATE_SYMBOL_OWNERSHIP];
 				if (prop_ownership && prop_ownership?.parent !== ownership) {
 					widen_ownership(ownership, prop_ownership);
