@@ -195,8 +195,10 @@ function mark_reactions(signal, status) {
 		var reaction = reactions[i];
 		var flags = reaction.f;
 
-		// We can skip this reaction if it's a) "dirty" or it's b) "maybe dirty" and either "unowned" or if we're setting the status to "maybe dirty"
-		if ((flags & DIRTY) !== 0 || ((flags & (CLEAN | UNOWNED)) === 0 && to_maybe_dirty)) continue;
+		if ((flags & DIRTY) !== 0) continue;
+
+		// We can skip this reaction if it's MAYBE_DIRTY and either UNOWNED or if we're setting the status to MAYBE_DIRTY
+		if ((flags & (CLEAN | UNOWNED)) === 0 && to_maybe_dirty) continue;
 
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === current_effect) continue;
