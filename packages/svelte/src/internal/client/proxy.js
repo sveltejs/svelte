@@ -73,14 +73,13 @@ export function proxy(value, parent = null, prev) {
 				e.state_descriptors_fixed();
 			}
 
-			var value = descriptor.value;
-
 			var s = sources.get(prop);
+
 			if (s === undefined) {
-				s = source(value);
+				s = source(descriptor.value);
 				sources.set(prop, s);
 			} else {
-				set(s, proxy(value, metadata));
+				set(s, proxy(descriptor.value, metadata));
 			}
 
 			return true;
@@ -132,10 +131,7 @@ export function proxy(value, parent = null, prev) {
 
 			if (descriptor && 'value' in descriptor) {
 				var s = sources.get(prop);
-
-				if (s) {
-					descriptor.value = get(s);
-				}
+				if (s) descriptor.value = get(s);
 			} else if (descriptor === undefined) {
 				var source = sources.get(prop);
 				var value = source?.v;
@@ -173,6 +169,7 @@ export function proxy(value, parent = null, prev) {
 					s = source(has ? proxy(target[prop], metadata) : UNINITIALIZED);
 					sources.set(prop, s);
 				}
+
 				var value = get(s);
 				if (value === UNINITIALIZED) {
 					return false;
