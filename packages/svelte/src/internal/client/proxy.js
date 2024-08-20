@@ -38,7 +38,7 @@ export function proxy(value, parent = null, prev) {
 	var is_proxied_array = is_array(value);
 	var version = source(0);
 
-	var ownership = /** @type {ProxyMetadata} */ ({
+	var metadata = /** @type {ProxyMetadata} */ ({
 		parent,
 		owners: null
 	});
@@ -49,9 +49,9 @@ export function proxy(value, parent = null, prev) {
 			// If no previous proxy exists we play it safe and assume ownerless state
 			// @ts-expect-error
 			const prev_owners = prev.v?.[STATE_SYMBOL_OWNERSHIP]?.owners;
-			ownership.owners = prev_owners ? new Set(prev_owners) : null;
+			metadata.owners = prev_owners ? new Set(prev_owners) : null;
 		} else {
-			ownership.owners =
+			metadata.owners =
 				parent === null
 					? current_component_context !== null
 						? new Set([current_component_context.function])
@@ -64,7 +64,7 @@ export function proxy(value, parent = null, prev) {
 		defineProperty(target, prop, descriptor) {
 			if (descriptor.value) {
 				const s = sources.get(prop);
-				if (s !== undefined) set(s, proxy(descriptor.value, ownership));
+				if (s !== undefined) set(s, proxy(descriptor.value, metadata));
 			}
 
 			return Reflect.defineProperty(target, prop, descriptor);
@@ -99,7 +99,7 @@ export function proxy(value, parent = null, prev) {
 
 		get(target, prop, receiver) {
 			if (DEV && prop === STATE_SYMBOL_OWNERSHIP) {
-				return ownership;
+				return metadata;
 			}
 
 			if (prop === STATE_SYMBOL) {
@@ -110,7 +110,7 @@ export function proxy(value, parent = null, prev) {
 
 			// create a source, but only if it's an own property and not a prototype property
 			if (s === undefined && (!(prop in target) || get_descriptor(target, prop)?.writable)) {
-				s = source(proxy(target[prop], ownership));
+				s = source(proxy(target[prop], metadata));
 				sources.set(prop, s);
 			}
 
@@ -153,7 +153,7 @@ export function proxy(value, parent = null, prev) {
 				(current_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 			) {
 				if (s === undefined) {
-					s = source(has ? proxy(target[prop], ownership) : UNINITIALIZED);
+					s = source(has ? proxy(target[prop], metadata) : UNINITIALIZED);
 					sources.set(prop, s);
 				}
 				const value = get(s);
@@ -176,18 +176,18 @@ export function proxy(value, parent = null, prev) {
 				s = sources.get(prop);
 			}
 			if (s !== undefined) {
-				set(s, proxy(value, ownership));
+				set(s, proxy(value, metadata));
 			}
 
 			const not_has = !(prop in target);
 
 			if (DEV) {
 				/** @type {ProxyMetadata | undefined} */
-				const prop_ownership = value?.[STATE_SYMBOL_OWNERSHIP];
-				if (prop_ownership && prop_ownership?.parent !== ownership) {
-					widen_ownership(ownership, prop_ownership);
+				const prop_metadata = value?.[STATE_SYMBOL_OWNERSHIP];
+				if (prop_metadata && prop_metadata?.parent !== metadata) {
+					widen_ownership(metadata, prop_metadata);
 				}
-				check_ownership(ownership);
+				check_ownership(metadata);
 			}
 
 			// variable.length = value -> clear all signals with index >= value
