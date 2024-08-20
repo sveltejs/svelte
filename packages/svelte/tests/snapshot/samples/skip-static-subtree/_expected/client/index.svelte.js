@@ -14,7 +14,6 @@ export default function Skip_static_subtree($$anchor, $$props) {
 	var node = $.sibling(h1, 10);
 
 	$.html(node, () => $$props.content, false, false);
-	$.sibling(node, 14);
 	$.reset(main);
 	$.template_effect(() => $.set_text(text, $$props.title));
 	$.append($$anchor, fragment);
