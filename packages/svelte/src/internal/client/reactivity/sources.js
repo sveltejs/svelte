@@ -29,6 +29,7 @@ import * as e from '../errors.js';
 import { derived } from './deriveds.js';
 
 let inspect_effects = new Set();
+let allow_mutations = false;
 
 /**
  * @template V
@@ -56,10 +57,11 @@ export function source_link(get_value, callback) {
 	var was_local = false;
 	var init = false;
 	var local_source = source(/** @type {V} */ (undefined));
+	var cached_linked_value = derived(get_value);
 
 	var linked_derived = derived(() => {
 		var local_value = /** @type {V} */ (get(local_source));
-		var linked_value = get_value();
+		var linked_value = get(cached_linked_value);
 
 		if (was_local) {
 			was_local = false;
@@ -68,6 +70,17 @@ export function source_link(get_value, callback) {
 
 		return linked_value;
 	});
+
+	/** @type {Derived<V> | undefined} */
+	var callback_derived;
+
+	if (callback !== undefined) {
+		callback_derived = derived(() => {
+			var linked_value = get(cached_linked_value);
+			untrack(() => callback(linked_value));
+			return local_source.v;
+		});
+	}
 
 	return function (/** @type {any} */ value) {
 		if (arguments.length > 0) {
@@ -78,10 +91,11 @@ export function source_link(get_value, callback) {
 		}
 
 		var linked_value = get(linked_derived);
+		get(local_source);
 
 		if (init) {
-			if (callback !== undefined) {
-				untrack(() => callback(linked_value));
+			if (callback_derived !== undefined) {
+				get(callback_derived);
 				return local_source.v;
 			}
 		} else {
@@ -133,7 +147,12 @@ export function mutate(source, value) {
  * @returns {V}
  */
 export function set(source, value) {
-	if (current_reaction !== null && is_runes() && (current_reaction.f & DERIVED) !== 0) {
+	if (
+		!allow_mutations &&
+		current_reaction !== null &&
+		is_runes() &&
+		(current_reaction.f & DERIVED) !== 0
+	) {
 		e.state_unsafe_mutation();
 	}
 
