@@ -49,14 +49,16 @@ export function source(v) {
 /**
  * @template V
  * @param {() => V} get_value
+ * @param {(value: V) => void} [callback]
  * @returns {(value?: V) => V}
  */
-export function source_link(get_value) {
+export function source_link(get_value, callback) {
 	var was_local = false;
-	var local_source = source(undefined);
+	var init = false;
+	var local_source = source(/** @type {V} */ (undefined));
 
 	var linked_derived = derived(() => {
-		var local_value = get(local_source);
+		var local_value = /** @type {V} */ (get(local_source));
 		var linked_value = get_value();
 
 		if (was_local) {
@@ -75,7 +77,20 @@ export function source_link(get_value) {
 			return value;
 		}
 
-		return get(linked_derived);
+		var linked_value = get(linked_derived);
+
+		if (init) {
+			if (typeof callback === 'function') {
+				untrack(() => callback(linked_value));
+			}
+			return local_source.v;
+		} else {
+			init = true;
+		}
+
+		local_source.v = linked_value;
+
+		return linked_value;
 	};
 }
 
