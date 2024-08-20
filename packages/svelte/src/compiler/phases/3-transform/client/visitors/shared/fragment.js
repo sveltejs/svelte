@@ -75,16 +75,14 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 		const needs_hydration_check = sequence.length === 1;
 		const id = flush_node(needs_hydration_check, 'text');
 
-		if (within_bound_contenteditable || !has_state) {
-			state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
-		} else {
-			const update = b.stmt(b.call('$.set_text', id, value));
+		const update = b.stmt(b.call('$.set_text', id, value));
 
-			if (has_call && !within_bound_contenteditable) {
-				state.init.push(build_update(update));
-			} else if (has_state && !within_bound_contenteditable) {
-				state.update.push(update);
-			}
+		if (has_call && !within_bound_contenteditable) {
+			state.init.push(build_update(update));
+		} else if (has_state && !within_bound_contenteditable) {
+			state.update.push(update);
+		} else {
+			state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
 		}
 	}
 
