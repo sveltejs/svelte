@@ -72,3 +72,16 @@ test('defines a property', () => {
 		/state_descriptors_fixed/
 	);
 });
+
+test('does not re-proxy proxies', () => {
+	const inner = proxy({ count: 0 });
+	const outer = proxy({ inner });
+
+	assert.equal(inner.count, 0);
+	assert.equal(outer.inner.count, 0);
+
+	inner.count += 1;
+
+	assert.equal(inner.count, 1);
+	assert.equal(outer.inner.count, 1);
+});
