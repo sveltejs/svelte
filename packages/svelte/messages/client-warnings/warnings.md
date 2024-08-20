@@ -56,3 +56,5 @@
 	value === proxy; // always false
 </script>
 ```
+
+To resolve this, ensure you're comparing values where both values were created with `$state(...)`, or neither were. Note that `$state.raw(...)` will _not_ create a state proxy.
