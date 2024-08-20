@@ -51,7 +51,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 		}
 
 		prev = () => id;
-		skipped = 1;
+		skipped = 1; // the next node is `$.sibling(id)`
 
 		return id;
 	}
@@ -114,6 +114,8 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 		flush_sequence(sequence);
 	}
 
+	// if there are trailing static text nodes/elements,
+	// traverse to the last (n - 1) one when hydrating
 	if (skipped > 1) {
 		skipped -= 1;
 		state.init.push(b.stmt(get_node(false)));
