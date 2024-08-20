@@ -33,14 +33,6 @@ export function CallExpression(node, context) {
 		);
 	}
 
-	if (rune === '$state.is') {
-		return b.call(
-			'Object.is',
-			/** @type {Expression} */ (context.visit(node.arguments[0])),
-			/** @type {Expression} */ (context.visit(node.arguments[1]))
-		);
-	}
-
 	if (rune === '$inspect' || rune === '$inspect().with') {
 		return transform_inspect_rune(node, context);
 	}
