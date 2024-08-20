@@ -139,7 +139,7 @@ export default function element(parser) {
 					: 'RegularElement';
 
 	if (type === 'Component' && !regex_valid_component_name.test(name)) {
-		e.component_invalid_name({ start: start + 1, end: start + name.length + 1 }, name);
+		e.component_invalid_name({ start: start + 1, end: start + name.length + 1 });
 	}
 
 	/** @type {Compiler.ElementLike} */

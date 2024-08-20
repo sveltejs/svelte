@@ -777,13 +777,12 @@ export function component_invalid_directive(node) {
 }
 
 /**
- * `%name%` is not a valid component name. A component name can be an identifier, or a member expression with dot notation.
+ * Component name must be a valid variable name or dot notation expression
  * @param {null | number | NodeLike} node
- * @param {string} name
  * @returns {never}
  */
-export function component_invalid_name(node, name) {
-	e(node, "component_invalid_name", `\`${name}\` is not a valid component name. A component name can be an identifier, or a member expression with dot notation.`);
+export function component_invalid_name(node) {
+	e(node, "component_invalid_name", "Component name must be a valid variable name or dot notation expression");
 }
 
 /**

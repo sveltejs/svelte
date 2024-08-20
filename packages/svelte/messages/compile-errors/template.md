@@ -102,7 +102,7 @@
 
 ## component_invalid_name
 
-> `%name%` is not a valid component name. A component name can be an identifier, or a member expression with dot notation.
+> Component name must be a valid variable name or dot notation expression
 
 ## const_tag_cycle
 
