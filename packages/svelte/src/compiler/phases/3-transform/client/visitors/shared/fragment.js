@@ -1,6 +1,6 @@
 /** @import { Expression } from 'estree' */
 /** @import { ExpressionTag, SvelteNode, Text } from '#compiler' */
-/** @import { ComponentClientTransformState, ComponentContext } from '../../types' */
+/** @import { ComponentContext } from '../../types' */
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { build_template_literal, build_update } from './utils.js';
@@ -145,10 +145,6 @@ function is_static_element(node) {
 
 		if (node.name === 'option' && attribute.name === 'value') {
 			return false;
-		}
-
-		if (node.name.includes('-')) {
-			return false; // we're setting all attributes on custom elements through properties
 		}
 	}
 

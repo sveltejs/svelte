@@ -19,3 +19,7 @@
 	<p>ones</p>
 	{@html content}
 </main>
+
+<cant-skip>
+	<custom-elements with="attributes"></custom-elements>
+</cant-skip>
