@@ -18,7 +18,7 @@
     "@lezer/common": "^1.2.1",
     "@sveltejs/adapter-static": "^3.0.1",
     "@sveltejs/adapter-vercel": "^5.0.0",
-    "@sveltejs/kit": "^2.5.0",
+    "@sveltejs/kit": "^2.5.24",
     "@sveltejs/site-kit": "6.0.0-next.64",
     "@sveltejs/vite-plugin-svelte": "^4.0.0-next.3",
     "@vercel/speed-insights": "^1.0.0",
