@@ -70,6 +70,10 @@ export function proxy(value, parent = null, prev) {
 				descriptor.enumerable === false ||
 				descriptor.writable === false
 			) {
+				// we disallow non-basic descriptors, because unless they are applied to the
+				// target object — which we avoid, so that state can be forked — we will run
+				// afoul of the various invariants
+				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy/Proxy/getOwnPropertyDescriptor#invariants
 				e.state_descriptors_fixed();
 			}
 
