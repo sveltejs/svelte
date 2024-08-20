@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.227
+
+### Patch Changes
+
+- breaking: disallow `Object.defineProperty` on state proxies with non-basic descriptors ([#12916](https://github.com/sveltejs/svelte/pull/12916))
+
+- breaking: allow frozen objects to be proxied ([#12916](https://github.com/sveltejs/svelte/pull/12916))
+
+- breaking: avoid mutations to underlying proxied object with $state ([#12916](https://github.com/sveltejs/svelte/pull/12916))
+
+- breaking: remove $state.is rune ([#12916](https://github.com/sveltejs/svelte/pull/12916))
+
 ## 5.0.0-next.226
 
 ### Patch Changes
