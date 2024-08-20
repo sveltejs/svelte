@@ -195,6 +195,7 @@ function mark_reactions(signal, status) {
 		var reaction = reactions[i];
 		var flags = reaction.f;
 
+		// Skip any effects that are already dirty
 		if ((flags & DIRTY) !== 0) continue;
 
 		// We can skip this reaction if it's MAYBE_DIRTY and either UNOWNED or if we're setting the status to MAYBE_DIRTY
