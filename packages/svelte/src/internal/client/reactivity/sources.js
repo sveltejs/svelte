@@ -95,17 +95,6 @@ export function source_link(get_value, callback) {
 }
 
 /**
- * @param {((value?: number) => number)} fn
- * @param {1 | -1} [d]
- * @returns {number}
- */
-export function update_link(fn, d = 1) {
-	const value = fn();
-	fn(value + d);
-	return value;
-}
-
-/**
  * @template V
  * @param {V} initial_value
  * @returns {Source<V>}
