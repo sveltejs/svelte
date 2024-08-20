@@ -145,8 +145,8 @@ function mark_reactions(signal, status) {
 		var reaction = reactions[i];
 		var flags = reaction.f;
 
-		// If a reaction is already dirty, skip it (but always mark unowned deriveds)
-		if ((flags & (CLEAN | UNOWNED)) === 0) continue;
+		// Skip any effects that are already dirty
+		if ((flags & DIRTY) !== 0) continue;
 
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === current_effect) continue;
