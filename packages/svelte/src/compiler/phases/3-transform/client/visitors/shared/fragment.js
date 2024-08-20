@@ -148,7 +148,7 @@ function is_static_element(node) {
 		}
 
 		if (node.name.includes('-')) {
-			return false; // TODO this feels unnecessary, but tests break
+			return false; // we're setting all attributes on custom elements through properties
 		}
 	}
 
