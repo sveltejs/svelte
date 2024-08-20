@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.229
+
+### Patch Changes
+
+- feat: add `$state.link` rune ([#12545](https://github.com/sveltejs/svelte/pull/12545))
+
+- fix: allow mixing slots and snippets in custom elements mode ([#12929](https://github.com/sveltejs/svelte/pull/12929))
+
+- fix: small legibility improvement in `Snippet` type hint ([#12928](https://github.com/sveltejs/svelte/pull/12928))
+
+- feat: support HMR with custom elements ([#12926](https://github.com/sveltejs/svelte/pull/12926))
+
+- feat: error on invalid component name ([#12821](https://github.com/sveltejs/svelte/pull/12821))
+
 ## 5.0.0-next.228
 
 ### Patch Changes
