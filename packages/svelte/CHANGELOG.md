@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.226
+
+### Patch Changes
+
+- fix: ensure typings for `<svelte:options>` are picked up ([#12903](https://github.com/sveltejs/svelte/pull/12903))
+
+- fix: exclude local declarations from non-reactive property warnings ([#12909](https://github.com/sveltejs/svelte/pull/12909))
+
 ## 5.0.0-next.225
 
 ### Patch Changes
