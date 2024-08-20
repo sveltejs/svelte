@@ -118,7 +118,6 @@ const runes = [
 	{ snippet: '$bindable()', test: is_bindable },
 	{ snippet: '$effect.root(() => {\n\t${}\n})' },
 	{ snippet: '$state.snapshot(${})' },
-	{ snippet: '$state.is(${})' },
 	{ snippet: '$effect.tracking()' },
 	{ snippet: '$inspect(${});', test: is_statement }
 ];
