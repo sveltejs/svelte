@@ -176,10 +176,14 @@ export type TaskEntry = { c: TaskCallback; f: () => void };
 export interface ProxyMetadata<T = Record<string | symbol, any>> {
 	/** The original target this proxy was created for */
 	t: T;
-	/** Dev-only — the components that 'own' this state, if any. `null` means no owners, i.e. everyone can mutate this state. */
+}
+
+/** Dev-only */
+export interface ProxyOwnership {
+	/** The components that 'own' this state, if any. `null` means no owners, i.e. everyone can mutate this state. */
 	owners: null | Set<Function>;
-	/** Dev-only — the parent metadata object */
-	parent: null | ProxyMetadata;
+	/** The parent metadata object */
+	parent: null | ProxyOwnership;
 }
 
 export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
