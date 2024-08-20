@@ -649,7 +649,10 @@ export function analyze_component(root, source, options) {
 		);
 	}
 
-	if (analysis.uses_render_tags && (analysis.uses_slots || analysis.slot_names.size > 0)) {
+	if (
+		analysis.uses_render_tags &&
+		(analysis.uses_slots || (!analysis.custom_element && analysis.slot_names.size > 0))
+	) {
 		const pos = analysis.slot_names.values().next().value ?? analysis.source.indexOf('$$slot');
 		e.slot_snippet_conflict(pos);
 	}
