@@ -1,4 +1,4 @@
-import type { CompileOptions, File } from '../types';
+import type { CompileOptions, File, Warning } from '../types';
 
 export type CompileMessageData = {
 	id: number;
@@ -15,6 +15,11 @@ export type CompileMessageData = {
 		metadata?: {
 			runes: boolean;
 		};
+		error: {
+			message: string;
+			position: [number, number];
+		} | null;
+		warnings: Warning[];
 	};
 };
 

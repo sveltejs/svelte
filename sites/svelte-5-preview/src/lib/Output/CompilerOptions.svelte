@@ -1,4 +1,3 @@
-<!-- svelte-ignore a11y-label-has-associated-control -->
 <script>
 	import { get_repl_context } from '$lib/context.js';
 	import Checkbox from '../Checkbox.svelte';

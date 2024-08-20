@@ -91,14 +91,14 @@
 	{#if embedded}
 		<CodeMirror bind:this={js_editor} readonly />
 	{:else}
-		<PaneWithPanel pos="50%" panel="Compiler options">
-			<div slot="main">
+		<PaneWithPanel pos={50} title="Compiler options">
+			{#snippet main()}
 				<CodeMirror bind:this={js_editor} readonly />
-			</div>
+			{/snippet}
 
-			<div slot="panel-body">
+			{#snippet body()}
 				<CompilerOptions />
-			</div>
+			{/snippet}
 		</PaneWithPanel>
 	{/if}
 </div>

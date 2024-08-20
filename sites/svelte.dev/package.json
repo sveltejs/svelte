@@ -43,7 +43,7 @@
     "magic-string": "^0.30.5",
     "marked": "^11.1.1",
     "prettier": "^3.2.4",
-    "prettier-plugin-svelte": "^3.1.2",
+    "prettier-plugin-svelte": "^3.2.6",
     "sass": "^1.70.0",
     "satori": "^0.10.11",
     "satori-html": "^0.3.2",

@@ -64,14 +64,11 @@ export type ReplContext = {
 	EDITOR_STATE_MAP: Map<string, EditorState>;
 
 	// Methods
+	set_files(data: { files: File[]; css?: string }): void;
 	rebundle(): Promise<void>;
 	migrate(): Promise<void>;
 	handle_select(filename: string): Promise<void>;
-	handle_change(
-		event: CustomEvent<{
-			value: string;
-		}>
-	): Promise<void>;
-	go_to_warning_pos(item?: MessageDetails): Promise<void>;
+	handle_change(value: string): Promise<void>;
+	go_to_warning_pos(item?: { start?: { character: number }; filename?: string }): Promise<void>;
 	clear_state(): void;
 };

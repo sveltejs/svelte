@@ -1,21 +1,15 @@
 <script>
+	/** @import { File } from '$lib/types' */
 	import { get_repl_context } from '$lib/context.js';
 	import { get_full_filename } from '$lib/utils.js';
-	import { createEventDispatcher, tick } from 'svelte';
+	import { tick } from 'svelte';
 	import RunesInfo from './RunesInfo.svelte';
 	import Migrate from './Migrate.svelte';
 
-	/** @type {boolean}  */
-	export let show_modified;
+	/** @typedef {{ files: File[]; diff: File }} ChangeEvent */
 
-	/** @type {boolean} */
-	export let runes;
-
-	/** @type {ReturnType<typeof createEventDispatcher<{
-	 * remove: { files: import('$lib/types').File[]; diff: import('$lib/types').File },
-	 * add: { files: import('$lib/types').File[]; diff: import('$lib/types').File },
-	 * }>>} */
-	const dispatch = createEventDispatcher();
+	/** @type {{ show_modified: boolean; runes: boolean, onremove?: (ev: ChangeEvent) => void, onadd?: (ev: ChangeEvent) => void }} */
+	const { show_modified, runes, onremove, onadd } = $props();
 
 	const {
 		files,
@@ -28,9 +22,9 @@
 	} = get_repl_context();
 
 	/** @type {string | null} */
-	let editing_name = null;
+	let editing_name = $state(null);
 
-	let input_value = '';
+	let input_value = $state('');
 
 	/** @param {string} filename */
 	function select_file(filename) {
@@ -40,7 +34,7 @@
 		}
 	}
 
-	/** @param {import('$lib/types').File} file */
+	/** @param {File} file */
 	function edit_tab(file) {
 		if ($selected_name === get_full_filename(file)) {
 			editing_name = get_full_filename(file);
@@ -125,7 +119,7 @@
 
 		$files = $files.filter((file) => get_full_filename(file) !== filename);
 
-		dispatch('remove', { files: $files, diff: file });
+		onremove?.({ files: $files, diff: file });
 
 		EDITOR_STATE_MAP.delete(get_full_filename(file));
 
@@ -160,12 +154,12 @@
 
 		rebundle();
 
-		dispatch('add', { files: $files, diff: file });
+		onadd?.({ files: $files, diff: file });
 
 		$files = $files;
 	}
 
-	/** @param {import('$lib/types').File} editing */
+	/** @param {File} editing */
 	function is_file_name_used(editing) {
 		return $files.find(
 			(file) => JSON.stringify(file) !== JSON.stringify($selected) && file.name === editing.name
@@ -177,7 +171,7 @@
 	let from = null;
 
 	/** @type {string | null} */
-	let over = null;
+	let over = $state(null);
 
 	/** @param {DragEvent & { currentTarget: HTMLDivElement }} event */
 	function dragStart(event) {
@@ -190,10 +184,13 @@
 
 	/** @param {DragEvent & { currentTarget: HTMLDivElement }} event */
 	function dragOver(event) {
+		event.preventDefault();
 		over = event.currentTarget.id;
 	}
 
-	function dragEnd() {
+	/** @param {DragEvent & { currentTarget: HTMLDivElement }} event */
+	function dragEnd(event) {
+		event.preventDefault();
 		if (from && over) {
 			const from_index = $files.findIndex((file) => file.name === from);
 			const to_index = $files.findIndex((file) => file.name === over);
@@ -210,8 +207,8 @@
 </script>
 
 <div class="component-selector">
-	<!-- svelte-ignore a11y-no-static-element-interactions -->
-	<div class="file-tabs" on:dblclick={add_new}>
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="file-tabs" ondblclick={add_new}>
 		{#each $files as file, index (file.name)}
 			{@const filename = get_full_filename(file)}
 			<div
@@ -222,14 +219,14 @@
 				class:active={filename === $selected_name}
 				class:draggable={filename !== editing_name && index !== 0}
 				class:drag-over={over === file.name}
-				on:click={() => select_file(filename)}
-				on:keyup={(e) => e.key === ' ' && select_file(filename)}
-				on:dblclick|stopPropagation={() => {}}
+				onclick={() => select_file(filename)}
+				onkeyup={(e) => e.key === ' ' && select_file(filename)}
+				ondblclick={(ev) => ev.stopPropagation()}
 				draggable={filename !== editing_name}
-				on:dragstart={dragStart}
-				on:dragover|preventDefault={dragOver}
-				on:dragleave={dragLeave}
-				on:drop|preventDefault={dragEnd}
+				ondragstart={dragStart}
+				ondragover={dragOver}
+				ondragleave={dragLeave}
+				ondrop={dragEnd}
 			>
 				<i class="drag-handle"></i>
 				{#if file.name === 'App' && filename !== editing_name}
@@ -244,14 +241,14 @@
 							{input_value + (/\./.test(input_value) ? '' : `.${editing_file.type}`)}
 						</span>
 
-						<!-- svelte-ignore a11y-autofocus -->
+						<!-- svelte-ignore a11y_autofocus -->
 						<input
 							autofocus
 							spellcheck={false}
 							bind:value={input_value}
-							on:focus={select_input}
-							on:blur={close_edit}
-							on:keydown={(e) => {
+							onfocus={select_input}
+							onblur={close_edit}
+							onkeydown={(e) => {
 								if (e.key === 'Enter') {
 									e.preventDefault();
 									if (!is_file_name_used(editing_file)) {
@@ -263,21 +260,21 @@
 						/>
 					{/if}
 				{:else}
-					<!-- svelte-ignore a11y-no-static-element-interactions -->
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
 						class="editable"
 						title="edit component name"
-						on:click={() => edit_tab(file)}
-						on:keyup={(e) => e.key === ' ' && edit_tab(file)}
+						onclick={() => edit_tab(file)}
+						onkeyup={(e) => e.key === ' ' && edit_tab(file)}
 					>
 						{file.name}.{file.type}{#if show_modified && file.modified}*{/if}
 					</div>
 
-					<!-- svelte-ignore a11y-no-static-element-interactions -->
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<span
 						class="remove"
-						on:click={() => remove(filename)}
-						on:keyup={(e) => e.key === ' ' && remove(filename)}
+						onclick={() => remove(filename)}
+						onkeyup={(e) => e.key === ' ' && remove(filename)}
 					>
 						<svg width="12" height="12" viewBox="0 0 24 24">
 							<line stroke="#999" x1="18" y1="6" x2="6" y2="18" />
@@ -289,7 +286,7 @@
 		{/each}
 	</div>
 
-	<button class="add-new" on:click={add_new} title="add new component">
+	<button class="add-new" onclick={add_new} title="add new component">
 		<svg width="12" height="12" viewBox="0 0 24 24">
 			<line stroke="#999" x1="12" y1="5" x2="12" y2="19" />
 			<line stroke="#999" x1="5" y1="12" x2="19" y2="12" />

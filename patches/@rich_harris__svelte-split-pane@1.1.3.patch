@@ -1,0 +1,44 @@
+diff --git a/dist/SplitPane.svelte b/dist/SplitPane.svelte
+index e5f8455e87d1fef63f63b912eeb6f6be60a268e6..39af9ec886ae9c7a06ecb571efaff783efaccb50 100644
+--- a/dist/SplitPane.svelte
++++ b/dist/SplitPane.svelte
+@@ -2,7 +2,7 @@
+ 	import { createEventDispatcher } from 'svelte';
+ 	import { constrain } from './utils.js';
+ 
+-	/** @type {ReturnType<typeof createEventDispatcher<{ change: undefined }>>} */
++	/** @type {ReturnType<typeof createEventDispatcher<{ change: import('./types').Length }>>} */
+ 	const dispatch = createEventDispatcher();
+ 
+ 	/** @type {string | undefined} */
+@@ -54,7 +54,7 @@
+ 
+ 		position = pos.endsWith('%') ? `${(100 * pos_px) / size}%` : `${pos_px}px`;
+ 
+-		dispatch('change');
++		dispatch('change', position);
+ 	}
+ 
+ 	/**
+diff --git a/dist/SplitPane.svelte.d.ts b/dist/SplitPane.svelte.d.ts
+index 861240ad71a00ae4a0838eedbbf4892bac57fd0c..9afa30f1023167c63d25ef8e984ab521dfe152a4 100644
+--- a/dist/SplitPane.svelte.d.ts
++++ b/dist/SplitPane.svelte.d.ts
+@@ -10,7 +10,7 @@ export default class SplitPane extends SvelteComponentTyped<{
+     disabled?: boolean | undefined;
+     priority?: "min" | "max" | undefined;
+ }, {
+-    change: CustomEvent<any>;
++    change: CustomEvent<import("./types").Length>;
+ } & {
+     [evt: string]: CustomEvent<any>;
+ }, {
+@@ -33,7 +33,7 @@ declare const __propDef: {
+         priority?: "min" | "max" | undefined;
+     };
+     events: {
+-        change: CustomEvent<any>;
++        change: CustomEvent<import("./types").Length>;
+     } & {
+         [evt: string]: CustomEvent<any>;
+     };

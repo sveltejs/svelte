@@ -1,15 +1,21 @@
 <script>
-	/** @type {import('svelte/compiler').CompileError} */
-	export let error;
+	import { get_repl_context } from '$lib/context';
+
+	/** @type {{ error: {message: string, start?: {line: number, column: number, character: number}}, title: string }} */
+	let { error, title } = $props();
+
+	const { go_to_warning_pos } = get_repl_context();
 </script>
 
 <div class="error-overlay">
 	<div class="error">
-		<h2>Error compiling {error.filename ?? 'component'}</h2>
+		<h2>{title}</h2>
 		<pre><code>{error.message}</code></pre>
 
 		{#if error.start}
-			<small>line {error.start.line} column {error.start.column}</small>
+			<button class="position" onclick={() => go_to_warning_pos(error)}>
+				<small>line {error.start.line} column {error.start.column + 1}</small>
+			</button>
 		{/if}
 	</div>
 </div>
@@ -41,7 +47,13 @@
 		background: var(--sk-back-3);
 	}
 
-	small {
+	.position {
 		color: var(--sk-text-4);
+		text-align: left;
+		display: inline-block;
+		width: fit-content;
+	}
+	.position:hover {
+		text-decoration: underline;
 	}
 </style>
