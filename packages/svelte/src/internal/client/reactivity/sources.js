@@ -29,7 +29,6 @@ import * as e from '../errors.js';
 import { derived } from './deriveds.js';
 
 let inspect_effects = new Set();
-let allow_mutations = false;
 
 /**
  * @template V
@@ -147,12 +146,7 @@ export function mutate(source, value) {
  * @returns {V}
  */
 export function set(source, value) {
-	if (
-		!allow_mutations &&
-		current_reaction !== null &&
-		is_runes() &&
-		(current_reaction.f & DERIVED) !== 0
-	) {
+	if (current_reaction !== null && is_runes() && (current_reaction.f & DERIVED) !== 0) {
 		e.state_unsafe_mutation();
 	}
 
