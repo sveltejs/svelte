@@ -140,7 +140,7 @@ function mark_reactions(signal, status) {
 
 	var runes = is_runes();
 	var length = reactions.length;
-	var to_dirty = (status & DIRTY) !== 0;
+	var to_maybe_dirty = (status & MAYBE_DIRTY) !== 0;
 
 	for (var i = 0; i < length; i++) {
 		var reaction = reactions[i];
@@ -149,7 +149,7 @@ function mark_reactions(signal, status) {
 		// We can skip this reaction if it's dirty or it's maybe dirty and either unowned or we're trying to set it to dirty
 		if (
 			(flags & DIRTY) !== 0 ||
-			((flags & MAYBE_DIRTY) !== 0 && ((flags & UNOWNED) === 0 || to_dirty))
+			((flags & MAYBE_DIRTY) !== 0 && ((flags & UNOWNED) === 0 || to_maybe_dirty))
 		)
 			continue;
 
