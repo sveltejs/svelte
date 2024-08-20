@@ -266,4 +266,4 @@ In Svelte 4, content can be passed to components using [slots](https://svelte.de
 
 They continue to work, however, and you can mix and match snippets and slots in your components.
 
-When using custom elements, you should still use `<slot />` like before. In a future version, when Svelte removes its internal version of slots, it will leave those slot as-is, i.e. output a regular DOM tag instead of transforming it.
+When using custom elements, you should still use `<slot />` like before. In a future version, when Svelte removes its internal version of slots, it will leave those slots as-is, i.e. output a regular DOM tag instead of transforming it.
