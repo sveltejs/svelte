@@ -23,26 +23,26 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	/** @type {Sequence} */
 	let sequence = [];
 
-	/** @param {boolean} check */
-	function get_node(check) {
+	/** @param {boolean} is_text */
+	function get_node(is_text) {
 		if (skipped === 0) {
-			return prev(check);
+			return prev(is_text);
 		}
 
 		return b.call(
 			'$.sibling',
 			prev(false),
-			(check || skipped !== 1) && b.literal(skipped),
-			check && b.true
+			(is_text || skipped !== 1) && b.literal(skipped),
+			is_text && b.true
 		);
 	}
 
 	/**
-	 * @param {boolean} check
+	 * @param {boolean} is_text
 	 * @param {string} name
 	 */
-	function flush_node(check, name) {
-		const expression = get_node(check);
+	function flush_node(is_text, name) {
+		const expression = get_node(is_text);
 		let id = expression;
 
 		if (id.type !== 'Identifier') {
@@ -72,8 +72,8 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 		// if this is a standalone `{expression}`, make sure we handle the case where
 		// no text node was created because the expression was empty during SSR
-		const needs_hydration_check = sequence.length === 1;
-		const id = flush_node(needs_hydration_check, 'text');
+		const is_text = sequence.length === 1;
+		const id = flush_node(is_text, 'text');
 
 		const update = b.stmt(b.call('$.set_text', id, value));
 
