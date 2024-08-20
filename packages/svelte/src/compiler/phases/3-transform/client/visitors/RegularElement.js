@@ -340,7 +340,7 @@ export function RegularElement(node, context) {
 			arg = b.member(arg, 'content');
 		}
 
-		process_children(trimmed, () => b.call('$.child', arg), true, {
+		process_children(trimmed, () => b.call('$.child', arg), true, needs_reset, {
 			...context,
 			state: child_state
 		});

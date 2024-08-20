@@ -11,10 +11,11 @@ import { build_template_literal, build_update } from './utils.js';
  * corresponding template node references these updates are applied to.
  * @param {SvelteNode[]} nodes
  * @param {(is_text: boolean) => Expression} initial
- * @param {boolean} is_element
+ * @param {boolean} is_element TODO get rid of this — we should be able to determine controlled status during analysis
+ * @param {boolean} needs_reset
  * @param {ComponentContext} context
  */
-export function process_children(nodes, initial, is_element, { visit, state }) {
+export function process_children(nodes, initial, is_element, needs_reset, { visit, state }) {
 	const within_bound_contenteditable = state.metadata.bound_contenteditable;
 	let prev = initial;
 	let skipped = 0;
@@ -116,7 +117,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 	// if there are trailing static text nodes/elements,
 	// traverse to the last (n - 1) one when hydrating
-	if (skipped > 1) {
+	if (skipped > 1 && !needs_reset) {
 		skipped -= 1;
 		state.init.push(b.stmt(get_node(false)));
 	}
