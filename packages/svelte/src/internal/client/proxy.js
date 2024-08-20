@@ -6,7 +6,6 @@ import {
 	get_descriptor,
 	get_prototype_of,
 	is_array,
-	is_frozen,
 	object_prototype
 } from '../shared/utils.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
@@ -24,7 +23,7 @@ import * as e from './errors.js';
  */
 export function proxy(value, parent = null, prev) {
 	// if non-proxyable, or is already a proxy, return `value`
-	if (typeof value !== 'object' || value === null || is_frozen(value) || STATE_SYMBOL in value) {
+	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
 		return value;
 	}
 
