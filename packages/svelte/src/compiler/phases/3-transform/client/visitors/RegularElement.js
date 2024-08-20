@@ -322,9 +322,7 @@ export function RegularElement(node, context) {
 
 	if (text_content && !text_content.has_state) {
 		child_state.init.push(
-			b.stmt(
-				b.assignment('=', b.member(context.state.node, b.id('textContent')), text_content.value)
-			)
+			b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), text_content.value))
 		);
 	} else {
 		/** @type {Expression} */
@@ -339,7 +337,7 @@ export function RegularElement(node, context) {
 		if (node.name === 'template') {
 			needs_reset = true;
 			child_state.init.push(b.stmt(b.call('$.hydrate_template', arg)));
-			arg = b.member(arg, b.id('content'));
+			arg = b.member(arg, 'content');
 		}
 
 		process_children(trimmed, () => b.call('$.child', arg), true, {
@@ -369,9 +367,8 @@ export function RegularElement(node, context) {
 	if (has_direction_attribute) {
 		// This fixes an issue with Chromium where updates to text content within an element
 		// does not update the direction when set to auto. If we just re-assign the dir, this fixes it.
-		context.state.update.push(
-			b.stmt(b.assignment('=', b.member(node_id, b.id('dir')), b.member(node_id, b.id('dir'))))
-		);
+		const dir = b.member(node_id, 'dir');
+		context.state.update.push(b.stmt(b.assignment('=', dir, dir)));
 	}
 
 	if (child_locations.length > 0) {
@@ -494,16 +491,16 @@ function build_element_spread_attributes(
 
 	const preserve_attribute_case =
 		element.metadata.svg || element.metadata.mathml || is_custom_element_node(element);
-	const id = context.state.scope.generate('attributes');
+	const id = b.id(context.state.scope.generate('attributes'));
 
 	const update = b.stmt(
 		b.assignment(
 			'=',
-			b.id(id),
+			id,
 			b.call(
 				'$.set_attributes',
 				element_id,
-				b.id(id),
+				id,
 				b.object(values),
 				context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
 				preserve_attribute_case && b.true,
@@ -523,17 +520,17 @@ function build_element_spread_attributes(
 
 	if (needs_select_handling) {
 		context.state.init.push(
-			b.stmt(b.call('$.init_select', element_id, b.thunk(b.member(b.id(id), b.id('value')))))
+			b.stmt(b.call('$.init_select', element_id, b.thunk(b.member(id, 'value'))))
 		);
 		context.state.update.push(
 			b.if(
-				b.binary('in', b.literal('value'), b.id(id)),
+				b.binary('in', b.literal('value'), id),
 				b.block([
 					// This ensures a one-way street to the DOM in case it's <select {value}>
 					// and not <select bind:value>. We need it in addition to $.init_select
 					// because the select value is not reflected as an attribute, so the
 					// mutation observer wouldn't notice.
-					b.stmt(b.call('$.select_option', element_id, b.member(b.id(id), b.id('value'))))
+					b.stmt(b.call('$.select_option', element_id, b.member(id, 'value')))
 				])
 			)
 		);
@@ -596,7 +593,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 	} else if (name === 'checked') {
 		update = b.stmt(b.call('$.set_checked', node_id, value));
 	} else if (is_dom_property(name)) {
-		update = b.stmt(b.assignment('=', b.member(node_id, b.id(name)), value));
+		update = b.stmt(b.assignment('=', b.member(node_id, name), value));
 	} else {
 		const callee = name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute';
 		update = b.stmt(
@@ -666,9 +663,9 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 
 	const inner_assignment = b.assignment(
 		'=',
-		b.member(node_id, b.id('value')),
+		b.member(node_id, 'value'),
 		b.conditional(
-			b.binary('==', b.literal(null), b.assignment('=', b.member(node_id, b.id('__value')), value)),
+			b.binary('==', b.literal(null), b.assignment('=', b.member(node_id, '__value'), value)),
 			b.literal(''), // render null/undefined values as empty string to support placeholder options
 			value
 		)

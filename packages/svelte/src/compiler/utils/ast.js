@@ -332,7 +332,7 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 					if (element.type === 'RestElement') {
 						/** @type {DestructuredAssignment['expression']} */
 						const rest_expression = (object) =>
-							b.call(b.member(expression(object), b.id('slice')), b.literal(i));
+							b.call(b.member(expression(object), 'slice'), b.literal(i));
 						if (element.argument.type === 'Identifier') {
 							assignments.push({
 								node: element.argument,

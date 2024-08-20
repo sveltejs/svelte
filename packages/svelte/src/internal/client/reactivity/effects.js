@@ -95,7 +95,8 @@ function create_effect(type, fn, sync, push = true) {
 	var effect = {
 		ctx: current_component_context,
 		deps: null,
-		nodes: null,
+		nodes_start: null,
+		nodes_end: null,
 		f: type | DIRTY,
 		first: null,
 		fn,
@@ -135,7 +136,7 @@ function create_effect(type, fn, sync, push = true) {
 		sync &&
 		effect.deps === null &&
 		effect.first === null &&
-		effect.nodes === null &&
+		effect.nodes_start === null &&
 		effect.teardown === null;
 
 	if (!inert && !is_root && push) {
@@ -355,10 +356,10 @@ export function execute_effect_teardown(effect) {
 export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
-	if ((remove_dom || (effect.f & HEAD_EFFECT) !== 0) && effect.nodes !== null) {
+	if ((remove_dom || (effect.f & HEAD_EFFECT) !== 0) && effect.nodes_start !== null) {
 		/** @type {TemplateNode | null} */
-		var node = effect.nodes.start;
-		var end = effect.nodes.end;
+		var node = effect.nodes_start;
+		var end = effect.nodes_end;
 
 		while (node !== null) {
 			/** @type {TemplateNode | null} */
@@ -375,8 +376,10 @@ export function destroy_effect(effect, remove_dom = true) {
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);
 
-	if (effect.transitions) {
-		for (const transition of effect.transitions) {
+	var transitions = effect.transitions;
+
+	if (transitions !== null) {
+		for (const transition of transitions) {
 			transition.stop();
 		}
 	}
@@ -398,7 +401,8 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.deps =
 		effect.parent =
 		effect.fn =
-		effect.nodes =
+		effect.nodes_start =
+		effect.nodes_end =
 			null;
 }
 

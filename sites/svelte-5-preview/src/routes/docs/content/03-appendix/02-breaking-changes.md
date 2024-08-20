@@ -278,7 +278,9 @@ Error and warning codes have been renamed. Previously they used dashes to separa
 
 ### Reduced number of namespaces
 
-The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `mathml`, `svg` and `foreign`.
+The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `mathml` and `svg`.
+
+The `foreign` namespace was only useful for Svelte Native, which we're planning to support differently in a 5.x minor.
 
 ### beforeUpdate/afterUpdate changes
 

@@ -1,5 +1,39 @@
 # svelte
 
+## 5.0.0-next.226
+
+### Patch Changes
+
+- fix: ensure typings for `<svelte:options>` are picked up ([#12903](https://github.com/sveltejs/svelte/pull/12903))
+
+- fix: exclude local declarations from non-reactive property warnings ([#12909](https://github.com/sveltejs/svelte/pull/12909))
+
+## 5.0.0-next.225
+
+### Patch Changes
+
+- chore: improve the performance of set_text for single expressions ([#12893](https://github.com/sveltejs/svelte/pull/12893))
+
+- fix: add cleanup function signature to `createRawSnippet` ([#12894](https://github.com/sveltejs/svelte/pull/12894))
+
+- feat: more efficient checking for missing SSR text node ([#12891](https://github.com/sveltejs/svelte/pull/12891))
+
+- fix: ensure nullish expressions render empty text ([#12898](https://github.com/sveltejs/svelte/pull/12898))
+
+## 5.0.0-next.224
+
+### Patch Changes
+
+- chore: inline start and end node properties into effect ([#12878](https://github.com/sveltejs/svelte/pull/12878))
+
+- fix: correctly ensure prop bindings are reactive when bound ([#12879](https://github.com/sveltejs/svelte/pull/12879))
+
+- fix: remove sapper bindings ([#12875](https://github.com/sveltejs/svelte/pull/12875))
+
+- chore: refactor internal signal dependency heuristic ([#12881](https://github.com/sveltejs/svelte/pull/12881))
+
+- fix: allow store as initial value for props in ssr ([#12885](https://github.com/sveltejs/svelte/pull/12885))
+
 ## 5.0.0-next.223
 
 ### Patch Changes

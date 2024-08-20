@@ -60,7 +60,7 @@ export function SlotElement(node, context) {
 
 	const expression = is_default
 		? b.call('$.default_slot', b.id('$$props'))
-		: b.member(b.member(b.id('$$props'), b.id('$$slots')), name, true, true);
+		: b.member(b.member(b.id('$$props'), '$$slots'), name, true, true);
 
 	const slot = b.call('$.slot', context.state.node, expression, props_expression, fallback);
 	context.state.init.push(b.stmt(slot));

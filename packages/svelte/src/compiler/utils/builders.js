@@ -286,12 +286,16 @@ export function literal(value) {
 
 /**
  * @param {ESTree.Expression | ESTree.Super} object
- * @param {ESTree.Expression | ESTree.PrivateIdentifier} property
+ * @param {string | ESTree.Expression | ESTree.PrivateIdentifier} property
  * @param {boolean} computed
  * @param {boolean} optional
  * @returns {ESTree.MemberExpression}
  */
 export function member(object, property, computed = false, optional = false) {
+	if (typeof property === 'string') {
+		property = id(property);
+	}
+
 	return { type: 'MemberExpression', object, property, computed, optional };
 }
 

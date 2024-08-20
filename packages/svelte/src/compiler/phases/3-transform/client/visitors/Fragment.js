@@ -96,7 +96,7 @@ export function Fragment(node, context) {
 			call = b.call(
 				'$.add_locations',
 				call,
-				b.member(b.id(context.state.analysis.name), b.id('$.FILENAME'), true),
+				b.member(b.id(context.state.analysis.name), '$.FILENAME', true),
 				build_locations(state.locations)
 			);
 		}

@@ -349,6 +349,16 @@ export function rune_missing_parentheses(node) {
 }
 
 /**
+ * The `%name%` rune has been removed
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function rune_removed(node, name) {
+	e(node, "rune_removed", `The \`${name}\` rune has been removed`);
+}
+
+/**
  * `%name%` is now `%replacement%`
  * @param {null | number | NodeLike} node
  * @param {string} name

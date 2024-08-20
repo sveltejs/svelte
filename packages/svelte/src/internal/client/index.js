@@ -157,7 +157,7 @@ export {
 	validate_prop_bindings
 } from './validate.js';
 export { raf } from './timing.js';
-export { proxy, is } from './proxy.js';
+export { proxy } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
 export {
 	child,

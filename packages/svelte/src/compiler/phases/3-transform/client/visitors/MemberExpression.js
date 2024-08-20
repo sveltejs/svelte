@@ -11,7 +11,7 @@ export function MemberExpression(node, context) {
 	if (node.property.type === 'PrivateIdentifier') {
 		const field = context.state.private_state.get(node.property.name);
 		if (field) {
-			return context.state.in_constructor ? b.member(node, b.id('v')) : b.call('$.get', node);
+			return context.state.in_constructor ? b.member(node, 'v') : b.call('$.get', node);
 		}
 	} else if (node.object.type === 'ThisExpression') {
 		// rewrite `this.foo` as `this.#foo.v` inside a constructor
@@ -19,7 +19,7 @@ export function MemberExpression(node, context) {
 			const field = context.state.public_state.get(node.property.name);
 
 			if (field && context.state.in_constructor) {
-				return b.member(b.member(b.this, field.id), b.id('v'));
+				return b.member(b.member(b.this, field.id), 'v');
 			}
 		}
 	}

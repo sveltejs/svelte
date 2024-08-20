@@ -141,13 +141,6 @@ export function CallExpression(node, context) {
 			}
 
 			break;
-
-		case '$state.is':
-			if (node.arguments.length !== 2) {
-				e.rune_invalid_arguments_length(node, rune, 'exactly two arguments');
-			}
-
-			break;
 	}
 
 	if (context.state.expression && !is_pure(node.callee, context)) {

@@ -169,7 +169,7 @@ export function check_dirtiness(reaction) {
 
 			if ((flags & DISCONNECTED) !== 0) {
 				for (i = 0; i < dependencies.length; i++) {
-					(dependencies[i].reactions ??= new Set()).add(reaction);
+					(dependencies[i].reactions ??= []).push(reaction);
 				}
 
 				reaction.f ^= DISCONNECTED;
@@ -188,11 +188,11 @@ export function check_dirtiness(reaction) {
 
 				if (is_unowned) {
 					// TODO is there a more logical place to do this work?
-					if (!current_skip_reaction && !dependency?.reactions?.has(reaction)) {
+					if (!current_skip_reaction && !dependency?.reactions?.includes(reaction)) {
 						// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
 						// and the version hasn't changed, we still need to check that this reaction
 						// if linked to the dependency source – otherwise future updates will not be caught.
-						(dependency.reactions ??= new Set()).add(reaction);
+						(dependency.reactions ??= []).push(reaction);
 					}
 				}
 			}
@@ -291,26 +291,9 @@ export function update_reaction(reaction) {
 		var deps = reaction.deps;
 
 		if (new_deps !== null) {
-			var dependency;
 			var i;
 
-			if (deps !== null) {
-				/** All dependencies of the reaction, including those tracked on the previous run */
-				var array = skipped_deps === 0 ? new_deps : deps.slice(0, skipped_deps).concat(new_deps);
-
-				// If we have more than 16 elements in the array then use a Set for faster performance
-				// TODO: evaluate if we should always just use a Set or not here?
-				var set = array.length > 16 ? new Set(array) : null;
-
-				// Remove dependencies that should no longer be tracked
-				for (i = skipped_deps; i < deps.length; i++) {
-					dependency = deps[i];
-
-					if (set !== null ? !set.has(dependency) : !array.includes(dependency)) {
-						remove_reaction(reaction, dependency);
-					}
-				}
-			}
+			remove_reactions(reaction, skipped_deps);
 
 			if (deps !== null && skipped_deps > 0) {
 				deps.length = skipped_deps + new_deps.length;
@@ -323,7 +306,7 @@ export function update_reaction(reaction) {
 
 			if (!current_skip_reaction) {
 				for (i = skipped_deps; i < deps.length; i++) {
-					(deps[i].reactions ??= new Set()).add(reaction);
+					(deps[i].reactions ??= []).push(reaction);
 				}
 			}
 		} else if (deps !== null && skipped_deps < deps.length) {
@@ -350,9 +333,16 @@ export function update_reaction(reaction) {
 function remove_reaction(signal, dependency) {
 	let reactions = dependency.reactions;
 	if (reactions !== null) {
-		reactions.delete(signal);
-		if (reactions.size === 0) {
-			reactions = dependency.reactions = null;
+		var index = reactions.indexOf(signal);
+		if (index !== -1) {
+			var new_length = reactions.length - 1;
+			if (new_length === 0) {
+				reactions = dependency.reactions = null;
+			} else {
+				// Swap with last element and then remove.
+				reactions[index] = reactions[new_length];
+				reactions.pop();
+			}
 		}
 	}
 	// If the derived has no reactions, then we can disconnect it from the graph,
@@ -377,19 +367,8 @@ export function remove_reactions(signal, start_index) {
 	var dependencies = signal.deps;
 	if (dependencies === null) return;
 
-	var active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
-	var seen = new Set();
-
 	for (var i = start_index; i < dependencies.length; i++) {
-		var dependency = dependencies[i];
-
-		if (seen.has(dependency)) continue;
-		seen.add(dependency);
-
-		// Avoid removing a reaction if we know that it is active (start_index will not be 0)
-		if (active_dependencies === null || !active_dependencies.includes(dependency)) {
-			remove_reaction(signal, dependency);
-		}
+		remove_reaction(signal, dependencies[i]);
 	}
 }
 
@@ -518,7 +497,7 @@ function flush_queued_effects(effects) {
 			// don't know if we need to keep them until they are executed. Doing the check
 			// here (rather than in `update_effect`) allows us to skip the work for
 			// immediate effects.
-			if (effect.deps === null && effect.first === null && effect.nodes === null) {
+			if (effect.deps === null && effect.first === null && effect.nodes_start === null) {
 				if (effect.teardown === null) {
 					// remove this effect from the graph
 					unlink_effect(effect);
@@ -726,16 +705,10 @@ export function get(signal) {
 		// rather than updating `new_deps`, which creates GC cost
 		if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
 			skipped_deps++;
-		}
-
-		// Otherwise, create or push to `new_deps`, but only if this
-		// dependency wasn't the last one that was accessed
-		else if (deps === null || skipped_deps === 0 || deps[skipped_deps - 1] !== signal) {
-			if (new_deps === null) {
-				new_deps = [signal];
-			} else if (new_deps[new_deps.length - 1] !== signal) {
-				new_deps.push(signal);
-			}
+		} else if (new_deps === null) {
+			new_deps = [signal];
+		} else {
+			new_deps.push(signal);
 		}
 
 		if (

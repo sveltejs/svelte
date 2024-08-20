@@ -372,7 +372,7 @@ export function build_component(node, component_name, context, anchor = context.
 
 		statements.push(
 			b.stmt(b.call('$.css_props', anchor, b.thunk(b.object(custom_css_props)))),
-			b.stmt(fn(b.member(anchor, b.id('lastChild')))),
+			b.stmt(fn(b.member(anchor, 'lastChild'))),
 			b.stmt(b.call('$.reset', anchor))
 		);
 	} else {

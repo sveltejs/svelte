@@ -378,7 +378,7 @@ declare module 'svelte' {
 	 * */
 	export function createRawSnippet<Params extends unknown[]>(fn: (...params: Getters<Params>) => {
 		render: () => string;
-		setup?: (element: Element) => void;
+		setup?: (element: Element) => void | (() => void);
 	}): Snippet<Params>;
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
@@ -2961,27 +2961,6 @@ declare namespace $state {
 	 * @param state The value to snapshot
 	 */
 	export function snapshot<T>(state: T): Snapshot<T>;
-
-	/**
-	 * Compare two values, one or both of which is a reactive `$state(...)` proxy.
-	 *
-	 * Example:
-	 * ```ts
-	 * <script>
-	 *	 let foo = $state({});
-	 *	 let bar = {};
-	 *
-	 *	 foo.bar = bar;
-	 *
-	 *	 console.log(foo.bar === bar); // false — `foo.bar` is a reactive proxy
-	 *   console.log($state.is(foo.bar, bar)); // true
-	 * </script>
-	 * ```
-	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$state.is
-	 *
-	 */
-	export function is(a: any, b: any): boolean;
 
 	// prevent intellisense from being unhelpful
 	/** @deprecated */
