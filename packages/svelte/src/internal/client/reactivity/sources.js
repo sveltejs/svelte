@@ -80,10 +80,10 @@ export function source_link(get_value, callback) {
 		var linked_value = get(linked_derived);
 
 		if (init) {
-			if (typeof callback === 'function') {
+			if (callback !== undefined) {
 				untrack(() => callback(linked_value));
+				return local_source.v;
 			}
-			return local_source.v;
 		} else {
 			init = true;
 		}
