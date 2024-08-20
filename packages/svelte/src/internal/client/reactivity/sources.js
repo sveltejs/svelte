@@ -53,7 +53,6 @@ export function source(v) {
  */
 export function source_link(get_value) {
 	var was_local = false;
-	var init = false;
 	var local_source = source(/** @type {V} */ (undefined));
 
 	var linked_derived = derived(() => {
@@ -76,17 +75,7 @@ export function source_link(get_value) {
 			return value;
 		}
 
-		var linked_value = get(linked_derived);
-
-		if (init) {
-			// do nothing
-		} else {
-			init = true;
-		}
-
-		local_source.v = linked_value;
-
-		return linked_value;
+		return (local_source.v = get(linked_derived));
 	};
 }
 
