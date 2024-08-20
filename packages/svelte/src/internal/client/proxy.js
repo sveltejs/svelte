@@ -175,6 +175,7 @@ export function proxy(value, parent = null, prev) {
 				untrack(() => receiver[prop]);
 				s = sources.get(prop);
 			}
+
 			if (s !== undefined) {
 				set(s, proxy(value, metadata));
 			}
