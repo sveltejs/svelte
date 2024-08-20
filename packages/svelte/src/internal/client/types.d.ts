@@ -174,10 +174,6 @@ export type TaskCallback = (now: number) => boolean | void;
 export type TaskEntry = { c: TaskCallback; f: () => void };
 
 export interface ProxyMetadata<T = Record<string | symbol, any>> {
-	/** A version counter, used within the proxy to signal changes in places where there's no other way to signal an update */
-	v: Source<number>;
-	/** The associated proxy */
-	p: ProxyStateObject<T>;
 	/** The original target this proxy was created for */
 	t: T;
 	/** Dev-only — the components that 'own' this state, if any. `null` means no owners, i.e. everyone can mutate this state. */

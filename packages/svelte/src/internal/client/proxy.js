@@ -3,7 +3,6 @@ import { DEV } from 'esm-env';
 import { get, current_component_context, untrack, current_effect } from './runtime.js';
 import {
 	array_prototype,
-	define_property,
 	get_descriptor,
 	get_prototype_of,
 	is_array,
@@ -24,26 +23,9 @@ import * as e from './errors.js';
  * @returns {ProxyStateObject<T> | T}
  */
 export function proxy(value, parent = null, prev) {
-	if (typeof value !== 'object' || value == null || is_frozen(value)) {
+	// if non-proxyable, or is already a proxy, return `value`
+	if (typeof value !== 'object' || value === null || is_frozen(value) || STATE_SYMBOL in value) {
 		return value;
-	}
-
-	// If we have an existing proxy, return it...
-	if (STATE_SYMBOL in value) {
-		const metadata = /** @type {ProxyMetadata<T>} */ (value[STATE_SYMBOL]);
-
-		// ...unless the proxy belonged to a different object, because
-		// someone copied the state symbol using `Reflect.ownKeys(...)`
-		if (metadata.t === value || metadata.p === value) {
-			if (DEV) {
-				// Since original parent relationship gets lost, we need to copy over ancestor owners
-				// into current metadata. The object might still exist on both, so we need to widen it.
-				widen_ownership(metadata, metadata);
-				metadata.parent = parent;
-			}
-
-			return metadata.p;
-		}
 	}
 
 	const prototype = get_prototype_of(value);
@@ -57,8 +39,6 @@ export function proxy(value, parent = null, prev) {
 	var version = source(0);
 
 	let metadata = /** @type {ProxyMetadata} */ ({
-		// TODO we probably don't need this any more
-		p: /** @type {any} */ (null),
 		t: value
 	});
 
@@ -229,8 +209,6 @@ export function proxy(value, parent = null, prev) {
 		}
 	});
 
-	metadata.p = p;
-
 	if (DEV) {
 		metadata.parent = parent;
 
@@ -238,7 +216,7 @@ export function proxy(value, parent = null, prev) {
 			// Reuse owners from previous state; necessary because reassignment is not guaranteed to have correct component context.
 			// If no previous proxy exists we play it safe and assume ownerless state
 			// @ts-expect-error
-			const prev_owners = prev?.v?.[STATE_SYMBOL]?.owners;
+			const prev_owners = prev.v?.[STATE_SYMBOL]?.owners;
 			metadata.owners = prev_owners ? new Set(prev_owners) : null;
 		} else {
 			metadata.owners =
