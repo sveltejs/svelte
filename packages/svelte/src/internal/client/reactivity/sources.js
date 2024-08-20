@@ -140,13 +140,19 @@ function mark_reactions(signal, status) {
 
 	var runes = is_runes();
 	var length = reactions.length;
+	var mark_maybe_dirty = (status & MAYBE_DIRTY) !== 0;
 
 	for (var i = 0; i < length; i++) {
 		var reaction = reactions[i];
 		var flags = reaction.f;
 
+<<<<<<< Updated upstream
 		// Skip any effects that are already dirty
 		if ((flags & DIRTY) !== 0) continue;
+=======
+		// If a we're marking as maybe dirty and the reaction is already dirty, skip it (but always mark unowned deriveds)
+		if (mark_maybe_dirty && (flags & (CLEAN | UNOWNED)) === 0) continue;
+>>>>>>> Stashed changes
 
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === current_effect) continue;
