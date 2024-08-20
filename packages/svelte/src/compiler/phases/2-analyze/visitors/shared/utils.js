@@ -23,6 +23,14 @@ export function validate_assignment(node, argument, state) {
 				e.constant_assignment(node, 'derived state');
 			}
 
+			if (binding?.kind === 'prop') {
+				e.constant_assignment(
+					node,
+					'a non-bindable prop',
+					'Use `$state.link(...)` to create a local copy of the value'
+				);
+			}
+
 			if (binding?.kind === 'each') {
 				e.each_item_invalid_assignment(node);
 			}

@@ -69,13 +69,14 @@ export function bindable_invalid_location(node) {
 }
 
 /**
- * Cannot assign to %thing%
+ * Cannot assign to %thing%. %suggestion%
  * @param {null | number | NodeLike} node
  * @param {string} thing
+ * @param {string | undefined | null} [suggestion]
  * @returns {never}
  */
-export function constant_assignment(node, thing) {
-	e(node, "constant_assignment", `Cannot assign to ${thing}`);
+export function constant_assignment(node, thing, suggestion) {
+	e(node, "constant_assignment", suggestion ? `Cannot assign to ${thing}. ${suggestion}` : `Cannot assign to ${thing}`);
 }
 
 /**

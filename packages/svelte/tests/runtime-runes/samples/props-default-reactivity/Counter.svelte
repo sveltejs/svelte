@@ -14,7 +14,3 @@
 <button onclick={() => (non_bindable.count += 1)}>
 	mutate: {non_bindable.count}
 </button>
-
-<button onclick={() => (non_bindable = { count: non_bindable.count + 1 })}>
-	reassign: {non_bindable.count}
-</button>

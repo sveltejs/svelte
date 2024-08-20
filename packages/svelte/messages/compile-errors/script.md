@@ -6,6 +6,8 @@
 
 > Cannot assign to %thing%
 
+> Cannot assign to %thing%. %suggestion%
+
 ## constant_binding
 
 > Cannot bind to %thing%
