@@ -593,7 +593,15 @@ export function client_component(analysis, options) {
 
 		// If a tag name is provided, call `customElements.define`, otherwise leave to the user
 		if (typeof ce !== 'boolean' && typeof ce.tag === 'string') {
-			body.push(b.stmt(b.call('customElements.define', b.literal(ce.tag), create_ce)));
+			const define = b.stmt(b.call('customElements.define', b.literal(ce.tag), create_ce));
+
+			if (options.hmr) {
+				body.push(
+					b.if(b.binary('==', b.call('customElements.get', b.literal(ce.tag)), b.null), define)
+				);
+			} else {
+				body.push(define);
+			}
 		} else {
 			body.push(b.stmt(create_ce));
 		}
