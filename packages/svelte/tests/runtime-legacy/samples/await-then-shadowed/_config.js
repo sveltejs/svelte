@@ -1,8 +1,6 @@
 import { test } from '../../test';
 
 export default test({
-	solo: true,
-
 	html: '<div>Loading...</div>',
 
 	async test({ assert, target }) {
