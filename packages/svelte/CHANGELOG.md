@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.228
+
+### Patch Changes
+
+- feat: skip over static nodes in compiled client code ([#12914](https://github.com/sveltejs/svelte/pull/12914))
+
 ## 5.0.0-next.227
 
 ### Patch Changes
