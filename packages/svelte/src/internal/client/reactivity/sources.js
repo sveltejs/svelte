@@ -146,7 +146,7 @@ function mark_reactions(signal, status) {
 		var reaction = reactions[i];
 		var flags = reaction.f;
 
-		// We can skip this reaction if it's dirty or it's maybe dirty and either unowned or we're trying to set it to dirty
+		// We can skip this reaction if it's a) "dirty" or it's b) "maybe dirty" and either "unowned" or if we're setting the status to "maybe dirty"
 		if (
 			(flags & DIRTY) !== 0 ||
 			((flags & MAYBE_DIRTY) !== 0 && ((flags & UNOWNED) === 0 || to_maybe_dirty))
