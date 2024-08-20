@@ -286,7 +286,7 @@ export interface Snippet<Parameters extends unknown[] = []> {
 		// in the future, the condition can be removed.
 		...args: number extends Parameters['length'] ? never : Parameters
 	): typeof SnippetReturn & {
-		_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
+		_: "functions passed to {@render ...} tags must use the `Snippet` type imported from 'svelte'";
 	};
 }
 
