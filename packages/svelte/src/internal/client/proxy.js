@@ -63,40 +63,42 @@ export function proxy(value, parent = null, prev) {
 	}
 
 	return new Proxy(/** @type {any} */ (value), {
-		defineProperty(target, prop, descriptor) {
-			if (descriptor.value) {
-				const s = sources.get(prop);
-				if (s !== undefined) set(s, proxy(descriptor.value, metadata));
+		defineProperty(_, prop, descriptor) {
+			if (
+				!('value' in descriptor) ||
+				descriptor.configurable === false ||
+				descriptor.enumerable === false ||
+				descriptor.writable === false
+			) {
+				e.state_descriptors_fixed();
 			}
 
-			return Reflect.defineProperty(target, prop, descriptor);
+			var value = descriptor.value;
+
+			var s = sources.get(prop);
+			if (s === undefined) {
+				s = source(value);
+				sources.set(prop, s);
+			} else {
+				set(s, proxy(value, metadata));
+			}
+
+			return true;
 		},
 
 		deleteProperty(target, prop) {
-			const s = sources.get(prop);
-			const boolean = delete target[prop];
+			var s = sources.get(prop);
+			var exists = s !== undefined ? s.v !== UNINITIALIZED : prop in target;
 
-			// If we have mutated an array directly, and the deletion
-			// was successful we will also need to update the length
-			// before updating the field or the version. This is to
-			// ensure any effects observing length can execute before
-			// effects that listen to the fields – otherwise they will
-			// operate an an index that no longer exists.
-			if (is_proxied_array && boolean) {
-				const ls = sources.get('length');
-				const length = target.length - 1;
-				if (ls !== undefined && ls.v !== length) {
-					set(ls, length);
-				}
+			if (s !== undefined) {
+				set(s, UNINITIALIZED);
 			}
 
-			if (s !== undefined) set(s, UNINITIALIZED);
-
-			if (boolean) {
+			if (exists) {
 				update_version(version);
 			}
 
-			return boolean;
+			return exists;
 		},
 
 		get(target, prop, receiver) {
@@ -108,30 +110,43 @@ export function proxy(value, parent = null, prev) {
 				return value;
 			}
 
-			let s = sources.get(prop);
+			var s = sources.get(prop);
+			var exists = prop in target;
 
 			// create a source, but only if it's an own property and not a prototype property
-			if (s === undefined && (!(prop in target) || get_descriptor(target, prop)?.writable)) {
-				s = source(proxy(target[prop], metadata));
+			if (s === undefined && (!exists || get_descriptor(target, prop)?.writable)) {
+				s = source(proxy(exists ? target[prop] : UNINITIALIZED, metadata));
 				sources.set(prop, s);
 			}
 
 			if (s !== undefined) {
-				const value = get(s);
-				return value === UNINITIALIZED ? undefined : value;
+				var v = get(s);
+				return v === UNINITIALIZED ? undefined : v;
 			}
 
 			return Reflect.get(target, prop, receiver);
 		},
 
 		getOwnPropertyDescriptor(target, prop) {
-			const descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
+			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
 
 			if (descriptor && 'value' in descriptor) {
-				const s = sources.get(prop);
+				var s = sources.get(prop);
 
 				if (s) {
 					descriptor.value = get(s);
+				}
+			} else if (descriptor === undefined) {
+				var source = sources.get(prop);
+				var value = source?.v;
+
+				if (source !== undefined && value !== UNINITIALIZED) {
+					return {
+						enumerable: true,
+						configurable: true,
+						value,
+						writable: true
+					};
 				}
 			}
 
@@ -147,9 +162,9 @@ export function proxy(value, parent = null, prev) {
 				return true;
 			}
 
-			const has = Reflect.has(target, prop);
+			var s = sources.get(prop);
+			var has = (s !== undefined && s.v !== UNINITIALIZED) || Reflect.has(target, prop);
 
-			let s = sources.get(prop);
 			if (
 				s !== undefined ||
 				(current_effect !== null && (!has || get_descriptor(target, prop)?.writable))
@@ -158,35 +173,37 @@ export function proxy(value, parent = null, prev) {
 					s = source(has ? proxy(target[prop], metadata) : UNINITIALIZED);
 					sources.set(prop, s);
 				}
-				const value = get(s);
+				var value = get(s);
 				if (value === UNINITIALIZED) {
 					return false;
 				}
 			}
+
 			return has;
 		},
 
 		set(target, prop, value, receiver) {
-			let s = sources.get(prop);
+			var s = sources.get(prop);
+			var has = prop in target;
+
 			// If we haven't yet created a source for this property, we need to ensure
 			// we do so otherwise if we read it later, then the write won't be tracked and
 			// the heuristics of effects will be different vs if we had read the proxied
 			// object property before writing to that property.
 			if (s === undefined) {
-				// the read creates a signal
-				untrack(() => receiver[prop]);
-				s = sources.get(prop);
-			}
-
-			if (s !== undefined) {
+				if (!has || get_descriptor(target, prop)?.writable) {
+					s = source(undefined);
+					set(s, proxy(value, metadata));
+					sources.set(prop, s);
+				}
+			} else {
+				has = s.v !== UNINITIALIZED;
 				set(s, proxy(value, metadata));
 			}
 
-			const not_has = !(prop in target);
-
 			if (DEV) {
 				/** @type {ProxyMetadata | undefined} */
-				const prop_metadata = value?.[STATE_SYMBOL_METADATA];
+				var prop_metadata = value?.[STATE_SYMBOL_METADATA];
 				if (prop_metadata && prop_metadata?.parent !== metadata) {
 					widen_ownership(metadata, prop_metadata);
 				}
@@ -195,9 +212,9 @@ export function proxy(value, parent = null, prev) {
 
 			// variable.length = value -> clear all signals with index >= value
 			if (is_proxied_array && prop === 'length') {
-				for (let i = value; i < target.length; i += 1) {
-					const s = sources.get(i + '');
-					if (s !== undefined) set(s, UNINITIALIZED);
+				for (var i = value; i < target.length; i += 1) {
+					var other_s = sources.get(i + '');
+					if (other_s !== undefined) set(other_s, UNINITIALIZED);
 				}
 			}
 
@@ -206,22 +223,25 @@ export function proxy(value, parent = null, prev) {
 			// Set the new value before updating any signals so that any listeners get the new value
 			if (descriptor?.set) {
 				descriptor.set.call(receiver, value);
-			} else {
-				target[prop] = value;
 			}
 
-			if (not_has) {
+			if (!has) {
 				// If we have mutated an array directly, we might need to
-				// signal that length has also changed. Do it before updating the version
-				// to ensure that iterating over the array as a result of a version update
+				// signal that length has also changed. Do it before updating metadata
+				// to ensure that iterating over the array as a result of a metadata update
 				// will not cause the length to be out of sync.
-				if (is_proxied_array) {
-					const ls = sources.get('length');
-					const length = target.length;
-					if (ls !== undefined && ls.v !== length) {
-						set(ls, length);
+				if (is_proxied_array && typeof prop === 'string') {
+					var ls = sources.get('length');
+
+					if (ls !== undefined) {
+						var n = Number(prop);
+
+						if (Number.isInteger(n) && n >= ls.v) {
+							set(ls, n + 1);
+						}
 					}
 				}
+
 				update_version(version);
 			}
 
@@ -230,7 +250,19 @@ export function proxy(value, parent = null, prev) {
 
 		ownKeys(target) {
 			get(version);
-			return Reflect.ownKeys(target);
+
+			var own_keys = Reflect.ownKeys(target).filter((key) => {
+				var source = sources.get(key);
+				return source === undefined || source.v !== UNINITIALIZED;
+			});
+
+			for (var [key, source] of sources) {
+				if (source.v !== UNINITIALIZED && !(key in target)) {
+					own_keys.push(key);
+				}
+			}
+
+			return own_keys;
 		},
 
 		setPrototypeOf() {
