@@ -38,12 +38,15 @@ export function proxy(value, parent = null, prev) {
 	var is_proxied_array = is_array(value);
 	var version = source(0);
 
-	var metadata = /** @type {ProxyMetadata} */ ({
-		parent,
-		owners: null
-	});
+	/** @type {ProxyMetadata} */
+	var metadata;
 
 	if (DEV) {
+		metadata = {
+			parent,
+			owners: null
+		};
+
 		if (prev) {
 			// Reuse owners from previous state; necessary because reassignment is not guaranteed to have correct component context.
 			// If no previous proxy exists we play it safe and assume ownerless state
