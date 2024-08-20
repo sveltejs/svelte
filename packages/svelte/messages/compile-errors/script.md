@@ -122,6 +122,10 @@
 
 > Cannot use rune without parentheses
 
+## rune_removed
+
+> The `%name%` rune has been removed
+
 ## rune_renamed
 
 > `%name%` is now `%replacement%`

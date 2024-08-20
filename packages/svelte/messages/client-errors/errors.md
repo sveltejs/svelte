@@ -64,6 +64,10 @@
 
 > The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
 
+## state_descriptors_fixed
+
+> Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
+
 ## state_prototype_fixed
 
 > Cannot set prototype of `$state` object

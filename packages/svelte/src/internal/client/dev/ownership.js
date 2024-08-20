@@ -1,7 +1,7 @@
 /** @import { ProxyMetadata } from '#client' */
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
-import { STATE_SYMBOL } from '../constants.js';
+import { STATE_SYMBOL_METADATA } from '../constants.js';
 import { render_effect, user_pre_effect } from '../reactivity/effects.js';
 import { dev_current_component_function } from '../runtime.js';
 import { get_prototype_of } from '../../shared/utils.js';
@@ -113,7 +113,7 @@ export function mark_module_end(component) {
 export function add_owner(object, owner, global = false, skip_warning = false) {
 	if (object && !global) {
 		const component = dev_current_component_function;
-		const metadata = object[STATE_SYMBOL];
+		const metadata = object[STATE_SYMBOL_METADATA];
 		if (metadata && !has_owner(metadata, component)) {
 			let original = get_owner(metadata);
 
@@ -138,8 +138,8 @@ export function add_owner_effect(get_object, Component, skip_warning = false) {
 }
 
 /**
- * @param {ProxyMetadata<any> | null} from
- * @param {ProxyMetadata<any>} to
+ * @param {ProxyMetadata | null} from
+ * @param {ProxyMetadata} to
  */
 export function widen_ownership(from, to) {
 	if (to.owners === null) {
@@ -166,7 +166,7 @@ export function widen_ownership(from, to) {
  * @param {Set<any>} seen
  */
 function add_owner_to_object(object, owner, seen) {
-	const metadata = /** @type {ProxyMetadata} */ (object?.[STATE_SYMBOL]);
+	const metadata = /** @type {ProxyMetadata} */ (object?.[STATE_SYMBOL_METADATA]);
 
 	if (metadata) {
 		// this is a state proxy, add owner directly, if not globally shared

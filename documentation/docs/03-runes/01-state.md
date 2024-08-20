@@ -101,28 +101,6 @@ To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snaps
 
 This is handy when you want to pass some state to an external library or API that doesn't expect a proxy, such as `structuredClone`.
 
-## `$state.is`
-
-Sometimes you might need to compare two values, one of which is a reactive `$state(...)` proxy but the other is not. For this you can use `$state.is(a, b)`:
-
-```svelte
-<script>
-	let foo = $state({});
-	let bar = {};
-
-	foo.bar = bar;
-
-	console.log(foo.bar === bar); // false — `foo.bar` is a reactive proxy
-	console.log($state.is(foo.bar, bar)); // true
-</script>
-```
-
-This is handy when you might want to check if the object exists within a deeply reactive object/array.
-
-Under the hood, `$state.is` uses [`Object.is`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is) for comparing the values.
-
-> Use this as an escape hatch - most of the time you don't need this. Svelte will warn you at dev time if you happen to run into this problem
-
 ## `$derived`
 
 Derived state is declared with the `$derived` rune:
