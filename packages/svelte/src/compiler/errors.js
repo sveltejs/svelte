@@ -787,6 +787,15 @@ export function component_invalid_directive(node) {
 }
 
 /**
+ * Component name must be a valid variable name or dot notation expression
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function component_invalid_name(node) {
+	e(node, "component_invalid_name", "Component name must be a valid variable name or dot notation expression");
+}
+
+/**
  * Cyclical dependency detected: %cycle%
  * @param {null | number | NodeLike} node
  * @param {string} cycle
