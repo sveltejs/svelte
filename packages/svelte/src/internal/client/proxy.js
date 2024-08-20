@@ -1,4 +1,4 @@
-/** @import { ProxyMetadata, ProxyOwnership, ProxyStateObject, Source } from '#client' */
+/** @import { ProxyOwnership, ProxyStateObject, Source } from '#client' */
 import { DEV } from 'esm-env';
 import { get, current_component_context, untrack, current_effect } from './runtime.js';
 import {
@@ -37,10 +37,6 @@ export function proxy(value, parent = null, prev) {
 	var sources = new Map();
 	var is_proxied_array = is_array(value);
 	var version = source(0);
-
-	let metadata = /** @type {ProxyMetadata} */ ({
-		t: value
-	});
 
 	var ownership = /** @type {ProxyOwnership} */ ({
 		parent,
@@ -107,7 +103,7 @@ export function proxy(value, parent = null, prev) {
 			}
 
 			if (prop === STATE_SYMBOL) {
-				return metadata;
+				return value;
 			}
 
 			let s = sources.get(prop);
@@ -213,8 +209,8 @@ export function proxy(value, parent = null, prev) {
 
 			if (not_has) {
 				// If we have mutated an array directly, we might need to
-				// signal that length has also changed. Do it before updating metadata
-				// to ensure that iterating over the array as a result of a metadata update
+				// signal that length has also changed. Do it before updating the version
+				// to ensure that iterating over the array as a result of a version update
 				// will not cause the length to be out of sync.
 				if (is_proxied_array) {
 					const ls = sources.get('length');
@@ -253,11 +249,9 @@ function update_version(signal, d = 1) {
  */
 export function get_proxied_value(value) {
 	if (value !== null && typeof value === 'object' && STATE_SYMBOL in value) {
-		var metadata = value[STATE_SYMBOL];
-		if (metadata) {
-			return metadata.t;
-		}
+		return value[STATE_SYMBOL];
 	}
+
 	return value;
 }
 
