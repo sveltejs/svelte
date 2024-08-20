@@ -349,6 +349,16 @@ export function rune_missing_parentheses(node) {
 }
 
 /**
+ * The `%name%` rune has been removed
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function rune_removed(node, name) {
+	e(node, "rune_removed", `The \`${name}\` rune has been removed`);
+}
+
+/**
  * `%name%` is now `%replacement%`
  * @param {null | number | NodeLike} node
  * @param {string} name
@@ -422,16 +432,6 @@ export function store_invalid_subscription(node) {
  */
 export function store_invalid_subscription_module(node) {
 	e(node, "store_invalid_subscription_module", "Cannot reference store value outside a `.svelte` file");
-}
-
-/**
- * The `%name%` rune has been removed
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @returns {never}
- */
-export function rune_removed(node, name) {
-	e(node, "rune_removed", `The \`${name}\` rune has been removed`);
 }
 
 /**

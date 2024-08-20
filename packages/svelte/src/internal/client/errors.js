@@ -279,6 +279,22 @@ export function rune_outside_svelte(rune) {
 }
 
 /**
+ * Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
+ * @returns {never}
+ */
+export function state_descriptors_fixed() {
+	if (DEV) {
+		const error = new Error(`state_descriptors_fixed\nProperty descriptors defined on \`$state\` objects must contain \`value\` and always be \`enumerable\`, \`configurable\` and \`writable\`.`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("state_descriptors_fixed");
+	}
+}
+
+/**
  * Cannot set prototype of `$state` object
  * @returns {never}
  */
@@ -323,21 +339,5 @@ export function svelte_component_invalid_this_value() {
 	} else {
 		// TODO print a link to the documentation
 		throw new Error("svelte_component_invalid_this_value");
-	}
-}
-
-/**
- * Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
- * @returns {never}
- */
-export function state_descriptors_fixed() {
-	if (DEV) {
-		const error = new Error(`state_descriptors_fixed\nProperty descriptors defined on \`$state\` objects must contain \`value\` and always be \`enumerable\`, \`configurable\` and \`writable\`.`);
-
-		error.name = 'Svelte error';
-		throw error;
-	} else {
-		// TODO print a link to the documentation
-		throw new Error("state_descriptors_fixed");
 	}
 }
