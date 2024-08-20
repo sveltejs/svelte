@@ -11,7 +11,7 @@ import {
 } from '../shared/utils.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
 import { source, set } from './reactivity/sources.js';
-import { STATE_SYMBOL, STATE_SYMBOL_OWNERSHIP } from './constants.js';
+import { STATE_SYMBOL, STATE_SYMBOL_METADATA } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 
@@ -48,7 +48,7 @@ export function proxy(value, parent = null, prev) {
 			// Reuse owners from previous state; necessary because reassignment is not guaranteed to have correct component context.
 			// If no previous proxy exists we play it safe and assume ownerless state
 			// @ts-expect-error
-			const prev_owners = prev.v?.[STATE_SYMBOL_OWNERSHIP]?.owners;
+			const prev_owners = prev.v?.[STATE_SYMBOL_METADATA]?.owners;
 			metadata.owners = prev_owners ? new Set(prev_owners) : null;
 		} else {
 			metadata.owners =
@@ -98,7 +98,7 @@ export function proxy(value, parent = null, prev) {
 		},
 
 		get(target, prop, receiver) {
-			if (DEV && prop === STATE_SYMBOL_OWNERSHIP) {
+			if (DEV && prop === STATE_SYMBOL_METADATA) {
 				return metadata;
 			}
 
@@ -137,7 +137,7 @@ export function proxy(value, parent = null, prev) {
 		},
 
 		has(target, prop) {
-			if (DEV && prop === STATE_SYMBOL_OWNERSHIP) {
+			if (DEV && prop === STATE_SYMBOL_METADATA) {
 				return true;
 			}
 
@@ -184,7 +184,7 @@ export function proxy(value, parent = null, prev) {
 
 			if (DEV) {
 				/** @type {ProxyMetadata | undefined} */
-				const prop_metadata = value?.[STATE_SYMBOL_OWNERSHIP];
+				const prop_metadata = value?.[STATE_SYMBOL_METADATA];
 				if (prop_metadata && prop_metadata?.parent !== metadata) {
 					widen_ownership(metadata, prop_metadata);
 				}
