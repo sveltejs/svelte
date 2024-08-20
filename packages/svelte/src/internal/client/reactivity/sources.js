@@ -27,6 +27,7 @@ import {
 } from '../constants.js';
 import * as e from '../errors.js';
 import { derived } from './deriveds.js';
+import { render_effect } from './effects.js';
 
 let inspect_effects = new Set();
 
@@ -53,44 +54,23 @@ export function source(v) {
  * @returns {(value?: V) => V}
  */
 export function source_link(get_value, callback) {
-	var was_local = false;
-	var init = false;
-	var local_source = source(/** @type {V} */ (undefined));
+	var s = source(/** @type {V} */ (undefined));
+	var ran = false;
 
-	var linked_derived = derived(() => {
-		var local_value = /** @type {V} */ (get(local_source));
-		var linked_value = get_value();
+	callback ??= (value) => set(s, value);
 
-		if (was_local) {
-			was_local = false;
-			return local_value;
+	render_effect(() => {
+		if (ran) {
+			callback(get_value());
+		} else {
+			s.v = get_value();
 		}
-
-		return linked_value;
 	});
 
+	ran = true;
+
 	return function (/** @type {any} */ value) {
-		if (arguments.length > 0) {
-			was_local = true;
-			set(local_source, value);
-			get(linked_derived);
-			return value;
-		}
-
-		var linked_value = get(linked_derived);
-
-		if (init) {
-			if (callback !== undefined) {
-				untrack(() => callback(linked_value));
-				return local_source.v;
-			}
-		} else {
-			init = true;
-		}
-
-		local_source.v = linked_value;
-
-		return linked_value;
+		return arguments.length === 1 ? set(s, /** @type {V} */ (value)) : get(s);
 	};
 }
 
