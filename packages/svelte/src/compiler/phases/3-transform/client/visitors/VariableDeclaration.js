@@ -113,7 +113,7 @@ export function VariableDeclaration(node, context) {
 			const value =
 				args.length === 0 ? b.id('undefined') : /** @type {Expression} */ (context.visit(args[0]));
 
-			if (rune === '$state' || rune === '$state.raw' || rune === '$state.link') {
+			if (rune === '$state' || rune === '$state.raw') {
 				/**
 				 * @param {Identifier} id
 				 * @param {Expression} value
@@ -122,24 +122,12 @@ export function VariableDeclaration(node, context) {
 					const binding = /** @type {import('#compiler').Binding} */ (
 						context.state.scope.get(id.name)
 					);
-
-					if (
-						(rune === '$state' || rune === '$state.link') &&
-						should_proxy(value, context.state.scope)
-					) {
+					if (rune === '$state' && should_proxy(value, context.state.scope)) {
 						value = b.call('$.proxy', value);
 					}
-
-					if (rune === '$state.link') {
-						value = b.call(
-							'$.source_link',
-							b.thunk(value),
-							args.length === 2 && /** @type {Expression} */ (context.visit(args[1]))
-						);
-					} else if (is_state_source(binding, context.state.analysis)) {
+					if (is_state_source(binding, context.state.analysis)) {
 						value = b.call('$.source', value);
 					}
-
 					return value;
 				};
 
