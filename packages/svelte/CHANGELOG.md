@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.232
+
+### Patch Changes
+
+- breaking: remove `$state.link` rune pending further design work ([#12943](https://github.com/sveltejs/svelte/pull/12943))
+
+- fix: ensure `$store` reads are properly transformed ([#12952](https://github.com/sveltejs/svelte/pull/12952))
+
+- breaking: deprecate `context="module"` in favor of `module` ([#12948](https://github.com/sveltejs/svelte/pull/12948))
+
 ## 5.0.0-next.231
 
 ### Patch Changes
