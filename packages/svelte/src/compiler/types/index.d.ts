@@ -278,7 +278,6 @@ export interface Binding {
 		| 'bindable_prop'
 		| 'rest_prop'
 		| 'state'
-		| 'linked_state'
 		| 'raw_state'
 		| 'derived'
 		| 'each'

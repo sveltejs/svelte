@@ -88,7 +88,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 }
 
 export interface StateField {
-	kind: 'state' | 'raw_state' | 'linked_state' | 'derived' | 'derived_by';
+	kind: 'state' | 'raw_state' | 'derived' | 'derived_by';
 	id: PrivateIdentifier;
 }
 

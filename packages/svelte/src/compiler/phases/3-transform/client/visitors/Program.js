@@ -102,7 +102,7 @@ export function Program(_, context) {
 			if (is_prop_source(binding, context.state)) {
 				context.state.transform[name] = {
 					read: b.call,
-					assign: b.call,
+					assign: (node, value) => b.call(node, value),
 					mutate: (node, value) => {
 						if (binding.kind === 'bindable_prop') {
 							// only necessary for interop with legacy parent bindings

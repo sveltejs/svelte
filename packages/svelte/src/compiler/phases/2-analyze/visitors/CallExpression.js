@@ -74,7 +74,6 @@ export function CallExpression(node, context) {
 
 		case '$state':
 		case '$state.raw':
-		case '$state.link':
 		case '$derived':
 		case '$derived.by':
 			if (
@@ -86,7 +85,7 @@ export function CallExpression(node, context) {
 
 			if ((rune === '$derived' || rune === '$derived.by') && node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
-			} else if ((rune === '$state' || rune === '$state.link') && node.arguments.length > 1) {
+			} else if (rune === '$state' && node.arguments.length > 1) {
 				e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
 			}
 
@@ -170,7 +169,7 @@ export function CallExpression(node, context) {
 	}
 
 	// `$inspect(foo)` or `$derived(foo) should not trigger the `static-state-reference` warning
-	if (rune === '$inspect' || rune === '$derived' || rune === '$state.link') {
+	if (rune === '$inspect' || rune === '$derived') {
 		context.next({ ...context.state, function_depth: context.state.function_depth + 1 });
 	} else {
 		context.next();

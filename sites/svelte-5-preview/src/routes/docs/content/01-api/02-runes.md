@@ -64,33 +64,6 @@ Only plain objects and arrays [are made deeply reactive](/#H4sIAAAAAAAAE42QwWrDM
 
 In non-runes mode, a `let` declaration is treated as reactive state if it is updated at some point. Unlike `$state(...)`, which works anywhere in your app, `let` only behaves this way at the top level of a component.
 
-## `$state.link`
-
-Linked state stays up to date with its input:
-
-```js
-let a = $state(0);
-let b = $state.link(a);
-
-a = 1;
-console.log(a, b); // 1, 1
-```
-
-You can temporarily _unlink_ state. It will be _relinked_ when the input value changes:
-
-```js
-let a = 1;
-let b = 1;
-// ---cut---
-b = 2; // unlink
-console.log(a, b); // 1, 2
-
-a = 3; // relink
-console.log(a, b); // 3, 3
-```
-
-As with `$state`, if `$state.link` is passed a plain object or array it will be made deeply reactive. If passed an existing state proxy it will be reused, meaning that mutating the linked state will mutate the original. To clone a state proxy, you can use [`$state.snapshot`](#$state-snapshot).
-
 ## `$state.raw`
 
 State declared with `$state.raw` cannot be mutated; it can only be _reassigned_. In other words, rather than assigning to a property of an object, or using an array method like `push`, replace the object or array altogether if you'd like to update it:
