@@ -43,7 +43,12 @@ export function Program(_, context) {
 	for (const [name, binding] of context.state.scope.declarations) {
 		if (binding.kind === 'store_sub') {
 			// read lazily, so that transforms added later are still applied
-			const get_store = () => /** @type {Expression} */ (context.visit(b.id(name.slice(1))));
+			/** @type {Expression} */
+			let cached;
+
+			const get_store = () => {
+				return (cached ??= /** @type {Expression} */ (context.visit(b.id(name.slice(1)))));
+			};
 
 			context.state.transform[name] = {
 				read: b.call,
