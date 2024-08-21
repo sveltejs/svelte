@@ -31,7 +31,7 @@ export function validate_dynamic_component(component_fn) {
 	} catch (err) {
 		const { message } = /** @type {Error} */ (err);
 
-		if (typeof message === 'string' && message.indexOf('is not a function') !== -1) {
+		if (typeof message === 'string' && message.indexOf('$$component is not a function') !== -1) {
 			e.svelte_component_invalid_this_value();
 		}
 
