@@ -15,31 +15,6 @@ function is_void(tag) {
 }
 
 /**
- * @template Component
- * @param {() => Component} component_fn
- * @returns {Component}
- */
-export function validate_dynamic_component(component_fn) {
-	try {
-		const instance = component_fn();
-
-		if (instance !== undefined && typeof instance !== 'object') {
-			e.svelte_component_invalid_this_value();
-		}
-
-		return instance;
-	} catch (err) {
-		const { message } = /** @type {Error} */ (err);
-
-		if (typeof message === 'string' && message.indexOf('is not a function') !== -1) {
-			e.svelte_component_invalid_this_value();
-		}
-
-		throw err;
-	}
-}
-
-/**
  * @param {() => any} collection
  * @param {(item: any, index: number) => string} key_fn
  * @returns {void}

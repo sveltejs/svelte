@@ -144,12 +144,7 @@ export {
 	setContext,
 	hasContext
 } from './runtime.js';
-export {
-	validate_binding,
-	validate_dynamic_component,
-	validate_each_keys,
-	validate_prop_bindings
-} from './validate.js';
+export { validate_binding, validate_each_keys, validate_prop_bindings } from './validate.js';
 export { raf } from './timing.js';
 export { proxy } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
