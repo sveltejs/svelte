@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.230
+
+### Patch Changes
+
+- fix: align list of passive events with browser defaults ([#12933](https://github.com/sveltejs/svelte/pull/12933))
+
+- fix: ensure `{#await}` scope shadowing is computed in the correct order ([#12945](https://github.com/sveltejs/svelte/pull/12945))
+
+- fix: don't skip custom elements with attributes ([#12939](https://github.com/sveltejs/svelte/pull/12939))
+
 ## 5.0.0-next.229
 
 ### Patch Changes
