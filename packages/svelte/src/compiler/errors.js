@@ -99,12 +99,12 @@ export function declaration_duplicate(node, name) {
 }
 
 /**
- * Cannot declare same variable name which is imported inside `<script module>`
+ * Cannot declare a variable with the same name as an import inside `<script module>`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function declaration_duplicate_module_import(node) {
-	e(node, "declaration_duplicate_module_import", "Cannot declare same variable name which is imported inside `<script module>`");
+	e(node, "declaration_duplicate_module_import", "Cannot declare a variable with the same name as an import inside `<script module>`");
 }
 
 /**
@@ -1053,13 +1053,13 @@ export function script_duplicate(node) {
 }
 
 /**
- * If the %name% attribute is supplied, it must be a boolean attribute
+ * If the `%name%` attribute is supplied, it must be a boolean attribute
  * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
 export function script_invalid_attribute_value(node, name) {
-	e(node, "script_invalid_attribute_value", `If the ${name} attribute is supplied, it must be a boolean attribute`);
+	e(node, "script_invalid_attribute_value", `If the \`${name}\` attribute is supplied, it must be a boolean attribute`);
 }
 
 /**
@@ -1072,13 +1072,13 @@ export function script_invalid_context(node) {
 }
 
 /**
- * The %name% attribute is reserved and cannot be used
+ * The `%name%` attribute is reserved and cannot be used
  * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
 export function script_reserved_attribute(node, name) {
-	e(node, "script_reserved_attribute", `The ${name} attribute is reserved and cannot be used`);
+	e(node, "script_reserved_attribute", `The \`${name}\` attribute is reserved and cannot be used`);
 }
 
 /**

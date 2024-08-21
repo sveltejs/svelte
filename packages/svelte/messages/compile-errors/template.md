@@ -220,7 +220,7 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 ## script_invalid_attribute_value
 
-> If the %name% attribute is supplied, it must be a boolean attribute
+> If the `%name%` attribute is supplied, it must be a boolean attribute
 
 ## script_invalid_context
 
@@ -228,7 +228,7 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 ## script_reserved_attribute
 
-> The %name% attribute is reserved and cannot be used
+> The `%name%` attribute is reserved and cannot be used
 
 ## slot_attribute_duplicate
 
