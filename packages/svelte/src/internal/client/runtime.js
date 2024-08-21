@@ -735,6 +735,19 @@ export function get(signal) {
 }
 
 /**
+ * Like `get`, but checks for `undefined`. Used for `var` declarations because they can be accessed before being declared
+ * @template V
+ * @param {Value<V> | undefined} signal
+ * @returns {V | undefined}
+ */
+export function safe_get(signal) {
+	if (!signal) {
+		return undefined;
+	}
+	return get(signal);
+}
+
+/**
  * Invokes a function and captures all signals that are read during the invocation,
  * then invalidates them.
  * @param {() => any} fn

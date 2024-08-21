@@ -296,7 +296,7 @@ export function VariableDeclaration(node, context) {
 }
 
 /**
- * Creates the output for a state declaration.
+ * Creates the output for a state declaration in legacy mode.
  * @param {VariableDeclarator} declarator
  * @param {Scope} scope
  * @param {Expression} value
