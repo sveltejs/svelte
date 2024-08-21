@@ -131,7 +131,11 @@ export function VariableDeclaration(node, context) {
 					}
 
 					if (rune === '$state.link') {
-						value = b.call('$.source_link', b.thunk(value));
+						value = b.call(
+							'$.source_link',
+							b.thunk(value),
+							args.length === 2 && /** @type {Expression} */ (context.visit(args[1]))
+						);
 					} else if (is_state_source(binding, context.state.analysis)) {
 						value = b.call('$.source', value);
 					}
