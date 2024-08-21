@@ -146,6 +146,10 @@ function is_static_element(node) {
 		if (node.name === 'option' && attribute.name === 'value') {
 			return false;
 		}
+
+		if (node.name.includes('-')) {
+			return false; // we're setting all attributes on custom elements through properties
+		}
 	}
 
 	return true;
