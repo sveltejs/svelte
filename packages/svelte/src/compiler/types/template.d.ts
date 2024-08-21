@@ -488,7 +488,7 @@ export type SvelteNode = Node | TemplateNode | Fragment | Css.Node;
 
 export interface Script extends BaseNode {
 	type: 'Script';
-	context: string;
+	context: 'default' | 'module';
 	content: Program;
 	attributes: Attribute[];
 }

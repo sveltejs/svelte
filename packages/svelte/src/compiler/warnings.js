@@ -118,6 +118,7 @@ export const codes = [
 	"event_directive_deprecated",
 	"node_invalid_placement_ssr",
 	"script_context_deprecated",
+	"script_unknown_attribute",
 	"slot_element_deprecated",
 	"svelte_component_deprecated",
 	"svelte_element_invalid_this"
@@ -776,6 +777,14 @@ export function node_invalid_placement_ssr(node, thing, parent) {
  */
 export function script_context_deprecated(node) {
 	w(node, "script_context_deprecated", "`context=\"module\"` is deprecated, use the `module` attribute instead");
+}
+
+/**
+ * Unrecognized attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
+ * @param {null | NodeLike} node
+ */
+export function script_unknown_attribute(node) {
+	w(node, "script_unknown_attribute", "Unrecognized attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it");
 }
 
 /**

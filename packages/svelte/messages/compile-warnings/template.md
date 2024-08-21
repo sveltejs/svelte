@@ -54,6 +54,10 @@ This code will work when the component is rendered on the client (which is why t
 
 > `context="module"` is deprecated, use the `module` attribute instead
 
+## script_unknown_attribute
+
+> Unrecognized attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
+
 ## slot_element_deprecated
 
 > Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead
