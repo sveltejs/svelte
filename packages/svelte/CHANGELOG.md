@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.233
+
+### Patch Changes
+
+- fix: more robust handling of var declarations ([#12949](https://github.com/sveltejs/svelte/pull/12949))
+
+- fix: remove buggy `validate_dynamic_component` check ([#12960](https://github.com/sveltejs/svelte/pull/12960))
+
 ## 5.0.0-next.232
 
 ### Patch Changes
