@@ -74,6 +74,7 @@ export function CallExpression(node, context) {
 
 		case '$state':
 		case '$state.raw':
+		case '$state.link':
 		case '$derived':
 		case '$derived.by':
 			if (
@@ -85,7 +86,7 @@ export function CallExpression(node, context) {
 
 			if ((rune === '$derived' || rune === '$derived.by') && node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
-			} else if (rune === '$state' && node.arguments.length > 1) {
+			} else if ((rune === '$state' || rune === '$state.link') && node.arguments.length > 1) {
 				e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
 			}
 
