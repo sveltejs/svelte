@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.231
+
+### Patch Changes
+
+- breaking: remove callback from `$state.link` ([#12942](https://github.com/sveltejs/svelte/pull/12942))
+
 ## 5.0.0-next.230
 
 ### Patch Changes
