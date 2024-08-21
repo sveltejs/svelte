@@ -1053,15 +1053,6 @@ export function script_duplicate(node) {
 }
 
 /**
- * A top-level `<script>` element can only have static attributes
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function script_invalid_attribute(node) {
-	e(node, "script_invalid_attribute", "A top-level `<script>` element can only have static attributes");
-}
-
-/**
  * If the `%name%` attribute is supplied, it must be a boolean attribute
  * @param {null | number | NodeLike} node
  * @param {string} name

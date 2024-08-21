@@ -1946,7 +1946,7 @@ declare module 'svelte/compiler' {
 
 	interface Script extends BaseNode {
 		type: 'Script';
-		context: string;
+		context: 'default' | 'module';
 		content: Program;
 		attributes: Attribute[];
 	}
