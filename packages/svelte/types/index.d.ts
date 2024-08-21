@@ -2937,7 +2937,7 @@ declare namespace $state {
 	 *
 	 * @param value The linked value
 	 */
-	export function link<T>(value: T, callback?: (value: T) => void): T;
+	export function link<T>(value: T): T;
 
 	export function raw<T>(initial: T): T;
 	export function raw<T>(): T | undefined;
