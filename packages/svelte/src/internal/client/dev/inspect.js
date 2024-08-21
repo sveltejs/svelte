@@ -1,5 +1,5 @@
 import { snapshot } from '../../shared/clone.js';
-import { inspect_effect, validate_effect } from '../reactivity/effects.js';
+import { sync_effect, validate_effect } from '../reactivity/effects.js';
 
 /**
  * @param {() => any[]} get_value
@@ -11,7 +11,7 @@ export function inspect(get_value, inspector = console.log) {
 
 	let initial = true;
 
-	inspect_effect(() => {
+	sync_effect(() => {
 		inspector(initial ? 'init' : 'update', ...snapshot(get_value()));
 		initial = false;
 	});

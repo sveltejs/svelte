@@ -1,5 +1,4 @@
 /** @import { Derived, Effect, Source, Value } from '#client' */
-import { DEV } from 'esm-env';
 import {
 	current_component_context,
 	current_reaction,
@@ -21,14 +20,14 @@ import {
 	DERIVED,
 	DIRTY,
 	BRANCH_EFFECT,
-	INSPECT_EFFECT,
+	SYNC_EFFECT,
 	UNOWNED,
 	MAYBE_DIRTY
 } from '../constants.js';
 import * as e from '../errors.js';
 import { derived } from './deriveds.js';
 
-let inspect_effects = new Set();
+let sync_effects = new Set();
 
 /**
  * @template V
@@ -151,13 +150,11 @@ export function set(source, value) {
 			}
 		}
 
-		if (DEV) {
-			for (const effect of inspect_effects) {
-				update_effect(effect);
-			}
-
-			inspect_effects.clear();
+		for (const effect of sync_effects) {
+			update_effect(effect);
 		}
+
+		sync_effects.clear();
 	}
 
 	return value;
@@ -185,9 +182,9 @@ function mark_reactions(signal, status) {
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === current_effect) continue;
 
-		// Inspect effects need to run immediately, so that the stack trace makes sense
-		if (DEV && (flags & INSPECT_EFFECT) !== 0) {
-			inspect_effects.add(reaction);
+		// Sync effects need to run immediately
+		if ((flags & SYNC_EFFECT) !== 0) {
+			sync_effects.add(reaction);
 			continue;
 		}
 

@@ -32,7 +32,7 @@ import {
 	DERIVED,
 	UNOWNED,
 	CLEAN,
-	INSPECT_EFFECT,
+	SYNC_EFFECT,
 	HEAD_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
@@ -84,11 +84,9 @@ function create_effect(type, fn, sync, push = true) {
 	var is_root = (type & ROOT_EFFECT) !== 0;
 	var parent_effect = current_effect;
 
-	if (DEV) {
-		// Ensure the parent is never an inspect effect
-		while (parent_effect !== null && (parent_effect.f & INSPECT_EFFECT) !== 0) {
-			parent_effect = parent_effect.parent;
-		}
+	// Ensure the parent is never an inspect effect
+	while (parent_effect !== null && (parent_effect.f & SYNC_EFFECT) !== 0) {
+		parent_effect = parent_effect.parent;
 	}
 
 	/** @type {Effect} */
@@ -222,8 +220,8 @@ export function user_pre_effect(fn) {
 }
 
 /** @param {() => void | (() => void)} fn */
-export function inspect_effect(fn) {
-	return create_effect(INSPECT_EFFECT, fn, true);
+export function sync_effect(fn) {
+	return create_effect(SYNC_EFFECT, fn, true);
 }
 
 /**
