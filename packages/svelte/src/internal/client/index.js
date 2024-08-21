@@ -127,6 +127,7 @@ export {
 export { set_text } from './render.js';
 export {
 	get,
+	safe_get,
 	invalidate_inner_signals,
 	flush_sync,
 	tick,

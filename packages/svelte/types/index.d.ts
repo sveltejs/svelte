@@ -282,9 +282,9 @@ declare module 'svelte' {
 			// rest parameter type, which is not supported. If rest parameters are added
 			// in the future, the condition can be removed.
 			...args: number extends Parameters['length'] ? never : Parameters
-		): typeof SnippetReturn & {
-			_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-		};
+		): {
+			'{@render ...} must be called with a Snippet': "import type { Snippet } from 'svelte'";
+		} & typeof SnippetReturn;
 	}
 
 	interface DispatchOptions {
@@ -1518,7 +1518,7 @@ declare module 'svelte/compiler' {
 		css: Css.StyleSheet | null;
 		/** The parsed `<script>` element, if exists */
 		instance: Script | null;
-		/** The parsed `<script context="module">` element, if exists */
+		/** The parsed `<script module>` element, if exists */
 		module: Script | null;
 		metadata: {
 			/** Whether the component was parsed with typescript */
@@ -1945,7 +1945,7 @@ declare module 'svelte/compiler' {
 
 	interface Script extends BaseNode {
 		type: 'Script';
-		context: string;
+		context: 'default' | 'module';
 		content: Program;
 		attributes: Attribute[];
 	}

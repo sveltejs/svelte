@@ -2,7 +2,7 @@
 	"css": null,
 	"js": [],
 	"start": 0,
-	"end": 112,
+	"end": 102,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
@@ -16,8 +16,8 @@
 			},
 			{
 				"type": "Text",
-				"start": 112,
-				"end": 114,
+				"start": 102,
+				"end": 104,
 				"raw": "\n\n",
 				"data": "\n\n"
 			}
@@ -79,12 +79,12 @@
 	"module": {
 		"type": "Script",
 		"start": 67,
-		"end": 112,
+		"end": 102,
 		"context": "module",
 		"content": {
 			"type": "Program",
-			"start": 102,
-			"end": 103,
+			"start": 92,
+			"end": 93,
 			"loc": {
 				"start": {
 					"line": 1,
@@ -102,27 +102,19 @@
 			{
 				"type": "Attribute",
 				"start": 75,
-				"end": 91,
-				"name": "context",
-				"value": [
-					{
-						"start": 84,
-						"end": 90,
-						"type": "Text",
-						"raw": "module",
-						"data": "module"
-					}
-				]
+				"end": 81,
+				"name": "module",
+				"value": true
 			},
 			{
 				"type": "Attribute",
-				"start": 92,
-				"end": 101,
+				"start": 82,
+				"end": 91,
 				"name": "lang",
 				"value": [
 					{
-						"start": 98,
-						"end": 100,
+						"start": 88,
+						"end": 90,
 						"type": "Text",
 						"raw": "ts",
 						"data": "ts"
@@ -133,13 +125,13 @@
 	},
 	"instance": {
 		"type": "Script",
-		"start": 114,
-		"end": 179,
+		"start": 104,
+		"end": 169,
 		"context": "default",
 		"content": {
 			"type": "Program",
-			"start": 169,
-			"end": 170,
+			"start": 159,
+			"end": 160,
 			"loc": {
 				"start": {
 					"line": 1,
@@ -156,13 +148,13 @@
 		"attributes": [
 			{
 				"type": "Attribute",
-				"start": 122,
-				"end": 131,
+				"start": 112,
+				"end": 121,
 				"name": "lang",
 				"value": [
 					{
-						"start": 128,
-						"end": 130,
+						"start": 118,
+						"end": 120,
 						"type": "Text",
 						"raw": "ts",
 						"data": "ts"
@@ -171,13 +163,13 @@
 			},
 			{
 				"type": "Attribute",
-				"start": 132,
-				"end": 168,
+				"start": 122,
+				"end": 158,
 				"name": "generics",
 				"value": [
 					{
-						"start": 142,
-						"end": 167,
+						"start": 132,
+						"end": 157,
 						"type": "Text",
 						"raw": "T extends { foo: number }",
 						"data": "T extends { foo: number }"

@@ -61,7 +61,7 @@ export interface Root extends BaseNode {
 	css: Css.StyleSheet | null;
 	/** The parsed `<script>` element, if exists */
 	instance: Script | null;
-	/** The parsed `<script context="module">` element, if exists */
+	/** The parsed `<script module>` element, if exists */
 	module: Script | null;
 	metadata: {
 		/** Whether the component was parsed with typescript */
@@ -488,7 +488,7 @@ export type SvelteNode = Node | TemplateNode | Fragment | Css.Node;
 
 export interface Script extends BaseNode {
 	type: 'Script';
-	context: string;
+	context: 'default' | 'module';
 	content: Program;
 	attributes: Attribute[];
 }

@@ -50,6 +50,14 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 This code will work when the component is rendered on the client (which is why this is a warning rather than an error), but if you use server rendering it will cause hydration to fail.
 
+## script_context_deprecated
+
+> `context="module"` is deprecated, use the `module` attribute instead
+
+## script_unknown_attribute
+
+> Unrecognized attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
+
 ## slot_element_deprecated
 
 > Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead

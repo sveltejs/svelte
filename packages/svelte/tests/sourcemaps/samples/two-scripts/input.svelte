@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	export let first;
 </script>
 

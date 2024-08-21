@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	let toast1 = $state();
 	let toast2 = $state({});
 
@@ -8,7 +8,7 @@
 			show: true
 		};
 		toast1.show = false;
-		
+
 		toast2 = {
 			message: 'foo',
 			show: true

@@ -26,3 +26,7 @@
 	<p>completely</p>
 	<p>ignored</p>
 </main>
+
+<cant-skip>
+	<custom-elements with="attributes"></custom-elements>
+</cant-skip>
