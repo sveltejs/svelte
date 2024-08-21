@@ -41,6 +41,45 @@ export function Program(_, context) {
 	}
 
 	for (const [name, binding] of context.state.scope.declarations) {
+		if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
+			if (is_prop_source(binding, context.state)) {
+				context.state.transform[name] = {
+					read: b.call,
+					assign: b.call,
+					mutate: (node, value) => {
+						if (binding.kind === 'bindable_prop') {
+							// only necessary for interop with legacy parent bindings
+							return b.call(node, value, b.true);
+						}
+
+						return value;
+					},
+					update: (node) => {
+						return b.call(
+							node.prefix ? '$.update_pre_prop' : '$.update_prop',
+							node.argument,
+							node.operator === '--' && b.literal(-1)
+						);
+					}
+				};
+			} else if (binding.prop_alias) {
+				const key = b.key(binding.prop_alias);
+
+				context.state.transform[name] = {
+					read: (_) => b.member(b.id('$$props'), key, key.type === 'Literal')
+				};
+			} else {
+				context.state.transform[name] = {
+					read: (node) => b.member(b.id('$$props'), node)
+				};
+			}
+		}
+	}
+
+	add_state_transformers(context);
+
+	// store subscriptions need to be last because getting the store value could depend on other transformers
+	for (const [name, binding] of context.state.scope.declarations) {
 		if (binding.kind === 'store_sub') {
 			const store = /** @type {Expression} */ (context.visit(b.id(name.slice(1))));
 
@@ -91,43 +130,7 @@ export function Program(_, context) {
 				}
 			};
 		}
-
-		if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
-			if (is_prop_source(binding, context.state)) {
-				context.state.transform[name] = {
-					read: b.call,
-					assign: b.call,
-					mutate: (node, value) => {
-						if (binding.kind === 'bindable_prop') {
-							// only necessary for interop with legacy parent bindings
-							return b.call(node, value, b.true);
-						}
-
-						return value;
-					},
-					update: (node) => {
-						return b.call(
-							node.prefix ? '$.update_pre_prop' : '$.update_prop',
-							node.argument,
-							node.operator === '--' && b.literal(-1)
-						);
-					}
-				};
-			} else if (binding.prop_alias) {
-				const key = b.key(binding.prop_alias);
-
-				context.state.transform[name] = {
-					read: (_) => b.member(b.id('$$props'), key, key.type === 'Literal')
-				};
-			} else {
-				context.state.transform[name] = {
-					read: (node) => b.member(b.id('$$props'), node)
-				};
-			}
-		}
 	}
-
-	add_state_transformers(context);
 
 	context.next();
 }
