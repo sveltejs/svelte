@@ -4,6 +4,7 @@
 import * as acorn from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
 import * as e from '../../../errors.js';
+import * as w from '../../../warnings.js';
 
 const regex_closing_script_tag = /<\/script\s*>/;
 const regex_starts_with_closing_script_tag = /^<\/script\s*>/;
@@ -13,22 +14,42 @@ const regex_starts_with_closing_script_tag = /^<\/script\s*>/;
  * @returns {string}
  */
 function get_context(attributes) {
-	const context = attributes.find(
-		/** @param {any} attribute */ (attribute) => attribute.name === 'context'
-	);
-	if (!context) return 'default';
+	for (const attribute of attributes) {
+		switch (attribute.name) {
+			case 'context': {
+				if (attribute.value.length !== 1 || attribute.value[0].type !== 'Text') {
+					e.script_invalid_context(attribute.start);
+				}
 
-	if (context.value.length !== 1 || context.value[0].type !== 'Text') {
-		e.script_invalid_context(context.start);
+				const value = attribute.value[0].data;
+
+				if (value !== 'module') {
+					e.script_invalid_context(attribute.start);
+				}
+
+				w.script_context_deprecated(attribute);
+
+				return value;
+			}
+			case 'module': {
+				if (attribute.value !== true) {
+					// Deliberately a generic code to future-proof for potential other attributes
+					e.script_invalid_attribute_value(attribute.start, attribute.name);
+				}
+
+				return 'module';
+			}
+			case 'server':
+			case 'client':
+			case 'worker':
+			case 'test':
+			case 'default': {
+				e.script_reserved_attribute(attribute.start, attribute.name);
+			}
+		}
 	}
 
-	const value = context.value[0].data;
-
-	if (value !== 'module') {
-		e.script_invalid_context(context.start);
-	}
-
-	return value;
+	return 'default';
 }
 
 /**

@@ -330,7 +330,7 @@ export function analyze_component(root, source, options) {
 
 			if (module.ast) {
 				for (const { node, path } of references) {
-					// if the reference is inside context="module", error. this is a bit hacky but it works
+					// if the reference is inside module, error. this is a bit hacky but it works
 					if (
 						/** @type {number} */ (node.start) > /** @type {number} */ (module.ast.start) &&
 						/** @type {number} */ (node.end) < /** @type {number} */ (module.ast.end) &&

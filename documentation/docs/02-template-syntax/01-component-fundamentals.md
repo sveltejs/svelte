@@ -161,16 +161,16 @@ If you'd like to react to changes to a prop, use the `$derived` or `$effect` run
 
 For more information on reactivity, read the documentation around runes.
 
-## &lt;script context="module"&gt;
+## &lt;script module&gt;
 
-A `<script>` tag with a `context="module"` attribute runs once when the module first evaluates, rather than for each component instance. Values declared in this block are accessible from a regular `<script>` (and the component markup) but not vice versa.
+A `<script>` tag with a `module` attribute runs once when the module first evaluates, rather than for each component instance. Values declared in this block are accessible from a regular `<script>` (and the component markup) but not vice versa.
 
 You can `export` bindings from this block, and they will become exports of the compiled module.
 
 You cannot `export default`, since the default export is the component itself.
 
 ```svelte
-<script context="module">
+<script module>
 	let totalComponents = 0;
 
 	// the export keyword allows this function to imported with e.g.

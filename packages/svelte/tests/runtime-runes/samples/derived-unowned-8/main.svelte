@@ -1,13 +1,13 @@
-<script context="module">
+<script module>
 	let visible = $state(true);
 
 	function toggleVisibility() {
 		visible = !visible;
 	}
 
-	let unchangedState = $state("unchanged state");
+	let unchangedState = $state('unchanged state');
 	let derived = $derived.by(() => {
-		console.log("recalculating");
+		console.log('recalculating');
 		return unchangedState;
 	});
 </script>

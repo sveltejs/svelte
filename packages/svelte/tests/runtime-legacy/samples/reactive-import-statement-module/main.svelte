@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	import state from './state.js';
 
 	function update() {

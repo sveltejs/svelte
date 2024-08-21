@@ -117,3 +117,14 @@ A derived value may be used in other contexts:
 ## `immutable`
 
 The `immutable` compiler option is deprecated. Use runes mode instead, where all state is immutable (which means that assigning to `object.property` won't cause updates for anything that is observing `object` itself, or a different property of it).
+
+## `context="module"`
+
+`context="module"` is deprecated, use the new `module` attribute instead:
+
+```diff
+- <script context="module">
++ <script module>
+	...
+</script>
+```
