@@ -741,10 +741,7 @@ export function get(signal) {
  * @returns {V | undefined}
  */
 export function safe_get(signal) {
-	if (!signal) {
-		return undefined;
-	}
-	return get(signal);
+	return signal && get(signal);
 }
 
 /**
