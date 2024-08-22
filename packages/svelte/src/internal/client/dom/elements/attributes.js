@@ -333,6 +333,7 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 		for (key in next) {
 			// TODO do we need to separate attributes from properties here? probably
 			if (get_setters(node).includes(key)) {
+				// @ts-expect-error
 				node[key] = next[key];
 			} else {
 				set_attribute(node, key, next[key]);
