@@ -23,6 +23,9 @@ const { test, run } = suite<PreprocessTest>(async (config, cwd) => {
 
 	if (result.map) {
 		fs.writeFileSync(`${cwd}/_actual.html.map`, JSON.stringify(result.map, null, 2));
+
+		// @ts-expect-error
+		delete result.map.ignoreList;
 	}
 
 	expect(result.code).toMatchFileSnapshot(`${cwd}/output.svelte`);

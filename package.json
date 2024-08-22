@@ -29,22 +29,22 @@
     "bench:debug": "node --allow-natives-syntax --inspect-brk ./benchmarking/run.js"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.6",
+    "@changesets/cli": "^2.27.7",
     "@sveltejs/eslint-config": "^8.0.1",
     "@svitejs/changesets-changelog-github-compact": "^1.1.0",
-    "@types/node": "^20.11.5",
-    "@vitest/coverage-v8": "^1.2.1",
-    "eslint": "^9.6.0",
+    "@types/node": "^22.5.0",
+    "@vitest/coverage-v8": "^2.0.5",
+    "eslint": "^9.9.0",
     "eslint-plugin-lube": "^0.4.3",
     "jsdom": "22.0.0",
-    "playwright": "^1.41.1",
-    "prettier": "^3.2.4",
-    "prettier-plugin-svelte": "^3.1.2",
+    "playwright": "^1.46.1",
+    "prettier": "^3.3.3",
+    "prettier-plugin-svelte": "^3.2.6",
     "svelte": "workspace:^",
-    "typescript": "^5.5.2",
-    "typescript-eslint": "^8.0.0-alpha.34",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.2.0",
     "v8-natives": "^1.2.5",
-    "vitest": "^1.2.1"
+    "vitest": "^2.0.5"
   },
   "pnpm": {
     "overrides": {

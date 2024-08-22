@@ -12,11 +12,11 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^4.0.0-next.3",
-    "nodemon": "^3.0.3",
-    "polka": "^1.0.0-next.25",
+    "@sveltejs/vite-plugin-svelte": "4.0.0-next.6",
+    "nodemon": "^3.1.4",
+    "polka": "1.0.0-next.25",
     "svelte": "workspace:*",
-    "vite": "^5.0.13",
-    "vite-plugin-inspect": "^0.8.4"
+    "vite": "^5.4.2",
+    "vite-plugin-inspect": "^0.8.6"
   }
 }
