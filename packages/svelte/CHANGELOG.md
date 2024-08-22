@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.234
+
+### Patch Changes
+
+- fix: allow deleting non-existent `$restProps` properties ([#12971](https://github.com/sveltejs/svelte/pull/12971))
+
+- feat: only traverse trailing static nodes during hydration ([#12935](https://github.com/sveltejs/svelte/pull/12935))
+
 ## 5.0.0-next.233
 
 ### Patch Changes
