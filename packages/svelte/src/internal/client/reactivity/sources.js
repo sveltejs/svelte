@@ -150,11 +150,17 @@ export function set(source, value) {
 			}
 		}
 
-		for (const effect of sync_effects) {
-			update_effect(effect);
-		}
+		if (sync_effects.size > 0) {
+			// Make sure the global map is reset to its base state
+			// BEFORE running the effects, which could themselves
+			// trigger other sync effects.
+			const effects_to_run = [...sync_effects];
+			sync_effects.clear();
 
-		sync_effects.clear();
+			for (const effect of effects_to_run) {
+				update_effect(effect);
+			}
+		}
 	}
 
 	return value;
