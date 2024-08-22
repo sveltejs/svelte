@@ -11,5 +11,5 @@ export default test({
 
 	test(assert, target) {
 		assert.htmlEqual(target.innerHTML, '<div></div>');
-	},
+	}
 });
