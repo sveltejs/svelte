@@ -57,7 +57,7 @@ export function html(node, get_value, svg, mathml, skip_warning) {
 			return;
 		}
 
-		if (effect) {
+		if (effect !== undefined) {
 			destroy_effect(effect);
 			effect = undefined;
 		}
