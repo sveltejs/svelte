@@ -57,20 +57,6 @@ function build_assignment(operator, left, right, context) {
 					return b.assignment(operator, /** @type {Pattern} */ (context.visit(left)), value);
 				}
 			}
-		} else if (left.property.type === 'Identifier' && context.state.in_constructor) {
-			const public_state = context.state.public_state.get(left.property.name);
-
-			if (public_state !== undefined && should_proxy(right, context.state.scope)) {
-				const value = /** @type {Expression} */ (context.visit(right));
-
-				return b.assignment(
-					operator,
-					/** @type {Pattern} */ (context.visit(left)),
-					public_state.kind === 'raw_state'
-						? value
-						: build_proxy_reassignment(value, public_state.id)
-				);
-			}
 		}
 	}
 
