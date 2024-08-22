@@ -224,6 +224,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 }
 
 /**
+ * Add, remove, or reorder items output by an each block as its input changes
  * @template V
  * @param {Array<V>} array
  * @param {EachState} state
