@@ -165,7 +165,7 @@ export interface RenderTag extends BaseNode {
 type Tag = ExpressionTag | HtmlTag | ConstTag | DebugTag | RenderTag;
 
 /** An `animate:` directive */
-interface AnimateDirective extends BaseNode {
+export interface AnimateDirective extends BaseNode {
 	type: 'AnimateDirective';
 	/** The 'x' in `animate:x` */
 	name: string;
@@ -246,7 +246,7 @@ export interface StyleDirective extends BaseNode {
 
 // TODO have separate in/out/transition directives
 /** A `transition:`, `in:` or `out:` directive */
-interface TransitionDirective extends BaseNode {
+export interface TransitionDirective extends BaseNode {
 	type: 'TransitionDirective';
 	/** The 'x' in `transition:x` */
 	name: string;
@@ -260,7 +260,7 @@ interface TransitionDirective extends BaseNode {
 }
 
 /** A `use:` directive */
-interface UseDirective extends BaseNode {
+export interface UseDirective extends BaseNode {
 	type: 'UseDirective';
 	/** The 'x' in `use:x` */
 	name: string;
@@ -293,7 +293,7 @@ export interface Component extends BaseElement {
 	};
 }
 
-interface TitleElement extends BaseElement {
+export interface TitleElement extends BaseElement {
 	type: 'TitleElement';
 	name: 'title';
 }
@@ -317,7 +317,7 @@ export interface RegularElement extends BaseElement {
 	};
 }
 
-interface SvelteBody extends BaseElement {
+export interface SvelteBody extends BaseElement {
 	type: 'SvelteBody';
 	name: 'svelte:body';
 }
@@ -332,7 +332,7 @@ export interface SvelteComponent extends BaseElement {
 	};
 }
 
-interface SvelteDocument extends BaseElement {
+export interface SvelteDocument extends BaseElement {
 	type: 'SvelteDocument';
 	name: 'svelte:document';
 }
@@ -362,7 +362,7 @@ export interface SvelteFragment extends BaseElement {
 	name: 'svelte:fragment';
 }
 
-interface SvelteHead extends BaseElement {
+export interface SvelteHead extends BaseElement {
 	type: 'SvelteHead';
 	name: 'svelte:head';
 }
@@ -382,7 +382,7 @@ export interface SvelteSelf extends BaseElement {
 	};
 }
 
-interface SvelteWindow extends BaseElement {
+export interface SvelteWindow extends BaseElement {
 	type: 'SvelteWindow';
 	name: 'svelte:window';
 }

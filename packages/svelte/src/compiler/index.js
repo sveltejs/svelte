@@ -90,7 +90,7 @@ export function compileModule(source, options) {
  * @overload
  * @param {string} source
  * @param {{ filename?: string; modern?: false }} [options]
- * @returns {LegacyRoot}
+ * @returns {Record<string, any>}
  */
 
 /**
@@ -102,7 +102,7 @@ export function compileModule(source, options) {
  * https://svelte.dev/docs/svelte-compiler#svelte-parse
  * @param {string} source
  * @param {{ filename?: string; rootDir?: string; modern?: boolean }} [options]
- * @returns {Root | LegacyRoot}
+ * @returns {Root | Record<string, any>}
  */
 export function parse(source, { filename, rootDir, modern } = {}) {
 	state.reset_warning_filter(() => false);
