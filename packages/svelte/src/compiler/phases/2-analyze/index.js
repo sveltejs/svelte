@@ -63,6 +63,7 @@ import { SvelteWindow } from './visitors/SvelteWindow.js';
 import { TaggedTemplateExpression } from './visitors/TaggedTemplateExpression.js';
 import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
+import { TSEnumDeclaration } from './visitors/TSEnumDeclaration.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
@@ -174,7 +175,10 @@ const visitors = {
 	TitleElement,
 	UpdateExpression,
 	UseDirective,
-	VariableDeclarator
+	VariableDeclarator,
+
+	// @ts-expect-error
+	TSEnumDeclaration
 };
 
 /**
