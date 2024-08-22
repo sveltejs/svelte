@@ -1,10 +1,10 @@
-/** @import { SvelteFragment } from '#compiler' */
+/** @import { Ast } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import { validate_slot_attribute } from './shared/attribute.js';
 
 /**
- * @param {SvelteFragment} node
+ * @param {Ast.SvelteFragment} node
  * @param {Context} context
  */
 export function SvelteFragment(node, context) {

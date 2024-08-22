@@ -1,10 +1,10 @@
 /** @import { Expression } from 'estree' */
-/** @import { HtmlTag } from '#compiler' */
+/** @import { Ast } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
 
 /**
- * @param {HtmlTag} node
+ * @param {Ast.HtmlTag} node
  * @param {ComponentContext} context
  */
 export function HtmlTag(node, context) {

@@ -1,5 +1,5 @@
-/** @import { Expression, ExpressionStatement, Literal } from 'estree' */
-/** @import { Attribute, ClassDirective, Namespace, RegularElement, SpreadAttribute, StyleDirective, SvelteElement, SvelteNode } from '#compiler' */
+/** @import { Expression, Literal } from 'estree' */
+/** @import { Ast, Namespace } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../../types.js' */
 import {
 	get_attribute_chunks,
@@ -30,17 +30,17 @@ const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
 /**
  * Writes the output to the template output. Some elements may have attributes on them that require the
  * their output to be the child content instead. In this case, an object is returned.
- * @param {RegularElement | SvelteElement} node
- * @param {import('zimmerframe').Context<SvelteNode, ComponentServerTransformState>} context
+ * @param {Ast.RegularElement | Ast.SvelteElement} node
+ * @param {import('zimmerframe').Context<Ast.SvelteNode, ComponentServerTransformState>} context
  */
 export function build_element_attributes(node, context) {
-	/** @type {Array<Attribute | SpreadAttribute>} */
+	/** @type {Array<Ast.Attribute | Ast.SpreadAttribute>} */
 	const attributes = [];
 
-	/** @type {ClassDirective[]} */
+	/** @type {Ast.ClassDirective[]} */
 	const class_directives = [];
 
-	/** @type {StyleDirective[]} */
+	/** @type {Ast.StyleDirective[]} */
 	const style_directives = [];
 
 	/** @type {Expression | null} */
@@ -117,7 +117,7 @@ export function build_element_attributes(node, context) {
 					/** @type {Expression} */ (context.visit(attribute.expression))
 				);
 			} else if (attribute.name === 'group') {
-				const value_attribute = /** @type {Attribute | undefined} */ (
+				const value_attribute = /** @type {Ast.Attribute | undefined} */ (
 					node.attributes.find((attr) => attr.type === 'Attribute' && attr.name === 'value')
 				);
 				if (!value_attribute) continue;
@@ -194,7 +194,7 @@ export function build_element_attributes(node, context) {
 	if (class_directives.length > 0 && !has_spread) {
 		const class_attribute = build_class_directives(
 			class_directives,
-			/** @type {Attribute | null} */ (attributes[class_index] ?? null)
+			/** @type {Ast.Attribute | null} */ (attributes[class_index] ?? null)
 		);
 		if (class_index === -1) {
 			attributes.push(class_attribute);
@@ -204,7 +204,7 @@ export function build_element_attributes(node, context) {
 	if (style_directives.length > 0 && !has_spread) {
 		build_style_directives(
 			style_directives,
-			/** @type {Attribute | null} */ (attributes[style_index] ?? null),
+			/** @type {Ast.Attribute | null} */ (attributes[style_index] ?? null),
 			context
 		);
 		if (style_index > -1) {
@@ -215,7 +215,7 @@ export function build_element_attributes(node, context) {
 	if (has_spread) {
 		build_element_spread_attributes(node, attributes, style_directives, class_directives, context);
 	} else {
-		for (const attribute of /** @type {Attribute[]} */ (attributes)) {
+		for (const attribute of /** @type {Ast.Attribute[]} */ (attributes)) {
 			if (attribute.value === true || is_text_attribute(attribute)) {
 				const name = get_attribute_name(node, attribute, context);
 				const literal_value = /** @type {Literal} */ (
@@ -262,8 +262,8 @@ export function build_element_attributes(node, context) {
 }
 
 /**
- * @param {RegularElement | SvelteElement} element
- * @param {Attribute} attribute
+ * @param {Ast.RegularElement | Ast.SvelteElement} element
+ * @param {Ast.Attribute} attribute
  * @param {{ state: { namespace: Namespace }}} context
  */
 function get_attribute_name(element, attribute, context) {
@@ -278,10 +278,10 @@ function get_attribute_name(element, attribute, context) {
 
 /**
  *
- * @param {RegularElement | SvelteElement} element
- * @param {Array<Attribute | SpreadAttribute>} attributes
- * @param {StyleDirective[]} style_directives
- * @param {ClassDirective[]} class_directives
+ * @param {Ast.RegularElement | Ast.SvelteElement} element
+ * @param {Array<Ast.Attribute | Ast.SpreadAttribute>} attributes
+ * @param {Ast.StyleDirective[]} style_directives
+ * @param {Ast.ClassDirective[]} class_directives
  * @param {ComponentContext} context
  */
 function build_element_spread_attributes(
@@ -353,8 +353,8 @@ function build_element_spread_attributes(
 
 /**
  *
- * @param {ClassDirective[]} class_directives
- * @param {Attribute | null} class_attribute
+ * @param {Ast.ClassDirective[]} class_directives
+ * @param {Ast.Attribute | null} class_attribute
  * @returns
  */
 function build_class_directives(class_directives, class_attribute) {
@@ -402,8 +402,8 @@ function build_class_directives(class_directives, class_attribute) {
 }
 
 /**
- * @param {StyleDirective[]} style_directives
- * @param {Attribute | null} style_attribute
+ * @param {Ast.StyleDirective[]} style_directives
+ * @param {Ast.Attribute | null} style_attribute
  * @param {ComponentContext} context
  */
 function build_style_directives(style_directives, style_attribute, context) {

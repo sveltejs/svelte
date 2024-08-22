@@ -1,11 +1,11 @@
 import type { Scope } from '../scope.js';
 import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
-import type { ExpressionMetadata, RenderTag, SvelteNode, ValidatedCompileOptions } from '#compiler';
+import type { ExpressionMetadata, Ast, ValidatedCompileOptions } from '#compiler';
 import type { LabeledStatement } from 'estree';
 
 export interface AnalysisState {
 	scope: Scope;
-	scopes: Map<SvelteNode, Scope>;
+	scopes: Map<Ast.SvelteNode, Scope>;
 	analysis: ComponentAnalysis;
 	options: ValidatedCompileOptions;
 	ast_type: 'instance' | 'template' | 'module';
@@ -16,7 +16,7 @@ export interface AnalysisState {
 	/** Information about the current expression/directive/block value */
 	expression: ExpressionMetadata | null;
 	/** The current {@render ...} tag, if any */
-	render_tag: null | RenderTag;
+	render_tag: null | Ast.RenderTag;
 	private_derived_state: string[];
 	function_depth: number;
 
@@ -27,11 +27,11 @@ export interface AnalysisState {
 }
 
 export type Context<State extends AnalysisState = AnalysisState> = import('zimmerframe').Context<
-	SvelteNode,
+	Ast.SvelteNode,
 	State
 >;
 
 export type Visitors<State extends AnalysisState = AnalysisState> = import('zimmerframe').Visitors<
-	SvelteNode,
+	Ast.SvelteNode,
 	State
 >;

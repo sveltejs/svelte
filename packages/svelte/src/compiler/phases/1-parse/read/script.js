@@ -1,5 +1,5 @@
 /** @import { Program } from 'estree' */
-/** @import { Attribute, SpreadAttribute, Directive, Script } from '#compiler' */
+/** @import { Ast } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import * as acorn from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
@@ -16,8 +16,8 @@ const ALLOWED_ATTRIBUTES = ['context', 'generics', 'lang', 'module'];
 /**
  * @param {Parser} parser
  * @param {number} start
- * @param {Array<Attribute | SpreadAttribute | Directive>} attributes
- * @returns {Script}
+ * @param {Array<Ast.Attribute | Ast.SpreadAttribute | Ast.Directive>} attributes
+ * @returns {Ast.Script}
  */
 export function read_script(parser, start, attributes) {
 	const script_start = parser.index;
@@ -45,7 +45,7 @@ export function read_script(parser, start, attributes) {
 	/** @type {'default' | 'module'} */
 	let context = 'default';
 
-	for (const attribute of /** @type {Attribute[]} */ (attributes)) {
+	for (const attribute of /** @type {Ast.Attribute[]} */ (attributes)) {
 		if (RESERVED_ATTRIBUTES.includes(attribute.name)) {
 			e.script_reserved_attribute(attribute, attribute.name);
 		}

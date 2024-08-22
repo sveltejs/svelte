@@ -1,7 +1,8 @@
-/** @import { Fragment } from '#compiler' */
+/** @import { Ast } from '#compiler' */
+
 /**
  * @param {any} transparent
- * @returns {Fragment}
+ * @returns {Ast.Fragment}
  */
 export function create_fragment(transparent = false) {
 	return {

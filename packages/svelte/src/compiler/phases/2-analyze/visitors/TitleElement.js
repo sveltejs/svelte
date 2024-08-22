@@ -1,9 +1,9 @@
-/** @import { TitleElement } from '#compiler' */
+/** @import { Ast } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 
 /**
- * @param {TitleElement} node
+ * @param {Ast.TitleElement} node
  * @param {Context} context
  */
 export function TitleElement(node, context) {

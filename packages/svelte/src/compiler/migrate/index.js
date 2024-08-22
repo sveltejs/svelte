@@ -1,4 +1,5 @@
 /** @import { VariableDeclarator, Node, Identifier } from 'estree' */
+/** @import { Ast } from '../types/template.js' */
 /** @import { Visitors } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
 /** @import { Scope } from '../phases/scope.js' */
@@ -229,7 +230,7 @@ export function migrate(source) {
  * }} State
  */
 
-/** @type {Visitors<Compiler.SvelteNode, State>} */
+/** @type {Visitors<Ast.SvelteNode, State>} */
 const instance_script = {
 	_(node, { state, next }) {
 		// @ts-expect-error
@@ -478,7 +479,7 @@ const instance_script = {
 	}
 };
 
-/** @type {Visitors<Compiler.SvelteNode, State>} */
+/** @type {Visitors<Ast.SvelteNode, State>} */
 const template = {
 	Identifier(node, { state, path }) {
 		handle_identifier(node, state, path);
@@ -596,7 +597,7 @@ const template = {
 /**
  * @param {VariableDeclarator} declarator
  * @param {MagicString} str
- * @param {Array<Compiler.SvelteNode>} path
+ * @param {Ast.SvelteNode[]} path
  */
 function extract_type_and_comment(declarator, str, path) {
 	const parent = path.at(-1);
@@ -641,11 +642,11 @@ function extract_type_and_comment(declarator, str, path) {
 }
 
 /**
- * @param {Compiler.RegularElement | Compiler.SvelteElement | Compiler.SvelteWindow | Compiler.SvelteDocument | Compiler.SvelteBody} element
+ * @param {Ast.RegularElement | Ast.SvelteElement | Ast.SvelteWindow | Ast.SvelteDocument | Ast.SvelteBody} element
  * @param {State} state
  */
 function handle_events(element, state) {
-	/** @type {Map<string, Compiler.OnDirective[]>} */
+	/** @type {Map<string, Ast.OnDirective[]>} */
 	const handlers = new Map();
 	for (const attribute of element.attributes) {
 		if (attribute.type !== 'OnDirective') continue;
@@ -880,7 +881,7 @@ function get_node_range(source, node) {
 }
 
 /**
- * @param {Compiler.OnDirective} last
+ * @param {Ast.OnDirective} last
  * @param {State} state
  */
 function generate_event_name(last, state) {

@@ -8,7 +8,7 @@ import { get_attribute_chunks, is_text_attribute } from '../../../utils/ast.js';
 /**
  * @typedef {{
  *   stylesheet: Compiler.Css.StyleSheet;
- *   element: Compiler.RegularElement | Compiler.SvelteElement;
+ *   element: Compiler.Ast.RegularElement | Compiler.Ast.SvelteElement;
  * }} State
  */
 /** @typedef {NODE_PROBABLY_EXISTS | NODE_DEFINITELY_EXISTS} NodeExistsValue */
@@ -53,7 +53,7 @@ const nesting_selector = {
 /**
  *
  * @param {Compiler.Css.StyleSheet} stylesheet
- * @param {Compiler.RegularElement | Compiler.SvelteElement} element
+ * @param {Compiler.Ast.RegularElement | Compiler.Ast.SvelteElement} element
  */
 export function prune(stylesheet, element) {
 	walk(stylesheet, { stylesheet, element }, visitors);
@@ -120,7 +120,7 @@ function truncate(node) {
 /**
  * @param {Compiler.Css.RelativeSelector[]} relative_selectors
  * @param {Compiler.Css.Rule} rule
- * @param {Compiler.RegularElement | Compiler.SvelteElement} element
+ * @param {Compiler.Ast.RegularElement | Compiler.Ast.SvelteElement} element
  * @param {Compiler.Css.StyleSheet} stylesheet
  * @returns {boolean}
  */
@@ -147,7 +147,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 		switch (name) {
 			case ' ':
 			case '>': {
-				let parent = /** @type {Compiler.TemplateNode | null} */ (element.parent);
+				let parent = /** @type {Compiler.Ast.TemplateNode | null} */ (element.parent);
 
 				let parent_matched = false;
 				let crossed_component_boundary = false;
@@ -170,7 +170,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 						if (name === '>') return parent_matched;
 					}
 
-					parent = /** @type {Compiler.TemplateNode | null} */ (parent.parent);
+					parent = /** @type {Compiler.Ast.TemplateNode | null} */ (parent.parent);
 				}
 
 				return parent_matched || parent_selectors.every((selector) => is_global(selector, rule));
@@ -222,7 +222,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
  * Mark both the compound selector and the node it selects as encapsulated,
  * for transformation in a later step
  * @param {Compiler.Css.RelativeSelector} relative_selector
- * @param {Compiler.RegularElement | Compiler.SvelteElement} element
+ * @param {Compiler.Ast.RegularElement | Compiler.Ast.SvelteElement} element
  */
 function mark(relative_selector, element) {
 	relative_selector.metadata.scoped = true;
@@ -279,7 +279,7 @@ const regex_backslash_and_following_character = /\\(.)/g;
  *
  * @param {Compiler.Css.RelativeSelector} relative_selector
  * @param {Compiler.Css.Rule} rule
- * @param {Compiler.RegularElement | Compiler.SvelteElement} element
+ * @param {Compiler.Ast.RegularElement | Compiler.Ast.SvelteElement} element
  * @param {Compiler.Css.StyleSheet} stylesheet
  * @returns {boolean}
  */
@@ -435,7 +435,7 @@ function test_attribute(operator, expected_value, case_insensitive, value) {
 }
 
 /**
- * @param {Compiler.RegularElement | Compiler.SvelteElement} node
+ * @param {Compiler.Ast.RegularElement | Compiler.Ast.SvelteElement} node
  * @param {string} name
  * @param {string | null} expected_value
  * @param {string | null} operator
@@ -542,11 +542,11 @@ function unquote(str) {
 }
 
 /**
- * @param {Compiler.RegularElement | Compiler.SvelteElement} node
- * @returns {Compiler.RegularElement | Compiler.SvelteElement | null}
+ * @param {Compiler.Ast.RegularElement | Compiler.Ast.SvelteElement} node
+ * @returns {Compiler.Ast.RegularElement | Compiler.Ast.SvelteElement | null}
  */
 function get_element_parent(node) {
-	/** @type {Compiler.SvelteNode | null} */
+	/** @type {Compiler.Ast.SvelteNode | null} */
 	let parent = node;
 	while (
 		// @ts-expect-error TODO figure out a more elegant solution
@@ -576,11 +576,11 @@ function get_element_parent(node) {
  * <h1>Heading 1</h1>
  * <h2>Heading 2</h2>
  * ```
- * @param {Compiler.SvelteNode} node
- * @returns {Compiler.SvelteNode}
+ * @param {Compiler.Ast.SvelteNode} node
+ * @returns {Compiler.Ast.SvelteNode}
  */
 function find_previous_sibling(node) {
-	/** @type {Compiler.SvelteNode} */
+	/** @type {Compiler.Ast.SvelteNode} */
 	let current_node = node;
 
 	while (
@@ -609,15 +609,15 @@ function find_previous_sibling(node) {
 }
 
 /**
- * @param {Compiler.SvelteNode} node
+ * @param {Compiler.Ast.SvelteNode} node
  * @param {boolean} adjacent_only
- * @returns {Map<Compiler.RegularElement | Compiler.SvelteElement | Compiler.SlotElement | Compiler.RenderTag, NodeExistsValue>}
+ * @returns {Map<Compiler.Ast.RegularElement | Compiler.Ast.SvelteElement | Compiler.Ast.SlotElement | Compiler.Ast.RenderTag, NodeExistsValue>}
  */
 function get_possible_element_siblings(node, adjacent_only) {
-	/** @type {Map<Compiler.RegularElement | Compiler.SvelteElement | Compiler.SlotElement | Compiler.RenderTag, NodeExistsValue>} */
+	/** @type {Map<Compiler.Ast.RegularElement | Compiler.Ast.SvelteElement | Compiler.Ast.SlotElement | Compiler.Ast.RenderTag, NodeExistsValue>} */
 	const result = new Map();
 
-	/** @type {Compiler.SvelteNode} */
+	/** @type {Compiler.Ast.SvelteNode} */
 	let prev = node;
 	while ((prev = find_previous_sibling(prev))) {
 		if (prev.type === 'RegularElement') {
@@ -649,7 +649,7 @@ function get_possible_element_siblings(node, adjacent_only) {
 	}
 
 	if (!prev || !adjacent_only) {
-		/** @type {Compiler.SvelteNode | null} */
+		/** @type {Compiler.Ast.SvelteNode | null} */
 		let parent = node;
 
 		while (
@@ -676,12 +676,12 @@ function get_possible_element_siblings(node, adjacent_only) {
 }
 
 /**
- * @param {Compiler.EachBlock | Compiler.IfBlock | Compiler.AwaitBlock} relative_selector
+ * @param {Compiler.Ast.EachBlock | Compiler.Ast.IfBlock | Compiler.Ast.AwaitBlock} relative_selector
  * @param {boolean} adjacent_only
- * @returns {Map<Compiler.RegularElement, NodeExistsValue>}
+ * @returns {Map<Compiler.Ast.RegularElement, NodeExistsValue>}
  */
 function get_possible_last_child(relative_selector, adjacent_only) {
-	/** @typedef {Map<Compiler.RegularElement, NodeExistsValue>} NodeMap */
+	/** @typedef {Map<Compiler.Ast.RegularElement, NodeExistsValue>} NodeMap */
 
 	/** @type {NodeMap} */
 	const result = new Map();
@@ -783,7 +783,7 @@ function higher_existence(exist1, exist2) {
 	return exist1 > exist2 ? exist1 : exist2;
 }
 
-/** @param {Map<Compiler.RegularElement, NodeExistsValue>} result */
+/** @param {Map<Compiler.Ast.RegularElement, NodeExistsValue>} result */
 function mark_as_probably(result) {
 	for (const key of result.keys()) {
 		result.set(key, NODE_PROBABLY_EXISTS);
@@ -791,11 +791,11 @@ function mark_as_probably(result) {
 }
 
 /**
- * @param {Compiler.SvelteNode[]} children
+ * @param {Compiler.Ast.SvelteNode[]} children
  * @param {boolean} adjacent_only
  */
 function loop_child(children, adjacent_only) {
-	/** @type {Map<Compiler.RegularElement, NodeExistsValue>} */
+	/** @type {Map<Compiler.Ast.RegularElement, NodeExistsValue>} */
 	const result = new Map();
 	for (let i = children.length - 1; i >= 0; i--) {
 		const child = children[i];

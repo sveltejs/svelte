@@ -1,12 +1,11 @@
 /** @import { Expression } from 'estree' */
-/** @import { SvelteBody, SvelteDocument, SvelteWindow } from '#compiler' */
+/** @import { Ast } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
-import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 
 /**
  *
- * @param {SvelteBody | SvelteDocument | SvelteWindow} node
+ * @param {Ast.SvelteBody | Ast.SvelteDocument | Ast.SvelteWindow} node
  * @param {string} id
  * @param {ComponentContext} context
  */

@@ -1,4 +1,4 @@
-/** @import { SlotElement } from '#compiler' */
+/** @import { Ast } from '#compiler' */
 /** @import { Context } from '../types' */
 import { is_text_attribute } from '../../../utils/ast.js';
 import * as e from '../../../errors.js';
@@ -6,7 +6,7 @@ import * as w from '../../../warnings.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {SlotElement} node
+ * @param {Ast.SlotElement} node
  * @param {Context} context
  */
 export function SlotElement(node, context) {

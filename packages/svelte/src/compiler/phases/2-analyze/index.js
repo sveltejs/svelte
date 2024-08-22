@@ -1,5 +1,5 @@
 /** @import { Expression, Node, Program } from 'estree' */
-/** @import { Binding, Root, Script, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { Binding, Ast, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import { walk } from 'zimmerframe';
@@ -172,7 +172,7 @@ const visitors = {
 };
 
 /**
- * @param {Script | null} script
+ * @param {Ast.Script | null} script
  * @param {ScopeRoot} root
  * @param {boolean} allow_reactive_declarations
  * @param {Scope | null} parent
@@ -251,7 +251,7 @@ export function analyze_module(ast, options) {
 }
 
 /**
- * @param {Root} root
+ * @param {Ast.Root} root
  * @param {string} source
  * @param {ValidatedCompileOptions} options
  * @returns {ComponentAnalysis}
@@ -474,7 +474,7 @@ export function analyze_component(root, source, options) {
 
 		// more legacy nonsense: if an `each` binding is reassigned/mutated,
 		// treat the expression as being mutated as well
-		walk(/** @type {SvelteNode} */ (template.ast), null, {
+		walk(/** @type {Ast.SvelteNode} */ (template.ast), null, {
 			EachBlock(node) {
 				const scope = /** @type {Scope} */ (template.scopes.get(node));
 
@@ -553,7 +553,7 @@ export function analyze_component(root, source, options) {
 				reactive_statements: new Map()
 			};
 
-			walk(/** @type {SvelteNode} */ (ast), state, visitors);
+			walk(/** @type {Ast.SvelteNode} */ (ast), state, visitors);
 		}
 
 		// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
@@ -574,7 +574,7 @@ export function analyze_component(root, source, options) {
 							// bind:this doesn't need to be a state reference if it will never change
 							if (
 								type === 'BindDirective' &&
-								/** @type {import('#compiler').BindDirective} */ (path[i]).name === 'this'
+								/** @type {Ast.BindDirective} */ (path[i]).name === 'this'
 							) {
 								for (let j = i - 1; j >= 0; j -= 1) {
 									const type = path[j].type;
@@ -622,7 +622,7 @@ export function analyze_component(root, source, options) {
 				function_depth: scope.function_depth
 			};
 
-			walk(/** @type {SvelteNode} */ (ast), state, visitors);
+			walk(/** @type {Ast.SvelteNode} */ (ast), state, visitors);
 		}
 
 		for (const [name, binding] of instance.scope.declarations) {
@@ -682,7 +682,7 @@ export function analyze_component(root, source, options) {
 				// TODO this happens during the analysis phase, which shouldn't know anything about client vs server
 				if (element.type === 'SvelteElement' && options.generate === 'client') continue;
 
-				/** @type {import('#compiler').Attribute | undefined} */
+				/** @type {Ast.Attribute | undefined} */
 				let class_attribute = undefined;
 
 				for (const attribute of element.attributes) {
@@ -701,7 +701,7 @@ export function analyze_component(root, source, options) {
 					if (is_text_attribute(class_attribute)) {
 						class_attribute.value[0].data += ` ${analysis.css.hash}`;
 					} else {
-						/** @type {import('#compiler').Text} */
+						/** @type {Ast.Text} */
 						const css_text = {
 							type: 'Text',
 							data: ` ${analysis.css.hash}`,

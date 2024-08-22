@@ -1,10 +1,10 @@
-/** @import { ConstTag } from '#compiler' */
+/** @import { Ast } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import { validate_opening_tag } from './shared/utils.js';
 
 /**
- * @param {ConstTag} node
+ * @param {Ast.ConstTag} node
  * @param {Context} context
  */
 export function ConstTag(node, context) {

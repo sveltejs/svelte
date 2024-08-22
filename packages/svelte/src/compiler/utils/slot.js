@@ -1,9 +1,9 @@
-/** @import { SvelteNode } from '#compiler' */
+/** @import { Ast } from '#compiler' */
 import { is_element_node } from '../phases/nodes.js';
 import { is_text_attribute } from './ast.js';
 
 /**
- * @param {SvelteNode} node
+ * @param {Ast.SvelteNode} node
  */
 export function determine_slot(node) {
 	if (!is_element_node(node)) return null;

@@ -1,10 +1,10 @@
-/** @import { SvelteHead } from '#compiler' */
+/** @import { Ast } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {SvelteHead} node
+ * @param {Ast.SvelteHead} node
  * @param {Context} context
  */
 export function SvelteHead(node, context) {

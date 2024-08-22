@@ -1,4 +1,4 @@
-/** @import { Attribute, SpreadAttribute, Directive, Css } from '#compiler' */
+/** @import { Ast, Css } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import * as e from '../../../errors.js';
 
@@ -18,7 +18,7 @@ const REGEX_HTML_COMMENT_CLOSE = /-->/;
 /**
  * @param {Parser} parser
  * @param {number} start
- * @param {Array<Attribute | SpreadAttribute | Directive>} attributes
+ * @param {Array<Ast.Attribute | Ast.SpreadAttribute | Ast.Directive>} attributes
  * @returns {Css.StyleSheet}
  */
 export default function read_style(parser, start, attributes) {

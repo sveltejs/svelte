@@ -1,11 +1,11 @@
 /** @import { Expression } from 'estree' */
-/** @import { Component } from '#compiler' */
+/** @import { Ast } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
 import { build_component } from './shared/component.js';
 
 /**
- * @param {Component} node
+ * @param {Ast.Component} node
  * @param {ComponentContext} context
  */
 export function Component(node, context) {

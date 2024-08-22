@@ -1,10 +1,10 @@
 /** @import { Expression } from 'estree' */
-/** @import { SvelteComponent } from '#compiler' */
+/** @import { Ast } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import { build_inline_component } from './shared/component.js';
 
 /**
- * @param {SvelteComponent} node
+ * @param {Ast.SvelteComponent} node
  * @param {ComponentContext} context
  */
 export function SvelteComponent(node, context) {

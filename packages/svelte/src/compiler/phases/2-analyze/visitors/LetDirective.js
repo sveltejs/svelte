@@ -1,9 +1,9 @@
-/** @import { LetDirective } from '#compiler' */
+/** @import { Ast } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 
 /**
- * @param {LetDirective} node
+ * @param {Ast.LetDirective} node
  * @param {Context} context
  */
 export function LetDirective(node, context) {

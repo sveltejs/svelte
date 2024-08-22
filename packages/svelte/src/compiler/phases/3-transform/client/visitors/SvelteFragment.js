@@ -1,9 +1,9 @@
 /** @import { BlockStatement, ExpressionStatement } from 'estree' */
-/** @import { SvelteFragment } from '#compiler' */
+/** @import { Ast } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 
 /**
- * @param {SvelteFragment} node
+ * @param {Ast.SvelteFragment} node
  * @param {ComponentContext} context
  */
 export function SvelteFragment(node, context) {

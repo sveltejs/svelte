@@ -1,8 +1,8 @@
-/** @import { SpreadAttribute } from '#compiler' */
+/** @import { Ast } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 
 /**
- * @param {SpreadAttribute} node
+ * @param {Ast.SpreadAttribute} node
  * @param {ComponentContext} context
  */
 export function SpreadAttribute(node, context) {

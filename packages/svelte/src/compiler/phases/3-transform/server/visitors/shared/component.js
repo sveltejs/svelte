@@ -1,12 +1,12 @@
 /** @import { BlockStatement, Expression, Pattern, Property, Statement } from 'estree' */
-/** @import { Attribute, Component, LetDirective, SvelteComponent, SvelteSelf, TemplateNode, Text } from '#compiler' */
+/** @import { Ast } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { empty_comment, build_attribute_value } from './utils.js';
 import * as b from '../../../../../utils/builders.js';
 import { is_element_node } from '../../../../nodes.js';
 
 /**
- * @param {Component | SvelteComponent | SvelteSelf} node
+ * @param {Ast.Component | Ast.SvelteComponent | Ast.SvelteSelf} node
  * @param {Expression} expression
  * @param {ComponentContext} context
  */
@@ -17,7 +17,7 @@ export function build_inline_component(node, expression, context) {
 	/** @type {Property[]} */
 	const custom_css_props = [];
 
-	/** @type {Record<string, LetDirective[]>} */
+	/** @type {Record<string, Ast.LetDirective[]>} */
 	const lets = { default: [] };
 
 	/**
@@ -29,7 +29,7 @@ export function build_inline_component(node, expression, context) {
 		scope: node.metadata.scopes.default
 	};
 
-	/** @type {Record<string, TemplateNode[]>} */
+	/** @type {Record<string, Ast.TemplateNode[]>} */
 	const children = {};
 
 	/**
@@ -120,14 +120,14 @@ export function build_inline_component(node, expression, context) {
 
 		let slot_name = 'default';
 		if (is_element_node(child)) {
-			const slot = /** @type {Attribute | undefined} */ (
+			const slot = /** @type {Ast.Attribute | undefined} */ (
 				child.attributes.find(
 					(attribute) => attribute.type === 'Attribute' && attribute.name === 'slot'
 				)
 			);
 
 			if (slot !== undefined) {
-				slot_name = /** @type {Text[]} */ (slot.value)[0].data;
+				slot_name = /** @type {Ast.Text[]} */ (slot.value)[0].data;
 
 				lets[slot_name] = child.attributes.filter((attribute) => attribute.type === 'LetDirective');
 			} else if (child.type === 'SvelteFragment') {

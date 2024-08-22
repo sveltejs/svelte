@@ -1,10 +1,9 @@
 /** @import { Expression, LabeledStatement } from 'estree' */
-/** @import { ReactiveStatement, SvelteNode } from '#compiler' */
+/** @import { Ast, ReactiveStatement } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import { extract_identifiers, object } from '../../../utils/ast.js';
 import * as w from '../../../warnings.js';
-import { is_state_source } from '../../3-transform/client/utils.js';
 
 /**
  * @param {LabeledStatement} node
@@ -12,7 +11,7 @@ import { is_state_source } from '../../3-transform/client/utils.js';
  */
 export function LabeledStatement(node, context) {
 	if (node.label.name === '$') {
-		const parent = /** @type {SvelteNode} */ (context.path.at(-1));
+		const parent = /** @type {Ast.SvelteNode} */ (context.path.at(-1));
 
 		const is_reactive_statement =
 			context.state.ast_type === 'instance' && parent.type === 'Program';

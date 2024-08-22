@@ -1,5 +1,5 @@
 /** @import { Expression } from 'estree' */
-/** @import { ExpressionTag, SvelteNode, Text } from '#compiler' */
+/** @import { Ast } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
@@ -9,7 +9,7 @@ import { build_template_literal, build_update } from './utils.js';
  * Processes an array of template nodes, joining sibling text/expression nodes
  * (e.g. `{a} b {c}`) into a single update function. Along the way it creates
  * corresponding template node references these updates are applied to.
- * @param {SvelteNode[]} nodes
+ * @param {Ast.SvelteNode[]} nodes
  * @param {(is_text: boolean) => Expression} initial
  * @param {boolean} is_element
  * @param {ComponentContext} context
@@ -19,7 +19,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	let prev = initial;
 	let skipped = 0;
 
-	/** @typedef {Array<Text | ExpressionTag>} Sequence */
+	/** @typedef {Array<Ast.Text | Ast.ExpressionTag>} Sequence */
 	/** @type {Sequence} */
 	let sequence = [];
 
@@ -124,7 +124,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 /**
  *
- * @param {SvelteNode} node
+ * @param {Ast.SvelteNode} node
  */
 function is_static_element(node) {
 	if (node.type !== 'RegularElement') return false;

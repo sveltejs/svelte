@@ -1,10 +1,10 @@
 /** @import { BlockStatement, Expression } from 'estree' */
-/** @import { IfBlock } from '#compiler' */
+/** @import { Ast } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
 
 /**
- * @param {IfBlock} node
+ * @param {Ast.IfBlock} node
  * @param {ComponentContext} context
  */
 export function IfBlock(node, context) {
