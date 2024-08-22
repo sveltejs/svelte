@@ -21,12 +21,12 @@ export default function Main($$anchor) {
 
 	var custom_element_1 = $.sibling(svg_1, 2);
 
-	$.template_effect(() => $.set_custom_element_data(custom_element_1, "fooBar", y()));
+	$.template_effect(() => custom_element_1.fooBar = y());
 
 	$.template_effect(() => {
 		$.set_attribute(div, "foobar", x);
 		$.set_attribute(svg, "viewBox", x);
-		$.set_custom_element_data(custom_element, "fooBar", x);
+		custom_element.fooBar = x;
 	});
 
 	$.append($$anchor, fragment);

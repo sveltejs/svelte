@@ -20,6 +20,36 @@ export function binding_property_non_reactive(binding, location) {
 }
 
 /**
+ * `<%name%>` (%location%) has a `%prop%` property, but is specified as an attribute. Use `%prop%={...}`, without surrounding quotes, to treat it as a property instead
+ * @param {string} name
+ * @param {string} prop
+ * @param {string | undefined | null} [location]
+ */
+export function custom_element_invalid_attribute(name, prop, location) {
+	if (DEV) {
+		console.warn(`%c[svelte] custom_element_invalid_attribute\n%c${location ? `\`<${name}>\` (${location}) has a \`${prop}\` property, but is specified as an attribute. Use \`${prop}={...}\`, without surrounding quotes, to treat it as a property instead` : `\`<${name}>\` has a \`${prop}\` property, but it is specified as an attribute. Use \`${prop}={...}\`, without surrounding quotes, to treat it as a property instead`}`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("custom_element_invalid_attribute");
+	}
+}
+
+/**
+ * `<%name%>` (%location%) does not have a `%prop%` property. Use `%prop%="..."`, with the surrounding quotes, to treat it as an attribute instead
+ * @param {string} name
+ * @param {string} prop
+ * @param {string | undefined | null} [location]
+ */
+export function custom_element_invalid_property(name, prop, location) {
+	if (DEV) {
+		console.warn(`%c[svelte] custom_element_invalid_property\n%c${location ? `\`<${name}>\` (${location}) does not have a \`${prop}\` property. Use \`${prop}="..."\`, with the surrounding quotes, to treat it as an attribute instead` : `\`<${name}>\` does not have a \`${prop}\` property. Use \`${prop}="..."\`, with the surrounding quotes, to treat it as an attribute instead`}`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("custom_element_invalid_property");
+	}
+}
+
+/**
  * %handler% should be a function. Did you mean to %suggestion%?
  * @param {string} handler
  * @param {string} suggestion

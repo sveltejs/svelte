@@ -20,7 +20,7 @@ export default function Skip_static_subtree($$anchor, $$props) {
 	var cant_skip = $.sibling(main, 2);
 	var custom_elements = $.child(cant_skip);
 
-	$.set_custom_element_data(custom_elements, "with", "attributes");
+	$.set_attribute(custom_elements, "with", "attributes");
 	$.reset(cant_skip);
 	$.template_effect(() => $.set_text(text, $$props.title));
 	$.append($$anchor, fragment);

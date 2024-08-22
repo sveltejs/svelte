@@ -4,6 +4,20 @@
 
 > `%binding%` (%location%) is binding to a non-reactive property
 
+## custom_element_invalid_attribute
+
+> `<%name%>` has a `%prop%` property, but it is specified as an attribute. Use `%prop%={...}`, without surrounding quotes, to treat it as a property instead
+
+> `<%name%>` (%location%) has a `%prop%` property, but is specified as an attribute. Use `%prop%={...}`, without surrounding quotes, to treat it as a property instead
+
+When specifying attributes and properties on custom elements, values that are quoted are treated as attributes. Unquoted values are treated as properties.
+
+## custom_element_invalid_property
+
+> `<%name%>` does not have a `%prop%` property. Use `%prop%="..."`, with the surrounding quotes, to treat it as an attribute instead
+
+> `<%name%>` (%location%) does not have a `%prop%` property. Use `%prop%="..."`, with the surrounding quotes, to treat it as an attribute instead
+
 ## event_handler_invalid
 
 > %handler% should be a function. Did you mean to %suggestion%?

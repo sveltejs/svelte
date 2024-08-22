@@ -126,19 +126,26 @@ export function set_xlink_attribute(dom, attribute, value) {
 }
 
 /**
- * @param {any} node
- * @param {string} prop
- * @param {any} value
+ * @param {HTMLElement} element
+ * @param {string} name
  */
-export function set_custom_element_data(node, prop, value) {
-	if (prop in node) {
-		var curr_val = node[prop];
-		var next_val = typeof curr_val === 'boolean' && value === '' ? true : value;
-		if (typeof curr_val !== 'object' || curr_val !== next_val) {
-			node[prop] = next_val;
-		}
-	} else {
-		set_attribute(node, prop, value);
+export function warn_if_attribute(element, name) {
+	if (!get_setters(element).includes(name)) {
+		w.custom_element_invalid_property(element.localName, name); // TODO variant with location
+	}
+}
+
+/**
+ * @param {HTMLElement} element
+ * @param {string} name
+ */
+export function warn_if_property(element, name) {
+	const attributes = /** @type {string} */ (
+		/** @type {any} */ (element.constructor).observedAttributes
+	);
+
+	if (get_setters(element).includes(name) && !attributes.includes(name)) {
+		w.custom_element_invalid_attribute(element.localName, name); // TODO variant with location
 	}
 }
 
@@ -173,8 +180,7 @@ export function set_attributes(
 		next.class = next.class ? next.class + ' ' + css_hash : css_hash;
 	}
 
-	var setters = setters_cache.get(element.nodeName);
-	if (!setters) setters_cache.set(element.nodeName, (setters = get_setters(element)));
+	var setters = get_setters(element);
 
 	// @ts-expect-error
 	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});
@@ -325,7 +331,12 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 		}
 
 		for (key in next) {
-			set_custom_element_data(node, key, next[key]);
+			// TODO do we need to separate attributes from properties here? probably
+			if (get_setters(node).includes(key)) {
+				node[key] = next[key];
+			} else {
+				set_attribute(node, key, next[key]);
+			}
 		}
 
 		return next;
@@ -355,22 +366,27 @@ var setters_cache = new Map();
 
 /** @param {Element} element */
 function get_setters(element) {
-	/** @type {string[]} */
-	var setters = [];
-	var descriptors;
-	var proto = get_prototype_of(element);
+	var setters = setters_cache.get(element.nodeName);
 
-	// Stop at Element, from there on there's only unnecessary setters we're not interested in
-	while (proto.constructor.name !== 'Element') {
-		descriptors = get_descriptors(proto);
+	if (!setters) {
+		setters = [];
+		setters_cache.set(element.nodeName, setters);
 
-		for (var key in descriptors) {
-			if (descriptors[key].set && !always_set_through_set_attribute.includes(key)) {
-				setters.push(key);
+		var descriptors;
+		var proto = get_prototype_of(element);
+
+		// Stop at Element, from there on there's only unnecessary setters we're not interested in
+		while (proto.constructor.name !== 'Element') {
+			descriptors = get_descriptors(proto);
+
+			for (var key in descriptors) {
+				if (descriptors[key].set && !always_set_through_set_attribute.includes(key)) {
+					setters.push(key);
+				}
 			}
-		}
 
-		proto = get_prototype_of(proto);
+			proto = get_prototype_of(proto);
+		}
 	}
 
 	return setters;

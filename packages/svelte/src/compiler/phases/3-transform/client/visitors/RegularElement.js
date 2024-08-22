@@ -34,6 +34,7 @@ import {
 	build_update_assignment
 } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
+import { is_array } from '../../../../../internal/shared/utils.js';
 
 /**
  * @param {RegularElement} node
@@ -632,7 +633,22 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
 	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
 	let { has_call, value } = build_attribute_value(attribute.value, context);
 
-	const update = b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), value));
+	// if it's quoted, it's an attribute, otherwise it's a property
+	const is_attribute = is_array(attribute.value);
+
+	if (dev) {
+		if (is_attribute && !is_ignored(attribute, 'custom_element_invalid_attribute')) {
+			state.init.push(b.stmt(b.call('$.warn_if_property', node_id, b.literal(name))));
+		}
+
+		if (!is_attribute && !is_ignored(attribute, 'custom_element_invalid_property')) {
+			state.init.push(b.stmt(b.call('$.warn_if_attribute', node_id, b.literal(name))));
+		}
+	}
+
+	const update = is_attribute
+		? b.stmt(b.call('$.set_attribute', node_id, b.literal(name), value))
+		: b.stmt(b.assignment('=', b.member(node_id, name), value));
 
 	if (attribute.metadata.expression.has_state) {
 		if (has_call) {

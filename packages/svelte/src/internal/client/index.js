@@ -28,12 +28,13 @@ export {
 	remove_input_defaults,
 	set_attribute,
 	set_attributes,
-	set_custom_element_data,
 	set_dynamic_element_attributes,
 	set_xlink_attribute,
 	handle_lazy_img,
 	set_value,
-	set_checked
+	set_checked,
+	warn_if_attribute,
+	warn_if_property
 } from './dom/elements/attributes.js';
 export { set_class, set_svg_class, set_mathml_class, toggle_class } from './dom/elements/class.js';
 export { apply, event, delegate, replay_events } from './dom/elements/events.js';
