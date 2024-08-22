@@ -582,7 +582,7 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { AssignmentExpression, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, MemberExpression, ObjectExpression, Pattern, Node, VariableDeclarator, ArrowFunctionExpression, VariableDeclaration, FunctionExpression, Program, ChainExpression, SimpleCallExpression } from 'estree';
+	import type { AssignmentExpression, Expression, Identifier, ArrayExpression, MemberExpression, ObjectExpression, Pattern, VariableDeclarator, ArrowFunctionExpression, VariableDeclaration, Program, ChainExpression, SimpleCallExpression } from 'estree';
 	import type { SourceMap } from 'magic-string';
 	import type { Location } from 'locate-character';
 	/**
@@ -896,81 +896,6 @@ declare module 'svelte/compiler' {
 		 */
 		warningFilter?: (warning: Warning) => boolean;
 	}
-
-	type DeclarationKind =
-		| 'var'
-		| 'let'
-		| 'const'
-		| 'function'
-		| 'import'
-		| 'param'
-		| 'rest_param'
-		| 'synthetic';
-
-	interface Binding {
-		node: Identifier;
-		/**
-		 * - `normal`: A variable that is not in any way special
-		 * - `prop`: A normal prop (possibly reassigned or mutated)
-		 * - `bindable_prop`: A prop one can `bind:` to (possibly reassigned or mutated)
-		 * - `rest_prop`: A rest prop
-		 * - `state`: A state variable
-		 * - `derived`: A derived variable
-		 * - `each`: An each block parameter
-		 * - `snippet`: A snippet parameter
-		 * - `store_sub`: A $store value
-		 * - `legacy_reactive`: A `$:` declaration
-		 */
-		kind:
-			| 'normal'
-			| 'prop'
-			| 'bindable_prop'
-			| 'rest_prop'
-			| 'state'
-			| 'raw_state'
-			| 'derived'
-			| 'each'
-			| 'snippet'
-			| 'store_sub'
-			| 'legacy_reactive';
-		declaration_kind: DeclarationKind;
-		/**
-		 * What the value was initialized with.
-		 * For destructured props such as `let { foo = 'bar' } = $props()` this is `'bar'` and not `$props()`
-		 */
-		initial:
-			| null
-			| Expression
-			| FunctionDeclaration
-			| ClassDeclaration
-			| ImportDeclaration
-			| EachBlock;
-		is_called: boolean;
-		references: { node: Identifier; path: SvelteNode[] }[];
-		mutated: boolean;
-		reassigned: boolean;
-		/** `true` if mutated _or_ reassigned */
-		updated: boolean;
-		scope: Scope;
-		/** For `legacy_reactive`: its reactive dependencies */
-		legacy_dependencies: Binding[];
-		/** Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props() */
-		prop_alias: string | null;
-		/** Additional metadata, varies per binding type */
-		metadata: {
-			/** `true` if is (inside) a rest parameter */
-			inside_rest?: boolean;
-		} | null;
-	}
-
-	interface ExpressionMetadata {
-		/** All the bindings that are referenced inside this expression */
-		dependencies: Set<Binding>;
-		/** True if the expression references state directly, or _might_ (via member/call expressions) */
-		has_state: boolean;
-		/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
-		has_call: boolean;
-	}
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
 	 * For example, it can be used to convert a <style lang="sass"> block into vanilla CSS.
@@ -1243,58 +1168,6 @@ declare module 'svelte/compiler' {
 		| LegacyAttributeShorthand
 		| LegacyCssNode
 		| Text;
-	class Scope {
-		
-		constructor(root: ScopeRoot, parent: Scope | null, porous: boolean);
-		
-		root: ScopeRoot;
-		/**
-		 * The immediate parent scope
-		 * */
-		parent: Scope | null;
-		/**
-		 * A map of every identifier declared by this scope, and all the
-		 * identifiers that reference it
-		 * */
-		declarations: Map<string, Binding>;
-		/**
-		 * A map of declarators to the bindings they declare
-		 * */
-		declarators: Map<VariableDeclarator | LetDirective, Binding[]>;
-		/**
-		 * A set of all the names referenced with this scope
-		 * — useful for generating unique names
-		 * */
-		references: Map<string, {
-			node: Identifier;
-			path: SvelteNode[];
-		}[]>;
-		/**
-		 * The scope depth allows us to determine if a state variable is referenced in its own scope,
-		 * which is usually an error. Block statements do not increase this value
-		 */
-		function_depth: number;
-		
-		declare(node: Identifier, kind: Binding["kind"], declaration_kind: DeclarationKind, initial?: null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | EachBlock): Binding;
-		child(porous?: boolean): Scope;
-		
-		generate(preferred_name: string): string;
-		
-		get(name: string): Binding | null;
-		
-		get_bindings(node: VariableDeclarator | LetDirective): Binding[];
-		
-		owner(name: string): Scope | null;
-		
-		reference(node: Identifier, path: SvelteNode[]): void;
-		#private;
-	}
-	class ScopeRoot {
-		
-		conflicts: Set<string>;
-		
-		unique(preferred_name: string): Identifier;
-	}
 	namespace Css {
 		export interface BaseNode {
 			start: number;
@@ -1479,25 +1352,11 @@ declare module 'svelte/compiler' {
 		type: string;
 		start: number;
 		end: number;
-		/** This is set during parsing on elements/components/expressions/text (but not attributes etc) */
-		parent: SvelteNode | null;
 	}
 
 	interface Fragment {
 		type: 'Fragment';
 		nodes: Array<Text | Tag | ElementLike | Block | Comment>;
-		metadata: {
-			/**
-			 * Fragments declare their own scopes. A transparent fragment is one whose scope
-			 * is not represented by a scope in the resulting JavaScript (e.g. an element scope),
-			 * and should therefore delegate to parent scopes when generating unique identifiers
-			 */
-			transparent: boolean;
-			/**
-			 * Whether or not we need to traverse into the fragment during mount/hydrate
-			 */
-			dynamic: boolean;
-		};
 	}
 
 	/**
@@ -1520,10 +1379,6 @@ declare module 'svelte/compiler' {
 		instance: Script | null;
 		/** The parsed `<script module>` element, if exists */
 		module: Script | null;
-		metadata: {
-			/** Whether the component was parsed with typescript */
-			ts: boolean;
-		};
 	}
 
 	interface SvelteOptions {
@@ -1572,9 +1427,6 @@ declare module 'svelte/compiler' {
 	interface ExpressionTag extends BaseNode {
 		type: 'ExpressionTag';
 		expression: Expression;
-		metadata: {
-			expression: ExpressionMetadata;
-		};
 	}
 
 	/** A (possibly reactive) HTML template expression — `{@html ...}` */
@@ -1609,10 +1461,6 @@ declare module 'svelte/compiler' {
 	interface RenderTag extends BaseNode {
 		type: 'RenderTag';
 		expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
-		metadata: {
-			dynamic: boolean;
-			args_with_call_expression: Set<number>;
-		};
 	}
 
 	type Tag = ExpressionTag | HtmlTag | ConstTag | DebugTag | RenderTag;
@@ -1633,10 +1481,6 @@ declare module 'svelte/compiler' {
 		name: string;
 		/** The y in `bind:x={y}` */
 		expression: Identifier | MemberExpression;
-		metadata: {
-			binding_group_name: Identifier;
-			parent_each_blocks: EachBlock[];
-		};
 	}
 
 	/** A `class:` directive */
@@ -1646,9 +1490,6 @@ declare module 'svelte/compiler' {
 		name: 'class';
 		/** The 'y' in `class:x={y}`, or the `x` in `class:x` */
 		expression: Expression;
-		metadata: {
-			expression: ExpressionMetadata;
-		};
 	}
 
 	/** A `let:` directive */
@@ -1667,18 +1508,8 @@ declare module 'svelte/compiler' {
 		name: string;
 		/** The 'y' in `on:x={y}` */
 		expression: null | Expression;
-		modifiers: string[]; // TODO specify
-		metadata: {
-			expression: ExpressionMetadata;
-		};
+		modifiers: string[];
 	}
-
-	type DelegatedEvent =
-		| {
-				hoisted: true;
-				function: ArrowFunctionExpression | FunctionExpression | FunctionDeclaration;
-		  }
-		| { hoisted: false };
 
 	/** A `style:` directive */
 	interface StyleDirective extends BaseNode {
@@ -1688,9 +1519,6 @@ declare module 'svelte/compiler' {
 		/** The 'y' in `style:x={y}` */
 		value: true | ExpressionTag | Array<ExpressionTag | Text>;
 		modifiers: Array<'important'>;
-		metadata: {
-			expression: ExpressionMetadata;
-		};
 	}
 
 	// TODO have separate in/out/transition directives
@@ -1735,10 +1563,6 @@ declare module 'svelte/compiler' {
 
 	interface Component extends BaseElement {
 		type: 'Component';
-		metadata: {
-			scopes: Record<string, Scope>;
-			dynamic: boolean;
-		};
 	}
 
 	interface TitleElement extends BaseElement {
@@ -1753,15 +1577,6 @@ declare module 'svelte/compiler' {
 
 	interface RegularElement extends BaseElement {
 		type: 'RegularElement';
-		metadata: {
-			/** `true` if this is an svg element */
-			svg: boolean;
-			/** `true` if this is a mathml element */
-			mathml: boolean;
-			/** `true` if contains a SpreadAttribute */
-			has_spread: boolean;
-			scoped: boolean;
-		};
 	}
 
 	interface SvelteBody extends BaseElement {
@@ -1773,9 +1588,6 @@ declare module 'svelte/compiler' {
 		type: 'SvelteComponent';
 		name: 'svelte:component';
 		expression: Expression;
-		metadata: {
-			scopes: Record<string, Scope>;
-		};
 	}
 
 	interface SvelteDocument extends BaseElement {
@@ -1787,19 +1599,6 @@ declare module 'svelte/compiler' {
 		type: 'SvelteElement';
 		name: 'svelte:element';
 		tag: Expression;
-		metadata: {
-			/**
-			 * `true` if this is an svg element. The boolean may not be accurate because
-			 * the tag is dynamic, but we do our best to infer it from the template.
-			 */
-			svg: boolean;
-			/**
-			 * `true` if this is a mathml element. The boolean may not be accurate because
-			 * the tag is dynamic, but we do our best to infer it from the template.
-			 */
-			mathml: boolean;
-			scoped: boolean;
-		};
 	}
 
 	interface SvelteFragment extends BaseElement {
@@ -1821,9 +1620,6 @@ declare module 'svelte/compiler' {
 	interface SvelteSelf extends BaseElement {
 		type: 'SvelteSelf';
 		name: 'svelte:self';
-		metadata: {
-			scopes: Record<string, Scope>;
-		};
 	}
 
 	interface SvelteWindow extends BaseElement {
@@ -1855,22 +1651,6 @@ declare module 'svelte/compiler' {
 		fallback?: Fragment;
 		index?: string;
 		key?: Expression;
-		metadata: {
-			expression: ExpressionMetadata;
-			keyed: boolean;
-			contains_group_binding: boolean;
-			/** Set if something in the array expression is shadowed within the each block */
-			array_name: Identifier | null;
-			index: Identifier;
-			item: Identifier;
-			declarations: Map<string, Binding>;
-			/**
-			 * Optimization path for each blocks: If the parent isn't a fragment and
-			 * it only has a single child, then we can classify the block as being "controlled".
-			 * This saves us from creating an extra comment and insertion being faster.
-			 */
-			is_controlled: boolean;
-		};
 	}
 
 	/** An `{#if ...}` block */
@@ -1915,33 +1695,12 @@ declare module 'svelte/compiler' {
 		type: 'Attribute';
 		name: string;
 		value: true | ExpressionTag | Array<Text | ExpressionTag>;
-		metadata: {
-			expression: ExpressionMetadata;
-			/** May be set if this is an event attribute */
-			delegated: null | DelegatedEvent;
-		};
 	}
 
 	interface SpreadAttribute extends BaseNode {
 		type: 'SpreadAttribute';
 		expression: Expression;
-		metadata: {
-			expression: ExpressionMetadata;
-		};
 	}
-
-	type TemplateNode =
-		| Root
-		| Text
-		| Tag
-		| ElementLike
-		| Attribute
-		| SpreadAttribute
-		| Directive
-		| Comment
-		| Block;
-
-	type SvelteNode = Node | TemplateNode | Fragment | Css.Node;
 
 	interface Script extends BaseNode {
 		type: 'Script';

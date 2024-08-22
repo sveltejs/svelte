@@ -22,13 +22,14 @@ export interface BaseNode {
 	type: string;
 	start: number;
 	end: number;
-	/** This is set during parsing on elements/components/expressions/text (but not attributes etc) */
+	/** @internal This is set during parsing on elements/components/expressions/text (but not attributes etc) */
 	parent: SvelteNode | null;
 }
 
 export interface Fragment {
 	type: 'Fragment';
 	nodes: Array<Text | Tag | ElementLike | Block | Comment>;
+	/** @internal */
 	metadata: {
 		/**
 		 * Fragments declare their own scopes. A transparent fragment is one whose scope
@@ -63,6 +64,7 @@ export interface Root extends BaseNode {
 	instance: Script | null;
 	/** The parsed `<script module>` element, if exists */
 	module: Script | null;
+	/** @internal */
 	metadata: {
 		/** Whether the component was parsed with typescript */
 		ts: boolean;
@@ -115,6 +117,7 @@ export interface Text extends BaseNode {
 export interface ExpressionTag extends BaseNode {
 	type: 'ExpressionTag';
 	expression: Expression;
+	/** @internal */
 	metadata: {
 		expression: ExpressionMetadata;
 	};
@@ -152,6 +155,7 @@ export interface DebugTag extends BaseNode {
 export interface RenderTag extends BaseNode {
 	type: 'RenderTag';
 	expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
+	/** @internal */
 	metadata: {
 		dynamic: boolean;
 		args_with_call_expression: Set<number>;
@@ -176,6 +180,7 @@ export interface BindDirective extends BaseNode {
 	name: string;
 	/** The y in `bind:x={y}` */
 	expression: Identifier | MemberExpression;
+	/** @internal */
 	metadata: {
 		binding_group_name: Identifier;
 		parent_each_blocks: EachBlock[];
@@ -189,6 +194,7 @@ export interface ClassDirective extends BaseNode {
 	name: 'class';
 	/** The 'y' in `class:x={y}`, or the `x` in `class:x` */
 	expression: Expression;
+	/** @internal */
 	metadata: {
 		expression: ExpressionMetadata;
 	};
@@ -211,6 +217,7 @@ export interface OnDirective extends BaseNode {
 	/** The 'y' in `on:x={y}` */
 	expression: null | Expression;
 	modifiers: string[]; // TODO specify
+	/** @internal */
 	metadata: {
 		expression: ExpressionMetadata;
 	};
@@ -231,6 +238,7 @@ export interface StyleDirective extends BaseNode {
 	/** The 'y' in `style:x={y}` */
 	value: true | ExpressionTag | Array<ExpressionTag | Text>;
 	modifiers: Array<'important'>;
+	/** @internal */
 	metadata: {
 		expression: ExpressionMetadata;
 	};
@@ -278,6 +286,7 @@ interface BaseElement extends BaseNode {
 
 export interface Component extends BaseElement {
 	type: 'Component';
+	/** @internal */
 	metadata: {
 		scopes: Record<string, Scope>;
 		dynamic: boolean;
@@ -296,6 +305,7 @@ export interface SlotElement extends BaseElement {
 
 export interface RegularElement extends BaseElement {
 	type: 'RegularElement';
+	/** @internal */
 	metadata: {
 		/** `true` if this is an svg element */
 		svg: boolean;
@@ -316,6 +326,7 @@ export interface SvelteComponent extends BaseElement {
 	type: 'SvelteComponent';
 	name: 'svelte:component';
 	expression: Expression;
+	/** @internal */
 	metadata: {
 		scopes: Record<string, Scope>;
 	};
@@ -330,6 +341,7 @@ export interface SvelteElement extends BaseElement {
 	type: 'SvelteElement';
 	name: 'svelte:element';
 	tag: Expression;
+	/** @internal */
 	metadata: {
 		/**
 		 * `true` if this is an svg element. The boolean may not be accurate because
@@ -364,6 +376,7 @@ export interface SvelteOptionsRaw extends BaseElement {
 export interface SvelteSelf extends BaseElement {
 	type: 'SvelteSelf';
 	name: 'svelte:self';
+	/** @internal */
 	metadata: {
 		scopes: Record<string, Scope>;
 	};
@@ -398,6 +411,7 @@ export interface EachBlock extends BaseNode {
 	fallback?: Fragment;
 	index?: string;
 	key?: Expression;
+	/** @internal */
 	metadata: {
 		expression: ExpressionMetadata;
 		keyed: boolean;
@@ -458,6 +472,7 @@ export interface Attribute extends BaseNode {
 	type: 'Attribute';
 	name: string;
 	value: true | ExpressionTag | Array<Text | ExpressionTag>;
+	/** @internal */
 	metadata: {
 		expression: ExpressionMetadata;
 		/** May be set if this is an event attribute */
@@ -468,6 +483,7 @@ export interface Attribute extends BaseNode {
 export interface SpreadAttribute extends BaseNode {
 	type: 'SpreadAttribute';
 	expression: Expression;
+	/** @internal */
 	metadata: {
 		expression: ExpressionMetadata;
 	};
