@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.236
+
+### Patch Changes
+
+- fix: properly transform destructured `$derived.by` declarations ([#12984](https://github.com/sveltejs/svelte/pull/12984))
+
 ## 5.0.0-next.235
 
 ### Patch Changes
