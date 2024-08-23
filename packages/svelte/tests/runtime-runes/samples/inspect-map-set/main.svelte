@@ -1,5 +1,5 @@
 <script>
-	import {SvelteMap, SvelteSet} from "svelte/reactivity"
+	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 	let map = new SvelteMap();
 	let set = new SvelteSet();
