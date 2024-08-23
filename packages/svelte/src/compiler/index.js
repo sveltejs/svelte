@@ -78,7 +78,7 @@ export function compileModule(source, options) {
  * @overload
  * @param {string} source
  * @param {{ filename?: string; modern: true }} options
- * @returns {import('./public.js').Ast.Root}
+ * @returns {Ast.Root}
  */
 
 /**
