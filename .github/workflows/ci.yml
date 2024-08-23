@@ -17,19 +17,19 @@ jobs:
     strategy:
       matrix:
         include:
-          - node-version: 16
-            os: ubuntu-latest
-          - node-version: 16
-            os: windows-latest
-          - node-version: 16
-            os: macOS-latest
           - node-version: 18
             os: ubuntu-latest
+          - node-version: 18
+            os: windows-latest
+          - node-version: 18
+            os: macOS-latest
           - node-version: 20
+            os: ubuntu-latest
+          - node-version: 22
             os: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2.2.4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
@@ -44,10 +44,10 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2.2.4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 18
           cache: pnpm
       - name: install
         run: pnpm install --frozen-lockfile
