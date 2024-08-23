@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Source, Value } from '#client' */
+/** @import { Derived, Effect, Source, Value, Reaction } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	current_component_context,
@@ -28,6 +28,8 @@ import {
 import * as e from '../errors.js';
 
 let inspect_effects = new Set();
+/** @type {Reaction | null} */
+let constructor_reaction = null;
 
 /**
  * @template V
@@ -84,7 +86,12 @@ export function mutate(source, value) {
  * @returns {V}
  */
 export function set(source, value) {
-	if (current_reaction !== null && is_runes() && (current_reaction.f & DERIVED) !== 0) {
+	if (
+		current_reaction !== null &&
+		current_reaction !== constructor_reaction &&
+		is_runes() &&
+		(current_reaction.f & DERIVED) !== 0
+	) {
 		e.state_unsafe_mutation();
 	}
 
@@ -168,4 +175,17 @@ function mark_reactions(signal, status) {
 			}
 		}
 	}
+}
+
+export function enter_constructor() {
+	const prev = constructor_reaction;
+	constructor_reaction = current_reaction;
+	return prev;
+}
+
+/**
+ * @param {Reaction | null} reaction
+ */
+export function leave_constructor(reaction) {
+	constructor_reaction = reaction;
 }

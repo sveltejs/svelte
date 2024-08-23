@@ -613,6 +613,16 @@ function return_builder(argument = null) {
 }
 
 /**
+ * @param {ESTree.BlockStatement} block
+ * @param {ESTree.CatchClause | null} [catch_handler]
+ * @param {ESTree.BlockStatement} [finalizer]
+ * @returns {ESTree.TryStatement}
+ */
+function try_builder(block, catch_handler, finalizer) {
+	return { type: 'TryStatement', block, handler: catch_handler, finalizer };
+}
+
+/**
  * @param {string} str
  * @returns {ESTree.ThrowStatement}
  */
@@ -624,6 +634,7 @@ export function throw_error(str) {
 }
 
 export {
+	try_builder as try,
 	await_builder as await,
 	let_builder as let,
 	const_builder as const,
