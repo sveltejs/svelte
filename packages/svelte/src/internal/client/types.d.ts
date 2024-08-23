@@ -173,25 +173,16 @@ export type TaskCallback = (now: number) => boolean | void;
 
 export type TaskEntry = { c: TaskCallback; f: () => void };
 
-export interface ProxyMetadata<T = Record<string | symbol, any>> {
-	/** A map of signals associated to the properties that are reactive */
-	s: Map<string | symbol, Source<any>>;
-	/** A version counter, used within the proxy to signal changes in places where there's no other way to signal an update */
-	v: Source<number>;
-	/** `true` if the proxified object is an array */
-	a: boolean;
-	/** The associated proxy */
-	p: ProxyStateObject<T>;
-	/** The original target this proxy was created for */
-	t: T;
-	/** Dev-only — the components that 'own' this state, if any. `null` means no owners, i.e. everyone can mutate this state. */
+/** Dev-only */
+export interface ProxyMetadata {
+	/** The components that 'own' this state, if any. `null` means no owners, i.e. everyone can mutate this state. */
 	owners: null | Set<Function>;
-	/** Dev-only — the parent metadata object */
+	/** The parent metadata object */
 	parent: null | ProxyMetadata;
 }
 
 export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
-	[STATE_SYMBOL]: ProxyMetadata;
+	[STATE_SYMBOL]: T;
 };
 
 export * from './reactivity/types';

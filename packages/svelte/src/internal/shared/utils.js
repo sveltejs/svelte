@@ -3,9 +3,6 @@
 export var is_array = Array.isArray;
 export var array_from = Array.from;
 export var object_keys = Object.keys;
-export var object_assign = Object.assign;
-export var is_frozen = Object.isFrozen;
-export var object_freeze = Object.freeze;
 export var define_property = Object.defineProperty;
 export var get_descriptor = Object.getOwnPropertyDescriptor;
 export var get_descriptors = Object.getOwnPropertyDescriptors;
@@ -45,4 +42,19 @@ export function run_all(arr) {
 	for (var i = 0; i < arr.length; i++) {
 		arr[i]();
 	}
+}
+
+/**
+ * @template V
+ * @param {V} value
+ * @param {V | (() => V)} fallback
+ * @param {boolean} [lazy]
+ * @returns {V}
+ */
+export function fallback(value, fallback, lazy = false) {
+	return value === undefined
+		? lazy
+			? /** @type {() => V} */ (fallback)()
+			: /** @type {V} */ (fallback)
+		: value;
 }

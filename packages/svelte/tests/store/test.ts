@@ -1,5 +1,17 @@
 import { describe, it, assert } from 'vitest';
-import { readable, writable, derived, get, readonly, type Readable } from 'svelte/store';
+import {
+	readable,
+	writable,
+	derived,
+	get,
+	readonly,
+	toStore,
+	type Readable,
+	fromStore
+} from 'svelte/store';
+import { source, set } from '../../src/internal/client/reactivity/sources';
+import * as $ from '../../src/internal/client/runtime';
+import { effect_root, render_effect } from 'svelte/internal/client';
 
 describe('writable', () => {
 	it('creates a writable store', () => {
@@ -572,5 +584,99 @@ describe('readonly', () => {
 
 		// @ts-ignore
 		assert.throws(() => readableStore.set(3));
+	});
+});
+
+describe('toStore', () => {
+	it('creates a readable store from state', () => {
+		const count = source(0);
+
+		const store = toStore(() => $.get(count));
+
+		const log: number[] = [];
+
+		const unsubscribe = store.subscribe((value) => {
+			log.push(value);
+		});
+
+		assert.deepEqual(log, [0]);
+
+		set(count, 1);
+		$.flush_sync();
+		assert.deepEqual(log, [0, 1]);
+
+		unsubscribe();
+	});
+
+	it('creates a writable store from state', () => {
+		const count = source(0);
+
+		const store = toStore(
+			() => $.get(count),
+			(v) => set(count, v)
+		);
+
+		const log: number[] = [];
+
+		const unsubscribe = store.subscribe((value) => {
+			log.push(value);
+		});
+
+		assert.deepEqual(log, [0]);
+
+		set(count, 1);
+		$.flush_sync();
+		assert.deepEqual(log, [0, 1]);
+
+		store.set(2);
+		assert.equal($.get(count), 2);
+
+		unsubscribe();
+	});
+});
+
+describe('fromStore', () => {
+	it('creates state from a writable store', () => {
+		const store = writable(0);
+
+		const count = fromStore(store);
+
+		assert.equal(count.current, 0);
+
+		const log: number[] = [];
+
+		const teardown = effect_root(() => {
+			render_effect(() => {
+				log.push(count.current);
+			});
+		});
+
+		assert.deepEqual(log, [0]);
+
+		store.set(1);
+		$.flush_sync();
+		assert.deepEqual(log, [0, 1]);
+
+		count.current = 2;
+		$.flush_sync();
+		assert.deepEqual(log, [0, 1, 2]);
+
+		assert.equal(get(store), 2);
+
+		teardown();
+	});
+
+	it('creates state from a readable store', () => {
+		const store = readable(0);
+
+		const count = fromStore(store);
+
+		assert.equal(count.current, 0);
+
+		assert.throws(
+			// @ts-expect-error property is readonly
+			() => (count.current += 1),
+			'Cannot set property current of #<Object> which has only a getter'
+		);
 	});
 });

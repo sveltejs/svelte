@@ -12,7 +12,7 @@ This post will walk you through setting up your editor so that it recognises Sve
 
 - eslint-plugin-svelte3
 - svelte-vscode
-- associating .svelte files with HTML in VSCode, Sublime, etc.
+- associating .svelte files with HTML in VS Code, Sublime, etc.
 
 ## Atom
 

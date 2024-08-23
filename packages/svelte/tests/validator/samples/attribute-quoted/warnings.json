@@ -12,6 +12,18 @@
 		}
 	},
 	{
+		"code": "svelte_component_deprecated",
+		"end": {
+			"column": 45,
+			"line": 15
+		},
+		"message": "`<svelte:component>` is deprecated in runes mode — components are dynamic by default",
+		"start": {
+			"column": 0,
+			"line": 15
+		}
+	},
+	{
 		"code": "attribute_quoted",
 		"message": "Quoted attributes on components and custom elements will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes",
 		"start": {

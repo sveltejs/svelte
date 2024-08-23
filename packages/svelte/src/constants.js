@@ -1,16 +1,15 @@
 export const EACH_ITEM_REACTIVE = 1;
 export const EACH_INDEX_REACTIVE = 1 << 1;
-export const EACH_KEYED = 1 << 2;
-
 /** See EachBlock interface metadata.is_controlled for an explanation what this is */
-export const EACH_IS_CONTROLLED = 1 << 3;
-export const EACH_IS_ANIMATED = 1 << 4;
-export const EACH_IS_STRICT_EQUALS = 1 << 6;
+export const EACH_IS_CONTROLLED = 1 << 2;
+export const EACH_IS_ANIMATED = 1 << 3;
+export const EACH_ITEM_IMMUTABLE = 1 << 4;
 
 export const PROPS_IS_IMMUTABLE = 1;
 export const PROPS_IS_RUNES = 1 << 1;
 export const PROPS_IS_UPDATED = 1 << 2;
-export const PROPS_IS_LAZY_INITIAL = 1 << 3;
+export const PROPS_IS_BINDABLE = 1 << 3;
+export const PROPS_IS_LAZY_INITIAL = 1 << 4;
 
 export const TRANSITION_IN = 1;
 export const TRANSITION_OUT = 1 << 1;
@@ -34,341 +33,24 @@ export const UNINITIALIZED = Symbol();
 export const FILENAME = Symbol('filename');
 export const HMR = Symbol('hmr');
 
-/** List of elements that require raw contents and should not have SSR comments put in them */
-export const RawTextElements = ['textarea', 'script', 'style', 'title'];
+export const NAMESPACE_SVG = 'http://www.w3.org/2000/svg';
+export const NAMESPACE_MATHML = 'http://www.w3.org/1998/Math/MathML';
 
-/** List of Element events that will be delegated */
-export const DelegatedEvents = [
-	'beforeinput',
-	'click',
-	'change',
-	'dblclick',
-	'contextmenu',
-	'focusin',
-	'focusout',
-	'input',
-	'keydown',
-	'keyup',
-	'mousedown',
-	'mousemove',
-	'mouseout',
-	'mouseover',
-	'mouseup',
-	'pointerdown',
-	'pointermove',
-	'pointerout',
-	'pointerover',
-	'pointerup',
-	'touchend',
-	'touchmove',
-	'touchstart'
-];
-
-/** List of Element events that will be delegated and are passive */
-export const PassiveDelegatedEvents = ['touchstart', 'touchmove', 'touchend'];
-
-/**
- * @type {Record<string, string>}
- * List of attribute names that should be aliased to their property names
- * because they behave differently between setting them as an attribute and
- * setting them as a property.
- */
-export const AttributeAliases = {
-	// no `class: 'className'` because we handle that separately
-	formnovalidate: 'formNoValidate',
-	ismap: 'isMap',
-	nomodule: 'noModule',
-	playsinline: 'playsInline',
-	readonly: 'readOnly'
-};
-
-/**
- * Attributes that are boolean, i.e. they are present or not present.
- */
-export const DOMBooleanAttributes = [
-	'allowfullscreen',
-	'async',
-	'autofocus',
-	'autoplay',
-	'checked',
-	'controls',
-	'default',
-	'disabled',
-	'formnovalidate',
-	'hidden',
-	'indeterminate',
-	'ismap',
-	'loop',
-	'multiple',
-	'muted',
-	'nomodule',
-	'novalidate',
-	'open',
-	'playsinline',
-	'readonly',
-	'required',
-	'reversed',
-	'seamless',
-	'selected',
-	'webkitdirectory'
-];
-
-export const namespace_svg = 'http://www.w3.org/2000/svg';
-export const namespace_mathml = 'http://www.w3.org/1998/Math/MathML';
-
-// while `input` is also an interactive element, it is never moved by the browser, so we don't need to check for it
-export const interactive_elements = new Set([
-	'a',
-	'button',
-	'iframe',
-	'embed',
-	'select',
-	'textarea'
+// we use a list of ignorable runtime warnings because not every runtime warning
+// can be ignored and we want to keep the validation for svelte-ignore in place
+export const IGNORABLE_RUNTIME_WARNINGS = /** @type {const} */ ([
+	'state_snapshot_uncloneable',
+	'binding_property_non_reactive',
+	'hydration_attribute_changed',
+	'hydration_html_changed',
+	'ownership_invalid_binding',
+	'ownership_invalid_mutation'
 ]);
 
-export const disallowed_paragraph_contents = [
-	'address',
-	'article',
-	'aside',
-	'blockquote',
-	'details',
-	'div',
-	'dl',
-	'fieldset',
-	'figcapture',
-	'figure',
-	'footer',
-	'form',
-	'h1',
-	'h2',
-	'h3',
-	'h4',
-	'h5',
-	'h6',
-	'header',
-	'hr',
-	'menu',
-	'nav',
-	'ol',
-	'pre',
-	'section',
-	'table',
-	'ul',
-	'p'
-];
-
-// https://html.spec.whatwg.org/multipage/syntax.html#generate-implied-end-tags
-const implied_end_tags = ['dd', 'dt', 'li', 'option', 'optgroup', 'p', 'rp', 'rt'];
-
 /**
- * @param {string} tag
- * @param {string} parent_tag
- * @returns {boolean}
+ * Whitespace inside one of these elements will not result in
+ * a whitespace node being created in any circumstances. (This
+ * list is almost certainly very incomplete)
+ * TODO this is currently unused
  */
-export function is_tag_valid_with_parent(tag, parent_tag) {
-	// First, let's check if we're in an unusual parsing mode...
-	switch (parent_tag) {
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inselect
-		case 'select':
-			return (
-				tag === 'option' ||
-				tag === 'optgroup' ||
-				tag === '#text' ||
-				tag === 'hr' ||
-				tag === 'script' ||
-				tag === 'template'
-			);
-		case 'optgroup':
-			return tag === 'option' || tag === '#text';
-		// Strictly speaking, seeing an <option> doesn't mean we're in a <select>
-		// but
-		case 'option':
-			return tag === '#text';
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intd
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-incaption
-		// No special behavior since these rules fall back to "in body" mode for
-		// all except special table nodes which cause bad parsing behavior anyway.
-
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intr
-		case 'tr':
-			return (
-				tag === 'th' || tag === 'td' || tag === 'style' || tag === 'script' || tag === 'template'
-			);
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intbody
-		case 'tbody':
-		case 'thead':
-		case 'tfoot':
-			return tag === 'tr' || tag === 'style' || tag === 'script' || tag === 'template';
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-incolgroup
-		case 'colgroup':
-			return tag === 'col' || tag === 'template';
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intable
-		case 'table':
-			return (
-				tag === 'caption' ||
-				tag === 'colgroup' ||
-				tag === 'tbody' ||
-				tag === 'tfoot' ||
-				tag === 'thead' ||
-				tag === 'style' ||
-				tag === 'script' ||
-				tag === 'template'
-			);
-		// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inhead
-		case 'head':
-			return (
-				tag === 'base' ||
-				tag === 'basefont' ||
-				tag === 'bgsound' ||
-				tag === 'link' ||
-				tag === 'meta' ||
-				tag === 'title' ||
-				tag === 'noscript' ||
-				tag === 'noframes' ||
-				tag === 'style' ||
-				tag === 'script' ||
-				tag === 'template'
-			);
-		// https://html.spec.whatwg.org/multipage/semantics.html#the-html-element
-		case 'html':
-			return tag === 'head' || tag === 'body' || tag === 'frameset';
-		case 'frameset':
-			return tag === 'frame';
-		case '#document':
-			return tag === 'html';
-	}
-
-	// Probably in the "in body" parsing mode, so we outlaw only tag combos
-	// where the parsing rules cause implicit opens or closes to be added.
-	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inbody
-	switch (tag) {
-		case 'h1':
-		case 'h2':
-		case 'h3':
-		case 'h4':
-		case 'h5':
-		case 'h6':
-			return (
-				parent_tag !== 'h1' &&
-				parent_tag !== 'h2' &&
-				parent_tag !== 'h3' &&
-				parent_tag !== 'h4' &&
-				parent_tag !== 'h5' &&
-				parent_tag !== 'h6'
-			);
-
-		case 'rp':
-		case 'rt':
-			return implied_end_tags.indexOf(parent_tag) === -1;
-
-		case 'body':
-		case 'caption':
-		case 'col':
-		case 'colgroup':
-		case 'frameset':
-		case 'frame':
-		case 'head':
-		case 'html':
-		case 'tbody':
-		case 'td':
-		case 'tfoot':
-		case 'th':
-		case 'thead':
-		case 'tr':
-			// These tags are only valid with a few parents that have special child
-			// parsing rules -- if we're down here, then none of those matched and
-			// so we allow it only if we don't know what the parent is, as all other
-			// cases are invalid.
-			return parent_tag == null;
-	}
-
-	return true;
-}
-
-/**
- * @param {string} name
- * @param {"include-on" | "exclude-on"} [mode] - wether if name starts with `on` or `on` is excluded at this point
- */
-export function is_capture_event(name, mode = 'exclude-on') {
-	if (!name.endsWith('capture')) {
-		return false;
-	}
-	return mode == 'exclude-on'
-		? name !== 'gotpointercapture' && name !== 'lostpointercapture'
-		: name !== 'ongotpointercapture' && name !== 'onlostpointercapture';
-}
-
-export const reserved = [
-	'arguments',
-	'await',
-	'break',
-	'case',
-	'catch',
-	'class',
-	'const',
-	'continue',
-	'debugger',
-	'default',
-	'delete',
-	'do',
-	'else',
-	'enum',
-	'eval',
-	'export',
-	'extends',
-	'false',
-	'finally',
-	'for',
-	'function',
-	'if',
-	'implements',
-	'import',
-	'in',
-	'instanceof',
-	'interface',
-	'let',
-	'new',
-	'null',
-	'package',
-	'private',
-	'protected',
-	'public',
-	'return',
-	'static',
-	'super',
-	'switch',
-	'this',
-	'throw',
-	'true',
-	'try',
-	'typeof',
-	'var',
-	'void',
-	'while',
-	'with',
-	'yield'
-];
-
-const void_element_names = [
-	'area',
-	'base',
-	'br',
-	'col',
-	'command',
-	'embed',
-	'hr',
-	'img',
-	'input',
-	'keygen',
-	'link',
-	'meta',
-	'param',
-	'source',
-	'track',
-	'wbr'
-];
-
-/** @param {string} name */
-export function is_void(name) {
-	return void_element_names.includes(name) || name.toLowerCase() === '!doctype';
-}
+export const ELEMENTS_WITHOUT_TEXT = ['audio', 'datalist', 'dl', 'optgroup', 'select', 'video'];

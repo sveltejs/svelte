@@ -85,7 +85,7 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	accessors?: boolean;
 	/**
-	 * The namespace of the element; e.g., `"html"`, `"svg"`, `"foreign"`.
+	 * The namespace of the element; e.g., `"html"`, `"svg"`, `"mathml"`.
 	 *
 	 * @default 'html'
 	 */
@@ -271,7 +271,6 @@ export interface Binding {
 	 * - `snippet`: A snippet parameter
 	 * - `store_sub`: A $store value
 	 * - `legacy_reactive`: A `$:` declaration
-	 * - `legacy_reactive_import`: An imported binding that is mutated inside the component
 	 */
 	kind:
 		| 'normal'
@@ -279,13 +278,12 @@ export interface Binding {
 		| 'bindable_prop'
 		| 'rest_prop'
 		| 'state'
-		| 'frozen_state'
+		| 'raw_state'
 		| 'derived'
 		| 'each'
 		| 'snippet'
 		| 'store_sub'
-		| 'legacy_reactive'
-		| 'legacy_reactive_import';
+		| 'legacy_reactive';
 	declaration_kind: DeclarationKind;
 	/**
 	 * What the value was initialized with.
@@ -302,18 +300,27 @@ export interface Binding {
 	references: { node: Identifier; path: SvelteNode[] }[];
 	mutated: boolean;
 	reassigned: boolean;
+	/** `true` if mutated _or_ reassigned */
+	updated: boolean;
 	scope: Scope;
 	/** For `legacy_reactive`: its reactive dependencies */
 	legacy_dependencies: Binding[];
 	/** Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props() */
 	prop_alias: string | null;
-	/** If this is set, all mutations should use this expression */
-	mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
 	/** Additional metadata, varies per binding type */
 	metadata: {
 		/** `true` if is (inside) a rest parameter */
 		inside_rest?: boolean;
 	} | null;
+}
+
+export interface ExpressionMetadata {
+	/** All the bindings that are referenced inside this expression */
+	dependencies: Set<Binding>;
+	/** True if the expression references state directly, or _might_ (via member/call expressions) */
+	has_state: boolean;
+	/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
+	has_call: boolean;
 }
 
 export * from './template.js';

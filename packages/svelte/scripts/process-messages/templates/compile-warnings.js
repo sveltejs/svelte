@@ -3,7 +3,7 @@ import { CompileDiagnostic } from './utils/compile_diagnostic.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
 
-export class InternalCompileWarning extends CompileDiagnostic {
+class InternalCompileWarning extends CompileDiagnostic {
 	name = 'CompileWarning';
 
 	/**

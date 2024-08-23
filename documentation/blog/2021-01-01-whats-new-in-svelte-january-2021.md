@@ -39,7 +39,7 @@ As cautioned in _[What's the deal with SvelteKit?](https://svelte.dev/blog/whats
 - [weather-ab](https://github.com/ganochenkodg/weather-ab) compares the archive of weather in different cities of the world. Indispensable for people thinking about migration
 - [Game Nibs](https://gamenibs.com/) is a platform for gamers to find and share concise bite-sized bits of gaming advice, tips, tricks, screenshots, builds, and much more
 - [Ora](https://github.com/cupcakearmy/ora) is an open source website tracking and limiting tool for Chrome and Firefox
-- [vscode-dms](https://github.com/techsyndicate/vscode-dms) is a group direct messaging chat app for VSCode
+- [vscode-dms](https://github.com/techsyndicate/vscode-dms) is a group direct messaging chat app for VS Code
 - [Zero.2](https://zero.oleksandrdemian.tech/) is a math-based challenge game where you try to get to zero as quickly as possible
 - [Octave Compass](https://octavecompass.com/2741) is a chord table and scale explorer for many popular musical scales
 - [Infinite Walking Bass Generator 2](https://github.com/elialbert/infinitewalkingbass2) is an online music player that generates a unique walking bass line

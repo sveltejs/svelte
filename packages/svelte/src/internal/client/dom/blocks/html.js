@@ -8,6 +8,7 @@ import * as w from '../../warnings.js';
 import { hash } from '../../../../utils.js';
 import { DEV } from 'esm-env';
 import { dev_current_component_function } from '../../runtime.js';
+import { get_first_child, get_next_sibling } from '../operations.js';
 
 /**
  * @param {Element} element
@@ -37,22 +38,28 @@ function check_hash(element, server_hash, value) {
  * @param {() => string} get_value
  * @param {boolean} svg
  * @param {boolean} mathml
+ * @param {boolean} [skip_warning]
  * @returns {void}
  */
-export function html(node, get_value, svg, mathml) {
+export function html(node, get_value, svg, mathml, skip_warning) {
 	var anchor = node;
 
 	var value = '';
 
-	/** @type {Effect | null} */
+	/** @type {Effect | undefined} */
 	var effect;
 
 	block(() => {
-		if (value === (value = get_value())) return;
+		if (value === (value = get_value())) {
+			if (hydrating) {
+				hydrate_next();
+			}
+			return;
+		}
 
-		if (effect) {
+		if (effect !== undefined) {
 			destroy_effect(effect);
-			effect = null;
+			effect = undefined;
 		}
 
 		if (value === '') return;
@@ -70,7 +77,7 @@ export function html(node, get_value, svg, mathml) {
 					(next.nodeType !== 8 || /** @type {Comment} */ (next).data !== '')
 				) {
 					last = next;
-					next = /** @type {TemplateNode} */ (next.nextSibling);
+					next = /** @type {TemplateNode} */ (get_next_sibling(next));
 				}
 
 				if (next === null) {
@@ -78,7 +85,7 @@ export function html(node, get_value, svg, mathml) {
 					throw HYDRATION_ERROR;
 				}
 
-				if (DEV) {
+				if (DEV && !skip_warning) {
 					check_hash(/** @type {Element} */ (next.parentNode), hash, value);
 				}
 
@@ -97,17 +104,17 @@ export function html(node, get_value, svg, mathml) {
 			var node = create_fragment_from_html(html);
 
 			if (svg || mathml) {
-				node = /** @type {Element} */ (node.firstChild);
+				node = /** @type {Element} */ (get_first_child(node));
 			}
 
 			assign_nodes(
-				/** @type {TemplateNode} */ (node.firstChild),
+				/** @type {TemplateNode} */ (get_first_child(node)),
 				/** @type {TemplateNode} */ (node.lastChild)
 			);
 
 			if (svg || mathml) {
-				while (node.firstChild) {
-					anchor.before(node.firstChild);
+				while (get_first_child(node)) {
+					anchor.before(/** @type {Node} */ (get_first_child(node)));
 				}
 			} else {
 				anchor.before(node);

@@ -1,4 +1,5 @@
 /** @import { Derived } from '#client' */
+import { DEV } from 'esm-env';
 import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
 import {
 	current_reaction,
@@ -11,8 +12,7 @@ import {
 	increment_version
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
-
-export let updating_derived = false;
+import * as e from '../errors.js';
 
 /**
  * @template V
@@ -80,15 +80,36 @@ function destroy_derived_children(derived) {
 }
 
 /**
+ * The currently updating deriveds, used to detect infinite recursion
+ * in dev mode and provide a nicer error than 'too much recursion'
+ * @type {Derived[]}
+ */
+let stack = [];
+
+/**
  * @param {Derived} derived
  * @returns {void}
  */
 export function update_derived(derived) {
-	var previous_updating_derived = updating_derived;
-	updating_derived = true;
-	destroy_derived_children(derived);
-	var value = update_reaction(derived);
-	updating_derived = previous_updating_derived;
+	var value;
+
+	if (DEV) {
+		try {
+			if (stack.includes(derived)) {
+				e.derived_references_self();
+			}
+
+			stack.push(derived);
+
+			destroy_derived_children(derived);
+			value = update_reaction(derived);
+		} finally {
+			stack.pop();
+		}
+	} else {
+		destroy_derived_children(derived);
+		value = update_reaction(derived);
+	}
 
 	var status =
 		(current_skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null
@@ -107,7 +128,7 @@ export function update_derived(derived) {
  * @param {Derived} signal
  * @returns {void}
  */
-export function destroy_derived(signal) {
+function destroy_derived(signal) {
 	destroy_derived_children(signal);
 	remove_reactions(signal, 0);
 	set_signal_status(signal, DESTROYED);

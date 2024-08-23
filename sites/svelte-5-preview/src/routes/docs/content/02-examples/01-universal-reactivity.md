@@ -48,6 +48,8 @@ We can encapsulate this logic in a function, so that it can be used in multiple 
 ```
 
 > Note that we're using a [`get` property](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/get) in the returned object, so that `counter.count` always refers to the current value rather than the value at the time the `createCounter` function was called.
+>
+> As a corollary, `const { count, increment } = createCounter()` won't work. That's because in JavaScript, [destructured declarations](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) are evaluated at the time of destructuring — in other words, `count` will never update.
 
 We can also extract that function out into a separate `.svelte.js` or `.svelte.ts` module...
 

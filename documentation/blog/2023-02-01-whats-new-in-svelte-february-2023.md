@@ -65,7 +65,7 @@ _To Watch or Hear_
 
 - [I built a $5 chat app with Pocketbase & Svelte. Will it scale?](https://www.youtube.com/watch?v=gUYBFDPZ5qk) by Fireship
 - [The Comprehensive Introduction To SvelteKit](https://www.youtube.com/watch?v=obmiLi3bhkQ), [What Svelte UI Library Should You Use?](https://www.youtube.com/watch?v=O0mNU0maItY) and [Learn Everything About SvelteKit Routing (Pages, Layout, Nested Routes)](https://www.youtube.com/watch?v=7hXHbGj6iE0) by Joy of Code
-- [Progressive Enhancement in SvelteKit (use:enhance)](https://www.youtube.com/watch?v=jXtzWMhdI2U), [Are Your Routes Actually Protected?](https://www.youtube.com/watch?v=UbhhJWV3bmI) and [10X Your SvelteKit Developer Experience in VSCode](https://www.youtube.com/watch?v=13v50nLh67Q) by Huntabyte
+- [Progressive Enhancement in SvelteKit (use:enhance)](https://www.youtube.com/watch?v=jXtzWMhdI2U), [Are Your Routes Actually Protected?](https://www.youtube.com/watch?v=UbhhJWV3bmI) and [10X Your SvelteKit Developer Experience in VS Code](https://www.youtube.com/watch?v=13v50nLh67Q) by Huntabyte
 - [The easiest realtime app I’ve ever built](https://www.youtube.com/watch?v=UbOaAtHWidc) by Beyond Fireship
 - [Angular developers can learn Svelte so fast...](https://www.youtube.com/watch?v=lKdw_z9qmPU) by Joshua Morony
 - [SvelteKit + PocketBase Integration: User Login and Registration](https://www.youtube.com/watch?v=AxPB3e-3yEM) by Jian Yuan Lee

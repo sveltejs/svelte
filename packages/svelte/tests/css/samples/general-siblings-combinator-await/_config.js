@@ -5,20 +5,20 @@ export default test({
 		{
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector ".b ~ .c"',
-			start: { character: 217, column: 1, line: 13 },
-			end: { character: 224, column: 8, line: 13 }
+			start: { character: 269, column: 1, line: 15 },
+			end: { character: 276, column: 8, line: 15 }
 		},
 		{
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector ".c ~ .d"',
-			start: { character: 242, column: 1, line: 14 },
-			end: { character: 249, column: 8, line: 14 }
+			start: { character: 296, column: 1, line: 16 },
+			end: { character: 303, column: 8, line: 16 }
 		},
 		{
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector ".b ~ .d"',
-			start: { character: 267, column: 1, line: 15 },
-			end: { character: 274, column: 8, line: 15 }
+			start: { character: 323, column: 1, line: 17 },
+			end: { character: 330, column: 8, line: 17 }
 		}
 	]
 });

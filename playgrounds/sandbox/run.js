@@ -63,11 +63,18 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 			runes: argv.values.runes
 		});
 
+		for (const warning of compiled.warnings) {
+			console.warn(warning.code);
+			console.warn(warning.frame);
+		}
+
 		fs.writeFileSync(
 			output_js,
 			compiled.js.code + '\n//# sourceMappingURL=' + path.basename(output_map)
 		);
+
 		fs.writeFileSync(output_map, compiled.js.map.toString());
+
 		if (compiled.css) {
 			fs.writeFileSync(output_css, compiled.css.code);
 		}

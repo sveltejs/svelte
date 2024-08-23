@@ -223,10 +223,10 @@ declare module 'svelte' {
 	 * withProps(MyComponent, { foo: 'bar' });
 	 * ```
 	 */
-	export type ComponentProps<Comp extends SvelteComponent | Component<any>> =
+	export type ComponentProps<Comp extends SvelteComponent | Component<any, any>> =
 		Comp extends SvelteComponent<infer Props>
 			? Props
-			: Comp extends Component<infer Props>
+			: Comp extends Component<infer Props, any>
 				? Props
 				: never;
 
@@ -282,9 +282,9 @@ declare module 'svelte' {
 			// rest parameter type, which is not supported. If rest parameters are added
 			// in the future, the condition can be removed.
 			...args: number extends Parameters['length'] ? never : Parameters
-		): typeof SnippetReturn & {
-			_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-		};
+		): {
+			'{@render ...} must be called with a Snippet': "import type { Snippet } from 'svelte'";
+		} & typeof SnippetReturn;
 	}
 
 	interface DispatchOptions {
@@ -378,7 +378,7 @@ declare module 'svelte' {
 	 * */
 	export function createRawSnippet<Params extends unknown[]>(fn: (...params: Getters<Params>) => {
 		render: () => string;
-		setup?: (element: Element) => void;
+		setup?: (element: Element) => void | (() => void);
 	}): Snippet<Params>;
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
@@ -584,7 +584,6 @@ declare module 'svelte/animate' {
 declare module 'svelte/compiler' {
 	import type { AssignmentExpression, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, MemberExpression, ObjectExpression, Pattern, Node, VariableDeclarator, ArrowFunctionExpression, VariableDeclaration, FunctionExpression, Program, ChainExpression, SimpleCallExpression } from 'estree';
 	import type { SourceMap } from 'magic-string';
-	import type { Context } from 'zimmerframe';
 	import type { Location } from 'locate-character';
 	/**
 	 * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
@@ -766,7 +765,7 @@ declare module 'svelte/compiler' {
 		 */
 		accessors?: boolean;
 		/**
-		 * The namespace of the element; e.g., `"html"`, `"svg"`, `"foreign"`.
+		 * The namespace of the element; e.g., `"html"`, `"svg"`, `"mathml"`.
 		 *
 		 * @default 'html'
 		 */
@@ -921,7 +920,6 @@ declare module 'svelte/compiler' {
 		 * - `snippet`: A snippet parameter
 		 * - `store_sub`: A $store value
 		 * - `legacy_reactive`: A `$:` declaration
-		 * - `legacy_reactive_import`: An imported binding that is mutated inside the component
 		 */
 		kind:
 			| 'normal'
@@ -929,13 +927,12 @@ declare module 'svelte/compiler' {
 			| 'bindable_prop'
 			| 'rest_prop'
 			| 'state'
-			| 'frozen_state'
+			| 'raw_state'
 			| 'derived'
 			| 'each'
 			| 'snippet'
 			| 'store_sub'
-			| 'legacy_reactive'
-			| 'legacy_reactive_import';
+			| 'legacy_reactive';
 		declaration_kind: DeclarationKind;
 		/**
 		 * What the value was initialized with.
@@ -952,18 +949,27 @@ declare module 'svelte/compiler' {
 		references: { node: Identifier; path: SvelteNode[] }[];
 		mutated: boolean;
 		reassigned: boolean;
+		/** `true` if mutated _or_ reassigned */
+		updated: boolean;
 		scope: Scope;
 		/** For `legacy_reactive`: its reactive dependencies */
 		legacy_dependencies: Binding[];
 		/** Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props() */
 		prop_alias: string | null;
-		/** If this is set, all mutations should use this expression */
-		mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
 		/** Additional metadata, varies per binding type */
 		metadata: {
 			/** `true` if is (inside) a rest parameter */
 			inside_rest?: boolean;
 		} | null;
+	}
+
+	interface ExpressionMetadata {
+		/** All the bindings that are referenced inside this expression */
+		dependencies: Set<Binding>;
+		/** True if the expression references state directly, or _might_ (via member/call expressions) */
+		has_state: boolean;
+		/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
+		has_call: boolean;
 	}
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
@@ -1322,17 +1328,32 @@ declare module 'svelte/compiler' {
 			metadata: {
 				parent_rule: null | Rule;
 				has_local_selectors: boolean;
+				/**
+				 * `true` if the rule contains a `:global` selector, and therefore everything inside should be unscoped
+				 */
 				is_global_block: boolean;
 			};
 		}
 
+		/**
+		 * A list of selectors, e.g. `a, b, c {}`
+		 */
 		export interface SelectorList extends BaseNode {
 			type: 'SelectorList';
+			/**
+			 * The `a`, `b` and `c` in `a, b, c {}`
+			 */
 			children: ComplexSelector[];
 		}
 
+		/**
+		 * A complex selector, e.g. `a b c {}`
+		 */
 		export interface ComplexSelector extends BaseNode {
 			type: 'ComplexSelector';
+			/**
+			 * The `a`, `b` and `c` in `a b c {}`
+			 */
 			children: RelativeSelector[];
 			metadata: {
 				rule: null | Rule;
@@ -1340,14 +1361,26 @@ declare module 'svelte/compiler' {
 			};
 		}
 
+		/**
+		 * A relative selector, e.g the `a` and `> b` in `a > b {}`
+		 */
 		export interface RelativeSelector extends BaseNode {
 			type: 'RelativeSelector';
+			/**
+			 * In `a > b`, `> b` forms one relative selector, and `>` is the combinator. `null` for the first selector.
+			 */
 			combinator: null | Combinator;
+			/**
+			 * The `b:is(...)` in `> b:is(...)`
+			 */
 			selectors: SimpleSelector[];
 			metadata: {
-				/** :global(..) */
+				/**
+				 * `true` if the whole selector is unscoped, e.g. `:global(...)` or `:global` or `:global.x`.
+				 * Selectors like `:global(...).x` are not considered global, because they still need scoping.
+				 */
 				is_global: boolean;
-				/** :root, :host, ::view-transition */
+				/** `:root`, `:host`, `::view-transition`, or selectors after a `:global` */
 				is_global_like: boolean;
 				scoped: boolean;
 			};
@@ -1453,23 +1486,26 @@ declare module 'svelte/compiler' {
 	interface Fragment {
 		type: 'Fragment';
 		nodes: Array<Text | Tag | ElementLike | Block | Comment>;
-		/**
-		 * Fragments declare their own scopes. A transparent fragment is one whose scope
-		 * is not represented by a scope in the resulting JavaScript (e.g. an element scope),
-		 * and should therefore delegate to parent scopes when generating unique identifiers
-		 */
-		transparent: boolean;
+		metadata: {
+			/**
+			 * Fragments declare their own scopes. A transparent fragment is one whose scope
+			 * is not represented by a scope in the resulting JavaScript (e.g. an element scope),
+			 * and should therefore delegate to parent scopes when generating unique identifiers
+			 */
+			transparent: boolean;
+			/**
+			 * Whether or not we need to traverse into the fragment during mount/hydrate
+			 */
+			dynamic: boolean;
+		};
 	}
 
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
 	 * - `svg`     — for e.g. `<svg>` or `<g>`
 	 * - `mathml`  — for e.g. `<math>` or `<mrow>`
-	 * - `foreign` — for other compilation targets than the web, e.g. Svelte Native.
-	 *               Disallows bindings other than bind:this, disables a11y checks, disables any special attribute handling
-	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
 	 */
-	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
+	type Namespace = 'html' | 'svg' | 'mathml';
 
 	interface Root extends BaseNode {
 		type: 'Root';
@@ -1482,7 +1518,7 @@ declare module 'svelte/compiler' {
 		css: Css.StyleSheet | null;
 		/** The parsed `<script>` element, if exists */
 		instance: Script | null;
-		/** The parsed `<script context="module">` element, if exists */
+		/** The parsed `<script module>` element, if exists */
 		module: Script | null;
 		metadata: {
 			/** Whether the component was parsed with typescript */
@@ -1500,8 +1536,9 @@ declare module 'svelte/compiler' {
 		accessors?: boolean;
 		preserveWhitespace?: boolean;
 		namespace?: Namespace;
+		css?: 'injected';
 		customElement?: {
-			tag: string;
+			tag?: string;
 			shadow?: 'open' | 'none';
 			props?: Record<
 				string,
@@ -1536,12 +1573,7 @@ declare module 'svelte/compiler' {
 		type: 'ExpressionTag';
 		expression: Expression;
 		metadata: {
-			contains_call_expression: boolean;
-			/**
-			 * Whether or not the expression contains any dynamic references —
-			 * determines whether it will be updated in a render effect or not
-			 */
-			dynamic: boolean;
+			expression: ExpressionMetadata;
 		};
 	}
 
@@ -1615,7 +1647,7 @@ declare module 'svelte/compiler' {
 		/** The 'y' in `class:x={y}`, or the `x` in `class:x` */
 		expression: Expression;
 		metadata: {
-			dynamic: false;
+			expression: ExpressionMetadata;
 		};
 	}
 
@@ -1637,17 +1669,16 @@ declare module 'svelte/compiler' {
 		expression: null | Expression;
 		modifiers: string[]; // TODO specify
 		metadata: {
-			contains_call_expression: boolean;
-			dynamic: boolean;
+			expression: ExpressionMetadata;
 		};
 	}
 
 	type DelegatedEvent =
 		| {
-				type: 'hoistable';
+				hoisted: true;
 				function: ArrowFunctionExpression | FunctionExpression | FunctionDeclaration;
 		  }
-		| { type: 'non-hoistable' };
+		| { hoisted: false };
 
 	/** A `style:` directive */
 	interface StyleDirective extends BaseNode {
@@ -1658,7 +1689,7 @@ declare module 'svelte/compiler' {
 		value: true | ExpressionTag | Array<ExpressionTag | Text>;
 		modifiers: Array<'important'>;
 		metadata: {
-			dynamic: boolean;
+			expression: ExpressionMetadata;
 		};
 	}
 
@@ -1705,6 +1736,7 @@ declare module 'svelte/compiler' {
 	interface Component extends BaseElement {
 		type: 'Component';
 		metadata: {
+			scopes: Record<string, Scope>;
 			dynamic: boolean;
 		};
 	}
@@ -1741,6 +1773,9 @@ declare module 'svelte/compiler' {
 		type: 'SvelteComponent';
 		name: 'svelte:component';
 		expression: Expression;
+		metadata: {
+			scopes: Record<string, Scope>;
+		};
 	}
 
 	interface SvelteDocument extends BaseElement {
@@ -1786,6 +1821,9 @@ declare module 'svelte/compiler' {
 	interface SvelteSelf extends BaseElement {
 		type: 'SvelteSelf';
 		name: 'svelte:self';
+		metadata: {
+			scopes: Record<string, Scope>;
+		};
 	}
 
 	interface SvelteWindow extends BaseElement {
@@ -1818,14 +1856,14 @@ declare module 'svelte/compiler' {
 		index?: string;
 		key?: Expression;
 		metadata: {
+			expression: ExpressionMetadata;
+			keyed: boolean;
 			contains_group_binding: boolean;
 			/** Set if something in the array expression is shadowed within the each block */
 			array_name: Identifier | null;
 			index: Identifier;
 			item: Identifier;
 			declarations: Map<string, Binding>;
-			/** List of bindings that are referenced within the expression */
-			references: Binding[];
 			/**
 			 * Optimization path for each blocks: If the parent isn't a fragment and
 			 * it only has a single child, then we can classify the block as being "controlled".
@@ -1878,7 +1916,7 @@ declare module 'svelte/compiler' {
 		name: string;
 		value: true | ExpressionTag | Array<Text | ExpressionTag>;
 		metadata: {
-			dynamic: boolean;
+			expression: ExpressionMetadata;
 			/** May be set if this is an event attribute */
 			delegated: null | DelegatedEvent;
 		};
@@ -1888,8 +1926,7 @@ declare module 'svelte/compiler' {
 		type: 'SpreadAttribute';
 		expression: Expression;
 		metadata: {
-			contains_call_expression: boolean;
-			dynamic: boolean;
+			expression: ExpressionMetadata;
 		};
 	}
 
@@ -1908,7 +1945,7 @@ declare module 'svelte/compiler' {
 
 	interface Script extends BaseNode {
 		type: 'Script';
-		context: string;
+		context: 'default' | 'module';
 		content: Program;
 		attributes: Attribute[];
 	}
@@ -2272,6 +2309,17 @@ declare module 'svelte/store' {
 		 */
 		update(this: void, updater: Updater<T>): void;
 	}
+	export function toStore<V>(get: () => V, set: (v: V) => void): Writable<V>;
+
+	export function toStore<V>(get: () => V): Readable<V>;
+
+	export function fromStore<V>(store: Writable<V>): {
+		current: V;
+	};
+
+	export function fromStore<V>(store: Readable<V>): {
+		readonly current: V;
+	};
 	/**
 	 * Creates a `Readable` store that allows reading by subscription.
 	 *
@@ -2590,7 +2638,7 @@ declare module 'svelte/types/compiler/interfaces' {
 		 */
 		accessors?: boolean;
 		/**
-		 * The namespace of the element; e.g., `"html"`, `"svg"`, `"foreign"`.
+		 * The namespace of the element; e.g., `"html"`, `"svg"`, `"mathml"`.
 		 *
 		 * @default 'html'
 		 */
@@ -2725,11 +2773,8 @@ declare module 'svelte/types/compiler/interfaces' {
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
 	 * - `svg`     — for e.g. `<svg>` or `<g>`
 	 * - `mathml`  — for e.g. `<math>` or `<mrow>`
-	 * - `foreign` — for other compilation targets than the web, e.g. Svelte Native.
-	 *               Disallows bindings other than bind:this, disables a11y checks, disables any special attribute handling
-	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
 	 */
-	type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
+	type Namespace = 'html' | 'svg' | 'mathml';
 	type ICompileDiagnostic = {
 		code: string;
 		message: string;
@@ -2845,12 +2890,13 @@ declare namespace $state {
 						: never;
 
 	/**
-	 * Declares reactive read-only state that is shallowly immutable.
+	 * Declares state that is _not_ made deeply reactive — instead of mutating it,
+	 * you must reassign it.
 	 *
 	 * Example:
 	 * ```ts
 	 * <script>
-	 *   let items = $state.frozen([0]);
+	 *   let items = $state.raw([0]);
 	 *
 	 *   const addItem = () => {
 	 *     items = [...items, items.length];
@@ -2866,8 +2912,8 @@ declare namespace $state {
 	 *
 	 * @param initial The initial value
 	 */
-	export function frozen<T>(initial: T): Readonly<T>;
-	export function frozen<T>(): Readonly<T> | undefined;
+	export function raw<T>(initial: T): T;
+	export function raw<T>(): T | undefined;
 	/**
 	 * To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
 	 *
@@ -2888,27 +2934,6 @@ declare namespace $state {
 	 * @param state The value to snapshot
 	 */
 	export function snapshot<T>(state: T): Snapshot<T>;
-
-	/**
-	 * Compare two values, one or both of which is a reactive `$state(...)` proxy.
-	 *
-	 * Example:
-	 * ```ts
-	 * <script>
-	 *	 let foo = $state({});
-	 *	 let bar = {};
-	 *
-	 *	 foo.bar = bar;
-	 *
-	 *	 console.log(foo.bar === bar); // false — `foo.bar` is a reactive proxy
-	 *   console.log($state.is(foo.bar, bar)); // true
-	 * </script>
-	 * ```
-	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$state.is
-	 *
-	 */
-	export function is(a: any, b: any): boolean;
 
 	// prevent intellisense from being unhelpful
 	/** @deprecated */

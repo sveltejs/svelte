@@ -1,6 +1,7 @@
 import { test } from '../../test';
 
 export default test({
+	html: 'Loading...',
 	async test({ assert, component, target }) {
 		await component.test();
 

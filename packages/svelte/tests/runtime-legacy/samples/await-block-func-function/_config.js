@@ -7,6 +7,10 @@ export default test({
 		};
 	},
 
+	html: `
+		Waiting...
+	`,
+
 	async test({ assert, component, target }) {
 		await (component.thePromise = Promise.resolve({ func: 12345 }));
 

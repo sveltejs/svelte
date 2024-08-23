@@ -6,7 +6,7 @@
 	.d.svelte-xyz + .e:where(.svelte-xyz) { color: green; }
 
 	/* no match */
-	/* (unused) .a + .e { color: red; }*/
-	/* (unused) .b + .c { color: red; }*/
-	/* (unused) .c + .d { color: red; }*/
-	/* (unused) .b + .d { color: red; }*/
+	/* (unused) .a + .e { color: green; }*/
+	/* (unused) .b + .c { color: green; }*/
+	/* (unused) .c + .d { color: green; }*/
+	/* (unused) .b + .d { color: green; }*/

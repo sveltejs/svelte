@@ -7,7 +7,6 @@ export default test({
 		});
 
 		component.promise = promise;
-		await Promise.resolve();
 
 		assert.htmlEqual(target.innerHTML, '<p>wait for it...</p>');
 

@@ -6,26 +6,25 @@ import { walk } from 'zimmerframe';
 import { set_scope } from '../../scope.js';
 import { extract_identifiers } from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
-import { filename } from '../../../state.js';
+import { dev, filename } from '../../../state.js';
 import { render_stylesheet } from '../css/index.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { CallExpression } from './visitors/CallExpression.js';
-import { ClassBodyRunes } from './visitors/ClassBody.js';
+import { ClassBody } from './visitors/ClassBody.js';
 import { Component } from './visitors/Component.js';
 import { ConstTag } from './visitors/ConstTag.js';
 import { DebugTag } from './visitors/DebugTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
-import { ExpressionStatementRunes } from './visitors/ExpressionStatement.js';
+import { ExpressionStatement } from './visitors/ExpressionStatement.js';
 import { Fragment } from './visitors/Fragment.js';
 import { HtmlTag } from './visitors/HtmlTag.js';
 import { Identifier } from './visitors/Identifier.js';
 import { IfBlock } from './visitors/IfBlock.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
-import { LabeledStatementLegacy } from './visitors/LabeledStatement.js';
-import { LetDirective } from './visitors/LetDirective.js';
-import { MemberExpressionRunes } from './visitors/MemberExpression.js';
-import { PropertyDefinitionRunes } from './visitors/PropertyDefinition.js';
+import { LabeledStatement } from './visitors/LabeledStatement.js';
+import { MemberExpression } from './visitors/MemberExpression.js';
+import { PropertyDefinition } from './visitors/PropertyDefinition.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
 import { SlotElement } from './visitors/SlotElement.js';
@@ -38,34 +37,21 @@ import { SvelteHead } from './visitors/SvelteHead.js';
 import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
-import {
-	VariableDeclarationLegacy,
-	VariableDeclarationRunes
-} from './visitors/VariableDeclaration.js';
+import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 
 /** @type {Visitors} */
 const global_visitors = {
+	_: set_scope,
 	AssignmentExpression,
 	CallExpression,
+	ClassBody,
+	ExpressionStatement,
 	Identifier,
-	UpdateExpression
-};
-
-/** @type {Visitors} */
-const javascript_visitors_runes = {
-	...global_visitors,
-	ClassBody: ClassBodyRunes,
-	ExpressionStatement: ExpressionStatementRunes,
-	MemberExpression: MemberExpressionRunes,
-	PropertyDefinition: PropertyDefinitionRunes,
-	VariableDeclaration: VariableDeclarationRunes
-};
-
-/** @type {Visitors} */
-const javascript_visitors_legacy = {
-	...global_visitors,
-	LabeledStatement: LabeledStatementLegacy,
-	VariableDeclaration: VariableDeclarationLegacy
+	LabeledStatement,
+	MemberExpression,
+	PropertyDefinition,
+	UpdateExpression,
+	VariableDeclaration
 };
 
 /** @type {ComponentVisitors} */
@@ -79,7 +65,6 @@ const template_visitors = {
 	HtmlTag,
 	IfBlock,
 	KeyBlock,
-	LetDirective,
 	RegularElement,
 	RenderTag,
 	SlotElement,
@@ -104,7 +89,7 @@ export function server_component(analysis, options) {
 		analysis,
 		options,
 		scope: analysis.module.scope,
-		scopes: analysis.template.scopes,
+		scopes: analysis.module.scopes,
 		hoisted: [b.import_all('$', 'svelte/internal/server')],
 		legacy_reactive_statements: new Map(),
 		// these are set inside the `Fragment` visitor, and cannot be used until then
@@ -113,30 +98,19 @@ export function server_component(analysis, options) {
 		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
 		private_derived: new Map(),
-		getters: {},
 		skip_hydration_boundaries: false
 	};
 
 	const module = /** @type {Program} */ (
-		walk(
-			/** @type {SvelteNode} */ (analysis.module.ast),
-			state,
-			// @ts-expect-error TODO: zimmerframe types
-			{
-				...set_scope(analysis.module.scopes),
-				...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy)
-			}
-		)
+		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, global_visitors)
 	);
 
 	const instance = /** @type {Program} */ (
 		walk(
 			/** @type {SvelteNode} */ (analysis.instance.ast),
-			state,
-			// @ts-expect-error TODO: zimmerframe types
+			{ ...state, scopes: analysis.instance.scopes },
 			{
-				...set_scope(analysis.instance.scopes),
-				...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy),
+				...global_visitors,
 				ImportDeclaration(node) {
 					state.hoisted.push(node);
 					return b.empty;
@@ -155,13 +129,9 @@ export function server_component(analysis, options) {
 	const template = /** @type {Program} */ (
 		walk(
 			/** @type {SvelteNode} */ (analysis.template.ast),
-			state,
-			// @ts-expect-error TODO: zimmerframe types
-			{
-				...set_scope(analysis.template.scopes),
-				...global_visitors,
-				...template_visitors
-			}
+			{ ...state, scopes: analysis.template.scopes },
+			// @ts-expect-error don't know, don't care
+			{ ...global_visitors, ...template_visitors }
 		)
 	);
 
@@ -272,10 +242,10 @@ export function server_component(analysis, options) {
 		.../** @type {Statement[]} */ (template.body)
 	]);
 
-	let should_inject_context = analysis.needs_context || options.dev;
+	let should_inject_context = dev || analysis.needs_context;
 
 	if (should_inject_context) {
-		component_block.body.unshift(b.stmt(b.call('$.push', options.dev && b.id(analysis.name))));
+		component_block.body.unshift(b.stmt(b.call('$.push', dev && b.id(analysis.name))));
 		component_block.body.push(b.stmt(b.call('$.pop')));
 	}
 
@@ -351,7 +321,7 @@ export function server_component(analysis, options) {
 									b.id(analysis.name),
 									b.object([
 										b.init('props', b.id('$$props')),
-										b.init('context', b.member(b.id('$$opts'), b.id('context'), false, true))
+										b.init('context', b.member(b.id('$$opts'), 'context', false, true))
 									])
 								)
 							)
@@ -361,7 +331,7 @@ export function server_component(analysis, options) {
 			),
 			b.export_default(b.id(analysis.name))
 		);
-	} else if (options.dev) {
+	} else if (dev) {
 		body.push(
 			component_function,
 			b.stmt(
@@ -386,15 +356,11 @@ export function server_component(analysis, options) {
 		body.push(b.export_default(component_function));
 	}
 
-	if (options.dev && filename) {
+	if (dev && filename) {
 		// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later
 		body.unshift(
 			b.stmt(
-				b.assignment(
-					'=',
-					b.member(b.id(analysis.name), b.id('$.FILENAME'), true),
-					b.literal(filename)
-				)
+				b.assignment('=', b.member(b.id(analysis.name), '$.FILENAME', true), b.literal(filename))
 			)
 		);
 	}
@@ -422,15 +388,11 @@ export function server_module(analysis, options) {
 		// to be present for `javascript_visitors_legacy` and so is included in module
 		// transform state as well as component transform state
 		legacy_reactive_statements: new Map(),
-		private_derived: new Map(),
-		getters: {}
+		private_derived: new Map()
 	};
 
 	const module = /** @type {Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, {
-			...set_scope(analysis.module.scopes),
-			...javascript_visitors_runes
-		})
+		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, global_visitors)
 	);
 
 	return {

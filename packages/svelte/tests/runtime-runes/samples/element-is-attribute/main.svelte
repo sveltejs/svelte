@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	if (!customElements.get('x-button')) {
 		class XButton extends HTMLButtonElement {
 			connectedCallback() {

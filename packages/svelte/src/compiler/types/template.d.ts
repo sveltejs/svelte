@@ -1,4 +1,4 @@
-import type { Binding, Css } from '#compiler';
+import type { Binding, Css, ExpressionMetadata } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
@@ -16,6 +16,7 @@ import type {
 	ChainExpression,
 	SimpleCallExpression
 } from 'estree';
+import type { Scope } from '../phases/scope';
 
 export interface BaseNode {
 	type: string;
@@ -28,23 +29,26 @@ export interface BaseNode {
 export interface Fragment {
 	type: 'Fragment';
 	nodes: Array<Text | Tag | ElementLike | Block | Comment>;
-	/**
-	 * Fragments declare their own scopes. A transparent fragment is one whose scope
-	 * is not represented by a scope in the resulting JavaScript (e.g. an element scope),
-	 * and should therefore delegate to parent scopes when generating unique identifiers
-	 */
-	transparent: boolean;
+	metadata: {
+		/**
+		 * Fragments declare their own scopes. A transparent fragment is one whose scope
+		 * is not represented by a scope in the resulting JavaScript (e.g. an element scope),
+		 * and should therefore delegate to parent scopes when generating unique identifiers
+		 */
+		transparent: boolean;
+		/**
+		 * Whether or not we need to traverse into the fragment during mount/hydrate
+		 */
+		dynamic: boolean;
+	};
 }
 
 /**
  * - `html`    — the default, for e.g. `<div>` or `<span>`
  * - `svg`     — for e.g. `<svg>` or `<g>`
  * - `mathml`  — for e.g. `<math>` or `<mrow>`
- * - `foreign` — for other compilation targets than the web, e.g. Svelte Native.
- *               Disallows bindings other than bind:this, disables a11y checks, disables any special attribute handling
- *               (also see https://github.com/sveltejs/svelte/pull/5652)
  */
-export type Namespace = 'html' | 'svg' | 'mathml' | 'foreign';
+export type Namespace = 'html' | 'svg' | 'mathml';
 
 export interface Root extends BaseNode {
 	type: 'Root';
@@ -57,7 +61,7 @@ export interface Root extends BaseNode {
 	css: Css.StyleSheet | null;
 	/** The parsed `<script>` element, if exists */
 	instance: Script | null;
-	/** The parsed `<script context="module">` element, if exists */
+	/** The parsed `<script module>` element, if exists */
 	module: Script | null;
 	metadata: {
 		/** Whether the component was parsed with typescript */
@@ -75,8 +79,9 @@ export interface SvelteOptions {
 	accessors?: boolean;
 	preserveWhitespace?: boolean;
 	namespace?: Namespace;
+	css?: 'injected';
 	customElement?: {
-		tag: string;
+		tag?: string;
 		shadow?: 'open' | 'none';
 		props?: Record<
 			string,
@@ -111,12 +116,7 @@ export interface ExpressionTag extends BaseNode {
 	type: 'ExpressionTag';
 	expression: Expression;
 	metadata: {
-		contains_call_expression: boolean;
-		/**
-		 * Whether or not the expression contains any dynamic references —
-		 * determines whether it will be updated in a render effect or not
-		 */
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 	};
 }
 
@@ -190,7 +190,7 @@ export interface ClassDirective extends BaseNode {
 	/** The 'y' in `class:x={y}`, or the `x` in `class:x` */
 	expression: Expression;
 	metadata: {
-		dynamic: false;
+		expression: ExpressionMetadata;
 	};
 }
 
@@ -212,17 +212,16 @@ export interface OnDirective extends BaseNode {
 	expression: null | Expression;
 	modifiers: string[]; // TODO specify
 	metadata: {
-		contains_call_expression: boolean;
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 	};
 }
 
 export type DelegatedEvent =
 	| {
-			type: 'hoistable';
+			hoisted: true;
 			function: ArrowFunctionExpression | FunctionExpression | FunctionDeclaration;
 	  }
-	| { type: 'non-hoistable' };
+	| { hoisted: false };
 
 /** A `style:` directive */
 export interface StyleDirective extends BaseNode {
@@ -233,7 +232,7 @@ export interface StyleDirective extends BaseNode {
 	value: true | ExpressionTag | Array<ExpressionTag | Text>;
 	modifiers: Array<'important'>;
 	metadata: {
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 	};
 }
 
@@ -280,6 +279,7 @@ interface BaseElement extends BaseNode {
 export interface Component extends BaseElement {
 	type: 'Component';
 	metadata: {
+		scopes: Record<string, Scope>;
 		dynamic: boolean;
 	};
 }
@@ -316,6 +316,9 @@ export interface SvelteComponent extends BaseElement {
 	type: 'SvelteComponent';
 	name: 'svelte:component';
 	expression: Expression;
+	metadata: {
+		scopes: Record<string, Scope>;
+	};
 }
 
 interface SvelteDocument extends BaseElement {
@@ -361,6 +364,9 @@ export interface SvelteOptionsRaw extends BaseElement {
 export interface SvelteSelf extends BaseElement {
 	type: 'SvelteSelf';
 	name: 'svelte:self';
+	metadata: {
+		scopes: Record<string, Scope>;
+	};
 }
 
 interface SvelteWindow extends BaseElement {
@@ -393,14 +399,14 @@ export interface EachBlock extends BaseNode {
 	index?: string;
 	key?: Expression;
 	metadata: {
+		expression: ExpressionMetadata;
+		keyed: boolean;
 		contains_group_binding: boolean;
 		/** Set if something in the array expression is shadowed within the each block */
 		array_name: Identifier | null;
 		index: Identifier;
 		item: Identifier;
 		declarations: Map<string, Binding>;
-		/** List of bindings that are referenced within the expression */
-		references: Binding[];
 		/**
 		 * Optimization path for each blocks: If the parent isn't a fragment and
 		 * it only has a single child, then we can classify the block as being "controlled".
@@ -453,7 +459,7 @@ export interface Attribute extends BaseNode {
 	name: string;
 	value: true | ExpressionTag | Array<Text | ExpressionTag>;
 	metadata: {
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 		/** May be set if this is an event attribute */
 		delegated: null | DelegatedEvent;
 	};
@@ -463,8 +469,7 @@ export interface SpreadAttribute extends BaseNode {
 	type: 'SpreadAttribute';
 	expression: Expression;
 	metadata: {
-		contains_call_expression: boolean;
-		dynamic: boolean;
+		expression: ExpressionMetadata;
 	};
 }
 
@@ -483,7 +488,7 @@ export type SvelteNode = Node | TemplateNode | Fragment | Css.Node;
 
 export interface Script extends BaseNode {
 	type: 'Script';
-	context: string;
+	context: 'default' | 'module';
 	content: Program;
 	attributes: Attribute[];
 }

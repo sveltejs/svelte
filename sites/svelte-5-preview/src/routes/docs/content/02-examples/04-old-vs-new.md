@@ -293,3 +293,5 @@ Combined with event attributes, this reduces the number of concepts to learn —
 
 - [Before](https://svelte-5-preview.vercel.app/#H4sIAAAAAAAACn2PzYrCQBCEX6XpSxTE3GeTgPoYzh5i0sHB-WOmIywh776ZjCgieOsqqvrrnnBQmiKK84S2NYQCD97jDvnPJxHvpJkWHd0YuuRUsQvKcyOtZGW8CwzHkdlZGIIzUOzLLPe5WvxIW5Wvjq0eaWdFp1V3q6fNFuoGWk2BN8UpedQDXwkua7LYzqCJhQ_Or1TJaxGm5MxpfV7ZLGca16tBUY-Cw0jz7vlVjnx97PJ-2MqqonYMCVTLJWoI7q0eSSKUTSLnzjJ-sn_nfxmfF-FdAQAA)
 - [After](https://svelte-5-preview.vercel.app/#H4sIAAAAAAAACo2PzW6DMBCEX2XlVgIkBHcKUdo-RumBwqJYNbZlL5Eqy-9e_9DkkEtv3vHMzn6OrVygZd2HY3LakHXsVWtWM_rRcbBXFIRhtmo3c1R6Oxuu6TTKkfimlSF424mUhNWoDYqmzWOTo8XLKPv2npH94VZyFnz-HlxZwXCCSaChsniPGi5AF4SvZCwqn7rck5VcaySYL1wsBmWpjdKVj58jpWXgopQU1x52H_tz5ylwbGrhK8eFdWR29PUNO1v-Sy7CHe52SQ1N08RqCx4GeE7PsnpAz0Tg_twH2TmsWNDcwcZQuiFcJ7HjyKqEkLMh8Ajx6X8BPkQdmscBAAA=)
+
+> When using custom elements, you should still use `<slot />` like before. In a future version, when Svelte removes its internal version of slots, it will leave those slots as-is, i.e. output a regular DOM tag instead of transforming it.

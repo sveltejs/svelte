@@ -3,7 +3,7 @@
 import { CompileDiagnostic } from './utils/compile_diagnostic.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
-export class InternalCompileError extends CompileDiagnostic {
+class InternalCompileError extends CompileDiagnostic {
 	name = 'CompileError';
 
 	/**
@@ -99,12 +99,12 @@ export function declaration_duplicate(node, name) {
 }
 
 /**
- * Cannot declare same variable name which is imported inside `<script context="module">`
+ * Cannot declare a variable with the same name as an import inside `<script module>`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function declaration_duplicate_module_import(node) {
-	e(node, "declaration_duplicate_module_import", "Cannot declare same variable name which is imported inside `<script context=\"module\">`");
+	e(node, "declaration_duplicate_module_import", "Cannot declare a variable with the same name as an import inside `<script module>`");
 }
 
 /**
@@ -349,6 +349,16 @@ export function rune_missing_parentheses(node) {
 }
 
 /**
+ * The `%name%` rune has been removed
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function rune_removed(node, name) {
+	e(node, "rune_removed", `The \`${name}\` rune has been removed`);
+}
+
+/**
  * `%name%` is now `%replacement%`
  * @param {null | number | NodeLike} node
  * @param {string} name
@@ -407,12 +417,21 @@ export function store_invalid_scoped_subscription(node) {
 }
 
 /**
- * Cannot reference store value inside `<script context="module">`
+ * Cannot reference store value inside `<script module>`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function store_invalid_subscription(node) {
-	e(node, "store_invalid_subscription", "Cannot reference store value inside `<script context=\"module\">`");
+	e(node, "store_invalid_subscription", "Cannot reference store value inside `<script module>`");
+}
+
+/**
+ * Cannot reference store value outside a `.svelte` file
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function store_invalid_subscription_module(node) {
+	e(node, "store_invalid_subscription_module", "Cannot reference store value outside a `.svelte` file");
 }
 
 /**
@@ -434,76 +453,76 @@ export function css_expected_identifier(node) {
 }
 
 /**
- * A :global {...} block cannot follow a %name% combinator
+ * A `:global` selector cannot follow a `%name%` combinator
  * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
 export function css_global_block_invalid_combinator(node, name) {
-	e(node, "css_global_block_invalid_combinator", `A :global {...} block cannot follow a ${name} combinator`);
+	e(node, "css_global_block_invalid_combinator", `A \`:global\` selector cannot follow a \`${name}\` combinator`);
 }
 
 /**
- * A :global {...} block can only contain rules, not declarations
+ * A top-level `:global {...}` block can only contain rules, not declarations
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function css_global_block_invalid_declaration(node) {
-	e(node, "css_global_block_invalid_declaration", "A :global {...} block can only contain rules, not declarations");
+	e(node, "css_global_block_invalid_declaration", "A top-level `:global {...}` block can only contain rules, not declarations");
 }
 
 /**
- * A :global {...} block cannot be part of a selector list with more than one item
+ * A `:global` selector cannot be part of a selector list with more than one item
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function css_global_block_invalid_list(node) {
-	e(node, "css_global_block_invalid_list", "A :global {...} block cannot be part of a selector list with more than one item");
+	e(node, "css_global_block_invalid_list", "A `:global` selector cannot be part of a selector list with more than one item");
 }
 
 /**
- * A :global {...} block cannot modify an existing selector
+ * A `:global` selector cannot modify an existing selector
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function css_global_block_invalid_modifier(node) {
-	e(node, "css_global_block_invalid_modifier", "A :global {...} block cannot modify an existing selector");
+	e(node, "css_global_block_invalid_modifier", "A `:global` selector cannot modify an existing selector");
 }
 
 /**
- * A :global {...} block can only appear at the end of a selector sequence (did you mean to use :global(...) instead?)
+ * A `:global` selector can only be modified if it is a descendant of other selectors
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function css_global_block_invalid_placement(node) {
-	e(node, "css_global_block_invalid_placement", "A :global {...} block can only appear at the end of a selector sequence (did you mean to use :global(...) instead?)");
+export function css_global_block_invalid_modifier_start(node) {
+	e(node, "css_global_block_invalid_modifier_start", "A `:global` selector can only be modified if it is a descendant of other selectors");
 }
 
 /**
- * :global(...) can be at the start or end of a selector sequence, but not in the middle
+ * `:global(...)` can be at the start or end of a selector sequence, but not in the middle
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function css_global_invalid_placement(node) {
-	e(node, "css_global_invalid_placement", ":global(...) can be at the start or end of a selector sequence, but not in the middle");
+	e(node, "css_global_invalid_placement", "`:global(...)` can be at the start or end of a selector sequence, but not in the middle");
 }
 
 /**
- * :global(...) must contain exactly one selector
+ * `:global(...)` must contain exactly one selector
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function css_global_invalid_selector(node) {
-	e(node, "css_global_invalid_selector", ":global(...) must contain exactly one selector");
+	e(node, "css_global_invalid_selector", "`:global(...)` must contain exactly one selector");
 }
 
 /**
- * :global(...) must not contain type or universal selectors when used in a compound selector
+ * `:global(...)` must not contain type or universal selectors when used in a compound selector
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function css_global_invalid_selector_list(node) {
-	e(node, "css_global_invalid_selector_list", ":global(...) must not contain type or universal selectors when used in a compound selector");
+	e(node, "css_global_invalid_selector_list", "`:global(...)` must not contain type or universal selectors when used in a compound selector");
 }
 
 /**
@@ -525,12 +544,12 @@ export function css_selector_invalid(node) {
 }
 
 /**
- * :global(...) must not be followed with a type selector
+ * `:global(...)` must not be followed by a type selector
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function css_type_selector_invalid_placement(node) {
-	e(node, "css_type_selector_invalid_placement", ":global(...) must not be followed with a type selector");
+	e(node, "css_type_selector_invalid_placement", "`:global(...)` must not be followed by a type selector");
 }
 
 /**
@@ -768,6 +787,15 @@ export function component_invalid_directive(node) {
 }
 
 /**
+ * Component name must be a valid variable name or dot notation expression
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function component_invalid_name(node) {
+	e(node, "component_invalid_name", "Component name must be a valid variable name or dot notation expression");
+}
+
+/**
  * Cyclical dependency detected: %cycle%
  * @param {null | number | NodeLike} node
  * @param {string} cycle
@@ -978,14 +1006,14 @@ export function mixed_event_handler_syntaxes(node, name) {
 }
 
 /**
- * %thing% is invalid inside <%parent%>
+ * %thing% is invalid inside `<%parent%>`
  * @param {null | number | NodeLike} node
  * @param {string} thing
  * @param {string} parent
  * @returns {never}
  */
 export function node_invalid_placement(node, thing, parent) {
-	e(node, "node_invalid_placement", `${thing} is invalid inside <${parent}>`);
+	e(node, "node_invalid_placement", `${thing} is invalid inside \`<${parent}>\``);
 }
 
 /**
@@ -1016,12 +1044,22 @@ export function render_tag_invalid_spread_argument(node) {
 }
 
 /**
- * A component can have a single top-level `<script>` element and/or a single top-level `<script context="module">` element
+ * A component can have a single top-level `<script>` element and/or a single top-level `<script module>` element
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function script_duplicate(node) {
-	e(node, "script_duplicate", "A component can have a single top-level `<script>` element and/or a single top-level `<script context=\"module\">` element");
+	e(node, "script_duplicate", "A component can have a single top-level `<script>` element and/or a single top-level `<script module>` element");
+}
+
+/**
+ * If the `%name%` attribute is supplied, it must be a boolean attribute
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function script_invalid_attribute_value(node, name) {
+	e(node, "script_invalid_attribute_value", `If the \`${name}\` attribute is supplied, it must be a boolean attribute`);
 }
 
 /**
@@ -1031,6 +1069,16 @@ export function script_duplicate(node) {
  */
 export function script_invalid_context(node) {
 	e(node, "script_invalid_context", "If the context attribute is supplied, its value must be \"module\"");
+}
+
+/**
+ * The `%name%` attribute is reserved and cannot be used
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function script_reserved_attribute(node, name) {
+	e(node, "script_reserved_attribute", `The \`${name}\` attribute is reserved and cannot be used`);
 }
 
 /**
@@ -1275,22 +1323,22 @@ export function svelte_options_invalid_attribute(node) {
 }
 
 /**
- * Valid values are %list%
+ * Value must be %list%, if specified
  * @param {null | number | NodeLike} node
  * @param {string} list
  * @returns {never}
  */
 export function svelte_options_invalid_attribute_value(node, list) {
-	e(node, "svelte_options_invalid_attribute_value", `Valid values are ${list}`);
+	e(node, "svelte_options_invalid_attribute_value", `Value must be ${list}, if specified`);
 }
 
 /**
- * "customElement" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
+ * "customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function svelte_options_invalid_customelement(node) {
-	e(node, "svelte_options_invalid_customelement", "\"customElement\" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: \"open\" | \"none\"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }");
+	e(node, "svelte_options_invalid_customelement", "\"customElement\" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: \"open\" | \"none\"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }");
 }
 
 /**

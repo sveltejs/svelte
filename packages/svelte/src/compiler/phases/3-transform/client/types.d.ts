@@ -3,7 +3,10 @@ import type {
 	Statement,
 	LabeledStatement,
 	Identifier,
-	PrivateIdentifier
+	PrivateIdentifier,
+	Expression,
+	AssignmentExpression,
+	UpdateExpression
 } from 'estree';
 import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
@@ -20,8 +23,19 @@ export interface ClientTransformState extends TransformState {
 	 */
 	readonly in_constructor: boolean;
 
-	/** The $: calls, which will be ordered in the end */
-	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
+	readonly transform: Record<
+		string,
+		{
+			/** turn `foo` into e.g. `$.get(foo)` */
+			read: (id: Identifier) => Expression;
+			/** turn `foo = bar` into e.g. `$.set(foo, bar)` */
+			assign?: (node: Identifier, value: Expression) => Expression;
+			/** turn `foo.bar = baz` into e.g. `$.mutate(foo, $.get(foo).bar = baz);` */
+			mutate?: (node: Identifier, mutation: AssignmentExpression) => Expression;
+			/** turn `foo++` into e.g. `$.update(foo)` */
+			update?: (node: UpdateExpression) => Expression;
+		}
+	>;
 }
 
 export interface ComponentClientTransformState extends ClientTransformState {
@@ -29,6 +43,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly options: ValidatedCompileOptions;
 	readonly hoisted: Array<Statement | ModuleDeclaration>;
 	readonly events: Set<string>;
+	readonly is_instance: boolean;
 
 	/** Stuff that happens before the render effect(s) */
 	readonly before_init: Statement[];
@@ -64,15 +79,21 @@ export interface ComponentClientTransformState extends ClientTransformState {
 
 	/** The anchor node for the current context */
 	readonly node: Identifier;
+
+	/** Imports that should be re-evaluated in legacy mode following a mutation */
+	readonly legacy_reactive_imports: Statement[];
+
+	/** The $: calls, which will be ordered in the end */
+	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
 }
 
 export interface StateField {
-	kind: 'state' | 'frozen_state' | 'derived' | 'derived_call';
+	kind: 'state' | 'raw_state' | 'derived' | 'derived_by';
 	id: PrivateIdentifier;
 }
 
 export type Context = import('zimmerframe').Context<SvelteNode, ClientTransformState>;
-export type Visitors = import('zimmerframe').Visitors<SvelteNode, ClientTransformState>;
+export type Visitors = import('zimmerframe').Visitors<SvelteNode, any>;
 
 export type ComponentContext = import('zimmerframe').Context<
 	SvelteNode,

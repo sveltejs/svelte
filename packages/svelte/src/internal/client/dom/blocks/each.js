@@ -1,11 +1,10 @@
-/** @import { EachItem, EachState, Effect, EffectNodes, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
+/** @import { EachItem, EachState, Effect, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
 import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
 	EACH_IS_CONTROLLED,
-	EACH_IS_STRICT_EQUALS,
+	EACH_ITEM_IMMUTABLE,
 	EACH_ITEM_REACTIVE,
-	EACH_KEYED,
 	HYDRATION_END,
 	HYDRATION_START_ELSE
 } from '../../../../constants.js';
@@ -17,7 +16,12 @@ import {
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
-import { clear_text_content, empty } from '../operations.js';
+import {
+	clear_text_content,
+	create_text,
+	get_first_child,
+	get_next_sibling
+} from '../operations.js';
 import {
 	block,
 	branch,
@@ -28,8 +32,8 @@ import {
 	resume_effect
 } from '../../reactivity/effects.js';
 import { source, mutable_source, set } from '../../reactivity/sources.js';
-import { is_array, is_frozen } from '../../../shared/utils.js';
-import { INERT, STATE_FROZEN_SYMBOL, STATE_SYMBOL } from '../../constants.js';
+import { array_from, is_array } from '../../../shared/utils.js';
+import { INERT } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
 import { current_effect } from '../../runtime.js';
 
@@ -117,8 +121,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		var parent_node = /** @type {Element} */ (node);
 
 		anchor = hydrating
-			? set_hydrate_node(/** @type {Comment | Text} */ (parent_node.firstChild))
-			: parent_node.appendChild(empty());
+			? set_hydrate_node(/** @type {Comment | Text} */ (get_first_child(parent_node)))
+			: parent_node.appendChild(create_text());
 	}
 
 	if (hydrating) {
@@ -135,26 +139,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			? collection
 			: collection == null
 				? []
-				: Array.from(collection);
+				: array_from(collection);
 
 		var length = array.length;
-
-		// If we are working with an array that isn't proxied or frozen, then remove strict equality and ensure the items
-		// are treated as reactive, so they get wrapped in a signal.
-		var flags = state.flags;
-		if (
-			(flags & EACH_IS_STRICT_EQUALS) !== 0 &&
-			!is_frozen(array) &&
-			!(STATE_FROZEN_SYMBOL in array) &&
-			!(STATE_SYMBOL in array)
-		) {
-			flags ^= EACH_IS_STRICT_EQUALS;
-
-			// Additionally if we're in an keyed each block, we'll need ensure the items are all wrapped in signals.
-			if ((flags & EACH_KEYED) !== 0 && (flags & EACH_ITEM_REACTIVE) === 0) {
-				flags ^= EACH_ITEM_REACTIVE;
-			}
-		}
 
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
@@ -237,6 +224,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 }
 
 /**
+ * Add, remove, or reorder items output by an each block as its input changes
  * @template V
  * @param {Array<V>} array
  * @param {EachState} state
@@ -255,14 +243,14 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 	var first = state.first;
 	var current = first;
 
-	/** @type {Set<EachItem>} */
-	var seen = new Set();
+	/** @type {undefined | Set<EachItem>} */
+	var seen;
 
 	/** @type {EachItem | null} */
 	var prev = null;
 
-	/** @type {Set<EachItem>} */
-	var to_animate = new Set();
+	/** @type {undefined | Set<EachItem>} */
+	var to_animate;
 
 	/** @type {EachItem[]} */
 	var matched = [];
@@ -290,7 +278,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 
 			if (item !== undefined) {
 				item.a?.measure();
-				to_animate.add(item);
+				(to_animate ??= new Set()).add(item);
 			}
 		}
 	}
@@ -301,7 +289,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		item = items.get(key);
 
 		if (item === undefined) {
-			var child_anchor = current ? /** @type {EffectNodes} */ (current.e.nodes).start : anchor;
+			var child_anchor = current ? /** @type {TemplateNode} */ (current.e.nodes_start) : anchor;
 
 			prev = create_item(
 				child_anchor,
@@ -332,12 +320,12 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			resume_effect(item.e);
 			if (is_animated) {
 				item.a?.unfix();
-				to_animate.delete(item);
+				(to_animate ??= new Set()).delete(item);
 			}
 		}
 
 		if (item !== current) {
-			if (seen.has(item)) {
+			if (seen !== undefined && seen.has(item)) {
 				if (matched.length < stashed.length) {
 					// more efficient to move later items to the front
 					var start = stashed[0];
@@ -385,7 +373,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			stashed = [];
 
 			while (current !== null && current.k !== key) {
-				seen.add(current);
+				(seen ??= new Set()).add(current);
 				stashed.push(current);
 				current = current.next;
 			}
@@ -402,32 +390,36 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		current = item.next;
 	}
 
-	const to_destroy = Array.from(seen);
+	if (current !== null || seen !== undefined) {
+		var to_destroy = seen === undefined ? [] : array_from(seen);
 
-	while (current !== null) {
-		to_destroy.push(current);
-		current = current.next;
-	}
-	var destroy_length = to_destroy.length;
-
-	if (destroy_length > 0) {
-		var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
-
-		if (is_animated) {
-			for (i = 0; i < destroy_length; i += 1) {
-				to_destroy[i].a?.measure();
-			}
-
-			for (i = 0; i < destroy_length; i += 1) {
-				to_destroy[i].a?.fix();
-			}
+		while (current !== null) {
+			to_destroy.push(current);
+			current = current.next;
 		}
 
-		pause_effects(state, to_destroy, controlled_anchor, items);
+		var destroy_length = to_destroy.length;
+
+		if (destroy_length > 0) {
+			var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
+
+			if (is_animated) {
+				for (i = 0; i < destroy_length; i += 1) {
+					to_destroy[i].a?.measure();
+				}
+
+				for (i = 0; i < destroy_length; i += 1) {
+					to_destroy[i].a?.fix();
+				}
+			}
+
+			pause_effects(state, to_destroy, controlled_anchor, items);
+		}
 	}
 
 	if (is_animated) {
 		queue_micro_task(() => {
+			if (to_animate === undefined) return;
 			for (item of to_animate) {
 				item.a?.apply();
 			}
@@ -475,7 +467,7 @@ function create_item(anchor, state, prev, next, value, key, index, render_fn, fl
 
 	try {
 		var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
-		var mutable = (flags & EACH_IS_STRICT_EQUALS) === 0;
+		var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
 
 		var v = reactive ? (mutable ? mutable_source(value) : source(value)) : value;
 		var i = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
@@ -522,13 +514,13 @@ function create_item(anchor, state, prev, next, value, key, index, render_fn, fl
  * @param {Text | Element | Comment} anchor
  */
 function move(item, next, anchor) {
-	var end = item.next ? /** @type {EffectNodes} */ (item.next.e.nodes).start : anchor;
+	var end = item.next ? /** @type {TemplateNode} */ (item.next.e.nodes_start) : anchor;
 
-	var dest = next ? /** @type {EffectNodes} */ (next.e.nodes).start : anchor;
-	var node = /** @type {EffectNodes} */ (item.e.nodes).start;
+	var dest = next ? /** @type {TemplateNode} */ (next.e.nodes_start) : anchor;
+	var node = /** @type {TemplateNode} */ (item.e.nodes_start);
 
 	while (node !== end) {
-		var next_node = /** @type {TemplateNode} */ (node.nextSibling);
+		var next_node = /** @type {TemplateNode} */ (get_next_sibling(node));
 		dest.before(node);
 		node = next_node;
 	}

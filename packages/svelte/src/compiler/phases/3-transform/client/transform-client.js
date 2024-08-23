@@ -4,54 +4,145 @@
 /** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';
 import * as b from '../../../utils/builders.js';
-import { set_scope } from '../../scope.js';
-import { template_visitors } from './visitors/template.js';
-import { global_visitors } from './visitors/global.js';
-import { javascript_visitors } from './visitors/javascript.js';
-import { javascript_visitors_runes } from './visitors/javascript-runes.js';
-import { javascript_visitors_legacy } from './visitors/javascript-legacy.js';
-import { serialize_get_binding } from './utils.js';
+import { build_getter } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
-import { filename } from '../../../state.js';
+import { dev, filename } from '../../../state.js';
+import { AnimateDirective } from './visitors/AnimateDirective.js';
+import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
+import { AssignmentExpression } from './visitors/AssignmentExpression.js';
+import { Attribute } from './visitors/Attribute.js';
+import { AwaitBlock } from './visitors/AwaitBlock.js';
+import { BinaryExpression } from './visitors/BinaryExpression.js';
+import { BindDirective } from './visitors/BindDirective.js';
+import { BlockStatement } from './visitors/BlockStatement.js';
+import { BreakStatement } from './visitors/BreakStatement.js';
+import { CallExpression } from './visitors/CallExpression.js';
+import { ClassBody } from './visitors/ClassBody.js';
+import { Comment } from './visitors/Comment.js';
+import { Component } from './visitors/Component.js';
+import { ConstTag } from './visitors/ConstTag.js';
+import { DebugTag } from './visitors/DebugTag.js';
+import { EachBlock } from './visitors/EachBlock.js';
+import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
+import { ExpressionStatement } from './visitors/ExpressionStatement.js';
+import { Fragment } from './visitors/Fragment.js';
+import { FunctionDeclaration } from './visitors/FunctionDeclaration.js';
+import { FunctionExpression } from './visitors/FunctionExpression.js';
+import { HtmlTag } from './visitors/HtmlTag.js';
+import { Identifier } from './visitors/Identifier.js';
+import { IfBlock } from './visitors/IfBlock.js';
+import { ImportDeclaration } from './visitors/ImportDeclaration.js';
+import { KeyBlock } from './visitors/KeyBlock.js';
+import { LabeledStatement } from './visitors/LabeledStatement.js';
+import { LetDirective } from './visitors/LetDirective.js';
+import { MemberExpression } from './visitors/MemberExpression.js';
+import { OnDirective } from './visitors/OnDirective.js';
+import { Program } from './visitors/Program.js';
+import { RegularElement } from './visitors/RegularElement.js';
+import { RenderTag } from './visitors/RenderTag.js';
+import { SlotElement } from './visitors/SlotElement.js';
+import { SnippetBlock } from './visitors/SnippetBlock.js';
+import { SpreadAttribute } from './visitors/SpreadAttribute.js';
+import { SvelteBody } from './visitors/SvelteBody.js';
+import { SvelteComponent } from './visitors/SvelteComponent.js';
+import { SvelteDocument } from './visitors/SvelteDocument.js';
+import { SvelteElement } from './visitors/SvelteElement.js';
+import { SvelteFragment } from './visitors/SvelteFragment.js';
+import { SvelteHead } from './visitors/SvelteHead.js';
+import { SvelteSelf } from './visitors/SvelteSelf.js';
+import { SvelteWindow } from './visitors/SvelteWindow.js';
+import { TitleElement } from './visitors/TitleElement.js';
+import { TransitionDirective } from './visitors/TransitionDirective.js';
+import { UpdateExpression } from './visitors/UpdateExpression.js';
+import { UseDirective } from './visitors/UseDirective.js';
+import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 
-/**
- * This function ensures visitor sets don't accidentally clobber each other
- * @param  {...Visitors} array
- * @returns {Visitors}
- */
-function combine_visitors(...array) {
-	/** @type {Record<string, any>} */
-	const visitors = {};
+/** @type {Visitors} */
+const visitors = {
+	_: function set_scope(node, { next, state }) {
+		const scope = state.scopes.get(node);
 
-	for (const member of array) {
-		for (const key in member) {
-			if (visitors[key]) {
-				throw new Error(`Duplicate visitor: ${key}`);
+		if (scope && scope !== state.scope) {
+			const transform = { ...state.transform };
+
+			for (const [name, binding] of scope.declarations) {
+				if (binding.kind === 'normal') {
+					delete transform[name];
+				}
 			}
 
-			// @ts-ignore
-			visitors[key] = member[key];
+			next({ ...state, transform, scope });
+		} else {
+			next();
 		}
-	}
-
-	return visitors;
-}
+	},
+	AnimateDirective,
+	ArrowFunctionExpression,
+	AssignmentExpression,
+	Attribute,
+	AwaitBlock,
+	BinaryExpression,
+	BindDirective,
+	BlockStatement,
+	BreakStatement,
+	CallExpression,
+	ClassBody,
+	Comment,
+	Component,
+	ConstTag,
+	DebugTag,
+	EachBlock,
+	ExportNamedDeclaration,
+	ExpressionStatement,
+	Fragment,
+	FunctionDeclaration,
+	FunctionExpression,
+	HtmlTag,
+	Identifier,
+	IfBlock,
+	ImportDeclaration,
+	KeyBlock,
+	LabeledStatement,
+	LetDirective,
+	MemberExpression,
+	OnDirective,
+	Program,
+	RegularElement,
+	RenderTag,
+	SlotElement,
+	SnippetBlock,
+	SpreadAttribute,
+	SvelteBody,
+	SvelteComponent,
+	SvelteDocument,
+	SvelteElement,
+	SvelteFragment,
+	SvelteHead,
+	SvelteSelf,
+	SvelteWindow,
+	TitleElement,
+	TransitionDirective,
+	UpdateExpression,
+	UseDirective,
+	VariableDeclaration
+};
 
 /**
- * @param {string} source
  * @param {ComponentAnalysis} analysis
  * @param {ValidatedCompileOptions} options
  * @returns {ESTree.Program}
  */
-export function client_component(source, analysis, options) {
+export function client_component(analysis, options) {
 	/** @type {ComponentClientTransformState} */
 	const state = {
 		analysis,
 		options,
 		scope: analysis.module.scope,
-		scopes: analysis.template.scopes,
+		scopes: analysis.module.scopes,
+		is_instance: false,
 		hoisted: [b.import_all('$', 'svelte/internal/client')],
 		node: /** @type {any} */ (null), // populated by the root node
+		legacy_reactive_imports: [],
 		legacy_reactive_statements: new Map(),
 		metadata: {
 			context: {
@@ -65,7 +156,7 @@ export function client_component(source, analysis, options) {
 		preserve_whitespace: options.preserveWhitespace,
 		public_state: new Map(),
 		private_state: new Map(),
-		getters: {},
+		transform: {},
 		in_constructor: false,
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
@@ -78,70 +169,35 @@ export function client_component(source, analysis, options) {
 	};
 
 	const module = /** @type {ESTree.Program} */ (
-		walk(
-			/** @type {SvelteNode} */ (analysis.module.ast),
-			state,
-			combine_visitors(
-				set_scope(analysis.module.scopes),
-				global_visitors,
-				// @ts-expect-error TODO
-				javascript_visitors,
-				analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy
-			)
-		)
+		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, visitors)
 	);
 
-	const instance_state = { ...state, scope: analysis.instance.scope };
-	const instance = /** @type {ESTree.Program} */ (
-		walk(
-			/** @type {SvelteNode} */ (analysis.instance.ast),
-			instance_state,
-			combine_visitors(
-				set_scope(analysis.instance.scopes),
-				global_visitors,
-				// @ts-expect-error TODO
-				javascript_visitors,
-				analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy,
-				{
-					ImportDeclaration(node) {
-						state.hoisted.push(node);
-						return b.empty;
-					},
-					ExportNamedDeclaration(node, context) {
-						if (node.declaration) {
-							return context.visit(node.declaration);
-						}
+	const instance_state = {
+		...state,
+		transform: { ...state.transform },
+		scope: analysis.instance.scope,
+		scopes: analysis.instance.scopes,
+		is_instance: true
+	};
 
-						return b.empty;
-					}
-				}
-			)
-		)
+	const instance = /** @type {ESTree.Program} */ (
+		walk(/** @type {SvelteNode} */ (analysis.instance.ast), instance_state, visitors)
 	);
 
 	const template = /** @type {ESTree.Program} */ (
 		walk(
 			/** @type {SvelteNode} */ (analysis.template.ast),
-			{ ...state, scope: analysis.instance.scope },
-			combine_visitors(
-				set_scope(analysis.template.scopes),
-				global_visitors,
-				// @ts-expect-error TODO
-				template_visitors
-			)
+			{
+				...state,
+				transform: instance_state.transform,
+				scope: analysis.instance.scope,
+				scopes: analysis.template.scopes
+			},
+			visitors
 		)
 	);
 
-	// Very very dirty way of making import statements reactive in legacy mode if needed
-	if (!analysis.runes) {
-		for (const [name, binding] of analysis.module.scope.declarations) {
-			if (binding.kind === 'legacy_reactive_import') {
-				instance.body.unshift(
-					b.var('$$_import_' + name, b.call('$.reactive_import', b.thunk(b.id(name))))
-				);
-			}
-		}
-	}
+	module.body.unshift(...state.legacy_reactive_imports);
 
 	/** @type {ESTree.Statement[]} */
 	const store_setup = [];
@@ -159,12 +215,12 @@ export function client_component(source, analysis, options) {
 			}
 
 			// We're creating an arrow function that gets the store value which minifies better for two or more references
-			const store_reference = serialize_get_binding(b.id(name.slice(1)), instance_state);
+			const store_reference = build_getter(b.id(name.slice(1)), instance_state);
 			const store_get = b.call('$.store_get', store_reference, b.literal(name), b.id('$$stores'));
 			store_setup.push(
 				b.const(
 					binding.node,
-					options.dev
+					dev
 						? b.thunk(
 								b.sequence([
 									b.call('$.validate_store', store_reference, b.literal(name.slice(1))),
@@ -201,7 +257,7 @@ export function client_component(source, analysis, options) {
 	/** @type {Array<ESTree.Property | ESTree.SpreadElement>} */
 	const component_returned_object = analysis.exports.flatMap(({ name, alias }) => {
 		const binding = instance_state.scope.get(name);
-		const expression = serialize_get_binding(b.id(name), instance_state);
+		const expression = build_getter(b.id(name), instance_state);
 		const getter = b.get(alias ?? name, [b.return(expression)]);
 
 		if (expression.type === 'Identifier') {
@@ -210,24 +266,14 @@ export function client_component(source, analysis, options) {
 					getter,
 					b.set(alias ?? name, [b.stmt(b.assignment('=', expression, b.id('$$value')))])
 				];
-			} else if (!options.dev) {
+			} else if (!dev) {
 				return b.init(alias ?? name, expression);
 			}
 		}
 
-		if (binding?.kind === 'state' || binding?.kind === 'frozen_state') {
-			return [
-				getter,
-				b.set(alias ?? name, [
-					b.stmt(
-						b.call(
-							'$.set',
-							b.id(name),
-							b.call(binding.kind === 'state' ? '$.proxy' : '$.freeze', b.id('$$value'))
-						)
-					)
-				])
-			];
+		if (binding?.kind === 'state' || binding?.kind === 'raw_state') {
+			const value = binding.kind === 'state' ? b.call('$.proxy', b.id('$$value')) : b.id('$$value');
+			return [getter, b.set(alias ?? name, [b.stmt(b.call('$.set', b.id(name), value))])];
 		}
 
 		return getter;
@@ -238,7 +284,7 @@ export function client_component(source, analysis, options) {
 			(binding.kind === 'prop' || binding.kind === 'bindable_prop') && !name.startsWith('$$')
 	);
 
-	if (analysis.runes && options.dev) {
+	if (dev && analysis.runes) {
 		const exports = analysis.exports.map(({ name, alias }) => b.literal(alias ?? name));
 		/** @type {ESTree.Literal[]} */
 		const bindable = [];
@@ -300,12 +346,12 @@ export function client_component(source, analysis, options) {
 				)
 			)
 		);
-	} else if (options.dev) {
+	} else if (dev) {
 		component_returned_object.push(b.spread(b.call(b.id('$.legacy_api'))));
 	}
 
 	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
-	if (options.dev) push_args.push(b.id(analysis.name));
+	if (dev) push_args.push(b.id(analysis.name));
 
 	const component_block = b.block([
 		...store_setup,
@@ -326,7 +372,7 @@ export function client_component(source, analysis, options) {
 						'$.bind_prop',
 						b.id('$$props'),
 						b.literal(alias ?? name),
-						serialize_get_binding(b.id(name), instance_state)
+						build_getter(b.id(name), instance_state)
 					)
 				)
 			);
@@ -340,15 +386,17 @@ export function client_component(source, analysis, options) {
 		state.hoisted.push(b.const('$$css', b.object([b.init('hash', hash), b.init('code', code)])));
 
 		component_block.body.unshift(
-			b.stmt(b.call('$.append_styles', b.id('$$anchor'), b.id('$$css')))
+			b.stmt(
+				b.call('$.append_styles', b.id('$$anchor'), b.id('$$css'), options.customElement && b.true)
+			)
 		);
 	}
 
 	const should_inject_context =
+		dev ||
 		analysis.needs_context ||
 		analysis.reactive_statements.size > 0 ||
-		component_returned_object.length > 0 ||
-		options.dev;
+		component_returned_object.length > 0;
 
 	if (should_inject_context) {
 		component_block.body.unshift(b.stmt(b.call('$.push', ...push_args)));
@@ -425,12 +473,8 @@ export function client_component(source, analysis, options) {
 		const incoming = b.member(b.id('module.default'), HMR, true);
 
 		const accept_fn_body = [
-			b.stmt(
-				b.assignment('=', b.member(incoming, b.id('source')), b.member(existing, b.id('source')))
-			),
-			b.stmt(
-				b.call('$.set', b.member(existing, b.id('source')), b.member(incoming, b.id('original')))
-			)
+			b.stmt(b.assignment('=', b.member(incoming, 'source'), b.member(existing, 'source'))),
+			b.stmt(b.call('$.set', b.member(existing, 'source'), b.member(incoming, 'original')))
 		];
 
 		if (analysis.css.hash) {
@@ -440,7 +484,7 @@ export function client_component(source, analysis, options) {
 					b.call(
 						b.member(
 							b.call('document.querySelector', b.literal('#' + analysis.css.hash)),
-							b.id('remove'),
+							'remove',
 							false,
 							true
 						)
@@ -450,9 +494,7 @@ export function client_component(source, analysis, options) {
 		}
 
 		const hmr = b.block([
-			b.stmt(
-				b.assignment('=', id, b.call('$.hmr', id, b.thunk(b.member(existing, b.id('source')))))
-			),
+			b.stmt(b.assignment('=', id, b.call('$.hmr', id, b.thunk(b.member(existing, 'source'))))),
 
 			b.stmt(b.call('import.meta.hot.accept', b.arrow([b.id('module')], b.block(accept_fn_body))))
 		]);
@@ -462,16 +504,12 @@ export function client_component(source, analysis, options) {
 		body.push(b.export_default(component));
 	}
 
-	if (options.dev) {
+	if (dev) {
 		if (filename) {
 			// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later
 			body.unshift(
 				b.stmt(
-					b.assignment(
-						'=',
-						b.member(b.id(analysis.name), b.id('$.FILENAME'), true),
-						b.literal(filename)
-					)
+					b.assignment('=', b.member(b.id(analysis.name), '$.FILENAME', true), b.literal(filename))
 				)
 			);
 		}
@@ -498,7 +536,7 @@ export function client_component(source, analysis, options) {
 				)
 			)
 		);
-	} else if (options.dev) {
+	} else if (dev) {
 		component_block.body.unshift(b.stmt(b.call('$.check_target', b.id('new.target'))));
 	}
 
@@ -553,10 +591,17 @@ export function client_component(source, analysis, options) {
 			/** @type {any} */ (typeof ce !== 'boolean' ? ce.extend : undefined)
 		);
 
-		// If customElement option is set, we define the custom element directly. Else we still create
-		// the custom element class so that the user may instantiate a custom element themselves later.
-		if (typeof ce !== 'boolean') {
-			body.push(b.stmt(b.call('customElements.define', b.literal(ce.tag), create_ce)));
+		// If a tag name is provided, call `customElements.define`, otherwise leave to the user
+		if (typeof ce !== 'boolean' && typeof ce.tag === 'string') {
+			const define = b.stmt(b.call('customElements.define', b.literal(ce.tag), create_ce));
+
+			if (options.hmr) {
+				body.push(
+					b.if(b.binary('==', b.call('customElements.get', b.literal(ce.tag)), b.null), define)
+				);
+			} else {
+				body.push(define);
+			}
 		} else {
 			body.push(b.stmt(create_ce));
 		}
@@ -581,25 +626,14 @@ export function client_module(analysis, options) {
 		options,
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
-		legacy_reactive_statements: new Map(),
 		public_state: new Map(),
 		private_state: new Map(),
-		getters: {},
+		transform: {},
 		in_constructor: false
 	};
 
 	const module = /** @type {ESTree.Program} */ (
-		walk(
-			/** @type {SvelteNode} */ (analysis.module.ast),
-			state,
-			combine_visitors(
-				set_scope(analysis.module.scopes),
-				global_visitors,
-				// @ts-expect-error
-				javascript_visitors,
-				javascript_visitors_runes
-			)
-		)
+		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, visitors)
 	);
 
 	return {

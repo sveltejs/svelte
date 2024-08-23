@@ -100,6 +100,10 @@
 
 > This type of directive is not valid on components
 
+## component_invalid_name
+
+> Component name must be a valid variable name or dot notation expression
+
 ## const_tag_cycle
 
 > Cyclical dependency detected: %cycle%
@@ -190,7 +194,13 @@
 
 ## node_invalid_placement
 
-> %thing% is invalid inside <%parent%>
+> %thing% is invalid inside `<%parent%>`
+
+HTML restricts where certain elements can appear. In case of a violation the browser will 'repair' the HTML in a way that breaks Svelte's assumptions about the structure of your components. Some examples:
+
+- `<p>hello <div>world</div></p>` will result in `<p>hello </p><div>world</div><p></p>` for example (the `<div>` autoclosed the `<p>` because `<p>` cannot contain block-level elements)
+- `<option><div>option a</div></option>` will result in `<option>option a</option>` (the `<div>` is removed)
+- `<table><tr><td>cell</td></tr></table>` will result in `<table><tbody><tr><td>cell</td></tr></tbody></table>` (a `<tbody>` is auto-inserted)
 
 ## render_tag_invalid_call_expression
 
@@ -206,11 +216,19 @@
 
 ## script_duplicate
 
-> A component can have a single top-level `<script>` element and/or a single top-level `<script context="module">` element
+> A component can have a single top-level `<script>` element and/or a single top-level `<script module>` element
+
+## script_invalid_attribute_value
+
+> If the `%name%` attribute is supplied, it must be a boolean attribute
 
 ## script_invalid_context
 
 > If the context attribute is supplied, its value must be "module"
+
+## script_reserved_attribute
+
+> The `%name%` attribute is reserved and cannot be used
 
 ## slot_attribute_duplicate
 
@@ -318,11 +336,11 @@
 
 ## svelte_options_invalid_attribute_value
 
-> Valid values are %list%
+> Value must be %list%, if specified
 
 ## svelte_options_invalid_customelement
 
-> "customElement" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
+> "customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
 
 ## svelte_options_invalid_customelement_props
 

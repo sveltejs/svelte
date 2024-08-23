@@ -1,5 +1,5 @@
-/** @import { Effect, EffectNodes, TemplateNode } from '#client' */
-import { FILENAME, namespace_svg } from '../../../../constants.js';
+/** @import { Effect, TemplateNode } from '#client' */
+import { FILENAME, NAMESPACE_SVG } from '../../../../constants.js';
 import {
 	hydrate_next,
 	hydrate_node,
@@ -7,7 +7,7 @@ import {
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
-import { empty } from '../operations.js';
+import { create_text, get_first_child } from '../operations.js';
 import {
 	block,
 	branch,
@@ -68,7 +68,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 	block(() => {
 		const next_tag = get_tag() || null;
-		var ns = get_namespace ? get_namespace() : is_svg || next_tag === 'svg' ? namespace_svg : null;
+		var ns = get_namespace ? get_namespace() : is_svg || next_tag === 'svg' ? NAMESPACE_SVG : null;
 
 		// Assumption: Noone changes the namespace but not the tag (what would that even mean?)
 		if (next_tag === tag) return;
@@ -119,7 +119,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					// If hydrating, use the existing ssr comment as the anchor so that the
 					// inner open and close methods can pick up the existing nodes correctly
 					var child_anchor = /** @type {TemplateNode} */ (
-						hydrating ? element.firstChild : element.appendChild(empty())
+						hydrating ? get_first_child(element) : element.appendChild(create_text())
 					);
 
 					if (hydrating) {
@@ -138,7 +138,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				}
 
 				// we do this after calling `render_fn` so that child effects don't override `nodes.end`
-				/** @type {Effect & { nodes: EffectNodes }} */ (current_effect).nodes.end = element;
+				/** @type {Effect} */ (current_effect).nodes_end = element;
 
 				anchor.before(element);
 			});

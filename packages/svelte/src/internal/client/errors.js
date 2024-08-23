@@ -94,6 +94,22 @@ export function component_api_invalid_new(component, name) {
 }
 
 /**
+ * A derived value cannot reference itself recursively
+ * @returns {never}
+ */
+export function derived_references_self() {
+	if (DEV) {
+		const error = new Error(`derived_references_self\nA derived value cannot reference itself recursively`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("derived_references_self");
+	}
+}
+
+/**
  * Keyed each block has duplicate key `%value%` at indexes %a% and %b%
  * @param {string} a
  * @param {string} b
@@ -263,18 +279,18 @@ export function rune_outside_svelte(rune) {
 }
 
 /**
- * The argument to `$state.frozen(...)` cannot be an object created with `$state(...)`. You should create a copy of it first, for example with `$state.snapshot`
+ * Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
  * @returns {never}
  */
-export function state_frozen_invalid_argument() {
+export function state_descriptors_fixed() {
 	if (DEV) {
-		const error = new Error(`state_frozen_invalid_argument\nThe argument to \`$state.frozen(...)\` cannot be an object created with \`$state(...)\`. You should create a copy of it first, for example with \`$state.snapshot\``);
+		const error = new Error(`state_descriptors_fixed\nProperty descriptors defined on \`$state\` objects must contain \`value\` and always be \`enumerable\`, \`configurable\` and \`writable\`.`);
 
 		error.name = 'Svelte error';
 		throw error;
 	} else {
 		// TODO print a link to the documentation
-		throw new Error("state_frozen_invalid_argument");
+		throw new Error("state_descriptors_fixed");
 	}
 }
 

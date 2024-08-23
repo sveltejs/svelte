@@ -162,9 +162,9 @@ export function check_dirtiness(reaction) {
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
+		var is_unowned = (flags & UNOWNED) !== 0;
 
 		if (dependencies !== null) {
-			var is_unowned = (flags & UNOWNED) !== 0;
 			var i;
 
 			if ((flags & DISCONNECTED) !== 0) {
@@ -198,7 +198,10 @@ export function check_dirtiness(reaction) {
 			}
 		}
 
-		set_signal_status(reaction, CLEAN);
+		// Unowned signals should never be marked as clean.
+		if (!is_unowned) {
+			set_signal_status(reaction, CLEAN);
+		}
 	}
 
 	return false;
@@ -288,26 +291,9 @@ export function update_reaction(reaction) {
 		var deps = reaction.deps;
 
 		if (new_deps !== null) {
-			var dependency;
 			var i;
 
-			if (deps !== null) {
-				/** All dependencies of the reaction, including those tracked on the previous run */
-				var array = skipped_deps === 0 ? new_deps : deps.slice(0, skipped_deps).concat(new_deps);
-
-				// If we have more than 16 elements in the array then use a Set for faster performance
-				// TODO: evaluate if we should always just use a Set or not here?
-				var set = array.length > 16 ? new Set(array) : null;
-
-				// Remove dependencies that should no longer be tracked
-				for (i = skipped_deps; i < deps.length; i++) {
-					dependency = deps[i];
-
-					if (set !== null ? !set.has(dependency) : !array.includes(dependency)) {
-						remove_reaction(reaction, dependency);
-					}
-				}
-			}
+			remove_reactions(reaction, skipped_deps);
 
 			if (deps !== null && skipped_deps > 0) {
 				deps.length = skipped_deps + new_deps.length;
@@ -320,17 +306,7 @@ export function update_reaction(reaction) {
 
 			if (!current_skip_reaction) {
 				for (i = skipped_deps; i < deps.length; i++) {
-					dependency = deps[i];
-					var reactions = dependency.reactions;
-
-					if (reactions === null) {
-						dependency.reactions = [reaction];
-					} else if (
-						reactions[reactions.length - 1] !== reaction &&
-						!reactions.includes(reaction)
-					) {
-						reactions.push(reaction);
-					}
+					(deps[i].reactions ??= []).push(reaction);
 				}
 			}
 		} else if (deps !== null && skipped_deps < deps.length) {
@@ -355,24 +331,23 @@ export function update_reaction(reaction) {
  * @returns {void}
  */
 function remove_reaction(signal, dependency) {
-	const reactions = dependency.reactions;
-	let reactions_length = 0;
+	let reactions = dependency.reactions;
 	if (reactions !== null) {
-		reactions_length = reactions.length - 1;
-		const index = reactions.indexOf(signal);
+		var index = reactions.indexOf(signal);
 		if (index !== -1) {
-			if (reactions_length === 0) {
-				dependency.reactions = null;
+			var new_length = reactions.length - 1;
+			if (new_length === 0) {
+				reactions = dependency.reactions = null;
 			} else {
 				// Swap with last element and then remove.
-				reactions[index] = reactions[reactions_length];
+				reactions[index] = reactions[new_length];
 				reactions.pop();
 			}
 		}
 	}
 	// If the derived has no reactions, then we can disconnect it from the graph,
 	// allowing it to either reconnect in the future, or be GC'd by the VM.
-	if (reactions_length === 0 && (dependency.f & DERIVED) !== 0) {
+	if (reactions === null && (dependency.f & DERIVED) !== 0) {
 		set_signal_status(dependency, MAYBE_DIRTY);
 		// If we are working with a derived that is owned by an effect, then mark it as being
 		// disconnected.
@@ -392,19 +367,8 @@ export function remove_reactions(signal, start_index) {
 	var dependencies = signal.deps;
 	if (dependencies === null) return;
 
-	var active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
-	var seen = new Set();
-
 	for (var i = start_index; i < dependencies.length; i++) {
-		var dependency = dependencies[i];
-
-		if (seen.has(dependency)) continue;
-		seen.add(dependency);
-
-		// Avoid removing a reaction if we know that it is active (start_index will not be 0)
-		if (active_dependencies === null || !active_dependencies.includes(dependency)) {
-			remove_reaction(signal, dependency);
-		}
+		remove_reaction(signal, dependencies[i]);
 	}
 }
 
@@ -533,7 +497,7 @@ function flush_queued_effects(effects) {
 			// don't know if we need to keep them until they are executed. Doing the check
 			// here (rather than in `update_effect`) allows us to skip the work for
 			// immediate effects.
-			if (effect.deps === null && effect.first === null && effect.nodes === null) {
+			if (effect.deps === null && effect.first === null && effect.nodes_start === null) {
 				if (effect.teardown === null) {
 					// remove this effect from the graph
 					unlink_effect(effect);
@@ -605,7 +569,7 @@ function process_effects(effect, collected_effects) {
 		var flags = current_effect.f;
 		// TODO: we probably don't need to check for destroyed as it shouldn't be encountered?
 		var is_active = (flags & (DESTROYED | INERT)) === 0;
-		var is_branch = flags & BRANCH_EFFECT;
+		var is_branch = (flags & BRANCH_EFFECT) !== 0;
 		var is_clean = (flags & CLEAN) !== 0;
 		var child = current_effect.first;
 
@@ -741,16 +705,10 @@ export function get(signal) {
 		// rather than updating `new_deps`, which creates GC cost
 		if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
 			skipped_deps++;
-		}
-
-		// Otherwise, create or push to `new_deps`, but only if this
-		// dependency wasn't the last one that was accessed
-		else if (deps === null || skipped_deps === 0 || deps[skipped_deps - 1] !== signal) {
-			if (new_deps === null) {
-				new_deps = [signal];
-			} else if (new_deps[new_deps.length - 1] !== signal) {
-				new_deps.push(signal);
-			}
+		} else if (new_deps === null) {
+			new_deps = [signal];
+		} else {
+			new_deps.push(signal);
 		}
 
 		if (
@@ -774,6 +732,16 @@ export function get(signal) {
 	}
 
 	return signal.v;
+}
+
+/**
+ * Like `get`, but checks for `undefined`. Used for `var` declarations because they can be accessed before being declared
+ * @template V
+ * @param {Value<V> | undefined} signal
+ * @returns {V | undefined}
+ */
+export function safe_get(signal) {
+	return signal && get(signal);
 }
 
 /**
@@ -840,17 +808,6 @@ const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
  */
 export function set_signal_status(signal, status) {
 	signal.f = (signal.f & STATUS_MASK) | status;
-}
-
-/**
- * @template V
- * @param {V | Value<V>} val
- * @returns {val is Value<V>}
- */
-export function is_signal(val) {
-	return (
-		typeof val === 'object' && val !== null && typeof (/** @type {Value<V>} */ (val).f) === 'number'
-	);
 }
 
 /**
@@ -988,32 +945,16 @@ export function update_pre(signal, d = 1) {
  * @returns {Record<string, unknown>}
  */
 export function exclude_from_object(obj, keys) {
-	obj = { ...obj };
-	let key;
-	for (key of keys) {
-		delete obj[key];
+	/** @type {Record<string, unknown>} */
+	var result = {};
+
+	for (var key in obj) {
+		if (!keys.includes(key)) {
+			result[key] = obj[key];
+		}
 	}
-	return obj;
-}
 
-/**
- * @template V
- * @param {V} value
- * @param {() => V} fallback lazy because could contain side effects
- * @returns {V}
- */
-export function value_or_fallback(value, fallback) {
-	return value === undefined ? fallback() : value;
-}
-
-/**
- * @template V
- * @param {V} value
- * @param {() => Promise<V>} fallback lazy because could contain side effects
- * @returns {Promise<V>}
- */
-export async function value_or_fallback_async(value, fallback) {
-	return value === undefined ? fallback() : value;
+	return result;
 }
 
 /**
@@ -1150,20 +1091,6 @@ export function deep_read(value, visited = new Set()) {
 			}
 		}
 	}
-}
-
-/**
- * @template V
- * @param {V | Value<V>} value
- * @returns {V}
- */
-export function unwrap(value) {
-	if (is_signal(value)) {
-		// @ts-ignore
-		return get(value);
-	}
-	// @ts-ignore
-	return value;
 }
 
 if (DEV) {

@@ -18,6 +18,10 @@
 
 > Attempted to instantiate %component% with `new %name%`, which is no longer valid in Svelte 5. If this component is not under your control, set the `compatibility.componentApi` compiler option to `4` to keep it working. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information
 
+## derived_references_self
+
+> A derived value cannot reference itself recursively
+
 ## each_key_duplicate
 
 > Keyed each block has duplicate key at indexes %a% and %b%
@@ -60,9 +64,9 @@
 
 > The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
 
-## state_frozen_invalid_argument
+## state_descriptors_fixed
 
-> The argument to `$state.frozen(...)` cannot be an object created with `$state(...)`. You should create a copy of it first, for example with `$state.snapshot`
+> Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
 
 ## state_prototype_fixed
 

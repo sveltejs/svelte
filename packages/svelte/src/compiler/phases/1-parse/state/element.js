@@ -1,16 +1,17 @@
 /** @import { Expression } from 'estree' */
 /** @import * as Compiler from '#compiler' */
 /** @import { Parser } from '../index.js' */
-import { is_void } from '../../../../constants.js';
+import { is_void } from '../../../../utils.js';
 import read_expression from '../read/expression.js';
 import { read_script } from '../read/script.js';
 import read_style from '../read/style.js';
-import { closing_tag_omitted, decode_character_references } from '../utils/html.js';
+import { decode_character_references } from '../utils/html.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { create_fragment } from '../utils/create.js';
-import { create_attribute } from '../../nodes.js';
+import { create_attribute, create_expression_metadata } from '../../nodes.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../utils/ast.js';
+import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 
 // eslint-disable-next-line no-useless-escape
 const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
@@ -73,7 +74,9 @@ function parent_is_shadowroot_template(stack) {
 
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
 const regex_closing_comment = /-->/;
-const regex_capital_letter = /[A-Z]/;
+const regex_component_name = /^(?:[A-Z]|[A-Za-z][A-Za-z0-9_$]*\.)/;
+const regex_valid_component_name =
+	/^(?:[A-Z][A-Za-z0-9_$.]*|[a-z][A-Za-z0-9_$]*\.[A-Za-z0-9_$])[A-Za-z0-9_$.]*$/;
 
 /** @param {Parser} parser */
 export default function element(parser) {
@@ -126,7 +129,7 @@ export default function element(parser) {
 
 	const type = meta_tags.has(name)
 		? meta_tags.get(name)
-		: regex_capital_letter.test(name[0]) || name === 'svelte:self' || name === 'svelte:component'
+		: regex_component_name.test(name)
 			? 'Component'
 			: name === 'title' && parent_is_head(parser.stack)
 				? 'TitleElement'
@@ -135,11 +138,15 @@ export default function element(parser) {
 					? 'SlotElement'
 					: 'RegularElement';
 
+	if (type === 'Component' && !regex_valid_component_name.test(name)) {
+		e.component_invalid_name({ start: start + 1, end: start + name.length + 1 });
+	}
+
 	/** @type {Compiler.ElementLike} */
 	const element =
 		type === 'RegularElement'
 			? {
-					type: type,
+					type,
 					start,
 					end: -1,
 					name,
@@ -162,7 +169,7 @@ export default function element(parser) {
 					fragment: create_fragment(true),
 					parent: null,
 					metadata: {
-						svg: false
+						// unpopulated at first, differs between types
 					}
 				});
 
@@ -507,8 +514,7 @@ function read_attribute(parser) {
 				expression,
 				parent: null,
 				metadata: {
-					contains_call_expression: false,
-					dynamic: false
+					expression: create_expression_metadata()
 				}
 			};
 
@@ -537,8 +543,7 @@ function read_attribute(parser) {
 				},
 				parent: null,
 				metadata: {
-					dynamic: false,
-					contains_call_expression: false
+					expression: create_expression_metadata()
 				}
 			};
 
@@ -583,7 +588,7 @@ function read_attribute(parser) {
 				value,
 				parent: null,
 				metadata: {
-					dynamic: false
+					expression: create_expression_metadata()
 				}
 			};
 		}
@@ -615,16 +620,9 @@ function read_attribute(parser) {
 			modifiers,
 			expression,
 			metadata: {
-				dynamic: false,
-				contains_call_expression: false
+				expression: create_expression_metadata()
 			}
 		};
-
-		if (directive.type === 'ClassDirective') {
-			directive.metadata = {
-				dynamic: false
-			};
-		}
 
 		if (directive.type === 'TransitionDirective') {
 			const direction = name.slice(0, colon_index);
@@ -788,8 +786,7 @@ function read_sequence(parser, done, location) {
 				expression,
 				parent: null,
 				metadata: {
-					contains_call_expression: false,
-					dynamic: false
+					expression: create_expression_metadata()
 				}
 			};
 

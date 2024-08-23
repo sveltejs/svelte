@@ -1,5 +1,4 @@
 /** @import { VariableDeclarator, Node, Identifier } from 'estree' */
-/** @import { SvelteNode } from '../types/template.js' */
 /** @import { Visitors } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
 /** @import { Scope } from '../phases/scope.js' */
@@ -57,6 +56,13 @@ export function migrate(source) {
 			run_name: analysis.root.unique('run').name,
 			needs_run: false
 		};
+
+		if (parsed.module) {
+			const context = parsed.module.attributes.find((attr) => attr.name === 'context');
+			if (context) {
+				state.str.update(context.start, context.end, 'module');
+			}
+		}
 
 		if (parsed.instance) {
 			walk(parsed.instance.content, state, instance_script);
@@ -223,7 +229,7 @@ export function migrate(source) {
  * }} State
  */
 
-/** @type {Visitors<SvelteNode, State>} */
+/** @type {Visitors<Compiler.SvelteNode, State>} */
 const instance_script = {
 	_(node, { state, next }) {
 		// @ts-expect-error
@@ -331,10 +337,7 @@ const instance_script = {
 
 				const binding = /** @type {Compiler.Binding} */ (state.scope.get(declarator.id.name));
 
-				if (
-					state.analysis.uses_props &&
-					(declarator.init || binding.mutated || binding.reassigned)
-				) {
+				if (state.analysis.uses_props && (declarator.init || binding.updated)) {
 					throw new Error(
 						'$$props is used together with named props in a way that cannot be automatically migrated.'
 					);
@@ -350,7 +353,7 @@ const instance_script = {
 							)
 						: '',
 					optional: !!declarator.init,
-					bindable: binding.mutated || binding.reassigned,
+					bindable: binding.updated,
 					...extract_type_and_comment(declarator, state.str, path)
 				});
 				state.props_insertion_point = /** @type {number} */ (declarator.end);
@@ -475,7 +478,7 @@ const instance_script = {
 	}
 };
 
-/** @type {Visitors<SvelteNode, State>} */
+/** @type {Visitors<Compiler.SvelteNode, State>} */
 const template = {
 	Identifier(node, { state, path }) {
 		handle_identifier(node, state, path);
@@ -593,7 +596,7 @@ const template = {
 /**
  * @param {VariableDeclarator} declarator
  * @param {MagicString} str
- * @param {Compiler.SvelteNode[]} path
+ * @param {Array<Compiler.SvelteNode>} path
  */
 function extract_type_and_comment(declarator, str, path) {
 	const parent = path.at(-1);

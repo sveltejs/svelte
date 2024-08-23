@@ -5,26 +5,26 @@ export default test({
 		{
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector ".a + .e"',
-			start: { character: 188, column: 1, line: 10 },
-			end: { character: 195, column: 8, line: 10 }
+			start: { character: 242, column: 1, line: 14 },
+			end: { character: 249, column: 8, line: 14 }
 		},
 		{
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector ".b + .c"',
-			start: { character: 213, column: 1, line: 11 },
-			end: { character: 220, column: 8, line: 11 }
+			start: { character: 269, column: 1, line: 15 },
+			end: { character: 276, column: 8, line: 15 }
 		},
 		{
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector ".c + .d"',
-			start: { character: 238, column: 1, line: 12 },
-			end: { character: 245, column: 8, line: 12 }
+			start: { character: 296, column: 1, line: 16 },
+			end: { character: 303, column: 8, line: 16 }
 		},
 		{
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector ".b + .d"',
-			start: { character: 263, column: 1, line: 13 },
-			end: { character: 270, column: 8, line: 13 }
+			start: { character: 323, column: 1, line: 17 },
+			end: { character: 330, column: 8, line: 17 }
 		}
 	]
 });

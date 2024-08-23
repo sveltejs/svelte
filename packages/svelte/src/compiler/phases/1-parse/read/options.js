@@ -1,6 +1,6 @@
 /** @import { ObjectExpression } from 'estree' */
 /** @import { SvelteOptionsRaw, Root, SvelteOptions } from '#compiler' */
-import { namespace_mathml, namespace_svg } from '../../../../constants.js';
+import { NAMESPACE_MATHML, NAMESPACE_SVG } from '../../../../constants.js';
 import * as e from '../../../errors.js';
 
 const regex_valid_tag_name = /^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/;
@@ -40,7 +40,7 @@ export default function read_options(node) {
 			}
 			case 'customElement': {
 				/** @type {SvelteOptions['customElement']} */
-				const ce = { tag: '' };
+				const ce = {};
 				const { value: v } = attribute;
 				const value = v === true || Array.isArray(v) ? v : [v];
 
@@ -79,8 +79,6 @@ export default function read_options(node) {
 					const tag_value = tag[1]?.value;
 					validate_tag(tag, tag_value);
 					ce.tag = tag_value;
-				} else {
-					e.svelte_options_invalid_customelement(attribute);
 				}
 
 				const props = properties.find(([name]) => name === 'props')?.[1];
@@ -155,22 +153,25 @@ export default function read_options(node) {
 			case 'namespace': {
 				const value = get_static_value(attribute);
 
-				if (value === namespace_svg) {
+				if (value === NAMESPACE_SVG) {
 					component_options.namespace = 'svg';
-				} else if (value === namespace_mathml) {
+				} else if (value === NAMESPACE_MATHML) {
 					component_options.namespace = 'mathml';
-				} else if (
-					value === 'html' ||
-					value === 'mathml' ||
-					value === 'svg' ||
-					value === 'foreign'
-				) {
+				} else if (value === 'html' || value === 'mathml' || value === 'svg') {
 					component_options.namespace = value;
 				} else {
-					e.svelte_options_invalid_attribute_value(
-						attribute,
-						`"html", "mathml", "svg" or "foreign"`
-					);
+					e.svelte_options_invalid_attribute_value(attribute, `"html", "mathml" or "svg"`);
+				}
+
+				break;
+			}
+			case 'css': {
+				const value = get_static_value(attribute);
+
+				if (value === 'injected') {
+					component_options.css = value;
+				} else {
+					e.svelte_options_invalid_attribute_value(attribute, `"injected"`);
 				}
 
 				break;
@@ -240,8 +241,4 @@ function validate_tag(attribute, tag) {
 	if (tag && !regex_valid_tag_name.test(tag)) {
 		e.svelte_options_invalid_tagname(attribute);
 	}
-	// TODO do we still need this?
-	// if (tag && !component.compile_options.customElement) {
-	// 	component.warn(attribute, compiler_warnings.missing_custom_element_compile_options);
-	// }
 }

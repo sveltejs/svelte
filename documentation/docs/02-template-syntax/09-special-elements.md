@@ -64,7 +64,7 @@ If `this` is the name of a [void element](https://developer.mozilla.org/en-US/do
 <svelte:element this={tag} on:click={handler}>Foo</svelte:element>
 ```
 
-Svelte tries its best to infer the correct namespace from its surroundings, but that's not always possible to analyze statically. You can give a hint by adding a `xmlns` attribute:
+Svelte tries its best to infer the correct namespace from the element's surroundings, but it's not always possible. You can make it explicit with an `xmlns` attribute:
 
 ```svelte
 <svelte:element this={tag} xmlns="http://www.w3.org/2000/svg" />
@@ -185,7 +185,7 @@ The `<svelte:options>` element provides a place to specify per-component compile
 - `accessors={true}` — adds getters and setters for the component's props
 - `accessors={false}` — the default
 - `namespace="..."` — the namespace where this component will be used, most commonly "svg"; use the "foreign" namespace to opt out of case-insensitive attribute names and HTML-specific warnings
-- `customElement="..."` — the name to use when compiling this component as a custom element
+- `customElement={...}` — the [options](/docs/custom-elements-api#component-options) to use when compiling this component as a custom element. If a string is passed, it is used as the `tag` option
 
 ```svelte
 <svelte:options customElement="my-custom-element" />

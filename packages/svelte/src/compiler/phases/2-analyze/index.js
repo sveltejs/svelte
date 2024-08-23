@@ -1,44 +1,175 @@
-/** @import { ArrowFunctionExpression, CallExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, LabeledStatement, Literal, Node, Program, Super } from 'estree' */
-/** @import { Attribute, BindDirective, Binding, DelegatedEvent, RegularElement, Root, Script, SvelteNode, Text, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
-/** @import { AnalysisState, Context, LegacyAnalysisState, Visitors } from './types' */
+/** @import { Expression, Node, Program } from 'estree' */
+/** @import { Binding, Root, Script, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
-import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
-import {
-	extract_identifiers,
-	extract_all_identifiers_from_expression,
-	extract_paths,
-	is_event_attribute,
-	is_text_attribute,
-	object,
-	unwrap_optional,
-	get_attribute_expression,
-	get_attribute_chunks
-} from '../../utils/ast.js';
+import { extract_identifiers, is_text_attribute } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
-import { MathMLElements, ReservedKeywords, Runes, SVGElements } from '../constants.js';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
-import { merge } from '../visitors.js';
-import { validation_legacy, validation_runes, validation_runes_js } from './validation.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
-import { regex_starts_with_newline } from '../patterns.js';
-import { create_attribute, is_element_node } from '../nodes.js';
-import {
-	DelegatedEvents,
-	is_capture_event,
-	namespace_mathml,
-	namespace_svg
-} from '../../../constants.js';
-import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
+import { create_attribute } from '../nodes.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
-import { hash } from '../../../utils.js';
+import { hash, is_rune } from '../../../utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
 import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
-import { equal } from '../../utils/assert.js';
+import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
+import { AssignmentExpression } from './visitors/AssignmentExpression.js';
+import { Attribute } from './visitors/Attribute.js';
+import { AwaitBlock } from './visitors/AwaitBlock.js';
+import { BindDirective } from './visitors/BindDirective.js';
+import { CallExpression } from './visitors/CallExpression.js';
+import { ClassBody } from './visitors/ClassBody.js';
+import { ClassDeclaration } from './visitors/ClassDeclaration.js';
+import { ClassDirective } from './visitors/ClassDirective.js';
+import { Component } from './visitors/Component.js';
+import { ConstTag } from './visitors/ConstTag.js';
+import { DebugTag } from './visitors/DebugTag.js';
+import { EachBlock } from './visitors/EachBlock.js';
+import { ExportDefaultDeclaration } from './visitors/ExportDefaultDeclaration.js';
+import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
+import { ExportSpecifier } from './visitors/ExportSpecifier.js';
+import { ExpressionStatement } from './visitors/ExpressionStatement.js';
+import { ExpressionTag } from './visitors/ExpressionTag.js';
+import { FunctionDeclaration } from './visitors/FunctionDeclaration.js';
+import { FunctionExpression } from './visitors/FunctionExpression.js';
+import { HtmlTag } from './visitors/HtmlTag.js';
+import { Identifier } from './visitors/Identifier.js';
+import { IfBlock } from './visitors/IfBlock.js';
+import { ImportDeclaration } from './visitors/ImportDeclaration.js';
+import { KeyBlock } from './visitors/KeyBlock.js';
+import { LabeledStatement } from './visitors/LabeledStatement.js';
+import { LetDirective } from './visitors/LetDirective.js';
+import { MemberExpression } from './visitors/MemberExpression.js';
+import { NewExpression } from './visitors/NewExpression.js';
+import { OnDirective } from './visitors/OnDirective.js';
+import { RegularElement } from './visitors/RegularElement.js';
+import { RenderTag } from './visitors/RenderTag.js';
+import { SlotElement } from './visitors/SlotElement.js';
+import { SnippetBlock } from './visitors/SnippetBlock.js';
+import { SpreadAttribute } from './visitors/SpreadAttribute.js';
+import { StyleDirective } from './visitors/StyleDirective.js';
+import { SvelteComponent } from './visitors/SvelteComponent.js';
+import { SvelteElement } from './visitors/SvelteElement.js';
+import { SvelteFragment } from './visitors/SvelteFragment.js';
+import { SvelteHead } from './visitors/SvelteHead.js';
+import { SvelteSelf } from './visitors/SvelteSelf.js';
+import { TaggedTemplateExpression } from './visitors/TaggedTemplateExpression.js';
+import { Text } from './visitors/Text.js';
+import { TitleElement } from './visitors/TitleElement.js';
+import { UpdateExpression } from './visitors/UpdateExpression.js';
+import { UseDirective } from './visitors/UseDirective.js';
+import { VariableDeclarator } from './visitors/VariableDeclarator.js';
+import is_reference from 'is-reference';
+
+/**
+ * @type {Visitors}
+ */
+const visitors = {
+	_(node, { state, next, path }) {
+		const parent = path.at(-1);
+
+		/** @type {string[]} */
+		const ignores = [];
+
+		if (parent?.type === 'Fragment' && node.type !== 'Comment' && node.type !== 'Text') {
+			const idx = parent.nodes.indexOf(/** @type {any} */ (node));
+
+			for (let i = idx - 1; i >= 0; i--) {
+				const prev = parent.nodes[i];
+
+				if (prev.type === 'Comment') {
+					ignores.push(
+						...extract_svelte_ignore(
+							prev.start + 4 /* '<!--'.length */,
+							prev.data,
+							state.analysis.runes
+						)
+					);
+				} else if (prev.type !== 'Text') {
+					break;
+				}
+			}
+		} else {
+			const comments = /** @type {any} */ (node).leadingComments;
+
+			if (comments) {
+				for (const comment of comments) {
+					ignores.push(
+						...extract_svelte_ignore(
+							comment.start + 2 /* '//'.length */,
+							comment.value,
+							state.analysis.runes
+						)
+					);
+				}
+			}
+		}
+
+		if (ignores.length > 0) {
+			push_ignore(ignores);
+		}
+
+		ignore_map.set(node, structuredClone(ignore_stack));
+
+		const scope = state.scopes.get(node);
+		next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
+
+		if (ignores.length > 0) {
+			pop_ignore();
+		}
+	},
+	ArrowFunctionExpression,
+	AssignmentExpression,
+	Attribute,
+	AwaitBlock,
+	BindDirective,
+	CallExpression,
+	ClassBody,
+	ClassDeclaration,
+	ClassDirective,
+	Component,
+	ConstTag,
+	DebugTag,
+	EachBlock,
+	ExportDefaultDeclaration,
+	ExportNamedDeclaration,
+	ExportSpecifier,
+	ExpressionStatement,
+	ExpressionTag,
+	FunctionDeclaration,
+	FunctionExpression,
+	HtmlTag,
+	Identifier,
+	IfBlock,
+	ImportDeclaration,
+	KeyBlock,
+	LabeledStatement,
+	LetDirective,
+	MemberExpression,
+	NewExpression,
+	OnDirective,
+	RegularElement,
+	RenderTag,
+	SlotElement,
+	SnippetBlock,
+	SpreadAttribute,
+	StyleDirective,
+	SvelteHead,
+	SvelteElement,
+	SvelteFragment,
+	SvelteComponent,
+	SvelteSelf,
+	TaggedTemplateExpression,
+	Text,
+	TitleElement,
+	UpdateExpression,
+	UseDirective,
+	VariableDeclarator
+};
 
 /**
  * @param {Script | null} script
@@ -76,156 +207,7 @@ function get_component_name(filename) {
 	return name[0].toUpperCase() + name.slice(1);
 }
 
-/**
- * Checks if given event attribute can be delegated/hoisted and returns the corresponding info if so
- * @param {string} event_name
- * @param {Expression | null} handler
- * @param {Context} context
- * @returns {null | DelegatedEvent}
- */
-function get_delegated_event(event_name, handler, context) {
-	// Handle delegated event handlers. Bail-out if not a delegated event.
-	if (!handler || !DelegatedEvents.includes(event_name)) {
-		return null;
-	}
-
-	// If we are not working with a RegularElement, then bail-out.
-	const element = context.path.at(-1);
-	if (element?.type !== 'RegularElement') {
-		return null;
-	}
-
-	/** @type {DelegatedEvent} */
-	const non_hoistable = { type: 'non-hoistable' };
-	/** @type {FunctionExpression | FunctionDeclaration | ArrowFunctionExpression | null} */
-	let target_function = null;
-	let binding = null;
-
-	if (element.metadata.has_spread) {
-		// event attribute becomes part of the dynamic spread array
-		return non_hoistable;
-	}
-
-	if (handler.type === 'ArrowFunctionExpression' || handler.type === 'FunctionExpression') {
-		target_function = handler;
-	} else if (handler.type === 'Identifier') {
-		binding = context.state.scope.get(handler.name);
-
-		if (context.state.analysis.module.scope.references.has(handler.name)) {
-			// If a binding with the same name is referenced in the module scope (even if not declared there), bail-out
-			return non_hoistable;
-		}
-
-		if (binding != null) {
-			for (const { path } of binding.references) {
-				const parent = path.at(-1);
-				if (parent == null) return non_hoistable;
-
-				const grandparent = path.at(-2);
-
-				/** @type {RegularElement | null} */
-				let element = null;
-				/** @type {string | null} */
-				let event_name = null;
-				if (parent.type === 'OnDirective') {
-					element = /** @type {RegularElement} */ (grandparent);
-					event_name = parent.name;
-				} else if (
-					parent.type === 'ExpressionTag' &&
-					grandparent?.type === 'Attribute' &&
-					is_event_attribute(grandparent)
-				) {
-					element = /** @type {RegularElement} */ (path.at(-3));
-					const attribute = /** @type {Attribute} */ (grandparent);
-					event_name = get_attribute_event_name(attribute.name);
-				}
-
-				if (element && event_name) {
-					if (
-						element.type !== 'RegularElement' ||
-						determine_element_spread(element).metadata.has_spread ||
-						!DelegatedEvents.includes(event_name)
-					) {
-						return non_hoistable;
-					}
-				} else if (parent.type !== 'FunctionDeclaration' && parent.type !== 'VariableDeclarator') {
-					return non_hoistable;
-				}
-			}
-		}
-
-		// If the binding is exported, bail-out
-		if (context.state.analysis.exports.find((node) => node.name === handler.name)) {
-			return non_hoistable;
-		}
-
-		if (binding !== null && binding.initial !== null && !binding.mutated && !binding.is_called) {
-			const binding_type = binding.initial.type;
-
-			if (
-				binding_type === 'ArrowFunctionExpression' ||
-				binding_type === 'FunctionDeclaration' ||
-				binding_type === 'FunctionExpression'
-			) {
-				target_function = binding.initial;
-			}
-		}
-	}
-
-	// If we can't find a function, bail-out
-	if (target_function == null) return non_hoistable;
-	// If the function is marked as non-hoistable, bail-out
-	if (target_function.metadata.hoistable === 'impossible') return non_hoistable;
-	// If the function has more than one arg, then bail-out
-	if (target_function.params.length > 1) return non_hoistable;
-
-	const visited_references = new Set();
-	const scope = target_function.metadata.scope;
-	for (const [reference] of scope.references) {
-		// Bail-out if the arguments keyword is used
-		if (reference === 'arguments') return non_hoistable;
-		// Bail-out if references a store subscription
-		if (scope.get(`$${reference}`)?.kind === 'store_sub') return non_hoistable;
-
-		const binding = scope.get(reference);
-		const local_binding = context.state.scope.get(reference);
-
-		// If we are referencing a binding that is shadowed in another scope then bail out.
-		if (local_binding !== null && binding !== null && local_binding.node !== binding.node) {
-			return non_hoistable;
-		}
-
-		// If we have multiple references to the same store using $ prefix, bail out.
-		if (
-			binding !== null &&
-			binding.kind === 'store_sub' &&
-			visited_references.has(reference.slice(1))
-		) {
-			return non_hoistable;
-		}
-
-		// If we reference the index within an each block, then bail-out.
-		if (binding !== null && binding.initial?.type === 'EachBlock') return non_hoistable;
-
-		if (
-			binding !== null &&
-			// Bail-out if the the binding is a rest param
-			(binding.declaration_kind === 'rest_param' ||
-				// Bail-out if we reference anything from the EachBlock (for now) that mutates in non-runes mode,
-				(((!context.state.analysis.runes && binding.kind === 'each') ||
-					// or any normal not reactive bindings that are mutated.
-					binding.kind === 'normal' ||
-					// or any reactive imports (those are rewritten) (can only happen in legacy mode)
-					binding.kind === 'legacy_reactive_import') &&
-					binding.mutated))
-		) {
-			return non_hoistable;
-		}
-		visited_references.add(reference);
-	}
-
-	return { type: 'hoistable', function: target_function };
-}
+const RESERVED = ['$$props', '$$restProps', '$$slots'];
 
 /**
  * @param {Program} ast
@@ -236,17 +218,27 @@ export function analyze_module(ast, options) {
 	const { scope, scopes } = create_scopes(ast, new ScopeRoot(), false, null);
 
 	for (const [name, references] of scope.references) {
-		if (name[0] !== '$' || ReservedKeywords.includes(name)) continue;
+		if (name[0] !== '$' || RESERVED.includes(name)) continue;
 		if (name === '$' || name[1] === '$') {
 			e.global_reference_invalid(references[0].node, name);
+		}
+
+		const binding = scope.get(name.slice(1));
+
+		if (binding !== null && !is_rune(name)) {
+			e.store_invalid_subscription_module(references[0].node);
 		}
 	}
 
 	walk(
 		/** @type {Node} */ (ast),
-		{ scope, analysis: { runes: true } },
-		// @ts-expect-error TODO clean this mess up
-		merge(set_scope(scopes), validation_runes_js, runes_scope_js_tweaker)
+		{
+			scope,
+			scopes,
+			// @ts-expect-error TODO
+			analysis: { runes: true }
+		},
+		visitors
 	);
 
 	return {
@@ -277,7 +269,7 @@ export function analyze_component(root, source, options) {
 
 	// create synthetic bindings for store subscriptions
 	for (const [name, references] of module.scope.references) {
-		if (name[0] !== '$' || ReservedKeywords.includes(name)) continue;
+		if (name[0] !== '$' || RESERVED.includes(name)) continue;
 		if (name === '$' || name[1] === '$') {
 			e.global_reference_invalid(references[0].node, name);
 		}
@@ -289,7 +281,7 @@ export function analyze_component(root, source, options) {
 		// is referencing a rune and not a global store.
 		if (
 			options.runes === false ||
-			!Runes.includes(/** @type {any} */ (name)) ||
+			!is_rune(name) ||
 			(declaration !== null &&
 				// const state = $state(0) is valid
 				(get_rune(declaration.initial, instance.scope) === null ||
@@ -327,7 +319,7 @@ export function analyze_component(root, source, options) {
 			if (options.runes !== false) {
 				if (declaration === null && /[a-z]/.test(store_name[0])) {
 					e.global_reference_invalid(references[0].node, name);
-				} else if (declaration !== null && Runes.includes(/** @type {any} */ (name))) {
+				} else if (declaration !== null && is_rune(name)) {
 					for (const { node, path } of references) {
 						if (path.at(-1)?.type === 'CallExpression') {
 							w.store_rune_conflict(node, store_name);
@@ -338,7 +330,7 @@ export function analyze_component(root, source, options) {
 
 			if (module.ast) {
 				for (const { node, path } of references) {
-					// if the reference is inside context="module", error. this is a bit hacky but it works
+					// if the reference is inside module, error. this is a bit hacky but it works
 					if (
 						/** @type {number} */ (node.start) > /** @type {number} */ (module.ast.start) &&
 						/** @type {number} */ (node.end) < /** @type {number} */ (module.ast.end) &&
@@ -359,9 +351,7 @@ export function analyze_component(root, source, options) {
 
 	const component_name = get_component_name(options.filename ?? 'Component');
 
-	const runes =
-		options.runes ??
-		Array.from(module.scope.references).some(([name]) => Runes.includes(/** @type {any} */ (name)));
+	const runes = options.runes ?? Array.from(module.scope.references.keys()).some(is_rune);
 
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config
 	/** @type {ComponentAnalysis} */
@@ -410,6 +400,112 @@ export function analyze_component(root, source, options) {
 		source
 	};
 
+	if (!runes) {
+		// every exported `let` or `var` declaration becomes a prop, everything else becomes an export
+		for (const node of instance.ast.body) {
+			if (node.type !== 'ExportNamedDeclaration') continue;
+
+			analysis.needs_props = true;
+
+			if (node.declaration) {
+				if (
+					node.declaration.type === 'FunctionDeclaration' ||
+					node.declaration.type === 'ClassDeclaration'
+				) {
+					analysis.exports.push({
+						name: /** @type {import('estree').Identifier} */ (node.declaration.id).name,
+						alias: null
+					});
+				} else if (node.declaration.type === 'VariableDeclaration') {
+					if (node.declaration.kind === 'const') {
+						for (const declarator of node.declaration.declarations) {
+							for (const node of extract_identifiers(declarator.id)) {
+								analysis.exports.push({ name: node.name, alias: null });
+							}
+						}
+					} else {
+						for (const declarator of node.declaration.declarations) {
+							for (const id of extract_identifiers(declarator.id)) {
+								const binding = /** @type {Binding} */ (instance.scope.get(id.name));
+								binding.kind = 'bindable_prop';
+							}
+						}
+					}
+				}
+			} else {
+				for (const specifier of node.specifiers) {
+					const binding = instance.scope.get(specifier.local.name);
+
+					if (
+						binding &&
+						(binding.declaration_kind === 'var' || binding.declaration_kind === 'let')
+					) {
+						binding.kind = 'bindable_prop';
+
+						if (specifier.exported.name !== specifier.local.name) {
+							binding.prop_alias = specifier.exported.name;
+						}
+					} else {
+						analysis.exports.push({ name: specifier.local.name, alias: specifier.exported.name });
+					}
+				}
+			}
+		}
+
+		// if reassigned/mutated bindings are referenced in `$:` blocks
+		// or the template, turn them into state
+		for (const binding of instance.scope.declarations.values()) {
+			if (binding.kind !== 'normal') continue;
+
+			for (const { node, path } of binding.references) {
+				if (node === binding.node) continue;
+
+				if (binding.updated) {
+					if (
+						path[path.length - 1].type === 'StyleDirective' ||
+						path.some((node) => node.type === 'Fragment') ||
+						(path[1].type === 'LabeledStatement' && path[1].label.name === '$')
+					) {
+						binding.kind = 'state';
+					}
+				}
+			}
+		}
+
+		// more legacy nonsense: if an `each` binding is reassigned/mutated,
+		// treat the expression as being mutated as well
+		walk(/** @type {SvelteNode} */ (template.ast), null, {
+			EachBlock(node) {
+				const scope = /** @type {Scope} */ (template.scopes.get(node));
+
+				for (const binding of scope.declarations.values()) {
+					if (binding.updated) {
+						const state = { scope: /** @type {Scope} */ (scope.parent), scopes: template.scopes };
+
+						walk(node.expression, state, {
+							// @ts-expect-error
+							_: set_scope,
+							Identifier(node, context) {
+								const parent = /** @type {Expression} */ (context.path.at(-1));
+
+								if (is_reference(node, parent)) {
+									const binding = context.state.scope.get(node.name);
+
+									if (binding && binding.kind === 'normal') {
+										binding.kind = 'state';
+										binding.mutated = binding.updated = true;
+									}
+								}
+							}
+						});
+
+						break;
+					}
+				}
+			}
+		});
+	}
+
 	if (root.options) {
 		for (const attribute of root.options.attributes) {
 			if (attribute.name === 'accessors') {
@@ -441,6 +537,7 @@ export function analyze_component(root, source, options) {
 			/** @type {AnalysisState} */
 			const state = {
 				scope,
+				scopes,
 				analysis,
 				options,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
@@ -450,14 +547,13 @@ export function analyze_component(root, source, options) {
 				expression: null,
 				render_tag: null,
 				private_derived_state: [],
-				function_depth: scope.function_depth
+				function_depth: scope.function_depth,
+				instance_scope: instance.scope,
+				reactive_statement: null,
+				reactive_statements: new Map()
 			};
 
-			walk(
-				/** @type {SvelteNode} */ (ast),
-				state,
-				merge(set_scope(scopes), validation_runes, runes_scope_tweaker, common_visitors)
-			);
+			walk(/** @type {SvelteNode} */ (ast), state, visitors);
 		}
 
 		// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
@@ -478,7 +574,7 @@ export function analyze_component(root, source, options) {
 							// bind:this doesn't need to be a state reference if it will never change
 							if (
 								type === 'BindDirective' &&
-								/** @type {BindDirective} */ (path[i]).name === 'this'
+								/** @type {import('#compiler').BindDirective} */ (path[i]).name === 'this'
 							) {
 								for (let j = i - 1; j >= 0; j -= 1) {
 									const type = path[j].type;
@@ -507,9 +603,10 @@ export function analyze_component(root, source, options) {
 		instance.scope.declare(b.id('$$restProps'), 'rest_prop', 'synthetic');
 
 		for (const { ast, scope, scopes } of [module, instance, template]) {
-			/** @type {LegacyAnalysisState} */
+			/** @type {AnalysisState} */
 			const state = {
 				scope,
+				scopes,
 				analysis,
 				options,
 				parent_element: null,
@@ -525,12 +622,7 @@ export function analyze_component(root, source, options) {
 				function_depth: scope.function_depth
 			};
 
-			walk(
-				/** @type {SvelteNode} */ (ast),
-				state,
-				// @ts-expect-error TODO
-				merge(set_scope(scopes), validation_legacy, legacy_scope_tweaker, common_visitors)
-			);
+			walk(/** @type {SvelteNode} */ (ast), state, visitors);
 		}
 
 		for (const [name, binding] of instance.scope.declarations) {
@@ -557,7 +649,10 @@ export function analyze_component(root, source, options) {
 		);
 	}
 
-	if (analysis.uses_render_tags && (analysis.uses_slots || analysis.slot_names.size > 0)) {
+	if (
+		analysis.uses_render_tags &&
+		(analysis.uses_slots || (!analysis.custom_element && analysis.slot_names.size > 0))
+	) {
 		const pos = analysis.slot_names.values().next().value ?? analysis.source.indexOf('$$slot');
 		e.slot_snippet_conflict(pos);
 	}
@@ -587,7 +682,7 @@ export function analyze_component(root, source, options) {
 				// TODO this happens during the analysis phase, which shouldn't know anything about client vs server
 				if (element.type === 'SvelteElement' && options.generate === 'client') continue;
 
-				/** @type {Attribute | undefined} */
+				/** @type {import('#compiler').Attribute | undefined} */
 				let class_attribute = undefined;
 
 				for (const attribute of element.attributes) {
@@ -606,7 +701,7 @@ export function analyze_component(root, source, options) {
 					if (is_text_attribute(class_attribute)) {
 						class_attribute.value[0].data += ` ${analysis.css.hash}`;
 					} else {
-						/** @type {Text} */
+						/** @type {import('#compiler').Text} */
 						const css_text = {
 							type: 'Text',
 							data: ` ${analysis.css.hash}`,
@@ -646,941 +741,11 @@ export function analyze_component(root, source, options) {
 	return analysis;
 }
 
-/** @type {Visitors<LegacyAnalysisState>} */
-const legacy_scope_tweaker = {
-	LabeledStatement(node, { next, path, state }) {
-		if (
-			state.ast_type !== 'instance' ||
-			node.label.name !== '$' ||
-			/** @type {SvelteNode} */ (path.at(-1)).type !== 'Program'
-		) {
-			return next();
-		}
-
-		// Find all dependencies of this `$: {...}` statement
-		/** @type {ReactiveStatement} */
-		const reactive_statement = {
-			assignments: new Set(),
-			dependencies: []
-		};
-
-		next({ ...state, reactive_statement, function_depth: state.scope.function_depth + 1 });
-
-		// Every referenced binding becomes a dependency, unless it's on
-		// the left-hand side of an `=` assignment
-		for (const [name, nodes] of state.scope.references) {
-			const binding = state.scope.get(name);
-			if (binding === null) continue;
-
-			for (const { node, path } of nodes) {
-				/** @type {Expression} */
-				let left = node;
-
-				let i = path.length - 1;
-				let parent = /** @type {Expression} */ (path.at(i));
-				while (parent.type === 'MemberExpression') {
-					left = parent;
-					parent = /** @type {Expression} */ (path.at(--i));
-				}
-
-				if (
-					parent.type === 'AssignmentExpression' &&
-					parent.operator === '=' &&
-					parent.left === left
-				) {
-					continue;
-				}
-
-				reactive_statement.dependencies.push(binding);
-				break;
-			}
-		}
-
-		state.reactive_statements.set(node, reactive_statement);
-
-		// Ideally this would be in the validation file, but that isn't possible because this visitor
-		// calls "next" before setting the reactive statements.
-		if (
-			reactive_statement.dependencies.length &&
-			reactive_statement.dependencies.every(
-				(d) => d.scope === state.analysis.module.scope && d.declaration_kind !== 'const'
-			)
-		) {
-			w.reactive_declaration_module_script(node);
-		}
-
-		if (
-			node.body.type === 'ExpressionStatement' &&
-			node.body.expression.type === 'AssignmentExpression'
-		) {
-			let ids = extract_identifiers(node.body.expression.left);
-			if (node.body.expression.left.type === 'MemberExpression') {
-				const id = object(node.body.expression.left);
-				if (id !== null) {
-					ids = [id];
-				}
-			}
-
-			for (const id of ids) {
-				const binding = state.scope.get(id.name);
-				if (binding?.kind === 'legacy_reactive') {
-					// TODO does this include `let double; $: double = x * 2`?
-					binding.legacy_dependencies = Array.from(reactive_statement.dependencies);
-				}
-			}
-		}
-	},
-	AssignmentExpression(node, { state, next }) {
-		if (state.reactive_statement) {
-			const id = node.left.type === 'MemberExpression' ? object(node.left) : node.left;
-			if (id !== null) {
-				for (const id of extract_identifiers(node.left)) {
-					const binding = state.scope.get(id.name);
-
-					if (binding) {
-						state.reactive_statement.assignments.add(binding);
-					}
-				}
-			}
-		}
-
-		next();
-	},
-	UpdateExpression(node, { state, next }) {
-		if (state.reactive_statement) {
-			const id = node.argument.type === 'MemberExpression' ? object(node.argument) : node.argument;
-			if (id?.type === 'Identifier') {
-				const binding = state.scope.get(id.name);
-
-				if (binding) {
-					state.reactive_statement.assignments.add(binding);
-				}
-			}
-		}
-
-		next();
-	},
-	Identifier(node, { state, path }) {
-		const parent = /** @type {Node} */ (path.at(-1));
-		if (is_reference(node, parent)) {
-			if (node.name === '$$props') {
-				state.analysis.uses_props = true;
-			}
-
-			if (node.name === '$$restProps') {
-				state.analysis.uses_rest_props = true;
-			}
-
-			if (node.name === '$$slots') {
-				state.analysis.uses_slots = true;
-			}
-
-			let binding = state.scope.get(node.name);
-
-			if (binding?.kind === 'store_sub') {
-				// get the underlying store to mark it as reactive in case it's mutated
-				binding = state.scope.get(node.name.slice(1));
-			}
-
-			if (
-				binding?.kind === 'normal' &&
-				((binding.scope === state.instance_scope && binding.declaration_kind !== 'function') ||
-					binding.declaration_kind === 'import')
-			) {
-				if (binding.declaration_kind === 'import') {
-					if (
-						binding.mutated &&
-						// TODO could be more fine-grained - not every mention in the template implies a state binding
-						(state.reactive_statement || state.ast_type === 'template') &&
-						parent.type === 'MemberExpression'
-					) {
-						binding.kind = 'legacy_reactive_import';
-					}
-				} else if (
-					binding.mutated &&
-					// TODO could be more fine-grained - not every mention in the template implies a state binding
-					(state.reactive_statement || state.ast_type === 'template')
-				) {
-					binding.kind = 'state';
-				} else if (
-					state.reactive_statement &&
-					parent.type === 'AssignmentExpression' &&
-					parent.left === binding.node
-				) {
-					binding.kind = 'derived';
-				}
-			} else if (binding?.kind === 'each' && binding.mutated) {
-				// Ensure that the array is marked as reactive even when only its entries are mutated
-				let i = path.length;
-				while (i--) {
-					const ancestor = path[i];
-					if (
-						ancestor.type === 'EachBlock' &&
-						state.analysis.template.scopes.get(ancestor)?.declarations.get(node.name) === binding
-					) {
-						for (const binding of ancestor.metadata.references) {
-							if (binding.kind === 'normal') {
-								binding.kind = 'state';
-							}
-						}
-						break;
-					}
-				}
-			}
-		}
-	},
-	ExportNamedDeclaration(node, { next, state }) {
-		if (state.ast_type !== 'instance') {
-			return next();
-		}
-
-		state.analysis.needs_props = true;
-
-		if (!node.declaration) {
-			for (const specifier of node.specifiers) {
-				const binding = /** @type {Binding} */ (state.scope.get(specifier.local.name));
-				if (
-					binding !== null &&
-					(binding.kind === 'state' ||
-						binding.kind === 'frozen_state' ||
-						(binding.kind === 'normal' &&
-							(binding.declaration_kind === 'let' || binding.declaration_kind === 'var')))
-				) {
-					binding.kind = 'bindable_prop';
-					if (specifier.exported.name !== specifier.local.name) {
-						binding.prop_alias = specifier.exported.name;
-					}
-				} else {
-					state.analysis.exports.push({
-						name: specifier.local.name,
-						alias: specifier.exported.name
-					});
-				}
-			}
-			return next();
-		}
-
-		if (
-			node.declaration.type === 'FunctionDeclaration' ||
-			node.declaration.type === 'ClassDeclaration'
-		) {
-			state.analysis.exports.push({
-				name: /** @type {Identifier} */ (node.declaration.id).name,
-				alias: null
-			});
-			return next();
-		}
-
-		if (node.declaration.type === 'VariableDeclaration') {
-			if (node.declaration.kind === 'const') {
-				for (const declarator of node.declaration.declarations) {
-					for (const node of extract_identifiers(declarator.id)) {
-						state.analysis.exports.push({ name: node.name, alias: null });
-					}
-				}
-				return next();
-			}
-
-			for (const declarator of node.declaration.declarations) {
-				for (const id of extract_identifiers(declarator.id)) {
-					const binding = /** @type {Binding} */ (state.scope.get(id.name));
-					binding.kind = 'bindable_prop';
-				}
-			}
-		}
-	},
-	StyleDirective(node, { state }) {
-		// the case for node.value different from true is already covered by the Identifier visitor
-		if (node.value === true) {
-			// get the binding for node.name and change the binding to state
-			let binding = state.scope.get(node.name);
-			if (binding?.mutated && binding.kind === 'normal') {
-				binding.kind = 'state';
-			}
-		}
-	}
-};
-
-/** @type {Visitors} */
-const runes_scope_js_tweaker = {
-	VariableDeclarator(node, { state }) {
-		if (node.init?.type !== 'CallExpression') return;
-		const rune = get_rune(node.init, state.scope);
-		if (rune === null) return;
-
-		const callee = node.init.callee;
-		if (callee.type !== 'Identifier' && callee.type !== 'MemberExpression') return;
-
-		if (
-			rune !== '$state' &&
-			rune !== '$state.frozen' &&
-			rune !== '$derived' &&
-			rune !== '$derived.by'
-		)
-			return;
-
-		for (const path of extract_paths(node.id)) {
-			// @ts-ignore this fails in CI for some insane reason
-			const binding = /** @type {Binding} */ (state.scope.get(path.node.name));
-			binding.kind =
-				rune === '$state' ? 'state' : rune === '$state.frozen' ? 'frozen_state' : 'derived';
-		}
-	}
-};
-
-/** @type {Visitors} */
-const runes_scope_tweaker = {
-	CallExpression(node, { state, next }) {
-		const rune = get_rune(node, state.scope);
-
-		// `$inspect(foo)` should not trigger the `static-state-reference` warning
-		if (rune === '$inspect') {
-			next({ ...state, function_depth: state.function_depth + 1 });
-		}
-	},
-	VariableDeclarator(node, { state }) {
-		const init = node.init;
-		if (!init || init.type !== 'CallExpression') return;
-		const rune = get_rune(init, state.scope);
-		if (rune === null) return;
-
-		const callee = init.callee;
-		if (callee.type !== 'Identifier' && callee.type !== 'MemberExpression') return;
-
-		if (
-			rune !== '$state' &&
-			rune !== '$state.frozen' &&
-			rune !== '$derived' &&
-			rune !== '$derived.by' &&
-			rune !== '$props'
-		)
-			return;
-
-		for (const path of extract_paths(node.id)) {
-			// @ts-ignore this fails in CI for some insane reason
-			const binding = /** @type {Binding} */ (state.scope.get(path.node.name));
-			binding.kind =
-				rune === '$state'
-					? 'state'
-					: rune === '$state.frozen'
-						? 'frozen_state'
-						: rune === '$derived' || rune === '$derived.by'
-							? 'derived'
-							: path.is_rest
-								? 'rest_prop'
-								: 'prop';
-		}
-
-		if (rune === '$props') {
-			state.analysis.needs_props = true;
-
-			if (node.id.type === 'Identifier') {
-				const binding = /** @type {Binding} */ (state.scope.get(node.id.name));
-				binding.initial = null; // else would be $props()
-				binding.kind = 'rest_prop';
-			} else {
-				equal(node.id.type, 'ObjectPattern');
-
-				for (const property of node.id.properties) {
-					if (property.type !== 'Property') continue;
-
-					const name =
-						property.value.type === 'AssignmentPattern'
-							? /** @type {Identifier} */ (property.value.left).name
-							: /** @type {Identifier} */ (property.value).name;
-					const alias =
-						property.key.type === 'Identifier'
-							? property.key.name
-							: String(/** @type {Literal} */ (property.key).value);
-					let initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
-
-					const binding = /** @type {Binding} */ (state.scope.get(name));
-					binding.prop_alias = alias;
-
-					// rewire initial from $props() to the actual initial value, stripping $bindable() if necessary
-					if (
-						initial?.type === 'CallExpression' &&
-						initial.callee.type === 'Identifier' &&
-						initial.callee.name === '$bindable'
-					) {
-						binding.initial = /** @type {Expression | null} */ (initial.arguments[0] ?? null);
-						binding.kind = 'bindable_prop';
-					} else {
-						binding.initial = initial;
-					}
-				}
-			}
-		}
-	},
-	ExportSpecifier(node, { state }) {
-		if (state.ast_type !== 'instance') return;
-
-		state.analysis.exports.push({
-			name: node.local.name,
-			alias: node.exported.name
-		});
-
-		const binding = state.scope.get(node.local.name);
-		if (binding) binding.reassigned = true;
-	},
-	ExportNamedDeclaration(node, { next, state }) {
-		if (!node.declaration || state.ast_type !== 'instance') {
-			return next();
-		}
-
-		if (
-			node.declaration.type === 'FunctionDeclaration' ||
-			node.declaration.type === 'ClassDeclaration'
-		) {
-			state.analysis.exports.push({
-				name: /** @type {Identifier} */ (node.declaration.id).name,
-				alias: null
-			});
-			return next();
-		}
-
-		if (node.declaration.type === 'VariableDeclaration' && node.declaration.kind === 'const') {
-			for (const declarator of node.declaration.declarations) {
-				for (const node of extract_identifiers(declarator.id)) {
-					state.analysis.exports.push({ name: node.name, alias: null });
-				}
-			}
-		}
-	}
-};
-
 /**
- * @param {CallExpression} node
- * @param {Context} context
- * @returns {boolean}
- */
-function is_known_safe_call(node, context) {
-	const callee = node.callee;
-
-	// String / Number / BigInt / Boolean casting calls
-	if (callee.type === 'Identifier') {
-		const name = callee.name;
-		const binding = context.state.scope.get(name);
-		if (
-			binding === null &&
-			(name === 'BigInt' || name === 'String' || name === 'Number' || name === 'Boolean')
-		) {
-			return true;
-		}
-	}
-
-	// TODO add more cases
-
-	return false;
-}
-
-/**
- * @param {ArrowFunctionExpression | FunctionExpression | FunctionDeclaration} node
- * @param {Context} context
- */
-const function_visitor = (node, context) => {
-	// TODO retire this in favour of a more general solution based on bindings
-	node.metadata = {
-		// module context -> already hoisted
-		hoistable: context.state.ast_type === 'module' ? 'impossible' : false,
-		hoistable_params: [],
-		scope: context.state.scope
-	};
-
-	context.next({
-		...context.state,
-		function_depth: context.state.function_depth + 1
-	});
-};
-
-/**
- * A 'safe' identifier means that the `foo` in `foo.bar` or `foo()` will not
- * call functions that require component context to exist
- * @param {Expression | Super} expression
- * @param {Scope} scope
- */
-function is_safe_identifier(expression, scope) {
-	let node = expression;
-	while (node.type === 'MemberExpression') node = node.object;
-
-	if (node.type !== 'Identifier') return false;
-
-	const binding = scope.get(node.name);
-	if (!binding) return true;
-
-	if (binding.kind === 'store_sub') {
-		return is_safe_identifier({ name: node.name.slice(1), type: 'Identifier' }, scope);
-	}
-
-	return (
-		binding.declaration_kind !== 'import' &&
-		binding.kind !== 'prop' &&
-		binding.kind !== 'bindable_prop' &&
-		binding.kind !== 'rest_prop'
-	);
-}
-
-/** @type {Visitors} */
-const common_visitors = {
-	_(node, { state, next, path }) {
-		ignore_map.set(node, structuredClone(ignore_stack));
-		const parent = path.at(-1);
-		if (parent?.type === 'Fragment' && node.type !== 'Comment' && node.type !== 'Text') {
-			const idx = parent.nodes.indexOf(/** @type {any} */ (node));
-			/** @type {string[]} */
-			const ignores = [];
-			for (let i = idx - 1; i >= 0; i--) {
-				const prev = parent.nodes[i];
-				if (prev.type === 'Comment') {
-					ignores.push(
-						...extract_svelte_ignore(
-							prev.start + 4 /* '<!--'.length */,
-							prev.data,
-							state.analysis.runes
-						)
-					);
-				} else if (prev.type !== 'Text') {
-					break;
-				}
-			}
-
-			if (ignores.length > 0) {
-				push_ignore(ignores);
-				ignore_map.set(node, structuredClone(ignore_stack));
-				next();
-				pop_ignore();
-			}
-		} else {
-			const comments = /** @type {any} */ (node).leadingComments;
-			if (comments) {
-				/** @type {string[]} */
-				const ignores = [];
-				for (const comment of comments) {
-					ignores.push(
-						...extract_svelte_ignore(
-							comment.start + 2 /* '//'.length */,
-							comment.value,
-							state.analysis.runes
-						)
-					);
-				}
-				if (ignores.length > 0) {
-					push_ignore(ignores);
-					ignore_map.set(node, structuredClone(ignore_stack));
-					next();
-					pop_ignore();
-				}
-			}
-		}
-	},
-	Attribute(node, context) {
-		if (node.value === true) return;
-
-		context.next();
-
-		node.metadata.dynamic = get_attribute_chunks(node.value).some((chunk) => {
-			if (chunk.type !== 'ExpressionTag') {
-				return false;
-			}
-
-			if (
-				chunk.expression.type === 'FunctionExpression' ||
-				chunk.expression.type === 'ArrowFunctionExpression'
-			) {
-				return false;
-			}
-
-			return chunk.metadata.dynamic || chunk.metadata.contains_call_expression;
-		});
-
-		if (is_event_attribute(node)) {
-			const parent = context.path.at(-1);
-			if (parent?.type === 'RegularElement' || parent?.type === 'SvelteElement') {
-				context.state.analysis.uses_event_attributes = true;
-			}
-
-			const expression = get_attribute_expression(node);
-			const delegated_event = get_delegated_event(node.name.slice(2), expression, context);
-
-			if (delegated_event !== null) {
-				if (delegated_event.type === 'hoistable') {
-					delegated_event.function.metadata.hoistable = true;
-				}
-				node.metadata.delegated = delegated_event;
-			}
-		}
-	},
-	ClassDirective(node, context) {
-		context.next({ ...context.state, expression: node });
-	},
-	SpreadAttribute(node, context) {
-		context.next({ ...context.state, expression: node });
-	},
-	SlotElement(node, context) {
-		let name = 'default';
-		for (const attr of node.attributes) {
-			if (attr.type === 'Attribute' && attr.name === 'name' && is_text_attribute(attr)) {
-				name = attr.value[0].data;
-				break;
-			}
-		}
-		context.state.analysis.slot_names.set(name, node);
-	},
-	StyleDirective(node, context) {
-		if (node.value === true) {
-			const binding = context.state.scope.get(node.name);
-			if (binding?.kind !== 'normal') {
-				node.metadata.dynamic = true;
-			}
-		} else {
-			context.next();
-			node.metadata.dynamic = get_attribute_chunks(node.value).some(
-				(node) => node.type === 'ExpressionTag' && node.metadata.dynamic
-			);
-		}
-	},
-	ExpressionTag(node, context) {
-		context.next({ ...context.state, expression: node });
-	},
-	Identifier(node, context) {
-		const parent = /** @type {Node} */ (context.path.at(-1));
-		if (!is_reference(node, parent)) return;
-
-		if (node.name === '$$slots') {
-			context.state.analysis.uses_slots = true;
-			return;
-		}
-
-		// If we are using arguments outside of a function, then throw an error
-		if (
-			node.name === 'arguments' &&
-			context.path.every((n) => n.type !== 'FunctionDeclaration' && n.type !== 'FunctionExpression')
-		) {
-			e.invalid_arguments_usage(node);
-		}
-
-		const binding = context.state.scope.get(node.name);
-
-		// if no binding, means some global variable
-		if (binding && binding.kind !== 'normal') {
-			if (context.state.expression) {
-				context.state.expression.metadata.dynamic = true;
-			}
-
-			// TODO it would be better to just bail out when we hit the ExportSpecifier node but that's
-			// not currently possibly because of our visitor merging, which I desperately want to nuke
-			const is_export_specifier =
-				/** @type {SvelteNode} */ (context.path.at(-1)).type === 'ExportSpecifier';
-
-			if (
-				context.state.analysis.runes &&
-				node !== binding.node &&
-				context.state.function_depth === binding.scope.function_depth &&
-				// If we have $state that can be proxied or frozen and isn't re-assigned, then that means
-				// it's likely not using a primitive value and thus this warning isn't that helpful.
-				((binding.kind === 'state' &&
-					(binding.reassigned ||
-						(binding.initial?.type === 'CallExpression' &&
-							binding.initial.arguments.length === 1 &&
-							binding.initial.arguments[0].type !== 'SpreadElement' &&
-							!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
-					binding.kind === 'frozen_state' ||
-					binding.kind === 'derived') &&
-				!is_export_specifier &&
-				// We're only concerned with reads here
-				(parent.type !== 'AssignmentExpression' || parent.left !== node) &&
-				parent.type !== 'UpdateExpression'
-			) {
-				w.state_referenced_locally(node);
-			}
-		}
-	},
-	CallExpression(node, context) {
-		const { expression, render_tag } = context.state;
-		if (
-			(expression?.type === 'ExpressionTag' ||
-				expression?.type === 'SpreadAttribute' ||
-				expression?.type === 'OnDirective') &&
-			!is_known_safe_call(node, context)
-		) {
-			expression.metadata.contains_call_expression = true;
-		}
-
-		if (render_tag) {
-			// Find out which of the render tag arguments contains this call expression
-			const arg_idx = unwrap_optional(render_tag.expression).arguments.findIndex(
-				(arg) => arg === node || context.path.includes(arg)
-			);
-
-			// -1 if this is the call expression of the render tag itself
-			if (arg_idx !== -1) {
-				render_tag.metadata.args_with_call_expression.add(arg_idx);
-			}
-		}
-
-		const callee = node.callee;
-		const rune = get_rune(node, context.state.scope);
-
-		if (callee.type === 'Identifier') {
-			const binding = context.state.scope.get(callee.name);
-
-			if (binding !== null) {
-				binding.is_called = true;
-			}
-
-			if (rune === '$derived') {
-				// special case — `$derived(foo)` is treated as `$derived(() => foo)`
-				// for the purposes of identifying static state references
-				context.next({
-					...context.state,
-					function_depth: context.state.function_depth + 1
-				});
-
-				return;
-			}
-		}
-
-		if (rune === '$effect' || rune === '$effect.pre') {
-			// `$effect` needs context because Svelte needs to know whether it should re-run
-			// effects that invalidate themselves, and that's determined by whether we're in runes mode
-			context.state.analysis.needs_context = true;
-		} else if (rune === null) {
-			if (!is_safe_identifier(callee, context.state.scope)) {
-				context.state.analysis.needs_context = true;
-			}
-		}
-
-		context.next();
-	},
-	MemberExpression(node, context) {
-		if (context.state.expression) {
-			context.state.expression.metadata.dynamic = true;
-		}
-
-		if (!is_safe_identifier(node, context.state.scope)) {
-			context.state.analysis.needs_context = true;
-		}
-
-		context.next();
-	},
-	OnDirective(node, { state, path, next }) {
-		const parent = path.at(-1);
-		if (parent?.type === 'SvelteElement' || parent?.type === 'RegularElement') {
-			state.analysis.event_directive_node ??= node;
-		}
-		next({ ...state, expression: node });
-	},
-	BindDirective(node, context) {
-		let i = context.path.length;
-		while (i--) {
-			const parent = context.path[i];
-			if (
-				parent.type === 'Component' ||
-				parent.type === 'SvelteComponent' ||
-				parent.type === 'SvelteSelf'
-			) {
-				if (node.name !== 'this') {
-					context.state.analysis.uses_component_bindings = true;
-				}
-				break;
-			} else if (is_element_node(parent)) {
-				break;
-			}
-		}
-
-		if (node.name !== 'group') return;
-
-		// Traverse the path upwards and find all EachBlocks who are (indirectly) contributing to bind:group,
-		// i.e. one of their declarations is referenced in the binding. This allows group bindings to work
-		// correctly when referencing a variable declared in an EachBlock by using the index of the each block
-		// entries as keys.
-		i = context.path.length;
-		const each_blocks = [];
-		const [keypath, expression_ids] = extract_all_identifiers_from_expression(node.expression);
-		let ids = expression_ids;
-		while (i--) {
-			const parent = context.path[i];
-			if (parent.type === 'EachBlock') {
-				const references = ids.filter((id) => parent.metadata.declarations.has(id.name));
-				if (references.length > 0) {
-					parent.metadata.contains_group_binding = true;
-					for (const binding of parent.metadata.references) {
-						binding.mutated = true;
-					}
-					each_blocks.push(parent);
-					ids = ids.filter((id) => !references.includes(id));
-					ids.push(...extract_all_identifiers_from_expression(parent.expression)[1]);
-				}
-			}
-		}
-
-		// The identifiers that make up the binding expression form they key for the binding group.
-		// If the same identifiers in the same order are used in another bind:group, they will be in the same group.
-		// (there's an edge case where `bind:group={a[i]}` will be in a different group than `bind:group={a[j]}` even when i == j,
-		//  but this is a limitation of the current static analysis we do; it also never worked in Svelte 4)
-		const bindings = expression_ids.map((id) => context.state.scope.get(id.name));
-		let group_name;
-		outer: for (const [[key, b], group] of context.state.analysis.binding_groups) {
-			if (b.length !== bindings.length || key !== keypath) continue;
-			for (let i = 0; i < bindings.length; i++) {
-				if (bindings[i] !== b[i]) continue outer;
-			}
-			group_name = group;
-		}
-
-		if (!group_name) {
-			group_name = context.state.scope.root.unique('binding_group');
-			context.state.analysis.binding_groups.set([keypath, bindings], group_name);
-		}
-
-		node.metadata = {
-			binding_group_name: group_name,
-			parent_each_blocks: each_blocks
-		};
-	},
-	ArrowFunctionExpression: function_visitor,
-	FunctionExpression: function_visitor,
-	FunctionDeclaration: function_visitor,
-	RegularElement(node, context) {
-		if (context.state.options.namespace !== 'foreign') {
-			if (SVGElements.includes(node.name)) node.metadata.svg = true;
-			else if (MathMLElements.includes(node.name)) node.metadata.mathml = true;
-		}
-
-		determine_element_spread(node);
-
-		// Special case: Move the children of <textarea> into a value attribute if they are dynamic
-		if (
-			context.state.options.namespace !== 'foreign' &&
-			node.name === 'textarea' &&
-			node.fragment.nodes.length > 0
-		) {
-			if (node.fragment.nodes.length > 1 || node.fragment.nodes[0].type !== 'Text') {
-				const first = node.fragment.nodes[0];
-				if (first.type === 'Text') {
-					// The leading newline character needs to be stripped because of a qirk:
-					// It is ignored by browsers if the tag and its contents are set through
-					// innerHTML, but we're now setting it through the value property at which
-					// point it is _not_ ignored, so we need to strip it ourselves.
-					// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
-					// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
-					first.data = first.data.replace(regex_starts_with_newline, '');
-					first.raw = first.raw.replace(regex_starts_with_newline, '');
-				}
-
-				node.attributes.push(
-					create_attribute(
-						'value',
-						/** @type {Text} */ (node.fragment.nodes.at(0)).start,
-						/** @type {Text} */ (node.fragment.nodes.at(-1)).end,
-						// @ts-ignore
-						node.fragment.nodes
-					)
-				);
-
-				node.fragment.nodes = [];
-			}
-		}
-
-		// Special case: single expression tag child of option element -> add "fake" attribute
-		// to ensure that value types are the same (else for example numbers would be strings)
-		if (
-			context.state.options.namespace !== 'foreign' &&
-			node.name === 'option' &&
-			node.fragment.nodes?.length === 1 &&
-			node.fragment.nodes[0].type === 'ExpressionTag' &&
-			!node.attributes.some(
-				(attribute) => attribute.type === 'Attribute' && attribute.name === 'value'
-			)
-		) {
-			const child = node.fragment.nodes[0];
-			node.attributes.push(create_attribute('value', child.start, child.end, [child]));
-		}
-
-		context.state.analysis.elements.push(node);
-	},
-	SvelteElement(node, context) {
-		context.state.analysis.elements.push(node);
-
-		for (const attribute of node.attributes) {
-			if (attribute.type === 'Attribute') {
-				if (attribute.name === 'xmlns' && is_text_attribute(attribute)) {
-					node.metadata.svg = attribute.value[0].data === namespace_svg;
-					node.metadata.mathml = attribute.value[0].data === namespace_mathml;
-					return;
-				}
-			}
-		}
-
-		for (let i = context.path.length - 1; i >= 0; i--) {
-			const ancestor = context.path[i];
-			if (
-				ancestor.type === 'Component' ||
-				ancestor.type === 'SvelteComponent' ||
-				ancestor.type === 'SvelteFragment' ||
-				ancestor.type === 'SnippetBlock'
-			) {
-				// Inside a slot or a snippet -> this resets the namespace, so assume the component namespace
-				node.metadata.svg = context.state.options.namespace === 'svg';
-				node.metadata.mathml = context.state.options.namespace === 'mathml';
-				return;
-			}
-			if (ancestor.type === 'SvelteElement' || ancestor.type === 'RegularElement') {
-				node.metadata.svg =
-					ancestor.type === 'RegularElement' && ancestor.name === 'foreignObject'
-						? false
-						: ancestor.metadata.svg;
-				node.metadata.mathml =
-					ancestor.type === 'RegularElement' && ancestor.name === 'foreignObject'
-						? false
-						: ancestor.metadata.mathml;
-				return;
-			}
-		}
-	},
-	Component(node, context) {
-		const binding = context.state.scope.get(
-			node.name.includes('.') ? node.name.slice(0, node.name.indexOf('.')) : node.name
-		);
-
-		node.metadata.dynamic = binding !== null && binding.kind !== 'normal';
-	},
-	RenderTag(node, context) {
-		context.next({ ...context.state, render_tag: node });
-	}
-};
-
-/**
- * @param {RegularElement} node
- */
-function determine_element_spread(node) {
-	let has_spread = false;
-	for (const attribute of node.attributes) {
-		if (!has_spread && attribute.type === 'SpreadAttribute') {
-			has_spread = true;
-		}
-	}
-	node.metadata.has_spread = has_spread;
-
-	return node;
-}
-
-/**
- * @param {string} event_name
- */
-function get_attribute_event_name(event_name) {
-	if (is_capture_event(event_name, 'include-on')) {
-		event_name = event_name.slice(0, -7);
-	}
-	event_name = event_name.slice(2);
-	return event_name;
-}
-
-/**
- * @param {Map<LabeledStatement, ReactiveStatement>} unsorted_reactive_declarations
+ * @param {Map<import('estree').LabeledStatement, ReactiveStatement>} unsorted_reactive_declarations
  */
 function order_reactive_statements(unsorted_reactive_declarations) {
-	/** @typedef {[LabeledStatement, ReactiveStatement]} Tuple */
+	/** @typedef {[import('estree').LabeledStatement, ReactiveStatement]} Tuple */
 
 	/** @type {Map<string, Array<Tuple>>} */
 	const lookup = new Map();
@@ -1613,12 +778,12 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	}
 
 	// We use a map and take advantage of the fact that the spec says insertion order is preserved when iterating
-	/** @type {Map<LabeledStatement, ReactiveStatement>} */
+	/** @type {Map<import('estree').LabeledStatement, ReactiveStatement>} */
 	const reactive_declarations = new Map();
 
 	/**
 	 *
-	 * @param {LabeledStatement} node
+	 * @param {import('estree').LabeledStatement} node
 	 * @param {ReactiveStatement} declaration
 	 * @returns
 	 */

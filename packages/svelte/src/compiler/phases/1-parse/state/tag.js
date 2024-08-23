@@ -7,6 +7,7 @@ import * as e from '../../../errors.js';
 import { create_fragment } from '../utils/create.js';
 import { walk } from 'zimmerframe';
 import { parse_expression_at } from '../acorn.js';
+import { create_expression_metadata } from '../../nodes.js';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
@@ -39,8 +40,7 @@ export default function tag(parser) {
 		end: parser.index,
 		expression,
 		metadata: {
-			contains_call_expression: false,
-			dynamic: false
+			expression: create_expression_metadata()
 		}
 	});
 }
