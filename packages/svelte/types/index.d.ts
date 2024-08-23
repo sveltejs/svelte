@@ -2206,6 +2206,7 @@ declare module 'svelte/reactivity' {
 		constructor(value?: Iterable<T> | null | undefined);
 		
 		add(value: T): this;
+		toJSON(): Set<T>;
 		#private;
 	}
 	export class SvelteMap<K, V> extends Map<K, V> {
@@ -2213,6 +2214,7 @@ declare module 'svelte/reactivity' {
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
 		
 		set(key: K, value: V): this;
+		toJSON(): Map<K, V>;
 		#private;
 	}
 	export class SvelteURL extends URL {
