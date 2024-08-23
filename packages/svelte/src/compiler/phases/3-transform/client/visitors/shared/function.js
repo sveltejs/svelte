@@ -20,6 +20,9 @@ export const visit_function = (node, context) => {
 		in_constructor = state.in_constructor =
 			parent.type === 'MethodDefinition' && parent.kind === 'constructor';
 
+		// We might not use runes in the immediate class, but we do in the extended class
+		// so we need to inject the enter/leave logic in this constructor if it does a super()
+		// call
 		if (in_constructor) {
 			walk(node.body, null, {
 				// @ts-expect-error
@@ -52,7 +55,7 @@ export const visit_function = (node, context) => {
 		const enter = b.var('$$', b.call('$.enter_constructor'));
 		const leave = b.stmt(b.call('$.leave_constructor', b.id('$$')));
 
-		body.body.splice(has_super_call ? 1 : 0, 0, enter);
+		body.body.splice(0, 0, enter);
 		body.body.push(leave);
 
 		return {
