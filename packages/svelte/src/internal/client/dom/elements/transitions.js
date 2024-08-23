@@ -405,6 +405,7 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 			animation.finished
 				.then(() => {
 					on_finish?.();
+					on_finish = undefined;
 
 					if (t2 === 1) {
 						animation.cancel();
@@ -433,7 +434,8 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 		task = loop((now) => {
 			if (now >= end) {
 				tick(t2, 1 - t2);
-				if (!css) on_finish?.();
+				on_finish?.();
+				on_finish = undefined;
 				return false;
 			}
 
