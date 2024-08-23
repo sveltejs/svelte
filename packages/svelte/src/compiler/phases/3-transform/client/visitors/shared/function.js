@@ -2,6 +2,7 @@
 /** @import { ComponentContext } from '../../types' */
 import { build_hoisted_params } from '../../utils.js';
 import * as b from '../../../../../utils/builders.js';
+import { walk } from 'zimmerframe';
 
 /**
  * @param {ArrowFunctionExpression | FunctionExpression} node
@@ -12,11 +13,23 @@ export const visit_function = (node, context) => {
 
 	let state = { ...context.state, in_constructor: false };
 	let in_constructor = false;
+	let has_super_call = false;
 
 	if (node.type === 'FunctionExpression') {
 		const parent = /** @type {Node} */ (context.path.at(-1));
 		in_constructor = state.in_constructor =
 			parent.type === 'MethodDefinition' && parent.kind === 'constructor';
+
+		if (in_constructor) {
+			walk(node.body, null, {
+				// @ts-expect-error
+				CallExpression(node) {
+					if (node.callee.type === 'Super') {
+						has_super_call = true;
+					}
+				}
+			});
+		}
 	}
 
 	if (metadata?.hoisted === true) {
@@ -29,13 +42,13 @@ export const visit_function = (node, context) => {
 		});
 	}
 
-	if (in_constructor && (state.private_state.size > 0 || state.public_state.size > 0)) {
+	if (
+		state.analysis.runes &&
+		in_constructor &&
+		(has_super_call || state.private_state.size > 0 || state.public_state.size > 0)
+	) {
 		const params = /** @type {Pattern[]} */ (node.params.map((p) => context.visit(p, state)));
 		const body = /** @type {BlockStatement} */ (context.visit(node.body, state));
-		const has_super_call =
-			body.body[0]?.type === 'ExpressionStatement' &&
-			body.body[0].expression.type === 'CallExpression' &&
-			body.body[0].expression.callee.type === 'Super';
 		const enter = b.var('$$', b.call('$.enter_constructor'));
 		const leave = b.stmt(b.call('$.leave_constructor', b.id('$$')));
 

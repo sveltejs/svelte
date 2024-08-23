@@ -28,7 +28,13 @@ import {
 import * as e from '../errors.js';
 
 let inspect_effects = new Set();
-/** @type {Reaction | null} */
+/**
+ * When we enter a class constructor, we set `constructor_reaction` and then reset it when we leave the
+ * constructor. When setting source signals, we avoid firing the mutations inside derived error if the derived
+ * reaction matches `constructor_reaction`.
+ *
+ * @type {Reaction | null}
+ * */
 let constructor_reaction = null;
 
 /**
