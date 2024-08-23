@@ -173,7 +173,7 @@ export function VariableDeclaration(node, context) {
 					let id;
 					let rhs = value;
 
-					if (init.arguments[0].type === 'Identifier') {
+					if (rune === '$derived' && init.arguments[0].type === 'Identifier') {
 						id = init.arguments[0];
 					} else {
 						id = b.id(context.state.scope.generate('$$d'));
