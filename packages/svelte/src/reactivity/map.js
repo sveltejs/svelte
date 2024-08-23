@@ -4,8 +4,6 @@ import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
 
-var inited = false;
-
 /**
  * @template K
  * @template V
