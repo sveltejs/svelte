@@ -32,15 +32,6 @@ export class SvelteMap extends Map {
 			}
 			this.#size.v = super.size;
 		}
-
-		if (DEV && !inited) {
-			inited = true;
-			var proto = SvelteMap.prototype;
-			// @ts-ignore
-			proto.toJSON = function () {
-				return new Map(this);
-			};
-		}
 	}
 
 	/** @param {K} key */
