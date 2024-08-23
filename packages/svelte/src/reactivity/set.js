@@ -155,4 +155,8 @@ export class SvelteSet extends Set {
 	get size() {
 		return get(this.#size);
 	}
+
+	toJSON() {
+		return new Set(this);
+	}
 }

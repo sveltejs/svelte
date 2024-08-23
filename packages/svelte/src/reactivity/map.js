@@ -177,4 +177,8 @@ export class SvelteMap extends Map {
 		get(this.#size);
 		return super.size;
 	}
+
+	toJSON() {
+		return new Map(this);
+	}
 }
