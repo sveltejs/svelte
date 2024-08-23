@@ -261,6 +261,32 @@ This is a footgun. In runes mode, if you want to concatenate stuff you must wrap
 
 Note that Svelte 5 will also warn if you have a single expression wrapped in quotes, like `answer="{42}"` — in Svelte 6, that will cause the value to be converted to a string, rather than passed as a number.
 
+### HTML structure is stricter
+
+In Svelte 4, you were allowed to write HTML code that would be repaired by the browser when server side rendering it. For example you could write this...
+
+```svelte
+<table>
+	<tr>
+		<td>hi</td>
+	</tr>
+</table>
+```
+
+... and the browser would auto-insert a `<tbody>` element:
+
+```svelte
+<table>
+	<tbody>
+		<tr>
+			<td>hi</td>
+		</tr>
+	</tbody>
+</table>
+```
+
+Svelte 5 is more strict about the HTML structure and will throw a compiler error in cases where the browser would repair the DOM.
+
 ## Other breaking changes
 
 ### Stricter `@const` assignment validation
