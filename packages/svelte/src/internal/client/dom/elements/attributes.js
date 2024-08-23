@@ -320,6 +320,8 @@ export function set_attributes(
  */
 export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 	if (node.tagName.includes('-')) {
+		var setters = get_setters(node);
+
 		for (var key in prev) {
 			if (!(key in next)) {
 				next[key] = null;
@@ -331,7 +333,7 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 		}
 
 		for (key in next) {
-			if (get_setters(node).includes(key)) {
+			if (setters.includes(key)) {
 				// @ts-expect-error
 				node[key] = next[key];
 			} else {
