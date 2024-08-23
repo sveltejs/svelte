@@ -1,5 +1,13 @@
 # svelte
 
+## 4.2.19
+
+### Patch Changes
+
+- fix: ensure typings for `<svelte:options>` are picked up ([#12902](https://github.com/sveltejs/svelte/pull/12902))
+
+- fix: escape `<` in attribute strings ([#12989](https://github.com/sveltejs/svelte/pull/12989))
+
 ## 4.2.18
 
 ### Patch Changes
