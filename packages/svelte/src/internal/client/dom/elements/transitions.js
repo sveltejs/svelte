@@ -423,6 +423,7 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 				});
 		});
 	}
+
 	if (tick) {
 		// Timer
 		if (t1 === 0) {
@@ -432,7 +433,7 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 		task = loop((now) => {
 			if (now >= end) {
 				tick(t2, 1 - t2);
-				on_finish?.(); // TODO is this supposed to not be called when tick == undefined?
+				if (!css) on_finish?.();
 				return false;
 			}
 
