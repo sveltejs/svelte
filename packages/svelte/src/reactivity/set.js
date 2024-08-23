@@ -63,6 +63,12 @@ export class SvelteSet extends Set {
 				return new SvelteSet(set);
 			};
 		}
+
+		if (DEV) {
+			proto.toJSON = function() {
+				return new Set(this);
+			}
+		}
 	}
 
 	/** @param {T} value */

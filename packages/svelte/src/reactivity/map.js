@@ -4,6 +4,8 @@ import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
 
+var inited = false;
+
 /**
  * @template K
  * @template V
@@ -29,6 +31,15 @@ export class SvelteMap extends Map {
 				super.set(key, v);
 			}
 			this.#size.v = super.size;
+		}
+
+		if (DEV && !inited) {
+			inited = true;
+			var proto = SvelteMap.prototype;
+			// @ts-ignore
+			proto.toJSON = function() {
+				return new Map(this);
+			}
 		}
 	}
 
@@ -176,9 +187,5 @@ export class SvelteMap extends Map {
 	get size() {
 		get(this.#size);
 		return super.size;
-	}
-
-	toJSON() {
-		return new Map(this);
 	}
 }
