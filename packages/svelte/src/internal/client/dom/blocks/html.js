@@ -46,15 +46,20 @@ export function html(node, get_value, svg, mathml, skip_warning) {
 
 	var value = '';
 
-	/** @type {Effect | null} */
+	/** @type {Effect | undefined} */
 	var effect;
 
 	block(() => {
-		if (value === (value = get_value())) return;
+		if (value === (value = get_value())) {
+			if (hydrating) {
+				hydrate_next();
+			}
+			return;
+		}
 
-		if (effect) {
+		if (effect !== undefined) {
 			destroy_effect(effect);
-			effect = null;
+			effect = undefined;
 		}
 
 		if (value === '') return;
