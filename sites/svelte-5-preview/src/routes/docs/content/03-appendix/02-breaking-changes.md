@@ -248,8 +248,9 @@ In the very rare cases that you need to prevent these event defaults, you should
 
 In Svelte 4, complex attribute values needn't be quoted:
 
+<!-- prettier-ignore -->
 ```svelte
-<Component prop="this{is}valid" />
+<Component prop=this{is}valid />
 ```
 
 This is a footgun. In runes mode, if you want to concatenate stuff you must wrap the value in quotes:
