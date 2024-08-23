@@ -9,10 +9,7 @@
 				"start": 0,
 				"end": 31,
 				"data": " svelte-ignore foo, bar ",
-				"ignores": [
-					"foo",
-					"bar"
-				]
+				"ignores": ["foo", "bar"]
 			}
 		]
 	}
