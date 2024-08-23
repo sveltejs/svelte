@@ -1,6 +1,6 @@
 import { string_literal } from '../../../utils/stringify.js';
 import { x } from 'code-red';
-import { regex_double_quotes } from '../../../../utils/patterns.js';
+import { escape } from '../../../../../shared/utils/escape.js';
 
 /**
  * @param {import('../../../nodes/Attribute.js').default} attribute
@@ -37,9 +37,7 @@ export function get_attribute_value(attribute) {
 	return attribute.chunks
 		.map((chunk) => {
 			return chunk.type === 'Text'
-				? /** @type {import('estree').Expression} */ (
-						string_literal(chunk.data.replace(regex_double_quotes, '&quot;'))
-				  )
+				? /** @type {import('estree').Expression} */ (string_literal(escape(chunk.data, true)))
 				: x`@escape(${chunk.node}, ${is_textarea_value ? 'false' : 'true'})`;
 		})
 		.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);

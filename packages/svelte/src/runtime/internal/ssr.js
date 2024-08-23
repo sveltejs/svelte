@@ -2,7 +2,9 @@ import { set_current_component, current_component } from './lifecycle.js';
 import { run_all, blank_object } from './utils.js';
 import { boolean_attributes } from '../../shared/boolean_attributes.js';
 import { ensure_array_like } from './each.js';
+import { escape } from '../../shared/utils/escape.js';
 export { is_void } from '../../shared/utils/names.js';
+export { escape };
 
 export const invalid_attribute_name_character =
 	/[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
@@ -65,30 +67,6 @@ export function merge_ssr_styles(style_attribute, style_directive) {
 		}
 	}
 	return style_object;
-}
-
-const ATTR_REGEX = /[&"]/g;
-const CONTENT_REGEX = /[&<]/g;
-
-/**
- * Note: this method is performance sensitive and has been optimized
- * https://github.com/sveltejs/svelte/pull/5701
- * @param {unknown} value
- * @returns {string}
- */
-export function escape(value, is_attr = false) {
-	const str = String(value);
-	const pattern = is_attr ? ATTR_REGEX : CONTENT_REGEX;
-	pattern.lastIndex = 0;
-	let escaped = '';
-	let last = 0;
-	while (pattern.test(str)) {
-		const i = pattern.lastIndex - 1;
-		const ch = str[i];
-		escaped += str.substring(last, i) + (ch === '&' ? '&amp;' : ch === '"' ? '&quot;' : '&lt;');
-		last = i + 1;
-	}
-	return escaped + str.substring(last);
 }
 
 export function escape_attribute_value(value) {
