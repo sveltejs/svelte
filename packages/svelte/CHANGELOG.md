@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.235
+
+### Patch Changes
+
+- chore: update client check for smaller bundle size ([#12975](https://github.com/sveltejs/svelte/pull/12975))
+
+- fix: correctly hydrate empty raw blocks ([#12979](https://github.com/sveltejs/svelte/pull/12979))
+
 ## 5.0.0-next.234
 
 ### Patch Changes
