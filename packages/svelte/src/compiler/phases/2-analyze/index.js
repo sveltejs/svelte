@@ -243,7 +243,7 @@ export function analyze_module(ast, options) {
 
 	return {
 		module: { ast, scope, scopes },
-		name: options.filename || 'module',
+		name: options.filename,
 		accessors: false,
 		runes: true,
 		immutable: true
@@ -349,7 +349,7 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
-	const component_name = get_component_name(options.filename ?? 'Component');
+	const component_name = get_component_name(options.filename);
 
 	const runes = options.runes ?? Array.from(module.scope.references.keys()).some(is_rune);
 
@@ -390,7 +390,7 @@ export function analyze_component(root, source, options) {
 			hash: root.css
 				? options.cssHash({
 						css: root.css.content.styles,
-						filename: options.filename ?? '<unknown>',
+						filename: options.filename,
 						name: component_name,
 						hash
 					})

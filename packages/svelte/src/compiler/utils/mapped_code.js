@@ -393,7 +393,7 @@ export function parse_attached_sourcemap(processed, tag_name) {
  */
 export function merge_with_preprocessor_map(result, options, source_name) {
 	if (options.sourcemap) {
-		const file_basename = get_basename(options.filename || 'input.svelte');
+		const file_basename = get_basename(options.filename);
 		// The preprocessor map is expected to contain `sources: [basename_of_filename]`, but our own
 		// map may contain a different file name. Patch our map beforehand to align sources so merging
 		// with the preprocessor map works correctly.
@@ -442,11 +442,10 @@ export function get_basename(filename) {
 }
 
 /**
- * @param {string | undefined} filename
+ * @param {string} filename
  * @param {string | undefined} output_filename
  * @param {string} fallback
  */
 export function get_source_name(filename, output_filename, fallback) {
-	if (!filename) return fallback;
 	return output_filename ? get_relative_path(output_filename, filename) : get_basename(filename);
 }

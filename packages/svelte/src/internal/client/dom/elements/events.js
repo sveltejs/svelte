@@ -310,11 +310,7 @@ export function apply(
 		handler.apply(element, args);
 	} else if (has_side_effects || handler != null) {
 		const filename = component?.[FILENAME];
-		const location = filename
-			? loc
-				? ` at ${filename}:${loc[0]}:${loc[1]}`
-				: ` in ${filename}`
-			: '';
+		const location = loc ? ` at ${filename}:${loc[0]}:${loc[1]}` : ` in ${filename}`;
 
 		const event_name = args[0].type;
 		const description = `\`${event_name}\` handler${location}`;

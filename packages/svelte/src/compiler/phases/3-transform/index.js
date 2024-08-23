@@ -80,7 +80,7 @@ export function transform_module(analysis, source, options) {
 			? server_module(analysis, options)
 			: client_module(analysis, options);
 
-	const basename = (options.filename ?? 'Module').split(/[/\\]/).at(-1);
+	const basename = options.filename.split(/[/\\]/).at(-1);
 	if (program.body.length > 0) {
 		program.body[0].leadingComments = [
 			{

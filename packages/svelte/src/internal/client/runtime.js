@@ -233,10 +233,8 @@ function handle_error(error, effect, component_context) {
 		/** @type {string} */
 		var filename = current_context.function?.[FILENAME];
 
-		if (filename) {
-			const file = filename.split('/').pop();
-			component_stack.push(file);
-		}
+		const file = filename.split('/').pop();
+		component_stack.push(file);
 
 		current_context = current_context.p;
 	}
