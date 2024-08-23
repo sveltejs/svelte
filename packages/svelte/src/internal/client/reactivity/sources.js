@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Source, Value, Reaction } from '#client' */
+/** @import { Derived, Effect, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	current_component_context,
@@ -26,16 +26,9 @@ import {
 	MAYBE_DIRTY
 } from '../constants.js';
 import * as e from '../errors.js';
+import { derived_sources, set_derived_sources } from './deriveds.js';
 
 let inspect_effects = new Set();
-/**
- * When we enter a class constructor, we set `constructor_reaction` and then reset it when we leave the
- * constructor. When setting source signals, we avoid firing the mutations inside derived error if the derived
- * reaction matches `constructor_reaction`.
- *
- * @type {Reaction | null}
- * */
-let constructor_reaction = null;
 
 /**
  * @template V
@@ -44,13 +37,21 @@ let constructor_reaction = null;
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function source(v) {
-	return {
+	var source = {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
 		v,
 		reactions: null,
 		equals,
 		version: 0
 	};
+	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
+		if (derived_sources === null) {
+			set_derived_sources([source]);
+		} else {
+			derived_sources.push(source);
+		}
+	}
+	return source;
 }
 
 /**
@@ -94,9 +95,11 @@ export function mutate(source, value) {
 export function set(source, value) {
 	if (
 		current_reaction !== null &&
-		current_reaction !== constructor_reaction &&
 		is_runes() &&
-		(current_reaction.f & DERIVED) !== 0
+		(current_reaction.f & DERIVED) !== 0 &&
+		// If the source was created locally within the current derived, then
+		// we allow the mutation.
+		(derived_sources === null || !derived_sources.includes(source))
 	) {
 		e.state_unsafe_mutation();
 	}
@@ -181,17 +184,4 @@ function mark_reactions(signal, status) {
 			}
 		}
 	}
-}
-
-export function enter_constructor() {
-	const prev = constructor_reaction;
-	constructor_reaction = current_reaction;
-	return prev;
-}
-
-/**
- * @param {Reaction | null} reaction
- */
-export function leave_constructor(reaction) {
-	constructor_reaction = reaction;
 }

@@ -1,4 +1,4 @@
-/** @import { Derived } from '#client' */
+/** @import { Derived, Source } from '#client' */
 import { DEV } from 'esm-env';
 import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
 import {
@@ -13,6 +13,20 @@ import {
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
+
+/**
+ * When sources are created within a derived, we record them so that we can safely allow
+ * local mutations to these sources without the side-effect error being invoked unnecessarily.
+ * @type {null | Source[]}
+ */
+export let derived_sources = null;
+
+/**
+ * @param {Source[] | null} sources
+ */
+export function set_derived_sources(sources) {
+	derived_sources = sources;
+}
 
 /**
  * @template V
@@ -108,7 +122,13 @@ export function update_derived(derived) {
 		}
 	} else {
 		destroy_derived_children(derived);
-		value = update_reaction(derived);
+		const prev_derived_sources = derived_sources;
+		derived_sources = null;
+		try {
+			value = update_reaction(derived);
+		} finally {
+			derived_sources = prev_derived_sources;
+		}
 	}
 
 	var status =
