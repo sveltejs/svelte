@@ -9,6 +9,7 @@ import { hash } from '../../../../utils.js';
 import { DEV } from 'esm-env';
 import { dev_current_component_function } from '../../runtime.js';
 import { get_first_child, get_next_sibling } from '../operations.js';
+import { print_location } from '../../dev/elements.js';
 
 /**
  * @param {Element} element
@@ -20,11 +21,11 @@ function check_hash(element, server_hash, value) {
 
 	let location;
 
-	// @ts-expect-error
-	const loc = element.__svelte_meta?.loc;
+	const loc = print_location(element);
 	if (loc) {
-		location = `near ${loc.file}:${loc.line}:${loc.column}`;
+		location = `near ${loc}`;
 	} else if (dev_current_component_function?.[FILENAME]) {
+		// TODO can this happen?
 		location = `in ${dev_current_component_function[FILENAME]}`;
 	}
 

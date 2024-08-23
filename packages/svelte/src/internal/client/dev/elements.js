@@ -58,3 +58,15 @@ function assign_locations(node, filename, locations) {
 		node = node.nextSibling;
 	}
 }
+
+/**
+ * @param {Element} element
+ */
+export function print_location(element) {
+	// @ts-expect-error
+	const loc = element.__svelte_meta.loc;
+	if (!loc) return;
+
+	// add a zero-width space after `/` characters to prevent Chrome devtools printing it as a link
+	return `${loc.file.replaceAll('/', '/' + String.fromCharCode(8203))}:${loc.line}:${loc.column}`;
+}

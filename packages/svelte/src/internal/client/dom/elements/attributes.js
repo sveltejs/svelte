@@ -8,6 +8,7 @@ import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '../../constants.js';
 import { queue_idle_task, queue_micro_task } from '../task.js';
 import { is_capture_event, is_delegated, normalize_attribute } from '../../../../utils.js';
+import { print_location } from '../../dev/elements.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -131,7 +132,7 @@ export function set_xlink_attribute(dom, attribute, value) {
  */
 export function warn_if_attribute(element, name) {
 	if (!get_setters(element).includes(name)) {
-		w.custom_element_invalid_property(element.localName, name); // TODO variant with location
+		w.custom_element_invalid_property(element.localName, name, print_location(element));
 	}
 }
 
@@ -145,7 +146,7 @@ export function warn_if_property(element, name) {
 	);
 
 	if (get_setters(element).includes(name) && !attributes.includes(name)) {
-		w.custom_element_invalid_attribute(element.localName, name); // TODO variant with location
+		w.custom_element_invalid_attribute(element.localName, name, print_location(element));
 	}
 }
 
