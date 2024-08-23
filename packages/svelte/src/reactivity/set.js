@@ -65,9 +65,9 @@ export class SvelteSet extends Set {
 		}
 
 		if (DEV) {
-			proto.toJSON = function() {
+			proto.toJSON = function () {
 				return new Set(this);
-			}
+			};
 		}
 	}
 

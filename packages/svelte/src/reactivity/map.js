@@ -37,9 +37,9 @@ export class SvelteMap extends Map {
 			inited = true;
 			var proto = SvelteMap.prototype;
 			// @ts-ignore
-			proto.toJSON = function() {
+			proto.toJSON = function () {
 				return new Map(this);
-			}
+			};
 		}
 	}
 
