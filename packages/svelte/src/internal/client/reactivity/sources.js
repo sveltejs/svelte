@@ -34,28 +34,17 @@ let inspect_effects = new Set();
 /**
  * @template V
  * @param {V} v
- * @param {Reaction | null} [owner]
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function source(v, owner = current_reaction) {
-	var source = {
+export function source(v) {
+	return {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
 		v,
 		reactions: null,
 		equals,
 		version: 0
 	};
-
-	if (owner !== null && (owner.f & DERIVED) !== 0) {
-		if (derived_sources === null) {
-			set_derived_sources([source]);
-		} else {
-			derived_sources.push(source);
-		}
-	}
-
-	return source;
 }
 
 /**
@@ -64,7 +53,17 @@ export function source(v, owner = current_reaction) {
  * @returns {Source<V>}
  */
 export function state(v) {
-	return source(v);
+	var s = source(v);
+
+	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
+		if (derived_sources === null) {
+			set_derived_sources([s]);
+		} else {
+			derived_sources.push(s);
+		}
+	}
+
+	return s;
 }
 
 /**

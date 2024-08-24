@@ -126,7 +126,7 @@ export function VariableDeclaration(node, context) {
 						value = b.call('$.proxy', value);
 					}
 					if (is_state_source(binding, context.state.analysis)) {
-						value = b.call('$.source', value);
+						value = b.call('$.state', value);
 					}
 					return value;
 				};

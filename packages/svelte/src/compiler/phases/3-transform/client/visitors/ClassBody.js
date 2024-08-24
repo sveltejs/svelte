@@ -113,17 +113,17 @@ export function ClassBody(node, context) {
 					value =
 						field.kind === 'state'
 							? b.call(
-									'$.source',
+									'$.state',
 									should_proxy(init, context.state.scope) ? b.call('$.proxy', init) : init
 								)
 							: field.kind === 'raw_state'
-								? b.call('$.source', init)
+								? b.call('$.state', init)
 								: field.kind === 'derived_by'
 									? b.call('$.derived', init)
 									: b.call('$.derived', b.thunk(init));
 				} else {
 					// if no arguments, we know it's state as `$derived()` is a compile error
-					value = b.call('$.source');
+					value = b.call('$.state');
 				}
 
 				if (is_private) {

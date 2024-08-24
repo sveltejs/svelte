@@ -13,7 +13,7 @@ export default function Bind_component_snippet($$anchor) {
 		$.append($$anchor, text);
 	};
 
-	let value = $.source('');
+	let value = $.state('');
 	const _snippet = snippet;
 	var fragment = root();
 	var node = $.first_child(fragment);
