@@ -17,6 +17,8 @@ export interface ComponentConstructorOptions<
 	context?: Map<any, any>;
 	hydrate?: boolean;
 	intro?: boolean;
+	recover?: boolean;
+	sync?: boolean;
 	$$inline?: boolean;
 }
 
