@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	export const cursorIndex = writable(0);
 </script>
 

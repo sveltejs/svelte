@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	const context = $state({
 		settings: {
 			showInRgb: true

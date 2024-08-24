@@ -1,6 +1,6 @@
 /** @import { Expression } from 'estree' */
 /** @import { ExpressionTag, SvelteNode, Text } from '#compiler' */
-/** @import { ComponentClientTransformState, ComponentContext } from '../../types' */
+/** @import { ComponentContext } from '../../types' */
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { build_template_literal, build_update } from './utils.js';
@@ -119,7 +119,7 @@ export function process_children(nodes, initial, is_element, needs_reset, { visi
 	// traverse to the last (n - 1) one when hydrating
 	if (skipped > 1 && !needs_reset) {
 		skipped -= 1;
-		state.init.push(b.stmt(get_node(false)));
+		state.init.push(b.stmt(b.call('$.next', skipped !== 1 && b.literal(skipped))));
 	}
 }
 

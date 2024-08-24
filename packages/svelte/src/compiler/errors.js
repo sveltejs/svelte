@@ -99,12 +99,12 @@ export function declaration_duplicate(node, name) {
 }
 
 /**
- * Cannot declare same variable name which is imported inside `<script context="module">`
+ * Cannot declare a variable with the same name as an import inside `<script module>`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function declaration_duplicate_module_import(node) {
-	e(node, "declaration_duplicate_module_import", "Cannot declare same variable name which is imported inside `<script context=\"module\">`");
+	e(node, "declaration_duplicate_module_import", "Cannot declare a variable with the same name as an import inside `<script module>`");
 }
 
 /**
@@ -417,12 +417,12 @@ export function store_invalid_scoped_subscription(node) {
 }
 
 /**
- * Cannot reference store value inside `<script context="module">`
+ * Cannot reference store value inside `<script module>`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function store_invalid_subscription(node) {
-	e(node, "store_invalid_subscription", "Cannot reference store value inside `<script context=\"module\">`");
+	e(node, "store_invalid_subscription", "Cannot reference store value inside `<script module>`");
 }
 
 /**
@@ -1044,12 +1044,22 @@ export function render_tag_invalid_spread_argument(node) {
 }
 
 /**
- * A component can have a single top-level `<script>` element and/or a single top-level `<script context="module">` element
+ * A component can have a single top-level `<script>` element and/or a single top-level `<script module>` element
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function script_duplicate(node) {
-	e(node, "script_duplicate", "A component can have a single top-level `<script>` element and/or a single top-level `<script context=\"module\">` element");
+	e(node, "script_duplicate", "A component can have a single top-level `<script>` element and/or a single top-level `<script module>` element");
+}
+
+/**
+ * If the `%name%` attribute is supplied, it must be a boolean attribute
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function script_invalid_attribute_value(node, name) {
+	e(node, "script_invalid_attribute_value", `If the \`${name}\` attribute is supplied, it must be a boolean attribute`);
 }
 
 /**
@@ -1059,6 +1069,16 @@ export function script_duplicate(node) {
  */
 export function script_invalid_context(node) {
 	e(node, "script_invalid_context", "If the context attribute is supplied, its value must be \"module\"");
+}
+
+/**
+ * The `%name%` attribute is reserved and cannot be used
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function script_reserved_attribute(node, name) {
+	e(node, "script_reserved_attribute", `The \`${name}\` attribute is reserved and cannot be used`);
 }
 
 /**

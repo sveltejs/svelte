@@ -118,7 +118,7 @@ export function proxy(value, parent = null, prev) {
 
 			// create a source, but only if it's an own property and not a prototype property
 			if (s === undefined && (!exists || get_descriptor(target, prop)?.writable)) {
-				s = source(proxy(exists ? target[prop] : UNINITIALIZED, metadata));
+				s = source(proxy(exists ? target[prop] : UNINITIALIZED, metadata), null);
 				sources.set(prop, s);
 			}
 
@@ -170,7 +170,7 @@ export function proxy(value, parent = null, prev) {
 				(current_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 			) {
 				if (s === undefined) {
-					s = source(has ? proxy(target[prop], metadata) : UNINITIALIZED);
+					s = source(has ? proxy(target[prop], metadata) : UNINITIALIZED, null);
 					sources.set(prop, s);
 				}
 

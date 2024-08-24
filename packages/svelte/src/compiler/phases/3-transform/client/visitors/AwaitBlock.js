@@ -11,6 +11,9 @@ import { create_derived_block_argument } from '../utils.js';
 export function AwaitBlock(node, context) {
 	context.state.template.push('<!>');
 
+	// Visit {#await <expression>} first to ensure that scopes are in the correct order
+	const expression = b.thunk(/** @type {Expression} */ (context.visit(node.expression)));
+
 	let then_block;
 	let catch_block;
 
@@ -45,7 +48,7 @@ export function AwaitBlock(node, context) {
 			b.call(
 				'$.await',
 				context.state.node,
-				b.thunk(/** @type {Expression} */ (context.visit(node.expression))),
+				expression,
 				node.pending
 					? b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.pending)))
 					: b.literal(null),

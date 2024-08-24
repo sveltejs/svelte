@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	let moduleA = 'moduleA';
 	let moduleB = 'moduleB';
 </script>

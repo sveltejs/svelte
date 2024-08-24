@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	if (!customElements.get('my-custom-element')) {
 		customElements.define('my-custom-element', class extends HTMLElement {
 			connectedCallback() {

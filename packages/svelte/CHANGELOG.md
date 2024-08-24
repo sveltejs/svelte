@@ -1,5 +1,89 @@
 # svelte
 
+## 5.0.0-next.237
+
+### Patch Changes
+
+- breaking: throw error if derived creates state and then depends on it ([#12985](https://github.com/sveltejs/svelte/pull/12985))
+
+- fix: ensure assignments to state field inside constructor trigger effects ([#12985](https://github.com/sveltejs/svelte/pull/12985))
+
+- fix: ensure $inspect works with SvelteMap and SvelteSet ([#12994](https://github.com/sveltejs/svelte/pull/12994))
+
+- chore: default options.filename to "(unknown)" ([#12997](https://github.com/sveltejs/svelte/pull/12997))
+
+- feat: allow non-synchronous legacy component instantiation ([#12970](https://github.com/sveltejs/svelte/pull/12970))
+
+## 5.0.0-next.236
+
+### Patch Changes
+
+- fix: properly transform destructured `$derived.by` declarations ([#12984](https://github.com/sveltejs/svelte/pull/12984))
+
+## 5.0.0-next.235
+
+### Patch Changes
+
+- chore: update client check for smaller bundle size ([#12975](https://github.com/sveltejs/svelte/pull/12975))
+
+- fix: correctly hydrate empty raw blocks ([#12979](https://github.com/sveltejs/svelte/pull/12979))
+
+## 5.0.0-next.234
+
+### Patch Changes
+
+- fix: allow deleting non-existent `$restProps` properties ([#12971](https://github.com/sveltejs/svelte/pull/12971))
+
+- feat: only traverse trailing static nodes during hydration ([#12935](https://github.com/sveltejs/svelte/pull/12935))
+
+## 5.0.0-next.233
+
+### Patch Changes
+
+- fix: more robust handling of var declarations ([#12949](https://github.com/sveltejs/svelte/pull/12949))
+
+- fix: remove buggy `validate_dynamic_component` check ([#12960](https://github.com/sveltejs/svelte/pull/12960))
+
+## 5.0.0-next.232
+
+### Patch Changes
+
+- breaking: remove `$state.link` rune pending further design work ([#12943](https://github.com/sveltejs/svelte/pull/12943))
+
+- fix: ensure `$store` reads are properly transformed ([#12952](https://github.com/sveltejs/svelte/pull/12952))
+
+- breaking: deprecate `context="module"` in favor of `module` ([#12948](https://github.com/sveltejs/svelte/pull/12948))
+
+## 5.0.0-next.231
+
+### Patch Changes
+
+- breaking: remove callback from `$state.link` ([#12942](https://github.com/sveltejs/svelte/pull/12942))
+
+## 5.0.0-next.230
+
+### Patch Changes
+
+- fix: align list of passive events with browser defaults ([#12933](https://github.com/sveltejs/svelte/pull/12933))
+
+- fix: ensure `{#await}` scope shadowing is computed in the correct order ([#12945](https://github.com/sveltejs/svelte/pull/12945))
+
+- fix: don't skip custom elements with attributes ([#12939](https://github.com/sveltejs/svelte/pull/12939))
+
+## 5.0.0-next.229
+
+### Patch Changes
+
+- feat: add `$state.link` rune ([#12545](https://github.com/sveltejs/svelte/pull/12545))
+
+- fix: allow mixing slots and snippets in custom elements mode ([#12929](https://github.com/sveltejs/svelte/pull/12929))
+
+- fix: small legibility improvement in `Snippet` type hint ([#12928](https://github.com/sveltejs/svelte/pull/12928))
+
+- feat: support HMR with custom elements ([#12926](https://github.com/sveltejs/svelte/pull/12926))
+
+- feat: error on invalid component name ([#12821](https://github.com/sveltejs/svelte/pull/12821))
+
 ## 5.0.0-next.228
 
 ### Patch Changes

@@ -66,9 +66,16 @@ export function hydrate_template(template) {
 	}
 }
 
-export function next() {
+export function next(count = 1) {
 	if (hydrating) {
-		hydrate_next();
+		var i = count;
+		var node = hydrate_node;
+
+		while (i--) {
+			node = /** @type {TemplateNode} */ (get_next_sibling(node));
+		}
+
+		hydrate_node = node;
 	}
 }
 

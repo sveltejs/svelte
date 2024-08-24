@@ -1,5 +1,5 @@
-<script context="module">
-  import Foo from './Foo.svelte';
+<script module>
+	import Foo from './Foo.svelte';
 
-  export const Components = { Foo };
+	export const Components = { Foo };
 </script>

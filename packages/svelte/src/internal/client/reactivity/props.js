@@ -130,7 +130,7 @@ const legacy_rest_props_handler = {
 	},
 	deleteProperty(target, key) {
 		// Svelte 4 allowed for deletions on $$restProps
-		if (target.exclude.includes(key)) return false;
+		if (target.exclude.includes(key)) return true;
 		target.exclude.push(key);
 		update(target.version);
 		return true;

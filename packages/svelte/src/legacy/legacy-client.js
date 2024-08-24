@@ -17,9 +17,6 @@ import { define_property } from '../internal/shared/utils.js';
  *
  * @param {ComponentConstructorOptions<Props> & {
  * 	component: ComponentType<SvelteComponent<Props, Events, Slots>> | Component<Props>;
- * 	immutable?: boolean;
- * 	hydrate?: boolean;
- * 	recover?: boolean;
  * }} options
  * @returns {SvelteComponent<Props, Events, Slots> & Exports}
  */
@@ -64,9 +61,6 @@ class Svelte4Component {
 	/**
 	 * @param {ComponentConstructorOptions & {
 	 *  component: any;
-	 * 	immutable?: boolean;
-	 * 	hydrate?: boolean;
-	 * 	recover?: false;
 	 * }} options
 	 */
 	constructor(options) {
@@ -110,8 +104,8 @@ class Svelte4Component {
 			recover: options.recover
 		});
 
-		// We don't flush_sync for custom element wrappers
-		if (!options?.props?.$$host) {
+		// We don't flush_sync for custom element wrappers or if the user doesn't want it
+		if (!options?.props?.$$host || options.sync === false) {
 			flush_sync();
 		}
 

@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	import { FOO } from './dummy.svelte';
 	function ok() {
 		let FOO;
