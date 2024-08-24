@@ -2,7 +2,7 @@
 /** @import { Store } from '#shared' */
 import { subscribe_to_store } from '../../../store/utils.js';
 import { noop } from '../../shared/utils.js';
-import { get, untrack } from '../runtime.js';
+import { get } from '../runtime.js';
 import { teardown } from './effects.js';
 import { mutable_source, set } from './sources.js';
 

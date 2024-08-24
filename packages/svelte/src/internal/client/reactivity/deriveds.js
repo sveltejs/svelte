@@ -1,4 +1,4 @@
-/** @import { Derived, Source } from '#client' */
+/** @import { Derived } from '#client' */
 import { DEV } from 'esm-env';
 import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
 import {
