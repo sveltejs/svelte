@@ -9,7 +9,7 @@ const COUNT = 1e5;
  */
 function create_data_signals(n, sources) {
 	for (let i = 0; i < n; i++) {
-		sources[i] = $.source(i);
+		sources[i] = $.state(i);
 	}
 	return sources;
 }

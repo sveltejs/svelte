@@ -3,7 +3,7 @@ import * as $ from '../../../packages/svelte/src/internal/client/index.js';
 import { busy } from './util.js';
 
 function setup() {
-	let head = $.source(0);
+	let head = $.state(0);
 	let computed1 = $.derived(() => $.get(head));
 	let computed2 = $.derived(() => ($.get(computed1), 0));
 	let computed3 = $.derived(() => (busy(), $.get(computed2) + 1)); // heavy computation

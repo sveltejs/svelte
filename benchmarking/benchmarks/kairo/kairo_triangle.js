@@ -11,7 +11,7 @@ function count(number) {
 }
 
 function setup() {
-	let head = $.source(0);
+	let head = $.state(0);
 	let current = head;
 	let list = [];
 	for (let i = 0; i < width; i++) {
