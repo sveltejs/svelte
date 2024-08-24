@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Source, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	current_component_context,
@@ -13,7 +13,9 @@ import {
 	set_signal_status,
 	untrack,
 	increment_version,
-	update_effect
+	update_effect,
+	derived_sources,
+	set_derived_sources
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -32,27 +34,39 @@ let inspect_effects = new Set();
 /**
  * @template V
  * @param {V} v
+ * @param {Reaction | null} [owner]
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function source(v) {
-	return {
+export function source(v, owner = current_reaction) {
+	var source = {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
 		v,
 		reactions: null,
 		equals,
 		version: 0
 	};
+
+	if (owner !== null && (owner.f & DERIVED) !== 0) {
+		if (derived_sources === null) {
+			set_derived_sources([source]);
+		} else {
+			derived_sources.push(source);
+		}
+	}
+
+	return source;
 }
 
 /**
  * @template V
  * @param {V} initial_value
+ * @param {Reaction | null} [owner]
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function mutable_source(initial_value) {
-	const s = source(initial_value);
+export function mutable_source(initial_value, owner) {
+	const s = source(initial_value, owner);
 	s.equals = safe_equals;
 
 	// bind the signal to the component context, in case we need to
@@ -84,7 +98,14 @@ export function mutate(source, value) {
  * @returns {V}
  */
 export function set(source, value) {
-	if (current_reaction !== null && is_runes() && (current_reaction.f & DERIVED) !== 0) {
+	if (
+		current_reaction !== null &&
+		is_runes() &&
+		(current_reaction.f & DERIVED) !== 0 &&
+		// If the source was created locally within the current derived, then
+		// we allow the mutation.
+		(derived_sources === null || !derived_sources.includes(source))
+	) {
 		e.state_unsafe_mutation();
 	}
 

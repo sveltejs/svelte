@@ -19,7 +19,7 @@ import { mutable_source, set } from './sources.js';
 export function store_get(store, store_name, stores) {
 	const entry = (stores[store_name] ??= {
 		store: null,
-		source: mutable_source(undefined),
+		source: mutable_source(undefined, null),
 		unsubscribe: noop
 	});
 
