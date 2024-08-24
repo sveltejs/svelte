@@ -14,7 +14,5 @@
 		"!tests/runtime-browser/driver-ssr.js",
 		"!tests/types/component.ts"
 	],
-	"project": [
-		"src/**"
-	]
+	"project": ["src/**"]
 }
