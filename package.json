@@ -44,7 +44,7 @@
     "typescript": "^5.5.2",
     "typescript-eslint": "^8.0.0-alpha.34",
     "v8-natives": "^1.2.5",
-    "vitest": "^1.2.1"
+    "vitest": "^1.6.0"
   },
   "pnpm": {
     "overrides": {
