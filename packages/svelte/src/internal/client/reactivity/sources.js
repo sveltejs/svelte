@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Source, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	current_component_context,
@@ -34,11 +34,11 @@ let inspect_effects = new Set();
 /**
  * @template V
  * @param {V} v
- * @param {boolean} [skip_derived_source]
+ * @param {Reaction | null} [owner]
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function source(v, skip_derived_source = false) {
+export function source(v, owner = current_reaction) {
 	var source = {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
 		v,
@@ -46,25 +46,27 @@ export function source(v, skip_derived_source = false) {
 		equals,
 		version: 0
 	};
-	if (!skip_derived_source && current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
+
+	if (owner !== null && (owner.f & DERIVED) !== 0) {
 		if (derived_sources === null) {
 			set_derived_sources([source]);
 		} else {
 			derived_sources.push(source);
 		}
 	}
+
 	return source;
 }
 
 /**
  * @template V
  * @param {V} initial_value
- * @param {boolean} [skip_derived_source]
+ * @param {Reaction | null} [owner]
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function mutable_source(initial_value, skip_derived_source) {
-	const s = source(initial_value, skip_derived_source);
+export function mutable_source(initial_value, owner) {
+	const s = source(initial_value, owner);
 	s.equals = safe_equals;
 
 	// bind the signal to the component context, in case we need to
