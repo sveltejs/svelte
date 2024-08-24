@@ -74,7 +74,7 @@ export function state(v) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function mutable_source(initial_value, owner = current_reaction) {
-	const s = source(initial_value, owner);
+	const s = source(initial_value);
 	s.equals = safe_equals;
 
 	if (owner !== null && (owner.f & DERIVED) !== 0) {

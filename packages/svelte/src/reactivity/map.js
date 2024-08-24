@@ -12,8 +12,8 @@ import { increment } from './utils.js';
 export class SvelteMap extends Map {
 	/** @type {Map<K, Source<number>>} */
 	#sources = new Map();
-	#version = source(0, null);
-	#size = source(0, null);
+	#version = source(0);
+	#size = source(0);
 
 	/**
 	 * @param {Iterable<readonly [K, V]> | null | undefined} [value]
@@ -40,7 +40,7 @@ export class SvelteMap extends Map {
 		if (s === undefined) {
 			var ret = super.get(key);
 			if (ret !== undefined) {
-				s = source(0, null);
+				s = source(0);
 				sources.set(key, s);
 			} else {
 				// We should always track the version in case
@@ -71,7 +71,7 @@ export class SvelteMap extends Map {
 		if (s === undefined) {
 			var ret = super.get(key);
 			if (ret !== undefined) {
-				s = source(0, null);
+				s = source(0);
 				sources.set(key, s);
 			} else {
 				// We should always track the version in case
@@ -96,7 +96,7 @@ export class SvelteMap extends Map {
 		var res = super.set(key, value);
 
 		if (s === undefined) {
-			sources.set(key, source(0, null));
+			sources.set(key, source(0));
 			set(this.#size, super.size);
 			increment(this.#version);
 		} else if (prev_res !== value) {
@@ -144,7 +144,7 @@ export class SvelteMap extends Map {
 		if (this.#size.v !== sources.size) {
 			for (var key of super.keys()) {
 				if (!sources.has(key)) {
-					sources.set(key, source(0, null));
+					sources.set(key, source(0));
 				}
 			}
 		}

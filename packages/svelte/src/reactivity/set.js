@@ -16,8 +16,8 @@ var inited = false;
 export class SvelteSet extends Set {
 	/** @type {Map<T, Source<boolean>>} */
 	#sources = new Map();
-	#version = source(0, null);
-	#size = source(0, null);
+	#version = source(0);
+	#size = source(0);
 
 	/**
 	 * @param {Iterable<T> | null | undefined} [value]
@@ -79,7 +79,7 @@ export class SvelteSet extends Set {
 				return false;
 			}
 
-			s = source(true, null);
+			s = source(true);
 			sources.set(value, s);
 		}
 

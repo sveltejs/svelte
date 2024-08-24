@@ -106,7 +106,7 @@ export function toStore(get, set) {
  */
 export function fromStore(store) {
 	let value = /** @type {V} */ (undefined);
-	let version = source(0, null);
+	let version = source(0);
 	let subscribers = 0;
 
 	let unsubscribe = noop;

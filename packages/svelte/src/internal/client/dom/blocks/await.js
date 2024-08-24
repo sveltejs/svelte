@@ -53,7 +53,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	var catch_effect;
 
 	var input_source = runes
-		? source(/** @type {V} */ (undefined), null)
+		? source(/** @type {V} */ (undefined))
 		: mutable_source(/** @type {V} */ (undefined), null);
 	var error_source = runes ? source(undefined) : mutable_source(undefined);
 	var resolved = false;

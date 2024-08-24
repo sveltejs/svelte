@@ -35,7 +35,7 @@ export function proxy(value, parent = null, prev) {
 
 	var sources = new Map();
 	var is_proxied_array = is_array(value);
-	var version = source(0, null);
+	var version = source(0);
 
 	/** @type {ProxyMetadata} */
 	var metadata;
@@ -80,7 +80,7 @@ export function proxy(value, parent = null, prev) {
 			var s = sources.get(prop);
 
 			if (s === undefined) {
-				s = source(descriptor.value, null);
+				s = source(descriptor.value);
 				sources.set(prop, s);
 			} else {
 				set(s, proxy(descriptor.value, metadata));
@@ -118,7 +118,7 @@ export function proxy(value, parent = null, prev) {
 
 			// create a source, but only if it's an own property and not a prototype property
 			if (s === undefined && (!exists || get_descriptor(target, prop)?.writable)) {
-				s = source(proxy(exists ? target[prop] : UNINITIALIZED, metadata), null);
+				s = source(proxy(exists ? target[prop] : UNINITIALIZED, metadata));
 				sources.set(prop, s);
 			}
 
@@ -170,7 +170,7 @@ export function proxy(value, parent = null, prev) {
 				(current_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 			) {
 				if (s === undefined) {
-					s = source(has ? proxy(target[prop], metadata) : UNINITIALIZED, null);
+					s = source(has ? proxy(target[prop], metadata) : UNINITIALIZED);
 					sources.set(prop, s);
 				}
 
@@ -193,7 +193,7 @@ export function proxy(value, parent = null, prev) {
 			// object property before writing to that property.
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
-					s = source(undefined, null);
+					s = source(undefined);
 					set(s, proxy(value, metadata));
 					sources.set(prop, s);
 				}
