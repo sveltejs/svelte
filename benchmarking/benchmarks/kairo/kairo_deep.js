@@ -5,7 +5,7 @@ let len = 50;
 const iter = 50;
 
 function setup() {
-	let head = $.source(0);
+	let head = $.state(0);
 	let current = head;
 	for (let i = 0; i < len; i++) {
 		let c = current;

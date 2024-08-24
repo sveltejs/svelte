@@ -207,7 +207,7 @@ export function client_component(analysis, options) {
 
 	for (const [name, binding] of analysis.instance.scope.declarations) {
 		if (binding.kind === 'legacy_reactive') {
-			legacy_reactive_declarations.push(b.const(name, b.call('$.mutable_source')));
+			legacy_reactive_declarations.push(b.const(name, b.call('$.mutable_state')));
 		}
 		if (binding.kind === 'store_sub') {
 			if (store_setup.length === 0) {

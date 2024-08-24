@@ -11,8 +11,8 @@ function reset(_, str, tpl) {
 var root = $.template(`<input> <input> <button>reset</button>`, 1);
 
 export default function State_proxy_literal($$anchor) {
-	let str = $.source('');
-	let tpl = $.source(``);
+	let str = $.state('');
+	let tpl = $.state(``);
 	var fragment = root();
 	var input = $.first_child(fragment);
 
