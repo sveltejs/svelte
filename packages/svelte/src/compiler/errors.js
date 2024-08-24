@@ -1247,15 +1247,6 @@ export function svelte_fragment_invalid_placement(node) {
 }
 
 /**
- * `<svelte:fragment>` slot attribute must have a static value
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_fragment_invalid_slot(node) {
-	e(node, "svelte_fragment_invalid_slot", "`<svelte:fragment>` slot attribute must have a static value");
-}
-
-/**
  * `<svelte:head>` cannot have attributes nor directives
  * @param {null | number | NodeLike} node
  * @returns {never}

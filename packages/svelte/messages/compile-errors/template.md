@@ -302,10 +302,6 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 > `<svelte:fragment>` must be the direct child of a component
 
-## svelte_fragment_invalid_slot
-
-> `<svelte:fragment>` slot attribute must have a static value
-
 ## svelte_head_illegal_attribute
 
 > `<svelte:head>` cannot have attributes nor directives

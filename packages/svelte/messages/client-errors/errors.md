@@ -79,7 +79,3 @@
 ## state_unsafe_mutation
 
 > Updating state inside a derived is forbidden. If the value should not be reactive, declare it without `$state`
-
-## svelte_component_invalid_this_value
-
-> The `this={...}` property of a `<svelte:component>` must be a Svelte component, if defined
