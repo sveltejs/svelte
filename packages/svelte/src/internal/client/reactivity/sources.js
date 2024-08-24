@@ -36,7 +36,6 @@ let inspect_effects = new Set();
  * @param {V} v
  * @returns {Source<V>}
  */
-/*#__NO_SIDE_EFFECTS__*/
 export function source(v) {
 	return {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
@@ -50,20 +49,9 @@ export function source(v) {
 /**
  * @template V
  * @param {V} v
- * @returns {Source<V>}
  */
 export function state(v) {
-	var s = source(v);
-
-	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
-		if (derived_sources === null) {
-			set_derived_sources([s]);
-		} else {
-			derived_sources.push(s);
-		}
-	}
-
-	return s;
+	return push_derived_source(source(v));
 }
 
 /**
@@ -91,17 +79,24 @@ export function mutable_source(initial_value) {
  * @returns {Source<V>}
  */
 export function mutable_state(v) {
-	var s = mutable_source(v);
+	return push_derived_source(mutable_source(v));
+}
 
+/**
+ * @template V
+ * @param {Source<V>} source
+ */
+/*#__NO_SIDE_EFFECTS__*/
+function push_derived_source(source) {
 	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
 		if (derived_sources === null) {
-			set_derived_sources([s]);
+			set_derived_sources([source]);
 		} else {
-			derived_sources.push(s);
+			derived_sources.push(source);
 		}
 	}
 
-	return s;
+	return source;
 }
 
 /**
