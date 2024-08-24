@@ -11,6 +11,8 @@ import { source, set } from '../../src/internal/client/reactivity/sources';
 import type { Derived, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
+import { snapshot } from '../../src/internal/shared/clone.js';
+import { SvelteSet } from '../../src/reactivity/set';
 
 /**
  * @param runes runes mode
@@ -691,6 +693,36 @@ describe('signals', () => {
 
 			assert.deepEqual($.get(combined), [{ a: 1 }]);
 			assert.equal($.get(derived_length), 1);
+		};
+	});
+
+	test('deriveds cannot depend on state they own', () => {
+		return () => {
+			const d = derived(() => {
+				const s = source(0);
+				return $.get(s);
+			});
+
+			assert.throws(() => $.get(d), 'state_unsafe_local_read');
+		};
+	});
+
+	test('proxy version source does not trigger self-dependency guard', () => {
+		return () => {
+			const s = proxy({ a: { b: 1 } });
+			const d = derived(() => snapshot(s));
+
+			assert.deepEqual($.get(d), s);
+		};
+	});
+
+	test('set version source does not trigger self-dependency guard', () => {
+		return () => {
+			const set = new SvelteSet();
+			const d = derived(() => set.has('test'));
+
+			set.add('test');
+			assert.equal($.get(d), true);
 		};
 	});
 });

@@ -35,7 +35,7 @@ export function proxy(value, parent = null, prev) {
 
 	var sources = new Map();
 	var is_proxied_array = is_array(value);
-	var version = source(0);
+	var version = source(0, null);
 
 	/** @type {ProxyMetadata} */
 	var metadata;
