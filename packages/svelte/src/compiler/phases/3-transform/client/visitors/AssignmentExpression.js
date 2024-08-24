@@ -48,7 +48,7 @@ function build_assignment(operator, left, right, context) {
 					value =
 						private_state.kind === 'raw_state'
 							? value
-							: build_proxy_reassignment(value, private_state.id);
+							: build_proxy_reassignment(value, b.member(b.this, private_state.id));
 				}
 
 				if (!context.state.in_constructor) {
@@ -95,7 +95,7 @@ function build_assignment(operator, left, right, context) {
 			context.state.analysis.runes &&
 			should_proxy(value, context.state.scope)
 		) {
-			value = binding.kind === 'raw_state' ? value : build_proxy_reassignment(value, object.name);
+			value = binding.kind === 'raw_state' ? value : build_proxy_reassignment(value, object);
 		}
 
 		return transform.assign(object, value);
