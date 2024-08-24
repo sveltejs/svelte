@@ -153,6 +153,9 @@ importers:
       svelte:
         specifier: workspace:*
         version: link:../../packages/svelte
+      tiny-glob:
+        specifier: ^0.2.9
+        version: 0.2.9
       vite:
         specifier: ^5.0.13
         version: 5.0.13(@types/node@20.12.7)(lightningcss@1.23.0)(sass@1.70.0)(terser@5.27.0)
