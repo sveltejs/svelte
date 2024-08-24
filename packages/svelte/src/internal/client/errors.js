@@ -279,6 +279,22 @@ export function rune_outside_svelte(rune) {
 }
 
 /**
+ * Reading state that was created inside the same derived is forbidden. Consider using `untrack` to read locally created state.
+ * @returns {never}
+ */
+export function state_unsafe_local_read() {
+	if (DEV) {
+		const error = new Error(`state_unsafe_local_read\nReading state that was created inside the same derived is forbidden. Consider using \`untrack\` to read locally created state.`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("state_unsafe_local_read");
+	}
+}
+
+/**
  * Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
  * @returns {never}
  */

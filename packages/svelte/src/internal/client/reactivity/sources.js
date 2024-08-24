@@ -13,7 +13,9 @@ import {
 	set_signal_status,
 	untrack,
 	increment_version,
-	update_effect
+	update_effect,
+	derived_sources,
+	set_derived_sources
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -26,17 +28,17 @@ import {
 	MAYBE_DIRTY
 } from '../constants.js';
 import * as e from '../errors.js';
-import { derived_sources, set_derived_sources } from './deriveds.js';
 
 let inspect_effects = new Set();
 
 /**
  * @template V
  * @param {V} v
+ * @param {boolean} [skip_derived_source]
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function source(v) {
+export function source(v, skip_derived_source = false) {
 	var source = {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
 		v,
@@ -44,7 +46,7 @@ export function source(v) {
 		equals,
 		version: 0
 	};
-	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
+	if (!skip_derived_source && current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
 		if (derived_sources === null) {
 			set_derived_sources([source]);
 		} else {
@@ -57,11 +59,12 @@ export function source(v) {
 /**
  * @template V
  * @param {V} initial_value
+ * @param {boolean} [skip_derived_source]
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function mutable_source(initial_value) {
-	const s = source(initial_value);
+export function mutable_source(initial_value, skip_derived_source) {
+	const s = source(initial_value, skip_derived_source);
 	s.equals = safe_equals;
 
 	// bind the signal to the component context, in case we need to

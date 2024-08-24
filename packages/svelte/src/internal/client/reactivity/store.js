@@ -2,7 +2,7 @@
 /** @import { Store } from '#shared' */
 import { subscribe_to_store } from '../../../store/utils.js';
 import { noop } from '../../shared/utils.js';
-import { get } from '../runtime.js';
+import { get, untrack } from '../runtime.js';
 import { teardown } from './effects.js';
 import { mutable_source, set } from './sources.js';
 
@@ -19,7 +19,7 @@ import { mutable_source, set } from './sources.js';
 export function store_get(store, store_name, stores) {
 	const entry = (stores[store_name] ??= {
 		store: null,
-		source: mutable_source(undefined),
+		source: mutable_source(undefined, true),
 		unsubscribe: noop
 	});
 
