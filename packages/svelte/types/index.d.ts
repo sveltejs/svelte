@@ -740,7 +740,7 @@ declare module 'svelte/compiler' {
 
 	type CssHashGetter = (args: {
 		name: string;
-		filename: string | undefined;
+		filename: string;
 		css: string;
 		hash: (input: string) => string;
 	}) => string;
@@ -2613,7 +2613,7 @@ declare module 'svelte/types/compiler/interfaces' {
 
 	type CssHashGetter = (args: {
 		name: string;
-		filename: string | undefined;
+		filename: string;
 		css: string;
 		hash: (input: string) => string;
 	}) => string;

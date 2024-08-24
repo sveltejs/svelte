@@ -8,9 +8,9 @@ import { getLocator } from 'locate-character';
 export let warnings = [];
 
 /**
- * The filename (if specified in the compiler options) relative to the rootDir (if specified).
+ * The filename relative to the rootDir (if specified).
  * This should not be used in the compiler output except in dev mode
- * @type {string | undefined}
+ * @type {string}
  */
 export let filename;
 
@@ -77,20 +77,16 @@ export function is_ignored(node, code) {
 
 /**
  * @param {string} _source
- * @param {{ dev?: boolean; filename?: string; rootDir?: string }} options
+ * @param {{ dev?: boolean; filename: string; rootDir?: string }} options
  */
 export function reset(_source, options) {
 	source = _source;
 	const root_dir = options.rootDir?.replace(/\\/g, '/');
-	filename = options.filename?.replace(/\\/g, '/');
+	filename = options.filename.replace(/\\/g, '/');
 
 	dev = !!options.dev;
 
-	if (
-		typeof filename === 'string' &&
-		typeof root_dir === 'string' &&
-		filename.startsWith(root_dir)
-	) {
+	if (typeof root_dir === 'string' && filename.startsWith(root_dir)) {
 		// make filename relative to rootDir
 		filename = filename.replace(root_dir, '').replace(/^[/\\]/, '');
 	}
