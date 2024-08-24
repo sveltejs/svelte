@@ -139,12 +139,14 @@ export function ClassBody(node, context) {
 					if (field.kind === 'state') {
 						// set foo(value) { this.#foo = value; }
 						const value = b.id('value');
+						const prev = b.member(b.this, field.id);
+
 						body.push(
 							b.method(
 								'set',
 								definition.key,
 								[value],
-								[b.stmt(b.call('$.set', member, build_proxy_reassignment(value, field.id)))]
+								[b.stmt(b.call('$.set', member, build_proxy_reassignment(value, prev)))]
 							)
 						);
 					}
