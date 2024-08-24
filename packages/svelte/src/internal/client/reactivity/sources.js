@@ -69,26 +69,36 @@ export function state(v) {
 /**
  * @template V
  * @param {V} initial_value
- * @param {Reaction | null} [owner]
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function mutable_source(initial_value, owner = current_reaction) {
+export function mutable_source(initial_value) {
 	const s = source(initial_value);
 	s.equals = safe_equals;
-
-	if (owner !== null && (owner.f & DERIVED) !== 0) {
-		if (derived_sources === null) {
-			set_derived_sources([s]);
-		} else {
-			derived_sources.push(s);
-		}
-	}
 
 	// bind the signal to the component context, in case we need to
 	// track updates to trigger beforeUpdate/afterUpdate callbacks
 	if (current_component_context !== null && current_component_context.l !== null) {
 		(current_component_context.l.s ??= []).push(s);
+	}
+
+	return s;
+}
+
+/**
+ * @template V
+ * @param {V} v
+ * @returns {Source<V>}
+ */
+export function mutable_state(v) {
+	var s = mutable_source(v);
+
+	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
+		if (derived_sources === null) {
+			set_derived_sources([s]);
+		} else {
+			derived_sources.push(s);
+		}
 	}
 
 	return s;
