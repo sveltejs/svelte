@@ -19,7 +19,7 @@ import * as e from './errors.js';
  * @param {T} value
  * @param {ProxyMetadata | null} [parent]
  * @param {Source<T>} [prev] dev mode only
- * @returns {ProxyStateObject<T> | T}
+ * @returns {T}
  */
 export function proxy(value, parent = null, prev) {
 	// if non-proxyable, or is already a proxy, return `value`
@@ -91,17 +91,17 @@ export function proxy(value, parent = null, prev) {
 
 		deleteProperty(target, prop) {
 			var s = sources.get(prop);
-			var exists = s !== undefined ? s.v !== UNINITIALIZED : prop in target;
 
-			if (s !== undefined) {
+			if (s === undefined) {
+				if (prop in target) {
+					sources.set(prop, source(UNINITIALIZED));
+				}
+			} else {
 				set(s, UNINITIALIZED);
-			}
-
-			if (exists) {
 				update_version(version);
 			}
 
-			return exists;
+			return true;
 		},
 
 		get(target, prop, receiver) {
