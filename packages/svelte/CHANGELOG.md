@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.237
+
+### Patch Changes
+
+- breaking: throw error if derived creates state and then depends on it ([#12985](https://github.com/sveltejs/svelte/pull/12985))
+
+- fix: ensure assignments to state field inside constructor trigger effects ([#12985](https://github.com/sveltejs/svelte/pull/12985))
+
+- fix: ensure $inspect works with SvelteMap and SvelteSet ([#12994](https://github.com/sveltejs/svelte/pull/12994))
+
+- chore: default options.filename to "(unknown)" ([#12997](https://github.com/sveltejs/svelte/pull/12997))
+
+- feat: allow non-synchronous legacy component instantiation ([#12970](https://github.com/sveltejs/svelte/pull/12970))
+
 ## 5.0.0-next.236
 
 ### Patch Changes
