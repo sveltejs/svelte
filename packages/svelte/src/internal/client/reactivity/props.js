@@ -150,7 +150,10 @@ const legacy_rest_props_handler = {
  * @returns {Record<string, unknown>}
  */
 export function legacy_rest_props(props, exclude) {
-	return new Proxy({ props, exclude, special: {}, version: source(0) }, legacy_rest_props_handler);
+	return new Proxy(
+		{ props, exclude, special: {}, version: source(0, null) },
+		legacy_rest_props_handler
+	);
 }
 
 /**

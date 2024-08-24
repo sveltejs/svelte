@@ -6,7 +6,7 @@ import { get } from '../internal/client/runtime.js';
 var inited = false;
 
 export class SvelteDate extends Date {
-	#time = source(super.getTime());
+	#time = source(super.getTime(), null);
 
 	/** @type {Map<keyof Date, Source<unknown>>} */
 	#deriveds = new Map();

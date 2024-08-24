@@ -80,7 +80,7 @@ export function proxy(value, parent = null, prev) {
 			var s = sources.get(prop);
 
 			if (s === undefined) {
-				s = source(descriptor.value);
+				s = source(descriptor.value, null);
 				sources.set(prop, s);
 			} else {
 				set(s, proxy(descriptor.value, metadata));
@@ -193,7 +193,7 @@ export function proxy(value, parent = null, prev) {
 			// object property before writing to that property.
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
-					s = source(undefined);
+					s = source(undefined, null);
 					set(s, proxy(value, metadata));
 					sources.set(prop, s);
 				}

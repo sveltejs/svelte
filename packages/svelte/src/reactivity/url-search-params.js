@@ -6,7 +6,7 @@ import { increment } from './utils.js';
 export const REPLACE = Symbol();
 
 export class SvelteURLSearchParams extends URLSearchParams {
-	#version = source(0);
+	#version = source(0, null);
 	#url = get_current_url();
 
 	#updating = false;

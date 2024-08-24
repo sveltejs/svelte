@@ -8,7 +8,7 @@ import { is_array } from '../../../shared/utils.js';
  * @param {() => any} fn
  */
 export function reactive_import(fn) {
-	var s = source(0);
+	var s = source(0, null);
 
 	return function () {
 		if (arguments.length === 1) {

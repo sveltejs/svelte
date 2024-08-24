@@ -71,7 +71,7 @@ export function hmr(original, get_source) {
 		// The `get_source` parameter reads `wrapper[HMR].source`, but in the `accept`
 		// function we always replace it with `previous[HMR].source`, which in practice
 		// means we only ever update the original
-		source: source(original)
+		source: source(original, null)
 	};
 
 	return wrapper;

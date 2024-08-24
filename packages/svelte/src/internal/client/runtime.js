@@ -1001,7 +1001,7 @@ export function push(props, runes = false, fn) {
 			s: null,
 			u: null,
 			r1: [],
-			r2: source(false)
+			r2: source(false, null)
 		};
 	}
 

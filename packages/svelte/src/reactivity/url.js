@@ -11,14 +11,14 @@ export function get_current_url() {
 }
 
 export class SvelteURL extends URL {
-	#protocol = source(super.protocol);
-	#username = source(super.username);
-	#password = source(super.password);
-	#hostname = source(super.hostname);
-	#port = source(super.port);
-	#pathname = source(super.pathname);
-	#hash = source(super.hash);
-	#search = source(super.search);
+	#protocol = source(super.protocol, null);
+	#username = source(super.username, null);
+	#password = source(super.password, null);
+	#hostname = source(super.hostname, null);
+	#port = source(super.port, null);
+	#pathname = source(super.pathname, null);
+	#hash = source(super.hash, null);
+	#search = source(super.search, null);
 	#searchParams;
 
 	/**
