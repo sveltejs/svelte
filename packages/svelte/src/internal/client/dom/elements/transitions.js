@@ -313,11 +313,11 @@ export function transition(flags, element, get_fn, get_params) {
  * @param {AnimationConfig | ((opts: { direction: 'in' | 'out' }) => AnimationConfig)} options
  * @param {number} t1 The starting `t` value — `0` for intro, `1` for outro, but can be in between if started during existing transition
  * @param {number} t2 The target `t` value — `1` for intro, `0` for outro
- * @param {(() => void) | undefined} on_finish Called after successfully completing the animation
- * @param {(() => void) | undefined} [on_abort] Called if the animation is aborted
+ * @param {(() => void)} on_finish Called after successfully completing the animation
+ * @param {(() => void)} [on_abort] Called if the animation is aborted
  * @returns {Animation}
  */
-function animate(element, options, t1, t2, on_finish, on_abort) {
+function animate(element, options, t1, t2, on_finish, on_abort = noop) {
 	var is_intro = t2 === 1;
 
 	if (is_function(options)) {
@@ -348,7 +348,8 @@ function animate(element, options, t1, t2, on_finish, on_abort) {
 	}
 
 	if (!options?.duration) {
-		on_finish?.();
+		on_finish();
+
 		return {
 			abort: noop,
 			deactivate: noop,
@@ -400,10 +401,8 @@ function animate(element, options, t1, t2, on_finish, on_abort) {
 
 		animation.finished
 			.then(() => {
-				on_finish?.();
-				on_finish = undefined;
-
 				tick?.(t2, 1 - t2);
+				on_finish();
 
 				if (t2 === 1) {
 					// TODO do we need the `if`?
@@ -411,6 +410,8 @@ function animate(element, options, t1, t2, on_finish, on_abort) {
 				}
 			})
 			.catch((e) => {
+				on_abort();
+
 				// Error for DOMException: The user aborted a request. This results in two things:
 				// - startTime is `null`
 				// - currentTime is `null`
@@ -451,15 +452,9 @@ function animate(element, options, t1, t2, on_finish, on_abort) {
 				// This prevents memory leaks in Chromium
 				animation.effect = null;
 			}
-
-			// TODO does this belong in the animation.finished handlers?
-			on_abort?.();
-			on_finish = undefined;
-			on_abort = undefined;
 		},
 		deactivate: () => {
-			on_finish = undefined;
-			on_abort = undefined;
+			on_finish = on_abort = noop;
 		},
 		reset: () => {
 			if (t2 === 0) {
