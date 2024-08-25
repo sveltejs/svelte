@@ -446,8 +446,10 @@ function animate(element, options, counterpart, t1, t2, on_finish, on_abort) {
 				/** @type {globalThis.Animation} */ (animation).currentTime
 			);
 
-			var t = t1 + delta * easing(time / duration);
-			tick(t, 1 - t);
+			if (time >= delay) {
+				var t = t1 + delta * easing((time - delay) / duration);
+				tick(t, 1 - t);
+			}
 
 			return true;
 		});
@@ -479,7 +481,7 @@ function animate(element, options, counterpart, t1, t2, on_finish, on_abort) {
 				/** @type {globalThis.Animation} */ (animation).currentTime
 			);
 
-			var t = t1 + delta * easing(time / duration);
+			var t = t1 + delta * easing(Math.max(0, time - delay) / duration);
 			return Math.min(1, Math.max(0, t));
 		}
 	};
