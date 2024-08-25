@@ -124,11 +124,16 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/aria-query": "^5.0.4",
+    "@types/node": "^20.11.5",
     "dts-buddy": "^0.5.1",
     "esbuild": "^0.19.11",
+    "eslint": "^9.6.0",
+    "prettier": "^3.2.4",
     "rollup": "^4.9.5",
     "source-map": "^0.7.4",
-    "tiny-glob": "^0.2.9"
+    "tiny-glob": "^0.2.9",
+    "typescript": "^5.5.2",
+    "vitest": "^1.2.1"
   },
   "dependencies": {
     "@ampproject/remapping": "^2.2.1",
@@ -144,18 +149,5 @@
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.5",
     "zimmerframe": "^1.1.2"
-  },
-  "knip": {
-    "entry": [
-      "src/*/index.js",
-      "src/index-client.ts",
-      "src/index-server.ts",
-      "src/index.d.ts",
-      "tests/**/*.js",
-      "tests/**/*.ts"
-    ],
-    "project": [
-      "src/**"
-    ]
   }
 }
