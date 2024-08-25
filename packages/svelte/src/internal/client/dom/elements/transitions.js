@@ -97,18 +97,10 @@ export function animation(element, get_fn, get_params) {
 			) {
 				const options = get_fn()(this.element, { from, to }, get_params?.());
 
-				animation = animate(
-					this.element,
-					options,
-					undefined,
-					0,
-					1,
-					() => {
-						animation?.abort();
-						animation = undefined;
-					},
-					undefined
-				);
+				animation = animate(this.element, options, 0, 1, () => {
+					animation?.abort();
+					animation = undefined;
+				});
 			}
 		},
 		fix() {
@@ -221,7 +213,6 @@ export function transition(flags, element, get_fn, get_params) {
 				intro = animate(
 					element,
 					get_options(),
-					outro,
 					t1,
 					1,
 					() => {
@@ -249,11 +240,13 @@ export function transition(flags, element, get_fn, get_params) {
 
 				var t1 = intro?.t() ?? 1;
 
+				// we don't want to _abort_ the counterpart intro, but we _do_ want to prevent callbacks firing
+				intro?.deactivate();
+
 				dispatch_event(element, 'outrostart');
 				outro = animate(
 					element,
 					get_options(),
-					intro,
 					t1,
 					0,
 					() => {
@@ -316,14 +309,13 @@ export function transition(flags, element, get_fn, get_params) {
  * Animates an element, according to the provided configuration
  * @param {Element} element
  * @param {AnimationConfig | ((opts: { direction: 'in' | 'out' }) => AnimationConfig)} options
- * @param {Animation | undefined} counterpart The corresponding intro/outro to this outro/intro
  * @param {number} t1 The starting `t` value — `0` for intro, `1` for outro, but can be in between if started during existing transition
  * @param {number} t2 The target `t` value — `1` for intro, `0` for outro
  * @param {(() => void) | undefined} on_finish Called after successfully completing the animation
- * @param {(() => void) | undefined} on_abort Called if the animation is aborted
+ * @param {(() => void) | undefined} [on_abort] Called if the animation is aborted
  * @returns {Animation}
  */
-function animate(element, options, counterpart, t1, t2, on_finish, on_abort) {
+function animate(element, options, t1, t2, on_finish, on_abort) {
 	var is_intro = t2 === 1;
 
 	if (is_function(options)) {
@@ -337,7 +329,7 @@ function animate(element, options, counterpart, t1, t2, on_finish, on_abort) {
 		queue_micro_task(() => {
 			if (aborted) return;
 			var o = options({ direction: is_intro ? 'in' : 'out' });
-			a = animate(element, o, counterpart, t1, t2, on_finish, on_abort);
+			a = animate(element, o, t1, t2, on_finish, on_abort);
 		});
 
 		// ...but we want to do so without using `async`/`await` everywhere, so
@@ -352,8 +344,6 @@ function animate(element, options, counterpart, t1, t2, on_finish, on_abort) {
 			t: () => a.t()
 		};
 	}
-
-	counterpart?.deactivate();
 
 	if (!options?.duration) {
 		on_finish?.();
