@@ -201,15 +201,14 @@ export function transition(flags, element, get_fn, get_params) {
 		in() {
 			element.inert = inert;
 
-			var t1 = outro?.t() ?? 0;
-
-			// abort the outro to prevent overlap with the intro
-			outro?.abort();
-			// abort previous intro (can happen if an element is intro'd, then outro'd, then intro'd again)
-			intro?.abort();
-
 			if (is_intro) {
+				// abort previous intro (can happen if an element is intro'd, then outro'd, then intro'd again)
+				intro?.abort();
+
 				dispatch_event(element, 'introstart');
+
+				var t1 = outro?.t() ?? 0;
+
 				intro = animate(
 					element,
 					get_options(),
@@ -230,12 +229,15 @@ export function transition(flags, element, get_fn, get_params) {
 			} else {
 				reset?.();
 			}
+
+			// abort the outro to prevent overlap with the intro
+			outro?.abort();
 		},
 		out(fn) {
-			// abort previous outro (can happen if an element is outro'd, then intro'd, then outro'd again)
-			outro?.abort();
-
 			if (is_outro) {
+				// abort previous outro (can happen if an element is outro'd, then intro'd, then outro'd again)
+				outro?.abort();
+
 				element.inert = true;
 
 				var t1 = intro?.t() ?? 1;
