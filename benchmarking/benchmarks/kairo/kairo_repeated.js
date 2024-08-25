@@ -4,7 +4,7 @@ import * as $ from '../../../packages/svelte/src/internal/client/index.js';
 let size = 30;
 
 function setup() {
-	let head = $.source(0);
+	let head = $.state(0);
 	let current = $.derived(() => {
 		let result = 0;
 		for (let i = 0; i < size; i++) {

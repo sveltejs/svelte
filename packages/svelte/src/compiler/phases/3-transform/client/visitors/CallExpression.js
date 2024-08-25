@@ -24,13 +24,6 @@ export function CallExpression(node, context) {
 				is_ignored(node, 'state_snapshot_uncloneable') && b.true
 			);
 
-		case '$state.is':
-			return b.call(
-				'$.is',
-				/** @type {Expression} */ (context.visit(node.arguments[0])),
-				/** @type {Expression} */ (context.visit(node.arguments[1]))
-			);
-
 		case '$effect.root':
 			return b.call(
 				'$.effect_root',

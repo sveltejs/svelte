@@ -7,10 +7,11 @@ import {
 } from '../../../../html-tree-validation.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
-import { create_attribute } from '../../nodes.js';
+import { create_attribute, is_custom_element_node } from '../../nodes.js';
 import { regex_starts_with_newline } from '../../patterns.js';
 import { check_element } from './shared/a11y.js';
 import { validate_element } from './shared/element.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
  * @param {RegularElement} node
@@ -87,6 +88,11 @@ export function RegularElement(node, context) {
 
 	node.metadata.svg = is_svg(node.name);
 	node.metadata.mathml = is_mathml(node.name);
+
+	if (is_custom_element_node(node) && node.attributes.length > 0) {
+		// we're setting all attributes on custom elements through properties
+		mark_subtree_dynamic(context.path);
+	}
 
 	if (context.state.parent_element) {
 		let past_parent = false;

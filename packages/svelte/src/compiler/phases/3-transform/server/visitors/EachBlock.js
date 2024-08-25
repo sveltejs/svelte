@@ -35,7 +35,7 @@ export function EachBlock(node, context) {
 
 	const for_loop = b.for(
 		b.let(index, b.literal(0)),
-		b.binary('<', index, b.member(array_id, b.id('length'))),
+		b.binary('<', index, b.member(array_id, 'length')),
 		b.update('++', index, false),
 		b.block(each)
 	);
@@ -51,7 +51,7 @@ export function EachBlock(node, context) {
 
 		state.template.push(
 			b.if(
-				b.binary('!==', b.member(array_id, b.id('length')), b.literal(0)),
+				b.binary('!==', b.member(array_id, 'length'), b.literal(0)),
 				b.block([open, for_loop]),
 				fallback
 			),

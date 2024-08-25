@@ -9,9 +9,9 @@ import { queue_micro_task } from '../../task.js';
  * @returns {boolean}
  */
 function is_bound_this(bound_value, element_or_component) {
-	// Find the original target if the value is proxied.
-	var proxy_target = bound_value && bound_value[STATE_SYMBOL]?.t;
-	return bound_value === element_or_component || proxy_target === element_or_component;
+	return (
+		bound_value === element_or_component || bound_value?.[STATE_SYMBOL] === element_or_component
+	);
 }
 
 /**

@@ -14,6 +14,8 @@ declare module 'svelte' {
 		context?: Map<any, any>;
 		hydrate?: boolean;
 		intro?: boolean;
+		recover?: boolean;
+		sync?: boolean;
 		$$inline?: boolean;
 	}
 
@@ -282,9 +284,9 @@ declare module 'svelte' {
 			// rest parameter type, which is not supported. If rest parameters are added
 			// in the future, the condition can be removed.
 			...args: number extends Parameters['length'] ? never : Parameters
-		): typeof SnippetReturn & {
-			_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-		};
+		): {
+			'{@render ...} must be called with a Snippet': "import type { Snippet } from 'svelte'";
+		} & typeof SnippetReturn;
 	}
 
 	interface DispatchOptions {
@@ -378,7 +380,7 @@ declare module 'svelte' {
 	 * */
 	export function createRawSnippet<Params extends unknown[]>(fn: (...params: Getters<Params>) => {
 		render: () => string;
-		setup?: (element: Element) => void;
+		setup?: (element: Element) => void | (() => void);
 	}): Snippet<Params>;
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
@@ -740,7 +742,7 @@ declare module 'svelte/compiler' {
 
 	type CssHashGetter = (args: {
 		name: string;
-		filename: string | undefined;
+		filename: string;
 		css: string;
 		hash: (input: string) => string;
 	}) => string;
@@ -1518,7 +1520,7 @@ declare module 'svelte/compiler' {
 		css: Css.StyleSheet | null;
 		/** The parsed `<script>` element, if exists */
 		instance: Script | null;
-		/** The parsed `<script context="module">` element, if exists */
+		/** The parsed `<script module>` element, if exists */
 		module: Script | null;
 		metadata: {
 			/** Whether the component was parsed with typescript */
@@ -1945,7 +1947,7 @@ declare module 'svelte/compiler' {
 
 	interface Script extends BaseNode {
 		type: 'Script';
-		context: string;
+		context: 'default' | 'module';
 		content: Program;
 		attributes: Attribute[];
 	}
@@ -2101,9 +2103,6 @@ declare module 'svelte/legacy' {
 	 * */
 	export function createClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(options: ComponentConstructorOptions<Props> & {
 		component: ComponentType<SvelteComponent<Props, Events, Slots>> | Component<Props>;
-		immutable?: boolean;
-		hydrate?: boolean;
-		recover?: boolean;
 	}): SvelteComponent<Props, Events, Slots> & Exports;
 	/**
 	 * Takes the component function and returns a Svelte 4 compatible component constructor.
@@ -2613,7 +2612,7 @@ declare module 'svelte/types/compiler/interfaces' {
 
 	type CssHashGetter = (args: {
 		name: string;
-		filename: string | undefined;
+		filename: string;
 		css: string;
 		hash: (input: string) => string;
 	}) => string;
@@ -2934,27 +2933,6 @@ declare namespace $state {
 	 * @param state The value to snapshot
 	 */
 	export function snapshot<T>(state: T): Snapshot<T>;
-
-	/**
-	 * Compare two values, one or both of which is a reactive `$state(...)` proxy.
-	 *
-	 * Example:
-	 * ```ts
-	 * <script>
-	 *	 let foo = $state({});
-	 *	 let bar = {};
-	 *
-	 *	 foo.bar = bar;
-	 *
-	 *	 console.log(foo.bar === bar); // false — `foo.bar` is a reactive proxy
-	 *   console.log($state.is(foo.bar, bar)); // true
-	 * </script>
-	 * ```
-	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$state.is
-	 *
-	 */
-	export function is(a: any, b: any): boolean;
 
 	// prevent intellisense from being unhelpful
 	/** @deprecated */

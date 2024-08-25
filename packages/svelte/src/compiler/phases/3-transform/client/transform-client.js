@@ -207,7 +207,7 @@ export function client_component(analysis, options) {
 
 	for (const [name, binding] of analysis.instance.scope.declarations) {
 		if (binding.kind === 'legacy_reactive') {
-			legacy_reactive_declarations.push(b.const(name, b.call('$.mutable_source')));
+			legacy_reactive_declarations.push(b.const(name, b.call('$.mutable_state')));
 		}
 		if (binding.kind === 'store_sub') {
 			if (store_setup.length === 0) {
@@ -473,12 +473,8 @@ export function client_component(analysis, options) {
 		const incoming = b.member(b.id('module.default'), HMR, true);
 
 		const accept_fn_body = [
-			b.stmt(
-				b.assignment('=', b.member(incoming, b.id('source')), b.member(existing, b.id('source')))
-			),
-			b.stmt(
-				b.call('$.set', b.member(existing, b.id('source')), b.member(incoming, b.id('original')))
-			)
+			b.stmt(b.assignment('=', b.member(incoming, 'source'), b.member(existing, 'source'))),
+			b.stmt(b.call('$.set', b.member(existing, 'source'), b.member(incoming, 'original')))
 		];
 
 		if (analysis.css.hash) {
@@ -488,7 +484,7 @@ export function client_component(analysis, options) {
 					b.call(
 						b.member(
 							b.call('document.querySelector', b.literal('#' + analysis.css.hash)),
-							b.id('remove'),
+							'remove',
 							false,
 							true
 						)
@@ -498,9 +494,7 @@ export function client_component(analysis, options) {
 		}
 
 		const hmr = b.block([
-			b.stmt(
-				b.assignment('=', id, b.call('$.hmr', id, b.thunk(b.member(existing, b.id('source')))))
-			),
+			b.stmt(b.assignment('=', id, b.call('$.hmr', id, b.thunk(b.member(existing, 'source'))))),
 
 			b.stmt(b.call('import.meta.hot.accept', b.arrow([b.id('module')], b.block(accept_fn_body))))
 		]);
@@ -511,18 +505,12 @@ export function client_component(analysis, options) {
 	}
 
 	if (dev) {
-		if (filename) {
-			// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later
-			body.unshift(
-				b.stmt(
-					b.assignment(
-						'=',
-						b.member(b.id(analysis.name), b.id('$.FILENAME'), true),
-						b.literal(filename)
-					)
-				)
-			);
-		}
+		// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later
+		body.unshift(
+			b.stmt(
+				b.assignment('=', b.member(b.id(analysis.name), '$.FILENAME', true), b.literal(filename))
+			)
+		);
 
 		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'))));
 		body.push(b.stmt(b.call(b.id('$.mark_module_end'), b.id(analysis.name))));
@@ -603,7 +591,15 @@ export function client_component(analysis, options) {
 
 		// If a tag name is provided, call `customElements.define`, otherwise leave to the user
 		if (typeof ce !== 'boolean' && typeof ce.tag === 'string') {
-			body.push(b.stmt(b.call('customElements.define', b.literal(ce.tag), create_ce)));
+			const define = b.stmt(b.call('customElements.define', b.literal(ce.tag), create_ce));
+
+			if (options.hmr) {
+				body.push(
+					b.if(b.binary('==', b.call('customElements.get', b.literal(ce.tag)), b.null), define)
+				);
+			} else {
+				body.push(define);
+			}
 		} else {
 			body.push(b.stmt(create_ce));
 		}

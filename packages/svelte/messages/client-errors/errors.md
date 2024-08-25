@@ -64,9 +64,17 @@
 
 > The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
 
+## state_descriptors_fixed
+
+> Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
+
 ## state_prototype_fixed
 
 > Cannot set prototype of `$state` object
+
+## state_unsafe_local_read
+
+> Reading state that was created inside the same derived is forbidden. Consider using `untrack` to read locally created state
 
 ## state_unsafe_mutation
 

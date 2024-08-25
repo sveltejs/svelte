@@ -1,5 +1,159 @@
 # svelte
 
+## 5.0.0-next.237
+
+### Patch Changes
+
+- breaking: throw error if derived creates state and then depends on it ([#12985](https://github.com/sveltejs/svelte/pull/12985))
+
+- fix: ensure assignments to state field inside constructor trigger effects ([#12985](https://github.com/sveltejs/svelte/pull/12985))
+
+- fix: ensure $inspect works with SvelteMap and SvelteSet ([#12994](https://github.com/sveltejs/svelte/pull/12994))
+
+- chore: default options.filename to "(unknown)" ([#12997](https://github.com/sveltejs/svelte/pull/12997))
+
+- feat: allow non-synchronous legacy component instantiation ([#12970](https://github.com/sveltejs/svelte/pull/12970))
+
+## 5.0.0-next.236
+
+### Patch Changes
+
+- fix: properly transform destructured `$derived.by` declarations ([#12984](https://github.com/sveltejs/svelte/pull/12984))
+
+## 5.0.0-next.235
+
+### Patch Changes
+
+- chore: update client check for smaller bundle size ([#12975](https://github.com/sveltejs/svelte/pull/12975))
+
+- fix: correctly hydrate empty raw blocks ([#12979](https://github.com/sveltejs/svelte/pull/12979))
+
+## 5.0.0-next.234
+
+### Patch Changes
+
+- fix: allow deleting non-existent `$restProps` properties ([#12971](https://github.com/sveltejs/svelte/pull/12971))
+
+- feat: only traverse trailing static nodes during hydration ([#12935](https://github.com/sveltejs/svelte/pull/12935))
+
+## 5.0.0-next.233
+
+### Patch Changes
+
+- fix: more robust handling of var declarations ([#12949](https://github.com/sveltejs/svelte/pull/12949))
+
+- fix: remove buggy `validate_dynamic_component` check ([#12960](https://github.com/sveltejs/svelte/pull/12960))
+
+## 5.0.0-next.232
+
+### Patch Changes
+
+- breaking: remove `$state.link` rune pending further design work ([#12943](https://github.com/sveltejs/svelte/pull/12943))
+
+- fix: ensure `$store` reads are properly transformed ([#12952](https://github.com/sveltejs/svelte/pull/12952))
+
+- breaking: deprecate `context="module"` in favor of `module` ([#12948](https://github.com/sveltejs/svelte/pull/12948))
+
+## 5.0.0-next.231
+
+### Patch Changes
+
+- breaking: remove callback from `$state.link` ([#12942](https://github.com/sveltejs/svelte/pull/12942))
+
+## 5.0.0-next.230
+
+### Patch Changes
+
+- fix: align list of passive events with browser defaults ([#12933](https://github.com/sveltejs/svelte/pull/12933))
+
+- fix: ensure `{#await}` scope shadowing is computed in the correct order ([#12945](https://github.com/sveltejs/svelte/pull/12945))
+
+- fix: don't skip custom elements with attributes ([#12939](https://github.com/sveltejs/svelte/pull/12939))
+
+## 5.0.0-next.229
+
+### Patch Changes
+
+- feat: add `$state.link` rune ([#12545](https://github.com/sveltejs/svelte/pull/12545))
+
+- fix: allow mixing slots and snippets in custom elements mode ([#12929](https://github.com/sveltejs/svelte/pull/12929))
+
+- fix: small legibility improvement in `Snippet` type hint ([#12928](https://github.com/sveltejs/svelte/pull/12928))
+
+- feat: support HMR with custom elements ([#12926](https://github.com/sveltejs/svelte/pull/12926))
+
+- feat: error on invalid component name ([#12821](https://github.com/sveltejs/svelte/pull/12821))
+
+## 5.0.0-next.228
+
+### Patch Changes
+
+- feat: skip over static nodes in compiled client code ([#12914](https://github.com/sveltejs/svelte/pull/12914))
+
+## 5.0.0-next.227
+
+### Patch Changes
+
+- breaking: disallow `Object.defineProperty` on state proxies with non-basic descriptors ([#12916](https://github.com/sveltejs/svelte/pull/12916))
+
+- breaking: allow frozen objects to be proxied ([#12916](https://github.com/sveltejs/svelte/pull/12916))
+
+- breaking: avoid mutations to underlying proxied object with $state ([#12916](https://github.com/sveltejs/svelte/pull/12916))
+
+- breaking: remove $state.is rune ([#12916](https://github.com/sveltejs/svelte/pull/12916))
+
+## 5.0.0-next.226
+
+### Patch Changes
+
+- fix: ensure typings for `<svelte:options>` are picked up ([#12903](https://github.com/sveltejs/svelte/pull/12903))
+
+- fix: exclude local declarations from non-reactive property warnings ([#12909](https://github.com/sveltejs/svelte/pull/12909))
+
+## 5.0.0-next.225
+
+### Patch Changes
+
+- chore: improve the performance of set_text for single expressions ([#12893](https://github.com/sveltejs/svelte/pull/12893))
+
+- fix: add cleanup function signature to `createRawSnippet` ([#12894](https://github.com/sveltejs/svelte/pull/12894))
+
+- feat: more efficient checking for missing SSR text node ([#12891](https://github.com/sveltejs/svelte/pull/12891))
+
+- fix: ensure nullish expressions render empty text ([#12898](https://github.com/sveltejs/svelte/pull/12898))
+
+## 5.0.0-next.224
+
+### Patch Changes
+
+- chore: inline start and end node properties into effect ([#12878](https://github.com/sveltejs/svelte/pull/12878))
+
+- fix: correctly ensure prop bindings are reactive when bound ([#12879](https://github.com/sveltejs/svelte/pull/12879))
+
+- fix: remove sapper bindings ([#12875](https://github.com/sveltejs/svelte/pull/12875))
+
+- chore: refactor internal signal dependency heuristic ([#12881](https://github.com/sveltejs/svelte/pull/12881))
+
+- fix: allow store as initial value for props in ssr ([#12885](https://github.com/sveltejs/svelte/pull/12885))
+
+## 5.0.0-next.223
+
+### Patch Changes
+
+- fix: treat module-level imports as non-reactive in legacy mode ([#12845](https://github.com/sveltejs/svelte/pull/12845))
+
+- breaking: remove foreign namespace ([#12869](https://github.com/sveltejs/svelte/pull/12869))
+
+- feat: more efficient text-only fragments ([#12864](https://github.com/sveltejs/svelte/pull/12864))
+
+- fix: ensure outro animation is not prematurely aborted ([#12865](https://github.com/sveltejs/svelte/pull/12865))
+
+- chore: improve performance of DOM traversal operations ([#12863](https://github.com/sveltejs/svelte/pull/12863))
+
+- feat: better destructuring assignments ([#12872](https://github.com/sveltejs/svelte/pull/12872))
+
+- fix: stricter `crossorigin` and `wrap` attributes types ([#12858](https://github.com/sveltejs/svelte/pull/12858))
+
 ## 5.0.0-next.222
 
 ### Patch Changes

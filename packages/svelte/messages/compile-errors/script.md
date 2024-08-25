@@ -16,7 +16,7 @@
 
 ## declaration_duplicate_module_import
 
-> Cannot declare same variable name which is imported inside `<script context="module">`
+> Cannot declare a variable with the same name as an import inside `<script module>`
 
 ## derived_invalid_export
 
@@ -122,6 +122,10 @@
 
 > Cannot use rune without parentheses
 
+## rune_removed
+
+> The `%name%` rune has been removed
+
 ## rune_renamed
 
 > `%name%` is now `%replacement%`
@@ -148,7 +152,7 @@
 
 ## store_invalid_subscription
 
-> Cannot reference store value inside `<script context="module">`
+> Cannot reference store value inside `<script module>`
 
 ## store_invalid_subscription_module
 

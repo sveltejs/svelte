@@ -42,11 +42,17 @@ export function Program(_, context) {
 
 	for (const [name, binding] of context.state.scope.declarations) {
 		if (binding.kind === 'store_sub') {
-			const store = /** @type {Expression} */ (context.visit(b.id(name.slice(1))));
+			// read lazily, so that transforms added later are still applied
+			/** @type {Expression} */
+			let cached;
+
+			const get_store = () => {
+				return (cached ??= /** @type {Expression} */ (context.visit(b.id(name.slice(1)))));
+			};
 
 			context.state.transform[name] = {
 				read: b.call,
-				assign: (_, value) => b.call('$.store_set', store, value),
+				assign: (_, value) => b.call('$.store_set', get_store(), value),
 				mutate: (node, mutation) => {
 					// We need to untrack the store read, for consistency with Svelte 4
 					const untracked = b.call('$.untrack', node);
@@ -70,7 +76,7 @@ export function Program(_, context) {
 
 					return b.call(
 						'$.store_mutate',
-						store,
+						get_store(),
 						b.assignment(
 							mutation.operator,
 							/** @type {MemberExpression} */ (

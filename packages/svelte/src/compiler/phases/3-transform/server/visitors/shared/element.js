@@ -138,7 +138,7 @@ export function build_element_attributes(node, context) {
 							parent: attribute,
 							expression: is_checkbox
 								? b.call(
-										b.member(attribute.expression, b.id('includes')),
+										b.member(attribute.expression, 'includes'),
 										build_attribute_value(value_attribute.value, context)
 									)
 								: b.binary(
@@ -389,10 +389,7 @@ function build_class_directives(class_directives, class_attribute) {
 		end: -1,
 		parent: class_attribute,
 		expression: b.call(
-			b.member(
-				b.call(b.member(b.array(expressions), b.id('filter')), b.id('Boolean')),
-				b.id('join')
-			),
+			b.member(b.call(b.member(b.array(expressions), 'filter'), b.id('Boolean')), b.id('join')),
 			b.literal(' ')
 		),
 		metadata: {

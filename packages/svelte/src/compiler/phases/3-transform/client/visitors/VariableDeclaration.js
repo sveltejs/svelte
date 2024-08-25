@@ -28,8 +28,7 @@ export function VariableDeclaration(node, context) {
 				rune === '$effect.tracking' ||
 				rune === '$effect.root' ||
 				rune === '$inspect' ||
-				rune === '$state.snapshot' ||
-				rune === '$state.is'
+				rune === '$state.snapshot'
 			) {
 				if (init != null && is_hoisted_function(init)) {
 					context.state.hoisted.push(
@@ -127,7 +126,7 @@ export function VariableDeclaration(node, context) {
 						value = b.call('$.proxy', value);
 					}
 					if (is_state_source(binding, context.state.analysis)) {
-						value = b.call('$.source', value);
+						value = b.call('$.state', value);
 					}
 					return value;
 				};
@@ -174,7 +173,7 @@ export function VariableDeclaration(node, context) {
 					let id;
 					let rhs = value;
 
-					if (init.arguments[0].type === 'Identifier') {
+					if (rune === '$derived' && init.arguments[0].type === 'Identifier') {
 						id = init.arguments[0];
 					} else {
 						id = b.id(context.state.scope.generate('$$d'));
@@ -285,14 +284,14 @@ export function VariableDeclaration(node, context) {
 }
 
 /**
- * Creates the output for a state declaration.
+ * Creates the output for a state declaration in legacy mode.
  * @param {VariableDeclarator} declarator
  * @param {Scope} scope
  * @param {Expression} value
  */
 function create_state_declarators(declarator, scope, value) {
 	if (declarator.id.type === 'Identifier') {
-		return [b.declarator(declarator.id, b.call('$.mutable_source', value))];
+		return [b.declarator(declarator.id, b.call('$.mutable_state', value))];
 	}
 
 	const tmp = scope.generate('tmp');
@@ -304,7 +303,7 @@ function create_state_declarators(declarator, scope, value) {
 			const binding = scope.get(/** @type {Identifier} */ (path.node).name);
 			return b.declarator(
 				path.node,
-				binding?.kind === 'state' ? b.call('$.mutable_source', value) : value
+				binding?.kind === 'state' ? b.call('$.mutable_state', value) : value
 			);
 		})
 	];

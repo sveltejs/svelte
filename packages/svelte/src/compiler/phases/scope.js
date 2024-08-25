@@ -461,8 +461,20 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		ForStatement: create_block_scope,
 		ForInStatement: create_block_scope,
 		ForOfStatement: create_block_scope,
-		BlockStatement: create_block_scope,
 		SwitchStatement: create_block_scope,
+		BlockStatement(node, context) {
+			const parent = context.path.at(-1);
+			if (
+				parent?.type === 'FunctionDeclaration' ||
+				parent?.type === 'FunctionExpression' ||
+				parent?.type === 'ArrowFunctionExpression'
+			) {
+				// We already created a new scope for the function
+				context.next();
+			} else {
+				create_block_scope(node, context);
+			}
+		},
 
 		ClassDeclaration(node, { state, next }) {
 			if (node.id) state.scope.declare(node.id, 'normal', 'let', node);

@@ -841,10 +841,6 @@ export interface HTMLAnchorAttributes extends HTMLAttributes<HTMLAnchorElement> 
 	target?: HTMLAttributeAnchorTarget | undefined | null;
 	type?: string | undefined | null;
 	referrerpolicy?: ReferrerPolicy | undefined | null;
-
-	// Sapper
-	'sapper:noscroll'?: true | undefined | null;
-	'sapper:prefetch'?: true | undefined | null;
 }
 
 export interface HTMLAudioAttributes extends HTMLMediaAttributes<HTMLAudioElement> {}

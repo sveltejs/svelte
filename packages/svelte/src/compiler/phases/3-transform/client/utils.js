@@ -47,19 +47,10 @@ export function build_getter(node, state) {
 
 /**
  * @param {Expression} value
- * @param {PrivateIdentifier | string} proxy_reference
+ * @param {Expression} previous
  */
-export function build_proxy_reassignment(value, proxy_reference) {
-	return dev
-		? b.call(
-				'$.proxy',
-				value,
-				b.null,
-				typeof proxy_reference === 'string'
-					? b.id(proxy_reference)
-					: b.member(b.this, proxy_reference)
-			)
-		: b.call('$.proxy', value);
+export function build_proxy_reassignment(value, previous) {
+	return dev ? b.call('$.proxy', value, b.null, previous) : b.call('$.proxy', value);
 }
 
 /**
@@ -186,7 +177,7 @@ export function get_prop_source(binding, state, name, initial) {
 		state.analysis.accessors ||
 		(state.analysis.immutable
 			? binding.reassigned || (state.analysis.runes && binding.mutated)
-			: binding.mutated)
+			: binding.updated)
 	) {
 		flags |= PROPS_IS_UPDATED;
 	}

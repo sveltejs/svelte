@@ -39,7 +39,8 @@ export function MemberExpression(node, context) {
 					binding.declaration_kind === 'import' ||
 					(binding.initial &&
 						binding.initial.type !== 'ArrayExpression' &&
-						binding.initial.type !== 'ObjectExpression')
+						binding.initial.type !== 'ObjectExpression' &&
+						binding.scope.function_depth <= 1)
 				) {
 					if (parent.type !== 'MemberExpression' && parent.type !== 'CallExpression') {
 						w.reactive_declaration_non_reactive_property(node);

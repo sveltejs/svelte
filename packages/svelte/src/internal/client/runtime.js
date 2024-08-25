@@ -81,6 +81,20 @@ export function set_current_effect(effect) {
 }
 
 /**
+ * When sources are created within a derived, we record them so that we can safely allow
+ * local mutations to these sources without the side-effect error being invoked unnecessarily.
+ * @type {null | Source[]}
+ */
+export let derived_sources = null;
+
+/**
+ * @param {Source[] | null} sources
+ */
+export function set_derived_sources(sources) {
+	derived_sources = sources;
+}
+
+/**
  * The dependencies of the reaction that is currently being executed. In many cases,
  * the dependencies are unchanged between runs, and so this will be `null` unless
  * and until a new dependency is accessed — we track this via `skipped_deps`
@@ -169,7 +183,7 @@ export function check_dirtiness(reaction) {
 
 			if ((flags & DISCONNECTED) !== 0) {
 				for (i = 0; i < dependencies.length; i++) {
-					(dependencies[i].reactions ??= new Set()).add(reaction);
+					(dependencies[i].reactions ??= []).push(reaction);
 				}
 
 				reaction.f ^= DISCONNECTED;
@@ -188,11 +202,11 @@ export function check_dirtiness(reaction) {
 
 				if (is_unowned) {
 					// TODO is there a more logical place to do this work?
-					if (!current_skip_reaction && !dependency?.reactions?.has(reaction)) {
+					if (!current_skip_reaction && !dependency?.reactions?.includes(reaction)) {
 						// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
 						// and the version hasn't changed, we still need to check that this reaction
 						// if linked to the dependency source – otherwise future updates will not be caught.
-						(dependency.reactions ??= new Set()).add(reaction);
+						(dependency.reactions ??= []).push(reaction);
 					}
 				}
 			}
@@ -230,12 +244,14 @@ function handle_error(error, effect, component_context) {
 	let current_context = component_context;
 
 	while (current_context !== null) {
-		/** @type {string} */
-		var filename = current_context.function?.[FILENAME];
+		if (DEV) {
+			/** @type {string} */
+			var filename = current_context.function?.[FILENAME];
 
-		if (filename) {
-			const file = filename.split('/').pop();
-			component_stack.push(file);
+			if (filename) {
+				const file = filename.split('/').pop();
+				component_stack.push(file);
+			}
 		}
 
 		current_context = current_context.p;
@@ -279,38 +295,23 @@ export function update_reaction(reaction) {
 	var previous_untracked_writes = current_untracked_writes;
 	var previous_reaction = current_reaction;
 	var previous_skip_reaction = current_skip_reaction;
+	var prev_derived_sources = derived_sources;
 
 	new_deps = /** @type {null | Value[]} */ (null);
 	skipped_deps = 0;
 	current_untracked_writes = null;
 	current_reaction = (reaction.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 	current_skip_reaction = !is_flushing_effect && (reaction.f & UNOWNED) !== 0;
+	derived_sources = null;
 
 	try {
 		var result = /** @type {Function} */ (0, reaction.fn)();
 		var deps = reaction.deps;
 
 		if (new_deps !== null) {
-			var dependency;
 			var i;
 
-			if (deps !== null) {
-				/** All dependencies of the reaction, including those tracked on the previous run */
-				var array = skipped_deps === 0 ? new_deps : deps.slice(0, skipped_deps).concat(new_deps);
-
-				// If we have more than 16 elements in the array then use a Set for faster performance
-				// TODO: evaluate if we should always just use a Set or not here?
-				var set = array.length > 16 ? new Set(array) : null;
-
-				// Remove dependencies that should no longer be tracked
-				for (i = skipped_deps; i < deps.length; i++) {
-					dependency = deps[i];
-
-					if (set !== null ? !set.has(dependency) : !array.includes(dependency)) {
-						remove_reaction(reaction, dependency);
-					}
-				}
-			}
+			remove_reactions(reaction, skipped_deps);
 
 			if (deps !== null && skipped_deps > 0) {
 				deps.length = skipped_deps + new_deps.length;
@@ -323,7 +324,7 @@ export function update_reaction(reaction) {
 
 			if (!current_skip_reaction) {
 				for (i = skipped_deps; i < deps.length; i++) {
-					(deps[i].reactions ??= new Set()).add(reaction);
+					(deps[i].reactions ??= []).push(reaction);
 				}
 			}
 		} else if (deps !== null && skipped_deps < deps.length) {
@@ -338,6 +339,7 @@ export function update_reaction(reaction) {
 		current_untracked_writes = previous_untracked_writes;
 		current_reaction = previous_reaction;
 		current_skip_reaction = previous_skip_reaction;
+		derived_sources = prev_derived_sources;
 	}
 }
 
@@ -350,9 +352,16 @@ export function update_reaction(reaction) {
 function remove_reaction(signal, dependency) {
 	let reactions = dependency.reactions;
 	if (reactions !== null) {
-		reactions.delete(signal);
-		if (reactions.size === 0) {
-			reactions = dependency.reactions = null;
+		var index = reactions.indexOf(signal);
+		if (index !== -1) {
+			var new_length = reactions.length - 1;
+			if (new_length === 0) {
+				reactions = dependency.reactions = null;
+			} else {
+				// Swap with last element and then remove.
+				reactions[index] = reactions[new_length];
+				reactions.pop();
+			}
 		}
 	}
 	// If the derived has no reactions, then we can disconnect it from the graph,
@@ -377,19 +386,8 @@ export function remove_reactions(signal, start_index) {
 	var dependencies = signal.deps;
 	if (dependencies === null) return;
 
-	var active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
-	var seen = new Set();
-
 	for (var i = start_index; i < dependencies.length; i++) {
-		var dependency = dependencies[i];
-
-		if (seen.has(dependency)) continue;
-		seen.add(dependency);
-
-		// Avoid removing a reaction if we know that it is active (start_index will not be 0)
-		if (active_dependencies === null || !active_dependencies.includes(dependency)) {
-			remove_reaction(signal, dependency);
-		}
+		remove_reaction(signal, dependencies[i]);
 	}
 }
 
@@ -518,7 +516,7 @@ function flush_queued_effects(effects) {
 			// don't know if we need to keep them until they are executed. Doing the check
 			// here (rather than in `update_effect`) allows us to skip the work for
 			// immediate effects.
-			if (effect.deps === null && effect.first === null && effect.nodes === null) {
+			if (effect.deps === null && effect.first === null && effect.nodes_start === null) {
 				if (effect.teardown === null) {
 					// remove this effect from the graph
 					unlink_effect(effect);
@@ -572,53 +570,6 @@ export function schedule_effect(signal) {
 }
 
 /**
- * @param {Effect} effect
- * @param {Effect[]} effects
- */
-function process_effect_children(effect, effects) {
-	var current = effect.first;
-
-	while (current !== null) {
-		var next = current.next;
-		process_effect(current, effects);
-		current = next;
-	}
-}
-
-/**
- * @param {Effect} effect
- * @param {Effect[]} effects
- */
-function process_effect(effect, effects) {
-	var flags = effect.f;
-	// TODO: we probably don't need to check for destroyed as it shouldn't be encountered?
-	var is_active = (flags & (DESTROYED | INERT)) === 0;
-	var is_branch = (flags & BRANCH_EFFECT) !== 0;
-	var is_clean = (flags & CLEAN) !== 0;
-
-	// Skip this branch if it's clean
-	if (is_active && (!is_branch || !is_clean)) {
-		if (is_branch) {
-			set_signal_status(effect, CLEAN);
-		}
-
-		if ((flags & RENDER_EFFECT) !== 0) {
-			if (!is_branch && check_dirtiness(effect)) {
-				update_effect(effect);
-			}
-
-			process_effect_children(effect, effects);
-		} else if ((flags & EFFECT) !== 0) {
-			if (is_branch || is_clean) {
-				process_effect_children(effect, effects);
-			} else {
-				effects.push(effect);
-			}
-		}
-	}
-}
-
-/**
  *
  * This function both runs render effects and collects user effects in topological order
  * from the starting effect passed in. Effects will be collected when they match the filtered
@@ -630,13 +581,70 @@ function process_effect(effect, effects) {
  * @returns {void}
  */
 function process_effects(effect, collected_effects) {
-	/** @type {Effect[]} */
+	var current_effect = effect.first;
 	var effects = [];
-	process_effect_children(effect, effects);
+
+	main_loop: while (current_effect !== null) {
+		var flags = current_effect.f;
+		// TODO: we probably don't need to check for destroyed as it shouldn't be encountered?
+		var is_active = (flags & (DESTROYED | INERT)) === 0;
+		var is_branch = (flags & BRANCH_EFFECT) !== 0;
+		var is_clean = (flags & CLEAN) !== 0;
+		var child = current_effect.first;
+
+		// Skip this branch if it's clean
+		if (is_active && (!is_branch || !is_clean)) {
+			if (is_branch) {
+				set_signal_status(current_effect, CLEAN);
+			}
+
+			if ((flags & RENDER_EFFECT) !== 0) {
+				if (!is_branch && check_dirtiness(current_effect)) {
+					update_effect(current_effect);
+					// Child might have been mutated since running the effect
+					child = current_effect.first;
+				}
+
+				if (child !== null) {
+					current_effect = child;
+					continue;
+				}
+			} else if ((flags & EFFECT) !== 0) {
+				if (is_branch || is_clean) {
+					if (child !== null) {
+						current_effect = child;
+						continue;
+					}
+				} else {
+					effects.push(current_effect);
+				}
+			}
+		}
+		var sibling = current_effect.next;
+
+		if (sibling === null) {
+			let parent = current_effect.parent;
+
+			while (parent !== null) {
+				if (effect === parent) {
+					break main_loop;
+				}
+				var parent_sibling = parent.next;
+				if (parent_sibling !== null) {
+					current_effect = parent_sibling;
+					continue main_loop;
+				}
+				parent = parent.parent;
+			}
+		}
+
+		current_effect = sibling;
+	}
+
 	// We might be dealing with many effects here, far more than can be spread into
 	// an array push call (callstack overflow). So let's deal with each effect in a loop.
 	for (var i = 0; i < effects.length; i++) {
-		var child = effects[i];
+		child = effects[i];
 		collected_effects.push(child);
 		process_effects(child, collected_effects);
 	}
@@ -709,6 +717,9 @@ export function get(signal) {
 
 	// Register the dependency on the current reaction signal.
 	if (current_reaction !== null) {
+		if (derived_sources !== null && derived_sources.includes(signal)) {
+			e.state_unsafe_local_read();
+		}
 		var deps = current_reaction.deps;
 
 		// If the signal is accessing the same dependencies in the same
@@ -716,16 +727,10 @@ export function get(signal) {
 		// rather than updating `new_deps`, which creates GC cost
 		if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
 			skipped_deps++;
-		}
-
-		// Otherwise, create or push to `new_deps`, but only if this
-		// dependency wasn't the last one that was accessed
-		else if (deps === null || skipped_deps === 0 || deps[skipped_deps - 1] !== signal) {
-			if (new_deps === null) {
-				new_deps = [signal];
-			} else if (new_deps[new_deps.length - 1] !== signal) {
-				new_deps.push(signal);
-			}
+		} else if (new_deps === null) {
+			new_deps = [signal];
+		} else {
+			new_deps.push(signal);
 		}
 
 		if (
@@ -749,6 +754,16 @@ export function get(signal) {
 	}
 
 	return signal.v;
+}
+
+/**
+ * Like `get`, but checks for `undefined`. Used for `var` declarations because they can be accessed before being declared
+ * @template V
+ * @param {Value<V> | undefined} signal
+ * @returns {V | undefined}
+ */
+export function safe_get(signal) {
+	return signal && get(signal);
 }
 
 /**

@@ -63,6 +63,10 @@ export interface ComponentAnalysis extends Analysis {
 	event_directive_node: OnDirective | null;
 	/** true if uses event attributes (onclick) on a DOM element */
 	uses_event_attributes: boolean;
+	/**
+	 * Contains the content of `<svelte:options customElement={...} />`,
+	 * or if not present a boolean which corresponds to the compiler option value
+	 */
 	custom_element: boolean | SvelteOptions['customElement'];
 	/** If `true`, should append styles through JavaScript */
 	inject_styles: boolean;

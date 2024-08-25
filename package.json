@@ -40,6 +40,7 @@
     "playwright": "^1.41.1",
     "prettier": "^3.2.4",
     "prettier-plugin-svelte": "^3.1.2",
+    "svelte": "workspace:^",
     "typescript": "^5.5.2",
     "typescript-eslint": "^8.0.0-alpha.34",
     "v8-natives": "^1.2.5",

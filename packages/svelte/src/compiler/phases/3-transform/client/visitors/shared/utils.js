@@ -59,11 +59,21 @@ export function build_template_literal(values, visit, state) {
 						id,
 						create_derived(
 							state,
-							b.thunk(/** @type {Expression} */ (visit(node.expression, state)))
+							b.thunk(
+								b.logical(
+									'??',
+									/** @type {Expression} */ (visit(node.expression, state)),
+									b.literal('')
+								)
+							)
 						)
 					)
 				);
 				expressions.push(b.call('$.get', id));
+			} else if (values.length === 1) {
+				// If we have a single expression, then pass that in directly to possibly avoid doing
+				// extra work in the template_effect (instead we do the work in set_text).
+				return { value: visit(node.expression, state), has_state, has_call };
 			} else {
 				expressions.push(b.logical('??', visit(node.expression, state), b.literal('')));
 			}

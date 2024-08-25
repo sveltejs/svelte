@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	let foo = 0;
 
 	export function update() {

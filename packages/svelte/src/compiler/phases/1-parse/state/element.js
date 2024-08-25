@@ -75,6 +75,8 @@ function parent_is_shadowroot_template(stack) {
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
 const regex_closing_comment = /-->/;
 const regex_component_name = /^(?:[A-Z]|[A-Za-z][A-Za-z0-9_$]*\.)/;
+const regex_valid_component_name =
+	/^(?:[A-Z][A-Za-z0-9_$.]*|[a-z][A-Za-z0-9_$]*\.[A-Za-z0-9_$])[A-Za-z0-9_$.]*$/;
 
 /** @param {Parser} parser */
 export default function element(parser) {
@@ -135,6 +137,10 @@ export default function element(parser) {
 					name === 'slot' && !parent_is_shadowroot_template(parser.stack)
 					? 'SlotElement'
 					: 'RegularElement';
+
+	if (type === 'Component' && !regex_valid_component_name.test(name)) {
+		e.component_invalid_name({ start: start + 1, end: start + name.length + 1 });
+	}
 
 	/** @type {Compiler.ElementLike} */
 	const element =

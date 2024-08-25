@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Source, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	current_component_context,
@@ -13,7 +13,9 @@ import {
 	set_signal_status,
 	untrack,
 	increment_version,
-	update_effect
+	update_effect,
+	derived_sources,
+	set_derived_sources
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -34,7 +36,6 @@ let inspect_effects = new Set();
  * @param {V} v
  * @returns {Source<V>}
  */
-/*#__NO_SIDE_EFFECTS__*/
 export function source(v) {
 	return {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
@@ -43,6 +44,14 @@ export function source(v) {
 		equals,
 		version: 0
 	};
+}
+
+/**
+ * @template V
+ * @param {V} v
+ */
+export function state(v) {
+	return push_derived_source(source(v));
 }
 
 /**
@@ -66,6 +75,32 @@ export function mutable_source(initial_value) {
 
 /**
  * @template V
+ * @param {V} v
+ * @returns {Source<V>}
+ */
+export function mutable_state(v) {
+	return push_derived_source(mutable_source(v));
+}
+
+/**
+ * @template V
+ * @param {Source<V>} source
+ */
+/*#__NO_SIDE_EFFECTS__*/
+function push_derived_source(source) {
+	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
+		if (derived_sources === null) {
+			set_derived_sources([source]);
+		} else {
+			derived_sources.push(source);
+		}
+	}
+
+	return source;
+}
+
+/**
+ * @template V
  * @param {Value<V>} source
  * @param {V} value
  */
@@ -84,7 +119,14 @@ export function mutate(source, value) {
  * @returns {V}
  */
 export function set(source, value) {
-	if (current_reaction !== null && is_runes() && (current_reaction.f & DERIVED) !== 0) {
+	if (
+		current_reaction !== null &&
+		is_runes() &&
+		(current_reaction.f & DERIVED) !== 0 &&
+		// If the source was created locally within the current derived, then
+		// we allow the mutation.
+		(derived_sources === null || !derived_sources.includes(source))
+	) {
 		e.state_unsafe_mutation();
 	}
 
@@ -139,8 +181,10 @@ function mark_reactions(signal, status) {
 	if (reactions === null) return;
 
 	var runes = is_runes();
+	var length = reactions.length;
 
-	for (var reaction of reactions) {
+	for (var i = 0; i < length; i++) {
+		var reaction = reactions[i];
 		var flags = reaction.f;
 
 		// Skip any effects that are already dirty

@@ -61,6 +61,10 @@ export function Identifier(node, context) {
 						e.rune_renamed(parent, '$state.frozen', '$state.raw');
 					}
 
+					if (name === '$state.is') {
+						e.rune_removed(parent, '$state.is');
+					}
+
 					e.rune_invalid_name(parent, name);
 				}
 			}

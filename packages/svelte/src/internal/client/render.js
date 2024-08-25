@@ -1,4 +1,4 @@
-/** @import { ComponentContext, Effect, EffectNodes, TemplateNode } from '#client' */
+/** @import { ComponentContext, Effect, TemplateNode } from '#client' */
 /** @import { Component, ComponentType, SvelteComponent } from '../../index.js' */
 import { DEV } from 'esm-env';
 import {
@@ -51,7 +51,8 @@ export function set_text(text, value) {
 	// @ts-expect-error
 	if (value !== (text.__t ??= text.nodeValue)) {
 		// @ts-expect-error
-		text.nodeValue = text.__t = value;
+		text.__t = value;
+		text.nodeValue = value == null ? '' : value + '';
 	}
 }
 
@@ -246,7 +247,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			should_intro = true;
 
 			if (hydrating) {
-				/** @type {Effect & { nodes: EffectNodes }} */ (current_effect).nodes.end = hydrate_node;
+				/** @type {Effect} */ (current_effect).nodes_end = hydrate_node;
 			}
 
 			if (context) {

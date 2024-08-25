@@ -348,14 +348,7 @@ export function build_component(node, component_name, context, anchor = context.
 				b.thunk(/** @type {Expression} */ (context.visit(node.expression))),
 				b.arrow(
 					[b.id('$$anchor'), b.id(component_name)],
-					b.block([
-						...binding_initializers,
-						b.stmt(
-							dev
-								? b.call('$.validate_dynamic_component', b.thunk(prev(b.id('$$anchor'))))
-								: prev(b.id('$$anchor'))
-						)
-					])
+					b.block([...binding_initializers, b.stmt(prev(b.id('$$anchor')))])
 				)
 			);
 		};
@@ -372,7 +365,7 @@ export function build_component(node, component_name, context, anchor = context.
 
 		statements.push(
 			b.stmt(b.call('$.css_props', anchor, b.thunk(b.object(custom_css_props)))),
-			b.stmt(fn(b.member(anchor, b.id('lastChild')))),
+			b.stmt(fn(b.member(anchor, 'lastChild'))),
 			b.stmt(b.call('$.reset', anchor))
 		);
 	} else {

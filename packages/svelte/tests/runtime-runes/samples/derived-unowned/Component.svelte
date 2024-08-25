@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	class Foo {
 		x = $state(5);
 		y = $derived(this.x * 2);
@@ -17,7 +17,7 @@
 
 		get y() {
 			return y;
-		},
+		}
 	};
 </script>
 
