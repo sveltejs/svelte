@@ -97,7 +97,7 @@ export function animation(element, get_fn, get_params) {
 			) {
 				const options = get_fn()(this.element, { from, to }, get_params?.());
 
-				animation = animate(this.element, options, 0, 1, () => {
+				animation = animate(this.element, options, undefined, 1, () => {
 					animation?.abort();
 					animation = undefined;
 				});
@@ -207,12 +207,10 @@ export function transition(flags, element, get_fn, get_params) {
 
 				dispatch_event(element, 'introstart');
 
-				var t1 = outro?.t() ?? 0;
-
 				intro = animate(
 					element,
 					get_options(),
-					t1,
+					outro,
 					1,
 					() => {
 						dispatch_event(element, 'introend');
@@ -240,8 +238,6 @@ export function transition(flags, element, get_fn, get_params) {
 
 				element.inert = true;
 
-				var t1 = intro?.t() ?? 1;
-
 				// we don't want to _abort_ the counterpart intro, but we _do_ want to prevent callbacks firing
 				intro?.deactivate();
 
@@ -249,7 +245,7 @@ export function transition(flags, element, get_fn, get_params) {
 				outro = animate(
 					element,
 					get_options(),
-					t1,
+					intro,
 					0,
 					() => {
 						dispatch_event(element, 'outroend');
@@ -311,19 +307,19 @@ export function transition(flags, element, get_fn, get_params) {
  * Animates an element, according to the provided configuration
  * @param {Element} element
  * @param {AnimationConfig | ((opts: { direction: 'in' | 'out' }) => AnimationConfig)} options
- * @param {number} t1 The starting `t` value — `0` for intro, `1` for outro, but can be in between if started during existing transition
+ * @param {Animation | undefined} counterpart
  * @param {number} t2 The target `t` value — `1` for intro, `0` for outro
  * @param {(() => void)} on_finish Called after successfully completing the animation
  * @param {(() => void)} [on_abort] Called if the animation is aborted
  * @returns {Animation}
  */
-function animate(element, options, t1, t2, on_finish, on_abort = noop) {
+function animate(element, options, counterpart, t2, on_finish, on_abort = noop) {
 	var is_intro = t2 === 1;
 
 	if (is_function(options)) {
 		// In the case of a deferred transition (such as `crossfade`), `option` will be
 		// a function rather than an `AnimationConfig`. We need to call this function
-		// once DOM has been updated...
+		// once the DOM has been updated...
 		/** @type {Animation} */
 		var a;
 		var aborted = false;
@@ -331,7 +327,7 @@ function animate(element, options, t1, t2, on_finish, on_abort = noop) {
 		queue_micro_task(() => {
 			if (aborted) return;
 			var o = options({ direction: is_intro ? 'in' : 'out' });
-			a = animate(element, o, t1, t2, on_finish, on_abort);
+			a = animate(element, o, counterpart, t2, on_finish, on_abort);
 		});
 
 		// ...but we want to do so without using `async`/`await` everywhere, so
@@ -360,17 +356,24 @@ function animate(element, options, t1, t2, on_finish, on_abort = noop) {
 
 	const { delay = 0, css, tick, easing = linear } = options;
 
-	if (t1 === 0) {
+	if (is_intro && counterpart === undefined) {
 		tick?.(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
 	}
 
-	var delta = t2 - t1;
-	var duration = options.duration * Math.abs(delta);
-	var started = false;
+	// until this transition starts, track the counterpart
+	var get_t = () => counterpart?.t() ?? 1 - t2;
 
+	// create a dummy animation that lasts as long as the delay (but with whatever devtools
+	// multiplier is in effect). in the common case that it is `0`, we keep it anyway so that
+	// the CSS keyframes aren't created until the DOM is updated
 	var animation = element.animate([], { duration: delay });
 
 	animation.onfinish = () => {
+		var t1 = counterpart?.t() ?? 1 - t2;
+
+		var delta = t2 - t1;
+		var duration = /** @type {number} */ (options.duration) * Math.abs(delta);
+
 		var keyframes = [];
 
 		if (css) {
@@ -386,6 +389,8 @@ function animate(element, options, t1, t2, on_finish, on_abort = noop) {
 		animation = element.animate(keyframes, { duration, fill: 'forwards' });
 
 		animation.onfinish = () => {
+			get_t = () => t2;
+
 			tick?.(t2, 1 - t2);
 			on_finish();
 
@@ -397,22 +402,24 @@ function animate(element, options, t1, t2, on_finish, on_abort = noop) {
 
 		animation.oncancel = () => on_abort();
 
+		get_t = () => {
+			var time = /** @type {number} */ (
+				/** @type {globalThis.Animation} */ (animation).currentTime
+			);
+
+			return t1 + delta * easing(time / duration);
+		};
+
 		if (tick) {
 			loop(() => {
 				if (animation.playState !== 'running') return false;
 
-				var time = /** @type {number} */ (
-					/** @type {globalThis.Animation} */ (animation).currentTime
-				);
-
-				var t = t1 + delta * easing(time / duration);
+				var t = get_t();
 				tick(t, 1 - t);
 
 				return true;
 			});
 		}
-
-		started = true;
 	};
 
 	animation.oncancel = () => on_abort();
@@ -433,15 +440,6 @@ function animate(element, options, t1, t2, on_finish, on_abort = noop) {
 				tick?.(1, 0);
 			}
 		},
-		t: () => {
-			if (!started) return t1;
-
-			var time = /** @type {number} */ (
-				/** @type {globalThis.Animation} */ (animation).currentTime
-			);
-
-			var t = t1 + delta * easing(Math.max(0, time) / duration);
-			return Math.min(1, Math.max(0, t));
-		}
+		t: () => get_t()
 	};
 }
