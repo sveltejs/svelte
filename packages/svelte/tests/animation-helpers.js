@@ -24,7 +24,6 @@ export const raf = {
  */
 function tick(time) {
 	raf.time = time;
-	flushSync();
 	for (const animation of raf.animations) {
 		animation._update();
 	}
@@ -40,8 +39,11 @@ class Animation {
 
 	#offset = raf.time;
 
-	#finished = () => {};
-	#cancelled = () => {};
+	/** @type {Function} */
+	#onfinish = () => {};
+
+	/** @type {Function} */
+	#oncancel = () => {};
 
 	target;
 	currentTime = 0;
@@ -59,21 +61,6 @@ class Animation {
 		this.#duration = duration;
 		this.#delay = delay ?? 0;
 
-		// Promise-like semantics, but call callbacks immediately on raf.tick
-		this.finished = {
-			/** @param {() => void} callback */
-			then: (callback) => {
-				this.#finished = callback;
-
-				return {
-					/** @param {() => void} callback */
-					catch: (callback) => {
-						this.#cancelled = callback;
-					}
-				};
-			}
-		};
-
 		this._update();
 	}
 
@@ -85,7 +72,7 @@ class Animation {
 		this.#apply_keyframe(target_frame);
 
 		if (this.currentTime >= this.#duration) {
-			this.#finished();
+			this.#onfinish();
 			raf.animations.delete(this);
 		}
 	}
@@ -136,8 +123,28 @@ class Animation {
 		this.startTime = null;
 
 		this.playState = 'idle';
-		this.#cancelled();
+		this.#oncancel();
 		raf.animations.delete(this);
+	}
+
+	/** @param {Function} fn */
+	set onfinish(fn) {
+		if (this.#duration === 0) {
+			fn();
+		} else {
+			this.#onfinish = () => {
+				fn();
+				this.#onfinish = () => {};
+			};
+		}
+	}
+
+	/** @param {Function} fn */
+	set oncancel(fn) {
+		this.#oncancel = () => {
+			fn();
+			this.#oncancel = () => {};
+		};
 	}
 }
 

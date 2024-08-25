@@ -360,30 +360,21 @@ function animate(element, options, t1, t2, on_finish, on_abort = noop) {
 
 	const { delay = 0, css, tick, easing = linear } = options;
 
+	if (t1 === 0) {
+		tick?.(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
+	}
+
 	var delta = t2 - t1;
-
 	var duration = options.duration * Math.abs(delta);
+	var started = false;
 
-	/** @type {globalThis.Animation} */
-	var animation;
+	var animation = element.animate([], { duration: delay });
 
-	// run after a micro task so that all transitions that are lining up and are about to run can correctly measure the DOM
-	queue_micro_task(() => {
-		// WAAPI
+	animation.onfinish = () => {
 		var keyframes = [];
 
 		if (css) {
 			var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
-
-			// In case of a delayed intro, apply the initial style for the duration of the delay;
-			// else in case of a fade-in for example the element would be visible until the animation starts
-			if (is_intro && delay > 0) {
-				let m = Math.ceil(delay / (1000 / 60));
-				let keyframe = css_to_keyframe(css(0, 1));
-				for (let i = 0; i < m; i += 1) {
-					keyframes.push(keyframe);
-				}
-			}
 
 			for (var i = 0; i <= n; i += 1) {
 				var t = t1 + delta * easing(i / n);
@@ -392,58 +383,39 @@ function animate(element, options, t1, t2, on_finish, on_abort = noop) {
 			}
 		}
 
-		animation = element.animate(keyframes, {
-			delay: is_intro ? 0 : delay,
-			duration: duration + (is_intro ? delay : 0),
-			easing: 'linear',
-			fill: 'forwards'
-		});
+		animation = element.animate(keyframes, { duration, fill: 'forwards' });
 
-		animation.finished
-			.then(() => {
-				tick?.(t2, 1 - t2);
-				on_finish();
+		animation.onfinish = () => {
+			tick?.(t2, 1 - t2);
+			on_finish();
 
-				if (t2 === 1) {
-					// TODO do we need the `if`?
-					animation.cancel();
-				}
-			})
-			.catch((e) => {
-				on_abort();
+			if (t2 === 1) {
+				// TODO do we need the `if`?
+				animation.cancel();
+			}
+		};
 
-				// Error for DOMException: The user aborted a request. This results in two things:
-				// - startTime is `null`
-				// - currentTime is `null`
-				// We can't use the existence of an AbortError as this error and error code is shared
-				// with other Web APIs such as fetch().
+		animation.oncancel = () => on_abort();
 
-				if (animation.startTime !== null && animation.currentTime !== null) {
-					throw e;
-				}
+		if (tick) {
+			loop(() => {
+				if (animation.playState !== 'running') return false;
+
+				var time = /** @type {number} */ (
+					/** @type {globalThis.Animation} */ (animation).currentTime
+				);
+
+				var t = t1 + delta * easing(time / duration);
+				tick(t, 1 - t);
+
+				return true;
 			});
-	});
-
-	if (tick) {
-		if (t1 === 0) {
-			tick(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
 		}
 
-		loop(() => {
-			if (animation.playState !== 'running') return false;
+		started = true;
+	};
 
-			var time = /** @type {number} */ (
-				/** @type {globalThis.Animation} */ (animation).currentTime
-			);
-
-			if (time >= delay) {
-				var t = t1 + delta * easing((time - delay) / duration);
-				tick(t, 1 - t);
-			}
-
-			return true;
-		});
-	}
+	animation.oncancel = () => on_abort();
 
 	return {
 		abort: () => {
@@ -462,11 +434,13 @@ function animate(element, options, t1, t2, on_finish, on_abort = noop) {
 			}
 		},
 		t: () => {
+			if (!started) return t1;
+
 			var time = /** @type {number} */ (
 				/** @type {globalThis.Animation} */ (animation).currentTime
 			);
 
-			var t = t1 + delta * easing(Math.max(0, time - delay) / duration);
+			var t = t1 + delta * easing(Math.max(0, time) / duration);
 			return Math.min(1, Math.max(0, t));
 		}
 	};
