@@ -366,9 +366,6 @@ function animate(element, options, t1, t2, on_finish, on_abort) {
 	/** @type {globalThis.Animation} */
 	var animation;
 
-	/** @type {Task} */
-	var task;
-
 	// run after a micro task so that all transitions that are lining up and are about to run can correctly measure the DOM
 	queue_micro_task(() => {
 		// WAAPI
@@ -431,7 +428,7 @@ function animate(element, options, t1, t2, on_finish, on_abort) {
 			tick(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
 		}
 
-		task = loop(() => {
+		loop(() => {
 			if (animation.playState !== 'running') return false;
 
 			var time = /** @type {number} */ (
@@ -454,7 +451,8 @@ function animate(element, options, t1, t2, on_finish, on_abort) {
 				// This prevents memory leaks in Chromium
 				animation.effect = null;
 			}
-			task?.abort();
+
+			// TODO does this belong in the animation.finished handlers?
 			on_abort?.();
 			on_finish = undefined;
 			on_abort = undefined;

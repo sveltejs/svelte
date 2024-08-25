@@ -134,6 +134,8 @@ class Animation {
 		this.currentTime = null;
 		// @ts-ignore
 		this.startTime = null;
+
+		this.playState = 'idle';
 		this.#cancelled();
 		raf.animations.delete(this);
 	}
