@@ -101,6 +101,7 @@ export function animation(element, get_fn, get_params) {
 					this.element,
 					options,
 					undefined,
+					0,
 					1,
 					() => {
 						animation?.abort();
@@ -208,6 +209,8 @@ export function transition(flags, element, get_fn, get_params) {
 		in() {
 			element.inert = inert;
 
+			var t1 = outro?.t() ?? 0;
+
 			// abort the outro to prevent overlap with the intro
 			outro?.abort();
 			// abort previous intro (can happen if an element is intro'd, then outro'd, then intro'd again)
@@ -219,6 +222,7 @@ export function transition(flags, element, get_fn, get_params) {
 					element,
 					get_options(),
 					outro,
+					t1,
 					1,
 					() => {
 						dispatch_event(element, 'introend');
@@ -243,11 +247,14 @@ export function transition(flags, element, get_fn, get_params) {
 			if (is_outro) {
 				element.inert = true;
 
+				var t1 = intro?.t() ?? 1;
+
 				dispatch_event(element, 'outrostart');
 				outro = animate(
 					element,
 					get_options(),
 					intro,
+					t1,
 					0,
 					() => {
 						dispatch_event(element, 'outroend');
@@ -310,12 +317,13 @@ export function transition(flags, element, get_fn, get_params) {
  * @param {Element} element
  * @param {AnimationConfig | ((opts: { direction: 'in' | 'out' }) => AnimationConfig)} options
  * @param {Animation | undefined} counterpart The corresponding intro/outro to this outro/intro
+ * @param {number} t1 The starting `t` value — `0` for intro, `1` for outro, but can be in between if started during existing transition
  * @param {number} t2 The target `t` value — `1` for intro, `0` for outro
  * @param {(() => void) | undefined} on_finish Called after successfully completing the animation
  * @param {(() => void) | undefined} on_abort Called if the animation is aborted
  * @returns {Animation}
  */
-function animate(element, options, counterpart, t2, on_finish, on_abort) {
+function animate(element, options, counterpart, t1, t2, on_finish, on_abort) {
 	var is_intro = t2 === 1;
 
 	if (is_function(options)) {
@@ -329,7 +337,7 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 		queue_micro_task(() => {
 			if (aborted) return;
 			var o = options({ direction: is_intro ? 'in' : 'out' });
-			a = animate(element, o, counterpart, t2, on_finish, on_abort);
+			a = animate(element, o, counterpart, t1, t2, on_finish, on_abort);
 		});
 
 		// ...but we want to do so without using `async`/`await` everywhere, so
@@ -341,7 +349,7 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 			},
 			deactivate: () => a.deactivate(),
 			reset: () => a.reset(),
-			t: (now) => a.t(now)
+			t: () => a.t()
 		};
 	}
 
@@ -359,12 +367,9 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 
 	const { delay = 0, css, tick, easing = linear } = options;
 
-	var start = raf.now() + delay;
-	var t1 = counterpart?.t(start) ?? 1 - t2;
 	var delta = t2 - t1;
 
 	var duration = options.duration * Math.abs(delta);
-	var end = start + duration;
 
 	/** @type {globalThis.Animation} */
 	var animation;
@@ -372,11 +377,12 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 	/** @type {Task} */
 	var task;
 
-	if (css) {
-		// run after a micro task so that all transitions that are lining up and are about to run can correctly measure the DOM
-		queue_micro_task(() => {
-			// WAAPI
-			var keyframes = [];
+	// run after a micro task so that all transitions that are lining up and are about to run can correctly measure the DOM
+	queue_micro_task(() => {
+		// WAAPI
+		var keyframes = [];
+
+		if (css) {
 			var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
 
 			// In case of a delayed intro, apply the initial style for the duration of the delay;
@@ -394,55 +400,54 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 				var styles = css(t, 1 - t);
 				keyframes.push(css_to_keyframe(styles));
 			}
+		}
 
-			animation = element.animate(keyframes, {
-				delay: is_intro ? 0 : delay,
-				duration: duration + (is_intro ? delay : 0),
-				easing: 'linear',
-				fill: 'forwards'
-			});
-
-			animation.finished
-				.then(() => {
-					on_finish?.();
-					on_finish = undefined;
-
-					if (t2 === 1) {
-						animation.cancel();
-					}
-				})
-				.catch((e) => {
-					// Error for DOMException: The user aborted a request. This results in two things:
-					// - startTime is `null`
-					// - currentTime is `null`
-					// We can't use the existence of an AbortError as this error and error code is shared
-					// with other Web APIs such as fetch().
-
-					if (animation.startTime !== null && animation.currentTime !== null) {
-						throw e;
-					}
-				});
+		animation = element.animate(keyframes, {
+			delay: is_intro ? 0 : delay,
+			duration: duration + (is_intro ? delay : 0),
+			easing: 'linear',
+			fill: 'forwards'
 		});
-	}
+
+		animation.finished
+			.then(() => {
+				on_finish?.();
+				on_finish = undefined;
+
+				tick?.(t2, 1 - t2);
+
+				if (t2 === 1) {
+					// TODO do we need the `if`?
+					animation.cancel();
+				}
+			})
+			.catch((e) => {
+				// Error for DOMException: The user aborted a request. This results in two things:
+				// - startTime is `null`
+				// - currentTime is `null`
+				// We can't use the existence of an AbortError as this error and error code is shared
+				// with other Web APIs such as fetch().
+
+				if (animation.startTime !== null && animation.currentTime !== null) {
+					throw e;
+				}
+			});
+	});
 
 	if (tick) {
-		// Timer
 		if (t1 === 0) {
 			tick(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
 		}
 
-		task = loop((now) => {
-			if (now >= end) {
-				tick(t2, 1 - t2);
-				on_finish?.();
-				on_finish = undefined;
-				return false;
-			}
+		task = loop(() => {
+			if (animation.playState !== 'running') return false;
 
-			if (now >= start) {
-				var p = t1 + delta * easing((now - start) / duration);
-				tick(p, 1 - p);
-			}
+			var time = /** @type {number} */ (
+				/** @type {globalThis.Animation} */ (animation).currentTime
+			);
+
+			var t = t1 + delta * easing(time / duration);
+			tick(t, 1 - t);
 
 			return true;
 		});
@@ -469,8 +474,12 @@ function animate(element, options, counterpart, t2, on_finish, on_abort) {
 				tick?.(1, 0);
 			}
 		},
-		t: (now) => {
-			var t = t1 + delta * easing((now - start) / duration);
+		t: () => {
+			var time = /** @type {number} */ (
+				/** @type {globalThis.Animation} */ (animation).currentTime
+			);
+
+			var t = t1 + delta * easing(time / duration);
 			return Math.min(1, Math.max(0, t));
 		}
 	};

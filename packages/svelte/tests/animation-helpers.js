@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { raf as svelte_raf } from 'svelte/internal/client';
 
 export const raf = {
@@ -23,6 +24,7 @@ export const raf = {
  */
 function tick(time) {
 	raf.time = time;
+	flushSync();
 	for (const animation of raf.animations) {
 		animation._update();
 	}
@@ -44,6 +46,7 @@ class Animation {
 	target;
 	currentTime = 0;
 	startTime = 0;
+	playState = 'running';
 
 	/**
 	 * @param {HTMLElement} target
