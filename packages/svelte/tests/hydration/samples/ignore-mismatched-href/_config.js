@@ -10,10 +10,10 @@ export default test({
 	},
 
 	test(assert, target) {
-		assert.equal(target.querySelector('a')?.getAttribute('href'), '/bar');
+		assert.equal(target.querySelector('link')?.getAttribute('href'), '/bar');
 	},
 
 	errors: [
-		'The `href` attribute on `<a href="/bar">...</a>` changed its value between server and client renders. The client value, `/foo`, will be ignored in favour of the server value'
+		'The `href` attribute on `<link href="/bar">` changed its value between server and client renders. The client value, `/foo`, will be ignored in favour of the server value'
 	]
 });
