@@ -201,70 +201,68 @@ export function transition(flags, element, get_fn, get_params) {
 		in() {
 			element.inert = inert;
 
-			if (is_intro) {
-				// abort previous intro (can happen if an element is intro'd, then outro'd, then intro'd again)
-				intro?.abort();
-
-				dispatch_event(element, 'introstart');
-
-				intro = animate(
-					element,
-					get_options(),
-					outro,
-					1,
-					() => {
-						dispatch_event(element, 'introend');
-						// Ensure we cancel the animation to prevent leaking
-						intro?.abort();
-						intro = current_options = undefined;
-					},
-					is_both
-						? undefined
-						: () => {
-								intro = current_options = undefined;
-							}
-				);
-			} else {
+			if (!is_intro) {
+				outro?.abort();
 				reset?.();
+				return;
 			}
 
-			// abort the outro to prevent overlap with the intro
-			outro?.abort();
+			// abort previous intro (can happen if an element is intro'd, then outro'd, then intro'd again)
+			intro?.abort();
+
+			intro = animate(
+				element,
+				get_options(),
+				outro,
+				1,
+				() => {
+					dispatch_event(element, 'introend');
+					// Ensure we cancel the animation to prevent leaking
+					intro?.abort();
+					intro = current_options = undefined;
+				},
+				is_both
+					? undefined
+					: () => {
+							intro = current_options = undefined;
+						}
+			);
+
+			dispatch_event(element, 'introstart');
 		},
 		out(fn) {
-			if (is_outro) {
-				// abort previous outro (can happen if an element is outro'd, then intro'd, then outro'd again)
-				outro?.abort();
-
-				element.inert = true;
-
-				// we don't want to _abort_ the counterpart intro, but we _do_ want to prevent callbacks firing
-				intro?.deactivate();
-
-				dispatch_event(element, 'outrostart');
-				outro = animate(
-					element,
-					get_options(),
-					intro,
-					0,
-					() => {
-						dispatch_event(element, 'outroend');
-						outro = current_options = undefined;
-						fn?.();
-					},
-					is_both
-						? undefined
-						: () => {
-								outro = current_options = undefined;
-							}
-				);
-
-				// TODO arguably the outro should never null itself out until _all_ outros for this effect have completed...
-				// in that case we wouldn't need to store `reset` separately
-				reset = outro.reset;
-			} else {
+			if (!is_outro) {
 				fn?.();
+				return;
 			}
+
+			element.inert = true;
+
+			// abort previous outro (can happen if an element is outro'd, then intro'd, then outro'd again)
+			outro?.abort();
+
+			outro = animate(
+				element,
+				get_options(),
+				intro,
+				0,
+				() => {
+					dispatch_event(element, 'outroend');
+					outro = current_options = undefined;
+					fn?.();
+				},
+				is_both
+					? undefined
+					: () => {
+							outro = current_options = undefined;
+						}
+			);
+
+			// TODO arguably the outro should never null itself out until _all_ outros for this effect have completed...
+			// in that case we wouldn't need to store `reset` separately
+			reset = outro.reset;
+
+			dispatch_event(element, 'outrostart');
 		},
 		stop: () => {
 			intro?.abort();
@@ -343,6 +341,8 @@ function animate(element, options, counterpart, t2, on_finish, on_abort = noop) 
 		};
 	}
 
+	counterpart?.deactivate();
+
 	if (!options?.duration) {
 		on_finish();
 
@@ -371,6 +371,10 @@ function animate(element, options, counterpart, t2, on_finish, on_abort = noop) 
 	animation.onfinish = () => {
 		var t1 = counterpart?.t() ?? 1 - t2;
 
+		if (t2 === 1) {
+			counterpart?.abort();
+		}
+
 		var delta = t2 - t1;
 		var duration = /** @type {number} */ (options.duration) * Math.abs(delta);
 
@@ -390,14 +394,8 @@ function animate(element, options, counterpart, t2, on_finish, on_abort = noop) 
 
 		animation.onfinish = () => {
 			get_t = () => t2;
-
 			tick?.(t2, 1 - t2);
 			on_finish();
-
-			if (t2 === 1) {
-				// TODO do we need the `if`?
-				animation.cancel();
-			}
 		};
 
 		animation.oncancel = () => on_abort();
