@@ -146,7 +146,7 @@ export function warn_if_attribute(element, name) {
  */
 export function warn_if_property(element, name) {
 	const attributes = /** @type {string} */ (
-		/** @type {any} */ (element.constructor).observedAttributes
+		/** @type {any} */ (element.constructor).observedAttributes ?? []
 	);
 
 	if (get_setters(element).includes(name) && !attributes.includes(name)) {
