@@ -185,9 +185,6 @@ export function transition(flags, element, get_fn, get_params) {
 	/** @type {Animation | undefined} */
 	var outro;
 
-	/** @type {(() => void) | undefined} */
-	var reset;
-
 	function get_options() {
 		// If a transition is still ongoing, we use the existing options rather than generating
 		// new ones. This ensures that reversible transitions reverse smoothly, rather than
@@ -203,7 +200,7 @@ export function transition(flags, element, get_fn, get_params) {
 
 			if (!is_intro) {
 				outro?.abort();
-				reset?.();
+				outro?.reset?.();
 				return;
 			}
 
@@ -245,10 +242,6 @@ export function transition(flags, element, get_fn, get_params) {
 				dispatch_event(element, 'outroend');
 				fn?.();
 			});
-
-			// TODO arguably the outro should never null itself out until _all_ outros for this effect have completed...
-			// in that case we wouldn't need to store `reset` separately
-			reset = outro.reset;
 
 			dispatch_event(element, 'outrostart');
 		},
