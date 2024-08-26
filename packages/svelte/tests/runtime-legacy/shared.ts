@@ -96,6 +96,12 @@ afterAll(() => {
 	process.removeListener('unhandledRejection', unhandled_rejection_handler);
 });
 
+// eslint-disable-next-line no-console
+let console_log = console.log;
+
+// eslint-disable-next-line no-console
+let console_warn = console.warn;
+
 export function runtime_suite(runes: boolean) {
 	return suite_with_variants<RuntimeTest, 'hydrate' | 'ssr' | 'dom', CompileOptions>(
 		['dom', 'hydrate', 'ssr'],
@@ -170,9 +176,6 @@ async function run_test_variant(
 	runes: boolean
 ) {
 	let unintended_error = false;
-
-	// eslint-disable-next-line no-console
-	const { log, warn } = console;
 
 	let logs: string[] = [];
 	let warnings: string[] = [];
@@ -412,9 +415,9 @@ async function run_test_variant(
 
 				if (config.warnings) {
 					assert.deepEqual(warnings, config.warnings);
-				} else if (warnings.length && console.warn === warn) {
+				} else if (warnings.length && console.warn === console_warn) {
 					unintended_error = true;
-					warn.apply(console, warnings);
+					console_warn.apply(console, warnings);
 					assert.fail('Received unexpected warnings');
 				}
 
@@ -440,8 +443,8 @@ async function run_test_variant(
 			throw err;
 		}
 	} finally {
-		console.log = log;
-		console.warn = warn;
+		console.log = console_log;
+		console.warn = console_warn;
 
 		config.after_test?.();
 
