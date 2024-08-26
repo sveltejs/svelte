@@ -24,6 +24,7 @@ import {
 	is_content_editable_binding,
 	is_load_error_element
 } from '../../../../../../utils.js';
+import { is_array } from '../../../../../../internal/shared/utils.js';
 
 const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
 
@@ -239,16 +240,18 @@ export function build_element_attributes(node, context) {
 				continue;
 			}
 
-			const name = get_attribute_name(node, attribute, context);
-			const value = build_attribute_value(
-				attribute.value,
-				context,
-				WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
-			);
+			if (is_array(attribute.value) || !node.name.includes('-')) {
+				const name = get_attribute_name(node, attribute, context);
+				const value = build_attribute_value(
+					attribute.value,
+					context,
+					WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
+				);
 
-			context.state.template.push(
-				b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
-			);
+				context.state.template.push(
+					b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
+				);
+			}
 		}
 	}
 

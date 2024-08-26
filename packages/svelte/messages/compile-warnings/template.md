@@ -16,7 +16,7 @@
 
 ## attribute_quoted
 
-> Quoted attributes on components and custom elements will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes
+> Quoted properties on components will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes
 
 ## bind_invalid_each_rest
 

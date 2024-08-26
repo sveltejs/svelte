@@ -31,8 +31,7 @@ export function validate_attribute(attribute, parent) {
 		attribute.value[0].type === 'ExpressionTag' &&
 		(parent.type === 'Component' ||
 			parent.type === 'SvelteComponent' ||
-			parent.type === 'SvelteSelf' ||
-			(parent.type === 'RegularElement' && is_custom_element_node(parent)))
+			parent.type === 'SvelteSelf')
 	) {
 		w.attribute_quoted(attribute);
 	}

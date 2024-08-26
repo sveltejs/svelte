@@ -701,11 +701,11 @@ export function attribute_invalid_property_name(node, wrong, right) {
 }
 
 /**
- * Quoted attributes on components and custom elements will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes
+ * Quoted properties on components will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes
  * @param {null | NodeLike} node
  */
 export function attribute_quoted(node) {
-	w(node, "attribute_quoted", "Quoted attributes on components and custom elements will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes");
+	w(node, "attribute_quoted", "Quoted properties on components will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes");
 }
 
 /**
