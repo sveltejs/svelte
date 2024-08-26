@@ -89,10 +89,6 @@ export function set_attribute(element, attribute, value, skip_warning) {
 	if (hydrating) {
 		attributes[attribute] = element.getAttribute(attribute);
 
-		// Don't include href: When using a base path, SvelteKit will by default render relative URLs on the server
-		// and use root-relative links on the client. While the href would resolve to the same URL on the initial
-		// page, once you're doing a client-side navigation to a URL at a different depth, the relative path would
-		// now point to the wrong location. Therefore we need to repair href mismatches.
 		if (
 			attribute === 'src' ||
 			attribute === 'srcset' ||
