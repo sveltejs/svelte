@@ -93,7 +93,11 @@ export function set_attribute(element, attribute, value, skip_warning) {
 		// and use root-relative links on the client. While the href would resolve to the same URL on the initial
 		// page, once you're doing a client-side navigation to a URL at a different depth, the relative path would
 		// now point to the wrong location. Therefore we need to repair href mismatches.
-		if (attribute === 'src' || attribute === 'srcset') {
+		if (
+			attribute === 'src' ||
+			attribute === 'srcset' ||
+			(attribute === 'href' && element.nodeName === 'LINK')
+		) {
 			if (!skip_warning) {
 				check_src_in_dev_hydration(element, attribute, value);
 			}
@@ -392,7 +396,7 @@ function check_src_in_dev_hydration(element, attribute, value) {
 
 	w.hydration_attribute_changed(
 		attribute,
-		element.outerHTML.replace(element.innerHTML, '...'),
+		element.outerHTML.replace(element.innerHTML, element.innerHTML && '...'),
 		String(value)
 	);
 }
