@@ -115,7 +115,7 @@
     "knip": "pnpm dlx knip"
   },
   "devDependencies": {
-    "@jridgewell/trace-mapping": "^0.3.22",
+    "@jridgewell/trace-mapping": "^0.3.25",
     "@playwright/test": "^1.35.1",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
@@ -124,16 +124,16 @@
     "@types/aria-query": "^5.0.4",
     "@types/node": "^20.11.5",
     "dts-buddy": "^0.5.1",
-    "esbuild": "^0.19.11",
-    "rollup": "^4.9.5",
+    "esbuild": "^0.21.5",
+    "rollup": "^4.21.0",
     "source-map": "^0.7.4",
     "tiny-glob": "^0.2.9",
     "typescript": "^5.5.2",
-    "vitest": "^1.2.1"
+    "vitest": "^2.0.5"
   },
   "dependencies": {
-    "@ampproject/remapping": "^2.2.1",
-    "@jridgewell/sourcemap-codec": "^1.4.15",
+    "@ampproject/remapping": "^2.3.0",
+    "@jridgewell/sourcemap-codec": "^1.5.0",
     "@types/estree": "^1.0.5",
     "acorn": "^8.11.3",
     "acorn-typescript": "^1.4.13",

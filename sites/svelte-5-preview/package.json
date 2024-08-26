@@ -15,7 +15,7 @@
     "@fontsource/fira-mono": "^5.0.8",
     "@lezer/common": "^1.2.1",
     "@sveltejs/adapter-static": "^3.0.1",
-    "@sveltejs/adapter-vercel": "^5.0.0",
+    "@sveltejs/adapter-vercel": "^5.4.3",
     "@sveltejs/kit": "^2.5.24",
     "@sveltejs/site-kit": "6.0.0-next.64",
     "@sveltejs/vite-plugin-svelte": "^4.0.0-next.3",
@@ -28,7 +28,7 @@
     "svelte": "workspace:^",
     "svelte-check": "^3.6.3",
     "typescript": "^5.5.2",
-    "vite": "^5.0.13"
+    "vite": "^5.4.2"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.12.0",
@@ -41,7 +41,7 @@
     "@codemirror/lint": "^6.5.0",
     "@codemirror/state": "^6.4.0",
     "@codemirror/view": "^6.24.0",
-    "@jridgewell/sourcemap-codec": "^1.4.15",
+    "@jridgewell/sourcemap-codec": "^1.5.0",
     "@lezer/highlight": "^1.1.6",
     "@neocodemirror/svelte": "0.0.15",
     "@replit/codemirror-lang-svelte": "^6.0.0",
