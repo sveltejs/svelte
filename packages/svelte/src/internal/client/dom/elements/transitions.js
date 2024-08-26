@@ -344,8 +344,17 @@ function animate(element, options, counterpart, t2, on_finish, on_abort = noop) 
 
 	const { delay = 0, css, tick, easing = linear } = options;
 
+	let delay_keyframes = [];
+
 	if (is_intro && counterpart === undefined) {
-		tick?.(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
+		if (tick) {
+			tick(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
+		}
+
+		if (css) {
+			const frame = css_to_keyframe(css(0, 1));
+			delay_keyframes.push(frame, frame);
+		}
 	}
 
 	// until this transition starts, track the counterpart
@@ -354,7 +363,7 @@ function animate(element, options, counterpart, t2, on_finish, on_abort = noop) 
 	// create a dummy animation that lasts as long as the delay (but with whatever devtools
 	// multiplier is in effect). in the common case that it is `0`, we keep it anyway so that
 	// the CSS keyframes aren't created until the DOM is updated
-	var animation = element.animate([], { duration: delay });
+	var animation = element.animate(delay_keyframes, { duration: delay });
 
 	animation.onfinish = () => {
 		var t1 = counterpart?.t() ?? 1 - t2;
