@@ -102,6 +102,9 @@ let console_log = console.log;
 // eslint-disable-next-line no-console
 let console_warn = console.warn;
 
+// eslint-disable-next-line no-console
+let console_error = console.error;
+
 export function runtime_suite(runes: boolean) {
 	return suite_with_variants<RuntimeTest, 'hydrate' | 'ssr' | 'dom', CompileOptions>(
 		['dom', 'hydrate', 'ssr'],
@@ -445,6 +448,7 @@ async function run_test_variant(
 	} finally {
 		console.log = console_log;
 		console.warn = console_warn;
+		console.error = console_error;
 
 		config.after_test?.();
 
