@@ -58,7 +58,7 @@ class Animation {
 	constructor(target, keyframes, { duration, delay }) {
 		this.target = target;
 		this.#keyframes = keyframes;
-		this.#duration = duration;
+		this.#duration = Math.round(duration);
 		this.#delay = delay ?? 0;
 
 		this._update();
