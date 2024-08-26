@@ -327,7 +327,7 @@ function animate(element, options, counterpart, t2, on_finish) {
 
 	const { delay = 0, css, tick, easing = linear } = options;
 
-	let delay_keyframes = [];
+	let keyframes = [];
 
 	if (is_intro && counterpart === undefined) {
 		if (tick) {
@@ -336,24 +336,22 @@ function animate(element, options, counterpart, t2, on_finish) {
 
 		if (css) {
 			const frame = css_to_keyframe(css(0, 1));
-			delay_keyframes.push(frame, frame);
+			keyframes.push(frame, frame);
 		}
 	}
 
-	// until this transition starts, track the counterpart
-	var get_t = () => counterpart?.t() ?? 1 - t2;
+	var get_t = () => 1 - t2;
 
 	// create a dummy animation that lasts as long as the delay (but with whatever devtools
 	// multiplier is in effect). in the common case that it is `0`, we keep it anyway so that
 	// the CSS keyframes aren't created until the DOM is updated
-	var animation = element.animate(delay_keyframes, { duration: delay });
+	var animation = element.animate(keyframes, { duration: delay });
 
 	animation.onfinish = () => {
+		// for bidirectional transitions, we start from the current position,
+		// rather than doing a full intro/outro
 		var t1 = counterpart?.t() ?? 1 - t2;
-
-		if (t2 === 1) {
-			counterpart?.abort();
-		}
+		counterpart?.abort();
 
 		var delta = t2 - t1;
 		var duration = /** @type {number} */ (options.duration) * Math.abs(delta);
