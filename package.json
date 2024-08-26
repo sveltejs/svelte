@@ -37,11 +37,11 @@
     "eslint": "^9.9.1",
     "eslint-plugin-lube": "^0.4.3",
     "jsdom": "22.0.0",
-    "playwright": "^1.41.1",
+    "playwright": "^1.46.1",
     "prettier": "^3.2.4",
     "prettier-plugin-svelte": "^3.1.2",
     "svelte": "workspace:^",
-    "typescript": "^5.5.2",
+    "typescript": "^5.5.4",
     "typescript-eslint": "^8.2.0",
     "v8-natives": "^1.2.5",
     "vitest": "^2.0.5"
