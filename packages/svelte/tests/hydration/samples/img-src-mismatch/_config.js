@@ -12,6 +12,6 @@ export default test({
 		assert.htmlEqual(target.innerHTML, '<img src="server.jpg" alt="">');
 	},
 	errors: [
-		'The `src` attribute on `...<img src="server.jpg" alt="">` changed its value between server and client renders. The client value, `client.jpg`, will be ignored in favour of the server value'
+		'The `src` attribute on `<img src="server.jpg" alt="">` changed its value between server and client renders. The client value, `client.jpg`, will be ignored in favour of the server value'
 	]
 });
