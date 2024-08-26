@@ -16,6 +16,8 @@ export default test({
 
 	recover: true,
 
+	mode: ['hydrate'],
+
 	before_test() {
 		console.error = (x) => {
 			log.push(x);
@@ -27,16 +29,18 @@ export default test({
 		log.length = 0;
 	},
 
-	async test({ assert, variant }) {
-		if (variant === 'hydrate') {
-			assert.equal(
-				log[0].split('\n')[0],
-				'node_invalid_placement_ssr: `<p>` (main.svelte:6:0) cannot contain `<h1>` (h1.svelte:1:0)'
-			);
-			assert.equal(
-				log[1].split('\n')[0],
-				'node_invalid_placement_ssr: `<form>` (main.svelte:9:0) cannot contain `<form>` (form.svelte:1:0)'
-			);
-		}
-	}
+	async test({ assert }) {
+		assert.equal(
+			log[0].split('\n')[0],
+			'node_invalid_placement_ssr: `<p>` (main.svelte:6:0) cannot contain `<h1>` (h1.svelte:1:0)'
+		);
+		assert.equal(
+			log[1].split('\n')[0],
+			'node_invalid_placement_ssr: `<form>` (main.svelte:9:0) cannot contain `<form>` (form.svelte:1:0)'
+		);
+	},
+
+	warnings: [
+		'Hydration failed because the initial UI does not match what was rendered on the server'
+	]
 });
