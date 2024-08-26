@@ -60,6 +60,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 		};
 		logs: any[];
 		warnings: any[];
+		errors: any[];
 		hydrate: Function;
 	}) => void | Promise<void>;
 	test_ssr?: (args: { logs: any[]; assert: Assert }) => void | Promise<void>;
@@ -70,6 +71,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	error?: string;
 	runtime_error?: string;
 	warnings?: string[];
+	errors?: string[];
 	expect_unhandled_rejections?: boolean;
 	withoutNormalizeHtml?: boolean | 'only-strip-comments';
 	recover?: boolean;
@@ -182,6 +184,7 @@ async function run_test_variant(
 
 	let logs: string[] = [];
 	let warnings: string[] = [];
+	let errors: string[] = [];
 	let manual_hydrate = false;
 
 	{
@@ -218,6 +221,13 @@ async function run_test_variant(
 				} else {
 					warnings.push(...args);
 				}
+			};
+		}
+
+		if (str.slice(0, i).includes('errors') || config.errors) {
+			// eslint-disable-next-line no-console
+			console.error = (...args) => {
+				errors.push(...args);
 			};
 		}
 	}
@@ -317,15 +327,6 @@ async function run_test_variant(
 
 			config.before_test?.();
 
-			// eslint-disable-next-line no-console
-			const error = console.error;
-			// eslint-disable-next-line no-console
-			console.error = (error) => {
-				if (typeof error === 'string' && error.startsWith('Hydration failed')) {
-					throw new Error(error);
-				}
-			};
-
 			let instance: any;
 			let props: any;
 			let hydrate_fn: Function = () => {
@@ -363,9 +364,6 @@ async function run_test_variant(
 				});
 			}
 
-			// eslint-disable-next-line no-console
-			console.error = error;
-
 			if (config.error) {
 				unintended_error = true;
 				assert.fail('Expected a runtime error');
@@ -401,6 +399,7 @@ async function run_test_variant(
 						compileOptions,
 						logs,
 						warnings,
+						errors,
 						hydrate: hydrate_fn
 					});
 				}
@@ -422,6 +421,14 @@ async function run_test_variant(
 					unintended_error = true;
 					console_warn.apply(console, warnings);
 					assert.fail('Received unexpected warnings');
+				}
+
+				if (config.errors) {
+					assert.deepEqual(errors, config.errors);
+				} else if (errors.length && console.error === console_error) {
+					unintended_error = true;
+					console_error.apply(console, errors);
+					assert.fail('Received unexpected errors');
 				}
 
 				assert_html_equal(
