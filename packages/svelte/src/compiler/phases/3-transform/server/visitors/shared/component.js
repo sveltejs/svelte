@@ -80,22 +80,28 @@ export function build_inline_component(node, expression, context) {
 			const value = build_attribute_value(attribute.value, context, false, true);
 			push_prop(b.prop('init', b.key(attribute.name), value));
 		} else if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
-			// TODO this needs to turn the whole thing into a while loop because the binding could be mutated eagerly in the child
 			push_prop(
 				b.get(attribute.name, [
 					b.return(/** @type {Expression} */ (context.visit(attribute.expression)))
 				])
 			);
-			push_prop(
-				b.set(attribute.name, [
-					b.stmt(
-						/** @type {Expression} */ (
-							context.visit(b.assignment('=', attribute.expression, b.id('$$value')))
-						)
-					),
-					b.stmt(b.assignment('=', b.id('$$settled'), b.false))
-				])
-			);
+			if (
+				// Don't reassign imports
+				attribute.expression.type !== 'Identifier' ||
+				attribute.expression.name !== attribute.name ||
+				context.state.scope.get(attribute.name)?.declaration_kind !== 'import'
+			) {
+				push_prop(
+					b.set(attribute.name, [
+						b.stmt(
+							/** @type {Expression} */ (
+								context.visit(b.assignment('=', attribute.expression, b.id('$$value')))
+							)
+						),
+						b.stmt(b.assignment('=', b.id('$$settled'), b.false))
+					])
+				);
+			}
 		}
 	}
 
