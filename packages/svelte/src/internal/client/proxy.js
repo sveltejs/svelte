@@ -33,9 +33,16 @@ export function proxy(value, parent = null, prev) {
 		return value;
 	}
 
+	/** @type {Map<any, Source<any>>} */
 	var sources = new Map();
 	var is_proxied_array = is_array(value);
 	var version = source(0);
+
+	if (is_proxied_array) {
+		// We need to create the length source eagerly to ensure that
+		// mutations to the array are properly synced with our proxy
+		sources.set('length', source(/** @type {any[]} */ (value).length));
+	}
 
 	/** @type {ProxyMetadata} */
 	var metadata;
@@ -187,6 +194,22 @@ export function proxy(value, parent = null, prev) {
 			var s = sources.get(prop);
 			var has = prop in target;
 
+			// variable.length = value -> clear all signals with index >= value
+			if (is_proxied_array && prop === 'length') {
+				for (var i = value; i < /** @type {Source<number>} */ (s).v; i += 1) {
+					var other_s = sources.get(i + '');
+					if (other_s !== undefined) {
+						set(other_s, UNINITIALIZED);
+					} else if (i in target) {
+						// If the item exists in the original, we need to create a uninitialized source,
+						// else a later read of the property would result in a source being created with
+						// the value of the original item at that index.
+						other_s = source(UNINITIALIZED);
+						sources.set(i + '', other_s);
+					}
+				}
+			}
+
 			// If we haven't yet created a source for this property, we need to ensure
 			// we do so otherwise if we read it later, then the write won't be tracked and
 			// the heuristics of effects will be different vs if we had read the proxied
@@ -211,14 +234,6 @@ export function proxy(value, parent = null, prev) {
 				check_ownership(metadata);
 			}
 
-			// variable.length = value -> clear all signals with index >= value
-			if (is_proxied_array && prop === 'length') {
-				for (var i = value; i < target.length; i += 1) {
-					var other_s = sources.get(i + '');
-					if (other_s !== undefined) set(other_s, UNINITIALIZED);
-				}
-			}
-
 			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
 
 			// Set the new value before updating any signals so that any listeners get the new value
@@ -232,14 +247,11 @@ export function proxy(value, parent = null, prev) {
 				// to ensure that iterating over the array as a result of a metadata update
 				// will not cause the length to be out of sync.
 				if (is_proxied_array && typeof prop === 'string') {
-					var ls = sources.get('length');
+					var ls = /** @type {Source<number>} */ (sources.get('length'));
+					var n = Number(prop);
 
-					if (ls !== undefined) {
-						var n = Number(prop);
-
-						if (Number.isInteger(n) && n >= ls.v) {
-							set(ls, n + 1);
-						}
+					if (Number.isInteger(n) && n >= ls.v) {
+						set(ls, n + 1);
 					}
 				}
 

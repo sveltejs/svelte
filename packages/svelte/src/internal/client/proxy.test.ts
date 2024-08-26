@@ -96,3 +96,38 @@ test('deletes a property', () => {
 	// deleting a non-existent property should succeed
 	delete state.c;
 });
+
+test('handles array.push', () => {
+	const original = [1, 2, 3];
+	const state = proxy(original);
+
+	state.push(4);
+	assert.deepEqual(original.length, 3);
+	assert.deepEqual(original, [1, 2, 3]);
+	assert.deepEqual(state.length, 4);
+	assert.deepEqual(state, [1, 2, 3, 4]);
+});
+
+test('handles array mutation', () => {
+	const original = [1, 2, 3];
+	const state = proxy(original);
+
+	state[3] = 4;
+	assert.deepEqual(original.length, 3);
+	assert.deepEqual(original, [1, 2, 3]);
+	assert.deepEqual(state.length, 4);
+	assert.deepEqual(state, [1, 2, 3, 4]);
+});
+
+test('handles array length mutation', () => {
+	const original = [1, 2, 3];
+	const state = proxy(original);
+
+	state.length = 0;
+	assert.deepEqual(original.length, 3);
+	assert.deepEqual(original, [1, 2, 3]);
+	assert.deepEqual(original[0], 1);
+	assert.deepEqual(state.length, 0);
+	assert.deepEqual(state, []);
+	assert.deepEqual(state[0], undefined);
+});
