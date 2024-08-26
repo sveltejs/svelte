@@ -2,22 +2,6 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"type": "chrome",
-			"request": "launch",
-			"name": "Playground: Browser",
-			"url": "http://localhost:10001"
-		},
-		{
-			"type": "node",
-			"request": "launch",
-			"runtimeArgs": ["--watch"],
-			"name": "Playground: Server",
-			"outputCapture": "std",
-			"program": "start.js",
-			"cwd": "${workspaceFolder}/playgrounds/demo",
-			"cascadeTerminateToConfigurations": ["Playground: Browser"]
-		},
-		{
 			"type": "node",
 			"request": "launch",
 			"name": "Run sandbox",
@@ -25,12 +9,6 @@
 			"env": {
 				"NODE_OPTIONS": "--stack-trace-limit=10000"
 			}
-		}
-	],
-	"compounds": [
-		{
-			"name": "Playground: Full",
-			"configurations": ["Playground: Server", "Playground: Browser"]
 		}
 	]
 }

@@ -341,19 +341,3 @@ export function state_unsafe_mutation() {
 		throw new Error("state_unsafe_mutation");
 	}
 }
-
-/**
- * The `this={...}` property of a `<svelte:component>` must be a Svelte component, if defined
- * @returns {never}
- */
-export function svelte_component_invalid_this_value() {
-	if (DEV) {
-		const error = new Error(`svelte_component_invalid_this_value\nThe \`this={...}\` property of a \`<svelte:component>\` must be a Svelte component, if defined`);
-
-		error.name = 'Svelte error';
-		throw error;
-	} else {
-		// TODO print a link to the documentation
-		throw new Error("svelte_component_invalid_this_value");
-	}
-}

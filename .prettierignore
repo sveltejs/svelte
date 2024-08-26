@@ -2,12 +2,12 @@
 # see: https://github.com/sveltejs/svelte/pull/9609
 documentation/docs/05-misc/03-typescript.md
 
-# The following are all duplicated with prettierignore configs in the packages,
-# which is necessary because of https://github.com/prettier/prettier-vscode/issues/3424
 packages/**/dist/*.js
 packages/**/build/*.js
 packages/**/npm/**/*
 packages/**/config/*.js
+
+# packages/svelte
 packages/svelte/messages/**/*.md
 packages/svelte/src/compiler/errors.js
 packages/svelte/src/compiler/warnings.js
@@ -17,6 +17,7 @@ packages/svelte/src/internal/shared/errors.js
 packages/svelte/src/internal/shared/warnings.js
 packages/svelte/src/internal/server/errors.js
 packages/svelte/tests/migrate/samples/*/output.svelte
+packages/svelte/tests/**/*.svelte
 packages/svelte/tests/**/_expected*
 packages/svelte/tests/**/_actual*
 packages/svelte/tests/**/expected*
@@ -29,6 +30,7 @@ packages/svelte/compiler/index.js
 playgrounds/sandbox/input/**.svelte
 playgrounds/sandbox/output
 
+# sites/svelte.dev
 sites/svelte.dev/static/svelte-app.json
 sites/svelte.dev/scripts/svelte-app/
 sites/svelte.dev/src/routes/_components/Supporters/contributors.jpg

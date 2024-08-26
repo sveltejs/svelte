@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.238
+
+### Patch Changes
+
+- fix: always return true from `deleteProperty` trap ([#13008](https://github.com/sveltejs/svelte/pull/13008))
+
+- fix: handle deletions of previously-unread state proxy properties ([#13008](https://github.com/sveltejs/svelte/pull/13008))
+
+- fix: make internal sources ownerless ([#13013](https://github.com/sveltejs/svelte/pull/13013))
+
+- fix: join text nodes separated by comments ([#13009](https://github.com/sveltejs/svelte/pull/13009))
+
 ## 5.0.0-next.237
 
 ### Patch Changes

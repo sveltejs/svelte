@@ -2,4 +2,4 @@
 	let { browser } = $props();
 </script>
 
-<link href={browser ? '/foo' : '/bar'} />
+<a href={browser ? '/foo' : '/bar'}>foo</a>
