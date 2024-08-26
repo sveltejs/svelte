@@ -2,7 +2,7 @@ import { assert, fastest_test } from '../../utils.js';
 import * as $ from '../../../packages/svelte/src/internal/client/index.js';
 
 function setup() {
-	let heads = new Array(100).fill(null).map((_) => $.source(0));
+	let heads = new Array(100).fill(null).map((_) => $.state(0));
 	const mux = $.derived(() => {
 		return Object.fromEntries(heads.map((h) => $.get(h)).entries());
 	});

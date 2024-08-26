@@ -14,6 +14,8 @@ declare module 'svelte' {
 		context?: Map<any, any>;
 		hydrate?: boolean;
 		intro?: boolean;
+		recover?: boolean;
+		sync?: boolean;
 		$$inline?: boolean;
 	}
 
@@ -740,7 +742,7 @@ declare module 'svelte/compiler' {
 
 	type CssHashGetter = (args: {
 		name: string;
-		filename: string | undefined;
+		filename: string;
 		css: string;
 		hash: (input: string) => string;
 	}) => string;
@@ -2101,9 +2103,6 @@ declare module 'svelte/legacy' {
 	 * */
 	export function createClassComponent<Props extends Record<string, any>, Exports extends Record<string, any>, Events extends Record<string, any>, Slots extends Record<string, any>>(options: ComponentConstructorOptions<Props> & {
 		component: ComponentType<SvelteComponent<Props, Events, Slots>> | Component<Props>;
-		immutable?: boolean;
-		hydrate?: boolean;
-		recover?: boolean;
 	}): SvelteComponent<Props, Events, Slots> & Exports;
 	/**
 	 * Takes the component function and returns a Svelte 4 compatible component constructor.
@@ -2613,7 +2612,7 @@ declare module 'svelte/types/compiler/interfaces' {
 
 	type CssHashGetter = (args: {
 		name: string;
-		filename: string | undefined;
+		filename: string;
 		css: string;
 		hash: (input: string) => string;
 	}) => string;

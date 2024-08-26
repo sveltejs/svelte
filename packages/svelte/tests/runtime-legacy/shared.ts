@@ -351,7 +351,6 @@ async function run_test_variant(
 					component: mod.default,
 					props: config.props,
 					target,
-					immutable: config.immutable,
 					intro: config.intro,
 					recover: config.recover ?? false,
 					hydrate: variant === 'hydrate'

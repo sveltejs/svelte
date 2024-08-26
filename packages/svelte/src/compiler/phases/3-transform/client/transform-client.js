@@ -207,7 +207,7 @@ export function client_component(analysis, options) {
 
 	for (const [name, binding] of analysis.instance.scope.declarations) {
 		if (binding.kind === 'legacy_reactive') {
-			legacy_reactive_declarations.push(b.const(name, b.call('$.mutable_source')));
+			legacy_reactive_declarations.push(b.const(name, b.call('$.mutable_state')));
 		}
 		if (binding.kind === 'store_sub') {
 			if (store_setup.length === 0) {
@@ -505,14 +505,12 @@ export function client_component(analysis, options) {
 	}
 
 	if (dev) {
-		if (filename) {
-			// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later
-			body.unshift(
-				b.stmt(
-					b.assignment('=', b.member(b.id(analysis.name), '$.FILENAME', true), b.literal(filename))
-				)
-			);
-		}
+		// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later
+		body.unshift(
+			b.stmt(
+				b.assignment('=', b.member(b.id(analysis.name), '$.FILENAME', true), b.literal(filename))
+			)
+		);
 
 		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'))));
 		body.push(b.stmt(b.call(b.id('$.mark_module_end'), b.id(analysis.name))));

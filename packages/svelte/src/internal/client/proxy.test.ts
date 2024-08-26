@@ -85,3 +85,49 @@ test('does not re-proxy proxies', () => {
 	assert.equal(inner.count, 1);
 	assert.equal(outer.inner.count, 1);
 });
+
+test('deletes a property', () => {
+	const state = proxy({ a: 1, b: 2 } as { a?: number; b?: number; c?: number });
+
+	delete state.a;
+	assert.equal(JSON.stringify(state), '{"b":2}');
+	delete state.a;
+
+	// deleting a non-existent property should succeed
+	delete state.c;
+});
+
+test('handles array.push', () => {
+	const original = [1, 2, 3];
+	const state = proxy(original);
+
+	state.push(4);
+	assert.deepEqual(original.length, 3);
+	assert.deepEqual(original, [1, 2, 3]);
+	assert.deepEqual(state.length, 4);
+	assert.deepEqual(state, [1, 2, 3, 4]);
+});
+
+test('handles array mutation', () => {
+	const original = [1, 2, 3];
+	const state = proxy(original);
+
+	state[3] = 4;
+	assert.deepEqual(original.length, 3);
+	assert.deepEqual(original, [1, 2, 3]);
+	assert.deepEqual(state.length, 4);
+	assert.deepEqual(state, [1, 2, 3, 4]);
+});
+
+test('handles array length mutation', () => {
+	const original = [1, 2, 3];
+	const state = proxy(original);
+
+	state.length = 0;
+	assert.deepEqual(original.length, 3);
+	assert.deepEqual(original, [1, 2, 3]);
+	assert.deepEqual(original[0], 1);
+	assert.deepEqual(state.length, 0);
+	assert.deepEqual(state, []);
+	assert.deepEqual(state[0], undefined);
+});

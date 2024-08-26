@@ -11,8 +11,8 @@ export default test({
 	test({ assert, target, window }) {
 		const [p1, p2] = target.querySelectorAll('p');
 
-		assert.equal(window.getComputedStyle(p1).color, 'red');
-		assert.equal(window.getComputedStyle(p2).color, 'red');
+		assert.equal(window.getComputedStyle(p1).color, 'rgb(255, 0, 0)');
+		assert.equal(window.getComputedStyle(p2).color, 'rgb(255, 0, 0)');
 
 		const btn = target.querySelector('button');
 		btn?.click();
@@ -27,7 +27,7 @@ export default test({
 		`
 		);
 
-		assert.equal(window.getComputedStyle(p1).color, 'green');
-		assert.equal(window.getComputedStyle(p2).color, 'green');
+		assert.equal(window.getComputedStyle(p1).color, 'rgb(0, 128, 0)');
+		assert.equal(window.getComputedStyle(p2).color, 'rgb(0, 128, 0)');
 	}
 });

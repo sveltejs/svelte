@@ -1,15 +1,23 @@
 {
-  "name": "svelte-playgrounds-sandbox",
+  "name": "svelte-playgrounds-demo",
   "private": true,
-  "type": "module",
-  "license": "MIT",
   "version": "0.0.1",
+  "type": "module",
   "scripts": {
-    "format": "prettier --check --write .",
-    "lint": "prettier --check . && eslint"
+    "prepare": "node scripts/create-app-svelte.js",
+    "dev": "vite --host",
+    "ssr": "node ./ssr-dev.js",
+    "build": "vite build --outDir dist/client && vite build --outDir dist/server --ssr ssr-prod.js",
+    "prod": "npm run build && node dist/server/ssr-prod",
+    "preview": "vite preview"
   },
-  "dependencies": {
-    "svelte": "workspace:^",
-    "tiny-glob": "^0.2.9"
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^4.0.0-next.6",
+    "nodemon": "^3.0.3",
+    "polka": "^1.0.0-next.25",
+    "svelte": "workspace:*",
+    "tiny-glob": "^0.2.9",
+    "vite": "^5.4.2",
+    "vite-plugin-inspect": "^0.8.4"
   }
 }

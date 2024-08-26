@@ -56,6 +56,9 @@ function clone(value, cloned, path, paths) {
 		const unwrapped = cloned.get(value);
 		if (unwrapped !== undefined) return unwrapped;
 
+		if (value instanceof Map) return /** @type {Snapshot<T>} */ (new Map(value));
+		if (value instanceof Set) return /** @type {Snapshot<T>} */ (new Set(value));
+
 		if (is_array(value)) {
 			const copy = /** @type {Snapshot<any>} */ ([]);
 			cloned.set(value, copy);

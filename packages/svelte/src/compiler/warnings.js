@@ -94,7 +94,6 @@ export const codes = [
 	"options_removed_hydratable",
 	"options_removed_loop_guard_timeout",
 	"options_renamed_ssr_dom",
-	"derived_iife",
 	"export_let_unused",
 	"legacy_component_creation",
 	"non_reactive_update",
@@ -572,14 +571,6 @@ export function options_removed_loop_guard_timeout(node) {
  */
 export function options_renamed_ssr_dom(node) {
 	w(node, "options_renamed_ssr_dom", "`generate: \"dom\"` and `generate: \"ssr\"` options have been renamed to \"client\" and \"server\" respectively");
-}
-
-/**
- * Use `$derived.by(() => {...})` instead of `$derived((() => {...})())`
- * @param {null | NodeLike} node
- */
-export function derived_iife(node) {
-	w(node, "derived_iife", "Use `$derived.by(() => {...})` instead of `$derived((() => {...})())`");
 }
 
 /**

@@ -106,7 +106,7 @@ export function compileModule(source, options) {
  */
 export function parse(source, { filename, rootDir, modern } = {}) {
 	state.reset_warning_filter(() => false);
-	state.reset(source, { filename, rootDir }); // TODO it's weird to require filename/rootDir here. reconsider the API
+	state.reset(source, { filename: filename ?? '(unknown)', rootDir });
 
 	const ast = _parse(source);
 	return to_public_ast(source, ast, modern);

@@ -1,5 +1,45 @@
 # svelte
 
+## 5.0.0-next.238
+
+### Patch Changes
+
+- fix: always return true from `deleteProperty` trap ([#13008](https://github.com/sveltejs/svelte/pull/13008))
+
+- fix: handle deletions of previously-unread state proxy properties ([#13008](https://github.com/sveltejs/svelte/pull/13008))
+
+- fix: make internal sources ownerless ([#13013](https://github.com/sveltejs/svelte/pull/13013))
+
+- fix: join text nodes separated by comments ([#13009](https://github.com/sveltejs/svelte/pull/13009))
+
+## 5.0.0-next.237
+
+### Patch Changes
+
+- breaking: throw error if derived creates state and then depends on it ([#12985](https://github.com/sveltejs/svelte/pull/12985))
+
+- fix: ensure assignments to state field inside constructor trigger effects ([#12985](https://github.com/sveltejs/svelte/pull/12985))
+
+- fix: ensure $inspect works with SvelteMap and SvelteSet ([#12994](https://github.com/sveltejs/svelte/pull/12994))
+
+- chore: default options.filename to "(unknown)" ([#12997](https://github.com/sveltejs/svelte/pull/12997))
+
+- feat: allow non-synchronous legacy component instantiation ([#12970](https://github.com/sveltejs/svelte/pull/12970))
+
+## 5.0.0-next.236
+
+### Patch Changes
+
+- fix: properly transform destructured `$derived.by` declarations ([#12984](https://github.com/sveltejs/svelte/pull/12984))
+
+## 5.0.0-next.235
+
+### Patch Changes
+
+- chore: update client check for smaller bundle size ([#12975](https://github.com/sveltejs/svelte/pull/12975))
+
+- fix: correctly hydrate empty raw blocks ([#12979](https://github.com/sveltejs/svelte/pull/12979))
+
 ## 5.0.0-next.234
 
 ### Patch Changes

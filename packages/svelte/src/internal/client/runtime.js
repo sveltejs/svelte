@@ -81,6 +81,20 @@ export function set_current_effect(effect) {
 }
 
 /**
+ * When sources are created within a derived, we record them so that we can safely allow
+ * local mutations to these sources without the side-effect error being invoked unnecessarily.
+ * @type {null | Source[]}
+ */
+export let derived_sources = null;
+
+/**
+ * @param {Source[] | null} sources
+ */
+export function set_derived_sources(sources) {
+	derived_sources = sources;
+}
+
+/**
  * The dependencies of the reaction that is currently being executed. In many cases,
  * the dependencies are unchanged between runs, and so this will be `null` unless
  * and until a new dependency is accessed — we track this via `skipped_deps`
@@ -230,12 +244,14 @@ function handle_error(error, effect, component_context) {
 	let current_context = component_context;
 
 	while (current_context !== null) {
-		/** @type {string} */
-		var filename = current_context.function?.[FILENAME];
+		if (DEV) {
+			/** @type {string} */
+			var filename = current_context.function?.[FILENAME];
 
-		if (filename) {
-			const file = filename.split('/').pop();
-			component_stack.push(file);
+			if (filename) {
+				const file = filename.split('/').pop();
+				component_stack.push(file);
+			}
 		}
 
 		current_context = current_context.p;
@@ -279,12 +295,14 @@ export function update_reaction(reaction) {
 	var previous_untracked_writes = current_untracked_writes;
 	var previous_reaction = current_reaction;
 	var previous_skip_reaction = current_skip_reaction;
+	var prev_derived_sources = derived_sources;
 
 	new_deps = /** @type {null | Value[]} */ (null);
 	skipped_deps = 0;
 	current_untracked_writes = null;
 	current_reaction = (reaction.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 	current_skip_reaction = !is_flushing_effect && (reaction.f & UNOWNED) !== 0;
+	derived_sources = null;
 
 	try {
 		var result = /** @type {Function} */ (0, reaction.fn)();
@@ -321,6 +339,7 @@ export function update_reaction(reaction) {
 		current_untracked_writes = previous_untracked_writes;
 		current_reaction = previous_reaction;
 		current_skip_reaction = previous_skip_reaction;
+		derived_sources = prev_derived_sources;
 	}
 }
 
@@ -698,6 +717,9 @@ export function get(signal) {
 
 	// Register the dependency on the current reaction signal.
 	if (current_reaction !== null) {
+		if (derived_sources !== null && derived_sources.includes(signal)) {
+			e.state_unsafe_local_read();
+		}
 		var deps = current_reaction.deps;
 
 		// If the signal is accessing the same dependencies in the same

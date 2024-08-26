@@ -9,18 +9,15 @@
     "build": "vite build",
     "preview": "vite preview",
     "check-disable-tmp": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
-    "format": "prettier --check --write .",
-    "lint": "prettier --check ."
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch"
   },
   "devDependencies": {
     "@fontsource/fira-mono": "^5.0.8",
     "@lezer/common": "^1.2.1",
-    "@sveltejs/adapter-static": "^3.0.1",
-    "@sveltejs/adapter-vercel": "^5.0.0",
+    "@sveltejs/adapter-vercel": "^5.4.3",
     "@sveltejs/kit": "^2.5.24",
     "@sveltejs/site-kit": "6.0.0-next.64",
-    "@sveltejs/vite-plugin-svelte": "^4.0.0-next.3",
+    "@sveltejs/vite-plugin-svelte": "^4.0.0-next.6",
     "@vercel/speed-insights": "^1.0.0",
     "esrap": "^1.2.2",
     "marked": "^9.0.0",
@@ -28,10 +25,9 @@
     "shiki": "^0.14.7",
     "shiki-twoslash": "^3.1.2",
     "svelte": "workspace:^",
-    "svelte-check": "^3.6.3",
-    "tslib": "^2.6.2",
-    "typescript": "^5.5.2",
-    "vite": "^5.0.13"
+    "svelte-check": "^3.8.6",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.12.0",
@@ -44,18 +40,18 @@
     "@codemirror/lint": "^6.5.0",
     "@codemirror/state": "^6.4.0",
     "@codemirror/view": "^6.24.0",
-    "@jridgewell/sourcemap-codec": "^1.4.15",
+    "@jridgewell/sourcemap-codec": "^1.5.0",
     "@lezer/highlight": "^1.1.6",
     "@neocodemirror/svelte": "0.0.15",
     "@replit/codemirror-lang-svelte": "^6.0.0",
     "@rich_harris/svelte-split-pane": "^1.1.3",
     "@rollup/browser": "^3.28.0",
-    "acorn": "^8.10.0",
+    "acorn": "^8.12.1",
     "codemirror": "^6.0.1",
     "esm-env": "^1.0.0",
     "marked": "^7.0.2",
     "resolve.exports": "^2.0.2",
     "svelte-json-tree": "^2.2.0",
-    "zimmerframe": "^1.1.1"
+    "zimmerframe": "^1.1.2"
   }
 }
