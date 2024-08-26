@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.239
+
+### Patch Changes
+
+- fix: properly handle proxied array length mutations ([#13026](https://github.com/sveltejs/svelte/pull/13026))
+
+- fix: repair `href` attribute mismatches ([#13032](https://github.com/sveltejs/svelte/pull/13032))
+
 ## 5.0.0-next.238
 
 ### Patch Changes
