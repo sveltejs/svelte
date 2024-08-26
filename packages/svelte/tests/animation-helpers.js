@@ -129,7 +129,7 @@ class Animation {
 		raf.animations.delete(this);
 	}
 
-	/** @param {Function} fn */
+	/** @param {() => {}} fn */
 	set onfinish(fn) {
 		if (this.#duration === 0) {
 			queue_micro_task(fn);
@@ -141,7 +141,7 @@ class Animation {
 		}
 	}
 
-	/** @param {Function} fn */
+	/** @param {() => {}} fn */
 	set oncancel(fn) {
 		this.#oncancel = () => {
 			fn();
