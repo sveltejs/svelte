@@ -241,22 +241,10 @@ export function transition(flags, element, get_fn, get_params) {
 			// abort previous outro (can happen if an element is outro'd, then intro'd, then outro'd again)
 			outro?.abort();
 
-			outro = animate(
-				element,
-				get_options(),
-				intro,
-				0,
-				() => {
-					dispatch_event(element, 'outroend');
-					outro = current_options = undefined;
-					fn?.();
-				},
-				is_both
-					? undefined
-					: () => {
-							outro = current_options = undefined;
-						}
-			);
+			outro = animate(element, get_options(), intro, 0, () => {
+				dispatch_event(element, 'outroend');
+				fn?.();
+			});
 
 			// TODO arguably the outro should never null itself out until _all_ outros for this effect have completed...
 			// in that case we wouldn't need to store `reset` separately
