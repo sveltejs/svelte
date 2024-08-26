@@ -279,7 +279,8 @@ export interface Binding {
 		| 'each'
 		| 'snippet'
 		| 'store_sub'
-		| 'legacy_reactive';
+		| 'legacy_reactive'
+		| 'template';
 	declaration_kind: DeclarationKind;
 	/**
 	 * What the value was initialized with.
