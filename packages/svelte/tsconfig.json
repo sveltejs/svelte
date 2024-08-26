@@ -14,7 +14,6 @@
 		"strict": true,
 		"allowJs": true,
 		"checkJs": true,
-		"skipLibCheck": true,
 		"paths": {
 			"acorn-typescript": ["./src/compiler/phases/1-parse/ambient.d.ts"],
 			"svelte": ["./src/index.d.ts"],
