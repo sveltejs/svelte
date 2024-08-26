@@ -10,12 +10,12 @@ export default test({
 		ok(p);
 
 		let styles = window.getComputedStyle(p);
-		assert.equal(styles.color, 'red');
+		assert.equal(styles.color, 'rgb(255, 0, 0)');
 		assert.equal(styles.fontSize, '20px');
 
 		component.color = 'green';
 
 		styles = window.getComputedStyle(p);
-		assert.equal(styles.color, 'green');
+		assert.equal(styles.color, 'rgb(0, 128, 0)');
 	}
 });

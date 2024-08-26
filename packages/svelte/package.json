@@ -112,13 +112,11 @@
     "generate:version": "node ./scripts/generate-version.js",
     "generate:types": "node ./scripts/generate-types.js && tsc -p tsconfig.generated.json",
     "prepublishOnly": "pnpm build",
-    "format": "prettier --check --write .",
-    "lint": "prettier --check . && eslint",
     "knip": "pnpm dlx knip"
   },
   "devDependencies": {
-    "@jridgewell/trace-mapping": "^0.3.22",
-    "@playwright/test": "^1.35.1",
+    "@jridgewell/trace-mapping": "^0.3.25",
+    "@playwright/test": "^1.46.1",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
@@ -126,28 +124,26 @@
     "@types/aria-query": "^5.0.4",
     "@types/node": "^20.11.5",
     "dts-buddy": "^0.5.1",
-    "esbuild": "^0.19.11",
-    "eslint": "^9.6.0",
-    "prettier": "^3.2.4",
-    "rollup": "^4.9.5",
+    "esbuild": "^0.21.5",
+    "rollup": "^4.21.0",
     "source-map": "^0.7.4",
     "tiny-glob": "^0.2.9",
-    "typescript": "^5.5.2",
-    "vitest": "^1.2.1"
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
   },
   "dependencies": {
-    "@ampproject/remapping": "^2.2.1",
-    "@jridgewell/sourcemap-codec": "^1.4.15",
+    "@ampproject/remapping": "^2.3.0",
+    "@jridgewell/sourcemap-codec": "^1.5.0",
     "@types/estree": "^1.0.5",
-    "acorn": "^8.11.3",
+    "acorn": "^8.12.1",
     "acorn-typescript": "^1.4.13",
     "aria-query": "^5.3.0",
-    "axobject-query": "^4.0.0",
+    "axobject-query": "^4.1.0",
     "esm-env": "^1.0.0",
     "esrap": "^1.2.2",
     "is-reference": "^3.0.2",
     "locate-character": "^3.0.0",
-    "magic-string": "^0.30.5",
+    "magic-string": "^0.30.11",
     "zimmerframe": "^1.1.2"
   }
 }

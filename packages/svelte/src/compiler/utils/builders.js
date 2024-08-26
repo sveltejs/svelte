@@ -352,7 +352,7 @@ export function prop(kind, key, value, computed = false) {
  * @returns {ESTree.PropertyDefinition}
  */
 export function prop_def(key, value, computed = false, is_static = false) {
-	return { type: 'PropertyDefinition', key, value, computed, static: is_static };
+	return { type: 'PropertyDefinition', key, value, computed, static: is_static, decorators: [] };
 }
 
 /**
@@ -541,7 +541,8 @@ export function method(kind, key, params, body, computed = false, is_static = fa
 		kind,
 		value: function_builder(null, params, block(body)),
 		computed,
-		static: is_static
+		static: is_static,
+		decorators: []
 	};
 }
 

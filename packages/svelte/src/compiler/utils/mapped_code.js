@@ -328,7 +328,7 @@ function apply_preprocessor_sourcemap(filename, svelte_map, preprocessor_map_inp
 			}
 		}
 	});
-	return /** @type {SourceMap} */ (result_map);
+	return /** @type {any} */ (result_map);
 }
 const regex_data_uri = /data:(?:application|text)\/json;(?:charset[:=]\S+?;)?base64,(\S*)/;
 // parse attached sourcemap in processed.code
