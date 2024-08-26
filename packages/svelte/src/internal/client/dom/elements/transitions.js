@@ -207,29 +207,20 @@ export function transition(flags, element, get_fn, get_params) {
 			// abort previous intro (can happen if an element is intro'd, then outro'd, then intro'd again)
 			intro?.abort();
 
-			intro = animate(
-				element,
-				get_options(),
-				outro,
-				1,
-				() => {
-					dispatch_event(element, 'introend');
-					// Ensure we cancel the animation to prevent leaking
-					intro?.abort();
-					intro = current_options = undefined;
-				},
-				is_both
-					? undefined
-					: () => {
-							intro = current_options = undefined;
-						}
-			);
+			intro = animate(element, get_options(), outro, 1, () => {
+				dispatch_event(element, 'introend');
+
+				// Ensure we cancel the animation to prevent leaking
+				intro?.abort();
+				intro = current_options = undefined;
+			});
 
 			dispatch_event(element, 'introstart');
 		},
 		out(fn) {
 			if (!is_outro) {
 				fn?.();
+				current_options = undefined;
 				return;
 			}
 
@@ -289,10 +280,9 @@ export function transition(flags, element, get_fn, get_params) {
  * @param {Animation | undefined} counterpart
  * @param {number} t2 The target `t` value — `1` for intro, `0` for outro
  * @param {(() => void)} on_finish Called after successfully completing the animation
- * @param {(() => void)} [on_abort] Called if the animation is aborted
  * @returns {Animation}
  */
-function animate(element, options, counterpart, t2, on_finish, on_abort = noop) {
+function animate(element, options, counterpart, t2, on_finish) {
 	var is_intro = t2 === 1;
 
 	if (is_function(options)) {
@@ -306,7 +296,7 @@ function animate(element, options, counterpart, t2, on_finish, on_abort = noop) 
 		queue_micro_task(() => {
 			if (aborted) return;
 			var o = options({ direction: is_intro ? 'in' : 'out' });
-			a = animate(element, o, counterpart, t2, on_finish, on_abort);
+			a = animate(element, o, counterpart, t2, on_finish);
 		});
 
 		// ...but we want to do so without using `async`/`await` everywhere, so
@@ -388,8 +378,6 @@ function animate(element, options, counterpart, t2, on_finish, on_abort = noop) 
 			on_finish();
 		};
 
-		animation.oncancel = () => on_abort();
-
 		get_t = () => {
 			var time = /** @type {number} */ (
 				/** @type {globalThis.Animation} */ (animation).currentTime
@@ -410,8 +398,6 @@ function animate(element, options, counterpart, t2, on_finish, on_abort = noop) 
 		}
 	};
 
-	animation.oncancel = () => on_abort();
-
 	return {
 		abort: () => {
 			if (animation) {
@@ -421,7 +407,7 @@ function animate(element, options, counterpart, t2, on_finish, on_abort = noop) 
 			}
 		},
 		deactivate: () => {
-			on_finish = on_abort = noop;
+			on_finish = noop;
 		},
 		reset: () => {
 			if (t2 === 0) {
