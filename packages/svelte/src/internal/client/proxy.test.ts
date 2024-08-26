@@ -85,3 +85,14 @@ test('does not re-proxy proxies', () => {
 	assert.equal(inner.count, 1);
 	assert.equal(outer.inner.count, 1);
 });
+
+test('deletes a property', () => {
+	const state = proxy({ a: 1, b: 2 } as { a?: number; b?: number; c?: number });
+
+	delete state.a;
+	assert.equal(JSON.stringify(state), '{"b":2}');
+	delete state.a;
+
+	// deleting a non-existent property should succeed
+	delete state.c;
+});

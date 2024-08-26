@@ -7,10 +7,12 @@ import {
 	render_effect,
 	user_effect
 } from '../../src/internal/client/reactivity/effects';
-import { source, set } from '../../src/internal/client/reactivity/sources';
+import { state, set } from '../../src/internal/client/reactivity/sources';
 import type { Derived, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
+import { snapshot } from '../../src/internal/shared/clone.js';
+import { SvelteSet } from '../../src/reactivity/set';
 
 /**
  * @param runes runes mode
@@ -51,7 +53,7 @@ describe('signals', () => {
 	test('effect with state and derived in it', () => {
 		const log: string[] = [];
 
-		let count = source(0);
+		let count = state(0);
 		let double = derived(() => $.get(count) * 2);
 		effect(() => {
 			log.push(`${$.get(count)}:${$.get(double)}`);
@@ -68,7 +70,7 @@ describe('signals', () => {
 	test('multiple effects with state and derived in it#1', () => {
 		const log: string[] = [];
 
-		let count = source(0);
+		let count = state(0);
 		let double = derived(() => $.get(count) * 2);
 
 		effect(() => {
@@ -89,7 +91,7 @@ describe('signals', () => {
 	test('multiple effects with state and derived in it#2', () => {
 		const log: string[] = [];
 
-		let count = source(0);
+		let count = state(0);
 		let double = derived(() => $.get(count) * 2);
 
 		effect(() => {
@@ -110,7 +112,7 @@ describe('signals', () => {
 	test('derived from state', () => {
 		const log: number[] = [];
 
-		let count = source(0);
+		let count = state(0);
 		let double = derived(() => $.get(count) * 2);
 
 		effect(() => {
@@ -128,7 +130,7 @@ describe('signals', () => {
 	test('derived from derived', () => {
 		const log: number[] = [];
 
-		let count = source(0);
+		let count = state(0);
 		let double = derived(() => $.get(count) * 2);
 		let quadruple = derived(() => $.get(double) * 2);
 
@@ -147,7 +149,7 @@ describe('signals', () => {
 	test('state reset', () => {
 		const log: number[] = [];
 
-		let count = source(0);
+		let count = state(0);
 		let double = derived(() => $.get(count) * 2);
 
 		effect(() => {
@@ -183,8 +185,8 @@ describe('signals', () => {
 		const fib = (n: number): number => (n < 2 ? 1 : fib(n - 1) + fib(n - 2));
 		const hard = (n: number, l: string) => n + fib(16);
 
-		const A = source(0);
-		const B = source(0);
+		const A = state(0);
+		const B = state(0);
 		const C = derived(() => ($.get(A) % 2) + ($.get(B) % 2));
 		const D = derived(() => numbers.map((i) => i + ($.get(A) % 2) - ($.get(B) % 2)));
 		const E = derived(() => hard($.get(C) + $.get(A) + $.get(D)[0]!, 'E'));
@@ -223,7 +225,7 @@ describe('signals', () => {
 	test('effects correctly handle unowned derived values that do not change', () => {
 		const log: number[] = [];
 
-		let count = source(0);
+		let count = state(0);
 		const read = () => {
 			const x = derived(() => ({ count: $.get(count) }));
 			return $.get(x);
@@ -251,8 +253,8 @@ describe('signals', () => {
 		return () => {
 			const nested: Derived<string>[] = [];
 
-			const a = source(0);
-			const b = source(0);
+			const a = state(0);
+			const b = state(0);
 			const c = derived(() => {
 				const a_2 = derived(() => $.get(a) + '!');
 				const b_2 = derived(() => $.get(b) + '?');
@@ -280,7 +282,7 @@ describe('signals', () => {
 	});
 
 	// outside of test function so that they are unowned signals
-	let count = source(0);
+	let count = state(0);
 	let calc = derived(() => {
 		if ($.get(count) >= 2) {
 			return 'limit';
@@ -335,7 +337,7 @@ describe('signals', () => {
 		};
 	});
 
-	let some_state = source({});
+	let some_state = state({});
 	let some_deps = derived(() => {
 		return [$.get(some_state)];
 	});
@@ -360,7 +362,7 @@ describe('signals', () => {
 	test('schedules rerun when writing to signal before reading it', (runes) => {
 		if (!runes) return () => {};
 
-		const value = source({ count: 0 });
+		const value = state({ count: 0 });
 		user_effect(() => {
 			set(value, { count: 0 });
 			$.get(value);
@@ -400,7 +402,7 @@ describe('signals', () => {
 	});
 
 	test('effect teardown is removed on re-run', () => {
-		const count = source(0);
+		const count = state(0);
 		let first = true;
 		let teardown = 0;
 
@@ -428,8 +430,8 @@ describe('signals', () => {
 		let outer: Value<string | number>;
 
 		const destroy = effect_root(() => {
-			inner = source(0);
-			outer = source(0);
+			inner = state(0);
+			outer = state(0);
 
 			render_effect(() => {
 				a = derived(() => {
@@ -470,12 +472,12 @@ describe('signals', () => {
 
 	test('owned deriveds correctly cleanup when no longer connected to graph', () => {
 		let a: Derived<unknown>;
-		let state = source(0);
+		let s = state(0);
 
 		const destroy = effect_root(() => {
 			render_effect(() => {
 				a = derived(() => {
-					$.get(state);
+					$.get(s);
 				});
 				$.get(a);
 			});
@@ -484,16 +486,16 @@ describe('signals', () => {
 		return () => {
 			flushSync();
 			assert.equal(a?.deps?.length, 1);
-			assert.equal(state?.reactions?.length, 1);
+			assert.equal(s?.reactions?.length, 1);
 			destroy();
 			assert.equal(a?.deps?.length, 1);
-			assert.equal(state?.reactions, null);
+			assert.equal(s?.reactions, null);
 		};
 	});
 
 	test('deriveds update upon reconnection #1', () => {
-		let a = source(false);
-		let b = source(false);
+		let a = state(false);
+		let b = state(false);
 
 		let c = derived(() => $.get(a));
 		let d = derived(() => $.get(c));
@@ -534,9 +536,9 @@ describe('signals', () => {
 	});
 
 	test('deriveds update upon reconnection #2', () => {
-		let a = source(false);
-		let b = source(false);
-		let c = source(false);
+		let a = state(false);
+		let b = state(false);
+		let c = state(false);
 
 		let d = derived(() => $.get(a) || $.get(b));
 
@@ -583,8 +585,8 @@ describe('signals', () => {
 	});
 
 	test('deriveds update upon reconnection #3', () => {
-		let a = source(false);
-		let b = source(false);
+		let a = state(false);
+		let b = state(false);
 
 		let c = derived(() => $.get(a) || $.get(b));
 		let d = derived(() => $.get(c));
@@ -617,7 +619,7 @@ describe('signals', () => {
 	});
 
 	test('unowned deriveds are not added as reactions', () => {
-		var count = source(0);
+		var count = state(0);
 
 		function create_derived() {
 			return derived(() => $.get(count) * 2);
@@ -642,7 +644,7 @@ describe('signals', () => {
 	});
 
 	test('unowned deriveds are correctly connected and disconnected from the graph', () => {
-		var count = source(0);
+		var count = state(0);
 
 		function create_derived() {
 			return derived(() => $.get(count) * 2);
@@ -691,6 +693,36 @@ describe('signals', () => {
 
 			assert.deepEqual($.get(combined), [{ a: 1 }]);
 			assert.equal($.get(derived_length), 1);
+		};
+	});
+
+	test('deriveds cannot depend on state they own', () => {
+		return () => {
+			const d = derived(() => {
+				const s = state(0);
+				return $.get(s);
+			});
+
+			assert.throws(() => $.get(d), 'state_unsafe_local_read');
+		};
+	});
+
+	test('proxy version state does not trigger self-dependency guard', () => {
+		return () => {
+			const s = proxy({ a: { b: 1 } });
+			const d = derived(() => snapshot(s));
+
+			assert.deepEqual($.get(d), s);
+		};
+	});
+
+	test('set version state does not trigger self-dependency guard', () => {
+		return () => {
+			const set = new SvelteSet();
+			const d = derived(() => set.has('test'));
+
+			set.add('test');
+			assert.equal($.get(d), true);
 		};
 	});
 });

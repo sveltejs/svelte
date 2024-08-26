@@ -60,9 +60,9 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	 * @param {Sequence} sequence
 	 */
 	function flush_sequence(sequence) {
-		if (sequence.length === 1 && sequence[0].type === 'Text') {
+		if (sequence.every((node) => node.type === 'Text')) {
 			skipped += 1;
-			state.template.push(sequence[0].raw);
+			state.template.push(sequence.map((node) => node.raw).join(''));
 			return;
 		}
 
