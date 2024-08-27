@@ -12,12 +12,19 @@ import { create_fragment } from '../utils/create.js';
 import { create_attribute, create_expression_metadata } from '../../nodes.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../utils/ast.js';
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
+import { list } from '../../../utils/string.js';
 
-// eslint-disable-next-line no-useless-escape
-const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
-
-/** Invalid attribute characters if the attribute is not surrounded by quotes */
-const regex_starts_with_invalid_attr_value = /^(\/>|[\s"'=<>`])/;
+const regex_invalid_unquoted_attribute_value = /^(\/>|[\s"'=<>`])/;
+const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
+const regex_closing_comment = /-->/;
+const regex_component_name = /^(?:[A-Z]|[A-Za-z][A-Za-z0-9_$]*\.)/;
+const regex_valid_component_name =
+	/^(?:[A-Z][A-Za-z0-9_$.]*|[a-z][A-Za-z0-9_$]*\.[A-Za-z0-9_$])[A-Za-z0-9_$.]*$/;
+const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
+const regex_token_ending_character = /[\s=/>"']/;
+const regex_starts_with_quote_characters = /^["']/;
+const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]+))/;
+const regex_valid_tag_name = /^!?[a-zA-Z]{1,}:?[a-zA-Z0-9-]*/;
 
 /** @type {Map<string, Compiler.ElementLike['type']>} */
 const root_only_meta_tags = new Map([
@@ -36,47 +43,6 @@ const meta_tags = new Map([
 	['svelte:self', 'SvelteSelf'],
 	['svelte:fragment', 'SvelteFragment']
 ]);
-
-const valid_meta_tags = Array.from(meta_tags.keys());
-
-const SELF = /^svelte:self(?=[\s/>])/;
-const COMPONENT = /^svelte:component(?=[\s/>])/;
-const SLOT = /^svelte:fragment(?=[\s/>])/;
-const ELEMENT = /^svelte:element(?=[\s/>])/;
-
-/** @param {Compiler.TemplateNode[]} stack */
-function parent_is_head(stack) {
-	let i = stack.length;
-	while (i--) {
-		const { type } = stack[i];
-		if (type === 'SvelteHead') return true;
-		if (type === 'RegularElement' || type === 'Component') return false;
-	}
-	return false;
-}
-
-/** @param {Compiler.TemplateNode[]} stack */
-function parent_is_shadowroot_template(stack) {
-	// https://developer.chrome.com/docs/css-ui/declarative-shadow-dom#building_a_declarative_shadow_root
-	let i = stack.length;
-	while (i--) {
-		if (
-			stack[i].type === 'RegularElement' &&
-			/** @type {Compiler.RegularElement} */ (stack[i]).attributes.some(
-				(a) => a.type === 'Attribute' && a.name === 'shadowrootmode'
-			)
-		) {
-			return true;
-		}
-	}
-	return false;
-}
-
-const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
-const regex_closing_comment = /-->/;
-const regex_component_name = /^(?:[A-Z]|[A-Za-z][A-Za-z0-9_$]*\.)/;
-const regex_valid_component_name =
-	/^(?:[A-Z][A-Za-z0-9_$.]*|[a-z][A-Za-z0-9_$]*\.[A-Za-z0-9_$])[A-Za-z0-9_$.]*$/;
 
 /** @param {Parser} parser */
 export default function element(parser) {
@@ -100,31 +66,62 @@ export default function element(parser) {
 	}
 
 	const is_closing_tag = parser.eat('/');
+	const name = parser.read_until(regex_whitespace_or_slash_or_closing_tag);
 
-	const name = read_tag_name(parser);
+	if (is_closing_tag) {
+		parser.allow_whitespace();
+		parser.eat('>', true);
+
+		if (is_void(name)) {
+			e.void_element_invalid_content(start);
+		}
+
+		// close any elements that don't have their own closing tags, e.g. <div><p></div>
+		while (/** @type {Compiler.RegularElement} */ (parent).name !== name) {
+			if (parent.type !== 'RegularElement') {
+				if (parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name) {
+					e.element_invalid_closing_tag_autoclosed(start, name, parser.last_auto_closed_tag.reason);
+				} else {
+					e.element_invalid_closing_tag(start, name);
+				}
+			}
+
+			parent.end = start;
+			parser.pop();
+
+			parent = parser.current();
+		}
+
+		parent.end = parser.index;
+		parser.pop();
+
+		if (parser.last_auto_closed_tag && parser.stack.length < parser.last_auto_closed_tag.depth) {
+			parser.last_auto_closed_tag = undefined;
+		}
+
+		return;
+	}
+
+	if (name.startsWith('svelte:') && !meta_tags.has(name)) {
+		const bounds = { start: start + 1, end: start + 1 + name.length };
+		e.svelte_meta_invalid_tag(bounds, list(Array.from(meta_tags.keys())));
+	}
+
+	if (!regex_valid_tag_name.test(name)) {
+		const bounds = { start: start + 1, end: start + 1 + name.length };
+		e.element_invalid_tag_name(bounds);
+	}
 
 	if (root_only_meta_tags.has(name)) {
-		if (is_closing_tag) {
-			if (
-				['svelte:options', 'svelte:window', 'svelte:body', 'svelte:document'].includes(name) &&
-				/** @type {Compiler.ElementLike} */ (parent).fragment.nodes.length
-			) {
-				e.svelte_meta_invalid_content(
-					/** @type {Compiler.ElementLike} */ (parent).fragment.nodes[0].start,
-					name
-				);
-			}
-		} else {
-			if (name in parser.meta_tags) {
-				e.svelte_meta_duplicate(start, name);
-			}
-
-			if (parent.type !== 'Root') {
-				e.svelte_meta_invalid_placement(start, name);
-			}
-
-			parser.meta_tags[name] = true;
+		if (name in parser.meta_tags) {
+			e.svelte_meta_duplicate(start, name);
 		}
+
+		if (parent.type !== 'Root') {
+			e.svelte_meta_invalid_placement(start, name);
+		}
+
+		parser.meta_tags[name] = true;
 	}
 
 	const type = meta_tags.has(name)
@@ -175,38 +172,7 @@ export default function element(parser) {
 
 	parser.allow_whitespace();
 
-	if (is_closing_tag) {
-		if (is_void(name)) {
-			e.void_element_invalid_content(start);
-		}
-
-		parser.eat('>', true);
-
-		// close any elements that don't have their own closing tags, e.g. <div><p></div>
-		while (/** @type {Compiler.RegularElement} */ (parent).name !== name) {
-			if (parent.type !== 'RegularElement') {
-				if (parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name) {
-					e.element_invalid_closing_tag_autoclosed(start, name, parser.last_auto_closed_tag.reason);
-				} else {
-					e.element_invalid_closing_tag(start, name);
-				}
-			}
-
-			parent.end = start;
-			parser.pop();
-
-			parent = parser.current();
-		}
-
-		parent.end = parser.index;
-		parser.pop();
-
-		if (parser.last_auto_closed_tag && parser.stack.length < parser.last_auto_closed_tag.depth) {
-			parser.last_auto_closed_tag = undefined;
-		}
-
-		return;
-	} else if (parent.type === 'RegularElement' && closing_tag_omitted(parent.name, name)) {
+	if (parent.type === 'RegularElement' && closing_tag_omitted(parent.name, name)) {
 		parent.end = start;
 		parser.pop();
 		parser.last_auto_closed_tag = {
@@ -386,63 +352,33 @@ export default function element(parser) {
 	}
 }
 
-const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
-
-/** @param {Parser} parser */
-function read_tag_name(parser) {
-	const start = parser.index;
-
-	if (parser.read(SELF)) {
-		// check we're inside a block, otherwise this
-		// will cause infinite recursion
-		let i = parser.stack.length;
-		let legal = false;
-
-		while (i--) {
-			const fragment = parser.stack[i];
-			if (
-				fragment.type === 'IfBlock' ||
-				fragment.type === 'EachBlock' ||
-				fragment.type === 'Component' ||
-				fragment.type === 'SnippetBlock'
-			) {
-				legal = true;
-				break;
-			}
-		}
-
-		if (!legal) {
-			e.svelte_self_invalid_placement(start);
-		}
-
-		return 'svelte:self';
+/** @param {Compiler.TemplateNode[]} stack */
+function parent_is_head(stack) {
+	let i = stack.length;
+	while (i--) {
+		const { type } = stack[i];
+		if (type === 'SvelteHead') return true;
+		if (type === 'RegularElement' || type === 'Component') return false;
 	}
-
-	if (parser.read(COMPONENT)) return 'svelte:component';
-	if (parser.read(ELEMENT)) return 'svelte:element';
-
-	if (parser.read(SLOT)) return 'svelte:fragment';
-
-	const name = parser.read_until(regex_whitespace_or_slash_or_closing_tag);
-
-	if (meta_tags.has(name)) return name;
-
-	if (name.startsWith('svelte:')) {
-		const list = `${valid_meta_tags.slice(0, -1).join(', ')} or ${valid_meta_tags[valid_meta_tags.length - 1]}`;
-		e.svelte_meta_invalid_tag(start, list);
-	}
-
-	if (!valid_tag_name.test(name)) {
-		e.element_invalid_tag_name(start);
-	}
-
-	return name;
+	return false;
 }
 
-// eslint-disable-next-line no-useless-escape
-const regex_token_ending_character = /[\s=\/>"']/;
-const regex_starts_with_quote_characters = /^["']/;
-const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]+))/;
+/** @param {Compiler.TemplateNode[]} stack */
+function parent_is_shadowroot_template(stack) {
+	// https://developer.chrome.com/docs/css-ui/declarative-shadow-dom#building_a_declarative_shadow_root
+	let i = stack.length;
+	while (i--) {
+		if (
+			stack[i].type === 'RegularElement' &&
+			/** @type {Compiler.RegularElement} */ (stack[i]).attributes.some(
+				(a) => a.type === 'Attribute' && a.name === 'shadowrootmode'
+			)
+		) {
+			return true;
+		}
+	}
+	return false;
+}
 
 /**
  * @param {Parser} parser
@@ -692,7 +628,7 @@ function read_attribute_value(parser) {
 			() => {
 				// handle common case of quote marks existing outside of regex for performance reasons
 				if (quote_mark) return parser.match(quote_mark);
-				return !!parser.match_regex(regex_starts_with_invalid_attr_value);
+				return !!parser.match_regex(regex_invalid_unquoted_attribute_value);
 			},
 			'in attribute value'
 		);
