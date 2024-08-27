@@ -278,7 +278,7 @@ export function transition(flags, element, get_fn, get_params) {
  * Animates an element, according to the provided configuration
  * @param {Element} element
  * @param {AnimationConfig | ((opts: { direction: 'in' | 'out' }) => AnimationConfig)} options
- * @param {Animation | undefined} counterpart
+ * @param {Animation | undefined} counterpart The corresponding intro/outro to this outro/intro
  * @param {number} t2 The target `t` value — `1` for intro, `0` for outro
  * @param {(() => void)} on_finish Called after successfully completing the animation
  * @returns {Animation}
