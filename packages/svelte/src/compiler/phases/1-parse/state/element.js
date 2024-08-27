@@ -24,7 +24,7 @@ const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
 const regex_token_ending_character = /[\s=/>"']/;
 const regex_starts_with_quote_characters = /^["']/;
 const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]+))/;
-const regex_valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9-]*/;
+const regex_valid_tag_name = /^!?[a-zA-Z]{1,}:?[a-zA-Z0-9-]*/;
 
 /** @type {Map<string, Compiler.ElementLike['type']>} */
 const root_only_meta_tags = new Map([
