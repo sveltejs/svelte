@@ -101,8 +101,10 @@ export function render(component, options = {}) {
 	on_destroy = [];
 	payload.out += BLOCK_OPEN;
 
-	// prevent parent/child element state being corrupted by a bad render
-	reset_elements();
+	if (DEV) {
+		// prevent parent/child element state being corrupted by a bad render
+		reset_elements();
+	}
 
 	if (options.context) {
 		push();
