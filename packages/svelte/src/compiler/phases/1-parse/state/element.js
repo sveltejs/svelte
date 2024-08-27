@@ -14,11 +14,17 @@ import { get_attribute_expression, is_expression_attribute } from '../../../util
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
 
-// eslint-disable-next-line no-useless-escape
-const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
-
-/** Invalid attribute characters if the attribute is not surrounded by quotes */
-const regex_starts_with_invalid_attr_value = /^(\/>|[\s"'=<>`])/;
+const regex_invalid_unquoted_attribute_value = /^(\/>|[\s"'=<>`])/;
+const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
+const regex_closing_comment = /-->/;
+const regex_component_name = /^(?:[A-Z]|[A-Za-z][A-Za-z0-9_$]*\.)/;
+const regex_valid_component_name =
+	/^(?:[A-Z][A-Za-z0-9_$.]*|[a-z][A-Za-z0-9_$]*\.[A-Za-z0-9_$])[A-Za-z0-9_$.]*$/;
+const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
+const regex_token_ending_character = /[\s=/>"']/;
+const regex_starts_with_quote_characters = /^["']/;
+const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]+))/;
+const regex_valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9-]*/;
 
 /** @type {Map<string, Compiler.ElementLike['type']>} */
 const root_only_meta_tags = new Map([
@@ -37,40 +43,6 @@ const meta_tags = new Map([
 	['svelte:self', 'SvelteSelf'],
 	['svelte:fragment', 'SvelteFragment']
 ]);
-
-/** @param {Compiler.TemplateNode[]} stack */
-function parent_is_head(stack) {
-	let i = stack.length;
-	while (i--) {
-		const { type } = stack[i];
-		if (type === 'SvelteHead') return true;
-		if (type === 'RegularElement' || type === 'Component') return false;
-	}
-	return false;
-}
-
-/** @param {Compiler.TemplateNode[]} stack */
-function parent_is_shadowroot_template(stack) {
-	// https://developer.chrome.com/docs/css-ui/declarative-shadow-dom#building_a_declarative_shadow_root
-	let i = stack.length;
-	while (i--) {
-		if (
-			stack[i].type === 'RegularElement' &&
-			/** @type {Compiler.RegularElement} */ (stack[i]).attributes.some(
-				(a) => a.type === 'Attribute' && a.name === 'shadowrootmode'
-			)
-		) {
-			return true;
-		}
-	}
-	return false;
-}
-
-const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
-const regex_closing_comment = /-->/;
-const regex_component_name = /^(?:[A-Z]|[A-Za-z][A-Za-z0-9_$]*\.)/;
-const regex_valid_component_name =
-	/^(?:[A-Z][A-Za-z0-9_$.]*|[a-z][A-Za-z0-9_$]*\.[A-Za-z0-9_$])[A-Za-z0-9_$.]*$/;
 
 /** @param {Parser} parser */
 export default function element(parser) {
@@ -94,7 +66,7 @@ export default function element(parser) {
 	}
 
 	const is_closing_tag = parser.eat('/');
-	const name = read_tag_name(parser);
+	const name = parser.read_until(regex_whitespace_or_slash_or_closing_tag);
 
 	if (is_closing_tag) {
 		parser.allow_whitespace();
@@ -128,6 +100,16 @@ export default function element(parser) {
 		}
 
 		return;
+	}
+
+	if (name.startsWith('svelte:') && !meta_tags.has(name)) {
+		const bounds = { start: start + 1, end: start + 1 + name.length };
+		e.svelte_meta_invalid_tag(bounds, list(Array.from(meta_tags.keys())));
+	}
+
+	if (!regex_valid_tag_name.test(name)) {
+		const bounds = { start: start + 1, end: start + 1 + name.length };
+		e.element_invalid_tag_name(bounds);
 	}
 
 	if (root_only_meta_tags.has(name)) {
@@ -370,32 +352,33 @@ export default function element(parser) {
 	}
 }
 
-const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
-
-/** @param {Parser} parser */
-function read_tag_name(parser) {
-	const start = parser.index;
-
-	const name = parser.read_until(regex_whitespace_or_slash_or_closing_tag);
-	if (meta_tags.has(name)) return name;
-
-	const end = start + name.length;
-
-	if (name.startsWith('svelte:')) {
-		e.svelte_meta_invalid_tag({ start, end }, list(Array.from(meta_tags.keys())));
+/** @param {Compiler.TemplateNode[]} stack */
+function parent_is_head(stack) {
+	let i = stack.length;
+	while (i--) {
+		const { type } = stack[i];
+		if (type === 'SvelteHead') return true;
+		if (type === 'RegularElement' || type === 'Component') return false;
 	}
-
-	if (!valid_tag_name.test(name)) {
-		e.element_invalid_tag_name({ start, end });
-	}
-
-	return name;
+	return false;
 }
 
-// eslint-disable-next-line no-useless-escape
-const regex_token_ending_character = /[\s=\/>"']/;
-const regex_starts_with_quote_characters = /^["']/;
-const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]+))/;
+/** @param {Compiler.TemplateNode[]} stack */
+function parent_is_shadowroot_template(stack) {
+	// https://developer.chrome.com/docs/css-ui/declarative-shadow-dom#building_a_declarative_shadow_root
+	let i = stack.length;
+	while (i--) {
+		if (
+			stack[i].type === 'RegularElement' &&
+			/** @type {Compiler.RegularElement} */ (stack[i]).attributes.some(
+				(a) => a.type === 'Attribute' && a.name === 'shadowrootmode'
+			)
+		) {
+			return true;
+		}
+	}
+	return false;
+}
 
 /**
  * @param {Parser} parser
@@ -645,7 +628,7 @@ function read_attribute_value(parser) {
 			() => {
 				// handle common case of quote marks existing outside of regex for performance reasons
 				if (quote_mark) return parser.match(quote_mark);
-				return !!parser.match_regex(regex_starts_with_invalid_attr_value);
+				return !!parser.match_regex(regex_invalid_unquoted_attribute_value);
 			},
 			'in attribute value'
 		);
