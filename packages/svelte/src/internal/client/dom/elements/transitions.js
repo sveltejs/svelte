@@ -356,7 +356,6 @@ function animate(element, options, counterpart, t2, on_finish) {
 
 		var delta = t2 - t1;
 		var duration = /** @type {number} */ (options.duration) * Math.abs(delta);
-
 		var keyframes = [];
 
 		if (css) {
