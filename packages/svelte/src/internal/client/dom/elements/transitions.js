@@ -210,6 +210,8 @@ export function transition(flags, element, get_fn, get_params) {
 				intro?.abort();
 			}
 
+			dispatch_event(element, 'introstart');
+
 			intro = animate(element, get_options(), outro, 1, () => {
 				dispatch_event(element, 'introend');
 
@@ -217,8 +219,6 @@ export function transition(flags, element, get_fn, get_params) {
 				intro?.abort();
 				intro = current_options = undefined;
 			});
-
-			dispatch_event(element, 'introstart');
 		},
 		out(fn) {
 			if (!is_outro) {
@@ -229,12 +229,12 @@ export function transition(flags, element, get_fn, get_params) {
 
 			element.inert = true;
 
+			dispatch_event(element, 'outrostart');
+
 			outro = animate(element, get_options(), intro, 0, () => {
 				dispatch_event(element, 'outroend');
 				fn?.();
 			});
-
-			dispatch_event(element, 'outrostart');
 		},
 		stop: () => {
 			intro?.abort();
@@ -250,7 +250,7 @@ export function transition(flags, element, get_fn, get_params) {
 	// parent (block) effect is where the state change happened. we can determine that by
 	// looking at whether the block effect is currently initializing
 	if (is_intro && should_intro) {
-		let run = is_global;
+		var run = is_global;
 
 		if (!run) {
 			var block = /** @type {Effect | null} */ (e.parent);
@@ -327,7 +327,7 @@ function animate(element, options, counterpart, t2, on_finish) {
 
 	const { delay = 0, css, tick, easing = linear } = options;
 
-	let keyframes = [];
+	var keyframes = [];
 
 	if (is_intro && counterpart === undefined) {
 		if (tick) {
@@ -335,8 +335,8 @@ function animate(element, options, counterpart, t2, on_finish) {
 		}
 
 		if (css) {
-			const frame = css_to_keyframe(css(0, 1));
-			keyframes.push(frame, frame);
+			var styles = css_to_keyframe(css(0, 1));
+			keyframes.push(styles, styles);
 		}
 	}
 
