@@ -21,7 +21,7 @@ const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const regex_starts_with_invalid_attr_value = /^(\/>|[\s"'=<>`])/;
 
 /** @type {Map<string, Compiler.ElementLike['type']>} */
-const root_only_special_elements = new Map([
+const root_only_meta_tags = new Map([
 	['svelte:head', 'SvelteHead'],
 	['svelte:options', 'SvelteOptions'],
 	['svelte:window', 'SvelteWindow'],
@@ -30,8 +30,8 @@ const root_only_special_elements = new Map([
 ]);
 
 /** @type {Map<string, Compiler.ElementLike['type']>} */
-const special_elements = new Map([
-	...root_only_special_elements,
+const meta_tags = new Map([
+	...root_only_meta_tags,
 	['svelte:element', 'SvelteElement'],
 	['svelte:component', 'SvelteComponent'],
 	['svelte:self', 'SvelteSelf'],
@@ -97,32 +97,20 @@ export default function element(parser) {
 
 	const name = read_tag_name(parser);
 
-	if (root_only_special_elements.has(name)) {
-		if (is_closing_tag) {
-			if (
-				['svelte:options'].includes(name) &&
-				/** @type {Compiler.ElementLike} */ (parent).fragment.nodes.length
-			) {
-				e.svelte_meta_invalid_content(
-					/** @type {Compiler.ElementLike} */ (parent).fragment.nodes[0].start,
-					name
-				);
-			}
-		} else {
-			if (name in parser.meta_tags) {
-				e.svelte_meta_duplicate(start, name);
-			}
-
-			if (parent.type !== 'Root') {
-				e.svelte_meta_invalid_placement(start, name);
-			}
-
-			parser.meta_tags[name] = true;
+	if (!is_closing_tag && root_only_meta_tags.has(name)) {
+		if (name in parser.meta_tags) {
+			e.svelte_meta_duplicate(start, name);
 		}
+
+		if (parent.type !== 'Root') {
+			e.svelte_meta_invalid_placement(start, name);
+		}
+
+		parser.meta_tags[name] = true;
 	}
 
-	const type = special_elements.has(name)
-		? special_elements.get(name)
+	const type = meta_tags.has(name)
+		? meta_tags.get(name)
 		: regex_component_name.test(name)
 			? 'Component'
 			: name === 'title' && parent_is_head(parser.stack)
@@ -387,12 +375,12 @@ function read_tag_name(parser) {
 	const start = parser.index;
 
 	const name = parser.read_until(regex_whitespace_or_slash_or_closing_tag);
-	if (special_elements.has(name)) return name;
+	if (meta_tags.has(name)) return name;
 
 	const end = start + name.length;
 
 	if (name.startsWith('svelte:')) {
-		e.svelte_meta_invalid_tag({ start, end }, list(Array.from(special_elements.keys())));
+		e.svelte_meta_invalid_tag({ start, end }, list(Array.from(meta_tags.keys())));
 	}
 
 	if (!valid_tag_name.test(name)) {
