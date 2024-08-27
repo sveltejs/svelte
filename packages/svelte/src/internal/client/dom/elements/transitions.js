@@ -1,8 +1,7 @@
-/** @import { AnimateFn, Animation, AnimationConfig, EachItem, Effect, Task, TransitionFn, TransitionManager } from '#client' */
+/** @import { AnimateFn, Animation, AnimationConfig, EachItem, Effect, TransitionFn, TransitionManager } from '#client' */
 import { noop, is_function } from '../../../shared/utils.js';
 import { effect } from '../../reactivity/effects.js';
 import { current_effect, untrack } from '../../runtime.js';
-import { raf } from '../../timing.js';
 import { loop } from '../../loop.js';
 import { should_intro } from '../../render.js';
 import { current_each_item } from '../blocks/each.js';
