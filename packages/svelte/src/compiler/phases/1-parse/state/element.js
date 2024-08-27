@@ -12,6 +12,7 @@ import { create_fragment } from '../utils/create.js';
 import { create_attribute, create_expression_metadata } from '../../nodes.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../utils/ast.js';
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
+import { list } from '../../../utils/string.js';
 
 // eslint-disable-next-line no-useless-escape
 const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
@@ -20,7 +21,7 @@ const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 const regex_starts_with_invalid_attr_value = /^(\/>|[\s"'=<>`])/;
 
 /** @type {Map<string, Compiler.ElementLike['type']>} */
-const root_only_meta_tags = new Map([
+const root_only_special_elements = new Map([
 	['svelte:head', 'SvelteHead'],
 	['svelte:options', 'SvelteOptions'],
 	['svelte:window', 'SvelteWindow'],
@@ -29,20 +30,13 @@ const root_only_meta_tags = new Map([
 ]);
 
 /** @type {Map<string, Compiler.ElementLike['type']>} */
-const meta_tags = new Map([
-	...root_only_meta_tags,
+const special_elements = new Map([
+	...root_only_special_elements,
 	['svelte:element', 'SvelteElement'],
 	['svelte:component', 'SvelteComponent'],
 	['svelte:self', 'SvelteSelf'],
 	['svelte:fragment', 'SvelteFragment']
 ]);
-
-const valid_meta_tags = Array.from(meta_tags.keys());
-
-const SELF = /^svelte:self(?=[\s/>])/;
-const COMPONENT = /^svelte:component(?=[\s/>])/;
-const SLOT = /^svelte:fragment(?=[\s/>])/;
-const ELEMENT = /^svelte:element(?=[\s/>])/;
 
 /** @param {Compiler.TemplateNode[]} stack */
 function parent_is_head(stack) {
@@ -103,7 +97,7 @@ export default function element(parser) {
 
 	const name = read_tag_name(parser);
 
-	if (root_only_meta_tags.has(name)) {
+	if (root_only_special_elements.has(name)) {
 		if (is_closing_tag) {
 			if (
 				['svelte:options', 'svelte:window', 'svelte:body', 'svelte:document'].includes(name) &&
@@ -127,8 +121,8 @@ export default function element(parser) {
 		}
 	}
 
-	const type = meta_tags.has(name)
-		? meta_tags.get(name)
+	const type = special_elements.has(name)
+		? special_elements.get(name)
 		: regex_component_name.test(name)
 			? 'Component'
 			: name === 'title' && parent_is_head(parser.stack)
@@ -392,48 +386,17 @@ const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
 function read_tag_name(parser) {
 	const start = parser.index;
 
-	if (parser.read(SELF)) {
-		// check we're inside a block, otherwise this
-		// will cause infinite recursion
-		let i = parser.stack.length;
-		let legal = false;
-
-		while (i--) {
-			const fragment = parser.stack[i];
-			if (
-				fragment.type === 'IfBlock' ||
-				fragment.type === 'EachBlock' ||
-				fragment.type === 'Component' ||
-				fragment.type === 'SnippetBlock'
-			) {
-				legal = true;
-				break;
-			}
-		}
-
-		if (!legal) {
-			e.svelte_self_invalid_placement(start);
-		}
-
-		return 'svelte:self';
-	}
-
-	if (parser.read(COMPONENT)) return 'svelte:component';
-	if (parser.read(ELEMENT)) return 'svelte:element';
-
-	if (parser.read(SLOT)) return 'svelte:fragment';
-
 	const name = parser.read_until(regex_whitespace_or_slash_or_closing_tag);
+	if (special_elements.has(name)) return name;
 
-	if (meta_tags.has(name)) return name;
+	const end = start + name.length;
 
 	if (name.startsWith('svelte:')) {
-		const list = `${valid_meta_tags.slice(0, -1).join(', ')} or ${valid_meta_tags[valid_meta_tags.length - 1]}`;
-		e.svelte_meta_invalid_tag(start, list);
+		e.svelte_meta_invalid_tag({ start, end }, list(Array.from(special_elements.keys())));
 	}
 
 	if (!valid_tag_name.test(name)) {
-		e.element_invalid_tag_name(start);
+		e.element_invalid_tag_name({ start, end });
 	}
 
 	return name;
