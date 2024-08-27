@@ -1918,6 +1918,11 @@ declare module 'svelte/compiler' {
 	interface Attribute extends BaseNode {
 		type: 'Attribute';
 		name: string;
+		/**
+		 * The attribute may be omitted when false.
+		 * String values are represented by an array since it may be a combination of text and expression
+		 * values such as `style="color: {color} !import"`.
+		 */
 		value: true | ExpressionTag | Array<Text | ExpressionTag>;
 		metadata: {
 			expression: ExpressionMetadata;
