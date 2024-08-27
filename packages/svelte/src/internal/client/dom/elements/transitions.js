@@ -204,8 +204,11 @@ export function transition(flags, element, get_fn, get_params) {
 				return;
 			}
 
-			// abort previous intro (can happen if an element is intro'd, then outro'd, then intro'd again)
-			intro?.abort();
+			if (!is_outro) {
+				// if we intro then outro then intro again, we want to abort the first intro,
+				// if it's not a bidirectional transition
+				intro?.abort();
+			}
 
 			intro = animate(element, get_options(), outro, 1, () => {
 				dispatch_event(element, 'introend');
@@ -225,9 +228,6 @@ export function transition(flags, element, get_fn, get_params) {
 			}
 
 			element.inert = true;
-
-			// abort previous outro (can happen if an element is outro'd, then intro'd, then outro'd again)
-			outro?.abort();
 
 			outro = animate(element, get_options(), intro, 0, () => {
 				dispatch_event(element, 'outroend');
