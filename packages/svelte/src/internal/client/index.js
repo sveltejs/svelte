@@ -33,6 +33,7 @@ export {
 	handle_lazy_img,
 	set_value,
 	set_checked,
+	set_custom_element_data,
 	warn_if_attribute,
 	warn_if_property
 } from './dom/elements/attributes.js';

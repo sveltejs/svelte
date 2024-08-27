@@ -240,7 +240,7 @@ export function build_element_attributes(node, context) {
 				continue;
 			}
 
-			if (is_array(attribute.value) || !node.name.includes('-')) {
+			if (is_array(attribute.value) || !node.name.includes('-') || !context.state.analysis.runes) {
 				const name = get_attribute_name(node, attribute, context);
 				const value = build_attribute_value(
 					attribute.value,

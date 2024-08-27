@@ -155,6 +155,23 @@ export function warn_if_property(element, name) {
 }
 
 /**
+ * @param {any} node
+ * @param {string} prop
+ * @param {any} value
+ */
+export function set_custom_element_data(node, prop, value) {
+	if (prop in node) {
+		var curr_val = node[prop];
+		var next_val = typeof curr_val === 'boolean' && value === '' ? true : value;
+		if (typeof curr_val !== 'object' || curr_val !== next_val) {
+			node[prop] = next_val;
+		}
+	} else {
+		set_attribute(node, prop, value);
+	}
+}
+
+/**
  * Spreads attributes onto a DOM element, taking into account the currently set attributes
  * @param {Element & ElementCSSInlineStyle} element
  * @param {Record<string, any> | undefined} prev
