@@ -14,7 +14,7 @@
 <div>hi</div>
 <p>hi</p>
 <button on:click={() => (red = false)}>off</button>
-<my-widget {red} white=""></my-widget>
+<my-widget {red} white></my-widget>
 
 <style>
 	:host([red]) div {
