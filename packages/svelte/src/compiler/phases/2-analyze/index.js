@@ -52,11 +52,14 @@ import { SlotElement } from './visitors/SlotElement.js';
 import { SnippetBlock } from './visitors/SnippetBlock.js';
 import { SpreadAttribute } from './visitors/SpreadAttribute.js';
 import { StyleDirective } from './visitors/StyleDirective.js';
+import { SvelteBody } from './visitors/SvelteBody.js';
 import { SvelteComponent } from './visitors/SvelteComponent.js';
+import { SvelteDocument } from './visitors/SvelteDocument.js';
 import { SvelteElement } from './visitors/SvelteElement.js';
 import { SvelteFragment } from './visitors/SvelteFragment.js';
 import { SvelteHead } from './visitors/SvelteHead.js';
 import { SvelteSelf } from './visitors/SvelteSelf.js';
+import { SvelteWindow } from './visitors/SvelteWindow.js';
 import { TaggedTemplateExpression } from './visitors/TaggedTemplateExpression.js';
 import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
@@ -158,11 +161,14 @@ const visitors = {
 	SnippetBlock,
 	SpreadAttribute,
 	StyleDirective,
-	SvelteHead,
+	SvelteBody,
+	SvelteComponent,
+	SvelteDocument,
 	SvelteElement,
 	SvelteFragment,
-	SvelteComponent,
+	SvelteHead,
 	SvelteSelf,
+	SvelteWindow,
 	TaggedTemplateExpression,
 	Text,
 	TitleElement,

@@ -100,7 +100,7 @@ export default function element(parser) {
 	if (root_only_special_elements.has(name)) {
 		if (is_closing_tag) {
 			if (
-				['svelte:options', 'svelte:window', 'svelte:body', 'svelte:document'].includes(name) &&
+				['svelte:options'].includes(name) &&
 				/** @type {Compiler.ElementLike} */ (parent).fragment.nodes.length
 			) {
 				e.svelte_meta_invalid_content(
