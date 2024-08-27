@@ -18,6 +18,11 @@ export default test({
 		assert.equal(spans[1].foo, undefined);
 		assert.equal(spans[2].foo, undefined);
 
+		// intermediate ticks necessary for testing purposes, so that time
+		// elapses after the initial delay animation's onfinish callback runs
+		raf.tick(50);
+		raf.tick(100);
+
 		raf.tick(125);
 		assert.equal(spans[0].foo, 0);
 		assert.equal(spans[1].foo, 0.25);
@@ -34,10 +39,6 @@ export default test({
 			<span>two</span>
 			<span>three</span>
 		`
-		);
-
-		spans = /** @type {NodeListOf<HTMLSpanElement & { foo: number }>} */ (
-			target.querySelectorAll('span')
 		);
 
 		assert.equal(spans[0].foo, 1);

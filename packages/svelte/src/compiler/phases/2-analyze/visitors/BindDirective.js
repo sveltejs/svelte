@@ -44,10 +44,6 @@ export function BindDirective(node, context) {
 			e.bind_invalid_value(node.expression);
 		}
 
-		if (binding?.kind === 'derived') {
-			e.constant_binding(node.expression, 'derived state');
-		}
-
 		if (context.state.analysis.runes && binding?.kind === 'each') {
 			e.each_item_invalid_assignment(node);
 		}

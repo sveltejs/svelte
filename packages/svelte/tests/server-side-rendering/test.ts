@@ -16,10 +16,20 @@ interface SSRTest extends BaseTest {
 	compileOptions?: Partial<CompileOptions>;
 	props?: Record<string, any>;
 	withoutNormalizeHtml?: boolean;
+	errors?: string[];
 }
+
+// eslint-disable-next-line no-console
+let console_error = console.error;
 
 const { test, run } = suite<SSRTest>(async (config, test_dir) => {
 	await compile_directory(test_dir, 'server', config.compileOptions);
+
+	const errors: string[] = [];
+
+	console.error = (...args) => {
+		errors.push(...args);
+	};
 
 	const Component = (await import(`${test_dir}/_output/server/main.svelte.js`)).default;
 	const expected_html = try_read_file(`${test_dir}/_expected.html`);
@@ -64,6 +74,12 @@ const { test, run } = suite<SSRTest>(async (config, test_dir) => {
 			}
 		}
 	}
+
+	if (errors.length > 0) {
+		assert.deepEqual(config.errors, errors);
+	}
+
+	console.error = console_error;
 });
 
 export { test };

@@ -267,6 +267,7 @@ export interface Binding {
 	 * - `snippet`: A snippet parameter
 	 * - `store_sub`: A $store value
 	 * - `legacy_reactive`: A `$:` declaration
+	 * - `template`: A binding declared in the template, e.g. in an `await` block or `const` tag
 	 */
 	kind:
 		| 'normal'
@@ -279,7 +280,8 @@ export interface Binding {
 		| 'each'
 		| 'snippet'
 		| 'store_sub'
-		| 'legacy_reactive';
+		| 'legacy_reactive'
+		| 'template';
 	declaration_kind: DeclarationKind;
 	/**
 	 * What the value was initialized with.

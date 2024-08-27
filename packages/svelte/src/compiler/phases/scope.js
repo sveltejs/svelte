@@ -390,7 +390,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 			if (node.expression) {
 				for (const id of extract_identifiers_from_destructuring(node.expression)) {
-					const binding = scope.declare(id, 'derived', 'const');
+					const binding = scope.declare(id, 'template', 'const');
 					bindings.push(binding);
 				}
 			} else {
@@ -401,7 +401,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					start: node.start,
 					end: node.end
 				};
-				const binding = scope.declare(id, 'derived', 'const');
+				const binding = scope.declare(id, 'template', 'const');
 				bindings.push(binding);
 			}
 		},
@@ -492,7 +492,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				for (const id of extract_identifiers(declarator.id)) {
 					const binding = state.scope.declare(
 						id,
-						is_parent_const_tag ? 'derived' : 'normal',
+						is_parent_const_tag ? 'template' : 'normal',
 						node.kind,
 						declarator.init
 					);
@@ -548,7 +548,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				binding.metadata = { inside_rest: is_rest_id };
 			}
 			if (node.context.type !== 'Identifier') {
-				scope.declare(b.id('$$item'), 'derived', 'synthetic');
+				scope.declare(b.id('$$item'), 'template', 'synthetic');
 			}
 			// Visit to pick up references from default initializers
 			visit(node.context, { scope });
@@ -557,7 +557,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				const is_keyed =
 					node.key &&
 					(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index);
-				scope.declare(b.id(node.index), is_keyed ? 'derived' : 'normal', 'const', node);
+				scope.declare(b.id(node.index), is_keyed ? 'template' : 'normal', 'const', node);
 			}
 			if (node.key) visit(node.key, { scope });
 
@@ -604,7 +604,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					scopes.set(node.value, value_scope);
 					context.visit(node.value, { scope: value_scope });
 					for (const id of extract_identifiers(node.value)) {
-						then_scope.declare(id, 'derived', 'const');
+						then_scope.declare(id, 'template', 'const');
 						value_scope.declare(id, 'normal', 'const');
 					}
 				}
@@ -618,7 +618,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					scopes.set(node.error, error_scope);
 					context.visit(node.error, { scope: error_scope });
 					for (const id of extract_identifiers(node.error)) {
-						catch_scope.declare(id, 'derived', 'const');
+						catch_scope.declare(id, 'template', 'const');
 						error_scope.declare(id, 'normal', 'const');
 					}
 				}

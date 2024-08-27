@@ -1,5 +1,23 @@
 # svelte
 
+## 5.0.0-next.240
+
+### Patch Changes
+
+- fix: use WAAPI to control timing of JS-based animations ([#13018](https://github.com/sveltejs/svelte/pull/13018))
+
+- fix: prevent binding to imports ([#13035](https://github.com/sveltejs/svelte/pull/13035))
+
+- fix: never abort bidirectional transitions ([#13018](https://github.com/sveltejs/svelte/pull/13018))
+
+## 5.0.0-next.239
+
+### Patch Changes
+
+- fix: properly handle proxied array length mutations ([#13026](https://github.com/sveltejs/svelte/pull/13026))
+
+- fix: repair `href` attribute mismatches ([#13032](https://github.com/sveltejs/svelte/pull/13032))
+
 ## 5.0.0-next.238
 
 ### Patch Changes

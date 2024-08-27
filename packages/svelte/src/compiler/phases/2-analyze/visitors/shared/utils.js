@@ -71,7 +71,11 @@ export function validate_no_const_assignment(node, argument, scope, is_binding) 
 		}
 	} else if (argument.type === 'Identifier') {
 		const binding = scope.get(argument.name);
-		if (binding?.declaration_kind === 'const' && binding.kind !== 'each') {
+		if (
+			binding?.kind === 'derived' ||
+			binding?.declaration_kind === 'import' ||
+			(binding?.declaration_kind === 'const' && binding.kind !== 'each')
+		) {
 			// e.invalid_const_assignment(
 			// 	node,
 			// 	is_binding,
@@ -83,7 +87,12 @@ export function validate_no_const_assignment(node, argument, scope, is_binding) 
 			// );
 
 			// TODO have a more specific error message for assignments to things like `{:then foo}`
-			const thing = 'constant';
+			const thing =
+				binding.declaration_kind === 'import'
+					? 'import'
+					: binding.kind === 'derived'
+						? 'derived state'
+						: 'constant';
 
 			if (is_binding) {
 				e.constant_binding(node, thing);
