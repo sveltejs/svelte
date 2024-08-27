@@ -94,10 +94,43 @@ export default function element(parser) {
 	}
 
 	const is_closing_tag = parser.eat('/');
-
 	const name = read_tag_name(parser);
 
-	if (!is_closing_tag && root_only_meta_tags.has(name)) {
+	if (is_closing_tag) {
+		parser.allow_whitespace();
+		parser.eat('>', true);
+
+		if (is_void(name)) {
+			e.void_element_invalid_content(start);
+		}
+
+		// close any elements that don't have their own closing tags, e.g. <div><p></div>
+		while (/** @type {Compiler.RegularElement} */ (parent).name !== name) {
+			if (parent.type !== 'RegularElement') {
+				if (parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name) {
+					e.element_invalid_closing_tag_autoclosed(start, name, parser.last_auto_closed_tag.reason);
+				} else {
+					e.element_invalid_closing_tag(start, name);
+				}
+			}
+
+			parent.end = start;
+			parser.pop();
+
+			parent = parser.current();
+		}
+
+		parent.end = parser.index;
+		parser.pop();
+
+		if (parser.last_auto_closed_tag && parser.stack.length < parser.last_auto_closed_tag.depth) {
+			parser.last_auto_closed_tag = undefined;
+		}
+
+		return;
+	}
+
+	if (root_only_meta_tags.has(name)) {
 		if (name in parser.meta_tags) {
 			e.svelte_meta_duplicate(start, name);
 		}
@@ -157,38 +190,7 @@ export default function element(parser) {
 
 	parser.allow_whitespace();
 
-	if (is_closing_tag) {
-		if (is_void(name)) {
-			e.void_element_invalid_content(start);
-		}
-
-		parser.eat('>', true);
-
-		// close any elements that don't have their own closing tags, e.g. <div><p></div>
-		while (/** @type {Compiler.RegularElement} */ (parent).name !== name) {
-			if (parent.type !== 'RegularElement') {
-				if (parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name) {
-					e.element_invalid_closing_tag_autoclosed(start, name, parser.last_auto_closed_tag.reason);
-				} else {
-					e.element_invalid_closing_tag(start, name);
-				}
-			}
-
-			parent.end = start;
-			parser.pop();
-
-			parent = parser.current();
-		}
-
-		parent.end = parser.index;
-		parser.pop();
-
-		if (parser.last_auto_closed_tag && parser.stack.length < parser.last_auto_closed_tag.depth) {
-			parser.last_auto_closed_tag = undefined;
-		}
-
-		return;
-	} else if (parent.type === 'RegularElement' && closing_tag_omitted(parent.name, name)) {
+	if (parent.type === 'RegularElement' && closing_tag_omitted(parent.name, name)) {
 		parent.end = start;
 		parser.pop();
 		parser.last_auto_closed_tag = {
