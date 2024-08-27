@@ -188,7 +188,9 @@ export function transition(flags, element, get_fn, get_params) {
 		// If a transition is still ongoing, we use the existing options rather than generating
 		// new ones. This ensures that reversible transitions reverse smoothly, rather than
 		// jumping to a new spot because (for example) a different `duration` was used
-		return (current_options ??= get_fn()(element, get_params?.(), { direction }));
+		return (current_options ??= get_fn()(element, get_params?.() ?? /** @type {P} */ ({}), {
+			direction
+		}));
 	}
 
 	/** @type {TransitionManager} */
