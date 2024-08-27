@@ -3,7 +3,6 @@ import { teardown } from '../../reactivity/effects.js';
 import { define_property, is_array } from '../../../shared/utils.js';
 import { hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
-import { dev_current_component_function } from '../../runtime.js';
 import { FILENAME } from '../../../../constants.js';
 import * as w from '../../warnings.js';
 
@@ -273,8 +272,8 @@ export function handle_event_propagation(event) {
 	} finally {
 		// @ts-expect-error is used above
 		event.__root = handler_element;
-		// @ts-expect-error is used above
-		current_target = handler_element;
+		// @ts-ignore remove proxy on currentTarget
+		delete event.currentTarget;
 	}
 }
 
