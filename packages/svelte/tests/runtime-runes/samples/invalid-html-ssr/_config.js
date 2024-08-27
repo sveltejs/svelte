@@ -1,12 +1,5 @@
 import { test } from '../../test';
 
-let console_error = console.error;
-
-/**
- * @type {any[]}
- */
-const log = [];
-
 export default test({
 	compileOptions: {
 		dev: true
@@ -16,27 +9,14 @@ export default test({
 
 	recover: true,
 
-	before_test() {
-		console.error = (x) => {
-			log.push(x);
-		};
-	},
+	mode: ['hydrate'],
 
-	after_test() {
-		console.error = console_error;
-		log.length = 0;
-	},
+	errors: [
+		'node_invalid_placement_ssr: `<p>` (main.svelte:6:0) cannot contain `<h1>` (h1.svelte:1:0)\n\nThis can cause content to shift around as the browser repairs the HTML, and will likely result in a `hydration_mismatch` warning.',
+		'node_invalid_placement_ssr: `<form>` (main.svelte:9:0) cannot contain `<form>` (form.svelte:1:0)\n\nThis can cause content to shift around as the browser repairs the HTML, and will likely result in a `hydration_mismatch` warning.'
+	],
 
-	async test({ assert, variant }) {
-		if (variant === 'hydrate') {
-			assert.equal(
-				log[0].split('\n')[0],
-				'node_invalid_placement_ssr: `<p>` (main.svelte:6:0) cannot contain `<h1>` (h1.svelte:1:0)'
-			);
-			assert.equal(
-				log[1].split('\n')[0],
-				'node_invalid_placement_ssr: `<form>` (main.svelte:9:0) cannot contain `<form>` (form.svelte:1:0)'
-			);
-		}
-	}
+	warnings: [
+		'Hydration failed because the initial UI does not match what was rendered on the server'
+	]
 });

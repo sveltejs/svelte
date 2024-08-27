@@ -290,10 +290,10 @@ let mounted_components = new WeakMap();
  */
 export function unmount(component) {
 	const fn = mounted_components.get(component);
-	if (DEV && !fn) {
+
+	if (fn) {
+		fn();
+	} else if (DEV) {
 		w.lifecycle_double_unmount();
-		// eslint-disable-next-line no-console
-		console.trace('stack trace');
 	}
-	fn?.();
 }
