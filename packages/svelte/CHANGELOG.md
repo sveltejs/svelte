@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.241
+
+### Patch Changes
+
+- fix: prevent div/0 when generating transition keyframes ([#13058](https://github.com/sveltejs/svelte/pull/13058))
+
+- fix: error on invalid element name ([#13057](https://github.com/sveltejs/svelte/pull/13057))
+
+- fix: better compile errors for invalid tag names/placement ([#13045](https://github.com/sveltejs/svelte/pull/13045))
+
+- fix: ensure event currentTarget is reset after propagation logic ([#13042](https://github.com/sveltejs/svelte/pull/13042))
+
 ## 5.0.0-next.240
 
 ### Patch Changes
