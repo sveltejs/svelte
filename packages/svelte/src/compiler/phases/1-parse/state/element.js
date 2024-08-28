@@ -17,14 +17,14 @@ import { list } from '../../../utils/string.js';
 const regex_invalid_unquoted_attribute_value = /^(\/>|[\s"'=<>`])/;
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
 const regex_closing_comment = /-->/;
-const regex_component_name = /^(?:[A-Z]|[A-Za-z][A-Za-z0-9_$]*\.)/;
-const regex_valid_component_name =
-	/^(?:[A-Z][A-Za-z0-9_$.]*|[a-z][A-Za-z0-9_$]*\.[A-Za-z0-9_$])[A-Za-z0-9_$.]*$/;
 const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
 const regex_token_ending_character = /[\s=/>"']/;
 const regex_starts_with_quote_characters = /^["']/;
 const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]+))/;
-const regex_valid_tag_name = /^!?[a-zA-Z]{1,}:?[a-zA-Z0-9-]*/;
+const regex_valid_element_name =
+	/^(?:![a-zA-Z]+|[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|[a-zA-Z][a-zA-Z0-9]*:[a-zA-Z][a-zA-Z0-9-]*[a-zA-Z0-9])$/;
+const regex_valid_component_name =
+	/^(?:[A-Z][A-Za-z0-9_$.]*|[a-z][A-Za-z0-9_$]*(?:\.[A-Za-z0-9_$]+)+)$/;
 
 /** @type {Map<string, Compiler.ElementLike['type']>} */
 const root_only_meta_tags = new Map([
@@ -107,9 +107,9 @@ export default function element(parser) {
 		e.svelte_meta_invalid_tag(bounds, list(Array.from(meta_tags.keys())));
 	}
 
-	if (!regex_valid_tag_name.test(name)) {
+	if (!regex_valid_element_name.test(name) && !regex_valid_component_name.test(name)) {
 		const bounds = { start: start + 1, end: start + 1 + name.length };
-		e.element_invalid_tag_name(bounds);
+		e.tag_invalid_name(bounds);
 	}
 
 	if (root_only_meta_tags.has(name)) {
@@ -126,7 +126,7 @@ export default function element(parser) {
 
 	const type = meta_tags.has(name)
 		? meta_tags.get(name)
-		: regex_component_name.test(name)
+		: regex_valid_component_name.test(name)
 			? 'Component'
 			: name === 'title' && parent_is_head(parser.stack)
 				? 'TitleElement'
@@ -134,10 +134,6 @@ export default function element(parser) {
 					name === 'slot' && !parent_is_shadowroot_template(parser.stack)
 					? 'SlotElement'
 					: 'RegularElement';
-
-	if (type === 'Component' && !regex_valid_component_name.test(name)) {
-		e.component_invalid_name({ start: start + 1, end: start + name.length + 1 });
-	}
 
 	/** @type {Compiler.ElementLike} */
 	const element =

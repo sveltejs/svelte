@@ -787,15 +787,6 @@ export function component_invalid_directive(node) {
 }
 
 /**
- * Component name must be a valid variable name or dot notation expression
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function component_invalid_name(node) {
-	e(node, "component_invalid_name", "Component name must be a valid variable name or dot notation expression");
-}
-
-/**
  * Cyclical dependency detected: %cycle%
  * @param {null | number | NodeLike} node
  * @param {string} cycle
@@ -870,15 +861,6 @@ export function element_invalid_closing_tag(node, name) {
  */
 export function element_invalid_closing_tag_autoclosed(node, name, reason) {
 	e(node, "element_invalid_closing_tag_autoclosed", `\`</${name}>\` attempted to close element that was already automatically closed by \`<${reason}>\` (cannot nest \`<${reason}>\` inside \`<${name}>\`)`);
-}
-
-/**
- * Expected valid tag name
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function element_invalid_tag_name(node) {
-	e(node, "element_invalid_tag_name", "Expected valid tag name");
 }
 
 /**
@@ -1376,6 +1358,15 @@ export function svelte_options_unknown_attribute(node, name) {
  */
 export function svelte_self_invalid_placement(node) {
 	e(node, "svelte_self_invalid_placement", "`<svelte:self>` components can only exist inside `{#if}` blocks, `{#each}` blocks, `{#snippet}` blocks or slots passed to components");
+}
+
+/**
+ * Expected a valid element or component name. Components must have a valid variable name or dot notation expression
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function tag_invalid_name(node) {
+	e(node, "tag_invalid_name", "Expected a valid element or component name. Components must have a valid variable name or dot notation expression");
 }
 
 /**
