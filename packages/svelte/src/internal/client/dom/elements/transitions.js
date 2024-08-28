@@ -358,7 +358,7 @@ function animate(element, options, counterpart, t2, on_finish) {
 		var duration = /** @type {number} */ (options.duration) * Math.abs(delta);
 		var keyframes = [];
 
-		if (css) {
+		if (css && duration > 0) {
 			var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
 
 			for (var i = 0; i <= n; i += 1) {
