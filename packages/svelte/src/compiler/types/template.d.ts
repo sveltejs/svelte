@@ -458,9 +458,9 @@ export interface Attribute extends BaseNode {
 	type: 'Attribute';
 	name: string;
 	/**
-	 * The attribute may be omitted when false.
-	 * String values are represented by an array since it may be a combination of text and expression
-	 * values such as `style="color: {color} !import"`.
+	 * A boolean attribute is either present (true) or not.
+	 * Quoted/string values are represented as an array of alternating text and expressions whether
+	 * complex (`"foo{x}bar"`) or just a single expression like `"{x}"`.
 	 */
 	value: true | ExpressionTag | Array<Text | ExpressionTag>;
 	metadata: {
