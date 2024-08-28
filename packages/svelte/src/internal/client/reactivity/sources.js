@@ -191,7 +191,13 @@ function mark_reactions(signal, status) {
 		if ((flags & DIRTY) !== 0) continue;
 
 		// In legacy mode, skip the current effect to prevent infinite loops
-		if (!runes && reaction === current_effect) continue;
+		if (!runes && reaction === current_effect) {
+			// Set the status if not dirty so that subsequent runs are picked up
+			if (status !== DIRTY) {
+				set_signal_status(reaction, status);
+			}
+			continue;
+		}
 
 		// Inspect effects need to run immediately, so that the stack trace makes sense
 		if (DEV && (flags & INSPECT_EFFECT) !== 0) {
