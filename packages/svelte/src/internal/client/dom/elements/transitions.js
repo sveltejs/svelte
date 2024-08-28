@@ -358,13 +358,34 @@ function animate(element, options, counterpart, t2, on_finish) {
 		var duration = /** @type {number} */ (options.duration) * Math.abs(delta);
 		var keyframes = [];
 
-		if (css) {
-			var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
+		if (duration > 0) {
+			if (css) {
+				var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
 
-			for (var i = 0; i <= n; i += 1) {
-				var t = t1 + delta * easing(i / n);
-				var styles = css(t, 1 - t);
-				keyframes.push(css_to_keyframe(styles));
+				for (var i = 0; i <= n; i += 1) {
+					var t = t1 + delta * easing(i / n);
+					var styles = css(t, 1 - t);
+					keyframes.push(css_to_keyframe(styles));
+				}
+			}
+
+			get_t = () => {
+				var time = /** @type {number} */ (
+					/** @type {globalThis.Animation} */ (animation).currentTime
+				);
+
+				return t1 + delta * easing(time / duration);
+			};
+
+			if (tick) {
+				loop(() => {
+					if (animation.playState !== 'running') return false;
+
+					var t = get_t();
+					tick(t, 1 - t);
+
+					return true;
+				});
 			}
 		}
 
@@ -375,25 +396,6 @@ function animate(element, options, counterpart, t2, on_finish) {
 			tick?.(t2, 1 - t2);
 			on_finish();
 		};
-
-		get_t = () => {
-			var time = /** @type {number} */ (
-				/** @type {globalThis.Animation} */ (animation).currentTime
-			);
-
-			return t1 + delta * easing(time / duration);
-		};
-
-		if (tick) {
-			loop(() => {
-				if (animation.playState !== 'running') return false;
-
-				var t = get_t();
-				tick(t, 1 - t);
-
-				return true;
-			});
-		}
 	};
 
 	return {
