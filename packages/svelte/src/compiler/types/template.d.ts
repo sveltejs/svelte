@@ -458,7 +458,6 @@ export interface Attribute extends BaseNode {
 	type: 'Attribute';
 	name: string;
 	/**
-	 * A boolean attribute is either present (true) or not.
 	 * Quoted/string values are represented by an array, even if they contain a single expression like `"{x}"`
 	 */
 	value: true | ExpressionTag | Array<Text | ExpressionTag>;
