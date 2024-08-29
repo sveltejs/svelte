@@ -1866,7 +1866,6 @@ declare module 'svelte/compiler' {
 			/** Set if something in the array expression is shadowed within the each block */
 			array_name: Identifier | null;
 			index: Identifier;
-			item: Identifier;
 			declarations: Map<string, Binding>;
 			/**
 			 * Optimization path for each blocks: If the parent isn't a fragment and
