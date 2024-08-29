@@ -6,7 +6,7 @@ import * as w from '../warnings.js';
 export function install_custom_formatter() {
 	// Custom formatters are 'supported' in Firefox, but they're worse than useless.
 	// They're not supported in Firefox. We can maybe tweak this over time
-	var is_chrome = navigator.userAgent.includes('Chrome');
+	var is_chrome = typeof navigator !== 'undefined' && navigator.userAgent.includes('Chrome');
 	var custom_formatters_enabled = false;
 
 	if (is_chrome) {
