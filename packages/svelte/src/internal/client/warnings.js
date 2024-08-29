@@ -139,3 +139,15 @@ export function state_proxy_equality_mismatch(operator) {
 		console.warn("state_proxy_equality_mismatch");
 	}
 }
+
+/**
+ * We recommend enabling custom formatters for better results when logging `$state` objects — in your devtools, click the gear icon and check the 'Custom formatters' box
+ */
+export function enable_custom_formatters() {
+	if (DEV) {
+		console.warn(`%c[svelte] enable_custom_formatters\n%cWe recommend enabling custom formatters for better results when logging \`$state\` objects — in your devtools, click the gear icon and check the 'Custom formatters' box`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("enable_custom_formatters");
+	}
+}

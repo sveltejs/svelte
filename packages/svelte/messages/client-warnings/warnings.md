@@ -4,6 +4,10 @@
 
 > `%binding%` (%location%) is binding to a non-reactive property
 
+## enable_custom_formatters
+
+> We recommend enabling custom formatters for better results when logging `$state` objects — in your devtools, click the gear icon and check the 'Custom formatters' box
+
 ## event_handler_invalid
 
 > %handler% should be a function. Did you mean to %suggestion%?

@@ -1,43 +1,43 @@
 import { STATE_SYMBOL } from '../constants.js';
+import { VERSION } from '../../../version.js';
+import { snapshot } from '../../shared/clone.js';
+import * as w from '../warnings.js';
 
-export function monkey_patch_console() {
-	for (const method of Object.keys(console)) {
-		// @ts-expect-error
-		const original = console[method];
+export function install_custom_formatter() {
+	// Custom formatters are 'supported' in Firefox, but they're worse than useless.
+	// They're not supported in Firefox. We can maybe tweak this over time
+	var is_chrome = navigator.userAgent.includes('Chrome');
+	var custom_formatters_enabled = false;
 
+	if (is_chrome) {
 		// @ts-expect-error
-		console[method] = (...args) => {
-			for (const arg of args) {
-				if (contains_state_proxy(arg)) {
-					// TODO make this a proper warning
-					console.warn('contains state proxy!!!!');
-					break;
+		(window.devtoolsFormatters ??= []).push({
+			/**
+			 * @param {any} object
+			 * @param {any} config
+			 */
+			header(object, config) {
+				custom_formatters_enabled = true;
+
+				if (STATE_SYMBOL in object) {
+					return [
+						'div',
+						{},
+						['span', { style: 'font-weight: bold' }, '$state'],
+						['object', { object: snapshot(object), config }]
+					];
 				}
-			}
 
-			return original.apply(console, args);
-		};
-	}
-}
+				return null;
+			},
 
-/**
- * @param {any} value
- * @param {Set<any>} seen
- * @returns {boolean}
- */
-function contains_state_proxy(value, seen = new Set()) {
-	if (typeof value !== 'object' || value === null) return false;
-
-	if (seen.has(value)) return false;
-	seen.add(value);
-
-	if (STATE_SYMBOL in value) {
-		return true;
+			hasBody: () => false
+		});
 	}
 
-	for (const key in value) {
-		if (contains_state_proxy(value[key], seen)) {
-			return true;
-		}
+	console.log(`Running Svelte in development mode`, { version: VERSION });
+
+	if (is_chrome && !custom_formatters_enabled) {
+		w.enable_custom_formatters();
 	}
 }

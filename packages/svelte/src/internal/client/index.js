@@ -1,5 +1,5 @@
 import { DEV } from 'esm-env';
-import { monkey_patch_console } from './dev/log.js';
+import { install_custom_formatter } from './dev/log.js';
 
 export { FILENAME, HMR } from '../../constants.js';
 export { add_locations } from './dev/elements.js';
@@ -169,5 +169,5 @@ export {
 export { strict_equals, equals } from './dev/equality.js';
 
 if (DEV) {
-	monkey_patch_console();
+	install_custom_formatter();
 }
