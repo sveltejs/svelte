@@ -1,3 +1,6 @@
+import { DEV } from 'esm-env';
+import { monkey_patch_console } from './dev/log.js';
+
 export { FILENAME, HMR } from '../../constants.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
@@ -164,3 +167,7 @@ export {
 	validate_void_dynamic_element
 } from '../shared/validate.js';
 export { strict_equals, equals } from './dev/equality.js';
+
+if (DEV) {
+	monkey_patch_console();
+}
