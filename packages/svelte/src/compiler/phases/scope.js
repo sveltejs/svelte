@@ -547,9 +547,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 				binding.metadata = { inside_rest: is_rest_id };
 			}
-			if (node.context.type !== 'Identifier') {
-				scope.declare(b.id('$$item'), 'template', 'synthetic');
-			}
+
 			// Visit to pick up references from default initializers
 			visit(node.context, { scope });
 
@@ -583,7 +581,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				contains_group_binding: false,
 				array_name: needs_array_deduplication ? state.scope.root.unique('$$array') : null,
 				index: scope.root.unique('$$index'),
-				item: node.context.type === 'Identifier' ? node.context : b.id('$$item'),
 				declarations: scope.declarations,
 				is_controlled: false
 			};
