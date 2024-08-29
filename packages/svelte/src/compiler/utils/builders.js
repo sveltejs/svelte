@@ -176,27 +176,25 @@ export function logical(operator, left, right) {
 
 /**
  * @param {'const' | 'let' | 'var'} kind
- * @param {string | ESTree.Pattern} pattern
- * @param {ESTree.Expression} [init]
+ * @param {ESTree.VariableDeclarator[]} declarations
  * @returns {ESTree.VariableDeclaration}
  */
-export function declaration(kind, pattern, init) {
-	if (typeof pattern === 'string') pattern = id(pattern);
-
+export function declaration(kind, declarations) {
 	return {
 		type: 'VariableDeclaration',
 		kind,
-		declarations: [init ? declarator(pattern, init) : declarator(pattern)]
+		declarations
 	};
 }
 
 /**
- * @param {ESTree.Pattern} id
+ * @param {ESTree.Pattern | string} pattern
  * @param {ESTree.Expression} [init]
  * @returns {ESTree.VariableDeclarator}
  */
-export function declarator(id, init) {
-	return { type: 'VariableDeclarator', id, init };
+export function declarator(pattern, init) {
+	if (typeof pattern === 'string') pattern = id(pattern);
+	return { type: 'VariableDeclarator', id: pattern, init };
 }
 
 /** @type {ESTree.EmptyStatement} */
@@ -491,7 +489,7 @@ const this_instance = {
  * @returns {ESTree.VariableDeclaration}
  */
 function let_builder(pattern, init) {
-	return declaration('let', pattern, init);
+	return declaration('let', [declarator(pattern, init)]);
 }
 
 /**
@@ -500,7 +498,7 @@ function let_builder(pattern, init) {
  * @returns {ESTree.VariableDeclaration}
  */
 function const_builder(pattern, init) {
-	return declaration('const', pattern, init);
+	return declaration('const', [declarator(pattern, init)]);
 }
 
 /**
@@ -509,7 +507,7 @@ function const_builder(pattern, init) {
  * @returns {ESTree.VariableDeclaration}
  */
 function var_builder(pattern, init) {
-	return declaration('var', pattern, init);
+	return declaration('var', [declarator(pattern, init)]);
 }
 
 /**
