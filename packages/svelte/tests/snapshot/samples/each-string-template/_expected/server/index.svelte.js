@@ -5,7 +5,7 @@ export default function Each_string_template($$payload) {
 
 	$$payload.out += `<!--[-->`;
 
-	for (let $$index = 0; $$index < each_array.length; $$index++) {
+	for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
 		const thing = each_array[$$index];
 
 		$$payload.out += `${$.escape(thing)}, `;

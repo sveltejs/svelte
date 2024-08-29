@@ -30,8 +30,11 @@ export function EachBlock(node, context) {
 	each.push(.../** @type {BlockStatement} */ (context.visit(node.body)).body);
 
 	const for_loop = b.for(
-		b.let(index, b.literal(0)),
-		b.binary('<', index, b.member(array_id, 'length')),
+		b.declaration('let', [
+			b.declarator(index, b.literal(0)),
+			b.declarator('$$length', b.member(array_id, 'length'))
+		]),
+		b.binary('<', index, b.id('$$length')),
 		b.update('++', index, false),
 		b.block(each)
 	);
