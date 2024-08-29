@@ -35,6 +35,8 @@ export function install_custom_formatter() {
 		});
 	}
 
+	// the arguments need to include an object, so that we discover
+	// whether custom formatters are enabled
 	console.log(`Running Svelte in development mode`, { version: VERSION });
 
 	if (is_chrome && !custom_formatters_enabled) {
