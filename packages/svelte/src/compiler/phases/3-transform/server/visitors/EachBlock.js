@@ -14,7 +14,6 @@ export function EachBlock(node, context) {
 
 	const each_node_meta = node.metadata;
 	const collection = /** @type {Expression} */ (context.visit(node.expression));
-	const item = each_node_meta.item;
 	const index =
 		each_node_meta.contains_group_binding || !node.index ? each_node_meta.index : b.id(node.index);
 
@@ -22,11 +21,8 @@ export function EachBlock(node, context) {
 	state.init.push(b.const(array_id, b.call('$.ensure_array_like', collection)));
 
 	/** @type {Statement[]} */
-	const each = [b.const(item, b.member(array_id, index, true))];
+	const each = [b.const(/** @type {Pattern} */ (node.context), b.member(array_id, index, true))];
 
-	if (node.context.type !== 'Identifier') {
-		each.push(b.const(/** @type {Pattern} */ (node.context), item));
-	}
 	if (index.name !== node.index && node.index != null) {
 		each.push(b.let(node.index, index));
 	}
