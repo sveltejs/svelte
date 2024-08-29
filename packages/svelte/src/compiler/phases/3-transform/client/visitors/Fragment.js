@@ -64,7 +64,10 @@ export function Fragment(node, context) {
 		init: [],
 		update: [],
 		after_update: [],
-		template: [],
+		template: {
+			quasi: [],
+			expressions: []
+		},
 		locations: [],
 		transform: { ...context.state.transform },
 		metadata: {
@@ -115,7 +118,12 @@ export function Fragment(node, context) {
 		});
 
 		/** @type {Expression[]} */
-		const args = [b.template([b.quasi(state.template.join(''), true)], [])];
+		const args = [
+			b.template(
+				state.template.quasi.map((q) => b.quasi(q, true)),
+				state.template.expressions
+			)
+		];
 
 		if (state.metadata.context.template_needs_import_node) {
 			args.push(b.literal(TEMPLATE_USE_IMPORT_NODE));
@@ -170,12 +178,15 @@ export function Fragment(node, context) {
 					flags |= TEMPLATE_USE_IMPORT_NODE;
 				}
 
-				if (state.template.length === 1 && state.template[0] === '<!>') {
+				if (state.template.quasi.length === 1 && state.template.quasi[0] === '<!>') {
 					// special case — we can use `$.comment` instead of creating a unique template
 					body.push(b.var(id, b.call('$.comment')));
 				} else {
 					add_template(template_name, [
-						b.template([b.quasi(state.template.join(''), true)], []),
+						b.template(
+							state.template.quasi.map((q) => b.quasi(q, true)),
+							state.template.expressions
+						),
 						b.literal(flags)
 					]);
 

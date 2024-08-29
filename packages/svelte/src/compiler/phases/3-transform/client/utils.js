@@ -311,3 +311,38 @@ export function create_derived_block_argument(node, context) {
 export function create_derived(state, arg) {
 	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
 }
+
+/**
+ * @param {import('./types.js').ComponentClientTransformState} state
+ * @param {string} quasi_to_add
+ */
+export function push_template_quasi(state, quasi_to_add) {
+	const { quasi } = state.template;
+	if (quasi.length === 0) {
+		quasi.push(quasi_to_add);
+		return;
+	}
+	quasi[quasi.length - 1] = quasi[quasi.length - 1].concat(quasi_to_add);
+}
+
+/**
+ * @param {import('./types.js').ComponentClientTransformState} state
+ * @param {import('estree').Expression} expression_to_add
+ */
+export function push_template_expression(state, expression_to_add) {
+	const { expressions, quasi } = state.template;
+	if (quasi.length === 0) {
+		quasi.push('');
+	}
+	expressions.push(expression_to_add);
+	quasi.push('');
+}
+
+/**
+ * Whether a variable can be referenced directly from template string.
+ * @param {import('#compiler').Binding | undefined} binding
+ * @returns {boolean}
+ */
+export function can_inline_variable(binding) {
+	return !!binding && !binding.scope.parent;
+}

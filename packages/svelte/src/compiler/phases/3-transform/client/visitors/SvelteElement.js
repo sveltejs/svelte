@@ -9,6 +9,7 @@ import {
 } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { determine_namespace_for_children } from '../../utils.js';
+import { push_template_quasi } from '../utils.js';
 import {
 	build_attribute_value,
 	build_class_directives,
@@ -21,7 +22,7 @@ import { build_render_statement, build_update } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function SvelteElement(node, context) {
-	context.state.template.push(`<!>`);
+	push_template_quasi(context.state, `<!>`);
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];

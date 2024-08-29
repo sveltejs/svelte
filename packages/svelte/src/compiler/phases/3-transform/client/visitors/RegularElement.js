@@ -19,7 +19,12 @@ import {
 import * as b from '../../../../utils/builders.js';
 import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { build_getter } from '../utils.js';
+import {
+	build_getter,
+	can_inline_variable,
+	push_template_expression,
+	push_template_quasi
+} from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
@@ -53,7 +58,7 @@ export function RegularElement(node, context) {
 	}
 
 	if (node.name === 'noscript') {
-		context.state.template.push('<noscript></noscript>');
+		push_template_quasi(context.state, '<noscript></noscript>');
 		return;
 	}
 
@@ -67,7 +72,7 @@ export function RegularElement(node, context) {
 		namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
 	};
 
-	context.state.template.push(`<${node.name}`);
+	push_template_quasi(context.state, `<${node.name}`);
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];
@@ -241,7 +246,8 @@ export function RegularElement(node, context) {
 				const value = is_text_attribute(attribute) ? attribute.value[0].data : true;
 
 				if (name !== 'class' || value) {
-					context.state.template.push(
+					push_template_quasi(
+						context.state,
 						` ${attribute.name}${
 							is_boolean_attribute(name) && value === true
 								? ''
@@ -278,7 +284,7 @@ export function RegularElement(node, context) {
 		context.state.after_update.push(b.stmt(b.call('$.replay_events', node_id)));
 	}
 
-	context.state.template.push('>');
+	push_template_quasi(context.state, '>');
 
 	/** @type {SourceLocation[]} */
 	const child_locations = [];
@@ -377,7 +383,7 @@ export function RegularElement(node, context) {
 	}
 
 	if (!is_void(node.name)) {
-		context.state.template.push(`</${node.name}>`);
+		push_template_quasi(context.state, `</${node.name}>`);
 	}
 }
 
@@ -465,7 +471,7 @@ function build_element_spread_attributes(
 				value.type === 'Literal' &&
 				context.state.metadata.namespace === 'html'
 			) {
-				context.state.template.push(` is="${escape_html(value.value, true)}"`);
+				push_template_quasi(context.state, ` is="${escape_html(value.value, true)}"`);
 				continue;
 			}
 
@@ -607,6 +613,13 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		);
 	}
 
+	const { has_expression_tag, can_inline } =
+		attribute.value === true
+			? { has_expression_tag: false, can_inline: true }
+			: can_inline_all_nodes(
+					Array.isArray(attribute.value) ? attribute.value : [attribute.value],
+					context.state
+				);
 	if (attribute.metadata.expression.has_state) {
 		if (has_call) {
 			state.init.push(build_update(update));
@@ -615,9 +628,38 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		}
 		return true;
 	} else {
-		state.init.push(update);
+		if (has_expression_tag && can_inline) {
+			push_template_quasi(context.state, ` ${name}="`);
+			push_template_expression(context.state, value);
+			push_template_quasi(context.state, '"');
+		} else {
+			state.init.push(update);
+		}
 		return false;
 	}
+}
+
+/**
+ * @param {(AST.Text | AST.ExpressionTag)[]} nodes
+ * @param {import('../types.js').ComponentClientTransformState} state
+ */
+function can_inline_all_nodes(nodes, state) {
+	let can_inline = true;
+	let has_expression_tag = false;
+	for (let value of nodes) {
+		if (value.type === 'ExpressionTag') {
+			if (value.expression.type === 'Identifier') {
+				const binding = state.scope
+					.owner(value.expression.name)
+					?.declarations.get(value.expression.name);
+				can_inline &&= can_inline_variable(binding);
+			} else {
+				can_inline = false;
+			}
+			has_expression_tag = true;
+		}
+	}
+	return { can_inline, has_expression_tag };
 }
 
 /**
