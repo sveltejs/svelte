@@ -187,17 +187,11 @@ function mark_reactions(signal, status) {
 		var reaction = reactions[i];
 		var flags = reaction.f;
 
-		// Skip any effects that are already dirty
-		if ((flags & DIRTY) !== 0) continue;
+		// If in runes mode, skip any effects that are already dirty
+		if (runes && (flags & DIRTY) !== 0) continue;
 
 		// In legacy mode, skip the current effect to prevent infinite loops
-		if (!runes && reaction === current_effect) {
-			// Set the status if not dirty so that subsequent runs are picked up
-			if (status !== DIRTY) {
-				set_signal_status(reaction, status);
-			}
-			continue;
-		}
+		if (!runes && reaction === current_effect) continue;
 
 		// Inspect effects need to run immediately, so that the stack trace makes sense
 		if (DEV && (flags & INSPECT_EFFECT) !== 0) {
@@ -207,8 +201,9 @@ function mark_reactions(signal, status) {
 
 		set_signal_status(reaction, status);
 
-		// If the signal a) was previously clean or b) is an unowned derived, then mark it
-		if ((flags & (CLEAN | UNOWNED)) !== 0) {
+		// If we're not in runes mode or the signal a) was previously clean or b) is
+		// an unowned derived, then mark it
+		if (!runes || (flags & (CLEAN | UNOWNED)) !== 0) {
 			if ((flags & DERIVED) !== 0) {
 				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
 			} else {
