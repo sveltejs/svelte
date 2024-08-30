@@ -1,6 +1,6 @@
 import "svelte/internal/disclose-version";
-import * as $ from "svelte/internal/client";
 import TextInput from './Child.svelte';
+import * as $ from "svelte/internal/client";
 
 var root = $.template(`<!> `, 1);
 
