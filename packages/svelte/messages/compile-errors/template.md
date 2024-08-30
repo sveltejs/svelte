@@ -276,7 +276,7 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 ## svelte_body_illegal_attribute
 
-> `<svelte:body>` cannot have spread attributes
+> `<svelte:body>` does not support non-event attributes or spread attributes
 
 ## svelte_component_invalid_this
 

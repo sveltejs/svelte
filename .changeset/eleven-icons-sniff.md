@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: error on spreading attributes for svelte:body
+fix: error on incorrect attributes for svelte:body
