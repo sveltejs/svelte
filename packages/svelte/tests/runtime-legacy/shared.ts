@@ -303,7 +303,7 @@ async function run_test_variant(
 						config.withoutNormalizeHtml === 'only-strip-comments' ? false : undefined,
 					withoutNormalizeHtml: !!config.withoutNormalizeHtml
 				});
-			} else if (config.html) {
+			} else if (config.html !== undefined) {
 				assert_html_equal_with_options(target.innerHTML, config.html, {
 					preserveComments:
 						config.withoutNormalizeHtml === 'only-strip-comments' ? false : undefined,
@@ -369,7 +369,7 @@ async function run_test_variant(
 				assert.fail('Expected a runtime error');
 			}
 
-			if (config.html) {
+			if (config.html !== undefined) {
 				flushSync();
 				assert_html_equal_with_options(target.innerHTML, config.html, {
 					preserveComments:
