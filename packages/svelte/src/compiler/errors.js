@@ -1238,6 +1238,15 @@ export function svelte_head_illegal_attribute(node) {
 }
 
 /**
+ * `<svelte:body>` cannot have spread attributes
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_body_illegal_attribute(node) {
+	e(node, "svelte_body_illegal_attribute", "`<svelte:body>` cannot have spread attributes");
+}
+
+/**
  * A component can only have one `<%name%>` element
  * @param {null | number | NodeLike} node
  * @param {string} name
