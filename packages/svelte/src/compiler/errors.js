@@ -1184,6 +1184,15 @@ export function style_duplicate(node) {
 }
 
 /**
+ * `<svelte:body>` does not support non-event attributes or spread attributes
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_body_illegal_attribute(node) {
+	e(node, "svelte_body_illegal_attribute", "`<svelte:body>` does not support non-event attributes or spread attributes");
+}
+
+/**
  * Invalid component definition — must be an `{expression}`
  * @param {null | number | NodeLike} node
  * @returns {never}

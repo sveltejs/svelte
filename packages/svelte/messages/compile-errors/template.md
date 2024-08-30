@@ -274,6 +274,10 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 > A component can have a single top-level `<style>` element
 
+## svelte_body_illegal_attribute
+
+> `<svelte:body>` does not support non-event attributes or spread attributes
+
 ## svelte_component_invalid_this
 
 > Invalid component definition — must be an `{expression}`

@@ -1,7 +1,6 @@
 /** @import { Expression } from 'estree' */
 /** @import { SvelteBody, SvelteDocument, SvelteWindow } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
-import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 
 /**
