@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.242
+
+### Patch Changes
+
+- fix: insert comment before text in an each block, to prevent glued nodes ([#13073](https://github.com/sveltejs/svelte/pull/13073))
+
+- feat: better generated each block code in SSR mode ([#13060](https://github.com/sveltejs/svelte/pull/13060))
+
 ## 5.0.0-next.241
 
 ### Patch Changes
