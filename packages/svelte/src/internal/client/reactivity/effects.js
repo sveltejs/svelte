@@ -389,7 +389,7 @@ export function destroy_effect(effect, remove_dom = true) {
 	var parent = effect.parent;
 
 	// If the parent doesn't have any children, then skip this work altogether
-	if (parent !== null && (effect.f & BRANCH_EFFECT) !== 0 && parent.first !== null) {
+	if (parent !== null && parent.first !== null) {
 		unlink_effect(effect);
 	}
 
