@@ -459,7 +459,7 @@ export function client_component(analysis, options) {
 
 	// we hoist all the import declarations to the top of the file
 	const body = [...module.body, ...state.hoisted].sort((body_a, body_b) =>
-		body_a.type === 'ImportDeclaration' ? -1 : 1
+		body_a.type === 'ImportDeclaration' && body_b.type !== 'ImportDeclaration' ? -1 : 1
 	);
 
 	const component = b.function_declaration(
