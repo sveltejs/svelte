@@ -458,7 +458,7 @@ export function client_component(analysis, options) {
 		analysis.slot_names.size > 0;
 
 	// we hoist all the import declarations to the top of the file
-	const body = [...module.body, ...state.hoisted].toSorted((body_a, body_b) =>
+	const body = [...module.body, ...state.hoisted].sort((body_a, body_b) =>
 		body_a.type === 'ImportDeclaration' ? -1 : 1
 	);
 
