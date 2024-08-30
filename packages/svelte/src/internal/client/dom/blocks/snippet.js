@@ -41,7 +41,7 @@ export function snippet(node, get_snippet, is_chain, ...args) {
 			snippet_effect = null;
 		}
 
-		if (snippet) {
+		if (snippet != null) {
 			snippet_effect = branch(() => /** @type {SnippetFn} */ (snippet)(anchor, ...args));
 		} else if (!is_chain) {
 			e.invalid_snippet();
