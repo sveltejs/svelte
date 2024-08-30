@@ -37,7 +37,7 @@ export function RenderTag(node, context) {
 					context.state.node,
 					b.thunk(snippet_function),
 					b.literal(node.expression.type === 'ChainExpression'),
-					...args,
+					...args
 				)
 			)
 		);
