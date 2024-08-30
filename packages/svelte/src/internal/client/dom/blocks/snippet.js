@@ -11,21 +11,24 @@ import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { create_fragment_from_html } from '../reconciler.js';
 import { assign_nodes } from '../template.js';
 import * as w from '../../warnings.js';
+import * as e from '../../errors.js';
 import { DEV } from 'esm-env';
 import { get_first_child, get_next_sibling } from '../operations.js';
+import { UNINITIALIZED } from '../../../../constants.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
  * @param {TemplateNode} node
  * @param {() => SnippetFn | null | undefined} get_snippet
+ * @param {boolean} is_chain
  * @param {(() => any)[]} args
  * @returns {void}
  */
-export function snippet(node, get_snippet, ...args) {
+export function snippet(node, get_snippet, is_chain, ...args) {
 	var anchor = node;
 
-	/** @type {SnippetFn | null | undefined} */
-	var snippet;
+	/** @type {SnippetFn | null | undefined | typeof UNINITIALIZED} */
+	var snippet = UNINITIALIZED;
 
 	/** @type {Effect | null} */
 	var snippet_effect;
@@ -40,6 +43,8 @@ export function snippet(node, get_snippet, ...args) {
 
 		if (snippet) {
 			snippet_effect = branch(() => /** @type {SnippetFn} */ (snippet)(anchor, ...args));
+		} else if (!is_chain) {
+			e.invalid_snippet();
 		}
 	}, EFFECT_TRANSPARENT);
 

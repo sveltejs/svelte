@@ -31,7 +31,15 @@ export function RenderTag(node, context) {
 
 	if (node.metadata.dynamic) {
 		context.state.init.push(
-			b.stmt(b.call('$.snippet', context.state.node, b.thunk(snippet_function), ...args))
+			b.stmt(
+				b.call(
+					'$.snippet',
+					context.state.node,
+					b.thunk(snippet_function),
+					b.literal(node.expression.type === 'ChainExpression'),
+					...args,
+				)
+			)
 		);
 	} else {
 		context.state.init.push(
