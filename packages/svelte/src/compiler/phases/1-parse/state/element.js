@@ -14,7 +14,7 @@ import { get_attribute_expression, is_expression_attribute } from '../../../util
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
 
-const regex_invalid_unquoted_attribute_value = /^(\/>|[\s"'=<>`])/;
+const regex_invalid_unquoted_attribute_value = /^(\/>|[\s"'<>`]|=[^/])/;
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
 const regex_closing_comment = /-->/;
 const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
