@@ -392,7 +392,7 @@ export function remove_reactions(signal, start_index) {
 }
 
 /**
- * @param {Reaction} signal
+ * @param {Effect} signal
  * @param {boolean} remove_dom
  * @returns {void}
  */
