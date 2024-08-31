@@ -37,7 +37,8 @@ Not covered in this list are a ton of efficiency and performance improvements ac
 - [Mark Of Destiny](https://markofdestiny.com/) is a multiplayer online strategy game where you are the ruler of a small developing kingdom
 - [Dungeons and Jacks](https://github.com/deozza/roguejack) is a game mixing blackjack and roguelite elements
 - [YT Desk](https://github.com/isaxk/ytdesk) is a standalone player for YouTube and Youtube Music with a miniplayer, Discord "Rich Presence" and global shortcuts
-- [Synapsis](https://h.tronic247.com/introducing-synapsis-the-complete-ai-based-learning-platform) is an AI-based learning platform 
+- [Synapsis](https://h.tronic247.com/introducing-synapsis-the-complete-ai-based-learning-platform) is an AI-based learning platform
+- [SvelteCareers](https://sveltecareers.com/) is a new Svelte job site that posts job alerts every Monday
 
 **Learning Resources**
 
@@ -77,6 +78,7 @@ _To Watch_
 - [ssgoi](https://github.com/meursyphus/ssgoi) is a page transition library thats support animated page transition with every browser - including Safari
 - [@svelte-put/preaction](https://svelte-put-next.vnphanquang.com/docs/preaction) is a proof-of-concept Svelte preprocessor that allows usage of "preaction" - an extension to Svelte action with the ability to add static attributes on server-side
 - [svelte-standalone](https://github.com/brenoliradev/svelte-standalone) is a series of configurations that aims to process any svelte widget to a single standalone javascript file
+- [svelte-cartesian](https://github.com/theetrain/svelte-cartesian) is a single component that helps with rendering all prop combinations of a provided component for visual regression testing
 
 That's it for this month! Let us know if we missed anything on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.gg/svelte).
 
