@@ -94,7 +94,7 @@ export function html(node, get_value, svg, mathml, skip_warning) {
 				return;
 			}
 
-			var html = (value == null) ? '' : value + '';
+			var html = value + '';
 			if (svg) html = `<svg>${html}</svg>`;
 			else if (mathml) html = `<math>${html}</math>`;
 
