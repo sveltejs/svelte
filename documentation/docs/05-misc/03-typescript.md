@@ -15,7 +15,7 @@ The easiest way to get started is scaffolding a new SvelteKit project by typing 
 ```ts
 /// file: svelte.config.js
 // @noErrors
-import { vitePreprocess } from '@sveltejs/kit/vite';
+import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";;
 
 const config = {
 	preprocess: vitePreprocess()
