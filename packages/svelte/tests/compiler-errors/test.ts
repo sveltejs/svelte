@@ -5,13 +5,11 @@ import { suite, type BaseTest } from '../suite';
 import { read_file } from '../helpers.js';
 
 interface CompilerErrorTest extends BaseTest {
-	error:
-		| {
-				code: string;
-				message: string;
-				position?: [number, number];
-		  }
-		| false;
+	error: {
+		code: string;
+		message: string;
+		position?: [number, number];
+	};
 }
 
 const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
@@ -20,56 +18,52 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 	}
 
 	if (fs.existsSync(`${cwd}/main.svelte`)) {
-		let caught_error: CompileError | null = null;
+		let caught_error = false;
 
 		try {
 			compile(read_file(`${cwd}/main.svelte`), {
 				generate: 'client'
 			});
 		} catch (e) {
-			caught_error = e as CompileError;
+			const error = e as CompileError;
 
-			if (config.error) {
-				expect(caught_error.code).toBe(config.error.code);
-				expect(caught_error.message).toBe(config.error.message);
+			caught_error = true;
 
-				if (config.error.position) {
-					expect(caught_error.position).toEqual(config.error.position);
-				}
+			expect(error.code).toBe(config.error.code);
+			expect(error.message).toBe(config.error.message);
+
+			if (config.error.position) {
+				expect(error.position).toEqual(config.error.position);
 			}
 		}
 
-		if (config.error && caught_error == null) {
+		if (!caught_error) {
 			assert.fail('Expected an error');
-		} else if (!config.error && caught_error != null) {
-			assert.fail(`Unexpected error: ${caught_error.code}`);
 		}
 	}
 
 	if (fs.existsSync(`${cwd}/main.svelte.js`)) {
-		let caught_error: CompileError | null = null;
+		let caught_error = false;
 
 		try {
 			compileModule(read_file(`${cwd}/main.svelte.js`), {
 				generate: 'client'
 			});
 		} catch (e) {
-			caught_error = e as CompileError;
+			const error = e as CompileError;
 
-			if (config.error) {
-				expect(caught_error.code).toEqual(config.error.code);
-				expect(caught_error.message).toEqual(config.error.message);
+			caught_error = true;
 
-				if (config.error.position) {
-					expect(caught_error.position).toEqual(config.error.position);
-				}
+			expect(error.code).toEqual(config.error.code);
+			expect(error.message).toEqual(config.error.message);
+
+			if (config.error.position) {
+				expect(error.position).toEqual(config.error.position);
 			}
 		}
 
-		if (config.error && caught_error == null) {
+		if (!caught_error) {
 			assert.fail('Expected an error');
-		} else if (!config.error && caught_error != null) {
-			assert.fail(`Unexpected error: ${caught_error.code}`);
 		}
 	}
 });
