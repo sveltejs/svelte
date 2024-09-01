@@ -92,7 +92,7 @@ export function createRawSnippet(fn) {
 			var fragment = create_fragment_from_html(html);
 			element = /** @type {Element} */ (get_first_child(fragment));
 
-			if (DEV && (get_next_sibling(element) !== null || element.nodeType !== 3)) {
+			if (DEV && (get_next_sibling(element) !== null || element.nodeType !== 1)) {
 				w.invalid_raw_snippet_render();
 			}
 

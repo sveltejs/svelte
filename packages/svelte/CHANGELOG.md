@@ -1,5 +1,91 @@
 # svelte
 
+## 5.0.0-next.242
+
+### Patch Changes
+
+- fix: insert comment before text in an each block, to prevent glued nodes ([#13073](https://github.com/sveltejs/svelte/pull/13073))
+
+- feat: better generated each block code in SSR mode ([#13060](https://github.com/sveltejs/svelte/pull/13060))
+
+## 5.0.0-next.241
+
+### Patch Changes
+
+- fix: prevent div/0 when generating transition keyframes ([#13058](https://github.com/sveltejs/svelte/pull/13058))
+
+- fix: error on invalid element name ([#13057](https://github.com/sveltejs/svelte/pull/13057))
+
+- fix: better compile errors for invalid tag names/placement ([#13045](https://github.com/sveltejs/svelte/pull/13045))
+
+- fix: ensure event currentTarget is reset after propagation logic ([#13042](https://github.com/sveltejs/svelte/pull/13042))
+
+## 5.0.0-next.240
+
+### Patch Changes
+
+- fix: use WAAPI to control timing of JS-based animations ([#13018](https://github.com/sveltejs/svelte/pull/13018))
+
+- fix: prevent binding to imports ([#13035](https://github.com/sveltejs/svelte/pull/13035))
+
+- fix: never abort bidirectional transitions ([#13018](https://github.com/sveltejs/svelte/pull/13018))
+
+## 5.0.0-next.239
+
+### Patch Changes
+
+- fix: properly handle proxied array length mutations ([#13026](https://github.com/sveltejs/svelte/pull/13026))
+
+- fix: repair `href` attribute mismatches ([#13032](https://github.com/sveltejs/svelte/pull/13032))
+
+## 5.0.0-next.238
+
+### Patch Changes
+
+- fix: always return true from `deleteProperty` trap ([#13008](https://github.com/sveltejs/svelte/pull/13008))
+
+- fix: handle deletions of previously-unread state proxy properties ([#13008](https://github.com/sveltejs/svelte/pull/13008))
+
+- fix: make internal sources ownerless ([#13013](https://github.com/sveltejs/svelte/pull/13013))
+
+- fix: join text nodes separated by comments ([#13009](https://github.com/sveltejs/svelte/pull/13009))
+
+## 5.0.0-next.237
+
+### Patch Changes
+
+- breaking: throw error if derived creates state and then depends on it ([#12985](https://github.com/sveltejs/svelte/pull/12985))
+
+- fix: ensure assignments to state field inside constructor trigger effects ([#12985](https://github.com/sveltejs/svelte/pull/12985))
+
+- fix: ensure $inspect works with SvelteMap and SvelteSet ([#12994](https://github.com/sveltejs/svelte/pull/12994))
+
+- chore: default options.filename to "(unknown)" ([#12997](https://github.com/sveltejs/svelte/pull/12997))
+
+- feat: allow non-synchronous legacy component instantiation ([#12970](https://github.com/sveltejs/svelte/pull/12970))
+
+## 5.0.0-next.236
+
+### Patch Changes
+
+- fix: properly transform destructured `$derived.by` declarations ([#12984](https://github.com/sveltejs/svelte/pull/12984))
+
+## 5.0.0-next.235
+
+### Patch Changes
+
+- chore: update client check for smaller bundle size ([#12975](https://github.com/sveltejs/svelte/pull/12975))
+
+- fix: correctly hydrate empty raw blocks ([#12979](https://github.com/sveltejs/svelte/pull/12979))
+
+## 5.0.0-next.234
+
+### Patch Changes
+
+- fix: allow deleting non-existent `$restProps` properties ([#12971](https://github.com/sveltejs/svelte/pull/12971))
+
+- feat: only traverse trailing static nodes during hydration ([#12935](https://github.com/sveltejs/svelte/pull/12935))
+
 ## 5.0.0-next.233
 
 ### Patch Changes

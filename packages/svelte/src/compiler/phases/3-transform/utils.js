@@ -287,10 +287,11 @@ export function clean_nodes(
 					!first.attributes.some(
 						(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
 					))),
-		/** if a component or snippet starts with text, we need to add an anchor comment so that its text node doesn't get fused with its surroundings */
+		/** if a component/snippet/each block starts with text, we need to add an anchor comment so that its text node doesn't get fused with its surroundings */
 		is_text_first:
 			(parent.type === 'Fragment' ||
 				parent.type === 'SnippetBlock' ||
+				parent.type === 'EachBlock' ||
 				parent.type === 'SvelteComponent' ||
 				parent.type === 'Component' ||
 				parent.type === 'SvelteSelf') &&

@@ -147,7 +147,7 @@ export function EachBlock(node, context) {
 	// which needs a reference to the index
 	const index =
 		each_node_meta.contains_group_binding || !node.index ? each_node_meta.index : b.id(node.index);
-	const item = each_node_meta.item;
+	const item = node.context.type === 'Identifier' ? node.context : b.id('$$item');
 
 	let uses_index = each_node_meta.contains_group_binding;
 	let key_uses_index = false;

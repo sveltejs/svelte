@@ -102,7 +102,7 @@ export function validate_binding(binding, get_object, get_property, line, column
 		ran = true;
 
 		if (effect.deps === null) {
-			var location = filename && `${filename}:${line}:${column}`;
+			var location = `${filename}:${line}:${column}`;
 			w.binding_property_non_reactive(binding, location);
 
 			warned = true;

@@ -2,7 +2,7 @@ import { assert, fastest_test } from '../../utils.js';
 import * as $ from '../../../packages/svelte/src/internal/client/index.js';
 
 function setup() {
-	let head = $.source(0);
+	let head = $.state(0);
 	const double = $.derived(() => $.get(head) * 2);
 	const inverse = $.derived(() => -$.get(head));
 	let current = $.derived(() => {

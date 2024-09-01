@@ -33,7 +33,8 @@ import {
 	UNOWNED,
 	CLEAN,
 	INSPECT_EFFECT,
-	HEAD_EFFECT
+	HEAD_EFFECT,
+	MAYBE_DIRTY
 } from '../constants.js';
 import { set } from './sources.js';
 import * as e from '../errors.js';
@@ -280,6 +281,12 @@ export function legacy_pre_effect_reset() {
 		// Run dirty `$:` statements
 		for (var token of context.l.r1) {
 			var effect = token.effect;
+
+			// If the effect is CLEAN, then make it MAYBE_DIRTY. This ensures we traverse through
+			// the effects dependencies and correctly ensure each dependency is up-to-date.
+			if ((effect.f & CLEAN) !== 0) {
+				set_signal_status(effect, MAYBE_DIRTY);
+			}
 
 			if (check_dirtiness(effect)) {
 				update_effect(effect);

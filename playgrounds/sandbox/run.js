@@ -26,13 +26,13 @@ function mkdirp(dir) {
 	} catch {}
 }
 
-const svelte_modules = glob('**/*.svelte', { cwd: `${cwd}/input` });
-const js_modules = glob('**/*.js', { cwd: `${cwd}/input` });
+const svelte_modules = glob('**/*.svelte', { cwd: `${cwd}/src` });
+const js_modules = glob('**/*.js', { cwd: `${cwd}/src` });
 
 for (const generate of /** @type {const} */ (['client', 'server'])) {
 	console.error(`\n--- generating ${generate} ---\n`);
 	for (const file of svelte_modules) {
-		const input = `${cwd}/input/${file}`;
+		const input = `${cwd}/src/${file}`;
 		const source = fs.readFileSync(input, 'utf-8');
 
 		const output_js = `${cwd}/output/${generate}/${file}.js`;
@@ -81,7 +81,7 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 	}
 
 	for (const file of js_modules) {
-		const input = `${cwd}/input/${file}`;
+		const input = `${cwd}/src/${file}`;
 		const source = fs.readFileSync(input, 'utf-8');
 
 		const compiled = compileModule(source, {

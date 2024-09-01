@@ -1,0 +1,18 @@
+{
+	"$schema": "https://unpkg.com/knip@5/schema.json",
+	"entry": [
+		"src/*/index.js",
+		"src/index-client.ts",
+		"src/index-server.ts",
+		"src/index.d.ts",
+		"tests/**/*.js",
+		"tests/**/*.ts",
+		"!tests/**/*.svelte",
+		"!tests/**/*.svelte.js",
+		"!tests/**/_output",
+		"!tests/runtime-browser/driver.js",
+		"!tests/runtime-browser/driver-ssr.js",
+		"!tests/types/component.ts"
+	],
+	"project": ["src/**"]
+}

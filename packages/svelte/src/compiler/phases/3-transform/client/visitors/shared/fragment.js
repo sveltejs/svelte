@@ -60,9 +60,9 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	 * @param {Sequence} sequence
 	 */
 	function flush_sequence(sequence) {
-		if (sequence.length === 1 && sequence[0].type === 'Text') {
+		if (sequence.every((node) => node.type === 'Text')) {
 			skipped += 1;
-			state.template.push(sequence[0].raw);
+			state.template.push(sequence.map((node) => node.raw).join(''));
 			return;
 		}
 
@@ -118,7 +118,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	// traverse to the last (n - 1) one when hydrating
 	if (skipped > 1) {
 		skipped -= 1;
-		state.init.push(b.stmt(get_node(false)));
+		state.init.push(b.stmt(b.call('$.next', skipped !== 1 && b.literal(skipped))));
 	}
 }
 

@@ -100,10 +100,6 @@
 
 > This type of directive is not valid on components
 
-## component_invalid_name
-
-> Component name must be a valid variable name or dot notation expression
-
 ## const_tag_cycle
 
 > Cyclical dependency detected: %cycle%
@@ -135,10 +131,6 @@
 ## element_invalid_closing_tag_autoclosed
 
 > `</%name%>` attempted to close element that was already automatically closed by `<%reason%>` (cannot nest `<%reason%>` inside `<%name%>`)
-
-## element_invalid_tag_name
-
-> Expected valid tag name
 
 ## element_unclosed
 
@@ -282,6 +274,10 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 > A component can have a single top-level `<style>` element
 
+## svelte_body_illegal_attribute
+
+> `<svelte:body>` does not support non-event attributes or spread attributes
+
 ## svelte_component_invalid_this
 
 > Invalid component definition — must be an `{expression}`
@@ -301,10 +297,6 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 ## svelte_fragment_invalid_placement
 
 > `<svelte:fragment>` must be the direct child of a component
-
-## svelte_fragment_invalid_slot
-
-> `<svelte:fragment>` slot attribute must have a static value
 
 ## svelte_head_illegal_attribute
 
@@ -361,6 +353,10 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 ## svelte_self_invalid_placement
 
 > `<svelte:self>` components can only exist inside `{#if}` blocks, `{#each}` blocks, `{#snippet}` blocks or slots passed to components
+
+## tag_invalid_name
+
+> Expected a valid element or component name. Components must have a valid variable name or dot notation expression
 
 ## tag_invalid_placement
 

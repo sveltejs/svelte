@@ -356,7 +356,7 @@ export function server_component(analysis, options) {
 		body.push(b.export_default(component_function));
 	}
 
-	if (dev && filename) {
+	if (dev) {
 		// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later
 		body.unshift(
 			b.stmt(

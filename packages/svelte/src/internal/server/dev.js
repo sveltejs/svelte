@@ -50,6 +50,10 @@ function print_error(payload, parent, child) {
 	payload.head.out += `<script>console.error(${JSON.stringify(message)})</script>`;
 }
 
+export function reset_elements() {
+	parent = null;
+}
+
 /**
  * @param {Payload} payload
  * @param {string} tag

@@ -18,6 +18,13 @@
 	<p>these</p>
 	<p>ones</p>
 	{@html content}
+	<p>these</p>
+	<p>trailing</p>
+	<p>nodes</p>
+	<p>can</p>
+	<p>be</p>
+	<p>completely</p>
+	<p>ignored</p>
 </main>
 
 <cant-skip>

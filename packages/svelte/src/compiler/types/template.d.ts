@@ -412,7 +412,6 @@ export namespace Ast {
 		fallback?: Fragment;
 		index?: string;
 		key?: Expression;
-		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
 			keyed: boolean;
@@ -420,7 +419,6 @@ export namespace Ast {
 			/** Set if something in the array expression is shadowed within the each block */
 			array_name: Identifier | null;
 			index: Identifier;
-			item: Identifier;
 			declarations: Map<string, Binding>;
 			/**
 			 * Optimization path for each blocks: If the parent isn't a fragment and
@@ -472,8 +470,10 @@ export namespace Ast {
 	export interface Attribute extends BaseNode {
 		type: 'Attribute';
 		name: string;
+		/**
+		 * Quoted/string values are represented by an array, even if they contain a single expression like `"{x}"`
+		 */
 		value: true | ExpressionTag | Array<Text | ExpressionTag>;
-		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
 			/** May be set if this is an event attribute */

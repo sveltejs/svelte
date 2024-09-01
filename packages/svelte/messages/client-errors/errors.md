@@ -72,10 +72,10 @@
 
 > Cannot set prototype of `$state` object
 
+## state_unsafe_local_read
+
+> Reading state that was created inside the same derived is forbidden. Consider using `untrack` to read locally created state
+
 ## state_unsafe_mutation
 
 > Updating state inside a derived is forbidden. If the value should not be reactive, declare it without `$state`
-
-## svelte_component_invalid_this_value
-
-> The `this={...}` property of a `<svelte:component>` must be a Svelte component, if defined

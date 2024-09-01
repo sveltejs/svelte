@@ -16,6 +16,7 @@ import { current_component, pop, push } from './context.js';
 import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_void } from '../../utils.js';
+import { reset_elements } from './dev.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
@@ -99,6 +100,11 @@ export function render(component, options = {}) {
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
 	payload.out += BLOCK_OPEN;
+
+	if (DEV) {
+		// prevent parent/child element state being corrupted by a bad render
+		reset_elements();
+	}
 
 	if (options.context) {
 		push();

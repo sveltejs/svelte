@@ -244,6 +244,23 @@ When using `onwheel`, `onmousewheel`, `ontouchstart` and `ontouchmove` event att
 
 In the very rare cases that you need to prevent these event defaults, you should use [`on`](https://svelte-5-preview.vercel.app/docs/imports#svelte-events) instead (for example inside an action).
 
+### Attribute/prop syntax is stricter
+
+In Svelte 4, complex attribute values needn't be quoted:
+
+<!-- prettier-ignore -->
+```svelte
+<Component prop=this{is}valid />
+```
+
+This is a footgun. In runes mode, if you want to concatenate stuff you must wrap the value in quotes:
+
+```svelte
+<Component prop="this{is}valid" />
+```
+
+Note that Svelte 5 will also warn if you have a single expression wrapped in quotes, like `answer="{42}"` — in Svelte 6, that will cause the value to be converted to a string, rather than passed as a number.
+
 ## Other breaking changes
 
 ### Stricter `@const` assignment validation

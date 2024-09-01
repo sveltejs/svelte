@@ -65,10 +65,6 @@ export function read_script(parser, start, attributes) {
 
 		if (attribute.name === 'context') {
 			if (attribute.value === true || !is_text_attribute(attribute)) {
-				throw new Error('TODO');
-			}
-
-			if (attribute.value.length !== 1 || attribute.value[0].type !== 'Text') {
 				e.script_invalid_context(attribute);
 			}
 
