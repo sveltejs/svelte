@@ -1,5 +1,5 @@
-/** @import {  AssignmentOperator, Expression, Identifier, Node, Statement, TemplateElement } from 'estree' */
-/** @import { Attribute, Comment, ExpressionTag, SvelteNode, Text } from '#compiler' */
+/** @import { AssignmentOperator, Expression, Identifier, Node, Statement, TemplateElement } from 'estree' */
+/** @import { AST, SvelteNode } from '#compiler' */
 /** @import { ComponentContext, ServerTransformState } from '../../types.js' */
 
 import { escape_html } from '../../../../../../escaping.js';
@@ -28,7 +28,7 @@ export const empty_comment = b.literal(EMPTY_COMMENT);
  * @param {ComponentContext} context
  */
 export function process_children(nodes, { visit, state }) {
-	/** @type {Array<Text | Comment | ExpressionTag>} */
+	/** @type {Array<AST.Text | AST.Comment | AST.ExpressionTag>} */
 	let sequence = [];
 
 	function flush() {
@@ -146,7 +146,7 @@ export function build_template(template, out = b.id('$$payload.out'), operator =
 
 /**
  *
- * @param {Attribute['value']} value
+ * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
  * @param {boolean} trim_whitespace
  * @param {boolean} is_component

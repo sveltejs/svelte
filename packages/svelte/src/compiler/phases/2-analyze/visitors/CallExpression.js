@@ -1,5 +1,5 @@
 /** @import { CallExpression, VariableDeclarator } from 'estree' */
-/** @import { SvelteNode } from '#compiler' */
+/** @import { AST, SvelteNode } from '#compiler' */
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';

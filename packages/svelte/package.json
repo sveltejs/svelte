@@ -123,7 +123,7 @@
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/aria-query": "^5.0.4",
     "@types/node": "^20.11.5",
-    "dts-buddy": "^0.5.1",
+    "dts-buddy": "^0.5.3",
     "esbuild": "^0.21.5",
     "rollup": "^4.21.0",
     "source-map": "^0.7.4",

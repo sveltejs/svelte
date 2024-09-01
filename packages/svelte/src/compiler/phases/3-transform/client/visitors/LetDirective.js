@@ -1,11 +1,11 @@
 /** @import { Expression } from 'estree' */
-/** @import { LetDirective } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
 import { create_derived } from '../utils.js';
 
 /**
- * @param {LetDirective} node
+ * @param {AST.LetDirective} node
  * @param {ComponentContext} context
  */
 export function LetDirective(node, context) {

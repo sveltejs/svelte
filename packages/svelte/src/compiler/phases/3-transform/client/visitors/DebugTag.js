@@ -1,10 +1,10 @@
 /** @import { Expression} from 'estree' */
-/** @import { DebugTag } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
 
 /**
- * @param {DebugTag} node
+ * @param {AST.DebugTag} node
  * @param {ComponentContext} context
  */
 export function DebugTag(node, context) {

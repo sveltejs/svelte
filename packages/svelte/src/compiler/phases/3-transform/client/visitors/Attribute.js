@@ -1,10 +1,10 @@
-/** @import { Attribute } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { is_event_attribute } from '../../../../utils/ast.js';
 import { visit_event_attribute } from './shared/events.js';
 
 /**
- * @param {Attribute} node
+ * @param {AST.Attribute} node
  * @param {ComponentContext} context
  */
 export function Attribute(node, context) {

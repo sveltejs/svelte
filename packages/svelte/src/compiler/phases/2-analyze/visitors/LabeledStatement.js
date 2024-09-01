@@ -1,10 +1,9 @@
 /** @import { Expression, LabeledStatement } from 'estree' */
-/** @import { ReactiveStatement, SvelteNode } from '#compiler' */
+/** @import { AST, ReactiveStatement, SvelteNode } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import { extract_identifiers, object } from '../../../utils/ast.js';
 import * as w from '../../../warnings.js';
-import { is_state_source } from '../../3-transform/client/utils.js';
 
 /**
  * @param {LabeledStatement} node

@@ -1,5 +1,5 @@
-/** @import { AssignmentExpression, CallExpression, Expression, Pattern, PrivateIdentifier, Super, TaggedTemplateExpression, UpdateExpression, VariableDeclarator } from 'estree' */
-/** @import { Fragment } from '#compiler' */
+/** @import { AssignmentExpression, Expression, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { AnalysisState, Context } from '../../types' */
 /** @import { Scope } from '../../../scope' */
 /** @import { NodeLike } from '../../../../errors.js' */
@@ -118,7 +118,7 @@ export function validate_opening_tag(node, state, expected) {
 }
 
 /**
- * @param {Fragment | null | undefined} node
+ * @param {AST.Fragment | null | undefined} node
  * @param {Context} context
  */
 export function validate_block_not_empty(node, context) {

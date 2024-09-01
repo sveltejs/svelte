@@ -1,5 +1,5 @@
 /** @import { Location } from 'locate-character' */
-/** @import { RegularElement, Text } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
 /** @import { Scope } from '../../../scope.js' */
 import { is_void } from '../../../../../utils.js';
@@ -10,7 +10,7 @@ import { build_element_attributes } from './shared/element.js';
 import { process_children, build_template } from './shared/utils.js';
 
 /**
- * @param {RegularElement} node
+ * @param {AST.RegularElement} node
  * @param {ComponentContext} context
  */
 export function RegularElement(node, context) {
@@ -30,7 +30,7 @@ export function RegularElement(node, context) {
 
 	if ((node.name === 'script' || node.name === 'style') && node.fragment.nodes.length === 1) {
 		context.state.template.push(
-			b.literal(/** @type {Text} */ (node.fragment.nodes[0]).data),
+			b.literal(/** @type {AST.Text} */ (node.fragment.nodes[0]).data),
 			b.literal(`</${node.name}>`)
 		);
 

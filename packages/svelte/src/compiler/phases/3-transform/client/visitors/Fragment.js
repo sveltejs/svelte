@@ -1,5 +1,5 @@
 /** @import { Expression, Identifier, Statement } from 'estree' */
-/** @import { Fragment, Namespace, RegularElement } from '#compiler' */
+/** @import { AST, Namespace } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../../../constants.js';
@@ -10,7 +10,7 @@ import { process_children } from './shared/fragment.js';
 import { build_render_statement } from './shared/utils.js';
 
 /**
- * @param {Fragment} node
+ * @param {AST.Fragment} node
  * @param {ComponentContext} context
  */
 export function Fragment(node, context) {
@@ -105,7 +105,7 @@ export function Fragment(node, context) {
 	};
 
 	if (is_single_element) {
-		const element = /** @type {RegularElement} */ (trimmed[0]);
+		const element = /** @type {AST.RegularElement} */ (trimmed[0]);
 
 		const id = b.id(context.state.scope.generate(element.name));
 

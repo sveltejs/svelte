@@ -1,4 +1,4 @@
-/** @import { Component, RegularElement, SvelteComponent, SvelteElement, SvelteSelf, TransitionDirective } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../../types' */
 import { get_attribute_expression, is_expression_attribute } from '../../../../utils/ast.js';
 import { regex_illegal_attribute_character } from '../../../patterns.js';
@@ -23,16 +23,16 @@ const EVENT_MODIFIERS = [
 ];
 
 /**
- * @param {import('#compiler').RegularElement | SvelteElement} node
+ * @param {AST.RegularElement | AST.SvelteElement} node
  * @param {Context} context
  */
 export function validate_element(node, context) {
 	let has_animate_directive = false;
 
-	/** @type {TransitionDirective | null} */
+	/** @type {AST.TransitionDirective | null} */
 	let in_transition = null;
 
-	/** @type {TransitionDirective | null} */
+	/** @type {AST.TransitionDirective | null} */
 	let out_transition = null;
 
 	for (const attribute of node.attributes) {
@@ -75,7 +75,7 @@ export function validate_element(node, context) {
 			}
 
 			if (attribute.name === 'slot') {
-				/** @type {RegularElement | SvelteElement | Component | SvelteComponent | SvelteSelf | undefined} */
+				/** @type {AST.RegularElement | AST.SvelteElement | AST.Component | AST.SvelteComponent | AST.SvelteSelf | undefined} */
 				validate_slot_attribute(context, attribute);
 			}
 
@@ -112,7 +112,7 @@ export function validate_element(node, context) {
 				has_animate_directive = true;
 			}
 		} else if (attribute.type === 'TransitionDirective') {
-			const existing = /** @type {TransitionDirective | null} */ (
+			const existing = /** @type {AST.TransitionDirective | null} */ (
 				(attribute.intro && in_transition) || (attribute.outro && out_transition)
 			);
 

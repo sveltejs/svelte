@@ -1,11 +1,11 @@
 /** @import { Expression } from 'estree' */
-/** @import { RenderTag } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { unwrap_optional } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 
 /**
- * @param {RenderTag} node
+ * @param {AST.RenderTag} node
  * @param {ComponentContext} context
  */
 export function RenderTag(node, context) {

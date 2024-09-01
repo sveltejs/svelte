@@ -1,5 +1,5 @@
 /** @import { Expression, Node, Program } from 'estree' */
-/** @import { Binding, Root, Script, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { Binding, AST, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import { walk } from 'zimmerframe';
@@ -178,7 +178,7 @@ const visitors = {
 };
 
 /**
- * @param {Script | null} script
+ * @param {AST.Script | null} script
  * @param {ScopeRoot} root
  * @param {boolean} allow_reactive_declarations
  * @param {Scope | null} parent
@@ -257,7 +257,7 @@ export function analyze_module(ast, options) {
 }
 
 /**
- * @param {Root} root
+ * @param {AST.Root} root
  * @param {string} source
  * @param {ValidatedCompileOptions} options
  * @returns {ComponentAnalysis}
@@ -580,7 +580,7 @@ export function analyze_component(root, source, options) {
 							// bind:this doesn't need to be a state reference if it will never change
 							if (
 								type === 'BindDirective' &&
-								/** @type {import('#compiler').BindDirective} */ (path[i]).name === 'this'
+								/** @type {AST.BindDirective} */ (path[i]).name === 'this'
 							) {
 								for (let j = i - 1; j >= 0; j -= 1) {
 									const type = path[j].type;
@@ -688,7 +688,7 @@ export function analyze_component(root, source, options) {
 				// TODO this happens during the analysis phase, which shouldn't know anything about client vs server
 				if (element.type === 'SvelteElement' && options.generate === 'client') continue;
 
-				/** @type {import('#compiler').Attribute | undefined} */
+				/** @type {AST.Attribute | undefined} */
 				let class_attribute = undefined;
 
 				for (const attribute of element.attributes) {
@@ -707,7 +707,7 @@ export function analyze_component(root, source, options) {
 					if (is_text_attribute(class_attribute)) {
 						class_attribute.value[0].data += ` ${analysis.css.hash}`;
 					} else {
-						/** @type {import('#compiler').Text} */
+						/** @type {AST.Text} */
 						const css_text = {
 							type: 'Text',
 							data: ` ${analysis.css.hash}`,

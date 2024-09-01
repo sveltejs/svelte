@@ -1,6 +1,6 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement, Super, TemplateElement, TemplateLiteral } from 'estree' */
-/** @import { BindDirective, DelegatedEvent, ExpressionMetadata, ExpressionTag, OnDirective, SvelteNode, Text } from '#compiler' */
-/** @import { ComponentClientTransformState, ComponentContext } from '../../types' */
+/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement, Super } from 'estree' */
+/** @import { AST, SvelteNode } from '#compiler' */
+/** @import { ComponentClientTransformState } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
@@ -11,7 +11,7 @@ import is_reference from 'is-reference';
 import { locator } from '../../../../../state.js';
 
 /**
- * @param {Array<Text | ExpressionTag>} values
+ * @param {Array<AST.Text | AST.ExpressionTag>} values
  * @param {(node: SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
  */
@@ -221,7 +221,7 @@ export function build_bind_this(expression, value, { state, visit }) {
 
 /**
  * @param {ComponentClientTransformState} state
- * @param {BindDirective} binding
+ * @param {AST.BindDirective} binding
  * @param {MemberExpression} expression
  */
 export function validate_binding(state, binding, expression) {

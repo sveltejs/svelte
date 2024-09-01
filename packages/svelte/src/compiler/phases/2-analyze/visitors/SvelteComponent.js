@@ -1,10 +1,10 @@
-/** @import { SvelteComponent } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as w from '../../../warnings.js';
 import { visit_component } from './shared/component.js';
 
 /**
- * @param {SvelteComponent} node
+ * @param {AST.SvelteComponent} node
  * @param {Context} context
  */
 export function SvelteComponent(node, context) {

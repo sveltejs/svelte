@@ -1,5 +1,5 @@
 /** @import { BlockStatement, Expression, Identifier, Pattern, Statement } from 'estree' */
-/** @import { SnippetBlock } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
 import { extract_paths } from '../../../../utils/ast.js';
@@ -7,7 +7,7 @@ import * as b from '../../../../utils/builders.js';
 import { get_value } from './shared/declarations.js';
 
 /**
- * @param {SnippetBlock} node
+ * @param {AST.SnippetBlock} node
  * @param {ComponentContext} context
  */
 export function SnippetBlock(node, context) {

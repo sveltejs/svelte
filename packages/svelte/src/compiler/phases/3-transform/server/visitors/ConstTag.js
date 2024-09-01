@@ -1,10 +1,10 @@
 /** @import { Expression, Pattern } from 'estree' */
-/** @import { ConstTag } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
 
 /**
- * @param {ConstTag} node
+ * @param {AST.ConstTag} node
  * @param {ComponentContext} context
  */
 export function ConstTag(node, context) {

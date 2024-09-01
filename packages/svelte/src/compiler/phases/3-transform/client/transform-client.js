@@ -1,5 +1,5 @@
 /** @import * as ESTree from 'estree' */
-/** @import { ValidatedCompileOptions, SvelteNode, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { ValidatedCompileOptions, AST, ValidatedModuleCompileOptions, SvelteNode } from '#compiler' */
 /** @import { ComponentAnalysis, Analysis } from '../../types' */
 /** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';

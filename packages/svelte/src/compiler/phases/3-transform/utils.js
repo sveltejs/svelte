@@ -1,6 +1,6 @@
 /** @import { Context } from 'zimmerframe' */
 /** @import { TransformState } from './types.js' */
-/** @import * as Compiler from '#compiler' */
+/** @import { AST, Binding, Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler' */
 /** @import { Node, Expression, CallExpression } from 'estree' */
 import {
 	regex_ends_with_whitespaces,
@@ -33,20 +33,20 @@ export function is_hoisted_function(node) {
 
 /**
  * Match Svelte 4 behaviour by sorting ConstTag nodes in topological order
- * @param {Compiler.SvelteNode[]} nodes
+ * @param {SvelteNode[]} nodes
  * @param {TransformState} state
  */
 function sort_const_tags(nodes, state) {
 	/**
 	 * @typedef {{
-	 *   node: Compiler.ConstTag;
-	 *   deps: Set<Compiler.Binding>;
+	 *   node: AST.ConstTag;
+	 *   deps: Set<Binding>;
 	 * }} Tag
 	 */
 
 	const other = [];
 
-	/** @type {Map<Compiler.Binding, Tag>} */
+	/** @type {Map<Binding, Tag>} */
 	const tags = new Map();
 
 	for (const node of nodes) {
@@ -54,10 +54,10 @@ function sort_const_tags(nodes, state) {
 			const declaration = node.declaration.declarations[0];
 
 			const bindings = extract_identifiers(declaration.id).map((id) => {
-				return /** @type {Compiler.Binding} */ (state.scope.get(id.name));
+				return /** @type {Binding} */ (state.scope.get(id.name));
 			});
 
-			/** @type {Set<Compiler.Binding>} */
+			/** @type {Set<Binding>} */
 			const deps = new Set();
 
 			walk(declaration.init, state, {
@@ -85,7 +85,7 @@ function sort_const_tags(nodes, state) {
 		return nodes;
 	}
 
-	/** @type {Array<[Compiler.Binding, Compiler.Binding]>} */
+	/** @type {Array<[Binding, Binding]>} */
 	const edges = [];
 
 	for (const [id, tag] of tags) {
@@ -102,7 +102,7 @@ function sort_const_tags(nodes, state) {
 		e.const_tag_cycle(tag.node, cycle.map((binding) => binding.node.name).join(' → '));
 	}
 
-	/** @type {Compiler.ConstTag[]} */
+	/** @type {AST.ConstTag[]} */
 	const sorted = [];
 
 	/** @param {Tag} tag */
@@ -133,11 +133,11 @@ function sort_const_tags(nodes, state) {
  *   unless it's whitespace-only, in which case collapse to a single whitespace for all cases
  *   except when it's children of certain elements where we know ignore whitespace (like td/option/head),
  *   in which case we remove it entirely
- * @param {Compiler.SvelteNode} parent
- * @param {Compiler.SvelteNode[]} nodes
- * @param {Compiler.SvelteNode[]} path
- * @param {Compiler.Namespace} namespace
- * @param {TransformState & { options: Compiler.ValidatedCompileOptions }} state
+ * @param {SvelteNode} parent
+ * @param {SvelteNode[]} nodes
+ * @param {SvelteNode[]} path
+ * @param {Namespace} namespace
+ * @param {TransformState & { options: ValidatedCompileOptions }} state
  * @param {boolean} preserve_whitespace
  * @param {boolean} preserve_comments
  */
@@ -157,10 +157,10 @@ export function clean_nodes(
 		nodes = sort_const_tags(nodes, state);
 	}
 
-	/** @type {Compiler.SvelteNode[]} */
+	/** @type {SvelteNode[]} */
 	const hoisted = [];
 
-	/** @type {Compiler.SvelteNode[]} */
+	/** @type {SvelteNode[]} */
 	const regular = [];
 
 	for (const node of nodes) {
@@ -302,9 +302,9 @@ export function clean_nodes(
 
 /**
  * Infers the namespace for the children of a node that should be used when creating the `$.template(...)`.
- * @param {Compiler.Namespace} namespace
- * @param {Compiler.SvelteNode} parent
- * @param {Compiler.SvelteNode[]} nodes
+ * @param {Namespace} namespace
+ * @param {SvelteNode} parent
+ * @param {SvelteNode[]} nodes
  */
 export function infer_namespace(namespace, parent, nodes) {
 	if (parent.type === 'RegularElement' && parent.name === 'foreignObject') {
@@ -341,12 +341,12 @@ export function infer_namespace(namespace, parent, nodes) {
  * Heuristic: Keep current namespace, unless we find a regular element,
  * in which case we always want html, or we only find svg nodes,
  * in which case we assume svg.
- * @param {Compiler.SvelteNode[]} nodes
- * @param {Compiler.Namespace | 'keep' | 'maybe_html'} namespace
+ * @param {SvelteNode[]} nodes
+ * @param {Namespace | 'keep' | 'maybe_html'} namespace
  */
 function check_nodes_for_namespace(nodes, namespace) {
 	/**
-	 * @param {Compiler.SvelteElement | Compiler.RegularElement} node}
+	 * @param {AST.SvelteElement | AST.RegularElement} node}
 	 * @param {{stop: () => void}} context
 	 */
 	const RegularElement = (node, { stop }) => {
@@ -395,9 +395,9 @@ function check_nodes_for_namespace(nodes, namespace) {
 
 /**
  * Determines the namespace the children of this node are in.
- * @param {Compiler.RegularElement | Compiler.SvelteElement} node
- * @param {Compiler.Namespace} namespace
- * @returns {Compiler.Namespace}
+ * @param {AST.RegularElement | AST.SvelteElement} node
+ * @param {Namespace} namespace
+ * @returns {Namespace}
  */
 export function determine_namespace_for_children(node, namespace) {
 	if (node.name === 'foreignObject') {

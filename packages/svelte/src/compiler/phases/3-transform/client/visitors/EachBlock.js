@@ -1,5 +1,5 @@
 /** @import { BlockStatement, Expression, Identifier, Pattern, Statement } from 'estree' */
-/** @import { Binding, EachBlock } from '#compiler' */
+/** @import { AST, Binding } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
 import {
@@ -16,7 +16,7 @@ import { build_getter } from '../utils.js';
 import { get_value } from './shared/declarations.js';
 
 /**
- * @param {EachBlock} node
+ * @param {AST.EachBlock} node
  * @param {ComponentContext} context
  */
 export function EachBlock(node, context) {
@@ -289,7 +289,7 @@ export function EachBlock(node, context) {
  * @param {ComponentContext} context
  */
 function collect_parent_each_blocks(context) {
-	return /** @type {EachBlock[]} */ (context.path.filter((node) => node.type === 'EachBlock'));
+	return /** @type {AST.EachBlock[]} */ (context.path.filter((node) => node.type === 'EachBlock'));
 }
 
 /**

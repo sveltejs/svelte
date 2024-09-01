@@ -1,6 +1,6 @@
 /** @import { ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
-/** @import { AnimateDirective, Binding, Component, DeclarationKind, EachBlock, ElementLike, LetDirective, SvelteComponent, SvelteNode, SvelteSelf, TransitionDirective, UseDirective } from '#compiler' */
+/** @import { AST, Binding, DeclarationKind, ElementLike, SvelteNode } from '#compiler' */
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { create_expression_metadata } from './nodes.js';
@@ -40,7 +40,7 @@ export class Scope {
 
 	/**
 	 * A map of declarators to the bindings they declare
-	 * @type {Map<VariableDeclarator | LetDirective, Binding[]>}
+	 * @type {Map<VariableDeclarator | AST.LetDirective, Binding[]>}
 	 */
 	declarators = new Map();
 
@@ -74,7 +74,7 @@ export class Scope {
 	 * @param {Identifier} node
 	 * @param {Binding['kind']} kind
 	 * @param {DeclarationKind} declaration_kind
-	 * @param {null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | EachBlock} initial
+	 * @param {null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | AST.EachBlock} initial
 	 * @returns {Binding}
 	 */
 	declare(node, kind, declaration_kind, initial = null) {
@@ -168,7 +168,7 @@ export class Scope {
 	}
 
 	/**
-	 * @param {VariableDeclarator | LetDirective} node
+	 * @param {VariableDeclarator | AST.LetDirective} node
 	 * @returns {Binding[]}
 	 */
 	get_bindings(node) {
@@ -298,7 +298,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<Component | SvelteComponent | SvelteSelf, State, SvelteNode>}
+	 * @type {Visitor<AST.Component | AST.SvelteComponent | AST.SvelteSelf, State, SvelteNode>}
 	 */
 	const Component = (node, context) => {
 		node.metadata.scopes = {
@@ -335,7 +335,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<AnimateDirective | TransitionDirective | UseDirective, State, SvelteNode>}
+	 * @type {Visitor<AST.AnimateDirective | AST.TransitionDirective | AST.UseDirective, State, SvelteNode>}
 	 */
 	const SvelteDirective = (node, { state, path, visit }) => {
 		state.scope.reference(b.id(node.name.split('.')[0]), path);
@@ -724,7 +724,7 @@ export function set_scope(node, { next, state }) {
 
 /**
  * Returns the name of the rune if the given expression is a `CallExpression` using a rune.
- * @param {Node | EachBlock | null | undefined} node
+ * @param {Node | AST.EachBlock | null | undefined} node
  * @param {Scope} scope
  */
 export function get_rune(node, scope) {

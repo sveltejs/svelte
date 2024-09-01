@@ -1,5 +1,5 @@
 /** @import { CallExpression, Expression, MemberExpression } from 'estree' */
-/** @import { Attribute, BindDirective } from '#compiler' */
+/** @import { AST, SvelteNode } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
@@ -9,14 +9,14 @@ import { build_attribute_value } from './shared/element.js';
 import { build_bind_this, validate_binding } from './shared/utils.js';
 
 /**
- * @param {BindDirective} node
+ * @param {AST.BindDirective} node
  * @param {ComponentContext} context
  */
 export function BindDirective(node, context) {
 	const expression = node.expression;
 	const property = binding_properties[node.name];
 
-	const parent = /** @type {import('#compiler').SvelteNode} */ (context.path.at(-1));
+	const parent = /** @type {SvelteNode} */ (context.path.at(-1));
 
 	if (
 		dev &&
@@ -188,7 +188,7 @@ export function BindDirective(node, context) {
 
 				if (parent?.type === 'RegularElement') {
 					const value = /** @type {any[]} */ (
-						/** @type {Attribute} */ (
+						/** @type {AST.Attribute} */ (
 							parent.attributes.find(
 								(a) =>
 									a.type === 'Attribute' &&

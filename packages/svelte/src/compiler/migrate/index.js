@@ -2,7 +2,7 @@
 /** @import { Visitors } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
 /** @import { Scope } from '../phases/scope.js' */
-/** @import * as Compiler from '#compiler' */
+/** @import { AST, Binding, SvelteNode, ValidatedCompileOptions } from '#compiler' */
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
 import { parse } from '../phases/1-parse/index.js';
@@ -30,7 +30,7 @@ export function migrate(source) {
 
 		const { customElement: customElementOptions, ...parsed_options } = parsed.options || {};
 
-		/** @type {Compiler.ValidatedCompileOptions} */
+		/** @type {ValidatedCompileOptions} */
 		const combined_options = {
 			...validate_component_options({}, ''),
 			...parsed_options,
@@ -160,7 +160,7 @@ export function migrate(source) {
 		let needs_reordering = false;
 
 		for (const [node, { dependencies }] of state.analysis.reactive_statements) {
-			/** @type {Compiler.Binding[]} */
+			/** @type {Binding[]} */
 			let ids = [];
 			if (
 				node.body.type === 'ExpressionStatement' &&
@@ -229,7 +229,7 @@ export function migrate(source) {
  * }} State
  */
 
-/** @type {Visitors<Compiler.SvelteNode, State>} */
+/** @type {Visitors<SvelteNode, State>} */
 const instance_script = {
 	_(node, { state, next }) {
 		// @ts-expect-error
@@ -335,7 +335,7 @@ const instance_script = {
 					// }
 				}
 
-				const binding = /** @type {Compiler.Binding} */ (state.scope.get(declarator.id.name));
+				const binding = /** @type {Binding} */ (state.scope.get(declarator.id.name));
 
 				if (state.analysis.uses_props && (declarator.init || binding.updated)) {
 					throw new Error(
@@ -478,7 +478,7 @@ const instance_script = {
 	}
 };
 
-/** @type {Visitors<Compiler.SvelteNode, State>} */
+/** @type {Visitors<SvelteNode, State>} */
 const template = {
 	Identifier(node, { state, path }) {
 		handle_identifier(node, state, path);
@@ -596,7 +596,7 @@ const template = {
 /**
  * @param {VariableDeclarator} declarator
  * @param {MagicString} str
- * @param {Array<Compiler.SvelteNode>} path
+ * @param {SvelteNode[]} path
  */
 function extract_type_and_comment(declarator, str, path) {
 	const parent = path.at(-1);
@@ -641,11 +641,11 @@ function extract_type_and_comment(declarator, str, path) {
 }
 
 /**
- * @param {Compiler.RegularElement | Compiler.SvelteElement | Compiler.SvelteWindow | Compiler.SvelteDocument | Compiler.SvelteBody} element
+ * @param {AST.RegularElement | AST.SvelteElement | AST.SvelteWindow | AST.SvelteDocument | AST.SvelteBody} element
  * @param {State} state
  */
 function handle_events(element, state) {
-	/** @type {Map<string, Compiler.OnDirective[]>} */
+	/** @type {Map<string, AST.OnDirective[]>} */
 	const handlers = new Map();
 	for (const attribute of element.attributes) {
 		if (attribute.type !== 'OnDirective') continue;
@@ -880,7 +880,7 @@ function get_node_range(source, node) {
 }
 
 /**
- * @param {Compiler.OnDirective} last
+ * @param {AST.OnDirective} last
  * @param {State} state
  */
 function generate_event_name(last, state) {

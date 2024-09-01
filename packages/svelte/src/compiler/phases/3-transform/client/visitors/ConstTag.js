@@ -1,5 +1,5 @@
 /** @import { Expression, Pattern } from 'estree' */
-/** @import { ConstTag } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
 import { extract_identifiers } from '../../../../utils/ast.js';
@@ -8,7 +8,7 @@ import { create_derived } from '../utils.js';
 import { get_value } from './shared/declarations.js';
 
 /**
- * @param {ConstTag} node
+ * @param {AST.ConstTag} node
  * @param {ComponentContext} context
  */
 export function ConstTag(node, context) {

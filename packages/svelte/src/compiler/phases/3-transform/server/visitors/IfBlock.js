@@ -1,12 +1,12 @@
 /** @import { BlockStatement, Expression } from 'estree' */
-/** @import { IfBlock } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import { BLOCK_OPEN_ELSE } from '../../../../../internal/server/hydration.js';
 import * as b from '../../../../utils/builders.js';
 import { block_close, block_open } from './shared/utils.js';
 
 /**
- * @param {IfBlock} node
+ * @param {AST.IfBlock} node
  * @param {ComponentContext} context
  */
 export function IfBlock(node, context) {

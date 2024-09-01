@@ -1,5 +1,5 @@
 /** @import { Expression, Identifier } from 'estree' */
-/** @import { Attribute, ClassDirective, ExpressionMetadata, Namespace, RegularElement, StyleDirective, SvelteElement } from '#compiler' */
+/** @import { AST, Namespace } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { normalize_attribute } from '../../../../../../utils.js';
 import * as b from '../../../../../utils/builders.js';
@@ -9,7 +9,7 @@ import { build_template_literal, build_update } from './utils.js';
 /**
  * Serializes each style directive into something like `$.set_style(element, style_property, value)`
  * and adds it either to init or update, depending on whether or not the value or the attributes are dynamic.
- * @param {StyleDirective[]} style_directives
+ * @param {AST.StyleDirective[]} style_directives
  * @param {Identifier} element_id
  * @param {ComponentContext} context
  * @param {boolean} is_attributes_reactive
@@ -56,7 +56,7 @@ export function build_style_directives(
 /**
  * Serializes each class directive into something like `$.class_toogle(element, class_name, value)`
  * and adds it either to init or update, depending on whether or not the value or the attributes are dynamic.
- * @param {ClassDirective[]} class_directives
+ * @param {AST.ClassDirective[]} class_directives
  * @param {Identifier} element_id
  * @param {ComponentContext} context
  * @param {boolean} is_attributes_reactive
@@ -85,7 +85,7 @@ export function build_class_directives(
 }
 
 /**
- * @param {Attribute['value']} value
+ * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
  */
 export function build_attribute_value(value, context) {
@@ -111,8 +111,8 @@ export function build_attribute_value(value, context) {
 }
 
 /**
- * @param {RegularElement | SvelteElement} element
- * @param {Attribute} attribute
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {AST.Attribute} attribute
  * @param {{ state: { metadata: { namespace: Namespace }}}} context
  */
 export function get_attribute_name(element, attribute, context) {

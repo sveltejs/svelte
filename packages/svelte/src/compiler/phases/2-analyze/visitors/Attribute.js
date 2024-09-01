@@ -1,5 +1,5 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression } from 'estree' */
-/** @import { Attribute, DelegatedEvent, RegularElement, SvelteNode } from '#compiler' */
+/** @import { AST, DelegatedEvent, SvelteNode } from '#compiler' */
 /** @import { Context } from '../types' */
 import { is_capture_event, is_delegated } from '../../../../utils.js';
 import {
@@ -10,7 +10,7 @@ import {
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {Attribute} node
+ * @param {AST.Attribute} node
  * @param {Context} context
  */
 export function Attribute(node, context) {
@@ -107,20 +107,20 @@ function get_delegated_event(event_name, handler, context) {
 
 				const grandparent = path.at(-2);
 
-				/** @type {RegularElement | null} */
+				/** @type {AST.RegularElement | null} */
 				let element = null;
 				/** @type {string | null} */
 				let event_name = null;
 				if (parent.type === 'OnDirective') {
-					element = /** @type {RegularElement} */ (grandparent);
+					element = /** @type {AST.RegularElement} */ (grandparent);
 					event_name = parent.name;
 				} else if (
 					parent.type === 'ExpressionTag' &&
 					grandparent?.type === 'Attribute' &&
 					is_event_attribute(grandparent)
 				) {
-					element = /** @type {RegularElement} */ (path.at(-3));
-					const attribute = /** @type {Attribute} */ (grandparent);
+					element = /** @type {AST.RegularElement} */ (path.at(-3));
+					const attribute = /** @type {AST.Attribute} */ (grandparent);
 					event_name = get_attribute_event_name(attribute.name);
 				}
 

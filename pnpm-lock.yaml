@@ -127,8 +127,8 @@ importers:
         specifier: ^20.11.5
         version: 20.12.7
       dts-buddy:
-        specifier: ^0.5.1
-        version: 0.5.1(typescript@5.5.4)
+        specifier: ^0.5.3
+        version: 0.5.3(typescript@5.5.4)
       esbuild:
         specifier: ^0.21.5
         version: 0.21.5
@@ -1988,8 +1988,8 @@ packages:
     resolution: {integrity: sha512-HTlk5nmhkm8F6JcdXvHIzaorzCoziNQT9mGxLPVXW8wJF1TiGSL60ZGB4gHWabHOaMmWmhvk2/lPHfnBiT78AQ==}
     engines: {node: '>=12'}
 
-  dts-buddy@0.5.1:
-    resolution: {integrity: sha512-naiM3F8hSlBIrMl+WyU9KQsC+Vd0i9jVBeksQ5IsH9Rfzpqx27TmSCftlsY9UxFxAWxoGcf5EB3p1xi0JxWzPw==}
+  dts-buddy@0.5.3:
+    resolution: {integrity: sha512-wS2DC5T+F6R+sG/YNlJ21yn8CKVhy1QQlpKA34G+uO4PUXkwz+JQWbGcIryUByxoJgbH98O0dTGzE2RqsRR3KA==}
     hasBin: true
     peerDependencies:
       typescript: '>=5.0.4 <5.6'
@@ -5676,7 +5676,7 @@ snapshots:
 
   dotenv@16.3.2: {}
 
-  dts-buddy@0.5.1(typescript@5.5.4):
+  dts-buddy@0.5.3(typescript@5.5.4):
     dependencies:
       '@jridgewell/source-map': 0.3.6
       '@jridgewell/sourcemap-codec': 1.5.0

@@ -1,9 +1,9 @@
-/** @import { SvelteSelf } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { build_component } from './shared/component.js';
 
 /**
- * @param {SvelteSelf} node
+ * @param {AST.SvelteSelf} node
  * @param {ComponentContext} context
  */
 export function SvelteSelf(node, context) {

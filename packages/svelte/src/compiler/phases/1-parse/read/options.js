@@ -1,16 +1,16 @@
 /** @import { ObjectExpression } from 'estree' */
-/** @import { SvelteOptionsRaw, Root, SvelteOptions } from '#compiler' */
+/** @import { AST } from '#compiler' */
 import { NAMESPACE_MATHML, NAMESPACE_SVG } from '../../../../constants.js';
 import * as e from '../../../errors.js';
 
 const regex_valid_tag_name = /^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/;
 
 /**
- * @param {SvelteOptionsRaw} node
- * @returns {Root['options']}
+ * @param {AST.SvelteOptionsRaw} node
+ * @returns {AST.Root['options']}
  */
 export default function read_options(node) {
-	/** @type {SvelteOptions} */
+	/** @type {AST.SvelteOptions} */
 	const component_options = {
 		start: node.start,
 		end: node.end,
@@ -39,7 +39,7 @@ export default function read_options(node) {
 				break; // eslint doesn't know this is unnecessary
 			}
 			case 'customElement': {
-				/** @type {SvelteOptions['customElement']} */
+				/** @type {AST.SvelteOptions['customElement']} */
 				const ce = {};
 				const { value: v } = attribute;
 				const value = v === true || Array.isArray(v) ? v : [v];

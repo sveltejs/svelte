@@ -1,9 +1,9 @@
-/** @import { DebugTag } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { validate_opening_tag } from './shared/utils.js';
 
 /**
- * @param {DebugTag} node
+ * @param {AST.DebugTag} node
  * @param {Context} context
  */
 export function DebugTag(node, context) {

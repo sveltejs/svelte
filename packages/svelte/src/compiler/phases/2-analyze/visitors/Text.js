@@ -1,11 +1,11 @@
-/** @import { Text } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { is_tag_valid_with_parent } from '../../../../html-tree-validation.js';
 import { regex_not_whitespace } from '../../patterns.js';
 import * as e from '../../../errors.js';
 
 /**
- * @param {Text} node
+ * @param {AST.Text} node
  * @param {Context} context
  */
 export function Text(node, context) {

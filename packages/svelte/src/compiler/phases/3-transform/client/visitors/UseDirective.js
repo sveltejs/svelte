@@ -1,11 +1,11 @@
 /** @import { Expression } from 'estree' */
-/** @import { UseDirective } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
 import { parse_directive_name } from './shared/utils.js';
 
 /**
- * @param {UseDirective} node
+ * @param {AST.UseDirective} node
  * @param {ComponentContext} context
  */
 export function UseDirective(node, context) {

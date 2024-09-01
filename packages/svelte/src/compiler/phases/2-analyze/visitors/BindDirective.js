@@ -1,4 +1,4 @@
-/** @import { Attribute, BindDirective } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import {
 	extract_all_identifiers_from_expression,
@@ -13,7 +13,7 @@ import fuzzymatch from '../../1-parse/utils/fuzzymatch.js';
 import { is_content_editable_binding, is_svg } from '../../../../utils.js';
 
 /**
- * @param {BindDirective} node
+ * @param {AST.BindDirective} node
  * @param {Context} context
  */
 export function BindDirective(node, context) {
@@ -152,7 +152,7 @@ export function BindDirective(node, context) {
 			}
 
 			if (parent.name === 'input' && node.name !== 'this') {
-				const type = /** @type {Attribute | undefined} */ (
+				const type = /** @type {AST.Attribute | undefined} */ (
 					parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'type')
 				);
 
@@ -194,7 +194,7 @@ export function BindDirective(node, context) {
 			}
 
 			if (is_content_editable_binding(node.name)) {
-				const contenteditable = /** @type {Attribute} */ (
+				const contenteditable = /** @type {AST.Attribute} */ (
 					parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'contenteditable')
 				);
 

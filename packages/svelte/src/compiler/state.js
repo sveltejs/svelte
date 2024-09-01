@@ -66,7 +66,6 @@ export function reset_warning_filter(fn = () => true) {
 }
 
 /**
- *
  * @param {SvelteNode | NodeLike} node
  * @param {import('../constants.js').IGNORABLE_RUNTIME_WARNINGS[number]} code
  * @returns

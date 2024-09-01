@@ -1,8 +1,6 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, Literal, MemberExpression, ObjectExpression, Statement } from 'estree' */
-/** @import { Attribute, ClassDirective, SpreadAttribute, StyleDirective, SvelteElement } from '#compiler' */
-/** @import { SourceLocation } from '#shared' */
-/** @import { ComponentClientTransformState, ComponentContext } from '../types' */
-/** @import { Scope } from '../../../scope' */
+/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, ObjectExpression, Statement } from 'estree' */
+/** @import { AST } from '#compiler' */
+/** @import { ComponentContext } from '../types' */
 import { dev, locator } from '../../../../state.js';
 import {
 	get_attribute_expression,
@@ -19,22 +17,22 @@ import {
 import { build_render_statement, build_update } from './shared/utils.js';
 
 /**
- * @param {SvelteElement} node
+ * @param {AST.SvelteElement} node
  * @param {ComponentContext} context
  */
 export function SvelteElement(node, context) {
 	context.state.template.push(`<!>`);
 
-	/** @type {Array<Attribute | SpreadAttribute>} */
+	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];
 
-	/** @type {Attribute['value'] | undefined} */
+	/** @type {AST.Attribute['value'] | undefined} */
 	let dynamic_namespace = undefined;
 
-	/** @type {ClassDirective[]} */
+	/** @type {AST.ClassDirective[]} */
 	const class_directives = [];
 
-	/** @type {StyleDirective[]} */
+	/** @type {AST.StyleDirective[]} */
 	const style_directives = [];
 
 	/** @type {ExpressionStatement[]} */
@@ -139,7 +137,7 @@ export function SvelteElement(node, context) {
 /**
  * Serializes dynamic element attribute assignments.
  * Returns the `true` if spread is deemed reactive.
- * @param {Array<Attribute | SpreadAttribute>} attributes
+ * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
  * @param {ComponentContext} context
  * @param {Identifier} element_id
  * @returns {boolean}

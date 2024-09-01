@@ -1,6 +1,5 @@
-/** @import { Visitors } from 'zimmerframe' */
 /** @import { AnalysisState } from '../../types.js' */
-/** @import { Attribute, SvelteNode, TemplateNode, RegularElement, SvelteElement } from '#compiler' */
+/** @import { AST, SvelteNode, TemplateNode } from '#compiler' */
 /** @import { ARIARoleDefinitionKey, ARIARoleRelationConcept, ARIAProperty, ARIAPropertyDefinition, ARIARoleDefinition } from 'aria-query' */
 import { roles as roles_map, aria, elementRoles } from 'aria-query';
 // @ts-expect-error package doesn't provide typings
@@ -78,7 +77,7 @@ function is_presentation_role(role) {
 
 /**
  * @param {string} tag_name
- * @param {Map<string, Attribute>} attribute_map
+ * @param {Map<string, AST.Attribute>} attribute_map
  */
 function is_hidden_from_screen_reader(tag_name, attribute_map) {
 	if (tag_name === 'input') {
@@ -96,7 +95,7 @@ function is_hidden_from_screen_reader(tag_name, attribute_map) {
 }
 
 /**
- * @param {Map<string, Attribute>} attribute_map
+ * @param {Map<string, AST.Attribute>} attribute_map
  */
 function has_disabled_attribute(attribute_map) {
 	const disabled_attr_value = get_static_value(attribute_map.get('disabled'));
@@ -173,7 +172,7 @@ elementAXObjects.entries().forEach(
 /**
  * @param {ARIARoleRelationConcept} schema
  * @param {string} tag_name
- * @param {Map<string, Attribute>} attribute_map
+ * @param {Map<string, AST.Attribute>} attribute_map
  */
 function match_schema(schema, tag_name, attribute_map) {
 	if (schema.name !== tag_name) return false;
@@ -196,7 +195,7 @@ const ElementInteractivity = /** @type {const} */ ({
 
 /**
  * @param {string} tag_name
- * @param {Map<string, Attribute>} attribute_map
+ * @param {Map<string, AST.Attribute>} attribute_map
  * @returns {ElementInteractivity[keyof ElementInteractivity]}
  */
 function element_interactivity(tag_name, attribute_map) {
@@ -232,7 +231,7 @@ function element_interactivity(tag_name, attribute_map) {
 
 /**
  * @param {string} tag_name
- * @param {Map<string, Attribute>} attribute_map
+ * @param {Map<string, AST.Attribute>} attribute_map
  * @returns {boolean}
  */
 function is_interactive_element(tag_name, attribute_map) {
@@ -241,7 +240,7 @@ function is_interactive_element(tag_name, attribute_map) {
 
 /**
  * @param {string} tag_name
- * @param {Map<string, Attribute>} attribute_map
+ * @param {Map<string, AST.Attribute>} attribute_map
  * @returns {boolean}
  */
 function is_non_interactive_element(tag_name, attribute_map) {
@@ -250,7 +249,7 @@ function is_non_interactive_element(tag_name, attribute_map) {
 
 /**
  * @param {string} tag_name
- * @param {Map<string, Attribute>} attribute_map
+ * @param {Map<string, AST.Attribute>} attribute_map
  * @returns {boolean}
  */
 function is_static_element(tag_name, attribute_map) {
@@ -260,7 +259,7 @@ function is_static_element(tag_name, attribute_map) {
 /**
  * @param {ARIARoleDefinitionKey} role
  * @param {string} tag_name
- * @param {Map<string, Attribute>} attribute_map
+ * @param {Map<string, AST.Attribute>} attribute_map
  */
 function is_semantic_role_element(role, tag_name, attribute_map) {
 	for (const [schema, ax_object] of elementAXObjects.entries()) {
@@ -544,7 +543,7 @@ const a11y_non_interactive_element_to_interactive_role_exceptions = {
 
 const combobox_if_list = ['email', 'search', 'tel', 'text', 'url'];
 
-/** @param {Map<string, Attribute>} attribute_map */
+/** @param {Map<string, AST.Attribute>} attribute_map */
 function input_implicit_role(attribute_map) {
 	const type_attribute = attribute_map.get('type');
 	if (!type_attribute) return;
@@ -557,7 +556,7 @@ function input_implicit_role(attribute_map) {
 	return input_type_to_implicit_role.get(type);
 }
 
-/** @param {Map<string, Attribute>} attribute_map */
+/** @param {Map<string, AST.Attribute>} attribute_map */
 function menuitem_implicit_role(attribute_map) {
 	const type_attribute = attribute_map.get('type');
 	if (!type_attribute) return;
@@ -568,7 +567,7 @@ function menuitem_implicit_role(attribute_map) {
 
 /**
  * @param {string} name
- * @param {Map<string, Attribute>} attribute_map
+ * @param {Map<string, AST.Attribute>} attribute_map
  */
 function get_implicit_role(name, attribute_map) {
 	if (name === 'menuitem') {
@@ -598,7 +597,7 @@ function is_parent(parent, elements) {
 }
 
 /**
- * @param {Attribute} attribute
+ * @param {AST.Attribute} attribute
  * @param {ARIAProperty} name
  * @param {ARIAPropertyDefinition} schema
  * @param {string | true | null} value
@@ -648,7 +647,7 @@ function validate_aria_attribute_value(attribute, name, schema, value) {
 }
 
 /**
- * @param {RegularElement |SvelteElement} node
+ * @param {AST.RegularElement |AST.SvelteElement} node
  * @param {string[]} attributes
  * @param {string} name
  */
@@ -664,7 +663,7 @@ function warn_missing_attribute(node, attributes, name = node.name) {
 }
 
 /**
- * @param {Attribute | undefined} attribute
+ * @param {AST.Attribute | undefined} attribute
  */
 function get_static_value(attribute) {
 	if (!attribute) return null;
@@ -674,7 +673,7 @@ function get_static_value(attribute) {
 }
 
 /**
- * @param {Attribute | undefined} attribute
+ * @param {AST.Attribute | undefined} attribute
  */
 function get_static_text_value(attribute) {
 	const value = get_static_value(attribute);
@@ -683,17 +682,17 @@ function get_static_text_value(attribute) {
 }
 
 /**
- * @param {RegularElement | SvelteElement} node
+ * @param {AST.RegularElement | AST.SvelteElement} node
  * @param {AnalysisState} state
  */
 export function check_element(node, state) {
-	/** @type {Map<string, Attribute>} */
+	/** @type {Map<string, AST.Attribute>} */
 	const attribute_map = new Map();
 
 	/** @type {Set<string>} */
 	const handlers = new Set();
 
-	/** @type {Attribute[]} */
+	/** @type {AST.Attribute[]} */
 	const attributes = [];
 
 	const is_dynamic_element = node.type === 'SvelteElement';
@@ -1098,7 +1097,7 @@ export function check_element(node, state) {
 			return;
 		}
 		let has_caption = false;
-		const track = /** @type {RegularElement | undefined} */ (
+		const track = /** @type {AST.RegularElement | undefined} */ (
 			node.fragment.nodes.find((i) => i.type === 'RegularElement' && i.name === 'track')
 		);
 		if (track) {

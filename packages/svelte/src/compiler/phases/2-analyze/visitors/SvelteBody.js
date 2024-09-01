@@ -1,11 +1,11 @@
-/** @import { SvelteBody } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import { is_event_attribute } from '../../../utils/ast.js';
 import { disallow_children } from './shared/special-element.js';
 
 /**
- * @param {SvelteBody} node
+ * @param {AST.SvelteBody} node
  * @param {Context} context
  */
 export function SvelteBody(node, context) {
