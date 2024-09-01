@@ -189,7 +189,15 @@ export default function element(parser) {
 
 	let attribute;
 	while ((attribute = read(parser))) {
-		if (attribute.type === 'Attribute' || attribute.type === 'BindDirective') {
+		// animate and transition can only be specified once per element so no need
+		// to check here, use can be used multiple times, same for the on directive
+		// finally let already has error handling in case of duplicate variable names
+		if (
+			attribute.type === 'Attribute' ||
+			attribute.type === 'BindDirective' ||
+			attribute.type === 'StyleDirective' ||
+			attribute.type === 'ClassDirective'
+		) {
 			if (unique_names.includes(attribute.name)) {
 				e.attribute_duplicate(attribute);
 				// <svelte:element bind:this this=..> is allowed
