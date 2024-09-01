@@ -27,16 +27,14 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 				generate: 'client'
 			});
 		} catch (e) {
-			const error = e as CompileError;
-
-			caught_error = error;
+			caught_error = e as CompileError;
 
 			if (config.error) {
-				expect(error.code).toBe(config.error.code);
-				expect(error.message).toBe(config.error.message);
+				expect(caught_error.code).toBe(config.error.code);
+				expect(caught_error.message).toBe(config.error.message);
 
 				if (config.error.position) {
-					expect(error.position).toEqual(config.error.position);
+					expect(caught_error.position).toEqual(config.error.position);
 				}
 			}
 		}
@@ -56,16 +54,14 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 				generate: 'client'
 			});
 		} catch (e) {
-			const error = e as CompileError;
-
-			caught_error = error;
+			caught_error = e as CompileError;
 
 			if (config.error) {
-				expect(error.code).toEqual(config.error.code);
-				expect(error.message).toEqual(config.error.message);
+				expect(caught_error.code).toEqual(config.error.code);
+				expect(caught_error.message).toEqual(config.error.message);
 
 				if (config.error.position) {
-					expect(error.position).toEqual(config.error.position);
+					expect(caught_error.position).toEqual(config.error.position);
 				}
 			}
 		}
