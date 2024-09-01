@@ -50,7 +50,7 @@ export function html(node, get_value, svg, mathml, skip_warning) {
 	var effect;
 
 	block(() => {
-		if (value === (value = get_value())) {
+		if (value === (value = get_value() ?? '')) {
 			if (hydrating) {
 				hydrate_next();
 			}
