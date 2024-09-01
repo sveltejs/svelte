@@ -1,5 +1,5 @@
 /** @import { AssignmentOperator, Expression, Identifier, Node, Statement, TemplateElement } from 'estree' */
-/** @import { AST } from '#compiler' */
+/** @import { AST, SvelteNode } from '#compiler' */
 /** @import { ComponentContext, ServerTransformState } from '../../types.js' */
 
 import { escape_html } from '../../../../../../escaping.js';
@@ -24,7 +24,7 @@ export const empty_comment = b.literal(EMPTY_COMMENT);
 /**
  * Processes an array of template nodes, joining sibling text/expression nodes and
  * recursing into child nodes.
- * @param {Array<AST.SvelteNode>} nodes
+ * @param {Array<SvelteNode>} nodes
  * @param {ComponentContext} context
  */
 export function process_children(nodes, { visit, state }) {

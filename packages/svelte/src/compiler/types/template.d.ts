@@ -170,8 +170,6 @@ export namespace AST {
 		};
 	}
 
-	type Tag = ExpressionTag | HtmlTag | ConstTag | DebugTag | RenderTag;
-
 	/** An `animate:` directive */
 	export interface AnimateDirective extends BaseNode {
 		type: 'AnimateDirective';
@@ -268,16 +266,6 @@ export namespace AST {
 		/** The 'y' in `use:x={y}` */
 		expression: null | Expression;
 	}
-
-	export type Directive =
-		| AnimateDirective
-		| BindDirective
-		| ClassDirective
-		| LetDirective
-		| OnDirective
-		| StyleDirective
-		| TransitionDirective
-		| UseDirective;
 
 	interface BaseElement extends BaseNode {
 		name: string;
@@ -465,8 +453,6 @@ export namespace AST {
 		body: Fragment;
 	}
 
-	export type Block = EachBlock | IfBlock | AwaitBlock | KeyBlock | SnippetBlock;
-
 	export interface Attribute extends BaseNode {
 		type: 'Attribute';
 		name: string;
@@ -490,19 +476,6 @@ export namespace AST {
 		};
 	}
 
-	export type TemplateNode =
-		| Root
-		| Text
-		| Tag
-		| ElementLike
-		| Attribute
-		| SpreadAttribute
-		| Directive
-		| Comment
-		| Block;
-
-	export type SvelteNode = Node | TemplateNode | Fragment | Css.Node;
-
 	export interface Script extends BaseNode {
 		type: 'Script';
 		context: 'default' | 'module';
@@ -510,6 +483,33 @@ export namespace AST {
 		attributes: Attribute[];
 	}
 }
+
+type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
+
+export type Directive =
+	| AST.AnimateDirective
+	| AST.BindDirective
+	| AST.ClassDirective
+	| AST.LetDirective
+	| AST.OnDirective
+	| AST.StyleDirective
+	| AST.TransitionDirective
+	| AST.UseDirective;
+
+export type Block = AST.EachBlock | AST.IfBlock | AST.AwaitBlock | AST.KeyBlock | AST.SnippetBlock;
+
+export type TemplateNode =
+	| AST.Root
+	| AST.Text
+	| Tag
+	| AST.ElementLike
+	| AST.Attribute
+	| AST.SpreadAttribute
+	| Directive
+	| AST.Comment
+	| Block;
+
+export type SvelteNode = Node | TemplateNode | AST.Fragment | Css.Node;
 
 declare module 'estree' {
 	export interface BaseNode {

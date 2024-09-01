@@ -1,6 +1,6 @@
 /** @import { ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
-/** @import { AST, Binding, DeclarationKind } from '#compiler' */
+/** @import { AST, Binding, DeclarationKind, SvelteNode } from '#compiler' */
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { create_expression_metadata } from './nodes.js';
@@ -47,7 +47,7 @@ export class Scope {
 	/**
 	 * A set of all the names referenced with this scope
 	 * — useful for generating unique names
-	 * @type {Map<string, { node: Identifier; path: AST.SvelteNode[] }[]>}
+	 * @type {Map<string, { node: Identifier; path: SvelteNode[] }[]>}
 	 */
 	references = new Map();
 
@@ -189,7 +189,7 @@ export class Scope {
 
 	/**
 	 * @param {Identifier} node
-	 * @param {AST.SvelteNode[]} path
+	 * @param {SvelteNode[]} path
 	 */
 	reference(node, path) {
 		path = [...path]; // ensure that mutations to path afterwards don't affect this reference
@@ -235,7 +235,7 @@ export class ScopeRoot {
 }
 
 /**
- * @param {AST.SvelteNode} ast
+ * @param {SvelteNode} ast
  * @param {ScopeRoot} root
  * @param {boolean} allow_reactive_declarations
  * @param {Scope | null} parent
@@ -245,7 +245,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 	/**
 	 * A map of node->associated scope. A node appearing in this map does not necessarily mean that it created a scope
-	 * @type {Map<AST.SvelteNode, Scope>}
+	 * @type {Map<SvelteNode, Scope>}
 	 */
 	const scopes = new Map();
 	const scope = new Scope(root, parent, false);
@@ -254,7 +254,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	/** @type {State} */
 	const state = { scope };
 
-	/** @type {[Scope, { node: Identifier; path: AST.SvelteNode[] }][]} */
+	/** @type {[Scope, { node: Identifier; path: SvelteNode[] }][]} */
 	const references = [];
 
 	/** @type {[Scope, Pattern | MemberExpression][]} */
@@ -279,7 +279,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	}
 
 	/**
-	 * @type {Visitor<Node, State, AST.SvelteNode>}
+	 * @type {Visitor<Node, State, SvelteNode>}
 	 */
 	const create_block_scope = (node, { state, next }) => {
 		const scope = state.scope.child(true);
@@ -289,7 +289,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<AST.ElementLike, State, AST.SvelteNode>}
+	 * @type {Visitor<AST.ElementLike, State, SvelteNode>}
 	 */
 	const SvelteFragment = (node, { state, next }) => {
 		const scope = state.scope.child();
@@ -298,7 +298,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<AST.Component | AST.SvelteComponent | AST.SvelteSelf, State, AST.SvelteNode>}
+	 * @type {Visitor<AST.Component | AST.SvelteComponent | AST.SvelteSelf, State, SvelteNode>}
 	 */
 	const Component = (node, context) => {
 		node.metadata.scopes = {
@@ -335,7 +335,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<AST.AnimateDirective | AST.TransitionDirective | AST.UseDirective, State, AST.SvelteNode>}
+	 * @type {Visitor<AST.AnimateDirective | AST.TransitionDirective | AST.UseDirective, State, SvelteNode>}
 	 */
 	const SvelteDirective = (node, { state, path, visit }) => {
 		state.scope.reference(b.id(node.name.split('.')[0]), path);
@@ -713,9 +713,9 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 }
 
 /**
- * @template {{ scope: Scope, scopes: Map<AST.SvelteNode, Scope> }} State
- * @param {AST.SvelteNode} node
- * @param {Context<AST.SvelteNode, State>} context
+ * @template {{ scope: Scope, scopes: Map<SvelteNode, Scope> }} State
+ * @param {SvelteNode} node
+ * @param {Context<SvelteNode, State>} context
  */
 export function set_scope(node, { next, state }) {
 	const scope = state.scopes.get(node);

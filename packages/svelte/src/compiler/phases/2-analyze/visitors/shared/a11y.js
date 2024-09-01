@@ -1,5 +1,5 @@
 /** @import { AnalysisState } from '../../types.js' */
-/** @import { AST } from '#compiler' */
+/** @import { AST, SvelteNode, TemplateNode } from '#compiler' */
 /** @import { ARIARoleDefinitionKey, ARIARoleRelationConcept, ARIAProperty, ARIAPropertyDefinition, ARIARoleDefinition } from 'aria-query' */
 import { roles as roles_map, aria, elementRoles } from 'aria-query';
 // @ts-expect-error package doesn't provide typings
@@ -582,7 +582,7 @@ function get_implicit_role(name, attribute_map) {
 const invisible_elements = ['meta', 'html', 'script', 'style'];
 
 /**
- * @param {AST.SvelteNode | null} parent
+ * @param {SvelteNode | null} parent
  * @param {string[]} elements
  */
 function is_parent(parent, elements) {
@@ -591,7 +591,7 @@ function is_parent(parent, elements) {
 		if (parent.type === 'RegularElement') {
 			return elements.includes(parent.name);
 		}
-		parent = /** @type {AST.TemplateNode} */ (parent).parent;
+		parent = /** @type {TemplateNode} */ (parent).parent;
 	}
 	return false;
 }
@@ -1060,7 +1060,7 @@ export function check_element(node, state) {
 	}
 
 	if (node.name === 'label') {
-		/** @param {AST.TemplateNode} node */
+		/** @param {TemplateNode} node */
 		const has_input_child = (node) => {
 			let has = false;
 			walk(

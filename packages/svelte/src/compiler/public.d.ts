@@ -12,4 +12,4 @@ export type {
 	CompileResult,
 	Warning
 } from './types/index';
-export type { AST as Ast } from './types/template';
+export type { AST } from './types/template';

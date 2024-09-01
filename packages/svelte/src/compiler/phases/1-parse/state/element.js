@@ -1,5 +1,5 @@
 /** @import { Expression } from 'estree' */
-/** @import { AST } from '#compiler' */
+/** @import { AST, Directive, TemplateNode } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { is_void } from '../../../../utils.js';
 import read_expression from '../read/expression.js';
@@ -346,7 +346,7 @@ export default function element(parser) {
 	}
 }
 
-/** @param {AST.TemplateNode[]} stack */
+/** @param {TemplateNode[]} stack */
 function parent_is_head(stack) {
 	let i = stack.length;
 	while (i--) {
@@ -357,7 +357,7 @@ function parent_is_head(stack) {
 	return false;
 }
 
-/** @param {AST.TemplateNode[]} stack */
+/** @param {TemplateNode[]} stack */
 function parent_is_shadowroot_template(stack) {
 	// https://developer.chrome.com/docs/css-ui/declarative-shadow-dom#building_a_declarative_shadow_root
 	let i = stack.length;
@@ -422,7 +422,7 @@ function read_static_attribute(parser) {
 
 /**
  * @param {Parser} parser
- * @returns {AST.Attribute | AST.SpreadAttribute | AST.Directive | null}
+ * @returns {AST.Attribute | AST.SpreadAttribute | Directive | null}
  */
 function read_attribute(parser) {
 	const start = parser.index;
@@ -540,7 +540,7 @@ function read_attribute(parser) {
 			}
 		}
 
-		/** @type {AST.Directive} */
+		/** @type {Directive} */
 		// @ts-expect-error TODO can't figure out this error
 		const directive = {
 			start,

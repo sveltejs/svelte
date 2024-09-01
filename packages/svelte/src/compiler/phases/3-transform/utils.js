@@ -1,6 +1,6 @@
 /** @import { Context } from 'zimmerframe' */
 /** @import { TransformState } from './types.js' */
-/** @import { AST, Binding, Namespace, ValidatedCompileOptions } from '#compiler' */
+/** @import { AST, Binding, Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler' */
 /** @import { Node, Expression, CallExpression } from 'estree' */
 import {
 	regex_ends_with_whitespaces,
@@ -33,7 +33,7 @@ export function is_hoisted_function(node) {
 
 /**
  * Match Svelte 4 behaviour by sorting ConstTag nodes in topological order
- * @param {AST.SvelteNode[]} nodes
+ * @param {SvelteNode[]} nodes
  * @param {TransformState} state
  */
 function sort_const_tags(nodes, state) {
@@ -133,9 +133,9 @@ function sort_const_tags(nodes, state) {
  *   unless it's whitespace-only, in which case collapse to a single whitespace for all cases
  *   except when it's children of certain elements where we know ignore whitespace (like td/option/head),
  *   in which case we remove it entirely
- * @param {AST.SvelteNode} parent
- * @param {AST.SvelteNode[]} nodes
- * @param {AST.SvelteNode[]} path
+ * @param {SvelteNode} parent
+ * @param {SvelteNode[]} nodes
+ * @param {SvelteNode[]} path
  * @param {Namespace} namespace
  * @param {TransformState & { options: ValidatedCompileOptions }} state
  * @param {boolean} preserve_whitespace
@@ -157,10 +157,10 @@ export function clean_nodes(
 		nodes = sort_const_tags(nodes, state);
 	}
 
-	/** @type {AST.SvelteNode[]} */
+	/** @type {SvelteNode[]} */
 	const hoisted = [];
 
-	/** @type {AST.SvelteNode[]} */
+	/** @type {SvelteNode[]} */
 	const regular = [];
 
 	for (const node of nodes) {
@@ -303,8 +303,8 @@ export function clean_nodes(
 /**
  * Infers the namespace for the children of a node that should be used when creating the `$.template(...)`.
  * @param {Namespace} namespace
- * @param {AST.SvelteNode} parent
- * @param {AST.SvelteNode[]} nodes
+ * @param {SvelteNode} parent
+ * @param {SvelteNode[]} nodes
  */
 export function infer_namespace(namespace, parent, nodes) {
 	if (parent.type === 'RegularElement' && parent.name === 'foreignObject') {
@@ -341,7 +341,7 @@ export function infer_namespace(namespace, parent, nodes) {
  * Heuristic: Keep current namespace, unless we find a regular element,
  * in which case we always want html, or we only find svg nodes,
  * in which case we assume svg.
- * @param {AST.SvelteNode[]} nodes
+ * @param {SvelteNode[]} nodes
  * @param {Namespace | 'keep' | 'maybe_html'} namespace
  */
 function check_nodes_for_namespace(nodes, namespace) {

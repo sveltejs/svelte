@@ -1,5 +1,5 @@
 /** @import { Expression, Literal } from 'estree' */
-/** @import { AST, Namespace } from '#compiler' */
+/** @import { AST, Namespace, SvelteNode } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../../types.js' */
 import {
 	get_attribute_chunks,
@@ -31,7 +31,7 @@ const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
  * Writes the output to the template output. Some elements may have attributes on them that require the
  * their output to be the child content instead. In this case, an object is returned.
  * @param {AST.RegularElement | AST.SvelteElement} node
- * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentServerTransformState>} context
+ * @param {import('zimmerframe').Context<SvelteNode, ComponentServerTransformState>} context
  */
 export function build_element_attributes(node, context) {
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */

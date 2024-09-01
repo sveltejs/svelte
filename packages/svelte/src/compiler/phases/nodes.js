@@ -1,4 +1,4 @@
-/** @import { AST, ExpressionMetadata } from '#compiler' */
+/** @import { AST, ExpressionMetadata, SvelteNode } from '#compiler' */
 /**
  * All nodes that can appear elsewhere than the top level, have attributes and can contain children
  */
@@ -14,7 +14,7 @@ const element_nodes = [
 
 /**
  * Returns true for all nodes that can appear elsewhere than the top level, have attributes and can contain children
- * @param {AST.SvelteNode} node
+ * @param {SvelteNode} node
  * @returns {node is AST.Component | AST.RegularElement | AST.SlotElement | AST.SvelteComponent | AST.SvelteElement | AST.SvelteFragment | AST.SvelteSelf}
  */
 export function is_element_node(node) {

@@ -1,9 +1,8 @@
 /** @import { VariableDeclarator, Node, Identifier } from 'estree' */
-/** @import { AST } from '../types/template.js' */
 /** @import { Visitors } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
 /** @import { Scope } from '../phases/scope.js' */
-/** @import * as Compiler from '#compiler' */
+/** @import { AST, Binding, SvelteNode, ValidatedCompileOptions } from '#compiler' */
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
 import { parse } from '../phases/1-parse/index.js';
@@ -31,7 +30,7 @@ export function migrate(source) {
 
 		const { customElement: customElementOptions, ...parsed_options } = parsed.options || {};
 
-		/** @type {Compiler.ValidatedCompileOptions} */
+		/** @type {ValidatedCompileOptions} */
 		const combined_options = {
 			...validate_component_options({}, ''),
 			...parsed_options,
@@ -161,7 +160,7 @@ export function migrate(source) {
 		let needs_reordering = false;
 
 		for (const [node, { dependencies }] of state.analysis.reactive_statements) {
-			/** @type {Compiler.Binding[]} */
+			/** @type {Binding[]} */
 			let ids = [];
 			if (
 				node.body.type === 'ExpressionStatement' &&
@@ -230,7 +229,7 @@ export function migrate(source) {
  * }} State
  */
 
-/** @type {Visitors<AST.SvelteNode, State>} */
+/** @type {Visitors<SvelteNode, State>} */
 const instance_script = {
 	_(node, { state, next }) {
 		// @ts-expect-error
@@ -336,7 +335,7 @@ const instance_script = {
 					// }
 				}
 
-				const binding = /** @type {Compiler.Binding} */ (state.scope.get(declarator.id.name));
+				const binding = /** @type {Binding} */ (state.scope.get(declarator.id.name));
 
 				if (state.analysis.uses_props && (declarator.init || binding.updated)) {
 					throw new Error(
@@ -479,7 +478,7 @@ const instance_script = {
 	}
 };
 
-/** @type {Visitors<AST.SvelteNode, State>} */
+/** @type {Visitors<SvelteNode, State>} */
 const template = {
 	Identifier(node, { state, path }) {
 		handle_identifier(node, state, path);
@@ -597,7 +596,7 @@ const template = {
 /**
  * @param {VariableDeclarator} declarator
  * @param {MagicString} str
- * @param {AST.SvelteNode[]} path
+ * @param {SvelteNode[]} path
  */
 function extract_type_and_comment(declarator, str, path) {
 	const parent = path.at(-1);

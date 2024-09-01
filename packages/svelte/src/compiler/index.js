@@ -1,6 +1,6 @@
 /** @import { LegacyRoot } from './types/legacy-nodes.js' */
 /** @import { CompileOptions, CompileResult, ValidatedCompileOptions, ModuleCompileOptions } from '#compiler' */
-/** @import { Ast } from './public.js' */
+/** @import { AST } from './public.js' */
 import { walk as zimmerframe_walk } from 'zimmerframe';
 import { convert } from './legacy.js';
 import { parse as parse_acorn } from './phases/1-parse/acorn.js';
@@ -78,7 +78,7 @@ export function compileModule(source, options) {
  * @overload
  * @param {string} source
  * @param {{ filename?: string; modern: true }} options
- * @returns {Ast.Root}
+ * @returns {AST.Root}
  */
 
 /**
@@ -103,7 +103,7 @@ export function compileModule(source, options) {
  * https://svelte.dev/docs/svelte-compiler#svelte-parse
  * @param {string} source
  * @param {{ filename?: string; rootDir?: string; modern?: boolean }} [options]
- * @returns {Ast.Root | LegacyRoot}
+ * @returns {AST.Root | LegacyRoot}
  */
 export function parse(source, { filename, rootDir, modern } = {}) {
 	state.reset_warning_filter(() => false);
@@ -115,7 +115,7 @@ export function parse(source, { filename, rootDir, modern } = {}) {
 
 /**
  * @param {string} source
- * @param {Ast.Root} ast
+ * @param {AST.Root} ast
  * @param {boolean | undefined} modern
  */
 function to_public_ast(source, ast, modern) {

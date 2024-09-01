@@ -613,7 +613,7 @@ declare module 'svelte/compiler' {
 	export function parse(source: string, options: {
 		filename?: string;
 		modern: true;
-	}): Ast.Root;
+	}): AST.Root;
 	/**
 	 * The parse function parses a component, returning only its abstract syntax tree.
 	 *
@@ -948,9 +948,9 @@ declare module 'svelte/compiler' {
 			| FunctionDeclaration
 			| ClassDeclaration
 			| ImportDeclaration
-			| Ast.EachBlock;
+			| AST.EachBlock;
 		is_called: boolean;
-		references: { node: Identifier; path: Ast.SvelteNode[] }[];
+		references: { node: Identifier; path: SvelteNode[] }[];
 		mutated: boolean;
 		reassigned: boolean;
 		/** `true` if mutated _or_ reassigned */
@@ -989,7 +989,7 @@ declare module 'svelte/compiler' {
 		  }
 		| { hoisted: false };
 
-	export namespace Ast {
+	export namespace AST {
 		export interface BaseNode {
 			type: string;
 			start: number;
@@ -1098,8 +1098,6 @@ declare module 'svelte/compiler' {
 			expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
 		}
 
-		type Tag = ExpressionTag | HtmlTag | ConstTag | DebugTag | RenderTag;
-
 		/** An `animate:` directive */
 		export interface AnimateDirective extends BaseNode {
 			type: 'AnimateDirective';
@@ -1179,16 +1177,6 @@ declare module 'svelte/compiler' {
 			/** The 'y' in `use:x={y}` */
 			expression: null | Expression;
 		}
-
-		export type Directive =
-			| AnimateDirective
-			| BindDirective
-			| ClassDirective
-			| LetDirective
-			| OnDirective
-			| StyleDirective
-			| TransitionDirective
-			| UseDirective;
 
 		interface BaseElement extends BaseNode {
 			name: string;
@@ -1339,8 +1327,6 @@ declare module 'svelte/compiler' {
 			body: Fragment;
 		}
 
-		export type Block = EachBlock | IfBlock | AwaitBlock | KeyBlock | SnippetBlock;
-
 		export interface Attribute extends BaseNode {
 			type: 'Attribute';
 			name: string;
@@ -1360,19 +1346,6 @@ declare module 'svelte/compiler' {
 			expression: Expression;
 		}
 
-		export type TemplateNode =
-			| Root
-			| Text
-			| Tag
-			| ElementLike
-			| Attribute
-			| SpreadAttribute
-			| Directive
-			| Comment
-			| Block;
-
-		export type SvelteNode = Node | TemplateNode | Fragment | Css.Node;
-
 		export interface Script extends BaseNode {
 			type: 'Script';
 			context: 'default' | 'module';
@@ -1380,6 +1353,33 @@ declare module 'svelte/compiler' {
 			attributes: Attribute[];
 		}
 	}
+
+	type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
+
+	type Directive =
+		| AST.AnimateDirective
+		| AST.BindDirective
+		| AST.ClassDirective
+		| AST.LetDirective
+		| AST.OnDirective
+		| AST.StyleDirective
+		| AST.TransitionDirective
+		| AST.UseDirective;
+
+	type Block = AST.EachBlock | AST.IfBlock | AST.AwaitBlock | AST.KeyBlock | AST.SnippetBlock;
+
+	type TemplateNode =
+		| AST.Root
+		| AST.Text
+		| Tag
+		| AST.ElementLike
+		| AST.Attribute
+		| AST.SpreadAttribute
+		| Directive
+		| AST.Comment
+		| Block;
+
+	type SvelteNode = Node | TemplateNode | AST.Fragment | Css.Node;
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
 	 * For example, it can be used to convert a <style lang="sass"> block into vanilla CSS.
@@ -1420,14 +1420,14 @@ declare module 'svelte/compiler' {
 		/**
 		 * A map of declarators to the bindings they declare
 		 * */
-		declarators: Map<VariableDeclarator | Ast.LetDirective, Binding[]>;
+		declarators: Map<VariableDeclarator | AST.LetDirective, Binding[]>;
 		/**
 		 * A set of all the names referenced with this scope
 		 * — useful for generating unique names
 		 * */
 		references: Map<string, {
 			node: Identifier;
-			path: Ast.SvelteNode[];
+			path: SvelteNode[];
 		}[]>;
 		/**
 		 * The scope depth allows us to determine if a state variable is referenced in its own scope,
@@ -1435,18 +1435,18 @@ declare module 'svelte/compiler' {
 		 */
 		function_depth: number;
 		
-		declare(node: Identifier, kind: Binding["kind"], declaration_kind: DeclarationKind, initial?: null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | Ast.EachBlock): Binding;
+		declare(node: Identifier, kind: Binding["kind"], declaration_kind: DeclarationKind, initial?: null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | AST.EachBlock): Binding;
 		child(porous?: boolean): Scope;
 		
 		generate(preferred_name: string): string;
 		
 		get(name: string): Binding | null;
 		
-		get_bindings(node: VariableDeclarator | Ast.LetDirective): Binding[];
+		get_bindings(node: VariableDeclarator | AST.LetDirective): Binding[];
 		
 		owner(name: string): Scope | null;
 		
-		reference(node: Identifier, path: Ast.SvelteNode[]): void;
+		reference(node: Identifier, path: SvelteNode[]): void;
 		#private;
 	}
 	class ScopeRoot {
@@ -1470,7 +1470,7 @@ declare module 'svelte/compiler' {
 				end: number;
 				styles: string;
 				/** Possible comment atop the style tag */
-				comment: Ast.Comment | null;
+				comment: AST.Comment | null;
 			};
 		}
 

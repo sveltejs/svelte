@@ -1,5 +1,5 @@
 /** @import { CallExpression, Expression, MemberExpression } from 'estree' */
-/** @import { AST } from '#compiler' */
+/** @import { AST, SvelteNode } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
@@ -16,7 +16,7 @@ export function BindDirective(node, context) {
 	const expression = node.expression;
 	const property = binding_properties[node.name];
 
-	const parent = /** @type {AST.SvelteNode} */ (context.path.at(-1));
+	const parent = /** @type {SvelteNode} */ (context.path.at(-1));
 
 	if (
 		dev &&

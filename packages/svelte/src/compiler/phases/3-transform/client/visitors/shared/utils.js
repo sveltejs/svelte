@@ -1,5 +1,5 @@
 /** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement, Super } from 'estree' */
-/** @import { AST } from '#compiler' */
+/** @import { AST, SvelteNode } from '#compiler' */
 /** @import { ComponentClientTransformState } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
@@ -12,7 +12,7 @@ import { locator } from '../../../../../state.js';
 
 /**
  * @param {Array<AST.Text | AST.ExpressionTag>} values
- * @param {(node: AST.SvelteNode, state: any) => any} visit
+ * @param {(node: SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
  */
 export function build_template_literal(values, visit, state) {
@@ -146,7 +146,7 @@ export function build_update_assignment(state, id, init, value, update) {
  * Serializes `bind:this` for components and elements.
  * @param {Identifier | MemberExpression} expression
  * @param {Expression} value
- * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentClientTransformState>} context
+ * @param {import('zimmerframe').Context<SvelteNode, ComponentClientTransformState>} context
  */
 export function build_bind_this(expression, value, { state, visit }) {
 	/** @type {Identifier[]} */

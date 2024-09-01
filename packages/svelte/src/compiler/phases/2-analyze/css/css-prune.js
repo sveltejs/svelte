@@ -147,7 +147,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 		switch (name) {
 			case ' ':
 			case '>': {
-				let parent = /** @type {Compiler.AST.TemplateNode | null} */ (element.parent);
+				let parent = /** @type {Compiler.TemplateNode | null} */ (element.parent);
 
 				let parent_matched = false;
 				let crossed_component_boundary = false;
@@ -170,7 +170,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 						if (name === '>') return parent_matched;
 					}
 
-					parent = /** @type {Compiler.AST.TemplateNode | null} */ (parent.parent);
+					parent = /** @type {Compiler.TemplateNode | null} */ (parent.parent);
 				}
 
 				return parent_matched || parent_selectors.every((selector) => is_global(selector, rule));
@@ -546,7 +546,7 @@ function unquote(str) {
  * @returns {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null}
  */
 function get_element_parent(node) {
-	/** @type {Compiler.AST.SvelteNode | null} */
+	/** @type {Compiler.SvelteNode | null} */
 	let parent = node;
 	while (
 		// @ts-expect-error TODO figure out a more elegant solution
@@ -576,11 +576,11 @@ function get_element_parent(node) {
  * <h1>Heading 1</h1>
  * <h2>Heading 2</h2>
  * ```
- * @param {Compiler.AST.SvelteNode} node
- * @returns {Compiler.AST.SvelteNode}
+ * @param {Compiler.SvelteNode} node
+ * @returns {Compiler.SvelteNode}
  */
 function find_previous_sibling(node) {
-	/** @type {Compiler.AST.SvelteNode} */
+	/** @type {Compiler.SvelteNode} */
 	let current_node = node;
 
 	while (
@@ -609,7 +609,7 @@ function find_previous_sibling(node) {
 }
 
 /**
- * @param {Compiler.AST.SvelteNode} node
+ * @param {Compiler.SvelteNode} node
  * @param {boolean} adjacent_only
  * @returns {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>}
  */
@@ -617,7 +617,7 @@ function get_possible_element_siblings(node, adjacent_only) {
 	/** @type {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>} */
 	const result = new Map();
 
-	/** @type {Compiler.AST.SvelteNode} */
+	/** @type {Compiler.SvelteNode} */
 	let prev = node;
 	while ((prev = find_previous_sibling(prev))) {
 		if (prev.type === 'RegularElement') {
@@ -649,7 +649,7 @@ function get_possible_element_siblings(node, adjacent_only) {
 	}
 
 	if (!prev || !adjacent_only) {
-		/** @type {Compiler.AST.SvelteNode | null} */
+		/** @type {Compiler.SvelteNode | null} */
 		let parent = node;
 
 		while (
@@ -791,7 +791,7 @@ function mark_as_probably(result) {
 }
 
 /**
- * @param {Compiler.AST.SvelteNode[]} children
+ * @param {Compiler.SvelteNode[]} children
  * @param {boolean} adjacent_only
  */
 function loop_child(children, adjacent_only) {
