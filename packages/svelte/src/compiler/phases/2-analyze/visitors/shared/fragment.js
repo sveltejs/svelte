@@ -1,7 +1,7 @@
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 
 /**
- * @param {Ast.SvelteNode[]} path
+ * @param {AST.SvelteNode[]} path
  */
 export function mark_subtree_dynamic(path) {
 	let i = path.length;

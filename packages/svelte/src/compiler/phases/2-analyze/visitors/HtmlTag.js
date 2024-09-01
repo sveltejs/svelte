@@ -1,10 +1,10 @@
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { mark_subtree_dynamic } from './shared/fragment.js';
 import { validate_opening_tag } from './shared/utils.js';
 
 /**
- * @param {Ast.HtmlTag} node
+ * @param {AST.HtmlTag} node
  * @param {Context} context
  */
 export function HtmlTag(node, context) {

@@ -1,12 +1,12 @@
 /** @import { Expression } from 'estree' */
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../../constants.js';
 import * as b from '../../../../utils/builders.js';
 import { parse_directive_name } from './shared/utils.js';
 
 /**
- * @param {Ast.TransitionDirective} node
+ * @param {AST.TransitionDirective} node
  * @param {ComponentContext} context
  */
 export function TransitionDirective(node, context) {

@@ -1,8 +1,8 @@
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 import * as e from '../../../../errors.js';
 
 /**
- * @param {Ast.SvelteBody | Ast.SvelteDocument | Ast.SvelteOptionsRaw | Ast.SvelteWindow} node
+ * @param {AST.SvelteBody | AST.SvelteDocument | AST.SvelteOptionsRaw | AST.SvelteWindow} node
  */
 export function disallow_children(node) {
 	const { nodes } = node.fragment;

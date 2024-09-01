@@ -1,4 +1,4 @@
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
@@ -28,13 +28,13 @@ export class Parser {
 	/** Whether we're parsing in TypeScript mode */
 	ts = false;
 
-	/** @type {Ast.TemplateNode[]} */
+	/** @type {AST.TemplateNode[]} */
 	stack = [];
 
-	/** @type {Ast.Fragment[]} */
+	/** @type {AST.Fragment[]} */
 	fragments = [];
 
-	/** @type {Ast.Root} */
+	/** @type {AST.Root} */
 	root;
 
 	/** @type {Record<string, boolean>} */
@@ -122,7 +122,7 @@ export class Parser {
 			(thing) => thing.type === 'SvelteOptions'
 		);
 		if (options_index !== -1) {
-			const options = /** @type {Ast.SvelteOptionsRaw} */ (this.root.fragment.nodes[options_index]);
+			const options = /** @type {AST.SvelteOptionsRaw} */ (this.root.fragment.nodes[options_index]);
 			this.root.fragment.nodes.splice(options_index, 1);
 			this.root.options = read_options(options);
 
@@ -292,7 +292,7 @@ export class Parser {
 
 /**
  * @param {string} template
- * @returns {Ast.Root}
+ * @returns {AST.Root}
  */
 export function parse(template) {
 	const parser = new Parser(template);

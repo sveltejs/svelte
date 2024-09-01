@@ -1,10 +1,10 @@
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
 import { build_template_literal } from './shared/utils.js';
 
 /**
- * @param {Ast.TitleElement} node
+ * @param {AST.TitleElement} node
  * @param {ComponentContext} context
  */
 export function TitleElement(node, context) {

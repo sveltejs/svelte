@@ -1,12 +1,12 @@
 /** @import { Expression } from 'estree' */
-/** @import { Ast, ExpressionMetadata } from '#compiler' */
+/** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { is_capture_event, is_passive_event } from '../../../../../../utils.js';
 import { dev, locator } from '../../../../../state.js';
 import * as b from '../../../../../utils/builders.js';
 
 /**
- * @param {Ast.Attribute} node
+ * @param {AST.Attribute} node
  * @param {ComponentContext} context
  */
 export function visit_event_attribute(node, context) {
@@ -20,8 +20,8 @@ export function visit_event_attribute(node, context) {
 
 	// we still need to support the weird `onclick="{() => {...}}" form
 	const tag = Array.isArray(node.value)
-		? /** @type {Ast.ExpressionTag} */ (node.value[0])
-		: /** @type {Ast.ExpressionTag} */ (node.value);
+		? /** @type {AST.ExpressionTag} */ (node.value[0])
+		: /** @type {AST.ExpressionTag} */ (node.value);
 
 	let handler = build_event_handler(tag.expression, tag.metadata.expression, context);
 
@@ -68,7 +68,7 @@ export function visit_event_attribute(node, context) {
 			)
 		);
 
-		const type = /** @type {Ast.SvelteNode} */ (context.path.at(-1)).type;
+		const type = /** @type {AST.SvelteNode} */ (context.path.at(-1)).type;
 
 		if (type === 'SvelteDocument' || type === 'SvelteWindow' || type === 'SvelteBody') {
 			// These nodes are above the component tree, and its events should run parent first

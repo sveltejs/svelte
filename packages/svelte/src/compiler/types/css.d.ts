@@ -1,4 +1,4 @@
-import type { Ast } from '#compiler';
+import type { AST } from '#compiler';
 
 export namespace Css {
 	export interface BaseNode {
@@ -15,7 +15,7 @@ export namespace Css {
 			end: number;
 			styles: string;
 			/** Possible comment atop the style tag */
-			comment: Ast.Comment | null;
+			comment: AST.Comment | null;
 		};
 	}
 

@@ -1,5 +1,5 @@
 /** @import { Expression } from 'estree' */
-/** @import * as Compiler from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { is_void } from '../../../../utils.js';
 import read_expression from '../read/expression.js';
@@ -26,7 +26,7 @@ const regex_valid_element_name =
 const regex_valid_component_name =
 	/^(?:[A-Z][A-Za-z0-9_$.]*|[a-z][A-Za-z0-9_$]*(?:\.[A-Za-z0-9_$]+)+)$/;
 
-/** @type {Map<string, Compiler.Ast.ElementLike['type']>} */
+/** @type {Map<string, AST.ElementLike['type']>} */
 const root_only_meta_tags = new Map([
 	['svelte:head', 'SvelteHead'],
 	['svelte:options', 'SvelteOptions'],
@@ -35,7 +35,7 @@ const root_only_meta_tags = new Map([
 	['svelte:body', 'SvelteBody']
 ]);
 
-/** @type {Map<string, Compiler.Ast.ElementLike['type']>} */
+/** @type {Map<string, AST.ElementLike['type']>} */
 const meta_tags = new Map([
 	...root_only_meta_tags,
 	['svelte:element', 'SvelteElement'],
@@ -54,7 +54,7 @@ export default function element(parser) {
 		const data = parser.read_until(regex_closing_comment);
 		parser.eat('-->', true);
 
-		/** @type {ReturnType<typeof parser.append<Compiler.Ast.Comment>>} */
+		/** @type {ReturnType<typeof parser.append<AST.Comment>>} */
 		parser.append({
 			type: 'Comment',
 			start,
@@ -77,7 +77,7 @@ export default function element(parser) {
 		}
 
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
-		while (/** @type {Compiler.Ast.RegularElement} */ (parent).name !== name) {
+		while (/** @type {AST.RegularElement} */ (parent).name !== name) {
 			if (parent.type !== 'RegularElement') {
 				if (parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name) {
 					e.element_invalid_closing_tag_autoclosed(start, name, parser.last_auto_closed_tag.reason);
@@ -135,7 +135,7 @@ export default function element(parser) {
 					? 'SlotElement'
 					: 'RegularElement';
 
-	/** @type {Compiler.Ast.ElementLike} */
+	/** @type {AST.ElementLike} */
 	const element =
 		type === 'RegularElement'
 			? {
@@ -153,7 +153,7 @@ export default function element(parser) {
 					},
 					parent: null
 				}
-			: /** @type {Compiler.Ast.ElementLike} */ ({
+			: /** @type {AST.ElementLike} */ ({
 					type,
 					start,
 					end: -1,
@@ -211,9 +211,7 @@ export default function element(parser) {
 			e.svelte_component_missing_this(start);
 		}
 
-		const definition = /** @type {Compiler.Ast.Attribute} */ (
-			element.attributes.splice(index, 1)[0]
-		);
+		const definition = /** @type {AST.Attribute} */ (element.attributes.splice(index, 1)[0]);
 		if (!is_expression_attribute(definition)) {
 			e.svelte_component_invalid_this(definition.start);
 		}
@@ -230,9 +228,7 @@ export default function element(parser) {
 			e.svelte_element_missing_this(start);
 		}
 
-		const definition = /** @type {Compiler.Ast.Attribute} */ (
-			element.attributes.splice(index, 1)[0]
-		);
+		const definition = /** @type {AST.Attribute} */ (element.attributes.splice(index, 1)[0]);
 
 		if (definition.value === true) {
 			e.svelte_element_missing_this(definition);
@@ -245,9 +241,7 @@ export default function element(parser) {
 			// it would be much better to just error here, but we are preserving the existing buggy
 			// Svelte 4 behaviour out of an overabundance of caution regarding breaking changes.
 			// TODO in 6.0, error
-			const chunk = /** @type {Array<Compiler.Ast.ExpressionTag | Compiler.Ast.Text>} */ (
-				definition.value
-			)[0];
+			const chunk = /** @type {Array<AST.ExpressionTag | AST.Text>} */ (definition.value)[0];
 			element.tag =
 				chunk.type === 'Text'
 					? {
@@ -266,7 +260,7 @@ export default function element(parser) {
 	if (is_top_level_script_or_style) {
 		parser.eat('>', true);
 
-		/** @type {Compiler.Ast.Comment | null} */
+		/** @type {AST.Comment | null} */
 		let prev_comment = null;
 		for (let i = current.fragment.nodes.length - 1; i >= 0; i--) {
 			const node = current.fragment.nodes[i];
@@ -333,7 +327,7 @@ export default function element(parser) {
 		const data = parser.read_until(new RegExp(`</${name}>`));
 		const end = parser.index;
 
-		/** @type {Compiler.Ast.Text} */
+		/** @type {AST.Text} */
 		const node = {
 			start,
 			end,
@@ -352,7 +346,7 @@ export default function element(parser) {
 	}
 }
 
-/** @param {Compiler.Ast.TemplateNode[]} stack */
+/** @param {AST.TemplateNode[]} stack */
 function parent_is_head(stack) {
 	let i = stack.length;
 	while (i--) {
@@ -363,14 +357,14 @@ function parent_is_head(stack) {
 	return false;
 }
 
-/** @param {Compiler.Ast.TemplateNode[]} stack */
+/** @param {AST.TemplateNode[]} stack */
 function parent_is_shadowroot_template(stack) {
 	// https://developer.chrome.com/docs/css-ui/declarative-shadow-dom#building_a_declarative_shadow_root
 	let i = stack.length;
 	while (i--) {
 		if (
 			stack[i].type === 'RegularElement' &&
-			/** @type {Compiler.Ast.RegularElement} */ (stack[i]).attributes.some(
+			/** @type {AST.RegularElement} */ (stack[i]).attributes.some(
 				(a) => a.type === 'Attribute' && a.name === 'shadowrootmode'
 			)
 		) {
@@ -382,7 +376,7 @@ function parent_is_shadowroot_template(stack) {
 
 /**
  * @param {Parser} parser
- * @returns {Compiler.Ast.Attribute | null}
+ * @returns {AST.Attribute | null}
  */
 function read_static_attribute(parser) {
 	const start = parser.index;
@@ -390,7 +384,7 @@ function read_static_attribute(parser) {
 	const name = parser.read_until(regex_token_ending_character);
 	if (!name) return null;
 
-	/** @type {true | Array<Compiler.Ast.Text | Compiler.Ast.ExpressionTag>} */
+	/** @type {true | Array<AST.Text | AST.ExpressionTag>} */
 	let value = true;
 
 	if (parser.eat('=')) {
@@ -428,7 +422,7 @@ function read_static_attribute(parser) {
 
 /**
  * @param {Parser} parser
- * @returns {Compiler.Ast.Attribute | Compiler.Ast.SpreadAttribute | Compiler.Ast.Directive | null}
+ * @returns {AST.Attribute | AST.SpreadAttribute | AST.Directive | null}
  */
 function read_attribute(parser) {
 	const start = parser.index;
@@ -442,7 +436,7 @@ function read_attribute(parser) {
 			parser.allow_whitespace();
 			parser.eat('}', true);
 
-			/** @type {Compiler.Ast.SpreadAttribute} */
+			/** @type {AST.SpreadAttribute} */
 			const spread = {
 				type: 'SpreadAttribute',
 				start,
@@ -466,7 +460,7 @@ function read_attribute(parser) {
 			parser.allow_whitespace();
 			parser.eat('}', true);
 
-			/** @type {Compiler.Ast.ExpressionTag} */
+			/** @type {AST.ExpressionTag} */
 			const expression = {
 				type: 'ExpressionTag',
 				start: value_start,
@@ -497,7 +491,7 @@ function read_attribute(parser) {
 	const colon_index = name.indexOf(':');
 	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
 
-	/** @type {true | Compiler.Ast.ExpressionTag | Array<Compiler.Ast.Text | Compiler.Ast.ExpressionTag>} */
+	/** @type {true | AST.ExpressionTag | Array<AST.Text | AST.ExpressionTag>} */
 	let value = true;
 	if (parser.eat('=')) {
 		parser.allow_whitespace();
@@ -546,7 +540,7 @@ function read_attribute(parser) {
 			}
 		}
 
-		/** @type {Compiler.Ast.Directive} */
+		/** @type {AST.Directive} */
 		// @ts-expect-error TODO can't figure out this error
 		const directive = {
 			start,
@@ -603,7 +597,7 @@ function get_directive_type(name) {
 
 /**
  * @param {Parser} parser
- * @return {Compiler.Ast.ExpressionTag | Array<Compiler.Ast.ExpressionTag | Compiler.Ast.Text>}
+ * @return {AST.ExpressionTag | Array<AST.ExpressionTag | AST.Text>}
  */
 function read_attribute_value(parser) {
 	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
@@ -620,7 +614,7 @@ function read_attribute_value(parser) {
 		];
 	}
 
-	/** @type {Array<Compiler.Ast.ExpressionTag | Compiler.Ast.Text>} */
+	/** @type {Array<AST.ExpressionTag | AST.Text>} */
 	let value;
 	try {
 		value = read_sequence(
@@ -666,7 +660,7 @@ function read_attribute_value(parser) {
  * @returns {any[]}
  */
 function read_sequence(parser, done, location) {
-	/** @type {Compiler.Ast.Text} */
+	/** @type {AST.Text} */
 	let current_chunk = {
 		start: parser.index,
 		end: -1,
@@ -676,7 +670,7 @@ function read_sequence(parser, done, location) {
 		parent: null
 	};
 
-	/** @type {Array<Compiler.Ast.Text | Compiler.Ast.ExpressionTag>} */
+	/** @type {Array<AST.Text | AST.ExpressionTag>} */
 	const chunks = [];
 
 	/** @param {number} end */
@@ -714,7 +708,7 @@ function read_sequence(parser, done, location) {
 			parser.allow_whitespace();
 			parser.eat('}', true);
 
-			/** @type {Compiler.Ast.ExpressionTag} */
+			/** @type {AST.ExpressionTag} */
 			const chunk = {
 				type: 'ExpressionTag',
 				start: index,

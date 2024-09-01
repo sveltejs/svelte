@@ -1,5 +1,5 @@
 /** @import { Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
@@ -36,7 +36,7 @@ import {
 import { visit_event_attribute } from './shared/events.js';
 
 /**
- * @param {Ast.RegularElement} node
+ * @param {AST.RegularElement} node
  * @param {ComponentContext} context
  */
 export function RegularElement(node, context) {
@@ -69,13 +69,13 @@ export function RegularElement(node, context) {
 
 	context.state.template.push(`<${node.name}`);
 
-	/** @type {Array<Ast.Attribute | Ast.SpreadAttribute>} */
+	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];
 
-	/** @type {Ast.ClassDirective[]} */
+	/** @type {AST.ClassDirective[]} */
 	const class_directives = [];
 
-	/** @type {Ast.StyleDirective[]} */
+	/** @type {AST.StyleDirective[]} */
 	const style_directives = [];
 
 	/** @type {ExpressionStatement[]} */
@@ -85,7 +85,7 @@ export function RegularElement(node, context) {
 	let needs_input_reset = false;
 	let needs_content_reset = false;
 
-	/** @type {Ast.BindDirective | null} */
+	/** @type {AST.BindDirective | null} */
 	let value_binding = null;
 
 	/** If true, needs `__value` for inputs */
@@ -215,7 +215,7 @@ export function RegularElement(node, context) {
 		);
 		is_attributes_reactive = true;
 	} else {
-		for (const attribute of /** @type {Ast.Attribute[]} */ (attributes)) {
+		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 			if (is_event_attribute(attribute)) {
 				if (
 					(attribute.name === 'onload' || attribute.name === 'onerror') &&
@@ -384,7 +384,7 @@ export function RegularElement(node, context) {
 /**
  * Special case: if we have a value binding on a select element, we need to set up synchronization
  * between the value binding and inner signals, for indirect updates
- * @param {Ast.BindDirective} value_binding
+ * @param {AST.BindDirective} value_binding
  * @param {ComponentContext} context
  */
 function setup_select_synchronization(value_binding, context) {
@@ -436,9 +436,9 @@ function setup_select_synchronization(value_binding, context) {
 }
 
 /**
- * @param {Array<Ast.Attribute | Ast.SpreadAttribute>} attributes
+ * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
  * @param {ComponentContext} context
- * @param {Ast.RegularElement} element
+ * @param {AST.RegularElement} element
  * @param {Identifier} element_id
  * @param {boolean} needs_select_handling
  */
@@ -559,9 +559,9 @@ function build_element_spread_attributes(
  * });
  * ```
  * Returns true if attribute is deemed reactive, false otherwise.
- * @param {Ast.RegularElement} element
+ * @param {AST.RegularElement} element
  * @param {Identifier} node_id
- * @param {Ast.Attribute} attribute
+ * @param {AST.Attribute} attribute
  * @param {ComponentContext} context
  * @returns {boolean}
  */
@@ -623,7 +623,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 /**
  * Like `build_element_attribute_update_assignment` but without any special attribute treatment.
  * @param {Identifier}	node_id
- * @param {Ast.Attribute} attribute
+ * @param {AST.Attribute} attribute
  * @param {ComponentContext} context
  * @returns {boolean}
  */
@@ -653,7 +653,7 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
  * Returns true if attribute is deemed reactive, false otherwise.
  * @param {string} element
  * @param {Identifier} node_id
- * @param {Ast.Attribute} attribute
+ * @param {AST.Attribute} attribute
  * @param {ComponentContext} context
  * @returns {boolean}
  */

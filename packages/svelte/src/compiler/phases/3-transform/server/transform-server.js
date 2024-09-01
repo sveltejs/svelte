@@ -1,5 +1,5 @@
 /** @import { Program, Property, Statement, VariableDeclarator } from 'estree' */
-/** @import { Ast, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { ComponentServerTransformState, ComponentVisitors, ServerTransformState, Visitors } from './types.js' */
 /** @import { Analysis, ComponentAnalysis } from '../../types.js' */
 import { walk } from 'zimmerframe';
@@ -102,12 +102,12 @@ export function server_component(analysis, options) {
 	};
 
 	const module = /** @type {Program} */ (
-		walk(/** @type {Ast.SvelteNode} */ (analysis.module.ast), state, global_visitors)
+		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, global_visitors)
 	);
 
 	const instance = /** @type {Program} */ (
 		walk(
-			/** @type {Ast.SvelteNode} */ (analysis.instance.ast),
+			/** @type {AST.SvelteNode} */ (analysis.instance.ast),
 			{ ...state, scopes: analysis.instance.scopes },
 			{
 				...global_visitors,
@@ -128,7 +128,7 @@ export function server_component(analysis, options) {
 
 	const template = /** @type {Program} */ (
 		walk(
-			/** @type {Ast.SvelteNode} */ (analysis.template.ast),
+			/** @type {AST.SvelteNode} */ (analysis.template.ast),
 			{ ...state, scopes: analysis.template.scopes },
 			// @ts-expect-error don't know, don't care
 			{ ...global_visitors, ...template_visitors }
@@ -392,7 +392,7 @@ export function server_module(analysis, options) {
 	};
 
 	const module = /** @type {Program} */ (
-		walk(/** @type {Ast.SvelteNode} */ (analysis.module.ast), state, global_visitors)
+		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, global_visitors)
 	);
 
 	return {

@@ -1,5 +1,5 @@
 /** @import { Expression } from 'estree' */
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import * as Legacy from './types/legacy-nodes.js' */
 import { walk } from 'zimmerframe';
 import {
@@ -11,7 +11,7 @@ import { extract_svelte_ignore } from './utils/extract_svelte_ignore.js';
 
 /**
  * Some of the legacy Svelte AST nodes remove whitespace from the start and end of their children.
- * @param {Ast.TemplateNode[]} nodes
+ * @param {AST.TemplateNode[]} nodes
  */
 function remove_surrounding_whitespace_nodes(nodes) {
 	const first = nodes.at(0);
@@ -36,11 +36,11 @@ function remove_surrounding_whitespace_nodes(nodes) {
 /**
  * Transform our nice modern AST into the monstrosity emitted by Svelte 4
  * @param {string} source
- * @param {Ast.Root} ast
+ * @param {AST.Root} ast
  * @returns {Legacy.LegacyRoot}
  */
 export function convert(source, ast) {
-	const root = /** @type {Ast.SvelteNode | Legacy.LegacySvelteNode} */ (ast);
+	const root = /** @type {AST.SvelteNode | Legacy.LegacySvelteNode} */ (ast);
 
 	return /** @type {Legacy.LegacyRoot} */ (
 		walk(root, null, {
@@ -74,8 +74,8 @@ export function convert(source, ast) {
 				let end = null;
 
 				if (node.fragment.nodes.length > 0) {
-					const first = /** @type {Ast.BaseNode} */ (node.fragment.nodes.at(0));
-					const last = /** @type {Ast.BaseNode} */ (node.fragment.nodes.at(-1));
+					const first = /** @type {AST.BaseNode} */ (node.fragment.nodes.at(0));
+					const last = /** @type {AST.BaseNode} */ (node.fragment.nodes.at(-1));
 
 					start = first.start;
 					end = last.end;
@@ -242,7 +242,7 @@ export function convert(source, ast) {
 					return node;
 				}
 
-				const modern_node = /** @type {Ast.ConstTag} */ (node);
+				const modern_node = /** @type {AST.ConstTag} */ (node);
 				const { id: left } = { ...modern_node.declaration.declarations[0] };
 				// @ts-ignore
 				delete left.typeAnnotation;
@@ -584,7 +584,7 @@ export function convert(source, ast) {
 				const parent = path.at(-1);
 				if (parent?.type === 'RegularElement' && parent.name === 'style') {
 					// these text nodes are missing `raw` for some dumb reason
-					return /** @type {Ast.Text} */ ({
+					return /** @type {AST.Text} */ ({
 						type: 'Text',
 						start: node.start,
 						end: node.end,

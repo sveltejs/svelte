@@ -1,4 +1,4 @@
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { is_mathml, is_svg, is_void } from '../../../../utils.js';
 import {
@@ -14,7 +14,7 @@ import { validate_element } from './shared/element.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {Ast.RegularElement} node
+ * @param {AST.RegularElement} node
  * @param {Context} context
  */
 export function RegularElement(node, context) {
@@ -48,8 +48,8 @@ export function RegularElement(node, context) {
 			node.attributes.push(
 				create_attribute(
 					'value',
-					/** @type {Ast.Text} */ (node.fragment.nodes.at(0)).start,
-					/** @type {Ast.Text} */ (node.fragment.nodes.at(-1)).end,
+					/** @type {AST.Text} */ (node.fragment.nodes.at(0)).start,
+					/** @type {AST.Text} */ (node.fragment.nodes.at(-1)).end,
 					// @ts-ignore
 					node.fragment.nodes
 				)

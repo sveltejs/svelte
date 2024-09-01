@@ -1,5 +1,5 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Property, Statement } from 'estree' */
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks } from '../../../../../utils/ast.js';
@@ -11,7 +11,7 @@ import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
 
 /**
- * @param {Ast.Component | Ast.SvelteComponent | Ast.SvelteSelf} node
+ * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
  * @param {string} component_name
  * @param {ComponentContext} context
  * @param {Expression} anchor
@@ -33,7 +33,7 @@ export function build_component(node, component_name, context, anchor = context.
 		}
 	};
 
-	/** @type {Record<string, Ast.TemplateNode[]>} */
+	/** @type {Record<string, AST.TemplateNode[]>} */
 	const children = {};
 
 	/** @type {Record<string, Expression[]>} */

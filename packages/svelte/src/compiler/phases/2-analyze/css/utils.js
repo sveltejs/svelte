@@ -1,4 +1,4 @@
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Node } from 'estree' */
 const UNKNOWN = {};
 
@@ -18,7 +18,7 @@ function gather_possible_values(node, set) {
 }
 
 /**
- * @param {Ast.Text | Ast.ExpressionTag} chunk
+ * @param {AST.Text | AST.ExpressionTag} chunk
  * @returns {Set<string> | null}
  */
 export function get_possible_values(chunk) {

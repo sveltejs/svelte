@@ -1,4 +1,4 @@
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { decode_character_references } from '../utils/html.js';
 
@@ -12,7 +12,7 @@ export default function text(parser) {
 		data += parser.template[parser.index++];
 	}
 
-	/** @type {ReturnType<typeof parser.append<Ast.Text>>} */
+	/** @type {ReturnType<typeof parser.append<AST.Text>>} */
 	parser.append({
 		type: 'Text',
 		start,

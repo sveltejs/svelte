@@ -8,7 +8,7 @@ import type {
 import type { SourceMap } from 'magic-string';
 import type { Scope } from '../phases/scope.js';
 import type { Css } from './css.js';
-import type { Ast, Namespace } from './template.js';
+import type { AST, Namespace } from './template.js';
 import type { ICompileDiagnostic } from '../utils/compile_diagnostic.js';
 
 /** The return value of `compile` from `svelte/compiler` */
@@ -238,7 +238,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		sourcemap: CompileOptions['sourcemap'];
 		compatibility: Required<Required<CompileOptions>['compatibility']>;
 		runes: CompileOptions['runes'];
-		customElementOptions: Ast.SvelteOptions['customElement'];
+		customElementOptions: AST.SvelteOptions['customElement'];
 		hmr: CompileOptions['hmr'];
 	};
 
@@ -291,9 +291,9 @@ export interface Binding {
 		| FunctionDeclaration
 		| ClassDeclaration
 		| ImportDeclaration
-		| Ast.EachBlock;
+		| AST.EachBlock;
 	is_called: boolean;
-	references: { node: Identifier; path: Ast.SvelteNode[] }[];
+	references: { node: Identifier; path: AST.SvelteNode[] }[];
 	mutated: boolean;
 	reassigned: boolean;
 	/** `true` if mutated _or_ reassigned */

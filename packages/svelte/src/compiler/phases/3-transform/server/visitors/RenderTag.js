@@ -1,12 +1,12 @@
 /** @import { Expression } from 'estree' */
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import { unwrap_optional } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { empty_comment } from './shared/utils.js';
 
 /**
- * @param {Ast.RenderTag} node
+ * @param {AST.RenderTag} node
  * @param {ComponentContext} context
  */
 export function RenderTag(node, context) {

@@ -1,4 +1,4 @@
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import * as ESTree from 'estree' */
 import { walk } from 'zimmerframe';
 import * as b from '../utils/builders.js';
@@ -22,8 +22,8 @@ export function object(expression) {
 
 /**
  * Returns true if the attribute contains a single static text node.
- * @param {Ast.Attribute} attribute
- * @returns {attribute is Ast.Attribute & { value: [Ast.Text] }}
+ * @param {AST.Attribute} attribute
+ * @returns {attribute is AST.Attribute & { value: [AST.Text] }}
  */
 export function is_text_attribute(attribute) {
 	return (
@@ -37,8 +37,8 @@ export function is_text_attribute(attribute) {
  * Returns true if the attribute contains a single expression node.
  * In Svelte 5, this also includes a single expression node wrapped in an array.
  * TODO change that in a future version
- * @param {Ast.Attribute} attribute
- * @returns {attribute is Ast.Attribute & { value: [Ast.ExpressionTag] | Ast.ExpressionTag }}
+ * @param {AST.Attribute} attribute
+ * @returns {attribute is AST.Attribute & { value: [AST.ExpressionTag] | AST.ExpressionTag }}
  */
 export function is_expression_attribute(attribute) {
 	return (
@@ -53,19 +53,19 @@ export function is_expression_attribute(attribute) {
  * Returns the single attribute expression node.
  * In Svelte 5, this also includes a single expression node wrapped in an array.
  * TODO change that in a future version
- * @param { Ast.Attribute & { value: [Ast.ExpressionTag] | Ast.ExpressionTag }} attribute
+ * @param { AST.Attribute & { value: [AST.ExpressionTag] | AST.ExpressionTag }} attribute
  * @returns {ESTree.Expression}
  */
 export function get_attribute_expression(attribute) {
 	return Array.isArray(attribute.value)
-		? /** @type {Ast.ExpressionTag} */ (attribute.value[0]).expression
+		? /** @type {AST.ExpressionTag} */ (attribute.value[0]).expression
 		: attribute.value.expression;
 }
 
 /**
  * Returns the expression chunks of an attribute value
- * @param {Ast.Attribute['value']} value
- * @returns {Array<Ast.Text | Ast.ExpressionTag>}
+ * @param {AST.Attribute['value']} value
+ * @returns {Array<AST.Text | AST.ExpressionTag>}
  */
 export function get_attribute_chunks(value) {
 	return Array.isArray(value) ? value : typeof value === 'boolean' ? [] : [value];
@@ -73,8 +73,8 @@ export function get_attribute_chunks(value) {
 
 /**
  * Returns true if the attribute starts with `on` and contains a single expression node.
- * @param {Ast.Attribute} attribute
- * @returns {attribute is Ast.Attribute & { value: [Ast.ExpressionTag] | Ast.ExpressionTag }}
+ * @param {AST.Attribute} attribute
+ * @returns {attribute is AST.Attribute & { value: [AST.ExpressionTag] | AST.ExpressionTag }}
  */
 export function is_event_attribute(attribute) {
 	return is_expression_attribute(attribute) && attribute.name.startsWith('on');
@@ -393,7 +393,7 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
  * Like `path.at(x)`, but skips over `TSNonNullExpression` and `TSAsExpression` nodes and eases assertions a bit
  * by removing the `| undefined` from the resulting type.
  *
- * @template {Ast.SvelteNode} T
+ * @template {AST.SvelteNode} T
  * @param {T[]} path
  * @param {number} at
  */

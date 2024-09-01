@@ -1,11 +1,11 @@
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { is_tag_valid_with_parent } from '../../../../html-tree-validation.js';
 import * as e from '../../../errors.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {Ast.ExpressionTag} node
+ * @param {AST.ExpressionTag} node
  * @param {Context} context
  */
 export function ExpressionTag(node, context) {

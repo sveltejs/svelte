@@ -1,8 +1,8 @@
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 
 /**
  * @param {any} transparent
- * @returns {Ast.Fragment}
+ * @returns {AST.Fragment}
  */
 export function create_fragment(transparent = false) {
 	return {

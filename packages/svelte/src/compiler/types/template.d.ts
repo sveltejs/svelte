@@ -32,7 +32,7 @@ export type DelegatedEvent =
 	  }
 	| { hoisted: false };
 
-export namespace Ast {
+export namespace AST {
 	export interface BaseNode {
 		type: string;
 		start: number;

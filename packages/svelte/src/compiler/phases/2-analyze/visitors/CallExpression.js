@@ -1,5 +1,5 @@
 /** @import { CallExpression, VariableDeclarator } from 'estree' */
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
@@ -11,7 +11,7 @@ import { is_pure, is_safe_identifier } from './shared/utils.js';
  * @param {Context} context
  */
 export function CallExpression(node, context) {
-	const parent = /** @type {Ast.SvelteNode} */ (get_parent(context.path, -1));
+	const parent = /** @type {AST.SvelteNode} */ (get_parent(context.path, -1));
 
 	const rune = get_rune(node, context.state.scope);
 

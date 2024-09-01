@@ -1,9 +1,9 @@
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { disallow_children } from './shared/special-element.js';
 
 /**
- * @param {Ast.SvelteWindow} node
+ * @param {AST.SvelteWindow} node
  * @param {Context} context
  */
 export function SvelteWindow(node, context) {

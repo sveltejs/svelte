@@ -1,4 +1,4 @@
-/** @import { Ast, ExpressionMetadata } from '#compiler' */
+/** @import { AST, ExpressionMetadata } from '#compiler' */
 /**
  * All nodes that can appear elsewhere than the top level, have attributes and can contain children
  */
@@ -14,15 +14,15 @@ const element_nodes = [
 
 /**
  * Returns true for all nodes that can appear elsewhere than the top level, have attributes and can contain children
- * @param {Ast.SvelteNode} node
- * @returns {node is Ast.Component | Ast.RegularElement | Ast.SlotElement | Ast.SvelteComponent | Ast.SvelteElement | Ast.SvelteFragment | Ast.SvelteSelf}
+ * @param {AST.SvelteNode} node
+ * @returns {node is AST.Component | AST.RegularElement | AST.SlotElement | AST.SvelteComponent | AST.SvelteElement | AST.SvelteFragment | AST.SvelteSelf}
  */
 export function is_element_node(node) {
 	return element_nodes.includes(node.type);
 }
 
 /**
- * @param {Ast.RegularElement | Ast.SvelteElement} node
+ * @param {AST.RegularElement | AST.SvelteElement} node
  * @returns {boolean}
  */
 export function is_custom_element_node(node) {
@@ -33,8 +33,8 @@ export function is_custom_element_node(node) {
  * @param {string} name
  * @param {number} start
  * @param {number} end
- * @param {Ast.Attribute['value']} value
- * @returns {Ast.Attribute}
+ * @param {AST.Attribute['value']} value
+ * @returns {AST.Attribute}
  */
 export function create_attribute(name, start, end, value) {
 	return {

@@ -1,11 +1,11 @@
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import { get_attribute_chunks } from '../../../utils/ast.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {Ast.StyleDirective} node
+ * @param {AST.StyleDirective} node
  * @param {Context} context
  */
 export function StyleDirective(node, context) {

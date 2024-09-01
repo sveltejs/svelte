@@ -1,10 +1,10 @@
 /** @import { BlockStatement } from 'estree' */
-/** @import { Ast } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
 
 /**
- * @param {Ast.SnippetBlock} node
+ * @param {AST.SnippetBlock} node
  * @param {ComponentContext} context
  */
 export function SnippetBlock(node, context) {
