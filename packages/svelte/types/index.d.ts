@@ -584,7 +584,7 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, FunctionExpression, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression } from 'estree';
+	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression } from 'estree';
 	import type { SourceMap } from 'magic-string';
 	import type { Location } from 'locate-character';
 	/**
@@ -898,96 +898,12 @@ declare module 'svelte/compiler' {
 		 */
 		warningFilter?: (warning: Warning) => boolean;
 	}
-
-	type DeclarationKind =
-		| 'var'
-		| 'let'
-		| 'const'
-		| 'function'
-		| 'import'
-		| 'param'
-		| 'rest_param'
-		| 'synthetic';
-
-	interface Binding {
-		node: Identifier;
-		/**
-		 * - `normal`: A variable that is not in any way special
-		 * - `prop`: A normal prop (possibly reassigned or mutated)
-		 * - `bindable_prop`: A prop one can `bind:` to (possibly reassigned or mutated)
-		 * - `rest_prop`: A rest prop
-		 * - `state`: A state variable
-		 * - `derived`: A derived variable
-		 * - `each`: An each block parameter
-		 * - `snippet`: A snippet parameter
-		 * - `store_sub`: A $store value
-		 * - `legacy_reactive`: A `$:` declaration
-		 * - `template`: A binding declared in the template, e.g. in an `await` block or `const` tag
-		 */
-		kind:
-			| 'normal'
-			| 'prop'
-			| 'bindable_prop'
-			| 'rest_prop'
-			| 'state'
-			| 'raw_state'
-			| 'derived'
-			| 'each'
-			| 'snippet'
-			| 'store_sub'
-			| 'legacy_reactive'
-			| 'template';
-		declaration_kind: DeclarationKind;
-		/**
-		 * What the value was initialized with.
-		 * For destructured props such as `let { foo = 'bar' } = $props()` this is `'bar'` and not `$props()`
-		 */
-		initial:
-			| null
-			| Expression
-			| FunctionDeclaration
-			| ClassDeclaration
-			| ImportDeclaration
-			| AST.EachBlock;
-		is_called: boolean;
-		references: { node: Identifier; path: SvelteNode[] }[];
-		mutated: boolean;
-		reassigned: boolean;
-		/** `true` if mutated _or_ reassigned */
-		updated: boolean;
-		scope: Scope;
-		/** For `legacy_reactive`: its reactive dependencies */
-		legacy_dependencies: Binding[];
-		/** Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props() */
-		prop_alias: string | null;
-		/** Additional metadata, varies per binding type */
-		metadata: {
-			/** `true` if is (inside) a rest parameter */
-			inside_rest?: boolean;
-		} | null;
-	}
-
-	interface ExpressionMetadata {
-		/** All the bindings that are referenced inside this expression */
-		dependencies: Set<Binding>;
-		/** True if the expression references state directly, or _might_ (via member/call expressions) */
-		has_state: boolean;
-		/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
-		has_call: boolean;
-	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
 	 * - `svg`     — for e.g. `<svg>` or `<g>`
 	 * - `mathml`  — for e.g. `<math>` or `<mrow>`
 	 */
 	type Namespace = 'html' | 'svg' | 'mathml';
-
-	type DelegatedEvent =
-		| {
-				hoisted: true;
-				function: ArrowFunctionExpression | FunctionExpression | FunctionDeclaration;
-		  }
-		| { hoisted: false };
 
 	export namespace AST {
 		export interface BaseNode {
@@ -1274,21 +1190,6 @@ declare module 'svelte/compiler' {
 			fallback?: Fragment;
 			index?: string;
 			key?: Expression;
-			metadata: {
-				expression: ExpressionMetadata;
-				keyed: boolean;
-				contains_group_binding: boolean;
-				/** Set if something in the array expression is shadowed within the each block */
-				array_name: Identifier | null;
-				index: Identifier;
-				declarations: Map<string, Binding>;
-				/**
-				 * Optimization path for each blocks: If the parent isn't a fragment and
-				 * it only has a single child, then we can classify the block as being "controlled".
-				 * This saves us from creating an extra comment and insertion being faster.
-				 */
-				is_controlled: boolean;
-			};
 		}
 
 		/** An `{#if ...}` block */
@@ -1334,11 +1235,6 @@ declare module 'svelte/compiler' {
 			 * Quoted/string values are represented by an array, even if they contain a single expression like `"{x}"`
 			 */
 			value: true | ExpressionTag | Array<Text | ExpressionTag>;
-			metadata: {
-				expression: ExpressionMetadata;
-				/** May be set if this is an event attribute */
-				delegated: null | DelegatedEvent;
-			};
 		}
 
 		export interface SpreadAttribute extends BaseNode {
@@ -1367,19 +1263,6 @@ declare module 'svelte/compiler' {
 		| AST.UseDirective;
 
 	type Block = AST.EachBlock | AST.IfBlock | AST.AwaitBlock | AST.KeyBlock | AST.SnippetBlock;
-
-	type TemplateNode =
-		| AST.Root
-		| AST.Text
-		| Tag
-		| AST.ElementLike
-		| AST.Attribute
-		| AST.SpreadAttribute
-		| Directive
-		| AST.Comment
-		| Block;
-
-	type SvelteNode = Node | TemplateNode | AST.Fragment | Css.Node;
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
 	 * For example, it can be used to convert a <style lang="sass"> block into vanilla CSS.
@@ -1403,58 +1286,6 @@ declare module 'svelte/compiler' {
 	export function migrate(source: string): {
 		code: string;
 	};
-	class Scope {
-		
-		constructor(root: ScopeRoot, parent: Scope | null, porous: boolean);
-		
-		root: ScopeRoot;
-		/**
-		 * The immediate parent scope
-		 * */
-		parent: Scope | null;
-		/**
-		 * A map of every identifier declared by this scope, and all the
-		 * identifiers that reference it
-		 * */
-		declarations: Map<string, Binding>;
-		/**
-		 * A map of declarators to the bindings they declare
-		 * */
-		declarators: Map<VariableDeclarator | AST.LetDirective, Binding[]>;
-		/**
-		 * A set of all the names referenced with this scope
-		 * — useful for generating unique names
-		 * */
-		references: Map<string, {
-			node: Identifier;
-			path: SvelteNode[];
-		}[]>;
-		/**
-		 * The scope depth allows us to determine if a state variable is referenced in its own scope,
-		 * which is usually an error. Block statements do not increase this value
-		 */
-		function_depth: number;
-		
-		declare(node: Identifier, kind: Binding["kind"], declaration_kind: DeclarationKind, initial?: null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | AST.EachBlock): Binding;
-		child(porous?: boolean): Scope;
-		
-		generate(preferred_name: string): string;
-		
-		get(name: string): Binding | null;
-		
-		get_bindings(node: VariableDeclarator | AST.LetDirective): Binding[];
-		
-		owner(name: string): Scope | null;
-		
-		reference(node: Identifier, path: SvelteNode[]): void;
-		#private;
-	}
-	class ScopeRoot {
-		
-		conflicts: Set<string>;
-		
-		unique(preferred_name: string): Identifier;
-	}
 	namespace Css {
 		export interface BaseNode {
 			start: number;

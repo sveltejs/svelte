@@ -400,6 +400,7 @@ export namespace AST {
 		fallback?: Fragment;
 		index?: string;
 		key?: Expression;
+		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
 			keyed: boolean;
@@ -460,6 +461,7 @@ export namespace AST {
 		 * Quoted/string values are represented by an array, even if they contain a single expression like `"{x}"`
 		 */
 		value: true | ExpressionTag | Array<Text | ExpressionTag>;
+		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
 			/** May be set if this is an event attribute */
