@@ -1,6 +1,6 @@
 /** @import { ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
-/** @import { AST, Binding, DeclarationKind, SvelteNode } from '#compiler' */
+/** @import { AST, Binding, DeclarationKind, ElementLike, SvelteNode } from '#compiler' */
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { create_expression_metadata } from './nodes.js';
@@ -289,7 +289,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<AST.ElementLike, State, SvelteNode>}
+	 * @type {Visitor<ElementLike, State, SvelteNode>}
 	 */
 	const SvelteFragment = (node, { state, next }) => {
 		const scope = state.scope.child();

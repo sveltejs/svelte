@@ -376,21 +376,6 @@ export namespace AST {
 		name: 'svelte:window';
 	}
 
-	export type ElementLike =
-		| Component
-		| TitleElement
-		| SlotElement
-		| RegularElement
-		| SvelteBody
-		| SvelteComponent
-		| SvelteDocument
-		| SvelteElement
-		| SvelteFragment
-		| SvelteHead
-		| SvelteOptionsRaw
-		| SvelteSelf
-		| SvelteWindow;
-
 	/** An `{#each ...}` block */
 	export interface EachBlock extends BaseNode {
 		type: 'EachBlock';
@@ -500,11 +485,26 @@ export type Directive =
 
 export type Block = AST.EachBlock | AST.IfBlock | AST.AwaitBlock | AST.KeyBlock | AST.SnippetBlock;
 
+export type ElementLike =
+	| AST.Component
+	| AST.TitleElement
+	| AST.SlotElement
+	| AST.RegularElement
+	| AST.SvelteBody
+	| AST.SvelteComponent
+	| AST.SvelteDocument
+	| AST.SvelteElement
+	| AST.SvelteFragment
+	| AST.SvelteHead
+	| AST.SvelteOptionsRaw
+	| AST.SvelteSelf
+	| AST.SvelteWindow;
+
 export type TemplateNode =
 	| AST.Root
 	| AST.Text
 	| Tag
-	| AST.ElementLike
+	| ElementLike
 	| AST.Attribute
 	| AST.SpreadAttribute
 	| Directive

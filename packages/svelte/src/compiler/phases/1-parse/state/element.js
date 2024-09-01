@@ -1,5 +1,5 @@
 /** @import { Expression } from 'estree' */
-/** @import { AST, Directive, TemplateNode } from '#compiler' */
+/** @import { AST, Directive, ElementLike, TemplateNode } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { is_void } from '../../../../utils.js';
 import read_expression from '../read/expression.js';
@@ -26,7 +26,7 @@ const regex_valid_element_name =
 const regex_valid_component_name =
 	/^(?:[A-Z][A-Za-z0-9_$.]*|[a-z][A-Za-z0-9_$]*(?:\.[A-Za-z0-9_$]+)+)$/;
 
-/** @type {Map<string, AST.ElementLike['type']>} */
+/** @type {Map<string, ElementLike['type']>} */
 const root_only_meta_tags = new Map([
 	['svelte:head', 'SvelteHead'],
 	['svelte:options', 'SvelteOptions'],
@@ -35,7 +35,7 @@ const root_only_meta_tags = new Map([
 	['svelte:body', 'SvelteBody']
 ]);
 
-/** @type {Map<string, AST.ElementLike['type']>} */
+/** @type {Map<string, ElementLike['type']>} */
 const meta_tags = new Map([
 	...root_only_meta_tags,
 	['svelte:element', 'SvelteElement'],
@@ -135,7 +135,7 @@ export default function element(parser) {
 					? 'SlotElement'
 					: 'RegularElement';
 
-	/** @type {AST.ElementLike} */
+	/** @type {ElementLike} */
 	const element =
 		type === 'RegularElement'
 			? {
@@ -153,7 +153,7 @@ export default function element(parser) {
 					},
 					parent: null
 				}
-			: /** @type {AST.ElementLike} */ ({
+			: /** @type {ElementLike} */ ({
 					type,
 					start,
 					end: -1,

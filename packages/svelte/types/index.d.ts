@@ -1166,21 +1166,6 @@ declare module 'svelte/compiler' {
 			name: 'svelte:window';
 		}
 
-		export type ElementLike =
-			| Component
-			| TitleElement
-			| SlotElement
-			| RegularElement
-			| SvelteBody
-			| SvelteComponent
-			| SvelteDocument
-			| SvelteElement
-			| SvelteFragment
-			| SvelteHead
-			| SvelteOptionsRaw
-			| SvelteSelf
-			| SvelteWindow;
-
 		/** An `{#each ...}` block */
 		export interface EachBlock extends BaseNode {
 			type: 'EachBlock';
@@ -1263,6 +1248,21 @@ declare module 'svelte/compiler' {
 		| AST.UseDirective;
 
 	type Block = AST.EachBlock | AST.IfBlock | AST.AwaitBlock | AST.KeyBlock | AST.SnippetBlock;
+
+	type ElementLike =
+		| AST.Component
+		| AST.TitleElement
+		| AST.SlotElement
+		| AST.RegularElement
+		| AST.SvelteBody
+		| AST.SvelteComponent
+		| AST.SvelteDocument
+		| AST.SvelteElement
+		| AST.SvelteFragment
+		| AST.SvelteHead
+		| AST.SvelteOptionsRaw
+		| AST.SvelteSelf
+		| AST.SvelteWindow;
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
 	 * For example, it can be used to convert a <style lang="sass"> block into vanilla CSS.
