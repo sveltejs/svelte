@@ -198,11 +198,15 @@ export default function element(parser) {
 			attribute.type === 'StyleDirective' ||
 			attribute.type === 'ClassDirective'
 		) {
-			if (unique_names.includes(attribute.name)) {
+			// `bind:attribute` and `attribute` are just the same but `class:attribute`,
+			// `style:attribute` and `attribute` are different and should be allowed together
+			// so we concatenate the type while normalizing the type for BindDirective
+			const type = attribute.type === 'BindDirective' ? 'Attribute' : attribute.type;
+			if (unique_names.includes(type + attribute.name)) {
 				e.attribute_duplicate(attribute);
 				// <svelte:element bind:this this=..> is allowed
 			} else if (attribute.name !== 'this') {
-				unique_names.push(attribute.name);
+				unique_names.push(type + attribute.name);
 			}
 		}
 
