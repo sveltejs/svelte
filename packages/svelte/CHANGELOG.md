@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.243
+
+### Patch Changes
+
+- fix: ensure reactive graph is fully traversed in the marking phase for non-runes mode ([#13059](https://github.com/sveltejs/svelte/pull/13059))
+
+- fix: ensure reactivity system remains consistent with removals ([#13087](https://github.com/sveltejs/svelte/pull/13087))
+
+- fix: render undefined html as the empty string ([#13092](https://github.com/sveltejs/svelte/pull/13092))
+
+- fix: error on incorrect attributes for svelte:body ([#13084](https://github.com/sveltejs/svelte/pull/13084))
+
+- feat: provide AST node types with internal types stripped out ([#12968](https://github.com/sveltejs/svelte/pull/12968))
+
 ## 5.0.0-next.242
 
 ### Patch Changes
