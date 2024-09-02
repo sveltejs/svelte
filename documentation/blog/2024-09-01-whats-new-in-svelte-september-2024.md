@@ -13,12 +13,10 @@ Let's take a look...
 
 - `$state.frozen` has been replaced with `$state.raw` (**5.0.0-next.218**, [Docs](https://svelte-5-preview.vercel.app/docs/runes#state-raw), [#12808](https://github.com/sveltejs/svelte/pull/12808))
 - `$state.is` has been removed. RIP, little guy ([#12916](https://github.com/sveltejs/svelte/pull/12916))
-- `$state.link` was added, experimented with, and then removed (**5.0.0-next.229 - 232**, [#12545](https://github.com/sveltejs/svelte/pull/12545) and [#12943](https://github.com/sveltejs/svelte/pull/12943))
-- `svelte:options` lets you do a per-component css injection (**5.0.0-next.209**, [#12660](https://github.com/sveltejs/svelte/pull/12660))
-- `<svelte:component>` is now unnecessary in runes mode and has now been deprecated (**5.0.0-next.203/217**, [#12646](https://github.com/sveltejs/svelte/pull/12646) and [#12694](https://github.com/sveltejs/svelte/pull/12694))
+- `svelte:options` now lets you set the `css: "inject"` compiler option on a per-component basis (**5.0.0-next.209**, [#12660](https://github.com/sveltejs/svelte/pull/12660))
+- `<svelte:component>` is now unnecessary in runes mode and therefore is deprecated (**5.0.0-next.203/217**, [#12646](https://github.com/sveltejs/svelte/pull/12646) and [#12694](https://github.com/sveltejs/svelte/pull/12694))
 - `:global` is now allowed in more places - making it easier to use in `<style>` tags and fixing issues with Tailwind's `@apply` (**5.0.0-next.199**, [Docs](https://github.com/sveltejs/svelte/blob/main/documentation/docs/02-template-syntax/05-styles-and-classes.md), [#12560](https://github.com/sveltejs/svelte/pull/12560))
-- A warning will now be emitted if binding to a non-reactive property **(5.0.0-next.192**, [#12500](https://github.com/sveltejs/svelte/pull/12500))
-- Svelte's dynamic typescript definitions will now warn when its diagnostics detect a `d.ts` file was not generated (**svelte2tsx@0.7.14**, [#2428](https://github.com/sveltejs/language-tools/pull/2428))
+- Svelte's typescript definition generator that comes with `@sveltejs/package` will now warn when its diagnostics detect that a `d.ts` file was not generated (**svelte2tsx@0.7.14**, [#2428](https://github.com/sveltejs/language-tools/pull/2428))
 - You can now specify a tsconfig in `emitDts` - helpful when working in a monorepo (**svelte2tsx@0.7.16**, [#2454](https://github.com/sveltejs/language-tools/pull/2454))
 
 Not covered in this list are a ton of efficiency and performance improvements across css and javascript compilation. If you're interested, check out the [CHANGELOG](https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md) for more on how destructuring, state proxies and actions/styles/classes have all improved since last month.
