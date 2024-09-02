@@ -1,26 +1,26 @@
 [
 	{
 		"code": "non_reactive_update",
-		"end": {
-			"column": 27,
-			"line": 2
-		},
-		"message": "`no_need_no_conditional` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates",
+		"message": "`does_need1` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates",
 		"start": {
 			"column": 5,
-			"line": 2
+			"line": 5
+		},
+		"end": {
+			"column": 15,
+			"line": 5
 		}
 	},
 	{
 		"code": "non_reactive_update",
-		"message": "`does_need1` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates",
+		"message": "`does_need2` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates",
 		"start": {
 			"column": 5,
-			"line": 7
+			"line": 6
 		},
 		"end": {
 			"column": 15,
-			"line": 7
+			"line": 6
 		}
 	}
 ]
