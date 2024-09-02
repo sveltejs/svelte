@@ -564,42 +564,26 @@ export function analyze_component(root, source, options) {
 
 		// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
 		for (const scope of [module.scope, instance.scope]) {
-			outer: for (const [name, binding] of scope.declarations) {
+			bindings: for (const [name, binding] of scope.declarations) {
 				if (binding.kind === 'normal' && binding.reassigned) {
-					inner: for (const { path } of binding.references) {
+					references: for (const { path } of binding.references) {
 						if (path[0].type !== 'Fragment') continue;
 						for (let i = 1; i < path.length; i += 1) {
 							const type = path[i].type;
 							if (
 								type === 'FunctionDeclaration' ||
 								type === 'FunctionExpression' ||
-								type === 'ArrowFunctionExpression'
+								type === 'ArrowFunctionExpression' ||
+								// bind:this is a write-only binding
+								(type === 'BindDirective' &&
+									/** @type {AST.BindDirective} */ (path[i]).name === 'this')
 							) {
-								continue inner;
-							}
-							// bind:this doesn't need to be a state reference if it will never change
-							if (
-								type === 'BindDirective' &&
-								/** @type {AST.BindDirective} */ (path[i]).name === 'this'
-							) {
-								for (let j = i - 1; j >= 0; j -= 1) {
-									const type = path[j].type;
-									if (
-										type === 'IfBlock' ||
-										type === 'EachBlock' ||
-										type === 'AwaitBlock' ||
-										type === 'KeyBlock'
-									) {
-										w.non_reactive_update(binding.node, name);
-										continue outer;
-									}
-								}
-								continue inner;
+								continue references;
 							}
 						}
 
 						w.non_reactive_update(binding.node, name);
-						continue outer;
+						continue bindings;
 					}
 				}
 			}

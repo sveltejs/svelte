@@ -651,6 +651,26 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		BindDirective(node, context) {
+			if (node.name === 'this') {
+				for (let i = context.path.length - 1; i >= 0; i -= 1) {
+					const type = context.path[i].type;
+					// if bind this is not in a conditional, it will never change
+					if (
+						type === 'IfBlock' ||
+						type === 'EachBlock' ||
+						type === 'AwaitBlock' ||
+						type === 'KeyBlock'
+					) {
+						updates.push([
+							context.state.scope,
+							/** @type {Identifier | MemberExpression} */ (node.expression)
+						]);
+					}
+				}
+				context.next();
+				return;
+			}
+
 			updates.push([
 				context.state.scope,
 				/** @type {Identifier | MemberExpression} */ (node.expression)
