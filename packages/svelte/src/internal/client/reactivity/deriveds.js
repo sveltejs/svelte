@@ -1,4 +1,4 @@
-/** @import { Derived } from '#client' */
+/** @import { Derived, Effect } from '#client' */
 import { DEV } from 'esm-env';
 import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
 import {
@@ -8,11 +8,11 @@ import {
 	set_signal_status,
 	current_skip_reaction,
 	update_reaction,
-	destroy_effect_children,
 	increment_version
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
+import { destroy_effect } from './effects.js';
 
 /**
  * @template V
@@ -26,25 +26,19 @@ export function derived(fn) {
 
 	/** @type {Derived<V>} */
 	const signal = {
+		children: null,
 		deps: null,
-		deriveds: null,
 		equals,
 		f: flags,
-		first: null,
 		fn,
-		last: null,
 		reactions: null,
 		v: /** @type {V} */ (null),
 		version: 0
 	};
 
 	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
-		var current_derived = /** @type {Derived} */ (current_reaction);
-		if (current_derived.deriveds === null) {
-			current_derived.deriveds = [signal];
-		} else {
-			current_derived.deriveds.push(signal);
-		}
+		var derived = /** @type {Derived} */ (current_reaction);
+		(derived.children ??= []).push(signal);
 	}
 
 	return signal;
@@ -67,14 +61,18 @@ export function derived_safe_equal(fn) {
  * @returns {void}
  */
 function destroy_derived_children(derived) {
-	destroy_effect_children(derived);
-	var deriveds = derived.deriveds;
+	var children = derived.children;
 
-	if (deriveds !== null) {
-		derived.deriveds = null;
+	if (children !== null) {
+		derived.children = null;
 
-		for (var i = 0; i < deriveds.length; i += 1) {
-			destroy_derived(deriveds[i]);
+		for (var i = 0; i < children.length; i += 1) {
+			var child = children[i];
+			if ((child.f & DERIVED) !== 0) {
+				destroy_derived(/** @type {Derived} */ (child));
+			} else {
+				destroy_effect(/** @type {Effect} */ (child));
+			}
 		}
 	}
 }
@@ -135,8 +133,7 @@ function destroy_derived(signal) {
 
 	// TODO we need to ensure we remove the derived from any parent derives
 
-	signal.first =
-		signal.last =
+	signal.children =
 		signal.deps =
 		signal.reactions =
 		// @ts-expect-error `signal.fn` cannot be `null` while the signal is alive

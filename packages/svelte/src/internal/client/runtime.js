@@ -392,7 +392,7 @@ export function remove_reactions(signal, start_index) {
 }
 
 /**
- * @param {Reaction} signal
+ * @param {Effect} signal
  * @param {boolean} remove_dom
  * @returns {void}
  */
@@ -601,9 +601,9 @@ function process_effects(effect, collected_effects) {
 			if ((flags & RENDER_EFFECT) !== 0) {
 				if (!is_branch && check_dirtiness(current_effect)) {
 					update_effect(current_effect);
-					// Child might have been mutated since running the effect
-					child = current_effect.first;
 				}
+				// Child might have been mutated since running the effect or checking dirtiness
+				child = current_effect.first;
 
 				if (child !== null) {
 					current_effect = child;

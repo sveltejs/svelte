@@ -1,4 +1,4 @@
-/** @import { ComponentContext, ComponentContextLegacy, Effect, Reaction, TemplateNode, TransitionManager } from '#client' */
+/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, Reaction, TemplateNode, TransitionManager } from '#client' */
 import {
 	check_dirtiness,
 	current_component_context,
@@ -61,7 +61,7 @@ export function validate_effect(rune) {
 
 /**
  * @param {Effect} effect
- * @param {Reaction} parent_effect
+ * @param {Effect} parent_effect
  */
 function push_effect(effect, parent_effect) {
 	var parent_last = parent_effect.last;
@@ -147,7 +147,8 @@ function create_effect(type, fn, sync, push = true) {
 
 		// if we're in a derived, add the effect there too
 		if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
-			push_effect(effect, current_reaction);
+			var derived = /** @type {Derived} */ (current_reaction);
+			(derived.children ??= []).push(effect);
 		}
 	}
 
@@ -396,7 +397,7 @@ export function destroy_effect(effect, remove_dom = true) {
 	var parent = effect.parent;
 
 	// If the parent doesn't have any children, then skip this work altogether
-	if (parent !== null && (effect.f & BRANCH_EFFECT) !== 0 && parent.first !== null) {
+	if (parent !== null && parent.first !== null) {
 		unlink_effect(effect);
 	}
 
