@@ -1,6 +1,6 @@
 <script lang="ts">
 	// here is a comment
-	let div: HTMLIFrameElement = $state();
+	let div: HTMLIFrameElement;
 	let count = $state(0);
 </script>
 
