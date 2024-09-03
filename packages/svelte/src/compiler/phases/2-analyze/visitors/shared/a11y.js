@@ -992,12 +992,21 @@ export function check_element(node, state) {
 	// element-specific checks
 	let contains_a11y_label = false;
 
+	const has_content = node.fragment.nodes.some(child =>
+		(child.type === 'Text' && child.data.trim() !== '') ||
+		(child.type === 'Element' && child.name !== 'script' && child.name !== 'style')
+	);
+
+	const aria_label = attribute_map.get('aria-label');
+	const aria_labelledby = attribute_map.get('aria-labelledby');
+
+	contains_a11y_label =
+		(aria_label && get_static_value(aria_label) !== '') ||
+		(aria_labelledby && get_static_value(aria_labelledby) !== '');
+
 	if (node.name === 'a') {
-		const aria_label_attribute = attribute_map.get('aria-label');
-		if (aria_label_attribute) {
-			if (get_static_value(aria_label_attribute) !== '') {
-				contains_a11y_label = true;
-			}
+		if (!has_content && !contains_a11y_label) {
+			w.a11y_consider_explicit_label(node, node.name);
 		}
 
 		const href = attribute_map.get('href') || attribute_map.get('xlink:href');
@@ -1023,6 +1032,12 @@ export function check_element(node, state) {
 			if (!has_attribute) {
 				warn_missing_attribute(node, required_attributes);
 			}
+		}
+	}
+
+	if (node.name === 'button') {
+		if (!has_content && !contains_a11y_label) {
+			w.a11y_consider_explicit_label(node, node.name);
 		}
 	}
 
