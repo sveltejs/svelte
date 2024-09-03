@@ -53,10 +53,20 @@ const { test, run } = suite<ValidatorTest>(async (config, cwd) => {
 	const expected = expected_errors && expected_errors[0];
 
 	if (error && expected) {
-		assert.equal(error.code, expected.code);
-		assert.equal(error.message, expected.message);
-		assert.deepEqual({ line: error.start?.line, column: error.start?.column }, expected.start);
-		assert.deepEqual({ line: error.end?.line, column: error.end?.column }, expected.end);
+		assert.deepEqual(
+			{
+				code: error.code,
+				message: error.message,
+				start: { line: error.start?.line, column: error.start?.column },
+				end: { line: error.end?.line, column: error.end?.column }
+			},
+			{
+				code: expected.code,
+				message: expected.message,
+				start: expected.start,
+				end: expected.end
+			}
+		);
 	} else if (expected) {
 		throw new Error(`Expected an error: ${expected.message}`);
 	} else if (error) {

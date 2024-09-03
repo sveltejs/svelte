@@ -1,0 +1,14 @@
+[
+	{
+		"code": "typescript_invalid_feature",
+		"message": "TypeScript language features like accessor fields (related TSC proposal is not stage 4 yet) are not natively supported, and their use is generally discouraged. You will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler",
+		"start": {
+			"line": 3,
+			"column": 2
+		},
+		"end": {
+			"line": 3,
+			"column": 17
+		}
+	}
+]
