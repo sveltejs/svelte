@@ -248,8 +248,8 @@ export function RegularElement(node, context) {
 								: `="${value === true ? '' : escape_html(value, true)}"`
 						}`
 					);
-					continue;
 				}
+				continue;
 			}
 
 			const is = is_custom_element
