@@ -344,5 +344,10 @@ export function push_template_expression(state, expression_to_add) {
  * @returns {boolean}
  */
 export function can_inline_variable(binding) {
-	return !!binding && !binding.scope.parent;
+	return (
+		!!binding &&
+		!binding.scope.parent &&
+		// to prevent the need for escaping
+		binding.initial?.type === 'Literal'
+	);
 }
