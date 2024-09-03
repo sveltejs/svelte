@@ -17,6 +17,9 @@ function remove_this_param(node, context) {
 
 /** @type {Visitors<any, null>} */
 const visitors = {
+	Decorator(node) {
+		e.typescript_invalid_feature(node, 'decorators (related TSC proposal is not stage 4 yet)');
+	},
 	ImportDeclaration(node) {
 		if (node.importKind === 'type') return b.empty;
 
@@ -52,6 +55,14 @@ const visitors = {
 	ExportAllDeclaration(node) {
 		if (node.exportKind === 'type') return b.empty;
 		return node;
+	},
+	PropertyDefinition(node) {
+		if (node.accessor) {
+			e.typescript_invalid_feature(
+				node,
+				'accessor fields (related TSC proposal is not stage 4 yet)'
+			);
+		}
 	},
 	TSAsExpression(node, context) {
 		return context.visit(node.expression);
