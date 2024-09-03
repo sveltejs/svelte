@@ -162,4 +162,4 @@ Using a `$` prefix to refer to the value of a store is only possible inside `.sv
 
 ## typescript_invalid_feature
 
-> TypeScript language features like %feature% are not natively supported, and their use is generally discouraged. You will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler
+> TypeScript language features like %feature% are not natively supported, and their use is generally discouraged. Outside of `<script>` tags, these features are not supported. For use within `<script>` tags, you will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler. If you are using `vitePreprocess`, make sure to specifically enable preprocessing script tags (`vitePreprocess({ script: true })`)
