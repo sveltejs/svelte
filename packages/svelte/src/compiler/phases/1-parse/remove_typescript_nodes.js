@@ -105,12 +105,27 @@ const visitors = {
 	},
 	FunctionExpression: remove_this_param,
 	FunctionDeclaration: remove_this_param,
+	TSDeclareFunction() {
+		return b.empty;
+	},
+	ClassDeclaration(node, context) {
+		if (node.declare) {
+			return b.empty;
+		}
+		return context.next();
+	},
+	VariableDeclaration(node, context) {
+		if (node.declare) {
+			return b.empty;
+		}
+		return context.next();
+	},
 	TSModuleDeclaration(node, context) {
 		if (!node.body) return b.empty;
 
 		// namespaces can contain non-type nodes
-		const cleaned = context.visit(node.body.body);
-		if (cleaned.length !== 0) {
+		const cleaned = /** @type {any[]} */ (node.body.body).map((entry) => context.visit(entry));
+		if (cleaned.some((entry) => entry !== b.empty)) {
 			e.typescript_invalid_feature(node, 'namespaces with non-type nodes');
 		}
 
