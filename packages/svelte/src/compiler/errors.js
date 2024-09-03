@@ -435,6 +435,16 @@ export function store_invalid_subscription_module(node) {
 }
 
 /**
+ * TypeScript language features like %feature% are not natively supported, and their use is generally discouraged. Outside of `<script>` tags, these features are not supported. For use within `<script>` tags, you will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler. If you are using `vitePreprocess`, make sure to specifically enable preprocessing script tags (`vitePreprocess({ script: true })`)
+ * @param {null | number | NodeLike} node
+ * @param {string} feature
+ * @returns {never}
+ */
+export function typescript_invalid_feature(node, feature) {
+	e(node, "typescript_invalid_feature", `TypeScript language features like ${feature} are not natively supported, and their use is generally discouraged. Outside of \`<script>\` tags, these features are not supported. For use within \`<script>\` tags, you will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler. If you are using \`vitePreprocess\`, make sure to specifically enable preprocessing script tags (\`vitePreprocess({ script: true })\`)`);
+}
+
+/**
  * Declaration cannot be empty
  * @param {null | number | NodeLike} node
  * @returns {never}
