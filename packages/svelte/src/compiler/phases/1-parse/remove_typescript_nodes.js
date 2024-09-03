@@ -2,6 +2,7 @@
 /** @import { FunctionExpression, FunctionDeclaration } from 'estree' */
 import { walk } from 'zimmerframe';
 import * as b from '../../utils/builders.js';
+import * as e from '../../errors.js';
 
 /**
  * @param {FunctionExpression | FunctionDeclaration} node
@@ -73,10 +74,13 @@ const visitors = {
 	TSTypeParameterInstantiation() {
 		return b.empty;
 	},
-	TSEnumDeclaration() {
-		return b.empty;
+	TSEnumDeclaration(node) {
+		e.typescript_invalid_feature(node, 'enums');
 	},
-	TSParameterProperty(node) {
+	TSParameterProperty(node, context) {
+		if (node.accessibility && context.path.at(-2)?.kind === 'constructor') {
+			e.typescript_invalid_feature(node, 'accessibility modifiers on constructor parameters');
+		}
 		return node.parameter;
 	},
 	Identifier(node) {
@@ -92,9 +96,14 @@ const visitors = {
 	FunctionDeclaration: remove_this_param,
 	TSModuleDeclaration(node, context) {
 		if (!node.body) return b.empty;
+
 		// namespaces can contain non-type nodes
 		const cleaned = context.visit(node.body.body);
-		if (cleaned.length === 0) return b.empty;
+		if (cleaned.length !== 0) {
+			e.typescript_invalid_feature(node, 'namespaces with non-type nodes');
+		}
+
+		return b.empty;
 	}
 };
 
