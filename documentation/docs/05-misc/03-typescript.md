@@ -12,18 +12,6 @@ To use TypeScript within Svelte components, you need to add a preprocessor that 
 
 The easiest way to get started is scaffolding a new SvelteKit project by typing `npm create svelte@latest`, following the prompts and choosing the TypeScript option.
 
-```ts
-/// file: svelte.config.js
-// @noErrors
-import { vitePreprocess } from '@sveltejs/kit/vite';
-
-const config = {
-	preprocess: vitePreprocess()
-};
-
-export default config;
-```
-
 If you don't need or want all the features SvelteKit has to offer, you can scaffold a Svelte-flavoured Vite project instead by typing `npm create vite@latest` and selecting the `svelte-ts` option.
 
 ```ts
