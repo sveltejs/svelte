@@ -435,13 +435,13 @@ export function store_invalid_subscription_module(node) {
 }
 
 /**
- * TypeScript language feature like %feature% are not natively supported, and their use is generally discouraged. You will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler
+ * TypeScript language features like %feature% are not natively supported, and their use is generally discouraged. You will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler
  * @param {null | number | NodeLike} node
  * @param {string} feature
  * @returns {never}
  */
 export function typescript_invalid_feature(node, feature) {
-	e(node, "typescript_invalid_feature", `TypeScript language feature like ${feature} are not natively supported, and their use is generally discouraged. You will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler`);
+	e(node, "typescript_invalid_feature", `TypeScript language features like ${feature} are not natively supported, and their use is generally discouraged. You will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler`);
 }
 
 /**

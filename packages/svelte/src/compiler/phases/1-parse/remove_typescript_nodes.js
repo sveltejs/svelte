@@ -89,7 +89,13 @@ const visitors = {
 		return node;
 	},
 	FunctionExpression: remove_this_param,
-	FunctionDeclaration: remove_this_param
+	FunctionDeclaration: remove_this_param,
+	TSModuleDeclaration(node, context) {
+		if (!node.body) return b.empty;
+		// namespaces can contain non-type nodes
+		const cleaned = context.visit(node.body.body);
+		if (cleaned.length === 0) return b.empty;
+	}
 };
 
 /**
