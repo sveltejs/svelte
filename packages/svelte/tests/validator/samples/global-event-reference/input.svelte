@@ -2,8 +2,8 @@
     let onclick;
 </script>
 
-<button {onclick}></button>
-<button onclick={onclick}></button>
+<button {onclick} aria-label="Button"></button>
+<button onclick={onclick} aria-label="Button"></button>
 
-<button {onkeydown}></button>
-<button onkeydown={onkeydown}></button>
+<button {onkeydown} aria-label="Button"></button>
+<button onkeydown={onkeydown} aria-label="Button"></button>

@@ -2,7 +2,7 @@
 <article role="article"></article>
 <aside role="complementary"></aside>
 <body role="document"></body>
-<button role="button"></button>
+<button role="button" aria-label="Button"></button>
 <datalist role="listbox"></datalist>
 <dd role="definition"></dd>
 <dfn role="term"></dfn>

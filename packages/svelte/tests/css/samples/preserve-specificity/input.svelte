@@ -1,5 +1,5 @@
 <!-- svelte-ignore a11y_missing_attribute -->
-<a>
+<a aria-label="Link">
   <b>
     <c>
       <span>
