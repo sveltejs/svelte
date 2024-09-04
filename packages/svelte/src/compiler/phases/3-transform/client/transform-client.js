@@ -457,7 +457,7 @@ export function client_component(analysis, options) {
 		analysis.uses_slots ||
 		analysis.slot_names.size > 0;
 
-	const body = [...module.body, ...state.hoisted];
+	const body = [...state.hoisted, ...module.body];
 
 	const component = b.function_declaration(
 		b.id(analysis.name),
