@@ -50,7 +50,7 @@
 
 ## invalid_snippet
 
-> Could not `{@render}` snippet due to the expression being null or undefined. Consider using optional chaining `{@render snippet?.()}`
+> Could not `{@render}` snippet due to the expression being `null` or `undefined`. Consider using optional chaining `{@render snippet?.()}`
 
 ## lifecycle_legacy_only
 

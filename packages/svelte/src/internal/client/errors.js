@@ -211,12 +211,12 @@ export function hydration_failed() {
 }
 
 /**
- * Could not `{@render}` snippet due to the expression being null or undefined. Consider using optional chaining `{@render snippet?.()}`
+ * Could not `{@render}` snippet due to the expression being `null` or `undefined`. Consider using optional chaining `{@render snippet?.()}`
  * @returns {never}
  */
 export function invalid_snippet() {
 	if (DEV) {
-		const error = new Error(`invalid_snippet\nCould not \`{@render}\` snippet due to the expression being null or undefined. Consider using optional chaining \`{@render snippet?.()}\``);
+		const error = new Error(`invalid_snippet\nCould not \`{@render}\` snippet due to the expression being \`null\` or \`undefined\`. Consider using optional chaining \`{@render snippet?.()}\``);
 
 		error.name = 'Svelte error';
 		throw error;
