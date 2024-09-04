@@ -28,7 +28,8 @@ export function VariableDeclaration(node, context) {
 				rune === '$effect.tracking' ||
 				rune === '$effect.root' ||
 				rune === '$inspect' ||
-				rune === '$state.snapshot'
+				rune === '$state.snapshot' ||
+				rune === '$host'
 			) {
 				if (init != null && is_hoisted_function(init)) {
 					context.state.hoisted.push(
