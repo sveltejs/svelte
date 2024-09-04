@@ -991,25 +991,41 @@ export function check_element(node, state) {
 
 	// element-specific checks
 	let contains_a11y_label = false;
+	let missing_content_warning_fired = false;
 
 	const aria_hidden = attribute_map.get('aria-hidden');
 	const is_hidden = aria_hidden && get_static_value(aria_hidden) === 'true';
 
-	const has_content = node.fragment.nodes.some(child =>
-		(child.type === 'Text' && child.data.trim() !== '') ||
-		(child.type === 'Element' && child.name !== 'script' && child.name !== 'style')
-	);
+	const has_content = node.fragment.nodes.some((child) => {
+		if (child.type === 'Text') {
+			return child.data.trim() !== '';
+		}
+		if (child.type === 'Component' || child.type === 'SlotElement') {
+			if (child.name !== 'script' && child.name !== 'style') {
+				return child.fragment.nodes.some(
+					(grandchild) => grandchild.type === 'Text' && grandchild.data.trim() !== ''
+				);
+			}
+		}
+		return false;
+	});
 
 	const aria_label = attribute_map.get('aria-label');
 	const aria_labelledby = attribute_map.get('aria-labelledby');
 
 	contains_a11y_label =
 		(aria_label && get_static_value(aria_label) !== '') ||
-		(aria_labelledby && get_static_value(aria_labelledby) !== '');
+		(aria_labelledby && get_static_value(aria_labelledby) !== '') ||
+		false;
 
 	if (node.name === 'a') {
 		if (!is_hidden && !has_content && !contains_a11y_label) {
-			w.a11y_consider_explicit_label(node, node.name);
+			if (node.fragment.nodes.length === 0 && !missing_content_warning_fired) {
+				w.a11y_missing_content(node, node.name);
+				missing_content_warning_fired = true;
+			} else {
+				w.a11y_consider_explicit_label(node, node.name);
+			}
 		}
 
 		const href = attribute_map.get('href') || attribute_map.get('xlink:href');
@@ -1161,8 +1177,10 @@ export function check_element(node, state) {
 		!contains_a11y_label &&
 		!has_contenteditable_binding &&
 		a11y_required_content.includes(node.name) &&
-		node.fragment.nodes.length === 0
+		node.fragment.nodes.length === 0 &&
+		!missing_content_warning_fired
 	) {
 		w.a11y_missing_content(node, node.name);
+		missing_content_warning_fired = true;
 	}
 }
