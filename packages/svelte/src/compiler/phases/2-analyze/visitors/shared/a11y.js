@@ -992,6 +992,9 @@ export function check_element(node, state) {
 	// element-specific checks
 	let contains_a11y_label = false;
 
+	const aria_hidden = attribute_map.get('aria-hidden');
+	const is_hidden = aria_hidden && get_static_value(aria_hidden) === 'true';
+
 	const has_content = node.fragment.nodes.some(child =>
 		(child.type === 'Text' && child.data.trim() !== '') ||
 		(child.type === 'Element' && child.name !== 'script' && child.name !== 'style')
@@ -1005,7 +1008,7 @@ export function check_element(node, state) {
 		(aria_labelledby && get_static_value(aria_labelledby) !== '');
 
 	if (node.name === 'a') {
-		if (!has_content && !contains_a11y_label) {
+		if (!is_hidden && !has_content && !contains_a11y_label) {
 			w.a11y_consider_explicit_label(node, node.name);
 		}
 
@@ -1036,7 +1039,7 @@ export function check_element(node, state) {
 	}
 
 	if (node.name === 'button') {
-		if (!has_content && !contains_a11y_label) {
+		if (!is_hidden && !has_content && !contains_a11y_label) {
 			w.a11y_consider_explicit_label(node, node.name);
 		}
 	}
