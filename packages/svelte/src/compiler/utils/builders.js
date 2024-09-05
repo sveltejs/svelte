@@ -446,12 +446,11 @@ export function unthunk(expression) {
 		expression.body.type === 'CallExpression' &&
 		expression.body.callee.type === 'Identifier' &&
 		expression.params.length === expression.body.arguments.length &&
-		expression.params.every( (param, index) => {
-			const arg = /** @type {ESTree.SimpleCallExpression} */(expression.body).arguments[index];
-			return param.type === 'Identifier'
-				&& arg.type === 'Identifier'
-				&& param.name === arg.name;
-		})) {
+		expression.params.every((param, index) => {
+			const arg = /** @type {ESTree.SimpleCallExpression} */ (expression.body).arguments[index];
+			return param.type === 'Identifier' && arg.type === 'Identifier' && param.name === arg.name;
+		})
+	) {
 		return expression.body.callee;
 	}
 	return expression;
