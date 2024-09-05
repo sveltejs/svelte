@@ -38,10 +38,10 @@ export function BindDirective(node, context) {
 
 	const getter = b.thunk(/** @type {Expression} */ (context.visit(expression)));
 
-	const setter = b.arrow(
+	const setter = b.unthunk(b.arrow(
 		[b.id('$$value')],
 		/** @type {Expression} */ (context.visit(b.assignment('=', expression, b.id('$$value'))))
-	);
+	));
 
 	/** @type {CallExpression} */
 	let call;
