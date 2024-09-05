@@ -60,3 +60,14 @@ if (bad_links.length > 0) {
 
 	process.exit(1);
 }
+
+if (types.includes('\texport { ')) {
+	// eslint-disable-next-line no-console
+	console.error(
+		`The generated types file should not contain 'export { ... }' statements. ` +
+			`TypeScript is bad at following these: when creating d.ts files through @sveltejs/package, and one of these types is used, ` +
+			`TypeScript will likely fail at generating a d.ts file. ` +
+			`To prevent this, do 'export interface Foo {}' instead of 'interface Foo {}' and then 'export { Foo }'`
+	);
+	process.exit(1);
+}

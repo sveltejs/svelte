@@ -1,11 +1,11 @@
 /** Callback to inform of a value updates. */
-type Subscriber<T> = (value: T) => void;
+export type Subscriber<T> = (value: T) => void;
 
 /** Unsubscribes from value updates. */
-type Unsubscriber = () => void;
+export type Unsubscriber = () => void;
 
 /** Callback to update a value. */
-type Updater<T> = (value: T) => T;
+export type Updater<T> = (value: T) => T;
 
 /**
  * Start and stop notification callbacks.
@@ -16,13 +16,13 @@ type Updater<T> = (value: T) => T;
  * @returns {void | (() => void)} Optionally, a cleanup function that is called when the last remaining
  * subscriber unsubscribes.
  */
-type StartStopNotifier<T> = (
+export type StartStopNotifier<T> = (
 	set: (value: T) => void,
 	update: (fn: Updater<T>) => void
 ) => void | (() => void);
 
 /** Readable interface for subscribing. */
-interface Readable<T> {
+export interface Readable<T> {
 	/**
 	 * Subscribe on value changes.
 	 * @param run subscription callback
@@ -32,7 +32,7 @@ interface Readable<T> {
 }
 
 /** Writable interface for both updating and subscribing. */
-interface Writable<T> extends Readable<T> {
+export interface Writable<T> extends Readable<T> {
 	/**
 	 * Set value and inform subscribers.
 	 * @param value to set
@@ -45,7 +45,5 @@ interface Writable<T> extends Readable<T> {
 	 */
 	update(this: void, updater: Updater<T>): void;
 }
-
-export { Readable, StartStopNotifier, Subscriber, Unsubscriber, Updater, Writable };
 
 export * from './index-client.js';
