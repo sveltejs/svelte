@@ -30,16 +30,13 @@ export function RenderTag(node, context) {
 	let snippet_function = /** @type {Expression} */ (context.visit(callee));
 
 	if (node.metadata.dynamic) {
+		// If we have a chain expression then ensure a nullish snippet function gets turned into an empty one
+		if (b.literal(node.expression.type === 'ChainExpression')) {
+			snippet_function = b.logical('??', snippet_function, b.id('$.empty_snippet'));
+		}
+
 		context.state.init.push(
-			b.stmt(
-				b.call(
-					'$.snippet',
-					context.state.node,
-					b.thunk(snippet_function),
-					b.literal(node.expression.type === 'ChainExpression'),
-					...args
-				)
-			)
+			b.stmt(b.call('$.snippet', context.state.node, b.thunk(snippet_function), ...args))
 		);
 	} else {
 		context.state.init.push(
