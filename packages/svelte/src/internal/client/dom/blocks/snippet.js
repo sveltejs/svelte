@@ -11,8 +11,10 @@ import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { create_fragment_from_html } from '../reconciler.js';
 import { assign_nodes } from '../template.js';
 import * as w from '../../warnings.js';
+import * as e from '../../errors.js';
 import { DEV } from 'esm-env';
 import { get_first_child, get_next_sibling } from '../operations.js';
+import { noop } from '../../../shared/utils.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
@@ -25,7 +27,8 @@ export function snippet(node, get_snippet, ...args) {
 	var anchor = node;
 
 	/** @type {SnippetFn | null | undefined} */
-	var snippet;
+	// @ts-ignore
+	var snippet = noop;
 
 	/** @type {Effect | null} */
 	var snippet_effect;
@@ -38,9 +41,11 @@ export function snippet(node, get_snippet, ...args) {
 			snippet_effect = null;
 		}
 
-		if (snippet) {
-			snippet_effect = branch(() => /** @type {SnippetFn} */ (snippet)(anchor, ...args));
+		if (DEV && snippet == null) {
+			e.invalid_snippet();
 		}
+
+		snippet_effect = branch(() => /** @type {SnippetFn} */ (snippet)(anchor, ...args));
 	}, EFFECT_TRANSPARENT);
 
 	if (hydrating) {

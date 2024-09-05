@@ -30,6 +30,11 @@ export function RenderTag(node, context) {
 	let snippet_function = /** @type {Expression} */ (context.visit(callee));
 
 	if (node.metadata.dynamic) {
+		// If we have a chain expression then ensure a nullish snippet function gets turned into an empty one
+		if (node.expression.type === 'ChainExpression') {
+			snippet_function = b.logical('??', snippet_function, b.id('$.noop'));
+		}
+
 		context.state.init.push(
 			b.stmt(b.call('$.snippet', context.state.node, b.thunk(snippet_function), ...args))
 		);
