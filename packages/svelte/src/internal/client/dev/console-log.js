@@ -18,6 +18,7 @@ export function log_if_contains_state(...objects) {
 	}
 
 	if (has_state) {
+		// eslint-disable-next-line no-console
 		console.log(
 			'Your console.log contained $state objects. We recommend using $inspect or $state.snapshot when logging these for better results. The snapshotted value is:\n',
 			...transformed,
