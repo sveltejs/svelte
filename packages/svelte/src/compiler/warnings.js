@@ -113,6 +113,7 @@ export const codes = [
 	"bind_invalid_each_rest",
 	"block_empty",
 	"component_name_lowercase",
+	"directive_not_defined",
 	"element_invalid_self_closing_tag",
 	"event_directive_deprecated",
 	"node_invalid_placement_ssr",
@@ -732,6 +733,15 @@ export function block_empty(node) {
  */
 export function component_name_lowercase(node, name) {
 	w(node, "component_name_lowercase", `\`<${name}>\` will be treated as an HTML element unless it begins with a capital letter`);
+}
+
+/**
+ * `%name%` is not defined. Consider declaring, getting it via prop or importing the directive
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function directive_not_defined(node, name) {
+	w(node, "directive_not_defined", `\`${name}\` is not defined. Consider declaring, getting it via prop or importing the directive`);
 }
 
 /**

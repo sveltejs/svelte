@@ -16,6 +16,7 @@ import { hash, is_rune } from '../../../utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
 import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
+import { AnimateDirective } from './visitors/AnimateDirective.js';
 import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { Attribute } from './visitors/Attribute.js';
@@ -63,6 +64,7 @@ import { SvelteWindow } from './visitors/SvelteWindow.js';
 import { TaggedTemplateExpression } from './visitors/TaggedTemplateExpression.js';
 import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
+import { TransitionDirective } from './visitors/TransitionDirective.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
@@ -125,6 +127,7 @@ const visitors = {
 			pop_ignore();
 		}
 	},
+	AnimateDirective,
 	ArrowFunctionExpression,
 	AssignmentExpression,
 	Attribute,
@@ -172,6 +175,7 @@ const visitors = {
 	TaggedTemplateExpression,
 	Text,
 	TitleElement,
+	TransitionDirective,
 	UpdateExpression,
 	UseDirective,
 	VariableDeclarator

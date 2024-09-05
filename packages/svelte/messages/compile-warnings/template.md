@@ -30,6 +30,10 @@
 
 > `<%name%>` will be treated as an HTML element unless it begins with a capital letter
 
+## directive_not_defined
+
+> `%name%` is not defined. Consider declaring, getting it via prop or importing the directive
+
 ## element_invalid_self_closing_tag
 
 > Self-closing HTML tags for non-void elements are ambiguous — use `<%name% ...></%name%>` rather than `<%name% ... />`

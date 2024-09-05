@@ -1,6 +1,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
+import * as w from '../../../warnings.js';
 import { get_attribute_chunks } from '../../../utils/ast.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
@@ -21,10 +22,19 @@ export function StyleDirective(node, context) {
 			if (binding.kind !== 'normal') {
 				node.metadata.expression.has_state = true;
 			}
+		} else {
+			w.directive_not_defined(node, node.name);
 		}
 
 		mark_subtree_dynamic(context.path);
 	} else {
+		if (
+			!Array.isArray(node.value) &&
+			node.value.expression.type === 'Identifier' &&
+			!context.state.scope.get(node.value.expression.name)
+		) {
+			w.directive_not_defined(node, node.value.expression.name);
+		}
 		context.next();
 
 		for (const chunk of get_attribute_chunks(node.value)) {

@@ -1,0 +1,146 @@
+[
+	{
+		"code": "directive_not_defined",
+		"end": {
+			"column": 27,
+			"line": 1
+		},
+		"message": "`nonexistent` is not defined. Consider declaring, getting it via prop or importing the directive",
+		"start": {
+			"column": 5,
+			"line": 1
+		}
+	},
+	{
+		"code": "directive_not_defined",
+		"end": {
+			"column": 19,
+			"line": 3
+		},
+		"message": "`nonexistent` is not defined. Consider declaring, getting it via prop or importing the directive",
+		"start": {
+			"column": 5,
+			"line": 3
+		}
+	},
+	{
+		"code": "directive_not_defined",
+		"end": {
+			"column": 20,
+			"line": 5
+		},
+		"message": "`nonexistent` is not defined. Consider declaring, getting it via prop or importing the directive",
+		"start": {
+			"column": 5,
+			"line": 5
+		}
+	},
+	{
+		"code": "directive_not_defined",
+		"end": {
+			"column": 27,
+			"line": 7
+		},
+		"message": "`nonexistent` is not defined. Consider declaring, getting it via prop or importing the directive",
+		"start": {
+			"column": 5,
+			"line": 7
+		}
+	},
+	{
+		"code": "directive_not_defined",
+		"end": {
+			"column": 26,
+			"line": 9
+		},
+		"message": "`nonexistent` is not defined. Consider declaring, getting it via prop or importing the directive",
+		"start": {
+			"column": 5,
+			"line": 9
+		}
+	},
+	{
+		"code": "directive_not_defined",
+		"end": {
+			"column": 34,
+			"line": 11
+		},
+		"message": "`nonexistent` is not defined. Consider declaring, getting it via prop or importing the directive",
+		"start": {
+			"column": 5,
+			"line": 11
+		}
+	},
+	{
+		"code": "directive_not_defined",
+		"end": {
+			"column": 21,
+			"line": 14
+		},
+		"message": "`nonexistent` is not defined. Consider declaring, getting it via prop or importing the directive",
+		"start": {
+			"column": 6,
+			"line": 14
+		}
+	},
+	{
+		"code": "directive_not_defined",
+		"end": {
+			"column": 25,
+			"line": 18
+		},
+		"message": "`nonexistent` is not defined. Consider declaring, getting it via prop or importing the directive",
+		"start": {
+			"column": 6,
+			"line": 18
+		}
+	},
+	{
+		"code": "directive_not_defined",
+		"end": {
+			"column": 30,
+			"line": 21
+		},
+		"message": "`nonexistent` is not defined. Consider declaring, getting it via prop or importing the directive",
+		"start": {
+			"column": 5,
+			"line": 21
+		}
+	},
+	{
+		"code": "directive_not_defined",
+		"end": {
+			"column": 16,
+			"line": 23
+		},
+		"message": "`color` is not defined. Consider declaring, getting it via prop or importing the directive",
+		"start": {
+			"column": 5,
+			"line": 23
+		}
+	},
+	{
+		"code": "directive_not_defined",
+		"end": {
+			"column": 34,
+			"line": 25
+		},
+		"message": "`nonexistent` is not defined. Consider declaring, getting it via prop or importing the directive",
+		"start": {
+			"column": 5,
+			"line": 25
+		}
+	},
+	{
+		"code": "directive_not_defined",
+		"end": {
+			"column": 22,
+			"line": 27
+		},
+		"message": "`nonexistent` is not defined. Consider declaring, getting it via prop or importing the directive",
+		"start": {
+			"column": 5,
+			"line": 27
+		}
+	}
+]
