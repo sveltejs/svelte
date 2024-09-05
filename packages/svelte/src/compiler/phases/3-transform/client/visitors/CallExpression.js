@@ -35,5 +35,25 @@ export function CallExpression(node, context) {
 			return transform_inspect_rune(node, context);
 	}
 
+	if (
+		context.state.options.dev &&
+		node.callee.type === 'MemberExpression' &&
+		node.callee.object.type === 'Identifier' &&
+		node.callee.object.name === 'console' &&
+		context.state.scope.get('console') === null &&
+		node.callee.property.type === 'Identifier' &&
+		['log', 'warn', 'error'].includes(node.callee.property.name)
+	) {
+		return b.call(
+			node.callee,
+			b.spread(
+				b.call(
+					'$.log_if_contains_state',
+					.../** @type {Expression[]} */ (node.arguments.map((arg) => context.visit(arg)))
+				)
+			)
+		);
+	}
+
 	context.next();
 }
