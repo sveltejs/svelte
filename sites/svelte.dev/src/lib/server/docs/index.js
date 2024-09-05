@@ -41,10 +41,10 @@ export async function get_docs_data(base = CONTENT_BASE_PATHS.DOCS) {
 
 		const category_slug = match[1];
 
-		// Read the meta.json
-		const { title: category_title, draft = 'false' } = JSON.parse(
-			await readFile(`${base}/${category_dir}/meta.json`, 'utf-8')
-		);
+		// Read the index.md
+		const { title: category_title, draft = 'false' } = extractFrontmatter(
+			await readFile(`${base}/${category_dir}/index.md`, 'utf-8')
+		).metadata;
 
 		if (draft === 'true') continue;
 
@@ -56,7 +56,7 @@ export async function get_docs_data(base = CONTENT_BASE_PATHS.DOCS) {
 		};
 
 		for (const filename of await readdir(`${base}/${category_dir}`)) {
-			if (filename === 'meta.json') continue;
+			if (filename === 'index.md') continue;
 			const match = /\d{2}-(.+)/.exec(filename);
 			if (!match) continue;
 
