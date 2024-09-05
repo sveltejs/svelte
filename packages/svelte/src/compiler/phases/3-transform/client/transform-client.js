@@ -457,10 +457,22 @@ export function client_component(analysis, options) {
 		analysis.uses_slots ||
 		analysis.slot_names.size > 0;
 
-	// we hoist all the import declarations to the top of the file
-	const body = [...module.body, ...state.hoisted].sort((body_a, body_b) =>
-		body_a.type === 'ImportDeclaration' && body_b.type !== 'ImportDeclaration' ? -1 : 1
-	);
+	// Merge hoisted statements into module body.
+	// Ensure imports are on top, with the order preserved, then module body, then hoisted statements
+	/** @type {ESTree.ImportDeclaration[]} */
+	const imports = [];
+	/** @type {ESTree.Program['body']} */
+	let body = [];
+
+	for (const entry of [...module.body, ...state.hoisted]) {
+		if (entry.type === 'ImportDeclaration') {
+			imports.push(entry);
+		} else {
+			body.push(entry);
+		}
+	}
+
+	body = [...imports, ...body];
 
 	const component = b.function_declaration(
 		b.id(analysis.name),

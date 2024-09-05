@@ -25,7 +25,7 @@
     "shiki": "^0.14.7",
     "shiki-twoslash": "^3.1.2",
     "svelte": "workspace:^",
-    "svelte-check": "^3.8.6",
+    "svelte-check": "^4.0.0",
     "typescript": "^5.5.4",
     "vite": "^5.4.2"
   },
