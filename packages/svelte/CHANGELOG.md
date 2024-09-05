@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.244
+
+### Patch Changes
+
+- fix: error on duplicate style and class directive ([#13097](https://github.com/sveltejs/svelte/pull/13097))
+
+- fix: ensure $host rune correctly compiles in variable declarations ([#13127](https://github.com/sveltejs/svelte/pull/13127))
+
+- fix: remove unnecessary update assignments ([#13113](https://github.com/sveltejs/svelte/pull/13113))
+
+- fix: error at compile time on unsupported TypeScript language features ([#12982](https://github.com/sveltejs/svelte/pull/12982))
+
+- fix: Ensure imports are above other statements ([#13132](https://github.com/sveltejs/svelte/pull/13132))
+
 ## 5.0.0-next.243
 
 ### Patch Changes
