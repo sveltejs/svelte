@@ -18,7 +18,7 @@ export { css_props } from './dom/blocks/css-props.js';
 export { index, each } from './dom/blocks/each.js';
 export { html } from './dom/blocks/html.js';
 export { sanitize_slots, slot } from './dom/blocks/slot.js';
-export { snippet, wrap_snippet, empty_snippet } from './dom/blocks/snippet.js';
+export { snippet, wrap_snippet } from './dom/blocks/snippet.js';
 export { component } from './dom/blocks/svelte-component.js';
 export { element } from './dom/blocks/svelte-element.js';
 export { head } from './dom/blocks/svelte-head.js';

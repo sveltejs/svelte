@@ -8,6 +8,6 @@ export default test({
 		assert.throws(() => {
 			btn?.click();
 			flushSync();
-		}, /snippet is not a function/);
+		}, /invalid_snippet/);
 	}
 });
