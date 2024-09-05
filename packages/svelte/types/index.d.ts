@@ -1700,16 +1700,6 @@ declare module 'svelte/motion' {
 }
 
 declare module 'svelte/reactivity' {
-	/** @deprecated Use `SvelteDate` instead */
-	function Date_1(): void;
-	/** @deprecated Use `SvelteSet` instead */
-	function Set_1(): void;
-	/** @deprecated Use `SvelteMap` instead */
-	function Map_1(): void;
-	/** @deprecated Use `SvelteURL` instead */
-	function URL_1(): void;
-	/** @deprecated Use `SvelteURLSearchParams` instead */
-	function URLSearchParams_1(): void;
 	export class SvelteDate extends Date {
 		
 		constructor(...params: any[]);
@@ -1740,7 +1730,7 @@ declare module 'svelte/reactivity' {
 		#private;
 	}
 
-	export { Date_1 as Date, Set_1 as Set, Map_1 as Map, URL_1 as URL, URLSearchParams_1 as URLSearchParams };
+	export {};
 }
 
 declare module 'svelte/server' {
@@ -1777,13 +1767,13 @@ declare module 'svelte/server' {
 
 declare module 'svelte/store' {
 	/** Callback to inform of a value updates. */
-	type Subscriber<T> = (value: T) => void;
+	export type Subscriber<T> = (value: T) => void;
 
 	/** Unsubscribes from value updates. */
-	type Unsubscriber = () => void;
+	export type Unsubscriber = () => void;
 
 	/** Callback to update a value. */
-	type Updater<T> = (value: T) => T;
+	export type Updater<T> = (value: T) => T;
 
 	/**
 	 * Start and stop notification callbacks.
@@ -1794,13 +1784,13 @@ declare module 'svelte/store' {
 	 * @returns Optionally, a cleanup function that is called when the last remaining
 	 * subscriber unsubscribes.
 	 */
-	type StartStopNotifier<T> = (
+	export type StartStopNotifier<T> = (
 		set: (value: T) => void,
 		update: (fn: Updater<T>) => void
 	) => void | (() => void);
 
 	/** Readable interface for subscribing. */
-	interface Readable<T> {
+	export interface Readable<T> {
 		/**
 		 * Subscribe on value changes.
 		 * @param run subscription callback
@@ -1810,7 +1800,7 @@ declare module 'svelte/store' {
 	}
 
 	/** Writable interface for both updating and subscribing. */
-	interface Writable<T> extends Readable<T> {
+	export interface Writable<T> extends Readable<T> {
 		/**
 		 * Set value and inform subscribers.
 		 * @param value to set
@@ -1882,13 +1872,13 @@ declare module 'svelte/store' {
 	type StoresValues<T> =
 		T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 
-	export { Subscriber, Unsubscriber, Updater, StartStopNotifier, Readable, Writable };
+	export {};
 }
 
 declare module 'svelte/transition' {
-	type EasingFunction = (t: number) => number;
+	export type EasingFunction = (t: number) => number;
 
-	interface TransitionConfig {
+	export interface TransitionConfig {
 		delay?: number;
 		duration?: number;
 		easing?: EasingFunction;
@@ -1896,7 +1886,7 @@ declare module 'svelte/transition' {
 		tick?: (t: number, u: number) => void;
 	}
 
-	interface BlurParams {
+	export interface BlurParams {
 		delay?: number;
 		duration?: number;
 		easing?: EasingFunction;
@@ -1904,13 +1894,13 @@ declare module 'svelte/transition' {
 		opacity?: number;
 	}
 
-	interface FadeParams {
+	export interface FadeParams {
 		delay?: number;
 		duration?: number;
 		easing?: EasingFunction;
 	}
 
-	interface FlyParams {
+	export interface FlyParams {
 		delay?: number;
 		duration?: number;
 		easing?: EasingFunction;
@@ -1919,14 +1909,14 @@ declare module 'svelte/transition' {
 		opacity?: number;
 	}
 
-	interface SlideParams {
+	export interface SlideParams {
 		delay?: number;
 		duration?: number;
 		easing?: EasingFunction;
 		axis?: 'x' | 'y';
 	}
 
-	interface ScaleParams {
+	export interface ScaleParams {
 		delay?: number;
 		duration?: number;
 		easing?: EasingFunction;
@@ -1934,14 +1924,14 @@ declare module 'svelte/transition' {
 		opacity?: number;
 	}
 
-	interface DrawParams {
+	export interface DrawParams {
 		delay?: number;
 		speed?: number;
 		duration?: number | ((len: number) => number);
 		easing?: EasingFunction;
 	}
 
-	interface CrossfadeParams {
+	export interface CrossfadeParams {
 		delay?: number;
 		duration?: number | ((len: number) => number);
 		easing?: EasingFunction;
@@ -1997,7 +1987,7 @@ declare module 'svelte/transition' {
 		key: any;
 	}) => () => TransitionConfig];
 
-	export { EasingFunction, TransitionConfig, BlurParams, FadeParams, FlyParams, SlideParams, ScaleParams, DrawParams, CrossfadeParams };
+	export {};
 }
 
 declare module 'svelte/events' {
