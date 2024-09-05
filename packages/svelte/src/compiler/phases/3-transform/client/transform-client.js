@@ -457,7 +457,22 @@ export function client_component(analysis, options) {
 		analysis.uses_slots ||
 		analysis.slot_names.size > 0;
 
-	const body = [...module.body, ...state.hoisted];
+	// Merge hoisted statements into module body.
+	// Ensure imports are on top, with the order preserved, then module body, then hoisted statements
+	/** @type {ESTree.ImportDeclaration[]} */
+	const imports = [];
+	/** @type {ESTree.Program['body']} */
+	let body = [];
+
+	for (const entry of [...module.body, ...state.hoisted]) {
+		if (entry.type === 'ImportDeclaration') {
+			imports.push(entry);
+		} else {
+			body.push(entry);
+		}
+	}
+
+	body = [...imports, ...body];
 
 	const component = b.function_declaration(
 		b.id(analysis.name),
