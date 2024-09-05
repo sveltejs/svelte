@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: revert #13048, leave instance-scope imports above other statements
+fix: Ensure imports are above other statements
