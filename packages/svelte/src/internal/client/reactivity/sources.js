@@ -15,8 +15,7 @@ import {
 	increment_version,
 	update_effect,
 	derived_sources,
-	set_derived_sources,
-	flush_sync
+	set_derived_sources
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -30,7 +29,14 @@ import {
 } from '../constants.js';
 import * as e from '../errors.js';
 
-let inspect_effects = new Set();
+export let inspect_effects = new Set();
+
+/**
+ * @param {Set<any>} v
+ */
+export function set_inspect_effects(v) {
+	inspect_effects = v;
+}
 
 /**
  * @template V
@@ -161,15 +167,11 @@ export function set(source, value) {
 		}
 
 		if (DEV && inspect_effects.size > 0) {
-			// Triggering an effect sync can tear the signal graph, so to avoid this we need
-			// to ensure the graph has been flushed before triggering any inspect effects.
-			// This is expensive, but given this is a DEV mode only feature, it should be fine
-			flush_sync();
-			for (const effect of inspect_effects) {
+			const inspects = Array.from(inspect_effects);
+			inspect_effects.clear();
+			for (const effect of inspects) {
 				update_effect(effect);
 			}
-
-			inspect_effects.clear();
 		}
 	}
 

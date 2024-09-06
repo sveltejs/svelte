@@ -13,6 +13,7 @@ import {
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import { destroy_effect } from './effects.js';
+import { inspect_effects, set_inspect_effects } from './sources.js';
 
 /**
  * @template V
@@ -92,6 +93,8 @@ export function update_derived(derived) {
 	var value;
 
 	if (DEV) {
+		let prev_inspect_effects = inspect_effects;
+		set_inspect_effects(new Set());
 		try {
 			if (stack.includes(derived)) {
 				e.derived_references_self();
@@ -102,6 +105,7 @@ export function update_derived(derived) {
 			destroy_derived_children(derived);
 			value = update_reaction(derived);
 		} finally {
+			set_inspect_effects(prev_inspect_effects);
 			stack.pop();
 		}
 	} else {
