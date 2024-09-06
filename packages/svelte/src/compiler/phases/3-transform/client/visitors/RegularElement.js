@@ -613,10 +613,10 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		);
 	}
 
-	const { has_expression_tag, can_inline } =
+	const inlinable_expression =
 		attribute.value === true
-			? { has_expression_tag: false, can_inline: true }
-			: can_inline_all_nodes(
+			? false // not an expression
+			: is_inlinable_expression(
 					Array.isArray(attribute.value) ? attribute.value : [attribute.value],
 					context.state
 				);
@@ -628,7 +628,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		}
 		return true;
 	} else {
-		if (has_expression_tag && can_inline) {
+		if (inlinable_expression) {
 			push_template_quasi(context.state, ` ${name}="`);
 			push_template_expression(context.state, value);
 			push_template_quasi(context.state, '"');
@@ -643,8 +643,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
  * @param {(AST.Text | AST.ExpressionTag)[]} nodes
  * @param {import('../types.js').ComponentClientTransformState} state
  */
-function can_inline_all_nodes(nodes, state) {
-	let can_inline = true;
+function is_inlinable_expression(nodes, state) {
 	let has_expression_tag = false;
 	for (let value of nodes) {
 		if (value.type === 'ExpressionTag') {
@@ -652,14 +651,16 @@ function can_inline_all_nodes(nodes, state) {
 				const binding = state.scope
 					.owner(value.expression.name)
 					?.declarations.get(value.expression.name);
-				can_inline &&= can_inline_variable(binding);
+				if (!can_inline_variable(binding)) {
+					return false;
+				}
 			} else {
-				can_inline = false;
+				return false;
 			}
 			has_expression_tag = true;
 		}
 	}
-	return { can_inline, has_expression_tag };
+	return has_expression_tag;
 }
 
 /**
