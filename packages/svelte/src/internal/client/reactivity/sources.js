@@ -168,10 +168,10 @@ export function set(source, value) {
 
 		if (DEV && inspect_effects.size > 0) {
 			const inspects = Array.from(inspect_effects);
-			inspect_effects.clear();
 			for (const effect of inspects) {
 				update_effect(effect);
 			}
+			inspect_effects.clear();
 		}
 	}
 
