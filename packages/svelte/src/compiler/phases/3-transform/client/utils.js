@@ -346,6 +346,7 @@ export function push_template_expression(state, expression_to_add) {
 export function can_inline_variable(binding) {
 	return (
 		!!binding &&
+		// in a `<script module>` block
 		!binding.scope.parent &&
 		// to prevent the need for escaping
 		binding.initial?.type === 'Literal'
