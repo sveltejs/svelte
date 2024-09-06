@@ -15,7 +15,8 @@ import {
 	increment_version,
 	update_effect,
 	derived_sources,
-	set_derived_sources
+	set_derived_sources,
+	flush_sync
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -159,7 +160,11 @@ export function set(source, value) {
 			}
 		}
 
-		if (DEV) {
+		if (DEV && inspect_effects.size > 0) {
+			// Triggering an effect sync can tear the signal graph, so to avoid this we need
+			// to ensure the graph has been flushed before triggering any inspect effects.
+			// This is expensive, but given this is a DEV mode only feature, it should be fine
+			flush_sync();
 			for (const effect of inspect_effects) {
 				update_effect(effect);
 			}
