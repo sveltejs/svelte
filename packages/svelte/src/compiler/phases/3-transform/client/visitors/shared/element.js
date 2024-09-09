@@ -46,7 +46,11 @@ export function build_style_directives(
 		if (!is_attributes_reactive && has_call) {
 			state.init.push(build_update(update));
 		} else if (is_attributes_reactive || has_state || has_call) {
-			state.update.push(update);
+			if (has_state || has_call) {
+				state.init.push(build_update(update));
+			} else {
+				state.update.push(update);
+			}
 		} else {
 			state.init.push(update);
 		}
@@ -77,7 +81,11 @@ export function build_class_directives(
 		if (!is_attributes_reactive && has_call) {
 			state.init.push(build_update(update));
 		} else if (is_attributes_reactive || has_state || has_call) {
-			state.update.push(update);
+			if (has_state || has_call) {
+				state.init.push(build_update(update));
+			} else {
+				state.update.push(update);
+			}
 		} else {
 			state.init.push(update);
 		}
