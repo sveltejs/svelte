@@ -169,6 +169,9 @@ export function set(source, value) {
 
 		if (DEV && inspect_effects.size > 0) {
 			const inspects = Array.from(inspect_effects);
+					// Triggering an effect sync can tear the signal graph, so to avoid this we need
+			// to ensure the graph has been flushed before triggering any inspect effects.
+			// This is expensive, but given this is a DEV mode only feature, it should be fine
 			flush_sync();
 			for (const effect of inspects) {
 				update_effect(effect);
