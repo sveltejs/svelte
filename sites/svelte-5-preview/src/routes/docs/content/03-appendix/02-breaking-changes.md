@@ -4,6 +4,28 @@ title: Breaking changes
 
 While Svelte 5 is a complete rewrite, we have done our best to ensure that most codebases can upgrade with a minimum of hassle. That said, there are a few small breaking changes which may require action on your part. They are listed here.
 
+
+## Codemods
+
+To assist with the upgrade from Svelte 4 to Svelte 5, [Codemod](https://github.com/codemod-com/codemod) provide automated transformations for updating your code to align with many of the new APIs and patterns introduced in Svelte 5.
+
+These following codemods are available : 
+
+- `svelte/5/components-as-functions`
+- `svelte/5/components-as-functions-destroyfunction`
+- `svelte/5/components-as-functions-onfunction`
+- `svelte/5/is-where-scoping`
+- `svelte/5/server-api-changes`
+- `svelte/5/svelte-element-expression`
+
+For the provided list of Svelte 5 codemods, along with detailed information on each, their source, and various ways to run them, visit the [Codemod Registry](https://codemod.com/registry). You can run all the codemods mentioned in this guide using the following codemod recipe:
+
+```
+npx codemod svelte/5/migration-recipe
+```
+
+This command will execute all codemods in sequence, with the option to deselect any that you do not wish to run. Each codemod is also listed below alongside its respective change and can be executed independently.
+
 ## Components are no longer classes
 
 In Svelte 3 and 4, components are classes. In Svelte 5 they are functions and should be instantiated differently. If you need to manually instantiate components, you should use `mount` or `hydrate` (imported from `svelte`) instead. If you see this error using SvelteKit, try updating to the latest version of SvelteKit first, which adds support for Svelte 5. If you're using Svelte without SvelteKit, you'll likely have a `main.js` file (or similar) which you need to adjust:
@@ -17,6 +39,11 @@ import App from './App.svelte'
 
 export default app;
 ```
+
+> **Codemod :** You can automate this migration by running:
+> ```
+> npx codemod svelte/5/components-as-functions
+> ```
 
 `mount` and `hydrate` have the exact same API. The difference is that `hydrate` will pick up the Svelte's server-rendered HTML inside its target and hydrate it. Both return an object with the exports of the component and potentially property accessors (if compiled with `accessors: true`). They do not come with the `$on`, `$set` and `$destroy` methods you may know from the class component API. These are its replacements:
 
@@ -32,6 +59,11 @@ import App from './App.svelte'
 ```
 
 > Note that using `events` is discouraged — instead, [use callbacks](https://svelte-5-preview.vercel.app/docs/event-handlers)
+
+> **Codemod :** You can automate this migration by running:
+>```
+>npx codemod svelte/5/components-as-functions-onfunction
+>```
 
 For `$set`, use `$state` instead to create a reactive property object and manipulate it. If you're doing this inside a `.js` or `.ts` file, adjust the ending to include `.svelte`, i.e. `.svelte.js` or `.svelte.ts`.
 
@@ -57,6 +89,11 @@ import App from './App.svelte'
 + const app = mount(App, { target: document.getElementById("app") });
 + unmount(app);
 ```
+
+> **Codemod :** You can automate this migration by running:
+>```
+>npx codemod svelte/5/components-as-functions-destroyfunction
+>```
 
 As a stop-gap-solution, you can also use `createClassComponent` or `asClassComponent` (imported from `svelte/legacy`) instead to keep the same API known from Svelte 4 after instantiating.
 
@@ -98,6 +135,11 @@ import App from './App.svelte';
 ```
 
 In Svelte 4, rendering a component to a string also returned the CSS of all components. In Svelte 5, this is no longer the case by default because most of the time you're using a tooling chain that takes care of it in other ways (like SvelteKit). If you need CSS to be returned from `render`, you can set the `css` compiler option to `'injected'` and it will add `<style>` elements to the `head`.
+
+> **Codemod :** You can automate this migration by running:
+>```
+>npx codemod svelte/5/server-api-changes
+>```
 
 ### Component typing changes
 
@@ -280,6 +322,12 @@ When using Tailwind's `@apply` directive, add a `:global` selector to preserve r
 }
 ```
 
+> **Codemod :** You can automate this migration by running:
+>```
+>npx codemod svelte/5/is-where-scoping
+>```
+
+
 ### CSS hash position no longer deterministic
 
 Previously Svelte would always insert the CSS hash last. This is no longer guaranteed in Svelte 5. This is only breaking if you [have very weird css selectors](https://stackoverflow.com/questions/15670631/does-the-order-of-classes-listed-on-an-item-affect-the-css).
@@ -359,6 +407,12 @@ In Svelte 4, `<svelte:element this="div">` is valid code. This makes little sens
 - <svelte:element this="div">
 + <svelte:element this={"div"}>
 ```
+
+> **Codemod :** You can automate this migration by running:
+>```
+>npx codemod svelte/5/svelte-element-expression
+>```
+
 
 Note that whereas Svelte 4 would treat `<svelte:element this="input">` (for example) identically to `<input>` for the purposes of determining which `bind:` directives could be applied, Svelte 5 does not.
 
