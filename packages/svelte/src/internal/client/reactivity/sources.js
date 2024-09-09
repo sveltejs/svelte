@@ -15,7 +15,8 @@ import {
 	increment_version,
 	update_effect,
 	derived_sources,
-	set_derived_sources
+	set_derived_sources,
+	flush_sync
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -168,6 +169,7 @@ export function set(source, value) {
 
 		if (DEV && inspect_effects.size > 0) {
 			const inspects = Array.from(inspect_effects);
+			flush_sync();
 			for (const effect of inspects) {
 				update_effect(effect);
 			}
