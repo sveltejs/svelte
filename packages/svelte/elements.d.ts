@@ -1934,7 +1934,7 @@ export interface SvelteHTMLElements {
 			| string
 			| undefined
 			| {
-					tag: string;
+					tag?: string;
 					shadow?: 'open' | 'none' | undefined;
 					props?:
 						| Record<
