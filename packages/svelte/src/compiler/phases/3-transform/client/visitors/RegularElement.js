@@ -211,7 +211,9 @@ export function RegularElement(node, context) {
 			node,
 			node_id,
 			// If value binding exists, that one takes care of calling $.init_select
-			value_binding === null && node.name === 'select'
+			value_binding === null && node.name === 'select',
+			class_directives.some((cd) => cd.metadata.expression.has_call) ||
+				style_directives.some((sd) => sd.metadata.expression.has_call)
 		);
 		is_attributes_reactive = true;
 	} else {
@@ -447,10 +449,9 @@ function build_element_spread_attributes(
 	context,
 	element,
 	element_id,
-	needs_select_handling
+	needs_select_handling,
+	needs_isolation = false
 ) {
-	let needs_isolation = false;
-
 	/** @type {ObjectExpression['properties']} */
 	const values = [];
 
