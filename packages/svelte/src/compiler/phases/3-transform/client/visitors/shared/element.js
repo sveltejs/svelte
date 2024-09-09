@@ -43,14 +43,10 @@ export function build_style_directives(
 
 		const { has_state, has_call } = directive.metadata.expression;
 
-		if (!is_attributes_reactive && has_call) {
+		if (!is_attributes_reactive || has_call) {
 			state.init.push(build_update(update));
 		} else if (is_attributes_reactive || has_state || has_call) {
-			if (has_state || has_call) {
-				state.init.push(build_update(update));
-			} else {
-				state.update.push(update);
-			}
+			state.update.push(update);
 		} else {
 			state.init.push(update);
 		}
@@ -78,14 +74,10 @@ export function build_class_directives(
 
 		const { has_state, has_call } = directive.metadata.expression;
 
-		if (!is_attributes_reactive && has_call) {
+		if (!is_attributes_reactive || has_call) {
 			state.init.push(build_update(update));
 		} else if (is_attributes_reactive || has_state || has_call) {
-			if (has_state || has_call) {
-				state.init.push(build_update(update));
-			} else {
-				state.update.push(update);
-			}
+			state.update.push(update);
 		} else {
 			state.init.push(update);
 		}
