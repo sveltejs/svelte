@@ -74,6 +74,8 @@ const visitors = {
 		return context.visit(node.expression);
 	},
 	TSTypeAnnotation() {
+		// This isn't correct, strictly speaking, and could result in invalid ASTs (like an empty statement within function parameters),
+		// but esrap, our printing tool, just ignores these AST nodes at invalid positions, so it's fine
 		return b.empty;
 	},
 	TSInterfaceDeclaration() {
