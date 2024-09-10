@@ -73,6 +73,9 @@ const visitors = {
 	TSNonNullExpression(node, context) {
 		return context.visit(node.expression);
 	},
+	TSTypeAnnotation() {
+		return b.empty;
+	},
 	TSInterfaceDeclaration() {
 		return b.empty;
 	},

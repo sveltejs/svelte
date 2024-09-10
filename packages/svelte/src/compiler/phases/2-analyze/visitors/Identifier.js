@@ -9,20 +9,6 @@ import { is_rune } from '../../../../utils.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- *
- * @param {Context["path"]} path
- */
-function is_type_annotation(path) {
-	for (let i = 0; i < path.length - 1; i++) {
-		// @ts-ignore no types for the type annotations in path
-		if (path[i].typeAnnotation === path[i + 1]) {
-			return true;
-		}
-	}
-	return false;
-}
-
-/**
  * @param {Identifier} node
  * @param {Context} context
  */
@@ -123,8 +109,7 @@ export function Identifier(node, context) {
 				binding.kind === 'derived') &&
 			// We're only concerned with reads here
 			(parent.type !== 'AssignmentExpression' || parent.left !== node) &&
-			parent.type !== 'UpdateExpression' &&
-			!is_type_annotation(context.path)
+			parent.type !== 'UpdateExpression'
 		) {
 			w.state_referenced_locally(node);
 		}
