@@ -241,7 +241,7 @@ export function prop(props, key, flags, fallback) {
 	var fallback_used = false;
 
 	var get_fallback = () => {
-		fallback_used = true
+		fallback_used = true;
 		if (lazy && fallback_dirty) {
 			fallback_dirty = false;
 			fallback_value = untrack(/** @type {() => V} */ (fallback));
