@@ -99,15 +99,6 @@ const visitors = {
 		}
 		return node.parameter;
 	},
-	Identifier(node) {
-		if (node.typeAnnotation) {
-			return {
-				...node,
-				typeAnnotation: null
-			};
-		}
-		return node;
-	},
 	FunctionExpression: remove_this_param,
 	FunctionDeclaration: remove_this_param,
 	TSDeclareFunction() {
