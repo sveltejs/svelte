@@ -73,6 +73,11 @@ const visitors = {
 	TSNonNullExpression(node, context) {
 		return context.visit(node.expression);
 	},
+	TSTypeAnnotation() {
+		// This isn't correct, strictly speaking, and could result in invalid ASTs (like an empty statement within function parameters),
+		// but esrap, our printing tool, just ignores these AST nodes at invalid positions, so it's fine
+		return b.empty;
+	},
 	TSInterfaceDeclaration() {
 		return b.empty;
 	},
@@ -93,15 +98,6 @@ const visitors = {
 			e.typescript_invalid_feature(node, 'accessibility modifiers on constructor parameters');
 		}
 		return node.parameter;
-	},
-	Identifier(node) {
-		if (node.typeAnnotation) {
-			return {
-				...node,
-				typeAnnotation: null
-			};
-		}
-		return node;
 	},
 	FunctionExpression: remove_this_param,
 	FunctionDeclaration: remove_this_param,
