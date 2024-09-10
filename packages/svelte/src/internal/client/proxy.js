@@ -134,11 +134,11 @@ export function proxy(value, parent = null, prev) {
 
 				// In case of something like `foo = bar.map(...)`, foo would have ownership
 				// of the array itself, while the individual items would have ownership
-				// of the component that created the proxy. That means if we later do
-				// `foo[0].baz = 42`, we could get a false-positive ownership violation,
-				// since the two proxies are not connected to each other via the parent
-				// relationship. For this reason, we need to widen the ownership of the
-				// children upon access when we detect they are not connected.
+				// of the component that created bar. That means if we later do `foo[0].baz = 42`,
+				// we could get a false-positive ownership violation, since the two proxies
+				// are not connected to each other via the parent metadata relationship.
+				// For this reason, we need to widen the ownership of the children
+				// upon access when we detect they are not connected.
 				if (DEV) {
 					/** @type {ProxyMetadata | undefined} */
 					var prop_metadata = v?.[STATE_SYMBOL_METADATA];
