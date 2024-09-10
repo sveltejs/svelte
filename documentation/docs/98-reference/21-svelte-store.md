@@ -2,4 +2,4 @@
 title: svelte/store
 ---
 
-<!-- @include svelte/store -->
+> MODULE: svelte/store
