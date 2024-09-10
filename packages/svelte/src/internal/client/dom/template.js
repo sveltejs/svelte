@@ -187,26 +187,41 @@ function run_scripts(node) {
 	// scripts were SSR'd, in which case they will run
 	if (hydrating) return;
 
+	const is_fragment = node.nodeType === 11;
 	const scripts =
 		/** @type {HTMLElement} */ (node).tagName === 'SCRIPT'
 			? [/** @type {HTMLScriptElement} */ (node)]
 			: node.querySelectorAll('script');
+	const effect = /** @type {Effect} */ (current_effect);
+
 	for (const script of scripts) {
-		var clone = document.createElement('script');
+		const clone = document.createElement('script');
 		for (var attribute of script.attributes) {
 			clone.setAttribute(attribute.name, attribute.value);
 		}
 
 		clone.textContent = script.textContent;
 
+		const replace = () => {
+			// The script has changed - if it's at the edges, the effect now points at dead nodes
+			if (is_fragment ? node.firstChild === script : node === script) {
+				effect.nodes_start = clone;
+			}
+			if (is_fragment ? node.lastChild === script : node === script) {
+				effect.nodes_end = clone;
+			}
+
+			script.replaceWith(clone);
+		};
+
 		// If node === script tag, replaceWith will do nothing because there's no parent yet,
 		// waiting until that's the case using an effect solves this.
 		// Don't do it in other circumstances or we could accidentally execute scripts
 		// in an adjacent @html tag that was instantiated in the meantime.
 		if (script === node) {
-			queue_micro_task(() => script.replaceWith(clone));
+			queue_micro_task(replace);
 		} else {
-			script.replaceWith(clone);
+			replace();
 		}
 	}
 }

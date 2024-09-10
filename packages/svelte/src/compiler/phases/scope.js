@@ -305,6 +305,10 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			default: context.state.scope.child()
 		};
 
+		if (node.type === 'SvelteComponent') {
+			context.visit(node.expression);
+		}
+
 		const default_state = determine_slot(node)
 			? context.state
 			: { scope: node.metadata.scopes.default };
@@ -353,7 +357,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				references.push([state.scope, { node, path: path.slice() }]);
 			}
 		},
-
 		LabeledStatement(node, { path, next }) {
 			if (path.length > 1 || !allow_reactive_declarations) return next();
 			if (node.label.name !== '$') return next();

@@ -196,18 +196,20 @@ export function check_dirtiness(reaction) {
 					update_derived(/** @type {Derived} */ (dependency));
 				}
 
-				if (dependency.version > reaction.version) {
-					return true;
+				// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
+				// and the version hasn't changed, we still need to check that this reaction
+				// is linked to the dependency source – otherwise future updates will not be caught.
+				if (
+					is_unowned &&
+					current_effect !== null &&
+					!current_skip_reaction &&
+					!dependency?.reactions?.includes(reaction)
+				) {
+					(dependency.reactions ??= []).push(reaction);
 				}
 
-				if (is_unowned) {
-					// TODO is there a more logical place to do this work?
-					if (!current_skip_reaction && !dependency?.reactions?.includes(reaction)) {
-						// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
-						// and the version hasn't changed, we still need to check that this reaction
-						// if linked to the dependency source – otherwise future updates will not be caught.
-						(dependency.reactions ??= []).push(reaction);
-					}
+				if (dependency.version > reaction.version) {
+					return true;
 				}
 			}
 		}
