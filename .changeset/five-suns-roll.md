@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: `state_referenced_locally` in types declarations
+fix: don't show `state_referenced_locally` warning on types
