@@ -1,3 +1,5 @@
+import process from 'node:process';
+
 /** @import { ModuleCompileOptions, ValidatedModuleCompileOptions, CompileOptions, ValidatedCompileOptions } from '#compiler' */
 import * as e from './errors.js';
 import * as w from './warnings.js';
