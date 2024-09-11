@@ -180,7 +180,7 @@ export function set(source, value) {
 			}
 			for (const effect of inspects) {
 				// If the inspect effect is clean, mark it maybe dirty so we can avoid overfiring.
-				if ((effect.f & DIRTY) !== 0) {
+				if ((effect.f & CLEAN) !== 0) {
 					set_signal_status(effect, MAYBE_DIRTY);
 				}
 				if (check_dirtiness(effect)) {
