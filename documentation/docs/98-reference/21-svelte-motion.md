@@ -2,4 +2,4 @@
 title: svelte/motion
 ---
 
-<!-- @include svelte/motion -->
+> MODULE: svelte/motion
