@@ -13,6 +13,8 @@ export function StyleDirective(node, context) {
 		e.style_directive_invalid_modifier(node);
 	}
 
+	mark_subtree_dynamic(context.path);
+
 	if (node.value === true) {
 		// get the binding for node.name and change the binding to state
 		let binding = context.state.scope.get(node.name);
@@ -22,8 +24,6 @@ export function StyleDirective(node, context) {
 				node.metadata.expression.has_state = true;
 			}
 		}
-
-		mark_subtree_dynamic(context.path);
 	} else {
 		context.next();
 
