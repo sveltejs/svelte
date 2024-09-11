@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-Better types for the `autocomplete` attribute
+feat: better types for the `autocomplete` attribute
