@@ -70,14 +70,14 @@ export function Fragment(node, context) {
 		update: [],
 		after_update: [],
 		template: {
-			pushQuasi: (/** @type {string} */ quasi_to_add) => {
+			push_quasi: (/** @type {string} */ quasi_to_add) => {
 				if (quasi.length === 0) {
 					quasi.push(quasi_to_add);
 					return;
 				}
 				quasi[quasi.length - 1] = quasi[quasi.length - 1].concat(quasi_to_add);
 			},
-			pushExpression: (/** @type {Expression} */ expression_to_add) => {
+			push_expression: (/** @type {Expression} */ expression_to_add) => {
 				if (quasi.length === 0) {
 					quasi.push('');
 				}
