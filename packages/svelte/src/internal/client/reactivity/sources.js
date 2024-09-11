@@ -16,7 +16,8 @@ import {
 	update_effect,
 	derived_sources,
 	set_derived_sources,
-	flush_sync
+	flush_sync,
+	check_dirtiness
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -178,7 +179,13 @@ export function set(source, value) {
 				flush_sync();
 			}
 			for (const effect of inspects) {
-				update_effect(effect);
+				// If the inspect effect is clean, mark it maybe dirty so we can avoid overfiring.
+				if ((effect.f & DIRTY) !== 0) {
+					set_signal_status(effect, MAYBE_DIRTY);
+				}
+				if (check_dirtiness(effect)) {
+					update_effect(effect);
+				}
 			}
 			inspect_effects.clear();
 		}
