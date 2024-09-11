@@ -937,7 +937,7 @@ export interface HTMLFieldsetAttributes extends HTMLAttributes<HTMLFieldSetEleme
 export interface HTMLFormAttributes extends HTMLAttributes<HTMLFormElement> {
 	acceptcharset?: string | undefined | null;
 	action?: string | undefined | null;
-	autocomplete?: string | undefined | null;
+	autocomplete?: AutoFillBase | undefined | null;
 	enctype?: string | undefined | null;
 	method?: string | undefined | null;
 	name?: string | undefined | null;
@@ -1025,7 +1025,7 @@ export type HTMLInputTypeAttribute =
 export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	accept?: string | undefined | null;
 	alt?: string | undefined | null;
-	autocomplete?: string | undefined | null;
+	autocomplete?: AutoFill | undefined | null;
 	capture?: boolean | 'user' | 'environment' | undefined | null; // https://www.w3.org/TR/html-media-capture/#the-capture-attribute
 	checked?: boolean | undefined | null;
 	dirname?: string | undefined | null;
@@ -1244,7 +1244,7 @@ export interface HTMLScriptAttributes extends HTMLAttributes<HTMLScriptElement> 
 }
 
 export interface HTMLSelectAttributes extends HTMLAttributes<HTMLSelectElement> {
-	autocomplete?: string | undefined | null;
+	autocomplete?: AutoFill | undefined | null;
 	disabled?: boolean | undefined | null;
 	form?: string | undefined | null;
 	multiple?: boolean | undefined | null;
@@ -1289,7 +1289,7 @@ export interface HTMLTableAttributes extends HTMLAttributes<HTMLTableElement> {
 }
 
 export interface HTMLTextareaAttributes extends HTMLAttributes<HTMLTextAreaElement> {
-	autocomplete?: string | undefined | null;
+	autocomplete?: AutoFill | undefined | null;
 	cols?: number | undefined | null;
 	dirname?: string | undefined | null;
 	disabled?: boolean | undefined | null;
