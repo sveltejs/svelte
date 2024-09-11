@@ -10,7 +10,14 @@
 	testProps = {
 		color: "blue"
 	};
-}}>change</button>
+}}>set color</button>
+
+<button onclick={() => {
+	testProps = {
+		color: "pink",
+		options: 'baz'
+	};
+}}>set options</button>
 
 <Inner {...testProps} />
 

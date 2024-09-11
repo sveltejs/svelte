@@ -5,11 +5,27 @@ export default test({
 	accessors: false,
 
 	test({ assert, target }) {
-		const [btn] = target.querySelectorAll('button');
+		const [btn1, btn2] = target.querySelectorAll('button');
 
-		btn.click();
+		btn1.click();
 		flushSync();
+		assert.htmlEqual(
+			target.innerHTML,
+			`<button>set color</button> <button>set options</button> bar bar`
+		);
 
-		assert.htmlEqual(target.innerHTML, `<button>change</button>\nbar\nbar`);
+		btn2.click();
+		flushSync();
+		assert.htmlEqual(
+			target.innerHTML,
+			`<button>set color</button> <button>set options</button> baz bar`
+		);
+
+		btn1.click();
+		flushSync();
+		assert.htmlEqual(
+			target.innerHTML,
+			`<button>set color</button> <button>set options</button> foo bar`
+		);
 	}
 });
