@@ -3,14 +3,13 @@
 /** @import { ComponentContext } from '../types' */
 import { unwrap_optional } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
-import { push_template_quasi } from '../utils.js';
 
 /**
  * @param {AST.RenderTag} node
  * @param {ComponentContext} context
  */
 export function RenderTag(node, context) {
-	push_template_quasi(context.state, '<!>');
+	context.state.template.pushQuasi('<!>');
 	const callee = unwrap_optional(node.expression).callee;
 	const raw_args = unwrap_optional(node.expression).arguments;
 

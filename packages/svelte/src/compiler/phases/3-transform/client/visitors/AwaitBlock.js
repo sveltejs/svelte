@@ -2,14 +2,14 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
-import { create_derived_block_argument, push_template_quasi } from '../utils.js';
+import { create_derived_block_argument } from '../utils.js';
 
 /**
  * @param {AST.AwaitBlock} node
  * @param {ComponentContext} context
  */
 export function AwaitBlock(node, context) {
-	push_template_quasi(context.state, '<!>');
+	context.state.template.pushQuasi('<!>');
 
 	// Visit {#await <expression>} first to ensure that scopes are in the correct order
 	const expression = b.thunk(/** @type {Expression} */ (context.visit(node.expression)));

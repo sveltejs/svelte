@@ -19,12 +19,7 @@ import {
 import * as b from '../../../../utils/builders.js';
 import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import {
-	build_getter,
-	can_inline_variable,
-	push_template_expression,
-	push_template_quasi
-} from '../utils.js';
+import { build_getter, can_inline_variable } from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
@@ -58,7 +53,7 @@ export function RegularElement(node, context) {
 	}
 
 	if (node.name === 'noscript') {
-		push_template_quasi(context.state, '<noscript></noscript>');
+		context.state.template.pushQuasi('<noscript></noscript>');
 		return;
 	}
 
@@ -72,7 +67,7 @@ export function RegularElement(node, context) {
 		namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
 	};
 
-	push_template_quasi(context.state, `<${node.name}`);
+	context.state.template.pushQuasi(`<${node.name}`);
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];
@@ -246,8 +241,7 @@ export function RegularElement(node, context) {
 				const value = is_text_attribute(attribute) ? attribute.value[0].data : true;
 
 				if (name !== 'class' || value) {
-					push_template_quasi(
-						context.state,
+					context.state.template.pushQuasi(
 						` ${attribute.name}${
 							is_boolean_attribute(name) && value === true
 								? ''
@@ -284,7 +278,7 @@ export function RegularElement(node, context) {
 		context.state.after_update.push(b.stmt(b.call('$.replay_events', node_id)));
 	}
 
-	push_template_quasi(context.state, '>');
+	context.state.template.pushQuasi('>');
 
 	/** @type {SourceLocation[]} */
 	const child_locations = [];
@@ -383,7 +377,7 @@ export function RegularElement(node, context) {
 	}
 
 	if (!is_void(node.name)) {
-		push_template_quasi(context.state, `</${node.name}>`);
+		context.state.template.pushQuasi(`</${node.name}>`);
 	}
 }
 
@@ -471,7 +465,7 @@ function build_element_spread_attributes(
 				value.type === 'Literal' &&
 				context.state.metadata.namespace === 'html'
 			) {
-				push_template_quasi(context.state, ` is="${escape_html(value.value, true)}"`);
+				context.state.template.pushQuasi(` is="${escape_html(value.value, true)}"`);
 				continue;
 			}
 
@@ -629,9 +623,9 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		return true;
 	} else {
 		if (inlinable_expression) {
-			push_template_quasi(context.state, ` ${name}="`);
-			push_template_expression(context.state, value);
-			push_template_quasi(context.state, '"');
+			context.state.template.pushQuasi(` ${name}="`);
+			context.state.template.pushExpression(value);
+			context.state.template.pushQuasi('"');
 		} else {
 			state.init.push(update);
 		}

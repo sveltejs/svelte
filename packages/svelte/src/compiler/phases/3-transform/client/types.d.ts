@@ -55,8 +55,8 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly after_update: Statement[];
 	/** The HTML template string */
 	readonly template: {
-		quasi: string[];
-		expressions: Expression[];
+		pushQuasi: (q: string) => void;
+		pushExpression: (e: Expression) => void;
 	};
 	readonly locations: SourceLocation[];
 	readonly metadata: {

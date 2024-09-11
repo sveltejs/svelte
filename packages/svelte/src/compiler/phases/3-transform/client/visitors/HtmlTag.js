@@ -3,14 +3,13 @@
 /** @import { ComponentContext } from '../types' */
 import { is_ignored } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
-import { push_template_quasi } from '../utils.js';
 
 /**
  * @param {AST.HtmlTag} node
  * @param {ComponentContext} context
  */
 export function HtmlTag(node, context) {
-	push_template_quasi(context.state, '<!>');
+	context.state.template.pushQuasi('<!>');
 
 	// push into init, so that bindings run afterwards, which might trigger another run and override hydration
 	context.state.init.push(

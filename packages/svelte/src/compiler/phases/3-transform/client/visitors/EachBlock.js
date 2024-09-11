@@ -12,7 +12,7 @@ import {
 import { dev } from '../../../../state.js';
 import { extract_paths, object } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
-import { build_getter, push_template_quasi } from '../utils.js';
+import { build_getter } from '../utils.js';
 import { get_value } from './shared/declarations.js';
 
 /**
@@ -32,7 +32,7 @@ export function EachBlock(node, context) {
 	);
 
 	if (!each_node_meta.is_controlled) {
-		push_template_quasi(context.state, '<!>');
+		context.state.template.pushQuasi('<!>');
 	}
 
 	if (each_node_meta.array_name !== null) {

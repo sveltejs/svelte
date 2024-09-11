@@ -4,7 +4,7 @@
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { create_derived, push_template_quasi } from '../../utils.js';
+import { create_derived } from '../../utils.js';
 import { build_bind_this, validate_binding } from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
@@ -357,8 +357,7 @@ export function build_component(node, component_name, context, anchor = context.
 	}
 
 	if (Object.keys(custom_css_props).length > 0) {
-		push_template_quasi(
-			context.state,
+		context.state.template.pushQuasi(
 			context.state.metadata.namespace === 'svg'
 				? '<g><!></g>'
 				: '<div style="display: contents"><!></div>'
@@ -370,7 +369,7 @@ export function build_component(node, component_name, context, anchor = context.
 			b.stmt(b.call('$.reset', anchor))
 		);
 	} else {
-		push_template_quasi(context.state, '<!>');
+		context.state.template.pushQuasi('<!>');
 		statements.push(b.stmt(fn(anchor)));
 	}
 

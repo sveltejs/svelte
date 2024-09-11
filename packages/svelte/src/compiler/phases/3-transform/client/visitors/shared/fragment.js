@@ -3,7 +3,6 @@
 /** @import { ComponentContext } from '../../types' */
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { push_template_quasi } from '../../utils.js';
 import { build_template_literal, build_update } from './utils.js';
 
 /**
@@ -63,11 +62,11 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	function flush_sequence(sequence) {
 		if (sequence.every((node) => node.type === 'Text')) {
 			skipped += 1;
-			push_template_quasi(state, sequence.map((node) => node.raw).join(''));
+			state.template.pushQuasi(sequence.map((node) => node.raw).join(''));
 			return;
 		}
 
-		push_template_quasi(state, ' ');
+		state.template.pushQuasi(' ');
 
 		const { has_state, has_call, value } = build_template_literal(sequence, visit, state);
 

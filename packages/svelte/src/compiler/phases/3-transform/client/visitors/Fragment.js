@@ -57,6 +57,11 @@ export function Fragment(node, context) {
 	/** @type {Statement | undefined} */
 	let close = undefined;
 
+	/** @type {string[]} */
+	const quasi = [];
+	/** @type {Expression[]} */
+	const expressions = [];
+
 	/** @type {ComponentClientTransformState} */
 	const state = {
 		...context.state,
@@ -65,8 +70,20 @@ export function Fragment(node, context) {
 		update: [],
 		after_update: [],
 		template: {
-			quasi: [],
-			expressions: []
+			pushQuasi: (/** @type {string} */ quasi_to_add) => {
+				if (quasi.length === 0) {
+					quasi.push(quasi_to_add);
+					return;
+				}
+				quasi[quasi.length - 1] = quasi[quasi.length - 1].concat(quasi_to_add);
+			},
+			pushExpression: (/** @type {Expression} */ expression_to_add) => {
+				if (quasi.length === 0) {
+					quasi.push('');
+				}
+				expressions.push(expression_to_add);
+				quasi.push('');
+			}
 		},
 		locations: [],
 		transform: { ...context.state.transform },
@@ -120,8 +137,8 @@ export function Fragment(node, context) {
 		/** @type {Expression[]} */
 		const args = [
 			b.template(
-				state.template.quasi.map((q) => b.quasi(q, true)),
-				state.template.expressions
+				quasi.map((q) => b.quasi(q, true)),
+				expressions
 			)
 		];
 
@@ -178,14 +195,14 @@ export function Fragment(node, context) {
 					flags |= TEMPLATE_USE_IMPORT_NODE;
 				}
 
-				if (state.template.quasi.length === 1 && state.template.quasi[0] === '<!>') {
+				if (quasi.length === 1 && quasi[0] === '<!>') {
 					// special case — we can use `$.comment` instead of creating a unique template
 					body.push(b.var(id, b.call('$.comment')));
 				} else {
 					add_template(template_name, [
 						b.template(
-							state.template.quasi.map((q) => b.quasi(q, true)),
-							state.template.expressions
+							quasi.map((q) => b.quasi(q, true)),
+							expressions
 						),
 						b.literal(flags)
 					]);

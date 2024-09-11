@@ -2,7 +2,6 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
-import { push_template_quasi } from '../utils.js';
 import { build_attribute_value } from './shared/element.js';
 
 /**
@@ -11,7 +10,7 @@ import { build_attribute_value } from './shared/element.js';
  */
 export function SlotElement(node, context) {
 	// <slot {a}>fallback</slot>  -->   $.slot($$slots.default, { get a() { .. } }, () => ...fallback);
-	push_template_quasi(context.state, '<!>');
+	context.state.template.pushQuasi('<!>');
 
 	/** @type {Property[]} */
 	const props = [];
