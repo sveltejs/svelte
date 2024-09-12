@@ -32,7 +32,7 @@ import {
 	build_template_literal,
 	build_update,
 	build_update_assignment,
-	get_states_and_call
+	get_states_and_calls
 } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 
@@ -319,7 +319,7 @@ export function RegularElement(node, context) {
 	const states_and_calls =
 		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
 		trimmed.some((node) => node.type === 'ExpressionTag') &&
-		get_states_and_call(trimmed);
+		get_states_and_calls(trimmed);
 
 	if (states_and_calls && states_and_calls.states === 0) {
 		child_state.init.push(

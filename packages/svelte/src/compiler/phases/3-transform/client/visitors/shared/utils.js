@@ -13,7 +13,7 @@ import { locator } from '../../../../../state.js';
 /**
  * @param {Array<AST.Text | AST.ExpressionTag>} values
  */
-export function get_states_and_call(values) {
+export function get_states_and_calls(values) {
 	let states = 0;
 	let calls = 0;
 	for (let i = 0; i < values.length; i++) {
@@ -44,7 +44,7 @@ export function build_template_literal(values, visit, state) {
 	let quasi = b.quasi('');
 	const quasis = [quasi];
 
-	const { states, calls } = get_states_and_call(values);
+	const { states, calls } = get_states_and_calls(values);
 
 	let has_call = calls > 0;
 	let has_state = states > 0;
