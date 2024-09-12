@@ -179,7 +179,8 @@ export function set(source, value) {
 				flush_sync();
 			}
 			for (const effect of inspects) {
-				// If the inspect effect is clean, mark it maybe dirty so we can avoid overfiring.
+				// Mark clean inspect-effects as maybe dirty and then check their dirtiness
+				// instead of just updating the effects - this way we avoid overfiring.
 				if ((effect.f & CLEAN) !== 0) {
 					set_signal_status(effect, MAYBE_DIRTY);
 				}
