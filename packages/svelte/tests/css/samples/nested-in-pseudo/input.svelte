@@ -5,6 +5,7 @@
 <style>
 nav{
 	header:has(&){
+		color: red;
 	}
 }	
 </style>
