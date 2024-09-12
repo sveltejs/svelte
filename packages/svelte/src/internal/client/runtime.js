@@ -153,7 +153,7 @@ export function set_dev_current_component_function(fn) {
 }
 
 export function increment_version() {
-	return current_version++;
+	return ++current_version;
 }
 
 /** @returns {boolean} */
