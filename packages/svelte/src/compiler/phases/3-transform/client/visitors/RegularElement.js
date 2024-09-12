@@ -31,7 +31,8 @@ import {
 	build_render_statement,
 	build_template_literal,
 	build_update,
-	build_update_assignment
+	build_update_assignment,
+	get_states_and_calls
 } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 
@@ -315,14 +316,20 @@ export function RegularElement(node, context) {
 
 	// special case — if an element that only contains text, we don't need
 	// to descend into it if the text is non-reactive
-	const text_content =
+	const states_and_calls =
 		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
 		trimmed.some((node) => node.type === 'ExpressionTag') &&
-		build_template_literal(trimmed, context.visit, child_state);
+		get_states_and_calls(trimmed);
 
-	if (text_content && !text_content.has_state) {
+	if (states_and_calls && states_and_calls.states === 0) {
 		child_state.init.push(
-			b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), text_content.value))
+			b.stmt(
+				b.assignment(
+					'=',
+					b.member(context.state.node, 'textContent'),
+					build_template_literal(trimmed, context.visit, child_state).value
+				)
+			)
 		);
 	} else {
 		/** @type {Expression} */
