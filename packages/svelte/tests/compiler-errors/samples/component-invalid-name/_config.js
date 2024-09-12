@@ -5,6 +5,6 @@ export default test({
 		code: 'tag_invalid_name',
 		message:
 			'Expected a valid element or component name. Components must have a valid variable name or dot notation expression',
-		position: [1, 14]
+		position: [71, 84]
 	}
 });
