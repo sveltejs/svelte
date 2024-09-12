@@ -536,12 +536,12 @@ export function css_global_invalid_selector_list(node) {
 }
 
 /**
- * Nesting selectors can only be used inside a rule
+ * Nesting selectors can only be used inside a rule or as the first selector inside a lone `:global(...)`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function css_nesting_selector_invalid_placement(node) {
-	e(node, "css_nesting_selector_invalid_placement", "Nesting selectors can only be used inside a rule");
+	e(node, "css_nesting_selector_invalid_placement", "Nesting selectors can only be used inside a rule or as the first selector inside a lone `:global(...)`");
 }
 
 /**
