@@ -3,11 +3,11 @@
 		"code": "block_unexpected_character",
 		"message": "Expected a `#` character immediately following the opening bracket",
 		"start": {
-			"line": 5,
+			"line": 10,
 			"column": 1
 		},
 		"end": {
-			"line": 5,
+			"line": 10,
 			"column": 6
 		}
 	}
