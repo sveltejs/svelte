@@ -61,6 +61,17 @@ export type TransitionEventHandler<T extends EventTarget> = EventHandler<Transit
 export type MessageEventHandler<T extends EventTarget> = EventHandler<MessageEvent, T>;
 export type ToggleEventHandler<T extends EventTarget> = EventHandler<ToggleEvent, T>;
 
+export type FullAutoFill =
+	| AutoFill
+	| 'bday'
+	| `${OptionalPrefixToken<AutoFillAddressKind>}${'cc-additional-name'}`
+	| 'nickname'
+	| 'language'
+	| 'organization-title'
+	| 'photo'
+	| 'sex'
+	| 'url';
+
 //
 // DOM Attributes
 // ----------------------------------------------------------------------
@@ -1025,7 +1036,7 @@ export type HTMLInputTypeAttribute =
 export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	accept?: string | undefined | null;
 	alt?: string | undefined | null;
-	autocomplete?: AutoFill | undefined | null;
+	autocomplete?: FullAutoFill | undefined | null;
 	capture?: boolean | 'user' | 'environment' | undefined | null; // https://www.w3.org/TR/html-media-capture/#the-capture-attribute
 	checked?: boolean | undefined | null;
 	dirname?: string | undefined | null;
@@ -1244,7 +1255,7 @@ export interface HTMLScriptAttributes extends HTMLAttributes<HTMLScriptElement> 
 }
 
 export interface HTMLSelectAttributes extends HTMLAttributes<HTMLSelectElement> {
-	autocomplete?: AutoFill | undefined | null;
+	autocomplete?: FullAutoFill | undefined | null;
 	disabled?: boolean | undefined | null;
 	form?: string | undefined | null;
 	multiple?: boolean | undefined | null;
@@ -1289,7 +1300,7 @@ export interface HTMLTableAttributes extends HTMLAttributes<HTMLTableElement> {
 }
 
 export interface HTMLTextareaAttributes extends HTMLAttributes<HTMLTextAreaElement> {
-	autocomplete?: AutoFill | undefined | null;
+	autocomplete?: FullAutoFill | undefined | null;
 	cols?: number | undefined | null;
 	dirname?: string | undefined | null;
 	disabled?: boolean | undefined | null;
