@@ -16,8 +16,9 @@ import {
 	update_effect,
 	derived_sources,
 	set_derived_sources,
-	flush_sync,
-	check_dirtiness
+	check_dirtiness,
+	set_is_flushing_effect,
+	is_flushing_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -170,23 +171,21 @@ export function set(source, value) {
 
 		if (DEV && inspect_effects.size > 0) {
 			const inspects = Array.from(inspect_effects);
-			if (current_effect === null) {
-				// Triggering an effect sync can tear the signal graph, so to avoid this we need
-				// to ensure the graph has been flushed before triggering any inspect effects.
-				// Only needed when there's currently no effect, and flushing with one present
-				// could have other unintended consequences, like effects running out of order.
-				// This is expensive, but given this is a DEV mode only feature, it should be fine
-				flush_sync();
-			}
-			for (const effect of inspects) {
-				// Mark clean inspect-effects as maybe dirty and then check their dirtiness
-				// instead of just updating the effects - this way we avoid overfiring.
-				if ((effect.f & CLEAN) !== 0) {
-					set_signal_status(effect, MAYBE_DIRTY);
+			var previously_flushing_effect = is_flushing_effect;
+			set_is_flushing_effect(true);
+			try {
+				for (const effect of inspects) {
+					// Mark clean inspect-effects as maybe dirty and then check their dirtiness
+					// instead of just updating the effects - this way we avoid overfiring.
+					if ((effect.f & CLEAN) !== 0) {
+						set_signal_status(effect, MAYBE_DIRTY);
+					}
+					if (check_dirtiness(effect)) {
+						update_effect(effect);
+					}
 				}
-				if (check_dirtiness(effect)) {
-					update_effect(effect);
-				}
+			} finally {
+				set_is_flushing_effect(previously_flushing_effect);
 			}
 			inspect_effects.clear();
 		}
