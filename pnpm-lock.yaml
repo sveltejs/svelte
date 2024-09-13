@@ -78,10 +78,10 @@ importers:
         specifier: ^1.4.13
         version: 1.4.13(acorn@8.12.1)
       aria-query:
-        specifier: ^5.3.1
+        specifier: 5.3.1
         version: 5.3.1
       axobject-query:
-        specifier: ^4.1.0
+        specifier: 4.1.0
         version: 4.1.0
       esm-env:
         specifier: ^1.0.0
