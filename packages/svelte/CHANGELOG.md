@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.246
+
+### Patch Changes
+
+- perf: inline module variables into template ([#13075](https://github.com/sveltejs/svelte/pull/13075))
+
+- fix: allow custom element events on slot to bubble inside custom element ([#13222](https://github.com/sveltejs/svelte/pull/13222))
+
+- fix: add missing `autocomplete` attribute tokens ([#13229](https://github.com/sveltejs/svelte/pull/13229))
+
+- feat: add infinite loop effect callstack ([#13231](https://github.com/sveltejs/svelte/pull/13231))
+
 ## 5.0.0-next.245
 
 ### Patch Changes
