@@ -224,12 +224,13 @@ const css_visitors = {
 		if (!parent_rule) {
 			// https://developer.mozilla.org/en-US/docs/Web/CSS/Nesting_selector#using_outside_nested_rule
 			const children = rule.prelude.children;
+			const selectors = children[0].children[0].selectors;
 			if (
 				children.length > 1 ||
-				children[0].children[0].selectors.length > 1 ||
-				children[0].children[0].selectors[0].type !== 'PseudoClassSelector' ||
-				children[0].children[0].selectors[0].name !== 'global' ||
-				children[0].children[0].selectors[0].args?.children[0]?.children[0].selectors[0] !== node
+				selectors.length > 1 ||
+				selectors[0].type !== 'PseudoClassSelector' ||
+				selectors[0].name !== 'global' ||
+				selectors[0].args?.children[0]?.children[0].selectors[0] !== node
 			) {
 				e.css_nesting_selector_invalid_placement(node);
 			}
