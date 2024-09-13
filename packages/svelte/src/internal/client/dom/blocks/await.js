@@ -147,7 +147,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 		}
 
 		// Set the input to null, in order to disable the promise callbacks
-		return () => input = null;
+		return () => (input = null);
 	});
 
 	if (hydrating) {
