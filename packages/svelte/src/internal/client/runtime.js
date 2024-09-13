@@ -468,17 +468,18 @@ function infinite_loop_guard() {
 		if (DEV) {
 			try {
 				e.effect_update_depth_exceeded();
-			} catch (e) {
+			} catch (error) {
 				// stack is garbage, ignore. Instead add a console.error message.
+				define_property(error, 'stack', {
+					value: ''
+				});
 				// eslint-disable-next-line no-console
 				console.error(
 					'Last ten effects were: ',
 					dev_effect_stack.slice(-10).map((d) => d.fn)
 				);
 				dev_effect_stack = [];
-				// @ts-expect-error
-				e.stack = '';
-				throw e;
+				throw error;
 			}
 		} else {
 			e.effect_update_depth_exceeded();
