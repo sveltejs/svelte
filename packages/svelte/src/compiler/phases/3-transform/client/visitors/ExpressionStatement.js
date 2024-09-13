@@ -15,7 +15,10 @@ export function ExpressionStatement(node, context) {
 			const callee = rune === '$effect' ? '$.user_effect' : '$.user_pre_effect';
 			const func = /** @type {Expression} */ (context.visit(node.expression.arguments[0]));
 
-			return b.stmt(b.call(callee, /** @type {Expression} */ (func)));
+			const expr = b.call(callee, /** @type {Expression} */ (func));
+			expr.callee.loc = node.expression.callee.loc; // ensure correct mapping
+
+			return b.stmt(expr);
 		}
 	}
 
