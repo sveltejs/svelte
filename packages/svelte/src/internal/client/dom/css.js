@@ -19,7 +19,7 @@ export function append_styles(anchor, css) {
 				seen = new Set();
 				root_seen.set(root, seen);
 			}
-			
+
 			if (seen.has(css)) return;
 			seen.add(css);
 		}
