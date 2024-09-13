@@ -62,6 +62,7 @@ export type MessageEventHandler<T extends EventTarget> = EventHandler<MessageEve
 export type ToggleEventHandler<T extends EventTarget> = EventHandler<ToggleEvent, T>;
 
 export type FullAutoFill =
+	| AutoFill
 	| 'bday'
 	| `${OptionalPrefixToken<AutoFillAddressKind>}${'cc-additional-name'}`
 	| 'nickname'
