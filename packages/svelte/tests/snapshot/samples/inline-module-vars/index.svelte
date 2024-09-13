@@ -1,11 +1,17 @@
 <svelte:options runes={true} />
 
 <script module>
+	import __IMPORTED_ASSET_0__ from "./foo.svg";
+	import { counter } from "./some.js";
 	const __DECLARED_ASSET_0__ = "__VITE_ASSET__2AM7_y_a__ 1440w, __VITE_ASSET__2AM7_y_b__ 960w";
 	const __DECLARED_ASSET_1__ = "__VITE_ASSET__2AM7_y_c__ 1440w, __VITE_ASSET__2AM7_y_d__ 960w";
 	const __DECLARED_ASSET_2__ = "__VITE_ASSET__2AM7_y_e__ 1440w, __VITE_ASSET__2AM7_y_f__ 960w";
 	const __DECLARED_ASSET_3__ = "__VITE_ASSET__2AM7_y_g__";
 </script>
+
+<div>{counter} named exports are live bindings so cannot be inlined</div>
+
+<img src={__IMPORTED_ASSET_0__} alt="default imports are not live bindings so can be inlined" />
 
 <picture>
 	<source srcset={__DECLARED_ASSET_0__} type="image/avif" />

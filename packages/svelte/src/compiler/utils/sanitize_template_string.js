@@ -1,4 +1,5 @@
 /**
+ * Escape special characters like ` $ { \
  * @param {string} str
  * @returns {string}
  */

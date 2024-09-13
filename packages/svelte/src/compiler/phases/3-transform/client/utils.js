@@ -314,15 +314,12 @@ export function create_derived(state, arg) {
 
 /**
  * Whether a variable can be referenced directly from template string.
- * @param {import('#compiler').Binding | undefined} binding
+ * @param {import('#compiler').Binding} binding
  * @returns {boolean}
  */
 export function can_inline_variable(binding) {
 	return (
-		!!binding &&
 		// in a `<script module>` block
-		!binding.scope.parent &&
-		// to prevent the need for escaping
-		binding.initial?.type === 'Literal'
+		!binding.scope.parent
 	);
 }

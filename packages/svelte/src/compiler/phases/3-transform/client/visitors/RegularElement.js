@@ -631,7 +631,9 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 	} else {
 		if (inlinable_expression) {
 			context.state.template.push_quasi(` ${name}="`);
-			context.state.template.push_expression(value);
+			context.state.template.push_expression(
+				inlinable_expression.need_to_escape ? b.call('$.escape', value) : value
+			);
 			context.state.template.push_quasi('"');
 		} else {
 			state.init.push(update);
@@ -646,22 +648,24 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
  */
 function is_inlinable_expression(nodes, state) {
 	let has_expression_tag = false;
+	let need_to_escape = false;
 	for (let value of nodes) {
 		if (value.type === 'ExpressionTag') {
 			if (value.expression.type === 'Identifier') {
 				const binding = state.scope
 					.owner(value.expression.name)
 					?.declarations.get(value.expression.name);
-				if (!can_inline_variable(binding)) {
+				if (!binding || !can_inline_variable(binding)) {
 					return false;
 				}
+				need_to_escape = need_to_escape || binding.initial?.type !== 'Literal';
 			} else {
 				return false;
 			}
 			has_expression_tag = true;
 		}
 	}
-	return has_expression_tag;
+	return { need_to_escape };
 }
 
 /**
