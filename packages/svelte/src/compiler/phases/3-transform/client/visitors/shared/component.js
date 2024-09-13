@@ -357,7 +357,7 @@ export function build_component(node, component_name, context, anchor = context.
 	}
 
 	if (Object.keys(custom_css_props).length > 0) {
-		context.state.template.push(
+		context.state.template.push_quasi(
 			context.state.metadata.namespace === 'svg'
 				? '<g><!></g>'
 				: '<div style="display: contents"><!></div>'
@@ -369,7 +369,7 @@ export function build_component(node, component_name, context, anchor = context.
 			b.stmt(b.call('$.reset', anchor))
 		);
 	} else {
-		context.state.template.push('<!>');
+		context.state.template.push_quasi('<!>');
 		statements.push(b.stmt(fn(anchor)));
 	}
 

@@ -311,3 +311,18 @@ export function create_derived_block_argument(node, context) {
 export function create_derived(state, arg) {
 	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
 }
+
+/**
+ * Whether a variable can be referenced directly from template string.
+ * @param {import('#compiler').Binding | undefined} binding
+ * @returns {boolean}
+ */
+export function can_inline_variable(binding) {
+	return (
+		!!binding &&
+		// in a `<script module>` block
+		!binding.scope.parent &&
+		// to prevent the need for escaping
+		binding.initial?.type === 'Literal'
+	);
+}
