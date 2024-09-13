@@ -3,5 +3,5 @@
 <button onclick={(e)=>{
 	$host().callback();
 }}>
-<slot></slot>
+	<slot></slot>
 </button>
