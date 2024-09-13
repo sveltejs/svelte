@@ -1,23 +1,28 @@
 import { DEV } from 'esm-env';
 import { queue_micro_task } from './task.js';
 
-var seen = new Set();
+var root_seen = new WeakMap();
 
 /**
  * @param {Node} anchor
  * @param {{ hash: string, code: string }} css
- * @param {boolean} [is_custom_element]
  */
-export function append_styles(anchor, css, is_custom_element = false) {
-	// in dev, always check the DOM, so that styles can be replaced with HMR
-	if (!DEV && !is_custom_element) {
-		if (seen.has(css)) return;
-		seen.add(css);
-	}
-
+export function append_styles(anchor, css) {
 	// Use `queue_micro_task` to ensure `anchor` is in the DOM, otherwise getRootNode() will yield wrong results
 	queue_micro_task(() => {
 		var root = anchor.getRootNode();
+
+		// in dev, always check the DOM, so that styles can be replaced with HMR
+		if (!DEV) {
+			let seen = root_seen.get(root);
+			if (!seen) {
+				seen = new Set();
+				root_seen.set(root, seen);
+			}
+			
+			if (seen.has(css)) return;
+			seen.add(css);
+		}
 
 		var target = /** @type {ShadowRoot} */ (root).host
 			? /** @type {ShadowRoot} */ (root)

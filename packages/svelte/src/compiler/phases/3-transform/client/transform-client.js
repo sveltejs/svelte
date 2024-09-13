@@ -387,7 +387,7 @@ export function client_component(analysis, options) {
 
 		component_block.body.unshift(
 			b.stmt(
-				b.call('$.append_styles', b.id('$$anchor'), b.id('$$css'), options.customElement && b.true)
+				b.call('$.append_styles', b.id('$$anchor'), b.id('$$css'))
 			)
 		);
 	}
