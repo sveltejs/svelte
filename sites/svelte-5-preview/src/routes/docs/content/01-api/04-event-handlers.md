@@ -178,6 +178,20 @@ Duplicate attributes/properties on elements — which now includes event handler
 </button>
 ```
 
+When spreading props, the chained event handler should be specified after the spread. Otherwise, the props event handler will override the chained event handler.
+
+```svelte
+<button
+	{...everythingElse}
+	onclick={(e) => {
+		one(e);
+		props.onclick(e);
+	}}
+>
+	...
+</button>
+```
+
 ## Why the change?
 
 By deprecating `createEventDispatcher` and the `on:` directive in favour of callback props and normal element properties, we:
