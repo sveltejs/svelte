@@ -9,7 +9,7 @@ import { create_derived_block_argument } from '../utils.js';
  * @param {ComponentContext} context
  */
 export function AwaitBlock(node, context) {
-	context.state.template.push('<!>');
+	context.state.template.push_quasi('<!>');
 
 	// Visit {#await <expression>} first to ensure that scopes are in the correct order
 	const expression = b.thunk(/** @type {Expression} */ (context.visit(node.expression)));

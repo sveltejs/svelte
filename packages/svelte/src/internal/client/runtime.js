@@ -62,6 +62,8 @@ export function set_is_destroying_effect(value) {
 let current_queued_root_effects = [];
 
 let flush_count = 0;
+/** @type {Effect[]} Stack of effects, dev only */
+let dev_effect_stack = [];
 // Handle signal reactivity tree dependencies and reactions
 
 /** @type {null | Reaction} */
@@ -153,7 +155,7 @@ export function set_dev_current_component_function(fn) {
 }
 
 export function increment_version() {
-	return current_version++;
+	return ++current_version;
 }
 
 /** @returns {boolean} */
@@ -196,18 +198,20 @@ export function check_dirtiness(reaction) {
 					update_derived(/** @type {Derived} */ (dependency));
 				}
 
-				if (dependency.version > reaction.version) {
-					return true;
+				// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
+				// and the version hasn't changed, we still need to check that this reaction
+				// is linked to the dependency source – otherwise future updates will not be caught.
+				if (
+					is_unowned &&
+					current_effect !== null &&
+					!current_skip_reaction &&
+					!dependency?.reactions?.includes(reaction)
+				) {
+					(dependency.reactions ??= []).push(reaction);
 				}
 
-				if (is_unowned) {
-					// TODO is there a more logical place to do this work?
-					if (!current_skip_reaction && !dependency?.reactions?.includes(reaction)) {
-						// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
-						// and the version hasn't changed, we still need to check that this reaction
-						// if linked to the dependency source – otherwise future updates will not be caught.
-						(dependency.reactions ??= []).push(reaction);
-					}
+				if (dependency.version > reaction.version) {
+					return true;
 				}
 			}
 		}
@@ -441,8 +445,11 @@ export function update_effect(effect) {
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
-
 		effect.version = current_version;
+
+		if (DEV) {
+			dev_effect_stack.push(effect);
+		}
 	} catch (error) {
 		handle_error(/** @type {Error} */ (error), effect, current_component_context);
 	} finally {
@@ -458,7 +465,25 @@ export function update_effect(effect) {
 function infinite_loop_guard() {
 	if (flush_count > 1000) {
 		flush_count = 0;
-		e.effect_update_depth_exceeded();
+		if (DEV) {
+			try {
+				e.effect_update_depth_exceeded();
+			} catch (error) {
+				// stack is garbage, ignore. Instead add a console.error message.
+				define_property(error, 'stack', {
+					value: ''
+				});
+				// eslint-disable-next-line no-console
+				console.error(
+					'Last ten effects were: ',
+					dev_effect_stack.slice(-10).map((d) => d.fn)
+				);
+				dev_effect_stack = [];
+				throw error;
+			}
+		} else {
+			e.effect_update_depth_exceeded();
+		}
 	}
 	flush_count++;
 }
@@ -539,6 +564,9 @@ function process_deferred() {
 	flush_queued_root_effects(previous_queued_root_effects);
 	if (!is_micro_task_queued) {
 		flush_count = 0;
+		if (DEV) {
+			dev_effect_stack = [];
+		}
 	}
 }
 
@@ -680,6 +708,9 @@ export function flush_sync(fn) {
 		}
 
 		flush_count = 0;
+		if (DEV) {
+			dev_effect_stack = [];
+		}
 
 		return result;
 	} finally {

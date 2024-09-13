@@ -118,7 +118,7 @@ Components can declare a generic relationship between their properties. One exam
 		select: Item;
 	}
 
-	let { items, select } = $props();
+	let { items, select }: Props = $props();
 </script>
 
 {#each items as item}
@@ -210,8 +210,8 @@ declare namespace svelteHTML {
 	}
 	// enhance attributes
 	interface HTMLAttributes<T> {
-		// If you want to use on:beforeinstallprompt
-		'on:beforeinstallprompt'?: (event: any) => any;
+		// If you want to use the beforeinstallprompt event
+		'onbeforeinstallprompt'?: (event: any) => any;
 		// If you want to use myCustomAttribute={..} (note: all lowercase)
 		mycustomattribute?: any; // You can replace any with something more specific if you like
 	}

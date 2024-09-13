@@ -136,7 +136,13 @@ export function set_xlink_attribute(dom, attribute, value) {
  */
 export function set_custom_element_data(node, prop, value) {
 	if (prop in node) {
-		var curr_val = node[prop];
+		// Reading the prop could cause an error, we don't want this to fail everything else
+		try {
+			var curr_val = node[prop];
+		} catch {
+			set_attribute(node, prop, value);
+			return;
+		}
 		var next_val = typeof curr_val === 'boolean' && value === '' ? true : value;
 		if (typeof curr_val !== 'object' || curr_val !== next_val) {
 			node[prop] = next_val;

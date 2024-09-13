@@ -9,4 +9,6 @@
 	<slot name="bar" />
 {/if}
 
+{#if $$slots.default}foo{/if}
+
 <slot name="dashed-name" />

@@ -9,7 +9,7 @@ import * as b from '../../../../utils/builders.js';
  * @param {ComponentContext} context
  */
 export function RenderTag(node, context) {
-	context.state.template.push('<!>');
+	context.state.template.push_quasi('<!>');
 	const callee = unwrap_optional(node.expression).callee;
 	const raw_args = unwrap_optional(node.expression).arguments;
 

@@ -62,11 +62,11 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	function flush_sequence(sequence) {
 		if (sequence.every((node) => node.type === 'Text')) {
 			skipped += 1;
-			state.template.push(sequence.map((node) => node.raw).join(''));
+			state.template.push_quasi(sequence.map((node) => node.raw).join(''));
 			return;
 		}
 
-		state.template.push(' ');
+		state.template.push_quasi(' ');
 
 		const { has_state, has_call, value } = build_template_literal(sequence, visit, state);
 

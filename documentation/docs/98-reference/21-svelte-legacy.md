@@ -2,4 +2,4 @@
 title: svelte/legacy
 ---
 
-<!-- @include svelte/legacy -->
+> MODULE: svelte/legacy

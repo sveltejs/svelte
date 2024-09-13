@@ -233,7 +233,10 @@ export function handle_event_propagation(event) {
 		while (current_target !== null) {
 			/** @type {null | Element} */
 			var parent_element =
-				current_target.parentNode || /** @type {any} */ (current_target).host || null;
+				current_target.assignedSlot ||
+				current_target.parentNode ||
+				/** @type {any} */ (current_target).host ||
+				null;
 
 			try {
 				// @ts-expect-error

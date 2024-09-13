@@ -21,7 +21,7 @@ import { build_render_statement, build_update } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function SvelteElement(node, context) {
-	context.state.template.push(`<!>`);
+	context.state.template.push_quasi(`<!>`);
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];

@@ -42,25 +42,30 @@ Numeric input values are coerced; even though `input.value` is a string as far a
 <input type="range" bind:value={num} />
 ```
 
-On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList). It is readonly.
+On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList). When you want to update the files programmatically, you always need to use a `FileList` object.
 
 ```svelte
+<script>
+	let files = $state();
+
+	function clear() {
+		files = new FileList(); // null or undefined doesn't work
+	}
+</script>
+
 <label for="avatar">Upload a picture:</label>
 <input accept="image/png, image/jpeg" bind:files id="avatar" name="avatar" type="file" />
+<button onclick={clear}>clear</button>
 ```
 
-If you're using `bind:` directives together with `on:` directives, the order that they're defined in affects the value of the bound variable when the event handler is called.
+If you're using `bind:` directives together with `on` event attributes, the binding will always fire before the event attribute.
 
 ```svelte
 <script>
 	let value = 'Hello World';
 </script>
 
-<input
-	on:input={() => console.log('Old value:', value)}
-	bind:value
-	on:input={() => console.log('New value:', value)}
-/>
+<input oninput={() => console.log('New value:', value)} bind:value />
 ```
 
 Here we were binding to the value of a text input, which uses the `input` event. Bindings on other elements may use different events such as `change`.

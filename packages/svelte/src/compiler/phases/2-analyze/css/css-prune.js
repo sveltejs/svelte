@@ -73,9 +73,23 @@ const visitors = {
 		const inner = selectors[selectors.length - 1];
 
 		if (node.metadata.rule?.metadata.parent_rule && selectors.length > 0) {
-			const has_explicit_nesting_selector = selectors.some((selector) =>
-				selector.selectors.some((s) => s.type === 'NestingSelector')
-			);
+			let has_explicit_nesting_selector = false;
+
+			// nesting could be inside pseudo classes like :is, :has or :where
+			for (let selector of selectors) {
+				walk(
+					selector,
+					{},
+					{
+						// @ts-ignore
+						NestingSelector() {
+							has_explicit_nesting_selector = true;
+						}
+					}
+				);
+				// if we found one we can break from the others
+				if (has_explicit_nesting_selector) break;
+			}
 
 			if (!has_explicit_nesting_selector) {
 				selectors[0] = {

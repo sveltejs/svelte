@@ -12,6 +12,28 @@ import { locator } from '../../../../../state.js';
 
 /**
  * @param {Array<AST.Text | AST.ExpressionTag>} values
+ */
+export function get_states_and_calls(values) {
+	let states = 0;
+	let calls = 0;
+	for (let i = 0; i < values.length; i++) {
+		const node = values[i];
+
+		if (node.type === 'ExpressionTag') {
+			if (node.metadata.expression.has_call) {
+				calls++;
+			}
+			if (node.metadata.expression.has_state) {
+				states++;
+			}
+		}
+	}
+
+	return { states, calls };
+}
+
+/**
+ * @param {Array<AST.Text | AST.ExpressionTag>} values
  * @param {(node: SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
  */
@@ -22,24 +44,11 @@ export function build_template_literal(values, visit, state) {
 	let quasi = b.quasi('');
 	const quasis = [quasi];
 
-	let has_call = false;
-	let has_state = false;
-	let contains_multiple_call_expression = false;
+	const { states, calls } = get_states_and_calls(values);
 
-	for (let i = 0; i < values.length; i++) {
-		const node = values[i];
-
-		if (node.type === 'ExpressionTag') {
-			if (node.metadata.expression.has_call) {
-				if (has_call) {
-					contains_multiple_call_expression = true;
-				}
-				has_call = true;
-			}
-
-			has_state ||= node.metadata.expression.has_state;
-		}
-	}
+	let has_call = calls > 0;
+	let has_state = states > 0;
+	let contains_multiple_call_expression = calls > 1;
 
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
@@ -53,7 +62,6 @@ export function build_template_literal(values, visit, state) {
 		} else {
 			if (contains_multiple_call_expression) {
 				const id = b.id(state.scope.generate('stringified_text'));
-
 				state.init.push(
 					b.const(
 						id,

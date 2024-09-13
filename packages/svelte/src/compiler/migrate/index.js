@@ -927,6 +927,9 @@ function handle_identifier(node, state, path) {
 	} else if (node.name === '$$slots' && state.analysis.uses_slots) {
 		if (parent?.type === 'MemberExpression') {
 			state.str.update(/** @type {number} */ (node.start), parent.property.start, '');
+			if (parent.property.name === 'default') {
+				state.str.update(parent.property.start, parent.property.end, 'children');
+			}
 		}
 		// else passed as identifier, we don't know what to do here, so let it error
 	}

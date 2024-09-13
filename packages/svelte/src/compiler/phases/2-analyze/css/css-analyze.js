@@ -222,7 +222,18 @@ const css_visitors = {
 		const parent_rule = rule.metadata.parent_rule;
 
 		if (!parent_rule) {
-			e.css_nesting_selector_invalid_placement(node);
+			// https://developer.mozilla.org/en-US/docs/Web/CSS/Nesting_selector#using_outside_nested_rule
+			const children = rule.prelude.children;
+			const selectors = children[0].children[0].selectors;
+			if (
+				children.length > 1 ||
+				selectors.length > 1 ||
+				selectors[0].type !== 'PseudoClassSelector' ||
+				selectors[0].name !== 'global' ||
+				selectors[0].args?.children[0]?.children[0].selectors[0] !== node
+			) {
+				e.css_nesting_selector_invalid_placement(node);
+			}
 		} else if (
 			// :global { &.foo { ... } } is invalid
 			parent_rule.metadata.is_global_block &&
