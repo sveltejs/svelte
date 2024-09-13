@@ -185,7 +185,7 @@ When spreading props, the chained event handler should be specified after the sp
 	{...everythingElse}
 	onclick={(e) => {
 		one(e);
-		props.onclick(e);
+		everythingElse.onclick(e);
 	}}
 >
 	...
