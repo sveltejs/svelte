@@ -19,4 +19,6 @@
 	{@render bar?.()}
 {/if}
 
+{#if children}foo{/if}
+
 {@render dashed_name?.()}
