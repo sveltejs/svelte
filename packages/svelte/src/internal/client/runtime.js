@@ -62,6 +62,8 @@ export function set_is_destroying_effect(value) {
 let current_queued_root_effects = [];
 
 let flush_count = 0;
+/** @type {Effect[]} Stack of effects, dev only */
+let dev_effect_stack = [];
 // Handle signal reactivity tree dependencies and reactions
 
 /** @type {null | Reaction} */
@@ -443,8 +445,11 @@ export function update_effect(effect) {
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
-
 		effect.version = current_version;
+
+		if (DEV) {
+			dev_effect_stack.push(effect);
+		}
 	} catch (error) {
 		handle_error(/** @type {Error} */ (error), effect, current_component_context);
 	} finally {
@@ -460,7 +465,25 @@ export function update_effect(effect) {
 function infinite_loop_guard() {
 	if (flush_count > 1000) {
 		flush_count = 0;
-		e.effect_update_depth_exceeded();
+		if (DEV) {
+			try {
+				e.effect_update_depth_exceeded();
+			} catch (error) {
+				// stack is garbage, ignore. Instead add a console.error message.
+				define_property(error, 'stack', {
+					value: ''
+				});
+				// eslint-disable-next-line no-console
+				console.error(
+					'Last ten effects were: ',
+					dev_effect_stack.slice(-10).map((d) => d.fn)
+				);
+				dev_effect_stack = [];
+				throw error;
+			}
+		} else {
+			e.effect_update_depth_exceeded();
+		}
 	}
 	flush_count++;
 }
@@ -541,6 +564,9 @@ function process_deferred() {
 	flush_queued_root_effects(previous_queued_root_effects);
 	if (!is_micro_task_queued) {
 		flush_count = 0;
+		if (DEV) {
+			dev_effect_stack = [];
+		}
 	}
 }
 
@@ -682,6 +708,9 @@ export function flush_sync(fn) {
 		}
 
 		flush_count = 0;
+		if (DEV) {
+			dev_effect_stack = [];
+		}
 
 		return result;
 	} finally {
