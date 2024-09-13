@@ -1,5 +1,6 @@
 import { DEV } from 'esm-env';
 import { queue_micro_task } from './task.js';
+import { register_css_cleanup } from '../dev/css.js';
 
 var root_seen = new WeakMap();
 
@@ -34,6 +35,10 @@ export function append_styles(anchor, css) {
 			style.textContent = css.code;
 
 			target.appendChild(style);
+
+			if (DEV) {
+				register_css_cleanup(css.hash, () => target.removeChild(style));
+			}
 		}
 	});
 }
