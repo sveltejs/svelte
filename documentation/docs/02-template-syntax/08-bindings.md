@@ -60,31 +60,7 @@ On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`
 
 `FileList` objects also cannot be modified, so if you want to e.g. delete a single file from the list, you need to create a new `DataTransfer` object and add the files you want to keep.
 
-```svelte
-<script>
-	let files = $state();
-
-	function removeFile(file) {
-		const dataTransfer = new DataTransfer();
-		for (const oldFile of files)
-			if (oldFile !== file)
-				dataTransfer.items.add(oldFile);
-
-		files = dataTransfer.files;
-	}
-</script>
-
-<input bind:files multiple />
-
-{#each files as file (file)}
-	<div>
-		{file.name}
-		<button onclick={() => removeFile(file)}>Remove</button>
-	</div>
-{/each}
-```
-
-> `DataTransfer` may not be available in server-side JS runtimes. Leaving the state that is bound to an input's `files` uninitialized prevents potential errors if components are server-side rendered.
+> `DataTransfer` may not be available in server-side JS runtimes. Leaving the state that is bound to `files` uninitialized prevents potential errors if components are server-side rendered.
 
 If you're using `bind:` directives together with `on` event attributes, the binding will always fire before the event attribute.
 
