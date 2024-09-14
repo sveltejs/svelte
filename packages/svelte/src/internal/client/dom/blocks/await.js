@@ -40,7 +40,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	/** @type {any} */
 	var component_function = DEV ? component_context?.function : null;
 
-	/** @type {V | Promise<V>} */
+	/** @type {V | Promise<V> | null} */
 	var input;
 
 	/** @type {Effect | null} */
@@ -146,9 +146,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 			update(THEN, false);
 		}
 
-		// Inert effects are proactively detached from the effect tree. Returning a noop
-		// teardown function is an easy way to ensure that this is not discarded
-		return noop;
+		// Set the input to null, in order to disable the promise callbacks
+		return () => (input = null);
 	});
 
 	if (hydrating) {
