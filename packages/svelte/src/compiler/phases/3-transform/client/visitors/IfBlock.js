@@ -3,11 +3,52 @@
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
 
+
 /**
  * @param {AST.IfBlock} node
  * @param {ComponentContext} context
  */
 export function IfBlock(node, context) {
+	context.state.template.push_quasi('<!>');
+
+	// const conditions = [ ]
+
+	/** @type {AST.IfBlock} */
+	let if_block = node;
+
+	/** @type {Expression[]} */
+	const args = [context.state.node];
+
+	while (true) {
+		const expression = /** @type {Expression} */ (context.visit(if_block.test));
+		const consequent = /** @type {BlockStatement} */ (context.visit(if_block.consequent));
+		args.push(b.array([
+			b.thunk(expression),
+			b.arrow([b.id('$$anchor')], consequent)]) );
+
+		const alternate = if_block.alternate;
+		if (alternate && alternate.nodes.length === 1 && alternate.nodes[0].type === 'IfBlock' && alternate.nodes[0].elseif) {
+			if_block = alternate.nodes[0];
+		} else {
+			break;
+		}
+	}
+	if (if_block.alternate) {
+		const alternate = /** @type {BlockStatement} */ (context.visit(if_block.alternate));
+		args.push(b.array([
+			b.arrow([], b.true),
+			b.arrow([b.id('$$anchor')], alternate)
+		]));
+	}
+
+	context.state.init.push(b.stmt(b.call('$.if', ...args)));
+}
+
+/**
+ * @param {AST.IfBlock} node
+ * @param {ComponentContext} context
+ */
+export function IfBlockOLD(node, context) {
 	context.state.template.push_quasi('<!>');
 
 	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
