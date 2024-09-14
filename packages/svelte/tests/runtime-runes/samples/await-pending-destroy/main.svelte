@@ -7,9 +7,9 @@
 		{#await promise}
 			{console.log("await")}
 		{:then r}
-			{console.log("then")}
+			{console.log("then:"+r)}
 		{:catch err}
-			{console.log("catch")}
+			{console.log("catch:"+err)}
 		{/await}
 	{/if}
 
