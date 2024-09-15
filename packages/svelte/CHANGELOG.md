@@ -38,8 +38,6 @@
 
 - fix: ensure inner script tags are properly removed ([#13152](https://github.com/sveltejs/svelte/pull/13152))
 
-- chore: improve ssr parent validation ([#13158](https://github.com/sveltejs/svelte/pull/13158))
-
 - fix: prevent nullish snippet for rendering empty content ([#13083](https://github.com/sveltejs/svelte/pull/13083))
 
 - fix: allow more characters in the unicode range as component identifiers ([#13198](https://github.com/sveltejs/svelte/pull/13198))
