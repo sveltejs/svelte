@@ -1,7 +1,7 @@
 [
 	{
 		"code": "svelte_options_reserved_tagname",
-		"message": "Tag name is reserved and conflicts with standard element names",
+		"message": "Tag name is reserved",
 		"start": {
 			"line": 1,
 			"column": 16
