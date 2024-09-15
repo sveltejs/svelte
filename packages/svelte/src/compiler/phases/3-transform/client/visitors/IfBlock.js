@@ -8,12 +8,31 @@ import * as b from '../../../../utils/builders.js';
  * @param {ComponentContext} context
  */
 export function IfBlock(node, context) {
-	context.state.template.push_quasi('<!>');
+	const { state } = context;
 
 	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
 
+	// compile to if rather than $.if for non-reactive if statements
+	// NOTE: this only handles expressions that are simple identifiers and doesn't handle elseif yet
+	if (state.analysis.runes && node.test.type === 'Identifier' && !node.elseif) {
+		const binding = state.scope.owner(node.test.name)?.declarations.get(node.test.name);
+		if (binding?.kind === 'normal') {
+			consequent.body.unshift(b.var(b.id('$$anchor'), state.node));
+			const alternate = node.alternate
+				? /** @type {BlockStatement} */ (context.visit(node.alternate))
+				: undefined;
+			if (alternate) {
+				alternate.body.unshift(b.var(b.id('$$anchor'), state.node));
+			}
+			state.init.push(b.if(node.test, consequent, alternate));
+			return;
+		}
+	}
+
+	state.template.push_quasi('<!>');
+
 	const args = [
-		context.state.node,
+		state.node,
 		b.thunk(/** @type {Expression} */ (context.visit(node.test))),
 		b.arrow([b.id('$$anchor')], consequent)
 	];
@@ -51,5 +70,5 @@ export function IfBlock(node, context) {
 		args.push(b.literal(true));
 	}
 
-	context.state.init.push(b.stmt(b.call('$.if', ...args)));
+	state.init.push(b.stmt(b.call('$.if', ...args)));
 }
