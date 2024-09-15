@@ -17,7 +17,7 @@ import { inspect_effects, set_inspect_effects } from './sources.js';
 
 /**
  * @template V
- * @param {() => V} fn
+ * @param {(current: V | null ) => V} fn
  * @returns {Derived<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
@@ -47,7 +47,7 @@ export function derived(fn) {
 
 /**
  * @template V
- * @param {() => V} fn
+ * @param {(current: NoInfer<V> | null) => V} fn
  * @returns {Derived<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/

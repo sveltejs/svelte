@@ -6,6 +6,6 @@ export default function Svelte_element($$anchor, $$props) {
 	var fragment = $.comment();
 	var node = $.first_child(fragment);
 
-	$.element(node, tag, false);
+	$.element(node, () => tag(), false);
 	$.append($$anchor, fragment);
 }

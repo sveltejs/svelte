@@ -471,7 +471,7 @@ describe('signals', () => {
 	});
 
 	test('owned deriveds correctly cleanup when no longer connected to graph', () => {
-		let a: Derived<unknown>;
+		let a: Derived<void>;
 		let s = state(0);
 
 		const destroy = effect_root(() => {

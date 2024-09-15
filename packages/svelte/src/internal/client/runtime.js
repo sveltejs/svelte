@@ -309,7 +309,11 @@ export function update_reaction(reaction) {
 	derived_sources = null;
 
 	try {
-		var result = /** @type {Function} */ (0, reaction.fn)();
+		var args = [];
+		if (reaction.f & DERIVED) {
+			args.push(/**@type {Derived}*/ (reaction).v);
+		}
+		var result = /** @type {Function} */ (0, reaction.fn)(...args);
 		var deps = reaction.deps;
 
 		if (new_deps !== null) {
@@ -783,7 +787,6 @@ export function get(signal) {
 			update_derived(derived);
 		}
 	}
-
 	return signal.v;
 }
 

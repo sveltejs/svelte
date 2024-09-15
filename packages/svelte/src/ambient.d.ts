@@ -202,7 +202,7 @@ declare namespace $derived {
 	 *
 	 * https://svelte-5-preview.vercel.app/docs/runes#$derived-by
 	 */
-	export function by<T>(fn: () => T): T;
+	export function by<T>(fn: (current: T | null) => T): T;
 
 	// prevent intellisense from being unhelpful
 	/** @deprecated */

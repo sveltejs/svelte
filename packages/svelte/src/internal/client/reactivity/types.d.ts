@@ -25,7 +25,7 @@ export interface Reaction extends Signal {
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {
 	/** The derived function */
-	fn: () => V;
+	fn: (current: V | null) => V;
 	/** Reactions created inside this signal */
 	children: null | Reaction[];
 }
