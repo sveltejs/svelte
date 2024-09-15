@@ -1352,12 +1352,21 @@ export function svelte_options_invalid_customelement_shadow(node) {
 }
 
 /**
- * Tag name must be two or more words joined by the "-" character
+ * Tag name must be lowercase and hyphenated
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function svelte_options_invalid_tagname(node) {
-	e(node, "svelte_options_invalid_tagname", "Tag name must be two or more words joined by the \"-\" character");
+	e(node, "svelte_options_invalid_tagname", "Tag name must be lowercase and hyphenated");
+}
+
+/**
+ * Tag name is reserved
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_options_reserved_tagname(node) {
+	e(node, "svelte_options_reserved_tagname", "Tag name is reserved");
 }
 
 /**
