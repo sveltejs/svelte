@@ -1361,6 +1361,15 @@ export function svelte_options_invalid_tagname(node) {
 }
 
 /**
+ * Tag name is reserved and conflicts with standard element names
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_options_reserved_tagname(node) {
+	e(node, "svelte_options_reserved_tagname", "Tag name is reserved and conflicts with standard element names");
+}
+
+/**
  * `<svelte:options>` unknown attribute '%name%'
  * @param {null | number | NodeLike} node
  * @param {string} name

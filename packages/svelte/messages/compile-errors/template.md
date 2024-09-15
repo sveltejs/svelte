@@ -346,6 +346,10 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 > Tag name must be two or more words joined by the "-" character
 
+## svelte_options_reserved_tagname
+
+> Tag name is reserved and conflicts with standard element names
+
 ## svelte_options_unknown_attribute
 
 > `<svelte:options>` unknown attribute '%name%'
