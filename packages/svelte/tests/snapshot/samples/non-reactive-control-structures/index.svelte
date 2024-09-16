@@ -12,3 +12,9 @@
 {#if b}
   world
 {/if}
+
+{#if a}
+  hi
+{:else}
+	earth
+{/if}

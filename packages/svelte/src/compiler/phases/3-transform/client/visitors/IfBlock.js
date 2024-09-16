@@ -16,10 +16,17 @@ export function IfBlock(node, context) {
 
 	// compile to if rather than $.if for non-reactive if statements
 	// NOTE: doesn't handle else/elseif yet or mismatches. also, this probably breaks transition locality
-	if (!node.metadata.expression.has_state && !(node.alternate || node.elseif)) {
+	if (!node.metadata.expression.has_state && !node.elseif) {
 		state.init.push(
-			b.stmt(b.call('$.next')),
-			b.if(node.test, b.block([b.let(b.id('$$anchor'), state.node), ...consequent.body]))
+			b.block([
+				b.let(b.id('$$anchor'), state.node),
+				b.stmt(b.call('$.next')),
+				b.if(
+					node.test,
+					consequent,
+					node.alternate ? /** @type {BlockStatement} */ (context.visit(node.alternate)) : undefined
+				)
+			])
 		);
 
 		return;

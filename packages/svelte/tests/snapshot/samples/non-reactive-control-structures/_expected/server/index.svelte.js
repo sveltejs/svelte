@@ -20,5 +20,15 @@ export default function Non_reactive_control_structures($$payload) {
 		$$payload.out += "<!--[!-->";
 	}
 
+	$$payload.out += `<!--]--> `;
+
+	if (a) {
+		$$payload.out += "<!--[-->";
+		$$payload.out += `hi`;
+	} else {
+		$$payload.out += "<!--[!-->";
+		$$payload.out += `earth`;
+	}
+
 	$$payload.out += `<!--]-->`;
 }
