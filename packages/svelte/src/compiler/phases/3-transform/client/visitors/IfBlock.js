@@ -8,24 +8,19 @@ import * as b from '../../../../utils/builders.js';
  * @param {ComponentContext} context
  */
 export function IfBlock(node, context) {
-	const { state } = context;
-
 	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
+	const alternate = node.alternate && /** @type {BlockStatement} */ (context.visit(node.alternate));
 
-	state.template.push_quasi('<!>');
+	context.state.template.push_quasi('<!>');
 
 	// compile to if rather than $.if for non-reactive if statements
 	// NOTE: doesn't handle else/elseif yet or mismatches. also, this probably breaks transition locality
 	if (!node.metadata.expression.has_state && !node.elseif) {
-		state.init.push(
+		context.state.init.push(
 			b.block([
-				b.let(b.id('$$anchor'), state.node),
+				b.let(b.id('$$anchor'), context.state.node),
 				b.stmt(b.call('$.next')),
-				b.if(
-					node.test,
-					consequent,
-					node.alternate ? /** @type {BlockStatement} */ (context.visit(node.alternate)) : undefined
-				)
+				b.if(node.test, consequent, alternate ?? undefined)
 			])
 		);
 
@@ -33,17 +28,13 @@ export function IfBlock(node, context) {
 	}
 
 	const args = [
-		state.node,
+		context.state.node,
 		b.thunk(/** @type {Expression} */ (context.visit(node.test))),
 		b.arrow([b.id('$$anchor')], consequent)
 	];
 
-	if (node.alternate || node.elseif) {
-		args.push(
-			node.alternate
-				? b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.alternate)))
-				: b.literal(null)
-		);
+	if (alternate || node.elseif) {
+		args.push(alternate ? b.arrow([b.id('$$anchor')], alternate) : b.literal(null));
 	}
 
 	if (node.elseif) {
@@ -71,5 +62,5 @@ export function IfBlock(node, context) {
 		args.push(b.literal(true));
 	}
 
-	state.init.push(b.stmt(b.call('$.if', ...args)));
+	context.state.init.push(b.stmt(b.call('$.if', ...args)));
 }
