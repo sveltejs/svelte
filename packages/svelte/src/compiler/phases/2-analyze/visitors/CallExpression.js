@@ -171,7 +171,7 @@ export function CallExpression(node, context) {
 	}
 
 	if (context.state.expression) {
-		// We assume that any dependencies are stateful, which isn't necessarily the case — see
+		// TODO We assume that any dependencies are stateful, which isn't necessarily the case — see
 		// https://github.com/sveltejs/svelte/issues/13266. This check also includes dependencies
 		// outside the call expression itself (e.g. `{blah && pure()}`) resulting in additional
 		// false positives, but for now we accept that trade-off
