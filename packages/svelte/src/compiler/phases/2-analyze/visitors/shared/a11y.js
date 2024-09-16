@@ -996,20 +996,6 @@ export function check_element(node, state) {
 	const aria_hidden = attribute_map.get('aria-hidden');
 	const is_hidden = aria_hidden && get_static_value(aria_hidden) === 'true';
 
-	const has_content = node.fragment.nodes.some((child) => {
-		if (child.type === 'Text') {
-			return child.data.trim() !== '';
-		}
-		if (child.type === 'Component' || child.type === 'SlotElement') {
-			if (child.name !== 'script' && child.name !== 'style') {
-				return child.fragment.nodes.some(
-					(grandchild) => grandchild.type === 'Text' && grandchild.data.trim() !== ''
-				);
-			}
-		}
-		return false;
-	});
-
 	const aria_label = attribute_map.get('aria-label');
 	const aria_labelledby = attribute_map.get('aria-labelledby');
 
@@ -1019,7 +1005,7 @@ export function check_element(node, state) {
 		false;
 
 	if (node.name === 'a') {
-		if (!is_hidden && !has_content && !contains_a11y_label) {
+		if (!is_hidden && !has_content(node) && !contains_a11y_label) {
 			if (node.fragment.nodes.length === 0 && !missing_content_warning_fired) {
 				w.a11y_missing_content(node, node.name);
 				missing_content_warning_fired = true;
@@ -1055,7 +1041,7 @@ export function check_element(node, state) {
 	}
 
 	if (node.name === 'button') {
-		if (!is_hidden && !has_content && !contains_a11y_label) {
+		if (!is_hidden && !has_content(node) && !contains_a11y_label) {
 			w.a11y_consider_explicit_label(node, node.name);
 		}
 	}
@@ -1182,5 +1168,28 @@ export function check_element(node, state) {
 	) {
 		w.a11y_missing_content(node, node.name);
 		missing_content_warning_fired = true;
+	}
+}
+
+/**
+ * @param {RegularElement | SvelteElement} element
+ */
+function has_content(element) {
+	for (const node of element.fragment.nodes) {
+		if (node.type === 'Text') {
+			if (node.data.trim() === '') {
+				continue;
+			}
+		}
+
+		if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
+			if (!has_content(node)) {
+				continue;
+			}
+		}
+
+		// assume everything else has content — this will result in false positives
+		// (e.g. an empty `{#if ...}{/if}`) but that's probably fine
+		return true;
 	}
 }
