@@ -58,7 +58,6 @@ export function create_expression_metadata() {
 	return {
 		dependencies: new Set(),
 		has_state: false,
-		has_call: false,
-		has_local: false
+		has_call: false
 	};
 }

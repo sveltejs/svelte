@@ -317,8 +317,6 @@ export interface ExpressionMetadata {
 	has_state: boolean;
 	/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
 	has_call: boolean;
-	/** True if the expression involves a reference to a local variable */
-	has_local: boolean;
 }
 
 export * from './template.js';

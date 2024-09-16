@@ -172,7 +172,7 @@ export function CallExpression(node, context) {
 
 	if (
 		context.state.expression &&
-		(!is_pure(node.callee, context) || context.state.expression.has_local)
+		(!is_pure(node.callee, context) || context.state.expression.dependencies.size > 0)
 	) {
 		context.state.expression.has_call = true;
 		context.state.expression.has_state = true;
