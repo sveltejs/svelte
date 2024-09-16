@@ -419,19 +419,31 @@ export function template(elements, expressions) {
  * @returns {ESTree.Expression}
  */
 export function thunk(expression, async = false) {
-	if (
-		expression.type === 'CallExpression' &&
-		expression.callee.type !== 'Super' &&
-		expression.callee.type !== 'MemberExpression' &&
-		expression.callee.type !== 'CallExpression' &&
-		expression.arguments.length === 0
-	) {
-		return expression.callee;
-	}
-
 	const fn = arrow([], expression);
 	if (async) fn.async = true;
-	return fn;
+	return unthunk(fn);
+}
+
+/**
+ * Replace "(arg) => func(arg)" to "func"
+ * @param {ESTree.Expression} expression
+ * @returns {ESTree.Expression}
+ */
+export function unthunk(expression) {
+	if (
+		expression.type === 'ArrowFunctionExpression' &&
+		expression.async === false &&
+		expression.body.type === 'CallExpression' &&
+		expression.body.callee.type === 'Identifier' &&
+		expression.params.length === expression.body.arguments.length &&
+		expression.params.every((param, index) => {
+			const arg = /** @type {ESTree.SimpleCallExpression} */ (expression.body).arguments[index];
+			return param.type === 'Identifier' && arg.type === 'Identifier' && param.name === arg.name;
+		})
+	) {
+		return expression.body.callee;
+	}
+	return expression;
 }
 
 /**

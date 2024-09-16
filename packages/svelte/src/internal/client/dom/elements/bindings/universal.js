@@ -4,24 +4,24 @@ import { listen } from './shared.js';
 /**
  * @param {'innerHTML' | 'textContent' | 'innerText'} property
  * @param {HTMLElement} element
- * @param {() => unknown} get_value
- * @param {(value: unknown) => void} update
+ * @param {() => unknown} get
+ * @param {(value: unknown) => void} set
  * @returns {void}
  */
-export function bind_content_editable(property, element, get_value, update) {
+export function bind_content_editable(property, element, get, set = get) {
 	element.addEventListener('input', () => {
 		// @ts-ignore
-		update(element[property]);
+		set(element[property]);
 	});
 
 	render_effect(() => {
-		var value = get_value();
+		var value = get();
 
 		if (element[property] !== value) {
 			if (value == null) {
 				// @ts-ignore
 				var non_null_value = element[property];
-				update(non_null_value);
+				set(non_null_value);
 			} else {
 				// @ts-ignore
 				element[property] = value + '';
@@ -65,11 +65,11 @@ export function bind_property(property, event_name, element, set, get) {
 
 /**
  * @param {HTMLElement} element
- * @param {(value: unknown) => void} update
+ * @param {(value: unknown) => void} set
  * @returns {void}
  */
-export function bind_focused(element, update) {
+export function bind_focused(element, set) {
 	listen(element, ['focus', 'blur'], () => {
-		update(element === document.activeElement);
+		set(element === document.activeElement);
 	});
 }

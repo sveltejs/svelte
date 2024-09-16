@@ -36,12 +36,19 @@ export function BindDirective(node, context) {
 		);
 	}
 
-	const getter = b.thunk(/** @type {Expression} */ (context.visit(expression)));
+	const get = b.thunk(/** @type {Expression} */ (context.visit(expression)));
 
-	const setter = b.arrow(
-		[b.id('$$value')],
-		/** @type {Expression} */ (context.visit(b.assignment('=', expression, b.id('$$value'))))
+	/** @type {Expression | undefined} */
+	let set = b.unthunk(
+		b.arrow(
+			[b.id('$$value')],
+			/** @type {Expression} */ (context.visit(b.assignment('=', expression, b.id('$$value'))))
+		)
 	);
+
+	if (get === set) {
+		set = undefined;
+	}
 
 	/** @type {CallExpression} */
 	let call;
@@ -52,15 +59,15 @@ export function BindDirective(node, context) {
 			b.literal(node.name),
 			b.literal(property.event),
 			context.state.node,
-			setter,
-			property.bidirectional && getter
+			set ?? get,
+			property.bidirectional && get
 		);
 	} else {
 		// special cases
 		switch (node.name) {
 			// window
 			case 'online':
-				call = b.call(`$.bind_online`, setter);
+				call = b.call(`$.bind_online`, set ?? get);
 				break;
 
 			case 'scrollX':
@@ -68,8 +75,8 @@ export function BindDirective(node, context) {
 				call = b.call(
 					'$.bind_window_scroll',
 					b.literal(node.name === 'scrollX' ? 'x' : 'y'),
-					getter,
-					setter
+					get,
+					set
 				);
 				break;
 
@@ -77,47 +84,47 @@ export function BindDirective(node, context) {
 			case 'innerHeight':
 			case 'outerWidth':
 			case 'outerHeight':
-				call = b.call('$.bind_window_size', b.literal(node.name), setter);
+				call = b.call('$.bind_window_size', b.literal(node.name), set ?? get);
 				break;
 
 			// document
 			case 'activeElement':
-				call = b.call('$.bind_active_element', setter);
+				call = b.call('$.bind_active_element', set ?? get);
 				break;
 
 			// media
 			case 'muted':
-				call = b.call(`$.bind_muted`, context.state.node, getter, setter);
+				call = b.call(`$.bind_muted`, context.state.node, get, set);
 				break;
 			case 'paused':
-				call = b.call(`$.bind_paused`, context.state.node, getter, setter);
+				call = b.call(`$.bind_paused`, context.state.node, get, set);
 				break;
 			case 'volume':
-				call = b.call(`$.bind_volume`, context.state.node, getter, setter);
+				call = b.call(`$.bind_volume`, context.state.node, get, set);
 				break;
 			case 'playbackRate':
-				call = b.call(`$.bind_playback_rate`, context.state.node, getter, setter);
+				call = b.call(`$.bind_playback_rate`, context.state.node, get, set);
 				break;
 			case 'currentTime':
-				call = b.call(`$.bind_current_time`, context.state.node, getter, setter);
+				call = b.call(`$.bind_current_time`, context.state.node, get, set);
 				break;
 			case 'buffered':
-				call = b.call(`$.bind_buffered`, context.state.node, setter);
+				call = b.call(`$.bind_buffered`, context.state.node, set ?? get);
 				break;
 			case 'played':
-				call = b.call(`$.bind_played`, context.state.node, setter);
+				call = b.call(`$.bind_played`, context.state.node, set ?? get);
 				break;
 			case 'seekable':
-				call = b.call(`$.bind_seekable`, context.state.node, setter);
+				call = b.call(`$.bind_seekable`, context.state.node, set ?? get);
 				break;
 			case 'seeking':
-				call = b.call(`$.bind_seeking`, context.state.node, setter);
+				call = b.call(`$.bind_seeking`, context.state.node, set ?? get);
 				break;
 			case 'ended':
-				call = b.call(`$.bind_ended`, context.state.node, setter);
+				call = b.call(`$.bind_ended`, context.state.node, set ?? get);
 				break;
 			case 'readyState':
-				call = b.call(`$.bind_ready_state`, context.state.node, setter);
+				call = b.call(`$.bind_ready_state`, context.state.node, set ?? get);
 				break;
 
 			// dimensions
@@ -125,28 +132,33 @@ export function BindDirective(node, context) {
 			case 'contentBoxSize':
 			case 'borderBoxSize':
 			case 'devicePixelContentBoxSize':
-				call = b.call('$.bind_resize_observer', context.state.node, b.literal(node.name), setter);
+				call = b.call(
+					'$.bind_resize_observer',
+					context.state.node,
+					b.literal(node.name),
+					set ?? get
+				);
 				break;
 
 			case 'clientWidth':
 			case 'clientHeight':
 			case 'offsetWidth':
 			case 'offsetHeight':
-				call = b.call('$.bind_element_size', context.state.node, b.literal(node.name), setter);
+				call = b.call('$.bind_element_size', context.state.node, b.literal(node.name), set ?? get);
 				break;
 
 			// various
 			case 'value': {
 				if (parent?.type === 'RegularElement' && parent.name === 'select') {
-					call = b.call(`$.bind_select_value`, context.state.node, getter, setter);
+					call = b.call(`$.bind_select_value`, context.state.node, get, set);
 				} else {
-					call = b.call(`$.bind_value`, context.state.node, getter, setter);
+					call = b.call(`$.bind_value`, context.state.node, get, set);
 				}
 				break;
 			}
 
 			case 'files':
-				call = b.call(`$.bind_files`, context.state.node, getter, setter);
+				call = b.call(`$.bind_files`, context.state.node, get, set);
 				break;
 
 			case 'this':
@@ -160,18 +172,18 @@ export function BindDirective(node, context) {
 					'$.bind_content_editable',
 					b.literal(node.name),
 					context.state.node,
-					getter,
-					setter
+					get,
+					set
 				);
 				break;
 
 			// checkbox/radio
 			case 'checked':
-				call = b.call(`$.bind_checked`, context.state.node, getter, setter);
+				call = b.call(`$.bind_checked`, context.state.node, get, set);
 				break;
 
 			case 'focused':
-				call = b.call(`$.bind_focused`, context.state.node, setter);
+				call = b.call(`$.bind_focused`, context.state.node, set ?? get);
 				break;
 
 			case 'group': {
@@ -184,7 +196,7 @@ export function BindDirective(node, context) {
 
 				// We need to additionally invoke the value attribute signal to register it as a dependency,
 				// so that when the value is updated, the group binding is updated
-				let group_getter = getter;
+				let group_getter = get;
 
 				if (parent?.type === 'RegularElement') {
 					const value = /** @type {any[]} */ (
@@ -215,7 +227,7 @@ export function BindDirective(node, context) {
 					b.array(indexes),
 					context.state.node,
 					group_getter,
-					setter
+					set ?? get
 				);
 				break;
 			}
