@@ -1992,6 +1992,22 @@ declare module 'svelte/transition' {
 
 declare module 'svelte/events' {
 	/**
+	 * Attaches an event handler to the window and returns a function that removes the handler. Using this
+	 * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
+	 * (with attributes like `onclick`), which use event delegation for performance reasons
+	 *
+	 * */
+	export function on<Type extends keyof WindowEventMap>(window: Window, type: Type, handler: (this: Document, event: WindowEventMap[Type]) => any, options?: AddEventListenerOptions | undefined): () => void;
+
+	/**
+	 * Attaches an event handler to the document and returns a function that removes the handler. Using this
+	 * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
+	 * (with attributes like `onclick`), which use event delegation for performance reasons
+	 *
+	 * */
+	export function on<Type extends keyof DocumentEventMap>(document: Document, type: Type, handler: (this: Document, event: DocumentEventMap[Type]) => any, options?: AddEventListenerOptions | undefined): () => void;
+
+	/**
 	 * Attaches an event handler to an element and returns a function that removes the handler. Using this
 	 * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
 	 * (with attributes like `onclick`), which use event delegation for performance reasons
