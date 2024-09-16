@@ -90,7 +90,8 @@ export function Identifier(node, context) {
 	if (binding) {
 		if (context.state.expression) {
 			context.state.expression.dependencies.add(binding);
-			context.state.expression.has_state ||= binding.kind !== 'normal';
+			context.state.expression.has_state ||=
+				binding.kind !== 'normal' || binding.declaration_kind === 'import';
 		}
 
 		if (
