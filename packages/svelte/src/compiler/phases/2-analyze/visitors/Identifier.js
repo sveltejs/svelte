@@ -91,6 +91,7 @@ export function Identifier(node, context) {
 		if (context.state.expression) {
 			context.state.expression.dependencies.add(binding);
 			context.state.expression.has_state ||= binding.kind !== 'normal';
+			context.state.expression.has_local = true;
 		}
 
 		if (
