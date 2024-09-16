@@ -170,11 +170,14 @@ export function CallExpression(node, context) {
 		context.next();
 	}
 
-	if (
-		context.state.expression &&
-		(!is_pure(node.callee, context) || context.state.expression.dependencies.size > 0)
-	) {
-		context.state.expression.has_call = true;
-		context.state.expression.has_state = true;
+	if (context.state.expression) {
+		// We assume that any dependencies are stateful, which isn't necessarily the case — see
+		// https://github.com/sveltejs/svelte/issues/13266. This check also includes dependencies
+		// outside the call expression itself (e.g. `{blah && pure()}`) resulting in additional
+		// false positives, but for now we accept that trade-off
+		if (!is_pure(node.callee, context) || context.state.expression.dependencies.size > 0) {
+			context.state.expression.has_call = true;
+			context.state.expression.has_state = true;
+		}
 	}
 }
