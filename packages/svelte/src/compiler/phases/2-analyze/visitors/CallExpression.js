@@ -143,11 +143,6 @@ export function CallExpression(node, context) {
 			break;
 	}
 
-	if (context.state.expression && !is_pure(node.callee, context)) {
-		context.state.expression.has_call = true;
-		context.state.expression.has_state = true;
-	}
-
 	if (context.state.render_tag) {
 		// Find out which of the render tag arguments contains this call expression
 		const arg_idx = unwrap_optional(context.state.render_tag.expression).arguments.findIndex(
@@ -173,5 +168,16 @@ export function CallExpression(node, context) {
 		context.next({ ...context.state, function_depth: context.state.function_depth + 1 });
 	} else {
 		context.next();
+	}
+
+	if (context.state.expression) {
+		// TODO We assume that any dependencies are stateful, which isn't necessarily the case — see
+		// https://github.com/sveltejs/svelte/issues/13266. This check also includes dependencies
+		// outside the call expression itself (e.g. `{blah && pure()}`) resulting in additional
+		// false positives, but for now we accept that trade-off
+		if (!is_pure(node.callee, context) || context.state.expression.dependencies.size > 0) {
+			context.state.expression.has_call = true;
+			context.state.expression.has_state = true;
+		}
 	}
 }
