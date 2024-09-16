@@ -1,5 +1,21 @@
 # svelte
 
+## 5.0.0-next.247
+
+### Patch Changes
+
+- fix: wait until template strings are complete before sanitizing ([#13262](https://github.com/sveltejs/svelte/pull/13262))
+
+- fix: avoid flushing sync with $inspect ([#13239](https://github.com/sveltejs/svelte/pull/13239))
+
+- fix: separate `template_effect` for dynamic class/style directive with dynamic attributes ([#13171](https://github.com/sveltejs/svelte/pull/13171))
+
+- fix: treat pure call expressions as potentially reactive if they reference local bindings ([#13264](https://github.com/sveltejs/svelte/pull/13264))
+
+- fix: follow spec for `customElement` option ([#13247](https://github.com/sveltejs/svelte/pull/13247))
+
+- fix: tighten up `# svelte prefix validation ([#13261](https://github.com/sveltejs/svelte/pull/13261))
+
 ## 5.0.0-next.246
 
 ### Patch Changes
