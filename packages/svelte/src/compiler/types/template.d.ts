@@ -410,6 +410,10 @@ export namespace AST {
 		test: Expression;
 		consequent: Fragment;
 		alternate: Fragment | null;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** An `{#await ...}` block */

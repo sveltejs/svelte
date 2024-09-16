@@ -1,7 +1,7 @@
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 
-var root = $.template(` <!>`, 1);
+var root = $.template(`<!> <!>`, 1);
 
 export default function Non_reactive_control_structures($$anchor) {
 	const a = true;
@@ -9,8 +9,10 @@ export default function Non_reactive_control_structures($$anchor) {
 	var fragment = root();
 	var node = $.first_child(fragment);
 
+	$.next();
+
 	if (a) {
-		var $$anchor = node;
+		let $$anchor = node;
 		var text = $.text("hello");
 
 		$.append($$anchor, text);

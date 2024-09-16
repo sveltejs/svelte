@@ -12,18 +12,18 @@ export function IfBlock(node, context) {
 
 	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
 
-	// compile to if rather than $.if for non-reactive if statements
-	// NOTE: this only handles expressions that are simple identifiers and doesn't handle else/elseif yet
-	if (state.analysis.runes && node.test.type === 'Identifier' && !(node.alternate || node.elseif)) {
-		const binding = state.scope.owner(node.test.name)?.declarations.get(node.test.name);
-		if (binding?.kind === 'normal') {
-			consequent.body.unshift(b.var(b.id('$$anchor'), state.node));
-			state.init.push(b.if(node.test, consequent));
-			return;
-		}
-	}
-
 	state.template.push_quasi('<!>');
+
+	// compile to if rather than $.if for non-reactive if statements
+	// NOTE: doesn't handle else/elseif yet or mismatches. also, this probably breaks transition locality
+	if (!node.metadata.expression.has_state && !(node.alternate || node.elseif)) {
+		state.init.push(
+			b.stmt(b.call('$.next')),
+			b.if(node.test, b.block([b.let(b.id('$$anchor'), state.node), ...consequent.body]))
+		);
+
+		return;
+	}
 
 	const args = [
 		state.node,
