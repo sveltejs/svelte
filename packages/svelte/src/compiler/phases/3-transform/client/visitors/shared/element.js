@@ -25,19 +25,18 @@ export function build_style_directives(
 	const state = context.state;
 
 	for (const directive of style_directives) {
+		const { has_state, has_call } = directive.metadata.expression;
+
 		let value =
 			directive.value === true
 				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
 				: build_attribute_value(directive.value, context).value;
-		const { has_state, has_call } = directive.metadata.expression;
-
-		let final_value = value;
 
 		if (has_call) {
 			const id = b.id(state.scope.generate('style_directive'));
 
 			state.init.push(b.const(id, create_derived(state, b.thunk(value))));
-			final_value = b.call('$.get', id);
+			value = b.call('$.get', id);
 		}
 
 		const update = b.stmt(
@@ -45,7 +44,7 @@ export function build_style_directives(
 				'$.set_style',
 				element_id,
 				b.literal(directive.name),
-				final_value,
+				value,
 				/** @type {Expression} */ (directive.modifiers.includes('important') ? b.true : undefined),
 				force_check ? b.true : undefined
 			)
@@ -77,21 +76,17 @@ export function build_class_directives(
 ) {
 	const state = context.state;
 	for (const directive of class_directives) {
-		const value = /** @type {Expression} */ (context.visit(directive.expression));
 		const { has_state, has_call } = directive.metadata.expression;
-
-		let final_value = value;
+		let value = /** @type {Expression} */ (context.visit(directive.expression));
 
 		if (has_call) {
 			const id = b.id(state.scope.generate('class_directive'));
 
 			state.init.push(b.const(id, create_derived(state, b.thunk(value))));
-			final_value = b.call('$.get', id);
+			value = b.call('$.get', id);
 		}
 
-		const update = b.stmt(
-			b.call('$.toggle_class', element_id, b.literal(directive.name), final_value)
-		);
+		const update = b.stmt(b.call('$.toggle_class', element_id, b.literal(directive.name), value));
 
 		if (!is_attributes_reactive && has_call) {
 			state.init.push(build_update(update));

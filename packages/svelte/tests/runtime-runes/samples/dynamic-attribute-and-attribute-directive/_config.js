@@ -1,12 +1,10 @@
 import { flushSync } from 'svelte';
-import { ok, test } from '../../test';
+import { test } from '../../test';
 
 export default test({
 	test({ target, logs, assert }) {
 		const [div, div2] = target.querySelectorAll('div');
-
 		const button = target.querySelector('button');
-		ok(button);
 
 		assert.deepEqual(logs, ['called', 'called']);
 
@@ -15,9 +13,7 @@ export default test({
 		assert.equal(div.classList.contains('dark'), false);
 		assert.equal(div2.style.color, 'red');
 
-		flushSync(() => {
-			button.click();
-		});
+		flushSync(() => button?.click());
 		assert.deepEqual(logs, ['called', 'called']);
 	}
 });

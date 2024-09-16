@@ -1,7 +1,6 @@
 <script>
-
 	let value = $state(0);
-	
+
 	function dark(){
 		console.log('called')
 		return false;
