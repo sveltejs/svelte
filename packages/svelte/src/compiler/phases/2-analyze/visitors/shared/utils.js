@@ -1,5 +1,5 @@
-/** @import { AssignmentExpression, Expression, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
-/** @import { AST } from '#compiler' */
+/** @import { AssignmentExpression, Expression, Identifier, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
+/** @import { AST, Binding } from '#compiler' */
 /** @import { AnalysisState, Context } from '../../types' */
 /** @import { Scope } from '../../../scope' */
 /** @import { NodeLike } from '../../../../errors.js' */
@@ -195,4 +195,33 @@ export function is_pure(node, context) {
 
 	// TODO add more cases (safe Svelte imports, etc)
 	return false;
+}
+
+/**
+ * Checks if the name is valid, which it is when it's not starting with (or is) a dollar sign or if it's a function parameter.
+ * The second argument is the depth of the scope, which is there for backwards compatibility reasons: In Svelte 4, you
+ * were allowed to define `$`-prefixed variables anywhere below the top level of components. Once legacy mode is gone, this
+ * argument can be removed / the call sites adjusted accordingly.
+ * @param {Binding | null} binding
+ * @param {number | undefined} [function_depth]
+ */
+export function validate_identifier_name(binding, function_depth) {
+	if (!binding) return;
+
+	const declaration_kind = binding.declaration_kind;
+
+	if (
+		declaration_kind !== 'synthetic' &&
+		declaration_kind !== 'param' &&
+		declaration_kind !== 'rest_param' &&
+		(!function_depth || function_depth <= 1)
+	) {
+		const node = binding.node;
+
+		if (node.name === '$') {
+			e.dollar_binding_invalid(node);
+		} else if (node.name.startsWith('$')) {
+			e.dollar_prefix_invalid(node);
+		}
+	}
 }
