@@ -1,4 +1,4 @@
-/** @import { Effect, TemplateNode } from '#client' */
+/** @import { Derived, Effect, TemplateNode } from '#client' */
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import {
 	hydrate_next,
@@ -10,41 +10,49 @@ import {
 } from '../hydration.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { HYDRATION_START_ELSE } from '../../../../constants.js';
-import { noop } from '../../../shared/utils.js';
+import { derived } from '../../reactivity/deriveds.js';
+import { get } from '../../runtime.js';
 
 
 
 /**
  * @param {TemplateNode} node
- * @param {[() => boolean, (anchor: Node) => void, Effect?][]} conditions
+ * @param {(() => boolean)[]} test_fns
+ * @param {((anchor: Node) => void)[]} consequent_fns
+ * @param {((anchor: Node) => void) | null} alternate_fn
  * @returns {void}
  */
-export function if_block(node, ...conditions) {
+export function pick(node, test_fns, consequent_fns, alternate_fn = null) {
 	if (hydrating) {
 		hydrate_next();
 	}
 
 	var anchor = node;
 
-	/** @type {Effect | null | undefined} */
-	var current_effect = null;
+	const max = consequent_fns.length;
+
+	/** @type {{d:Derived<boolean>, e:Effect|null}[]} */
+	var effects = test_fns.map( fn => ({ d: derived(fn), e: null }) );
+
+	if (alternate_fn) {
+		
+		// @ts-ignore
+		effects[-1] = { e: null }
+	}
 
 	/** @type {number | null} */
 	var current_index = null;
 
 	block(() => {
 		const previous_index = current_index;
-		const previous_effect = current_effect;
-		if (current_index === (current_index = conditions.findIndex(c => c[0]()))) return;
+		if (current_index === (current_index = (effects.findIndex(e => get(e.d))))) return;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
-
+		
 		if (hydrating) {
-			// TODO
-			const is_else = -5; // /** @type {Comment} */ (anchor).data === HYDRATION_START_ELSE;
-
-			if (current_index !== is_else) {
+			const data = current_index < 0 ? '[!' : (current_index === 0 ? '[' : ('[' + current_index) );
+			if (data !== /** @type {Comment} */ (anchor).data) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
 				// This could happen with `{#if browser}...{/if}`, for example
 				anchor = remove_nodes();
@@ -55,33 +63,38 @@ export function if_block(node, ...conditions) {
 			}
 		}
 
-		if (current_index < 0) {
-			current_effect = null;
+		let current_effect = effects[current_index]?.e;
+		if (current_effect) {
+			resume_effect(current_effect);
 		} else {
-			current_effect = conditions[current_index][2];
-			if (current_effect) {
-				resume_effect(current_effect);
-			} else {
-				const fn = conditions[current_index]?.[1];
-				if (fn) {
-					let target_anchor = anchor;
-					if (previous_index != null
-						&& previous_index > current_index
-						&& previous_effect && previous_effect.nodes_start) {
-						target_anchor = previous_effect.nodes_start;
-					}				
-					current_effect = branch(() => fn(target_anchor));
-				}
+			const fn = current_index < 0 ? alternate_fn : consequent_fns[current_index];
+			if (fn) {
+				let target_anchor = anchor;
+				if (previous_index != null && current_index !== -1) {
+					const alternate_effect = effects[-1]?.e;
+					if (alternate_effect && alternate_effect.nodes_start) {
+						target_anchor = alternate_effect.nodes_start;
+					}
+					for (let i=current_index+1; i<max; i++) {
+						const effect = effects[i];
+						if (effect.e && effect.e.nodes_start) {
+							target_anchor = effect.e.nodes_start;
+							break;
+						}
+					}
+				}		
+				current_effect = branch(() => fn(target_anchor));
+				effects[current_index].e = current_effect;
 			}
 		}
 
-		if (previous_effect && previous_index!=null) {
-			if (previous_effect.transitions) {
-				conditions[previous_index][2] = previous_effect;
+		if (previous_index!=null) {
+			const previous_effect = effects[previous_index]?.e;
+			if (previous_effect) {
+				pause_effect(previous_effect, () => {
+					effects[previous_index].e = null;
+				});
 			}
-			pause_effect(previous_effect, () => {
-				delete conditions[previous_index][2];
-			});
 		}
 		if (mismatch) {
 			// continue in hydration mode
@@ -103,7 +116,7 @@ export function if_block(node, ...conditions) {
  * @param {boolean} [elseif] True if this is an `{:else if ...}` block rather than an `{#if ...}`, as that affects which transitions are considered 'local'
  * @returns {void}
  */
-export function if_block_old(node, get_condition, consequent_fn, alternate_fn = null, elseif = false) {
+export function if_block(node, get_condition, consequent_fn, alternate_fn = null, elseif = false) {
 	if (hydrating) {
 		hydrate_next();
 	}

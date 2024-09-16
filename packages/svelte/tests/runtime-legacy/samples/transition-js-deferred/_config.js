@@ -7,7 +7,7 @@ export default test({
 		return Promise.resolve().then(() => {
 			raf.tick(0);
 
-			const [, div] = target.querySelectorAll('div');
+			const [div] = target.querySelectorAll('div');
 			// @ts-ignore
 			assert.equal(div.foo, 0);
 

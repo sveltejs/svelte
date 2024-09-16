@@ -93,7 +93,8 @@ export function remove_nodes() {
 			if (data === HYDRATION_END) {
 				if (depth === 0) return node;
 				depth -= 1;
-			} else if (data === HYDRATION_START || data === HYDRATION_START_ELSE) {
+			} else if (data.startsWith('[')) {
+			// } else if (data === HYDRATION_START || data === HYDRATION_START_ELSE) {
 				depth += 1;
 			}
 		}
