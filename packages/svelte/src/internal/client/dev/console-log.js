@@ -1,10 +1,12 @@
 import { STATE_SYMBOL } from '../constants.js';
 import { snapshot } from '../../shared/clone.js';
+import * as w from '../warnings.js';
 
 /**
+ * @param {string} method
  * @param  {...any} objects
  */
-export function log_if_contains_state(...objects) {
+export function log_if_contains_state(method, ...objects) {
 	let has_state = false;
 	const transformed = [];
 
@@ -18,12 +20,10 @@ export function log_if_contains_state(...objects) {
 	}
 
 	if (has_state) {
+		w.console_log_state(method);
+
 		// eslint-disable-next-line no-console
-		console.log(
-			'Your console.log contained $state objects. We recommend using $inspect or $state.snapshot when logging these for better results. The snapshotted value is:\n',
-			...transformed,
-			'\nThe original value is:\n'
-		);
+		console.log('%c[snapshot]', 'color: grey', ...transformed);
 	}
 
 	return objects;

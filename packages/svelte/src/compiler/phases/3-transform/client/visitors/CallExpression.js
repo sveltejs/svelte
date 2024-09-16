@@ -49,6 +49,7 @@ export function CallExpression(node, context) {
 			b.spread(
 				b.call(
 					'$.log_if_contains_state',
+					b.literal(node.callee.property.name),
 					.../** @type {Expression[]} */ (node.arguments.map((arg) => context.visit(arg)))
 				)
 			)
