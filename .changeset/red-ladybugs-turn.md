@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure function calls to identifiers are made reactive
+fix: treat pure call expressions as potentially reactive if they reference local bindings
