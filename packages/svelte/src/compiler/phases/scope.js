@@ -14,6 +14,7 @@ import {
 } from '../utils/ast.js';
 import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
+import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
 
 export class Scope {
 	/** @type {ScopeRoot} */
@@ -78,20 +79,6 @@ export class Scope {
 	 * @returns {Binding}
 	 */
 	declare(node, kind, declaration_kind, initial = null) {
-		if (node.name === '$') {
-			e.dollar_binding_invalid(node);
-		}
-
-		if (
-			node.name.startsWith('$') &&
-			declaration_kind !== 'synthetic' &&
-			declaration_kind !== 'param' &&
-			declaration_kind !== 'rest_param' &&
-			this.function_depth <= 1
-		) {
-			e.dollar_prefix_invalid(node);
-		}
-
 		if (this.parent) {
 			if (declaration_kind === 'var' && this.#porous) {
 				return this.parent.declare(node, kind, declaration_kind);
@@ -123,6 +110,9 @@ export class Scope {
 			prop_alias: null,
 			metadata: null
 		};
+
+		validate_identifier_name(binding, this.function_depth);
+
 		this.declarations.set(node.name, binding);
 		this.root.conflicts.add(node.name);
 		return binding;
