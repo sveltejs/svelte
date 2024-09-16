@@ -54,10 +54,10 @@ export function build_template_literal(values, visit, state) {
 		const node = values[i];
 
 		if (node.type === 'Text') {
-			quasi.value.raw += sanitize_template_string(node.data);
+			quasi.value.cooked += node.data;
 		} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
 			if (node.expression.value != null) {
-				quasi.value.raw += sanitize_template_string(node.expression.value + '');
+				quasi.value.cooked += node.expression.value + '';
 			}
 		} else {
 			if (contains_multiple_call_expression) {
@@ -89,6 +89,10 @@ export function build_template_literal(values, visit, state) {
 			quasi = b.quasi('', i + 1 === values.length);
 			quasis.push(quasi);
 		}
+	}
+
+	for (const quasi of quasis) {
+		quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
 	}
 
 	const value = b.template(quasis, expressions);
