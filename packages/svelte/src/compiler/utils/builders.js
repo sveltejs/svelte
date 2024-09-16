@@ -419,19 +419,9 @@ export function template(elements, expressions) {
  * @returns {ESTree.Expression}
  */
 export function thunk(expression, async = false) {
-	if (
-		expression.type === 'CallExpression' &&
-		expression.callee.type !== 'Super' &&
-		expression.callee.type !== 'MemberExpression' &&
-		expression.callee.type !== 'CallExpression' &&
-		expression.arguments.length === 0
-	) {
-		return expression.callee;
-	}
-
 	const fn = arrow([], expression);
 	if (async) fn.async = true;
-	return fn;
+	return unthunk(fn);
 }
 
 /**
