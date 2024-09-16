@@ -1,4 +1,4 @@
----
+﻿---
 title: Bindings
 ---
 
@@ -42,14 +42,14 @@ Numeric input values are coerced; even though `input.value` is a string as far a
 <input type="range" bind:value={num} />
 ```
 
-On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList). When you want to update the files programmatically, you always need to use a `FileList` object.
+On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList). When you want to update the files programmatically, you always need to use a `FileList` object. Currently `FileList` objects cannot be constructed directly, so you need to create a new [`DataTransfer`](https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer) object and get `files` from there.
 
 ```svelte
 <script>
 	let files = $state();
 
 	function clear() {
-		files = new FileList(); // null or undefined doesn't work
+		files = new DataTransfer().files; // null or undefined does not work
 	}
 </script>
 
@@ -57,6 +57,10 @@ On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`
 <input accept="image/png, image/jpeg" bind:files id="avatar" name="avatar" type="file" />
 <button onclick={clear}>clear</button>
 ```
+
+`FileList` objects also cannot be modified, so if you want to e.g. delete a single file from the list, you need to create a new `DataTransfer` object and add the files you want to keep.
+
+> `DataTransfer` may not be available in server-side JS runtimes. Leaving the state that is bound to `files` uninitialized prevents potential errors if components are server-side rendered.
 
 If you're using `bind:` directives together with `on` event attributes, the binding will always fire before the event attribute.
 
