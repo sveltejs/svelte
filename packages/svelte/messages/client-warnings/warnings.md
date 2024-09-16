@@ -4,6 +4,14 @@
 
 > `%binding%` (%location%) is binding to a non-reactive property
 
+## console_log_state
+
+> Your `console.%method%` contained `$state` proxies. Consider using `$inspect(...)` or `$state.snapshot(...)` instead
+
+When logging a [proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy), browser devtools will log the proxy itself rather than the value it represents. In the case of Svelte, the 'target' of a `$state` proxy might not resemble its current value, which can be confusing.
+
+The easiest way to log a value as it changes over time is to use the [`$inspect`](https://svelte-5-preview.vercel.app/docs/runes#$inspect) rune. Alternatively, to log things on a one-off basis (for example, inside an event handler) you can use [`$state.snapshot`](https://svelte-5-preview.vercel.app/docs/runes#$state-snapshot) to take a snapshot of the current value.
+
 ## event_handler_invalid
 
 > %handler% should be a function. Did you mean to %suggestion%?

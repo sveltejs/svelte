@@ -20,6 +20,19 @@ export function binding_property_non_reactive(binding, location) {
 }
 
 /**
+ * Your `console.%method%` contained `$state` proxies. Consider using `$inspect(...)` or `$state.snapshot(...)` instead
+ * @param {string} method
+ */
+export function console_log_state(method) {
+	if (DEV) {
+		console.warn(`%c[svelte] console_log_state\n%cYour \`console.${method}\` contained \`$state\` proxies. Consider using \`$inspect(...)\` or \`$state.snapshot(...)\` instead`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("console_log_state");
+	}
+}
+
+/**
  * %handler% should be a function. Did you mean to %suggestion%?
  * @param {string} handler
  * @param {string} suggestion
