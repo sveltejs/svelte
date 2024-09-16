@@ -178,14 +178,14 @@ Duplicate attributes/properties on elements — which now includes event handler
 </button>
 ```
 
-When spreading props, the chained event handler should be specified after the spread. Otherwise, the props event handler will override the chained event handler.
+When spreading props, local event handlers must go _after_ the spread, or they risk being overwritten:
 
 ```svelte
 <button
-	{...everythingElse}
+	{...props}
 	onclick={(e) => {
-		one(e);
-		everythingElse.onclick(e);
+		doStuff(e);
+		props.onclick?.(e);
 	}}
 >
 	...
