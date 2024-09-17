@@ -613,7 +613,7 @@ function process_effects(effect, collected_effects) {
 	}
 
 	var current_effect = effect.first;
-	var effects = [];
+	var deferred = [];
 
 	main_loop: while (current_effect !== null) {
 		var flags = current_effect.f;
@@ -627,7 +627,7 @@ function process_effects(effect, collected_effects) {
 					update_effect(current_effect);
 					has_dirty_children = true;
 				} else {
-					effects.push(current_effect);
+					deferred.push(current_effect);
 				}
 			}
 
@@ -661,8 +661,8 @@ function process_effects(effect, collected_effects) {
 
 	// We might be dealing with many effects here, far more than can be spread into
 	// an array push call (callstack overflow). So let's deal with each effect in a loop.
-	for (var i = 0; i < effects.length; i++) {
-		var child = effects[i];
+	for (var i = 0; i < deferred.length; i++) {
+		var child = deferred[i];
 		collected_effects.push(child);
 		process_effects(child, collected_effects);
 	}
