@@ -637,14 +637,7 @@ function process_effects(effect, collected_effects) {
 					continue;
 				}
 			} else if ((flags & EFFECT) !== 0) {
-				if (is_branch || is_clean) {
-					if (child !== null) {
-						current_effect = child;
-						continue;
-					}
-				} else {
 					effects.push(current_effect);
-				}
 			}
 		}
 		var sibling = current_effect.next;
