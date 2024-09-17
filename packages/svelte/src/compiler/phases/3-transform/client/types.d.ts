@@ -54,10 +54,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	/** Stuff that happens after the render effect (control blocks, dynamic elements, bindings, actions, etc) */
 	readonly after_update: Statement[];
 	/** The HTML template string */
-	readonly template: {
-		push_quasi: (q: string) => void;
-		push_expression: (e: Expression) => void;
-	};
+	readonly template: Array<string | Expression>;
 	readonly locations: SourceLocation[];
 	readonly metadata: {
 		namespace: Namespace;
