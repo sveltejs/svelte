@@ -373,7 +373,9 @@ function remove_reaction(signal, dependency) {
 	if (
 		reactions === null &&
 		(dependency.f & DERIVED) !== 0 &&
-		// If we have this dependency in our new_deps then we shouldn't disconnect it
+		// Destroying a child effect while updating a parent effect can cause a dependency to appear
+		// to be unused, when in fact it is used by the currently-updating parent. Checking `new_deps`
+		// allows us to skip the expensive work of disconnecting and immediately reconnecting it
 		(new_deps === null || !new_deps.includes(dependency))
 	) {
 		set_signal_status(dependency, MAYBE_DIRTY);
