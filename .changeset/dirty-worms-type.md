@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure the if block condition is wrapped in a derived
+fix: avoid disconnecting deriveds that are still active
