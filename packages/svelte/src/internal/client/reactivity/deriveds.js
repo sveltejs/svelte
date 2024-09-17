@@ -2,11 +2,11 @@
 import { DEV } from 'esm-env';
 import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
 import {
-	current_reaction,
-	current_effect,
+	active_reaction,
+	active_effect,
 	remove_reactions,
 	set_signal_status,
-	current_skip_reaction,
+	skip_reaction,
 	update_reaction,
 	increment_version
 } from '../runtime.js';
@@ -23,7 +23,7 @@ import { inspect_effects, set_inspect_effects } from './sources.js';
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
 	let flags = DERIVED | DIRTY;
-	if (current_effect === null) flags |= UNOWNED;
+	if (active_effect === null) flags |= UNOWNED;
 
 	/** @type {Derived<V>} */
 	const signal = {
@@ -37,8 +37,8 @@ export function derived(fn) {
 		version: 0
 	};
 
-	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
-		var derived = /** @type {Derived} */ (current_reaction);
+	if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
+		var derived = /** @type {Derived} */ (active_reaction);
 		(derived.children ??= []).push(signal);
 	}
 
@@ -114,9 +114,7 @@ export function update_derived(derived) {
 	}
 
 	var status =
-		(current_skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null
-			? MAYBE_DIRTY
-			: CLEAN;
+		(skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null ? MAYBE_DIRTY : CLEAN;
 
 	set_signal_status(derived, status);
 
