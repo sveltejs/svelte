@@ -647,9 +647,6 @@ function process_effects(effect, collected_effects) {
 			let parent = current_effect.parent;
 
 			while (parent !== null) {
-				if (effect === parent) {
-					break main_loop;
-				}
 				var parent_sibling = parent.next;
 				if (parent_sibling !== null) {
 					current_effect = parent_sibling;
