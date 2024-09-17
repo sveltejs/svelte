@@ -32,7 +32,7 @@ export function EachBlock(node, context) {
 	);
 
 	if (!each_node_meta.is_controlled) {
-		context.state.template.push_quasi('<!>');
+		context.state.template.push('<!>');
 	}
 
 	if (each_node_meta.array_name !== null) {

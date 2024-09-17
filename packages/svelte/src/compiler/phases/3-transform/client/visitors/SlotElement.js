@@ -10,7 +10,7 @@ import { build_attribute_value } from './shared/element.js';
  */
 export function SlotElement(node, context) {
 	// <slot {a}>fallback</slot>  -->   $.slot($$slots.default, { get a() { .. } }, () => ...fallback);
-	context.state.template.push_quasi('<!>');
+	context.state.template.push('<!>');
 
 	/** @type {Property[]} */
 	const props = [];
