@@ -99,6 +99,12 @@ import App from './App.svelte';
 
 In Svelte 4, rendering a component to a string also returned the CSS of all components. In Svelte 5, this is no longer the case by default because most of the time you're using a tooling chain that takes care of it in other ways (like SvelteKit). If you need CSS to be returned from `render`, you can set the `css` compiler option to `'injected'` and it will add `<style>` elements to the `head`.
 
+You can set this option:
+
+- Globally through the `compilerOption` property in your svelte config.
+- On a per component basis through the `<svelte:options css="injected" />` tag.
+- Dynamically using the [`dynamicCompileOption`](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/config.md#dynamiccompileoptions) property of `vite-plugin-svelte`
+
 ### Component typing changes
 
 The change from classes towards functions is also reflected in the typings: `SvelteComponent`, the base class from Svelte 4, is deprecated in favour of the new `Component` type which defines the function shape of a Svelte component. To manually define a component shape in a `d.ts` file:
