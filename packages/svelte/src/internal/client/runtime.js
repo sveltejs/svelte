@@ -621,7 +621,8 @@ function process_effects(effect, collected_effects) {
 
 		// Skip this branch if it's clean
 		if (is_active && (!is_branch || !is_clean)) {
-			if ((flags & EFFECT_HAS_DIRTY_CHILDREN) !== 0) {
+			if (is_branch) {
+				// Can only be a branch effect with EFFECT_HAS_DIRTY_CHILDREN
 				set_signal_status(current_effect, CLEAN);
 			}
 
@@ -637,7 +638,7 @@ function process_effects(effect, collected_effects) {
 					continue;
 				}
 			} else if ((flags & EFFECT) !== 0) {
-					effects.push(current_effect);
+				effects.push(current_effect);
 			}
 		}
 		var sibling = current_effect.next;
