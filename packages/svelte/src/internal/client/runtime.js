@@ -612,8 +612,7 @@ function process_effects(effect, collected_effects) {
 
 	main_loop: while (current_effect !== null) {
 		var flags = current_effect.f;
-		// TODO: we probably don't need to check for destroyed as it shouldn't be encountered?
-		var is_active = (flags & (DESTROYED | INERT)) === 0;
+		var is_active = (flags & INERT) === 0;
 		var is_branch = (flags & BRANCH_EFFECT) !== 0;
 		var is_clean = (flags & CLEAN) !== 0;
 		var child = current_effect.first;
@@ -646,6 +645,7 @@ function process_effects(effect, collected_effects) {
 				}
 			}
 		}
+
 		var sibling = current_effect.next;
 
 		if (sibling === null) {
