@@ -54,7 +54,7 @@ export function RegularElement(node, context) {
 	}
 
 	if (node.name === 'noscript') {
-		context.state.template.push_quasi('<noscript></noscript>');
+		context.state.template.push('<noscript></noscript>');
 		return;
 	}
 
@@ -68,7 +68,7 @@ export function RegularElement(node, context) {
 		namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
 	};
 
-	context.state.template.push_quasi(`<${node.name}`);
+	context.state.template.push(`<${node.name}`);
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];
@@ -242,7 +242,7 @@ export function RegularElement(node, context) {
 				const value = is_text_attribute(attribute) ? attribute.value[0].data : true;
 
 				if (name !== 'class' || value) {
-					context.state.template.push_quasi(
+					context.state.template.push(
 						` ${attribute.name}${
 							is_boolean_attribute(name) && value === true
 								? ''
@@ -279,7 +279,7 @@ export function RegularElement(node, context) {
 		context.state.after_update.push(b.stmt(b.call('$.replay_events', node_id)));
 	}
 
-	context.state.template.push_quasi('>');
+	context.state.template.push('>');
 
 	/** @type {SourceLocation[]} */
 	const child_locations = [];
@@ -384,7 +384,7 @@ export function RegularElement(node, context) {
 	}
 
 	if (!is_void(node.name)) {
-		context.state.template.push_quasi(`</${node.name}>`);
+		context.state.template.push(`</${node.name}>`);
 	}
 }
 
@@ -472,7 +472,7 @@ function build_element_spread_attributes(
 				value.type === 'Literal' &&
 				context.state.metadata.namespace === 'html'
 			) {
-				context.state.template.push_quasi(` is="${escape_html(value.value, true)}"`);
+				context.state.template.push(` is="${escape_html(value.value, true)}"`);
 				continue;
 			}
 
@@ -630,9 +630,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		return true;
 	} else {
 		if (inlinable_expression) {
-			context.state.template.push_quasi(` ${name}="`);
-			context.state.template.push_expression(value);
-			context.state.template.push_quasi('"');
+			context.state.template.push(` ${name}="`, value, '"');
 		} else {
 			state.init.push(update);
 		}

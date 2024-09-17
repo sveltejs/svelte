@@ -3,4 +3,4 @@
 	let { b }: { b: string } = $derived(a);
 </script>
 
-<button onclick={()=>a++}></button>
+<button onclick={()=>a++}>click me</button>

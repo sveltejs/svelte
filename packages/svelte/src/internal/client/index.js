@@ -1,4 +1,5 @@
 export { FILENAME, HMR } from '../../constants.js';
+export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
 export {

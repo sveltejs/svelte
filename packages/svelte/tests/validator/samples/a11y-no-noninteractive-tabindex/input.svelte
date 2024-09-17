@@ -1,7 +1,7 @@
 <!-- valid -->
-<button></button>
-<button tabindex='0'></button>
-<button tabindex='{0}'></button>
+<button>click me</button>
+<button tabindex='0'>click me</button>
+<button tabindex='{0}'>click me</button>
 <div></div>
 <div tabindex='-1'></div>
 <div role='button' tabindex='0'></div>

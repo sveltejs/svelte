@@ -5,6 +5,7 @@
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../../../constants.js';
 import { dev } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
+import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 import { clean_nodes, infer_namespace } from '../../utils.js';
 import { process_children } from './shared/fragment.js';
 import { build_render_statement } from './shared/utils.js';
@@ -57,11 +58,6 @@ export function Fragment(node, context) {
 	/** @type {Statement | undefined} */
 	let close = undefined;
 
-	/** @type {string[]} */
-	const quasi = [];
-	/** @type {Expression[]} */
-	const expressions = [];
-
 	/** @type {ComponentClientTransformState} */
 	const state = {
 		...context.state,
@@ -69,22 +65,7 @@ export function Fragment(node, context) {
 		init: [],
 		update: [],
 		after_update: [],
-		template: {
-			push_quasi: (/** @type {string} */ quasi_to_add) => {
-				if (quasi.length === 0) {
-					quasi.push(quasi_to_add);
-					return;
-				}
-				quasi[quasi.length - 1] = quasi[quasi.length - 1].concat(quasi_to_add);
-			},
-			push_expression: (/** @type {Expression} */ expression_to_add) => {
-				if (quasi.length === 0) {
-					quasi.push('');
-				}
-				expressions.push(expression_to_add);
-				quasi.push('');
-			}
-		},
+		template: [],
 		locations: [],
 		transform: { ...context.state.transform },
 		metadata: {
@@ -135,12 +116,7 @@ export function Fragment(node, context) {
 		});
 
 		/** @type {Expression[]} */
-		const args = [
-			b.template(
-				quasi.map((q) => b.quasi(q, true)),
-				expressions
-			)
-		];
+		const args = [join_template(state.template)];
 
 		if (state.metadata.context.template_needs_import_node) {
 			args.push(b.literal(TEMPLATE_USE_IMPORT_NODE));
@@ -195,17 +171,11 @@ export function Fragment(node, context) {
 					flags |= TEMPLATE_USE_IMPORT_NODE;
 				}
 
-				if (quasi.length === 1 && quasi[0] === '<!>') {
+				if (state.template.length === 1 && state.template[0] === '<!>') {
 					// special case — we can use `$.comment` instead of creating a unique template
 					body.push(b.var(id, b.call('$.comment')));
 				} else {
-					add_template(template_name, [
-						b.template(
-							quasi.map((q) => b.quasi(q, true)),
-							expressions
-						),
-						b.literal(flags)
-					]);
+					add_template(template_name, [join_template(state.template), b.literal(flags)]);
 
 					body.push(b.var(id, b.call(template_name)));
 				}
@@ -233,6 +203,31 @@ export function Fragment(node, context) {
 	}
 
 	return b.block(body);
+}
+
+/**
+ * @param {Array<string | Expression>} items
+ */
+function join_template(items) {
+	let quasi = b.quasi('');
+	const template = b.template([quasi], []);
+
+	for (const item of items) {
+		if (typeof item === 'string') {
+			quasi.value.cooked += item;
+		} else {
+			template.expressions.push(item);
+			template.quasis.push((quasi = b.quasi('')));
+		}
+	}
+
+	for (const quasi of template.quasis) {
+		quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
+	}
+
+	quasi.tail = true;
+
+	return template;
 }
 
 /**

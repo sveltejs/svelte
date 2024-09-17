@@ -403,9 +403,9 @@ const a11y_required_attributes = {
 	object: ['title', 'aria-label', 'aria-labelledby']
 };
 const a11y_distracting_elements = ['blink', 'marquee'];
+
+// this excludes `<a>` and `<button>` because they are handled separately
 const a11y_required_content = [
-	// anchor-has-content
-	'a',
 	// heading-has-content
 	'h1',
 	'h2',
@@ -989,16 +989,17 @@ export function check_element(node, state) {
 	}
 
 	// element-specific checks
-	let contains_a11y_label = false;
+	const is_labelled = attribute_map.has('aria-label') || attribute_map.has('aria-labelledby');
+
+	if (node.name === 'a' || node.name === 'button') {
+		const is_hidden = get_static_value(attribute_map.get('aria-hidden')) === 'true';
+
+		if (!is_hidden && !is_labelled && !has_content(node)) {
+			w.a11y_consider_explicit_label(node);
+		}
+	}
 
 	if (node.name === 'a') {
-		const aria_label_attribute = attribute_map.get('aria-label');
-		if (aria_label_attribute) {
-			if (get_static_value(aria_label_attribute) !== '') {
-				contains_a11y_label = true;
-			}
-		}
-
 		const href = attribute_map.get('href') || attribute_map.get('xlink:href');
 		if (href) {
 			const href_value = get_static_text_value(href);
@@ -1139,11 +1140,34 @@ export function check_element(node, state) {
 
 	// Check content
 	if (
-		!contains_a11y_label &&
+		!is_labelled &&
 		!has_contenteditable_binding &&
 		a11y_required_content.includes(node.name) &&
-		node.fragment.nodes.length === 0
+		!has_content(node)
 	) {
 		w.a11y_missing_content(node, node.name);
+	}
+}
+
+/**
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ */
+function has_content(element) {
+	for (const node of element.fragment.nodes) {
+		if (node.type === 'Text') {
+			if (node.data.trim() === '') {
+				continue;
+			}
+		}
+
+		if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
+			if (!has_content(node)) {
+				continue;
+			}
+		}
+
+		// assume everything else has content — this will result in false positives
+		// (e.g. an empty `{#if ...}{/if}`) but that's probably fine
+		return true;
 	}
 }

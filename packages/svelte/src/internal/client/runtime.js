@@ -640,6 +640,7 @@ function process_effects(effect, collected_effects) {
 				effects.push(current_effect);
 			}
 		}
+
 		var sibling = current_effect.next;
 
 		if (sibling === null) {

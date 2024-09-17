@@ -9,7 +9,7 @@ import * as b from '../../../../utils/builders.js';
  * @param {ComponentContext} context
  */
 export function HtmlTag(node, context) {
-	context.state.template.push_quasi('<!>');
+	context.state.template.push('<!>');
 
 	// push into init, so that bindings run afterwards, which might trigger another run and override hydration
 	context.state.init.push(

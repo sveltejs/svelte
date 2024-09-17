@@ -50,6 +50,7 @@ export const codes = [
 	"a11y_autocomplete_valid",
 	"a11y_autofocus",
 	"a11y_click_events_have_key_events",
+	"a11y_consider_explicit_label",
 	"a11y_distracting_elements",
 	"a11y_figcaption_index",
 	"a11y_figcaption_parent",
@@ -172,6 +173,14 @@ export function a11y_autofocus(node) {
  */
 export function a11y_click_events_have_key_events(node) {
 	w(node, "a11y_click_events_have_key_events", "Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type=\"button\">` or `<a>` might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details");
+}
+
+/**
+ * Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute
+ * @param {null | NodeLike} node
+ */
+export function a11y_consider_explicit_label(node) {
+	w(node, "a11y_consider_explicit_label", "Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute");
 }
 
 /**
@@ -355,12 +364,12 @@ export function a11y_missing_attribute(node, name, article, sequence) {
 }
 
 /**
- * `<%name%>` element should have child content
+ * `<%name%>` element should contain text
  * @param {null | NodeLike} node
  * @param {string} name
  */
 export function a11y_missing_content(node, name) {
-	w(node, "a11y_missing_content", `\`<${name}>\` element should have child content`);
+	w(node, "a11y_missing_content", `\`<${name}>\` element should contain text`);
 }
 
 /**

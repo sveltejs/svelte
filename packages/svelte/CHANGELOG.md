@@ -1,5 +1,25 @@
 # svelte
 
+## 5.0.0-next.249
+
+### Patch Changes
+
+- fix: ensure snapshot logs don't affect dependency graph ([#13286](https://github.com/sveltejs/svelte/pull/13286))
+
+- fix: allow custom element styles to be updated in HMR mode ([#13225](https://github.com/sveltejs/svelte/pull/13225))
+
+- fix: inject styles correctly when mounting inside an iframe ([#13225](https://github.com/sveltejs/svelte/pull/13225))
+
+## 5.0.0-next.248
+
+### Patch Changes
+
+- feat: provide guidance in browser console when logging $state objects ([#13142](https://github.com/sveltejs/svelte/pull/13142))
+
+- fix: ensure correct parent effect is associated with render effects ([#13274](https://github.com/sveltejs/svelte/pull/13274))
+
+- feat: unwrap function expressions where possible, and optimise bindings ([#13269](https://github.com/sveltejs/svelte/pull/13269))
+
 ## 5.0.0-next.247
 
 ### Patch Changes
