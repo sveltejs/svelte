@@ -99,11 +99,11 @@ import App from './App.svelte';
 
 In Svelte 4, rendering a component to a string also returned the CSS of all components. In Svelte 5, this is no longer the case by default because most of the time you're using a tooling chain that takes care of it in other ways (like SvelteKit). If you need CSS to be returned from `render`, you can set the `css` compiler option to `'injected'` and it will add `<style>` elements to the `head`.
 
-You can set this option:
+There are several ways to set this option:
 
-- Globally through the `compilerOption` property in your svelte config.
-- On a per component basis through the `<svelte:options css="injected" />` tag.
-- Dynamically using the [`dynamicCompileOption`](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/config.md#dynamiccompileoptions) property of `vite-plugin-svelte`
+- Globally, via the `compilerOptions.css` option in your `svelte.config.js` or the options passed to `svelte.compile`
+- Dynamically, using [`dynamicCompileOptions`](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/config.md#dynamiccompileoptions) in `vite-plugin-svelte`
+- Per-component, with `<svelte:options css="injected" />` (this will override options set any other way)
 
 ### Component typing changes
 
