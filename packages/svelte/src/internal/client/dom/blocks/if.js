@@ -10,8 +10,6 @@ import {
 } from '../hydration.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { HYDRATION_START_ELSE } from '../../../../constants.js';
-import { get } from '../../runtime.js';
-import { derived } from '../../reactivity/deriveds.js';
 
 /**
  * @param {TemplateNode} node
@@ -34,13 +32,13 @@ export function if_block(node, get_condition, consequent_fn, alternate_fn = null
 	/** @type {Effect | null} */
 	var alternate_effect = null;
 
-	/** We use a derived here to ensure stability of any depedencies due to the use of `pause_effect` */
-	var derived_condition = derived(() => !!get_condition());
+	/** @type {boolean | null} */
+	var condition = null;
 
 	var flags = elseif ? EFFECT_TRANSPARENT : 0;
 
 	block(() => {
-		var condition = get(derived_condition);
+		if (condition === (condition = !!get_condition())) return;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;

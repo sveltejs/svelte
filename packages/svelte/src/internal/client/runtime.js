@@ -370,7 +370,12 @@ function remove_reaction(signal, dependency) {
 	}
 	// If the derived has no reactions, then we can disconnect it from the graph,
 	// allowing it to either reconnect in the future, or be GC'd by the VM.
-	if (reactions === null && (dependency.f & DERIVED) !== 0) {
+	if (
+		reactions === null &&
+		(dependency.f & DERIVED) !== 0 &&
+		// If we have this dependency in our new_deps then we shouldn't disconnect it
+		(new_deps === null || !new_deps.includes(dependency))
+	) {
 		set_signal_status(dependency, MAYBE_DIRTY);
 		// If we are working with a derived that is owned by an effect, then mark it as being
 		// disconnected.

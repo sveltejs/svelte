@@ -1,9 +1,7 @@
 /** @import { Effect, TemplateNode } from '#client' */
 import { UNINITIALIZED } from '../../../../constants.js';
-import { derived } from '../../reactivity/deriveds.js';
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
 import { safe_not_equal } from '../../reactivity/equality.js';
-import { get } from '../../runtime.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 
 /**
@@ -26,11 +24,8 @@ export function key_block(node, get_key, render_fn) {
 	/** @type {Effect} */
 	var effect;
 
-	/** We use a derived here to ensure stability of any depedencies due to the use of `pause_effect` */
-	var derived_key = derived(get_key);
-
 	block(() => {
-		if (safe_not_equal(key, (key = get(derived_key)))) {
+		if (safe_not_equal(key, (key = get_key()))) {
 			if (effect) {
 				pause_effect(effect);
 			}
