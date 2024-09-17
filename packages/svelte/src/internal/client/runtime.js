@@ -625,6 +625,7 @@ function process_effects(effect, collected_effects) {
 			if (check_dirtiness(current_effect)) {
 				if ((flags & RENDER_EFFECT) !== 0) {
 					update_effect(current_effect);
+					has_dirty_children = true;
 				} else {
 					effects.push(current_effect);
 				}
