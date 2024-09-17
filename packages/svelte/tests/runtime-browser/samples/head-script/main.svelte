@@ -7,4 +7,4 @@
 		});
 	</script>
 </svelte:head>
-<button aria-label="Button"></button>
+<button>click me</button>
