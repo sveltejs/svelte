@@ -9,7 +9,7 @@ import {
 	init_operations
 } from './dom/operations.js';
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
-import { push, pop, current_component_context, current_effect } from './runtime.js';
+import { push, pop, component_context, active_effect } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
 import {
 	hydrate_next,
@@ -228,7 +228,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 		branch(() => {
 			if (context) {
 				push({});
-				var ctx = /** @type {ComponentContext} */ (current_component_context);
+				var ctx = /** @type {ComponentContext} */ (component_context);
 				ctx.c = context;
 			}
 
@@ -247,7 +247,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			should_intro = true;
 
 			if (hydrating) {
-				/** @type {Effect} */ (current_effect).nodes_end = hydrate_node;
+				/** @type {Effect} */ (active_effect).nodes_end = hydrate_node;
 			}
 
 			if (context) {

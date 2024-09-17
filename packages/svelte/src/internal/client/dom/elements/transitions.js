@@ -1,7 +1,7 @@
 /** @import { AnimateFn, Animation, AnimationConfig, EachItem, Effect, TransitionFn, TransitionManager } from '#client' */
 import { noop, is_function } from '../../../shared/utils.js';
 import { effect } from '../../reactivity/effects.js';
-import { current_effect, untrack } from '../../runtime.js';
+import { active_effect, untrack } from '../../runtime.js';
 import { loop } from '../../loop.js';
 import { should_intro } from '../../render.js';
 import { current_each_item } from '../blocks/each.js';
@@ -243,7 +243,7 @@ export function transition(flags, element, get_fn, get_params) {
 		}
 	};
 
-	var e = /** @type {Effect} */ (current_effect);
+	var e = /** @type {Effect} */ (active_effect);
 
 	(e.transitions ??= []).push(transition);
 

@@ -39,7 +39,7 @@ const FLUSH_SYNC = 1;
 /** @param {WeakSet<Error>} value */
 const handled_errors = new WeakSet();
 // Used for controlling the flush of effects.
-let current_scheduler_mode = FLUSH_MICROTASK;
+let scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
 
@@ -59,7 +59,7 @@ export function set_is_destroying_effect(value) {
 // Handle effect queues
 
 /** @type {Effect[]} */
-let current_queued_root_effects = [];
+let queued_root_effects = [];
 
 let flush_count = 0;
 /** @type {Effect[]} Stack of effects, dev only */
@@ -67,19 +67,19 @@ let dev_effect_stack = [];
 // Handle signal reactivity tree dependencies and reactions
 
 /** @type {null | Reaction} */
-export let current_reaction = null;
+export let active_reaction = null;
 
 /** @param {null | Reaction} reaction */
-export function set_current_reaction(reaction) {
-	current_reaction = reaction;
+export function set_active_reaction(reaction) {
+	active_reaction = reaction;
 }
 
 /** @type {null | Effect} */
-export let current_effect = null;
+export let active_effect = null;
 
 /** @param {null | Effect} effect */
-export function set_current_effect(effect) {
-	current_effect = effect;
+export function set_active_effect(effect) {
+	active_effect = effect;
 }
 
 /**
@@ -111,11 +111,11 @@ let skipped_deps = 0;
  * so that the dependency can be added to the effect later on if it then reads it
  * @type {null | Source[]}
  */
-export let current_untracked_writes = null;
+export let untracked_writes = null;
 
 /** @param {null | Source[]} value */
-export function set_current_untracked_writes(value) {
-	current_untracked_writes = value;
+export function set_untracked_writes(value) {
+	untracked_writes = value;
 }
 
 /** @type {number} Used by sources and deriveds for handling updates to unowned deriveds */
@@ -123,18 +123,18 @@ let current_version = 0;
 
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
-export let current_skip_reaction = false;
+export let skip_reaction = false;
 // Handle collecting all signals which are read during a specific time frame
 export let is_signals_recorded = false;
 let captured_signals = new Set();
 
 // Handling runtime component context
 /** @type {ComponentContext | null} */
-export let current_component_context = null;
+export let component_context = null;
 
 /** @param {ComponentContext | null} context */
-export function set_current_component_context(context) {
-	current_component_context = context;
+export function set_component_context(context) {
+	component_context = context;
 }
 
 /**
@@ -160,7 +160,7 @@ export function increment_version() {
 
 /** @returns {boolean} */
 export function is_runes() {
-	return current_component_context !== null && current_component_context.l === null;
+	return component_context !== null && component_context.l === null;
 }
 
 /**
@@ -198,13 +198,13 @@ export function check_dirtiness(reaction) {
 					update_derived(/** @type {Derived} */ (dependency));
 				}
 
-				// If we are working with an unowned signal as part of an effect (due to !current_skip_reaction)
+				// If we are working with an unowned signal as part of an effect (due to !skip_reaction)
 				// and the version hasn't changed, we still need to check that this reaction
 				// is linked to the dependency source – otherwise future updates will not be caught.
 				if (
 					is_unowned &&
-					current_effect !== null &&
-					!current_skip_reaction &&
+					active_effect !== null &&
+					!skip_reaction &&
 					!dependency?.reactions?.includes(reaction)
 				) {
 					(dependency.reactions ??= []).push(reaction);
@@ -296,16 +296,16 @@ function handle_error(error, effect, component_context) {
 export function update_reaction(reaction) {
 	var previous_deps = new_deps;
 	var previous_skipped_deps = skipped_deps;
-	var previous_untracked_writes = current_untracked_writes;
-	var previous_reaction = current_reaction;
-	var previous_skip_reaction = current_skip_reaction;
+	var previous_untracked_writes = untracked_writes;
+	var previous_reaction = active_reaction;
+	var previous_skip_reaction = skip_reaction;
 	var prev_derived_sources = derived_sources;
 
 	new_deps = /** @type {null | Value[]} */ (null);
 	skipped_deps = 0;
-	current_untracked_writes = null;
-	current_reaction = (reaction.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
-	current_skip_reaction = !is_flushing_effect && (reaction.f & UNOWNED) !== 0;
+	untracked_writes = null;
+	active_reaction = (reaction.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
+	skip_reaction = !is_flushing_effect && (reaction.f & UNOWNED) !== 0;
 	derived_sources = null;
 
 	try {
@@ -326,7 +326,7 @@ export function update_reaction(reaction) {
 				reaction.deps = deps = new_deps;
 			}
 
-			if (!current_skip_reaction) {
+			if (!skip_reaction) {
 				for (i = skipped_deps; i < deps.length; i++) {
 					(deps[i].reactions ??= []).push(reaction);
 				}
@@ -340,9 +340,9 @@ export function update_reaction(reaction) {
 	} finally {
 		new_deps = previous_deps;
 		skipped_deps = previous_skipped_deps;
-		current_untracked_writes = previous_untracked_writes;
-		current_reaction = previous_reaction;
-		current_skip_reaction = previous_skip_reaction;
+		untracked_writes = previous_untracked_writes;
+		active_reaction = previous_reaction;
+		skip_reaction = previous_skip_reaction;
 		derived_sources = prev_derived_sources;
 	}
 }
@@ -424,13 +424,11 @@ export function update_effect(effect) {
 
 	set_signal_status(effect, CLEAN);
 
-	var component_context = effect.ctx;
+	var previous_effect = active_effect;
+	var previous_component_context = component_context;
 
-	var previous_effect = current_effect;
-	var previous_component_context = current_component_context;
-
-	current_effect = effect;
-	current_component_context = component_context;
+	active_effect = effect;
+	component_context = effect.ctx;
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
@@ -451,10 +449,10 @@ export function update_effect(effect) {
 			dev_effect_stack.push(effect);
 		}
 	} catch (error) {
-		handle_error(/** @type {Error} */ (error), effect, current_component_context);
+		handle_error(/** @type {Error} */ (error), effect, previous_component_context);
 	} finally {
-		current_effect = previous_effect;
-		current_component_context = previous_component_context;
+		active_effect = previous_effect;
+		component_context = previous_component_context;
 
 		if (DEV) {
 			dev_current_component_function = previous_component_fn;
@@ -559,8 +557,8 @@ function process_deferred() {
 	if (flush_count > 1001) {
 		return;
 	}
-	const previous_queued_root_effects = current_queued_root_effects;
-	current_queued_root_effects = [];
+	const previous_queued_root_effects = queued_root_effects;
+	queued_root_effects = [];
 	flush_queued_root_effects(previous_queued_root_effects);
 	if (!is_micro_task_queued) {
 		flush_count = 0;
@@ -575,7 +573,7 @@ function process_deferred() {
  * @returns {void}
  */
 export function schedule_effect(signal) {
-	if (current_scheduler_mode === FLUSH_MICROTASK) {
+	if (scheduler_mode === FLUSH_MICROTASK) {
 		if (!is_micro_task_queued) {
 			is_micro_task_queued = true;
 			queueMicrotask(process_deferred);
@@ -594,7 +592,7 @@ export function schedule_effect(signal) {
 		}
 	}
 
-	current_queued_root_effects.push(effect);
+	queued_root_effects.push(effect);
 }
 
 /**
@@ -685,8 +683,8 @@ function process_effects(effect, collected_effects) {
  * @returns {any}
  */
 export function flush_sync(fn) {
-	var previous_scheduler_mode = current_scheduler_mode;
-	var previous_queued_root_effects = current_queued_root_effects;
+	var previous_scheduler_mode = scheduler_mode;
+	var previous_queued_root_effects = queued_root_effects;
 
 	try {
 		infinite_loop_guard();
@@ -694,8 +692,8 @@ export function flush_sync(fn) {
 		/** @type {Effect[]} */
 		const root_effects = [];
 
-		current_scheduler_mode = FLUSH_SYNC;
-		current_queued_root_effects = root_effects;
+		scheduler_mode = FLUSH_SYNC;
+		queued_root_effects = root_effects;
 		is_micro_task_queued = false;
 
 		flush_queued_root_effects(previous_queued_root_effects);
@@ -703,7 +701,7 @@ export function flush_sync(fn) {
 		var result = fn?.();
 
 		flush_tasks();
-		if (current_queued_root_effects.length > 0 || root_effects.length > 0) {
+		if (queued_root_effects.length > 0 || root_effects.length > 0) {
 			flush_sync();
 		}
 
@@ -714,8 +712,8 @@ export function flush_sync(fn) {
 
 		return result;
 	} finally {
-		current_scheduler_mode = previous_scheduler_mode;
-		current_queued_root_effects = previous_queued_root_effects;
+		scheduler_mode = previous_scheduler_mode;
+		queued_root_effects = previous_queued_root_effects;
 	}
 }
 
@@ -747,11 +745,11 @@ export function get(signal) {
 	}
 
 	// Register the dependency on the current reaction signal.
-	if (current_reaction !== null) {
+	if (active_reaction !== null) {
 		if (derived_sources !== null && derived_sources.includes(signal)) {
 			e.state_unsafe_local_read();
 		}
-		var deps = current_reaction.deps;
+		var deps = active_reaction.deps;
 
 		// If the signal is accessing the same dependencies in the same
 		// order as it did last time, increment `skipped_deps`
@@ -765,14 +763,14 @@ export function get(signal) {
 		}
 
 		if (
-			current_untracked_writes !== null &&
-			current_effect !== null &&
-			(current_effect.f & CLEAN) !== 0 &&
-			(current_effect.f & BRANCH_EFFECT) === 0 &&
-			current_untracked_writes.includes(signal)
+			untracked_writes !== null &&
+			active_effect !== null &&
+			(active_effect.f & CLEAN) !== 0 &&
+			(active_effect.f & BRANCH_EFFECT) === 0 &&
+			untracked_writes.includes(signal)
 		) {
-			set_signal_status(current_effect, DIRTY);
-			schedule_effect(current_effect);
+			set_signal_status(active_effect, DIRTY);
+			schedule_effect(active_effect);
 		}
 	}
 
@@ -843,12 +841,12 @@ export function invalidate_inner_signals(fn) {
  * @returns {T}
  */
 export function untrack(fn) {
-	const previous_reaction = current_reaction;
+	const previous_reaction = active_reaction;
 	try {
-		current_reaction = null;
+		active_reaction = null;
 		return fn();
 	} finally {
-		current_reaction = previous_reaction;
+		active_reaction = previous_reaction;
 	}
 }
 
@@ -877,7 +875,7 @@ export function getContext(key) {
 	const result = /** @type {T} */ (context_map.get(key));
 
 	if (DEV) {
-		const fn = /** @type {ComponentContext} */ (current_component_context).function;
+		const fn = /** @type {ComponentContext} */ (component_context).function;
 		if (fn) {
 			add_owner(result, fn, true);
 		}
@@ -931,7 +929,7 @@ export function getAllContexts() {
 	const context_map = get_or_init_context_map('getAllContexts');
 
 	if (DEV) {
-		const fn = current_component_context?.function;
+		const fn = component_context?.function;
 		if (fn) {
 			for (const value of context_map.values()) {
 				add_owner(value, fn, true);
@@ -947,13 +945,11 @@ export function getAllContexts() {
  * @returns {Map<unknown, unknown>}
  */
 function get_or_init_context_map(name) {
-	if (current_component_context === null) {
+	if (component_context === null) {
 		lifecycle_outside_component(name);
 	}
 
-	return (current_component_context.c ??= new Map(
-		get_parent_context(current_component_context) || undefined
-	));
+	return (component_context.c ??= new Map(get_parent_context(component_context) || undefined));
 }
 
 /**
@@ -1017,8 +1013,8 @@ export function exclude_from_object(obj, keys) {
  * @returns {void}
  */
 export function push(props, runes = false, fn) {
-	current_component_context = {
-		p: current_component_context,
+	component_context = {
+		p: component_context,
 		c: null,
 		e: null,
 		m: false,
@@ -1028,7 +1024,7 @@ export function push(props, runes = false, fn) {
 	};
 
 	if (!runes) {
-		current_component_context.l = {
+		component_context.l = {
 			s: null,
 			u: null,
 			r1: [],
@@ -1038,7 +1034,7 @@ export function push(props, runes = false, fn) {
 
 	if (DEV) {
 		// component function
-		current_component_context.function = fn;
+		component_context.function = fn;
 		dev_current_component_function = fn;
 	}
 }
@@ -1049,7 +1045,7 @@ export function push(props, runes = false, fn) {
  * @returns {T}
  */
 export function pop(component) {
-	const context_stack_item = current_component_context;
+	const context_stack_item = component_context;
 	if (context_stack_item !== null) {
 		if (component !== undefined) {
 			context_stack_item.x = component;
@@ -1068,7 +1064,7 @@ export function pop(component) {
 				set_current_effect(previous_effect);
 			}
 		}
-		current_component_context = context_stack_item.p;
+		component_context = context_stack_item.p;
 		if (DEV) {
 			dev_current_component_function = context_stack_item.p?.function ?? null;
 		}

@@ -2,7 +2,7 @@
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { create_text, get_first_child } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
-import { current_effect } from '../runtime.js';
+import { active_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
 import { queue_micro_task } from './task.js';
 
@@ -11,7 +11,7 @@ import { queue_micro_task } from './task.js';
  * @param {TemplateNode | null} end
  */
 export function assign_nodes(start, end) {
-	var effect = /** @type {Effect} */ (current_effect);
+	var effect = /** @type {Effect} */ (active_effect);
 	if (effect.nodes_start === null) {
 		effect.nodes_start = start;
 		effect.nodes_end = end;
@@ -192,7 +192,7 @@ function run_scripts(node) {
 		/** @type {HTMLElement} */ (node).tagName === 'SCRIPT'
 			? [/** @type {HTMLScriptElement} */ (node)]
 			: node.querySelectorAll('script');
-	const effect = /** @type {Effect} */ (current_effect);
+	const effect = /** @type {Effect} */ (active_effect);
 
 	for (const script of scripts) {
 		const clone = document.createElement('script');
@@ -274,7 +274,7 @@ export function comment() {
  */
 export function append(anchor, dom) {
 	if (hydrating) {
-		/** @type {Effect} */ (current_effect).nodes_end = hydrate_node;
+		/** @type {Effect} */ (active_effect).nodes_end = hydrate_node;
 		hydrate_next();
 		return;
 	}
