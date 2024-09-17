@@ -989,14 +989,17 @@ export function check_element(node, state) {
 	}
 
 	// element-specific checks
-	const is_hidden = get_static_value(attribute_map.get('aria-hidden')) === 'true';
 	const is_labelled = attribute_map.has('aria-label') || attribute_map.has('aria-labelledby');
 
-	if (node.name === 'a') {
-		if (!is_hidden && !has_content(node) && !is_labelled) {
+	if (node.name === 'a' || node.name === 'button') {
+		const is_hidden = get_static_value(attribute_map.get('aria-hidden')) === 'true';
+
+		if (!is_hidden && !is_labelled && !has_content(node)) {
 			w.a11y_consider_explicit_label(node);
 		}
+	}
 
+	if (node.name === 'a') {
 		const href = attribute_map.get('href') || attribute_map.get('xlink:href');
 		if (href) {
 			const href_value = get_static_text_value(href);
@@ -1020,12 +1023,6 @@ export function check_element(node, state) {
 			if (!has_attribute) {
 				warn_missing_attribute(node, required_attributes);
 			}
-		}
-	}
-
-	if (node.name === 'button') {
-		if (!is_hidden && !has_content(node) && !is_labelled) {
-			w.a11y_consider_explicit_label(node);
 		}
 	}
 
