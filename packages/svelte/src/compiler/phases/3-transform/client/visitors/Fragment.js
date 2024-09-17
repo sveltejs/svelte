@@ -206,31 +206,28 @@ export function Fragment(node, context) {
 }
 
 /**
- * @param {Array<string | Expression>} template
+ * @param {Array<string | Expression>} items
  */
-function join_template(template) {
+function join_template(items) {
 	let quasi = b.quasi('');
-	const quasis = [quasi];
+	const template = b.template([quasi], []);
 
-	/** @type {Expression[]} */
-	const expressions = [];
-
-	for (const item of template) {
+	for (const item of items) {
 		if (typeof item === 'string') {
 			quasi.value.cooked += item;
 		} else {
-			expressions.push(item);
-			quasis.push((quasi = b.quasi('')));
+			template.expressions.push(item);
+			template.quasis.push((quasi = b.quasi('')));
 		}
 	}
 
-	for (const quasi of quasis) {
+	for (const quasi of template.quasis) {
 		quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
 	}
 
 	quasi.tail = true;
 
-	return b.template(quasis, expressions);
+	return template;
 }
 
 /**
