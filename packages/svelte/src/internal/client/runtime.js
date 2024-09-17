@@ -583,17 +583,21 @@ export function schedule_effect(signal) {
 
 	var effect = signal;
 
-	while (effect.parent !== null) {
-		effect = effect.parent;
-
+	while (true) {
 		if ((effect.f & EFFECT_HAS_DIRTY_CHILDREN) !== 0) {
 			return;
 		}
 
-		effect.f |= EFFECT_HAS_DIRTY_CHILDREN;
-	}
+		var parent = effect.parent;
 
-	queued_root_effects.push(effect);
+		if (parent === null) {
+			queued_root_effects.push(effect);
+			return;
+		}
+
+		effect.f |= EFFECT_HAS_DIRTY_CHILDREN;
+		effect = parent;
+	}
 }
 
 /**
@@ -608,10 +612,6 @@ export function schedule_effect(signal) {
  * @returns {void}
  */
 function process_effects(effect, collected_effects) {
-	if ((effect.f & EFFECT_HAS_DIRTY_CHILDREN) !== 0) {
-		effect.f ^= EFFECT_HAS_DIRTY_CHILDREN;
-	}
-
 	var current_effect = effect.first;
 	var deferred = [];
 
