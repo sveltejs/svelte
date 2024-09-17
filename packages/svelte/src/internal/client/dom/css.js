@@ -37,7 +37,7 @@ export function append_styles(anchor, css, is_custom_element) {
 			target.appendChild(style);
 
 			if (DEV) {
-				register_css_cleanup(css.hash, () => target.removeChild(style));
+				register_css_cleanup(css.hash, style);
 			}
 		}
 	});
