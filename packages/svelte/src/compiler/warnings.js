@@ -364,12 +364,12 @@ export function a11y_missing_attribute(node, name, article, sequence) {
 }
 
 /**
- * `<%name%>` element should have child content
+ * `<%name%>` element should contain text
  * @param {null | NodeLike} node
  * @param {string} name
  */
 export function a11y_missing_content(node, name) {
-	w(node, "a11y_missing_content", `\`<${name}>\` element should have child content`);
+	w(node, "a11y_missing_content", `\`<${name}>\` element should contain text`);
 }
 
 /**

@@ -403,9 +403,9 @@ const a11y_required_attributes = {
 	object: ['title', 'aria-label', 'aria-labelledby']
 };
 const a11y_distracting_elements = ['blink', 'marquee'];
+
+// this excludes `<a>` and `<button>` because they are handled separately
 const a11y_required_content = [
-	// anchor-has-content
-	'a',
 	// heading-has-content
 	'h1',
 	'h2',
@@ -989,19 +989,12 @@ export function check_element(node, state) {
 	}
 
 	// element-specific checks
-	let missing_content_warning_fired = false;
-
 	const is_hidden = get_static_value(attribute_map.get('aria-hidden')) === 'true';
 	const is_labelled = attribute_map.has('aria-label') || attribute_map.has('aria-labelledby');
 
 	if (node.name === 'a') {
 		if (!is_hidden && !has_content(node) && !is_labelled) {
-			if (node.fragment.nodes.length === 0 && !missing_content_warning_fired) {
-				w.a11y_missing_content(node, node.name);
-				missing_content_warning_fired = true;
-			} else {
-				w.a11y_consider_explicit_label(node);
-			}
+			w.a11y_consider_explicit_label(node);
 		}
 
 		const href = attribute_map.get('href') || attribute_map.get('xlink:href');
@@ -1153,16 +1146,14 @@ export function check_element(node, state) {
 		!is_labelled &&
 		!has_contenteditable_binding &&
 		a11y_required_content.includes(node.name) &&
-		node.fragment.nodes.length === 0 &&
-		!missing_content_warning_fired
+		!has_content(node)
 	) {
 		w.a11y_missing_content(node, node.name);
-		missing_content_warning_fired = true;
 	}
 }
 
 /**
- * @param {RegularElement | SvelteElement} element
+ * @param {AST.RegularElement | AST.SvelteElement} element
  */
 function has_content(element) {
 	for (const node of element.fragment.nodes) {
