@@ -23,6 +23,6 @@ export default test({
 		button?.dispatchEvent(click);
 		flushSync();
 
-		assert.deepEqual(logs, ['mount', 'unmount']);
+		assert.deepEqual(logs, ['mount', 'unmount', 'mount']);
 	}
 });
