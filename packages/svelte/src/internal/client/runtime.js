@@ -631,8 +631,12 @@ function process_effects(effect, collected_effects) {
 			}
 
 			if (has_dirty_children) {
-				current_effect = current_effect.first;
-				continue;
+				var first = current_effect.first;
+
+				if (first) {
+					current_effect = first;
+					continue;
+				}
 			}
 		}
 
