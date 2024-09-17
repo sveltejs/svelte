@@ -1,32 +1,31 @@
 /** @type {Map<String, Set<HTMLStyleElement>} */
-var styles_cleanup = new Map();
+var all_styles = new Map();
 
 /**
  * @param {String} hash
  * @param {HTMLStyleElement} style
  */
-export function register_css_cleanup(hash, style) {
-	let hash_cleanup = styles_cleanup.get(hash);
+export function register_style(hash, style) {
+	var styles = all_styles.get(hash);
 
-	if (!hash_cleanup) {
-		hash_cleanup = new Set();
-		styles_cleanup.set(hash, hash_cleanup);
+	if (!styles) {
+		styles = new Set();
+		all_styles.set(hash, styles);
 	}
 
-	hash_cleanup.add(style);
+	styles.add(style);
 }
 
 /**
  * @param {String} hash
  */
 export function cleanup_styles(hash) {
-	const hash_cleanup = styles_cleanup.get(hash);
+	var styles = all_styles.get(hash);
+	if (!styles) return;
 
-	if (hash_cleanup) {
-		for (const style of hash_cleanup) {
-			style.remove();
-		}
-
-		styles_cleanup.delete(hash);
+	for (const style of styles) {
+		style.remove();
 	}
+
+	all_styles.delete(hash);
 }
