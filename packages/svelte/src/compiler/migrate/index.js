@@ -368,8 +368,18 @@ const instance_script = {
 
 			// state
 			if (declarator.init) {
-				state.str.prependLeft(/** @type {number} */ (declarator.init.start), '$state(');
-				state.str.appendRight(/** @type {number} */ (declarator.init.end), ')');
+				// we want to special case SequenceExpression because parenthesis are not included in start/end
+				// and moving a sequence in a function call will treat the comma as different arguments
+				// so we add an extra pair of parenthesis
+				const is_sequence = declarator.init.type === 'SequenceExpression';
+				state.str.prependLeft(
+					/** @type {number} */ (declarator.init.start),
+					`$state(${is_sequence ? '(' : ''}`
+				);
+				state.str.appendRight(
+					/** @type {number} */ (declarator.init.end),
+					`${is_sequence ? ')' : ''})`
+				);
 			} else {
 				state.str.prependLeft(
 					/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
@@ -422,18 +432,45 @@ const instance_script = {
 					/** @type {number} */ (node.body.expression.start),
 					'let '
 				);
+				// we want to special case SequenceExpression because parenthesis are not included in start/end
+				// and moving a sequence in a function call will treat the comma as different arguments
+				// so we add an extra pair of parenthesis
+				const is_sequence = node.body.expression.right.type === 'SequenceExpression';
 				state.str.prependRight(
 					/** @type {number} */ (node.body.expression.right.start),
-					'$derived('
+					`$derived(${is_sequence ? '(' : ''}`
 				);
-				if (node.body.expression.right.end !== node.end) {
+				state.str.appendLeft(
+					/** @type {number} */ (node.body.expression.right.end),
+					`${is_sequence ? ')' : ''})`
+				);
+
+				/**
+				 * To check if the whole expression is surrounded by parenthesis like in this case
+				 *
+				 * ```
+				 * $: ({ quadruple } = { quadruple: count*2 })
+				 * ```
+				 * we can't just use the end because semicolons are also not included in so we check
+				 * that the end of the right expression is different from the end of the labeled statement
+				 * and that the start of the body of the labeled statement (the assignment) is different from
+				 * the start of the expression.
+				 */
+				if (
+					node.body.expression.right.end !== node.end &&
+					node.body.start !== node.body.expression.start
+				) {
+					// get the last char to avoid wiping the semicolon from people code
+					const last_char = state.str.original.at(/** @type {number} */ (node.end) - 1);
+
+					// wipe everything to the right of the right expression and replace it with the
+					// semicolon (+ the special case for the sequence) since we already replaced the initial
+					// parenthesis by replacing the labeled statement with the derived
 					state.str.update(
 						/** @type {number} */ (node.body.expression.right.end),
 						/** @type {number} */ (node.end),
-						');'
+						`${is_sequence ? ')' : ''}${last_char === ';' ? ';' : ''}`
 					);
-				} else {
-					state.str.appendLeft(/** @type {number} */ (node.end), ');');
 				}
 				return;
 			} else {
