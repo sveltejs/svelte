@@ -8,7 +8,7 @@ import { untrack } from '../runtime.js';
  * @param  {...any} objects
  */
 export function log_if_contains_state(method, ...objects) {
-	return untrack(() => {
+	untrack(() => {
 		try {
 			let has_state = false;
 			const transformed = [];
@@ -28,8 +28,8 @@ export function log_if_contains_state(method, ...objects) {
 				// eslint-disable-next-line no-console
 				console.log('%c[snapshot]', 'color: grey', ...transformed);
 			}
-		} finally {
-			return objects;
-		}
+		} catch {}
 	});
+
+	return objects;
 }
