@@ -1010,7 +1010,7 @@ export function check_element(node, state) {
 				w.a11y_missing_content(node, node.name);
 				missing_content_warning_fired = true;
 			} else {
-				w.a11y_consider_explicit_label(node, node.name);
+				w.a11y_consider_explicit_label(node);
 			}
 		}
 
@@ -1042,7 +1042,7 @@ export function check_element(node, state) {
 
 	if (node.name === 'button') {
 		if (!is_hidden && !has_content(node) && !contains_a11y_label) {
-			w.a11y_consider_explicit_label(node, node.name);
+			w.a11y_consider_explicit_label(node);
 		}
 	}
 

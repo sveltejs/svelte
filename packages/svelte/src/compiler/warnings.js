@@ -176,12 +176,11 @@ export function a11y_click_events_have_key_events(node) {
 }
 
 /**
- * `<%element%>` element is empty and has no aria-label or aria-labelledby. Add content or an aria-label for better accessibility.
+ * Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute
  * @param {null | NodeLike} node
- * @param {string} element
  */
-export function a11y_consider_explicit_label(node, element) {
-	w(node, "a11y_consider_explicit_label", `\`<${element}>\` element is empty and has no aria-label or aria-labelledby. Add content or an aria-label for better accessibility.`);
+export function a11y_consider_explicit_label(node) {
+	w(node, "a11y_consider_explicit_label", "Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute");
 }
 
 /**
