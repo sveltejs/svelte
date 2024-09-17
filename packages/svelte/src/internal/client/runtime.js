@@ -22,7 +22,8 @@ import {
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
-	DISCONNECTED
+	DISCONNECTED,
+	EFFECT_HAS_DIRTY_CHILDREN
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -586,15 +587,9 @@ export function schedule_effect(signal) {
 		effect = effect.parent;
 		var flags = effect.f;
 
-		// Branch effects are not part of the reactive signal graph as they can never have
-		// dependencies. As such, we can use effects can be CLEAN or MAYBE_DIRTY to signal
-		// that they contain an effect that is dirty and needs visiting in `process_effects`,
-		// and if not we can skip the branch entirely. This also doubles as being able to
-		// skip propagation up the graph in `schedule_effect` if we encounter a branch that
-		// is already MAYBE_DIRTY.
 		if ((flags & BRANCH_EFFECT) !== 0) {
 			if ((flags & CLEAN) === 0) return;
-			set_signal_status(effect, MAYBE_DIRTY);
+			set_signal_status(effect, EFFECT_HAS_DIRTY_CHILDREN);
 		}
 	}
 
@@ -626,7 +621,7 @@ function process_effects(effect, collected_effects) {
 
 		// Skip this branch if it's clean
 		if (is_active && (!is_branch || !is_clean)) {
-			if (is_branch) {
+			if ((flags & EFFECT_HAS_DIRTY_CHILDREN) !== 0) {
 				set_signal_status(current_effect, CLEAN);
 			}
 
