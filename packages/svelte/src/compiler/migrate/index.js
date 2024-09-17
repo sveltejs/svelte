@@ -368,18 +368,15 @@ const instance_script = {
 
 			// state
 			if (declarator.init) {
-				// we want to special case SequenceExpression because parenthesis are not included in start/end
-				// and moving a sequence in a function call will treat the comma as different arguments
-				// so we add an extra pair of parenthesis
-				const is_sequence = declarator.init.type === 'SequenceExpression';
-				state.str.prependLeft(
-					/** @type {number} */ (declarator.init.start),
-					`$state(${is_sequence ? '(' : ''}`
-				);
-				state.str.appendRight(
-					/** @type {number} */ (declarator.init.end),
-					`${is_sequence ? ')' : ''})`
-				);
+				let { start, end } = /** @type {{ start: number, end: number }} */ (declarator.init);
+
+				if (declarator.init.type === 'SequenceExpression') {
+					while (state.str.original[start] !== '(') start -= 1;
+					while (state.str.original[end - 1] !== ')') end += 1;
+				}
+
+				state.str.prependLeft(start, '$state(');
+				state.str.appendRight(end, ')');
 			} else {
 				state.str.prependLeft(
 					/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
@@ -426,52 +423,30 @@ const instance_script = {
 			const bindings = ids.map((id) => state.scope.get(id.name));
 			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
 			if (reassigned_bindings.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
+				let { start, end } = /** @type {{ start: number, end: number }} */ (
+					node.body.expression.right
+				);
+
 				// $derived
 				state.str.update(
 					/** @type {number} */ (node.start),
 					/** @type {number} */ (node.body.expression.start),
 					'let '
 				);
-				// we want to special case SequenceExpression because parenthesis are not included in start/end
-				// and moving a sequence in a function call will treat the comma as different arguments
-				// so we add an extra pair of parenthesis
-				const is_sequence = node.body.expression.right.type === 'SequenceExpression';
-				state.str.prependRight(
-					/** @type {number} */ (node.body.expression.right.start),
-					`$derived(${is_sequence ? '(' : ''}`
-				);
-				state.str.appendLeft(
-					/** @type {number} */ (node.body.expression.right.end),
-					`${is_sequence ? ')' : ''})`
-				);
 
-				/**
-				 * To check if the whole expression is surrounded by parenthesis like in this case
-				 *
-				 * ```
-				 * $: ({ quadruple } = { quadruple: count*2 })
-				 * ```
-				 * we can't just use the end because semicolons are also not included in so we check
-				 * that the end of the right expression is different from the end of the labeled statement
-				 * and that the start of the body of the labeled statement (the assignment) is different from
-				 * the start of the expression.
-				 */
-				if (
-					node.body.expression.right.end !== node.end &&
-					node.body.start !== node.body.expression.start
-				) {
-					// get the last char to avoid wiping the semicolon from people code
-					const last_char = state.str.original.at(/** @type {number} */ (node.end) - 1);
-
-					// wipe everything to the right of the right expression and replace it with the
-					// semicolon (+ the special case for the sequence) since we already replaced the initial
-					// parenthesis by replacing the labeled statement with the derived
-					state.str.update(
-						/** @type {number} */ (node.body.expression.right.end),
-						/** @type {number} */ (node.end),
-						`${is_sequence ? ')' : ''}${last_char === ';' ? ';' : ''}`
-					);
+				if (node.body.expression.right.type === 'SequenceExpression') {
+					while (state.str.original[start] !== '(') start -= 1;
+					while (state.str.original[end - 1] !== ')') end += 1;
 				}
+
+				state.str.prependRight(start, `$derived(`);
+
+				// in a case like `$: ({ a } = b())`, there's already a trailing parenthesis.
+				// otherwise, we need to add one
+				if (state.str.original[/** @type {number} */ (node.body.start)] !== '(') {
+					state.str.appendLeft(end, `)`);
+				}
+
 				return;
 			} else {
 				for (const binding of reassigned_bindings) {
