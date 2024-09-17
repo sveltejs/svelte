@@ -630,9 +630,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		return true;
 	} else {
 		if (inlinable_expression) {
-			context.state.template.push(` ${name}="`);
-			context.state.template.push(value);
-			context.state.template.push('"');
+			context.state.template.push(` ${name}="`, value, '"');
 		} else {
 			state.init.push(update);
 		}
