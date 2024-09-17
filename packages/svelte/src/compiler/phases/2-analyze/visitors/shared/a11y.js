@@ -989,22 +989,13 @@ export function check_element(node, state) {
 	}
 
 	// element-specific checks
-	let contains_a11y_label = false;
 	let missing_content_warning_fired = false;
 
-	const aria_hidden = attribute_map.get('aria-hidden');
-	const is_hidden = aria_hidden && get_static_value(aria_hidden) === 'true';
-
-	const aria_label = attribute_map.get('aria-label');
-	const aria_labelledby = attribute_map.get('aria-labelledby');
-
-	contains_a11y_label =
-		(aria_label && get_static_value(aria_label) !== '') ||
-		(aria_labelledby && get_static_value(aria_labelledby) !== '') ||
-		false;
+	const is_hidden = get_static_value(attribute_map.get('aria-hidden')) === 'true';
+	const is_labelled = attribute_map.has('aria-label') || attribute_map.has('aria-labelledby');
 
 	if (node.name === 'a') {
-		if (!is_hidden && !has_content(node) && !contains_a11y_label) {
+		if (!is_hidden && !has_content(node) && !is_labelled) {
 			if (node.fragment.nodes.length === 0 && !missing_content_warning_fired) {
 				w.a11y_missing_content(node, node.name);
 				missing_content_warning_fired = true;
@@ -1040,7 +1031,7 @@ export function check_element(node, state) {
 	}
 
 	if (node.name === 'button') {
-		if (!is_hidden && !has_content(node) && !contains_a11y_label) {
+		if (!is_hidden && !has_content(node) && !is_labelled) {
 			w.a11y_consider_explicit_label(node);
 		}
 	}
@@ -1159,7 +1150,7 @@ export function check_element(node, state) {
 
 	// Check content
 	if (
-		!contains_a11y_label &&
+		!is_labelled &&
 		!has_contenteditable_binding &&
 		a11y_required_content.includes(node.name) &&
 		node.fragment.nodes.length === 0 &&
