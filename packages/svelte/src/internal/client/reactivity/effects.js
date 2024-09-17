@@ -201,7 +201,10 @@ export function user_effect(fn) {
 
 	if (defer) {
 		var context = /** @type {ComponentContext} */ (current_component_context);
-		(context.e ??= []).push(fn);
+		(context.e ??= []).push({
+			fn,
+			parent: current_effect
+		});
 	} else {
 		var signal = effect(fn);
 		return signal;

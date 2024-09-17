@@ -15,7 +15,7 @@ export type ComponentContext = {
 	/** context */
 	c: null | Map<unknown, unknown>;
 	/** deferred effects */
-	e: null | Array<() => void | (() => void)>;
+	e: null | Array<{ fn: () => void | (() => void); parent: null | Effect }>;
 	/** mounted */
 	m: boolean;
 	/**
