@@ -34,15 +34,12 @@ export function if_block(node, get_condition, consequent_fn, alternate_fn = null
 	/** @type {Effect | null} */
 	var alternate_effect = null;
 
+	/** We use a derived here to ensure stability of any depedencies due to the use of `pause_effect` */
 	var derived_condition = derived(() => !!get_condition());
 
 	var flags = elseif ? EFFECT_TRANSPARENT : 0;
 
 	block(() => {
-		// We use a derived here to ensure stability of any depedencies that are captured when we read `get_condition`.
-		// This is mainly because the current block effect's dependencies are only applied _after_ the effect has finished
-		// running, however as we're sync calling `destroy_effect` via `pause_effect` below, it might mean that our
-		// dependencies get lost. By having a derived already having run, those dependencies won't be affected by this
 		var condition = get(derived_condition);
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
