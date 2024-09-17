@@ -1,4 +1,4 @@
-/** @type {Map<String, Set<HTMLStyleElement>} */
+/** @type {Map<String, Set<HTMLStyleElement>>} */
 var all_styles = new Map();
 
 /**
