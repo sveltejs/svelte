@@ -10,7 +10,7 @@ function setup() {
 		.map((_, index) => $.derived(() => $.get(mux)[index]))
 		.map((x) => $.derived(() => $.get(x) + 1));
 
-	const destroy = $.user_effect_root(() => {
+	const destroy = $.effect_root(() => {
 		splited.forEach((x) => {
 			$.render_effect(() => {
 				$.get(x);
@@ -65,7 +65,7 @@ export async function kairo_mux_unowned() {
 export async function kairo_mux_owned() {
 	let run, destroy;
 
-	const destroy_owned = $.user_effect_root(() => {
+	const destroy_owned = $.effect_root(() => {
 		// Do 10 loops to warm up JIT
 		for (let i = 0; i < 10; i++) {
 			const { run, destroy } = setup();

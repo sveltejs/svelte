@@ -6,7 +6,7 @@ function setup() {
 	let last = head;
 	let counter = 0;
 
-	const destroy = $.user_effect_root(() => {
+	const destroy = $.effect_root(() => {
 		for (let i = 0; i < 50; i++) {
 			let current = $.derived(() => {
 				return $.get(head) + i;
@@ -68,7 +68,7 @@ export async function kairo_broad_unowned() {
 export async function kairo_broad_owned() {
 	let run, destroy;
 
-	const destroy_owned = $.user_effect_root(() => {
+	const destroy_owned = $.effect_root(() => {
 		// Do 10 loops to warm up JIT
 		for (let i = 0; i < 10; i++) {
 			const { run, destroy } = setup();

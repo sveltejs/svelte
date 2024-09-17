@@ -10,7 +10,7 @@ import {
 } from './dom/operations.js';
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
 import { push, pop, component_context, active_effect } from './runtime.js';
-import { effect_root, branch } from './reactivity/effects.js';
+import { effect_root } from './reactivity/effects.js';
 import {
 	hydrate_next,
 	hydrate_node,
@@ -225,35 +225,33 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 	var component = undefined;
 
 	var unmount = effect_root(() => {
-		branch(() => {
-			if (context) {
-				push({});
-				var ctx = /** @type {ComponentContext} */ (component_context);
-				ctx.c = context;
-			}
+		if (context) {
+			push({});
+			var ctx = /** @type {ComponentContext} */ (component_context);
+			ctx.c = context;
+		}
 
-			if (events) {
-				// We can't spread the object or else we'd lose the state proxy stuff, if it is one
-				/** @type {any} */ (props).$$events = events;
-			}
+		if (events) {
+			// We can't spread the object or else we'd lose the state proxy stuff, if it is one
+			/** @type {any} */ (props).$$events = events;
+		}
 
-			if (hydrating) {
-				assign_nodes(/** @type {TemplateNode} */ (anchor), null);
-			}
+		if (hydrating) {
+			assign_nodes(/** @type {TemplateNode} */ (anchor), null);
+		}
 
-			should_intro = intro;
-			// @ts-expect-error the public typings are not what the actual function looks like
-			component = Component(anchor, props) || {};
-			should_intro = true;
+		should_intro = intro;
+		// @ts-expect-error the public typings are not what the actual function looks like
+		component = Component(anchor, props) || {};
+		should_intro = true;
 
-			if (hydrating) {
-				/** @type {Effect} */ (active_effect).nodes_end = hydrate_node;
-			}
+		if (hydrating) {
+			/** @type {Effect} */ (active_effect).nodes_end = hydrate_node;
+		}
 
-			if (context) {
-				pop();
-			}
-		});
+		if (context) {
+			pop();
+		}
 
 		return () => {
 			for (var event_name of registered_events) {

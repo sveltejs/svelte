@@ -39,7 +39,7 @@ import {
 import { set } from './sources.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
-import { define_property } from '../../shared/utils.js';
+import { define_property, noop } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 
 /**
@@ -133,6 +133,7 @@ function create_effect(type, fn, sync, push = true) {
 
 	// if an effect has no dependencies, no DOM and no teardown function,
 	// don't bother adding it to the effect tree
+	debugger;
 	var inert =
 		sync &&
 		effect.deps === null &&
@@ -232,25 +233,26 @@ export function inspect_effect(fn) {
 }
 
 /**
- * @param {() => void | (() => void)} fn
- * @returns {() => void}
- */
-export function effect_root(fn) {
-	const effect = create_effect(ROOT_EFFECT, fn, true);
-	return () => {
-		destroy_effect(effect);
-	};
-}
-
-/**
  * Internal representation of `$effect.root(...)`
  * @param {() => void | (() => void)} fn
  * @returns {() => void}
  */
-export function user_effect_root(fn) {
-	return effect_root(() => {
-		branch(fn);
-	});
+export function effect_root(fn) {
+	const effect = create_effect(
+		ROOT_EFFECT,
+		() => {
+			branch(() => {
+				// We return a noop if no function is returned to ensure that the branch
+				// is attached to the effect tree otherwise it will count as inert
+				return fn() || noop;
+			});
+		},
+		true
+	);
+
+	return () => {
+		destroy_effect(effect);
+	};
 }
 
 /**

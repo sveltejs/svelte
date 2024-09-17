@@ -192,14 +192,14 @@ test('map handling of undefined values', () => {
 		render_effect(() => {
 			log.push(map.get(1));
 		});
+	});
 
-		flushSync(() => {
-			map.delete(1);
-		});
+	flushSync(() => {
+		map.delete(1);
+	});
 
-		flushSync(() => {
-			map.set(1, 1);
-		});
+	flushSync(() => {
+		map.set(1, 1);
 	});
 
 	assert.deepEqual(log, [undefined, undefined, 1]);
@@ -220,14 +220,14 @@ test('not invoking reactivity when value is not in the map after changes', () =>
 		render_effect(() => {
 			log.push(map.get(2));
 		});
+	});
 
-		flushSync(() => {
-			map.delete(1);
-		});
+	flushSync(() => {
+		map.delete(1);
+	});
 
-		flushSync(() => {
-			map.set(1, 1);
-		});
+	flushSync(() => {
+		map.set(1, 1);
 	});
 
 	assert.deepEqual(log, [1, undefined, undefined, undefined, 1, undefined]);

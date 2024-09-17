@@ -18,7 +18,7 @@ function setup() {
 	});
 	let counter = 0;
 
-	const destroy = $.user_effect_root(() => {
+	const destroy = $.effect_root(() => {
 		$.render_effect(() => {
 			$.get(sum);
 			counter++;
@@ -72,7 +72,7 @@ export async function kairo_diamond_unowned() {
 export async function kairo_diamond_owned() {
 	let run, destroy;
 
-	const destroy_owned = $.user_effect_root(() => {
+	const destroy_owned = $.effect_root(() => {
 		// Do 10 loops to warm up JIT
 		for (let i = 0; i < 10; i++) {
 			const { run, destroy } = setup();

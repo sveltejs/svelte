@@ -10,7 +10,7 @@ function setup() {
 	let computed4 = $.derived(() => $.get(computed3) + 2);
 	let computed5 = $.derived(() => $.get(computed4) + 3);
 
-	const destroy = $.user_effect_root(() => {
+	const destroy = $.effect_root(() => {
 		$.render_effect(() => {
 			$.get(computed5);
 			busy(); // heavy side effect
@@ -62,7 +62,7 @@ export async function kairo_avoidable_unowned() {
 export async function kairo_avoidable_owned() {
 	let run, destroy;
 
-	const destroy_owned = $.user_effect_root(() => {
+	const destroy_owned = $.effect_root(() => {
 		// Do 10 loops to warm up JIT
 		for (let i = 0; i < 10; i++) {
 			const { run, destroy } = setup();
