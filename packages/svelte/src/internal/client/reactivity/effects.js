@@ -133,7 +133,6 @@ function create_effect(type, fn, sync, push = true) {
 
 	// if an effect has no dependencies, no DOM and no teardown function,
 	// don't bother adding it to the effect tree
-	debugger;
 	var inert =
 		sync &&
 		effect.deps === null &&
