@@ -11,7 +11,7 @@ import {
 } from 'svelte/store';
 import { source, set } from '../../src/internal/client/reactivity/sources';
 import * as $ from '../../src/internal/client/runtime';
-import { effect_root, render_effect } from 'svelte/internal/client';
+import { user_effect_root, render_effect } from 'svelte/internal/client';
 
 describe('writable', () => {
 	it('creates a writable store', () => {
@@ -645,7 +645,7 @@ describe('fromStore', () => {
 
 		const log: number[] = [];
 
-		const teardown = effect_root(() => {
+		const teardown = user_effect_root(() => {
 			render_effect(() => {
 				log.push(count.current);
 			});

@@ -26,7 +26,7 @@ export function CallExpression(node, context) {
 
 		case '$effect.root':
 			return b.call(
-				'$.effect_root',
+				'$.user_effect_root',
 				.../** @type {Expression[]} */ (node.arguments.map((arg) => context.visit(arg)))
 			);
 

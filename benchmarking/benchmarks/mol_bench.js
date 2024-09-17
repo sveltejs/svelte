@@ -32,7 +32,7 @@ function setup() {
 	const F = $.derived(() => hard($.get(D)[0] && $.get(B)));
 	const G = $.derived(() => $.get(C) + ($.get(C) || $.get(E) % 2) + $.get(D)[0] + $.get(F));
 
-	const destroy = $.effect_root(() => {
+	const destroy = $.user_effect_root(() => {
 		$.render_effect(() => {
 			res.push(hard($.get(G)));
 		});
@@ -67,7 +67,7 @@ function setup() {
 export async function mol_bench_owned() {
 	let run, destroy;
 
-	const destroy_owned = $.effect_root(() => {
+	const destroy_owned = $.user_effect_root(() => {
 		// Do 10 loops to warm up JIT
 		for (let i = 0; i < 10; i++) {
 			const { run, destroy } = setup();

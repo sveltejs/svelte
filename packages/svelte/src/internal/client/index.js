@@ -96,7 +96,7 @@ export {
 export { derived, derived_safe_equal } from './reactivity/deriveds.js';
 export {
 	effect_tracking,
-	effect_root,
+	user_effect_root,
 	legacy_pre_effect,
 	legacy_pre_effect_reset,
 	render_effect,

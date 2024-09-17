@@ -592,9 +592,7 @@ export function schedule_effect(signal) {
 		}
 	}
 
-	if (!queued_root_effects.includes(effect)) {
-		queued_root_effects.push(effect);
-	}
+	queued_root_effects.push(effect);
 }
 
 /**

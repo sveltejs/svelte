@@ -232,7 +232,6 @@ export function inspect_effect(fn) {
 }
 
 /**
- * Internal representation of `$effect.root(...)`
  * @param {() => void | (() => void)} fn
  * @returns {() => void}
  */
@@ -241,6 +240,17 @@ export function effect_root(fn) {
 	return () => {
 		destroy_effect(effect);
 	};
+}
+
+/**
+ * Internal representation of `$effect.root(...)`
+ * @param {() => void | (() => void)} fn
+ * @returns {() => void}
+ */
+export function user_effect_root(fn) {
+	return effect_root(() => {
+		branch(fn);
+	});
 }
 
 /**

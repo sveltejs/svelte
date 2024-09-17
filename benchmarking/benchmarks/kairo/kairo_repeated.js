@@ -15,7 +15,7 @@ function setup() {
 
 	let counter = 0;
 
-	const destroy = $.effect_root(() => {
+	const destroy = $.user_effect_root(() => {
 		$.render_effect(() => {
 			$.get(current);
 			counter++;
@@ -69,7 +69,7 @@ export async function kairo_repeated_unowned() {
 export async function kairo_repeated_owned() {
 	let run, destroy;
 
-	const destroy_owned = $.effect_root(() => {
+	const destroy_owned = $.user_effect_root(() => {
 		// Do 10 loops to warm up JIT
 		for (let i = 0; i < 10; i++) {
 			const { run, destroy } = setup();
