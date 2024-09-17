@@ -615,7 +615,7 @@ function process_effects(effect, collected_effects) {
 	var current_effect = effect.first;
 	var deferred = [];
 
-	main_loop: while (current_effect !== null) {
+	while (current_effect !== null) {
 		var flags = current_effect.f;
 
 		var has_dirty_children = (flags & EFFECT_HAS_DIRTY_CHILDREN) !== 0;
@@ -641,22 +641,16 @@ function process_effects(effect, collected_effects) {
 			}
 		}
 
-		var sibling = current_effect.next;
+		while (current_effect !== null) {
+			var sibling = current_effect.next;
 
-		if (sibling === null) {
-			let parent = current_effect.parent;
-
-			while (parent !== null) {
-				var parent_sibling = parent.next;
-				if (parent_sibling !== null) {
-					current_effect = parent_sibling;
-					continue main_loop;
-				}
-				parent = parent.parent;
+			if (sibling) {
+				current_effect = sibling;
+				break;
 			}
-		}
 
-		current_effect = sibling;
+			current_effect = current_effect.parent;
+		}
 	}
 
 	// We might be dealing with many effects here, far more than can be spread into
