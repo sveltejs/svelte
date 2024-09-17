@@ -22,7 +22,8 @@ import {
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
-	DISCONNECTED
+	DISCONNECTED,
+	EFFECT_HAS_DIRTY_CHILDREN
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -584,12 +585,12 @@ export function schedule_effect(signal) {
 
 	while (effect.parent !== null) {
 		effect = effect.parent;
-		var flags = effect.f;
 
-		if ((flags & BRANCH_EFFECT) !== 0) {
-			if ((flags & CLEAN) === 0) return;
-			set_signal_status(effect, MAYBE_DIRTY);
+		if ((effect.f & EFFECT_HAS_DIRTY_CHILDREN) !== 0) {
+			return;
 		}
+
+		effect.f |= EFFECT_HAS_DIRTY_CHILDREN;
 	}
 
 	queued_root_effects.push(effect);
@@ -607,42 +608,31 @@ export function schedule_effect(signal) {
  * @returns {void}
  */
 function process_effects(effect, collected_effects) {
+	if ((effect.f & EFFECT_HAS_DIRTY_CHILDREN) !== 0) {
+		effect.f ^= EFFECT_HAS_DIRTY_CHILDREN;
+	}
+
 	var current_effect = effect.first;
 	var effects = [];
 
 	main_loop: while (current_effect !== null) {
 		var flags = current_effect.f;
-		var is_active = (flags & INERT) === 0;
-		var is_branch = (flags & BRANCH_EFFECT) !== 0;
-		var is_clean = (flags & CLEAN) !== 0;
-		var child = current_effect.first;
 
-		// Skip this branch if it's clean
-		if (is_active && (!is_branch || !is_clean)) {
-			if (is_branch) {
-				set_signal_status(current_effect, CLEAN);
-			}
+		var has_dirty_children = (flags & EFFECT_HAS_DIRTY_CHILDREN) !== 0;
+		if (has_dirty_children) current_effect.f ^= EFFECT_HAS_DIRTY_CHILDREN;
 
-			if ((flags & RENDER_EFFECT) !== 0) {
-				if (!is_branch && check_dirtiness(current_effect)) {
+		if ((flags & INERT) === 0) {
+			if (check_dirtiness(current_effect)) {
+				if ((flags & RENDER_EFFECT) !== 0) {
 					update_effect(current_effect);
-				}
-				// Child might have been mutated since running the effect or checking dirtiness
-				child = current_effect.first;
-
-				if (child !== null) {
-					current_effect = child;
-					continue;
-				}
-			} else if ((flags & EFFECT) !== 0) {
-				if (is_branch || is_clean) {
-					if (child !== null) {
-						current_effect = child;
-						continue;
-					}
 				} else {
 					effects.push(current_effect);
 				}
+			}
+
+			if (has_dirty_children) {
+				current_effect = current_effect.first;
+				continue;
 			}
 		}
 
@@ -670,7 +660,7 @@ function process_effects(effect, collected_effects) {
 	// We might be dealing with many effects here, far more than can be spread into
 	// an array push call (callstack overflow). So let's deal with each effect in a loop.
 	for (var i = 0; i < effects.length; i++) {
-		child = effects[i];
+		var child = effects[i];
 		collected_effects.push(child);
 		process_effects(child, collected_effects);
 	}
