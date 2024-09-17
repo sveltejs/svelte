@@ -1,7 +1,7 @@
 [
 	{
 		"code": "a11y_consider_explicit_label",
-		"message": "`<button>` element is empty and has no aria-label or aria-labelledby. Add content or an aria-label for better accessibility.",
+		"message": "Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute",
 		"start": {
 			"line": 1,
 			"column": 0
@@ -13,7 +13,7 @@
 	},
 	{
 		"code": "a11y_consider_explicit_label",
-		"message": "`<a>` element is empty and has no aria-label or aria-labelledby. Add content or an aria-label for better accessibility.",
+		"message": "Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute",
 		"start": {
 			"line": 2,
 			"column": 0
