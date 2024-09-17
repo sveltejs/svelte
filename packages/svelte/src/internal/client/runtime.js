@@ -586,6 +586,12 @@ export function schedule_effect(signal) {
 		effect = effect.parent;
 		var flags = effect.f;
 
+		// Branch effects are not part of the reactive signal graph as they can never have
+		// dependencies. As such, we can use effects can be CLEAN or MAYBE_DIRTY to signal
+		// that they contain an effect that is dirty and needs visiting in `process_effects`,
+		// and if not we can skip the branch entirely. This also doubles as being able to
+		// skip propagation up the graph in `schedule_effect` if we encounter a branch that
+		// is already MAYBE_DIRTY.
 		if ((flags & BRANCH_EFFECT) !== 0) {
 			if ((flags & CLEAN) === 0) return;
 			set_signal_status(effect, MAYBE_DIRTY);
