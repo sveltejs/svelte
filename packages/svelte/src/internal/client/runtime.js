@@ -1052,16 +1052,16 @@ export function pop(component) {
 		}
 		const component_effects = context_stack_item.e;
 		if (component_effects !== null) {
-			var previous_effect = current_effect;
+			var previous_effect = active_effect;
 			context_stack_item.e = null;
 			try {
 				for (var i = 0; i < component_effects.length; i++) {
 					var component_effect = component_effects[i];
-					set_current_effect(component_effect.parent);
+					set_active_effect(component_effect.parent);
 					effect(component_effect.fn);
 				}
 			} finally {
-				set_current_effect(previous_effect);
+				set_active_effect(previous_effect);
 			}
 		}
 		component_context = context_stack_item.p;
