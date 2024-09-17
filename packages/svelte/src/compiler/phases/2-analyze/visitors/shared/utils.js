@@ -1,5 +1,5 @@
-/** @import { AssignmentExpression, CallExpression, Expression, Pattern, PrivateIdentifier, Super, TaggedTemplateExpression, UpdateExpression, VariableDeclarator } from 'estree' */
-/** @import { Fragment } from '#compiler' */
+/** @import { AssignmentExpression, Expression, Identifier, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
+/** @import { AST, Binding } from '#compiler' */
 /** @import { AnalysisState, Context } from '../../types' */
 /** @import { Scope } from '../../../scope' */
 /** @import { NodeLike } from '../../../../errors.js' */
@@ -71,7 +71,11 @@ export function validate_no_const_assignment(node, argument, scope, is_binding) 
 		}
 	} else if (argument.type === 'Identifier') {
 		const binding = scope.get(argument.name);
-		if (binding?.declaration_kind === 'const' && binding.kind !== 'each') {
+		if (
+			binding?.kind === 'derived' ||
+			binding?.declaration_kind === 'import' ||
+			(binding?.declaration_kind === 'const' && binding.kind !== 'each')
+		) {
 			// e.invalid_const_assignment(
 			// 	node,
 			// 	is_binding,
@@ -83,7 +87,12 @@ export function validate_no_const_assignment(node, argument, scope, is_binding) 
 			// );
 
 			// TODO have a more specific error message for assignments to things like `{:then foo}`
-			const thing = 'constant';
+			const thing =
+				binding.declaration_kind === 'import'
+					? 'import'
+					: binding.kind === 'derived'
+						? 'derived state'
+						: 'constant';
 
 			if (is_binding) {
 				e.constant_binding(node, thing);
@@ -109,7 +118,7 @@ export function validate_opening_tag(node, state, expected) {
 }
 
 /**
- * @param {Fragment | null | undefined} node
+ * @param {AST.Fragment | null | undefined} node
  * @param {Context} context
  */
 export function validate_block_not_empty(node, context) {
@@ -186,4 +195,33 @@ export function is_pure(node, context) {
 
 	// TODO add more cases (safe Svelte imports, etc)
 	return false;
+}
+
+/**
+ * Checks if the name is valid, which it is when it's not starting with (or is) a dollar sign or if it's a function parameter.
+ * The second argument is the depth of the scope, which is there for backwards compatibility reasons: In Svelte 4, you
+ * were allowed to define `$`-prefixed variables anywhere below the top level of components. Once legacy mode is gone, this
+ * argument can be removed / the call sites adjusted accordingly.
+ * @param {Binding | null} binding
+ * @param {number | undefined} [function_depth]
+ */
+export function validate_identifier_name(binding, function_depth) {
+	if (!binding) return;
+
+	const declaration_kind = binding.declaration_kind;
+
+	if (
+		declaration_kind !== 'synthetic' &&
+		declaration_kind !== 'param' &&
+		declaration_kind !== 'rest_param' &&
+		(!function_depth || function_depth <= 1)
+	) {
+		const node = binding.node;
+
+		if (node.name === '$') {
+			e.dollar_binding_invalid(node);
+		} else if (node.name.startsWith('$')) {
+			e.dollar_prefix_invalid(node);
+		}
+	}
 }

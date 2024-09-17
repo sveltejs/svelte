@@ -1,4 +1,5 @@
 export { FILENAME, HMR } from '../../constants.js';
+export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
 export {
@@ -164,3 +165,4 @@ export {
 	validate_void_dynamic_element
 } from '../shared/validate.js';
 export { strict_equals, equals } from './dev/equality.js';
+export { log_if_contains_state } from './dev/console-log.js';

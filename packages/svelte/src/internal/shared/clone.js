@@ -18,15 +18,15 @@ const empty = [];
  * @returns {Snapshot<T>}
  */
 export function snapshot(value, skip_warning = false) {
-	if (DEV) {
+	if (DEV && !skip_warning) {
 		/** @type {string[]} */
 		const paths = [];
 
 		const copy = clone(value, new Map(), '', paths);
-		if (paths.length === 1 && paths[0] === '' && !skip_warning) {
+		if (paths.length === 1 && paths[0] === '') {
 			// value could not be cloned
 			w.state_snapshot_uncloneable();
-		} else if (paths.length > 0 && !skip_warning) {
+		} else if (paths.length > 0) {
 			// some properties could not be cloned
 			const slice = paths.length > 10 ? paths.slice(0, 7) : paths.slice(0, 10);
 			const excess = paths.length - slice.length;

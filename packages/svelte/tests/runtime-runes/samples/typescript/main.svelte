@@ -9,7 +9,18 @@
 	}
 
 	class Foo {
-		constructor(public readonly name: string) {}
+		constructor(readonly name: string) {}
+	}
+
+	declare const declared_const: number;
+	declare function declared_fn(): void;
+	declare class declared_class {
+		foo: number;
+	}
+
+	declare module 'foobar' {}
+	namespace SomeNamespace {
+		export type Foo = true
 	}
 
 	export type { Hello };

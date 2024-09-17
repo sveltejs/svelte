@@ -1,10 +1,10 @@
-/** @import { OnDirective } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as w from '../../../warnings.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {OnDirective} node
+ * @param {AST.OnDirective} node
  * @param {Context} context
  */
 export function OnDirective(node, context) {

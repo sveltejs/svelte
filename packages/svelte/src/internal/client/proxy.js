@@ -1,6 +1,6 @@
 /** @import { ProxyMetadata, ProxyStateObject, Source } from '#client' */
 import { DEV } from 'esm-env';
-import { get, current_component_context, untrack, current_effect } from './runtime.js';
+import { get, component_context, active_effect } from './runtime.js';
 import {
 	array_prototype,
 	get_descriptor,
@@ -62,8 +62,8 @@ export function proxy(value, parent = null, prev) {
 		} else {
 			metadata.owners =
 				parent === null
-					? current_component_context !== null
-						? new Set([current_component_context.function])
+					? component_context !== null
+						? new Set([component_context.function])
 						: null
 					: new Set();
 		}
@@ -131,6 +131,22 @@ export function proxy(value, parent = null, prev) {
 
 			if (s !== undefined) {
 				var v = get(s);
+
+				// In case of something like `foo = bar.map(...)`, foo would have ownership
+				// of the array itself, while the individual items would have ownership
+				// of the component that created bar. That means if we later do `foo[0].baz = 42`,
+				// we could get a false-positive ownership violation, since the two proxies
+				// are not connected to each other via the parent metadata relationship.
+				// For this reason, we need to widen the ownership of the children
+				// upon access when we detect they are not connected.
+				if (DEV) {
+					/** @type {ProxyMetadata | undefined} */
+					var prop_metadata = v?.[STATE_SYMBOL_METADATA];
+					if (prop_metadata && prop_metadata?.parent !== metadata) {
+						widen_ownership(metadata, prop_metadata);
+					}
+				}
+
 				return v === UNINITIALIZED ? undefined : v;
 			}
 
@@ -174,7 +190,7 @@ export function proxy(value, parent = null, prev) {
 
 			if (
 				s !== undefined ||
-				(current_effect !== null && (!has || get_descriptor(target, prop)?.writable))
+				(active_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 			) {
 				if (s === undefined) {
 					s = source(has ? proxy(target[prop], metadata) : UNINITIALIZED);

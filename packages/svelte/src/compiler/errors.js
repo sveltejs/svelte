@@ -435,6 +435,16 @@ export function store_invalid_subscription_module(node) {
 }
 
 /**
+ * TypeScript language features like %feature% are not natively supported, and their use is generally discouraged. Outside of `<script>` tags, these features are not supported. For use within `<script>` tags, you will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler. If you are using `vitePreprocess`, make sure to specifically enable preprocessing script tags (`vitePreprocess({ script: true })`)
+ * @param {null | number | NodeLike} node
+ * @param {string} feature
+ * @returns {never}
+ */
+export function typescript_invalid_feature(node, feature) {
+	e(node, "typescript_invalid_feature", `TypeScript language features like ${feature} are not natively supported, and their use is generally discouraged. Outside of \`<script>\` tags, these features are not supported. For use within \`<script>\` tags, you will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler. If you are using \`vitePreprocess\`, make sure to specifically enable preprocessing script tags (\`vitePreprocess({ script: true })\`)`);
+}
+
+/**
  * Declaration cannot be empty
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -526,12 +536,12 @@ export function css_global_invalid_selector_list(node) {
 }
 
 /**
- * Nesting selectors can only be used inside a rule
+ * Nesting selectors can only be used inside a rule or as the first selector inside a lone `:global(...)`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function css_nesting_selector_invalid_placement(node) {
-	e(node, "css_nesting_selector_invalid_placement", "Nesting selectors can only be used inside a rule");
+	e(node, "css_nesting_selector_invalid_placement", "Nesting selectors can only be used inside a rule or as the first selector inside a lone `:global(...)`");
 }
 
 /**
@@ -787,15 +797,6 @@ export function component_invalid_directive(node) {
 }
 
 /**
- * Component name must be a valid variable name or dot notation expression
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function component_invalid_name(node) {
-	e(node, "component_invalid_name", "Component name must be a valid variable name or dot notation expression");
-}
-
-/**
  * Cyclical dependency detected: %cycle%
  * @param {null | number | NodeLike} node
  * @param {string} cycle
@@ -870,15 +871,6 @@ export function element_invalid_closing_tag(node, name) {
  */
 export function element_invalid_closing_tag_autoclosed(node, name, reason) {
 	e(node, "element_invalid_closing_tag_autoclosed", `\`</${name}>\` attempted to close element that was already automatically closed by \`<${reason}>\` (cannot nest \`<${reason}>\` inside \`<${name}>\`)`);
-}
-
-/**
- * Expected valid tag name
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function element_invalid_tag_name(node) {
-	e(node, "element_invalid_tag_name", "Expected valid tag name");
 }
 
 /**
@@ -1202,6 +1194,15 @@ export function style_duplicate(node) {
 }
 
 /**
+ * `<svelte:body>` does not support non-event attributes or spread attributes
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_body_illegal_attribute(node) {
+	e(node, "svelte_body_illegal_attribute", "`<svelte:body>` does not support non-event attributes or spread attributes");
+}
+
+/**
  * Invalid component definition — must be an `{expression}`
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -1351,12 +1352,21 @@ export function svelte_options_invalid_customelement_shadow(node) {
 }
 
 /**
- * Tag name must be two or more words joined by the "-" character
+ * Tag name must be lowercase and hyphenated
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function svelte_options_invalid_tagname(node) {
-	e(node, "svelte_options_invalid_tagname", "Tag name must be two or more words joined by the \"-\" character");
+	e(node, "svelte_options_invalid_tagname", "Tag name must be lowercase and hyphenated");
+}
+
+/**
+ * Tag name is reserved
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_options_reserved_tagname(node) {
+	e(node, "svelte_options_reserved_tagname", "Tag name is reserved");
 }
 
 /**
@@ -1376,6 +1386,15 @@ export function svelte_options_unknown_attribute(node, name) {
  */
 export function svelte_self_invalid_placement(node) {
 	e(node, "svelte_self_invalid_placement", "`<svelte:self>` components can only exist inside `{#if}` blocks, `{#each}` blocks, `{#snippet}` blocks or slots passed to components");
+}
+
+/**
+ * Expected a valid element or component name. Components must have a valid variable name or dot notation expression
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function tag_invalid_name(node) {
+	e(node, "tag_invalid_name", "Expected a valid element or component name. Components must have a valid variable name or dot notation expression");
 }
 
 /**

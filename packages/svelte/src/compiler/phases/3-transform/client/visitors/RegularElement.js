@@ -1,5 +1,5 @@
-/** @import { Expression, ExpressionStatement, Identifier, Literal, MemberExpression, ObjectExpression, Statement } from 'estree' */
-/** @import { Attribute, BindDirective, ClassDirective, RegularElement, SpreadAttribute, StyleDirective } from '#compiler' */
+/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
@@ -19,7 +19,7 @@ import {
 import * as b from '../../../../utils/builders.js';
 import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { build_getter } from '../utils.js';
+import { build_getter, can_inline_variable } from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
@@ -31,12 +31,13 @@ import {
 	build_render_statement,
 	build_template_literal,
 	build_update,
-	build_update_assignment
+	build_update_assignment,
+	get_states_and_calls
 } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 
 /**
- * @param {RegularElement} node
+ * @param {AST.RegularElement} node
  * @param {ComponentContext} context
  */
 export function RegularElement(node, context) {
@@ -69,13 +70,13 @@ export function RegularElement(node, context) {
 
 	context.state.template.push(`<${node.name}`);
 
-	/** @type {Array<Attribute | SpreadAttribute>} */
+	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];
 
-	/** @type {ClassDirective[]} */
+	/** @type {AST.ClassDirective[]} */
 	const class_directives = [];
 
-	/** @type {StyleDirective[]} */
+	/** @type {AST.StyleDirective[]} */
 	const style_directives = [];
 
 	/** @type {ExpressionStatement[]} */
@@ -85,7 +86,7 @@ export function RegularElement(node, context) {
 	let needs_input_reset = false;
 	let needs_content_reset = false;
 
-	/** @type {BindDirective | null} */
+	/** @type {AST.BindDirective | null} */
 	let value_binding = null;
 
 	/** If true, needs `__value` for inputs */
@@ -215,7 +216,7 @@ export function RegularElement(node, context) {
 		);
 		is_attributes_reactive = true;
 	} else {
-		for (const attribute of /** @type {Attribute[]} */ (attributes)) {
+		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 			if (is_event_attribute(attribute)) {
 				if (
 					(attribute.name === 'onload' || attribute.name === 'onerror') &&
@@ -248,8 +249,8 @@ export function RegularElement(node, context) {
 								: `="${value === true ? '' : escape_html(value, true)}"`
 						}`
 					);
-					continue;
 				}
+				continue;
 			}
 
 			const is = is_custom_element
@@ -315,14 +316,20 @@ export function RegularElement(node, context) {
 
 	// special case — if an element that only contains text, we don't need
 	// to descend into it if the text is non-reactive
-	const text_content =
+	const states_and_calls =
 		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
 		trimmed.some((node) => node.type === 'ExpressionTag') &&
-		build_template_literal(trimmed, context.visit, child_state);
+		get_states_and_calls(trimmed);
 
-	if (text_content && !text_content.has_state) {
+	if (states_and_calls && states_and_calls.states === 0) {
 		child_state.init.push(
-			b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), text_content.value))
+			b.stmt(
+				b.assignment(
+					'=',
+					b.member(context.state.node, 'textContent'),
+					build_template_literal(trimmed, context.visit, child_state).value
+				)
+			)
 		);
 	} else {
 		/** @type {Expression} */
@@ -384,7 +391,7 @@ export function RegularElement(node, context) {
 /**
  * Special case: if we have a value binding on a select element, we need to set up synchronization
  * between the value binding and inner signals, for indirect updates
- * @param {BindDirective} value_binding
+ * @param {AST.BindDirective} value_binding
  * @param {ComponentContext} context
  */
 function setup_select_synchronization(value_binding, context) {
@@ -436,9 +443,9 @@ function setup_select_synchronization(value_binding, context) {
 }
 
 /**
- * @param {Array<Attribute | SpreadAttribute>} attributes
+ * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
  * @param {ComponentContext} context
- * @param {RegularElement} element
+ * @param {AST.RegularElement} element
  * @param {Identifier} element_id
  * @param {boolean} needs_select_handling
  */
@@ -559,9 +566,9 @@ function build_element_spread_attributes(
  * });
  * ```
  * Returns true if attribute is deemed reactive, false otherwise.
- * @param {RegularElement} element
+ * @param {AST.RegularElement} element
  * @param {Identifier} node_id
- * @param {Attribute} attribute
+ * @param {AST.Attribute} attribute
  * @param {ComponentContext} context
  * @returns {boolean}
  */
@@ -607,6 +614,13 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		);
 	}
 
+	const inlinable_expression =
+		attribute.value === true
+			? false // not an expression
+			: is_inlinable_expression(
+					Array.isArray(attribute.value) ? attribute.value : [attribute.value],
+					context.state
+				);
 	if (attribute.metadata.expression.has_state) {
 		if (has_call) {
 			state.init.push(build_update(update));
@@ -615,15 +629,43 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		}
 		return true;
 	} else {
-		state.init.push(update);
+		if (inlinable_expression) {
+			context.state.template.push(` ${name}="`, value, '"');
+		} else {
+			state.init.push(update);
+		}
 		return false;
 	}
 }
 
 /**
+ * @param {(AST.Text | AST.ExpressionTag)[]} nodes
+ * @param {import('../types.js').ComponentClientTransformState} state
+ */
+function is_inlinable_expression(nodes, state) {
+	let has_expression_tag = false;
+	for (let value of nodes) {
+		if (value.type === 'ExpressionTag') {
+			if (value.expression.type === 'Identifier') {
+				const binding = state.scope
+					.owner(value.expression.name)
+					?.declarations.get(value.expression.name);
+				if (!can_inline_variable(binding)) {
+					return false;
+				}
+			} else {
+				return false;
+			}
+			has_expression_tag = true;
+		}
+	}
+	return has_expression_tag;
+}
+
+/**
  * Like `build_element_attribute_update_assignment` but without any special attribute treatment.
  * @param {Identifier}	node_id
- * @param {Attribute} attribute
+ * @param {AST.Attribute} attribute
  * @param {ComponentContext} context
  * @returns {boolean}
  */
@@ -653,7 +695,7 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
  * Returns true if attribute is deemed reactive, false otherwise.
  * @param {string} element
  * @param {Identifier} node_id
- * @param {Attribute} attribute
+ * @param {AST.Attribute} attribute
  * @param {ComponentContext} context
  * @returns {boolean}
  */

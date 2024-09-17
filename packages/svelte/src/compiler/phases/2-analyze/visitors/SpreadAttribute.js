@@ -1,10 +1,10 @@
-/** @import { SpreadAttribute } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {SpreadAttribute} node
+ * @param {AST.SpreadAttribute} node
  * @param {Context} context
  */
 export function SpreadAttribute(node, context) {

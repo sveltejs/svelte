@@ -1,6 +1,6 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement, Super, TemplateElement, TemplateLiteral } from 'estree' */
-/** @import { BindDirective, DelegatedEvent, ExpressionMetadata, ExpressionTag, OnDirective, SvelteNode, Text } from '#compiler' */
-/** @import { ComponentClientTransformState, ComponentContext } from '../../types' */
+/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement, Super } from 'estree' */
+/** @import { AST, SvelteNode } from '#compiler' */
+/** @import { ComponentClientTransformState } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
@@ -11,7 +11,29 @@ import is_reference from 'is-reference';
 import { locator } from '../../../../../state.js';
 
 /**
- * @param {Array<Text | ExpressionTag>} values
+ * @param {Array<AST.Text | AST.ExpressionTag>} values
+ */
+export function get_states_and_calls(values) {
+	let states = 0;
+	let calls = 0;
+	for (let i = 0; i < values.length; i++) {
+		const node = values[i];
+
+		if (node.type === 'ExpressionTag') {
+			if (node.metadata.expression.has_call) {
+				calls++;
+			}
+			if (node.metadata.expression.has_state) {
+				states++;
+			}
+		}
+	}
+
+	return { states, calls };
+}
+
+/**
+ * @param {Array<AST.Text | AST.ExpressionTag>} values
  * @param {(node: SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
  */
@@ -22,38 +44,24 @@ export function build_template_literal(values, visit, state) {
 	let quasi = b.quasi('');
 	const quasis = [quasi];
 
-	let has_call = false;
-	let has_state = false;
-	let contains_multiple_call_expression = false;
+	const { states, calls } = get_states_and_calls(values);
 
-	for (let i = 0; i < values.length; i++) {
-		const node = values[i];
-
-		if (node.type === 'ExpressionTag') {
-			if (node.metadata.expression.has_call) {
-				if (has_call) {
-					contains_multiple_call_expression = true;
-				}
-				has_call = true;
-			}
-
-			has_state ||= node.metadata.expression.has_state;
-		}
-	}
+	let has_call = calls > 0;
+	let has_state = states > 0;
+	let contains_multiple_call_expression = calls > 1;
 
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
 
 		if (node.type === 'Text') {
-			quasi.value.raw += sanitize_template_string(node.data);
+			quasi.value.cooked += node.data;
 		} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
 			if (node.expression.value != null) {
-				quasi.value.raw += sanitize_template_string(node.expression.value + '');
+				quasi.value.cooked += node.expression.value + '';
 			}
 		} else {
 			if (contains_multiple_call_expression) {
 				const id = b.id(state.scope.generate('stringified_text'));
-
 				state.init.push(
 					b.const(
 						id,
@@ -81,6 +89,10 @@ export function build_template_literal(values, visit, state) {
 			quasi = b.quasi('', i + 1 === values.length);
 			quasis.push(quasi);
 		}
+	}
+
+	for (const quasi of quasis) {
+		quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
 	}
 
 	const value = b.template(quasis, expressions);
@@ -221,7 +233,7 @@ export function build_bind_this(expression, value, { state, visit }) {
 
 /**
  * @param {ComponentClientTransformState} state
- * @param {BindDirective} binding
+ * @param {AST.BindDirective} binding
  * @param {MemberExpression} expression
  */
 export function validate_binding(state, binding, expression) {

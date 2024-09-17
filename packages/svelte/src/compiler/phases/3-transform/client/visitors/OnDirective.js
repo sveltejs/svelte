@@ -1,4 +1,4 @@
-/** @import { OnDirective, SvelteNode } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
 import { build_event, build_event_handler } from './shared/events.js';
@@ -13,7 +13,7 @@ const modifiers = [
 ];
 
 /**
- * @param {OnDirective} node
+ * @param {AST.OnDirective} node
  * @param {ComponentContext} context
  */
 export function OnDirective(node, context) {

@@ -1,9 +1,9 @@
-/** @import { Component } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { visit_component } from './shared/component.js';
 
 /**
- * @param {Component} node
+ * @param {AST.Component} node
  * @param {Context} context
  */
 export function Component(node, context) {

@@ -3,7 +3,6 @@ import { teardown } from '../../reactivity/effects.js';
 import { define_property, is_array } from '../../../shared/utils.js';
 import { hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
-import { dev_current_component_function } from '../../runtime.js';
 import { FILENAME } from '../../../../constants.js';
 import * as w from '../../warnings.js';
 
@@ -84,30 +83,6 @@ export function create_event(event_name, dom, handler, options) {
  * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
  * (with attributes like `onclick`), which use event delegation for performance reasons
  *
- * @template {HTMLElement} Element
- * @template {keyof HTMLElementEventMap} Type
- * @overload
- * @param {Element} element
- * @param {Type} type
- * @param {(this: Element, event: HTMLElementEventMap[Type]) => any} handler
- * @param {AddEventListenerOptions} [options]
- * @returns {() => void}
- */
-
-/**
- * Attaches an event handler to an element and returns a function that removes the handler. Using this
- * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
- * (with attributes like `onclick`), which use event delegation for performance reasons
- *
- * @overload
- * @param {EventTarget} element
- * @param {string} type
- * @param {EventListener} handler
- * @param {AddEventListenerOptions} [options]
- * @returns {() => void}
- */
-
-/**
  * @param {EventTarget} element
  * @param {string} type
  * @param {EventListener} handler
@@ -234,7 +209,10 @@ export function handle_event_propagation(event) {
 		while (current_target !== null) {
 			/** @type {null | Element} */
 			var parent_element =
-				current_target.parentNode || /** @type {any} */ (current_target).host || null;
+				current_target.assignedSlot ||
+				current_target.parentNode ||
+				/** @type {any} */ (current_target).host ||
+				null;
 
 			try {
 				// @ts-expect-error
@@ -273,8 +251,8 @@ export function handle_event_propagation(event) {
 	} finally {
 		// @ts-expect-error is used above
 		event.__root = handler_element;
-		// @ts-expect-error is used above
-		current_target = handler_element;
+		// @ts-ignore remove proxy on currentTarget
+		delete event.currentTarget;
 	}
 }
 

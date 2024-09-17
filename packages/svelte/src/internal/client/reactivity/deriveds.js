@@ -1,18 +1,19 @@
-/** @import { Derived } from '#client' */
+/** @import { Derived, Effect } from '#client' */
 import { DEV } from 'esm-env';
 import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
 import {
-	current_reaction,
-	current_effect,
+	active_reaction,
+	active_effect,
 	remove_reactions,
 	set_signal_status,
-	current_skip_reaction,
+	skip_reaction,
 	update_reaction,
-	destroy_effect_children,
 	increment_version
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
+import { destroy_effect } from './effects.js';
+import { inspect_effects, set_inspect_effects } from './sources.js';
 
 /**
  * @template V
@@ -22,29 +23,23 @@ import * as e from '../errors.js';
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
 	let flags = DERIVED | DIRTY;
-	if (current_effect === null) flags |= UNOWNED;
+	if (active_effect === null) flags |= UNOWNED;
 
 	/** @type {Derived<V>} */
 	const signal = {
+		children: null,
 		deps: null,
-		deriveds: null,
 		equals,
 		f: flags,
-		first: null,
 		fn,
-		last: null,
 		reactions: null,
 		v: /** @type {V} */ (null),
 		version: 0
 	};
 
-	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
-		var current_derived = /** @type {Derived} */ (current_reaction);
-		if (current_derived.deriveds === null) {
-			current_derived.deriveds = [signal];
-		} else {
-			current_derived.deriveds.push(signal);
-		}
+	if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
+		var derived = /** @type {Derived} */ (active_reaction);
+		(derived.children ??= []).push(signal);
 	}
 
 	return signal;
@@ -67,14 +62,18 @@ export function derived_safe_equal(fn) {
  * @returns {void}
  */
 function destroy_derived_children(derived) {
-	destroy_effect_children(derived);
-	var deriveds = derived.deriveds;
+	var children = derived.children;
 
-	if (deriveds !== null) {
-		derived.deriveds = null;
+	if (children !== null) {
+		derived.children = null;
 
-		for (var i = 0; i < deriveds.length; i += 1) {
-			destroy_derived(deriveds[i]);
+		for (var i = 0; i < children.length; i += 1) {
+			var child = children[i];
+			if ((child.f & DERIVED) !== 0) {
+				destroy_derived(/** @type {Derived} */ (child));
+			} else {
+				destroy_effect(/** @type {Effect} */ (child));
+			}
 		}
 	}
 }
@@ -94,6 +93,8 @@ export function update_derived(derived) {
 	var value;
 
 	if (DEV) {
+		let prev_inspect_effects = inspect_effects;
+		set_inspect_effects(new Set());
 		try {
 			if (stack.includes(derived)) {
 				e.derived_references_self();
@@ -104,6 +105,7 @@ export function update_derived(derived) {
 			destroy_derived_children(derived);
 			value = update_reaction(derived);
 		} finally {
+			set_inspect_effects(prev_inspect_effects);
 			stack.pop();
 		}
 	} else {
@@ -112,9 +114,7 @@ export function update_derived(derived) {
 	}
 
 	var status =
-		(current_skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null
-			? MAYBE_DIRTY
-			: CLEAN;
+		(skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null ? MAYBE_DIRTY : CLEAN;
 
 	set_signal_status(derived, status);
 
@@ -135,8 +135,7 @@ function destroy_derived(signal) {
 
 	// TODO we need to ensure we remove the derived from any parent derives
 
-	signal.first =
-		signal.last =
+	signal.children =
 		signal.deps =
 		signal.reactions =
 		// @ts-expect-error `signal.fn` cannot be `null` while the signal is alive

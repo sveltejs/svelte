@@ -15,7 +15,7 @@ export type ComponentContext = {
 	/** context */
 	c: null | Map<unknown, unknown>;
 	/** deferred effects */
-	e: null | Array<() => void | (() => void)>;
+	e: null | Array<{ fn: () => void | (() => void); parent: null | Effect }>;
 	/** mounted */
 	m: boolean;
 	/**
@@ -121,7 +121,7 @@ export interface Animation {
 	/** Resets an animation to its starting state, if it uses `tick`. Exposed as a separate method so that an aborted `out:` can still reset even if the `outro` had already completed */
 	reset: () => void;
 	/** Get the `t` value (between `0` and `1`) of the animation, so that its counterpart can start from the right place */
-	t: (now: number) => number;
+	t: () => number;
 }
 
 export type TransitionFn<P> = (

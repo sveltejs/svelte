@@ -1,13 +1,13 @@
 /** @import { ComponentContextLegacy } from '#client' */
 import { run, run_all } from '../../../shared/utils.js';
 import { user_pre_effect, user_effect } from '../../reactivity/effects.js';
-import { current_component_context, deep_read_state, get, untrack } from '../../runtime.js';
+import { component_context, deep_read_state, get, untrack } from '../../runtime.js';
 
 /**
  * Legacy-mode only: Call `onMount` callbacks and set up `beforeUpdate`/`afterUpdate` effects
  */
 export function init() {
-	const context = /** @type {ComponentContextLegacy} */ (current_component_context);
+	const context = /** @type {ComponentContextLegacy} */ (component_context);
 
 	const callbacks = context.l.u;
 	if (!callbacks) return;

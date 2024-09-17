@@ -1,4 +1,4 @@
-/** @import { SvelteNode } from '#compiler' */
+/** @import { AST, SvelteNode } from '#compiler' */
 
 /**
  * @param {SvelteNode[]} path

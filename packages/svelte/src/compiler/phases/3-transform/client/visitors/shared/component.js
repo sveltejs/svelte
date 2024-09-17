@@ -1,5 +1,5 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Property, Statement } from 'estree' */
-/** @import { Component, SvelteComponent, SvelteSelf, TemplateNode } from '#compiler' */
+/** @import { AST, TemplateNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks } from '../../../../../utils/ast.js';
@@ -11,7 +11,7 @@ import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
 
 /**
- * @param {Component | SvelteComponent | SvelteSelf} node
+ * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
  * @param {string} component_name
  * @param {ComponentContext} context
  * @param {Expression} anchor

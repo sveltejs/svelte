@@ -1,12 +1,12 @@
 /** @import { Expression } from 'estree' */
-/** @import { Attribute, ExpressionMetadata, ExpressionTag, SvelteNode } from '#compiler' */
+/** @import { AST, ExpressionMetadata, SvelteNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { is_capture_event, is_passive_event } from '../../../../../../utils.js';
 import { dev, locator } from '../../../../../state.js';
 import * as b from '../../../../../utils/builders.js';
 
 /**
- * @param {Attribute} node
+ * @param {AST.Attribute} node
  * @param {ComponentContext} context
  */
 export function visit_event_attribute(node, context) {
@@ -20,8 +20,8 @@ export function visit_event_attribute(node, context) {
 
 	// we still need to support the weird `onclick="{() => {...}}" form
 	const tag = Array.isArray(node.value)
-		? /** @type {ExpressionTag} */ (node.value[0])
-		: /** @type {ExpressionTag} */ (node.value);
+		? /** @type {AST.ExpressionTag} */ (node.value[0])
+		: /** @type {AST.ExpressionTag} */ (node.value);
 
 	let handler = build_event_handler(tag.expression, tag.metadata.expression, context);
 

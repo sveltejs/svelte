@@ -1,5 +1,5 @@
 /** @import * as ESTree from 'estree' */
-/** @import { ValidatedCompileOptions, SvelteNode, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { ValidatedCompileOptions, AST, ValidatedModuleCompileOptions, SvelteNode } from '#compiler' */
 /** @import { ComponentAnalysis, Analysis } from '../../types' */
 /** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';
@@ -457,7 +457,22 @@ export function client_component(analysis, options) {
 		analysis.uses_slots ||
 		analysis.slot_names.size > 0;
 
-	const body = [...state.hoisted, ...module.body];
+	// Merge hoisted statements into module body.
+	// Ensure imports are on top, with the order preserved, then module body, then hoisted statements
+	/** @type {ESTree.ImportDeclaration[]} */
+	const imports = [];
+	/** @type {ESTree.Program['body']} */
+	let body = [];
+
+	for (const entry of [...module.body, ...state.hoisted]) {
+		if (entry.type === 'ImportDeclaration') {
+			imports.push(entry);
+		} else {
+			body.push(entry);
+		}
+	}
+
+	body = [...imports, ...body];
 
 	const component = b.function_declaration(
 		b.id(analysis.name),
@@ -479,18 +494,7 @@ export function client_component(analysis, options) {
 
 		if (analysis.css.hash) {
 			// remove existing `<style>` element, in case CSS changed
-			accept_fn_body.unshift(
-				b.stmt(
-					b.call(
-						b.member(
-							b.call('document.querySelector', b.literal('#' + analysis.css.hash)),
-							'remove',
-							false,
-							true
-						)
-					)
-				)
-			);
+			accept_fn_body.unshift(b.stmt(b.call('$.cleanup_styles', b.literal(analysis.css.hash))));
 		}
 
 		const hmr = b.block([

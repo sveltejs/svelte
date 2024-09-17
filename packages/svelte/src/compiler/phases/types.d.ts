@@ -1,14 +1,4 @@
-import type {
-	Binding,
-	Css,
-	Fragment,
-	OnDirective,
-	RegularElement,
-	SlotElement,
-	SvelteElement,
-	SvelteNode,
-	SvelteOptions
-} from '#compiler';
+import type { AST, Binding, Css, SvelteNode } from '#compiler';
 import type { Identifier, LabeledStatement, Program, VariableDeclaration } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
 
@@ -19,7 +9,7 @@ export interface Js {
 }
 
 export interface Template {
-	ast: Fragment;
+	ast: AST.Fragment;
 	scope: Scope;
 	scopes: Map<SvelteNode, Scope>;
 }
@@ -46,7 +36,7 @@ export interface ComponentAnalysis extends Analysis {
 	root: ScopeRoot;
 	instance: Js;
 	template: Template;
-	elements: Array<RegularElement | SvelteElement>;
+	elements: Array<AST.RegularElement | AST.SvelteElement>;
 	runes: boolean;
 	exports: Array<{ name: string; alias: string | null }>;
 	/** Whether the component uses `$$props` */
@@ -60,21 +50,21 @@ export interface ComponentAnalysis extends Analysis {
 	needs_context: boolean;
 	needs_props: boolean;
 	/** Set to the first event directive (on:x) found on a DOM element in the code */
-	event_directive_node: OnDirective | null;
+	event_directive_node: AST.OnDirective | null;
 	/** true if uses event attributes (onclick) on a DOM element */
 	uses_event_attributes: boolean;
 	/**
 	 * Contains the content of `<svelte:options customElement={...} />`,
 	 * or if not present a boolean which corresponds to the compiler option value
 	 */
-	custom_element: boolean | SvelteOptions['customElement'];
+	custom_element: boolean | AST.SvelteOptions['customElement'];
 	/** If `true`, should append styles through JavaScript */
 	inject_styles: boolean;
 	reactive_statements: Map<LabeledStatement, ReactiveStatement>;
 	top_level_snippets: VariableDeclaration[];
 	/** Identifiers that make up the `bind:group` expression -> internal group binding name */
 	binding_groups: Map<[key: string, bindings: Array<Binding | null>], Identifier>;
-	slot_names: Map<string, SlotElement>;
+	slot_names: Map<string, AST.SlotElement>;
 	css: {
 		ast: Css.StyleSheet | null;
 		hash: string;

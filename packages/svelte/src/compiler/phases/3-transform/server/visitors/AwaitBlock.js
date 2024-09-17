@@ -1,11 +1,11 @@
 /** @import { BlockStatement, Expression, Pattern } from 'estree' */
-/** @import { AwaitBlock } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
 import { empty_comment } from './shared/utils.js';
 
 /**
- * @param {AwaitBlock} node
+ * @param {AST.AwaitBlock} node
  * @param {ComponentContext} context
  */
 export function AwaitBlock(node, context) {

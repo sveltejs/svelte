@@ -1,5 +1,5 @@
 /** @import { Expression } from 'estree' */
-/** @import { ExpressionTag, SvelteNode, Text } from '#compiler' */
+/** @import { AST, SvelteNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
@@ -19,7 +19,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	let prev = initial;
 	let skipped = 0;
 
-	/** @typedef {Array<Text | ExpressionTag>} Sequence */
+	/** @typedef {Array<AST.Text | AST.ExpressionTag>} Sequence */
 	/** @type {Sequence} */
 	let sequence = [];
 
@@ -123,7 +123,6 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 }
 
 /**
- *
  * @param {SvelteNode} node
  */
 function is_static_element(node) {

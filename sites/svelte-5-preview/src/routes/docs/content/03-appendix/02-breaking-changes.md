@@ -398,3 +398,9 @@ Since these mismatches are extremely rare, Svelte 5 assumes that the values are 
 ### Hydration works differently
 
 Svelte 5 makes use of comments during server side rendering which are used for more robust and efficient hydration on the client. As such, you shouldn't remove comments from your HTML output if you intend to hydrate it, and if you manually authored HTML to be hydrated by a Svelte component, you need to adjust that HTML to include said comments at the correct positions.
+
+### `onevent` attributes are delegated
+
+Event attributes replace event directives: Instead of `on:click={handler}` you write `onclick={handler}`. For backwards compatibility the `on:event` syntax is still supported and behaves the same as in Svelte 4. Some of the `onevent` attributes however are delegated, which means you need to take care to not stop event propagation on those manually, as they then might never reach the listener for this event type at the root.
+
+<!-- TODO in final docs, add link to corresponding section for more details -->

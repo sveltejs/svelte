@@ -1,5 +1,4 @@
 import type {
-	AssignmentExpression,
 	ClassDeclaration,
 	Expression,
 	FunctionDeclaration,
@@ -7,10 +6,9 @@ import type {
 	ImportDeclaration
 } from 'estree';
 import type { SourceMap } from 'magic-string';
-import type { Context } from 'zimmerframe';
 import type { Scope } from '../phases/scope.js';
 import type { Css } from './css.js';
-import type { EachBlock, Namespace, SvelteNode, SvelteOptions } from './template.js';
+import type { AST, Namespace, SvelteNode } from './template.js';
 import type { ICompileDiagnostic } from '../utils/compile_diagnostic.js';
 
 /** The return value of `compile` from `svelte/compiler` */
@@ -240,7 +238,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		sourcemap: CompileOptions['sourcemap'];
 		compatibility: Required<Required<CompileOptions>['compatibility']>;
 		runes: CompileOptions['runes'];
-		customElementOptions: SvelteOptions['customElement'];
+		customElementOptions: AST.SvelteOptions['customElement'];
 		hmr: CompileOptions['hmr'];
 	};
 
@@ -267,6 +265,7 @@ export interface Binding {
 	 * - `snippet`: A snippet parameter
 	 * - `store_sub`: A $store value
 	 * - `legacy_reactive`: A `$:` declaration
+	 * - `template`: A binding declared in the template, e.g. in an `await` block or `const` tag
 	 */
 	kind:
 		| 'normal'
@@ -279,7 +278,8 @@ export interface Binding {
 		| 'each'
 		| 'snippet'
 		| 'store_sub'
-		| 'legacy_reactive';
+		| 'legacy_reactive'
+		| 'template';
 	declaration_kind: DeclarationKind;
 	/**
 	 * What the value was initialized with.
@@ -291,7 +291,7 @@ export interface Binding {
 		| FunctionDeclaration
 		| ClassDeclaration
 		| ImportDeclaration
-		| EachBlock;
+		| AST.EachBlock;
 	is_called: boolean;
 	references: { node: Identifier; path: SvelteNode[] }[];
 	mutated: boolean;

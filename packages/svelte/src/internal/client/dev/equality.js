@@ -78,9 +78,13 @@ export function init_array_prototype_warnings() {
  * @returns {boolean}
  */
 export function strict_equals(a, b, equal = true) {
-	if ((a === b) !== (get_proxied_value(a) === get_proxied_value(b))) {
-		w.state_proxy_equality_mismatch(equal ? '===' : '!==');
-	}
+	// try-catch needed because this tries to read properties of `a` and `b`,
+	// which could be disallowed for example in a secure context
+	try {
+		if ((a === b) !== (get_proxied_value(a) === get_proxied_value(b))) {
+			w.state_proxy_equality_mismatch(equal ? '===' : '!==');
+		}
+	} catch {}
 
 	return (a === b) === equal;
 }

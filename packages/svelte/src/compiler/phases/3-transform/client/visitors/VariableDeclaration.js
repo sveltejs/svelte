@@ -28,11 +28,12 @@ export function VariableDeclaration(node, context) {
 				rune === '$effect.tracking' ||
 				rune === '$effect.root' ||
 				rune === '$inspect' ||
-				rune === '$state.snapshot'
+				rune === '$state.snapshot' ||
+				rune === '$host'
 			) {
 				if (init != null && is_hoisted_function(init)) {
 					context.state.hoisted.push(
-						b.declaration('const', declarator.id, /** @type {Expression} */ (context.visit(init)))
+						b.const(declarator.id, /** @type {Expression} */ (context.visit(init)))
 					);
 
 					continue;
@@ -205,7 +206,7 @@ export function VariableDeclaration(node, context) {
 
 				if (init != null && is_hoisted_function(init)) {
 					context.state.hoisted.push(
-						b.declaration('const', declarator.id, /** @type {Expression} */ (context.visit(init)))
+						b.const(declarator.id, /** @type {Expression} */ (context.visit(init)))
 					);
 
 					continue;

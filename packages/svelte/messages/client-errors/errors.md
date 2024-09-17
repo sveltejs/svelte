@@ -48,6 +48,10 @@
 
 > Failed to hydrate the application
 
+## invalid_snippet
+
+> Could not `{@render}` snippet due to the expression being `null` or `undefined`. Consider using optional chaining `{@render snippet?.()}`
+
 ## lifecycle_legacy_only
 
 > `%name%(...)` cannot be used in runes mode

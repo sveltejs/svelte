@@ -2,4 +2,4 @@
 title: svelte/reactivity
 ---
 
-<!-- @include svelte/reactivity -->
+> MODULE: svelte/reactivity

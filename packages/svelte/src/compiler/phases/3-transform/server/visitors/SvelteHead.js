@@ -1,10 +1,10 @@
 /** @import { BlockStatement } from 'estree' */
-/** @import { SvelteHead } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
 
 /**
- * @param {SvelteHead} node
+ * @param {AST.SvelteHead} node
  * @param {ComponentContext} context
  */
 export function SvelteHead(node, context) {

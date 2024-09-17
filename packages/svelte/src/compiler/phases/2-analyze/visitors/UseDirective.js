@@ -1,9 +1,9 @@
-/** @import { UseDirective } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {UseDirective} node
+ * @param {AST.UseDirective} node
  * @param {Context} context
  */
 export function UseDirective(node, context) {

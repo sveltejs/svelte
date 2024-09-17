@@ -102,6 +102,7 @@ The `t` argument passed to `css` is a value between `0` and `1` after the `easin
 The function is called repeatedly _before_ the transition begins, with different `t` and `u` arguments.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { elasticOut } from 'svelte/easing';
 
@@ -345,6 +346,7 @@ The function is called repeatedly _before_ the animation begins, with different 
 <!-- TODO: Types -->
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { cubicOut } from 'svelte/easing';
 
@@ -378,6 +380,7 @@ A custom animation function can also return a `tick` function, which is called _
 > If it's possible to use `css` instead of `tick`, do so — CSS animations can run off the main thread, preventing jank on slower devices.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { cubicOut } from 'svelte/easing';
 

@@ -1,4 +1,4 @@
-/** @import { EachBlock } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 /** @import { Scope } from '../../scope' */
 import * as e from '../../../errors.js';
@@ -6,7 +6,7 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
 import { validate_block_not_empty, validate_opening_tag } from './shared/utils.js';
 
 /**
- * @param {EachBlock} node
+ * @param {AST.EachBlock} node
  * @param {Context} context
  */
 export function EachBlock(node, context) {

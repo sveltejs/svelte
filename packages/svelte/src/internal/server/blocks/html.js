@@ -5,6 +5,7 @@ import { hash } from '../../../utils.js';
  * @param {string} value
  */
 export function html(value) {
-	var open = DEV ? `<!--${hash(String(value ?? ''))}-->` : '<!---->';
-	return `${open}${value}<!---->`;
+	var html = String(value ?? '');
+	var open = DEV ? `<!--${hash(html)}-->` : '<!---->';
+	return open + html + '<!---->';
 }

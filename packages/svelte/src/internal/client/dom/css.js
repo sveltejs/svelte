@@ -1,16 +1,22 @@
 import { DEV } from 'esm-env';
 import { queue_micro_task } from './task.js';
+import { register_style } from '../dev/css.js';
 
-var seen = new Set();
+var roots = new WeakMap();
 
 /**
  * @param {Node} anchor
  * @param {{ hash: string, code: string }} css
  * @param {boolean} [is_custom_element]
  */
-export function append_styles(anchor, css, is_custom_element = false) {
+export function append_styles(anchor, css, is_custom_element) {
 	// in dev, always check the DOM, so that styles can be replaced with HMR
 	if (!DEV && !is_custom_element) {
+		var doc = /** @type {Document} */ (anchor.ownerDocument);
+
+		if (!roots.has(doc)) roots.set(doc, new Set());
+		const seen = roots.get(doc);
+
 		if (seen.has(css)) return;
 		seen.add(css);
 	}
@@ -29,6 +35,10 @@ export function append_styles(anchor, css, is_custom_element = false) {
 			style.textContent = css.code;
 
 			target.appendChild(style);
+
+			if (DEV) {
+				register_style(css.hash, style);
+			}
 		}
 	});
 }

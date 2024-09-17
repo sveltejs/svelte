@@ -1,6 +1,6 @@
 import type { Scope } from '../scope.js';
 import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
-import type { ExpressionMetadata, RenderTag, SvelteNode, ValidatedCompileOptions } from '#compiler';
+import type { ExpressionMetadata, AST, ValidatedCompileOptions, SvelteNode } from '#compiler';
 import type { LabeledStatement } from 'estree';
 
 export interface AnalysisState {
@@ -16,7 +16,7 @@ export interface AnalysisState {
 	/** Information about the current expression/directive/block value */
 	expression: ExpressionMetadata | null;
 	/** The current {@render ...} tag, if any */
-	render_tag: null | RenderTag;
+	render_tag: null | AST.RenderTag;
 	private_derived_state: string[];
 	function_depth: number;
 

@@ -1,4 +1,4 @@
-/** @import { RenderTag } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { unwrap_optional } from '../../../utils/ast.js';
 import * as e from '../../../errors.js';
@@ -6,7 +6,7 @@ import { validate_opening_tag } from './shared/utils.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {RenderTag} node
+ * @param {AST.RenderTag} node
  * @param {Context} context
  */
 export function RenderTag(node, context) {
