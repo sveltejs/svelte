@@ -35,7 +35,7 @@ import { source, mutable_source, set } from '../../reactivity/sources.js';
 import { array_from, is_array } from '../../../shared/utils.js';
 import { INERT } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
-import { current_effect } from '../../runtime.js';
+import { active_effect } from '../../runtime.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -426,8 +426,8 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		});
 	}
 
-	/** @type {Effect} */ (current_effect).first = state.first && state.first.e;
-	/** @type {Effect} */ (current_effect).last = prev && prev.e;
+	/** @type {Effect} */ (active_effect).first = state.first && state.first.e;
+	/** @type {Effect} */ (active_effect).last = prev && prev.e;
 }
 
 /**

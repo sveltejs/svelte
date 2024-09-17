@@ -1,6 +1,6 @@
 /** @import { ProxyMetadata, ProxyStateObject, Source } from '#client' */
 import { DEV } from 'esm-env';
-import { get, current_component_context, untrack, current_effect } from './runtime.js';
+import { get, component_context, active_effect } from './runtime.js';
 import {
 	array_prototype,
 	get_descriptor,
@@ -62,8 +62,8 @@ export function proxy(value, parent = null, prev) {
 		} else {
 			metadata.owners =
 				parent === null
-					? current_component_context !== null
-						? new Set([current_component_context.function])
+					? component_context !== null
+						? new Set([component_context.function])
 						: null
 					: new Set();
 		}
@@ -190,7 +190,7 @@ export function proxy(value, parent = null, prev) {
 
 			if (
 				s !== undefined ||
-				(current_effect !== null && (!has || get_descriptor(target, prop)?.writable))
+				(active_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 			) {
 				if (s === undefined) {
 					s = source(has ? proxy(target[prop], metadata) : UNINITIALIZED);

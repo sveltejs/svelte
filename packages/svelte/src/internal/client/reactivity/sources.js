@@ -1,15 +1,15 @@
 /** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
-	current_component_context,
-	current_reaction,
+	component_context,
+	active_reaction,
 	new_deps,
-	current_effect,
-	current_untracked_writes,
+	active_effect,
+	untracked_writes,
 	get,
 	is_runes,
 	schedule_effect,
-	set_current_untracked_writes,
+	set_untracked_writes,
 	set_signal_status,
 	untrack,
 	increment_version,
@@ -76,8 +76,8 @@ export function mutable_source(initial_value) {
 
 	// bind the signal to the component context, in case we need to
 	// track updates to trigger beforeUpdate/afterUpdate callbacks
-	if (current_component_context !== null && current_component_context.l !== null) {
-		(current_component_context.l.s ??= []).push(s);
+	if (component_context !== null && component_context.l !== null) {
+		(component_context.l.s ??= []).push(s);
 	}
 
 	return s;
@@ -98,7 +98,7 @@ export function mutable_state(v) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 function push_derived_source(source) {
-	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
+	if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
 		if (derived_sources === null) {
 			set_derived_sources([source]);
 		} else {
@@ -130,9 +130,9 @@ export function mutate(source, value) {
  */
 export function set(source, value) {
 	if (
-		current_reaction !== null &&
+		active_reaction !== null &&
 		is_runes() &&
-		(current_reaction.f & DERIVED) !== 0 &&
+		(active_reaction.f & DERIVED) !== 0 &&
 		// If the source was created locally within the current derived, then
 		// we allow the mutation.
 		(derived_sources === null || !derived_sources.includes(source))
@@ -153,18 +153,18 @@ export function set(source, value) {
 		// scheduled. i.e: `$effect(() => x++)`
 		if (
 			is_runes() &&
-			current_effect !== null &&
-			(current_effect.f & CLEAN) !== 0 &&
-			(current_effect.f & BRANCH_EFFECT) === 0
+			active_effect !== null &&
+			(active_effect.f & CLEAN) !== 0 &&
+			(active_effect.f & BRANCH_EFFECT) === 0
 		) {
 			if (new_deps !== null && new_deps.includes(source)) {
-				set_signal_status(current_effect, DIRTY);
-				schedule_effect(current_effect);
+				set_signal_status(active_effect, DIRTY);
+				schedule_effect(active_effect);
 			} else {
-				if (current_untracked_writes === null) {
-					set_current_untracked_writes([source]);
+				if (untracked_writes === null) {
+					set_untracked_writes([source]);
 				} else {
-					current_untracked_writes.push(source);
+					untracked_writes.push(source);
 				}
 			}
 		}
@@ -214,7 +214,7 @@ function mark_reactions(signal, status) {
 		if ((flags & DIRTY) !== 0) continue;
 
 		// In legacy mode, skip the current effect to prevent infinite loops
-		if (!runes && reaction === current_effect) continue;
+		if (!runes && reaction === active_effect) continue;
 
 		// Inspect effects need to run immediately, so that the stack trace makes sense
 		if (DEV && (flags & INSPECT_EFFECT) !== 0) {

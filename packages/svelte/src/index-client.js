@@ -1,7 +1,7 @@
 /** @import { ComponentContext, ComponentContextLegacy } from '#client' */
 /** @import { EventDispatcher } from './index.js' */
 /** @import { NotFunction } from './internal/types.js' */
-import { current_component_context, flush_sync, untrack } from './internal/client/runtime.js';
+import { component_context, flush_sync, untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/shared/utils.js';
 import { user_effect } from './internal/client/index.js';
 import * as e from './internal/client/errors.js';
@@ -22,12 +22,12 @@ import { lifecycle_outside_component } from './internal/shared/errors.js';
  * @returns {void}
  */
 export function onMount(fn) {
-	if (current_component_context === null) {
+	if (component_context === null) {
 		lifecycle_outside_component('onMount');
 	}
 
-	if (current_component_context.l !== null) {
-		init_update_callbacks(current_component_context).m.push(fn);
+	if (component_context.l !== null) {
+		init_update_callbacks(component_context).m.push(fn);
 	} else {
 		user_effect(() => {
 			const cleanup = untrack(fn);
@@ -47,7 +47,7 @@ export function onMount(fn) {
  * @returns {void}
  */
 export function onDestroy(fn) {
-	if (current_component_context === null) {
+	if (component_context === null) {
 		lifecycle_outside_component('onDestroy');
 	}
 
@@ -90,14 +90,14 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
  * @returns {EventDispatcher<EventMap>}
  */
 export function createEventDispatcher() {
-	const component_context = current_component_context;
-	if (component_context === null) {
+	const active_component_context = component_context;
+	if (active_component_context === null) {
 		lifecycle_outside_component('createEventDispatcher');
 	}
 
 	return (type, detail, options) => {
 		const events = /** @type {Record<string, Function | Function[]>} */ (
-			component_context.s.$$events
+			active_component_context.s.$$events
 		)?.[/** @type {any} */ (type)];
 
 		if (events) {
@@ -106,7 +106,7 @@ export function createEventDispatcher() {
 			// in a server (non-DOM) environment?
 			const event = create_custom_event(/** @type {string} */ (type), detail, options);
 			for (const fn of callbacks) {
-				fn.call(component_context.x, event);
+				fn.call(active_component_context.x, event);
 			}
 			return !event.defaultPrevented;
 		}
@@ -130,15 +130,15 @@ export function createEventDispatcher() {
  * @returns {void}
  */
 export function beforeUpdate(fn) {
-	if (current_component_context === null) {
+	if (component_context === null) {
 		lifecycle_outside_component('beforeUpdate');
 	}
 
-	if (current_component_context.l === null) {
+	if (component_context.l === null) {
 		e.lifecycle_legacy_only('beforeUpdate');
 	}
 
-	init_update_callbacks(current_component_context).b.push(fn);
+	init_update_callbacks(component_context).b.push(fn);
 }
 
 /**
@@ -154,15 +154,15 @@ export function beforeUpdate(fn) {
  * @returns {void}
  */
 export function afterUpdate(fn) {
-	if (current_component_context === null) {
+	if (component_context === null) {
 		lifecycle_outside_component('afterUpdate');
 	}
 
-	if (current_component_context.l === null) {
+	if (component_context.l === null) {
 		e.lifecycle_legacy_only('afterUpdate');
 	}
 
-	init_update_callbacks(current_component_context).a.push(fn);
+	init_update_callbacks(component_context).a.push(fn);
 }
 
 /**

@@ -1,12 +1,12 @@
 /** @import { Effect, Source, TemplateNode } from '#client' */
 import { is_promise, noop } from '../../../shared/utils.js';
 import {
-	current_component_context,
+	component_context,
 	flush_sync,
 	is_runes,
-	set_current_component_context,
-	set_current_effect,
-	set_current_reaction,
+	set_component_context,
+	set_active_effect,
+	set_active_reaction,
 	set_dev_current_component_function
 } from '../../runtime.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
@@ -35,7 +35,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 	var anchor = node;
 	var runes = is_runes();
-	var component_context = current_component_context;
+	var active_component_context = component_context;
 
 	/** @type {any} */
 	var component_function = DEV ? component_context?.function : null;
@@ -64,9 +64,9 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 		resolved = true;
 
 		if (restore) {
-			set_current_effect(effect);
-			set_current_reaction(effect); // TODO do we need both?
-			set_current_component_context(component_context);
+			set_active_effect(effect);
+			set_active_reaction(effect); // TODO do we need both?
+			set_component_context(active_component_context);
 			if (DEV) set_dev_current_component_function(component_function);
 		}
 
@@ -99,9 +99,9 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 		if (restore) {
 			if (DEV) set_dev_current_component_function(null);
-			set_current_component_context(null);
-			set_current_reaction(null);
-			set_current_effect(null);
+			set_component_context(null);
+			set_active_reaction(null);
+			set_active_effect(null);
 
 			// without this, the DOM does not update until two ticks after the promise
 			// resolves, which is unexpected behaviour (and somewhat irksome to test)
