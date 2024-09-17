@@ -1,5 +1,5 @@
 ---
-'svelte': minor
+'svelte': patch
 ---
 
-Add accessibility warnings for buttons and anchors without explicit labels and content
+feat: Add accessibility warnings for buttons and anchors without explicit labels and content
