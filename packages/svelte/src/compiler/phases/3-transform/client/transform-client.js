@@ -494,18 +494,7 @@ export function client_component(analysis, options) {
 
 		if (analysis.css.hash) {
 			// remove existing `<style>` element, in case CSS changed
-			accept_fn_body.unshift(
-				b.stmt(
-					b.call(
-						b.member(
-							b.call('document.querySelector', b.literal('#' + analysis.css.hash)),
-							'remove',
-							false,
-							true
-						)
-					)
-				)
-			);
+			accept_fn_body.unshift(b.stmt(b.call('$.cleanup_styles', b.literal(analysis.css.hash))));
 		}
 
 		const hmr = b.block([
