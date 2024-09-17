@@ -618,10 +618,10 @@ function process_effects(effect, collected_effects) {
 	while (current_effect !== null) {
 		var flags = current_effect.f;
 
-		var has_dirty_children = (flags & EFFECT_HAS_DIRTY_CHILDREN) !== 0;
-		if (has_dirty_children) current_effect.f ^= EFFECT_HAS_DIRTY_CHILDREN;
-
 		if ((flags & INERT) === 0) {
+			var has_dirty_children = (flags & EFFECT_HAS_DIRTY_CHILDREN) !== 0;
+			if (has_dirty_children) current_effect.f ^= EFFECT_HAS_DIRTY_CHILDREN;
+
 			if (check_dirtiness(current_effect)) {
 				if ((flags & RENDER_EFFECT) !== 0) {
 					update_effect(current_effect);
