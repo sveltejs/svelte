@@ -45,7 +45,7 @@ export function if_block(node, get_condition, consequent_fn, alternate_fn = null
 		// dependencies get lost. By having a derived already having run, those dependencies won't be affected by this
 		var condition = get(derived_condition);
 
-		// Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out
+		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
 
 		if (hydrating) {
@@ -85,7 +85,6 @@ export function if_block(node, get_condition, consequent_fn, alternate_fn = null
 				pause_effect(consequent_effect, () => {
 					consequent_effect = null;
 				});
-
 			}
 		}
 
