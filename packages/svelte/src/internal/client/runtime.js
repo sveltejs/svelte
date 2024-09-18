@@ -516,16 +516,11 @@ function flush_queued_root_effects(root_effects) {
 				effect.f ^= EFFECT_HAS_DIRTY_CHILDREN;
 			}
 
-			// When working with custom elements, the root effects might not have a root
-			if (effect.first === null && (effect.f & BRANCH_EFFECT) === 0) {
-				flush_queued_effects([effect]);
-			} else {
-				/** @type {Effect[]} */
-				var collected_effects = [];
+			/** @type {Effect[]} */
+			var collected_effects = [];
 
-				process_effects(effect, collected_effects);
-				flush_queued_effects(collected_effects);
-			}
+			process_effects(effect, collected_effects);
+			flush_queued_effects(collected_effects);
 		}
 	} finally {
 		is_flushing_effect = previously_flushing_effect;
@@ -1056,15 +1051,18 @@ export function pop(component) {
 		const component_effects = context_stack_item.e;
 		if (component_effects !== null) {
 			var previous_effect = active_effect;
+			var previous_reaction = active_reaction;
 			context_stack_item.e = null;
 			try {
 				for (var i = 0; i < component_effects.length; i++) {
 					var component_effect = component_effects[i];
-					set_active_effect(component_effect.parent);
+					set_active_effect(component_effect.effect);
+					set_active_reaction(component_effect.reaction);
 					effect(component_effect.fn);
 				}
 			} finally {
 				set_active_effect(previous_effect);
+				set_active_reaction(previous_reaction);
 			}
 		}
 		component_context = context_stack_item.p;
