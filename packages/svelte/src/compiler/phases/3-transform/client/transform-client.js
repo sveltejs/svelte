@@ -386,9 +386,7 @@ export function client_component(analysis, options) {
 		state.hoisted.push(b.const('$$css', b.object([b.init('hash', hash), b.init('code', code)])));
 
 		component_block.body.unshift(
-			b.stmt(
-				b.call('$.append_styles', b.id('$$anchor'), b.id('$$css'), options.customElement && b.true)
-			)
+			b.stmt(b.call('$.append_styles', b.id('$$anchor'), b.id('$$css')))
 		);
 	}
 
