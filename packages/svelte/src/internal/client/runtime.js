@@ -22,7 +22,8 @@ import {
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
-	DISCONNECTED
+	DISCONNECTED,
+	EFFECT_QUEUED
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -511,6 +512,10 @@ function flush_queued_root_effects(root_effects) {
 		for (var i = 0; i < length; i++) {
 			var effect = root_effects[i];
 
+			if ((effect.f & EFFECT_QUEUED) !== 0) {
+				effect.f ^= EFFECT_QUEUED;
+			}
+
 			// When working with custom elements, the root effects might not have a root
 			if (effect.first === null && (effect.f & BRANCH_EFFECT) === 0) {
 				flush_queued_effects([effect]);
@@ -595,7 +600,12 @@ export function schedule_effect(signal) {
 
 		if ((flags & BRANCH_EFFECT) !== 0) {
 			if ((flags & CLEAN) === 0) return;
-			set_signal_status(effect, MAYBE_DIRTY);
+			effect.f ^= CLEAN;
+		}
+
+		if ((flags & ROOT_EFFECT) !== 0) {
+			if ((flags & EFFECT_QUEUED) !== 0) return;
+			effect.f ^= EFFECT_QUEUED;
 		}
 	}
 
@@ -642,14 +652,7 @@ function process_effects(effect, collected_effects) {
 					continue;
 				}
 			} else if ((flags & EFFECT) !== 0) {
-				if (is_branch || is_clean) {
-					if (child !== null) {
-						current_effect = child;
-						continue;
-					}
-				} else {
-					effects.push(current_effect);
-				}
+				effects.push(current_effect);
 			}
 		}
 
