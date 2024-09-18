@@ -237,17 +237,7 @@ export function inspect_effect(fn) {
  * @returns {() => void}
  */
 export function effect_root(fn) {
-	const effect = create_effect(
-		ROOT_EFFECT,
-		() => {
-			branch(() => {
-				// We return a noop if no function is returned to ensure that the branch
-				// is attached to the effect tree otherwise it will count as inert
-				return fn() || noop;
-			});
-		},
-		true
-	);
+	const effect = create_effect(ROOT_EFFECT, fn, true);
 
 	return () => {
 		destroy_effect(effect);
