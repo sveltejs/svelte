@@ -108,10 +108,12 @@ let stack = [];
  */
 export function update_derived(derived) {
 	var value;
+	var prev_active_effect = active_effect;
+
+	set_active_effect(derived.parent);
 
 	if (DEV) {
 		let prev_inspect_effects = inspect_effects;
-		let prev_active_effect = active_effect;
 		set_inspect_effects(new Set());
 		try {
 			if (stack.includes(derived)) {
@@ -121,7 +123,6 @@ export function update_derived(derived) {
 			stack.push(derived);
 
 			destroy_derived_children(derived);
-			set_active_effect(derived.parent);
 			value = update_reaction(derived);
 		} finally {
 			set_active_effect(prev_active_effect);
@@ -129,8 +130,12 @@ export function update_derived(derived) {
 			stack.pop();
 		}
 	} else {
-		destroy_derived_children(derived);
-		value = update_reaction(derived);
+		try {
+			destroy_derived_children(derived);
+			value = update_reaction(derived);
+		} finally {
+			set_active_effect(prev_active_effect);
+		}
 	}
 
 	var status =
