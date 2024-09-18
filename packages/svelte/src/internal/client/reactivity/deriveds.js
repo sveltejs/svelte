@@ -1,6 +1,14 @@
 /** @import { Derived, Effect } from '#client' */
 import { DEV } from 'esm-env';
-import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
+import {
+	CLEAN,
+	DERIVED,
+	DESTROYED,
+	DIRTY,
+	EFFECT_HAS_DERIVED,
+	MAYBE_DIRTY,
+	UNOWNED
+} from '../constants.js';
 import {
 	active_reaction,
 	active_effect,
@@ -24,7 +32,14 @@ import { inspect_effects, set_inspect_effects } from './sources.js';
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
 	let flags = DERIVED | DIRTY;
-	if (active_effect === null) flags |= UNOWNED;
+
+	if (active_effect === null) {
+		flags |= UNOWNED;
+	} else {
+		// Since deriveds are evaluated lazily, any effects created inside them are
+		// created too late to ensure that the parent effect is added to the tree
+		active_effect.f |= EFFECT_HAS_DERIVED;
+	}
 
 	/** @type {Derived<V>} */
 	const signal = {
