@@ -343,7 +343,14 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		// references
 		Identifier(node, { path, state }) {
 			const parent = path.at(-1);
-			if (parent && is_reference(node, /** @type {Node} */ (parent))) {
+			if (
+				parent &&
+				is_reference(node, /** @type {Node} */ (parent)) &&
+				// TSTypeAnnotation, TSInterfaceDeclaration etc - these are normally already filtered out,
+				// but for the migration they aren't, so we need to filter them out here
+				// -> once migration script is gone we can remove this check
+				!parent.type.startsWith('TS')
+			) {
 				references.push([state.scope, { node, path: path.slice() }]);
 			}
 		},
