@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.251
+
+### Patch Changes
+
+- fix: improve performance of scheduling effects ([#13300](https://github.com/sveltejs/svelte/pull/13300))
+
 ## 5.0.0-next.250
 
 ### Patch Changes
