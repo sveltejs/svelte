@@ -36,7 +36,6 @@ export function derived(fn) {
 		reactions: null,
 		v: /** @type {V} */ (null),
 		version: 0,
-
 		parent: active_effect
 	};
 
