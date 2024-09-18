@@ -335,7 +335,8 @@ const instance_script = {
 					// }
 				}
 
-				const binding = /** @type {Binding} */ (state.scope.get(declarator.id.name));
+				const name = declarator.id.name;
+				const binding = /** @type {Binding} */ (state.scope.get(name));
 
 				if (state.analysis.uses_props && (declarator.init || binding.updated)) {
 					throw new Error(
@@ -343,19 +344,33 @@ const instance_script = {
 					);
 				}
 
-				state.props.push({
-					local: declarator.id.name,
-					exported: binding.prop_alias ? binding.prop_alias : declarator.id.name,
-					init: declarator.init
+				const prop = state.props.find((prop) => prop.exported === (binding.prop_alias || name));
+				if (prop) {
+					// $$Props type was used
+					prop.init = declarator.init
 						? state.str.original.substring(
 								/** @type {number} */ (declarator.init.start),
 								/** @type {number} */ (declarator.init.end)
 							)
-						: '',
-					optional: !!declarator.init,
-					bindable: binding.updated,
-					...extract_type_and_comment(declarator, state.str, path)
-				});
+						: '';
+					prop.bindable = binding.updated;
+					prop.exported = binding.prop_alias || name;
+				} else {
+					state.props.push({
+						local: name,
+						exported: binding.prop_alias ? binding.prop_alias : name,
+						init: declarator.init
+							? state.str.original.substring(
+									/** @type {number} */ (declarator.init.start),
+									/** @type {number} */ (declarator.init.end)
+								)
+							: '',
+						optional: !!declarator.init,
+						bindable: binding.updated,
+						...extract_type_and_comment(declarator, state.str, path)
+					});
+				}
+
 				state.props_insertion_point = /** @type {number} */ (declarator.end);
 				state.str.update(
 					/** @type {number} */ (declarator.start),
@@ -944,6 +959,48 @@ function handle_identifier(node, state, path) {
 			}
 		}
 		// else passed as identifier, we don't know what to do here, so let it error
+	} else if (
+		parent?.type === 'TSInterfaceDeclaration' ||
+		parent?.type === 'TSTypeAliasDeclaration'
+	) {
+		const members =
+			parent.type === 'TSInterfaceDeclaration' ? parent.body.body : parent.typeAnnotation?.members;
+		if (Array.isArray(members)) {
+			if (node.name === '$$Props') {
+				for (const member of members) {
+					const prop = state.props.find((prop) => prop.exported === member.key.name);
+
+					const type = state.str.original.substring(
+						member.typeAnnotation.typeAnnotation.start,
+						member.typeAnnotation.typeAnnotation.end
+					);
+
+					let comment;
+					const comment_node = member.leadingComments?.at(-1);
+					if (comment_node?.type === 'Block') {
+						comment = state.str.original.substring(comment_node.start, comment_node.end);
+					}
+
+					if (prop) {
+						prop.type = type;
+						prop.optional = member.optional;
+						prop.comment = comment ?? prop.comment;
+					} else {
+						state.props.push({
+							local: member.key.name,
+							exported: member.key.name,
+							init: '',
+							bindable: false,
+							optional: member.optional,
+							type,
+							comment
+						});
+					}
+				}
+
+				state.str.remove(parent.start, parent.end);
+			}
+		}
 	}
 }
 

@@ -2,25 +2,11 @@ import { DEV } from 'esm-env';
 import { queue_micro_task } from './task.js';
 import { register_style } from '../dev/css.js';
 
-var roots = new WeakMap();
-
 /**
  * @param {Node} anchor
  * @param {{ hash: string, code: string }} css
- * @param {boolean} [is_custom_element]
  */
-export function append_styles(anchor, css, is_custom_element) {
-	// in dev, always check the DOM, so that styles can be replaced with HMR
-	if (!DEV && !is_custom_element) {
-		var doc = /** @type {Document} */ (anchor.ownerDocument);
-
-		if (!roots.has(doc)) roots.set(doc, new Set());
-		const seen = roots.get(doc);
-
-		if (seen.has(css)) return;
-		seen.add(css);
-	}
-
+export function append_styles(anchor, css) {
 	// Use `queue_micro_task` to ensure `anchor` is in the DOM, otherwise getRootNode() will yield wrong results
 	queue_micro_task(() => {
 		var root = anchor.getRootNode();
@@ -29,6 +15,8 @@ export function append_styles(anchor, css, is_custom_element) {
 			? /** @type {ShadowRoot} */ (root)
 			: /** @type {Document} */ (root).head ?? /** @type {Document} */ (root.ownerDocument).head;
 
+		// Always querying the DOM is roughly the same perf as additionally checking for presence in a map first assuming
+		// that you'll get cache hits half of the time, so we just always query the dom for simplicity and code savings.
 		if (!target.querySelector('#' + css.hash)) {
 			const style = document.createElement('style');
 			style.id = css.hash;
