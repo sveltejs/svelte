@@ -238,7 +238,6 @@ export function inspect_effect(fn) {
  */
 export function effect_root(fn) {
 	const effect = create_effect(ROOT_EFFECT, fn, true);
-
 	return () => {
 		destroy_effect(effect);
 	};
