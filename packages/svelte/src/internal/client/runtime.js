@@ -516,16 +516,11 @@ function flush_queued_root_effects(root_effects) {
 				effect.f ^= EFFECT_QUEUED;
 			}
 
-			// When working with custom elements, the root effects might not have a root
-			if (effect.first === null && (effect.f & BRANCH_EFFECT) === 0) {
-				flush_queued_effects([effect]);
-			} else {
-				/** @type {Effect[]} */
-				var collected_effects = [];
+			/** @type {Effect[]} */
+			var collected_effects = [];
 
-				process_effects(effect, collected_effects);
-				flush_queued_effects(collected_effects);
-			}
+			process_effects(effect, collected_effects);
+			flush_queued_effects(collected_effects);
 		}
 	} finally {
 		is_flushing_effect = previously_flushing_effect;
