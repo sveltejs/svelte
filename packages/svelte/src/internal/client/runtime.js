@@ -622,12 +622,10 @@ function process_effects(effect, collected_effects) {
 		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
-			if (is_branch) {
-				current_effect.f ^= CLEAN;
-			}
-
 			if ((flags & RENDER_EFFECT) !== 0) {
-				if (!is_branch && check_dirtiness(current_effect)) {
+				if (is_branch) {
+					current_effect.f ^= CLEAN;
+				} else if (check_dirtiness(current_effect)) {
 					update_effect(current_effect);
 				}
 
