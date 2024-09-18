@@ -203,7 +203,8 @@ export function user_effect(fn) {
 		var context = /** @type {ComponentContext} */ (component_context);
 		(context.e ??= []).push({
 			fn,
-			parent: active_effect
+			effect: active_effect,
+			reaction: active_reaction
 		});
 	} else {
 		var signal = effect(fn);

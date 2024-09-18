@@ -1,6 +1,6 @@
 import type { Store } from '#shared';
 import { STATE_SYMBOL } from './constants.js';
-import type { Effect, Source, Value } from './reactivity/types.js';
+import type { Effect, Source, Value, Reaction } from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
@@ -15,7 +15,11 @@ export type ComponentContext = {
 	/** context */
 	c: null | Map<unknown, unknown>;
 	/** deferred effects */
-	e: null | Array<{ fn: () => void | (() => void); parent: null | Effect }>;
+	e: null | Array<{
+		fn: () => void | (() => void);
+		effect: null | Effect;
+		reaction: null | Reaction;
+	}>;
 	/** mounted */
 	m: boolean;
 	/**
