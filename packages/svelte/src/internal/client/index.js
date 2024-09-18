@@ -12,7 +12,7 @@ export {
 export { check_target, legacy_api } from './dev/legacy.js';
 export { inspect } from './dev/inspect.js';
 export { await_block as await } from './dom/blocks/await.js';
-export { if_block as if, pick } from './dom/blocks/if.js';
+export { if_block as if, choose } from './dom/blocks/if.js';
 export { key_block as key } from './dom/blocks/key.js';
 export { css_props } from './dom/blocks/css-props.js';
 export { index, each } from './dom/blocks/each.js';

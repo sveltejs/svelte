@@ -13,45 +13,37 @@ import { HYDRATION_START_ELSE } from '../../../../constants.js';
 import { derived } from '../../reactivity/deriveds.js';
 import { get } from '../../runtime.js';
 
-
-
 /**
  * @param {TemplateNode} node
- * @param {(() => boolean)[]} test_fns
- * @param {((anchor: Node) => void)[]} consequent_fns
- * @param {((anchor: Node) => void) | null} alternate_fn
+ * @param {() => [number, (anchor: Node) => void] | undefined} get_fn
  * @returns {void}
  */
-export function pick(node, test_fns, consequent_fns, alternate_fn = null) {
+export function choose(node, get_fn) {
 	if (hydrating) {
 		hydrate_next();
 	}
 
 	var anchor = node;
 
-	const max = consequent_fns.length;
-
-	/** @type {{d:Derived<boolean>, e:Effect|null}[]} */
-	var effects = test_fns.map( fn => ({ d: derived(fn), e: null }) );
-
-	if (alternate_fn) {
-		
-		// @ts-ignore
-		effects[-1] = { e: null }
-	}
+	/** @type {Array<Effect|undefined>} */
+	const effects = [];
 
 	/** @type {number | null} */
 	var current_index = null;
 
 	block(() => {
-		const previous_index = current_index;
-		if (current_index === (current_index = (effects.findIndex(e => get(e.d))))) return;
+		const [new_index, new_fn] = get_fn() ?? [-1, null];
+
+		if (current_index === new_index) return;
+
+		const old_index = current_index;
+		current_index = new_index;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
-		
+
 		if (hydrating) {
-			const data = current_index < 0 ? '[!' : (current_index === 0 ? '[' : ('[' + current_index) );
+			const data = new_index < 0 ? '[!' : new_index === 0 ? '[' : '[' + new_index;
 			if (data !== /** @type {Comment} */ (anchor).data) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
 				// This could happen with `{#if browser}...{/if}`, for example
@@ -63,38 +55,28 @@ export function pick(node, test_fns, consequent_fns, alternate_fn = null) {
 			}
 		}
 
-		let current_effect = effects[current_index]?.e;
-		if (current_effect) {
-			resume_effect(current_effect);
-		} else {
-			const fn = current_index < 0 ? alternate_fn : consequent_fns[current_index];
-			if (fn) {
-				let target_anchor = anchor;
-				if (previous_index != null && current_index !== -1) {
-					const alternate_effect = effects[-1]?.e;
-					if (alternate_effect && alternate_effect.nodes_start) {
-						target_anchor = alternate_effect.nodes_start;
+		if (effects[new_index]) {
+			resume_effect(effects[new_index]);
+		} else if (new_fn) {
+			let target_anchor = anchor;
+			if (old_index != -1) {
+				// search the first node after the current condition :
+				const len = effects.length;
+				for (let i = new_index + 1; i < len; i++) {
+					const effect = effects[i];
+					if (effect && effect.nodes_start) {
+						target_anchor = effect.nodes_start;
+						break;
 					}
-					for (let i=current_index+1; i<max; i++) {
-						const effect = effects[i];
-						if (effect.e && effect.e.nodes_start) {
-							target_anchor = effect.e.nodes_start;
-							break;
-						}
-					}
-				}		
-				current_effect = branch(() => fn(target_anchor));
-				effects[current_index].e = current_effect;
+				}
 			}
+			effects[new_index] = branch(() => new_fn(target_anchor));
 		}
 
-		if (previous_index!=null) {
-			const previous_effect = effects[previous_index]?.e;
-			if (previous_effect) {
-				pause_effect(previous_effect, () => {
-					effects[previous_index].e = null;
-				});
-			}
+		if (old_index != null && old_index >= 0 && effects[old_index]) {
+			pause_effect(effects[old_index], () => {
+				delete effects[old_index];
+			});
 		}
 		if (mismatch) {
 			// continue in hydration mode
@@ -106,7 +88,6 @@ export function pick(node, test_fns, consequent_fns, alternate_fn = null) {
 		anchor = hydrate_node;
 	}
 }
-
 
 /**
  * @param {TemplateNode} node
