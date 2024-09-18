@@ -9,7 +9,6 @@ export const DISCONNECTED = 1 << 8;
 export const CLEAN = 1 << 9;
 export const DIRTY = 1 << 10;
 export const MAYBE_DIRTY = 1 << 11;
-export const EFFECT_HAS_DIRTY_CHILDREN = 1 << 12;
 export const INERT = 1 << 13;
 export const DESTROYED = 1 << 14;
 export const EFFECT_RAN = 1 << 15;

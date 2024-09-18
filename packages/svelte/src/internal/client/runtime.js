@@ -22,8 +22,7 @@ import {
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
-	DISCONNECTED,
-	EFFECT_HAS_DIRTY_CHILDREN
+	DISCONNECTED
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -589,7 +588,7 @@ export function schedule_effect(signal) {
 
 		if ((flags & BRANCH_EFFECT) !== 0) {
 			if ((flags & CLEAN) === 0) return;
-			set_signal_status(effect, EFFECT_HAS_DIRTY_CHILDREN);
+			effect.f ^= CLEAN;
 		}
 	}
 
@@ -621,7 +620,6 @@ function process_effects(effect, collected_effects) {
 		// Skip this branch if it's clean
 		if (is_active && (!is_branch || !is_clean)) {
 			if (is_branch) {
-				// Can only be a branch effect with EFFECT_HAS_DIRTY_CHILDREN
 				set_signal_status(current_effect, CLEAN);
 			}
 
@@ -845,7 +843,7 @@ export function untrack(fn) {
 	}
 }
 
-const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN | EFFECT_HAS_DIRTY_CHILDREN);
+const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
 
 /**
  * @param {Signal} signal
