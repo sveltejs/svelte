@@ -1,6 +1,14 @@
 /** @import { Derived, Effect } from '#client' */
 import { DEV } from 'esm-env';
-import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
+import {
+	CLEAN,
+	DERIVED,
+	DESTROYED,
+	DIRTY,
+	EFFECT_HAS_DERIVED,
+	MAYBE_DIRTY,
+	UNOWNED
+} from '../constants.js';
 import {
 	active_reaction,
 	active_effect,
@@ -8,7 +16,8 @@ import {
 	set_signal_status,
 	skip_reaction,
 	update_reaction,
-	increment_version
+	increment_version,
+	set_active_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -23,7 +32,14 @@ import { inspect_effects, set_inspect_effects } from './sources.js';
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
 	let flags = DERIVED | DIRTY;
-	if (active_effect === null) flags |= UNOWNED;
+
+	if (active_effect === null) {
+		flags |= UNOWNED;
+	} else {
+		// Since deriveds are evaluated lazily, any effects created inside them are
+		// created too late to ensure that the parent effect is added to the tree
+		active_effect.f |= EFFECT_HAS_DERIVED;
+	}
 
 	/** @type {Derived<V>} */
 	const signal = {
@@ -34,7 +50,8 @@ export function derived(fn) {
 		fn,
 		reactions: null,
 		v: /** @type {V} */ (null),
-		version: 0
+		version: 0,
+		parent: active_effect
 	};
 
 	if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
@@ -91,6 +108,9 @@ let stack = [];
  */
 export function update_derived(derived) {
 	var value;
+	var prev_active_effect = active_effect;
+
+	set_active_effect(derived.parent);
 
 	if (DEV) {
 		let prev_inspect_effects = inspect_effects;
@@ -105,12 +125,17 @@ export function update_derived(derived) {
 			destroy_derived_children(derived);
 			value = update_reaction(derived);
 		} finally {
+			set_active_effect(prev_active_effect);
 			set_inspect_effects(prev_inspect_effects);
 			stack.pop();
 		}
 	} else {
-		destroy_derived_children(derived);
-		value = update_reaction(derived);
+		try {
+			destroy_derived_children(derived);
+			value = update_reaction(derived);
+		} finally {
+			set_active_effect(prev_active_effect);
+		}
 	}
 
 	var status =
