@@ -10,7 +10,7 @@ import {
 } from './dom/operations.js';
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
 import { push, pop, component_context, active_effect } from './runtime.js';
-import { branch, effect_root } from './reactivity/effects.js';
+import { effect_root, branch } from './reactivity/effects.js';
 import {
 	hydrate_next,
 	hydrate_node,
