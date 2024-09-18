@@ -845,7 +845,7 @@ export function untrack(fn) {
 	}
 }
 
-const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
+const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN | EFFECT_HAS_DIRTY_CHILDREN);
 
 /**
  * @param {Signal} signal
