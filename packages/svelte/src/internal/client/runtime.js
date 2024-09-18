@@ -23,7 +23,7 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	EFFECT_QUEUED
+	EFFECT_HAS_DIRTY_CHILDREN
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -512,8 +512,8 @@ function flush_queued_root_effects(root_effects) {
 		for (var i = 0; i < length; i++) {
 			var effect = root_effects[i];
 
-			if ((effect.f & EFFECT_QUEUED) !== 0) {
-				effect.f ^= EFFECT_QUEUED;
+			if ((effect.f & EFFECT_HAS_DIRTY_CHILDREN) !== 0) {
+				effect.f ^= EFFECT_HAS_DIRTY_CHILDREN;
 			}
 
 			// When working with custom elements, the root effects might not have a root
@@ -598,14 +598,9 @@ export function schedule_effect(signal) {
 		effect = effect.parent;
 		var flags = effect.f;
 
-		if ((flags & BRANCH_EFFECT) !== 0) {
-			if ((flags & CLEAN) === 0) return;
-			effect.f ^= CLEAN;
-		}
-
-		if ((flags & ROOT_EFFECT) !== 0) {
-			if ((flags & EFFECT_QUEUED) !== 0) return;
-			effect.f ^= EFFECT_QUEUED;
+		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
+			if ((flags & EFFECT_HAS_DIRTY_CHILDREN) !== 0) return;
+			effect.f ^= EFFECT_HAS_DIRTY_CHILDREN;
 		}
 	}
 
@@ -629,23 +624,21 @@ function process_effects(effect, collected_effects) {
 
 	main_loop: while (current_effect !== null) {
 		var flags = current_effect.f;
-		var is_active = (flags & INERT) === 0;
 		var is_branch = (flags & BRANCH_EFFECT) !== 0;
-		var is_clean = (flags & CLEAN) !== 0;
-		var child = current_effect.first;
+		var is_skippable_branch = is_branch && (flags & EFFECT_HAS_DIRTY_CHILDREN) === 0;
 
-		// Skip this branch if it's clean
-		if (is_active && (!is_branch || !is_clean)) {
+		if (!is_skippable_branch && (flags & INERT) === 0) {
 			if (is_branch) {
-				set_signal_status(current_effect, CLEAN);
+				current_effect.f ^= EFFECT_HAS_DIRTY_CHILDREN;
 			}
 
 			if ((flags & RENDER_EFFECT) !== 0) {
 				if (!is_branch && check_dirtiness(current_effect)) {
 					update_effect(current_effect);
 				}
+
 				// Child might have been mutated since running the effect or checking dirtiness
-				child = current_effect.first;
+				var child = current_effect.first;
 
 				if (child !== null) {
 					current_effect = child;
