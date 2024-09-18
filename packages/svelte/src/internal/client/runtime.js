@@ -22,8 +22,7 @@ import {
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
-	DISCONNECTED,
-	EFFECT_HAS_DIRTY_CHILDREN
+	DISCONNECTED
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -512,8 +511,8 @@ function flush_queued_root_effects(root_effects) {
 		for (var i = 0; i < length; i++) {
 			var effect = root_effects[i];
 
-			if ((effect.f & EFFECT_HAS_DIRTY_CHILDREN) !== 0) {
-				effect.f ^= EFFECT_HAS_DIRTY_CHILDREN;
+			if ((effect.f & CLEAN) === 0) {
+				effect.f ^= CLEAN;
 			}
 
 			/** @type {Effect[]} */
@@ -594,8 +593,8 @@ export function schedule_effect(signal) {
 		var flags = effect.f;
 
 		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
-			if ((flags & EFFECT_HAS_DIRTY_CHILDREN) !== 0) return;
-			effect.f ^= EFFECT_HAS_DIRTY_CHILDREN;
+			if ((flags & CLEAN) === 0) return;
+			effect.f ^= CLEAN;
 		}
 	}
 
@@ -620,11 +619,11 @@ function process_effects(effect, collected_effects) {
 	main_loop: while (current_effect !== null) {
 		var flags = current_effect.f;
 		var is_branch = (flags & BRANCH_EFFECT) !== 0;
-		var is_skippable_branch = is_branch && (flags & EFFECT_HAS_DIRTY_CHILDREN) === 0;
+		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
 			if (is_branch) {
-				current_effect.f ^= EFFECT_HAS_DIRTY_CHILDREN;
+				current_effect.f ^= CLEAN;
 			}
 
 			if ((flags & RENDER_EFFECT) !== 0) {
