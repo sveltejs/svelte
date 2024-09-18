@@ -368,8 +368,15 @@ const instance_script = {
 
 			// state
 			if (declarator.init) {
-				state.str.prependLeft(/** @type {number} */ (declarator.init.start), '$state(');
-				state.str.appendRight(/** @type {number} */ (declarator.init.end), ')');
+				let { start, end } = /** @type {{ start: number, end: number }} */ (declarator.init);
+
+				if (declarator.init.type === 'SequenceExpression') {
+					while (state.str.original[start] !== '(') start -= 1;
+					while (state.str.original[end - 1] !== ')') end += 1;
+				}
+
+				state.str.prependLeft(start, '$state(');
+				state.str.appendRight(end, ')');
 			} else {
 				state.str.prependLeft(
 					/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
@@ -416,25 +423,30 @@ const instance_script = {
 			const bindings = ids.map((id) => state.scope.get(id.name));
 			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
 			if (reassigned_bindings.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
+				let { start, end } = /** @type {{ start: number, end: number }} */ (
+					node.body.expression.right
+				);
+
 				// $derived
 				state.str.update(
 					/** @type {number} */ (node.start),
 					/** @type {number} */ (node.body.expression.start),
 					'let '
 				);
-				state.str.prependRight(
-					/** @type {number} */ (node.body.expression.right.start),
-					'$derived('
-				);
-				if (node.body.expression.right.end !== node.end) {
-					state.str.update(
-						/** @type {number} */ (node.body.expression.right.end),
-						/** @type {number} */ (node.end),
-						');'
-					);
-				} else {
-					state.str.appendLeft(/** @type {number} */ (node.end), ');');
+
+				if (node.body.expression.right.type === 'SequenceExpression') {
+					while (state.str.original[start] !== '(') start -= 1;
+					while (state.str.original[end - 1] !== ')') end += 1;
 				}
+
+				state.str.prependRight(start, `$derived(`);
+
+				// in a case like `$: ({ a } = b())`, there's already a trailing parenthesis.
+				// otherwise, we need to add one
+				if (state.str.original[/** @type {number} */ (node.body.start)] !== '(') {
+					state.str.appendLeft(end, `)`);
+				}
+
 				return;
 			} else {
 				for (const binding of reassigned_bindings) {
