@@ -629,7 +629,6 @@ function process_effects(effect, collected_effects) {
 					update_effect(current_effect);
 				}
 
-				// Child might have been mutated since running the effect or checking dirtiness
 				var child = current_effect.first;
 
 				if (child !== null) {
