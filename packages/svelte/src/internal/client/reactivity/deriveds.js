@@ -8,7 +8,8 @@ import {
 	set_signal_status,
 	skip_reaction,
 	update_reaction,
-	increment_version
+	increment_version,
+	set_active_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -34,7 +35,9 @@ export function derived(fn) {
 		fn,
 		reactions: null,
 		v: /** @type {V} */ (null),
-		version: 0
+		version: 0,
+
+		parent: active_effect
 	};
 
 	if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
@@ -94,6 +97,7 @@ export function update_derived(derived) {
 
 	if (DEV) {
 		let prev_inspect_effects = inspect_effects;
+		let prev_active_effect = active_effect;
 		set_inspect_effects(new Set());
 		try {
 			if (stack.includes(derived)) {
@@ -103,8 +107,10 @@ export function update_derived(derived) {
 			stack.push(derived);
 
 			destroy_derived_children(derived);
+			set_active_effect(derived.parent);
 			value = update_reaction(derived);
 		} finally {
+			set_active_effect(prev_active_effect);
 			set_inspect_effects(prev_inspect_effects);
 			stack.pop();
 		}
