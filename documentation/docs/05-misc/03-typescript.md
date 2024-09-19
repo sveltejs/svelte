@@ -8,7 +8,7 @@ title: TypeScript
 - using `Component` and the other helper types
 - using `svelte-check`
 
-You can use TypeScript within Svelte components. IDE extensions like the [Svelte VSCode extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) will help you catch errors right in your editor, and [`svelte-check`](https://www.npmjs.com/package/svelte-check) does the same on the command line, which you can integrate into your CI.
+You can use TypeScript within Svelte components. IDE extensions like the [Svelte VS Code extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) will help you catch errors right in your editor, and [`svelte-check`](https://www.npmjs.com/package/svelte-check) does the same on the command line, which you can integrate into your CI.
 
 ## `<script lang="ts">`
 
@@ -118,7 +118,7 @@ Components can declare a generic relationship between their properties. One exam
 		select: Item;
 	}
 
-	let { items, select } = $props();
+	let { items, select }: Props = $props();
 </script>
 
 {#each items as item}
@@ -210,8 +210,8 @@ declare namespace svelteHTML {
 	}
 	// enhance attributes
 	interface HTMLAttributes<T> {
-		// If you want to use on:beforeinstallprompt
-		'on:beforeinstallprompt'?: (event: any) => any;
+		// If you want to use the beforeinstallprompt event
+		'onbeforeinstallprompt'?: (event: any) => any;
 		// If you want to use myCustomAttribute={..} (note: all lowercase)
 		mycustomattribute?: any; // You can replace any with something more specific if you like
 	}

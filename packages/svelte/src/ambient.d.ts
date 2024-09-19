@@ -102,12 +102,13 @@ declare namespace $state {
 						: never;
 
 	/**
-	 * Declares reactive read-only state that is shallowly immutable.
+	 * Declares state that is _not_ made deeply reactive — instead of mutating it,
+	 * you must reassign it.
 	 *
 	 * Example:
 	 * ```ts
 	 * <script>
-	 *   let items = $state.frozen([0]);
+	 *   let items = $state.raw([0]);
 	 *
 	 *   const addItem = () => {
 	 *     items = [...items, items.length];
@@ -123,8 +124,8 @@ declare namespace $state {
 	 *
 	 * @param initial The initial value
 	 */
-	export function frozen<T>(initial: T): Readonly<T>;
-	export function frozen<T>(): Readonly<T> | undefined;
+	export function raw<T>(initial: T): T;
+	export function raw<T>(): T | undefined;
 	/**
 	 * To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
 	 *
@@ -145,27 +146,6 @@ declare namespace $state {
 	 * @param state The value to snapshot
 	 */
 	export function snapshot<T>(state: T): Snapshot<T>;
-
-	/**
-	 * Compare two values, one or both of which is a reactive `$state(...)` proxy.
-	 *
-	 * Example:
-	 * ```ts
-	 * <script>
-	 *	 let foo = $state({});
-	 *	 let bar = {};
-	 *
-	 *	 foo.bar = bar;
-	 *
-	 *	 console.log(foo.bar === bar); // false — `foo.bar` is a reactive proxy
-	 *   console.log($state.is(foo.bar, bar)); // true
-	 * </script>
-	 * ```
-	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$state.is
-	 *
-	 */
-	export function is(a: any, b: any): boolean;
 
 	// prevent intellisense from being unhelpful
 	/** @deprecated */

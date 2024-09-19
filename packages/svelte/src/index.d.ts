@@ -17,6 +17,8 @@ export interface ComponentConstructorOptions<
 	context?: Map<any, any>;
 	hydrate?: boolean;
 	intro?: boolean;
+	recover?: boolean;
+	sync?: boolean;
 	$$inline?: boolean;
 }
 
@@ -226,10 +228,10 @@ export type ComponentEvents<Comp extends SvelteComponent> =
  * withProps(MyComponent, { foo: 'bar' });
  * ```
  */
-export type ComponentProps<Comp extends SvelteComponent | Component<any>> =
+export type ComponentProps<Comp extends SvelteComponent | Component<any, any>> =
 	Comp extends SvelteComponent<infer Props>
 		? Props
-		: Comp extends Component<infer Props>
+		: Comp extends Component<infer Props, any>
 			? Props
 			: never;
 
@@ -285,9 +287,9 @@ export interface Snippet<Parameters extends unknown[] = []> {
 		// rest parameter type, which is not supported. If rest parameters are added
 		// in the future, the condition can be removed.
 		...args: number extends Parameters['length'] ? never : Parameters
-	): typeof SnippetReturn & {
-		_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-	};
+	): {
+		'{@render ...} must be called with a Snippet': "import type { Snippet } from 'svelte'";
+	} & typeof SnippetReturn;
 }
 
 interface DispatchOptions {

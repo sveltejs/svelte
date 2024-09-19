@@ -2,4 +2,4 @@
 title: svelte/server
 ---
 
-<!-- @include svelte/server -->
+> MODULE: svelte/server

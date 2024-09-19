@@ -70,7 +70,7 @@ function merge_tables(this_table, other_table) {
 	}
 	return [new_table, idx_map, val_changed, idx_changed];
 }
-const regex_line_token = /([^\d\w\s]|\s+)/g;
+const regex_line_token = /([^\w\s]|\s+)/g;
 /** */
 export class MappedCode {
 	/**
@@ -328,7 +328,7 @@ function apply_preprocessor_sourcemap(filename, svelte_map, preprocessor_map_inp
 			}
 		}
 	});
-	return /** @type {SourceMap} */ (result_map);
+	return /** @type {any} */ (result_map);
 }
 const regex_data_uri = /data:(?:application|text)\/json;(?:charset[:=]\S+?;)?base64,(\S*)/;
 // parse attached sourcemap in processed.code
@@ -393,7 +393,7 @@ export function parse_attached_sourcemap(processed, tag_name) {
  */
 export function merge_with_preprocessor_map(result, options, source_name) {
 	if (options.sourcemap) {
-		const file_basename = get_basename(options.filename || 'input.svelte');
+		const file_basename = get_basename(options.filename);
 		// The preprocessor map is expected to contain `sources: [basename_of_filename]`, but our own
 		// map may contain a different file name. Patch our map beforehand to align sources so merging
 		// with the preprocessor map works correctly.
@@ -442,11 +442,10 @@ export function get_basename(filename) {
 }
 
 /**
- * @param {string | undefined} filename
+ * @param {string} filename
  * @param {string | undefined} output_filename
  * @param {string} fallback
  */
 export function get_source_name(filename, output_filename, fallback) {
-	if (!filename) return fallback;
 	return output_filename ? get_relative_path(output_filename, filename) : get_basename(filename);
 }

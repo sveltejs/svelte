@@ -132,10 +132,6 @@
 
 > `</%name%>` attempted to close element that was already automatically closed by `<%reason%>` (cannot nest `<%reason%>` inside `<%name%>`)
 
-## element_invalid_tag_name
-
-> Expected valid tag name
-
 ## element_unclosed
 
 > `<%name%>` was left open
@@ -190,7 +186,13 @@
 
 ## node_invalid_placement
 
-> %thing% is invalid inside <%parent%>
+> %thing% is invalid inside `<%parent%>`
+
+HTML restricts where certain elements can appear. In case of a violation the browser will 'repair' the HTML in a way that breaks Svelte's assumptions about the structure of your components. Some examples:
+
+- `<p>hello <div>world</div></p>` will result in `<p>hello </p><div>world</div><p></p>` for example (the `<div>` autoclosed the `<p>` because `<p>` cannot contain block-level elements)
+- `<option><div>option a</div></option>` will result in `<option>option a</option>` (the `<div>` is removed)
+- `<table><tr><td>cell</td></tr></table>` will result in `<table><tbody><tr><td>cell</td></tr></tbody></table>` (a `<tbody>` is auto-inserted)
 
 HTML has some restrictions where certain elements can appear. For example, a `<div>` inside a `<p>` is invalid. Some violations "only" result in invalid HTML, others result in the HTML being repaired by the browser, resulting in content shifting around. Some examples:
 
@@ -214,11 +216,19 @@ Svelte throws a compiler error when it detects that it will generate the HTML in
 
 ## script_duplicate
 
-> A component can have a single top-level `<script>` element and/or a single top-level `<script context="module">` element
+> A component can have a single top-level `<script>` element and/or a single top-level `<script module>` element
+
+## script_invalid_attribute_value
+
+> If the `%name%` attribute is supplied, it must be a boolean attribute
 
 ## script_invalid_context
 
 > If the context attribute is supplied, its value must be "module"
+
+## script_reserved_attribute
+
+> The `%name%` attribute is reserved and cannot be used
 
 ## slot_attribute_duplicate
 
@@ -272,6 +282,10 @@ Svelte throws a compiler error when it detects that it will generate the HTML in
 
 > A component can have a single top-level `<style>` element
 
+## svelte_body_illegal_attribute
+
+> `<svelte:body>` does not support non-event attributes or spread attributes
+
 ## svelte_component_invalid_this
 
 > Invalid component definition — must be an `{expression}`
@@ -291,10 +305,6 @@ Svelte throws a compiler error when it detects that it will generate the HTML in
 ## svelte_fragment_invalid_placement
 
 > `<svelte:fragment>` must be the direct child of a component
-
-## svelte_fragment_invalid_slot
-
-> `<svelte:fragment>` slot attribute must have a static value
 
 ## svelte_head_illegal_attribute
 
@@ -326,11 +336,11 @@ Svelte throws a compiler error when it detects that it will generate the HTML in
 
 ## svelte_options_invalid_attribute_value
 
-> Valid values are %list%
+> Value must be %list%, if specified
 
 ## svelte_options_invalid_customelement
 
-> "customElement" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
+> "customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
 
 ## svelte_options_invalid_customelement_props
 
@@ -342,7 +352,15 @@ Svelte throws a compiler error when it detects that it will generate the HTML in
 
 ## svelte_options_invalid_tagname
 
-> Tag name must be two or more words joined by the "-" character
+> Tag name must be lowercase and hyphenated
+
+See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name for more information on valid tag names
+
+## svelte_options_reserved_tagname
+
+> Tag name is reserved
+
+See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name for more information on valid tag names
 
 ## svelte_options_unknown_attribute
 
@@ -351,6 +369,10 @@ Svelte throws a compiler error when it detects that it will generate the HTML in
 ## svelte_self_invalid_placement
 
 > `<svelte:self>` components can only exist inside `{#if}` blocks, `{#each}` blocks, `{#snippet}` blocks or slots passed to components
+
+## tag_invalid_name
+
+> Expected a valid element or component name. Components must have a valid variable name or dot notation expression
 
 ## tag_invalid_placement
 

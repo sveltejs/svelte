@@ -14,11 +14,15 @@ export default test({
 
 		await tick();
 
-		el.shadowRoot.querySelector('button').click();
-		assert.deepEqual(events, ['greeting', 'hello']);
+		el.shadowRoot.querySelectorAll('button')[0].click();
+		el.shadowRoot.querySelectorAll('button')[1].click();
+		el.shadowRoot.querySelectorAll('button')[2].click();
+		assert.deepEqual(events, ['greeting', 'hello', 'greeting', 'welcome', 'greeting', 'bonjour']);
 
 		el.removeEventListener('greeting', handle_evt);
-		el.shadowRoot.querySelector('button').click();
-		assert.deepEqual(events, ['greeting', 'hello']);
+		el.shadowRoot.querySelectorAll('button')[0].click();
+		el.shadowRoot.querySelectorAll('button')[1].click();
+		el.shadowRoot.querySelectorAll('button')[2].click();
+		assert.deepEqual(events, ['greeting', 'hello', 'greeting', 'welcome', 'greeting', 'bonjour']);
 	}
 });

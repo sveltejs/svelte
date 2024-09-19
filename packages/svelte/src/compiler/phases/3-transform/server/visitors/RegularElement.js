@@ -1,16 +1,16 @@
 /** @import { Location } from 'locate-character' */
-/** @import { RegularElement, Text } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
 /** @import { Scope } from '../../../scope.js' */
-import { locator } from '../../../../state.js';
+import { is_void } from '../../../../../utils.js';
+import { dev, locator } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
-import { VoidElements } from '../../../constants.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { serialize_element_attributes } from './shared/element.js';
-import { process_children, serialize_template } from './shared/utils.js';
+import { build_element_attributes } from './shared/element.js';
+import { process_children, build_template } from './shared/utils.js';
 
 /**
- * @param {RegularElement} node
+ * @param {AST.RegularElement} node
  * @param {ComponentContext} context
  */
 export function RegularElement(node, context) {
@@ -19,20 +19,18 @@ export function RegularElement(node, context) {
 	/** @type {ComponentServerTransformState} */
 	const state = {
 		...context.state,
-		getters: { ...context.state.getters },
 		namespace,
 		preserve_whitespace:
-			context.state.preserve_whitespace ||
-			((node.name === 'pre' || node.name === 'textarea') && namespace !== 'foreign')
+			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
 	};
 
 	context.state.template.push(b.literal(`<${node.name}`));
-	const body = serialize_element_attributes(node, { ...context, state });
+	const body = build_element_attributes(node, { ...context, state });
 	context.state.template.push(b.literal('>'));
 
 	if ((node.name === 'script' || node.name === 'style') && node.fragment.nodes.length === 1) {
 		context.state.template.push(
-			b.literal(/** @type {Text} */ (node.fragment.nodes[0]).data),
+			b.literal(/** @type {AST.Text} */ (node.fragment.nodes[0]).data),
 			b.literal(`</${node.name}>`)
 		);
 
@@ -60,7 +58,7 @@ export function RegularElement(node, context) {
 		context.visit(node, state);
 	}
 
-	if (state.options.dev) {
+	if (dev) {
 		const location = /** @type {Location} */ (locator(node.start));
 		state.template.push(
 			b.stmt(
@@ -94,17 +92,17 @@ export function RegularElement(node, context) {
 		state.template.push(
 			b.if(
 				id,
-				b.block(serialize_template([id])),
-				b.block([...inner_state.init, ...serialize_template(inner_state.template)])
+				b.block(build_template([id])),
+				b.block([...inner_state.init, ...build_template(inner_state.template)])
 			)
 		);
 	}
 
-	if (!VoidElements.includes(node.name) && namespace !== 'foreign') {
+	if (!is_void(node.name)) {
 		state.template.push(b.literal(`</${node.name}>`));
 	}
 
-	if (state.options.dev) {
+	if (dev) {
 		state.template.push(b.stmt(b.call('$.pop_element')));
 	}
 }

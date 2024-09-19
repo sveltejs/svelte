@@ -30,7 +30,7 @@ export function transform_component(analysis, source, options) {
 	const program =
 		options.generate === 'server'
 			? server_component(analysis, options)
-			: client_component(source, analysis, options);
+			: client_component(analysis, options);
 
 	const js_source_name = get_source_name(options.filename, options.outputFilename, 'input.svelte');
 	const js = print(program, {
@@ -80,7 +80,7 @@ export function transform_module(analysis, source, options) {
 			? server_module(analysis, options)
 			: client_module(analysis, options);
 
-	const basename = (options.filename ?? 'Module').split(/[/\\]/).at(-1);
+	const basename = options.filename.split(/[/\\]/).at(-1);
 	if (program.body.length > 0) {
 		program.body[0].leadingComments = [
 			{

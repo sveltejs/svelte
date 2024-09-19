@@ -34,12 +34,14 @@ function stringify(element) {
 
 /**
  * @param {Payload} payload
- * @param {Element} parent
+ * @param {Element | null} parent
  * @param {Element} child
  */
 function print_error(payload, parent, child) {
 	var message =
-		`node_invalid_placement_ssr: ${stringify(parent)} cannot contain ${stringify(child)}\n\n` +
+		(parent === null
+			? `node_invalid_placement_ssr: ${stringify(child)} needs a valid parent element\n\n`
+			: `node_invalid_placement_ssr: ${stringify(parent)} cannot contain ${stringify(child)}\n\n`) +
 		'This can cause content to shift around as the browser repairs the HTML, and will likely result in a `hydration_mismatch` warning.';
 
 	if ((seen ??= new Set()).has(message)) return;
@@ -48,6 +50,10 @@ function print_error(payload, parent, child) {
 	// eslint-disable-next-line no-console
 	console.error(message);
 	payload.head.out += `<script>console.error(${JSON.stringify(message)})</script>`;
+}
+
+export function reset_elements() {
+	parent = null;
 }
 
 /**
@@ -59,17 +65,24 @@ function print_error(payload, parent, child) {
 export function push_element(payload, tag, line, column) {
 	var filename = /** @type {Component} */ (current_component).function[FILENAME];
 	var child = { tag, parent, filename, line, column };
-	var ancestor = parent?.parent;
 
-	if (parent !== null && !is_tag_valid_with_parent(tag, parent.tag)) {
-		print_error(payload, parent, child);
-	}
+	if (parent !== null) {
+		var ancestor = parent.parent;
+		var ancestors = [parent.tag];
 
-	while (ancestor != null) {
-		if (!is_tag_valid_with_ancestor(tag, ancestor.tag)) {
-			print_error(payload, ancestor, child);
+		if (!is_tag_valid_with_parent(tag, parent.tag)) {
+			print_error(payload, parent, child);
 		}
-		ancestor = ancestor.parent;
+
+		while (ancestor != null) {
+			ancestors.push(ancestor.tag);
+			if (!is_tag_valid_with_ancestor(tag, ancestors)) {
+				print_error(payload, ancestor, child);
+			}
+			ancestor = ancestor.parent;
+		}
+	} else if (!is_tag_valid_with_parent(tag, null)) {
+		print_error(payload, null, child);
 	}
 
 	parent = child;

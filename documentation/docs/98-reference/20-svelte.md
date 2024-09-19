@@ -2,4 +2,4 @@
 title: svelte
 ---
 
-<!-- @include svelte -->
+> MODULE: svelte

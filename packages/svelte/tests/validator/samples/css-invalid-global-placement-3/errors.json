@@ -1,7 +1,7 @@
 [
 	{
 		"code": "css_global_invalid_placement",
-		"message": ":global(...) can be at the start or end of a selector sequence, but not in the middle",
+		"message": "`:global(...)` can be at the start or end of a selector sequence, but not in the middle",
 		"start": {
 			"line": 5,
 			"column": 6

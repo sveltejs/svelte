@@ -1,13 +1,15 @@
+/** @import { Location } from 'locate-character' */
 /** @import { BlockStatement, Expression } from 'estree' */
-/** @import { SvelteElement } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
+import { dev, locator } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { determine_namespace_for_children } from '../../utils.js';
-import { serialize_element_attributes } from './shared/element.js';
-import { serialize_template } from './shared/utils.js';
+import { build_element_attributes } from './shared/element.js';
+import { build_template } from './shared/utils.js';
 
 /**
- * @param {SvelteElement} node
+ * @param {AST.SvelteElement} node
  * @param {ComponentContext} context
  */
 export function SvelteElement(node, context) {
@@ -18,7 +20,7 @@ export function SvelteElement(node, context) {
 		tag = b.id(tag_id);
 	}
 
-	if (context.state.options.dev) {
+	if (dev) {
 		if (node.fragment.nodes.length > 0) {
 			context.state.init.push(b.stmt(b.call('$.validate_void_dynamic_element', b.thunk(tag))));
 		}
@@ -27,19 +29,29 @@ export function SvelteElement(node, context) {
 
 	const state = {
 		...context.state,
-		getteres: { ...context.state.getters },
 		namespace: determine_namespace_for_children(node, context.state.namespace),
 		template: [],
 		init: []
 	};
 
-	serialize_element_attributes(node, { ...context, state });
+	build_element_attributes(node, { ...context, state });
 
-	if (context.state.options.dev) {
-		context.state.template.push(b.stmt(b.call('$.push_element', tag, b.id('$$payload'))));
+	if (dev) {
+		const location = /** @type {Location} */ (locator(node.start));
+		context.state.template.push(
+			b.stmt(
+				b.call(
+					'$.push_element',
+					b.id('$$payload'),
+					tag,
+					b.literal(location.line),
+					b.literal(location.column)
+				)
+			)
+		);
 	}
 
-	const attributes = b.block([...state.init, ...serialize_template(state.template)]);
+	const attributes = b.block([...state.init, ...build_template(state.template)]);
 	const children = /** @type {BlockStatement} */ (context.visit(node.fragment, state));
 
 	context.state.template.push(
@@ -54,7 +66,7 @@ export function SvelteElement(node, context) {
 		)
 	);
 
-	if (context.state.options.dev) {
+	if (dev) {
 		context.state.template.push(b.stmt(b.call('$.pop_element')));
 	}
 }

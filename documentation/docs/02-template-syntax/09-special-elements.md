@@ -14,8 +14,7 @@ It cannot appear at the top level of your markup; it must be inside an if or eac
 
 ```svelte
 <script>
-	/** @type {number} */
-	export let count;
+	let { count } = $props();
 </script>
 
 {#if count > 0}
@@ -56,15 +55,15 @@ If `this` is the name of a [void element](https://developer.mozilla.org/en-US/do
 
 ```svelte
 <script>
-	let tag = 'div';
+	let { handler } = $props();
 
-	export let handler;
+	let tag = $state('div');
 </script>
 
-<svelte:element this={tag} on:click={handler}>Foo</svelte:element>
+<svelte:element this={tag} onclick={handler}>Foo</svelte:element>
 ```
 
-Svelte tries its best to infer the correct namespace from its surroundings, but that's not always possible to analyze statically. You can give a hint by adding a `xmlns` attribute:
+Svelte tries its best to infer the correct namespace from the element's surroundings, but it's not always possible. You can make it explicit with an `xmlns` attribute:
 
 ```svelte
 <svelte:element this={tag} xmlns="http://www.w3.org/2000/svg" />
@@ -73,7 +72,7 @@ Svelte tries its best to infer the correct namespace from its surroundings, but 
 ## `<svelte:window>`
 
 ```svelte
-<svelte:window on:event={handler} />
+<svelte:window onevent={handler} />
 ```
 
 ```svelte
@@ -86,13 +85,12 @@ Unlike `<svelte:self>`, this element may only appear at the top level of your co
 
 ```svelte
 <script>
-	/** @param {KeyboardEvent} event */
 	function handleKeydown(event) {
 		alert(`pressed the ${event.key} key`);
 	}
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} />
 ```
 
 You can also bind to the following properties:
@@ -117,7 +115,7 @@ All except `scrollX` and `scrollY` are readonly.
 ## `<svelte:document>`
 
 ```svelte
-<svelte:document on:event={handler} />
+<svelte:document onevent={handler} />
 ```
 
 ```svelte
@@ -129,7 +127,7 @@ Similarly to `<svelte:window>`, this element allows you to add listeners to even
 As with `<svelte:window>`, this element may only appear the top level of your component and must never be inside a block or element.
 
 ```svelte
-<svelte:document on:visibilitychange={handleVisibilityChange} use:someAction />
+<svelte:document onvisibilitychange={handleVisibilityChange} use:someAction />
 ```
 
 You can also bind to the following properties:
@@ -144,7 +142,7 @@ All are readonly.
 ## `<svelte:body>`
 
 ```svelte
-<svelte:body on:event={handler} />
+<svelte:body onevent={handler} />
 ```
 
 Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave`, which don't fire on `window`. It also lets you use [actions](/docs/element-directives#use-action) on the `<body>` element.
@@ -152,7 +150,7 @@ Similarly to `<svelte:window>`, this element allows you to add listeners to even
 As with `<svelte:window>` and `<svelte:document>`, this element may only appear the top level of your component and must never be inside a block or element.
 
 ```svelte
-<svelte:body on:mouseenter={handleMouseenter} on:mouseleave={handleMouseleave} use:someAction />
+<svelte:body onmouseenter={handleMouseenter} onmouseleave={handleMouseleave} use:someAction />
 ```
 
 ## `<svelte:head>`
@@ -185,7 +183,7 @@ The `<svelte:options>` element provides a place to specify per-component compile
 - `accessors={true}` — adds getters and setters for the component's props
 - `accessors={false}` — the default
 - `namespace="..."` — the namespace where this component will be used, most commonly "svg"; use the "foreign" namespace to opt out of case-insensitive attribute names and HTML-specific warnings
-- `customElement="..."` — the name to use when compiling this component as a custom element
+- `customElement={...}` — the [options](/docs/custom-elements-api#component-options) to use when compiling this component as a custom element. If a string is passed, it is used as the `tag` option
 
 ```svelte
 <svelte:options customElement="my-custom-element" />

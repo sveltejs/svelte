@@ -15,11 +15,11 @@ function time_ranges_to_array(ranges) {
 
 /**
  * @param {HTMLVideoElement | HTMLAudioElement} media
- * @param {() => number | undefined} get_value
- * @param {(value: number) => void} update
+ * @param {() => number | undefined} get
+ * @param {(value: number) => void} set
  * @returns {void}
  */
-export function bind_current_time(media, get_value, update) {
+export function bind_current_time(media, get, set = get) {
 	/** @type {number} */
 	var raf_id;
 	/** @type {number} */
@@ -37,7 +37,7 @@ export function bind_current_time(media, get_value, update) {
 
 		var next_value = media.currentTime;
 		if (value !== next_value) {
-			update((value = next_value));
+			set((value = next_value));
 		}
 	};
 
@@ -45,7 +45,7 @@ export function bind_current_time(media, get_value, update) {
 	media.addEventListener('timeupdate', callback);
 
 	render_effect(() => {
-		var next_value = Number(get_value());
+		var next_value = Number(get());
 
 		if (value !== next_value && !isNaN(/** @type {any} */ (next_value))) {
 			media.currentTime = value = next_value;
@@ -57,66 +57,66 @@ export function bind_current_time(media, get_value, update) {
 
 /**
  * @param {HTMLVideoElement | HTMLAudioElement} media
- * @param {(array: Array<{ start: number; end: number }>) => void} update
+ * @param {(array: Array<{ start: number; end: number }>) => void} set
  */
-export function bind_buffered(media, update) {
-	listen(media, ['loadedmetadata', 'progress'], () => update(time_ranges_to_array(media.buffered)));
+export function bind_buffered(media, set) {
+	listen(media, ['loadedmetadata', 'progress'], () => set(time_ranges_to_array(media.buffered)));
 }
 
 /**
  * @param {HTMLVideoElement | HTMLAudioElement} media
- * @param {(array: Array<{ start: number; end: number }>) => void} update
+ * @param {(array: Array<{ start: number; end: number }>) => void} set
  */
-export function bind_seekable(media, update) {
-	listen(media, ['loadedmetadata'], () => update(time_ranges_to_array(media.seekable)));
+export function bind_seekable(media, set) {
+	listen(media, ['loadedmetadata'], () => set(time_ranges_to_array(media.seekable)));
 }
 
 /**
  * @param {HTMLVideoElement | HTMLAudioElement} media
- * @param {(array: Array<{ start: number; end: number }>) => void} update
+ * @param {(array: Array<{ start: number; end: number }>) => void} set
  */
-export function bind_played(media, update) {
-	listen(media, ['timeupdate'], () => update(time_ranges_to_array(media.played)));
+export function bind_played(media, set) {
+	listen(media, ['timeupdate'], () => set(time_ranges_to_array(media.played)));
 }
 
 /**
  * @param {HTMLVideoElement | HTMLAudioElement} media
- * @param {(seeking: boolean) => void} update
+ * @param {(seeking: boolean) => void} set
  */
-export function bind_seeking(media, update) {
-	listen(media, ['seeking', 'seeked'], () => update(media.seeking));
+export function bind_seeking(media, set) {
+	listen(media, ['seeking', 'seeked'], () => set(media.seeking));
 }
 
 /**
  * @param {HTMLVideoElement | HTMLAudioElement} media
- * @param {(seeking: boolean) => void} update
+ * @param {(seeking: boolean) => void} set
  */
-export function bind_ended(media, update) {
-	listen(media, ['timeupdate', 'ended'], () => update(media.ended));
+export function bind_ended(media, set) {
+	listen(media, ['timeupdate', 'ended'], () => set(media.ended));
 }
 
 /**
  * @param {HTMLVideoElement | HTMLAudioElement} media
- * @param {(ready_state: number) => void} update
+ * @param {(ready_state: number) => void} set
  */
-export function bind_ready_state(media, update) {
+export function bind_ready_state(media, set) {
 	listen(
 		media,
 		['loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough', 'playing', 'waiting', 'emptied'],
-		() => update(media.readyState)
+		() => set(media.readyState)
 	);
 }
 
 /**
  * @param {HTMLVideoElement | HTMLAudioElement} media
- * @param {() => number | undefined} get_value
- * @param {(playback_rate: number) => void} update
+ * @param {() => number | undefined} get
+ * @param {(playback_rate: number) => void} set
  */
-export function bind_playback_rate(media, get_value, update) {
+export function bind_playback_rate(media, get, set = get) {
 	// Needs to happen after element is inserted into the dom (which is guaranteed by using effect),
 	// else playback will be set back to 1 by the browser
 	effect(() => {
-		var value = Number(get_value());
+		var value = Number(get());
 
 		if (value !== media.playbackRate && !isNaN(value)) {
 			media.playbackRate = value;
@@ -127,24 +127,24 @@ export function bind_playback_rate(media, get_value, update) {
 	// else playback will be set to 1 by the browser
 	effect(() => {
 		listen(media, ['ratechange'], () => {
-			update(media.playbackRate);
+			set(media.playbackRate);
 		});
 	});
 }
 
 /**
  * @param {HTMLVideoElement | HTMLAudioElement} media
- * @param {() => boolean | undefined} get_value
- * @param {(paused: boolean) => void} update
+ * @param {() => boolean | undefined} get
+ * @param {(paused: boolean) => void} set
  */
-export function bind_paused(media, get_value, update) {
+export function bind_paused(media, get, set = get) {
 	var mounted = hydrating;
-	var paused = get_value();
+	var paused = get();
 
 	var callback = () => {
 		if (paused !== media.paused) {
 			paused = media.paused;
-			update((paused = media.paused));
+			set((paused = media.paused));
 		}
 	};
 
@@ -160,7 +160,7 @@ export function bind_paused(media, get_value, update) {
 	}
 
 	render_effect(() => {
-		paused = !!get_value();
+		paused = !!get();
 
 		if (paused !== media.paused) {
 			var toggle = () => {
@@ -169,7 +169,7 @@ export function bind_paused(media, get_value, update) {
 					media.pause();
 				} else {
 					media.play().catch(() => {
-						update((paused = true));
+						set((paused = true));
 					});
 				}
 			};
@@ -195,22 +195,22 @@ export function bind_paused(media, get_value, update) {
 
 /**
  * @param {HTMLVideoElement | HTMLAudioElement} media
- * @param {() => number | undefined} get_value
- * @param {(volume: number) => void} update
+ * @param {() => number | undefined} get
+ * @param {(volume: number) => void} set
  */
-export function bind_volume(media, get_value, update) {
+export function bind_volume(media, get, set = get) {
 	var callback = () => {
-		update(media.volume);
+		set(media.volume);
 	};
 
-	if (get_value() == null) {
+	if (get() == null) {
 		callback();
 	}
 
 	listen(media, ['volumechange'], callback, false);
 
 	render_effect(() => {
-		var value = Number(get_value());
+		var value = Number(get());
 
 		if (value !== media.volume && !isNaN(value)) {
 			media.volume = value;
@@ -220,22 +220,22 @@ export function bind_volume(media, get_value, update) {
 
 /**
  * @param {HTMLVideoElement | HTMLAudioElement} media
- * @param {() => boolean | undefined} get_value
- * @param {(muted: boolean) => void} update
+ * @param {() => boolean | undefined} get
+ * @param {(muted: boolean) => void} set
  */
-export function bind_muted(media, get_value, update) {
+export function bind_muted(media, get, set = get) {
 	var callback = () => {
-		update(media.muted);
+		set(media.muted);
 	};
 
-	if (get_value() == null) {
+	if (get() == null) {
 		callback();
 	}
 
 	listen(media, ['volumechange'], callback, false);
 
 	render_effect(() => {
-		var value = !!get_value();
+		var value = !!get();
 
 		if (media.muted !== value) media.muted = value;
 	});

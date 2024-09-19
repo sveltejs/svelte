@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { createBundle } from 'dts-buddy';
 
@@ -21,6 +22,10 @@ fs.writeFileSync(`${dir}/types/compiler/interfaces.d.ts`, "import '../index.js';
 
 await createBundle({
 	output: `${dir}/types/index.d.ts`,
+	compilerOptions: {
+		// so that types/properties with `@internal` (and its dependencies) are removed from the output
+		stripInternal: true
+	},
 	modules: {
 		[pkg.name]: `${dir}/src/index.d.ts`,
 		[`${pkg.name}/action`]: `${dir}/src/action/public.d.ts`,
@@ -33,7 +38,7 @@ await createBundle({
 		[`${pkg.name}/server`]: `${dir}/src/server/index.d.ts`,
 		[`${pkg.name}/store`]: `${dir}/src/store/public.d.ts`,
 		[`${pkg.name}/transition`]: `${dir}/src/transition/public.d.ts`,
-		[`${pkg.name}/events`]: `${dir}/src/events/index.js`,
+		[`${pkg.name}/events`]: `${dir}/src/events/public.d.ts`,
 		// TODO remove in Svelte 6
 		[`${pkg.name}/types/compiler/preprocess`]: `${dir}/src/compiler/preprocess/legacy-public.d.ts`,
 		[`${pkg.name}/types/compiler/interfaces`]: `${dir}/src/compiler/types/legacy-interfaces.d.ts`
@@ -54,5 +59,16 @@ if (bad_links.length > 0) {
 		console.error(`- ${link}`);
 	}
 
+	process.exit(1);
+}
+
+if (types.includes('\texport { ')) {
+	// eslint-disable-next-line no-console
+	console.error(
+		`The generated types file should not contain 'export { ... }' statements. ` +
+			`TypeScript is bad at following these: when creating d.ts files through @sveltejs/package, and one of these types is used, ` +
+			`TypeScript will likely fail at generating a d.ts file. ` +
+			`To prevent this, do 'export interface Foo {}' instead of 'interface Foo {}' and then 'export { Foo }'`
+	);
 	process.exit(1);
 }

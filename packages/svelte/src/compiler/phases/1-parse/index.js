@@ -1,13 +1,14 @@
-/** @import { TemplateNode, Fragment, Root, SvelteOptionsRaw } from '#compiler' */
+/** @import { AST, TemplateNode } from '#compiler' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
 import { regex_whitespace } from '../patterns.js';
-import { reserved } from '../../../constants.js';
 import full_char_code_at from './utils/full_char_code_at.js';
 import * as e from '../../errors.js';
 import { create_fragment } from './utils/create.js';
 import read_options from './read/options.js';
+import { is_reserved } from '../../../utils.js';
+import { disallow_children } from '../2-analyze/visitors/shared/special-element.js';
 
 const regex_position_indicator = / \(\d+:\d+\)$/;
 
@@ -30,10 +31,10 @@ export class Parser {
 	/** @type {TemplateNode[]} */
 	stack = [];
 
-	/** @type {Fragment[]} */
+	/** @type {AST.Fragment[]} */
 	fragments = [];
 
-	/** @type {Root} */
+	/** @type {AST.Root} */
 	root;
 
 	/** @type {Record<string, boolean>} */
@@ -121,9 +122,12 @@ export class Parser {
 			(thing) => thing.type === 'SvelteOptions'
 		);
 		if (options_index !== -1) {
-			const options = /** @type {SvelteOptionsRaw} */ (this.root.fragment.nodes[options_index]);
+			const options = /** @type {AST.SvelteOptionsRaw} */ (this.root.fragment.nodes[options_index]);
 			this.root.fragment.nodes.splice(options_index, 1);
 			this.root.options = read_options(options);
+
+			disallow_children(options);
+
 			// We need this for the old AST format
 			Object.defineProperty(this.root.options, '__raw__', {
 				value: options,
@@ -219,7 +223,7 @@ export class Parser {
 
 		const identifier = this.template.slice(this.index, (this.index = i));
 
-		if (!allow_reserved && reserved.includes(identifier)) {
+		if (!allow_reserved && is_reserved(identifier)) {
 			e.unexpected_reserved_word(start, identifier);
 		}
 
@@ -288,7 +292,7 @@ export class Parser {
 
 /**
  * @param {string} template
- * @returns {Root}
+ * @returns {AST.Root}
  */
 export function parse(template) {
 	const parser = new Parser(template);

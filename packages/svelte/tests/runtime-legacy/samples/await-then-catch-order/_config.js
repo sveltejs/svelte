@@ -12,6 +12,10 @@ export default test({
 		return { thePromise };
 	},
 
+	html: `
+		<p>loading...</p><p>true!</p>
+	`,
+
 	test({ assert, target }) {
 		fulfil(42);
 

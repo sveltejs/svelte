@@ -1,7 +1,7 @@
 import { createClassComponent } from '../../../../legacy/legacy-client.js';
-import { destroy_effect, render_effect } from '../../reactivity/effects.js';
+import { destroy_effect, effect_root, render_effect } from '../../reactivity/effects.js';
 import { append } from '../template.js';
-import { define_property, object_keys } from '../../../shared/utils.js';
+import { define_property, get_descriptor, object_keys } from '../../../shared/utils.js';
 
 /**
  * @typedef {Object} CustomElementPropDefinition
@@ -145,24 +145,26 @@ if (typeof HTMLElement === 'function') {
 				});
 
 				// Reflect component props as attributes
-				this.$$me = render_effect(() => {
-					this.$$r = true;
-					for (const key of object_keys(this.$$c)) {
-						if (!this.$$p_d[key]?.reflect) continue;
-						this.$$d[key] = this.$$c[key];
-						const attribute_value = get_custom_element_value(
-							key,
-							this.$$d[key],
-							this.$$p_d,
-							'toAttribute'
-						);
-						if (attribute_value == null) {
-							this.removeAttribute(this.$$p_d[key].attribute || key);
-						} else {
-							this.setAttribute(this.$$p_d[key].attribute || key, attribute_value);
+				this.$$me = effect_root(() => {
+					render_effect(() => {
+						this.$$r = true;
+						for (const key of object_keys(this.$$c)) {
+							if (!this.$$p_d[key]?.reflect) continue;
+							this.$$d[key] = this.$$c[key];
+							const attribute_value = get_custom_element_value(
+								key,
+								this.$$d[key],
+								this.$$p_d,
+								'toAttribute'
+							);
+							if (attribute_value == null) {
+								this.removeAttribute(this.$$p_d[key].attribute || key);
+							} else {
+								this.setAttribute(this.$$p_d[key].attribute || key, attribute_value);
+							}
 						}
-					}
-					this.$$r = false;
+						this.$$r = false;
+					});
 				});
 
 				for (const type in this.$$l) {
@@ -196,7 +198,7 @@ if (typeof HTMLElement === 'function') {
 			Promise.resolve().then(() => {
 				if (!this.$$cn && this.$$c) {
 					this.$$c.$destroy();
-					destroy_effect(this.$$me);
+					this.$$me();
 					this.$$c = undefined;
 				}
 			});
@@ -305,7 +307,18 @@ export function create_custom_element(
 			set(value) {
 				value = get_custom_element_value(prop, value, props_definition);
 				this.$$d[prop] = value;
-				this.$$c?.$set({ [prop]: value });
+				var component = this.$$c;
+
+				if (component) {
+					// // If the instance has an accessor, use that instead
+					var setter = get_descriptor(component, prop)?.get;
+
+					if (setter) {
+						component[prop] = value;
+					} else {
+						component.$set({ [prop]: value });
+					}
+				}
 			}
 		});
 	});

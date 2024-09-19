@@ -14,10 +14,11 @@ const empty = [];
 /**
  * @template T
  * @param {T} value
+ * @param {boolean} [skip_warning]
  * @returns {Snapshot<T>}
  */
-export function snapshot(value) {
-	if (DEV) {
+export function snapshot(value, skip_warning = false) {
+	if (DEV && !skip_warning) {
 		/** @type {string[]} */
 		const paths = [];
 
@@ -54,6 +55,9 @@ function clone(value, cloned, path, paths) {
 	if (typeof value === 'object' && value !== null) {
 		const unwrapped = cloned.get(value);
 		if (unwrapped !== undefined) return unwrapped;
+
+		if (value instanceof Map) return /** @type {Snapshot<T>} */ (new Map(value));
+		if (value instanceof Set) return /** @type {Snapshot<T>} */ (new Set(value));
 
 		if (is_array(value)) {
 			const copy = /** @type {Snapshot<any>} */ ([]);

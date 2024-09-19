@@ -1,6 +1,7 @@
 /** @import { Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
+	PROPS_IS_BINDABLE,
 	PROPS_IS_IMMUTABLE,
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_RUNES,
@@ -13,6 +14,7 @@ import { get, is_signals_recorded, untrack, update } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import { LEGACY_DERIVED_PROP } from '../constants.js';
+import { proxy } from '../proxy.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -126,6 +128,13 @@ const legacy_rest_props_handler = {
 			};
 		}
 	},
+	deleteProperty(target, key) {
+		// Svelte 4 allowed for deletions on $$restProps
+		if (target.exclude.includes(key)) return true;
+		target.exclude.push(key);
+		update(target.version);
+		return true;
+	},
 	has(target, key) {
 		if (target.exclude.includes(key)) return false;
 		return key in target.props;
@@ -221,6 +230,7 @@ export function spread_props(...props) {
 export function prop(props, key, flags, fallback) {
 	var immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
 	var runes = (flags & PROPS_IS_RUNES) !== 0;
+	var bindable = (flags & PROPS_IS_BINDABLE) !== 0;
 	var lazy = (flags & PROPS_IS_LAZY_INITIAL) !== 0;
 
 	var prop_value = /** @type {V} */ (props[key]);
@@ -228,11 +238,17 @@ export function prop(props, key, flags, fallback) {
 
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;
+	var fallback_used = false;
 
 	var get_fallback = () => {
-		if (lazy && fallback_dirty) {
+		fallback_used = true;
+		if (fallback_dirty) {
 			fallback_dirty = false;
-			fallback_value = untrack(/** @type {() => V} */ (fallback));
+			if (lazy) {
+				fallback_value = untrack(/** @type {() => V} */ (fallback));
+			} else {
+				fallback_value = /** @type {V} */ (fallback);
+			}
 		}
 
 		return fallback_value;
@@ -254,6 +270,7 @@ export function prop(props, key, flags, fallback) {
 			var value = /** @type {V} */ (props[key]);
 			if (value === undefined) return get_fallback();
 			fallback_dirty = true;
+			fallback_used = false;
 			return value;
 		};
 	} else {
@@ -336,11 +353,16 @@ export function prop(props, key, flags, fallback) {
 		}
 
 		if (arguments.length > 0) {
-			const new_value = mutation ? get(current_value) : value;
+			const new_value = mutation ? get(current_value) : runes && bindable ? proxy(value) : value;
 
 			if (!current_value.equals(new_value)) {
 				from_child = true;
 				set(inner_current_value, new_value);
+				// To ensure the fallback value is consistent when used with proxies, we
+				// update the local fallback_value, but only if the fallback is actively used
+				if (fallback_used && fallback_value !== undefined) {
+					fallback_value = new_value;
+				}
 				get(current_value); // force a synchronisation immediately
 			}
 

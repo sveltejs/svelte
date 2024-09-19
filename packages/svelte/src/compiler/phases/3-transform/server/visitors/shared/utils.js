@@ -1,7 +1,7 @@
-/** @import {  AssignmentExpression, AssignmentOperator, BinaryOperator, Expression, Identifier, Node, Pattern, Statement, TemplateElement } from 'estree' */
-/** @import { Attribute, Comment, ExpressionTag, SvelteNode, Text } from '#compiler' */
+/** @import { AssignmentOperator, Expression, Identifier, Node, Statement, TemplateElement } from 'estree' */
+/** @import { AST, SvelteNode } from '#compiler' */
 /** @import { ComponentContext, ServerTransformState } from '../../types.js' */
-import { extract_paths } from '../../../../../utils/ast.js';
+
 import { escape_html } from '../../../../../../escaping.js';
 import {
 	BLOCK_CLOSE,
@@ -28,7 +28,7 @@ export const empty_comment = b.literal(EMPTY_COMMENT);
  * @param {ComponentContext} context
  */
 export function process_children(nodes, { visit, state }) {
-	/** @type {Array<Text | Comment | ExpressionTag>} */
+	/** @type {Array<AST.Text | AST.Comment | AST.ExpressionTag>} */
 	let sequence = [];
 
 	function flush() {
@@ -42,12 +42,11 @@ export function process_children(nodes, { visit, state }) {
 			const node = sequence[i];
 
 			if (node.type === 'Text' || node.type === 'Comment') {
-				quasi.value.raw += sanitize_template_string(
-					node.type === 'Comment' ? `<!--${node.data}-->` : escape_html(node.data)
-				);
+				quasi.value.cooked +=
+					node.type === 'Comment' ? `<!--${node.data}-->` : escape_html(node.data);
 			} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
 				if (node.expression.value != null) {
-					quasi.value.raw += sanitize_template_string(escape_html(node.expression.value + ''));
+					quasi.value.cooked += escape_html(node.expression.value + '');
 				}
 			} else {
 				expressions.push(b.call('$.escape', /** @type {Expression} */ (visit(node.expression))));
@@ -55,6 +54,10 @@ export function process_children(nodes, { visit, state }) {
 				quasi = b.quasi('', i + 1 === sequence.length);
 				quasis.push(quasi);
 			}
+		}
+
+		for (const quasi of quasis) {
+			quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
 		}
 
 		state.template.push(b.template(quasis, expressions));
@@ -94,9 +97,9 @@ function is_statement(node) {
  * @param {AssignmentOperator} operator
  * @returns {Statement[]}
  */
-export function serialize_template(template, out = b.id('$$payload.out'), operator = '+=') {
-	/** @type {TemplateElement[]} */
-	let quasis = [];
+export function build_template(template, out = b.id('$$payload.out'), operator = '+=') {
+	/** @type {string[]} */
+	let strings = [];
 
 	/** @type {Expression[]} */
 	let expressions = [];
@@ -105,8 +108,19 @@ export function serialize_template(template, out = b.id('$$payload.out'), operat
 	const statements = [];
 
 	const flush = () => {
-		statements.push(b.stmt(b.assignment(operator, out, b.template(quasis, expressions))));
-		quasis = [];
+		statements.push(
+			b.stmt(
+				b.assignment(
+					operator,
+					out,
+					b.template(
+						strings.map((cooked, i) => b.quasi(cooked, i === strings.length - 1)),
+						expressions
+					)
+				)
+			)
+		);
+		strings = [];
 		expressions = [];
 	};
 
@@ -114,30 +128,30 @@ export function serialize_template(template, out = b.id('$$payload.out'), operat
 		const node = template[i];
 
 		if (is_statement(node)) {
-			if (quasis.length !== 0) {
+			if (strings.length !== 0) {
 				flush();
 			}
 
 			statements.push(node);
 		} else {
-			let last = quasis.at(-1);
-			if (!last) quasis.push((last = b.quasi('', false)));
+			if (strings.length === 0) {
+				strings.push('');
+			}
 
 			if (node.type === 'Literal') {
-				last.value.raw +=
-					typeof node.value === 'string' ? sanitize_template_string(node.value) : node.value;
+				strings[strings.length - 1] += node.value;
 			} else if (node.type === 'TemplateLiteral') {
-				last.value.raw += node.quasis[0].value.raw;
-				quasis.push(...node.quasis.slice(1));
+				strings[strings.length - 1] += node.quasis[0].value.cooked;
+				strings.push(...node.quasis.slice(1).map((q) => /** @type {string} */ (q.value.cooked)));
 				expressions.push(...node.expressions);
 			} else {
 				expressions.push(node);
-				quasis.push(b.quasi('', i + 1 === template.length || is_statement(template[i + 1])));
+				strings.push('');
 			}
 		}
 	}
 
-	if (quasis.length !== 0) {
+	if (strings.length !== 0) {
 		flush();
 	}
 
@@ -146,13 +160,13 @@ export function serialize_template(template, out = b.id('$$payload.out'), operat
 
 /**
  *
- * @param {Attribute['value']} value
+ * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
  * @param {boolean} trim_whitespace
  * @param {boolean} is_component
  * @returns {Expression}
  */
-export function serialize_attribute_value(
+export function build_attribute_value(
 	value,
 	context,
 	trim_whitespace = false,
@@ -207,7 +221,7 @@ export function serialize_attribute_value(
  * @param {ServerTransformState} state
  * @returns {Expression}
  */
-export function serialize_get_binding(node, state) {
+export function build_getter(node, state) {
 	const binding = state.scope.get(node.name);
 
 	if (binding === null || node === binding.node) {
@@ -221,145 +235,9 @@ export function serialize_get_binding(node, state) {
 			'$.store_get',
 			b.assignment('??=', b.id('$$store_subs'), b.object([])),
 			b.literal(node.name),
-			serialize_get_binding(store_id, state)
+			build_getter(store_id, state)
 		);
-	}
-
-	if (Object.hasOwn(state.getters, node.name)) {
-		const getter = state.getters[node.name];
-		return typeof getter === 'function' ? getter(node) : getter;
 	}
 
 	return node;
-}
-
-/**
- * @param {AssignmentExpression} node
- * @param {import('zimmerframe').Context<SvelteNode, ServerTransformState>} context
- * @param {() => any} fallback
- * @returns {Expression}
- */
-export function serialize_set_binding(node, context, fallback) {
-	const { state, visit } = context;
-
-	if (
-		node.left.type === 'ArrayPattern' ||
-		node.left.type === 'ObjectPattern' ||
-		node.left.type === 'RestElement'
-	) {
-		// Turn assignment into an IIFE, so that `$.set` calls etc don't produce invalid code
-		const tmp_id = context.state.scope.generate('tmp');
-
-		/** @type {AssignmentExpression[]} */
-		const original_assignments = [];
-
-		/** @type {Expression[]} */
-		const assignments = [];
-
-		const paths = extract_paths(node.left);
-
-		for (const path of paths) {
-			const value = path.expression?.(b.id(tmp_id));
-			const assignment = b.assignment('=', path.node, value);
-			original_assignments.push(assignment);
-			assignments.push(serialize_set_binding(assignment, context, () => assignment));
-		}
-
-		if (assignments.every((assignment, i) => assignment === original_assignments[i])) {
-			// No change to output -> nothing to transform -> we can keep the original assignment
-			return fallback();
-		}
-
-		return b.call(
-			b.thunk(
-				b.block([
-					b.const(tmp_id, /** @type {Expression} */ (visit(node.right))),
-					b.stmt(b.sequence(assignments)),
-					b.return(b.id(tmp_id))
-				])
-			)
-		);
-	}
-
-	if (node.left.type !== 'Identifier' && node.left.type !== 'MemberExpression') {
-		throw new Error(`Unexpected assignment type ${node.left.type}`);
-	}
-
-	let left = node.left;
-
-	while (left.type === 'MemberExpression') {
-		// @ts-expect-error
-		left = left.object;
-	}
-
-	if (left.type !== 'Identifier') {
-		return fallback();
-	}
-
-	const is_store = is_store_name(left.name);
-	const left_name = is_store ? left.name.slice(1) : left.name;
-	const binding = state.scope.get(left_name);
-
-	if (!binding) return fallback();
-
-	if (binding.mutation !== null) {
-		return binding.mutation(node, context);
-	}
-
-	if (
-		binding.kind !== 'state' &&
-		binding.kind !== 'frozen_state' &&
-		binding.kind !== 'prop' &&
-		binding.kind !== 'bindable_prop' &&
-		binding.kind !== 'each' &&
-		binding.kind !== 'legacy_reactive' &&
-		!is_store
-	) {
-		// TODO error if it's a computed (or rest prop)? or does that already happen elsewhere?
-		return fallback();
-	}
-
-	const value = get_assignment_value(node, context);
-	if (left === node.left) {
-		if (is_store) {
-			return b.call('$.store_set', b.id(left_name), /** @type {Expression} */ (visit(node.right)));
-		}
-		return fallback();
-	} else if (is_store) {
-		return b.call(
-			'$.mutate_store',
-			b.assignment('??=', b.id('$$store_subs'), b.object([])),
-			b.literal(left.name),
-			b.id(left_name),
-			b.assignment(node.operator, /** @type {Pattern} */ (visit(node.left)), value)
-		);
-	}
-	return fallback();
-}
-
-/**
- * @param {AssignmentExpression} node
- * @param {Pick<import('zimmerframe').Context<SvelteNode, ServerTransformState>, 'visit' | 'state'>} context
- */
-function get_assignment_value(node, { state, visit }) {
-	if (node.left.type === 'Identifier') {
-		const operator = node.operator;
-		return operator === '='
-			? /** @type {Expression} */ (visit(node.right))
-			: // turn something like x += 1 into x = x + 1
-				b.binary(
-					/** @type {BinaryOperator} */ (operator.slice(0, -1)),
-					serialize_get_binding(node.left, state),
-					/** @type {Expression} */ (visit(node.right))
-				);
-	}
-
-	return /** @type {Expression} */ (visit(node.right));
-}
-
-/**
- * @param {string} name
- */
-function is_store_name(name) {
-	return name[0] === '$' && /[A-Za-z_]/.test(name[1]);
 }

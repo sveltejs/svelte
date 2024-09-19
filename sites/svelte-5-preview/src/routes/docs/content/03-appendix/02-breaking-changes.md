@@ -83,6 +83,8 @@ export default {
 };
 ```
 
+Note that `mount` and `hydrate` are _not_ synchronous, so things like `onMount` won't have been called by the time the function returns and the pending block of promises will not have been rendered yet (because `#await` waits a microtask to wait for a potentially immediately-resolved promise). If you need that guarantee, call `flushSync` (import from `'svelte'`) after calling `mount/hydrate`.
+
 ### Server API changes
 
 Similarly, components no longer have a `render` method when compiled for server side rendering. Instead, pass the function to `render` from `svelte/server`:
@@ -142,9 +144,15 @@ Previously, Svelte employed a very complicated algorithm to determine if whitesp
 
 As before, you can disable whitespace trimming by setting the `preserveWhitespace` option in your compiler settings or on a per-component basis in `<svelte:options>`.
 
-## More recent browser required
+## Modern browser required
 
-Svelte now use Mutation Observers instead of IFrames to measure dimensions for `bind:clientWidth/clientHeight/offsetWidth/offsetHeight`. It also no longer listens to the `change` event on range inputs. Lastly, the `legacy` option was removed (or rather, replaced with a different set of settings).
+Svelte 5 requires a modern browser (in other words, not Internet Explorer) for various reasons:
+
+- it uses [`Proxies`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy)
+- elements with `clientWidth`/`clientHeight`/`offsetWidth`/`offsetHeight` bindings use a [`ResizeObserver`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver) rather than a convoluted `<iframe>` hack
+- `<input type="range" bind:value={...} />` only uses an `input` event listener, rather than also listening for `change` events as a fallback
+
+The `legacy` compiler option, which generated bulkier but IE-friendly code, no longer exists.
 
 ## Changes to compiler options
 
@@ -158,6 +166,16 @@ Svelte now use Mutation Observers instead of IFrames to measure dimensions for `
 ## The `children` prop is reserved
 
 Content inside component tags becomes a [snippet prop](/docs/snippets) called `children`. You cannot have a separate prop by that name.
+
+## Dot notation indicates a component
+
+In Svelte 4, `<foo.bar>` would create an element with a tag name of `"foo.bar"`. In Svelte 5, `foo.bar` is treated as a component instead. This is particularly useful inside `each` blocks:
+
+```svelte
+{#each items as item}
+	<item.component {...item.props} />
+{/each}
+```
 
 ## Breaking changes in runes mode
 
@@ -196,15 +214,71 @@ In Svelte 4, doing the following triggered reactivity:
 
 This is because the Svelte compiler treated the assignment to `foo.value` as an instruction to update anything that referenced `foo`. In Svelte 5, reactivity is determined at runtime rather than compile time, so you should define `value` as a reactive `$state` field on the `Foo` class. Wrapping `new Foo()` with `$state(...)` will have no effect — only vanilla objects and arrays are made deeply reactive.
 
+### `<svelte:component>` is no longer necessary
+
+In Svelte 4, components are _static_ — if you render `<Thing>`, and the value of `Thing` changes, [nothing happens](https://svelte.dev/repl/7f1fa24f0ab44c1089dcbb03568f8dfa?version=4.2.18). To make it dynamic you must use `<svelte:component>`.
+
+This is [no longer true in Svelte 5](/#H4sIAAAAAAAAE4WQwU7DMAyGX8VESANpXe8lq9Q8AzfGobQujZQmWeJOQlXenaQB1sM0bnG-379_e2GDVOhZ9bYw3U7IKtZYy_aMvmwq_AUVYay9mV2XfrjvnLRUn_SJ5GSNI2hgcGaC3aFsDrlh97LB4g-LLY4ChQSvo9SfcIRHTy3h03NEvLzO0Nyjwo7gQ-q-urRqxuOy9oQ1AjeWpNHwQ5pQN7zMf7e4CLXY8Dhpdc-THooCaESP0DoEPM8ydqEmKIqkzUnL9MxrVJ2JG-qkoFH631xREg82mV4OEntWkZsx7K_3vXtdm_LbuwbiHwNx2-A9fANfmchv7QEAAA==):
+
+```svelte
+<script>
+	import A from './A.svelte';
+	import B from './B.svelte';
+
+	let Thing = $state();
+</script>
+
+<select bind:value={Thing}>
+	<option value={A}>A</option>
+	<option value={B}>B</option>
+</select>
+
+<!-- these are equivalent -->
+<Thing />
+<svelte:component this={Thing} />
+```
+
+### Touch and wheel events are passive
+
+When using `onwheel`, `onmousewheel`, `ontouchstart` and `ontouchmove` event attributes, the handlers are [passive](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#using_passive_listeners) to align with browser defaults. This greatly improves responsiveness by allowing the browser to scroll the document immediately, rather than waiting to see if the event handler calls `event.preventDefault()`.
+
+In the very rare cases that you need to prevent these event defaults, you should use [`on`](https://svelte-5-preview.vercel.app/docs/imports#svelte-events) instead (for example inside an action).
+
+### Attribute/prop syntax is stricter
+
+In Svelte 4, complex attribute values needn't be quoted:
+
+<!-- prettier-ignore -->
+```svelte
+<Component prop=this{is}valid />
+```
+
+This is a footgun. In runes mode, if you want to concatenate stuff you must wrap the value in quotes:
+
+```svelte
+<Component prop="this{is}valid" />
+```
+
+Note that Svelte 5 will also warn if you have a single expression wrapped in quotes, like `answer="{42}"` — in Svelte 6, that will cause the value to be converted to a string, rather than passed as a number.
+
 ## Other breaking changes
 
 ### Stricter `@const` assignment validation
 
 Assignments to destructured parts of a `@const` declaration are no longer allowed. It was an oversight that this was ever allowed.
 
-### Stricter CSS `:global` selector validation
+### :is(...) and :where(...) are scoped
 
-Previously, a compound selector starting with a global modifier which has universal or type selectors (like `:global(span).foo`) was valid. In Svelte 5, this is a validation error instead. The reason is that in this selector the resulting CSS would be equivalent to one without `:global` - in other words, `:global` is ignored in this case.
+Previously, Svelte did not analyse selectors inside `:is(...)` and `:where(...)`, effectively treating them as global. Svelte 5 analyses them in the context of the current component. As such, some selectors may now be treated as unused if they were relying on this treatment. To fix this, use `:global(...)` inside the `:is(...)/:where(...)` selectors.
+
+When using Tailwind's `@apply` directive, add a `:global` selector to preserve rules that use Tailwind-generated `:is(...)` selectors:
+
+```diff
+- main {
++ main :global {
+	@apply bg-blue-100 dark:bg-blue-900
+}
+```
 
 ### CSS hash position no longer deterministic
 
@@ -227,7 +301,9 @@ Error and warning codes have been renamed. Previously they used dashes to separa
 
 ### Reduced number of namespaces
 
-The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `mathml`, `svg` and `foreign`.
+The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `mathml` and `svg`.
+
+The `foreign` namespace was only useful for Svelte Native, which we're planning to support differently in a 5.x minor.
 
 ### beforeUpdate/afterUpdate changes
 
@@ -323,23 +399,8 @@ Since these mismatches are extremely rare, Svelte 5 assumes that the values are 
 
 Svelte 5 makes use of comments during server side rendering which are used for more robust and efficient hydration on the client. As such, you shouldn't remove comments from your HTML output if you intend to hydrate it, and if you manually authored HTML to be hydrated by a Svelte component, you need to adjust that HTML to include said comments at the correct positions.
 
-### `await` blocks delay render
+### `onevent` attributes are delegated
 
-In Svelte 4, an `{#await ...}` block immediately renders the pending section. In some cases, this is wasteful, because the promise is already resolved.
+Event attributes replace event directives: Instead of `on:click={handler}` you write `onclick={handler}`. For backwards compatibility the `on:event` syntax is still supported and behaves the same as in Svelte 4. Some of the `onevent` attributes however are delegated, which means you need to take care to not stop event propagation on those manually, as they then might never reach the listener for this event type at the root.
 
-In Svelte 5 the block remains unrendered when mounting or updating the promise, until we know whether it is already resolved or not — if so, we initally render then `{:then ...}` or `{:catch ...}` section instead.
-
-This does _not_ apply during hydration, since the pending section was already server-rendered.
-
-To wait until the pending section has been rendered (for example during testing), use `await Promise.resolve()` after mounting or updating the promise:
-
-```diff
-let props = {
-	promise: getPromiseSomehow()
-};
-
-mount(App, { target, props });
-
-+await Promise.resolve();
-assert.equal(target.innerHTML, '...');
-```
+<!-- TODO in final docs, add link to corresponding section for more details -->

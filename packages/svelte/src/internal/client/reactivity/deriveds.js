@@ -1,18 +1,28 @@
-/** @import { Derived } from '#client' */
-import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
+/** @import { Derived, Effect } from '#client' */
+import { DEV } from 'esm-env';
 import {
-	current_reaction,
-	current_effect,
+	CLEAN,
+	DERIVED,
+	DESTROYED,
+	DIRTY,
+	EFFECT_HAS_DERIVED,
+	MAYBE_DIRTY,
+	UNOWNED
+} from '../constants.js';
+import {
+	active_reaction,
+	active_effect,
 	remove_reactions,
 	set_signal_status,
-	current_skip_reaction,
+	skip_reaction,
 	update_reaction,
-	destroy_effect_children,
-	increment_version
+	increment_version,
+	set_active_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
-
-export let updating_derived = false;
+import * as e from '../errors.js';
+import { destroy_effect } from './effects.js';
+import { inspect_effects, set_inspect_effects } from './sources.js';
 
 /**
  * @template V
@@ -22,29 +32,31 @@ export let updating_derived = false;
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
 	let flags = DERIVED | DIRTY;
-	if (current_effect === null) flags |= UNOWNED;
+
+	if (active_effect === null) {
+		flags |= UNOWNED;
+	} else {
+		// Since deriveds are evaluated lazily, any effects created inside them are
+		// created too late to ensure that the parent effect is added to the tree
+		active_effect.f |= EFFECT_HAS_DERIVED;
+	}
 
 	/** @type {Derived<V>} */
 	const signal = {
+		children: null,
 		deps: null,
-		deriveds: null,
 		equals,
 		f: flags,
-		first: null,
 		fn,
-		last: null,
 		reactions: null,
 		v: /** @type {V} */ (null),
-		version: 0
+		version: 0,
+		parent: active_effect
 	};
 
-	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
-		var current_derived = /** @type {Derived} */ (current_reaction);
-		if (current_derived.deriveds === null) {
-			current_derived.deriveds = [signal];
-		} else {
-			current_derived.deriveds.push(signal);
-		}
+	if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
+		var derived = /** @type {Derived} */ (active_reaction);
+		(derived.children ??= []).push(signal);
 	}
 
 	return signal;
@@ -67,33 +79,67 @@ export function derived_safe_equal(fn) {
  * @returns {void}
  */
 function destroy_derived_children(derived) {
-	destroy_effect_children(derived);
-	var deriveds = derived.deriveds;
+	var children = derived.children;
 
-	if (deriveds !== null) {
-		derived.deriveds = null;
+	if (children !== null) {
+		derived.children = null;
 
-		for (var i = 0; i < deriveds.length; i += 1) {
-			destroy_derived(deriveds[i]);
+		for (var i = 0; i < children.length; i += 1) {
+			var child = children[i];
+			if ((child.f & DERIVED) !== 0) {
+				destroy_derived(/** @type {Derived} */ (child));
+			} else {
+				destroy_effect(/** @type {Effect} */ (child));
+			}
 		}
 	}
 }
+
+/**
+ * The currently updating deriveds, used to detect infinite recursion
+ * in dev mode and provide a nicer error than 'too much recursion'
+ * @type {Derived[]}
+ */
+let stack = [];
 
 /**
  * @param {Derived} derived
  * @returns {void}
  */
 export function update_derived(derived) {
-	var previous_updating_derived = updating_derived;
-	updating_derived = true;
-	destroy_derived_children(derived);
-	var value = update_reaction(derived);
-	updating_derived = previous_updating_derived;
+	var value;
+	var prev_active_effect = active_effect;
+
+	set_active_effect(derived.parent);
+
+	if (DEV) {
+		let prev_inspect_effects = inspect_effects;
+		set_inspect_effects(new Set());
+		try {
+			if (stack.includes(derived)) {
+				e.derived_references_self();
+			}
+
+			stack.push(derived);
+
+			destroy_derived_children(derived);
+			value = update_reaction(derived);
+		} finally {
+			set_active_effect(prev_active_effect);
+			set_inspect_effects(prev_inspect_effects);
+			stack.pop();
+		}
+	} else {
+		try {
+			destroy_derived_children(derived);
+			value = update_reaction(derived);
+		} finally {
+			set_active_effect(prev_active_effect);
+		}
+	}
 
 	var status =
-		(current_skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null
-			? MAYBE_DIRTY
-			: CLEAN;
+		(skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null ? MAYBE_DIRTY : CLEAN;
 
 	set_signal_status(derived, status);
 
@@ -107,15 +153,14 @@ export function update_derived(derived) {
  * @param {Derived} signal
  * @returns {void}
  */
-export function destroy_derived(signal) {
+function destroy_derived(signal) {
 	destroy_derived_children(signal);
 	remove_reactions(signal, 0);
 	set_signal_status(signal, DESTROYED);
 
 	// TODO we need to ensure we remove the derived from any parent derives
 
-	signal.first =
-		signal.last =
+	signal.children =
 		signal.deps =
 		signal.reactions =
 		// @ts-expect-error `signal.fn` cannot be `null` while the signal is alive

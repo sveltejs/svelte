@@ -1,5 +1,5 @@
 <script>
-	import {untrack} from 'svelte';
+	import { untrack } from 'svelte';
 
 	const foo = $effect.tracking();
 	let bar = $state(false);
@@ -10,5 +10,5 @@
 
 <p>{foo}</p>
 <p>{bar}</p>
-<p>{$effect.tracking()}</p>
-<p>{untrack(() => $effect.tracking())}</p>
+<p>{(bar, $effect.tracking())}</p>
+<p>{untrack(() => (bar, $effect.tracking()))}</p>

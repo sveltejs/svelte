@@ -32,6 +32,14 @@ export class SvelteDate extends Date {
 			if (method.startsWith('get') || method.startsWith('to')) {
 				// @ts-ignore
 				proto[method] = function (...args) {
+					// don't memoize if there are arguments
+					// @ts-ignore
+					if (args.length > 0) {
+						get(this.#time);
+						// @ts-ignore
+						return date_proto[method].apply(this, args);
+					}
+
 					var d = this.#deriveds.get(method);
 
 					if (d === undefined) {

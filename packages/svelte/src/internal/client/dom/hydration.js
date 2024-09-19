@@ -1,6 +1,13 @@
 /** @import { TemplateNode } from '#client' */
 
-import { HYDRATION_END, HYDRATION_START, HYDRATION_START_ELSE } from '../../../constants.js';
+import {
+	HYDRATION_END,
+	HYDRATION_ERROR,
+	HYDRATION_START,
+	HYDRATION_START_ELSE
+} from '../../../constants.js';
+import * as w from '../warnings.js';
+import { get_next_sibling } from './operations.js';
 
 /**
  * Use this variable to guard everything related to hydration code so it can be treeshaken out
@@ -24,23 +31,51 @@ export let hydrate_node;
 
 /** @param {TemplateNode} node */
 export function set_hydrate_node(node) {
+	if (node === null) {
+		w.hydration_mismatch();
+		throw HYDRATION_ERROR;
+	}
+
 	return (hydrate_node = node);
 }
 
 export function hydrate_next() {
-	return (hydrate_node = /** @type {TemplateNode} */ (hydrate_node.nextSibling));
+	return set_hydrate_node(/** @type {TemplateNode} */ (get_next_sibling(hydrate_node)));
 }
 
 /** @param {TemplateNode} node */
 export function reset(node) {
+	if (!hydrating) return;
+
+	// If the node has remaining siblings, something has gone wrong
+	if (get_next_sibling(hydrate_node) !== null) {
+		w.hydration_mismatch();
+		throw HYDRATION_ERROR;
+	}
+
+	hydrate_node = node;
+}
+
+/**
+ * @param {HTMLTemplateElement} template
+ */
+export function hydrate_template(template) {
 	if (hydrating) {
-		hydrate_node = node;
+		// @ts-expect-error TemplateNode doesn't include DocumentFragment, but it's actually fine
+		hydrate_node = template.content;
 	}
 }
 
-export function next() {
+export function next(count = 1) {
 	if (hydrating) {
-		hydrate_next();
+		var i = count;
+		var node = hydrate_node;
+
+		while (i--) {
+			node = /** @type {TemplateNode} */ (get_next_sibling(node));
+		}
+
+		hydrate_node = node;
 	}
 }
 
@@ -63,7 +98,7 @@ export function remove_nodes() {
 			}
 		}
 
-		var next = /** @type {TemplateNode} */ (node.nextSibling);
+		var next = /** @type {TemplateNode} */ (get_next_sibling(node));
 		node.remove();
 		node = next;
 	}

@@ -4,6 +4,18 @@
 
 > `%binding%` (%location%) is binding to a non-reactive property
 
+## console_log_state
+
+> Your `console.%method%` contained `$state` proxies. Consider using `$inspect(...)` or `$state.snapshot(...)` instead
+
+When logging a [proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy), browser devtools will log the proxy itself rather than the value it represents. In the case of Svelte, the 'target' of a `$state` proxy might not resemble its current value, which can be confusing.
+
+The easiest way to log a value as it changes over time is to use the [`$inspect`](https://svelte-5-preview.vercel.app/docs/runes#$inspect) rune. Alternatively, to log things on a one-off basis (for example, inside an event handler) you can use [`$state.snapshot`](https://svelte-5-preview.vercel.app/docs/runes#$state-snapshot) to take a snapshot of the current value.
+
+## event_handler_invalid
+
+> %handler% should be a function. Did you mean to %suggestion%?
+
 ## hydration_attribute_changed
 
 > The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
@@ -40,24 +52,17 @@
 
 ## state_proxy_equality_mismatch
 
-> Reactive `$state(...)` proxies and the values they proxy have different identities. Because of this, comparisons with `%operator%` will produce unexpected results. Consider using `$state.is(a, b)` instead%details%
+> Reactive `$state(...)` proxies and the values they proxy have different identities. Because of this, comparisons with `%operator%` will produce unexpected results
 
-`$state(...)` does create a proxy of the value it is passed. Therefore, the resulting object has a different identity and equality checks will always return `false`:
-
-```svelte
-<script>
-    let object = { foo: 'bar' };
-    let state_object = $state(object);
-    object === state_object; // always false
-</script>
-```
-
-Most of the time this will not be a problem in practise because it is very rare to keep the original value around to later compare it against a state value. In case it happens, Svelte will warn you about it in development mode and suggest to use `$state.is` instead, which is able to unwrap the proxy and compare the original values:
+`$state(...)` creates a [proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) of the value it is passed. The proxy and the value have different identities, meaning equality checks will always return `false`:
 
 ```svelte
 <script>
-    let object = { foo: 'bar' };
-    let state_object = $state(object);
-    $state.is(object, state_object); // true
+	let value = { foo: 'bar' };
+	let proxy = $state(value);
+
+	value === proxy; // always false
 </script>
 ```
+
+To resolve this, ensure you're comparing values where both values were created with `$state(...)`, or neither were. Note that `$state.raw(...)` will _not_ create a state proxy.

@@ -8,9 +8,9 @@ import { getLocator } from 'locate-character';
 export let warnings = [];
 
 /**
- * The filename (if specified in the compiler options) relative to the rootDir (if specified).
+ * The filename relative to the rootDir (if specified).
  * This should not be used in the compiler output except in dev mode
- * @type {string | undefined}
+ * @type {string}
  */
 export let filename;
 
@@ -19,6 +19,12 @@ export let filename;
  * @type {string}
  */
 export let source;
+
+/**
+ * True if compiling with `dev: true`
+ * @type {boolean}
+ */
+export let dev;
 
 export let locator = getLocator('', { offsetLine: 1 });
 
@@ -60,19 +66,26 @@ export function reset_warning_filter(fn = () => true) {
 }
 
 /**
+ * @param {SvelteNode | NodeLike} node
+ * @param {import('../constants.js').IGNORABLE_RUNTIME_WARNINGS[number]} code
+ * @returns
+ */
+export function is_ignored(node, code) {
+	return dev && !!ignore_map.get(node)?.some((codes) => codes.has(code));
+}
+
+/**
  * @param {string} _source
- * @param {{ filename?: string, rootDir?: string }} options
+ * @param {{ dev?: boolean; filename: string; rootDir?: string }} options
  */
 export function reset(_source, options) {
 	source = _source;
 	const root_dir = options.rootDir?.replace(/\\/g, '/');
-	filename = options.filename?.replace(/\\/g, '/');
+	filename = options.filename.replace(/\\/g, '/');
 
-	if (
-		typeof filename === 'string' &&
-		typeof root_dir === 'string' &&
-		filename.startsWith(root_dir)
-	) {
+	dev = !!options.dev;
+
+	if (typeof root_dir === 'string' && filename.startsWith(root_dir)) {
 		// make filename relative to rootDir
 		filename = filename.replace(root_dir, '').replace(/^[/\\]/, '');
 	}

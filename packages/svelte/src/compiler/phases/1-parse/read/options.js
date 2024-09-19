@@ -1,16 +1,14 @@
 /** @import { ObjectExpression } from 'estree' */
-/** @import { SvelteOptionsRaw, Root, SvelteOptions } from '#compiler' */
-import { namespace_mathml, namespace_svg } from '../../../../constants.js';
+/** @import { AST } from '#compiler' */
+import { NAMESPACE_MATHML, NAMESPACE_SVG } from '../../../../constants.js';
 import * as e from '../../../errors.js';
 
-const regex_valid_tag_name = /^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/;
-
 /**
- * @param {SvelteOptionsRaw} node
- * @returns {Root['options']}
+ * @param {AST.SvelteOptionsRaw} node
+ * @returns {AST.Root['options']}
  */
 export default function read_options(node) {
-	/** @type {SvelteOptions} */
+	/** @type {AST.SvelteOptions} */
 	const component_options = {
 		start: node.start,
 		end: node.end,
@@ -39,8 +37,8 @@ export default function read_options(node) {
 				break; // eslint doesn't know this is unnecessary
 			}
 			case 'customElement': {
-				/** @type {SvelteOptions['customElement']} */
-				const ce = { tag: '' };
+				/** @type {AST.SvelteOptions['customElement']} */
+				const ce = {};
 				const { value: v } = attribute;
 				const value = v === true || Array.isArray(v) ? v : [v];
 
@@ -79,8 +77,6 @@ export default function read_options(node) {
 					const tag_value = tag[1]?.value;
 					validate_tag(tag, tag_value);
 					ce.tag = tag_value;
-				} else {
-					e.svelte_options_invalid_customelement(attribute);
 				}
 
 				const props = properties.find(([name]) => name === 'props')?.[1];
@@ -155,22 +151,25 @@ export default function read_options(node) {
 			case 'namespace': {
 				const value = get_static_value(attribute);
 
-				if (value === namespace_svg) {
+				if (value === NAMESPACE_SVG) {
 					component_options.namespace = 'svg';
-				} else if (value === namespace_mathml) {
+				} else if (value === NAMESPACE_MATHML) {
 					component_options.namespace = 'mathml';
-				} else if (
-					value === 'html' ||
-					value === 'mathml' ||
-					value === 'svg' ||
-					value === 'foreign'
-				) {
+				} else if (value === 'html' || value === 'mathml' || value === 'svg') {
 					component_options.namespace = value;
 				} else {
-					e.svelte_options_invalid_attribute_value(
-						attribute,
-						`"html", "mathml", "svg" or "foreign"`
-					);
+					e.svelte_options_invalid_attribute_value(attribute, `"html", "mathml" or "svg"`);
+				}
+
+				break;
+			}
+			case 'css': {
+				const value = get_static_value(attribute);
+
+				if (value === 'injected') {
+					component_options.css = value;
+				} else {
+					e.svelte_options_invalid_attribute_value(attribute, `"injected"`);
 				}
 
 				break;
@@ -228,6 +227,21 @@ function get_boolean_value(attribute) {
 	return value;
 }
 
+// https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name
+const tag_name_char =
+	'[a-z0-9_.\xB7\xC0-\xD6\xD8-\xF6\xF8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u{10000}-\u{EFFFF}-]';
+const regex_valid_tag_name = new RegExp(`^[a-z]${tag_name_char}*-${tag_name_char}*$`, 'u');
+const reserved_tag_names = [
+	'annotation-xml',
+	'color-profile',
+	'font-face',
+	'font-face-src',
+	'font-face-uri',
+	'font-face-format',
+	'font-face-name',
+	'missing-glyph'
+];
+
 /**
  * @param {any} attribute
  * @param {string | null} tag
@@ -237,11 +251,11 @@ function validate_tag(attribute, tag) {
 	if (typeof tag !== 'string') {
 		e.svelte_options_invalid_tagname(attribute);
 	}
-	if (tag && !regex_valid_tag_name.test(tag)) {
-		e.svelte_options_invalid_tagname(attribute);
+	if (tag) {
+		if (!regex_valid_tag_name.test(tag)) {
+			e.svelte_options_invalid_tagname(attribute);
+		} else if (reserved_tag_names.includes(tag)) {
+			e.svelte_options_reserved_tagname(attribute);
+		}
 	}
-	// TODO do we still need this?
-	// if (tag && !component.compile_options.customElement) {
-	// 	component.warn(attribute, compiler_warnings.missing_custom_element_compile_options);
-	// }
 }

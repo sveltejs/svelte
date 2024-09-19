@@ -1,18 +1,11 @@
 import type { Scope } from '../scope.js';
 import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
-import type {
-	ClassDirective,
-	ExpressionTag,
-	OnDirective,
-	RenderTag,
-	SpreadAttribute,
-	SvelteNode,
-	ValidatedCompileOptions
-} from '#compiler';
+import type { ExpressionMetadata, AST, ValidatedCompileOptions, SvelteNode } from '#compiler';
 import type { LabeledStatement } from 'estree';
 
 export interface AnalysisState {
 	scope: Scope;
+	scopes: Map<SvelteNode, Scope>;
 	analysis: ComponentAnalysis;
 	options: ValidatedCompileOptions;
 	ast_type: 'instance' | 'template' | 'module';
@@ -20,15 +13,14 @@ export interface AnalysisState {
 	has_props_rune: boolean;
 	/** Which slots the current parent component has */
 	component_slots: Set<string>;
-	/** The current {expression}, if any */
-	expression: ExpressionTag | ClassDirective | OnDirective | SpreadAttribute | null;
+	/** Information about the current expression/directive/block value */
+	expression: ExpressionMetadata | null;
 	/** The current {@render ...} tag, if any */
-	render_tag: null | RenderTag;
+	render_tag: null | AST.RenderTag;
 	private_derived_state: string[];
 	function_depth: number;
-}
 
-export interface LegacyAnalysisState extends AnalysisState {
+	// legacy stuff
 	instance_scope: Scope;
 	reactive_statement: null | ReactiveStatement;
 	reactive_statements: Map<LabeledStatement, ReactiveStatement>;
