@@ -44,7 +44,8 @@ type Properties<Props, Slots> = Props &
 export class SvelteComponent<
 	Props extends Record<string, any> = Record<string, any>,
 	Events extends Record<string, any> = any,
-	Slots extends Record<string, any> = any
+	Slots extends Record<string, any> = any,
+	Bindings extends string = string
 > {
 	/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
 	static element?: typeof HTMLElement;
@@ -79,7 +80,7 @@ export class SvelteComponent<
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
 	 */
-	$$bindings?: string;
+	$$bindings?: Bindings;
 
 	/**
 	 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
@@ -176,8 +177,9 @@ export interface Component<
 export class SvelteComponentTyped<
 	Props extends Record<string, any> = Record<string, any>,
 	Events extends Record<string, any> = any,
-	Slots extends Record<string, any> = any
-> extends SvelteComponent<Props, Events, Slots> {}
+	Slots extends Record<string, any> = any,
+	Bindings extends string = string
+> extends SvelteComponent<Props, Events, Slots, Bindings> {}
 
 /**
  * @deprecated The new `Component` type does not have a dedicated Events type. Use `ComponentProps` instead.
