@@ -194,8 +194,6 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 - `<option><div>option a</div></option>` will result in `<option>option a</option>` (the `<div>` is removed)
 - `<table><tr><td>cell</td></tr></table>` will result in `<table><tbody><tr><td>cell</td></tr></tbody></table>` (a `<tbody>` is auto-inserted)
 
-Svelte throws a compiler error when it detects that it will generate the HTML in such a way that it will always be repaired and result in the runtime code not finding the nodes at the expected locations.
-
 ## render_tag_invalid_call_expression
 
 > Calling a snippet function using apply, bind or call is not allowed
