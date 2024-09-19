@@ -27,7 +27,7 @@ export function SvelteSelf(node, context) {
 		const basename =
 			filename === '(unknown)'
 				? 'Self.svelte'
-				: /** @type {string} */ (filename.split(/[\/]/).pop());
+				: /** @type {string} */ (filename.split(/[/\\]/).pop());
 
 		w.svelte_self_deprecated(node, name, basename);
 	}
