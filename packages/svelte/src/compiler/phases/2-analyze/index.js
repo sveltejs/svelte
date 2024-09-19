@@ -359,6 +359,13 @@ export function analyze_component(root, source, options) {
 
 	const runes = options.runes ?? Array.from(module.scope.references.keys()).some(is_rune);
 
+	if (runes && root.module) {
+		const context = root.module.attributes.find((attribute) => attribute.name === 'context');
+		if (context) {
+			w.script_context_deprecated(context);
+		}
+	}
+
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config
 	/** @type {ComponentAnalysis} */
 	const analysis = {
