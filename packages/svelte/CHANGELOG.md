@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.254
+
+### Patch Changes
+
+- feat: account for `zoom` when calculating animation transforms ([#13317](https://github.com/sveltejs/svelte/pull/13317))
+
 ## 5.0.0-next.253
 
 ### Patch Changes
