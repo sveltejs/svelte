@@ -81,8 +81,6 @@ export function set_checked(element, checked) {
  * @param {boolean} [skip_warning]
  */
 export function set_attribute(element, attribute, value, skip_warning) {
-	value = value == null ? null : value + '';
-
 	// @ts-expect-error
 	var attributes = (element.__attributes ??= {});
 
@@ -95,7 +93,7 @@ export function set_attribute(element, attribute, value, skip_warning) {
 			(attribute === 'href' && element.nodeName === 'LINK')
 		) {
 			if (!skip_warning) {
-				check_src_in_dev_hydration(element, attribute, value);
+				check_src_in_dev_hydration(element, attribute, value ?? '');
 			}
 
 			// If we reset these attributes, they would result in another network request, which we want to avoid.
@@ -113,10 +111,15 @@ export function set_attribute(element, attribute, value, skip_warning) {
 		element[LOADING_ATTR_SYMBOL] = value;
 	}
 
-	if (value === null) {
+	if (value == null) {
 		element.removeAttribute(attribute);
 	} else {
-		element.setAttribute(attribute, value);
+		if (attribute in element && typeof value !== 'string') {
+			// @ts-ignore
+			element[attribute] = value;
+		} else {
+			element.setAttribute(attribute, value);
+		}
 	}
 }
 
@@ -287,15 +290,15 @@ export function set_attributes(
 				name = normalize_attribute(name);
 			}
 
-			if (setters.includes(name)) {
-				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
-					if (!skip_warning) check_src_in_dev_hydration(element, name, value);
-				} else {
-					// @ts-ignore
-					element[name] = value;
-				}
+			if (setters.includes(name) && typeof value !== 'string') {
+				// @ts-ignore
+				element[name] = value;
 			} else if (typeof value !== 'function') {
-				set_attribute(element, name, value);
+				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
+					if (!skip_warning) check_src_in_dev_hydration(element, name, value ?? '');
+				} else {
+					set_attribute(element, name, value);
+				}
 			}
 		}
 	}
@@ -389,12 +392,12 @@ function get_setters(element) {
 /**
  * @param {any} element
  * @param {string} attribute
- * @param {string | null} value
+ * @param {string} value
  */
 function check_src_in_dev_hydration(element, attribute, value) {
 	if (!DEV) return;
 	if (attribute === 'srcset' && srcset_url_equal(element, value)) return;
-	if (src_url_equal(element.getAttribute(attribute) ?? '', value ?? '')) return;
+	if (src_url_equal(element.getAttribute(attribute) ?? '', value)) return;
 
 	w.hydration_attribute_changed(
 		attribute,
@@ -420,12 +423,12 @@ function split_srcset(srcset) {
 
 /**
  * @param {HTMLSourceElement | HTMLImageElement} element
- * @param {string | undefined | null} srcset
+ * @param {string} srcset
  * @returns {boolean}
  */
 function srcset_url_equal(element, srcset) {
 	var element_urls = split_srcset(element.srcset);
-	var urls = split_srcset(srcset ?? '');
+	var urls = split_srcset(srcset);
 
 	return (
 		urls.length === element_urls.length &&
