@@ -4,7 +4,7 @@
 /** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';
 import * as b from '../../../utils/builders.js';
-import { build_getter } from './utils.js';
+import { build_getter, is_state_source } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
 import { dev, filename } from '../../../state.js';
 import { AnimateDirective } from './visitors/AnimateDirective.js';
@@ -66,7 +66,12 @@ const visitors = {
 			const transform = { ...state.transform };
 
 			for (const [name, binding] of scope.declarations) {
-				if (binding.kind === 'normal') {
+				if (
+					binding.kind === 'normal' ||
+					// Reads of `$state(...)` declarations are not
+					// transformed if they are never reassigned
+					(binding.kind === 'state' && !is_state_source(binding, state.analysis))
+				) {
 					delete transform[name];
 				}
 			}
