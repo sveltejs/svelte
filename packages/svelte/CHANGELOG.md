@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.255
+
+### Patch Changes
+
+- fix: keep bound inputs in sync in runes mode ([#13328](https://github.com/sveltejs/svelte/pull/13328))
+
+- fix: silence snapshot warnings inside `$inspect` ([#13334](https://github.com/sveltejs/svelte/pull/13334))
+
 ## 5.0.0-next.254
 
 ### Patch Changes

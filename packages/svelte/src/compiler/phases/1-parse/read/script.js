@@ -74,8 +74,6 @@ export function read_script(parser, start, attributes) {
 				e.script_invalid_context(attribute);
 			}
 
-			w.script_context_deprecated(attribute);
-
 			context = 'module';
 		}
 	}
