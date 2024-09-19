@@ -121,7 +121,8 @@ export const codes = [
 	"script_unknown_attribute",
 	"slot_element_deprecated",
 	"svelte_component_deprecated",
-	"svelte_element_invalid_this"
+	"svelte_element_invalid_this",
+	"svelte_self_deprecated"
 ];
 
 /**
@@ -809,4 +810,14 @@ export function svelte_component_deprecated(node) {
  */
 export function svelte_element_invalid_this(node) {
 	w(node, "svelte_element_invalid_this", "`this` should be an `{expression}`. Using a string attribute value will cause an error in future versions of Svelte");
+}
+
+/**
+ * `<svelte:self>` is deprecated — use self-imports (e.g. `import %name% from './%basename%'`) instead
+ * @param {null | NodeLike} node
+ * @param {string} name
+ * @param {string} basename
+ */
+export function svelte_self_deprecated(node, name, basename) {
+	w(node, "svelte_self_deprecated", `\`<svelte:self>\` is deprecated — use self-imports (e.g. \`import ${name} from './${basename}'\`) instead`);
 }

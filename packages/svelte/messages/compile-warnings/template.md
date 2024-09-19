@@ -97,3 +97,7 @@ A derived value may be used in other contexts:
 ## svelte_element_invalid_this
 
 > `this` should be an `{expression}`. Using a string attribute value will cause an error in future versions of Svelte
+
+## svelte_self_deprecated
+
+> `<svelte:self>` is deprecated — use self-imports (e.g. `import %name% from './%basename%'`) instead
