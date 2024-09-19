@@ -17,8 +17,10 @@ export function flip(node, { from, to }, params = {}) {
 	const zoom = from.width / parseFloat(style.width); // https://drafts.csswg.org/css-viewport/#effective-zoom
 	const transform = style.transform === 'none' ? '' : style.transform;
 	const [ox, oy] = style.transformOrigin.split(' ').map(parseFloat);
-	const dx = (from.left + (from.width * ox) / to.width - (to.left + ox)) / zoom;
-	const dy = (from.top + (from.height * oy) / to.height - (to.top + oy)) / zoom;
+	const dsx = from.width / to.width;
+	const dsy = from.height / to.height;
+	const dx = (from.left + dsx * ox - (to.left + ox)) / zoom;
+	const dy = (from.top + dsy * oy - (to.top + oy)) / zoom;
 	const { delay = 0, duration = (d) => Math.sqrt(d) * 120, easing = cubicOut } = params;
 
 	return {
@@ -28,8 +30,8 @@ export function flip(node, { from, to }, params = {}) {
 		css: (t, u) => {
 			const x = u * dx;
 			const y = u * dy;
-			const sx = t + (u * from.width) / to.width;
-			const sy = t + (u * from.height) / to.height;
+			const sx = t + u * dsx;
+			const sy = t + u * dsy;
 			return `transform: ${transform} translate(${x}px, ${y}px) scale(${sx}, ${sy});`;
 		}
 	};
