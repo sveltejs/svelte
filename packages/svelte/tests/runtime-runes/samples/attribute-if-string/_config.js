@@ -1,21 +1,24 @@
 import { test } from '../../test';
 
 export default test({
-	test({ assert, target }) {
-		const should_be_false = /** @type {NodeListOf<HTMLDivElement>} */ (
-			target.querySelectorAll('.translate-false div')
-		);
+	test({ assert, target, variant, hydrate }) {
+		function check(/** @type {boolean} */ condition) {
+			const divs = /** @type {NodeListOf<HTMLDivElement>} */ (
+				target.querySelectorAll(`.translate-${condition} div`)
+			);
 
-		const should_be_true = /** @type {NodeListOf<HTMLDivElement>} */ (
-			target.querySelectorAll('.translate-true div')
-		);
+			divs.forEach((div, i) => {
+				assert.equal(div.translate, condition, `${i + 1} of ${divs.length}: ${div.outerHTML}`);
+			});
+		}
 
-		should_be_false.forEach((div, i) => {
-			assert.equal(div.translate, false, `${i + 1} of ${should_be_false.length}: ${div.outerHTML}`);
-		});
+		check(false);
+		check(true);
 
-		should_be_true.forEach((div, i) => {
-			assert.equal(div.translate, true, `${i + 1} of ${should_be_true.length}: ${div.outerHTML}`);
-		});
+		if (variant === 'hydrate') {
+			hydrate();
+			check(false);
+			check(true);
+		}
 	}
 });
