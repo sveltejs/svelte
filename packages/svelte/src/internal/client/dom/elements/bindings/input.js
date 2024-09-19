@@ -5,6 +5,7 @@ import * as e from '../../../errors.js';
 import { get_proxied_value, is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
+import { is_runes } from '../../../runtime.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -13,13 +14,24 @@ import { hydrating } from '../../hydration.js';
  * @returns {void}
  */
 export function bind_value(input, get, set = get) {
+	var runes = is_runes();
+
 	listen_to_event_and_reset_event(input, 'input', () => {
 		if (DEV && input.type === 'checkbox') {
 			// TODO should this happen in prod too?
 			e.bind_invalid_checkbox_value();
 		}
 
-		set(is_numberlike_input(input) ? to_number(input.value) : input.value);
+		/** @type {unknown} */
+		var value = is_numberlike_input(input) ? to_number(input.value) : input.value;
+		set(value);
+
+		// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
+		// because we use mutable state which ensures the render effect always runs)
+		if (runes && value !== (value = get())) {
+			// @ts-expect-error the value is coerced on assignment
+			input.value = value ?? '';
+		}
 	});
 
 	render_effect(() => {
