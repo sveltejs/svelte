@@ -309,40 +309,6 @@ export function set_attributes(
 	return current;
 }
 
-/**
- * @param {Element} node
- * @param {Record<string, any> | undefined} prev
- * @param {Record<string, any>} next The new attributes - this function mutates this object
- * @param {string} [css_hash]
- */
-export function set_dynamic_element_attributes(node, prev, next, css_hash) {
-	if (node.tagName.includes('-')) {
-		for (var key in prev) {
-			if (!(key in next)) {
-				next[key] = null;
-			}
-		}
-
-		if (css_hash !== undefined) {
-			next.class = next.class ? next.class + ' ' + css_hash : css_hash;
-		}
-
-		for (key in next) {
-			set_custom_element_data(node, key, next[key]);
-		}
-
-		return next;
-	}
-
-	return set_attributes(
-		/** @type {Element & ElementCSSInlineStyle} */ (node),
-		prev,
-		next,
-		css_hash,
-		node.namespaceURI !== NAMESPACE_SVG
-	);
-}
-
 /** @type {Map<string, string[]>} */
 var setters_cache = new Map();
 
