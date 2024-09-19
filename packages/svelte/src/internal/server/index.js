@@ -148,6 +148,19 @@ export function head(payload, fn) {
 }
 
 /**
+ * `<div translate={false}>` should be rendered as `<div translate="no">` and _not_
+ * `<div translate="false">`, which is equivalent to `<div translate="yes">`. There
+ * may be other odd cases that need to be added to this list in future
+ * @type {Record<string, Map<any, string>>}
+ */
+const replacements = {
+	translate: new Map([
+		[true, 'yes'],
+		[false, 'no']
+	])
+};
+
+/**
  * @template V
  * @param {string} name
  * @param {V} value
@@ -156,7 +169,8 @@ export function head(payload, fn) {
  */
 export function attr(name, value, is_boolean = false) {
 	if (value == null || (!value && is_boolean) || (value === '' && name === 'class')) return '';
-	const assignment = is_boolean ? '' : `="${escape_html(value, true)}"`;
+	const normalized = (name in replacements && replacements[name].get(value)) || value;
+	const assignment = is_boolean ? '' : `="${escape_html(normalized, true)}"`;
 	return ` ${name}${assignment}`;
 }
 
