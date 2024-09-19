@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.256
+
+### Patch Changes
+
+- fix: only warn on context="module" in runes mode ([#13332](https://github.com/sveltejs/svelte/pull/13332))
+
+- feat: deprecate `<svelte:self>` in runes mode ([#13333](https://github.com/sveltejs/svelte/pull/13333))
+
+- fix: set strings as attributes, non-strings as properties if property exists ([#13327](https://github.com/sveltejs/svelte/pull/13327))
+
 ## 5.0.0-next.255
 
 ### Patch Changes
