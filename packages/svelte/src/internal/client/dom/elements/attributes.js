@@ -356,10 +356,9 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
  * because updating them through the property setter doesn't work reliably.
  * In the example of `width`/`height`, the problem is that the setter only
  * accepts numeric values, but the attribute can also be set to a string like `50%`.
- * In case of draggable trying to set `element.draggable='false'` will actually set
- * draggable to `true`. If this list becomes too big, rethink this approach.
+ * If this list becomes too big, rethink this approach.
  */
-var always_set_through_set_attribute = ['width', 'height', 'draggable'];
+var always_set_through_set_attribute = ['width', 'height'];
 
 /** @type {Map<string, string[]>} */
 var setters_cache = new Map();
