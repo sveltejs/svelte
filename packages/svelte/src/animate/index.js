@@ -32,7 +32,7 @@ export function flip(node, { from, to }, params = {}) {
 			var y = u * dy;
 			var sx = t + u * dsx;
 			var sy = t + u * dsy;
-			return `transform: ${transform} translate(${x}px, ${y}px) scale(${sx}, ${sy});`;
+			return `transform: ${transform} scale(${sx}, ${sy}) translate(${x}px, ${y}px);`;
 		}
 	};
 }
