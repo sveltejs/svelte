@@ -351,15 +351,6 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 	);
 }
 
-/**
- * List of attributes that should always be set through the attr method,
- * because updating them through the property setter doesn't work reliably.
- * In the example of `width`/`height`, the problem is that the setter only
- * accepts numeric values, but the attribute can also be set to a string like `50%`.
- * If this list becomes too big, rethink this approach.
- */
-var always_set_through_set_attribute = ['width', 'height'];
-
 /** @type {Map<string, string[]>} */
 var setters_cache = new Map();
 
@@ -375,7 +366,7 @@ function get_setters(element) {
 		descriptors = get_descriptors(proto);
 
 		for (var key in descriptors) {
-			if (descriptors[key].set && !always_set_through_set_attribute.includes(key)) {
+			if (descriptors[key].set) {
 				setters.push(key);
 			}
 		}
