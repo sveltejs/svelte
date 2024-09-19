@@ -2,11 +2,11 @@ import { test } from '../../test';
 
 export default test({
 	test({ assert, target }) {
-		const should_be_false = /** @type {HTMLDivElement[]} */ (
+		const should_be_false = /** @type {NodeListOf<HTMLDivElement>} */ (
 			target.querySelectorAll('.translate-false div')
 		);
 
-		const should_be_true = /** @type {HTMLDivElement[]} */ (
+		const should_be_true = /** @type {NodeListOf<HTMLDivElement>} */ (
 			target.querySelectorAll('.translate-true div')
 		);
 
