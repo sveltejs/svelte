@@ -12,7 +12,7 @@ export function inspect(get_value, inspector = console.log) {
 	let initial = true;
 
 	inspect_effect(() => {
-		inspector(initial ? 'init' : 'update', ...snapshot(get_value()));
+		inspector(initial ? 'init' : 'update', ...snapshot(get_value(), true));
 		initial = false;
 	});
 }
