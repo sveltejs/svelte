@@ -135,18 +135,8 @@ export function set_xlink_attribute(dom, attribute, value) {
  * @param {any} value
  */
 export function set_custom_element_data(node, prop, value) {
-	if (prop in node) {
-		// Reading the prop could cause an error, we don't want this to fail everything else
-		try {
-			var curr_val = node[prop];
-		} catch {
-			set_attribute(node, prop, value);
-			return;
-		}
-		var next_val = typeof curr_val === 'boolean' && value === '' ? true : value;
-		if (typeof curr_val !== 'object' || curr_val !== next_val) {
-			node[prop] = next_val;
-		}
+	if (get_setters(node).includes(prop)) {
+		node[prop] = value;
 	} else {
 		set_attribute(node, prop, value);
 	}
@@ -314,40 +304,6 @@ export function set_attributes(
 	}
 
 	return current;
-}
-
-/**
- * @param {Element} node
- * @param {Record<string, any> | undefined} prev
- * @param {Record<string, any>} next The new attributes - this function mutates this object
- * @param {string} [css_hash]
- */
-export function set_dynamic_element_attributes(node, prev, next, css_hash) {
-	if (node.tagName.includes('-')) {
-		for (var key in prev) {
-			if (!(key in next)) {
-				next[key] = null;
-			}
-		}
-
-		if (css_hash !== undefined) {
-			next.class = next.class ? next.class + ' ' + css_hash : css_hash;
-		}
-
-		for (key in next) {
-			set_custom_element_data(node, key, next[key]);
-		}
-
-		return next;
-	}
-
-	return set_attributes(
-		/** @type {Element & ElementCSSInlineStyle} */ (node),
-		prev,
-		next,
-		css_hash,
-		node.namespaceURI !== NAMESPACE_SVG
-	);
 }
 
 /**

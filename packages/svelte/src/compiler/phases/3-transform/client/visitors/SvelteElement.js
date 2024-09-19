@@ -197,11 +197,12 @@ function build_dynamic_element_attributes(attributes, context, element_id) {
 				'=',
 				b.id(id),
 				b.call(
-					'$.set_dynamic_element_attributes',
+					'$.set_attributes',
 					element_id,
 					b.id(id),
 					b.object(values),
-					context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash)
+					context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
+					b.binary('!==', b.member(element_id, 'namespaceURI'), b.id('$.NAMESPACE_SVG'))
 				)
 			)
 		);
@@ -218,11 +219,12 @@ function build_dynamic_element_attributes(attributes, context, element_id) {
 	context.state.init.push(
 		b.stmt(
 			b.call(
-				'$.set_dynamic_element_attributes',
+				'$.set_attributes',
 				element_id,
 				b.literal(null),
 				b.object(values),
-				context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash)
+				context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
+				b.binary('!==', b.member(element_id, 'namespaceURI'), b.id('$.NAMESPACE_SVG'))
 			)
 		)
 	);
