@@ -1,7 +1,7 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Identifier, ObjectExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import { dev, locator } from '../../../../state.js';
+import { dev, is_ignored, locator } from '../../../../state.js';
 import {
 	get_attribute_expression,
 	is_event_attribute,
@@ -84,7 +84,7 @@ export function SvelteElement(node, context) {
 	// Always use spread because we don't know whether the element is a custom element or not,
 	// therefore we need to do the "how to set an attribute" logic at runtime.
 	const is_attributes_reactive =
-		build_dynamic_element_attributes(attributes, inner_context, element_id) !== null;
+		build_dynamic_element_attributes(node, attributes, inner_context, element_id) !== null;
 
 	// class/style directives must be applied last since they could override class/style attributes
 	build_class_directives(class_directives, element_id, inner_context, is_attributes_reactive);
@@ -137,12 +137,13 @@ export function SvelteElement(node, context) {
 /**
  * Serializes dynamic element attribute assignments.
  * Returns the `true` if spread is deemed reactive.
+ * @param {AST.SvelteElement} element
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
  * @param {ComponentContext} context
  * @param {Identifier} element_id
  * @returns {boolean}
  */
-function build_dynamic_element_attributes(attributes, context, element_id) {
+function build_dynamic_element_attributes(element, attributes, context, element_id) {
 	if (attributes.length === 0) {
 		if (context.state.analysis.css.hash) {
 			context.state.init.push(
@@ -202,7 +203,9 @@ function build_dynamic_element_attributes(attributes, context, element_id) {
 					b.id(id),
 					b.object(values),
 					context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
-					b.binary('!==', b.member(element_id, 'namespaceURI'), b.id('$.NAMESPACE_SVG'))
+					b.binary('!==', b.member(element_id, 'namespaceURI'), b.id('$.NAMESPACE_SVG')),
+					is_ignored(element, 'hydration_attribute_changed') && b.true,
+					b.call(b.member(b.member(element_id, 'nodeName'), 'includes'), b.literal('-'))
 				)
 			)
 		);
@@ -224,7 +227,9 @@ function build_dynamic_element_attributes(attributes, context, element_id) {
 				b.literal(null),
 				b.object(values),
 				context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
-				b.binary('!==', b.member(element_id, 'namespaceURI'), b.id('$.NAMESPACE_SVG'))
+				b.binary('!==', b.member(element_id, 'namespaceURI'), b.id('$.NAMESPACE_SVG')),
+				is_ignored(element, 'hydration_attribute_changed') && b.true,
+				b.call(b.member(b.member(element_id, 'nodeName'), 'includes'), b.literal('-'))
 			)
 		)
 	);

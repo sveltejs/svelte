@@ -150,6 +150,7 @@ export function set_custom_element_data(node, prop, value) {
  * @param {string} [css_hash]
  * @param {boolean} preserve_attribute_case
  * @param {boolean} [skip_warning]
+ * @param {boolean} [is_custom_element]
  * @returns {Record<string, any>}
  */
 export function set_attributes(
@@ -158,7 +159,8 @@ export function set_attributes(
 	next,
 	css_hash,
 	preserve_attribute_case = false,
-	skip_warning
+	skip_warning = false,
+	is_custom_element = false
 ) {
 	var current = prev || {};
 	var is_option_element = element.tagName === 'OPTION';
@@ -261,14 +263,11 @@ export function set_attributes(
 					delegate([event_name]);
 				}
 			}
-		} else if (value == null) {
-			attributes[key] = null;
-			element.removeAttribute(key);
-		} else if (key === 'style') {
+		} else if (key === 'style' && value != null) {
 			element.style.cssText = value + '';
 		} else if (key === 'autofocus') {
 			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
-		} else if (key === '__value' || key === 'value') {
+		} else if (key === '__value' || (key === 'value' && value != null)) {
 			// @ts-ignore
 			element.value = element[key] = element.__value = value;
 		} else {
@@ -277,15 +276,18 @@ export function set_attributes(
 				name = normalize_attribute(name);
 			}
 
-			if (setters.includes(name)) {
-				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
-					if (!skip_warning) check_src_in_dev_hydration(element, name, value);
-				} else {
-					// @ts-ignore
-					element[name] = value;
-				}
+			if (value == null && !is_custom_element) {
+				attributes[key] = null;
+				element.removeAttribute(key);
+			} else if (setters.includes(name) && (is_custom_element || typeof value !== 'string')) {
+				// @ts-ignore
+				element[name] = value;
 			} else if (typeof value !== 'function') {
-				set_attribute(element, name, value);
+				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
+					if (!skip_warning) check_src_in_dev_hydration(element, name, value ?? '');
+				} else {
+					set_attribute(element, name, value);
+				}
 			}
 		}
 	}

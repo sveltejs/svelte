@@ -511,7 +511,8 @@ function build_element_spread_attributes(
 				b.object(values),
 				context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
 				preserve_attribute_case && b.true,
-				is_ignored(element, 'hydration_attribute_changed') && b.true
+				is_ignored(element, 'hydration_attribute_changed') && b.true,
+				element.name.includes('-') && b.true
 			)
 		)
 	);
