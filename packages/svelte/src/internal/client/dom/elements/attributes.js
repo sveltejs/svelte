@@ -113,13 +113,11 @@ export function set_attribute(element, attribute, value, skip_warning) {
 
 	if (value == null) {
 		element.removeAttribute(attribute);
+	} else if (attribute in element && typeof value !== 'string') {
+		// @ts-ignore
+		element[attribute] = value;
 	} else {
-		if (attribute in element && typeof value !== 'string') {
-			// @ts-ignore
-			element[attribute] = value;
-		} else {
-			element.setAttribute(attribute, value);
-		}
+		element.setAttribute(attribute, value);
 	}
 }
 
