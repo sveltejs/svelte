@@ -21,16 +21,14 @@ export function bind_value(input, get, set = get) {
 			// TODO should this happen in prod too?
 			e.bind_invalid_checkbox_value();
 		}
-		var input_value = is_numberlike_input(input) ? to_number(input.value) : input.value;
 
-		set(input_value);
+		/** @type {unknown} */
+		var value = is_numberlike_input(input) ? to_number(input.value) : input.value;
+		set(value);
 
-		if (!runes) return;
-		// If we are in runes mode, we need to ensure that we are correctly keeping the input
-		// in sync with current value
-		var value = get();
-
-		if (input_value !== value) {
+		// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
+		// because we use mutable state which ensures the render effect always runs)
+		if (runes && value !== (value = get())) {
 			// @ts-expect-error the value is coerced on assignment
 			input.value = value ?? '';
 		}
