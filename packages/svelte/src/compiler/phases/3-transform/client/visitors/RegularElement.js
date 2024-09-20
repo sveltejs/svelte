@@ -193,17 +193,32 @@ export function RegularElement(node, context) {
 	const node_id = context.state.node;
 
 	// Then do attributes
-	let is_attributes_reactive = false;
+	let is_attributes_reactive = has_spread;
+
 	if (has_spread) {
-		build_element_spread_attributes(
-			attributes,
-			context,
-			node,
-			node_id,
-			// If value binding exists, that one takes care of calling $.init_select
-			node.name === 'select' && !bindings.has('value')
-		);
-		is_attributes_reactive = true;
+		const attributes_id = b.id(context.state.scope.generate('attributes'));
+
+		build_element_spread_attributes(attributes, context, node, node_id, attributes_id);
+
+		// If value binding exists, that one takes care of calling $.init_select
+		if (node.name === 'select' && !bindings.has('value')) {
+			context.state.init.push(
+				b.stmt(b.call('$.init_select', node_id, b.thunk(b.member(attributes_id, 'value'))))
+			);
+
+			context.state.update.push(
+				b.if(
+					b.binary('in', b.literal('value'), attributes_id),
+					b.block([
+						// This ensures a one-way street to the DOM in case it's <select {value}>
+						// and not <select bind:value>. We need it in addition to $.init_select
+						// because the select value is not reflected as an attribute, so the
+						// mutation observer wouldn't notice.
+						b.stmt(b.call('$.select_option', node_id, b.member(attributes_id, 'value')))
+					])
+				)
+			);
+		}
 	} else {
 		/** If true, needs `__value` for inputs */
 		const needs_special_value_handling =
@@ -452,15 +467,9 @@ function setup_select_synchronization(value_binding, context) {
  * @param {ComponentContext} context
  * @param {AST.RegularElement} element
  * @param {Identifier} element_id
- * @param {boolean} needs_select_handling
+ * @param {Identifier} attributes_id
  */
-function build_element_spread_attributes(
-	attributes,
-	context,
-	element,
-	element_id,
-	needs_select_handling
-) {
+function build_element_spread_attributes(attributes, context, element, element_id, attributes_id) {
 	let needs_isolation = false;
 
 	/** @type {ObjectExpression['properties']} */
@@ -501,16 +510,15 @@ function build_element_spread_attributes(
 
 	const preserve_attribute_case =
 		element.metadata.svg || element.metadata.mathml || is_custom_element_node(element);
-	const id = b.id(context.state.scope.generate('attributes'));
 
 	const update = b.stmt(
 		b.assignment(
 			'=',
-			id,
+			attributes_id,
 			b.call(
 				'$.set_attributes',
 				element_id,
-				id,
+				attributes_id,
 				b.object(values),
 				context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
 				preserve_attribute_case && b.true,
@@ -520,31 +528,13 @@ function build_element_spread_attributes(
 		)
 	);
 
-	context.state.init.push(b.let(id));
+	context.state.init.push(b.let(attributes_id));
 
 	// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
 	if (needs_isolation) {
 		context.state.init.push(build_update(update));
 	} else {
 		context.state.update.push(update);
-	}
-
-	if (needs_select_handling) {
-		context.state.init.push(
-			b.stmt(b.call('$.init_select', element_id, b.thunk(b.member(id, 'value'))))
-		);
-		context.state.update.push(
-			b.if(
-				b.binary('in', b.literal('value'), id),
-				b.block([
-					// This ensures a one-way street to the DOM in case it's <select {value}>
-					// and not <select bind:value>. We need it in addition to $.init_select
-					// because the select value is not reflected as an attribute, so the
-					// mutation observer wouldn't notice.
-					b.stmt(b.call('$.select_option', element_id, b.member(id, 'value')))
-				])
-			)
-		);
 	}
 }
 
