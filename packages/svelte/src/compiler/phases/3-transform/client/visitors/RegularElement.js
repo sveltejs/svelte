@@ -314,9 +314,6 @@ export function RegularElement(node, context) {
 		state.options.preserveComments
 	);
 
-	/** Whether or not we need to wrap the children in `{...}` to avoid declaration conflicts */
-	const has_declaration = node.fragment.nodes.some((node) => node.type === 'SnippetBlock');
-
 	/** @type {typeof state} */
 	const child_state = { ...state, init: [], update: [], after_update: [] };
 
@@ -367,7 +364,8 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (has_declaration) {
+	if (node.fragment.nodes.some((node) => node.type === 'SnippetBlock')) {
+		// Wrap children in `{...}` to avoid declaration conflicts
 		context.state.init.push(
 			b.block([
 				...child_state.init,
