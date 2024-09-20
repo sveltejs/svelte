@@ -58,6 +58,16 @@ export function RegularElement(node, context) {
 		return;
 	}
 
+	const is_custom_element = is_custom_element_node(node);
+
+	if (is_custom_element) {
+		// cloneNode is faster, but it does not instantiate the underlying class of the
+		// custom element until the template is connected to the dom, which would
+		// cause problems when setting properties on the custom element.
+		// Therefore we need to use importNode instead, which doesn't have this caveat.
+		context.state.metadata.context.template_needs_import_node = true;
+	}
+
 	if (node.name === 'script') {
 		context.state.metadata.context.template_contains_script_tag = true;
 	}
@@ -78,16 +88,6 @@ export function RegularElement(node, context) {
 
 	/** @type {ExpressionStatement[]} */
 	const lets = [];
-
-	const is_custom_element = is_custom_element_node(node);
-
-	if (is_custom_element) {
-		// cloneNode is faster, but it does not instantiate the underlying class of the
-		// custom element until the template is connected to the dom, which would
-		// cause problems when setting properties on the custom element.
-		// Therefore we need to use importNode instead, which doesn't have this caveat.
-		context.state.metadata.context.template_needs_import_node = true;
-	}
 
 	/** @type {Map<string, AST.Attribute>} */
 	const lookup = new Map();
