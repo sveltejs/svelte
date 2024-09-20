@@ -186,8 +186,21 @@ export function EachBlock(node, context) {
 	if (invalidate_store) sequence.push(invalidate_store);
 
 	if (node.context.type === 'Identifier') {
+		const name = node.context.name;
+		const binding = /** @type {Binding} */ (context.state.scope.get(name));
+
 		child_state.transform[node.context.name] = {
-			read: (flags & EACH_ITEM_REACTIVE) !== 0 ? get_value : (node) => node,
+			read: (node) => {
+				if (binding.reassigned) {
+					return b.member(
+						each_node_meta.array_name ? b.call(each_node_meta.array_name) : collection,
+						index,
+						true
+					);
+				}
+
+				return (flags & EACH_ITEM_REACTIVE) !== 0 ? get_value(node) : node;
+			},
 			assign: (_, value) => {
 				uses_index = true;
 
