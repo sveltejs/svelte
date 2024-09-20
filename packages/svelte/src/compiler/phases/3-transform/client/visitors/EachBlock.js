@@ -193,6 +193,8 @@ export function EachBlock(node, context) {
 			read: (node) => {
 				if (binding.reassigned) {
 					// we need to do `array[$$index]` instead of `$$item` or whatever
+					// TODO this only applies in legacy mode, reassignments are
+					// forbidden in runes mode
 					return b.member(
 						each_node_meta.array_name ? b.call(each_node_meta.array_name) : collection,
 						index,
