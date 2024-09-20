@@ -153,8 +153,6 @@ function build_dynamic_element_attributes(element, attributes, context, element_
 		return false;
 	}
 
-	// TODO why are we always treating this as a spread? needs docs, if that's not an error
-
 	let needs_isolation = false;
 	let is_reactive = false;
 

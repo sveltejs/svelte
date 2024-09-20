@@ -95,7 +95,7 @@ export function RegularElement(node, context) {
 	/** @type {Map<string, AST.BindDirective>} */
 	const bindings = new Map();
 
-	let has_spread = false;
+	let has_spread = node.metadata.has_spread;
 	let has_use = false;
 
 	for (const attribute of node.attributes) {
@@ -129,7 +129,6 @@ export function RegularElement(node, context) {
 
 			case 'SpreadAttribute':
 				attributes.push(attribute);
-				has_spread = true;
 				break;
 
 			case 'StyleDirective':
@@ -195,7 +194,7 @@ export function RegularElement(node, context) {
 
 	// Then do attributes
 	let is_attributes_reactive = false;
-	if (node.metadata.has_spread) {
+	if (has_spread) {
 		build_element_spread_attributes(
 			attributes,
 			context,
@@ -258,7 +257,7 @@ export function RegularElement(node, context) {
 		node_id,
 		context,
 		is_attributes_reactive,
-		lookup.has('style') || node.metadata.has_spread
+		lookup.has('style') || has_spread
 	);
 
 	// Apply the src and loading attributes for <img> elements after the element is appended to the document
