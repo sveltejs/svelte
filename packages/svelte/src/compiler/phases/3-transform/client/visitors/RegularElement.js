@@ -85,8 +85,6 @@ export function RegularElement(node, context) {
 	const is_custom_element = is_custom_element_node(node);
 	let needs_content_reset = false;
 
-	let is_content_editable = false;
-
 	if (is_custom_element) {
 		// cloneNode is faster, but it does not instantiate the underlying class of the
 		// custom element until the template is connected to the dom, which would
@@ -119,12 +117,6 @@ export function RegularElement(node, context) {
 				!is_text_attribute(attribute)
 			) {
 				needs_content_reset = true;
-			} else if (
-				attribute.name === 'contenteditable' &&
-				(attribute.value === true ||
-					(is_text_attribute(attribute) && attribute.value[0].data === 'true'))
-			) {
-				is_content_editable = true;
 			}
 		} else if (attribute.type === 'SpreadAttribute') {
 			has_spread = true;
@@ -156,9 +148,17 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	child_metadata.bound_contenteditable =
-		is_content_editable &&
-		(bindings.has('innerHTML') || bindings.has('innerText') || bindings.has('textContent'));
+	if (bindings.has('innerHTML') || bindings.has('innerText') || bindings.has('textContent')) {
+		const contenteditable = lookup.get('contenteditable');
+
+		if (
+			contenteditable &&
+			(contenteditable.value === true ||
+				(is_text_attribute(contenteditable) && contenteditable.value[0].data === 'true'))
+		) {
+			child_metadata.bound_contenteditable = true;
+		}
+	}
 
 	if (
 		node.name === 'input' &&
