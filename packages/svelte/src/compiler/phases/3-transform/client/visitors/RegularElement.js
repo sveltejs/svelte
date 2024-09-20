@@ -24,7 +24,8 @@ import {
 	get_attribute_name,
 	build_attribute_value,
 	build_class_directives,
-	build_style_directives
+	build_style_directives,
+	build_set_attributes
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
 import {
@@ -208,7 +209,7 @@ export function RegularElement(node, context) {
 	if (has_spread) {
 		const attributes_id = b.id(context.state.scope.generate('attributes'));
 
-		build_element_spread_attributes(
+		build_set_attributes(
 			attributes,
 			context,
 			node,
@@ -478,87 +479,6 @@ function setup_select_synchronization(value_binding, context) {
 			)
 		)
 	);
-}
-
-/**
- * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
- * @param {ComponentContext} context
- * @param {AST.RegularElement} element
- * @param {Identifier} element_id
- * @param {Identifier} attributes_id
- * @param {false | Expression} preserve_attribute_case
- * @param {false | Expression} is_custom_element
- */
-function build_element_spread_attributes(
-	attributes,
-	context,
-	element,
-	element_id,
-	attributes_id,
-	preserve_attribute_case,
-	is_custom_element
-) {
-	let needs_isolation = false;
-	let is_reactive = false;
-
-	/** @type {ObjectExpression['properties']} */
-	const values = [];
-
-	for (const attribute of attributes) {
-		if (attribute.type === 'Attribute') {
-			const { value } = build_attribute_value(attribute.value, context);
-
-			if (
-				is_event_attribute(attribute) &&
-				(get_attribute_expression(attribute).type === 'ArrowFunctionExpression' ||
-					get_attribute_expression(attribute).type === 'FunctionExpression')
-			) {
-				// Give the event handler a stable ID so it isn't removed and readded on every update
-				const id = context.state.scope.generate('event_handler');
-				context.state.init.push(b.var(id, value));
-				values.push(b.init(attribute.name, b.id(id)));
-			} else {
-				values.push(b.init(attribute.name, value));
-			}
-		} else {
-			values.push(b.spread(/** @type {Expression} */ (context.visit(attribute))));
-		}
-
-		is_reactive ||=
-			attribute.metadata.expression.has_state ||
-			// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
-			attribute.type === 'SpreadAttribute';
-		needs_isolation ||=
-			attribute.type === 'SpreadAttribute' && attribute.metadata.expression.has_call;
-	}
-
-	const call = b.call(
-		'$.set_attributes',
-		element_id,
-		is_reactive ? attributes_id : b.literal(null),
-		b.object(values),
-		context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
-		preserve_attribute_case,
-		is_custom_element,
-		is_ignored(element, 'hydration_attribute_changed') && b.true
-	);
-
-	if (is_reactive) {
-		context.state.init.push(b.let(attributes_id));
-
-		const update = b.stmt(b.assignment('=', attributes_id, call));
-
-		if (needs_isolation) {
-			context.state.init.push(build_update(update));
-			return false;
-		}
-
-		context.state.update.push(update);
-		return true;
-	}
-
-	context.state.init.push(b.stmt(call));
-	return false;
 }
 
 /**
