@@ -105,6 +105,16 @@ export function RegularElement(node, context) {
 				break;
 
 			case 'Attribute':
+				// `is` attributes need to be part of the template, otherwise they break
+				if (attribute.name === 'is' && context.state.metadata.namespace === 'html') {
+					const { value } = build_attribute_value(attribute.value, context);
+
+					if (value.type === 'Literal' && typeof value.value === 'string') {
+						context.state.template.push(` is="${escape_html(value.value, true)}"`);
+						continue;
+					}
+				}
+
 				attributes.push(attribute);
 				lookup.set(attribute.name, attribute);
 				break;
@@ -243,7 +253,7 @@ export function RegularElement(node, context) {
 				attribute.name !== 'autofocus' &&
 				(attribute.value === true || is_text_attribute(attribute))
 			) {
-				const name = get_attribute_name(node, attribute, context);
+				const name = get_attribute_name(node, attribute);
 				const value = is_text_attribute(attribute) ? attribute.value[0].data : true;
 
 				if (name !== 'class' || value) {
@@ -480,15 +490,6 @@ function build_element_spread_attributes(attributes, context, element, element_i
 			const { value } = build_attribute_value(attribute.value, context);
 
 			if (
-				attribute.name === 'is' &&
-				value.type === 'Literal' &&
-				context.state.metadata.namespace === 'html'
-			) {
-				context.state.template.push(` is="${escape_html(value.value, true)}"`);
-				continue;
-			}
-
-			if (
 				is_event_attribute(attribute) &&
 				(get_attribute_expression(attribute).type === 'ArrowFunctionExpression' ||
 					get_attribute_expression(attribute).type === 'FunctionExpression')
@@ -568,7 +569,7 @@ function build_element_spread_attributes(attributes, context, element, element_i
  */
 function build_element_attribute_update_assignment(element, node_id, attribute, context) {
 	const state = context.state;
-	const name = get_attribute_name(element, attribute, context);
+	const name = get_attribute_name(element, attribute);
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
 	let { has_call, value } = build_attribute_value(attribute.value, context);

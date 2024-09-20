@@ -101,6 +101,7 @@ export function build_class_directives(
 /**
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
+ * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
  */
 export function build_attribute_value(value, context) {
 	if (value === true) {
@@ -127,9 +128,8 @@ export function build_attribute_value(value, context) {
 /**
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {AST.Attribute} attribute
- * @param {{ state: { metadata: { namespace: Namespace }}}} context
  */
-export function get_attribute_name(element, attribute, context) {
+export function get_attribute_name(element, attribute) {
 	if (!element.metadata.svg && !element.metadata.mathml) {
 		return normalize_attribute(attribute.name);
 	}
