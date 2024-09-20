@@ -90,10 +90,17 @@ export function SvelteElement(node, context) {
 			);
 		}
 	} else {
+		const attributes_id = b.id(context.state.scope.generate('attributes'));
+
 		// Always use spread because we don't know whether the element is a custom element or not,
 		// therefore we need to do the "how to set an attribute" logic at runtime.
-		is_attributes_reactive =
-			build_dynamic_element_attributes(node, attributes, inner_context, element_id) !== null;
+		is_attributes_reactive = build_dynamic_element_attributes(
+			node,
+			attributes,
+			inner_context,
+			element_id,
+			attributes_id
+		);
 	}
 
 	// class/style directives must be applied last since they could override class/style attributes
@@ -151,9 +158,10 @@ export function SvelteElement(node, context) {
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
  * @param {ComponentContext} context
  * @param {Identifier} element_id
+ * @param {Identifier} attributes_id
  * @returns {boolean}
  */
-function build_dynamic_element_attributes(element, attributes, context, element_id) {
+function build_dynamic_element_attributes(element, attributes, context, element_id, attributes_id) {
 	let needs_isolation = false;
 	let is_reactive = false;
 
@@ -189,17 +197,16 @@ function build_dynamic_element_attributes(element, attributes, context, element_
 	}
 
 	if (is_reactive) {
-		const id = b.id(context.state.scope.generate('attributes'));
-		context.state.init.push(b.let(id));
+		context.state.init.push(b.let(attributes_id));
 
 		const update = b.stmt(
 			b.assignment(
 				'=',
-				id,
+				attributes_id,
 				b.call(
 					'$.set_attributes',
 					element_id,
-					id,
+					attributes_id,
 					b.object(values),
 					context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
 					b.binary('!==', b.member(element_id, 'namespaceURI'), b.id('$.NAMESPACE_SVG')),
