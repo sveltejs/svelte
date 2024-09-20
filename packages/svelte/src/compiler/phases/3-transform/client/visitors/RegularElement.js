@@ -161,18 +161,16 @@ export function RegularElement(node, context) {
 
 	if (
 		node.name === 'input' &&
-		node.attributes.some((attribute) => {
-			return (
-				attribute.type === 'SpreadAttribute' ||
-				(attribute.type === 'Attribute' &&
+		(has_spread ||
+			bindings.has('value') ||
+			bindings.has('checked') ||
+			bindings.has('group') ||
+			attributes.some(
+				(attribute) =>
+					attribute.type === 'Attribute' &&
 					(attribute.name === 'value' || attribute.name === 'checked') &&
-					!is_text_attribute(attribute)) ||
-				(attribute.type === 'BindDirective' &&
-					(attribute.name === 'group' ||
-						attribute.name === 'checked' ||
-						attribute.name === 'value'))
-			);
-		})
+					!is_text_attribute(attribute)
+			))
 	) {
 		context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
 	}
@@ -190,10 +188,10 @@ export function RegularElement(node, context) {
 		setup_select_synchronization(/** @type {AST.BindDirective} */ (bindings.get('value')), context);
 	}
 
-	const node_id = context.state.node;
-
 	// Let bindings first, they can be used on attributes
 	context.state.init.push(...lets);
+
+	const node_id = context.state.node;
 
 	// Then do attributes
 	let is_attributes_reactive = false;
@@ -253,11 +251,6 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	// Apply the src and loading attributes for <img> elements after the element is appended to the document
-	if (node.name === 'img' && (has_spread || lookup.has('loading'))) {
-		context.state.after_update.push(b.stmt(b.call('$.handle_lazy_img', node_id)));
-	}
-
 	// class/style directives must be applied last since they could override class/style attributes
 	build_class_directives(class_directives, node_id, context, is_attributes_reactive);
 	build_style_directives(
@@ -267,6 +260,11 @@ export function RegularElement(node, context) {
 		is_attributes_reactive,
 		lookup.has('style') || node.metadata.has_spread
 	);
+
+	// Apply the src and loading attributes for <img> elements after the element is appended to the document
+	if (node.name === 'img' && (has_spread || lookup.has('loading'))) {
+		context.state.after_update.push(b.stmt(b.call('$.handle_lazy_img', node_id)));
+	}
 
 	if (
 		is_load_error_element(node.name) &&
