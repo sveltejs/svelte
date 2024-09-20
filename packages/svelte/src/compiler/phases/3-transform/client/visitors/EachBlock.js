@@ -192,6 +192,7 @@ export function EachBlock(node, context) {
 		child_state.transform[node.context.name] = {
 			read: (node) => {
 				if (binding.reassigned) {
+					// we need to do `array[$$index]` instead of `$$item` or whatever
 					return b.member(
 						each_node_meta.array_name ? b.call(each_node_meta.array_name) : collection,
 						index,
