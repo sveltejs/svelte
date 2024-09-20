@@ -58,15 +58,19 @@ export function RegularElement(node, context) {
 		return;
 	}
 
+	const is_custom_element = is_custom_element_node(node);
+
+	if (is_custom_element) {
+		// cloneNode is faster, but it does not instantiate the underlying class of the
+		// custom element until the template is connected to the dom, which would
+		// cause problems when setting properties on the custom element.
+		// Therefore we need to use importNode instead, which doesn't have this caveat.
+		context.state.metadata.context.template_needs_import_node = true;
+	}
+
 	if (node.name === 'script') {
 		context.state.metadata.context.template_contains_script_tag = true;
 	}
-
-	const metadata = context.state.metadata;
-	const child_metadata = {
-		...context.state.metadata,
-		namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
-	};
 
 	context.state.template.push(`<${node.name}`);
 
@@ -79,151 +83,138 @@ export function RegularElement(node, context) {
 	/** @type {AST.StyleDirective[]} */
 	const style_directives = [];
 
+	/** @type {Array<AST.AnimateDirective | AST.BindDirective | AST.OnDirective | AST.TransitionDirective | AST.UseDirective>} */
+	const other_directives = [];
+
 	/** @type {ExpressionStatement[]} */
 	const lets = [];
 
-	const is_custom_element = is_custom_element_node(node);
-	let needs_input_reset = false;
-	let needs_content_reset = false;
+	/** @type {Map<string, AST.Attribute>} */
+	const lookup = new Map();
 
-	/** @type {AST.BindDirective | null} */
-	let value_binding = null;
+	/** @type {Map<string, AST.BindDirective>} */
+	const bindings = new Map();
 
-	/** If true, needs `__value` for inputs */
-	let needs_special_value_handling = node.name === 'option' || node.name === 'select';
-	let is_content_editable = false;
-	let has_content_editable_binding = false;
-	let img_might_be_lazy = false;
-	let might_need_event_replaying = false;
-	let has_direction_attribute = false;
-	let has_style_attribute = false;
+	let has_spread = false;
+	let has_use = false;
 
-	if (is_custom_element) {
-		// cloneNode is faster, but it does not instantiate the underlying class of the
-		// custom element until the template is connected to the dom, which would
-		// cause problems when setting properties on the custom element.
-		// Therefore we need to use importNode instead, which doesn't have this caveat.
-		metadata.context.template_needs_import_node = true;
-	}
-
-	// visit let directives first, to set state
 	for (const attribute of node.attributes) {
-		if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+		switch (attribute.type) {
+			case 'AnimateDirective':
+				other_directives.push(attribute);
+				break;
+
+			case 'Attribute':
+				attributes.push(attribute);
+				lookup.set(attribute.name, attribute);
+				break;
+
+			case 'BindDirective':
+				bindings.set(attribute.name, attribute);
+				other_directives.push(attribute);
+				break;
+
+			case 'ClassDirective':
+				class_directives.push(attribute);
+				break;
+
+			case 'LetDirective':
+				// visit let directives before everything else, to set state
+				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+				break;
+
+			case 'OnDirective':
+				other_directives.push(attribute);
+				break;
+
+			case 'SpreadAttribute':
+				attributes.push(attribute);
+				has_spread = true;
+				break;
+
+			case 'StyleDirective':
+				style_directives.push(attribute);
+				break;
+
+			case 'TransitionDirective':
+				other_directives.push(attribute);
+				break;
+
+			case 'UseDirective':
+				has_use = true;
+				other_directives.push(attribute);
+				break;
 		}
 	}
 
-	for (const attribute of node.attributes) {
-		if (attribute.type === 'Attribute') {
-			attributes.push(attribute);
-			if (node.name === 'img' && attribute.name === 'loading') {
-				img_might_be_lazy = true;
-			}
-			if (attribute.name === 'dir') {
-				has_direction_attribute = true;
-			}
-			if (attribute.name === 'style') {
-				has_style_attribute = true;
-			}
-			if (
-				(attribute.name === 'value' || attribute.name === 'checked') &&
-				!is_text_attribute(attribute)
-			) {
-				needs_input_reset = true;
-				needs_content_reset = true;
-			} else if (
-				attribute.name === 'contenteditable' &&
-				(attribute.value === true ||
-					(is_text_attribute(attribute) && attribute.value[0].data === 'true'))
-			) {
-				is_content_editable = true;
-			}
-		} else if (attribute.type === 'SpreadAttribute') {
-			attributes.push(attribute);
-			needs_input_reset = true;
-			needs_content_reset = true;
-			if (is_load_error_element(node.name)) {
-				might_need_event_replaying = true;
-			}
-		} else if (attribute.type === 'ClassDirective') {
-			class_directives.push(attribute);
-		} else if (attribute.type === 'StyleDirective') {
-			style_directives.push(attribute);
-		} else if (attribute.type === 'OnDirective') {
+	for (const attribute of other_directives) {
+		if (attribute.type === 'OnDirective') {
 			const handler = /** @type {Expression} */ (context.visit(attribute));
-			const has_action_directive = node.attributes.find((a) => a.type === 'UseDirective');
 
 			context.state.after_update.push(
-				b.stmt(has_action_directive ? b.call('$.effect', b.thunk(handler)) : handler)
+				b.stmt(has_use ? b.call('$.effect', b.thunk(handler)) : handler)
 			);
-		} else if (attribute.type !== 'LetDirective') {
-			if (attribute.type === 'BindDirective') {
-				if (attribute.name === 'group' || attribute.name === 'checked') {
-					needs_special_value_handling = true;
-					needs_input_reset = true;
-				} else if (attribute.name === 'value') {
-					value_binding = attribute;
-					needs_content_reset = true;
-					needs_input_reset = true;
-				} else if (
-					attribute.name === 'innerHTML' ||
-					attribute.name === 'innerText' ||
-					attribute.name === 'textContent'
-				) {
-					has_content_editable_binding = true;
-				}
-			} else if (attribute.type === 'UseDirective' && is_load_error_element(node.name)) {
-				might_need_event_replaying = true;
-			}
+		} else {
 			context.visit(attribute);
 		}
 	}
 
-	if (is_content_editable && has_content_editable_binding) {
-		child_metadata.bound_contenteditable = true;
-	}
-
-	if (needs_input_reset && node.name === 'input') {
+	if (
+		node.name === 'input' &&
+		(has_spread ||
+			bindings.has('value') ||
+			bindings.has('checked') ||
+			bindings.has('group') ||
+			attributes.some(
+				(attribute) =>
+					attribute.type === 'Attribute' &&
+					(attribute.name === 'value' || attribute.name === 'checked') &&
+					!is_text_attribute(attribute)
+			))
+	) {
 		context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
 	}
 
-	if (needs_content_reset && node.name === 'textarea') {
-		context.state.init.push(b.stmt(b.call('$.remove_textarea_child', context.state.node)));
+	if (node.name === 'textarea') {
+		const attribute = lookup.get('value') ?? lookup.get('checked');
+		const needs_content_reset = attribute && !is_text_attribute(attribute);
+
+		if (has_spread || bindings.has('value') || needs_content_reset) {
+			context.state.init.push(b.stmt(b.call('$.remove_textarea_child', context.state.node)));
+		}
 	}
 
-	if (value_binding !== null && node.name === 'select') {
-		setup_select_synchronization(value_binding, context);
+	if (node.name === 'select' && bindings.has('value')) {
+		setup_select_synchronization(/** @type {AST.BindDirective} */ (bindings.get('value')), context);
 	}
-
-	const node_id = context.state.node;
 
 	// Let bindings first, they can be used on attributes
 	context.state.init.push(...lets);
 
+	const node_id = context.state.node;
+
 	// Then do attributes
 	let is_attributes_reactive = false;
 	if (node.metadata.has_spread) {
-		if (node.name === 'img') {
-			img_might_be_lazy = true;
-		}
 		build_element_spread_attributes(
 			attributes,
 			context,
 			node,
 			node_id,
 			// If value binding exists, that one takes care of calling $.init_select
-			value_binding === null && node.name === 'select'
+			node.name === 'select' && !bindings.has('value')
 		);
 		is_attributes_reactive = true;
 	} else {
+		/** If true, needs `__value` for inputs */
+		const needs_special_value_handling =
+			node.name === 'option' ||
+			node.name === 'select' ||
+			bindings.has('group') ||
+			bindings.has('checked');
+
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 			if (is_event_attribute(attribute)) {
-				if (
-					(attribute.name === 'onload' || attribute.name === 'onerror') &&
-					is_load_error_element(node.name)
-				) {
-					might_need_event_replaying = true;
-				}
 				visit_event_attribute(attribute, context);
 				continue;
 			}
@@ -260,11 +251,6 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	// Apply the src and loading attributes for <img> elements after the element is appended to the document
-	if (img_might_be_lazy) {
-		context.state.after_update.push(b.stmt(b.call('$.handle_lazy_img', node_id)));
-	}
-
 	// class/style directives must be applied last since they could override class/style attributes
 	build_class_directives(class_directives, node_id, context, is_attributes_reactive);
 	build_style_directives(
@@ -272,23 +258,45 @@ export function RegularElement(node, context) {
 		node_id,
 		context,
 		is_attributes_reactive,
-		has_style_attribute || node.metadata.has_spread
+		lookup.has('style') || node.metadata.has_spread
 	);
 
-	if (might_need_event_replaying) {
+	// Apply the src and loading attributes for <img> elements after the element is appended to the document
+	if (node.name === 'img' && (has_spread || lookup.has('loading'))) {
+		context.state.after_update.push(b.stmt(b.call('$.handle_lazy_img', node_id)));
+	}
+
+	if (
+		is_load_error_element(node.name) &&
+		(has_spread || has_use || lookup.has('onload') || lookup.has('onerror'))
+	) {
 		context.state.after_update.push(b.stmt(b.call('$.replay_events', node_id)));
 	}
 
 	context.state.template.push('>');
 
-	/** @type {SourceLocation[]} */
-	const child_locations = [];
+	const metadata = {
+		...context.state.metadata,
+		namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
+	};
+
+	if (bindings.has('innerHTML') || bindings.has('innerText') || bindings.has('textContent')) {
+		const contenteditable = lookup.get('contenteditable');
+
+		if (
+			contenteditable &&
+			(contenteditable.value === true ||
+				(is_text_attribute(contenteditable) && contenteditable.value[0].data === 'true'))
+		) {
+			metadata.bound_contenteditable = true;
+		}
+	}
 
 	/** @type {ComponentClientTransformState} */
 	const state = {
 		...context.state,
-		metadata: child_metadata,
-		locations: child_locations,
+		metadata,
+		locations: [],
 		scope: /** @type {Scope} */ (context.state.scopes.get(node.fragment)),
 		preserve_whitespace:
 			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
@@ -298,14 +306,11 @@ export function RegularElement(node, context) {
 		node,
 		node.fragment.nodes,
 		context.path,
-		child_metadata.namespace,
+		state.metadata.namespace,
 		state,
 		node.name === 'script' || state.preserve_whitespace,
 		state.options.preserveComments
 	);
-
-	/** Whether or not we need to wrap the children in `{...}` to avoid declaration conflicts */
-	const has_declaration = node.fragment.nodes.some((node) => node.type === 'SnippetBlock');
 
 	/** @type {typeof state} */
 	const child_state = { ...state, init: [], update: [], after_update: [] };
@@ -357,7 +362,8 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (has_declaration) {
+	if (node.fragment.nodes.some((node) => node.type === 'SnippetBlock')) {
+		// Wrap children in `{...}` to avoid declaration conflicts
 		context.state.init.push(
 			b.block([
 				...child_state.init,
@@ -371,16 +377,16 @@ export function RegularElement(node, context) {
 		context.state.after_update.push(...child_state.after_update);
 	}
 
-	if (has_direction_attribute) {
+	if (lookup.has('dir')) {
 		// This fixes an issue with Chromium where updates to text content within an element
 		// does not update the direction when set to auto. If we just re-assign the dir, this fixes it.
 		const dir = b.member(node_id, 'dir');
 		context.state.update.push(b.stmt(b.assignment('=', dir, dir)));
 	}
 
-	if (child_locations.length > 0) {
+	if (state.locations.length > 0) {
 		// @ts-expect-error
-		location.push(child_locations);
+		location.push(state.locations);
 	}
 
 	if (!is_void(node.name)) {

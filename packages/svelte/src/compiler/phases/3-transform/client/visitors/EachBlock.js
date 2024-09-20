@@ -186,8 +186,23 @@ export function EachBlock(node, context) {
 	if (invalidate_store) sequence.push(invalidate_store);
 
 	if (node.context.type === 'Identifier') {
+		const binding = /** @type {Binding} */ (context.state.scope.get(node.context.name));
+
 		child_state.transform[node.context.name] = {
-			read: (flags & EACH_ITEM_REACTIVE) !== 0 ? get_value : (node) => node,
+			read: (node) => {
+				if (binding.reassigned) {
+					// we need to do `array[$$index]` instead of `$$item` or whatever
+					// TODO 6.0 this only applies in legacy mode, reassignments are
+					// forbidden in runes mode
+					return b.member(
+						each_node_meta.array_name ? b.call(each_node_meta.array_name) : collection,
+						index,
+						true
+					);
+				}
+
+				return (flags & EACH_ITEM_REACTIVE) !== 0 ? get_value(node) : node;
+			},
 			assign: (_, value) => {
 				uses_index = true;
 
