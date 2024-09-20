@@ -21,7 +21,7 @@ export function EachBlock(node, context) {
 	state.init.push(b.const(array_id, b.call('$.ensure_array_like', collection)));
 
 	/** @type {Statement[]} */
-	const each = [b.const(/** @type {Pattern} */ (node.context), b.member(array_id, index, true))];
+	const each = [b.let(/** @type {Pattern} */ (node.context), b.member(array_id, index, true))];
 
 	if (index.name !== node.index && node.index != null) {
 		each.push(b.let(node.index, index));
