@@ -10,8 +10,6 @@ import {
 } from '../hydration.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { HYDRATION_START_ELSE } from '../../../../constants.js';
-import { derived } from '../../reactivity/deriveds.js';
-import { get } from '../../runtime.js';
 
 /**
  * @param {TemplateNode} node

@@ -29,37 +29,26 @@ export function IfBlock(node, context) {
 	let index = 0;
 
 	/** @type {IfStatement} */
-	const main_if = create_if(node, context, index++);
+	let if_statement = create_if(node, context, index++);
 
-	/** @type {IfStatement} */
-	let current_if = main_if;
+	context.state.init.push(
+		b.stmt(b.call('$.choose', context.state.node, b.arrow([], b.block([if_statement]))))
+	);
 
-	let alternate = node.alternate;
-
-	while (
-		alternate &&
-		alternate.nodes.length === 1 &&
-		alternate.nodes[0].type === 'IfBlock' &&
-		alternate.nodes[0].elseif
-	) {
-		const current_node = alternate.nodes[0];
-		current_if = current_if.alternate = create_if(current_node, context, index++);
-		alternate = current_node.alternate;
+	let alt = node.alternate;
+	while (alt && alt.nodes.length === 1 && alt.nodes[0].type === 'IfBlock' && alt.nodes[0].elseif) {
+		const elseif = alt.nodes[0];
+		if_statement = if_statement.alternate = create_if(elseif, context, index++);
+		alt = elseif.alternate;
 	}
-	if (alternate) {
-		current_if.alternate = b.block([
+	if (alt) {
+		if_statement.alternate = b.block([
 			b.return(
 				b.array([
 					b.literal(index++),
-					b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(alternate)))
+					b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(alt)))
 				])
 			)
 		]);
 	}
-
-	context.state.init.push(
-		b.stmt(
-			b.call('$.choose', context.state.node, b.arrow([], b.block([main_if])), b.literal(index))
-		)
-	);
 }
