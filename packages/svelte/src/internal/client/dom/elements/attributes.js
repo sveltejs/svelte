@@ -113,7 +113,7 @@ export function set_attribute(element, attribute, value, skip_warning) {
 
 	if (value == null) {
 		element.removeAttribute(attribute);
-	} else if (attribute in element && typeof value !== 'string') {
+	} else if (typeof value !== 'string' && get_setters(element).includes(attribute)) {
 		// @ts-ignore
 		element[attribute] = value;
 	} else {
