@@ -1,17 +1,20 @@
-/** @import { SlotElement } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { is_text_attribute } from '../../../utils/ast.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {SlotElement} node
+ * @param {AST.SlotElement} node
  * @param {Context} context
  */
 export function SlotElement(node, context) {
 	if (context.state.analysis.runes && !context.state.analysis.custom_element) {
 		w.slot_element_deprecated(node);
 	}
+
+	mark_subtree_dynamic(context.path);
 
 	/** @type {string} */
 	let name = 'default';

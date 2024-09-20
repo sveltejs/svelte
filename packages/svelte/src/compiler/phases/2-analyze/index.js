@@ -1,13 +1,13 @@
-/** @import { Node, Program } from 'estree' */
-/** @import { Root, Script, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { Expression, Node, Program } from 'estree' */
+/** @import { Binding, AST, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import { walk } from 'zimmerframe';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
-import { is_text_attribute } from '../../utils/ast.js';
+import { extract_identifiers, is_text_attribute } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
-import { Scope, ScopeRoot, create_scopes, get_rune } from '../scope.js';
+import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { create_attribute } from '../nodes.js';
 import { analyze_css } from './css/css-analyze.js';
@@ -52,16 +52,21 @@ import { SlotElement } from './visitors/SlotElement.js';
 import { SnippetBlock } from './visitors/SnippetBlock.js';
 import { SpreadAttribute } from './visitors/SpreadAttribute.js';
 import { StyleDirective } from './visitors/StyleDirective.js';
+import { SvelteBody } from './visitors/SvelteBody.js';
 import { SvelteComponent } from './visitors/SvelteComponent.js';
+import { SvelteDocument } from './visitors/SvelteDocument.js';
 import { SvelteElement } from './visitors/SvelteElement.js';
 import { SvelteFragment } from './visitors/SvelteFragment.js';
 import { SvelteHead } from './visitors/SvelteHead.js';
 import { SvelteSelf } from './visitors/SvelteSelf.js';
+import { SvelteWindow } from './visitors/SvelteWindow.js';
 import { TaggedTemplateExpression } from './visitors/TaggedTemplateExpression.js';
 import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
+import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
+import is_reference from 'is-reference';
 
 /**
  * @type {Visitors}
@@ -156,20 +161,24 @@ const visitors = {
 	SnippetBlock,
 	SpreadAttribute,
 	StyleDirective,
-	SvelteHead,
+	SvelteBody,
+	SvelteComponent,
+	SvelteDocument,
 	SvelteElement,
 	SvelteFragment,
-	SvelteComponent,
+	SvelteHead,
 	SvelteSelf,
+	SvelteWindow,
 	TaggedTemplateExpression,
 	Text,
 	TitleElement,
 	UpdateExpression,
+	UseDirective,
 	VariableDeclarator
 };
 
 /**
- * @param {Script | null} script
+ * @param {AST.Script | null} script
  * @param {ScopeRoot} root
  * @param {boolean} allow_reactive_declarations
  * @param {Scope | null} parent
@@ -219,6 +228,12 @@ export function analyze_module(ast, options) {
 		if (name === '$' || name[1] === '$') {
 			e.global_reference_invalid(references[0].node, name);
 		}
+
+		const binding = scope.get(name.slice(1));
+
+		if (binding !== null && !is_rune(name)) {
+			e.store_invalid_subscription_module(references[0].node);
+		}
 	}
 
 	walk(
@@ -234,7 +249,7 @@ export function analyze_module(ast, options) {
 
 	return {
 		module: { ast, scope, scopes },
-		name: options.filename || 'module',
+		name: options.filename,
 		accessors: false,
 		runes: true,
 		immutable: true
@@ -242,7 +257,7 @@ export function analyze_module(ast, options) {
 }
 
 /**
- * @param {Root} root
+ * @param {AST.Root} root
  * @param {string} source
  * @param {ValidatedCompileOptions} options
  * @returns {ComponentAnalysis}
@@ -321,7 +336,7 @@ export function analyze_component(root, source, options) {
 
 			if (module.ast) {
 				for (const { node, path } of references) {
-					// if the reference is inside context="module", error. this is a bit hacky but it works
+					// if the reference is inside module, error. this is a bit hacky but it works
 					if (
 						/** @type {number} */ (node.start) > /** @type {number} */ (module.ast.start) &&
 						/** @type {number} */ (node.end) < /** @type {number} */ (module.ast.end) &&
@@ -340,9 +355,16 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
-	const component_name = get_component_name(options.filename ?? 'Component');
+	const component_name = get_component_name(options.filename);
 
 	const runes = options.runes ?? Array.from(module.scope.references.keys()).some(is_rune);
+
+	if (runes && root.module) {
+		const context = root.module.attributes.find((attribute) => attribute.name === 'context');
+		if (context) {
+			w.script_context_deprecated(context);
+		}
+	}
 
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config
 	/** @type {ComponentAnalysis} */
@@ -381,7 +403,7 @@ export function analyze_component(root, source, options) {
 			hash: root.css
 				? options.cssHash({
 						css: root.css.content.styles,
-						filename: options.filename ?? '<unknown>',
+						filename: options.filename,
 						name: component_name,
 						hash
 					})
@@ -390,6 +412,112 @@ export function analyze_component(root, source, options) {
 		},
 		source
 	};
+
+	if (!runes) {
+		// every exported `let` or `var` declaration becomes a prop, everything else becomes an export
+		for (const node of instance.ast.body) {
+			if (node.type !== 'ExportNamedDeclaration') continue;
+
+			analysis.needs_props = true;
+
+			if (node.declaration) {
+				if (
+					node.declaration.type === 'FunctionDeclaration' ||
+					node.declaration.type === 'ClassDeclaration'
+				) {
+					analysis.exports.push({
+						name: /** @type {import('estree').Identifier} */ (node.declaration.id).name,
+						alias: null
+					});
+				} else if (node.declaration.type === 'VariableDeclaration') {
+					if (node.declaration.kind === 'const') {
+						for (const declarator of node.declaration.declarations) {
+							for (const node of extract_identifiers(declarator.id)) {
+								analysis.exports.push({ name: node.name, alias: null });
+							}
+						}
+					} else {
+						for (const declarator of node.declaration.declarations) {
+							for (const id of extract_identifiers(declarator.id)) {
+								const binding = /** @type {Binding} */ (instance.scope.get(id.name));
+								binding.kind = 'bindable_prop';
+							}
+						}
+					}
+				}
+			} else {
+				for (const specifier of node.specifiers) {
+					const binding = instance.scope.get(specifier.local.name);
+
+					if (
+						binding &&
+						(binding.declaration_kind === 'var' || binding.declaration_kind === 'let')
+					) {
+						binding.kind = 'bindable_prop';
+
+						if (specifier.exported.name !== specifier.local.name) {
+							binding.prop_alias = specifier.exported.name;
+						}
+					} else {
+						analysis.exports.push({ name: specifier.local.name, alias: specifier.exported.name });
+					}
+				}
+			}
+		}
+
+		// if reassigned/mutated bindings are referenced in `$:` blocks
+		// or the template, turn them into state
+		for (const binding of instance.scope.declarations.values()) {
+			if (binding.kind !== 'normal') continue;
+
+			for (const { node, path } of binding.references) {
+				if (node === binding.node) continue;
+
+				if (binding.updated) {
+					if (
+						path[path.length - 1].type === 'StyleDirective' ||
+						path.some((node) => node.type === 'Fragment') ||
+						(path[1].type === 'LabeledStatement' && path[1].label.name === '$')
+					) {
+						binding.kind = 'state';
+					}
+				}
+			}
+		}
+
+		// more legacy nonsense: if an `each` binding is reassigned/mutated,
+		// treat the expression as being mutated as well
+		walk(/** @type {SvelteNode} */ (template.ast), null, {
+			EachBlock(node) {
+				const scope = /** @type {Scope} */ (template.scopes.get(node));
+
+				for (const binding of scope.declarations.values()) {
+					if (binding.updated) {
+						const state = { scope: /** @type {Scope} */ (scope.parent), scopes: template.scopes };
+
+						walk(node.expression, state, {
+							// @ts-expect-error
+							_: set_scope,
+							Identifier(node, context) {
+								const parent = /** @type {Expression} */ (context.path.at(-1));
+
+								if (is_reference(node, parent)) {
+									const binding = context.state.scope.get(node.name);
+
+									if (binding && binding.kind === 'normal') {
+										binding.kind = 'state';
+										binding.mutated = binding.updated = true;
+									}
+								}
+							}
+						});
+
+						break;
+					}
+				}
+			}
+		});
+	}
 
 	if (root.options) {
 		for (const attribute of root.options.attributes) {
@@ -459,7 +587,7 @@ export function analyze_component(root, source, options) {
 							// bind:this doesn't need to be a state reference if it will never change
 							if (
 								type === 'BindDirective' &&
-								/** @type {import('#compiler').BindDirective} */ (path[i]).name === 'this'
+								/** @type {AST.BindDirective} */ (path[i]).name === 'this'
 							) {
 								for (let j = i - 1; j >= 0; j -= 1) {
 									const type = path[j].type;
@@ -534,7 +662,10 @@ export function analyze_component(root, source, options) {
 		);
 	}
 
-	if (analysis.uses_render_tags && (analysis.uses_slots || analysis.slot_names.size > 0)) {
+	if (
+		analysis.uses_render_tags &&
+		(analysis.uses_slots || (!analysis.custom_element && analysis.slot_names.size > 0))
+	) {
 		const pos = analysis.slot_names.values().next().value ?? analysis.source.indexOf('$$slot');
 		e.slot_snippet_conflict(pos);
 	}
@@ -564,7 +695,7 @@ export function analyze_component(root, source, options) {
 				// TODO this happens during the analysis phase, which shouldn't know anything about client vs server
 				if (element.type === 'SvelteElement' && options.generate === 'client') continue;
 
-				/** @type {import('#compiler').Attribute | undefined} */
+				/** @type {AST.Attribute | undefined} */
 				let class_attribute = undefined;
 
 				for (const attribute of element.attributes) {
@@ -583,7 +714,7 @@ export function analyze_component(root, source, options) {
 					if (is_text_attribute(class_attribute)) {
 						class_attribute.value[0].data += ` ${analysis.css.hash}`;
 					} else {
-						/** @type {import('#compiler').Text} */
+						/** @type {AST.Text} */
 						const css_text = {
 							type: 'Text',
 							data: ` ${analysis.css.hash}`,

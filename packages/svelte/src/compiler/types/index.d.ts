@@ -1,5 +1,4 @@
 import type {
-	AssignmentExpression,
 	ClassDeclaration,
 	Expression,
 	FunctionDeclaration,
@@ -7,10 +6,9 @@ import type {
 	ImportDeclaration
 } from 'estree';
 import type { SourceMap } from 'magic-string';
-import type { Context } from 'zimmerframe';
 import type { Scope } from '../phases/scope.js';
 import type { Css } from './css.js';
-import type { EachBlock, Namespace, SvelteNode, SvelteOptions } from './template.js';
+import type { AST, Namespace, SvelteNode } from './template.js';
 import type { ICompileDiagnostic } from '../utils/compile_diagnostic.js';
 
 /** The return value of `compile` from `svelte/compiler` */
@@ -56,7 +54,7 @@ export interface CompileError extends ICompileDiagnostic {}
 
 export type CssHashGetter = (args: {
 	name: string;
-	filename: string | undefined;
+	filename: string;
 	css: string;
 	hash: (input: string) => string;
 }) => string;
@@ -85,7 +83,7 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	accessors?: boolean;
 	/**
-	 * The namespace of the element; e.g., `"html"`, `"svg"`, `"foreign"`.
+	 * The namespace of the element; e.g., `"html"`, `"svg"`, `"mathml"`.
 	 *
 	 * @default 'html'
 	 */
@@ -219,11 +217,7 @@ export interface ModuleCompileOptions {
 
 // The following two somewhat scary looking types ensure that certain types are required but can be undefined still
 
-export type ValidatedModuleCompileOptions = Omit<
-	Required<ModuleCompileOptions>,
-	'filename' | 'rootDir'
-> & {
-	filename: ModuleCompileOptions['filename'];
+export type ValidatedModuleCompileOptions = Omit<Required<ModuleCompileOptions>, 'rootDir'> & {
 	rootDir: ModuleCompileOptions['rootDir'];
 };
 
@@ -244,7 +238,7 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		sourcemap: CompileOptions['sourcemap'];
 		compatibility: Required<Required<CompileOptions>['compatibility']>;
 		runes: CompileOptions['runes'];
-		customElementOptions: SvelteOptions['customElement'];
+		customElementOptions: AST.SvelteOptions['customElement'];
 		hmr: CompileOptions['hmr'];
 	};
 
@@ -271,6 +265,7 @@ export interface Binding {
 	 * - `snippet`: A snippet parameter
 	 * - `store_sub`: A $store value
 	 * - `legacy_reactive`: A `$:` declaration
+	 * - `template`: A binding declared in the template, e.g. in an `await` block or `const` tag
 	 */
 	kind:
 		| 'normal'
@@ -278,12 +273,13 @@ export interface Binding {
 		| 'bindable_prop'
 		| 'rest_prop'
 		| 'state'
-		| 'frozen_state'
+		| 'raw_state'
 		| 'derived'
 		| 'each'
 		| 'snippet'
 		| 'store_sub'
-		| 'legacy_reactive';
+		| 'legacy_reactive'
+		| 'template';
 	declaration_kind: DeclarationKind;
 	/**
 	 * What the value was initialized with.
@@ -295,11 +291,13 @@ export interface Binding {
 		| FunctionDeclaration
 		| ClassDeclaration
 		| ImportDeclaration
-		| EachBlock;
+		| AST.EachBlock;
 	is_called: boolean;
 	references: { node: Identifier; path: SvelteNode[] }[];
 	mutated: boolean;
 	reassigned: boolean;
+	/** `true` if mutated _or_ reassigned */
+	updated: boolean;
 	scope: Scope;
 	/** For `legacy_reactive`: its reactive dependencies */
 	legacy_dependencies: Binding[];

@@ -10,7 +10,7 @@ import {
 import { CompileDiagnostic } from './utils/compile_diagnostic.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
-export class InternalCompileWarning extends CompileDiagnostic {
+class InternalCompileWarning extends CompileDiagnostic {
 	name = 'CompileWarning';
 
 	/**
@@ -50,6 +50,7 @@ export const codes = [
 	"a11y_autocomplete_valid",
 	"a11y_autofocus",
 	"a11y_click_events_have_key_events",
+	"a11y_consider_explicit_label",
 	"a11y_distracting_elements",
 	"a11y_figcaption_index",
 	"a11y_figcaption_parent",
@@ -94,14 +95,14 @@ export const codes = [
 	"options_removed_hydratable",
 	"options_removed_loop_guard_timeout",
 	"options_renamed_ssr_dom",
-	"derived_iife",
 	"export_let_unused",
 	"legacy_component_creation",
 	"non_reactive_update",
 	"perf_avoid_inline_class",
 	"perf_avoid_nested_class",
 	"reactive_declaration_invalid_placement",
-	"reactive_declaration_module_script",
+	"reactive_declaration_module_script_dependency",
+	"reactive_declaration_non_reactive_property",
 	"state_referenced_locally",
 	"store_rune_conflict",
 	"css_unused_selector",
@@ -116,8 +117,12 @@ export const codes = [
 	"element_invalid_self_closing_tag",
 	"event_directive_deprecated",
 	"node_invalid_placement_ssr",
+	"script_context_deprecated",
+	"script_unknown_attribute",
 	"slot_element_deprecated",
-	"svelte_element_invalid_this"
+	"svelte_component_deprecated",
+	"svelte_element_invalid_this",
+	"svelte_self_deprecated"
 ];
 
 /**
@@ -169,6 +174,14 @@ export function a11y_autofocus(node) {
  */
 export function a11y_click_events_have_key_events(node) {
 	w(node, "a11y_click_events_have_key_events", "Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type=\"button\">` or `<a>` might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details");
+}
+
+/**
+ * Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute
+ * @param {null | NodeLike} node
+ */
+export function a11y_consider_explicit_label(node) {
+	w(node, "a11y_consider_explicit_label", "Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute");
 }
 
 /**
@@ -352,12 +365,12 @@ export function a11y_missing_attribute(node, name, article, sequence) {
 }
 
 /**
- * `<%name%>` element should have child content
+ * `<%name%>` element should contain text
  * @param {null | NodeLike} node
  * @param {string} name
  */
 export function a11y_missing_content(node, name) {
-	w(node, "a11y_missing_content", `\`<${name}>\` element should have child content`);
+	w(node, "a11y_missing_content", `\`<${name}>\` element should contain text`);
 }
 
 /**
@@ -571,14 +584,6 @@ export function options_renamed_ssr_dom(node) {
 }
 
 /**
- * Use `$derived.by(() => {...})` instead of `$derived((() => {...})())`
- * @param {null | NodeLike} node
- */
-export function derived_iife(node) {
-	w(node, "derived_iife", "Use `$derived.by(() => {...})` instead of `$derived((() => {...})())`");
-}
-
-/**
  * Component has unused export property '%name%'. If it is for external reference only, please consider using `export const %name%`
  * @param {null | NodeLike} node
  * @param {string} name
@@ -629,11 +634,19 @@ export function reactive_declaration_invalid_placement(node) {
 }
 
 /**
- * All dependencies of the reactive declaration are declared in a module script and will not be reactive
+ * Reassignments of module-level declarations will not cause reactive statements to update
  * @param {null | NodeLike} node
  */
-export function reactive_declaration_module_script(node) {
-	w(node, "reactive_declaration_module_script", "All dependencies of the reactive declaration are declared in a module script and will not be reactive");
+export function reactive_declaration_module_script_dependency(node) {
+	w(node, "reactive_declaration_module_script_dependency", "Reassignments of module-level declarations will not cause reactive statements to update");
+}
+
+/**
+ * Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update
+ * @param {null | NodeLike} node
+ */
+export function reactive_declaration_non_reactive_property(node) {
+	w(node, "reactive_declaration_non_reactive_property", "Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update");
 }
 
 /**
@@ -760,6 +773,22 @@ export function node_invalid_placement_ssr(node, thing, parent) {
 }
 
 /**
+ * `context="module"` is deprecated, use the `module` attribute instead
+ * @param {null | NodeLike} node
+ */
+export function script_context_deprecated(node) {
+	w(node, "script_context_deprecated", "`context=\"module\"` is deprecated, use the `module` attribute instead");
+}
+
+/**
+ * Unrecognized attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
+ * @param {null | NodeLike} node
+ */
+export function script_unknown_attribute(node) {
+	w(node, "script_unknown_attribute", "Unrecognized attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it");
+}
+
+/**
  * Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead
  * @param {null | NodeLike} node
  */
@@ -768,9 +797,27 @@ export function slot_element_deprecated(node) {
 }
 
 /**
+ * `<svelte:component>` is deprecated in runes mode — components are dynamic by default
+ * @param {null | NodeLike} node
+ */
+export function svelte_component_deprecated(node) {
+	w(node, "svelte_component_deprecated", "`<svelte:component>` is deprecated in runes mode — components are dynamic by default");
+}
+
+/**
  * `this` should be an `{expression}`. Using a string attribute value will cause an error in future versions of Svelte
  * @param {null | NodeLike} node
  */
 export function svelte_element_invalid_this(node) {
 	w(node, "svelte_element_invalid_this", "`this` should be an `{expression}`. Using a string attribute value will cause an error in future versions of Svelte");
+}
+
+/**
+ * `<svelte:self>` is deprecated — use self-imports (e.g. `import %name% from './%basename%'`) instead
+ * @param {null | NodeLike} node
+ * @param {string} name
+ * @param {string} basename
+ */
+export function svelte_self_deprecated(node, name, basename) {
+	w(node, "svelte_self_deprecated", `\`<svelte:self>\` is deprecated — use self-imports (e.g. \`import ${name} from './${basename}'\`) instead`);
 }

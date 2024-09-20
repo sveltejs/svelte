@@ -54,7 +54,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	/** Stuff that happens after the render effect (control blocks, dynamic elements, bindings, actions, etc) */
 	readonly after_update: Statement[];
 	/** The HTML template string */
-	readonly template: string[];
+	readonly template: Array<string | Expression>;
 	readonly locations: SourceLocation[];
 	readonly metadata: {
 		namespace: Namespace;
@@ -88,7 +88,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 }
 
 export interface StateField {
-	kind: 'state' | 'frozen_state' | 'derived' | 'derived_by';
+	kind: 'state' | 'raw_state' | 'derived' | 'derived_by';
 	id: PrivateIdentifier;
 }
 

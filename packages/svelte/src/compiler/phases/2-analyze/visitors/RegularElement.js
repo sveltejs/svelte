@@ -1,4 +1,4 @@
-/** @import { RegularElement } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { is_mathml, is_svg, is_void } from '../../../../utils.js';
 import {
@@ -7,13 +7,14 @@ import {
 } from '../../../../html-tree-validation.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
-import { create_attribute } from '../../nodes.js';
+import { create_attribute, is_custom_element_node } from '../../nodes.js';
 import { regex_starts_with_newline } from '../../patterns.js';
 import { check_element } from './shared/a11y.js';
 import { validate_element } from './shared/element.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {RegularElement} node
+ * @param {AST.RegularElement} node
  * @param {Context} context
  */
 export function RegularElement(node, context) {
@@ -24,11 +25,7 @@ export function RegularElement(node, context) {
 	context.state.analysis.elements.push(node);
 
 	// Special case: Move the children of <textarea> into a value attribute if they are dynamic
-	if (
-		context.state.options.namespace !== 'foreign' &&
-		node.name === 'textarea' &&
-		node.fragment.nodes.length > 0
-	) {
+	if (node.name === 'textarea' && node.fragment.nodes.length > 0) {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute' && attribute.name === 'value') {
 				e.textarea_invalid_content(node);
@@ -51,8 +48,8 @@ export function RegularElement(node, context) {
 			node.attributes.push(
 				create_attribute(
 					'value',
-					/** @type {import('#compiler').Text} */ (node.fragment.nodes.at(0)).start,
-					/** @type {import('#compiler').Text} */ (node.fragment.nodes.at(-1)).end,
+					/** @type {AST.Text} */ (node.fragment.nodes.at(0)).start,
+					/** @type {AST.Text} */ (node.fragment.nodes.at(-1)).end,
 					// @ts-ignore
 					node.fragment.nodes
 				)
@@ -65,7 +62,6 @@ export function RegularElement(node, context) {
 	// Special case: single expression tag child of option element -> add "fake" attribute
 	// to ensure that value types are the same (else for example numbers would be strings)
 	if (
-		context.state.options.namespace !== 'foreign' &&
 		node.name === 'option' &&
 		node.fragment.nodes?.length === 1 &&
 		node.fragment.nodes[0].type === 'ExpressionTag' &&
@@ -90,9 +86,12 @@ export function RegularElement(node, context) {
 		(attribute) => attribute.type === 'SpreadAttribute'
 	);
 
-	if (context.state.options.namespace !== 'foreign') {
-		node.metadata.svg = is_svg(node.name);
-		node.metadata.mathml = is_mathml(node.name);
+	node.metadata.svg = is_svg(node.name);
+	node.metadata.mathml = is_mathml(node.name);
+
+	if (is_custom_element_node(node) && node.attributes.length > 0) {
+		// we're setting all attributes on custom elements through properties
+		mark_subtree_dynamic(context.path);
 	}
 
 	if (context.state.parent_element) {
@@ -156,7 +155,6 @@ export function RegularElement(node, context) {
 
 	if (
 		context.state.analysis.source[node.end - 2] === '/' &&
-		context.state.options.namespace !== 'foreign' &&
 		!is_void(node_name) &&
 		!is_svg(node_name)
 	) {

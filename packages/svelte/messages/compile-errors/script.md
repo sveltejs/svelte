@@ -16,7 +16,7 @@
 
 ## declaration_duplicate_module_import
 
-> Cannot declare same variable name which is imported inside `<script context="module">`
+> Cannot declare a variable with the same name as an import inside `<script module>`
 
 ## derived_invalid_export
 
@@ -122,6 +122,10 @@
 
 > Cannot use rune without parentheses
 
+## rune_removed
+
+> The `%name%` rune has been removed
+
 ## rune_renamed
 
 > `%name%` is now `%replacement%`
@@ -148,4 +152,14 @@
 
 ## store_invalid_subscription
 
-> Cannot reference store value inside `<script context="module">`
+> Cannot reference store value inside `<script module>`
+
+## store_invalid_subscription_module
+
+> Cannot reference store value outside a `.svelte` file
+
+Using a `$` prefix to refer to the value of a store is only possible inside `.svelte` files, where Svelte can automatically create subscriptions when a component is mounted and unsubscribe when the component is unmounted. Consider migrating to runes instead.
+
+## typescript_invalid_feature
+
+> TypeScript language features like %feature% are not natively supported, and their use is generally discouraged. Outside of `<script>` tags, these features are not supported. For use within `<script>` tags, you will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler. If you are using `vitePreprocess`, make sure to specifically enable preprocessing script tags (`vitePreprocess({ script: true })`)

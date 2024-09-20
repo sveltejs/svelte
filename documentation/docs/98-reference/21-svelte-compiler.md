@@ -2,4 +2,4 @@
 title: svelte/compiler
 ---
 
-<!-- @include svelte/compiler -->
+> MODULE: svelte/compiler

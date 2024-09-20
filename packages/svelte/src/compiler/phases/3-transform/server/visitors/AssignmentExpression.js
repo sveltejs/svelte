@@ -10,7 +10,7 @@ import { visit_assignment_expression } from '../../shared/assignments.js';
  * @param {Context} context
  */
 export function AssignmentExpression(node, context) {
-	return visit_assignment_expression(node, context, build_assignment);
+	return visit_assignment_expression(node, context, build_assignment) ?? context.next();
 }
 
 /**

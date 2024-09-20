@@ -1,11 +1,11 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Property } from 'estree' */
-/** @import { SlotElement } from '#compiler' */
+/** @import { BlockStatement, Expression, Property } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
 import { empty_comment, build_attribute_value } from './shared/utils.js';
 
 /**
- * @param {SlotElement} node
+ * @param {AST.SlotElement} node
  * @param {ComponentContext} context
  */
 export function SlotElement(node, context) {

@@ -1,11 +1,11 @@
 /** @import { Expression } from 'estree' */
-/** @import { RenderTag } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { unwrap_optional } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 
 /**
- * @param {RenderTag} node
+ * @param {AST.RenderTag} node
  * @param {ComponentContext} context
  */
 export function RenderTag(node, context) {
@@ -30,6 +30,11 @@ export function RenderTag(node, context) {
 	let snippet_function = /** @type {Expression} */ (context.visit(callee));
 
 	if (node.metadata.dynamic) {
+		// If we have a chain expression then ensure a nullish snippet function gets turned into an empty one
+		if (node.expression.type === 'ChainExpression') {
+			snippet_function = b.logical('??', snippet_function, b.id('$.noop'));
+		}
+
 		context.state.init.push(
 			b.stmt(b.call('$.snippet', context.state.node, b.thunk(snippet_function), ...args))
 		);

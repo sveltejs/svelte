@@ -132,10 +132,6 @@
 
 > `</%name%>` attempted to close element that was already automatically closed by `<%reason%>` (cannot nest `<%reason%>` inside `<%name%>`)
 
-## element_invalid_tag_name
-
-> Expected valid tag name
-
 ## element_unclosed
 
 > `<%name%>` was left open
@@ -212,11 +208,19 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 ## script_duplicate
 
-> A component can have a single top-level `<script>` element and/or a single top-level `<script context="module">` element
+> A component can have a single top-level `<script>` element and/or a single top-level `<script module>` element
+
+## script_invalid_attribute_value
+
+> If the `%name%` attribute is supplied, it must be a boolean attribute
 
 ## script_invalid_context
 
 > If the context attribute is supplied, its value must be "module"
+
+## script_reserved_attribute
+
+> The `%name%` attribute is reserved and cannot be used
 
 ## slot_attribute_duplicate
 
@@ -270,6 +274,10 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 > A component can have a single top-level `<style>` element
 
+## svelte_body_illegal_attribute
+
+> `<svelte:body>` does not support non-event attributes or spread attributes
+
 ## svelte_component_invalid_this
 
 > Invalid component definition — must be an `{expression}`
@@ -289,10 +297,6 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 ## svelte_fragment_invalid_placement
 
 > `<svelte:fragment>` must be the direct child of a component
-
-## svelte_fragment_invalid_slot
-
-> `<svelte:fragment>` slot attribute must have a static value
 
 ## svelte_head_illegal_attribute
 
@@ -340,7 +344,15 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 ## svelte_options_invalid_tagname
 
-> Tag name must be two or more words joined by the "-" character
+> Tag name must be lowercase and hyphenated
+
+See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name for more information on valid tag names
+
+## svelte_options_reserved_tagname
+
+> Tag name is reserved
+
+See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name for more information on valid tag names
 
 ## svelte_options_unknown_attribute
 
@@ -349,6 +361,10 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 ## svelte_self_invalid_placement
 
 > `<svelte:self>` components can only exist inside `{#if}` blocks, `{#each}` blocks, `{#snippet}` blocks or slots passed to components
+
+## tag_invalid_name
+
+> Expected a valid element or component name. Components must have a valid variable name or dot notation expression
 
 ## tag_invalid_placement
 

@@ -7,12 +7,7 @@ import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
-import {
-	get_prop_source,
-	is_prop_source,
-	is_state_source,
-	should_proxy_or_freeze
-} from '../utils.js';
+import { get_prop_source, is_prop_source, is_state_source, should_proxy } from '../utils.js';
 import { is_hoisted_function } from '../../utils.js';
 
 /**
@@ -34,11 +29,11 @@ export function VariableDeclaration(node, context) {
 				rune === '$effect.root' ||
 				rune === '$inspect' ||
 				rune === '$state.snapshot' ||
-				rune === '$state.is'
+				rune === '$host'
 			) {
 				if (init != null && is_hoisted_function(init)) {
 					context.state.hoisted.push(
-						b.declaration('const', declarator.id, /** @type {Expression} */ (context.visit(init)))
+						b.const(declarator.id, /** @type {Expression} */ (context.visit(init)))
 					);
 
 					continue;
@@ -86,7 +81,7 @@ export function VariableDeclaration(node, context) {
 							if (
 								initial &&
 								binding.kind === 'bindable_prop' &&
-								should_proxy_or_freeze(initial, context.state.scope)
+								should_proxy(initial, context.state.scope)
 							) {
 								initial = b.call('$.proxy', initial);
 							}
@@ -119,7 +114,7 @@ export function VariableDeclaration(node, context) {
 			const value =
 				args.length === 0 ? b.id('undefined') : /** @type {Expression} */ (context.visit(args[0]));
 
-			if (rune === '$state' || rune === '$state.frozen') {
+			if (rune === '$state' || rune === '$state.raw') {
 				/**
 				 * @param {Identifier} id
 				 * @param {Expression} value
@@ -128,11 +123,11 @@ export function VariableDeclaration(node, context) {
 					const binding = /** @type {import('#compiler').Binding} */ (
 						context.state.scope.get(id.name)
 					);
-					if (should_proxy_or_freeze(value, context.state.scope)) {
-						value = b.call(rune === '$state' ? '$.proxy' : '$.freeze', value);
+					if (rune === '$state' && should_proxy(value, context.state.scope)) {
+						value = b.call('$.proxy', value);
 					}
-					if (is_state_source(binding, context.state)) {
-						value = b.call('$.source', value);
+					if (is_state_source(binding, context.state.analysis)) {
+						value = b.call('$.state', value);
 					}
 					return value;
 				};
@@ -151,7 +146,7 @@ export function VariableDeclaration(node, context) {
 							const binding = context.state.scope.get(/** @type {Identifier} */ (path.node).name);
 							return b.declarator(
 								path.node,
-								binding?.kind === 'state' || binding?.kind === 'frozen_state'
+								binding?.kind === 'state' || binding?.kind === 'raw_state'
 									? create_state_declarator(binding.node, value)
 									: value
 							);
@@ -179,7 +174,7 @@ export function VariableDeclaration(node, context) {
 					let id;
 					let rhs = value;
 
-					if (init.arguments[0].type === 'Identifier') {
+					if (rune === '$derived' && init.arguments[0].type === 'Identifier') {
 						id = init.arguments[0];
 					} else {
 						id = b.id(context.state.scope.generate('$$d'));
@@ -211,7 +206,7 @@ export function VariableDeclaration(node, context) {
 
 				if (init != null && is_hoisted_function(init)) {
 					context.state.hoisted.push(
-						b.declaration('const', declarator.id, /** @type {Expression} */ (context.visit(init)))
+						b.const(declarator.id, /** @type {Expression} */ (context.visit(init)))
 					);
 
 					continue;
@@ -290,14 +285,14 @@ export function VariableDeclaration(node, context) {
 }
 
 /**
- * Creates the output for a state declaration.
+ * Creates the output for a state declaration in legacy mode.
  * @param {VariableDeclarator} declarator
  * @param {Scope} scope
  * @param {Expression} value
  */
 function create_state_declarators(declarator, scope, value) {
 	if (declarator.id.type === 'Identifier') {
-		return [b.declarator(declarator.id, b.call('$.mutable_source', value))];
+		return [b.declarator(declarator.id, b.call('$.mutable_state', value))];
 	}
 
 	const tmp = scope.generate('tmp');
@@ -309,7 +304,7 @@ function create_state_declarators(declarator, scope, value) {
 			const binding = scope.get(/** @type {Identifier} */ (path.node).name);
 			return b.declarator(
 				path.node,
-				binding?.kind === 'state' ? b.call('$.mutable_source', value) : value
+				binding?.kind === 'state' ? b.call('$.mutable_state', value) : value
 			);
 		})
 	];

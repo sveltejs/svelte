@@ -54,8 +54,7 @@
 										"raw": "foo",
 										"data": "foo"
 									}
-								],
-								"transparent": true
+								]
 							}
 						},
 						{
@@ -65,8 +64,7 @@
 							"raw": "\n",
 							"data": "\n"
 						}
-					],
-					"transparent": false
+					]
 				},
 				"alternate": {
 					"type": "Fragment",
@@ -94,8 +92,7 @@
 										"raw": "not foo",
 										"data": "not foo"
 									}
-								],
-								"transparent": true
+								]
 							}
 						},
 						{
@@ -105,12 +102,10 @@
 							"raw": "\n",
 							"data": "\n"
 						}
-					],
-					"transparent": false
+					]
 				}
 			}
-		],
-		"transparent": false
+		]
 	},
 	"options": null
 }

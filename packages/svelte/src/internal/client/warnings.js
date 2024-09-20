@@ -20,6 +20,33 @@ export function binding_property_non_reactive(binding, location) {
 }
 
 /**
+ * Your `console.%method%` contained `$state` proxies. Consider using `$inspect(...)` or `$state.snapshot(...)` instead
+ * @param {string} method
+ */
+export function console_log_state(method) {
+	if (DEV) {
+		console.warn(`%c[svelte] console_log_state\n%cYour \`console.${method}\` contained \`$state\` proxies. Consider using \`$inspect(...)\` or \`$state.snapshot(...)\` instead`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("console_log_state");
+	}
+}
+
+/**
+ * %handler% should be a function. Did you mean to %suggestion%?
+ * @param {string} handler
+ * @param {string} suggestion
+ */
+export function event_handler_invalid(handler, suggestion) {
+	if (DEV) {
+		console.warn(`%c[svelte] event_handler_invalid\n%c${handler} should be a function. Did you mean to ${suggestion}?`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("event_handler_invalid");
+	}
+}
+
+/**
  * The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
  * @param {string} attribute
  * @param {string} html
@@ -114,13 +141,12 @@ export function ownership_invalid_mutation(component, owner) {
 }
 
 /**
- * Reactive `$state(...)` proxies and the values they proxy have different identities. Because of this, comparisons with `%operator%` will produce unexpected results. Consider using `$state.is(a, b)` instead%details%
+ * Reactive `$state(...)` proxies and the values they proxy have different identities. Because of this, comparisons with `%operator%` will produce unexpected results
  * @param {string} operator
- * @param {string} details
  */
-export function state_proxy_equality_mismatch(operator, details) {
+export function state_proxy_equality_mismatch(operator) {
 	if (DEV) {
-		console.warn(`%c[svelte] state_proxy_equality_mismatch\n%cReactive \`$state(...)\` proxies and the values they proxy have different identities. Because of this, comparisons with \`${operator}\` will produce unexpected results. Consider using \`$state.is(a, b)\` instead${details}`, bold, normal);
+		console.warn(`%c[svelte] state_proxy_equality_mismatch\n%cReactive \`$state(...)\` proxies and the values they proxy have different identities. Because of this, comparisons with \`${operator}\` will produce unexpected results`, bold, normal);
 	} else {
 		// TODO print a link to the documentation
 		console.warn("state_proxy_equality_mismatch");

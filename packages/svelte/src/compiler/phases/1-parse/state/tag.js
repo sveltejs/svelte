@@ -1,5 +1,5 @@
 /** @import { ArrowFunctionExpression, Expression, Identifier } from 'estree' */
-/** @import { AwaitBlock, ConstTag, DebugTag, EachBlock, ExpressionTag, HtmlTag, IfBlock, KeyBlock, RenderTag, SnippetBlock } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import read_pattern from '../read/context.js';
 import read_expression from '../read/expression.js';
@@ -33,7 +33,7 @@ export default function tag(parser) {
 	parser.allow_whitespace();
 	parser.eat('}', true);
 
-	/** @type {ReturnType<typeof parser.append<ExpressionTag>>} */
+	/** @type {ReturnType<typeof parser.append<AST.ExpressionTag>>} */
 	parser.append({
 		type: 'ExpressionTag',
 		start,
@@ -53,7 +53,7 @@ function open(parser) {
 	if (parser.eat('if')) {
 		parser.require_whitespace();
 
-		/** @type {ReturnType<typeof parser.append<IfBlock>>} */
+		/** @type {ReturnType<typeof parser.append<AST.IfBlock>>} */
 		const block = parser.append({
 			type: 'IfBlock',
 			elseif: false,
@@ -174,7 +174,7 @@ function open(parser) {
 
 		parser.eat('}', true);
 
-		/** @type {ReturnType<typeof parser.append<EachBlock>>} */
+		/** @type {ReturnType<typeof parser.append<AST.EachBlock>>} */
 		const block = parser.append({
 			type: 'EachBlock',
 			start,
@@ -198,7 +198,7 @@ function open(parser) {
 		const expression = read_expression(parser);
 		parser.allow_whitespace();
 
-		/** @type {ReturnType<typeof parser.append<AwaitBlock>>} */
+		/** @type {ReturnType<typeof parser.append<AST.AwaitBlock>>} */
 		const block = parser.append({
 			type: 'AwaitBlock',
 			start,
@@ -252,7 +252,7 @@ function open(parser) {
 
 		parser.eat('}', true);
 
-		/** @type {ReturnType<typeof parser.append<KeyBlock>>} */
+		/** @type {ReturnType<typeof parser.append<AST.KeyBlock>>} */
 		const block = parser.append({
 			type: 'KeyBlock',
 			start,
@@ -303,7 +303,7 @@ function open(parser) {
 		parser.allow_whitespace();
 		parser.eat('}', true);
 
-		/** @type {ReturnType<typeof parser.append<SnippetBlock>>} */
+		/** @type {ReturnType<typeof parser.append<AST.SnippetBlock>>} */
 		const block = parser.append({
 			type: 'SnippetBlock',
 			start,
@@ -355,7 +355,7 @@ function next(parser) {
 			let elseif_start = start - 1;
 			while (parser.template[elseif_start] !== '{') elseif_start -= 1;
 
-			/** @type {ReturnType<typeof parser.append<IfBlock>>} */
+			/** @type {ReturnType<typeof parser.append<AST.IfBlock>>} */
 			const child = parser.append({
 				start: elseif_start,
 				end: -1,
@@ -451,7 +451,7 @@ function close(parser) {
 			while (block.elseif) {
 				block.end = parser.index;
 				parser.stack.pop();
-				block = /** @type {IfBlock} */ (parser.current());
+				block = /** @type {AST.IfBlock} */ (parser.current());
 			}
 			block.end = parser.index;
 			parser.pop();
@@ -499,7 +499,7 @@ function special(parser) {
 		parser.allow_whitespace();
 		parser.eat('}', true);
 
-		/** @type {ReturnType<typeof parser.append<HtmlTag>>} */
+		/** @type {ReturnType<typeof parser.append<AST.HtmlTag>>} */
 		parser.append({
 			type: 'HtmlTag',
 			start,
@@ -537,7 +537,7 @@ function special(parser) {
 			parser.eat('}', true);
 		}
 
-		/** @type {ReturnType<typeof parser.append<DebugTag>>} */
+		/** @type {ReturnType<typeof parser.append<AST.DebugTag>>} */
 		parser.append({
 			type: 'DebugTag',
 			start,
@@ -570,7 +570,7 @@ function special(parser) {
 
 		parser.eat('}', true);
 
-		/** @type {ReturnType<typeof parser.append<ConstTag>>} */
+		/** @type {ReturnType<typeof parser.append<AST.ConstTag>>} */
 		parser.append({
 			type: 'ConstTag',
 			start,
@@ -601,7 +601,7 @@ function special(parser) {
 		parser.allow_whitespace();
 		parser.eat('}', true);
 
-		/** @type {ReturnType<typeof parser.append<RenderTag>>} */
+		/** @type {ReturnType<typeof parser.append<AST.RenderTag>>} */
 		parser.append({
 			type: 'RenderTag',
 			start,

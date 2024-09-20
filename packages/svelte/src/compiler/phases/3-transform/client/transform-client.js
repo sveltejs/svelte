@@ -1,10 +1,10 @@
 /** @import * as ESTree from 'estree' */
-/** @import { ValidatedCompileOptions, SvelteNode, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { ValidatedCompileOptions, AST, ValidatedModuleCompileOptions, SvelteNode } from '#compiler' */
 /** @import { ComponentAnalysis, Analysis } from '../../types' */
 /** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';
 import * as b from '../../../utils/builders.js';
-import { build_getter } from './utils.js';
+import { build_getter, is_state_source } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
 import { dev, filename } from '../../../state.js';
 import { AnimateDirective } from './visitors/AnimateDirective.js';
@@ -66,7 +66,12 @@ const visitors = {
 			const transform = { ...state.transform };
 
 			for (const [name, binding] of scope.declarations) {
-				if (binding.kind === 'normal') {
+				if (
+					binding.kind === 'normal' ||
+					// Reads of `$state(...)` declarations are not
+					// transformed if they are never reassigned
+					(binding.kind === 'state' && !is_state_source(binding, state.analysis))
+				) {
 					delete transform[name];
 				}
 			}
@@ -197,7 +202,7 @@ export function client_component(analysis, options) {
 		)
 	);
 
-	instance.body.unshift(...state.legacy_reactive_imports);
+	module.body.unshift(...state.legacy_reactive_imports);
 
 	/** @type {ESTree.Statement[]} */
 	const store_setup = [];
@@ -207,7 +212,7 @@ export function client_component(analysis, options) {
 
 	for (const [name, binding] of analysis.instance.scope.declarations) {
 		if (binding.kind === 'legacy_reactive') {
-			legacy_reactive_declarations.push(b.const(name, b.call('$.mutable_source')));
+			legacy_reactive_declarations.push(b.const(name, b.call('$.mutable_state')));
 		}
 		if (binding.kind === 'store_sub') {
 			if (store_setup.length === 0) {
@@ -271,19 +276,9 @@ export function client_component(analysis, options) {
 			}
 		}
 
-		if (binding?.kind === 'state' || binding?.kind === 'frozen_state') {
-			return [
-				getter,
-				b.set(alias ?? name, [
-					b.stmt(
-						b.call(
-							'$.set',
-							b.id(name),
-							b.call(binding.kind === 'state' ? '$.proxy' : '$.freeze', b.id('$$value'))
-						)
-					)
-				])
-			];
+		if (binding?.kind === 'state' || binding?.kind === 'raw_state') {
+			const value = binding.kind === 'state' ? b.call('$.proxy', b.id('$$value')) : b.id('$$value');
+			return [getter, b.set(alias ?? name, [b.stmt(b.call('$.set', b.id(name), value))])];
 		}
 
 		return getter;
@@ -396,9 +391,7 @@ export function client_component(analysis, options) {
 		state.hoisted.push(b.const('$$css', b.object([b.init('hash', hash), b.init('code', code)])));
 
 		component_block.body.unshift(
-			b.stmt(
-				b.call('$.append_styles', b.id('$$anchor'), b.id('$$css'), options.customElement && b.true)
-			)
+			b.stmt(b.call('$.append_styles', b.id('$$anchor'), b.id('$$css')))
 		);
 	}
 
@@ -467,7 +460,22 @@ export function client_component(analysis, options) {
 		analysis.uses_slots ||
 		analysis.slot_names.size > 0;
 
-	const body = [...state.hoisted, ...module.body];
+	// Merge hoisted statements into module body.
+	// Ensure imports are on top, with the order preserved, then module body, then hoisted statements
+	/** @type {ESTree.ImportDeclaration[]} */
+	const imports = [];
+	/** @type {ESTree.Program['body']} */
+	let body = [];
+
+	for (const entry of [...module.body, ...state.hoisted]) {
+		if (entry.type === 'ImportDeclaration') {
+			imports.push(entry);
+		} else {
+			body.push(entry);
+		}
+	}
+
+	body = [...imports, ...body];
 
 	const component = b.function_declaration(
 		b.id(analysis.name),
@@ -483,34 +491,17 @@ export function client_component(analysis, options) {
 		const incoming = b.member(b.id('module.default'), HMR, true);
 
 		const accept_fn_body = [
-			b.stmt(
-				b.assignment('=', b.member(incoming, b.id('source')), b.member(existing, b.id('source')))
-			),
-			b.stmt(
-				b.call('$.set', b.member(existing, b.id('source')), b.member(incoming, b.id('original')))
-			)
+			b.stmt(b.assignment('=', b.member(incoming, 'source'), b.member(existing, 'source'))),
+			b.stmt(b.call('$.set', b.member(existing, 'source'), b.member(incoming, 'original')))
 		];
 
 		if (analysis.css.hash) {
 			// remove existing `<style>` element, in case CSS changed
-			accept_fn_body.unshift(
-				b.stmt(
-					b.call(
-						b.member(
-							b.call('document.querySelector', b.literal('#' + analysis.css.hash)),
-							b.id('remove'),
-							false,
-							true
-						)
-					)
-				)
-			);
+			accept_fn_body.unshift(b.stmt(b.call('$.cleanup_styles', b.literal(analysis.css.hash))));
 		}
 
 		const hmr = b.block([
-			b.stmt(
-				b.assignment('=', id, b.call('$.hmr', id, b.thunk(b.member(existing, b.id('source')))))
-			),
+			b.stmt(b.assignment('=', id, b.call('$.hmr', id, b.thunk(b.member(existing, 'source'))))),
 
 			b.stmt(b.call('import.meta.hot.accept', b.arrow([b.id('module')], b.block(accept_fn_body))))
 		]);
@@ -521,18 +512,12 @@ export function client_component(analysis, options) {
 	}
 
 	if (dev) {
-		if (filename) {
-			// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later
-			body.unshift(
-				b.stmt(
-					b.assignment(
-						'=',
-						b.member(b.id(analysis.name), b.id('$.FILENAME'), true),
-						b.literal(filename)
-					)
-				)
-			);
-		}
+		// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later
+		body.unshift(
+			b.stmt(
+				b.assignment('=', b.member(b.id(analysis.name), '$.FILENAME', true), b.literal(filename))
+			)
+		);
 
 		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'))));
 		body.push(b.stmt(b.call(b.id('$.mark_module_end'), b.id(analysis.name))));
@@ -613,7 +598,15 @@ export function client_component(analysis, options) {
 
 		// If a tag name is provided, call `customElements.define`, otherwise leave to the user
 		if (typeof ce !== 'boolean' && typeof ce.tag === 'string') {
-			body.push(b.stmt(b.call('customElements.define', b.literal(ce.tag), create_ce)));
+			const define = b.stmt(b.call('customElements.define', b.literal(ce.tag), create_ce));
+
+			if (options.hmr) {
+				body.push(
+					b.if(b.binary('==', b.call('customElements.get', b.literal(ce.tag)), b.null), define)
+				);
+			} else {
+				body.push(define);
+			}
 		} else {
 			body.push(b.stmt(create_ce));
 		}

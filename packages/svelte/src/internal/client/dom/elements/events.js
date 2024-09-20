@@ -1,7 +1,10 @@
+/** @import { Location } from 'locate-character' */
 import { teardown } from '../../reactivity/effects.js';
 import { define_property, is_array } from '../../../shared/utils.js';
 import { hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
+import { FILENAME } from '../../../../constants.js';
+import * as w from '../../warnings.js';
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -80,30 +83,6 @@ export function create_event(event_name, dom, handler, options) {
  * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
  * (with attributes like `onclick`), which use event delegation for performance reasons
  *
- * @template {HTMLElement} Element
- * @template {keyof HTMLElementEventMap} Type
- * @overload
- * @param {Element} element
- * @param {Type} type
- * @param {(this: Element, event: HTMLElementEventMap[Type]) => any} handler
- * @param {AddEventListenerOptions} [options]
- * @returns {() => void}
- */
-
-/**
- * Attaches an event handler to an element and returns a function that removes the handler. Using this
- * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
- * (with attributes like `onclick`), which use event delegation for performance reasons
- *
- * @overload
- * @param {EventTarget} element
- * @param {string} type
- * @param {EventListener} handler
- * @param {AddEventListenerOptions} [options]
- * @returns {() => void}
- */
-
-/**
  * @param {EventTarget} element
  * @param {string} type
  * @param {EventListener} handler
@@ -230,7 +209,10 @@ export function handle_event_propagation(event) {
 		while (current_target !== null) {
 			/** @type {null | Element} */
 			var parent_element =
-				current_target.parentNode || /** @type {any} */ (current_target).host || null;
+				current_target.assignedSlot ||
+				current_target.parentNode ||
+				/** @type {any} */ (current_target).host ||
+				null;
 
 			try {
 				// @ts-expect-error
@@ -269,7 +251,53 @@ export function handle_event_propagation(event) {
 	} finally {
 		// @ts-expect-error is used above
 		event.__root = handler_element;
-		// @ts-expect-error is used above
-		current_target = handler_element;
+		// @ts-ignore remove proxy on currentTarget
+		delete event.currentTarget;
+	}
+}
+
+/**
+ * In dev, warn if an event handler is not a function, as it means the
+ * user probably called the handler or forgot to add a `() =>`
+ * @param {() => (event: Event, ...args: any) => void} thunk
+ * @param {EventTarget} element
+ * @param {[Event, ...any]} args
+ * @param {any} component
+ * @param {[number, number]} [loc]
+ * @param {boolean} [remove_parens]
+ */
+export function apply(
+	thunk,
+	element,
+	args,
+	component,
+	loc,
+	has_side_effects = false,
+	remove_parens = false
+) {
+	let handler;
+	let error;
+
+	try {
+		handler = thunk();
+	} catch (e) {
+		error = e;
+	}
+
+	if (typeof handler === 'function') {
+		handler.apply(element, args);
+	} else if (has_side_effects || handler != null) {
+		const filename = component?.[FILENAME];
+		const location = loc ? ` at ${filename}:${loc[0]}:${loc[1]}` : ` in ${filename}`;
+
+		const event_name = args[0].type;
+		const description = `\`${event_name}\` handler${location}`;
+		const suggestion = remove_parens ? 'remove the trailing `()`' : 'add a leading `() =>`';
+
+		w.event_handler_invalid(description, suggestion);
+
+		if (error) {
+			throw error;
+		}
 	}
 }

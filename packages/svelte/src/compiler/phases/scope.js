@@ -1,8 +1,9 @@
 /** @import { ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
-/** @import { AnimateDirective, Binding, Component, DeclarationKind, EachBlock, ElementLike, LetDirective, SvelteComponent, SvelteNode, SvelteSelf, TransitionDirective, UseDirective } from '#compiler' */
+/** @import { AST, Binding, DeclarationKind, ElementLike, SvelteNode } from '#compiler' */
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
+import { create_expression_metadata } from './nodes.js';
 import * as b from '../utils/builders.js';
 import * as e from '../errors.js';
 import {
@@ -13,6 +14,7 @@ import {
 } from '../utils/ast.js';
 import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
+import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
 
 export class Scope {
 	/** @type {ScopeRoot} */
@@ -39,7 +41,7 @@ export class Scope {
 
 	/**
 	 * A map of declarators to the bindings they declare
-	 * @type {Map<VariableDeclarator | LetDirective, Binding[]>}
+	 * @type {Map<VariableDeclarator | AST.LetDirective, Binding[]>}
 	 */
 	declarators = new Map();
 
@@ -73,24 +75,10 @@ export class Scope {
 	 * @param {Identifier} node
 	 * @param {Binding['kind']} kind
 	 * @param {DeclarationKind} declaration_kind
-	 * @param {null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | EachBlock} initial
+	 * @param {null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | AST.EachBlock} initial
 	 * @returns {Binding}
 	 */
 	declare(node, kind, declaration_kind, initial = null) {
-		if (node.name === '$') {
-			e.dollar_binding_invalid(node);
-		}
-
-		if (
-			node.name.startsWith('$') &&
-			declaration_kind !== 'synthetic' &&
-			declaration_kind !== 'param' &&
-			declaration_kind !== 'rest_param' &&
-			this.function_depth <= 1
-		) {
-			e.dollar_prefix_invalid(node);
-		}
-
 		if (this.parent) {
 			if (declaration_kind === 'var' && this.#porous) {
 				return this.parent.declare(node, kind, declaration_kind);
@@ -112,15 +100,19 @@ export class Scope {
 			references: [],
 			legacy_dependencies: [],
 			initial,
+			reassigned: false,
 			mutated: false,
+			updated: false,
 			scope: this,
 			kind,
 			declaration_kind,
 			is_called: false,
 			prop_alias: null,
-			reassigned: false,
 			metadata: null
 		};
+
+		validate_identifier_name(binding, this.function_depth);
+
 		this.declarations.set(node.name, binding);
 		this.root.conflicts.add(node.name);
 		return binding;
@@ -166,7 +158,7 @@ export class Scope {
 	}
 
 	/**
-	 * @param {VariableDeclarator | LetDirective} node
+	 * @param {VariableDeclarator | AST.LetDirective} node
 	 * @returns {Binding[]}
 	 */
 	get_bindings(node) {
@@ -296,12 +288,16 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<Component | SvelteComponent | SvelteSelf, State, SvelteNode>}
+	 * @type {Visitor<AST.Component | AST.SvelteComponent | AST.SvelteSelf, State, SvelteNode>}
 	 */
 	const Component = (node, context) => {
 		node.metadata.scopes = {
 			default: context.state.scope.child()
 		};
+
+		if (node.type === 'SvelteComponent') {
+			context.visit(node.expression);
+		}
 
 		const default_state = determine_slot(node)
 			? context.state
@@ -333,7 +329,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<AnimateDirective | TransitionDirective | UseDirective, State, SvelteNode>}
+	 * @type {Visitor<AST.AnimateDirective | AST.TransitionDirective | AST.UseDirective, State, SvelteNode>}
 	 */
 	const SvelteDirective = (node, { state, path, visit }) => {
 		state.scope.reference(b.id(node.name.split('.')[0]), path);
@@ -347,11 +343,17 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		// references
 		Identifier(node, { path, state }) {
 			const parent = path.at(-1);
-			if (parent && is_reference(node, /** @type {Node} */ (parent))) {
+			if (
+				parent &&
+				is_reference(node, /** @type {Node} */ (parent)) &&
+				// TSTypeAnnotation, TSInterfaceDeclaration etc - these are normally already filtered out,
+				// but for the migration they aren't, so we need to filter them out here
+				// -> once migration script is gone we can remove this check
+				!parent.type.startsWith('TS')
+			) {
 				references.push([state.scope, { node, path: path.slice() }]);
 			}
 		},
-
 		LabeledStatement(node, { path, next }) {
 			if (path.length > 1 || !allow_reactive_declarations) return next();
 			if (node.label.name !== '$') return next();
@@ -388,7 +390,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 			if (node.expression) {
 				for (const id of extract_identifiers_from_destructuring(node.expression)) {
-					const binding = scope.declare(id, 'derived', 'const');
+					const binding = scope.declare(id, 'template', 'const');
 					bindings.push(binding);
 				}
 			} else {
@@ -399,7 +401,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					start: node.start,
 					end: node.end
 				};
-				const binding = scope.declare(id, 'derived', 'const');
+				const binding = scope.declare(id, 'template', 'const');
 				bindings.push(binding);
 			}
 		},
@@ -459,8 +461,20 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		ForStatement: create_block_scope,
 		ForInStatement: create_block_scope,
 		ForOfStatement: create_block_scope,
-		BlockStatement: create_block_scope,
 		SwitchStatement: create_block_scope,
+		BlockStatement(node, context) {
+			const parent = context.path.at(-1);
+			if (
+				parent?.type === 'FunctionDeclaration' ||
+				parent?.type === 'FunctionExpression' ||
+				parent?.type === 'ArrowFunctionExpression'
+			) {
+				// We already created a new scope for the function
+				context.next();
+			} else {
+				create_block_scope(node, context);
+			}
+		},
 
 		ClassDeclaration(node, { state, next }) {
 			if (node.id) state.scope.declare(node.id, 'normal', 'let', node);
@@ -478,7 +492,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				for (const id of extract_identifiers(declarator.id)) {
 					const binding = state.scope.declare(
 						id,
-						is_parent_const_tag ? 'derived' : 'normal',
+						is_parent_const_tag ? 'template' : 'normal',
 						node.kind,
 						declarator.init
 					);
@@ -505,17 +519,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		EachBlock(node, { state, visit }) {
-			// Array part is still from the scope above
-			/** @type {Set<Identifier>} */
-			const references_within = new Set();
-			const idx = references.length;
 			visit(node.expression);
-			for (let i = idx; i < references.length; i++) {
-				const [scope, { node: id }] = references[i];
-				if (scope === state.scope) {
-					references_within.add(id);
-				}
-			}
 
 			// context and children are a new scope
 			const scope = state.scope.child();
@@ -543,9 +547,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 				binding.metadata = { inside_rest: is_rest_id };
 			}
-			if (node.context.type !== 'Identifier') {
-				scope.declare(b.id('$$item'), 'derived', 'synthetic');
-			}
+
 			// Visit to pick up references from default initializers
 			visit(node.context, { scope });
 
@@ -553,7 +555,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				const is_keyed =
 					node.key &&
 					(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index);
-				scope.declare(b.id(node.index), is_keyed ? 'derived' : 'normal', 'const', node);
+				scope.declare(b.id(node.index), is_keyed ? 'template' : 'normal', 'const', node);
 			}
 			if (node.key) visit(node.key, { scope });
 
@@ -574,15 +576,12 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			}
 
 			node.metadata = {
+				expression: create_expression_metadata(),
 				keyed: false,
 				contains_group_binding: false,
 				array_name: needs_array_deduplication ? state.scope.root.unique('$$array') : null,
 				index: scope.root.unique('$$index'),
-				item: node.context.type === 'Identifier' ? node.context : b.id('$$item'),
 				declarations: scope.declarations,
-				references: [...references_within]
-					.map((id) => /** @type {Binding} */ (state.scope.get(id.name)))
-					.filter(Boolean),
 				is_controlled: false
 			};
 		},
@@ -602,7 +601,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					scopes.set(node.value, value_scope);
 					context.visit(node.value, { scope: value_scope });
 					for (const id of extract_identifiers(node.value)) {
-						then_scope.declare(id, 'derived', 'const');
+						then_scope.declare(id, 'template', 'const');
 						value_scope.declare(id, 'normal', 'const');
 					}
 				}
@@ -616,7 +615,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					scopes.set(node.error, error_scope);
 					context.visit(node.error, { scope: error_scope });
 					for (const id of extract_identifiers(node.error)) {
-						catch_scope.declare(id, 'derived', 'const');
+						catch_scope.declare(id, 'template', 'const');
 						error_scope.declare(id, 'normal', 'const');
 					}
 				}
@@ -646,7 +645,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		Fragment: (node, context) => {
-			const scope = context.state.scope.child(node.transparent);
+			const scope = context.state.scope.child(node.metadata.transparent);
 			scopes.set(node, scope);
 			context.next({ scope });
 		},
@@ -669,7 +668,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		// the css property
 		StyleDirective(node, { path, state, next }) {
 			if (node.value === true) {
-				state.scope.reference(b.id(node.name), path);
+				state.scope.reference(b.id(node.name), path.concat(node));
 			}
 			next();
 		}
@@ -691,25 +690,19 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	}
 
 	for (const [scope, node] of updates) {
-		if (node.type === 'MemberExpression') {
-			let object = node.object;
-			while (object.type === 'MemberExpression') {
-				object = object.object;
-			}
+		for (const expression of unwrap_pattern(node)) {
+			const left = object(expression);
+			const binding = left && scope.get(left.name);
 
-			const binding = scope.get(/** @type {Identifier} */ (object).name);
-			if (binding) binding.mutated = true;
-		} else {
-			unwrap_pattern(node).forEach((node) => {
-				let id = node.type === 'Identifier' ? node : object(node);
-				if (id === null) return;
+			if (binding !== null && left !== binding.node) {
+				binding.updated = true;
 
-				const binding = scope.get(id.name);
-				if (binding && id !== binding.node) {
+				if (left === expression) {
+					binding.reassigned = true;
+				} else {
 					binding.mutated = true;
-					binding.reassigned = node.type === 'Identifier';
 				}
-			});
+			}
 		}
 	}
 
@@ -731,7 +724,7 @@ export function set_scope(node, { next, state }) {
 
 /**
  * Returns the name of the rune if the given expression is a `CallExpression` using a rune.
- * @param {Node | EachBlock | null | undefined} node
+ * @param {Node | AST.EachBlock | null | undefined} node
  * @param {Scope} scope
  */
 export function get_rune(node, scope) {

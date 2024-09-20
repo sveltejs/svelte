@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	const data = $state({
 		list: [],
 		derived: 0

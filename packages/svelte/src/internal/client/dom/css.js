@@ -1,20 +1,12 @@
 import { DEV } from 'esm-env';
 import { queue_micro_task } from './task.js';
-
-var seen = new Set();
+import { register_style } from '../dev/css.js';
 
 /**
  * @param {Node} anchor
  * @param {{ hash: string, code: string }} css
- * @param {boolean} [is_custom_element]
  */
-export function append_styles(anchor, css, is_custom_element = false) {
-	// in dev, always check the DOM, so that styles can be replaced with HMR
-	if (!DEV && !is_custom_element) {
-		if (seen.has(css)) return;
-		seen.add(css);
-	}
-
+export function append_styles(anchor, css) {
 	// Use `queue_micro_task` to ensure `anchor` is in the DOM, otherwise getRootNode() will yield wrong results
 	queue_micro_task(() => {
 		var root = anchor.getRootNode();
@@ -23,12 +15,18 @@ export function append_styles(anchor, css, is_custom_element = false) {
 			? /** @type {ShadowRoot} */ (root)
 			: /** @type {Document} */ (root).head ?? /** @type {Document} */ (root.ownerDocument).head;
 
+		// Always querying the DOM is roughly the same perf as additionally checking for presence in a map first assuming
+		// that you'll get cache hits half of the time, so we just always query the dom for simplicity and code savings.
 		if (!target.querySelector('#' + css.hash)) {
 			const style = document.createElement('style');
 			style.id = css.hash;
 			style.textContent = css.code;
 
 			target.appendChild(style);
+
+			if (DEV) {
+				register_style(css.hash, style);
+			}
 		}
 	});
 }

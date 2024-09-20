@@ -1,5 +1,5 @@
 /** @import { Expression } from 'estree' */
-/** @import * as Compiler from '#compiler' */
+/** @import { AST, Directive, ElementLike, TemplateNode } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { is_void } from '../../../../utils.js';
 import read_expression from '../read/expression.js';
@@ -12,14 +12,23 @@ import { create_fragment } from '../utils/create.js';
 import { create_attribute, create_expression_metadata } from '../../nodes.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../utils/ast.js';
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
+import { list } from '../../../utils/string.js';
 
-// eslint-disable-next-line no-useless-escape
-const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
+const regex_invalid_unquoted_attribute_value = /^(\/>|[\s"'=<>`])/;
+const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
+const regex_closing_comment = /-->/;
+const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
+const regex_token_ending_character = /[\s=/>"']/;
+const regex_starts_with_quote_characters = /^["']/;
+const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]+))/;
+const regex_valid_element_name =
+	/^(?:![a-zA-Z]+|[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|[a-zA-Z][a-zA-Z0-9]*:[a-zA-Z][a-zA-Z0-9-]*[a-zA-Z0-9])$/;
+const regex_valid_component_name =
+	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#identifiers adjusted for our needs
+	// (must start with uppercase letter if no dots, can contain dots)
+	/^(?:\p{Lu}[$\u200c\u200d\p{ID_Continue}.]*|\p{ID_Start}[$\u200c\u200d\p{ID_Continue}]*(?:\.[$\u200c\u200d\p{ID_Continue}]+)+)$/u;
 
-/** Invalid attribute characters if the attribute is not surrounded by quotes */
-const regex_starts_with_invalid_attr_value = /^(\/>|[\s"'=<>`])/;
-
-/** @type {Map<string, Compiler.ElementLike['type']>} */
+/** @type {Map<string, ElementLike['type']>} */
 const root_only_meta_tags = new Map([
 	['svelte:head', 'SvelteHead'],
 	['svelte:options', 'SvelteOptions'],
@@ -28,7 +37,7 @@ const root_only_meta_tags = new Map([
 	['svelte:body', 'SvelteBody']
 ]);
 
-/** @type {Map<string, Compiler.ElementLike['type']>} */
+/** @type {Map<string, ElementLike['type']>} */
 const meta_tags = new Map([
 	...root_only_meta_tags,
 	['svelte:element', 'SvelteElement'],
@@ -36,45 +45,6 @@ const meta_tags = new Map([
 	['svelte:self', 'SvelteSelf'],
 	['svelte:fragment', 'SvelteFragment']
 ]);
-
-const valid_meta_tags = Array.from(meta_tags.keys());
-
-const SELF = /^svelte:self(?=[\s/>])/;
-const COMPONENT = /^svelte:component(?=[\s/>])/;
-const SLOT = /^svelte:fragment(?=[\s/>])/;
-const ELEMENT = /^svelte:element(?=[\s/>])/;
-
-/** @param {Compiler.TemplateNode[]} stack */
-function parent_is_head(stack) {
-	let i = stack.length;
-	while (i--) {
-		const { type } = stack[i];
-		if (type === 'SvelteHead') return true;
-		if (type === 'RegularElement' || type === 'Component') return false;
-	}
-	return false;
-}
-
-/** @param {Compiler.TemplateNode[]} stack */
-function parent_is_shadowroot_template(stack) {
-	// https://developer.chrome.com/docs/css-ui/declarative-shadow-dom#building_a_declarative_shadow_root
-	let i = stack.length;
-	while (i--) {
-		if (
-			stack[i].type === 'RegularElement' &&
-			/** @type {Compiler.RegularElement} */ (stack[i]).attributes.some(
-				(a) => a.type === 'Attribute' && a.name === 'shadowrootmode'
-			)
-		) {
-			return true;
-		}
-	}
-	return false;
-}
-
-const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
-const regex_closing_comment = /-->/;
-const regex_capital_letter = /[A-Z]/;
 
 /** @param {Parser} parser */
 export default function element(parser) {
@@ -86,7 +56,7 @@ export default function element(parser) {
 		const data = parser.read_until(regex_closing_comment);
 		parser.eat('-->', true);
 
-		/** @type {ReturnType<typeof parser.append<Compiler.Comment>>} */
+		/** @type {ReturnType<typeof parser.append<AST.Comment>>} */
 		parser.append({
 			type: 'Comment',
 			start,
@@ -98,86 +68,18 @@ export default function element(parser) {
 	}
 
 	const is_closing_tag = parser.eat('/');
-
-	const name = read_tag_name(parser);
-
-	if (root_only_meta_tags.has(name)) {
-		if (is_closing_tag) {
-			if (
-				['svelte:options', 'svelte:window', 'svelte:body', 'svelte:document'].includes(name) &&
-				/** @type {Compiler.ElementLike} */ (parent).fragment.nodes.length
-			) {
-				e.svelte_meta_invalid_content(
-					/** @type {Compiler.ElementLike} */ (parent).fragment.nodes[0].start,
-					name
-				);
-			}
-		} else {
-			if (name in parser.meta_tags) {
-				e.svelte_meta_duplicate(start, name);
-			}
-
-			if (parent.type !== 'Root') {
-				e.svelte_meta_invalid_placement(start, name);
-			}
-
-			parser.meta_tags[name] = true;
-		}
-	}
-
-	const type = meta_tags.has(name)
-		? meta_tags.get(name)
-		: regex_capital_letter.test(name[0])
-			? 'Component'
-			: name === 'title' && parent_is_head(parser.stack)
-				? 'TitleElement'
-				: // TODO Svelte 6/7: once slots are removed in favor of snippets, always keep slot as a regular element
-					name === 'slot' && !parent_is_shadowroot_template(parser.stack)
-					? 'SlotElement'
-					: 'RegularElement';
-
-	/** @type {Compiler.ElementLike} */
-	const element =
-		type === 'RegularElement'
-			? {
-					type,
-					start,
-					end: -1,
-					name,
-					attributes: [],
-					fragment: create_fragment(true),
-					metadata: {
-						svg: false,
-						mathml: false,
-						scoped: false,
-						has_spread: false
-					},
-					parent: null
-				}
-			: /** @type {Compiler.ElementLike} */ ({
-					type,
-					start,
-					end: -1,
-					name,
-					attributes: [],
-					fragment: create_fragment(true),
-					parent: null,
-					metadata: {
-						// unpopulated at first, differs between types
-					}
-				});
-
-	parser.allow_whitespace();
+	const name = parser.read_until(regex_whitespace_or_slash_or_closing_tag);
 
 	if (is_closing_tag) {
+		parser.allow_whitespace();
+		parser.eat('>', true);
+
 		if (is_void(name)) {
 			e.void_element_invalid_content(start);
 		}
 
-		parser.eat('>', true);
-
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
-		while (/** @type {Compiler.RegularElement} */ (parent).name !== name) {
+		while (/** @type {AST.RegularElement} */ (parent).name !== name) {
 			if (parent.type !== 'RegularElement') {
 				if (parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name) {
 					e.element_invalid_closing_tag_autoclosed(start, name, parser.last_auto_closed_tag.reason);
@@ -200,7 +102,75 @@ export default function element(parser) {
 		}
 
 		return;
-	} else if (parent.type === 'RegularElement' && closing_tag_omitted(parent.name, name)) {
+	}
+
+	if (name.startsWith('svelte:') && !meta_tags.has(name)) {
+		const bounds = { start: start + 1, end: start + 1 + name.length };
+		e.svelte_meta_invalid_tag(bounds, list(Array.from(meta_tags.keys())));
+	}
+
+	if (!regex_valid_element_name.test(name) && !regex_valid_component_name.test(name)) {
+		const bounds = { start: start + 1, end: start + 1 + name.length };
+		e.tag_invalid_name(bounds);
+	}
+
+	if (root_only_meta_tags.has(name)) {
+		if (name in parser.meta_tags) {
+			e.svelte_meta_duplicate(start, name);
+		}
+
+		if (parent.type !== 'Root') {
+			e.svelte_meta_invalid_placement(start, name);
+		}
+
+		parser.meta_tags[name] = true;
+	}
+
+	const type = meta_tags.has(name)
+		? meta_tags.get(name)
+		: regex_valid_component_name.test(name)
+			? 'Component'
+			: name === 'title' && parent_is_head(parser.stack)
+				? 'TitleElement'
+				: // TODO Svelte 6/7: once slots are removed in favor of snippets, always keep slot as a regular element
+					name === 'slot' && !parent_is_shadowroot_template(parser.stack)
+					? 'SlotElement'
+					: 'RegularElement';
+
+	/** @type {ElementLike} */
+	const element =
+		type === 'RegularElement'
+			? {
+					type,
+					start,
+					end: -1,
+					name,
+					attributes: [],
+					fragment: create_fragment(true),
+					metadata: {
+						svg: false,
+						mathml: false,
+						scoped: false,
+						has_spread: false
+					},
+					parent: null
+				}
+			: /** @type {ElementLike} */ ({
+					type,
+					start,
+					end: -1,
+					name,
+					attributes: [],
+					fragment: create_fragment(true),
+					parent: null,
+					metadata: {
+						// unpopulated at first, differs between types
+					}
+				});
+
+	parser.allow_whitespace();
+
+	if (parent.type === 'RegularElement' && closing_tag_omitted(parent.name, name)) {
 		parent.end = start;
 		parser.pop();
 		parser.last_auto_closed_tag = {
@@ -221,12 +191,24 @@ export default function element(parser) {
 
 	let attribute;
 	while ((attribute = read(parser))) {
-		if (attribute.type === 'Attribute' || attribute.type === 'BindDirective') {
-			if (unique_names.includes(attribute.name)) {
+		// animate and transition can only be specified once per element so no need
+		// to check here, use can be used multiple times, same for the on directive
+		// finally let already has error handling in case of duplicate variable names
+		if (
+			attribute.type === 'Attribute' ||
+			attribute.type === 'BindDirective' ||
+			attribute.type === 'StyleDirective' ||
+			attribute.type === 'ClassDirective'
+		) {
+			// `bind:attribute` and `attribute` are just the same but `class:attribute`,
+			// `style:attribute` and `attribute` are different and should be allowed together
+			// so we concatenate the type while normalizing the type for BindDirective
+			const type = attribute.type === 'BindDirective' ? 'Attribute' : attribute.type;
+			if (unique_names.includes(type + attribute.name)) {
 				e.attribute_duplicate(attribute);
 				// <svelte:element bind:this this=..> is allowed
 			} else if (attribute.name !== 'this') {
-				unique_names.push(attribute.name);
+				unique_names.push(type + attribute.name);
 			}
 		}
 
@@ -243,7 +225,7 @@ export default function element(parser) {
 			e.svelte_component_missing_this(start);
 		}
 
-		const definition = /** @type {Compiler.Attribute} */ (element.attributes.splice(index, 1)[0]);
+		const definition = /** @type {AST.Attribute} */ (element.attributes.splice(index, 1)[0]);
 		if (!is_expression_attribute(definition)) {
 			e.svelte_component_invalid_this(definition.start);
 		}
@@ -260,7 +242,7 @@ export default function element(parser) {
 			e.svelte_element_missing_this(start);
 		}
 
-		const definition = /** @type {Compiler.Attribute} */ (element.attributes.splice(index, 1)[0]);
+		const definition = /** @type {AST.Attribute} */ (element.attributes.splice(index, 1)[0]);
 
 		if (definition.value === true) {
 			e.svelte_element_missing_this(definition);
@@ -273,9 +255,7 @@ export default function element(parser) {
 			// it would be much better to just error here, but we are preserving the existing buggy
 			// Svelte 4 behaviour out of an overabundance of caution regarding breaking changes.
 			// TODO in 6.0, error
-			const chunk = /** @type {Array<Compiler.ExpressionTag | Compiler.Text>} */ (
-				definition.value
-			)[0];
+			const chunk = /** @type {Array<AST.ExpressionTag | AST.Text>} */ (definition.value)[0];
 			element.tag =
 				chunk.type === 'Text'
 					? {
@@ -294,7 +274,7 @@ export default function element(parser) {
 	if (is_top_level_script_or_style) {
 		parser.eat('>', true);
 
-		/** @type {Compiler.Comment | null} */
+		/** @type {AST.Comment | null} */
 		let prev_comment = null;
 		for (let i = current.fragment.nodes.length - 1; i >= 0; i--) {
 			const node = current.fragment.nodes[i];
@@ -361,7 +341,7 @@ export default function element(parser) {
 		const data = parser.read_until(new RegExp(`</${name}>`));
 		const end = parser.index;
 
-		/** @type {Compiler.Text} */
+		/** @type {AST.Text} */
 		const node = {
 			start,
 			end,
@@ -380,67 +360,37 @@ export default function element(parser) {
 	}
 }
 
-const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
-
-/** @param {Parser} parser */
-function read_tag_name(parser) {
-	const start = parser.index;
-
-	if (parser.read(SELF)) {
-		// check we're inside a block, otherwise this
-		// will cause infinite recursion
-		let i = parser.stack.length;
-		let legal = false;
-
-		while (i--) {
-			const fragment = parser.stack[i];
-			if (
-				fragment.type === 'IfBlock' ||
-				fragment.type === 'EachBlock' ||
-				fragment.type === 'Component' ||
-				fragment.type === 'SnippetBlock'
-			) {
-				legal = true;
-				break;
-			}
-		}
-
-		if (!legal) {
-			e.svelte_self_invalid_placement(start);
-		}
-
-		return 'svelte:self';
+/** @param {TemplateNode[]} stack */
+function parent_is_head(stack) {
+	let i = stack.length;
+	while (i--) {
+		const { type } = stack[i];
+		if (type === 'SvelteHead') return true;
+		if (type === 'RegularElement' || type === 'Component') return false;
 	}
-
-	if (parser.read(COMPONENT)) return 'svelte:component';
-	if (parser.read(ELEMENT)) return 'svelte:element';
-
-	if (parser.read(SLOT)) return 'svelte:fragment';
-
-	const name = parser.read_until(regex_whitespace_or_slash_or_closing_tag);
-
-	if (meta_tags.has(name)) return name;
-
-	if (name.startsWith('svelte:')) {
-		const list = `${valid_meta_tags.slice(0, -1).join(', ')} or ${valid_meta_tags[valid_meta_tags.length - 1]}`;
-		e.svelte_meta_invalid_tag(start, list);
-	}
-
-	if (!valid_tag_name.test(name)) {
-		e.element_invalid_tag_name(start);
-	}
-
-	return name;
+	return false;
 }
 
-// eslint-disable-next-line no-useless-escape
-const regex_token_ending_character = /[\s=\/>"']/;
-const regex_starts_with_quote_characters = /^["']/;
-const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]+))/;
+/** @param {TemplateNode[]} stack */
+function parent_is_shadowroot_template(stack) {
+	// https://developer.chrome.com/docs/css-ui/declarative-shadow-dom#building_a_declarative_shadow_root
+	let i = stack.length;
+	while (i--) {
+		if (
+			stack[i].type === 'RegularElement' &&
+			/** @type {AST.RegularElement} */ (stack[i]).attributes.some(
+				(a) => a.type === 'Attribute' && a.name === 'shadowrootmode'
+			)
+		) {
+			return true;
+		}
+	}
+	return false;
+}
 
 /**
  * @param {Parser} parser
- * @returns {Compiler.Attribute | null}
+ * @returns {AST.Attribute | null}
  */
 function read_static_attribute(parser) {
 	const start = parser.index;
@@ -448,7 +398,7 @@ function read_static_attribute(parser) {
 	const name = parser.read_until(regex_token_ending_character);
 	if (!name) return null;
 
-	/** @type {true | Array<Compiler.Text | Compiler.ExpressionTag>} */
+	/** @type {true | Array<AST.Text | AST.ExpressionTag>} */
 	let value = true;
 
 	if (parser.eat('=')) {
@@ -486,7 +436,7 @@ function read_static_attribute(parser) {
 
 /**
  * @param {Parser} parser
- * @returns {Compiler.Attribute | Compiler.SpreadAttribute | Compiler.Directive | null}
+ * @returns {AST.Attribute | AST.SpreadAttribute | Directive | null}
  */
 function read_attribute(parser) {
 	const start = parser.index;
@@ -500,7 +450,7 @@ function read_attribute(parser) {
 			parser.allow_whitespace();
 			parser.eat('}', true);
 
-			/** @type {Compiler.SpreadAttribute} */
+			/** @type {AST.SpreadAttribute} */
 			const spread = {
 				type: 'SpreadAttribute',
 				start,
@@ -524,7 +474,7 @@ function read_attribute(parser) {
 			parser.allow_whitespace();
 			parser.eat('}', true);
 
-			/** @type {Compiler.ExpressionTag} */
+			/** @type {AST.ExpressionTag} */
 			const expression = {
 				type: 'ExpressionTag',
 				start: value_start,
@@ -555,7 +505,7 @@ function read_attribute(parser) {
 	const colon_index = name.indexOf(':');
 	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
 
-	/** @type {true | Compiler.ExpressionTag | Array<Compiler.Text | Compiler.ExpressionTag>} */
+	/** @type {true | AST.ExpressionTag | Array<AST.Text | AST.ExpressionTag>} */
 	let value = true;
 	if (parser.eat('=')) {
 		parser.allow_whitespace();
@@ -604,7 +554,7 @@ function read_attribute(parser) {
 			}
 		}
 
-		/** @type {Compiler.Directive} */
+		/** @type {Directive} */
 		// @ts-expect-error TODO can't figure out this error
 		const directive = {
 			start,
@@ -661,7 +611,7 @@ function get_directive_type(name) {
 
 /**
  * @param {Parser} parser
- * @return {Compiler.ExpressionTag | Array<Compiler.ExpressionTag | Compiler.Text>}
+ * @return {AST.ExpressionTag | Array<AST.ExpressionTag | AST.Text>}
  */
 function read_attribute_value(parser) {
 	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
@@ -678,7 +628,7 @@ function read_attribute_value(parser) {
 		];
 	}
 
-	/** @type {Array<Compiler.ExpressionTag | Compiler.Text>} */
+	/** @type {Array<AST.ExpressionTag | AST.Text>} */
 	let value;
 	try {
 		value = read_sequence(
@@ -686,7 +636,7 @@ function read_attribute_value(parser) {
 			() => {
 				// handle common case of quote marks existing outside of regex for performance reasons
 				if (quote_mark) return parser.match(quote_mark);
-				return !!parser.match_regex(regex_starts_with_invalid_attr_value);
+				return !!parser.match_regex(regex_invalid_unquoted_attribute_value);
 			},
 			'in attribute value'
 		);
@@ -724,7 +674,7 @@ function read_attribute_value(parser) {
  * @returns {any[]}
  */
 function read_sequence(parser, done, location) {
-	/** @type {Compiler.Text} */
+	/** @type {AST.Text} */
 	let current_chunk = {
 		start: parser.index,
 		end: -1,
@@ -734,7 +684,7 @@ function read_sequence(parser, done, location) {
 		parent: null
 	};
 
-	/** @type {Array<Compiler.Text | Compiler.ExpressionTag>} */
+	/** @type {Array<AST.Text | AST.ExpressionTag>} */
 	const chunks = [];
 
 	/** @param {number} end */
@@ -772,7 +722,7 @@ function read_sequence(parser, done, location) {
 			parser.allow_whitespace();
 			parser.eat('}', true);
 
-			/** @type {Compiler.ExpressionTag} */
+			/** @type {AST.ExpressionTag} */
 			const chunk = {
 				type: 'ExpressionTag',
 				start: index,

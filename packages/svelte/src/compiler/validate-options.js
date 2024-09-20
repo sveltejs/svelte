@@ -1,3 +1,5 @@
+import process from 'node:process';
+
 /** @import { ModuleCompileOptions, ValidatedModuleCompileOptions, CompileOptions, ValidatedCompileOptions } from '#compiler' */
 import * as e from './errors.js';
 import * as w from './warnings.js';
@@ -9,7 +11,7 @@ import * as w from './warnings.js';
  */
 
 const common = {
-	filename: string(undefined),
+	filename: string('(unknown)'),
 
 	// default to process.cwd() where it exists to replicate svelte4 behavior
 	// see https://github.com/sveltejs/svelte/blob/b62fc8c8fd2640c9b99168f01b9d958cb2f7574f/packages/svelte/src/compiler/compile/Component.js#L211
@@ -90,7 +92,7 @@ export const validate_component_options =
 
 			name: string(undefined),
 
-			namespace: list(['html', 'svg', 'foreign']),
+			namespace: list(['html', 'mathml', 'svg']),
 
 			modernAst: boolean(false),
 

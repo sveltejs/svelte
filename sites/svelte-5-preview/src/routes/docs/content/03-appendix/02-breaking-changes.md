@@ -144,9 +144,15 @@ Previously, Svelte employed a very complicated algorithm to determine if whitesp
 
 As before, you can disable whitespace trimming by setting the `preserveWhitespace` option in your compiler settings or on a per-component basis in `<svelte:options>`.
 
-## More recent browser required
+## Modern browser required
 
-Svelte now use Mutation Observers instead of IFrames to measure dimensions for `bind:clientWidth/clientHeight/offsetWidth/offsetHeight`. It also no longer listens to the `change` event on range inputs. Lastly, the `legacy` option was removed (or rather, replaced with a different set of settings).
+Svelte 5 requires a modern browser (in other words, not Internet Explorer) for various reasons:
+
+- it uses [`Proxies`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy)
+- elements with `clientWidth`/`clientHeight`/`offsetWidth`/`offsetHeight` bindings use a [`ResizeObserver`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver) rather than a convoluted `<iframe>` hack
+- `<input type="range" bind:value={...} />` only uses an `input` event listener, rather than also listening for `change` events as a fallback
+
+The `legacy` compiler option, which generated bulkier but IE-friendly code, no longer exists.
 
 ## Changes to compiler options
 
@@ -160,6 +166,16 @@ Svelte now use Mutation Observers instead of IFrames to measure dimensions for `
 ## The `children` prop is reserved
 
 Content inside component tags becomes a [snippet prop](/docs/snippets) called `children`. You cannot have a separate prop by that name.
+
+## Dot notation indicates a component
+
+In Svelte 4, `<foo.bar>` would create an element with a tag name of `"foo.bar"`. In Svelte 5, `foo.bar` is treated as a component instead. This is particularly useful inside `each` blocks:
+
+```svelte
+{#each items as item}
+	<item.component {...item.props} />
+{/each}
+```
 
 ## Breaking changes in runes mode
 
@@ -222,6 +238,55 @@ This is [no longer true in Svelte 5](/#H4sIAAAAAAAAE4WQwU7DMAyGX8VESANpXe8lq9Q8A
 <svelte:component this={Thing} />
 ```
 
+### Touch and wheel events are passive
+
+When using `onwheel`, `onmousewheel`, `ontouchstart` and `ontouchmove` event attributes, the handlers are [passive](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#using_passive_listeners) to align with browser defaults. This greatly improves responsiveness by allowing the browser to scroll the document immediately, rather than waiting to see if the event handler calls `event.preventDefault()`.
+
+In the very rare cases that you need to prevent these event defaults, you should use [`on`](https://svelte-5-preview.vercel.app/docs/imports#svelte-events) instead (for example inside an action).
+
+### Attribute/prop syntax is stricter
+
+In Svelte 4, complex attribute values needn't be quoted:
+
+<!-- prettier-ignore -->
+```svelte
+<Component prop=this{is}valid />
+```
+
+This is a footgun. In runes mode, if you want to concatenate stuff you must wrap the value in quotes:
+
+```svelte
+<Component prop="this{is}valid" />
+```
+
+Note that Svelte 5 will also warn if you have a single expression wrapped in quotes, like `answer="{42}"` — in Svelte 6, that will cause the value to be converted to a string, rather than passed as a number.
+
+### HTML structure is stricter
+
+In Svelte 4, you were allowed to write HTML code that would be repaired by the browser when server side rendering it. For example you could write this...
+
+```svelte
+<table>
+	<tr>
+		<td>hi</td>
+	</tr>
+</table>
+```
+
+... and the browser would auto-insert a `<tbody>` element:
+
+```svelte
+<table>
+	<tbody>
+		<tr>
+			<td>hi</td>
+		</tr>
+	</tbody>
+</table>
+```
+
+Svelte 5 is more strict about the HTML structure and will throw a compiler error in cases where the browser would repair the DOM.
+
 ## Other breaking changes
 
 ### Stricter `@const` assignment validation
@@ -262,7 +327,9 @@ Error and warning codes have been renamed. Previously they used dashes to separa
 
 ### Reduced number of namespaces
 
-The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `mathml`, `svg` and `foreign`.
+The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `mathml` and `svg`.
+
+The `foreign` namespace was only useful for Svelte Native, which we're planning to support differently in a 5.x minor.
 
 ### beforeUpdate/afterUpdate changes
 
@@ -357,3 +424,9 @@ Since these mismatches are extremely rare, Svelte 5 assumes that the values are 
 ### Hydration works differently
 
 Svelte 5 makes use of comments during server side rendering which are used for more robust and efficient hydration on the client. As such, you shouldn't remove comments from your HTML output if you intend to hydrate it, and if you manually authored HTML to be hydrated by a Svelte component, you need to adjust that HTML to include said comments at the correct positions.
+
+### `onevent` attributes are delegated
+
+Event attributes replace event directives: Instead of `on:click={handler}` you write `onclick={handler}`. For backwards compatibility the `on:event` syntax is still supported and behaves the same as in Svelte 4. Some of the `onevent` attributes however are delegated, which means you need to take care to not stop event propagation on those manually, as they then might never reach the listener for this event type at the root.
+
+<!-- TODO in final docs, add link to corresponding section for more details -->

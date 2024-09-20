@@ -1,10 +1,10 @@
 /** @import { Expression } from 'estree' */
-/** @import { KeyBlock } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
 
 /**
- * @param {KeyBlock} node
+ * @param {AST.KeyBlock} node
  * @param {ComponentContext} context
  */
 export function KeyBlock(node, context) {

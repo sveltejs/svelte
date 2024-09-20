@@ -1,5 +1,5 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression } from 'estree' */
-/** @import { Attribute, DelegatedEvent, RegularElement } from '#compiler' */
+/** @import { AST, DelegatedEvent, SvelteNode } from '#compiler' */
 /** @import { Context } from '../types' */
 import { is_capture_event, is_delegated } from '../../../../utils.js';
 import {
@@ -7,13 +7,22 @@ import {
 	get_attribute_expression,
 	is_event_attribute
 } from '../../../utils/ast.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {Attribute} node
+ * @param {AST.Attribute} node
  * @param {Context} context
  */
 export function Attribute(node, context) {
 	context.next();
+
+	// special case
+	if (node.name === 'value') {
+		const parent = /** @type {SvelteNode} */ (context.path.at(-1));
+		if (parent.type === 'RegularElement' && parent.name === 'option') {
+			mark_subtree_dynamic(context.path);
+		}
+	}
 
 	if (node.value !== true) {
 		for (const chunk of get_attribute_chunks(node.value)) {
@@ -98,20 +107,20 @@ function get_delegated_event(event_name, handler, context) {
 
 				const grandparent = path.at(-2);
 
-				/** @type {RegularElement | null} */
+				/** @type {AST.RegularElement | null} */
 				let element = null;
 				/** @type {string | null} */
 				let event_name = null;
 				if (parent.type === 'OnDirective') {
-					element = /** @type {RegularElement} */ (grandparent);
+					element = /** @type {AST.RegularElement} */ (grandparent);
 					event_name = parent.name;
 				} else if (
 					parent.type === 'ExpressionTag' &&
 					grandparent?.type === 'Attribute' &&
 					is_event_attribute(grandparent)
 				) {
-					element = /** @type {RegularElement} */ (path.at(-3));
-					const attribute = /** @type {Attribute} */ (grandparent);
+					element = /** @type {AST.RegularElement} */ (path.at(-3));
+					const attribute = /** @type {AST.Attribute} */ (grandparent);
 					event_name = get_attribute_event_name(attribute.name);
 				}
 
@@ -134,7 +143,7 @@ function get_delegated_event(event_name, handler, context) {
 			return unhoisted;
 		}
 
-		if (binding !== null && binding.initial !== null && !binding.mutated && !binding.is_called) {
+		if (binding !== null && binding.initial !== null && !binding.updated && !binding.is_called) {
 			const binding_type = binding.initial.type;
 
 			if (
@@ -188,7 +197,7 @@ function get_delegated_event(event_name, handler, context) {
 				(((!context.state.analysis.runes && binding.kind === 'each') ||
 					// or any normal not reactive bindings that are mutated.
 					binding.kind === 'normal') &&
-					binding.mutated))
+					binding.updated))
 		) {
 			return unhoisted;
 		}

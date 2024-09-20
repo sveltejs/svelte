@@ -1,11 +1,12 @@
-/** @import { EachBlock } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 /** @import { Scope } from '../../scope' */
 import * as e from '../../../errors.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 import { validate_block_not_empty, validate_opening_tag } from './shared/utils.js';
 
 /**
- * @param {EachBlock} node
+ * @param {AST.EachBlock} node
  * @param {Context} context
  */
 export function EachBlock(node, context) {
@@ -29,10 +30,13 @@ export function EachBlock(node, context) {
 	// evaluate expression in parent scope
 	context.visit(node.expression, {
 		...context.state,
+		expression: node.metadata.expression,
 		scope: /** @type {Scope} */ (context.state.scope.parent)
 	});
 
 	context.visit(node.body);
 	if (node.key) context.visit(node.key);
 	if (node.fallback) context.visit(node.fallback);
+
+	mark_subtree_dynamic(context.path);
 }

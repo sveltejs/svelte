@@ -1,10 +1,11 @@
-/** @import { StyleDirective } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import { get_attribute_chunks } from '../../../utils/ast.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {StyleDirective} node
+ * @param {AST.StyleDirective} node
  * @param {Context} context
  */
 export function StyleDirective(node, context) {
@@ -12,15 +13,13 @@ export function StyleDirective(node, context) {
 		e.style_directive_invalid_modifier(node);
 	}
 
+	mark_subtree_dynamic(context.path);
+
 	if (node.value === true) {
 		// get the binding for node.name and change the binding to state
 		let binding = context.state.scope.get(node.name);
 
 		if (binding) {
-			if (!context.state.analysis.runes && binding.mutated) {
-				binding.kind = 'state';
-			}
-
 			if (binding.kind !== 'normal') {
 				node.metadata.expression.has_state = true;
 			}

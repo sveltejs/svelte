@@ -1,4 +1,4 @@
-import type { Text, Css, ExpressionTag } from '#compiler';
+import type { AST, Css } from '#compiler';
 import type {
 	ArrayExpression,
 	AssignmentExpression,
@@ -60,7 +60,7 @@ export interface LegacyBody extends BaseElement {
 export interface LegacyAttribute extends BaseNode {
 	type: 'Attribute';
 	name: string;
-	value: true | Array<Text | LegacyMustacheTag | LegacyAttributeShorthand>;
+	value: true | Array<AST.Text | LegacyMustacheTag | LegacyAttributeShorthand>;
 }
 
 export interface LegacyAttributeShorthand extends BaseNode {
@@ -200,7 +200,7 @@ export interface LegacyStyleDirective extends BaseNode {
 	/** The 'x' in `style:x` */
 	name: string;
 	/** The 'y' in `style:x={y}` */
-	value: true | Array<ExpressionTag | Text>;
+	value: true | Array<AST.ExpressionTag | AST.Text>;
 	modifiers: Array<'important'>;
 }
 
@@ -270,4 +270,4 @@ export type LegacySvelteNode =
 	| LegacyAttributeLike
 	| LegacyAttributeShorthand
 	| LegacyCssNode
-	| Text;
+	| AST.Text;

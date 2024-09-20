@@ -3,7 +3,7 @@
 import { CompileDiagnostic } from './utils/compile_diagnostic.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
-export class InternalCompileError extends CompileDiagnostic {
+class InternalCompileError extends CompileDiagnostic {
 	name = 'CompileError';
 
 	/**
@@ -99,12 +99,12 @@ export function declaration_duplicate(node, name) {
 }
 
 /**
- * Cannot declare same variable name which is imported inside `<script context="module">`
+ * Cannot declare a variable with the same name as an import inside `<script module>`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function declaration_duplicate_module_import(node) {
-	e(node, "declaration_duplicate_module_import", "Cannot declare same variable name which is imported inside `<script context=\"module\">`");
+	e(node, "declaration_duplicate_module_import", "Cannot declare a variable with the same name as an import inside `<script module>`");
 }
 
 /**
@@ -349,6 +349,16 @@ export function rune_missing_parentheses(node) {
 }
 
 /**
+ * The `%name%` rune has been removed
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function rune_removed(node, name) {
+	e(node, "rune_removed", `The \`${name}\` rune has been removed`);
+}
+
+/**
  * `%name%` is now `%replacement%`
  * @param {null | number | NodeLike} node
  * @param {string} name
@@ -407,12 +417,31 @@ export function store_invalid_scoped_subscription(node) {
 }
 
 /**
- * Cannot reference store value inside `<script context="module">`
+ * Cannot reference store value inside `<script module>`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function store_invalid_subscription(node) {
-	e(node, "store_invalid_subscription", "Cannot reference store value inside `<script context=\"module\">`");
+	e(node, "store_invalid_subscription", "Cannot reference store value inside `<script module>`");
+}
+
+/**
+ * Cannot reference store value outside a `.svelte` file
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function store_invalid_subscription_module(node) {
+	e(node, "store_invalid_subscription_module", "Cannot reference store value outside a `.svelte` file");
+}
+
+/**
+ * TypeScript language features like %feature% are not natively supported, and their use is generally discouraged. Outside of `<script>` tags, these features are not supported. For use within `<script>` tags, you will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler. If you are using `vitePreprocess`, make sure to specifically enable preprocessing script tags (`vitePreprocess({ script: true })`)
+ * @param {null | number | NodeLike} node
+ * @param {string} feature
+ * @returns {never}
+ */
+export function typescript_invalid_feature(node, feature) {
+	e(node, "typescript_invalid_feature", `TypeScript language features like ${feature} are not natively supported, and their use is generally discouraged. Outside of \`<script>\` tags, these features are not supported. For use within \`<script>\` tags, you will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler. If you are using \`vitePreprocess\`, make sure to specifically enable preprocessing script tags (\`vitePreprocess({ script: true })\`)`);
 }
 
 /**
@@ -507,12 +536,12 @@ export function css_global_invalid_selector_list(node) {
 }
 
 /**
- * Nesting selectors can only be used inside a rule
+ * Nesting selectors can only be used inside a rule or as the first selector inside a lone `:global(...)`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function css_nesting_selector_invalid_placement(node) {
-	e(node, "css_nesting_selector_invalid_placement", "Nesting selectors can only be used inside a rule");
+	e(node, "css_nesting_selector_invalid_placement", "Nesting selectors can only be used inside a rule or as the first selector inside a lone `:global(...)`");
 }
 
 /**
@@ -845,15 +874,6 @@ export function element_invalid_closing_tag_autoclosed(node, name, reason) {
 }
 
 /**
- * Expected valid tag name
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function element_invalid_tag_name(node) {
-	e(node, "element_invalid_tag_name", "Expected valid tag name");
-}
-
-/**
  * `<%name%>` was left open
  * @param {null | number | NodeLike} node
  * @param {string} name
@@ -1016,12 +1036,22 @@ export function render_tag_invalid_spread_argument(node) {
 }
 
 /**
- * A component can have a single top-level `<script>` element and/or a single top-level `<script context="module">` element
+ * A component can have a single top-level `<script>` element and/or a single top-level `<script module>` element
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function script_duplicate(node) {
-	e(node, "script_duplicate", "A component can have a single top-level `<script>` element and/or a single top-level `<script context=\"module\">` element");
+	e(node, "script_duplicate", "A component can have a single top-level `<script>` element and/or a single top-level `<script module>` element");
+}
+
+/**
+ * If the `%name%` attribute is supplied, it must be a boolean attribute
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function script_invalid_attribute_value(node, name) {
+	e(node, "script_invalid_attribute_value", `If the \`${name}\` attribute is supplied, it must be a boolean attribute`);
 }
 
 /**
@@ -1031,6 +1061,16 @@ export function script_duplicate(node) {
  */
 export function script_invalid_context(node) {
 	e(node, "script_invalid_context", "If the context attribute is supplied, its value must be \"module\"");
+}
+
+/**
+ * The `%name%` attribute is reserved and cannot be used
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function script_reserved_attribute(node, name) {
+	e(node, "script_reserved_attribute", `The \`${name}\` attribute is reserved and cannot be used`);
 }
 
 /**
@@ -1154,6 +1194,15 @@ export function style_duplicate(node) {
 }
 
 /**
+ * `<svelte:body>` does not support non-event attributes or spread attributes
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_body_illegal_attribute(node) {
+	e(node, "svelte_body_illegal_attribute", "`<svelte:body>` does not support non-event attributes or spread attributes");
+}
+
+/**
  * Invalid component definition — must be an `{expression}`
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -1196,15 +1245,6 @@ export function svelte_fragment_invalid_attribute(node) {
  */
 export function svelte_fragment_invalid_placement(node) {
 	e(node, "svelte_fragment_invalid_placement", "`<svelte:fragment>` must be the direct child of a component");
-}
-
-/**
- * `<svelte:fragment>` slot attribute must have a static value
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function svelte_fragment_invalid_slot(node) {
-	e(node, "svelte_fragment_invalid_slot", "`<svelte:fragment>` slot attribute must have a static value");
 }
 
 /**
@@ -1312,12 +1352,21 @@ export function svelte_options_invalid_customelement_shadow(node) {
 }
 
 /**
- * Tag name must be two or more words joined by the "-" character
+ * Tag name must be lowercase and hyphenated
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function svelte_options_invalid_tagname(node) {
-	e(node, "svelte_options_invalid_tagname", "Tag name must be two or more words joined by the \"-\" character");
+	e(node, "svelte_options_invalid_tagname", "Tag name must be lowercase and hyphenated");
+}
+
+/**
+ * Tag name is reserved
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_options_reserved_tagname(node) {
+	e(node, "svelte_options_reserved_tagname", "Tag name is reserved");
 }
 
 /**
@@ -1337,6 +1386,15 @@ export function svelte_options_unknown_attribute(node, name) {
  */
 export function svelte_self_invalid_placement(node) {
 	e(node, "svelte_self_invalid_placement", "`<svelte:self>` components can only exist inside `{#if}` blocks, `{#each}` blocks, `{#snippet}` blocks or slots passed to components");
+}
+
+/**
+ * Expected a valid element or component name. Components must have a valid variable name or dot notation expression
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function tag_invalid_name(node) {
+	e(node, "tag_invalid_name", "Expected a valid element or component name. Components must have a valid variable name or dot notation expression");
 }
 
 /**

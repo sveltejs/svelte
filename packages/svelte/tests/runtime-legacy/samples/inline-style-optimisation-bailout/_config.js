@@ -11,7 +11,7 @@ export default test({
 
 		let styles = window.getComputedStyle(p);
 		assert.equal(styles.opacity, '0.5');
-		assert.equal(styles.color, 'red');
+		assert.equal(styles.color, 'rgb(255, 0, 0)');
 
 		component.styles = 'font-size: 20px';
 

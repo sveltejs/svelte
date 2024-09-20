@@ -1,10 +1,10 @@
-/** @import { SnippetBlock } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { validate_block_not_empty, validate_opening_tag } from './shared/utils.js';
 import * as e from '../../../errors.js';
 
 /**
- * @param {SnippetBlock} node
+ * @param {AST.SnippetBlock} node
  * @param {Context} context
  */
 export function SnippetBlock(node, context) {

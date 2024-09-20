@@ -39,7 +39,8 @@ export default [
 	{
 		languageOptions: {
 			parserOptions: {
-				project: true
+				projectService: true,
+				tsconfigRootDir: import.meta.dirname
 			}
 		},
 		plugins: {
@@ -64,10 +65,14 @@ export default [
 		}
 	},
 	{
-		files: ['playgrounds/**/*'],
+		// If you get an error along the lines of "@typescript-eslint/await-thenable needs a project service configured", then that likely means
+		// that eslint rules that need to be type-aware run through a Svelte file which seems unsupported at the moment. In that case, ensure that
+		// these are excluded to run on Svelte files.
+		files: ['**/*.svelte'],
 		rules: {
-			'lube/svelte-naming-convention': 'off',
-			'no-console': 'off'
+			'@typescript-eslint/await-thenable': 'off',
+			'@typescript-eslint/prefer-promise-reject-errors': 'off',
+			'@typescript-eslint/require-await': 'off'
 		}
 	},
 	{
@@ -87,6 +92,12 @@ export default [
 			'packages/svelte/src/internal/client/warnings.js',
 			'packages/svelte/src/internal/shared/warnings.js',
 			'packages/svelte/compiler/index.js',
+			// stuff we don't want to lint
+			'benchmarking/**',
+			'coverage/**',
+			'playgrounds/sandbox/**',
+			// exclude top level config files
+			'*.config.js',
 			// documentation can contain invalid examples
 			'documentation',
 			// contains a fork of the REPL which doesn't adhere to eslint rules

@@ -32,39 +32,8 @@ export function ExportNamedDeclaration(node, context) {
 					e.derived_invalid_export(node);
 				}
 
-				if ((binding.kind === 'state' || binding.kind === 'frozen_state') && binding.reassigned) {
+				if ((binding.kind === 'state' || binding.kind === 'raw_state') && binding.reassigned) {
 					e.state_invalid_export(node);
-				}
-			}
-		}
-	}
-
-	if (context.state.ast_type === 'instance' && !context.state.analysis.runes) {
-		context.state.analysis.needs_props = true;
-
-		if (node.declaration) {
-			if (
-				node.declaration.type === 'FunctionDeclaration' ||
-				node.declaration.type === 'ClassDeclaration'
-			) {
-				context.state.analysis.exports.push({
-					name: /** @type {Identifier} */ (node.declaration.id).name,
-					alias: null
-				});
-			} else if (node.declaration.type === 'VariableDeclaration') {
-				if (node.declaration.kind === 'const') {
-					for (const declarator of node.declaration.declarations) {
-						for (const node of extract_identifiers(declarator.id)) {
-							context.state.analysis.exports.push({ name: node.name, alias: null });
-						}
-					}
-				} else {
-					for (const declarator of node.declaration.declarations) {
-						for (const id of extract_identifiers(declarator.id)) {
-							const binding = /** @type {Binding} */ (context.state.scope.get(id.name));
-							binding.kind = 'bindable_prop';
-						}
-					}
 				}
 			}
 		}

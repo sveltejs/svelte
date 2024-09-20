@@ -1,15 +1,15 @@
 /** @import { Expression, Identifier } from 'estree' */
-/** @import { Attribute, ClassDirective, ExpressionMetadata, Namespace, RegularElement, StyleDirective, SvelteElement } from '#compiler' */
+/** @import { AST, Namespace } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { normalize_attribute } from '../../../../../../utils.js';
 import * as b from '../../../../../utils/builders.js';
-import { build_getter } from '../../utils.js';
+import { build_getter, create_derived } from '../../utils.js';
 import { build_template_literal, build_update } from './utils.js';
 
 /**
  * Serializes each style directive into something like `$.set_style(element, style_property, value)`
  * and adds it either to init or update, depending on whether or not the value or the attributes are dynamic.
- * @param {StyleDirective[]} style_directives
+ * @param {AST.StyleDirective[]} style_directives
  * @param {Identifier} element_id
  * @param {ComponentContext} context
  * @param {boolean} is_attributes_reactive
@@ -25,10 +25,19 @@ export function build_style_directives(
 	const state = context.state;
 
 	for (const directive of style_directives) {
+		const { has_state, has_call } = directive.metadata.expression;
+
 		let value =
 			directive.value === true
 				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
 				: build_attribute_value(directive.value, context).value;
+
+		if (has_call) {
+			const id = b.id(state.scope.generate('style_directive'));
+
+			state.init.push(b.const(id, create_derived(state, b.thunk(value))));
+			value = b.call('$.get', id);
+		}
 
 		const update = b.stmt(
 			b.call(
@@ -40,8 +49,6 @@ export function build_style_directives(
 				force_check ? b.true : undefined
 			)
 		);
-
-		const { has_state, has_call } = directive.metadata.expression;
 
 		if (!is_attributes_reactive && has_call) {
 			state.init.push(build_update(update));
@@ -56,7 +63,7 @@ export function build_style_directives(
 /**
  * Serializes each class directive into something like `$.class_toogle(element, class_name, value)`
  * and adds it either to init or update, depending on whether or not the value or the attributes are dynamic.
- * @param {ClassDirective[]} class_directives
+ * @param {AST.ClassDirective[]} class_directives
  * @param {Identifier} element_id
  * @param {ComponentContext} context
  * @param {boolean} is_attributes_reactive
@@ -69,10 +76,17 @@ export function build_class_directives(
 ) {
 	const state = context.state;
 	for (const directive of class_directives) {
-		const value = /** @type {Expression} */ (context.visit(directive.expression));
-		const update = b.stmt(b.call('$.toggle_class', element_id, b.literal(directive.name), value));
-
 		const { has_state, has_call } = directive.metadata.expression;
+		let value = /** @type {Expression} */ (context.visit(directive.expression));
+
+		if (has_call) {
+			const id = b.id(state.scope.generate('class_directive'));
+
+			state.init.push(b.const(id, create_derived(state, b.thunk(value))));
+			value = b.call('$.get', id);
+		}
+
+		const update = b.stmt(b.call('$.toggle_class', element_id, b.literal(directive.name), value));
 
 		if (!is_attributes_reactive && has_call) {
 			state.init.push(build_update(update));
@@ -85,7 +99,7 @@ export function build_class_directives(
 }
 
 /**
- * @param {Attribute['value']} value
+ * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
  */
 export function build_attribute_value(value, context) {
@@ -111,16 +125,12 @@ export function build_attribute_value(value, context) {
 }
 
 /**
- * @param {RegularElement | SvelteElement} element
- * @param {Attribute} attribute
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {AST.Attribute} attribute
  * @param {{ state: { metadata: { namespace: Namespace }}}} context
  */
 export function get_attribute_name(element, attribute, context) {
-	if (
-		!element.metadata.svg &&
-		!element.metadata.mathml &&
-		context.state.metadata.namespace !== 'foreign'
-	) {
+	if (!element.metadata.svg && !element.metadata.mathml) {
 		return normalize_attribute(attribute.name);
 	}
 

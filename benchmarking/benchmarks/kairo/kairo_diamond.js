@@ -4,7 +4,7 @@ import * as $ from '../../../packages/svelte/src/internal/client/index.js';
 let width = 5;
 
 function setup() {
-	let head = $.source(0);
+	let head = $.state(0);
 	let current = [];
 	for (let i = 0; i < width; i++) {
 		current.push(

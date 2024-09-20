@@ -1,11 +1,11 @@
 /** @import { Raf } from '#client' */
 import { noop } from '../shared/utils.js';
 
-const is_client = typeof window !== 'undefined';
+import { BROWSER } from 'esm-env';
 
-const request_animation_frame = is_client ? requestAnimationFrame : noop;
+const request_animation_frame = BROWSER ? requestAnimationFrame : noop;
 
-const now = is_client ? () => performance.now() : () => Date.now();
+const now = BROWSER ? () => performance.now() : () => Date.now();
 
 /** @type {Raf} */
 export const raf = {

@@ -48,6 +48,10 @@
 
 > Failed to hydrate the application
 
+## invalid_snippet
+
+> Could not `{@render}` snippet due to the expression being `null` or `undefined`. Consider using optional chaining `{@render snippet?.()}`
+
 ## lifecycle_legacy_only
 
 > `%name%(...)` cannot be used in runes mode
@@ -64,18 +68,18 @@
 
 > The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
 
-## state_frozen_invalid_argument
+## state_descriptors_fixed
 
-> The argument to `$state.frozen(...)` cannot be an object created with `$state(...)`. You should create a copy of it first, for example with `$state.snapshot`
+> Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
 
 ## state_prototype_fixed
 
 > Cannot set prototype of `$state` object
 
+## state_unsafe_local_read
+
+> Reading state that was created inside the same derived is forbidden. Consider using `untrack` to read locally created state
+
 ## state_unsafe_mutation
 
 > Updating state inside a derived is forbidden. If the value should not be reactive, declare it without `$state`
-
-## svelte_component_invalid_this_value
-
-> The `this={...}` property of a `<svelte:component>` must be a Svelte component, if defined

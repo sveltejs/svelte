@@ -1,5 +1,5 @@
 import type { Expression, Statement, ModuleDeclaration, LabeledStatement } from 'estree';
-import type { SvelteNode, Namespace, ValidatedCompileOptions } from '#compiler';
+import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
 import type { StateField } from '../client/types.js';

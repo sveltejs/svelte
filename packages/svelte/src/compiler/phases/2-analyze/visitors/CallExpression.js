@@ -1,5 +1,5 @@
 /** @import { CallExpression, VariableDeclarator } from 'estree' */
-/** @import { SvelteNode } from '#compiler' */
+/** @import { AST, SvelteNode } from '#compiler' */
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
@@ -73,7 +73,7 @@ export function CallExpression(node, context) {
 			break;
 
 		case '$state':
-		case '$state.frozen':
+		case '$state.raw':
 		case '$derived':
 		case '$derived.by':
 			if (
@@ -141,18 +141,6 @@ export function CallExpression(node, context) {
 			}
 
 			break;
-
-		case '$state.is':
-			if (node.arguments.length !== 2) {
-				e.rune_invalid_arguments_length(node, rune, 'exactly two arguments');
-			}
-
-			break;
-	}
-
-	if (context.state.expression && !is_pure(node.callee, context)) {
-		context.state.expression.has_call = true;
-		context.state.expression.has_state = true;
 	}
 
 	if (context.state.render_tag) {
@@ -180,5 +168,16 @@ export function CallExpression(node, context) {
 		context.next({ ...context.state, function_depth: context.state.function_depth + 1 });
 	} else {
 		context.next();
+	}
+
+	if (context.state.expression) {
+		// TODO We assume that any dependencies are stateful, which isn't necessarily the case — see
+		// https://github.com/sveltejs/svelte/issues/13266. This check also includes dependencies
+		// outside the call expression itself (e.g. `{blah && pure()}`) resulting in additional
+		// false positives, but for now we accept that trade-off
+		if (!is_pure(node.callee, context) || context.state.expression.dependencies.size > 0) {
+			context.state.expression.has_call = true;
+			context.state.expression.has_state = true;
+		}
 	}
 }

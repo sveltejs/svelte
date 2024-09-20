@@ -1,4 +1,5 @@
 export { FILENAME, HMR } from '../../constants.js';
+export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
 export {
@@ -36,7 +37,7 @@ export {
 	set_checked
 } from './dom/elements/attributes.js';
 export { set_class, set_svg_class, set_mathml_class, toggle_class } from './dom/elements/class.js';
-export { event, delegate, replay_events } from './dom/elements/events.js';
+export { apply, event, delegate, replay_events } from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
 export { set_style } from './dom/elements/style.js';
 export { animation, transition } from './dom/elements/transitions.js';
@@ -93,7 +94,6 @@ export {
 	template_with_script,
 	text
 } from './dom/template.js';
-export { freeze } from './freeze.js';
 export { derived, derived_safe_equal } from './reactivity/deriveds.js';
 export {
 	effect_tracking,
@@ -106,7 +106,7 @@ export {
 	user_effect,
 	user_pre_effect
 } from './reactivity/effects.js';
-export { mutable_source, mutate, source, set } from './reactivity/sources.js';
+export { mutable_state, mutate, set, state } from './reactivity/sources.js';
 export {
 	prop,
 	rest_props,
@@ -128,6 +128,7 @@ export {
 export { set_text } from './render.js';
 export {
 	get,
+	safe_get,
 	invalidate_inner_signals,
 	flush_sync,
 	tick,
@@ -137,7 +138,6 @@ export {
 	exclude_from_object,
 	pop,
 	push,
-	unwrap,
 	deep_read,
 	deep_read_state,
 	getAllContexts,
@@ -145,14 +145,9 @@ export {
 	setContext,
 	hasContext
 } from './runtime.js';
-export {
-	validate_binding,
-	validate_dynamic_component,
-	validate_each_keys,
-	validate_prop_bindings
-} from './validate.js';
+export { validate_binding, validate_each_keys, validate_prop_bindings } from './validate.js';
 export { raf } from './timing.js';
-export { proxy, is } from './proxy.js';
+export { proxy } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
 export {
 	child,
@@ -170,3 +165,4 @@ export {
 	validate_void_dynamic_element
 } from '../shared/validate.js';
 export { strict_equals, equals } from './dev/equality.js';
+export { log_if_contains_state } from './dev/console-log.js';

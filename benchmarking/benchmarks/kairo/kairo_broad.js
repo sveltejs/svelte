@@ -2,7 +2,7 @@ import { assert, fastest_test } from '../../utils.js';
 import * as $ from '../../../packages/svelte/src/internal/client/index.js';
 
 function setup() {
-	let head = $.source(0);
+	let head = $.state(0);
 	let last = head;
 	let counter = 0;
 

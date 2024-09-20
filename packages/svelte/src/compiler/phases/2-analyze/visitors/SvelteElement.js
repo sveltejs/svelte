@@ -1,12 +1,13 @@
-/** @import { Attribute, SvelteElement, Text } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { NAMESPACE_MATHML, NAMESPACE_SVG } from '../../../../constants.js';
 import { is_text_attribute } from '../../../utils/ast.js';
 import { check_element } from './shared/a11y.js';
 import { validate_element } from './shared/element.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {SvelteElement} node
+ * @param {AST.SvelteElement} node
  * @param {Context} context
  */
 export function SvelteElement(node, context) {
@@ -16,7 +17,7 @@ export function SvelteElement(node, context) {
 
 	context.state.analysis.elements.push(node);
 
-	const xmlns = /** @type {Attribute & { value: [Text] } | undefined} */ (
+	const xmlns = /** @type {AST.Attribute & { value: [AST.Text] } | undefined} */ (
 		node.attributes.find(
 			(a) => a.type === 'Attribute' && a.name === 'xmlns' && is_text_attribute(a)
 		)
@@ -57,6 +58,8 @@ export function SvelteElement(node, context) {
 			}
 		}
 	}
+
+	mark_subtree_dynamic(context.path);
 
 	context.next({ ...context.state, parent_element: null });
 }

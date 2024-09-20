@@ -1,19 +1,24 @@
-/** @import { Derived, Effect, Source, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
-	current_component_context,
-	current_reaction,
+	component_context,
+	active_reaction,
 	new_deps,
-	current_effect,
-	current_untracked_writes,
+	active_effect,
+	untracked_writes,
 	get,
 	is_runes,
 	schedule_effect,
-	set_current_untracked_writes,
+	set_untracked_writes,
 	set_signal_status,
 	untrack,
 	increment_version,
-	update_effect
+	update_effect,
+	derived_sources,
+	set_derived_sources,
+	check_dirtiness,
+	set_is_flushing_effect,
+	is_flushing_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -27,14 +32,20 @@ import {
 } from '../constants.js';
 import * as e from '../errors.js';
 
-let inspect_effects = new Set();
+export let inspect_effects = new Set();
+
+/**
+ * @param {Set<any>} v
+ */
+export function set_inspect_effects(v) {
+	inspect_effects = v;
+}
 
 /**
  * @template V
  * @param {V} v
  * @returns {Source<V>}
  */
-/*#__NO_SIDE_EFFECTS__*/
 export function source(v) {
 	return {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
@@ -43,6 +54,14 @@ export function source(v) {
 		equals,
 		version: 0
 	};
+}
+
+/**
+ * @template V
+ * @param {V} v
+ */
+export function state(v) {
+	return push_derived_source(source(v));
 }
 
 /**
@@ -57,11 +76,37 @@ export function mutable_source(initial_value) {
 
 	// bind the signal to the component context, in case we need to
 	// track updates to trigger beforeUpdate/afterUpdate callbacks
-	if (current_component_context !== null && current_component_context.l !== null) {
-		(current_component_context.l.s ??= []).push(s);
+	if (component_context !== null && component_context.l !== null) {
+		(component_context.l.s ??= []).push(s);
 	}
 
 	return s;
+}
+
+/**
+ * @template V
+ * @param {V} v
+ * @returns {Source<V>}
+ */
+export function mutable_state(v) {
+	return push_derived_source(mutable_source(v));
+}
+
+/**
+ * @template V
+ * @param {Source<V>} source
+ */
+/*#__NO_SIDE_EFFECTS__*/
+function push_derived_source(source) {
+	if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
+		if (derived_sources === null) {
+			set_derived_sources([source]);
+		} else {
+			derived_sources.push(source);
+		}
+	}
+
+	return source;
 }
 
 /**
@@ -84,7 +129,14 @@ export function mutate(source, value) {
  * @returns {V}
  */
 export function set(source, value) {
-	if (current_reaction !== null && is_runes() && (current_reaction.f & DERIVED) !== 0) {
+	if (
+		active_reaction !== null &&
+		is_runes() &&
+		(active_reaction.f & DERIVED) !== 0 &&
+		// If the source was created locally within the current derived, then
+		// we allow the mutation.
+		(derived_sources === null || !derived_sources.includes(source))
+	) {
 		e.state_unsafe_mutation();
 	}
 
@@ -101,27 +153,40 @@ export function set(source, value) {
 		// scheduled. i.e: `$effect(() => x++)`
 		if (
 			is_runes() &&
-			current_effect !== null &&
-			(current_effect.f & CLEAN) !== 0 &&
-			(current_effect.f & BRANCH_EFFECT) === 0
+			active_effect !== null &&
+			(active_effect.f & CLEAN) !== 0 &&
+			(active_effect.f & BRANCH_EFFECT) === 0
 		) {
 			if (new_deps !== null && new_deps.includes(source)) {
-				set_signal_status(current_effect, DIRTY);
-				schedule_effect(current_effect);
+				set_signal_status(active_effect, DIRTY);
+				schedule_effect(active_effect);
 			} else {
-				if (current_untracked_writes === null) {
-					set_current_untracked_writes([source]);
+				if (untracked_writes === null) {
+					set_untracked_writes([source]);
 				} else {
-					current_untracked_writes.push(source);
+					untracked_writes.push(source);
 				}
 			}
 		}
 
-		if (DEV) {
-			for (const effect of inspect_effects) {
-				update_effect(effect);
+		if (DEV && inspect_effects.size > 0) {
+			const inspects = Array.from(inspect_effects);
+			var previously_flushing_effect = is_flushing_effect;
+			set_is_flushing_effect(true);
+			try {
+				for (const effect of inspects) {
+					// Mark clean inspect-effects as maybe dirty and then check their dirtiness
+					// instead of just updating the effects - this way we avoid overfiring.
+					if ((effect.f & CLEAN) !== 0) {
+						set_signal_status(effect, MAYBE_DIRTY);
+					}
+					if (check_dirtiness(effect)) {
+						update_effect(effect);
+					}
+				}
+			} finally {
+				set_is_flushing_effect(previously_flushing_effect);
 			}
-
 			inspect_effects.clear();
 		}
 	}
@@ -149,7 +214,7 @@ function mark_reactions(signal, status) {
 		if ((flags & DIRTY) !== 0) continue;
 
 		// In legacy mode, skip the current effect to prevent infinite loops
-		if (!runes && reaction === current_effect) continue;
+		if (!runes && reaction === active_effect) continue;
 
 		// Inspect effects need to run immediately, so that the stack trace makes sense
 		if (DEV && (flags & INSPECT_EFFECT) !== 0) {

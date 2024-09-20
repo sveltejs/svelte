@@ -1,4 +1,4 @@
-/** @import { Effect, EffectNodes, TemplateNode } from '#client' */
+/** @import { Effect, TemplateNode } from '#client' */
 import { FILENAME, NAMESPACE_SVG } from '../../../../constants.js';
 import {
 	hydrate_next,
@@ -7,7 +7,7 @@ import {
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
-import { empty } from '../operations.js';
+import { create_text, get_first_child } from '../operations.js';
 import {
 	block,
 	branch,
@@ -17,7 +17,7 @@ import {
 } from '../../reactivity/effects.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
-import { current_component_context, current_effect } from '../../runtime.js';
+import { component_context, active_effect } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { assign_nodes } from '../template.js';
@@ -38,7 +38,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 		hydrate_next();
 	}
 
-	var filename = DEV && location && current_component_context?.function[FILENAME];
+	var filename = DEV && location && component_context?.function[FILENAME];
 
 	/** @type {string | null} */
 	var tag;
@@ -119,7 +119,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 					// If hydrating, use the existing ssr comment as the anchor so that the
 					// inner open and close methods can pick up the existing nodes correctly
 					var child_anchor = /** @type {TemplateNode} */ (
-						hydrating ? element.firstChild : element.appendChild(empty())
+						hydrating ? get_first_child(element) : element.appendChild(create_text())
 					);
 
 					if (hydrating) {
@@ -138,7 +138,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				}
 
 				// we do this after calling `render_fn` so that child effects don't override `nodes.end`
-				/** @type {Effect & { nodes: EffectNodes }} */ (current_effect).nodes.end = element;
+				/** @type {Effect} */ (active_effect).nodes_end = element;
 
 				anchor.before(element);
 			});

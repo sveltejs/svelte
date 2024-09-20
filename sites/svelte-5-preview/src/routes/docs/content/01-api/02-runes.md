@@ -64,14 +64,14 @@ Only plain objects and arrays [are made deeply reactive](/#H4sIAAAAAAAAE42QwWrDM
 
 In non-runes mode, a `let` declaration is treated as reactive state if it is updated at some point. Unlike `$state(...)`, which works anywhere in your app, `let` only behaves this way at the top level of a component.
 
-## `$state.frozen`
+## `$state.raw`
 
-State declared with `$state.frozen` cannot be mutated; it can only be _reassigned_. In other words, rather than assigning to a property of an object, or using an array method like `push`, replace the object or array altogether if you'd like to update it:
+State declared with `$state.raw` cannot be mutated; it can only be _reassigned_. In other words, rather than assigning to a property of an object, or using an array method like `push`, replace the object or array altogether if you'd like to update it:
 
 ```diff
 <script>
 -	let numbers = $state([1, 2, 3]);
-+	let numbers = $state.frozen([1, 2, 3]);
++	let numbers = $state.raw([1, 2, 3]);
 </script>
 
 -<button onclick={() => numbers.push(numbers.length + 1)}>
@@ -89,9 +89,7 @@ State declared with `$state.frozen` cannot be mutated; it can only be _reassigne
 </p>
 ```
 
-This can improve performance with large arrays and objects that you weren't planning to mutate anyway, since it avoids the cost of making them reactive. Note that frozen state can _contain_ reactive state (for example, a frozen array of reactive objects).
-
-> Objects and arrays passed to `$state.frozen` will be shallowly frozen using `Object.freeze()`. If you don't want this, pass in a clone of the object or array instead.
+This can improve performance with large arrays and objects that you weren't planning to mutate anyway, since it avoids the cost of making them reactive. Note that raw state can _contain_ reactive state (for example, a raw array of reactive objects).
 
 ## `$state.snapshot`
 
@@ -109,26 +107,6 @@ To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snaps
 ```
 
 This is handy when you want to pass some state to an external library or API that doesn't expect a proxy, such as `structuredClone`.
-
-## `$state.is`
-
-Sometimes you might need to compare two values, one of which is a reactive `$state(...)` proxy. For this you can use `$state.is(a, b)`:
-
-```svelte
-<script>
-	let foo = $state({});
-	let bar = {};
-
-	foo.bar = bar;
-
-	console.log(foo.bar === bar); // false — `foo.bar` is a reactive proxy
-	console.log($state.is(foo.bar, bar)); // true
-</script>
-```
-
-This is handy when you might want to check if the object exists within a deeply reactive object/array.
-
-> `$state.is` uses `Object.is` to check if two values are the same value.
 
 ## `$derived`
 
@@ -278,6 +256,21 @@ An effect only reruns when the object it reads changes, not when a property insi
 </button>
 
 <p>{state.value} doubled is {derived.value}</p>
+```
+
+An effect only depends on the values that it read the last time it ran. If `a` is true, changes to `b` will [not cause this effect to rerun](/#H4sIAAAAAAAAE3WQ0WrDMAxFf0U1hTow1vcsMfQ7lj3YjlxEXTvEymC4_vfFC6Ewtidxde8RkrJw5DGJ9j2LoO8oWnGZJvEi-GuqIn2iZ1x1istsa6dLdqaJ1RAG9sigoYdjYs0onfYJm7fdMX85q3dE59CylA30CnJtDWxjSNHjq49XeZqXEChcT9usLUAOpIbHA0yzM78oColGhDVofLS3neZSS6mqOz-XD51ZmGOAGKwne-vztk-956CL0kAJsi7decupf4l658EUZX4I8yTWt93jSI5wFC3PC5aP8g0Aje5DcQEAAA==):
+
+```ts
+let a = false;
+let b = false;
+// ---cut---
+$effect(() => {
+	console.log('running');
+
+	if (a || b) {
+		console.log('inside if block');
+	}
+});
 ```
 
 You can return a function from `$effect`, which will run immediately before the effect re-runs, and before it is destroyed ([demo](/#H4sIAAAAAAAAE42SzW6DMBCEX2Vl5RDaVCQ9JoDUY--9lUox9lKsGBvZC1GEePcaKPnpqSe86_m0M2t6ViqNnu0_e2Z4jWzP3pqGbRhdmrHwHWrCUHvbOjF2Ei-caijLTU4aCYRtDUEKK0-ccL2NDstNrbRWHoU10t8Eu-121gTVCssSBa3XEaQZ9GMrpziGj0p5OAccCgSHwmEgJZwrNNihg6MyhK7j-gii4uYb_YyGUZ5guQwzPdL7b_U4ZNSOvp9T2B3m1rB5cLx4zMkhtc7AHz7YVCVwEFzrgosTBMuNs52SKDegaPbvWnMH8AhUXaNUIY6-hHCldQhUIcyLCFlfAuHvkCKaYk8iYevGGgy2wyyJnpy9oLwG0sjdNe2yhGhJN32HsUzi2xOapNpl_bSLIYnDeeoVLZE1YI3QSpzSfo7-8J5PKbwOmdf2jC6JZyD7HxpPaMk93aHhF6utVKVCyfbkWhy-hh9Z3o_2nQIAAA==)).

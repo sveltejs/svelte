@@ -1,5 +1,439 @@
 # svelte
 
+## 5.0.0-next.257
+
+### Patch Changes
+
+- fix: only set attribute as property if element has setter ([#13341](https://github.com/sveltejs/svelte/pull/13341))
+
+## 5.0.0-next.256
+
+### Patch Changes
+
+- fix: only warn on context="module" in runes mode ([#13332](https://github.com/sveltejs/svelte/pull/13332))
+
+- feat: deprecate `<svelte:self>` in runes mode ([#13333](https://github.com/sveltejs/svelte/pull/13333))
+
+- fix: set strings as attributes, non-strings as properties if property exists ([#13327](https://github.com/sveltejs/svelte/pull/13327))
+
+## 5.0.0-next.255
+
+### Patch Changes
+
+- fix: keep bound inputs in sync in runes mode ([#13328](https://github.com/sveltejs/svelte/pull/13328))
+
+- fix: silence snapshot warnings inside `$inspect` ([#13334](https://github.com/sveltejs/svelte/pull/13334))
+
+## 5.0.0-next.254
+
+### Patch Changes
+
+- feat: account for `zoom` when calculating animation transforms ([#13317](https://github.com/sveltejs/svelte/pull/13317))
+
+## 5.0.0-next.253
+
+### Patch Changes
+
+- fix: delete transformers shadowed by unreassigned state ([#13316](https://github.com/sveltejs/svelte/pull/13316))
+
+- fix: don't make wheel events passive by default ([#13322](https://github.com/sveltejs/svelte/pull/13322))
+
+## 5.0.0-next.252
+
+### Patch Changes
+
+- fix: handle `$Props` interface during migration ([#13305](https://github.com/sveltejs/svelte/pull/13305))
+
+- fix: attach effects-inside-deriveds to the parent of the derived ([#13309](https://github.com/sveltejs/svelte/pull/13309))
+
+- fix: simplify and robustify appending styles ([#13303](https://github.com/sveltejs/svelte/pull/13303))
+
+## 5.0.0-next.251
+
+### Patch Changes
+
+- fix: improve performance of scheduling effects ([#13300](https://github.com/sveltejs/svelte/pull/13300))
+
+## 5.0.0-next.250
+
+### Patch Changes
+
+- fix: correctly migrate sequence expressions ([#13291](https://github.com/sveltejs/svelte/pull/13291))
+
+- fix: avoid disconnecting deriveds that are still active ([#13292](https://github.com/sveltejs/svelte/pull/13292))
+
+- feat: Add accessibility warnings for buttons and anchors without explicit labels and content ([#13130](https://github.com/sveltejs/svelte/pull/13130))
+
+## 5.0.0-next.249
+
+### Patch Changes
+
+- fix: ensure snapshot logs don't affect dependency graph ([#13286](https://github.com/sveltejs/svelte/pull/13286))
+
+- fix: allow custom element styles to be updated in HMR mode ([#13225](https://github.com/sveltejs/svelte/pull/13225))
+
+- fix: inject styles correctly when mounting inside an iframe ([#13225](https://github.com/sveltejs/svelte/pull/13225))
+
+## 5.0.0-next.248
+
+### Patch Changes
+
+- feat: provide guidance in browser console when logging $state objects ([#13142](https://github.com/sveltejs/svelte/pull/13142))
+
+- fix: ensure correct parent effect is associated with render effects ([#13274](https://github.com/sveltejs/svelte/pull/13274))
+
+- feat: unwrap function expressions where possible, and optimise bindings ([#13269](https://github.com/sveltejs/svelte/pull/13269))
+
+## 5.0.0-next.247
+
+### Patch Changes
+
+- fix: wait until template strings are complete before sanitizing ([#13262](https://github.com/sveltejs/svelte/pull/13262))
+
+- fix: avoid flushing sync with $inspect ([#13239](https://github.com/sveltejs/svelte/pull/13239))
+
+- fix: separate `template_effect` for dynamic class/style directive with dynamic attributes ([#13171](https://github.com/sveltejs/svelte/pull/13171))
+
+- fix: treat pure call expressions as potentially reactive if they reference local bindings ([#13264](https://github.com/sveltejs/svelte/pull/13264))
+
+- fix: follow spec for `customElement` option ([#13247](https://github.com/sveltejs/svelte/pull/13247))
+
+- fix: tighten up `# svelte prefix validation ([#13261](https://github.com/sveltejs/svelte/pull/13261))
+
+## 5.0.0-next.246
+
+### Patch Changes
+
+- perf: inline module variables into template ([#13075](https://github.com/sveltejs/svelte/pull/13075))
+
+- fix: allow custom element events on slot to bubble inside custom element ([#13222](https://github.com/sveltejs/svelte/pull/13222))
+
+- fix: add missing `autocomplete` attribute tokens ([#13229](https://github.com/sveltejs/svelte/pull/13229))
+
+- feat: add infinite loop effect callstack ([#13231](https://github.com/sveltejs/svelte/pull/13231))
+
+## 5.0.0-next.245
+
+### Patch Changes
+
+- fix: visit expression for `svelte:component` references ([#13151](https://github.com/sveltejs/svelte/pull/13151))
+
+- fix: ensure signal graph is consistent before triggering $inspect signals ([#13153](https://github.com/sveltejs/svelte/pull/13153))
+
+- feat: better types for the `autocomplete` attribute ([#13201](https://github.com/sveltejs/svelte/pull/13201))
+
+- fix: widen ownership upon property access if necessary ([#13175](https://github.com/sveltejs/svelte/pull/13175))
+
+- fix: don't show `state_referenced_locally` warning on types ([#13177](https://github.com/sveltejs/svelte/pull/13177))
+
+- fix: ensure locally mutated bindable props persist with spreading props ([#13190](https://github.com/sveltejs/svelte/pull/13190))
+
+- fix: try catch `strict_equals` to avoid error accessing `STATE_SYMBOL` ([#13216](https://github.com/sveltejs/svelte/pull/13216))
+
+- fix: ensure types are easier to follow for TypeScript ([#13140](https://github.com/sveltejs/svelte/pull/13140))
+
+- fix: ensure $inspect effects are fine-grain ([#13199](https://github.com/sveltejs/svelte/pull/13199))
+
+- fix: ensure unowned derived signals correctly re-connect to graph ([#13184](https://github.com/sveltejs/svelte/pull/13184))
+
+- fix: ensure inner script tags are properly removed ([#13152](https://github.com/sveltejs/svelte/pull/13152))
+
+- chore: improve ssr parent validation ([#13158](https://github.com/sveltejs/svelte/pull/13158))
+
+- fix: prevent nullish snippet for rendering empty content ([#13083](https://github.com/sveltejs/svelte/pull/13083))
+
+- fix: allow more characters in the unicode range as component identifiers ([#13198](https://github.com/sveltejs/svelte/pull/13198))
+
+- fix: allow for nesting selector in pseudoclasses ([#13209](https://github.com/sveltejs/svelte/pull/13209))
+
+- fix: ensure StyleDirective and ClassDirective are marked as dynamic ([#13205](https://github.com/sveltejs/svelte/pull/13205))
+
+## 5.0.0-next.244
+
+### Patch Changes
+
+- fix: error on duplicate style and class directive ([#13097](https://github.com/sveltejs/svelte/pull/13097))
+
+- fix: ensure $host rune correctly compiles in variable declarations ([#13127](https://github.com/sveltejs/svelte/pull/13127))
+
+- fix: remove unnecessary update assignments ([#13113](https://github.com/sveltejs/svelte/pull/13113))
+
+- fix: error at compile time on unsupported TypeScript language features ([#12982](https://github.com/sveltejs/svelte/pull/12982))
+
+- fix: Ensure imports are above other statements ([#13132](https://github.com/sveltejs/svelte/pull/13132))
+
+## 5.0.0-next.243
+
+### Patch Changes
+
+- fix: ensure reactive graph is fully traversed in the marking phase for non-runes mode ([#13059](https://github.com/sveltejs/svelte/pull/13059))
+
+- fix: ensure reactivity system remains consistent with removals ([#13087](https://github.com/sveltejs/svelte/pull/13087))
+
+- fix: render undefined html as the empty string ([#13092](https://github.com/sveltejs/svelte/pull/13092))
+
+- fix: error on incorrect attributes for svelte:body ([#13084](https://github.com/sveltejs/svelte/pull/13084))
+
+- feat: provide AST node types with internal types stripped out ([#12968](https://github.com/sveltejs/svelte/pull/12968))
+
+## 5.0.0-next.242
+
+### Patch Changes
+
+- fix: insert comment before text in an each block, to prevent glued nodes ([#13073](https://github.com/sveltejs/svelte/pull/13073))
+
+- feat: better generated each block code in SSR mode ([#13060](https://github.com/sveltejs/svelte/pull/13060))
+
+## 5.0.0-next.241
+
+### Patch Changes
+
+- fix: prevent div/0 when generating transition keyframes ([#13058](https://github.com/sveltejs/svelte/pull/13058))
+
+- fix: error on invalid element name ([#13057](https://github.com/sveltejs/svelte/pull/13057))
+
+- fix: better compile errors for invalid tag names/placement ([#13045](https://github.com/sveltejs/svelte/pull/13045))
+
+- fix: ensure event currentTarget is reset after propagation logic ([#13042](https://github.com/sveltejs/svelte/pull/13042))
+
+## 5.0.0-next.240
+
+### Patch Changes
+
+- fix: use WAAPI to control timing of JS-based animations ([#13018](https://github.com/sveltejs/svelte/pull/13018))
+
+- fix: prevent binding to imports ([#13035](https://github.com/sveltejs/svelte/pull/13035))
+
+- fix: never abort bidirectional transitions ([#13018](https://github.com/sveltejs/svelte/pull/13018))
+
+## 5.0.0-next.239
+
+### Patch Changes
+
+- fix: properly handle proxied array length mutations ([#13026](https://github.com/sveltejs/svelte/pull/13026))
+
+- fix: repair `href` attribute mismatches ([#13032](https://github.com/sveltejs/svelte/pull/13032))
+
+## 5.0.0-next.238
+
+### Patch Changes
+
+- fix: always return true from `deleteProperty` trap ([#13008](https://github.com/sveltejs/svelte/pull/13008))
+
+- fix: handle deletions of previously-unread state proxy properties ([#13008](https://github.com/sveltejs/svelte/pull/13008))
+
+- fix: make internal sources ownerless ([#13013](https://github.com/sveltejs/svelte/pull/13013))
+
+- fix: join text nodes separated by comments ([#13009](https://github.com/sveltejs/svelte/pull/13009))
+
+## 5.0.0-next.237
+
+### Patch Changes
+
+- breaking: throw error if derived creates state and then depends on it ([#12985](https://github.com/sveltejs/svelte/pull/12985))
+
+- fix: ensure assignments to state field inside constructor trigger effects ([#12985](https://github.com/sveltejs/svelte/pull/12985))
+
+- fix: ensure $inspect works with SvelteMap and SvelteSet ([#12994](https://github.com/sveltejs/svelte/pull/12994))
+
+- chore: default options.filename to "(unknown)" ([#12997](https://github.com/sveltejs/svelte/pull/12997))
+
+- feat: allow non-synchronous legacy component instantiation ([#12970](https://github.com/sveltejs/svelte/pull/12970))
+
+## 5.0.0-next.236
+
+### Patch Changes
+
+- fix: properly transform destructured `$derived.by` declarations ([#12984](https://github.com/sveltejs/svelte/pull/12984))
+
+## 5.0.0-next.235
+
+### Patch Changes
+
+- chore: update client check for smaller bundle size ([#12975](https://github.com/sveltejs/svelte/pull/12975))
+
+- fix: correctly hydrate empty raw blocks ([#12979](https://github.com/sveltejs/svelte/pull/12979))
+
+## 5.0.0-next.234
+
+### Patch Changes
+
+- fix: allow deleting non-existent `$restProps` properties ([#12971](https://github.com/sveltejs/svelte/pull/12971))
+
+- feat: only traverse trailing static nodes during hydration ([#12935](https://github.com/sveltejs/svelte/pull/12935))
+
+## 5.0.0-next.233
+
+### Patch Changes
+
+- fix: more robust handling of var declarations ([#12949](https://github.com/sveltejs/svelte/pull/12949))
+
+- fix: remove buggy `validate_dynamic_component` check ([#12960](https://github.com/sveltejs/svelte/pull/12960))
+
+## 5.0.0-next.232
+
+### Patch Changes
+
+- breaking: remove `$state.link` rune pending further design work ([#12943](https://github.com/sveltejs/svelte/pull/12943))
+
+- fix: ensure `$store` reads are properly transformed ([#12952](https://github.com/sveltejs/svelte/pull/12952))
+
+- breaking: deprecate `context="module"` in favor of `module` ([#12948](https://github.com/sveltejs/svelte/pull/12948))
+
+## 5.0.0-next.231
+
+### Patch Changes
+
+- breaking: remove callback from `$state.link` ([#12942](https://github.com/sveltejs/svelte/pull/12942))
+
+## 5.0.0-next.230
+
+### Patch Changes
+
+- fix: align list of passive events with browser defaults ([#12933](https://github.com/sveltejs/svelte/pull/12933))
+
+- fix: ensure `{#await}` scope shadowing is computed in the correct order ([#12945](https://github.com/sveltejs/svelte/pull/12945))
+
+- fix: don't skip custom elements with attributes ([#12939](https://github.com/sveltejs/svelte/pull/12939))
+
+## 5.0.0-next.229
+
+### Patch Changes
+
+- feat: add `$state.link` rune ([#12545](https://github.com/sveltejs/svelte/pull/12545))
+
+- fix: allow mixing slots and snippets in custom elements mode ([#12929](https://github.com/sveltejs/svelte/pull/12929))
+
+- fix: small legibility improvement in `Snippet` type hint ([#12928](https://github.com/sveltejs/svelte/pull/12928))
+
+- feat: support HMR with custom elements ([#12926](https://github.com/sveltejs/svelte/pull/12926))
+
+- feat: error on invalid component name ([#12821](https://github.com/sveltejs/svelte/pull/12821))
+
+## 5.0.0-next.228
+
+### Patch Changes
+
+- feat: skip over static nodes in compiled client code ([#12914](https://github.com/sveltejs/svelte/pull/12914))
+
+## 5.0.0-next.227
+
+### Patch Changes
+
+- breaking: disallow `Object.defineProperty` on state proxies with non-basic descriptors ([#12916](https://github.com/sveltejs/svelte/pull/12916))
+
+- breaking: allow frozen objects to be proxied ([#12916](https://github.com/sveltejs/svelte/pull/12916))
+
+- breaking: avoid mutations to underlying proxied object with $state ([#12916](https://github.com/sveltejs/svelte/pull/12916))
+
+- breaking: remove $state.is rune ([#12916](https://github.com/sveltejs/svelte/pull/12916))
+
+## 5.0.0-next.226
+
+### Patch Changes
+
+- fix: ensure typings for `<svelte:options>` are picked up ([#12903](https://github.com/sveltejs/svelte/pull/12903))
+
+- fix: exclude local declarations from non-reactive property warnings ([#12909](https://github.com/sveltejs/svelte/pull/12909))
+
+## 5.0.0-next.225
+
+### Patch Changes
+
+- chore: improve the performance of set_text for single expressions ([#12893](https://github.com/sveltejs/svelte/pull/12893))
+
+- fix: add cleanup function signature to `createRawSnippet` ([#12894](https://github.com/sveltejs/svelte/pull/12894))
+
+- feat: more efficient checking for missing SSR text node ([#12891](https://github.com/sveltejs/svelte/pull/12891))
+
+- fix: ensure nullish expressions render empty text ([#12898](https://github.com/sveltejs/svelte/pull/12898))
+
+## 5.0.0-next.224
+
+### Patch Changes
+
+- chore: inline start and end node properties into effect ([#12878](https://github.com/sveltejs/svelte/pull/12878))
+
+- fix: correctly ensure prop bindings are reactive when bound ([#12879](https://github.com/sveltejs/svelte/pull/12879))
+
+- fix: remove sapper bindings ([#12875](https://github.com/sveltejs/svelte/pull/12875))
+
+- chore: refactor internal signal dependency heuristic ([#12881](https://github.com/sveltejs/svelte/pull/12881))
+
+- fix: allow store as initial value for props in ssr ([#12885](https://github.com/sveltejs/svelte/pull/12885))
+
+## 5.0.0-next.223
+
+### Patch Changes
+
+- fix: treat module-level imports as non-reactive in legacy mode ([#12845](https://github.com/sveltejs/svelte/pull/12845))
+
+- breaking: remove foreign namespace ([#12869](https://github.com/sveltejs/svelte/pull/12869))
+
+- feat: more efficient text-only fragments ([#12864](https://github.com/sveltejs/svelte/pull/12864))
+
+- fix: ensure outro animation is not prematurely aborted ([#12865](https://github.com/sveltejs/svelte/pull/12865))
+
+- chore: improve performance of DOM traversal operations ([#12863](https://github.com/sveltejs/svelte/pull/12863))
+
+- feat: better destructuring assignments ([#12872](https://github.com/sveltejs/svelte/pull/12872))
+
+- fix: stricter `crossorigin` and `wrap` attributes types ([#12858](https://github.com/sveltejs/svelte/pull/12858))
+
+## 5.0.0-next.222
+
+### Patch Changes
+
+- fix: avoid throwing `store_invalid_subscription_module` for runes ([#12848](https://github.com/sveltejs/svelte/pull/12848))
+
+- fix: omit `$index` parameter where possible ([#12851](https://github.com/sveltejs/svelte/pull/12851))
+
+- feat: skip over static subtrees ([#12849](https://github.com/sveltejs/svelte/pull/12849))
+
+- chore: set `binding.kind` before analysis ([#12843](https://github.com/sveltejs/svelte/pull/12843))
+
+- feat: better compiler warnings for non-reactive dependencies of reactive statements ([#12824](https://github.com/sveltejs/svelte/pull/12824))
+
+- fix: skip unnecessary `$legacy` flag ([#12850](https://github.com/sveltejs/svelte/pull/12850))
+
+## 5.0.0-next.221
+
+### Patch Changes
+
+- fix: ensure onwheel is passive by default ([#12837](https://github.com/sveltejs/svelte/pull/12837))
+
+- chore: improve signal perf by using Set rather than array for reactions ([#12831](https://github.com/sveltejs/svelte/pull/12831))
+
+- fix: ensure each key validation occurs for updates ([#12836](https://github.com/sveltejs/svelte/pull/12836))
+
+## 5.0.0-next.220
+
+### Patch Changes
+
+- feat: warn on invalid event handlers ([#12818](https://github.com/sveltejs/svelte/pull/12818))
+
+## 5.0.0-next.219
+
+### Patch Changes
+
+- feat: add compiler error when encountering a $-prefixed store value outside a .svelte file ([#12799](https://github.com/sveltejs/svelte/pull/12799))
+
+## 5.0.0-next.218
+
+### Patch Changes
+
+- breaking: replace `$state.frozen` with `$state.raw` ([#12808](https://github.com/sveltejs/svelte/pull/12808))
+
+- fix: ensure inspect effects are skipped from effect parent logic ([#12810](https://github.com/sveltejs/svelte/pull/12810))
+
+## 5.0.0-next.217
+
+### Patch Changes
+
+- feat: deprecate `svelte:component` ([#12694](https://github.com/sveltejs/svelte/pull/12694))
+
+- feat: treat tag with `.` as a component, even if lowercase ([#12798](https://github.com/sveltejs/svelte/pull/12798))
+
 ## 5.0.0-next.216
 
 ### Patch Changes

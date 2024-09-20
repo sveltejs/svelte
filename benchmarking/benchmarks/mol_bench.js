@@ -20,8 +20,8 @@ const numbers = Array.from({ length: 5 }, (_, i) => i);
 
 function setup() {
 	let res = [];
-	const A = $.source(0);
-	const B = $.source(0);
+	const A = $.state(0);
+	const B = $.state(0);
 	const C = $.derived(() => ($.get(A) % 2) + ($.get(B) % 2));
 	const D = $.derived(() => numbers.map((i) => i + ($.get(A) % 2) - ($.get(B) % 2)));
 	D.equals = function (/** @type {number[]} */ l) {

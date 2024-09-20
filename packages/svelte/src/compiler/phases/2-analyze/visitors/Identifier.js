@@ -1,10 +1,12 @@
 /** @import { Expression, Identifier } from 'estree' */
+/** @import { EachBlock } from '#compiler' */
 /** @import { Context } from '../types' */
 import is_reference from 'is-reference';
-import { should_proxy_or_freeze } from '../../3-transform/client/utils.js';
+import { should_proxy } from '../../3-transform/client/utils.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { is_rune } from '../../../../utils.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
  * @param {Identifier} node
@@ -17,6 +19,8 @@ export function Identifier(node, context) {
 	if (!is_reference(node, parent)) {
 		return;
 	}
+
+	mark_subtree_dynamic(context.path);
 
 	// If we are using arguments outside of a function, then throw an error
 	if (
@@ -53,6 +57,14 @@ export function Identifier(node, context) {
 						e.rune_renamed(parent, '$effect.active', '$effect.tracking');
 					}
 
+					if (name === '$state.frozen') {
+						e.rune_renamed(parent, '$state.frozen', '$state.raw');
+					}
+
+					if (name === '$state.is') {
+						e.rune_removed(parent, '$state.is');
+					}
+
 					e.rune_invalid_name(parent, name);
 				}
 			}
@@ -73,52 +85,12 @@ export function Identifier(node, context) {
 		if (node.name === '$$restProps') {
 			context.state.analysis.uses_rest_props = true;
 		}
-
-		if (
-			binding?.kind === 'normal' &&
-			((binding.scope === context.state.instance_scope &&
-				binding.declaration_kind !== 'function') ||
-				binding.declaration_kind === 'import')
-		) {
-			if (
-				binding.declaration_kind !== 'import' &&
-				binding.mutated &&
-				// TODO could be more fine-grained - not every mention in the template implies a state binding
-				(context.state.reactive_statement || context.state.ast_type === 'template')
-			) {
-				binding.kind = 'state';
-			} else if (
-				context.state.reactive_statement &&
-				parent.type === 'AssignmentExpression' &&
-				parent.left === binding.node
-			) {
-				binding.kind = 'derived';
-			}
-		} else if (binding?.kind === 'each' && binding.mutated) {
-			// Ensure that the array is marked as reactive even when only its entries are mutated
-			let i = context.path.length;
-			while (i--) {
-				const ancestor = context.path[i];
-				if (
-					ancestor.type === 'EachBlock' &&
-					context.state.analysis.template.scopes.get(ancestor)?.declarations.get(node.name) ===
-						binding
-				) {
-					for (const binding of ancestor.metadata.references) {
-						if (binding.kind === 'normal') {
-							binding.kind = 'state';
-						}
-					}
-					break;
-				}
-			}
-		}
 	}
 
-	if (binding && binding.kind !== 'normal') {
+	if (binding) {
 		if (context.state.expression) {
 			context.state.expression.dependencies.add(binding);
-			context.state.expression.has_state = true;
+			context.state.expression.has_state ||= binding.kind !== 'normal';
 		}
 
 		if (
@@ -132,14 +104,22 @@ export function Identifier(node, context) {
 					(binding.initial?.type === 'CallExpression' &&
 						binding.initial.arguments.length === 1 &&
 						binding.initial.arguments[0].type !== 'SpreadElement' &&
-						!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
-				binding.kind === 'frozen_state' ||
+						!should_proxy(binding.initial.arguments[0], context.state.scope)))) ||
+				binding.kind === 'raw_state' ||
 				binding.kind === 'derived') &&
 			// We're only concerned with reads here
 			(parent.type !== 'AssignmentExpression' || parent.left !== node) &&
 			parent.type !== 'UpdateExpression'
 		) {
 			w.state_referenced_locally(node);
+		}
+
+		if (
+			context.state.reactive_statement &&
+			binding.scope === context.state.analysis.module.scope &&
+			binding.reassigned
+		) {
+			w.reactive_declaration_module_script_dependency(node);
 		}
 	}
 }

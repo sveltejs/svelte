@@ -1,4 +1,4 @@
-/** @import { Expression, MemberExpression, Program } from 'estree' */
+/** @import { Expression, ImportDeclaration, MemberExpression, Program } from 'estree' */
 /** @import { ComponentContext } from '../types' */
 import { build_getter, is_prop_source } from '../utils.js';
 import * as b from '../../../../utils/builders.js';
@@ -16,27 +16,43 @@ export function Program(_, context) {
 
 		for (const [name, binding] of context.state.scope.declarations) {
 			if (binding.declaration_kind === 'import' && binding.mutated) {
-				const id = b.id('$$_import_' + name);
+				// the declaration itself is hoisted to the module scope, so we need
+				// to resort to cruder measures to differentiate instance/module imports
+				const { start, end } = context.state.analysis.instance.ast;
+				const node = /** @type {ImportDeclaration} */ (binding.initial);
+				const is_instance_import =
+					/** @type {number} */ (node.start) > /** @type {number} */ (start) &&
+					/** @type {number} */ (node.end) < /** @type {number} */ (end);
 
-				context.state.transform[name] = {
-					read: (_) => b.call(id),
-					mutate: (_, mutation) => b.call(id, mutation)
-				};
+				if (is_instance_import) {
+					const id = b.id('$$_import_' + name);
 
-				context.state.legacy_reactive_imports.push(
-					b.var(id, b.call('$.reactive_import', b.thunk(b.id(name))))
-				);
+					context.state.transform[name] = {
+						read: (_) => b.call(id),
+						mutate: (_, mutation) => b.call(id, mutation)
+					};
+
+					context.state.legacy_reactive_imports.push(
+						b.var(id, b.call('$.reactive_import', b.thunk(b.id(name))))
+					);
+				}
 			}
 		}
 	}
 
 	for (const [name, binding] of context.state.scope.declarations) {
 		if (binding.kind === 'store_sub') {
-			const store = /** @type {Expression} */ (context.visit(b.id(name.slice(1))));
+			// read lazily, so that transforms added later are still applied
+			/** @type {Expression} */
+			let cached;
+
+			const get_store = () => {
+				return (cached ??= /** @type {Expression} */ (context.visit(b.id(name.slice(1)))));
+			};
 
 			context.state.transform[name] = {
 				read: b.call,
-				assign: (_, value) => b.call('$.store_set', store, value),
+				assign: (_, value) => b.call('$.store_set', get_store(), value),
 				mutate: (node, mutation) => {
 					// We need to untrack the store read, for consistency with Svelte 4
 					const untracked = b.call('$.untrack', node);
@@ -60,7 +76,7 @@ export function Program(_, context) {
 
 					return b.call(
 						'$.store_mutate',
-						store,
+						get_store(),
 						b.assignment(
 							mutation.operator,
 							/** @type {MemberExpression} */ (

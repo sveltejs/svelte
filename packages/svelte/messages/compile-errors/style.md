@@ -40,7 +40,7 @@
 
 ## css_nesting_selector_invalid_placement
 
-> Nesting selectors can only be used inside a rule
+> Nesting selectors can only be used inside a rule or as the first selector inside a lone `:global(...)`
 
 ## css_selector_invalid
 

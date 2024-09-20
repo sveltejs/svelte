@@ -1,4 +1,4 @@
-/** @import { Comment, Component, Fragment, SvelteComponent, SvelteSelf } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../../types' */
 import * as e from '../../../../errors.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../../utils/ast.js';
@@ -8,12 +8,15 @@ import {
 	validate_attribute_name,
 	validate_slot_attribute
 } from './attribute.js';
+import { mark_subtree_dynamic } from './fragment.js';
 
 /**
- * @param {Component | SvelteComponent | SvelteSelf} node
+ * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
  * @param {Context} context
  */
 export function visit_component(node, context) {
+	mark_subtree_dynamic(context.path);
+
 	for (const attribute of node.attributes) {
 		if (
 			attribute.type !== 'Attribute' &&
@@ -72,10 +75,10 @@ export function visit_component(node, context) {
 		context.visit(attribute, attribute.type === 'LetDirective' ? default_state : context.state);
 	}
 
-	/** @type {Comment[]} */
+	/** @type {AST.Comment[]} */
 	let comments = [];
 
-	/** @type {Record<string, Fragment['nodes']>} */
+	/** @type {Record<string, AST.Fragment['nodes']>} */
 	const nodes = { default: [] };
 
 	for (const child of node.fragment.nodes) {

@@ -1,0 +1,1 @@
+<svelte:options customElement="emotion-😍" />

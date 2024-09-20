@@ -211,6 +211,22 @@ export function hydration_failed() {
 }
 
 /**
+ * Could not `{@render}` snippet due to the expression being `null` or `undefined`. Consider using optional chaining `{@render snippet?.()}`
+ * @returns {never}
+ */
+export function invalid_snippet() {
+	if (DEV) {
+		const error = new Error(`invalid_snippet\nCould not \`{@render}\` snippet due to the expression being \`null\` or \`undefined\`. Consider using optional chaining \`{@render snippet?.()}\``);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("invalid_snippet");
+	}
+}
+
+/**
  * `%name%(...)` cannot be used in runes mode
  * @param {string} name
  * @returns {never}
@@ -279,18 +295,18 @@ export function rune_outside_svelte(rune) {
 }
 
 /**
- * The argument to `$state.frozen(...)` cannot be an object created with `$state(...)`. You should create a copy of it first, for example with `$state.snapshot`
+ * Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
  * @returns {never}
  */
-export function state_frozen_invalid_argument() {
+export function state_descriptors_fixed() {
 	if (DEV) {
-		const error = new Error(`state_frozen_invalid_argument\nThe argument to \`$state.frozen(...)\` cannot be an object created with \`$state(...)\`. You should create a copy of it first, for example with \`$state.snapshot\``);
+		const error = new Error(`state_descriptors_fixed\nProperty descriptors defined on \`$state\` objects must contain \`value\` and always be \`enumerable\`, \`configurable\` and \`writable\`.`);
 
 		error.name = 'Svelte error';
 		throw error;
 	} else {
 		// TODO print a link to the documentation
-		throw new Error("state_frozen_invalid_argument");
+		throw new Error("state_descriptors_fixed");
 	}
 }
 
@@ -311,6 +327,22 @@ export function state_prototype_fixed() {
 }
 
 /**
+ * Reading state that was created inside the same derived is forbidden. Consider using `untrack` to read locally created state
+ * @returns {never}
+ */
+export function state_unsafe_local_read() {
+	if (DEV) {
+		const error = new Error(`state_unsafe_local_read\nReading state that was created inside the same derived is forbidden. Consider using \`untrack\` to read locally created state`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		// TODO print a link to the documentation
+		throw new Error("state_unsafe_local_read");
+	}
+}
+
+/**
  * Updating state inside a derived is forbidden. If the value should not be reactive, declare it without `$state`
  * @returns {never}
  */
@@ -323,21 +355,5 @@ export function state_unsafe_mutation() {
 	} else {
 		// TODO print a link to the documentation
 		throw new Error("state_unsafe_mutation");
-	}
-}
-
-/**
- * The `this={...}` property of a `<svelte:component>` must be a Svelte component, if defined
- * @returns {never}
- */
-export function svelte_component_invalid_this_value() {
-	if (DEV) {
-		const error = new Error(`svelte_component_invalid_this_value\nThe \`this={...}\` property of a \`<svelte:component>\` must be a Svelte component, if defined`);
-
-		error.name = 'Svelte error';
-		throw error;
-	} else {
-		// TODO print a link to the documentation
-		throw new Error("svelte_component_invalid_this_value");
 	}
 }

@@ -81,17 +81,19 @@ export function set_checked(element, checked) {
  * @param {boolean} [skip_warning]
  */
 export function set_attribute(element, attribute, value, skip_warning) {
-	value = value == null ? null : value + '';
-
 	// @ts-expect-error
 	var attributes = (element.__attributes ??= {});
 
 	if (hydrating) {
 		attributes[attribute] = element.getAttribute(attribute);
 
-		if (attribute === 'src' || attribute === 'href' || attribute === 'srcset') {
+		if (
+			attribute === 'src' ||
+			attribute === 'srcset' ||
+			(attribute === 'href' && element.nodeName === 'LINK')
+		) {
 			if (!skip_warning) {
-				check_src_in_dev_hydration(element, attribute, value);
+				check_src_in_dev_hydration(element, attribute, value ?? '');
 			}
 
 			// If we reset these attributes, they would result in another network request, which we want to avoid.
@@ -109,8 +111,11 @@ export function set_attribute(element, attribute, value, skip_warning) {
 		element[LOADING_ATTR_SYMBOL] = value;
 	}
 
-	if (value === null) {
+	if (value == null) {
 		element.removeAttribute(attribute);
+	} else if (typeof value !== 'string' && get_setters(element).includes(attribute)) {
+		// @ts-ignore
+		element[attribute] = value;
 	} else {
 		element.setAttribute(attribute, value);
 	}
@@ -132,7 +137,13 @@ export function set_xlink_attribute(dom, attribute, value) {
  */
 export function set_custom_element_data(node, prop, value) {
 	if (prop in node) {
-		var curr_val = node[prop];
+		// Reading the prop could cause an error, we don't want this to fail everything else
+		try {
+			var curr_val = node[prop];
+		} catch {
+			set_attribute(node, prop, value);
+			return;
+		}
 		var next_val = typeof curr_val === 'boolean' && value === '' ? true : value;
 		if (typeof curr_val !== 'object' || curr_val !== next_val) {
 			node[prop] = next_val;
@@ -173,8 +184,7 @@ export function set_attributes(
 		next.class = next.class ? next.class + ' ' + css_hash : css_hash;
 	}
 
-	var setters = setters_cache.get(element.nodeName);
-	if (!setters) setters_cache.set(element.nodeName, (setters = get_setters(element)));
+	var setters = get_setters(element);
 
 	// @ts-expect-error
 	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});
@@ -277,15 +287,15 @@ export function set_attributes(
 				name = normalize_attribute(name);
 			}
 
-			if (setters.includes(name)) {
-				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
-					if (!skip_warning) check_src_in_dev_hydration(element, name, value);
-				} else {
-					// @ts-ignore
-					element[name] = value;
-				}
+			if (setters.includes(name) && typeof value !== 'string') {
+				// @ts-ignore
+				element[name] = value;
 			} else if (typeof value !== 'function') {
-				set_attribute(element, name, value);
+				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
+					if (!skip_warning) check_src_in_dev_hydration(element, name, value ?? '');
+				} else {
+					set_attribute(element, name, value);
+				}
 			}
 		}
 	}
@@ -340,23 +350,14 @@ export function set_dynamic_element_attributes(node, prev, next, css_hash) {
 	);
 }
 
-/**
- * List of attributes that should always be set through the attr method,
- * because updating them through the property setter doesn't work reliably.
- * In the example of `width`/`height`, the problem is that the setter only
- * accepts numeric values, but the attribute can also be set to a string like `50%`.
- * In case of draggable trying to set `element.draggable='false'` will actually set
- * draggable to `true`. If this list becomes too big, rethink this approach.
- */
-var always_set_through_set_attribute = ['width', 'height', 'draggable'];
-
 /** @type {Map<string, string[]>} */
 var setters_cache = new Map();
 
 /** @param {Element} element */
 function get_setters(element) {
-	/** @type {string[]} */
-	var setters = [];
+	var setters = setters_cache.get(element.nodeName);
+	if (setters) return setters;
+	setters_cache.set(element.nodeName, (setters = []));
 	var descriptors;
 	var proto = get_prototype_of(element);
 
@@ -365,7 +366,7 @@ function get_setters(element) {
 		descriptors = get_descriptors(proto);
 
 		for (var key in descriptors) {
-			if (descriptors[key].set && !always_set_through_set_attribute.includes(key)) {
+			if (descriptors[key].set) {
 				setters.push(key);
 			}
 		}
@@ -379,16 +380,16 @@ function get_setters(element) {
 /**
  * @param {any} element
  * @param {string} attribute
- * @param {string | null} value
+ * @param {string} value
  */
 function check_src_in_dev_hydration(element, attribute, value) {
 	if (!DEV) return;
 	if (attribute === 'srcset' && srcset_url_equal(element, value)) return;
-	if (src_url_equal(element.getAttribute(attribute) ?? '', value ?? '')) return;
+	if (src_url_equal(element.getAttribute(attribute) ?? '', value)) return;
 
 	w.hydration_attribute_changed(
 		attribute,
-		element.outerHTML.replace(element.innerHTML, '...'),
+		element.outerHTML.replace(element.innerHTML, element.innerHTML && '...'),
 		String(value)
 	);
 }
@@ -410,12 +411,12 @@ function split_srcset(srcset) {
 
 /**
  * @param {HTMLSourceElement | HTMLImageElement} element
- * @param {string | undefined | null} srcset
+ * @param {string} srcset
  * @returns {boolean}
  */
 function srcset_url_equal(element, srcset) {
 	var element_urls = split_srcset(element.srcset);
-	var urls = split_srcset(srcset ?? '');
+	var urls = split_srcset(srcset);
 
 	return (
 		urls.length === element_urls.length &&

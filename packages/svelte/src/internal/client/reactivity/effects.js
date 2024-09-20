@@ -1,9 +1,9 @@
-/** @import { ComponentContext, ComponentContextLegacy, Effect, Reaction, TemplateNode, TransitionManager } from '#client' */
+/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, Reaction, TemplateNode, TransitionManager } from '#client' */
 import {
 	check_dirtiness,
-	current_component_context,
-	current_effect,
-	current_reaction,
+	component_context,
+	active_effect,
+	active_reaction,
 	destroy_effect_children,
 	dev_current_component_function,
 	update_effect,
@@ -12,7 +12,7 @@ import {
 	is_flushing_effect,
 	remove_reactions,
 	schedule_effect,
-	set_current_reaction,
+	set_active_reaction,
 	set_is_destroying_effect,
 	set_is_flushing_effect,
 	set_signal_status,
@@ -33,22 +33,25 @@ import {
 	UNOWNED,
 	CLEAN,
 	INSPECT_EFFECT,
-	HEAD_EFFECT
+	HEAD_EFFECT,
+	MAYBE_DIRTY,
+	EFFECT_HAS_DERIVED
 } from '../constants.js';
 import { set } from './sources.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
+import { get_next_sibling } from '../dom/operations.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
  */
 export function validate_effect(rune) {
-	if (current_effect === null && current_reaction === null) {
+	if (active_effect === null && active_reaction === null) {
 		e.effect_orphan(rune);
 	}
 
-	if (current_reaction !== null && (current_reaction.f & UNOWNED) !== 0) {
+	if (active_reaction !== null && (active_reaction.f & UNOWNED) !== 0) {
 		e.effect_in_unowned_derived();
 	}
 
@@ -59,9 +62,9 @@ export function validate_effect(rune) {
 
 /**
  * @param {Effect} effect
- * @param {Reaction} parent_effect
+ * @param {Effect} parent_effect
  */
-export function push_effect(effect, parent_effect) {
+function push_effect(effect, parent_effect) {
 	var parent_last = parent_effect.last;
 	if (parent_last === null) {
 		parent_effect.last = parent_effect.first = effect;
@@ -81,18 +84,27 @@ export function push_effect(effect, parent_effect) {
  */
 function create_effect(type, fn, sync, push = true) {
 	var is_root = (type & ROOT_EFFECT) !== 0;
+	var parent_effect = active_effect;
+
+	if (DEV) {
+		// Ensure the parent is never an inspect effect
+		while (parent_effect !== null && (parent_effect.f & INSPECT_EFFECT) !== 0) {
+			parent_effect = parent_effect.parent;
+		}
+	}
 
 	/** @type {Effect} */
 	var effect = {
-		ctx: current_component_context,
+		ctx: component_context,
 		deps: null,
-		nodes: null,
+		nodes_start: null,
+		nodes_end: null,
 		f: type | DIRTY,
 		first: null,
 		fn,
 		last: null,
 		next: null,
-		parent: is_root ? null : current_effect,
+		parent: is_root ? null : parent_effect,
 		prev: null,
 		teardown: null,
 		transitions: null,
@@ -126,17 +138,19 @@ function create_effect(type, fn, sync, push = true) {
 		sync &&
 		effect.deps === null &&
 		effect.first === null &&
-		effect.nodes === null &&
-		effect.teardown === null;
+		effect.nodes_start === null &&
+		effect.teardown === null &&
+		(effect.f & EFFECT_HAS_DERIVED) === 0;
 
 	if (!inert && !is_root && push) {
-		if (current_effect !== null) {
-			push_effect(effect, current_effect);
+		if (parent_effect !== null) {
+			push_effect(effect, parent_effect);
 		}
 
 		// if we're in a derived, add the effect there too
-		if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
-			push_effect(effect, current_reaction);
+		if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
+			var derived = /** @type {Derived} */ (active_reaction);
+			(derived.children ??= []).push(effect);
 		}
 	}
 
@@ -148,11 +162,11 @@ function create_effect(type, fn, sync, push = true) {
  * @returns {boolean}
  */
 export function effect_tracking() {
-	if (current_reaction === null) {
+	if (active_reaction === null) {
 		return false;
 	}
 
-	return (current_reaction.f & UNOWNED) === 0;
+	return (active_reaction.f & UNOWNED) === 0;
 }
 
 /**
@@ -175,11 +189,11 @@ export function user_effect(fn) {
 	// Non-nested `$effect(...)` in a component should be deferred
 	// until the component is mounted
 	var defer =
-		current_effect !== null &&
-		(current_effect.f & RENDER_EFFECT) !== 0 &&
+		active_effect !== null &&
+		(active_effect.f & RENDER_EFFECT) !== 0 &&
 		// TODO do we actually need this? removing them changes nothing
-		current_component_context !== null &&
-		!current_component_context.m;
+		component_context !== null &&
+		!component_context.m;
 
 	if (DEV) {
 		define_property(fn, 'name', {
@@ -188,8 +202,12 @@ export function user_effect(fn) {
 	}
 
 	if (defer) {
-		var context = /** @type {ComponentContext} */ (current_component_context);
-		(context.e ??= []).push(fn);
+		var context = /** @type {ComponentContext} */ (component_context);
+		(context.e ??= []).push({
+			fn,
+			effect: active_effect,
+			reaction: active_reaction
+		});
 	} else {
 		var signal = effect(fn);
 		return signal;
@@ -242,7 +260,7 @@ export function effect(fn) {
  * @param {() => void | (() => void)} fn
  */
 export function legacy_pre_effect(deps, fn) {
-	var context = /** @type {ComponentContextLegacy} */ (current_component_context);
+	var context = /** @type {ComponentContextLegacy} */ (component_context);
 
 	/** @type {{ effect: null | Effect, ran: boolean }} */
 	var token = { effect: null, ran: false };
@@ -262,7 +280,7 @@ export function legacy_pre_effect(deps, fn) {
 }
 
 export function legacy_pre_effect_reset() {
-	var context = /** @type {ComponentContextLegacy} */ (current_component_context);
+	var context = /** @type {ComponentContextLegacy} */ (component_context);
 
 	render_effect(() => {
 		if (!get(context.l.r2)) return;
@@ -270,6 +288,12 @@ export function legacy_pre_effect_reset() {
 		// Run dirty `$:` statements
 		for (var token of context.l.r1) {
 			var effect = token.effect;
+
+			// If the effect is CLEAN, then make it MAYBE_DIRTY. This ensures we traverse through
+			// the effects dependencies and correctly ensure each dependency is up-to-date.
+			if ((effect.f & CLEAN) !== 0) {
+				set_signal_status(effect, MAYBE_DIRTY);
+			}
 
 			if (check_dirtiness(effect)) {
 				update_effect(effect);
@@ -326,14 +350,14 @@ export function execute_effect_teardown(effect) {
 	var teardown = effect.teardown;
 	if (teardown !== null) {
 		const previously_destroying_effect = is_destroying_effect;
-		const previous_reaction = current_reaction;
+		const previous_reaction = active_reaction;
 		set_is_destroying_effect(true);
-		set_current_reaction(null);
+		set_active_reaction(null);
 		try {
 			teardown.call(null);
 		} finally {
 			set_is_destroying_effect(previously_destroying_effect);
-			set_current_reaction(previous_reaction);
+			set_active_reaction(previous_reaction);
 		}
 	}
 }
@@ -346,14 +370,14 @@ export function execute_effect_teardown(effect) {
 export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
-	if ((remove_dom || (effect.f & HEAD_EFFECT) !== 0) && effect.nodes !== null) {
+	if ((remove_dom || (effect.f & HEAD_EFFECT) !== 0) && effect.nodes_start !== null) {
 		/** @type {TemplateNode | null} */
-		var node = effect.nodes.start;
-		var end = effect.nodes.end;
+		var node = effect.nodes_start;
+		var end = effect.nodes_end;
 
 		while (node !== null) {
 			/** @type {TemplateNode | null} */
-			var next = node === end ? null : /** @type {TemplateNode} */ (node.nextSibling);
+			var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
 
 			node.remove();
 			node = next;
@@ -366,8 +390,10 @@ export function destroy_effect(effect, remove_dom = true) {
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);
 
-	if (effect.transitions) {
-		for (const transition of effect.transitions) {
+	var transitions = effect.transitions;
+
+	if (transitions !== null) {
+		for (const transition of transitions) {
 			transition.stop();
 		}
 	}
@@ -377,7 +403,7 @@ export function destroy_effect(effect, remove_dom = true) {
 	var parent = effect.parent;
 
 	// If the parent doesn't have any children, then skip this work altogether
-	if (parent !== null && (effect.f & BRANCH_EFFECT) !== 0 && parent.first !== null) {
+	if (parent !== null && parent.first !== null) {
 		unlink_effect(effect);
 	}
 
@@ -389,7 +415,8 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.deps =
 		effect.parent =
 		effect.fn =
-		effect.nodes =
+		effect.nodes_start =
+		effect.nodes_end =
 			null;
 }
 

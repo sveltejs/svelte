@@ -1,9 +1,8 @@
 /** @import { VariableDeclarator, Node, Identifier } from 'estree' */
-/** @import { SvelteNode } from '../types/template.js' */
 /** @import { Visitors } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
 /** @import { Scope } from '../phases/scope.js' */
-/** @import * as Compiler from '#compiler' */
+/** @import { AST, Binding, SvelteNode, ValidatedCompileOptions } from '#compiler' */
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
 import { parse } from '../phases/1-parse/index.js';
@@ -31,7 +30,7 @@ export function migrate(source) {
 
 		const { customElement: customElementOptions, ...parsed_options } = parsed.options || {};
 
-		/** @type {Compiler.ValidatedCompileOptions} */
+		/** @type {ValidatedCompileOptions} */
 		const combined_options = {
 			...validate_component_options({}, ''),
 			...parsed_options,
@@ -57,6 +56,13 @@ export function migrate(source) {
 			run_name: analysis.root.unique('run').name,
 			needs_run: false
 		};
+
+		if (parsed.module) {
+			const context = parsed.module.attributes.find((attr) => attr.name === 'context');
+			if (context) {
+				state.str.update(context.start, context.end, 'module');
+			}
+		}
 
 		if (parsed.instance) {
 			walk(parsed.instance.content, state, instance_script);
@@ -154,7 +160,7 @@ export function migrate(source) {
 		let needs_reordering = false;
 
 		for (const [node, { dependencies }] of state.analysis.reactive_statements) {
-			/** @type {Compiler.Binding[]} */
+			/** @type {Binding[]} */
 			let ids = [];
 			if (
 				node.body.type === 'ExpressionStatement' &&
@@ -329,30 +335,42 @@ const instance_script = {
 					// }
 				}
 
-				const binding = /** @type {Compiler.Binding} */ (state.scope.get(declarator.id.name));
+				const name = declarator.id.name;
+				const binding = /** @type {Binding} */ (state.scope.get(name));
 
-				if (
-					state.analysis.uses_props &&
-					(declarator.init || binding.mutated || binding.reassigned)
-				) {
+				if (state.analysis.uses_props && (declarator.init || binding.updated)) {
 					throw new Error(
 						'$$props is used together with named props in a way that cannot be automatically migrated.'
 					);
 				}
 
-				state.props.push({
-					local: declarator.id.name,
-					exported: binding.prop_alias ? binding.prop_alias : declarator.id.name,
-					init: declarator.init
+				const prop = state.props.find((prop) => prop.exported === (binding.prop_alias || name));
+				if (prop) {
+					// $$Props type was used
+					prop.init = declarator.init
 						? state.str.original.substring(
 								/** @type {number} */ (declarator.init.start),
 								/** @type {number} */ (declarator.init.end)
 							)
-						: '',
-					optional: !!declarator.init,
-					bindable: binding.mutated || binding.reassigned,
-					...extract_type_and_comment(declarator, state.str, path)
-				});
+						: '';
+					prop.bindable = binding.updated;
+					prop.exported = binding.prop_alias || name;
+				} else {
+					state.props.push({
+						local: name,
+						exported: binding.prop_alias ? binding.prop_alias : name,
+						init: declarator.init
+							? state.str.original.substring(
+									/** @type {number} */ (declarator.init.start),
+									/** @type {number} */ (declarator.init.end)
+								)
+							: '',
+						optional: !!declarator.init,
+						bindable: binding.updated,
+						...extract_type_and_comment(declarator, state.str, path)
+					});
+				}
+
 				state.props_insertion_point = /** @type {number} */ (declarator.end);
 				state.str.update(
 					/** @type {number} */ (declarator.start),
@@ -365,8 +383,15 @@ const instance_script = {
 
 			// state
 			if (declarator.init) {
-				state.str.prependLeft(/** @type {number} */ (declarator.init.start), '$state(');
-				state.str.appendRight(/** @type {number} */ (declarator.init.end), ')');
+				let { start, end } = /** @type {{ start: number, end: number }} */ (declarator.init);
+
+				if (declarator.init.type === 'SequenceExpression') {
+					while (state.str.original[start] !== '(') start -= 1;
+					while (state.str.original[end - 1] !== ')') end += 1;
+				}
+
+				state.str.prependLeft(start, '$state(');
+				state.str.appendRight(end, ')');
 			} else {
 				state.str.prependLeft(
 					/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
@@ -413,25 +438,30 @@ const instance_script = {
 			const bindings = ids.map((id) => state.scope.get(id.name));
 			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
 			if (reassigned_bindings.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
+				let { start, end } = /** @type {{ start: number, end: number }} */ (
+					node.body.expression.right
+				);
+
 				// $derived
 				state.str.update(
 					/** @type {number} */ (node.start),
 					/** @type {number} */ (node.body.expression.start),
 					'let '
 				);
-				state.str.prependRight(
-					/** @type {number} */ (node.body.expression.right.start),
-					'$derived('
-				);
-				if (node.body.expression.right.end !== node.end) {
-					state.str.update(
-						/** @type {number} */ (node.body.expression.right.end),
-						/** @type {number} */ (node.end),
-						');'
-					);
-				} else {
-					state.str.appendLeft(/** @type {number} */ (node.end), ');');
+
+				if (node.body.expression.right.type === 'SequenceExpression') {
+					while (state.str.original[start] !== '(') start -= 1;
+					while (state.str.original[end - 1] !== ')') end += 1;
 				}
+
+				state.str.prependRight(start, `$derived(`);
+
+				// in a case like `$: ({ a } = b())`, there's already a trailing parenthesis.
+				// otherwise, we need to add one
+				if (state.str.original[/** @type {number} */ (node.body.start)] !== '(') {
+					state.str.appendLeft(end, `)`);
+				}
+
 				return;
 			} else {
 				for (const binding of reassigned_bindings) {
@@ -593,7 +623,7 @@ const template = {
 /**
  * @param {VariableDeclarator} declarator
  * @param {MagicString} str
- * @param {Compiler.SvelteNode[]} path
+ * @param {SvelteNode[]} path
  */
 function extract_type_and_comment(declarator, str, path) {
 	const parent = path.at(-1);
@@ -638,11 +668,11 @@ function extract_type_and_comment(declarator, str, path) {
 }
 
 /**
- * @param {Compiler.RegularElement | Compiler.SvelteElement | Compiler.SvelteWindow | Compiler.SvelteDocument | Compiler.SvelteBody} element
+ * @param {AST.RegularElement | AST.SvelteElement | AST.SvelteWindow | AST.SvelteDocument | AST.SvelteBody} element
  * @param {State} state
  */
 function handle_events(element, state) {
-	/** @type {Map<string, Compiler.OnDirective[]>} */
+	/** @type {Map<string, AST.OnDirective[]>} */
 	const handlers = new Map();
 	for (const attribute of element.attributes) {
 		if (attribute.type !== 'OnDirective') continue;
@@ -877,7 +907,7 @@ function get_node_range(source, node) {
 }
 
 /**
- * @param {Compiler.OnDirective} last
+ * @param {AST.OnDirective} last
  * @param {State} state
  */
 function generate_event_name(last, state) {
@@ -924,8 +954,53 @@ function handle_identifier(node, state, path) {
 	} else if (node.name === '$$slots' && state.analysis.uses_slots) {
 		if (parent?.type === 'MemberExpression') {
 			state.str.update(/** @type {number} */ (node.start), parent.property.start, '');
+			if (parent.property.name === 'default') {
+				state.str.update(parent.property.start, parent.property.end, 'children');
+			}
 		}
 		// else passed as identifier, we don't know what to do here, so let it error
+	} else if (
+		parent?.type === 'TSInterfaceDeclaration' ||
+		parent?.type === 'TSTypeAliasDeclaration'
+	) {
+		const members =
+			parent.type === 'TSInterfaceDeclaration' ? parent.body.body : parent.typeAnnotation?.members;
+		if (Array.isArray(members)) {
+			if (node.name === '$$Props') {
+				for (const member of members) {
+					const prop = state.props.find((prop) => prop.exported === member.key.name);
+
+					const type = state.str.original.substring(
+						member.typeAnnotation.typeAnnotation.start,
+						member.typeAnnotation.typeAnnotation.end
+					);
+
+					let comment;
+					const comment_node = member.leadingComments?.at(-1);
+					if (comment_node?.type === 'Block') {
+						comment = state.str.original.substring(comment_node.start, comment_node.end);
+					}
+
+					if (prop) {
+						prop.type = type;
+						prop.optional = member.optional;
+						prop.comment = comment ?? prop.comment;
+					} else {
+						state.props.push({
+							local: member.key.name,
+							exported: member.key.name,
+							init: '',
+							bindable: false,
+							optional: member.optional,
+							type,
+							comment
+						});
+					}
+				}
+
+				state.str.remove(parent.start, parent.end);
+			}
+		}
 	}
 }
 

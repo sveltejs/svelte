@@ -15,6 +15,7 @@
 <svelte:component this={foo} class="{foo}" />
 <!-- prettier-ignore -->
 {#if foo}
+	<!-- svelte-ignore svelte_self_deprecated -->
 	<svelte:self class="{foo}" />
 {/if}
 <!-- prettier-ignore -->

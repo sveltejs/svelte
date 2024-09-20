@@ -1,6 +1,6 @@
-/** @import { BinaryOperator, Expression, Identifier } from 'estree' */
+/** @import { Identifier } from 'estree' */
 /** @import { ComponentContext, Context } from '../../types' */
-import { build_proxy_reassignment, is_state_source, should_proxy_or_freeze } from '../../utils.js';
+import { is_state_source } from '../../utils.js';
 import * as b from '../../../../../utils/builders.js';
 
 /**
@@ -18,12 +18,12 @@ export function get_value(node) {
 export function add_state_transformers(context) {
 	for (const [name, binding] of context.state.scope.declarations) {
 		if (
-			is_state_source(binding, context.state) ||
+			is_state_source(binding, context.state.analysis) ||
 			binding.kind === 'derived' ||
 			binding.kind === 'legacy_reactive'
 		) {
 			context.state.transform[name] = {
-				read: get_value,
+				read: binding.declaration_kind === 'var' ? (node) => b.call('$.safe_get', node) : get_value,
 				assign: (node, value) => {
 					let call = b.call('$.set', node, value);
 

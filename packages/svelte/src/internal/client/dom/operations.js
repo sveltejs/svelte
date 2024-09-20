@@ -2,6 +2,7 @@
 import { hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
+import { get_descriptor } from '../../shared/utils.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -9,6 +10,11 @@ export var $window;
 
 /** @type {Document} */
 export var $document;
+
+/** @type {() => Node | null} */
+var first_child_getter;
+/** @type {() => Node | null} */
+var next_sibling_getter;
 
 /**
  * Initialize these lazily to avoid issues when using the runtime in a server context
@@ -23,6 +29,12 @@ export function init_operations() {
 	$document = document;
 
 	var element_prototype = Element.prototype;
+	var node_prototype = Node.prototype;
+
+	// @ts-ignore
+	first_child_getter = get_descriptor(node_prototype, 'firstChild').get;
+	// @ts-ignore
+	next_sibling_getter = get_descriptor(node_prototype, 'nextSibling').get;
 
 	// the following assignments improve perf of lookups on DOM nodes
 	// @ts-expect-error
@@ -45,9 +57,32 @@ export function init_operations() {
 	}
 }
 
-/** @returns {Text} */
-export function empty() {
-	return document.createTextNode('');
+/**
+ * @param {string} value
+ * @returns {Text}
+ */
+export function create_text(value = '') {
+	return document.createTextNode(value);
+}
+
+/**
+ * @template {Node} N
+ * @param {N} node
+ * @returns {Node | null}
+ */
+/*@__NO_SIDE_EFFECTS__*/
+export function get_first_child(node) {
+	return first_child_getter.call(node);
+}
+
+/**
+ * @template {Node} N
+ * @param {N} node
+ * @returns {Node | null}
+ */
+/*@__NO_SIDE_EFFECTS__*/
+export function get_next_sibling(node) {
+	return next_sibling_getter.call(node);
 }
 
 /**
@@ -58,14 +93,14 @@ export function empty() {
  */
 export function child(node) {
 	if (!hydrating) {
-		return node.firstChild;
+		return get_first_child(node);
 	}
 
-	var child = /** @type {TemplateNode} */ (hydrate_node.firstChild);
+	var child = /** @type {TemplateNode} */ (get_first_child(hydrate_node));
 
 	// Child can be null if we have an element with a single child, like `<p>{text}</p>`, where `text` is empty
 	if (child === null) {
-		child = hydrate_node.appendChild(empty());
+		child = hydrate_node.appendChild(create_text());
 	}
 
 	set_hydrate_node(child);
@@ -81,10 +116,10 @@ export function child(node) {
 export function first_child(fragment, is_text) {
 	if (!hydrating) {
 		// when not hydrating, `fragment` is a `DocumentFragment` (the result of calling `open_frag`)
-		var first = /** @type {DocumentFragment} */ (fragment).firstChild;
+		var first = /** @type {DocumentFragment} */ (get_first_child(/** @type {Node} */ (fragment)));
 
 		// TODO prevent user comments with the empty string when preserveComments is true
-		if (first instanceof Comment && first.data === '') return first.nextSibling;
+		if (first instanceof Comment && first.data === '') return get_next_sibling(first);
 
 		return first;
 	}
@@ -92,7 +127,7 @@ export function first_child(fragment, is_text) {
 	// if an {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one
 	if (is_text && hydrate_node?.nodeType !== 3) {
-		var text = empty();
+		var text = create_text();
 
 		hydrate_node?.before(text);
 		set_hydrate_node(text);
@@ -104,24 +139,28 @@ export function first_child(fragment, is_text) {
 
 /**
  * Don't mark this as side-effect-free, hydration needs to walk all nodes
- * @template {Node} N
- * @param {N} node
+ * @param {TemplateNode} node
+ * @param {number} count
  * @param {boolean} is_text
  * @returns {Node | null}
  */
-export function sibling(node, is_text = false) {
-	if (!hydrating) {
-		return /** @type {TemplateNode} */ (node.nextSibling);
+export function sibling(node, count = 1, is_text = false) {
+	let next_sibling = hydrating ? hydrate_node : node;
+
+	while (count--) {
+		next_sibling = /** @type {TemplateNode} */ (get_next_sibling(next_sibling));
 	}
 
-	var next_sibling = /** @type {TemplateNode} */ (hydrate_node.nextSibling);
+	if (!hydrating) {
+		return next_sibling;
+	}
 
 	var type = next_sibling.nodeType;
 
 	// if a sibling {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one
 	if (is_text && type !== 3) {
-		var text = empty();
+		var text = create_text();
 		next_sibling?.before(text);
 		set_hydrate_node(text);
 		return text;

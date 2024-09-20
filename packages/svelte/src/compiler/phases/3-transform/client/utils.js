@@ -1,6 +1,7 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, Pattern, PrivateIdentifier, Statement } from 'estree' */
 /** @import { Binding, SvelteNode } from '#compiler' */
 /** @import { ClientTransformState, ComponentClientTransformState, ComponentContext } from './types.js' */
+/** @import { Analysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
 import * as b from '../../../utils/builders.js';
 import { extract_identifiers, is_simple_expression } from '../../../utils/ast.js';
@@ -8,20 +9,21 @@ import {
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
 	PROPS_IS_RUNES,
-	PROPS_IS_UPDATED
+	PROPS_IS_UPDATED,
+	PROPS_IS_BINDABLE
 } from '../../../../constants.js';
 import { dev } from '../../../state.js';
 import { get_value } from './visitors/shared/declarations.js';
 
 /**
  * @param {Binding} binding
- * @param {ClientTransformState} state
+ * @param {Analysis} analysis
  * @returns {boolean}
  */
-export function is_state_source(binding, state) {
+export function is_state_source(binding, analysis) {
 	return (
-		(binding.kind === 'state' || binding.kind === 'frozen_state') &&
-		(!state.analysis.immutable || binding.reassigned || state.analysis.accessors)
+		(binding.kind === 'state' || binding.kind === 'raw_state') &&
+		(!analysis.immutable || binding.reassigned || analysis.accessors)
 	);
 }
 
@@ -45,19 +47,10 @@ export function build_getter(node, state) {
 
 /**
  * @param {Expression} value
- * @param {PrivateIdentifier | string} proxy_reference
+ * @param {Expression} previous
  */
-export function build_proxy_reassignment(value, proxy_reference) {
-	return dev
-		? b.call(
-				'$.proxy',
-				value,
-				b.null,
-				typeof proxy_reference === 'string'
-					? b.id(proxy_reference)
-					: b.member(b.this, proxy_reference)
-			)
-		: b.call('$.proxy', value);
+export function build_proxy_reassignment(value, previous) {
+	return dev ? b.call('$.proxy', value, b.null, previous) : b.call('$.proxy', value);
 }
 
 /**
@@ -168,6 +161,10 @@ export function get_prop_source(binding, state, name, initial) {
 
 	let flags = 0;
 
+	if (binding.kind === 'bindable_prop') {
+		flags |= PROPS_IS_BINDABLE;
+	}
+
 	if (state.analysis.immutable) {
 		flags |= PROPS_IS_IMMUTABLE;
 	}
@@ -180,7 +177,7 @@ export function get_prop_source(binding, state, name, initial) {
 		state.analysis.accessors ||
 		(state.analysis.immutable
 			? binding.reassigned || (state.analysis.runes && binding.mutated)
-			: binding.mutated)
+			: binding.updated)
 	) {
 		flags |= PROPS_IS_UPDATED;
 	}
@@ -230,7 +227,7 @@ export function is_prop_source(binding, state) {
 			binding.initial ||
 			// Until legacy mode is gone, we also need to use the prop source when only mutated is true,
 			// because the parent could be a legacy component which needs coarse-grained reactivity
-			binding.mutated)
+			binding.updated)
 	);
 }
 
@@ -238,7 +235,7 @@ export function is_prop_source(binding, state) {
  * @param {Expression} node
  * @param {Scope | null} scope
  */
-export function should_proxy_or_freeze(node, scope) {
+export function should_proxy(node, scope) {
 	if (
 		!node ||
 		node.type === 'Literal' ||
@@ -251,9 +248,10 @@ export function should_proxy_or_freeze(node, scope) {
 	) {
 		return false;
 	}
+
 	if (node.type === 'Identifier' && scope !== null) {
 		const binding = scope.get(node.name);
-		// Let's see if the reference is something that can be proxied or frozen
+		// Let's see if the reference is something that can be proxied
 		if (
 			binding !== null &&
 			!binding.reassigned &&
@@ -263,24 +261,11 @@ export function should_proxy_or_freeze(node, scope) {
 			binding.initial.type !== 'ImportDeclaration' &&
 			binding.initial.type !== 'EachBlock'
 		) {
-			return should_proxy_or_freeze(binding.initial, null);
+			return should_proxy(binding.initial, null);
 		}
 	}
-	return true;
-}
 
-/**
- * Port over the location information from the source to the target identifier.
- * but keep the target as-is (i.e. a new id is created).
- * This ensures esrap can generate accurate source maps.
- * @param {Identifier} target
- * @param {Identifier} source
- */
-export function with_loc(target, source) {
-	if (source.loc) {
-		return { ...target, loc: source.loc };
-	}
-	return target;
+	return true;
 }
 
 /**
@@ -325,4 +310,19 @@ export function create_derived_block_argument(node, context) {
  */
 export function create_derived(state, arg) {
 	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
+}
+
+/**
+ * Whether a variable can be referenced directly from template string.
+ * @param {import('#compiler').Binding | undefined} binding
+ * @returns {boolean}
+ */
+export function can_inline_variable(binding) {
+	return (
+		!!binding &&
+		// in a `<script module>` block
+		!binding.scope.parent &&
+		// to prevent the need for escaping
+		binding.initial?.type === 'Literal'
+	);
 }

@@ -1,4 +1,4 @@
-/** @import { Attribute, ElementLike } from '#compiler' */
+/** @import { AST, ElementLike } from '#compiler' */
 /** @import { Context } from '../../types' */
 import * as e from '../../../../errors.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
@@ -7,7 +7,7 @@ import { is_custom_element_node } from '../../../nodes.js';
 import { regex_only_whitespaces } from '../../../patterns.js';
 
 /**
- * @param {Attribute} attribute
+ * @param {AST.Attribute} attribute
  */
 export function validate_attribute_name(attribute) {
 	if (
@@ -21,7 +21,7 @@ export function validate_attribute_name(attribute) {
 }
 
 /**
- * @param {Attribute} attribute
+ * @param {AST.Attribute} attribute
  * @param {ElementLike} parent
  */
 export function validate_attribute(attribute, parent) {
@@ -50,7 +50,7 @@ export function validate_attribute(attribute, parent) {
 
 /**
  * @param {Context} context
- * @param {Attribute} attribute
+ * @param {AST.Attribute} attribute
  * @param {boolean} is_component
  */
 export function validate_slot_attribute(context, attribute, is_component = false) {

@@ -1,10 +1,10 @@
-/** @import { TitleElement, Text } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
 import { build_template_literal } from './shared/utils.js';
 
 /**
- * @param {TitleElement} node
+ * @param {AST.TitleElement} node
  * @param {ComponentContext} context
  */
 export function TitleElement(node, context) {
@@ -14,7 +14,7 @@ export function TitleElement(node, context) {
 		context.state
 	);
 
-	const statement = b.stmt(b.assignment('=', b.member(b.id('$.document'), b.id('title')), value));
+	const statement = b.stmt(b.assignment('=', b.id('$.document.title'), value));
 
 	if (has_state) {
 		context.state.update.push(statement);

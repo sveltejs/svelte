@@ -1,16 +1,17 @@
 /** @import { Expression, Identifier, Statement } from 'estree' */
-/** @import { Fragment, Namespace, RegularElement } from '#compiler' */
+/** @import { AST, Namespace } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../../../constants.js';
 import { dev } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
+import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 import { clean_nodes, infer_namespace } from '../../utils.js';
 import { process_children } from './shared/fragment.js';
 import { build_render_statement } from './shared/utils.js';
 
 /**
- * @param {Fragment} node
+ * @param {AST.Fragment} node
  * @param {ComponentContext} context
  */
 export function Fragment(node, context) {
@@ -96,7 +97,7 @@ export function Fragment(node, context) {
 			call = b.call(
 				'$.add_locations',
 				call,
-				b.member(b.id(context.state.analysis.name), b.id('$.FILENAME'), true),
+				b.member(b.id(context.state.analysis.name), '$.FILENAME', true),
 				build_locations(state.locations)
 			);
 		}
@@ -105,7 +106,7 @@ export function Fragment(node, context) {
 	};
 
 	if (is_single_element) {
-		const element = /** @type {RegularElement} */ (trimmed[0]);
+		const element = /** @type {AST.RegularElement} */ (trimmed[0]);
 
 		const id = b.id(context.state.scope.generate(element.name));
 
@@ -115,7 +116,7 @@ export function Fragment(node, context) {
 		});
 
 		/** @type {Expression[]} */
-		const args = [b.template([b.quasi(state.template.join(''), true)], [])];
+		const args = [join_template(state.template)];
 
 		if (state.metadata.context.template_needs_import_node) {
 			args.push(b.literal(TEMPLATE_USE_IMPORT_NODE));
@@ -128,6 +129,14 @@ export function Fragment(node, context) {
 	} else if (is_single_child_not_needing_template) {
 		context.visit(trimmed[0], state);
 		body.push(...state.before_init, ...state.init);
+	} else if (trimmed.length === 1 && trimmed[0].type === 'Text') {
+		const id = b.id(context.state.scope.generate('text'));
+		body.push(
+			b.var(id, b.call('$.text', b.literal(trimmed[0].data))),
+			...state.before_init,
+			...state.init
+		);
+		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 	} else if (trimmed.length > 0) {
 		const id = b.id(context.state.scope.generate('fragment'));
 
@@ -166,10 +175,7 @@ export function Fragment(node, context) {
 					// special case — we can use `$.comment` instead of creating a unique template
 					body.push(b.var(id, b.call('$.comment')));
 				} else {
-					add_template(template_name, [
-						b.template([b.quasi(state.template.join(''), true)], []),
-						b.literal(flags)
-					]);
+					add_template(template_name, [join_template(state.template), b.literal(flags)]);
 
 					body.push(b.var(id, b.call(template_name)));
 				}
@@ -197,6 +203,31 @@ export function Fragment(node, context) {
 	}
 
 	return b.block(body);
+}
+
+/**
+ * @param {Array<string | Expression>} items
+ */
+function join_template(items) {
+	let quasi = b.quasi('');
+	const template = b.template([quasi], []);
+
+	for (const item of items) {
+		if (typeof item === 'string') {
+			quasi.value.cooked += item;
+		} else {
+			template.expressions.push(item);
+			template.quasis.push((quasi = b.quasi('')));
+		}
+	}
+
+	for (const quasi of template.quasis) {
+		quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
+	}
+
+	quasi.tail = true;
+
+	return template;
 }
 
 /**

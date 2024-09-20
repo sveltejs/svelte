@@ -1,5 +1,5 @@
 /** @import { Expression } from 'estree' */
-/** @import { BaseNode, ConstTag, Root, SvelteNode, TemplateNode, Text } from '#compiler' */
+/** @import { AST, SvelteNode, TemplateNode } from '#compiler' */
 /** @import * as Legacy from './types/legacy-nodes.js' */
 import { walk } from 'zimmerframe';
 import {
@@ -36,7 +36,7 @@ function remove_surrounding_whitespace_nodes(nodes) {
 /**
  * Transform our nice modern AST into the monstrosity emitted by Svelte 4
  * @param {string} source
- * @param {Root} ast
+ * @param {AST.Root} ast
  * @returns {Legacy.LegacyRoot}
  */
 export function convert(source, ast) {
@@ -74,8 +74,8 @@ export function convert(source, ast) {
 				let end = null;
 
 				if (node.fragment.nodes.length > 0) {
-					const first = /** @type {BaseNode} */ (node.fragment.nodes.at(0));
-					const last = /** @type {BaseNode} */ (node.fragment.nodes.at(-1));
+					const first = /** @type {AST.BaseNode} */ (node.fragment.nodes.at(0));
+					const last = /** @type {AST.BaseNode} */ (node.fragment.nodes.at(-1));
 
 					start = first.start;
 					end = last.end;
@@ -242,7 +242,7 @@ export function convert(source, ast) {
 					return node;
 				}
 
-				const modern_node = /** @type {ConstTag} */ (node);
+				const modern_node = /** @type {AST.ConstTag} */ (node);
 				const { id: left } = { ...modern_node.declaration.declarations[0] };
 				// @ts-ignore
 				delete left.typeAnnotation;
@@ -584,7 +584,7 @@ export function convert(source, ast) {
 				const parent = path.at(-1);
 				if (parent?.type === 'RegularElement' && parent.name === 'style') {
 					// these text nodes are missing `raw` for some dumb reason
-					return /** @type {Text} */ ({
+					return /** @type {AST.Text} */ ({
 						type: 'Text',
 						start: node.start,
 						end: node.end,

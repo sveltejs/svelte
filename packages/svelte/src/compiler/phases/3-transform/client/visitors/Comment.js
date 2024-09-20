@@ -1,8 +1,8 @@
-/** @import { Comment } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 
 /**
- * @param {Comment} node
+ * @param {AST.Comment} node
  * @param {ComponentContext} context
  */
 export function Comment(node, context) {

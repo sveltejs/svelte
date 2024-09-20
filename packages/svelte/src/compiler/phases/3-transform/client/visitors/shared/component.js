@@ -1,5 +1,5 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Property, Statement } from 'estree' */
-/** @import { Component, SvelteComponent, SvelteSelf, TemplateNode } from '#compiler' */
+/** @import { AST, TemplateNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks } from '../../../../../utils/ast.js';
@@ -11,7 +11,7 @@ import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
 
 /**
- * @param {Component | SvelteComponent | SvelteSelf} node
+ * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
  * @param {string} component_name
  * @param {ComponentContext} context
  * @param {Expression} anchor
@@ -298,7 +298,10 @@ export function build_component(node, component_name, context, anchor = context.
 		push_prop(b.init('$$slots', b.object(serialized_slots)));
 	}
 
-	if (!context.state.analysis.runes) {
+	if (
+		!context.state.analysis.runes &&
+		node.attributes.some((attribute) => attribute.type === 'BindDirective')
+	) {
 		push_prop(b.init('$$legacy', b.true));
 	}
 
@@ -345,14 +348,7 @@ export function build_component(node, component_name, context, anchor = context.
 				b.thunk(/** @type {Expression} */ (context.visit(node.expression))),
 				b.arrow(
 					[b.id('$$anchor'), b.id(component_name)],
-					b.block([
-						...binding_initializers,
-						b.stmt(
-							dev
-								? b.call('$.validate_dynamic_component', b.thunk(prev(b.id('$$anchor'))))
-								: prev(b.id('$$anchor'))
-						)
-					])
+					b.block([...binding_initializers, b.stmt(prev(b.id('$$anchor')))])
 				)
 			);
 		};
@@ -369,7 +365,7 @@ export function build_component(node, component_name, context, anchor = context.
 
 		statements.push(
 			b.stmt(b.call('$.css_props', anchor, b.thunk(b.object(custom_css_props)))),
-			b.stmt(fn(b.member(anchor, b.id('lastChild')))),
+			b.stmt(fn(b.member(anchor, 'lastChild'))),
 			b.stmt(b.call('$.reset', anchor))
 		);
 	} else {

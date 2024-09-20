@@ -1,4 +1,4 @@
-/** @import { Attribute, BindDirective } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import {
 	extract_all_identifiers_from_expression,
@@ -13,7 +13,7 @@ import fuzzymatch from '../../1-parse/utils/fuzzymatch.js';
 import { is_content_editable_binding, is_svg } from '../../../../utils.js';
 
 /**
- * @param {BindDirective} node
+ * @param {AST.BindDirective} node
  * @param {Context} context
  */
 export function BindDirective(node, context) {
@@ -34,18 +34,14 @@ export function BindDirective(node, context) {
 			node.name !== 'this' && // bind:this also works for regular variables
 			(!binding ||
 				(binding.kind !== 'state' &&
-					binding.kind !== 'frozen_state' &&
+					binding.kind !== 'raw_state' &&
 					binding.kind !== 'prop' &&
 					binding.kind !== 'bindable_prop' &&
 					binding.kind !== 'each' &&
 					binding.kind !== 'store_sub' &&
-					!binding.mutated))
+					!binding.updated)) // TODO wut?
 		) {
 			e.bind_invalid_value(node.expression);
-		}
-
-		if (binding?.kind === 'derived') {
-			e.constant_binding(node.expression, 'derived state');
 		}
 
 		if (context.state.analysis.runes && binding?.kind === 'each') {
@@ -79,10 +75,6 @@ export function BindDirective(node, context) {
 
 				if (references.length > 0) {
 					parent.metadata.contains_group_binding = true;
-
-					for (const binding of parent.metadata.references) {
-						binding.mutated = true;
-					}
 
 					each_blocks.push(parent);
 					ids = ids.filter((id) => !references.includes(id));
@@ -130,10 +122,6 @@ export function BindDirective(node, context) {
 		parent?.type === 'SvelteDocument' ||
 		parent?.type === 'SvelteBody'
 	) {
-		if (context.state.options.namespace === 'foreign' && node.name !== 'this') {
-			e.bind_invalid_name(node, node.name, 'Foreign elements only support `bind:this`');
-		}
-
 		if (node.name in binding_properties) {
 			const property = binding_properties[node.name];
 			if (property.valid_elements && !property.valid_elements.includes(parent.name)) {
@@ -164,7 +152,7 @@ export function BindDirective(node, context) {
 			}
 
 			if (parent.name === 'input' && node.name !== 'this') {
-				const type = /** @type {Attribute | undefined} */ (
+				const type = /** @type {AST.Attribute | undefined} */ (
 					parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'type')
 				);
 
@@ -206,7 +194,7 @@ export function BindDirective(node, context) {
 			}
 
 			if (is_content_editable_binding(node.name)) {
-				const contenteditable = /** @type {Attribute} */ (
+				const contenteditable = /** @type {AST.Attribute} */ (
 					parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'contenteditable')
 				);
 

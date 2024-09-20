@@ -1,6 +1,6 @@
 /** @import { Location } from 'locate-character' */
 /** @import { BlockStatement, Expression } from 'estree' */
-/** @import { SvelteElement } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import { dev, locator } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
@@ -9,7 +9,7 @@ import { build_element_attributes } from './shared/element.js';
 import { build_template } from './shared/utils.js';
 
 /**
- * @param {SvelteElement} node
+ * @param {AST.SvelteElement} node
  * @param {ComponentContext} context
  */
 export function SvelteElement(node, context) {
