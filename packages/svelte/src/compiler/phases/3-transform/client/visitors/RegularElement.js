@@ -83,7 +83,7 @@ export function RegularElement(node, context) {
 	/** @type {AST.StyleDirective[]} */
 	const style_directives = [];
 
-	/** @type {Array<AST.AnimateDirective | AST.BindDirective | AST.OnDirective | AST.TransitionDirective | AST.UseDirective} */
+	/** @type {Array<AST.AnimateDirective | AST.BindDirective | AST.OnDirective | AST.TransitionDirective | AST.UseDirective>} */
 	const other_directives = [];
 
 	/** @type {ExpressionStatement[]} */
