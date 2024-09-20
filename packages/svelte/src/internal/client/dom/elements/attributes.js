@@ -184,8 +184,7 @@ export function set_attributes(
 		next.class = next.class ? next.class + ' ' + css_hash : css_hash;
 	}
 
-	var setters = setters_cache.get(element.nodeName);
-	if (!setters) setters_cache.set(element.nodeName, (setters = get_setters(element)));
+	var setters = get_setters(element);
 
 	// @ts-expect-error
 	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});
@@ -356,8 +355,9 @@ var setters_cache = new Map();
 
 /** @param {Element} element */
 function get_setters(element) {
-	/** @type {string[]} */
-	var setters = [];
+	var setters = setters_cache.get(element.nodeName);
+	if (setters) return setters;
+	setters_cache.set(element.nodeName, (setters = []));
 	var descriptors;
 	var proto = get_prototype_of(element);
 
