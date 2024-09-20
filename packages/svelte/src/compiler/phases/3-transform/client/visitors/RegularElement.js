@@ -83,17 +83,13 @@ export function RegularElement(node, context) {
 	const lets = [];
 
 	const is_custom_element = is_custom_element_node(node);
-	let needs_input_reset = false;
 	let needs_content_reset = false;
 
 	/** @type {AST.BindDirective | null} */
 	let value_binding = null;
 
-	/** If true, needs `__value` for inputs */
-	let needs_special_value_handling = node.name === 'option' || node.name === 'select';
 	let is_content_editable = false;
 	let has_content_editable_binding = false;
-	let img_might_be_lazy = false;
 	let might_need_event_replaying = false;
 	let has_direction_attribute = false;
 	let has_style_attribute = false;
@@ -113,12 +109,16 @@ export function RegularElement(node, context) {
 		}
 	}
 
+	/** @type {Set<string>} */
+	const names = new Set();
+
+	/** @type {Set<string>} */
+	const bindings = new Set();
+
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute') {
-			attributes.push(attribute);
-			if (node.name === 'img' && attribute.name === 'loading') {
-				img_might_be_lazy = true;
-			}
+			names.add(attribute.name);
+
 			if (attribute.name === 'dir') {
 				has_direction_attribute = true;
 			}
@@ -129,7 +129,6 @@ export function RegularElement(node, context) {
 				(attribute.name === 'value' || attribute.name === 'checked') &&
 				!is_text_attribute(attribute)
 			) {
-				needs_input_reset = true;
 				needs_content_reset = true;
 			} else if (
 				attribute.name === 'contenteditable' &&
@@ -139,12 +138,35 @@ export function RegularElement(node, context) {
 				is_content_editable = true;
 			}
 		} else if (attribute.type === 'SpreadAttribute') {
-			attributes.push(attribute);
-			needs_input_reset = true;
+			names.add('*');
 			needs_content_reset = true;
 			if (is_load_error_element(node.name)) {
 				might_need_event_replaying = true;
 			}
+		}
+		if (attribute.type === 'BindDirective') {
+			bindings.add(attribute.name);
+
+			if (attribute.name === 'value') {
+				value_binding = attribute;
+				needs_content_reset = true;
+			} else if (
+				attribute.name === 'innerHTML' ||
+				attribute.name === 'innerText' ||
+				attribute.name === 'textContent'
+			) {
+				has_content_editable_binding = true;
+			}
+		} else if (attribute.type === 'UseDirective' && is_load_error_element(node.name)) {
+			might_need_event_replaying = true;
+		}
+	}
+
+	for (const attribute of node.attributes) {
+		if (attribute.type === 'Attribute') {
+			attributes.push(attribute);
+		} else if (attribute.type === 'SpreadAttribute') {
+			attributes.push(attribute);
 		} else if (attribute.type === 'ClassDirective') {
 			class_directives.push(attribute);
 		} else if (attribute.type === 'StyleDirective') {
@@ -157,24 +179,6 @@ export function RegularElement(node, context) {
 				b.stmt(has_action_directive ? b.call('$.effect', b.thunk(handler)) : handler)
 			);
 		} else if (attribute.type !== 'LetDirective') {
-			if (attribute.type === 'BindDirective') {
-				if (attribute.name === 'group' || attribute.name === 'checked') {
-					needs_special_value_handling = true;
-					needs_input_reset = true;
-				} else if (attribute.name === 'value') {
-					value_binding = attribute;
-					needs_content_reset = true;
-					needs_input_reset = true;
-				} else if (
-					attribute.name === 'innerHTML' ||
-					attribute.name === 'innerText' ||
-					attribute.name === 'textContent'
-				) {
-					has_content_editable_binding = true;
-				}
-			} else if (attribute.type === 'UseDirective' && is_load_error_element(node.name)) {
-				might_need_event_replaying = true;
-			}
 			context.visit(attribute);
 		}
 	}
@@ -183,7 +187,21 @@ export function RegularElement(node, context) {
 		child_metadata.bound_contenteditable = true;
 	}
 
-	if (needs_input_reset && node.name === 'input') {
+	if (
+		node.name === 'input' &&
+		node.attributes.some((attribute) => {
+			return (
+				attribute.type === 'SpreadAttribute' ||
+				(attribute.type === 'Attribute' &&
+					(attribute.name === 'value' || attribute.name === 'checked') &&
+					!is_text_attribute(attribute)) ||
+				(attribute.type === 'BindDirective' &&
+					(attribute.name === 'group' ||
+						attribute.name === 'checked' ||
+						attribute.name === 'value'))
+			);
+		})
+	) {
 		context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
 	}
 
@@ -203,9 +221,6 @@ export function RegularElement(node, context) {
 	// Then do attributes
 	let is_attributes_reactive = false;
 	if (node.metadata.has_spread) {
-		if (node.name === 'img') {
-			img_might_be_lazy = true;
-		}
 		build_element_spread_attributes(
 			attributes,
 			context,
@@ -216,6 +231,13 @@ export function RegularElement(node, context) {
 		);
 		is_attributes_reactive = true;
 	} else {
+		/** If true, needs `__value` for inputs */
+		const needs_special_value_handling =
+			node.name === 'option' ||
+			node.name === 'select' ||
+			bindings.has('group') ||
+			bindings.has('checked');
+
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 			if (is_event_attribute(attribute)) {
 				if (
@@ -261,7 +283,7 @@ export function RegularElement(node, context) {
 	}
 
 	// Apply the src and loading attributes for <img> elements after the element is appended to the document
-	if (img_might_be_lazy) {
+	if (node.name === 'img' && (names.has('*') || names.has('loading'))) {
 		context.state.after_update.push(b.stmt(b.call('$.handle_lazy_img', node_id)));
 	}
 
