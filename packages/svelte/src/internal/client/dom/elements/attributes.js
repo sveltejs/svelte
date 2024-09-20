@@ -149,9 +149,9 @@ export function set_custom_element_data(node, prop, value) {
  * @param {Record<string, any> | undefined} prev
  * @param {Record<string, any>} next New attributes - this function mutates this object
  * @param {string} [css_hash]
- * @param {boolean} preserve_attribute_case
- * @param {boolean} [skip_warning]
+ * @param {boolean} [preserve_attribute_case]
  * @param {boolean} [is_custom_element]
+ * @param {boolean} [skip_warning]
  * @returns {Record<string, any>}
  */
 export function set_attributes(
@@ -160,8 +160,8 @@ export function set_attributes(
 	next,
 	css_hash,
 	preserve_attribute_case = false,
-	skip_warning = false,
-	is_custom_element = false
+	is_custom_element = false,
+	skip_warning = false
 ) {
 	var current = prev || {};
 	var is_option_element = element.tagName === 'OPTION';

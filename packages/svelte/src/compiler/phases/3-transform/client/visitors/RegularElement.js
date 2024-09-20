@@ -24,7 +24,8 @@ import {
 	get_attribute_name,
 	build_attribute_value,
 	build_class_directives,
-	build_style_directives
+	build_style_directives,
+	build_set_attributes
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
 import {
@@ -95,7 +96,7 @@ export function RegularElement(node, context) {
 	/** @type {Map<string, AST.BindDirective>} */
 	const bindings = new Map();
 
-	let has_spread = false;
+	let has_spread = node.metadata.has_spread;
 	let has_use = false;
 
 	for (const attribute of node.attributes) {
@@ -105,6 +106,16 @@ export function RegularElement(node, context) {
 				break;
 
 			case 'Attribute':
+				// `is` attributes need to be part of the template, otherwise they break
+				if (attribute.name === 'is' && context.state.metadata.namespace === 'html') {
+					const { value } = build_attribute_value(attribute.value, context);
+
+					if (value.type === 'Literal' && typeof value.value === 'string') {
+						context.state.template.push(` is="${escape_html(value.value, true)}"`);
+						continue;
+					}
+				}
+
 				attributes.push(attribute);
 				lookup.set(attribute.name, attribute);
 				break;
@@ -129,7 +140,6 @@ export function RegularElement(node, context) {
 
 			case 'SpreadAttribute':
 				attributes.push(attribute);
-				has_spread = true;
 				break;
 
 			case 'StyleDirective':
@@ -194,17 +204,40 @@ export function RegularElement(node, context) {
 	const node_id = context.state.node;
 
 	// Then do attributes
-	let is_attributes_reactive = false;
-	if (node.metadata.has_spread) {
-		build_element_spread_attributes(
+	let is_attributes_reactive = has_spread;
+
+	if (has_spread) {
+		const attributes_id = b.id(context.state.scope.generate('attributes'));
+
+		build_set_attributes(
 			attributes,
 			context,
 			node,
 			node_id,
-			// If value binding exists, that one takes care of calling $.init_select
-			node.name === 'select' && !bindings.has('value')
+			attributes_id,
+			(node.metadata.svg || node.metadata.mathml || is_custom_element_node(node)) && b.true,
+			node.name.includes('-') && b.true
 		);
-		is_attributes_reactive = true;
+
+		// If value binding exists, that one takes care of calling $.init_select
+		if (node.name === 'select' && !bindings.has('value')) {
+			context.state.init.push(
+				b.stmt(b.call('$.init_select', node_id, b.thunk(b.member(attributes_id, 'value'))))
+			);
+
+			context.state.update.push(
+				b.if(
+					b.binary('in', b.literal('value'), attributes_id),
+					b.block([
+						// This ensures a one-way street to the DOM in case it's <select {value}>
+						// and not <select bind:value>. We need it in addition to $.init_select
+						// because the select value is not reflected as an attribute, so the
+						// mutation observer wouldn't notice.
+						b.stmt(b.call('$.select_option', node_id, b.member(attributes_id, 'value')))
+					])
+				)
+			);
+		}
 	} else {
 		/** If true, needs `__value` for inputs */
 		const needs_special_value_handling =
@@ -229,7 +262,7 @@ export function RegularElement(node, context) {
 				attribute.name !== 'autofocus' &&
 				(attribute.value === true || is_text_attribute(attribute))
 			) {
-				const name = get_attribute_name(node, attribute, context);
+				const name = get_attribute_name(node, attribute);
 				const value = is_text_attribute(attribute) ? attribute.value[0].data : true;
 
 				if (name !== 'class' || value) {
@@ -258,7 +291,7 @@ export function RegularElement(node, context) {
 		node_id,
 		context,
 		is_attributes_reactive,
-		lookup.has('style') || node.metadata.has_spread
+		lookup.has('style') || has_spread
 	);
 
 	// Apply the src and loading attributes for <img> elements after the element is appended to the document
@@ -449,109 +482,6 @@ function setup_select_synchronization(value_binding, context) {
 }
 
 /**
- * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
- * @param {ComponentContext} context
- * @param {AST.RegularElement} element
- * @param {Identifier} element_id
- * @param {boolean} needs_select_handling
- */
-function build_element_spread_attributes(
-	attributes,
-	context,
-	element,
-	element_id,
-	needs_select_handling
-) {
-	let needs_isolation = false;
-
-	/** @type {ObjectExpression['properties']} */
-	const values = [];
-
-	for (const attribute of attributes) {
-		if (attribute.type === 'Attribute') {
-			const name = get_attribute_name(element, attribute, context);
-			// TODO: handle has_call
-			const { value } = build_attribute_value(attribute.value, context);
-
-			if (
-				name === 'is' &&
-				value.type === 'Literal' &&
-				context.state.metadata.namespace === 'html'
-			) {
-				context.state.template.push(` is="${escape_html(value.value, true)}"`);
-				continue;
-			}
-
-			if (
-				is_event_attribute(attribute) &&
-				(get_attribute_expression(attribute).type === 'ArrowFunctionExpression' ||
-					get_attribute_expression(attribute).type === 'FunctionExpression')
-			) {
-				// Give the event handler a stable ID so it isn't removed and readded on every update
-				const id = context.state.scope.generate('event_handler');
-				context.state.init.push(b.var(id, value));
-				values.push(b.init(attribute.name, b.id(id)));
-			} else {
-				values.push(b.init(name, value));
-			}
-		} else {
-			values.push(b.spread(/** @type {Expression} */ (context.visit(attribute))));
-		}
-
-		needs_isolation ||=
-			attribute.type === 'SpreadAttribute' && attribute.metadata.expression.has_call;
-	}
-
-	const preserve_attribute_case =
-		element.metadata.svg || element.metadata.mathml || is_custom_element_node(element);
-	const id = b.id(context.state.scope.generate('attributes'));
-
-	const update = b.stmt(
-		b.assignment(
-			'=',
-			id,
-			b.call(
-				'$.set_attributes',
-				element_id,
-				id,
-				b.object(values),
-				context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
-				preserve_attribute_case && b.true,
-				is_ignored(element, 'hydration_attribute_changed') && b.true,
-				element.name.includes('-') && b.true
-			)
-		)
-	);
-
-	context.state.init.push(b.let(id));
-
-	// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
-	if (needs_isolation) {
-		context.state.init.push(build_update(update));
-	} else {
-		context.state.update.push(update);
-	}
-
-	if (needs_select_handling) {
-		context.state.init.push(
-			b.stmt(b.call('$.init_select', element_id, b.thunk(b.member(id, 'value'))))
-		);
-		context.state.update.push(
-			b.if(
-				b.binary('in', b.literal('value'), id),
-				b.block([
-					// This ensures a one-way street to the DOM in case it's <select {value}>
-					// and not <select bind:value>. We need it in addition to $.init_select
-					// because the select value is not reflected as an attribute, so the
-					// mutation observer wouldn't notice.
-					b.stmt(b.call('$.select_option', element_id, b.member(id, 'value')))
-				])
-			)
-		);
-	}
-}
-
-/**
  * Serializes an assignment to an element property by adding relevant statements to either only
  * the init or the the init and update arrays, depending on whether or not the value is dynamic.
  * Resulting code for static looks something like this:
@@ -581,7 +511,7 @@ function build_element_spread_attributes(
  */
 function build_element_attribute_update_assignment(element, node_id, attribute, context) {
 	const state = context.state;
-	const name = get_attribute_name(element, attribute, context);
+	const name = get_attribute_name(element, attribute);
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
 	let { has_call, value } = build_attribute_value(attribute.value, context);

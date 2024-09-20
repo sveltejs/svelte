@@ -36,6 +36,7 @@ export function get_states_and_calls(values) {
  * @param {Array<AST.Text | AST.ExpressionTag>} values
  * @param {(node: SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
+ * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
  */
 export function build_template_literal(values, visit, state) {
 	/** @type {Expression[]} */
