@@ -1,10 +1,92 @@
-/** @import { Expression, Identifier } from 'estree' */
+/** @import { Expression, Identifier, ObjectExpression } from 'estree' */
 /** @import { AST, Namespace } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { normalize_attribute } from '../../../../../../utils.js';
+import { is_ignored } from '../../../../../state.js';
+import { get_attribute_expression, is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { build_getter, create_derived } from '../../utils.js';
 import { build_template_literal, build_update } from './utils.js';
+
+/**
+ * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
+ * @param {ComponentContext} context
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {Identifier} element_id
+ * @param {Identifier} attributes_id
+ * @param {false | Expression} preserve_attribute_case
+ * @param {false | Expression} is_custom_element
+ */
+export function build_set_attributes(
+	attributes,
+	context,
+	element,
+	element_id,
+	attributes_id,
+	preserve_attribute_case,
+	is_custom_element
+) {
+	let needs_isolation = false;
+	let has_state = false;
+
+	/** @type {ObjectExpression['properties']} */
+	const values = [];
+
+	for (const attribute of attributes) {
+		if (attribute.type === 'Attribute') {
+			const { value } = build_attribute_value(attribute.value, context);
+
+			if (
+				is_event_attribute(attribute) &&
+				(value.type === 'ArrowFunctionExpression' || value.type === 'FunctionExpression')
+			) {
+				// Give the event handler a stable ID so it isn't removed and readded on every update
+				const id = context.state.scope.generate('event_handler');
+				context.state.init.push(b.var(id, value));
+				values.push(b.init(attribute.name, b.id(id)));
+			} else {
+				values.push(b.init(attribute.name, value));
+			}
+
+			has_state ||= attribute.metadata.expression.has_state;
+		} else {
+			values.push(b.spread(/** @type {Expression} */ (context.visit(attribute))));
+
+			// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
+			has_state = true;
+
+			needs_isolation ||= attribute.metadata.expression.has_call;
+		}
+	}
+
+	const call = b.call(
+		'$.set_attributes',
+		element_id,
+		has_state ? attributes_id : b.literal(null),
+		b.object(values),
+		context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
+		preserve_attribute_case,
+		is_custom_element,
+		is_ignored(element, 'hydration_attribute_changed') && b.true
+	);
+
+	if (has_state) {
+		context.state.init.push(b.let(attributes_id));
+
+		const update = b.stmt(b.assignment('=', attributes_id, call));
+
+		if (needs_isolation) {
+			context.state.init.push(build_update(update));
+			return false;
+		}
+
+		context.state.update.push(update);
+		return true;
+	}
+
+	context.state.init.push(b.stmt(call));
+	return false;
+}
 
 /**
  * Serializes each style directive into something like `$.set_style(element, style_property, value)`
@@ -101,6 +183,7 @@ export function build_class_directives(
 /**
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
+ * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
  */
 export function build_attribute_value(value, context) {
 	if (value === true) {
@@ -127,9 +210,8 @@ export function build_attribute_value(value, context) {
 /**
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {AST.Attribute} attribute
- * @param {{ state: { metadata: { namespace: Namespace }}}} context
  */
-export function get_attribute_name(element, attribute, context) {
+export function get_attribute_name(element, attribute) {
 	if (!element.metadata.svg && !element.metadata.mathml) {
 		return normalize_attribute(attribute.name);
 	}
