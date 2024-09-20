@@ -27,7 +27,7 @@ export function build_set_attributes(
 	is_custom_element
 ) {
 	let needs_isolation = false;
-	let is_reactive = false;
+	let has_state = false;
 
 	/** @type {ObjectExpression['properties']} */
 	const values = [];
@@ -47,22 +47,22 @@ export function build_set_attributes(
 			} else {
 				values.push(b.init(attribute.name, value));
 			}
+
+			has_state ||= attribute.metadata.expression.has_state;
 		} else {
 			values.push(b.spread(/** @type {Expression} */ (context.visit(attribute))));
-		}
 
-		is_reactive ||=
-			attribute.metadata.expression.has_state ||
 			// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
-			attribute.type === 'SpreadAttribute';
-		needs_isolation ||=
-			attribute.type === 'SpreadAttribute' && attribute.metadata.expression.has_call;
+			has_state = true;
+
+			needs_isolation ||= attribute.metadata.expression.has_call;
+		}
 	}
 
 	const call = b.call(
 		'$.set_attributes',
 		element_id,
-		is_reactive ? attributes_id : b.literal(null),
+		has_state ? attributes_id : b.literal(null),
 		b.object(values),
 		context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
 		preserve_attribute_case,
@@ -70,7 +70,7 @@ export function build_set_attributes(
 		is_ignored(element, 'hydration_attribute_changed') && b.true
 	);
 
-	if (is_reactive) {
+	if (has_state) {
 		context.state.init.push(b.let(attributes_id));
 
 		const update = b.stmt(b.assignment('=', attributes_id, call));
