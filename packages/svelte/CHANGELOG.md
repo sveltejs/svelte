@@ -1,5 +1,29 @@
 # svelte
 
+## 5.0.0-next.257
+
+### Patch Changes
+
+- fix: only set attribute as property if element has setter ([#13341](https://github.com/sveltejs/svelte/pull/13341))
+
+## 5.0.0-next.256
+
+### Patch Changes
+
+- fix: only warn on context="module" in runes mode ([#13332](https://github.com/sveltejs/svelte/pull/13332))
+
+- feat: deprecate `<svelte:self>` in runes mode ([#13333](https://github.com/sveltejs/svelte/pull/13333))
+
+- fix: set strings as attributes, non-strings as properties if property exists ([#13327](https://github.com/sveltejs/svelte/pull/13327))
+
+## 5.0.0-next.255
+
+### Patch Changes
+
+- fix: keep bound inputs in sync in runes mode ([#13328](https://github.com/sveltejs/svelte/pull/13328))
+
+- fix: silence snapshot warnings inside `$inspect` ([#13334](https://github.com/sveltejs/svelte/pull/13334))
+
 ## 5.0.0-next.254
 
 ### Patch Changes

@@ -1,0 +1,14 @@
+[
+	{
+		"code": "svelte_self_deprecated",
+		"message": "`<svelte:self>` is deprecated — use self-imports (e.g. `import Self from './Self.svelte'`) instead",
+		"start": {
+			"line": 9,
+			"column": 1
+		},
+		"end": {
+			"line": 9,
+			"column": 26
+		}
+	}
+]

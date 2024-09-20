@@ -4,11 +4,11 @@
 		"message": "`context=\"module\"` is deprecated, use the `module` attribute instead",
 		"start": {
 			"column": 8,
-			"line": 1
+			"line": 3
 		},
 		"end": {
 			"column": 24,
-			"line": 1
+			"line": 3
 		}
 	}
 ]
