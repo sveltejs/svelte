@@ -277,7 +277,7 @@ export function RegularElement(node, context) {
 
 	context.state.template.push('>');
 
-	const child_metadata = {
+	const metadata = {
 		...context.state.metadata,
 		namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
 	};
@@ -290,14 +290,14 @@ export function RegularElement(node, context) {
 			(contenteditable.value === true ||
 				(is_text_attribute(contenteditable) && contenteditable.value[0].data === 'true'))
 		) {
-			child_metadata.bound_contenteditable = true;
+			metadata.bound_contenteditable = true;
 		}
 	}
 
 	/** @type {ComponentClientTransformState} */
 	const state = {
 		...context.state,
-		metadata: child_metadata,
+		metadata,
 		locations: [],
 		scope: /** @type {Scope} */ (context.state.scopes.get(node.fragment)),
 		preserve_whitespace:
@@ -308,7 +308,7 @@ export function RegularElement(node, context) {
 		node,
 		node.fragment.nodes,
 		context.path,
-		child_metadata.namespace,
+		state.metadata.namespace,
 		state,
 		node.name === 'script' || state.preserve_whitespace,
 		state.options.preserveComments
