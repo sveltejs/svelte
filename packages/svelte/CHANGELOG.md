@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.257
+
+### Patch Changes
+
+- fix: only set attribute as property if element has setter ([#13341](https://github.com/sveltejs/svelte/pull/13341))
+
 ## 5.0.0-next.256
 
 ### Patch Changes
