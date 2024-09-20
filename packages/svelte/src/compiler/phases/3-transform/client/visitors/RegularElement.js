@@ -85,9 +85,6 @@ export function RegularElement(node, context) {
 	const is_custom_element = is_custom_element_node(node);
 	let needs_content_reset = false;
 
-	/** @type {AST.BindDirective | null} */
-	let value_binding = null;
-
 	let is_content_editable = false;
 
 	if (is_custom_element) {
@@ -105,15 +102,17 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	/** @type {Set<string>} */
-	const names = new Set();
+	/** @type {Map<string, AST.Attribute>} */
+	const lookup = new Map();
 
-	/** @type {Set<string>} */
-	const bindings = new Set();
+	/** @type {Map<string, AST.BindDirective>} */
+	const bindings = new Map();
+
+	let has_spread = false;
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute') {
-			names.add(attribute.name);
+			lookup.set(attribute.name, attribute);
 
 			if (
 				(attribute.name === 'value' || attribute.name === 'checked') &&
@@ -128,16 +127,11 @@ export function RegularElement(node, context) {
 				is_content_editable = true;
 			}
 		} else if (attribute.type === 'SpreadAttribute') {
-			names.add('*');
-			needs_content_reset = true;
+			has_spread = true;
 		}
-		if (attribute.type === 'BindDirective') {
-			bindings.add(attribute.name);
 
-			if (attribute.name === 'value') {
-				value_binding = attribute;
-				needs_content_reset = true;
-			}
+		if (attribute.type === 'BindDirective') {
+			bindings.set(attribute.name, attribute);
 		}
 	}
 
@@ -184,12 +178,12 @@ export function RegularElement(node, context) {
 		context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
 	}
 
-	if (needs_content_reset && node.name === 'textarea') {
+	if (node.name === 'textarea' && (has_spread || bindings.has('value') || needs_content_reset)) {
 		context.state.init.push(b.stmt(b.call('$.remove_textarea_child', context.state.node)));
 	}
 
-	if (value_binding !== null && node.name === 'select') {
-		setup_select_synchronization(value_binding, context);
+	if (node.name === 'select' && bindings.has('value')) {
+		setup_select_synchronization(/** @type {AST.BindDirective} */ (bindings.get('value')), context);
 	}
 
 	const node_id = context.state.node;
@@ -206,7 +200,7 @@ export function RegularElement(node, context) {
 			node,
 			node_id,
 			// If value binding exists, that one takes care of calling $.init_select
-			value_binding === null && node.name === 'select'
+			node.name === 'select' && !bindings.has('value')
 		);
 		is_attributes_reactive = true;
 	} else {
@@ -256,7 +250,7 @@ export function RegularElement(node, context) {
 	}
 
 	// Apply the src and loading attributes for <img> elements after the element is appended to the document
-	if (node.name === 'img' && (names.has('*') || names.has('loading'))) {
+	if (node.name === 'img' && (has_spread || lookup.has('loading'))) {
 		context.state.after_update.push(b.stmt(b.call('$.handle_lazy_img', node_id)));
 	}
 
@@ -267,14 +261,14 @@ export function RegularElement(node, context) {
 		node_id,
 		context,
 		is_attributes_reactive,
-		names.has('style') || node.metadata.has_spread
+		lookup.has('style') || node.metadata.has_spread
 	);
 
 	if (
 		is_load_error_element(node.name) &&
-		(names.has('*') ||
-			names.has('onload') ||
-			names.has('onerror') ||
+		(has_spread ||
+			lookup.has('onload') ||
+			lookup.has('onerror') ||
 			node.attributes.some((attribute) => attribute.type === 'UseDirective'))
 	) {
 		context.state.after_update.push(b.stmt(b.call('$.replay_events', node_id)));
@@ -372,7 +366,7 @@ export function RegularElement(node, context) {
 		context.state.after_update.push(...child_state.after_update);
 	}
 
-	if (names.has('dir')) {
+	if (lookup.has('dir')) {
 		// This fixes an issue with Chromium where updates to text content within an element
 		// does not update the direction when set to auto. If we just re-assign the dir, this fixes it.
 		const dir = b.member(node_id, 'dir');
