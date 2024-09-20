@@ -196,25 +196,21 @@ function build_dynamic_element_attributes(element, attributes, context, element_
 			attribute.type === 'SpreadAttribute' && attribute.metadata.expression.has_call;
 	}
 
+	const call = b.call(
+		'$.set_attributes',
+		element_id,
+		is_reactive ? attributes_id : b.literal(null),
+		b.object(values),
+		context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
+		b.binary('!==', b.member(element_id, 'namespaceURI'), b.id('$.NAMESPACE_SVG')),
+		is_ignored(element, 'hydration_attribute_changed') && b.true,
+		b.call(b.member(b.member(element_id, 'nodeName'), 'includes'), b.literal('-'))
+	);
+
 	if (is_reactive) {
 		context.state.init.push(b.let(attributes_id));
 
-		const update = b.stmt(
-			b.assignment(
-				'=',
-				attributes_id,
-				b.call(
-					'$.set_attributes',
-					element_id,
-					attributes_id,
-					b.object(values),
-					context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
-					b.binary('!==', b.member(element_id, 'namespaceURI'), b.id('$.NAMESPACE_SVG')),
-					is_ignored(element, 'hydration_attribute_changed') && b.true,
-					b.call(b.member(b.member(element_id, 'nodeName'), 'includes'), b.literal('-'))
-				)
-			)
-		);
+		const update = b.stmt(b.assignment('=', attributes_id, call));
 
 		if (needs_isolation) {
 			context.state.init.push(build_update(update));
@@ -225,19 +221,6 @@ function build_dynamic_element_attributes(element, attributes, context, element_
 		return true;
 	}
 
-	context.state.init.push(
-		b.stmt(
-			b.call(
-				'$.set_attributes',
-				element_id,
-				b.literal(null),
-				b.object(values),
-				context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
-				b.binary('!==', b.member(element_id, 'namespaceURI'), b.id('$.NAMESPACE_SVG')),
-				is_ignored(element, 'hydration_attribute_changed') && b.true,
-				b.call(b.member(b.member(element_id, 'nodeName'), 'includes'), b.literal('-'))
-			)
-		)
-	);
+	context.state.init.push(b.stmt(call));
 	return false;
 }
