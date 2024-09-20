@@ -83,7 +83,6 @@ export function RegularElement(node, context) {
 	const lets = [];
 
 	const is_custom_element = is_custom_element_node(node);
-	let needs_content_reset = false;
 
 	if (is_custom_element) {
 		// cloneNode is faster, but it does not instantiate the underlying class of the
@@ -91,13 +90,6 @@ export function RegularElement(node, context) {
 		// cause problems when setting properties on the custom element.
 		// Therefore we need to use importNode instead, which doesn't have this caveat.
 		metadata.context.template_needs_import_node = true;
-	}
-
-	// visit let directives first, to set state
-	for (const attribute of node.attributes) {
-		if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
-		}
 	}
 
 	/** @type {Map<string, AST.Attribute>} */
@@ -109,21 +101,15 @@ export function RegularElement(node, context) {
 	let has_spread = false;
 
 	for (const attribute of node.attributes) {
-		if (attribute.type === 'Attribute') {
-			lookup.set(attribute.name, attribute);
-
-			if (
-				(attribute.name === 'value' || attribute.name === 'checked') &&
-				!is_text_attribute(attribute)
-			) {
-				needs_content_reset = true;
-			}
-		} else if (attribute.type === 'SpreadAttribute') {
+		if (attribute.type === 'SpreadAttribute') {
 			has_spread = true;
-		}
-
-		if (attribute.type === 'BindDirective') {
+		} else if (attribute.type === 'Attribute') {
+			lookup.set(attribute.name, attribute);
+		} else if (attribute.type === 'BindDirective') {
 			bindings.set(attribute.name, attribute);
+		} else if (attribute.type === 'LetDirective') {
+			// visit let directives before everything else, to set state
+			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 		}
 	}
 
@@ -178,8 +164,13 @@ export function RegularElement(node, context) {
 		context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
 	}
 
-	if (node.name === 'textarea' && (has_spread || bindings.has('value') || needs_content_reset)) {
-		context.state.init.push(b.stmt(b.call('$.remove_textarea_child', context.state.node)));
+	if (node.name === 'textarea') {
+		const attribute = lookup.get('value') ?? lookup.get('checked');
+		const needs_content_reset = attribute && !is_text_attribute(attribute);
+
+		if (has_spread || bindings.has('value') || needs_content_reset) {
+			context.state.init.push(b.stmt(b.call('$.remove_textarea_child', context.state.node)));
+		}
 	}
 
 	if (node.name === 'select' && bindings.has('value')) {
