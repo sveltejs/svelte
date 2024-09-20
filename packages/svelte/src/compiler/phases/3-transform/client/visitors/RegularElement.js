@@ -89,8 +89,6 @@ export function RegularElement(node, context) {
 	let value_binding = null;
 
 	let is_content_editable = false;
-	let has_direction_attribute = false;
-	let has_style_attribute = false;
 
 	if (is_custom_element) {
 		// cloneNode is faster, but it does not instantiate the underlying class of the
@@ -117,12 +115,6 @@ export function RegularElement(node, context) {
 		if (attribute.type === 'Attribute') {
 			names.add(attribute.name);
 
-			if (attribute.name === 'dir') {
-				has_direction_attribute = true;
-			}
-			if (attribute.name === 'style') {
-				has_style_attribute = true;
-			}
 			if (
 				(attribute.name === 'value' || attribute.name === 'checked') &&
 				!is_text_attribute(attribute)
@@ -275,7 +267,7 @@ export function RegularElement(node, context) {
 		node_id,
 		context,
 		is_attributes_reactive,
-		has_style_attribute || node.metadata.has_spread
+		names.has('style') || node.metadata.has_spread
 	);
 
 	if (
@@ -380,7 +372,7 @@ export function RegularElement(node, context) {
 		context.state.after_update.push(...child_state.after_update);
 	}
 
-	if (has_direction_attribute) {
+	if (names.has('dir')) {
 		// This fixes an issue with Chromium where updates to text content within an element
 		// does not update the direction when set to auto. If we just re-assign the dir, this fixes it.
 		const dir = b.member(node_id, 'dir');
