@@ -186,8 +186,7 @@ export function EachBlock(node, context) {
 	if (invalidate_store) sequence.push(invalidate_store);
 
 	if (node.context.type === 'Identifier') {
-		const name = node.context.name;
-		const binding = /** @type {Binding} */ (context.state.scope.get(name));
+		const binding = /** @type {Binding} */ (context.state.scope.get(node.context.name));
 
 		child_state.transform[node.context.name] = {
 			read: (node) => {
