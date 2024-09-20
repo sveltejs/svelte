@@ -42,7 +42,9 @@
 
 ## effect_update_depth_exceeded
 
-> Maximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops
+> Maximum update depth exceeded. This usually indicates state is being updated inside an effect, which you should avoid. Svelte limits the number of nested updates to prevent infinite loops
+
+> Maximum update depth exceeded after assignment at %location%. This usually indicates state is being updated inside an effect that also depends on that state. Svelte limits the number of nested updates to prevent infinite loops
 
 ## hydration_failed
 

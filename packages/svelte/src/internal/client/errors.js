@@ -179,12 +179,13 @@ export function effect_orphan(rune) {
 }
 
 /**
- * Maximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops
+ * Maximum update depth exceeded after assignment at %location%. This usually indicates state is being updated inside an effect that also depends on that state. Svelte limits the number of nested updates to prevent infinite loops
+ * @param {string | undefined | null} [location]
  * @returns {never}
  */
-export function effect_update_depth_exceeded() {
+export function effect_update_depth_exceeded(location) {
 	if (DEV) {
-		const error = new Error(`effect_update_depth_exceeded\nMaximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops`);
+		const error = new Error(`effect_update_depth_exceeded\n${location ? `Maximum update depth exceeded after assignment at ${location}. This usually indicates state is being updated inside an effect that also depends on that state. Svelte limits the number of nested updates to prevent infinite loops` : "Maximum update depth exceeded. This usually indicates state is being updated inside an effect, which you should avoid. Svelte limits the number of nested updates to prevent infinite loops"}`);
 
 		error.name = 'Svelte error';
 		throw error;
