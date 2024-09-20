@@ -62,7 +62,6 @@ export function RegularElement(node, context) {
 		context.state.metadata.context.template_contains_script_tag = true;
 	}
 
-	const metadata = context.state.metadata;
 	const child_metadata = {
 		...context.state.metadata,
 		namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
@@ -79,6 +78,9 @@ export function RegularElement(node, context) {
 	/** @type {AST.StyleDirective[]} */
 	const style_directives = [];
 
+	/** @type {Array<AST.AnimateDirective | AST.BindDirective | AST.OnDirective | AST.TransitionDirective | AST.UseDirective} */
+	const other_directives = [];
+
 	/** @type {ExpressionStatement[]} */
 	const lets = [];
 
@@ -89,7 +91,7 @@ export function RegularElement(node, context) {
 		// custom element until the template is connected to the dom, which would
 		// cause problems when setting properties on the custom element.
 		// Therefore we need to use importNode instead, which doesn't have this caveat.
-		metadata.context.template_needs_import_node = true;
+		context.state.metadata.context.template_needs_import_node = true;
 	}
 
 	/** @type {Map<string, AST.Attribute>} */
@@ -99,37 +101,62 @@ export function RegularElement(node, context) {
 	const bindings = new Map();
 
 	let has_spread = false;
+	let has_use = false;
 
 	for (const attribute of node.attributes) {
-		if (attribute.type === 'SpreadAttribute') {
-			has_spread = true;
-		} else if (attribute.type === 'Attribute') {
-			lookup.set(attribute.name, attribute);
-		} else if (attribute.type === 'BindDirective') {
-			bindings.set(attribute.name, attribute);
-		} else if (attribute.type === 'LetDirective') {
-			// visit let directives before everything else, to set state
-			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+		switch (attribute.type) {
+			case 'SpreadAttribute':
+				attributes.push(attribute);
+				has_spread = true;
+				break;
+
+			case 'Attribute':
+				attributes.push(attribute);
+				lookup.set(attribute.name, attribute);
+				break;
+
+			case 'BindDirective':
+				bindings.set(attribute.name, attribute);
+				other_directives.push(attribute);
+				break;
+
+			case 'ClassDirective':
+				class_directives.push(attribute);
+				break;
+
+			case 'StyleDirective':
+				style_directives.push(attribute);
+				break;
+
+			case 'LetDirective':
+				// visit let directives before everything else, to set state
+				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+				break;
+
+			case 'UseDirective':
+				has_use = true;
+				other_directives.push(attribute);
+				break;
+
+			case 'OnDirective':
+				other_directives.push(attribute);
+				break;
+
+			case 'AnimateDirective':
+			case 'TransitionDirective':
+				other_directives.push(attribute);
+				break;
 		}
 	}
 
-	for (const attribute of node.attributes) {
-		if (attribute.type === 'Attribute') {
-			attributes.push(attribute);
-		} else if (attribute.type === 'SpreadAttribute') {
-			attributes.push(attribute);
-		} else if (attribute.type === 'ClassDirective') {
-			class_directives.push(attribute);
-		} else if (attribute.type === 'StyleDirective') {
-			style_directives.push(attribute);
-		} else if (attribute.type === 'OnDirective') {
+	for (const attribute of other_directives) {
+		if (attribute.type === 'OnDirective') {
 			const handler = /** @type {Expression} */ (context.visit(attribute));
-			const has_action_directive = node.attributes.find((a) => a.type === 'UseDirective');
 
 			context.state.after_update.push(
-				b.stmt(has_action_directive ? b.call('$.effect', b.thunk(handler)) : handler)
+				b.stmt(has_use ? b.call('$.effect', b.thunk(handler)) : handler)
 			);
-		} else if (attribute.type !== 'LetDirective') {
+		} else {
 			context.visit(attribute);
 		}
 	}
@@ -257,10 +284,7 @@ export function RegularElement(node, context) {
 
 	if (
 		is_load_error_element(node.name) &&
-		(has_spread ||
-			lookup.has('onload') ||
-			lookup.has('onerror') ||
-			node.attributes.some((attribute) => attribute.type === 'UseDirective'))
+		(has_spread || has_use || lookup.has('onload') || lookup.has('onerror'))
 	) {
 		context.state.after_update.push(b.stmt(b.call('$.replay_events', node_id)));
 	}
