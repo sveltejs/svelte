@@ -89,8 +89,6 @@ export function RegularElement(node, context) {
 	let value_binding = null;
 
 	let is_content_editable = false;
-	let has_content_editable_binding = false;
-	let might_need_event_replaying = false;
 	let has_direction_attribute = false;
 	let has_style_attribute = false;
 
@@ -140,9 +138,6 @@ export function RegularElement(node, context) {
 		} else if (attribute.type === 'SpreadAttribute') {
 			names.add('*');
 			needs_content_reset = true;
-			if (is_load_error_element(node.name)) {
-				might_need_event_replaying = true;
-			}
 		}
 		if (attribute.type === 'BindDirective') {
 			bindings.add(attribute.name);
@@ -150,15 +145,7 @@ export function RegularElement(node, context) {
 			if (attribute.name === 'value') {
 				value_binding = attribute;
 				needs_content_reset = true;
-			} else if (
-				attribute.name === 'innerHTML' ||
-				attribute.name === 'innerText' ||
-				attribute.name === 'textContent'
-			) {
-				has_content_editable_binding = true;
 			}
-		} else if (attribute.type === 'UseDirective' && is_load_error_element(node.name)) {
-			might_need_event_replaying = true;
 		}
 	}
 
@@ -183,9 +170,9 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (is_content_editable && has_content_editable_binding) {
-		child_metadata.bound_contenteditable = true;
-	}
+	child_metadata.bound_contenteditable =
+		is_content_editable &&
+		(bindings.has('innerHTML') || bindings.has('innerText') || bindings.has('textContent'));
 
 	if (
 		node.name === 'input' &&
@@ -240,12 +227,6 @@ export function RegularElement(node, context) {
 
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 			if (is_event_attribute(attribute)) {
-				if (
-					(attribute.name === 'onload' || attribute.name === 'onerror') &&
-					is_load_error_element(node.name)
-				) {
-					might_need_event_replaying = true;
-				}
 				visit_event_attribute(attribute, context);
 				continue;
 			}
@@ -297,7 +278,13 @@ export function RegularElement(node, context) {
 		has_style_attribute || node.metadata.has_spread
 	);
 
-	if (might_need_event_replaying) {
+	if (
+		is_load_error_element(node.name) &&
+		(names.has('*') ||
+			names.has('onload') ||
+			names.has('onerror') ||
+			node.attributes.some((attribute) => attribute.type === 'UseDirective'))
+	) {
 		context.state.after_update.push(b.stmt(b.call('$.replay_events', node_id)));
 	}
 
