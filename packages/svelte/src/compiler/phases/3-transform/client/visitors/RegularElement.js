@@ -208,7 +208,15 @@ export function RegularElement(node, context) {
 	if (has_spread) {
 		const attributes_id = b.id(context.state.scope.generate('attributes'));
 
-		build_element_spread_attributes(attributes, context, node, node_id, attributes_id);
+		build_element_spread_attributes(
+			attributes,
+			context,
+			node,
+			node_id,
+			attributes_id,
+			(node.metadata.svg || node.metadata.mathml || is_custom_element_node(node)) && b.true,
+			node.name.includes('-') && b.true
+		);
 
 		// If value binding exists, that one takes care of calling $.init_select
 		if (node.name === 'select' && !bindings.has('value')) {
@@ -478,8 +486,18 @@ function setup_select_synchronization(value_binding, context) {
  * @param {AST.RegularElement} element
  * @param {Identifier} element_id
  * @param {Identifier} attributes_id
+ * @param {false | Expression} preserve_attribute_case
+ * @param {false | Expression} is_custom_element
  */
-function build_element_spread_attributes(attributes, context, element, element_id, attributes_id) {
+function build_element_spread_attributes(
+	attributes,
+	context,
+	element,
+	element_id,
+	attributes_id,
+	preserve_attribute_case,
+	is_custom_element
+) {
 	let needs_isolation = false;
 
 	/** @type {ObjectExpression['properties']} */
@@ -509,9 +527,6 @@ function build_element_spread_attributes(attributes, context, element, element_i
 			attribute.type === 'SpreadAttribute' && attribute.metadata.expression.has_call;
 	}
 
-	const preserve_attribute_case =
-		element.metadata.svg || element.metadata.mathml || is_custom_element_node(element);
-
 	const update = b.stmt(
 		b.assignment(
 			'=',
@@ -522,9 +537,9 @@ function build_element_spread_attributes(attributes, context, element, element_i
 				attributes_id,
 				b.object(values),
 				context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
-				preserve_attribute_case && b.true,
-				is_ignored(element, 'hydration_attribute_changed') && b.true,
-				element.name.includes('-') && b.true
+				preserve_attribute_case,
+				is_custom_element,
+				is_ignored(element, 'hydration_attribute_changed') && b.true
 			)
 		)
 	);

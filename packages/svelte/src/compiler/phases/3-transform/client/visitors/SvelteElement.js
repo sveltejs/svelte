@@ -99,7 +99,9 @@ export function SvelteElement(node, context) {
 			attributes,
 			inner_context,
 			element_id,
-			attributes_id
+			attributes_id,
+			b.binary('!==', b.member(element_id, 'namespaceURI'), b.id('$.NAMESPACE_SVG')),
+			b.call(b.member(b.member(element_id, 'nodeName'), 'includes'), b.literal('-'))
 		);
 	}
 
@@ -159,9 +161,19 @@ export function SvelteElement(node, context) {
  * @param {ComponentContext} context
  * @param {Identifier} element_id
  * @param {Identifier} attributes_id
+ * @param {false | Expression} preserve_attribute_case
+ * @param {false | Expression} is_custom_element
  * @returns {boolean}
  */
-function build_dynamic_element_attributes(element, attributes, context, element_id, attributes_id) {
+function build_dynamic_element_attributes(
+	element,
+	attributes,
+	context,
+	element_id,
+	attributes_id,
+	preserve_attribute_case,
+	is_custom_element
+) {
 	let needs_isolation = false;
 	let is_reactive = false;
 
@@ -202,9 +214,9 @@ function build_dynamic_element_attributes(element, attributes, context, element_
 		is_reactive ? attributes_id : b.literal(null),
 		b.object(values),
 		context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
-		b.binary('!==', b.member(element_id, 'namespaceURI'), b.id('$.NAMESPACE_SVG')),
-		is_ignored(element, 'hydration_attribute_changed') && b.true,
-		b.call(b.member(b.member(element_id, 'nodeName'), 'includes'), b.literal('-'))
+		preserve_attribute_case,
+		is_custom_element,
+		is_ignored(element, 'hydration_attribute_changed') && b.true
 	);
 
 	if (is_reactive) {
