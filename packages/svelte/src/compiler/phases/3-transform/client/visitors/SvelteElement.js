@@ -187,18 +187,18 @@ function build_dynamic_element_attributes(element, attributes, context, element_
 			attribute.type === 'SpreadAttribute' && attribute.metadata.expression.has_call;
 	}
 
-	if (needs_isolation || is_reactive) {
-		const id = context.state.scope.generate('attributes');
+	if (is_reactive) {
+		const id = b.id(context.state.scope.generate('attributes'));
 		context.state.init.push(b.let(id));
 
 		const update = b.stmt(
 			b.assignment(
 				'=',
-				b.id(id),
+				id,
 				b.call(
 					'$.set_attributes',
 					element_id,
-					b.id(id),
+					id,
 					b.object(values),
 					context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
 					b.binary('!==', b.member(element_id, 'namespaceURI'), b.id('$.NAMESPACE_SVG')),

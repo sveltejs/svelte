@@ -468,12 +468,10 @@ function build_element_spread_attributes(
 
 	for (const attribute of attributes) {
 		if (attribute.type === 'Attribute') {
-			const name = get_attribute_name(element, attribute, context);
-			// TODO: handle has_call
 			const { value } = build_attribute_value(attribute.value, context);
 
 			if (
-				name === 'is' &&
+				attribute.name === 'is' &&
 				value.type === 'Literal' &&
 				context.state.metadata.namespace === 'html'
 			) {
@@ -491,7 +489,7 @@ function build_element_spread_attributes(
 				context.state.init.push(b.var(id, value));
 				values.push(b.init(attribute.name, b.id(id)));
 			} else {
-				values.push(b.init(name, value));
+				values.push(b.init(attribute.name, value));
 			}
 		} else {
 			values.push(b.spread(/** @type {Expression} */ (context.visit(attribute))));
