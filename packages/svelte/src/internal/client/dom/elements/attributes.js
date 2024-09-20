@@ -136,18 +136,8 @@ export function set_xlink_attribute(dom, attribute, value) {
  * @param {any} value
  */
 export function set_custom_element_data(node, prop, value) {
-	if (prop in node) {
-		// Reading the prop could cause an error, we don't want this to fail everything else
-		try {
-			var curr_val = node[prop];
-		} catch {
-			set_attribute(node, prop, value);
-			return;
-		}
-		var next_val = typeof curr_val === 'boolean' && value === '' ? true : value;
-		if (typeof curr_val !== 'object' || curr_val !== next_val) {
-			node[prop] = next_val;
-		}
+	if (get_setters(node).includes(prop)) {
+		node[prop] = value;
 	} else {
 		set_attribute(node, prop, value);
 	}
@@ -161,6 +151,7 @@ export function set_custom_element_data(node, prop, value) {
  * @param {string} [css_hash]
  * @param {boolean} preserve_attribute_case
  * @param {boolean} [skip_warning]
+ * @param {boolean} [is_custom_element]
  * @returns {Record<string, any>}
  */
 export function set_attributes(
@@ -169,7 +160,8 @@ export function set_attributes(
 	next,
 	css_hash,
 	preserve_attribute_case = false,
-	skip_warning
+	skip_warning = false,
+	is_custom_element = false
 ) {
 	var current = prev || {};
 	var is_option_element = element.tagName === 'OPTION';
@@ -271,14 +263,11 @@ export function set_attributes(
 					delegate([event_name]);
 				}
 			}
-		} else if (value == null) {
-			attributes[key] = null;
-			element.removeAttribute(key);
-		} else if (key === 'style') {
+		} else if (key === 'style' && value != null) {
 			element.style.cssText = value + '';
 		} else if (key === 'autofocus') {
 			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
-		} else if (key === '__value' || key === 'value') {
+		} else if (key === '__value' || (key === 'value' && value != null)) {
 			// @ts-ignore
 			element.value = element[key] = element.__value = value;
 		} else {
@@ -287,7 +276,10 @@ export function set_attributes(
 				name = normalize_attribute(name);
 			}
 
-			if (setters.includes(name) && typeof value !== 'string') {
+			if (value == null && !is_custom_element) {
+				attributes[key] = null;
+				element.removeAttribute(key);
+			} else if (setters.includes(name) && (is_custom_element || typeof value !== 'string')) {
 				// @ts-ignore
 				element[name] = value;
 			} else if (typeof value !== 'function') {
@@ -314,40 +306,6 @@ export function set_attributes(
 	}
 
 	return current;
-}
-
-/**
- * @param {Element} node
- * @param {Record<string, any> | undefined} prev
- * @param {Record<string, any>} next The new attributes - this function mutates this object
- * @param {string} [css_hash]
- */
-export function set_dynamic_element_attributes(node, prev, next, css_hash) {
-	if (node.tagName.includes('-')) {
-		for (var key in prev) {
-			if (!(key in next)) {
-				next[key] = null;
-			}
-		}
-
-		if (css_hash !== undefined) {
-			next.class = next.class ? next.class + ' ' + css_hash : css_hash;
-		}
-
-		for (key in next) {
-			set_custom_element_data(node, key, next[key]);
-		}
-
-		return next;
-	}
-
-	return set_attributes(
-		/** @type {Element & ElementCSSInlineStyle} */ (node),
-		prev,
-		next,
-		css_hash,
-		node.namespaceURI !== NAMESPACE_SVG
-	);
 }
 
 /** @type {Map<string, string[]>} */
