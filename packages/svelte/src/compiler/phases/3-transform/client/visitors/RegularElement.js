@@ -294,14 +294,11 @@ export function RegularElement(node, context) {
 
 	context.state.template.push('>');
 
-	/** @type {SourceLocation[]} */
-	const child_locations = [];
-
 	/** @type {ComponentClientTransformState} */
 	const state = {
 		...context.state,
 		metadata: child_metadata,
-		locations: child_locations,
+		locations: [],
 		scope: /** @type {Scope} */ (context.state.scopes.get(node.fragment)),
 		preserve_whitespace:
 			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
@@ -391,9 +388,9 @@ export function RegularElement(node, context) {
 		context.state.update.push(b.stmt(b.assignment('=', dir, dir)));
 	}
 
-	if (child_locations.length > 0) {
+	if (state.locations.length > 0) {
 		// @ts-expect-error
-		location.push(child_locations);
+		location.push(state.locations);
 	}
 
 	if (!is_void(node.name)) {
