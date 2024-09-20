@@ -499,6 +499,7 @@ function build_element_spread_attributes(
 	is_custom_element
 ) {
 	let needs_isolation = false;
+	let is_reactive = false;
 
 	/** @type {ObjectExpression['properties']} */
 	const values = [];
@@ -523,35 +524,41 @@ function build_element_spread_attributes(
 			values.push(b.spread(/** @type {Expression} */ (context.visit(attribute))));
 		}
 
+		is_reactive ||=
+			attribute.metadata.expression.has_state ||
+			// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
+			attribute.type === 'SpreadAttribute';
 		needs_isolation ||=
 			attribute.type === 'SpreadAttribute' && attribute.metadata.expression.has_call;
 	}
 
-	const update = b.stmt(
-		b.assignment(
-			'=',
-			attributes_id,
-			b.call(
-				'$.set_attributes',
-				element_id,
-				attributes_id,
-				b.object(values),
-				context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
-				preserve_attribute_case,
-				is_custom_element,
-				is_ignored(element, 'hydration_attribute_changed') && b.true
-			)
-		)
+	const call = b.call(
+		'$.set_attributes',
+		element_id,
+		is_reactive ? attributes_id : b.literal(null),
+		b.object(values),
+		context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
+		preserve_attribute_case,
+		is_custom_element,
+		is_ignored(element, 'hydration_attribute_changed') && b.true
 	);
 
-	context.state.init.push(b.let(attributes_id));
+	if (is_reactive) {
+		context.state.init.push(b.let(attributes_id));
 
-	// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
-	if (needs_isolation) {
-		context.state.init.push(build_update(update));
-	} else {
+		const update = b.stmt(b.assignment('=', attributes_id, call));
+
+		if (needs_isolation) {
+			context.state.init.push(build_update(update));
+			return false;
+		}
+
 		context.state.update.push(update);
+		return true;
 	}
+
+	context.state.init.push(b.stmt(call));
+	return false;
 }
 
 /**
