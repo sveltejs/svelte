@@ -81,10 +81,20 @@ export function SvelteElement(node, context) {
 	context.state.init.push(...lets); // create computeds in the outer context; the dynamic element is the single child of this slot
 
 	// Then do attributes
-	// Always use spread because we don't know whether the element is a custom element or not,
-	// therefore we need to do the "how to set an attribute" logic at runtime.
-	const is_attributes_reactive =
-		build_dynamic_element_attributes(node, attributes, inner_context, element_id) !== null;
+	let is_attributes_reactive = false;
+
+	if (attributes.length === 0) {
+		if (context.state.analysis.css.hash) {
+			inner_context.state.init.push(
+				b.stmt(b.call('$.set_class', element_id, b.literal(context.state.analysis.css.hash)))
+			);
+		}
+	} else {
+		// Always use spread because we don't know whether the element is a custom element or not,
+		// therefore we need to do the "how to set an attribute" logic at runtime.
+		is_attributes_reactive =
+			build_dynamic_element_attributes(node, attributes, inner_context, element_id) !== null;
+	}
 
 	// class/style directives must be applied last since they could override class/style attributes
 	build_class_directives(class_directives, element_id, inner_context, is_attributes_reactive);
@@ -144,15 +154,6 @@ export function SvelteElement(node, context) {
  * @returns {boolean}
  */
 function build_dynamic_element_attributes(element, attributes, context, element_id) {
-	if (attributes.length === 0) {
-		if (context.state.analysis.css.hash) {
-			context.state.init.push(
-				b.stmt(b.call('$.set_class', element_id, b.literal(context.state.analysis.css.hash)))
-			);
-		}
-		return false;
-	}
-
 	let needs_isolation = false;
 	let is_reactive = false;
 
