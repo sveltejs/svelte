@@ -105,9 +105,8 @@ export function RegularElement(node, context) {
 
 	for (const attribute of node.attributes) {
 		switch (attribute.type) {
-			case 'SpreadAttribute':
-				attributes.push(attribute);
-				has_spread = true;
+			case 'AnimateDirective':
+				other_directives.push(attribute);
 				break;
 
 			case 'Attribute':
@@ -124,26 +123,30 @@ export function RegularElement(node, context) {
 				class_directives.push(attribute);
 				break;
 
-			case 'StyleDirective':
-				style_directives.push(attribute);
-				break;
-
 			case 'LetDirective':
 				// visit let directives before everything else, to set state
 				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
-				break;
-
-			case 'UseDirective':
-				has_use = true;
-				other_directives.push(attribute);
 				break;
 
 			case 'OnDirective':
 				other_directives.push(attribute);
 				break;
 
-			case 'AnimateDirective':
+			case 'SpreadAttribute':
+				attributes.push(attribute);
+				has_spread = true;
+				break;
+
+			case 'StyleDirective':
+				style_directives.push(attribute);
+				break;
+
 			case 'TransitionDirective':
+				other_directives.push(attribute);
+				break;
+
+			case 'UseDirective':
+				has_use = true;
 				other_directives.push(attribute);
 				break;
 		}
