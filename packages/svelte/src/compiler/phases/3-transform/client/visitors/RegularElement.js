@@ -62,11 +62,6 @@ export function RegularElement(node, context) {
 		context.state.metadata.context.template_contains_script_tag = true;
 	}
 
-	const child_metadata = {
-		...context.state.metadata,
-		namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
-	};
-
 	context.state.template.push(`<${node.name}`);
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
@@ -161,18 +156,6 @@ export function RegularElement(node, context) {
 			);
 		} else {
 			context.visit(attribute);
-		}
-	}
-
-	if (bindings.has('innerHTML') || bindings.has('innerText') || bindings.has('textContent')) {
-		const contenteditable = lookup.get('contenteditable');
-
-		if (
-			contenteditable &&
-			(contenteditable.value === true ||
-				(is_text_attribute(contenteditable) && contenteditable.value[0].data === 'true'))
-		) {
-			child_metadata.bound_contenteditable = true;
 		}
 	}
 
@@ -293,6 +276,23 @@ export function RegularElement(node, context) {
 	}
 
 	context.state.template.push('>');
+
+	const child_metadata = {
+		...context.state.metadata,
+		namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
+	};
+
+	if (bindings.has('innerHTML') || bindings.has('innerText') || bindings.has('textContent')) {
+		const contenteditable = lookup.get('contenteditable');
+
+		if (
+			contenteditable &&
+			(contenteditable.value === true ||
+				(is_text_attribute(contenteditable) && contenteditable.value[0].data === 'true'))
+		) {
+			child_metadata.bound_contenteditable = true;
+		}
+	}
 
 	/** @type {ComponentClientTransformState} */
 	const state = {
