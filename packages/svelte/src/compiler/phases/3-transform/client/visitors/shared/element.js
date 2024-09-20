@@ -38,8 +38,7 @@ export function build_set_attributes(
 
 			if (
 				is_event_attribute(attribute) &&
-				(get_attribute_expression(attribute).type === 'ArrowFunctionExpression' ||
-					get_attribute_expression(attribute).type === 'FunctionExpression')
+				(value.type === 'ArrowFunctionExpression' || value.type === 'FunctionExpression')
 			) {
 				// Give the event handler a stable ID so it isn't removed and readded on every update
 				const id = context.state.scope.generate('event_handler');
