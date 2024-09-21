@@ -71,7 +71,7 @@ export function migrate(source) {
 		state = { ...state, scope: analysis.template.scope };
 		walk(parsed.fragment, state, template);
 
-		const run_import = `import { run${state.run_name === 'run' ? '' : `as ${state.run_name}`} } from 'svelte/legacy';`;
+		const run_import = `import { run${state.run_name === 'run' ? '' : ` as ${state.run_name}`} } from 'svelte/legacy';`;
 		let added_legacy_import = false;
 
 		if (state.props.length > 0 || analysis.uses_rest_props || analysis.uses_props) {
