@@ -1,7 +1,7 @@
 <!-- https://eugenkiss.github.io/7guis/tasks#timer -->
 
 <script>
-	import { onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
 
 	let elapsed = 0;
 	let duration = 5000;
@@ -9,17 +9,19 @@
 	let last_time = window.performance.now();
 	let frame;
 
-	(function update() {
+	const update = () => {
 		frame = requestAnimationFrame(update);
 
 		const time = window.performance.now();
 		elapsed += Math.min(time - last_time, duration - elapsed);
 
 		last_time = time;
-	})();
+	};
 
-	onDestroy(() => {
-		cancelAnimationFrame(frame);
+  onMount(() => {
+    update()
+
+    return () => cancelAnimationFrame(frame)
 	});
 </script>
 
