@@ -6,7 +6,7 @@
 	let elapsed = 0;
 	let duration = 5000;
 
-	let last_time = window.performance.now();
+	let last_time
 	let frame;
 
 	const update = () => {
