@@ -170,3 +170,34 @@ class Svelte4Component {
 export function run(fn) {
 	user_pre_effect(fn);
 }
+
+/**
+ * @param {EventTarget} node
+ * @param {[EventListener, string, string[]]} options
+ */
+export function listener(node, [handler, type, modifiers = []]) {
+	const aborter = new AbortController();
+	node.addEventListener(
+		type,
+		(e) => {
+			for (let modifier of modifiers) {
+				// @ts-expect-error modifier is just a string
+				if (modifier in e && typeof e[modifier] === 'function') {
+					// @ts-expect-error modifier is just a string
+					e[modifier]();
+				}
+			}
+			handler?.(e);
+		},
+		{
+			signal: aborter.signal,
+			passive: modifiers.includes('passive'),
+			capture: modifiers.includes('capture')
+		}
+	);
+	return {
+		destroy() {
+			aborter.abort();
+		}
+	};
+}

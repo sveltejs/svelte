@@ -1,73 +1,40 @@
 <script>
+	import { listener } from 'svelte/legacy';
 	/** @type {{onclick?: (event: any) => void, ontoggle?: (event: any) => void, 'oncustom-event-bubble'?: (event: any) => void}} */
 	let { onclick, ontoggle, 'oncustom-event-bubble': oncustom_event_bubble } = $props();
 </script>
 
-<button  onclick={(event) => {
-	console.log('hi')
-
-	onclick?.(event);
-}}>click me</button>
-<button   onclick={(event) => {
-	console.log('before')
-
-	onclick?.(event);
-	console.log('after')
-}}
+<button use:listener={[() => console.log('hi'),"click"]} use:listener={[(event)=>{onclick?.(event);},"click"]}>click me</button>
+<button use:listener={[() => console.log('before'),"click"]} use:listener={[(event)=>{onclick?.(event);},"click"]} use:listener={[() => console.log('after'),"click"]}
 	>click me</button
 >
-<button  onclick={(event) => {
-	onclick?.(event);
+<button use:listener={[(event)=>{onclick?.(event);},"click"]} use:listener={[foo,"click"]}>click me</button>
+<button use:listener={[(event)=>{onclick?.(event);},"click"]}>click me</button>
 
-	foo?.(event);
-}}>click me</button>
-<button {onclick}>click me</button>
+<button use:listener={[() => console.log('hi'),"dblclick"]}>click me</button>
+<button use:listener={[(event)=>{ontoggle?.(event);},"toggle"]}>click me</button>
+<button use:listener={[() => 'hi',"custom-event"]}>click me</button>
+<button use:listener={[(event)=>{oncustom_event_bubble?.(event);},"custom-event-bubble"]}>click me</button>
 
-<button ondblclick={() => console.log('hi')}>click me</button>
-<button {ontoggle}>click me</button>
-<button oncustom-event={() => 'hi'}>click me</button>
-<button oncustom-event-bubble={oncustom_event_bubble}>click me</button>
-
-<button onclick={(event) => {
-	event.preventDefault();
-	''
-}}>click me</button>
-<button onclick={(event) => {
-	event.preventDefault();
-	searching = true
-}}>click me</button>
-<button onclick={(event) => {
-	event.stopPropagation();
-	
-}}>click me</button>
-<button onclick={(event) => {
-	event.stopImmediatePropagation();
-	''
-}}>click me</button>
-<button onclickcapture={() => ''}>click me</button>
-<button onclick={(event) => {
-	// @migration-task: incorporate self modifier
-	''
-}}>click me</button>
+<button use:listener={[() => '',"click",["preventDefault"]]}>click me</button>
+<button use:listener={[() => (searching = true),"click",["preventDefault"]]}>click me</button>
+<button use:listener={[() => {},"click",["stopPropagation"]]}>click me</button>
+<button use:listener={[() => '',"click",["stopImmediatePropagation"]]}>click me</button>
+<button use:listener={[() => '',"click",["capture"]]}>click me</button>
+<button use:listener={[() => '',"click",["self"]]}>click me</button>
 
 <Button on:click={() => 'leave untouched'} on:click>click me</Button>
 
 <div>
 	<button
-		onclick={() => {
+		use:listener={[() => {
 			console.log('hi');
-		}}>click me</button
+		},"click"]}>click me</button
 	>
 	<button
-		onclick={(event) => {
-			event.preventDefault();
-			
+		use:listener={[() => {
 			console.log('hi');
-		
-		}}>click me</button
+		},"click",["preventDefault"]]}>click me</button
 	>
-	<button onclick={(event) => {
-		event.preventDefault();
-		count += 1
-	}}>click me</button>
+	<button use:listener={[() => (count += 1),"click",["preventDefault"]]}>click me</button>
 </div>
