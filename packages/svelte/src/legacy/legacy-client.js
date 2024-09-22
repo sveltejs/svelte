@@ -209,73 +209,11 @@ export function handlers(...handlers) {
 	};
 }
 
-/**
- * Migration helper to substitute the `stopImmediatePropagation` event modifier
- * @param {EventListener} fn
- */
-export function stopImmediatePropagation(fn) {
-	return (/**@type {Event}*/ e) => {
-		e.stopImmediatePropagation();
-		fn(e);
-	};
-}
-
-/**
- * Migration helper to substitute the `preventDefault` event modifier
- * @param {EventListener} fn
- */
-export function preventDefault(fn) {
-	return (/**@type {Event}*/ e) => {
-		e.preventDefault();
-		fn(e);
-	};
-}
-
-/**
- * Migration helper to substitute the `stopPropagation` event modifier
- * @param {EventListener} fn
- */
-export function stopPropagation(fn) {
-	return (/**@type {Event}*/ e) => {
-		e.stopPropagation();
-		fn(e);
-	};
-}
-
-/**
- * Migration helper to substitute the `trusted` event modifier
- * @param {EventListener} fn
- */
-export function trusted(fn) {
-	return (/**@type {Event}*/ e) => {
-		if (e.isTrusted) {
-			fn(e);
-		}
-	};
-}
-
-/**
- * Migration helper to substitute the `self` event modifier
- * @param {EventListener} fn
- */
-export function self(fn) {
-	return (/**@type {Event}*/ e) => {
-		if (e.target === e.currentTarget) {
-			fn(e);
-		}
-	};
-}
-
-/**
- * Migration helper to substitute the `once` event modifier
- * @param {EventListener} fn
- */
-export function once(fn) {
-	let executed = false;
-	return (/**@type {Event}*/ e) => {
-		if (!executed) {
-			executed = true;
-			fn(e);
-		}
-	};
-}
+export {
+	once,
+	preventDefault,
+	self,
+	stopImmediatePropagation,
+	stopPropagation,
+	trusted
+} from '../internal/client/dom/legacy/event-modifiers.js';

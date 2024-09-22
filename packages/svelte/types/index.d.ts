@@ -1637,29 +1637,35 @@ declare module 'svelte/legacy' {
 	 * */
 	export function handlers(...handlers: EventListener[]): EventListener;
 	/**
-	 * Migration helper to substitute the `stopImmediatePropagation` event modifier
+	 * Substitute for the `trusted` event modifier
+	 * @deprecated
 	 * */
-	export function stopImmediatePropagation(fn: EventListener): (e: Event) => void;
+	export function trusted(fn: (event: Event, ...args: Array<unknown>) => void): (event: Event, ...args: unknown[]) => void;
 	/**
-	 * Migration helper to substitute the `preventDefault` event modifier
+	 * Substitute for the `self` event modifier
+	 * @deprecated
 	 * */
-	export function preventDefault(fn: EventListener): (e: Event) => void;
+	export function self(fn: (event: Event, ...args: Array<unknown>) => void): (event: Event, ...args: unknown[]) => void;
 	/**
-	 * Migration helper to substitute the `stopPropagation` event modifier
+	 * Substitute for the `stopPropagation` event modifier
+	 * @deprecated
 	 * */
-	export function stopPropagation(fn: EventListener): (e: Event) => void;
+	export function stopPropagation(fn: (event: Event, ...args: Array<unknown>) => void): (event: Event, ...args: unknown[]) => void;
 	/**
-	 * Migration helper to substitute the `trusted` event modifier
+	 * Substitute for the `once` event modifier
+	 * @deprecated
 	 * */
-	export function trusted(fn: EventListener): (e: Event) => void;
+	export function once(fn: (event: Event, ...args: Array<unknown>) => void): (event: Event, ...args: unknown[]) => void;
 	/**
-	 * Migration helper to substitute the `self` event modifier
+	 * Substitute for the `stopImmediatePropagation` event modifier
+	 * @deprecated
 	 * */
-	export function self(fn: EventListener): (e: Event) => void;
+	export function stopImmediatePropagation(fn: (event: Event, ...args: Array<unknown>) => void): (event: Event, ...args: unknown[]) => void;
 	/**
-	 * Migration helper to substitute the `once` event modifier
+	 * Substitute for the `preventDefault` event modifier
+	 * @deprecated
 	 * */
-	export function once(fn: EventListener): (e: Event) => void;
+	export function preventDefault(fn: (event: Event, ...args: Array<unknown>) => void): (event: Event, ...args: unknown[]) => void;
 
 	export {};
 }

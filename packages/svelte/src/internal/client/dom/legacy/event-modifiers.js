@@ -1,4 +1,6 @@
 /**
+ * Substitute for the `trusted` event modifier
+ * @deprecated
  * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
@@ -13,6 +15,8 @@ export function trusted(fn) {
 }
 
 /**
+ * Substitute for the `self` event modifier
+ * @deprecated
  * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
@@ -28,6 +32,8 @@ export function self(fn) {
 }
 
 /**
+ * Substitute for the `stopPropagation` event modifier
+ * @deprecated
  * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
@@ -41,6 +47,8 @@ export function stopPropagation(fn) {
 }
 
 /**
+ * Substitute for the `once` event modifier
+ * @deprecated
  * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
@@ -57,6 +65,8 @@ export function once(fn) {
 }
 
 /**
+ * Substitute for the `stopImmediatePropagation` event modifier
+ * @deprecated
  * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
@@ -70,6 +80,8 @@ export function stopImmediatePropagation(fn) {
 }
 
 /**
+ * Substitute for the `preventDefault` event modifier
+ * @deprecated
  * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
