@@ -1632,6 +1632,34 @@ declare module 'svelte/legacy' {
 	 * @deprecated Use this only as a temporary solution to migrate your component code to Svelte 5.
 	 * */
 	export function run(fn: () => void | (() => void)): void;
+	/**
+	 * Function to mimic the multiple listeners available in svelte 4
+	 * */
+	export function handlers(...handlers: EventListener[]): EventListener;
+	/**
+	 * Migration helper to substitute the `stopImmediatePropagation` event modifier
+	 * */
+	export function stopImmediatePropagation(fn: EventListener): (e: Event) => void;
+	/**
+	 * Migration helper to substitute the `preventDefault` event modifier
+	 * */
+	export function preventDefault(fn: EventListener): (e: Event) => void;
+	/**
+	 * Migration helper to substitute the `stopPropagation` event modifier
+	 * */
+	export function stopPropagation(fn: EventListener): (e: Event) => void;
+	/**
+	 * Migration helper to substitute the `trusted` event modifier
+	 * */
+	export function trusted(fn: EventListener): (e: Event) => void;
+	/**
+	 * Migration helper to substitute the `self` event modifier
+	 * */
+	export function self(fn: EventListener): (e: Event) => void;
+	/**
+	 * Migration helper to substitute the `once` event modifier
+	 * */
+	export function once(fn: EventListener): (e: Event) => void;
 
 	export {};
 }
