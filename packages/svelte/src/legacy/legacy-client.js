@@ -172,32 +172,110 @@ export function run(fn) {
 }
 
 /**
- * @param {EventTarget} node
- * @param {[EventListener, string, string[]]} options
+ * Function to mimic the multiple listeners available in svelte 4
+ * @param {EventListener[]} handlers
+ * @returns {EventListener}
  */
-export function listener(node, [handler, type, modifiers = []]) {
-	const aborter = new AbortController();
-	node.addEventListener(
-		type,
-		(e) => {
-			for (let modifier of modifiers) {
-				// @ts-expect-error modifier is just a string
-				if (modifier in e && typeof e[modifier] === 'function') {
-					// @ts-expect-error modifier is just a string
-					e[modifier]();
-				}
+export function handlers(...handlers) {
+	return function (event) {
+		const { stopImmediatePropagation } = event;
+		let stopped = false;
+
+		event.stopImmediatePropagation = () => {
+			stopped = true;
+			stopImmediatePropagation.call(event);
+		};
+
+		const errors = [];
+
+		for (const handler of handlers) {
+			try {
+				// @ts-expect-error `this` is not typed
+				handler.call(this, event);
+			} catch (e) {
+				errors.push(e);
 			}
-			handler?.(e);
-		},
-		{
-			signal: aborter.signal,
-			passive: modifiers.includes('passive'),
-			capture: modifiers.includes('capture')
+
+			if (stopped) {
+				break;
+			}
 		}
-	);
-	return {
-		destroy() {
-			aborter.abort();
+
+		for (let error of errors) {
+			queueMicrotask(() => {
+				throw error;
+			});
+		}
+	};
+}
+
+/**
+ * Migration helper to substitute the `stopImmediatePropagation` event modifier
+ * @param {EventListener} fn
+ */
+export function stopImmediatePropagation(fn) {
+	return (/**@type {Event}*/ e) => {
+		e.stopImmediatePropagation();
+		fn(e);
+	};
+}
+
+/**
+ * Migration helper to substitute the `preventDefault` event modifier
+ * @param {EventListener} fn
+ */
+export function preventDefault(fn) {
+	return (/**@type {Event}*/ e) => {
+		e.preventDefault();
+		fn(e);
+	};
+}
+
+/**
+ * Migration helper to substitute the `stopPropagation` event modifier
+ * @param {EventListener} fn
+ */
+export function stopPropagation(fn) {
+	return (/**@type {Event}*/ e) => {
+		e.stopPropagation();
+		fn(e);
+	};
+}
+
+/**
+ * Migration helper to substitute the `trusted` event modifier
+ * @param {EventListener} fn
+ */
+export function trusted(fn) {
+	return (/**@type {Event}*/ e) => {
+		if (e.isTrusted) {
+			fn(e);
+		}
+	};
+}
+
+/**
+ * Migration helper to substitute the `self` event modifier
+ * @param {EventListener} fn
+ */
+export function self(fn) {
+	return (/**@type {Event}*/ e) => {
+		if (e.target === e.currentTarget) {
+			fn(e);
+		}
+	};
+}
+
+/**
+ * Migration helper to substitute the `once` event modifier
+ * @param {EventListener} fn
+ */
+export function once(fn) {
+	let executed = false;
+	return (/**@type {Event}*/ e) => {
+		if (!executed) {
+			executed = true;
+			fn(e);
 		}
 	};
 }

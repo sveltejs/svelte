@@ -53,10 +53,17 @@ export function migrate(source) {
 			props_name: analysis.root.unique('props').name,
 			rest_props_name: analysis.root.unique('rest').name,
 			end: source.length,
-			run_name: analysis.root.unique('run').name,
-			listener_name: analysis.root.unique('listener').name,
-			needs_run: false,
-			needs_listener: false
+			legacy_imports_names: new Map([
+				['run', analysis.root.unique('run').name],
+				['handlers', analysis.root.unique('handlers').name],
+				['stopImmediatePropagation', analysis.root.unique('stopImmediatePropagation').name],
+				['preventDefault', analysis.root.unique('preventDefault').name],
+				['stopPropagation', analysis.root.unique('stopPropagation').name],
+				['once', analysis.root.unique('once').name],
+				['self', analysis.root.unique('self').name],
+				['trusted', analysis.root.unique('trusted').name]
+			]),
+			legacy_imports: new Set()
 		};
 
 		if (parsed.module) {
@@ -73,7 +80,16 @@ export function migrate(source) {
 		state = { ...state, scope: analysis.template.scope };
 		walk(parsed.fragment, state, template);
 
-		const legacy_import = `import { ${state.needs_run ? `run${state.run_name === 'run' ? '' : ` as ${state.run_name}`}` : ''}${state.needs_listener ? `${state.needs_run ? ', ' : ''}listener${state.listener_name === 'listener' ? '' : ` as ${state.listener_name}`}` : ''} } from 'svelte/legacy';`;
+		const imports = [...state.legacy_imports]
+			.map((legacy_import) => {
+				const maybe_as = state.legacy_imports_names.get(legacy_import);
+				if (legacy_import === maybe_as) {
+					return legacy_import;
+				}
+				return `${legacy_import} as ${maybe_as}`;
+			})
+			.join(', ');
+		const legacy_import = `import { ${imports} } from 'svelte/legacy';`;
 		let added_legacy_import = false;
 
 		if (state.props.length > 0 || analysis.uses_rest_props || analysis.uses_props) {
@@ -147,8 +163,7 @@ export function migrate(source) {
 					props_declaration = `\n${indent}${props_declaration}`;
 					str.appendRight(state.props_insertion_point, props_declaration);
 				} else {
-					const imports =
-						state.needs_run || state.needs_listener ? `${indent}${legacy_import}\n` : '';
+					const imports = state.legacy_imports.size > 0 ? `${indent}${legacy_import}\n` : '';
 					str.prepend(`<script>\n${imports}${indent}${props_declaration}\n</script>\n\n`);
 					added_legacy_import = true;
 				}
@@ -196,7 +211,7 @@ export function migrate(source) {
 			}
 		}
 
-		if ((state.needs_run || state.needs_listener) && !added_legacy_import) {
+		if (state.legacy_imports.size > 0 && !added_legacy_import) {
 			if (parsed.instance) {
 				str.appendRight(
 					/** @type {number} */ (parsed.instance.content.start),
@@ -227,10 +242,8 @@ export function migrate(source) {
  * 	props_name: string;
  * 	rest_props_name: string;
  *  end: number;
- *  run_name: string;
- *  listener_name: string;
- *  needs_run: boolean;
- *  needs_listener: boolean;
+ * 	legacy_imports_names: Map<string, string>;
+ * 	legacy_imports: Set<string>;
  * }} State
  */
 
@@ -481,7 +494,7 @@ const instance_script = {
 			}
 		}
 
-		state.needs_run = true;
+		state.legacy_imports.add('run');
 		const is_block_stmt = node.body.type === 'BlockStatement';
 		const start_end = /** @type {number} */ (node.body.start);
 		// TODO try to find out if we can use $derived.by instead?
@@ -489,7 +502,7 @@ const instance_script = {
 			state.str.update(
 				/** @type {number} */ (node.start),
 				start_end + 1,
-				`${state.run_name}(() => {`
+				`${state.legacy_imports_names.get('run')}(() => {`
 			);
 			const end = /** @type {number} */ (node.body.end);
 			state.str.update(end - 1, end, '});');
@@ -497,7 +510,7 @@ const instance_script = {
 			state.str.update(
 				/** @type {number} */ (node.start),
 				start_end,
-				`${state.run_name}(() => {\n${state.indent}`
+				`${state.legacy_imports_names.get('run')}(() => {\n${state.indent}`
 			);
 			state.str.indent(state.indent, {
 				exclude: [
@@ -701,25 +714,48 @@ function handle_events(element, state) {
 		// Check if prop already set, could happen when on:click on different elements
 		let local = state.props.find((prop) => prop.exported === exported)?.local;
 
-		const last = nodes[nodes.length - 1];
-		const payload_name =
-			last.expression?.type === 'ArrowFunctionExpression' &&
-			last.expression.params[0]?.type === 'Identifier'
-				? last.expression.params[0].name
-				: generate_event_name(last, state);
+		if (nodes.length > 1) {
+			state.legacy_imports.add('handlers');
+		}
+
+		const handlers = [];
 
 		for (let i = 0; i < nodes.length; i += 1) {
-			let prepend = '';
 			const node = nodes[i];
+			const payload_name =
+				(node.expression?.type === 'ArrowFunctionExpression' ||
+					node.expression?.type === 'FunctionExpression') &&
+				node.expression.params[0]?.type === 'Identifier'
+					? node.expression.params[0].name
+					: generate_event_name(node, state);
 			const indent = get_indent(state, node, element);
-			const args = `,"${node.name}"${node.modifiers.length > 0 ? `,${JSON.stringify(node.modifiers)}` : ''}`;
+			const new_line_index = state.str.original.lastIndexOf('\n', node.start);
+			const needs_line_delete =
+				state.str.original.substring(new_line_index, node.start).trim() === '' && i !== 0;
+
+			// always move once as the first modifier
+			const sorted_modifier = [...node.modifiers].sort((a, b) =>
+				a === 'once' ? 1 : b === 'once' ? -1 : 0
+			);
+
 			if (node.expression) {
 				let body = state.str.original.substring(
 					/** @type {number} */ (node.expression.start),
 					/** @type {number} */ (node.expression.end)
 				);
-				prepend += `use:${state.listener_name}={[${body}${args}]}`;
-				state.needs_listener = true;
+
+				for (const modifier of sorted_modifier) {
+					if (modifier !== 'capture' && modifier !== 'passive' && modifier !== 'nonpassive') {
+						state.legacy_imports.add(modifier);
+						body = `${state.legacy_imports_names.get(modifier)}(${body})`;
+					}
+				}
+				handlers.push({
+					handler: body,
+					indent,
+					needs_line_delete
+				});
+				state.str.remove(needs_line_delete ? new_line_index : node.start, node.end);
 			} else {
 				if (!local) {
 					local = state.scope.generate(`on${node.name}`);
@@ -732,11 +768,40 @@ function handle_events(element, state) {
 						type: '(event: any) => void'
 					});
 				}
-				prepend += `use:${state.listener_name}={[(${payload_name})=>{${local}?.(${payload_name});}${args}]}`;
-				state.needs_listener = true;
-			}
+				let body = `(${payload_name})=>{`;
 
-			state.str.overwrite(node.start, node.end, prepend);
+				let added_modifiers = 0;
+
+				for (const modifier of sorted_modifier) {
+					if (modifier !== 'capture' && modifier !== 'passive' && modifier !== 'nonpassive') {
+						added_modifiers++;
+						body = `\n${indent}${state.legacy_imports_names.get(modifier)}(${body}`;
+						state.legacy_imports.add(modifier);
+					}
+				}
+
+				body += `${local}?.(${payload_name});}${')'.repeat(added_modifiers)}`;
+				handlers.push({
+					handler: body,
+					indent
+				});
+				state.str.remove(needs_line_delete ? new_line_index : node.start, node.end);
+			}
+		}
+
+		const first_node = nodes[0];
+
+		if (first_node) {
+			let handlers_body = '';
+			for (let handler of handlers) {
+				handlers_body += `${handler.needs_line_delete || nodes.length > 1 ? `\n${handler.indent}` : ''}${handler.handler},`;
+			}
+			handlers_body = handlers_body.substring(0, handlers_body.length - 1);
+			state.str.overwrite(
+				first_node.start,
+				first_node.end,
+				`${name}={${nodes.length > 1 ? `${state.legacy_imports_names.get('handlers')}(` : ''}${handlers_body}${nodes.length > 1 ? ')' : ''}}`
+			);
 		}
 	}
 }

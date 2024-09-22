@@ -1,5 +1,4 @@
 <script>
-	import { handlers, preventDefault, stopPropagation, stopImmediatePropagation, self, trusted, once } from 'svelte/legacy';
 	/** @type {{onclick?: (event: any) => void, ontoggle?: (event: any) => void, 'oncustom-event-bubble'?: (event: any) => void, onblur?: (event: any) => void}} */
 	let {
 		onclick,
@@ -7,21 +6,29 @@
 		'oncustom-event-bubble': oncustom_event_bubble,
 		onblur
 	} = $props();
+	import { handlers as handlers_1, preventDefault, stopPropagation as stopPropagation_1, stopImmediatePropagation as stopImmediatePropagation_1, self as self_1, trusted as trusted_1, once as once_1 } from 'svelte/legacy';
+
+	let handlers;
+	let stopPropagation;
+	let stopImmediatePropagation;
+	let once;
+	let trusted;
+	let self;
 </script>
 
-<button onclick={handlers(
+<button onclick={handlers_1(
 	() => console.log('hi'),
 	(event)=>{onclick?.(event);})} >click me</button>
-<button onclick={handlers(
+<button onclick={handlers_1(
 	function(){ console.log('hi') },
 	(event)=>{onclick?.(event);})} >click me</button>
-<button onclick={handlers(
+<button onclick={handlers_1(
 	() => console.log('before'),
 	(event)=>{onclick?.(event);},
 	() => console.log('after'))}  
 	>click me</button
 >
-<button onclick={handlers(
+<button onclick={handlers_1(
 	(event)=>{onclick?.(event);},
 	foo)} >click me</button>
 <button onclick={(event)=>{onclick?.(event);}}>click me</button>
@@ -33,32 +40,32 @@
 
 <button onclick={preventDefault(() => (searching = true))}>click me</button>
 <button onclick={preventDefault(() => '')}>click me</button>
-<button onclick={stopPropagation(() => {})}>click me</button>
-<button onclick={stopImmediatePropagation(() => '')}>click me</button>
+<button onclick={stopPropagation_1(() => {})}>click me</button>
+<button onclick={stopImmediatePropagation_1(() => '')}>click me</button>
 <button onclickcapture={() => ''}>click me</button>
-<button onclick={self(() => '')}>click me</button>
-<button onclick={trusted(() => '')}>click me</button>
-<button onclick={once(() => '')}>click me</button>
+<button onclick={self_1(() => '')}>click me</button>
+<button onclick={trusted_1(() => '')}>click me</button>
+<button onclick={once_1(() => '')}>click me</button>
 
-<button onclick={stopPropagation(preventDefault(() => ''))}>click me</button>
-<button onclick={stopImmediatePropagation(stopPropagation(() => {}))}>click me</button>
-<button onclick={self(stopImmediatePropagation(() => ''))}>click me</button>
-<button onclick={trusted(self(() => ''))}>click me</button>
-<button onclick={once(trusted(() => ''))}>click me</button>
-<button onclick={once(preventDefault(() => ''))}>click me</button>
+<button onclick={stopPropagation_1(preventDefault(() => ''))}>click me</button>
+<button onclick={stopImmediatePropagation_1(stopPropagation_1(() => {}))}>click me</button>
+<button onclick={self_1(stopImmediatePropagation_1(() => ''))}>click me</button>
+<button onclick={trusted_1(self_1(() => ''))}>click me</button>
+<button onclick={once_1(trusted_1(() => ''))}>click me</button>
+<button onclick={once_1(preventDefault(() => ''))}>click me</button>
 
 <button
-	onclick={handlers(
+	onclick={handlers_1(
 		(event)=>{onclick?.(event);},
 		foo,
 		()=>'',
-		once(preventDefault(trusted(()=>''))))}
-	onblur={handlers(
+		once_1(preventDefault(trusted_1(()=>''))))}
+	onblur={handlers_1(
 		foo,
 		
-		once(
+		once_1(
 		preventDefault(
-		trusted((event)=>{onblur?.(event);}))))}
+		trusted_1((event)=>{onblur?.(event);}))))}
 >
 	click me
 </button>

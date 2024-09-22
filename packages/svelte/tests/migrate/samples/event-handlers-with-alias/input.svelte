@@ -1,3 +1,12 @@
+<script>
+	let handlers;
+	let stopPropagation;
+	let stopImmediatePropagation;
+	let once;
+	let trusted;
+	let self;
+</script>
+
 <button on:click={() => console.log('hi')} on:click>click me</button>
 <button on:click={function(){ console.log('hi') }} on:click>click me</button>
 <button on:click={() => console.log('before')} on:click on:click={() => console.log('after')}
