@@ -1634,8 +1634,13 @@ declare module 'svelte/legacy' {
 	export function run(fn: () => void | (() => void)): void;
 	/**
 	 * Function to mimic the multiple listeners available in svelte 4
+	 * @deprecated
 	 * */
 	export function handlers(...handlers: EventListener[]): EventListener;
+	/**
+	 * Function to create a `bubble` function that mimic the behavior of `on:click` without handler available in svelte 4.
+	 * @deprecated Use this only as a temporary solution to migrate your automatically delegated events in Svelte 5.
+	 */
 	export function createBubbler(): (type: string) => (event: Event) => boolean;
 	/**
 	 * Substitute for the `trusted` event modifier
