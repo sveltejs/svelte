@@ -1636,6 +1636,7 @@ declare module 'svelte/legacy' {
 	 * Function to mimic the multiple listeners available in svelte 4
 	 * */
 	export function handlers(...handlers: EventListener[]): EventListener;
+	export function createBubbler(): (type: string) => (event: Event) => boolean;
 	/**
 	 * Substitute for the `trusted` event modifier
 	 * @deprecated
