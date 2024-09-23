@@ -53,16 +53,16 @@ export function migrate(source) {
 			props_name: analysis.root.unique('props').name,
 			rest_props_name: analysis.root.unique('rest').name,
 			end: source.length,
-			legacy_imports_names: new Map([
-				['run', analysis.root.unique('run').name],
-				['handlers', analysis.root.unique('handlers').name],
-				['stopImmediatePropagation', analysis.root.unique('stopImmediatePropagation').name],
-				['preventDefault', analysis.root.unique('preventDefault').name],
-				['stopPropagation', analysis.root.unique('stopPropagation').name],
-				['once', analysis.root.unique('once').name],
-				['self', analysis.root.unique('self').name],
-				['trusted', analysis.root.unique('trusted').name]
-			]),
+			legacy_imports_names: {
+				run: analysis.root.unique('run').name,
+				handlers: analysis.root.unique('handlers').name,
+				stopImmediatePropagation: analysis.root.unique('stopImmediatePropagation').name,
+				preventDefault: analysis.root.unique('preventDefault').name,
+				stopPropagation: analysis.root.unique('stopPropagation').name,
+				once: analysis.root.unique('once').name,
+				self: analysis.root.unique('self').name,
+				trusted: analysis.root.unique('trusted').name
+			},
 			legacy_imports: new Set()
 		};
 
@@ -82,7 +82,7 @@ export function migrate(source) {
 
 		const imports = [...state.legacy_imports]
 			.map((legacy_import) => {
-				const maybe_as = state.legacy_imports_names.get(legacy_import);
+				const maybe_as = state.legacy_imports_names[legacy_import];
 				if (legacy_import === maybe_as) {
 					return legacy_import;
 				}
@@ -242,7 +242,7 @@ export function migrate(source) {
  * 	props_name: string;
  * 	rest_props_name: string;
  *  end: number;
- * 	legacy_imports_names: Map<string, string>;
+ * 	legacy_imports_names: Record<string, string>;
  * 	legacy_imports: Set<string>;
  * }} State
  */
@@ -502,7 +502,7 @@ const instance_script = {
 			state.str.update(
 				/** @type {number} */ (node.start),
 				start_end + 1,
-				`${state.legacy_imports_names.get('run')}(() => {`
+				`${state.legacy_imports_names.run}(() => {`
 			);
 			const end = /** @type {number} */ (node.body.end);
 			state.str.update(end - 1, end, '});');
@@ -510,7 +510,7 @@ const instance_script = {
 			state.str.update(
 				/** @type {number} */ (node.start),
 				start_end,
-				`${state.legacy_imports_names.get('run')}(() => {\n${state.indent}`
+				`${state.legacy_imports_names.run}(() => {\n${state.indent}`
 			);
 			state.str.indent(state.indent, {
 				exclude: [
@@ -747,7 +747,7 @@ function handle_events(element, state) {
 				for (const modifier of sorted_modifier) {
 					if (modifier !== 'capture' && modifier !== 'passive' && modifier !== 'nonpassive') {
 						state.legacy_imports.add(modifier);
-						body = `${state.legacy_imports_names.get(modifier)}(${body})`;
+						body = `${state.legacy_imports_names[modifier]}(${body})`;
 					}
 				}
 				handlers.push({
@@ -775,7 +775,7 @@ function handle_events(element, state) {
 				for (const modifier of sorted_modifier) {
 					if (modifier !== 'capture' && modifier !== 'passive' && modifier !== 'nonpassive') {
 						added_modifiers++;
-						body = `\n${indent}${state.legacy_imports_names.get(modifier)}(${body}`;
+						body = `\n${indent}${state.legacy_imports_names[modifier]}(${body}`;
 						state.legacy_imports.add(modifier);
 					}
 				}
@@ -800,7 +800,7 @@ function handle_events(element, state) {
 			state.str.overwrite(
 				first_node.start,
 				first_node.end,
-				`${name}={${nodes.length > 1 ? `${state.legacy_imports_names.get('handlers')}(` : ''}${handlers_body}${nodes.length > 1 ? ')' : ''}}`
+				`${name}={${nodes.length > 1 ? `${state.legacy_imports_names.handlers}(` : ''}${handlers_body}${nodes.length > 1 ? ')' : ''}}`
 			);
 		}
 	}
