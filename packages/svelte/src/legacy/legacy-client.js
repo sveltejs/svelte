@@ -174,6 +174,7 @@ export function run(fn) {
 
 /**
  * Function to mimic the multiple listeners available in svelte 4
+ * @deprecated
  * @param {EventListener[]} handlers
  * @returns {EventListener}
  */
@@ -210,6 +211,10 @@ export function handlers(...handlers) {
 	};
 }
 
+/**
+ * Function to create a `bubble` function that mimic the behavior of `on:click` without handler available in svelte 4.
+ * @deprecated Use this only as a temporary solution to migrate your automatically delegated events in Svelte 5.
+ */
 export function createBubbler() {
 	const active_component_context = component_context;
 	if (active_component_context === null) {
