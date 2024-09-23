@@ -6,28 +6,25 @@
 	let elapsed = 0;
 	let duration = 5000;
 
-	let last_time
-	let frame;
+	onMount(() => {
+		let last_time = performance.now();
+		
+		let frame = requestAnimationFrame(function update(time) {
+			frame = requestAnimationFrame(update);
 
-	const update = () => {
-		frame = requestAnimationFrame(update);
+			elapsed += Math.min(time - last_time, duration - elapsed);
+			last_time = time;
+		});
 
-		const time = window.performance.now();
-		elapsed += Math.min(time - last_time, duration - elapsed);
-
-		last_time = time;
-	};
-
-  onMount(() => {
-    update()
-
-    return () => cancelAnimationFrame(frame)
+		return () => {
+			cancelAnimationFrame(frame);
+		};
 	});
 </script>
 
 <label>
 	elapsed time:
-	<progress value={elapsed / duration} />
+	<progress value={elapsed / duration}></progress>
 </label>
 
 <div>{(elapsed / 1000).toFixed(1)}s</div>
