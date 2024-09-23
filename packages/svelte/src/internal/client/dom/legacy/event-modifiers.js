@@ -1,3 +1,7 @@
+import { noop } from '../../../shared/utils.js';
+import { user_pre_effect } from '../../reactivity/effects.js';
+import { on } from '../elements/events.js';
+
 /**
  * Substitute for the `trusted` event modifier
  * @deprecated
@@ -92,4 +96,30 @@ export function preventDefault(fn) {
 		// @ts-ignore
 		return fn?.apply(this, args);
 	};
+}
+
+/**
+ * Substitute for the `passive` event modifier. It's an action.
+ * @deprecated
+ * @type {import("svelte/action").Action<HTMLElement, { handler: () => EventListener, event: string }>}
+ */
+export function passive(node, { handler, event }) {
+	user_pre_effect(() => {
+		return on(node, event, handler() ?? noop, {
+			passive: true
+		});
+	});
+}
+
+/**
+ * Substitute for the `nonpassive` event modifier. It's an action.
+ * @deprecated
+ * @type {import("svelte/action").Action<HTMLElement, { handler: () => EventListener, event: string }>}
+ */
+export function nonpassive(node, { handler, event }) {
+	user_pre_effect(() => {
+		return on(node, event, handler() ?? noop, {
+			passive: false
+		});
+	});
 }

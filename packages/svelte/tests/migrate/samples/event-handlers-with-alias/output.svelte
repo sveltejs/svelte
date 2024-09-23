@@ -1,5 +1,5 @@
 <script>
-	import { handlers as handlers_1, createBubbler as createBubbler_1, preventDefault as preventDefault_1, stopPropagation as stopPropagation_1, stopImmediatePropagation as stopImmediatePropagation_1, self as self_1, trusted as trusted_1, once as once_1 } from 'svelte/legacy';
+	import { handlers as handlers_1, createBubbler as createBubbler_1, preventDefault as preventDefault_1, stopPropagation as stopPropagation_1, stopImmediatePropagation as stopImmediatePropagation_1, self as self_1, trusted as trusted_1, once as once_1, passive as passive_1, nonpassive as nonpassive_1 } from 'svelte/legacy';
 	const bubble_1 = createBubbler_1();
 
 
@@ -12,6 +12,8 @@
 	let self;
 	let createBubbler;
 	let bubble;
+	let passive;
+	let nonpassive;
 </script>
 
 <button onclick={handlers_1(
@@ -51,6 +53,38 @@
 <button onclick={trusted_1(self_1(() => ''))}>click me</button>
 <button onclick={once_1(trusted_1(() => ''))}>click me</button>
 <button onclick={once_1(preventDefault_1(() => ''))}>click me</button>
+
+<button 
+	use:passive_1={{ handler: () => bubble_1('click'), event: 'click' }}>click me</button>
+<button 
+	use:nonpassive_1={{ handler: () => bubble_1('click'), event: 'click' }}>click me</button>
+<button 
+	use:passive_1={{ handler: () => ()=>'', event: 'click' }}>click me</button>
+<button 
+	use:nonpassive_1={{ handler: () => ()=>'', event: 'click' }}>click me</button>
+<button 
+	use:passive_1={{ handler: () => foo, event: 'click' }}>click me</button>
+<button 
+	use:nonpassive_1={{ handler: () => foo, event: 'click' }}>click me</button>
+<button 
+	use:passive_1={{ handler: () => stopPropagation_1(()=>''), event: 'click' }}>click me</button>
+<button 
+	use:nonpassive_1={{ handler: () => trusted_1(()=>''), event: 'click' }}>click me</button>
+
+<button 
+	onclick={handlers_1(
+		bubble_1('click'),
+		()=>'')}
+		use:passive_1={{ handler: () => ()=>'', event: 'click' }}
+>click me</button>
+
+<button 
+	onclick={handlers_1(
+		bubble_1('click'),
+		()=>'')}
+		use:nonpassive_1={{ handler: () => ()=>'', event: 'click' }}
+>click me</button>
+
 
 <button
 	onclick={handlers_1(

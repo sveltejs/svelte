@@ -7,12 +7,11 @@ import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
 import { parse } from '../phases/1-parse/index.js';
 import { analyze_component } from '../phases/2-analyze/index.js';
-import { validate_component_options } from '../validate-options.js';
 import { get_rune } from '../phases/scope.js';
 import { reset, reset_warning_filter } from '../state.js';
 import { extract_identifiers } from '../utils/ast.js';
-import { regex_is_valid_identifier } from '../phases/patterns.js';
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
+import { validate_component_options } from '../validate-options.js';
 
 /**
  * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
@@ -63,7 +62,9 @@ export function migrate(source) {
 				self: analysis.root.unique('self').name,
 				trusted: analysis.root.unique('trusted').name,
 				createBubbler: analysis.root.unique('createBubbler').name,
-				bubble: analysis.root.unique('bubble').name
+				bubble: analysis.root.unique('bubble').name,
+				passive: analysis.root.unique('passive').name,
+				nonpassive: analysis.root.unique('nonpassive').name
 			},
 			legacy_imports: new Set(),
 			script_insertions: new Set()
@@ -728,6 +729,7 @@ function handle_events(element, state) {
 		}
 
 		const handlers = [];
+		const explicit_passive_handlers = [];
 
 		for (let i = 0; i < nodes.length; i += 1) {
 			const node = nodes[i];
@@ -755,17 +757,36 @@ function handle_events(element, state) {
 				);
 			}
 
+			let has_passive = false;
+			let has_nonpassive = false;
+
 			for (const modifier of sorted_modifier) {
+				has_passive ||= modifier === 'passive';
+				has_nonpassive ||= modifier === 'nonpassive';
 				if (modifier !== 'capture' && modifier !== 'passive' && modifier !== 'nonpassive') {
 					state.legacy_imports.add(modifier);
 					body = `${state.legacy_imports_names[modifier]}(${body})`;
 				}
 			}
-			handlers.push({
-				handler: body,
-				indent,
-				needs_line_delete
-			});
+			if (has_passive || has_nonpassive) {
+				if (has_passive) {
+					state.legacy_imports.add('passive');
+				}
+				if (has_nonpassive) {
+					state.legacy_imports.add('nonpassive');
+				}
+				explicit_passive_handlers.push({
+					handler: `use:${has_nonpassive ? state.legacy_imports_names.nonpassive : state.legacy_imports_names.passive}={{ handler: () => ${body}, event: '${node.name}' }}`,
+					indent,
+					needs_line_delete
+				});
+			} else {
+				handlers.push({
+					handler: body,
+					indent,
+					needs_line_delete
+				});
+			}
 			state.str.remove(needs_line_delete ? new_line_index : node.start, node.end);
 		}
 
@@ -773,17 +794,25 @@ function handle_events(element, state) {
 
 		if (first_node) {
 			let handlers_body = '';
-			for (let handler of handlers) {
+			for (const handler of handlers) {
 				handlers_body += `${handler.needs_line_delete || nodes.length > 1 ? `\n${handler.indent}` : ''}${handler.handler},`;
 			}
 			handlers_body = handlers_body.substring(0, handlers_body.length - 1);
-			if (handlers_body === name) {
-				state.str.overwrite(first_node.start, first_node.end, `{${name}}`);
-			} else {
-				state.str.overwrite(
-					first_node.start,
+			if (handlers_body) {
+				if (handlers_body === name) {
+					state.str.overwrite(first_node.start, first_node.end, `{${name}}`);
+				} else {
+					state.str.overwrite(
+						first_node.start,
+						first_node.end,
+						`${name}={${nodes.length > 1 ? `${state.legacy_imports_names.handlers}(` : ''}${handlers_body}${nodes.length > 1 ? ')' : ''}}`
+					);
+				}
+			}
+			for (const passive_handler of explicit_passive_handlers) {
+				state.str.appendRight(
 					first_node.end,
-					`${name}={${nodes.length > 1 ? `${state.legacy_imports_names.handlers}(` : ''}${handlers_body}${nodes.length > 1 ? ')' : ''}}`
+					`${passive_handler.needs_line_delete || nodes.length > 1 ? `\n${passive_handler.indent}` : ''}${passive_handler.handler}`
 				);
 			}
 		}

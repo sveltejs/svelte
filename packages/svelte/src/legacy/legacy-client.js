@@ -243,5 +243,7 @@ export {
 	self,
 	stopImmediatePropagation,
 	stopPropagation,
-	trusted
+	trusted,
+	passive,
+	nonpassive
 } from '../internal/client/dom/legacy/event-modifiers.js';

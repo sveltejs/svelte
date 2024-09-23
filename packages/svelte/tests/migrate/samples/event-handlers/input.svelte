@@ -27,6 +27,28 @@
 <button on:click|trusted|once={() => ''}>click me</button>
 <button on:click|once|preventDefault={() => ''}>click me</button>
 
+<button on:click|passive>click me</button>
+<button on:click|nonpassive>click me</button>
+<button on:click|passive={()=>''}>click me</button>
+<button on:click|nonpassive={()=>''}>click me</button>
+<button on:click|passive={foo}>click me</button>
+<button on:click|nonpassive={foo}>click me</button>
+<button on:click|stopPropagation|passive={()=>''}>click me</button>
+<button on:click|trusted|nonpassive={()=>''}>click me</button>
+
+<button 
+	on:click|passive={()=>''}
+	on:click
+	on:click={()=>''}
+>click me</button>
+
+<button 
+	on:click|nonpassive={()=>''}
+	on:click
+	on:click={()=>''}
+>click me</button>
+
+
 <button
 	on:click
 	on:click={foo}
