@@ -8,7 +8,7 @@
 
 	onMount(() => {
 		let last_time = performance.now();
-		
+
 		let frame = requestAnimationFrame(function update(time) {
 			frame = requestAnimationFrame(update);
 
