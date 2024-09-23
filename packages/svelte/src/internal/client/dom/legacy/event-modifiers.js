@@ -9,7 +9,7 @@ export function trusted(fn) {
 		var event = /** @type {Event} */ (args[0]);
 		if (event.isTrusted) {
 			// @ts-ignore
-			fn.apply(this, args);
+			fn?.apply(this, args);
 		}
 	};
 }
@@ -26,7 +26,7 @@ export function self(fn) {
 		// @ts-ignore
 		if (event.target === this) {
 			// @ts-ignore
-			fn.apply(this, args);
+			fn?.apply(this, args);
 		}
 	};
 }
@@ -42,7 +42,7 @@ export function stopPropagation(fn) {
 		var event = /** @type {Event} */ (args[0]);
 		event.stopPropagation();
 		// @ts-ignore
-		return fn.apply(this, args);
+		return fn?.apply(this, args);
 	};
 }
 
@@ -60,7 +60,7 @@ export function once(fn) {
 		ran = true;
 
 		// @ts-ignore
-		return fn.apply(this, args);
+		return fn?.apply(this, args);
 	};
 }
 
@@ -75,7 +75,7 @@ export function stopImmediatePropagation(fn) {
 		var event = /** @type {Event} */ (args[0]);
 		event.stopImmediatePropagation();
 		// @ts-ignore
-		return fn.apply(this, args);
+		return fn?.apply(this, args);
 	};
 }
 
@@ -90,6 +90,6 @@ export function preventDefault(fn) {
 		var event = /** @type {Event} */ (args[0]);
 		event.preventDefault();
 		// @ts-ignore
-		return fn.apply(this, args);
+		return fn?.apply(this, args);
 	};
 }

@@ -191,7 +191,7 @@ export function handlers(...handlers) {
 		for (const handler of handlers) {
 			try {
 				// @ts-expect-error `this` is not typed
-				handler.call(this, event);
+				handler?.call(this, event);
 			} catch (e) {
 				errors.push(e);
 			}
