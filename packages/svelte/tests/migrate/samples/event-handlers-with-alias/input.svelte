@@ -1,6 +1,7 @@
 <script>
 	let handlers;
 	let stopPropagation;
+	let preventDefault;
 	let stopImmediatePropagation;
 	let once;
 	let trusted;

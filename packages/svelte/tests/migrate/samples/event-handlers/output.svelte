@@ -1,38 +1,31 @@
 <script>
 	import { handlers, createBubbler, preventDefault, stopPropagation, stopImmediatePropagation, self, trusted, once } from 'svelte/legacy';
-
+	
 	const bubble = createBubbler();
 
-	/** @type {{onclick?: (event: any) => void, ontoggle?: (event: any) => void, 'oncustom-event-bubble'?: (event: any) => void, onblur?: (event: any) => void}} */
-	let {
-		onclick = bubble('click'),
-		ontoggle = bubble('toggle'),
-		'oncustom-event-bubble': oncustom_event_bubble = bubble('custom-event-bubble'),
-		onblur = bubble('blur')
-	} = $props();
 </script>
 
 <button onclick={handlers(
 	() => console.log('hi'),
-	onclick)} >click me</button>
+	bubble('click'))} >click me</button>
 <button onclick={handlers(
 	function(){ console.log('hi') },
-	onclick)} >click me</button>
+	bubble('click'))} >click me</button>
 <button onclick={handlers(
 	() => console.log('before'),
-	onclick,
+	bubble('click'),
 	() => console.log('after'))}  
 	>click me</button
 >
 <button onclick={handlers(
-	onclick,
+	bubble('click'),
 	foo)} >click me</button>
-<button {onclick}>click me</button>
+<button onclick={bubble('click')}>click me</button>
 
 <button ondblclick={() => console.log('hi')}>click me</button>
-<button ontoggle={ontoggle}>click me</button>
+<button ontoggle={bubble('toggle')}>click me</button>
 <button oncustom-event={() => 'hi'}>click me</button>
-<button oncustom-event-bubble={oncustom_event_bubble}>click me</button>
+<button oncustom-event-bubble={bubble('custom-event-bubble')}>click me</button>
 
 <button onclick={preventDefault(() => (searching = true))}>click me</button>
 <button onclick={preventDefault(() => '')}>click me</button>
@@ -52,13 +45,13 @@
 
 <button
 	onclick={handlers(
-		onclick,
+		bubble('click'),
 		foo,
 		()=>'',
 		once(preventDefault(trusted(()=>''))))}
 	onblur={handlers(
 		foo,
-		once(preventDefault(trusted(onblur))))}
+		once(preventDefault(trusted(bubble('blur')))))}
 >
 	click me
 </button>

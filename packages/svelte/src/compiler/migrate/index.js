@@ -172,7 +172,7 @@ export function migrate(source) {
 							? `\n${indent}${[...state.script_insertions].join(indent)}\n`
 							: '';
 					str.prepend(
-						`<script>\n${imports}${script_insertions}${indent}${props_declaration}\n</script>\n\n`
+						`<script>\n${imports}${indent}${props_declaration}${script_insertions}\n</script>\n\n`
 					);
 					added_legacy_import = true;
 				}
@@ -723,14 +723,6 @@ function handle_events(element, state) {
 	}
 
 	for (const [name, nodes] of handlers) {
-		// turn on:click into a prop
-		let exported = name;
-		if (!regex_is_valid_identifier.test(name)) {
-			exported = `'${exported}'`;
-		}
-		// Check if prop already set, could happen when on:click on different elements
-		let local = state.props.find((prop) => prop.exported === exported)?.local;
-
 		if (nodes.length > 1) {
 			state.legacy_imports.add('handlers');
 		}
@@ -743,15 +735,13 @@ function handle_events(element, state) {
 			const new_line_index = state.str.original.lastIndexOf('\n', node.start);
 			const needs_line_delete =
 				state.str.original.substring(new_line_index, node.start).trim() === '' && i !== 0;
-			// Check if prop already set, could happen when on:click on different elements
-			let local = state.props.find((prop) => prop.exported === exported)?.local;
 
 			// always move once as the first modifier
 			const sorted_modifier = [...node.modifiers].sort((a, b) =>
 				a === 'once' ? 1 : b === 'once' ? -1 : 0
 			);
 
-			let body = local ?? name;
+			let body = `${state.legacy_imports_names.bubble}('${node.name}')`;
 
 			if (node.expression) {
 				body = state.str.original.substring(
@@ -759,19 +749,6 @@ function handle_events(element, state) {
 					/** @type {number} */ (node.expression.end)
 				);
 			} else {
-				const init = `${state.legacy_imports_names.bubble}('${node.name}')`;
-				if (!local) {
-					local = state.scope.generate(`on${node.name}`);
-					state.props.push({
-						local,
-						exported,
-						init,
-						bindable: false,
-						optional: true,
-						type: '(event: any) => void'
-					});
-				}
-				body = local;
 				state.legacy_imports.add('createBubbler');
 				state.script_insertions.add(
 					`const ${state.legacy_imports_names.bubble} = ${state.legacy_imports_names.createBubbler}();\n`
@@ -800,7 +777,7 @@ function handle_events(element, state) {
 				handlers_body += `${handler.needs_line_delete || nodes.length > 1 ? `\n${handler.indent}` : ''}${handler.handler},`;
 			}
 			handlers_body = handlers_body.substring(0, handlers_body.length - 1);
-			if (handlers_body === name && local === name) {
+			if (handlers_body === name) {
 				state.str.overwrite(first_node.start, first_node.end, `{${name}}`);
 			} else {
 				state.str.overwrite(
