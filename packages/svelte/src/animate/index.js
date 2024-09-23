@@ -52,7 +52,7 @@ function get_zoom(element) {
 
 	while (current !== null) {
 		zoom *= +getComputedStyle(current).zoom;
-		current = /** @type {Element | null} */ (current.parentNode);
+		current = /** @type {Element | null} */ (current.parentElement);
 	}
 
 	return zoom;
