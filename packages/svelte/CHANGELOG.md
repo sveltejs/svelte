@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.258
+
+### Patch Changes
+
+- fix: only use getComputedStyle with elements ([#13366](https://github.com/sveltejs/svelte/pull/13366))
+
+- fix: make each items reassignable in legacy mode ([#12257](https://github.com/sveltejs/svelte/pull/12257))
+
 ## 5.0.0-next.257
 
 ### Patch Changes
