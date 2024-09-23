@@ -61,9 +61,12 @@ export function migrate(source) {
 				stopPropagation: analysis.root.unique('stopPropagation').name,
 				once: analysis.root.unique('once').name,
 				self: analysis.root.unique('self').name,
-				trusted: analysis.root.unique('trusted').name
+				trusted: analysis.root.unique('trusted').name,
+				createBubbler: analysis.root.unique('createBubbler').name,
+				bubble: analysis.root.unique('bubble').name
 			},
-			legacy_imports: new Set()
+			legacy_imports: new Set(),
+			script_insertions: new Set()
 		};
 
 		if (parsed.module) {
@@ -164,7 +167,13 @@ export function migrate(source) {
 					str.appendRight(state.props_insertion_point, props_declaration);
 				} else {
 					const imports = state.legacy_imports.size > 0 ? `${indent}${legacy_import}\n` : '';
-					str.prepend(`<script>\n${imports}${indent}${props_declaration}\n</script>\n\n`);
+					const script_insertions =
+						state.script_insertions.size > 0
+							? `\n${indent}${[...state.script_insertions].join(indent)}\n`
+							: '';
+					str.prepend(
+						`<script>\n${imports}${indent}${props_declaration}${script_insertions}\n</script>\n\n`
+					);
 					added_legacy_import = true;
 				}
 			}
@@ -211,14 +220,21 @@ export function migrate(source) {
 			}
 		}
 
+		const script_insertions =
+			state.script_insertions.size > 0
+				? `\n${indent}${[...state.script_insertions].join(indent)}`
+				: '';
+
 		if (state.legacy_imports.size > 0 && !added_legacy_import) {
 			if (parsed.instance) {
 				str.appendRight(
 					/** @type {number} */ (parsed.instance.content.start),
-					`\n${indent}${legacy_import}\n`
+					`\n${indent}${legacy_import}${script_insertions}\n`
 				);
 			} else {
-				str.prepend(`<script>\n${indent}${legacy_import}\n</script>\n\n`);
+				str.prepend(
+					`<script>\n${indent}${legacy_import}\n${indent}${script_insertions}\n</script>\n\n`
+				);
 			}
 		}
 
@@ -244,6 +260,7 @@ export function migrate(source) {
  *  end: number;
  * 	legacy_imports_names: Record<string, string>;
  * 	legacy_imports: Set<string>;
+ * 	script_insertions: Set<string>
  * }} State
  */
 
@@ -738,55 +755,32 @@ function handle_events(element, state) {
 				a === 'once' ? 1 : b === 'once' ? -1 : 0
 			);
 
+			let body = `${state.legacy_imports_names.bubble}('${node.name}')`;
+
 			if (node.expression) {
-				let body = state.str.original.substring(
+				body = state.str.original.substring(
 					/** @type {number} */ (node.expression.start),
 					/** @type {number} */ (node.expression.end)
 				);
-
-				for (const modifier of sorted_modifier) {
-					if (modifier !== 'capture' && modifier !== 'passive' && modifier !== 'nonpassive') {
-						state.legacy_imports.add(modifier);
-						body = `${state.legacy_imports_names[modifier]}(${body})`;
-					}
-				}
-				handlers.push({
-					handler: body,
-					indent,
-					needs_line_delete
-				});
-				state.str.remove(needs_line_delete ? new_line_index : node.start, node.end);
 			} else {
-				if (!local) {
-					local = state.scope.generate(`on${node.name}`);
-					state.props.push({
-						local,
-						exported,
-						init: '',
-						bindable: false,
-						optional: true,
-						type: '(event: any) => void'
-					});
-				}
-				let body = `(${payload_name})=>{`;
-
-				let added_modifiers = 0;
-
-				for (const modifier of sorted_modifier) {
-					if (modifier !== 'capture' && modifier !== 'passive' && modifier !== 'nonpassive') {
-						added_modifiers++;
-						body = `\n${indent}${state.legacy_imports_names[modifier]}(${body}`;
-						state.legacy_imports.add(modifier);
-					}
-				}
-
-				body += `${local}?.(${payload_name});}${')'.repeat(added_modifiers)}`;
-				handlers.push({
-					handler: body,
-					indent
-				});
-				state.str.remove(needs_line_delete ? new_line_index : node.start, node.end);
+				state.legacy_imports.add('createBubbler');
+				state.script_insertions.add(
+					`const ${state.legacy_imports_names.bubble} = ${state.legacy_imports_names.createBubbler}();\n`
+				);
 			}
+
+			for (const modifier of sorted_modifier) {
+				if (modifier !== 'capture' && modifier !== 'passive' && modifier !== 'nonpassive') {
+					state.legacy_imports.add(modifier);
+					body = `${state.legacy_imports_names[modifier]}(${body})`;
+				}
+			}
+			handlers.push({
+				handler: body,
+				indent,
+				needs_line_delete
+			});
+			state.str.remove(needs_line_delete ? new_line_index : node.start, node.end);
 		}
 
 		const first_node = nodes[0];

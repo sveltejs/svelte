@@ -1,35 +1,31 @@
 <script>
-	import { handlers, preventDefault, stopPropagation, stopImmediatePropagation, self, trusted, once } from 'svelte/legacy';
-	/** @type {{onclick?: (event: any) => void, ontoggle?: (event: any) => void, 'oncustom-event-bubble'?: (event: any) => void, onblur?: (event: any) => void}} */
-	let {
-		onclick,
-		ontoggle,
-		'oncustom-event-bubble': oncustom_event_bubble,
-		onblur
-	} = $props();
+	import { handlers, createBubbler, preventDefault, stopPropagation, stopImmediatePropagation, self, trusted, once } from 'svelte/legacy';
+	
+	const bubble = createBubbler();
+
 </script>
 
 <button onclick={handlers(
 	() => console.log('hi'),
-	(event)=>{onclick?.(event);})} >click me</button>
+	bubble('click'))} >click me</button>
 <button onclick={handlers(
 	function(){ console.log('hi') },
-	(event)=>{onclick?.(event);})} >click me</button>
+	bubble('click'))} >click me</button>
 <button onclick={handlers(
 	() => console.log('before'),
-	(event)=>{onclick?.(event);},
+	bubble('click'),
 	() => console.log('after'))}  
 	>click me</button
 >
 <button onclick={handlers(
-	(event)=>{onclick?.(event);},
+	bubble('click'),
 	foo)} >click me</button>
-<button onclick={(event)=>{onclick?.(event);}}>click me</button>
+<button onclick={bubble('click')}>click me</button>
 
 <button ondblclick={() => console.log('hi')}>click me</button>
-<button ontoggle={(event)=>{ontoggle?.(event);}}>click me</button>
+<button ontoggle={bubble('toggle')}>click me</button>
 <button oncustom-event={() => 'hi'}>click me</button>
-<button oncustom-event-bubble={(event)=>{oncustom_event_bubble?.(event);}}>click me</button>
+<button oncustom-event-bubble={bubble('custom-event-bubble')}>click me</button>
 
 <button onclick={preventDefault(() => (searching = true))}>click me</button>
 <button onclick={preventDefault(() => '')}>click me</button>
@@ -49,16 +45,13 @@
 
 <button
 	onclick={handlers(
-		(event)=>{onclick?.(event);},
+		bubble('click'),
 		foo,
 		()=>'',
 		once(preventDefault(trusted(()=>''))))}
 	onblur={handlers(
 		foo,
-		
-		once(
-		preventDefault(
-		trusted((event)=>{onblur?.(event);}))))}
+		once(preventDefault(trusted(bubble('blur')))))}
 >
 	click me
 </button>

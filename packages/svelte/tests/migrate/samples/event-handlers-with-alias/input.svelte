@@ -5,6 +5,8 @@
 	let once;
 	let trusted;
 	let self;
+	let createBubbler;
+	let bubble;
 </script>
 
 <button on:click={() => console.log('hi')} on:click>click me</button>

@@ -1,9 +1,10 @@
 /** @import { ComponentConstructorOptions, ComponentType, SvelteComponent, Component } from 'svelte' */
-import { mutable_source, set } from '../internal/client/reactivity/sources.js';
 import { user_pre_effect } from '../internal/client/reactivity/effects.js';
+import { mutable_source, set } from '../internal/client/reactivity/sources.js';
 import { hydrate, mount, unmount } from '../internal/client/render.js';
-import { flush_sync, get } from '../internal/client/runtime.js';
-import { define_property } from '../internal/shared/utils.js';
+import { component_context, flush_sync, get } from '../internal/client/runtime.js';
+import { lifecycle_outside_component } from '../internal/shared/errors.js';
+import { define_property, is_array } from '../internal/shared/utils.js';
 
 /**
  * Takes the same options as a Svelte 4 component and the component function and returns a Svelte 4 compatible component.
@@ -206,6 +207,28 @@ export function handlers(...handlers) {
 				throw error;
 			});
 		}
+	};
+}
+
+export function createBubbler() {
+	const active_component_context = component_context;
+	if (active_component_context === null) {
+		lifecycle_outside_component('createBubbler');
+	}
+
+	return (/**@type {string}*/ type) => (/**@type {Event}*/ event) => {
+		const events = /** @type {Record<string, Function | Function[]>} */ (
+			active_component_context.s.$$events
+		)?.[/** @type {any} */ (type)];
+
+		if (events) {
+			const callbacks = is_array(events) ? events.slice() : [events];
+			for (const fn of callbacks) {
+				fn.call(active_component_context.x, event);
+			}
+			return !event.defaultPrevented;
+		}
+		return true;
 	};
 }
 
