@@ -43,22 +43,14 @@
 <button onclick={once(trusted(() => ''))}>click me</button>
 <button onclick={once(preventDefault(() => ''))}>click me</button>
 
-<button 
-	use:passive={{ handler: () => bubble('click'), event: 'click' }}>click me</button>
-<button 
-	use:nonpassive={{ handler: () => bubble('click'), event: 'click' }}>click me</button>
-<button 
-	use:passive={{ handler: () => ()=>'', event: 'click' }}>click me</button>
-<button 
-	use:nonpassive={{ handler: () => ()=>'', event: 'click' }}>click me</button>
-<button 
-	use:passive={{ handler: () => foo, event: 'click' }}>click me</button>
-<button 
-	use:nonpassive={{ handler: () => foo, event: 'click' }}>click me</button>
-<button 
-	use:passive={{ handler: () => stopPropagation(()=>''), event: 'click' }}>click me</button>
-<button 
-	use:nonpassive={{ handler: () => trusted(()=>''), event: 'click' }}>click me</button>
+<button use:passive={{ handler: () => bubble('click'), event: 'click' }}>click me</button>
+<button use:nonpassive={{ handler: () => bubble('click'), event: 'click' }}>click me</button>
+<button use:passive={{ handler: () => ()=>'', event: 'click' }}>click me</button>
+<button use:nonpassive={{ handler: () => ()=>'', event: 'click' }}>click me</button>
+<button use:passive={{ handler: () => foo, event: 'click' }}>click me</button>
+<button use:nonpassive={{ handler: () => foo, event: 'click' }}>click me</button>
+<button use:passive={{ handler: () => stopPropagation(()=>''), event: 'click' }}>click me</button>
+<button use:nonpassive={{ handler: () => trusted(()=>''), event: 'click' }}>click me</button>
 
 <button 
 	onclick={handlers(
