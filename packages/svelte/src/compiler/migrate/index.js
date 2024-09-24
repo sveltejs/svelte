@@ -730,10 +730,6 @@ function handle_events(element, state) {
 	}
 
 	for (const [name, nodes] of handlers) {
-		if (nodes.length > 1) {
-			state.legacy_imports.add('handlers');
-		}
-
 		const handlers = [];
 
 		let first = null;
@@ -794,6 +790,7 @@ function handle_events(element, state) {
 			let replacement;
 
 			if (handlers.length > 1) {
+				state.legacy_imports.add('handlers');
 				replacement = `${name}={${state.names.handlers}(${handlers.join(', ')})}`;
 			} else {
 				const handler = handlers[0];

@@ -1,5 +1,5 @@
 <script>
-	import { handlers as handlers_1, createBubbler as createBubbler_1, preventDefault as preventDefault_1, stopPropagation as stopPropagation_1, stopImmediatePropagation as stopImmediatePropagation_1, self as self_1, trusted as trusted_1, once as once_1, passive as passive_1, nonpassive as nonpassive_1 } from 'svelte/legacy';
+	import { createBubbler as createBubbler_1, handlers as handlers_1, preventDefault as preventDefault_1, stopPropagation as stopPropagation_1, stopImmediatePropagation as stopImmediatePropagation_1, self as self_1, trusted as trusted_1, once as once_1, passive as passive_1, nonpassive as nonpassive_1 } from 'svelte/legacy';
 	const bubble_1 = createBubbler_1();
 
 	let handlers;
