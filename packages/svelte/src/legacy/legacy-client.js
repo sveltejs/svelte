@@ -1,9 +1,10 @@
 /** @import { ComponentConstructorOptions, ComponentType, SvelteComponent, Component } from 'svelte' */
-import { mutable_source, set } from '../internal/client/reactivity/sources.js';
 import { user_pre_effect } from '../internal/client/reactivity/effects.js';
+import { mutable_source, set } from '../internal/client/reactivity/sources.js';
 import { hydrate, mount, unmount } from '../internal/client/render.js';
-import { flush_sync, get } from '../internal/client/runtime.js';
-import { define_property } from '../internal/shared/utils.js';
+import { component_context, flush_sync, get } from '../internal/client/runtime.js';
+import { lifecycle_outside_component } from '../internal/shared/errors.js';
+import { define_property, is_array } from '../internal/shared/utils.js';
 
 /**
  * Takes the same options as a Svelte 4 component and the component function and returns a Svelte 4 compatible component.
@@ -170,3 +171,79 @@ class Svelte4Component {
 export function run(fn) {
 	user_pre_effect(fn);
 }
+
+/**
+ * Function to mimic the multiple listeners available in svelte 4
+ * @deprecated
+ * @param {EventListener[]} handlers
+ * @returns {EventListener}
+ */
+export function handlers(...handlers) {
+	return function (event) {
+		const { stopImmediatePropagation } = event;
+		let stopped = false;
+
+		event.stopImmediatePropagation = () => {
+			stopped = true;
+			stopImmediatePropagation.call(event);
+		};
+
+		const errors = [];
+
+		for (const handler of handlers) {
+			try {
+				// @ts-expect-error `this` is not typed
+				handler?.call(this, event);
+			} catch (e) {
+				errors.push(e);
+			}
+
+			if (stopped) {
+				break;
+			}
+		}
+
+		for (let error of errors) {
+			queueMicrotask(() => {
+				throw error;
+			});
+		}
+	};
+}
+
+/**
+ * Function to create a `bubble` function that mimic the behavior of `on:click` without handler available in svelte 4.
+ * @deprecated Use this only as a temporary solution to migrate your automatically delegated events in Svelte 5.
+ */
+export function createBubbler() {
+	const active_component_context = component_context;
+	if (active_component_context === null) {
+		lifecycle_outside_component('createBubbler');
+	}
+
+	return (/**@type {string}*/ type) => (/**@type {Event}*/ event) => {
+		const events = /** @type {Record<string, Function | Function[]>} */ (
+			active_component_context.s.$$events
+		)?.[/** @type {any} */ (type)];
+
+		if (events) {
+			const callbacks = is_array(events) ? events.slice() : [events];
+			for (const fn of callbacks) {
+				fn.call(active_component_context.x, event);
+			}
+			return !event.defaultPrevented;
+		}
+		return true;
+	};
+}
+
+export {
+	once,
+	preventDefault,
+	self,
+	stopImmediatePropagation,
+	stopPropagation,
+	trusted,
+	passive,
+	nonpassive
+} from '../internal/client/dom/legacy/event-modifiers.js';

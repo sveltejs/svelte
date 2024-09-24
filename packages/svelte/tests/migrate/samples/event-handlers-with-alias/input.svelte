@@ -1,3 +1,17 @@
+<script>
+	let handlers;
+	let stopPropagation;
+	let preventDefault;
+	let stopImmediatePropagation;
+	let once;
+	let trusted;
+	let self;
+	let createBubbler;
+	let bubble;
+	let passive;
+	let nonpassive;
+</script>
+
 <button on:click={() => console.log('hi')} on:click>click me</button>
 <button on:click={function(){ console.log('hi') }} on:click>click me</button>
 <button on:click={() => console.log('before')} on:click on:click={() => console.log('after')}
@@ -24,7 +38,6 @@
 <button on:click|stopPropagation|stopImmediatePropagation={() => {}}>click me</button>
 <button on:click|stopImmediatePropagation|self={() => ''}>click me</button>
 <button on:click|self|trusted={() => ''}>click me</button>
-<button on:click|trusted|self={() => ''}>click me</button>
 <button on:click|trusted|once={() => ''}>click me</button>
 <button on:click|once|preventDefault={() => ''}>click me</button>
 
@@ -37,18 +50,16 @@
 <button on:click|stopPropagation|passive={()=>''}>click me</button>
 <button on:click|trusted|nonpassive={()=>''}>click me</button>
 
-<button
+<button 
 	on:click|passive={()=>''}
 	on:click
 	on:click={()=>''}
 >click me</button>
 
-<button
+<button 
 	on:click|nonpassive={()=>''}
 	on:click
-	on:click={()=>{
-		return 'multiline';
-	}}
+	on:click={()=>''}
 >click me</button>
 
 

@@ -7,12 +7,11 @@ import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
 import { parse } from '../phases/1-parse/index.js';
 import { analyze_component } from '../phases/2-analyze/index.js';
-import { validate_component_options } from '../validate-options.js';
 import { get_rune } from '../phases/scope.js';
 import { reset, reset_warning_filter } from '../state.js';
 import { extract_identifiers } from '../utils/ast.js';
-import { regex_is_valid_identifier } from '../phases/patterns.js';
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
+import { validate_component_options } from '../validate-options.js';
 
 /**
  * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
@@ -50,11 +49,27 @@ export function migrate(source) {
 			props: [],
 			props_insertion_point: parsed.instance?.content.start ?? 0,
 			has_props_rune: false,
-			props_name: analysis.root.unique('props').name,
-			rest_props_name: analysis.root.unique('rest').name,
 			end: source.length,
-			run_name: analysis.root.unique('run').name,
-			needs_run: false
+			names: {
+				props: analysis.root.unique('props').name,
+				rest: analysis.root.unique('rest').name,
+
+				// event stuff
+				run: analysis.root.unique('run').name,
+				handlers: analysis.root.unique('handlers').name,
+				stopImmediatePropagation: analysis.root.unique('stopImmediatePropagation').name,
+				preventDefault: analysis.root.unique('preventDefault').name,
+				stopPropagation: analysis.root.unique('stopPropagation').name,
+				once: analysis.root.unique('once').name,
+				self: analysis.root.unique('self').name,
+				trusted: analysis.root.unique('trusted').name,
+				createBubbler: analysis.root.unique('createBubbler').name,
+				bubble: analysis.root.unique('bubble').name,
+				passive: analysis.root.unique('passive').name,
+				nonpassive: analysis.root.unique('nonpassive').name
+			},
+			legacy_imports: new Set(),
+			script_insertions: new Set()
 		};
 
 		if (parsed.module) {
@@ -71,7 +86,12 @@ export function migrate(source) {
 		state = { ...state, scope: analysis.template.scope };
 		walk(parsed.fragment, state, template);
 
-		const run_import = `import { run${state.run_name === 'run' ? '' : ` as ${state.run_name}`} } from 'svelte/legacy';`;
+		const specifiers = [...state.legacy_imports].map((imported) => {
+			const local = state.names[imported];
+			return imported === local ? imported : `${imported} as ${local}`;
+		});
+
+		const legacy_import = `import { ${specifiers.join(', ')} } from 'svelte/legacy';`;
 		let added_legacy_import = false;
 
 		if (state.props.length > 0 || analysis.uses_rest_props || analysis.uses_props) {
@@ -80,7 +100,7 @@ export function migrate(source) {
 			const props_separator = has_many_props ? newline_separator : ' ';
 			let props = '';
 			if (analysis.uses_props) {
-				props = `...${state.props_name}`;
+				props = `...${state.names.props}`;
 			} else {
 				props = state.props
 					.map((prop) => {
@@ -96,7 +116,7 @@ export function migrate(source) {
 					.join(`,${props_separator}`);
 
 				if (analysis.uses_rest_props) {
-					props += `,${props_separator}...${state.rest_props_name}`;
+					props += `${state.props.length > 0 ? `,${props_separator}` : ''}...${state.names.rest}`;
 				}
 			}
 
@@ -145,8 +165,14 @@ export function migrate(source) {
 					props_declaration = `\n${indent}${props_declaration}`;
 					str.appendRight(state.props_insertion_point, props_declaration);
 				} else {
-					const imports = state.needs_run ? `${indent}${run_import}\n` : '';
-					str.prepend(`<script>\n${imports}${indent}${props_declaration}\n</script>\n\n`);
+					const imports = state.legacy_imports.size > 0 ? `${indent}${legacy_import}\n` : '';
+					const script_insertions =
+						state.script_insertions.size > 0
+							? `\n${indent}${[...state.script_insertions].join(`\n${indent}`)}`
+							: '';
+					str.prepend(
+						`<script>\n${imports}${indent}${props_declaration}${script_insertions}\n</script>\n\n`
+					);
 					added_legacy_import = true;
 				}
 			}
@@ -193,14 +219,21 @@ export function migrate(source) {
 			}
 		}
 
-		if (state.needs_run && !added_legacy_import) {
+		if (state.legacy_imports.size > 0 && !added_legacy_import) {
+			const script_insertions =
+				state.script_insertions.size > 0
+					? `\n${indent}${[...state.script_insertions].join(`\n${indent}`)}`
+					: '';
+
 			if (parsed.instance) {
 				str.appendRight(
 					/** @type {number} */ (parsed.instance.content.start),
-					`\n${indent}${run_import}\n`
+					`\n${indent}${legacy_import}${script_insertions}\n`
 				);
 			} else {
-				str.prepend(`<script>\n${indent}${run_import}\n</script>\n\n`);
+				str.prepend(
+					`<script>\n${indent}${legacy_import}\n${indent}${script_insertions}\n</script>\n\n`
+				);
 			}
 		}
 
@@ -221,11 +254,10 @@ export function migrate(source) {
  *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string }>;
  *  props_insertion_point: number;
  *  has_props_rune: boolean;
- * 	props_name: string;
- * 	rest_props_name: string;
  *  end: number;
- *  run_name: string;
- *  needs_run: boolean;
+ * 	names: Record<string, string>;
+ * 	legacy_imports: Set<string>;
+ * 	script_insertions: Set<string>
  * }} State
  */
 
@@ -476,7 +508,7 @@ const instance_script = {
 			}
 		}
 
-		state.needs_run = true;
+		state.legacy_imports.add('run');
 		const is_block_stmt = node.body.type === 'BlockStatement';
 		const start_end = /** @type {number} */ (node.body.start);
 		// TODO try to find out if we can use $derived.by instead?
@@ -484,7 +516,7 @@ const instance_script = {
 			state.str.update(
 				/** @type {number} */ (node.start),
 				start_end + 1,
-				`${state.run_name}(() => {`
+				`${state.names.run}(() => {`
 			);
 			const end = /** @type {number} */ (node.body.end);
 			state.str.update(end - 1, end, '});');
@@ -492,7 +524,7 @@ const instance_script = {
 			state.str.update(
 				/** @type {number} */ (node.start),
 				start_end,
-				`${state.run_name}(() => {\n${state.indent}`
+				`${state.names.run}(() => {\n${state.indent}`
 			);
 			state.str.indent(state.indent, {
 				exclude: [
@@ -667,6 +699,16 @@ function extract_type_and_comment(declarator, str, path) {
 	return { type: 'any', comment };
 }
 
+// Ensure modifiers are applied in the same order as Svelte 4
+const modifier_order = [
+	'preventDefault',
+	'stopPropagation',
+	'stopImmediatePropagation',
+	'self',
+	'trusted',
+	'once'
+];
+
 /**
  * @param {AST.RegularElement | AST.SvelteElement | AST.SvelteWindow | AST.SvelteDocument | AST.SvelteBody} element
  * @param {State} state
@@ -688,198 +730,76 @@ function handle_events(element, state) {
 	}
 
 	for (const [name, nodes] of handlers) {
-		// turn on:click into a prop
-		let exported = name;
-		if (!regex_is_valid_identifier.test(name)) {
-			exported = `'${exported}'`;
-		}
-		// Check if prop already set, could happen when on:click on different elements
-		let local = state.props.find((prop) => prop.exported === exported)?.local;
+		const handlers = [];
 
-		const last = nodes[nodes.length - 1];
-		const payload_name =
-			last.expression?.type === 'ArrowFunctionExpression' &&
-			last.expression.params[0]?.type === 'Identifier'
-				? last.expression.params[0].name
-				: generate_event_name(last, state);
-		let prepend = '';
+		let first = null;
 
-		for (let i = 0; i < nodes.length - 1; i += 1) {
-			const node = nodes[i];
-			const indent = get_indent(state, node, element);
+		for (const node of nodes) {
+			/** @type {string} */
+			let body;
+
 			if (node.expression) {
-				let body = '';
-				if (node.expression.type === 'ArrowFunctionExpression') {
-					body = state.str.original.substring(
-						/** @type {number} */ (node.expression.body.start),
-						/** @type {number} */ (node.expression.body.end)
-					);
-				} else {
-					body = `${state.str.original.substring(
-						/** @type {number} */ (node.expression.start),
-						/** @type {number} */ (node.expression.end)
-					)}();`;
-				}
-
-				for (const modifier of node.modifiers) {
-					if (modifier === 'stopPropagation') {
-						body = `\n${indent}${payload_name}.stopPropagation();\n${body}`;
-					} else if (modifier === 'preventDefault') {
-						body = `\n${indent}${payload_name}.preventDefault();\n${body}`;
-					} else if (modifier === 'stopImmediatePropagation') {
-						body = `\n${indent}${payload_name}.stopImmediatePropagation();\n${body}`;
-					} else {
-						body = `\n${indent}// @migration-task: incorporate ${modifier} modifier\n${body}`;
-					}
-				}
-
-				prepend += `\n${indent}${body}\n`;
+				body = state.str.original.substring(
+					/** @type {number} */ (node.expression.start),
+					/** @type {number} */ (node.expression.end)
+				);
 			} else {
-				if (!local) {
-					local = state.scope.generate(`on${node.name}`);
-					state.props.push({
-						local,
-						exported,
-						init: '',
-						bindable: false,
-						optional: true,
-						type: '(event: any) => void'
-					});
-				}
-				prepend += `\n${indent}${local}?.(${payload_name});\n`;
-			}
-
-			state.str.remove(node.start, node.end);
-		}
-
-		if (last.expression) {
-			// remove : from on:click
-			state.str.remove(last.start + 2, last.start + 3);
-			// remove modifiers
-			if (last.modifiers.length > 0) {
-				state.str.remove(
-					last.start + last.name.length + 3,
-					state.str.original.indexOf('=', last.start)
+				body = `${state.names.bubble}('${node.name}')`;
+				state.legacy_imports.add('createBubbler');
+				state.script_insertions.add(
+					`const ${state.names.bubble} = ${state.names.createBubbler}();`
 				);
 			}
-			if (last.modifiers.includes('capture')) {
-				state.str.appendRight(last.start + last.name.length + 3, 'capture');
+
+			const has_passive = node.modifiers.includes('passive');
+			const has_nonpassive = node.modifiers.includes('nonpassive');
+
+			const modifiers = modifier_order.filter((modifier) => node.modifiers.includes(modifier));
+
+			for (const modifier of modifiers) {
+				state.legacy_imports.add(modifier);
+				body = `${state.names[modifier]}(${body})`;
 			}
 
-			const indent = get_indent(state, last, element);
+			if (has_passive || has_nonpassive) {
+				const action = has_passive ? 'passive' : 'nonpassive';
+				state.legacy_imports.add(action);
 
-			for (const modifier of last.modifiers) {
-				if (modifier === 'stopPropagation') {
-					prepend += `\n${indent}${payload_name}.stopPropagation();\n`;
-				} else if (modifier === 'preventDefault') {
-					prepend += `\n${indent}${payload_name}.preventDefault();\n`;
-				} else if (modifier === 'stopImmediatePropagation') {
-					prepend += `\n${indent}${payload_name}.stopImmediatePropagation();\n`;
-				} else if (modifier !== 'capture') {
-					prepend += `\n${indent}// @migration-task: incorporate ${modifier} modifier\n`;
-				}
-			}
-
-			if (prepend) {
-				let pos = last.expression.start;
-				if (last.expression.type === 'ArrowFunctionExpression') {
-					pos = last.expression.body.start;
-					if (
-						last.expression.params.length > 0 &&
-						last.expression.params[0].type !== 'Identifier'
-					) {
-						const start = /** @type {number} */ (last.expression.params[0].start);
-						const end = /** @type {number} */ (last.expression.params[0].end);
-						// replace event payload with generated one that others use,
-						// then destructure generated payload param into what the user wrote
-						state.str.overwrite(start, end, payload_name);
-						prepend = `let ${state.str.original.substring(
-							start,
-							end
-						)} = ${payload_name};\n${prepend}`;
-					} else if (last.expression.params.length === 0) {
-						// add generated payload param to arrow function
-						const pos = state.str.original.lastIndexOf(')', last.expression.body.start);
-						state.str.prependLeft(pos, payload_name);
-					}
-
-					const needs_curlies = last.expression.body.type !== 'BlockStatement';
-					const end = /** @type {number} */ (last.expression.body.end) - (needs_curlies ? 0 : 1);
-					pos = /** @type {number} */ (pos) + (needs_curlies ? 0 : 1);
-					if (needs_curlies && state.str.original[pos - 1] === '(') {
-						// Prettier does something like on:click={() => (foo = true)}, we need to remove the braces in this case
-						state.str.update(pos - 1, pos, `{${prepend}${indent}`);
-						state.str.update(end, end + 1, `\n${indent.slice(state.indent.length)}}`);
-					} else {
-						state.str.prependRight(pos, `${needs_curlies ? '{' : ''}${prepend}${indent}`);
-						state.str.appendRight(
-							end,
-							`\n${indent.slice(state.indent.length)}${needs_curlies ? '}' : ''}`
-						);
-					}
-				} else {
-					state.str.update(
-						/** @type {number} */ (last.expression.start),
-						/** @type {number} */ (last.expression.end),
-						`(${payload_name}) => {${prepend}\n${indent}${state.str.original.substring(
-							/** @type {number} */ (last.expression.start),
-							/** @type {number} */ (last.expression.end)
-						)}?.(${payload_name});\n}`
-					);
-				}
-			}
-		} else {
-			// turn on:click into a prop
-			// Check if prop already set, could happen when on:click on different elements
-			if (!local) {
-				local = state.scope.generate(`on${last.name}`);
-				state.props.push({
-					local,
-					exported,
-					init: '',
-					bindable: false,
-					optional: true,
-					type: '(event: any) => void'
-				});
-			}
-
-			let replacement = '';
-			if (!prepend) {
-				if (exported === local) {
-					replacement = `{${name}}`;
-				} else {
-					replacement = `${name}={${local}}`;
-				}
+				state.str.overwrite(
+					node.start,
+					node.end,
+					`use:${state.names[action]}={['${node.name}', () => ${body}]}`
+				);
 			} else {
-				replacement = `${name}={(${payload_name}) => {${prepend}\n${state.indent}${local}?.(${payload_name});\n}}`;
+				if (first) {
+					let start = node.start;
+					let end = node.end;
+
+					while (/[\s\n]/.test(state.str.original[start - 1])) start -= 1;
+					state.str.remove(start, end);
+				} else {
+					first = node;
+				}
+
+				handlers.push(body);
+			}
+		}
+
+		if (first) {
+			/** @type {string} */
+			let replacement;
+
+			if (handlers.length > 1) {
+				state.legacy_imports.add('handlers');
+				replacement = `${name}={${state.names.handlers}(${handlers.join(', ')})}`;
+			} else {
+				const handler = handlers[0];
+				replacement = handler === name ? `{${handler}}` : `${name}={${handler}}`;
 			}
 
-			state.str.update(last.start, last.end, replacement);
+			state.str.overwrite(first.start, first.end, replacement);
 		}
 	}
-}
-
-/**
- * Returns the next indentation level of the first node that has all-whitespace before it
- * @param {State} state
- * @param {Array<{start: number; end: number}>} nodes
- */
-function get_indent(state, ...nodes) {
-	let indent = state.indent;
-
-	for (const node of nodes) {
-		const line_start = state.str.original.lastIndexOf('\n', node.start);
-		indent = state.str.original.substring(line_start + 1, node.start);
-
-		if (indent.trim() === '') {
-			indent = state.indent + indent;
-			return indent;
-		} else {
-			indent = state.indent;
-		}
-	}
-
-	return indent;
 }
 
 /**
@@ -937,19 +857,19 @@ function handle_identifier(node, state, path) {
 			state.str.update(
 				/** @type {number} */ (node.start),
 				/** @type {number} */ (node.end),
-				state.props_name
+				state.names.props
 			);
 		} else {
 			const binding = state.scope.get(node.name);
 			if (binding?.kind === 'bindable_prop') {
-				state.str.prependLeft(/** @type {number} */ (node.start), `${state.props_name}.`);
+				state.str.prependLeft(/** @type {number} */ (node.start), `${state.names.props}.`);
 			}
 		}
 	} else if (node.name === '$$restProps' && state.analysis.uses_rest_props) {
 		state.str.update(
 			/** @type {number} */ (node.start),
 			/** @type {number} */ (node.end),
-			state.rest_props_name
+			state.names.rest
 		);
 	} else if (node.name === '$$slots' && state.analysis.uses_slots) {
 		if (parent?.type === 'MemberExpression') {
