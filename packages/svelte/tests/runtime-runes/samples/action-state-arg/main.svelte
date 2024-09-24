@@ -1,18 +1,16 @@
 <script>
-	const action = (element) => {
-		console.log(element.id);
-	};
+    let foo = $state({ count: 0 });
+    let count = $state(0);
+
+    function action() {
+        return {
+            update(foo) {
+                count = foo.count;
+            }
+        }
+    }
 </script>
 
-<div use:action id="5">
-	<div use:action id="3">
-		<div use:action id="1">
-		</div>
-		<div use:action id="2">
-		</div>
-	</div>
-	<div use:action id="4">
-	</div>
-</div>
-<div use:action id="6">
-</div>
+<button onclick={() => foo.count++}>mutate</button>
+<button onclick={() => foo = {...foo, count: foo.count + 1 }}>reassign</button>
+<div use:action={foo}>{count}</div>
