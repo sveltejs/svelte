@@ -81,8 +81,7 @@ export function set_text(text, value) {
  * @returns {Exports}
  */
 export function mount(component, options) {
-	const anchor = options.anchor ?? options.target.appendChild(create_text());
-	return _mount(component, { ...options, anchor });
+	return _mount(component, options);
 }
 
 /**
@@ -176,7 +175,7 @@ const document_listeners = new Map();
  * @param {ComponentType<SvelteComponent<any>> | Component<any>} Component
  * @param {{
  * 		target: Document | Element | ShadowRoot;
- * 		anchor: Node;
+ * 		anchor?: Node;
  * 		props?: any;
  * 		events?: any;
  * 		context?: Map<any, any>;
@@ -225,6 +224,8 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 	var component = undefined;
 
 	var unmount = effect_root(() => {
+		var anchor_node = anchor ?? target.appendChild(create_text());
+
 		branch(() => {
 			if (context) {
 				push({});
@@ -238,12 +239,12 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			}
 
 			if (hydrating) {
-				assign_nodes(/** @type {TemplateNode} */ (anchor), null);
+				assign_nodes(/** @type {TemplateNode} */ (anchor_node), null);
 			}
 
 			should_intro = intro;
 			// @ts-expect-error the public typings are not what the actual function looks like
-			component = Component(anchor, props) || {};
+			component = Component(anchor_node, props) || {};
 			should_intro = true;
 
 			if (hydrating) {
@@ -271,6 +272,9 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 
 			root_event_handles.delete(event_handle);
 			mounted_components.delete(component);
+			if (anchor_node !== anchor) {
+				anchor_node.parentNode?.removeChild(anchor_node);
+			}
 		};
 	});
 
