@@ -73,19 +73,23 @@ export function template(content, flags) {
 /*#__NO_SIDE_EFFECTS__*/
 export function template_with_script(content, flags) {
 	var first = true;
-	var fn = template(content, flags);
+	var fn = template(content, flags | TEMPLATE_FRAGMENT);
 
 	return () => {
 		if (hydrating) return fn();
 
-		var node = /** @type {Element | DocumentFragment} */ (fn());
+		var fragment = /** @type {DocumentFragment} */ (fn());
 
 		if (first) {
 			first = false;
-			run_scripts(node);
+			run_scripts(fragment);
 		}
 
-		return node;
+		if ((flags & TEMPLATE_FRAGMENT) !== 0) {
+			return fragment;
+		}
+
+		return /** @type {Node} */ (fragment.firstChild);
 	};
 }
 
@@ -152,19 +156,23 @@ export function ns_template(content, flags, ns = 'svg') {
 /*#__NO_SIDE_EFFECTS__*/
 export function svg_template_with_script(content, flags) {
 	var first = true;
-	var fn = ns_template(content, flags);
+	var fn = ns_template(content, flags | TEMPLATE_FRAGMENT);
 
 	return () => {
 		if (hydrating) return fn();
 
-		var node = /** @type {Element | DocumentFragment} */ (fn());
+		var fragment = /** @type {DocumentFragment} */ (fn());
 
 		if (first) {
 			first = false;
-			run_scripts(node);
+			run_scripts(fragment);
 		}
 
-		return node;
+		if ((flags & TEMPLATE_FRAGMENT) !== 0) {
+			return fragment;
+		}
+
+		return /** @type {Node} */ (fragment.firstChild);
 	};
 }
 
@@ -181,20 +189,15 @@ export function mathml_template(content, flags) {
 /**
  * Creating a document fragment from HTML that contains script tags will not execute
  * the scripts. We need to replace the script tags with new ones so that they are executed.
- * @param {Element | DocumentFragment} node
+ * @param {DocumentFragment} fragment
  */
-function run_scripts(node) {
+function run_scripts(fragment) {
 	// scripts were SSR'd, in which case they will run
 	if (hydrating) return;
 
-	const is_fragment = node.nodeType === 11;
-	const scripts =
-		/** @type {HTMLElement} */ (node).tagName === 'SCRIPT'
-			? [/** @type {HTMLScriptElement} */ (node)]
-			: node.querySelectorAll('script');
 	const effect = /** @type {Effect} */ (active_effect);
 
-	for (const script of scripts) {
+	for (const script of fragment.querySelectorAll('script')) {
 		const clone = document.createElement('script');
 		for (var attribute of script.attributes) {
 			clone.setAttribute(attribute.name, attribute.value);
@@ -202,27 +205,15 @@ function run_scripts(node) {
 
 		clone.textContent = script.textContent;
 
-		const replace = () => {
-			// The script has changed - if it's at the edges, the effect now points at dead nodes
-			if (is_fragment ? node.firstChild === script : node === script) {
-				effect.nodes_start = clone;
-			}
-			if (is_fragment ? node.lastChild === script : node === script) {
-				effect.nodes_end = clone;
-			}
-
-			script.replaceWith(clone);
-		};
-
-		// If node === script tag, replaceWith will do nothing because there's no parent yet,
-		// waiting until that's the case using an effect solves this.
-		// Don't do it in other circumstances or we could accidentally execute scripts
-		// in an adjacent @html tag that was instantiated in the meantime.
-		if (script === node) {
-			queue_micro_task(replace);
-		} else {
-			replace();
+		// The script has changed - if it's at the edges, the effect now points at dead nodes
+		if (fragment.firstChild === script) {
+			effect.nodes_start = clone;
 		}
+		if (fragment.lastChild === script) {
+			effect.nodes_end = clone;
+		}
+
+		script.replaceWith(clone);
 	}
 }
 
