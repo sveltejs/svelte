@@ -54,13 +54,13 @@
 <button use:nonpassive_1={['click', () => trusted_1(()=>'')]}>click me</button>
 
 <button 
-	onclick={handlers_1(bubble_1('click'), ()=>'')}
 	use:passive_1={['click', () => ()=>'']}
+	onclick={handlers_1(bubble_1('click'), ()=>'')}
 >click me</button>
 
 <button 
-	onclick={handlers_1(bubble_1('click'), ()=>'')}
 	use:nonpassive_1={['click', () => ()=>'']}
+	onclick={handlers_1(bubble_1('click'), ()=>'')}
 >click me</button>
 
 

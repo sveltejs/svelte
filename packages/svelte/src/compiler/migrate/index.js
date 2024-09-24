@@ -735,7 +735,8 @@ function handle_events(element, state) {
 		}
 
 		const handlers = [];
-		const explicit_passive_handlers = [];
+
+		let first = null;
 
 		for (let i = 0; i < nodes.length; i += 1) {
 			const node = nodes[i];
@@ -773,20 +774,24 @@ function handle_events(element, state) {
 				const action = has_passive ? 'passive' : 'nonpassive';
 				state.legacy_imports.add(action);
 
-				explicit_passive_handlers.push({
-					handler: `use:${state.names[action]}={['${node.name}', () => ${body}]}`,
-					needs_line_delete
-				});
+				state.str.overwrite(
+					node.start,
+					node.end,
+					`use:${state.names[action]}={['${node.name}', () => ${body}]}`
+				);
 			} else {
+				if (first) {
+					state.str.remove(needs_line_delete ? new_line_index : node.start, node.end);
+				} else {
+					first = node;
+				}
+
 				handlers.push({
 					handler: body,
 					needs_line_delete
 				});
 			}
-			state.str.remove(needs_line_delete ? new_line_index : node.start, node.end);
 		}
-
-		const first = nodes[0];
 
 		if (first) {
 			const indent = get_indent(state, first, element);
@@ -803,13 +808,6 @@ function handle_events(element, state) {
 
 					state.str.overwrite(first.start, first.end, `${name}={${singular}}`);
 				}
-			}
-
-			for (const passive_handler of explicit_passive_handlers) {
-				state.str.appendRight(
-					first.end,
-					`${passive_handler.needs_line_delete || nodes.length > 1 ? `\n${indent}` : ''}${passive_handler.handler}`
-				);
 			}
 		}
 	}

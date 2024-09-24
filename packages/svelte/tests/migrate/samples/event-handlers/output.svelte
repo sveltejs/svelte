@@ -44,15 +44,15 @@
 <button use:nonpassive={['click', () => trusted(()=>'')]}>click me</button>
 
 <button
-	onclick={handlers(bubble('click'), ()=>'')}
 	use:passive={['click', () => ()=>'']}
+	onclick={handlers(bubble('click'), ()=>'')}
 >click me</button>
 
 <button
+	use:nonpassive={['click', () => ()=>'']}
 	onclick={handlers(bubble('click'), ()=>{
 		return 'multiline';
 	})}
-	use:nonpassive={['click', () => ()=>'']}
 >click me</button>
 
 
