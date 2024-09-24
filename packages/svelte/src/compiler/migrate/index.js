@@ -786,27 +786,22 @@ function handle_events(element, state) {
 					first = node;
 				}
 
-				handlers.push({
-					handler: body,
-					needs_line_delete
-				});
+				handlers.push(body);
 			}
 		}
 
 		if (first) {
-			let singular = handlers.map((handler) => handler.handler).join(', ');
+			/** @type {string} */
+			let replacement;
 
-			if (singular) {
-				if (singular === name) {
-					state.str.overwrite(first.start, first.end, `{${name}}`);
-				} else {
-					if (nodes.length > 1) {
-						singular = `${state.names.handlers}(${singular})`;
-					}
-
-					state.str.overwrite(first.start, first.end, `${name}={${singular}}`);
-				}
+			if (handlers.length > 1) {
+				replacement = `${name}={${state.names.handlers}(${handlers.join(', ')})}`;
+			} else {
+				const handler = handlers[0];
+				replacement = handler === name ? `{${handler}}` : `${name}={${handler}}`;
 			}
+
+			state.str.overwrite(first.start, first.end, replacement);
 		}
 	}
 }
