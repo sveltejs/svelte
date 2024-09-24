@@ -84,16 +84,12 @@ export function migrate(source) {
 		state = { ...state, scope: analysis.template.scope };
 		walk(parsed.fragment, state, template);
 
-		const imports = [...state.legacy_imports]
-			.map((legacy_import) => {
-				const maybe_as = state.legacy_imports_names[legacy_import];
-				if (legacy_import === maybe_as) {
-					return legacy_import;
-				}
-				return `${legacy_import} as ${maybe_as}`;
-			})
-			.join(', ');
-		const legacy_import = `import { ${imports} } from 'svelte/legacy';`;
+		const specifiers = [...state.legacy_imports].map((imported) => {
+			const local = state.legacy_imports_names[imported];
+			return imported === local ? imported : `${imported} as ${local}`;
+		});
+
+		const legacy_import = `import { ${specifiers.join(', ')} } from 'svelte/legacy';`;
 		let added_legacy_import = false;
 
 		if (state.props.length > 0 || analysis.uses_rest_props || analysis.uses_props) {
