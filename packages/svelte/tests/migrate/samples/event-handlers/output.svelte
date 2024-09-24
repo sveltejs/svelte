@@ -2,7 +2,6 @@
 	import { handlers, createBubbler, preventDefault, stopPropagation, stopImmediatePropagation, self, trusted, once, passive, nonpassive } from 'svelte/legacy';
 	
 	const bubble = createBubbler();
-
 </script>
 
 <button onclick={handlers(

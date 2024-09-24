@@ -168,7 +168,7 @@ export function migrate(source) {
 					const imports = state.legacy_imports.size > 0 ? `${indent}${legacy_import}\n` : '';
 					const script_insertions =
 						state.script_insertions.size > 0
-							? `\n${indent}${[...state.script_insertions].join(indent)}\n`
+							? `\n${indent}${[...state.script_insertions].join(`\n${indent}`)}`
 							: '';
 					str.prepend(
 						`<script>\n${imports}${indent}${props_declaration}${script_insertions}\n</script>\n\n`
@@ -222,7 +222,7 @@ export function migrate(source) {
 		if (state.legacy_imports.size > 0 && !added_legacy_import) {
 			const script_insertions =
 				state.script_insertions.size > 0
-					? `\n${indent}${[...state.script_insertions].join(indent)}`
+					? `\n${indent}${[...state.script_insertions].join(`\n${indent}`)}`
 					: '';
 
 			if (parsed.instance) {
@@ -749,7 +749,7 @@ function handle_events(element, state) {
 			} else {
 				state.legacy_imports.add('createBubbler');
 				state.script_insertions.add(
-					`const ${state.names.bubble} = ${state.names.createBubbler}();\n`
+					`const ${state.names.bubble} = ${state.names.createBubbler}();`
 				);
 			}
 
