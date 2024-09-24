@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: improve reconcilation of inert each block rows
+fix: improve reconciliation of inert each block rows
