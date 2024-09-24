@@ -170,14 +170,13 @@ function add_owner_to_object(object, owner, seen) {
 
 	if (metadata) {
 		// this is a state proxy, add owner directly, if not globally shared
-		if (metadata.owners !== null) {
+		if ('owners' in metadata && metadata.owners != null) {
 			metadata.owners.add(owner);
 		}
 	} else if (object && typeof object === 'object') {
 		if (seen.has(object)) return;
 		seen.add(object);
-
-		if (object[ADD_OWNER]) {
+		if (ADD_OWNER in object && object[ADD_OWNER]) {
 			// this is a class with state fields. we put this in a render effect
 			// so that if state is replaced (e.g. `instance.name = { first, last }`)
 			// the new state is also co-owned by the caller of `getContext`
