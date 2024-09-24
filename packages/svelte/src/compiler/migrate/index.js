@@ -773,7 +773,7 @@ function handle_events(element, state) {
 				state.legacy_imports.add(action);
 
 				explicit_passive_handlers.push({
-					handler: `use:${action}={['${node.name}', () => ${body}]}`,
+					handler: `use:${state.names[action]}={['${node.name}', () => ${body}]}`,
 					indent,
 					needs_line_delete
 				});

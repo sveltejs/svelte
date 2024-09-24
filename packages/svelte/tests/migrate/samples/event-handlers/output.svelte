@@ -72,10 +72,10 @@
 		bubble('click'),
 		foo,
 		()=>'',
-		once(preventDefault(trusted(()=>''))))}
+		once(trusted(preventDefault(()=>''))))}
 	onblur={handlers(
 		foo,
-		once(preventDefault(trusted(bubble('blur')))))}
+		once(trusted(preventDefault(bubble('blur')))))}
 >
 	click me
 </button>
