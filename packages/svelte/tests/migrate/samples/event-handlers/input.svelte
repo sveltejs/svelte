@@ -24,6 +24,7 @@
 <button on:click|stopPropagation|stopImmediatePropagation={() => {}}>click me</button>
 <button on:click|stopImmediatePropagation|self={() => ''}>click me</button>
 <button on:click|self|trusted={() => ''}>click me</button>
+<button on:click|trusted|self={() => ''}>click me</button>
 <button on:click|trusted|once={() => ''}>click me</button>
 <button on:click|once|preventDefault={() => ''}>click me</button>
 

@@ -699,6 +699,16 @@ function extract_type_and_comment(declarator, str, path) {
 	return { type: 'any', comment };
 }
 
+// Ensure modifiers are applied in the same order as Svelte 4
+const modifier_order = [
+	'preventDefault',
+	'stopPropagation',
+	'stopImmediatePropagation',
+	'self',
+	'trusted',
+	'once'
+];
+
 /**
  * @param {AST.RegularElement | AST.SvelteElement | AST.SvelteWindow | AST.SvelteDocument | AST.SvelteBody} element
  * @param {State} state
@@ -734,11 +744,6 @@ function handle_events(element, state) {
 			const needs_line_delete =
 				state.str.original.substring(new_line_index, node.start).trim() === '' && i !== 0;
 
-			// always move once as the first modifier
-			const sorted_modifier = [...node.modifiers].sort((a, b) =>
-				a === 'once' ? 1 : b === 'once' ? -1 : 0
-			);
-
 			let body = `${state.names.bubble}('${node.name}')`;
 
 			if (node.expression) {
@@ -753,26 +758,22 @@ function handle_events(element, state) {
 				);
 			}
 
-			let has_passive = false;
-			let has_nonpassive = false;
+			const has_passive = node.modifiers.includes('passive');
+			const has_nonpassive = node.modifiers.includes('nonpassive');
 
-			for (const modifier of sorted_modifier) {
-				has_passive ||= modifier === 'passive';
-				has_nonpassive ||= modifier === 'nonpassive';
-				if (modifier !== 'capture' && modifier !== 'passive' && modifier !== 'nonpassive') {
-					state.legacy_imports.add(modifier);
-					body = `${state.names[modifier]}(${body})`;
-				}
+			const modifiers = modifier_order.filter((modifier) => node.modifiers.includes(modifier));
+
+			for (const modifier of modifiers) {
+				state.legacy_imports.add(modifier);
+				body = `${state.names[modifier]}(${body})`;
 			}
+
 			if (has_passive || has_nonpassive) {
-				if (has_passive) {
-					state.legacy_imports.add('passive');
-				}
-				if (has_nonpassive) {
-					state.legacy_imports.add('nonpassive');
-				}
+				const action = has_passive ? 'passive' : 'nonpassive';
+				state.legacy_imports.add(action);
+
 				explicit_passive_handlers.push({
-					handler: `use:${has_nonpassive ? state.names.nonpassive : state.names.passive}={['${node.name}', () => ${body}]}`,
+					handler: `use:${action}={['${node.name}', () => ${body}]}`,
 					indent,
 					needs_line_delete
 				});

@@ -39,6 +39,7 @@
 <button onclick={stopImmediatePropagation(stopPropagation(() => {}))}>click me</button>
 <button onclick={self(stopImmediatePropagation(() => ''))}>click me</button>
 <button onclick={trusted(self(() => ''))}>click me</button>
+<button onclick={trusted(self(() => ''))}>click me</button>
 <button onclick={once(trusted(() => ''))}>click me</button>
 <button onclick={once(preventDefault(() => ''))}>click me</button>
 
