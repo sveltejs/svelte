@@ -49,10 +49,12 @@ export function migrate(source) {
 			props: [],
 			props_insertion_point: parsed.instance?.content.start ?? 0,
 			has_props_rune: false,
-			props_name: analysis.root.unique('props').name,
-			rest_props_name: analysis.root.unique('rest').name,
 			end: source.length,
-			legacy_imports_names: {
+			names: {
+				props: analysis.root.unique('props').name,
+				rest: analysis.root.unique('rest').name,
+
+				// event stuff
 				run: analysis.root.unique('run').name,
 				handlers: analysis.root.unique('handlers').name,
 				stopImmediatePropagation: analysis.root.unique('stopImmediatePropagation').name,
@@ -85,7 +87,7 @@ export function migrate(source) {
 		walk(parsed.fragment, state, template);
 
 		const specifiers = [...state.legacy_imports].map((imported) => {
-			const local = state.legacy_imports_names[imported];
+			const local = state.names[imported];
 			return imported === local ? imported : `${imported} as ${local}`;
 		});
 
@@ -98,7 +100,7 @@ export function migrate(source) {
 			const props_separator = has_many_props ? newline_separator : ' ';
 			let props = '';
 			if (analysis.uses_props) {
-				props = `...${state.props_name}`;
+				props = `...${state.names.props}`;
 			} else {
 				props = state.props
 					.map((prop) => {
@@ -114,7 +116,7 @@ export function migrate(source) {
 					.join(`,${props_separator}`);
 
 				if (analysis.uses_rest_props) {
-					props += `${state.props.length > 0 ? `,${props_separator}` : ''}...${state.rest_props_name}`;
+					props += `${state.props.length > 0 ? `,${props_separator}` : ''}...${state.names.rest}`;
 				}
 			}
 
@@ -252,10 +254,8 @@ export function migrate(source) {
  *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string }>;
  *  props_insertion_point: number;
  *  has_props_rune: boolean;
- * 	props_name: string;
- * 	rest_props_name: string;
  *  end: number;
- * 	legacy_imports_names: Record<string, string>;
+ * 	names: Record<string, string>;
  * 	legacy_imports: Set<string>;
  * 	script_insertions: Set<string>
  * }} State
@@ -516,7 +516,7 @@ const instance_script = {
 			state.str.update(
 				/** @type {number} */ (node.start),
 				start_end + 1,
-				`${state.legacy_imports_names.run}(() => {`
+				`${state.names.run}(() => {`
 			);
 			const end = /** @type {number} */ (node.body.end);
 			state.str.update(end - 1, end, '});');
@@ -524,7 +524,7 @@ const instance_script = {
 			state.str.update(
 				/** @type {number} */ (node.start),
 				start_end,
-				`${state.legacy_imports_names.run}(() => {\n${state.indent}`
+				`${state.names.run}(() => {\n${state.indent}`
 			);
 			state.str.indent(state.indent, {
 				exclude: [
@@ -739,7 +739,7 @@ function handle_events(element, state) {
 				a === 'once' ? 1 : b === 'once' ? -1 : 0
 			);
 
-			let body = `${state.legacy_imports_names.bubble}('${node.name}')`;
+			let body = `${state.names.bubble}('${node.name}')`;
 
 			if (node.expression) {
 				body = state.str.original.substring(
@@ -749,7 +749,7 @@ function handle_events(element, state) {
 			} else {
 				state.legacy_imports.add('createBubbler');
 				state.script_insertions.add(
-					`const ${state.legacy_imports_names.bubble} = ${state.legacy_imports_names.createBubbler}();\n`
+					`const ${state.names.bubble} = ${state.names.createBubbler}();\n`
 				);
 			}
 
@@ -761,7 +761,7 @@ function handle_events(element, state) {
 				has_nonpassive ||= modifier === 'nonpassive';
 				if (modifier !== 'capture' && modifier !== 'passive' && modifier !== 'nonpassive') {
 					state.legacy_imports.add(modifier);
-					body = `${state.legacy_imports_names[modifier]}(${body})`;
+					body = `${state.names[modifier]}(${body})`;
 				}
 			}
 			if (has_passive || has_nonpassive) {
@@ -772,7 +772,7 @@ function handle_events(element, state) {
 					state.legacy_imports.add('nonpassive');
 				}
 				explicit_passive_handlers.push({
-					handler: `use:${has_nonpassive ? state.legacy_imports_names.nonpassive : state.legacy_imports_names.passive}={['${node.name}', () => ${body}]}`,
+					handler: `use:${has_nonpassive ? state.names.nonpassive : state.names.passive}={['${node.name}', () => ${body}]}`,
 					indent,
 					needs_line_delete
 				});
@@ -801,7 +801,7 @@ function handle_events(element, state) {
 					state.str.overwrite(
 						first_node.start,
 						first_node.end,
-						`${name}={${nodes.length > 1 ? `${state.legacy_imports_names.handlers}(` : ''}${handlers_body}${nodes.length > 1 ? ')' : ''}}`
+						`${name}={${nodes.length > 1 ? `${state.names.handlers}(` : ''}${handlers_body}${nodes.length > 1 ? ')' : ''}}`
 					);
 				}
 			}
@@ -893,19 +893,19 @@ function handle_identifier(node, state, path) {
 			state.str.update(
 				/** @type {number} */ (node.start),
 				/** @type {number} */ (node.end),
-				state.props_name
+				state.names.props
 			);
 		} else {
 			const binding = state.scope.get(node.name);
 			if (binding?.kind === 'bindable_prop') {
-				state.str.prependLeft(/** @type {number} */ (node.start), `${state.props_name}.`);
+				state.str.prependLeft(/** @type {number} */ (node.start), `${state.names.props}.`);
 			}
 		}
 	} else if (node.name === '$$restProps' && state.analysis.uses_rest_props) {
 		state.str.update(
 			/** @type {number} */ (node.start),
 			/** @type {number} */ (node.end),
-			state.rest_props_name
+			state.names.rest
 		);
 	} else if (node.name === '$$slots' && state.analysis.uses_slots) {
 		if (parent?.type === 'MemberExpression') {
