@@ -217,12 +217,12 @@ export function migrate(source) {
 			}
 		}
 
-		const script_insertions =
-			state.script_insertions.size > 0
-				? `\n${indent}${[...state.script_insertions].join(indent)}`
-				: '';
-
 		if (state.legacy_imports.size > 0 && !added_legacy_import) {
+			const script_insertions =
+				state.script_insertions.size > 0
+					? `\n${indent}${[...state.script_insertions].join(indent)}`
+					: '';
+
 			if (parsed.instance) {
 				str.appendRight(
 					/** @type {number} */ (parsed.instance.content.start),
