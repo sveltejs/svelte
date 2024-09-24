@@ -373,7 +373,11 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			stashed = [];
 
 			while (current !== null && current.k !== key) {
-				(seen ??= new Set()).add(current);
+				// If the item has an effect that is already inert, skip over adding it
+				// to our seen Set as the item is already being handled
+				if ((current.e.f & INERT) === 0) {
+					(seen ??= new Set()).add(current);
+				}
 				stashed.push(current);
 				current = current.next;
 			}
