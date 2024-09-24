@@ -1,3 +1,4 @@
+/** @import { ActionReturn } from 'svelte/action' */
 import { noop } from '../../../shared/utils.js';
 import { user_pre_effect } from '../../reactivity/effects.js';
 import { on } from '../elements/events.js';
@@ -99,11 +100,12 @@ export function preventDefault(fn) {
 }
 
 /**
- * Substitute for the `passive` event modifier. It's an action.
+ * Substitute for the `passive` event modifier, implemented as an action
  * @deprecated
- * @type {import("svelte/action").Action<HTMLElement, { handler: () => EventListener, event: string }>}
+ * @param {HTMLElement} node
+ * @param {[event: string, handler: () => EventListener]} options
  */
-export function passive(node, { handler, event }) {
+export function passive(node, [event, handler]) {
 	user_pre_effect(() => {
 		return on(node, event, handler() ?? noop, {
 			passive: true
@@ -112,11 +114,12 @@ export function passive(node, { handler, event }) {
 }
 
 /**
- * Substitute for the `nonpassive` event modifier. It's an action.
+ * Substitute for the `nonpassive` event modifier, implemented as an action
  * @deprecated
- * @type {import("svelte/action").Action<HTMLElement, { handler: () => EventListener, event: string }>}
+ * @param {HTMLElement} node
+ * @param {[event: string, handler: () => EventListener]} options
  */
-export function nonpassive(node, { handler, event }) {
+export function nonpassive(node, [event, handler]) {
 	user_pre_effect(() => {
 		return on(node, event, handler() ?? noop, {
 			passive: false

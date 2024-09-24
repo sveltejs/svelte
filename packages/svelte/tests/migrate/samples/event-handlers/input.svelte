@@ -36,13 +36,13 @@
 <button on:click|stopPropagation|passive={()=>''}>click me</button>
 <button on:click|trusted|nonpassive={()=>''}>click me</button>
 
-<button 
+<button
 	on:click|passive={()=>''}
 	on:click
 	on:click={()=>''}
 >click me</button>
 
-<button 
+<button
 	on:click|nonpassive={()=>''}
 	on:click
 	on:click={()=>''}

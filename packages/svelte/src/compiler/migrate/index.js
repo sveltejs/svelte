@@ -776,7 +776,7 @@ function handle_events(element, state) {
 					state.legacy_imports.add('nonpassive');
 				}
 				explicit_passive_handlers.push({
-					handler: `use:${has_nonpassive ? state.legacy_imports_names.nonpassive : state.legacy_imports_names.passive}={{ handler: () => ${body}, event: '${node.name}' }}`,
+					handler: `use:${has_nonpassive ? state.legacy_imports_names.nonpassive : state.legacy_imports_names.passive}={['${node.name}', () => ${body}]}`,
 					indent,
 					needs_line_delete
 				});

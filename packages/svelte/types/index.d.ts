@@ -1672,20 +1672,16 @@ declare module 'svelte/legacy' {
 	 * @deprecated
 	 * */
 	export function preventDefault(fn: (event: Event, ...args: Array<unknown>) => void): (event: Event, ...args: unknown[]) => void;
-	export function passive<Node extends HTMLElement>(node: Node, parameter: {
-		handler: () => EventListener;
-		event: string;
-	}): void | import("svelte/action").ActionReturn<{
-		handler: () => EventListener;
-		event: string;
-	}, any>;
-	export function nonpassive<Node extends HTMLElement>(node: Node, parameter: {
-		handler: () => EventListener;
-		event: string;
-	}): void | import("svelte/action").ActionReturn<{
-		handler: () => EventListener;
-		event: string;
-	}, any>;
+	/**
+	 * Substitute for the `passive` event modifier, implemented as an action
+	 * @deprecated
+	 * */
+	export function passive(node: HTMLElement, [event, handler]: [event: string, handler: () => EventListener]): void;
+	/**
+	 * Substitute for the `nonpassive` event modifier, implemented as an action
+	 * @deprecated
+	 * */
+	export function nonpassive(node: HTMLElement, [event, handler]: [event: string, handler: () => EventListener]): void;
 
 	export {};
 }
