@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.259
+
+### Patch Changes
+
+- fix: higher fidelity event migration ([#13362](https://github.com/sveltejs/svelte/pull/13362))
+
+- fix: properly remove root anchor node on unmount ([#13381](https://github.com/sveltejs/svelte/pull/13381))
+
+- fix: improve reconciliation of inert each block rows ([#13379](https://github.com/sveltejs/svelte/pull/13379))
+
 ## 5.0.0-next.258
 
 ### Patch Changes
