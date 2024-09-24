@@ -738,12 +738,7 @@ function handle_events(element, state) {
 
 		let first = null;
 
-		for (let i = 0; i < nodes.length; i += 1) {
-			const node = nodes[i];
-			const new_line_index = state.str.original.lastIndexOf('\n', node.start);
-			const needs_line_delete =
-				state.str.original.substring(new_line_index, node.start).trim() === '' && i !== 0;
-
+		for (const node of nodes) {
 			/** @type {string} */
 			let body;
 
@@ -781,7 +776,11 @@ function handle_events(element, state) {
 				);
 			} else {
 				if (first) {
-					state.str.remove(needs_line_delete ? new_line_index : node.start, node.end);
+					let start = node.start;
+					let end = node.end;
+
+					while (/[\s\n]/.test(state.str.original[start - 1])) start -= 1;
+					state.str.remove(start, end);
 				} else {
 					first = node;
 				}

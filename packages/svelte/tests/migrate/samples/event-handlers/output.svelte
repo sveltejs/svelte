@@ -4,12 +4,12 @@
 	const bubble = createBubbler();
 </script>
 
-<button onclick={handlers(() => console.log('hi'), bubble('click'))} >click me</button>
-<button onclick={handlers(function(){ console.log('hi') }, bubble('click'))} >click me</button>
-<button onclick={handlers(() => console.log('before'), bubble('click'), () => console.log('after'))}  
+<button onclick={handlers(() => console.log('hi'), bubble('click'))}>click me</button>
+<button onclick={handlers(function(){ console.log('hi') }, bubble('click'))}>click me</button>
+<button onclick={handlers(() => console.log('before'), bubble('click'), () => console.log('after'))}
 	>click me</button
 >
-<button onclick={handlers(bubble('click'), foo)} >click me</button>
+<button onclick={handlers(bubble('click'), foo)}>click me</button>
 <button onclick={bubble('click')}>click me</button>
 
 <button ondblclick={() => console.log('hi')}>click me</button>

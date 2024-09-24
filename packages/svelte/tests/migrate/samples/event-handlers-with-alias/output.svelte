@@ -15,12 +15,12 @@
 	let nonpassive;
 </script>
 
-<button onclick={handlers_1(() => console.log('hi'), bubble_1('click'))} >click me</button>
-<button onclick={handlers_1(function(){ console.log('hi') }, bubble_1('click'))} >click me</button>
-<button onclick={handlers_1(() => console.log('before'), bubble_1('click'), () => console.log('after'))}  
+<button onclick={handlers_1(() => console.log('hi'), bubble_1('click'))}>click me</button>
+<button onclick={handlers_1(function(){ console.log('hi') }, bubble_1('click'))}>click me</button>
+<button onclick={handlers_1(() => console.log('before'), bubble_1('click'), () => console.log('after'))}
 	>click me</button
 >
-<button onclick={handlers_1(bubble_1('click'), foo)} >click me</button>
+<button onclick={handlers_1(bubble_1('click'), foo)}>click me</button>
 <button onclick={bubble_1('click')}>click me</button>
 
 <button ondblclick={() => console.log('hi')}>click me</button>
