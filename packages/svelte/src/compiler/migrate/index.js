@@ -794,8 +794,6 @@ function handle_events(element, state) {
 		}
 
 		if (first) {
-			const indent = get_indent(state, first, element);
-
 			let singular = handlers.map((handler) => handler.handler).join(', ');
 
 			if (singular) {
@@ -811,24 +809,6 @@ function handle_events(element, state) {
 			}
 		}
 	}
-}
-
-/**
- * Returns the next indentation level of the first node that has all-whitespace before it
- * @param {State} state
- * @param {Array<{start: number; end: number}>} nodes
- */
-function get_indent(state, ...nodes) {
-	for (const node of nodes) {
-		const line_start = state.str.original.lastIndexOf('\n', node.start);
-		const indent = state.str.original.substring(line_start + 1, node.start);
-
-		if (indent.trim() === '') {
-			return indent;
-		}
-	}
-
-	return '';
 }
 
 /**
