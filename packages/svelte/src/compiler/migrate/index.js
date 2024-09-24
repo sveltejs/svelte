@@ -739,12 +739,12 @@ function handle_events(element, state) {
 
 		for (let i = 0; i < nodes.length; i += 1) {
 			const node = nodes[i];
-			const indent = get_indent(state, node, element);
 			const new_line_index = state.str.original.lastIndexOf('\n', node.start);
 			const needs_line_delete =
 				state.str.original.substring(new_line_index, node.start).trim() === '' && i !== 0;
 
-			let body = `${state.names.bubble}('${node.name}')`;
+			/** @type {string} */
+			let body;
 
 			if (node.expression) {
 				body = state.str.original.substring(
@@ -752,6 +752,7 @@ function handle_events(element, state) {
 					/** @type {number} */ (node.expression.end)
 				);
 			} else {
+				body = `${state.names.bubble}('${node.name}')`;
 				state.legacy_imports.add('createBubbler');
 				state.script_insertions.add(
 					`const ${state.names.bubble} = ${state.names.createBubbler}();`
@@ -774,13 +775,11 @@ function handle_events(element, state) {
 
 				explicit_passive_handlers.push({
 					handler: `use:${state.names[action]}={['${node.name}', () => ${body}]}`,
-					indent,
 					needs_line_delete
 				});
 			} else {
 				handlers.push({
 					handler: body,
-					indent,
 					needs_line_delete
 				});
 			}
@@ -790,9 +789,10 @@ function handle_events(element, state) {
 		const first_node = nodes[0];
 
 		if (first_node) {
+			const indent = get_indent(state, first_node, element);
 			let handlers_body = '';
 			for (const handler of handlers) {
-				handlers_body += `${handler.needs_line_delete || nodes.length > 1 ? `\n${handler.indent}` : ''}${handler.handler},`;
+				handlers_body += `${handler.needs_line_delete || nodes.length > 1 ? `\n${indent}` : ''}${handler.handler},`;
 			}
 			handlers_body = handlers_body.substring(0, handlers_body.length - 1);
 			if (handlers_body) {
@@ -809,7 +809,7 @@ function handle_events(element, state) {
 			for (const passive_handler of explicit_passive_handlers) {
 				state.str.appendRight(
 					first_node.end,
-					`${passive_handler.needs_line_delete || nodes.length > 1 ? `\n${passive_handler.indent}` : ''}${passive_handler.handler}`
+					`${passive_handler.needs_line_delete || nodes.length > 1 ? `\n${indent}` : ''}${passive_handler.handler}`
 				);
 			}
 		}
