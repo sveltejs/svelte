@@ -46,7 +46,9 @@
 <button
 	on:click|nonpassive={()=>''}
 	on:click
-	on:click={()=>''}
+	on:click={()=>{
+		return 'multiline';
+	}}
 >click me</button>
 
 

@@ -4,21 +4,12 @@
 	const bubble = createBubbler();
 </script>
 
-<button onclick={handlers(
-	() => console.log('hi'),
-	bubble('click'))} >click me</button>
-<button onclick={handlers(
-	function(){ console.log('hi') },
-	bubble('click'))} >click me</button>
-<button onclick={handlers(
-	() => console.log('before'),
-	bubble('click'),
-	() => console.log('after'))}  
+<button onclick={handlers(() => console.log('hi'), bubble('click'))} >click me</button>
+<button onclick={handlers(function(){ console.log('hi') }, bubble('click'))} >click me</button>
+<button onclick={handlers(() => console.log('before'), bubble('click'), () => console.log('after'))}  
 	>click me</button
 >
-<button onclick={handlers(
-	bubble('click'),
-	foo)} >click me</button>
+<button onclick={handlers(bubble('click'), foo)} >click me</button>
 <button onclick={bubble('click')}>click me</button>
 
 <button ondblclick={() => console.log('hi')}>click me</button>
@@ -53,29 +44,21 @@
 <button use:nonpassive={['click', () => trusted(()=>'')]}>click me</button>
 
 <button
-	onclick={handlers(
-		bubble('click'),
-		()=>'')}
-		use:passive={['click', () => ()=>'']}
+	onclick={handlers(bubble('click'), ()=>'')}
+	use:passive={['click', () => ()=>'']}
 >click me</button>
 
 <button
-	onclick={handlers(
-		bubble('click'),
-		()=>'')}
-		use:nonpassive={['click', () => ()=>'']}
+	onclick={handlers(bubble('click'), ()=>{
+		return 'multiline';
+	})}
+	use:nonpassive={['click', () => ()=>'']}
 >click me</button>
 
 
 <button
-	onclick={handlers(
-		bubble('click'),
-		foo,
-		()=>'',
-		once(trusted(preventDefault(()=>''))))}
-	onblur={handlers(
-		foo,
-		once(trusted(preventDefault(bubble('blur')))))}
+	onclick={handlers(bubble('click'), foo, ()=>'', once(trusted(preventDefault(()=>''))))}
+	onblur={handlers(foo, once(trusted(preventDefault(bubble('blur')))))}
 >
 	click me
 </button>

@@ -786,29 +786,28 @@ function handle_events(element, state) {
 			state.str.remove(needs_line_delete ? new_line_index : node.start, node.end);
 		}
 
-		const first_node = nodes[0];
+		const first = nodes[0];
 
-		if (first_node) {
-			const indent = get_indent(state, first_node, element);
-			let handlers_body = '';
-			for (const handler of handlers) {
-				handlers_body += `${handler.needs_line_delete || nodes.length > 1 ? `\n${indent}` : ''}${handler.handler},`;
-			}
-			handlers_body = handlers_body.substring(0, handlers_body.length - 1);
-			if (handlers_body) {
-				if (handlers_body === name) {
-					state.str.overwrite(first_node.start, first_node.end, `{${name}}`);
+		if (first) {
+			const indent = get_indent(state, first, element);
+
+			let singular = handlers.map((handler) => handler.handler).join(', ');
+
+			if (singular) {
+				if (singular === name) {
+					state.str.overwrite(first.start, first.end, `{${name}}`);
 				} else {
-					state.str.overwrite(
-						first_node.start,
-						first_node.end,
-						`${name}={${nodes.length > 1 ? `${state.names.handlers}(` : ''}${handlers_body}${nodes.length > 1 ? ')' : ''}}`
-					);
+					if (nodes.length > 1) {
+						singular = `${state.names.handlers}(${singular})`;
+					}
+
+					state.str.overwrite(first.start, first.end, `${name}={${singular}}`);
 				}
 			}
+
 			for (const passive_handler of explicit_passive_handlers) {
 				state.str.appendRight(
-					first_node.end,
+					first.end,
 					`${passive_handler.needs_line_delete || nodes.length > 1 ? `\n${indent}` : ''}${passive_handler.handler}`
 				);
 			}
@@ -822,21 +821,16 @@ function handle_events(element, state) {
  * @param {Array<{start: number; end: number}>} nodes
  */
 function get_indent(state, ...nodes) {
-	let indent = state.indent;
-
 	for (const node of nodes) {
 		const line_start = state.str.original.lastIndexOf('\n', node.start);
-		indent = state.str.original.substring(line_start + 1, node.start);
+		const indent = state.str.original.substring(line_start + 1, node.start);
 
 		if (indent.trim() === '') {
-			indent = state.indent + indent;
 			return indent;
-		} else {
-			indent = state.indent;
 		}
 	}
 
-	return indent;
+	return '';
 }
 
 /**
