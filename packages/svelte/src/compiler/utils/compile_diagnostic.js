@@ -44,7 +44,8 @@ function get_code_frame(source, line, column) {
  * 	end?: Location;
  * 	position?: [number, number];
  * 	frame?: string;
- * }} ICompileDiagnostic */
+ * }} ICompileDiagnostic
+ */
 
 /** @implements {ICompileDiagnostic} */
 export class CompileDiagnostic extends Error {
