@@ -8,7 +8,7 @@ import { validate_identifier_name } from './shared/utils.js';
  * @param {Context} context
  */
 export function ClassDeclaration(node, context) {
-	if (context.state.analysis.runes) {
+	if (context.state.analysis.runes && node.id !== null) {
 		validate_identifier_name(context.state.scope.get(node.id.name));
 	}
 
