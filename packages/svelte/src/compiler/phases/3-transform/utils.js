@@ -270,6 +270,19 @@ export function clean_nodes(
 
 	var first = trimmed[0];
 
+	// Special case: Add a comment if this is a lone script tag. This ensures that our run_scripts logic in template.js
+	// will always be able to call node.replaceWith() on the script tag in order to make it run. If we don't add this
+	// and would still call node.replaceWith() on the script tag, it would be a no-op because the script tag has no parent.
+	if (trimmed.length === 1 && first.type === 'RegularElement' && first.name === 'script') {
+		trimmed.push({
+			type: 'Comment',
+			data: '',
+			parent: first.parent,
+			start: -1,
+			end: -1
+		});
+	}
+
 	return {
 		hoisted,
 		trimmed,
