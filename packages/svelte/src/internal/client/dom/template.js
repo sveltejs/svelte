@@ -185,13 +185,7 @@ function run_scripts(node) {
 			effect.nodes_end = clone;
 		}
 
-		// If node === script tag, replaceWith will do nothing because there's no parent yet
-		if (script === node) {
-			// but we can returns the cloned <script> immediately
-			return clone;
-		} else {
-			script.replaceWith(clone);
-		}
+		script.replaceWith(clone);
 	}
 	return node;
 }
