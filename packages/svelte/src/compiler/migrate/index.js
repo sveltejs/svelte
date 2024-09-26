@@ -583,6 +583,7 @@ const template = {
 		next();
 	},
 	SlotElement(node, { state, next }) {
+		if (state.analysis.custom_element) return;
 		let name = 'children';
 		let slot_name = 'default';
 		let slot_props = '{ ';
