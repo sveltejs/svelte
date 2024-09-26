@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ownership getting tricked by proxies
+fix: make ownership widening more robust to userland proxies
