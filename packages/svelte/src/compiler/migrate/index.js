@@ -13,6 +13,9 @@ import { extract_identifiers } from '../utils/ast.js';
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
 import { validate_component_options } from '../validate-options.js';
 
+const regex_style_tags = /(<style[^>]+>)([\S\s]*?)(<\/style>)/g;
+const style_placeholder = '/*$$__STYLE_CONTENT__$$*/';
+
 /**
  * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
  * May throw an error if the code is too complex to migrate automatically.
@@ -22,6 +25,15 @@ import { validate_component_options } from '../validate-options.js';
  */
 export function migrate(source) {
 	try {
+		// Blank CSS, could contain SCSS or similar that needs a preprocessor.
+		// Since we don't care about CSS in this migration, we'll just ignore it.
+		/** @type {Array<[number, string]>} */
+		const style_contents = [];
+		source = source.replace(regex_style_tags, (_, start, content, end, idx) => {
+			style_contents.push([idx + start.length, content]);
+			return start + style_placeholder + end;
+		});
+
 		reset_warning_filter(() => false);
 		reset(source, { filename: 'migrate.svelte' });
 
@@ -39,6 +51,10 @@ export function migrate(source) {
 		const str = new MagicString(source);
 		const analysis = analyze_component(parsed, source, combined_options);
 		const indent = guess_indent(source);
+
+		for (const content of style_contents) {
+			str.overwrite(content[0], content[0] + style_placeholder.length, content[1]);
+		}
 
 		/** @type {State} */
 		let state = {
