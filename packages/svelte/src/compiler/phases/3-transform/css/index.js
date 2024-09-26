@@ -348,10 +348,6 @@ function is_used(rule) {
 
 	for (const child of rule.block.children) {
 		if (child.type === 'Rule' && is_used(child)) return true;
-
-		if (child.type === 'Atrule') {
-			return true; // TODO
-		}
 	}
 
 	return false;
