@@ -1,6 +1,13 @@
 <svelte:options customElement="my-element" />
 
-<button><slot /></button>
+<script>
+	// to show that it doesn't bail out from the whole migration
+	let count = 0;
+</script>
+
+<button on:click={()=>count++}><slot /></button>
+
+{count}
 
 {#if foo}
 	<slot name="foo" {foo} />
