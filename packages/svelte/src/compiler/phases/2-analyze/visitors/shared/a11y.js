@@ -1161,6 +1161,13 @@ function has_content(element) {
 		}
 
 		if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
+			if (
+				node.name === 'img' &&
+				node.attributes.some((node) => node.type === 'Attribute' && node.name === 'alt')
+			) {
+				return true;
+			}
+
 			if (!has_content(node)) {
 				continue;
 			}
