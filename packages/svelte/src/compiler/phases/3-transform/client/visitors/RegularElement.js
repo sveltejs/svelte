@@ -157,15 +157,18 @@ export function RegularElement(node, context) {
 		}
 	}
 
+	/** @type {typeof state} */
+	const element_after_update_state = { ...context.state, after_update: [] };
+
 	for (const attribute of other_directives) {
 		if (attribute.type === 'OnDirective') {
 			const handler = /** @type {Expression} */ (context.visit(attribute));
 
-			context.state.after_update.push(
+			element_after_update_state.after_update.push(
 				b.stmt(has_use ? b.call('$.effect', b.thunk(handler)) : handler)
 			);
 		} else {
-			context.visit(attribute);
+			context.visit(attribute, element_after_update_state);
 		}
 	}
 
@@ -401,13 +404,19 @@ export function RegularElement(node, context) {
 			b.block([
 				...child_state.init,
 				child_state.update.length > 0 ? build_render_statement(child_state.update) : b.empty,
-				...child_state.after_update
+				...child_state.after_update,
+				...element_after_update_state.after_update
 			])
 		);
 	} else if (node.fragment.metadata.dynamic) {
 		context.state.init.push(...child_state.init);
 		context.state.update.push(...child_state.update);
-		context.state.after_update.push(...child_state.after_update);
+		context.state.after_update.push(
+			...child_state.after_update,
+			...element_after_update_state.after_update
+		);
+	} else {
+		context.state.after_update.push(...element_after_update_state.after_update);
 	}
 
 	if (lookup.has('dir')) {
