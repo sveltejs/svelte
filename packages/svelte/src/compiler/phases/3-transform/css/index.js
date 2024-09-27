@@ -333,7 +333,7 @@ function is_empty(rule) {
 		}
 
 		if (child.type === 'Atrule') {
-			return false; // TODO
+			if (child.block === null || child.block.children.length > 0) return false;
 		}
 	}
 
@@ -342,19 +342,7 @@ function is_empty(rule) {
 
 /** @param {Css.Rule} rule */
 function is_used(rule) {
-	for (const selector of rule.prelude.children) {
-		if (selector.metadata.used) return true;
-	}
-
-	for (const child of rule.block.children) {
-		if (child.type === 'Rule' && is_used(child)) return true;
-
-		if (child.type === 'Atrule') {
-			return true; // TODO
-		}
-	}
-
-	return false;
+	return rule.prelude.children.some((selector) => selector.metadata.used);
 }
 
 /**
