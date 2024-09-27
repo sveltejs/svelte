@@ -1,5 +1,23 @@
 # svelte
 
+## 5.0.0-next.260
+
+### Patch Changes
+
+- fix: ensure use directives execute in the correct sequence ([#13384](https://github.com/sveltejs/svelte/pull/13384))
+
+- fix: blank CSS contents while migrating ([#13403](https://github.com/sveltejs/svelte/pull/13403))
+
+- fix: avoid migrating slots in custom elements ([#13406](https://github.com/sveltejs/svelte/pull/13406))
+
+- fix: don't consider children of rules when checking whether they are used or not ([#13410](https://github.com/sveltejs/svelte/pull/13410))
+
+- fix: treat `<img>` alt attribute as content for a11y labelling purposes ([#13411](https://github.com/sveltejs/svelte/pull/13411))
+
+- fix: make ownership widening more robust to userland proxies ([#13377](https://github.com/sveltejs/svelte/pull/13377))
+
+- fix: validation should not fail on anonymous declarations ([#13393](https://github.com/sveltejs/svelte/pull/13393))
+
 ## 5.0.0-next.259
 
 ### Patch Changes
