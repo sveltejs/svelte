@@ -9,3 +9,4 @@
 
 <button>Click me</button>
 <a href="/#">Link text</a>
+<a href="/#"><img src="./icon.svg" alt="Link text"></a>
