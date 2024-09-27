@@ -333,21 +333,23 @@ function is_empty(rule) {
 		}
 
 		if (child.type === 'Atrule') {
-			return false; // TODO
+			if (child.block === null || child.block.children.length > 0) return false;
 		}
 	}
 
 	return true;
 }
 
-/** @param {Css.Rule} rule */
+/** @param {Css.Rule | Css.Atrule} rule */
 function is_used(rule) {
-	for (const selector of rule.prelude.children) {
-		if (selector.metadata.used) return true;
+	if (rule.type === 'Rule') {
+		for (const selector of rule.prelude.children) {
+			if (selector.metadata.used) return true;
+		}
 	}
 
-	for (const child of rule.block.children) {
-		if (child.type === 'Rule' && is_used(child)) return true;
+	for (const child of rule.block?.children || []) {
+		if ((child.type === 'Rule' || child.type === 'Atrule') && is_used(child)) return true;
 	}
 
 	return false;
