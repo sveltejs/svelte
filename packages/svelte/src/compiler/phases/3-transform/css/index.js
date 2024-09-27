@@ -340,19 +340,9 @@ function is_empty(rule) {
 	return true;
 }
 
-/** @param {Css.Rule | Css.Atrule} rule */
+/** @param {Css.Rule} rule */
 function is_used(rule) {
-	if (rule.type === 'Rule') {
-		for (const selector of rule.prelude.children) {
-			if (selector.metadata.used) return true;
-		}
-	}
-
-	for (const child of rule.block?.children || []) {
-		if ((child.type === 'Rule' || child.type === 'Atrule') && is_used(child)) return true;
-	}
-
-	return false;
+	return rule.prelude.children.some((selector) => selector.metadata.used);
 }
 
 /**
