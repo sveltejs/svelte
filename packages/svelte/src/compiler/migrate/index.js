@@ -108,7 +108,6 @@ export function migrate(source) {
 
 		const need_script =
 			state.legacy_imports.size > 0 ||
-			state.derived_components.size > 0 ||
 			state.script_insertions.size > 0 ||
 			state.props.length > 0 ||
 			analysis.uses_rest_props ||
