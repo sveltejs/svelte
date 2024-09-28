@@ -251,7 +251,6 @@ export function migrate(source) {
 			}
 		}
 
-	
 		if (!parsed.instance && need_script) {
 			str.appendRight(insertion_point, '\n</script>\n\n');
 		}
