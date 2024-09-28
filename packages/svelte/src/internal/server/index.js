@@ -405,12 +405,19 @@ export function unsubscribe_stores(store_values) {
 
 /**
  * @param {Payload} payload
- * @param {void | ((payload: Payload, props: Record<string, unknown>) => void)} slot_fn
+ * @param {Record<string, any>} $$props
+ * @param {string} name
  * @param {Record<string, unknown>} slot_props
  * @param {null | (() => void)} fallback_fn
  * @returns {void}
  */
-export function slot(payload, slot_fn, slot_props, fallback_fn) {
+export function slot(payload, $$props, name, slot_props, fallback_fn) {
+	var slot_fn = $$props.$$slots?.[name];
+	// Interop: Can use snippets to fill slots
+	if (slot_fn === true) {
+		slot_fn = $$props[name === 'default' ? 'children' : name];
+	}
+
 	if (slot_fn !== undefined) {
 		slot_fn(payload, slot_props);
 	} else {
@@ -545,5 +552,3 @@ export {
 } from '../shared/validate.js';
 
 export { escape_html as escape };
-
-export { default_slot } from '../client/dom/legacy/misc.js';
