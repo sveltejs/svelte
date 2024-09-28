@@ -12,7 +12,6 @@ const subscriber_queue = [];
 /**
  * Creates a `Readable` store that allows reading by subscription.
  *
- * https://svelte.dev/docs/svelte-store#readable
  * @template T
  * @param {T} [value] initial value
  * @param {StartStopNotifier<T>} [start]
@@ -27,7 +26,6 @@ export function readable(value, start) {
 /**
  * Create a `Writable` store that allows both updating and reading by subscription.
  *
- * https://svelte.dev/docs/svelte-store#writable
  * @template T
  * @param {T} [value] initial value
  * @param {StartStopNotifier<T>} [start]
@@ -100,7 +98,6 @@ export function writable(value, start = noop) {
  * Derived value store by synchronizing one or more readable stores and
  * applying an aggregation function over its input values.
  *
- * https://svelte.dev/docs/svelte-store#derived
  * @template {Stores} S
  * @template T
  * @overload
@@ -113,7 +110,6 @@ export function writable(value, start = noop) {
  * Derived value store by synchronizing one or more readable stores and
  * applying an aggregation function over its input values.
  *
- * https://svelte.dev/docs/svelte-store#derived
  * @template {Stores} S
  * @template T
  * @overload
@@ -187,7 +183,6 @@ export function derived(stores, fn, initial_value) {
 /**
  * Takes a store and returns a new one derived from the old one that is readable.
  *
- * https://svelte.dev/docs/svelte-store#readonly
  * @template T
  * @param {Readable<T>} store  - store to make readonly
  * @returns {Readable<T>}
@@ -202,7 +197,6 @@ export function readonly(store) {
 /**
  * Get the current value from a store by subscribing and immediately unsubscribing.
  *
- * https://svelte.dev/docs/svelte-store#get
  * @template T
  * @param {Readable<T>} store
  * @returns {T}

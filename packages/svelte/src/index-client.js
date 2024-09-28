@@ -16,7 +16,6 @@ import { lifecycle_outside_component } from './internal/shared/errors.js';
  *
  * `onMount` does not run inside a [server-side component](https://svelte.dev/docs#run-time-server-side-component-api).
  *
- * https://svelte.dev/docs/svelte#onmount
  * @template T
  * @param {() => NotFunction<T> | Promise<NotFunction<T>> | (() => any)} fn
  * @returns {void}
@@ -42,7 +41,6 @@ export function onMount(fn) {
  * Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the
  * only one that runs inside a server-side component.
  *
- * https://svelte.dev/docs/svelte#ondestroy
  * @param {() => any} fn
  * @returns {void}
  */
@@ -84,7 +82,6 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
  * }>();
  * ```
  *
- * https://svelte.dev/docs/svelte#createeventdispatcher
  * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte-5-preview.vercel.app/docs/deprecations#createeventdispatcher
  * @template {Record<string, any>} [EventMap = any]
  * @returns {EventDispatcher<EventMap>}
@@ -124,7 +121,6 @@ export function createEventDispatcher() {
  *
  * In runes mode use `$effect.pre` instead.
  *
- * https://svelte.dev/docs/svelte#beforeupdate
  * @deprecated Use `$effect.pre` instead — see https://svelte-5-preview.vercel.app/docs/deprecations#beforeupdate-and-afterupdate
  * @param {() => void} fn
  * @returns {void}
@@ -148,7 +144,6 @@ export function beforeUpdate(fn) {
  *
  * In runes mode use `$effect` instead.
  *
- * https://svelte.dev/docs/svelte#afterupdate
  * @deprecated Use `$effect` instead — see https://svelte-5-preview.vercel.app/docs/deprecations#beforeupdate-and-afterupdate
  * @param {() => void} fn
  * @returns {void}

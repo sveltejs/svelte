@@ -15,7 +15,6 @@ export { default as preprocess } from './preprocess/index.js';
 /**
  * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
  *
- * https://svelte.dev/docs/svelte-compiler#svelte-compile
  * @param {string} source The component source code
  * @param {CompileOptions} options The compiler options
  * @returns {CompileResult}
@@ -54,7 +53,6 @@ export function compile(source, options) {
 /**
  * `compileModule` takes your JavaScript source code containing runes, and turns it into a JavaScript module.
  *
- * https://svelte.dev/docs/svelte-compiler#svelte-compile
  * @param {string} source The component source code
  * @param {ModuleCompileOptions} options
  * @returns {CompileResult}
@@ -74,7 +72,6 @@ export function compileModule(source, options) {
  * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
  * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
  *
- * https://svelte.dev/docs/svelte-compiler#svelte-parse
  * @overload
  * @param {string} source
  * @param {{ filename?: string; modern: true }} options
@@ -87,7 +84,6 @@ export function compileModule(source, options) {
  * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
  * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
  *
- * https://svelte.dev/docs/svelte-compiler#svelte-parse
  * @overload
  * @param {string} source
  * @param {{ filename?: string; modern?: false }} [options]
@@ -100,7 +96,6 @@ export function compileModule(source, options) {
  * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
  * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
  *
- * https://svelte.dev/docs/svelte-compiler#svelte-parse
  * @param {string} source
  * @param {{ filename?: string; rootDir?: string; modern?: boolean }} [options]
  * @returns {AST.Root | LegacyRoot}
