@@ -23,8 +23,6 @@
  * 	};
  * }
  * ```
- *
- * Docs: https://svelte.dev/docs/svelte-action
  */
 export interface ActionReturn<
 	Parameter = undefined,
@@ -54,8 +52,6 @@ export interface ActionReturn<
  *
  * You can return an object with methods `update` and `destroy` from the function and type which additional attributes and events it has.
  * See interface `ActionReturn` for more details.
- *
- * Docs: https://svelte.dev/docs/svelte-action
  */
 export interface Action<
 	Element = HTMLElement,

@@ -859,7 +859,6 @@ export function set_signal_status(signal, status) {
  * Retrieves the context that belongs to the closest parent component with the specified `key`.
  * Must be called during component initialisation.
  *
- * https://svelte.dev/docs/svelte#getcontext
  * @template T
  * @param {any} key
  * @returns {T}
@@ -885,7 +884,6 @@ export function getContext(key) {
  *
  * Like lifecycle functions, this must be called during component initialisation.
  *
- * https://svelte.dev/docs/svelte#setcontext
  * @template T
  * @param {any} key
  * @param {T} context
@@ -901,7 +899,6 @@ export function setContext(key, context) {
  * Checks whether a given `key` has been set in the context of a parent component.
  * Must be called during component initialisation.
  *
- * https://svelte.dev/docs/svelte#hascontext
  * @param {any} key
  * @returns {boolean}
  */
@@ -915,7 +912,6 @@ export function hasContext(key) {
  * Must be called during component initialisation. Useful, for example, if you
  * programmatically create a component and want to pass the existing context to it.
  *
- * https://svelte.dev/docs/svelte#getallcontexts
  * @template {Map<any, any>} [T=Map<any, any>]
  * @returns {T}
  */
