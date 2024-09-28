@@ -1,6 +1,6 @@
 <script>
 	import { createBubbler, handlers, preventDefault, stopPropagation, stopImmediatePropagation, self, trusted, once, passive, nonpassive } from 'svelte/legacy';
-	
+
 	const bubble = createBubbler();
 </script>
 
