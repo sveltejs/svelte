@@ -314,7 +314,6 @@ declare module 'svelte' {
 	 *
 	 * `onMount` does not run inside a [server-side component](https://svelte.dev/docs#run-time-server-side-component-api).
 	 *
-	 * https://svelte.dev/docs/svelte#onmount
 	 * */
 	export function onMount<T>(fn: () => NotFunction<T> | Promise<NotFunction<T>> | (() => any)): void;
 	/**
@@ -323,7 +322,6 @@ declare module 'svelte' {
 	 * Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the
 	 * only one that runs inside a server-side component.
 	 *
-	 * https://svelte.dev/docs/svelte#ondestroy
 	 * */
 	export function onDestroy(fn: () => any): void;
 	/**
@@ -345,7 +343,6 @@ declare module 'svelte' {
 	 * }>();
 	 * ```
 	 *
-	 * https://svelte.dev/docs/svelte#createeventdispatcher
 	 * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte-5-preview.vercel.app/docs/deprecations#createeventdispatcher
 	 * */
 	export function createEventDispatcher<EventMap extends Record<string, any> = any>(): EventDispatcher<EventMap>;
@@ -356,7 +353,6 @@ declare module 'svelte' {
 	 *
 	 * In runes mode use `$effect.pre` instead.
 	 *
-	 * https://svelte.dev/docs/svelte#beforeupdate
 	 * @deprecated Use `$effect.pre` instead — see https://svelte-5-preview.vercel.app/docs/deprecations#beforeupdate-and-afterupdate
 	 * */
 	export function beforeUpdate(fn: () => void): void;
@@ -367,7 +363,6 @@ declare module 'svelte' {
 	 *
 	 * In runes mode use `$effect` instead.
 	 *
-	 * https://svelte.dev/docs/svelte#afterupdate
 	 * @deprecated Use `$effect` instead — see https://svelte-5-preview.vercel.app/docs/deprecations#beforeupdate-and-afterupdate
 	 * */
 	export function afterUpdate(fn: () => void): void;
@@ -441,7 +436,6 @@ declare module 'svelte' {
 	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
 	 * Must be called during component initialisation.
 	 *
-	 * https://svelte.dev/docs/svelte#getcontext
 	 * */
 	export function getContext<T>(key: any): T;
 	/**
@@ -451,14 +445,12 @@ declare module 'svelte' {
 	 *
 	 * Like lifecycle functions, this must be called during component initialisation.
 	 *
-	 * https://svelte.dev/docs/svelte#setcontext
 	 * */
 	export function setContext<T>(key: any, context: T): T;
 	/**
 	 * Checks whether a given `key` has been set in the context of a parent component.
 	 * Must be called during component initialisation.
 	 *
-	 * https://svelte.dev/docs/svelte#hascontext
 	 * */
 	export function hasContext(key: any): boolean;
 	/**
@@ -466,7 +458,6 @@ declare module 'svelte' {
 	 * Must be called during component initialisation. Useful, for example, if you
 	 * programmatically create a component and want to pass the existing context to it.
 	 *
-	 * https://svelte.dev/docs/svelte#getallcontexts
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
 	type Getters<T> = {
@@ -502,8 +493,6 @@ declare module 'svelte/action' {
 	 * 	};
 	 * }
 	 * ```
-	 *
-	 * Docs: https://svelte.dev/docs/svelte-action
 	 */
 	export interface ActionReturn<
 		Parameter = undefined,
@@ -533,8 +522,6 @@ declare module 'svelte/action' {
 	 *
 	 * You can return an object with methods `update` and `destroy` from the function and type which additional attributes and events it has.
 	 * See interface `ActionReturn` for more details.
-	 *
-	 * Docs: https://svelte.dev/docs/svelte-action
 	 */
 	export interface Action<
 		Element = HTMLElement,
@@ -573,7 +560,6 @@ declare module 'svelte/animate' {
 	 * The flip function calculates the start and end position of an element and animates between them, translating the x and y values.
 	 * `flip` stands for [First, Last, Invert, Play](https://aerotwist.com/blog/flip-your-animations/).
 	 *
-	 * https://svelte.dev/docs/svelte-animate#flip
 	 * */
 	export function flip(node: Element, { from, to }: {
 		from: DOMRect;
@@ -590,7 +576,6 @@ declare module 'svelte/compiler' {
 	/**
 	 * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
 	 *
-	 * https://svelte.dev/docs/svelte-compiler#svelte-compile
 	 * @param source The component source code
 	 * @param options The compiler options
 	 * */
@@ -598,7 +583,6 @@ declare module 'svelte/compiler' {
 	/**
 	 * `compileModule` takes your JavaScript source code containing runes, and turns it into a JavaScript module.
 	 *
-	 * https://svelte.dev/docs/svelte-compiler#svelte-compile
 	 * @param source The component source code
 	 * */
 	export function compileModule(source: string, options: ModuleCompileOptions): CompileResult;
@@ -608,7 +592,6 @@ declare module 'svelte/compiler' {
 	 * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
 	 * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
 	 *
-	 * https://svelte.dev/docs/svelte-compiler#svelte-parse
 	 * */
 	export function parse(source: string, options: {
 		filename?: string;
@@ -620,7 +603,6 @@ declare module 'svelte/compiler' {
 	 * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
 	 * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
 	 *
-	 * https://svelte.dev/docs/svelte-compiler#svelte-parse
 	 * */
 	export function parse(source: string, options?: {
 		filename?: string;
@@ -1267,7 +1249,6 @@ declare module 'svelte/compiler' {
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
 	 * For example, it can be used to convert a <style lang="sass"> block into vanilla CSS.
 	 *
-	 * https://svelte.dev/docs/svelte-compiler#svelte-preprocess
 	 * */
 	export function preprocess(source: string, preprocessor: PreprocessorGroup | PreprocessorGroup[], options?: {
 		filename?: string;
@@ -1480,129 +1461,66 @@ declare module 'svelte/compiler' {
 }
 
 declare module 'svelte/easing' {
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
 	export function linear(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function backInOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function backIn(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function backOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function bounceOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function bounceInOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function bounceIn(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function circInOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function circIn(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function circOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function cubicInOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function cubicIn(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function cubicOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function elasticInOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function elasticIn(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function elasticOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function expoInOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function expoIn(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function expoOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function quadInOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function quadIn(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function quadOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function quartInOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function quartIn(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function quartOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function quintInOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function quintIn(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function quintOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function sineInOut(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function sineIn(t: number): number;
-	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
+
 	export function sineOut(t: number): number;
 
 	export {};
@@ -1736,13 +1654,11 @@ declare module 'svelte/motion' {
 	/**
 	 * The spring function in Svelte creates a store whose value is animated, with a motion that simulates the behavior of a spring. This means when the value changes, instead of transitioning at a steady rate, it "bounces" like a spring would, depending on the physics parameters provided. This adds a level of realism to the transitions and can enhance the user experience.
 	 *
-	 * https://svelte.dev/docs/svelte-motion#spring
 	 * */
 	export function spring<T = any>(value?: T | undefined, opts?: SpringOpts | undefined): Spring<T>;
 	/**
 	 * A tweened store in Svelte is a special type of store that provides smooth transitions between state values over time.
 	 *
-	 * https://svelte.dev/docs/svelte-motion#tweened
 	 * */
 	export function tweened<T>(value?: T | undefined, defaults?: TweenedOptions<T> | undefined): Tweened<T>;
 
@@ -1877,14 +1793,12 @@ declare module 'svelte/store' {
 	/**
 	 * Creates a `Readable` store that allows reading by subscription.
 	 *
-	 * https://svelte.dev/docs/svelte-store#readable
 	 * @param value initial value
 	 * */
 	export function readable<T>(value?: T | undefined, start?: StartStopNotifier<T> | undefined): Readable<T>;
 	/**
 	 * Create a `Writable` store that allows both updating and reading by subscription.
 	 *
-	 * https://svelte.dev/docs/svelte-store#writable
 	 * @param value initial value
 	 * */
 	export function writable<T>(value?: T | undefined, start?: StartStopNotifier<T> | undefined): Writable<T>;
@@ -1892,27 +1806,23 @@ declare module 'svelte/store' {
 	 * Derived value store by synchronizing one or more readable stores and
 	 * applying an aggregation function over its input values.
 	 *
-	 * https://svelte.dev/docs/svelte-store#derived
 	 * */
 	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>, set: (value: T) => void, update: (fn: Updater<T>) => void) => Unsubscriber | void, initial_value?: T | undefined): Readable<T>;
 	/**
 	 * Derived value store by synchronizing one or more readable stores and
 	 * applying an aggregation function over its input values.
 	 *
-	 * https://svelte.dev/docs/svelte-store#derived
 	 * */
 	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>) => T, initial_value?: T | undefined): Readable<T>;
 	/**
 	 * Takes a store and returns a new one derived from the old one that is readable.
 	 *
-	 * https://svelte.dev/docs/svelte-store#readonly
 	 * @param store  - store to make readonly
 	 * */
 	export function readonly<T>(store: Readable<T>): Readable<T>;
 	/**
 	 * Get the current value from a store by subscribing and immediately unsubscribing.
 	 *
-	 * https://svelte.dev/docs/svelte-store#get
 	 * */
 	export function get<T>(store: Readable<T>): T;
 	/** One or more `Readable`s. */
@@ -1989,37 +1899,31 @@ declare module 'svelte/transition' {
 	/**
 	 * Animates a `blur` filter alongside an element's opacity.
 	 *
-	 * https://svelte.dev/docs/svelte-transition#blur
 	 * */
 	export function blur(node: Element, { delay, duration, easing, amount, opacity }?: BlurParams | undefined): TransitionConfig;
 	/**
 	 * Animates the opacity of an element from 0 to the current opacity for `in` transitions and from the current opacity to 0 for `out` transitions.
 	 *
-	 * https://svelte.dev/docs/svelte-transition#fade
 	 * */
 	export function fade(node: Element, { delay, duration, easing }?: FadeParams | undefined): TransitionConfig;
 	/**
 	 * Animates the x and y positions and the opacity of an element. `in` transitions animate from the provided values, passed as parameters to the element's default values. `out` transitions animate from the element's default values to the provided values.
 	 *
-	 * https://svelte.dev/docs/svelte-transition#fly
 	 * */
 	export function fly(node: Element, { delay, duration, easing, x, y, opacity }?: FlyParams | undefined): TransitionConfig;
 	/**
 	 * Slides an element in and out.
 	 *
-	 * https://svelte.dev/docs/svelte-transition#slide
 	 * */
 	export function slide(node: Element, { delay, duration, easing, axis }?: SlideParams | undefined): TransitionConfig;
 	/**
 	 * Animates the opacity and scale of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
 	 *
-	 * https://svelte.dev/docs/svelte-transition#scale
 	 * */
 	export function scale(node: Element, { delay, duration, easing, start, opacity }?: ScaleParams | undefined): TransitionConfig;
 	/**
 	 * Animates the stroke of an SVG element, like a snake in a tube. `in` transitions begin with the path invisible and draw the path to the screen over time. `out` transitions start in a visible state and gradually erase the path. `draw` only works with elements that have a `getTotalLength` method, like `<path>` and `<polyline>`.
 	 *
-	 * https://svelte.dev/docs/svelte-transition#draw
 	 * */
 	export function draw(node: SVGElement & {
 		getTotalLength(): number;
@@ -2027,7 +1931,6 @@ declare module 'svelte/transition' {
 	/**
 	 * The `crossfade` function creates a pair of [transitions](https://svelte.dev/docs#template-syntax-element-directives-transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
 	 *
-	 * https://svelte.dev/docs/svelte-transition#crossfade
 	 * */
 	export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
 		fallback?: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
