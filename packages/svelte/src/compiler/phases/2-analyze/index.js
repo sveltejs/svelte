@@ -67,6 +67,7 @@ import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
 import is_reference from 'is-reference';
+import { mark_subtree_dynamic } from './visitors/shared/fragment.js';
 
 /**
  * @type {Visitors}
@@ -743,6 +744,13 @@ export function analyze_component(root, source, options) {
 							}
 						])
 					);
+					if (
+						element.type === 'RegularElement' &&
+						element.name.includes('-') &&
+						element.attributes.length === 1
+					) {
+						mark_subtree_dynamic(element.metadata.path);
+					}
 				}
 			}
 		}
