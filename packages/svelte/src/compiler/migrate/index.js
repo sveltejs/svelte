@@ -114,8 +114,7 @@ export function migrate(source) {
 			analysis.uses_props;
 
 		if (!parsed.instance && need_script) {
-			const to_prepend = '<script>';
-			str.appendRight(0, to_prepend);
+			str.appendRight(0, '<script>');
 		}
 
 		const specifiers = [...state.legacy_imports].map((imported) => {
