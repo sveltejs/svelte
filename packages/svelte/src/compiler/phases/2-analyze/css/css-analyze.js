@@ -116,6 +116,17 @@ const css_visitors = {
 		);
 	},
 	RelativeSelector(node, context) {
+		const parent = /** @type {Css.ComplexSelector} */ (context.path.at(-1));
+
+		if (
+			node.combinator != null &&
+			!context.state.rule?.metadata.parent_rule &&
+			parent.children[0] === node &&
+			context.path.at(-3)?.type !== 'PseudoClassSelector'
+		) {
+			e.css_selector_invalid(node.start); // only highlight the combinator
+		}
+
 		node.metadata.is_global = node.selectors.length >= 1 && is_global(node);
 
 		if (node.selectors.length === 1) {

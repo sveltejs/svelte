@@ -351,11 +351,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 		const combinator = read_combinator(parser);
 
 		if (combinator) {
-			if (relative_selector.selectors.length === 0) {
-				if (!inside_pseudo_class) {
-					e.css_selector_invalid(start);
-				}
-			} else {
+			if (relative_selector.selectors.length > 0) {
 				relative_selector.end = index;
 				children.push(relative_selector);
 			}
