@@ -7,7 +7,7 @@ const no_compiler_imports = {
 		docs: {
 			description:
 				'Enforce that there are no imports to the compiler in runtime code. ' +
-				'This prevent accidental inclusion of the compiler runtime and ' +
+				'This prevents accidental inclusion of the compiler runtime and ' +
 				"ensures that TypeScript does not pick up more ambient types (for example from Node) that shouldn't be available in the browser."
 		}
 	},
@@ -15,7 +15,7 @@ const no_compiler_imports = {
 		return {
 			Program: () => {
 				// Do a simple string search because ESLint doesn't provide a way to check JSDoc comments.
-				// The string search could in theory yield false positives, but in practice it's unlikely.
+				// The string search could yield false positives in theory, but in practice it's unlikely to happen.
 				const text = context.sourceCode.getText();
 				const idx = Math.max(text.indexOf('../compiler/'), text.indexOf('#compiler'));
 				if (idx !== -1) {
@@ -25,7 +25,7 @@ const no_compiler_imports = {
 							end: context.sourceCode.getLocFromIndex(idx + 12)
 						},
 						message:
-							'References to compiler code are forbidden in runtime code (both for type and value imports)'
+							'References to compiler code that are forbidden in runtime code (both for type and value imports)'
 					});
 				}
 			}
@@ -65,8 +65,8 @@ export default [
 		}
 	},
 	{
-		// If you get an error along the lines of "@typescript-eslint/await-thenable needs a project service configured", then that likely means
-		// that eslint rules that need to be type-aware run through a Svelte file which seems unsupported at the moment. In that case, ensure that
+		// If you get an error along the lines of "@typescript-eslint/await-thenable needs a project service configured", then it likely means
+		// that eslint rules need to be type-aware and run through a Svelte file which seems to be unsupported at the moment. In that case, ensure that
 		// these are excluded to run on Svelte files.
 		files: ['**/*.svelte'],
 		rules: {
@@ -103,7 +103,7 @@ export default [
 			// contains a fork of the REPL which doesn't adhere to eslint rules
 			'sites/svelte-5-preview/**',
 			'tmp/**',
-			// wasn't checked previously, reenable at some point
+			// wasn't checked previously, re-enable at some point
 			'sites/svelte.dev/**'
 		]
 	}
