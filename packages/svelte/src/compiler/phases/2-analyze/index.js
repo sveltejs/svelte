@@ -747,7 +747,8 @@ export function analyze_component(root, source, options) {
 					if (
 						element.type === 'RegularElement' &&
 						element.name.includes('-') &&
-						element.attributes.length === 1
+						element.attributes.length === 1 &&
+						element.metadata.path
 					) {
 						mark_subtree_dynamic(element.metadata.path);
 					}
