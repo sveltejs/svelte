@@ -9,7 +9,7 @@ import { extract_identifiers, is_text_attribute } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
-import { create_attribute } from '../nodes.js';
+import { create_attribute, is_custom_element_node } from '../nodes.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
 import { hash, is_rune } from '../../../utils.js';
@@ -745,8 +745,7 @@ export function analyze_component(root, source, options) {
 						])
 					);
 					if (
-						element.type === 'RegularElement' &&
-						element.name.includes('-') &&
+						is_custom_element_node(element) &&
 						element.attributes.length === 1 &&
 						element.metadata.path
 					) {
