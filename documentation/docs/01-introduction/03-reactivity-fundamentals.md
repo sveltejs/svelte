@@ -40,6 +40,19 @@ class Todo {
 }
 ```
 
+> [!LEGACY]
+> In Svelte 4, state was implicitly reactive if the variable was declared at the top level
+>
+> ```svelte
+> <script>
+> 	let count = 0;
+> </script>
+>
+> <button on:click={() => count++}>
+> 	clicks: {count}
+> </button>
+> ```
+
 ## `$derived`
 
 Derived state is declared with the `$derived` rune:
@@ -60,6 +73,24 @@ Derived state is declared with the `$derived` rune:
 The expression inside `$derived(...)` should be free of side-effects. Svelte will disallow state changes (e.g. `count++`) inside derived expressions.
 
 As with `$state`, you can mark class fields as `$derived`.
+
+> [!LEGACY]
+> In Svelte 4, you could use reactive statements for this.
+>
+> ```svelte
+> <script>
+> 	let count = 0;
+> 	$: doubled = count * 2;
+> </script>
+>
+> <button on:click={() => count++}>
+> 	{doubled}
+> </button>
+>
+> <p>{count} doubled is {doubled}</p>
+> ```
+>
+> This only worked at the top level of a component.
 
 ## `$effect`
 
@@ -86,3 +117,28 @@ To run _side-effects_ when the component is mounted to the DOM, and when values 
 ```
 
 The function passed to `$effect` will run when the component mounts, and will re-run after any changes to the values it reads that were declared with `$state` or `$derived` (including those passed in with `$props`). Re-runs are batched (i.e. changing `color` and `size` in the same moment won't cause two separate runs), and happen after any DOM updates have been applied.
+
+> [!LEGACY]
+> In Svelte 4, you could use reactive statements for this.
+>
+> ```svelte
+> <script>
+> 	let size = 50;
+> 	let color = '#ff3e00';
+>
+> 	let canvas;
+>
+> 	$: {
+> 		const context = canvas.getContext('2d');
+> 		context.clearRect(0, 0, canvas.width, canvas.height);
+>
+> 		// this will re-run whenever `color` or `size` change
+> 		context.fillStyle = color;
+> 		context.fillRect(0, 0, size, size);
+> 	}
+> </script>
+>
+> <canvas bind:this={canvas} width="100" height="100" />
+> ```
+>
+> This only worked at the top level of a component.
