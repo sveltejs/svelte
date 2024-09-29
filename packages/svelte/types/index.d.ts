@@ -570,7 +570,7 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression } from 'estree';
+	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, AssignmentExpression } from 'estree';
 	import type { SourceMap } from 'magic-string';
 	import type { Location } from 'locate-character';
 	/**
@@ -607,7 +607,7 @@ declare module 'svelte/compiler' {
 	export function parse(source: string, options?: {
 		filename?: string;
 		modern?: false;
-	} | undefined): Record<string, any>;
+	} | undefined): LegacyRoot;
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
 	 * */
@@ -1267,6 +1267,255 @@ declare module 'svelte/compiler' {
 	export function migrate(source: string): {
 		code: string;
 	};
+	interface BaseNode {
+		type: string;
+		start: number;
+		end: number;
+	}
+
+	interface BaseElement extends BaseNode {
+		name: string;
+		attributes: Array<LegacyAttributeLike>;
+		children: Array<LegacyElementLike>;
+	}
+
+	interface LegacyRoot extends BaseNode {
+		html: LegacySvelteNode;
+		css?: any;
+		instance?: any;
+		module?: any;
+	}
+
+	interface LegacyAction extends BaseNode {
+		type: 'Action';
+		/** The 'x' in `use:x` */
+		name: string;
+		/** The 'y' in `use:x={y}` */
+		expression: null | Expression;
+	}
+
+	interface LegacyAnimation extends BaseNode {
+		type: 'Animation';
+		/** The 'x' in `animate:x` */
+		name: string;
+		/** The y in `animate:x={y}` */
+		expression: null | Expression;
+	}
+
+	interface LegacyBinding extends BaseNode {
+		type: 'Binding';
+		/** The 'x' in `bind:x` */
+		name: string;
+		/** The y in `bind:x={y}` */
+		expression: Identifier | MemberExpression;
+	}
+
+	interface LegacyBody extends BaseElement {
+		type: 'Body';
+		name: 'svelte:body';
+	}
+
+	interface LegacyAttribute extends BaseNode {
+		type: 'Attribute';
+		name: string;
+		value: true | Array<AST.Text | LegacyMustacheTag | LegacyAttributeShorthand>;
+	}
+
+	interface LegacyAttributeShorthand extends BaseNode {
+		type: 'AttributeShorthand';
+		expression: Expression;
+	}
+
+	interface LegacyLet extends BaseNode {
+		type: 'Let';
+		/** The 'x' in `let:x` */
+		name: string;
+		/** The 'y' in `let:x={y}` */
+		expression: null | Identifier | ArrayExpression | ObjectExpression;
+	}
+
+	interface LegacyCatchBlock extends BaseNode {
+		type: 'CatchBlock';
+		children: LegacySvelteNode[];
+		skip: boolean;
+	}
+
+	interface LegacyClass extends BaseNode {
+		type: 'Class';
+		/** The 'x' in `class:x` */
+		name: 'class';
+		/** The 'y' in `class:x={y}`, or the `x` in `class:x` */
+		expression: Expression;
+	}
+
+	interface LegacyDocument extends BaseElement {
+		type: 'Document';
+	}
+
+	interface LegacyElement {
+		type: 'Element';
+	}
+
+	interface LegacyEventHandler extends BaseNode {
+		type: 'EventHandler';
+		/** The 'x' in `on:x` */
+		name: string;
+		/** The 'y' in `on:x={y}` */
+		expression: null | Expression;
+		modifiers: string[];
+	}
+
+	interface LegacyHead extends BaseElement {
+		type: 'Head';
+	}
+
+	interface LegacyInlineComponent extends BaseElement {
+		type: 'InlineComponent';
+		/** Set if this is a `<svelte:component>` */
+		expression?: Expression;
+	}
+
+	interface LegacyMustacheTag extends BaseNode {
+		type: 'MustacheTag';
+		expression: Expression;
+	}
+
+	interface LegacyOptions {
+		type: 'Options';
+		name: 'svelte:options';
+		attributes: Array<any>;
+	}
+
+	interface LegacyPendingBlock extends BaseNode {
+		type: 'PendingBlock';
+		children: LegacySvelteNode[];
+		skip: boolean;
+	}
+
+	interface LegacyRawMustacheTag extends BaseNode {
+		type: 'RawMustacheTag';
+		expression: Expression;
+	}
+
+	interface LegacySpread extends BaseNode {
+		type: 'Spread';
+		expression: Expression;
+	}
+
+	interface LegacySlot extends BaseElement {
+		type: 'Slot';
+	}
+
+	interface LegacySlotTemplate extends BaseElement {
+		type: 'SlotTemplate';
+	}
+
+	interface LegacyThenBlock extends BaseNode {
+		type: 'ThenBlock';
+		children: LegacySvelteNode[];
+		skip: boolean;
+	}
+
+	interface LegacyTitle extends BaseElement {
+		type: 'Title';
+		name: 'title';
+	}
+
+	interface LegacyConstTag extends BaseNode {
+		type: 'ConstTag';
+		expression: AssignmentExpression;
+	}
+
+	interface LegacyTransition extends BaseNode {
+		type: 'Transition';
+		/** The 'x' in `transition:x` */
+		name: string;
+		/** The 'y' in `transition:x={y}` */
+		expression: null | Expression;
+		modifiers: Array<'local' | 'global'>;
+		/** True if this is a `transition:` or `in:` directive */
+		intro: boolean;
+		/** True if this is a `transition:` or `out:` directive */
+		outro: boolean;
+	}
+
+	/** A `style:` directive */
+	interface LegacyStyleDirective extends BaseNode {
+		type: 'StyleDirective';
+		/** The 'x' in `style:x` */
+		name: string;
+		/** The 'y' in `style:x={y}` */
+		value: true | Array<AST.ExpressionTag | AST.Text>;
+		modifiers: Array<'important'>;
+	}
+
+	interface LegacyWindow extends BaseElement {
+		type: 'Window';
+	}
+
+	interface LegacyComment extends BaseNode {
+		type: 'Comment';
+		/** the contents of the comment */
+		data: string;
+		/** any svelte-ignore directives — <!-- svelte-ignore a b c --> would result in ['a', 'b', 'c'] */
+		ignores: string[];
+	}
+
+	type LegacyDirective =
+		| LegacyAnimation
+		| LegacyBinding
+		| LegacyClass
+		| LegacyLet
+		| LegacyEventHandler
+		| LegacyStyleDirective
+		| LegacyTransition
+		| LegacyAction;
+
+	type LegacyAttributeLike = LegacyAttribute | LegacySpread | LegacyDirective;
+
+	type LegacyElementLike =
+		| LegacyBody
+		| LegacyCatchBlock
+		| LegacyComment
+		| LegacyDocument
+		| LegacyElement
+		| LegacyHead
+		| LegacyInlineComponent
+		| LegacyMustacheTag
+		| LegacyOptions
+		| LegacyPendingBlock
+		| LegacyRawMustacheTag
+		| LegacySlot
+		| LegacySlotTemplate
+		| LegacyThenBlock
+		| LegacyTitle
+		| LegacyWindow;
+
+	interface LegacyStyle extends BaseNode {
+		type: 'Style';
+		attributes: any[];
+		content: {
+			start: number;
+			end: number;
+			styles: string;
+		};
+		children: any[];
+	}
+
+	interface LegacySelector extends BaseNode {
+		type: 'Selector';
+		children: Array<Css.Combinator | Css.SimpleSelector>;
+	}
+
+	type LegacyCssNode = LegacyStyle | LegacySelector;
+
+	type LegacySvelteNode =
+		| LegacyConstTag
+		| LegacyElementLike
+		| LegacyAttributeLike
+		| LegacyAttributeShorthand
+		| LegacyCssNode
+		| AST.Text;
 	namespace Css {
 		export interface BaseNode {
 			start: number;
