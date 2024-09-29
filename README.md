@@ -4,7 +4,7 @@
 
 ## What is Svelte?
 
-Svelte is a new way to build web applications. It's a compiler that takes your declarative components and converts them into efficient JavaScript that surgically updates the DOM.
+Svelte is a new way to build web applications. It's a compiler that takes your declarative components and converts them into an efficient JavaScript that surgically updates the DOM.
 
 Learn more at the [Svelte website](https://svelte.dev), or stop by the [Discord chatroom](https://svelte.dev/chat).
 
@@ -18,7 +18,7 @@ Funds donated via Open Collective will be used for compensating expenses related
 
 ## Roadmap
 
-You may view [our roadmap](https://svelte.dev/roadmap) if you'd like to see what we're currently working on.
+You can view [our roadmap](https://svelte.dev/roadmap) if you'd like to see what we're currently working on.
 
 ## Contributing
 
@@ -26,7 +26,7 @@ Please see the [Contributing Guide](CONTRIBUTING.md) and the [`svelte`](packages
 
 ### svelte.dev
 
-The source code for https://svelte.dev lives in the [sites](https://github.com/sveltejs/svelte/tree/master/sites/svelte.dev) folder, with all the documentation right [here](https://github.com/sveltejs/svelte/tree/master/documentation). The site is built with [SvelteKit](https://kit.svelte.dev).
+The source code for https://svelte.dev is in [sites](https://github.com/sveltejs/svelte/tree/master/sites/svelte.dev) folder, with all the documentation right [here](https://github.com/sveltejs/svelte/tree/master/documentation). The site is built with [SvelteKit](https://kit.svelte.dev).
 
 ## Is svelte.dev down?
 
