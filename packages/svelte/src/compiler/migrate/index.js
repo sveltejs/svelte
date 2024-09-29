@@ -102,13 +102,40 @@ export function migrate(source) {
 		state = { ...state, scope: analysis.template.scope };
 		walk(parsed.fragment, state, template);
 
+		let insertion_point = parsed.instance
+			? /** @type {number} */ (parsed.instance.content.start)
+			: 0;
+
+		const need_script =
+			state.legacy_imports.size > 0 ||
+			state.script_insertions.size > 0 ||
+			state.props.length > 0 ||
+			analysis.uses_rest_props ||
+			analysis.uses_props;
+
+		if (!parsed.instance && need_script) {
+			str.appendRight(0, '<script>');
+		}
+
 		const specifiers = [...state.legacy_imports].map((imported) => {
 			const local = state.names[imported];
 			return imported === local ? imported : `${imported} as ${local}`;
 		});
 
-		const legacy_import = `import { ${specifiers.join(', ')} } from 'svelte/legacy';`;
-		let added_legacy_import = false;
+		const legacy_import = `import { ${specifiers.join(', ')} } from 'svelte/legacy';\n`;
+
+		if (state.legacy_imports.size > 0) {
+			str.appendRight(insertion_point, `\n${indent}${legacy_import}`);
+		}
+
+		if (state.script_insertions.size > 0) {
+			str.appendRight(
+				insertion_point,
+				`\n${indent}${[...state.script_insertions].join(`\n${indent}`)}`
+			);
+		}
+
+		insertion_point = state.props_insertion_point;
 
 		if (state.props.length > 0 || analysis.uses_rest_props || analysis.uses_props) {
 			const has_many_props = state.props.length > 3;
@@ -138,7 +165,7 @@ export function migrate(source) {
 
 			if (state.has_props_rune) {
 				// some render tags or forwarded event attributes to add
-				str.appendRight(state.props_insertion_point, ` ${props},`);
+				str.appendRight(insertion_point, ` ${props},`);
 			} else {
 				const uses_ts = parsed.instance?.attributes.some(
 					(attr) => attr.name === 'lang' && /** @type {any} */ (attr).value[0].data === 'ts'
@@ -177,20 +204,8 @@ export function migrate(source) {
 					props_declaration = `${props_declaration} = $props();`;
 				}
 
-				if (parsed.instance) {
-					props_declaration = `\n${indent}${props_declaration}`;
-					str.appendRight(state.props_insertion_point, props_declaration);
-				} else {
-					const imports = state.legacy_imports.size > 0 ? `${indent}${legacy_import}\n` : '';
-					const script_insertions =
-						state.script_insertions.size > 0
-							? `\n${indent}${[...state.script_insertions].join(`\n${indent}`)}`
-							: '';
-					str.prepend(
-						`<script>\n${imports}${indent}${props_declaration}${script_insertions}\n</script>\n\n`
-					);
-					added_legacy_import = true;
-				}
+				props_declaration = `\n${indent}${props_declaration}`;
+				str.appendRight(insertion_point, props_declaration);
 			}
 		}
 
@@ -235,24 +250,9 @@ export function migrate(source) {
 			}
 		}
 
-		if (state.legacy_imports.size > 0 && !added_legacy_import) {
-			const script_insertions =
-				state.script_insertions.size > 0
-					? `\n${indent}${[...state.script_insertions].join(`\n${indent}`)}`
-					: '';
-
-			if (parsed.instance) {
-				str.appendRight(
-					/** @type {number} */ (parsed.instance.content.start),
-					`\n${indent}${legacy_import}${script_insertions}\n`
-				);
-			} else {
-				str.prepend(
-					`<script>\n${indent}${legacy_import}\n${indent}${script_insertions}\n</script>\n\n`
-				);
-			}
+		if (!parsed.instance && need_script) {
+			str.appendRight(insertion_point, '\n</script>\n\n');
 		}
-
 		return { code: str.toString() };
 	} catch (e) {
 		// eslint-disable-next-line no-console
@@ -841,22 +841,6 @@ function get_node_range(source, node) {
 	start = idx;
 
 	return { start, end };
-}
-
-/**
- * @param {AST.OnDirective} last
- * @param {State} state
- */
-function generate_event_name(last, state) {
-	const scope =
-		(last.expression && state.analysis.template.scopes.get(last.expression)) || state.scope;
-
-	let name = 'event';
-	if (!scope.get(name)) return name;
-
-	let i = 1;
-	while (scope.get(`${name}${i}`)) i += 1;
-	return `${name}${i}`;
 }
 
 /**
