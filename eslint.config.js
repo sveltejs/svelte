@@ -7,7 +7,7 @@ const no_compiler_imports = {
 		docs: {
 			description:
 				'Enforce that there are no imports to the compiler in runtime code. ' +
-				'This prevent accidental inclusion of the compiler runtime and ' +
+				'This prevents accidental inclusion of the compiler runtime and ' +
 				"ensures that TypeScript does not pick up more ambient types (for example from Node) that shouldn't be available in the browser."
 		}
 	},
