@@ -1,16 +1,18 @@
 /** @import { VariableDeclarator, Node, Identifier } from 'estree' */
 /** @import { Visitors } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
-/** @import { Scope } from '../phases/scope.js' */
+/** @import { Scope, ScopeRoot } from '../phases/scope.js' */
 /** @import { AST, Binding, SvelteNode, ValidatedCompileOptions } from '#compiler' */
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
 import { parse } from '../phases/1-parse/index.js';
+import { regex_valid_component_name } from '../phases/1-parse/state/element.js';
 import { analyze_component } from '../phases/2-analyze/index.js';
 import { get_rune } from '../phases/scope.js';
 import { reset, reset_warning_filter } from '../state.js';
 import { extract_identifiers } from '../utils/ast.js';
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
+import { determine_slot } from '../utils/slot.js';
 import { validate_component_options } from '../validate-options.js';
 
 const regex_style_tags = /(<style[^>]+>)([\S\s]*?)(<\/style>)/g;
@@ -85,7 +87,8 @@ export function migrate(source) {
 				nonpassive: analysis.root.unique('nonpassive').name
 			},
 			legacy_imports: new Set(),
-			script_insertions: new Set()
+			script_insertions: new Set(),
+			derived_components: new Map()
 		};
 
 		if (parsed.module) {
@@ -108,6 +111,7 @@ export function migrate(source) {
 
 		const need_script =
 			state.legacy_imports.size > 0 ||
+			state.derived_components.size > 0 ||
 			state.script_insertions.size > 0 ||
 			state.props.length > 0 ||
 			analysis.uses_rest_props ||
@@ -250,6 +254,17 @@ export function migrate(source) {
 			}
 		}
 
+		insertion_point = parsed.instance
+			? /** @type {number} */ (parsed.instance.content.end)
+			: insertion_point;
+
+		if (state.derived_components.size > 0) {
+			str.appendRight(
+				insertion_point,
+				`\n${indent}${[...state.derived_components.entries()].map(([init, name]) => `const ${name} = $derived(${init});`).join(`\n${indent}`)}\n`
+			);
+		}
+
 		if (!parsed.instance && need_script) {
 			str.appendRight(insertion_point, '\n</script>\n\n');
 		}
@@ -273,7 +288,8 @@ export function migrate(source) {
  *  end: number;
  * 	names: Record<string, string>;
  * 	legacy_imports: Set<string>;
- * 	script_insertions: Set<string>
+ * 	script_insertions: Set<string>;
+ *  derived_components: Map<string, string>
  * }} State
  */
 
@@ -585,6 +601,65 @@ const template = {
 
 		handle_events(node, state);
 		next();
+	},
+	SvelteComponent(node, { state, next, path }) {
+		next();
+
+		let expression = state.str
+			.snip(
+				/** @type {number} */ (node.expression.start),
+				/** @type {number} */ (node.expression.end)
+			)
+			.toString();
+
+		if (
+			(node.expression.type !== 'Identifier' && node.expression.type !== 'MemberExpression') ||
+			!regex_valid_component_name.test(expression)
+		) {
+			let current_expression = expression;
+			expression = state.scope.generate('SvelteComponent');
+			let needs_derived = true;
+			for (let i = path.length - 1; i >= 0; i--) {
+				const part = path[i];
+				if (
+					part.type === 'EachBlock' ||
+					part.type === 'AwaitBlock' ||
+					part.type === 'IfBlock' ||
+					part.type === 'KeyBlock' ||
+					part.type === 'SnippetBlock' ||
+					part.type === 'Component' ||
+					part.type === 'SvelteComponent'
+				) {
+					const indent = state.str.original.substring(
+						state.str.original.lastIndexOf('\n', node.start) + 1,
+						node.start
+					);
+					state.str.prependLeft(
+						node.start,
+						`{@const ${expression} = ${current_expression}}\n${indent}`
+					);
+					needs_derived = false;
+					continue;
+				}
+			}
+			if (needs_derived) {
+				if (state.derived_components.has(current_expression)) {
+					expression = /** @type {string} */ (state.derived_components.get(current_expression));
+				} else {
+					state.derived_components.set(current_expression, expression);
+				}
+			}
+		}
+
+		state.str.overwrite(node.start + 1, node.start + node.name.length + 1, expression);
+
+		if (state.str.original.substring(node.end - node.name.length - 1, node.end - 1) === node.name) {
+			state.str.overwrite(node.end - node.name.length - 1, node.end - 1, expression);
+		}
+		let this_pos = state.str.original.lastIndexOf('this', node.expression.start);
+		while (!state.str.original.charAt(this_pos - 1).trim()) this_pos--;
+		const end_pos = state.str.original.indexOf('}', node.expression.end) + 1;
+		state.str.remove(this_pos, end_pos);
 	},
 	SvelteWindow(node, { state, next }) {
 		handle_events(node, state);

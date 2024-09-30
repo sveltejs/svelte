@@ -23,7 +23,7 @@ const regex_starts_with_quote_characters = /^["']/;
 const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]+))/;
 const regex_valid_element_name =
 	/^(?:![a-zA-Z]+|[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|[a-zA-Z][a-zA-Z0-9]*:[a-zA-Z][a-zA-Z0-9-]*[a-zA-Z0-9])$/;
-const regex_valid_component_name =
+export const regex_valid_component_name =
 	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#identifiers adjusted for our needs
 	// (must start with uppercase letter if no dots, can contain dots)
 	/^(?:\p{Lu}[$\u200c\u200d\p{ID_Continue}.]*|\p{ID_Start}[$\u200c\u200d\p{ID_Continue}]*(?:\.[$\u200c\u200d\p{ID_Continue}]+)+)$/u;
