@@ -5,16 +5,24 @@ author: Dani Sandoval
 authorURL: https://dreamindani.com
 ---
 
+It's October! Which can only mean one thing... [Svelte Summit Fall](https://www.sveltesummit.com/2024/fall) is only 19 days away! Stay up to date with the latest Svelte Summit news by [subscribing to its official newsletter](https://marketing.sveltesociety.dev/forms/nfrm_weLJnLY5) or follow along during the stream [on the Discord](https://discord.gg/svelte).
+
 Thanks to the number of folks who have been trying the Svelte 5 release candidates, the maintainers have been hard at work in addressing bugs and implementing performance improvements for the upcoming release. This month, we'll cover the most notable changes along with the many apps, resources and libraries that the community has created over the last few weeks.
 
 ## What's new in Svelte
 
+Have you been wanting to migrate your project to Svelte 5? Want to test out the migration tool and give the team feedback? Then you should give the [svelte-migrate tool](https://github.com/sveltejs/kit/tree/main/packages/migrate) a try! `npx svelte-migrate svelte-5` is all you need to get started. If you run into any problems, please [file an issue](https://github.com/sveltejs/svelte/issues).
+
+Here's what else is new...
+
 - Legacy components can now be manually instantiated asynchronously with the `sync` option (**5.0.0-next.237**, [#12970](https://github.com/sveltejs/svelte/pull/12970))
 - The `each` block is now much better in SSR mode - removing an unnecessary declaration and caching the length of the array before iterating over it (**5.0.0-next.242**, [#13060](https://github.com/sveltejs/svelte/pull/13060))
-- A callstack will now appear if an infinite loop is detected - with the last ten effects printed out - in development mode (5.0.0-next.246, [#13231](https://github.com/sveltejs/svelte/pull/13231))
+- A callstack will now appear if an infinite loop is detected - with the last ten effects printed out - in development mode (**5.0.0-next.246**, [#13231](https://github.com/sveltejs/svelte/pull/13231))
+- Projects that use `@sveltejs/enhanced-img` should see a much smaller bundle thanks to module variables being inlined into the template (**5.0.0-next.246**, [#13075](https://github.com/sveltejs/svelte/pull/13075))
 - There are now a11y warnings for `<button>`/`<a>` elements that are missing an aria-label and content (**5.0.0-next.250**, [#13130](https://github.com/sveltejs/svelte/pull/13130))
 - Animations now take into account `zoom` when calculating transforms (**5.0.0-next.254**, [#13317](https://github.com/sveltejs/svelte/pull/13317))
 - `<svelte:self>` is now deprecated in runes mode. It's not necessary since components can now import themselves (**5.0.0-next.256**, [#13333](https://github.com/sveltejs/svelte/pull/13333))
+- `svelte-check`, the CLI is used by almost every Svelte project, is now much smaller ([repo](https://github.com/sveltejs/language-tools/tree/master/packages/svelte-check), [post](https://x.com/BenjaminMcCann/status/1839349949605236753))
 
 Curious to see all that the maintainers have been up to in getting Svelte 5 production ready? Check out the [CHANGELOG](https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md) to see all the fixes - big and small!
 
