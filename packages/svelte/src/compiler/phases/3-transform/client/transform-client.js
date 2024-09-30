@@ -276,6 +276,13 @@ export function client_component(analysis, options) {
 			}
 		}
 
+		if (binding?.kind === 'prop' || binding?.kind === 'bindable_prop') {
+			return [
+				getter,
+				b.set(alias ?? name, [b.stmt(b.call(name, b.call('$.proxy', b.id('$$value'))))])
+			];
+		}
+
 		if (binding?.kind === 'state' || binding?.kind === 'raw_state') {
 			const value = binding.kind === 'state' ? b.call('$.proxy', b.id('$$value')) : b.id('$$value');
 			return [getter, b.set(alias ?? name, [b.stmt(b.call('$.set', b.id(name), value))])];

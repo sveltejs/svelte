@@ -12,7 +12,6 @@ import { get_rune } from '../phases/scope.js';
 import { reset, reset_warning_filter } from '../state.js';
 import { extract_identifiers } from '../utils/ast.js';
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
-import { determine_slot } from '../utils/slot.js';
 import { validate_component_options } from '../validate-options.js';
 
 const regex_style_tags = /(<style[^>]+>)([\S\s]*?)(<\/style>)/g;
@@ -53,6 +52,8 @@ export function migrate(source) {
 		const str = new MagicString(source);
 		const analysis = analyze_component(parsed, source, combined_options);
 		const indent = guess_indent(source);
+
+		str.replaceAll(/(<svelte:options\s.*?\s?)accessors\s?/g, (_, $1) => $1);
 
 		for (const content of style_contents) {
 			str.overwrite(content[0], content[0] + style_placeholder.length, content[1]);
@@ -262,6 +263,13 @@ export function migrate(source) {
 			str.appendRight(
 				insertion_point,
 				`\n${indent}${[...state.derived_components.entries()].map(([init, name]) => `const ${name} = $derived(${init});`).join(`\n${indent}`)}\n`
+			);
+		}
+
+		if (state.props.length > 0 && state.analysis.accessors) {
+			str.appendRight(
+				insertion_point,
+				`\n${indent}export {\n${indent}\t${state.props.map((prop) => `${prop.local},`).join(`\n${indent}\t`)}\n${indent}}\n`
 			);
 		}
 
