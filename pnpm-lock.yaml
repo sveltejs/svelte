@@ -98,6 +98,9 @@ importers:
       magic-string:
         specifier: ^0.30.11
         version: 0.30.11
+      swc-svelte:
+        specifier: workspace:*
+        version: link:../swc-svelte
       zimmerframe:
         specifier: ^1.1.2
         version: 1.1.2
@@ -284,7 +287,7 @@ importers:
         version: link:../../packages/svelte
       svelte-check:
         specifier: ^4.0.0
-        version: 4.0.1(svelte@packages+svelte)(typescript@5.5.4)
+        version: 4.0.1(picomatch@4.0.2)(svelte@packages+svelte)(typescript@5.5.4)
       typescript:
         specifier: ^5.5.4
         version: 5.5.4
@@ -384,7 +387,7 @@ importers:
         version: 4.2.9
       svelte-check:
         specifier: ^4.0.0
-        version: 4.0.1(svelte@4.2.9)(typescript@5.5.4)
+        version: 4.0.1(picomatch@4.0.2)(svelte@4.2.9)(typescript@5.5.4)
       svelte-preprocess:
         specifier: ^5.1.3
         version: 5.1.3(postcss-load-config@3.1.4(postcss@8.4.47))(postcss@8.4.47)(sass@1.70.0)(svelte@4.2.9)(typescript@5.5.4)
@@ -2996,6 +2999,10 @@ packages:
   picomatch@2.3.1:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
     engines: {node: '>=8.6'}
+
+  picomatch@4.0.2:
+    resolution: {integrity: sha512-M7BAV6Rlcy5u+m6oPhAPFgJTzAioX/6B0DxyvDlo9l8+T3nLKbrczg2WLUyzd45L8RqfUMyGPzekbMvX2Ldkwg==}
+    engines: {node: '>=12'}
 
   pify@4.0.1:
     resolution: {integrity: sha512-uB80kBFb/tfd68bVleG9T5GGsGPjJrLAUpR5PZIrhBnIaRTQRjqdJSsIKkOP6OAIFbj7GOrcudc5pNjZ+geV2g==}
@@ -5867,6 +5874,10 @@ snapshots:
     optionalDependencies:
       picomatch: 2.3.1
 
+  fdir@6.3.0(picomatch@4.0.2):
+    optionalDependencies:
+      picomatch: 4.0.2
+
   fenceparser@1.1.1: {}
 
   fflate@0.7.4: {}
@@ -6658,6 +6669,9 @@ snapshots:
 
   picomatch@2.3.1: {}
 
+  picomatch@4.0.2:
+    optional: true
+
   pify@4.0.1: {}
 
   pixelmatch@4.0.2:
@@ -7062,11 +7076,11 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  svelte-check@4.0.1(svelte@4.2.9)(typescript@5.5.4):
+  svelte-check@4.0.1(picomatch@4.0.2)(svelte@4.2.9)(typescript@5.5.4):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.25
       chokidar: 3.5.3
-      fdir: 6.3.0(picomatch@2.3.1)
+      fdir: 6.3.0(picomatch@4.0.2)
       picocolors: 1.1.0
       sade: 1.8.1
       svelte: 4.2.9
@@ -7074,11 +7088,11 @@ snapshots:
     transitivePeerDependencies:
       - picomatch
 
-  svelte-check@4.0.1(svelte@packages+svelte)(typescript@5.5.4):
+  svelte-check@4.0.1(picomatch@4.0.2)(svelte@packages+svelte)(typescript@5.5.4):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.25
       chokidar: 3.5.3
-      fdir: 6.3.0(picomatch@2.3.1)
+      fdir: 6.3.0(picomatch@4.0.2)
       picocolors: 1.1.0
       sade: 1.8.1
       svelte: link:packages/svelte

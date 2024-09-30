@@ -1,11 +1,11 @@
 {
 	"name": "swc-svelte",
-	"type": "module",
 	"collaborators": [
 		"Ottomated <otto@ottomated.net>"
 	],
 	"scripts": {
-		"build": "wasm-pack build --no-pack"
+		"build": "wasm-pack build --target nodejs --no-pack",
+		"dev": "cargo watch -s 'pnpm build --no-opt'"
 	},
 	"version": "0.0.0",
 	"files": [

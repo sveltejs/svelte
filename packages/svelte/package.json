@@ -144,6 +144,7 @@
     "is-reference": "^3.0.2",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.11",
+    "swc-svelte": "workspace:*",
     "zimmerframe": "^1.1.2"
   }
 }

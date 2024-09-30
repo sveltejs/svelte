@@ -4,6 +4,7 @@ import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from 'acorn-typescript';
 import { locator } from '../../state.js';
+import * as swc from 'swc-svelte';
 
 const ParserWithTS = acorn.Parser.extend(tsPlugin({ allowSatisfies: true }));
 
@@ -35,19 +36,8 @@ export function parse(source, typescript) {
  * @returns {acorn.Expression & { leadingComments?: CommentWithLocation[]; trailingComments?: CommentWithLocation[]; }}
  */
 export function parse_expression_at(source, typescript, index) {
-	const parser = typescript ? ParserWithTS : acorn.Parser;
-	const { onComment, add_comments } = get_comment_handlers(source);
-
-	const ast = parser.parseExpressionAt(source, index, {
-		onComment,
-		sourceType: 'module',
-		ecmaVersion: 13,
-		locations: true
-	});
-
-	if (typescript) amend(source, ast);
-	add_comments(ast);
-
+	const ast = swc.parse_expression_at(source, index, typescript).Expr;
+	amend(source, ast);
 	return ast;
 }
 
@@ -150,39 +140,15 @@ function get_comment_handlers(source) {
 
 /**
  * Tidy up some stuff left behind by acorn-typescript
- * @param {string} source
+ * @param {string} _source
  * @param {Node} node
  */
-function amend(source, node) {
+function amend(_source, node) {
 	return walk(node, null, {
 		_(node, context) {
-			// @ts-expect-error
-			delete node.loc.start.index;
-			// @ts-expect-error
-			delete node.loc.end.index;
-
-			if (typeof node.loc?.end === 'number') {
-				const loc = locator(node.loc.end);
-				if (loc) {
-					node.loc.end = {
-						line: loc.line,
-						column: loc.column
-					};
-				}
-			}
-
-			if (
-				/** @type {any} */ (node).typeAnnotation &&
-				(node.end === undefined || node.end < node.start)
-			) {
-				// i think there might be a bug in acorn-typescript that prevents
-				// `end` from being assigned when there's a type annotation
-				let end = /** @type {any} */ (node).typeAnnotation.start;
-				while (/\s/.test(source[end - 1])) end -= 1;
-				node.end = end;
-			}
-
-			context.next();
+			// todo - remove this once tests are no longer checking for it to not exist
+			delete node.range;
+			context.next()
 		}
 	});
 }

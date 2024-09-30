@@ -7,21 +7,20 @@ edition = "2018"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
-[features]
-default = ["console_error_panic_hook"]
-
 [dependencies]
 wasm-bindgen = "0.2.84"
+console_error_panic_hook = "0.1.7"
 
-# The `console_error_panic_hook` crate provides better debugging of panics by
-# logging them with `console.error`. This is great for development, but requires
-# all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
-# code size when deploying.
-console_error_panic_hook = { version = "0.1.7", optional = true }
+swc_ecma_ast = { version = "0.121.0", features = ["serde-impl"] }
+swc_common = "0.40.0"
+swc_ecma_parser = { version = "0.152.0", features = ["typescript"] }
+serde_json = "1.0.128"
+getrandom = { version = "0.2.15", features = ["js"] }
+gloo-utils = { version = "0.2.0", features = ["serde"] }
+swc_estree_compat = "0.215.0"
+swc_node_comments = "0.27.0"
+swc_estree_ast = "0.30.0"
+js-sys = "0.3.70"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.34"
-
-[profile.release]
-# Tell `rustc` to optimize for small code size.
-opt-level = "s"

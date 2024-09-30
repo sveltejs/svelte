@@ -64,6 +64,9 @@ const visitors = {
 			);
 		}
 	},
+	ParenthesizedExpression(node, context) {
+		return context.visit(node.expression);
+	},
 	TSAsExpression(node, context) {
 		return context.visit(node.expression);
 	},
