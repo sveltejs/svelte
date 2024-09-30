@@ -19,7 +19,6 @@
 		test,
 		count,
 		stuff,
-		cool,
 	}
 </script>
 
