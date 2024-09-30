@@ -114,6 +114,19 @@ const css_visitors = {
 		node.metadata.used ||= node.children.every(
 			({ metadata }) => metadata.is_global || metadata.is_global_like
 		);
+
+		if (
+			node.metadata.rule?.metadata.parent_rule &&
+			node.children[0]?.selectors[0]?.type === 'NestingSelector'
+		) {
+			const parent_is_global = node.metadata.rule.metadata.parent_rule.prelude.children.some(
+				(child) => child.children.length === 1 && child.children[0].metadata.is_global
+			);
+			// mark `&:hover` in `:global(.foo) { &:hover { color: green }}` as used
+			if (parent_is_global) {
+				node.metadata.used = true;
+			}
+		}
 	},
 	RelativeSelector(node, context) {
 		node.metadata.is_global = node.selectors.length >= 1 && is_global(node);
