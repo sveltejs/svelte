@@ -148,6 +148,8 @@ importers:
         specifier: ^2.0.5
         version: 2.0.5(@types/node@20.12.7)(jsdom@25.0.0)(lightningcss@1.23.0)(sass@1.70.0)(terser@5.27.0)
 
+  packages/swc-svelte: {}
+
   playgrounds/sandbox:
     devDependencies:
       '@sveltejs/vite-plugin-svelte':

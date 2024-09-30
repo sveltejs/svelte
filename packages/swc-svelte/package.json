@@ -1,0 +1,23 @@
+{
+	"name": "swc-svelte",
+	"type": "module",
+	"collaborators": [
+		"Ottomated <otto@ottomated.net>"
+	],
+	"scripts": {
+		"build": "wasm-pack build --no-pack"
+	},
+	"version": "0.0.0",
+	"files": [
+		"pkg/swc_svelte_bg.wasm",
+		"pkg/swc_svelte.js",
+		"pkg/swc_svelte_bg.js",
+		"pkg/swc_svelte.d.ts"
+	],
+	"main": "pkg/swc_svelte.js",
+	"types": "pkg/swc_svelte.d.ts",
+	"sideEffects": [
+		"./pkg/swc_svelte.js",
+		"./pkg/snippets/*"
+	]
+}
