@@ -61,7 +61,6 @@ export function migrate(source) {
 		/** @type {State} */
 		let state = {
 			scope: analysis.instance.scope,
-			scopes: analysis.template.scopes,
 			analysis,
 			str,
 			indent,
@@ -280,7 +279,6 @@ export function migrate(source) {
 /**
  * @typedef {{
  *  scope: Scope;
- *  scopes: Map<SvelteNode, Scope>;
  *  str: MagicString;
  *  analysis: ComponentAnalysis;
  *  indent: string;
@@ -573,10 +571,6 @@ const instance_script = {
 
 /** @type {Visitors<SvelteNode, State>} */
 const template = {
-	_(node, { state, next }) {
-		const scope = state.scopes.get(node);
-		next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
-	},
 	Identifier(node, { state, path }) {
 		handle_identifier(node, state, path);
 	},
@@ -608,106 +602,43 @@ const template = {
 		handle_events(node, state);
 		next();
 	},
-	Component(node, context) {
-		// If the component has a slot attribute — `<Foo slot="whatever" .../>` —
-		// then `let:` directives apply to other attributes, instead of just the
-		// top-level contents of the component. Yes, this is very weird.
-		const default_state = determine_slot(node)
-			? context.state
-			: { ...context.state, scope: node.metadata.scopes.default };
-
-		for (const attribute of node.attributes) {
-			context.visit(attribute, attribute.type === 'LetDirective' ? default_state : context.state);
-		}
-
-		/** @type {AST.Comment[]} */
-		let comments = [];
-
-		/** @type {Record<string, AST.Fragment['nodes']>} */
-		const nodes = { default: [] };
-
-		for (const child of node.fragment.nodes) {
-			if (child.type === 'Comment') {
-				comments.push(child);
-				continue;
-			}
-
-			const slot_name = determine_slot(child) ?? 'default';
-			(nodes[slot_name] ??= []).push(...comments, child);
-
-			if (slot_name !== 'default') comments = [];
-		}
-
-		const component_slots = new Set();
-
-		for (const slot_name in nodes) {
-			const state = {
-				...context.state,
-				scope: node.metadata.scopes[slot_name],
-				parent_element: null,
-				component_slots
-			};
-
-			context.visit({ ...node.fragment, nodes: nodes[slot_name] }, state);
-		}
-	},
 	SvelteComponent(node, { state, next, path }) {
 		let expression = state.str.original.substring(
 			/** @type {number} */ (node.expression.start),
 			node.expression.end
 		);
 
-		let difference = 0;
-		/**
-		 * @type {Binding | undefined}
-		 */
-		let last_const_bindings;
-		// we need to migrate $$props and $$restProps by hand to update all the $$props and $$restProps in the expression
-		// we also need to check if any part of the expression if a `{@const}`
-		walk(
-			node.expression,
-			{},
-			{
-				Identifier(id_node, { path, next }) {
-					const binding = state.scope.get(id_node.name);
+		if (state.analysis.uses_props || state.analysis.uses_rest_props) {
+			let difference = 0;
+			// we need to migrate $$props and $$restProps by hand to update all the $$props and $$restProps in the expression
+			walk(
+				node.expression,
+				{},
+				{
+					Identifier(id_node, { path, next }) {
+						const parent = path[path.length - 1];
+						if (id_node.name !== '$$props' && id_node.name !== '$$restProps') return;
 
-					if (
-						binding?.declaration_kind === 'const' &&
-						binding.kind === 'template' &&
-						binding.references[0].path.some(
-							(part) => part.type === 'ConstTag' || part.type === 'LetDirective'
-						)
-					) {
-						if (
-							/** @type {number} */ (binding.node.start) >
-							(last_const_bindings?.node.start ?? -Infinity)
-						) {
-							last_const_bindings = binding;
-						}
+						if (parent.type === 'MemberExpression' && parent.object !== id_node) return;
+
+						const props_name =
+							id_node.name === '$$props' || state.analysis.uses_props
+								? state.names.props
+								: state.names.rest;
+						const props_start =
+							/** @type {number} */ (id_node.start) - /** @type {number} */ (node.expression.start);
+
+						expression =
+							expression.substring(0, props_start + difference) +
+							props_name +
+							expression.substring(props_start + id_node.name.length + difference);
+
+						difference += props_name.length - id_node.name.length;
+						next();
 					}
-
-					const parent = path[path.length - 1];
-					if (id_node.name !== '$$props' && id_node.name !== '$$restProps') return;
-
-					if (parent.type === 'MemberExpression' && parent.object !== id_node) return;
-
-					const props_name =
-						id_node.name === '$$props' || state.analysis.uses_props
-							? state.names.props
-							: state.names.rest;
-					const props_start =
-						/** @type {number} */ (id_node.start) - /** @type {number} */ (node.expression.start);
-
-					expression =
-						expression.substring(0, props_start + difference) +
-						props_name +
-						expression.substring(props_start + id_node.name.length + difference);
-
-					difference += props_name.length - id_node.name.length;
-					next();
 				}
-			}
-		);
+			);
+		}
 
 		if (
 			(node.expression.type !== 'Identifier' && node.expression.type !== 'MemberExpression') ||
@@ -716,85 +647,26 @@ const template = {
 			let current_expression = expression;
 			expression = state.scope.generate('SvelteComponent');
 			let needs_derived = true;
-			if (last_const_bindings) {
-				needs_derived = false;
-				const declaration_idx = last_const_bindings.references[0].path.findIndex(
-					(part) => part.type === 'ConstTag' || part.type === 'LetDirective'
-				);
-
-				const declaration = /**@type {AST.ConstTag | AST.LetDirective}*/ (
-					last_const_bindings.references[0].path[declaration_idx]
-				);
-
-				if (declaration.type === 'ConstTag') {
-					let i = declaration_idx - 1;
-					let block =
-						/**
-						 * @type {AST.IfBlock | AST.EachBlock | AST.KeyBlock | AST.AwaitBlock | AST.SnippetBlock}
-						 */ last_const_bindings.references[0].path[i];
-					while (
-						block.type !== 'IfBlock' &&
-						block.type !== 'EachBlock' &&
-						block.type !== 'KeyBlock' &&
-						block.type !== 'AwaitBlock' &&
-						block.type !== 'SnippetBlock'
-					) {
-						i--;
-						block = last_const_bindings.references[0].path[i];
-					}
-
-					const indent = guess_indent(state.str.original.substring(block.start, block.end));
-					state.str.appendRight(
-						state.str.original.indexOf('}', last_const_bindings.initial?.end) + 1,
-						`\n${indent}{@const ${expression} = ${current_expression}}`
+			for (let i = path.length - 1; i >= 0; i--) {
+				const part = path[i];
+				if (
+					part.type === 'EachBlock' ||
+					part.type === 'AwaitBlock' ||
+					part.type === 'IfBlock' ||
+					part.type === 'KeyBlock' ||
+					part.type === 'SnippetBlock' ||
+					part.type === 'Component'
+				) {
+					const indent = state.str.original.substring(
+						state.str.original.lastIndexOf('\n', node.start) + 1,
+						node.start
 					);
-				} else {
-					let i = declaration_idx - 1;
-					let block =
-						/**
-						 * @type {AST.Component}
-						 */ last_const_bindings.references[0].path[i];
-					while (
-						block.type !== 'Component' &&
-						block.type !== 'RegularElement' &&
-						block.type !== 'SvelteFragment' &&
-						block.type !== 'SvelteElement'
-					) {
-						i--;
-						block = last_const_bindings.references[0].path[i];
-					}
-					const indent = guess_indent(state.str.original.substring(block.start, block.end));
 					state.str.prependLeft(
-						block.fragment.nodes[0].start,
-						`\n${indent}{@const ${expression} = ${current_expression}}`
+						node.start,
+						`{@const ${expression} = ${current_expression}}\n${indent}`
 					);
-				}
-			} else {
-				for (let i = path.length - 1; i >= 0; i--) {
-					const part = path[i];
-					if (part.type === 'EachBlock') {
-						const each_start = state.str.original.indexOf('}', part.start) + 1;
-						const indent = guess_indent(state.str.original.substring(part.start, part.end));
-						state.str.appendRight(
-							each_start,
-							`\n${indent}{@const ${expression} = ${current_expression}}`
-						);
-						needs_derived = false;
-					} else if (part.type === 'AwaitBlock') {
-						let actual_start = state.str.original.indexOf('}', part.start) + 1;
-						if (part.then === path[i + 1]) {
-							actual_start = part.then.nodes[0].start;
-						} else if (part.catch === path[i + 1]) {
-							actual_start = part.catch.nodes[0].start;
-						}
-
-						const indent = guess_indent(state.str.original.substring(part.start, part.end));
-						state.str.appendRight(
-							actual_start,
-							`\n${indent}{@const ${expression} = ${current_expression}}`
-						);
-						needs_derived = false;
-					}
+					needs_derived = false;
+					continue;
 				}
 			}
 			if (needs_derived) {
