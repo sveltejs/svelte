@@ -23,21 +23,21 @@
 
 <Component>
 	<div slot="x" let:comp={stuff}>
-	{@const SvelteComponent_2 = stuff}
+		{@const SvelteComponent_2 = stuff}
 		<SvelteComponent_2 />
 	</div>
 </Component>
 
 <Component>
 	<svelte:fragment slot="x" let:comp={stuff}>
-	{@const SvelteComponent_3 = stuff}
+		{@const SvelteComponent_3 = stuff}
 		<SvelteComponent_3 />
 	</svelte:fragment>
 </Component>
 
 <Component>
 	<svelte:element this={"div"} slot="x" let:comp={stuff}>
-	{@const SvelteComponent_4 = stuff}
+		{@const SvelteComponent_4 = stuff}
 		<SvelteComponent_4 />
 	</svelte:element>
 </Component>
@@ -90,8 +90,8 @@
 {/each}
 
 {#await Promise.resolve()}
-	{@const SvelteComponent_10 = fallback}
 	<Component />
+	{@const SvelteComponent_10 = fallback}
 	<SvelteComponent_10 />
 {:then something}
 	{@const SvelteComponent_11 = something}
