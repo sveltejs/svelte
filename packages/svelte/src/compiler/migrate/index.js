@@ -627,7 +627,8 @@ const template = {
 					part.type === 'IfBlock' ||
 					part.type === 'KeyBlock' ||
 					part.type === 'SnippetBlock' ||
-					part.type === 'Component'
+					part.type === 'Component' ||
+					part.type === 'SvelteComponent'
 				) {
 					const indent = state.str.original.substring(
 						state.str.original.lastIndexOf('\n', node.start) + 1,

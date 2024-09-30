@@ -33,6 +33,36 @@
 	</svelte:element>
 </Component>
 
+<svelte:component this={Component} let:Comp>
+	<svelte:component this={Comp} />
+</svelte:component>
+
+<svelte:component this={Component} let:comp>
+	<svelte:component this={comp} />
+</svelte:component>
+
+<svelte:component this={Component} let:comp={stuff}>
+	<svelte:component this={stuff} />
+</svelte:component>
+
+<svelte:component this={Component}>
+	<div slot="x" let:comp={stuff}>
+		<svelte:component this={stuff} />
+	</div>
+</svelte:component>
+
+<svelte:component this={Component}>
+	<svelte:fragment slot="x" let:comp={stuff}>
+		<svelte:component this={stuff} />
+	</svelte:fragment>
+</svelte:component>
+
+<svelte:component this={Component}>
+	<svelte:element this={"div"} slot="x" let:comp={stuff}>
+		<svelte:component this={stuff} />
+	</svelte:element>
+</svelte:component>
+
 <svelte:component this={Component} />
 <svelte:component this={Component} prop value="" on:click on:click={()=>''} />
 <svelte:component this={Math.random() > .5 ? $$restProps.heads : $$restProps.tail}  prop value="" on:click on:click={()=>''}/>
