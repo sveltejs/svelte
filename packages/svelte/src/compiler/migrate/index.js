@@ -603,42 +603,14 @@ const template = {
 		next();
 	},
 	SvelteComponent(node, { state, next, path }) {
-		let expression = state.str.original.substring(
-			/** @type {number} */ (node.expression.start),
-			node.expression.end
-		);
+		next();
 
-		if (state.analysis.uses_props || state.analysis.uses_rest_props) {
-			let difference = 0;
-			// we need to migrate $$props and $$restProps by hand to update all the $$props and $$restProps in the expression
-			walk(
-				node.expression,
-				{},
-				{
-					Identifier(id_node, { path, next }) {
-						const parent = path[path.length - 1];
-						if (id_node.name !== '$$props' && id_node.name !== '$$restProps') return;
-
-						if (parent.type === 'MemberExpression' && parent.object !== id_node) return;
-
-						const props_name =
-							id_node.name === '$$props' || state.analysis.uses_props
-								? state.names.props
-								: state.names.rest;
-						const props_start =
-							/** @type {number} */ (id_node.start) - /** @type {number} */ (node.expression.start);
-
-						expression =
-							expression.substring(0, props_start + difference) +
-							props_name +
-							expression.substring(props_start + id_node.name.length + difference);
-
-						difference += props_name.length - id_node.name.length;
-						next();
-					}
-				}
-			);
-		}
+		let expression = state.str
+			.snip(
+				/** @type {number} */ (node.expression.start),
+				/** @type {number} */ (node.expression.end)
+			)
+			.toString();
 
 		if (
 			(node.expression.type !== 'Identifier' && node.expression.type !== 'MemberExpression') ||
@@ -687,7 +659,6 @@ const template = {
 		while (!state.str.original.charAt(this_pos - 1).trim()) this_pos--;
 		const end_pos = state.str.original.indexOf('}', node.expression.end) + 1;
 		state.str.remove(this_pos, end_pos);
-		next();
 	},
 	SvelteWindow(node, { state, next }) {
 		handle_events(node, state);
@@ -947,32 +918,13 @@ function get_node_range(source, node) {
 }
 
 /**
- *
- * @param {SvelteNode[]} path
- */
-function is_in_sveltecomponent_expression(path) {
-	for (let i = 0; i < path.length - 1; i++) {
-		const part = path[i];
-		if (part.type === 'SvelteComponent' && part.expression === path[i + 1]) {
-			return true;
-		}
-	}
-}
-
-/**
  * @param {Identifier} node
  * @param {State} state
  * @param {any[]} path
  */
 function handle_identifier(node, state, path) {
 	const parent = path.at(-1);
-	if (
-		(parent?.type === 'MemberExpression' && parent.property === node) ||
-		// we migrate the expression of svelte:component separately because
-		// it might need to be as an expression in a derived
-		is_in_sveltecomponent_expression(path)
-	)
-		return;
+	if (parent?.type === 'MemberExpression' && parent.property === node) return;
 
 	if (state.analysis.uses_props) {
 		if (node.name === '$$props' || node.name === '$$restProps') {
