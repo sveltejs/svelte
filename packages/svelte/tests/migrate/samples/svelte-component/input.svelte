@@ -123,3 +123,77 @@
 {:catch Error}
 	<svelte:component this={Error} />
 {/await}
+
+<Component>
+	{@const stuff = true}
+	<div>
+		<p>
+			<svelte:component this={stuff && Component} />
+		</p>
+	</div>
+</Component>
+
+<svelte:component this={Component}>
+	{@const stuff = true}
+	<div>
+		<p>
+			<svelte:component this={stuff && Component} />
+		</p>
+	</div>
+</svelte:component>
+
+{#each [] as i}
+	{@const stuff = true}
+	<li>
+		<svelte:component this={stuff && Component} />
+	</li>
+{/each}
+
+{#await stuff}
+	{@const stuff = true}
+	<li>
+		<svelte:component this={stuff && Component} />
+	</li>
+{:then x}
+	{@const stuff = true}
+	<li>
+		<svelte:component this={stuff && Component} />
+	</li>
+{:catch e}
+	{@const stuff = true}
+	<li>
+		<svelte:component this={stuff && Component} />
+	</li>
+{/await}
+
+{#await stuff then x}
+	{@const stuff = true}
+	<li>
+		<svelte:component this={stuff && Component} />
+	</li>
+{:catch e}
+	{@const stuff = true}
+	<li>
+		<svelte:component this={stuff && Component} />
+	</li>
+{/await}
+
+{#if true}
+	{@const stuff = true}
+	<li>
+		<svelte:component this={stuff && Component} />
+	</li>
+{/if}
+
+{#snippet test()}
+	{@const stuff = true}
+	<li>
+		<svelte:component this={stuff && Component} />
+	</li>
+{/snippet}
+
+<Component>
+	<Nested>
+		<svelte:component this={stuff && Component} />
+	</Nested>
+</Component>

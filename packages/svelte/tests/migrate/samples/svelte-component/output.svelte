@@ -22,22 +22,22 @@
 </Component>
 
 <Component>
+	{@const SvelteComponent_2 = stuff}
 	<div slot="x" let:comp={stuff}>
-		{@const SvelteComponent_2 = stuff}
 		<SvelteComponent_2 />
 	</div>
 </Component>
 
 <Component>
+	{@const SvelteComponent_3 = stuff}
 	<svelte:fragment slot="x" let:comp={stuff}>
-		{@const SvelteComponent_3 = stuff}
 		<SvelteComponent_3 />
 	</svelte:fragment>
 </Component>
 
 <Component>
+	{@const SvelteComponent_4 = stuff}
 	<svelte:element this={"div"} slot="x" let:comp={stuff}>
-		{@const SvelteComponent_4 = stuff}
 		<SvelteComponent_4 />
 	</svelte:element>
 </Component>
@@ -57,22 +57,22 @@
 </Component>
 
 <Component>
+	{@const SvelteComponent_7 = stuff}
 	<div slot="x" let:comp={stuff}>
-		{@const SvelteComponent_7 = stuff}
 		<SvelteComponent_7 />
 	</div>
 </Component>
 
 <Component>
+	{@const SvelteComponent_8 = stuff}
 	<svelte:fragment slot="x" let:comp={stuff}>
-		{@const SvelteComponent_8 = stuff}
 		<SvelteComponent_8 />
 	</svelte:fragment>
 </Component>
 
 <Component>
+	{@const SvelteComponent_9 = stuff}
 	<svelte:element this={"div"} slot="x" let:comp={stuff}>
-		{@const SvelteComponent_9 = stuff}
 		<SvelteComponent_9 />
 	</svelte:element>
 </Component>
@@ -141,3 +141,88 @@
 {:catch Error}
 	<Error />
 {/await}
+
+<Component>
+	{@const stuff = true}
+	{@const SvelteComponent_18 = stuff && Component}
+	<div>
+		<p>
+			<SvelteComponent_18 />
+		</p>
+	</div>
+</Component>
+
+<Component>
+	{@const stuff = true}
+	{@const SvelteComponent_19 = stuff && Component}
+	<div>
+		<p>
+			<SvelteComponent_19 />
+		</p>
+	</div>
+</Component>
+
+{#each [] as i}
+	{@const stuff = true}
+	{@const SvelteComponent_20 = stuff && Component}
+	<li>
+		<SvelteComponent_20 />
+	</li>
+{/each}
+
+{#await stuff}
+	{@const stuff = true}
+	{@const SvelteComponent_21 = stuff && Component}
+	<li>
+		<SvelteComponent_21 />
+	</li>
+{:then x}
+	{@const stuff = true}
+	{@const SvelteComponent_22 = stuff && Component}
+	<li>
+		<SvelteComponent_22 />
+	</li>
+{:catch e}
+	{@const stuff = true}
+	{@const SvelteComponent_23 = stuff && Component}
+	<li>
+		<SvelteComponent_23 />
+	</li>
+{/await}
+
+{#await stuff then x}
+	{@const stuff = true}
+	{@const SvelteComponent_24 = stuff && Component}
+	<li>
+		<SvelteComponent_24 />
+	</li>
+{:catch e}
+	{@const stuff = true}
+	{@const SvelteComponent_25 = stuff && Component}
+	<li>
+		<SvelteComponent_25 />
+	</li>
+{/await}
+
+{#if true}
+	{@const stuff = true}
+	{@const SvelteComponent_26 = stuff && Component}
+	<li>
+		<SvelteComponent_26 />
+	</li>
+{/if}
+
+{#snippet test()}
+	{@const stuff = true}
+	{@const SvelteComponent_27 = stuff && Component}
+	<li>
+		<SvelteComponent_27 />
+	</li>
+{/snippet}
+
+<Component>
+	<Nested>
+		{@const SvelteComponent_28 = stuff && Component}
+		<SvelteComponent_28 />
+	</Nested>
+</Component>

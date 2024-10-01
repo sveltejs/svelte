@@ -625,21 +625,30 @@ const template = {
 					part.type === 'EachBlock' ||
 					part.type === 'AwaitBlock' ||
 					part.type === 'IfBlock' ||
-					part.type === 'KeyBlock' ||
 					part.type === 'SnippetBlock' ||
 					part.type === 'Component' ||
 					part.type === 'SvelteComponent'
 				) {
+					let position = node.start;
+					if (i !== path.length - 1) {
+						for (let modifier = 1; modifier < path.length - i; modifier++) {
+							const path_part = path[i + modifier];
+							if ('start' in path_part) {
+								position = /** @type {number} */ (path_part.start);
+								break;
+							}
+						}
+					}
 					const indent = state.str.original.substring(
-						state.str.original.lastIndexOf('\n', node.start) + 1,
-						node.start
+						state.str.original.lastIndexOf('\n', position) + 1,
+						position
 					);
 					state.str.prependLeft(
-						node.start,
+						position,
 						`{@const ${expression} = ${current_expression}}\n${indent}`
 					);
 					needs_derived = false;
-					continue;
+					break;
 				}
 			}
 			if (needs_derived) {
