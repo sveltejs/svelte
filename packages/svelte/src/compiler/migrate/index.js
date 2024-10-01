@@ -673,7 +673,7 @@ const template = {
 		handle_events(node, state);
 		next();
 	},
-	SlotElement(node, { state, next }) {
+	SlotElement(node, { state, next, visit }) {
 		if (state.analysis.custom_element) return;
 		let name = 'children';
 		let slot_name = 'default';
@@ -688,13 +688,22 @@ const template = {
 				} else {
 					const attr_value =
 						attr.value === true || Array.isArray(attr.value) ? attr.value : [attr.value];
-					const value =
-						attr_value !== true
-							? state.str.original.substring(
-									attr_value[0].start,
-									attr_value[attr_value.length - 1].end
-								)
-							: 'true';
+					let value = 'true';
+					if (attr_value !== true) {
+						const first = attr_value[0];
+						const last = attr_value[attr_value.length - 1];
+						for (const attr of attr_value) {
+							visit(attr);
+						}
+						value = state.str
+							.snip(
+								first.type === 'Text'
+									? first.start - 1
+									: /** @type {number} */ (first.expression.start),
+								last.type === 'Text' ? last.end + 1 : /** @type {number} */ (last.expression.end)
+							)
+							.toString();
+					}
 					slot_props += value === attr.name ? `${value}, ` : `${attr.name}: ${value}, `;
 				}
 			}

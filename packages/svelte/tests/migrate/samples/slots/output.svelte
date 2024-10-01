@@ -26,3 +26,5 @@
 {#if dashed_name}foo{/if}
 
 {@render dashed_name?.()}
+
+{@render children?.({ header: "something", title: my_title, id, })}

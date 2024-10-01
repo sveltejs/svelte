@@ -16,3 +16,5 @@
 {#if $$slots['dashed-name']}foo{/if}
 
 <slot name="dashed-name" />
+
+<slot header="something" title={my_title} {id} />
