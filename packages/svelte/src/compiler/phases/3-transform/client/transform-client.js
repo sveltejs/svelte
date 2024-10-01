@@ -279,7 +279,7 @@ export function client_component(analysis, options) {
 		if (binding?.kind === 'prop' || binding?.kind === 'bindable_prop') {
 			return [
 				getter,
-				b.set(alias ?? name, [b.stmt(b.call(name, b.call('$.proxy', b.id('$$value'))))])
+				b.set(alias ?? name, [b.stmt(b.call(name, b.id('$$value')))])
 			];
 		}
 
