@@ -1,4 +1,4 @@
-/** @import { VariableDeclarator, Node, Identifier } from 'estree' */
+/** @import { VariableDeclarator, Node, Identifier, AssignmentExpression, LabeledStatement } from 'estree' */
 /** @import { Visitors } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
 /** @import { Scope, ScopeRoot } from '../phases/scope.js' */
@@ -88,7 +88,8 @@ export function migrate(source) {
 			},
 			legacy_imports: new Set(),
 			script_insertions: new Set(),
-			derived_components: new Map()
+			derived_components: new Map(),
+			derived_labeled_statements: new Set()
 		};
 
 		if (parsed.module) {
@@ -100,6 +101,13 @@ export function migrate(source) {
 
 		if (parsed.instance) {
 			walk(parsed.instance.content, state, instance_script);
+		}
+
+		for (let labeled_to_remove of state.derived_labeled_statements) {
+			state.str.remove(
+				/** @type {number} */ (labeled_to_remove.start),
+				/** @type {number} */ (labeled_to_remove.end)
+			);
 		}
 
 		state = { ...state, scope: analysis.template.scope };
@@ -289,7 +297,8 @@ export function migrate(source) {
  * 	names: Record<string, string>;
  * 	legacy_imports: Set<string>;
  * 	script_insertions: Set<string>;
- *  derived_components: Map<string, string>
+ *  derived_components: Map<string, string>,
+ * 	derived_labeled_statements: Set<LabeledStatement>
  * }} State
  */
 
@@ -337,7 +346,7 @@ const instance_script = {
 			state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
 		}
 	},
-	VariableDeclaration(node, { state, path }) {
+	VariableDeclaration(node, { state, path, visit }) {
 		if (state.scope !== state.analysis.instance.scope) {
 			return;
 		}
@@ -457,10 +466,80 @@ const instance_script = {
 				state.str.prependLeft(start, '$state(');
 				state.str.appendRight(end, ')');
 			} else {
-				state.str.prependLeft(
-					/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
-					' = $state()'
+				/**
+				 * @type {AssignmentExpression | undefined}
+				 */
+				let assignment_in_labeled;
+				/**
+				 * @type {LabeledStatement | undefined}
+				 */
+				let labeled_statement;
+
+				const possible_derived = bindings.every((binding) =>
+					binding.references.every((reference) => {
+						const declaration_idx = reference.path.findIndex(
+							(el) => el.type === 'VariableDeclaration'
+						);
+						const assignment_idx = reference.path.findIndex(
+							(el) => el.type === 'AssignmentExpression'
+						);
+						const update_idx = reference.path.findIndex((el) => el.type === 'UpdateExpression');
+						const labeled_idx = reference.path.findIndex(
+							(el) => el.type === 'LabeledStatement' && el.label.name === '$'
+						);
+
+						if (assignment_idx !== -1 && labeled_idx !== -1) {
+							if (assignment_in_labeled) return false;
+							assignment_in_labeled = /** @type {AssignmentExpression} */ (
+								reference.path[assignment_idx]
+							);
+							labeled_statement = /** @type {LabeledStatement} */ (reference.path[labeled_idx]);
+						}
+
+						return (
+							update_idx === -1 &&
+							(declaration_idx !== -1 ||
+								(labeled_idx !== -1 && assignment_idx !== -1) ||
+								(labeled_idx === -1 && assignment_idx === -1))
+						);
+					})
 				);
+
+				const labeled_has_single_assignment =
+					labeled_statement?.body.type === 'BlockStatement' &&
+					labeled_statement.body.body.length === 1;
+
+				if (
+					possible_derived &&
+					assignment_in_labeled &&
+					labeled_statement &&
+					labeled_has_single_assignment
+				) {
+					state.str.appendRight(
+						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+						' = $derived('
+					);
+					visit(assignment_in_labeled.right);
+					state.str.appendRight(
+						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+						state.str
+							.snip(
+								/** @type {number} */ (assignment_in_labeled.right.start),
+								/** @type {number} */ (assignment_in_labeled.right.end)
+							)
+							.toString()
+					);
+					state.str.appendRight(
+						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+						')'
+					);
+					state.derived_labeled_statements.add(labeled_statement);
+				} else {
+					state.str.prependLeft(
+						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+						' = $state()'
+					);
+				}
 			}
 		}
 
@@ -491,6 +570,7 @@ const instance_script = {
 		if (state.analysis.runes) return;
 		if (path.length > 1) return;
 		if (node.label.name !== '$') return;
+		if (state.derived_labeled_statements.has(node)) return;
 
 		next();
 
