@@ -189,7 +189,7 @@ export function migrate(source) {
 					}
 				} else {
 					if (analysis.uses_props || analysis.uses_rest_props) {
-						type = `{Record<string, any>}`;
+						type = `Record<string, any>`;
 					} else {
 						type = `{${state.props
 							.map((prop) => {
