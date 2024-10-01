@@ -282,7 +282,7 @@ export function migrate(source) {
  *  str: MagicString;
  *  analysis: ComponentAnalysis;
  *  indent: string;
- *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string }>;
+ *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string; needs_refine_type?: boolean; }>;
  *  props_insertion_point: number;
  *  has_props_rune: boolean;
  *  end: number;
@@ -722,6 +722,9 @@ const template = {
 				slot_name,
 				type: `import('svelte').${slot_props ? 'Snippet<[any]>' : 'Snippet'}`
 			});
+		} else if (existing_prop.needs_refine_type) {
+			existing_prop.type = `import('svelte').${slot_props ? 'Snippet<[any]>' : 'Snippet'}`;
+			existing_prop.needs_refine_type = false;
 		}
 
 		if (node.fragment.nodes.length > 0) {
@@ -949,10 +952,38 @@ function handle_identifier(node, state, path) {
 		);
 	} else if (node.name === '$$slots' && state.analysis.uses_slots) {
 		if (parent?.type === 'MemberExpression') {
-			state.str.update(/** @type {number} */ (node.start), parent.property.start, '');
-			if (parent.property.name === 'default') {
-				state.str.update(parent.property.start, parent.property.end, 'children');
+			if (state.analysis.custom_element) return;
+
+			let name = parent.property.type === 'Literal' ? parent.property.value : parent.property.name;
+			let slot_name = name;
+			const existing_prop = state.props.find((prop) => prop.slot_name === name);
+			if (existing_prop) {
+				name = existing_prop.local;
+			} else if (name !== 'default') {
+				name = state.scope.generate(name);
 			}
+
+			name = name === 'default' ? 'children' : name;
+
+			if (!existing_prop) {
+				state.props.push({
+					local: name,
+					exported: name,
+					init: '',
+					bindable: false,
+					optional: true,
+					slot_name,
+					// if it's the first time we encounter this slot
+					// we start with any and delegate to when the slot
+					// is actually rendered (it might not happen in that case)
+					// any is still a safe bet
+					type: `import('svelte').Snippet<[any]>}`,
+					needs_refine_type: true
+				});
+			}
+
+			state.str.update(/** @type {number} */ (node.start), parent.property.start, '');
+			state.str.update(parent.property.start, parent.end, name);
 		}
 		// else passed as identifier, we don't know what to do here, so let it error
 	} else if (

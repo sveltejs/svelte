@@ -21,4 +21,8 @@
 
 {#if children}foo{/if}
 
+{#if children}foo{/if}
+
+{#if dashed_name}foo{/if}
+
 {@render dashed_name?.()}

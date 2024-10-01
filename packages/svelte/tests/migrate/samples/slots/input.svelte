@@ -11,4 +11,8 @@
 
 {#if $$slots.default}foo{/if}
 
+{#if $$slots['default']}foo{/if}
+
+{#if $$slots['dashed-name']}foo{/if}
+
 <slot name="dashed-name" />
