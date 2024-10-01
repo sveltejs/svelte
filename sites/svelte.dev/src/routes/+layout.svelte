@@ -2,6 +2,7 @@
 	import '@sveltejs/site-kit/styles/index.css';
 
 	import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
+	import { inject } from '@vercel/analytics'
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { Icon, Shell, Banners } from '@sveltejs/site-kit/components';
@@ -9,6 +10,7 @@
 	import { Search, SearchBox } from '@sveltejs/site-kit/search';
 
 	injectSpeedInsights();
+	inject();
 
 	export let data;
 
