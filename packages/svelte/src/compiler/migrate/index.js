@@ -103,13 +103,6 @@ export function migrate(source) {
 			walk(parsed.instance.content, state, instance_script);
 		}
 
-		for (let labeled_to_remove of state.derived_labeled_statements) {
-			state.str.remove(
-				/** @type {number} */ (labeled_to_remove.start),
-				/** @type {number} */ (labeled_to_remove.end)
-			);
-		}
-
 		state = { ...state, scope: analysis.template.scope };
 		walk(parsed.fragment, state, template);
 
@@ -477,30 +470,24 @@ const instance_script = {
 
 				const possible_derived = bindings.every((binding) =>
 					binding.references.every((reference) => {
-						const declaration_idx = reference.path.findIndex(
-							(el) => el.type === 'VariableDeclaration'
-						);
-						const assignment_idx = reference.path.findIndex(
-							(el) => el.type === 'AssignmentExpression'
-						);
-						const update_idx = reference.path.findIndex((el) => el.type === 'UpdateExpression');
-						const labeled_idx = reference.path.findIndex(
+						const declaration_idx = reference.path.find((el) => el.type === 'VariableDeclaration');
+						const assignment_idx = reference.path.find((el) => el.type === 'AssignmentExpression');
+						const update_idx = reference.path.find((el) => el.type === 'UpdateExpression');
+						const labeled_idx = reference.path.find(
 							(el) => el.type === 'LabeledStatement' && el.label.name === '$'
 						);
 
-						if (assignment_idx !== -1 && labeled_idx !== -1) {
+						if (assignment_idx && labeled_idx) {
 							if (assignment_in_labeled) return false;
-							assignment_in_labeled = /** @type {AssignmentExpression} */ (
-								reference.path[assignment_idx]
-							);
-							labeled_statement = /** @type {LabeledStatement} */ (reference.path[labeled_idx]);
+							assignment_in_labeled = /** @type {AssignmentExpression} */ (assignment_idx);
+							labeled_statement = /** @type {LabeledStatement} */ (labeled_idx);
 						}
 
 						return (
-							update_idx === -1 &&
-							(declaration_idx !== -1 ||
-								(labeled_idx !== -1 && assignment_idx !== -1) ||
-								(labeled_idx === -1 && assignment_idx === -1))
+							!update_idx &&
+							(declaration_idx ||
+								(labeled_idx && assignment_idx) ||
+								(!labeled_idx && !assignment_idx))
 						);
 					})
 				);
@@ -528,6 +515,10 @@ const instance_script = {
 								/** @type {number} */ (assignment_in_labeled.right.end)
 							)
 							.toString()
+					);
+					state.str.remove(
+						/** @type {number} */ (labeled_statement.start),
+						/** @type {number} */ (labeled_statement.end)
 					);
 					state.str.appendRight(
 						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
