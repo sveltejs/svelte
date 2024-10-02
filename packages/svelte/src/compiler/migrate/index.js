@@ -1,4 +1,4 @@
-/** @import { VariableDeclarator, Node, Identifier, AssignmentExpression, LabeledStatement } from 'estree' */
+/** @import { VariableDeclarator, Node, Identifier, AssignmentExpression, LabeledStatement, ExpressionStatement } from 'estree' */
 /** @import { Visitors } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
 /** @import { Scope, ScopeRoot } from '../phases/scope.js' */
@@ -10,7 +10,7 @@ import { regex_valid_component_name } from '../phases/1-parse/state/element.js';
 import { analyze_component } from '../phases/2-analyze/index.js';
 import { get_rune } from '../phases/scope.js';
 import { reset, reset_warning_filter } from '../state.js';
-import { extract_identifiers } from '../utils/ast.js';
+import { extract_identifiers, extract_all_identifiers_from_expression } from '../utils/ast.js';
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
 import { determine_slot } from '../utils/slot.js';
 import { validate_component_options } from '../validate-options.js';
@@ -493,16 +493,33 @@ const instance_script = {
 				);
 
 				const labeled_has_single_assignment =
-					(labeled_statement?.body.type === 'BlockStatement' &&
-						labeled_statement.body.body.length === 1) ||
-					(labeled_statement?.body.type === 'ExpressionStatement' &&
-						labeled_statement.body.expression.type === 'AssignmentExpression');
+					labeled_statement?.body.type === 'BlockStatement' &&
+					labeled_statement.body.body.length === 1;
+
+				const is_expression_assignment =
+					labeled_statement?.body.type === 'ExpressionStatement' &&
+					labeled_statement.body.expression.type === 'AssignmentExpression';
+
+				let should_be_state = false;
+
+				if (is_expression_assignment) {
+					const body = /**@type {ExpressionStatement}*/ (labeled_statement?.body);
+					const expression = /**@type {AssignmentExpression}*/ (body.expression);
+					const [, ids] = extract_all_identifiers_from_expression(expression.right);
+					if (ids.length === 0) {
+						should_be_state = true;
+						state.derived_labeled_statements.add(
+							/** @type {LabeledStatement} */ (labeled_statement)
+						);
+					}
+				}
 
 				if (
+					!should_be_state &&
 					possible_derived &&
 					assignment_in_labeled &&
 					labeled_statement &&
-					labeled_has_single_assignment
+					(labeled_has_single_assignment || is_expression_assignment)
 				) {
 					state.str.appendRight(
 						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
@@ -530,7 +547,30 @@ const instance_script = {
 				} else {
 					state.str.prependLeft(
 						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
-						' = $state()'
+						' = $state('
+					);
+					if (should_be_state) {
+						state.str.appendRight(
+							/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+							state.str
+								.snip(
+									/** @type {number} */ (
+										/** @type {AssignmentExpression} */ (assignment_in_labeled).right.start
+									),
+									/** @type {number} */ (
+										/** @type {AssignmentExpression} */ (assignment_in_labeled).right.end
+									)
+								)
+								.toString()
+						);
+						state.str.remove(
+							/** @type {number} */ (/** @type {LabeledStatement} */ (labeled_statement).start),
+							/** @type {number} */ (/** @type {LabeledStatement} */ (labeled_statement).end)
+						);
+					}
+					state.str.appendRight(
+						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+						')'
 					);
 				}
 			}
