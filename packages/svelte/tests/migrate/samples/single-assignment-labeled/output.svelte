@@ -40,6 +40,9 @@
 		evenmore = count * 64;
 		evenmore_doubled = evenmore * 2;
 	});
+
+	let almost_infinity = $derived(count * 128);
+	
 </script>
 
 <button onclick={()=>{

@@ -493,8 +493,10 @@ const instance_script = {
 				);
 
 				const labeled_has_single_assignment =
-					labeled_statement?.body.type === 'BlockStatement' &&
-					labeled_statement.body.body.length === 1;
+					(labeled_statement?.body.type === 'BlockStatement' &&
+						labeled_statement.body.body.length === 1) ||
+					(labeled_statement?.body.type === 'ExpressionStatement' &&
+						labeled_statement.body.expression.type === 'AssignmentExpression');
 
 				if (
 					possible_derived &&

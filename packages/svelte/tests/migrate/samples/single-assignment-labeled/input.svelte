@@ -40,6 +40,9 @@
 		evenmore = count * 64;
 		evenmore_doubled = evenmore * 2;
 	}
+
+	let almost_infinity;
+	$: almost_infinity = count * 128;
 </script>
 
 <button on:click={()=>{
