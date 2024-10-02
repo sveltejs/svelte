@@ -46,8 +46,6 @@
 
 	let should_be_state;
 	$: should_be_state = 42;
-
-	$: should_be_state_too = 42;
 </script>
 
 <button on:click={()=>{

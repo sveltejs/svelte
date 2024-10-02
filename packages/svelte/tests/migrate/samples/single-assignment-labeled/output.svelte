@@ -46,8 +46,6 @@
 
 	let should_be_state = $state(42);
 	
-
-	let should_be_state_too = $derived(42);
 </script>
 
 <button onclick={()=>{
