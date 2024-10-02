@@ -236,7 +236,9 @@ export function migrate(source) {
 				dependencies.some(
 					(dep) =>
 						!ids.includes(dep) &&
-						/** @type {number} */ (dep.node.start) > /** @type {number} */ (node.start)
+						(dep.kind === 'prop' || dep.kind === 'bindable_prop'
+							? state.props_insertion_point
+							: /** @type {number} */ (dep.node.start)) > /** @type {number} */ (node.start)
 				)
 			) {
 				needs_reordering = true;
