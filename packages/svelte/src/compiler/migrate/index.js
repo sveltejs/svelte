@@ -741,11 +741,15 @@ const template = {
 			state.str.update(
 				node.start,
 				node.fragment.nodes[0].start,
-				`{#if ${name}}{@render ${name}(${slot_props})}{:else}`
+				`{#if ${name}}{@render ${state.analysis.uses_props ? `${state.names.props}.` : ''}${name}(${slot_props})}{:else}`
 			);
 			state.str.update(node.fragment.nodes[node.fragment.nodes.length - 1].end, node.end, '{/if}');
 		} else {
-			state.str.update(node.start, node.end, `{@render ${name}?.(${slot_props})}`);
+			state.str.update(
+				node.start,
+				node.end,
+				`{@render ${state.analysis.uses_props ? `${state.names.props}.` : ''}${name}?.(${slot_props})}`
+			);
 		}
 	},
 	Comment(node, { state }) {
@@ -939,7 +943,9 @@ function handle_identifier(node, state, path) {
 	const parent = path.at(-1);
 	if (parent?.type === 'MemberExpression' && parent.property === node) return;
 
-	if (state.analysis.uses_props) {
+	console.log(node);
+
+	if (state.analysis.uses_props && node.name !== '$$slots') {
 		if (node.name === '$$props' || node.name === '$$restProps') {
 			// not 100% correct for $$restProps but it'll do
 			state.str.update(
@@ -991,7 +997,11 @@ function handle_identifier(node, state, path) {
 				});
 			}
 
-			state.str.update(/** @type {number} */ (node.start), parent.property.start, '');
+			state.str.update(
+				/** @type {number} */ (node.start),
+				parent.property.start,
+				state.analysis.uses_props ? `${state.names.props}.` : ''
+			);
 			state.str.update(parent.property.start, parent.end, name);
 		}
 		// else passed as identifier, we don't know what to do here, so let it error
