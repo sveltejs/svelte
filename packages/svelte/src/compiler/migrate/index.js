@@ -943,8 +943,6 @@ function handle_identifier(node, state, path) {
 	const parent = path.at(-1);
 	if (parent?.type === 'MemberExpression' && parent.property === node) return;
 
-	console.log(node);
-
 	if (state.analysis.uses_props && node.name !== '$$slots') {
 		if (node.name === '$$props' || node.name === '$$restProps') {
 			// not 100% correct for $$restProps but it'll do
