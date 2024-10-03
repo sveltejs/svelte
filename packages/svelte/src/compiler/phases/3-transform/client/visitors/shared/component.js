@@ -45,9 +45,7 @@ export function build_component(node, component_name, context, anchor = context.
 	/** @type {Identifier | MemberExpression | null} */
 	let bind_this = null;
 
-	/**
-	 * @type {ExpressionStatement[]}
-	 */
+	/** @type {ExpressionStatement[]} */
 	const binding_initializers = [];
 
 	/**
@@ -215,6 +213,7 @@ export function build_component(node, component_name, context, anchor = context.
 
 	/** @type {Statement[]} */
 	const snippet_declarations = [];
+
 	/** @type {import('estree').Property[]} */
 	const serialized_slots = [];
 

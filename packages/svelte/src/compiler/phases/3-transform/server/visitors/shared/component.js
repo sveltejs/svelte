@@ -59,6 +59,7 @@ export function build_inline_component(node, expression, context) {
 			props_and_spreads.push(props);
 		}
 	}
+
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
 			if (!slot_scope_applies_to_itself) {
@@ -101,6 +102,7 @@ export function build_inline_component(node, expression, context) {
 
 	/** @type {Statement[]} */
 	const snippet_declarations = [];
+
 	/** @type {Property[]} */
 	const serialized_slots = [];
 
