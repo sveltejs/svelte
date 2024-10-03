@@ -1846,6 +1846,7 @@ export interface SvelteHTMLElements {
 	samp: HTMLAttributes<HTMLElement>;
 	slot: HTMLSlotAttributes;
 	script: HTMLScriptAttributes;
+	search: HTMLAttributes<HTMLElement>;
 	section: HTMLAttributes<HTMLElement>;
 	select: HTMLSelectAttributes;
 	small: HTMLAttributes<HTMLElement>;
