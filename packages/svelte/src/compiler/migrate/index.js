@@ -14,6 +14,7 @@ import { extract_identifiers } from '../utils/ast.js';
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
 import { determine_slot } from '../utils/slot.js';
 import { validate_component_options } from '../validate-options.js';
+import { is_svg, is_void } from '../../utils.js';
 
 const regex_style_tags = /(<style[^>]+>)([\S\s]*?)(<\/style>)/g;
 const style_placeholder = '/*$$__STYLE_CONTENT__$$*/';
@@ -580,6 +581,15 @@ const template = {
 	},
 	RegularElement(node, { state, next }) {
 		handle_events(node, state);
+		// Strip off any namespace from the beginning of the node name.
+		const node_name = node.name.replace(/[a-zA-Z-]*:/g, '');
+
+		if (state.analysis.source[node.end - 2] === '/' && !is_void(node_name) && !is_svg(node_name)) {
+			let trimmed_position = node.end - 2;
+			while (state.str.original.charAt(trimmed_position - 1) === ' ') trimmed_position--;
+			state.str.remove(trimmed_position, node.end - 1);
+			state.str.appendRight(node.end, `</${node.name}>`);
+		}
 		next();
 	},
 	SvelteElement(node, { state, next }) {
