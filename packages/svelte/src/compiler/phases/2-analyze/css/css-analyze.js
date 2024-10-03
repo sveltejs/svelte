@@ -124,7 +124,7 @@ const css_visitors = {
 			parent.children[0] === node &&
 			context.path.at(-3)?.type !== 'PseudoClassSelector'
 		) {
-			e.css_selector_invalid(node.start); // only highlight the combinator
+			e.css_selector_invalid(node.combinator);
 		}
 
 		node.metadata.is_global = node.selectors.length >= 1 && is_global(node);
