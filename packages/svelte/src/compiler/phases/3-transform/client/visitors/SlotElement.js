@@ -23,7 +23,6 @@ export function SlotElement(node, context) {
 
 	let is_default = true;
 
-	/** @type {Literal} */
 	let name = b.literal('default');
 
 	for (const attribute of node.attributes) {
