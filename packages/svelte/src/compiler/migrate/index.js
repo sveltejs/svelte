@@ -273,7 +273,7 @@ export function migrate(source) {
 		if (state.props.length > 0 && state.analysis.accessors) {
 			str.appendRight(
 				insertion_point,
-				`\n${indent}export {${state.props.reduce((acc, prop) => (prop.slot_name ? acc : `${acc}\n${indent}\t${prop.local},`), '')}\n${indent}}\n`
+				`\n${indent}export {${state.props.reduce((acc, prop) => (prop.slot_name || prop.type_only ? acc : `${acc}\n${indent}\t${prop.local},`), '')}\n${indent}}\n`
 			);
 		}
 
