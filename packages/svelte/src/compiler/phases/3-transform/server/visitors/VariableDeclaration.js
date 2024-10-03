@@ -27,7 +27,7 @@ export function VariableDeclaration(node, context) {
 			if (rune === '$props') {
 				let has_rest = false;
 				// remove $bindable() from props declaration
-				const id = walk(declarator.id, null, {
+				let id = walk(declarator.id, null, {
 					RestElement(node, context) {
 						if (context.path.at(-1) === declarator.id) {
 							has_rest = true;
@@ -45,8 +45,8 @@ export function VariableDeclaration(node, context) {
 						}
 					}
 				});
-				// If a rest pattern is used, we need to ensure we don't expose $$slots or $$events
 				if (id.type === 'ObjectPattern' && has_rest) {
+					// If a rest pattern is used within an object pattern, we need to ensure we don't expose $$slots or $$events
 					id.properties.splice(
 						id.properties.length - 1,
 						0,
@@ -54,6 +54,14 @@ export function VariableDeclaration(node, context) {
 						b.prop('init', b.id('$$slots'), b.id('$$slots')),
 						b.prop('init', b.id('$$events'), b.id('$$events'))
 					);
+				} else if (id.type === 'Identifier') {
+					// If $props is referenced as an identifier, we need to ensure we don't expose $$slots or $$events as properties
+					// on the identifier reference
+					id = b.object_pattern([
+						b.prop('init', b.id('$$slots'), b.id('$$slots')),
+						b.prop('init', b.id('$$events'), b.id('$$events')),
+						b.rest(b.id(id.name))
+					]);
 				}
 				declarations.push(
 					b.declarator(/** @type {Pattern} */ (context.visit(id)), b.id('$$props'))
