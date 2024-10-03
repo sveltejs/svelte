@@ -37,8 +37,8 @@ function run_tsc(line) {
 	try {
 		if (line.fn === 'parse') {
 		} else {
-			const file = ts.createSourceFile('anon.ts', line.source, ts.ScriptTarget.ESNext);
-			console.log(file)
+			// const file = ts.createSourceFile('anon.ts', line.source, ts.ScriptTarget.ESNext);
+			// console.log(file)
 		}
 	} catch (_) {  }
 }
@@ -54,8 +54,8 @@ for (const line of lines) {
 	const acorn_end = performance.now();
 
 	for (let i = 0; i < 1000; i++) {
-run_tsc(line)
-		// swc.parse_expression_at(line.source, line.index, line.typescript).Expr;
+// run_tsc(line)
+		swc.parse_expression_at(line.source, line.index, line.typescript).Expr;
 	}
 	const swc_end = performance.now();
 
@@ -67,7 +67,7 @@ run_tsc(line)
 	const acorn_t = acorn_end - acorn_start;
 	const swc_t = swc_end - acorn_end;
 	const oxc_t = oxc_end - swc_end;
-	console.log(`${line.source.length.toString().padStart(5, ' ')} - TSC: ${Math.round(acorn_t / swc_t * 100)}%, OXC: ${Math.round(acorn_t / oxc_t * 100)}%`);
+	console.log(`${line.source.length.toString().padStart(5, ' ')} - SWC: ${Math.round(acorn_t / swc_t * 100)}%, OXC: ${Math.round(acorn_t / oxc_t * 100)}%`);
 }
 
 

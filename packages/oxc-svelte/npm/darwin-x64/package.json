@@ -1,0 +1,18 @@
+{
+  "name": "oxc-svelte-darwin-x64",
+  "version": "0.0.0",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "main": "oxc-svelte.darwin-x64.node",
+  "files": [
+    "oxc-svelte.darwin-x64.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  }
+}

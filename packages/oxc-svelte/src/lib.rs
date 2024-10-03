@@ -1,42 +1,15 @@
-use gloo_utils::format::JsValueSerdeExt;
+#![deny(clippy::all)]
+
+#[macro_use]
+extern crate napi_derive;
+
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
-extern "C" {
-	#[wasm_bindgen(js_namespace = console)]
-	fn log(s: &str);
-}
-
-macro_rules! console_log {
-	// Note that this is using the `log` function imported above during
-	// `bare_bones`
-	($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
-}
-
-#[wasm_bindgen]
-pub fn parse_expression_at(source: js_sys::JsString, index: usize, typescript: bool) -> String {
-	// We need to slice the JS string at the correct byte position given the weird utf-16 encoding javascript does
-	let mut byte_position = 0usize;
-	let mut i = 0usize;
-	while i < index {
-		let char = source.char_code_at(i as u32) as u16;
-		if char <= 0x7f {
-			byte_position += 1;
-		} else if char <= 0x7ff {
-			byte_position += 2;
-		} else if (0xD800..=0xDBFF).contains(&char) {
-			byte_position += 4;
-			i += 1;
-		} else {
-			byte_position += 3;
-		}
-		i += 1;
-	}
-
-	let source = source.as_string().expect("Invalid UTF-16 string");
+#[napi(js_name = "parse_expression_at")]
+pub fn parse_expression_at(source: String, index: u32, typescript: bool) -> String {
+	let byte_position = index;
 
 	let allocator = Allocator::default();
 	let source_type = if typescript {
@@ -44,11 +17,46 @@ pub fn parse_expression_at(source: js_sys::JsString, index: usize, typescript: b
 	} else {
 		SourceType::mjs()
 	};
-	let source_text = source[byte_position..].to_string();
+	let source_text = source[(byte_position as usize)..].to_string();
 
 	let ret = Parser::new(&allocator, &source_text, source_type)
 		.svelte_parse_expression()
 		.unwrap();
 	serde_json::to_string(&ret.0).unwrap()
-	// JsValue::from_serde(&ret.0).unwrap()
+}
+
+#[napi(js_name = "parse_pattern_at")]
+pub fn parse_pattern_at(
+	source: String,
+	index: u32,
+	typescript: bool,
+	allow_type_annotation: bool,
+) -> String {
+	let byte_position = index;
+
+	let allocator = Allocator::default();
+	let source_type = if typescript {
+		SourceType::ts()
+	} else {
+		SourceType::mjs()
+	};
+	let source_text = source[(byte_position as usize)..].to_string();
+
+	let ret = Parser::new(&allocator, &source_text, source_type)
+		.svelte_parse_pattern(typescript && allow_type_annotation)
+		.unwrap();
+	serde_json::to_string(&ret.0).unwrap()
+}
+
+#[napi]
+pub fn parse(source: String, typescript: bool) -> String {
+	let allocator = Allocator::default();
+	let source_type = if typescript {
+		SourceType::ts()
+	} else {
+		SourceType::mjs()
+	};
+
+	let ret = Parser::new(&allocator, &source, source_type).parse();
+	serde_json::to_string(&ret.program).unwrap()
 }

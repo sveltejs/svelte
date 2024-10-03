@@ -34,6 +34,7 @@
     "@svitejs/changesets-changelog-github-compact": "^1.1.0",
     "@types/node": "^20.11.5",
     "@vitest/coverage-v8": "^2.0.5",
+    "@vitest/ui": "^2.1.2",
     "eslint": "^9.9.1",
     "eslint-plugin-lube": "^0.4.3",
     "jsdom": "25.0.0",

@@ -73,6 +73,8 @@ impl<'a> ParserImpl<'a> {
 		&mut self,
 		allow_type_annotation: bool,
 	) -> oxc_diagnostics::Result<oxc_ast::ast::BindingPattern<'a>> {
+		let span = self.start_span();
+
 		let mut binding_kind = self.parse_binding_pattern_kind()?;
 		let type_annotation = if allow_type_annotation && self.ts_enabled() {
 			let type_annotation = self.parse_ts_type_annotation()?;

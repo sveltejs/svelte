@@ -19,7 +19,6 @@ use cargo::{
 use fs_extra::dir::{copy, CopyOptions};
 
 pub fn main() {
-	napi_build::setup();
 	println!("cargo:rerun-if-changed=src/oxc_inject.rs");
 
 	patch().expect("Failed to patch oxc");
