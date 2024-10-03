@@ -15,7 +15,6 @@ export function SlotElement(node, context) {
 	/** @type {Expression[]} */
 	const spreads = [];
 
-	/** @type {Literal} */
 	let name = b.literal('default');
 
 	for (const attribute of node.attributes) {
