@@ -1,152 +1,151 @@
 {
-	"name": "svelte",
-	"description": "Cybernetically enhanced web apps",
-	"license": "MIT",
-	"version": "5.0.0-next.260",
-	"type": "module",
-	"types": "./types/index.d.ts",
-	"engines": {
-		"node": ">=18"
-	},
-	"files": [
-		"src",
-		"!src/**/*.test.*",
-		"types",
-		"compiler",
-		"*.d.ts",
-		"README.md"
-	],
-	"module": "src/index-client.js",
-	"main": "src/index-client.js",
-	"exports": {
-		".": {
-			"types": "./types/index.d.ts",
-			"browser": "./src/index-client.js",
-			"default": "./src/index-server.js"
-		},
-		"./package.json": "./package.json",
-		"./action": {
-			"types": "./types/index.d.ts"
-		},
-		"./animate": {
-			"types": "./types/index.d.ts",
-			"default": "./src/animate/index.js"
-		},
-		"./compiler": {
-			"types": "./types/index.d.ts",
-			"require": "./compiler/index.js",
-			"default": "./src/compiler/index.js"
-		},
-		"./easing": {
-			"types": "./types/index.d.ts",
-			"default": "./src/easing/index.js"
-		},
-		"./elements": {
-			"types": "./elements.d.ts"
-		},
-		"./internal": {
-			"default": "./src/internal/index.js"
-		},
-		"./internal/client": {
-			"default": "./src/internal/client/index.js"
-		},
-		"./internal/disclose-version": {
-			"default": "./src/internal/disclose-version.js"
-		},
-		"./internal/server": {
-			"default": "./src/internal/server/index.js"
-		},
-		"./legacy": {
-			"types": "./types/index.d.ts",
-			"browser": "./src/legacy/legacy-client.js",
-			"default": "./src/legacy/legacy-server.js"
-		},
-		"./motion": {
-			"types": "./types/index.d.ts",
-			"default": "./src/motion/index.js"
-		},
-		"./reactivity": {
-			"types": "./types/index.d.ts",
-			"browser": "./src/reactivity/index-client.js",
-			"default": "./src/reactivity/index-server.js"
-		},
-		"./server": {
-			"types": "./types/index.d.ts",
-			"default": "./src/server/index.js"
-		},
-		"./store": {
-			"types": "./types/index.d.ts",
-			"browser": "./src/store/index-client.js",
-			"default": "./src/store/index-server.js"
-		},
-		"./transition": {
-			"types": "./types/index.d.ts",
-			"default": "./src/transition/index.js"
-		},
-		"./events": {
-			"types": "./types/index.d.ts",
-			"default": "./src/events/index.js"
-		}
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/sveltejs/svelte.git",
-		"directory": "packages/svelte"
-	},
-	"bugs": {
-		"url": "https://github.com/sveltejs/svelte/issues"
-	},
-	"homepage": "https://svelte.dev",
-	"keywords": [
-		"svelte",
-		"UI",
-		"framework",
-		"templates",
-		"templating"
-	],
-	"scripts": {
-		"build": "node scripts/process-messages && rollup -c && pnpm generate:types && node scripts/check-treeshakeability.js",
-		"dev": "node scripts/process-messages && rollup -cw",
-		"check": "tsc --project tsconfig.runtime.json && tsc && cd ./tests/types && tsc",
-		"check:watch": "tsc --watch",
-		"generate:version": "node ./scripts/generate-version.js",
-		"generate:types": "node ./scripts/generate-types.js && tsc -p tsconfig.generated.json",
-		"prepublishOnly": "pnpm build",
-		"knip": "pnpm dlx knip"
-	},
-	"devDependencies": {
-		"@jridgewell/trace-mapping": "^0.3.25",
-		"@playwright/test": "^1.46.1",
-		"@rollup/plugin-commonjs": "^28.0.0",
-		"@rollup/plugin-node-resolve": "^15.3.0",
-		"@rollup/plugin-terser": "^0.4.4",
-		"@rollup/plugin-virtual": "^3.0.2",
-		"@types/aria-query": "^5.0.4",
-		"@types/node": "^20.11.5",
-		"dts-buddy": "^0.5.3",
-		"esbuild": "^0.21.5",
-		"mitata": "^1.0.10",
-		"rollup": "^4.21.0",
-		"source-map": "^0.7.4",
-		"tiny-glob": "^0.2.9",
-		"typescript": "^5.5.4",
-		"vitest": "^2.0.5"
-	},
-	"dependencies": {
-		"@ampproject/remapping": "^2.3.0",
-		"@jridgewell/sourcemap-codec": "^1.5.0",
-		"@types/estree": "^1.0.5",
-		"acorn": "^8.12.1",
-		"acorn-typescript": "^1.4.13",
-		"aria-query": "^5.3.1",
-		"axobject-query": "^4.1.0",
-		"esm-env": "^1.0.0",
-		"esrap": "^1.2.2",
-		"is-reference": "^3.0.2",
-		"locate-character": "^3.0.0",
-		"magic-string": "^0.30.11",
-		"oxc-svelte": "workspace:*",
-		"swc-svelte": "workspace:*",
-		"zimmerframe": "^1.1.2"
-	}
+  "name": "svelte",
+  "description": "Cybernetically enhanced web apps",
+  "license": "MIT",
+  "version": "5.0.0-next.261",
+  "type": "module",
+  "types": "./types/index.d.ts",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "src",
+    "!src/**/*.test.*",
+    "types",
+    "compiler",
+    "*.d.ts",
+    "README.md"
+  ],
+  "module": "src/index-client.js",
+  "main": "src/index-client.js",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "browser": "./src/index-client.js",
+      "default": "./src/index-server.js"
+    },
+    "./package.json": "./package.json",
+    "./action": {
+      "types": "./types/index.d.ts"
+    },
+    "./animate": {
+      "types": "./types/index.d.ts",
+      "default": "./src/animate/index.js"
+    },
+    "./compiler": {
+      "types": "./types/index.d.ts",
+      "require": "./compiler/index.js",
+      "default": "./src/compiler/index.js"
+    },
+    "./easing": {
+      "types": "./types/index.d.ts",
+      "default": "./src/easing/index.js"
+    },
+    "./elements": {
+      "types": "./elements.d.ts"
+    },
+    "./internal": {
+      "default": "./src/internal/index.js"
+    },
+    "./internal/client": {
+      "default": "./src/internal/client/index.js"
+    },
+    "./internal/disclose-version": {
+      "default": "./src/internal/disclose-version.js"
+    },
+    "./internal/server": {
+      "default": "./src/internal/server/index.js"
+    },
+    "./legacy": {
+      "types": "./types/index.d.ts",
+      "browser": "./src/legacy/legacy-client.js",
+      "default": "./src/legacy/legacy-server.js"
+    },
+    "./motion": {
+      "types": "./types/index.d.ts",
+      "default": "./src/motion/index.js"
+    },
+    "./reactivity": {
+      "types": "./types/index.d.ts",
+      "browser": "./src/reactivity/index-client.js",
+      "default": "./src/reactivity/index-server.js"
+    },
+    "./server": {
+      "types": "./types/index.d.ts",
+      "default": "./src/server/index.js"
+    },
+    "./store": {
+      "types": "./types/index.d.ts",
+      "browser": "./src/store/index-client.js",
+      "default": "./src/store/index-server.js"
+    },
+    "./transition": {
+      "types": "./types/index.d.ts",
+      "default": "./src/transition/index.js"
+    },
+    "./events": {
+      "types": "./types/index.d.ts",
+      "default": "./src/events/index.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sveltejs/svelte.git",
+    "directory": "packages/svelte"
+  },
+  "bugs": {
+    "url": "https://github.com/sveltejs/svelte/issues"
+  },
+  "homepage": "https://svelte.dev",
+  "keywords": [
+    "svelte",
+    "UI",
+    "framework",
+    "templates",
+    "templating"
+  ],
+  "scripts": {
+    "build": "node scripts/process-messages && rollup -c && pnpm generate:types && node scripts/check-treeshakeability.js",
+    "dev": "node scripts/process-messages && rollup -cw",
+    "check": "tsc --project tsconfig.runtime.json && tsc && cd ./tests/types && tsc",
+    "check:watch": "tsc --watch",
+    "generate:version": "node ./scripts/generate-version.js",
+    "generate:types": "node ./scripts/generate-types.js && tsc -p tsconfig.generated.json",
+    "prepublishOnly": "pnpm build",
+    "knip": "pnpm dlx knip"
+  },
+  "devDependencies": {
+    "@jridgewell/trace-mapping": "^0.3.25",
+    "@playwright/test": "^1.46.1",
+    "@rollup/plugin-commonjs": "^28.0.0",
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-virtual": "^3.0.2",
+    "@types/aria-query": "^5.0.4",
+    "@types/node": "^20.11.5",
+    "dts-buddy": "^0.5.3",
+    "esbuild": "^0.21.5",
+    "rollup": "^4.21.0",
+    "source-map": "^0.7.4",
+    "tiny-glob": "^0.2.9",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
+  },
+  "dependencies": {
+    "@ampproject/remapping": "^2.3.0",
+    "@jridgewell/sourcemap-codec": "^1.5.0",
+    "@types/estree": "^1.0.5",
+    "acorn": "^8.12.1",
+    "acorn-typescript": "^1.4.13",
+    "aria-query": "^5.3.1",
+    "axobject-query": "^4.1.0",
+    "esm-env": "^1.0.0",
+    "esrap": "^1.2.2",
+    "is-reference": "^3.0.2",
+    "locate-character": "^3.0.0",
+    "magic-string": "^0.30.11",
+    "oxc-svelte": "workspace:*",
+    "swc-svelte": "workspace:*",
+    "zimmerframe": "^1.1.2"
+  }
 }

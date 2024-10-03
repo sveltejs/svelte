@@ -391,6 +391,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			if (node.expression) {
 				for (const id of extract_identifiers_from_destructuring(node.expression)) {
 					const binding = scope.declare(id, 'template', 'const');
+					scope.reference(id, [context.path[context.path.length - 1], node]);
 					bindings.push(binding);
 				}
 			} else {
@@ -402,6 +403,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					end: node.end
 				};
 				const binding = scope.declare(id, 'template', 'const');
+				scope.reference(id, [context.path[context.path.length - 1], node]);
 				bindings.push(binding);
 			}
 		},

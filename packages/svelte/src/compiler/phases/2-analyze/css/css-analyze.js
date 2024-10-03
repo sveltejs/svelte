@@ -114,8 +114,32 @@ const css_visitors = {
 		node.metadata.used ||= node.children.every(
 			({ metadata }) => metadata.is_global || metadata.is_global_like
 		);
+
+		if (
+			node.metadata.rule?.metadata.parent_rule &&
+			node.children[0]?.selectors[0]?.type === 'NestingSelector'
+		) {
+			const parent_is_global = node.metadata.rule.metadata.parent_rule.prelude.children.some(
+				(child) => child.children.length === 1 && child.children[0].metadata.is_global
+			);
+			// mark `&:hover` in `:global(.foo) { &:hover { color: green }}` as used
+			if (parent_is_global) {
+				node.metadata.used = true;
+			}
+		}
 	},
 	RelativeSelector(node, context) {
+		const parent = /** @type {Css.ComplexSelector} */ (context.path.at(-1));
+
+		if (
+			node.combinator != null &&
+			!context.state.rule?.metadata.parent_rule &&
+			parent.children[0] === node &&
+			context.path.at(-3)?.type !== 'PseudoClassSelector'
+		) {
+			e.css_selector_invalid(node.combinator);
+		}
+
 		node.metadata.is_global = node.selectors.length >= 1 && is_global(node);
 
 		if (node.selectors.length === 1) {

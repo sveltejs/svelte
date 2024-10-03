@@ -10,6 +10,15 @@
 
 		:global(.x) {
 			color: green;
+			&:hover {
+				color: green;
+			}
+			&div {
+				color: green;
+			}
+			.unused {
+				color: red;
+			}
 		}
 
 		p :global {
