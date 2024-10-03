@@ -1,5 +1,23 @@
 # svelte
 
+## 5.0.0-next.261
+
+### Patch Changes
+
+- fix: migrate `$Props` without creating non existent props ([#13484](https://github.com/sveltejs/svelte/pull/13484))
+
+- feat: support migration of `svelte:component` ([#13437](https://github.com/sveltejs/svelte/pull/13437))
+
+- feat: fix accessors and support migration of accessors ([#13456](https://github.com/sveltejs/svelte/pull/13456))
+
+- fix: move labeled statements that need reordering after props insertion point ([#13480](https://github.com/sveltejs/svelte/pull/13480))
+
+- feat: support migration of self closing tags ([#13479](https://github.com/sveltejs/svelte/pull/13479))
+
+- fix: various `svelte:component` migration bugs ([#13473](https://github.com/sveltejs/svelte/pull/13473))
+
+- fix: exclude type-only props from instance exports when migrating ([#13485](https://github.com/sveltejs/svelte/pull/13485))
+
 ## 5.0.0-next.260
 
 ### Patch Changes
