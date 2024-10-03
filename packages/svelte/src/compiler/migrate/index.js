@@ -150,6 +150,7 @@ export function migrate(source) {
 				props = `...${state.names.props}`;
 			} else {
 				props = state.props
+					.filter((prop) => !prop.type_only)
 					.map((prop) => {
 						let prop_str =
 							prop.local === prop.exported ? prop.local : `${prop.exported}: ${prop.local}`;
@@ -282,7 +283,7 @@ export function migrate(source) {
  *  str: MagicString;
  *  analysis: ComponentAnalysis;
  *  indent: string;
- *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string }>;
+ *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string, type_only?: boolean }>;
  *  props_insertion_point: number;
  *  has_props_rune: boolean;
  *  end: number;
@@ -419,6 +420,7 @@ const instance_script = {
 						: '';
 					prop.bindable = binding.updated;
 					prop.exported = binding.prop_alias || name;
+					prop.type_only = false;
 				} else {
 					state.props.push({
 						local: name,
@@ -989,7 +991,8 @@ function handle_identifier(node, state, path) {
 							bindable: false,
 							optional: member.optional,
 							type,
-							comment
+							comment,
+							type_only: true
 						});
 					}
 				}
