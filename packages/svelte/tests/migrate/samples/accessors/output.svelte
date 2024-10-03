@@ -9,14 +9,12 @@
 	}
 
 	let {
-		test,
 		count = 0,
 		stuff,
 		cool
 	}: Props = $props();
 
 	export {
-		test,
 		count,
 		stuff,
 	}
