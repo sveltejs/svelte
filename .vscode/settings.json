@@ -3,5 +3,8 @@
 		"sites/svelte-5-preview/static/*": true
 	},
 	"typescript.tsdk": "node_modules/typescript/lib",
-	"rust-analyzer.linkedProjects": ["./packages/swc-svelte/Cargo.toml"]
+	"rust-analyzer.linkedProjects": [
+		"./packages/swc-svelte/Cargo.toml",
+		"./packages/oxc-svelte/Cargo.toml"
+	]
 }

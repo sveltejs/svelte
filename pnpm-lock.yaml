@@ -60,6 +60,8 @@ importers:
         specifier: ^2.0.5
         version: 2.0.5(@types/node@20.12.7)(jsdom@25.0.0)(lightningcss@1.23.0)(sass@1.70.0)(terser@5.27.0)
 
+  packages/oxc-svelte: {}
+
   packages/svelte:
     dependencies:
       '@ampproject/remapping':
@@ -98,6 +100,9 @@ importers:
       magic-string:
         specifier: ^0.30.11
         version: 0.30.11
+      oxc-svelte:
+        specifier: workspace:^
+        version: link:../oxc-svelte
       swc-svelte:
         specifier: workspace:*
         version: link:../swc-svelte
@@ -135,6 +140,9 @@ importers:
       esbuild:
         specifier: ^0.21.5
         version: 0.21.5
+      mitata:
+        specifier: ^1.0.10
+        version: 1.0.10
       rollup:
         specifier: ^4.21.0
         version: 4.21.0
@@ -2763,6 +2771,9 @@ packages:
   minizlib@2.1.2:
     resolution: {integrity: sha512-bAxsR8BVfj60DWXHE3u30oHzfl4G7khkSuPW+qvpd7jFRHm7dLxOjUk1EHACJ/hxLY8phGJ0YhYHZo7jil7Qdg==}
     engines: {node: '>= 8'}
+
+  mitata@1.0.10:
+    resolution: {integrity: sha512-pn21sHg5+AiTqj7z7aCeNlkEXMYhAykl1zbGqp1sbTJKRe8lhNokoyubLmvwbY5sWb8B+VDQByn3UyRmdBDQ1w==}
 
   mkdirp@0.5.6:
     resolution: {integrity: sha512-FP+p8RB8OWpF3YZBCrP5gtADmtXApB5AMLn+vdyA+PyxCjrCs00mjyUozssO33cwDeT3wNGdLxJ5M//YqtHAJw==}
@@ -6468,6 +6479,8 @@ snapshots:
     dependencies:
       minipass: 3.3.6
       yallist: 4.0.0
+
+  mitata@1.0.10: {}
 
   mkdirp@0.5.6:
     dependencies:
