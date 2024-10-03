@@ -25,8 +25,14 @@ export function VariableDeclaration(node, context) {
 			}
 
 			if (rune === '$props') {
+				let has_rest = false;
 				// remove $bindable() from props declaration
 				const id = walk(declarator.id, null, {
+					RestElement(node, context) {
+						if (context.path.at(-1) === declarator.id) {
+							has_rest = true;
+						}
+					},
 					AssignmentPattern(node) {
 						if (
 							node.right.type === 'CallExpression' &&
@@ -39,6 +45,16 @@ export function VariableDeclaration(node, context) {
 						}
 					}
 				});
+				// If a rest pattern is used, we need to ensure we don't expose $$slots or $$events
+				if (id.type === 'ObjectPattern' && has_rest) {
+					id.properties.splice(
+						id.properties.length - 1,
+						0,
+						// @ts-ignore
+						b.prop('init', b.id('$$slots'), b.id('$$slots')),
+						b.prop('init', b.id('$$events'), b.id('$$events'))
+					);
+				}
 				declarations.push(
 					b.declarator(/** @type {Pattern} */ (context.visit(id)), b.id('$$props'))
 				);
