@@ -362,7 +362,7 @@ export function build_component(node, component_name, context, anchor = context.
 		context.state.template.push(
 			context.state.metadata.namespace === 'svg'
 				? '<g><!></g>'
-				: '<span style="display: contents"><!></span>'
+				: '<svelte-css-wrapper style="display: contents"><!></svelte-css-wrapper>'
 		);
 
 		statements.push(

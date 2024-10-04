@@ -12,30 +12,30 @@ export default test({
 		nestTrackColor2: 'pink'
 	},
 	html: `
-		<span style="display: contents; --rail-color: black; --track-color: red;">
+		<svelte-css-wrapper style="display: contents; --rail-color: black; --track-color: red;">
 			<div id="slider-1">
 				<p class="svelte-17ay6rc">Slider</p>
 				<span class="svelte-17ay6rc">Track</span>
 			</div>
-			<span style="display: contents; --rail-color: white; --track-color: gray;">
+			<svelte-css-wrapper style="display: contents; --rail-color: white; --track-color: gray;">
 				<div id="nest-slider-1">
 					<p class="svelte-17ay6rc">Slider</p>
 					<span class="svelte-17ay6rc">Track</span>
 				</div>
-			</span>
-		</span>
-		<span style="display: contents; --rail-color: green; --track-color: blue;">
+			</svelte-css-wrapper>
+		</svelte-css-wrapper>
+		<svelte-css-wrapper style="display: contents; --rail-color: green; --track-color: blue;">
 			<div id="slider-2">
 				<p class="svelte-17ay6rc">Slider</p>
 				<span class="svelte-17ay6rc">Track</span>
 			</div>
-			<span style="display: contents; --rail-color: aqua; --track-color: pink;">
+			<svelte-css-wrapper style="display: contents; --rail-color: aqua; --track-color: pink;">
 				<div id="nest-slider-2">
 					<p class="svelte-17ay6rc">Slider</p>
 					<span class="svelte-17ay6rc">Track</span>
 				</div>
-			</span>
-		</span>
+			</svelte-css-wrapper>
+		</svelte-css-wrapper>
 	`,
 	test({ component, assert, target }) {
 		component.railColor1 = 'yellow';
@@ -46,30 +46,30 @@ export default test({
 		assert.htmlEqual(
 			target.innerHTML,
 			`
-			<span style="display: contents; --rail-color:yellow; --track-color:red;">
+			<svelte-css-wrapper style="display: contents; --rail-color:yellow; --track-color:red;">
 				<div id="slider-1">
 					<p class="svelte-17ay6rc">Slider</p>
 					<span class="svelte-17ay6rc">Track</span>
 				</div>
-				<span style="display: contents; --rail-color:lime; --track-color:gray;">
+				<svelte-css-wrapper style="display: contents; --rail-color:lime; --track-color:gray;">
 					<div id="nest-slider-1">
 						<p class="svelte-17ay6rc">Slider</p>
 						<span class="svelte-17ay6rc">Track</span>
 					</div>
-				</span>
-			</span>
-			<span style="display: contents; --rail-color:green; --track-color:orange;">
+				</svelte-css-wrapper>
+			</svelte-css-wrapper>
+			<svelte-css-wrapper style="display: contents; --rail-color:green; --track-color:orange;">
 				<div id="slider-2">
 					<p class="svelte-17ay6rc">Slider</p>
 					<span class="svelte-17ay6rc">Track</span>
 				</div>
-				<span style="display: contents; --rail-color:aqua; --track-color:gold;">
+				<svelte-css-wrapper style="display: contents; --rail-color:aqua; --track-color:gold;">
 					<div id="nest-slider-2">
 						<p class="svelte-17ay6rc">Slider</p>
 						<span class="svelte-17ay6rc">Track</span>
 					</div>
-				</span>
-			</span>
+				</svelte-css-wrapper>
+			</svelte-css-wrapper>
 		`
 		);
 	}

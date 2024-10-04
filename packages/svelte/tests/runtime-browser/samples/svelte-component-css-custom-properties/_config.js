@@ -5,18 +5,18 @@ export default test({
 		componentName: /** @type {string | undefined} */ ('Slider1')
 	},
 	html: `
-		<span style="display: contents; --rail-color: rgb(0, 0, 0); --track-color: rgb(255, 0, 0);">
+		<svelte-css-wrapper style="display: contents; --rail-color: rgb(0, 0, 0); --track-color: rgb(255, 0, 0);">
 			<div id="component1">
 				<p class="svelte-17ay6rc">Slider1</p>
 				<span class="svelte-17ay6rc">Track</span>
 			</div>
-		</span>
-		<span style="display: contents; --rail-color: rgb(0, 255, 0); --track-color: rgb(0, 0, 255);">
+		</svelte-css-wrapper>
+		<svelte-css-wrapper style="display: contents; --rail-color: rgb(0, 255, 0); --track-color: rgb(0, 0, 255);">
 			<div id="component2">
 				<p class="svelte-17ay6rc">Slider1</p>
 				<span class="svelte-17ay6rc">Track</span>
 			</div>
-		</span>
+		</svelte-css-wrapper>
 	`,
 	test({ target, window, assert, component }) {
 		function assert_slider_1() {
