@@ -1,20 +1,21 @@
 import { run, bench, boxplot } from 'mitata';
-import { parse as acorn_parse, parse_expression_at } from './src/compiler/phases/1-parse/acorn.js';
-import * as oxc from 'oxc-svelte';
+import * as acorn from './src/compiler/phases/1-parse/acorn.js';
+import * as oxc from './src/compiler/phases/1-parse/oxc.js';
 import { readFileSync } from 'fs';
+
 const input = {
-	fn: 'parse_expression_at',
-	source: readFileSync('./test.svelte', 'utf8'),
-			typescript: true,
-	index: 7601
+	fn: 'parse',
+	source:
+		'                  \n\t// yo\n\tlet array: Array<{ id: number; element: HTMLElement | null }> = $state([\n\t\t{ id: 1, element: null },\n\t\t{ id: 2, element: null },\n\t\t{ id: 3, element: null /* yo */ }\n\t]);\n',
+	typescript: true
 };
 
-console.log(oxc.parse_expression_at(input.source, input.index, input.typescript));
+console.log(JSON.stringify(oxc.parse(input.source, input.typescript), null, 2));
 boxplot(() => {
-	bench('acorn', () => parse_expression_at(input.source, input.typescript, input.index));
+	bench('acorn', () => acorn.parse(input.source, input.typescript));
 
 	bench('oxc', () => {
-		JSON.parse(oxc.parse_expression_at(input.source, input.index, input.typescript));
+		oxc.parse(input.source, input.typescript);
 	});
 });
 run();

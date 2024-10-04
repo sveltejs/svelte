@@ -4,8 +4,11 @@
 extern crate napi_derive;
 
 use oxc_allocator::Allocator;
+use oxc_ast::{CommentKind, Trivias};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
+use serde_json::json;
 
 #[napi(js_name = "parse_expression_at")]
 pub fn parse_expression_at(source: String, index: u32, typescript: bool) -> String {
@@ -49,7 +52,7 @@ pub fn parse_pattern_at(
 }
 
 #[napi]
-pub fn parse(source: String, typescript: bool) -> String {
+pub fn parse(source: String, typescript: bool) -> ParseReturn {
 	let allocator = Allocator::default();
 	let source_type = if typescript {
 		SourceType::ts()
@@ -58,5 +61,37 @@ pub fn parse(source: String, typescript: bool) -> String {
 	};
 
 	let ret = Parser::new(&allocator, &source, source_type).parse();
-	serde_json::to_string(&ret.program).unwrap()
+	ParseReturn::new(ret.program, ret.errors, ret.trivias)
+}
+
+#[napi(object)]
+pub struct ParseReturn {
+	pub ast: String,
+	pub errors: Vec<String>,
+	pub comments: String,
+}
+impl ParseReturn {
+	fn new<T>(ast: T, errors: Vec<OxcDiagnostic>, comments: Trivias) -> Self
+	where
+		T: serde::Serialize,
+	{
+		let comments = comments
+			.comments()
+			.map(|c| {
+				json!({
+					"type": match c.kind {
+						CommentKind::Line => "Line",
+						CommentKind::Block => "Block",
+					},
+					"start": c.span.start,
+					"end": c.span.end,
+				})
+			})
+			.collect::<Vec<_>>();
+		ParseReturn {
+			ast: serde_json::to_string(&ast).unwrap(),
+			errors: errors.into_iter().map(|e| e.to_string()).collect(),
+			comments: serde_json::to_string(&comments).unwrap(),
+		}
+	}
 }

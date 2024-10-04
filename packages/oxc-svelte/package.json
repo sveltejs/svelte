@@ -1,23 +1,28 @@
 {
 	"name": "oxc-svelte",
 	"version": "0.0.0",
-	"main": "index.js",
-	"types": "index.d.ts",
+	"type": "module",
+	"exports": {
+		".": {
+			"import": "./index.js",
+			"types": "./index.d.ts"
+		},
+		"./ast": {
+			"types": "./ast.d.ts"
+		}
+	},
 	"napi": {
 		"name": "oxc-svelte",
-		"triples": {}
+		"triples": {},
+		"npmClient": "pnpm"
 	},
 	"license": "MIT",
 	"devDependencies": {
 		"@napi-rs/cli": "^2.18.4"
 	},
-	"engines": {
-		"node": ">= 10"
-	},
 	"scripts": {
 		"artifacts": "napi artifacts",
-		"build": "napi build --platform --release",
-		"build:debug": "napi build --platform",
+		"build": "napi build --platform --js bindings.cjs --dts target/unused.d.ts --release",
 		"prepublishOnly": "napi prepublish -t npm",
 		"universal": "napi universal",
 		"version": "napi version"

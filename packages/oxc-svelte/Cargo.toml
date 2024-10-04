@@ -12,8 +12,10 @@ napi-derive = "2.12.2"
 
 oxc_allocator = "0.30.5"
 oxc_ast = { version = "0.30.5", features = ["serialize"] }
+oxc_diagnostics = "0.30.5"
 oxc_parser = "0.30.5"
 oxc_span = "0.30.5"
+serde = "1.0.210"
 serde_json = "1.0.128"
 
 [patch.crates-io]
