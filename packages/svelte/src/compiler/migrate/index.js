@@ -1,4 +1,4 @@
-/** @import { VariableDeclarator, Node, Identifier } from 'estree' */
+/** @import { VariableDeclarator, Node, Identifier, AssignmentExpression, LabeledStatement, ExpressionStatement } from 'estree' */
 /** @import { Visitors } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
 /** @import { Scope, ScopeRoot } from '../phases/scope.js' */
@@ -10,7 +10,7 @@ import { regex_valid_component_name } from '../phases/1-parse/state/element.js';
 import { analyze_component } from '../phases/2-analyze/index.js';
 import { get_rune } from '../phases/scope.js';
 import { reset, reset_warning_filter } from '../state.js';
-import { extract_identifiers } from '../utils/ast.js';
+import { extract_identifiers, extract_all_identifiers_from_expression } from '../utils/ast.js';
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
 import { validate_component_options } from '../validate-options.js';
 import { is_svg, is_void } from '../../utils.js';
@@ -90,7 +90,8 @@ export function migrate(source) {
 			},
 			legacy_imports: new Set(),
 			script_insertions: new Set(),
-			derived_components: new Map()
+			derived_components: new Map(),
+			derived_labeled_statements: new Set()
 		};
 
 		if (parsed.module) {
@@ -301,7 +302,8 @@ export function migrate(source) {
  * 	names: Record<string, string>;
  * 	legacy_imports: Set<string>;
  * 	script_insertions: Set<string>;
- *  derived_components: Map<string, string>
+ *  derived_components: Map<string, string>,
+ * 	derived_labeled_statements: Set<LabeledStatement>
  * }} State
  */
 
@@ -349,7 +351,7 @@ const instance_script = {
 			state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
 		}
 	},
-	VariableDeclaration(node, { state, path }) {
+	VariableDeclaration(node, { state, path, visit }) {
 		if (state.scope !== state.analysis.instance.scope) {
 			return;
 		}
@@ -470,10 +472,118 @@ const instance_script = {
 				state.str.prependLeft(start, '$state(');
 				state.str.appendRight(end, ')');
 			} else {
-				state.str.prependLeft(
-					/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
-					' = $state()'
+				/**
+				 * @type {AssignmentExpression | undefined}
+				 */
+				let assignment_in_labeled;
+				/**
+				 * @type {LabeledStatement | undefined}
+				 */
+				let labeled_statement;
+
+				// Analyze declaration bindings to see if they're exclusively updated within a single reactive statement
+				const possible_derived = bindings.every((binding) =>
+					binding.references.every((reference) => {
+						const declaration = reference.path.find((el) => el.type === 'VariableDeclaration');
+						const assignment = reference.path.find((el) => el.type === 'AssignmentExpression');
+						const update = reference.path.find((el) => el.type === 'UpdateExpression');
+						const labeled = reference.path.find(
+							(el) => el.type === 'LabeledStatement' && el.label.name === '$'
+						);
+
+						if (assignment && labeled) {
+							if (assignment_in_labeled) return false;
+							assignment_in_labeled = /** @type {AssignmentExpression} */ (assignment);
+							labeled_statement = /** @type {LabeledStatement} */ (labeled);
+						}
+
+						return !update && (declaration || (labeled && assignment) || (!labeled && !assignment));
+					})
 				);
+
+				const labeled_has_single_assignment =
+					labeled_statement?.body.type === 'BlockStatement' &&
+					labeled_statement.body.body.length === 1;
+
+				const is_expression_assignment =
+					labeled_statement?.body.type === 'ExpressionStatement' &&
+					labeled_statement.body.expression.type === 'AssignmentExpression';
+
+				let should_be_state = false;
+
+				if (is_expression_assignment) {
+					const body = /**@type {ExpressionStatement}*/ (labeled_statement?.body);
+					const expression = /**@type {AssignmentExpression}*/ (body.expression);
+					const [, ids] = extract_all_identifiers_from_expression(expression.right);
+					if (ids.length === 0) {
+						should_be_state = true;
+						state.derived_labeled_statements.add(
+							/** @type {LabeledStatement} */ (labeled_statement)
+						);
+					}
+				}
+
+				if (
+					!should_be_state &&
+					possible_derived &&
+					assignment_in_labeled &&
+					labeled_statement &&
+					(labeled_has_single_assignment || is_expression_assignment)
+				) {
+					// Someone wrote a `$: { ... }` statement which we can turn into a `$derived`
+					state.str.appendRight(
+						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+						' = $derived('
+					);
+					visit(assignment_in_labeled.right);
+					state.str.appendRight(
+						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+						state.str
+							.snip(
+								/** @type {number} */ (assignment_in_labeled.right.start),
+								/** @type {number} */ (assignment_in_labeled.right.end)
+							)
+							.toString()
+					);
+					state.str.remove(
+						/** @type {number} */ (labeled_statement.start),
+						/** @type {number} */ (labeled_statement.end)
+					);
+					state.str.appendRight(
+						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+						')'
+					);
+					state.derived_labeled_statements.add(labeled_statement);
+				} else {
+					state.str.prependLeft(
+						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+						' = $state('
+					);
+					if (should_be_state) {
+						// someone wrote a `$: foo = ...` statement which we can turn into `let foo = $state(...)`
+						state.str.appendRight(
+							/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+							state.str
+								.snip(
+									/** @type {number} */ (
+										/** @type {AssignmentExpression} */ (assignment_in_labeled).right.start
+									),
+									/** @type {number} */ (
+										/** @type {AssignmentExpression} */ (assignment_in_labeled).right.end
+									)
+								)
+								.toString()
+						);
+						state.str.remove(
+							/** @type {number} */ (/** @type {LabeledStatement} */ (labeled_statement).start),
+							/** @type {number} */ (/** @type {LabeledStatement} */ (labeled_statement).end)
+						);
+					}
+					state.str.appendRight(
+						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+						')'
+					);
+				}
 			}
 		}
 
@@ -504,6 +614,7 @@ const instance_script = {
 		if (state.analysis.runes) return;
 		if (path.length > 1) return;
 		if (node.label.name !== '$') return;
+		if (state.derived_labeled_statements.has(node)) return;
 
 		next();
 
@@ -512,6 +623,9 @@ const instance_script = {
 			node.body.expression.type === 'AssignmentExpression'
 		) {
 			const ids = extract_identifiers(node.body.expression.left);
+			const [, expression_ids] = extract_all_identifiers_from_expression(
+				node.body.expression.right
+			);
 			const bindings = ids.map((id) => state.scope.get(id.name));
 			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
 			if (reassigned_bindings.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
@@ -542,13 +656,23 @@ const instance_script = {
 				return;
 			} else {
 				for (const binding of reassigned_bindings) {
-					if (binding && ids.includes(binding.node)) {
+					if (binding && (ids.includes(binding.node) || expression_ids.length === 0)) {
+						const init =
+							binding.kind === 'state'
+								? ' = $state()'
+								: expression_ids.length === 0
+									? ` = $state(${state.str.original.substring(/** @type {number} */ (node.body.expression.right.start), node.body.expression.right.end)})`
+									: '';
 						// implicitly-declared variable which we need to make explicit
-						state.str.prependRight(
+						state.str.prependLeft(
 							/** @type {number} */ (node.start),
-							`let ${binding.node.name}${binding.kind === 'state' ? ' = $state()' : ''};\n${state.indent}`
+							`let ${binding.node.name}${init};\n${state.indent}`
 						);
 					}
+				}
+				if (expression_ids.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
+					state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
+					return;
 				}
 			}
 		}
