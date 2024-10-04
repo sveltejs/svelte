@@ -740,27 +740,45 @@ const template = {
 		next();
 	},
 	SvelteSelf(node, { state, next }) {
+		const source = state.str.original.substring(node.start, node.end);
 		if (!state.filename) {
-			const indent = guess_indent(state.str.original.substring(node.start, node.end));
+			const indent = guess_indent(source);
 			state.str.prependRight(
 				node.start,
 				`<!-- @migration-task: migrate this by hand or call the migrate function with the filename of this file -->\n${indent}`
 			);
 			return;
 		}
+		// by default we overwrite until the end of the node - 1
 		let end = node.end - 1;
+		// if it has some children we need to overwrite from start to start of the fragment
 		if (node.fragment.nodes.length > 0) {
 			end = node.fragment.nodes[0].start;
+		} else if (!source.endsWith('/>')) {
+			// special case `<svelte:self></svelte:self>` it has no fragment but
+			// we still can't remove to the node end
+			end = node.start + source.lastIndexOf('><', node.end) + 1;
 		}
+		// if at has some attributes we stop at the start of the first
 		if (node.attributes.length > 0) {
 			end = node.attributes[0].start;
 		}
+		// overwrite the open tag
 		state.str.overwrite(node.start + 1, end - 1, `${state.names.svelte_self}`);
+		// if it has a fragment we need to overwrite the closing tag too
 		if (node.fragment.nodes.length > 0) {
 			const start_closing =
 				state.str.original.indexOf('<', node.fragment.nodes[node.fragment.nodes.length - 1].end) +
 				2;
 			state.str.overwrite(start_closing, node.end - 1, `${state.names.svelte_self}`);
+		} else if (!source.endsWith('/>')) {
+			// special case for case `<svelte:self></svelte:self>` it has no fragment but
+			// we still need to overwrite the end tag
+			state.str.overwrite(
+				node.start + source.lastIndexOf('</', node.end) + 2,
+				node.end - 1,
+				`${state.names.svelte_self}`
+			);
 		}
 		state.has_svelte_self = true;
 		next();
