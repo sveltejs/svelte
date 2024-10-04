@@ -468,27 +468,23 @@ const instance_script = {
 				 */
 				let labeled_statement;
 
+				// Analyze declaration bindings to see if they're exclusively updated within a single reactive statement
 				const possible_derived = bindings.every((binding) =>
 					binding.references.every((reference) => {
-						const declaration_idx = reference.path.find((el) => el.type === 'VariableDeclaration');
-						const assignment_idx = reference.path.find((el) => el.type === 'AssignmentExpression');
-						const update_idx = reference.path.find((el) => el.type === 'UpdateExpression');
-						const labeled_idx = reference.path.find(
+						const declaration = reference.path.find((el) => el.type === 'VariableDeclaration');
+						const assignment = reference.path.find((el) => el.type === 'AssignmentExpression');
+						const update = reference.path.find((el) => el.type === 'UpdateExpression');
+						const labeled = reference.path.find(
 							(el) => el.type === 'LabeledStatement' && el.label.name === '$'
 						);
 
-						if (assignment_idx && labeled_idx) {
+						if (assignment && labeled) {
 							if (assignment_in_labeled) return false;
-							assignment_in_labeled = /** @type {AssignmentExpression} */ (assignment_idx);
-							labeled_statement = /** @type {LabeledStatement} */ (labeled_idx);
+							assignment_in_labeled = /** @type {AssignmentExpression} */ (assignment);
+							labeled_statement = /** @type {LabeledStatement} */ (labeled);
 						}
 
-						return (
-							!update_idx &&
-							(declaration_idx ||
-								(labeled_idx && assignment_idx) ||
-								(!labeled_idx && !assignment_idx))
-						);
+						return !update && (declaration || (labeled && assignment) || (!labeled && !assignment));
 					})
 				);
 
@@ -521,6 +517,7 @@ const instance_script = {
 					labeled_statement &&
 					(labeled_has_single_assignment || is_expression_assignment)
 				) {
+					// Someone wrote a `$: { ... }` statement which we can turn into a `$derived`
 					state.str.appendRight(
 						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
 						' = $derived('
@@ -550,6 +547,7 @@ const instance_script = {
 						' = $state('
 					);
 					if (should_be_state) {
+						// someone wrote a `$: foo = ...` statement which we can turn into `let foo = $state(...)`
 						state.str.appendRight(
 							/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
 							state.str
