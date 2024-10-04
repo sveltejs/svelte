@@ -11,4 +11,5 @@
 	<svelte:self count={$$props.count}     >
 		child
 	</svelte:self>
+	<svelte:self></svelte:self>
 {/if}

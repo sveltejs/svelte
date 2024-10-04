@@ -17,4 +17,5 @@
 	<SvelteSelf count={props.count}     >
 		child
 	</SvelteSelf>
+	<SvelteSelf></SvelteSelf>
 {/if}
