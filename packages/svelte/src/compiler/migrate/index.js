@@ -747,6 +747,7 @@ const template = {
 				node.start,
 				`<!-- @migration-task: migrate this by hand or call the migrate function with the filename of this file -->\n${indent}`
 			);
+			next();
 			return;
 		}
 		// by default we overwrite until the end of the node - 1

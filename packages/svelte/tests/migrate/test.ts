@@ -4,7 +4,9 @@ import { migrate } from 'svelte/compiler';
 import { try_read_file } from '../helpers.js';
 import { suite, type BaseTest } from '../suite.js';
 
-interface ParserTest extends BaseTest {}
+interface ParserTest extends BaseTest {
+	skip_filename?: boolean;
+}
 
 const { test, run } = suite<ParserTest>(async (config, cwd) => {
 	const input = fs
@@ -12,7 +14,7 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 		.replace(/\s+$/, '')
 		.replace(/\r/g, '');
 
-	const actual = migrate(input, `${cwd}/output.svelte`).code;
+	const actual = migrate(input, config.skip_filename ? undefined : `${cwd}/output.svelte`).code;
 
 	// run `UPDATE_SNAPSHOTS=true pnpm test migrate` to update parser tests
 	if (process.env.UPDATE_SNAPSHOTS || !fs.existsSync(`${cwd}/output.svelte`)) {
