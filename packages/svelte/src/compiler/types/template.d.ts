@@ -7,15 +7,15 @@ import type {
 	Expression,
 	FunctionDeclaration,
 	FunctionExpression,
-	Identifier,
+	BindingIdentifier,
 	MemberExpression,
 	Node,
 	ObjectExpression,
 	Pattern,
 	Program,
 	ChainExpression,
-	SimpleCallExpression
-} from 'estree';
+	CallExpression
+} from 'oxc-svelte/ast';
 import type { Scope } from '../phases/scope';
 
 /**
@@ -107,7 +107,7 @@ export namespace AST {
 			 * (ceClass: new () => HTMLElement) => new () => HTMLElement
 			 * ```
 			 */
-			extend?: ArrowFunctionExpression | Identifier;
+			extend?: ArrowFunctionExpression | BindingIdentifier;
 		};
 		attributes: Attribute[];
 	}
@@ -156,13 +156,13 @@ export namespace AST {
 	/** A `{@debug ...}` tag */
 	export interface DebugTag extends BaseNode {
 		type: 'DebugTag';
-		identifiers: Identifier[];
+		identifiers: BindingIdentifier[];
 	}
 
 	/** A `{@render foo(...)} tag */
 	export interface RenderTag extends BaseNode {
 		type: 'RenderTag';
-		expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
+		expression: CallExpression | (ChainExpression & { expression: CallExpression });
 		/** @internal */
 		metadata: {
 			dynamic: boolean;
@@ -185,10 +185,10 @@ export namespace AST {
 		/** The 'x' in `bind:x` */
 		name: string;
 		/** The y in `bind:x={y}` */
-		expression: Identifier | MemberExpression;
+		expression: BindingIdentifier | MemberExpression;
 		/** @internal */
 		metadata: {
-			binding_group_name: Identifier;
+			binding_group_name: BindingIdentifier;
 			parent_each_blocks: EachBlock[];
 		};
 	}
@@ -212,7 +212,7 @@ export namespace AST {
 		/** The 'x' in `let:x` */
 		name: string;
 		/** The 'y' in `let:x={y}` */
-		expression: null | Identifier | ArrayExpression | ObjectExpression;
+		expression: null | BindingIdentifier | ArrayExpression | ObjectExpression;
 	}
 
 	/** An `on:` directive */
@@ -391,8 +391,8 @@ export namespace AST {
 			keyed: boolean;
 			contains_group_binding: boolean;
 			/** Set if something in the array expression is shadowed within the each block */
-			array_name: Identifier | null;
-			index: Identifier;
+			array_name: BindingIdentifier | null;
+			index: BindingIdentifier;
 			declarations: Map<string, Binding>;
 			/**
 			 * Optimization path for each blocks: If the parent isn't a fragment and
@@ -434,7 +434,7 @@ export namespace AST {
 
 	export interface SnippetBlock extends BaseNode {
 		type: 'SnippetBlock';
-		expression: Identifier;
+		expression: BindingIdentifier;
 		parameters: Pattern[];
 		body: Fragment;
 	}
@@ -512,14 +512,3 @@ export type TemplateNode =
 	| Block;
 
 export type SvelteNode = Node | TemplateNode | AST.Fragment | Css.Node;
-
-declare module 'estree' {
-	export interface BaseNode {
-		/** Added by the Svelte parser */
-		start?: number;
-		/** Added by the Svelte parser */
-		end?: number;
-		/** Added by acorn-typescript */
-		typeAnnotation?: any;
-	}
-}

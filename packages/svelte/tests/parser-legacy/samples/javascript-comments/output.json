@@ -104,24 +104,21 @@
 											"arguments": [],
 											"optional": false
 										},
-										"leadingComments": [
+										"leading_comments": [
 											{
 												"type": "Block",
-												"value": " another comment ",
 												"start": 606,
 												"end": 627
 											}
 										],
-										"trailingComments": [
+										"trailing_comments": [
 											{
 												"type": "Line",
-												"value": " a trailing comment",
 												"start": 636,
 												"end": 657
 											},
 											{
 												"type": "Block",
-												"value": " trailing block comment ",
 												"start": 660,
 												"end": 688
 											}
@@ -129,10 +126,9 @@
 									}
 								]
 							},
-							"leadingComments": [
+							"leading_comments": [
 								{
 									"type": "Line",
-									"value": " comment",
 									"start": 584,
 									"end": 594
 								}
@@ -167,10 +163,9 @@
 								}
 							},
 							"name": "a",
-							"leadingComments": [
+							"leading_cmments": [
 								{
 									"type": "Block",
-									"value": " leading block comment ",
 									"start": 696,
 									"end": 723
 								}
@@ -244,24 +239,21 @@
 						},
 						"name": "b"
 					},
-					"leadingComments": [
+					"leading_comments": [
 						{
 							"type": "Line",
-							"value": " leading line comment",
 							"start": 739,
 							"end": 762
 						}
 					],
-					"trailingComments": [
+					"trailing_comments": [
 						{
 							"type": "Line",
-							"value": " trailing line comment",
 							"start": 770,
 							"end": 794
 						},
 						{
 							"type": "Block",
-							"value": " trailing block comment ",
 							"start": 796,
 							"end": 824
 						}
@@ -355,18 +347,16 @@
 						}
 					],
 					"kind": "const",
-					"leadingComments": [
+					"leading_comments": [
 						{
 							"type": "Line",
-							"value": " a leading comment",
 							"start": 10,
 							"end": 30
 						}
 					],
-					"trailingComments": [
+					"trailing_comments": [
 						{
 							"type": "Line",
-							"value": " a trailing comment",
 							"start": 45,
 							"end": 66
 						}
@@ -517,10 +507,9 @@
 									},
 									"name": "foo"
 								},
-								"trailingComments": [
+								"trailing_comments": [
 									{
 										"type": "Line",
-										"value": " trailing",
 										"start": 125,
 										"end": 136
 									}
@@ -556,42 +545,36 @@
 									},
 									"name": "bar"
 								},
-								"leadingComments": [
+								"leading_comments": [
 									{
 										"type": "Block",
-										"value": " leading comment 1 ",
 										"start": 139,
 										"end": 162
 									},
 									{
 										"type": "Block",
-										"value": " leading comment 2 ",
 										"start": 165,
 										"end": 188
 									},
 									{
 										"type": "Block",
-										"value": " leading comment 3 ",
 										"start": 191,
 										"end": 214
 									}
 								],
-								"trailingComments": [
+								"trailing_comments": [
 									{
 										"type": "Block",
-										"value": " trailing comment 1 ",
 										"start": 224,
 										"end": 248
 									},
 									{
 										"type": "Block",
-										"value": " trailing comment 2 ",
 										"start": 251,
 										"end": 275
 									},
 									{
 										"type": "Block",
-										"value": " trailing comment 3 ",
 										"start": 278,
 										"end": 302
 									}
@@ -599,10 +582,9 @@
 							}
 						]
 					},
-					"leadingComments": [
+					"leading_comments": [
 						{
 							"type": "Block",
-							"value": "* a comment ",
 							"start": 83,
 							"end": 99
 						}
@@ -684,30 +666,26 @@
 										},
 										"value": 1,
 										"raw": "1",
-										"leadingComments": [
+										"leading_comments": [
 											{
 												"type": "Line",
-												"value": " leading comment 1",
 												"start": 326,
 												"end": 346
 											},
 											{
 												"type": "Line",
-												"value": " leading comment 2",
 												"start": 349,
 												"end": 369
 											}
 										],
-										"trailingComments": [
+										"trailing_comments": [
 											{
 												"type": "Line",
-												"value": " trailing comment 1",
 												"start": 375,
 												"end": 396
 											},
 											{
 												"type": "Block",
-												"value": " trailing comment 2 ",
 												"start": 399,
 												"end": 423
 											}
@@ -830,30 +808,26 @@
 											"raw": "1"
 										},
 										"kind": "init",
-										"leadingComments": [
+										"leading_comments": [
 											{
 												"type": "Line",
-												"value": " leading comment 1",
 												"start": 449,
 												"end": 469
 											},
 											{
 												"type": "Line",
-												"value": " leading comment 2",
 												"start": 472,
 												"end": 492
 											}
 										],
-										"trailingComments": [
+										"trailing_comments": [
 											{
 												"type": "Line",
-												"value": " trailing comment 1",
 												"start": 501,
 												"end": 522
 											},
 											{
 												"type": "Block",
-												"value": " trailing comment 2 ",
 												"start": 525,
 												"end": 549
 											}

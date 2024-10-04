@@ -97,7 +97,7 @@ const visitors = {
 				}
 			}
 		} else {
-			const comments = /** @type {any} */ (node).leadingComments;
+			const comments = /** @type {any} */ (node).leading_comments;
 
 			if (comments) {
 				for (const comment of comments) {

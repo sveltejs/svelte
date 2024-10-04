@@ -1,7 +1,6 @@
-/** @import { VariableDeclarator, Node, Identifier } from 'estree' */
 /** @import { Visitors } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
-/** @import { Scope, ScopeRoot } from '../phases/scope.js' */
+/** @import { Scope } from '../phases/scope.js' */
 /** @import { AST, Binding, SvelteNode, ValidatedCompileOptions } from '#compiler' */
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
@@ -308,8 +307,7 @@ export function migrate(source) {
 /** @type {Visitors<SvelteNode, State>} */
 const instance_script = {
 	_(node, { state, next }) {
-		// @ts-expect-error
-		const comments = node.leadingComments;
+		const comments = node.leading_comments;
 		if (comments) {
 			for (const comment of comments) {
 				if (comment.type === 'Line') {
@@ -784,7 +782,7 @@ function extract_type_and_comment(declarator, str, path) {
 	const parent = path.at(-1);
 
 	// Try to find jsdoc above the declaration
-	let comment_node = /** @type {Node} */ (parent)?.leadingComments?.at(-1);
+	let comment_node = /** @type {Node} */ (parent)?.leading_comments?.at(-1);
 	if (comment_node?.type !== 'Block') comment_node = undefined;
 
 	const comment_start = /** @type {any} */ (comment_node)?.start;
@@ -1003,7 +1001,7 @@ function handle_identifier(node, state, path) {
 					);
 
 					let comment;
-					const comment_node = member.leadingComments?.at(-1);
+					const comment_node = member.leading_comments?.at(-1);
 					if (comment_node?.type === 'Block') {
 						comment = state.str.original.substring(comment_node.start, comment_node.end);
 					}

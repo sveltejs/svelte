@@ -1,54 +1,58 @@
-/** @import * as ESTree from 'estree' */
+/** @import * as AST from 'oxc-svelte/ast-builder' */
 import { regex_is_valid_identifier } from '../phases/patterns.js';
 import { sanitize_template_string } from './sanitize_template_string.js';
 
 /**
- * @param {Array<ESTree.Expression | ESTree.SpreadElement | null>} elements
- * @returns {ESTree.ArrayExpression}
+ * @param {Array<AST.Expression | AST.SpreadElement | null>} elements
+ * @returns {AST.ArrayExpression}
  */
 export function array(elements = []) {
 	return { type: 'ArrayExpression', elements };
 }
 
 /**
- * @param {Array<ESTree.Pattern | null>} elements
- * @returns {ESTree.ArrayPattern}
+ * @param {Array<AST.BindingPattern | null>} elements
+ * @returns {AST.ArrayPattern}
  */
 export function array_pattern(elements) {
 	return { type: 'ArrayPattern', elements };
 }
 
 /**
- * @param {ESTree.Pattern} left
- * @param {ESTree.Expression} right
- * @returns {ESTree.AssignmentPattern}
+ * @param {AST.BindingPattern} left
+ * @param {AST.Expression} right
+ * @returns {AST.AssignmentPattern}
  */
 export function assignment_pattern(left, right) {
 	return { type: 'AssignmentPattern', left, right };
 }
 
 /**
- * @param {Array<ESTree.Pattern>} params
- * @param {ESTree.BlockStatement | ESTree.Expression} body
- * @returns {ESTree.ArrowFunctionExpression}
+ * @param {Array<AST.BindingPattern>} params
+ * @param {AST.BlockStatement | AST.Expression} body
+ * @returns {AST.ArrowFunctionExpression}
  */
 export function arrow(params, body) {
 	return {
 		type: 'ArrowFunctionExpression',
-		params,
-		body,
+		params: parameters(params, 'ArrowFormalParameters'),
+		body: {
+			type: 'FunctionBody',
+			directives: [],
+			statements: body.type === 'BlockStatement' ? body.body : [stmt(body)]
+		},
 		expression: body.type !== 'BlockStatement',
-		generator: false,
 		async: false,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		typeParameters: null,
+		returnType: null
 	};
 }
 
 /**
- * @param {ESTree.AssignmentOperator} operator
- * @param {ESTree.Pattern} left
- * @param {ESTree.Expression} right
- * @returns {ESTree.AssignmentExpression}
+ * @param {AST.AssignmentOperator} operator
+ * @param {AST.AssignmentTarget} left
+ * @param {AST.Expression} right
+ * @returns {AST.AssignmentExpression}
  */
 export function assignment(operator, left, right) {
 	return { type: 'AssignmentExpression', operator, left, right };
@@ -56,34 +60,34 @@ export function assignment(operator, left, right) {
 
 /**
  * @template T
- * @param {T & ESTree.BaseFunction} func
- * @returns {T & ESTree.BaseFunction}
+ * @param {T & AST.Function} func
+ * @returns {T & AST.Function}
  */
 export function async(func) {
 	return { ...func, async: true };
 }
 
 /**
- * @param {ESTree.Expression} argument
- * @returns {ESTree.AwaitExpression}
+ * @param {AST.Expression} argument
+ * @returns {AST.AwaitExpression}
  */
 function await_builder(argument) {
 	return { type: 'AwaitExpression', argument };
 }
 
 /**
- * @param {ESTree.BinaryOperator} operator
- * @param {ESTree.Expression} left
- * @param {ESTree.Expression} right
- * @returns {ESTree.BinaryExpression}
+ * @param {AST.BinaryOperator} operator
+ * @param {AST.Expression} left
+ * @param {AST.Expression} right
+ * @returns {AST.BinaryExpression}
  */
 export function binary(operator, left, right) {
 	return { type: 'BinaryExpression', operator, left, right };
 }
 
 /**
- * @param {ESTree.Statement[]} body
- * @returns {ESTree.BlockStatement}
+ * @param {AST.Statement[]} body
+ * @returns {AST.BlockStatement}
  */
 export function block(body) {
 	return { type: 'BlockStatement', body };
@@ -91,17 +95,17 @@ export function block(body) {
 
 /**
  * @param {string} name
- * @param {ESTree.Statement} body
- * @returns {ESTree.LabeledStatement}
+ * @param {AST.Statement} body
+ * @returns {AST.LabeledStatement}
  */
 export function labeled(name, body) {
 	return { type: 'LabeledStatement', label: id(name), body };
 }
 
 /**
- * @param {string | ESTree.Expression} callee
- * @param {...(ESTree.Expression | ESTree.SpreadElement | false | undefined)} args
- * @returns {ESTree.CallExpression}
+ * @param {string | AST.Expression} callee
+ * @param {...(AST.Expression | AST.SpreadElement | false | undefined)} args
+ * @returns {AST.CallExpression}
  */
 export function call(callee, ...args) {
 	if (typeof callee === 'string') callee = id(callee);
@@ -124,19 +128,20 @@ export function call(callee, ...args) {
 
 	return {
 		type: 'CallExpression',
-		callee,
-		arguments: /** @type {Array<ESTree.Expression | ESTree.SpreadElement>} */ (args),
-		optional: false
+		callee: /** @type {AST.Expression} */ (callee),
+		arguments: /** @type {Array<AST.Expression | AST.SpreadElement>} */ (args),
+		optional: false,
+		typeParameters: null
 	};
 }
 
 /**
- * @param {string | ESTree.Expression} callee
- * @param {...ESTree.Expression} args
- * @returns {ESTree.ChainExpression}
+ * @param {string | AST.Expression} callee
+ * @param {...AST.Expression} args
+ * @returns {AST.ChainExpression}
  */
 export function maybe_call(callee, ...args) {
-	const expression = /** @type {ESTree.SimpleCallExpression} */ (call(callee, ...args));
+	const expression = /** @type {AST.CallExpression} */ (call(callee, ...args));
 	expression.optional = true;
 
 	return {
@@ -146,29 +151,29 @@ export function maybe_call(callee, ...args) {
 }
 
 /**
- * @param {ESTree.UnaryOperator} operator
- * @param {ESTree.Expression} argument
- * @returns {ESTree.UnaryExpression}
+ * @param {AST.UnaryOperator} operator
+ * @param {AST.Expression} argument
+ * @returns {AST.UnaryExpression}
  */
 export function unary(operator, argument) {
-	return { type: 'UnaryExpression', argument, operator, prefix: true };
+	return { type: 'UnaryExpression', argument, operator };
 }
 
 /**
- * @param {ESTree.Expression} test
- * @param {ESTree.Expression} consequent
- * @param {ESTree.Expression} alternate
- * @returns {ESTree.ConditionalExpression}
+ * @param {AST.Expression} test
+ * @param {AST.Expression} consequent
+ * @param {AST.Expression} alternate
+ * @returns {AST.ConditionalExpression}
  */
 export function conditional(test, consequent, alternate) {
 	return { type: 'ConditionalExpression', test, consequent, alternate };
 }
 
 /**
- * @param {ESTree.LogicalOperator} operator
- * @param {ESTree.Expression} left
- * @param {ESTree.Expression} right
- * @returns {ESTree.LogicalExpression}
+ * @param {AST.LogicalOperator} operator
+ * @param {AST.Expression} left
+ * @param {AST.Expression} right
+ * @returns {AST.LogicalExpression}
  */
 export function logical(operator, left, right) {
 	return { type: 'LogicalExpression', operator, left, right };
@@ -176,62 +181,80 @@ export function logical(operator, left, right) {
 
 /**
  * @param {'const' | 'let' | 'var'} kind
- * @param {ESTree.VariableDeclarator[]} declarations
- * @returns {ESTree.VariableDeclaration}
+ * @param {AST.VariableDeclarator[]} declarations
+ * @returns {AST.VariableDeclaration}
  */
 export function declaration(kind, declarations) {
 	return {
 		type: 'VariableDeclaration',
 		kind,
-		declarations
+		declarations,
+		declare: false /* typescript - declare const foo */
 	};
 }
 
 /**
- * @param {ESTree.Pattern | string} pattern
- * @param {ESTree.Expression} [init]
- * @returns {ESTree.VariableDeclarator}
+ * @param {AST.BindingPattern | string} pattern
+ * @param {AST.Expression} init
+ * @returns {AST.VariableDeclarator}
  */
 export function declarator(pattern, init) {
-	if (typeof pattern === 'string') pattern = id(pattern);
-	return { type: 'VariableDeclarator', id: pattern, init };
+	if (typeof pattern === 'string')
+		pattern = { type: 'Identifier', name: pattern, optional: false, typeAnnotation: null };
+	return {
+		type: 'VariableDeclarator',
+		id: /** @type {AST.BindingPattern} */ (pattern),
+		init,
+		definite: false /** const foo!: number */
+	};
 }
 
-/** @type {ESTree.EmptyStatement} */
+/** @type {AST.EmptyStatement} */
 export const empty = {
 	type: 'EmptyStatement'
 };
 
 /**
- * @param {ESTree.Expression | ESTree.MaybeNamedClassDeclaration | ESTree.MaybeNamedFunctionDeclaration} declaration
- * @returns {ESTree.ExportDefaultDeclaration}
+ * @param {AST.ExportDefaultDeclarationKind} declaration
+ * @returns {AST.ExportDefaultDeclaration}
  */
 export function export_default(declaration) {
-	return { type: 'ExportDefaultDeclaration', declaration };
+	return {
+		type: 'ExportDefaultDeclaration',
+		declaration,
+		exported: { type: 'Identifier', name: 'default' }
+	};
 }
 
 /**
- * @param {ESTree.Identifier} id
- * @param {ESTree.Pattern[]} params
- * @param {ESTree.BlockStatement} body
- * @returns {ESTree.FunctionDeclaration}
+ * @param {AST.IdentifierReference} id
+ * @param {Array<AST.BindingPattern>} params
+ * @param {AST.BlockStatement} body
+ * @returns {AST.Function}
  */
 export function function_declaration(id, params, body) {
 	return {
 		type: 'FunctionDeclaration',
 		id,
-		params,
-		body,
+		params: parameters(params),
+		body: {
+			type: 'FunctionBody',
+			directives: [],
+			statements: body.body
+		},
 		generator: false,
 		async: false,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		typeParameters: null,
+		returnType: null,
+		declare: false,
+		thisParam: null
 	};
 }
 
 /**
  * @param {string} name
- * @param {ESTree.Statement[]} body
- * @returns {ESTree.Property & { value: ESTree.FunctionExpression}}}
+ * @param {AST.Statement[]} body
+ * @returns {AST.ObjectProperty & { value: AST.Function }}
  */
 export function get(name, body) {
 	return prop('get', key(name), function_builder(null, [], block(body)));
@@ -239,7 +262,7 @@ export function get(name, body) {
 
 /**
  * @param {string} name
- * @returns {ESTree.Identifier}
+ * @returns {AST.IdentifierReference}
  */
 export function id(name) {
 	return { type: 'Identifier', name };
@@ -247,7 +270,7 @@ export function id(name) {
 
 /**
  * @param {string} name
- * @returns {ESTree.PrivateIdentifier}
+ * @returns {AST.PrivateIdentifier}
  */
 export function private_id(name) {
 	return { type: 'PrivateIdentifier', name };
@@ -255,7 +278,7 @@ export function private_id(name) {
 
 /**
  * @param {string} local
- * @returns {ESTree.ImportNamespaceSpecifier}
+ * @returns {AST.ImportNamespaceSpecifier}
  */
 function import_namespace(local) {
 	return {
@@ -266,45 +289,90 @@ function import_namespace(local) {
 
 /**
  * @param {string} name
- * @param {ESTree.Expression} value
- * @returns {ESTree.Property}
+ * @param {AST.Expression} value
+ * @returns {AST.ObjectProperty}
  */
 export function init(name, value) {
 	return prop('init', key(name), value);
 }
 
 /**
- * @param {string | boolean | null | number | RegExp} value
- * @returns {ESTree.Literal}
+ * @param {string | boolean | null | number} value
+ * @returns {AST.StringLiteral | AST.BooleanLiteral | AST.NullLiteral | AST.NumericLiteral}
  */
 export function literal(value) {
-	// @ts-expect-error we don't want to muck around with bigint here
-	return { type: 'Literal', value };
+	if (value === null) return { type: 'NullLiteral' };
+	switch (typeof value) {
+		case 'string':
+			return {
+				type: 'StringLiteral',
+				value
+			};
+		case 'boolean':
+			return {
+				type: 'BooleanLiteral',
+				value
+			};
+		case 'number':
+			return {
+				type: 'NumericLiteral',
+				value,
+				raw: value.toString()
+			};
+		default:
+			throw new Error(`invalid literal ${value}`);
+	}
 }
 
 /**
- * @param {ESTree.Expression | ESTree.Super} object
- * @param {string | ESTree.Expression | ESTree.PrivateIdentifier} property
- * @param {boolean} computed
+ * @param {AST.Expression | AST.Super} object
+ * @param {string | AST.Expression | AST.PrivateIdentifier} property
  * @param {boolean} optional
- * @returns {ESTree.MemberExpression}
+ * @returns {AST.MemberExpression}
  */
 export function member(object, property, computed = false, optional = false) {
 	if (typeof property === 'string') {
 		property = id(property);
 	}
 
-	return { type: 'MemberExpression', object, property, computed, optional };
+	if (property.type === 'PrivateIdentifier') {
+		return {
+			type: 'PrivateFieldExpression',
+			object,
+			field: property,
+			optional
+		};
+	}
+
+	if (computed) {
+		return {
+			type: 'ComputedMemberExpression',
+			object,
+			expression: property,
+			optional
+		};
+	}
+
+	if (property.type !== 'Identifier') {
+		throw new Error('invalid property type ' + property.type);
+	}
+
+	return {
+		type: 'StaticMemberExpression',
+		object,
+		property,
+		optional
+	};
 }
 
 /**
  * @param {string} path
- * @returns {ESTree.Identifier | ESTree.MemberExpression}
+ * @returns {AST.IdentifierReference | AST.MemberExpression}
  */
 export function member_id(path) {
 	const parts = path.split('.');
 
-	/** @type {ESTree.Identifier | ESTree.MemberExpression} */
+	/** @type {AST.IdentifierReference | AST.MemberExpression} */
 	let expression = id(parts[0]);
 
 	for (let i = 1; i < parts.length; i += 1) {
@@ -314,49 +382,72 @@ export function member_id(path) {
 }
 
 /**
- * @param {Array<ESTree.Property | ESTree.SpreadElement>} properties
- * @returns {ESTree.ObjectExpression}
+ * @param {Array<AST.ObjectPropertyKind>} properties
+ * @returns {AST.ObjectExpression}
  */
 export function object(properties) {
 	return { type: 'ObjectExpression', properties };
 }
 
 /**
- * @param {Array<ESTree.RestElement | ESTree.AssignmentProperty | ESTree.Property>} properties
- * @returns {ESTree.ObjectPattern}
+ * @param {AST.ObjectPattern['properties']} properties
+ * @returns {AST.ObjectPattern}
  */
 export function object_pattern(properties) {
-	// @ts-expect-error the types appear to be wrong
 	return { type: 'ObjectPattern', properties };
 }
 
 /**
- * @template {ESTree.Expression} Value
+ * @template {AST.Expression} Value
  * @param {'init' | 'get' | 'set'} kind
- * @param {ESTree.Expression} key
+ * @param {AST.Expression} key
  * @param {Value} value
  * @param {boolean} computed
- * @returns {ESTree.Property & { value: Value }}
+ * @returns {AST.ObjectProperty & { value: Value }}
  */
 export function prop(kind, key, value, computed = false) {
-	return { type: 'Property', kind, key, value, method: false, shorthand: false, computed };
+	return {
+		type: 'ObjectProperty',
+		kind,
+		key,
+		value,
+		method: false,
+		shorthand: false,
+		computed,
+		init: null
+	};
 }
 
 /**
- * @param {ESTree.Expression | ESTree.PrivateIdentifier} key
- * @param {ESTree.Expression | null | undefined} value
+ * @param {AST.Expression | AST.PrivateIdentifier} key
+ * @param {AST.Expression | null | undefined} value
  * @param {boolean} computed
  * @param {boolean} is_static
- * @returns {ESTree.PropertyDefinition}
+ * @returns {AST.PropertyDefinition}
  */
-export function prop_def(key, value, computed = false, is_static = false) {
-	return { type: 'PropertyDefinition', key, value, computed, static: is_static, decorators: [] };
+export function prop_def(key, value = null, computed = false, is_static = false) {
+	return {
+		type: 'PropertyDefinition',
+		key,
+		value,
+		computed,
+		static: is_static,
+		decorators: [],
+		// Typescript properties
+		declare: false,
+		definite: false,
+		typeAnnotation: null,
+		accessibility: null,
+		override: false,
+		optional: false,
+		readonly: false
+	};
 }
 
 /**
  * @param {string} cooked
  * @param {boolean} tail
- * @returns {ESTree.TemplateElement}
+ * @returns {AST.TemplateElement}
  */
 export function quasi(cooked, tail = false) {
 	const raw = sanitize_template_string(cooked);
@@ -364,16 +455,16 @@ export function quasi(cooked, tail = false) {
 }
 
 /**
- * @param {ESTree.Pattern} argument
- * @returns {ESTree.RestElement}
+ * @param {AST.BindingPattern} argument
+ * @returns {AST.BindingRestElement}
  */
 export function rest(argument) {
 	return { type: 'RestElement', argument };
 }
 
 /**
- * @param {ESTree.Expression[]} expressions
- * @returns {ESTree.SequenceExpression}
+ * @param {AST.Expression[]} expressions
+ * @returns {AST.SequenceExpression}
  */
 export function sequence(expressions) {
 	return { type: 'SequenceExpression', expressions };
@@ -381,42 +472,42 @@ export function sequence(expressions) {
 
 /**
  * @param {string} name
- * @param {ESTree.Statement[]} body
- * @returns {ESTree.Property & { value: ESTree.FunctionExpression}}
+ * @param {AST.Statement[]} body
+ * @returns {AST.ObjectProperty & { value: AST.Function}}
  */
 export function set(name, body) {
 	return prop('set', key(name), function_builder(null, [id('$$value')], block(body)));
 }
 
 /**
- * @param {ESTree.Expression} argument
- * @returns {ESTree.SpreadElement}
+ * @param {AST.Expression} argument
+ * @returns {AST.SpreadElement}
  */
 export function spread(argument) {
 	return { type: 'SpreadElement', argument };
 }
 
 /**
- * @param {ESTree.Expression} expression
- * @returns {ESTree.ExpressionStatement}
+ * @param {AST.Expression} expression
+ * @returns {AST.ExpressionStatement}
  */
 export function stmt(expression) {
 	return { type: 'ExpressionStatement', expression };
 }
 
 /**
- * @param {ESTree.TemplateElement[]} elements
- * @param {ESTree.Expression[]} expressions
- * @returns {ESTree.TemplateLiteral}
+ * @param {AST.TemplateElement[]} elements
+ * @param {AST.Expression[]} expressions
+ * @returns {AST.TemplateLiteral}
  */
 export function template(elements, expressions) {
 	return { type: 'TemplateLiteral', quasis: elements, expressions };
 }
 
 /**
- * @param {ESTree.Expression | ESTree.BlockStatement} expression
+ * @param {AST.Expression | AST.BlockStatement} expression
  * @param {boolean} [async]
- * @returns {ESTree.Expression}
+ * @returns {AST.Expression}
  */
 export function thunk(expression, async = false) {
 	const fn = arrow([], expression);
@@ -426,31 +517,40 @@ export function thunk(expression, async = false) {
 
 /**
  * Replace "(arg) => func(arg)" to "func"
- * @param {ESTree.Expression} expression
- * @returns {ESTree.Expression}
+ * @param {AST.Expression} expression
+ * @returns {AST.Expression}
  */
 export function unthunk(expression) {
+	if (expression.type !== 'ArrowFunctionExpression' || expression.async) return expression;
+
+	const body = expression.body.statements[0];
+	if (!body) return expression;
+
 	if (
-		expression.type === 'ArrowFunctionExpression' &&
-		expression.async === false &&
-		expression.body.type === 'CallExpression' &&
-		expression.body.callee.type === 'Identifier' &&
-		expression.params.length === expression.body.arguments.length &&
-		expression.params.every((param, index) => {
-			const arg = /** @type {ESTree.SimpleCallExpression} */ (expression.body).arguments[index];
-			return param.type === 'Identifier' && arg.type === 'Identifier' && param.name === arg.name;
+		body.type === 'ExpressionStatement' &&
+		body.expression.type === 'CallExpression' &&
+		body.expression.callee.type === 'Identifier' &&
+		expression.params.items.length === body.expression.arguments.length &&
+		expression.params.items.every((param, index) => {
+			const arg = /** @type {AST.CallExpression} */ (body.expression).arguments[index];
+			return (
+				param.type === 'FormalParameter' &&
+				param.pattern.type === 'Identifier' &&
+				arg.type === 'Identifier' &&
+				param.pattern.name === arg.name
+			);
 		})
 	) {
-		return expression.body.callee;
+		return body.expression.callee;
 	}
 	return expression;
 }
 
 /**
  *
- * @param {string | ESTree.Expression} expression
- * @param  {...ESTree.Expression} args
- * @returns {ESTree.NewExpression}
+ * @param {string | AST.Expression} expression
+ * @param  {...AST.Expression} args
+ * @returns {AST.NewExpression}
  */
 function new_builder(expression, ...args) {
 	if (typeof expression === 'string') expression = id(expression);
@@ -458,24 +558,25 @@ function new_builder(expression, ...args) {
 	return {
 		callee: expression,
 		arguments: args,
-		type: 'NewExpression'
+		type: 'NewExpression',
+		typeParameters: null
 	};
 }
 
 /**
- * @param {ESTree.UpdateOperator} operator
- * @param {ESTree.Expression} argument
+ * @param {AST.UpdateOperator} operator
+ * @param {AST.SimpleAssignmentTarget} argument
  * @param {boolean} prefix
- * @returns {ESTree.UpdateExpression}
+ * @returns {AST.UpdateExpression}
  */
 export function update(operator, argument, prefix = false) {
 	return { type: 'UpdateExpression', operator, argument, prefix };
 }
 
 /**
- * @param {ESTree.Expression} test
- * @param {ESTree.Statement} body
- * @returns {ESTree.DoWhileStatement}
+ * @param {AST.Expression} test
+ * @param {AST.Statement} body
+ * @returns {AST.DoWhileStatement}
  */
 export function do_while(test, body) {
 	return { type: 'DoWhileStatement', test, body };
@@ -485,38 +586,38 @@ const true_instance = literal(true);
 const false_instance = literal(false);
 const null_instane = literal(null);
 
-/** @type {ESTree.DebuggerStatement} */
+/** @type {AST.DebuggerStatement} */
 const debugger_builder = {
 	type: 'DebuggerStatement'
 };
 
-/** @type {ESTree.ThisExpression} */
+/** @type {AST.ThisExpression} */
 const this_instance = {
 	type: 'ThisExpression'
 };
 
 /**
- * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} [init]
- * @returns {ESTree.VariableDeclaration}
+ * @param {string | AST.BindingPattern} pattern
+ * @param {AST.Expression} init
+ * @returns {AST.VariableDeclaration}
  */
 function let_builder(pattern, init) {
 	return declaration('let', [declarator(pattern, init)]);
 }
 
 /**
- * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} init
- * @returns {ESTree.VariableDeclaration}
+ * @param {string | AST.BindingPattern} pattern
+ * @param { AST.Expression} init
+ * @returns {AST.VariableDeclaration}
  */
 function const_builder(pattern, init) {
 	return declaration('const', [declarator(pattern, init)]);
 }
 
 /**
- * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} [init]
- * @returns {ESTree.VariableDeclaration}
+ * @param {string | AST.BindingPattern} pattern
+ * @param {AST.Expression} init
+ * @returns {AST.VariableDeclaration}
  */
 function var_builder(pattern, init) {
 	return declaration('var', [declarator(pattern, init)]);
@@ -524,11 +625,11 @@ function var_builder(pattern, init) {
 
 /**
  *
- * @param {ESTree.VariableDeclaration | ESTree.Expression | null} init
- * @param {ESTree.Expression} test
- * @param {ESTree.Expression} update
- * @param {ESTree.Statement} body
- * @returns {ESTree.ForStatement}
+ * @param {AST.VariableDeclaration | AST.Expression | null} init
+ * @param {AST.Expression} test
+ * @param {AST.Expression} update
+ * @param {AST.Statement} body
+ * @returns {AST.ForStatement}
  */
 function for_builder(init, test, update, body) {
 	return { type: 'ForStatement', init, test, update, body };
@@ -537,12 +638,12 @@ function for_builder(init, test, update, body) {
 /**
  *
  * @param {'constructor' | 'method' | 'get' | 'set'} kind
- * @param {ESTree.Expression | ESTree.PrivateIdentifier} key
- * @param {ESTree.Pattern[]} params
- * @param {ESTree.Statement[]} body
+ * @param {AST.Expression | AST.PrivateIdentifier} key
+ * @param {AST.BindingPattern[]} params
+ * @param {AST.Statement[]} body
  * @param {boolean} computed
  * @param {boolean} is_static
- * @returns {ESTree.MethodDefinition}
+ * @returns {AST.MethodDefinition}
  */
 export function method(kind, key, params, body, computed = false, is_static = false) {
 	return {
@@ -552,34 +653,69 @@ export function method(kind, key, params, body, computed = false, is_static = fa
 		value: function_builder(null, params, block(body)),
 		computed,
 		static: is_static,
-		decorators: []
+		decorators: [],
+		override: false,
+		optional: false,
+		accessibility: null
+	};
+}
+
+/**
+ * 
+ * @param {Array<AST.BindingPatternKind>} params
+ * @param {AST.FormalParameterKind} kind
+ * @returns {AST.FormalParameters}
+ */
+function parameters(params, kind = 'FormalParameter') {
+	return {
+		type: 'FormalParameters',
+		kind,
+		items: params.map((p) => ({
+			type: 'FormalParameter',
+			pattern: {
+				...p,
+				typeAnnotation: null,
+				optional: false,
+			},
+			decorators: [],
+			accessibility: null,
+			readonly: false,
+			override: false
+		}))
 	};
 }
 
 /**
  *
- * @param {ESTree.Identifier | null} id
- * @param {ESTree.Pattern[]} params
- * @param {ESTree.BlockStatement} body
- * @returns {ESTree.FunctionExpression}
+ * @param {AST.IdentifierReference | null} id
+ * @param {Array<AST.BindingPatternKind>} params
+ * @param {AST.BlockStatement} body
+ * @returns {AST.Function}
  */
 function function_builder(id, params, body) {
 	return {
 		type: 'FunctionExpression',
 		id,
-		params,
-		body,
+		params: parameters(params),
+		body: {
+			type: 'FunctionBody',
+			directives: [],
+			statements: body.body
+		},
 		generator: false,
 		async: false,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		declare: false,
+		typeParameters: null,
+		returnType: null,
+		thisParam: null
 	};
 }
 
 /**
- * @param {ESTree.Expression} test
- * @param {ESTree.Statement} consequent
- * @param {ESTree.Statement} [alternate]
- * @returns {ESTree.IfStatement}
+ * @param {AST.Expression} test
+ * @param {AST.Statement} consequent
+ * @param {AST.Statement} alternate
+ * @returns {AST.IfStatement}
  */
 function if_builder(test, consequent, alternate) {
 	return { type: 'IfStatement', test, consequent, alternate };
@@ -588,36 +724,47 @@ function if_builder(test, consequent, alternate) {
 /**
  * @param {string} as
  * @param {string} source
- * @returns {ESTree.ImportDeclaration}
+ * @returns {AST.ImportDeclaration}
  */
 export function import_all(as, source) {
 	return {
 		type: 'ImportDeclaration',
-		source: literal(source),
-		specifiers: [import_namespace(as)]
+		source: {
+			type: 'StringLiteral',
+			value: source
+		},
+		specifiers: [import_namespace(as)],
+		withClause: null,
+		importKind: 'value'
 	};
 }
 
 /**
  * @param {Array<[string, string]>} parts
  * @param {string} source
- * @returns {ESTree.ImportDeclaration}
+ * @returns {AST.ImportDeclaration}
  */
 export function imports(parts, source) {
 	return {
 		type: 'ImportDeclaration',
-		source: literal(source),
+		source: {
+			type: 'StringLiteral',
+			value: source
+		},
 		specifiers: parts.map((p) => ({
 			type: 'ImportSpecifier',
 			imported: id(p[0]),
-			local: id(p[1])
-		}))
+			local: id(p[1]),
+			importKind: 'value'
+		})),
+		withClause: null,
+		importKind: 'value'
 	};
 }
 
 /**
- * @param {ESTree.Expression | null} argument
- * @returns {ESTree.ReturnStatement}
+ * @param {AST.Expression | null} argument
+ * @returns {AST.ReturnStatement}
  */
 function return_builder(argument = null) {
 	return { type: 'ReturnStatement', argument };
@@ -625,7 +772,7 @@ function return_builder(argument = null) {
 
 /**
  * @param {string} str
- * @returns {ESTree.ThrowStatement}
+ * @returns {AST.ThrowStatement}
  */
 export function throw_error(str) {
 	return {
@@ -652,7 +799,7 @@ export {
 
 /**
  * @param {string} name
- * @returns {ESTree.Expression}
+ * @returns {AST.Expression}
  */
 export function key(name) {
 	return regex_is_valid_identifier.test(name) ? id(name) : literal(name);

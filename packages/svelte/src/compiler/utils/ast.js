@@ -1,16 +1,16 @@
 /** @import { AST, SvelteNode } from '#compiler' */
-/** @import * as ESTree from 'estree' */
+/** @import * as JS from 'oxc-svelte/ast' */
 import { walk } from 'zimmerframe';
 import * as b from '../utils/builders.js';
 
 /**
  * Gets the left-most identifier of a member expression or identifier.
- * @param {ESTree.MemberExpression | ESTree.Identifier} expression
- * @returns {ESTree.Identifier | null}
+ * @param {JS.MemberExpression | JS.IdentifierReference} expression
+ * @returns {JS.IdentifierReference | null}
  */
 export function object(expression) {
-	while (expression.type === 'MemberExpression') {
-		expression = /** @type {ESTree.MemberExpression | ESTree.Identifier} */ (expression.object);
+	while (expression.type !== 'Identifier') {
+		expression = /** @type {JS.MemberExpression | JS.IdentifierReference} */ (expression.object);
 	}
 
 	if (expression.type !== 'Identifier') {
@@ -54,7 +54,7 @@ export function is_expression_attribute(attribute) {
  * In Svelte 5, this also includes a single expression node wrapped in an array.
  * TODO change that in a future version
  * @param { AST.Attribute & { value: [AST.ExpressionTag] | AST.ExpressionTag }} attribute
- * @returns {ESTree.Expression}
+ * @returns {JS.Expression}
  */
 export function get_attribute_expression(attribute) {
 	return Array.isArray(attribute.value)
@@ -82,19 +82,13 @@ export function is_event_attribute(attribute) {
 
 /**
  * Extracts all identifiers and member expressions from a pattern.
- * @param {ESTree.Pattern} pattern
- * @param {Array<ESTree.Identifier | ESTree.MemberExpression>} [nodes]
- * @returns {Array<ESTree.Identifier | ESTree.MemberExpression>}
+ * @param {JS.BindingPattern | JS.BindingRestElement} pattern
+ * @param {Array<JS.IdentifierReference | JS.MemberExpression>} [nodes]
+ * @returns {Array<JS.IdentifierReference | JS.MemberExpression>}
  */
 export function unwrap_pattern(pattern, nodes = []) {
 	switch (pattern.type) {
 		case 'Identifier':
-			nodes.push(pattern);
-			break;
-
-		case 'MemberExpression':
-			// member expressions can be part of an assignment pattern, but not a binding pattern
-			// see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment#binding_and_assignment
 			nodes.push(pattern);
 			break;
 
@@ -130,8 +124,8 @@ export function unwrap_pattern(pattern, nodes = []) {
 
 /**
  * Extracts all identifiers from a pattern.
- * @param {ESTree.Pattern} pattern
- * @returns {ESTree.Identifier[]}
+ * @param {JS.BindingPattern | JS.BindingRestElement} pattern
+ * @returns {Array<JS.IdentifierReference>}
  */
 export function extract_identifiers(pattern) {
 	return unwrap_pattern(pattern, []).filter((node) => node.type === 'Identifier');
@@ -140,11 +134,11 @@ export function extract_identifiers(pattern) {
 /**
  * Extracts all identifiers and a stringified keypath from an expression.
  * TODO replace this with `expression.dependencies`
- * @param {ESTree.Expression} expr
- * @returns {[keypath: string, ids: ESTree.Identifier[]]}
+ * @param {JS.Expression} expr
+ * @returns {[keypath: string, ids: Array<JS.IdentifierReference>]}
  */
 export function extract_all_identifiers_from_expression(expr) {
-	/** @type {ESTree.Identifier[]} */
+	/** @type {Array<JS.IdentifierReference>} */
 	let nodes = [];
 	/** @type {string[]} */
 	let keypath = [];

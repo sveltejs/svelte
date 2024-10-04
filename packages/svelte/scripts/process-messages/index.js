@@ -111,7 +111,7 @@ function transform(name, dest) {
 
 				if (/^[,) \t]*$/.test(slice)) {
 					// @ts-expect-error
-					node.trailingComments = [comments.shift()];
+					node.trailing_comments = [comments.shift()];
 				}
 			}
 		},
@@ -131,7 +131,7 @@ function transform(name, dest) {
 
 	if (comments.length > 0) {
 		// @ts-expect-error
-		(ast.trailingComments ||= []).push(...comments);
+		(ast.trailing_comments ||= []).push(...comments);
 	}
 
 	const category = messages[name];

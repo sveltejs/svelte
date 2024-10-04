@@ -9,6 +9,9 @@
 		},
 		"./ast": {
 			"types": "./ast.d.ts"
+		},
+		"./ast-builder": {
+			"types": "./ast-builder.d.ts"
 		}
 	},
 	"napi": {

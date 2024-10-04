@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, Pattern, Property, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, Pattern, Property, Statement } from 'oxc-svelte/ast' */
 /** @import { AST, TemplateNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { empty_comment, build_attribute_value } from './utils.js';

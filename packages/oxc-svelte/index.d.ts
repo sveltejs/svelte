@@ -1,4 +1,4 @@
-import type { BindingPattern, Expression, Program } from './ast';
+import type { BindingPattern, Expression, Program, Comment } from './ast';
 
 export declare function parse_expression_at(
 	source: string,
@@ -14,12 +14,6 @@ export declare function parse_pattern_at(
 ): ParseReturn<BindingPattern>;
 
 export declare function parse(source: string, typescript: boolean): ParseReturn<Program>;
-
-export type Comment = {
-	type: 'Line' | 'Block';
-	start: number;
-	end: number;
-};
 
 export interface ParseReturn<TAst> {
 	ast: TAst;

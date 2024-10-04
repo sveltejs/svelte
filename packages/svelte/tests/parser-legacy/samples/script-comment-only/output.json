@@ -42,10 +42,9 @@
 			},
 			"body": [],
 			"sourceType": "module",
-			"trailingComments": [
+			"trailing_comments": [
 				{
 					"type": "Line",
-					"value": " TODO write some code",
 					"start": 10,
 					"end": 33
 				}

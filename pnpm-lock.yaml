@@ -69,8 +69,6 @@ importers:
         specifier: ^2.18.4
         version: 2.18.4
 
-  packages/oxc-svelte-wasm: {}
-
   packages/svelte:
     dependencies:
       '@ampproject/remapping':
@@ -110,11 +108,8 @@ importers:
         specifier: ^0.30.11
         version: 0.30.11
       oxc-svelte:
-        specifier: workspace:^
-        version: link:../oxc-svelte
-      swc-svelte:
         specifier: workspace:*
-        version: link:../swc-svelte
+        version: link:../oxc-svelte
       zimmerframe:
         specifier: ^1.1.2
         version: 1.1.2
@@ -167,8 +162,6 @@ importers:
       vitest:
         specifier: ^2.0.5
         version: 2.0.5(@types/node@20.12.7)(@vitest/ui@2.1.2(vitest@2.0.5))(jsdom@25.0.0)(lightningcss@1.23.0)(sass@1.70.0)(terser@5.27.0)
-
-  packages/swc-svelte: {}
 
   playgrounds/sandbox:
     devDependencies:

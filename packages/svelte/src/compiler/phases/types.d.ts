@@ -73,11 +73,11 @@ export interface ComponentAnalysis extends Analysis {
 	source: string;
 }
 
-declare module 'estree' {
+declare module 'oxc-svelte/ast' {
 	interface ArrowFunctionExpression {
 		metadata: {
 			hoisted: boolean;
-			hoisted_params: Pattern[];
+			hoisted_params: BindingPattern[];
 			scope: Scope;
 		};
 	}
@@ -85,7 +85,7 @@ declare module 'estree' {
 	interface FunctionExpression {
 		metadata: {
 			hoisted: boolean;
-			hoisted_params: Pattern[];
+			hoisted_params: BindingPattern[];
 			scope: Scope;
 		};
 	}
@@ -93,7 +93,7 @@ declare module 'estree' {
 	interface FunctionDeclaration {
 		metadata: {
 			hoisted: boolean;
-			hoisted_params: Pattern[];
+			hoisted_params: BindingPattern[];
 			scope: Scope;
 		};
 	}

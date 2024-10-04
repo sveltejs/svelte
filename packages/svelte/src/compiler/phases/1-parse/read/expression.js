@@ -1,4 +1,3 @@
-/** @import { Expression } from 'estree' */
 /** @import { Parser } from '../index.js' */
 import { parse_expression_at } from '../acorn.js';
 import { regex_whitespace } from '../../patterns.js';
@@ -19,8 +18,8 @@ export default function read_expression(parser) {
 		}
 
 		let index = /** @type {number} */ (node.end);
-		if (node.trailingComments !== undefined && node.trailingComments.length > 0) {
-			index = node.trailingComments.at(-1).end;
+		if (node.trailing_comments !== undefined && node.trailing_comments.length > 0) {
+			index = node.trailing_comments.at(-1).end;
 		}
 
 		while (num_parens > 0) {

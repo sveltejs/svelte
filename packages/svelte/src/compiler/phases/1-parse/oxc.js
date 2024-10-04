@@ -1,5 +1,4 @@
-/** @import { ArrayExpression, BlockStatement, Node, ObjectExpression, Program } from 'oxc-svelte/ast' */
-/** @import { Comment } from 'oxc-svelte' */
+/** @import { ArrayExpression, BlockStatement, Node, ObjectExpression, Program, Comment } from 'oxc-svelte/ast' */
 import { walk } from 'zimmerframe';
 import * as oxc from 'oxc-svelte';
 
@@ -39,10 +38,6 @@ export function parse_pattern_at(source, typescript, index, allow_type_annotatio
 	return res.ast;
 }
 
-/**
- * @typedef {T & { leading_comments?: Comment[]; trailing_comments?: Comment[] }} NodeWithComments
- * @template {Node} T
- */
 
 /**
  * Oxc returns comments separately from the AST. This factory returns the capabilities
@@ -50,14 +45,14 @@ export function parse_pattern_at(source, typescript, index, allow_type_annotatio
  * in JS code and so that `prettier-plugin-svelte` doesn't remove all comments when formatting.
  * @template {Node} T
  * @param {string} source
- * @param {NodeWithComments<T>} ast
+ * @param {T} ast
  * @param {Comment[]} comments
- * @returns {NodeWithComments<T>}
+ * @returns {T}
  */
 function add_comments(source, ast, comments) {
 	if (comments.length === 0) return ast;
 
-	walk(/** @type {NodeWithComments<Node>} */ (ast), null, {
+	walk(/** @type {Node} */ (ast), null, {
 		_(node, { next, path }) {
 			let comment;
 
@@ -72,10 +67,9 @@ function add_comments(source, ast, comments) {
 				return;
 			}
 			const parent =
-				/** @type {NodeWithComments<BlockStatement | Program | ArrayExpression | ObjectExpression>} */ (
+				/** @type {BlockStatement | Program | ArrayExpression | ObjectExpression} */ (
 					path.at(-1)
 				);
-			console.log(parent)
 
 			if (parent === undefined || node.end !== parent.end) {
 				const slice = source.slice(node.end, comments[0].start);

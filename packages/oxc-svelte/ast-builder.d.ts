@@ -10,8 +10,6 @@ export type Comment = {
 
 export interface Node {
 	type: string;
-	start: number;
-	end: number;
 	leading_comments?: Comment[];
 	trailing_comments?: Comment[];
 }

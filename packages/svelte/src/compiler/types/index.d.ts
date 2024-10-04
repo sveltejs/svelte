@@ -1,10 +1,10 @@
 import type {
-	ClassDeclaration,
+	Class,
 	Expression,
 	FunctionDeclaration,
-	Identifier,
+	IdentifierReference,
 	ImportDeclaration
-} from 'estree';
+} from 'oxc-svelte/ast';
 import type { SourceMap } from 'magic-string';
 import type { Scope } from '../phases/scope.js';
 import type { Css } from './css.js';
@@ -253,7 +253,7 @@ export type DeclarationKind =
 	| 'synthetic';
 
 export interface Binding {
-	node: Identifier;
+	node: IdentifierReference;
 	/**
 	 * - `normal`: A variable that is not in any way special
 	 * - `prop`: A normal prop (possibly reassigned or mutated)
@@ -289,11 +289,11 @@ export interface Binding {
 		| null
 		| Expression
 		| FunctionDeclaration
-		| ClassDeclaration
+		| Class
 		| ImportDeclaration
 		| AST.EachBlock;
 	is_called: boolean;
-	references: { node: Identifier; path: SvelteNode[] }[];
+	references: { node: IdentifierReference; path: SvelteNode[] }[];
 	mutated: boolean;
 	reassigned: boolean;
 	/** `true` if mutated _or_ reassigned */

@@ -1,4 +1,4 @@
-/** @import { ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
+/** @import { Class, Expression, FunctionDeclaration, IdentifierReference, ImportDeclaration, MemberExpression, Node, BindingPattern, VariableDeclarator, BindingRestElement } from 'oxc-svelte/ast' */
 /** @import { Context, Visitor } from 'zimmerframe' */
 /** @import { AST, Binding, DeclarationKind, ElementLike, SvelteNode } from '#compiler' */
 import is_reference from 'is-reference';
@@ -48,7 +48,7 @@ export class Scope {
 	/**
 	 * A set of all the names referenced with this scope
 	 * — useful for generating unique names
-	 * @type {Map<string, { node: Identifier; path: SvelteNode[] }[]>}
+	 * @type {Map<string, { node: IdentifierReference; path: SvelteNode[] }[]>}
 	 */
 	references = new Map();
 
@@ -72,10 +72,10 @@ export class Scope {
 	}
 
 	/**
-	 * @param {Identifier} node
+	 * @param {IdentifierReference} node
 	 * @param {Binding['kind']} kind
 	 * @param {DeclarationKind} declaration_kind
-	 * @param {null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | AST.EachBlock} initial
+	 * @param {null | Expression | FunctionDeclaration | Class | ImportDeclaration | AST.EachBlock} initial
 	 * @returns {Binding}
 	 */
 	declare(node, kind, declaration_kind, initial = null) {
@@ -178,7 +178,7 @@ export class Scope {
 	}
 
 	/**
-	 * @param {Identifier} node
+	 * @param {IdentifierReference} node
 	 * @param {SvelteNode[]} path
 	 */
 	reference(node, path) {
@@ -244,21 +244,21 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	/** @type {State} */
 	const state = { scope };
 
-	/** @type {[Scope, { node: Identifier; path: SvelteNode[] }][]} */
+	/** @type {[Scope, { node: IdentifierReference; path: SvelteNode[] }][]} */
 	const references = [];
 
-	/** @type {[Scope, Pattern | MemberExpression][]} */
+	/** @type {[Scope, BindingPattern | MemberExpression][]} */
 	const updates = [];
 
 	/**
 	 * An array of reactive declarations, i.e. the `a` in `$: a = b * 2`
-	 * @type {Identifier[]}
+	 * @type {IdentifierReference[]}
 	 */
 	const possible_implicit_declarations = [];
 
 	/**
 	 * @param {Scope} scope
-	 * @param {Pattern[]} params
+	 * @param {Array<BindingPattern | BindingRestElement>} params
 	 */
 	function add_params(scope, params) {
 		for (const param of params) {
