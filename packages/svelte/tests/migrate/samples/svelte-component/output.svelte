@@ -28,24 +28,30 @@
 </Component>
 
 <Component>
-	{#snippet x({ comp: stuff })}{@const SvelteComponent_2 = stuff}
+	{#snippet x({ comp: stuff })}
+		{@const SvelteComponent_2 = stuff}
 	<div  >
-		<SvelteComponent_2 />
-	</div>{/snippet}
-</Component>
-
-<Component>
-	{#snippet x({ comp: stuff })}{@const SvelteComponent_3 = stuff}
-	
-		<SvelteComponent_3 />
+			<SvelteComponent_2 />
+		</div>
 	{/snippet}
 </Component>
 
 <Component>
-	{#snippet x({ comp: stuff })}{@const SvelteComponent_4 = stuff}
+	{#snippet x({ comp: stuff })}
+	{@const SvelteComponent_3 = stuff}
+	
+			<SvelteComponent_3 />
+		
+	{/snippet}
+</Component>
+
+<Component>
+	{#snippet x({ comp: stuff })}
+		{@const SvelteComponent_4 = stuff}
 	<svelte:element this={"div"}  >
-		<SvelteComponent_4 />
-	</svelte:element>{/snippet}
+			<SvelteComponent_4 />
+		</svelte:element>
+	{/snippet}
 </Component>
 
 <Component >
@@ -69,24 +75,30 @@
 </Component>
 
 <Component>
-	{#snippet x({ comp: stuff })}{@const SvelteComponent_7 = stuff}
+	{#snippet x({ comp: stuff })}
+		{@const SvelteComponent_7 = stuff}
 	<div  >
-		<SvelteComponent_7 />
-	</div>{/snippet}
-</Component>
-
-<Component>
-	{#snippet x({ comp: stuff })}{@const SvelteComponent_8 = stuff}
-	
-		<SvelteComponent_8 />
+			<SvelteComponent_7 />
+		</div>
 	{/snippet}
 </Component>
 
 <Component>
-	{#snippet x({ comp: stuff })}{@const SvelteComponent_9 = stuff}
+	{#snippet x({ comp: stuff })}
+	{@const SvelteComponent_8 = stuff}
+	
+			<SvelteComponent_8 />
+		
+	{/snippet}
+</Component>
+
+<Component>
+	{#snippet x({ comp: stuff })}
+		{@const SvelteComponent_9 = stuff}
 	<svelte:element this={"div"}  >
-		<SvelteComponent_9 />
-	</svelte:element>{/snippet}
+			<SvelteComponent_9 />
+		</svelte:element>
+	{/snippet}
 </Component>
 
 <Component />

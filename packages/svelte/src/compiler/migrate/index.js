@@ -1043,8 +1043,17 @@ function migrate_slot_usage(node, path, state) {
 		}
 	} else {
 		// Named slot or `svelte:fragment`: wrap element itself in a snippet
-		state.str.prependRight(node.start, `{#snippet ${snippet_name}(${props})}`);
-		state.str.appendLeft(node.end, `{/snippet}`);
+		state.str.prependLeft(
+			node.start,
+			`{#snippet ${snippet_name}(${props})}\n${state.indent.repeat(path.length - 2)}`
+		);
+		state.str.indent(state.indent, {
+			exclude: [
+				[0, node.start],
+				[node.end, state.str.original.length]
+			]
+		});
+		state.str.appendLeft(node.end, `\n${state.indent.repeat(path.length - 2)}{/snippet}`);
 	}
 }
 

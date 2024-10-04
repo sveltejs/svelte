@@ -23,6 +23,13 @@
 </Component>
 
 <Component>
+    <div slot="named">
+        <p>multi</p>
+        <p>line</p>
+    </div>
+</Component>
+
+<Component>
     <svelte:element this={'div'} slot="named">x</svelte:element>
 </Component>
 
