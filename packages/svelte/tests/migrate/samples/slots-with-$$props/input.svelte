@@ -17,4 +17,4 @@
 
 <slot name="dashed-name" />
 
-<slot header="something" title={my_title} {id} />
+<slot header="something" title={$$props.cool} {id} />

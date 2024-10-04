@@ -192,7 +192,7 @@ export function migrate(source) {
 					}
 				} else {
 					if (analysis.uses_props || analysis.uses_rest_props) {
-						type = `{Record<string, any>}`;
+						type = `Record<string, any>`;
 					} else {
 						type = `{${state.props
 							.map((prop) => {
@@ -294,7 +294,7 @@ export function migrate(source) {
  *  str: MagicString;
  *  analysis: ComponentAnalysis;
  *  indent: string;
- *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string, type_only?: boolean }>;
+ *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string; type_only?: boolean; needs_refine_type?: boolean; }>;
  *  props_insertion_point: number;
  *  has_props_rune: boolean;
  *  end: number;
@@ -704,7 +704,7 @@ const template = {
 		handle_events(node, state);
 		next();
 	},
-	SlotElement(node, { state, next }) {
+	SlotElement(node, { state, next, visit }) {
 		if (state.analysis.custom_element) return;
 		let name = 'children';
 		let slot_name = 'default';
@@ -719,13 +719,22 @@ const template = {
 				} else {
 					const attr_value =
 						attr.value === true || Array.isArray(attr.value) ? attr.value : [attr.value];
-					const value =
-						attr_value !== true
-							? state.str.original.substring(
-									attr_value[0].start,
-									attr_value[attr_value.length - 1].end
-								)
-							: 'true';
+					let value = 'true';
+					if (attr_value !== true) {
+						const first = attr_value[0];
+						const last = attr_value[attr_value.length - 1];
+						for (const attr of attr_value) {
+							visit(attr);
+						}
+						value = state.str
+							.snip(
+								first.type === 'Text'
+									? first.start - 1
+									: /** @type {number} */ (first.expression.start),
+								last.type === 'Text' ? last.end + 1 : /** @type {number} */ (last.expression.end)
+							)
+							.toString();
+					}
 					slot_props += value === attr.name ? `${value}, ` : `${attr.name}: ${value}, `;
 				}
 			}
@@ -753,6 +762,9 @@ const template = {
 				slot_name,
 				type: `import('svelte').${slot_props ? 'Snippet<[any]>' : 'Snippet'}`
 			});
+		} else if (existing_prop.needs_refine_type) {
+			existing_prop.type = `import('svelte').${slot_props ? 'Snippet<[any]>' : 'Snippet'}`;
+			existing_prop.needs_refine_type = false;
 		}
 
 		if (node.fragment.nodes.length > 0) {
@@ -760,11 +772,15 @@ const template = {
 			state.str.update(
 				node.start,
 				node.fragment.nodes[0].start,
-				`{#if ${name}}{@render ${name}(${slot_props})}{:else}`
+				`{#if ${name}}{@render ${state.analysis.uses_props ? `${state.names.props}.` : ''}${name}(${slot_props})}{:else}`
 			);
 			state.str.update(node.fragment.nodes[node.fragment.nodes.length - 1].end, node.end, '{/if}');
 		} else {
-			state.str.update(node.start, node.end, `{@render ${name}?.(${slot_props})}`);
+			state.str.update(
+				node.start,
+				node.end,
+				`{@render ${state.analysis.uses_props ? `${state.names.props}.` : ''}${name}?.(${slot_props})}`
+			);
 		}
 	},
 	Comment(node, { state }) {
@@ -958,7 +974,7 @@ function handle_identifier(node, state, path) {
 	const parent = path.at(-1);
 	if (parent?.type === 'MemberExpression' && parent.property === node) return;
 
-	if (state.analysis.uses_props) {
+	if (state.analysis.uses_props && node.name !== '$$slots') {
 		if (node.name === '$$props' || node.name === '$$restProps') {
 			// not 100% correct for $$restProps but it'll do
 			state.str.update(
@@ -980,10 +996,42 @@ function handle_identifier(node, state, path) {
 		);
 	} else if (node.name === '$$slots' && state.analysis.uses_slots) {
 		if (parent?.type === 'MemberExpression') {
-			state.str.update(/** @type {number} */ (node.start), parent.property.start, '');
-			if (parent.property.name === 'default') {
-				state.str.update(parent.property.start, parent.property.end, 'children');
+			if (state.analysis.custom_element) return;
+
+			let name = parent.property.type === 'Literal' ? parent.property.value : parent.property.name;
+			let slot_name = name;
+			const existing_prop = state.props.find((prop) => prop.slot_name === name);
+			if (existing_prop) {
+				name = existing_prop.local;
+			} else if (name !== 'default') {
+				name = state.scope.generate(name);
 			}
+
+			name = name === 'default' ? 'children' : name;
+
+			if (!existing_prop) {
+				state.props.push({
+					local: name,
+					exported: name,
+					init: '',
+					bindable: false,
+					optional: true,
+					slot_name,
+					// if it's the first time we encounter this slot
+					// we start with any and delegate to when the slot
+					// is actually rendered (it might not happen in that case)
+					// any is still a safe bet
+					type: `import('svelte').Snippet<[any]>}`,
+					needs_refine_type: true
+				});
+			}
+
+			state.str.update(
+				/** @type {number} */ (node.start),
+				parent.property.start,
+				state.analysis.uses_props ? `${state.names.props}.` : ''
+			);
+			state.str.update(parent.property.start, parent.end, name);
 		}
 		// else passed as identifier, we don't know what to do here, so let it error
 	} else if (
