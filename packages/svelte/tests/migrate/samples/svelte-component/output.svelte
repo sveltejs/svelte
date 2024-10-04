@@ -7,74 +7,86 @@
 	const SvelteComponent_10 = $derived(Math.random() > .5 ? rest.heads : rest.tail);
 </script>
 
-<Component let:Comp>
-	<Comp />
+<Component >
+	{#snippet children({ Comp })}
+		<Comp />
+	{/snippet}
 </Component>
 
-<Component let:comp>
-	{@const SvelteComponent = comp}
+<Component >
+	{#snippet children({ comp })}
+		{@const SvelteComponent = comp}
 	<SvelteComponent />
+	{/snippet}
 </Component>
 
-<Component let:comp={stuff}>
-	{@const SvelteComponent_1 = stuff}
+<Component >
+	{#snippet children({ comp: stuff })}
+		{@const SvelteComponent_1 = stuff}
 	<SvelteComponent_1 />
+	{/snippet}
 </Component>
 
 <Component>
 	{@const SvelteComponent_2 = stuff}
-	<div slot="x" let:comp={stuff}>
+	{#snippet x({ comp: stuff })}<div  >
 		<SvelteComponent_2 />
-	</div>
+	</div>{/snippet}
 </Component>
 
 <Component>
 	{@const SvelteComponent_3 = stuff}
-	<svelte:fragment slot="x" let:comp={stuff}>
+	{#snippet x({ comp: stuff })}
 		<SvelteComponent_3 />
-	</svelte:fragment>
+	{/snippet}
 </Component>
 
 <Component>
 	{@const SvelteComponent_4 = stuff}
-	<svelte:element this={"div"} slot="x" let:comp={stuff}>
+	{#snippet x({ comp: stuff })}<svelte:element this={"div"}  >
 		<SvelteComponent_4 />
-	</svelte:element>
+	</svelte:element>{/snippet}
 </Component>
 
-<Component let:Comp>
-	<Comp />
+<Component >
+	{#snippet children({ Comp })}
+		<Comp />
+	{/snippet}
 </Component>
 
-<Component let:comp>
-	{@const SvelteComponent_5 = comp}
+<Component >
+	{#snippet children({ comp })}
+		{@const SvelteComponent_5 = comp}
 	<SvelteComponent_5 />
+	{/snippet}
 </Component>
 
-<Component let:comp={stuff}>
-	{@const SvelteComponent_6 = stuff}
+<Component >
+	{#snippet children({ comp: stuff })}
+		{@const SvelteComponent_6 = stuff}
 	<SvelteComponent_6 />
+	{/snippet}
 </Component>
 
 <Component>
 	{@const SvelteComponent_7 = stuff}
-	<div slot="x" let:comp={stuff}>
+	{#snippet x({ comp: stuff })}<div  >
 		<SvelteComponent_7 />
-	</div>
+	</div>{/snippet}
 </Component>
 
 <Component>
 	{@const SvelteComponent_8 = stuff}
-	<svelte:fragment slot="x" let:comp={stuff}>
+	{#snippet x({ comp: stuff })}
 		<SvelteComponent_8 />
-	</svelte:fragment>
+	{/snippet}
 </Component>
 
 <Component>
 	{@const SvelteComponent_9 = stuff}
-	<svelte:element this={"div"} slot="x" let:comp={stuff}>
+	{#snippet x({ comp: stuff })}<svelte:element this={"div"}  >
 		<SvelteComponent_9 />
-	</svelte:element>
+	</svelte:element>{/snippet}
 </Component>
 
 <Component />

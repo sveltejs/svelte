@@ -1,0 +1,57 @@
+<Component>
+    unchanged
+</Component>
+
+<Component>
+    unchanged
+</Component>
+
+<Component >
+    {#snippet children({ foo })}
+        <div>{foo}</div>
+    {/snippet}
+</Component>
+
+<Component >
+    {#snippet children({ foo: bar })}
+        <div>{bar}</div>
+    {/snippet}
+</Component>
+
+<Component >
+    {#snippet children({ foo })}
+        <div>{foo}</div>
+    {/snippet}
+</Component>
+
+<Component>
+    {#snippet named()}<div >x</div>{/snippet}
+</Component>
+
+<Component>
+    {#snippet named()}<svelte:element this={'div'} >x</svelte:element>{/snippet}
+</Component>
+
+<Component>
+    {#snippet foo({ foo })}<div  >{foo}</div>{/snippet}
+    {#snippet bar({ foo: bar })}<div  >{bar}</div>{/snippet}
+</Component>
+
+<Component >
+    {#snippet children({ foo })}
+        {foo}
+            {/snippet}
+{#snippet named()}<div >x</div>{/snippet}
+</Component>
+
+<Component>
+    {#snippet children({ foo })}{foo}{/snippet}
+</Component>
+
+<Component>
+    {#snippet named({ foo })}{foo}{/snippet}
+</Component>
+
+<c-e>
+    <div slot="named">unchanged</div>
+</c-e>
