@@ -44,6 +44,32 @@
     <svelte:fragment slot="named" let:foo>{foo}</svelte:fragment>
 </Component>
 
+<Component>
+    <div slot="foo">foo</div>
+    OMG WHY
+    <div slot="bar">bar</div>
+</Component>
+
+<Component>
+    If you do mix slots like this
+    <div slot="foo">foo</div>
+    you're a monster
+    <div slot="bar">bar</div>
+</Component>
+
+<Component let:omg>
+    <div slot="foo">foo</div>
+    {omg} WHY
+    <div slot="bar">bar</div>
+</Component>
+
+<Component let:monster>
+    If you do mix slots like this
+    <div slot="foo">foo</div>
+    you're a {monster}
+    <div slot="bar">bar</div>
+</Component>
+
 <c-e>
     <div slot="named">unchanged</div>
 </c-e>

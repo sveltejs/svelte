@@ -802,7 +802,7 @@ const template = {
 						state.str.original.lastIndexOf('\n', position) + 1,
 						position
 					);
-					state.str.prependLeft(
+					state.str.appendRight(
 						position,
 						`{@const ${expression} = ${current_expression}}\n${indent}`
 					);
@@ -985,11 +985,12 @@ function migrate_slot_usage(node, path, state) {
 	if (snippet_name === 'children' && node.type !== 'SvelteFragment') {
 		if (snippet_props.length === 0) return; // nothing to do
 
-		// Default slot: wrap children in a snippet (TODO: named slots)
-		const inner_start = node.fragment.nodes[0].start;
-		let inner_end = node.fragment.nodes[node.fragment.nodes.length - 1].end;
+		let inner_start = 0;
+		let inner_end = 0;
 		for (let i = 0; i < node.fragment.nodes.length; i++) {
 			const inner = node.fragment.nodes[i];
+			const is_empty_text = inner.type === 'Text' && !inner.data.trim();
+
 			if (
 				(inner.type === 'RegularElement' ||
 					inner.type === 'SvelteElement' ||
@@ -999,15 +1000,30 @@ function migrate_slot_usage(node, path, state) {
 					inner.type === 'SvelteFragment') &&
 				inner.attributes.some((attr) => attr.type === 'Attribute' && attr.name === 'slot')
 			) {
-				// Assumption: People don't have default content mixed with named slots
-				inner_end = inner.start;
-				break;
+				if (inner_start && !inner_end) {
+					// End of default slot content
+					inner_end = inner.start;
+				}
+			} else if (!inner_start && !is_empty_text) {
+				// Start of default slot content
+				inner_start = inner.start;
+			} else if (inner_end && !is_empty_text) {
+				// There was default slot content before, then some named slot content, now some default slot content again.
+				// We're moving the last character back by one to avoid the closing {/snippet} tag inserted afterwards
+				// to come before the opening {#snippet} tag of the named slot.
+				state.str.update(inner_end - 1, inner_end, '');
+				state.str.prependLeft(inner_end - 1, state.str.original[inner_end - 1]);
+				state.str.move(inner.start, inner.end, inner_end - 1);
 			}
+		}
+
+		if (!inner_end) {
+			inner_end = node.fragment.nodes[node.fragment.nodes.length - 1].end;
 		}
 
 		state.str.appendLeft(
 			inner_start,
-			`\n${state.indent.repeat(path.length)}{#snippet ${snippet_name}(${props})}`
+			`{#snippet ${snippet_name}(${props})}\n${state.indent.repeat(path.length)}`
 		);
 		state.str.indent(state.indent, {
 			exclude: [
@@ -1015,14 +1031,20 @@ function migrate_slot_usage(node, path, state) {
 				[inner_end, state.str.original.length]
 			]
 		});
-		state.str.prependLeft(
-			inner_end,
-			`${state.indent.repeat(path.length)}{/snippet}\n${state.indent.repeat(path.length - 1)}`
-		);
+		if (inner_end < node.fragment.nodes[node.fragment.nodes.length - 1].end) {
+			// Named slots coming afterwards
+			state.str.prependLeft(inner_end, `{/snippet}\n${state.indent.repeat(path.length)}`);
+		} else {
+			// No named slots coming afterwards
+			state.str.prependLeft(
+				inner_end,
+				`${state.indent.repeat(path.length)}{/snippet}\n${state.indent.repeat(path.length - 1)}`
+			);
+		}
 	} else {
 		// Named slot or `svelte:fragment`: wrap element itself in a snippet
-		state.str.prependLeft(node.start, `{#snippet ${snippet_name}(${props})}`);
-		state.str.appendRight(node.end, `{/snippet}`);
+		state.str.prependRight(node.start, `{#snippet ${snippet_name}(${props})}`);
+		state.str.appendLeft(node.end, `{/snippet}`);
 	}
 }
 
