@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-breaking: use <span> instead of <div> for style props
+breaking: use `<span>` instead of `<div>` for style props
