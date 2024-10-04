@@ -138,56 +138,26 @@ export function bind_playback_rate(media, get, set = get) {
  * @param {(paused: boolean) => void} set
  */
 export function bind_paused(media, get, set = get) {
-	var mounted = hydrating;
 	var paused = get();
 
-	var callback = () => {
+	var update = () => {
 		if (paused !== media.paused) {
-			paused = media.paused;
 			set((paused = media.paused));
 		}
 	};
 
-	if (paused == null) {
-		callback();
-	}
-
-	// Defer listening if not mounted yet so that the first canplay event doesn't cause a potentially wrong update
-	if (mounted) {
-		// If someone switches the src while media is playing, the player will pause.
-		// Listen to the canplay event to get notified of this situation.
-		listen(media, ['play', 'pause', 'canplay'], callback, false);
-	}
+	// If someone switches the src while media is playing, the player will pause.
+	// Listen to the canplay event to get notified of this situation.
+	listen(media, ['play', 'pause', 'canplay'], update, paused == null);
 
 	render_effect(() => {
-		paused = !!get();
-
-		if (paused !== media.paused) {
-			var toggle = () => {
-				mounted = true;
-				if (paused) {
-					media.pause();
-				} else {
-					media.play().catch(() => {
-						set((paused = true));
-					});
-				}
-			};
-
-			if (mounted) {
-				toggle();
+		if ((paused = !!get()) !== media.paused) {
+			if (paused) {
+				media.pause();
 			} else {
-				// If this is the first invocation in dom mode, the media element isn't mounted yet,
-				// and therefore its resource isn't loaded yet. We need to wait for the canplay event
-				// in this case or else we'll get a "The play() request was interrupted by a new load request" error.
-				media.addEventListener(
-					'canplay',
-					() => {
-						listen(media, ['play', 'pause', 'canplay'], callback, false);
-						toggle();
-					},
-					{ once: true }
-				);
+				media.play().catch(() => {
+					set((paused = true));
+				});
 			}
 		}
 	});
