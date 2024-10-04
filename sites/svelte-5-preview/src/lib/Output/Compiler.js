@@ -80,7 +80,8 @@ export default class Compiler {
 			this.worker.postMessage({
 				id,
 				type: 'migrate',
-				source: file.source
+				source: file.source,
+				filename: `${file.name}.${file.type}`
 			});
 		});
 	}

@@ -12,7 +12,7 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 		.replace(/\s+$/, '')
 		.replace(/\r/g, '');
 
-	const actual = migrate(input).code;
+	const actual = migrate(input, `${cwd}/output.svelte`).code;
 
 	// run `UPDATE_SNAPSHOTS=true pnpm test migrate` to update parser tests
 	if (process.env.UPDATE_SNAPSHOTS || !fs.existsSync(`${cwd}/output.svelte`)) {

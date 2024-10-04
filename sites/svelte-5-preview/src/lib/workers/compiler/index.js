@@ -133,9 +133,9 @@ function compile({ id, source, options, return_ast }) {
 }
 
 /** @param {import("../workers").MigrateMessageData} param0 */
-function migrate({ id, source }) {
+function migrate({ id, source, filename }) {
 	try {
-		const result = svelte.migrate(source);
+		const result = svelte.migrate(source, filename);
 
 		return {
 			id,

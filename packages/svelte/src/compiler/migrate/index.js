@@ -10,7 +10,7 @@ import { regex_valid_component_name } from '../phases/1-parse/state/element.js';
 import { analyze_component } from '../phases/2-analyze/index.js';
 import { get_rune } from '../phases/scope.js';
 import { reset, reset_warning_filter } from '../state.js';
-import { extract_identifiers, extract_all_identifiers_from_expression } from '../utils/ast.js';
+import { extract_all_identifiers_from_expression, extract_identifiers } from '../utils/ast.js';
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
 import { validate_component_options } from '../validate-options.js';
 import { is_svg, is_void } from '../../utils.js';
@@ -23,9 +23,10 @@ const style_placeholder = '/*$$__STYLE_CONTENT__$$*/';
  * May throw an error if the code is too complex to migrate automatically.
  *
  * @param {string} source
+ * @param {string} [filename]
  * @returns {{ code: string; }}
  */
-export function migrate(source) {
+export function migrate(source, filename) {
 	try {
 		// Blank CSS, could contain SCSS or similar that needs a preprocessor.
 		// Since we don't care about CSS in this migration, we'll just ignore it.
@@ -37,7 +38,7 @@ export function migrate(source) {
 		});
 
 		reset_warning_filter(() => false);
-		reset(source, { filename: 'migrate.svelte' });
+		reset(source, { filename: filename ?? 'migrate.svelte' });
 
 		let parsed = parse(source);
 
@@ -64,6 +65,7 @@ export function migrate(source) {
 		let state = {
 			scope: analysis.instance.scope,
 			analysis,
+			filename,
 			str,
 			indent,
 			props: [],
@@ -86,12 +88,14 @@ export function migrate(source) {
 				createBubbler: analysis.root.unique('createBubbler').name,
 				bubble: analysis.root.unique('bubble').name,
 				passive: analysis.root.unique('passive').name,
-				nonpassive: analysis.root.unique('nonpassive').name
+				nonpassive: analysis.root.unique('nonpassive').name,
+				svelte_self: analysis.root.unique('SvelteSelf').name
 			},
 			legacy_imports: new Set(),
 			script_insertions: new Set(),
 			derived_components: new Map(),
-			derived_labeled_statements: new Set()
+			derived_labeled_statements: new Set(),
+			has_svelte_self: false
 		};
 
 		if (parsed.module) {
@@ -118,10 +122,19 @@ export function migrate(source) {
 			state.script_insertions.size > 0 ||
 			state.props.length > 0 ||
 			analysis.uses_rest_props ||
-			analysis.uses_props;
+			analysis.uses_props ||
+			state.has_svelte_self;
 
 		if (!parsed.instance && need_script) {
 			str.appendRight(0, '<script>');
+		}
+
+		if (state.has_svelte_self && filename) {
+			const file = filename.split('/').pop();
+			str.appendRight(
+				insertion_point,
+				`\n${indent}import ${state.names.svelte_self} from './${file}';`
+			);
 		}
 
 		const specifiers = [...state.legacy_imports].map((imported) => {
@@ -294,6 +307,7 @@ export function migrate(source) {
  *  scope: Scope;
  *  str: MagicString;
  *  analysis: ComponentAnalysis;
+ *  filename?: string;
  *  indent: string;
  *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string; type_only?: boolean; needs_refine_type?: boolean; }>;
  *  props_insertion_point: number;
@@ -302,8 +316,9 @@ export function migrate(source) {
  * 	names: Record<string, string>;
  * 	legacy_imports: Set<string>;
  * 	script_insertions: Set<string>;
- *  derived_components: Map<string, string>,
- * 	derived_labeled_statements: Set<LabeledStatement>
+ *  derived_components: Map<string, string>;
+ * 	derived_labeled_statements: Set<LabeledStatement>;
+ *  has_svelte_self: boolean;
  * }} State
  */
 
@@ -722,6 +737,32 @@ const template = {
 			state.str.remove(trimmed_position, node.end - 1);
 			state.str.appendRight(node.end, `</${node.name}>`);
 		}
+		next();
+	},
+	SvelteSelf(node, { state, next }) {
+		if (!state.filename) {
+			const indent = guess_indent(state.str.original.substring(node.start, node.end));
+			state.str.prependRight(
+				node.start,
+				`<!-- @migration-task: migrate this by hand or call the migrate function with the filename of this file -->\n${indent}`
+			);
+			return;
+		}
+		let end = node.end - 1;
+		if (node.fragment.nodes.length > 0) {
+			end = node.fragment.nodes[0].start;
+		}
+		if (node.attributes.length > 0) {
+			end = node.attributes[0].start;
+		}
+		state.str.overwrite(node.start + 1, end - 1, `${state.names.svelte_self}`);
+		if (node.fragment.nodes.length > 0) {
+			const start_closing =
+				state.str.original.indexOf('<', node.fragment.nodes[node.fragment.nodes.length - 1].end) +
+				2;
+			state.str.overwrite(start_closing, node.end - 1, `${state.names.svelte_self}`);
+		}
+		state.has_svelte_self = true;
 		next();
 	},
 	SvelteElement(node, { state, next }) {
