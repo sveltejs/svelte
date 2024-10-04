@@ -10,7 +10,11 @@ import { regex_valid_component_name } from '../phases/1-parse/state/element.js';
 import { analyze_component } from '../phases/2-analyze/index.js';
 import { get_rune } from '../phases/scope.js';
 import { reset, reset_warning_filter } from '../state.js';
-import { extract_all_identifiers_from_expression, extract_identifiers } from '../utils/ast.js';
+import {
+	extract_identifiers,
+	extract_all_identifiers_from_expression,
+	is_text_attribute
+} from '../utils/ast.js';
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
 import { validate_component_options } from '../validate-options.js';
 import { is_svg, is_void } from '../../utils.js';
@@ -726,7 +730,8 @@ const template = {
 	Identifier(node, { state, path }) {
 		handle_identifier(node, state, path);
 	},
-	RegularElement(node, { state, next }) {
+	RegularElement(node, { state, path, next }) {
+		migrate_slot_usage(node, path, state);
 		handle_events(node, state);
 		// Strip off any namespace from the beginning of the node name.
 		const node_name = node.name.replace(/[a-zA-Z-]*:/g, '');
@@ -784,7 +789,8 @@ const template = {
 		state.has_svelte_self = true;
 		next();
 	},
-	SvelteElement(node, { state, next }) {
+	SvelteElement(node, { state, path, next }) {
+		migrate_slot_usage(node, path, state);
 		if (node.tag.type === 'Literal') {
 			let is_static = true;
 
@@ -808,8 +814,14 @@ const template = {
 		handle_events(node, state);
 		next();
 	},
+	Component(node, { state, path, next }) {
+		next();
+		migrate_slot_usage(node, path, state);
+	},
 	SvelteComponent(node, { state, next, path }) {
 		next();
+
+		migrate_slot_usage(node, path, state);
 
 		let expression = state.str
 			.snip(
@@ -849,7 +861,7 @@ const template = {
 						state.str.original.lastIndexOf('\n', position) + 1,
 						position
 					);
-					state.str.prependLeft(
+					state.str.appendRight(
 						position,
 						`{@const ${expression} = ${current_expression}}\n${indent}`
 					);
@@ -876,6 +888,10 @@ const template = {
 		const end_pos = state.str.original.indexOf('}', node.expression.end) + 1;
 		state.str.remove(this_pos, end_pos);
 	},
+	SvelteFragment(node, { state, path, next }) {
+		migrate_slot_usage(node, path, state);
+		next();
+	},
 	SvelteWindow(node, { state, next }) {
 		handle_events(node, state);
 		next();
@@ -888,7 +904,9 @@ const template = {
 		handle_events(node, state);
 		next();
 	},
-	SlotElement(node, { state, next, visit }) {
+	SlotElement(node, { state, path, next, visit }) {
+		migrate_slot_usage(node, path, state);
+
 		if (state.analysis.custom_element) return;
 		let name = 'children';
 		let slot_name = 'default';
@@ -974,6 +992,129 @@ const template = {
 		}
 	}
 };
+
+/**
+ * @param {AST.RegularElement | AST.SvelteElement | AST.SvelteComponent | AST.Component | AST.SlotElement | AST.SvelteFragment} node
+ * @param {SvelteNode[]} path
+ * @param {State} state
+ */
+function migrate_slot_usage(node, path, state) {
+	const parent = path.at(-2);
+	// Bail on custom element slot usage
+	if (
+		parent?.type !== 'Component' &&
+		parent?.type !== 'SvelteComponent' &&
+		node.type !== 'Component' &&
+		node.type !== 'SvelteComponent'
+	) {
+		return;
+	}
+
+	let snippet_name = 'children';
+	let snippet_props = [];
+
+	for (let attribute of node.attributes) {
+		if (
+			attribute.type === 'Attribute' &&
+			attribute.name === 'slot' &&
+			is_text_attribute(attribute)
+		) {
+			snippet_name = attribute.value[0].data;
+			state.str.remove(attribute.start, attribute.end);
+		}
+		if (attribute.type === 'LetDirective') {
+			snippet_props.push(
+				attribute.name +
+					(attribute.expression
+						? `: ${state.str.original.substring(/** @type {number} */ (attribute.expression.start), /** @type {number} */ (attribute.expression.end))}`
+						: '')
+			);
+			state.str.remove(attribute.start, attribute.end);
+		}
+	}
+
+	if (node.type === 'SvelteFragment' && node.fragment.nodes.length > 0) {
+		// remove node itself, keep content
+		state.str.remove(node.start, node.fragment.nodes[0].start);
+		state.str.remove(node.fragment.nodes[node.fragment.nodes.length - 1].end, node.end);
+	}
+
+	const props = snippet_props.length > 0 ? `{ ${snippet_props.join(', ')} }` : '';
+
+	if (snippet_name === 'children' && node.type !== 'SvelteFragment') {
+		if (snippet_props.length === 0) return; // nothing to do
+
+		let inner_start = 0;
+		let inner_end = 0;
+		for (let i = 0; i < node.fragment.nodes.length; i++) {
+			const inner = node.fragment.nodes[i];
+			const is_empty_text = inner.type === 'Text' && !inner.data.trim();
+
+			if (
+				(inner.type === 'RegularElement' ||
+					inner.type === 'SvelteElement' ||
+					inner.type === 'Component' ||
+					inner.type === 'SvelteComponent' ||
+					inner.type === 'SlotElement' ||
+					inner.type === 'SvelteFragment') &&
+				inner.attributes.some((attr) => attr.type === 'Attribute' && attr.name === 'slot')
+			) {
+				if (inner_start && !inner_end) {
+					// End of default slot content
+					inner_end = inner.start;
+				}
+			} else if (!inner_start && !is_empty_text) {
+				// Start of default slot content
+				inner_start = inner.start;
+			} else if (inner_end && !is_empty_text) {
+				// There was default slot content before, then some named slot content, now some default slot content again.
+				// We're moving the last character back by one to avoid the closing {/snippet} tag inserted afterwards
+				// to come before the opening {#snippet} tag of the named slot.
+				state.str.update(inner_end - 1, inner_end, '');
+				state.str.prependLeft(inner_end - 1, state.str.original[inner_end - 1]);
+				state.str.move(inner.start, inner.end, inner_end - 1);
+			}
+		}
+
+		if (!inner_end) {
+			inner_end = node.fragment.nodes[node.fragment.nodes.length - 1].end;
+		}
+
+		state.str.appendLeft(
+			inner_start,
+			`{#snippet ${snippet_name}(${props})}\n${state.indent.repeat(path.length)}`
+		);
+		state.str.indent(state.indent, {
+			exclude: [
+				[0, inner_start],
+				[inner_end, state.str.original.length]
+			]
+		});
+		if (inner_end < node.fragment.nodes[node.fragment.nodes.length - 1].end) {
+			// Named slots coming afterwards
+			state.str.prependLeft(inner_end, `{/snippet}\n${state.indent.repeat(path.length)}`);
+		} else {
+			// No named slots coming afterwards
+			state.str.prependLeft(
+				inner_end,
+				`${state.indent.repeat(path.length)}{/snippet}\n${state.indent.repeat(path.length - 1)}`
+			);
+		}
+	} else {
+		// Named slot or `svelte:fragment`: wrap element itself in a snippet
+		state.str.prependLeft(
+			node.start,
+			`{#snippet ${snippet_name}(${props})}\n${state.indent.repeat(path.length - 2)}`
+		);
+		state.str.indent(state.indent, {
+			exclude: [
+				[0, node.start],
+				[node.end, state.str.original.length]
+			]
+		});
+		state.str.appendLeft(node.end, `\n${state.indent.repeat(path.length - 2)}{/snippet}`);
+	}
+}
 
 /**
  * @param {VariableDeclarator} declarator
