@@ -186,7 +186,7 @@ export function css_props(payload, is_html, props, component, dynamic = false) {
 	const styles = style_object_to_string(props);
 
 	if (is_html) {
-		payload.out += `<div style="display: contents; ${styles}">`;
+		payload.out += `<span style="display: contents; ${styles}">`;
 	} else {
 		payload.out += `<g style="${styles}">`;
 	}
@@ -198,7 +198,7 @@ export function css_props(payload, is_html, props, component, dynamic = false) {
 	component();
 
 	if (is_html) {
-		payload.out += `<!----></div>`;
+		payload.out += `<!----></span>`;
 	} else {
 		payload.out += `<!----></g>`;
 	}

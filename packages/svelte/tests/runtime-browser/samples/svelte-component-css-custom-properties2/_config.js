@@ -6,18 +6,18 @@ export default test({
 	},
 	html: `
 		<section>
-			<div style="display: contents; --rail-color: rgb(0, 0, 0); --track-color: rgb(255, 0, 0);">
+			<span style="display: contents; --rail-color: rgb(0, 0, 0); --track-color: rgb(255, 0, 0);">
 				<div id="component1">
 					<p class="svelte-17ay6rc">Slider1</p>
 					<span class="svelte-17ay6rc">Track</span>
 				</div>
-			</div>
-			<div style="display: contents; --rail-color: rgb(0, 255, 0); --track-color: rgb(0, 0, 255);">
+			</span>
+			<span style="display: contents; --rail-color: rgb(0, 255, 0); --track-color: rgb(0, 0, 255);">
 				<div id="component2">
 					<p class="svelte-17ay6rc">Slider1</p>
 					<span class="svelte-17ay6rc">Track</span>
 				</div>
-			</div>
+			</span>
 		</section>
 	`,
 	test({ target, window, assert, component }) {

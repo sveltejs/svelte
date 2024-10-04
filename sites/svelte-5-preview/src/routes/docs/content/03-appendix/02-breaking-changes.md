@@ -429,4 +429,8 @@ Svelte 5 makes use of comments during server side rendering which are used for m
 
 Event attributes replace event directives: Instead of `on:click={handler}` you write `onclick={handler}`. For backwards compatibility the `on:event` syntax is still supported and behaves the same as in Svelte 4. Some of the `onevent` attributes however are delegated, which means you need to take care to not stop event propagation on those manually, as they then might never reach the listener for this event type at the root.
 
+### `--style-props` uses a different element
+
+Svelte 5 uses an extra `<span>` element instead of a `<div>` to wrap the component when using CSS custom properties.
+
 <!-- TODO in final docs, add link to corresponding section for more details -->
