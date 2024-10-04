@@ -13,11 +13,15 @@
 	<slot name="foo" {foo} />
 {/if}
 
-{#if bar}
+{#if $$slots.bar}
 	{$$slots}
 	<slot name="bar" />
 {/if}
 
-{#if children}foo{/if}
+{#if $$slots.default}foo{/if}
+
+{#if $$slots['default']}foo{/if}
+
+{#if $$slots['dashed-name']}foo{/if}
 
 <slot name="dashed-name" />

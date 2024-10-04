@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.262
+
+### Patch Changes
+
+- feat: enable snippets to fill slots ([#13427](https://github.com/sveltejs/svelte/pull/13427))
+
+- fix: strip internal properties from rest props during SSR ([#13492](https://github.com/sveltejs/svelte/pull/13492))
+
+- fix: allow combinator at start of nested CSS selector ([#13440](https://github.com/sveltejs/svelte/pull/13440))
+
 ## 5.0.0-next.261
 
 ### Patch Changes

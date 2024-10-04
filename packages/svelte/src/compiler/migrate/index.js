@@ -1,3 +1,4 @@
+/** @import { VariableDeclarator, Node, Identifier, AssignmentExpression, LabeledStatement, ExpressionStatement } from 'estree' */
 /** @import { Visitors } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
 /** @import { Scope } from '../phases/scope.js' */
@@ -9,7 +10,11 @@ import { regex_valid_component_name } from '../phases/1-parse/state/element.js';
 import { analyze_component } from '../phases/2-analyze/index.js';
 import { get_rune } from '../phases/scope.js';
 import { reset, reset_warning_filter } from '../state.js';
-import { extract_identifiers } from '../utils/ast.js';
+import {
+	extract_identifiers,
+	extract_all_identifiers_from_expression,
+	is_text_attribute
+} from '../utils/ast.js';
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
 import { validate_component_options } from '../validate-options.js';
 import { is_svg, is_void } from '../../utils.js';
@@ -89,7 +94,8 @@ export function migrate(source) {
 			},
 			legacy_imports: new Set(),
 			script_insertions: new Set(),
-			derived_components: new Map()
+			derived_components: new Map(),
+			derived_labeled_statements: new Set()
 		};
 
 		if (parsed.module) {
@@ -191,7 +197,7 @@ export function migrate(source) {
 					}
 				} else {
 					if (analysis.uses_props || analysis.uses_rest_props) {
-						type = `{Record<string, any>}`;
+						type = `Record<string, any>`;
 					} else {
 						type = `{${state.props
 							.map((prop) => {
@@ -293,14 +299,15 @@ export function migrate(source) {
  *  str: MagicString;
  *  analysis: ComponentAnalysis;
  *  indent: string;
- *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string, type_only?: boolean }>;
+ *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string; type_only?: boolean; needs_refine_type?: boolean; }>;
  *  props_insertion_point: number;
  *  has_props_rune: boolean;
  *  end: number;
  * 	names: Record<string, string>;
  * 	legacy_imports: Set<string>;
  * 	script_insertions: Set<string>;
- *  derived_components: Map<string, string>
+ *  derived_components: Map<string, string>,
+ * 	derived_labeled_statements: Set<LabeledStatement>
  * }} State
  */
 
@@ -347,7 +354,7 @@ const instance_script = {
 			state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
 		}
 	},
-	VariableDeclaration(node, { state, path }) {
+	VariableDeclaration(node, { state, path, visit }) {
 		if (state.scope !== state.analysis.instance.scope) {
 			return;
 		}
@@ -468,10 +475,118 @@ const instance_script = {
 				state.str.prependLeft(start, '$state(');
 				state.str.appendRight(end, ')');
 			} else {
-				state.str.prependLeft(
-					/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
-					' = $state()'
+				/**
+				 * @type {AssignmentExpression | undefined}
+				 */
+				let assignment_in_labeled;
+				/**
+				 * @type {LabeledStatement | undefined}
+				 */
+				let labeled_statement;
+
+				// Analyze declaration bindings to see if they're exclusively updated within a single reactive statement
+				const possible_derived = bindings.every((binding) =>
+					binding.references.every((reference) => {
+						const declaration = reference.path.find((el) => el.type === 'VariableDeclaration');
+						const assignment = reference.path.find((el) => el.type === 'AssignmentExpression');
+						const update = reference.path.find((el) => el.type === 'UpdateExpression');
+						const labeled = reference.path.find(
+							(el) => el.type === 'LabeledStatement' && el.label.name === '$'
+						);
+
+						if (assignment && labeled) {
+							if (assignment_in_labeled) return false;
+							assignment_in_labeled = /** @type {AssignmentExpression} */ (assignment);
+							labeled_statement = /** @type {LabeledStatement} */ (labeled);
+						}
+
+						return !update && (declaration || (labeled && assignment) || (!labeled && !assignment));
+					})
 				);
+
+				const labeled_has_single_assignment =
+					labeled_statement?.body.type === 'BlockStatement' &&
+					labeled_statement.body.body.length === 1;
+
+				const is_expression_assignment =
+					labeled_statement?.body.type === 'ExpressionStatement' &&
+					labeled_statement.body.expression.type === 'AssignmentExpression';
+
+				let should_be_state = false;
+
+				if (is_expression_assignment) {
+					const body = /**@type {ExpressionStatement}*/ (labeled_statement?.body);
+					const expression = /**@type {AssignmentExpression}*/ (body.expression);
+					const [, ids] = extract_all_identifiers_from_expression(expression.right);
+					if (ids.length === 0) {
+						should_be_state = true;
+						state.derived_labeled_statements.add(
+							/** @type {LabeledStatement} */ (labeled_statement)
+						);
+					}
+				}
+
+				if (
+					!should_be_state &&
+					possible_derived &&
+					assignment_in_labeled &&
+					labeled_statement &&
+					(labeled_has_single_assignment || is_expression_assignment)
+				) {
+					// Someone wrote a `$: { ... }` statement which we can turn into a `$derived`
+					state.str.appendRight(
+						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+						' = $derived('
+					);
+					visit(assignment_in_labeled.right);
+					state.str.appendRight(
+						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+						state.str
+							.snip(
+								/** @type {number} */ (assignment_in_labeled.right.start),
+								/** @type {number} */ (assignment_in_labeled.right.end)
+							)
+							.toString()
+					);
+					state.str.remove(
+						/** @type {number} */ (labeled_statement.start),
+						/** @type {number} */ (labeled_statement.end)
+					);
+					state.str.appendRight(
+						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+						')'
+					);
+					state.derived_labeled_statements.add(labeled_statement);
+				} else {
+					state.str.prependLeft(
+						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+						' = $state('
+					);
+					if (should_be_state) {
+						// someone wrote a `$: foo = ...` statement which we can turn into `let foo = $state(...)`
+						state.str.appendRight(
+							/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+							state.str
+								.snip(
+									/** @type {number} */ (
+										/** @type {AssignmentExpression} */ (assignment_in_labeled).right.start
+									),
+									/** @type {number} */ (
+										/** @type {AssignmentExpression} */ (assignment_in_labeled).right.end
+									)
+								)
+								.toString()
+						);
+						state.str.remove(
+							/** @type {number} */ (/** @type {LabeledStatement} */ (labeled_statement).start),
+							/** @type {number} */ (/** @type {LabeledStatement} */ (labeled_statement).end)
+						);
+					}
+					state.str.appendRight(
+						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+						')'
+					);
+				}
 			}
 		}
 
@@ -502,6 +617,7 @@ const instance_script = {
 		if (state.analysis.runes) return;
 		if (path.length > 1) return;
 		if (node.label.name !== '$') return;
+		if (state.derived_labeled_statements.has(node)) return;
 
 		next();
 
@@ -510,6 +626,9 @@ const instance_script = {
 			node.body.expression.type === 'AssignmentExpression'
 		) {
 			const ids = extract_identifiers(node.body.expression.left);
+			const [, expression_ids] = extract_all_identifiers_from_expression(
+				node.body.expression.right
+			);
 			const bindings = ids.map((id) => state.scope.get(id.name));
 			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
 			if (reassigned_bindings.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
@@ -540,13 +659,23 @@ const instance_script = {
 				return;
 			} else {
 				for (const binding of reassigned_bindings) {
-					if (binding && ids.includes(binding.node)) {
+					if (binding && (ids.includes(binding.node) || expression_ids.length === 0)) {
+						const init =
+							binding.kind === 'state'
+								? ' = $state()'
+								: expression_ids.length === 0
+									? ` = $state(${state.str.original.substring(/** @type {number} */ (node.body.expression.right.start), node.body.expression.right.end)})`
+									: '';
 						// implicitly-declared variable which we need to make explicit
-						state.str.prependRight(
+						state.str.prependLeft(
 							/** @type {number} */ (node.start),
-							`let ${binding.node.name}${binding.kind === 'state' ? ' = $state()' : ''};\n${state.indent}`
+							`let ${binding.node.name}${init};\n${state.indent}`
 						);
 					}
+				}
+				if (expression_ids.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
+					state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
+					return;
 				}
 			}
 		}
@@ -585,7 +714,8 @@ const template = {
 	Identifier(node, { state, path }) {
 		handle_identifier(node, state, path);
 	},
-	RegularElement(node, { state, next }) {
+	RegularElement(node, { state, path, next }) {
+		migrate_slot_usage(node, path, state);
 		handle_events(node, state);
 		// Strip off any namespace from the beginning of the node name.
 		const node_name = node.name.replace(/[a-zA-Z-]*:/g, '');
@@ -598,7 +728,9 @@ const template = {
 		}
 		next();
 	},
-	SvelteElement(node, { state, next }) {
+	SvelteElement(node, { state, path, next }) {
+		migrate_slot_usage(node, path, state);
+
 		if (node.tag.type === 'Literal') {
 			let is_static = true;
 
@@ -622,8 +754,14 @@ const template = {
 		handle_events(node, state);
 		next();
 	},
+	Component(node, { state, path, next }) {
+		next();
+		migrate_slot_usage(node, path, state);
+	},
 	SvelteComponent(node, { state, next, path }) {
 		next();
+
+		migrate_slot_usage(node, path, state);
 
 		let expression = state.str
 			.snip(
@@ -663,7 +801,7 @@ const template = {
 						state.str.original.lastIndexOf('\n', position) + 1,
 						position
 					);
-					state.str.prependLeft(
+					state.str.appendRight(
 						position,
 						`{@const ${expression} = ${current_expression}}\n${indent}`
 					);
@@ -690,6 +828,10 @@ const template = {
 		const end_pos = state.str.original.indexOf('}', node.expression.end) + 1;
 		state.str.remove(this_pos, end_pos);
 	},
+	SvelteFragment(node, { state, path, next }) {
+		migrate_slot_usage(node, path, state);
+		next();
+	},
 	SvelteWindow(node, { state, next }) {
 		handle_events(node, state);
 		next();
@@ -702,7 +844,9 @@ const template = {
 		handle_events(node, state);
 		next();
 	},
-	SlotElement(node, { state, next }) {
+	SlotElement(node, { state, path, next, visit }) {
+		migrate_slot_usage(node, path, state);
+
 		if (state.analysis.custom_element) return;
 		let name = 'children';
 		let slot_name = 'default';
@@ -717,13 +861,22 @@ const template = {
 				} else {
 					const attr_value =
 						attr.value === true || Array.isArray(attr.value) ? attr.value : [attr.value];
-					const value =
-						attr_value !== true
-							? state.str.original.substring(
-									attr_value[0].start,
-									attr_value[attr_value.length - 1].end
-								)
-							: 'true';
+					let value = 'true';
+					if (attr_value !== true) {
+						const first = attr_value[0];
+						const last = attr_value[attr_value.length - 1];
+						for (const attr of attr_value) {
+							visit(attr);
+						}
+						value = state.str
+							.snip(
+								first.type === 'Text'
+									? first.start - 1
+									: /** @type {number} */ (first.expression.start),
+								last.type === 'Text' ? last.end + 1 : /** @type {number} */ (last.expression.end)
+							)
+							.toString();
+					}
 					slot_props += value === attr.name ? `${value}, ` : `${attr.name}: ${value}, `;
 				}
 			}
@@ -751,6 +904,9 @@ const template = {
 				slot_name,
 				type: `import('svelte').${slot_props ? 'Snippet<[any]>' : 'Snippet'}`
 			});
+		} else if (existing_prop.needs_refine_type) {
+			existing_prop.type = `import('svelte').${slot_props ? 'Snippet<[any]>' : 'Snippet'}`;
+			existing_prop.needs_refine_type = false;
 		}
 
 		if (node.fragment.nodes.length > 0) {
@@ -758,11 +914,15 @@ const template = {
 			state.str.update(
 				node.start,
 				node.fragment.nodes[0].start,
-				`{#if ${name}}{@render ${name}(${slot_props})}{:else}`
+				`{#if ${name}}{@render ${state.analysis.uses_props ? `${state.names.props}.` : ''}${name}(${slot_props})}{:else}`
 			);
 			state.str.update(node.fragment.nodes[node.fragment.nodes.length - 1].end, node.end, '{/if}');
 		} else {
-			state.str.update(node.start, node.end, `{@render ${name}?.(${slot_props})}`);
+			state.str.update(
+				node.start,
+				node.end,
+				`{@render ${state.analysis.uses_props ? `${state.names.props}.` : ''}${name}?.(${slot_props})}`
+			);
 		}
 	},
 	Comment(node, { state }) {
@@ -772,6 +932,129 @@ const template = {
 		}
 	}
 };
+
+/**
+ * @param {AST.RegularElement | AST.SvelteElement | AST.SvelteComponent | AST.Component | AST.SlotElement | AST.SvelteFragment} node
+ * @param {SvelteNode[]} path
+ * @param {State} state
+ */
+function migrate_slot_usage(node, path, state) {
+	const parent = path.at(-2);
+	// Bail on custom element slot usage
+	if (
+		parent?.type !== 'Component' &&
+		parent?.type !== 'SvelteComponent' &&
+		node.type !== 'Component' &&
+		node.type !== 'SvelteComponent'
+	) {
+		return;
+	}
+
+	let snippet_name = 'children';
+	let snippet_props = [];
+
+	for (let attribute of node.attributes) {
+		if (
+			attribute.type === 'Attribute' &&
+			attribute.name === 'slot' &&
+			is_text_attribute(attribute)
+		) {
+			snippet_name = attribute.value[0].data;
+			state.str.remove(attribute.start, attribute.end);
+		}
+		if (attribute.type === 'LetDirective') {
+			snippet_props.push(
+				attribute.name +
+					(attribute.expression
+						? `: ${state.str.original.substring(/** @type {number} */ (attribute.expression.start), /** @type {number} */ (attribute.expression.end))}`
+						: '')
+			);
+			state.str.remove(attribute.start, attribute.end);
+		}
+	}
+
+	if (node.type === 'SvelteFragment' && node.fragment.nodes.length > 0) {
+		// remove node itself, keep content
+		state.str.remove(node.start, node.fragment.nodes[0].start);
+		state.str.remove(node.fragment.nodes[node.fragment.nodes.length - 1].end, node.end);
+	}
+
+	const props = snippet_props.length > 0 ? `{ ${snippet_props.join(', ')} }` : '';
+
+	if (snippet_name === 'children' && node.type !== 'SvelteFragment') {
+		if (snippet_props.length === 0) return; // nothing to do
+
+		let inner_start = 0;
+		let inner_end = 0;
+		for (let i = 0; i < node.fragment.nodes.length; i++) {
+			const inner = node.fragment.nodes[i];
+			const is_empty_text = inner.type === 'Text' && !inner.data.trim();
+
+			if (
+				(inner.type === 'RegularElement' ||
+					inner.type === 'SvelteElement' ||
+					inner.type === 'Component' ||
+					inner.type === 'SvelteComponent' ||
+					inner.type === 'SlotElement' ||
+					inner.type === 'SvelteFragment') &&
+				inner.attributes.some((attr) => attr.type === 'Attribute' && attr.name === 'slot')
+			) {
+				if (inner_start && !inner_end) {
+					// End of default slot content
+					inner_end = inner.start;
+				}
+			} else if (!inner_start && !is_empty_text) {
+				// Start of default slot content
+				inner_start = inner.start;
+			} else if (inner_end && !is_empty_text) {
+				// There was default slot content before, then some named slot content, now some default slot content again.
+				// We're moving the last character back by one to avoid the closing {/snippet} tag inserted afterwards
+				// to come before the opening {#snippet} tag of the named slot.
+				state.str.update(inner_end - 1, inner_end, '');
+				state.str.prependLeft(inner_end - 1, state.str.original[inner_end - 1]);
+				state.str.move(inner.start, inner.end, inner_end - 1);
+			}
+		}
+
+		if (!inner_end) {
+			inner_end = node.fragment.nodes[node.fragment.nodes.length - 1].end;
+		}
+
+		state.str.appendLeft(
+			inner_start,
+			`{#snippet ${snippet_name}(${props})}\n${state.indent.repeat(path.length)}`
+		);
+		state.str.indent(state.indent, {
+			exclude: [
+				[0, inner_start],
+				[inner_end, state.str.original.length]
+			]
+		});
+		if (inner_end < node.fragment.nodes[node.fragment.nodes.length - 1].end) {
+			// Named slots coming afterwards
+			state.str.prependLeft(inner_end, `{/snippet}\n${state.indent.repeat(path.length)}`);
+		} else {
+			// No named slots coming afterwards
+			state.str.prependLeft(
+				inner_end,
+				`${state.indent.repeat(path.length)}{/snippet}\n${state.indent.repeat(path.length - 1)}`
+			);
+		}
+	} else {
+		// Named slot or `svelte:fragment`: wrap element itself in a snippet
+		state.str.prependLeft(
+			node.start,
+			`{#snippet ${snippet_name}(${props})}\n${state.indent.repeat(path.length - 2)}`
+		);
+		state.str.indent(state.indent, {
+			exclude: [
+				[0, node.start],
+				[node.end, state.str.original.length]
+			]
+		});
+		state.str.appendLeft(node.end, `\n${state.indent.repeat(path.length - 2)}{/snippet}`);
+	}
+}
 
 /**
  * @param {VariableDeclarator} declarator
@@ -956,7 +1239,7 @@ function handle_identifier(node, state, path) {
 	const parent = path.at(-1);
 	if (parent?.type === 'MemberExpression' && parent.property === node) return;
 
-	if (state.analysis.uses_props) {
+	if (state.analysis.uses_props && node.name !== '$$slots') {
 		if (node.name === '$$props' || node.name === '$$restProps') {
 			// not 100% correct for $$restProps but it'll do
 			state.str.update(
@@ -978,10 +1261,42 @@ function handle_identifier(node, state, path) {
 		);
 	} else if (node.name === '$$slots' && state.analysis.uses_slots) {
 		if (parent?.type === 'MemberExpression') {
-			state.str.update(/** @type {number} */ (node.start), parent.property.start, '');
-			if (parent.property.name === 'default') {
-				state.str.update(parent.property.start, parent.property.end, 'children');
+			if (state.analysis.custom_element) return;
+
+			let name = parent.property.type === 'Literal' ? parent.property.value : parent.property.name;
+			let slot_name = name;
+			const existing_prop = state.props.find((prop) => prop.slot_name === name);
+			if (existing_prop) {
+				name = existing_prop.local;
+			} else if (name !== 'default') {
+				name = state.scope.generate(name);
 			}
+
+			name = name === 'default' ? 'children' : name;
+
+			if (!existing_prop) {
+				state.props.push({
+					local: name,
+					exported: name,
+					init: '',
+					bindable: false,
+					optional: true,
+					slot_name,
+					// if it's the first time we encounter this slot
+					// we start with any and delegate to when the slot
+					// is actually rendered (it might not happen in that case)
+					// any is still a safe bet
+					type: `import('svelte').Snippet<[any]>}`,
+					needs_refine_type: true
+				});
+			}
+
+			state.str.update(
+				/** @type {number} */ (node.start),
+				parent.property.start,
+				state.analysis.uses_props ? `${state.names.props}.` : ''
+			);
+			state.str.update(parent.property.start, parent.end, name);
 		}
 		// else passed as identifier, we don't know what to do here, so let it error
 	} else if (

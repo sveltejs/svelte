@@ -1,5 +1,5 @@
 <script>
-    /** @type {{Record<string, any>}} */
+    /** @type {Record<string, any>} */
     let { foo, ...rest } = $props();
 </script>
 
