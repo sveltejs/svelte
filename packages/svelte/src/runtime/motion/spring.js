@@ -103,7 +103,7 @@ export function spring(value, opts = {}) {
 					inv_mass,
 					opts: spring,
 					settled: true,
-					dt: ((now - last_time) * 60) / 1000
+					dt: ((Math.min(now - last_time, 1000 / 24)) * 60) / 1000 // limit delta time to 24fps for realistic spring behavior at low framerates
 				};
 				const next_value = tick_spring(ctx, last_value, value, target_value);
 				last_time = now;
