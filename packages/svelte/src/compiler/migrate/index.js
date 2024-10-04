@@ -610,6 +610,9 @@ const instance_script = {
 			node.body.expression.type === 'AssignmentExpression'
 		) {
 			const ids = extract_identifiers(node.body.expression.left);
+			const [, expression_ids] = extract_all_identifiers_from_expression(
+				node.body.expression.right
+			);
 			const bindings = ids.map((id) => state.scope.get(id.name));
 			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
 			if (reassigned_bindings.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
@@ -640,13 +643,23 @@ const instance_script = {
 				return;
 			} else {
 				for (const binding of reassigned_bindings) {
-					if (binding && ids.includes(binding.node)) {
+					if (binding && (ids.includes(binding.node) || expression_ids.length === 0)) {
+						const init =
+							binding.kind === 'state'
+								? ' = $state()'
+								: expression_ids.length === 0
+									? ` = $state(${state.str.original.substring(/** @type {number} */ (node.body.expression.right.start), node.body.expression.right.end)})`
+									: '';
 						// implicitly-declared variable which we need to make explicit
-						state.str.prependRight(
+						state.str.prependLeft(
 							/** @type {number} */ (node.start),
-							`let ${binding.node.name}${binding.kind === 'state' ? ' = $state()' : ''};\n${state.indent}`
+							`let ${binding.node.name}${init};\n${state.indent}`
 						);
 					}
+				}
+				if (expression_ids.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
+					state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
+					return;
 				}
 			}
 		}

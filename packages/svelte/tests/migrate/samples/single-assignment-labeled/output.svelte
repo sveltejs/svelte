@@ -46,10 +46,13 @@
 
 	let should_be_state = $state(42);
 	
+	let should_be_state_too = $state(42);
+	
 </script>
 
 <button onclick={()=>{
 	count++;
 	eight_times++;
 	sixteen_times += 1;
+	should_be_state_too++;
 }}>click</button>
