@@ -431,6 +431,6 @@ Event attributes replace event directives: Instead of `on:click={handler}` you w
 
 ### `--style-props` uses a different element
 
-Svelte 5 uses an extra `<span>` element instead of a `<div>` to wrap the component when using CSS custom properties.
+Svelte 5 uses an extra `<svelte-css-wrapper>` element instead of a `<div>` to wrap the component when using CSS custom properties.
 
 <!-- TODO in final docs, add link to corresponding section for more details -->
