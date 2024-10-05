@@ -5,7 +5,7 @@
 </script>
 
 {#if false}
-	<SvelteSelf/>
+	<SvelteSelf />
 	<SvelteSelf with_attributes/>
 	<SvelteSelf count={count+1}/>
 	<SvelteSelf>

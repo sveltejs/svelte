@@ -755,22 +755,12 @@ const template = {
 			next();
 			return;
 		}
-		// by default we overwrite until the end of the node - 1
-		let end = node.end - 1;
-		// if it has some children we need to overwrite from start to start of the fragment
-		if (node.fragment.nodes.length > 0) {
-			end = node.fragment.nodes[0].start;
-		} else if (!source.endsWith('/>')) {
-			// special case `<svelte:self></svelte:self>` it has no fragment but
-			// we still can't remove to the node end
-			end = node.start + source.lastIndexOf('><', node.end) + 1;
-		}
-		// if at has some attributes we stop at the start of the first
-		if (node.attributes.length > 0) {
-			end = node.attributes[0].start;
-		}
 		// overwrite the open tag
-		state.str.overwrite(node.start + 1, end - 1, `${state.names.svelte_self}`);
+		state.str.overwrite(
+			node.start + 1,
+			node.start + 1 + 'svelte:self'.length,
+			`${state.names.svelte_self}`
+		);
 		// if it has a fragment we need to overwrite the closing tag too
 		if (node.fragment.nodes.length > 0) {
 			const start_closing =
