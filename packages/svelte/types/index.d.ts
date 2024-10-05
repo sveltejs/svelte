@@ -1264,7 +1264,9 @@ declare module 'svelte/compiler' {
 	 * May throw an error if the code is too complex to migrate automatically.
 	 *
 	 * */
-	export function migrate(source: string): {
+	export function migrate(source: string, { filename }?: {
+		filename?: string;
+	} | undefined): {
 		code: string;
 	};
 	namespace Css {

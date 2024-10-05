@@ -27,9 +27,10 @@ const style_placeholder = '/*$$__STYLE_CONTENT__$$*/';
  * May throw an error if the code is too complex to migrate automatically.
  *
  * @param {string} source
+ * @param {{filename?: string}} [options]
  * @returns {{ code: string; }}
  */
-export function migrate(source) {
+export function migrate(source, { filename } = {}) {
 	try {
 		// Blank CSS, could contain SCSS or similar that needs a preprocessor.
 		// Since we don't care about CSS in this migration, we'll just ignore it.
@@ -41,7 +42,7 @@ export function migrate(source) {
 		});
 
 		reset_warning_filter(() => false);
-		reset(source, { filename: 'migrate.svelte' });
+		reset(source, { filename: filename ?? 'migrate.svelte' });
 
 		let parsed = parse(source);
 
@@ -68,6 +69,7 @@ export function migrate(source) {
 		let state = {
 			scope: analysis.instance.scope,
 			analysis,
+			filename,
 			str,
 			indent,
 			props: [],
@@ -90,12 +92,14 @@ export function migrate(source) {
 				createBubbler: analysis.root.unique('createBubbler').name,
 				bubble: analysis.root.unique('bubble').name,
 				passive: analysis.root.unique('passive').name,
-				nonpassive: analysis.root.unique('nonpassive').name
+				nonpassive: analysis.root.unique('nonpassive').name,
+				svelte_self: analysis.root.unique('SvelteSelf').name
 			},
 			legacy_imports: new Set(),
 			script_insertions: new Set(),
 			derived_components: new Map(),
-			derived_labeled_statements: new Set()
+			derived_labeled_statements: new Set(),
+			has_svelte_self: false
 		};
 
 		if (parsed.module) {
@@ -122,10 +126,19 @@ export function migrate(source) {
 			state.script_insertions.size > 0 ||
 			state.props.length > 0 ||
 			analysis.uses_rest_props ||
-			analysis.uses_props;
+			analysis.uses_props ||
+			state.has_svelte_self;
 
 		if (!parsed.instance && need_script) {
 			str.appendRight(0, '<script>');
+		}
+
+		if (state.has_svelte_self && filename) {
+			const file = filename.split('/').pop();
+			str.appendRight(
+				insertion_point,
+				`\n${indent}import ${state.names.svelte_self} from './${file}';`
+			);
 		}
 
 		const specifiers = [...state.legacy_imports].map((imported) => {
@@ -298,6 +311,7 @@ export function migrate(source) {
  *  scope: Scope;
  *  str: MagicString;
  *  analysis: ComponentAnalysis;
+ *  filename?: string;
  *  indent: string;
  *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string; type_only?: boolean; needs_refine_type?: boolean; }>;
  *  props_insertion_point: number;
@@ -306,8 +320,9 @@ export function migrate(source) {
  * 	names: Record<string, string>;
  * 	legacy_imports: Set<string>;
  * 	script_insertions: Set<string>;
- *  derived_components: Map<string, string>,
- * 	derived_labeled_statements: Set<LabeledStatement>
+ *  derived_components: Map<string, string>;
+ * 	derived_labeled_statements: Set<LabeledStatement>;
+ *  has_svelte_self: boolean;
  * }} State
  */
 
@@ -729,9 +744,44 @@ const template = {
 		}
 		next();
 	},
+	SvelteSelf(node, { state, next }) {
+		const source = state.str.original.substring(node.start, node.end);
+		if (!state.filename) {
+			const indent = guess_indent(source);
+			state.str.prependRight(
+				node.start,
+				`<!-- @migration-task: svelte:self is deprecated, import this Svelte file into itself instead -->\n${indent}`
+			);
+			next();
+			return;
+		}
+		// overwrite the open tag
+		state.str.overwrite(
+			node.start + 1,
+			node.start + 1 + 'svelte:self'.length,
+			`${state.names.svelte_self}`
+		);
+		// if it has a fragment we need to overwrite the closing tag too
+		if (node.fragment.nodes.length > 0) {
+			state.str.overwrite(
+				state.str.original.lastIndexOf('<', node.end) + 2,
+				node.end - 1,
+				`${state.names.svelte_self}`
+			);
+		} else if (!source.endsWith('/>')) {
+			// special case for case `<svelte:self></svelte:self>` it has no fragment but
+			// we still need to overwrite the end tag
+			state.str.overwrite(
+				node.start + source.lastIndexOf('</', node.end) + 2,
+				node.end - 1,
+				`${state.names.svelte_self}`
+			);
+		}
+		state.has_svelte_self = true;
+		next();
+	},
 	SvelteElement(node, { state, path, next }) {
 		migrate_slot_usage(node, path, state);
-
 		if (node.tag.type === 'Literal') {
 			let is_static = true;
 
