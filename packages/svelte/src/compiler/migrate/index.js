@@ -763,10 +763,11 @@ const template = {
 		);
 		// if it has a fragment we need to overwrite the closing tag too
 		if (node.fragment.nodes.length > 0) {
-			const start_closing =
-				state.str.original.indexOf('<', node.fragment.nodes[node.fragment.nodes.length - 1].end) +
-				2;
-			state.str.overwrite(start_closing, node.end - 1, `${state.names.svelte_self}`);
+			state.str.overwrite(
+				state.str.original.lastIndexOf('<', node.end) + 2,
+				node.end - 1,
+				`${state.names.svelte_self}`
+			);
 		} else if (!source.endsWith('/>')) {
 			// special case for case `<svelte:self></svelte:self>` it has no fragment but
 			// we still need to overwrite the end tag
