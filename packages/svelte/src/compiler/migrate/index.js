@@ -750,7 +750,7 @@ const template = {
 			const indent = guess_indent(source);
 			state.str.prependRight(
 				node.start,
-				`<!-- @migration-task: migrate this by hand or call the migrate function with the filename of this file -->\n${indent}`
+				`<!-- @migration-task: svelte:self is deprecated, import this Svelte file into itself instead -->\n${indent}`
 			);
 			next();
 			return;
