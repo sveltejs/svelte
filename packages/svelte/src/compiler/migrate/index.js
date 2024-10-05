@@ -27,10 +27,10 @@ const style_placeholder = '/*$$__STYLE_CONTENT__$$*/';
  * May throw an error if the code is too complex to migrate automatically.
  *
  * @param {string} source
- * @param {string} [filename]
+ * @param {{filename?: string}} [options]
  * @returns {{ code: string; }}
  */
-export function migrate(source, filename) {
+export function migrate(source, { filename } = {}) {
 	try {
 		// Blank CSS, could contain SCSS or similar that needs a preprocessor.
 		// Since we don't care about CSS in this migration, we'll just ignore it.
