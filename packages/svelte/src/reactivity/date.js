@@ -1,4 +1,5 @@
 /** @import { Source } from '#client' */
+import { DESTROYED } from '../internal/client/constants.js';
 import { derived } from '../internal/client/index.js';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';

@@ -2,6 +2,7 @@ import { render_effect, effect_root } from '../internal/client/reactivity/effect
 import { flushSync } from '../index-client.js';
 import { SvelteDate } from './date.js';
 import { assert, test } from 'vitest';
+import { derived, get } from 'svelte/internal/client';
 
 const initial_date = new Date(2023, 0, 2, 0, 0, 0, 0);
 const a = new Date(2024, 1, 3, 1, 1, 1, 1);
@@ -581,4 +582,31 @@ test('Date.toLocaleString', () => {
 
 test('Date.instanceOf', () => {
 	assert.equal(new SvelteDate() instanceof Date, true);
+});
+
+test('Date methods invoked for the first time in a derived', () => {
+	const date = new SvelteDate(initial_date);
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		const months = derived(() => {
+			return date.getMonth();
+		});
+
+		render_effect(() => {
+			log.push(get(months));
+		});
+
+		flushSync(() => {
+			date.setMonth(date.getMonth() + 1);
+		});
+
+		flushSync(() => {
+			date.setMonth(date.getMonth() + 1);
+		});
+	});
+
+	assert.deepEqual(log, [0, 1, 2]);
+
+	cleanup();
 });
