@@ -43,7 +43,7 @@ export class SvelteDate extends Date {
 
 					var d = this.#deriveds.get(method);
 
-					if (d === undefined) {
+					if (d === undefined || (d.f & DESTROYED) !== 0) {
 						d = derived(() => {
 							get(this.#time);
 							// @ts-ignore
