@@ -1,4 +1,5 @@
 /** @import { Source } from '#client' */
+import { DESTROYED } from '../internal/client/constants.js';
 import { derived } from '../internal/client/index.js';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
@@ -42,7 +43,7 @@ export class SvelteDate extends Date {
 
 					var d = this.#deriveds.get(method);
 
-					if (d === undefined) {
+					if (d === undefined || (d.f & DESTROYED) !== 0) {
 						d = derived(() => {
 							get(this.#time);
 							// @ts-ignore
