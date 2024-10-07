@@ -48,3 +48,19 @@ export function asClassComponent(component) {
 export function run(fn) {
 	fn();
 }
+
+const noop = () => {};
+
+// event stuff, no need to worry about it for SSR but needs to be there or it will crash
+export {
+	noop as handlers,
+	noop as createBubbler,
+	noop as once,
+	noop as preventDefault,
+	noop as self,
+	noop as stopImmediatePropagation,
+	noop as stopPropagation,
+	noop as trusted,
+	noop as passive,
+	noop as nonpassive
+};
