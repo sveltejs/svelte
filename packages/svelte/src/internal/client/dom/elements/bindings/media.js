@@ -150,7 +150,9 @@ export function bind_paused(media, get, set = get) {
 	// Listen to the canplay event to get notified of this situation.
 	listen(media, ['play', 'pause', 'canplay'], update, paused == null);
 
-	render_effect(() => {
+	// Needs to be an effect to ensure media element is mounted: else, if paused is `false` (i.e. should play right away)
+	// a "The play() request was interrupted by a new load request" error would be thrown because the resource isn't loaded yet.
+	effect(() => {
 		if ((paused = !!get()) !== media.paused) {
 			if (paused) {
 				media.pause();
