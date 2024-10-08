@@ -398,7 +398,10 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		var to_destroy = seen === undefined ? [] : array_from(seen);
 
 		while (current !== null) {
-			to_destroy.push(current);
+			// Inert effects are currently outroing and will be removed once the transition is finished
+			if ((current.e.f & INERT) === 0) {
+				to_destroy.push(current);
+			}
 			current = current.next;
 		}
 
