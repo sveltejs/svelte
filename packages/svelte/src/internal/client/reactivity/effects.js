@@ -407,12 +407,17 @@ export function destroy_effect(effect, remove_dom = true) {
 		unlink_effect(effect);
 	}
 
+	if (DEV) {
+		effect.component_function = null;
+	}
+
 	// `first` and `child` are nulled out in destroy_effect_children
 	effect.next =
 		effect.prev =
 		effect.teardown =
 		effect.ctx =
 		effect.deps =
+		effect.next =
 		effect.parent =
 		effect.fn =
 		effect.nodes_start =
