@@ -1,5 +1,27 @@
 # svelte
 
+## 5.0.0-next.263
+
+### Patch Changes
+
+- fix: add media listeners immediately when using `bind:paused` ([#13502](https://github.com/sveltejs/svelte/pull/13502))
+
+- fix: further improve reconciliation of inert each block rows ([#13527](https://github.com/sveltejs/svelte/pull/13527))
+
+- feat: add types for the search element ([#13489](https://github.com/sveltejs/svelte/pull/13489))
+
+- feat: support migrating `svelte:self` ([#13504](https://github.com/sveltejs/svelte/pull/13504))
+
+- feat: support migration of single assignment labeled statements ([#13461](https://github.com/sveltejs/svelte/pull/13461))
+
+- fix: correctly migrate `$slots` with bracket member expressions & slots with static props ([#13468](https://github.com/sveltejs/svelte/pull/13468))
+
+- feat: migrate slot usages ([#13500](https://github.com/sveltejs/svelte/pull/13500))
+
+- fix: recreate `SvelteDate` methods deriveds if they are destroyed ([#13515](https://github.com/sveltejs/svelte/pull/13515))
+
+- fix: allow imports from `svelte/legacy` in SSR ([#13523](https://github.com/sveltejs/svelte/pull/13523))
+
 ## 5.0.0-next.262
 
 ### Patch Changes
