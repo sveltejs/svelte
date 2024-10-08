@@ -744,10 +744,7 @@ export function analyze_component(root, source, options) {
 							}
 						])
 					);
-					if (
-						is_custom_element_node(element) &&
-						element.attributes.length === 1
-					) {
+					if (is_custom_element_node(element) && element.attributes.length === 1) {
 						mark_subtree_dynamic(element.metadata.path);
 					}
 				}
