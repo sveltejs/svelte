@@ -19,7 +19,7 @@ import {
 import * as b from '../../../../utils/builders.js';
 import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { build_getter, can_inline_variable } from '../utils.js';
+import { build_getter, can_inline_variable, create_derived } from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
@@ -534,6 +534,12 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 	let update;
 
 	if (name === 'class') {
+		if (attribute.metadata.expression.has_state && has_call) {
+			const id = b.id(state.scope.generate('class_derived'));
+			state.init.push(b.const(id, create_derived(state, b.thunk(value))));
+			value = b.call('$.get', id);
+			has_call = false;
+		}
 		update = b.stmt(
 			b.call(
 				is_svg ? '$.set_svg_class' : is_mathml ? '$.set_mathml_class' : '$.set_class',
@@ -548,6 +554,12 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 	} else if (is_dom_property(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, name), value));
 	} else {
+		if (name === 'style' && attribute.metadata.expression.has_state && has_call) {
+			const id = b.id(state.scope.generate('style_derived'));
+			state.init.push(b.const(id, create_derived(state, b.thunk(value))));
+			value = b.call('$.get', id);
+			has_call = false;
+		}
 		const callee = name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute';
 		update = b.stmt(
 			b.call(
