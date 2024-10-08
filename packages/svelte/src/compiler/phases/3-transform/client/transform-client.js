@@ -212,7 +212,9 @@ export function client_component(analysis, options) {
 
 	for (const [name, binding] of analysis.instance.scope.declarations) {
 		if (binding.kind === 'legacy_reactive') {
-			legacy_reactive_declarations.push(b.const(name, b.call('$.mutable_state')));
+			legacy_reactive_declarations.push(
+				b.const(name, b.call('$.mutable_state', undefined, analysis.immutable ? b.true : undefined))
+			);
 		}
 		if (binding.kind === 'store_sub') {
 			if (store_setup.length === 0) {
@@ -368,7 +370,9 @@ export function client_component(analysis, options) {
 		...group_binding_declarations,
 		...analysis.top_level_snippets,
 		.../** @type {ESTree.Statement[]} */ (instance.body),
-		analysis.runes || !analysis.needs_context ? b.empty : b.stmt(b.call('$.init')),
+		analysis.runes || !analysis.needs_context
+			? b.empty
+			: b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)),
 		.../** @type {ESTree.Statement[]} */ (template.body)
 	]);
 

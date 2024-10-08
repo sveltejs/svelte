@@ -521,7 +521,7 @@ export function analyze_component(root, source, options) {
 
 	if (root.options) {
 		for (const attribute of root.options.attributes) {
-			if (attribute.name === 'accessors') {
+			if (attribute.name === 'accessors' && analysis.runes) {
 				w.options_deprecated_accessors(attribute);
 			}
 
@@ -529,7 +529,7 @@ export function analyze_component(root, source, options) {
 				w.options_missing_custom_element(attribute);
 			}
 
-			if (attribute.name === 'immutable') {
+			if (attribute.name === 'immutable' && analysis.runes) {
 				w.options_deprecated_immutable(attribute);
 			}
 		}
