@@ -208,6 +208,7 @@ export default config;
 You can now start writing tests. These are totally unaware of Svelte as a framework, so you mainly interact with the DOM and write assertions.
 
 ```js
+// @errors: 2307 7031
 /// file: tests/hello-world.spec.js
 import { expect, test } from '@playwright/test';
 
