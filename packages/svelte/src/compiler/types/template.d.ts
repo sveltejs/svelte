@@ -303,7 +303,7 @@ export namespace AST {
 			/** `true` if contains a SpreadAttribute */
 			has_spread: boolean;
 			scoped: boolean;
-			path?: SvelteNode[];
+			path: SvelteNode[];
 		};
 	}
 
