@@ -417,7 +417,6 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.teardown =
 		effect.ctx =
 		effect.deps =
-		effect.next =
 		effect.parent =
 		effect.fn =
 		effect.nodes_start =
