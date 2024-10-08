@@ -18,7 +18,7 @@
     "@jridgewell/sourcemap-codec": "^1.5.0",
     "@supabase/supabase-js": "^2.39.3",
     "@sveltejs/repl": "0.6.0",
-    "cookie": "^0.6.0",
+    "cookie": "^0.7.0",
     "devalue": "^4.3.2",
     "do-not-zip": "^1.0.0",
     "flexsearch": "^0.7.43",
