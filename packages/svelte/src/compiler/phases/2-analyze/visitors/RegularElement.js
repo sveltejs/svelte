@@ -22,6 +22,8 @@ export function RegularElement(node, context) {
 
 	check_element(node, context.state);
 
+	node.metadata.path = [...context.path];
+
 	context.state.analysis.elements.push(node);
 
 	// Special case: Move the children of <textarea> into a value attribute if they are dynamic
