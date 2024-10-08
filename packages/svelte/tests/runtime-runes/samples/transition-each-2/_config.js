@@ -28,7 +28,7 @@ export default test({
 		assert.equal(li.foo, 0.5);
 		assert.htmlEqual(
 			target.innerHTML,
-			'<button>Push</button><button>Remove</button><ul><li>0</li><li>1</li><li>2</li><li>3</li></ul>'
+			'<button>Push</button><button>Remove</button><ul><li>3</li><li>0</li><li>1</li><li>2</li></ul>'
 		);
 	}
 });
