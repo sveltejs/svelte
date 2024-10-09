@@ -38,8 +38,10 @@ const entity_pattern_attr_value = get_entity_pattern(true);
  * @param {boolean} is_attribute_value
  */
 export function decode_character_references(html, is_attribute_value) {
+	// Replace all BOM characters from the HTML with a standard space
+	const sanitised_html = html.replaceAll(String.fromCharCode(65279), ' ');
 	const entity_pattern = is_attribute_value ? entity_pattern_attr_value : entity_pattern_content;
-	return html.replace(
+	return sanitised_html.replace(
 		entity_pattern,
 		/**
 		 * @param {any} match
