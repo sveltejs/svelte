@@ -1,0 +1,14 @@
+[
+	{
+		"code": "node_invalid_placement",
+		"message": "`<tbody>` is invalid inside `<div>`",
+		"start": {
+			"line": 8,
+			"column": 1
+		},
+		"end": {
+			"line": 8,
+			"column": 16
+		}
+	}
+]
