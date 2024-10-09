@@ -42,7 +42,7 @@ export function migrate(source, { filename } = {}) {
 		});
 
 		reset_warning_filter(() => false);
-		reset(source, { filename: filename ?? 'migrate.svelte' });
+		reset(source, { filename: filename ?? '(unknown)' });
 
 		let parsed = parse(source);
 
@@ -52,7 +52,8 @@ export function migrate(source, { filename } = {}) {
 		const combined_options = {
 			...validate_component_options({}, ''),
 			...parsed_options,
-			customElementOptions
+			customElementOptions,
+			filename: filename ?? '(unknown)'
 		};
 
 		const str = new MagicString(source);
@@ -92,8 +93,7 @@ export function migrate(source, { filename } = {}) {
 				createBubbler: analysis.root.unique('createBubbler').name,
 				bubble: analysis.root.unique('bubble').name,
 				passive: analysis.root.unique('passive').name,
-				nonpassive: analysis.root.unique('nonpassive').name,
-				svelte_self: analysis.root.unique('SvelteSelf').name
+				nonpassive: analysis.root.unique('nonpassive').name
 			},
 			legacy_imports: new Set(),
 			script_insertions: new Set(),
@@ -137,7 +137,7 @@ export function migrate(source, { filename } = {}) {
 			const file = filename.split('/').pop();
 			str.appendRight(
 				insertion_point,
-				`\n${indent}import ${state.names.svelte_self} from './${file}';`
+				`\n${indent}import ${state.analysis.name} from './${file}';`
 			);
 		}
 
@@ -759,14 +759,14 @@ const template = {
 		state.str.overwrite(
 			node.start + 1,
 			node.start + 1 + 'svelte:self'.length,
-			`${state.names.svelte_self}`
+			`${state.analysis.name}`
 		);
 		// if it has a fragment we need to overwrite the closing tag too
 		if (node.fragment.nodes.length > 0) {
 			state.str.overwrite(
 				state.str.original.lastIndexOf('<', node.end) + 2,
 				node.end - 1,
-				`${state.names.svelte_self}`
+				`${state.analysis.name}`
 			);
 		} else if (!source.endsWith('/>')) {
 			// special case for case `<svelte:self></svelte:self>` it has no fragment but
@@ -774,7 +774,7 @@ const template = {
 			state.str.overwrite(
 				node.start + source.lastIndexOf('</', node.end) + 2,
 				node.end - 1,
-				`${state.names.svelte_self}`
+				`${state.analysis.name}`
 			);
 		}
 		state.has_svelte_self = true;
