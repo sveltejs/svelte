@@ -35,6 +35,7 @@ export function transform_component(analysis, source, options) {
 	const js_source_name = get_source_name(options.filename, options.outputFilename, 'input.svelte');
 	const js = print(program, {
 		// include source content; makes it easier/more robust looking up the source map code
+		// (else esrap does return null for source and sourceMapContent which may trip up tooling)
 		sourceMapContent: source,
 		sourceMapSource: js_source_name
 	});
@@ -91,7 +92,12 @@ export function transform_module(analysis, source, options) {
 	}
 
 	return {
-		js: print(program, {}),
+		js: print(program, {
+			// include source content; makes it easier/more robust looking up the source map code
+			// (else esrap does return null for source and sourceMapContent which may trip up tooling)
+			sourceMapContent: source,
+			sourceMapSource: get_source_name(options.filename, undefined, 'input.svelte.js')
+		}),
 		css: null,
 		metadata: {
 			runes: true
