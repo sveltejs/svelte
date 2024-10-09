@@ -49,14 +49,12 @@ export function set_should_intro(value) {
  */
 export function set_text(text, value) {
 	// For objects, we apply string coercion before diffing
-	if (typeof value === 'object' && value !== null) {
-		value = value + '';
-	}
+	var str = value == null ? '' : typeof value === 'object' ? value + '' : value;
 	// @ts-expect-error
-	if (value !== (text.__t ??= text.nodeValue)) {
+	if (str !== (text.__t ??= text.nodeValue)) {
 		// @ts-expect-error
-		text.__t = value;
-		text.nodeValue = value == null ? '' : value + '';
+		text.__t = str;
+		text.nodeValue = str == null ? '' : str + '';
 	}
 }
 
