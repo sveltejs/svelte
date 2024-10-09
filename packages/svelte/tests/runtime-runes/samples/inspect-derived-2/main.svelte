@@ -18,4 +18,4 @@
 </script>
 
 <button onclick={() => (state.data.list.push(1))}>update</button>
-{state.data.list}
+{state.data.list.toString()}

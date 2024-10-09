@@ -1,6 +1,6 @@
 /** @import { ProxyMetadata, ProxyStateObject, Source } from '#client' */
 import { DEV } from 'esm-env';
-import { get, component_context, active_effect } from './runtime.js';
+import { get, component_context, active_effect, untrack } from './runtime.js';
 import {
 	array_prototype,
 	get_descriptor,
@@ -114,6 +114,12 @@ export function proxy(value, parent = null, prev) {
 		get(target, prop, receiver) {
 			if (DEV && prop === STATE_SYMBOL_METADATA) {
 				return metadata;
+			}
+			// We untrack Symbol.toPrimitive cases. If people want explicit reactivity, they should
+			// use toString() or some other coercion method instead
+			if (is_proxied_array && prop === Symbol.toPrimitive) {
+				return (/** @type {'string' | 'number' | 'default'} */ hint) =>
+					untrack(() => (hint === 'number' ? Number(target) : String(target)));
 			}
 
 			if (prop === STATE_SYMBOL) {
