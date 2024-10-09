@@ -3,25 +3,26 @@ import { assert_ok, test } from '../../assert';
 export default test({
 	props: {},
 	html: `
-		<div style="display: contents; --rail-color: rgb(0, 0, 0); --track-color: rgb(255, 0, 0);">
+		<svelte-css-wrapper style="display: contents; --rail-color: rgb(0, 0, 0); --track-color: rgb(255, 0, 0);">
 			<div id="component1">
 				<p class="svelte-q538ga">Slider1</p><span class="svelte-q538ga">Track</span>
 			</div>
-			<div style="display: contents; --rail-color: rgb(255, 255, 0); --track-color: rgb(255, 0, 255);">
+			<svelte-css-wrapper style="display: contents; --rail-color: rgb(255, 255, 0); --track-color: rgb(255, 0, 255);">
 				<div id="nest-component1">
 					<p class="svelte-q538ga">Slider1</p><span class="svelte-q538ga">Track</span></div>
 				</div>
-			</div>
-		<div style="display: contents; --rail-color: rgb(0, 255, 0); --track-color: rgb(0, 0, 255);">
+			</svelte-css-wrapper>
+		</svelte-css-wrapper>
+		<svelte-css-wrapper style="display: contents; --rail-color: rgb(0, 255, 0); --track-color: rgb(0, 0, 255);">
 			<div id="component2">
 				<p class="svelte-q538ga">Slider2</p><span class="svelte-q538ga">Track</span>
 			</div>
-			<div style="display: contents; --rail-color: rgb(0, 255, 255); --track-color: rgb(255, 255, 255);">
+			<svelte-css-wrapper style="display: contents; --rail-color: rgb(0, 255, 255); --track-color: rgb(255, 255, 255);">
 				<div id="nest-component2">
 					<p class="svelte-q538ga">Slider2</p><span class="svelte-q538ga">Track</span>
 				</div>
-			</div>
-		</div>
+			</svelte-css-wrapper>
+		</svelte-css-wrapper>
 	`,
 	test({ target, window, assert }) {
 		const rail_color1 = target.querySelector('#component1 p');
