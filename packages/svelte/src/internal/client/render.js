@@ -48,6 +48,10 @@ export function set_should_intro(value) {
  * @returns {void}
  */
 export function set_text(text, value) {
+	// For objects, we apply string coercion before diffing
+	if (typeof value === 'object' && value !== null) {
+		value = value + '';
+	}
 	// @ts-expect-error
 	if (value !== (text.__t ??= text.nodeValue)) {
 		// @ts-expect-error
