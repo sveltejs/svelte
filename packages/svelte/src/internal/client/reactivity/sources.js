@@ -67,12 +67,15 @@ export function state(v) {
 /**
  * @template V
  * @param {V} initial_value
+ * @param {boolean} [immutable]
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function mutable_source(initial_value) {
+export function mutable_source(initial_value, immutable = false) {
 	const s = source(initial_value);
-	s.equals = safe_equals;
+	if (!immutable) {
+		s.equals = safe_equals;
+	}
 
 	// bind the signal to the component context, in case we need to
 	// track updates to trigger beforeUpdate/afterUpdate callbacks
@@ -86,10 +89,11 @@ export function mutable_source(initial_value) {
 /**
  * @template V
  * @param {V} v
+ * @param {boolean} [immutable]
  * @returns {Source<V>}
  */
-export function mutable_state(v) {
-	return push_derived_source(mutable_source(v));
+export function mutable_state(v, immutable = false) {
+	return push_derived_source(mutable_source(v, immutable));
 }
 
 /**
