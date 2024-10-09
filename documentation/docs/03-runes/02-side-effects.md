@@ -252,7 +252,7 @@ If you need to use bindings, for whatever reason (for example when you want some
 </label>
 ```
 
-If you absolutely have to update `$state` within an effect and run into an infinite loop because you read and write to the same `$state`, use [untrack](functions#untrack).
+If you absolutely have to update `$state` within an effect and run into an infinite loop because you read and write to the same `$state`, use [untrack](svelte#untrack).
 
 ## `$effect.pre`
 
