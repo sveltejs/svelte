@@ -9,7 +9,7 @@ import {
 	init_operations
 } from './dom/operations.js';
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
-import { push, pop, component_context, active_effect } from './runtime.js';
+import { push, pop, component_context, active_effect, untrack } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
 import {
 	hydrate_next,
@@ -53,6 +53,31 @@ export function set_text(text, value) {
 		// @ts-expect-error
 		text.__t = value;
 		text.nodeValue = value == null ? '' : value + '';
+	}
+}
+
+/**
+ * @param {Element} text
+ * @param {any[]} parts
+ * @returns {void}
+ */
+export function set_text_parts(text, ...parts) {
+	var value = '';
+	// @ts-expect-error
+	var prev_parts = text.__p || [];
+	var changed = false;
+	for (var i = 0; i < parts.length; i++) {
+		var prev = prev_parts[i];
+		var next = parts[i];
+		if (prev !== next) {
+			changed = true;
+		}
+		value += next;
+	}
+	// @ts-expect-error
+	text.__p = parts;
+	if (changed) {
+		set_text(text, value);
 	}
 }
 

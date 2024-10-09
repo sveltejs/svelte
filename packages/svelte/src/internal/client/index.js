@@ -123,7 +123,7 @@ export {
 	update_pre_store,
 	update_store
 } from './reactivity/store.js';
-export { set_text } from './render.js';
+export { set_text, set_text_parts } from './render.js';
 export {
 	get,
 	safe_get,

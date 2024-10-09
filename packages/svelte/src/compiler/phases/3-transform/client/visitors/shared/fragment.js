@@ -74,8 +74,23 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 		// no text node was created because the expression was empty during SSR
 		const is_text = sequence.length === 1;
 		const id = flush_node(is_text, 'text');
+		const parts = [];
 
-		const update = b.stmt(b.call('$.set_text', id, value));
+		if (state.analysis.runes && value.type === 'TemplateLiteral') {
+			for (let i = 0; i < value.quasis.length; i++) {
+				const quasi = value.quasis[i];
+				parts.push(b.literal(/** @type {string} */ (quasi.value.cooked)));
+				if (i !== value.quasis.length - 1) {
+					const expression = value.expressions[i];
+					parts.push(expression);
+				}
+			}
+		}
+
+		const update =
+			parts.length > 0
+				? b.stmt(b.call('$.set_text_parts', id, ...parts))
+				: b.stmt(b.call('$.set_text', id, value));
 
 		if (has_call && !within_bound_contenteditable) {
 			state.init.push(build_update(update));

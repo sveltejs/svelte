@@ -20,7 +20,7 @@ export default function Text_nodes_deriveds($$anchor) {
 	const stringified_text_1 = $.derived(() => text2() ?? "");
 	var text = $.child(p);
 
-	$.template_effect(() => $.set_text(text, `${$.get(stringified_text)}${$.get(stringified_text_1)}`));
+	$.template_effect(() => $.set_text_parts(text, "", $.get(stringified_text), "", $.get(stringified_text_1), ""));
 	$.reset(p);
 	$.append($$anchor, p);
 }

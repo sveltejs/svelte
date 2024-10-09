@@ -48,6 +48,8 @@ export function init_operations() {
 
 	// @ts-expect-error
 	Text.prototype.__t = undefined;
+	// @ts-expect-error
+	Text.prototype.__p = undefined;
 
 	if (DEV) {
 		// @ts-expect-error
