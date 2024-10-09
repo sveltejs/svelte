@@ -10,7 +10,7 @@ import {
 } from '../shared/utils.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
 import { source, set } from './reactivity/sources.js';
-import { STATE_SYMBOL, STATE_SYMBOL_METADATA } from './constants.js';
+import { STATE_SYMBOL, STATE_SYMBOL_METADATA, TEMPLATE_EFFECT } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 
@@ -115,9 +115,14 @@ export function proxy(value, parent = null, prev) {
 			if (DEV && prop === STATE_SYMBOL_METADATA) {
 				return metadata;
 			}
-			// We untrack Symbol.toPrimitive cases. If people want explicit reactivity, they should
-			// use toString() or some other coercion method instead
-			if (is_proxied_array && prop === Symbol.toPrimitive) {
+			// We untrack Symbol.toPrimitive when used within a template effect. If people want explicit reactivity,
+			// they should use toString() or some other coercion method instead
+			if (
+				is_proxied_array &&
+				prop === Symbol.toPrimitive &&
+				active_effect !== null &&
+				(active_effect.f & TEMPLATE_EFFECT) !== 0
+			) {
 				return (/** @type {'string' | 'number' | 'default'} */ hint) =>
 					untrack(() => (hint === 'number' ? Number(target) : String(target)));
 			}

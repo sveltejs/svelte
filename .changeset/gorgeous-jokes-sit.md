@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-breaking: array proxy toPrimitive is no longer reactive
+breaking: array proxy coercion is no longer reactive in template

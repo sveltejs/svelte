@@ -35,7 +35,8 @@ import {
 	INSPECT_EFFECT,
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
-	EFFECT_HAS_DERIVED
+	EFFECT_HAS_DERIVED,
+	TEMPLATE_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
 import * as e from '../errors.js';
@@ -324,7 +325,7 @@ export function template_effect(fn) {
 			value: '{expression}'
 		});
 	}
-	return render_effect(fn);
+	return create_effect(RENDER_EFFECT | TEMPLATE_EFFECT, fn, true);
 }
 
 /**
