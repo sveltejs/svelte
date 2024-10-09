@@ -75,8 +75,8 @@ const NUL = 0;
 
 /** @param {number} code */
 function validate_code(code) {
-	// line feed becomes generic whitespace
-	if (code === 10) {
+	// line feed becomes generic whitespace, as does a BOM character
+	if (code === 10 || code === 65279) {
 		return 32;
 	}
 
