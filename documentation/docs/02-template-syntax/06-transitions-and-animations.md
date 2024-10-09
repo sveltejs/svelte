@@ -79,7 +79,7 @@ Transitions are local by default. Local transitions only play when the block the
 {/if}
 ```
 
-> By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](/docs/runtime/imperative-component-api) and marking the transition as `global`.
+> By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](imperative-component-api) and marking the transition as `global`.
 
 ## Transition parameters
 
@@ -312,7 +312,7 @@ DOMRect {
 
 An animation is triggered when the contents of a [keyed each block](control-flow#each) are re-ordered. Animations do not run when an element is added or removed, only when the index of an existing data item within the each block changes. Animate directives must be on an element that is an _immediate_ child of a keyed each block.
 
-Animations can be used with Svelte's [built-in animation functions](/docs/svelte/reference/svelte-animate) or [custom animation functions](#custom-animation-functions).
+Animations can be used with Svelte's [built-in animation functions](svelte-animate) or [custom animation functions](#custom-animation-functions).
 
 ```svelte
 <!-- When `list` is reordered the animation will run-->

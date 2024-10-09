@@ -94,7 +94,7 @@ $effect(() => {
 });
 ```
 
-An effect only reruns when the object it reads changes, not when a property inside it changes. (If you want to observe changes _inside_ an object at dev time, you can use [`$inspect`](/docs/svelte/misc/debugging#$inspect).)
+An effect only reruns when the object it reads changes, not when a property inside it changes. (If you want to observe changes _inside_ an object at dev time, you can use [`$inspect`](debugging#$inspect).)
 
 ```svelte
 <script>

@@ -112,7 +112,7 @@ If you export a `const`, `class` or `function`, it is readonly from outside the 
 </script>
 ```
 
-Readonly props can be accessed as properties on the element, tied to the component using [`bind:this` syntax](/docs/component-directives#bind-this).
+Readonly props can be accessed as properties on the element, tied to the component using [`bind:this` syntax](component-directives#bind-this).
 
 ### Reactive variables
 

@@ -82,4 +82,4 @@ Similarly, if you only want to show the error state, you can omit the `then` blo
 
 ## SvelteKit loaders
 
-Fetching inside your components is great for simple use cases, but it's prone to data loading waterfalls and makes code harder to work with because of the promise handling. SvelteKit solves this problem by providing a opinionated data loading story that is coupled to its router. Learn more about it [in the docs](/docs/kit).
+Fetching inside your components is great for simple use cases, but it's prone to data loading waterfalls and makes code harder to work with because of the promise handling. SvelteKit solves this problem by providing a opinionated data loading story that is coupled to its router. Learn more about it [in the docs](../kit).
