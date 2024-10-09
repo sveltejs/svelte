@@ -6,9 +6,6 @@ export default test({
 		const btn = target.querySelector('button');
 		btn?.click();
 		flushSync();
-		assert.htmlEqual(
-			target.innerHTML,
-			`<button>add</button><span>1,2,3,4</span>`
-		);
+		assert.htmlEqual(target.innerHTML, `<button>add</button><span>1,2,3,4</span>`);
 	}
 });
