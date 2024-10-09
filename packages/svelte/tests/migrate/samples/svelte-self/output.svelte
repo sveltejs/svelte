@@ -1,21 +1,21 @@
 <script>
-	import SvelteSelf from './output.svelte';
+	import Output from './output.svelte';
 	/** @type {Record<string, any>} */
 	let { ...props } = $props();
 </script>
 
 {#if false}
-	<SvelteSelf />
-	<SvelteSelf with_attributes/>
-	<SvelteSelf count={count+1}/>
-	<SvelteSelf>
+	<Output />
+	<Output with_attributes/>
+	<Output count={count+1}/>
+	<Output>
 		child
-	</SvelteSelf>
-	<SvelteSelf count={count+1}>
+	</Output>
+	<Output count={count+1}>
 		child
-	</SvelteSelf>
-	<SvelteSelf count={props.count}     >
+	</Output>
+	<Output count={props.count}     >
 		child
-	</SvelteSelf>
-	<SvelteSelf></SvelteSelf>
+	</Output>
+	<Output></Output>
 {/if}

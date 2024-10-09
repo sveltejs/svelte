@@ -42,7 +42,7 @@ export function migrate(source, { filename } = {}) {
 		});
 
 		reset_warning_filter(() => false);
-		reset(source, { filename: filename ?? 'migrate.svelte' });
+		reset(source, { filename: filename ?? '(unknown)' });
 
 		let parsed = parse(source);
 
@@ -52,7 +52,8 @@ export function migrate(source, { filename } = {}) {
 		const combined_options = {
 			...validate_component_options({}, ''),
 			...parsed_options,
-			customElementOptions
+			customElementOptions,
+			filename: filename ?? '(unknown)'
 		};
 
 		const str = new MagicString(source);
@@ -93,7 +94,7 @@ export function migrate(source, { filename } = {}) {
 				bubble: analysis.root.unique('bubble').name,
 				passive: analysis.root.unique('passive').name,
 				nonpassive: analysis.root.unique('nonpassive').name,
-				svelte_self: analysis.root.unique('SvelteSelf').name
+				svelte_self: analysis.name
 			},
 			legacy_imports: new Set(),
 			script_insertions: new Set(),

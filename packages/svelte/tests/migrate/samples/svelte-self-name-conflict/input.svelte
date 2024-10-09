@@ -1,5 +1,5 @@
 <script>
-	let SvelteSelf;
+	let Output;
 </script>
 
 {#if false}
