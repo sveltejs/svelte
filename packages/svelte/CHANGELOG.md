@@ -1,5 +1,21 @@
 # svelte
 
+## 5.0.0-next.264
+
+### Patch Changes
+
+- fix: exclude custom elements from HTML tree validation ([#13540](https://github.com/sveltejs/svelte/pull/13540))
+
+- fix: apply class/style directives after attributes ([#13535](https://github.com/sveltejs/svelte/pull/13535))
+
+- fix: make immutable option work more correctly ([#13526](https://github.com/sveltejs/svelte/pull/13526))
+
+- breaking: use `<svelte-css-wrapper>` instead of `<div>` for style props ([#13499](https://github.com/sveltejs/svelte/pull/13499))
+
+- fix: mark custom element with virtual class attribute as dynamic ([#13435](https://github.com/sveltejs/svelte/pull/13435))
+
+- fix: ensure set_text applies coercion to objects before diff ([#13542](https://github.com/sveltejs/svelte/pull/13542))
+
 ## 5.0.0-next.263
 
 ### Patch Changes
