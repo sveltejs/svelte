@@ -535,6 +535,8 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 
 	if (name === 'class') {
 		if (attribute.metadata.expression.has_state && has_call) {
+			// ensure we're not creating a separate template effect for this so that
+			// potential class directives are added to the same effect and therefore always apply
 			const id = b.id(state.scope.generate('class_derived'));
 			state.init.push(b.const(id, create_derived(state, b.thunk(value))));
 			value = b.call('$.get', id);
@@ -555,6 +557,8 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		update = b.stmt(b.assignment('=', b.member(node_id, name), value));
 	} else {
 		if (name === 'style' && attribute.metadata.expression.has_state && has_call) {
+			// ensure we're not creating a separate template effect for this so that
+			// potential style directives are added to the same effect and therefore always apply
 			const id = b.id(state.scope.generate('style_derived'));
 			state.init.push(b.const(id, create_derived(state, b.thunk(value))));
 			value = b.call('$.get', id);
