@@ -1,6 +1,6 @@
 /** @import { ProxyMetadata, ProxyStateObject, Source } from '#client' */
 import { DEV } from 'esm-env';
-import { get, component_context, active_effect, untrack } from './runtime.js';
+import { get, component_context, active_effect, untrack, active_reaction } from './runtime.js';
 import {
 	array_prototype,
 	get_descriptor,
@@ -120,8 +120,8 @@ export function proxy(value, parent = null, prev) {
 			if (
 				is_proxied_array &&
 				prop === Symbol.toPrimitive &&
-				active_effect !== null &&
-				(active_effect.f & TEMPLATE_EFFECT) !== 0
+				active_reaction !== null &&
+				(active_reaction.f & TEMPLATE_EFFECT) !== 0
 			) {
 				return (/** @type {'string' | 'number' | 'default'} */ hint) =>
 					untrack(() => (hint === 'number' ? Number(target) : String(target)));
