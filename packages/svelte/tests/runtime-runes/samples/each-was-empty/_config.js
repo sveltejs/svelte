@@ -7,9 +7,10 @@ export default test({
 	html: `<button>clicks: 0</button><button>undefined</button><button>null</button><button>empty</button><button>[1,2,3]</button><ul><li>count = <span>0</span></li></ul>`,
 
 	async test({ assert, target }) {
-		const [ increment, set_undefined, set_null, set_empty, set_list ] = target.querySelectorAll('button');
-		
-		const [ span ] = target.querySelectorAll("span");
+		const [increment, set_undefined, set_null, set_empty, set_list] =
+			target.querySelectorAll('button');
+
+		const [span] = target.querySelectorAll('span');
 
 		let count = 0;
 		assert.equal(span.innerHTML, `${count}`);
