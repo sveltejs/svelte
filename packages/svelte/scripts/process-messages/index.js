@@ -102,14 +102,13 @@ for (const [category, codes] of Object.entries(consolidated_messages)) {
 	for (const [code, { messages, details }] of sorted_codes) {
 		lines.push(`## \`${code}\`\n`);
 		for (const message of messages) {
-			lines.push('```');
-			lines.push(message);
-			lines.push('```');
+			// Replace backticks with single quotes to avoid markdown formatting it to code blocks
+			// Also make sure to escape < to avoid markdown interpreting it as an HTML tag
+			lines.push('> [!NOTE] ' + message.replaceAll('`', "'").replace(/(?<!\\)</g, '\\<') + '\n');
 		}
 		if (details) {
-			lines.push('\n' + details);
+			lines.push(details + '\n');
 		}
-		lines.push('');
 	}
 
 	fs.writeFileSync(
