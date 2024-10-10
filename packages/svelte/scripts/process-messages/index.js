@@ -97,8 +97,10 @@ for (const [category, codes] of Object.entries(consolidated_messages)) {
 		'---\n'
 	];
 
-	for (const [code, { messages, details }] of Object.entries(codes)) {
-		lines.push(`## ${code}\n`);
+	const sorted_codes = Object.entries(codes).sort(([a], [b]) => (a < b ? -1 : 1));
+
+	for (const [code, { messages, details }] of sorted_codes) {
+		lines.push(`## \`${code}\`\n`);
 		for (const message of messages) {
 			lines.push('```');
 			lines.push(message);
