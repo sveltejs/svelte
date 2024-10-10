@@ -104,6 +104,16 @@ export function proxy(value, parent = null, prev) {
 					sources.set(prop, source(UNINITIALIZED));
 				}
 			} else {
+				// When working with arrays, we need to also ensure we update the length when removing
+				// an indexed property
+				if (is_proxied_array && typeof prop === 'string') {
+					var ls = /** @type {Source<number>} */ (sources.get('length'));
+					var n = Number(prop);
+
+					if (Number.isInteger(n) && n < ls.v) {
+						set(ls, n);
+					}
+				}
 				set(s, UNINITIALIZED);
 				update_version(version);
 			}
