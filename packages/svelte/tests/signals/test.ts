@@ -725,4 +725,19 @@ describe('signals', () => {
 			assert.equal($.get(d), true);
 		};
 	});
+
+	test('deriveds read inside the root/branches are cleaned up', () => {
+		return () => {
+			const a = state(0);
+
+			const destroy = effect_root(() => {
+				const b = derived(() => $.get(a));
+				$.get(b);
+			});
+
+			destroy();
+
+			assert.deepEqual(a.reactions, null);
+		};
+	});
 });
