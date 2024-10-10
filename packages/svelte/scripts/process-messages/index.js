@@ -126,7 +126,16 @@ for (const [category, codes] of Object.entries(consolidated_messages)) {
 		for (const message of messages) {
 			// Replace backticks with single quotes to avoid markdown formatting it to code blocks
 			// Also make sure to escape < to avoid markdown interpreting it as an HTML tag
-			lines.push('> [!NOTE] ' + message.replaceAll('`', "'").replace(/(?<!\\)</g, '\\<') + '\n');
+			lines.push(
+				'> [!NOTE] ' +
+					message
+						.replaceAll('`', "'")
+						.replace(/(?<!\\)</g, '\\<')
+						.replace(/(?<!\\)\*/g, '\\*')
+						.split('\n')
+						.join('\n> ') +
+					'\n'
+			);
 		}
 		if (details) {
 			lines.push(details + '\n');

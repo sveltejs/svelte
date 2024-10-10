@@ -81,4 +81,4 @@ To resolve this, ensure you're comparing values where both values were created w
 > [!NOTE] Value cannot be cloned with '$state.snapshot' — the original value was returned
 
 > [!NOTE] The following properties cannot be cloned with '$state.snapshot' — the return value contains the originals:
-%properties%
+> %properties%

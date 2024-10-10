@@ -25,6 +25,7 @@ You can list multiple rules in a single comment (separated by commas), and add a
 
 Enforce no `accesskey` on element. Access keys are HTML attributes that allow web developers to assign keyboard shortcuts to elements. Inconsistencies between keyboard shortcuts and keyboard commands used by screen reader and keyboard-only users create accessibility complications. To avoid complications, access keys should not be used.
 
+<!-- prettier-ignore -->
 ```svelte
 <!-- A11y: Avoid using accesskey -->
 <div accesskey="z"></div>
@@ -43,7 +44,7 @@ An element with `aria-activedescendant` must be tabbable, so it must either have
 
 ## `a11y_aria_attributes`
 
-> [!NOTE] '\<%name%>' should not have aria-* attributes
+> [!NOTE] '\<%name%>' should not have aria-\* attributes
 
 Certain reserved DOM elements do not support ARIA roles, states and properties. This is often because they are not visible, for example `meta`, `html`, `script`, `style`. This rule enforces that these DOM elements do not contain the `aria-*` props.
 
@@ -376,6 +377,7 @@ A non-interactive element does not support event handlers (mouse and key handler
 
 Tab key navigation should be limited to elements on the page that can be interacted with.
 
+<!-- prettier-ignore -->
 ```svelte
 <!-- A11y: noninteractive element cannot have nonnegative tabIndex value -->
 <div tabindex="0"></div>
@@ -401,6 +403,7 @@ Some HTML elements have default ARIA roles. Giving these elements an ARIA role t
 
 Elements like `<div>` with interactive handlers like `click` must have an ARIA role.
 
+<!-- prettier-ignore -->
 ```svelte
 <!-- A11y: <div> with click handler must have an ARIA role -->
 <div onclick={() => ''}></div>
@@ -412,6 +415,7 @@ Elements like `<div>` with interactive handlers like `click` must have an ARIA r
 
 Avoid positive `tabindex` property values. This will move elements out of the expected tab order, creating a confusing experience for keyboard users.
 
+<!-- prettier-ignore -->
 ```svelte
 <!-- A11y: avoid tabindex values above zero -->
 <div tabindex="1"></div>
@@ -477,6 +481,7 @@ Enforce that only known ARIA attributes are used. This is based on the [WAI-ARIA
 
 Elements with ARIA roles must use a valid, non-abstract ARIA role. A reference to role definitions can be found at [WAI-ARIA](https://www.w3.org/TR/wai-aria/#role_definitions) site.
 
+<!-- prettier-ignore -->
 ```svelte
 <!-- A11y: Unknown role 'toooltip' (did you mean 'tooltip'?) -->
 <div role="toooltip"></div>
