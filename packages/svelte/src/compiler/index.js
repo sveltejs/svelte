@@ -20,6 +20,7 @@ export { default as preprocess } from './preprocess/index.js';
  * @returns {CompileResult}
  */
 export function compile(source, options) {
+	source = remove_bom(source);
 	state.reset_warning_filter(options.warningFilter);
 	const validated = validate_component_options(options, '');
 	state.reset(source, validated);
@@ -58,6 +59,7 @@ export function compile(source, options) {
  * @returns {CompileResult}
  */
 export function compileModule(source, options) {
+	source = remove_bom(source);
 	state.reset_warning_filter(options.warningFilter);
 	const validated = validate_module_options(options, '');
 	state.reset(source, validated);
@@ -101,6 +103,7 @@ export function compileModule(source, options) {
  * @returns {AST.Root | LegacyRoot}
  */
 export function parse(source, { filename, rootDir, modern } = {}) {
+	source = remove_bom(source);
 	state.reset_warning_filter(() => false);
 	state.reset(source, { filename: filename ?? '(unknown)', rootDir });
 
@@ -138,6 +141,17 @@ function to_public_ast(source, ast, modern) {
 	}
 
 	return convert(source, ast);
+}
+
+/**
+ * Remove the byte order mark from a string if it's present since it would mess with our template generation logic
+ * @param {string} source
+ */
+function remove_bom(source) {
+	if (source.charCodeAt(0) === 0xfeff) {
+		return source.slice(1);
+	}
+	return source;
 }
 
 /**

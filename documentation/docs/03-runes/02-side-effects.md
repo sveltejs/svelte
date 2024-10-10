@@ -94,7 +94,7 @@ $effect(() => {
 });
 ```
 
-An effect only reruns when the object it reads changes, not when a property inside it changes. (If you want to observe changes _inside_ an object at dev time, you can use [`$inspect`](/docs/svelte/misc/debugging#$inspect).)
+An effect only reruns when the object it reads changes, not when a property inside it changes. (If you want to observe changes _inside_ an object at dev time, you can use [`$inspect`](debugging#$inspect).)
 
 ```svelte
 <script>
@@ -252,7 +252,7 @@ If you need to use bindings, for whatever reason (for example when you want some
 </label>
 ```
 
-If you absolutely have to update `$state` within an effect and run into an infinite loop because you read and write to the same `$state`, use [untrack](functions#untrack).
+If you absolutely have to update `$state` within an effect and run into an infinite loop because you read and write to the same `$state`, use [untrack](svelte#untrack).
 
 ## `$effect.pre`
 
