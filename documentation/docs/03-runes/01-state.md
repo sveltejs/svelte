@@ -6,7 +6,7 @@ Svelte 5 uses _runes_, a powerful set of primitives for controlling reactivity i
 
 Runes are function-like symbols that provide instructions to the Svelte compiler. You don't need to import them from anywhere — when you use Svelte, they're part of the language. This page describes the runes that are concerned with managing state in your application.
 
-## $state
+## `$state`
 
 The `$state` rune is the at the heart of the runes API. It is used to declare reactive state:
 
@@ -62,7 +62,7 @@ Objects and arrays are made deeply reactive by wrapping them with [`Proxies`](ht
 
 > Only POJOs (plain old JavaScript objects) are made deeply reactive. Reactivity will stop at class boundaries and leave those alone
 
-## $state.raw
+## `$state.raw`
 
 State declared with `$state.raw` cannot be mutated; it can only be _reassigned_. In other words, rather than assigning to a property of an object, or using an array method like `push`, replace the object or array altogether if you'd like to update it:
 
@@ -84,7 +84,7 @@ person = {
 
 This can improve performance with large arrays and objects that you weren't planning to mutate anyway, since it avoids the cost of making them reactive. Note that raw state can _contain_ reactive state (for example, a raw array of reactive objects).
 
-## $state.snapshot
+## `$state.snapshot`
 
 To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
 
@@ -101,7 +101,7 @@ To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snaps
 
 This is handy when you want to pass some state to an external library or API that doesn't expect a proxy, such as `structuredClone`.
 
-## $derived
+## `$derived`
 
 Derived state is declared with the `$derived` rune:
 
@@ -122,7 +122,7 @@ The expression inside `$derived(...)` should be free of side-effects. Svelte wil
 
 As with `$state`, you can mark class fields as `$derived`.
 
-## $derived.by
+## `$derived.by`
 
 Sometimes you need to create complex derivations that don't fit inside a short expression. In these cases, you can use `$derived.by` which accepts a function as its argument.
 

@@ -9,7 +9,7 @@ title: Lifecycle hooks
 
 In Svelte 5, the component lifecycle consists of only two parts: Its creation and its destruction. Everything in-between - when certain state is updated - is not related to the component as a whole, only the parts that need to react to the state change are notified. This is because under the hood the smallest unit of change is actually not a component, it's the (render) effects that the component sets up upon component initialization. Consequently, there's no such thing as a "before update"/"after update" hook.
 
-## onMount
+## `onMount`
 
 The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM. It must be called during the component's initialisation (but doesn't need to live _inside_ the component; it can be called from an external module).
 
@@ -43,7 +43,7 @@ If a function is returned from `onMount`, it will be called when the component i
 
 > This behaviour will only work when the function passed to `onMount` _synchronously_ returns a value. `async` functions always return a `Promise`, and as such cannot _synchronously_ return a function.
 
-## onDestroy
+## `onDestroy`
 
 > EXPORT_SNIPPET: svelte#onDestroy
 
@@ -61,7 +61,7 @@ Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the onl
 </script>
 ```
 
-## tick
+## `tick`
 
 While there's no "after update" hook, you can use `tick` to ensure that the UI is updated before continuing. `tick` returns a promise that resolves once any pending state changes have been applied, or in the next microtask if there are none.
 
@@ -77,7 +77,7 @@ While there's no "after update" hook, you can use `tick` to ensure that the UI i
 </script>
 ```
 
-## Deprecated: beforeUpdate/afterUpdate
+## Deprecated: `beforeUpdate` / `afterUpdate`
 
 Svelte 4 contained hooks that ran before and after the component as a whole was updated. For backwards compatibility, these hooks were shimmed in Svelte 5 but not available inside components that use runes.
 

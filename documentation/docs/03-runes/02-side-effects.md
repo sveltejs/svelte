@@ -7,7 +7,7 @@ title: Side effects
 
 Side effects play a crucial role in applications. They are triggered by state changes and can then interact with external systems, like logging something, setting up a server connection or synchronize with a third-party library that has no knowledge of Svelte's reactivity model.
 
-## $effect fundamentals
+## `$effect` fundamentals
 
 To run _side-effects_ when the component is mounted to the DOM, and when values change, we can use the `$effect` rune ([demo](/#H4sIAAAAAAAAE31T24rbMBD9lUG7kAQ2sbdlX7xOYNk_aB_rQhRpbAsU2UiTW0P-vbrYubSlYGzmzMzROTPymdVKo2PFjzMzfIusYB99z14YnfoQuD1qQh-7bmdFQEonrOppVZmKNBI49QthCc-OOOH0LZ-9jxnR6c7eUpOnuv6KeT5JFdcqbvbcBcgDz1jXKGg6ncFyBedYR6IzLrAZwiN5vtSxaJA-EzadfJEjKw11C6GR22-BLH8B_wxdByWpvUYtqqal2XB6RVkG1CoHB6U1WJzbnYFDiwb3aGEdDa3Bm1oH12sQLTcNPp7r56m_00mHocSG97_zd7ICUXonA5fwKbPbkE2ZtMJGGVkEdctzQi4QzSwr9prnFYNk5hpmqVuqPQjNnfOJoMF22lUsrq_UfIN6lfSVyvQ7grB3X2mjMZYO3XO9w-U5iLx42qg29md3BP_ni5P4gy9ikTBlHxjLzAtPDlyYZmRdjAbGq7HprEQ7p64v4LU_guu0kvAkhBim3nMplWl8FreQD-CW20aZR0wq12t-KqDWeBywhvexKC3memmDwlHAv9q4Vo2ZK8KtK0CgX7u9J8wXbzdKv-nRnfF_2baTqlYoWUF2h5efl9-n0O6koAMAAA==)):
 
@@ -63,7 +63,7 @@ You can return a function from `$effect`, which will run immediately before the 
 <button onclick={() => (milliseconds /= 2)}>faster</button>
 ```
 
-## $effect dependencies
+## `$effect` dependencies
 
 `$effect` automatically picks up any reactivy values (`$state`, `$derived`, `$props`) that are _synchronously_ read inside its function body and registers them as dependencies. When those dependencies change, the `$effect` schedules a rerun.
 
@@ -139,7 +139,7 @@ $effect(() => {
 });
 ```
 
-## When not to use $effect
+## When not to use `$effect`
 
 In general, `$effect` is best considered something of an escape hatch — useful for things like analytics and direct DOM manipulation — rather than a tool you should use frequently. In particular, avoid using it to synchronise state. Instead of this...
 
@@ -254,7 +254,7 @@ If you need to use bindings, for whatever reason (for example when you want some
 
 If you absolutely have to update `$state` within an effect and run into an infinite loop because you read and write to the same `$state`, use [untrack](svelte#untrack).
 
-## $effect.pre
+## `$effect.pre`
 
 In rare cases, you may need to run code _before_ the DOM updates. For this we can use the `$effect.pre` rune:
 
@@ -291,7 +291,7 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 
 Apart from the timing, `$effect.pre` works exactly like [`$effect`](#$effect) — refer to its documentation for more info.
 
-## $effect.tracking
+## `$effect.tracking`
 
 The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template ([demo](/#H4sIAAAAAAAAE3XP0QrCMAwF0F-JRXAD595rLfgdzodRUyl0bVgzQcb-3VYFQfExl5tDMgvrPCYhT7MI_YBCiiOR2Aq-UxnSDT1jnlOcRlMSlczoiHUXOjYxpOhx5-O12rgAJg4UAwaGhDyR3Gxhjdai4V1v2N2wqus9tC3Y3ifMQjbehaqq4aBhLtEv_Or893icCsdLve-Caj8nBkU67zMO5HtGCfM3sKiWNKhV0zwVaBqd3x3ixVmHFyFLuJyXB-moOe8pAQAA)):
 
@@ -355,7 +355,7 @@ export default function readable<T>(
 }
 ```
 
-## $effect.root
+## `$effect.root`
 
 The `$effect.root` rune is an advanced feature that creates a non-tracked scope that doesn't auto-cleanup. This is useful for
 nested effects that you want to manually control. This rune also allows for creation of effects outside of the component initialisation phase.

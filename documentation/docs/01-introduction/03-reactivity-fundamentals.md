@@ -12,7 +12,7 @@ Runes are function-like symbols that provide instructions to the Svelte compiler
 
 The following sections introduce the most important runes for declare state, derived state and side effects at a high level. For more details refer to the later sections on [state](state) and [side effects](side-effects).
 
-## $state
+## `$state`
 
 Reactive state is declared with the `$state` rune:
 
@@ -53,7 +53,7 @@ class Todo {
 > </button>
 > ```
 
-## $derived
+## `$derived`
 
 Derived state is declared with the `$derived` rune:
 
@@ -92,7 +92,7 @@ As with `$state`, you can mark class fields as `$derived`.
 >
 > This only worked at the top level of a component.
 
-## $effect
+## `$effect`
 
 To run _side-effects_ when the component is mounted to the DOM, and when values change, we can use the `$effect` rune ([demo](/#H4sIAAAAAAAAE31T24rbMBD9lUG7kAQ2sbdlX7xOYNk_aB_rQhRpbAsU2UiTW0P-vbrYubSlYGzmzMzROTPymdVKo2PFjzMzfIusYB99z14YnfoQuD1qQh-7bmdFQEonrOppVZmKNBI49QthCc-OOOH0LZ-9jxnR6c7eUpOnuv6KeT5JFdcqbvbcBcgDz1jXKGg6ncFyBedYR6IzLrAZwiN5vtSxaJA-EzadfJEjKw11C6GR22-BLH8B_wxdByWpvUYtqqal2XB6RVkG1CoHB6U1WJzbnYFDiwb3aGEdDa3Bm1oH12sQLTcNPp7r56m_00mHocSG97_zd7ICUXonA5fwKbPbkE2ZtMJGGVkEdctzQi4QzSwr9prnFYNk5hpmqVuqPQjNnfOJoMF22lUsrq_UfIN6lfSVyvQ7grB3X2mjMZYO3XO9w-U5iLx42qg29md3BP_ni5P4gy9ikTBlHxjLzAtPDlyYZmRdjAbGq7HprEQ7p64v4LU_guu0kvAkhBim3nMplWl8FreQD-CW20aZR0wq12t-KqDWeBywhvexKC3memmDwlHAv9q4Vo2ZK8KtK0CgX7u9J8wXbzdKv-nRnfF_2baTqlYoWUF2h5efl9-n0O6koAMAAA==)):
 

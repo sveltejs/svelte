@@ -10,7 +10,7 @@ title: TypeScript
 
 You can use TypeScript within Svelte components. IDE extensions like the [Svelte VS Code extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) will help you catch errors right in your editor, and [`svelte-check`](https://www.npmjs.com/package/svelte-check) does the same on the command line, which you can integrate into your CI.
 
-## <script lang="ts">
+## `<script lang="ts">`
 
 To use TypeScript inside your Svelte components, add `lang="ts"` to your `script` tags:
 
@@ -77,7 +77,7 @@ If you're using tools like Rollup or Webpack instead, install their respective S
 
 > If you're starting a new project, we recommend using SvelteKit or Vite instead
 
-## Typing $props
+## Typing `$props`
 
 Type `$props` just like a regular object with certain properties.
 
@@ -107,7 +107,7 @@ Type `$props` just like a regular object with certain properties.
 </button>
 ```
 
-## Generic $props
+## Generic `$props`
 
 Components can declare a generic relationship between their properties. One example is a generic list component that receives a list of items and a callback property that reveives an item from the list. To declare that the `items` property and the `select` callback operate on the same types, add the `generics` attribute to the `script` tag:
 
@@ -130,7 +130,7 @@ Components can declare a generic relationship between their properties. One exam
 
 The content of `generics` is what you would put between the `<...>` tags of a generic function. In other words, you can use multiple generics, `extends` and fallback types.
 
-## Typing $state
+## Typing `$state`
 
 You can type `$state` like any other variable.
 
@@ -157,7 +157,7 @@ class Counter {
 }
 ```
 
-## The Component type
+## The `Component` type
 
 Svelte components or of type `Component`. You can use it and its related types to express a variety of constraints.
 

@@ -74,7 +74,7 @@ If you're using `bind:` directives together with `on` event attributes, the bind
 
 Here we were binding to the value of a text input, which uses the `input` event. Bindings on other elements may use different events such as `change`.
 
-## Binding <select> value
+## Binding `<select>` value
 
 A `<select>` value binding corresponds to the `value` property on the selected `<option>`, which can be any value (not just strings, as is normally the case in the DOM).
 
