@@ -507,9 +507,12 @@ export { await_block as await };
 
 /** @param {any} array_like_or_iterator */
 export function ensure_array_like(array_like_or_iterator) {
-	return array_like_or_iterator?.length !== undefined
-		? array_like_or_iterator
-		: Array.from(array_like_or_iterator);
+	if (array_like_or_iterator) {
+		return array_like_or_iterator.length !== undefined
+			? array_like_or_iterator
+			: Array.from(array_like_or_iterator);
+	}
+	return [];
 }
 
 /**
