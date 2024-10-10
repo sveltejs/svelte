@@ -1,7 +1,12 @@
 /** @import { Expression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../../constants.js';
+import {
+	TRANSITION_GLOBAL,
+	TRANSITION_HIDDEN,
+	TRANSITION_IN,
+	TRANSITION_OUT
+} from '../../../../../constants.js';
 import * as b from '../../../../utils/builders.js';
 import { parse_directive_name } from './shared/utils.js';
 
@@ -13,6 +18,9 @@ export function TransitionDirective(node, context) {
 	let flags = node.modifiers.includes('global') ? TRANSITION_GLOBAL : 0;
 	if (node.intro) flags |= TRANSITION_IN;
 	if (node.outro) flags |= TRANSITION_OUT;
+	if (node.modifiers.includes('hidden')) {
+		flags |= TRANSITION_HIDDEN;
+	}
 
 	const args = [
 		b.literal(flags),

@@ -14,6 +14,7 @@ export const PROPS_IS_LAZY_INITIAL = 1 << 4;
 export const TRANSITION_IN = 1;
 export const TRANSITION_OUT = 1 << 1;
 export const TRANSITION_GLOBAL = 1 << 2;
+export const TRANSITION_HIDDEN = 1 << 3;
 
 export const TEMPLATE_FRAGMENT = 1;
 export const TEMPLATE_USE_IMPORT_NODE = 1 << 1;

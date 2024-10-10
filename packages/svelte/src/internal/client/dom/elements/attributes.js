@@ -75,6 +75,28 @@ export function set_checked(element, checked) {
 }
 
 /**
+ * @param {Element & { hidden: boolean, __tm?: import('#client').TransitionManager}} element
+ * @param {boolean} hidden
+ */
+export function set_hidden(element, hidden) {
+	// @ts-expect-error
+	var attributes = (element.__attributes ??= {});
+
+	if (attributes.hidden === (attributes.hidden = !!hidden)) return;
+
+	if (element.__tm) {
+		if (hidden) {
+			element.__tm.out(() => (element.hidden = true));
+		} else {
+			element.hidden = false;
+			element.__tm.in();
+		}
+	} else {
+		element.hidden = hidden;
+	}
+}
+
+/**
  * @param {Element} element
  * @param {string} attribute
  * @param {string | null} value

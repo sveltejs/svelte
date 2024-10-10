@@ -545,6 +545,8 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		update = b.stmt(b.call('$.set_value', node_id, value));
 	} else if (name === 'checked') {
 		update = b.stmt(b.call('$.set_checked', node_id, value));
+	} else if (name === 'hidden') {
+		update = b.stmt(b.call('$.set_hidden', node_id, value));
 	} else if (is_dom_property(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, name), value));
 	} else {
