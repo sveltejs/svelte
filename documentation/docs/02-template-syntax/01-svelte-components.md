@@ -259,6 +259,8 @@ You can `export` bindings from this block, and they will become exports of the c
 
 You cannot `export default`, since the default export is the component itself.
 
+> Note that if you are using TypeScript, exports from a `context="module"` block will not be exposed to TypeScript, and the type checker will complain about unknown members. If possible, it is preferable to export from TypeScript into Svelte, and only import Svelte components themselves into TypeScript.
+
 > Variables defined in `module` scripts are not reactive — reassigning them will not trigger a rerender even though the variable itself will update. For values shared between multiple components, consider using a [store](/docs/svelte-store).
 
 ```svelte
