@@ -179,8 +179,8 @@ It is important to note that the reactive blocks are ordered via simple static a
 ```svelte
 <!--- file: App.svelte --->
 <script>
-	let x = 0;
-	let y = 0;
+	let x = 1;
+	let y = 2;
 
 	/** @param {number} value */
 	function setY(value) {
