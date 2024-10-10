@@ -27,7 +27,7 @@ import {
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
-import { update_derived } from './reactivity/deriveds.js';
+import { destroy_derived, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
@@ -408,6 +408,16 @@ export function remove_reactions(signal, start_index) {
  * @returns {void}
  */
 export function destroy_effect_children(signal, remove_dom = false) {
+	var deriveds = signal.deriveds;
+
+	if (deriveds !== null) {
+		signal.deriveds = null;
+
+		for (var i = 0; i < deriveds.length; i += 1) {
+			destroy_derived(deriveds[i]);
+		}
+	}
+
 	var effect = signal.first;
 	signal.first = signal.last = null;
 

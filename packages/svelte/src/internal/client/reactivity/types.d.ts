@@ -42,6 +42,8 @@ export interface Effect extends Reaction {
 	nodes_end: null | TemplateNode;
 	/** The associated component context */
 	ctx: null | ComponentContext;
+	/** Reactions created inside this signal */
+	deriveds: null | Derived[];
 	/** The effect function */
 	fn: null | (() => void | (() => void));
 	/** The teardown function returned from the effect function */
