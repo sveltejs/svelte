@@ -116,5 +116,6 @@ Value cannot be cloned with `$state.snapshot` — the original value was returne
 
 ```
 The following properties cannot be cloned with `$state.snapshot` — the return value contains the originals:
+
 %properties%
 ```

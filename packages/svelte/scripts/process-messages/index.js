@@ -4,7 +4,7 @@ import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import * as esrap from 'esrap';
 
-/** @type {Record<string, Record<string, { messages: string[], details: string }>>} */
+/** @type {Record<string, Record<string, { messages: string[], details: string | null }>>} */
 const messages = {};
 const seen = new Set();
 
@@ -31,29 +31,11 @@ for (const category of fs.readdirSync('messages')) {
 
 			sorted.push({ code, _ });
 
-			const lines = text.trim().split('\n');
-			let current_section = '';
-			let sections = [];
-			let details = '';
+			const sections = text.trim().split('\n\n');
+			const details = [];
 
-			for (let i = 0; i < lines.length; i++) {
-				const line = lines[i];
-
-				if (line.startsWith('> ')) {
-					current_section += line.slice(2) + '\n';
-				} else if (line === '' && lines[i + 1]) {
-					if (lines[i + 1].startsWith('> ')) {
-						sections.push(current_section.trim());
-						current_section = '';
-					} else {
-						details = lines.slice(i + 1).join('\n');
-						break;
-					}
-				}
-			}
-
-			if (current_section.length > 0) {
-				sections.push(current_section.trim());
+			while (!sections[sections.length - 1].startsWith('> ')) {
+				details.unshift(/** @type {string} */ (sections.pop()));
 			}
 
 			if (sections.length === 0) {
@@ -62,8 +44,8 @@ for (const category of fs.readdirSync('messages')) {
 
 			seen.add(code);
 			messages[category][code] = {
-				messages: sections,
-				details: details
+				messages: sections.map((section) => section.replace(/^> /gm, '').replace(/^>\n/gm, '\n')),
+				details: details.join('\n\n')
 			};
 		}
 
