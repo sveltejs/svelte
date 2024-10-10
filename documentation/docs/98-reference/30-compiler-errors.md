@@ -263,7 +263,6 @@ Cannot reference store value outside a `.svelte` file
 
 Using a `$` prefix to refer to the value of a store is only possible inside `.svelte` files, where Svelte can automatically create subscriptions when a component is mounted and unsubscribe when the component is unmounted. Consider migrating to runes instead.
 
-
 ## typescript_invalid_feature
 
 ```
@@ -633,11 +632,11 @@ Mixing old (on:%name%) and new syntaxes for event handling is not allowed. Use o
 %thing% is invalid inside `<%parent%>`
 ```
 
+HTML restricts where certain elements can appear. In case of a violation the browser will 'repair' the HTML in a way that breaks Svelte's assumptions about the structure of your components. Some examples:
+
 - `<p>hello <div>world</div></p>` will result in `<p>hello </p><div>world</div><p></p>` for example (the `<div>` autoclosed the `<p>` because `<p>` cannot contain block-level elements)
 - `<option><div>option a</div></option>` will result in `<option>option a</option>` (the `<div>` is removed)
 - `<table><tr><td>cell</td></tr></table>` will result in `<table><tbody><tr><td>cell</td></tr></tbody></table>` (a `<tbody>` is auto-inserted)
-HTML restricts where certain elements can appear. In case of a violation the browser will 'repair' the HTML in a way that breaks Svelte's assumptions about the structure of your components. Some examples:
-
 
 ## render_tag_invalid_call_expression
 
@@ -869,7 +868,6 @@ Tag name must be lowercase and hyphenated
 
 See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name for more information on valid tag names
 
-
 ## svelte_options_reserved_tagname
 
 ```
@@ -877,7 +875,6 @@ Tag name is reserved
 ```
 
 See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name for more information on valid tag names
-
 
 ## svelte_options_unknown_attribute
 

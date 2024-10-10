@@ -450,12 +450,13 @@ Using `on:%name%` to listen to the %name% event is deprecated. Use the event att
 %thing% is invalid inside `<%parent%>`. When rendering this component on the server, the resulting HTML will be modified by the browser, likely resulting in a `hydration_mismatch` warning
 ```
 
-This code will work when the component is rendered on the client (which is why this is a warning rather than an error), but if you use server rendering it will cause hydration to fail.
+HTML restricts where certain elements can appear. In case of a violation the browser will 'repair' the HTML in a way that breaks Svelte's assumptions about the structure of your components. Some examples:
+
 - `<p>hello <div>world</div></p>` will result in `<p>hello </p><div>world</div><p></p>` for example (the `<div>` autoclosed the `<p>` because `<p>` cannot contain block-level elements)
 - `<option><div>option a</div></option>` will result in `<option>option a</option>` (the `<div>` is removed)
 - `<table><tr><td>cell</td></tr></table>` will result in `<table><tbody><tr><td>cell</td></tr></tbody></table>` (a `<tbody>` is auto-inserted)
-HTML restricts where certain elements can appear. In case of a violation the browser will 'repair' the HTML in a way that breaks Svelte's assumptions about the structure of your components. Some examples:
 
+This code will work when the component is rendered on the client (which is why this is a warning rather than an error), but if you use server rendering it will cause hydration to fail.
 
 ## script_context_deprecated
 
@@ -481,6 +482,24 @@ Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags 
 `<svelte:component>` is deprecated in runes mode — components are dynamic by default
 ```
 
+In previous versions of Svelte, the component constructor was fixed when the component was rendered. In other words, if you wanted `<X>` to re-render when `X` changed, you would either have to use `<svelte:component this={X}>` or put the component inside a `{#key X}...{/key}` block.
+
+In Svelte 5 this is no longer true — if `X` changes, `<X>` re-renders.
+
+In some cases `<object.property>` syntax can be used as a replacement; a lowercased variable with property access is recognized as a component in Svelte 5.
+
+For complex component resolution logic, an intermediary, capitalized variable may be necessary. E.g. in places where `@const` can be used:
+
+```diff
+{#each items as item}
+-	<svelte:component this={item.condition ? Y : Z} />
++	{@const Component = item.condition ? Y : Z}
++	<Component />
+{/each}
+```
+
+A derived value may be used in other contexts:
+
 ```diff
 <script>
 	...
@@ -490,19 +509,6 @@ Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags 
 - <svelte:component this={condition ? Y : Z} />
 + <Component />
 ```
-A derived value may be used in other contexts:
-```diff
-{#each items as item}
--	<svelte:component this={item.condition ? Y : Z} />
-+	{@const Component = item.condition ? Y : Z}
-+	<Component />
-{/each}
-```
-For complex component resolution logic, an intermediary, capitalized variable may be necessary. E.g. in places where `@const` can be used:
-In some cases `<object.property>` syntax can be used as a replacement; a lowercased variable with property access is recognized as a component in Svelte 5.
-In Svelte 5 this is no longer true — if `X` changes, `<X>` re-renders.
-In previous versions of Svelte, the component constructor was fixed when the component was rendered. In other words, if you wanted `<X>` to re-render when `X` changed, you would either have to use `<svelte:component this={X}>` or put the component inside a `{#key X}...{/key}` block.
-
 
 ## svelte_element_invalid_this
 

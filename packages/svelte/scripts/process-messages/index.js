@@ -31,10 +31,29 @@ for (const category of fs.readdirSync('messages')) {
 
 			sorted.push({ code, _ });
 
-			const sections = text.trim().split('\n\n');
+			const lines = text.trim().split('\n');
+			let current_section = '';
+			let sections = [];
 			let details = '';
-			while (!sections[sections.length - 1].startsWith('> ')) {
-				details += /** @type {string} */ (sections.pop()) + '\n';
+
+			for (let i = 0; i < lines.length; i++) {
+				const line = lines[i];
+
+				if (line.startsWith('> ')) {
+					current_section += line.slice(2) + '\n';
+				} else if (line === '' && lines[i + 1]) {
+					if (lines[i + 1].startsWith('> ')) {
+						sections.push(current_section.trim());
+						current_section = '';
+					} else {
+						details = lines.slice(i + 1).join('\n');
+						break;
+					}
+				}
+			}
+
+			if (current_section.length > 0) {
+				sections.push(current_section.trim());
 			}
 
 			if (sections.length === 0) {
@@ -43,8 +62,8 @@ for (const category of fs.readdirSync('messages')) {
 
 			seen.add(code);
 			messages[category][code] = {
-				messages: sections.map((section) => section.replace(/^> /gm, '').replace(/^>\n/gm, '\n')),
-				details
+				messages: sections,
+				details: details
 			};
 		}
 
