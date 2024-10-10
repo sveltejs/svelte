@@ -76,14 +76,14 @@ for (const category of fs.readdirSync('messages')) {
 }
 
 const consolidated_messages = {
-	'Compiler Errors': { ...messages['compile-errors'] },
-	'Compiler Warnings': { ...messages['compile-warnings'] },
-	'Runtime Errors': {
+	'Compiler errors': { ...messages['compile-errors'] },
+	'Compiler warnings': { ...messages['compile-warnings'] },
+	'Runtime errors': {
 		...messages['client-errors'],
 		...messages['server-errors'],
 		...messages['shared-errors']
 	},
-	'Runtime Warnings': {
+	'Runtime warnings': {
 		...messages['client-warnings'],
 		...messages['shared-warnings']
 	}
