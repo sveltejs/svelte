@@ -132,6 +132,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	/** @type {Effect | null} */
 	var fallback = null;
 
+	var empty = false;
+
 	block(() => {
 		var collection = get_collection();
 
@@ -142,6 +144,13 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				: array_from(collection);
 
 		var length = array.length;
+
+		if (empty && length === 0) {
+			// ignore updates if the array is empty,
+			// and it already was empty on previous run
+			return;
+		}
+		empty = length === 0;
 
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
