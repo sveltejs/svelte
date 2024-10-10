@@ -10,7 +10,7 @@ Svelte 5 uses _runes_, a powerful set of primitives for controlling reactivity i
 
 Runes are function-like symbols that provide instructions to the Svelte compiler. You don't need to import them from anywhere — when you use Svelte, they're part of the language.
 
-The following sections introduce the most important runes for declare state, derived state and side effects at a high level. For more details refer to the later sections on [state](/docs/svelte/runes/state) and [side effects](/docs/svelte/runes/side-effects).
+The following sections introduce the most important runes for declare state, derived state and side effects at a high level. For more details refer to the later sections on [state](state) and [side effects](side-effects).
 
 ## `$state`
 
