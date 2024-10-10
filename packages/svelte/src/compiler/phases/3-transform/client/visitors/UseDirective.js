@@ -20,7 +20,10 @@ export function UseDirective(node, context) {
 		context.state.node,
 		b.arrow(
 			params,
-			b.call(/** @type {Expression} */ (context.visit(parse_directive_name(node.name))), ...params)
+			b.maybe_call(
+				/** @type {Expression} */ (context.visit(parse_directive_name(node.name))),
+				...params
+			)
 		)
 	];
 
