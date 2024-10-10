@@ -6,7 +6,7 @@ title: Special elements
 
 Some of Svelte's concepts need special elements. Those are prefixed with `svelte:` and listed here.
 
-## `<svelte:self>`
+## <svelte:self>
 
 The `<svelte:self>` element allows a component to include itself, recursively.
 
@@ -25,7 +25,7 @@ It cannot appear at the top level of your markup; it must be inside an if or eac
 {/if}
 ```
 
-## `<svelte:component>`
+## <svelte:component>
 
 ```svelte
 <svelte:component this={expression} />
@@ -39,7 +39,7 @@ If `this` is falsy, no component is rendered.
 <svelte:component this={currentSelection.component} foo={bar} />
 ```
 
-## `<svelte:element>`
+## <svelte:element>
 
 ```svelte
 <svelte:element this={expression} />
@@ -69,7 +69,7 @@ Svelte tries its best to infer the correct namespace from the element's surround
 <svelte:element this={tag} xmlns="http://www.w3.org/2000/svg" />
 ```
 
-## `<svelte:window>`
+## <svelte:window>
 
 ```svelte
 <svelte:window onevent={handler} />
@@ -112,7 +112,7 @@ All except `scrollX` and `scrollY` are readonly.
 
 > Note that the page will not be scrolled to the initial value to avoid accessibility issues. Only subsequent changes to the bound variable of `scrollX` and `scrollY` will cause scrolling. However, if the scrolling behaviour is desired, call `scrollTo()` in `onMount()`.
 
-## `<svelte:document>`
+## <svelte:document>
 
 ```svelte
 <svelte:document onevent={handler} />
@@ -139,7 +139,7 @@ You can also bind to the following properties:
 
 All are readonly.
 
-## `<svelte:body>`
+## <svelte:body>
 
 ```svelte
 <svelte:body onevent={handler} />
@@ -153,7 +153,7 @@ As with `<svelte:window>` and `<svelte:document>`, this element may only appear 
 <svelte:body onmouseenter={handleMouseenter} onmouseleave={handleMouseleave} use:someAction />
 ```
 
-## `<svelte:head>`
+## <svelte:head>
 
 ```svelte
 <svelte:head>...</svelte:head>
@@ -170,7 +170,7 @@ As with `<svelte:window>`, `<svelte:document>` and `<svelte:body>`, this element
 </svelte:head>
 ```
 
-## `<svelte:options>`
+## <svelte:options>
 
 ```svelte
 <svelte:options option={value} />

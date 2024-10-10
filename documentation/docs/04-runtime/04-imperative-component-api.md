@@ -12,7 +12,7 @@ better title needed?
 
 Every Svelte application starts by imperatively creating a root component. On the client this component is mounted to a specific element. On the server, you want to get back a string of HTML instead which you can render. The following functions help you achieve those tasks.
 
-## `mount`
+## mount
 
 Instantiates a component and mounts it to the given target:
 
@@ -31,7 +31,7 @@ You can mount multiple components per page, and you can also mount from within y
 
 Note that unlike calling `new App(...)` in Svelte 4, things like effects (including `onMount` callbacks, and action functions) will not run during `mount`. If you need to force pending effects to run (in the context of a test, for example) you can do so with `flushSync()`.
 
-## `unmount`
+## unmount
 
 Unmounts a component created with [`mount`](#mount) or [`hydrate`](#hydrate):
 
@@ -46,7 +46,7 @@ const app = mount(App, {...});
 unmount(app);
 ```
 
-## `render`
+## render
 
 Only available on the server and when compiling with the `server` option. Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app:
 
@@ -62,7 +62,7 @@ result.body; // HTML for somewhere in this <body> tag
 result.head; // HTML for somewhere in this <head> tag
 ```
 
-## `hydrate`
+## hydrate
 
 Like `mount`, but will reuse up any HTML rendered by Svelte's SSR output (from the [`render`](#server-render) function) inside the target and make it interactive:
 

@@ -44,7 +44,7 @@ Stores are still a good solution when you have complex asynchronous data streams
 
 The `svelte/store` module contains a minimal store implementation which fulfil the store contract. It provides methods for creating stores that you can update from the outside, stores you can only update from the inside, and for combining and deriving stores.
 
-### `writable`
+### writable
 
 Function that creates a store which has values that can be set from 'outside' components. It gets created as an object with additional `set` and `update` methods.
 
@@ -89,7 +89,7 @@ unsubscribe(); // logs 'no more subscribers'
 
 Note that the value of a `writable` is lost when it is destroyed, for example when the page is refreshed. However, you can write your own logic to sync the value to for example the `localStorage`.
 
-### `readable`
+### readable
 
 Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value, and the second argument to `readable` is the same as the second argument to `writable`.
 
@@ -115,7 +115,7 @@ const ticktock = readable('tick', (set, update) => {
 });
 ```
 
-### `derived`
+### derived
 
 Derives a store from one or more other stores. The callback runs initially when the first subscriber subscribes and then whenever the store dependencies change.
 
@@ -229,7 +229,7 @@ const delayed = derived([a, b], ([$a, $b], set) => {
 });
 ```
 
-### `readonly`
+### readonly
 
 This simple helper function makes a store readonly. You can still subscribe to the changes from the original one using this new readable store.
 
@@ -246,7 +246,7 @@ writableStore.set(2); // console: 2
 readableStore.set(2); // ERROR
 ```
 
-### `get`
+### get
 
 Generally, you should read the value of a store by subscribing to it and using the value as it changes over time. Occasionally, you may need to retrieve the value of a store to which you're not subscribed. `get` allows you to do so.
 

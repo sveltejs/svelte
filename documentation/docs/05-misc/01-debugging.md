@@ -7,7 +7,7 @@ title: Debugging
 
 Svelte provides two built-in ways to debug your application.
 
-## `$inspect`
+## $inspect
 
 The `$inspect` rune is roughly equivalent to `console.log`, with the exception that it will re-run whenever its
 argument changes. `$inspect` tracks reactive state deeply, meaning that updating something inside an object
