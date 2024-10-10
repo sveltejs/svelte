@@ -73,7 +73,7 @@ for (const category of fs.readdirSync('messages')) {
 				return chunks.join('\n\n');
 			})
 			.sort()
-			.join('\n\n')
+			.join('\n\n') + '\n'
 	);
 }
 
