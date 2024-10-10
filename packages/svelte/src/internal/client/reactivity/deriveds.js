@@ -58,6 +58,9 @@ export function derived(fn) {
 		var derived = /** @type {Derived} */ (active_reaction);
 		(derived.children ??= []).push(signal);
 	}
+	if (active_effect !== null) {
+		(active_effect.deriveds ??= []).push(signal);
+	}
 
 	return signal;
 }
@@ -153,7 +156,7 @@ export function update_derived(derived) {
  * @param {Derived} signal
  * @returns {void}
  */
-function destroy_derived(signal) {
+export function destroy_derived(signal) {
 	destroy_derived_children(signal);
 	remove_reactions(signal, 0);
 	set_signal_status(signal, DESTROYED);
