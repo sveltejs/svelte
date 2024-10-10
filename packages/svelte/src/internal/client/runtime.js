@@ -31,6 +31,8 @@ import { update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
+import { assignment_stack } from './dev/assignment-stack.js';
+import { sanitize_location } from './dev/utils.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -62,8 +64,7 @@ export function set_is_destroying_effect(value) {
 let queued_root_effects = [];
 
 let flush_count = 0;
-/** @type {Effect[]} Stack of effects, dev only */
-let dev_effect_stack = [];
+
 // Handle signal reactivity tree dependencies and reactions
 
 /** @type {null | Reaction} */
@@ -451,10 +452,6 @@ export function update_effect(effect) {
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 		effect.version = current_version;
-
-		if (DEV) {
-			dev_effect_stack.push(effect);
-		}
 	} catch (error) {
 		handle_error(/** @type {Error} */ (error), effect, previous_component_context);
 	} finally {
@@ -471,20 +468,12 @@ function infinite_loop_guard() {
 	if (flush_count > 1000) {
 		flush_count = 0;
 		if (DEV) {
+			let location = assignment_stack.pop();
+
 			try {
-				e.effect_update_depth_exceeded();
-			} catch (error) {
-				// stack is garbage, ignore. Instead add a console.error message.
-				define_property(error, 'stack', {
-					value: ''
-				});
-				// eslint-disable-next-line no-console
-				console.error(
-					'Last ten effects were: ',
-					dev_effect_stack.slice(-10).map((d) => d.fn)
-				);
-				dev_effect_stack = [];
-				throw error;
+				e.effect_update_depth_exceeded(location && sanitize_location(location));
+			} finally {
+				assignment_stack.length = 0;
 			}
 		} else {
 			e.effect_update_depth_exceeded();
@@ -560,16 +549,13 @@ function flush_queued_effects(effects) {
 
 function process_deferred() {
 	is_micro_task_queued = false;
-	if (flush_count > 1001) {
-		return;
-	}
 	const previous_queued_root_effects = queued_root_effects;
 	queued_root_effects = [];
 	flush_queued_root_effects(previous_queued_root_effects);
 	if (!is_micro_task_queued) {
 		flush_count = 0;
 		if (DEV) {
-			dev_effect_stack = [];
+			assignment_stack.length = 0;
 		}
 	}
 }
@@ -701,7 +687,7 @@ export function flush_sync(fn) {
 
 		flush_count = 0;
 		if (DEV) {
-			dev_effect_stack = [];
+			assignment_stack.length = 0;
 		}
 
 		return result;
