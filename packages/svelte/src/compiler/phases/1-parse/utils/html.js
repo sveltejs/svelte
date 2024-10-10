@@ -38,10 +38,8 @@ const entity_pattern_attr_value = get_entity_pattern(true);
  * @param {boolean} is_attribute_value
  */
 export function decode_character_references(html, is_attribute_value) {
-	// Replace all BOM characters from the HTML with a standard space
-	const sanitised_html = html.replaceAll(String.fromCharCode(65279), ' ');
 	const entity_pattern = is_attribute_value ? entity_pattern_attr_value : entity_pattern_content;
-	return sanitised_html.replace(
+	return html.replace(
 		entity_pattern,
 		/**
 		 * @param {any} match
@@ -77,8 +75,8 @@ const NUL = 0;
 
 /** @param {number} code */
 function validate_code(code) {
-	// line feed becomes generic whitespace, as does a BOM character
-	if (code === 10 || code === 65279) {
+	// line feed becomes generic whitespace
+	if (code === 10) {
 		return 32;
 	}
 
