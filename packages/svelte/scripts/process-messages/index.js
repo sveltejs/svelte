@@ -109,11 +109,11 @@ for (const [category, codes] of Object.entries(consolidated_messages)) {
 			'<input autofocus />',
 			'```',
 			'',
-			'You can list multiple rules in a single comment, and add an explanatory note alongside them:',
+			'You can list multiple rules in a single comment (separated by commas), and add an explanatory note (in parentheses) alongside them:',
 			'',
 			'```svelte',
 			'<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (because of reasons) -->',
-			'<div on:click>...</div>',
+			'<div onclick>...</div>',
 			'```',
 			''
 		);

@@ -12,24 +12,45 @@ Some warnings may be incorrect in your concrete use case. You can disable such f
 <input autofocus />
 ```
 
-You can list multiple rules in a single comment, and add an explanatory note alongside them:
+You can list multiple rules in a single comment (separated by commas), and add an explanatory note (in parentheses) alongside them:
 
 ```svelte
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (because of reasons) -->
-<div on:click>...</div>
+<div onclick>...</div>
 ```
 
 ## `a11y_accesskey`
 
 > [!NOTE] Avoid using accesskey
 
+Enforce no `accesskey` on element. Access keys are HTML attributes that allow web developers to assign keyboard shortcuts to elements. Inconsistencies between keyboard shortcuts and keyboard commands used by screen reader and keyboard-only users create accessibility complications. To avoid complications, access keys should not be used.
+
+```svelte
+<!-- A11y: Avoid using accesskey -->
+<div accesskey="z"></div>
+```
+
 ## `a11y_aria_activedescendant_has_tabindex`
 
 > [!NOTE] An element with an aria-activedescendant attribute should have a tabindex value
 
+An element with `aria-activedescendant` must be tabbable, so it must either have an inherent `tabindex` or declare `tabindex` as an attribute.
+
+```svelte
+<!-- A11y: Elements with attribute aria-activedescendant should have tabindex value -->
+<div aria-activedescendant="some-id"></div>
+```
+
 ## `a11y_aria_attributes`
 
 > [!NOTE] '\<%name%>' should not have aria-* attributes
+
+Certain reserved DOM elements do not support ARIA roles, states and properties. This is often because they are not visible, for example `meta`, `html`, `script`, `style`. This rule enforces that these DOM elements do not contain the `aria-*` props.
+
+```svelte
+<!-- A11y: <meta> should not have aria-* attributes -->
+<meta aria-hidden="false" />
+```
 
 ## `a11y_autocomplete_valid`
 
@@ -39,9 +60,29 @@ You can list multiple rules in a single comment, and add an explanatory note alo
 
 > [!NOTE] Avoid using autofocus
 
+Enforce that `autofocus` is not used on elements. Autofocusing elements can cause usability issues for sighted and non-sighted users alike.
+
+```svelte
+<!-- A11y: Avoid using autofocus -->
+<input autofocus />
+```
+
 ## `a11y_click_events_have_key_events`
 
 > [!NOTE] Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as '\<button type="button">' or '\<a>' might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details
+
+Enforce that visible, non-interactive elements with an `onclick` event are accompanied by a keyboard event handler.
+
+Users should first consider whether an interactive element might be more appropriate such as a `<button type="button">` element for actions or `<a>` element for navigations. These elements are more semantically meaningful and will have built-in key handling. E.g. `Space` and `Enter` will trigger a `<button>` and `Enter` will trigger an `<a>` element.
+
+If a non-interactive element is required then `onclick` should be accompanied by an `onkeyup` or `onkeydown` handler that enables the user to perform equivalent actions via the keyboard. In order for the user to be able to trigger a key press, the element will also need to be focusable by adding a [`tabindex`](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex). While an `onkeypress` handler will also silence this warning, it should be noted that the `keypress` event is deprecated.
+
+```svelte
+<!-- A11y: visible, non-interactive elements with an onclick event must be accompanied by a keyboard event handler. -->
+<div onclick={() => {}}></div>
+```
+
+Coding for the keyboard is important for users with physical disabilities who cannot use a mouse, AT compatibility, and screenreader users.
 
 ## `a11y_consider_explicit_label`
 
@@ -51,6 +92,15 @@ You can list multiple rules in a single comment, and add an explanatory note alo
 
 > [!NOTE] Avoid '\<%name%>' elements
 
+Enforces that no distracting elements are used. Elements that can be visually distracting can cause accessibility issues with visually impaired users. Such elements are most likely deprecated, and should be avoided.
+
+The following elements are visually distracting: `<marquee>` and `<blink>`.
+
+```svelte
+<!-- A11y: Avoid <marquee> elements -->
+<marquee></marquee>
+```
+
 ## `a11y_figcaption_index`
 
 > [!NOTE] '\<figcaption>' must be first or last child of '\<figure>'
@@ -59,17 +109,60 @@ You can list multiple rules in a single comment, and add an explanatory note alo
 
 > [!NOTE] '\<figcaption>' must be an immediate child of '\<figure>'
 
+Enforce that certain DOM elements have the correct structure.
+
+```svelte
+<!-- A11y: <figcaption> must be an immediate child of <figure> -->
+<div>
+	<figcaption>Image caption</figcaption>
+</div>
+```
+
 ## `a11y_hidden`
 
 > [!NOTE] '\<%name%>' element should not be hidden
+
+Certain DOM elements are useful for screen reader navigation and should not be hidden.
+
+<!-- prettier-ignore -->
+```svelte
+<!-- A11y: <h2> element should not be hidden -->
+<h2 aria-hidden="true">invisible header</h2>
+```
 
 ## `a11y_img_redundant_alt`
 
 > [!NOTE] Screenreaders already announce '\<img>' elements as an image
 
+Enforce img alt attribute does not contain the word image, picture, or photo. Screen readers already announce `img` elements as an image. There is no need to use words such as _image_, _photo_, and/or _picture_.
+
+```svelte
+<img src="foo" alt="Foo eating a sandwich." />
+
+<!-- aria-hidden, won't be announced by screen reader -->
+<img src="bar" aria-hidden="true" alt="Picture of me taking a photo of an image" />
+
+<!-- A11y: Screen readers already announce <img> elements as an image. -->
+<img src="foo" alt="Photo of foo being weird." />
+
+<!-- A11y: Screen readers already announce <img> elements as an image. -->
+<img src="bar" alt="Image of me at a bar!" />
+
+<!-- A11y: Screen readers already announce <img> elements as an image. -->
+<img src="foo" alt="Picture of baz fixing a bug." />
+```
+
 ## `a11y_incorrect_aria_attribute_type`
 
 > [!NOTE] The value of '%attribute%' must be a %type%
+
+Enforce that only the correct type of value is used for aria attributes. For example, `aria-hidden`
+should only receive a boolean.
+
+```svelte
+<!-- A11y: The value of 'aria-hidden' must be exactly one of true or false -->
+<div aria-hidden="yes"></div>
+```
 
 ## `a11y_incorrect_aria_attribute_type_boolean`
 
@@ -103,37 +196,139 @@ You can list multiple rules in a single comment, and add an explanatory note alo
 
 > [!NOTE] Elements with the '%role%' interactive role must have a tabindex value
 
+Enforce that elements with an interactive role and interactive handlers (mouse or key press) must be focusable or tabbable.
+
+```svelte
+<!-- A11y: Elements with the 'button' interactive role must have a tabindex value. -->
+<div role="button" onkeypress={() => {}} />
+```
+
 ## `a11y_invalid_attribute`
 
 > [!NOTE] '%href_value%' is not a valid %href_attribute% attribute
+
+Enforce that attributes important for accessibility have a valid value. For example, `href` should not be empty, `'#'`, or `javascript:`.
+
+```svelte
+<!-- A11y: '' is not a valid href attribute -->
+<a href="">invalid</a>
+```
 
 ## `a11y_label_has_associated_control`
 
 > [!NOTE] A form label must be associated with a control
 
+Enforce that a label tag has a text label and an associated control.
+
+There are two supported ways to associate a label with a control:
+
+- Wrapping a control in a label tag.
+- Adding `for` to a label and assigning it the ID of an input on the page.
+
+```svelte
+<label for="id">B</label>
+
+<label>C <input type="text" /></label>
+
+<!-- A11y: A form label must be associated with a control. -->
+<label>A</label>
+```
+
 ## `a11y_media_has_caption`
 
 > [!NOTE] '\<video>' elements must have a '\<track kind="captions">'
+
+Providing captions for media is essential for deaf users to follow along. Captions should be a transcription or translation of the dialogue, sound effects, relevant musical cues, and other relevant audio information. Not only is this important for accessibility, but can also be useful for all users in the case that the media is unavailable (similar to `alt` text on an image when an image is unable to load).
+
+The captions should contain all important and relevant information to understand the corresponding media. This may mean that the captions are not a 1:1 mapping of the dialogue in the media content. However, captions are not necessary for video components with the `muted` attribute.
+
+```svelte
+<video><track kind="captions" /></video>
+
+<audio muted></audio>
+
+<!-- A11y: Media elements must have a <track kind=\"captions\"> -->
+<video></video>
+
+<!-- A11y: Media elements must have a <track kind=\"captions\"> -->
+<video><track /></video>
+```
 
 ## `a11y_misplaced_role`
 
 > [!NOTE] '\<%name%>' should not have role attribute
 
+Certain reserved DOM elements do not support ARIA roles, states and properties. This is often because they are not visible, for example `meta`, `html`, `script`, `style`. This rule enforces that these DOM elements do not contain the `role` props.
+
+```svelte
+<!-- A11y: <meta> should not have role attribute -->
+<meta role="tooltip" />
+```
+
 ## `a11y_misplaced_scope`
 
 > [!NOTE] The scope attribute should only be used with '\<th>' elements
+
+The scope attribute should only be used on `<th>` elements.
+
+<!-- prettier-ignore -->
+```svelte
+<!-- A11y: The scope attribute should only be used with <th> elements -->
+<div scope="row" />
+```
 
 ## `a11y_missing_attribute`
 
 > [!NOTE] '\<%name%>' element should have %article% %sequence% attribute
 
+Enforce that attributes required for accessibility are present on an element. This includes the following checks:
+
+- `<a>` should have an href (unless it's a [fragment-defining tag](https://github.com/sveltejs/svelte/issues/4697))
+- `<area>` should have alt, aria-label, or aria-labelledby
+- `<html>` should have lang
+- `<iframe>` should have title
+- `<img>` should have alt
+- `<object>` should have title, aria-label, or aria-labelledby
+- `<input type="image">` should have alt, aria-label, or aria-labelledby
+
+```svelte
+<!-- A11y: <input type=\"image\"> element should have an alt, aria-label or aria-labelledby attribute -->
+<input type="image" />
+
+<!-- A11y: <html> element should have a lang attribute -->
+<html></html>
+
+<!-- A11y: <a> element should have an href attribute -->
+<a>text</a>
+```
+
 ## `a11y_missing_content`
 
 > [!NOTE] '\<%name%>' element should contain text
 
+Enforce that heading elements (`h1`, `h2`, etc.) and anchors have content and that the content is accessible to screen readers
+
+```svelte
+<!-- A11y: <a> element should have child content -->
+<a href="/foo"></a>
+
+<!-- A11y: <h1> element should have child content -->
+<h1></h1>
+```
+
 ## `a11y_mouse_events_have_key_events`
 
 > [!NOTE] '%event%' event must be accompanied by '%accompanied_by%' event
+
+Enforce that `onmouseover` and `onmouseout` are accompanied by `onfocus` and `onblur`, respectively. This helps to ensure that any functionality triggered by these mouse events is also accessible to keyboard users.
+
+```svelte
+<!-- A11y: onmouseover must be accompanied by onfocus -->
+<div onmouseover={handleMouseover} />
+
+<!-- A11y: onmouseout must be accompanied by onblur -->
+<div onmouseout={handleMouseout} />
+```
 
 ## `a11y_no_abstract_role`
 
@@ -143,41 +338,123 @@ You can list multiple rules in a single comment, and add an explanatory note alo
 
 > [!NOTE] '\<%element%>' cannot have role '%role%'
 
+[WAI-ARIA](https://www.w3.org/TR/wai-aria-1.1/#usage_intro) roles should not be used to convert an interactive element to a non-interactive element. Non-interactive ARIA roles include `article`, `banner`, `complementary`, `img`, `listitem`, `main`, `region` and `tooltip`.
+
+```svelte
+<!-- A11y: <textarea> cannot have role 'listitem' -->
+<textarea role="listitem"></textarea>
+```
+
 ## `a11y_no_noninteractive_element_interactions`
 
 > [!NOTE] Non-interactive element '\<%element%>' should not be assigned mouse or keyboard event listeners
+
+A non-interactive element does not support event handlers (mouse and key handlers). Non-interactive elements include `<main>`, `<area>`, `<h1>` (,`<h2>`, etc), `<p>`, `<img>`, `<li>`, `<ul>` and `<ol>`. Non-interactive [WAI-ARIA roles](https://www.w3.org/TR/wai-aria-1.1/#usage_intro) include `article`, `banner`, `complementary`, `img`, `listitem`, `main`, `region` and `tooltip`.
+
+```sv
+<!-- `A11y: Non-interactive element <li> should not be assigned mouse or keyboard event listeners.` -->
+<li onclick={() => {}}></li>
+
+<!-- `A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.` -->
+<div role="listitem" onclick={() => {}}></div>
+```
 
 ## `a11y_no_noninteractive_element_to_interactive_role`
 
 > [!NOTE] Non-interactive element '\<%element%>' cannot have interactive role '%role%'
 
+[WAI-ARIA](https://www.w3.org/TR/wai-aria-1.1/#usage_intro) roles should not be used to convert a non-interactive element to an interactive element. Interactive ARIA roles include `button`, `link`, `checkbox`, `menuitem`, `menuitemcheckbox`, `menuitemradio`, `option`, `radio`, `searchbox`, `switch` and `textbox`.
+
+```svelte
+<!-- A11y: Non-interactive element <h3> cannot have interactive role 'searchbox' -->
+<h3 role="searchbox">Button</h3>
+```
+
 ## `a11y_no_noninteractive_tabindex`
 
 > [!NOTE] noninteractive element cannot have nonnegative tabIndex value
+
+Tab key navigation should be limited to elements on the page that can be interacted with.
+
+```svelte
+<!-- A11y: noninteractive element cannot have nonnegative tabIndex value -->
+<div tabindex="0"></div>
+```
 
 ## `a11y_no_redundant_roles`
 
 > [!NOTE] Redundant role '%role%'
 
+Some HTML elements have default ARIA roles. Giving these elements an ARIA role that is already set by the browser [has no effect](https://www.w3.org/TR/using-aria/#aria-does-nothing) and is redundant.
+
+```svelte
+<!-- A11y: Redundant role 'button' -->
+<button role="button">...</button>
+
+<!-- A11y: Redundant role 'img' -->
+<img role="img" src="foo.jpg" />
+```
+
 ## `a11y_no_static_element_interactions`
 
 > [!NOTE] '\<%element%>' with a %handler% handler must have an ARIA role
+
+Elements like `<div>` with interactive handlers like `click` must have an ARIA role.
+
+```svelte
+<!-- A11y: <div> with click handler must have an ARIA role -->
+<div onclick={() => ''}></div>
+```
 
 ## `a11y_positive_tabindex`
 
 > [!NOTE] Avoid tabindex values above zero
 
+Avoid positive `tabindex` property values. This will move elements out of the expected tab order, creating a confusing experience for keyboard users.
+
+```svelte
+<!-- A11y: avoid tabindex values above zero -->
+<div tabindex="1"></div>
+```
+
 ## `a11y_role_has_required_aria_props`
 
 > [!NOTE] Elements with the ARIA role "%role%" must have the following attributes defined: %props%
+
+Elements with ARIA roles must have all required attributes for that role.
+
+```svelte
+<!-- A11y: A11y: Elements with the ARIA role "checkbox" must have the following attributes defined: "aria-checked" -->
+<span role="checkbox" aria-labelledby="foo" tabindex="0"></span>
+```
 
 ## `a11y_role_supports_aria_props`
 
 > [!NOTE] The attribute '%attribute%' is not supported by the role '%role%'
 
+Elements with explicit or implicit roles defined contain only `aria-*` properties supported by that role.
+
+```svelte
+<!-- A11y: The attribute 'aria-multiline' is not supported by the role 'link'. -->
+<div role="link" aria-multiline></div>
+
+<!-- A11y: The attribute 'aria-required' is not supported by the role 'listitem'. This role is implicit on the element <li>. -->
+<li aria-required></li>
+```
+
 ## `a11y_role_supports_aria_props_implicit`
 
 > [!NOTE] The attribute '%attribute%' is not supported by the role '%role%'. This role is implicit on the element '\<%name%>'
+
+Elements with explicit or implicit roles defined contain only `aria-*` properties supported by that role.
+
+```svelte
+<!-- A11y: The attribute 'aria-multiline' is not supported by the role 'link'. -->
+<div role="link" aria-multiline></div>
+
+<!-- A11y: The attribute 'aria-required' is not supported by the role 'listitem'. This role is implicit on the element <li>. -->
+<li aria-required></li>
+```
 
 ## `a11y_unknown_aria_attribute`
 
@@ -185,11 +462,25 @@ You can list multiple rules in a single comment, and add an explanatory note alo
 
 > [!NOTE] Unknown aria attribute 'aria-%attribute%'. Did you mean '%suggestion%'?
 
+Enforce that only known ARIA attributes are used. This is based on the [WAI-ARIA States and Properties spec](https://www.w3.org/WAI/PF/aria-1.1/states_and_properties).
+
+```svelte
+<!-- A11y: Unknown aria attribute 'aria-labeledby' (did you mean 'labelledby'?) -->
+<input type="image" aria-labeledby="foo" />
+```
+
 ## `a11y_unknown_role`
 
 > [!NOTE] Unknown role '%role%'
 
 > [!NOTE] Unknown role '%role%'. Did you mean '%suggestion%'?
+
+Elements with ARIA roles must use a valid, non-abstract ARIA role. A reference to role definitions can be found at [WAI-ARIA](https://www.w3.org/TR/wai-aria/#role_definitions) site.
+
+```svelte
+<!-- A11y: Unknown role 'toooltip' (did you mean 'tooltip'?) -->
+<div role="toooltip"></div>
+```
 
 ## `attribute_avoid_is`
 
