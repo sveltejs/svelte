@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: strip BOM character from templates
+fix: strip BOM character from input
