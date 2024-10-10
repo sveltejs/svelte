@@ -122,21 +122,14 @@ for (const [category, codes] of Object.entries(consolidated_messages)) {
 	const sorted_codes = Object.entries(codes).sort(([a], [b]) => (a < b ? -1 : 1));
 
 	for (const [code, { messages, details }] of sorted_codes) {
-		lines.push(`## \`${code}\`\n`);
+		lines.push(`### \`${code}\`\n`);
+
 		for (const message of messages) {
-			// Replace backticks with single quotes to avoid markdown formatting it to code blocks
-			// Also make sure to escape < to avoid markdown interpreting it as an HTML tag
-			lines.push(
-				'> [!NOTE] ' +
-					message
-						.replaceAll('`', "'")
-						.replace(/(?<!\\)</g, '\\<')
-						.replace(/(?<!\\)\*/g, '\\*')
-						.split('\n')
-						.join('\n> ') +
-					'\n'
-			);
+			lines.push('```');
+			lines.push(message);
+			lines.push('```\n');
 		}
+
 		if (details) {
 			lines.push(details + '\n');
 		}

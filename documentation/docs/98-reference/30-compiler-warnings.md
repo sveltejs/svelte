@@ -19,9 +19,11 @@ You can list multiple rules in a single comment (separated by commas), and add a
 <div onclick>...</div>
 ```
 
-## `a11y_accesskey`
+### `a11y_accesskey`
 
-> [!NOTE] Avoid using accesskey
+```
+Avoid using accesskey
+```
 
 Enforce no `accesskey` on element. Access keys are HTML attributes that allow web developers to assign keyboard shortcuts to elements. Inconsistencies between keyboard shortcuts and keyboard commands used by screen reader and keyboard-only users create accessibility complications. To avoid complications, access keys should not be used.
 
@@ -31,9 +33,11 @@ Enforce no `accesskey` on element. Access keys are HTML attributes that allow we
 <div accesskey="z"></div>
 ```
 
-## `a11y_aria_activedescendant_has_tabindex`
+### `a11y_aria_activedescendant_has_tabindex`
 
-> [!NOTE] An element with an aria-activedescendant attribute should have a tabindex value
+```
+An element with an aria-activedescendant attribute should have a tabindex value
+```
 
 An element with `aria-activedescendant` must be tabbable, so it must either have an inherent `tabindex` or declare `tabindex` as an attribute.
 
@@ -42,9 +46,11 @@ An element with `aria-activedescendant` must be tabbable, so it must either have
 <div aria-activedescendant="some-id"></div>
 ```
 
-## `a11y_aria_attributes`
+### `a11y_aria_attributes`
 
-> [!NOTE] '\<%name%>' should not have aria-\* attributes
+```
+`<%name%>` should not have aria-* attributes
+```
 
 Certain reserved DOM elements do not support ARIA roles, states and properties. This is often because they are not visible, for example `meta`, `html`, `script`, `style`. This rule enforces that these DOM elements do not contain the `aria-*` props.
 
@@ -53,13 +59,17 @@ Certain reserved DOM elements do not support ARIA roles, states and properties. 
 <meta aria-hidden="false" />
 ```
 
-## `a11y_autocomplete_valid`
+### `a11y_autocomplete_valid`
 
-> [!NOTE] '%value%' is an invalid value for 'autocomplete' on '\<input type="%type%">'
+```
+'%value%' is an invalid value for 'autocomplete' on `<input type="%type%">`
+```
 
-## `a11y_autofocus`
+### `a11y_autofocus`
 
-> [!NOTE] Avoid using autofocus
+```
+Avoid using autofocus
+```
 
 Enforce that `autofocus` is not used on elements. Autofocusing elements can cause usability issues for sighted and non-sighted users alike.
 
@@ -68,9 +78,11 @@ Enforce that `autofocus` is not used on elements. Autofocusing elements can caus
 <input autofocus />
 ```
 
-## `a11y_click_events_have_key_events`
+### `a11y_click_events_have_key_events`
 
-> [!NOTE] Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as '\<button type="button">' or '\<a>' might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details
+```
+Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details
+```
 
 Enforce that visible, non-interactive elements with an `onclick` event are accompanied by a keyboard event handler.
 
@@ -85,13 +97,17 @@ If a non-interactive element is required then `onclick` should be accompanied by
 
 Coding for the keyboard is important for users with physical disabilities who cannot use a mouse, AT compatibility, and screenreader users.
 
-## `a11y_consider_explicit_label`
+### `a11y_consider_explicit_label`
 
-> [!NOTE] Buttons and links should either contain text or have an 'aria-label' or 'aria-labelledby' attribute
+```
+Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute
+```
 
-## `a11y_distracting_elements`
+### `a11y_distracting_elements`
 
-> [!NOTE] Avoid '\<%name%>' elements
+```
+Avoid `<%name%>` elements
+```
 
 Enforces that no distracting elements are used. Elements that can be visually distracting can cause accessibility issues with visually impaired users. Such elements are most likely deprecated, and should be avoided.
 
@@ -102,13 +118,17 @@ The following elements are visually distracting: `<marquee>` and `<blink>`.
 <marquee></marquee>
 ```
 
-## `a11y_figcaption_index`
+### `a11y_figcaption_index`
 
-> [!NOTE] '\<figcaption>' must be first or last child of '\<figure>'
+```
+`<figcaption>` must be first or last child of `<figure>`
+```
 
-## `a11y_figcaption_parent`
+### `a11y_figcaption_parent`
 
-> [!NOTE] '\<figcaption>' must be an immediate child of '\<figure>'
+```
+`<figcaption>` must be an immediate child of `<figure>`
+```
 
 Enforce that certain DOM elements have the correct structure.
 
@@ -119,9 +139,11 @@ Enforce that certain DOM elements have the correct structure.
 </div>
 ```
 
-## `a11y_hidden`
+### `a11y_hidden`
 
-> [!NOTE] '\<%name%>' element should not be hidden
+```
+`<%name%>` element should not be hidden
+```
 
 Certain DOM elements are useful for screen reader navigation and should not be hidden.
 
@@ -131,9 +153,11 @@ Certain DOM elements are useful for screen reader navigation and should not be h
 <h2 aria-hidden="true">invisible header</h2>
 ```
 
-## `a11y_img_redundant_alt`
+### `a11y_img_redundant_alt`
 
-> [!NOTE] Screenreaders already announce '\<img>' elements as an image
+```
+Screenreaders already announce `<img>` elements as an image
+```
 
 Enforce img alt attribute does not contain the word image, picture, or photo. Screen readers already announce `img` elements as an image. There is no need to use words such as _image_, _photo_, and/or _picture_.
 
@@ -153,9 +177,11 @@ Enforce img alt attribute does not contain the word image, picture, or photo. Sc
 <img src="foo" alt="Picture of baz fixing a bug." />
 ```
 
-## `a11y_incorrect_aria_attribute_type`
+### `a11y_incorrect_aria_attribute_type`
 
-> [!NOTE] The value of '%attribute%' must be a %type%
+```
+The value of '%attribute%' must be a %type%
+```
 
 Enforce that only the correct type of value is used for aria attributes. For example, `aria-hidden`
 should only receive a boolean.
@@ -165,37 +191,53 @@ should only receive a boolean.
 <div aria-hidden="yes"></div>
 ```
 
-## `a11y_incorrect_aria_attribute_type_boolean`
+### `a11y_incorrect_aria_attribute_type_boolean`
 
-> [!NOTE] The value of '%attribute%' must be either 'true' or 'false'. It cannot be empty
+```
+The value of '%attribute%' must be either 'true' or 'false'. It cannot be empty
+```
 
-## `a11y_incorrect_aria_attribute_type_id`
+### `a11y_incorrect_aria_attribute_type_id`
 
-> [!NOTE] The value of '%attribute%' must be a string that represents a DOM element ID
+```
+The value of '%attribute%' must be a string that represents a DOM element ID
+```
 
-## `a11y_incorrect_aria_attribute_type_idlist`
+### `a11y_incorrect_aria_attribute_type_idlist`
 
-> [!NOTE] The value of '%attribute%' must be a space-separated list of strings that represent DOM element IDs
+```
+The value of '%attribute%' must be a space-separated list of strings that represent DOM element IDs
+```
 
-## `a11y_incorrect_aria_attribute_type_integer`
+### `a11y_incorrect_aria_attribute_type_integer`
 
-> [!NOTE] The value of '%attribute%' must be an integer
+```
+The value of '%attribute%' must be an integer
+```
 
-## `a11y_incorrect_aria_attribute_type_token`
+### `a11y_incorrect_aria_attribute_type_token`
 
-> [!NOTE] The value of '%attribute%' must be exactly one of %values%
+```
+The value of '%attribute%' must be exactly one of %values%
+```
 
-## `a11y_incorrect_aria_attribute_type_tokenlist`
+### `a11y_incorrect_aria_attribute_type_tokenlist`
 
-> [!NOTE] The value of '%attribute%' must be a space-separated list of one or more of %values%
+```
+The value of '%attribute%' must be a space-separated list of one or more of %values%
+```
 
-## `a11y_incorrect_aria_attribute_type_tristate`
+### `a11y_incorrect_aria_attribute_type_tristate`
 
-> [!NOTE] The value of '%attribute%' must be exactly one of true, false, or mixed
+```
+The value of '%attribute%' must be exactly one of true, false, or mixed
+```
 
-## `a11y_interactive_supports_focus`
+### `a11y_interactive_supports_focus`
 
-> [!NOTE] Elements with the '%role%' interactive role must have a tabindex value
+```
+Elements with the '%role%' interactive role must have a tabindex value
+```
 
 Enforce that elements with an interactive role and interactive handlers (mouse or key press) must be focusable or tabbable.
 
@@ -204,9 +246,11 @@ Enforce that elements with an interactive role and interactive handlers (mouse o
 <div role="button" onkeypress={() => {}} />
 ```
 
-## `a11y_invalid_attribute`
+### `a11y_invalid_attribute`
 
-> [!NOTE] '%href_value%' is not a valid %href_attribute% attribute
+```
+'%href_value%' is not a valid %href_attribute% attribute
+```
 
 Enforce that attributes important for accessibility have a valid value. For example, `href` should not be empty, `'#'`, or `javascript:`.
 
@@ -215,9 +259,11 @@ Enforce that attributes important for accessibility have a valid value. For exam
 <a href="">invalid</a>
 ```
 
-## `a11y_label_has_associated_control`
+### `a11y_label_has_associated_control`
 
-> [!NOTE] A form label must be associated with a control
+```
+A form label must be associated with a control
+```
 
 Enforce that a label tag has a text label and an associated control.
 
@@ -235,9 +281,11 @@ There are two supported ways to associate a label with a control:
 <label>A</label>
 ```
 
-## `a11y_media_has_caption`
+### `a11y_media_has_caption`
 
-> [!NOTE] '\<video>' elements must have a '\<track kind="captions">'
+```
+`<video>` elements must have a `<track kind="captions">`
+```
 
 Providing captions for media is essential for deaf users to follow along. Captions should be a transcription or translation of the dialogue, sound effects, relevant musical cues, and other relevant audio information. Not only is this important for accessibility, but can also be useful for all users in the case that the media is unavailable (similar to `alt` text on an image when an image is unable to load).
 
@@ -255,9 +303,11 @@ The captions should contain all important and relevant information to understand
 <video><track /></video>
 ```
 
-## `a11y_misplaced_role`
+### `a11y_misplaced_role`
 
-> [!NOTE] '\<%name%>' should not have role attribute
+```
+`<%name%>` should not have role attribute
+```
 
 Certain reserved DOM elements do not support ARIA roles, states and properties. This is often because they are not visible, for example `meta`, `html`, `script`, `style`. This rule enforces that these DOM elements do not contain the `role` props.
 
@@ -266,9 +316,11 @@ Certain reserved DOM elements do not support ARIA roles, states and properties. 
 <meta role="tooltip" />
 ```
 
-## `a11y_misplaced_scope`
+### `a11y_misplaced_scope`
 
-> [!NOTE] The scope attribute should only be used with '\<th>' elements
+```
+The scope attribute should only be used with `<th>` elements
+```
 
 The scope attribute should only be used on `<th>` elements.
 
@@ -278,9 +330,11 @@ The scope attribute should only be used on `<th>` elements.
 <div scope="row" />
 ```
 
-## `a11y_missing_attribute`
+### `a11y_missing_attribute`
 
-> [!NOTE] '\<%name%>' element should have %article% %sequence% attribute
+```
+`<%name%>` element should have %article% %sequence% attribute
+```
 
 Enforce that attributes required for accessibility are present on an element. This includes the following checks:
 
@@ -303,9 +357,11 @@ Enforce that attributes required for accessibility are present on an element. Th
 <a>text</a>
 ```
 
-## `a11y_missing_content`
+### `a11y_missing_content`
 
-> [!NOTE] '\<%name%>' element should contain text
+```
+`<%name%>` element should contain text
+```
 
 Enforce that heading elements (`h1`, `h2`, etc.) and anchors have content and that the content is accessible to screen readers
 
@@ -317,9 +373,11 @@ Enforce that heading elements (`h1`, `h2`, etc.) and anchors have content and th
 <h1></h1>
 ```
 
-## `a11y_mouse_events_have_key_events`
+### `a11y_mouse_events_have_key_events`
 
-> [!NOTE] '%event%' event must be accompanied by '%accompanied_by%' event
+```
+'%event%' event must be accompanied by '%accompanied_by%' event
+```
 
 Enforce that `onmouseover` and `onmouseout` are accompanied by `onfocus` and `onblur`, respectively. This helps to ensure that any functionality triggered by these mouse events is also accessible to keyboard users.
 
@@ -331,13 +389,17 @@ Enforce that `onmouseover` and `onmouseout` are accompanied by `onfocus` and `on
 <div onmouseout={handleMouseout} />
 ```
 
-## `a11y_no_abstract_role`
+### `a11y_no_abstract_role`
 
-> [!NOTE] Abstract role '%role%' is forbidden
+```
+Abstract role '%role%' is forbidden
+```
 
-## `a11y_no_interactive_element_to_noninteractive_role`
+### `a11y_no_interactive_element_to_noninteractive_role`
 
-> [!NOTE] '\<%element%>' cannot have role '%role%'
+```
+`<%element%>` cannot have role '%role%'
+```
 
 [WAI-ARIA](https://www.w3.org/TR/wai-aria-1.1/#usage_intro) roles should not be used to convert an interactive element to a non-interactive element. Non-interactive ARIA roles include `article`, `banner`, `complementary`, `img`, `listitem`, `main`, `region` and `tooltip`.
 
@@ -346,9 +408,11 @@ Enforce that `onmouseover` and `onmouseout` are accompanied by `onfocus` and `on
 <textarea role="listitem"></textarea>
 ```
 
-## `a11y_no_noninteractive_element_interactions`
+### `a11y_no_noninteractive_element_interactions`
 
-> [!NOTE] Non-interactive element '\<%element%>' should not be assigned mouse or keyboard event listeners
+```
+Non-interactive element `<%element%>` should not be assigned mouse or keyboard event listeners
+```
 
 A non-interactive element does not support event handlers (mouse and key handlers). Non-interactive elements include `<main>`, `<area>`, `<h1>` (,`<h2>`, etc), `<p>`, `<img>`, `<li>`, `<ul>` and `<ol>`. Non-interactive [WAI-ARIA roles](https://www.w3.org/TR/wai-aria-1.1/#usage_intro) include `article`, `banner`, `complementary`, `img`, `listitem`, `main`, `region` and `tooltip`.
 
@@ -360,9 +424,11 @@ A non-interactive element does not support event handlers (mouse and key handler
 <div role="listitem" onclick={() => {}}></div>
 ```
 
-## `a11y_no_noninteractive_element_to_interactive_role`
+### `a11y_no_noninteractive_element_to_interactive_role`
 
-> [!NOTE] Non-interactive element '\<%element%>' cannot have interactive role '%role%'
+```
+Non-interactive element `<%element%>` cannot have interactive role '%role%'
+```
 
 [WAI-ARIA](https://www.w3.org/TR/wai-aria-1.1/#usage_intro) roles should not be used to convert a non-interactive element to an interactive element. Interactive ARIA roles include `button`, `link`, `checkbox`, `menuitem`, `menuitemcheckbox`, `menuitemradio`, `option`, `radio`, `searchbox`, `switch` and `textbox`.
 
@@ -371,9 +437,11 @@ A non-interactive element does not support event handlers (mouse and key handler
 <h3 role="searchbox">Button</h3>
 ```
 
-## `a11y_no_noninteractive_tabindex`
+### `a11y_no_noninteractive_tabindex`
 
-> [!NOTE] noninteractive element cannot have nonnegative tabIndex value
+```
+noninteractive element cannot have nonnegative tabIndex value
+```
 
 Tab key navigation should be limited to elements on the page that can be interacted with.
 
@@ -383,9 +451,11 @@ Tab key navigation should be limited to elements on the page that can be interac
 <div tabindex="0"></div>
 ```
 
-## `a11y_no_redundant_roles`
+### `a11y_no_redundant_roles`
 
-> [!NOTE] Redundant role '%role%'
+```
+Redundant role '%role%'
+```
 
 Some HTML elements have default ARIA roles. Giving these elements an ARIA role that is already set by the browser [has no effect](https://www.w3.org/TR/using-aria/#aria-does-nothing) and is redundant.
 
@@ -397,9 +467,11 @@ Some HTML elements have default ARIA roles. Giving these elements an ARIA role t
 <img role="img" src="foo.jpg" />
 ```
 
-## `a11y_no_static_element_interactions`
+### `a11y_no_static_element_interactions`
 
-> [!NOTE] '\<%element%>' with a %handler% handler must have an ARIA role
+```
+`<%element%>` with a %handler% handler must have an ARIA role
+```
 
 Elements like `<div>` with interactive handlers like `click` must have an ARIA role.
 
@@ -409,9 +481,11 @@ Elements like `<div>` with interactive handlers like `click` must have an ARIA r
 <div onclick={() => ''}></div>
 ```
 
-## `a11y_positive_tabindex`
+### `a11y_positive_tabindex`
 
-> [!NOTE] Avoid tabindex values above zero
+```
+Avoid tabindex values above zero
+```
 
 Avoid positive `tabindex` property values. This will move elements out of the expected tab order, creating a confusing experience for keyboard users.
 
@@ -421,9 +495,11 @@ Avoid positive `tabindex` property values. This will move elements out of the ex
 <div tabindex="1"></div>
 ```
 
-## `a11y_role_has_required_aria_props`
+### `a11y_role_has_required_aria_props`
 
-> [!NOTE] Elements with the ARIA role "%role%" must have the following attributes defined: %props%
+```
+Elements with the ARIA role "%role%" must have the following attributes defined: %props%
+```
 
 Elements with ARIA roles must have all required attributes for that role.
 
@@ -432,9 +508,11 @@ Elements with ARIA roles must have all required attributes for that role.
 <span role="checkbox" aria-labelledby="foo" tabindex="0"></span>
 ```
 
-## `a11y_role_supports_aria_props`
+### `a11y_role_supports_aria_props`
 
-> [!NOTE] The attribute '%attribute%' is not supported by the role '%role%'
+```
+The attribute '%attribute%' is not supported by the role '%role%'
+```
 
 Elements with explicit or implicit roles defined contain only `aria-*` properties supported by that role.
 
@@ -446,9 +524,11 @@ Elements with explicit or implicit roles defined contain only `aria-*` propertie
 <li aria-required></li>
 ```
 
-## `a11y_role_supports_aria_props_implicit`
+### `a11y_role_supports_aria_props_implicit`
 
-> [!NOTE] The attribute '%attribute%' is not supported by the role '%role%'. This role is implicit on the element '\<%name%>'
+```
+The attribute '%attribute%' is not supported by the role '%role%'. This role is implicit on the element `<%name%>`
+```
 
 Elements with explicit or implicit roles defined contain only `aria-*` properties supported by that role.
 
@@ -460,11 +540,15 @@ Elements with explicit or implicit roles defined contain only `aria-*` propertie
 <li aria-required></li>
 ```
 
-## `a11y_unknown_aria_attribute`
+### `a11y_unknown_aria_attribute`
 
-> [!NOTE] Unknown aria attribute 'aria-%attribute%'
+```
+Unknown aria attribute 'aria-%attribute%'
+```
 
-> [!NOTE] Unknown aria attribute 'aria-%attribute%'. Did you mean '%suggestion%'?
+```
+Unknown aria attribute 'aria-%attribute%'. Did you mean '%suggestion%'?
+```
 
 Enforce that only known ARIA attributes are used. This is based on the [WAI-ARIA States and Properties spec](https://www.w3.org/WAI/PF/aria-1.1/states_and_properties).
 
@@ -473,11 +557,15 @@ Enforce that only known ARIA attributes are used. This is based on the [WAI-ARIA
 <input type="image" aria-labeledby="foo" />
 ```
 
-## `a11y_unknown_role`
+### `a11y_unknown_role`
 
-> [!NOTE] Unknown role '%role%'
+```
+Unknown role '%role%'
+```
 
-> [!NOTE] Unknown role '%role%'. Did you mean '%suggestion%'?
+```
+Unknown role '%role%'. Did you mean '%suggestion%'?
+```
 
 Elements with ARIA roles must use a valid, non-abstract ARIA role. A reference to role definitions can be found at [WAI-ARIA](https://www.w3.org/TR/wai-aria/#role_definitions) site.
 
@@ -487,65 +575,95 @@ Elements with ARIA roles must use a valid, non-abstract ARIA role. A reference t
 <div role="toooltip"></div>
 ```
 
-## `attribute_avoid_is`
+### `attribute_avoid_is`
 
-> [!NOTE] The "is" attribute is not supported cross-browser and should be avoided
+```
+The "is" attribute is not supported cross-browser and should be avoided
+```
 
-## `attribute_global_event_reference`
+### `attribute_global_event_reference`
 
-> [!NOTE] You are referencing 'globalThis.%name%'. Did you forget to declare a variable with that name?
+```
+You are referencing `globalThis.%name%`. Did you forget to declare a variable with that name?
+```
 
-## `attribute_illegal_colon`
+### `attribute_illegal_colon`
 
-> [!NOTE] Attributes should not contain ':' characters to prevent ambiguity with Svelte directives
+```
+Attributes should not contain ':' characters to prevent ambiguity with Svelte directives
+```
 
-## `attribute_invalid_property_name`
+### `attribute_invalid_property_name`
 
-> [!NOTE] '%wrong%' is not a valid HTML attribute. Did you mean '%right%'?
+```
+'%wrong%' is not a valid HTML attribute. Did you mean '%right%'?
+```
 
-## `attribute_quoted`
+### `attribute_quoted`
 
-> [!NOTE] Quoted attributes on components and custom elements will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes
+```
+Quoted attributes on components and custom elements will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes
+```
 
-## `bind_invalid_each_rest`
+### `bind_invalid_each_rest`
 
-> [!NOTE] The rest operator (...) will create a new object and binding '%name%' with the original object will not work
+```
+The rest operator (...) will create a new object and binding '%name%' with the original object will not work
+```
 
-## `block_empty`
+### `block_empty`
 
-> [!NOTE] Empty block
+```
+Empty block
+```
 
-## `component_name_lowercase`
+### `component_name_lowercase`
 
-> [!NOTE] '\<%name%>' will be treated as an HTML element unless it begins with a capital letter
+```
+`<%name%>` will be treated as an HTML element unless it begins with a capital letter
+```
 
-## `css_unused_selector`
+### `css_unused_selector`
 
-> [!NOTE] Unused CSS selector "%name%"
+```
+Unused CSS selector "%name%"
+```
 
-## `element_invalid_self_closing_tag`
+### `element_invalid_self_closing_tag`
 
-> [!NOTE] Self-closing HTML tags for non-void elements are ambiguous — use '\<%name% ...>\</%name%>' rather than '\<%name% ... />'
+```
+Self-closing HTML tags for non-void elements are ambiguous — use `<%name% ...></%name%>` rather than `<%name% ... />`
+```
 
-## `event_directive_deprecated`
+### `event_directive_deprecated`
 
-> [!NOTE] Using 'on:%name%' to listen to the %name% event is deprecated. Use the event attribute 'on%name%' instead
+```
+Using `on:%name%` to listen to the %name% event is deprecated. Use the event attribute `on%name%` instead
+```
 
-## `export_let_unused`
+### `export_let_unused`
 
-> [!NOTE] Component has unused export property '%name%'. If it is for external reference only, please consider using 'export const %name%'
+```
+Component has unused export property '%name%'. If it is for external reference only, please consider using `export const %name%`
+```
 
-## `legacy_code`
+### `legacy_code`
 
-> [!NOTE] '%code%' is no longer valid — please use '%suggestion%' instead
+```
+`%code%` is no longer valid — please use `%suggestion%` instead
+```
 
-## `legacy_component_creation`
+### `legacy_component_creation`
 
-> [!NOTE] Svelte 5 components are no longer classes. Instantiate them using 'mount' or 'hydrate' (imported from 'svelte') instead.
+```
+Svelte 5 components are no longer classes. Instantiate them using `mount` or `hydrate` (imported from 'svelte') instead.
+```
 
-## `node_invalid_placement_ssr`
+### `node_invalid_placement_ssr`
 
-> [!NOTE] %thing% is invalid inside '\<%parent%>'. When rendering this component on the server, the resulting HTML will be modified by the browser, likely resulting in a 'hydration_mismatch' warning
+```
+%thing% is invalid inside `<%parent%>`. When rendering this component on the server, the resulting HTML will be modified by the browser, likely resulting in a `hydration_mismatch` warning
+```
 
 HTML restricts where certain elements can appear. In case of a violation the browser will 'repair' the HTML in a way that breaks Svelte's assumptions about the structure of your components. Some examples:
 
@@ -555,81 +673,119 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 This code will work when the component is rendered on the client (which is why this is a warning rather than an error), but if you use server rendering it will cause hydration to fail.
 
-## `non_reactive_update`
+### `non_reactive_update`
 
-> [!NOTE] '%name%' is updated, but is not declared with '$state(...)'. Changing its value will not correctly trigger updates
+```
+`%name%` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
+```
 
-## `options_deprecated_accessors`
+### `options_deprecated_accessors`
 
-> [!NOTE] The 'accessors' option has been deprecated. It will have no effect in runes mode
+```
+The `accessors` option has been deprecated. It will have no effect in runes mode
+```
 
-## `options_deprecated_immutable`
+### `options_deprecated_immutable`
 
-> [!NOTE] The 'immutable' option has been deprecated. It will have no effect in runes mode
+```
+The `immutable` option has been deprecated. It will have no effect in runes mode
+```
 
-## `options_missing_custom_element`
+### `options_missing_custom_element`
 
-> [!NOTE] The 'customElement' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?
+```
+The `customElement` option is used when generating a custom element. Did you forget the `customElement: true` compile option?
+```
 
-## `options_removed_enable_sourcemap`
+### `options_removed_enable_sourcemap`
 
-> [!NOTE] The 'enableSourcemap' option has been removed. Source maps are always generated now, and tooling can choose to ignore them
+```
+The `enableSourcemap` option has been removed. Source maps are always generated now, and tooling can choose to ignore them
+```
 
-## `options_removed_hydratable`
+### `options_removed_hydratable`
 
-> [!NOTE] The 'hydratable' option has been removed. Svelte components are always hydratable now
+```
+The `hydratable` option has been removed. Svelte components are always hydratable now
+```
 
-## `options_removed_loop_guard_timeout`
+### `options_removed_loop_guard_timeout`
 
-> [!NOTE] The 'loopGuardTimeout' option has been removed
+```
+The `loopGuardTimeout` option has been removed
+```
 
-## `options_renamed_ssr_dom`
+### `options_renamed_ssr_dom`
 
-> [!NOTE] 'generate: "dom"' and 'generate: "ssr"' options have been renamed to "client" and "server" respectively
+```
+`generate: "dom"` and `generate: "ssr"` options have been renamed to "client" and "server" respectively
+```
 
-## `perf_avoid_inline_class`
+### `perf_avoid_inline_class`
 
-> [!NOTE] Avoid 'new class' — instead, declare the class at the top level scope
+```
+Avoid 'new class' — instead, declare the class at the top level scope
+```
 
-## `perf_avoid_nested_class`
+### `perf_avoid_nested_class`
 
-> [!NOTE] Avoid declaring classes below the top level scope
+```
+Avoid declaring classes below the top level scope
+```
 
-## `reactive_declaration_invalid_placement`
+### `reactive_declaration_invalid_placement`
 
-> [!NOTE] Reactive declarations only exist at the top level of the instance script
+```
+Reactive declarations only exist at the top level of the instance script
+```
 
-## `reactive_declaration_module_script_dependency`
+### `reactive_declaration_module_script_dependency`
 
-> [!NOTE] Reassignments of module-level declarations will not cause reactive statements to update
+```
+Reassignments of module-level declarations will not cause reactive statements to update
+```
 
-## `reactive_declaration_non_reactive_property`
+### `reactive_declaration_non_reactive_property`
 
-> [!NOTE] Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update
+```
+Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update
+```
 
-## `script_context_deprecated`
+### `script_context_deprecated`
 
-> [!NOTE] 'context="module"' is deprecated, use the 'module' attribute instead
+```
+`context="module"` is deprecated, use the `module` attribute instead
+```
 
-## `script_unknown_attribute`
+### `script_unknown_attribute`
 
-> [!NOTE] Unrecognized attribute — should be one of 'generics', 'lang' or 'module'. If this exists for a preprocessor, ensure that the preprocessor removes it
+```
+Unrecognized attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
+```
 
-## `slot_element_deprecated`
+### `slot_element_deprecated`
 
-> [!NOTE] Using '\<slot>' to render parent content is deprecated. Use '{@render ...}' tags instead
+```
+Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead
+```
 
-## `state_referenced_locally`
+### `state_referenced_locally`
 
-> [!NOTE] State referenced in its own scope will never update. Did you mean to reference it inside a closure?
+```
+State referenced in its own scope will never update. Did you mean to reference it inside a closure?
+```
 
-## `store_rune_conflict`
+### `store_rune_conflict`
 
-> [!NOTE] It looks like you're using the '$%name%' rune, but there is a local binding called '%name%'. Referencing a local variable with a '$' prefix will create a store subscription. Please rename '%name%' to avoid the ambiguity
+```
+It looks like you're using the `$%name%` rune, but there is a local binding called `%name%`. Referencing a local variable with a `$` prefix will create a store subscription. Please rename `%name%` to avoid the ambiguity
+```
 
-## `svelte_component_deprecated`
+### `svelte_component_deprecated`
 
-> [!NOTE] '\<svelte:component>' is deprecated in runes mode — components are dynamic by default
+```
+`<svelte:component>` is deprecated in runes mode — components are dynamic by default
+```
 
 In previous versions of Svelte, the component constructor was fixed when the component was rendered. In other words, if you wanted `<X>` to re-render when `X` changed, you would either have to use `<svelte:component this={X}>` or put the component inside a `{#key X}...{/key}` block.
 
@@ -659,16 +815,24 @@ A derived value may be used in other contexts:
 + <Component />
 ```
 
-## `svelte_element_invalid_this`
+### `svelte_element_invalid_this`
 
-> [!NOTE] 'this' should be an '{expression}'. Using a string attribute value will cause an error in future versions of Svelte
+```
+`this` should be an `{expression}`. Using a string attribute value will cause an error in future versions of Svelte
+```
 
-## `svelte_self_deprecated`
+### `svelte_self_deprecated`
 
-> [!NOTE] '\<svelte:self>' is deprecated — use self-imports (e.g. 'import %name% from './%basename%'') instead
+```
+`<svelte:self>` is deprecated — use self-imports (e.g. `import %name% from './%basename%'`) instead
+```
 
-## `unknown_code`
+### `unknown_code`
 
-> [!NOTE] '%code%' is not a recognised code
+```
+`%code%` is not a recognised code
+```
 
-> [!NOTE] '%code%' is not a recognised code (did you mean '%suggestion%'?)
+```
+`%code%` is not a recognised code (did you mean `%suggestion%`?)
+```
