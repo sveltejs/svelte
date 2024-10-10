@@ -97,6 +97,28 @@ for (const [category, codes] of Object.entries(consolidated_messages)) {
 		'---\n'
 	];
 
+	// TODO If we we want preceeding stuff for each category find a better way to do it
+	if (category === 'Compiler warnings') {
+		lines.push(
+			'Svelte warns you at compile time if it catches potential mistakes, such as writing inaccessible markup.',
+			'',
+			'Some warnings may be incorrect in your concrete use case. You can disable such false positives by placing a `<!-- svelte-ignore <code> -->` comment above the line that causes the warning. Example:',
+			'',
+			'```svelte',
+			'<!-- svelte-ignore a11y_autofocus -->',
+			'<input autofocus />',
+			'```',
+			'',
+			'You can list multiple rules in a single comment, and add an explanatory note alongside them:',
+			'',
+			'```svelte',
+			'<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (because of reasons) -->',
+			'<div on:click>...</div>',
+			'```',
+			''
+		);
+	}
+
 	const sorted_codes = Object.entries(codes).sort(([a], [b]) => (a < b ? -1 : 1));
 
 	for (const [code, { messages, details }] of sorted_codes) {
