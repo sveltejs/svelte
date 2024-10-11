@@ -1299,14 +1299,6 @@ declare module 'svelte/compiler' {
 			type: 'Rule';
 			prelude: SelectorList;
 			block: Block;
-			metadata: {
-				parent_rule: null | Rule;
-				has_local_selectors: boolean;
-				/**
-				 * `true` if the rule contains a `:global` selector, and therefore everything inside should be unscoped
-				 */
-				is_global_block: boolean;
-			};
 		}
 
 		/**
@@ -1329,11 +1321,6 @@ declare module 'svelte/compiler' {
 			 * The `a`, `b` and `c` in `a b c {}`
 			 */
 			children: RelativeSelector[];
-			metadata: {
-				rule: null | Rule;
-				/** True if this selector applies to an element. For global selectors, this is defined in css-analyze, for others in css-prune while scoping */
-				used: boolean;
-			};
 		}
 
 		/**
@@ -1349,16 +1336,6 @@ declare module 'svelte/compiler' {
 			 * The `b:is(...)` in `> b:is(...)`
 			 */
 			selectors: SimpleSelector[];
-			metadata: {
-				/**
-				 * `true` if the whole selector is unscoped, e.g. `:global(...)` or `:global` or `:global.x`.
-				 * Selectors like `:global(...).x` are not considered global, because they still need scoping.
-				 */
-				is_global: boolean;
-				/** `:root`, `:host`, `::view-transition`, or selectors after a `:global` */
-				is_global_like: boolean;
-				scoped: boolean;
-			};
 		}
 
 		export interface TypeSelector extends BaseNode {
