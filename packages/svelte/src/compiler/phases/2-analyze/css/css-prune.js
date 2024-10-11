@@ -121,16 +121,26 @@ const visitors = {
 };
 
 /**
- * Discard trailing `:global(...)` selectors without a `:has(...)` modifier, these are unused for scoping purposes
+ * Discard trailing `:global(...)` selectors without a `:has/is/where/not(...)` modifier, these are unused for scoping purposes
  * @param {Compiler.Css.ComplexSelector} node
  */
 function truncate(node) {
 	const i = node.children.findLastIndex(({ metadata, selectors }) => {
+		const first = selectors[0];
 		return (
+			// not after a :global selector
 			!metadata.is_global_like &&
+			!(first.type === 'PseudoClassSelector' && first.name === 'global' && first.args === null) &&
+			// not a :global(...) without a :has/is/where/not(...) modifier
 			(!metadata.is_global ||
 				selectors.some(
-					(selector) => selector.type === 'PseudoClassSelector' && selector.name === 'has'
+					(selector) =>
+						selector.type === 'PseudoClassSelector' &&
+						selector.args !== null &&
+						(selector.name === 'has' ||
+							selector.name === 'not' ||
+							selector.name === 'is' ||
+							selector.name === 'where')
 				))
 		);
 	});
@@ -440,17 +450,47 @@ function relative_selector_might_apply_to_node(
 				// We came across a :global, everything beyond it is global and therefore a potential match
 				if (name === 'global' && selector.args === null) return true;
 
-				if ((name === 'is' || name === 'where') && selector.args) {
+				if ((name === 'is' || name === 'where' || name === 'not') && selector.args) {
 					let matched = false;
 
 					for (const complex_selector of selector.args.children) {
-						if (apply_selector(truncate(complex_selector), rule, element, stylesheet, check_has)) {
+						const relative = truncate(complex_selector);
+						if (
+							relative.length === 0 /* is :global(...) */ ||
+							apply_selector(relative, rule, element, stylesheet, check_has)
+						) {
 							complex_selector.metadata.used = true;
 							matched = true;
+						} else if (complex_selector.children.length > 1 && (name == 'is' || name == 'where')) {
+							// foo :is(bar baz) can also mean that bar is an ancestor of foo, and baz a descendant.
+							// We can't fully check if that actually matches with our current algorithm, so we just assume it does.
+							// The result may not match a real element, so the only drawback is the missing prune.
+							complex_selector.metadata.used = true;
+							matched = true;
+							for (const selector of relative) {
+								selector.metadata.scoped = true;
+							}
 						}
 					}
 
 					if (!matched) {
+						if (
+							relative_selector.metadata.is_global &&
+							!relative_selector.metadata.is_global_like
+						) {
+							// Edge case: `:global(.x):is(.y)` where `.x` is global but `.y` doesn't match.
+							// Since `used` is set to `true` for `:global(.x)` in css-analyze beforehand, and
+							// we have no way of knowing if it's safe to set it back to `false`, we'll mark
+							// the inner selector as used and scoped to prevent it from being pruned, which could
+							// result in a invalid CSS output (e.g. `.x:is(/* unused .y */)`). The result
+							// can't match a real element, so the only drawback is the missing prune.
+							// TODO clean this up some day
+							selector.args.children[0].metadata.used = true;
+							selector.args.children[0].children.forEach((selector) => {
+								selector.metadata.scoped = true;
+							});
+						}
+
 						return false;
 					}
 				}

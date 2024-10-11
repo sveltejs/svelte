@@ -1,4 +1,34 @@
 
-	x.svelte-xyz :is(y:where(.svelte-xyz) /* (unused) z*/) {
-		color: purple;
+	x.svelte-xyz :is(y:where(.svelte-xyz)) {
+		color: green;
+	}
+	x.svelte-xyz :is(y:where(.svelte-xyz) /* (unused) .unused*/) {
+		color: green;
+	}
+	/* (unused) x :is(.unused) {
+		color: red;
+	}*/
+
+	x.svelte-xyz :is(y) {
+		color: green;
+	}
+	x.svelte-xyz :is(.foo) {
+		color: green;
+	}
+
+	.foo :is(x.svelte-xyz) {
+		color: green;
+	}
+	/* (unused) :global(.foo) :is(.unused) {
+		color: red;
+	}*/
+
+	x.svelte-xyz :is(html *) {
+		color: green;
+	}
+	x.svelte-xyz :is(html:where(.svelte-xyz) :where(.svelte-xyz)) {
+		color: red; /* TODO would be nice to prune this one day */
+	}
+	y.svelte-xyz :is(x:where(.svelte-xyz) :where(.svelte-xyz)) {
+		color: green; /* matches z */
 	}
