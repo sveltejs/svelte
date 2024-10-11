@@ -8,6 +8,10 @@ import * as esrap from 'esrap';
 const messages = {};
 const seen = new Set();
 
+const DIR = '../../documentation/docs/98-reference/.generated';
+fs.rmSync(DIR, { force: true, recursive: true });
+fs.mkdirSync(DIR);
+
 for (const category of fs.readdirSync('messages')) {
 	if (category.startsWith('.')) continue;
 
@@ -32,9 +36,10 @@ for (const category of fs.readdirSync('messages')) {
 			sorted.push({ code, _ });
 
 			const sections = text.trim().split('\n\n');
-			let details = null;
+			const details = [];
+
 			while (!sections[sections.length - 1].startsWith('> ')) {
-				details = /** @type {string} */ (sections.pop());
+				details.unshift(/** @type {string} */ (sections.pop()));
 			}
 
 			if (sections.length === 0) {
@@ -44,7 +49,7 @@ for (const category of fs.readdirSync('messages')) {
 			seen.add(code);
 			messages[category][code] = {
 				messages: sections.map((section) => section.replace(/^> /gm, '').replace(/^>\n/gm, '\n')),
-				details
+				details: details.join('\n\n')
 			};
 		}
 
@@ -54,6 +59,22 @@ for (const category of fs.readdirSync('messages')) {
 			sorted.map((x) => x._.trim()).join('\n\n') + '\n'
 		);
 	}
+
+	fs.writeFileSync(
+		`${DIR}/${category}.md`,
+		Object.entries(messages[category])
+			.map(([code, { messages, details }]) => {
+				const chunks = [`### ${code}`, ...messages.map((message) => '```\n' + message + '\n```')];
+
+				if (details) {
+					chunks.push(details);
+				}
+
+				return chunks.join('\n\n');
+			})
+			.sort()
+			.join('\n\n') + '\n'
+	);
 }
 
 /**
