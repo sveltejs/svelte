@@ -79,7 +79,7 @@ Transitions are local by default. Local transitions only play when the block the
 {/if}
 ```
 
-> By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](imperative-component-api) and marking the transition as `global`.
+> [!NOTE] By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](imperative-component-api) and marking the transition as `global`.
 
 ## Transition parameters
 
@@ -132,7 +132,7 @@ The function is called repeatedly _before_ the transition begins, with different
 
 A custom transition function can also return a `tick` function, which is called _during_ the transition with the same `t` and `u` arguments.
 
-> If it's possible to use `css` instead of `tick`, do so — CSS animations can run off the main thread, preventing jank on slower devices.
+> [!NOTE] If it's possible to use `css` instead of `tick`, do so — CSS animations can run off the main thread, preventing jank on slower devices.
 
 ```svelte
 <!--- file: App.svelte --->
@@ -377,7 +377,7 @@ The function is called repeatedly _before_ the animation begins, with different 
 
 A custom animation function can also return a `tick` function, which is called _during_ the animation with the same `t` and `u` arguments.
 
-> If it's possible to use `css` instead of `tick`, do so — CSS animations can run off the main thread, preventing jank on slower devices.
+> [!NOTE] If it's possible to use `css` instead of `tick`, do so — CSS animations can run off the main thread, preventing jank on slower devices.
 
 ```svelte
 <!--- file: App.svelte --->

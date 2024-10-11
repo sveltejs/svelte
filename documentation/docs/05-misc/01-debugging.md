@@ -48,7 +48,7 @@ A convenient way to find the origin of some change is to pass `console.trace` to
 $inspect(stuff).with(console.trace);
 ```
 
-> `$inspect` only works during development. In a production build it becomes a noop.
+> [!NOTE] `$inspect` only works during development. In a production build it becomes a noop.
 
 ## @debug
 

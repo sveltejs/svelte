@@ -48,7 +48,7 @@ Actions are functions that are called when an element is created. They can retur
 
 An action can have a parameter. If the returned value has an `update` method, it will be called immediately after Svelte has applied updates to the markup whenever that parameter changes.
 
-> Don't worry that we're redeclaring the `foo` function for every component instance — Svelte will hoist any functions that don't depend on local state out of the component definition.
+> [!NOTE] Don't worry that we're redeclaring the `foo` function for every component instance — Svelte will hoist any functions that don't depend on local state out of the component definition.
 
 ```svelte
 <!--- file: App.svelte --->

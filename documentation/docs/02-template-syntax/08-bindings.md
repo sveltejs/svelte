@@ -60,7 +60,7 @@ On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`
 
 `FileList` objects also cannot be modified, so if you want to e.g. delete a single file from the list, you need to create a new `DataTransfer` object and add the files you want to keep.
 
-> `DataTransfer` may not be available in server-side JS runtimes. Leaving the state that is bound to `files` uninitialized prevents potential errors if components are server-side rendered.
+> [!NOTE] `DataTransfer` may not be available in server-side JS runtimes. Leaving the state that is bound to `files` uninitialized prevents potential errors if components are server-side rendered.
 
 If you're using `bind:` directives together with `on` event attributes, the binding will always fire before the event attribute.
 
@@ -231,7 +231,7 @@ Inputs that work together can use `bind:group`.
 <input type="checkbox" bind:group={fillings} value="Guac (extra)" />
 ```
 
-> `bind:group` only works if the inputs are in the same Svelte component.
+> [!NOTE] `bind:group` only works if the inputs are in the same Svelte component.
 
 ## bind:this
 
@@ -277,7 +277,7 @@ Components also support `bind:this`, allowing you to interact with component ins
 </script>
 ```
 
-> Note that we can't do `{cart.empty}` since `cart` is `undefined` when the button is first rendered and throws an error.
+> [!NOTE] Note that we can't do `{cart.empty}` since `cart` is `undefined` when the button is first rendered and throws an error.
 
 ## bind:_property_ for components
 

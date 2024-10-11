@@ -184,7 +184,7 @@ Any content inside the component tags that is _not_ a snippet declaration implic
 <button>{@render children()}</button>
 ```
 
-> Note that you cannot have a prop called `children` if you also have content inside the component — for this reason, you should avoid having props with that name
+> [!NOTE] Note that you cannot have a prop called `children` if you also have content inside the component — for this reason, you should avoid having props with that name
 
 You can declare snippet props as being optional. You can either use optional chaining to not render anything if the snippet isn't set...
 
