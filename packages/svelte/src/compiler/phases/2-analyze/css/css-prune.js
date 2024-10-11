@@ -143,10 +143,10 @@ function truncate(node) {
  * @param {Compiler.Css.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  * @param {Compiler.Css.StyleSheet} stylesheet
- * @param {boolean} separate_has Whether or not to separate the `:has(...)` selectors
+ * @param {boolean} check_has Whether or not to check the `:has(...)` selectors
  * @returns {boolean}
  */
-function apply_selector(relative_selectors, rule, element, stylesheet, separate_has) {
+function apply_selector(relative_selectors, rule, element, stylesheet, check_has) {
 	const parent_selectors = relative_selectors.slice();
 	const relative_selector = parent_selectors.pop();
 
@@ -157,7 +157,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet, separate_
 		rule,
 		element,
 		stylesheet,
-		separate_has
+		check_has
 	);
 
 	if (!possible_match) {
@@ -172,7 +172,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet, separate_
 			rule,
 			element,
 			stylesheet,
-			separate_has
+			check_has
 		);
 	}
 
@@ -193,7 +193,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet, separate_
  * @param {Compiler.Css.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  * @param {Compiler.Css.StyleSheet} stylesheet
- * @param {boolean} separate_has
+ * @param {boolean} check_has Whether or not to check the `:has(...)` selectors
  * @returns {boolean}
  */
 function apply_combinator(
@@ -203,7 +203,7 @@ function apply_combinator(
 	rule,
 	element,
 	stylesheet,
-	separate_has
+	check_has
 ) {
 	const name = combinator.name;
 
@@ -221,7 +221,7 @@ function apply_combinator(
 				}
 
 				if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
-					if (apply_selector(parent_selectors, rule, parent, stylesheet, separate_has)) {
+					if (apply_selector(parent_selectors, rule, parent, stylesheet, check_has)) {
 						// TODO the `name === ' '` causes false positives, but removing it causes false negatives...
 						if (name === ' ' || crossed_component_boundary) {
 							mark(parent_selectors[parent_selectors.length - 1], parent);
@@ -253,7 +253,7 @@ function apply_combinator(
 						sibling_matched = true;
 					}
 				} else if (
-					apply_selector(parent_selectors, rule, possible_sibling, stylesheet, separate_has)
+					apply_selector(parent_selectors, rule, possible_sibling, stylesheet, check_has)
 				) {
 					mark(relative_selector, element);
 					sibling_matched = true;
@@ -336,7 +336,7 @@ const regex_backslash_and_following_character = /\\(.)/g;
  * @param {Compiler.Css.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  * @param {Compiler.Css.StyleSheet} stylesheet
- * @param {boolean} separate_has Whether or not to separate the `:has(...)` selectors
+ * @param {boolean} check_has Whether or not to check the `:has(...)` selectors
  * @returns {boolean}
  */
 function relative_selector_might_apply_to_node(
@@ -344,29 +344,23 @@ function relative_selector_might_apply_to_node(
 	rule,
 	element,
 	stylesheet,
-	separate_has
+	check_has
 ) {
-	// Sort :has(...) selectors in one bucket and everything else into another,
-	// unless we're called recursively from a :has(...) selector, in which case
-	// we're on the way of checking if the upper selectors match. In that
-	// case ignore them to avoid an infinite loop.
+	// Sort :has(...) selectors in one bucket and everything else into another
 	const has_selectors = [];
 	const other_selectors = [];
 
 	for (const selector of relative_selector.selectors) {
-		if (
-			separate_has &&
-			selector.type === 'PseudoClassSelector' &&
-			selector.name === 'has' &&
-			selector.args
-		) {
+		if (selector.type === 'PseudoClassSelector' && selector.name === 'has' && selector.args) {
 			has_selectors.push(selector);
 		} else {
 			other_selectors.push(selector);
 		}
 	}
 
-	if (has_selectors.length > 0) {
+	// If we're called recursively from a :has(...) selector, we're on the way of checking if the other selectors match.
+	// In that case ignore this check (because we just came from this) to avoid an infinite loop.
+	if (check_has && has_selectors.length > 0) {
 		// :has(...) is special in that it means "look downwards in the CSS tree". Since our matching algorithm goes
 		// upwards and back-to-front, we need to first check the selectors inside :has(...), then check the rest of the
 		// selector in a way that is similar to ancestor matching. In a sense, we're treating `.x:has(.y)` as `.x .y`.
@@ -379,7 +373,7 @@ function relative_selector_might_apply_to_node(
 				const selectors = truncate(complex_selector);
 				if (
 					selectors.length === 0 /* is :global(...) */ ||
-					apply_selector(selectors, rule, element, stylesheet, separate_has)
+					apply_selector(selectors, rule, element, stylesheet, check_has)
 				) {
 					// Treat e.g. `.x:has(.y)` as `.x .y` with the .y part already being matched,
 					// and now looking upwards for the .x part.
@@ -440,7 +434,7 @@ function relative_selector_might_apply_to_node(
 				) {
 					const args = selector.args;
 					const complex_selector = args.children[0];
-					return apply_selector(complex_selector.children, rule, element, stylesheet, separate_has);
+					return apply_selector(complex_selector.children, rule, element, stylesheet, check_has);
 				}
 
 				// We came across a :global, everything beyond it is global and therefore a potential match
@@ -450,9 +444,7 @@ function relative_selector_might_apply_to_node(
 					let matched = false;
 
 					for (const complex_selector of selector.args.children) {
-						if (
-							apply_selector(truncate(complex_selector), rule, element, stylesheet, separate_has)
-						) {
+						if (apply_selector(truncate(complex_selector), rule, element, stylesheet, check_has)) {
 							complex_selector.metadata.used = true;
 							matched = true;
 						}
@@ -526,9 +518,7 @@ function relative_selector_might_apply_to_node(
 				const parent = /** @type {Compiler.Css.Rule} */ (rule.metadata.parent_rule);
 
 				for (const complex_selector of parent.prelude.children) {
-					if (
-						apply_selector(truncate(complex_selector), parent, element, stylesheet, separate_has)
-					) {
+					if (apply_selector(truncate(complex_selector), parent, element, stylesheet, check_has)) {
 						complex_selector.metadata.used = true;
 						matched = true;
 					}
