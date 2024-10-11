@@ -41,7 +41,7 @@ class Todo {
 }
 ```
 
-> In this example, the compiler transforms `done` and `text` into `get`/`set` methods on the class prototype referencing private fields
+> [!NOTE] In this example, the compiler transforms `done` and `text` into `get`/`set` methods on the class prototype referencing private fields
 
 Objects and arrays are made deeply reactive by wrapping them with [`Proxies`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy). What that means is that in the following example, we can mutate the `entries` object and the UI will still update - but only the list item that is actually changed will rerender:
 
@@ -60,7 +60,7 @@ Objects and arrays are made deeply reactive by wrapping them with [`Proxies`](ht
 <button onclick={() => (entries[1].text = 'baz')}>change second entry text</button>
 ```
 
-> Only POJOs (plain old JavaScript objects) are made deeply reactive. Reactivity will stop at class boundaries and leave those alone
+> [!NOTE] Only POJOs (plain old JavaScript objects) are made deeply reactive. Reactivity will stop at class boundaries and leave those alone
 
 ## `$state.raw`
 

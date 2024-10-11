@@ -75,7 +75,7 @@ In both cases, a `svelte.config.js` with `vitePreprocess` will be added. Vite/Sv
 
 If you're using tools like Rollup or Webpack instead, install their respective Svelte plugins. For Rollup that's [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) and for Webpack that's [svelte-loader](https://github.com/sveltejs/svelte-loader). For both, you need to install `typescript` and `svelte-preprocess` and add the preprocessor to the plugin config (see the respective READMEs for more info). If you're starting a new project, you can also use the [rollup](https://github.com/sveltejs/template) or [webpack](https://github.com/sveltejs/template-webpack) template to scaffold the setup from a script.
 
-> If you're starting a new project, we recommend using SvelteKit or Vite instead
+> [!NOTE] If you're starting a new project, we recommend using SvelteKit or Vite instead
 
 ## Typing `$props`
 

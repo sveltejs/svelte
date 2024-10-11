@@ -62,7 +62,7 @@ The context is then available to children of the component (including slotted co
 - the state is not global, it's scoped to the component. That way it's safe to render your components on the server and not leak state
 - it's clear that the state is not global but rather scoped to a specific component tree and therefore can't be used in other parts of your app
 
-> `setContext`/`getContext` must be called during component initialisation.
+> [!NOTE] `setContext`/`getContext` must be called during component initialisation.
 
 Context is not inherently reactive. If you need reactive values in context then you can pass a `$state` object into context, whos properties _will_ be reactive.
 

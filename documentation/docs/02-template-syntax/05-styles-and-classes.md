@@ -85,7 +85,7 @@ To apply styles to a group of selectors globally, create a `:global {...}` block
 </style>
 ```
 
-> The second example above could also be written as an equivalent `.a :global .b .c .d` selector, where everything after the `:global` is unscoped, though the nested form is preferred.
+> [!NOTE] The second example above could also be written as an equivalent `.a :global .b .c .d` selector, where everything after the `:global` is unscoped, though the nested form is preferred.
 
 ## Nested style tags
 
@@ -207,7 +207,7 @@ For SVG namespace, the example above desugars into using `<g>` instead:
 </g>
 ```
 
-> Since this is an extra `<div>` (or `<g>`), beware that your CSS structure might accidentally target this. Be mindful of this added wrapper element when using this feature.
+> [!NOTE] Since this is an extra `<div>` (or `<g>`), beware that your CSS structure might accidentally target this. Be mindful of this added wrapper element when using this feature.
 
 Svelte's CSS Variables support allows for easily themeable components:
 
