@@ -62,6 +62,7 @@ export namespace Css {
 		children: RelativeSelector[];
 		metadata: {
 			rule: null | Rule;
+			/** True if this selector applies to an element. For global selectors, this is defined in css-analyze, for others in css-prune while scoping */
 			used: boolean;
 		};
 	}

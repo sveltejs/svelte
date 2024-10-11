@@ -311,7 +311,7 @@ const visitors = {
 		context.state.specificity.bumped = before_bumped;
 	},
 	PseudoClassSelector(node, context) {
-		if (node.name === 'is' || node.name === 'where') {
+		if (node.name === 'is' || node.name === 'where' || node.name === 'has') {
 			context.next();
 		}
 	}
