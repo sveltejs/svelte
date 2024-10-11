@@ -60,7 +60,7 @@ Objects and arrays are made deeply reactive by wrapping them with [`Proxies`](ht
 <button onclick={() => (entries[1].text = 'baz')}>change second entry text</button>
 ```
 
-> [!NOTE] Only POJOs (plain old JavaScript objects) are made deeply reactive. Reactivity will stop at class boundaries and leave those alone
+> [!NOTE] Only POJOs (plain old JavaScript objects) are made deeply reactive. Reactivity will stop at class boundaries and leave those alone. For some built-ins like `Set` and `Map`, there are reactive implementations that can be imported from `svelte/reactivity`.
 
 ## `$state.raw`
 
