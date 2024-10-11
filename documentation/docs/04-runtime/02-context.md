@@ -10,8 +10,7 @@ Most state is component-level state that lives as long as its component lives. T
 The easiest way to do that is to create global state and just import that.
 
 ```ts
-/// file: state.svelte.ts
-
+/// file: state.svelte.js
 export const myGlobalState = $state({
 	user: {
 		/* ... */
