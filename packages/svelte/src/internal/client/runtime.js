@@ -22,7 +22,8 @@ import {
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
-	DISCONNECTED
+	DISCONNECTED,
+	PRE_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -405,16 +406,56 @@ export function remove_reactions(signal, start_index) {
 /**
  * @param {Effect} signal
  * @param {boolean} remove_dom
+ * @param {boolean} [force]
  * @returns {void}
  */
-export function destroy_effect_children(signal, remove_dom = false) {
+export function destroy_effect_children(signal, remove_dom = false, force = false) {
 	var effect = signal.first;
-	signal.first = signal.last = null;
+	var parent_is_block = (signal.f & BLOCK_EFFECT) !== 0;
+	/**
+	 * @param {Effect} effect
+	 */
+	function is_render_not_pre(effect) {
+		return (effect.f & RENDER_EFFECT) !== 0 && (effect.f & PRE_EFFECT) === 0;
+	}
+	// we only clear the first property either if it's forced, if the parent is not a block
+	// or if signal.first is a proper RENDER effect (not a PRE)
+	if (force || !parent_is_block || (signal.first && !is_render_not_pre(signal.first))) {
+		signal.first = null;
+	}
+	// we only clear the last property either if it's forced, if the parent is not a block
+	// or if signal.last is a proper RENDER effect (not a PRE)
+	if (force || !parent_is_block || (signal.last && !is_render_not_pre(signal.last))) {
+		signal.last = null;
+	}
 
 	while (effect !== null) {
 		var next = effect.next;
-		destroy_effect(effect, remove_dom);
+		// we only destroy the effect if it's not a proper RENDER effect (not a PRE) or if it's forced
+		if (force || !parent_is_block || !is_render_not_pre(effect)) {
+			destroy_effect(effect, remove_dom);
+		} else if (signal.first === null && parent_is_block && !force) {
+			// if we didn't destroy this effect and first is null it means that first was "destroyed"
+			// and we need to update the linked list...we only need to do this if parent is BLOCK
+			signal.first = effect;
+		}
+		if (
+			next === null &&
+			signal.last === null &&
+			parent_is_block &&
+			is_render_not_pre(effect) &&
+			!force
+		) {
+			// if we are about to exit this while and we didn't destroy this effect and signal was last
+			// we update signal.last to keep the linked list up to date
+			signal.last = effect;
+		}
 		effect = next;
+	}
+	// if after the while signal.first is not null but signal.last is null we update
+	// signal.last to be signal.first
+	if (signal.first !== null && signal.last === null && parent_is_block && !force) {
+		signal.last = signal.first;
 	}
 }
 
@@ -443,9 +484,7 @@ export function update_effect(effect) {
 	}
 
 	try {
-		if ((flags & BLOCK_EFFECT) === 0) {
-			destroy_effect_children(effect);
-		}
+		destroy_effect_children(effect);
 
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);

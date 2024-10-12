@@ -35,7 +35,8 @@ import {
 	INSPECT_EFFECT,
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
-	EFFECT_HAS_DERIVED
+	EFFECT_HAS_DERIVED,
+	PRE_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
 import * as e from '../errors.js';
@@ -226,7 +227,7 @@ export function user_pre_effect(fn) {
 			value: '$effect.pre'
 		});
 	}
-	return render_effect(fn);
+	return render_effect(fn, PRE_EFFECT);
 }
 
 /** @param {() => void | (() => void)} fn */
@@ -308,10 +309,11 @@ export function legacy_pre_effect_reset() {
 
 /**
  * @param {() => void | (() => void)} fn
+ * @param {number} flags
  * @returns {Effect}
  */
-export function render_effect(fn) {
-	return create_effect(RENDER_EFFECT, fn, true);
+export function render_effect(fn, flags = 0) {
+	return create_effect(RENDER_EFFECT | flags, fn, true);
 }
 
 /**
@@ -386,7 +388,7 @@ export function destroy_effect(effect, remove_dom = true) {
 		removed = true;
 	}
 
-	destroy_effect_children(effect, remove_dom && !removed);
+	destroy_effect_children(effect, remove_dom && !removed, true);
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);
 
