@@ -84,6 +84,7 @@ export function slide(node, { delay = 0, duration = 400, easing = cubicOut, axis
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
 	const primary_property = axis === 'y' ? 'height' : 'width';
+	const min_primary_property = `min-${primary_property}`;
 	const primary_property_value = parseFloat(style[primary_property]);
 	const secondary_properties = axis === 'y' ? ['top', 'bottom'] : ['left', 'right'];
 	const capitalized_secondary_properties = secondary_properties.map(
@@ -107,6 +108,7 @@ export function slide(node, { delay = 0, duration = 400, easing = cubicOut, axis
 			'overflow: hidden;' +
 			`opacity: ${Math.min(t * 20, 1) * opacity};` +
 			`${primary_property}: ${t * primary_property_value}px;` +
+			`${min_primary_property}: 0;` +
 			`padding-${secondary_properties[0]}: ${t * padding_start_value}px;` +
 			`padding-${secondary_properties[1]}: ${t * padding_end_value}px;` +
 			`margin-${secondary_properties[0]}: ${t * margin_start_value}px;` +
