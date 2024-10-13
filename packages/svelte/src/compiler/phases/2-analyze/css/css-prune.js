@@ -136,9 +136,10 @@ function truncate(node) {
  * @param {Compiler.Css.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  * @param {Compiler.Css.StyleSheet} stylesheet
+ * @param {boolean} [contains_render_tag]
  * @returns {boolean}
  */
-function apply_selector(relative_selectors, rule, element, stylesheet) {
+function apply_selector(relative_selectors, rule, element, stylesheet, contains_render_tag) {
 	const parent_selectors = relative_selectors.slice();
 	const relative_selector = parent_selectors.pop();
 
@@ -152,7 +153,19 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 	);
 
 	if (!possible_match) {
-		return false;
+		contains_render_tag ??= element.fragment.nodes.some((node) => node.type === 'RenderTag');
+		if (contains_render_tag) {
+			// If the element contains a render tag then we assume the selector might match something inside the rendered snippet
+			// and traverse the blocks upwards to see if the present blocks match our node further upwards.
+			// (We could do more static analysis and check the render tag reference to see if this snippet block continues
+			// with elements that actually match the selector, but that would be a lot of work for little gain)
+			const possible = apply_selector(parent_selectors, rule, element, stylesheet, true);
+			if (possible) return true; // e.g `div span` matched for element `<div>{@render tag()}</div>`
+			// Continue checking if a parent element might match the selector.
+			// Example: Selector is `p span`, which matches `<p><strong>{@render tag()}</strong></p>` and we're currently at `strong`
+		} else {
+			return false;
+		}
 	}
 
 	if (relative_selector.combinator) {
@@ -169,6 +182,13 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 				while (parent) {
 					if (parent.type === 'Component' || parent.type === 'SvelteComponent') {
 						crossed_component_boundary = true;
+					}
+
+					if (parent.type === 'SnippetBlock') {
+						// We assume the snippet might be rendered in a place where the parent selectors match.
+						// (We could do more static analysis and check the render tag reference to see if this snippet block continues
+						// with elements that actually match the selector, but that would be a lot of work for little gain)
+						return true;
 					}
 
 					if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
@@ -221,6 +241,10 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 				return true;
 		}
 	}
+
+	// We got to the end of this under the assumption higher up might start matching,
+	// but turns out it didn't - therefore the selector doesn't apply after all.
+	if (contains_render_tag) return false;
 
 	// if this is the left-most non-global selector, mark it — we want
 	// `x y z {...}` to become `x.blah y z.blah {...}`
