@@ -313,31 +313,28 @@ export function update_reaction(reaction) {
 		var result = /** @type {Function} */ (0, reaction.fn)();
 		var deps = reaction.deps;
 
-		// Avoid doing work on an effect/derived that might have become destroyed
-		if ((flags & DESTROYED) === 0) {
-			if (new_deps !== null) {
-				var i;
+		if (new_deps !== null) {
+			var i;
 
-				remove_reactions(reaction, skipped_deps);
+			remove_reactions(reaction, skipped_deps);
 
-				if (deps !== null && skipped_deps > 0) {
-					deps.length = skipped_deps + new_deps.length;
-					for (i = 0; i < new_deps.length; i++) {
-						deps[skipped_deps + i] = new_deps[i];
-					}
-				} else {
-					reaction.deps = deps = new_deps;
+			if (deps !== null && skipped_deps > 0) {
+				deps.length = skipped_deps + new_deps.length;
+				for (i = 0; i < new_deps.length; i++) {
+					deps[skipped_deps + i] = new_deps[i];
 				}
-
-				if (!skip_reaction) {
-					for (i = skipped_deps; i < deps.length; i++) {
-						(deps[i].reactions ??= []).push(reaction);
-					}
-				}
-			} else if (deps !== null && skipped_deps < deps.length) {
-				remove_reactions(reaction, skipped_deps);
-				deps.length = skipped_deps;
+			} else {
+				reaction.deps = deps = new_deps;
 			}
+
+			if (!skip_reaction) {
+				for (i = skipped_deps; i < deps.length; i++) {
+					(deps[i].reactions ??= []).push(reaction);
+				}
+			}
+		} else if (deps !== null && skipped_deps < deps.length) {
+			remove_reactions(reaction, skipped_deps);
+			deps.length = skipped_deps;
 		}
 
 		return result;
@@ -748,7 +745,10 @@ export function get(signal) {
 	// If the derived is destroyed, just execute it again without retaining
 	// it's memoisation properties – as the derived is stale
 	if (is_derived && (flags & DESTROYED) !== 0) {
-		return execute_derived(/** @type {Derived} */ (signal));
+		var value = execute_derived(/** @type {Derived} */ (signal));
+		// Ensure the derived remains destroyed
+		destroy_derived(/** @type {Derived} */ (signal));
+		return value;
 	}
 
 	if (is_signals_recorded) {
