@@ -419,6 +419,22 @@ export function destroy_effect_children(signal, remove_dom = false) {
 }
 
 /**
+ * @param {Effect} signal
+ * @returns {void}
+ */
+export function destroy_block_effect_children(signal) {
+	var effect = signal.first;
+
+	while (effect !== null) {
+		var next = effect.next;
+		if ((effect.f & BRANCH_EFFECT) === 0) {
+			destroy_effect(effect);
+		}
+		effect = next;
+	}
+}
+
+/**
  * @param {Effect} effect
  * @returns {void}
  */
@@ -445,6 +461,8 @@ export function update_effect(effect) {
 	try {
 		if ((flags & BLOCK_EFFECT) === 0) {
 			destroy_effect_children(effect);
+		} else {
+			destroy_block_effect_children(effect);
 		}
 
 		execute_effect_teardown(effect);
