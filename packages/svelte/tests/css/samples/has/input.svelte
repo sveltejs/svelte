@@ -81,4 +81,11 @@
 	.unused x:has(y) {
 		color: red;
 	}
+
+	x:has(> y) {
+		color: green;
+	}
+	x:has(> z) {
+		color: red;
+	}
 </style>

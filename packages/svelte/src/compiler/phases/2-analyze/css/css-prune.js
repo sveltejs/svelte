@@ -371,6 +371,16 @@ function relative_selector_might_apply_to_node(
 
 			for (const complex_selector of complex_selectors) {
 				const selectors = truncate(complex_selector);
+				const left_most_combinator = selectors[0]?.combinator ?? descendant_combinator;
+				// In .x:has(> y), we want to search for y, ignoring the left-most combinator
+				// (else it would try to walk further up and fail because there are no selectors left)
+				if (selectors.length > 0) {
+					selectors[0] = {
+						...selectors[0],
+						combinator: null
+					};
+				}
+
 				if (
 					selectors.length === 0 /* is :global(...) */ ||
 					apply_selector(selectors, rule, element, stylesheet, check_has)
@@ -379,7 +389,7 @@ function relative_selector_might_apply_to_node(
 					// and now looking upwards for the .x part.
 					if (
 						apply_combinator(
-							selectors[0]?.combinator ?? descendant_combinator,
+							left_most_combinator,
 							selectors[0] ?? [],
 							[relative_selector],
 							rule,
