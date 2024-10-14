@@ -21,7 +21,7 @@ All three sections — script, styles and markup — are optional.
 </style>
 ```
 
-## &lt;script&gt;
+## `<script>`
 
 A `<script>` block contains JavaScript (or TypeScript, when adding the `lang="ts"` attribute) that runs when a component instance is created. Variables declared (or imported) at the top level are 'visible' from the component's markup.
 
@@ -161,7 +161,7 @@ If you'd like to react to changes to a prop, use the `$derived` or `$effect` run
 
 For more information on reactivity, read the documentation around runes.
 
-## &lt;script module&gt;
+## `<script module>`
 
 A `<script>` tag with a `module` attribute runs once when the module first evaluates, rather than for each component instance. Values declared in this block are accessible from a regular `<script>` (and the component markup) but not vice versa.
 
@@ -186,7 +186,7 @@ You cannot `export default`, since the default export is the component itself.
 </script>
 ```
 
-## &lt;style&gt;
+## `<style>`
 
 CSS inside a `<style>` block will be scoped to that component.
 

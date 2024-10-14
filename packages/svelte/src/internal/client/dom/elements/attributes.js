@@ -55,8 +55,8 @@ export function remove_input_defaults(input) {
 export function set_value(element, value) {
 	// @ts-expect-error
 	var attributes = (element.__attributes ??= {});
-
-	if (attributes.value === (attributes.value = value)) return;
+	// @ts-expect-error
+	if (attributes.value === (attributes.value = value) || element.value === value) return;
 	// @ts-expect-error
 	element.value = value;
 }

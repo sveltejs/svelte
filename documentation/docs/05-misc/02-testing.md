@@ -16,10 +16,10 @@ npm install -D vitest
 
 Then adjust your `vite.config.js`:
 
-```diff
+<!-- prettier-ignore -->
+```js
 /// file: vite.config.js
-- import { defineConfig } from 'vite';
-+ import { defineConfig } from 'vitest/config';
+import { defineConfig } from +++'vitest/config'+++;
 
 export default defineConfig({ /* ... */ })
 ```
