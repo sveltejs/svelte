@@ -1,5 +1,25 @@
 # svelte
 
+## 5.0.0-next.265
+
+### Patch Changes
+
+- fix: ensure source and filename are known to compileModule's source map ([#13546](https://github.com/sveltejs/svelte/pull/13546))
+
+- fix: cleanup non-branch effects created inside block effects ([#13600](https://github.com/sveltejs/svelte/pull/13600))
+
+- fix: do no rerun the each block when array change from empty to empty ([#13553](https://github.com/sveltejs/svelte/pull/13553))
+
+- fix: ensure effects destroy owned deriveds upon teardown ([#13563](https://github.com/sveltejs/svelte/pull/13563))
+
+- fix: ensure proxied arrays correctly update their length upon deletions ([#13549](https://github.com/sveltejs/svelte/pull/13549))
+
+- fix: avoid assigning input.value if the value is the same to fix `minlength` ([#13574](https://github.com/sveltejs/svelte/pull/13574))
+
+- fix: use `analysis.name` when migrating `<svelte:self>` ([#13544](https://github.com/sveltejs/svelte/pull/13544))
+
+- fix: strip BOM character from input ([#13548](https://github.com/sveltejs/svelte/pull/13548))
+
 ## 5.0.0-next.264
 
 ### Patch Changes
