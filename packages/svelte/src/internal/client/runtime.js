@@ -459,10 +459,10 @@ export function update_effect(effect) {
 	}
 
 	try {
-		if ((flags & BLOCK_EFFECT) === 0) {
-			destroy_effect_children(effect);
-		} else {
+		if ((flags & BLOCK_EFFECT) !== 0) {
 			destroy_block_effect_children(effect);
+		} else {
+			destroy_effect_children(effect);
 		}
 
 		execute_effect_teardown(effect);
