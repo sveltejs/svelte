@@ -60,8 +60,12 @@ export function bind_value(input, get, set = get) {
 			return;
 		}
 
-		// @ts-expect-error the value is coerced on assignment
-		input.value = value ?? '';
+		// don't set the value of the input if it's the same to allow
+		// minlength to work properly
+		if (value !== input.value) {
+			// @ts-expect-error the value is coerced on assignment
+			input.value = value ?? '';
+		}
 	});
 }
 
