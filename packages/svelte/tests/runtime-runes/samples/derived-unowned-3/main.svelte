@@ -1,4 +1,6 @@
 <script>
+  import { untrack } from 'svelte';
+
   class Model {
     data = $state();
 
@@ -26,6 +28,9 @@
   $effect(() => {
     if(needsSet) {
       setModel('effect');
+      untrack(() => {
+        needsSet = false;
+      });
     }
   });
 

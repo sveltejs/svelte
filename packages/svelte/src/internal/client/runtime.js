@@ -27,7 +27,7 @@ import {
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
-import { destroy_derived, update_derived } from './reactivity/deriveds.js';
+import { destroy_derived, execute_derived, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
@@ -300,40 +300,44 @@ export function update_reaction(reaction) {
 	var previous_reaction = active_reaction;
 	var previous_skip_reaction = skip_reaction;
 	var prev_derived_sources = derived_sources;
+	var flags = reaction.f;
 
 	new_deps = /** @type {null | Value[]} */ (null);
 	skipped_deps = 0;
 	untracked_writes = null;
-	active_reaction = (reaction.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
-	skip_reaction = !is_flushing_effect && (reaction.f & UNOWNED) !== 0;
+	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
+	skip_reaction = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	derived_sources = null;
 
 	try {
 		var result = /** @type {Function} */ (0, reaction.fn)();
 		var deps = reaction.deps;
 
-		if (new_deps !== null) {
-			var i;
+		// Avoid doing work on an effect/derived that might have become destroyed
+		if ((flags & DESTROYED) === 0) {
+			if (new_deps !== null) {
+				var i;
 
-			remove_reactions(reaction, skipped_deps);
+				remove_reactions(reaction, skipped_deps);
 
-			if (deps !== null && skipped_deps > 0) {
-				deps.length = skipped_deps + new_deps.length;
-				for (i = 0; i < new_deps.length; i++) {
-					deps[skipped_deps + i] = new_deps[i];
+				if (deps !== null && skipped_deps > 0) {
+					deps.length = skipped_deps + new_deps.length;
+					for (i = 0; i < new_deps.length; i++) {
+						deps[skipped_deps + i] = new_deps[i];
+					}
+				} else {
+					reaction.deps = deps = new_deps;
 				}
-			} else {
-				reaction.deps = deps = new_deps;
-			}
 
-			if (!skip_reaction) {
-				for (i = skipped_deps; i < deps.length; i++) {
-					(deps[i].reactions ??= []).push(reaction);
+				if (!skip_reaction) {
+					for (i = skipped_deps; i < deps.length; i++) {
+						(deps[i].reactions ??= []).push(reaction);
+					}
 				}
+			} else if (deps !== null && skipped_deps < deps.length) {
+				remove_reactions(reaction, skipped_deps);
+				deps.length = skipped_deps;
 			}
-		} else if (deps !== null && skipped_deps < deps.length) {
-			remove_reactions(reaction, skipped_deps);
-			deps.length = skipped_deps;
 		}
 
 		return result;
@@ -739,9 +743,12 @@ export async function tick() {
  */
 export function get(signal) {
 	var flags = signal.f;
+	var is_derived = (flags & DERIVED) !== 0;
 
-	if ((flags & DESTROYED) !== 0) {
-		return signal.v;
+	// If the derived is destroyed, just execute it again without retaining
+	// it's memoisation properties – as the derived is stale
+	if (is_derived && (flags & DESTROYED) !== 0) {
+		return execute_derived(/** @type {Derived} */ (signal));
 	}
 
 	if (is_signals_recorded) {
@@ -778,7 +785,7 @@ export function get(signal) {
 		}
 	}
 
-	if ((flags & DERIVED) !== 0) {
+	if (is_derived) {
 		var derived = /** @type {Derived} */ (signal);
 
 		if (check_dirtiness(derived)) {
