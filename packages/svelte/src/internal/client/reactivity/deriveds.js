@@ -58,6 +58,9 @@ export function derived(fn) {
 		var derived = /** @type {Derived} */ (active_reaction);
 		(derived.children ??= []).push(signal);
 	}
+	if (active_effect !== null) {
+		(active_effect.deriveds ??= []).push(signal);
+	}
 
 	return signal;
 }
@@ -103,10 +106,11 @@ function destroy_derived_children(derived) {
 let stack = [];
 
 /**
+ * @template T
  * @param {Derived} derived
- * @returns {void}
+ * @returns {T}
  */
-export function update_derived(derived) {
+export function execute_derived(derived) {
 	var value;
 	var prev_active_effect = active_effect;
 
@@ -138,6 +142,15 @@ export function update_derived(derived) {
 		}
 	}
 
+	return value;
+}
+
+/**
+ * @param {Derived} derived
+ * @returns {void}
+ */
+export function update_derived(derived) {
+	var value = execute_derived(derived);
 	var status =
 		(skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null ? MAYBE_DIRTY : CLEAN;
 
@@ -153,17 +166,11 @@ export function update_derived(derived) {
  * @param {Derived} signal
  * @returns {void}
  */
-function destroy_derived(signal) {
+export function destroy_derived(signal) {
 	destroy_derived_children(signal);
 	remove_reactions(signal, 0);
 	set_signal_status(signal, DESTROYED);
 
 	// TODO we need to ensure we remove the derived from any parent derives
-
-	signal.children =
-		signal.deps =
-		signal.reactions =
-		// @ts-expect-error `signal.fn` cannot be `null` while the signal is alive
-		signal.fn =
-			null;
+	signal.v = signal.children = signal.deps = signal.reactions = null;
 }

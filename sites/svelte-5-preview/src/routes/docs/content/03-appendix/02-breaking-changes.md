@@ -293,9 +293,9 @@ Svelte 5 is more strict about the HTML structure and will throw a compiler error
 
 Assignments to destructured parts of a `@const` declaration are no longer allowed. It was an oversight that this was ever allowed.
 
-### :is(...) and :where(...) are scoped
+### :is(...), :where(...) and :has(...) are scoped
 
-Previously, Svelte did not analyse selectors inside `:is(...)` and `:where(...)`, effectively treating them as global. Svelte 5 analyses them in the context of the current component. As such, some selectors may now be treated as unused if they were relying on this treatment. To fix this, use `:global(...)` inside the `:is(...)/:where(...)` selectors.
+Previously, Svelte did not analyse selectors inside `:is(...)`, `:where(...)` and `:has(...)`, effectively treating them as global. Svelte 5 analyses them in the context of the current component. As such, some selectors may now be treated as unused if they were relying on this treatment. To fix this, use `:global(...)` inside the `:is(...)/:where(...)/:has(...)` selectors.
 
 When using Tailwind's `@apply` directive, add a `:global` selector to preserve rules that use Tailwind-generated `:is(...)` selectors:
 
