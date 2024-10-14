@@ -743,7 +743,7 @@ export function get(signal) {
 	var is_derived = (flags & DERIVED) !== 0;
 
 	// If the derived is destroyed, just execute it again without retaining
-	// it's memoisation properties – as the derived is stale
+	// its memoisation properties as the derived is stale
 	if (is_derived && (flags & DESTROYED) !== 0) {
 		var value = execute_derived(/** @type {Derived} */ (signal));
 		// Ensure the derived remains destroyed
