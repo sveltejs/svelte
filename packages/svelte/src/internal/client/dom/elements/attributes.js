@@ -75,7 +75,7 @@ export function set_checked(element, checked) {
 }
 
 /**
- * @param {Element & { hidden: boolean, __tm?: import('#client').TransitionManager}} element
+ * @param {HTMLElement} element
  * @param {boolean} hidden
  */
 export function set_hidden(element, hidden) {
@@ -84,12 +84,29 @@ export function set_hidden(element, hidden) {
 
 	if (attributes.hidden === (attributes.hidden = !!hidden)) return;
 
-	if (element.__tm) {
+	/** @type {import('#client').TransitionManager[] | undefined} */
+	// @ts-expect-error
+	const tm = element.__tm;
+	if (tm) {
 		if (hidden) {
-			element.__tm.out(() => (element.hidden = true));
+			var remaining = tm.length;
+			var check = () => {
+				if (--remaining == 0) {
+					// cleanup
+					for (var transition of tm) {
+						transition.stop();
+					}
+					element.hidden = true;
+				}
+			};
+			for (var transition of tm) {
+				transition.out(check);
+			}
 		} else {
 			element.hidden = false;
-			element.__tm.in();
+			for (const transition of tm) {
+				transition.in();
+			}
 		}
 	} else {
 		element.hidden = hidden;
@@ -292,6 +309,8 @@ export function set_attributes(
 		} else if (key === '__value' || (key === 'value' && value != null)) {
 			// @ts-ignore
 			element.value = element[key] = element.__value = value;
+		} else if (key === 'hidden') {
+			set_hidden(/** @type {HTMLElement} */ (element), value);
 		} else {
 			var name = key;
 			if (!preserve_attribute_case) {

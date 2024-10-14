@@ -3,7 +3,7 @@
 /** @import { ComponentContext } from '../types' */
 import {
 	TRANSITION_GLOBAL,
-	TRANSITION_HIDDEN,
+	TRANSITION_THIS,
 	TRANSITION_IN,
 	TRANSITION_OUT
 } from '../../../../../constants.js';
@@ -18,8 +18,8 @@ export function TransitionDirective(node, context) {
 	let flags = node.modifiers.includes('global') ? TRANSITION_GLOBAL : 0;
 	if (node.intro) flags |= TRANSITION_IN;
 	if (node.outro) flags |= TRANSITION_OUT;
-	if (node.modifiers.includes('hidden')) {
-		flags |= TRANSITION_HIDDEN;
+	if (node.modifiers.includes('this')) {
+		flags |= TRANSITION_THIS;
 	}
 
 	const args = [

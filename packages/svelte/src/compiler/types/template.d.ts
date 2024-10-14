@@ -251,7 +251,7 @@ export namespace AST {
 		name: string;
 		/** The 'y' in `transition:x={y}` */
 		expression: null | Expression;
-		modifiers: Array<'local' | 'global' | 'hidden'>;
+		modifiers: Array<'local' | 'global' | 'this'>;
 		/** True if this is a `transition:` or `in:` directive */
 		intro: boolean;
 		/** True if this is a `transition:` or `out:` directive */
