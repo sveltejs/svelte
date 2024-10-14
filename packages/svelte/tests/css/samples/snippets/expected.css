@@ -1,8 +1,8 @@
 
-	div > span.svelte-xyz {
+	div.svelte-xyz > span:where(.svelte-xyz) {
 		color: green;
 	}
-	div span.svelte-xyz {
+	div.svelte-xyz span:where(.svelte-xyz) {
 		color: green;
 	}
 	div.svelte-xyz span {
