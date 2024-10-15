@@ -11,6 +11,6 @@ export default test({
 		assert.htmlEqual(
 			target.innerHTML,
 			`<button>Add</button><label><input type="checkbox">\n1</label><label><input type="checkbox">\nfoo</label>`
-		)
+		);
 	}
 });
