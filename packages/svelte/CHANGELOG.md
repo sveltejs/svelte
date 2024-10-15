@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.266
+
+### Patch Changes
+
+- feat: add hidden until-found and beforematch ([#13612](https://github.com/sveltejs/svelte/pull/13612))
+
+- fix: ensure local prop value is read during teardown ([#13611](https://github.com/sveltejs/svelte/pull/13611))
+
+- fix: take snippets into account when scoping CSS ([#13589](https://github.com/sveltejs/svelte/pull/13589))
+
+- breaking: scope `:not(...)` selectors ([#13568](https://github.com/sveltejs/svelte/pull/13568))
+
+- breaking: scope `:has(...)` selectors ([#13567](https://github.com/sveltejs/svelte/pull/13567))
+
 ## 5.0.0-next.265
 
 ### Patch Changes
