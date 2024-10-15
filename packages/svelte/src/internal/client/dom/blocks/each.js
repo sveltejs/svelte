@@ -205,10 +205,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 		if (!hydrating) {
 			reconcile(array, state, anchor, render_fn, flags, get_key);
-			// Reconciling can cause the collection to become unstable if any inner effects
-			// have mutated the collection since reconcialtion. Reading the collection again
-			// will fix this
-			get_collection();
 		}
 
 		if (fallback_fn !== null) {
@@ -229,6 +225,13 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			// continue in hydration mode
 			set_hydrating(true);
 		}
+
+		// When we mount the each block for the first time, the collection won't be
+		// connected to this effect as the effect hasn't finished running yet and its deps
+		// won't be assigned. However, it's possible that when reconciling the each block
+		// that a mutation occured and it's made the collection MAYBE_DIRTY, so reading the
+		// collection again can provide consistency to the reactive grpah again
+		get_collection();
 	});
 
 	if (hydrating) {
