@@ -205,6 +205,10 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 		if (!hydrating) {
 			reconcile(array, state, anchor, render_fn, flags, get_key);
+			// Reconciling can cause the collection to become unstable if any inner effects
+			// have mutated the collection since reconcialtion. Reading the collection again
+			// will fix this
+			get_collection();
 		}
 
 		if (fallback_fn !== null) {
