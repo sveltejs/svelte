@@ -1,4 +1,4 @@
-/** @import { Source } from './types.js' */
+/** @import { Derived, Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
 	PROPS_IS_BINDABLE,
@@ -20,7 +20,7 @@ import {
 } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import { BRANCH_EFFECT, LEGACY_DERIVED_PROP, ROOT_EFFECT } from '../constants.js';
+import { BRANCH_EFFECT, DESTROYED, LEGACY_DERIVED_PROP, ROOT_EFFECT } from '../constants.js';
 import { proxy } from '../proxy.js';
 
 /**
@@ -292,6 +292,8 @@ export function prop(props, key, flags, fallback) {
 
 	/** @type {() => V} */
 	var getter;
+	/** @type {Derived} */
+	var derived_getter;
 	if (runes) {
 		getter = () => {
 			var value = /** @type {V} */ (props[key]);
@@ -303,7 +305,7 @@ export function prop(props, key, flags, fallback) {
 	} else {
 		// Svelte 4 did not trigger updates when a primitive value was updated to the same value.
 		// Replicate that behavior through using a derived
-		var derived_getter = with_parent_branch(() =>
+		derived_getter = with_parent_branch(() =>
 			(immutable ? derived : derived_safe_equal)(() => /** @type {V} */ (props[key]))
 		);
 		derived_getter.f |= LEGACY_DERIVED_PROP;
@@ -353,12 +355,11 @@ export function prop(props, key, flags, fallback) {
 			var parent_value = getter();
 			var child_value = get(inner_current_value);
 
-			if (from_child) {
+			if (from_child || (derived_getter !== undefined && (derived_getter.f & DESTROYED) !== 0)) {
 				from_child = false;
 				was_from_child = true;
 				return child_value;
 			}
-
 			was_from_child = false;
 			return (inner_current_value.v = parent_value);
 		})
