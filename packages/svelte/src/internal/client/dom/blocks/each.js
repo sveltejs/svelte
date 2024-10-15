@@ -229,8 +229,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		// When we mount the each block for the first time, the collection won't be
 		// connected to this effect as the effect hasn't finished running yet and its deps
 		// won't be assigned. However, it's possible that when reconciling the each block
-		// that a mutation occured and it's made the collection MAYBE_DIRTY, so reading the
-		// collection again can provide consistency to the reactive grpah again
+		// that a mutation occurred and it's made the collection MAYBE_DIRTY, so reading the
+		// collection again can provide consistency to the reactive graph again as the deriveds
+		// will now be `CLEAN`.
 		get_collection();
 	});
 
