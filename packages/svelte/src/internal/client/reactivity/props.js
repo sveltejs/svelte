@@ -20,7 +20,7 @@ import {
 } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import { BRANCH_EFFECT, DESTROYED, LEGACY_DERIVED_PROP, ROOT_EFFECT } from '../constants.js';
+import { BRANCH_EFFECT, LEGACY_DERIVED_PROP, ROOT_EFFECT } from '../constants.js';
 import { proxy } from '../proxy.js';
 import { teardown } from './effects.js';
 
@@ -369,6 +369,7 @@ export function prop(props, key, flags, fallback) {
 				was_from_child = true;
 				return child_value;
 			}
+
 			was_from_child = false;
 			return (inner_current_value.v = parent_value);
 		})
