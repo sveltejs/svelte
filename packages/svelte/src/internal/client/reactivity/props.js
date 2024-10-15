@@ -1,4 +1,4 @@
-/** @import { Source } from './types.js' */
+/** @import { Derived, Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
 	PROPS_IS_BINDABLE,
@@ -12,6 +12,7 @@ import { mutable_source, set, source } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
 import {
 	active_effect,
+	active_reaction,
 	get,
 	is_signals_recorded,
 	set_active_effect,
@@ -20,9 +21,8 @@ import {
 } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import { BRANCH_EFFECT, LEGACY_DERIVED_PROP, ROOT_EFFECT } from '../constants.js';
+import { BRANCH_EFFECT, DESTROYED, LEGACY_DERIVED_PROP, ROOT_EFFECT } from '../constants.js';
 import { proxy } from '../proxy.js';
-import { teardown } from './effects.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -350,21 +350,16 @@ export function prop(props, key, flags, fallback) {
 	// source is written to from various places to persist this value.
 	var inner_current_value = mutable_source(prop_value);
 
-	teardown(() => {
-		// If the getter from the parent returns undefined, switch
-		// to using the local value from inner_current_value instead,
-		// as the parent value might have been torn down
-		if (getter() === undefined) {
-			from_child = true;
-		}
-	});
-
 	var current_value = with_parent_branch(() =>
 		derived(() => {
 			var parent_value = getter();
 			var child_value = get(inner_current_value);
+			var current_derived = /** @type {Derived} */ (active_reaction);
 
-			if (from_child) {
+			// If the getter from the parent returns undefined, switch
+			// to using the local value from inner_current_value instead,
+			// as the parent value might have been torn down
+			if (from_child || (parent_value === undefined && (current_derived.f & DESTROYED) !== 0)) {
 				from_child = false;
 				was_from_child = true;
 				return child_value;
