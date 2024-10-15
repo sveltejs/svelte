@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure bind_checked defers mutation to ensure reactive graph stability
+fix: ensure each block consistency to internal mutations to the collection
