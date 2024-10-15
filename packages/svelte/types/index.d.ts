@@ -1247,7 +1247,7 @@ declare module 'svelte/compiler' {
 		| AST.SvelteWindow;
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
-	 * For example, it can be used to convert a <style lang="sass"> block into vanilla CSS.
+	 * For example, it can be used to convert a `<style lang="sass">` block into vanilla CSS.
 	 *
 	 * */
 	export function preprocess(source: string, preprocessor: PreprocessorGroup | PreprocessorGroup[], options?: {
