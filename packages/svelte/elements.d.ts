@@ -428,6 +428,9 @@ export interface DOMAttributes<T extends EventTarget> {
 	onvisibilitychangecapture?: EventHandler<Event, T> | undefined | null;
 
 	// Global Events
+	'on:beforematch'?: EventHandler<Event, T> | undefined | null;
+	onbeforematch?: EventHandler<Event, T> | undefined | null;
+	onbeforematchcapture?: EventHandler<Event, T> | undefined | null;
 	'on:cancel'?: EventHandler<Event, T> | undefined | null;
 	oncancel?: EventHandler<Event, T> | undefined | null;
 	oncancelcapture?: EventHandler<Event, T> | undefined | null;
@@ -735,7 +738,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 		| 'send'
 		| undefined
 		| null;
-	hidden?: boolean | undefined | null;
+	hidden?: boolean | 'until-found' | '' | undefined | null;
 	id?: string | undefined | null;
 	lang?: string | undefined | null;
 	part?: string | undefined | null;
