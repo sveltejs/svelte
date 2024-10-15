@@ -180,9 +180,14 @@ export function bind_checked(input, get, set = get) {
 		set(value);
 	});
 
-	if (get() == undefined) {
-		set(false);
-	}
+	// We defer setting the value as we might already be in an active
+	// block like an each block where that effect hasn't yet hooked up
+	// to the reactivity graph
+	queue_micro_task(() => {
+		if (get() == undefined) {
+			set(false);
+		}
+	});
 
 	render_effect(() => {
 		var value = get();
