@@ -1,8 +1,7 @@
 <script>
-  let { value = $bindable(), config } = $props();
+  let { value = $bindable() } = $props();
 </script>
 
 <label>
   <input type="checkbox" bind:checked={value} />
-  {config.title}
 </label>
