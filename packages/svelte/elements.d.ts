@@ -887,7 +887,7 @@ export interface HTMLButtonAttributes extends HTMLAttributes<HTMLButtonElement> 
 	form?: string | undefined | null;
 	formaction?: string | undefined | null;
 	formenctype?: string | undefined | null;
-	formmethod?: string | undefined | null;
+	formmethod?: 'dialog' | 'get' | 'post' | undefined | null;
 	formnovalidate?: boolean | undefined | null;
 	formtarget?: string | undefined | null;
 	name?: string | undefined | null;
@@ -953,7 +953,7 @@ export interface HTMLFormAttributes extends HTMLAttributes<HTMLFormElement> {
 	action?: string | undefined | null;
 	autocomplete?: AutoFillBase | undefined | null;
 	enctype?: string | undefined | null;
-	method?: string | undefined | null;
+	method?: 'dialog' | 'get' | 'post' | undefined | null;
 	name?: string | undefined | null;
 	novalidate?: boolean | undefined | null;
 	target?: string | undefined | null;
@@ -1047,7 +1047,7 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	form?: string | undefined | null;
 	formaction?: string | undefined | null;
 	formenctype?: string | undefined | null;
-	formmethod?: string | undefined | null;
+	formmethod?: 'dialog' | 'get' | 'post' | undefined | null;
 	formnovalidate?: boolean | undefined | null;
 	formtarget?: string | undefined | null;
 	height?: number | string | undefined | null;
@@ -1486,7 +1486,8 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	lang?: string | undefined | null;
 	max?: number | string | undefined | null;
 	media?: string | undefined | null;
-	method?: string | undefined | null;
+	// On the `textPath` element
+	method?: 'align' | 'stretch' | undefined | null;
 	min?: number | string | undefined | null;
 	name?: string | undefined | null;
 	style?: string | undefined | null;
