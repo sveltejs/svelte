@@ -868,7 +868,7 @@ export interface HTMLAreaAttributes extends HTMLAttributes<HTMLAreaElement> {
 	media?: string | undefined | null;
 	referrerpolicy?: ReferrerPolicy | undefined | null;
 	rel?: string | undefined | null;
-	shape?: string | undefined | null;
+	shape?: 'circle' | 'default' | 'poly' | 'rect' | undefined | null;
 	target?: string | undefined | null;
 	ping?: string | undefined | null;
 }
