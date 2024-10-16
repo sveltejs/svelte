@@ -205,7 +205,7 @@ export function migrate(source, { filename } = {}) {
 						})
 						.join(newline_separator)}`;
 					if (analysis.uses_props || analysis.uses_rest_props) {
-						type += `${newline_separator}[key: string]: any`;
+						type += `${state.props.length > 0 ? newline_separator : ''}[key: string]: any`;
 					}
 					type += `\n${indent}}`;
 				} else {
