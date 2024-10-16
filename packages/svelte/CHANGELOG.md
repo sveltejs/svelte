@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.268
+
+### Patch Changes
+
+- breaking: disallow state mutations in logic block expression ([#13625](https://github.com/sveltejs/svelte/pull/13625))
+
+- breaking: stronger enumerated types ([#13624](https://github.com/sveltejs/svelte/pull/13624))
+
+- chore: improve runtime performance of derived signals ([#13626](https://github.com/sveltejs/svelte/pull/13626))
+
 ## 5.0.0-next.267
 
 ### Patch Changes
