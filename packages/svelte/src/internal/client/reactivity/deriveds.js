@@ -27,6 +27,7 @@ import { inspect_effects, set_inspect_effects } from './sources.js';
 /**
  * @template V
  * @param {() => V} fn
+ * @param {boolean} [attached]
  * @returns {Derived<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
