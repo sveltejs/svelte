@@ -886,7 +886,12 @@ export interface HTMLButtonAttributes extends HTMLAttributes<HTMLButtonElement> 
 	disabled?: boolean | undefined | null;
 	form?: string | undefined | null;
 	formaction?: string | undefined | null;
-	formenctype?: string | undefined | null;
+	formenctype?:
+		| 'application/x-www-form-urlencoded'
+		| 'multipart/form-data'
+		| 'text/plain'
+		| undefined
+		| null;
 	formmethod?: 'dialog' | 'get' | 'post' | undefined | null;
 	formnovalidate?: boolean | undefined | null;
 	formtarget?: string | undefined | null;
@@ -952,7 +957,12 @@ export interface HTMLFormAttributes extends HTMLAttributes<HTMLFormElement> {
 	acceptcharset?: string | undefined | null;
 	action?: string | undefined | null;
 	autocomplete?: AutoFillBase | undefined | null;
-	enctype?: string | undefined | null;
+	enctype?:
+		| 'application/x-www-form-urlencoded'
+		| 'multipart/form-data'
+		| 'text/plain'
+		| undefined
+		| null;
 	method?: 'dialog' | 'get' | 'post' | undefined | null;
 	name?: string | undefined | null;
 	novalidate?: boolean | undefined | null;
@@ -1046,7 +1056,12 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	disabled?: boolean | undefined | null;
 	form?: string | undefined | null;
 	formaction?: string | undefined | null;
-	formenctype?: string | undefined | null;
+	formenctype?:
+		| 'application/x-www-form-urlencoded'
+		| 'multipart/form-data'
+		| 'text/plain'
+		| undefined
+		| null;
 	formmethod?: 'dialog' | 'get' | 'post' | undefined | null;
 	formnovalidate?: boolean | undefined | null;
 	formtarget?: string | undefined | null;
