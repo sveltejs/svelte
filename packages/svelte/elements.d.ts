@@ -1362,7 +1362,7 @@ export interface HTMLTdAttributes extends HTMLAttributes<HTMLTableCellElement> {
 	colspan?: number | undefined | null;
 	headers?: string | undefined | null;
 	rowspan?: number | undefined | null;
-	scope?: string | undefined | null;
+	scope?: 'col' | 'colgroup' | 'row' | 'rowgroup' | undefined | null;
 	abbr?: string | undefined | null;
 	height?: number | string | undefined | null;
 	width?: number | string | undefined | null;
@@ -1374,7 +1374,7 @@ export interface HTMLThAttributes extends HTMLAttributes<HTMLTableCellElement> {
 	colspan?: number | undefined | null;
 	headers?: string | undefined | null;
 	rowspan?: number | undefined | null;
-	scope?: string | undefined | null;
+	scope?: 'col' | 'colgroup' | 'row' | 'rowgroup' | undefined | null;
 	abbr?: string | undefined | null;
 }
 
