@@ -1384,7 +1384,7 @@ export interface HTMLTimeAttributes extends HTMLAttributes<HTMLTimeElement> {
 
 export interface HTMLTrackAttributes extends HTMLAttributes<HTMLTrackElement> {
 	default?: boolean | undefined | null;
-	kind?: string | undefined | null;
+	kind?: 'captions' | 'chapters' | 'descriptions' | 'metadata' | 'subtitles' | undefined | null;
 	label?: string | undefined | null;
 	src?: string | undefined | null;
 	srclang?: string | undefined | null;
