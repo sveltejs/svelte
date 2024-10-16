@@ -1199,7 +1199,14 @@ export interface HTMLMediaAttributes<T extends HTMLMediaElement> extends HTMLAtt
 export interface HTMLMetaAttributes extends HTMLAttributes<HTMLMetaElement> {
 	charset?: string | undefined | null;
 	content?: string | undefined | null;
-	'http-equiv'?: string | undefined | null;
+	'http-equiv'?:
+		| 'content-security-policy'
+		| 'content-type'
+		| 'default-style'
+		| 'refresh'
+		| 'x-ua-compatible'
+		| undefined
+		| null;
 	name?: string | undefined | null;
 	media?: string | undefined | null;
 }
