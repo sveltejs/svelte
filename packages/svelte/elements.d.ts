@@ -721,6 +721,7 @@ export type AriaRole =
 export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, DOMAttributes<T> {
 	// Standard HTML Attributes
 	accesskey?: string | undefined | null;
+	autocapitalize?: 'characters' | 'off' | 'on' | 'none' | 'sentences' | 'words' | undefined | null;
 	autofocus?: boolean | undefined | null;
 	class?: string | undefined | null;
 	contenteditable?: Booleanish | 'inherit' | 'plaintext-only' | undefined | null;
@@ -770,7 +771,6 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	vocab?: string | undefined | null;
 
 	// Non-standard Attributes
-	autocapitalize?: 'characters' | 'off' | 'on' | 'none' | 'sentences' | 'words' | undefined | null;
 	autocorrect?: string | undefined | null;
 	autosave?: string | undefined | null;
 	color?: string | undefined | null;
