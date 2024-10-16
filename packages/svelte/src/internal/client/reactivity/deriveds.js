@@ -27,11 +27,10 @@ import { inspect_effects, set_inspect_effects } from './sources.js';
 /**
  * @template V
  * @param {() => V} fn
- * @param {boolean} [attached]
  * @returns {Derived<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function derived(fn, attached = true) {
+export function derived(fn) {
 	let flags = DERIVED | DIRTY;
 
 	if (active_effect === null) {
@@ -59,7 +58,7 @@ export function derived(fn, attached = true) {
 		var derived = /** @type {Derived} */ (active_reaction);
 		(derived.children ??= []).push(signal);
 	}
-	if (attached && active_effect !== null) {
+	if (active_effect !== null) {
 		(active_effect.deriveds ??= []).push(signal);
 	}
 
