@@ -770,7 +770,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	vocab?: string | undefined | null;
 
 	// Non-standard Attributes
-	autocapitalize?: string | undefined | null;
+	autocapitalize?: 'characters' | 'off' | 'on' | 'none' | 'sentences' | 'words' | undefined | null;
 	autocorrect?: string | undefined | null;
 	autosave?: string | undefined | null;
 	color?: string | undefined | null;
