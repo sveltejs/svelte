@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: moving deriveds during migration deletes part of the inserted code
+fix: ensure inserted code is preserved during migration 
