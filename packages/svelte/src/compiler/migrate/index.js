@@ -198,26 +198,26 @@ export function migrate(source, { filename } = {}) {
 				const type_name = state.scope.root.unique('Props').name;
 				let type = '';
 				if (uses_ts) {
+					type = `interface ${type_name} {${newline_separator}${state.props
+						.map((prop) => {
+							const comment = prop.comment ? `${prop.comment}${newline_separator}` : '';
+							return `${comment}${prop.exported}${prop.optional ? '?' : ''}: ${prop.type};`;
+						})
+						.join(newline_separator)}`;
 					if (analysis.uses_props || analysis.uses_rest_props) {
-						type = `interface ${type_name} { [key: string]: any }`;
-					} else {
-						type = `interface ${type_name} {${newline_separator}${state.props
-							.map((prop) => {
-								const comment = prop.comment ? `${prop.comment}${newline_separator}` : '';
-								return `${comment}${prop.exported}${prop.optional ? '?' : ''}: ${prop.type};`;
-							})
-							.join(newline_separator)}\n${indent}}`;
+						type += `${newline_separator}[key: string]: any`;
 					}
+					type += `\n${indent}}`;
 				} else {
+					type = `{${state.props
+						.map((prop) => {
+							return `${prop.exported}${prop.optional ? '?' : ''}: ${prop.type}`;
+						})
+						.join(`, `)}`;
 					if (analysis.uses_props || analysis.uses_rest_props) {
-						type = `Record<string, any>`;
-					} else {
-						type = `{${state.props
-							.map((prop) => {
-								return `${prop.exported}${prop.optional ? '?' : ''}: ${prop.type}`;
-							})
-							.join(`, `)}}`;
+						type += `${state.props.length > 0 ? ', ' : ''}[key: string]: any`;
 					}
+					type += '}';
 				}
 
 				let props_declaration = `let {${props_separator}${props}${has_many_props ? `\n${indent}` : ' '}}`;
