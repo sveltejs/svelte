@@ -721,11 +721,12 @@ export type AriaRole =
 export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, DOMAttributes<T> {
 	// Standard HTML Attributes
 	accesskey?: string | undefined | null;
+	autocapitalize?: 'characters' | 'off' | 'on' | 'none' | 'sentences' | 'words' | undefined | null;
 	autofocus?: boolean | undefined | null;
 	class?: string | undefined | null;
 	contenteditable?: Booleanish | 'inherit' | 'plaintext-only' | undefined | null;
 	contextmenu?: string | undefined | null;
-	dir?: string | undefined | null;
+	dir?: 'ltr' | 'rtl' | 'auto' | undefined | null;
 	draggable?: Booleanish | undefined | null;
 	elementtiming?: string | undefined | null;
 	enterkeyhint?:
@@ -751,6 +752,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	translate?: 'yes' | 'no' | '' | undefined | null;
 	inert?: boolean | undefined | null;
 	popover?: 'auto' | 'manual' | '' | undefined | null;
+	writingsuggestions?: Booleanish | undefined | null;
 
 	// Unknown
 	radiogroup?: string | undefined | null; // <command>, <menuitem>
@@ -769,8 +771,6 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	vocab?: string | undefined | null;
 
 	// Non-standard Attributes
-	autocapitalize?: string | undefined | null;
-	autocorrect?: string | undefined | null;
 	autosave?: string | undefined | null;
 	color?: string | undefined | null;
 	itemprop?: string | undefined | null;
@@ -868,7 +868,7 @@ export interface HTMLAreaAttributes extends HTMLAttributes<HTMLAreaElement> {
 	media?: string | undefined | null;
 	referrerpolicy?: ReferrerPolicy | undefined | null;
 	rel?: string | undefined | null;
-	shape?: string | undefined | null;
+	shape?: 'circle' | 'default' | 'poly' | 'rect' | undefined | null;
 	target?: string | undefined | null;
 	ping?: string | undefined | null;
 }
@@ -886,8 +886,13 @@ export interface HTMLButtonAttributes extends HTMLAttributes<HTMLButtonElement> 
 	disabled?: boolean | undefined | null;
 	form?: string | undefined | null;
 	formaction?: string | undefined | null;
-	formenctype?: string | undefined | null;
-	formmethod?: string | undefined | null;
+	formenctype?:
+		| 'application/x-www-form-urlencoded'
+		| 'multipart/form-data'
+		| 'text/plain'
+		| undefined
+		| null;
+	formmethod?: 'dialog' | 'get' | 'post' | undefined | null;
 	formnovalidate?: boolean | undefined | null;
 	formtarget?: string | undefined | null;
 	name?: string | undefined | null;
@@ -952,8 +957,13 @@ export interface HTMLFormAttributes extends HTMLAttributes<HTMLFormElement> {
 	acceptcharset?: string | undefined | null;
 	action?: string | undefined | null;
 	autocomplete?: AutoFillBase | undefined | null;
-	enctype?: string | undefined | null;
-	method?: string | undefined | null;
+	enctype?:
+		| 'application/x-www-form-urlencoded'
+		| 'multipart/form-data'
+		| 'text/plain'
+		| undefined
+		| null;
+	method?: 'dialog' | 'get' | 'post' | undefined | null;
 	name?: string | undefined | null;
 	novalidate?: boolean | undefined | null;
 	target?: string | undefined | null;
@@ -1040,14 +1050,21 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	accept?: string | undefined | null;
 	alt?: string | undefined | null;
 	autocomplete?: FullAutoFill | undefined | null;
+	// Safari only https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#autocorrect
+	autocorrect?: 'on' | 'off' | '' | undefined | null;
 	capture?: boolean | 'user' | 'environment' | undefined | null; // https://www.w3.org/TR/html-media-capture/#the-capture-attribute
 	checked?: boolean | undefined | null;
 	dirname?: string | undefined | null;
 	disabled?: boolean | undefined | null;
 	form?: string | undefined | null;
 	formaction?: string | undefined | null;
-	formenctype?: string | undefined | null;
-	formmethod?: string | undefined | null;
+	formenctype?:
+		| 'application/x-www-form-urlencoded'
+		| 'multipart/form-data'
+		| 'text/plain'
+		| undefined
+		| null;
+	formmethod?: 'dialog' | 'get' | 'post' | undefined | null;
 	formnovalidate?: boolean | undefined | null;
 	formtarget?: string | undefined | null;
 	height?: number | string | undefined | null;
@@ -1100,7 +1117,33 @@ export interface HTMLLiAttributes extends HTMLAttributes<HTMLLIElement> {
 }
 
 export interface HTMLLinkAttributes extends HTMLAttributes<HTMLLinkElement> {
-	as?: string | undefined | null;
+	as?:
+		| 'fetch'
+		| 'audio'
+		| 'audioworklet'
+		| 'document'
+		| 'embed'
+		| 'font'
+		| 'frame'
+		| 'iframe'
+		| 'image'
+		| 'json'
+		| 'manifest'
+		| 'object'
+		| 'paintworklet'
+		| 'report'
+		| 'script'
+		| 'serviceworker'
+		| 'sharedworker'
+		| 'style'
+		| 'track'
+		| 'video'
+		| 'webidentity'
+		| 'worker'
+		| 'xslt'
+		| ''
+		| undefined
+		| null;
 	crossorigin?: 'anonymous' | 'use-credentials' | '' | undefined | null;
 	href?: string | undefined | null;
 	hreflang?: string | undefined | null;
@@ -1143,7 +1186,7 @@ export interface HTMLMediaAttributes<T extends HTMLMediaElement> extends HTMLAtt
 	mediagroup?: string | undefined | null;
 	muted?: boolean | undefined | null;
 	playsinline?: boolean | undefined | null;
-	preload?: string | undefined | null;
+	preload?: 'auto' | 'none' | 'metadata' | '' | undefined | null;
 	src?: string | undefined | null;
 	/**
 	 * a value between 0 and 1
@@ -1173,7 +1216,14 @@ export interface HTMLMediaAttributes<T extends HTMLMediaElement> extends HTMLAtt
 export interface HTMLMetaAttributes extends HTMLAttributes<HTMLMetaElement> {
 	charset?: string | undefined | null;
 	content?: string | undefined | null;
-	'http-equiv'?: string | undefined | null;
+	'http-equiv'?:
+		| 'content-security-policy'
+		| 'content-type'
+		| 'default-style'
+		| 'refresh'
+		| 'x-ua-compatible'
+		| undefined
+		| null;
 	name?: string | undefined | null;
 	media?: string | undefined | null;
 }
@@ -1329,7 +1379,7 @@ export interface HTMLTdAttributes extends HTMLAttributes<HTMLTableCellElement> {
 	colspan?: number | undefined | null;
 	headers?: string | undefined | null;
 	rowspan?: number | undefined | null;
-	scope?: string | undefined | null;
+	scope?: 'col' | 'colgroup' | 'row' | 'rowgroup' | undefined | null;
 	abbr?: string | undefined | null;
 	height?: number | string | undefined | null;
 	width?: number | string | undefined | null;
@@ -1341,7 +1391,7 @@ export interface HTMLThAttributes extends HTMLAttributes<HTMLTableCellElement> {
 	colspan?: number | undefined | null;
 	headers?: string | undefined | null;
 	rowspan?: number | undefined | null;
-	scope?: string | undefined | null;
+	scope?: 'col' | 'colgroup' | 'row' | 'rowgroup' | undefined | null;
 	abbr?: string | undefined | null;
 }
 
@@ -1351,7 +1401,7 @@ export interface HTMLTimeAttributes extends HTMLAttributes<HTMLTimeElement> {
 
 export interface HTMLTrackAttributes extends HTMLAttributes<HTMLTrackElement> {
 	default?: boolean | undefined | null;
-	kind?: string | undefined | null;
+	kind?: 'captions' | 'chapters' | 'descriptions' | 'metadata' | 'subtitles' | undefined | null;
 	label?: string | undefined | null;
 	src?: string | undefined | null;
 	srclang?: string | undefined | null;
@@ -1453,7 +1503,8 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	lang?: string | undefined | null;
 	max?: number | string | undefined | null;
 	media?: string | undefined | null;
-	method?: string | undefined | null;
+	// On the `textPath` element
+	method?: 'align' | 'stretch' | undefined | null;
 	min?: number | string | undefined | null;
 	name?: string | undefined | null;
 	style?: string | undefined | null;
@@ -1737,6 +1788,10 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	[key: `data-${string}`]: any;
 }
 
+export interface HTMLTemplateAttributes extends HTMLAttributes<HTMLElement> {
+	shadowrootmode?: 'open' | 'closed' | undefined | null;
+}
+
 export interface HTMLWebViewAttributes extends HTMLAttributes<HTMLElement> {
 	allowfullscreen?: boolean | undefined | null;
 	allowpopups?: boolean | undefined | null;
@@ -1750,7 +1805,7 @@ export interface HTMLWebViewAttributes extends HTMLAttributes<HTMLElement> {
 	nodeintegration?: boolean | undefined | null;
 	partition?: string | undefined | null;
 	plugins?: boolean | undefined | null;
-	preload?: string | undefined | null;
+	preload?: 'auto' | 'none' | 'metadata' | '' | undefined | null;
 	src?: string | undefined | null;
 	useragent?: string | undefined | null;
 	webpreferences?: string | undefined | null;
@@ -1861,7 +1916,7 @@ export interface SvelteHTMLElements {
 	summary: HTMLAttributes<HTMLElement>;
 	sup: HTMLAttributes<HTMLElement>;
 	table: HTMLTableAttributes;
-	template: HTMLAttributes<HTMLTemplateElement>;
+	template: HTMLTemplateAttributes;
 	tbody: HTMLAttributes<HTMLTableSectionElement>;
 	td: HTMLTdAttributes;
 	textarea: HTMLTextareaAttributes;
