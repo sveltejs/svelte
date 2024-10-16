@@ -725,7 +725,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	class?: string | undefined | null;
 	contenteditable?: Booleanish | 'inherit' | 'plaintext-only' | undefined | null;
 	contextmenu?: string | undefined | null;
-	dir?: string | undefined | null;
+	dir?: 'ltr' | 'rtl' | 'auto' | undefined | null;
 	draggable?: Booleanish | undefined | null;
 	elementtiming?: string | undefined | null;
 	enterkeyhint?:
