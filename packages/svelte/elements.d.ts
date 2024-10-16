@@ -1786,6 +1786,10 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	[key: `data-${string}`]: any;
 }
 
+export interface HTMLTemplateAttributes extends HTMLAttributes<HTMLElement> {
+	shadowrootmode?: 'open' | 'closed' | undefined | null;
+}
+
 export interface HTMLWebViewAttributes extends HTMLAttributes<HTMLElement> {
 	allowfullscreen?: boolean | undefined | null;
 	allowpopups?: boolean | undefined | null;
@@ -1910,7 +1914,7 @@ export interface SvelteHTMLElements {
 	summary: HTMLAttributes<HTMLElement>;
 	sup: HTMLAttributes<HTMLElement>;
 	table: HTMLTableAttributes;
-	template: HTMLAttributes<HTMLTemplateElement>;
+	template: HTMLTemplateAttributes;
 	tbody: HTMLAttributes<HTMLTableSectionElement>;
 	td: HTMLTdAttributes;
 	textarea: HTMLTextareaAttributes;
