@@ -31,7 +31,7 @@ import {
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-import { source, mutable_source, set } from '../../reactivity/sources.js';
+import { source, mutable_source, internal_set } from '../../reactivity/sources.js';
 import { array_from, is_array } from '../../../shared/utils.js';
 import { INERT } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
@@ -463,11 +463,11 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
  */
 function update_item(item, value, index, type) {
 	if ((type & EACH_ITEM_REACTIVE) !== 0) {
-		set(item.v, value);
+		internal_set(item.v, value);
 	}
 
 	if ((type & EACH_INDEX_REACTIVE) !== 0) {
-		set(/** @type {Value<number>} */ (item.i), index);
+		internal_set(/** @type {Value<number>} */ (item.i), index);
 	} else {
 		item.i = index;
 	}
