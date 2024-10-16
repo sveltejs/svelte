@@ -7,7 +7,6 @@
 	let { data } = $props();
 
 	let bar = $state()
-
 	let { foo } = $derived(data)
 	run(() => {
 		bar = []

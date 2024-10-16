@@ -273,12 +273,7 @@ export function migrate(source, { filename } = {}) {
 				const { start, end } = get_node_range(source, node);
 				str.appendLeft(end, '\n');
 				str.move(start, end, /** @type {number} */ (parsed.instance?.content.end));
-				const carriage_idx = start - (source[start - 2] === '\r' ? 2 : 1);
-				// we might end up injecting something at the position we are about to remove
-				// since we only want to remove the carriage if we add the trimmed length
-				// of the transformed string to prevent removing something we added.
-				const transformed = state.str.snip(carriage_idx, start).toString().trim();
-				str.remove(carriage_idx + transformed.length, start);
+				str.update(start - (source[start - 2] === '\r' ? 2 : 1), start, '');
 			}
 		}
 
