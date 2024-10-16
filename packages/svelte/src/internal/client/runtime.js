@@ -801,7 +801,7 @@ export function get(signal) {
 			set_signal_status(active_effect, DIRTY);
 			schedule_effect(active_effect);
 		}
-	} else if (is_derived) {
+	} else if (is_derived && /** @type {Derived} */ (signal).deps === null) {
 		var derived = /** @type {Derived} */ (signal);
 		var parent = derived.parent;
 
