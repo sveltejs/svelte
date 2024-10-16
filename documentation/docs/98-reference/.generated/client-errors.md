@@ -125,5 +125,5 @@ Reading state that was created inside the same derived is forbidden. Consider us
 ### state_unsafe_mutation
 
 ```
-Updating state inside a derived is forbidden. If the value should not be reactive, declare it without `$state`
+Updating state inside a derived or logic block expression is forbidden. If the value should not be reactive, declare it without `$state`
 ```

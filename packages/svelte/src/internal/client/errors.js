@@ -343,12 +343,12 @@ export function state_unsafe_local_read() {
 }
 
 /**
- * Updating state inside a derived is forbidden. If the value should not be reactive, declare it without `$state`
+ * Updating state inside a derived or logic block expression is forbidden. If the value should not be reactive, declare it without `$state`
  * @returns {never}
  */
 export function state_unsafe_mutation() {
 	if (DEV) {
-		const error = new Error(`state_unsafe_mutation\nUpdating state inside a derived is forbidden. If the value should not be reactive, declare it without \`$state\``);
+		const error = new Error(`state_unsafe_mutation\nUpdating state inside a derived or logic block expression is forbidden. If the value should not be reactive, declare it without \`$state\``);
 
 		error.name = 'Svelte error';
 		throw error;
