@@ -549,6 +549,25 @@ const instance_script = {
 					labeled_statement &&
 					(labeled_has_single_assignment || is_expression_assignment)
 				) {
+					const indent = state.str.original.substring(
+						state.str.original.lastIndexOf('\n', /** @type {number} */ (node.start)) + 1,
+						/** @type {number} */ (node.start)
+					);
+					// transfer all the leading comments
+					if (
+						labeled_statement.body.type === 'BlockStatement' &&
+						labeled_statement.body.body[0].leadingComments
+					) {
+						for (let comment of labeled_statement.body.body[0].leadingComments) {
+							state.str.prependLeft(
+								/** @type {number} */ (node.start),
+								comment.type === 'Block'
+									? `/*${comment.value}*/\n${indent}`
+									: `// ${comment.value}\n${indent}`
+							);
+						}
+					}
+
 					// Someone wrote a `$: { ... }` statement which we can turn into a `$derived`
 					state.str.appendRight(
 						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
@@ -573,6 +592,21 @@ const instance_script = {
 						')'
 					);
 					state.derived_labeled_statements.add(labeled_statement);
+
+					// transfer all the trailing comments
+					if (
+						labeled_statement.body.type === 'BlockStatement' &&
+						labeled_statement.body.body[0].trailingComments
+					) {
+						for (let comment of labeled_statement.body.body[0].trailingComments) {
+							state.str.appendRight(
+								/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
+								comment.type === 'Block'
+									? `\n${indent}/*${comment.value}*/`
+									: `\n${indent}// ${comment.value}`
+							);
+						}
+					}
 				} else {
 					state.str.prependLeft(
 						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
@@ -1261,11 +1295,18 @@ function handle_events(element, state) {
  * Returns start and end of the node. If the start is preceeded with white-space-only before a line break,
  * the start will be the start of the line.
  * @param {string} source
- * @param {Node} node
+ * @param {LabeledStatement} node
  */
 function get_node_range(source, node) {
-	let start = /** @type {number} */ (node.start);
-	let end = /** @type {number} */ (node.end);
+	const first_leading_comment = node.leadingComments?.[0];
+	const last_trailing_comment = node.trailingComments?.[node.trailingComments.length - 1];
+
+	// @ts-expect-error the type of `Comment` seems to be wrong...the node actually contains
+	// start and end but the type seems to only contain a `range` (which doesn't actually exists)
+	let start = /** @type {number} */ (first_leading_comment?.start ?? node.start);
+	// @ts-expect-error the type of `Comment` seems to be wrong...the node actually contains
+	// start and end but the type seems to only contain a `range` (which doesn't actually exists)
+	let end = /** @type {number} */ (last_trailing_comment?.end ?? node.end);
 
 	let idx = start;
 	while (source[idx - 1] !== '\n' && source[idx - 1] !== '\r') {
