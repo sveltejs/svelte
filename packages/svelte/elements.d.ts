@@ -1100,7 +1100,33 @@ export interface HTMLLiAttributes extends HTMLAttributes<HTMLLIElement> {
 }
 
 export interface HTMLLinkAttributes extends HTMLAttributes<HTMLLinkElement> {
-	as?: string | undefined | null;
+	as?:
+		| 'fetch'
+		| 'audio'
+		| 'audioworklet'
+		| 'document'
+		| 'embed'
+		| 'font'
+		| 'frame'
+		| 'iframe'
+		| 'image'
+		| 'json'
+		| 'manifest'
+		| 'object'
+		| 'paintworklet'
+		| 'report'
+		| 'script'
+		| 'serviceworker'
+		| 'sharedworker'
+		| 'style'
+		| 'track'
+		| 'video'
+		| 'webidentity'
+		| 'worker'
+		| 'xslt'
+		| ''
+		| undefined
+		| null;
 	crossorigin?: 'anonymous' | 'use-credentials' | '' | undefined | null;
 	href?: string | undefined | null;
 	hreflang?: string | undefined | null;
