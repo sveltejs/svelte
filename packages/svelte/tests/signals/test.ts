@@ -488,7 +488,7 @@ describe('signals', () => {
 			assert.equal(a?.deps?.length, 1);
 			assert.equal(s?.reactions?.length, 1);
 			destroy();
-			assert.equal(a?.deps, null);
+			assert.equal(a?.deps?.length, 1);
 			assert.equal(s?.reactions, null);
 		};
 	});

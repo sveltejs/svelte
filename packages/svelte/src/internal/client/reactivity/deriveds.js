@@ -31,7 +31,7 @@ import { inspect_effects, set_inspect_effects } from './sources.js';
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
-	let flags = DERIVED | DIRTY;
+	var flags = DERIVED | DIRTY;
 
 	if (active_effect === null) {
 		flags |= UNOWNED;
@@ -57,9 +57,6 @@ export function derived(fn) {
 	if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
 		var derived = /** @type {Derived} */ (active_reaction);
 		(derived.children ??= []).push(signal);
-	}
-	if (active_effect !== null) {
-		(active_effect.deriveds ??= []).push(signal);
 	}
 
 	return signal;

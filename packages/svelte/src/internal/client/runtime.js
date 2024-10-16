@@ -801,10 +801,17 @@ export function get(signal) {
 			set_signal_status(active_effect, DIRTY);
 			schedule_effect(active_effect);
 		}
+	} else if (is_derived) {
+		var derived = /** @type {Derived} */ (signal);
+		var parent = derived.parent;
+
+		if (parent !== null && !parent.deriveds?.includes(derived)) {
+			(parent.deriveds ??= []).push(derived);
+		}
 	}
 
 	if (is_derived) {
-		var derived = /** @type {Derived} */ (signal);
+		derived = /** @type {Derived} */ (signal);
 
 		if (check_dirtiness(derived)) {
 			update_derived(derived);
