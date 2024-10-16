@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.267
+
+### Patch Changes
+
+- fix: ensure inserted code is preserved during migration ([#13617](https://github.com/sveltejs/svelte/pull/13617))
+
+- fix: ensure each block consistency to internal mutations to the collection ([#13614](https://github.com/sveltejs/svelte/pull/13614))
+
+- chore: improve derived ownership model ([#13623](https://github.com/sveltejs/svelte/pull/13623))
+
+- fix: ensure await block scope transforms are isolated ([#13622](https://github.com/sveltejs/svelte/pull/13622))
+
 ## 5.0.0-next.266
 
 ### Patch Changes
