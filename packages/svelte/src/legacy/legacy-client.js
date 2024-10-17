@@ -182,7 +182,7 @@ export function run(fn) {
 		var effect = /** @type {import('#client').Effect} */ (active_effect);
 		// If the effect is immediately made dirty again, mark it as maybe dirty to emulate legacy behaviour
 		if ((effect.f & DIRTY) !== 0) {
-			w.legacy_reactive_block_mutation();
+			w.legacy_recursive_reactive_block();
 			set_signal_status(effect, MAYBE_DIRTY);
 		}
 	});

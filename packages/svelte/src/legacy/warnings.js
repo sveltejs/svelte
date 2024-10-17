@@ -8,11 +8,11 @@ var normal = 'font-weight: normal';
 /**
  * Detected a migrated `$:` reactive block that both accesses and updates the same reactive value. This may cause recursive updates when converted to an `$effect`.
  */
-export function legacy_reactive_block_mutation() {
+export function legacy_recursive_reactive_block() {
 	if (DEV) {
-		console.warn(`%c[svelte] legacy_reactive_block_mutation\n%cDetected a migrated \`$:\` reactive block that both accesses and updates the same reactive value. This may cause recursive updates when converted to an \`$effect\`.`, bold, normal);
+		console.warn(`%c[svelte] legacy_recursive_reactive_block\n%cDetected a migrated \`$:\` reactive block that both accesses and updates the same reactive value. This may cause recursive updates when converted to an \`$effect\`.`, bold, normal);
 	} else {
 		// TODO print a link to the documentation
-		console.warn("legacy_reactive_block_mutation");
+		console.warn("legacy_recursive_reactive_block");
 	}
 }
