@@ -12,7 +12,7 @@ export function slot(anchor, $$props, name, slot_props, fallback_fn) {
 		hydrate_next();
 	}
 
-	var slot_fn = $$props.$$slots?.[name];
+	var slot_fn = $$props.$$slots?.[name] || $$props[name];
 	// Interop: Can use snippets to fill slots
 	var is_interop = false;
 	if (slot_fn === true) {
