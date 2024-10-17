@@ -1,5 +1,23 @@
 # svelte
 
+## 5.0.0-next.269
+
+### Patch Changes
+
+- fix: transitions within dynamic components now function correctly ([#13646](https://github.com/sveltejs/svelte/pull/13646))
+
+- fix: use `internal_set` in `await` block ([#13642](https://github.com/sveltejs/svelte/pull/13642))
+
+- fix: correctly applies autofocus to static elements ([#13648](https://github.com/sveltejs/svelte/pull/13648))
+
+- fix: `method` attribute is case insensitive ([#13639](https://github.com/sveltejs/svelte/pull/13639))
+
+- chore: avoid reporting inspections when an exception occurs ([#13601](https://github.com/sveltejs/svelte/pull/13601))
+
+- fix: ensure legacy run utility does not cause cycles ([#13643](https://github.com/sveltejs/svelte/pull/13643))
+
+- fix: better migration for leading and trailing comments ([#13630](https://github.com/sveltejs/svelte/pull/13630))
+
 ## 5.0.0-next.268
 
 ### Patch Changes
