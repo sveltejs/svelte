@@ -36,6 +36,10 @@ The easiest way to log a value as it changes over time is to use the [`$inspect`
 
 > The `render` function passed to `createRawSnippet` should return HTML for a single element
 
+## legacy_recursive_reactive_block
+
+> Detected a migrated `$:` reactive block that both accesses and updates the same reactive value. This may cause recursive updates when converted to an `$effect`.
+
 ## lifecycle_double_unmount
 
 > Tried to unmount a component that was not mounted
