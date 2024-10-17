@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.270
+
+### Patch Changes
+
+- fix: migrating rest props type includes props types ([#13632](https://github.com/sveltejs/svelte/pull/13632))
+
 ## 5.0.0-next.269
 
 ### Patch Changes
