@@ -1,5 +1,5 @@
 /** @import { VariableDeclarator, Node, Identifier, AssignmentExpression, LabeledStatement, ExpressionStatement } from 'estree' */
-/** @import { Visitors } from 'zimmerframe' */
+/** @import { Visitors, Context } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
 /** @import { Scope, ScopeRoot } from '../phases/scope.js' */
 /** @import { AST, Binding, SvelteNode, ValidatedCompileOptions } from '#compiler' */
@@ -323,10 +323,11 @@ export function migrate(source, { filename } = {}) {
  *  derived_components: Map<string, string>;
  * 	derived_labeled_statements: Set<LabeledStatement>;
  *  has_svelte_self: boolean;
+ *  migrate_prop_component_type?: boolean;
  * }} State
  */
 
-/** @type {Visitors<SvelteNode, State>} */
+/** @type {Visitors<SvelteNode | { type: "TSTypeReference", typeName: Identifier, start: number, end: number }, State>} */
 const instance_script = {
 	_(node, { state, next }) {
 		// @ts-expect-error
@@ -343,8 +344,37 @@ const instance_script = {
 		}
 		next();
 	},
-	Identifier(node, { state, path }) {
+	TSTypeReference(node, { state, path }) {
+		// we don't want to overwrite in case it's an exported prop because
+		// we already take care of that in extract_type_and_comment
+		if (
+			path[1] &&
+			path[1].type === 'ExportNamedDeclaration' &&
+			path[1].declaration?.type === 'VariableDeclaration' &&
+			path[1].declaration?.kind === 'let' &&
+			!state.migrate_prop_component_type
+		)
+			return;
+		if (state.analysis.runes) return;
+		if (node.typeName.type === 'Identifier') {
+			const binding = state.scope.get(node.typeName.name);
+			if (
+				binding &&
+				binding.declaration_kind === 'import' &&
+				binding.initial?.type === 'ImportDeclaration' &&
+				binding.initial.source.value?.toString().endsWith('.svelte')
+			) {
+				state.str.overwrite(
+					node.start,
+					node.end,
+					`ReturnType<typeof ${state.str.original.substring(node.start, node.end)}>`
+				);
+			}
+		}
+	},
+	Identifier(node, { state, path, next }) {
 		handle_identifier(node, state, path);
+		next();
 	},
 	ImportDeclaration(node, { state }) {
 		state.props_insertion_point = node.end ?? state.props_insertion_point;
@@ -370,7 +400,8 @@ const instance_script = {
 			state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
 		}
 	},
-	VariableDeclaration(node, { state, path, visit }) {
+	VariableDeclaration(node, context) {
+		const { state, path, visit, next } = context;
 		if (state.scope !== state.analysis.instance.scope) {
 			return;
 		}
@@ -465,7 +496,7 @@ const instance_script = {
 							: '',
 						optional: !!declarator.init,
 						bindable: binding.updated,
-						...extract_type_and_comment(declarator, state.str, path)
+						...extract_type_and_comment(declarator, state.str, context)
 					});
 				}
 
@@ -653,6 +684,7 @@ const instance_script = {
 			while (state.str.original[end] !== '\n') end++;
 			state.str.update(start, end, '');
 		}
+		next();
 	},
 	BreakStatement(node, { state, path }) {
 		if (path[1].type !== 'LabeledStatement') return;
@@ -1144,9 +1176,10 @@ function migrate_slot_usage(node, path, state) {
 /**
  * @param {VariableDeclarator} declarator
  * @param {MagicString} str
- * @param {SvelteNode[]} path
+ * @param {Context<SvelteNode | { type: "TSTypeReference", typeName: Identifier, start: number, end: number }, State>} context
  */
-function extract_type_and_comment(declarator, str, path) {
+function extract_type_and_comment(declarator, str, context) {
+	const path = context.path;
 	const parent = path.at(-1);
 
 	// Try to find jsdoc above the declaration
@@ -1166,7 +1199,14 @@ function extract_type_and_comment(declarator, str, path) {
 		while (str.original[start] === ' ') {
 			start++;
 		}
-		return { type: str.original.substring(start, declarator.id.typeAnnotation.end), comment };
+		context.visit(declarator.id.typeAnnotation, {
+			...context.state,
+			migrate_prop_component_type: true
+		});
+		return {
+			type: str.snip(start, declarator.id.typeAnnotation.end).toString(),
+			comment
+		};
 	}
 
 	// try to find a comment with a type annotation, hinting at jsdoc
