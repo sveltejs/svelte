@@ -1,5 +1,5 @@
 <script>
-	/** @type {Record<string, any>} */
+	/** @type {{children?: import('svelte').Snippet, foo_1?: import('svelte').Snippet<[any]>, bar?: import('svelte').Snippet, dashed_name?: import('svelte').Snippet, [key: string]: any}} */
 	let {
 		...props
 	} = $props();
