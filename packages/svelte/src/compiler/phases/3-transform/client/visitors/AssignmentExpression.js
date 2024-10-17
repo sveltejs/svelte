@@ -1,8 +1,9 @@
 /** @import { AssignmentExpression, AssignmentOperator, Expression, Pattern } from 'estree' */
+/** @import { Location } from 'locate-character' */
 /** @import { Context } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
 import { build_assignment_value } from '../../../../utils/ast.js';
-import { is_ignored } from '../../../../state.js';
+import { dev, filename, is_ignored, locator } from '../../../../state.js';
 import { build_proxy_reassignment, should_proxy } from '../utils.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
 
@@ -11,9 +12,22 @@ import { visit_assignment_expression } from '../../shared/assignments.js';
  * @param {Context} context
  */
 export function AssignmentExpression(node, context) {
-	const expression = /** @type {Expression} */ (
+	let expression = /** @type {Expression} */ (
 		visit_assignment_expression(node, context, build_assignment) ?? context.next()
 	);
+
+	const loc =
+		dev &&
+		node.left.type === 'MemberExpression' &&
+		node.left.start !== undefined &&
+		locator(node.left.start);
+
+	if (loc) {
+		expression = b.sequence([
+			b.call('$.track_assignment', b.literal(`${filename}:${loc.line}:${loc.column}`)),
+			expression
+		]);
+	}
 
 	return is_ignored(node, 'ownership_invalid_mutation')
 		? b.call('$.skip_ownership_validation', b.thunk(expression))
