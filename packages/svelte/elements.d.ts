@@ -892,7 +892,7 @@ export interface HTMLButtonAttributes extends HTMLAttributes<HTMLButtonElement> 
 		| 'text/plain'
 		| undefined
 		| null;
-	formmethod?: 'dialog' | 'get' | 'post' | undefined | null;
+	formmethod?: 'dialog' | 'get' | 'post' | 'DIALOG' | 'GET' | 'POST' | undefined | null;
 	formnovalidate?: boolean | undefined | null;
 	formtarget?: string | undefined | null;
 	name?: string | undefined | null;
@@ -963,7 +963,7 @@ export interface HTMLFormAttributes extends HTMLAttributes<HTMLFormElement> {
 		| 'text/plain'
 		| undefined
 		| null;
-	method?: 'dialog' | 'get' | 'post' | undefined | null;
+	method?: 'dialog' | 'get' | 'post' | 'DIALOG' | 'GET' | 'POST' | undefined | null;
 	name?: string | undefined | null;
 	novalidate?: boolean | undefined | null;
 	target?: string | undefined | null;
@@ -1064,7 +1064,7 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 		| 'text/plain'
 		| undefined
 		| null;
-	formmethod?: 'dialog' | 'get' | 'post' | undefined | null;
+	formmethod?: 'dialog' | 'get' | 'post' | 'DIALOG' | 'GET' | 'POST' | undefined | null;
 	formnovalidate?: boolean | undefined | null;
 	formtarget?: string | undefined | null;
 	height?: number | string | undefined | null;
