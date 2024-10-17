@@ -152,3 +152,15 @@ export function state_proxy_equality_mismatch(operator) {
 		console.warn("state_proxy_equality_mismatch");
 	}
 }
+
+/**
+ * Detected a migrated `$:` reactive block that both accesses and updates the same reactive value. This may cause recursive updates when converted to an `$effect`.
+ */
+export function legacy_recursive_reactive_block() {
+	if (DEV) {
+		console.warn(`%c[svelte] legacy_recursive_reactive_block\n%cDetected a migrated \`$:\` reactive block that both accesses and updates the same reactive value. This may cause recursive updates when converted to an \`$effect\`.`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("legacy_recursive_reactive_block");
+	}
+}

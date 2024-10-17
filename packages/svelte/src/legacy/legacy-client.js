@@ -12,7 +12,7 @@ import {
 } from '../internal/client/runtime.js';
 import { lifecycle_outside_component } from '../internal/shared/errors.js';
 import { define_property, is_array } from '../internal/shared/utils.js';
-import * as w from './warnings.js';
+import * as w from '../internal/client/warnings.js';
 
 /**
  * Takes the same options as a Svelte 4 component and the component function and returns a Svelte 4 compatible component.
