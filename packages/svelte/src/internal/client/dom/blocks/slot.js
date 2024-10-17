@@ -1,4 +1,6 @@
+import { DEV } from 'esm-env';
 import { hydrate_next, hydrating } from '../hydration.js';
+import { validated_snippets } from './snippet.js';
 
 /**
  * @param {Comment} anchor
@@ -12,7 +14,18 @@ export function slot(anchor, $$props, name, slot_props, fallback_fn) {
 		hydrate_next();
 	}
 
-	var slot_fn = $$props.$$slots?.[name] || $$props[name];
+	var slot_fn = $$props.$$slots?.[name];
+
+	if (slot_fn === undefined) {
+		var possible_snippet = $$props[name];
+		if (
+			typeof possible_snippet === 'function' &&
+			(!DEV || validated_snippets.has(possible_snippet))
+		) {
+			slot_fn = possible_snippet;
+		}
+	}
+
 	// Interop: Can use snippets to fill slots
 	var is_interop = false;
 	if (slot_fn === true) {

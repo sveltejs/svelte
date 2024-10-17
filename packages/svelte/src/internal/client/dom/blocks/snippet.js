@@ -16,6 +16,8 @@ import { DEV } from 'esm-env';
 import { get_first_child, get_next_sibling } from '../operations.js';
 import { noop } from '../../../shared/utils.js';
 
+export var validated_snippets = new WeakSet();
+
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
  * @param {TemplateNode} node
@@ -60,7 +62,7 @@ export function snippet(node, get_snippet, ...args) {
  * @param {(node: TemplateNode, ...args: any[]) => void} fn
  */
 export function wrap_snippet(component, fn) {
-	return (/** @type {TemplateNode} */ node, /** @type {any[]} */ ...args) => {
+	var wrapped_snippet = (/** @type {TemplateNode} */ node, /** @type {any[]} */ ...args) => {
 		var previous_component_function = dev_current_component_function;
 		set_dev_current_component_function(component);
 
@@ -70,6 +72,10 @@ export function wrap_snippet(component, fn) {
 			set_dev_current_component_function(previous_component_function);
 		}
 	};
+	if (DEV) {
+		validated_snippets.add(wrapped_snippet);
+	}
+	return wrapped_snippet;
 }
 
 /**
