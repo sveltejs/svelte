@@ -142,6 +142,10 @@ function is_static_element(node) {
 			return false;
 		}
 
+		if (attribute.name === 'autofocus') {
+			return false;
+		}
+
 		if (node.name === 'option' && attribute.name === 'value') {
 			return false;
 		}
