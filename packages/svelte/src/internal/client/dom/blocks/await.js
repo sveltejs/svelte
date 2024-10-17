@@ -1,19 +1,19 @@
 /** @import { Effect, Source, TemplateNode } from '#client' */
-import { is_promise, noop } from '../../../shared/utils.js';
+import { DEV } from 'esm-env';
+import { is_promise } from '../../../shared/utils.js';
+import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
+import { internal_set, mutable_source, source } from '../../reactivity/sources.js';
 import {
 	component_context,
 	flush_sync,
 	is_runes,
-	set_component_context,
 	set_active_effect,
 	set_active_reaction,
+	set_component_context,
 	set_dev_current_component_function
 } from '../../runtime.js';
-import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
-import { DEV } from 'esm-env';
-import { queue_micro_task } from '../task.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
-import { mutable_source, set, source } from '../../reactivity/sources.js';
+import { queue_micro_task } from '../task.js';
 
 const PENDING = 0;
 const THEN = 1;
@@ -120,12 +120,16 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 			promise.then(
 				(value) => {
 					if (promise !== input) return;
-					set(input_source, value);
+					// we technically could use `set` here since it's on the next microtick
+					// but let's use internal_set for consistency and just to be safe
+					internal_set(input_source, value);
 					update(THEN, true);
 				},
 				(error) => {
 					if (promise !== input) return;
-					set(error_source, error);
+					// we technically could use `set` here since it's on the next microtick
+					// but let's use internal_set for consistency and just to be safe
+					internal_set(error_source, error);
 					update(CATCH, true);
 				}
 			);
@@ -142,7 +146,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 				});
 			}
 		} else {
-			set(input_source, input);
+			internal_set(input_source, input);
 			update(THEN, false);
 		}
 
