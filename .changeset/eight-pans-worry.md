@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix : $.component() break transition
+fix: transitions within dynamic components now function correctly
