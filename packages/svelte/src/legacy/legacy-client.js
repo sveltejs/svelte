@@ -12,6 +12,7 @@ import {
 } from '../internal/client/runtime.js';
 import { lifecycle_outside_component } from '../internal/shared/errors.js';
 import { define_property, is_array } from '../internal/shared/utils.js';
+import * as w from './warnings.js';
 
 /**
  * Takes the same options as a Svelte 4 component and the component function and returns a Svelte 4 compatible component.
@@ -181,6 +182,7 @@ export function run(fn) {
 		var effect = /** @type {import('#client').Effect} */ (active_effect);
 		// If the effect is immediately made dirty again, mark it as maybe dirty to emulate legacy behaviour
 		if ((effect.f & DIRTY) !== 0) {
+			w.legacy_reactive_block_mutation();
 			set_signal_status(effect, MAYBE_DIRTY);
 		}
 	});

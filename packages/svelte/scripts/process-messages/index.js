@@ -404,3 +404,4 @@ transform('client-errors', 'src/internal/client/errors.js');
 transform('server-errors', 'src/internal/server/errors.js');
 transform('shared-errors', 'src/internal/shared/errors.js');
 transform('shared-warnings', 'src/internal/shared/warnings.js');
+transform('legacy-warnings', 'src/legacy/warnings.js');
