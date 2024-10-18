@@ -570,7 +570,8 @@ const instance_script = {
 
 				const labeled_has_single_assignment =
 					labeled_statement?.body.type === 'BlockStatement' &&
-					labeled_statement.body.body.length === 1;
+					labeled_statement.body.body.length === 1 &&
+					labeled_statement.body.body[0].type === 'ExpressionStatement';
 
 				const is_expression_assignment =
 					labeled_statement?.body.type === 'ExpressionStatement' &&
