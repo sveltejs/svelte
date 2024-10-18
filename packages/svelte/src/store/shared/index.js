@@ -3,6 +3,8 @@
 import { noop, run_all } from '../../internal/shared/utils.js';
 import { safe_not_equal } from '../../internal/client/reactivity/equality.js';
 import { subscribe_to_store } from '../utils.js';
+import { queue_micro_task } from '../../internal/client/dom/task.js';
+import { active_effect } from '../../internal/client/runtime.js';
 
 /**
  * @type {Array<SubscribeInvalidateTuple<any> | any>}
@@ -168,7 +170,11 @@ export function derived(stores, fn, initial_value) {
 			)
 		);
 		started = true;
-		sync();
+		if (active_effect === null) {
+			sync();
+		} else {
+			queue_micro_task(sync);
+		}
 		return function stop() {
 			run_all(unsubscribers);
 			cleanup();
