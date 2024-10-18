@@ -996,6 +996,10 @@ const template = {
 			if (attr.type === 'SpreadAttribute') {
 				slot_props += `...${state.str.original.substring(/** @type {number} */ (attr.expression.start), attr.expression.end)}, `;
 			} else if (attr.type === 'Attribute') {
+				if (attr.name === 'slot') {
+					continue;
+				}
+
 				if (attr.name === 'name') {
 					slot_name = /** @type {any} */ (attr.value)[0].data;
 				} else {
@@ -1200,7 +1204,13 @@ function migrate_slot_usage(node, path, state) {
 				[node.end, state.str.original.length]
 			]
 		});
-		state.str.appendLeft(node.end, `\n${state.indent.repeat(path.length - 2)}{/snippet}`);
+		const str = `\n${state.indent.repeat(path.length - 2)}{/snippet}`;
+
+		if (node.type === 'SlotElement') {
+			state.str.appendRight(node.end, str);
+		} else {
+			state.str.appendLeft(node.end, str);
+		}
 	}
 }
 
