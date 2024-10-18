@@ -1049,7 +1049,7 @@ function migrate_slot_usage(node, path, state) {
 			if (!regex_is_valid_identifier.test(snippet_name)) {
 				state.str.appendLeft(
 					node.start,
-					`<!-- @migration-task: migrate this slot by hand -->\n${state.indent}`
+					`<!-- @migration-task: migrate this slot by hand, \`${snippet_name}\` is an invalid identifier -->\n${state.indent}`
 				);
 				return;
 			}
