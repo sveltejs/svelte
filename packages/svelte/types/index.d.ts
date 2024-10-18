@@ -379,44 +379,26 @@ declare module 'svelte' {
 	}): Snippet<Params>;
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
-	export type MountOptions<Props extends Record<string, any> = Record<string, any>> = {
-		/**
-		 * Target element where the component will be mounted.
-		 */
-		target: Document | Element | ShadowRoot;
-		/**
-		 * Optional node inside `target` and when specified, it is used to render the component immediately before it.
-		 */
-		anchor?: Node;
-		/**
-		 * Allows the specification of events.
-		 */
-		events?: Record<string, (e: any) => any>;
-		/**
-		 * Used to define context at the component level.
-		 */
-		context?: Map<any, any>;
-		/**
-		 * Used to control transition playback on initial render.  The default value is `true` to run transitions.
-		 */
-		intro?: boolean;
-	} & {} extends Props ? {
-		/**
-		 * Component properties.
-		 */
-		props?: Props;
-	} : {
-		/**
-		 * Component properties.
-		 */
-		props: Props;
-	}
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
 	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
 	 *
 	 * */
-	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: MountOptions<Props>): Exports;
+	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
+		target: Document | Element | ShadowRoot;
+		anchor?: Node;
+		props?: Props;
+		events?: Record<string, (e: any) => any>;
+		context?: Map<any, any>;
+		intro?: boolean;
+	} : {
+		target: Document | Element | ShadowRoot;
+		props: Props;
+		anchor?: Node;
+		events?: Record<string, (e: any) => any>;
+		context?: Map<any, any>;
+		intro?: boolean;
+	}): Exports;
 	/**
 	 * Hydrates a component on the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
 	 *
