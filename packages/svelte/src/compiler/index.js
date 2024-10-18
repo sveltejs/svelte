@@ -89,7 +89,7 @@ export function compileModule(source, options) {
  * @overload
  * @param {string} source
  * @param {{ filename?: string; modern?: false }} [options]
- * @returns {Record<string, any>}
+ * @returns {LegacyRoot}
  */
 
 /**
