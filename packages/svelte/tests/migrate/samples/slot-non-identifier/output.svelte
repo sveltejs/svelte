@@ -51,28 +51,28 @@
 
 <Comp>
 	<!-- @migration-task: migrate this slot by hand, `cool:stuff` is an invalid identifier -->
-	<div let:shoudl_stay slot="cool:stuff">
+	<div let:should_stay slot="cool:stuff">
 		cool
 	</div>
 </Comp>
 
 <Comp>
 	<!-- @migration-task: migrate this slot by hand, `cool stuff` is an invalid identifier -->
-	<div let:shoudl_stay slot="cool stuff">
+	<div let:should_stay slot="cool stuff">
 		cool
 	</div>
 </Comp>
 
 <Comp>
 	<!-- @migration-task: migrate this slot by hand, `cool:stuff` is an invalid identifier -->
-	<svelte:fragment let:shoudl_stay slot="cool:stuff">
+	<svelte:fragment let:should_stay slot="cool:stuff">
 		cool
 	</svelte:fragment>
 </Comp>
 
 <Comp>
 	<!-- @migration-task: migrate this slot by hand, `cool stuff` is an invalid identifier -->
-	<svelte:fragment let:shoudl_stay slot="cool stuff">
+	<svelte:fragment let:should_stay slot="cool stuff">
 		cool
 	</svelte:fragment>
 </Comp>
