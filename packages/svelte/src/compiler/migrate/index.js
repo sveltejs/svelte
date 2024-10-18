@@ -1204,7 +1204,13 @@ function migrate_slot_usage(node, path, state) {
 				[node.end, state.str.original.length]
 			]
 		});
-		state.str.appendRight(node.end, `\n${state.indent.repeat(path.length - 2)}{/snippet}`);
+		const str = `\n${state.indent.repeat(path.length - 2)}{/snippet}`;
+
+		if (node.type === 'SlotElement') {
+			state.str.appendRight(node.end, str);
+		} else {
+			state.str.appendLeft(node.end, str);
+		}
 	}
 }
 
