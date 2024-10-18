@@ -32,7 +32,7 @@
 </Comp>
 
 <Comp>
-	<!-- @migration-task: migrate this slot by hand -->
+	<!-- @migration-task: migrate this slot by hand, `cool stuff` is an invalid identifier -->
 	<svelte:fragment slot="cool stuff">
 		cool
 	</svelte:fragment>
