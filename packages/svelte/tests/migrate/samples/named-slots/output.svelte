@@ -10,4 +10,5 @@
 <Component>
   {#snippet msg()}
     {@render children?.()}
+  {/snippet}
 </Component>

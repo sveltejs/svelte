@@ -1193,17 +1193,18 @@ function migrate_slot_usage(node, path, state) {
 			);
 		}
 	} else {
-		const prepend_string = `{#snippet ${snippet_name}(${props})}\n${state.indent.repeat(path.length - 2)}`;
 		// Named slot or `svelte:fragment`: wrap element itself in a snippet
-		state.str.prependLeft(node.start, prepend_string);
+		state.str.prependLeft(
+			node.start,
+			`{#snippet ${snippet_name}(${props})}\n${state.indent.repeat(path.length - 2)}`
+		);
 		state.str.indent(state.indent, {
 			exclude: [
 				[0, node.start],
 				[node.end, state.str.original.length]
 			]
 		});
-		const append_string = `\n${state.indent.repeat(path.length - 2)}{/snippet}`;
-		state.str.appendLeft(node.end, append_string);
+		state.str.appendRight(node.end, `\n${state.indent.repeat(path.length - 2)}{/snippet}`);
 	}
 }
 
