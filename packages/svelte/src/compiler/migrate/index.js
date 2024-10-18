@@ -996,6 +996,10 @@ const template = {
 			if (attr.type === 'SpreadAttribute') {
 				slot_props += `...${state.str.original.substring(/** @type {number} */ (attr.expression.start), attr.expression.end)}, `;
 			} else if (attr.type === 'Attribute') {
+				if (attr.name === 'slot') {
+					continue;
+				}
+
 				if (attr.name === 'name') {
 					slot_name = /** @type {any} */ (attr.value)[0].data;
 				} else {
@@ -1189,18 +1193,17 @@ function migrate_slot_usage(node, path, state) {
 			);
 		}
 	} else {
+		const prepend_string = `{#snippet ${snippet_name}(${props})}\n${state.indent.repeat(path.length - 2)}`;
 		// Named slot or `svelte:fragment`: wrap element itself in a snippet
-		state.str.prependLeft(
-			node.start,
-			`{#snippet ${snippet_name}(${props})}\n${state.indent.repeat(path.length - 2)}`
-		);
+		state.str.prependLeft(node.start, prepend_string);
 		state.str.indent(state.indent, {
 			exclude: [
 				[0, node.start],
 				[node.end, state.str.original.length]
 			]
 		});
-		state.str.appendLeft(node.end, `\n${state.indent.repeat(path.length - 2)}{/snippet}`);
+		const append_string = `\n${state.indent.repeat(path.length - 2)}{/snippet}`;
+		state.str.appendLeft(node.end, append_string);
 	}
 }
 
