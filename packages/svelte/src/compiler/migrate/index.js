@@ -549,27 +549,28 @@ const instance_script = {
 				let labeled_statement;
 
 				// Analyze declaration bindings to see if they're exclusively updated within a single reactive statement
-				const possible_derived = bindings.every(
-					(binding) =>
-						binding.initial !== null &&
-						binding.references.every((reference) => {
-							const declaration = reference.path.find((el) => el.type === 'VariableDeclaration');
-							const assignment = reference.path.find((el) => el.type === 'AssignmentExpression');
-							const update = reference.path.find((el) => el.type === 'UpdateExpression');
-							const labeled = reference.path.find(
-								(el) => el.type === 'LabeledStatement' && el.label.name === '$'
-							);
+				const possible_derived = bindings.every((binding) =>
+					binding.references.every((reference) => {
+						const declaration = reference.path.find((el) => el.type === 'VariableDeclaration');
+						const assignment = reference.path.find((el) => el.type === 'AssignmentExpression');
+						const update = reference.path.find((el) => el.type === 'UpdateExpression');
+						const labeled = reference.path.find(
+							(el) => el.type === 'LabeledStatement' && el.label.name === '$'
+						);
 
-							if (assignment && labeled) {
-								if (assignment_in_labeled) return false;
-								assignment_in_labeled = /** @type {AssignmentExpression} */ (assignment);
-								labeled_statement = /** @type {LabeledStatement} */ (labeled);
-							}
+						if (assignment && labeled) {
+							if (assignment_in_labeled) return false;
+							assignment_in_labeled = /** @type {AssignmentExpression} */ (assignment);
+							labeled_statement = /** @type {LabeledStatement} */ (labeled);
+						}
 
-							return (
-								!update && (declaration || (labeled && assignment) || (!labeled && !assignment))
-							);
-						})
+						return (
+							!update &&
+							((declaration && binding.initial) ||
+								(labeled && assignment) ||
+								(!labeled && !assignment))
+						);
+					})
 				);
 
 				const labeled_has_single_assignment =

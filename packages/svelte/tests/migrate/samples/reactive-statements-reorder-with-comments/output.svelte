@@ -6,7 +6,10 @@
 
 
 	// triple
-	let triple = $state();
+	//  update triple
+	let triple = $derived(count * 3)
+	//  trailing comment
+	//  in triple;
 
 	function increment() {
 		count += 1;
@@ -16,12 +19,7 @@
 	run(() => {
 		console.log({ count, double });
 	});
-	run(() => {
-		// update triple
-		triple = count * 3;
-		// trailing comment
-		// in triple
-	});
+	
 </script>
 
 <button onclick={increment}>
