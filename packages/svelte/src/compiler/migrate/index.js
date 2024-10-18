@@ -23,6 +23,8 @@ import { regex_is_valid_identifier } from '../phases/patterns.js';
 const regex_style_tags = /(<style[^>]+>)([\S\s]*?)(<\/style>)/g;
 const style_placeholder = '/*$$__STYLE_CONTENT__$$*/';
 
+let has_migration_task = false;
+
 /**
  * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
  * May throw an error if the code is too complex to migrate automatically.
@@ -33,6 +35,7 @@ const style_placeholder = '/*$$__STYLE_CONTENT__$$*/';
  */
 export function migrate(source, { filename } = {}) {
 	try {
+		has_migration_task = false;
 		// Blank CSS, could contain SCSS or similar that needs a preprocessor.
 		// Since we don't care about CSS in this migration, we'll just ignore it.
 		/** @type {Array<[number, string]>} */
@@ -303,10 +306,17 @@ export function migrate(source, { filename } = {}) {
 	} catch (e) {
 		// eslint-disable-next-line no-console
 		console.error('Error while migrating Svelte code', e);
-
+		has_migration_task = true;
 		return {
 			code: `<!-- @migration-task Error while migrating Svelte code: ${/** @type {any} */ (e).message} -->\n${source}`
 		};
+	} finally {
+		if (has_migration_task) {
+			// eslint-disable-next-line no-console
+			console.log(
+				`One or more \`@migration-task\` comments were added to ${filename ? `\`${filename}\`` : "a file (unfortunately we don't know the name)"}, please check them and complete the migration manually.`
+			);
+		}
 	}
 }
 
@@ -820,6 +830,7 @@ const template = {
 		const source = state.str.original.substring(node.start, node.end);
 		if (!state.filename) {
 			const indent = guess_indent(source);
+			has_migration_task = true;
 			state.str.prependRight(
 				node.start,
 				`<!-- @migration-task: svelte:self is deprecated, import this Svelte file into itself instead -->\n${indent}`
@@ -1084,6 +1095,7 @@ function migrate_slot_usage(node, path, state) {
 		) {
 			snippet_name = attribute.value[0].data;
 			if (!regex_is_valid_identifier.test(snippet_name)) {
+				has_migration_task = true;
 				state.str.appendLeft(
 					node.start,
 					`<!-- @migration-task: migrate this slot by hand, \`${snippet_name}\` is an invalid identifier -->\n${state.indent}`
