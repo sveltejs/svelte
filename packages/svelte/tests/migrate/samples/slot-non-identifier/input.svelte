@@ -37,3 +37,30 @@
 		cool
 	</svelte:fragment>
 </Comp>
+
+
+<!-- don't remove the let directive if we don't migrate -->
+
+<Comp>
+	<div let:shoudl_stay slot="cool:stuff">
+		cool
+	</div>
+</Comp>
+
+<Comp>
+	<div let:shoudl_stay slot="cool stuff">
+		cool
+	</div>
+</Comp>
+
+<Comp>
+	<svelte:fragment let:shoudl_stay slot="cool:stuff">
+		cool
+	</svelte:fragment>
+</Comp>
+
+<Comp>
+	<svelte:fragment let:shoudl_stay slot="cool stuff">
+		cool
+	</svelte:fragment>
+</Comp>

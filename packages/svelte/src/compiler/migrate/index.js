@@ -1097,6 +1097,11 @@ function migrate_slot_usage(node, path, state) {
 	let snippet_name = 'children';
 	let snippet_props = [];
 
+	// if we stop the transform because the name is not correct we don't want to
+	// remove the let directive and they could come before the name
+	let removal_queue = [];
+	let slot_name_found = false;
+
 	for (let attribute of node.attributes) {
 		if (
 			attribute.type === 'Attribute' &&
@@ -1112,6 +1117,24 @@ function migrate_slot_usage(node, path, state) {
 				);
 				return;
 			}
+			if (parent?.type === 'Component' || parent?.type === 'SvelteComponent') {
+				for (let attribute of parent.attributes) {
+					if (attribute.type === 'Attribute' || attribute.type === 'BindDirective') {
+						if (attribute.name === snippet_name) {
+							state.str.appendLeft(
+								node.start,
+								`<!-- @migration-task: migrate this slot by hand, \`${snippet_name}\` would shadow a prop on the parent component -->\n${state.indent}`
+							);
+							return;
+						}
+					}
+				}
+			}
+			slot_name_found = true;
+			// flush the queue after we found the name
+			for (let remove_let of removal_queue) {
+				remove_let();
+			}
 			state.str.remove(attribute.start, attribute.end);
 		}
 		if (attribute.type === 'LetDirective') {
@@ -1121,7 +1144,21 @@ function migrate_slot_usage(node, path, state) {
 						? `: ${state.str.original.substring(/** @type {number} */ (attribute.expression.start), /** @type {number} */ (attribute.expression.end))}`
 						: '')
 			);
-			state.str.remove(attribute.start, attribute.end);
+			function remove_let() {
+				state.str.remove(attribute.start, attribute.end);
+			}
+			// if we didn't find the name yet we just add to the queue else we call immediately
+			if (slot_name_found) {
+				remove_let();
+			} else {
+				removal_queue.push(remove_let);
+			}
+		}
+	}
+
+	if (!slot_name_found && removal_queue.length > 0) {
+		for (let remove_let of removal_queue) {
+			remove_let();
 		}
 	}
 
