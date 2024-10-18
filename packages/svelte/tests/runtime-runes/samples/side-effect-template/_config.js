@@ -9,6 +9,9 @@ export default test({
 	test({ assert, target }) {
 		const button = target.querySelector('button');
 
-		assert.throws(() => {}, /state_unsafe_mutation/);
+		assert.throws(() => {
+			button?.click();
+			flushSync();
+		}, /state_unsafe_mutation/);
 	}
 });
