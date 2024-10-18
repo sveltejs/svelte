@@ -1,14 +1,12 @@
 <script>
-	/** @type {{children?: import('svelte').Snippet, foo_1?: import('svelte').Snippet<[any]>, bar?: import('svelte').Snippet, dashed_name?: import('svelte').Snippet, [key: string]: any}} */
-	let {
-		...props
-	} = $props();
+	/** @type {{children?: import('svelte').Snippet, foo?: import('svelte').Snippet<[any]>, bar?: import('svelte').Snippet, [key: string]: any}} */
+	let { ...props } = $props();
 </script>
 
 <button>{@render props.children?.()}</button>
 
-{#if foo}
-	{@render props.foo_1?.({ foo, })}
+{#if foos}
+	{@render props.foo?.({ foo: foos, })}
 {/if}
 
 {#if props.bar}
@@ -19,9 +17,5 @@
 {#if props.children}foo{/if}
 
 {#if props.children}foo{/if}
-
-{#if props.dashed_name}foo{/if}
-
-{@render props.dashed_name?.()}
 
 {@render props.children?.({ header: "something", title: props.cool, id, })}

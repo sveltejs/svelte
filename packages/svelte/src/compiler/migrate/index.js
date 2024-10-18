@@ -418,7 +418,7 @@ const instance_script = {
 			state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
 		}
 	},
-	VariableDeclaration(node, { state, path, visit }) {
+	VariableDeclaration(node, { state, path, visit, next }) {
 		if (state.scope !== state.analysis.instance.scope) {
 			return;
 		}
@@ -439,12 +439,14 @@ const instance_script = {
 				bindings = state.scope.get_bindings(declarator);
 			} catch (e) {
 				// no bindings, so we can skip this
+				next();
 				continue;
 			}
 			const has_state = bindings.some((binding) => binding.kind === 'state');
 			const has_props = bindings.some((binding) => binding.kind === 'bindable_prop');
 
 			if (!has_state && !has_props) {
+				next();
 				continue;
 			}
 
@@ -491,25 +493,31 @@ const instance_script = {
 
 				const prop = state.props.find((prop) => prop.exported === (binding.prop_alias || name));
 				if (prop) {
+					next();
 					// $$Props type was used
 					prop.init = declarator.init
-						? state.str.original.substring(
-								/** @type {number} */ (declarator.init.start),
-								/** @type {number} */ (declarator.init.end)
-							)
+						? state.str
+								.snip(
+									/** @type {number} */ (declarator.init.start),
+									/** @type {number} */ (declarator.init.end)
+								)
+								.toString()
 						: '';
 					prop.bindable = binding.updated;
 					prop.exported = binding.prop_alias || name;
 					prop.type_only = false;
 				} else {
+					next();
 					state.props.push({
 						local: name,
 						exported: binding.prop_alias ? binding.prop_alias : name,
 						init: declarator.init
-							? state.str.original.substring(
-									/** @type {number} */ (declarator.init.start),
-									/** @type {number} */ (declarator.init.end)
-								)
+							? state.str
+									.snip(
+										/** @type {number} */ (declarator.init.start),
+										/** @type {number} */ (declarator.init.end)
+									)
+									.toString()
 							: '',
 						optional: !!declarator.init,
 						bindable: binding.updated,
@@ -1036,6 +1044,11 @@ const template = {
 			name = existing_prop.local;
 		} else if (slot_name !== 'default') {
 			name = state.scope.generate(slot_name);
+			if (name !== slot_name) {
+				throw new Error(
+					'This migration would change the name of a slot making the component unusable'
+				);
+			}
 		}
 
 		if (!existing_prop) {
@@ -1434,7 +1447,12 @@ function handle_identifier(node, state, path) {
 			if (existing_prop) {
 				name = existing_prop.local;
 			} else if (name !== 'default') {
-				name = state.scope.generate(name);
+				let new_name = state.scope.generate(name);
+				if (new_name !== name) {
+					throw new Error(
+						'This migration would change the name of a slot making the component unusable'
+					);
+				}
 			}
 
 			name = name === 'default' ? 'children' : name;
@@ -1451,7 +1469,7 @@ function handle_identifier(node, state, path) {
 					// we start with any and delegate to when the slot
 					// is actually rendered (it might not happen in that case)
 					// any is still a safe bet
-					type: `import('svelte').Snippet<[any]>}`,
+					type: `import('svelte').Snippet<[any]>`,
 					needs_refine_type: true
 				});
 			}
