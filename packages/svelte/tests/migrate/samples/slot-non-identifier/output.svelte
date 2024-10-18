@@ -3,7 +3,7 @@
 </script>
 
 <Comp>
-	<!-- @migration-task: migrate this slot by hand -->
+	<!-- @migration-task: migrate this slot by hand, `cool:stuff` is an invalid identifier -->
 	<div slot="cool:stuff">
 		cool
 	</div>
