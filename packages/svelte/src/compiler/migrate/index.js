@@ -301,8 +301,11 @@ export function migrate(source, { filename } = {}) {
 		return { code: str.toString() };
 	} catch (e) {
 		// eslint-disable-next-line no-console
-		console.error('Error while migrating Svelte code');
-		throw e;
+		console.error('Error while migrating Svelte code', e);
+
+		return {
+			code: `<!-- @migration-task Error while migrating Svelte code: ${/** @type {any} */ (e).message} -->\n${source}`
+		};
 	}
 }
 
@@ -348,6 +351,40 @@ const instance_script = {
 	},
 	ImportDeclaration(node, { state }) {
 		state.props_insertion_point = node.end ?? state.props_insertion_point;
+		if (node.source.value === 'svelte') {
+			let illegal_specifiers = [];
+			let removed_specifiers = 0;
+			for (let specifier of node.specifiers) {
+				if (
+					specifier.type === 'ImportSpecifier' &&
+					['beforeUpdate', 'afterUpdate'].includes(specifier.imported.name)
+				) {
+					const references = state.scope.references.get(specifier.local.name);
+					if (!references) {
+						let end = /** @type {number} */ (
+							state.str.original.indexOf(',', specifier.end) !== -1 &&
+							state.str.original.indexOf(',', specifier.end) <
+								state.str.original.indexOf('}', specifier.end)
+								? state.str.original.indexOf(',', specifier.end) + 1
+								: specifier.end
+						);
+						while (state.str.original[end].trim() === '') end++;
+						state.str.remove(/** @type {number} */ (specifier.start), end);
+						removed_specifiers++;
+						continue;
+					}
+					illegal_specifiers.push(specifier.imported.name);
+				}
+			}
+			if (removed_specifiers === node.specifiers.length) {
+				state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
+			}
+			if (illegal_specifiers.length > 0) {
+				throw new Error(
+					`Can't migrate code with ${illegal_specifiers.join(' and ')}. Please migrate by hand.`
+				);
+			}
+		}
 	},
 	ExportNamedDeclaration(node, { state, next }) {
 		if (node.declaration) {
