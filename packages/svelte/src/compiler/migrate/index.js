@@ -564,7 +564,12 @@ const instance_script = {
 							labeled_statement = /** @type {LabeledStatement} */ (labeled);
 						}
 
-						return !update && (declaration || (labeled && assignment) || (!labeled && !assignment));
+						return (
+							!update &&
+							((declaration && binding.initial) ||
+								(labeled && assignment) ||
+								(!labeled && !assignment))
+						);
 					})
 				);
 
