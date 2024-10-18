@@ -2,8 +2,10 @@
 	import { run } from 'svelte/legacy';
 
 	let count = $state(0);
-	let double = $derived(count * 2);
-	
+	let double = $state();
+	run(() => {
+		double = count * 2;
+	});
 	
 	let quadruple = $state();
 	run(() => {
@@ -41,10 +43,13 @@
 		evenmore_doubled = evenmore * 2;
 	});
 
-	let almost_infinity = $derived(count * 128);
-	
+	let almost_infinity = $state();
+	run(() => {
+		almost_infinity = count * 128;
+	});
 
-	let should_be_state = $state(42);
+	let should_be_state = $state();
+	let should_be_state = $state();
 	
 	let should_be_state_too = $state(42);
 	
