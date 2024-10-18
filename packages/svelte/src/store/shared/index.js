@@ -168,7 +168,7 @@ export function derived(stores, fn, initial_value) {
 			)
 		);
 		started = true;
-		sync()
+		sync();
 		return function stop() {
 			run_all(unsubscribers);
 			cleanup();
