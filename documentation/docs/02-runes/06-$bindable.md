@@ -2,4 +2,4 @@
 title: $bindable
 ---
 
-TODO
+Coming soon!
