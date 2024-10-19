@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.1
+
+### Patch Changes
+
+- fix: use typedef for JSDoc props and maintain comments ([#13698](https://github.com/sveltejs/svelte/pull/13698))
+
 ## 5.0.0
 
 A new major version of Svelte has been released! 🎉
