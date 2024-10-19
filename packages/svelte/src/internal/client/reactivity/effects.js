@@ -192,8 +192,7 @@ export function user_effect(fn) {
 	// until the component is mounted
 	var defer =
 		active_effect !== null &&
-		(active_effect.f & RENDER_EFFECT) !== 0 &&
-		// TODO do we actually need this? removing them changes nothing
+		(active_effect.f & BRANCH_EFFECT) !== 0 &&
 		component_context !== null &&
 		!component_context.m;
 
