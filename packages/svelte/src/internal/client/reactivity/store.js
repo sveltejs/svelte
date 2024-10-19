@@ -4,7 +4,7 @@ import { subscribe_to_store } from '../../../store/utils.js';
 import { noop } from '../../shared/utils.js';
 import { get } from '../runtime.js';
 import { teardown } from './effects.js';
-import { mutable_source, set } from './sources.js';
+import { internal_set, mutable_source } from './sources.js';
 
 /**
  * Gets the current value of a store. If the store isn't subscribed to yet, it will create a proxy
@@ -39,7 +39,7 @@ export function store_get(store, store_name, stores) {
 					// inside a derived, we will hit the `state_unsafe_mutation` error if we `set` the value
 					entry.source.v = v;
 				} else {
-					set(entry.source, v);
+					internal_set(entry.source, v);
 				}
 			});
 
