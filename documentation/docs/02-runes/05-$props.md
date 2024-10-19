@@ -35,14 +35,16 @@ On the other side, inside `MyComponent.svelte`, we can receive props with the `$
 <p>this component is {+++adjective+++}</p>
 ```
 
-## Default values
+## Fallback values
 
-Destructuring allows us to declare default values, which are used if the parent component does not set a given prop:
+Destructuring allows us to declare fallback values, which are used if the parent component does not set a given prop:
 
 ```js
 /// file: MyComponent.svelte
 let { adjective = 'happy' } = $props();
 ```
+
+> [!NOTE] Fallback values are not turned into reactive state proxies.
 
 ## Renaming props
 
@@ -58,6 +60,38 @@ Finally, we can use a _rest property_ to get, well, the rest of the props:
 
 ```js
 let { a, b, c, ...others } = $props();
+```
+
+## Updating props
+
+References to a prop inside a component update when the prop itself updates — when `count` changes in `App.svelte`, it will also change inside `Child.svelte`. But the child component is able to temporarily override the prop value, which can be useful for unsaved emphemeral state ([demo](/playground/untitled#H4sIAAAAAAAAE6WQ0WrDMAxFf0WIQR0Wmu3VTQJln7HsIfVcZubIxlbGRvC_DzuBraN92qPula50tODZWB1RPi_IX16jLALWSOOUq6P3-_ihLWftNEZ9TVeOWBNHlNhGFYznfqCBzeRdYHh6M_YVzsFNsNs3pdpGd4eBcqPVDMrNxNDBXeSRtXioDgO1zU8ataeZ2RE4Utao924RFXQ9iHXwvoPHKpW1xY4g_Bg0cSVhKS0p560Za95612ZC02ONrD8ZJYdZp_rGQ37ff_mSP86Np2TWZaNNmdcH56P4P67K66_SXoK9pG-5dF5Z9QEAAA==)):
+
+<!-- prettier-ignore -->
+```svelte
+/// file: App.svelte
+<script>
+	import Child from './Child.svelte';
+
+	let count = $state(0);
+</script>
+
+<button onclick={() => (count += 1)}>
+	clicks (parent): {count}
+</button>
+
+<Child {count} />
+```
+
+<!-- prettier-ignore -->
+```svelte
+/// file: Child.svelte
+<script>
+	let { count } = $props();
+</script>
+
+<button onclick={() => (count += 1)}>
+	clicks (child): {count}
+</button>
 ```
 
 ## Type safety
