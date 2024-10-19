@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.2
+
+### Patch Changes
+
+- fix: don't blank css on migration error ([#13703](https://github.com/sveltejs/svelte/pull/13703))
+
 ## 5.0.1
 
 ### Patch Changes
