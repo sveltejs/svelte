@@ -18,9 +18,12 @@ import {
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
 import { validate_component_options } from '../validate-options.js';
 import { is_svg, is_void } from '../../utils.js';
+import { regex_is_valid_identifier } from '../phases/patterns.js';
 
 const regex_style_tags = /(<style[^>]+>)([\S\s]*?)(<\/style>)/g;
 const style_placeholder = '/*$$__STYLE_CONTENT__$$*/';
+
+let has_migration_task = false;
 
 /**
  * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
@@ -32,6 +35,7 @@ const style_placeholder = '/*$$__STYLE_CONTENT__$$*/';
  */
 export function migrate(source, { filename } = {}) {
 	try {
+		has_migration_task = false;
 		// Blank CSS, could contain SCSS or similar that needs a preprocessor.
 		// Since we don't care about CSS in this migration, we'll just ignore it.
 		/** @type {Array<[number, string]>} */
@@ -301,8 +305,18 @@ export function migrate(source, { filename } = {}) {
 		return { code: str.toString() };
 	} catch (e) {
 		// eslint-disable-next-line no-console
-		console.error('Error while migrating Svelte code');
-		throw e;
+		console.error('Error while migrating Svelte code', e);
+		has_migration_task = true;
+		return {
+			code: `<!-- @migration-task Error while migrating Svelte code: ${/** @type {any} */ (e).message} -->\n${source}`
+		};
+	} finally {
+		if (has_migration_task) {
+			// eslint-disable-next-line no-console
+			console.log(
+				`One or more \`@migration-task\` comments were added to ${filename ? `\`${filename}\`` : "a file (unfortunately we don't know the name)"}, please check them and complete the migration manually.`
+			);
+		}
 	}
 }
 
@@ -348,6 +362,40 @@ const instance_script = {
 	},
 	ImportDeclaration(node, { state }) {
 		state.props_insertion_point = node.end ?? state.props_insertion_point;
+		if (node.source.value === 'svelte') {
+			let illegal_specifiers = [];
+			let removed_specifiers = 0;
+			for (let specifier of node.specifiers) {
+				if (
+					specifier.type === 'ImportSpecifier' &&
+					['beforeUpdate', 'afterUpdate'].includes(specifier.imported.name)
+				) {
+					const references = state.scope.references.get(specifier.local.name);
+					if (!references) {
+						let end = /** @type {number} */ (
+							state.str.original.indexOf(',', specifier.end) !== -1 &&
+							state.str.original.indexOf(',', specifier.end) <
+								state.str.original.indexOf('}', specifier.end)
+								? state.str.original.indexOf(',', specifier.end) + 1
+								: specifier.end
+						);
+						while (state.str.original[end].trim() === '') end++;
+						state.str.remove(/** @type {number} */ (specifier.start), end);
+						removed_specifiers++;
+						continue;
+					}
+					illegal_specifiers.push(specifier.imported.name);
+				}
+			}
+			if (removed_specifiers === node.specifiers.length) {
+				state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
+			}
+			if (illegal_specifiers.length > 0) {
+				throw new Error(
+					`Can't migrate code with ${illegal_specifiers.join(' and ')}. Please migrate by hand.`
+				);
+			}
+		}
 	},
 	ExportNamedDeclaration(node, { state, next }) {
 		if (node.declaration) {
@@ -370,7 +418,7 @@ const instance_script = {
 			state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
 		}
 	},
-	VariableDeclaration(node, { state, path, visit }) {
+	VariableDeclaration(node, { state, path, visit, next }) {
 		if (state.scope !== state.analysis.instance.scope) {
 			return;
 		}
@@ -391,12 +439,14 @@ const instance_script = {
 				bindings = state.scope.get_bindings(declarator);
 			} catch (e) {
 				// no bindings, so we can skip this
+				next();
 				continue;
 			}
 			const has_state = bindings.some((binding) => binding.kind === 'state');
 			const has_props = bindings.some((binding) => binding.kind === 'bindable_prop');
 
 			if (!has_state && !has_props) {
+				next();
 				continue;
 			}
 
@@ -443,25 +493,31 @@ const instance_script = {
 
 				const prop = state.props.find((prop) => prop.exported === (binding.prop_alias || name));
 				if (prop) {
+					next();
 					// $$Props type was used
 					prop.init = declarator.init
-						? state.str.original.substring(
-								/** @type {number} */ (declarator.init.start),
-								/** @type {number} */ (declarator.init.end)
-							)
+						? state.str
+								.snip(
+									/** @type {number} */ (declarator.init.start),
+									/** @type {number} */ (declarator.init.end)
+								)
+								.toString()
 						: '';
 					prop.bindable = binding.updated;
 					prop.exported = binding.prop_alias || name;
 					prop.type_only = false;
 				} else {
+					next();
 					state.props.push({
 						local: name,
 						exported: binding.prop_alias ? binding.prop_alias : name,
 						init: declarator.init
-							? state.str.original.substring(
-									/** @type {number} */ (declarator.init.start),
-									/** @type {number} */ (declarator.init.end)
-								)
+							? state.str
+									.snip(
+										/** @type {number} */ (declarator.init.start),
+										/** @type {number} */ (declarator.init.end)
+									)
+									.toString()
 							: '',
 						optional: !!declarator.init,
 						bindable: binding.updated,
@@ -516,13 +572,19 @@ const instance_script = {
 							labeled_statement = /** @type {LabeledStatement} */ (labeled);
 						}
 
-						return !update && (declaration || (labeled && assignment) || (!labeled && !assignment));
+						return (
+							!update &&
+							((declaration && binding.initial) ||
+								(labeled && assignment) ||
+								(!labeled && !assignment))
+						);
 					})
 				);
 
 				const labeled_has_single_assignment =
 					labeled_statement?.body.type === 'BlockStatement' &&
-					labeled_statement.body.body.length === 1;
+					labeled_statement.body.body.length === 1 &&
+					labeled_statement.body.body[0].type === 'ExpressionStatement';
 
 				const is_expression_assignment =
 					labeled_statement?.body.type === 'ExpressionStatement' &&
@@ -782,6 +844,7 @@ const template = {
 		const source = state.str.original.substring(node.start, node.end);
 		if (!state.filename) {
 			const indent = guess_indent(source);
+			has_migration_task = true;
 			state.str.prependRight(
 				node.start,
 				`<!-- @migration-task: svelte:self is deprecated, import this Svelte file into itself instead -->\n${indent}`
@@ -941,6 +1004,10 @@ const template = {
 			if (attr.type === 'SpreadAttribute') {
 				slot_props += `...${state.str.original.substring(/** @type {number} */ (attr.expression.start), attr.expression.end)}, `;
 			} else if (attr.type === 'Attribute') {
+				if (attr.name === 'slot') {
+					continue;
+				}
+
 				if (attr.name === 'name') {
 					slot_name = /** @type {any} */ (attr.value)[0].data;
 				} else {
@@ -977,6 +1044,11 @@ const template = {
 			name = existing_prop.local;
 		} else if (slot_name !== 'default') {
 			name = state.scope.generate(slot_name);
+			if (name !== slot_name) {
+				throw new Error(
+					'This migration would change the name of a slot making the component unusable'
+				);
+			}
 		}
 
 		if (!existing_prop) {
@@ -1038,6 +1110,10 @@ function migrate_slot_usage(node, path, state) {
 	let snippet_name = 'children';
 	let snippet_props = [];
 
+	// if we stop the transform because the name is not correct we don't want to
+	// remove the let directive and they could come before the name
+	let removal_queue = [];
+
 	for (let attribute of node.attributes) {
 		if (
 			attribute.type === 'Attribute' &&
@@ -1045,6 +1121,31 @@ function migrate_slot_usage(node, path, state) {
 			is_text_attribute(attribute)
 		) {
 			snippet_name = attribute.value[0].data;
+			if (!regex_is_valid_identifier.test(snippet_name)) {
+				has_migration_task = true;
+				state.str.appendLeft(
+					node.start,
+					`<!-- @migration-task: migrate this slot by hand, \`${snippet_name}\` is an invalid identifier -->\n${state.indent}`
+				);
+				return;
+			}
+			if (parent?.type === 'Component' || parent?.type === 'SvelteComponent') {
+				for (let attribute of parent.attributes) {
+					if (attribute.type === 'Attribute' || attribute.type === 'BindDirective') {
+						if (attribute.name === snippet_name) {
+							state.str.appendLeft(
+								node.start,
+								`<!-- @migration-task: migrate this slot by hand, \`${snippet_name}\` would shadow a prop on the parent component -->\n${state.indent}`
+							);
+							return;
+						}
+					}
+				}
+			}
+			// flush the queue after we found the name
+			for (let remove_let of removal_queue) {
+				remove_let();
+			}
 			state.str.remove(attribute.start, attribute.end);
 		}
 		if (attribute.type === 'LetDirective') {
@@ -1054,7 +1155,14 @@ function migrate_slot_usage(node, path, state) {
 						? `: ${state.str.original.substring(/** @type {number} */ (attribute.expression.start), /** @type {number} */ (attribute.expression.end))}`
 						: '')
 			);
-			state.str.remove(attribute.start, attribute.end);
+			// we just add to the queue to remove them after we found if we need to migrate or we bail
+			removal_queue.push(() => state.str.remove(attribute.start, attribute.end));
+		}
+	}
+
+	if (removal_queue.length > 0) {
+		for (let remove_let of removal_queue) {
+			remove_let();
 		}
 	}
 
@@ -1137,7 +1245,13 @@ function migrate_slot_usage(node, path, state) {
 				[node.end, state.str.original.length]
 			]
 		});
-		state.str.appendLeft(node.end, `\n${state.indent.repeat(path.length - 2)}{/snippet}`);
+		const str = `\n${state.indent.repeat(path.length - 2)}{/snippet}`;
+
+		if (node.type === 'SlotElement') {
+			state.str.appendRight(node.end, str);
+		} else {
+			state.str.appendLeft(node.end, str);
+		}
 	}
 }
 
@@ -1361,7 +1475,12 @@ function handle_identifier(node, state, path) {
 			if (existing_prop) {
 				name = existing_prop.local;
 			} else if (name !== 'default') {
-				name = state.scope.generate(name);
+				let new_name = state.scope.generate(name);
+				if (new_name !== name) {
+					throw new Error(
+						'This migration would change the name of a slot making the component unusable'
+					);
+				}
 			}
 
 			name = name === 'default' ? 'children' : name;
@@ -1378,7 +1497,7 @@ function handle_identifier(node, state, path) {
 					// we start with any and delegate to when the slot
 					// is actually rendered (it might not happen in that case)
 					// any is still a safe bet
-					type: `import('svelte').Snippet<[any]>}`,
+					type: `import('svelte').Snippet<[any]>`,
 					needs_refine_type: true
 				});
 			}

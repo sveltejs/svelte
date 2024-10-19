@@ -1,7 +1,7 @@
 <button><slot /></button>
 
-{#if foo}
-	<slot name="foo" {foo} />
+{#if foos}
+	<slot name="foo" foo={foos} />
 {/if}
 
 {#if $$slots.bar}
@@ -12,9 +12,5 @@
 {#if $$slots.default}foo{/if}
 
 {#if $$slots['default']}foo{/if}
-
-{#if $$slots['dashed-name']}foo{/if}
-
-<slot name="dashed-name" />
 
 <slot header="something" title={$$props.cool} {id} />

@@ -4,7 +4,6 @@ import {
 	component_context,
 	active_effect,
 	active_reaction,
-	destroy_effect_children,
 	dev_current_component_function,
 	update_effect,
 	get,
@@ -16,7 +15,8 @@ import {
 	set_is_destroying_effect,
 	set_is_flushing_effect,
 	set_signal_status,
-	untrack
+	untrack,
+	set_active_effect
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -42,6 +42,7 @@ import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
+import { destroy_derived } from './deriveds.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -364,6 +365,54 @@ export function execute_effect_teardown(effect) {
 }
 
 /**
+ * @param {Effect} signal
+ * @returns {void}
+ */
+export function destroy_effect_deriveds(signal) {
+	var deriveds = signal.deriveds;
+
+	if (deriveds !== null) {
+		signal.deriveds = null;
+
+		for (var i = 0; i < deriveds.length; i += 1) {
+			destroy_derived(deriveds[i]);
+		}
+	}
+}
+
+/**
+ * @param {Effect} signal
+ * @param {boolean} remove_dom
+ * @returns {void}
+ */
+export function destroy_effect_children(signal, remove_dom = false) {
+	var effect = signal.first;
+	signal.first = signal.last = null;
+
+	while (effect !== null) {
+		var next = effect.next;
+		destroy_effect(effect, remove_dom);
+		effect = next;
+	}
+}
+
+/**
+ * @param {Effect} signal
+ * @returns {void}
+ */
+export function destroy_block_effect_children(signal) {
+	var effect = signal.first;
+
+	while (effect !== null) {
+		var next = effect.next;
+		if ((effect.f & BRANCH_EFFECT) === 0) {
+			destroy_effect(effect);
+		}
+		effect = next;
+	}
+}
+
+/**
  * @param {Effect} effect
  * @param {boolean} [remove_dom]
  * @returns {void}
@@ -375,18 +424,32 @@ export function destroy_effect(effect, remove_dom = true) {
 		/** @type {TemplateNode | null} */
 		var node = effect.nodes_start;
 		var end = effect.nodes_end;
+		var previous_reaction = active_reaction;
+		var previous_effect = active_effect;
 
-		while (node !== null) {
-			/** @type {TemplateNode | null} */
-			var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
+		// Really we only need to do this in Chromium because of https://chromestatus.com/feature/5128696823545856,
+		// as removal of the DOM can cause sync `blur` events to fire, which can cause logic to run inside
+		// the current `active_reaction`, which isn't what we want at all. Additionally, the blur event handler
+		// might create a derived or effect and they will be incorrectly attached to the wrong thing
+		set_active_reaction(null);
+		set_active_effect(null);
+		try {
+			while (node !== null) {
+				/** @type {TemplateNode | null} */
+				var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
 
-			node.remove();
-			node = next;
+				node.remove();
+				node = next;
+			}
+		} finally {
+			set_active_reaction(previous_reaction);
+			set_active_effect(previous_effect);
 		}
 
 		removed = true;
 	}
 
+	destroy_effect_deriveds(effect);
 	destroy_effect_children(effect, remove_dom && !removed);
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);
