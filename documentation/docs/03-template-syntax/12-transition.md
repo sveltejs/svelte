@@ -1,5 +1,5 @@
 ---
-title: Transitions & Animations
+title: transition:
 ---
 
 - how to use (template syntax)

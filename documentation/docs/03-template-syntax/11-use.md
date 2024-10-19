@@ -1,5 +1,5 @@
 ---
-title: Actions
+title: use:
 ---
 
 - template syntax

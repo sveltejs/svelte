@@ -1,5 +1,5 @@
 ---
-title: Snippets
+title: {#snippet ...}
 ---
 
 Better title needed?

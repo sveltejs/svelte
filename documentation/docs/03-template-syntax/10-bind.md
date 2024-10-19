@@ -1,5 +1,5 @@
 ﻿---
-title: Bindings
+title: bind:
 ---
 
 - how for dom elements
