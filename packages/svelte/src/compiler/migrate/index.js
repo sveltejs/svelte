@@ -34,6 +34,7 @@ let has_migration_task = false;
  * @returns {{ code: string; }}
  */
 export function migrate(source, { filename } = {}) {
+	let og_source = source;
 	try {
 		has_migration_task = false;
 		// Blank CSS, could contain SCSS or similar that needs a preprocessor.
@@ -303,7 +304,7 @@ export function migrate(source, { filename } = {}) {
 		console.error('Error while migrating Svelte code', e);
 		has_migration_task = true;
 		return {
-			code: `<!-- @migration-task Error while migrating Svelte code: ${/** @type {any} */ (e).message} -->\n${source}`
+			code: `<!-- @migration-task Error while migrating Svelte code: ${/** @type {any} */ (e).message} -->\n${og_source}`
 		};
 	} finally {
 		if (has_migration_task) {
