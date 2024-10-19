@@ -3,7 +3,6 @@ import { DEV } from 'esm-env';
 import { define_property, get_descriptors, get_prototype_of } from '../shared/utils.js';
 import {
 	destroy_block_effect_children,
-	destroy_effect,
 	destroy_effect_children,
 	destroy_effect_deriveds,
 	effect,
