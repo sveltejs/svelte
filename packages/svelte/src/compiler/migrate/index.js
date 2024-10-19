@@ -213,11 +213,11 @@ export function migrate(source, { filename } = {}) {
 					}
 					type += `\n${indent}}`;
 				} else {
-					type = `/**\n${indent}* @typedef {Object} ${type_name}${state.props
+					type = `/**\n${indent} * @typedef {Object} ${type_name}${state.props
 						.map((prop) => {
-							return `\n${indent}* @property {${prop.type}} ${prop.optional ? `[${prop.exported}]` : prop.exported}${prop.comment ? ` - ${prop.comment}` : ''}`;
+							return `\n${indent} * @property {${prop.type}} ${prop.optional ? `[${prop.exported}]` : prop.exported}${prop.comment ? ` - ${prop.comment}` : ''}`;
 						})
-						.join(``)}\n${indent}*/`;
+						.join(``)}\n${indent} */`;
 				}
 				let props_declaration = `let {${props_separator}${props}${has_many_props ? `\n${indent}` : ' '}}`;
 				if (uses_ts) {
@@ -1260,7 +1260,6 @@ function extract_type_and_comment(declarator, str, path) {
 
 	// Try to find jsdoc above the declaration
 	let comment_node = /** @type {Node} */ (parent)?.leadingComments?.at(-1);
-	//if (comment_node?.type !== 'Block') comment_node = undefined;
 
 	const comment_start = /** @type {any} */ (comment_node)?.start;
 	const comment_end = /** @type {any} */ (comment_node)?.end;

@@ -1,12 +1,12 @@
 <script>
 	
 	/**
-	* @typedef {Object} Props
-	* @property {Record<string, { href: string; title: string; }[]>} readonly
-	* @property {string} [optional]
-	* @property {any} binding
-	* @property {string} [bindingOptional]
-	*/
+	 * @typedef {Object} Props
+	 * @property {Record<string, { href: string; title: string; }[]>} readonly
+	 * @property {string} [optional]
+	 * @property {any} binding
+	 * @property {string} [bindingOptional]
+	 */
 
 	/** @type {Props} */
 	let {

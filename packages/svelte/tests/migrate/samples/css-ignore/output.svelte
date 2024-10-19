@@ -1,8 +1,8 @@
 <script>
 	/**
-	* @typedef {Object} Props
-	* @property {any} name
-	*/
+	 * @typedef {Object} Props
+	 * @property {any} name
+	 */
 
 	/** @type {Props} */
 	let { name } = $props();

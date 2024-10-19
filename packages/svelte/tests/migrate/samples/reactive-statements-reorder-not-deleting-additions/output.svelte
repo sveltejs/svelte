@@ -4,9 +4,9 @@
 
 	import { blah } from './blah.js'
 	/**
-	* @typedef {Object} Props
-	* @property {any} data
-	*/
+	 * @typedef {Object} Props
+	 * @property {any} data
+	 */
 
 	/** @type {Props} */
 	let { data } = $props();

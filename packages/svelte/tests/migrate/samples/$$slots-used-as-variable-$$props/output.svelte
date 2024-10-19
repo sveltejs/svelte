@@ -1,9 +1,9 @@
 <script>
 	/**
-	* @typedef {Object} Props
-	* @property {import('svelte').Snippet} [message]
-	* @property {import('svelte').Snippet<[any]>} [extra]
-	*/
+	 * @typedef {Object} Props
+	 * @property {import('svelte').Snippet} [message]
+	 * @property {import('svelte').Snippet<[any]>} [extra]
+	 */
 
 	/** @type {Props & { [key: string]: any }} */
 	let { ...props } = $props();
