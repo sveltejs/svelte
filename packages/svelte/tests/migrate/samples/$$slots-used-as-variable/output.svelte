@@ -1,5 +1,13 @@
 <script>
-	/** @type {{message?: import('svelte').Snippet, showMessage?: any, title?: import('svelte').Snippet<[any]>, extra?: import('svelte').Snippet<[any]>}} */
+	/**
+	 * @typedef {Object} Props
+	 * @property {import('svelte').Snippet} [message]
+	 * @property {any} [showMessage]
+	 * @property {import('svelte').Snippet<[any]>} [title]
+	 * @property {import('svelte').Snippet<[any]>} [extra]
+	 */
+
+	/** @type {Props} */
 	let {
 		message,
 		showMessage = message,

@@ -1,6 +1,6 @@
 <script>
 	import Output_1 from './output.svelte';
-	/** @type {{[key: string]: any}} */
+	/** @type {{ [key: string]: any }} */
 	let { ...props } = $props();
 	let Output;
 </script>

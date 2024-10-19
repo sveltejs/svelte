@@ -1,5 +1,12 @@
 <script>
-	/** @type {{children?: import('svelte').Snippet, foo?: import('svelte').Snippet<[any]>, bar?: import('svelte').Snippet, [key: string]: any}} */
+	/**
+	 * @typedef {Object} Props
+	 * @property {import('svelte').Snippet} [children]
+	 * @property {import('svelte').Snippet<[any]>} [foo]
+	 * @property {import('svelte').Snippet} [bar]
+	 */
+
+	/** @type {Props & { [key: string]: any }} */
 	let { ...props } = $props();
 </script>
 

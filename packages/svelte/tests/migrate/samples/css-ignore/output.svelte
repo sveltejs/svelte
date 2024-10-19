@@ -1,5 +1,10 @@
 <script>
-	/** @type {{name: any}} */
+	/**
+	 * @typedef {Object} Props
+	 * @property {any} name
+	 */
+
+	/** @type {Props} */
 	let { name } = $props();
 </script>
 
