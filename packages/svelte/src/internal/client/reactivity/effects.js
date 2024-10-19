@@ -16,7 +16,8 @@ import {
 	set_is_destroying_effect,
 	set_is_flushing_effect,
 	set_signal_status,
-	untrack
+	untrack,
+	set_active_effect
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -376,11 +377,14 @@ export function destroy_effect(effect, remove_dom = true) {
 		var node = effect.nodes_start;
 		var end = effect.nodes_end;
 		var previous_reaction = active_reaction;
+		var previous_effect = active_effect;
 
 		// Really we only need to do this in Chromium because of https://chromestatus.com/feature/5128696823545856,
 		// as removal of the DOM can cause sync `blur` events to fire, which can cause logic to run inside
-		// the current `active_reaction`, which isn't what we want at all
+		// the current `active_reaction`, which isn't what we want at all. Additionally, the blur event handler
+		// might create a derived or effect and they will be incorrectly attached to the wrong thing
 		set_active_reaction(null);
+		set_active_effect(null);
 		while (node !== null) {
 			/** @type {TemplateNode | null} */
 			var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
@@ -389,6 +393,7 @@ export function destroy_effect(effect, remove_dom = true) {
 			node = next;
 		}
 		set_active_reaction(previous_reaction);
+		set_active_effect(previous_effect);
 
 		removed = true;
 	}
