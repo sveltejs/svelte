@@ -1283,9 +1283,13 @@ function extract_type_and_comment(declarator, str, path) {
 		.map((line) =>
 			line
 				.trim()
+				// replace `// ` for one liners
 				.replace(/^\/\/\s*/g, '')
-				.replace(/^\/\*\*\s*/g, '')
+				// replace `\**` for the initial JSDoc
+				.replace(/^\/\*\*?\s*/g, '')
+				// migrate `*/` for the end of JSDoc
 				.replace(/\s*\*\/$/g, '')
+				// remove any initial `* ` to clean the comment
 				.replace(/^\*\s*/g, '')
 		)
 		.filter(Boolean);
