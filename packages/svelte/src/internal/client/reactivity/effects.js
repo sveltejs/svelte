@@ -326,7 +326,7 @@ export function template_effect(fn) {
 			value: '{expression}'
 		});
 	}
-	return render_effect(fn);
+	return block(fn);
 }
 
 /**
