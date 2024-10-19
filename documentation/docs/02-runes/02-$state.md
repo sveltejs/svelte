@@ -97,7 +97,7 @@ let person = $state.raw({
 	age: 49
 });
 
-// this will have no effect (and will throw an error in dev)
+// this will have no effect
 person.age += 1;
 
 // this will work, because we're creating a new person

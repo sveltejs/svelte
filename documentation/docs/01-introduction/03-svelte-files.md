@@ -37,8 +37,6 @@ In addition to normal JavaScript, you can use _runes_ to declare [component prop
 
 A `<script>` tag with a `module` attribute runs once when the module first evaluates, rather than for each component instance. Variables declared in this block can be referenced elsewhere in the component, but not vice versa.
 
-You can `export` bindings from this block, and they will become exports of the compiled module. You cannot `export default`, since the default export is the component itself.
-
 ```svelte
 <script module>
 	let total = 0;
@@ -49,6 +47,8 @@ You can `export` bindings from this block, and they will become exports of the c
 	console.log(`instantiated ${total} times`);
 </script>
 ```
+
+You can `export` bindings from this block, and they will become exports of the compiled module. You cannot `export default`, since the default export is the component itself.
 
 ## `<style>`
 
