@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0
+
+A new major version of Svelte has been released! 🎉
+
+The new version brings:
+
+- even better performance,
+- a more granular reactivity system with runes,
+- more expressive template syntax with snippets and event attributes,
+- native TypeScript support,
+- and backwards compatibility with the previous syntax!
+
+For more details check out the [Svelte docs](https://svelte-omnisite.vercel.app/) and the [migration guide](https://svelte-omnisite.vercel.app/docs/svelte/v5-migration-guide).
+
 ## 5.0.0-next.272
 
 ### Patch Changes
