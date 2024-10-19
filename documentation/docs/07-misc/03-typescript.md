@@ -211,7 +211,7 @@ declare namespace svelteHTML {
 	// enhance attributes
 	interface HTMLAttributes<T> {
 		// If you want to use the beforeinstallprompt event
-		'onbeforeinstallprompt'?: (event: any) => any;
+		onbeforeinstallprompt?: (event: any) => any;
 		// If you want to use myCustomAttribute={..} (note: all lowercase)
 		mycustomattribute?: any; // You can replace any with something more specific if you like
 	}
