@@ -2,29 +2,29 @@
 title: Overview
 ---
 
-- Short intro to what Svelte is and why it's the best ever
-- A few code examples to have a very rough understanding of how Svelte code looks like
-- Jump off points to tutorial, SvelteKit etc
-
-Svelte is a web UI framework that uses a compiler to turn declarative component code like this...
+Svelte is a framework for building user interfaces on the web. It uses a compiler to turn declarative components written in HTML, CSS and JavaScript...
 
 ```svelte
 <!--- file: App.svelte --->
-<script lang="ts">
-	let count = $state(0);
-
-	function increment() {
-		count += 1;
+<script>
+	function greet() {
+		alert('Welcome to Svelte!');
 	}
 </script>
 
-<button onclick={increment}>
-	clicks: {count}
-</button>
+<button onclick={greet}>click me</button>
+
+<style>
+	button {
+		font-size: 2em;
+	}
+</style>
 ```
 
-...into tightly optimized JavaScript that updates the document when state like count changes. Because the compiler can 'see' where count is referenced, the generated code is highly efficient, and because we're hijacking syntax like `$state(...)` and `=` instead of using cumbersome APIs, you can write less code.
+...into lean, tightly optimized JavaScript.
 
-Besides being fun to work with, Svelte offers a lot of features built-in, such as animations and transitions. Once you've written your first components you can reach for our batteries included metaframework [SvelteKit](../kit) which provides you with an opinionated router, data loading and more.
+You can use it to build anything on the web, from standalone components to ambitious full stack apps (using Svelte's companion application framework, [SvelteKit](../kit)) and everything in between.
 
-If you're new to Svelte, visit the [interactive tutorial](/tutorial) before consulting this documentation. You can try Svelte online using the [REPL](/repl). Alternatively, if you'd like a more fully-featured environment, you can try Svelte on [StackBlitz](https://sveltekit.new).
+These pages serve as reference documentation. If you're new to Svelte, we recommend starting with the [interactive tutorial](/tutorial) and coming back here when you have questions.
+
+You can also try Svelte online in the [playground](/playground) or, if you need a more fully-featured environment, on [StackBlitz](https://sveltekit.new).
