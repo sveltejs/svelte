@@ -1,6 +1,14 @@
 <script>
 	
-	/** @type {{readonly: Record<string, { href: string; title: string; }[]>, optional?: string, binding: any, bindingOptional?: string}} */
+	/**
+	* @typedef {Object} Props
+	* @property {Record<string, { href: string; title: string; }[]>} readonly
+	* @property {string} [optional]
+	* @property {any} binding
+	* @property {string} [bindingOptional]
+	*/
+
+	/** @type {Props} */
 	let {
 		readonly,
 		optional = 'foo',

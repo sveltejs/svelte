@@ -3,7 +3,12 @@
 
 
 	import { blah } from './blah.js'
-	/** @type {{data: any}} */
+	/**
+	* @typedef {Object} Props
+	* @property {any} data
+	*/
+
+	/** @type {Props} */
 	let { data } = $props();
 
 	let bar = $state()

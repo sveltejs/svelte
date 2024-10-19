@@ -1,5 +1,11 @@
 <script>
-	/** @type {{message?: import('svelte').Snippet, extra?: import('svelte').Snippet<[any]>, [key: string]: any}} */
+	/**
+	* @typedef {Object} Props
+	* @property {import('svelte').Snippet} [message]
+	* @property {import('svelte').Snippet<[any]>} [extra]
+	*/
+
+	/** @type {Props & { [key: string]: any }} */
 	let { ...props } = $props();
 	let showMessage = props.message;
 	let extraTitle = $derived(props.extra);
