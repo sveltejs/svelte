@@ -1,0 +1,5 @@
+---
+title: $bindable
+---
+
+TODO
