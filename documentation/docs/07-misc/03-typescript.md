@@ -42,7 +42,7 @@ To use non-type-only TypeScript features within Svelte components, you need to a
 
 ### Using SvelteKit or Vite
 
-The easiest way to get started is scaffolding a new SvelteKit project by typing `npm create svelte@latest`, following the prompts and choosing the TypeScript option.
+The easiest way to get started is scaffolding a new SvelteKit project by typing `npx sv create`, following the prompts and choosing the TypeScript option.
 
 ```ts
 /// file: svelte.config.js
