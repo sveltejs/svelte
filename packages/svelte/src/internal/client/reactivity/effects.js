@@ -385,15 +385,18 @@ export function destroy_effect(effect, remove_dom = true) {
 		// might create a derived or effect and they will be incorrectly attached to the wrong thing
 		set_active_reaction(null);
 		set_active_effect(null);
-		while (node !== null) {
-			/** @type {TemplateNode | null} */
-			var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
+		try {
+			while (node !== null) {
+				/** @type {TemplateNode | null} */
+				var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
 
-			node.remove();
-			node = next;
+				node.remove();
+				node = next;
+			}
+		} finally {
+			set_active_reaction(previous_reaction);
+			set_active_effect(previous_effect);
 		}
-		set_active_reaction(previous_reaction);
-		set_active_effect(previous_effect);
 
 		removed = true;
 	}
