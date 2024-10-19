@@ -10,7 +10,11 @@ import * as b from '../../../../utils/builders.js';
 export function DebugTag(node, context) {
 	const object = b.object(
 		node.identifiers.map((identifier) =>
-			b.prop('init', identifier, /** @type {Expression} */ (context.visit(identifier)))
+			b.prop(
+				'init',
+				identifier,
+				b.call('$.snapshot', /** @type {Expression} */ (context.visit(identifier)))
+			)
 		)
 	);
 
