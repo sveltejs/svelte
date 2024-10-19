@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.271
+
+### Patch Changes
+
+- fix: avoid chromium issue with dispatching blur on element removal ([#13694](https://github.com/sveltejs/svelte/pull/13694))
+
 ## 5.0.0-next.270
 
 ### Patch Changes
