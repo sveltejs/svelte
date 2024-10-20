@@ -246,6 +246,10 @@ We can tighten things up further by declaring a generic, so that `data` and `row
 </script>
 ```
 
+## Programmatic snippets
+
+Snippets can be created programmatically with the [`createRawSnippet`](svelte#createRawSnippet) API. This is intended for advanced use cases.
+
 ## Snippets and slots
 
 In Svelte 4, content can be passed to components using [slots](https://svelte.dev/docs/special-elements#slot). Snippets are more powerful and flexible, and as such slots are deprecated in Svelte 5.
