@@ -6,21 +6,6 @@ var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
 /**
- * A component is attempting to bind to a non-existent property `%key%` belonging to %component% (i.e. `<%name% bind:%key%={...}>`)
- * @param {string} key
- * @param {string} component
- * @param {string} name
- */
-export function binding_non_existent_prop(key, component, name) {
-	if (DEV) {
-		console.warn(`%c[svelte] binding_non_existent_prop\n%cA component is attempting to bind to a non-existent property \`${key}\` belonging to ${component} (i.e. \`<${name} bind:${key}={...}>\`)`, bold, normal);
-	} else {
-		// TODO print a link to the documentation
-		console.warn("binding_non_existent_prop");
-	}
-}
-
-/**
  * `%binding%` (%location%) is binding to a non-reactive property
  * @param {string} binding
  * @param {string | undefined | null} [location]

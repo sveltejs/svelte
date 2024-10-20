@@ -75,7 +75,6 @@ export function validate_prop_bindings(
 				if (has_rest || non_bindable.includes(key)) {
 					e.bind_not_bindable(key, component[FILENAME], name);
 				}
-				w.binding_non_existent_prop(key, component[FILENAME], name);
 			}
 		}
 	}

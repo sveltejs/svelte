@@ -1,7 +1,3 @@
-## binding_non_existent_prop
-
-> A component is attempting to bind to a non-existent property `%key%` belonging to %component% (i.e. `<%name% bind:%key%={...}>`)
-
 ## binding_property_non_reactive
 
 > `%binding%` is binding to a non-reactive property

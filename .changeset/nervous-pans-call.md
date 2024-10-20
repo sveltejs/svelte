@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: warn instead of error when binding a non-existent prop
+fix: do not error when binding a non-existent prop
