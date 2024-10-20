@@ -408,28 +408,3 @@ A custom animation function can also return a `tick` function, which is called _
 	<div animate:whizz>{item}</div>
 {/each}
 ```
-
-## {#key ...}
-
-```svelte
-<!--- copy: false  --->
-{#key expression}...{/key}
-```
-
-Key blocks destroy and recreate their contents when the value of an expression changes.
-
-This is useful if you want an element to play its transition whenever a value changes.
-
-```svelte
-{#key value}
-	<div transition:fade>{value}</div>
-{/key}
-```
-
-When used around components, this will cause them to be reinstantiated and reinitialised.
-
-```svelte
-{#key value}
-	<Component />
-{/key}
-```
