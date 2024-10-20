@@ -437,7 +437,7 @@ In Svelte 4, you would pass data to a `<slot />` and then retrieve it with `let:
 
 By now you should have a pretty good understanding of the before/after and how the old syntax relates to the new syntax. It probably also became clear that a lot of these migrations are rather technical and repetitive - something you don't want to do by hand.
 
-We thought the same, which is why we provide a migration script to do most of the migration automatically. You can upgrade your project by using `npx svelte-migrate svelte-5`. This will do the following things:
+We thought the same, which is why we provide a migration script to do most of the migration automatically. You can upgrade your project by using `npx sv migrate svelte-5`. This will do the following things:
 
 - bump core dependencies in your `package.json`
 - migrate to runes (`let` -> `$state` etc)
