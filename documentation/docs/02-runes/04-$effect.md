@@ -175,7 +175,7 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 </div>
 ```
 
-Apart from the timing, `$effect.pre` works exactly like `$effect` — refer to its documentation for more info.
+Apart from the timing, `$effect.pre` works exactly like `$effect`.
 
 ## `$effect.tracking`
 
