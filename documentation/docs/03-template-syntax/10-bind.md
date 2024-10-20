@@ -2,45 +2,95 @@
 title: bind:
 ---
 
-- how for dom elements
-- list of all bindings
-- how for components
+Data ordinarily flows down, from parent to child. The `bind:` directive allows data to flow the other way, from child to parent.
 
-Most of the time a clear separation between data flowing down and events going up is worthwhile and results in more robust apps. But in some cases - especially when interacting with form elements - it's more ergonomic to declare a two way binding. Svelte provides many element bindings out of the box, and also allows component bindings.
+The general syntax is `bind:property={expression}`, where `expression` is an _lvalue_ (i.e. a variable or an object property). When the expression is an identifier with the same name as the property, we can omit the expression — in other words these are equivalent:
 
-## bind:_property_ for elements
-
+<!-- prettier-ignore -->
 ```svelte
-<!--- copy: false --->
-bind:property={variable}
-```
-
-Data ordinarily flows down, from parent to child. The `bind:` directive allows data to flow the other way, from child to parent. Most bindings are specific to particular elements.
-
-The simplest bindings reflect the value of a property, such as `input.value`.
-
-```svelte
-<input bind:value={name} />
-<textarea bind:value={text} />
-
-<input type="checkbox" bind:checked={yes} />
-```
-
-If the name matches the value, you can use a shorthand.
-
-```svelte
-<input bind:value />
-<!-- equivalent to
 <input bind:value={value} />
--->
+<input bind:value />
 ```
 
-Numeric input values are coerced; even though `input.value` is a string as far as the DOM is concerned, Svelte will treat it as a number. If the input is empty or invalid (in the case of `type="number"`), the value is `undefined`.
+Svelte creates an event listener that updates the bound value. If an element already has a listener for the same event, that listener will be fired before the bound value is updated.
+
+Most bindings are _two-way_, meaning that changes to the value will affect the element and vice versa. A few bindings are _readonly_, meaning that changing their value will have no effect on the element.
+
+## `<input bind:value>`
+
+A `bind:value` directive on an `<input>` element binds the input's `value` property:
+
+<!-- prettier-ignore -->
+```svelte
+<script>
+	let message = $state('hello');
+</script>
+
+<input bind:value={message} />
+<p>{message}</p>
+```
+
+In the case of a numeric input (`type="number"` or `type="range"`), the value will be coerced to a number ([demo](/playground/untitled#H4sIAAAAAAAAE6WPwYoCMQxAfyWEPeyiOOqx2w74Hds9pBql0IllmhGXYf5dKqwiyILsLXnwwsuI-5i4oPkaUX8yo7kCnKNQV7dNzoty4qSVBSr8jG-Poixa0KAt2z5mbb14TaxA4OCtKCm_rz4-f2m403WltrlrYhMFTtcLNkoeFGqZ8yhDF7j3CCHKzpwoDexGmqCL4jwuPUJHZ-dxVcfmyYGe5MAv-La5pbxYFf5Z9Zf_UJXb-sEMquFgJJhBmGyTW5yj8lnRaD_w9D1dAKSSj7zqAQAA)):
 
 ```svelte
-<input type="number" bind:value={num} />
-<input type="range" bind:value={num} />
+<script>
+	let a = $state(1);
+	let b = $state(2);
+</script>
+
+<label>
+	<input type="number" bind:value={a} min="0" max="10" />
+	<input type="range" bind:value={a} min="0" max="10" />
+</label>
+
+<label>
+	<input type="number" bind:value={b} min="0" max="10" />
+	<input type="range" bind:value={b} min="0" max="10" />
+</label>
+
+<p>{a} + {b} = {a + b}</p>
 ```
+
+If the input is empty or invalid (in the case of `type="number"`), the value is `undefined`.
+
+## `<input bind:checked>`
+
+Checkbox and radio inputs can be bound with `bind:checked`:
+
+```svelte
+<label>
+	<input type="checkbox" bind:checked={accepted} />
+	Accept terms and conditions
+</label>
+```
+
+## `<input bind:group>`
+
+Inputs that work together can use `bind:group`.
+
+```svelte
+<script>
+	let tortilla = 'Plain';
+
+	/** @type {Array<string>} */
+	let fillings = [];
+</script>
+
+<!-- grouped radio inputs are mutually exclusive -->
+<input type="radio" bind:group={tortilla} value="Plain" />
+<input type="radio" bind:group={tortilla} value="Whole wheat" />
+<input type="radio" bind:group={tortilla} value="Spinach" />
+
+<!-- grouped checkbox inputs populate an array -->
+<input type="checkbox" bind:group={fillings} value="Rice" />
+<input type="checkbox" bind:group={fillings} value="Beans" />
+<input type="checkbox" bind:group={fillings} value="Cheese" />
+<input type="checkbox" bind:group={fillings} value="Guac (extra)" />
+```
+
+> [!NOTE] `bind:group` only works if the inputs are in the same Svelte component.
+
+## `<input bind:files>`
 
 On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList). When you want to update the files programmatically, you always need to use a `FileList` object. Currently `FileList` objects cannot be constructed directly, so you need to create a new [`DataTransfer`](https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer) object and get `files` from there.
 
@@ -62,19 +112,7 @@ On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`
 
 > [!NOTE] `DataTransfer` may not be available in server-side JS runtimes. Leaving the state that is bound to `files` uninitialized prevents potential errors if components are server-side rendered.
 
-If you're using `bind:` directives together with `on` event attributes, the binding will always fire before the event attribute.
-
-```svelte
-<script>
-	let value = 'Hello World';
-</script>
-
-<input oninput={() => console.log('New value:', value)} bind:value />
-```
-
-Here we were binding to the value of a text input, which uses the `input` event. Bindings on other elements may use different events such as `change`.
-
-## Binding `<select>` value
+## `<select bind:value>`
 
 A `<select>` value binding corresponds to the `value` property on the selected `<option>`, which can be any value (not just strings, as is normally the case in the DOM).
 
@@ -108,13 +146,61 @@ When the value of an `<option>` matches its text content, the attribute can be o
 </select>
 ```
 
+## `<audio>`
+
+`<audio>` elements have their own set of bindings — five two-way ones...
+
+- [`currentTime`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/currentTime)
+- [`playbackRate`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/playbackRate)
+- [`paused`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/paused)
+- [`volume`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/volume)
+- [`muted`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/muted)
+
+...and seven readonly ones:
+
+- [`duration`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/duration)
+- [`buffered`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/buffered)
+- [`paused`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/paused)
+- [`seekable`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/seekable)
+- [`seeking`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/seeking_event)
+- [`ended`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/ended)
+- [`readyState`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/readyState)
+
+```svelte
+<audio src={clip} bind:duration bind:currentTime bind:paused></audio>
+```
+
+## `<video>`
+
+`<video>` elements have all the same bindings as [#audio] elements, plus readonly [`videoWidth`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/videoWidth) and [`videoHeight`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/videoHeight) bindings.
+
+## `<img>`
+
+`<img>` elements have two readonly bindings:
+
+- [`naturalWidth`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/naturalWidth)
+- [`naturalHeight`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/naturalHeight)
+
+## `<details bind:open>`
+
+`<details>` elements support binding to the `open` property.
+
+```svelte
+<details bind:open={isOpen}>
+	<summary>How do you comfort a JavaScript bug?</summary>
+	<p>You console it.</p>
+</details>
+```
+
+## Contenteditable bindings
+
 Elements with the `contenteditable` attribute support the following bindings:
 
 - [`innerHTML`](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)
 - [`innerText`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/innerText)
 - [`textContent`](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent)
 
-There are slight differences between each of these, read more about them [here](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent#Differences_from_innerText).
+> [!NOTE] There are [subtle differences between `innerText` and `textContent`](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent#differences_from_innertext).
 
 <!-- for some reason puts the comment and html on same line -->
 <!-- prettier-ignore -->
@@ -122,116 +208,20 @@ There are slight differences between each of these, read more about them [here](
 <div contenteditable="true" bind:innerHTML={html} />
 ```
 
-`<details>` elements support binding to the `open` property.
+## Dimensions
 
-```svelte
-<details bind:open={isOpen}>
-	<summary>Details</summary>
-	<p>Something small enough to escape casual notice.</p>
-</details>
-```
+All visible elements have the following readonly bindings, measured with a `ResizeObserver`:
 
-## Media element bindings
-
-Media elements (`<audio>` and `<video>`) have their own set of bindings — seven _readonly_ ones...
-
-- `duration` (readonly) — the total duration of the video, in seconds
-- `buffered` (readonly) — an array of `{start, end}` objects
-- `played` (readonly) — ditto
-- `seekable` (readonly) — ditto
-- `seeking` (readonly) — boolean
-- `ended` (readonly) — boolean
-- `readyState` (readonly) — number between (and including) 0 and 4
-
-...and five _two-way_ bindings:
-
-- `currentTime` — the current playback time in the video, in seconds
-- `playbackRate` — how fast or slow to play the video, where 1 is 'normal'
-- `paused` — this one should be self-explanatory
-- `volume` — a value between 0 and 1
-- `muted` — a boolean value indicating whether the player is muted
-
-Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
-
-```svelte
-<video
-	src={clip}
-	bind:duration
-	bind:buffered
-	bind:played
-	bind:seekable
-	bind:seeking
-	bind:ended
-	bind:readyState
-	bind:currentTime
-	bind:playbackRate
-	bind:paused
-	bind:volume
-	bind:muted
-	bind:videoWidth
-	bind:videoHeight
-/>
-```
-
-## Image element bindings
-
-Image elements (`<img>`) have two readonly bindings:
-
-- `naturalWidth` (readonly) — the original width of the image, available after the image has loaded
-- `naturalHeight` (readonly) — the original height of the image, available after the image has loaded
-
-```svelte
-<img
-	bind:naturalWidth
-	bind:naturalHeight
-></img>
-```
-
-## Block-level element bindings
-
-Block-level elements have 4 read-only bindings, measured using a technique similar to [this one](http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/):
-
-- `clientWidth`
-- `clientHeight`
-- `offsetWidth`
-- `offsetHeight`
+- [`clientWidth`](https://developer.mozilla.org/en-US/docs/Web/API/Element/clientWidth)
+- [`clientHeight`](https://developer.mozilla.org/en-US/docs/Web/API/Element/clientHeight)
+- [`offsetWidth`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/offsetWidth)
+- [`offsetHeight`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/offsetHeight)
 
 ```svelte
 <div bind:offsetWidth={width} bind:offsetHeight={height}>
 	<Chart {width} {height} />
 </div>
 ```
-
-## bind:group
-
-```svelte
-<!--- copy: false --->
-bind:group={variable}
-```
-
-Inputs that work together can use `bind:group`.
-
-```svelte
-<script>
-	let tortilla = 'Plain';
-
-	/** @type {Array<string>} */
-	let fillings = [];
-</script>
-
-<!-- grouped radio inputs are mutually exclusive -->
-<input type="radio" bind:group={tortilla} value="Plain" />
-<input type="radio" bind:group={tortilla} value="Whole wheat" />
-<input type="radio" bind:group={tortilla} value="Spinach" />
-
-<!-- grouped checkbox inputs populate an array -->
-<input type="checkbox" bind:group={fillings} value="Rice" />
-<input type="checkbox" bind:group={fillings} value="Beans" />
-<input type="checkbox" bind:group={fillings} value="Cheese" />
-<input type="checkbox" bind:group={fillings} value="Guac (extra)" />
-```
-
-> [!NOTE] `bind:group` only works if the inputs are in the same Svelte component.
 
 ## bind:this
 
@@ -240,22 +230,20 @@ Inputs that work together can use `bind:group`.
 bind:this={dom_node}
 ```
 
-To get a reference to a DOM node, use `bind:this`.
+To get a reference to a DOM node, use `bind:this`. The value will be `undefined` until the component is mounted — in other words, you should read it inside an effect or an event handler, but not during component initialisation:
 
 ```svelte
 <script>
-	import { onMount } from 'svelte';
-
 	/** @type {HTMLCanvasElement} */
-	let canvasElement;
+	let canvas;
 
-	onMount(() => {
-		const ctx = canvasElement.getContext('2d');
+	$effect(() => {
+		const ctx = canvas.getContext('2d');
 		drawStuff(ctx);
 	});
 </script>
 
-<canvas bind:this={canvasElement} />
+<canvas bind:this={canvas} />
 ```
 
 Components also support `bind:this`, allowing you to interact with component instances programmatically.
@@ -276,8 +264,6 @@ Components also support `bind:this`, allowing you to interact with component ins
 	}
 </script>
 ```
-
-> [!NOTE] Note that we can't do `{cart.empty}` since `cart` is `undefined` when the button is first rendered and throws an error.
 
 ## bind:_property_ for components
 
