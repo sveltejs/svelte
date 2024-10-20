@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.3
+
+### Patch Changes
+
+- chore: ensure transition events are dispatched without current reaction ([#13719](https://github.com/sveltejs/svelte/pull/13719))
+
 ## 5.0.2
 
 ### Patch Changes
