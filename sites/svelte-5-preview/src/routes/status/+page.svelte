@@ -6,7 +6,7 @@
 	<div class="column">
 		<h1>Is Svelte 5 ready yet?</h1>
 
-		<h2>{data.results.passed+data.results.skipped === data.results.total ? `Yes! 🎉` : `No.`}</h2>
+		<h2>{`Yes! 🎉`}</h2>
 
 		<p class="details">
 			{data.results.total} tests ({data.results.suites.length} suites) – {data.results.passed} passed,
