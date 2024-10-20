@@ -194,9 +194,9 @@ Svelte's implementation is essentially syntactic sugar for adding a wrapper elem
 Desugars to this:
 
 ```svelte
-<div style="display: contents; --rail-color: black; --track-color: rgb(0, 0, 255)">
+<svelte-css-wrapper style="display: contents; --rail-color: black; --track-color: rgb(0, 0, 255)">
 	<Slider bind:value min={0} max={100} />
-</div>
+</svelte-css-wrapper>
 ```
 
 For SVG namespace, the example above desugars into using `<g>` instead:
@@ -207,7 +207,7 @@ For SVG namespace, the example above desugars into using `<g>` instead:
 </g>
 ```
 
-> [!NOTE] Since this is an extra `<div>` (or `<g>`), beware that your CSS structure might accidentally target this. Be mindful of this added wrapper element when using this feature.
+> [!NOTE] Since this is an extra `<svelte-css-wrapper>` (or `<g>`), beware that your CSS structure might accidentally target this. Be mindful of this added wrapper element when using this feature.
 
 Svelte's CSS Variables support allows for easily themeable components:
 
