@@ -1,7 +1,6 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
-import { NAMESPACE_SVG } from '../../../../constants.js';
 import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
@@ -318,10 +317,11 @@ function get_setters(element) {
 	setters_cache.set(element.nodeName, (setters = []));
 	var descriptors;
 	var proto = get_prototype_of(element);
+	var element_proto = Element.prototype;
 
 	// Stop at Element, from there on there's only unnecessary setters we're not interested in
 	// Do not use contructor.name here as that's unreliable in some browser environments
-	while (!Element.prototype.isPrototypeOf(proto)) {
+	while (element_proto !== proto) {
 		descriptors = get_descriptors(proto);
 
 		for (var key in descriptors) {
