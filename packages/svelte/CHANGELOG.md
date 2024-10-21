@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.6
+
+### Patch Changes
+
+- fix: don't print errors on migration errors ([#13754](https://github.com/sveltejs/svelte/pull/13754))
+
 ## 5.0.5
 
 ### Patch Changes
