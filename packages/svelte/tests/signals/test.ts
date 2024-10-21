@@ -488,7 +488,6 @@ describe('signals', () => {
 			assert.equal(a?.deps?.length, 1);
 			assert.equal(s?.reactions?.length, 1);
 			destroy();
-			assert.equal(a?.deps?.length, 1);
 			assert.equal(s?.reactions, null);
 		};
 	});
@@ -723,6 +722,21 @@ describe('signals', () => {
 
 			set.add('test');
 			assert.equal($.get(d), true);
+		};
+	});
+
+	test('deriveds read inside the root/branches are cleaned up', () => {
+		return () => {
+			const a = state(0);
+
+			const destroy = effect_root(() => {
+				const b = derived(() => $.get(a));
+				$.get(b);
+			});
+
+			destroy();
+
+			assert.deepEqual(a.reactions, null);
 		};
 	});
 });

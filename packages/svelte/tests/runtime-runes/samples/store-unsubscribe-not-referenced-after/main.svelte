@@ -1,4 +1,5 @@
 <script>
+	import { untrack } from "svelte";
 	import { writable, derived } from "svelte/store";
 
 	const obj = writable({ a: 1 });
@@ -7,7 +8,9 @@
 
 	function watch (prop) {
 		return derived(obj, (o) => {
-			count++;
+			untrack(() => {
+				count++;
+			});
 			return o[prop];
 		});
 	}

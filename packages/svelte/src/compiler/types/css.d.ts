@@ -30,6 +30,7 @@ export namespace Css {
 		type: 'Rule';
 		prelude: SelectorList;
 		block: Block;
+		/** @internal */
 		metadata: {
 			parent_rule: null | Rule;
 			has_local_selectors: boolean;
@@ -60,8 +61,10 @@ export namespace Css {
 		 * The `a`, `b` and `c` in `a b c {}`
 		 */
 		children: RelativeSelector[];
+		/** @internal */
 		metadata: {
 			rule: null | Rule;
+			/** True if this selector applies to an element. For global selectors, this is defined in css-analyze, for others in css-prune while scoping */
 			used: boolean;
 		};
 	}
@@ -79,10 +82,13 @@ export namespace Css {
 		 * The `b:is(...)` in `> b:is(...)`
 		 */
 		selectors: SimpleSelector[];
+		/** @internal */
 		metadata: {
 			/**
 			 * `true` if the whole selector is unscoped, e.g. `:global(...)` or `:global` or `:global.x`.
 			 * Selectors like `:global(...).x` are not considered global, because they still need scoping.
+			 * Selectors like `:global(...):is/where/not/has(...)` are considered global even if they aren't
+			 * strictly speaking (we should consolidate the logic around this at some point).
 			 */
 			is_global: boolean;
 			/** `:root`, `:host`, `::view-transition`, or selectors after a `:global` */

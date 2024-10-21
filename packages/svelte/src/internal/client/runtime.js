@@ -2,7 +2,9 @@
 import { DEV } from 'esm-env';
 import { define_property, get_descriptors, get_prototype_of } from '../shared/utils.js';
 import {
-	destroy_effect,
+	destroy_block_effect_children,
+	destroy_effect_children,
+	destroy_effect_deriveds,
 	effect,
 	execute_effect_teardown,
 	unlink_effect
@@ -27,7 +29,7 @@ import {
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
-import { update_derived } from './reactivity/deriveds.js';
+import { destroy_derived, execute_derived, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
@@ -300,12 +302,13 @@ export function update_reaction(reaction) {
 	var previous_reaction = active_reaction;
 	var previous_skip_reaction = skip_reaction;
 	var prev_derived_sources = derived_sources;
+	var flags = reaction.f;
 
 	new_deps = /** @type {null | Value[]} */ (null);
 	skipped_deps = 0;
 	untracked_writes = null;
-	active_reaction = (reaction.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
-	skip_reaction = !is_flushing_effect && (reaction.f & UNOWNED) !== 0;
+	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
+	skip_reaction = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	derived_sources = null;
 
 	try {
@@ -403,22 +406,6 @@ export function remove_reactions(signal, start_index) {
 }
 
 /**
- * @param {Effect} signal
- * @param {boolean} remove_dom
- * @returns {void}
- */
-export function destroy_effect_children(signal, remove_dom = false) {
-	var effect = signal.first;
-	signal.first = signal.last = null;
-
-	while (effect !== null) {
-		var next = effect.next;
-		destroy_effect(effect, remove_dom);
-		effect = next;
-	}
-}
-
-/**
  * @param {Effect} effect
  * @returns {void}
  */
@@ -443,7 +430,10 @@ export function update_effect(effect) {
 	}
 
 	try {
-		if ((flags & BLOCK_EFFECT) === 0) {
+		destroy_effect_deriveds(effect);
+		if ((flags & BLOCK_EFFECT) !== 0) {
+			destroy_block_effect_children(effect);
+		} else {
 			destroy_effect_children(effect);
 		}
 
@@ -729,9 +719,15 @@ export async function tick() {
  */
 export function get(signal) {
 	var flags = signal.f;
+	var is_derived = (flags & DERIVED) !== 0;
 
-	if ((flags & DESTROYED) !== 0) {
-		return signal.v;
+	// If the derived is destroyed, just execute it again without retaining
+	// its memoisation properties as the derived is stale
+	if (is_derived && (flags & DESTROYED) !== 0) {
+		var value = execute_derived(/** @type {Derived} */ (signal));
+		// Ensure the derived remains destroyed
+		destroy_derived(/** @type {Derived} */ (signal));
+		return value;
 	}
 
 	if (is_signals_recorded) {
@@ -766,10 +762,17 @@ export function get(signal) {
 			set_signal_status(active_effect, DIRTY);
 			schedule_effect(active_effect);
 		}
+	} else if (is_derived && /** @type {Derived} */ (signal).deps === null) {
+		var derived = /** @type {Derived} */ (signal);
+		var parent = derived.parent;
+
+		if (parent !== null && !parent.deriveds?.includes(derived)) {
+			(parent.deriveds ??= []).push(derived);
+		}
 	}
 
-	if ((flags & DERIVED) !== 0) {
-		var derived = /** @type {Derived} */ (signal);
+	if (is_derived) {
+		derived = /** @type {Derived} */ (signal);
 
 		if (check_dirtiness(derived)) {
 			update_derived(derived);

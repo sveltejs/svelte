@@ -1,0 +1,3 @@
+<div>
+	<input autofocus />
+</div>

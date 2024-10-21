@@ -100,6 +100,18 @@ export function invalid_raw_snippet_render() {
 }
 
 /**
+ * Detected a migrated `$:` reactive block that both accesses and updates the same reactive value. This may cause recursive updates when converted to an `$effect`.
+ */
+export function legacy_recursive_reactive_block() {
+	if (DEV) {
+		console.warn(`%c[svelte] legacy_recursive_reactive_block\n%cDetected a migrated \`$:\` reactive block that both accesses and updates the same reactive value. This may cause recursive updates when converted to an \`$effect\`.`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("legacy_recursive_reactive_block");
+	}
+}
+
+/**
  * Tried to unmount a component that was not mounted
  */
 export function lifecycle_double_unmount() {

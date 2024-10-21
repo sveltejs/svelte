@@ -4,7 +4,6 @@ import {
 	component_context,
 	active_effect,
 	active_reaction,
-	destroy_effect_children,
 	dev_current_component_function,
 	update_effect,
 	get,
@@ -42,6 +41,7 @@ import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
+import { destroy_derived } from './deriveds.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -97,6 +97,7 @@ function create_effect(type, fn, sync, push = true) {
 	var effect = {
 		ctx: component_context,
 		deps: null,
+		deriveds: null,
 		nodes_start: null,
 		nodes_end: null,
 		f: type | DIRTY,
@@ -190,8 +191,7 @@ export function user_effect(fn) {
 	// until the component is mounted
 	var defer =
 		active_effect !== null &&
-		(active_effect.f & RENDER_EFFECT) !== 0 &&
-		// TODO do we actually need this? removing them changes nothing
+		(active_effect.f & BRANCH_EFFECT) !== 0 &&
 		component_context !== null &&
 		!component_context.m;
 
@@ -324,7 +324,7 @@ export function template_effect(fn) {
 			value: '{expression}'
 		});
 	}
-	return render_effect(fn);
+	return block(fn);
 }
 
 /**
@@ -363,6 +363,54 @@ export function execute_effect_teardown(effect) {
 }
 
 /**
+ * @param {Effect} signal
+ * @returns {void}
+ */
+export function destroy_effect_deriveds(signal) {
+	var deriveds = signal.deriveds;
+
+	if (deriveds !== null) {
+		signal.deriveds = null;
+
+		for (var i = 0; i < deriveds.length; i += 1) {
+			destroy_derived(deriveds[i]);
+		}
+	}
+}
+
+/**
+ * @param {Effect} signal
+ * @param {boolean} remove_dom
+ * @returns {void}
+ */
+export function destroy_effect_children(signal, remove_dom = false) {
+	var effect = signal.first;
+	signal.first = signal.last = null;
+
+	while (effect !== null) {
+		var next = effect.next;
+		destroy_effect(effect, remove_dom);
+		effect = next;
+	}
+}
+
+/**
+ * @param {Effect} signal
+ * @returns {void}
+ */
+export function destroy_block_effect_children(signal) {
+	var effect = signal.first;
+
+	while (effect !== null) {
+		var next = effect.next;
+		if ((effect.f & BRANCH_EFFECT) === 0) {
+			destroy_effect(effect);
+		}
+		effect = next;
+	}
+}
+
+/**
  * @param {Effect} effect
  * @param {boolean} [remove_dom]
  * @returns {void}
@@ -386,6 +434,7 @@ export function destroy_effect(effect, remove_dom = true) {
 		removed = true;
 	}
 
+	destroy_effect_deriveds(effect);
 	destroy_effect_children(effect, remove_dom && !removed);
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);

@@ -18,27 +18,34 @@ export function AwaitBlock(node, context) {
 	let catch_block;
 
 	if (node.then) {
-		const argument = node.value && create_derived_block_argument(node.value, context);
+		const then_context = {
+			...context,
+			state: { ...context.state, transform: { ...context.state.transform } }
+		};
+		const argument = node.value && create_derived_block_argument(node.value, then_context);
 
 		/** @type {Pattern[]} */
 		const args = [b.id('$$anchor')];
 		if (argument) args.push(argument.id);
 
 		const declarations = argument?.declarations ?? [];
-		const block = /** @type {BlockStatement} */ (context.visit(node.then));
+		const block = /** @type {BlockStatement} */ (then_context.visit(node.then, then_context.state));
 
 		then_block = b.arrow(args, b.block([...declarations, ...block.body]));
 	}
 
 	if (node.catch) {
-		const argument = node.error && create_derived_block_argument(node.error, context);
+		const catch_context = { ...context, state: { ...context.state } };
+		const argument = node.error && create_derived_block_argument(node.error, catch_context);
 
 		/** @type {Pattern[]} */
 		const args = [b.id('$$anchor')];
 		if (argument) args.push(argument.id);
 
 		const declarations = argument?.declarations ?? [];
-		const block = /** @type {BlockStatement} */ (context.visit(node.catch));
+		const block = /** @type {BlockStatement} */ (
+			catch_context.visit(node.catch, catch_context.state)
+		);
 
 		catch_block = b.arrow(args, b.block([...declarations, ...block.body]));
 	}

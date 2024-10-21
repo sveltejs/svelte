@@ -28,7 +28,8 @@ import {
 	BRANCH_EFFECT,
 	INSPECT_EFFECT,
 	UNOWNED,
-	MAYBE_DIRTY
+	MAYBE_DIRTY,
+	BLOCK_EFFECT
 } from '../constants.js';
 import * as e from '../errors.js';
 
@@ -136,7 +137,7 @@ export function set(source, value) {
 	if (
 		active_reaction !== null &&
 		is_runes() &&
-		(active_reaction.f & DERIVED) !== 0 &&
+		(active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 &&
 		// If the source was created locally within the current derived, then
 		// we allow the mutation.
 		(derived_sources === null || !derived_sources.includes(source))
@@ -144,6 +145,16 @@ export function set(source, value) {
 		e.state_unsafe_mutation();
 	}
 
+	return internal_set(source, value);
+}
+
+/**
+ * @template V
+ * @param {Source<V>} source
+ * @param {V} value
+ * @returns {V}
+ */
+export function internal_set(source, value) {
 	if (!source.equals(value)) {
 		source.v = value;
 		source.version = increment_version();

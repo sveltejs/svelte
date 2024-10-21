@@ -15,7 +15,7 @@ You can play around with Svelte in the [tutorial](https://learn.svelte.dev/), [e
 When you're ready to build a full-fledge application, we recommend using [SvelteKit](https://kit.svelte.dev):
 
 ```bash
-npm create svelte@latest my-app
+npx sv create my-app
 cd my-app
 npm install
 npm run dev

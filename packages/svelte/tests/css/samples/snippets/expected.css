@@ -1,0 +1,19 @@
+
+	div.svelte-xyz > span:where(.svelte-xyz) {
+		color: green;
+	}
+	div.svelte-xyz span:where(.svelte-xyz) {
+		color: green;
+	}
+	div.svelte-xyz span {
+		color: green;
+	}
+	p.svelte-xyz span:where(.svelte-xyz) {
+		color: green;
+	}
+	p.svelte-xyz .foo:where(.svelte-xyz) {
+		color: purple; /* doesn't match, but our static analysis doesn't handle this currently */
+	}
+	/* (unused) span div {
+		color: red;
+	}*/

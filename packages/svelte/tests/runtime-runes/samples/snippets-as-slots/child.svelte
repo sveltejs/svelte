@@ -1,2 +1,2 @@
-<p><slot /></p>
-<p><slot name="named" foo="foo" /></p>
+<p><slot foo="foo" /></p>
+<p><slot name="named" bar="bar" /></p>

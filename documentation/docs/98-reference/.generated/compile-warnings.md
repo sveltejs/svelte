@@ -774,24 +774,27 @@ In some cases `<object.property>` syntax can be used as a replacement; a lowerca
 
 For complex component resolution logic, an intermediary, capitalized variable may be necessary. E.g. in places where `@const` can be used:
 
-```diff
+<!-- prettier-ignore -->
+```svelte
 {#each items as item}
--	<svelte:component this={item.condition ? Y : Z} />
-+	{@const Component = item.condition ? Y : Z}
-+	<Component />
+	---<svelte:component this={item.condition ? Y : Z} />---
+	+++{@const Component = item.condition ? Y : Z}+++
+	+++<Component />+++
 {/each}
 ```
 
 A derived value may be used in other contexts:
 
-```diff
+<!-- prettier-ignore -->
+```svelte
 <script>
-	...
+	// ...
 	let condition = $state(false);
-+	const Component = $derived(condition ? Y : Z);
+	+++const Component = $derived(condition ? Y : Z);+++
 </script>
-- <svelte:component this={condition ? Y : Z} />
-+ <Component />
+
+---<svelte:component this={condition ? Y : Z} />---
++++<Component />+++
 ```
 
 ### svelte_element_invalid_this
