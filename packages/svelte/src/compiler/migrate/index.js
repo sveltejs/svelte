@@ -739,7 +739,7 @@ const instance_script = {
 			);
 			const bindings = ids.map((id) => state.scope.get(id.name));
 			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
-			if (reassigned_bindings.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
+			if (reassigned_bindings.length === 0 && !bindings.some((b) => b?.kind === 'store_sub') && node.body.expression.left.type === "Identifier") {
 				let { start, end } = /** @type {{ start: number, end: number }} */ (
 					node.body.expression.right
 				);
