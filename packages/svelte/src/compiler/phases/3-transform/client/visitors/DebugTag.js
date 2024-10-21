@@ -9,13 +9,15 @@ import * as b from '../../../../utils/builders.js';
  */
 export function DebugTag(node, context) {
 	const object = b.object(
-		node.identifiers.map((identifier) =>
-			b.prop(
+		node.identifiers.map((identifier) => {
+			const visited = b.call('$.snapshot', /** @type {Expression} */ (context.visit(identifier)));
+
+			return b.prop(
 				'init',
 				identifier,
-				b.call('$.snapshot', /** @type {Expression} */ (context.visit(identifier)))
-			)
-		)
+				context.state.analysis.runes ? visited : b.call('$.untrack', b.thunk(visited))
+			);
+		})
 	);
 
 	const call = b.call('console.log', object);
