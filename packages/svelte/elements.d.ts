@@ -1805,7 +1805,7 @@ export interface HTMLWebViewAttributes extends HTMLAttributes<HTMLElement> {
 	nodeintegration?: boolean | undefined | null;
 	partition?: string | undefined | null;
 	plugins?: boolean | undefined | null;
-	preload?: 'auto' | 'none' | 'metadata' | '' | undefined | null;
+	preload?: string | undefined | null;
 	src?: string | undefined | null;
 	useragent?: string | undefined | null;
 	webpreferences?: string | undefined | null;
