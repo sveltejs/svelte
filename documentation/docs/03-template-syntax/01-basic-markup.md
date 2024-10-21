@@ -2,11 +2,11 @@
 title: Basic markup
 ---
 
-- [basically what we have in the Svelte docs today](https://svelte.dev/docs/basic-markup)
+Markup inside a Svelte component can be thought of as HTML++.
 
 ## Tags
 
-A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalised tag, such as `<Widget>` or `<Namespace.Widget>`, indicates a _component_.
+A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalised tag or a tag that uses dot notation, such as `<Widget>` or `<my.stuff>`, indicates a _component_.
 
 ```svelte
 <script>
@@ -56,12 +56,12 @@ All other attributes are included unless their value is [nullish](https://develo
 <div title={null}>This div has no title attribute</div>
 ```
 
-Quoting a singular expression does not affect how the value is parsed yet, but in Svelte 6 it will:
-
-<!-- prettier-ignore -->
-```svelte
-<button disabled="{number !== 42}">...</button>
-```
+> [!NOTE] Quoting a singular expression does not affect how the value is parsed, but in Svelte 6 it will cause the value to be coerced to a string:
+>
+> <!-- prettier-ignore -->
+> ```svelte
+> <button disabled="{number !== 42}">...</button>
+> ```
 
 When the attribute name and value match (`name={name}`), they can be replaced with `{name}`.
 
@@ -88,12 +88,6 @@ An element or component can have multiple spread attributes, interspersed with r
 <Widget {...things} />
 ```
 
-> [!NOTE] The `value` attribute of an `input` element or its children `option` elements must not be set with spread attributes when using `bind:group` or `bind:checked`. Svelte needs to be able to see the element's `value` directly in the markup in these cases so that it can link it to the bound variable.
-
-> [!NOTE] Sometimes, the attribute order matters as Svelte sets attributes sequentially in JavaScript. For example, `<input type="range" min="0" max="1" value={0.5} step="0.1"/>`, Svelte will attempt to set the value to `1` (rounding up from 0.5 as the step by default is 1), and then set the step to `0.1`. To fix this, change it to `<input type="range" min="0" max="1" step="0.1" value={0.5}/>`.
-
-> [!NOTE] Another example is `<img src="..." loading="lazy" />`. Svelte will set the img `src` before making the img element `loading="lazy"`, which is probably too late. Change this to `<img loading="lazy" src="...">` to make the image lazily loaded.
-
 ## Events
 
 Listening to DOM events is possible by adding attributes to the element that start with `on`. For example, to listen to the `click` event, add the `onclick` attribute to a button:
@@ -108,7 +102,6 @@ Because events are just attributes, the same rules as for attributes apply:
 
 - you can use the shorthand form: `<button {onclick}>click me</button>`
 - you can spread them: `<button {...thisSpreadContainsEventAttributes}>click me</button>`
-- component events are just (callback) properties and don't need a separate concept
 
 Timing-wise, event attributes always fire after events from bindings (e.g. `oninput` always fires after an update to `bind:value`). Under the hood, some event handlers are attached directly with `addEventListener`, while others are _delegated_.
 

@@ -1,5 +1,5 @@
 ---
-title: Transitions & Animations
+title: transition:
 ---
 
 - how to use (template syntax)
@@ -310,7 +310,7 @@ DOMRect {
 }
 ```
 
-An animation is triggered when the contents of a [keyed each block](control-flow#each) are re-ordered. Animations do not run when an element is added or removed, only when the index of an existing data item within the each block changes. Animate directives must be on an element that is an _immediate_ child of a keyed each block.
+An animation is triggered when the contents of a [keyed each block](each) are re-ordered. Animations do not run when an element is added or removed, only when the index of an existing data item within the each block changes. Animate directives must be on an element that is an _immediate_ child of a keyed each block.
 
 Animations can be used with Svelte's [built-in animation functions](svelte-animate) or [custom animation functions](#Custom-animation-functions).
 
@@ -407,29 +407,4 @@ A custom animation function can also return a `tick` function, which is called _
 {#each list as item, index (item)}
 	<div animate:whizz>{item}</div>
 {/each}
-```
-
-## {#key ...}
-
-```svelte
-<!--- copy: false  --->
-{#key expression}...{/key}
-```
-
-Key blocks destroy and recreate their contents when the value of an expression changes.
-
-This is useful if you want an element to play its transition whenever a value changes.
-
-```svelte
-{#key value}
-	<div transition:fade>{value}</div>
-{/key}
-```
-
-When used around components, this will cause them to be reinstantiated and reinitialised.
-
-```svelte
-{#key value}
-	<Component />
-{/key}
 ```

@@ -9,7 +9,7 @@ After two years in development, [SvelteKit](https://kit.svelte.dev) has finally 
 
 We’re so excited to share this release with you. It’s the culmination of thousands of hours of work, both from the Svelte core team and the wider community, and we think it’s the most enjoyable way to build production-grade websites, whether you’re a solo developer working on a small project or part of a large team.
 
-To get started, run `npm create svelte@latest`, and visit the [docs](https://kit.svelte.dev/docs) and (experimental!) [interactive tutorial](https://learn.svelte.dev).
+To get started, run `npm sv create`, and visit the [docs](https://kit.svelte.dev/docs) and (experimental!) [interactive tutorial](https://learn.svelte.dev).
 
 <div class="max">
 <figure style="max-width: 960px; margin: 0 auto">

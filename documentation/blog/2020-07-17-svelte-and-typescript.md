@@ -16,7 +16,7 @@ We think it'll give you a much nicer development experience — one that also sc
 
 ## Try it now
 
-You can start a new Svelte TypeScript project using Svelte's official scaffolding CLI by running `npm create svelte@latest` and following the prompts. This sets up a new SvelteKit project for you.
+You can start a new Svelte TypeScript project using Svelte's official scaffolding CLI by running `npx sv create` and following the prompts. This sets up a new SvelteKit project for you.
 
 Alternatively you can run `npm create vite@latest myapp -- --template svelte-ts` to scaffold a Vite project using Svelte and TypeScript.
 

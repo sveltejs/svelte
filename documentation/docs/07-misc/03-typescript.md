@@ -42,7 +42,7 @@ To use non-type-only TypeScript features within Svelte components, you need to a
 
 ### Using SvelteKit or Vite
 
-The easiest way to get started is scaffolding a new SvelteKit project by typing `npm create svelte@latest`, following the prompts and choosing the TypeScript option.
+The easiest way to get started is scaffolding a new SvelteKit project by typing `npx sv create`, following the prompts and choosing the TypeScript option.
 
 ```ts
 /// file: svelte.config.js
@@ -170,7 +170,7 @@ Using it together with `<svelte:component>` to restrict what kinds of component 
 	interface Props {
 		// only components that have at most the "prop"
 		// property required can be passed
-		component: Component<{ prop: string }>
+		component: Component<{ prop: string }>;
 	}
 
 	let { component }: Props = $props();
@@ -211,7 +211,7 @@ declare namespace svelteHTML {
 	// enhance attributes
 	interface HTMLAttributes<T> {
 		// If you want to use the beforeinstallprompt event
-		'onbeforeinstallprompt'?: (event: any) => any;
+		onbeforeinstallprompt?: (event: any) => any;
 		// If you want to use myCustomAttribute={..} (note: all lowercase)
 		mycustomattribute?: any; // You can replace any with something more specific if you like
 	}

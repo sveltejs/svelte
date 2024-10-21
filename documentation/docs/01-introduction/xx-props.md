@@ -1,29 +1,6 @@
 ---
-title: Component fundamentals
+title: Public API of a component
 ---
-
-- script (module) / template / style (rough overview)
-- `$props` / `$state` (in the context of components)
-
-Components are the building blocks of Svelte applications. They are written into `.svelte` files, using a superset of HTML.
-
-All three sections — script, styles and markup — are optional.
-
-```svelte
-<script>
-	// logic goes here
-</script>
-
-<!-- markup (zero or more items) goes here -->
-
-<style>
-	/* styles go here */
-</style>
-```
-
-## `<script>`
-
-A `<script>` block contains JavaScript (or TypeScript, when adding the `lang="ts"` attribute) that runs when a component instance is created. Variables declared (or imported) at the top level are 'visible' from the component's markup.
 
 ### Public API of a component
 
@@ -160,43 +137,3 @@ If you'd like to react to changes to a prop, use the `$derived` or `$effect` run
 ```
 
 For more information on reactivity, read the documentation around runes.
-
-## `<script module>`
-
-A `<script>` tag with a `module` attribute runs once when the module first evaluates, rather than for each component instance. Values declared in this block are accessible from a regular `<script>` (and the component markup) but not vice versa.
-
-You can `export` bindings from this block, and they will become exports of the compiled module.
-
-You cannot `export default`, since the default export is the component itself.
-
-```svelte
-<script module>
-	let totalComponents = 0;
-
-	// the export keyword allows this function to imported with e.g.
-	// `import Example, { alertTotal } from './Example.svelte'`
-	export function alertTotal() {
-		alert(totalComponents);
-	}
-</script>
-
-<script>
-	totalComponents += 1;
-	console.log(`total number of times this component has been created: ${totalComponents}`);
-</script>
-```
-
-## `<style>`
-
-CSS inside a `<style>` block will be scoped to that component.
-
-```svelte
-<style>
-	p {
-		/* this will only affect <p> elements in this component */
-		color: burlywood;
-	}
-</style>
-```
-
-For more information regarding styling, read the documentation around [styles and classes](styles-and-classes).
