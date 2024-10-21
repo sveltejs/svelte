@@ -1,5 +1,23 @@
 # svelte
 
+## 5.0.5
+
+### Patch Changes
+
+- fix: mark `:has` selectors with multiple preceding selectors as used ([#13750](https://github.com/sveltejs/svelte/pull/13750))
+
+- fix: ensure event context is reset before invoking callback ([#13737](https://github.com/sveltejs/svelte/pull/13737))
+
+- fix: add more robust check for `Element` prototype ([#13744](https://github.com/sveltejs/svelte/pull/13744))
+
+- fix: do not comment out unused selectors that are inside an unused selector ([#13746](https://github.com/sveltejs/svelte/pull/13746))
+
+- fix: more accurately detect `$derived` migration opportunities ([#13740](https://github.com/sveltejs/svelte/pull/13740))
+
+- fix: @debug does not work with proxied-state ([#13690](https://github.com/sveltejs/svelte/pull/13690))
+
+- fix: do not add jsdoc if no types found ([#13738](https://github.com/sveltejs/svelte/pull/13738))
+
 ## 5.0.4
 
 ### Patch Changes
