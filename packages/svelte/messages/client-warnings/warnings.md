@@ -38,7 +38,7 @@ The easiest way to log a value as it changes over time is to use the [`$inspect`
 
 ## legacy_recursive_reactive_block
 
-> Detected a migrated `$:` reactive block that both accesses and updates the same reactive value. This may cause recursive updates when converted to an `$effect`.
+> Detected a migrated `$:` reactive block in `%filename%` that both accesses and updates the same reactive value. This may cause recursive updates when converted to an `$effect`.
 
 ## lifecycle_double_unmount
 
