@@ -56,6 +56,12 @@ Hydration failed because the initial UI does not match what was rendered on the 
 The `render` function passed to `createRawSnippet` should return HTML for a single element
 ```
 
+### legacy_recursive_reactive_block
+
+```
+Detected a migrated `$:` reactive block that both accesses and updates the same reactive value. This may cause recursive updates when converted to an `$effect`.
+```
+
 ### lifecycle_double_unmount
 
 ```

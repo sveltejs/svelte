@@ -64,7 +64,7 @@ result.head; // HTML for somewhere in this <head> tag
 
 ## `hydrate`
 
-Like `mount`, but will reuse up any HTML rendered by Svelte's SSR output (from the [`render`](#server-render) function) inside the target and make it interactive:
+Like `mount`, but will reuse up any HTML rendered by Svelte's SSR output (from the [`render`](#render) function) inside the target and make it interactive:
 
 ```js
 // @errors: 2322

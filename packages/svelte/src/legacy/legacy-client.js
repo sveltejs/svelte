@@ -1,10 +1,18 @@
 /** @import { ComponentConstructorOptions, ComponentType, SvelteComponent, Component } from 'svelte' */
+import { DIRTY, MAYBE_DIRTY } from '../internal/client/constants.js';
 import { user_pre_effect } from '../internal/client/reactivity/effects.js';
 import { mutable_source, set } from '../internal/client/reactivity/sources.js';
 import { hydrate, mount, unmount } from '../internal/client/render.js';
-import { component_context, flush_sync, get } from '../internal/client/runtime.js';
+import {
+	active_effect,
+	component_context,
+	flush_sync,
+	get,
+	set_signal_status
+} from '../internal/client/runtime.js';
 import { lifecycle_outside_component } from '../internal/shared/errors.js';
 import { define_property, is_array } from '../internal/shared/utils.js';
+import * as w from '../internal/client/warnings.js';
 
 /**
  * Takes the same options as a Svelte 4 component and the component function and returns a Svelte 4 compatible component.
@@ -169,7 +177,15 @@ class Svelte4Component {
  * @returns {void}
  */
 export function run(fn) {
-	user_pre_effect(fn);
+	user_pre_effect(() => {
+		fn();
+		var effect = /** @type {import('#client').Effect} */ (active_effect);
+		// If the effect is immediately made dirty again, mark it as maybe dirty to emulate legacy behaviour
+		if ((effect.f & DIRTY) !== 0) {
+			w.legacy_recursive_reactive_block();
+			set_signal_status(effect, MAYBE_DIRTY);
+		}
+	});
 }
 
 /**

@@ -328,7 +328,7 @@ async function process_markup(process, source) {
 
 /**
  * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
- * For example, it can be used to convert a <style lang="sass"> block into vanilla CSS.
+ * For example, it can be used to convert a `<style lang="sass">` block into vanilla CSS.
  *
  * @param {string} source
  * @param {PreprocessorGroup | PreprocessorGroup[]} preprocessor

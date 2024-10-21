@@ -1,5 +1,139 @@
 # svelte
 
+## 5.0.4
+
+### Patch Changes
+
+- fix: webview preload tag can be any string ([#13733](https://github.com/sveltejs/svelte/pull/13733))
+
+- fix: better children snippet / default slot interop ([#13734](https://github.com/sveltejs/svelte/pull/13734))
+
+## 5.0.3
+
+### Patch Changes
+
+- chore: ensure transition events are dispatched without current reaction ([#13719](https://github.com/sveltejs/svelte/pull/13719))
+
+## 5.0.2
+
+### Patch Changes
+
+- fix: don't blank css on migration error ([#13703](https://github.com/sveltejs/svelte/pull/13703))
+
+## 5.0.1
+
+### Patch Changes
+
+- fix: use typedef for JSDoc props and maintain comments ([#13698](https://github.com/sveltejs/svelte/pull/13698))
+
+## 5.0.0
+
+A new major version of Svelte has been released! 🎉
+
+The new version brings:
+
+- even better performance,
+- a more granular reactivity system with runes,
+- more expressive template syntax with snippets and event attributes,
+- native TypeScript support,
+- and backwards compatibility with the previous syntax!
+
+For more details check out the [Svelte docs](https://svelte-omnisite.vercel.app/) and the [migration guide](https://svelte-omnisite.vercel.app/docs/svelte/v5-migration-guide).
+
+## 5.0.0-next.272
+
+### Patch Changes
+
+- fix: ensure user effects are correctly executed on initialisation ([#13697](https://github.com/sveltejs/svelte/pull/13697))
+
+- breaking: state mutations inside the template are no longer allowed ([#13660](https://github.com/sveltejs/svelte/pull/13660))
+
+## 5.0.0-next.271
+
+### Patch Changes
+
+- fix: avoid chromium issue with dispatching blur on element removal ([#13694](https://github.com/sveltejs/svelte/pull/13694))
+
+## 5.0.0-next.270
+
+### Patch Changes
+
+- fix: bail out if slot name changes and $slots assigned to variable ([#13678](https://github.com/sveltejs/svelte/pull/13678))
+
+- feat: add `migration-task` for impossible to migrate slots ([#13658](https://github.com/sveltejs/svelte/pull/13658))
+
+- feat: tell users of `@migration-task` ([#13668](https://github.com/sveltejs/svelte/pull/13668))
+
+- fix: correct migration of uninitialised state ([#13673](https://github.com/sveltejs/svelte/pull/13673))
+
+- fix: ensure migrate correctly handles named slots ([#13676](https://github.com/sveltejs/svelte/pull/13676))
+
+- feat: add `migration-task` comment after errors ([#13659](https://github.com/sveltejs/svelte/pull/13659))
+
+- fix: migrate reactive statements with inner blocks ([#13675](https://github.com/sveltejs/svelte/pull/13675))
+
+- fix: migrating rest props type includes props types ([#13632](https://github.com/sveltejs/svelte/pull/13632))
+
+- fix: migrated snippet shadowing prop and let directive removal ([#13679](https://github.com/sveltejs/svelte/pull/13679))
+
+- chore: CompileDiagnostic no longer extends Error ([#13651](https://github.com/sveltejs/svelte/pull/13651))
+
+- fix: reset `reset_element` in `render` to prevent runtime error ([#13669](https://github.com/sveltejs/svelte/pull/13669))
+
+## 5.0.0-next.269
+
+### Patch Changes
+
+- fix: transitions within dynamic components now function correctly ([#13646](https://github.com/sveltejs/svelte/pull/13646))
+
+- fix: use `internal_set` in `await` block ([#13642](https://github.com/sveltejs/svelte/pull/13642))
+
+- fix: correctly applies autofocus to static elements ([#13648](https://github.com/sveltejs/svelte/pull/13648))
+
+- fix: `method` attribute is case insensitive ([#13639](https://github.com/sveltejs/svelte/pull/13639))
+
+- chore: avoid reporting inspections when an exception occurs ([#13601](https://github.com/sveltejs/svelte/pull/13601))
+
+- fix: ensure legacy run utility does not cause cycles ([#13643](https://github.com/sveltejs/svelte/pull/13643))
+
+- fix: better migration for leading and trailing comments ([#13630](https://github.com/sveltejs/svelte/pull/13630))
+
+## 5.0.0-next.268
+
+### Patch Changes
+
+- breaking: disallow state mutations in logic block expression ([#13625](https://github.com/sveltejs/svelte/pull/13625))
+
+- breaking: stronger enumerated types ([#13624](https://github.com/sveltejs/svelte/pull/13624))
+
+- chore: improve runtime performance of derived signals ([#13626](https://github.com/sveltejs/svelte/pull/13626))
+
+## 5.0.0-next.267
+
+### Patch Changes
+
+- fix: ensure inserted code is preserved during migration ([#13617](https://github.com/sveltejs/svelte/pull/13617))
+
+- fix: ensure each block consistency to internal mutations to the collection ([#13614](https://github.com/sveltejs/svelte/pull/13614))
+
+- chore: improve derived ownership model ([#13623](https://github.com/sveltejs/svelte/pull/13623))
+
+- fix: ensure await block scope transforms are isolated ([#13622](https://github.com/sveltejs/svelte/pull/13622))
+
+## 5.0.0-next.266
+
+### Patch Changes
+
+- feat: add hidden until-found and beforematch ([#13612](https://github.com/sveltejs/svelte/pull/13612))
+
+- fix: ensure local prop value is read during teardown ([#13611](https://github.com/sveltejs/svelte/pull/13611))
+
+- fix: take snippets into account when scoping CSS ([#13589](https://github.com/sveltejs/svelte/pull/13589))
+
+- breaking: scope `:not(...)` selectors ([#13568](https://github.com/sveltejs/svelte/pull/13568))
+
+- breaking: scope `:has(...)` selectors ([#13567](https://github.com/sveltejs/svelte/pull/13567))
+
 ## 5.0.0-next.265
 
 ### Patch Changes

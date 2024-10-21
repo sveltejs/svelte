@@ -6,6 +6,7 @@ import { suite, type BaseTest } from '../suite.js';
 
 interface ParserTest extends BaseTest {
 	skip_filename?: boolean;
+	logs?: string[];
 }
 
 const { test, run } = suite<ParserTest>(async (config, cwd) => {
@@ -14,9 +15,21 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 		.replace(/\s+$/, '')
 		.replace(/\r/g, '');
 
+	const logs: any[] = [];
+
+	if (config.logs) {
+		console.log = (...args) => {
+			logs.push(...args);
+		};
+	}
+
 	const actual = migrate(input, {
-		filename: config.skip_filename ? undefined : `${cwd}/output.svelte`
+		filename: config.skip_filename ? undefined : `output.svelte`
 	}).code;
+
+	if (config.logs) {
+		assert.deepEqual(logs, config.logs);
+	}
 
 	// run `UPDATE_SNAPSHOTS=true pnpm test migrate` to update parser tests
 	if (process.env.UPDATE_SNAPSHOTS || !fs.existsSync(`${cwd}/output.svelte`)) {

@@ -31,7 +31,7 @@ import {
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-import { source, mutable_source, set } from '../../reactivity/sources.js';
+import { source, mutable_source, internal_set } from '../../reactivity/sources.js';
 import { array_from, is_array } from '../../../shared/utils.js';
 import { INERT } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
@@ -225,6 +225,14 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			// continue in hydration mode
 			set_hydrating(true);
 		}
+
+		// When we mount the each block for the first time, the collection won't be
+		// connected to this effect as the effect hasn't finished running yet and its deps
+		// won't be assigned. However, it's possible that when reconciling the each block
+		// that a mutation occurred and it's made the collection MAYBE_DIRTY, so reading the
+		// collection again can provide consistency to the reactive graph again as the deriveds
+		// will now be `CLEAN`.
+		get_collection();
 	});
 
 	if (hydrating) {
@@ -455,11 +463,11 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
  */
 function update_item(item, value, index, type) {
 	if ((type & EACH_ITEM_REACTIVE) !== 0) {
-		set(item.v, value);
+		internal_set(item.v, value);
 	}
 
 	if ((type & EACH_INDEX_REACTIVE) !== 0) {
-		set(/** @type {Value<number>} */ (item.i), index);
+		internal_set(/** @type {Value<number>} */ (item.i), index);
 	} else {
 		item.i = index;
 	}

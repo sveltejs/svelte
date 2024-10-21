@@ -1,7 +1,13 @@
 /** @import { AnimateFn, Animation, AnimationConfig, EachItem, Effect, TransitionFn, TransitionManager } from '#client' */
 import { noop, is_function } from '../../../shared/utils.js';
 import { effect } from '../../reactivity/effects.js';
-import { active_effect, untrack } from '../../runtime.js';
+import {
+	active_effect,
+	active_reaction,
+	set_active_effect,
+	set_active_reaction,
+	untrack
+} from '../../runtime.js';
 import { loop } from '../../loop.js';
 import { should_intro } from '../../render.js';
 import { current_each_item } from '../blocks/each.js';
@@ -15,7 +21,16 @@ import { queue_micro_task } from '../task.js';
  * @returns {void}
  */
 function dispatch_event(element, type) {
-	element.dispatchEvent(new CustomEvent(type));
+	var previous_reaction = active_reaction;
+	var previous_effect = active_effect;
+	set_active_reaction(null);
+	set_active_effect(null);
+	try {
+		element.dispatchEvent(new CustomEvent(type));
+	} finally {
+		set_active_reaction(previous_reaction);
+		set_active_effect(previous_effect);
+	}
 }
 
 /**

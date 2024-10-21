@@ -9,6 +9,7 @@ import { get_attribute_chunks, is_text_attribute } from '../../../utils/ast.js';
  * @typedef {{
  *   stylesheet: Compiler.Css.StyleSheet;
  *   element: Compiler.AST.RegularElement | Compiler.AST.SvelteElement;
+ *   from_render_tag: boolean;
  * }} State
  */
 /** @typedef {NODE_PROBABLY_EXISTS | NODE_DEFINITELY_EXISTS} NodeExistsValue */
@@ -53,10 +54,17 @@ const nesting_selector = {
 /**
  *
  * @param {Compiler.Css.StyleSheet} stylesheet
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag} element
  */
 export function prune(stylesheet, element) {
-	walk(stylesheet, { stylesheet, element }, visitors);
+	if (element.type === 'RenderTag') {
+		const parent = get_element_parent(element);
+		if (!parent) return;
+
+		walk(stylesheet, { stylesheet, element: parent, from_render_tag: true }, visitors);
+	} else {
+		walk(stylesheet, { stylesheet, element, from_render_tag: false }, visitors);
+	}
 }
 
 /** @type {Visitors<Compiler.Css.Node, State>} */
@@ -101,7 +109,37 @@ const visitors = {
 			}
 		}
 
-		if (
+		if (context.state.from_render_tag) {
+			// We're searching for a match that crosses a render tag boundary. That means we have to both traverse up
+			// the element tree (to see if we find an entry point) but also remove selectors from the end (assuming
+			// they are part of the render tag we don't see). We do all possible combinations of both until we find a match.
+			/** @type {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null} */
+			let element = context.state.element;
+
+			while (element) {
+				const selectors_to_check = selectors.slice();
+
+				while (selectors_to_check.length > 0) {
+					selectors_to_check.pop();
+
+					if (
+						apply_selector(
+							selectors_to_check,
+							/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
+							element,
+							context.state.stylesheet,
+							true
+						)
+					) {
+						mark(inner, element);
+						node.metadata.used = true;
+						return;
+					}
+				}
+
+				element = get_element_parent(element);
+			}
+		} else if (
 			apply_selector(
 				selectors,
 				/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
@@ -121,16 +159,26 @@ const visitors = {
 };
 
 /**
- * Discard trailing `:global(...)` selectors without a `:has(...)` modifier, these are unused for scoping purposes
+ * Discard trailing `:global(...)` selectors without a `:has/is/where/not(...)` modifier, these are unused for scoping purposes
  * @param {Compiler.Css.ComplexSelector} node
  */
 function truncate(node) {
 	const i = node.children.findLastIndex(({ metadata, selectors }) => {
+		const first = selectors[0];
 		return (
+			// not after a :global selector
 			!metadata.is_global_like &&
+			!(first.type === 'PseudoClassSelector' && first.name === 'global' && first.args === null) &&
+			// not a :global(...) without a :has/is/where/not(...) modifier
 			(!metadata.is_global ||
 				selectors.some(
-					(selector) => selector.type === 'PseudoClassSelector' && selector.name === 'has'
+					(selector) =>
+						selector.type === 'PseudoClassSelector' &&
+						selector.args !== null &&
+						(selector.name === 'has' ||
+							selector.name === 'not' ||
+							selector.name === 'is' ||
+							selector.name === 'where')
 				))
 		);
 	});
@@ -218,6 +266,13 @@ function apply_combinator(
 			while (parent) {
 				if (parent.type === 'Component' || parent.type === 'SvelteComponent') {
 					crossed_component_boundary = true;
+				}
+
+				if (parent.type === 'SnippetBlock') {
+					// We assume the snippet might be rendered in a place where the parent selectors match.
+					// (We could do more static analysis and check the render tag reference to see if this snippet block continues
+					// with elements that actually match the selector, but that would be a lot of work for little gain)
+					return true;
 				}
 
 				if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
@@ -371,6 +426,16 @@ function relative_selector_might_apply_to_node(
 
 			for (const complex_selector of complex_selectors) {
 				const selectors = truncate(complex_selector);
+				const left_most_combinator = selectors[0]?.combinator ?? descendant_combinator;
+				// In .x:has(> y), we want to search for y, ignoring the left-most combinator
+				// (else it would try to walk further up and fail because there are no selectors left)
+				if (selectors.length > 0) {
+					selectors[0] = {
+						...selectors[0],
+						combinator: null
+					};
+				}
+
 				if (
 					selectors.length === 0 /* is :global(...) */ ||
 					apply_selector(selectors, rule, element, stylesheet, check_has)
@@ -379,7 +444,7 @@ function relative_selector_might_apply_to_node(
 					// and now looking upwards for the .x part.
 					if (
 						apply_combinator(
-							selectors[0]?.combinator ?? descendant_combinator,
+							left_most_combinator,
 							selectors[0] ?? [],
 							[relative_selector],
 							rule,
@@ -440,17 +505,47 @@ function relative_selector_might_apply_to_node(
 				// We came across a :global, everything beyond it is global and therefore a potential match
 				if (name === 'global' && selector.args === null) return true;
 
-				if ((name === 'is' || name === 'where') && selector.args) {
+				if ((name === 'is' || name === 'where' || name === 'not') && selector.args) {
 					let matched = false;
 
 					for (const complex_selector of selector.args.children) {
-						if (apply_selector(truncate(complex_selector), rule, element, stylesheet, check_has)) {
+						const relative = truncate(complex_selector);
+						if (
+							relative.length === 0 /* is :global(...) */ ||
+							apply_selector(relative, rule, element, stylesheet, check_has)
+						) {
 							complex_selector.metadata.used = true;
 							matched = true;
+						} else if (complex_selector.children.length > 1 && (name == 'is' || name == 'where')) {
+							// foo :is(bar baz) can also mean that bar is an ancestor of foo, and baz a descendant.
+							// We can't fully check if that actually matches with our current algorithm, so we just assume it does.
+							// The result may not match a real element, so the only drawback is the missing prune.
+							complex_selector.metadata.used = true;
+							matched = true;
+							for (const selector of relative) {
+								selector.metadata.scoped = true;
+							}
 						}
 					}
 
 					if (!matched) {
+						if (
+							relative_selector.metadata.is_global &&
+							!relative_selector.metadata.is_global_like
+						) {
+							// Edge case: `:global(.x):is(.y)` where `.x` is global but `.y` doesn't match.
+							// Since `used` is set to `true` for `:global(.x)` in css-analyze beforehand, and
+							// we have no way of knowing if it's safe to set it back to `false`, we'll mark
+							// the inner selector as used and scoped to prevent it from being pruned, which could
+							// result in a invalid CSS output (e.g. `.x:is(/* unused .y */)`). The result
+							// can't match a real element, so the only drawback is the missing prune.
+							// TODO clean this up some day
+							selector.args.children[0].metadata.used = true;
+							selector.args.children[0].children.forEach((selector) => {
+								selector.metadata.scoped = true;
+							});
+						}
+
 						return false;
 					}
 				}
@@ -674,7 +769,7 @@ function unquote(str) {
 }
 
 /**
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} node
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag} node
  * @returns {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null}
  */
 function get_element_parent(node) {

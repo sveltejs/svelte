@@ -75,3 +75,10 @@
 	/* (unused) .unused x:has(y) {
 		color: red;
 	}*/
+
+	x.svelte-xyz:has(> y:where(.svelte-xyz)) {
+		color: green;
+	}
+	/* (unused) x:has(> z) {
+		color: red;
+	}*/

@@ -85,6 +85,20 @@ export default test({
 				column: 17,
 				line: 81
 			}
+		},
+		{
+			code: 'css_unused_selector',
+			message: 'Unused CSS selector "x:has(> z)"',
+			start: {
+				line: 88,
+				column: 1,
+				character: 968
+			},
+			end: {
+				line: 88,
+				column: 11,
+				character: 978
+			}
 		}
 	]
 });
