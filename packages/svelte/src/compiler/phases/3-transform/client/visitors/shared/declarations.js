@@ -1,7 +1,9 @@
-/** @import { Identifier } from 'estree' */
+/** @import { Expression, Identifier } from 'estree' */
+/** @import { Location } from 'locate-character' */
 /** @import { ComponentContext, Context } from '../../types' */
 import { is_state_source } from '../../utils.js';
 import * as b from '../../../../../utils/builders.js';
+import { dev, filename, locator } from '../../../../../state.js';
 
 /**
  * Turns `foo` into `$.get(foo)`
@@ -25,7 +27,17 @@ export function add_state_transformers(context) {
 			context.state.transform[name] = {
 				read: binding.declaration_kind === 'var' ? (node) => b.call('$.safe_get', node) : get_value,
 				assign: (node, value) => {
+					/** @type {Expression} */
 					let call = b.call('$.set', node, value);
+
+					const loc = dev && node.start !== undefined && locator(node.start);
+
+					if (loc) {
+						call = b.sequence([
+							b.call('$.track_assignment', b.literal(`${filename}:${loc.line}:${loc.column}`)),
+							call
+						]);
+					}
 
 					if (context.state.scope.get(`$${node.name}`)?.kind === 'store_sub') {
 						call = b.call('$.store_unsub', call, b.literal(`$${node.name}`), b.id('$$stores'));
@@ -41,11 +53,23 @@ export function add_state_transformers(context) {
 					return b.call('$.mutate', node, mutation);
 				},
 				update: (node) => {
-					return b.call(
+					/** @type {Expression} */
+					let call = b.call(
 						node.prefix ? '$.update_pre' : '$.update',
 						node.argument,
 						node.operator === '--' && b.literal(-1)
 					);
+
+					const loc = dev && node.start !== undefined && locator(node.start);
+
+					if (loc) {
+						call = b.sequence([
+							b.call('$.track_assignment', b.literal(`${filename}:${loc.line}:${loc.column}`)),
+							call
+						]);
+					}
+
+					return call;
 				}
 			};
 		}
