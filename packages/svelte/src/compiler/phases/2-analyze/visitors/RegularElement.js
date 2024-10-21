@@ -77,7 +77,9 @@ export function RegularElement(node, context) {
 
 	if (
 		node.attributes.some(
-			(attribute) => attribute.type === 'Attribute' && attribute.name === 'autofocus'
+			(attribute) =>
+				attribute.type === 'Attribute' &&
+				(attribute.name === 'autofocus' || attribute.name === 'muted')
 		)
 	) {
 		mark_subtree_dynamic(context.path);
