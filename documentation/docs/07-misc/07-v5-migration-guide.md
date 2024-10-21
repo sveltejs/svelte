@@ -525,7 +525,7 @@ For `$set`, use `$state` instead to create a reactive property object and manipu
 import App from './App.svelte'
 
 ---const app = new App({ target: document.getElementById("app"), props: { foo: 'bar' } });
-app.$set('event', { foo: 'baz' });---
+app.$set({ foo: 'baz' });---
 +++const props = $state({ foo: 'bar' });
 const app = mount(App, { target: document.getElementById("app"), props });
 props.foo = 'baz';+++
@@ -850,7 +850,7 @@ In Svelte 4, `null` and `undefined` were printed as the corresponding string. In
 
 Previously, bindings did not take into account `reset` event of forms, and therefore values could get out of sync with the DOM. Svelte 5 fixes this by placing a `reset` listener on the document and invoking bindings where necessary.
 
-### `walk` not longer exported
+### `walk` no longer exported
 
 `svelte/compiler` reexported `walk` from `estree-walker` for convenience. This is no longer true in Svelte 5, import it directly from that package instead in case you need it.
 
