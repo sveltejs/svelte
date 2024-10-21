@@ -77,6 +77,14 @@
     <div slot="bar">bar</div>
 </Component>
 
+<Component>
+	<span slot="default">should be children</span>
+</Component>
+
+<Component>
+	<span slot="default" let:with_prop>should be children {with_prop} too</span>
+</Component>
+
 <c-e>
     <div slot="named">unchanged</div>
 </c-e>
