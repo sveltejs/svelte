@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.4
+
+### Patch Changes
+
+- fix: webview preload tag can be any string ([#13733](https://github.com/sveltejs/svelte/pull/13733))
+
+- fix: better children snippet / default slot interop ([#13734](https://github.com/sveltejs/svelte/pull/13734))
+
 ## 5.0.3
 
 ### Patch Changes
