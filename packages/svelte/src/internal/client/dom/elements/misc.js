@@ -21,6 +21,15 @@ export function autofocus(dom, value) {
 }
 
 /**
+ * @param {HTMLVideoElement} dom
+ * @param {boolean} value
+ * @returns {void}
+ */
+export function muted(dom, value) {
+	dom.muted = value;
+}
+
+/**
  * The child of a textarea actually corresponds to the defaultValue property, so we need
  * to remove it upon hydration to avoid a bug when someone resets the form value.
  * @param {HTMLTextAreaElement} dom

@@ -242,6 +242,7 @@ export function RegularElement(node, context) {
 			);
 		}
 	} else {
+		debugger;
 		/** If true, needs `__value` for inputs */
 		const needs_special_value_handling =
 			node.name === 'option' ||
@@ -263,6 +264,7 @@ export function RegularElement(node, context) {
 			if (
 				!is_custom_element &&
 				attribute.name !== 'autofocus' &&
+				attribute.name !== 'muted' &&
 				(attribute.value === true || is_text_attribute(attribute))
 			) {
 				const name = get_attribute_name(node, attribute);
@@ -527,6 +529,11 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 
 	if (name === 'autofocus') {
 		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
+		return false;
+	}
+
+	if (name === 'muted') {
+		state.init.push(b.stmt(b.call('$.muted', node_id, value)));
 		return false;
 	}
 
