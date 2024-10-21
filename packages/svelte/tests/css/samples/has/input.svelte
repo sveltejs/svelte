@@ -91,4 +91,7 @@
 	x:has(> z) {
 		color: red;
 	}
+	x > y:has(z) {
+		color: green;
+	}
 </style>
