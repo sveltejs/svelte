@@ -1805,7 +1805,7 @@ export interface HTMLWebViewAttributes extends HTMLAttributes<HTMLElement> {
 	nodeintegration?: boolean | undefined | null;
 	partition?: string | undefined | null;
 	plugins?: boolean | undefined | null;
-	preload?: string | undefined | null;
+	preload?: string | undefined | null; // in the DOM it's only 'auto' | 'none' | 'metadata' | '', but electron allows arbitrary values
 	src?: string | undefined | null;
 	useragent?: string | undefined | null;
 	webpreferences?: string | undefined | null;
