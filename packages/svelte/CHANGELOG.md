@@ -1,5 +1,59 @@
 # svelte
 
+## 5.0.4
+
+### Patch Changes
+
+- fix: webview preload tag can be any string ([#13733](https://github.com/sveltejs/svelte/pull/13733))
+
+- fix: better children snippet / default slot interop ([#13734](https://github.com/sveltejs/svelte/pull/13734))
+
+## 5.0.3
+
+### Patch Changes
+
+- chore: ensure transition events are dispatched without current reaction ([#13719](https://github.com/sveltejs/svelte/pull/13719))
+
+## 5.0.2
+
+### Patch Changes
+
+- fix: don't blank css on migration error ([#13703](https://github.com/sveltejs/svelte/pull/13703))
+
+## 5.0.1
+
+### Patch Changes
+
+- fix: use typedef for JSDoc props and maintain comments ([#13698](https://github.com/sveltejs/svelte/pull/13698))
+
+## 5.0.0
+
+A new major version of Svelte has been released! 🎉
+
+The new version brings:
+
+- even better performance,
+- a more granular reactivity system with runes,
+- more expressive template syntax with snippets and event attributes,
+- native TypeScript support,
+- and backwards compatibility with the previous syntax!
+
+For more details check out the [Svelte docs](https://svelte-omnisite.vercel.app/) and the [migration guide](https://svelte-omnisite.vercel.app/docs/svelte/v5-migration-guide).
+
+## 5.0.0-next.272
+
+### Patch Changes
+
+- fix: ensure user effects are correctly executed on initialisation ([#13697](https://github.com/sveltejs/svelte/pull/13697))
+
+- breaking: state mutations inside the template are no longer allowed ([#13660](https://github.com/sveltejs/svelte/pull/13660))
+
+## 5.0.0-next.271
+
+### Patch Changes
+
+- fix: avoid chromium issue with dispatching blur on element removal ([#13694](https://github.com/sveltejs/svelte/pull/13694))
+
 ## 5.0.0-next.270
 
 ### Patch Changes

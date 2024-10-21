@@ -34,6 +34,7 @@ let has_migration_task = false;
  * @returns {{ code: string; }}
  */
 export function migrate(source, { filename } = {}) {
+	let og_source = source;
 	try {
 		has_migration_task = false;
 		// Blank CSS, could contain SCSS or similar that needs a preprocessor.
@@ -80,6 +81,7 @@ export function migrate(source, { filename } = {}) {
 			props: [],
 			props_insertion_point: parsed.instance?.content.start ?? 0,
 			has_props_rune: false,
+			has_type_or_fallback: false,
 			end: source.length,
 			names: {
 				props: analysis.root.unique('props').name,
@@ -201,35 +203,39 @@ export function migrate(source, { filename } = {}) {
 				);
 				const type_name = state.scope.root.unique('Props').name;
 				let type = '';
-				if (uses_ts) {
-					type = `interface ${type_name} {${newline_separator}${state.props
-						.map((prop) => {
-							const comment = prop.comment ? `${prop.comment}${newline_separator}` : '';
-							return `${comment}${prop.exported}${prop.optional ? '?' : ''}: ${prop.type};`;
-						})
-						.join(newline_separator)}`;
-					if (analysis.uses_props || analysis.uses_rest_props) {
-						type += `${state.props.length > 0 ? newline_separator : ''}[key: string]: any`;
+
+				// Try to infer when we don't want to add types (e.g. user doesn't use types, or this is a zero-types +page.svelte)
+				if (state.has_type_or_fallback || state.props.every((prop) => prop.slot_name)) {
+					if (uses_ts) {
+						type = `interface ${type_name} {${newline_separator}${state.props
+							.map((prop) => {
+								const comment = prop.comment ? `${prop.comment}${newline_separator}` : '';
+								return `${comment}${prop.exported}${prop.optional ? '?' : ''}: ${prop.type};`;
+							})
+							.join(newline_separator)}`;
+						if (analysis.uses_props || analysis.uses_rest_props) {
+							type += `${state.props.length > 0 ? newline_separator : ''}[key: string]: any`;
+						}
+						type += `\n${indent}}`;
+					} else {
+						type = `/**\n${indent} * @typedef {Object} ${type_name}${state.props
+							.map((prop) => {
+								return `\n${indent} * @property {${prop.type}} ${prop.optional ? `[${prop.exported}]` : prop.exported}${prop.comment ? ` - ${prop.comment}` : ''}`;
+							})
+							.join(``)}\n${indent} */`;
 					}
-					type += `\n${indent}}`;
-				} else {
-					type = `{${state.props
-						.map((prop) => {
-							return `${prop.exported}${prop.optional ? '?' : ''}: ${prop.type}`;
-						})
-						.join(`, `)}`;
-					if (analysis.uses_props || analysis.uses_rest_props) {
-						type += `${state.props.length > 0 ? ', ' : ''}[key: string]: any`;
-					}
-					type += '}';
 				}
 
 				let props_declaration = `let {${props_separator}${props}${has_many_props ? `\n${indent}` : ' '}}`;
 				if (uses_ts) {
-					props_declaration = `${type}\n\n${indent}${props_declaration}`;
+					if (type) {
+						props_declaration = `${type}\n\n${indent}${props_declaration}`;
+					}
 					props_declaration = `${props_declaration}${type ? `: ${type_name}` : ''} = $props();`;
 				} else {
-					props_declaration = `/** @type {${type}} */\n${indent}${props_declaration}`;
+					if (type) {
+						props_declaration = `${state.props.length > 0 ? `${type}\n\n${indent}` : ''}/** @type {${state.props.length > 0 ? type_name : ''}${analysis.uses_props || analysis.uses_rest_props ? `${state.props.length > 0 ? ' & ' : ''}{ [key: string]: any }` : ''}} */\n${indent}${props_declaration}`;
+					}
 					props_declaration = `${props_declaration} = $props();`;
 				}
 
@@ -308,7 +314,7 @@ export function migrate(source, { filename } = {}) {
 		console.error('Error while migrating Svelte code', e);
 		has_migration_task = true;
 		return {
-			code: `<!-- @migration-task Error while migrating Svelte code: ${/** @type {any} */ (e).message} -->\n${source}`
+			code: `<!-- @migration-task Error while migrating Svelte code: ${/** @type {any} */ (e).message} -->\n${og_source}`
 		};
 	} finally {
 		if (has_migration_task) {
@@ -330,6 +336,7 @@ export function migrate(source, { filename } = {}) {
  *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string; type_only?: boolean; needs_refine_type?: boolean; }>;
  *  props_insertion_point: number;
  *  has_props_rune: boolean;
+ *  has_type_or_fallback: boolean;
  *  end: number;
  * 	names: Record<string, string>;
  * 	legacy_imports: Set<string>;
@@ -521,7 +528,7 @@ const instance_script = {
 							: '',
 						optional: !!declarator.init,
 						bindable: binding.updated,
-						...extract_type_and_comment(declarator, state.str, path)
+						...extract_type_and_comment(declarator, state, path)
 					});
 				}
 
@@ -562,14 +569,22 @@ const instance_script = {
 						const declaration = reference.path.find((el) => el.type === 'VariableDeclaration');
 						const assignment = reference.path.find((el) => el.type === 'AssignmentExpression');
 						const update = reference.path.find((el) => el.type === 'UpdateExpression');
-						const labeled = reference.path.find(
-							(el) => el.type === 'LabeledStatement' && el.label.name === '$'
+						const labeled = /** @type {LabeledStatement | undefined} */ (
+							reference.path.find((el) => el.type === 'LabeledStatement' && el.label.name === '$')
 						);
 
-						if (assignment && labeled) {
+						if (
+							assignment &&
+							labeled &&
+							// ensure that $: foo = bar * 2 is not counted as a reassignment of bar
+							(labeled.body.type !== 'ExpressionStatement' ||
+								labeled.body.expression !== assignment ||
+								(assignment.left.type === 'Identifier' &&
+									assignment.left.name === binding.node.name))
+						) {
 							if (assignment_in_labeled) return false;
 							assignment_in_labeled = /** @type {AssignmentExpression} */ (assignment);
-							labeled_statement = /** @type {LabeledStatement} */ (labeled);
+							labeled_statement = labeled;
 						}
 
 						return (
@@ -743,7 +758,12 @@ const instance_script = {
 			);
 			const bindings = ids.map((id) => state.scope.get(id.name));
 			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
-			if (reassigned_bindings.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
+
+			if (
+				reassigned_bindings.length === 0 &&
+				!bindings.some((b) => b?.kind === 'store_sub') &&
+				node.body.expression.left.type !== 'MemberExpression'
+			) {
 				let { start, end } = /** @type {{ start: number, end: number }} */ (
 					node.body.expression.right
 				);
@@ -1257,25 +1277,26 @@ function migrate_slot_usage(node, path, state) {
 
 /**
  * @param {VariableDeclarator} declarator
- * @param {MagicString} str
+ * @param {State} state
  * @param {SvelteNode[]} path
  */
-function extract_type_and_comment(declarator, str, path) {
+function extract_type_and_comment(declarator, state, path) {
+	const str = state.str;
 	const parent = path.at(-1);
 
 	// Try to find jsdoc above the declaration
 	let comment_node = /** @type {Node} */ (parent)?.leadingComments?.at(-1);
-	if (comment_node?.type !== 'Block') comment_node = undefined;
 
 	const comment_start = /** @type {any} */ (comment_node)?.start;
 	const comment_end = /** @type {any} */ (comment_node)?.end;
-	const comment = comment_node && str.original.substring(comment_start, comment_end);
+	let comment = comment_node && str.original.substring(comment_start, comment_end);
 
 	if (comment_node) {
 		str.update(comment_start, comment_end, '');
 	}
 
 	if (declarator.id.typeAnnotation) {
+		state.has_type_or_fallback = true;
 		let start = declarator.id.typeAnnotation.start + 1; // skip the colon
 		while (str.original[start] === ' ') {
 			start++;
@@ -1283,16 +1304,38 @@ function extract_type_and_comment(declarator, str, path) {
 		return { type: str.original.substring(start, declarator.id.typeAnnotation.end), comment };
 	}
 
+	let cleaned_comment = comment
+		?.split('\n')
+		.map((line) =>
+			line
+				.trim()
+				// replace `// ` for one liners
+				.replace(/^\/\/\s*/g, '')
+				// replace `\**` for the initial JSDoc
+				.replace(/^\/\*\*?\s*/g, '')
+				// migrate `*/` for the end of JSDoc
+				.replace(/\s*\*\/$/g, '')
+				// remove any initial `* ` to clean the comment
+				.replace(/^\*\s*/g, '')
+		)
+		.filter(Boolean);
+	const first_at_comment = cleaned_comment?.findIndex((line) => line.startsWith('@'));
+	comment = cleaned_comment
+		?.slice(0, first_at_comment !== -1 ? first_at_comment : cleaned_comment.length)
+		.join('\n');
+
 	// try to find a comment with a type annotation, hinting at jsdoc
 	if (parent?.type === 'ExportNamedDeclaration' && comment_node) {
+		state.has_type_or_fallback = true;
 		const match = /@type {(.+)}/.exec(comment_node.value);
 		if (match) {
-			return { type: match[1] };
+			return { type: match[1], comment };
 		}
 	}
 
 	// try to infer it from the init
 	if (declarator.init?.type === 'Literal') {
+		state.has_type_or_fallback = true; // only assume type if it's trivial to infer - else someone would've added a type annotation
 		const type = typeof declarator.init.value;
 		if (type === 'string' || type === 'number' || type === 'boolean') {
 			return { type, comment };
@@ -1518,6 +1561,8 @@ function handle_identifier(node, state, path) {
 			parent.type === 'TSInterfaceDeclaration' ? parent.body.body : parent.typeAnnotation?.members;
 		if (Array.isArray(members)) {
 			if (node.name === '$$Props') {
+				state.has_type_or_fallback = true;
+
 				for (const member of members) {
 					const prop = state.props.find((prop) => prop.exported === member.key.name);
 

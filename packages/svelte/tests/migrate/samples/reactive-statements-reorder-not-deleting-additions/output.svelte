@@ -3,7 +3,6 @@
 
 
 	import { blah } from './blah.js'
-	/** @type {{data: any}} */
 	let { data } = $props();
 
 	let bar = $state()
