@@ -159,34 +159,37 @@ const visitors = {
 		next();
 	},
 	SelectorList(node, { state, next, path }) {
-		let pruning = false;
-		let last = node.children[0].start;
+		// Only add comments if we're not inside a complex selector that itself is unused
+		if (!path.find((n) => n.type === 'ComplexSelector' && !n.metadata.used)) {
+			let pruning = false;
+			let last = node.children[0].start;
 
-		for (let i = 0; i < node.children.length; i += 1) {
-			const selector = node.children[i];
+			for (let i = 0; i < node.children.length; i += 1) {
+				const selector = node.children[i];
 
-			if (selector.metadata.used === pruning) {
-				if (pruning) {
-					let i = selector.start;
-					while (state.code.original[i] !== ',') i--;
+				if (selector.metadata.used === pruning) {
+					if (pruning) {
+						let i = selector.start;
+						while (state.code.original[i] !== ',') i--;
 
-					state.code.overwrite(i, i + 1, '*/');
-				} else {
-					if (i === 0) {
-						state.code.prependRight(selector.start, '/* (unused) ');
+						state.code.overwrite(i, i + 1, '*/');
 					} else {
-						state.code.overwrite(last, selector.start, ' /* (unused) ');
+						if (i === 0) {
+							state.code.prependRight(selector.start, '/* (unused) ');
+						} else {
+							state.code.overwrite(last, selector.start, ' /* (unused) ');
+						}
 					}
+
+					pruning = !pruning;
 				}
 
-				pruning = !pruning;
+				last = selector.end;
 			}
 
-			last = selector.end;
-		}
-
-		if (pruning) {
-			state.code.appendLeft(last, '*/');
+			if (pruning) {
+				state.code.appendLeft(last, '*/');
+			}
 		}
 
 		// if we're in a `:is(...)` or whatever, keep existing specificity bump state
