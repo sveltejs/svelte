@@ -120,7 +120,9 @@ export function build_inline_component(node, expression, context) {
 			push_prop(b.prop('init', child.expression, child.expression));
 
 			// Interop: allows people to pass snippets when component still uses slots
-			serialized_slots.push(b.init(child.expression.name, b.true));
+			serialized_slots.push(
+				b.init(child.expression.name === 'children' ? 'default' : child.expression.name, b.true)
+			);
 
 			continue;
 		}
@@ -200,7 +202,11 @@ export function build_inline_component(node, expression, context) {
 		if (slot_name === 'default' && !has_children_prop) {
 			if (
 				lets.default.length === 0 &&
-				children.default.every((node) => node.type !== 'SvelteFragment')
+				children.default.every(
+					(node) =>
+						node.type !== 'SvelteFragment' ||
+						!node.attributes.some((attr) => attr.type === 'LetDirective')
+				)
 			) {
 				// create `children` prop...
 				push_prop(b.prop('init', b.id('children'), slot_fn));
