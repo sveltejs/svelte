@@ -19,3 +19,5 @@
 		$count = 1;
 	});
 </script>
+
+<button onclick={() => count++}>increment</button>
