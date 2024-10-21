@@ -85,3 +85,6 @@
 	/* (unused) x:has(> z) {
 		color: red;
 	}*/
+	x.svelte-xyz > y:where(.svelte-xyz):has(z:where(.svelte-xyz)) {
+		color: green;
+	}

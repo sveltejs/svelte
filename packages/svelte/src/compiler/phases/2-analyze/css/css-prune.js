@@ -202,11 +202,16 @@ function apply_selector(relative_selectors, rule, element, stylesheet, check_has
 
 	const possible_match = relative_selector_might_apply_to_node(
 		relative_selector,
+		parent_selectors,
 		rule,
 		element,
 		stylesheet,
 		check_has
 	);
+
+	if (possible_match === 'definite_match') {
+		return true;
+	}
 
 	if (!possible_match) {
 		return false;
@@ -388,14 +393,16 @@ const regex_backslash_and_following_character = /\\(.)/g;
  * Ensure that `element` satisfies each simple selector in `relative_selector`
  *
  * @param {Compiler.Css.RelativeSelector} relative_selector
+ * @param {Compiler.Css.RelativeSelector[]} parent_selectors
  * @param {Compiler.Css.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  * @param {Compiler.Css.StyleSheet} stylesheet
  * @param {boolean} check_has Whether or not to check the `:has(...)` selectors
- * @returns {boolean}
+ * @returns {boolean | 'definite_match'}
  */
 function relative_selector_might_apply_to_node(
 	relative_selector,
+	parent_selectors,
 	rule,
 	element,
 	stylesheet,
@@ -446,7 +453,7 @@ function relative_selector_might_apply_to_node(
 						apply_combinator(
 							left_most_combinator,
 							selectors[0] ?? [],
-							[relative_selector],
+							[...parent_selectors, relative_selector],
 							rule,
 							element,
 							stylesheet,
@@ -478,7 +485,8 @@ function relative_selector_might_apply_to_node(
 			}
 		}
 
-		return true;
+		// We return this to signal the parent "don't bother checking the rest of the selectors, I already did that"
+		return 'definite_match';
 	}
 
 	for (const selector of other_selectors) {
