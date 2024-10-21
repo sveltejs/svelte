@@ -19,3 +19,6 @@ They differ from normal JavaScript functions in important ways, however:
 - You don't need to import them — they are part of the language
 - They're not values — you can't assign them to a variable or pass them as arguments to a function
 - Just like JavaScript keywords, they are only valid in certain positions (the compiler will help you if you put them in the wrong place)
+
+> [!LEGACY]
+> Runes didn't exist prior to Svelte 5.
