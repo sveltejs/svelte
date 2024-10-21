@@ -114,7 +114,10 @@ export function migrate(source, { filename } = {}) {
 			script_insertions: new Set(),
 			derived_components: new Map(),
 			derived_labeled_statements: new Set(),
-			has_svelte_self: false
+			has_svelte_self: false,
+			uses_ts: !!parsed.instance?.attributes.some(
+				(attr) => attr.name === 'lang' && /** @type {any} */ (attr).value[0].data === 'ts'
+			)
 		};
 
 		if (parsed.module) {
@@ -207,15 +210,12 @@ export function migrate(source, { filename } = {}) {
 				// some render tags or forwarded event attributes to add
 				str.appendRight(insertion_point, ` ${props},`);
 			} else {
-				const uses_ts = parsed.instance?.attributes.some(
-					(attr) => attr.name === 'lang' && /** @type {any} */ (attr).value[0].data === 'ts'
-				);
 				const type_name = state.scope.root.unique('Props').name;
 				let type = '';
 
 				// Try to infer when we don't want to add types (e.g. user doesn't use types, or this is a zero-types +page.svelte)
 				if (state.has_type_or_fallback || state.props.every((prop) => prop.slot_name)) {
-					if (uses_ts) {
+					if (state.uses_ts) {
 						type = `interface ${type_name} {${newline_separator}${state.props
 							.map((prop) => {
 								const comment = prop.comment ? `${prop.comment}${newline_separator}` : '';
@@ -236,7 +236,7 @@ export function migrate(source, { filename } = {}) {
 				}
 
 				let props_declaration = `let {${props_separator}${props}${has_many_props ? `\n${indent}` : ' '}}`;
-				if (uses_ts) {
+				if (state.uses_ts) {
 					if (type) {
 						props_declaration = `${type}\n\n${indent}${props_declaration}`;
 					}
@@ -355,6 +355,7 @@ export function migrate(source, { filename } = {}) {
  *  derived_components: Map<string, string>;
  * 	derived_labeled_statements: Set<LabeledStatement>;
  *  has_svelte_self: boolean;
+ *  uses_ts: boolean;
  * }} State
  */
 
@@ -1319,7 +1320,7 @@ function extract_type_and_comment(declarator, state, path) {
 		return { type: str.original.substring(start, declarator.id.typeAnnotation.end), comment };
 	}
 
-	let cleaned_comment = comment
+	let cleaned_comment_arr = comment
 		?.split('\n')
 		.map((line) =>
 			line
@@ -1334,9 +1335,9 @@ function extract_type_and_comment(declarator, state, path) {
 				.replace(/^\*\s*/g, '')
 		)
 		.filter(Boolean);
-	const first_at_comment = cleaned_comment?.findIndex((line) => line.startsWith('@'));
-	comment = cleaned_comment
-		?.slice(0, first_at_comment !== -1 ? first_at_comment : cleaned_comment.length)
+	const first_at_comment = cleaned_comment_arr?.findIndex((line) => line.startsWith('@'));
+	let cleaned_comment = cleaned_comment_arr
+		?.slice(0, first_at_comment !== -1 ? first_at_comment : cleaned_comment_arr.length)
 		.join('\n');
 
 	// try to find a comment with a type annotation, hinting at jsdoc
@@ -1344,7 +1345,7 @@ function extract_type_and_comment(declarator, state, path) {
 		state.has_type_or_fallback = true;
 		const match = /@type {(.+)}/.exec(comment_node.value);
 		if (match) {
-			return { type: match[1], comment };
+			return { type: match[1], comment: cleaned_comment };
 		}
 	}
 
@@ -1353,11 +1354,11 @@ function extract_type_and_comment(declarator, state, path) {
 		state.has_type_or_fallback = true; // only assume type if it's trivial to infer - else someone would've added a type annotation
 		const type = typeof declarator.init.value;
 		if (type === 'string' || type === 'number' || type === 'boolean') {
-			return { type, comment };
+			return { type, comment: state.uses_ts ? comment : cleaned_comment };
 		}
 	}
 
-	return { type: 'any', comment };
+	return { type: 'any', comment: state.uses_ts ? comment : cleaned_comment };
 }
 
 // Ensure modifiers are applied in the same order as Svelte 4
