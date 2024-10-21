@@ -25,6 +25,15 @@ const style_placeholder = '/*$$__STYLE_CONTENT__$$*/';
 
 let has_migration_task = false;
 
+class MigrationError extends Error {
+	/**
+	 * @param {string} msg
+	 */
+	constructor(msg) {
+		super(msg);
+	}
+}
+
 /**
  * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
  * May throw an error if the code is too complex to migrate automatically.
@@ -310,8 +319,10 @@ export function migrate(source, { filename } = {}) {
 		}
 		return { code: str.toString() };
 	} catch (e) {
-		// eslint-disable-next-line no-console
-		console.error('Error while migrating Svelte code', e);
+		if (!(e instanceof MigrationError)) {
+			// eslint-disable-next-line no-console
+			console.error('Error while migrating Svelte code', e);
+		}
 		has_migration_task = true;
 		return {
 			code: `<!-- @migration-task Error while migrating Svelte code: ${/** @type {any} */ (e).message} -->\n${og_source}`
@@ -398,7 +409,7 @@ const instance_script = {
 				state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
 			}
 			if (illegal_specifiers.length > 0) {
-				throw new Error(
+				throw new MigrationError(
 					`Can't migrate code with ${illegal_specifiers.join(' and ')}. Please migrate by hand.`
 				);
 			}
@@ -462,7 +473,7 @@ const instance_script = {
 
 				if (declarator.id.type !== 'Identifier') {
 					// TODO invest time in this?
-					throw new Error(
+					throw new MigrationError(
 						'Encountered an export declaration pattern that is not supported for automigration.'
 					);
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
@@ -493,7 +504,7 @@ const instance_script = {
 				const binding = /** @type {Binding} */ (state.scope.get(name));
 
 				if (state.analysis.uses_props && (declarator.init || binding.updated)) {
-					throw new Error(
+					throw new MigrationError(
 						'$$props is used together with named props in a way that cannot be automatically migrated.'
 					);
 				}
@@ -1065,7 +1076,7 @@ const template = {
 		} else if (slot_name !== 'default') {
 			name = state.scope.generate(slot_name);
 			if (name !== slot_name) {
-				throw new Error(
+				throw new MigrationError(
 					'This migration would change the name of a slot making the component unusable'
 				);
 			}
@@ -1520,7 +1531,7 @@ function handle_identifier(node, state, path) {
 			} else if (name !== 'default') {
 				let new_name = state.scope.generate(name);
 				if (new_name !== name) {
-					throw new Error(
+					throw new MigrationError(
 						'This migration would change the name of a slot making the component unusable'
 					);
 				}

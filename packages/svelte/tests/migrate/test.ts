@@ -6,7 +6,8 @@ import { suite, type BaseTest } from '../suite.js';
 
 interface ParserTest extends BaseTest {
 	skip_filename?: boolean;
-	logs?: string[];
+	logs?: any[];
+	errors?: any[];
 }
 
 const { test, run } = suite<ParserTest>(async (config, cwd) => {
@@ -16,10 +17,17 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 		.replace(/\r/g, '');
 
 	const logs: any[] = [];
+	const errors: any[] = [];
 
 	if (config.logs) {
 		console.log = (...args) => {
 			logs.push(...args);
+		};
+	}
+
+	if (config.errors) {
+		console.error = (...args) => {
+			errors.push(...args);
 		};
 	}
 
@@ -29,6 +37,10 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 
 	if (config.logs) {
 		assert.deepEqual(logs, config.logs);
+	}
+
+	if (config.errors) {
+		assert.deepEqual(errors, config.errors);
 	}
 
 	// run `UPDATE_SNAPSHOTS=true pnpm test migrate` to update parser tests
