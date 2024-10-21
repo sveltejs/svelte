@@ -19,7 +19,7 @@
 		$count = 1;
 	});
 	run(() => {
-		$count.x = count;
+		foo.x = count;
 	});
 </script>
 

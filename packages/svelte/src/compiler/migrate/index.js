@@ -558,14 +558,22 @@ const instance_script = {
 						const declaration = reference.path.find((el) => el.type === 'VariableDeclaration');
 						const assignment = reference.path.find((el) => el.type === 'AssignmentExpression');
 						const update = reference.path.find((el) => el.type === 'UpdateExpression');
-						const labeled = reference.path.find(
-							(el) => el.type === 'LabeledStatement' && el.label.name === '$'
+						const labeled = /** @type {LabeledStatement | undefined} */ (
+							reference.path.find((el) => el.type === 'LabeledStatement' && el.label.name === '$')
 						);
 
-						if (assignment && labeled) {
+						if (
+							assignment &&
+							labeled &&
+							// ensure that $: foo = bar * 2 is not counted as a reassignment of bar
+							(labeled.body.type !== 'ExpressionStatement' ||
+								labeled.body.expression !== assignment ||
+								(assignment.left.type === 'Identifier' &&
+									assignment.left.name === binding.node.name))
+						) {
 							if (assignment_in_labeled) return false;
 							assignment_in_labeled = /** @type {AssignmentExpression} */ (assignment);
-							labeled_statement = /** @type {LabeledStatement} */ (labeled);
+							labeled_statement = labeled;
 						}
 
 						return (
@@ -739,6 +747,7 @@ const instance_script = {
 			);
 			const bindings = ids.map((id) => state.scope.get(id.name));
 			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
+
 			if (
 				reassigned_bindings.length === 0 &&
 				!bindings.some((b) => b?.kind === 'store_sub') &&
