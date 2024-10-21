@@ -11,4 +11,4 @@ The `{@const ...}` tag defines a local constant.
 {/each}
 ```
 
-`{@const}` is only allowed as an immediate child of a block — `{#if ...}`, `{#each ...}`, `{#snippet ...}` and so on — or a <Component />.
+`{@const}` is only allowed as an immediate child of a block — `{#if ...}`, `{#each ...}`, `{#snippet ...}` and so on — or a `<Component />`.
