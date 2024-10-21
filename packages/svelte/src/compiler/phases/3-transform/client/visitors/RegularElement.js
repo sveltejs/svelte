@@ -242,7 +242,6 @@ export function RegularElement(node, context) {
 			);
 		}
 	} else {
-		debugger;
 		/** If true, needs `__value` for inputs */
 		const needs_special_value_handling =
 			node.name === 'option' ||
