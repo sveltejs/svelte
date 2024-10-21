@@ -81,6 +81,7 @@ export function migrate(source, { filename } = {}) {
 			props: [],
 			props_insertion_point: parsed.instance?.content.start ?? 0,
 			has_props_rune: false,
+			has_type_or_fallback: false,
 			end: source.length,
 			names: {
 				props: analysis.root.unique('props').name,
@@ -202,30 +203,39 @@ export function migrate(source, { filename } = {}) {
 				);
 				const type_name = state.scope.root.unique('Props').name;
 				let type = '';
-				if (uses_ts) {
-					type = `interface ${type_name} {${newline_separator}${state.props
-						.map((prop) => {
-							const comment = prop.comment ? `${prop.comment}${newline_separator}` : '';
-							return `${comment}${prop.exported}${prop.optional ? '?' : ''}: ${prop.type};`;
-						})
-						.join(newline_separator)}`;
-					if (analysis.uses_props || analysis.uses_rest_props) {
-						type += `${state.props.length > 0 ? newline_separator : ''}[key: string]: any`;
+
+				// Try to infer when we don't want to add types (e.g. user doesn't use types, or this is a zero-types +page.svelte)
+				if (state.has_type_or_fallback || state.props.every((prop) => prop.slot_name)) {
+					if (uses_ts) {
+						type = `interface ${type_name} {${newline_separator}${state.props
+							.map((prop) => {
+								const comment = prop.comment ? `${prop.comment}${newline_separator}` : '';
+								return `${comment}${prop.exported}${prop.optional ? '?' : ''}: ${prop.type};`;
+							})
+							.join(newline_separator)}`;
+						if (analysis.uses_props || analysis.uses_rest_props) {
+							type += `${state.props.length > 0 ? newline_separator : ''}[key: string]: any`;
+						}
+						type += `\n${indent}}`;
+					} else {
+						type = `/**\n${indent} * @typedef {Object} ${type_name}${state.props
+							.map((prop) => {
+								return `\n${indent} * @property {${prop.type}} ${prop.optional ? `[${prop.exported}]` : prop.exported}${prop.comment ? ` - ${prop.comment}` : ''}`;
+							})
+							.join(``)}\n${indent} */`;
 					}
-					type += `\n${indent}}`;
-				} else {
-					type = `/**\n${indent} * @typedef {Object} ${type_name}${state.props
-						.map((prop) => {
-							return `\n${indent} * @property {${prop.type}} ${prop.optional ? `[${prop.exported}]` : prop.exported}${prop.comment ? ` - ${prop.comment}` : ''}`;
-						})
-						.join(``)}\n${indent} */`;
 				}
+
 				let props_declaration = `let {${props_separator}${props}${has_many_props ? `\n${indent}` : ' '}}`;
 				if (uses_ts) {
-					props_declaration = `${type}\n\n${indent}${props_declaration}`;
+					if (type) {
+						props_declaration = `${type}\n\n${indent}${props_declaration}`;
+					}
 					props_declaration = `${props_declaration}${type ? `: ${type_name}` : ''} = $props();`;
 				} else {
-					props_declaration = `${type && state.props.length > 0 ? `${type}\n\n${indent}` : ''}/** @type {${state.props.length > 0 ? type_name : ''}${analysis.uses_props || analysis.uses_rest_props ? `${state.props.length > 0 ? ' & ' : ''}{ [key: string]: any }` : ''}} */\n${indent}${props_declaration}`;
+					if (type) {
+						props_declaration = `${state.props.length > 0 ? `${type}\n\n${indent}` : ''}/** @type {${state.props.length > 0 ? type_name : ''}${analysis.uses_props || analysis.uses_rest_props ? `${state.props.length > 0 ? ' & ' : ''}{ [key: string]: any }` : ''}} */\n${indent}${props_declaration}`;
+					}
 					props_declaration = `${props_declaration} = $props();`;
 				}
 
@@ -326,6 +336,7 @@ export function migrate(source, { filename } = {}) {
  *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string; type_only?: boolean; needs_refine_type?: boolean; }>;
  *  props_insertion_point: number;
  *  has_props_rune: boolean;
+ *  has_type_or_fallback: boolean;
  *  end: number;
  * 	names: Record<string, string>;
  * 	legacy_imports: Set<string>;
@@ -517,7 +528,7 @@ const instance_script = {
 							: '',
 						optional: !!declarator.init,
 						bindable: binding.updated,
-						...extract_type_and_comment(declarator, state.str, path)
+						...extract_type_and_comment(declarator, state, path)
 					});
 				}
 
@@ -1253,10 +1264,11 @@ function migrate_slot_usage(node, path, state) {
 
 /**
  * @param {VariableDeclarator} declarator
- * @param {MagicString} str
+ * @param {State} state
  * @param {SvelteNode[]} path
  */
-function extract_type_and_comment(declarator, str, path) {
+function extract_type_and_comment(declarator, state, path) {
+	const str = state.str;
 	const parent = path.at(-1);
 
 	// Try to find jsdoc above the declaration
@@ -1271,6 +1283,7 @@ function extract_type_and_comment(declarator, str, path) {
 	}
 
 	if (declarator.id.typeAnnotation) {
+		state.has_type_or_fallback = true;
 		let start = declarator.id.typeAnnotation.start + 1; // skip the colon
 		while (str.original[start] === ' ') {
 			start++;
@@ -1300,6 +1313,7 @@ function extract_type_and_comment(declarator, str, path) {
 
 	// try to find a comment with a type annotation, hinting at jsdoc
 	if (parent?.type === 'ExportNamedDeclaration' && comment_node) {
+		state.has_type_or_fallback = true;
 		const match = /@type {(.+)}/.exec(comment_node.value);
 		if (match) {
 			return { type: match[1], comment };
@@ -1308,6 +1322,7 @@ function extract_type_and_comment(declarator, str, path) {
 
 	// try to infer it from the init
 	if (declarator.init?.type === 'Literal') {
+		state.has_type_or_fallback = true; // only assume type if it's trivial to infer - else someone would've added a type annotation
 		const type = typeof declarator.init.value;
 		if (type === 'string' || type === 'number' || type === 'boolean') {
 			return { type, comment };
@@ -1533,6 +1548,8 @@ function handle_identifier(node, state, path) {
 			parent.type === 'TSInterfaceDeclaration' ? parent.body.body : parent.typeAnnotation?.members;
 		if (Array.isArray(members)) {
 			if (node.name === '$$Props') {
+				state.has_type_or_fallback = true;
+
 				for (const member of members) {
 					const prop = state.props.find((prop) => prop.exported === member.key.name);
 
