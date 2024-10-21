@@ -88,16 +88,30 @@ export default test({
 		},
 		{
 			code: 'css_unused_selector',
-			message: 'Unused CSS selector "x:has(> z)"',
+			message: 'Unused CSS selector ".unused:has(.unused)"',
 			start: {
-				line: 88,
+				line: 84,
 				column: 1,
-				character: 968
+				character: 934
 			},
 			end: {
-				line: 88,
+				line: 84,
+				column: 21,
+				character: 954
+			}
+		},
+		{
+			code: 'css_unused_selector',
+			message: 'Unused CSS selector "x:has(> z)"',
+			start: {
+				line: 91,
+				column: 1,
+				character: 1021
+			},
+			end: {
+				line: 91,
 				column: 11,
-				character: 978
+				character: 1031
 			}
 		}
 	]
