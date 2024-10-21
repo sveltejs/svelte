@@ -121,6 +121,16 @@
     {/snippet}
 </Component>
 
+<Component>
+	<span >should be children</span>
+</Component>
+
+<Component>
+	<span  >{#snippet children({ with_prop })}
+                should be children {with_prop} too            {/snippet}
+        </span>
+</Component>
+
 <c-e>
     <div slot="named">unchanged</div>
 </c-e>

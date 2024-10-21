@@ -1152,6 +1152,10 @@ function migrate_slot_usage(node, path, state) {
 			is_text_attribute(attribute)
 		) {
 			snippet_name = attribute.value[0].data;
+			// the default slot in svelte 4 if what the children slot is for svelte 5
+			if (snippet_name === 'default') {
+				snippet_name = 'children';
+			}
 			if (!regex_is_valid_identifier.test(snippet_name)) {
 				has_migration_task = true;
 				state.str.appendLeft(
