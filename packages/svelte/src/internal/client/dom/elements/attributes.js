@@ -320,7 +320,8 @@ function get_setters(element) {
 	var proto = get_prototype_of(element);
 
 	// Stop at Element, from there on there's only unnecessary setters we're not interested in
-	while (proto.constructor.name !== 'Element') {
+	// Do not use contructor.name here as that's unreliable in some browser environments
+	while (!Element.prototype.isPrototypeOf(proto)) {
 		descriptors = get_descriptors(proto);
 
 		for (var key in descriptors) {
