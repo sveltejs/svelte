@@ -279,7 +279,7 @@ You can bind to component props using the same syntax as for elements.
 
 While Svelte props are reactive without binding, that reactivity only flows downward into the component by default. Using `bind:property` allows changes to the property from within the component to flow back up out of the component.
 
-To mark a property as bindable, use the `$bindable` rune:
+To mark a property as bindable, use the [`$bindable`]($bindable) rune:
 
 ```svelte
 <script>
