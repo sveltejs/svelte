@@ -15,7 +15,8 @@ import {
 	set_is_destroying_effect,
 	set_is_flushing_effect,
 	set_signal_status,
-	untrack
+	untrack,
+	set_active_effect
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -518,14 +519,23 @@ export function pause_effect(effect, callback) {
  * @param {() => void} fn
  */
 export function run_out_transitions(transitions, fn) {
-	var remaining = transitions.length;
-	if (remaining > 0) {
-		var check = () => --remaining || fn();
-		for (var transition of transitions) {
-			transition.out(check);
+	let prev_active_effect = active_effect;
+	let prev_active_reaction = active_reaction;
+	set_active_reaction(null);
+	set_active_effect(null);
+	try {
+		var remaining = transitions.length;
+		if (remaining > 0) {
+			var check = () => --remaining || fn();
+			for (var transition of transitions) {
+				transition.out(check);
+			}
+		} else {
+			fn();
 		}
-	} else {
-		fn();
+	} finally {
+		set_active_effect(prev_active_effect);
+		set_active_reaction(prev_active_reaction);
 	}
 }
 
