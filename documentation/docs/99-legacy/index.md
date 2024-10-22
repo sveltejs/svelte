@@ -1,3 +1,3 @@
 ---
-title: Legacy syntax
+title: Legacy APIs
 ---
