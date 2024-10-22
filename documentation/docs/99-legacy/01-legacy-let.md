@@ -1,5 +1,5 @@
 ---
-title: Reactive declarations
+title: Reactive let/var declarations
 ---
 
 In runes mode, reactive state is explicitly declared with the [`$state` rune]($state).
