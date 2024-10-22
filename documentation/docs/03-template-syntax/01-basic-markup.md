@@ -18,7 +18,7 @@ A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalised tag
 </div>
 ```
 
-## Attributes and props
+## Element attributes
 
 By default, attributes work exactly like their HTML counterparts.
 
@@ -71,6 +71,8 @@ When the attribute name and value match (`name={name}`), they can be replaced wi
 <button disabled={disabled}>...</button>
 -->
 ```
+
+## Component props
 
 By convention, values passed to components are referred to as _properties_ or _props_ rather than _attributes_, which are a feature of the DOM.
 
