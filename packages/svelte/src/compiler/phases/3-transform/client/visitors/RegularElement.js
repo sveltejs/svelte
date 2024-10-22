@@ -532,7 +532,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 	}
 
 	if (name === 'muted') {
-		state.init.push(b.stmt(b.call('$.muted', node_id, value)));
+		state.init.push(b.stmt(b.assignment('=', b.member(node_id, b.id('muted')), value)));
 		return false;
 	}
 
