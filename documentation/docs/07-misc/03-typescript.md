@@ -115,7 +115,7 @@ Components can declare a generic relationship between their properties. One exam
 <script lang="ts" generics="Item extends { text: string }">
 	interface Props {
 		items: Item[];
-		select: Item;
+		select(item: Item): void;
 	}
 
 	let { items, select }: Props = $props();
