@@ -1,49 +1,34 @@
 ---
-title: let is reactive
+title: Reactive declarations
 ---
 
-To change component state and trigger a re-render, just assign to a locally declared variable.
+In runes mode, reactive state is explicitly declared with the [`$state` rune]($state).
 
-Update expressions (`count += 1`) and property assignments (`obj.x = y`) have the same effect.
+In legacy mode, variables declared at the top level of a component are automatically considered _reactive_. Reassigning or mutating these variables (`count += 1` or `object.x = y`) will cause the UI to update.
 
 ```svelte
 <script>
 	let count = 0;
-
-	function handleClick() {
-		// calling this function will trigger an
-		// update if the markup references `count`
-		count = count + 1;
-	}
 </script>
+
+<button on:click={() => count += 1}>
+	clicks: {count}
+</button>
 ```
 
-Because Svelte's reactivity is based on assignments, using array methods like `.push()` and `.splice()` won't automatically trigger updates. A subsequent assignment is required to trigger the update. This and more details can also be found in the [tutorial](https://learn.svelte.dev/tutorial/updating-arrays-and-objects).
+Because Svelte's legacy mode reactivity is based on _assignments_, using array methods like `.push()` and `.splice()` won't automatically trigger updates. A subsequent assignment is required to 'tell' the compiler to update the UI:
 
 ```svelte
 <script>
-	let arr = [0, 1];
+	let numbers = [1, 2, 3, 4];
 
-	function handleClick() {
+	function addNumber() {
 		// this method call does not trigger an update
-		arr.push(2);
-		// this assignment will trigger an update
-		// if the markup references `arr`
-		arr = arr;
+		numbers.push(numbers.length + 1);
+
+		// this assignment will update anything
+		// that depends on `numbers`
+		numbers = numbers;
 	}
 </script>
 ```
-
-Svelte's `<script>` blocks are run only when the component is created, so assignments within a `<script>` block are not automatically run again when a prop updates. If you'd like to track changes to a prop, see the next example in the following section.
-
-```svelte
-<script>
-	export let person;
-	// this will only set `name` on component creation
-	// it will not update when `person` does
-	let { name } = person;
-</script>
-```
-
-> [!NOTE]
-> In Svelte 5+, state is explicitly reactive via the [`$state` rune]($state)
