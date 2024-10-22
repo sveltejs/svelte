@@ -1,5 +1,5 @@
 ---
-title: <svelte:element>
+title: <svelte:options>
 ---
 
 ```svelte
