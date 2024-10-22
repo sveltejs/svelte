@@ -2,11 +2,14 @@
 title: export let
 ---
 
-Svelte uses the `export` keyword to mark a variable declaration as a _property_ or _prop_, which means it becomes accessible to consumers of the component (see the section on [attributes and props](/docs/basic-markup#attributes-and-props) for more information).
+In runes mode, [component props](basic-markup#Component-props) are declared with the [`$props`]($props) rune, allowing parent components to pass in data.
+
+In legacy mode, props are marked with the `export` keyword, and can have a default value:
 
 ```svelte
 <script>
 	export let foo;
+	export let bar = 'default value';
 
 	// Values that are passed in as props
 	// are immediately available
@@ -14,38 +17,47 @@ Svelte uses the `export` keyword to mark a variable declaration as a _property_ 
 </script>
 ```
 
-You can specify a default initial value for a prop. It will be used if the component's consumer doesn't specify the prop on the component (or if its initial value is `undefined`) when instantiating the component. Note that if the values of props are subsequently updated, then any prop whose value is not specified will be set to `undefined` (rather than its initial value).
+The default value is used if it would otherwise be `undefined` when the component is created.
 
-In development mode (see the [compiler options](/docs/svelte-compiler#compile)), a warning will be printed if no default initial value is provided and the consumer does not specify a value. To squelch this warning, ensure that a default initial value is specified, even if it is `undefined`.
+> [!NOTE] Unlike in runes mode, if the parent component changes a prop from a defined value to `undefined`, it does not revert to the initial value.
 
-```svelte
-<script>
-	export let bar = 'optional default initial value';
-	export let baz = undefined;
-</script>
+Props without default values are considered _required_, and Svelte will print a warning during development if no value is provided, which you can squelch by specifying `undefined` as the default value:
+
+```js
+export let foo +++= undefined;+++
 ```
 
-If you export a `const`, `class` or `function`, it is readonly from outside the component. Functions are valid prop values, however, as shown below.
+## Component exports
+
+An exported `const`, `class` or `function` declaration is _not_ considered a prop — instead, it becomes part of the component's API:
+
+```svelte
+<!--- file: Greeter.svelte--->
+<script>
+	export function greet(name) {
+		alert(`hello ${name}!`);
+	}
+</script>
+```
 
 ```svelte
 <!--- file: App.svelte --->
 <script>
-	// these are readonly
-	export const thisIs = 'readonly';
+	import Greeter from './Greeter.svelte';
 
-	/** @param {string} name */
-	export function greet(name) {
-		alert(`hello ${name}!`);
-	}
-
-	// this is a prop
-	export let format = (n) => n.toFixed(2);
+	let greeter;
 </script>
+
+<Greeter bind:this={greeter} />
+
+<button on:click={() => greeter.greet('world')}>
+	greet
+</button>
 ```
 
-Readonly props can be accessed as properties on the element, tied to the component using [`bind:this` syntax](/docs/component-directives#bind-this).
+## Renaming props
 
-You can use reserved words as prop names.
+The `export` keyword can appear separately from the declaration. This is useful for renaming props, for example in the case of a reserved word:
 
 ```svelte
 <!--- file: App.svelte --->
@@ -58,6 +70,3 @@ You can use reserved words as prop names.
 	export { className as class };
 </script>
 ```
-
-> [!NOTE]
-> In Svelte 5+, use the [`$props`]($props) rune instead
