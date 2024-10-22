@@ -2,8 +2,8 @@
 title: Context
 ---
 
-- get/set/hasContext
-- how to use, best practises (like encapsulating them)
+<!-- - get/set/hasContext
+- how to use, best practises (like encapsulating them) -->
 
 Most state is component-level state that lives as long as its component lives. There's also section-wide or app-wide state however, which also needs to be handled somehow.
 
