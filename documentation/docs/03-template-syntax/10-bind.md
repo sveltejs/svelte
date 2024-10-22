@@ -249,14 +249,14 @@ To get a reference to a DOM node, use `bind:this`. The value will be `undefined`
 Components also support `bind:this`, allowing you to interact with component instances programmatically.
 
 ```svelte
-<!--- App.svelte --->
+<!--- file: App.svelte --->
 <ShoppingCart bind:this={cart} />
 
 <button onclick={() => cart.empty()}> Empty shopping cart </button>
 ```
 
 ```svelte
-<!--- ShoppingCart.svelte --->
+<!--- file: ShoppingCart.svelte --->
 <script>
 	// All instance exports are available on the instance object
 	export function empty() {
