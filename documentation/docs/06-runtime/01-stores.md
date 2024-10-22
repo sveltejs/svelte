@@ -2,9 +2,9 @@
 title: Stores
 ---
 
-- how to use
+<!-- - how to use
 - how to write
-- TODO should the details for the store methods belong to the reference section?
+- TODO should the details for the store methods belong to the reference section? -->
 
 A _store_ is an object that allows reactive access to a value via a simple _store contract_. The [`svelte/store` module](../svelte-store) contains minimal store implementations which fulfil this contract.
 

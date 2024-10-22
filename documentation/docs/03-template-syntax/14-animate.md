@@ -1,5 +1,0 @@
----
-title: animate:
----
-
-Coming soon!

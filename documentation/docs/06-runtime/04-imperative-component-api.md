@@ -2,13 +2,13 @@
 title: Imperative component API
 ---
 
-better title needed?
+<!-- better title needed?
 
 - mount
 - unmount
 - render
 - hydrate
-- how they interact with each other
+- how they interact with each other -->
 
 Every Svelte application starts by imperatively creating a root component. On the client this component is mounted to a specific element. On the server, you want to get back a string of HTML instead which you can render. The following functions help you achieve those tasks.
 

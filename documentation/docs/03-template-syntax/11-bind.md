@@ -249,14 +249,14 @@ To get a reference to a DOM node, use `bind:this`. The value will be `undefined`
 Components also support `bind:this`, allowing you to interact with component instances programmatically.
 
 ```svelte
-<!--- App.svelte --->
+<!--- file: App.svelte --->
 <ShoppingCart bind:this={cart} />
 
 <button onclick={() => cart.empty()}> Empty shopping cart </button>
 ```
 
 ```svelte
-<!--- ShoppingCart.svelte --->
+<!--- file: ShoppingCart.svelte --->
 <script>
 	// All instance exports are available on the instance object
 	export function empty() {
@@ -279,7 +279,7 @@ You can bind to component props using the same syntax as for elements.
 
 While Svelte props are reactive without binding, that reactivity only flows downward into the component by default. Using `bind:property` allows changes to the property from within the component to flow back up out of the component.
 
-To mark a property as bindable, use the `$bindable` rune:
+To mark a property as bindable, use the [`$bindable`]($bindable) rune:
 
 ```svelte
 <script>

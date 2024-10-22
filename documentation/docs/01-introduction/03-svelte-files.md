@@ -66,4 +66,4 @@ CSS inside a `<style>` block will be scoped to that component.
 </style>
 ```
 
-For more information regarding styling, read the documentation around [styles and classes](styles-and-classes).
+For more information, head to the section on [styling](scoped-styles).
