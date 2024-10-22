@@ -102,7 +102,8 @@ export function SvelteElement(node, context) {
 			element_id,
 			attributes_id,
 			b.binary('!==', b.member(element_id, 'namespaceURI'), b.id('$.NAMESPACE_SVG')),
-			b.call(b.member(b.member(element_id, 'nodeName'), 'includes'), b.literal('-'))
+			b.call(b.member(b.member(element_id, 'nodeName'), 'includes'), b.literal('-')),
+			context.state
 		);
 	}
 
