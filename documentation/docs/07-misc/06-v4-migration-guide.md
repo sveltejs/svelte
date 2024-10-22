@@ -56,25 +56,27 @@ dispatch('noArgument', 'surprise'); // error, cannot pass an argument
 
 - `Action` and `ActionReturn` have a default parameter type of `undefined` now, which means you need to type the generic if you want to specify that this action receives a parameter. The migration script will migrate this automatically ([#7442](https://github.com/sveltejs/svelte/pull/7442))
 
-```diff
--const action: Action = (node, params) => { .. } // this is now an error if you use params in any way
-+const action: Action<HTMLElement, string> = (node, params) => { .. } // params is of type string
+```ts
+// @noErrors
+---const action: Action = (node, params) => { ... } // this is now an error if you use params in any way---
++++const action: Action<HTMLElement, string> = (node, params) => { ... } // params is of type string+++
 ```
 
 - `onMount` now shows a type error if you return a function asynchronously from it, because this is likely a bug in your code where you expect the callback to be called on destroy, which it will only do for synchronously returned functions ([#8136](https://github.com/sveltejs/svelte/issues/8136))
 
-```diff
+```js
+// @noErrors
 // Example where this change reveals an actual bug
 onMount(
-- // someCleanup() not called because function handed to onMount is async
-- async () => {
--   const something = await foo();
-+ // someCleanup() is called because function handed to onMount is sync
-+ () => {
-+  foo().then(something =>  ..
-   // ..
-   return () => someCleanup();
-}
+---	// someCleanup() not called because function handed to onMount is async
+	async () => {
+		const something = await foo();---
++++	// someCleanup() is called because function handed to onMount is sync
+	() => {
+		foo().then(something => {...});
+		// ...
+		return () => someCleanup();
+	}
 );
 ```
 
@@ -82,9 +84,9 @@ onMount(
 
 The creation of custom elements with Svelte has been overhauled and significantly improved. The `tag` option is deprecated in favor of the new `customElement` option:
 
-```diff
--<svelte:options tag="my-component" />
-+<svelte:options customElement="my-component" />
+```svelte
+---<svelte:options tag="my-component" />---
++++<svelte:options customElement="my-component" />+++
 ```
 
 This change was made to allow [more configurability](custom-elements-api#component-options) for advanced use cases. The migration script will adjust your code automatically. The update timing of properties has changed slightly as well. ([#8457](https://github.com/sveltejs/svelte/issues/8457))
@@ -93,28 +95,27 @@ This change was made to allow [more configurability](custom-elements-api#compone
 
 `SvelteComponentTyped` is deprecated, as `SvelteComponent` now has all its typing capabilities. Replace all instances of `SvelteComponentTyped` with `SvelteComponent`.
 
-```diff
-- import { SvelteComponentTyped } from 'svelte';
-+ import { SvelteComponent } from 'svelte';
+```js
+---import { SvelteComponentTyped } from 'svelte';---
++++import { SvelteComponent } from 'svelte';+++
 
-- export class Foo extends SvelteComponentTyped<{ aProp: string }> {}
-+ export class Foo extends SvelteComponent<{ aProp: string }> {}
+---export class Foo extends SvelteComponentTyped<{ aProp: string }> {}---
++++export class Foo extends SvelteComponent<{ aProp: string }> {}+++
 ```
 
 If you have used `SvelteComponent` as the component instance type previously, you may see a somewhat opaque type error now, which is solved by changing `: typeof SvelteComponent` to `: typeof SvelteComponent<any>`.
 
-```diff
+```svelte
 <script>
-  import ComponentA from './ComponentA.svelte';
-  import ComponentB from './ComponentB.svelte';
-  import { SvelteComponent } from 'svelte';
+	import ComponentA from './ComponentA.svelte';
+	import ComponentB from './ComponentB.svelte';
+	import { SvelteComponent } from 'svelte';
 
--  let component: typeof SvelteComponent;
-+  let component: typeof SvelteComponent<any>;
+	let component: typeof SvelteComponent+++<any>+++;
 
-  function choseRandomly() {
-    component = Math.random() > 0.5 ? ComponentA : ComponentB;
-  }
+	function choseRandomly() {
+		component = Math.random() > 0.5 ? ComponentA : ComponentB;
+	}
 </script>
 
 <button on:click={choseRandomly}>random</button>
@@ -217,12 +218,13 @@ const { code } = await preprocess(
 
 This could affect you for example if you are using `MDsveX` - in which case you should make sure it comes before any script or style preprocessor.
 
-```diff
+```js
+// @noErrors
 preprocess: [
--	vitePreprocess(),
--	mdsvex(mdsvexConfig)
-+	mdsvex(mdsvexConfig),
-+	vitePreprocess()
+---	vitePreprocess(),
+	mdsvex(mdsvexConfig)---
++++	mdsvex(mdsvexConfig),
+	vitePreprocess()+++
 ]
 ```
 
