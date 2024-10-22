@@ -3,6 +3,6 @@
 	"outputDirectory": "sites/svelte-5-preview/.vercel",
 	"buildCommand": "cd ../../ && pnpm build && (pnpm test-output || true) && pnpm preview-site",
 	"redirects": [
-		{ "source": "/", "destination": "https://svelte.dev/playground/", "permanent": true }
+		{ "source": "/", "destination": "https://svelte.dev/playground/untitled", "permanent": true }
 	]
 }
