@@ -36,7 +36,7 @@ document.body.innerHTML = `
 `;
 ```
 
-Any [props](basic-markup#Attributes-and-props) are exposed as properties of the DOM element (as well as being readable/writable as attributes, where possible).
+Any [props](basic-markup#Component-props) are exposed as properties of the DOM element (as well as being readable/writable as attributes, where possible).
 
 ```js
 // @noErrors
