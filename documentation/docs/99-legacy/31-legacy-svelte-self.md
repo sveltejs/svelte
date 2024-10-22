@@ -20,14 +20,14 @@ It cannot appear at the top level of your markup; it must be inside an if or eac
 ```
 
 > [!NOTE]
-> This concept is obsolete, as you can just self-import components
+> This concept is obsolete, as components can import themselves:
 > ```svelte
 > <!--- file: App.svelte --->
 > <script>
 > 	import Self from './App.svelte'
 > 	export let count;
 > </script>
-> 
+>
 > {#if count > 0}
 > 	<p>counting down... {count}</p>
 > 	<Self count={count - 1} />

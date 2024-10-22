@@ -2,85 +2,75 @@
 title: <slot>
 ---
 
+In Svelte 5, content can be passed to components in the form of [snippets](snippet) and rendered using [render tags](@render).
+
+In legacy mode, content inside component tags is considered _slotted content_, which can be rendered by the component using a `<slot>` element:
+
 ```svelte
-<slot><!-- optional fallback --></slot>
+<!--- file: App.svelte --->
+<script>
+	import Modal from './Modal.svelte';
+</script>
+
+<Modal>This is some slotted content</Modal>
 ```
 
 ```svelte
-<slot name="x"><!-- optional fallback --></slot>
-```
-
-```svelte
-<slot prop={value} />
-```
-
-Components can have child content, in the same way that elements can.
-
-The content is exposed in the child component using the `<slot>` element, which can contain fallback content that is rendered if no children are provided.
-
-```svelte
-<!-- Widget.svelte -->
-<div>
-	<slot>
-		this fallback content will be rendered when no content is provided, like in the first example
-	</slot>
+<!--- file: Modal.svelte --->
+<div class="modal">
+	<slot></slot>
 </div>
-
-<!-- App.svelte -->
-<Widget />
-<!-- this component will render the default content -->
-
-<Widget>
-	<p>this is some child content that will overwrite the default slot content</p>
-</Widget>
 ```
 
-Note: If you want to render regular `<slot>` element, You can use `<svelte:element this="slot" />`.
+> [!NOTE] If you want to render a regular `<slot>` element, you can use `<svelte:element this={'slot'} />`.
 
-> [!NOTE]
-> In Svelte 5+, use snippets instead
+## Named slots
 
-## `<slot name="`_name_`">`
-
-Named slots allow consumers to target specific areas. They can also have fallback content.
+A component can have _named_ slots in addition to the default slot. On the parent side, add a `slot="..."` attribute to an element, component or [`<svelte:fragment>`](legacy-svelte-fragment) directly inside the component tags.
 
 ```svelte
-<!-- Widget.svelte -->
-<div>
-	<slot name="header">No header was provided</slot>
-	<p>Some content between header and footer</p>
-	<slot name="footer" />
-</div>
+<!--- file: App.svelte --->
+<script>
+	import Modal from './Modal.svelte';
 
-<!-- App.svelte -->
-<Widget>
-	<h1 slot="header">Hello</h1>
-	<p slot="footer">Copyright (c) 2019 Svelte Industries</p>
-</Widget>
+	let open = true;
+</script>
+
+{#if open}
+	<Modal>
+		This is some slotted content
+
+		+++<div slot="buttons">+++
+			<button on:click={() => open = false}>
+				close
+			</button>
+		+++</div>+++
+	</Modal>
+{/if}
 ```
 
-Components can be placed in a named slot using the syntax `<Component slot="name" />`.
-In order to place content in a slot without using a wrapper element, you can use the special element `<svelte:fragment>`.
+On the child side, add a corresponding `<slot name="...">` element:
 
 ```svelte
-<!-- Widget.svelte -->
-<div>
-	<slot name="header">No header was provided</slot>
-	<p>Some content between header and footer</p>
-	<slot name="footer" />
+<!--- file: Modal.svelte --->
+<div class="modal">
+	<slot></slot>
+	<hr>
+	+++<slot name="buttons"></slot>+++
 </div>
-
-<!-- App.svelte -->
-<Widget>
-	<HeaderComponent slot="header" />
-	<svelte:fragment slot="footer">
-		<p>All rights reserved.</p>
-		<p>Copyright (c) 2019 Svelte Industries</p>
-	</svelte:fragment>
-</Widget>
 ```
 
-## `<slot key={`_value_`}>`
+## Fallback content
+
+If no slotted content is provided, a component can define fallback content by putting it inside the `<slot>` element:
+
+```svelte
+<slot>
+	This will be rendered if no slotted content is provided
+</slot>
+```
+
+## Passing data to slotted content
 
 Slots can be rendered zero or more times and can pass values _back_ to the parent using props. The parent exposes the values to the slot template using the `let:` directive.
 
@@ -122,3 +112,5 @@ Named slots can also expose values. The `let:` directive goes on the element wit
 	<p slot="footer">Copyright (c) 2019 Svelte Industries</p>
 </FancyList>
 ```
+
+

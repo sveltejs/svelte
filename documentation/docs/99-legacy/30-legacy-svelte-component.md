@@ -2,26 +2,12 @@
 title: <svelte:component>
 ---
 
-```svelte
-<svelte:component this={expression} />
-```
+In runes mode, `<MyComponent>` will re-render if the value of `MyComponent` changes.
 
-The `<svelte:component>` element renders a component dynamically, using the component constructor specified as the `this` property. When the property changes, the component is destroyed and recreated.
+In legacy mode, it won't — we must use `<svelte:component>`, which destroys and recreates the component instance when the value of its `this` expression changes:
+
+```svelte
+<svelte:component this={MyComponent} />
+```
 
 If `this` is falsy, no component is rendered.
-
-```svelte
-<svelte:component this={currentSelection.component} foo={bar} />
-```
-
-> [!NOTE]
-> In Svelte 5+, this concept is obsolete, as you can just reference `$state` or `$derived` variables containing components
-> ```svelte
-> <script>
->     let Component = $derived(currentSelection.component);
-> </script>
-> 
-> <Component />
-> <!-- or -->
-> <currentSelection.component foo={bar} />
-> ```
