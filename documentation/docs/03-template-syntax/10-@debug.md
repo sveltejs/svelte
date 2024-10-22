@@ -1,27 +1,6 @@
 ---
-title: Debugging
+title: {@debug ...}
 ---
-
-- `@debug`
-- `$inspect`
-
-Svelte provides two built-in ways to debug your application.
-
-## `$inspect`
-
-TODO
-
-## @debug
-
-```svelte
-<!--- copy: false --->
-{@debug}
-```
-
-```svelte
-<!--- copy: false --->
-{@debug var1, var2, ..., varN}
-```
 
 The `{@debug ...}` tag offers an alternative to `console.log(...)`. It logs the values of specific variables whenever they change, and pauses code execution if you have devtools open.
 
@@ -53,3 +32,4 @@ The `{@debug ...}` tag offers an alternative to `console.log(...)`. It logs the 
 ```
 
 The `{@debug}` tag without any arguments will insert a `debugger` statement that gets triggered when _any_ state changes, as opposed to the specified variables.
+

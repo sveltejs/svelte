@@ -22,7 +22,7 @@ It also will not compile Svelte code.
 
 ## Styling
 
-Content rendered this way is 'invisible' to Svelte and as such will not receive [scoped styles](styles-and-classes) — in other words, this will not work, and the `a` and `img` styles will be regarded as unused:
+Content rendered this way is 'invisible' to Svelte and as such will not receive [scoped styles](scoped-styles) — in other words, this will not work, and the `a` and `img` styles will be regarded as unused:
 
 <!-- prettier-ignore -->
 ```svelte
