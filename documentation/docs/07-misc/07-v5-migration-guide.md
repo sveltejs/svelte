@@ -701,7 +701,7 @@ This is because the Svelte compiler treated the assignment to `foo.value` as an 
 
 ### `<svelte:component>` is no longer necessary
 
-In Svelte 4, components are _static_ — if you render `<Thing>`, and the value of `Thing` changes, [nothing happens](https://svelte.dev/repl/7f1fa24f0ab44c1089dcbb03568f8dfa?version=4.2.18). To make it dynamic you must use `<svelte:component>`.
+In Svelte 4, components are _static_ — if you render `<Thing>`, and the value of `Thing` changes, [nothing happens](/playground/7f1fa24f0ab44c1089dcbb03568f8dfa?version=4.2.18). To make it dynamic you must use `<svelte:component>`.
 
 This is no longer true in Svelte 5:
 
