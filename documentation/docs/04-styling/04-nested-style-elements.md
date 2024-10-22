@@ -1,5 +1,5 @@
 ---
-title: Nested `<style>` elements
+title: Nested <style> elements
 ---
 
 There should only be 1 top-level `<style>` tag per component.
