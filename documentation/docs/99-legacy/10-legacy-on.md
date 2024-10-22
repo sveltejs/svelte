@@ -2,17 +2,9 @@
 title: on:
 ---
 
-```svelte
-<!--- copy: false --->
-on:eventname={handler}
-```
+In runes mode, event handlers are just like any other attribute or prop.
 
-```svelte
-<!--- copy: false --->
-on:eventname|modifiers={handler}
-```
-
-Use the `on:` directive to listen to DOM events.
+In legacy mode, we use the `on:` directive:
 
 ```svelte
 <!--- file: App.svelte --->
@@ -30,7 +22,7 @@ Use the `on:` directive to listen to DOM events.
 </button>
 ```
 
-Handlers can be declared inline with no performance penalty. As with attributes, directive values may be quoted for the sake of syntax highlighters.
+Handlers can be declared inline with no performance penalty:
 
 ```svelte
 <button on:click={() => (count += 1)}>
@@ -38,7 +30,7 @@ Handlers can be declared inline with no performance penalty. As with attributes,
 </button>
 ```
 
-Add _modifiers_ to DOM events with the `|` character.
+Add _modifiers_ to element event handlers with the `|` character.
 
 ```svelte
 <form on:submit|preventDefault={handleSubmit}>
@@ -64,7 +56,9 @@ Modifiers can be chained together, e.g. `on:click|once|capture={...}`.
 If the `on:` directive is used without a value, the component will _forward_ the event, meaning that a consumer of the component can listen for it.
 
 ```svelte
-<button on:click> The component itself will emit the click event </button>
+<button on:click>
+	The component itself will emit the click event
+</button>
 ```
 
 It's possible to have multiple event listeners for the same event:
@@ -72,58 +66,71 @@ It's possible to have multiple event listeners for the same event:
 ```svelte
 <!--- file: App.svelte --->
 <script>
-	let counter = 0;
+	let count = 0;
+
 	function increment() {
-		counter = counter + 1;
+		count += 1;
 	}
 
 	/** @param {MouseEvent} event */
-	function track(event) {
-		trackEvent(event);
+	function log(event) {
+		console.log(event);
 	}
 </script>
 
-<button on:click={increment} on:click={track}>Click me!</button>
+<button on:click={increment} on:click={log}>
+	clicks: {count}
+</button>
 ```
-
-> [!NOTE]
-> In Svelte 5+, use event attributes instead
-> ```svelte
-> <button onclick={() => alert('clicked')}>click me</button>
-> ```
 
 ## Component events
 
-Component events created with [`createEventDispatcher`](svelte#createEventDispatcher) create a `CustomEvent`. These events do not bubble. The detail argument corresponds to the `CustomEvent.detail` property and can contain any type of data.
+Components can dispatch events by creating a _dispatcher_ when they are initialised:
 
 ```svelte
+<!--- file: Stepper.svelte -->
 <script>
 	import { createEventDispatcher } from 'svelte';
-
 	const dispatch = createEventDispatcher();
 </script>
 
-<button on:click={() => dispatch('notify', 'detail value')}>Fire Event</button>
+<button on:click={() => dispatch('decrement')}>decrement</button>
+<button on:click={() => dispatch('increment')}>increment</button>
 ```
 
-Events dispatched from child components can be listened to in their parent. Any data provided when the event was dispatched is available on the `detail` property of the event object.
+`dispatch` creates a [`CustomEvent`](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent). If a second argument is provided, it becomes the `detail` property of the event object.
+
+A consumer of this component can listen for the dispatched events:
 
 ```svelte
 <script>
-	function callbackFunction(event) {
-		console.log(`Notify fired! Detail: ${event.detail}`);
-	}
+	import Stepper from './Stepper.svelte';
+
+	let n = 0;
 </script>
 
-<Child on:notify={callbackFunction} />
+<Stepper
+	on:decrement={() => n -= 1}
+	on:increment={() => n += 1}
+/>
+
+<p>n: {n}</p>
 ```
 
+Component events do not bubble — a parent component can only listen for events on its immediate children.
+
+Other than `once`, modifiers are not valid on component event handlers.
+
 > [!NOTE]
-> If you're planning on migrating to Svelte 5, use callback props instead. This will make upgrading easier as `createEventDispatcher` is deprecated
+> If you're planning an eventual migration to Svelte 5, use callback props instead. This will make upgrading easier as `createEventDispatcher` is deprecated:
+>
 > ```svelte
+> <!--- file: Stepper.svelte --->
 > <script>
-> 	export let notify;
+> 	export let decrement;
+> 	export let increment;
 > </script>
-> 
-> <button on:click={() => notify('detail value')}>Fire Event</button>
+>
+> <button on:click={decrement}>decrement</button>
+> <button on:click={increment}>increment</button>
 > ```
