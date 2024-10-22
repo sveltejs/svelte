@@ -2,7 +2,7 @@
 title: Getting started
 ---
 
-We recommend using [SvelteKit](https://kit.svelte.dev/), the official application framework from the Svelte team powered by [Vite](https://vite.dev/):
+We recommend using [SvelteKit](../kit), the official application framework from the Svelte team powered by [Vite](https://vite.dev/):
 
 ```
 npx sv create myapp
@@ -26,4 +26,4 @@ You can also check your code from the command line using [sv check](https://gith
 
 ## Getting help
 
-Don't be shy about asking for help in the [Discord chatroom](https://svelte.dev/chat)! You can also find answers on [Stack Overflow](https://stackoverflow.com/questions/tagged/svelte).
+Don't be shy about asking for help in the [Discord chatroom](/chat)! You can also find answers on [Stack Overflow](https://stackoverflow.com/questions/tagged/svelte).

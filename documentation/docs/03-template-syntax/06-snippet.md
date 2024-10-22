@@ -252,4 +252,4 @@ Snippets can be created programmatically with the [`createRawSnippet`](svelte#cr
 
 ## Snippets and slots
 
-In Svelte 4, content can be passed to components using [slots](https://svelte.dev/docs/special-elements#slot). Snippets are more powerful and flexible, and as such slots are deprecated in Svelte 5.
+In Svelte 4, content can be passed to components using [slots](legacy-slots). Snippets are more powerful and flexible, and as such slots are deprecated in Svelte 5.
