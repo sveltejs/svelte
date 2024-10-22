@@ -1,7 +1,13 @@
 /** @import { AnimateFn, Animation, AnimationConfig, EachItem, Effect, TransitionFn, TransitionManager } from '#client' */
 import { noop, is_function } from '../../../shared/utils.js';
 import { effect } from '../../reactivity/effects.js';
-import { active_effect, untrack } from '../../runtime.js';
+import {
+	active_effect,
+	active_reaction,
+	set_active_effect,
+	set_active_reaction,
+	untrack
+} from '../../runtime.js';
 import { loop } from '../../loop.js';
 import { should_intro } from '../../render.js';
 import { current_each_item } from '../blocks/each.js';
@@ -185,12 +191,21 @@ export function transition(flags, element, get_fn, get_params) {
 	var outro;
 
 	function get_options() {
-		// If a transition is still ongoing, we use the existing options rather than generating
-		// new ones. This ensures that reversible transitions reverse smoothly, rather than
-		// jumping to a new spot because (for example) a different `duration` was used
-		return (current_options ??= get_fn()(element, get_params?.() ?? /** @type {P} */ ({}), {
-			direction
-		}));
+		var previous_reaction = active_reaction;
+		var previous_effect = active_effect;
+		set_active_reaction(null);
+		set_active_effect(null);
+		try {
+			// If a transition is still ongoing, we use the existing options rather than generating
+			// new ones. This ensures that reversible transitions reverse smoothly, rather than
+			// jumping to a new spot because (for example) a different `duration` was used
+			return (current_options ??= get_fn()(element, get_params?.() ?? /** @type {P} */ ({}), {
+				direction
+			}));
+		} finally {
+			set_active_reaction(previous_reaction);
+			set_active_effect(previous_effect);
+		}
 	}
 
 	/** @type {TransitionManager} */
