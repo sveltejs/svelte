@@ -330,17 +330,19 @@ declare module 'svelte' {
 		 * Used to control transition playback on initial render.  The default value is `true` to run transitions.
 		 */
 		intro?: boolean;
-	} & ({} extends Props ? {
-		/**
-		 * Component properties.
-		 */
-		props?: Props;
-	} : {
-		/**
-		 * Component properties.
-		 */
-		props: Props;
-	})
+	} & ({} extends Props
+		? {
+				/**
+				 * Component properties.
+				 */
+				props?: Props;
+			}
+		: {
+				/**
+				 * Component properties.
+				 */
+				props: Props;
+			});
 	/**
 	 * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
 	 * It must be called during the component's initialisation (but doesn't need to live *inside* the component;
