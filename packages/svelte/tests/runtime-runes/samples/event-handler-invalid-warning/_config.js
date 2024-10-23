@@ -7,11 +7,11 @@ export default test({
 		dev: true
 	},
 
-	async test({ assert, target, warnings }) {
+	test({ assert, target, warnings }) {
 		/** @type {any} */
 		let error;
 
-		const handler = (e) => {
+		const handler = (/** @type {any} */ e) => {
 			error = e.error;
 			e.stopImmediatePropagation();
 		};
