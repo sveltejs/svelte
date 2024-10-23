@@ -6,112 +6,112 @@ export default test({
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector ".unused:has(y)"',
 			start: {
-				character: 269,
+				line: 28,
 				column: 1,
-				line: 27
+				character: 277
 			},
 			end: {
-				character: 283,
+				line: 28,
 				column: 15,
-				line: 27
+				character: 291
 			}
 		},
 		{
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector ".unused:has(:global(y))"',
 			start: {
-				character: 304,
+				line: 31,
 				column: 1,
-				line: 30
+				character: 312
 			},
 			end: {
-				character: 327,
+				line: 31,
 				column: 24,
-				line: 30
+				character: 335
 			}
 		},
 		{
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector "x:has(.unused)"',
 			start: {
-				character: 348,
+				line: 34,
 				column: 1,
-				line: 33
+				character: 356
 			},
 			end: {
-				character: 362,
+				line: 34,
 				column: 15,
-				line: 33
+				character: 370
 			}
 		},
 		{
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector "x:has(y):has(.unused)"',
 			start: {
-				character: 517,
+				line: 47,
 				column: 1,
-				line: 46
+				character: 525
 			},
 			end: {
-				character: 538,
+				line: 47,
 				column: 22,
-				line: 46
+				character: 546
 			}
 		},
 		{
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector ".unused"',
 			start: {
-				character: 743,
+				line: 66,
 				column: 2,
-				line: 65
+				character: 751
 			},
 			end: {
-				character: 750,
+				line: 66,
 				column: 9,
-				line: 65
+				character: 758
 			}
 		},
 		{
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector ".unused x:has(y)"',
 			start: {
-				character: 897,
+				line: 82,
 				column: 1,
-				line: 81
+				character: 905
 			},
 			end: {
-				character: 913,
+				line: 82,
 				column: 17,
-				line: 81
+				character: 921
 			}
 		},
 		{
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector ".unused:has(.unused)"',
 			start: {
-				line: 84,
+				line: 85,
 				column: 1,
-				character: 934
+				character: 942
 			},
 			end: {
-				line: 84,
+				line: 85,
 				column: 21,
-				character: 954
+				character: 962
 			}
 		},
 		{
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector "x:has(> z)"',
 			start: {
-				line: 91,
+				line: 92,
 				column: 1,
-				character: 1021
+				character: 1029
 			},
 			end: {
-				line: 91,
+				line: 92,
 				column: 11,
-				character: 1031
+				character: 1039
 			}
 		}
 	]
