@@ -333,16 +333,18 @@ export type MountOptions<Props extends Record<string, any> = Record<string, any>
 	 * Used to control transition playback on initial render.  The default value is `true` to run transitions.
 	 */
 	intro?: boolean;
-} & ({} extends Props ? {
-	/**
-	 * Component properties.
-	 */
-	props?: Props;
-} : {
-	/**
-	 * Component properties.
-	 */
-	props: Props;
-})
+} & ({} extends Props
+	? {
+			/**
+			 * Component properties.
+			 */
+			props?: Props;
+		}
+	: {
+			/**
+			 * Component properties.
+			 */
+			props: Props;
+		});
 
 export * from './index-client.js';
