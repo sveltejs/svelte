@@ -8,6 +8,6 @@
 		const context = getContext("key");
 		return num * context;
 	}
-	</script>
+</script>
 
-	<button onclick={() => count++}>{total}</button>
+<button onclick={() => count++}>{total}</button>
