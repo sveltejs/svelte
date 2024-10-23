@@ -142,7 +142,7 @@ function is_static_element(node) {
 			return false;
 		}
 
-		if (attribute.name === 'autofocus') {
+		if (attribute.name === 'autofocus' || attribute.name === 'muted') {
 			return false;
 		}
 

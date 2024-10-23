@@ -264,6 +264,7 @@ export function RegularElement(node, context) {
 			if (
 				!is_custom_element &&
 				attribute.name !== 'autofocus' &&
+				attribute.name !== 'muted' &&
 				(attribute.value === true || is_text_attribute(attribute))
 			) {
 				const name = get_attribute_name(node, attribute);
@@ -528,6 +529,12 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 
 	if (name === 'autofocus') {
 		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
+		return false;
+	}
+
+	// Special case for Firefox who needs it set as a property in order to work
+	if (name === 'muted') {
+		state.init.push(b.stmt(b.assignment('=', b.member(node_id, b.id('muted')), value)));
 		return false;
 	}
 
