@@ -613,6 +613,21 @@ To declare that a component of a certain type is required:
 
 <svelte:component this={component} foo="bar" />
 ```
+Or using the [new syntax](#svelte-component-no-longer-necessary):
+
+```svelte
+<script lang="ts">
+	import type { Component } from 'svelte';
+	import {
+		ComponentA,
+		ComponentB
+	} from 'component-library';
+	let Component: Component<{ foo: string }> = $state(
+		Math.random() ? ComponentA : ComponentB
+	);
+</script>
+<Component foo="bar" />
+```
 
 The two utility types `ComponentEvents` and `ComponentType` are also deprecated. `ComponentEvents` is obsolete because events are defined as callback props now, and `ComponentType` is obsolete because the new `Component` type is the component type already (e.g. `ComponentType<SvelteComponent<{ prop: string }>>` == `Component<{ prop: string }>`).
 
@@ -700,9 +715,9 @@ In Svelte 4, doing the following triggered reactivity:
 
 This is because the Svelte compiler treated the assignment to `foo.value` as an instruction to update anything that referenced `foo`. In Svelte 5, reactivity is determined at runtime rather than compile time, so you should define `value` as a reactive `$state` field on the `Foo` class. Wrapping `new Foo()` with `$state(...)` will have no effect — only vanilla objects and arrays are made deeply reactive.
 
-### `<svelte:component>` is no longer necessary
+### `<svelte:component>` is no longer necessary {#svelte-component-no-longer-necessary}
 
-In Svelte 4, components are _static_ — if you render `<Thing>`, and the value of `Thing` changes, [nothing happens](/playground/7f1fa24f0ab44c1089dcbb03568f8dfa?version=4.2.18). To make it dynamic you must use `<svelte:component>`.
+In Svelte 4, components are _static_ — if you render `<Thing>`, and the value of `Thing` changes, [nothing happens](/playground/7f1fa24f0ab44c1089dcbb03568f8dfa?version=4.2.18). To make it dynamic you had to use `<svelte:component>`.
 
 This is no longer true in Svelte 5:
 
@@ -723,6 +738,7 @@ This is no longer true in Svelte 5:
 <Thing />
 <svelte:component this={Thing} />
 ```
+While migrating, keep in mind that your user-defined component's name should be capitalized (`Thing`) to distinguish it from a normal HTML element and avoid incorrect types.
 
 ### Touch and wheel events are passive
 
