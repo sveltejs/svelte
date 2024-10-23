@@ -314,7 +314,7 @@ export function apply(
 
 	if (typeof handler === 'function') {
 		handler.apply(element, args);
-	} else if (has_side_effects || handler != null) {
+	} else if (has_side_effects || handler != null || error) {
 		const filename = component?.[FILENAME];
 		const location = loc ? ` at ${filename}:${loc[0]}:${loc[1]}` : ` in ${filename}`;
 
