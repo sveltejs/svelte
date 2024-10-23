@@ -130,6 +130,22 @@ Components can declare a generic relationship between their properties. One exam
 
 The content of `generics` is what you would put between the `<...>` tags of a generic function. In other words, you can use multiple generics, `extends` and fallback types.
 
+## Typing wrapper components
+
+In case you're writing a component that wraps a native element, you may want to expose all the attributes of underlying element to the user. In that case, use (or extend from) one of the interfaces provided by `svelte/elements`. Here's an example for a `Button` component:
+
+```svelte
+<script lang="ts">
+	import type { HTMLButtonAttributes } from 'svelte/elements';
+
+	let { children, ...rest }: HTMLButtonAttributes = $props();
+</script>
+
+<button {...rest}>
+	{@render children()}
+</button>
+```
+
 ## Typing `$state`
 
 You can type `$state` like any other variable.
@@ -159,9 +175,9 @@ class Counter {
 
 ## The `Component` type
 
-Svelte components or of type `Component`. You can use it and its related types to express a variety of constraints.
+Svelte components are of type `Component`. You can use it and its related types to express a variety of constraints.
 
-Using it together with `<svelte:component>` to restrict what kinds of component can be passed to it:
+Using it together with dynamic components to restrict what kinds of component can be passed to it:
 
 ```svelte
 <script lang="ts">
@@ -170,13 +186,13 @@ Using it together with `<svelte:component>` to restrict what kinds of component 
 	interface Props {
 		// only components that have at most the "prop"
 		// property required can be passed
-		component: Component<{ prop: string }>;
+		DynamicComponent: Component<{ prop: string }>;
 	}
 
-	let { component }: Props = $props();
+	let { DynamicComponent }: Props = $props();
 </script>
 
-<svelte:component this={component} prop="foo" />
+<DynamicComponent prop="foo" />
 ```
 
 Closely related to the `Component` type is the `ComponentProps` type which extracts the properties a component expects.
