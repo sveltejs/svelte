@@ -105,6 +105,11 @@ export function set_attribute(element, attribute, value, skip_warning) {
 
 	if (attributes[attribute] === (attributes[attribute] = value)) return;
 
+	if (attribute === 'style' && '__styles' in element) {
+		// reset styles to force style: directive to update
+		element.__styles = {};
+	}
+
 	if (attribute === 'loading') {
 		// @ts-expect-error
 		element[LOADING_ATTR_SYMBOL] = value;
@@ -288,6 +293,10 @@ export function set_attributes(
 					set_attribute(element, name, value);
 				}
 			}
+		}
+		if (key === 'style' && '__styles' in element) {
+			// reset styles to force style: directive to update
+			element.__styles = {};
 		}
 	}
 
