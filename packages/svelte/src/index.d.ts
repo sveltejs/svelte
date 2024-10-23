@@ -213,8 +213,7 @@ export type ComponentEvents<Comp extends SvelteComponent> =
  * const props: ComponentProps<typeof MyComponent> = { foo: 'bar' };
  * ```
  *
- * > [!NOTE]
- * > In Svelte 4, you would do `ComponentProps<MyComponent>` because `MyComponent` was a class.
+ * > [!NOTE] In Svelte 4, you would do `ComponentProps<MyComponent>` because `MyComponent` was a class.
  *
  * Example: A generic function that accepts some component and infers the type of its props:
  *

@@ -207,8 +207,10 @@ declare module 'svelte' {
 	 * import MyComponent from './MyComponent.svelte';
 	 *
 	 * // Errors if these aren't the correct props expected by MyComponent.
-	 * const props: ComponentProps<MyComponent> = { foo: 'bar' };
+	 * const props: ComponentProps<typeof MyComponent> = { foo: 'bar' };
 	 * ```
+	 *
+	 * > [!NOTE] In Svelte 4, you would do `ComponentProps<MyComponent>` because `MyComponent` was a class.
 	 *
 	 * Example: A generic function that accepts some component and infers the type of its props:
 	 *
