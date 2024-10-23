@@ -317,7 +317,15 @@ export function migrate(source, { filename } = {}) {
 		if (!parsed.instance && need_script) {
 			str.appendRight(insertion_point, '\n</script>\n\n');
 		}
-		return { code: str.toString() };
+		return {
+			code: str
+				.toString()
+				// for some reason replacing the magic string doesn't work
+				.replaceAll(
+					/(?<=<style[^>]*>[\s\S]*?:(?:is|not|where|has)\()([^)]+)(?=[\s\S]*?<\/style>)/gm,
+					':global($1)'
+				)
+		};
 	} catch (e) {
 		if (!(e instanceof MigrationError)) {
 			// eslint-disable-next-line no-console
