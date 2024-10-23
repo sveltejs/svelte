@@ -89,7 +89,7 @@ export function createCounter() {
 
 ## Stores equivalent
 
-In Svelte 4, the way you'd do this is by creating a [custom store](https://learn.svelte.dev/tutorial/custom-stores), perhaps like this:
+In Svelte 4, the way you'd do this is by creating a [custom store](https://svelte.dev/tutorial/svelte/custom-stores), perhaps like this:
 
 ```js
 import { writable } from 'svelte/store';
