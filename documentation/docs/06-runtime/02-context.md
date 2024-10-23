@@ -63,7 +63,7 @@ The context is then available to children of the component (including slotted co
 
 > [!NOTE] `setContext`/`getContext` must be called during component initialisation.
 
-Context is not inherently reactive. If you need reactive values in context then you can pass a `$state` object into context, whos properties _will_ be reactive.
+Context is not inherently reactive. If you need reactive values in context then you can pass a `$state` object into context, whose properties _will_ be reactive.
 
 ```svelte
 <!--- file: Parent.svelte --->
@@ -112,7 +112,7 @@ You can also retrieve the whole context map that belongs to the closest parent c
 
 ## Encapsulating context interactions
 
-The above methods are very unopionated about how to use them. When your app grows in scale, it's worthwhile to encapsulate setting and getting the context into functions and properly type them.
+The above methods are very unopinionated about how to use them. When your app grows in scale, it's worthwhile to encapsulate setting and getting the context into functions and properly type them.
 
 ```ts
 // @errors: 2304
