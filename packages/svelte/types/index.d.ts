@@ -326,7 +326,7 @@ declare module 'svelte' {
 		 */
 		events?: Record<string, (e: any) => any>;
 		/**
-		 * Context that can be access via `getContext()` at the component level.
+		 * Can be accessed via `getContext()` at the component level.
 		 */
 		context?: Map<any, any>;
 		/**
