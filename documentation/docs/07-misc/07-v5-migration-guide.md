@@ -58,10 +58,10 @@ A `$:` statement could also be used to create side effects. In Svelte 5, this is
 >
 > - `$:` only updated directly before rendering, which meant you could read stale values in-between rerenders
 > - `$:` only ran once per tick, which meant that statements may run less often than you think
-> - `$:` dependencies were determined through static analysis of the dependencies. This worked in most cases, but could break in subtle ways during a refactoring where dependencies would be > for example moved into a function and no longer be visible as a result
-> - `$:` statements were also ordered by using static analysis of the dependencies. In some cases there could be ties and the ordering would be wrong as a result, needing manual > interventions. Ordering could also break while refactoring code and some dependencies no longer being visible as a result.
+> - `$:` dependencies were determined through static analysis of the dependencies. This worked in most cases, but could break in subtle ways during a refactoring where dependencies would be for example moved into a function and no longer be visible as a result
+> - `$:` statements were also ordered by using static analysis of the dependencies. In some cases there could be ties and the ordering would be wrong as a result, needing manual interventions. Ordering could also break while refactoring code and some dependencies no longer being visible as a result.
 >
-> Lastly, it wasn't TypeScript-friendly (our editor tooling had to jump through some hoops to make it valid for TypeScript), which was a blocker for making Svelte's reactivity model truly > universal.
+> Lastly, it wasn't TypeScript-friendly (our editor tooling had to jump through some hoops to make it valid for TypeScript), which was a blocker for making Svelte's reactivity model truly universal.
 >
 > `$derived` and `$effect` fix all of these by
 >
@@ -429,7 +429,7 @@ In Svelte 4, you would pass data to a `<slot />` and then retrieve it with `let:
 > - the `let:` syntax was confusing to many people as it _creates_ a variable whereas all other `:` directives _receive_ a variable
 > - the scope of a variable declared with `let:` wasn't clear. In the example above, it may look like you can use the `item` slot prop in the `empty` slot, but that's not true
 > - named slots had to be applied to an element using the `slot` attribute. Sometimes you didn't want to create an element, so we had to add the `<svelte:fragment>` API
-> - named slots could also be applied to a component, which changed the semantics of where `let:` directives are available (even today us maintainers often don't know which way around it > works)
+> - named slots could also be applied to a component, which changed the semantics of where `let:` directives are available (even today us maintainers often don't know which way around it works)
 >
 > Snippets solve all of these problems by being much more readable and clear. At the same time they're more powerful as they allow you to define sections of UI that you can render _anywhere_, not just passing them as props to a component.
 
