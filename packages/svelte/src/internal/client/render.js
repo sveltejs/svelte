@@ -1,5 +1,5 @@
 /** @import { ComponentContext, Effect, TemplateNode } from '#client' */
-/** @import { Component, ComponentType, SvelteComponent } from '../../index.js' */
+/** @import { Component, ComponentType, SvelteComponent, MountOptions } from '../../index.js' */
 import { DEV } from 'esm-env';
 import {
 	clear_text_content,
@@ -65,21 +65,7 @@ export function set_text(text, value) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
  * @param {ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>} component
- * @param {{} extends Props ? {
- * 		target: Document | Element | ShadowRoot;
- * 		anchor?: Node;
- * 		props?: Props;
- * 		events?: Record<string, (e: any) => any>;
- * 		context?: Map<any, any>;
- * 		intro?: boolean;
- * 	}: {
- * 		target: Document | Element | ShadowRoot;
- * 		props: Props;
- * 		anchor?: Node;
- * 		events?: Record<string, (e: any) => any>;
- * 		context?: Map<any, any>;
- * 		intro?: boolean;
- * 	}} options
+ * @param {MountOptions<Props>} options
  * @returns {Exports}
  */
 export function mount(component, options) {
@@ -175,14 +161,7 @@ const document_listeners = new Map();
 /**
  * @template {Record<string, any>} Exports
  * @param {ComponentType<SvelteComponent<any>> | Component<any>} Component
- * @param {{
- * 		target: Document | Element | ShadowRoot;
- * 		anchor?: Node;
- * 		props?: any;
- * 		events?: any;
- * 		context?: Map<any, any>;
- * 		intro?: boolean;
- * 	}} options
+ * @param {MountOptions} options
  * @returns {Exports}
  */
 function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
