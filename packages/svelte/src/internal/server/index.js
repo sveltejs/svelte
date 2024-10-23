@@ -270,7 +270,12 @@ export function spread_props(props) {
 	for (let i = 0; i < props.length; i++) {
 		const obj = props[i];
 		for (key in obj) {
-			merged_props[key] = obj[key];
+			const desc = Object.getOwnPropertyDescriptor(obj, key);
+			if (desc) {
+				Object.defineProperty(merged_props, key, desc);
+			} else {
+				merged_props[key] = obj[key];
+			}
 		}
 	}
 	return merged_props;

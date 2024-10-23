@@ -177,6 +177,19 @@ const spread_props_handler = {
 			if (typeof p === 'object' && p !== null && key in p) return p[key];
 		}
 	},
+	set(target, key, value) {
+		let i = target.props.length;
+		while (i--) {
+			let p = target.props[i];
+			if (is_function(p)) p = p();
+			const desc = get_descriptor(p, key);
+			if (desc && desc.set) {
+				desc.set(value);
+				return true;
+			}
+		}
+		return false;
+	},
 	getOwnPropertyDescriptor(target, key) {
 		let i = target.props.length;
 		while (i--) {
