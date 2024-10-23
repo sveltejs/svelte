@@ -4,7 +4,7 @@ title: Getting started
 
 We recommend using [SvelteKit](../kit), the official application framework from the Svelte team powered by [Vite](https://vite.dev/):
 
-```
+```bash
 npx sv create myapp
 cd myapp
 npm run dev
