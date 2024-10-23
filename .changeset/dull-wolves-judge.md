@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-Fix property name conversion in custom transitions
+fix: correct property name conversion in custom transitions
