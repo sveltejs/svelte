@@ -320,19 +320,21 @@ export type MountOptions<Props extends Record<string, any> = Record<string, any>
 	 */
 	target: Document | Element | ShadowRoot;
 	/**
-	 * Optional node inside `target` and when specified, it is used to render the component immediately before it.
+	 * Optional node inside `target`. When specified, it is used to render the component immediately before it.
 	 */
 	anchor?: Node;
 	/**
 	 * Allows the specification of events.
+	 * @deprecated Use callback props instead.
 	 */
 	events?: Record<string, (e: any) => any>;
 	/**
-	 * Used to define context at the component level.
+	 * Can be accessed via `getContext()` at the component level.
 	 */
 	context?: Map<any, any>;
 	/**
-	 * Used to control transition playback on initial render.  The default value is `true` to run transitions.
+	 * Whether or not to play transitions on initial render.
+	 * @default true
 	 */
 	intro?: boolean;
 } & ({} extends Props
