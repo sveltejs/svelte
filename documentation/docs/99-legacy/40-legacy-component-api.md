@@ -82,7 +82,7 @@ component.$set({ answer: 42 });
 > ```js
 > // @noErrors
 > let props = $state({ answer: 42 });
-> const component = mount(Component);
+> const component = mount(Component, { props });
 > // ...
 > props.answer = 24;
 > ```
