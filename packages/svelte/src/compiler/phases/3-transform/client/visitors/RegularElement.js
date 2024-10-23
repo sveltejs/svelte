@@ -531,6 +531,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		return false;
 	}
 
+	// Special case for Firefox who needs it set as a property in order to work
 	if (name === 'muted') {
 		state.init.push(b.stmt(b.assignment('=', b.member(node_id, b.id('muted')), value)));
 		return false;
