@@ -128,7 +128,11 @@ export namespace Css {
 	export interface PseudoClassSelector extends BaseNode {
 		type: 'PseudoClassSelector';
 		name: string;
-		args: SelectorList | null;
+		/**
+		 * The arguments to the pseudo-class, which can be a SelectorList (e.g. for :has(), :is(), :not(), etc.)
+		 * or can be null for simple pseudo-classes like :hover or :focus
+		 */
+		args: SelectorList | ComplexSelector | SimpleSelector | null;
 	}
 
 	export interface Percentage extends BaseNode {
