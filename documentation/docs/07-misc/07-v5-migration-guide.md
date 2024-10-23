@@ -107,7 +107,7 @@ In Svelte 5, the `$props` rune makes this straightforward without any additional
 	export { klass as class};---
 	+++let { class: klass, ...rest } = $props();+++
 </script>
-<button {class} {...---$$restProps---+++rest+++}>click me</button>
+<button class={klass} {...---$$restProps---+++rest+++}>click me</button>
 ```
 
 > [!DETAILS] Why we did this
