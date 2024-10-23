@@ -3,6 +3,7 @@
 		<z></z>
 	</y>
 </x>
+<c></c>
 
 <style>
 	x:has(y) {
@@ -92,6 +93,13 @@
 		color: red;
 	}
 	x > y:has(z) {
+		color: green;
+	}
+
+	x:has(y) z {
+		color: green;
+	}
+	x:has(y) + c {
 		color: green;
 	}
 </style>

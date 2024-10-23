@@ -88,3 +88,10 @@
 	x.svelte-xyz > y:where(.svelte-xyz):has(z:where(.svelte-xyz)) {
 		color: green;
 	}
+
+	x.svelte-xyz:has(y:where(.svelte-xyz)) z:where(.svelte-xyz) {
+		color: green;
+	}
+	x.svelte-xyz:has(y:where(.svelte-xyz)) + c:where(.svelte-xyz) {
+		color: green;
+	}
