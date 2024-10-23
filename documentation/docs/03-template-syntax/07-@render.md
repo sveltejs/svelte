@@ -14,7 +14,7 @@ To render a [snippet](snippet), use a `{@render ...}` tag.
 {@render sum(5, 6)}
 ```
 
-The expression can be an identifer like `sum`, or an arbitrary JavaScript expression:
+The expression can be an identifier like `sum`, or an arbitrary JavaScript expression:
 
 ```svelte
 {@render (cool ? coolSnippet : lameSnippet)()}

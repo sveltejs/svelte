@@ -1,5 +1,33 @@
 # svelte
 
+## 5.1.0
+
+### Minor Changes
+
+- feat: export mount() options as the MountOptions type ([#13674](https://github.com/sveltejs/svelte/pull/13674))
+
+- feat: allow usage of getContext() within $derived runes ([#13830](https://github.com/sveltejs/svelte/pull/13830))
+
+### Patch Changes
+
+- fix: properly migrate ts with inferred type comments ([#13761](https://github.com/sveltejs/svelte/pull/13761))
+
+- fix: correct property name conversion in custom transitions ([#13820](https://github.com/sveltejs/svelte/pull/13820))
+
+- fix: ensure $effect.tracking returns false inside transition functions ([#13775](https://github.com/sveltejs/svelte/pull/13775))
+
+- fix: migrate default slots to children snippet ([#13760](https://github.com/sveltejs/svelte/pull/13760))
+
+- fix: don't print errors on migration errors ([#13754](https://github.com/sveltejs/svelte/pull/13754))
+
+- fix: prevent spread attribute from overriding class directive ([#13763](https://github.com/sveltejs/svelte/pull/13763))
+
+- fix: ensure `:has` selectors followed by other selectors match ([#13824](https://github.com/sveltejs/svelte/pull/13824))
+
+- fix: ensure muted DOM property works correctly in FF ([#13751](https://github.com/sveltejs/svelte/pull/13751))
+
+- fix: show filename information in `legacy_recursive_reactive_block` ([#13764](https://github.com/sveltejs/svelte/pull/13764))
+
 ## 5.0.5
 
 ### Patch Changes
