@@ -302,6 +302,7 @@ export function update_reaction(reaction) {
 	var previous_reaction = active_reaction;
 	var previous_skip_reaction = skip_reaction;
 	var prev_derived_sources = derived_sources;
+	var previous_component_context = component_context;
 	var flags = reaction.f;
 
 	new_deps = /** @type {null | Value[]} */ (null);
@@ -310,6 +311,7 @@ export function update_reaction(reaction) {
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 	skip_reaction = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	derived_sources = null;
+	component_context = reaction.ctx;
 
 	try {
 		var result = /** @type {Function} */ (0, reaction.fn)();
@@ -347,6 +349,7 @@ export function update_reaction(reaction) {
 		active_reaction = previous_reaction;
 		skip_reaction = previous_skip_reaction;
 		derived_sources = prev_derived_sources;
+		component_context = previous_component_context;
 	}
 }
 
@@ -422,7 +425,6 @@ export function update_effect(effect) {
 	var previous_component_context = component_context;
 
 	active_effect = effect;
-	component_context = effect.ctx;
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
@@ -449,7 +451,6 @@ export function update_effect(effect) {
 		handle_error(/** @type {Error} */ (error), effect, previous_component_context);
 	} finally {
 		active_effect = previous_effect;
-		component_context = previous_component_context;
 
 		if (DEV) {
 			dev_current_component_function = previous_component_fn;
