@@ -6,9 +6,9 @@
 
 - feat: export mount() options as the MountOptions type ([#13674](https://github.com/sveltejs/svelte/pull/13674))
 
-### Patch Changes
-
 - feat: allow usage of getContext() within $derived runes ([#13830](https://github.com/sveltejs/svelte/pull/13830))
+
+### Patch Changes
 
 - fix: properly migrate ts with inferred type comments ([#13761](https://github.com/sveltejs/svelte/pull/13761))
 
