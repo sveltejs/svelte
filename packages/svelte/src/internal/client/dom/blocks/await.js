@@ -80,9 +80,13 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 			else then_effect = branch(() => then_fn(anchor, input_source));
 		}
 
-		if (state === CATCH && catch_fn) {
-			if (catch_effect) resume_effect(catch_effect);
-			else catch_effect = branch(() => catch_fn(anchor, error_source));
+		if (state === CATCH) {
+			if (catch_fn) {
+				if (catch_effect) resume_effect(catch_effect);
+				else catch_effect = branch(() => catch_fn(anchor, error_source));
+			} else if (DEV) {
+				console.error(error_source.v);
+			}
 		}
 
 		if (state !== PENDING && pending_effect) {
