@@ -25,10 +25,18 @@ function dispatch_event(element, type) {
 }
 
 /**
+ * Converts a property to the camel-case format expected by Element.animate(), KeyframeEffect(), and KeyframeEffect.setKeyframes().
  * @param {string} style
  * @returns {string}
  */
-function css_style_from_camel_case(style) {
+function css_property_to_camelcase(style) {
+	// in compliance with spec
+	if (style === 'float') return 'cssFloat';
+	if (style === 'offset') return 'cssOffset';
+
+	// do not rename custom @properties
+	if (style.startsWith('--')) return style;
+
 	const parts = style.split('-');
 	if (parts.length === 1) return parts[0];
 	return (
@@ -52,7 +60,7 @@ function css_to_keyframe(css) {
 		const [property, value] = part.split(':');
 		if (!property || value === undefined) break;
 
-		const formatted_property = css_style_from_camel_case(property.trim());
+		const formatted_property = css_property_to_camelcase(property.trim());
 		keyframe[formatted_property] = value.trim();
 	}
 	return keyframe;
