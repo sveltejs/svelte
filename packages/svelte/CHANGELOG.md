@@ -1,5 +1,17 @@
 # svelte
 
+## 5.1.1
+
+### Patch Changes
+
+- fix: internally wrap store subscribe in untrack ([#13858](https://github.com/sveltejs/svelte/pull/13858))
+
+- fix: allow binding to const with spread in legacy mode ([#13849](https://github.com/sveltejs/svelte/pull/13849))
+
+- fix: ensure props internally untracks current_value on sets ([#13859](https://github.com/sveltejs/svelte/pull/13859))
+
+- fix: properly traverse children when checking matches for `:has` ([#13866](https://github.com/sveltejs/svelte/pull/13866))
+
 ## 5.1.0
 
 ### Minor Changes
