@@ -106,7 +106,7 @@ export class SvelteMap extends Map {
 			// being listened to, then also increment version to keep
 			// those cases in sync
 			if (s.reactions === null || version.reactions === null) {
-				increment(this.#version);
+				increment(version);
 			}
 		}
 
