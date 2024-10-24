@@ -7,7 +7,7 @@ export default function Skip_static_subtree($$anchor, $$props) {
 	var fragment = root();
 	var main = $.sibling($.first_child(fragment), 2);
 	var h1 = $.child(main);
-	var text = $.child(h1);
+	var text = $.child(h1, true);
 
 	$.reset(h1);
 
