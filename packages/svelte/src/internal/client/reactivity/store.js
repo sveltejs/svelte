@@ -171,10 +171,10 @@ export function mark_store_binding() {
  */
 export function capture_marked_store_sub(fn) {
 	var previous_marked_store_sub = marked_store_sub;
+
 	try {
 		marked_store_sub = false;
-		var value = fn();
-		return [value, marked_store_sub];
+		return [fn(), marked_store_sub];
 	} finally {
 		marked_store_sub = previous_marked_store_sub;
 	}
