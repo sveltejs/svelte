@@ -373,8 +373,6 @@ export function prop(props, key, flags, fallback) {
 	if (!immutable) current_value.equals = safe_equals;
 
 	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
-		var current = get(current_value);
-
 		// legacy nonsense — need to ensure the source is invalidated when necessary
 		// also needed for when handling inspect logic so we can inspect the correct source signal
 		if (is_signals_recorded) {
@@ -398,12 +396,11 @@ export function prop(props, key, flags, fallback) {
 				if (fallback_used && fallback_value !== undefined) {
 					fallback_value = new_value;
 				}
-				get(current_value); // force a synchronisation immediately
+				untrack(() => get(current_value)); // force a synchronisation immediately
 			}
 
 			return value;
 		}
-
-		return current;
+		return get(current_value);
 	};
 }
