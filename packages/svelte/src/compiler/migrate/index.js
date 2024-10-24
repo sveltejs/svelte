@@ -54,8 +54,16 @@ function migrate_css(state) {
 			code.startsWith(':is') ||
 			code.startsWith(':where')
 		) {
-			let parenthesis = 1;
 			let start = code.indexOf('(') + 1;
+			let is_global = false;
+			const global_str = ':global';
+			const next_global = code.indexOf(global_str);
+			const str_between = code.substring(start, next_global);
+			if (!str_between.trim()) {
+				is_global = true;
+				start += global_str.length;
+			}
+			let parenthesis = 1;
 			let end = start;
 			let char = code[end];
 			// find the closing parenthesis
@@ -66,8 +74,10 @@ function migrate_css(state) {
 				char = code[end];
 			}
 			if (start && end) {
-				str.prependLeft(starting + start, ':global(');
-				str.appendRight(starting + end - 1, ')');
+				if (!is_global) {
+					str.prependLeft(starting + start, ':global(');
+					str.appendRight(starting + end - 1, ')');
+				}
 				starting += end - 1;
 				code = code.substring(end - 1);
 				continue;

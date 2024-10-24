@@ -41,6 +41,12 @@ what if i'm talking about `:has()` in my blog?
 	div :where(.class:is(span:has(* > *))){}
 	div :is(.class:is(span:is(:hover)), .x){}
 
+	div :has(    :global(.class:is(span:where(:focus)))){}
+	div :not(:global(.class:is(span:where(:focus-within)))){}
+	div :is(:global(.class:is(span:is(:hover)))){}
+	div :where(:global(.class:is(span:has(* > *)))){}
+	div :is(:global(.class:is(span:is(:hover)), .x)){}
+
 	div{
 		p:has(&){
 
