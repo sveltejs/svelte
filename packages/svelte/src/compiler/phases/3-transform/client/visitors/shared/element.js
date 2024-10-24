@@ -94,14 +94,12 @@ export function build_set_attributes(
  * @param {Identifier} element_id
  * @param {ComponentContext} context
  * @param {boolean} is_attributes_reactive
- * @param {boolean} force_check Should be `true` if we can't rely on our cached value, because for example there's also a `style` attribute
  */
 export function build_style_directives(
 	style_directives,
 	element_id,
 	context,
-	is_attributes_reactive,
-	force_check
+	is_attributes_reactive
 ) {
 	const state = context.state;
 
@@ -126,8 +124,7 @@ export function build_style_directives(
 				element_id,
 				b.literal(directive.name),
 				value,
-				/** @type {Expression} */ (directive.modifiers.includes('important') ? b.true : undefined),
-				force_check ? b.true : undefined
+				/** @type {Expression} */ (directive.modifiers.includes('important') ? b.true : undefined)
 			)
 		);
 

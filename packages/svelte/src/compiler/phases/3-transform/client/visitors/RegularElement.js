@@ -291,13 +291,7 @@ export function RegularElement(node, context) {
 
 	// class/style directives must be applied last since they could override class/style attributes
 	build_class_directives(class_directives, node_id, context, is_attributes_reactive);
-	build_style_directives(
-		style_directives,
-		node_id,
-		context,
-		is_attributes_reactive,
-		lookup.has('style') || has_spread
-	);
+	build_style_directives(style_directives, node_id, context, is_attributes_reactive);
 
 	// Apply the src and loading attributes for <img> elements after the element is appended to the document
 	if (node.name === 'img' && (has_spread || lookup.has('loading'))) {
