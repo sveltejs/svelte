@@ -39,7 +39,7 @@ what if i'm talking about `:has()` in my blog?
 	div :not(.class:is(span:where(:focus-within))){}
 	div :is(.class:is(span:is(:hover))){}
 	div :where(.class:is(span:has(* > *))){}
-
+div :is(.class:is(span:is(:hover)), .x){}
 
 	div{
 		p:has(&){
