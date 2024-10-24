@@ -427,6 +427,10 @@ function animate(element, options, counterpart, t2, on_finish) {
 				animation.cancel();
 				// This prevents memory leaks in Chromium
 				animation.effect = null;
+				// This prevents onfinish to be launched after cancel(),
+				// which can happen in some rare cases
+				// see https://github.com/sveltejs/svelte/issues/13681
+				animation.onfinish = null;
 			}
 		},
 		deactivate: () => {
