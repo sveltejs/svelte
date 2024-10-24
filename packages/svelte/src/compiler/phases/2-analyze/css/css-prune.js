@@ -405,19 +405,28 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 		/** @type {Array<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} */
 		const descendant_elements = [];
 
-		/**
-		 * @param {Compiler.SvelteNode} node
-		 * @param {boolean} is_recursing
-		 */
-		function collect_child_elements(node, is_recursing) {
-			if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
-				descendant_elements.push(node);
-				if (!is_recursing) child_elements.push(node);
-				node.fragment.nodes.forEach((node) => collect_child_elements(node, true));
-			}
-		}
+		walk(
+			/** @type {Compiler.SvelteNode} */ (element.fragment),
+			{ is_child: true },
+			{
+				_(node, context) {
+					if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
+						descendant_elements.push(node);
 
-		element.fragment.nodes.forEach((node) => collect_child_elements(node, false));
+						if (context.state.is_child) {
+							child_elements.push(node);
+							context.state.is_child = false;
+							context.next();
+							context.state.is_child = true;
+						} else {
+							context.next();
+						}
+					} else {
+						context.next();
+					}
+				}
+			}
+		);
 
 		// :has(...) is special in that it means "look downwards in the CSS tree". Since our matching algorithm goes
 		// upwards and back-to-front, we need to first check the selectors inside :has(...), then check the rest of the

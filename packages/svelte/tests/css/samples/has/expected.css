@@ -82,7 +82,13 @@
 	x.svelte-xyz:has(> y:where(.svelte-xyz)) {
 		color: green;
 	}
+	y.svelte-xyz:has(> d:where(.svelte-xyz)) {
+		color: green;
+	}
 	/* (unused) x:has(> z) {
+		color: red;
+	}*/
+	/* (unused) x:has(> d) {
 		color: red;
 	}*/
 	x.svelte-xyz > y:where(.svelte-xyz):has(z:where(.svelte-xyz)) {
