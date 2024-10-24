@@ -430,7 +430,7 @@ function animate(element, options, counterpart, t2, on_finish) {
 				// This prevents onfinish to be launched after cancel(),
 				// which can happen in some rare cases
 				// see https://github.com/sveltejs/svelte/issues/13681
-				animation.onfinish = null;
+				animation.onfinish = noop;
 			}
 		},
 		deactivate: () => {
