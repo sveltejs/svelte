@@ -6,6 +6,8 @@ import { get } from '../runtime.js';
 import { teardown } from './effects.js';
 import { mutable_source, set } from './sources.js';
 
+let marked_store_sub = false;
+
 /**
  * Gets the current value of a store. If the store isn't subscribed to yet, it will create a proxy
  * signal that will be updated when the store is. The store references container is needed to
@@ -145,4 +147,24 @@ export function update_pre_store(store, store_value, d = 1) {
 	const value = store_value + d;
 	store.set(value);
 	return value;
+}
+
+export function mark_store_sub() {
+	marked_store_sub = true;
+}
+
+/**
+ * @template T
+ * @param {() => T} fn
+ * @returns {[T, boolean]}
+ */
+export function capture_marked_store_sub(fn) {
+	var previous_marked_store_sub = marked_store_sub;
+	try {
+		marked_store_sub = false;
+		var value = fn();
+		return [value, marked_store_sub];
+	} finally {
+		marked_store_sub = previous_marked_store_sub;
+	}
 }

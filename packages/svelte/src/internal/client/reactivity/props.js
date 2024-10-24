@@ -23,6 +23,7 @@ import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import { BRANCH_EFFECT, DESTROYED, LEGACY_DERIVED_PROP, ROOT_EFFECT } from '../constants.js';
 import { proxy } from '../proxy.js';
+import { capture_marked_store_sub } from './store.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -273,8 +274,14 @@ export function prop(props, key, flags, fallback) {
 	var runes = (flags & PROPS_IS_RUNES) !== 0;
 	var bindable = (flags & PROPS_IS_BINDABLE) !== 0;
 	var lazy = (flags & PROPS_IS_LAZY_INITIAL) !== 0;
+	var is_store_sub = false;
+	var prop_value;
 
-	var prop_value = /** @type {V} */ (props[key]);
+	if (bindable) {
+		[prop_value, is_store_sub] = capture_marked_store_sub(() => /** @type {V} */ (props[key]));
+	} else {
+		prop_value = /** @type {V} */ (props[key]);
+	}
 	var setter = get_descriptor(props, key)?.set;
 
 	var fallback_value = /** @type {V} */ (fallback);
@@ -343,7 +350,7 @@ export function prop(props, key, flags, fallback) {
 				// In that case the state proxy (if it exists) should take care of the notification.
 				// If the parent is not in runes mode, we need to notify on mutation, too, that the prop
 				// has changed because the parent will not be able to detect the change otherwise.
-				if (!runes || !mutation || legacy_parent) {
+				if (!runes || !mutation || legacy_parent || is_store_sub) {
 					/** @type {Function} */ (setter)(mutation ? getter() : value);
 				}
 				return value;
