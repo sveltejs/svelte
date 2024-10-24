@@ -35,6 +35,51 @@ class MigrationError extends Error {
 }
 
 /**
+ *
+ * @param {State} state
+ */
+function migrate_css(state) {
+	if (!state.analysis.css.ast?.start) return;
+	let code = state.str
+		.snip(state.analysis.css.ast.start, /** @type {number} */ (state.analysis.css.ast?.end))
+		.toString();
+	let starting = 0;
+
+	// since we already blank css we can't work directly on `state.str` so we will create a copy that we can update
+	const str = new MagicString(code);
+	while (!code.startsWith('</style>') && !!code.trim()) {
+		if (
+			code.startsWith(':has') ||
+			code.startsWith(':not') ||
+			code.startsWith(':is') ||
+			code.startsWith(':where')
+		) {
+			let parenthesis = 1;
+			let start = code.indexOf('(') + 1;
+			let end = start;
+			let char = code[end];
+			// find the closing parenthesis
+			while (parenthesis !== 0 && char) {
+				if (char === '(') parenthesis++;
+				if (char === ')') parenthesis--;
+				end++;
+				char = code[end];
+			}
+			if (start && end) {
+				str.prependLeft(starting + start, ':global(');
+				str.appendRight(starting + end - 1, ')');
+				starting += end - 1;
+				code = code.substring(end - 1);
+				continue;
+			}
+		}
+		starting++;
+		code = code.substring(1);
+	}
+	state.str.update(state.analysis.css.ast?.start, state.analysis.css.ast?.end, str.toString());
+}
+
+/**
  * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
  * May throw an error if the code is too complex to migrate automatically.
  *
@@ -317,14 +362,9 @@ export function migrate(source, { filename } = {}) {
 		if (!parsed.instance && need_script) {
 			str.appendRight(insertion_point, '\n</script>\n\n');
 		}
+		migrate_css(state);
 		return {
-			code: str
-				.toString()
-				// for some reason replacing the magic string doesn't work
-				.replaceAll(
-					/(?<=<style[^>]*>[\s\S]*?:(?:is|not|where|has)\()([\s\S]+)(?=\)[\s\S]*?<\/style>)/gm,
-					':global($1)'
-				)
+			code: str.toString()
 		};
 	} catch (e) {
 		if (!(e instanceof MigrationError)) {
