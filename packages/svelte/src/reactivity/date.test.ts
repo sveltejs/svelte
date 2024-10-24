@@ -39,22 +39,22 @@ test('date.setDate and date.setUTCDate', () => {
 	});
 
 	// Date/UTCDate may vary on some timezones
-	const datePlusZero = new Date(initial_date);
-	datePlusZero.setDate(a.getDate());
-	const datePlusOne = new Date(initial_date);
-	datePlusOne.setDate(a.getDate() + 1);
-	const datePlusTwo = new Date(initial_date);
-	datePlusTwo.setDate(a.getDate() + 2);
+	const date_plus_zero = new Date(initial_date);
+	date_plus_zero.setDate(a.getDate());
+	const date_plus_one = new Date(initial_date);
+	date_plus_one.setDate(a.getDate() + 1);
+	const date_plus_two = new Date(initial_date);
+	date_plus_two.setDate(a.getDate() + 2);
 
 	assert.deepEqual(log, [
 		initial_date.getDate(),
 		initial_date.getUTCDate(),
-		datePlusZero.getDate(),
-		datePlusZero.getUTCDate(),
-		datePlusOne.getDate(),
-		datePlusOne.getUTCDate(),
-		datePlusTwo.getDate(),
-		datePlusTwo.getUTCDate()
+		date_plus_zero.getDate(),
+		date_plus_zero.getUTCDate(),
+		date_plus_one.getDate(),
+		date_plus_one.getUTCDate(),
+		date_plus_two.getDate(),
+		date_plus_two.getUTCDate()
 	]);
 
 	cleanup();
