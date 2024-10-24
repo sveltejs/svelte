@@ -1,5 +1,23 @@
 # svelte
 
+## 5.1.2
+
+### Patch Changes
+
+- fix: improve consistency of transitions ([#13895](https://github.com/sveltejs/svelte/pull/13895))
+
+- fix: enable bound store props in runes mode components ([#13887](https://github.com/sveltejs/svelte/pull/13887))
+
+- fix: ensure each block references to imports are handled correctly ([#13892](https://github.com/sveltejs/svelte/pull/13892))
+
+- fix: ensure SvelteMap reactivity persists through deriveds ([#13877](https://github.com/sveltejs/svelte/pull/13877))
+
+- fix: ensure snippets after empty text correctly hydrate ([#13870](https://github.com/sveltejs/svelte/pull/13870))
+
+- fix: prevent migration script from adding `props.` to the `export let` identifier ([#13899](https://github.com/sveltejs/svelte/pull/13899))
+
+- fix: prevent var name clashing for delegated events without params ([#13896](https://github.com/sveltejs/svelte/pull/13896))
+
 ## 5.1.1
 
 ### Patch Changes
