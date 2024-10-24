@@ -1,5 +1,5 @@
 ---
-'svelte': minor
+'svelte': patch
 ---
 
-feat: migrate css `:id`, `:where``:not` and `:has`
+fix: wrap `:id`, `:where``:not` and `:has` with `:global` during migration
