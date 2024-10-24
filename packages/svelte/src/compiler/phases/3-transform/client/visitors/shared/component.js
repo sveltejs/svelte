@@ -188,7 +188,17 @@ export function build_component(node, component_name, context, anchor = context.
 					);
 				}
 
-				push_prop(b.get(attribute.name, [b.return(expression)]));
+				const is_store_sub =
+					attribute.expression.type === 'Identifier' &&
+					context.state.scope.get(attribute.expression.name)?.kind === 'store_sub';
+
+				if (is_store_sub) {
+					push_prop(
+						b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)])
+					);
+				} else {
+					push_prop(b.get(attribute.name, [b.return(expression)]));
+				}
 
 				const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
 				push_prop(

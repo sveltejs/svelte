@@ -7,6 +7,13 @@ import { teardown } from './effects.js';
 import { mutable_source, set } from './sources.js';
 
 /**
+ * Whether or not the prop currently being read is a store binding, as in
+ * `<Child bind:x={$y} />`. If it is, we treat the prop as mutable even in
+ * runes mode, and skip `binding_property_non_reactive` validation
+ */
+let is_store_binding = false;
+
+/**
  * Gets the current value of a store. If the store isn't subscribed to yet, it will create a proxy
  * signal that will be updated when the store is. The store references container is needed to
  * track reassignments to stores and to track the correct component context.
@@ -145,4 +152,30 @@ export function update_pre_store(store, store_value, d = 1) {
 	const value = store_value + d;
 	store.set(value);
 	return value;
+}
+
+/**
+ * Called inside prop getters to communicate that the prop is a store binding
+ */
+export function mark_store_binding() {
+	is_store_binding = true;
+}
+
+/**
+ * Returns a tuple that indicates whether `fn()` reads a prop that is a store binding.
+ * Used to prevent `binding_property_non_reactive` validation false positives and
+ * ensure that these props are treated as mutable even in runes mode
+ * @template T
+ * @param {() => T} fn
+ * @returns {[T, boolean]}
+ */
+export function capture_store_binding(fn) {
+	var previous_is_store_binding = is_store_binding;
+
+	try {
+		is_store_binding = false;
+		return [fn(), is_store_binding];
+	} finally {
+		is_store_binding = previous_is_store_binding;
+	}
 }
