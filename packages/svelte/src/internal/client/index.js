@@ -122,7 +122,7 @@ export {
 	store_unsub,
 	update_pre_store,
 	update_store,
-	mark_store_sub
+	mark_store_binding
 } from './reactivity/store.js';
 export { set_text } from './render.js';
 export {

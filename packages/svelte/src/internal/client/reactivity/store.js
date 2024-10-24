@@ -157,7 +157,7 @@ export function update_pre_store(store, store_value, d = 1) {
 /**
  * Called inside prop getters to communicate that the prop is a store binding
  */
-export function mark_store_sub() {
+export function mark_store_binding() {
 	marked_store_sub = true;
 }
 

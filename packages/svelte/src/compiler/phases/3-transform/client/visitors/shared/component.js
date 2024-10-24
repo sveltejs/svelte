@@ -194,7 +194,7 @@ export function build_component(node, component_name, context, anchor = context.
 
 				if (is_store_sub) {
 					push_prop(
-						b.get(attribute.name, [b.stmt(b.call('$.mark_store_sub')), b.return(expression)])
+						b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)])
 					);
 				} else {
 					push_prop(b.get(attribute.name, [b.return(expression)]));
