@@ -1,6 +1,9 @@
 <x>
 	<y>
 		<z></z>
+		{#if foo}
+			<d></d>
+		{/if}
 	</y>
 </x>
 <c></c>
@@ -89,7 +92,13 @@
 	x:has(> y) {
 		color: green;
 	}
+	y:has(> d) {
+		color: green;
+	}
 	x:has(> z) {
+		color: red;
+	}
+	x:has(> d) {
 		color: red;
 	}
 	x > y:has(z) {
