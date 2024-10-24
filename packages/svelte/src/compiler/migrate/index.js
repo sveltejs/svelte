@@ -1514,7 +1514,7 @@ function handle_identifier(node, state, path) {
 			);
 		} else {
 			const binding = state.scope.get(node.name);
-			if (binding?.kind === 'bindable_prop') {
+			if (binding?.kind === 'bindable_prop' && binding.node !== node) {
 				state.str.prependLeft(/** @type {number} */ (node.start), `${state.names.props}.`);
 			}
 		}
