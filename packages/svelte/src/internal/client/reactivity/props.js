@@ -401,8 +401,6 @@ export function prop(props, key, flags, fallback) {
 
 			return value;
 		}
-		var current = get(current_value);
-
-		return current;
+		return get(current_value);
 	};
 }
