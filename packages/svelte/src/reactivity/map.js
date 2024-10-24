@@ -94,13 +94,22 @@ export class SvelteMap extends Map {
 		var s = sources.get(key);
 		var prev_res = super.get(key);
 		var res = super.set(key, value);
+		var version = this.#version;
 
 		if (s === undefined) {
 			sources.set(key, source(0));
 			set(this.#size, super.size);
-			increment(this.#version);
+			increment(version);
 		} else if (prev_res !== value) {
 			increment(s);
+			// If no one listening to this property and is listening to the version, or
+			// the inverse, then we should increment the version to be safe
+			if (
+				(s.reactions === null && version.reactions !== null) ||
+				(s.reactions !== null && version.reactions === null)
+			) {
+				increment(version);
+			}
 		}
 
 		return res;
