@@ -11,7 +11,12 @@ import {
 import { loop } from '../../loop.js';
 import { should_intro } from '../../render.js';
 import { current_each_item } from '../blocks/each.js';
-import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
+import {
+	TRANSITION_GLOBAL,
+	TRANSITION_THIS,
+	TRANSITION_IN,
+	TRANSITION_OUT
+} from '../../../../constants.js';
 import { BLOCK_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
 
@@ -183,6 +188,7 @@ export function transition(flags, element, get_fn, get_params) {
 	var is_outro = (flags & TRANSITION_OUT) !== 0;
 	var is_both = is_intro && is_outro;
 	var is_global = (flags & TRANSITION_GLOBAL) !== 0;
+	var is_this = (flags & TRANSITION_THIS) !== 0;
 
 	/** @type {'in' | 'out' | 'both'} */
 	var direction = is_both ? 'both' : is_intro ? 'in' : 'out';
@@ -265,6 +271,12 @@ export function transition(flags, element, get_fn, get_params) {
 			outro?.abort();
 		}
 	};
+
+	if (is_this) {
+		// @ts-expect-error
+		(element.__tm ??= []).push(transition);
+		return;
+	}
 
 	var e = /** @type {Effect} */ (active_effect);
 

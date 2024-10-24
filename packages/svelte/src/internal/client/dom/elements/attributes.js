@@ -74,6 +74,45 @@ export function set_checked(element, checked) {
 }
 
 /**
+ * @param {HTMLElement} element
+ * @param {boolean} hidden
+ */
+export function set_hidden(element, hidden) {
+	// @ts-expect-error
+	var attributes = (element.__attributes ??= {});
+
+	if (attributes.hidden === (attributes.hidden = !!hidden)) return;
+
+	/** @type {import('#client').TransitionManager[] | undefined} */
+	// @ts-expect-error
+	const tm = element.__tm;
+	if (tm) {
+		if (hidden) {
+			var remaining = tm.length;
+			var check = () => {
+				if (--remaining == 0) {
+					// cleanup
+					for (var transition of tm) {
+						transition.stop();
+					}
+					element.hidden = true;
+				}
+			};
+			for (var transition of tm) {
+				transition.out(check);
+			}
+		} else {
+			element.hidden = false;
+			for (const transition of tm) {
+				transition.in();
+			}
+		}
+	} else {
+		element.hidden = hidden;
+	}
+}
+
+/**
  * @param {Element} element
  * @param {string} attribute
  * @param {string | null} value
@@ -274,6 +313,8 @@ export function set_attributes(
 		} else if (key === '__value' || (key === 'value' && value != null)) {
 			// @ts-ignore
 			element.value = element[key] = element.__value = value;
+		} else if (key === 'hidden') {
+			set_hidden(/** @type {HTMLElement} */ (element), value);
 		} else {
 			var name = key;
 			if (!preserve_attribute_case) {

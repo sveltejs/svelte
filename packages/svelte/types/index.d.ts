@@ -1088,7 +1088,7 @@ declare module 'svelte/compiler' {
 			name: string;
 			/** The 'y' in `transition:x={y}` */
 			expression: null | Expression;
-			modifiers: Array<'local' | 'global'>;
+			modifiers: Array<'local' | 'global' | 'this'>;
 			/** True if this is a `transition:` or `in:` directive */
 			intro: boolean;
 			/** True if this is a `transition:` or `out:` directive */
