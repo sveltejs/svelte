@@ -6,6 +6,11 @@ import { get } from '../runtime.js';
 import { teardown } from './effects.js';
 import { mutable_source, set } from './sources.js';
 
+/**
+ * Whether or not the prop currently being read is a store binding, as in
+ * `<Child bind:x={$y} />`. If it is, we treat the prop as mutable even in
+ * runes mode, and skip `binding_property_non_reactive` validation
+ */
 let marked_store_sub = false;
 
 /**
@@ -149,11 +154,17 @@ export function update_pre_store(store, store_value, d = 1) {
 	return value;
 }
 
+/**
+ * Called inside prop getters to communicate that the prop is a store binding
+ */
 export function mark_store_sub() {
 	marked_store_sub = true;
 }
 
 /**
+ * Returns a tuple that indicates whether `fn()` reads a prop that is a store binding.
+ * Used to prevent `binding_property_non_reactive` validation false positives and
+ * ensure that these props are treated as mutable even in runes mode
  * @template T
  * @param {() => T} fn
  * @returns {[T, boolean]}
