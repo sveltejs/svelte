@@ -4,7 +4,7 @@ import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
 import { render_effect } from './reactivity/effects.js';
 import * as w from './warnings.js';
-import { capture_marked_store_sub } from './reactivity/store.js';
+import { capture_store_binding } from './reactivity/store.js';
 
 /** regex of all html void element names */
 const void_element_names =
@@ -85,7 +85,7 @@ export function validate_binding(binding, get_object, get_property, line, column
 	render_effect(() => {
 		if (warned) return;
 
-		var [object, is_store_sub] = capture_marked_store_sub(get_object);
+		var [object, is_store_sub] = capture_store_binding(get_object);
 
 		if (is_store_sub) return;
 

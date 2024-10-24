@@ -11,7 +11,7 @@ import { mutable_source, set } from './sources.js';
  * `<Child bind:x={$y} />`. If it is, we treat the prop as mutable even in
  * runes mode, and skip `binding_property_non_reactive` validation
  */
-let marked_store_sub = false;
+let is_store_binding = false;
 
 /**
  * Gets the current value of a store. If the store isn't subscribed to yet, it will create a proxy
@@ -158,7 +158,7 @@ export function update_pre_store(store, store_value, d = 1) {
  * Called inside prop getters to communicate that the prop is a store binding
  */
 export function mark_store_binding() {
-	marked_store_sub = true;
+	is_store_binding = true;
 }
 
 /**
@@ -169,13 +169,13 @@ export function mark_store_binding() {
  * @param {() => T} fn
  * @returns {[T, boolean]}
  */
-export function capture_marked_store_sub(fn) {
-	var previous_marked_store_sub = marked_store_sub;
+export function capture_store_binding(fn) {
+	var previous_is_store_binding = is_store_binding;
 
 	try {
-		marked_store_sub = false;
-		return [fn(), marked_store_sub];
+		is_store_binding = false;
+		return [fn(), is_store_binding];
 	} finally {
-		marked_store_sub = previous_marked_store_sub;
+		is_store_binding = previous_is_store_binding;
 	}
 }

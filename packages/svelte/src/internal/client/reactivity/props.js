@@ -23,7 +23,7 @@ import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import { BRANCH_EFFECT, DESTROYED, LEGACY_DERIVED_PROP, ROOT_EFFECT } from '../constants.js';
 import { proxy } from '../proxy.js';
-import { capture_marked_store_sub } from './store.js';
+import { capture_store_binding } from './store.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -278,7 +278,7 @@ export function prop(props, key, flags, fallback) {
 	var prop_value;
 
 	if (bindable) {
-		[prop_value, is_store_sub] = capture_marked_store_sub(() => /** @type {V} */ (props[key]));
+		[prop_value, is_store_sub] = capture_store_binding(() => /** @type {V} */ (props[key]));
 	} else {
 		prop_value = /** @type {V} */ (props[key]);
 	}
