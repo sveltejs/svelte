@@ -21,6 +21,7 @@ export function subscribe_to_store(store, run, invalidate) {
 	}
 
 	// Svelte store takes a private second argument
+	// StartStopNotifier could mutate state, and we want to silence the corresponding validation error
 	const unsub = untrack(() =>
 		store.subscribe(
 			run,
