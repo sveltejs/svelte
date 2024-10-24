@@ -102,10 +102,12 @@ export class SvelteMap extends Map {
 			increment(version);
 		} else if (prev_res !== value) {
 			increment(s);
-			// If no one listening to this property yet, but version is
-			// being listened to, then also increment version to keep
-			// those cases in sync
-			if (s.reactions === null || version.reactions === null) {
+			// If no one listening to this property and is listening to the version, or
+			// the inverse, then we should increment the version to be safe
+			if (
+				(s.reactions === null && version.reactions !== null) ||
+				(s.reactions !== null && version.reactions === null)
+			) {
 				increment(version);
 			}
 		}
