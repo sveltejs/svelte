@@ -1,4 +1,5 @@
 /** @import { Readable } from './public' */
+import { untrack } from '../index-client.js';
 import { noop } from '../internal/shared/utils.js';
 
 /**
@@ -20,11 +21,11 @@ export function subscribe_to_store(store, run, invalidate) {
 	}
 
 	// Svelte store takes a private second argument
-	const unsub = store.subscribe(
+	const unsub = untrack(() => store.subscribe(
 		run,
 		// @ts-expect-error
 		invalidate
-	);
+	));
 
 	// Also support RxJS
 	// @ts-expect-error TODO fix this in the types?
