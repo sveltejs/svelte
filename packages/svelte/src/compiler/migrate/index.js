@@ -47,7 +47,7 @@ function migrate_css(state) {
 
 	// since we already blank css we can't work directly on `state.str` so we will create a copy that we can update
 	const str = new MagicString(code);
-	while (!code.startsWith('</style>') && !!code.trim()) {
+	while (code) {
 		if (
 			code.startsWith(':has') ||
 			code.startsWith(':not') ||
