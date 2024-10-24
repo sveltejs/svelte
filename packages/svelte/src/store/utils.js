@@ -21,11 +21,13 @@ export function subscribe_to_store(store, run, invalidate) {
 	}
 
 	// Svelte store takes a private second argument
-	const unsub = untrack(() => store.subscribe(
-		run,
-		// @ts-expect-error
-		invalidate
-	));
+	const unsub = untrack(() =>
+		store.subscribe(
+			run,
+			// @ts-expect-error
+			invalidate
+		)
+	);
 
 	// Also support RxJS
 	// @ts-expect-error TODO fix this in the types?
