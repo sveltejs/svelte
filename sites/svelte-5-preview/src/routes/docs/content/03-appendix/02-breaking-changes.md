@@ -31,7 +31,7 @@ import App from './App.svelte'
 + const app = mount(App, { target: document.getElementById("app"), events: { event: callback } });
 ```
 
-> Note that using `events` is discouraged — instead, [use callbacks](https://svelte-5-preview.vercel.app/docs/event-handlers)
+> Note that using `events` is discouraged — instead, [use callbacks](https://svelte.dev/docs/svelte/v5-migration-guide#Event-changes)
 
 For `$set`, use `$state` instead to create a reactive property object and manipulate it. If you're doing this inside a `.js` or `.ts` file, adjust the ending to include `.svelte`, i.e. `.svelte.js` or `.svelte.ts`.
 
@@ -242,7 +242,7 @@ This is [no longer true in Svelte 5](/#H4sIAAAAAAAAE4WQwU7DMAyGX8VESANpXe8lq9Q8A
 
 When using `onwheel`, `onmousewheel`, `ontouchstart` and `ontouchmove` event attributes, the handlers are [passive](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#using_passive_listeners) to align with browser defaults. This greatly improves responsiveness by allowing the browser to scroll the document immediately, rather than waiting to see if the event handler calls `event.preventDefault()`.
 
-In the very rare cases that you need to prevent these event defaults, you should use [`on`](https://svelte-5-preview.vercel.app/docs/imports#svelte-events) instead (for example inside an action).
+In the very rare cases that you need to prevent these event defaults, you should use [`on`](https://svelte.dev/docs/svelte/svelte-events#on) instead (for example inside an action).
 
 ### Attribute/prop syntax is stricter
 
