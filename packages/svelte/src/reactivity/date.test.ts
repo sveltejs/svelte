@@ -38,15 +38,23 @@ test('date.setDate and date.setUTCDate', () => {
 		date.setUTCDate(date.getUTCDate() + 1);
 	});
 
+	// Date/UTCDate may vary on some timezones
+	const date_plus_zero = new Date(initial_date);
+	date_plus_zero.setDate(a.getDate());
+	const date_plus_one = new Date(initial_date);
+	date_plus_one.setDate(a.getDate() + 1);
+	const date_plus_two = new Date(initial_date);
+	date_plus_two.setDate(a.getDate() + 2);
+
 	assert.deepEqual(log, [
 		initial_date.getDate(),
 		initial_date.getUTCDate(),
-		a.getDate(),
-		a.getUTCDate(),
-		a.getDate() + 1,
-		a.getUTCDate() + 1,
-		a.getDate() + 2,
-		a.getUTCDate() + 2
+		date_plus_zero.getDate(),
+		date_plus_zero.getUTCDate(),
+		date_plus_one.getDate(),
+		date_plus_one.getUTCDate(),
+		date_plus_two.getDate(),
+		date_plus_two.getUTCDate()
 	]);
 
 	cleanup();
