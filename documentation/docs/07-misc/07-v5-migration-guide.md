@@ -353,7 +353,7 @@ In Svelte 4, the easiest way to pass a piece of UI to the child was using a `<sl
 </script>
 
 ---<slot />---
-+++{@render children?.()}+++
++++{@render children()}+++
 ```
 
 ### Multiple content placeholders
