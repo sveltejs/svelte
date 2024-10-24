@@ -125,7 +125,11 @@ An effect only reruns when the object it reads changes, not when a property insi
 <p>{state.value} doubled is {derived.value}</p>
 ```
 
-An effect only depends on the values that it read the last time it ran. If `a` is true, changes to `b` will [not cause this effect to rerun](/playground/untitled#H4sIAAAAAAAAE3WQ0WrDMAxFf0U1hTow1vcsMfQ7lj3YjlxEXTvEymC4_vfFC6Ewtidxde8RkrJw5DGJ9j2LoO8oWnGZJvEi-GuqIn2iZ1x1istsa6dLdqaJ1RAG9sigoYdjYs0onfYJm7fdMX85q3dE59CylA30CnJtDWxjSNHjq49XeZqXEChcT9usLUAOpIbHA0yzM78oColGhDVofLS3neZSS6mqOz-XD51ZmGOAGKwne-vztk-956CL0kAJsi7decupf4l658EUZX4I8yTWt93jSI5wFC3PC5aP8g0Aje5DcQEAAA==):
+An effect only depends on the values that it read the last time it ran. This implementation detail has interesting implications for effects that have conditional short-circuiting code.
+
+For instance, if `a` is `false` in the code snippet below, the `a || b` operation will proceed to read `a` and _then_ `b`. This double read causes the effect to depend on both `a` and `b`, which in turn causes the effect to rerun whenever any of `a` or `b` change.
+
+On the other hand, if `a` is `true`, changes to `b` will [not cause this effect to rerun](/#H4sIAAAAAAAAE3WQ0WrDMAxFf0U1hTow1vcsMfQ7lj3YjlxEXTvEymC4_vfFC6Ewtidxde8RkrJw5DGJ9j2LoO8oWnGZJvEi-GuqIn2iZ1x1istsa6dLdqaJ1RAG9sigoYdjYs0onfYJm7fdMX85q3dE59CylA30CnJtDWxjSNHjq49XeZqXEChcT9usLUAOpIbHA0yzM78oColGhDVofLS3neZSS6mqOz-XD51ZmGOAGKwne-vztk-956CL0kAJsi7decupf4l658EUZX4I8yTWt93jSI5wFC3PC5aP8g0Aje5DcQEAAA==) because the `a || b` operation _exits early_ as soon as it encounters the first truthy operand. By exiting early, the effect will have only read `a`, which causes the effect to _only_ depend on `a`, not `b`.
 
 ```ts
 let a = false;
