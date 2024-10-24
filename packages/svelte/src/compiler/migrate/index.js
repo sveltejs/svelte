@@ -322,7 +322,7 @@ export function migrate(source, { filename } = {}) {
 				.toString()
 				// for some reason replacing the magic string doesn't work
 				.replaceAll(
-					/(?<=<style[^>]*>[\s\S]*?:(?:is|not|where|has)\()([^)]+)(?=[\s\S]*?<\/style>)/gm,
+					/(?<=<style[^>]*>[\s\S]*?:(?:is|not|where|has)\()([\s\S]+)(?=\)[\s\S]*?<\/style>)/gm,
 					':global($1)'
 				)
 		};
