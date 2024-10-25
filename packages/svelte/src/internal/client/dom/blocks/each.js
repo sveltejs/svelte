@@ -417,8 +417,7 @@ function reconcile(array, state, anchor, render_fn, flags, is_inert, get_key) {
 		var to_destroy = seen === undefined ? [] : array_from(seen);
 
 		while (current !== null) {
-			// If the each block isn't inert, then  item effects that are inert means they are currently
-			// already outroing and will be removed once the transition is finished
+			// If the each block isn't inert, then inert effects are currently outroing and will be removed once the transition is finished
 			if (is_inert || (current.e.f & INERT) === 0) {
 				to_destroy.push(current);
 			}
