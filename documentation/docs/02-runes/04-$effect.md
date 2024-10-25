@@ -190,7 +190,7 @@ The `$effect.tracking` rune is an advanced feature that tells you whether or not
 	});
 </script>
 
-<p>in template: {$effect.tracking()}</p> <!-- true -->
+<p>in template: {$effect.tracking()}</p> <!-- false -->
 ```
 
 This allows you to (for example) add things like subscriptions without causing memory leaks, by putting them in child effects. Here's a `readable` function that listens to changes from a callback function as long as it's inside a tracking context:
