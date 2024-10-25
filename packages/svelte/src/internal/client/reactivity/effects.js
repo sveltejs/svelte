@@ -581,6 +581,8 @@ function resume_children(effect, local) {
 		update_effect(effect);
 	}
 
+	// Ensure we toggle the flag after possibly updating the effect so that
+	// each block logic can correctly operate on inert items
 	effect.f ^= INERT;
 
 	var child = effect.first;
