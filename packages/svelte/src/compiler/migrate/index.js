@@ -853,6 +853,20 @@ const instance_script = {
 	}
 };
 
+/**
+ *
+ * @param {State} state
+ * @param {number} start
+ * @param {number} end
+ */
+function trim_block(state, start, end) {
+	const original = state.str.snip(start, end).toString();
+	const without_parens = original.substring(1, original.length - 1);
+	if (without_parens.trim().length !== without_parens.length) {
+		state.str.update(start + 1, end - 1, without_parens.trim());
+	}
+}
+
 /** @type {Visitors<SvelteNode, State>} */
 const template = {
 	Identifier(node, { state, path }) {
@@ -1119,6 +1133,46 @@ const template = {
 		if (migrated !== node.data) {
 			state.str.overwrite(node.start + '<!--'.length, node.end - '-->'.length, migrated);
 		}
+	},
+	HtmlTag(node, { state, next }) {
+		trim_block(state, node.start, node.end);
+		next();
+	},
+	ConstTag(node, { state, next }) {
+		trim_block(state, node.start, node.end);
+		next();
+	},
+	IfBlock(node, { state, next }) {
+		const start = node.start;
+		const end = state.str.original.indexOf('}', node.test.end) + 1;
+		trim_block(state, start, end);
+		next();
+	},
+	AwaitBlock(node, { state, next }) {
+		const start = node.start;
+		const end =
+			state.str.original.indexOf(
+				'}',
+				node.pending !== null ? node.expression.end : node.value?.end
+			) + 1;
+		trim_block(state, start, end);
+		if (node.pending !== null) {
+			const start = state.str.original.lastIndexOf('{', node.value?.start);
+			const end = state.str.original.indexOf('}', node.value?.end) + 1;
+			trim_block(state, start, end);
+		}
+		if (node.catch !== null) {
+			const start = state.str.original.lastIndexOf('{', node.error?.start);
+			const end = state.str.original.indexOf('}', node.error?.end) + 1;
+			trim_block(state, start, end);
+		}
+		next();
+	},
+	KeyBlock(node, { state, next }) {
+		const start = node.start;
+		const end = state.str.original.indexOf('}', node.expression.end) + 1;
+		trim_block(state, start, end);
+		next();
 	}
 };
 
