@@ -54,8 +54,13 @@ export function remove_input_defaults(input) {
 export function set_value(element, value) {
 	// @ts-expect-error
 	var attributes = (element.__attributes ??= {});
-	// @ts-expect-error
-	if (attributes.value === (attributes.value = value) || element.value === value) return;
+	if (
+		attributes.value === (attributes.value = value) ||
+		// @ts-expect-error
+		// `progress` elements always need their value set when its `0`
+		(element.value === value && (value !== 0 || element.nodeName !== 'PROGRESS'))
+	)
+		return;
 	// @ts-expect-error
 	element.value = value;
 }
