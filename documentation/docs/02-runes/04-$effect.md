@@ -347,7 +347,7 @@ Instead, use callbacks where possible ([demo](/playground/untitled#H4sIAAAAAAAAC
 </label>
 ```
 
-If you need to use bindings, for whatever reason (for example when you want some kind of "writable `$derived`"), consider using getters and setters to synchronise state ([demo](/playground/untitled#H4sIAAAAAAAACo2SQW-DMAyF_4pl7dBqXcsOu1CYtHtvO44dsmKqSCFExFRFiP8-xRCGth52tJ_9PecpA1bakMf0Y0CrasIU35zDHXLvQuGvZJhwh77p2nPoZP7casevhS3YEAM3rAzk8Jwkx9jzjixDDg-eFdMm2S6KoWolyK6ItuCqs2fWjYXOlYrpPTA2tIUhiAVH5iPtWbUX4v1VmY6Okzpzp2OepgNEGu_CT1St2fP2fXQ0juwwHNHZ4ScNmxn1RUaCybR1HUMIMS-wVfZCBYJQ80GAIzRWhvJh9d4RanXLB7Ea4SCsef4Qu1IG68Xu387h9D_GJ2ne8ZXpxTZUv1w994amjxCaMc1Se2dUn0Jl6DaHeFEuhWT_QvUqOlnHHdZNqStNJabcdjR-jt8IbC-7lgIAAA==)):
+If you need to use bindings, for whatever reason (for example when you want some kind of "writable `$derived`"), consider using getters and setters to synchronise state ([demo](/playground/untitled#H4sIAAAAAAAACpWRwW6DMBBEf8WyekikFOihFwcq9TvqHkyyQUjGsfCCQMj_XnvBNKpy6Qn2DTOD1wu_tRocF18Lx9kCFwT4iRvVxenT2syNoDGyWjl4xi93g2AwxPDSXfrW4oc0EjUgwzsqzSr2VhTnxJwNHwf24lAhHIpjVDZNwy1KS5wlNoGMSg9wOCYksQccerMlv65p51X0p_Xpdt_4YEy9yTkmV3z4MJT579-bUqsaNB2kbI0dwlnCgirJe2UakJzVrbkKaqkWivasU1O1ULxnOVk3JU-Uxti0p_-vKO4no_enbQ_yXhnZn0aHs4b1jiJMK7q2zmo1C3bTMG3LaZQVrMjeoSPgaUtkDxePMCEX2Ie6b_8D4WyJJEwCAAA=)):
 
 ```svelte
 <script>
@@ -371,7 +371,7 @@ If you need to use bindings, for whatever reason (for example when you want some
 
 <label>
 	<input type="range" bind:value={left.value} max={total} />
-	{left}/{total} left
+	{left.value}/{total} left
 </label>
 ```
 
