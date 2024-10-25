@@ -21,6 +21,8 @@ The expression inside `$derived(...)` should be free of side-effects. Svelte wil
 
 As with `$state`, you can mark class fields as `$derived`.
 
+> [!NOTE] Code in Svelte components is only executed once at creation, without the `$derived` rune `double` would maintain it's original value.
+
 ## `$derived.by`
 
 Sometimes you need to create complex derivations that don't fit inside a short expression. In these cases, you can use `$derived.by` which accepts a function as its argument.
