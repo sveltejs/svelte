@@ -1,5 +1,23 @@
 # svelte
 
+## 5.1.3
+
+### Patch Changes
+
+- fix: rethrow errors from await block if no catch block exists ([#13819](https://github.com/sveltejs/svelte/pull/13819))
+
+- fix: ensure SVG element attributes have case preserved ([#13935](https://github.com/sveltejs/svelte/pull/13935))
+
+- fix: ensure bind:group works as intended with proxied state objects ([#13939](https://github.com/sveltejs/svelte/pull/13939))
+
+- fix: ensure value is correctly set to zero on the progress element ([#13924](https://github.com/sveltejs/svelte/pull/13924))
+
+- fix: skip comment nodes in snippet validation logic ([#13936](https://github.com/sveltejs/svelte/pull/13936))
+
+- fix: typo in `Action` types ([#13874](https://github.com/sveltejs/svelte/pull/13874))
+
+- fix: remove metadata from legacy AST ([#13927](https://github.com/sveltejs/svelte/pull/13927))
+
 ## 5.1.2
 
 ### Patch Changes
