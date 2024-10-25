@@ -20,6 +20,7 @@ export default test({
                         ^`,
 			message: 'Unexpected end of input',
 			name: 'CompileError',
+			stack: '',
 			position: [30, 30],
 			start: {
 				character: 30,
