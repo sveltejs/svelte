@@ -289,7 +289,7 @@ In general, `$effect` is best considered something of an escape hatch — useful
 
 > [!NOTE] For things that are more complicated than a simple expression like `count * 2`, you can also use `$derived.by`.
 
-You might be tempted to do something convoluted with effects to link one value to another. The following example shows two inputs for "money spent" and "money left" that are connected to each other. If you update one, the other should update accordingly. Don't use effects for this ([demo](/playground/untitled#H4sIAAAAAAAACpVRy2rDMBD8lWXJwYE0dg-9KFYg31H3oNirIJBlYa1DjPG_F8l1XEop9LgzOzP7mFAbSwHF-4ROtYQCL97jAXn0sQh3skx4wNANfR2RMtS98XyuXMWWGLhjZUHCa1GcVix4cgwSdoEVU1bsn4wl_Y1I2kS6inekNdWcZXuQZ5giFDWpfwl5WYyT2fynbB1g1UWbTVbm2w6utOpKNq1TGucHhri6rLBX7kYVwtW4RtyVHUhOyXeGVj3klLxnyJP0i8lXNJUx6en-v6A48K85kTimpi0sYj-yAo-Wlh9FcL1LY4K3ahSgLT1OC3ZTXkBxfKN2uVC6T5LjAduuMdpQg4L7geaP-RNHPuClMQIAAA==)):
+You might be tempted to do something convoluted with effects to link one value to another. The following example shows two inputs for "money spent" and "money left" that are connected to each other. If you update one, the other should update accordingly. Don't use effects for this ([demo](/playground/untitled#H4sIAAAAAAAACpVRy26DMBD8FcvKgUhtoIdeHBwp31F6MGSJkBbHwksEQvx77aWQqooq9bgzOzP7mGTdIHipPiZJowOpGJAv0po2VmfnDv4OSBErjYdneHWzBJaCjcx91TWOToUtCIEE3cig0OIty44r5l1oDtjOkyFIsv3GINQ_CNYyGegd1DVUlCR7oU9iilDUcP8S8roYs9n8p2wdYNVFm4csTx872BxNCcjr5I11fdgonEkXsjP2CoUUZWMv6m6wBz2x7yxaM-iJvWeRsvSbSVeUy5i0uf8vKA78NIeJLSZWv1I8jQjLdyK4XuTSeIdmVKJGGI4LdjVOiezwDu1yG74My8PLCQaSiroe5s_5C2PHrkVGAgAA)):
 
 ```svelte
 <script>
@@ -317,7 +317,7 @@ You might be tempted to do something convoluted with effects to link one value t
 </label>
 ```
 
-Instead, use callbacks where possible ([demo](/playground/untitled#H4sIAAAAAAAACo2SP2-DMBDFv8rp1CFR84cOXQhU6p6tY-ngwoEsGWPhI0pk8d0rG5yglqGj37v7veMJh7VUZDH9dKhFS5jiuzG4Q74Z_7AXUky4Q9sNfemVzJa9NPxW6IIVMXDHQkEOL0lyipo1pBlyeLIsmDbJ9u4oqhdG2A2mLrgedMmy0zCYSjB9eMaGtuC8WXBkPtOBRd8QHy5CDXSa3Jk7HbOfDgjWuAo_U71kz9vr6Bgc2X44orPjow2dKfFNKhSTSW0GBl9iXmAvdEMFQqDmLgBH6HQYyt3ie0doxTV3IWqEY2DN88eohqePvsf9O9mf_if4HMSVXD89NfEI99qvbMs3RdPv4MXYaSWtUeKWQq3oOlfZCJNCcnildlFgWMcdtl0la0kVptwPNH6NP_uzV0acAgAA)):
+Instead, use callbacks where possible ([demo](/playground/untitled#H4sIAAAAAAAACo1SMW6EMBD8imWluFMSIEUaDiKlvy5lSOHjlhOSMRZeTiDkv8deMEEJRcqdmZ1ZjzzxqpZgePo5cRw18JQA_sSVaPz0rnVk7iDRYxdhYA8vW4Wg0NnwzJRdrfGtUAVKQIYtCsly9pIkp4AZ7cQOezAoEA7JcWUkVBuCdol0dNWrEutWsV5fHfnhPQ5wZJMnCwyejxCh6G6A0V3IHk4zu_jOxzzPBxBld83PTr7xXrb3rUNw8PbiYJ3FP22oTIoLSComq5XuXTeu8LzgnVA3KDgj13wiQ8taRaJ82rzXskYM-URRlsXktejjgNLoo9e4fyf70_8EnwncySX1GuunX6kGRwnzR_BgaPNaGy3FmLJKwrCUeBM6ZUn0Cs2mOlp3vwthQJ5i14P9st9vZqQlsQIAAA==)):
 
 ```svelte
 <script>
@@ -371,7 +371,7 @@ If you need to use bindings, for whatever reason (for example when you want some
 
 <label>
 	<input type="range" bind:value={left.value} max={total} />
-	{left.value}/{total} left
+	{left}/{total} left
 </label>
 ```
 
