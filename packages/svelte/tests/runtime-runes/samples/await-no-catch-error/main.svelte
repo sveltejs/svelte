@@ -1,7 +1,5 @@
 <script>
-	const promise = new Promise((res, rej) => {
-		rej(new Error('Test'));
-	})
+	const promise = Promise.reject('Test');
 	let toggle = $state(false);
 </script>
 
