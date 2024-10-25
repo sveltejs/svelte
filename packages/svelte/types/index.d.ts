@@ -1458,6 +1458,7 @@ declare module 'svelte/compiler' {
 	type ICompileDiagnostic = {
 		code: string;
 		message: string;
+		stack: string;
 		filename?: string;
 		start?: Location;
 		end?: Location;
@@ -2286,6 +2287,7 @@ declare module 'svelte/types/compiler/interfaces' {
 	type ICompileDiagnostic = {
 		code: string;
 		message: string;
+		stack: string;
 		filename?: string;
 		start?: Location;
 		end?: Location;
