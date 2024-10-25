@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-chore: highlight swallowed errors from await blocks in DEV
+fix: rethrow errors from await block if no catch block exists
