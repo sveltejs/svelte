@@ -56,7 +56,8 @@ export function set_value(element, value) {
 	var attributes = (element.__attributes ??= {});
 	if (
 		attributes.value === (attributes.value = value) ||
-		// @ts-expect-error <progress> elements report 0 value, but that might not really be 0
+		// @ts-expect-error 
+		// `progress` elements always need their value set when its `0`
 		(element.value === value && (value !== 0 || element.nodeName !== 'PROGRESS'))
 	)
 		return;
