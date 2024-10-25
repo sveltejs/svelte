@@ -2,19 +2,7 @@
 title: $derived
 ---
 
-
-Svelte's `<script>` blocks are run only when the component is created, so assignments within a `<script>` block are not automatically run again when a prop updates. 
-
-```svelte
-<script>
-	let count = $state(0);  
-	// this will only set `doubled` on component creation
-	// it will not update when `count` does
-	let doubled = count * 2;
-</script>
-```
-
-We can make any variable based on others reactive by declaring them a Derived state using the `$derived` rune:
+Derived state is declared with the `$derived` rune:
 
 ```svelte
 <script>
@@ -32,6 +20,8 @@ We can make any variable based on others reactive by declaring them a Derived st
 The expression inside `$derived(...)` should be free of side-effects. Svelte will disallow state changes (e.g. `count++`) inside derived expressions.
 
 As with `$state`, you can mark class fields as `$derived`.
+
+> [!NOTE] Code in Svelte components is only executed once at creation, without the `$derived` rune `double` would maintain it's original value.
 
 ## `$derived.by`
 
