@@ -344,7 +344,7 @@ export function server_component(analysis, options) {
 						b.block([
 							b.throw_error(
 								`Component.render(...) is no longer valid in Svelte 5. ` +
-									'See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information'
+									'See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information'
 							)
 						])
 					)
