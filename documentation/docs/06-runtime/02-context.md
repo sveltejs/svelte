@@ -80,7 +80,7 @@ Context is not inherently reactive. If you need reactive values in context then 
 ```svelte
 <!--- file: Child.svelte --->
 <script>
-	import { setContext } from 'svelte';
+	import { getContext } from 'svelte';
 
 	const value = getContext('counter');
 </script>
