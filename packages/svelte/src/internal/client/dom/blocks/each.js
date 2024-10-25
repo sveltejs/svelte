@@ -204,8 +204,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 
 		if (!hydrating) {
-			var is_inert = /** @type {Effect} */ (active_reaction.f & INERT) !== 0;
-			reconcile(array, state, anchor, render_fn, flags, is_inert, get_key);
+			var effect = /** @type {Effect} */ (active_reaction);
+			reconcile(array, state, anchor, render_fn, flags, (effect.f & INERT) !== 0, get_key);
 		}
 
 		if (fallback_fn !== null) {
