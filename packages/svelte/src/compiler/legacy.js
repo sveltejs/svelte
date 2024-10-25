@@ -204,7 +204,9 @@ export function convert(source, ast) {
 					ignores: extract_svelte_ignore(node.start, node.data, false)
 				};
 			},
-			ComplexSelector(node) {
+			ComplexSelector(node, { next }) {
+				next(); // delete inner metadata/parent properties
+
 				const children = [];
 
 				for (const child of node.children) {
