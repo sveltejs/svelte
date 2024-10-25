@@ -39,7 +39,7 @@ function get_code_frame(source, line, column) {
  * @typedef {{
  * 	code: string;
  * 	message: string;
- *  stack: string;
+ *  stack?: string;
  * 	filename?: string;
  * 	start?: Location;
  * 	end?: Location;
