@@ -35,7 +35,7 @@ import { source, mutable_source, internal_set } from '../../reactivity/sources.j
 import { array_from, is_array } from '../../../shared/utils.js';
 import { INERT } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
-import { active_effect } from '../../runtime.js';
+import { active_effect, active_reaction } from '../../runtime.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -204,7 +204,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 
 		if (!hydrating) {
-			reconcile(array, state, anchor, render_fn, flags, get_key);
+			var is_inert = /** @type {Effect} */ (active_reaction.f & INERT) !== 0;
+			reconcile(array, state, anchor, render_fn, flags, is_inert, get_key);
 		}
 
 		if (fallback_fn !== null) {
@@ -248,10 +249,11 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
  * @param {Element | Comment | Text} anchor
  * @param {(anchor: Node, item: MaybeSource<V>, index: number | Source<number>) => void} render_fn
  * @param {number} flags
+ * @param {boolean} is_inert
  * @param {(value: V, index: number) => any} get_key
  * @returns {void}
  */
-function reconcile(array, state, anchor, render_fn, flags, get_key) {
+function reconcile(array, state, anchor, render_fn, flags, is_inert, get_key) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 
@@ -390,9 +392,9 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			stashed = [];
 
 			while (current !== null && current.k !== key) {
-				// If the item has an effect that is already inert, skip over adding it
-				// to our seen Set as the item is already being handled
-				if ((current.e.f & INERT) === 0) {
+				// If the each block isn't inert and an item has an effect that is already inert,
+				// skip over adding it to our seen Set as the item is already being handled
+				if (is_inert || (current.e.f & INERT) === 0) {
 					(seen ??= new Set()).add(current);
 				}
 				stashed.push(current);
@@ -415,8 +417,9 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		var to_destroy = seen === undefined ? [] : array_from(seen);
 
 		while (current !== null) {
-			// Inert effects are currently outroing and will be removed once the transition is finished
-			if ((current.e.f & INERT) === 0) {
+			// If the each block isn't inert, then  item effects that are inert means they are currently
+			// already outroing and will be removed once the transition is finished
+			if (is_inert || (current.e.f & INERT) === 0) {
 				to_destroy.push(current);
 			}
 			current = current.next;
