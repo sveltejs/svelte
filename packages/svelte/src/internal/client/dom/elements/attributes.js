@@ -170,6 +170,7 @@ export function set_attributes(
 	var current = prev || {};
 	var is_option_element = element.tagName === 'OPTION';
 
+
 	for (var key in prev) {
 		if (!(key in next)) {
 			next[key] = null;
