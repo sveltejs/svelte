@@ -39,6 +39,7 @@ function get_code_frame(source, line, column) {
  * @typedef {{
  * 	code: string;
  * 	message: string;
+ *  stack?: string;
  * 	filename?: string;
  * 	start?: Location;
  * 	end?: Location;
@@ -50,6 +51,8 @@ function get_code_frame(source, line, column) {
 /** @implements {ICompileDiagnostic} */
 export class CompileDiagnostic {
 	name = 'CompileDiagnostic';
+	// adding an empty stack so that vite will show the file and frame during build
+	stack = '';
 
 	/**
 	 * @param {string} code
