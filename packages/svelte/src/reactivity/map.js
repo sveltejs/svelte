@@ -1,9 +1,8 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
-import { source, set } from '../internal/client/reactivity/sources.js';
+import { set, source } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
-import { DERIVED } from '../internal/client/constants.js';
 
 /**
  * @template K

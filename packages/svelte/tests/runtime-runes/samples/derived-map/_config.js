@@ -3,10 +3,6 @@ import { test } from '../../test';
 
 export default test({
 	html: `Loading`,
-	compileOptions: {
-		// dev: true
-	},
-
 	async test({ assert, target }) {
 		await Promise.resolve();
 		flushSync();
