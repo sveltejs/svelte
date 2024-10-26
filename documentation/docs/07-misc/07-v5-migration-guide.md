@@ -660,6 +660,16 @@ This is no longer true in Svelte 5:
 ```
 While migrating, keep in mind that your user-defined component's name should be capitalized (`Thing`) to distinguish it from a normal HTML element and avoid incorrect types.
 
+### Dot notation indicates a component
+
+In Svelte 4, `<foo.bar>` would create an element with a tag name of `"foo.bar"`. In Svelte 5, `foo.bar` is treated as a component instead. This is particularly useful inside `each` blocks:
+
+```svelte
+{#each items as item}
+	<item.component {...item.props} />
+{/each}
+```
+
 ## Whitespace handling changed
 
 Previously, Svelte employed a very complicated algorithm to determine if whitespace should be kept or not. Svelte 5 simplifies this which makes it easier to reason about as a developer. The rules are:
@@ -692,16 +702,6 @@ The `legacy` compiler option, which generated bulkier but IE-friendly code, no l
 ## The `children` prop is reserved
 
 Content inside component tags becomes a snippet prop called `children`. You cannot have a separate prop by that name.
-
-## Dot notation indicates a component
-
-In Svelte 4, `<foo.bar>` would create an element with a tag name of `"foo.bar"`. In Svelte 5, `foo.bar` is treated as a component instead. This is particularly useful inside `each` blocks:
-
-```svelte
-{#each items as item}
-	<item.component {...item.props} />
-{/each}
-```
 
 ## Breaking changes in runes mode
 
