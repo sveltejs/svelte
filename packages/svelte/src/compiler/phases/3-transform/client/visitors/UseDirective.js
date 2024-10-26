@@ -11,7 +11,10 @@ import { parse_directive_name } from './shared/utils.js';
 export function UseDirective(node, context) {
 	let action = /** @type {Expression} */ (context.visit(parse_directive_name(node.name)));
 	if (action.type === 'MemberExpression') {
-		action = b.maybe_call(b.member(action, 'bind', false, true), /** @type {Expression} */ (action.object));
+		action = b.maybe_call(
+			b.member(action, 'bind', false, true),
+			/** @type {Expression} */ (action.object)
+		);
 	}
 
 	const get_action = b.arrow([], action);
