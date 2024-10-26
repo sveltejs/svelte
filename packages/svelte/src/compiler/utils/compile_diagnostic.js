@@ -51,6 +51,7 @@ function get_code_frame(source, line, column) {
 /** @implements {ICompileDiagnostic} */
 export class CompileDiagnostic {
 	name = 'CompileDiagnostic';
+	// adding an empty stack so that vite will show the file and frame during build
 	stack = '';
 
 	/**
