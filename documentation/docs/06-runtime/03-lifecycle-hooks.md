@@ -67,9 +67,9 @@ While there's no "after update" hook, you can use `tick` to ensure that the UI i
 
 ```svelte
 <script>
-	import { beforeUpdate, tick } from 'svelte';
+	import { tick } from 'svelte';
 
-	beforeUpdate(async () => {
+	$effect.pre(async () => {
 		console.log('the component is about to update');
 		await tick();
 		console.log('the component just updated');
