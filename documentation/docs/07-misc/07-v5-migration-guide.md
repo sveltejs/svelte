@@ -319,9 +319,9 @@ When spreading props, local event handlers must go _after_ the spread, or they r
 > - call said dispatch function with a string and possibly a payload
 > - retrieve said payload on the other end through a `.details` property, because the event itself was always a `CustomEvent`
 >
-> It was always possible to use component callback props, but because you had to listen to dom events using `on:`, it made sense to use `createEventDispatcher` for component events due to syntactical consistency. Now that we have event attributes (`onclick`), it's the other way around: Callback props are now the more sensible thing to do.
+> It was always possible to use component callback props, but because you had to listen to DOM events using `on:`, it made sense to use `createEventDispatcher` for component events due to syntactical consistency. Now that we have event attributes (`onclick`), it's the other way around: Callback props are now the more sensible thing to do.
 >
-> The removal of event modifiers is arguably one of the changes that seems like a step back for those who've liked the shorthand syntax of event modifiers. Given that they are not used that frequently, we traded a smaller surface area for more explicitness. Modifiers also were inconsistent, because most of them were only useable on Dom elements.
+> The removal of event modifiers is arguably one of the changes that seems like a step back for those who've liked the shorthand syntax of event modifiers. Given that they are not used that frequently, we traded a smaller surface area for more explicitness. Modifiers also were inconsistent, because most of them were only useable on DOM elements.
 >
 > Multiple listeners for the same event are also no longer possible, but it was something of an anti-pattern anyway, since it impedes readability: if there are many attributes, it becomes harder to spot that there are two handlers unless they are right next to each other. It also implies that the two handlers are independent, when in fact something like `event.stopImmediatePropagation()` inside `one` would prevent `two` from being called.
 >
@@ -441,7 +441,7 @@ We thought the same, which is why we provide a migration script to do most of th
 
 - bump core dependencies in your `package.json`
 - migrate to runes (`let` -> `$state` etc)
-- migrate to event attributes for Dom elements (`on:click` -> `onclick`)
+- migrate to event attributes for DOM elements (`on:click` -> `onclick`)
 - migrate slot creations to render tags (`<slot />` -> `{@render children()}`)
 - migrate slot usages to snippets (`<div slot="x">...</div>` -> `{#snippet x()}<div>...</div>{/snippet}`)
 - migrate obvious component creations (`new Component(...)` -> `mount(Component, ...)`)
