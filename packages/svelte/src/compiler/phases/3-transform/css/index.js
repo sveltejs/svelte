@@ -162,10 +162,13 @@ const visitors = {
 		// Only add comments if we're not inside a complex selector that itself is unused
 		if (!path.find((n) => n.type === 'ComplexSelector' && !n.metadata.used)) {
 			let pruning = false;
-			let last = node.children[0].start;
 
-			for (let i = 0; i < node.children.length; i += 1) {
-				const selector = node.children[i];
+			const children = node.children;
+
+			let last = children.start;
+
+			for (let i = 0; i < children.length; i += 1) {
+				const selector = children[i];
 
 				if (selector.metadata.used === pruning) {
 					if (pruning) {
@@ -177,7 +180,10 @@ const visitors = {
 						if (i === 0) {
 							state.code.prependRight(selector.start, '/* (unused) ');
 						} else {
-							state.code.overwrite(last, selector.start, ' /* (unused) ');
+							// If this is not the last selector add a separator
+							const separator = i !== children.length - 1 ? ',' : '';
+
+							state.code.overwrite(last, selector.start, `${separator} /* (unused) `);
 						}
 					}
 
