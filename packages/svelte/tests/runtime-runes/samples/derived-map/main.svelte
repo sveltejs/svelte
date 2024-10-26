@@ -24,6 +24,10 @@
 	}
 
 	const value = $derived(get_async(1));
+	const value2 = $derived(get_async(1));
+	// both values are read before the set 
+	value;
+	value2;
 </script>
 
 {#if value instanceof Promise}
