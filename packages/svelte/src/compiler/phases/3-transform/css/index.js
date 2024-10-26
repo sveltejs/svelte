@@ -165,7 +165,7 @@ const visitors = {
 
 			const children = node.children;
 
-			let last = children.start;
+			let last = children[0].start;
 
 			for (let i = 0; i < children.length; i += 1) {
 				const selector = children[i];
