@@ -9,26 +9,19 @@ import { parse_directive_name } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function UseDirective(node, context) {
-	const params = [b.id('$$node')];
-
-	if (node.expression) {
-		params.push(b.id('$$action_arg'));
+	let action = /** @type {Expression} */ (context.visit(parse_directive_name(node.name)));
+	if (action.type === 'MemberExpression') {
+		action = b.maybe_call(b.member(action, 'bind', false, true), /** @type {Expression} */ (action.object));
 	}
 
-	/** @type {Expression[]} */
-	const args = [
-		context.state.node,
-		b.arrow(
-			params,
-			b.call(/** @type {Expression} */ (context.visit(parse_directive_name(node.name))), ...params)
-		)
-	];
-
-	if (node.expression) {
-		args.push(b.thunk(/** @type {Expression} */ (context.visit(node.expression))));
-	}
+	const get_action = b.arrow([], action);
+	const get_value = node.expression
+		? b.thunk(/** @type {Expression} */ (context.visit(node.expression)))
+		: undefined;
 
 	// actions need to run after attribute updates in order with bindings/events
-	context.state.after_update.push(b.stmt(b.call('$.action', ...args)));
+	context.state.after_update.push(
+		b.stmt(b.call('$.action', context.state.node, get_action, get_value))
+	);
 	context.next();
 }

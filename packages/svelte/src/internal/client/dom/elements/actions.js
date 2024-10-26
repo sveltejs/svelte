@@ -6,12 +6,16 @@ import { deep_read_state, untrack } from '../../runtime.js';
 /**
  * @template P
  * @param {Element} dom
- * @param {(dom: Element, value?: P) => ActionPayload<P>} action
+ * @param {() => (((dom: Element, value?: P) => ActionPayload<P>) | null | undefined)} get_action
  * @param {() => P} [get_value]
  * @returns {void}
  */
-export function action(dom, action, get_value) {
+export function action(dom, get_action, get_value) {
 	effect(() => {
+		const action = get_action();
+		if (action == null) {
+			return;
+		}
 		var payload = untrack(() => action(dom, get_value?.()) || {});
 
 		if (get_value && payload?.update) {
