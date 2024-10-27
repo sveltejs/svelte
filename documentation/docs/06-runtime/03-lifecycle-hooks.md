@@ -69,10 +69,11 @@ While there's no "after update" hook, you can use `tick` to ensure that the UI i
 <script>
 	import { tick } from 'svelte';
 
-	$effect.pre(async () => {
+	$effect.pre(() => {
 		console.log('the component is about to update');
-		await tick();
-		console.log('the component just updated');
+		tick().then(
+				console.log('the component just updated');
+		);
 	});
 </script>
 ```
