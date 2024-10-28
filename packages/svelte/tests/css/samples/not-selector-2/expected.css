@@ -1,0 +1,4 @@
+
+	.svelte-xyz:not(span:where(.svelte-xyz)) {
+		background-color: blue;
+	}

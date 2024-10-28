@@ -7,12 +7,13 @@ import { get_attribute_chunks, is_text_attribute } from '../../../utils/ast.js';
 
 /**
  * @typedef {{
- *   stylesheet: Compiler.Css.StyleSheet;
+ *   not_selector_collector: NotSelectorCollector;
  *   element: Compiler.AST.RegularElement | Compiler.AST.SvelteElement;
  *   from_render_tag: boolean;
  * }} State
  */
 /** @typedef {NODE_PROBABLY_EXISTS | NODE_DEFINITELY_EXISTS} NodeExistsValue */
+/** @typedef {Map<Css.RelativeSelector, Array<AST.RegularElement | AST.SvelteElement | AST.RenderTag>>} NotSelectorCollector */
 
 const NODE_PROBABLY_EXISTS = 0;
 const NODE_DEFINITELY_EXISTS = 1;
@@ -55,15 +56,16 @@ const nesting_selector = {
  *
  * @param {Compiler.Css.StyleSheet} stylesheet
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag} element
+ * @param {NotSelectorCollector} not_selector_collector
  */
-export function prune(stylesheet, element) {
+export function prune(stylesheet, element, not_selector_collector) {
 	if (element.type === 'RenderTag') {
 		const parent = get_element_parent(element);
 		if (!parent) return;
 
-		walk(stylesheet, { stylesheet, element: parent, from_render_tag: true }, visitors);
+		walk(stylesheet, { element: parent, from_render_tag: true, not_selector_collector }, visitors);
 	} else {
-		walk(stylesheet, { stylesheet, element, from_render_tag: false }, visitors);
+		walk(stylesheet, { element, from_render_tag: false, not_selector_collector }, visitors);
 	}
 }
 
@@ -127,7 +129,7 @@ const visitors = {
 							selectors_to_check,
 							/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
 							element,
-							context.state.stylesheet
+							context.state.not_selector_collector
 						)
 					) {
 						mark(inner, element);
@@ -143,7 +145,7 @@ const visitors = {
 				selectors,
 				/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
 				context.state.element,
-				context.state.stylesheet
+				context.state.not_selector_collector
 			)
 		) {
 			mark(inner, context.state.element);
@@ -188,10 +190,10 @@ function truncate(node) {
  * @param {Compiler.Css.RelativeSelector[]} relative_selectors
  * @param {Compiler.Css.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
- * @param {Compiler.Css.StyleSheet} stylesheet
+ * @param {NotSelectorCollector} not_selector_collector
  * @returns {boolean}
  */
-function apply_selector(relative_selectors, rule, element, stylesheet) {
+function apply_selector(relative_selectors, rule, element, not_selector_collector) {
 	const parent_selectors = relative_selectors.slice();
 	const relative_selector = parent_selectors.pop();
 
@@ -201,7 +203,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 		relative_selector,
 		rule,
 		element,
-		stylesheet
+		not_selector_collector
 	);
 
 	if (!possible_match) {
@@ -215,7 +217,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
 			parent_selectors,
 			rule,
 			element,
-			stylesheet
+			not_selector_collector
 		);
 	}
 
@@ -235,7 +237,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet) {
  * @param {Compiler.Css.RelativeSelector[]} parent_selectors
  * @param {Compiler.Css.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
- * @param {Compiler.Css.StyleSheet} stylesheet
+ * @param {NotSelectorCollector} not_selector_collector
  * @returns {boolean}
  */
 function apply_combinator(
@@ -244,7 +246,7 @@ function apply_combinator(
 	parent_selectors,
 	rule,
 	element,
-	stylesheet
+	not_selector_collector
 ) {
 	const name = combinator.name;
 
@@ -269,7 +271,7 @@ function apply_combinator(
 				}
 
 				if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
-					if (apply_selector(parent_selectors, rule, parent, stylesheet)) {
+					if (apply_selector(parent_selectors, rule, parent, not_selector_collector)) {
 						// TODO the `name === ' '` causes false positives, but removing it causes false negatives...
 						if (name === ' ' || crossed_component_boundary) {
 							mark(parent_selectors[parent_selectors.length - 1], parent);
@@ -300,7 +302,9 @@ function apply_combinator(
 						mark(relative_selector, element);
 						sibling_matched = true;
 					}
-				} else if (apply_selector(parent_selectors, rule, possible_sibling, stylesheet)) {
+				} else if (
+					apply_selector(parent_selectors, rule, possible_sibling, not_selector_collector)
+				) {
 					mark(relative_selector, element);
 					sibling_matched = true;
 				}
@@ -381,10 +385,15 @@ const regex_backslash_and_following_character = /\\(.)/g;
  * @param {Compiler.Css.RelativeSelector} relative_selector
  * @param {Compiler.Css.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
- * @param {Compiler.Css.StyleSheet} stylesheet
- * @returns {boolean  }
+ * @param {NotSelectorCollector} not_selector_collector
+ * @returns {boolean}
  */
-function relative_selector_might_apply_to_node(relative_selector, rule, element, stylesheet) {
+function relative_selector_might_apply_to_node(
+	relative_selector,
+	rule,
+	element,
+	not_selector_collector
+) {
 	// Sort :has(...) selectors in one bucket and everything else into another
 	const has_selectors = [];
 	const other_selectors = [];
@@ -458,7 +467,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 					if (
 						selectors.length === 0 /* is :global(...) */ ||
 						(element.metadata.scoped && selector_matched) ||
-						apply_selector(selectors, rule, element, stylesheet)
+						apply_selector(selectors, rule, element, not_selector_collector)
 					) {
 						complex_selector.metadata.used = true;
 						selector_matched = matched = true;
@@ -504,7 +513,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				) {
 					const args = selector.args;
 					const complex_selector = args.children[0];
-					return apply_selector(complex_selector.children, rule, element, stylesheet);
+					return apply_selector(complex_selector.children, rule, element, not_selector_collector);
 				}
 
 				// We came across a :global, everything beyond it is global and therefore a potential match
@@ -517,7 +526,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 						const relative = truncate(complex_selector);
 						if (
 							relative.length === 0 /* is :global(...) */ ||
-							apply_selector(relative, rule, element, stylesheet)
+							apply_selector(relative, rule, element, not_selector_collector)
 						) {
 							complex_selector.metadata.used = true;
 							matched = true;
@@ -549,6 +558,14 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 							selector.args.children[0].children.forEach((selector) => {
 								selector.metadata.scoped = true;
 							});
+						}
+
+						if (name === 'not') {
+							if (!not_selector_collector.has(relative_selector)) {
+								not_selector_collector.set(relative_selector, [element]);
+							} else {
+								not_selector_collector.get(relative_selector)?.push(element);
+							}
 						}
 
 						return false;
@@ -618,7 +635,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				const parent = /** @type {Compiler.Css.Rule} */ (rule.metadata.parent_rule);
 
 				for (const complex_selector of parent.prelude.children) {
-					if (apply_selector(truncate(complex_selector), parent, element, stylesheet)) {
+					if (apply_selector(truncate(complex_selector), parent, element, not_selector_collector)) {
 						complex_selector.metadata.used = true;
 						matched = true;
 					}

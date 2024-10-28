@@ -1,5 +1,5 @@
 /** @import { Expression, Node, Program } from 'estree' */
-/** @import { Binding, AST, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { Binding, AST, Css, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import { walk } from 'zimmerframe';
@@ -678,9 +678,22 @@ export function analyze_component(root, source, options) {
 	if (analysis.css.ast) {
 		analyze_css(analysis.css.ast, analysis);
 
+		/** @type {Map<Css.RelativeSelector, Array<AST.RegularElement | AST.SvelteElement | AST.RenderTag>>} */
+		const not_selector_collector = new Map();
 		// mark nodes as scoped/unused/empty etc
 		for (const element of analysis.elements) {
-			prune(analysis.css.ast, element);
+			prune(analysis.css.ast, element, not_selector_collector);
+		}
+		// we keep a list of elements that is not matched by :not
+		// if eventually the inner selector of :not() matched any elements
+		// then the :not() is not removed, and we need to make all the elements
+		// that can be "not" matched by the :not be scoped
+		for (const [not_selector, elements] of not_selector_collector) {
+			if (not_selector.metadata.scoped) {
+				for (const element of elements) {
+					element.metadata.scoped = true;
+				}
+			}
 		}
 
 		const { comment } = analysis.css.ast.content;
