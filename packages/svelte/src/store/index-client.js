@@ -112,9 +112,9 @@ export function fromStore(store) {
 	let unsubscribe = noop;
 
 	function current() {
-		get_source(version);
-
 		if (effect_tracking()) {
+			get_source(version);
+
 			render_effect(() => {
 				if (subscribers === 0) {
 					let ran = false;
