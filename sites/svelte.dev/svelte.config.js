@@ -7,7 +7,7 @@ export default {
 		adapter: adapter({ runtime: 'edge' }),
 		prerender: {
 			concurrency: 10,
-			origin: 'https://svelte.dev'
+			origin: 'https://v4.svelte.dev'
 		}
 	},
 
