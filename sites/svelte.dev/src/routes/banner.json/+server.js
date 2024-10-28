@@ -9,29 +9,15 @@ export const GET = async () => {
 	return json(
 		defineBanner([
 			{
-				id: 'advent2023',
+				id: 'deprecated',
 				start: new Date('1 Dec, 2023 00:00:00 UTC'),
-				end: new Date('24 Dec, 2023 23:59:59 UTC'),
+				end: new Date('24 Dec, 2050 23:59:59 UTC'),
 				arrow: true,
 				content: {
-					lg: 'Advent of Svelte 2023 is here!',
-					sm: 'Advent of Svelte'
+					lg: 'This documentation is for Svelte 3 and 4. Go to the latest docs.',
+					sm: 'These docs are for Svelte 3/4'
 				},
-				href: 'https://advent.sveltesociety.dev/'
-			},
-
-			// This one skips the blog post and just changes the link
-			{
-				id: 'advent2023-finished',
-				start: new Date('25 Dec, 2023 00:00:00 UTC'),
-				end: new Date('1 Jan, 2024 00:00:00 UTC'),
-				arrow: true,
-				content: {
-					lg: 'Advent of Svelte 2023 is over. See you next year!',
-					sm: 'Advent of Svelte 2023 is over!'
-				},
-				href: 'https://advent.sveltesociety.dev/'
-				// scope: ['svelte.dev, kit.svelte.dev'] // Dont show on learn.svelte.dev by not adding it to the array
+				href: 'https://svelte.dev/'
 			}
 		])
 	);
