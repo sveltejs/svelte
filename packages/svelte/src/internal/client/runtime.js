@@ -832,8 +832,6 @@ export function invalidate_inner_signals(fn) {
 
 /**
  * Use `untrack` to prevent something from being treated as an `$effect`/`$derived` dependency.
- *
- * https://svelte-5-preview.vercel.app/docs/functions#untrack
  * @template T
  * @param {() => T} fn
  * @returns {T}
