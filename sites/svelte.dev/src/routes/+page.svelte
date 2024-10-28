@@ -1,6 +1,5 @@
 <script>
 	import { Blurb, Footer, TrySection } from '@sveltejs/site-kit/home';
-	import Demo from './_components/Demo.svelte';
 	import Hero from './_components/Hero.svelte';
 	import Supporters from './_components/Supporters/index.svelte';
 	import WhosUsingSvelte from './_components/WhosUsingSvelte/index.svelte';
@@ -46,8 +45,6 @@
 
 <TrySection />
 
-<Demo />
-
 <WhosUsingSvelte />
 
 <Supporters />
@@ -65,11 +62,11 @@
 			},
 			{
 				title: 'examples',
-				href: '/examples'
+				href: 'https://svelte.dev/playground'
 			},
 			{
 				title: 'blog',
-				href: '/blog'
+				href: 'https://svelte.dev/blog'
 			}
 		],
 		connect: [

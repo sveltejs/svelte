@@ -2,7 +2,7 @@
 title: Congratulations!
 ---
 
-You've now finished the Svelte tutorial and are ready to start building apps. You can refer back to individual chapters at any time (click the title above to reveal a dropdown) or continue your learning via the [API reference](/docs), [Examples](/examples) and [Blog](/blog). If you're a Twitter user, you can get updates via [@sveltejs](https://twitter.com/sveltejs).
+You've now finished the Svelte tutorial and are ready to start building apps. You can refer back to individual chapters at any time (click the title above to reveal a dropdown) or continue your learning via the [API reference](/docs), [Examples](https://svelte.dev/playground) and [Blog](https://svelte.dev/blog). If you're a Twitter user, you can get updates via [@sveltejs](https://twitter.com/sveltejs).
 
 To get set up in your local development environment, check out [the quickstart guide](/docs/introduction).
 
