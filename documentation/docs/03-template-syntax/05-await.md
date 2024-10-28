@@ -76,3 +76,4 @@ Similarly, if you only want to show the error state, you can omit the `then` blo
 >	<Component.default />
 > {/await}
 > ```
+
