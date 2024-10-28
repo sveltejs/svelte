@@ -65,11 +65,11 @@
 			},
 			{
 				title: 'examples',
-				href: '/examples'
+				href: 'https://svelte.dev/playground'
 			},
 			{
 				title: 'blog',
-				href: '/blog'
+				href: 'https://svelte.dev/blog'
 			}
 		],
 		connect: [

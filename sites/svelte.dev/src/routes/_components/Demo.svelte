@@ -12,7 +12,7 @@
 			id: 'nested-components',
 			title: 'Scoped CSS',
 			description:
-				'CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="/blog/svelte-css-in-js">use your favourite CSS-in-JS library</a >.'
+				'CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="https://svelte.dev/blog/svelte-css-in-js">use your favourite CSS-in-JS library</a >.'
 		},
 		{
 			id: 'reactive-assignments',
@@ -49,7 +49,7 @@
 				{/each}
 			</div>
 
-			<a href="/examples">more <span class="large-show">&nbsp;examples</span> &rarr;</a>
+			<a href="https://svelte.dev/playground">more <span class="large-show">&nbsp;examples</span> &rarr;</a>
 		</div>
 
 		{#if selected}

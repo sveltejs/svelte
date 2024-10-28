@@ -11,7 +11,7 @@
 
 	$: {
 		if (repl) {
-			fetch(`/examples/api/${id}.json`)
+			fetch(`https://svelte.dev/playground/api/${id}.json`)
 				.then((r) => r.json())
 				.then((data) => process_example(data.files))
 				.then((files) => {
