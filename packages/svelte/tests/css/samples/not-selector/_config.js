@@ -20,42 +20,28 @@ export default test({
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector ":not(.foo):not(.unused)"',
 			start: {
-				line: 18,
+				line: 12,
 				column: 1,
-				character: 221
+				character: 124
 			},
 			end: {
-				line: 18,
+				line: 12,
 				column: 24,
-				character: 244
+				character: 147
 			}
 		},
 		{
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector "p :not(.foo)"',
 			start: {
-				line: 25,
+				line: 19,
 				column: 1,
-				character: 300
+				character: 203
 			},
 			end: {
-				line: 25,
+				line: 19,
 				column: 13,
-				character: 312
-			}
-		},
-		{
-			code: 'css_unused_selector',
-			message: 'Unused CSS selector ":global(.x) :not(.unused)"',
-			start: {
-				line: 34,
-				column: 1,
-				character: 469
-			},
-			end: {
-				line: 34,
-				column: 26,
-				character: 494
+				character: 215
 			}
 		}
 	]

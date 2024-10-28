@@ -515,12 +515,27 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 
 					for (const complex_selector of selector.args.children) {
 						const relative = truncate(complex_selector);
-						if (
-							relative.length === 0 /* is :global(...) */ ||
-							apply_selector(relative, rule, element, stylesheet)
-						) {
+						const is_global = relative.length === 0;
+
+						if (is_global || apply_selector(relative, rule, element, stylesheet)) {
 							complex_selector.metadata.used = true;
 							matched = true;
+						} else if (name === 'not') {
+							// For `:not(...)` we gotta do the inverse: If it did not match, mark the element and possibly
+							// everything above (if the selector is written is a such) as scoped (because they matched by not matching).
+							// The above if condition will ensure the selector itself will be marked as used if it doesn't match at least once,
+							// and therefore having actual usefulness in the CSS output.
+							element.metadata.scoped = true;
+
+							// bar:not(foo bar) means that foo is an ancestor of bar
+							if (complex_selector.children.length > 1) {
+								/** @type {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null} */
+								let el = get_element_parent(element);
+								while (el) {
+									el.metadata.scoped = true;
+									el = get_element_parent(el);
+								}
+							}
 						} else if (complex_selector.children.length > 1 && (name == 'is' || name == 'where')) {
 							// foo :is(bar baz) can also mean that bar is an ancestor of foo, and baz a descendant.
 							// We can't fully check if that actually matches with our current algorithm, so we just assume it does.
