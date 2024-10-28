@@ -2,7 +2,7 @@
 	import '@sveltejs/site-kit/styles/index.css';
 
 	import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
-	import { inject } from '@vercel/analytics'
+	import { inject } from '@vercel/analytics';
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { Icon, Shell, Banners } from '@sveltejs/site-kit/components';
@@ -58,9 +58,7 @@
 			</svelte:fragment>
 
 			<svelte:fragment slot="external-links">
-				<a href="https://learn.svelte.dev/">Tutorial</a>
-
-				<a href="https://kit.svelte.dev">SvelteKit</a>
+				<a href="https://svelte.dev">Current version</a>
 
 				<Separator />
 
