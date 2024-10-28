@@ -4,7 +4,7 @@ title: Basics
 
 Welcome to the Svelte tutorial. This will teach you everything you need to know to build fast, small web applications easily.
 
-You can also consult the [API docs](/docs) and the [examples](/examples), or — if you're impatient to start hacking on your machine locally — the [60-second quickstart](/docs/introduction).
+You can also consult the [API docs](/docs) and the [examples](https://svelte.dev/playground), or — if you're impatient to start hacking on your machine locally — the [60-second quickstart](/docs/introduction).
 
 ## What is Svelte?
 
