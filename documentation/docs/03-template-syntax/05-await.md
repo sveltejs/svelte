@@ -68,3 +68,12 @@ Similarly, if you only want to show the error state, you can omit the `then` blo
 	<p>The error is {error}</p>
 {/await}
 ```
+Also you can render dynamic components with the help of import() function.
+
+```svelte
+{#await import('./Component.svelte') then Component}
+  <Component.default/>
+{/await}
+```
+
+> [!NOTE] You need to add `.default` since components export a default only.
