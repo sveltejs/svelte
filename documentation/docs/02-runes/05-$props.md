@@ -44,8 +44,6 @@ Destructuring allows us to declare fallback values, which are used if the parent
 let { adjective = 'happy' } = $props();
 ```
 
-> [!NOTE] Fallback values are not turned into reactive state proxies.
-
 ## Renaming props
 
 We can also use the destructuring assignment to rename props, which is necessary if they're invalid identifiers, or a JavaScript keyword like `super`:
@@ -91,6 +89,54 @@ References to a prop inside a component update when the prop itself updates — 
 
 <button onclick={() => (count += 1)}>
 	clicks (child): {count}
+</button>
+```
+
+Prop variables not automatically deeply reactive. If a prop value is an object, setting a property of that object will not cause the component to update ([demo](/playground/untitled#H4sIAAAAAAAAE3VPS07DMBC9yshCaiuqBLYhjoQ4Q1eEReJOVIMztuJJBbJ8d-IkEqXQ5bx53yCo6VEU4kCs2eBR7EWnDXpRvAbBXy79EjDhK_PZucyf0XDC2sbjf7iyxEg82YjSq0E7rmqqWffODgwvJ22O0A22h02Wz9cq3TzVVOY_CioXrm3fUbEMQdmRuICHGCGvpiDGTxYFDyPG_Y3Cl_6_K199bpQ2yBDWBhBBwp0brPPb3Z-u7chsCSwpo9WHDNsdyApCMslzODUeyAJ23WSUsMUymyfBvYTHmmKcI2e9LyBcUmKKWyKulr_Fb2Z_SHPIAQAA)):
+
+
+<!-- prettier-ignore -->
+```svelte
+/// file: Child.svelte
+<script>
+	let { object } = $props();
+</script>
+
+<button onclick={() => {
+	// has no effect
+	object.count += 1
+}}>
+	clicks: {object.count}
+</button>
+```
+
+However if the value passed in by the parent component is itself a deeply reactive state object, then it will be deeply reactive in the child too ([demo](/playground/untitled#H4sIAAAAAAAAE3WQwU7DMBBEf2VlITUVVQLXkERC_YaeCIfE2aoujm3FGwqy_O_YcSug0KNnx7Nv1jHVjchKtlMkSOLANmwvJFpWvjhGnybOohD0s_PZmNy-o6So9Z3F_3SuFaGiEMMqyydhqGlVS2I0eiLYHoQcYD_pEVZ5sbzOX1dPwRaMEgl0f0ROUMOdpY4wc1zPikp48OvgqorvXFWlRJe-eCiawED4QaykaUa_udHl5-rfba4mN_pETHcB9RHVTNrY7C9gPxNpBVpxKfhb7bI11A24GFIUcBJSAu9mi0AHhKUo9Cj1CUjDbIbQP1rTpjzN72t4bJX3C8kSa8vLCZLFR4q0-eogr_4LN7sC9foBAAA=)):
+
+
+<!-- prettier-ignore -->
+```svelte
+/// file: App.svelte
+<script>
+	import Child from './Child.svelte';
+
+	let object = $state({count: 0});
+</script>
+
+<Child {object} />
+```
+
+<!-- prettier-ignore -->
+```svelte
+/// file: Child.svelte
+<script>
+	let { object } = $props();
+</script>
+
+<button onclick={() => {
+	// will cause the count below to update
+	object.count += 1
+}}>
+	clicks: {object.count}
 </button>
 ```
 
