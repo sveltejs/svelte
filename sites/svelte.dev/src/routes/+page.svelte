@@ -1,6 +1,5 @@
 <script>
 	import { Blurb, Footer, TrySection } from '@sveltejs/site-kit/home';
-	import Demo from './_components/Demo.svelte';
 	import Hero from './_components/Hero.svelte';
 	import Supporters from './_components/Supporters/index.svelte';
 	import WhosUsingSvelte from './_components/WhosUsingSvelte/index.svelte';
@@ -45,8 +44,6 @@
 </Blurb>
 
 <TrySection />
-
-<Demo />
 
 <WhosUsingSvelte />
 
