@@ -1,6 +1,13 @@
 [![Cybernetically enhanced web apps: Svelte](https://sveltejs.github.io/assets/banner.png)](https://svelte.dev)
 
-[![license](https://img.shields.io/github/license/sveltejs/svelte?logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9Imx1Y2lkZSBsdWNpZGUtY29weXJpZ2h0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIvPjxwYXRoIGQ9Ik0xNC44MyAxNC44M2E0IDQgMCAxIDEgMC01LjY2Ii8+PC9zdmc+Cg==&style=for-the-badge)](LICENSE.md) [![Chat](https://img.shields.io/discord/457912077277855764?label=chat&logo=discord&style=for-the-badge)](https://svelte.dev/chat)
+<a href="LICENSE.md">
+    <img src="https://img.shields.io/github/license/sveltejs/svelte?logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9Imx1Y2lkZSBsdWNpZGUtY29weXJpZ2h0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIvPjxwYXRoIGQ9Ik0xNC44MyAxNC44M2E0IDQgMCAxIDEgMC01LjY2Ii8+PC9zdmc+Cg==&style=for-the-badge" alt="license" height="24">
+</a>
+
+<a href="https://svelte.dev/chat">
+    <img src="https://img.shields.io/discord/457912077277855764?label=chat&logo=discord&style=for-the-badge" alt="Chat" height="24">
+</a>
+
 
 ## What is Svelte?
 
