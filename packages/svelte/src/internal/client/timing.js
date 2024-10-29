@@ -1,9 +1,10 @@
 /** @import { Raf } from '#client' */
 import { noop } from '../shared/utils.js';
 
-import { BROWSER } from 'esm-env';
+import { BROWSER, NODE } from 'esm-env';
 
-const request_animation_frame = BROWSER ? requestAnimationFrame : noop;
+// we check both conditions here to allow running browser code in Node for testing
+const request_animation_frame = BROWSER && !NODE ? requestAnimationFrame : noop;
 
 const now = BROWSER ? () => performance.now() : () => Date.now();
 
