@@ -39,7 +39,7 @@ Await blocks allow you to branch on the three possible states of a [`Promise`](h
 
 > [!NOTE] During server-side rendering, only the pending branch will be rendered.
 >
-> If the provided expression is not a `Promise` only the `:then` branch will be rendered, including during server-side rendering.
+> If the provided expression is not a `Promise`, only the `:then` branch will be rendered, including during server-side rendering.
 
 The `catch` block can be omitted if you don't need to render anything when the promise rejects (or no error is possible).
 
