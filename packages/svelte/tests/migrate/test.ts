@@ -6,6 +6,7 @@ import { suite, type BaseTest } from '../suite.js';
 
 interface ParserTest extends BaseTest {
 	skip_filename?: boolean;
+	use_ts?: boolean;
 	logs?: any[];
 	errors?: any[];
 }
@@ -32,7 +33,8 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 	}
 
 	const actual = migrate(input, {
-		filename: config.skip_filename ? undefined : `output.svelte`
+		filename: config.skip_filename ? undefined : `output.svelte`,
+		use_ts: config.use_ts
 	}).code;
 
 	if (config.logs) {
