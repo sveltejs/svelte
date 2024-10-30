@@ -12,7 +12,7 @@
 
         constructor() {
             super();
-            this.attachShadow({ mode: 'open' });tracking
+            this.attachShadow({ mode: 'open' });
         }
 
 		render() {
