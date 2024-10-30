@@ -24,7 +24,6 @@
 </script>
 
 <script>
-	import "./Counter.svelte";
     let count = $state(0);
 </script>
 
