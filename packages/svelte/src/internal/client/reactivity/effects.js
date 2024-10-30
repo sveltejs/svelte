@@ -35,7 +35,8 @@ import {
 	INSPECT_EFFECT,
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
-	EFFECT_HAS_DERIVED
+	EFFECT_HAS_DERIVED,
+	ELEMENT_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
 import * as e from '../errors.js';
@@ -255,6 +256,14 @@ export function effect_root(fn) {
  */
 export function effect(fn) {
 	return create_effect(EFFECT, fn, false);
+}
+
+/**
+ * @param {() => void | (() => void)} fn
+ * @returns {Effect}
+ */
+export function element_effect(fn) {
+	return create_effect(EFFECT | ELEMENT_EFFECT, fn, false);
 }
 
 /**

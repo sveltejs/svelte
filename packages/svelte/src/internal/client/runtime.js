@@ -24,7 +24,8 @@ import {
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
-	DISCONNECTED
+	DISCONNECTED,
+	ELEMENT_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -611,6 +612,7 @@ function process_effects(effect, collected_effects) {
 		var flags = current_effect.f;
 		var is_branch = (flags & BRANCH_EFFECT) !== 0;
 		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
+		var sibling;
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
 			if ((flags & RENDER_EFFECT) !== 0) {
@@ -623,6 +625,18 @@ function process_effects(effect, collected_effects) {
 				var child = current_effect.first;
 
 				if (child !== null) {
+					// Before traversing children, ensure that any sibling element effects
+					// are collected before any effects in children to keep the template
+					// effect ordering consistent
+					sibling = current_effect.next;
+
+					while (sibling !== null) {
+						if ((sibling.f & ELEMENT_EFFECT) !== 0) {
+							effects.push(sibling);
+						}
+						sibling = sibling.next;
+					}
+
 					current_effect = child;
 					continue;
 				}
@@ -631,7 +645,7 @@ function process_effects(effect, collected_effects) {
 			}
 		}
 
-		var sibling = current_effect.next;
+		sibling = current_effect.next;
 
 		if (sibling === null) {
 			let parent = current_effect.parent;

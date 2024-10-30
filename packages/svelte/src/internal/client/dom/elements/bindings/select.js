@@ -1,4 +1,4 @@
-import { effect } from '../../../reactivity/effects.js';
+import { element_effect } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import { untrack } from '../../../runtime.js';
 import { is } from '../../../proxy.js';
@@ -40,7 +40,7 @@ export function select_option(select, value, mounting) {
  */
 export function init_select(select, get_value) {
 	let mounting = true;
-	effect(() => {
+	element_effect(() => {
 		if (get_value) {
 			select_option(select, untrack(get_value), mounting);
 		}
@@ -96,7 +96,7 @@ export function bind_select_value(select, get, set = get) {
 	});
 
 	// Needs to be an effect, not a render_effect, so that in case of each loops the logic runs after the each block has updated
-	effect(() => {
+	element_effect(() => {
 		var value = get();
 		select_option(select, value, mounting);
 

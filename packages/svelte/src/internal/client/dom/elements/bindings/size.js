@@ -1,4 +1,4 @@
-import { effect, teardown } from '../../../reactivity/effects.js';
+import { element_effect, teardown } from '../../../reactivity/effects.js';
 import { untrack } from '../../../runtime.js';
 
 /**
@@ -100,7 +100,7 @@ export function bind_resize_observer(element, type, set) {
 export function bind_element_size(element, type, set) {
 	var unsub = resize_observer_border_box.observe(element, () => set(element[type]));
 
-	effect(() => {
+	element_effect(() => {
 		// The update could contain reads which should be ignored
 		untrack(() => set(element[type]));
 		return unsub;

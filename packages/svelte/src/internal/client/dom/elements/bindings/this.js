@@ -1,5 +1,5 @@
 import { STATE_SYMBOL } from '../../../constants.js';
-import { effect, render_effect } from '../../../reactivity/effects.js';
+import { element_effect, render_effect } from '../../../reactivity/effects.js';
 import { untrack } from '../../../runtime.js';
 import { queue_micro_task } from '../../task.js';
 
@@ -23,7 +23,7 @@ function is_bound_this(bound_value, element_or_component) {
  * @returns {void}
  */
 export function bind_this(element_or_component = {}, update, get_value, get_parts) {
-	effect(() => {
+	element_effect(() => {
 		/** @type {unknown[]} */
 		var old_parts;
 

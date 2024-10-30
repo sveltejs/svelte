@@ -1,5 +1,5 @@
 /** @import { ActionPayload } from '#client' */
-import { effect, render_effect } from '../../reactivity/effects.js';
+import { element_effect, render_effect } from '../../reactivity/effects.js';
 import { safe_not_equal } from '../../reactivity/equality.js';
 import { deep_read_state, untrack } from '../../runtime.js';
 
@@ -11,7 +11,7 @@ import { deep_read_state, untrack } from '../../runtime.js';
  * @returns {void}
  */
 export function action(dom, action, get_value) {
-	effect(() => {
+	element_effect(() => {
 		var payload = untrack(() => action(dom, get_value?.()) || {});
 
 		if (get_value && payload?.update) {
