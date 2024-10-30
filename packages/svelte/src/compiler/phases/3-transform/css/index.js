@@ -208,8 +208,8 @@ const visitors = {
 					if (pruning) {
 						let i = selector.start;
 						while (state.code.original[i] !== ',') i--;
-						// If this is not the last selector keep the separator
-						if (i !== children.length - 1) i++;
+						// If this is an in-between pruned selector keep the last separator
+						if (prune_start !== children[0].start && i !== children.length - 1) i--;
 
 						if (state.minify) {
 							state.code.remove(prune_start, i + 1);
