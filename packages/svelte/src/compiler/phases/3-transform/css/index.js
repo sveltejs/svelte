@@ -206,15 +206,15 @@ const visitors = {
 
 				if (selector.metadata.used === pruning) {
 					if (pruning) {
-						let i = selector.start;
-						while (state.code.original[i] !== ',') i--;
+						let end = selector.start;
+						while (state.code.original[end - 1] !== ',') end--;
 						// If this is an in-between pruned selector keep the last separator
-						if (prune_start !== children[0].start && i !== children.length - 1) i--;
+						if (prune_start !== children[0].start && i !== children.length - 1) end--;
 
 						if (state.minify) {
-							state.code.remove(prune_start, i + 1);
+							state.code.remove(prune_start, end);
 						} else {
-							state.code.overwrite(i, i + 1, '*/');
+							state.code.overwrite(i, end, '*/');
 						}
 					} else {
 						if (i === 0) {
