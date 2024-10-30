@@ -1,4 +1,4 @@
-/** @import { Derived, Source } from './types.js' */
+/** @import { Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
 	PROPS_IS_BINDABLE,
