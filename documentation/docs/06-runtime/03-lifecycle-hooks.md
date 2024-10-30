@@ -7,7 +7,7 @@ title: Lifecycle hooks
 - beforeUpdate/afterUpdate with deprecation notice?
 - or skip this entirely and only have it in the reference docs? -->
 
-In Svelte 5, the component lifecycle consists of only two parts: Its creation and its destruction. Everything in-between - when certain state is updated - is not related to the component as a whole, only the parts that need to react to the state change are notified. This is because under the hood the smallest unit of change is actually not a component, it's the (render) effects that the component sets up upon component initialization. Consequently, there's no such thing as a "before update"/"after update" hook.
+In Svelte 5, the component lifecycle consists of only two parts: Its creation and its destruction. Everything in-between — when certain state is updated — is not related to the component as a whole; only the parts that need to react to the state change are notified. This is because under the hood the smallest unit of change is actually not a component, it's the (render) effects that the component sets up upon component initialization. Consequently, there's no such thing as a "before update"/"after update" hook.
 
 ## `onMount`
 

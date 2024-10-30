@@ -21,7 +21,7 @@ There are also plugins for [Rollup](https://github.com/sveltejs/rollup-plugin-sv
 
 ## Editor tooling
 
-The Svelte team maintains a [VS Code extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) and there are integrations with various other [editors](https://sveltesociety.dev/resources#editor-support) and tools as well.
+The Svelte team maintains a [VS Code extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode), and there are integrations with various other [editors](https://sveltesociety.dev/resources#editor-support) and tools as well.
 
 You can also check your code from the command line using [sv check](https://github.com/sveltejs/cli).
 
