@@ -48,7 +48,7 @@ export function render_stylesheet(source, analysis, options) {
 	code.remove(0, ast.content.start);
 	code.remove(/** @type {number} */ (ast.content.end), source.length);
 	if (state.minify) {
-		remove_preceeding_whitespace(ast.content.end, state);
+		remove_preceding_whitespace(ast.content.end, state);
 	}
 
 	const css = {
@@ -122,7 +122,7 @@ const visitors = {
 				index++;
 			}
 		} else if (state.minify) {
-			remove_preceeding_whitespace(node.start, state);
+			remove_preceding_whitespace(node.start, state);
 
 			// Don't minify whitespace in custom properties, since some browsers (Chromium < 99)
 			// treat --foo: ; and --foo:; differently
@@ -136,8 +136,8 @@ const visitors = {
 	},
 	Rule(node, { state, next, visit }) {
 		if (state.minify) {
-			remove_preceeding_whitespace(node.start, state);
-			remove_preceeding_whitespace(node.block.end - 1, state);
+			remove_preceding_whitespace(node.start, state);
+			remove_preceding_whitespace(node.block.end - 1, state);
 		}
 
 		// keep empty rules in dev, because it's convenient to
@@ -385,7 +385,7 @@ const visitors = {
  * @param {number} end
  * @param {State} state
  */
-function remove_preceeding_whitespace(end, state) {
+function remove_preceding_whitespace(end, state) {
 	let start = end;
 	while (/\s/.test(state.code.original[start - 1])) start--;
 	if (start < end) state.code.remove(start, end);
