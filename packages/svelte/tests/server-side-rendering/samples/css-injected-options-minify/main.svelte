@@ -20,4 +20,10 @@
 	.foo, .unused {
 		color: green;
 	}
+	.unused, .foo {
+		color: green;
+	}
+	.foo, .unused, .foo {
+		color: green;
+	}
 </style>
