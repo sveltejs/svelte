@@ -7,7 +7,14 @@ The `in:` and `out:` directives are identical to [`transition:`](transition), ex
 ```svelte
 <script>
   import { fade, fly } from 'svelte/transition';
+  
+  let visible = $state(false);
 </script>
+
+<label>
+  <input type="checkbox" bind:checked={visible}>
+  visible
+</label>
 
 {#if visible}
 	<div in:fly out:fade>flies in, fades out</div>
