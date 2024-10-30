@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure onMount correctly fires when used externally
+fix: ensure onMount correctly fires when new expressions are used

@@ -208,9 +208,8 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 		var anchor_node = anchor ?? target.appendChild(create_text());
 
 		branch(() => {
-			push({});
-			
 			if (context) {
+				push({});
 				var ctx = /** @type {ComponentContext} */ (component_context);
 				ctx.c = context;
 			}
@@ -233,7 +232,9 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 				/** @type {Effect} */ (active_effect).nodes_end = hydrate_node;
 			}
 
-			pop();
+			if (context) {
+				pop();
+			}
 		});
 
 		return () => {
