@@ -12,7 +12,6 @@ import { mutable_source, set, source } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
 import {
 	active_effect,
-	active_reaction,
 	get,
 	is_signals_recorded,
 	set_active_effect,
@@ -21,7 +20,7 @@ import {
 } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import { BRANCH_EFFECT, DESTROYED, LEGACY_DERIVED_PROP, ROOT_EFFECT } from '../constants.js';
+import { BRANCH_EFFECT, LEGACY_DERIVED_PROP, ROOT_EFFECT } from '../constants.js';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 
@@ -369,17 +368,12 @@ export function prop(props, key, flags, fallback) {
 	// The derived returns the current value. The underlying mutable
 	// source is written to from various places to persist this value.
 	var inner_current_value = mutable_source(prop_value);
-
 	var current_value = with_parent_branch(() =>
 		derived(() => {
 			var parent_value = getter();
 			var child_value = get(inner_current_value);
-			var current_derived = /** @type {Derived} */ (active_reaction);
 
-			// If the getter from the parent returns undefined, switch
-			// to using the local value from inner_current_value instead,
-			// as the parent value might have been torn down
-			if (from_child || (parent_value === undefined && (current_derived.f & DESTROYED) !== 0)) {
+			if (from_child) {
 				from_child = false;
 				was_from_child = true;
 				return child_value;
