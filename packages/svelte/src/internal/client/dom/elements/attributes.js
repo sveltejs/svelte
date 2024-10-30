@@ -7,6 +7,12 @@ import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '../../constants.js';
 import { queue_idle_task, queue_micro_task } from '../task.js';
 import { is_capture_event, is_delegated, normalize_attribute } from '../../../../utils.js';
+import {
+	active_effect,
+	active_reaction,
+	set_active_effect,
+	set_active_reaction
+} from '../../runtime.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -145,10 +151,24 @@ export function set_xlink_attribute(dom, attribute, value) {
  * @param {any} value
  */
 export function set_custom_element_data(node, prop, value) {
-	if (get_setters(node).includes(prop)) {
-		node[prop] = value;
-	} else {
-		set_attribute(node, prop, value);
+	// We need to ensure that setting custom element props, which can
+	// invoke lifecycle methods on other custom elements, does not also
+	// associate those lifecycle methods with the current active reaction
+	// or effect
+	var previous_reaction = active_reaction;
+	var previous_effect = active_effect;
+
+	set_active_reaction(null);
+	set_active_effect(null);
+	try {
+		if (get_setters(node).includes(prop)) {
+			node[prop] = value;
+		} else {
+			set_attribute(node, prop, value);
+		}
+	} finally {
+		set_active_reaction(previous_reaction);
+		set_active_effect(previous_effect);
 	}
 }
 
