@@ -19,8 +19,6 @@ export default test({
 3: unterminated template
                         ^`,
 			message: 'Unexpected end of input',
-			name: 'CompileError',
-			stack: '',
 			position: [30, 30],
 			start: {
 				character: 30,

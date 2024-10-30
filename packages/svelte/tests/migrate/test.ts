@@ -28,7 +28,7 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 
 	if (config.errors) {
 		console.error = (...args) => {
-			errors.push(...args);
+			errors.push(...args.map((arg) => arg.toJSON?.() ?? arg));
 		};
 	}
 
