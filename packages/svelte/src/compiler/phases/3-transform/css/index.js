@@ -214,7 +214,7 @@ const visitors = {
 						if (state.minify) {
 							state.code.remove(prune_start, end);
 						} else {
-							state.code.overwrite(i, end, '*/');
+							state.code.overwrite(end - 1, end, '*/');
 						}
 					} else {
 						if (i === 0) {
