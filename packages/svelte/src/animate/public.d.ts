@@ -11,6 +11,7 @@ export interface FlipParams {
 	delay?: number;
 	duration?: number | ((len: number) => number);
 	easing?: (t: number) => number;
+	rotation?: number;
 }
 
 export * from './index.js';
