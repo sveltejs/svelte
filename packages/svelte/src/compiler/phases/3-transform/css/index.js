@@ -214,11 +214,15 @@ const visitors = {
 							state.code.overwrite(i, i + 1, '*/');
 						}
 					} else {
-						prune_start = selector.start;
-
-						if (!state.minify) {
-							if (i === 0) {
+						if (i === 0) {
+							if (state.minify) {
+								prune_start = selector.start;
+							} else {
 								state.code.prependRight(selector.start, '/* (unused) ');
+							}
+						} else {
+							if (state.minify) {
+								prune_start = last;
 							} else {
 								state.code.overwrite(last, selector.start, ' /* (unused) ');
 							}
