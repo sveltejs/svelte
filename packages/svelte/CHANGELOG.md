@@ -1,5 +1,23 @@
 # svelte
 
+## 5.1.4
+
+### Patch Changes
+
+- fix: add empty stack to `CompileDiagnostic` to show error on build ([#13942](https://github.com/sveltejs/svelte/pull/13942))
+
+- fix: ensure effect_tracking correctly handles tracking reactions ([#14005](https://github.com/sveltejs/svelte/pull/14005))
+
+- fix: update broken links ([#13944](https://github.com/sveltejs/svelte/pull/13944))
+
+- fix: more exhaustive check during `SvelteMap.set` in deriveds ([#13951](https://github.com/sveltejs/svelte/pull/13951))
+
+- fix: trim whitespace while migrating blocks ([#13941](https://github.com/sveltejs/svelte/pull/13941))
+
+- fix: update links that previously pointed to preview site ([#14001](https://github.com/sveltejs/svelte/pull/14001))
+
+- fix: properly migrate imports types prefixed with $ ([#14007](https://github.com/sveltejs/svelte/pull/14007))
+
 ## 5.1.3
 
 ### Patch Changes

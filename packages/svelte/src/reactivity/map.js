@@ -1,6 +1,6 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
-import { source, set } from '../internal/client/reactivity/sources.js';
+import { set, source } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
 
@@ -102,12 +102,15 @@ export class SvelteMap extends Map {
 			increment(version);
 		} else if (prev_res !== value) {
 			increment(s);
-			// If no one listening to this property and is listening to the version, or
-			// the inverse, then we should increment the version to be safe
-			if (
-				(s.reactions === null && version.reactions !== null) ||
-				(s.reactions !== null && version.reactions === null)
-			) {
+
+			// if not every reaction of s is a reaction of version we need to also include version
+			var v_reactions = version.reactions === null ? null : new Set(version.reactions);
+			var needs_version_increase =
+				v_reactions === null ||
+				!s.reactions?.every((r) =>
+					/** @type {NonNullable<typeof v_reactions>} */ (v_reactions).has(r)
+				);
+			if (needs_version_increase) {
 				increment(version);
 			}
 		}

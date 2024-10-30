@@ -42,8 +42,11 @@ export { derived, get, readable, readonly, writable } from './shared/index.js';
  * @returns {Writable<V> | Readable<V>}
  */
 export function toStore(get, set) {
-	const store = writable(get(), (set) => {
-		let ran = false;
+	let init_value = get();
+	const store = writable(init_value, (set) => {
+		// If the value has changed before we call subscribe, then
+		// we need to treat the value as already having run
+		let ran = init_value !== get();
 
 		// TODO do we need a different implementation on the server?
 		const teardown = effect_root(() => {
@@ -130,9 +133,12 @@ export function fromStore(store) {
 				subscribers += 1;
 
 				return () => {
-					subscribers -= 1;
-
 					tick().then(() => {
+						// Only count down after timeout, else we would reach 0 before our own render effect reruns,
+						// but reach 1 again when the tick callback of the prior teardown runs. That would mean we
+						// re-subcribe unnecessarily and create a memory leak because the old subscription is never cleaned up.
+						subscribers -= 1;
+
 						if (subscribers === 0) {
 							unsubscribe();
 						}

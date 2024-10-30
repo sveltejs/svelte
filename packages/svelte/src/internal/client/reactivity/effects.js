@@ -15,7 +15,8 @@ import {
 	set_is_destroying_effect,
 	set_is_flushing_effect,
 	set_signal_status,
-	untrack
+	untrack,
+	skip_reaction
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -167,7 +168,9 @@ export function effect_tracking() {
 		return false;
 	}
 
-	return (active_reaction.f & UNOWNED) === 0;
+	// If it's skipped, that's because we're inside an unowned
+	// that is not being tracked by another reaction
+	return !skip_reaction;
 }
 
 /**

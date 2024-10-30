@@ -39,10 +39,10 @@ class MigrationError extends Error {
  * May throw an error if the code is too complex to migrate automatically.
  *
  * @param {string} source
- * @param {{filename?: string}} [options]
+ * @param {{ filename?: string, use_ts?: boolean }} [options]
  * @returns {{ code: string; }}
  */
-export function migrate(source, { filename } = {}) {
+export function migrate(source, { filename, use_ts } = {}) {
 	let og_source = source;
 	try {
 		has_migration_task = false;
@@ -115,9 +115,12 @@ export function migrate(source, { filename } = {}) {
 			derived_components: new Map(),
 			derived_labeled_statements: new Set(),
 			has_svelte_self: false,
-			uses_ts: !!parsed.instance?.attributes.some(
-				(attr) => attr.name === 'lang' && /** @type {any} */ (attr).value[0].data === 'ts'
-			)
+			uses_ts:
+				// Some people could use jsdoc but have a tsconfig.json, so double-check file for jsdoc indicators
+				(use_ts && !source.includes('@type {')) ||
+				!!parsed.instance?.attributes.some(
+					(attr) => attr.name === 'lang' && /** @type {any} */ (attr).value[0].data === 'ts'
+				)
 		};
 
 		if (parsed.module) {
@@ -853,6 +856,20 @@ const instance_script = {
 	}
 };
 
+/**
+ *
+ * @param {State} state
+ * @param {number} start
+ * @param {number} end
+ */
+function trim_block(state, start, end) {
+	const original = state.str.snip(start, end).toString();
+	const without_parens = original.substring(1, original.length - 1);
+	if (without_parens.trim().length !== without_parens.length) {
+		state.str.update(start + 1, end - 1, without_parens.trim());
+	}
+}
+
 /** @type {Visitors<SvelteNode, State>} */
 const template = {
 	Identifier(node, { state, path }) {
@@ -1119,6 +1136,46 @@ const template = {
 		if (migrated !== node.data) {
 			state.str.overwrite(node.start + '<!--'.length, node.end - '-->'.length, migrated);
 		}
+	},
+	HtmlTag(node, { state, next }) {
+		trim_block(state, node.start, node.end);
+		next();
+	},
+	ConstTag(node, { state, next }) {
+		trim_block(state, node.start, node.end);
+		next();
+	},
+	IfBlock(node, { state, next }) {
+		const start = node.start;
+		const end = state.str.original.indexOf('}', node.test.end) + 1;
+		trim_block(state, start, end);
+		next();
+	},
+	AwaitBlock(node, { state, next }) {
+		const start = node.start;
+		const end =
+			state.str.original.indexOf(
+				'}',
+				node.pending !== null ? node.expression.end : node.value?.end
+			) + 1;
+		trim_block(state, start, end);
+		if (node.pending !== null) {
+			const start = state.str.original.lastIndexOf('{', node.value?.start);
+			const end = state.str.original.indexOf('}', node.value?.end) + 1;
+			trim_block(state, start, end);
+		}
+		if (node.catch !== null) {
+			const start = state.str.original.lastIndexOf('{', node.error?.start);
+			const end = state.str.original.indexOf('}', node.error?.end) + 1;
+			trim_block(state, start, end);
+		}
+		next();
+	},
+	KeyBlock(node, { state, next }) {
+		const start = node.start;
+		const end = state.str.original.indexOf('}', node.expression.end) + 1;
+		trim_block(state, start, end);
+		next();
 	}
 };
 

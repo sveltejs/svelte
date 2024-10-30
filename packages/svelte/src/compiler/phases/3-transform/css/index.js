@@ -11,6 +11,7 @@ import { dev } from '../../../state.js';
  * @typedef {{
  *   code: MagicString;
  *   hash: string;
+ *   minify: boolean;
  *   selector: string;
  *   keyframes: string[];
  *   specificity: {
@@ -32,6 +33,7 @@ export function render_stylesheet(source, analysis, options) {
 	const state = {
 		code,
 		hash: analysis.css.hash,
+		minify: analysis.inject_styles && !options.dev,
 		selector: `.${analysis.css.hash}`,
 		keyframes: analysis.css.keyframes,
 		specificity: {
@@ -45,6 +47,9 @@ export function render_stylesheet(source, analysis, options) {
 
 	code.remove(0, ast.content.start);
 	code.remove(/** @type {number} */ (ast.content.end), source.length);
+	if (state.minify) {
+		remove_preceeding_whitespace(ast.content.end, state);
+	}
 
 	const css = {
 		code: code.toString(),
@@ -116,22 +121,47 @@ const visitors = {
 
 				index++;
 			}
+		} else if (state.minify) {
+			remove_preceeding_whitespace(node.start, state);
+
+			// Don't minify whitespace in custom properties, since some browsers (Chromium < 99)
+			// treat --foo: ; and --foo:; differently
+			if (!node.property.startsWith('--')) {
+				let start = node.start + node.property.length + 1;
+				let end = start;
+				while (/\s/.test(state.code.original[end])) end++;
+				if (end > start) state.code.remove(start, end);
+			}
 		}
 	},
 	Rule(node, { state, next, visit }) {
+		if (state.minify) {
+			remove_preceeding_whitespace(node.start, state);
+			remove_preceeding_whitespace(node.block.end - 1, state);
+		}
+
 		// keep empty rules in dev, because it's convenient to
 		// see them in devtools
 		if (!dev && is_empty(node)) {
-			state.code.prependRight(node.start, '/* (empty) ');
-			state.code.appendLeft(node.end, '*/');
-			escape_comment_close(node, state.code);
+			if (state.minify) {
+				state.code.remove(node.start, node.end);
+			} else {
+				state.code.prependRight(node.start, '/* (empty) ');
+				state.code.appendLeft(node.end, '*/');
+				escape_comment_close(node, state.code);
+			}
+
 			return;
 		}
 
 		if (!is_used(node)) {
-			state.code.prependRight(node.start, '/* (unused) ');
-			state.code.appendLeft(node.end, '*/');
-			escape_comment_close(node, state.code);
+			if (state.minify) {
+				state.code.remove(node.start, node.end);
+			} else {
+				state.code.prependRight(node.start, '/* (unused) ');
+				state.code.appendLeft(node.end, '*/');
+				escape_comment_close(node, state.code);
+			}
 
 			return;
 		}
@@ -141,11 +171,16 @@ const visitors = {
 
 			if (selector.children.length === 1 && selector.children[0].selectors.length === 1) {
 				// `:global {...}`
-				state.code.prependRight(node.start, '/* ');
-				state.code.appendLeft(node.block.start + 1, '*/');
+				if (state.minify) {
+					state.code.remove(node.start, node.block.start + 1);
+					state.code.remove(node.block.end - 1, node.end);
+				} else {
+					state.code.prependRight(node.start, '/* ');
+					state.code.appendLeft(node.block.start + 1, '*/');
 
-				state.code.prependRight(node.block.end - 1, '/*');
-				state.code.appendLeft(node.block.end, '*/');
+					state.code.prependRight(node.block.end - 1, '/*');
+					state.code.appendLeft(node.block.end, '*/');
+				}
 
 				// don't recurse into selector or body
 				return;
@@ -161,11 +196,10 @@ const visitors = {
 	SelectorList(node, { state, next, path }) {
 		// Only add comments if we're not inside a complex selector that itself is unused
 		if (!path.find((n) => n.type === 'ComplexSelector' && !n.metadata.used)) {
-			let pruning = false;
-
 			const children = node.children;
-
-			let last = children[0].start;
+			let pruning = false;
+			let prune_start = children[0].start;
+			let last = prune_start;
 
 			for (let i = 0; i < children.length; i += 1) {
 				const selector = children[i];
@@ -174,16 +208,27 @@ const visitors = {
 					if (pruning) {
 						let i = selector.start;
 						while (state.code.original[i] !== ',') i--;
+						// If this is not the last selector keep the separator
+						if (i !== children.length - 1) i++;
 
-						state.code.overwrite(i, i + 1, '*/');
+						if (state.minify) {
+							state.code.remove(prune_start, i + 1);
+						} else {
+							state.code.overwrite(i, i + 1, '*/');
+						}
 					} else {
 						if (i === 0) {
-							state.code.prependRight(selector.start, '/* (unused) ');
+							if (state.minify) {
+								prune_start = selector.start;
+							} else {
+								state.code.prependRight(selector.start, '/* (unused) ');
+							}
 						} else {
-							// If this is not the last selector add a separator
-							const separator = i !== children.length - 1 ? ',' : '';
-
-							state.code.overwrite(last, selector.start, `${separator} /* (unused) `);
+							if (state.minify) {
+								prune_start = last;
+							} else {
+								state.code.overwrite(last, selector.start, ' /* (unused) ');
+							}
 						}
 					}
 
@@ -194,7 +239,11 @@ const visitors = {
 			}
 
 			if (pruning) {
-				state.code.appendLeft(last, '*/');
+				if (state.minify) {
+					state.code.remove(prune_start, last);
+				} else {
+					state.code.appendLeft(last, '*/');
+				}
 			}
 		}
 
@@ -325,6 +374,17 @@ const visitors = {
 		}
 	}
 };
+
+/**
+ * Walk backwards until we find a non-whitespace character
+ * @param {number} end
+ * @param {State} state
+ */
+function remove_preceeding_whitespace(end, state) {
+	let start = end;
+	while (/\s/.test(state.code.original[start - 1])) start--;
+	if (start < end) state.code.remove(start, end);
+}
 
 /** @param {Css.Rule} rule */
 function is_empty(rule) {

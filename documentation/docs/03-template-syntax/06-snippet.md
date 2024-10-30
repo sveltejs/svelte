@@ -53,7 +53,7 @@ Snippets, and [render tags](@render), are a way to create reusable chunks of mar
 {/each}
 ```
 
-Like function declarations, snippets can have an arbitrary number of parameters, which can have default values, and you can destructure each parameter. You cannot use rest parameters however.
+Like function declarations, snippets can have an arbitrary number of parameters, which can have default values, and you can destructure each parameter. You cannot use rest parameters, however.
 
 ## Snippet scope
 
