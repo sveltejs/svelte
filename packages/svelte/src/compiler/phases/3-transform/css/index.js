@@ -227,7 +227,10 @@ const visitors = {
 
 							if (state.minify) {
 								prune_start = last;
-								if (separator) state.code.appendLeft(last, separator);
+								if (separator) {
+									while (state.code.original[prune_start - 1] !== ',') prune_start++;
+									state.code.update(last, prune_start, separator);
+								}
 							} else {
 								state.code.overwrite(last, selector.start, `${separator} /* (unused) `);
 							}
