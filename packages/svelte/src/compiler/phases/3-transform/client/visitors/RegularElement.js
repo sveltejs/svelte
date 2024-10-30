@@ -11,11 +11,7 @@ import {
 } from '../../../../../utils.js';
 import { escape_html } from '../../../../../escaping.js';
 import { dev, is_ignored, locator } from '../../../../state.js';
-import {
-	get_attribute_expression,
-	is_event_attribute,
-	is_text_attribute
-} from '../../../../utils/ast.js';
+import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
@@ -158,17 +154,15 @@ export function RegularElement(node, context) {
 	}
 
 	/** @type {typeof state} */
-	const element_after_update_state = { ...context.state, after_update: [] };
+	const element_state = { ...context.state, init: [], after_update: [] };
 
 	for (const attribute of other_directives) {
 		if (attribute.type === 'OnDirective') {
 			const handler = /** @type {Expression} */ (context.visit(attribute));
 
-			element_after_update_state.after_update.push(
-				b.stmt(has_use ? b.call('$.effect', b.thunk(handler)) : handler)
-			);
+			element_state.init.push(b.stmt(has_use ? b.call('$.effect', b.thunk(handler)) : handler));
 		} else {
-			context.visit(attribute, element_after_update_state);
+			context.visit(attribute, element_state);
 		}
 	}
 
@@ -399,20 +393,19 @@ export function RegularElement(node, context) {
 		context.state.init.push(
 			b.block([
 				...child_state.init,
+				...element_state.init,
 				child_state.update.length > 0 ? build_render_statement(child_state.update) : b.empty,
 				...child_state.after_update,
-				...element_after_update_state.after_update
+				...element_state.after_update
 			])
 		);
 	} else if (node.fragment.metadata.dynamic) {
-		context.state.init.push(...child_state.init);
+		context.state.init.push(...child_state.init, ...element_state.init);
 		context.state.update.push(...child_state.update);
-		context.state.after_update.push(
-			...child_state.after_update,
-			...element_after_update_state.after_update
-		);
+		context.state.after_update.push(...child_state.after_update, ...element_state.after_update);
 	} else {
-		context.state.after_update.push(...element_after_update_state.after_update);
+		context.state.init.push(...element_state.init);
+		context.state.after_update.push(...element_state.after_update);
 	}
 
 	if (lookup.has('dir')) {

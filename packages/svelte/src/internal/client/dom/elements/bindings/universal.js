@@ -1,4 +1,4 @@
-import { render_effect, teardown } from '../../../reactivity/effects.js';
+import { effect, render_effect, teardown } from '../../../reactivity/effects.js';
 import { listen } from './shared.js';
 
 /**
@@ -14,19 +14,21 @@ export function bind_content_editable(property, element, get, set = get) {
 		set(element[property]);
 	});
 
-	render_effect(() => {
-		var value = get();
+	effect(() => {
+		render_effect(() => {
+			var value = get();
 
-		if (element[property] !== value) {
-			if (value == null) {
-				// @ts-ignore
-				var non_null_value = element[property];
-				set(non_null_value);
-			} else {
-				// @ts-ignore
-				element[property] = value + '';
+			if (element[property] !== value) {
+				if (value == null) {
+					// @ts-ignore
+					var non_null_value = element[property];
+					set(non_null_value);
+				} else {
+					// @ts-ignore
+					element[property] = value + '';
+				}
 			}
-		}
+		});
 	});
 }
 

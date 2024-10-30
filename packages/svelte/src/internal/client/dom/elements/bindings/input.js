@@ -1,5 +1,5 @@
 import { DEV } from 'esm-env';
-import { render_effect, teardown } from '../../../reactivity/effects.js';
+import { effect, render_effect, teardown } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
 import { is } from '../../../proxy.js';
@@ -34,38 +34,43 @@ export function bind_value(input, get, set = get) {
 		}
 	});
 
-	render_effect(() => {
-		if (DEV && input.type === 'checkbox') {
-			// TODO should this happen in prod too?
-			e.bind_invalid_checkbox_value();
-		}
+	let was_hyrating = hydrating;
 
-		var value = get();
+	effect(() => {
+		render_effect(() => {
+			if (DEV && input.type === 'checkbox') {
+				// TODO should this happen in prod too?
+				e.bind_invalid_checkbox_value();
+			}
 
-		// If we are hydrating and the value has since changed, then use the update value
-		// from the input instead.
-		if (hydrating && input.defaultValue !== input.value) {
-			set(input.value);
-			return;
-		}
+			var value = get();
 
-		if (is_numberlike_input(input) && value === to_number(input.value)) {
-			// handles 0 vs 00 case (see https://github.com/sveltejs/svelte/issues/9959)
-			return;
-		}
+			// If we are hydrating and the value has since changed, then use the update value
+			// from the input instead.
+			if (was_hyrating && input.defaultValue !== input.value) {
+				set(input.value);
+				return;
+			}
 
-		if (input.type === 'date' && !value && !input.value) {
-			// Handles the case where a temporarily invalid date is set (while typing, for example with a leading 0 for the day)
-			// and prevents this state from clearing the other parts of the date input (see https://github.com/sveltejs/svelte/issues/7897)
-			return;
-		}
+			if (is_numberlike_input(input) && value === to_number(input.value)) {
+				// handles 0 vs 00 case (see https://github.com/sveltejs/svelte/issues/9959)
+				return;
+			}
 
-		// don't set the value of the input if it's the same to allow
-		// minlength to work properly
-		if (value !== input.value) {
-			// @ts-expect-error the value is coerced on assignment
-			input.value = value ?? '';
-		}
+			if (input.type === 'date' && !value && !input.value) {
+				// Handles the case where a temporarily invalid date is set (while typing, for example with a leading 0 for the day)
+				// and prevents this state from clearing the other parts of the date input (see https://github.com/sveltejs/svelte/issues/7897)
+				return;
+			}
+
+			// don't set the value of the input if it's the same to allow
+			// minlength to work properly
+			if (value !== input.value) {
+				// @ts-expect-error the value is coerced on assignment
+				input.value = value ?? '';
+			}
+		});
+		was_hyrating = false;
 	});
 }
 
@@ -81,90 +86,96 @@ const pending = new Set();
  * @returns {void}
  */
 export function bind_group(inputs, group_index, input, get, set = get) {
-	var is_checkbox = input.getAttribute('type') === 'checkbox';
-	var binding_group = inputs;
+	let was_hyrating = hydrating;
 
-	// needs to be let or related code isn't treeshaken out if it's always false
-	let hydration_mismatch = false;
+	effect(() => {
+		var is_checkbox = input.getAttribute('type') === 'checkbox';
+		var binding_group = inputs;
 
-	if (group_index !== null) {
-		for (var index of group_index) {
-			// @ts-expect-error
-			binding_group = binding_group[index] ??= [];
+		// needs to be let or related code isn't treeshaken out if it's always false
+		let hydration_mismatch = false;
+
+		if (group_index !== null) {
+			for (var index of group_index) {
+				// @ts-expect-error
+				binding_group = binding_group[index] ??= [];
+			}
 		}
-	}
 
-	binding_group.push(input);
+		binding_group.push(input);
 
-	listen_to_event_and_reset_event(
-		input,
-		'change',
-		() => {
-			// @ts-ignore
-			var value = input.__value;
+		listen_to_event_and_reset_event(
+			input,
+			'change',
+			() => {
+				// @ts-ignore
+				var value = input.__value;
 
-			if (is_checkbox) {
-				value = get_binding_group_value(binding_group, value, input.checked);
+				if (is_checkbox) {
+					value = get_binding_group_value(binding_group, value, input.checked);
+				}
+
+				set(value);
+			},
+			// TODO better default value handling
+			() => set(is_checkbox ? [] : null)
+		);
+
+		render_effect(() => {
+			var value = get();
+
+			// If we are hydrating and the value has since changed, then use the update value
+			// from the input instead.
+			if (was_hyrating && input.defaultChecked !== input.checked) {
+				hydration_mismatch = true;
+				return;
 			}
 
-			set(value);
-		},
-		// TODO better default value handling
-		() => set(is_checkbox ? [] : null)
-	);
+			if (is_checkbox) {
+				value = value || [];
+				// @ts-ignore
+				input.checked = value.includes(input.__value);
+			} else {
+				// @ts-ignore
+				input.checked = is(input.__value, value);
+			}
+		});
 
-	render_effect(() => {
-		var value = get();
+		teardown(() => {
+			var index = binding_group.indexOf(input);
 
-		// If we are hydrating and the value has since changed, then use the update value
-		// from the input instead.
-		if (hydrating && input.defaultChecked !== input.checked) {
-			hydration_mismatch = true;
-			return;
+			if (index !== -1) {
+				binding_group.splice(index, 1);
+			}
+		});
+
+		if (!pending.has(binding_group)) {
+			pending.add(binding_group);
+
+			queue_micro_task(() => {
+				// necessary to maintain binding group order in all insertion scenarios
+				binding_group.sort((a, b) => (a.compareDocumentPosition(b) === 4 ? -1 : 1));
+				pending.delete(binding_group);
+			});
 		}
-
-		if (is_checkbox) {
-			value = value || [];
-			// @ts-ignore
-			input.checked = value.includes(input.__value);
-		} else {
-			// @ts-ignore
-			input.checked = is(input.__value, value);
-		}
-	});
-
-	teardown(() => {
-		var index = binding_group.indexOf(input);
-
-		if (index !== -1) {
-			binding_group.splice(index, 1);
-		}
-	});
-
-	if (!pending.has(binding_group)) {
-		pending.add(binding_group);
 
 		queue_micro_task(() => {
-			// necessary to maintain binding group order in all insertion scenarios
-			binding_group.sort((a, b) => (a.compareDocumentPosition(b) === 4 ? -1 : 1));
-			pending.delete(binding_group);
-		});
-	}
+			if (hydration_mismatch) {
+				var value;
 
-	queue_micro_task(() => {
-		if (hydration_mismatch) {
-			var value;
+				if (is_checkbox) {
+					value = get_binding_group_value(binding_group, value, input.checked);
+				} else {
+					var hydration_input = binding_group.find((input) => input.checked);
+					// @ts-ignore
+					value = hydration_input?.__value;
+				}
 
-			if (is_checkbox) {
-				value = get_binding_group_value(binding_group, value, input.checked);
-			} else {
-				var hydration_input = binding_group.find((input) => input.checked);
-				// @ts-ignore
-				value = hydration_input?.__value;
+				set(value);
 			}
+		});
 
-			set(value);
-		}
+		was_hyrating = false;
 	});
 }
 

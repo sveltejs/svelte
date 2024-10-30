@@ -245,7 +245,7 @@ export function BindDirective(node, context) {
 		const has_action_directive =
 			parent.type === 'RegularElement' && parent.attributes.find((a) => a.type === 'UseDirective');
 
-		context.state.after_update.push(
+		context.state.init.push(
 			b.stmt(has_action_directive ? b.call('$.effect', b.thunk(call)) : call)
 		);
 	}
