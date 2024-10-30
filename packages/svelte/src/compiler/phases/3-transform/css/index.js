@@ -206,15 +206,13 @@ const visitors = {
 
 				if (selector.metadata.used === pruning) {
 					if (pruning) {
-						let end = selector.start;
-						while (state.code.original[end - 1] !== ',') end--;
-						// If this is an in-between pruned selector keep the last separator
-						if (prune_start !== children[0].start && i !== children.length - 1) end--;
+						let i = selector.start;
+						while (state.code.original[i] !== ',') i--;
 
 						if (state.minify) {
-							state.code.remove(prune_start, end);
+							state.code.remove(prune_start, i + 1);
 						} else {
-							state.code.overwrite(end - 1, end, '*/');
+							state.code.overwrite(i, i + 1, '*/');
 						}
 					} else {
 						if (i === 0) {
@@ -224,10 +222,14 @@ const visitors = {
 								state.code.prependRight(selector.start, '/* (unused) ');
 							}
 						} else {
+							// If this is not the last selector add a separator
+							const separator = i !== children.length - 1 ? ',' : '';
+
 							if (state.minify) {
 								prune_start = last;
+								if (separator) state.code.appendLeft(last, separator);
 							} else {
-								state.code.overwrite(last, selector.start, ' /* (unused) ');
+								state.code.overwrite(last, selector.start, `${separator} /* (unused) `);
 							}
 						}
 					}
