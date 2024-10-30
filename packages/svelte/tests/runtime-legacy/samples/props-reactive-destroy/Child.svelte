@@ -7,3 +7,5 @@
 		data;
 	});
 </script>
+
+{data ? '' : null}

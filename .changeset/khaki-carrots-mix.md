@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure legacy props cache last value when destroyed
+fix: ensure derived props cache last value when destroyed

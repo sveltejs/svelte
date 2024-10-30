@@ -313,36 +313,42 @@ export function prop(props, key, flags, fallback) {
 
 	/** @type {() => V} */
 	var getter;
+	var legacy_parent = props.$$legacy;
+	// Svelte 4 did not trigger updates when a primitive value was updated to the same value.
+	// Replicate that behavior through using a derived
+	var derived_getter = with_parent_branch(() => {
+		return ((!runes && immutable) || (runes && !legacy_parent) ? derived : derived_safe_equal)(
+			() => /** @type {V} */ (props[key])
+		);
+	});
+	// Connect the derived getter to the parent branch effect
+	get(derived_getter);
+	/** @type {V} */
+	var last_value;
+
 	if (runes) {
 		getter = () => {
-			var value = /** @type {V} */ (props[key]);
-			if (value === undefined) return get_fallback();
-			fallback_dirty = true;
-			fallback_used = false;
-			return value;
-		};
-	} else {
-		// Svelte 4 did not trigger updates when a primitive value was updated to the same value.
-		// Replicate that behavior through using a derived
-		var derived_getter = with_parent_branch(() => {
-			return (immutable ? derived : derived_safe_equal)(() => /** @type {V} */ (props[key]));
-		});
-		// Connect the derived getter to the parent branch effect
-		get(derived_getter);
-
-		derived_getter.f |= LEGACY_DERIVED_PROP;
-		/** @type {V} */
-		var last_value;
-
-		getter = () => {
-			// Emulate the Svelte 4 behaviour of returning the last known value
+			// If the derived has been destroyed, use the last value we have
 			if ((derived_getter.f & DESTROYED) !== 0) {
 				return last_value;
 			}
 			var value = get(derived_getter);
+			if (value === undefined) return (last_value = get_fallback());
+			fallback_dirty = true;
+			fallback_used = false;
 			last_value = value;
+			return value;
+		};
+	} else {
+		derived_getter.f |= LEGACY_DERIVED_PROP;
+		getter = () => {
+			// If the derived has been destroyed, use the last value we have
+			if ((derived_getter.f & DESTROYED) !== 0) {
+				return last_value;
+			}
+			var value = get(derived_getter);
 			if (value !== undefined) fallback_value = /** @type {V} */ (undefined);
-			return value === undefined ? fallback_value : value;
+			return (last_value = value === undefined ? fallback_value : value);
 		};
 	}
 
@@ -354,7 +360,6 @@ export function prop(props, key, flags, fallback) {
 	// intermediate mode — prop is written to, but the parent component had
 	// `bind:foo` which means we can just call `$$props.foo = value` directly
 	if (setter) {
-		var legacy_parent = props.$$legacy;
 		return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
 			if (arguments.length > 0) {
 				// We don't want to notify if the value was mutated and the parent is in runes mode.
