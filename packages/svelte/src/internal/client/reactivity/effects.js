@@ -437,8 +437,8 @@ export function destroy_effect(effect, remove_dom = true) {
 		removed = true;
 	}
 
-	destroy_effect_deriveds(effect);
 	destroy_effect_children(effect, remove_dom && !removed);
+	destroy_effect_deriveds(effect);
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);
 
