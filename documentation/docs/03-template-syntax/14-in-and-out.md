@@ -17,6 +17,6 @@ The `in:` and `out:` directives are identical to [`transition:`](transition), ex
 </label>
 
 {#if visible}
-	<div in:fly out:fade>flies in, fades out</div>
+	<div in:fly={{ y: 200 }} out:fade>flies in, fades out</div>
 {/if}
 ```
