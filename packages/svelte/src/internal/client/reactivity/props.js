@@ -324,12 +324,23 @@ export function prop(props, key, flags, fallback) {
 	} else {
 		// Svelte 4 did not trigger updates when a primitive value was updated to the same value.
 		// Replicate that behavior through using a derived
-		var derived_getter = with_parent_branch(() =>
-			(immutable ? derived : derived_safe_equal)(() => /** @type {V} */ (props[key]))
-		);
+		var derived_getter = with_parent_branch(() => {
+			return (immutable ? derived : derived_safe_equal)(() => /** @type {V} */ (props[key]));
+		});
+		// Connect the derived getter to the parent branch effect
+		get(derived_getter);
+
 		derived_getter.f |= LEGACY_DERIVED_PROP;
+		/** @type {V} */
+		var last_value;
+
 		getter = () => {
+			// Emulate the Svelte 4 behaviour of returning the last known value
+			if ((derived_getter.f & DESTROYED) !== 0) {
+				return last_value;
+			}
 			var value = get(derived_getter);
+			last_value = value;
 			if (value !== undefined) fallback_value = /** @type {V} */ (undefined);
 			return value === undefined ? fallback_value : value;
 		};
