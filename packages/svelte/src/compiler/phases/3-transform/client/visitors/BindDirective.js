@@ -242,13 +242,11 @@ export function BindDirective(node, context) {
 	if (node.name === 'this') {
 		context.state.init.push(b.stmt(call));
 	} else {
-		const has_action_directive =
+		const has_use =
 			parent.type === 'RegularElement' && parent.attributes.find((a) => a.type === 'UseDirective');
 
-		if (has_action_directive) {
-			context.state.init.push(
-				b.stmt(has_action_directive ? b.call('$.effect', b.thunk(call)) : call)
-			);
+		if (has_use) {
+			context.state.init.push(b.stmt(b.call('$.effect', b.thunk(call))));
 		} else {
 			context.state.after_update.push(b.stmt(call));
 		}
