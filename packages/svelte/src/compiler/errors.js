@@ -747,12 +747,12 @@ export function block_duplicate_clause(node, name) {
 }
 
 /**
- * {:...} block is invalid at this position (did you forget to close the preceeding element or block?)
+ * {:...} block is invalid at this position (did you forget to close the preceding element or block?)
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function block_invalid_continuation_placement(node) {
-	e(node, "block_invalid_continuation_placement", "{:...} block is invalid at this position (did you forget to close the preceeding element or block?)");
+	e(node, "block_invalid_continuation_placement", "{:...} block is invalid at this position (did you forget to close the preceding element or block?)");
 }
 
 /**

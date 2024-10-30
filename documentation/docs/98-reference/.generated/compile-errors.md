@@ -119,7 +119,7 @@ Can only bind to state or props
 ### block_invalid_continuation_placement
 
 ```
-{:...} block is invalid at this position (did you forget to close the preceeding element or block?)
+{:...} block is invalid at this position (did you forget to close the preceding element or block?)
 ```
 
 ### block_invalid_elseif
