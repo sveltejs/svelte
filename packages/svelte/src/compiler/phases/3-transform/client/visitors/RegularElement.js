@@ -158,17 +158,19 @@ export function RegularElement(node, context) {
 	}
 
 	/** @type {typeof state} */
-	const element_after_update_state = { ...context.state, after_update: [] };
+	const element_state = { ...context.state, init: [], after_update: [] };
 
 	for (const attribute of other_directives) {
 		if (attribute.type === 'OnDirective') {
 			const handler = /** @type {Expression} */ (context.visit(attribute));
 
-			element_after_update_state.after_update.push(
-				b.stmt(has_use ? b.call('$.effect', b.thunk(handler)) : handler)
-			);
+			if (has_use) {
+				element_state.init.push(b.stmt(b.call('$.effect', b.thunk(handler))));
+			} else {
+				element_state.after_update.push(b.stmt(handler));
+			}
 		} else {
-			context.visit(attribute, element_after_update_state);
+			context.visit(attribute, element_state);
 		}
 	}
 
@@ -401,18 +403,16 @@ export function RegularElement(node, context) {
 				...child_state.init,
 				child_state.update.length > 0 ? build_render_statement(child_state.update) : b.empty,
 				...child_state.after_update,
-				...element_after_update_state.after_update
+				...element_state.after_update
 			])
 		);
 	} else if (node.fragment.metadata.dynamic) {
-		context.state.init.push(...child_state.init);
+		context.state.init.push(...child_state.init, ...element_state.init);
 		context.state.update.push(...child_state.update);
-		context.state.after_update.push(
-			...child_state.after_update,
-			...element_after_update_state.after_update
-		);
+		context.state.after_update.push(...child_state.after_update, ...element_state.after_update);
 	} else {
-		context.state.after_update.push(...element_after_update_state.after_update);
+		context.state.init.push(...element_state.init);
+		context.state.after_update.push(...element_state.after_update);
 	}
 
 	if (lookup.has('dir')) {
