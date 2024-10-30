@@ -625,16 +625,18 @@ function process_effects(effect, collected_effects) {
 				var child = current_effect.first;
 
 				if (child !== null) {
-					// Before traversing children, ensure that any sibling element effects
-					// are collected before any effects in children to keep the template
-					// effect ordering consistent
-					sibling = current_effect.next;
+					if ((flags & BLOCK_EFFECT) !== 0) {
+						// Before traversing children, ensure that any sibling element effects
+						// are collected before any effects in children to keep the template
+						// effect ordering consistent
+						sibling = current_effect.next;
 
-					while (sibling !== null) {
-						if ((sibling.f & ELEMENT_EFFECT) !== 0) {
-							effects.push(sibling);
+						while (sibling !== null) {
+							if ((sibling.f & ELEMENT_EFFECT) !== 0) {
+								effects.push(sibling);
+							}
+							sibling = sibling.next;
 						}
-						sibling = sibling.next;
 					}
 
 					current_effect = child;
