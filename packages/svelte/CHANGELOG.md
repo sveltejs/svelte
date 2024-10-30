@@ -1,5 +1,11 @@
 # svelte
 
+## 5.1.6
+
+### Patch Changes
+
+- fix: ensure child effects are destroyed before their deriveds ([#14043](https://github.com/sveltejs/svelte/pull/14043))
+
 ## 5.1.5
 
 ### Patch Changes
