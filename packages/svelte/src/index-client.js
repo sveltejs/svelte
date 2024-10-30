@@ -25,14 +25,10 @@ export function onMount(fn) {
 		lifecycle_outside_component('onMount');
 	}
 
-	if (component_context.l !== null) {
-		init_update_callbacks(component_context).m.push(fn);
-	} else {
-		user_effect(() => {
-			const cleanup = untrack(fn);
-			if (typeof cleanup === 'function') return /** @type {() => void} */ (cleanup);
-		});
-	}
+	user_effect(() => {
+		const cleanup = untrack(fn);
+		if (typeof cleanup === 'function') return /** @type {() => void} */ (cleanup);
+	});
 }
 
 /**
