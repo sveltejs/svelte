@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  xml2js: ^0.6.0
-
 importers:
 
   .:
