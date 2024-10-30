@@ -11,5 +11,7 @@ export function NewExpression(node, context) {
 		w.perf_avoid_inline_class(node);
 	}
 
+	context.state.analysis.needs_context = true;
+
 	context.next();
 }
