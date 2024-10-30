@@ -43,7 +43,7 @@ export { derived, get, readable, readonly, writable } from './shared/index.js';
  */
 export function toStore(get, set) {
 	let init_value = get();
-	const store = writable(get(), (set) => {
+	const store = writable(init_value, (set) => {
 		// If the value has changed before we call subscribe, then
 		// we need to treat the value as already having run
 		let ran = init_value !== get();
