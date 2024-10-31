@@ -35,6 +35,61 @@ class MigrationError extends Error {
 }
 
 /**
+ *
+ * @param {State} state
+ */
+function migrate_css(state) {
+	if (!state.analysis.css.ast?.start) return;
+	let code = state.str
+		.snip(state.analysis.css.ast.start, /** @type {number} */ (state.analysis.css.ast?.end))
+		.toString();
+	let starting = 0;
+
+	// since we already blank css we can't work directly on `state.str` so we will create a copy that we can update
+	const str = new MagicString(code);
+	while (code) {
+		if (
+			code.startsWith(':has') ||
+			code.startsWith(':not') ||
+			code.startsWith(':is') ||
+			code.startsWith(':where')
+		) {
+			let start = code.indexOf('(') + 1;
+			let is_global = false;
+			const global_str = ':global';
+			const next_global = code.indexOf(global_str);
+			const str_between = code.substring(start, next_global);
+			if (!str_between.trim()) {
+				is_global = true;
+				start += global_str.length;
+			}
+			let parenthesis = 1;
+			let end = start;
+			let char = code[end];
+			// find the closing parenthesis
+			while (parenthesis !== 0 && char) {
+				if (char === '(') parenthesis++;
+				if (char === ')') parenthesis--;
+				end++;
+				char = code[end];
+			}
+			if (start && end) {
+				if (!is_global) {
+					str.prependLeft(starting + start, ':global(');
+					str.appendRight(starting + end - 1, ')');
+				}
+				starting += end - 1;
+				code = code.substring(end - 1);
+				continue;
+			}
+		}
+		starting++;
+		code = code.substring(1);
+	}
+	state.str.update(state.analysis.css.ast?.start, state.analysis.css.ast?.end, str.toString());
+}
+
+/**
  * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
  * May throw an error if the code is too complex to migrate automatically.
  *
@@ -320,7 +375,10 @@ export function migrate(source, { filename, use_ts } = {}) {
 		if (!parsed.instance && need_script) {
 			str.appendRight(insertion_point, '\n</script>\n\n');
 		}
-		return { code: str.toString() };
+		migrate_css(state);
+		return {
+			code: str.toString()
+		};
 	} catch (e) {
 		if (!(e instanceof MigrationError)) {
 			// eslint-disable-next-line no-console
