@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-feat: migrate `Component` to `ReturnType<typeof Component>` in TS
+fix: migrate `Component` to `ComponentExports<typeof Component>` in TS
