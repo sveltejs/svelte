@@ -2,10 +2,10 @@
 title: 'Runtime warnings'
 ---
 
-## Client errors
+## Client warnings
 
 @include .generated/client-warnings.md
 
-## Shared errors
+## Shared warnings
 
 @include .generated/shared-warnings.md
