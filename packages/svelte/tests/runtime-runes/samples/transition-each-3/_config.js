@@ -13,11 +13,11 @@ export default test({
 		);
 
 		flushSync();
-		raf.tick(50);
+		raf.tick(250);
 
 		assert.htmlEqual(
 			target.innerHTML,
-			'<button>Toggle</button><div style="overflow: hidden; opacity: 0;"><div>1</div><div>2</div><div>3</div></div>'
+			'<button>Toggle</button><div style="opacity: 0;"><div>1</div><div>2</div><div>3</div></div>'
 		);
 
 		await Promise.resolve();

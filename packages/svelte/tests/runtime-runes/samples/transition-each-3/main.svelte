@@ -1,5 +1,5 @@
 <script>
-	import { slide } from 'svelte/transition';
+	import { fade } from 'svelte/transition';
 
 	let toggle = $state(true);
 	let items = $state([ 1, 2, 3 ]);
@@ -15,7 +15,7 @@
 <button onclick={handle_toggle}>Toggle</button>
 
 {#if toggle}
-	<div transition:slide={{ duration: 500 }}>
+	<div transition:fade={{ duration: 500 }}>
 		{#each items as item (item)}
 			<div>{item}</div>
 		{/each}
