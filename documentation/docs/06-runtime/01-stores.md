@@ -6,7 +6,7 @@ title: Stores
 - how to write
 - TODO should the details for the store methods belong to the reference section? -->
 
-> [!NOTE] Prior to the introduction of runes, stores were the primary state management mechanism for anything that couldn't be expressed as component state or props. With runes — which can be used in [`.svelte.js/ts`](svelte-js-files) files as well as in components — stores are rarely necessary, though you will still sometimes encounter them when using Svelte. See [When to use stores](#When-to-use-stores) below.
+> [!NOTE] Prior to the introduction of runes, stores were the primary state management mechanism for anything that couldn't be expressed as component state or props. With runes — which can be used in [`.svelte.js/ts`](svelte-js-files) files as well as in components — stores are rarely necessary, though you will still sometimes encounter them when using Svelte.
 
 A _store_ is an object that allows reactive access to a value via a simple [_store contract_](#Store-contract). The [`svelte/store`](../svelte-store) module contains minimal store implementations that fulfil this contract.
 
@@ -117,7 +117,3 @@ In general, you won't be implementing the subscription logic yourself. Instead, 
 <button onclick={counter.decrement}>decrement</button>
 <button onclick={counter.reset}>reset</button>
 ```
-
-## When to use stores
-
-Stores are still a good solution when you have complex asynchronous data streams or it's important to have more manual control over updating values or listening to changes. If you're familiar with RxJs and want to reuse that knowledge, the `$` also comes in handy for you.
