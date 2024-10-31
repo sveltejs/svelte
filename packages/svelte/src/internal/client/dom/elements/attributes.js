@@ -1,13 +1,18 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
-import { NAMESPACE_SVG } from '../../../../constants.js';
 import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '../../constants.js';
 import { queue_idle_task, queue_micro_task } from '../task.js';
 import { is_capture_event, is_delegated, normalize_attribute } from '../../../../utils.js';
+import {
+	active_effect,
+	active_reaction,
+	set_active_effect,
+	set_active_reaction
+} from '../../runtime.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -55,8 +60,13 @@ export function remove_input_defaults(input) {
 export function set_value(element, value) {
 	// @ts-expect-error
 	var attributes = (element.__attributes ??= {});
-	// @ts-expect-error
-	if (attributes.value === (attributes.value = value) || element.value === value) return;
+	if (
+		attributes.value === (attributes.value = value) ||
+		// @ts-expect-error
+		// `progress` elements always need their value set when its `0`
+		(element.value === value && (value !== 0 || element.nodeName !== 'PROGRESS'))
+	)
+		return;
 	// @ts-expect-error
 	element.value = value;
 }
@@ -106,6 +116,11 @@ export function set_attribute(element, attribute, value, skip_warning) {
 
 	if (attributes[attribute] === (attributes[attribute] = value)) return;
 
+	if (attribute === 'style' && '__styles' in element) {
+		// reset styles to force style: directive to update
+		element.__styles = {};
+	}
+
 	if (attribute === 'loading') {
 		// @ts-expect-error
 		element[LOADING_ATTR_SYMBOL] = value;
@@ -136,10 +151,24 @@ export function set_xlink_attribute(dom, attribute, value) {
  * @param {any} value
  */
 export function set_custom_element_data(node, prop, value) {
-	if (get_setters(node).includes(prop)) {
-		node[prop] = value;
-	} else {
-		set_attribute(node, prop, value);
+	// We need to ensure that setting custom element props, which can
+	// invoke lifecycle methods on other custom elements, does not also
+	// associate those lifecycle methods with the current active reaction
+	// or effect
+	var previous_reaction = active_reaction;
+	var previous_effect = active_effect;
+
+	set_active_reaction(null);
+	set_active_effect(null);
+	try {
+		if (get_setters(node).includes(prop)) {
+			node[prop] = value;
+		} else {
+			set_attribute(node, prop, value);
+		}
+	} finally {
+		set_active_reaction(previous_reaction);
+		set_active_effect(previous_effect);
 	}
 }
 
@@ -290,6 +319,10 @@ export function set_attributes(
 				}
 			}
 		}
+		if (key === 'style' && '__styles' in element) {
+			// reset styles to force style: directive to update
+			element.__styles = {};
+		}
 	}
 
 	// On the first run, ensure that events are added after bindings so
@@ -318,9 +351,11 @@ function get_setters(element) {
 	setters_cache.set(element.nodeName, (setters = []));
 	var descriptors;
 	var proto = get_prototype_of(element);
+	var element_proto = Element.prototype;
 
 	// Stop at Element, from there on there's only unnecessary setters we're not interested in
-	while (proto.constructor.name !== 'Element') {
+	// Do not use contructor.name here as that's unreliable in some browser environments
+	while (element_proto !== proto) {
 		descriptors = get_descriptors(proto);
 
 		for (var key in descriptors) {

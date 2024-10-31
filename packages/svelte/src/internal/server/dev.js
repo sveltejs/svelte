@@ -53,7 +53,11 @@ function print_error(payload, parent, child) {
 }
 
 export function reset_elements() {
+	let old_parent = parent;
 	parent = null;
+	return () => {
+		parent = old_parent;
+	};
 }
 
 /**

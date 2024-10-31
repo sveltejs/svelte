@@ -54,7 +54,7 @@ With that out of the way, let's see how you can use view transitions in your Sve
 
 ## Getting started with view transitions
 
-The best way to see view transitions in action is to try it yourself. You can spin up the SvelteKit demo app by running `npm create svelte@latest` in your local terminal, or in your browser on [StackBlitz](https://sveltekit.new). Make sure to use a browser that supports the view transitions API. Once you have the app running, add the following to the script block in `src/routes/+layout.svelte`.
+The best way to see view transitions in action is to try it yourself. You can spin up the SvelteKit demo app by running `npx sv create` in your local terminal, or in your browser on [StackBlitz](https://sveltekit.new). Make sure to use a browser that supports the view transitions API. Once you have the app running, add the following to the script block in `src/routes/+layout.svelte`.
 
 ```js
 // @errors: 2305 7006 2339 2810

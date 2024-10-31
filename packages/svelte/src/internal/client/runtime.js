@@ -2,7 +2,9 @@
 import { DEV } from 'esm-env';
 import { define_property, get_descriptors, get_prototype_of } from '../shared/utils.js';
 import {
-	destroy_effect,
+	destroy_block_effect_children,
+	destroy_effect_children,
+	destroy_effect_deriveds,
 	effect,
 	execute_effect_teardown,
 	unlink_effect
@@ -300,6 +302,7 @@ export function update_reaction(reaction) {
 	var previous_reaction = active_reaction;
 	var previous_skip_reaction = skip_reaction;
 	var prev_derived_sources = derived_sources;
+	var previous_component_context = component_context;
 	var flags = reaction.f;
 
 	new_deps = /** @type {null | Value[]} */ (null);
@@ -308,6 +311,7 @@ export function update_reaction(reaction) {
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 	skip_reaction = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	derived_sources = null;
+	component_context = reaction.ctx;
 
 	try {
 		var result = /** @type {Function} */ (0, reaction.fn)();
@@ -345,6 +349,7 @@ export function update_reaction(reaction) {
 		active_reaction = previous_reaction;
 		skip_reaction = previous_skip_reaction;
 		derived_sources = prev_derived_sources;
+		component_context = previous_component_context;
 	}
 }
 
@@ -404,48 +409,6 @@ export function remove_reactions(signal, start_index) {
 }
 
 /**
- * @param {Effect} signal
- * @param {boolean} remove_dom
- * @returns {void}
- */
-export function destroy_effect_children(signal, remove_dom = false) {
-	var deriveds = signal.deriveds;
-
-	if (deriveds !== null) {
-		signal.deriveds = null;
-
-		for (var i = 0; i < deriveds.length; i += 1) {
-			destroy_derived(deriveds[i]);
-		}
-	}
-
-	var effect = signal.first;
-	signal.first = signal.last = null;
-
-	while (effect !== null) {
-		var next = effect.next;
-		destroy_effect(effect, remove_dom);
-		effect = next;
-	}
-}
-
-/**
- * @param {Effect} signal
- * @returns {void}
- */
-export function destroy_block_effect_children(signal) {
-	var effect = signal.first;
-
-	while (effect !== null) {
-		var next = effect.next;
-		if ((effect.f & BRANCH_EFFECT) === 0) {
-			destroy_effect(effect);
-		}
-		effect = next;
-	}
-}
-
-/**
  * @param {Effect} effect
  * @returns {void}
  */
@@ -462,7 +425,6 @@ export function update_effect(effect) {
 	var previous_component_context = component_context;
 
 	active_effect = effect;
-	component_context = effect.ctx;
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
@@ -475,6 +437,7 @@ export function update_effect(effect) {
 		} else {
 			destroy_effect_children(effect);
 		}
+		destroy_effect_deriveds(effect);
 
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
@@ -488,7 +451,6 @@ export function update_effect(effect) {
 		handle_error(/** @type {Error} */ (error), effect, previous_component_context);
 	} finally {
 		active_effect = previous_effect;
-		component_context = previous_component_context;
 
 		if (DEV) {
 			dev_current_component_function = previous_component_fn;
@@ -870,8 +832,6 @@ export function invalidate_inner_signals(fn) {
 
 /**
  * Use `untrack` to prevent something from being treated as an `$effect`/`$derived` dependency.
- *
- * https://svelte-5-preview.vercel.app/docs/functions#untrack
  * @template T
  * @param {() => T} fn
  * @returns {T}

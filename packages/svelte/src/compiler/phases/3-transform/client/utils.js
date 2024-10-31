@@ -136,7 +136,7 @@ export function build_hoisted_params(node, context) {
 	if (node.params.length === 0) {
 		if (hoisted_params.length > 0) {
 			// For the event object
-			params.push(b.id('_'));
+			params.push(b.id(context.state.scope.generate('_')));
 		}
 	} else {
 		for (const param of node.params) {

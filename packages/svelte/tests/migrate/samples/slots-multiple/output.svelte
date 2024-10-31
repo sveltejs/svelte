@@ -1,10 +1,12 @@
 <script>
-	/** @type {{children?: import('svelte').Snippet, dashed_name?: import('svelte').Snippet}} */
-	let { children, dashed_name } = $props();
+	/**
+	 * @typedef {Object} Props
+	 * @property {import('svelte').Snippet} [children]
+	 */
+
+	/** @type {Props} */
+	let { children } = $props();
 </script>
 
 <button>{@render children?.()}</button>
 <button>{@render children?.()}</button>
-
-{@render dashed_name?.()}
-{@render dashed_name?.()}

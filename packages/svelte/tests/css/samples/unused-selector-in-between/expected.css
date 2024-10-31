@@ -1,0 +1,7 @@
+
+	h1.svelte-xyz,
+	h2.svelte-xyz,
+	h3.svelte-xyz, /* (unused) h4*/
+	p.svelte-xyz {
+		color: red;
+	}

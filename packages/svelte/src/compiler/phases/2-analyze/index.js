@@ -505,7 +505,11 @@ export function analyze_component(root, source, options) {
 								if (is_reference(node, parent)) {
 									const binding = context.state.scope.get(node.name);
 
-									if (binding && binding.kind === 'normal') {
+									if (
+										binding &&
+										binding.kind === 'normal' &&
+										binding.declaration_kind !== 'import'
+									) {
 										binding.kind = 'state';
 										binding.mutated = binding.updated = true;
 									}

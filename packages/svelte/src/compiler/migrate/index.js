@@ -18,20 +18,89 @@ import {
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
 import { validate_component_options } from '../validate-options.js';
 import { is_svg, is_void } from '../../utils.js';
+import { regex_is_valid_identifier } from '../phases/patterns.js';
 
 const regex_style_tags = /(<style[^>]+>)([\S\s]*?)(<\/style>)/g;
 const style_placeholder = '/*$$__STYLE_CONTENT__$$*/';
+
+let has_migration_task = false;
+
+class MigrationError extends Error {
+	/**
+	 * @param {string} msg
+	 */
+	constructor(msg) {
+		super(msg);
+	}
+}
+
+/**
+ *
+ * @param {State} state
+ */
+function migrate_css(state) {
+	if (!state.analysis.css.ast?.start) return;
+	let code = state.str
+		.snip(state.analysis.css.ast.start, /** @type {number} */ (state.analysis.css.ast?.end))
+		.toString();
+	let starting = 0;
+
+	// since we already blank css we can't work directly on `state.str` so we will create a copy that we can update
+	const str = new MagicString(code);
+	while (code) {
+		if (
+			code.startsWith(':has') ||
+			code.startsWith(':not') ||
+			code.startsWith(':is') ||
+			code.startsWith(':where')
+		) {
+			let start = code.indexOf('(') + 1;
+			let is_global = false;
+			const global_str = ':global';
+			const next_global = code.indexOf(global_str);
+			const str_between = code.substring(start, next_global);
+			if (!str_between.trim()) {
+				is_global = true;
+				start += global_str.length;
+			}
+			let parenthesis = 1;
+			let end = start;
+			let char = code[end];
+			// find the closing parenthesis
+			while (parenthesis !== 0 && char) {
+				if (char === '(') parenthesis++;
+				if (char === ')') parenthesis--;
+				end++;
+				char = code[end];
+			}
+			if (start && end) {
+				if (!is_global) {
+					str.prependLeft(starting + start, ':global(');
+					str.appendRight(starting + end - 1, ')');
+				}
+				starting += end - 1;
+				code = code.substring(end - 1);
+				continue;
+			}
+		}
+		starting++;
+		code = code.substring(1);
+	}
+	state.str.update(state.analysis.css.ast?.start, state.analysis.css.ast?.end, str.toString());
+}
 
 /**
  * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
  * May throw an error if the code is too complex to migrate automatically.
  *
  * @param {string} source
- * @param {{filename?: string}} [options]
+ * @param {{ filename?: string, use_ts?: boolean }} [options]
  * @returns {{ code: string; }}
  */
-export function migrate(source, { filename } = {}) {
+export function migrate(source, { filename, use_ts } = {}) {
+	let og_source = source;
 	try {
+		has_migration_task = false;
 		// Blank CSS, could contain SCSS or similar that needs a preprocessor.
 		// Since we don't care about CSS in this migration, we'll just ignore it.
 		/** @type {Array<[number, string]>} */
@@ -76,6 +145,7 @@ export function migrate(source, { filename } = {}) {
 			props: [],
 			props_insertion_point: parsed.instance?.content.start ?? 0,
 			has_props_rune: false,
+			has_type_or_fallback: false,
 			end: source.length,
 			names: {
 				props: analysis.root.unique('props').name,
@@ -99,7 +169,13 @@ export function migrate(source, { filename } = {}) {
 			script_insertions: new Set(),
 			derived_components: new Map(),
 			derived_labeled_statements: new Set(),
-			has_svelte_self: false
+			has_svelte_self: false,
+			uses_ts:
+				// Some people could use jsdoc but have a tsconfig.json, so double-check file for jsdoc indicators
+				(use_ts && !source.includes('@type {')) ||
+				!!parsed.instance?.attributes.some(
+					(attr) => attr.name === 'lang' && /** @type {any} */ (attr).value[0].data === 'ts'
+				)
 		};
 
 		if (parsed.module) {
@@ -192,40 +268,41 @@ export function migrate(source, { filename } = {}) {
 				// some render tags or forwarded event attributes to add
 				str.appendRight(insertion_point, ` ${props},`);
 			} else {
-				const uses_ts = parsed.instance?.attributes.some(
-					(attr) => attr.name === 'lang' && /** @type {any} */ (attr).value[0].data === 'ts'
-				);
 				const type_name = state.scope.root.unique('Props').name;
 				let type = '';
-				if (uses_ts) {
-					type = `interface ${type_name} {${newline_separator}${state.props
-						.map((prop) => {
-							const comment = prop.comment ? `${prop.comment}${newline_separator}` : '';
-							return `${comment}${prop.exported}${prop.optional ? '?' : ''}: ${prop.type};`;
-						})
-						.join(newline_separator)}`;
-					if (analysis.uses_props || analysis.uses_rest_props) {
-						type += `${state.props.length > 0 ? newline_separator : ''}[key: string]: any`;
+
+				// Try to infer when we don't want to add types (e.g. user doesn't use types, or this is a zero-types +page.svelte)
+				if (state.has_type_or_fallback || state.props.every((prop) => prop.slot_name)) {
+					if (state.uses_ts) {
+						type = `interface ${type_name} {${newline_separator}${state.props
+							.map((prop) => {
+								const comment = prop.comment ? `${prop.comment}${newline_separator}` : '';
+								return `${comment}${prop.exported}${prop.optional ? '?' : ''}: ${prop.type};`;
+							})
+							.join(newline_separator)}`;
+						if (analysis.uses_props || analysis.uses_rest_props) {
+							type += `${state.props.length > 0 ? newline_separator : ''}[key: string]: any`;
+						}
+						type += `\n${indent}}`;
+					} else {
+						type = `/**\n${indent} * @typedef {Object} ${type_name}${state.props
+							.map((prop) => {
+								return `\n${indent} * @property {${prop.type}} ${prop.optional ? `[${prop.exported}]` : prop.exported}${prop.comment ? ` - ${prop.comment}` : ''}`;
+							})
+							.join(``)}\n${indent} */`;
 					}
-					type += `\n${indent}}`;
-				} else {
-					type = `{${state.props
-						.map((prop) => {
-							return `${prop.exported}${prop.optional ? '?' : ''}: ${prop.type}`;
-						})
-						.join(`, `)}`;
-					if (analysis.uses_props || analysis.uses_rest_props) {
-						type += `${state.props.length > 0 ? ', ' : ''}[key: string]: any`;
-					}
-					type += '}';
 				}
 
 				let props_declaration = `let {${props_separator}${props}${has_many_props ? `\n${indent}` : ' '}}`;
-				if (uses_ts) {
-					props_declaration = `${type}\n\n${indent}${props_declaration}`;
+				if (state.uses_ts) {
+					if (type) {
+						props_declaration = `${type}\n\n${indent}${props_declaration}`;
+					}
 					props_declaration = `${props_declaration}${type ? `: ${type_name}` : ''} = $props();`;
 				} else {
-					props_declaration = `/** @type {${type}} */\n${indent}${props_declaration}`;
+					if (type) {
+						props_declaration = `${state.props.length > 0 ? `${type}\n\n${indent}` : ''}/** @type {${state.props.length > 0 ? type_name : ''}${analysis.uses_props || analysis.uses_rest_props ? `${state.props.length > 0 ? ' & ' : ''}{ [key: string]: any }` : ''}} */\n${indent}${props_declaration}`;
+					}
 					props_declaration = `${props_declaration} = $props();`;
 				}
 
@@ -298,11 +375,26 @@ export function migrate(source, { filename } = {}) {
 		if (!parsed.instance && need_script) {
 			str.appendRight(insertion_point, '\n</script>\n\n');
 		}
-		return { code: str.toString() };
+		migrate_css(state);
+		return {
+			code: str.toString()
+		};
 	} catch (e) {
-		// eslint-disable-next-line no-console
-		console.error('Error while migrating Svelte code');
-		throw e;
+		if (!(e instanceof MigrationError)) {
+			// eslint-disable-next-line no-console
+			console.error('Error while migrating Svelte code', e);
+		}
+		has_migration_task = true;
+		return {
+			code: `<!-- @migration-task Error while migrating Svelte code: ${/** @type {any} */ (e).message} -->\n${og_source}`
+		};
+	} finally {
+		if (has_migration_task) {
+			// eslint-disable-next-line no-console
+			console.log(
+				`One or more \`@migration-task\` comments were added to ${filename ? `\`${filename}\`` : "a file (unfortunately we don't know the name)"}, please check them and complete the migration manually.`
+			);
+		}
 	}
 }
 
@@ -318,6 +410,7 @@ export function migrate(source, { filename } = {}) {
  *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string; type_only?: boolean; needs_refine_type?: boolean; }>;
  *  props_insertion_point: number;
  *  has_props_rune: boolean;
+ *  has_type_or_fallback: boolean;
  *  end: number;
  * 	names: Record<string, string>;
  * 	legacy_imports: Set<string>;
@@ -326,6 +419,7 @@ export function migrate(source, { filename } = {}) {
  * 	derived_labeled_statements: Set<LabeledStatement>;
  *  has_svelte_self: boolean;
  *  migrate_prop_component_type?: boolean;
+ *  uses_ts: boolean;
  * }} State
  */
 
@@ -370,6 +464,40 @@ const instance_script = {
 	},
 	ImportDeclaration(node, { state }) {
 		state.props_insertion_point = node.end ?? state.props_insertion_point;
+		if (node.source.value === 'svelte') {
+			let illegal_specifiers = [];
+			let removed_specifiers = 0;
+			for (let specifier of node.specifiers) {
+				if (
+					specifier.type === 'ImportSpecifier' &&
+					['beforeUpdate', 'afterUpdate'].includes(specifier.imported.name)
+				) {
+					const references = state.scope.references.get(specifier.local.name);
+					if (!references) {
+						let end = /** @type {number} */ (
+							state.str.original.indexOf(',', specifier.end) !== -1 &&
+							state.str.original.indexOf(',', specifier.end) <
+								state.str.original.indexOf('}', specifier.end)
+								? state.str.original.indexOf(',', specifier.end) + 1
+								: specifier.end
+						);
+						while (state.str.original[end].trim() === '') end++;
+						state.str.remove(/** @type {number} */ (specifier.start), end);
+						removed_specifiers++;
+						continue;
+					}
+					illegal_specifiers.push(specifier.imported.name);
+				}
+			}
+			if (removed_specifiers === node.specifiers.length) {
+				state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
+			}
+			if (illegal_specifiers.length > 0) {
+				throw new MigrationError(
+					`Can't migrate code with ${illegal_specifiers.join(' and ')}. Please migrate by hand.`
+				);
+			}
+		}
 	},
 	ExportNamedDeclaration(node, { state, next }) {
 		if (node.declaration) {
@@ -415,12 +543,14 @@ const instance_script = {
 				bindings = state.scope.get_bindings(declarator);
 			} catch (e) {
 				// no bindings, so we can skip this
+				next();
 				continue;
 			}
 			const has_state = bindings.some((binding) => binding.kind === 'state');
 			const has_props = bindings.some((binding) => binding.kind === 'bindable_prop');
 
 			if (!has_state && !has_props) {
+				next();
 				continue;
 			}
 
@@ -429,7 +559,7 @@ const instance_script = {
 
 				if (declarator.id.type !== 'Identifier') {
 					// TODO invest time in this?
-					throw new Error(
+					throw new MigrationError(
 						'Encountered an export declaration pattern that is not supported for automigration.'
 					);
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
@@ -460,36 +590,42 @@ const instance_script = {
 				const binding = /** @type {Binding} */ (state.scope.get(name));
 
 				if (state.analysis.uses_props && (declarator.init || binding.updated)) {
-					throw new Error(
+					throw new MigrationError(
 						'$$props is used together with named props in a way that cannot be automatically migrated.'
 					);
 				}
 
 				const prop = state.props.find((prop) => prop.exported === (binding.prop_alias || name));
 				if (prop) {
+					next();
 					// $$Props type was used
 					prop.init = declarator.init
-						? state.str.original.substring(
-								/** @type {number} */ (declarator.init.start),
-								/** @type {number} */ (declarator.init.end)
-							)
+						? state.str
+								.snip(
+									/** @type {number} */ (declarator.init.start),
+									/** @type {number} */ (declarator.init.end)
+								)
+								.toString()
 						: '';
 					prop.bindable = binding.updated;
 					prop.exported = binding.prop_alias || name;
 					prop.type_only = false;
 				} else {
+					next();
 					state.props.push({
 						local: name,
 						exported: binding.prop_alias ? binding.prop_alias : name,
 						init: declarator.init
-							? state.str.original.substring(
-									/** @type {number} */ (declarator.init.start),
-									/** @type {number} */ (declarator.init.end)
-								)
+							? state.str
+									.snip(
+										/** @type {number} */ (declarator.init.start),
+										/** @type {number} */ (declarator.init.end)
+									)
+									.toString()
 							: '',
 						optional: !!declarator.init,
 						bindable: binding.updated,
-						...extract_type_and_comment(declarator, state.str, path)
+						...extract_type_and_comment(declarator, state, path)
 					});
 				}
 
@@ -530,23 +666,37 @@ const instance_script = {
 						const declaration = reference.path.find((el) => el.type === 'VariableDeclaration');
 						const assignment = reference.path.find((el) => el.type === 'AssignmentExpression');
 						const update = reference.path.find((el) => el.type === 'UpdateExpression');
-						const labeled = reference.path.find(
-							(el) => el.type === 'LabeledStatement' && el.label.name === '$'
+						const labeled = /** @type {LabeledStatement | undefined} */ (
+							reference.path.find((el) => el.type === 'LabeledStatement' && el.label.name === '$')
 						);
 
-						if (assignment && labeled) {
+						if (
+							assignment &&
+							labeled &&
+							// ensure that $: foo = bar * 2 is not counted as a reassignment of bar
+							(labeled.body.type !== 'ExpressionStatement' ||
+								labeled.body.expression !== assignment ||
+								(assignment.left.type === 'Identifier' &&
+									assignment.left.name === binding.node.name))
+						) {
 							if (assignment_in_labeled) return false;
 							assignment_in_labeled = /** @type {AssignmentExpression} */ (assignment);
-							labeled_statement = /** @type {LabeledStatement} */ (labeled);
+							labeled_statement = labeled;
 						}
 
-						return !update && (declaration || (labeled && assignment) || (!labeled && !assignment));
+						return (
+							!update &&
+							((declaration && binding.initial) ||
+								(labeled && assignment) ||
+								(!labeled && !assignment))
+						);
 					})
 				);
 
 				const labeled_has_single_assignment =
 					labeled_statement?.body.type === 'BlockStatement' &&
-					labeled_statement.body.body.length === 1;
+					labeled_statement.body.body.length === 1 &&
+					labeled_statement.body.body[0].type === 'ExpressionStatement';
 
 				const is_expression_assignment =
 					labeled_statement?.body.type === 'ExpressionStatement' &&
@@ -705,7 +855,12 @@ const instance_script = {
 			);
 			const bindings = ids.map((id) => state.scope.get(id.name));
 			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
-			if (reassigned_bindings.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
+
+			if (
+				reassigned_bindings.length === 0 &&
+				!bindings.some((b) => b?.kind === 'store_sub') &&
+				node.body.expression.left.type !== 'MemberExpression'
+			) {
 				let { start, end } = /** @type {{ start: number, end: number }} */ (
 					node.body.expression.right
 				);
@@ -783,6 +938,20 @@ const instance_script = {
 	}
 };
 
+/**
+ *
+ * @param {State} state
+ * @param {number} start
+ * @param {number} end
+ */
+function trim_block(state, start, end) {
+	const original = state.str.snip(start, end).toString();
+	const without_parens = original.substring(1, original.length - 1);
+	if (without_parens.trim().length !== without_parens.length) {
+		state.str.update(start + 1, end - 1, without_parens.trim());
+	}
+}
+
 /** @type {Visitors<SvelteNode, State>} */
 const template = {
 	Identifier(node, { state, path }) {
@@ -806,6 +975,7 @@ const template = {
 		const source = state.str.original.substring(node.start, node.end);
 		if (!state.filename) {
 			const indent = guess_indent(source);
+			has_migration_task = true;
 			state.str.prependRight(
 				node.start,
 				`<!-- @migration-task: svelte:self is deprecated, import this Svelte file into itself instead -->\n${indent}`
@@ -965,6 +1135,10 @@ const template = {
 			if (attr.type === 'SpreadAttribute') {
 				slot_props += `...${state.str.original.substring(/** @type {number} */ (attr.expression.start), attr.expression.end)}, `;
 			} else if (attr.type === 'Attribute') {
+				if (attr.name === 'slot') {
+					continue;
+				}
+
 				if (attr.name === 'name') {
 					slot_name = /** @type {any} */ (attr.value)[0].data;
 				} else {
@@ -1001,6 +1175,11 @@ const template = {
 			name = existing_prop.local;
 		} else if (slot_name !== 'default') {
 			name = state.scope.generate(slot_name);
+			if (name !== slot_name) {
+				throw new MigrationError(
+					'This migration would change the name of a slot making the component unusable'
+				);
+			}
 		}
 
 		if (!existing_prop) {
@@ -1039,6 +1218,46 @@ const template = {
 		if (migrated !== node.data) {
 			state.str.overwrite(node.start + '<!--'.length, node.end - '-->'.length, migrated);
 		}
+	},
+	HtmlTag(node, { state, next }) {
+		trim_block(state, node.start, node.end);
+		next();
+	},
+	ConstTag(node, { state, next }) {
+		trim_block(state, node.start, node.end);
+		next();
+	},
+	IfBlock(node, { state, next }) {
+		const start = node.start;
+		const end = state.str.original.indexOf('}', node.test.end) + 1;
+		trim_block(state, start, end);
+		next();
+	},
+	AwaitBlock(node, { state, next }) {
+		const start = node.start;
+		const end =
+			state.str.original.indexOf(
+				'}',
+				node.pending !== null ? node.expression.end : node.value?.end
+			) + 1;
+		trim_block(state, start, end);
+		if (node.pending !== null) {
+			const start = state.str.original.lastIndexOf('{', node.value?.start);
+			const end = state.str.original.indexOf('}', node.value?.end) + 1;
+			trim_block(state, start, end);
+		}
+		if (node.catch !== null) {
+			const start = state.str.original.lastIndexOf('{', node.error?.start);
+			const end = state.str.original.indexOf('}', node.error?.end) + 1;
+			trim_block(state, start, end);
+		}
+		next();
+	},
+	KeyBlock(node, { state, next }) {
+		const start = node.start;
+		const end = state.str.original.indexOf('}', node.expression.end) + 1;
+		trim_block(state, start, end);
+		next();
 	}
 };
 
@@ -1062,6 +1281,10 @@ function migrate_slot_usage(node, path, state) {
 	let snippet_name = 'children';
 	let snippet_props = [];
 
+	// if we stop the transform because the name is not correct we don't want to
+	// remove the let directive and they could come before the name
+	let removal_queue = [];
+
 	for (let attribute of node.attributes) {
 		if (
 			attribute.type === 'Attribute' &&
@@ -1069,6 +1292,35 @@ function migrate_slot_usage(node, path, state) {
 			is_text_attribute(attribute)
 		) {
 			snippet_name = attribute.value[0].data;
+			// the default slot in svelte 4 if what the children slot is for svelte 5
+			if (snippet_name === 'default') {
+				snippet_name = 'children';
+			}
+			if (!regex_is_valid_identifier.test(snippet_name)) {
+				has_migration_task = true;
+				state.str.appendLeft(
+					node.start,
+					`<!-- @migration-task: migrate this slot by hand, \`${snippet_name}\` is an invalid identifier -->\n${state.indent}`
+				);
+				return;
+			}
+			if (parent?.type === 'Component' || parent?.type === 'SvelteComponent') {
+				for (let attribute of parent.attributes) {
+					if (attribute.type === 'Attribute' || attribute.type === 'BindDirective') {
+						if (attribute.name === snippet_name) {
+							state.str.appendLeft(
+								node.start,
+								`<!-- @migration-task: migrate this slot by hand, \`${snippet_name}\` would shadow a prop on the parent component -->\n${state.indent}`
+							);
+							return;
+						}
+					}
+				}
+			}
+			// flush the queue after we found the name
+			for (let remove_let of removal_queue) {
+				remove_let();
+			}
 			state.str.remove(attribute.start, attribute.end);
 		}
 		if (attribute.type === 'LetDirective') {
@@ -1078,7 +1330,14 @@ function migrate_slot_usage(node, path, state) {
 						? `: ${state.str.original.substring(/** @type {number} */ (attribute.expression.start), /** @type {number} */ (attribute.expression.end))}`
 						: '')
 			);
-			state.str.remove(attribute.start, attribute.end);
+			// we just add to the queue to remove them after we found if we need to migrate or we bail
+			removal_queue.push(() => state.str.remove(attribute.start, attribute.end));
+		}
+	}
+
+	if (removal_queue.length > 0) {
+		for (let remove_let of removal_queue) {
+			remove_let();
 		}
 	}
 
@@ -1161,31 +1420,38 @@ function migrate_slot_usage(node, path, state) {
 				[node.end, state.str.original.length]
 			]
 		});
-		state.str.appendLeft(node.end, `\n${state.indent.repeat(path.length - 2)}{/snippet}`);
+		const str = `\n${state.indent.repeat(path.length - 2)}{/snippet}`;
+
+		if (node.type === 'SlotElement') {
+			state.str.appendRight(node.end, str);
+		} else {
+			state.str.appendLeft(node.end, str);
+		}
 	}
 }
 
 /**
  * @param {VariableDeclarator} declarator
- * @param {MagicString} str
+ * @param {State} state
  * @param {ASTNode[]} path
  */
-function extract_type_and_comment(declarator, str, path) {
+function extract_type_and_comment(declarator, state, path) {
+	const str = state.str;
 	const parent = path.at(-1);
 
 	// Try to find jsdoc above the declaration
 	let comment_node = /** @type {Node} */ (parent)?.leadingComments?.at(-1);
-	if (comment_node?.type !== 'Block') comment_node = undefined;
 
 	const comment_start = /** @type {any} */ (comment_node)?.start;
 	const comment_end = /** @type {any} */ (comment_node)?.end;
-	const comment = comment_node && str.original.substring(comment_start, comment_end);
+	let comment = comment_node && str.original.substring(comment_start, comment_end);
 
 	if (comment_node) {
 		str.update(comment_start, comment_end, '');
 	}
 
 	if (declarator.id.typeAnnotation) {
+		state.has_type_or_fallback = true;
 		let start = declarator.id.typeAnnotation.start + 1; // skip the colon
 		while (str.original[start] === ' ') {
 			start++;
@@ -1196,23 +1462,45 @@ function extract_type_and_comment(declarator, str, path) {
 		};
 	}
 
+	let cleaned_comment_arr = comment
+		?.split('\n')
+		.map((line) =>
+			line
+				.trim()
+				// replace `// ` for one liners
+				.replace(/^\/\/\s*/g, '')
+				// replace `\**` for the initial JSDoc
+				.replace(/^\/\*\*?\s*/g, '')
+				// migrate `*/` for the end of JSDoc
+				.replace(/\s*\*\/$/g, '')
+				// remove any initial `* ` to clean the comment
+				.replace(/^\*\s*/g, '')
+		)
+		.filter(Boolean);
+	const first_at_comment = cleaned_comment_arr?.findIndex((line) => line.startsWith('@'));
+	let cleaned_comment = cleaned_comment_arr
+		?.slice(0, first_at_comment !== -1 ? first_at_comment : cleaned_comment_arr.length)
+		.join('\n');
+
 	// try to find a comment with a type annotation, hinting at jsdoc
 	if (parent?.type === 'ExportNamedDeclaration' && comment_node) {
+		state.has_type_or_fallback = true;
 		const match = /@type {(.+)}/.exec(comment_node.value);
 		if (match) {
-			return { type: match[1] };
+			return { type: match[1], comment: cleaned_comment };
 		}
 	}
 
 	// try to infer it from the init
 	if (declarator.init?.type === 'Literal') {
+		state.has_type_or_fallback = true; // only assume type if it's trivial to infer - else someone would've added a type annotation
 		const type = typeof declarator.init.value;
 		if (type === 'string' || type === 'number' || type === 'boolean') {
-			return { type, comment };
+			return { type, comment: state.uses_ts ? comment : cleaned_comment };
 		}
 	}
 
-	return { type: 'any', comment };
+	return { type: 'any', comment: state.uses_ts ? comment : cleaned_comment };
 }
 
 // Ensure modifiers are applied in the same order as Svelte 4
@@ -1368,7 +1656,7 @@ function handle_identifier(node, state, path) {
 			);
 		} else {
 			const binding = state.scope.get(node.name);
-			if (binding?.kind === 'bindable_prop') {
+			if (binding?.kind === 'bindable_prop' && binding.node !== node) {
 				state.str.prependLeft(/** @type {number} */ (node.start), `${state.names.props}.`);
 			}
 		}
@@ -1388,7 +1676,12 @@ function handle_identifier(node, state, path) {
 			if (existing_prop) {
 				name = existing_prop.local;
 			} else if (name !== 'default') {
-				name = state.scope.generate(name);
+				let new_name = state.scope.generate(name);
+				if (new_name !== name) {
+					throw new MigrationError(
+						'This migration would change the name of a slot making the component unusable'
+					);
+				}
 			}
 
 			name = name === 'default' ? 'children' : name;
@@ -1405,7 +1698,7 @@ function handle_identifier(node, state, path) {
 					// we start with any and delegate to when the slot
 					// is actually rendered (it might not happen in that case)
 					// any is still a safe bet
-					type: `import('svelte').Snippet<[any]>}`,
+					type: `import('svelte').Snippet<[any]>`,
 					needs_refine_type: true
 				});
 			}
@@ -1426,6 +1719,8 @@ function handle_identifier(node, state, path) {
 			parent.type === 'TSInterfaceDeclaration' ? parent.body.body : parent.typeAnnotation?.members;
 		if (Array.isArray(members)) {
 			if (node.name === '$$Props') {
+				state.has_type_or_fallback = true;
+
 				for (const member of members) {
 					const prop = state.props.find((prop) => prop.exported === member.key.name);
 

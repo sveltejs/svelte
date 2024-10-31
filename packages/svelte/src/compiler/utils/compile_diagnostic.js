@@ -39,6 +39,7 @@ function get_code_frame(source, line, column) {
  * @typedef {{
  * 	code: string;
  * 	message: string;
+ *  stack?: string;
  * 	filename?: string;
  * 	start?: Location;
  * 	end?: Location;
@@ -48,7 +49,7 @@ function get_code_frame(source, line, column) {
  */
 
 /** @implements {ICompileDiagnostic} */
-export class CompileDiagnostic extends Error {
+export class CompileDiagnostic {
 	name = 'CompileDiagnostic';
 
 	/**
@@ -57,8 +58,8 @@ export class CompileDiagnostic extends Error {
 	 * @param {[number, number] | undefined} position
 	 */
 	constructor(code, message, position) {
-		super(message);
 		this.code = code;
+		this.message = message;
 
 		if (state.filename) {
 			this.filename = state.filename;

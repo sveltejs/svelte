@@ -2,7 +2,7 @@ import { DEV } from 'esm-env';
 import { render_effect, teardown } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
-import { get_proxied_value, is } from '../../../proxy.js';
+import { is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
 import { is_runes } from '../../../runtime.js';
@@ -126,7 +126,7 @@ export function bind_group(inputs, group_index, input, get, set = get) {
 		if (is_checkbox) {
 			value = value || [];
 			// @ts-ignore
-			input.checked = get_proxied_value(value).includes(get_proxied_value(input.__value));
+			input.checked = value.includes(input.__value);
 		} else {
 			// @ts-ignore
 			input.checked = is(input.__value, value);

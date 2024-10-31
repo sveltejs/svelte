@@ -29,6 +29,6 @@ export function UseDirective(node, context) {
 	}
 
 	// actions need to run after attribute updates in order with bindings/events
-	context.state.after_update.push(b.stmt(b.call('$.action', ...args)));
+	context.state.init.push(b.stmt(b.call('$.action', ...args)));
 	context.next();
 }

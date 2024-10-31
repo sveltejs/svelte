@@ -100,11 +100,12 @@ export function invalid_raw_snippet_render() {
 }
 
 /**
- * Detected a migrated `$:` reactive block that both accesses and updates the same reactive value. This may cause recursive updates when converted to an `$effect`.
+ * Detected a migrated `$:` reactive block in `%filename%` that both accesses and updates the same reactive value. This may cause recursive updates when converted to an `$effect`.
+ * @param {string} filename
  */
-export function legacy_recursive_reactive_block() {
+export function legacy_recursive_reactive_block(filename) {
 	if (DEV) {
-		console.warn(`%c[svelte] legacy_recursive_reactive_block\n%cDetected a migrated \`$:\` reactive block that both accesses and updates the same reactive value. This may cause recursive updates when converted to an \`$effect\`.`, bold, normal);
+		console.warn(`%c[svelte] legacy_recursive_reactive_block\n%cDetected a migrated \`$:\` reactive block in \`${filename}\` that both accesses and updates the same reactive value. This may cause recursive updates when converted to an \`$effect\`.`, bold, normal);
 	} else {
 		// TODO print a link to the documentation
 		console.warn("legacy_recursive_reactive_block");

@@ -57,7 +57,7 @@ export function bind_not_bindable(key, component, name) {
 }
 
 /**
- * %parent% called `%method%` on an instance of %component%, which is no longer valid in Svelte 5. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information
+ * %parent% called `%method%` on an instance of %component%, which is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information
  * @param {string} parent
  * @param {string} method
  * @param {string} component
@@ -65,7 +65,7 @@ export function bind_not_bindable(key, component, name) {
  */
 export function component_api_changed(parent, method, component) {
 	if (DEV) {
-		const error = new Error(`component_api_changed\n${parent} called \`${method}\` on an instance of ${component}, which is no longer valid in Svelte 5. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information`);
+		const error = new Error(`component_api_changed\n${parent} called \`${method}\` on an instance of ${component}, which is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -76,14 +76,14 @@ export function component_api_changed(parent, method, component) {
 }
 
 /**
- * Attempted to instantiate %component% with `new %name%`, which is no longer valid in Svelte 5. If this component is not under your control, set the `compatibility.componentApi` compiler option to `4` to keep it working. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information
+ * Attempted to instantiate %component% with `new %name%`, which is no longer valid in Svelte 5. If this component is not under your control, set the `compatibility.componentApi` compiler option to `4` to keep it working. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information
  * @param {string} component
  * @param {string} name
  * @returns {never}
  */
 export function component_api_invalid_new(component, name) {
 	if (DEV) {
-		const error = new Error(`component_api_invalid_new\nAttempted to instantiate ${component} with \`new ${name}\`, which is no longer valid in Svelte 5. If this component is not under your control, set the \`compatibility.componentApi\` compiler option to \`4\` to keep it working. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information`);
+		const error = new Error(`component_api_invalid_new\nAttempted to instantiate ${component} with \`new ${name}\`, which is no longer valid in Svelte 5. If this component is not under your control, set the \`compatibility.componentApi\` compiler option to \`4\` to keep it working. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -343,12 +343,12 @@ export function state_unsafe_local_read() {
 }
 
 /**
- * Updating state inside a derived or logic block expression is forbidden. If the value should not be reactive, declare it without `$state`
+ * Updating state inside a derived or a template expression is forbidden. If the value should not be reactive, declare it without `$state`
  * @returns {never}
  */
 export function state_unsafe_mutation() {
 	if (DEV) {
-		const error = new Error(`state_unsafe_mutation\nUpdating state inside a derived or logic block expression is forbidden. If the value should not be reactive, declare it without \`$state\``);
+		const error = new Error(`state_unsafe_mutation\nUpdating state inside a derived or a template expression is forbidden. If the value should not be reactive, declare it without \`$state\``);
 
 		error.name = 'Svelte error';
 		throw error;

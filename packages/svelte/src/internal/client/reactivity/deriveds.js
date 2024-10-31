@@ -17,7 +17,8 @@ import {
 	skip_reaction,
 	update_reaction,
 	increment_version,
-	set_active_effect
+	set_active_effect,
+	component_context
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -44,6 +45,7 @@ export function derived(fn) {
 	/** @type {Derived<V>} */
 	const signal = {
 		children: null,
+		ctx: component_context,
 		deps: null,
 		equals,
 		f: flags,
@@ -169,5 +171,5 @@ export function destroy_derived(signal) {
 	set_signal_status(signal, DESTROYED);
 
 	// TODO we need to ensure we remove the derived from any parent derives
-	signal.v = signal.children = signal.deps = signal.reactions = null;
+	signal.v = signal.children = signal.deps = signal.ctx = signal.reactions = null;
 }

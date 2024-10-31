@@ -1,8 +1,12 @@
 <x>
 	<y>
 		<z></z>
+		{#if foo}
+			<d></d>
+		{/if}
 	</y>
 </x>
+<c></c>
 
 <style>
 	x:has(y) {
@@ -81,11 +85,30 @@
 	.unused x:has(y) {
 		color: red;
 	}
+	.unused:has(.unused), x:has(y) {
+		color: green;
+	}
 
 	x:has(> y) {
 		color: green;
 	}
+	y:has(> d) {
+		color: green;
+	}
 	x:has(> z) {
 		color: red;
+	}
+	x:has(> d) {
+		color: red;
+	}
+	x > y:has(z) {
+		color: green;
+	}
+
+	x:has(y) z {
+		color: green;
+	}
+	x:has(y) + c {
+		color: green;
 	}
 </style>

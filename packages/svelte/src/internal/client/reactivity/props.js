@@ -1,4 +1,4 @@
-/** @import { Derived, Source } from './types.js' */
+/** @import { Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
 	PROPS_IS_BINDABLE,
@@ -12,7 +12,6 @@ import { mutable_source, set, source } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
 import {
 	active_effect,
-	active_reaction,
 	get,
 	is_signals_recorded,
 	set_active_effect,
@@ -21,8 +20,9 @@ import {
 } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import { BRANCH_EFFECT, DESTROYED, LEGACY_DERIVED_PROP, ROOT_EFFECT } from '../constants.js';
+import { BRANCH_EFFECT, LEGACY_DERIVED_PROP, ROOT_EFFECT } from '../constants.js';
 import { proxy } from '../proxy.js';
+import { capture_store_binding } from './store.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -177,6 +177,19 @@ const spread_props_handler = {
 			if (typeof p === 'object' && p !== null && key in p) return p[key];
 		}
 	},
+	set(target, key, value) {
+		let i = target.props.length;
+		while (i--) {
+			let p = target.props[i];
+			if (is_function(p)) p = p();
+			const desc = get_descriptor(p, key);
+			if (desc && desc.set) {
+				desc.set(value);
+				return true;
+			}
+		}
+		return false;
+	},
 	getOwnPropertyDescriptor(target, key) {
 		let i = target.props.length;
 		while (i--) {
@@ -260,8 +273,14 @@ export function prop(props, key, flags, fallback) {
 	var runes = (flags & PROPS_IS_RUNES) !== 0;
 	var bindable = (flags & PROPS_IS_BINDABLE) !== 0;
 	var lazy = (flags & PROPS_IS_LAZY_INITIAL) !== 0;
+	var is_store_sub = false;
+	var prop_value;
 
-	var prop_value = /** @type {V} */ (props[key]);
+	if (bindable) {
+		[prop_value, is_store_sub] = capture_store_binding(() => /** @type {V} */ (props[key]));
+	} else {
+		prop_value = /** @type {V} */ (props[key]);
+	}
 	var setter = get_descriptor(props, key)?.set;
 
 	var fallback_value = /** @type {V} */ (fallback);
@@ -330,7 +349,7 @@ export function prop(props, key, flags, fallback) {
 				// In that case the state proxy (if it exists) should take care of the notification.
 				// If the parent is not in runes mode, we need to notify on mutation, too, that the prop
 				// has changed because the parent will not be able to detect the change otherwise.
-				if (!runes || !mutation || legacy_parent) {
+				if (!runes || !mutation || legacy_parent || is_store_sub) {
 					/** @type {Function} */ (setter)(mutation ? getter() : value);
 				}
 				return value;
@@ -349,17 +368,12 @@ export function prop(props, key, flags, fallback) {
 	// The derived returns the current value. The underlying mutable
 	// source is written to from various places to persist this value.
 	var inner_current_value = mutable_source(prop_value);
-
 	var current_value = with_parent_branch(() =>
 		derived(() => {
 			var parent_value = getter();
 			var child_value = get(inner_current_value);
-			var current_derived = /** @type {Derived} */ (active_reaction);
 
-			// If the getter from the parent returns undefined, switch
-			// to using the local value from inner_current_value instead,
-			// as the parent value might have been torn down
-			if (from_child || (parent_value === undefined && (current_derived.f & DESTROYED) !== 0)) {
+			if (from_child) {
 				from_child = false;
 				was_from_child = true;
 				return child_value;
@@ -373,8 +387,6 @@ export function prop(props, key, flags, fallback) {
 	if (!immutable) current_value.equals = safe_equals;
 
 	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
-		var current = get(current_value);
-
 		// legacy nonsense — need to ensure the source is invalidated when necessary
 		// also needed for when handling inspect logic so we can inspect the correct source signal
 		if (is_signals_recorded) {
@@ -398,12 +410,11 @@ export function prop(props, key, flags, fallback) {
 				if (fallback_used && fallback_value !== undefined) {
 					fallback_value = new_value;
 				}
-				get(current_value); // force a synchronisation immediately
+				untrack(() => get(current_value)); // force a synchronisation immediately
 			}
 
 			return value;
 		}
-
-		return current;
+		return get(current_value);
 	};
 }

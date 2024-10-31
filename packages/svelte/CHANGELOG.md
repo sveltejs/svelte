@@ -1,5 +1,227 @@
 # svelte
 
+## 5.1.6
+
+### Patch Changes
+
+- fix: ensure child effects are destroyed before their deriveds ([#14043](https://github.com/sveltejs/svelte/pull/14043))
+
+## 5.1.5
+
+### Patch Changes
+
+- fix: replace typo in compiler error messages ([#14044](https://github.com/sveltejs/svelte/pull/14044))
+
+- fix: preserve the separator between selectors when an unused selector is in between ([#13954](https://github.com/sveltejs/svelte/pull/13954))
+
+- fix: more robust re-subscribe detection for `fromStore` ([#13995](https://github.com/sveltejs/svelte/pull/13995))
+
+- fix: allow to pass in TS preference to migration ([#13929](https://github.com/sveltejs/svelte/pull/13929))
+
+- fix: extend derived/state validation error to indirect exports ([#14039](https://github.com/sveltejs/svelte/pull/14039))
+
+- fix: minify inject CSS in prod mode ([#14006](https://github.com/sveltejs/svelte/pull/14006))
+
+- fix: ensure toStore subscription correctly syncs latest value ([#14015](https://github.com/sveltejs/svelte/pull/14015))
+
+- fix: don't access `requestAnimationFrame` until needed to reduce need for mocks during testing ([#14040](https://github.com/sveltejs/svelte/pull/14040))
+
+- fix: ensure element effects are executed in the correct order ([#14038](https://github.com/sveltejs/svelte/pull/14038))
+
+- fix: make compiler error extend from `Error` ([#14036](https://github.com/sveltejs/svelte/pull/14036))
+
+## 5.1.4
+
+### Patch Changes
+
+- fix: add empty stack to `CompileDiagnostic` to show error on build ([#13942](https://github.com/sveltejs/svelte/pull/13942))
+
+- fix: ensure effect_tracking correctly handles tracking reactions ([#14005](https://github.com/sveltejs/svelte/pull/14005))
+
+- fix: update broken links ([#13944](https://github.com/sveltejs/svelte/pull/13944))
+
+- fix: more exhaustive check during `SvelteMap.set` in deriveds ([#13951](https://github.com/sveltejs/svelte/pull/13951))
+
+- fix: trim whitespace while migrating blocks ([#13941](https://github.com/sveltejs/svelte/pull/13941))
+
+- fix: update links that previously pointed to preview site ([#14001](https://github.com/sveltejs/svelte/pull/14001))
+
+- fix: properly migrate imports types prefixed with $ ([#14007](https://github.com/sveltejs/svelte/pull/14007))
+
+## 5.1.3
+
+### Patch Changes
+
+- fix: rethrow errors from await block if no catch block exists ([#13819](https://github.com/sveltejs/svelte/pull/13819))
+
+- fix: ensure SVG element attributes have case preserved ([#13935](https://github.com/sveltejs/svelte/pull/13935))
+
+- fix: ensure bind:group works as intended with proxied state objects ([#13939](https://github.com/sveltejs/svelte/pull/13939))
+
+- fix: ensure value is correctly set to zero on the progress element ([#13924](https://github.com/sveltejs/svelte/pull/13924))
+
+- fix: skip comment nodes in snippet validation logic ([#13936](https://github.com/sveltejs/svelte/pull/13936))
+
+- fix: typo in `Action` types ([#13874](https://github.com/sveltejs/svelte/pull/13874))
+
+- fix: remove metadata from legacy AST ([#13927](https://github.com/sveltejs/svelte/pull/13927))
+
+## 5.1.2
+
+### Patch Changes
+
+- fix: improve consistency of transitions ([#13895](https://github.com/sveltejs/svelte/pull/13895))
+
+- fix: enable bound store props in runes mode components ([#13887](https://github.com/sveltejs/svelte/pull/13887))
+
+- fix: ensure each block references to imports are handled correctly ([#13892](https://github.com/sveltejs/svelte/pull/13892))
+
+- fix: ensure SvelteMap reactivity persists through deriveds ([#13877](https://github.com/sveltejs/svelte/pull/13877))
+
+- fix: ensure snippets after empty text correctly hydrate ([#13870](https://github.com/sveltejs/svelte/pull/13870))
+
+- fix: prevent migration script from adding `props.` to the `export let` identifier ([#13899](https://github.com/sveltejs/svelte/pull/13899))
+
+- fix: prevent var name clashing for delegated events without params ([#13896](https://github.com/sveltejs/svelte/pull/13896))
+
+## 5.1.1
+
+### Patch Changes
+
+- fix: internally wrap store subscribe in untrack ([#13858](https://github.com/sveltejs/svelte/pull/13858))
+
+- fix: allow binding to const with spread in legacy mode ([#13849](https://github.com/sveltejs/svelte/pull/13849))
+
+- fix: ensure props internally untracks current_value on sets ([#13859](https://github.com/sveltejs/svelte/pull/13859))
+
+- fix: properly traverse children when checking matches for `:has` ([#13866](https://github.com/sveltejs/svelte/pull/13866))
+
+## 5.1.0
+
+### Minor Changes
+
+- feat: export mount() options as the MountOptions type ([#13674](https://github.com/sveltejs/svelte/pull/13674))
+
+- feat: allow usage of getContext() within $derived runes ([#13830](https://github.com/sveltejs/svelte/pull/13830))
+
+### Patch Changes
+
+- fix: properly migrate ts with inferred type comments ([#13761](https://github.com/sveltejs/svelte/pull/13761))
+
+- fix: correct property name conversion in custom transitions ([#13820](https://github.com/sveltejs/svelte/pull/13820))
+
+- fix: ensure $effect.tracking returns false inside transition functions ([#13775](https://github.com/sveltejs/svelte/pull/13775))
+
+- fix: migrate default slots to children snippet ([#13760](https://github.com/sveltejs/svelte/pull/13760))
+
+- fix: don't print errors on migration errors ([#13754](https://github.com/sveltejs/svelte/pull/13754))
+
+- fix: prevent spread attribute from overriding class directive ([#13763](https://github.com/sveltejs/svelte/pull/13763))
+
+- fix: ensure `:has` selectors followed by other selectors match ([#13824](https://github.com/sveltejs/svelte/pull/13824))
+
+- fix: ensure muted DOM property works correctly in FF ([#13751](https://github.com/sveltejs/svelte/pull/13751))
+
+- fix: show filename information in `legacy_recursive_reactive_block` ([#13764](https://github.com/sveltejs/svelte/pull/13764))
+
+## 5.0.5
+
+### Patch Changes
+
+- fix: mark `:has` selectors with multiple preceding selectors as used ([#13750](https://github.com/sveltejs/svelte/pull/13750))
+
+- fix: ensure event context is reset before invoking callback ([#13737](https://github.com/sveltejs/svelte/pull/13737))
+
+- fix: add more robust check for `Element` prototype ([#13744](https://github.com/sveltejs/svelte/pull/13744))
+
+- fix: do not comment out unused selectors that are inside an unused selector ([#13746](https://github.com/sveltejs/svelte/pull/13746))
+
+- fix: more accurately detect `$derived` migration opportunities ([#13740](https://github.com/sveltejs/svelte/pull/13740))
+
+- fix: @debug does not work with proxied-state ([#13690](https://github.com/sveltejs/svelte/pull/13690))
+
+- fix: do not add jsdoc if no types found ([#13738](https://github.com/sveltejs/svelte/pull/13738))
+
+## 5.0.4
+
+### Patch Changes
+
+- fix: webview preload tag can be any string ([#13733](https://github.com/sveltejs/svelte/pull/13733))
+
+- fix: better children snippet / default slot interop ([#13734](https://github.com/sveltejs/svelte/pull/13734))
+
+## 5.0.3
+
+### Patch Changes
+
+- chore: ensure transition events are dispatched without current reaction ([#13719](https://github.com/sveltejs/svelte/pull/13719))
+
+## 5.0.2
+
+### Patch Changes
+
+- fix: don't blank css on migration error ([#13703](https://github.com/sveltejs/svelte/pull/13703))
+
+## 5.0.1
+
+### Patch Changes
+
+- fix: use typedef for JSDoc props and maintain comments ([#13698](https://github.com/sveltejs/svelte/pull/13698))
+
+## 5.0.0
+
+A new major version of Svelte has been released! 🎉
+
+The new version brings:
+
+- even better performance,
+- a more granular reactivity system with runes,
+- more expressive template syntax with snippets and event attributes,
+- native TypeScript support,
+- and backwards compatibility with the previous syntax!
+
+For more details check out the [Svelte docs](https://svelte-omnisite.vercel.app/) and the [migration guide](https://svelte-omnisite.vercel.app/docs/svelte/v5-migration-guide).
+
+## 5.0.0-next.272
+
+### Patch Changes
+
+- fix: ensure user effects are correctly executed on initialisation ([#13697](https://github.com/sveltejs/svelte/pull/13697))
+
+- breaking: state mutations inside the template are no longer allowed ([#13660](https://github.com/sveltejs/svelte/pull/13660))
+
+## 5.0.0-next.271
+
+### Patch Changes
+
+- fix: avoid chromium issue with dispatching blur on element removal ([#13694](https://github.com/sveltejs/svelte/pull/13694))
+
+## 5.0.0-next.270
+
+### Patch Changes
+
+- fix: bail out if slot name changes and $slots assigned to variable ([#13678](https://github.com/sveltejs/svelte/pull/13678))
+
+- feat: add `migration-task` for impossible to migrate slots ([#13658](https://github.com/sveltejs/svelte/pull/13658))
+
+- feat: tell users of `@migration-task` ([#13668](https://github.com/sveltejs/svelte/pull/13668))
+
+- fix: correct migration of uninitialised state ([#13673](https://github.com/sveltejs/svelte/pull/13673))
+
+- fix: ensure migrate correctly handles named slots ([#13676](https://github.com/sveltejs/svelte/pull/13676))
+
+- feat: add `migration-task` comment after errors ([#13659](https://github.com/sveltejs/svelte/pull/13659))
+
+- fix: migrate reactive statements with inner blocks ([#13675](https://github.com/sveltejs/svelte/pull/13675))
+
+- fix: migrating rest props type includes props types ([#13632](https://github.com/sveltejs/svelte/pull/13632))
+
+- fix: migrated snippet shadowing prop and let directive removal ([#13679](https://github.com/sveltejs/svelte/pull/13679))
+
+- chore: CompileDiagnostic no longer extends Error ([#13651](https://github.com/sveltejs/svelte/pull/13651))
+
+- fix: reset `reset_element` in `render` to prevent runtime error ([#13669](https://github.com/sveltejs/svelte/pull/13669))
+
 ## 5.0.0-next.269
 
 ### Patch Changes

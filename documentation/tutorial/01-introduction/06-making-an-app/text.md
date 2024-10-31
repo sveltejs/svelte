@@ -7,7 +7,7 @@ This tutorial is designed to get you familiar with the process of writing compon
 First, you'll need to integrate Svelte with a build tool. We recommend using [SvelteKit](https://kit.svelte.dev), which sets up [Vite](https://vitejs.dev/) with [vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte/) for you...
 
 ```bash
-npm create svelte@latest myapp
+npx sv create myapp
 ```
 
 There are also a number of [community-maintained integrations](https://sveltesociety.dev/tools).

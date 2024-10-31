@@ -4,7 +4,6 @@ import {
 	component_context,
 	active_effect,
 	active_reaction,
-	destroy_effect_children,
 	dev_current_component_function,
 	update_effect,
 	get,
@@ -16,7 +15,8 @@ import {
 	set_is_destroying_effect,
 	set_is_flushing_effect,
 	set_signal_status,
-	untrack
+	untrack,
+	skip_reaction
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -42,6 +42,7 @@ import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
+import { destroy_derived } from './deriveds.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -167,7 +168,9 @@ export function effect_tracking() {
 		return false;
 	}
 
-	return (active_reaction.f & UNOWNED) === 0;
+	// If it's skipped, that's because we're inside an unowned
+	// that is not being tracked by another reaction
+	return !skip_reaction;
 }
 
 /**
@@ -191,8 +194,7 @@ export function user_effect(fn) {
 	// until the component is mounted
 	var defer =
 		active_effect !== null &&
-		(active_effect.f & RENDER_EFFECT) !== 0 &&
-		// TODO do we actually need this? removing them changes nothing
+		(active_effect.f & BRANCH_EFFECT) !== 0 &&
 		component_context !== null &&
 		!component_context.m;
 
@@ -325,7 +327,7 @@ export function template_effect(fn) {
 			value: '{expression}'
 		});
 	}
-	return render_effect(fn);
+	return block(fn);
 }
 
 /**
@@ -364,6 +366,54 @@ export function execute_effect_teardown(effect) {
 }
 
 /**
+ * @param {Effect} signal
+ * @returns {void}
+ */
+export function destroy_effect_deriveds(signal) {
+	var deriveds = signal.deriveds;
+
+	if (deriveds !== null) {
+		signal.deriveds = null;
+
+		for (var i = 0; i < deriveds.length; i += 1) {
+			destroy_derived(deriveds[i]);
+		}
+	}
+}
+
+/**
+ * @param {Effect} signal
+ * @param {boolean} remove_dom
+ * @returns {void}
+ */
+export function destroy_effect_children(signal, remove_dom = false) {
+	var effect = signal.first;
+	signal.first = signal.last = null;
+
+	while (effect !== null) {
+		var next = effect.next;
+		destroy_effect(effect, remove_dom);
+		effect = next;
+	}
+}
+
+/**
+ * @param {Effect} signal
+ * @returns {void}
+ */
+export function destroy_block_effect_children(signal) {
+	var effect = signal.first;
+
+	while (effect !== null) {
+		var next = effect.next;
+		if ((effect.f & BRANCH_EFFECT) === 0) {
+			destroy_effect(effect);
+		}
+		effect = next;
+	}
+}
+
+/**
  * @param {Effect} effect
  * @param {boolean} [remove_dom]
  * @returns {void}
@@ -388,6 +438,7 @@ export function destroy_effect(effect, remove_dom = true) {
 	}
 
 	destroy_effect_children(effect, remove_dom && !removed);
+	destroy_effect_deriveds(effect);
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);
 
@@ -526,13 +577,16 @@ export function resume_effect(effect) {
  */
 function resume_children(effect, local) {
 	if ((effect.f & INERT) === 0) return;
-	effect.f ^= INERT;
 
 	// If a dependency of this effect changed while it was paused,
 	// apply the change now
 	if (check_dirtiness(effect)) {
 		update_effect(effect);
 	}
+
+	// Ensure we toggle the flag after possibly updating the effect so that
+	// each block logic can correctly operate on inert items
+	effect.f ^= INERT;
 
 	var child = effect.first;
 

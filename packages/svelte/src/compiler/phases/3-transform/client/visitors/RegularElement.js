@@ -158,17 +158,19 @@ export function RegularElement(node, context) {
 	}
 
 	/** @type {typeof state} */
-	const element_after_update_state = { ...context.state, after_update: [] };
+	const element_state = { ...context.state, init: [], after_update: [] };
 
 	for (const attribute of other_directives) {
 		if (attribute.type === 'OnDirective') {
 			const handler = /** @type {Expression} */ (context.visit(attribute));
 
-			element_after_update_state.after_update.push(
-				b.stmt(has_use ? b.call('$.effect', b.thunk(handler)) : handler)
-			);
+			if (has_use) {
+				element_state.init.push(b.stmt(b.call('$.effect', b.thunk(handler))));
+			} else {
+				element_state.after_update.push(b.stmt(handler));
+			}
 		} else {
-			context.visit(attribute, element_after_update_state);
+			context.visit(attribute, element_state);
 		}
 	}
 
@@ -219,7 +221,8 @@ export function RegularElement(node, context) {
 			node_id,
 			attributes_id,
 			(node.metadata.svg || node.metadata.mathml || is_custom_element_node(node)) && b.true,
-			node.name.includes('-') && b.true
+			node.name.includes('-') && b.true,
+			context.state
 		);
 
 		// If value binding exists, that one takes care of calling $.init_select
@@ -263,6 +266,7 @@ export function RegularElement(node, context) {
 			if (
 				!is_custom_element &&
 				attribute.name !== 'autofocus' &&
+				attribute.name !== 'muted' &&
 				(attribute.value === true || is_text_attribute(attribute))
 			) {
 				const name = get_attribute_name(node, attribute);
@@ -289,13 +293,7 @@ export function RegularElement(node, context) {
 
 	// class/style directives must be applied last since they could override class/style attributes
 	build_class_directives(class_directives, node_id, context, is_attributes_reactive);
-	build_style_directives(
-		style_directives,
-		node_id,
-		context,
-		is_attributes_reactive,
-		lookup.has('style') || has_spread
-	);
+	build_style_directives(style_directives, node_id, context, is_attributes_reactive);
 
 	// Apply the src and loading attributes for <img> elements after the element is appended to the document
 	if (node.name === 'img' && (has_spread || lookup.has('loading'))) {
@@ -388,7 +386,7 @@ export function RegularElement(node, context) {
 			arg = b.member(arg, 'content');
 		}
 
-		process_children(trimmed, () => b.call('$.child', arg), true, {
+		process_children(trimmed, (is_text) => b.call('$.child', arg, is_text && b.true), true, {
 			...context,
 			state: child_state
 		});
@@ -405,18 +403,16 @@ export function RegularElement(node, context) {
 				...child_state.init,
 				child_state.update.length > 0 ? build_render_statement(child_state.update) : b.empty,
 				...child_state.after_update,
-				...element_after_update_state.after_update
+				...element_state.after_update
 			])
 		);
 	} else if (node.fragment.metadata.dynamic) {
-		context.state.init.push(...child_state.init);
+		context.state.init.push(...child_state.init, ...element_state.init);
 		context.state.update.push(...child_state.update);
-		context.state.after_update.push(
-			...child_state.after_update,
-			...element_after_update_state.after_update
-		);
+		context.state.after_update.push(...child_state.after_update, ...element_state.after_update);
 	} else {
-		context.state.after_update.push(...element_after_update_state.after_update);
+		context.state.init.push(...element_state.init);
+		context.state.after_update.push(...element_state.after_update);
 	}
 
 	if (lookup.has('dir')) {
@@ -527,6 +523,12 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 
 	if (name === 'autofocus') {
 		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
+		return false;
+	}
+
+	// Special case for Firefox who needs it set as a property in order to work
+	if (name === 'muted') {
+		state.init.push(b.stmt(b.assignment('=', b.member(node_id, b.id('muted')), value)));
 		return false;
 	}
 

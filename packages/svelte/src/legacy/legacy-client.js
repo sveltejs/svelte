@@ -6,6 +6,7 @@ import { hydrate, mount, unmount } from '../internal/client/render.js';
 import {
 	active_effect,
 	component_context,
+	dev_current_component_function,
 	flush_sync,
 	get,
 	set_signal_status
@@ -13,6 +14,8 @@ import {
 import { lifecycle_outside_component } from '../internal/shared/errors.js';
 import { define_property, is_array } from '../internal/shared/utils.js';
 import * as w from '../internal/client/warnings.js';
+import { DEV } from 'esm-env';
+import { FILENAME } from '../constants.js';
 
 /**
  * Takes the same options as a Svelte 4 component and the component function and returns a Svelte 4 compatible component.
@@ -182,7 +185,12 @@ export function run(fn) {
 		var effect = /** @type {import('#client').Effect} */ (active_effect);
 		// If the effect is immediately made dirty again, mark it as maybe dirty to emulate legacy behaviour
 		if ((effect.f & DIRTY) !== 0) {
-			w.legacy_recursive_reactive_block();
+			let filename = "a file (we can't know which one)";
+			if (DEV) {
+				// @ts-ignore
+				filename = dev_current_component_function?.[FILENAME] ?? filename;
+			}
+			w.legacy_recursive_reactive_block(filename);
 			set_signal_status(effect, MAYBE_DIRTY);
 		}
 	});

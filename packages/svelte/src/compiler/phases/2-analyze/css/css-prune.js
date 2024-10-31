@@ -127,8 +127,7 @@ const visitors = {
 							selectors_to_check,
 							/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
 							element,
-							context.state.stylesheet,
-							true
+							context.state.stylesheet
 						)
 					) {
 						mark(inner, element);
@@ -144,8 +143,7 @@ const visitors = {
 				selectors,
 				/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
 				context.state.element,
-				context.state.stylesheet,
-				true
+				context.state.stylesheet
 			)
 		) {
 			mark(inner, context.state.element);
@@ -191,10 +189,9 @@ function truncate(node) {
  * @param {Compiler.Css.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  * @param {Compiler.Css.StyleSheet} stylesheet
- * @param {boolean} check_has Whether or not to check the `:has(...)` selectors
  * @returns {boolean}
  */
-function apply_selector(relative_selectors, rule, element, stylesheet, check_has) {
+function apply_selector(relative_selectors, rule, element, stylesheet) {
 	const parent_selectors = relative_selectors.slice();
 	const relative_selector = parent_selectors.pop();
 
@@ -204,8 +201,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet, check_has
 		relative_selector,
 		rule,
 		element,
-		stylesheet,
-		check_has
+		stylesheet
 	);
 
 	if (!possible_match) {
@@ -219,8 +215,7 @@ function apply_selector(relative_selectors, rule, element, stylesheet, check_has
 			parent_selectors,
 			rule,
 			element,
-			stylesheet,
-			check_has
+			stylesheet
 		);
 	}
 
@@ -241,7 +236,6 @@ function apply_selector(relative_selectors, rule, element, stylesheet, check_has
  * @param {Compiler.Css.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  * @param {Compiler.Css.StyleSheet} stylesheet
- * @param {boolean} check_has Whether or not to check the `:has(...)` selectors
  * @returns {boolean}
  */
 function apply_combinator(
@@ -250,8 +244,7 @@ function apply_combinator(
 	parent_selectors,
 	rule,
 	element,
-	stylesheet,
-	check_has
+	stylesheet
 ) {
 	const name = combinator.name;
 
@@ -276,7 +269,7 @@ function apply_combinator(
 				}
 
 				if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
-					if (apply_selector(parent_selectors, rule, parent, stylesheet, check_has)) {
+					if (apply_selector(parent_selectors, rule, parent, stylesheet)) {
 						// TODO the `name === ' '` causes false positives, but removing it causes false negatives...
 						if (name === ' ' || crossed_component_boundary) {
 							mark(parent_selectors[parent_selectors.length - 1], parent);
@@ -307,9 +300,7 @@ function apply_combinator(
 						mark(relative_selector, element);
 						sibling_matched = true;
 					}
-				} else if (
-					apply_selector(parent_selectors, rule, possible_sibling, stylesheet, check_has)
-				) {
+				} else if (apply_selector(parent_selectors, rule, possible_sibling, stylesheet)) {
 					mark(relative_selector, element);
 					sibling_matched = true;
 				}
@@ -391,16 +382,9 @@ const regex_backslash_and_following_character = /\\(.)/g;
  * @param {Compiler.Css.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  * @param {Compiler.Css.StyleSheet} stylesheet
- * @param {boolean} check_has Whether or not to check the `:has(...)` selectors
- * @returns {boolean}
+ * @returns {boolean  }
  */
-function relative_selector_might_apply_to_node(
-	relative_selector,
-	rule,
-	element,
-	stylesheet,
-	check_has
-) {
+function relative_selector_might_apply_to_node(relative_selector, rule, element, stylesheet) {
 	// Sort :has(...) selectors in one bucket and everything else into another
 	const has_selectors = [];
 	const other_selectors = [];
@@ -415,7 +399,35 @@ function relative_selector_might_apply_to_node(
 
 	// If we're called recursively from a :has(...) selector, we're on the way of checking if the other selectors match.
 	// In that case ignore this check (because we just came from this) to avoid an infinite loop.
-	if (check_has && has_selectors.length > 0) {
+	if (has_selectors.length > 0) {
+		/** @type {Array<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} */
+		const child_elements = [];
+		/** @type {Array<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} */
+		const descendant_elements = [];
+
+		walk(
+			/** @type {Compiler.SvelteNode} */ (element.fragment),
+			{ is_child: true },
+			{
+				_(node, context) {
+					if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
+						descendant_elements.push(node);
+
+						if (context.state.is_child) {
+							child_elements.push(node);
+							context.state.is_child = false;
+							context.next();
+							context.state.is_child = true;
+						} else {
+							context.next();
+						}
+					} else {
+						context.next();
+					}
+				}
+			}
+		);
+
 		// :has(...) is special in that it means "look downwards in the CSS tree". Since our matching algorithm goes
 		// upwards and back-to-front, we need to first check the selectors inside :has(...), then check the rest of the
 		// selector in a way that is similar to ancestor matching. In a sense, we're treating `.x:has(.y)` as `.x .y`.
@@ -436,25 +448,20 @@ function relative_selector_might_apply_to_node(
 					};
 				}
 
-				if (
-					selectors.length === 0 /* is :global(...) */ ||
-					apply_selector(selectors, rule, element, stylesheet, check_has)
-				) {
-					// Treat e.g. `.x:has(.y)` as `.x .y` with the .y part already being matched,
-					// and now looking upwards for the .x part.
+				const descendants =
+					left_most_combinator.name === '>' ? child_elements : descendant_elements;
+
+				let selector_matched = false;
+
+				// Iterate over all descendant elements and check if the selector inside :has matches
+				for (const element of descendants) {
 					if (
-						apply_combinator(
-							left_most_combinator,
-							selectors[0] ?? [],
-							[relative_selector],
-							rule,
-							element,
-							stylesheet,
-							false
-						)
+						selectors.length === 0 /* is :global(...) */ ||
+						(element.metadata.scoped && selector_matched) ||
+						apply_selector(selectors, rule, element, stylesheet)
 					) {
 						complex_selector.metadata.used = true;
-						matched = true;
+						selector_matched = matched = true;
 					}
 				}
 			}
@@ -477,8 +484,6 @@ function relative_selector_might_apply_to_node(
 				return false;
 			}
 		}
-
-		return true;
 	}
 
 	for (const selector of other_selectors) {
@@ -499,7 +504,7 @@ function relative_selector_might_apply_to_node(
 				) {
 					const args = selector.args;
 					const complex_selector = args.children[0];
-					return apply_selector(complex_selector.children, rule, element, stylesheet, check_has);
+					return apply_selector(complex_selector.children, rule, element, stylesheet);
 				}
 
 				// We came across a :global, everything beyond it is global and therefore a potential match
@@ -512,7 +517,7 @@ function relative_selector_might_apply_to_node(
 						const relative = truncate(complex_selector);
 						if (
 							relative.length === 0 /* is :global(...) */ ||
-							apply_selector(relative, rule, element, stylesheet, check_has)
+							apply_selector(relative, rule, element, stylesheet)
 						) {
 							complex_selector.metadata.used = true;
 							matched = true;
@@ -613,7 +618,7 @@ function relative_selector_might_apply_to_node(
 				const parent = /** @type {Compiler.Css.Rule} */ (rule.metadata.parent_rule);
 
 				for (const complex_selector of parent.prelude.children) {
-					if (apply_selector(truncate(complex_selector), parent, element, stylesheet, check_has)) {
+					if (apply_selector(truncate(complex_selector), parent, element, stylesheet)) {
 						complex_selector.metadata.used = true;
 						matched = true;
 					}

@@ -9,7 +9,7 @@ This page intends to give a broad overview of how code written using the new API
 The `$state`, `$derived` and `$effect` runes replace magic `let` declarations, `$: x = ...` and `$: { ... }`. Event handlers can be written as event attributes now, which in practise means just removing the colon.
 
 - [Before](/#H4sIAAAAAAAAE0VP0Q6CMAz8lbqYAGqC-jiBxH_wTXzQUWRxbgQ6E7Ps34VN40vbu8u1V8daqXBk_OyYvj6RcXbse7Zh9O5nML5QEU54NHYQM1OMYpA9VbWuSSGBMFYTlLA9zMySQ2PsTeHERGUF-6B8VRdmki2kUa9gt81-dE1XhQOlyckY6OS9WyRZdJOf21SK_B9AFzdLZDQYzYWS4lG6NIOyiqfXax9SuoA85OBitrAlOqvptadpZCuxYZwGi_7iP__ps0sVAQAA)
-- [After](/#H4sIAAAAAAAAE0VPzW7CMAx-FRMhkQ4k2I6lrbR32I3uUBJnRAtJlThIKMq7jzSgHSzr-_FnOzGlDQbWnhKz0xVZyz7nme0Y3ecCwg0N4QMHF70oTBeE1zMNox3JIIFw0RL0sA40EfJDc3wp0sWzwSJJ9PqGklfvG3xUU6k1KoWCOG-gHyAtNGkFT-8A74fmRY80GfTEN1_OwUX_XFabZxDl0nJB3f7_QNudI5Gz4GwrjBa_fap7lvDtNi9fpAVl2EOqJ-eSUieHx-tXJ7XSKFlLPmL-zn8TVUg5NQEAAA==)
+- [After](/#H4sIAAAAAAAACkVP0WrDMAz8FU0U6qyBdnvMksD-YW_LHlJbXs1cOzhyYRj_-3Dcsgch7nQ6nRJqY2nF7jOhm6-EHb4vC7bIv0sB640sE7a4-hhkYfpVBrPwOLmJLTFIHx3DALuVZyZxat4eE-Xj2VIZKQrmRkpU7TO8VlGpHWlNkoVoYBghbTQbDXftCC-n5kFPPFsKLPYf3sPFfF-e9ncjzqXlgvrjf0DXnyOzd-CdtEb-DKme2bwPh7w9kTaU4QipJs7FpC6O2OLVK6MNKew4RMpf-Q9GD6iFNAEAAA==)
 
 ```diff
 <script>
@@ -71,7 +71,7 @@ Conversely, suppose you — for some reason — wanted to recalculate `sum` when
 In non-runes mode, we 'hide' the dependency from the compiler by excluding it from the `$:` statement. In runes mode, we have a better and more explicit solution: [`untrack`](/docs/functions#untrack).
 
 - [Before](/#H4sIAAAAAAAAE3WPwYrDIBCGX2WQHhJSyJ6tEfocmz2oMSBNjOi4sIjvvpO0u6WHHhz4_vmGGQub3WIT45-FebVaxtk1BHZm-BN2SN92QUucthzNnohkogsoRz_iYhEUDPBx-SP9TycOKa-Eapoa1R7Z_ubsDbrNP3IoRwOjxRwphA704dbRi_65ywudEWls89wsztyG0rQwSFBdVyUV0d8F-V7Vu6pf1SCLqrS06Eq3Fjq5ij5I-vG6TW52dmIcY7b1q_4CeJwNvCwBAAA=)
-- [After](/#H4sIAAAAAAAAE3WQ3WrEIBBGX2WQwiakkF5nE6HP0fTCv4BsoqLjQhHfvWPTpRTaG2GOx49vLGyzu0lseivMicOwib2GwJ4ZfoQ2pLvZ0dCcfI6qkTmpaAPy1a1oj-AjQoHsMAp1gwpb9AdczmeXK0mk7QZBwAJPCQWa7qW_Pqj8k6Z8NK5NtHejO6F11_ffWVt2Cq138EWhNLZiNJgjMRgeVTq6XDjIM7Wubh5_irtZZkQK8W5Su1W3pZy6GIbK6ZjHU-D_q7Kp8rcaeBGVOhRZaYFCe9R5DJy-7_DabtZoNmHMpr7XT7Bzqxt5AQAA)
+- [After](/#H4sIAAAAAAAACnXOwWrFIBAF0F8Zhi4SDOStUyP0O1660DgBaWJExwdF_PeHKaUU2uWce7lMwc3tlHC6F_T6IJzwLQQckD9DO9KDdiYcMJ05rk1kWqMLrBa_8E4MGmZ4SayZulv_-q3mT035aG4pugfZTlvb9VfqF96yX9mdHi6F0mzhSJyjBw0CzDVTFy_Hnxe8NJn59HD6dXfrx1y6HmYFWoiqtBBy_MrVv03TmuZ3M6iiKwgopsIMJeWjyjEoHPA4rdscWZw4Zqrv9Qm1yJsGQQEAAA==)
 
 ```diff
 <script>

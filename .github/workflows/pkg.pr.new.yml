@@ -1,0 +1,24 @@
+name: Publish Any Commit
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - run: pnpx pkg-pr-new publish --compact --no-template './packages/svelte'

@@ -17,6 +17,8 @@ export interface Value<V = unknown> extends Signal {
 }
 
 export interface Reaction extends Signal {
+	/** The associated component context */
+	ctx: null | ComponentContext;
 	/** The reaction function */
 	fn: null | Function;
 	/** Signals that this signal reads from */
@@ -40,8 +42,6 @@ export interface Effect extends Reaction {
 	 */
 	nodes_start: null | TemplateNode;
 	nodes_end: null | TemplateNode;
-	/** The associated component context */
-	ctx: null | ComponentContext;
 	/** Reactions created inside this signal */
 	deriveds: null | Derived[];
 	/** The effect function */

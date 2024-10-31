@@ -101,9 +101,11 @@ export function render(component, options = {}) {
 	on_destroy = [];
 	payload.out += BLOCK_OPEN;
 
+	let reset_reset_element;
+
 	if (DEV) {
 		// prevent parent/child element state being corrupted by a bad render
-		reset_elements();
+		reset_reset_element = reset_elements();
 	}
 
 	if (options.context) {
@@ -116,6 +118,10 @@ export function render(component, options = {}) {
 
 	if (options.context) {
 		pop();
+	}
+
+	if (reset_reset_element) {
+		reset_reset_element();
 	}
 
 	payload.out += BLOCK_CLOSE;
@@ -264,7 +270,12 @@ export function spread_props(props) {
 	for (let i = 0; i < props.length; i++) {
 		const obj = props[i];
 		for (key in obj) {
-			merged_props[key] = obj[key];
+			const desc = Object.getOwnPropertyDescriptor(obj, key);
+			if (desc) {
+				Object.defineProperty(merged_props, key, desc);
+			} else {
+				merged_props[key] = obj[key];
+			}
 		}
 	}
 	return merged_props;

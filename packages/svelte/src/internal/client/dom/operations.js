@@ -44,6 +44,8 @@ export function init_operations() {
 	// @ts-expect-error
 	element_prototype.__attributes = null;
 	// @ts-expect-error
+	element_prototype.__styles = null;
+	// @ts-expect-error
 	element_prototype.__e = undefined;
 
 	// @ts-expect-error
@@ -89,9 +91,10 @@ export function get_next_sibling(node) {
  * Don't mark this as side-effect-free, hydration needs to walk all nodes
  * @template {Node} N
  * @param {N} node
+ * @param {boolean} is_text
  * @returns {Node | null}
  */
-export function child(node) {
+export function child(node, is_text) {
 	if (!hydrating) {
 		return get_first_child(node);
 	}
@@ -101,6 +104,11 @@ export function child(node) {
 	// Child can be null if we have an element with a single child, like `<p>{text}</p>`, where `text` is empty
 	if (child === null) {
 		child = hydrate_node.appendChild(create_text());
+	} else if (is_text && child.nodeType !== 3) {
+		var text = create_text();
+		child?.before(text);
+		set_hydrate_node(text);
+		return text;
 	}
 
 	set_hydrate_node(child);

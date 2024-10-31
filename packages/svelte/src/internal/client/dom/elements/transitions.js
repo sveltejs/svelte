@@ -1,7 +1,13 @@
 /** @import { AnimateFn, Animation, AnimationConfig, EachItem, Effect, TransitionFn, TransitionManager } from '#client' */
 import { noop, is_function } from '../../../shared/utils.js';
 import { effect } from '../../reactivity/effects.js';
-import { active_effect, untrack } from '../../runtime.js';
+import {
+	active_effect,
+	active_reaction,
+	set_active_effect,
+	set_active_reaction,
+	untrack
+} from '../../runtime.js';
 import { loop } from '../../loop.js';
 import { should_intro } from '../../render.js';
 import { current_each_item } from '../blocks/each.js';
@@ -19,10 +25,18 @@ function dispatch_event(element, type) {
 }
 
 /**
+ * Converts a property to the camel-case format expected by Element.animate(), KeyframeEffect(), and KeyframeEffect.setKeyframes().
  * @param {string} style
  * @returns {string}
  */
-function css_style_from_camel_case(style) {
+function css_property_to_camelcase(style) {
+	// in compliance with spec
+	if (style === 'float') return 'cssFloat';
+	if (style === 'offset') return 'cssOffset';
+
+	// do not rename custom @properties
+	if (style.startsWith('--')) return style;
+
 	const parts = style.split('-');
 	if (parts.length === 1) return parts[0];
 	return (
@@ -46,7 +60,7 @@ function css_to_keyframe(css) {
 		const [property, value] = part.split(':');
 		if (!property || value === undefined) break;
 
-		const formatted_property = css_style_from_camel_case(property.trim());
+		const formatted_property = css_property_to_camelcase(property.trim());
 		keyframe[formatted_property] = value.trim();
 	}
 	return keyframe;
@@ -185,12 +199,21 @@ export function transition(flags, element, get_fn, get_params) {
 	var outro;
 
 	function get_options() {
-		// If a transition is still ongoing, we use the existing options rather than generating
-		// new ones. This ensures that reversible transitions reverse smoothly, rather than
-		// jumping to a new spot because (for example) a different `duration` was used
-		return (current_options ??= get_fn()(element, get_params?.() ?? /** @type {P} */ ({}), {
-			direction
-		}));
+		var previous_reaction = active_reaction;
+		var previous_effect = active_effect;
+		set_active_reaction(null);
+		set_active_effect(null);
+		try {
+			// If a transition is still ongoing, we use the existing options rather than generating
+			// new ones. This ensures that reversible transitions reverse smoothly, rather than
+			// jumping to a new spot because (for example) a different `duration` was used
+			return (current_options ??= get_fn()(element, get_params?.() ?? /** @type {P} */ ({}), {
+				direction
+			}));
+		} finally {
+			set_active_reaction(previous_reaction);
+			set_active_effect(previous_effect);
+		}
 	}
 
 	/** @type {TransitionManager} */
@@ -404,6 +427,10 @@ function animate(element, options, counterpart, t2, on_finish) {
 				animation.cancel();
 				// This prevents memory leaks in Chromium
 				animation.effect = null;
+				// This prevents onfinish to be launched after cancel(),
+				// which can happen in some rare cases
+				// see https://github.com/sveltejs/svelte/issues/13681
+				animation.onfinish = noop;
 			}
 		},
 		deactivate: () => {

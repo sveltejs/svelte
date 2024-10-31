@@ -1,6 +1,6 @@
 /** @import { Expression, Identifier, ObjectExpression } from 'estree' */
 /** @import { AST, Namespace } from '#compiler' */
-/** @import { ComponentContext } from '../../types' */
+/** @import { ComponentClientTransformState, ComponentContext } from '../../types' */
 import { normalize_attribute } from '../../../../../../utils.js';
 import { is_ignored } from '../../../../../state.js';
 import { get_attribute_expression, is_event_attribute } from '../../../../../utils/ast.js';
@@ -16,6 +16,7 @@ import { build_template_literal, build_update } from './utils.js';
  * @param {Identifier} attributes_id
  * @param {false | Expression} preserve_attribute_case
  * @param {false | Expression} is_custom_element
+ * @param {ComponentClientTransformState} state
  */
 export function build_set_attributes(
 	attributes,
@@ -24,9 +25,9 @@ export function build_set_attributes(
 	element_id,
 	attributes_id,
 	preserve_attribute_case,
-	is_custom_element
+	is_custom_element,
+	state
 ) {
-	let needs_isolation = false;
 	let has_state = false;
 
 	/** @type {ObjectExpression['properties']} */
@@ -50,12 +51,17 @@ export function build_set_attributes(
 
 			has_state ||= attribute.metadata.expression.has_state;
 		} else {
-			values.push(b.spread(/** @type {Expression} */ (context.visit(attribute))));
-
 			// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
 			has_state = true;
 
-			needs_isolation ||= attribute.metadata.expression.has_call;
+			let value = /** @type {Expression} */ (context.visit(attribute));
+
+			if (attribute.metadata.expression.has_call) {
+				const id = b.id(state.scope.generate('spread_with_call'));
+				state.init.push(b.const(id, create_derived(state, b.thunk(value))));
+				value = b.call('$.get', id);
+			}
+			values.push(b.spread(value));
 		}
 	}
 
@@ -72,14 +78,7 @@ export function build_set_attributes(
 
 	if (has_state) {
 		context.state.init.push(b.let(attributes_id));
-
 		const update = b.stmt(b.assignment('=', attributes_id, call));
-
-		if (needs_isolation) {
-			context.state.init.push(build_update(update));
-			return false;
-		}
-
 		context.state.update.push(update);
 		return true;
 	}
@@ -95,14 +94,12 @@ export function build_set_attributes(
  * @param {Identifier} element_id
  * @param {ComponentContext} context
  * @param {boolean} is_attributes_reactive
- * @param {boolean} force_check Should be `true` if we can't rely on our cached value, because for example there's also a `style` attribute
  */
 export function build_style_directives(
 	style_directives,
 	element_id,
 	context,
-	is_attributes_reactive,
-	force_check
+	is_attributes_reactive
 ) {
 	const state = context.state;
 
@@ -127,8 +124,7 @@ export function build_style_directives(
 				element_id,
 				b.literal(directive.name),
 				value,
-				/** @type {Expression} */ (directive.modifiers.includes('important') ? b.true : undefined),
-				force_check ? b.true : undefined
+				/** @type {Expression} */ (directive.modifiers.includes('important') ? b.true : undefined)
 			)
 		);
 

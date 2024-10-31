@@ -101,14 +101,15 @@ export function SvelteElement(node, context) {
 			node,
 			element_id,
 			attributes_id,
-			b.binary('!==', b.member(element_id, 'namespaceURI'), b.id('$.NAMESPACE_SVG')),
-			b.call(b.member(b.member(element_id, 'nodeName'), 'includes'), b.literal('-'))
+			b.binary('===', b.member(element_id, 'namespaceURI'), b.id('$.NAMESPACE_SVG')),
+			b.call(b.member(b.member(element_id, 'nodeName'), 'includes'), b.literal('-')),
+			context.state
 		);
 	}
 
 	// class/style directives must be applied last since they could override class/style attributes
 	build_class_directives(class_directives, element_id, inner_context, is_attributes_reactive);
-	build_style_directives(style_directives, element_id, inner_context, is_attributes_reactive, true);
+	build_style_directives(style_directives, element_id, inner_context, is_attributes_reactive);
 
 	const get_tag = b.thunk(/** @type {Expression} */ (context.visit(node.tag)));
 
