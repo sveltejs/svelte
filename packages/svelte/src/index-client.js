@@ -14,7 +14,7 @@ import { lifecycle_outside_component } from './internal/shared/errors.js';
  *
  * If a function is returned _synchronously_ from `onMount`, it will be called when the component is unmounted.
  *
- * `onMount` does not run inside a [server-side component](https://svelte.dev/docs#run-time-server-side-component-api).
+ * `onMount` does not run inside [server-side components](https://svelte.dev/docs/svelte/svelte-server#render).
  *
  * @template T
  * @param {() => NotFunction<T> | Promise<NotFunction<T>> | (() => any)} fn
@@ -64,7 +64,7 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
 }
 
 /**
- * Creates an event dispatcher that can be used to dispatch [component events](https://svelte.dev/docs#template-syntax-component-directives-on-eventname).
+ * Creates an event dispatcher that can be used to dispatch [component events](https://svelte.dev/docs/svelte/legacy-on#Component-events).
  * Event dispatchers are functions that can take two arguments: `name` and `detail`.
  *
  * Component events created with `createEventDispatcher` create a
@@ -82,7 +82,7 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
  * }>();
  * ```
  *
- * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte-5-preview.vercel.app/docs/deprecations#createeventdispatcher
+ * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte.dev/docs/svelte/v5-migration-guide#Event-changes-Component-events
  * @template {Record<string, any>} [EventMap = any]
  * @returns {EventDispatcher<EventMap>}
  */
@@ -121,7 +121,7 @@ export function createEventDispatcher() {
  *
  * In runes mode use `$effect.pre` instead.
  *
- * @deprecated Use `$effect.pre` instead — see https://svelte-5-preview.vercel.app/docs/deprecations#beforeupdate-and-afterupdate
+ * @deprecated Use `$effect.pre` instead — see https://svelte.dev/docs/svelte/$effect#$effect.pre
  * @param {() => void} fn
  * @returns {void}
  */
@@ -144,7 +144,7 @@ export function beforeUpdate(fn) {
  *
  * In runes mode use `$effect` instead.
  *
- * @deprecated Use `$effect` instead — see https://svelte-5-preview.vercel.app/docs/deprecations#beforeupdate-and-afterupdate
+ * @deprecated Use `$effect` instead — see https://svelte.dev/docs/svelte/$effect
  * @param {() => void} fn
  * @returns {void}
  */

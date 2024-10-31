@@ -1,5 +1,53 @@
 # svelte
 
+## 5.1.6
+
+### Patch Changes
+
+- fix: ensure child effects are destroyed before their deriveds ([#14043](https://github.com/sveltejs/svelte/pull/14043))
+
+## 5.1.5
+
+### Patch Changes
+
+- fix: replace typo in compiler error messages ([#14044](https://github.com/sveltejs/svelte/pull/14044))
+
+- fix: preserve the separator between selectors when an unused selector is in between ([#13954](https://github.com/sveltejs/svelte/pull/13954))
+
+- fix: more robust re-subscribe detection for `fromStore` ([#13995](https://github.com/sveltejs/svelte/pull/13995))
+
+- fix: allow to pass in TS preference to migration ([#13929](https://github.com/sveltejs/svelte/pull/13929))
+
+- fix: extend derived/state validation error to indirect exports ([#14039](https://github.com/sveltejs/svelte/pull/14039))
+
+- fix: minify inject CSS in prod mode ([#14006](https://github.com/sveltejs/svelte/pull/14006))
+
+- fix: ensure toStore subscription correctly syncs latest value ([#14015](https://github.com/sveltejs/svelte/pull/14015))
+
+- fix: don't access `requestAnimationFrame` until needed to reduce need for mocks during testing ([#14040](https://github.com/sveltejs/svelte/pull/14040))
+
+- fix: ensure element effects are executed in the correct order ([#14038](https://github.com/sveltejs/svelte/pull/14038))
+
+- fix: make compiler error extend from `Error` ([#14036](https://github.com/sveltejs/svelte/pull/14036))
+
+## 5.1.4
+
+### Patch Changes
+
+- fix: add empty stack to `CompileDiagnostic` to show error on build ([#13942](https://github.com/sveltejs/svelte/pull/13942))
+
+- fix: ensure effect_tracking correctly handles tracking reactions ([#14005](https://github.com/sveltejs/svelte/pull/14005))
+
+- fix: update broken links ([#13944](https://github.com/sveltejs/svelte/pull/13944))
+
+- fix: more exhaustive check during `SvelteMap.set` in deriveds ([#13951](https://github.com/sveltejs/svelte/pull/13951))
+
+- fix: trim whitespace while migrating blocks ([#13941](https://github.com/sveltejs/svelte/pull/13941))
+
+- fix: update links that previously pointed to preview site ([#14001](https://github.com/sveltejs/svelte/pull/14001))
+
+- fix: properly migrate imports types prefixed with $ ([#14007](https://github.com/sveltejs/svelte/pull/14007))
+
 ## 5.1.3
 
 ### Patch Changes

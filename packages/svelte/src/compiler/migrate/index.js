@@ -39,10 +39,10 @@ class MigrationError extends Error {
  * May throw an error if the code is too complex to migrate automatically.
  *
  * @param {string} source
- * @param {{filename?: string}} [options]
+ * @param {{ filename?: string, use_ts?: boolean }} [options]
  * @returns {{ code: string; }}
  */
-export function migrate(source, { filename } = {}) {
+export function migrate(source, { filename, use_ts } = {}) {
 	let og_source = source;
 	try {
 		has_migration_task = false;
@@ -115,9 +115,12 @@ export function migrate(source, { filename } = {}) {
 			derived_components: new Map(),
 			derived_labeled_statements: new Set(),
 			has_svelte_self: false,
-			uses_ts: !!parsed.instance?.attributes.some(
-				(attr) => attr.name === 'lang' && /** @type {any} */ (attr).value[0].data === 'ts'
-			)
+			uses_ts:
+				// Some people could use jsdoc but have a tsconfig.json, so double-check file for jsdoc indicators
+				(use_ts && !source.includes('@type {')) ||
+				!!parsed.instance?.attributes.some(
+					(attr) => attr.name === 'lang' && /** @type {any} */ (attr).value[0].data === 'ts'
+				)
 		};
 
 		if (parsed.module) {
