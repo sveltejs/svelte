@@ -1,3 +1,4 @@
+# https://github.com/sveltejs/svelte.dev/blob/main/apps/svelte.dev/scripts/sync-docs/README.md
 name: Sync request
 
 on:
