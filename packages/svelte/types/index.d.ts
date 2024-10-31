@@ -238,7 +238,8 @@ declare module 'svelte' {
 	 * Convenience type to get the properties that given component exports.
 	 *
 	 * Example: Typing the `bind:this` for a component named `MyComponent`
-	 * ```
+	 *
+	 * ```ts
 	 * <script lang="ts">
 	 * 	import MyComponent from '$lib/component';
 	 * 	let component: ComponentExports<typeof MyComponent> | undefined = undefined;

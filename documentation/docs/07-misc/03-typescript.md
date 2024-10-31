@@ -195,7 +195,13 @@ Using it together with dynamic components to restrict what kinds of component ca
 <DynamicComponent prop="foo" />
 ```
 
-Closely related to the `Component` type is the `ComponentProps` type which extracts the properties a component expects.
+> [!LEGACY] In Svelte 4, components were of type `SvelteComponent`
+
+## Component helper types
+
+### ComponentProps
+
+`ComponentProps` extracts the properties a component expects.
 
 ```ts
 import type { Component, ComponentProps } from 'svelte';
@@ -209,6 +215,21 @@ function withProps<TComponent extends Component<any>>(
 // Errors if the second argument is not the correct props expected
 // by the component in the first argument.
 withProps(MyComponent, { foo: 'bar' });
+```
+
+### ComponentExports
+
+`ComponentExports` extracts the exports of a component, in other words you can use it to declare its instance type:
+
+```svelte
+<script lang="ts">
+	import type { ComponentExports } from 'svelte';
+	import { Component } from './Component.svelte';
+
+	let component: ComponentExports<typeof Component>;
+</script>
+
+<Component bind:this={component} />
 ```
 
 ## Enhancing built-in DOM types

@@ -599,18 +599,33 @@ To declare that a component of a certain type is required:
 
 ```svelte
 <script lang="ts">
-	import type { Component } from 'svelte';
+	import type { ---SvelteComponent--- +++Component+++ } from 'svelte';
 	import {
 		ComponentA,
 		ComponentB
 	} from 'component-library';
 
-	let component: Component<{ foo: string }> = $state(
+	---let component: typeof SvelteComponent<{ foo: string }>---
+	+++let component: Component<{ foo: string }>+++ = $state(
 		Math.random() ? ComponentA : ComponentB
 	);
 </script>
 
 <svelte:component this={component} foo="bar" />
+```
+
+To declare the instance type of a component, or in other words its exports:
+
+```svelte
+<script lang="ts">
+	+++import type { ComponentExports } from 'svelte';+++
+	import { Component } from './Component.svelte';
+
+	---let component: Component;---
+	+++let component: ComponentExports<typeof Component>;+++
+</script>
+
+<Component bind:this={component} />
 ```
 
 The two utility types `ComponentEvents` and `ComponentType` are also deprecated. `ComponentEvents` is obsolete because events are defined as callback props now, and `ComponentType` is obsolete because the new `Component` type is the component type already (e.g. `ComponentType<SvelteComponent<{ prop: string }>>` == `Component<{ prop: string }>`).
