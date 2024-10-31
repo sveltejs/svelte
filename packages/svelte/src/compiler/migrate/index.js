@@ -453,7 +453,7 @@ const instance_script = {
 				state.str.overwrite(
 					node.start,
 					node.end,
-					`ReturnType<typeof ${state.str.original.substring(node.start, node.end)}>`
+					`import('svelte').ComponentExports<typeof ${state.str.original.substring(node.start, node.end)}>`
 				);
 			}
 		}

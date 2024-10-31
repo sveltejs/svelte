@@ -4,19 +4,19 @@
 
 
 	interface Props {
-		my_comp: ReturnType<typeof Component>;
-		my_component_type: ReturnType<typeof ComponentType>;
+		my_comp: import('svelte').ComponentExports<typeof Component>;
+		my_component_type: import('svelte').ComponentExports<typeof ComponentType>;
 	}
 
 	let { my_comp, my_component_type }: Props = $props();
 
-	export function enhance(comp: ReturnType<typeof Component>, comp_type: ReturnType<typeof ComponentType>){
+	export function enhance(comp: import('svelte').ComponentExports<typeof Component>, comp_type: import('svelte').ComponentExports<typeof ComponentType>){
 		
 	}
 
-	let comp: ReturnType<typeof Component> | ReturnType<typeof ComponentType> | undefined = $state(undefined);
+	let comp: import('svelte').ComponentExports<typeof Component> | import('svelte').ComponentExports<typeof ComponentType> | undefined = $state(undefined);
 	
-	export const the_comp: ReturnType<typeof Component> | ReturnType<typeof ComponentType> = comp;
+	export const the_comp: import('svelte').ComponentExports<typeof Component> | import('svelte').ComponentExports<typeof ComponentType> = comp;
 </script>
 
 <Component bind:this={comp} />
