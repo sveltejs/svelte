@@ -7,8 +7,7 @@ import {
 	mount,
 	hydrate,
 	type Component,
-	type ComponentInternals,
-	type ComponentExports
+	type ComponentInternals
 } from 'svelte';
 import { render } from 'svelte/server';
 
@@ -181,16 +180,6 @@ render(NewComponent, {
 	}
 });
 
-const newComponentExports: ComponentExports<typeof NewComponent> = {
-	anExport: '',
-	$$events_def: null as any,
-	$$prop_def: null as any,
-	$$slot_def: null as any,
-	$set: null as any,
-	$destroy: null as any,
-	$on: null as any
-};
-
 // --------------------------------------------------------------------------- interop
 
 const AsLegacyComponent = asClassComponent(newComponent);
@@ -347,19 +336,6 @@ render(functionComponent, {
 		readonly: 1
 	}
 });
-
-const functionComponentExports: ComponentExports<typeof functionComponent> = {
-	foo: 'bar',
-	// @ts-expect-error
-	x: ''
-};
-
-type AdhocFunctionComponent = (a: unknown, b: { a: true }) => { foo: string };
-const adhocFunctionComponentExport: ComponentExports<AdhocFunctionComponent> = {
-	foo: 'bar',
-	// @ts-expect-error
-	x: ''
-};
 
 // --------------------------------------------------------------------------- *.svelte components
 
