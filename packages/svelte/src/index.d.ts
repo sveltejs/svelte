@@ -238,26 +238,6 @@ export type ComponentProps<Comp extends SvelteComponent | Component<any, any>> =
 			: never;
 
 /**
- * Convenience type to get the properties that given component exports.
- *
- * Example: Typing the `bind:this` for a component named `MyComponent`
- * ```
- * <script lang="ts">
- * 	import MyComponent from '$lib/component';
- * 	let component: ComponentExports<typeof MyComponent> | undefined = undefined;
- * <script>
- *
- * <MyComponent bind:this={component} />
- * ```
- */
-export type ComponentExports<TComponent extends Component<any, any> | typeof SvelteComponent<any>> =
-	TComponent extends typeof SvelteComponent<any>
-		? InstanceType<TComponent>
-		: TComponent extends Component<any, infer TExports>
-			? TExports
-			: never;
-
-/**
  * @deprecated This type is obsolete when working with the new `Component` type.
  *
  * @description
