@@ -1,5 +1,5 @@
 /** @import { VariableDeclarator, Node, Identifier, AssignmentExpression, LabeledStatement, ExpressionStatement } from 'estree' */
-/** @import { Visitors } from 'zimmerframe' */
+/** @import { Visitors, Context } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
 /** @import { Scope, ScopeRoot } from '../phases/scope.js' */
 /** @import { AST, Binding, SvelteNode, ValidatedCompileOptions } from '#compiler' */
@@ -398,6 +398,8 @@ export function migrate(source, { filename, use_ts } = {}) {
 	}
 }
 
+/** @typedef {SvelteNode | { type: "TSTypeReference", typeName: Identifier, start: number, end: number }} ASTNode  */
+
 /**
  * @typedef {{
  *  scope: Scope;
@@ -416,11 +418,12 @@ export function migrate(source, { filename, use_ts } = {}) {
  *  derived_components: Map<string, string>;
  * 	derived_labeled_statements: Set<LabeledStatement>;
  *  has_svelte_self: boolean;
+ *  migrate_prop_component_type?: boolean;
  *  uses_ts: boolean;
  * }} State
  */
 
-/** @type {Visitors<SvelteNode, State>} */
+/** @type {Visitors<ASTNode, State>} */
 const instance_script = {
 	_(node, { state, next }) {
 		// @ts-expect-error
@@ -437,8 +440,27 @@ const instance_script = {
 		}
 		next();
 	},
-	Identifier(node, { state, path }) {
+	TSTypeReference(node, { state, path }) {
+		if (state.analysis.runes) return;
+		if (node.typeName.type === 'Identifier') {
+			const binding = state.scope.get(node.typeName.name);
+			if (
+				binding &&
+				binding.declaration_kind === 'import' &&
+				binding.initial?.type === 'ImportDeclaration' &&
+				binding.initial.source.value?.toString().endsWith('.svelte')
+			) {
+				state.str.overwrite(
+					node.start,
+					node.end,
+					`import('svelte').ComponentExports<typeof ${state.str.original.substring(node.start, node.end)}>`
+				);
+			}
+		}
+	},
+	Identifier(node, { state, path, next }) {
 		handle_identifier(node, state, path);
+		next();
 	},
 	ImportDeclaration(node, { state }) {
 		state.props_insertion_point = node.end ?? state.props_insertion_point;
@@ -502,6 +524,8 @@ const instance_script = {
 		if (state.scope !== state.analysis.instance.scope) {
 			return;
 		}
+
+		next();
 
 		let nr_of_props = 0;
 
@@ -1409,7 +1433,7 @@ function migrate_slot_usage(node, path, state) {
 /**
  * @param {VariableDeclarator} declarator
  * @param {State} state
- * @param {SvelteNode[]} path
+ * @param {ASTNode[]} path
  */
 function extract_type_and_comment(declarator, state, path) {
 	const str = state.str;
@@ -1432,7 +1456,10 @@ function extract_type_and_comment(declarator, state, path) {
 		while (str.original[start] === ' ') {
 			start++;
 		}
-		return { type: str.original.substring(start, declarator.id.typeAnnotation.end), comment };
+		return {
+			type: str.snip(start, declarator.id.typeAnnotation.end).toString(),
+			comment
+		};
 	}
 
 	let cleaned_comment_arr = comment
