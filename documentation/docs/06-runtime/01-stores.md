@@ -2,10 +2,6 @@
 title: Stores
 ---
 
-<!-- - how to use
-- how to write
-- TODO should the details for the store methods belong to the reference section? -->
-
 > [!NOTE] Prior to the introduction of runes, stores were the primary state management mechanism for anything that couldn't be expressed as component state or props. With runes — which can be used in [`.svelte.js/ts`](svelte-js-files) files as well as in components — stores are rarely necessary, though you will still sometimes encounter them when using Svelte.
 
 A _store_ is an object that allows reactive access to a value via a simple [_store contract_](#Store-contract). The [`svelte/store`](../svelte-store) module contains minimal store implementations that fulfil this contract.
