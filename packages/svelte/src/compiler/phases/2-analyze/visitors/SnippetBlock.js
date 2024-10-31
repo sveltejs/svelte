@@ -46,7 +46,10 @@ export function SnippetBlock(node, context) {
 	) {
 		if (
 			parent.fragment.nodes.some(
-				(node) => node.type !== 'SnippetBlock' && (node.type !== 'Text' || node.data.trim())
+				(node) =>
+					node.type !== 'SnippetBlock' &&
+					(node.type !== 'Text' || node.data.trim()) &&
+					node.type !== 'Comment'
 			)
 		) {
 			e.snippet_conflict(node);

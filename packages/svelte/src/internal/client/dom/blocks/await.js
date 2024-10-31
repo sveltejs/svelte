@@ -131,6 +131,10 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 					// but let's use internal_set for consistency and just to be safe
 					internal_set(error_source, error);
 					update(CATCH, true);
+					if (!catch_fn) {
+						// Rethrow the error if no catch block exists
+						throw error_source.v;
+					}
 				}
 			);
 

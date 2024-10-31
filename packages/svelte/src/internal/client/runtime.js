@@ -432,12 +432,12 @@ export function update_effect(effect) {
 	}
 
 	try {
-		destroy_effect_deriveds(effect);
 		if ((flags & BLOCK_EFFECT) !== 0) {
 			destroy_block_effect_children(effect);
 		} else {
 			destroy_effect_children(effect);
 		}
+		destroy_effect_deriveds(effect);
 
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
@@ -832,8 +832,6 @@ export function invalidate_inner_signals(fn) {
 
 /**
  * Use `untrack` to prevent something from being treated as an `$effect`/`$derived` dependency.
- *
- * https://svelte-5-preview.vercel.app/docs/functions#untrack
  * @template T
  * @param {() => T} fn
  * @returns {T}
