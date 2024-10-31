@@ -1,5 +1,10 @@
 <script>
-	import { fade } from 'svelte/transition';
+	function fade(_) {
+		return {
+			duration: 500,
+			css: t => `opacity: ${t}`,
+		}
+	}
 
 	let toggle = $state(true);
 	let items = $state([ 1, 2, 3 ]);
@@ -15,7 +20,7 @@
 <button onclick={handle_toggle}>Toggle</button>
 
 {#if toggle}
-	<div transition:fade={{ duration: 500 }}>
+	<div transition:fade>
 		{#each items as item (item)}
 			<div>{item}</div>
 		{/each}

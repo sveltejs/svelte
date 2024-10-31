@@ -3,21 +3,19 @@ import { test } from '../../test';
 
 export default test({
 	async test({ assert, raf, target }) {
-		const btn1 = target.querySelector('button');
-
-		btn1?.click();
-
 		assert.htmlEqual(
 			target.innerHTML,
 			'<button>Toggle</button><div><div>1</div><div>2</div><div>3</div></div>'
 		);
 
+		const btn1 = target.querySelector('button');
+		btn1?.click();
 		flushSync();
 		raf.tick(250);
 
 		assert.htmlEqual(
 			target.innerHTML,
-			'<button>Toggle</button><div style="opacity: 0;"><div>1</div><div>2</div><div>3</div></div>'
+			'<button>Toggle</button><div style="opacity: 0.5;"><div>1</div><div>2</div><div>3</div></div>'
 		);
 
 		await Promise.resolve();
