@@ -245,8 +245,12 @@ declare module 'svelte' {
 	 * <MyComponent bind:this={component} />
 	 * ```
 	 */
-	export type ComponentExports<TComponent extends Component<any, any>> =
-		TComponent extends Component<any, infer TExports> ? TExports : never;
+	export type ComponentExports<TComponent extends Component<any, any> | typeof SvelteComponent<any>> =
+		TComponent extends typeof SvelteComponent<any>
+			? InstanceType<TComponent>
+			: TComponent extends Component<any, infer TExports>
+				? TExports
+				: never;
 
 	/**
 	 * @deprecated This type is obsolete when working with the new `Component` type.
