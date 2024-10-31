@@ -12,7 +12,7 @@ Svelte is a framework for building user interfaces on the web. It uses a compile
 	}
 </script>
 
-<button onclick={greet}>click me</button>
+<button on:click={greet}>click me</button>
 
 <style>
 	button {
