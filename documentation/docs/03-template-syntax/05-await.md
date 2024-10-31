@@ -73,7 +73,7 @@ Similarly, if you only want to show the error state, you can omit the `then` blo
 >
 > ```svelte
 > {#await import('./Component.svelte') then Component}
->	<Component.default />
+> 	<Component.default />
 > {/await}
 > ```
 
