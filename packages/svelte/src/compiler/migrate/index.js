@@ -306,6 +306,8 @@ export function migrate(source, { filename } = {}) {
 	}
 }
 
+/** @typedef {SvelteNode | { type: "TSTypeReference", typeName: Identifier, start: number, end: number }} ASTNode  */
+
 /**
  * @typedef {{
  *  scope: Scope;
@@ -327,7 +329,7 @@ export function migrate(source, { filename } = {}) {
  * }} State
  */
 
-/** @type {Visitors<SvelteNode | { type: "TSTypeReference", typeName: Identifier, start: number, end: number }, State>} */
+/** @type {Visitors<ASTNode, State>} */
 const instance_script = {
 	_(node, { state, next }) {
 		// @ts-expect-error
@@ -345,16 +347,6 @@ const instance_script = {
 		next();
 	},
 	TSTypeReference(node, { state, path }) {
-		// we don't want to overwrite in case it's an exported prop because
-		// we already take care of that in extract_type_and_comment
-		if (
-			path[1] &&
-			path[1].type === 'ExportNamedDeclaration' &&
-			path[1].declaration?.type === 'VariableDeclaration' &&
-			path[1].declaration?.kind === 'let' &&
-			!state.migrate_prop_component_type
-		)
-			return;
 		if (state.analysis.runes) return;
 		if (node.typeName.type === 'Identifier') {
 			const binding = state.scope.get(node.typeName.name);
@@ -400,11 +392,12 @@ const instance_script = {
 			state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
 		}
 	},
-	VariableDeclaration(node, context) {
-		const { state, path, visit, next } = context;
+	VariableDeclaration(node, { state, path, visit, next }) {
 		if (state.scope !== state.analysis.instance.scope) {
 			return;
 		}
+
+		next();
 
 		let nr_of_props = 0;
 
@@ -496,7 +489,7 @@ const instance_script = {
 							: '',
 						optional: !!declarator.init,
 						bindable: binding.updated,
-						...extract_type_and_comment(declarator, state.str, context)
+						...extract_type_and_comment(declarator, state.str, path)
 					});
 				}
 
@@ -684,7 +677,6 @@ const instance_script = {
 			while (state.str.original[end] !== '\n') end++;
 			state.str.update(start, end, '');
 		}
-		next();
 	},
 	BreakStatement(node, { state, path }) {
 		if (path[1].type !== 'LabeledStatement') return;
@@ -1176,10 +1168,9 @@ function migrate_slot_usage(node, path, state) {
 /**
  * @param {VariableDeclarator} declarator
  * @param {MagicString} str
- * @param {Context<SvelteNode | { type: "TSTypeReference", typeName: Identifier, start: number, end: number }, State>} context
+ * @param {ASTNode[]} path
  */
-function extract_type_and_comment(declarator, str, context) {
-	const path = context.path;
+function extract_type_and_comment(declarator, str, path) {
 	const parent = path.at(-1);
 
 	// Try to find jsdoc above the declaration
@@ -1199,10 +1190,6 @@ function extract_type_and_comment(declarator, str, context) {
 		while (str.original[start] === ' ') {
 			start++;
 		}
-		context.visit(declarator.id.typeAnnotation, {
-			...context.state,
-			migrate_prop_component_type: true
-		});
 		return {
 			type: str.snip(start, declarator.id.typeAnnotation.end).toString(),
 			comment
