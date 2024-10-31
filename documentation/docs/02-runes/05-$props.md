@@ -44,6 +44,8 @@ Destructuring allows us to declare fallback values, which are used if the parent
 let { adjective = 'happy' } = $props();
 ```
 
+> [!NOTE] Fallback values are not turned into reactive state proxies (see [Updating props](#Updating-props) for more info)
+
 ## Renaming props
 
 We can also use the destructuring assignment to rename props, which is necessary if they're invalid identifiers, or a JavaScript keyword like `super`:
@@ -145,6 +147,23 @@ However if the value passed in by the parent component is itself a deeply reacti
 	clicks: {object.count}
 </button>
 ```
+
+The fallback value of a prop not declared with `$bindable` is treated like a non-reactive POJO, and therefore also doesn't update the component when mutating its properties.
+
+```svelte
+<--- file: Child.svelte --->
+<script>
+	let { object = { count = 0 } } = $props();
+</script>
+<button onclick={() => {
+	// has no effect if the fallback value is used
+	object.count += 1
+}}>
+	clicks: {object.count}
+</button>
+```
+
+In general, mutating props is discouraged, instead use callback props to make it easier to reason about state and changes to that state. If parent and child should share (and be allowed to mutate) the same object, then use the [$bindable]($bindable) rune.
 
 ## Type safety
 
