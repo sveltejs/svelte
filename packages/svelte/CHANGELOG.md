@@ -1,5 +1,11 @@
 # svelte
 
+## 5.1.8
+
+### Patch Changes
+
+- fix: ensure compiler statements are correctly included ([#14074](https://github.com/sveltejs/svelte/pull/14074))
+
 ## 5.1.7
 
 ### Patch Changes
