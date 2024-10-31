@@ -1,5 +1,11 @@
 # svelte
 
+## 5.1.9
+
+### Patch Changes
+
+- fix: ensure transitions are applied to nested elements ([#14080](https://github.com/sveltejs/svelte/pull/14080))
+
 ## 5.1.8
 
 ### Patch Changes
