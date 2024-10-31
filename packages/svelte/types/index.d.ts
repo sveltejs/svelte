@@ -248,10 +248,10 @@ declare module 'svelte' {
 	 * ```
 	 */
 	export type ComponentExports<TComponent extends Component<any, any> | typeof SvelteComponent<any>> =
-		TComponent extends typeof SvelteComponent<any>
-			? InstanceType<TComponent>
-			: TComponent extends Component<any, infer TExports>
-				? TExports
+		TComponent extends Component<any, infer TExports>
+			? TExports
+			: TComponent extends typeof SvelteComponent<any>
+				? InstanceType<TComponent>
 				: never;
 
 	/**
