@@ -4,8 +4,8 @@ title: 'Runtime warnings'
 
 ## Client errors
 
-@include .generated/client-errors.md
+@include .generated/client-warnings.md
 
 ## Shared errors
 
-@include .generated/shared-errors.md
+@include .generated/shared-warnings.md
