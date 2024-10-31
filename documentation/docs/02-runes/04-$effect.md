@@ -140,6 +140,26 @@ $effect(() => {
 });
 ```
 
+## `untrack`
+
+As stated previously, dependencies are automatically tracked in an effect. To prevent a dependency from being tracked, `untrack` can be used. Unlike runes, `untrack` has to be imported from the `svelte` module. [Here](/playground/untitled#H4sIAAAAAAAACnXOwUrEMBDG8VcJw8K2bNn1XNvC-g6erIckTiVsmpTkqygh7y7Z6npQr__5DTOJnJyZWnp0MLD8Qg1NxnKk9ikRPpYyK4Gab3lelmN8Y4vSlIz8V9fegR0itdRFHcyCYXQjzLz4AJFWhyD1JYsp-Fnst7X9fSGWIaToxS5Cgqu7-lbVr7rjaWKNqqr7IZUwQnsXveWj9a-VbL7uXIGqt6Vcj6473Z7q1Ap4J7zT1uhLn4qVh0MezsJEkWTuThv5D6uCH65Y_WBqCPwOahFWzs_5E7FwwqtqAQAA)'s an example of its usage: 
+
+```svelte
+<script>
+	import {untrack} from 'svelte';
+
+	let a = $state(0);
+	let b = $state(0);
+
+	$effect(()=>{
+		console.log(a,untrack(()=>b)); //this will only run when `a` changes
+	})
+</script>
+
+<button onclick={()=>a++}>A is {a}</button>
+<button onclick={()=>b++}>B is {b}</button>
+```
+
 ## `$effect.pre`
 
 In rare cases, you may need to run code _before_ the DOM updates. For this we can use the `$effect.pre` rune:
