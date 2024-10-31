@@ -31,7 +31,9 @@ const common = {
 		}
 
 		return input;
-	})
+	}),
+
+	warningFilter: fun(() => true)
 };
 
 export const validate_module_options =
@@ -105,8 +107,6 @@ export const validate_component_options =
 			runes: boolean(undefined),
 
 			hmr: boolean(false),
-
-			warningFilter: fun(() => true),
 
 			sourcemap: validator(undefined, (input) => {
 				// Source maps can take on a variety of values, including string, JSON, map objects from magic-string and source-map,

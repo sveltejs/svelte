@@ -401,6 +401,7 @@ export function RegularElement(node, context) {
 		context.state.init.push(
 			b.block([
 				...child_state.init,
+				...element_state.init,
 				child_state.update.length > 0 ? build_render_statement(child_state.update) : b.empty,
 				...child_state.after_update,
 				...element_state.after_update
