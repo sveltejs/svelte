@@ -239,7 +239,7 @@ declare module 'svelte' {
 	 *
 	 * Example: Typing the `bind:this` for a component named `MyComponent`
 	 *
-	 * ```ts
+	 * ```svelte
 	 * <script lang="ts">
 	 * 	import MyComponent from '$lib/component';
 	 * 	let component: ComponentExports<typeof MyComponent> | undefined = undefined;
