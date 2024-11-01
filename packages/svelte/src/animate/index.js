@@ -53,7 +53,17 @@ export function flip(node, { from, to }, params = {}) {
  * @param {number} angle
  */
 function normalize_angle(angle) {
-	return Math.atan2(Math.sin(angle), Math.cos(angle));
+	var n = angle % (2 * Math.PI);
+
+	if (n > Math.PI) {
+		n -= 2 * Math.PI;
+	}
+    
+    if (n < -Math.PI) {
+		n += 2 * Math.PI;
+	}
+
+	return n;
 }
 
 /**
