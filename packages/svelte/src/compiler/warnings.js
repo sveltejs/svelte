@@ -642,14 +642,6 @@ export function reactive_declaration_module_script_dependency(node) {
 }
 
 /**
- * Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update
- * @param {null | NodeLike} node
- */
-export function reactive_declaration_non_reactive_property(node) {
-	w(node, "reactive_declaration_non_reactive_property", "Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update");
-}
-
-/**
  * State referenced in its own scope will never update. Did you mean to reference it inside a closure?
  * @param {null | NodeLike} node
  */
