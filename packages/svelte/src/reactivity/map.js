@@ -1,4 +1,5 @@
 /** @import { Source } from '#client' */
+import { DEV } from 'esm-env';
 import { set, source } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
@@ -19,6 +20,9 @@ export class SvelteMap extends Map {
 	 */
 	constructor(value) {
 		super();
+
+		// If the value is invalid then the native exception will fire here
+		if (DEV) value = new Map(value);
 
 		if (value) {
 			for (var [key, v] of value) {

@@ -1,4 +1,5 @@
 /** @import { Source } from '#client' */
+import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
@@ -23,6 +24,10 @@ export class SvelteSet extends Set {
 	 */
 	constructor(value) {
 		super();
+
+		// If the value is invalid then the native exception will fire here
+		// @ts-ignore
+		if (DEV) value = new Set(Array.from(value));
 
 		if (value) {
 			for (let element of value) {
