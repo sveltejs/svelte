@@ -581,7 +581,6 @@ declare module 'svelte/animate' {
 		delay?: number;
 		duration?: number | ((len: number) => number);
 		easing?: (t: number) => number;
-		rotation?: number;
 	}
 	/**
 	 * The flip function calculates the start and end position of an element and animates between them, translating the x and y values.

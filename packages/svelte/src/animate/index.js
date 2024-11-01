@@ -16,12 +16,20 @@ export function flip(node, { from, to }, params = {}) {
 
 	var transform = style.transform === 'none' ? '' : style.transform;
 	var [ox, oy] = style.transformOrigin.split(' ').map(parseFloat);
+
+	var m = new DOMMatrix(transform);
+
 	var dsx = from.width / to.width;
 	var dsy = from.height / to.height;
 
 	var dx = (from.left + dsx * ox - (to.left + ox)) / zoom;
 	var dy = (from.top + dsy * oy - (to.top + oy)) / zoom;
-	var { delay = 0, duration = (d) => Math.sqrt(d) * 120, easing = cubicOut, rotation = 0 } = params;
+	var { delay = 0, duration = (d) => Math.sqrt(d) * 120, easing = cubicOut } = params;
+
+	const rf = Math.atan2(m.m21, m.m11) + Math.atan2(from.bottom - from.top, from.right - from.left);
+	const rt = Math.atan2(to.bottom - to.top, to.right - to.left);
+
+	const rn = normalize_angle(rf - rt);
 
 	return {
 		delay,
@@ -30,12 +38,22 @@ export function flip(node, { from, to }, params = {}) {
 		css: (t, u) => {
 			var x = u * dx;
 			var y = u * dy;
-			var r = u * rotation;
 			var sx = t + u * dsx;
 			var sy = t + u * dsy;
-			return `transform: ${transform} scale(${sx}, ${sy}) translate(${x}px, ${y}px) rotate(${r}deg);`;
+			var r = u * rn;
+
+			return `transform: ${transform} scale(${sx}, ${sy}) translate(${x}px, ${y}px) rotate(${r}rad);`;
 		}
 	};
+}
+
+/**
+ * Prevent extra flips
+ *
+ * @param {number} angle
+ */
+function normalize_angle(angle) {
+	return Math.atan2(Math.sin(angle), Math.cos(angle));
 }
 
 /**
