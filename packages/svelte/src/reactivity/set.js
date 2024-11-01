@@ -29,7 +29,7 @@ export class SvelteSet extends Set {
 		if (DEV) value = new Set(value);
 
 		if (value) {
-			for (let element of value) {
+			for (var element of value) {
 				super.add(element);
 			}
 			this.#size.v = super.size;
