@@ -6,6 +6,10 @@
 
 > Svelte 5 components are no longer classes. Instantiate them using `mount` or `hydrate` (imported from 'svelte') instead.
 
+## non_reactive_update
+
+> `%name%` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
+
 ## perf_avoid_inline_class
 
 > Avoid 'new class' — instead, declare the class at the top level scope

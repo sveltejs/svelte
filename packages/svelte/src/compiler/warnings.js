@@ -97,6 +97,7 @@ export const codes = [
 	"options_renamed_ssr_dom",
 	"export_let_unused",
 	"legacy_component_creation",
+	"non_reactive_update",
 	"perf_avoid_inline_class",
 	"perf_avoid_nested_class",
 	"reactive_declaration_invalid_placement",
@@ -596,6 +597,15 @@ export function export_let_unused(node, name) {
  */
 export function legacy_component_creation(node) {
 	w(node, "legacy_component_creation", "Svelte 5 components are no longer classes. Instantiate them using `mount` or `hydrate` (imported from 'svelte') instead.");
+}
+
+/**
+ * `%name%` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function non_reactive_update(node, name) {
+	w(node, "non_reactive_update", `\`${name}\` is updated, but is not declared with \`$state(...)\`. Changing its value will not correctly trigger updates`);
 }
 
 /**
