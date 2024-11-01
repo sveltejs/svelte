@@ -15,7 +15,7 @@ In legacy mode, any top-level statement (i.e. not inside a block or a function) 
 	// when `a`, `b` or `sum` change
 	$: console.log(`${a} + ${b} = ${sum}`);
 
-	// this is a 'reactive assignment' — `sum` will be
+	// this is a 'reactive assignment' — `sum` will be
 	// recalculated when `a` or `b` change. It is
 	// not necessary to declare `sum` separately
 	$: sum = a + b;

@@ -11,7 +11,7 @@ In Svelte 3 and 4, the API for interacting with a component is different than in
 const component = new Component(options);
 ```
 
-A client-side component — that is, a component compiled with `generate: 'dom'` (or the `generate` option left unspecified) is a JavaScript class.
+A client-side component — that is, a component compiled with `generate: 'dom'` (or the `generate` option left unspecified) is a JavaScript class.
 
 ```ts
 // @noErrors
