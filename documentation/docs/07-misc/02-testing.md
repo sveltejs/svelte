@@ -31,7 +31,7 @@ export default defineConfig({
 		: undefined
 ```
 
-> [!NOTE] If loading the browser version of all your packages is undesireable, because you for example also test backend libraries, [you may need to resort to an alias configuration](https://github.com/testing-library/svelte-testing-library/issues/222#issuecomment-1909993331)
+> [!NOTE] If loading the browser version of all your packages is undesirable, because (for example) you also test backend libraries, [you may need to resort to an alias configuration](https://github.com/testing-library/svelte-testing-library/issues/222#issuecomment-1909993331)
 
 You can now write unit tests for code inside your `.js/.ts` files:
 
