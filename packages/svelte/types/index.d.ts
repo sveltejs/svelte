@@ -2354,7 +2354,7 @@ declare namespace $state {
 		| BigInt64Array
 		| BigUint64Array;
 
-	/** The things that `structuredClone` can handle — https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm */
+	/** The things that `structuredClone` can handle — https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm */
 	export type Cloneable =
 		| ArrayBuffer
 		| DataView
@@ -2665,7 +2665,7 @@ declare function $props(): any;
 declare function $bindable<T>(fallback?: T): T;
 
 /**
- * Inspects one or more values whenever they, or the properties they contain, change. Example:
+ * Inspects one or more values whenever they, or the properties they contain, change. Example:
  *
  * ```ts
  * $inspect(someValue, someOtherValue)
