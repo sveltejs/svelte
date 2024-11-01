@@ -1,5 +1,25 @@
 # svelte
 
+## 5.1.8
+
+### Patch Changes
+
+- fix: ensure compiler statements are correctly included ([#14074](https://github.com/sveltejs/svelte/pull/14074))
+
+## 5.1.7
+
+### Patch Changes
+
+- fix: ensure each block inert items are disposed of if the each block is also inert ([#13930](https://github.com/sveltejs/svelte/pull/13930))
+
+- fix: allow `warningFilter` option for `compileModule` ([#14066](https://github.com/sveltejs/svelte/pull/14066))
+
+- fix: ensure onMount correctly fires when new expressions are used ([#14049](https://github.com/sveltejs/svelte/pull/14049))
+
+- fix: wrap `:id`, `:where``:not` and `:has` with `:global` during migration ([#13850](https://github.com/sveltejs/svelte/pull/13850))
+
+- fix: ensure custom element attribute/prop changes are in their own context ([#14016](https://github.com/sveltejs/svelte/pull/14016))
+
 ## 5.1.6
 
 ### Patch Changes

@@ -63,6 +63,7 @@ import { SvelteWindow } from './visitors/SvelteWindow.js';
 import { TaggedTemplateExpression } from './visitors/TaggedTemplateExpression.js';
 import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
+import { TransitionDirective } from './visitors/TransitionDirective.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
@@ -172,6 +173,7 @@ const visitors = {
 	SvelteWindow,
 	TaggedTemplateExpression,
 	Text,
+	TransitionDirective,
 	TitleElement,
 	UpdateExpression,
 	UseDirective,

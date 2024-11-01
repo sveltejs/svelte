@@ -91,17 +91,17 @@ References to a prop inside a component update when the prop itself updates — 
 </button>
 ```
 
-Prop variables are not automatically deeply reactive. What happens when mutating one of their properties depends on what the parent passed in. For example if the parent passed a non-reactive POJO as a prop, setting a property of that object in the child will not cause the component to update ([demo](/playground/untitled#H4sIAAAAAAAAE3VPS07DMBC9yshCaiuqBLYhjoQ4Q1eEReJOVIMztuJJBbJ8d-IkEqXQ5bx53yCo6VEU4kCs2eBR7EWnDXpRvAbBXy79EjDhK_PZucyf0XDC2sbjf7iyxEg82YjSq0E7rmqqWffODgwvJ22O0A22h02Wz9cq3TzVVOY_CioXrm3fUbEMQdmRuICHGCGvpiDGTxYFDyPG_Y3Cl_6_K199bpQ2yBDWBhBBwp0brPPb3Z-u7chsCSwpo9WHDNsdyApCMslzODUeyAJ23WSUsMUymyfBvYTHmmKcI2e9LyBcUmKKWyKulr_Fb2Z_SHPIAQAA)):
+While you can temporarily _reassign_ props, you should not _mutate_ props unless they are [bindable]($bindable).
+
+If the prop is a regular object, the mutation will have no effect ([demo](/playground/untitled#H4sIAAAAAAAAE3WQwU7DMBBEf2W1QmorQgJXk0RC3PkBwiExG9WQrC17U4Es_ztKUkQp9OjxzM7bjcjtSKjwyfKNp1aLORA4b13ADHszUED1HFE-3eyaBcy-Mw_O5eFAg8xa1wb6T9eWhVgCKiyD9sZJ3XAjZnTWCzzuzfAKvbcjbPJieR2jm_uGy-InweXqtd0baaliBG0nFgW3kBIUNWYo9CGoxE-UsgvIpw2_oc9-LmAPJBCPDJCggqvlVtvdH9puErEMlvVg9HsVtzuoaojzkKKAfRuALVDfk5ZZW0fmy05wXcFdwyktlUs-KIinljTXrRVnm7-kL9dYLVbUAQAA)):
 
 ```svelte
 <!--- file: App.svelte --->
 <script>
 	import Child from './Child.svelte';
-
-	let object = $state({count: 0});
 </script>
 
-<Child {object} />
+<Child object={{ count: 0 }} />
 ```
 
 ```svelte
@@ -118,7 +118,7 @@ Prop variables are not automatically deeply reactive. What happens when mutating
 </button>
 ```
 
-However if the value passed in by the parent component is itself a deeply reactive state object, then it will be deeply reactive in the child, too ([demo](/playground/untitled#H4sIAAAAAAAAE3WQwU7DMBBEf2VlITUVVQLXkERC_YaeCIfE2aoujm3FGwqy_O_YcSug0KNnx7Nv1jHVjchKtlMkSOLANmwvJFpWvjhGnybOohD0s_PZmNy-o6So9Z3F_3SuFaGiEMMqyydhqGlVS2I0eiLYHoQcYD_pEVZ5sbzOX1dPwRaMEgl0f0ROUMOdpY4wc1zPikp48OvgqorvXFWlRJe-eCiawED4QaykaUa_udHl5-rfba4mN_pETHcB9RHVTNrY7C9gPxNpBVpxKfhb7bI11A24GFIUcBJSAu9mi0AHhKUo9Cj1CUjDbIbQP1rTpjzN72t4bJX3C8kSa8vLCZLFR4q0-eogr_4LN7sC9foBAAA=)):
+If the prop is a reactive state proxy, however, then mutations _will_ have an effect but you will see an [`ownership_invalid_mutation`](runtime-warnings#Client-warnings-ownership_invalid_mutation) warning, because the component is mutating state that does not 'belong' to it ([demo](/playground/untitled#H4sIAAAAAAAAE3WR0U7DMAxFf8VESBuiauG1WycheOEbKA9p67FA6kSNszJV-XeUZhMw2GN8r-1znUmQ7FGU4pn2UqsOes-SlSGRia3S6ET5Mgk-2OiJBZGdOh6szd0eNcdaIx3-V28NMRI7UYq1awdleVNTzaq3ZmB43CndwXYwPSzyYn4dWxermqJRI4Np3rFlqODasWRcTtAaT1zCHYSbVU3r4nsyrdPMKTUFKDYiE4yfLEoePIbsQpqfy3_nOVMuJIqg0wk1RFg7GOuWfwEbz2wIDLVatR_VtLyBagNTHFIUMCqtoZXeIfAOU1JoUJsR2IC3nWTMjt7GM4yKdyBhlAMpesvhydCC0y_i0ZagHByMh26WzUhXUUxKnpbcVnBfUwhznJnNlac7JkuIURL-2VVfwxflyrWcSQIAAA==)):
 
 ```svelte
 <!--- file: App.svelte --->
@@ -138,20 +138,23 @@ However if the value passed in by the parent component is itself a deeply reacti
 </script>
 
 <button onclick={() => {
-	// will cause the count below to update
+	// will cause the count below to update,
+	// but with a warning. Don't mutate
+	// objects you don't own!
 	object.count += 1
 }}>
 	clicks: {object.count}
 </button>
 ```
 
-The fallback value of a prop not declared with `$bindable` is treated like a non-reactive POJO, and therefore also doesn't update the component when mutating its properties.
+The fallback value of a prop not declared with `$bindable` is left untouched — it is not turned into a reactive state proxy — meaning mutations will not cause updates ([demo](/playground/untitled#H4sIAAAAAAAAE3WQwU7DMBBEf2VkIbUVoYFraCIh7vwA4eC4G9Wta1vxpgJZ_nfkBEQp9OjxzOzTRGHlkUQlXpy9G0gq1idCL43ppDrAD84HUYheGwqieo2CP3y2Z0EU3-En79fhRIaz1slA_-nKWSbLQVRiE9SgPTetbVkfvRsYzztttugHd8RiXU6vr-jisbWb8idhN7O3bEQhmN5ZVDyMlIorcOddv_Eufq4AGmJEuG5PilEjQrnRcoV7JCTUuJlGWq7-YHYjs7NwVhmtDnVcrlA3iLmzLLGTAdaB-j736h68Oxv-JM1I0AFjoG1OzPfX023c1nhobUoT39QeKsRzS8owM8DFTG_pE6dcVl70AQAA))
 
 ```svelte
 <!--- file: Child.svelte --->
 <script>
-	let { object = { count = 0 } } = $props();
+	let { object = { count: 0 } } = $props();
 </script>
+
 <button onclick={() => {
 	// has no effect if the fallback value is used
 	object.count += 1
@@ -160,7 +163,7 @@ The fallback value of a prop not declared with `$bindable` is treated like a non
 </button>
 ```
 
-In general, mutating props is discouraged, instead use callback props to make it easier to reason about state and changes to that state. If parent and child should share (and be allowed to mutate) the same object, then use the [$bindable]($bindable) rune.
+In summary: don't mutate props. Either use callback props to communicate changes, or — if parent and child should share the same object — use the [`$bindable`]($bindable) rune.
 
 ## Type safety
 
