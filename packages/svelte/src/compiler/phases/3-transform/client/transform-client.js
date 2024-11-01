@@ -561,17 +561,19 @@ export function client_component(analysis, options) {
 
 	if (analysis.custom_element) {
 		const ce = analysis.custom_element;
+		const ce_props = typeof ce === 'boolean' ? {} : ce.props || {};
 
 		/** @type {ESTree.Property[]} */
 		const props_str = [];
 
-		for (const [name, binding] of properties) {
-			const key = binding.prop_alias ?? name;
-			const prop_def = typeof ce === 'boolean' ? {} : ce.props?.[key] || {};
+		for (const [name, prop_def] of Object.entries(ce_props)) {
+			const binding = analysis.instance.scope.get(name);
+			const key = binding?.prop_alias ?? name;
+
 			if (
 				!prop_def.type &&
-				binding.initial?.type === 'Literal' &&
-				typeof binding.initial.value === 'boolean'
+				binding?.initial?.type === 'Literal' &&
+				typeof binding?.initial.value === 'boolean'
 			) {
 				prop_def.type = 'Boolean';
 			}
@@ -585,7 +587,15 @@ export function client_component(analysis, options) {
 					].filter(Boolean)
 				)
 			);
+
 			props_str.push(b.init(key, value));
+		}
+
+		for (const [name, binding] of properties) {
+			const key = binding.prop_alias ?? name;
+			if (ce_props[key]) continue;
+
+			props_str.push(b.init(key, b.object([])));
 		}
 
 		const slots_str = b.array([...analysis.slot_names.keys()].map((name) => b.literal(name)));
