@@ -97,7 +97,6 @@ export const codes = [
 	"options_renamed_ssr_dom",
 	"export_let_unused",
 	"legacy_component_creation",
-	"non_reactive_update",
 	"perf_avoid_inline_class",
 	"perf_avoid_nested_class",
 	"reactive_declaration_invalid_placement",
@@ -601,15 +600,6 @@ export function legacy_component_creation(node) {
 }
 
 /**
- * `%name%` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
- * @param {null | NodeLike} node
- * @param {string} name
- */
-export function non_reactive_update(node, name) {
-	w(node, "non_reactive_update", `\`${name}\` is updated, but is not declared with \`$state(...)\`. Changing its value will not correctly trigger updates`);
-}
-
-/**
  * Avoid 'new class' — instead, declare the class at the top level scope
  * @param {null | NodeLike} node
  */
@@ -639,6 +629,14 @@ export function reactive_declaration_invalid_placement(node) {
  */
 export function reactive_declaration_module_script_dependency(node) {
 	w(node, "reactive_declaration_module_script_dependency", "Reassignments of module-level declarations will not cause reactive statements to update");
+}
+
+/**
+ * Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update
+ * @param {null | NodeLike} node
+ */
+export function reactive_declaration_non_reactive_property(node) {
+	w(node, "reactive_declaration_non_reactive_property", "Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update");
 }
 
 /**

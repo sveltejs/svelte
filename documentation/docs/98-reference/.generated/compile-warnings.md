@@ -654,12 +654,6 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 This code will work when the component is rendered on the client (which is why this is a warning rather than an error), but if you use server rendering it will cause hydration to fail.
 
-### non_reactive_update
-
-```
-`%name%` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
-```
-
 ### options_deprecated_accessors
 
 ```
