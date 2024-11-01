@@ -26,8 +26,9 @@ export class SvelteSet extends Set {
 		super();
 
 		// If the value is invalid then the native exception will fire here
-		// @ts-ignore
-		if (DEV) value = new Set(Array.from(value));
+		if (DEV) {
+			value = new Set(value);
+		}
 
 		if (value) {
 			for (let element of value) {
