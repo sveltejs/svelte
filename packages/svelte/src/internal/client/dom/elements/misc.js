@@ -1,3 +1,4 @@
+import { teardown } from '../../reactivity/effects.js';
 import { hydrating } from '../hydration.js';
 import { clear_text_content, get_first_child } from '../operations.js';
 import { queue_micro_task } from '../task.js';
@@ -55,4 +56,15 @@ export function add_form_reset_listener() {
 			{ capture: true }
 		);
 	}
+}
+
+/**
+ * @param {string} text
+ */
+export function title(text) {
+	const previous = document.title;
+	document.title = text;
+	teardown(() => {
+		document.title = previous;
+	});
 }

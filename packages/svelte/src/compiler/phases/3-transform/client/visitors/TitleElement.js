@@ -14,11 +14,10 @@ export function TitleElement(node, context) {
 		context.state
 	);
 
-	const statement = b.stmt(b.assignment('=', b.id('$.document.title'), value));
+	context.state.init.push(b.stmt(b.call('$.title', value)));
 
 	if (has_state) {
+		const statement = b.stmt(b.assignment('=', b.id('$.document.title'), value));
 		context.state.update.push(statement);
-	} else {
-		context.state.init.push(statement);
 	}
 }
