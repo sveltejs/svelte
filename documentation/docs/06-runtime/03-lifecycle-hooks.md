@@ -71,9 +71,9 @@ While there's no "after update" hook, you can use `tick` to ensure that the UI i
 
 	$effect.pre(() => {
 		console.log('the component is about to update');
-		tick().then(
+		tick().then(() => {
 				console.log('the component just updated');
-		);
+		});
 	});
 </script>
 ```
