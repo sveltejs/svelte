@@ -168,6 +168,7 @@ export function migrate(source, { filename, use_ts } = {}) {
 			legacy_imports: new Set(),
 			script_insertions: new Set(),
 			derived_components: new Map(),
+			derived_conflicting_slots: new Map(),
 			derived_labeled_statements: new Set(),
 			has_svelte_self: false,
 			uses_ts:
@@ -199,6 +200,7 @@ export function migrate(source, { filename, use_ts } = {}) {
 		const need_script =
 			state.legacy_imports.size > 0 ||
 			state.derived_components.size > 0 ||
+			state.derived_conflicting_slots.size > 0 ||
 			state.script_insertions.size > 0 ||
 			state.props.length > 0 ||
 			analysis.uses_rest_props ||
@@ -365,6 +367,13 @@ export function migrate(source, { filename, use_ts } = {}) {
 			);
 		}
 
+		if (state.derived_conflicting_slots.size > 0) {
+			str.appendRight(
+				insertion_point,
+				`\n${indent}${[...state.derived_conflicting_slots.entries()].map(([name, init]) => `const ${name} = $derived(${init});`).join(`\n${indent}`)}\n`
+			);
+		}
+
 		if (state.props.length > 0 && state.analysis.accessors) {
 			str.appendRight(
 				insertion_point,
@@ -414,6 +423,7 @@ export function migrate(source, { filename, use_ts } = {}) {
  * 	legacy_imports: Set<string>;
  * 	script_insertions: Set<string>;
  *  derived_components: Map<string, string>;
+ *  derived_conflicting_slots: Map<string, string>;
  * 	derived_labeled_statements: Set<LabeledStatement>;
  *  has_svelte_self: boolean;
  *  uses_ts: boolean;
@@ -1106,6 +1116,7 @@ const template = {
 		let name = 'children';
 		let slot_name = 'default';
 		let slot_props = '{ ';
+		let aliased_slot_name;
 
 		for (const attr of node.attributes) {
 			if (attr.type === 'SpreadAttribute') {
@@ -1117,6 +1128,37 @@ const template = {
 
 				if (attr.name === 'name') {
 					slot_name = /** @type {any} */ (attr.value)[0].data;
+					// if some of the parents or this node itself har a slot
+					// attribute with the sane name of this slot
+					// we want to create a derived or the migrated snippet
+					// will shadow the slot prop
+					if (
+						path.some(
+							(parent) =>
+								(parent.type === 'RegularElement' ||
+									parent.type === 'SvelteElement' ||
+									parent.type === 'Component' ||
+									parent.type === 'SvelteComponent' ||
+									parent.type === 'SvelteFragment') &&
+								parent.attributes.some(
+									(attribute) =>
+										attribute.type === 'Attribute' &&
+										attribute.name === 'slot' &&
+										is_text_attribute(attribute) &&
+										attribute.value[0].data === slot_name
+								)
+						) ||
+						node.attributes.some(
+							(attribute) =>
+								attribute.type === 'Attribute' &&
+								attribute.name === 'slot' &&
+								is_text_attribute(attribute) &&
+								attribute.value[0].data === slot_name
+						)
+					) {
+						aliased_slot_name = `${slot_name}_render`;
+						state.derived_conflicting_slots.set(aliased_slot_name, slot_name);
+					}
 				} else {
 					const attr_value =
 						attr.value === true || Array.isArray(attr.value) ? attr.value : [attr.value];
@@ -1172,6 +1214,8 @@ const template = {
 			existing_prop.type = `import('svelte').${slot_props ? 'Snippet<[any]>' : 'Snippet'}`;
 			existing_prop.needs_refine_type = false;
 		}
+
+		name = aliased_slot_name ?? name;
 
 		if (node.fragment.nodes.length > 0) {
 			next();
