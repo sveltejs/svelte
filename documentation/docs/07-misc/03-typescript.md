@@ -226,8 +226,6 @@ To declare that a variable expects the constructor or instance type of a compone
 <MyComponent bind:this={componentInstance} />
 ```
 
-<!-- this is temporary, just testing something -->
-
 ## Enhancing built-in DOM types
 
 Svelte provides a best effort of all the HTML DOM types that exist. Sometimes you may want to use experimental attributes or custom events coming from an action. In these cases, TypeScript will throw a type error, saying that it does not know these types. If it's a non-experimental standard attribute/event, this may very well be a missing typing from our [HTML typings](https://github.com/sveltejs/svelte/blob/main/packages/svelte/elements.d.ts). In that case, you are welcome to open an issue and/or a PR fixing it.
