@@ -199,6 +199,8 @@ Using it together with dynamic components to restrict what kinds of component ca
 
 To extract the properties from a component, use `ComponentProps`.
 
+<!-- testing... -->
+
 ```ts
 import type { Component, ComponentProps } from 'svelte';
 import MyComponent from './MyComponent.svelte';
