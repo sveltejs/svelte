@@ -1,5 +1,5 @@
 /** @import { AST } from '#compiler' */
-/** @import { Context } from '../../types' */
+/** @import { AnalysisState, Context } from '../../types' */
 import * as e from '../../../../errors.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../../utils/ast.js';
 import { determine_slot } from '../../../../utils/slot.js';
@@ -96,6 +96,7 @@ export function visit_component(node, context) {
 	const component_slots = new Set();
 
 	for (const slot_name in nodes) {
+		/** @type {AnalysisState} */
 		const state = {
 			...context.state,
 			scope: node.metadata.scopes[slot_name],
