@@ -599,13 +599,14 @@ To declare that a component of a certain type is required:
 
 ```svelte
 <script lang="ts">
-	import type { Component } from 'svelte';
+	import type { ---SvelteComponent--- +++Component+++ } from 'svelte';
 	import {
 		ComponentA,
 		ComponentB
 	} from 'component-library';
 
-	let component: Component<{ foo: string }> = $state(
+	---let component: typeof SvelteComponent<{ foo: string }>---
+	+++let component: Component<{ foo: string }>+++ = $state(
 		Math.random() ? ComponentA : ComponentB
 	);
 </script>
