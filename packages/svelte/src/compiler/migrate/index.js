@@ -505,7 +505,8 @@ const instance_script = {
 
 		let nr_of_props = 0;
 
-		for (const declarator of node.declarations) {
+		for (let i = 0; i < node.declarations.length; i++) {
+			const declarator = node.declarations[i];
 			if (state.analysis.runes) {
 				if (get_rune(declarator.init, state.scope) === '$props') {
 					state.props_insertion_point = /** @type {number} */ (declarator.id.start) + 1;
@@ -605,12 +606,38 @@ const instance_script = {
 					});
 				}
 
-				state.props_insertion_point = /** @type {number} */ (declarator.end);
-				state.str.update(
-					/** @type {number} */ (declarator.start),
-					/** @type {number} */ (declarator.end),
-					''
-				);
+				let start = /** @type {number} */ (declarator.start);
+				let end = /** @type {number} */ (declarator.end);
+
+				// handle cases like let a,b,c; where only some are exported
+				if (node.declarations.length > 1) {
+					// move the insertion point after the node itself;
+					state.props_insertion_point = /** @type {number} */ (node.end);
+					// if it's not the first declaration remove from the , of the previous declaration
+					if (i !== 0) {
+						start = state.str.original.indexOf(
+							',',
+							/** @type {number} */ (node.declarations[i - 1].end)
+						);
+					}
+					// if it's not the last declaration remove either from up until the
+					// start of the next declaration (if it's the first declaration) or
+					// up until the last index of , from the next declaration
+					if (i !== node.declarations.length - 1) {
+						if (i === 0) {
+							end = /** @type {number} */ (node.declarations[i + 1].start);
+						} else {
+							end = state.str.original.lastIndexOf(
+								',',
+								/** @type {number} */ (node.declarations[i + 1].start)
+							);
+						}
+					}
+				} else {
+					state.props_insertion_point = /** @type {number} */ (declarator.end);
+				}
+
+				state.str.update(start, end, '');
 
 				continue;
 			}
