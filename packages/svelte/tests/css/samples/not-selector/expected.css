@@ -2,19 +2,16 @@
 	.svelte-xyz:not(.foo:where(.svelte-xyz)) {
 		color: green;
 	}
-	/* (unused) :not(.unused) {
-		color: red;
-	}*/
-	.svelte-xyz:not(.foo) {
+	.svelte-xyz:not(.unused:where(.svelte-xyz)) {
 		color: green;
 	}
+	/* (unused) :not(p) {
+		color: red;
+	}*/
 
-	.svelte-xyz:not(.foo:where(.svelte-xyz)):not(.unused) {
+	.svelte-xyz:not(.foo:where(.svelte-xyz)):not(.unused:where(.svelte-xyz)) {
 		color: green;
 	}
-	/* (unused) :not(.foo):not(.unused) {
-		color: red;
-	}*/
 
 	p.svelte-xyz:not(.foo:where(.svelte-xyz)) {
 		color: green;
@@ -22,12 +19,6 @@
 	/* (unused) p :not(.foo) {
 		color: red;
 	}*/
-	.x:not(.foo.svelte-xyz) {
-		color: green;
-	}
-	.x:not(.unused.svelte-xyz) {
-		color: red; /* TODO would be nice to prune this one day */
-	}
-	/* (unused) :global(.x) :not(.unused) {
+	/* (unused) p :not(.unused) {
 		color: red;
 	}*/
