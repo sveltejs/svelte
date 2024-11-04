@@ -32,4 +32,12 @@
 	 * This comment should be merged
 	 */
 	export let inline_commented_merged; // with this inline comment
+
+	/*
+	* this is a same-line leading multiline comment
+	**/ export let inline_multiline_leading_comment = 'world';
+
+	export let inline_multiline_trailing_comment = 'world'; /*
+	* this is a same-line trailing multiline comment
+	**/
 </script>
