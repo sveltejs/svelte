@@ -279,7 +279,7 @@ export function migrate(source, { filename, use_ts } = {}) {
 						type = `interface ${type_name} {${newline_separator}${state.props
 							.map((prop) => {
 								const comment = prop.comment ? `${prop.comment}${newline_separator}` : '';
-								return `${comment}${prop.exported}${prop.optional ? '?' : ''}: ${prop.type};`;
+								return `${comment}${prop.exported}${prop.optional ? '?' : ''}: ${prop.type};${prop.trailing_comment ? ' //' + prop.trailing_comment : ''}`;
 							})
 							.join(newline_separator)}`;
 						if (analysis.uses_props || analysis.uses_rest_props) {
@@ -289,7 +289,7 @@ export function migrate(source, { filename, use_ts } = {}) {
 					} else {
 						type = `/**\n${indent} * @typedef {Object} ${type_name}${state.props
 							.map((prop) => {
-								return `\n${indent} * @property {${prop.type}} ${prop.optional ? `[${prop.exported}]` : prop.exported}${prop.comment ? ` - ${prop.comment}` : ''}`;
+								return `\n${indent} * @property {${prop.type}} ${prop.optional ? `[${prop.exported}]` : prop.exported}${prop.comment ? ` - ${prop.comment}` : ''}${prop.trailing_comment ? ` - ${prop.trailing_comment.trim()}` : ''}`;
 							})
 							.join(``)}\n${indent} */`;
 					}
@@ -414,7 +414,7 @@ export function migrate(source, { filename, use_ts } = {}) {
  *  analysis: ComponentAnalysis;
  *  filename?: string;
  *  indent: string;
- *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string; type_only?: boolean; needs_refine_type?: boolean; }>;
+ *  props: Array<{ local: string; exported: string; init: string; bindable: boolean; slot_name?: string; optional: boolean; type: string; comment?: string; trailing_comment?: string; type_only?: boolean; needs_refine_type?: boolean; }>;
  *  props_insertion_point: number;
  *  has_props_rune: boolean;
  *  has_type_or_fallback: boolean;
@@ -1497,13 +1497,15 @@ function extract_type_and_comment(declarator, state, path) {
 		str.update(comment_start, comment_end, '');
 	}
 
+	const trailing_comment = /** @type {Node} */ (parent)?.trailingComments?.at(0)?.value;
+
 	if (declarator.id.typeAnnotation) {
 		state.has_type_or_fallback = true;
 		let start = declarator.id.typeAnnotation.start + 1; // skip the colon
 		while (str.original[start] === ' ') {
 			start++;
 		}
-		return { type: str.original.substring(start, declarator.id.typeAnnotation.end), comment };
+		return { type: str.original.substring(start, declarator.id.typeAnnotation.end), comment, trailing_comment };
 	}
 
 	let cleaned_comment_arr = comment
@@ -1531,7 +1533,7 @@ function extract_type_and_comment(declarator, state, path) {
 		state.has_type_or_fallback = true;
 		const match = /@type {(.+)}/.exec(comment_node.value);
 		if (match) {
-			return { type: match[1], comment: cleaned_comment };
+			return { type: match[1], comment: cleaned_comment, trailing_comment };
 		}
 	}
 
@@ -1540,11 +1542,11 @@ function extract_type_and_comment(declarator, state, path) {
 		state.has_type_or_fallback = true; // only assume type if it's trivial to infer - else someone would've added a type annotation
 		const type = typeof declarator.init.value;
 		if (type === 'string' || type === 'number' || type === 'boolean') {
-			return { type, comment: state.uses_ts ? comment : cleaned_comment };
+			return { type, comment: state.uses_ts ? comment : cleaned_comment, trailing_comment };
 		}
 	}
 
-	return { type: 'any', comment: state.uses_ts ? comment : cleaned_comment };
+	return { type: 'any', comment: state.uses_ts ? comment : cleaned_comment, trailing_comment };
 }
 
 // Ensure modifiers are applied in the same order as Svelte 4
@@ -1779,10 +1781,13 @@ function handle_identifier(node, state, path) {
 						comment = state.str.original.substring(comment_node.start, comment_node.end);
 					}
 
+					const trailing_comment = member.trailingComments?.at(0)?.value;
+
 					if (prop) {
 						prop.type = type;
 						prop.optional = member.optional;
 						prop.comment = comment ?? prop.comment;
+						prop.trailing_comment = trailing_comment ?? prop.trailing_comment;
 					} else {
 						state.props.push({
 							local: member.key.name,
@@ -1792,6 +1797,7 @@ function handle_identifier(node, state, path) {
 							optional: member.optional,
 							type,
 							comment,
+							trailing_comment,
 							type_only: true
 						});
 					}
