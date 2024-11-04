@@ -11,10 +11,13 @@
 	:global(.x):not(.foo) {
 		color: green;
 	}
-	:global(.x):not(.unused) {
+	:global(.x) :not(p) {
+		color: red;
+	}
+	:global(.x):not(p) {
 		color: red; /* TODO would be nice to prune this one day */
 	}
 	:global(.x) :not(.unused) {
-		color: red;
+		color: green;
 	}
 </style>

@@ -4,16 +4,16 @@ export default test({
 	warnings: [
 		{
 			code: 'css_unused_selector',
-			message: 'Unused CSS selector ":global(.x) :not(.unused)"',
+			message: 'Unused CSS selector ":global(.x) :not(p)"',
 			start: {
-				line: 17,
+				line: 14,
 				column: 1,
-				character: 289
+				character: 197
 			},
 			end: {
-				line: 17,
-				column: 26,
-				character: 314
+				line: 14,
+				column: 20,
+				character: 216
 			}
 		}
 	]

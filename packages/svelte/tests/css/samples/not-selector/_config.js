@@ -4,44 +4,44 @@ export default test({
 	warnings: [
 		{
 			code: 'css_unused_selector',
-			message: 'Unused CSS selector ":not(.unused)"',
+			message: 'Unused CSS selector ":not(p)"',
 			start: {
-				line: 8,
+				line: 11,
 				column: 1,
-				character: 89
+				character: 125
 			},
 			end: {
-				line: 8,
-				column: 14,
-				character: 102
-			}
-		},
-		{
-			code: 'css_unused_selector',
-			message: 'Unused CSS selector ":not(.foo):not(.unused)"',
-			start: {
-				line: 12,
-				column: 1,
-				character: 124
-			},
-			end: {
-				line: 12,
-				column: 24,
-				character: 147
+				line: 11,
+				column: 8,
+				character: 132
 			}
 		},
 		{
 			code: 'css_unused_selector',
 			message: 'Unused CSS selector "p :not(.foo)"',
 			start: {
-				line: 19,
+				line: 22,
 				column: 1,
-				character: 203
+				character: 235
 			},
 			end: {
-				line: 19,
+				line: 22,
 				column: 13,
-				character: 215
+				character: 247
+			}
+		},
+		{
+			code: 'css_unused_selector',
+			message: 'Unused CSS selector "p :not(.unused)"',
+			start: {
+				line: 25,
+				column: 1,
+				character: 268
+			},
+			end: {
+				line: 25,
+				column: 16,
+				character: 283
 			}
 		}
 	]

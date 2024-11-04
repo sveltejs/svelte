@@ -8,9 +8,12 @@
 	.x:not(.foo.svelte-xyz) {
 		color: green;
 	}
-	.x:not(.unused.svelte-xyz) {
-		color: red; /* TODO would be nice to prune this one day */
-	}
-	/* (unused) :global(.x) :not(.unused) {
+	/* (unused) :global(.x) :not(p) {
 		color: red;
 	}*/
+	.x:not(p.svelte-xyz) {
+		color: red; /* TODO would be nice to prune this one day */
+	}
+	.x .svelte-xyz:not(.unused:where(.svelte-xyz)) {
+		color: green;
+	}

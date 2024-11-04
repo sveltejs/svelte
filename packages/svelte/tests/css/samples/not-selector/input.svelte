@@ -6,17 +6,23 @@
 		color: green;
 	}
 	:not(.unused) {
+		color: green;
+	}
+	:not(p) {
 		color: red;
 	}
 
 	:not(.foo):not(.unused) {
-		color: red;
+		color: green;
 	}
 
 	p:not(.foo) {
 		color: green;
 	}
 	p :not(.foo) {
+		color: red;
+	}
+	p :not(.unused) {
 		color: red;
 	}
 </style>
