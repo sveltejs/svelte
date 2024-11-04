@@ -3,8 +3,9 @@
 import { CompileDiagnostic } from './utils/compile_diagnostic.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
-class InternalCompileError extends CompileDiagnostic {
-	name = 'CompileError';
+class InternalCompileError extends Error {
+	message = ''; // ensure this property is enumerable
+	#diagnostic;
 
 	/**
 	 * @param {string} code
@@ -12,7 +13,22 @@ class InternalCompileError extends CompileDiagnostic {
 	 * @param {[number, number] | undefined} position
 	 */
 	constructor(code, message, position) {
-		super(code, message, position);
+		super(message);
+		this.stack = ''; // avoid unnecessary noise; don't set it as a class property or it becomes enumerable
+		// We want to extend from Error so that various bundler plugins properly handle it.
+		// But we also want to share the same object shape with that of warnings, therefore
+		// we create an instance of the shared class an copy over its properties.
+		this.#diagnostic = new CompileDiagnostic(code, message, position);
+		Object.assign(this, this.#diagnostic);
+		this.name = 'CompileError';
+	}
+
+	toString() {
+		return this.#diagnostic.toString();
+	}
+
+	toJSON() {
+		return this.#diagnostic.toJSON();
 	}
 }
 
@@ -731,12 +747,12 @@ export function block_duplicate_clause(node, name) {
 }
 
 /**
- * {:...} block is invalid at this position (did you forget to close the preceeding element or block?)
+ * {:...} block is invalid at this position (did you forget to close the preceding element or block?)
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function block_invalid_continuation_placement(node) {
-	e(node, "block_invalid_continuation_placement", "{:...} block is invalid at this position (did you forget to close the preceeding element or block?)");
+	e(node, "block_invalid_continuation_placement", "{:...} block is invalid at this position (did you forget to close the preceding element or block?)");
 }
 
 /**

@@ -110,6 +110,7 @@ class Svelte4Component {
 
 		this.#instance = (options.hydrate ? hydrate : mount)(options.component, {
 			target: options.target,
+			anchor: options.anchor,
 			props,
 			context: options.context,
 			intro: options.intro ?? false,

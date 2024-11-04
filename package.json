@@ -45,10 +45,5 @@
     "typescript-eslint": "^8.2.0",
     "v8-natives": "^1.2.5",
     "vitest": "^2.0.5"
-  },
-  "pnpm": {
-    "overrides": {
-      "xml2js": "^0.6.0"
-    }
   }
 }

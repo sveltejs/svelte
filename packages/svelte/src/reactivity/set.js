@@ -26,7 +26,7 @@ export class SvelteSet extends Set {
 		super();
 
 		// If the value is invalid then the native exception will fire here
-		if (DEV) new Set(value);
+		if (DEV) value = new Set(value);
 
 		if (value) {
 			for (var element of value) {

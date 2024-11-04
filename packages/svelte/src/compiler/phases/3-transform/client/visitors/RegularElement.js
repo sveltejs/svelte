@@ -61,11 +61,13 @@ export function RegularElement(node, context) {
 
 	const is_custom_element = is_custom_element_node(node);
 
-	if (is_custom_element) {
+	if (node.name === 'video' || is_custom_element) {
 		// cloneNode is faster, but it does not instantiate the underlying class of the
 		// custom element until the template is connected to the dom, which would
 		// cause problems when setting properties on the custom element.
 		// Therefore we need to use importNode instead, which doesn't have this caveat.
+		// Additionally, Webkit browsers need importNode for video elements for autoplay
+		// to work correctly.
 		context.state.metadata.context.template_needs_import_node = true;
 	}
 
@@ -158,17 +160,19 @@ export function RegularElement(node, context) {
 	}
 
 	/** @type {typeof state} */
-	const element_after_update_state = { ...context.state, after_update: [] };
+	const element_state = { ...context.state, init: [], after_update: [] };
 
 	for (const attribute of other_directives) {
 		if (attribute.type === 'OnDirective') {
 			const handler = /** @type {Expression} */ (context.visit(attribute));
 
-			element_after_update_state.after_update.push(
-				b.stmt(has_use ? b.call('$.effect', b.thunk(handler)) : handler)
-			);
+			if (has_use) {
+				element_state.init.push(b.stmt(b.call('$.effect', b.thunk(handler))));
+			} else {
+				element_state.after_update.push(b.stmt(handler));
+			}
 		} else {
-			context.visit(attribute, element_after_update_state);
+			context.visit(attribute, element_state);
 		}
 	}
 
@@ -399,20 +403,19 @@ export function RegularElement(node, context) {
 		context.state.init.push(
 			b.block([
 				...child_state.init,
+				...element_state.init,
 				child_state.update.length > 0 ? build_render_statement(child_state.update) : b.empty,
 				...child_state.after_update,
-				...element_after_update_state.after_update
+				...element_state.after_update
 			])
 		);
 	} else if (node.fragment.metadata.dynamic) {
-		context.state.init.push(...child_state.init);
+		context.state.init.push(...child_state.init, ...element_state.init);
 		context.state.update.push(...child_state.update);
-		context.state.after_update.push(
-			...child_state.after_update,
-			...element_after_update_state.after_update
-		);
+		context.state.after_update.push(...child_state.after_update, ...element_state.after_update);
 	} else {
-		context.state.after_update.push(...element_after_update_state.after_update);
+		context.state.init.push(...element_state.init);
+		context.state.after_update.push(...element_state.after_update);
 	}
 
 	if (lookup.has('dir')) {

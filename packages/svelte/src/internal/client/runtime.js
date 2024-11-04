@@ -432,12 +432,12 @@ export function update_effect(effect) {
 	}
 
 	try {
-		destroy_effect_deriveds(effect);
 		if ((flags & BLOCK_EFFECT) !== 0) {
 			destroy_block_effect_children(effect);
 		} else {
 			destroy_effect_children(effect);
 		}
+		destroy_effect_deriveds(effect);
 
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
@@ -831,9 +831,17 @@ export function invalidate_inner_signals(fn) {
 }
 
 /**
- * Use `untrack` to prevent something from being treated as an `$effect`/`$derived` dependency.
+ * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived) or [`$effect`](https://svelte.dev/docs/svelte/$effect),
+ * any state read inside `fn` will not be treated as a dependency.
  *
- * https://svelte-5-preview.vercel.app/docs/functions#untrack
+ * ```ts
+ * $effect(() => {
+ *   // this will run when `data` changes, but not when `time` changes
+ *   save(data, {
+ *     timestamp: untrack(() => time)
+ *   });
+ * });
+ * ```
  * @template T
  * @param {() => T} fn
  * @returns {T}

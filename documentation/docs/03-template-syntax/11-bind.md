@@ -230,7 +230,7 @@ All visible elements have the following readonly bindings, measured with a `Resi
 bind:this={dom_node}
 ```
 
-To get a reference to a DOM node, use `bind:this`. The value will be `undefined` until the component is mounted — in other words, you should read it inside an effect or an event handler, but not during component initialisation:
+To get a reference to a DOM node, use `bind:this`. The value will be `undefined` until the component is mounted — in other words, you should read it inside an effect or an event handler, but not during component initialisation:
 
 ```svelte
 <script>

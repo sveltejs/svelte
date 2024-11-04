@@ -21,8 +21,18 @@ Then adjust your `vite.config.js`:
 /// file: vite.config.js
 import { defineConfig } from +++'vitest/config'+++;
 
-export default defineConfig({ /* ... */ })
+export default defineConfig({
+	// ...
+	// Tell Vitest to use the `browser` entry points in `package.json` files, even though it's running in Node
+	resolve: process.env.VITEST
+		? {
+				conditions: ['browser']
+			}
+		: undefined
+});
 ```
+
+> [!NOTE] If loading the browser version of all your packages is undesirable, because (for example) you also test backend libraries, [you may need to resort to an alias configuration](https://github.com/testing-library/svelte-testing-library/issues/222#issuecomment-1909993331)
 
 You can now write unit tests for code inside your `.js/.ts` files:
 

@@ -22,7 +22,7 @@ export class SvelteMap extends Map {
 		super();
 
 		// If the value is invalid then the native exception will fire here
-		if (DEV) new Map(value);
+		if (DEV) value = new Map(value);
 
 		if (value) {
 			for (var [key, v] of value) {

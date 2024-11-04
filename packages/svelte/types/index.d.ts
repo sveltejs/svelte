@@ -2,7 +2,7 @@ declare module 'svelte' {
 	/**
 	 * @deprecated In Svelte 4, components are classes. In Svelte 5, they are functions.
 	 * Use `mount` instead to instantiate components.
-	 * See [breaking changes](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes)
+	 * See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 	 * for more info.
 	 */
 	export interface ComponentConstructorOptions<
@@ -36,7 +36,7 @@ declare module 'svelte' {
 	 * This was the base class for Svelte components in Svelte 4. Svelte 5+ components
 	 * are completely different under the hood. For typing, use `Component` instead.
 	 * To instantiate components, use `mount` instead`.
-	 * See [breaking changes documentation](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes) for more info.
+	 * See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more info.
 	 */
 	export class SvelteComponent<
 		Props extends Record<string, any> = Record<string, any>,
@@ -50,7 +50,7 @@ declare module 'svelte' {
 		/**
 		 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
 		 * is a stop-gap solution. Migrate towards using `mount` instead. See
-		 * https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more info.
+		 * https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more info.
 		 */
 		constructor(options: ComponentConstructorOptions<Properties<Props, Slots>>);
 		/**
@@ -80,14 +80,14 @@ declare module 'svelte' {
 
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
 		 * for more info.
 		 */
 		$destroy(): void;
 
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
 		 * for more info.
 		 */
 		$on<K extends Extract<keyof Events, string>>(
@@ -97,7 +97,7 @@ declare module 'svelte' {
 
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
 		 * for more info.
 		 */
 		$set(props: Partial<Props>): void;
@@ -150,13 +150,13 @@ declare module 'svelte' {
 		): {
 			/**
 			 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-			 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+			 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
 			 * for more info.
 			 */
 			$on?(type: string, callback: (e: any) => void): () => void;
 			/**
 			 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-			 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+			 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
 			 * for more info.
 			 */
 			$set?(props: Partial<Props>): void;
@@ -168,7 +168,7 @@ declare module 'svelte' {
 	}
 
 	/**
-	 * @deprecated Use `Component` instead. See [breaking changes documentation](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes) for more information.
+	 * @deprecated Use `Component` instead. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more information.
 	 */
 	export class SvelteComponentTyped<
 		Props extends Record<string, any> = Record<string, any>,
@@ -275,7 +275,7 @@ declare module 'svelte' {
 	 * ```
 	 * You can only call a snippet through the `{@render ...}` tag.
 	 *
-	 * https://svelte-5-preview.vercel.app/docs/snippets
+	 * https://svelte.dev/docs/svelte/snippet
 	 *
 	 * @template Parameters the parameters that the snippet expects (if any) as a tuple.
 	 */
@@ -354,7 +354,7 @@ declare module 'svelte' {
 	 *
 	 * If a function is returned _synchronously_ from `onMount`, it will be called when the component is unmounted.
 	 *
-	 * `onMount` does not run inside a [server-side component](https://svelte.dev/docs#run-time-server-side-component-api).
+	 * `onMount` does not run inside [server-side components](https://svelte.dev/docs/svelte/svelte-server#render).
 	 *
 	 * */
 	export function onMount<T>(fn: () => NotFunction<T> | Promise<NotFunction<T>> | (() => any)): void;
@@ -367,7 +367,7 @@ declare module 'svelte' {
 	 * */
 	export function onDestroy(fn: () => any): void;
 	/**
-	 * Creates an event dispatcher that can be used to dispatch [component events](https://svelte.dev/docs#template-syntax-component-directives-on-eventname).
+	 * Creates an event dispatcher that can be used to dispatch [component events](https://svelte.dev/docs/svelte/legacy-on#Component-events).
 	 * Event dispatchers are functions that can take two arguments: `name` and `detail`.
 	 *
 	 * Component events created with `createEventDispatcher` create a
@@ -385,7 +385,7 @@ declare module 'svelte' {
 	 * }>();
 	 * ```
 	 *
-	 * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte-5-preview.vercel.app/docs/deprecations#createeventdispatcher
+	 * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte.dev/docs/svelte/v5-migration-guide#Event-changes-Component-events
 	 * */
 	export function createEventDispatcher<EventMap extends Record<string, any> = any>(): EventDispatcher<EventMap>;
 	/**
@@ -395,7 +395,7 @@ declare module 'svelte' {
 	 *
 	 * In runes mode use `$effect.pre` instead.
 	 *
-	 * @deprecated Use `$effect.pre` instead — see https://svelte-5-preview.vercel.app/docs/deprecations#beforeupdate-and-afterupdate
+	 * @deprecated Use `$effect.pre` instead — see https://svelte.dev/docs/svelte/$effect#$effect.pre
 	 * */
 	export function beforeUpdate(fn: () => void): void;
 	/**
@@ -405,7 +405,7 @@ declare module 'svelte' {
 	 *
 	 * In runes mode use `$effect` instead.
 	 *
-	 * @deprecated Use `$effect` instead — see https://svelte-5-preview.vercel.app/docs/deprecations#beforeupdate-and-afterupdate
+	 * @deprecated Use `$effect` instead — see https://svelte.dev/docs/svelte/$effect
 	 * */
 	export function afterUpdate(fn: () => void): void;
 	/**
@@ -455,9 +455,17 @@ declare module 'svelte' {
 	 * */
 	export function tick(): Promise<void>;
 	/**
-	 * Use `untrack` to prevent something from being treated as an `$effect`/`$derived` dependency.
+	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived) or [`$effect`](https://svelte.dev/docs/svelte/$effect),
+	 * any state read inside `fn` will not be treated as a dependency.
 	 *
-	 * https://svelte-5-preview.vercel.app/docs/functions#untrack
+	 * ```ts
+	 * $effect(() => {
+	 *   // this will run when `data` changes, but not when `time` changes
+	 *   save(data, {
+	 *     timestamp: untrack(() => time)
+	 *   });
+	 * });
+	 * ```
 	 * */
 	export function untrack<T>(fn: () => T): T;
 	/**
@@ -804,7 +812,7 @@ declare module 'svelte/compiler' {
 		 */
 		cssHash?: CssHashGetter;
 		/**
-		 * If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.
+		 * If `true`, your HTML comments will be preserved in the output. By default, they are stripped out.
 		 *
 		 * @default false
 		 */
@@ -1292,8 +1300,9 @@ declare module 'svelte/compiler' {
 	 * May throw an error if the code is too complex to migrate automatically.
 	 *
 	 * */
-	export function migrate(source: string, { filename }?: {
+	export function migrate(source: string, { filename, use_ts }?: {
 		filename?: string;
+		use_ts?: boolean;
 	} | undefined): {
 		code: string;
 	};
@@ -2174,7 +2183,7 @@ declare module 'svelte/types/compiler/interfaces' {
 		 */
 		cssHash?: CssHashGetter;
 		/**
-		 * If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.
+		 * If `true`, your HTML comments will be preserved in the output. By default, they are stripped out.
 		 *
 		 * @default false
 		 */
@@ -2322,7 +2331,7 @@ declare module 'svelte/types/compiler/interfaces' {
  * let count = $state(0);
  * ```
  *
- * https://svelte-5-preview.vercel.app/docs/runes#$state
+ * https://svelte.dev/docs/svelte/$state
  *
  * @param initial The initial value
  */
@@ -2345,7 +2354,7 @@ declare namespace $state {
 		| BigInt64Array
 		| BigUint64Array;
 
-	/** The things that `structuredClone` can handle — https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm */
+	/** The things that `structuredClone` can handle — https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm */
 	export type Cloneable =
 		| ArrayBuffer
 		| DataView
@@ -2418,7 +2427,7 @@ declare namespace $state {
 	 * </button>
 	 * ```
 	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$state-raw
+	 * https://svelte.dev/docs/svelte/$state#$state.raw
 	 *
 	 * @param initial The initial value
 	 */
@@ -2439,7 +2448,7 @@ declare namespace $state {
 	 * </script>
 	 * ```
 	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$state.snapshot
+	 * https://svelte.dev/docs/svelte/$state#$state.snapshot
 	 *
 	 * @param state The value to snapshot
 	 */
@@ -2476,7 +2485,7 @@ declare namespace $state {
  * let double = $derived(count * 2);
  * ```
  *
- * https://svelte-5-preview.vercel.app/docs/runes#$derived
+ * https://svelte.dev/docs/svelte/$derived
  *
  * @param expression The derived state expression
  */
@@ -2498,7 +2507,7 @@ declare namespace $derived {
 	 * });
 	 * ```
 	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$derived-by
+	 * https://svelte.dev/docs/svelte/$derived#$derived.by
 	 */
 	export function by<T>(fn: () => T): T;
 
@@ -2537,7 +2546,7 @@ declare namespace $derived {
  *
  * Does not run during server side rendering.
  *
- * https://svelte-5-preview.vercel.app/docs/runes#$effect
+ * https://svelte.dev/docs/svelte/$effect
  * @param fn The function to execute
  */
 declare function $effect(fn: () => void | (() => void)): void;
@@ -2556,7 +2565,7 @@ declare namespace $effect {
 	 *
 	 * Does not run during server side rendering.
 	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$effect-pre
+	 * https://svelte.dev/docs/svelte/$effect#$effect.pre
 	 * @param fn The function to execute
 	 */
 	export function pre(fn: () => void | (() => void)): void;
@@ -2579,7 +2588,7 @@ declare namespace $effect {
 	 *
 	 * This allows you to (for example) add things like subscriptions without causing memory leaks, by putting them in child effects.
 	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$effect-tracking
+	 * https://svelte.dev/docs/svelte/$effect#$effect.tracking
 	 */
 	export function tracking(): boolean;
 
@@ -2607,7 +2616,7 @@ declare namespace $effect {
 	 * <button onclick={() => cleanup()}>cleanup</button>
 	 * ```
 	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$effect-root
+	 * https://svelte.dev/docs/svelte/$effect#$effect.root
 	 */
 	export function root(fn: () => void | (() => void)): () => void;
 
@@ -2640,7 +2649,7 @@ declare namespace $effect {
  * let { optionalProp = 42, requiredProp, bindableProp = $bindable() }: { optionalProp?: number; requiredProps: string; bindableProp: boolean } = $props();
  * ```
  *
- * https://svelte-5-preview.vercel.app/docs/runes#$props
+ * https://svelte.dev/docs/svelte/$props
  */
 declare function $props(): any;
 
@@ -2651,12 +2660,12 @@ declare function $props(): any;
  * let { propName = $bindable() }: { propName: boolean } = $props();
  * ```
  *
- * https://svelte-5-preview.vercel.app/docs/runes#$bindable
+ * https://svelte.dev/docs/svelte/$bindable
  */
 declare function $bindable<T>(fallback?: T): T;
 
 /**
- * Inspects one or more values whenever they, or the properties they contain, change. Example:
+ * Inspects one or more values whenever they, or the properties they contain, change. Example:
  *
  * ```ts
  * $inspect(someValue, someOtherValue)
@@ -2671,7 +2680,7 @@ declare function $bindable<T>(fallback?: T): T;
  * $inspect(x, y).with(() => { debugger; });
  * ```
  *
- * https://svelte-5-preview.vercel.app/docs/runes#$inspect
+ * https://svelte.dev/docs/svelte/$inspect
  */
 declare function $inspect<T extends any[]>(
 	...values: T
@@ -2694,7 +2703,7 @@ declare function $inspect<T extends any[]>(
  *
  * Only available inside custom element components, and only on the client-side.
  *
- * https://svelte-5-preview.vercel.app/docs/runes#$host
+ * https://svelte.dev/docs/svelte/$host
  */
 declare function $host<El extends HTMLElement = HTMLElement>(): El;
 

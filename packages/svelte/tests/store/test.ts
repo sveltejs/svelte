@@ -666,6 +666,33 @@ describe('fromStore', () => {
 		teardown();
 	});
 
+	it('creates state from a writable store that updates after timeout', async () => {
+		const wait = () => new Promise((resolve) => setTimeout(resolve, 100));
+		const store = {
+			subscribe: (cb: any) => {
+				// new object each time to force updates of underlying signals,
+				// to test the whole thing doesn't rerun more often than it should
+				setTimeout(() => cb({}), 0);
+				return () => {};
+			}
+		};
+
+		const count = fromStore(store);
+		const log: any[] = [];
+
+		const teardown = effect_root(() => {
+			render_effect(() => {
+				log.push(count.current);
+			});
+		});
+
+		await wait();
+
+		assert.deepEqual(log, [undefined, {}]);
+
+		teardown();
+	});
+
 	it('creates state from a readable store', () => {
 		const store = readable(0);
 

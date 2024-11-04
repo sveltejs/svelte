@@ -376,7 +376,7 @@ If you wanted multiple UI placeholders, you had to use named slots. In Svelte 5,
 </main>
 
 <footer>
-	---<slot name="header" />---
+	---<slot name="footer" />---
 	+++{@render footer()}+++
 </footer>
 ```
@@ -599,13 +599,14 @@ To declare that a component of a certain type is required:
 
 ```svelte
 <script lang="ts">
-	import type { Component } from 'svelte';
+	import type { ---SvelteComponent--- +++Component+++ } from 'svelte';
 	import {
 		ComponentA,
 		ComponentB
 	} from 'component-library';
 
-	let component: Component<{ foo: string }> = $state(
+	---let component: typeof SvelteComponent<{ foo: string }>---
+	+++let component: Component<{ foo: string }>+++ = $state(
 		Math.random() ? ComponentA : ComponentB
 	);
 </script>

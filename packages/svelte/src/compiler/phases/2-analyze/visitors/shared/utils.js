@@ -220,7 +220,16 @@ export function validate_identifier_name(binding, function_depth) {
 
 		if (node.name === '$') {
 			e.dollar_binding_invalid(node);
-		} else if (node.name.startsWith('$')) {
+		} else if (
+			node.name.startsWith('$') &&
+			// import type { $Type } from "" - these are normally already filtered out,
+			// but for the migration they aren't, and throwing here is preventing the migration to complete
+			// TODO -> once migration script is gone we can remove this check
+			!(
+				binding.initial?.type === 'ImportDeclaration' &&
+				/** @type {any} */ (binding.initial).importKind === 'type'
+			)
+		) {
 			e.dollar_prefix_invalid(node);
 		}
 	}

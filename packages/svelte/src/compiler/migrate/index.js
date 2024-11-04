@@ -35,14 +35,69 @@ class MigrationError extends Error {
 }
 
 /**
+ *
+ * @param {State} state
+ */
+function migrate_css(state) {
+	if (!state.analysis.css.ast?.start) return;
+	let code = state.str
+		.snip(state.analysis.css.ast.start, /** @type {number} */ (state.analysis.css.ast?.end))
+		.toString();
+	let starting = 0;
+
+	// since we already blank css we can't work directly on `state.str` so we will create a copy that we can update
+	const str = new MagicString(code);
+	while (code) {
+		if (
+			code.startsWith(':has') ||
+			code.startsWith(':not') ||
+			code.startsWith(':is') ||
+			code.startsWith(':where')
+		) {
+			let start = code.indexOf('(') + 1;
+			let is_global = false;
+			const global_str = ':global';
+			const next_global = code.indexOf(global_str);
+			const str_between = code.substring(start, next_global);
+			if (!str_between.trim()) {
+				is_global = true;
+				start += global_str.length;
+			}
+			let parenthesis = 1;
+			let end = start;
+			let char = code[end];
+			// find the closing parenthesis
+			while (parenthesis !== 0 && char) {
+				if (char === '(') parenthesis++;
+				if (char === ')') parenthesis--;
+				end++;
+				char = code[end];
+			}
+			if (start && end) {
+				if (!is_global) {
+					str.prependLeft(starting + start, ':global(');
+					str.appendRight(starting + end - 1, ')');
+				}
+				starting += end - 1;
+				code = code.substring(end - 1);
+				continue;
+			}
+		}
+		starting++;
+		code = code.substring(1);
+	}
+	state.str.update(state.analysis.css.ast?.start, state.analysis.css.ast?.end, str.toString());
+}
+
+/**
  * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
  * May throw an error if the code is too complex to migrate automatically.
  *
  * @param {string} source
- * @param {{filename?: string}} [options]
+ * @param {{ filename?: string, use_ts?: boolean }} [options]
  * @returns {{ code: string; }}
  */
-export function migrate(source, { filename } = {}) {
+export function migrate(source, { filename, use_ts } = {}) {
 	let og_source = source;
 	try {
 		has_migration_task = false;
@@ -113,11 +168,15 @@ export function migrate(source, { filename } = {}) {
 			legacy_imports: new Set(),
 			script_insertions: new Set(),
 			derived_components: new Map(),
+			derived_conflicting_slots: new Map(),
 			derived_labeled_statements: new Set(),
 			has_svelte_self: false,
-			uses_ts: !!parsed.instance?.attributes.some(
-				(attr) => attr.name === 'lang' && /** @type {any} */ (attr).value[0].data === 'ts'
-			)
+			uses_ts:
+				// Some people could use jsdoc but have a tsconfig.json, so double-check file for jsdoc indicators
+				(use_ts && !source.includes('@type {')) ||
+				!!parsed.instance?.attributes.some(
+					(attr) => attr.name === 'lang' && /** @type {any} */ (attr).value[0].data === 'ts'
+				)
 		};
 
 		if (parsed.module) {
@@ -141,6 +200,7 @@ export function migrate(source, { filename } = {}) {
 		const need_script =
 			state.legacy_imports.size > 0 ||
 			state.derived_components.size > 0 ||
+			state.derived_conflicting_slots.size > 0 ||
 			state.script_insertions.size > 0 ||
 			state.props.length > 0 ||
 			analysis.uses_rest_props ||
@@ -307,6 +367,13 @@ export function migrate(source, { filename } = {}) {
 			);
 		}
 
+		if (state.derived_conflicting_slots.size > 0) {
+			str.appendRight(
+				insertion_point,
+				`\n${indent}${[...state.derived_conflicting_slots.entries()].map(([name, init]) => `const ${name} = $derived(${init});`).join(`\n${indent}`)}\n`
+			);
+		}
+
 		if (state.props.length > 0 && state.analysis.accessors) {
 			str.appendRight(
 				insertion_point,
@@ -317,7 +384,10 @@ export function migrate(source, { filename } = {}) {
 		if (!parsed.instance && need_script) {
 			str.appendRight(insertion_point, '\n</script>\n\n');
 		}
-		return { code: str.toString() };
+		migrate_css(state);
+		return {
+			code: str.toString()
+		};
 	} catch (e) {
 		if (!(e instanceof MigrationError)) {
 			// eslint-disable-next-line no-console
@@ -353,6 +423,7 @@ export function migrate(source, { filename } = {}) {
  * 	legacy_imports: Set<string>;
  * 	script_insertions: Set<string>;
  *  derived_components: Map<string, string>;
+ *  derived_conflicting_slots: Map<string, string>;
  * 	derived_labeled_statements: Set<LabeledStatement>;
  *  has_svelte_self: boolean;
  *  uses_ts: boolean;
@@ -444,7 +515,8 @@ const instance_script = {
 
 		let nr_of_props = 0;
 
-		for (const declarator of node.declarations) {
+		for (let i = 0; i < node.declarations.length; i++) {
+			const declarator = node.declarations[i];
 			if (state.analysis.runes) {
 				if (get_rune(declarator.init, state.scope) === '$props') {
 					state.props_insertion_point = /** @type {number} */ (declarator.id.start) + 1;
@@ -544,12 +616,38 @@ const instance_script = {
 					});
 				}
 
-				state.props_insertion_point = /** @type {number} */ (declarator.end);
-				state.str.update(
-					/** @type {number} */ (declarator.start),
-					/** @type {number} */ (declarator.end),
-					''
-				);
+				let start = /** @type {number} */ (declarator.start);
+				let end = /** @type {number} */ (declarator.end);
+
+				// handle cases like let a,b,c; where only some are exported
+				if (node.declarations.length > 1) {
+					// move the insertion point after the node itself;
+					state.props_insertion_point = /** @type {number} */ (node.end);
+					// if it's not the first declaration remove from the , of the previous declaration
+					if (i !== 0) {
+						start = state.str.original.indexOf(
+							',',
+							/** @type {number} */ (node.declarations[i - 1].end)
+						);
+					}
+					// if it's not the last declaration remove either from up until the
+					// start of the next declaration (if it's the first declaration) or
+					// up until the last index of , from the next declaration
+					if (i !== node.declarations.length - 1) {
+						if (i === 0) {
+							end = /** @type {number} */ (node.declarations[i + 1].start);
+						} else {
+							end = state.str.original.lastIndexOf(
+								',',
+								/** @type {number} */ (node.declarations[i + 1].start)
+							);
+						}
+					}
+				} else {
+					state.props_insertion_point = /** @type {number} */ (declarator.end);
+				}
+
+				state.str.update(start, end, '');
 
 				continue;
 			}
@@ -1045,6 +1143,7 @@ const template = {
 		let name = 'children';
 		let slot_name = 'default';
 		let slot_props = '{ ';
+		let aliased_slot_name;
 
 		for (const attr of node.attributes) {
 			if (attr.type === 'SpreadAttribute') {
@@ -1056,6 +1155,37 @@ const template = {
 
 				if (attr.name === 'name') {
 					slot_name = /** @type {any} */ (attr.value)[0].data;
+					// if some of the parents or this node itself har a slot
+					// attribute with the sane name of this slot
+					// we want to create a derived or the migrated snippet
+					// will shadow the slot prop
+					if (
+						path.some(
+							(parent) =>
+								(parent.type === 'RegularElement' ||
+									parent.type === 'SvelteElement' ||
+									parent.type === 'Component' ||
+									parent.type === 'SvelteComponent' ||
+									parent.type === 'SvelteFragment') &&
+								parent.attributes.some(
+									(attribute) =>
+										attribute.type === 'Attribute' &&
+										attribute.name === 'slot' &&
+										is_text_attribute(attribute) &&
+										attribute.value[0].data === slot_name
+								)
+						) ||
+						node.attributes.some(
+							(attribute) =>
+								attribute.type === 'Attribute' &&
+								attribute.name === 'slot' &&
+								is_text_attribute(attribute) &&
+								attribute.value[0].data === slot_name
+						)
+					) {
+						aliased_slot_name = `${slot_name}_render`;
+						state.derived_conflicting_slots.set(aliased_slot_name, slot_name);
+					}
 				} else {
 					const attr_value =
 						attr.value === true || Array.isArray(attr.value) ? attr.value : [attr.value];
@@ -1111,6 +1241,8 @@ const template = {
 			existing_prop.type = `import('svelte').${slot_props ? 'Snippet<[any]>' : 'Snippet'}`;
 			existing_prop.needs_refine_type = false;
 		}
+
+		name = aliased_slot_name ?? name;
 
 		if (node.fragment.nodes.length > 0) {
 			next();
