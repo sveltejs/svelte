@@ -58,8 +58,8 @@ function normalize_angle(angle) {
 	if (n > Math.PI) {
 		n -= 2 * Math.PI;
 	}
-    
-    if (n < -Math.PI) {
+
+	if (n < -Math.PI) {
 		n += 2 * Math.PI;
 	}
 
