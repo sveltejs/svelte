@@ -27,17 +27,22 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const fs = require('fs');
+            const output = JSON.parse(fs.readFileSync('output.json', 'utf8'));
 
+            const body = (number)=>`## \`pkg.pr.new\`
 
-            const body = (number)=>`## \`pkg.pr.new\` for ${context.sha.substring(0, 7)}
+            ${output.packages
+              .map((p) => `
+            ### ${p.name}
             \`\`\`
-            pnpm add https://pkg.pr.new/svelte@${number}
-            \`\`\`
+            pnpm add https://pkg.pr.new/${p.name}@${number}
+            \`\`\``).join('\n')}
 
             [Open Playground](https://svelte.dev/playground?version=pr-${number})
             `;
 
-            const bot_comment_identifier = `## \`pkg.pr.new\` for ${context.sha.substring(0, 7)}`;
+            const bot_comment_identifier = `## \`pkg.pr.new\``;
 
             async function find_bot_comment(issue_number) {
               if (!issue_number) return null;
