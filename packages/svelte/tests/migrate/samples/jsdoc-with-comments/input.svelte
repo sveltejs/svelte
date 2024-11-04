@@ -24,5 +24,12 @@
 	/**
 	 * This is optional
 	 */
-	 export let optional = {stuff: true};
+	export let optional = {stuff: true};
+	
+	export let inline_commented; // this should stay a comment
+
+	/**
+	 * This comment should be merged
+	 */
+	export let inline_commented_merged; // with this inline comment
 </script>
