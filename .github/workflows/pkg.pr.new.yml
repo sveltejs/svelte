@@ -27,17 +27,12 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const fs = require('fs');
-            const output = JSON.parse(fs.readFileSync('output.json', 'utf8'));
 
-            const packages = output.packages
-              .map((t) => `\`\`\`
-              pnpm add ${t.url}
-              \`\`\``)
-              .join('\n');
 
             const body = (number)=>`## \`pkg.pr.new\` for ${context.sha.substring(0, 7)}
-            ${packages}
+            \`\`\`
+            pnpm add https://pkg.pr.new/svelte@${number}
+            \`\`\`
 
             [Open Playground](https://svelte.dev/playground?version=pr-${number})
             `;
@@ -87,7 +82,7 @@ jobs:
               console.log('\nPublished Packages:');
               console.log(packages);
               console.log('\nPlayground URL:');
-              console.log(`\nhttps://svelte.dev/playground?version=commit-${context.sha}`)
+              console.log(`\nhttps://svelte.dev/playground?version=commit-${context.sha.substring(0, 7)}`)
               console.log('\n' + '='.repeat(50));
             }
 
