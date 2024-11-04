@@ -37,7 +37,7 @@ export function validate_each_keys(collection, key_fn) {
 				const b = String(i);
 
 				/** @type {string | null} */
-				let k = String(array[i]);
+				let k = String(key);
 				if (k.startsWith('[object ')) k = null;
 
 				e.each_key_duplicate(a, b, k);
