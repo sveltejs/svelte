@@ -4,7 +4,7 @@
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { create_derived } from '../../utils.js';
+import { create_derived, get_variable_declaration_name } from '../../utils.js';
 import { build_bind_this, validate_binding } from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
@@ -230,15 +230,16 @@ export function build_component(node, component_name, context, anchor = context.
 	// Group children by slot
 	for (const child of node.fragment.nodes) {
 		if (child.type === 'SnippetBlock') {
+			/** @type {Statement[]} */
+			const init = [];
 			// the SnippetBlock visitor adds a declaration to `init`, but if it's directly
 			// inside a component then we want to hoist them into a block so that they
 			// can be used as props without creating conflicts
-			context.visit(child, {
-				...context.state,
-				init: snippet_declarations
-			});
+			context.visit(child, { ...context.state, init });
+			snippet_declarations.push(...init);
+			const name = /** @type { string } */ (get_variable_declaration_name(init));
 
-			push_prop(b.prop('init', child.expression, child.expression));
+			push_prop(b.prop('init', child.expression, b.id(name)));
 
 			// Interop: allows people to pass snippets when component still uses slots
 			serialized_slots.push(

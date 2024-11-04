@@ -271,7 +271,7 @@ function open(parser) {
 		parser.require_whitespace();
 
 		const name_start = parser.index;
-		const name = parser.read_identifier();
+		const name = parser.read_identifier(parser.stack.at(-1)?.type === 'Component');
 		const name_end = parser.index;
 
 		if (name === null) {

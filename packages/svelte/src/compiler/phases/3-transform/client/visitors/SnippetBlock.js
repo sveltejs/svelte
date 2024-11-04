@@ -1,6 +1,7 @@
 /** @import { BlockStatement, Expression, Identifier, Pattern, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
+import { is_reserved } from '../../../../../utils.js';
 import { dev } from '../../../../state.js';
 import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
@@ -79,7 +80,11 @@ export function SnippetBlock(node, context) {
 		snippet = b.call('$.wrap_snippet', b.id(context.state.analysis.name), snippet);
 	}
 
-	const declaration = b.const(node.expression, snippet);
+	const id_expression =
+		node.expression.type === 'Identifier' && is_reserved(node.expression.name)
+			? b.id(`$_${node.expression.name}`)
+			: node.expression;
+	const declaration = b.const(id_expression, snippet);
 
 	// Top-level snippets are hoisted so they can be referenced in the `<script>`
 	if (context.path.length === 1 && context.path[0].type === 'Fragment') {

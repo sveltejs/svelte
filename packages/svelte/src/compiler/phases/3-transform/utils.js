@@ -1,7 +1,7 @@
 /** @import { Context } from 'zimmerframe' */
 /** @import { TransformState } from './types.js' */
 /** @import { AST, Binding, Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler' */
-/** @import { Node, Expression, CallExpression } from 'estree' */
+/** @import { Node, Expression, CallExpression, Statement } from 'estree' */
 import {
 	regex_ends_with_whitespaces,
 	regex_not_whitespace,
@@ -451,4 +451,18 @@ export function transform_inspect_rune(node, context) {
 		const arg = node.arguments.map((arg) => /** @type {Expression} */ (visit(arg)));
 		return b.call('$.inspect', as_fn ? b.thunk(b.array(arg)) : b.array(arg));
 	}
+}
+
+/**
+ * @param {Statement[]} statements
+ */
+export function get_variable_declaration_name(statements) {
+	if (
+		statements.length !== 1 ||
+		statements[0].type !== 'FunctionDeclaration' ||
+		statements[0].id.type !== 'Identifier'
+	) {
+		return null;
+	}
+	return statements[0].id.name;
 }

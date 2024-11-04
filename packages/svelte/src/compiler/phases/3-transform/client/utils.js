@@ -326,3 +326,17 @@ export function can_inline_variable(binding) {
 		binding.initial?.type === 'Literal'
 	);
 }
+
+/**
+ * @param {Statement[]} statements
+ */
+export function get_variable_declaration_name(statements) {
+	if (
+		statements.length !== 1 ||
+		statements[0].type !== 'VariableDeclaration' ||
+		statements[0].declarations[0].id?.type !== 'Identifier'
+	) {
+		return null;
+	}
+	return statements[0].declarations[0].id.name;
+}
