@@ -21,4 +21,94 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - run: pnpx pkg-pr-new publish --compact --no-template './packages/svelte'
+      - run: pnpx pkg-pr-new publish --comment=off --json output.json --compact --no-template './packages/svelte'
+      - name: Post or update comment
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const output = JSON.parse(fs.readFileSync('output.json', 'utf8'));
+
+            const packages = output.packages
+              .map((t) => `\`\`\`
+              pnpm add ${t.url}
+              \`\`\``)
+              .join('\n');
+
+            const body = (number)=>`## \`pkg.pr.new\` for ${context.sha.substring(0, 7)}
+            ${packages}
+
+            [Open Playground](https://svelte.dev/playground?version=pr-${number})
+            `;
+
+            const bot_comment_identifier = `## \`pkg.pr.new\` for ${context.sha.substring(0, 7)}`;
+
+            async function find_bot_comment(issue_number) {
+              if (!issue_number) return null;
+              const comments = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue_number,
+              });
+              return comments.data.find((comment) =>
+                comment.body.includes(bot_comment_identifier)
+              );
+            }
+
+            async function create_or_update_comment(issue_number) {
+              if (!issue_number) {
+                console.log('No issue number provided. Cannot post or update comment.');
+                return;
+              }
+
+              const existing_comment = await find_bot_comment(issue_number);
+              if (existing_comment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing_comment.id,
+                  body: body(issue_number),
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  issue_number: issue_number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: body(issue_number),
+                });
+              }
+            }
+
+            async function log_publish_info() {
+              console.log('\n' + '='.repeat(50));
+              console.log('Publish Information');
+              console.log('='.repeat(50));
+              console.log('\nPublished Packages:');
+              console.log(packages);
+              console.log('\nPlayground URL:');
+              console.log(`\nhttps://svelte.dev/playground?version=commit-${context.sha}`)
+              console.log('\n' + '='.repeat(50));
+            }
+
+            if (context.eventName === 'pull_request') {
+              if (context.issue.number) {
+                await create_or_update_comment(context.issue.number);
+              }
+            } else if (context.eventName === 'push') {
+              const pull_requests = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${context.repo.owner}:${context.ref.replace('refs/heads/', '')}`,
+              });
+
+              if (pull_requests.data.length > 0) {
+                await create_or_update_comment(pull_requests.data[0].number);
+              } else {
+                console.log(
+                  'No open pull request found for this push. Logging publish information to console:'
+                );
+                await log_publish_info();
+              }
+            }
