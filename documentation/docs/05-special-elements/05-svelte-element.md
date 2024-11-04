@@ -29,3 +29,5 @@ Svelte tries its best to infer the correct namespace from the element's surround
 ```svelte
 <svelte:element this={tag} xmlns="http://www.w3.org/2000/svg" />
 ```
+
+`this` needs to be a valid DOM element tag, things like `#text` or `svelte:head` will not work.
