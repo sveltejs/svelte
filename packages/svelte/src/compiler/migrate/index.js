@@ -1501,7 +1501,8 @@ function extract_type_and_comment(declarator, state, path) {
 	const trailing_comment_node = /** @type {Node} */ (parent)?.trailingComments?.at(0);
 	const trailing_comment_start = /** @type {any} */ (trailing_comment_node)?.start;
 	const trailing_comment_end = /** @type {any} */ (trailing_comment_node)?.end;
-	let trailing_comment = trailing_comment_node && str.original.substring(trailing_comment_start, trailing_comment_end);
+	let trailing_comment =
+		trailing_comment_node && str.original.substring(trailing_comment_start, trailing_comment_end);
 
 	if (trailing_comment_node) {
 		str.update(trailing_comment_start, trailing_comment_end, '');
@@ -1513,7 +1514,11 @@ function extract_type_and_comment(declarator, state, path) {
 		while (str.original[start] === ' ') {
 			start++;
 		}
-		return { type: str.original.substring(start, declarator.id.typeAnnotation.end), comment, trailing_comment };
+		return {
+			type: str.original.substring(start, declarator.id.typeAnnotation.end),
+			comment,
+			trailing_comment
+		};
 	}
 
 	let cleaned_comment_arr = comment
@@ -1535,7 +1540,7 @@ function extract_type_and_comment(declarator, state, path) {
 	let cleaned_comment = cleaned_comment_arr
 		?.slice(0, first_at_comment !== -1 ? first_at_comment : cleaned_comment_arr.length)
 		.join('\n');
-	
+
 	let cleaned_comment_arr_trailing = trailing_comment
 		?.split('\n')
 		.map((line) =>
@@ -1551,9 +1556,16 @@ function extract_type_and_comment(declarator, state, path) {
 				.replace(/^\*\s*/g, '')
 		)
 		.filter(Boolean);
-	const first_at_comment_trailing = cleaned_comment_arr_trailing?.findIndex((line) => line.startsWith('@'));
+	const first_at_comment_trailing = cleaned_comment_arr_trailing?.findIndex((line) =>
+		line.startsWith('@')
+	);
 	let cleaned_comment_trailing = cleaned_comment_arr_trailing
-		?.slice(0, first_at_comment_trailing !== -1 ? first_at_comment_trailing : cleaned_comment_arr_trailing.length)
+		?.slice(
+			0,
+			first_at_comment_trailing !== -1
+				? first_at_comment_trailing
+				: cleaned_comment_arr_trailing.length
+		)
 		.join('\n');
 
 	// try to find a comment with a type annotation, hinting at jsdoc
@@ -1561,7 +1573,11 @@ function extract_type_and_comment(declarator, state, path) {
 		state.has_type_or_fallback = true;
 		const match = /@type {(.+)}/.exec(comment_node.value);
 		if (match) {
-			return { type: match[1], comment: cleaned_comment, trailing_comment: cleaned_comment_trailing };
+			return {
+				type: match[1],
+				comment: cleaned_comment,
+				trailing_comment: cleaned_comment_trailing
+			};
 		}
 	}
 
@@ -1570,11 +1586,19 @@ function extract_type_and_comment(declarator, state, path) {
 		state.has_type_or_fallback = true; // only assume type if it's trivial to infer - else someone would've added a type annotation
 		const type = typeof declarator.init.value;
 		if (type === 'string' || type === 'number' || type === 'boolean') {
-			return { type, comment: state.uses_ts ? comment : cleaned_comment, trailing_comment: state.uses_ts ? trailing_comment : cleaned_comment_trailing };
+			return {
+				type,
+				comment: state.uses_ts ? comment : cleaned_comment,
+				trailing_comment: state.uses_ts ? trailing_comment : cleaned_comment_trailing
+			};
 		}
 	}
 
-	return { type: 'any', comment: state.uses_ts ? comment : cleaned_comment, trailing_comment: state.uses_ts ? trailing_comment : cleaned_comment_trailing };
+	return {
+		type: 'any',
+		comment: state.uses_ts ? comment : cleaned_comment,
+		trailing_comment: state.uses_ts ? trailing_comment : cleaned_comment_trailing
+	};
 }
 
 // Ensure modifiers are applied in the same order as Svelte 4
