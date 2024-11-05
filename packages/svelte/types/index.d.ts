@@ -1947,7 +1947,7 @@ declare module 'svelte/transition' {
 		getTotalLength(): number;
 	}, { delay, speed, duration, easing }?: DrawParams | undefined): TransitionConfig;
 	/**
-	 * The `crossfade` function creates a pair of [transitions](https://svelte.dev/docs#template-syntax-element-directives-transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
+	 * The `crossfade` function creates a pair of [transitions](https://svelte.dev/docs/svelte/transition) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
 	 *
 	 * */
 	export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
