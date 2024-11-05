@@ -15,7 +15,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: output.json
-          path: output.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
       - name: 'Post or update comment'
@@ -85,8 +84,8 @@ jobs:
             }
 
             if (output.event_name === 'pull_request') {
-              if (context.issue.number) {
-                await create_or_update_comment(context.issue.number);
+              if (output.number) {
+                await create_or_update_comment(output.number);
               }
             } else if (output.event_name === 'push') {
               const pull_requests = await github.rest.pulls.list({
