@@ -146,6 +146,20 @@ In case you're writing a component that wraps a native element, you may want to 
 </button>
 ```
 
+Not all elements have a specific type definition, in those cases, use `SvelteHTMLElements`:
+
+```svelte
+<script lang="ts">
+	import type { SvelteHTMLElements } from 'svelte/elements';
+
+	let { children, ...rest }:  SvelteHTMLElements['div'] = $props();
+</script>
+
+<div {...rest}>
+	{@render children()}
+</div>
+```
+
 ## Typing `$state`
 
 You can type `$state` like any other variable.
