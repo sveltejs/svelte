@@ -7,7 +7,7 @@ on:
       - completed
 
 jobs:
-  run:
+  build:
     name: 'Update comment'
     runs-on: ubuntu-latest
     steps:
