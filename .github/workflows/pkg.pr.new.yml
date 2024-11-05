@@ -37,4 +37,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: output.json
-          path: output.json
+          path: ./output
+
+      - run: ls -R .
