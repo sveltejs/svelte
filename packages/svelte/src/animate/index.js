@@ -26,10 +26,10 @@ export function flip(node, { from, to }, params = {}) {
 	var dy = (from.top + dsy * oy - (to.top + oy)) / zoom;
 	var { delay = 0, duration = (d) => Math.sqrt(d) * 120, easing = cubicOut } = params;
 
-	const rf = Math.atan2(m.m21, m.m11) + Math.atan2(from.bottom - from.top, from.right - from.left);
-	const rt = Math.atan2(to.bottom - to.top, to.right - to.left);
+	var rf = Math.atan2(m.m21, m.m11) + Math.atan2(from.bottom - from.top, from.right - from.left);
+	var rt = Math.atan2(to.bottom - to.top, to.right - to.left);
 
-	const rn = normalize_angle(rf - rt);
+	var rn = normalize_angle(rf - rt);
 
 	return {
 		delay,
