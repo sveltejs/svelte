@@ -17,7 +17,7 @@ export function flip(node, { from, to }, params = {}) {
 	var transform = style.transform === 'none' ? '' : style.transform;
 	var [ox, oy] = style.transformOrigin.split(' ').map(parseFloat);
 
-	var m = new DOMMatrix(transform);
+	var m = new DOMMatrixReadOnly(transform);
 
 	var dsx = from.width / to.width;
 	var dsy = from.height / to.height;
