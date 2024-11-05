@@ -30,19 +30,16 @@ jobs:
             const fs = require('fs');
             const output = JSON.parse(fs.readFileSync('output.json', 'utf8'));
 
-            const body = (number)=>`## \`pkg.pr.new\`
+            const bot_comment_identifier = `<!-- pkg.pr.new comment -->`;
 
-            ${output.packages
-              .map((p) => `
-            ### ${p.name}
+            const body = (number) => `${bot_comment_identifier}
+
+            [Playground](https://svelte.dev/playground?version=pr-${number})
+
             \`\`\`
-            pnpm add https://pkg.pr.new/${p.name}@${number}
-            \`\`\``).join('\n')}
-
-            [Open Playground](https://svelte.dev/playground?version=pr-${number})
+            ${output.packages.map((p) => `pnpm add https://pkg.pr.new/${p.name}@${number}`).join('\n')}
+            \`\`\`
             `;
-
-            const bot_comment_identifier = `## \`pkg.pr.new\``;
 
             async function find_bot_comment(issue_number) {
               if (!issue_number) return null;
