@@ -94,7 +94,7 @@ const visitors = {
 		e.typescript_invalid_feature(node, 'enums');
 	},
 	TSParameterProperty(node, context) {
-		if (node.accessibility && context.path.at(-2)?.kind === 'constructor') {
+		if ((node.readonly || node.accessibility) && context.path.at(-2)?.kind === 'constructor') {
 			e.typescript_invalid_feature(node, 'accessibility modifiers on constructor parameters');
 		}
 		return node.parameter;
