@@ -36,7 +36,7 @@ In Svelte 4, a `$:` statement at the top level of a component could be used to d
 </script>
 ```
 
-As with `$state`, nothing else changes. `double` is still the number itself, and you read it directly, without a wrapper like `.value` or `getCount()`.
+As with `$state`, nothing else changes. `double` is still the number itself, and you read it directly, without a wrapper like `.value` or `getDouble()`.
 
 A `$:` statement could also be used to create side effects. In Svelte 5, this is achieved using the `$effect` rune:
 
