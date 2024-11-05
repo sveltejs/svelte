@@ -9,7 +9,10 @@
 	}
 
 	class Foo {
-		constructor(readonly name: string) {}
+		public name: string;
+		constructor(name: string) {
+			this.name = name;
+		}
 	}
 
 	declare const declared_const: number;
