@@ -79,7 +79,7 @@ jobs:
               console.log('Publish Information');
               console.log('='.repeat(50));
               console.log('\nPublished Packages:');
-              console.log(packages);
+              console.log(output.packages.map((p) => `${p.name} - pnpm add https://pkg.pr.new/${p.name}@${number}`).join('\n'));
               console.log('\nPlayground URL:');
               console.log(`\nhttps://svelte.dev/playground?version=commit-${output.sha.substring(0, 7)}`)
               console.log('\n' + '='.repeat(50));
