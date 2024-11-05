@@ -17,6 +17,8 @@ jobs:
           name: output.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
+
+      - run: ls -R .
       - name: 'Post or update comment'
         uses: actions/github-script@v6
         with:
