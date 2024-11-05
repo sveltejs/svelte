@@ -22,90 +22,19 @@ jobs:
         run: pnpm build
 
       - run: pnpx pkg-pr-new publish --comment=off --json output.json --compact --no-template './packages/svelte'
-      - name: Post or update comment
+      - name: Add metadata to output
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
             const output = JSON.parse(fs.readFileSync('output.json', 'utf8'));
-
-            const bot_comment_identifier = `<!-- pkg.pr.new comment -->`;
-
-            const body = (number) => `${bot_comment_identifier}
-
-            [Playground](https://svelte.dev/playground?version=pr-${number})
-
-            \`\`\`
-            ${output.packages.map((p) => `pnpm add https://pkg.pr.new/${p.name}@${number}`).join('\n')}
-            \`\`\`
-            `;
-
-            async function find_bot_comment(issue_number) {
-              if (!issue_number) return null;
-              const comments = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issue_number,
-              });
-              return comments.data.find((comment) =>
-                comment.body.includes(bot_comment_identifier)
-              );
-            }
-
-            async function create_or_update_comment(issue_number) {
-              if (!issue_number) {
-                console.log('No issue number provided. Cannot post or update comment.');
-                return;
-              }
-
-              const existing_comment = await find_bot_comment(issue_number);
-              if (existing_comment) {
-                await github.rest.issues.updateComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  comment_id: existing_comment.id,
-                  body: body(issue_number),
-                });
-              } else {
-                await github.rest.issues.createComment({
-                  issue_number: issue_number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  body: body(issue_number),
-                });
-              }
-            }
-
-            async function log_publish_info() {
-              console.log('\n' + '='.repeat(50));
-              console.log('Publish Information');
-              console.log('='.repeat(50));
-              console.log('\nPublished Packages:');
-              console.log(packages);
-              console.log('\nPlayground URL:');
-              console.log(`\nhttps://svelte.dev/playground?version=commit-${context.sha.substring(0, 7)}`)
-              console.log('\n' + '='.repeat(50));
-            }
-
-            if (context.eventName === 'pull_request') {
-              if (context.issue.number) {
-                await create_or_update_comment(context.issue.number);
-              }
-            } else if (context.eventName === 'push') {
-              const pull_requests = await github.rest.pulls.list({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                state: 'open',
-                head: `${context.repo.owner}:${context.ref.replace('refs/heads/', '')}`,
-              });
-
-              if (pull_requests.data.length > 0) {
-                await create_or_update_comment(pull_requests.data[0].number);
-              } else {
-                console.log(
-                  'No open pull request found for this push. Logging publish information to console:'
-                );
-                await log_publish_info();
-              }
-            }
+            output.number = context.issue.number;
+            output.event_name = context.eventName;
+            output.ref = context.ref;
+            fs.writeFileSync('output.json', JSON.stringify(output), 'utf8');
+      - name: Upload output
+        uses: actions/upload-artifact@v4
+        with:
+          name: output.json
+          path: output.json
