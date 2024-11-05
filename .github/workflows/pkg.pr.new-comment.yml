@@ -75,13 +75,17 @@ jobs:
             }
 
             async function log_publish_info() {
+              const svelte_package = output.packages.find(p => p.name === 'svelte');
+              const svelte_sha = svelte_package.url.replace(/^.+@([^@]+)$/, '$1');
               console.log('\n' + '='.repeat(50));
               console.log('Publish Information');
               console.log('='.repeat(50));
               console.log('\nPublished Packages:');
-              console.log(output.packages.map((p) => `${p.name} - pnpm add https://pkg.pr.new/${p.name}@${number}`).join('\n'));
-              console.log('\nPlayground URL:');
-              console.log(`\nhttps://svelte.dev/playground?version=commit-${output.sha.substring(0, 7)}`)
+              console.log(output.packages.map((p) => `${p.name} - pnpm add https://pkg.pr.new/${p.name}@${p.url.replace(/^.+@([^@]+)$/, '$1')}`).join('\n'));
+              if(svelte_sha){
+                console.log('\nPlayground URL:');
+                console.log(`\nhttps://svelte.dev/playground?version=commit-${svelte_sha}`)
+              }
               console.log('\n' + '='.repeat(50));
             }
 
