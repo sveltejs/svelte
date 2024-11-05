@@ -306,6 +306,7 @@ export function clean_nodes(
 				parent.type === 'SnippetBlock' ||
 				parent.type === 'EachBlock' ||
 				parent.type === 'SvelteComponent' ||
+				parent.type === 'SvelteBoundary' ||
 				parent.type === 'Component' ||
 				parent.type === 'SvelteSelf') &&
 			first &&

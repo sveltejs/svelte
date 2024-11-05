@@ -24,7 +24,8 @@ import {
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
-	DISCONNECTED
+	DISCONNECTED,
+	BOUNDARY_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -231,12 +232,48 @@ export function check_dirtiness(reaction) {
 /**
  * @param {Error} error
  * @param {Effect} effect
+ */
+function propagate_error(error, effect) {
+	/** @type {Effect | null} */
+	var current = effect;
+	while (current !== null) {
+		/** @type {Effect | null} */
+		var parent = current.parent;
+
+		if ((current.f & BOUNDARY_EFFECT) !== 0) {
+			try {
+				// @ts-ignore
+				current.fn({ error });
+			} catch {
+				current = parent;
+				continue;
+			}
+			return;
+		}
+		current = parent;
+	}
+
+	throw error;
+}
+
+/**
+ * @param {Error} error
+ * @param {Effect} effect
  * @param {ComponentContext | null} component_context
  */
 function handle_error(error, effect, component_context) {
-	// Given we don't yet have error boundaries, we will just always throw.
-	if (!DEV || handled_errors.has(error) || component_context === null) {
-		throw error;
+	if (handled_errors.has(error)) {
+		// If the parent is not an error boundary then re-throw the error
+		if (effect.parent === null || (effect.parent.f & BOUNDARY_EFFECT) === 0) {
+			throw error;
+		}
+		return;
+	}
+	handled_errors.add(error);
+
+	if (!DEV || component_context === null) {
+		propagate_error(error, effect);
+		return;
 	}
 
 	const component_stack = [];
@@ -287,8 +324,7 @@ function handle_error(error, effect, component_context) {
 		});
 	}
 
-	handled_errors.add(error);
-	throw error;
+	propagate_error(error, effect);
 }
 
 /**

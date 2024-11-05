@@ -2026,6 +2026,10 @@ export interface SvelteHTMLElements {
 		[name: string]: any;
 	};
 	'svelte:head': { [name: string]: any };
+	'svelte:boundary': {
+		onerror?: (error: Error, reset: () => void) => void;
+		failed?: import('svelte').Snippet;
+	};
 
 	[name: string]: { [name: string]: any };
 }

@@ -4,7 +4,6 @@ import { create_text, get_first_child } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { active_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
-import { queue_micro_task } from './task.js';
 
 /**
  * @param {TemplateNode} start

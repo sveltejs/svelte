@@ -48,6 +48,7 @@ import { SvelteComponent } from './visitors/SvelteComponent.js';
 import { SvelteDocument } from './visitors/SvelteDocument.js';
 import { SvelteElement } from './visitors/SvelteElement.js';
 import { SvelteFragment } from './visitors/SvelteFragment.js';
+import { SvelteBoundary } from './visitors/SvelteBoundary.js';
 import { SvelteHead } from './visitors/SvelteHead.js';
 import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { SvelteWindow } from './visitors/SvelteWindow.js';
@@ -122,6 +123,7 @@ const visitors = {
 	SvelteDocument,
 	SvelteElement,
 	SvelteFragment,
+	SvelteBoundary,
 	SvelteHead,
 	SvelteSelf,
 	SvelteWindow,
