@@ -33,4 +33,7 @@
 	span:not(p span) {
 		color: green;
 	}
+	span:not(:focus) {
+		color: green;
+	}
 </style>

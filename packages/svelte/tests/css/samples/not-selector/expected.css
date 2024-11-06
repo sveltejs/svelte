@@ -26,3 +26,6 @@
 	span.svelte-xyz:not(p:where(.svelte-xyz) span:where(.svelte-xyz)) {
 		color: green;
 	}
+	span.svelte-xyz:not(:focus) {
+		color: green;
+	}
