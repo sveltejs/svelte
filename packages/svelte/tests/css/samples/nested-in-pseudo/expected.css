@@ -1,6 +1,0 @@
-
-nav.svelte-xyz{
-	header:where(.svelte-xyz):has(&){
-		color: red;
-	}
-}	

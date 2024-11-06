@@ -77,37 +77,8 @@ const visitors = {
 		}
 	},
 	ComplexSelector(node, context) {
-		const selectors = truncate(node);
+		const selectors = get_relative_selectors(node);
 		const inner = selectors[selectors.length - 1];
-
-		if (node.metadata.rule?.metadata.parent_rule && selectors.length > 0) {
-			let has_explicit_nesting_selector = false;
-
-			// nesting could be inside pseudo classes like :is, :has or :where
-			for (let selector of selectors) {
-				walk(
-					selector,
-					{},
-					{
-						// @ts-ignore
-						NestingSelector() {
-							has_explicit_nesting_selector = true;
-						}
-					}
-				);
-				// if we found one we can break from the others
-				if (has_explicit_nesting_selector) break;
-			}
-
-			if (!has_explicit_nesting_selector) {
-				selectors[0] = {
-					...selectors[0],
-					combinator: descendant_combinator
-				};
-
-				selectors.unshift(nesting_selector);
-			}
-		}
 
 		if (context.state.from_render_tag) {
 			// We're searching for a match that crosses a render tag boundary. That means we have to both traverse up
@@ -155,6 +126,50 @@ const visitors = {
 		// when we encounter them below
 	}
 };
+
+/**
+ * Retrieves the relative selectors (minus the trailing globals) from a complex selector.
+ * Also searches them for any existing `&` selectors and adds one if none are found.
+ * This ensures we traverse up to the parent rule when the inner selectors match and we're
+ * trying to see if the parent rule also matches.
+ * @param {Compiler.Css.ComplexSelector} node
+ */
+function get_relative_selectors(node) {
+	const selectors = truncate(node);
+
+	if (node.metadata.rule?.metadata.parent_rule && selectors.length > 0) {
+		let has_explicit_nesting_selector = false;
+
+		// nesting could be inside pseudo classes like :is, :has or :where
+		for (let selector of selectors) {
+			walk(
+				selector,
+				{},
+				{
+					// @ts-ignore
+					NestingSelector() {
+						has_explicit_nesting_selector = true;
+					}
+				}
+			);
+			// if we found one we can break from the others
+			if (has_explicit_nesting_selector) break;
+		}
+
+		if (!has_explicit_nesting_selector) {
+			if (selectors[0].combinator === null) {
+				selectors[0] = {
+					...selectors[0],
+					combinator: descendant_combinator
+				};
+			}
+
+			selectors.unshift(nesting_selector);
+		}
+	}
+
+	return selectors;
+}
 
 /**
  * Discard trailing `:global(...)` selectors without a `:has/is/where/not(...)` modifier, these are unused for scoping purposes
@@ -641,7 +656,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				const parent = /** @type {Compiler.Css.Rule} */ (rule.metadata.parent_rule);
 
 				for (const complex_selector of parent.prelude.children) {
-					if (apply_selector(truncate(complex_selector), parent, element, state)) {
+					if (apply_selector(get_relative_selectors(complex_selector), parent, element, state)) {
 						complex_selector.metadata.used = true;
 						matched = true;
 					}
