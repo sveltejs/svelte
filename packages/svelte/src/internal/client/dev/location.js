@@ -8,7 +8,7 @@ import { dev_current_component_function } from '../runtime.js';
  * @param {number} [column]
  */
 export function get_location(line, column) {
-	if (!DEV) return undefined;
+	if (!DEV || line === undefined) return undefined;
 
 	var filename = dev_current_component_function?.[FILENAME];
 	var location = filename && `${filename}:${line}:${column}`;

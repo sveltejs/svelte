@@ -275,7 +275,7 @@ export function legacy_pre_effect(deps, fn, line, column) {
 	var token = { effect: null, ran: false };
 	context.l.r1.push(token);
 
-	if (DEV) {
+	if (DEV && line !== undefined) {
 		var location = get_location(line, column);
 		var explicit_deps = capture_signals(deps);
 	}
@@ -290,7 +290,7 @@ export function legacy_pre_effect(deps, fn, line, column) {
 		token.ran = true;
 		set(context.l.r2, true);
 
-		if (DEV) {
+		if (location) {
 			var implicit_deps = capture_signals(() => untrack(fn));
 
 			for (const signal of implicit_deps) {

@@ -2,7 +2,7 @@
 /** @import { Expression, LabeledStatement, Statement } from 'estree' */
 /** @import { ReactiveStatement } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import { dev, locator } from '../../../../state.js';
+import { dev, is_ignored, locator } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { build_getter } from '../utils.js';
 
@@ -50,7 +50,10 @@ export function LabeledStatement(node, context) {
 		sequence.push(serialized);
 	}
 
-	const location = dev ? locator(/** @type {number} */ (node.start)) : undefined;
+	const location =
+		dev && !is_ignored(node, 'reactive_declaration_non_reactive_property')
+			? locator(/** @type {number} */ (node.start))
+			: undefined;
 
 	// these statements will be topologically ordered later
 	context.state.legacy_reactive_statements.set(
