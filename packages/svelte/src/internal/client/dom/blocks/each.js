@@ -36,6 +36,7 @@ import { array_from, is_array } from '../../../shared/utils.js';
 import { INERT } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
 import { active_effect, active_reaction } from '../../runtime.js';
+import { legacy_mode_flag } from '../../../flags/index.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -490,27 +491,27 @@ function update_item(item, value, index, type) {
  */
 function create_item(anchor, state, prev, next, value, key, index, render_fn, flags) {
 	var previous_each_item = current_each_item;
+	var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
+	var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
+
+	var v = reactive ? (legacy_mode_flag && mutable ? mutable_source(value) : source(value)) : value;
+	var i = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
+
+	/** @type {EachItem} */
+	var item = {
+		i,
+		v,
+		k: key,
+		a: null,
+		// @ts-expect-error
+		e: null,
+		prev,
+		next
+	};
+
+	current_each_item = item;
 
 	try {
-		var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
-		var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
-
-		var v = reactive ? (mutable ? mutable_source(value) : source(value)) : value;
-		var i = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
-
-		/** @type {EachItem} */
-		var item = {
-			i,
-			v,
-			k: key,
-			a: null,
-			// @ts-expect-error
-			e: null,
-			prev,
-			next
-		};
-
-		current_each_item = item;
 		item.e = branch(() => render_fn(anchor, v, i), hydrating);
 
 		item.e.prev = prev && prev.e;

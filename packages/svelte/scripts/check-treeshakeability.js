@@ -57,6 +57,7 @@ for (const key in pkg.exports) {
 	if (key === './compiler') continue;
 	if (key === './internal') continue;
 	if (key === './internal/disclose-version') continue;
+	if (key === './internal/flags/legacy') continue;
 
 	for (const type of ['browser', 'default']) {
 		if (!pkg.exports[key][type]) continue;
@@ -83,6 +84,7 @@ const bundle = await bundle_code(
 	// Use all features which contain hydration code to ensure it's treeshakeable
 	compile(
 		`
+<svelte:options runes />
 <script>
 	import { mount } from ${JSON.stringify(client_main)}; mount();
 	let foo;
@@ -118,12 +120,23 @@ if (!bundle.includes('hydrate_node') && !bundle.includes('hydrate_next')) {
 	// eslint-disable-next-line no-console
 	console.error(`✅ Hydration code treeshakeable`);
 } else {
-	// eslint-disable-next-line no-console
-	console.error(bundle);
+	failed = true;
 	// eslint-disable-next-line no-console
 	console.error(`❌ Hydration code not treeshakeable`);
-	failed = true;
+}
 
+if (!bundle.includes('component_context.l')) {
+	// eslint-disable-next-line no-console
+	console.error(`✅ Legacy code treeshakeable`);
+} else {
+	failed = true;
+	// eslint-disable-next-line no-console
+	console.error(`❌ Legacy code not treeshakeable`);
+}
+
+if (failed) {
+	// eslint-disable-next-line no-console
+	// console.error(bundle);
 	fs.writeFileSync('scripts/_bundle.js', bundle);
 }
 
