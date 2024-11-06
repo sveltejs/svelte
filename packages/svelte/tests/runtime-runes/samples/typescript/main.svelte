@@ -10,6 +10,7 @@
 
 	class Foo {
 		public name: string;
+		x = 'x' as const;
 		constructor(name: string) {
 			this.name = name;
 		}
