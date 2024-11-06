@@ -351,6 +351,15 @@ export function analyze_component(root, source, options) {
 				}
 			}
 
+			// if we are creating a synthetic binding for a let declaration we should also declare
+			// the declaration as state in case it's reassigned
+			if (
+				declaration !== null &&
+				declaration.kind === 'normal' &&
+				declaration.declaration_kind === 'let'
+			)
+				declaration.kind = 'state';
+
 			const binding = instance.scope.declare(b.id(name), 'store_sub', 'synthetic');
 			binding.references = references;
 			instance.scope.references.set(name, references);
