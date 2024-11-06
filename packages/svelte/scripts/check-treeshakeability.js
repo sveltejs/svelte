@@ -136,7 +136,7 @@ if (!bundle.includes('component_context.l')) {
 
 if (failed) {
 	// eslint-disable-next-line no-console
-	// console.error(bundle);
+	console.error(bundle);
 	fs.writeFileSync('scripts/_bundle.js', bundle);
 }
 
