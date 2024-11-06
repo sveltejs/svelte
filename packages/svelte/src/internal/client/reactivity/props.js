@@ -23,7 +23,7 @@ import * as e from '../errors.js';
 import { BRANCH_EFFECT, LEGACY_DERIVED_PROP, ROOT_EFFECT } from '../constants.js';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
-import { legacy_mode_flag } from '../../feature-flags.js';
+import { legacy_mode_flag } from '../../flags/index.js';
 
 /**
  * @param {((value?: number) => number)} fn

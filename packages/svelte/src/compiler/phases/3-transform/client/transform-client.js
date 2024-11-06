@@ -532,7 +532,7 @@ export function client_component(analysis, options) {
 	}
 
 	if (!analysis.runes) {
-		body.unshift(b.imports([], 'svelte/internal/legacy-component'));
+		body.unshift(b.imports([], 'svelte/internal/flags/legacy'));
 	}
 
 	if (options.discloseVersion) {

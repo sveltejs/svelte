@@ -33,7 +33,7 @@ import { destroy_derived, execute_derived, update_derived } from './reactivity/d
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
-import { legacy_mode_flag } from '../feature-flags.js';
+import { legacy_mode_flag } from '../flags/index.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;

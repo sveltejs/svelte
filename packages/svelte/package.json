@@ -53,8 +53,8 @@
     "./internal/disclose-version": {
       "default": "./src/internal/disclose-version.js"
     },
-    "./internal/legacy-component": {
-      "default": "./src/internal/legacy-component.js"
+    "./internal/flags/legacy": {
+      "default": "./src/internal/flags/legacy.js"
     },
     "./internal/server": {
       "default": "./src/internal/server/index.js"
