@@ -1,6 +1,8 @@
+/** @import { Location } from 'locate-character' */
 /** @import { Expression, LabeledStatement, Statement } from 'estree' */
 /** @import { ReactiveStatement } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
+import { dev, locator } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { build_getter } from '../utils.js';
 
@@ -48,6 +50,8 @@ export function LabeledStatement(node, context) {
 		sequence.push(serialized);
 	}
 
+	const location = dev ? locator(/** @type {number} */ (node.start)) : undefined;
+
 	// these statements will be topologically ordered later
 	context.state.legacy_reactive_statements.set(
 		node,
@@ -55,7 +59,9 @@ export function LabeledStatement(node, context) {
 			b.call(
 				'$.legacy_pre_effect',
 				sequence.length > 0 ? b.thunk(b.sequence(sequence)) : b.thunk(b.block([])),
-				b.thunk(b.block(body))
+				b.thunk(b.block(body)),
+				location && b.literal(location.line),
+				location && b.literal(location.column)
 			)
 		)
 	);

@@ -9,6 +9,7 @@ import { hash } from '../../../../utils.js';
 import { DEV } from 'esm-env';
 import { dev_current_component_function } from '../../runtime.js';
 import { get_first_child, get_next_sibling } from '../operations.js';
+import { sanitize_location } from '../../dev/location.js';
 
 /**
  * @param {Element} element
@@ -28,9 +29,7 @@ function check_hash(element, server_hash, value) {
 		location = `in ${dev_current_component_function[FILENAME]}`;
 	}
 
-	w.hydration_html_changed(
-		location?.replace(/\//g, '/\u200b') // prevent devtools trying to make it a clickable link by inserting a zero-width space
-	);
+	w.hydration_html_changed(sanitize_location(location));
 }
 
 /**

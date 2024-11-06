@@ -26,10 +26,6 @@
 
 > Reassignments of module-level declarations will not cause reactive statements to update
 
-## reactive_declaration_non_reactive_property
-
-> Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update
-
 ## state_referenced_locally
 
 > State referenced in its own scope will never update. Did you mean to reference it inside a closure?

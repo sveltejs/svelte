@@ -154,6 +154,19 @@ export function ownership_invalid_mutation(component, owner) {
 }
 
 /**
+ * A `$:` statement (%location%) read reactive state that was not visible to the compiler. Updates to this state will not cause the statement to re-run. The behaviour of this code will change if you migrate it to runes mode
+ * @param {string} location
+ */
+export function reactive_declaration_non_reactive_property(location) {
+	if (DEV) {
+		console.warn(`%c[svelte] reactive_declaration_non_reactive_property\n%cA \`$:\` statement (${location}) read reactive state that was not visible to the compiler. Updates to this state will not cause the statement to re-run. The behaviour of this code will change if you migrate it to runes mode`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("reactive_declaration_non_reactive_property");
+	}
+}
+
+/**
  * Reactive `$state(...)` proxies and the values they proxy have different identities. Because of this, comparisons with `%operator%` will produce unexpected results
  * @param {string} operator
  */

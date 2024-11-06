@@ -86,6 +86,12 @@ Mutating a value outside the component that created it is strongly discouraged. 
 %component% mutated a value owned by %owner%. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead
 ```
 
+### reactive_declaration_non_reactive_property
+
+```
+A `$:` statement (%location%) read reactive state that was not visible to the compiler. Updates to this state will not cause the statement to re-run. The behaviour of this code will change if you migrate it to runes mode
+```
+
 ### state_proxy_equality_mismatch
 
 ```

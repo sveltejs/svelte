@@ -795,19 +795,22 @@ export function safe_get(signal) {
 }
 
 /**
- * Invokes a function and captures all signals that are read during the invocation,
- * then invalidates them.
- * @param {() => any} fn
+ * Capture an array of all the signals that are read when `fn` is called
+ * @param {Function} fn
  */
-export function invalidate_inner_signals(fn) {
+export function capture_signals(fn) {
 	var previous_is_signals_recorded = is_signals_recorded;
 	var previous_captured_signals = captured_signals;
 	is_signals_recorded = true;
+
+	/** @type {Set<Signal>} */
 	captured_signals = new Set();
+
 	var captured = captured_signals;
 	var signal;
+
 	try {
-		untrack(fn);
+		fn();
 	} finally {
 		is_signals_recorded = previous_is_signals_recorded;
 		if (is_signals_recorded) {
@@ -817,6 +820,18 @@ export function invalidate_inner_signals(fn) {
 		}
 		captured_signals = previous_captured_signals;
 	}
+
+	return captured;
+}
+
+/**
+ * Invokes a function and captures all signals that are read during the invocation,
+ * then invalidates them.
+ * @param {() => any} fn
+ */
+export function invalidate_inner_signals(fn) {
+	var captured = capture_signals(() => untrack(fn));
+
 	for (signal of captured) {
 		// Go one level up because derived signals created as part of props in legacy mode
 		if ((signal.f & LEGACY_DERIVED_PROP) !== 0) {
