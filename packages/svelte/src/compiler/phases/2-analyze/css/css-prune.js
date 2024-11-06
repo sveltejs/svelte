@@ -162,9 +162,7 @@ const visitors = {
 };
 
 /**
- * Discard trailing `:global(...)` selectors without a `:has/is/where(...)` modifier, these are unused for scoping purposes
- * `:not(...)` modifiers are not considered, because they should stay unscoped, because scoping them would achieve the
- * opposite of what we want, because they are then _more_ likely to bleed out of the component.
+ * Discard trailing `:global(...)` selectors without a `:has/is/where/not(...)` modifier, these are unused for scoping purposes
  * @param {Compiler.Css.ComplexSelector} node
  */
 function truncate(node) {
@@ -174,13 +172,16 @@ function truncate(node) {
 			// not after a :global selector
 			!metadata.is_global_like &&
 			!(first.type === 'PseudoClassSelector' && first.name === 'global' && first.args === null) &&
-			// not a :global(...) without a :has/is/where(...) modifier
+			// not a :global(...) without a :has/is/where/not(...) modifier
 			(!metadata.is_global ||
 				selectors.some(
 					(selector) =>
 						selector.type === 'PseudoClassSelector' &&
 						selector.args !== null &&
-						(selector.name === 'has' || selector.name === 'is' || selector.name === 'where')
+						(selector.name === 'has' ||
+							selector.name === 'is' ||
+							selector.name === 'where' ||
+							selector.name === 'not')
 				))
 		);
 	});
@@ -511,9 +512,34 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				// We came across a :global, everything beyond it is global and therefore a potential match
 				if (name === 'global' && selector.args === null) return true;
 
-				// We ignore :not(...) because its contents should stay unscoped. Scoping them would achieve the
-				// opposite of what we want, because they are then _more_ likely to bleed out of the component,
-				// because there would be more chances of the inner selector not matching, which means `:not` matches.
+				// :not(...) contents should stay unscoped. Scoping them would achieve the opposite of what we want,
+				// because they are then _more_ likely to bleed out of the component. The exception is complex selectors
+				// with descendants, in which case we scope them all.
+				if (name === 'not' && selector.args) {
+					for (const complex_selector of selector.args.children) {
+						complex_selector.metadata.used = true;
+						const relative = truncate(complex_selector);
+
+						if (complex_selector.children.length > 1) {
+							// foo:not(bar foo) means that bar is an ancestor of foo (side note: ending with foo is the only way the selector make sense).
+							// We can't fully check if that actually matches with our current algorithm, so we just assume it does.
+							// The result may not match a real element, so the only drawback is the missing prune.
+							for (const selector of relative) {
+								selector.metadata.scoped = true;
+							}
+
+							/** @type {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null} */
+							let el = element;
+							while (el) {
+								el.metadata.scoped = true;
+								el = get_element_parent(el);
+							}
+						}
+					}
+
+					break;
+				}
+
 				if ((name === 'is' || name === 'where') && selector.args) {
 					let matched = false;
 

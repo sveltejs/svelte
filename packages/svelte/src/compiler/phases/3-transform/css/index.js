@@ -355,18 +355,8 @@ const visitors = {
 		context.state.specificity.bumped = before_bumped;
 	},
 	PseudoClassSelector(node, context) {
-		if (node.name === 'is' || node.name === 'where' || node.name === 'has') {
+		if (node.name === 'is' || node.name === 'where' || node.name === 'has' || node.name === 'not') {
 			context.next();
-		}
-		if (node.name === 'not' && node.args) {
-			for (const complex_selector of node.args.children) {
-				for (const relative_selector of complex_selector.children) {
-					if (relative_selector.metadata.is_global) {
-						const global = /** @type {Css.PseudoClassSelector} */ (relative_selector.selectors[0]);
-						remove_global_pseudo_class(global, relative_selector.combinator, context.state);
-					}
-				}
-			}
 		}
 	}
 };

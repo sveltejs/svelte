@@ -6,7 +6,7 @@
 		color: green;
 	}
 	.svelte-xyz:not(p) {
-		color: red; /* TODO would be nice to mark this as unused someday */
+		color: green;
 	}
 
 	.svelte-xyz:not(.foo):not(.unused) {
@@ -16,9 +16,13 @@
 	p.svelte-xyz:not(.foo) {
 		color: green;
 	}
-	/* (unused) p :not(.foo) {
+	/* (unused) span :not(.foo) {
 		color: red;
 	}*/
-	/* (unused) p :not(.unused) {
+	/* (unused) span :not(.unused) {
 		color: red;
 	}*/
+
+	span.svelte-xyz:not(p:where(.svelte-xyz) span:where(.svelte-xyz)) {
+		color: green;
+	}

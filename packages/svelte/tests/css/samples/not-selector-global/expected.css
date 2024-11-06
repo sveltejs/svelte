@@ -9,11 +9,21 @@
 		color: green;
 	}
 	.x .svelte-xyz:not(p) {
-		color: red; /* TODO would be nice to prune this one day */
+		color: green;
 	}
 	.x:not(p) {
-		color: red; /* TODO would be nice to prune this one day */
+		color: green;
 	}
 	.x .svelte-xyz:not(.unused) {
+		color: green;
+	}
+
+	span:not(p.svelte-xyz span:where(.svelte-xyz)) {
+		color: green;
+	}
+	span.svelte-xyz:not(p span) {
+		color: green;
+	}
+	span:not(p span) {
 		color: green;
 	}
