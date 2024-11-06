@@ -1,4 +1,0 @@
-
-	.svelte-xyz:not(.bar:where(.svelte-xyz)) {
-		color: green;
-	}

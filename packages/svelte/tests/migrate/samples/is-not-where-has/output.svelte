@@ -21,22 +21,22 @@ what if i'm talking about `:has()` in my blog?
 
 <style lang="postcss">
 	div:has(:global(span)){}
-	div > :not(:global(span)){}
+	div > :not(span){}
 	div > :is(:global(span)){}
 	div > :where(:global(span)){}
 
 	div:has(:global(:is(span))){}
-	div > :not(:global(:is(span))){}
+	div > :not(:is(span)){}
 	div > :is(:global(:is(span))){}
 	div > :where(:global(:is(span))){}
 
 	div:has(:global(.class:is(span))){}
-	div > :not(:global(.class:is(span))){}
+	div > :not(.class:is(span)){}
 	div > :is(:global(.class:is(span))){}
 	div > :where(:global(.class:is(span))){}
 
 	div :has(:global(.class:is(span:where(:focus)))){}
-	div :not(:global(.class:is(span:where(:focus-within)))){}
+	div :not(.class:is(span:where(:focus-within))){}
 	div :is(:global(.class:is(span:is(:hover)))){}
 	div :where(:global(.class:is(span:has(* > *)))){}
 	div :is(:global(.class:is(span:is(:hover)), .x)){}
@@ -51,7 +51,7 @@ what if i'm talking about `:has()` in my blog?
 		p:has(:global(&)){
 
 		}
-		:not(:global(span > *)){
+		:not(span > *){
 			:where(:global(form)){}
 		}
 	}

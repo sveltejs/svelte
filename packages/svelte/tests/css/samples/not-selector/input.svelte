@@ -1,5 +1,9 @@
 <p class="foo">foo</p>
-<p class="bar">bar</p>
+<p class="bar">
+	bar
+	<span>baz</span>
+</p>
+<span>buzz</span>
 
 <style>
 	:not(.foo) {
@@ -9,7 +13,7 @@
 		color: green;
 	}
 	:not(p) {
-		color: red;
+		color: green;
 	}
 
 	:not(.foo):not(.unused) {
@@ -19,10 +23,17 @@
 	p:not(.foo) {
 		color: green;
 	}
-	p :not(.foo) {
+	span :not(.foo) {
 		color: red;
 	}
-	p :not(.unused) {
+	span :not(.unused) {
 		color: red;
+	}
+
+	span:not(p span) {
+		color: green;
+	}
+	span:not(:focus) {
+		color: green;
 	}
 </style>

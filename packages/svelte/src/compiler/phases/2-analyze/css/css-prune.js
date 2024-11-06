@@ -10,7 +10,6 @@ import { get_attribute_chunks, is_text_attribute } from '../../../utils/ast.js';
  *   stylesheet: Compiler.Css.StyleSheet;
  *   element: Compiler.AST.RegularElement | Compiler.AST.SvelteElement;
  *   from_render_tag: boolean;
- *   inside_not: boolean;
  * }} State
  */
 /** @typedef {NODE_PROBABLY_EXISTS | NODE_DEFINITELY_EXISTS} NodeExistsValue */
@@ -62,13 +61,9 @@ export function prune(stylesheet, element) {
 		const parent = get_element_parent(element);
 		if (!parent) return;
 
-		walk(
-			stylesheet,
-			{ stylesheet, element: parent, from_render_tag: true, inside_not: false },
-			visitors
-		);
+		walk(stylesheet, { stylesheet, element: parent, from_render_tag: true }, visitors);
 	} else {
-		walk(stylesheet, { stylesheet, element, from_render_tag: false, inside_not: false }, visitors);
+		walk(stylesheet, { stylesheet, element, from_render_tag: false }, visitors);
 	}
 }
 
@@ -179,9 +174,9 @@ function truncate(node) {
 						selector.type === 'PseudoClassSelector' &&
 						selector.args !== null &&
 						(selector.name === 'has' ||
-							selector.name === 'not' ||
 							selector.name === 'is' ||
-							selector.name === 'where')
+							selector.name === 'where' ||
+							selector.name === 'not')
 				))
 		);
 	});
@@ -227,7 +222,7 @@ function apply_selector(relative_selectors, rule, element, state) {
 	// if this is the left-most non-global selector, mark it — we want
 	// `x y z {...}` to become `x.blah y z.blah {...}`
 	const parent = parent_selectors[parent_selectors.length - 1];
-	if (!state.inside_not && (!parent || is_global(parent, rule))) {
+	if (!parent || is_global(parent, rule)) {
 		mark(relative_selector, element);
 	}
 
@@ -269,7 +264,7 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 				if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
 					if (apply_selector(parent_selectors, rule, parent, state)) {
 						// TODO the `name === ' '` causes false positives, but removing it causes false negatives...
-						if (!state.inside_not && (name === ' ' || crossed_component_boundary)) {
+						if (name === ' ' || crossed_component_boundary) {
 							mark(parent_selectors[parent_selectors.length - 1], parent);
 						}
 
@@ -295,15 +290,11 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 				if (possible_sibling.type === 'RenderTag' || possible_sibling.type === 'SlotElement') {
 					// `{@render foo()}<p>foo</p>` with `:global(.x) + p` is a match
 					if (parent_selectors.length === 1 && parent_selectors[0].metadata.is_global) {
-						if (!state.inside_not) {
-							mark(relative_selector, element);
-						}
+						mark(relative_selector, element);
 						sibling_matched = true;
 					}
 				} else if (apply_selector(parent_selectors, rule, possible_sibling, state)) {
-					if (!state.inside_not) {
-						mark(relative_selector, element);
-					}
+					mark(relative_selector, element);
 					sibling_matched = true;
 				}
 			}
@@ -512,7 +503,35 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				// We came across a :global, everything beyond it is global and therefore a potential match
 				if (name === 'global' && selector.args === null) return true;
 
-				if ((name === 'is' || name === 'where' || name === 'not') && selector.args) {
+				// :not(...) contents should stay unscoped. Scoping them would achieve the opposite of what we want,
+				// because they are then _more_ likely to bleed out of the component. The exception is complex selectors
+				// with descendants, in which case we scope them all.
+				if (name === 'not' && selector.args) {
+					for (const complex_selector of selector.args.children) {
+						complex_selector.metadata.used = true;
+						const relative = truncate(complex_selector);
+
+						if (complex_selector.children.length > 1) {
+							// foo:not(bar foo) means that bar is an ancestor of foo (side note: ending with foo is the only way the selector make sense).
+							// We can't fully check if that actually matches with our current algorithm, so we just assume it does.
+							// The result may not match a real element, so the only drawback is the missing prune.
+							for (const selector of relative) {
+								selector.metadata.scoped = true;
+							}
+
+							/** @type {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null} */
+							let el = element;
+							while (el) {
+								el.metadata.scoped = true;
+								el = get_element_parent(el);
+							}
+						}
+					}
+
+					break;
+				}
+
+				if ((name === 'is' || name === 'where') && selector.args) {
 					let matched = false;
 
 					for (const complex_selector of selector.args.children) {
@@ -522,32 +541,9 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 						if (is_global) {
 							complex_selector.metadata.used = true;
 							matched = true;
-						} else if (name !== 'not' && apply_selector(relative, rule, element, state)) {
+						} else if (apply_selector(relative, rule, element, state)) {
 							complex_selector.metadata.used = true;
 							matched = true;
-						} else if (
-							name === 'not' &&
-							!apply_selector(relative, rule, element, { ...state, inside_not: true })
-						) {
-							// For `:not(...)` we gotta do the inverse: If it did not match, mark the element and possibly
-							// everything above (if the selector is written is a such) as scoped (because they matched by not matching).
-							element.metadata.scoped = true;
-							complex_selector.metadata.used = true;
-							matched = true;
-
-							for (const r of relative) {
-								r.metadata.scoped = true;
-							}
-
-							// bar:not(foo bar) means that foo is an ancestor of bar
-							if (complex_selector.children.length > 1) {
-								/** @type {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null} */
-								let el = get_element_parent(element);
-								while (el) {
-									el.metadata.scoped = true;
-									el = get_element_parent(el);
-								}
-							}
 						} else if (complex_selector.children.length > 1 && (name == 'is' || name == 'where')) {
 							// foo :is(bar baz) can also mean that bar is an ancestor of foo, and baz a descendant.
 							// We can't fully check if that actually matches with our current algorithm, so we just assume it does.

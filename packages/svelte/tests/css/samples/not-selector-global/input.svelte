@@ -1,5 +1,9 @@
 <p class="foo">foo</p>
-<p class="bar">bar</p>
+<p class="bar">
+	bar
+	<span>baz</span>
+</p>
+<span>buzz</span>
 
 <style>
 	:not(:global(.foo)) {
@@ -12,12 +16,22 @@
 		color: green;
 	}
 	:global(.x) :not(p) {
-		color: red;
+		color: green;
 	}
 	:global(.x):not(p) {
-		color: red; /* TODO would be nice to prune this one day */
+		color: green;
 	}
 	:global(.x) :not(.unused) {
+		color: green;
+	}
+
+	:global(span):not(p span) {
+		color: green;
+	}
+	span:not(:global(p span)) {
+		color: green;
+	}
+	:global(span:not(p span)) {
 		color: green;
 	}
 </style>

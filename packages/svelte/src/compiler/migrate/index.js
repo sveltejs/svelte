@@ -50,9 +50,9 @@ function migrate_css(state) {
 	while (code) {
 		if (
 			code.startsWith(':has') ||
-			code.startsWith(':not') ||
 			code.startsWith(':is') ||
-			code.startsWith(':where')
+			code.startsWith(':where') ||
+			code.startsWith(':not')
 		) {
 			let start = code.indexOf('(') + 1;
 			let is_global = false;
@@ -74,7 +74,7 @@ function migrate_css(state) {
 				char = code[end];
 			}
 			if (start && end) {
-				if (!is_global) {
+				if (!is_global && !code.startsWith(':not')) {
 					str.prependLeft(starting + start, ':global(');
 					str.appendRight(starting + end - 1, ')');
 				}
