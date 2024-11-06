@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-feat: adds legacy mode flag
+chore: adds legacy mode flag
