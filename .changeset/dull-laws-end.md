@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ignore `as` types expressions on property definitions
+fix: ignore `as` type expressions on property definitions
