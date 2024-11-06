@@ -642,11 +642,11 @@ export function reactive_declaration_module_script_dependency(node) {
 }
 
 /**
- * Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update
+ * Arrays and object properties are only reactive in runes mode. This may be unexpected if referencing an imported runes-based object and the behavior of this statement will change when migrating to runes mode.
  * @param {null | NodeLike} node
  */
 export function reactive_declaration_non_reactive_property(node) {
-	w(node, "reactive_declaration_non_reactive_property", "Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update");
+	w(node, "reactive_declaration_non_reactive_property", "Arrays and object properties are only reactive in runes mode. This may be unexpected if referencing an imported runes-based object and the behavior of this statement will change when migrating to runes mode.");
 }
 
 /**
