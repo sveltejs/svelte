@@ -531,6 +531,10 @@ export function client_component(analysis, options) {
 		body.push(b.stmt(b.call(b.id('$.mark_module_end'), b.id(analysis.name))));
 	}
 
+	if (!analysis.runes) {
+		body.unshift(b.imports([], 'svelte/internal/flags/legacy'));
+	}
+
 	if (options.discloseVersion) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}

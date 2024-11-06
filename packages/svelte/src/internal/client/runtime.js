@@ -33,6 +33,7 @@ import { destroy_derived, execute_derived, update_derived } from './reactivity/d
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
+import { legacy_mode_flag } from '../flags/index.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -162,7 +163,7 @@ export function increment_version() {
 
 /** @returns {boolean} */
 export function is_runes() {
-	return component_context !== null && component_context.l === null;
+	return !legacy_mode_flag || (component_context !== null && component_context.l === null);
 }
 
 /**
@@ -1025,7 +1026,7 @@ export function push(props, runes = false, fn) {
 		l: null
 	};
 
-	if (!runes) {
+	if (legacy_mode_flag && !runes) {
 		component_context.l = {
 			s: null,
 			u: null,

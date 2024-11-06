@@ -23,6 +23,7 @@ import * as e from '../errors.js';
 import { BRANCH_EFFECT, LEGACY_DERIVED_PROP, ROOT_EFFECT } from '../constants.js';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
+import { legacy_mode_flag } from '../../flags/index.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -270,7 +271,7 @@ function with_parent_branch(fn) {
  */
 export function prop(props, key, flags, fallback) {
 	var immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
-	var runes = (flags & PROPS_IS_RUNES) !== 0;
+	var runes = !legacy_mode_flag || (flags & PROPS_IS_RUNES) !== 0;
 	var bindable = (flags & PROPS_IS_BINDABLE) !== 0;
 	var lazy = (flags & PROPS_IS_LAZY_INITIAL) !== 0;
 	var is_store_sub = false;
