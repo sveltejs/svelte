@@ -1,5 +1,13 @@
 # svelte
 
+## 5.1.11
+
+### Patch Changes
+
+- fix: error on TypeScript's `readonly` modifier ([#14153](https://github.com/sveltejs/svelte/pull/14153))
+
+- fix: remove scoping for `:not` selectors ([#14177](https://github.com/sveltejs/svelte/pull/14177))
+
 ## 5.1.10
 
 ### Patch Changes
