@@ -489,14 +489,17 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 	}
 
 	for (const selector of other_selectors) {
-		if (selector.type === 'Percentage' || selector.type === 'Nth') continue;
+		if (selector.type === 'Percentage' || selector.type === 'Nth') {
+			if (state.inside_not) return true;
+			continue;
+		}
 
 		const name = selector.name.replace(regex_backslash_and_following_character, '$1');
 
 		switch (selector.type) {
 			case 'PseudoClassSelector': {
 				if (name === 'host' || name === 'root') {
-					return false;
+					return state.inside_not;
 				}
 
 				if (
@@ -514,6 +517,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 
 				if ((name === 'is' || name === 'where' || name === 'not') && selector.args) {
 					let matched = false;
+					let didnt_match = false;
 
 					for (const complex_selector of selector.args.children) {
 						const relative = truncate(complex_selector);
@@ -522,10 +526,12 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 						if (is_global) {
 							complex_selector.metadata.used = true;
 							matched = true;
-						} else if (name !== 'not' && apply_selector(relative, rule, element, state)) {
+							didnt_match = true;
+						} else if (apply_selector(relative, rule, element, { ...state, inside_not: true })) {
 							complex_selector.metadata.used = true;
 							matched = true;
 						} else if (
+							false &&
 							name === 'not' &&
 							!apply_selector(relative, rule, element, { ...state, inside_not: true })
 						) {
@@ -554,9 +560,12 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 							// The result may not match a real element, so the only drawback is the missing prune.
 							complex_selector.metadata.used = true;
 							matched = true;
+							didnt_match = true;
 							for (const selector of relative) {
 								selector.metadata.scoped = true;
 							}
+						} else {
+							didnt_match = true;
 						}
 					}
 
@@ -578,7 +587,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 							});
 						}
 
-						return false;
+						return state.inside_not && didnt_match;
 					}
 				}
 
@@ -586,13 +595,15 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 			}
 
 			case 'PseudoElementSelector': {
-				break;
+				return true;
 			}
 
 			case 'AttributeSelector': {
 				const whitelisted = whitelist_attribute_selector.get(element.name.toLowerCase());
+				if (whitelisted?.includes(selector.name.toLowerCase())) {
+					return true;
+				}
 				if (
-					!whitelisted?.includes(selector.name.toLowerCase()) &&
 					!attribute_matches(
 						element,
 						selector.name,
@@ -601,19 +612,20 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 						selector.flags?.includes('i') ?? false
 					)
 				) {
-					return false;
+					return state.inside_not;
 				}
+
 				break;
 			}
 
 			case 'ClassSelector': {
-				if (
-					!attribute_matches(element, 'class', name, '~=', false) &&
-					!element.attributes.some(
-						(attribute) => attribute.type === 'ClassDirective' && attribute.name === name
-					)
-				) {
-					return false;
+				const matches_class_directive = element.attributes.some(
+					(attribute) => attribute.type === 'ClassDirective' && attribute.name === name
+				);
+				if (!attribute_matches(element, 'class', name, '~=', false) && !matches_class_directive) {
+					return state.inside_not;
+				} else if (matches_class_directive) {
+					return true;
 				}
 
 				break;
@@ -633,7 +645,9 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 					name !== '*' &&
 					element.type !== 'SvelteElement'
 				) {
-					return false;
+					return state.inside_not;
+				} else if (element.type === 'SvelteElement' && state.inside_not) {
+					return true;
 				}
 
 				break;
@@ -641,6 +655,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 
 			case 'NestingSelector': {
 				let matched = false;
+				let didnt_match = true;
 
 				const parent = /** @type {Compiler.Css.Rule} */ (rule.metadata.parent_rule);
 
@@ -648,11 +663,16 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 					if (apply_selector(truncate(complex_selector), parent, element, state)) {
 						complex_selector.metadata.used = true;
 						matched = true;
+					} else {
+						didnt_match = true;
 					}
 				}
 
 				if (!matched) {
-					return false;
+					return state.inside_not;
+				}
+				if (state.inside_not && didnt_match) {
+					return true;
 				}
 
 				break;
@@ -661,7 +681,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 	}
 
 	// possible match
-	return true;
+	return !state.inside_not;
 }
 
 /**
