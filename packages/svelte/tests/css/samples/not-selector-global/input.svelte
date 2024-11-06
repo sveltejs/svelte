@@ -12,7 +12,7 @@
 		color: green;
 	}
 	:global(.x) :not(p) {
-		color: red;
+		color: red; /* TODO would be nice to prune this one day */
 	}
 	:global(.x):not(p) {
 		color: red; /* TODO would be nice to prune this one day */

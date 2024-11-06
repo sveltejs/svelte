@@ -1,19 +1,19 @@
 
-	.svelte-xyz:not(.foo:where(.svelte-xyz)) {
+	.svelte-xyz:not(.foo) {
 		color: green;
 	}
-	.svelte-xyz:not(.unused:where(.svelte-xyz)) {
+	.svelte-xyz:not(.unused) {
 		color: green;
 	}
-	/* (unused) :not(p) {
-		color: red;
-	}*/
-
-	.svelte-xyz:not(.foo:where(.svelte-xyz)):not(.unused:where(.svelte-xyz)) {
-		color: green;
+	.svelte-xyz:not(p) {
+		color: red; /* TODO would be nice to mark this as unused someday */
 	}
 
-	p.svelte-xyz:not(.foo:where(.svelte-xyz)) {
+	.svelte-xyz:not(.foo):not(.unused) {
+		color: green;
+	}
+
+	p.svelte-xyz:not(.foo) {
 		color: green;
 	}
 	/* (unused) p :not(.foo) {

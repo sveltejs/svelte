@@ -9,7 +9,7 @@
 		color: green;
 	}
 	:not(p) {
-		color: red;
+		color: red; /* TODO would be nice to mark this as unused someday */
 	}
 
 	:not(.foo):not(.unused) {

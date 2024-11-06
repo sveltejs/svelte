@@ -278,29 +278,10 @@ const visitors = {
 	ComplexSelector(node, context) {
 		const before_bumped = context.state.specificity.bumped;
 
-		/**
-		 * @param {Css.PseudoClassSelector} selector
-		 * @param {Css.Combinator | null} combinator
-		 */
-		function remove_global_pseudo_class(selector, combinator) {
-			if (selector.args === null) {
-				let start = selector.start;
-				if (combinator?.name === ' ') {
-					// div :global.x becomes div.x
-					while (/\s/.test(context.state.code.original[start - 1])) start--;
-				}
-				context.state.code.remove(start, selector.start + ':global'.length);
-			} else {
-				context.state.code
-					.remove(selector.start, selector.start + ':global('.length)
-					.remove(selector.end - 1, selector.end);
-			}
-		}
-
 		for (const relative_selector of node.children) {
 			if (relative_selector.metadata.is_global) {
 				const global = /** @type {Css.PseudoClassSelector} */ (relative_selector.selectors[0]);
-				remove_global_pseudo_class(global, relative_selector.combinator);
+				remove_global_pseudo_class(global, relative_selector.combinator, context.state);
 
 				if (
 					node.metadata.rule?.metadata.parent_rule &&
@@ -328,7 +309,7 @@ const visitors = {
 				// for any :global() or :global at the middle of compound selector
 				for (const selector of relative_selector.selectors) {
 					if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-						remove_global_pseudo_class(selector, null);
+						remove_global_pseudo_class(selector, null, context.state);
 					}
 				}
 
@@ -374,11 +355,41 @@ const visitors = {
 		context.state.specificity.bumped = before_bumped;
 	},
 	PseudoClassSelector(node, context) {
-		if (node.name === 'is' || node.name === 'where' || node.name === 'has' || node.name === 'not') {
+		if (node.name === 'is' || node.name === 'where' || node.name === 'has') {
 			context.next();
+		}
+		if (node.name === 'not' && node.args) {
+			for (const complex_selector of node.args.children) {
+				for (const relative_selector of complex_selector.children) {
+					if (relative_selector.metadata.is_global) {
+						const global = /** @type {Css.PseudoClassSelector} */ (relative_selector.selectors[0]);
+						remove_global_pseudo_class(global, relative_selector.combinator, context.state);
+					}
+				}
+			}
 		}
 	}
 };
+
+/**
+ * @param {Css.PseudoClassSelector} selector
+ * @param {Css.Combinator | null} combinator
+ * @param {State} state
+ */
+function remove_global_pseudo_class(selector, combinator, state) {
+	if (selector.args === null) {
+		let start = selector.start;
+		if (combinator?.name === ' ') {
+			// div :global.x becomes div.x
+			while (/\s/.test(state.code.original[start - 1])) start--;
+		}
+		state.code.remove(start, selector.start + ':global'.length);
+	} else {
+		state.code
+			.remove(selector.start, selector.start + ':global('.length)
+			.remove(selector.end - 1, selector.end);
+	}
+}
 
 /**
  * Walk backwards until we find a non-whitespace character

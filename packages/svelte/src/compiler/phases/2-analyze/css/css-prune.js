@@ -162,7 +162,9 @@ const visitors = {
 };
 
 /**
- * Discard trailing `:global(...)` selectors without a `:has/is/where/not(...)` modifier, these are unused for scoping purposes
+ * Discard trailing `:global(...)` selectors without a `:has/is/where(...)` modifier, these are unused for scoping purposes
+ * `:not(...)` modifiers are not considered, because they should stay unscoped, because scoping them would achieve the
+ * opposite of what we want, because they are then _more_ likely to bleed out of the component.
  * @param {Compiler.Css.ComplexSelector} node
  */
 function truncate(node) {
@@ -172,16 +174,13 @@ function truncate(node) {
 			// not after a :global selector
 			!metadata.is_global_like &&
 			!(first.type === 'PseudoClassSelector' && first.name === 'global' && first.args === null) &&
-			// not a :global(...) without a :has/is/where/not(...) modifier
+			// not a :global(...) without a :has/is/where(...) modifier
 			(!metadata.is_global ||
 				selectors.some(
 					(selector) =>
 						selector.type === 'PseudoClassSelector' &&
 						selector.args !== null &&
-						(selector.name === 'has' ||
-							selector.name === 'not' ||
-							selector.name === 'is' ||
-							selector.name === 'where')
+						(selector.name === 'has' || selector.name === 'is' || selector.name === 'where')
 				))
 		);
 	});
@@ -512,7 +511,10 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				// We came across a :global, everything beyond it is global and therefore a potential match
 				if (name === 'global' && selector.args === null) return true;
 
-				if ((name === 'is' || name === 'where' || name === 'not') && selector.args) {
+				// We ignore :not(...) because its contents should stay unscoped. Scoping them would achieve the
+				// opposite of what we want, because they are then _more_ likely to bleed out of the component,
+				// because there would be more chances of the inner selector not matching, which means `:not` matches.
+				if ((name === 'is' || name === 'where') && selector.args) {
 					let matched = false;
 
 					for (const complex_selector of selector.args.children) {
@@ -522,32 +524,9 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 						if (is_global) {
 							complex_selector.metadata.used = true;
 							matched = true;
-						} else if (name !== 'not' && apply_selector(relative, rule, element, state)) {
+						} else if (apply_selector(relative, rule, element, state)) {
 							complex_selector.metadata.used = true;
 							matched = true;
-						} else if (
-							name === 'not' &&
-							!apply_selector(relative, rule, element, { ...state, inside_not: true })
-						) {
-							// For `:not(...)` we gotta do the inverse: If it did not match, mark the element and possibly
-							// everything above (if the selector is written is a such) as scoped (because they matched by not matching).
-							element.metadata.scoped = true;
-							complex_selector.metadata.used = true;
-							matched = true;
-
-							for (const r of relative) {
-								r.metadata.scoped = true;
-							}
-
-							// bar:not(foo bar) means that foo is an ancestor of bar
-							if (complex_selector.children.length > 1) {
-								/** @type {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null} */
-								let el = get_element_parent(element);
-								while (el) {
-									el.metadata.scoped = true;
-									el = get_element_parent(el);
-								}
-							}
 						} else if (complex_selector.children.length > 1 && (name == 'is' || name == 'where')) {
 							// foo :is(bar baz) can also mean that bar is an ancestor of foo, and baz a descendant.
 							// We can't fully check if that actually matches with our current algorithm, so we just assume it does.
