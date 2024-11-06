@@ -293,11 +293,13 @@ export function legacy_pre_effect(deps, fn, line, column) {
 		if (DEV && location) {
 			var implicit_deps = capture_signals(() => untrack(fn));
 
-			for (const signal of implicit_deps) {
+			for (var signal of implicit_deps) {
 				if (!explicit_deps.has(signal)) {
 					w.reactive_declaration_non_reactive_property(/** @type {string} */ (location));
 				}
 			}
+		} else {
+			untrack(fn);
 		}
 	});
 }
