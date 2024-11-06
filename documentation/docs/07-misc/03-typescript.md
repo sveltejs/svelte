@@ -152,7 +152,7 @@ Not all elements have a specific type definition, in those cases, use `SvelteHTM
 <script lang="ts">
 	import type { SvelteHTMLElements } from 'svelte/elements';
 
-	let { children, ...rest }:  SvelteHTMLElements['div'] = $props();
+	let { children, ...rest }: SvelteHTMLElements['div'] = $props();
 </script>
 
 <div {...rest}>
