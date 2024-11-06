@@ -132,7 +132,7 @@ The content of `generics` is what you would put between the `<...>` tags of a ge
 
 ## Typing wrapper components
 
-In case you're writing a component that wraps a native element, you may want to expose all the attributes of underlying element to the user. In that case, use (or extend from) one of the interfaces provided by `svelte/elements`. Here's an example for a `Button` component:
+In case you're writing a component that wraps a native element, you may want to expose all the attributes of the underlying element to the user. In that case, use (or extend from) one of the interfaces provided by `svelte/elements`. Here's an example for a `Button` component:
 
 ```svelte
 <script lang="ts">
@@ -144,6 +144,20 @@ In case you're writing a component that wraps a native element, you may want to 
 <button {...rest}>
 	{@render children()}
 </button>
+```
+
+Not all elements have a specific type definition, in those cases, use `SvelteHTMLElements`:
+
+```svelte
+<script lang="ts">
+	import type { SvelteHTMLElements } from 'svelte/elements';
+
+	let { children, ...rest }: SvelteHTMLElements['div'] = $props();
+</script>
+
+<div {...rest}>
+	{@render children()}
+</div>
 ```
 
 ## Typing `$state`
