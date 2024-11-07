@@ -111,4 +111,14 @@
 	x:has(y) + c {
 		color: green;
 	}
+
+	x:has(+ c) {
+		color: green;
+	}
+	x:has(~ c) {
+		color: green;
+	}
+	x:has(~ y) {
+		color: red;
+	}
 </style>

@@ -101,3 +101,13 @@
 	x.svelte-xyz:has(y:where(.svelte-xyz)) + c:where(.svelte-xyz) {
 		color: green;
 	}
+
+	x.svelte-xyz:has(+ c:where(.svelte-xyz)) {
+		color: green;
+	}
+	x.svelte-xyz:has(~ c:where(.svelte-xyz)) {
+		color: green;
+	}
+	/* (unused) x:has(~ y) {
+		color: red;
+	}*/
