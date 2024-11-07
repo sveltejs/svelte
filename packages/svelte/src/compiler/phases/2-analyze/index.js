@@ -356,9 +356,11 @@ export function analyze_component(root, source, options) {
 			if (
 				declaration !== null &&
 				declaration.kind === 'normal' &&
-				declaration.declaration_kind === 'let'
-			)
+				declaration.declaration_kind === 'let' &&
+				declaration.reassigned
+			) {
 				declaration.kind = 'state';
+			}
 
 			const binding = instance.scope.declare(b.id(name), 'store_sub', 'synthetic');
 			binding.references = references;
