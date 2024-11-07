@@ -50,17 +50,9 @@ export function boundary(node, boundary_fn, props) {
 
 	block(() => {
 		var boundary = /** @type {Effect} */ (active_effect);
-		var start = hydrate_node;
 
 		// We re-use the effect's fn property to avoid allocation of an additional field
-		boundary.fn = (/** @type {{ error?: Error }} */ payload) => {
-			let { error } = payload;
-
-			// In the future, boundaries might handle other things other than errors
-			if (!error) {
-				return;
-			}
-
+		boundary.fn = (/** @type { Error }} */ error) => {
 			var onerror = props.onerror;
 			let failed_snippet = props.failed;
 

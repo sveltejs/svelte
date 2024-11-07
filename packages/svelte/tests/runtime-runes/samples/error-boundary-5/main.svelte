@@ -10,7 +10,7 @@
 	</svelte:boundary>
 
 	{#snippet failed(e, retry)}
-		<div>{e.message}</div>
+		<div>too high</div>
 		<button onclick={retry}>Retry</button>
 	{/snippet}
 </svelte:boundary>

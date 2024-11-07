@@ -243,8 +243,10 @@ function propagate_error(error, effect) {
 		if ((current.f & BOUNDARY_EFFECT) !== 0) {
 			try {
 				// @ts-ignore
-				current.fn({ error });
+				current.fn(error);
 			} catch {
+				// Remove boundary flag from effect
+				current.f ^= BOUNDARY_EFFECT;
 				current = parent;
 				continue;
 			}
@@ -485,7 +487,7 @@ export function update_effect(effect) {
 			dev_effect_stack.push(effect);
 		}
 	} catch (error) {
-		handle_error(/** @type {Error} */ (error), effect, previous_component_context);
+		handle_error(/** @type {Error} */ (error), effect, previous_component_context || effect.ctx);
 	} finally {
 		active_effect = previous_effect;
 
@@ -565,22 +567,28 @@ function flush_queued_effects(effects) {
 	for (var i = 0; i < length; i++) {
 		var effect = effects[i];
 
-		if ((effect.f & (DESTROYED | INERT)) === 0 && check_dirtiness(effect)) {
-			update_effect(effect);
+		if ((effect.f & (DESTROYED | INERT)) === 0) {
+			try {
+				if (check_dirtiness(effect)) {
+					update_effect(effect);
 
-			// Effects with no dependencies or teardown do not get added to the effect tree.
-			// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
-			// don't know if we need to keep them until they are executed. Doing the check
-			// here (rather than in `update_effect`) allows us to skip the work for
-			// immediate effects.
-			if (effect.deps === null && effect.first === null && effect.nodes_start === null) {
-				if (effect.teardown === null) {
-					// remove this effect from the graph
-					unlink_effect(effect);
-				} else {
-					// keep the effect in the graph, but free up some memory
-					effect.fn = null;
+					// Effects with no dependencies or teardown do not get added to the effect tree.
+					// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
+					// don't know if we need to keep them until they are executed. Doing the check
+					// here (rather than in `update_effect`) allows us to skip the work for
+					// immediate effects.
+					if (effect.deps === null && effect.first === null && effect.nodes_start === null) {
+						if (effect.teardown === null) {
+							// remove this effect from the graph
+							unlink_effect(effect);
+						} else {
+							// keep the effect in the graph, but free up some memory
+							effect.fn = null;
+						}
+					}
 				}
+			} catch (error) {
+				handle_error(/** @type {Error} */ (error), effect, effect.ctx);
 			}
 		}
 	}
@@ -653,8 +661,14 @@ function process_effects(effect, collected_effects) {
 			if ((flags & RENDER_EFFECT) !== 0) {
 				if (is_branch) {
 					current_effect.f ^= CLEAN;
-				} else if (check_dirtiness(current_effect)) {
-					update_effect(current_effect);
+				} else {
+					try {
+						if (check_dirtiness(current_effect)) {
+							update_effect(current_effect);
+						}
+					} catch (error) {
+						handle_error(/** @type {Error} */ (error), current_effect, current_effect.ctx);
+					}
 				}
 
 				var child = current_effect.first;
