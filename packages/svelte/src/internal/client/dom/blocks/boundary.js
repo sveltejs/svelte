@@ -10,7 +10,14 @@ import {
 	set_active_reaction,
 	set_component_context
 } from '../../runtime.js';
-import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
+import {
+	hydrate_next,
+	hydrate_node,
+	hydrating,
+	next,
+	remove_nodes,
+	set_hydrate_node
+} from '../hydration.js';
 import { queue_micro_task } from '../task.js';
 
 /**
@@ -50,6 +57,7 @@ export function boundary(node, boundary_fn, props) {
 
 	block(() => {
 		var boundary = /** @type {Effect} */ (active_effect);
+		var hydrate_open = hydrate_node;
 
 		// We re-use the effect's fn property to avoid allocation of an additional field
 		boundary.fn = (/** @type { Error }} */ error) => {
@@ -58,6 +66,10 @@ export function boundary(node, boundary_fn, props) {
 
 			if (boundary_effect) {
 				destroy_effect(boundary_effect);
+			} else if (hydrating) {
+				set_hydrate_node(hydrate_open);
+				next();
+				set_hydrate_node(remove_nodes());
 			}
 
 			// If we have nothing to capture the error then rethrow the error

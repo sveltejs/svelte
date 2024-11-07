@@ -259,18 +259,28 @@ function propagate_error(error, effect) {
 }
 
 /**
+ * @param {Effect} effect
+ */
+function should_rethrow_error(effect) {
+	return (
+		(effect.f & DESTROYED) === 0 &&
+		(effect.parent === null || (effect.parent.f & BOUNDARY_EFFECT) === 0)
+	);
+}
+
+/**
  * @param {Error} error
  * @param {Effect} effect
  * @param {ComponentContext | null} component_context
  */
 function handle_error(error, effect, component_context) {
 	if (handled_errors.has(error)) {
-		// If the parent is not an error boundary then re-throw the error
-		if (effect.parent === null || (effect.parent.f & BOUNDARY_EFFECT) === 0) {
+		if (should_rethrow_error(effect)) {
 			throw error;
 		}
 		return;
 	}
+
 	handled_errors.add(error);
 
 	if (!DEV || component_context === null) {
@@ -327,6 +337,9 @@ function handle_error(error, effect, component_context) {
 	}
 
 	propagate_error(error, effect);
+	if (should_rethrow_error(effect)) {
+		throw error;
+	}
 }
 
 /**
