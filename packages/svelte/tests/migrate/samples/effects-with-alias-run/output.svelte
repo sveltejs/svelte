@@ -1,7 +1,7 @@
 <script>
 	import { run as run_1 } from 'svelte/legacy';
 
-	let count = $state(0);
+	let count = 0;
 	let run = true;
 	run_1(() => {
 		console.log(count);
