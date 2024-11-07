@@ -104,6 +104,20 @@ class Svelte4Component {
 				set(target, prop, value) {
 					set(sources.get(prop) ?? add_source(prop, value), value);
 					return Reflect.set(target, prop, value);
+				},
+				getOwnPropertyDescriptor(target, prop) {
+					// TODO this throws "invalid binding" errors on the component side
+					const desc = Reflect.getOwnPropertyDescriptor(target, prop);
+					if (!desc?.configurable) return desc;
+					return {
+						get: () => get(sources.get(prop) ?? add_source(prop, Reflect.get(target, prop))),
+						set: (value) => {
+							set(sources.get(prop) ?? add_source(prop, value), value);
+							return Reflect.set(target, prop, value);
+						},
+						enumerable: desc.enumerable,
+						configurable: desc.configurable
+					};
 				}
 			}
 		);
