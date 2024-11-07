@@ -1,5 +1,15 @@
 # svelte
 
+## 5.1.12
+
+### Patch Changes
+
+- fix: ignore `as` type expressions on property definitions ([#14181](https://github.com/sveltejs/svelte/pull/14181))
+
+- fix: restore active reaction if then block throws ([#14191](https://github.com/sveltejs/svelte/pull/14191))
+
+- chore: adds legacy mode flag reducing bundle size in runes mode only apps ([#14180](https://github.com/sveltejs/svelte/pull/14180))
+
 ## 5.1.11
 
 ### Patch Changes
