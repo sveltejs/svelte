@@ -146,7 +146,7 @@ In case you're writing a component that wraps a native element, you may want to 
 </button>
 ```
 
-Not all elements have a specific type definition, in those cases, use `SvelteHTMLElements`:
+Not all elements have a dedicated type definition. For those without one, use `SvelteHTMLElements`:
 
 ```svelte
 <script lang="ts">
