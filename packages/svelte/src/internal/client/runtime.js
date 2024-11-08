@@ -669,6 +669,7 @@ function process_effects(effect, collected_effects) {
 		var flags = current_effect.f;
 		var is_branch = (flags & BRANCH_EFFECT) !== 0;
 		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
+		var sibling = current_effect.next;
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
 			if ((flags & RENDER_EFFECT) !== 0) {
@@ -694,8 +695,6 @@ function process_effects(effect, collected_effects) {
 				effects.push(current_effect);
 			}
 		}
-
-		var sibling = current_effect.next;
 
 		if (sibling === null) {
 			let parent = current_effect.parent;

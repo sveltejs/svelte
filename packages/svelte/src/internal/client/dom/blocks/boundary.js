@@ -66,14 +66,6 @@ export function boundary(node, boundary_fn, props) {
 			var onerror = props.onerror;
 			let failed_snippet = props.failed;
 
-			if (boundary_effect) {
-				destroy_effect(boundary_effect);
-			} else if (hydrating) {
-				set_hydrate_node(hydrate_open);
-				next();
-				set_hydrate_node(remove_nodes());
-			}
-
 			// If we have nothing to capture the error then re-throw the error
 			// for another boundary to handle, additionaly, if we're creating
 			// the fallback and that too fails, then re-throw the error
@@ -96,6 +88,14 @@ export function boundary(node, boundary_fn, props) {
 			// Handle the `onerror` event handler
 			if (onerror) {
 				onerror(error, reset);
+			}
+
+			if (boundary_effect) {
+				destroy_effect(boundary_effect);
+			} else if (hydrating) {
+				set_hydrate_node(hydrate_open);
+				next();
+				set_hydrate_node(remove_nodes());
 			}
 
 			// Handle the `failed` snippet fallback
