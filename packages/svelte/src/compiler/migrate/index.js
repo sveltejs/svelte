@@ -246,7 +246,7 @@ export function migrate(source, { filename, use_ts } = {}) {
 			const has_rune_binding = !!state.scope.get(rune);
 			if (has_rune_binding) {
 				throw new MigrationError(
-					`migrating this component would require adding a \`$${rune}\` but there's already a variable named ${rune}`
+					`migrating this component would require adding a \`$${rune}\` rune but there's already a variable named ${rune}.\n     Rename the variable and try again or migrate by hand.`
 				);
 			}
 		}
@@ -670,14 +670,13 @@ const instance_script = {
 			}
 
 			/**
-			 *
 			 * @param {"state"|"derived"} rune
 			 */
 			function check_rune_binding(rune) {
 				const has_rune_binding = !!state.scope.get(rune);
 				if (has_rune_binding) {
 					throw new MigrationError(
-						`can't migrate \`${state.str.original.substring(/** @type {number} */ (node.start), node.end)}\` to \`$${rune}\` because there's a variable named ${rune}`
+						`can't migrate \`${state.str.original.substring(/** @type {number} */ (node.start), node.end)}\` to \`$${rune}\` because there's a variable named ${rune}.\n     Rename the variable and try again or migrate by hand.`
 					);
 				}
 			}
@@ -901,7 +900,7 @@ const instance_script = {
 			const has_rune_binding = state.scope.get(rune);
 			if (has_rune_binding) {
 				throw new MigrationError(
-					`can't migrate \`$: ${state.str.original.substring(/** @type {number} */ (node.body.start), node.body.end)}\` to \`$${rune}\` because there's a variable named ${rune}`
+					`can't migrate \`$: ${state.str.original.substring(/** @type {number} */ (node.body.start), node.body.end)}\` to \`$${rune}\` because there's a variable named ${rune}.\n     Rename the variable and try again or migrate by hand.`
 				);
 			}
 		}
