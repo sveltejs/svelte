@@ -234,7 +234,7 @@ To declare that a variable expects the constructor or instance type of a compone
 	import MyComponent from './MyComponent.svelte';
 
 	let componentConstructor: typeof MyComponent = MyComponent;
-	let componentInstance: MyComponent;
+	let componentInstance: ReturnType<typeof MyComponent>;
 </script>
 
 <MyComponent bind:this={componentInstance} />
