@@ -127,6 +127,20 @@ export default test({
 				column: 11,
 				character: 1134
 			}
+		},
+		{
+			code: 'css_unused_selector',
+			message: 'Unused CSS selector "x:has(~ y)"',
+			start: {
+				line: 121,
+				column: 1,
+				character: 1326
+			},
+			end: {
+				line: 121,
+				column: 11,
+				character: 1336
+			}
 		}
 	]
 });
