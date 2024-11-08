@@ -1300,6 +1300,21 @@ const template = {
 			existing_prop.needs_refine_type = false;
 		}
 
+		if (
+			slot_name === 'default' &&
+			path.some(
+				(parent) =>
+					(parent.type === 'SvelteComponent' ||
+						parent.type === 'Component' ||
+						parent.type === 'RegularElement' ||
+						parent.type === 'SvelteElement' ||
+						parent.type === 'SvelteFragment') &&
+					parent.attributes.some((attr) => (attr.type = 'LetDirective'))
+			)
+		) {
+			aliased_slot_name = `${name}_render`;
+			state.derived_conflicting_slots.set(aliased_slot_name, name);
+		}
 		name = aliased_slot_name ?? name;
 
 		if (node.fragment.nodes.length > 0) {
