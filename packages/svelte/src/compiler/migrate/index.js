@@ -326,6 +326,14 @@ export function migrate(source, { filename, use_ts } = {}) {
 				props_declaration = `\n${indent}${props_declaration}`;
 				str.appendRight(insertion_point, props_declaration);
 			}
+
+			if (
+				state.uses_ts &&
+				parsed.instance &&
+				!parsed.instance.attributes.some((attr) => attr.name === 'lang')
+			) {
+				str.appendRight(parsed.instance.start + '<script'.length, ' lang="ts"');
+			}
 		}
 
 		/**
