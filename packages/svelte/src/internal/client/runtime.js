@@ -273,7 +273,7 @@ function should_rethrow_error(effect) {
  * @param {Effect} effect
  * @param {ComponentContext | null} component_context
  */
-function handle_error(error, effect, component_context) {
+export function handle_error(error, effect, component_context) {
 	if (handled_errors.has(error)) {
 		if (should_rethrow_error(effect)) {
 			throw error;
