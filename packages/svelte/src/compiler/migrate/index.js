@@ -207,8 +207,12 @@ export function migrate(source, { filename, use_ts } = {}) {
 			analysis.uses_props ||
 			state.has_svelte_self;
 
+		const need_ts_tag =
+			state.uses_ts &&
+			(!parsed.instance || !parsed.instance.attributes.some((attr) => attr.name === 'lang'));
+
 		if (!parsed.instance && need_script) {
-			str.appendRight(0, '<script>');
+			str.appendRight(0, need_ts_tag ? '<script lang="ts">' : '<script>');
 		}
 
 		if (state.has_svelte_self && filename) {
@@ -327,11 +331,7 @@ export function migrate(source, { filename, use_ts } = {}) {
 				str.appendRight(insertion_point, props_declaration);
 			}
 
-			if (
-				state.uses_ts &&
-				parsed.instance &&
-				!parsed.instance.attributes.some((attr) => attr.name === 'lang')
-			) {
+			if (parsed.instance && need_ts_tag) {
 				str.appendRight(parsed.instance.start + '<script'.length, ' lang="ts"');
 			}
 		}
