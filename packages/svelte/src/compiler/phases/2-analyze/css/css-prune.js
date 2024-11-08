@@ -196,7 +196,19 @@ function truncate(node) {
 		);
 	});
 
-	return node.children.slice(0, i + 1);
+	return node.children.slice(0, i + 1).map((child) => {
+		// In case of `:root.y:has(...)`, `y` is unscoped, but everything in `:has(...)` should be scoped (if not global).
+		// To properly accomplish that, we gotta filter out all selector types except `:has` and `:root`.
+		const root = child.selectors.find((s) => s.type === 'PseudoClassSelector' && s.name === 'root');
+		if (!root || child.metadata.is_global_like) return child;
+
+		return {
+			...child,
+			selectors: child.selectors.filter(
+				(s) => s.type === 'PseudoClassSelector' && (s.name === 'has' || s.name === 'root')
+			)
+		};
+	});
 }
 
 /**
@@ -415,6 +427,16 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 		/** @type {Array<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} */
 		let sibling_elements; // do them lazy because it's rarely used and expensive to calculate
 
+		// If this is a :has on a :root, we gotta include the element itself, too, because everything's a descendant of :root
+		const is_root_selector = other_selectors.some(
+			(s) => s.type === 'PseudoClassSelector' && s.name === 'root'
+		);
+
+		if (is_root_selector) {
+			child_elements.push(element);
+			descendant_elements.push(element);
+		}
+
 		walk(
 			/** @type {Compiler.SvelteNode} */ (element.fragment),
 			{ is_child: true },
@@ -460,7 +482,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 
 				const descendants =
 					left_most_combinator.name === '+' || left_most_combinator.name === '~'
-						? (sibling_elements ??= get_following_sibling_elements(element))
+						? (sibling_elements ??= get_following_sibling_elements(element, is_root_selector))
 						: left_most_combinator.name === '>'
 							? child_elements
 							: descendant_elements;
@@ -507,9 +529,9 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 
 		switch (selector.type) {
 			case 'PseudoClassSelector': {
-				if (name === 'host' || name === 'root') {
-					return false;
-				}
+				if (name === 'host') return false;
+
+				if (name === 'root') break;
 
 				if (
 					name === 'global' &&
@@ -681,8 +703,11 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 	return true;
 }
 
-/** @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element */
-function get_following_sibling_elements(element) {
+/**
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
+ * @param {boolean} include_self
+ */
+function get_following_sibling_elements(element, include_self) {
 	/** @type {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.Root | null} */
 	let parent = get_element_parent(element);
 
@@ -721,6 +746,10 @@ function get_following_sibling_elements(element) {
 				found_parent = true;
 			}
 		}
+	}
+
+	if (include_self) {
+		sibling_elements.push(element);
 	}
 
 	return sibling_elements;

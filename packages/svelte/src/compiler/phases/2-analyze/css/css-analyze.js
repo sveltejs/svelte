@@ -156,9 +156,24 @@ const css_visitors = {
 					].includes(first.name));
 		}
 
-		node.metadata.is_global_like ||= !!node.selectors.find(
-			(child) => child.type === 'PseudoClassSelector' && child.name === 'root'
-		);
+		const is_root_without_scoped_children =
+			node.selectors.some(
+				(child) => child.type === 'PseudoClassSelector' && child.name === 'root'
+			) &&
+			// :root.y:has(.x) is not a global selector because while .y is unscoped, .x inside `:has(...)` should be scoped
+			!node.selectors.some((child) => child.type === 'PseudoClassSelector' && child.name === 'has');
+
+		if (is_root_without_scoped_children) {
+			node.metadata.is_global_like ||= true;
+			// So that nested selectors like `:root:not(.x)` are not marked as unused
+			for (const child of node.selectors) {
+				walk(/** @type {Css.Node} */ (child), null, {
+					ComplexSelector(node) {
+						node.metadata.used = true;
+					}
+				});
+			}
+		}
 
 		context.next();
 	},
