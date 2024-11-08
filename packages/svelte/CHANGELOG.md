@@ -1,5 +1,25 @@
 # svelte
 
+## 5.1.13
+
+### Patch Changes
+
+- fix: add migration task when there's a variable named that would conflict with a rune ([#14216](https://github.com/sveltejs/svelte/pull/14216))
+
+- fix: consider `valueOf` in the reactive methods of `SvelteDate` ([#14227](https://github.com/sveltejs/svelte/pull/14227))
+
+- fix: handle sibling combinators within `:has` ([#14213](https://github.com/sveltejs/svelte/pull/14213))
+
+- fix: consider variables with synthetic store sub as state ([#14195](https://github.com/sveltejs/svelte/pull/14195))
+
+- fix: read index as a source in legacy keyed each block ([#14208](https://github.com/sveltejs/svelte/pull/14208))
+
+- fix: account for shadowing children slot during migration ([#14224](https://github.com/sveltejs/svelte/pull/14224))
+
+- fix: ensure explicit nesting selector is always applied ([#14193](https://github.com/sveltejs/svelte/pull/14193))
+
+- fix: add `lang="ts"` attribute during migration if needed ([#14222](https://github.com/sveltejs/svelte/pull/14222))
+
 ## 5.1.12
 
 ### Patch Changes
