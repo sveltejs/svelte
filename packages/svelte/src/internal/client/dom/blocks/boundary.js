@@ -59,7 +59,7 @@ export function boundary(node, boundary_fn, props) {
 	block(() => {
 		var boundary = /** @type {Effect} */ (active_effect);
 		var hydrate_open = hydrate_node;
-		var is_rendering_failed = false;
+		var is_creating_fallback = false;
 
 		// We re-use the effect's fn property to avoid allocation of an additional field
 		boundary.fn = (/** @type { Error }} */ error) => {
@@ -75,9 +75,9 @@ export function boundary(node, boundary_fn, props) {
 			}
 
 			// If we have nothing to capture the error then re-throw the error
-			// for another boundary to handle, additionaly, if we're rendering
+			// for another boundary to handle, additionaly, if we're creating
 			// the fallback and that too fails, then re-throw the error
-			if ((!onerror && !failed_snippet) || is_rendering_failed) {
+			if ((!onerror && !failed_snippet) || is_creating_fallback) {
 				throw error;
 			}
 
@@ -88,7 +88,7 @@ export function boundary(node, boundary_fn, props) {
 				}
 				with_boundary(boundary, () => {
 					boundary_effect = null;
-					is_rendering_failed = false;
+					is_creating_fallback = false;
 					boundary_effect = branch(() => boundary_fn(anchor));
 				});
 			};
@@ -104,7 +104,7 @@ export function boundary(node, boundary_fn, props) {
 				queue_micro_task(() => {
 					with_boundary(boundary, () => {
 						boundary_effect = null;
-						is_rendering_failed = true;
+						is_creating_fallback = true;
 						try {
 							boundary_effect = branch(() => {
 								failed_snippet(
@@ -116,7 +116,7 @@ export function boundary(node, boundary_fn, props) {
 						} catch (error) {
 							handle_error(/** @type {Error} */ (error), boundary, boundary.ctx);
 						}
-						is_rendering_failed = false;
+						is_creating_fallback = false;
 					});
 				});
 			}
