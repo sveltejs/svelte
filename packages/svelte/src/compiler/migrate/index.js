@@ -239,6 +239,18 @@ export function migrate(source, { filename, use_ts } = {}) {
 
 		insertion_point = state.props_insertion_point;
 
+		/**
+		 * @param {"derived"|"props"|"bindable"} rune
+		 */
+		function check_rune_binding(rune) {
+			const has_rune_binding = !!state.scope.get(rune);
+			if (has_rune_binding) {
+				throw new MigrationError(
+					`migrating this component would require adding a \`$${rune}\` rune but there's already a variable named ${rune}.\n     Rename the variable and try again or migrate by hand.`
+				);
+			}
+		}
+
 		if (state.props.length > 0 || analysis.uses_rest_props || analysis.uses_props) {
 			const has_many_props = state.props.length > 3;
 			const newline_separator = `\n${indent}${indent}`;
@@ -253,6 +265,7 @@ export function migrate(source, { filename, use_ts } = {}) {
 						let prop_str =
 							prop.local === prop.exported ? prop.local : `${prop.exported}: ${prop.local}`;
 						if (prop.bindable) {
+							check_rune_binding('bindable');
 							prop_str += ` = $bindable(${prop.init})`;
 						} else if (prop.init) {
 							prop_str += ` = ${prop.init}`;
@@ -300,11 +313,13 @@ export function migrate(source, { filename, use_ts } = {}) {
 					if (type) {
 						props_declaration = `${type}\n\n${indent}${props_declaration}`;
 					}
+					check_rune_binding('props');
 					props_declaration = `${props_declaration}${type ? `: ${type_name}` : ''} = $props();`;
 				} else {
 					if (type) {
 						props_declaration = `${state.props.length > 0 ? `${type}\n\n${indent}` : ''}/** @type {${state.props.length > 0 ? type_name : ''}${analysis.uses_props || analysis.uses_rest_props ? `${state.props.length > 0 ? ' & ' : ''}{ [key: string]: any }` : ''}} */\n${indent}${props_declaration}`;
 					}
+					check_rune_binding('props');
 					props_declaration = `${props_declaration} = $props();`;
 				}
 
@@ -361,6 +376,7 @@ export function migrate(source, { filename, use_ts } = {}) {
 			: insertion_point;
 
 		if (state.derived_components.size > 0) {
+			check_rune_binding('derived');
 			str.appendRight(
 				insertion_point,
 				`\n${indent}${[...state.derived_components.entries()].map(([init, name]) => `const ${name} = $derived(${init});`).join(`\n${indent}`)}\n`
@@ -368,6 +384,7 @@ export function migrate(source, { filename, use_ts } = {}) {
 		}
 
 		if (state.derived_conflicting_slots.size > 0) {
+			check_rune_binding('derived');
 			str.appendRight(
 				insertion_point,
 				`\n${indent}${[...state.derived_conflicting_slots.entries()].map(([name, init]) => `const ${name} = $derived(${init});`).join(`\n${indent}`)}\n`
@@ -652,6 +669,18 @@ const instance_script = {
 				continue;
 			}
 
+			/**
+			 * @param {"state"|"derived"} rune
+			 */
+			function check_rune_binding(rune) {
+				const has_rune_binding = !!state.scope.get(rune);
+				if (has_rune_binding) {
+					throw new MigrationError(
+						`can't migrate \`${state.str.original.substring(/** @type {number} */ (node.start), node.end)}\` to \`$${rune}\` because there's a variable named ${rune}.\n     Rename the variable and try again or migrate by hand.`
+					);
+				}
+			}
+
 			// state
 			if (declarator.init) {
 				let { start, end } = /** @type {{ start: number, end: number }} */ (declarator.init);
@@ -660,6 +689,8 @@ const instance_script = {
 					while (state.str.original[start] !== '(') start -= 1;
 					while (state.str.original[end - 1] !== ')') end += 1;
 				}
+
+				check_rune_binding('state');
 
 				state.str.prependLeft(start, '$state(');
 				state.str.appendRight(end, ')');
@@ -755,6 +786,8 @@ const instance_script = {
 						}
 					}
 
+					check_rune_binding('derived');
+
 					// Someone wrote a `$: { ... }` statement which we can turn into a `$derived`
 					state.str.appendRight(
 						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
@@ -795,6 +828,8 @@ const instance_script = {
 						}
 					}
 				} else {
+					check_rune_binding('state');
+
 					state.str.prependLeft(
 						/** @type {number} */ (declarator.id.typeAnnotation?.end ?? declarator.id.end),
 						' = $state('
@@ -858,6 +893,18 @@ const instance_script = {
 
 		next();
 
+		/**
+		 * @param {"state"|"derived"} rune
+		 */
+		function check_rune_binding(rune) {
+			const has_rune_binding = state.scope.get(rune);
+			if (has_rune_binding) {
+				throw new MigrationError(
+					`can't migrate \`$: ${state.str.original.substring(/** @type {number} */ (node.body.start), node.body.end)}\` to \`$${rune}\` because there's a variable named ${rune}.\n     Rename the variable and try again or migrate by hand.`
+				);
+			}
+		}
+
 		if (
 			node.body.type === 'ExpressionStatement' &&
 			node.body.expression.type === 'AssignmentExpression'
@@ -877,6 +924,8 @@ const instance_script = {
 				let { start, end } = /** @type {{ start: number, end: number }} */ (
 					node.body.expression.right
 				);
+
+				check_rune_binding('derived');
 
 				// $derived
 				state.str.update(
@@ -902,6 +951,7 @@ const instance_script = {
 			} else {
 				for (const binding of reassigned_bindings) {
 					if (binding && (ids.includes(binding.node) || expression_ids.length === 0)) {
+						check_rune_binding('state');
 						const init =
 							binding.kind === 'state'
 								? ' = $state()'
