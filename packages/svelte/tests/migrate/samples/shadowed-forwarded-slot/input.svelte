@@ -13,3 +13,13 @@
 		</MyComponent>
 	</div>
 </MyInput>
+
+<MyInput let:args>
+	<slot/>
+</MyInput>
+
+<MyInput>
+	<div let:args>
+		<slot/>
+	</div>
+</MyInput>
