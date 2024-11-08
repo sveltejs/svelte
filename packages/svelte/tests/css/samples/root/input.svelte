@@ -29,6 +29,21 @@
   :root:not(.x) {
     color: green;
   }
+
+  :root {
+    h1 {
+      color: green;
+    }
+    .unused {
+      color: red;
+    }
+    :has(h1) {
+      color: green;
+    }
+    :has(.unused) {
+      color: red;
+    }
+  }
 </style>
 
 <h1>Hello!</h1>

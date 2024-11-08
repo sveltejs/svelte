@@ -10,6 +10,7 @@ import { get_attribute_chunks, is_text_attribute } from '../../../utils/ast.js';
  *   stylesheet: Compiler.Css.StyleSheet;
  *   element: Compiler.AST.RegularElement | Compiler.AST.SvelteElement;
  *   from_render_tag: boolean;
+ *   in_root_selector: boolean;
  * }} State
  */
 /** @typedef {NODE_PROBABLY_EXISTS | NODE_DEFINITELY_EXISTS} NodeExistsValue */
@@ -61,9 +62,17 @@ export function prune(stylesheet, element) {
 		const parent = get_element_parent(element);
 		if (!parent) return;
 
-		walk(stylesheet, { stylesheet, element: parent, from_render_tag: true }, visitors);
+		walk(
+			stylesheet,
+			{ stylesheet, element: parent, from_render_tag: true, in_root_selector: false },
+			visitors
+		);
 	} else {
-		walk(stylesheet, { stylesheet, element, from_render_tag: false }, visitors);
+		walk(
+			stylesheet,
+			{ stylesheet, element, from_render_tag: false, in_root_selector: false },
+			visitors
+		);
 	}
 }
 
@@ -79,6 +88,16 @@ const visitors = {
 	ComplexSelector(node, context) {
 		const selectors = get_relative_selectors(node);
 		const inner = selectors[selectors.length - 1];
+		/** @type {State} */
+		const state = {
+			...context.state,
+			in_root_selector: [
+				node,
+				...get_parent_rules(node.metadata.rule).flatMap((r) => r.prelude.children)
+			].some((c) =>
+				c.children[0].selectors.some((s) => s.type === 'PseudoClassSelector' && s.name === 'root')
+			)
+		};
 
 		if (context.state.from_render_tag) {
 			// We're searching for a match that crosses a render tag boundary. That means we have to both traverse up
@@ -98,7 +117,7 @@ const visitors = {
 							selectors_to_check,
 							/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
 							element,
-							context.state
+							state
 						)
 					) {
 						mark(inner, element);
@@ -114,7 +133,7 @@ const visitors = {
 				selectors,
 				/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
 				context.state.element,
-				context.state
+				state
 			)
 		) {
 			mark(inner, context.state.element);
@@ -126,6 +145,21 @@ const visitors = {
 		// when we encounter them below
 	}
 };
+
+/**
+ * @param {Compiler.Css.Rule | null} rule
+ */
+function get_parent_rules(rule) {
+	const parents = [];
+
+	let parent = rule?.metadata.parent_rule;
+	while (parent) {
+		parents.push(parent);
+		parent = parent.metadata.parent_rule;
+	}
+
+	return parents;
+}
 
 /**
  * Retrieves the relative selectors (minus the trailing globals) from a complex selector.
@@ -198,15 +232,13 @@ function truncate(node) {
 
 	return node.children.slice(0, i + 1).map((child) => {
 		// In case of `:root.y:has(...)`, `y` is unscoped, but everything in `:has(...)` should be scoped (if not global).
-		// To properly accomplish that, we gotta filter out all selector types except `:has` and `:root`.
+		// To properly accomplish that, we gotta filter out all selector types `:has`.
 		const root = child.selectors.find((s) => s.type === 'PseudoClassSelector' && s.name === 'root');
 		if (!root || child.metadata.is_global_like) return child;
 
 		return {
 			...child,
-			selectors: child.selectors.filter(
-				(s) => s.type === 'PseudoClassSelector' && (s.name === 'has' || s.name === 'root')
-			)
+			selectors: child.selectors.filter((s) => s.type === 'PseudoClassSelector' && s.name === 'has')
 		};
 	});
 }
@@ -428,11 +460,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 		let sibling_elements; // do them lazy because it's rarely used and expensive to calculate
 
 		// If this is a :has on a :root, we gotta include the element itself, too, because everything's a descendant of :root
-		const is_root_selector = other_selectors.some(
-			(s) => s.type === 'PseudoClassSelector' && s.name === 'root'
-		);
-
-		if (is_root_selector) {
+		if (state.in_root_selector) {
 			child_elements.push(element);
 			descendant_elements.push(element);
 		}
@@ -482,7 +510,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 
 				const descendants =
 					left_most_combinator.name === '+' || left_most_combinator.name === '~'
-						? (sibling_elements ??= get_following_sibling_elements(element, is_root_selector))
+						? (sibling_elements ??= get_following_sibling_elements(element, state.in_root_selector))
 						: left_most_combinator.name === '>'
 							? child_elements
 							: descendant_elements;
@@ -529,9 +557,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 
 		switch (selector.type) {
 			case 'PseudoClassSelector': {
-				if (name === 'host') return false;
-
-				if (name === 'root') break;
+				if (name === 'host' || name === 'root') return false;
 
 				if (
 					name === 'global' &&
