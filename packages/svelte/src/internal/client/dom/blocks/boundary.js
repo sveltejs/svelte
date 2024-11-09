@@ -114,7 +114,7 @@ export function boundary(node, boundary_fn, props) {
 								);
 							});
 						} catch (error) {
-							handle_error(/** @type {Error} */ (error), boundary, boundary.ctx);
+							handle_error(error, boundary, boundary.ctx);
 						}
 						is_creating_fallback = false;
 					});
