@@ -150,6 +150,10 @@ function is_static_element(node) {
 			return false;
 		}
 
+		if (node.name === 'img' && attribute.name === 'loading') {
+			return false;
+		}
+
 		if (node.name.includes('-')) {
 			return false; // we're setting all attributes on custom elements through properties
 		}
