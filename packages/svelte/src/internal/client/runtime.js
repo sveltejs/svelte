@@ -321,6 +321,9 @@ export function handle_error(error, effect, component_context) {
 	define_property(error, 'message', {
 		value: error.message + `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`
 	});
+	define_property(error, 'component_stack', {
+		value: component_stack
+	});
 
 	const stack = error.stack;
 
