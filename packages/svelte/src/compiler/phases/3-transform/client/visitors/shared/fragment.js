@@ -150,6 +150,8 @@ function is_static_element(node) {
 			return false;
 		}
 
+		// an img with loading lazy is not static but needs the `img` to be
+		// generated to be passed to `handle_lazy_img`
 		if (node.name === 'img' && attribute.name === 'loading') {
 			return false;
 		}
