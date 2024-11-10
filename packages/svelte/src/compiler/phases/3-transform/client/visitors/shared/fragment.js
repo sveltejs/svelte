@@ -150,8 +150,7 @@ function is_static_element(node) {
 			return false;
 		}
 
-		// an img with loading lazy is not static but needs the `img` to be
-		// generated to be passed to `handle_lazy_img`
+		// We need to apply src and loading after appending the img to the DOM for lazy loading to work
 		if (node.name === 'img' && attribute.name === 'loading') {
 			return false;
 		}
