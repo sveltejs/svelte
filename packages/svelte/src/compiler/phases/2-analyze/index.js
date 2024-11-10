@@ -355,15 +355,15 @@ export function analyze_component(root, source, options) {
 
 			// we push to the array because at this moment in time we can't be sure if we are in legacy
 			// mode yet because we are still changing the module scope
-			synthetic_stores_legacy_check.push((/** @type {boolean} */ runes) => {
+			synthetic_stores_legacy_check.push(() => {
 				// if we are creating a synthetic binding for a let declaration we should also declare
-				// the declaration as state in case it's reassigned and we are not in runes mode
+				// the declaration as state in case it's reassigned and we are not in runes mode (the function will
+				// not be called if we are not in runes mode, that's why there's no !runes check here)
 				if (
 					declaration !== null &&
 					declaration.kind === 'normal' &&
 					declaration.declaration_kind === 'let' &&
-					declaration.reassigned &&
-					!runes
+					declaration.reassigned
 				) {
 					declaration.kind = 'state';
 				}
@@ -380,8 +380,10 @@ export function analyze_component(root, source, options) {
 
 	const runes = options.runes ?? Array.from(module.scope.references.keys()).some(is_rune);
 
-	for (let check of synthetic_stores_legacy_check) {
-		check(runes);
+	if (!runes) {
+		for (let check of synthetic_stores_legacy_check) {
+			check();
+		}
 	}
 
 	if (runes && root.module) {
