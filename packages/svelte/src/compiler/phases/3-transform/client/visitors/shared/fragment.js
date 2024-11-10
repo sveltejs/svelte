@@ -154,13 +154,19 @@ function is_static_element(node, state) {
 			return false;
 		}
 
-		if (attribute.value !== true && !is_text_attribute(attribute)) {
-			// if it's not a text attribute but it's an inlinable expression
-			// we will inline it in the template so we can still consider it static
-			return is_inlinable_expression(
+		if (
+			attribute.value !== true &&
+			!is_text_attribute(attribute) &&
+			// if the attribute is not a text attribute but is inlinable we will directly inline it in the
+			// the template so if it's not inlinable we can return false but if it is inlinable (or a text)
+			// attribute we keep count of the inlinable attributes so that if all the attributes are inlinable
+			// we deem the node as static
+			!is_inlinable_expression(
 				Array.isArray(attribute.value) ? attribute.value : [attribute.value],
 				state
-			);
+			)
+		) {
+			return false;
 		}
 	}
 
