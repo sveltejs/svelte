@@ -328,10 +328,11 @@ export function can_inline_variable(binding) {
 }
 
 /**
- * @param {(AST.Text | AST.ExpressionTag)[]} nodes
+ * @param {(AST.Text | AST.ExpressionTag) | (AST.Text | AST.ExpressionTag)[]} node_or_nodes
  * @param {import('./types.js').ComponentClientTransformState} state
  */
-export function is_inlinable_expression(nodes, state) {
+export function is_inlinable_expression(node_or_nodes, state) {
+	let nodes = Array.isArray(node_or_nodes) ? node_or_nodes : [node_or_nodes];
 	let has_expression_tag = false;
 	for (let value of nodes) {
 		if (value.type === 'ExpressionTag') {

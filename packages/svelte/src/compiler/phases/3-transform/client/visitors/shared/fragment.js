@@ -3,7 +3,7 @@
 /** @import { ComponentContext } from '../../types' */
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { can_inline_variable, is_inlinable_expression } from '../../utils.js';
+import { is_inlinable_expression } from '../../utils.js';
 import { build_template_literal, build_update } from './utils.js';
 
 /**
@@ -161,10 +161,7 @@ function is_static_element(node, state) {
 			// the template so if it's not inlinable we can return false but if it is inlinable (or a text)
 			// attribute we keep count of the inlinable attributes so that if all the attributes are inlinable
 			// we deem the node as static
-			!is_inlinable_expression(
-				Array.isArray(attribute.value) ? attribute.value : [attribute.value],
-				state
-			)
+			!is_inlinable_expression(attribute.value, state)
 		) {
 			return false;
 		}

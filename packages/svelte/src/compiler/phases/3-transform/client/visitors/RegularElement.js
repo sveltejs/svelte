@@ -589,10 +589,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 	const inlinable_expression =
 		attribute.value === true
 			? false // not an expression
-			: is_inlinable_expression(
-					Array.isArray(attribute.value) ? attribute.value : [attribute.value],
-					context.state
-				);
+			: is_inlinable_expression(attribute.value, context.state);
 	if (attribute.metadata.expression.has_state) {
 		if (has_call) {
 			state.init.push(build_update(update));
