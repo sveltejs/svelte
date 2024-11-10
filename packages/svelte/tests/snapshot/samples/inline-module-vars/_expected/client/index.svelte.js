@@ -9,11 +9,8 @@ var root = $.template(`<picture><source srcset="${__DECLARED_ASSET_0__}" type="i
 
 export default function Inline_module_vars($$anchor) {
 	var picture = root();
-	var source = $.child(picture);
-	var source_1 = $.sibling(source, 2);
-	var source_2 = $.sibling(source_1, 2);
-	var img = $.sibling(source_2, 2);
 
+	$.next(6);
 	$.reset(picture);
 	$.append($$anchor, picture);
 }

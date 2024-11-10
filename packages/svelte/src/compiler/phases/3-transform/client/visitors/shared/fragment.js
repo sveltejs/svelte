@@ -3,6 +3,7 @@
 /** @import { ComponentContext } from '../../types' */
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
+import { can_inline_variable } from '../../utils.js';
 import { build_template_literal, build_update } from './utils.js';
 
 /**
@@ -97,7 +98,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 			let child_state = state;
 
-			if (is_static_element(node)) {
+			if (is_static_element(node, state.scope)) {
 				skipped += 1;
 			} else if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
 				node.metadata.is_controlled = true;
@@ -124,8 +125,9 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 /**
  * @param {SvelteNode} node
+ * @param {ComponentContext["state"]["scope"]} scope
  */
-function is_static_element(node) {
+function is_static_element(node, scope) {
 	if (node.type !== 'RegularElement') return false;
 	if (node.fragment.metadata.dynamic) return false;
 
@@ -139,6 +141,18 @@ function is_static_element(node) {
 		}
 
 		if (attribute.value !== true && !is_text_attribute(attribute)) {
+			// in this situation we are already inlining the binding in the template
+			// so even if it's not a text attribute we can consider the element static
+			if (
+				typeof attribute.value !== 'boolean' &&
+				!Array.isArray(attribute.value) &&
+				attribute.value.expression.type === 'Identifier'
+			) {
+				const binding = scope.get(attribute.value.expression.name);
+				if (binding) {
+					return can_inline_variable(binding);
+				}
+			}
 			return false;
 		}
 
