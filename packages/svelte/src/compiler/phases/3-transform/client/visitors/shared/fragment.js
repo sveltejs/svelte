@@ -150,6 +150,11 @@ function is_static_element(node) {
 			return false;
 		}
 
+		// We need to apply src and loading after appending the img to the DOM for lazy loading to work
+		if (node.name === 'img' && attribute.name === 'loading') {
+			return false;
+		}
+
 		if (node.name.includes('-')) {
 			return false; // we're setting all attributes on custom elements through properties
 		}
