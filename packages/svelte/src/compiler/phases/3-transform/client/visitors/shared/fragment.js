@@ -130,6 +130,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 function is_static_element(node, state) {
 	if (node.type !== 'RegularElement') return false;
 	if (node.fragment.metadata.dynamic) return false;
+	if (node.name.includes('-')) return false; // we're setting all attributes on custom elements through properties
 
 	for (const attribute of node.attributes) {
 		if (attribute.type !== 'Attribute') {
@@ -138,15 +139,6 @@ function is_static_element(node, state) {
 
 		if (is_event_attribute(attribute)) {
 			return false;
-		}
-
-		if (attribute.value !== true && !is_text_attribute(attribute)) {
-			// if it's not a text attribute but it's an inlinable expression
-			// we will inline it in the template so we can still consider it static
-			return is_inlinable_expression(
-				Array.isArray(attribute.value) ? attribute.value : [attribute.value],
-				state
-			);
 		}
 
 		if (attribute.name === 'autofocus' || attribute.name === 'muted') {
@@ -162,8 +154,13 @@ function is_static_element(node, state) {
 			return false;
 		}
 
-		if (node.name.includes('-')) {
-			return false; // we're setting all attributes on custom elements through properties
+		if (attribute.value !== true && !is_text_attribute(attribute)) {
+			// if it's not a text attribute but it's an inlinable expression
+			// we will inline it in the template so we can still consider it static
+			return is_inlinable_expression(
+				Array.isArray(attribute.value) ? attribute.value : [attribute.value],
+				state
+			);
 		}
 	}
 
