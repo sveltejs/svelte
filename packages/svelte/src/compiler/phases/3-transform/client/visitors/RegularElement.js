@@ -19,7 +19,12 @@ import {
 import * as b from '../../../../utils/builders.js';
 import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { build_getter, can_inline_variable, create_derived } from '../utils.js';
+import {
+	build_getter,
+	can_inline_variable,
+	create_derived,
+	is_inlinable_expression
+} from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
@@ -603,30 +608,6 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		}
 		return false;
 	}
-}
-
-/**
- * @param {(AST.Text | AST.ExpressionTag)[]} nodes
- * @param {import('../types.js').ComponentClientTransformState} state
- */
-function is_inlinable_expression(nodes, state) {
-	let has_expression_tag = false;
-	for (let value of nodes) {
-		if (value.type === 'ExpressionTag') {
-			if (value.expression.type === 'Identifier') {
-				const binding = state.scope
-					.owner(value.expression.name)
-					?.declarations.get(value.expression.name);
-				if (!can_inline_variable(binding)) {
-					return false;
-				}
-			} else {
-				return false;
-			}
-			has_expression_tag = true;
-		}
-	}
-	return has_expression_tag;
 }
 
 /**
