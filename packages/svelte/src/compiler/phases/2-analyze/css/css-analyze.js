@@ -107,7 +107,6 @@ const css_visitors = {
 			);
 			// mark `&:hover` in `:global(.foo) { &:hover { color: green }}` as used
 			if (no_nesting_scope && parent_is_global) {
-				// here?
 				node.metadata.used = true;
 			}
 		}
