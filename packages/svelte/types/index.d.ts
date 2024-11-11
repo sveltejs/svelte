@@ -2312,7 +2312,7 @@ declare module 'svelte/types/compiler/interfaces' {
 
 	// Support using the component as both a class and function during the transition period
 	// prettier-ignore
-	interface ComponentType {
+	export interface ComponentType {
 		(
 			...args: Parameters<Component<Record<string, any>>>
 		): ReturnType<Component<Record<string, any>, Record<string, any>>>
