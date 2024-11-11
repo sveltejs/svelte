@@ -1,5 +1,17 @@
 # svelte
 
+## 5.1.14
+
+### Patch Changes
+
+- fix: migration script messing with attributes ([#14260](https://github.com/sveltejs/svelte/pull/14260))
+
+- fix: do not treat reassigned synthetic binds as state in runes mode ([#14236](https://github.com/sveltejs/svelte/pull/14236))
+
+- fix: account for mutations in script module in ownership check ([#14253](https://github.com/sveltejs/svelte/pull/14253))
+
+- fix: consider img with loading attribute not static ([#14237](https://github.com/sveltejs/svelte/pull/14237))
+
 ## 5.1.13
 
 ### Patch Changes
