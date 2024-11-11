@@ -157,10 +157,8 @@ function is_static_element(node, state) {
 		if (
 			attribute.value !== true &&
 			!is_text_attribute(attribute) &&
-			// if the attribute is not a text attribute but is inlinable we will directly inline it in the
-			// the template so if it's not inlinable we can return false but if it is inlinable (or a text)
-			// attribute we keep count of the inlinable attributes so that if all the attributes are inlinable
-			// we deem the node as static
+			// If the attribute is not a text attribute but is inlinable we will directly inline it in the
+			// the template so before returning false we need to check that the attribute is not inlinable
 			!is_inlinable_expression(attribute.value, state)
 		) {
 			return false;
