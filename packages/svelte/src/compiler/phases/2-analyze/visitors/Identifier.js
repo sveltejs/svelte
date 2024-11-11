@@ -7,6 +7,7 @@ import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { is_rune } from '../../../../utils.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
+import { is_inlinable_expression } from '../../utils.js';
 
 /**
  * @param {Identifier} node
@@ -20,7 +21,21 @@ export function Identifier(node, context) {
 		return;
 	}
 
-	mark_subtree_dynamic(context.path);
+	const expression_tag_parent = context.path.find((parent) => parent.type === 'ExpressionTag');
+	const attribute_parent = context.path.find((parent) => parent.type === 'Attribute');
+
+	/**
+	 * if the identifier is part of an expression tag of an attribute we want to check if it's inlinable
+	 * before marking the subtree as dynamic. This is because if it's inlinable it will be inlined in the template
+	 * directly making the whole thing actually static.
+	 */
+	if (
+		!attribute_parent ||
+		!expression_tag_parent ||
+		!is_inlinable_expression(expression_tag_parent, context.state.scope)
+	) {
+		mark_subtree_dynamic(context.path);
+	}
 
 	// If we are using arguments outside of a function, then throw an error
 	if (

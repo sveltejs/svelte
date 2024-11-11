@@ -10,7 +10,5 @@ var root = $.template(`<picture><source srcset="${__DECLARED_ASSET_0__}" type="i
 export default function Inline_module_vars($$anchor) {
 	var picture = root();
 
-	$.next(6);
-	$.reset(picture);
 	$.append($$anchor, picture);
 }

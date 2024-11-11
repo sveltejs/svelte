@@ -3,35 +3,28 @@
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
+import { escape_html } from '../../../../../escaping.js';
 import {
 	is_boolean_attribute,
 	is_dom_property,
 	is_load_error_element,
 	is_void
 } from '../../../../../utils.js';
-import { escape_html } from '../../../../../escaping.js';
 import { dev, is_ignored, locator } from '../../../../state.js';
-import {
-	get_attribute_expression,
-	is_event_attribute,
-	is_text_attribute
-} from '../../../../utils/ast.js';
+import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { is_custom_element_node } from '../../../nodes.js';
+import { is_inlinable_expression } from '../../../utils.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
+import { build_getter, create_derived } from '../utils.js';
 import {
-	build_getter,
-	can_inline_variable,
-	create_derived,
-	is_inlinable_expression
-} from '../utils.js';
-import {
-	get_attribute_name,
 	build_attribute_value,
 	build_class_directives,
+	build_set_attributes,
 	build_style_directives,
-	build_set_attributes
+	get_attribute_name
 } from './shared/element.js';
+import { visit_event_attribute } from './shared/events.js';
 import { process_children } from './shared/fragment.js';
 import {
 	build_render_statement,
@@ -40,7 +33,6 @@ import {
 	build_update_assignment,
 	get_states_and_calls
 } from './shared/utils.js';
-import { visit_event_attribute } from './shared/events.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -589,7 +581,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 	const inlinable_expression =
 		attribute.value === true
 			? false // not an expression
-			: is_inlinable_expression(attribute.value, context.state);
+			: is_inlinable_expression(attribute.value, context.state.scope);
 	if (attribute.metadata.expression.has_state) {
 		if (has_call) {
 			state.init.push(build_update(update));
