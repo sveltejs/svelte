@@ -10,7 +10,6 @@ import { get_attribute_chunks, is_text_attribute } from '../../../utils/ast.js';
  *   stylesheet: Compiler.Css.StyleSheet;
  *   element: Compiler.AST.RegularElement | Compiler.AST.SvelteElement;
  *   from_render_tag: boolean;
- *   in_root_selector: boolean;
  * }} State
  */
 /** @typedef {NODE_PROBABLY_EXISTS | NODE_DEFINITELY_EXISTS} NodeExistsValue */
@@ -62,17 +61,9 @@ export function prune(stylesheet, element) {
 		const parent = get_element_parent(element);
 		if (!parent) return;
 
-		walk(
-			stylesheet,
-			{ stylesheet, element: parent, from_render_tag: true, in_root_selector: false },
-			visitors
-		);
+		walk(stylesheet, { stylesheet, element: parent, from_render_tag: true }, visitors);
 	} else {
-		walk(
-			stylesheet,
-			{ stylesheet, element, from_render_tag: false, in_root_selector: false },
-			visitors
-		);
+		walk(stylesheet, { stylesheet, element, from_render_tag: false }, visitors);
 	}
 }
 
@@ -88,16 +79,6 @@ const visitors = {
 	ComplexSelector(node, context) {
 		const selectors = get_relative_selectors(node);
 		const inner = selectors[selectors.length - 1];
-		/** @type {State} */
-		const state = {
-			...context.state,
-			in_root_selector: [
-				node,
-				...get_parent_rules(node.metadata.rule).flatMap((r) => r.prelude.children)
-			].some((c) =>
-				c.children[0].selectors.some((s) => s.type === 'PseudoClassSelector' && s.name === 'root')
-			)
-		};
 
 		if (context.state.from_render_tag) {
 			// We're searching for a match that crosses a render tag boundary. That means we have to both traverse up
@@ -117,7 +98,7 @@ const visitors = {
 							selectors_to_check,
 							/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
 							element,
-							state
+							context.state
 						)
 					) {
 						mark(inner, element);
@@ -133,7 +114,7 @@ const visitors = {
 				selectors,
 				/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
 				context.state.element,
-				state
+				context.state
 			)
 		) {
 			mark(inner, context.state.element);
@@ -147,6 +128,7 @@ const visitors = {
 };
 
 /**
+ * Returns all parent rules; root is last
  * @param {Compiler.Css.Rule | null} rule
  */
 function get_parent_rules(rule) {
@@ -232,7 +214,7 @@ function truncate(node) {
 
 	return node.children.slice(0, i + 1).map((child) => {
 		// In case of `:root.y:has(...)`, `y` is unscoped, but everything in `:has(...)` should be scoped (if not global).
-		// To properly accomplish that, we gotta filter out all selector types `:has`.
+		// To properly accomplish that, we gotta filter out all selector types except `:has`.
 		const root = child.selectors.find((s) => s.type === 'PseudoClassSelector' && s.name === 'root');
 		if (!root || child.metadata.is_global_like) return child;
 
@@ -459,8 +441,17 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 		/** @type {Array<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} */
 		let sibling_elements; // do them lazy because it's rarely used and expensive to calculate
 
-		// If this is a :has on a :root, we gotta include the element itself, too, because everything's a descendant of :root
-		if (state.in_root_selector) {
+		// If this is a :has inside a global selector, we gotta include the element itself, too,
+		// because the global selector might be for an element that's outside the component (e.g. :root).
+		const rules = [rule, ...get_parent_rules(rule)];
+		const include_self =
+			rules.some((r) => r.prelude.children.some((c) => c.children.some((s) => is_global(s, r)))) ||
+			rules[rules.length - 1].prelude.children.some((c) =>
+				c.children.some((r) =>
+					r.selectors.some((s) => s.type === 'PseudoClassSelector' && s.name === 'root')
+				)
+			);
+		if (include_self) {
 			child_elements.push(element);
 			descendant_elements.push(element);
 		}
@@ -510,7 +501,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 
 				const descendants =
 					left_most_combinator.name === '+' || left_most_combinator.name === '~'
-						? (sibling_elements ??= get_following_sibling_elements(element, state.in_root_selector))
+						? (sibling_elements ??= get_following_sibling_elements(element, include_self))
 						: left_most_combinator.name === '>'
 							? child_elements
 							: descendant_elements;
