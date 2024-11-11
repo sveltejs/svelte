@@ -3,6 +3,7 @@
 /** @import { ComponentContext } from '../../types' */
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
+import { is_inlinable_expression } from '../../utils.js';
 import { build_template_literal, build_update } from './utils.js';
 
 /**
@@ -97,7 +98,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 			let child_state = state;
 
-			if (is_static_element(node)) {
+			if (is_static_element(node, state)) {
 				skipped += 1;
 			} else if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
 				node.metadata.is_controlled = true;
@@ -124,10 +125,12 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 /**
  * @param {SvelteNode} node
+ * @param {ComponentContext["state"]} state
  */
-function is_static_element(node) {
+function is_static_element(node, state) {
 	if (node.type !== 'RegularElement') return false;
 	if (node.fragment.metadata.dynamic) return false;
+	if (node.name.includes('-')) return false; // we're setting all attributes on custom elements through properties
 
 	for (const attribute of node.attributes) {
 		if (attribute.type !== 'Attribute') {
@@ -135,10 +138,6 @@ function is_static_element(node) {
 		}
 
 		if (is_event_attribute(attribute)) {
-			return false;
-		}
-
-		if (attribute.value !== true && !is_text_attribute(attribute)) {
 			return false;
 		}
 
@@ -155,8 +154,14 @@ function is_static_element(node) {
 			return false;
 		}
 
-		if (node.name.includes('-')) {
-			return false; // we're setting all attributes on custom elements through properties
+		if (
+			attribute.value !== true &&
+			!is_text_attribute(attribute) &&
+			// If the attribute is not a text attribute but is inlinable we will directly inline it in the
+			// the template so before returning false we need to check that the attribute is not inlinable
+			!is_inlinable_expression(attribute.value, state)
+		) {
+			return false;
 		}
 	}
 
