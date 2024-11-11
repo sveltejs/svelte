@@ -21,7 +21,6 @@ export function Identifier(node, context) {
 		return;
 	}
 
-	const expression_tag_parent = context.path.find((parent) => parent.type === 'ExpressionTag');
 	const attribute_parent = context.path.find((parent) => parent.type === 'Attribute');
 
 	/**
@@ -29,11 +28,7 @@ export function Identifier(node, context) {
 	 * before marking the subtree as dynamic. This is because if it's inlinable it will be inlined in the template
 	 * directly making the whole thing actually static.
 	 */
-	if (
-		!attribute_parent ||
-		!expression_tag_parent ||
-		!is_inlinable_expression(expression_tag_parent, context.state.scope)
-	) {
+	if (!attribute_parent || !is_inlinable_expression(attribute_parent, context.state.scope)) {
 		mark_subtree_dynamic(context.path);
 	}
 

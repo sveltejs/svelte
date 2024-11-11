@@ -1,4 +1,5 @@
 /** @import { AST, Binding } from '#compiler' */
+/** @import { Scope } from './scope' */
 
 /**
  * Whether a variable can be referenced directly from template string.
@@ -16,11 +17,12 @@ function can_inline_variable(binding) {
 }
 
 /**
- * @param {(AST.Text | AST.ExpressionTag) | (AST.Text | AST.ExpressionTag)[]} node_or_nodes
- * @param {import('./scope.js').Scope} scope
+ * @param {AST.Attribute} attribute
+ * @param {Scope} scope
  */
-export function is_inlinable_expression(node_or_nodes, scope) {
-	let nodes = Array.isArray(node_or_nodes) ? node_or_nodes : [node_or_nodes];
+export function is_inlinable_expression(attribute, scope) {
+	if (attribute.value === true) return false; // not an expression
+	let nodes = Array.isArray(attribute.value) ? attribute.value : [attribute.value];
 	let has_expression_tag = false;
 	for (let value of nodes) {
 		if (value.type === 'ExpressionTag') {
