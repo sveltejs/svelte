@@ -1,5 +1,11 @@
 # svelte
 
+## 5.1.15
+
+### Patch Changes
+
+- fix: consider static attributes that are inlined in the template ([#14249](https://github.com/sveltejs/svelte/pull/14249))
+
 ## 5.1.14
 
 ### Patch Changes
