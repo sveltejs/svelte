@@ -1309,7 +1309,7 @@ const template = {
 						parent.type === 'RegularElement' ||
 						parent.type === 'SvelteElement' ||
 						parent.type === 'SvelteFragment') &&
-					parent.attributes.some((attr) => (attr.type = 'LetDirective'))
+					parent.attributes.some((attr) => attr.type === 'LetDirective')
 			)
 		) {
 			aliased_slot_name = `${name}_render`;
