@@ -43,4 +43,10 @@
     /* (unused) :has(.unused) {
       color: red;
     }*/
+    &:has(h1.svelte-xyz) {
+      color: green;
+    }
+    /* (unused) &:has(.unused) {
+      color: red;
+    }*/
   }

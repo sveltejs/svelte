@@ -57,6 +57,20 @@ export default test({
 				column: 17,
 				character: 493
 			}
+		},
+		{
+			code: 'css_unused_selector',
+			message: 'Unused CSS selector "&:has(.unused)"',
+			start: {
+				line: 49,
+				column: 4,
+				character: 566
+			},
+			end: {
+				line: 49,
+				column: 18,
+				character: 580
+			}
 		}
 	]
 });

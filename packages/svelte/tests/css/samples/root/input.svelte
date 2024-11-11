@@ -43,6 +43,12 @@
     :has(.unused) {
       color: red;
     }
+    &:has(h1) {
+      color: green;
+    }
+    &:has(.unused) {
+      color: red;
+    }
   }
 </style>
 

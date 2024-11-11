@@ -710,7 +710,10 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				const parent = /** @type {Compiler.Css.Rule} */ (rule.metadata.parent_rule);
 
 				for (const complex_selector of parent.prelude.children) {
-					if (apply_selector(get_relative_selectors(complex_selector), parent, element, state)) {
+					if (
+						apply_selector(get_relative_selectors(complex_selector), parent, element, state) ||
+						complex_selector.children.every((s) => is_global(s, parent))
+					) {
 						complex_selector.metadata.used = true;
 						matched = true;
 					}
