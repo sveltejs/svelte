@@ -66,21 +66,31 @@ export function is_global(relative_selector) {
 			// :global(button).x means that the selector is still scoped because of the .x
 			relative_selector.selectors.every(
 				(selector) =>
-					(selector.type === 'PseudoClassSelector' && // These make the selector scoped
-						((selector.name !== 'has' &&
-							selector.name !== 'is' &&
-							selector.name !== 'where' &&
-							// Not is special because we want to scope as specific as possible, but because :not
-							// inverses the result, we want to leave the unscoped, too. The exception is more than
-							// one selector in the :not (.e.g :not(.x .y)), then .x and .y should be scoped
-							(selector.name !== 'not' ||
-								selector.args === null ||
-								selector.args.children.every((c) => c.children.length === 1))) ||
-							// selectors with has/is/where/not can also be global if all their children are global
-							selector.args === null ||
-							selector.args.children.every((c) => c.children.every((r) => is_global(r))))) ||
-					selector.type === 'PseudoElementSelector'
+					is_unscoped_pseudo_class(selector) || selector.type === 'PseudoElementSelector'
 			))
+	);
+}
+
+/**
+ * `true` if is a pseudo class that cannot be or is not scoped
+ * @param {Css.SimpleSelector} selector
+ */
+export function is_unscoped_pseudo_class(selector) {
+	return (
+		selector.type === 'PseudoClassSelector' &&
+		// These make the selector scoped
+		((selector.name !== 'has' &&
+			selector.name !== 'is' &&
+			selector.name !== 'where' &&
+			// Not is special because we want to scope as specific as possible, but because :not
+			// inverses the result, we want to leave the unscoped, too. The exception is more than
+			// one selector in the :not (.e.g :not(.x .y)), then .x and .y should be scoped
+			(selector.name !== 'not' ||
+				selector.args === null ||
+				selector.args.children.every((c) => c.children.length === 1))) ||
+			// selectors with has/is/where/not can also be global if all their children are global
+			selector.args === null ||
+			selector.args.children.every((c) => c.children.every((r) => is_global(r))))
 	);
 }
 
@@ -97,7 +107,7 @@ export function is_outer_global(relative_selector) {
 		first.type === 'PseudoClassSelector' &&
 		first.name === 'global' &&
 		(first.args === null ||
-			// Only these two selector types keep the whole selector global, because e.g.
+			// Only these two selector types can keep the whole selector global, because e.g.
 			// :global(button).x means that the selector is still scoped because of the .x
 			relative_selector.selectors.every(
 				(selector) =>

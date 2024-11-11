@@ -122,7 +122,7 @@
 		&:has(x.svelte-xyz) {
 			color: green;
 		}
-		&:has(/* (unused) .unused*/) {
+		/* (unused) &:has(.unused) {
 			color: red;
-		}
+		}*/
 	}

@@ -4,7 +4,7 @@
 import { walk } from 'zimmerframe';
 import * as e from '../../../errors.js';
 import { is_keyframes_node } from '../../css.js';
-import { is_global } from './utils.js';
+import { is_global, is_unscoped_pseudo_class } from './utils.js';
 
 /**
  * @typedef {Visitors<
@@ -99,11 +99,15 @@ const css_visitors = {
 			node.metadata.rule?.metadata.parent_rule &&
 			node.children[0]?.selectors[0]?.type === 'NestingSelector'
 		) {
+			const first = node.children[0]?.selectors[1];
+			const no_nesting_scope =
+				first?.type !== 'PseudoClassSelector' || is_unscoped_pseudo_class(first);
 			const parent_is_global = node.metadata.rule.metadata.parent_rule.prelude.children.some(
 				(child) => child.children.length === 1 && child.children[0].metadata.is_global
 			);
 			// mark `&:hover` in `:global(.foo) { &:hover { color: green }}` as used
-			if (parent_is_global) {
+			if (no_nesting_scope && parent_is_global) {
+				// here?
 				node.metadata.used = true;
 			}
 		}
