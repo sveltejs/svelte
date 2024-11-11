@@ -38,10 +38,11 @@ import { legacy_mode_flag } from '../flags/index.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
-
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */
 const handled_errors = new WeakSet();
+export let is_throwing_error = false;
+
 // Used for controlling the flush of effects.
 let scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
@@ -230,7 +231,7 @@ export function check_dirtiness(reaction) {
 }
 
 /**
- * @param {Error} error
+ * @param {unknown} error
  * @param {Effect} effect
  */
 function propagate_error(error, effect) {
@@ -254,7 +255,7 @@ function propagate_error(error, effect) {
 		}
 		current = parent;
 	}
-
+	is_throwing_error = false;
 	throw error;
 }
 
@@ -268,29 +269,42 @@ function should_rethrow_error(effect) {
 	);
 }
 
+export function reset_is_throwing_error() {
+	is_throwing_error = false;
+}
+
 /**
  * @param {unknown} error
  * @param {Effect} effect
+ * @param {Effect | null} previous_effect
  * @param {ComponentContext | null} component_context
  */
-export function handle_error(error, effect, component_context) {
-	if (!(error instanceof Error)) {
-		throw error;
-	}
-
-	if (handled_errors.has(error)) {
+export function handle_error(error, effect, previous_effect, component_context) {
+	if (is_throwing_error) {
+		if (previous_effect === null) {
+			is_throwing_error = false;
+		}
 		if (should_rethrow_error(effect)) {
 			throw error;
 		}
 		return;
 	}
 
-	handled_errors.add(error);
+	if (previous_effect !== null) {
+		is_throwing_error = true;
+	}
 
-	if (!DEV || component_context === null) {
+	if (
+		!DEV ||
+		component_context === null ||
+		!(error instanceof Error) ||
+		handled_errors.has(error)
+	) {
 		propagate_error(error, effect);
 		return;
 	}
+
+	handled_errors.add(error);
 
 	const component_stack = [];
 
@@ -507,7 +521,7 @@ export function update_effect(effect) {
 			dev_effect_stack.push(effect);
 		}
 	} catch (error) {
-		handle_error(error, effect, previous_component_context || effect.ctx);
+		handle_error(error, effect, previous_effect, previous_component_context || effect.ctx);
 	} finally {
 		active_effect = previous_effect;
 
@@ -608,7 +622,7 @@ function flush_queued_effects(effects) {
 					}
 				}
 			} catch (error) {
-				handle_error(error, effect, effect.ctx);
+				handle_error(error, effect, null, effect.ctx);
 			}
 		}
 	}
@@ -688,7 +702,7 @@ function process_effects(effect, collected_effects) {
 							update_effect(current_effect);
 						}
 					} catch (error) {
-						handle_error(error, current_effect, current_effect.ctx);
+						handle_error(error, current_effect, null, current_effect.ctx);
 					}
 				}
 

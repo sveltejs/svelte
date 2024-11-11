@@ -7,9 +7,11 @@ import {
 	active_reaction,
 	component_context,
 	handle_error,
+	is_throwing_error,
 	set_active_effect,
 	set_active_reaction,
-	set_component_context
+	set_component_context,
+	reset_is_throwing_error
 } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -45,8 +47,8 @@ function with_boundary(boundary, fn) {
  * @param {TemplateNode} node
  * @param {((anchor: Node) => void)} boundary_fn
  * @param {{
- * 	 onerror?: (error: Error, reset: () => void) => void,
- *   failed?: (anchor: Node, error: () => Error, reset: () => () => void) => void
+ * 	 onerror?: (error: unknown, reset: () => void) => void,
+ *   failed?: (anchor: Node, error: () => unknown, reset: () => () => void) => void
  * }} props
  * @returns {void}
  */
@@ -62,7 +64,7 @@ export function boundary(node, boundary_fn, props) {
 		var is_creating_fallback = false;
 
 		// We re-use the effect's fn property to avoid allocation of an additional field
-		boundary.fn = (/** @type { Error }} */ error) => {
+		boundary.fn = (/** @type { unknown }} */ error) => {
 			var onerror = props.onerror;
 			let failed_snippet = props.failed;
 
@@ -82,6 +84,7 @@ export function boundary(node, boundary_fn, props) {
 					boundary_effect = null;
 					is_creating_fallback = false;
 					boundary_effect = branch(() => boundary_fn(anchor));
+					reset_is_throwing_error();
 				});
 			};
 
@@ -114,8 +117,9 @@ export function boundary(node, boundary_fn, props) {
 								);
 							});
 						} catch (error) {
-							handle_error(error, boundary, boundary.ctx);
+							handle_error(error, boundary, null, boundary.ctx);
 						}
+						reset_is_throwing_error();
 						is_creating_fallback = false;
 					});
 				});
@@ -127,6 +131,7 @@ export function boundary(node, boundary_fn, props) {
 		}
 
 		boundary_effect = branch(() => boundary_fn(anchor));
+		reset_is_throwing_error();
 	}, EFFECT_TRANSPARENT | BOUNDARY_EFFECT);
 
 	if (hydrating) {

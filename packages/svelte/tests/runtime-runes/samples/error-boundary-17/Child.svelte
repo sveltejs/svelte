@@ -5,7 +5,7 @@
 
 	$effect.pre(() => {
 		if (count > 1) {
-			throw new Error('too high');
+			throw 'too high';
 		}
 	});
 </script>
