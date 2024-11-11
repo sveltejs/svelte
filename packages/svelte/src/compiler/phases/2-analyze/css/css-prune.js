@@ -1,7 +1,7 @@
 /** @import { Visitors } from 'zimmerframe' */
 /** @import * as Compiler from '#compiler' */
 import { walk } from 'zimmerframe';
-import { get_possible_values } from './utils.js';
+import { get_parent_rules, get_possible_values, is_outer_global } from './utils.js';
 import { regex_ends_with_whitespace, regex_starts_with_whitespace } from '../../patterns.js';
 import { get_attribute_chunks, is_text_attribute } from '../../../utils/ast.js';
 
@@ -128,22 +128,6 @@ const visitors = {
 };
 
 /**
- * Returns all parent rules; root is last
- * @param {Compiler.Css.Rule | null} rule
- */
-function get_parent_rules(rule) {
-	const parents = [];
-
-	let parent = rule?.metadata.parent_rule;
-	while (parent) {
-		parents.push(parent);
-		parent = parent.metadata.parent_rule;
-	}
-
-	return parents;
-}
-
-/**
  * Retrieves the relative selectors (minus the trailing globals) from a complex selector.
  * Also searches them for any existing `&` selectors and adds one if none are found.
  * This ensures we traverse up to the parent rule when the inner selectors match and we're
@@ -188,7 +172,7 @@ function get_relative_selectors(node) {
 }
 
 /**
- * Discard trailing `:global(...)` selectors without a `:has/is/where/not(...)` modifier, these are unused for scoping purposes
+ * Discard trailing `:global(...)` selectors, these are unused for scoping purposes
  * @param {Compiler.Css.ComplexSelector} node
  */
 function truncate(node) {
@@ -198,17 +182,8 @@ function truncate(node) {
 			// not after a :global selector
 			!metadata.is_global_like &&
 			!(first.type === 'PseudoClassSelector' && first.name === 'global' && first.args === null) &&
-			// not a :global(...) without a :has/is/where/not(...) modifier
-			(!metadata.is_global ||
-				selectors.some(
-					(selector) =>
-						selector.type === 'PseudoClassSelector' &&
-						selector.args !== null &&
-						(selector.name === 'has' ||
-							selector.name === 'is' ||
-							selector.name === 'where' ||
-							selector.name === 'not')
-				))
+			// not a :global(...) without a :has/is/where(...) modifier that is scoped
+			!metadata.is_global
 		);
 	});
 
@@ -360,7 +335,9 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  */
 function mark(relative_selector, element) {
-	relative_selector.metadata.scoped = true;
+	if (!is_outer_global(relative_selector)) {
+		relative_selector.metadata.scoped = true;
+	}
 	element.metadata.scoped = true;
 }
 
@@ -522,20 +499,6 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 			}
 
 			if (!matched) {
-				if (relative_selector.metadata.is_global && !relative_selector.metadata.is_global_like) {
-					// Edge case: `:global(.x):has(.y)` where `.x` is global but `.y` doesn't match.
-					// Since `used` is set to `true` for `:global(.x)` in css-analyze beforehand, and
-					// we have no way of knowing if it's safe to set it back to `false`, we'll mark
-					// the inner selector as used and scoped to prevent it from being pruned, which could
-					// result in a invalid CSS output (e.g. `.x:has(/* unused .y */)`). The result
-					// can't match a real element, so the only drawback is the missing prune.
-					// TODO clean this up some day
-					complex_selectors[0].metadata.used = true;
-					complex_selectors[0].children.forEach((selector) => {
-						selector.metadata.scoped = true;
-					});
-				}
-
 				return false;
 			}
 		}
@@ -617,23 +580,6 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 					}
 
 					if (!matched) {
-						if (
-							relative_selector.metadata.is_global &&
-							!relative_selector.metadata.is_global_like
-						) {
-							// Edge case: `:global(.x):is(.y)` where `.x` is global but `.y` doesn't match.
-							// Since `used` is set to `true` for `:global(.x)` in css-analyze beforehand, and
-							// we have no way of knowing if it's safe to set it back to `false`, we'll mark
-							// the inner selector as used and scoped to prevent it from being pruned, which could
-							// result in a invalid CSS output (e.g. `.x:is(/* unused .y */)`). The result
-							// can't match a real element, so the only drawback is the missing prune.
-							// TODO clean this up some day
-							selector.args.children[0].metadata.used = true;
-							selector.args.children[0].children.forEach((selector) => {
-								selector.metadata.scoped = true;
-							});
-						}
-
 						return false;
 					}
 				}

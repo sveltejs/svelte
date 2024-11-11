@@ -46,6 +46,20 @@ export default test({
 		},
 		{
 			code: 'css_unused_selector',
+			message: 'Unused CSS selector ":global(.foo):has(.unused)"',
+			start: {
+				line: 40,
+				column: 1,
+				character: 422
+			},
+			end: {
+				line: 40,
+				column: 27,
+				character: 448
+			}
+		},
+		{
+			code: 'css_unused_selector',
 			message: 'Unused CSS selector "x:has(y):has(.unused)"',
 			start: {
 				line: 50,
@@ -140,6 +154,20 @@ export default test({
 				line: 121,
 				column: 11,
 				character: 1336
+			}
+		},
+		{
+			code: 'css_unused_selector',
+			message: 'Unused CSS selector ":has(.unused)"',
+			start: {
+				line: 129,
+				column: 2,
+				character: 1409
+			},
+			end: {
+				line: 129,
+				column: 15,
+				character: 1422
 			}
 		}
 	]
