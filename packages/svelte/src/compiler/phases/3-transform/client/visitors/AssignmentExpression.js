@@ -80,10 +80,6 @@ function build_assignment(operator, left, right, context) {
 
 	// reassignment
 	if (object === left && transform?.assign) {
-		let value = /** @type {Expression} */ (
-			context.visit(build_assignment_value(operator, left, right))
-		);
-
 		// special case — if an element binding, we know it's a primitive
 		const path = context.path.map((node) => node.type);
 		const is_primitive = path.at(-1) === 'BindDirective' && path.at(-2) === 'RegularElement';
@@ -94,10 +90,16 @@ function build_assignment(operator, left, right, context) {
 			binding.kind !== 'bindable_prop' &&
 			binding.kind !== 'raw_state' &&
 			context.state.analysis.runes &&
-			should_proxy(value, context.state.scope)
+			should_proxy(right, context.state.scope) &&
+			// other operators result in coercion
+			['=', '||=', '&&=', '??='].includes(operator)
 		) {
-			value = build_proxy_reassignment(value, object);
+			right = build_proxy_reassignment(right, object);
 		}
+
+		let value = /** @type {Expression} */ (
+			context.visit(build_assignment_value(operator, left, right))
+		);
 
 		return transform.assign(object, value);
 	}
