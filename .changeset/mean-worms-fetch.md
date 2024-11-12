@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix(migration): named slots with reserved keyword
+fix: bail on named slots with that have reserved keywords during migration
