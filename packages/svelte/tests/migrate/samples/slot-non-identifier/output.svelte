@@ -17,6 +17,13 @@
 </Comp>
 
 <Comp>
+	<!-- @migration-task: migrate this slot by hand, `new` is an invalid identifier -->
+	<div slot="new">
+		reserved keyword
+	</div>
+</Comp>
+
+<Comp>
 	{#snippet stuff()}
 		<div >
 			cool
