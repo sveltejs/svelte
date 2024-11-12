@@ -84,11 +84,8 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 			state.update.push(update);
 		} else {
 			// if the expression is inlinable we just push it to the template
-			if (is_inlinable_expression(sequence, state.scope)) {
-				// escaping every quasi if it's a template literal
-				if (value.type === 'TemplateLiteral') {
-					escape_template_quasis(value);
-				}
+			if (is_inlinable_expression(sequence, state.scope) && !is_text) {
+				escape_template_quasis(value);
 				state.template.push(value);
 			} else {
 				// else we programmatically set the value

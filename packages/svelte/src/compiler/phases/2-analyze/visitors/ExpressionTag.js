@@ -2,8 +2,6 @@
 /** @import { Context } from '../types' */
 import { is_tag_valid_with_parent } from '../../../../html-tree-validation.js';
 import * as e from '../../../errors.js';
-import { is_inlinable_expression } from '../../utils.js';
-import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
  * @param {AST.ExpressionTag} node

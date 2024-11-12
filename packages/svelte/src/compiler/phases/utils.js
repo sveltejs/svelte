@@ -66,7 +66,11 @@ export function is_inlinable_expression(value, scope) {
 				// we need to special case null and boolean values because
 				// we want to set them programmatically
 				value.expression.type === 'Literal' &&
-				(value.expression.value === null || typeof value.expression.value === 'boolean')
+				(value.expression.value === null ||
+					typeof value.expression.value === 'boolean' ||
+					// we also want to special case the case of a literal with quotes
+					// because it could mess with the template
+					(typeof value.expression.value === 'string' && value.expression.value.includes('"')))
 			) {
 				return false;
 			}
