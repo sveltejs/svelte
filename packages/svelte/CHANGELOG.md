@@ -1,5 +1,13 @@
 # svelte
 
+## 5.1.16
+
+### Patch Changes
+
+- fix: don't wrap pseudo classes inside `:global(...)` with another `:global(...)` during migration ([#14267](https://github.com/sveltejs/svelte/pull/14267))
+
+- fix: bail on named slots with that have reserved keywords during migration ([#14278](https://github.com/sveltejs/svelte/pull/14278))
+
 ## 5.1.15
 
 ### Patch Changes
