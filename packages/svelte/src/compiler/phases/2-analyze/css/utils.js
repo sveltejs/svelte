@@ -7,6 +7,13 @@ const UNKNOWN = {};
  * @param {Set<any>} set
  */
 function gather_possible_values(node, set) {
+	// @ts-expect-error
+	if (node.type === 'TSAsExpression') {
+		// @ts-expect-error
+		gather_possible_values(node.expression, set);
+		return;
+	}
+
 	if (node.type === 'Literal') {
 		set.add(String(node.value));
 	} else if (node.type === 'ConditionalExpression') {
