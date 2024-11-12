@@ -4,6 +4,7 @@ import { dev, is_ignored } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { get_rune } from '../../../scope.js';
 import { transform_inspect_rune } from '../../utils.js';
+import { trace } from '../utils.js';
 
 /**
  * @param {CallExpression} node
@@ -33,6 +34,9 @@ export function CallExpression(node, context) {
 		case '$inspect':
 		case '$inspect().with':
 			return transform_inspect_rune(node, context);
+
+		case '$trace':
+			return b.empty;
 	}
 
 	if (
@@ -55,6 +59,18 @@ export function CallExpression(node, context) {
 					.../** @type {Expression[]} */ (node.arguments.map((arg) => context.visit(arg)))
 				)
 			)
+		);
+	}
+
+	if (dev) {
+		return trace(
+			node,
+			{
+				...node,
+				callee: /** @type {Expression} */ (context.visit(node.callee)),
+				arguments: node.arguments.map((arg) => /** @type {Expression} */ (context.visit(arg)))
+			},
+			context.state
 		);
 	}
 

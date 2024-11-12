@@ -37,5 +37,9 @@ export function CallExpression(node, context) {
 		return transform_inspect_rune(node, context);
 	}
 
+	if (rune === '$trace') {
+		return b.empty;
+	}
+
 	context.next();
 }

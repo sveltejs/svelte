@@ -399,3 +399,5 @@ declare function $inspect<T extends any[]>(
  * https://svelte.dev/docs/svelte/$host
  */
 declare function $host<El extends HTMLElement = HTMLElement>(): El;
+
+declare function $trace(name: string): void;

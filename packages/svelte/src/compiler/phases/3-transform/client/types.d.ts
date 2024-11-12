@@ -23,6 +23,10 @@ export interface ClientTransformState extends TransformState {
 	 */
 	readonly in_constructor: boolean;
 
+	readonly source: string[];
+
+	readonly trace_dependencies: boolean;
+
 	readonly transform: Record<
 		string,
 		{

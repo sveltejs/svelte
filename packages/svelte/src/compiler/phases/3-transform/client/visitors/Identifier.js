@@ -2,7 +2,8 @@
 /** @import { Context } from '../types' */
 import is_reference from 'is-reference';
 import * as b from '../../../../utils/builders.js';
-import { build_getter } from '../utils.js';
+import { build_getter, trace } from '../utils.js';
+import { dev } from '../../../../state.js';
 
 /**
  * @param {Identifier} node
@@ -10,6 +11,7 @@ import { build_getter } from '../utils.js';
  */
 export function Identifier(node, context) {
 	const parent = /** @type {Node} */ (context.path.at(-1));
+	let transformed;
 
 	if (is_reference(node, parent)) {
 		if (node.name === '$$props') {
@@ -32,10 +34,18 @@ export function Identifier(node, context) {
 				grand_parent?.type !== 'AssignmentExpression' &&
 				grand_parent?.type !== 'UpdateExpression'
 			) {
-				return b.id('$$props');
+				transformed = b.id('$$props');
 			}
 		}
 
-		return build_getter(node, context.state);
+		if (!transformed) {
+			transformed = build_getter(node, context.state);
+		}
 	}
+
+	if (transformed && transformed !== node && dev) {
+		return trace(node, transformed, context.state);
+	}
+
+	return transformed;
 }

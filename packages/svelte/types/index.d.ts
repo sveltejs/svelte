@@ -2707,4 +2707,6 @@ declare function $inspect<T extends any[]>(
  */
 declare function $host<El extends HTMLElement = HTMLElement>(): El;
 
+declare function $trace(name: string): void;
+
 //# sourceMappingURL=index.d.ts.map

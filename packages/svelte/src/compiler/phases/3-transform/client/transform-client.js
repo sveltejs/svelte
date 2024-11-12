@@ -17,6 +17,7 @@ import { BindDirective } from './visitors/BindDirective.js';
 import { BlockStatement } from './visitors/BlockStatement.js';
 import { BreakStatement } from './visitors/BreakStatement.js';
 import { CallExpression } from './visitors/CallExpression.js';
+import { NewExpression } from './visitors/NewExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
 import { Comment } from './visitors/Comment.js';
 import { Component } from './visitors/Component.js';
@@ -91,6 +92,7 @@ const visitors = {
 	BlockStatement,
 	BreakStatement,
 	CallExpression,
+	NewExpression,
 	ClassBody,
 	Comment,
 	Component,
@@ -134,14 +136,16 @@ const visitors = {
 
 /**
  * @param {ComponentAnalysis} analysis
+ * @param {string} source
  * @param {ValidatedCompileOptions} options
  * @returns {ESTree.Program}
  */
-export function client_component(analysis, options) {
+export function client_component(analysis, source, options) {
 	/** @type {ComponentClientTransformState} */
 	const state = {
 		analysis,
 		options,
+		source: source.split('\n'),
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
 		is_instance: false,
@@ -163,6 +167,7 @@ export function client_component(analysis, options) {
 		private_state: new Map(),
 		transform: {},
 		in_constructor: false,
+		trace_dependencies: false,
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		before_init: /** @type {any} */ (null),
@@ -643,20 +648,23 @@ export function client_component(analysis, options) {
 
 /**
  * @param {Analysis} analysis
+ * @param {string} source
  * @param {ValidatedModuleCompileOptions} options
  * @returns {ESTree.Program}
  */
-export function client_module(analysis, options) {
+export function client_module(analysis, source, options) {
 	/** @type {ClientTransformState} */
 	const state = {
 		analysis,
 		options,
+		source: source.split('\n'),
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
 		public_state: new Map(),
 		private_state: new Map(),
 		transform: {},
-		in_constructor: false
+		in_constructor: false,
+		trace_dependencies: false
 	};
 
 	const module = /** @type {ESTree.Program} */ (

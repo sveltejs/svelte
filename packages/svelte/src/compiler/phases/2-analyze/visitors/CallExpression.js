@@ -5,6 +5,7 @@ import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
 import { get_parent, unwrap_optional } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
+import { dev } from '../../../state.js';
 
 /**
  * @param {CallExpression} node
@@ -131,6 +132,28 @@ export function CallExpression(node, context) {
 		case '$inspect().with':
 			if (node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+			}
+
+			break;
+
+		case '$trace':
+			if (node.arguments.length !== 1) {
+				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+			}
+			if (node.arguments[0].type !== 'Literal' || typeof node.arguments[0].value !== 'string') {
+				throw new Error('TODO: $track requires a string argument');
+			}
+			if (parent.type !== 'ExpressionStatement' || context.path.at(-2)?.type !== 'BlockStatement') {
+				throw new Error('TODO: $track must be inside a block statement');
+			}
+
+			if (context.state.scope.tracing) {
+				throw new Error('TODO: $track must only be used once within the same block statement');
+			}
+
+			if (dev) {
+				// TODO should we validate if tracing is already enabled in this or a parent scope?
+				context.state.scope.tracing = node.arguments[0].value;
 			}
 
 			break;
