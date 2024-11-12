@@ -92,10 +92,11 @@ function build_assignment(operator, left, right, context) {
 			!is_primitive &&
 			binding.kind !== 'prop' &&
 			binding.kind !== 'bindable_prop' &&
+			binding.kind !== 'raw_state' &&
 			context.state.analysis.runes &&
 			should_proxy(value, context.state.scope)
 		) {
-			value = binding.kind === 'raw_state' ? value : build_proxy_reassignment(value, object);
+			value = build_proxy_reassignment(value, object);
 		}
 
 		return transform.assign(object, value);
