@@ -28,7 +28,7 @@ export function Identifier(node, context) {
 	 * before marking the subtree as dynamic. This is because if it's inlinable it will be inlined in the template
 	 * directly making the whole thing actually static.
 	 */
-	if (!attribute_parent || !is_inlinable_expression(attribute_parent, context.state.scope)) {
+	if (!attribute_parent || !is_inlinable_expression(attribute_parent.value, context.state.scope)) {
 		mark_subtree_dynamic(context.path);
 	}
 

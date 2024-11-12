@@ -1,4 +1,4 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement, Super } from 'estree' */
+/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement, Super, TemplateLiteral } from 'estree' */
 /** @import { AST, SvelteNode } from '#compiler' */
 /** @import { ComponentClientTransformState } from '../../types' */
 import { walk } from 'zimmerframe';
@@ -9,6 +9,7 @@ import { regex_is_valid_identifier } from '../../../../patterns.js';
 import { create_derived } from '../../utils.js';
 import is_reference from 'is-reference';
 import { locator } from '../../../../../state.js';
+import { escape_html } from '../../../../../../escaping.js';
 
 /**
  * @param {Array<AST.Text | AST.ExpressionTag>} values
@@ -30,6 +31,15 @@ export function get_states_and_calls(values) {
 	}
 
 	return { states, calls };
+}
+/**
+ * Escape the html in every quesi in the template literal
+ * @param {TemplateLiteral} template
+ */
+export function escape_template_quasis(template) {
+	for (let quasi of template.quasis) {
+		quasi.value.raw = escape_html(quasi.value.raw);
+	}
 }
 
 /**

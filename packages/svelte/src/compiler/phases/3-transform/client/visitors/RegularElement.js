@@ -31,6 +31,7 @@ import {
 	build_template_literal,
 	build_update,
 	build_update_assignment,
+	escape_template_quasis,
 	get_states_and_calls
 } from './shared/utils.js';
 
@@ -360,22 +361,30 @@ export function RegularElement(node, context) {
 		get_states_and_calls(trimmed);
 
 	if (states_and_calls && states_and_calls.states === 0) {
-		child_state.init.push(
-			b.stmt(
-				b.assignment(
-					'=',
-					b.member(context.state.node, 'textContent'),
-					build_template_literal(trimmed, context.visit, child_state).value
-				)
-			)
-		);
+		let { value } = build_template_literal(trimmed, context.visit, child_state);
+		// if the expression is inlinable we just push it to the template
+		if (is_inlinable_expression(trimmed, context.state.scope)) {
+			// escaping every quasi if it's a template literal
+			if (value.type === 'TemplateLiteral') {
+				escape_template_quasis(value);
+			}
+			state.template.push(value);
+		} else {
+			// else we programmatically set the value
+			child_state.init.push(
+				b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value))
+			);
+		}
 	} else {
 		/** @type {Expression} */
 		let arg = context.state.node;
 
 		// If `hydrate_node` is set inside the element, we need to reset it
-		// after the element has been hydrated
-		let needs_reset = trimmed.some((node) => node.type !== 'Text');
+		// after the element has been hydrated (we don't need to reset if it's been inlined)
+		let needs_reset =
+			trimmed.some((node) => node.type !== 'Text') &&
+			(!trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') ||
+				!is_inlinable_expression(trimmed, context.state.scope));
 
 		// The same applies if it's a `<template>` element, since we need to
 		// set the value of `hydrate_node` to `node.content`
@@ -578,7 +587,11 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		);
 	}
 
-	const inlinable_expression = is_inlinable_expression(attribute, context.state.scope);
+	// we need to special case textarea value because it's not an actual attribute
+	const inlinable_expression =
+		is_inlinable_expression(attribute.value, context.state.scope) &&
+		attribute.name !== 'value' &&
+		element.name !== 'textarea';
 	if (attribute.metadata.expression.has_state) {
 		if (has_call) {
 			state.init.push(build_update(update));

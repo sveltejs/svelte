@@ -4,7 +4,7 @@
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { is_inlinable_expression } from '../../../../utils.js';
-import { build_template_literal, build_update } from './utils.js';
+import { build_template_literal, build_update, escape_template_quasis } from './utils.js';
 
 /**
  * Processes an array of template nodes, joining sibling text/expression nodes
@@ -83,7 +83,17 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 		} else if (has_state && !within_bound_contenteditable) {
 			state.update.push(update);
 		} else {
-			state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
+			// if the expression is inlinable we just push it to the template
+			if (is_inlinable_expression(sequence, state.scope)) {
+				// escaping every quasi if it's a template literal
+				if (value.type === 'TemplateLiteral') {
+					escape_template_quasis(value);
+				}
+				state.template.push(value);
+			} else {
+				// else we programmatically set the value
+				state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
+			}
 		}
 	}
 
@@ -159,7 +169,7 @@ function is_static_element(node, state) {
 			!is_text_attribute(attribute) &&
 			// If the attribute is not a text attribute but is inlinable we will directly inline it in the
 			// the template so before returning false we need to check that the attribute is not inlinable
-			!is_inlinable_expression(attribute, state.scope)
+			!is_inlinable_expression(attribute.value, state.scope)
 		) {
 			return false;
 		}
