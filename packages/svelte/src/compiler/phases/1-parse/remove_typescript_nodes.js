@@ -131,10 +131,12 @@ const visitors = {
 };
 
 /**
+ * Removes all Typescript nodes from the AST that were added by the Acorn-TS-Plugin.
+ * Note that this MUTATES the AST, in order to correctly preserve the parent pointers.
  * @template T
  * @param {T} ast
  * @returns {T}
  */
 export function remove_typescript_nodes(ast) {
-	return walk(ast, null, visitors);
+	return walk(ast, null, visitors, { mutate: true });
 }

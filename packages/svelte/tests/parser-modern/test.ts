@@ -1,8 +1,10 @@
 import * as fs from 'node:fs';
 import { assert, it } from 'vitest';
 import { parse } from 'svelte/compiler';
+import { parse as internal_parse } from '../../src/compiler/phases/1-parse/index.js';
 import { try_load_json } from '../helpers.js';
 import { suite, type BaseTest } from '../suite.js';
+import { remove_typescript_nodes } from '../../src/compiler/phases/1-parse/remove_typescript_nodes.js';
 
 interface ParserTest extends BaseTest {}
 
@@ -54,4 +56,17 @@ it('Strips BOM from the input', () => {
 			}
 		]
 	});
+});
+
+it('Preserves correct parent pointers after stripping TypeScript nodes', () => {
+	const input = `<script lang="ts"></script>
+	
+	<div>
+		<p class={x as y}>hi</p>
+	</div>
+	`;
+	const prev: any = internal_parse(input);
+	const post: any = remove_typescript_nodes(prev);
+	assert.equal(prev, post);
+	assert.equal(post.fragment.nodes[1].fragment.nodes[1].parent, post.fragment.nodes[1]);
 });
