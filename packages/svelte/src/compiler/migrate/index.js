@@ -17,7 +17,7 @@ import {
 } from '../utils/ast.js';
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
 import { validate_component_options } from '../validate-options.js';
-import { is_svg, is_void } from '../../utils.js';
+import { is_reserved, is_svg, is_void } from '../../utils.js';
 import { regex_is_valid_identifier } from '../phases/patterns.js';
 
 const regex_style_tags = /(<style[^>]+>)([\S\s]*?)(<\/style>)/g;
@@ -1440,7 +1440,7 @@ function migrate_slot_usage(node, path, state) {
 			if (snippet_name === 'default') {
 				snippet_name = 'children';
 			}
-			if (!regex_is_valid_identifier.test(snippet_name)) {
+			if (!regex_is_valid_identifier.test(snippet_name) || is_reserved(snippet_name)) {
 				has_migration_task = true;
 				state.str.appendLeft(
 					node.start,
