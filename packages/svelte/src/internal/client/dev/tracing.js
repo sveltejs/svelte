@@ -170,7 +170,7 @@ export function set_tracing_expression_reactive(value) {
 }
 
 export function get_stack() {
-	let error = Error()
+	let error = Error();
 	const stack = error.stack;
 
 	if (stack) {
