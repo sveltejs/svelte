@@ -140,7 +140,9 @@ export function trace(fn, label, computed) {
 					changed:
 						tracing_expression_reactive === REACTIVE_CHANGED ||
 						tracing_expression_reactive === REACTIVE_CHANGED_CACHED,
-					label: label + (tracing_expression_reactive === REACTIVE_CHANGED_CACHED ? ' [cached derived]' : ''),
+					label:
+						label +
+						(tracing_expression_reactive === REACTIVE_CHANGED_CACHED ? ' [cached derived]' : ''),
 					value,
 					time,
 					stacks: set_stack ? [read_stack, set_stack] : [read_stack],
