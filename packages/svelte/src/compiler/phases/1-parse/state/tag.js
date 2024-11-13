@@ -1,4 +1,4 @@
-/** @import { ArrowFunctionExpression, Expression, Identifier } from 'estree' */
+/** @import { ArrowFunctionExpression, Expression, Identifier, Pattern } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import read_pattern from '../read/context.js';
@@ -143,15 +143,28 @@ function open(parser) {
 				parser.index = end;
 			}
 		}
-		parser.eat('as', true);
-		parser.require_whitespace();
 
-		const context = read_pattern(parser);
-
-		parser.allow_whitespace();
-
+		// TODO replace with guaranteed-not-conflicting identifier, or make context possibly null
+		/** @type {Pattern} */
+		let context = { type: 'Identifier', start: -1, end: -1, name: '_' };
 		let index;
 		let key;
+
+		const has_as = parser.match('as');
+
+		if (has_as) {
+			parser.eat('as', true);
+			parser.require_whitespace();
+
+			context = read_pattern(parser);
+		} else {
+			// {#each Array.from({ length: 10 }), i} is read as a sequence expression,
+			// which is set back above - we now gotta reset the index as a consequence
+			// to properly read the , i part
+			parser.index = /** @type {number} */ (expression.end);
+		}
+
+		parser.allow_whitespace();
 
 		if (parser.eat(',')) {
 			parser.allow_whitespace();
@@ -164,6 +177,10 @@ function open(parser) {
 		}
 
 		if (parser.eat('(')) {
+			if (!has_as) {
+				e.expected_token(parser.index, '}');
+			}
+
 			parser.allow_whitespace();
 
 			key = read_expression(parser);
