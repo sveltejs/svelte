@@ -128,8 +128,8 @@ let current_version = 0;
 // to prevent memory leaks, we skip adding the reaction.
 export let skip_reaction = false;
 // Handle collecting all signals which are read during a specific time frame
-export let is_signals_recorded = false;
-let captured_signals = new Set();
+/** @type {Set<Value> | null} */
+export let captured_signals = null;
 
 // Handling runtime component context
 /** @type {ComponentContext | null} */
@@ -732,7 +732,7 @@ export function get(signal) {
 		return value;
 	}
 
-	if (is_signals_recorded) {
+	if (captured_signals !== null) {
 		captured_signals.add(signal);
 	}
 
@@ -800,21 +800,18 @@ export function safe_get(signal) {
  * @param {() => any} fn
  */
 export function invalidate_inner_signals(fn) {
-	var previous_is_signals_recorded = is_signals_recorded;
 	var previous_captured_signals = captured_signals;
-	is_signals_recorded = true;
 	captured_signals = new Set();
 	var captured = captured_signals;
 	var signal;
 	try {
 		untrack(fn);
-	} finally {
-		is_signals_recorded = previous_is_signals_recorded;
-		if (is_signals_recorded) {
+		if (previous_captured_signals !== null) {
 			for (signal of captured_signals) {
 				previous_captured_signals.add(signal);
 			}
 		}
+	} finally {
 		captured_signals = previous_captured_signals;
 	}
 	for (signal of captured) {
