@@ -14,6 +14,7 @@ import {
 } from '../../../../constants.js';
 import { dev } from '../../../state.js';
 import { get_value } from './visitors/shared/declarations.js';
+import { walk } from 'zimmerframe';
 
 /**
  * @param {Binding} binding
@@ -361,6 +362,17 @@ export function trace(node, expression, state) {
 	const loc = node.loc;
 	const source = state.source;
 	let code = '';
+	let bailout = false;
+
+	walk(expression, null, {
+		AwaitExpression() {
+			bailout = true;
+		}
+	})
+
+	if (bailout) {
+		return expression;
+	}
 
 	if (loc) {
 		const start = loc.start;

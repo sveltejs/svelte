@@ -43,7 +43,7 @@ export function Identifier(node, context) {
 		}
 	}
 
-	if (dev && transformed && transformed !== node && parent.type !== 'AwaitExpression') {
+	if (transformed && transformed !== node && dev) {
 		return trace(node, transformed, context.state);
 	}
 

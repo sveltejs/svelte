@@ -62,9 +62,7 @@ export function CallExpression(node, context) {
 		);
 	}
 
-	const parent = context.path.at(-1);
-
-	if (dev && parent?.type !== 'AwaitExpression') {
+	if (dev) {
 		return trace(
 			node,
 			{
