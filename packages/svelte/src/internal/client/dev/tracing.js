@@ -135,7 +135,7 @@ export function trace(fn, label, computed) {
 					label,
 					value,
 					time,
-					stacks: [read_stack, write_stack],
+					stacks: write_stack ? [read_stack, write_stack] : [read_stack],
 					sub: null
 				});
 
