@@ -39,7 +39,8 @@ import {
 	set_tracing_expression_reactive,
 	REACTIVE_UNCHANGED,
 	REACTIVE_CHANGED,
-	tracing_expression_reactive
+	tracing_expression_reactive,
+	REACTIVE_CHANGED_CACHED
 } from './dev/tracing.js';
 
 const FLUSH_MICROTASK = 0;
@@ -785,10 +786,13 @@ export function get(signal) {
 		}
 	}
 
+	var updated = false;
+
 	if (is_derived) {
 		derived = /** @type {Derived} */ (signal);
 
 		if (check_dirtiness(derived)) {
+			updated = true;
 			update_derived(derived);
 		}
 	}
@@ -801,7 +805,9 @@ export function get(signal) {
 	) {
 		set_tracing_expression_reactive(
 			signal.version > active_reaction.version || active_reaction.version === current_version
-				? REACTIVE_CHANGED
+				? updated
+					? REACTIVE_CHANGED_CACHED
+					: REACTIVE_CHANGED
 				: REACTIVE_UNCHANGED
 		);
 	}

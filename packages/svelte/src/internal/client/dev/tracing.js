@@ -6,10 +6,11 @@ import { captured_signals, set_captured_signals } from '../runtime.js';
 export const NOT_REACTIVE = 0;
 export const REACTIVE_UNCHANGED = 1;
 export const REACTIVE_CHANGED = 2;
+export const REACTIVE_CHANGED_CACHED = 3;
 
 /** @type { { changed: boolean, label: string, time: number, sub: any, stacks: any[], value: any }[] | null } */
 export let tracing_expressions = null;
-/** @type { 0 | 1 | 2 } */
+/** @type { 0 | 1 | 2 | 3 } */
 export let tracing_expression_reactive = NOT_REACTIVE;
 
 /**
@@ -136,8 +137,10 @@ export function trace(fn, label, computed) {
 					tracing_expressions = [];
 				}
 				tracing_expressions.push({
-					changed: tracing_expression_reactive === REACTIVE_CHANGED,
-					label,
+					changed:
+						tracing_expression_reactive === REACTIVE_CHANGED ||
+						tracing_expression_reactive === REACTIVE_CHANGED_CACHED,
+					label: label + (tracing_expression_reactive === REACTIVE_CHANGED_CACHED ? ' [cached derived]' : ''),
 					value,
 					time,
 					stacks: set_stack ? [read_stack, set_stack] : [read_stack],
@@ -168,7 +171,7 @@ export function trace(fn, label, computed) {
 }
 
 /**
- * @param {0 | 1 | 2} value
+ * @param {0 | 1 | 2 | 3} value
  */
 export function set_tracing_expression_reactive(value) {
 	tracing_expression_reactive = value;
