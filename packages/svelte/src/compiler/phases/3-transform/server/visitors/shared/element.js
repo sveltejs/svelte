@@ -82,7 +82,8 @@ export function build_element_attributes(node, context) {
 				) {
 					events_to_capture.add(attribute.name);
 				}
-			} else {
+				// the defaultValue/defaultChecked properties don't exist as attributes
+			} else if (attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked') {
 				if (attribute.name === 'class') {
 					class_index = attributes.length;
 				} else if (attribute.name === 'style') {

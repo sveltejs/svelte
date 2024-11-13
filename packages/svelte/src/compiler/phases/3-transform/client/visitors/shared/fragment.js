@@ -1,6 +1,7 @@
 /** @import { Expression } from 'estree' */
 /** @import { AST, SvelteNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
+import { cannot_be_set_statically } from '../../../../../../utils.js';
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { is_inlinable_expression } from '../../utils.js';
@@ -141,7 +142,7 @@ function is_static_element(node, state) {
 			return false;
 		}
 
-		if (attribute.name === 'autofocus' || attribute.name === 'muted') {
+		if (cannot_be_set_statically(attribute.name)) {
 			return false;
 		}
 

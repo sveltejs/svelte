@@ -4,6 +4,7 @@
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
 import {
+	cannot_be_set_statically,
 	is_boolean_attribute,
 	is_dom_property,
 	is_load_error_element,
@@ -181,20 +182,28 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (
-		node.name === 'input' &&
-		(has_spread ||
-			bindings.has('value') ||
-			bindings.has('checked') ||
-			bindings.has('group') ||
-			attributes.some(
-				(attribute) =>
-					attribute.type === 'Attribute' &&
-					(attribute.name === 'value' || attribute.name === 'checked') &&
-					!is_text_attribute(attribute)
-			))
-	) {
-		context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
+	if (node.name === 'input') {
+		const has_value_attribute = attributes.some(
+			(attribute) =>
+				attribute.type === 'Attribute' &&
+				(attribute.name === 'value' || attribute.name === 'checked') &&
+				!is_text_attribute(attribute)
+		);
+		const has_default_value_attribute = attributes.some(
+			(attribute) =>
+				attribute.type === 'Attribute' &&
+				(attribute.name === 'defaultValue' || attribute.name === 'defaultChecked')
+		);
+		if (
+			!has_default_value_attribute &&
+			(has_spread ||
+				bindings.has('value') ||
+				bindings.has('checked') ||
+				bindings.has('group') ||
+				(!bindings.has('group') && has_value_attribute))
+		) {
+			context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
+		}
 	}
 
 	if (node.name === 'textarea') {
@@ -272,8 +281,7 @@ export function RegularElement(node, context) {
 
 			if (
 				!is_custom_element &&
-				attribute.name !== 'autofocus' &&
-				attribute.name !== 'muted' &&
+				!cannot_be_set_statically(attribute.name) &&
 				(attribute.value === true || is_text_attribute(attribute))
 			) {
 				const name = get_attribute_name(node, attribute);

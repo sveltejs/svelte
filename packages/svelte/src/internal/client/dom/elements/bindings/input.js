@@ -1,6 +1,6 @@
 import { DEV } from 'esm-env';
 import { render_effect, teardown } from '../../../reactivity/effects.js';
-import { listen_to_event_and_reset_event, without_reactive_context } from './shared.js';
+import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
 import { is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
@@ -34,6 +34,17 @@ export function bind_value(input, get, set = get) {
 		}
 	});
 
+	if (
+		// If we are hydrating and the value has since changed,
+		// then use the update value from the input instead.
+		(hydrating && input.defaultValue !== input.value) ||
+		// If defaultValue is set, then value == defaultValue
+		// TODO Svelte 6: remove input.value check and set to empty string?
+		(get() == null && input.value)
+	) {
+		set(input.value);
+	}
+
 	render_effect(() => {
 		if (DEV && input.type === 'checkbox') {
 			// TODO should this happen in prod too?
@@ -41,13 +52,6 @@ export function bind_value(input, get, set = get) {
 		}
 
 		var value = get();
-
-		// If we are hydrating and the value has since changed, then use the update value
-		// from the input instead.
-		if (hydrating && input.defaultValue !== input.value) {
-			set(input.value);
-			return;
-		}
 
 		if (is_numberlike_input(input) && value === to_number(input.value)) {
 			// handles 0 vs 00 case (see https://github.com/sveltejs/svelte/issues/9959)
@@ -180,8 +184,14 @@ export function bind_checked(input, get, set = get) {
 		set(value);
 	});
 
-	if (get() == undefined) {
-		set(false);
+	if (
+		// If we are hydrating and the value has since changed,
+		// then use the update value from the input instead.
+		(hydrating && input.defaultChecked !== input.checked) ||
+		// If defaultChecked is set, then checked == defaultChecked
+		get() == null
+	) {
+		set(input.checked);
 	}
 
 	render_effect(() => {
