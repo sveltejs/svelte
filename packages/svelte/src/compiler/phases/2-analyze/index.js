@@ -474,6 +474,10 @@ export function analyze_component(root, source, options) {
 				}
 			} else {
 				for (const specifier of node.specifiers) {
+					if (specifier.local.type !== 'Identifier' || specifier.exported.type !== 'Identifier') {
+						continue;
+					}
+
 					const binding = instance.scope.get(specifier.local.name);
 
 					if (
