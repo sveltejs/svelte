@@ -368,7 +368,7 @@ export function trace(node, expression, state) {
 		AwaitExpression() {
 			bailout = true;
 		}
-	})
+	});
 
 	if (bailout) {
 		return expression;
