@@ -27,7 +27,8 @@ export function MemberExpression(node, context) {
 		parent?.type !== 'BindDirective' &&
 		parent?.type !== 'AssignmentExpression' &&
 		parent?.type !== 'UpdateExpression' &&
-		parent?.type !== 'Component'
+		parent?.type !== 'Component' &&
+		parent?.type !== 'ChainExpression'
 	) {
 		return trace(
 			node,
