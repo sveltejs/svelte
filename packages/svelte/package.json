@@ -144,7 +144,7 @@
     "axobject-query": "^4.1.0",
     "esm-env": "^1.0.0",
     "esrap": "^1.2.2",
-    "is-reference": "^3.0.2",
+    "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.11",
     "zimmerframe": "^1.1.2"
