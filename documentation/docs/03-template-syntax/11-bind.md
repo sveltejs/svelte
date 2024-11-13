@@ -53,6 +53,19 @@ In the case of a numeric input (`type="number"` or `type="range"`), the value wi
 
 If the input is empty or invalid (in the case of `type="number"`), the value is `undefined`.
 
+You can give the input a default value by setting the `defaultValue` property. This way, when the input is part of a form and its `form.reset()` method is invoked, it will revert to that value instead of the empty string. Note that for the initial render the value of the binding takes precedence if it's not `null` or `undefined`.
+
+```svelte
+<script>
+	let value = $state('');
+</script>
+
+<form>
+	<input bind:value defaultValue="x">
+	<input type="reset" value="Reset">
+</form>
+```
+
 ## `<input bind:checked>`
 
 Checkbox and radio inputs can be bound with `bind:checked`:
@@ -64,16 +77,29 @@ Checkbox and radio inputs can be bound with `bind:checked`:
 </label>
 ```
 
+You can give the input a default value by setting the `defaultChecked` property. This way, when the input is part of a form and its `form.reset()` method is invoked, it will revert to that value instead of `false`. Note that for the initial render the value of the binding takes precedence if it's not `null` or `undefined`.
+
+```svelte
+<script>
+	let checked = $state(true);
+</script>
+
+<form>
+	<input type="checkbox" bind:checked defaultChecked={true}>
+	<input type="reset" value="Reset">
+</form>
+```
+
 ## `<input bind:group>`
 
 Inputs that work together can use `bind:group`.
 
 ```svelte
 <script>
-	let tortilla = 'Plain';
+	let tortilla = $state('Plain');
 
 	/** @type {Array<string>} */
-	let fillings = [];
+	let fillings = $state([]);
 </script>
 
 <!-- grouped radio inputs are mutually exclusive -->
@@ -86,6 +112,20 @@ Inputs that work together can use `bind:group`.
 <input type="checkbox" bind:group={fillings} value="Beans" />
 <input type="checkbox" bind:group={fillings} value="Cheese" />
 <input type="checkbox" bind:group={fillings} value="Guac (extra)" />
+```
+
+You can give the group a default value by setting the `checked` property on the elements that should be selected initially. This way, when the input is part of a form and its `form.reset()` method is invoked, it will revert to that value instead of the empty string (for radio groups) or the empty array (for checkbox groups). Note that for the initial render the value of the binding takes precedence if it's not `null` or `undefined`.
+
+```svelte
+<script>
+	let tortilla = $state('Plain');
+</script>
+
+<form>
+	<input type="radio" bind:group={tortilla} value="Plain" checked />
+	<input type="radio" bind:group={tortilla} value="Whole wheat" />
+	<input type="reset" value="Reset">
+</form>
 ```
 
 > [!NOTE] `bind:group` only works if the inputs are in the same Svelte component.
@@ -143,6 +183,16 @@ When the value of an `<option>` matches its text content, the attribute can be o
 	<option>Beans</option>
 	<option>Cheese</option>
 	<option>Guac (extra)</option>
+</select>
+```
+
+You can give the select a default value by setting the `selected` property on the elements that should be selected initially. This way, when the select is part of a form and its `form.reset()` method is invoked, it will revert to that value instead of the empty string (for single-value selects) or the empty array (for mult-value selects). Note that for the initial render the value of the binding takes precedence if it's not `null` or `undefined`.
+
+```svelte
+<select bind:value={selected}>
+	<option value={a}>a</option>
+	<option value={b} selected>b</option>
+	<option value={c}>c</option>
 </select>
 ```
 
