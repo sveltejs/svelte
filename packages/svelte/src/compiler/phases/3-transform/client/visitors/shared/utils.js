@@ -32,8 +32,9 @@ export function get_states_and_calls(values) {
 
 	return { states, calls };
 }
+
 /**
- * Escape the html in every quesi in the template literal
+ * Escape the html in every quasi in the template literal
  * @param {SvelteNode} template
  * @param {boolean} [is_attr]
  */
