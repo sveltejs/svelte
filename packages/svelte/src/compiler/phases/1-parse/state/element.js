@@ -496,7 +496,7 @@ function read_attribute(parser) {
 		}
 	}
 
-	const name = parser.read_until(regex_token_ending_character);
+	let name = parser.read_until(regex_token_ending_character);
 	if (!name) return null;
 
 	let end = parser.index;
@@ -512,15 +512,32 @@ function read_attribute(parser) {
 		parser.allow_whitespace();
 		value = read_attribute_value(parser);
 		end = parser.index;
-	} else if (parser.match_regex(regex_starts_with_quote_characters)) {
+	} else if (parser.match_regex(regex_starts_with_quote_characters) && type !== 'ClassDirective') {
 		e.expected_token(parser.index, '=');
 	}
 
 	if (type) {
 		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
+		/** @type {Array<AST.Text | AST.ExpressionTag> | null} */
+		let class_name_value = null;
 
 		if (directive_name === '') {
-			e.directive_missing_name({ start, end: start + colon_index + 1 }, name);
+			if (type !== 'ClassDirective') {
+				e.directive_missing_name({ start, end: start + colon_index + 1 }, name);
+			} else {
+				// class:"..." case
+				const v = read_attribute_value(parser);
+				if (!Array.isArray(v)) e.expected_token(v.start, '" or =');
+				class_name_value = v;
+
+				if (parser.eat('=')) {
+					parser.allow_whitespace();
+					value = read_attribute_value(parser);
+					end = parser.index;
+				} else if (parser.match_regex(regex_starts_with_quote_characters)) {
+					e.expected_token(parser.index, '=');
+				}
+			}
 		}
 
 		if (type === 'StyleDirective') {
@@ -568,6 +585,10 @@ function read_attribute(parser) {
 				expression: create_expression_metadata()
 			}
 		};
+
+		if (directive.type === 'ClassDirective') {
+			directive.value = class_name_value;
+		}
 
 		if (directive.type === 'TransitionDirective') {
 			const direction = name.slice(0, colon_index);

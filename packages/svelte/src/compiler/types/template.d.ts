@@ -196,8 +196,10 @@ export namespace AST {
 	/** A `class:` directive */
 	export interface ClassDirective extends BaseNode {
 		type: 'ClassDirective';
-		/** The 'x' in `class:x` */
-		name: 'class';
+		/** The 'x' in `class:x`, empty string in case of `class:"..."` */
+		name: string;
+		/** The 'x' in `class:"x"`, `null` in case of `class:x` (i.e. when no quotes) */
+		value: Array<Text | ExpressionTag> | null;
 		/** The 'y' in `class:x={y}`, or the `x` in `class:x` */
 		expression: Expression;
 		/** @internal */

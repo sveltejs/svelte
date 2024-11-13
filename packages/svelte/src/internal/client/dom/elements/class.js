@@ -114,3 +114,21 @@ export function toggle_class(dom, class_name, value) {
 		dom.classList.remove(class_name);
 	}
 }
+
+/**
+ * @param {Element} dom
+ * @param {string} class_names
+ * @param {boolean} value
+ * @param {string} prev_class_names
+ * @returns {string}
+ */
+export function toggle_classes(dom, class_names, value, prev_class_names) {
+	const split_classes = class_names.split(' ');
+	split_classes.forEach((class_name) => toggle_class(dom, class_name, value));
+	prev_class_names.split(' ').forEach((class_name) => {
+		if (!split_classes.includes(class_name)) {
+			toggle_class(dom, class_name, false);
+		}
+	});
+	return class_names;
+}

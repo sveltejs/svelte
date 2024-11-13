@@ -627,7 +627,13 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				if (
 					!attribute_matches(element, 'class', name, '~=', false) &&
 					!element.attributes.some(
-						(attribute) => attribute.type === 'ClassDirective' && attribute.name === name
+						(attribute) =>
+							attribute.type === 'ClassDirective' &&
+							(attribute.name === name ||
+								(attribute.value &&
+									(attribute.value.length > 1 ||
+										attribute.value[0].type !== 'Text' ||
+										test_attribute('~=', name, false, attribute.value[0].data))))
 					)
 				) {
 					return false;

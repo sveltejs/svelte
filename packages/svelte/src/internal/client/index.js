@@ -35,7 +35,13 @@ export {
 	set_value,
 	set_checked
 } from './dom/elements/attributes.js';
-export { set_class, set_svg_class, set_mathml_class, toggle_class } from './dom/elements/class.js';
+export {
+	set_class,
+	set_svg_class,
+	set_mathml_class,
+	toggle_class,
+	toggle_classes
+} from './dom/elements/class.js';
 export { apply, event, delegate, replay_events } from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
 export { set_style } from './dom/elements/style.js';

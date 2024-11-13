@@ -1,9 +1,9 @@
-/** @import { Expression, Identifier, ObjectExpression } from 'estree' */
-/** @import { AST, Namespace } from '#compiler' */
+/** @import { Expression, ExpressionStatement, Identifier, ObjectExpression } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../../types' */
 import { normalize_attribute } from '../../../../../../utils.js';
 import { is_ignored } from '../../../../../state.js';
-import { get_attribute_expression, is_event_attribute } from '../../../../../utils/ast.js';
+import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { build_getter, create_derived } from '../../utils.js';
 import { build_template_literal, build_update } from './utils.js';
@@ -154,7 +154,7 @@ export function build_class_directives(
 ) {
 	const state = context.state;
 	for (const directive of class_directives) {
-		const { has_state, has_call } = directive.metadata.expression;
+		let { has_state, has_call } = directive.metadata.expression;
 		let value = /** @type {Expression} */ (context.visit(directive.expression));
 
 		if (has_call) {
@@ -164,7 +164,37 @@ export function build_class_directives(
 			value = b.call('$.get', id);
 		}
 
-		const update = b.stmt(b.call('$.toggle_class', element_id, b.literal(directive.name), value));
+		/** @type {ExpressionStatement} */
+		let update;
+
+		if (!directive.value) {
+			update = b.stmt(b.call('$.toggle_class', element_id, b.literal(directive.name), value));
+		} else {
+			let prev_id;
+			let {
+				has_call: h_c,
+				has_state: h_s,
+				value: name
+			} = build_attribute_value(directive.value, context);
+
+			has_call ||= h_c;
+			has_state ||= h_s;
+
+			if (h_c || h_s) {
+				prev_id = b.id(state.scope.generate('prev_class_names'));
+				state.init.push(b.let(prev_id, b.literal('')));
+			}
+
+			if (has_call) {
+				const id = b.id(state.scope.generate('class_directive'));
+
+				state.init.push(b.const(id, create_derived(state, b.thunk(name))));
+				name = b.call('$.get', id);
+			}
+
+			const toggle = b.call('$.toggle_classes', element_id, name, value, prev_id);
+			update = b.stmt(prev_id ? b.assignment('=', prev_id, toggle) : toggle);
+		}
 
 		if (!is_attributes_reactive && has_call) {
 			state.init.push(build_update(update));
