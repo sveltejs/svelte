@@ -126,17 +126,22 @@ export function trace(fn, label, computed) {
 			var read_stack = ['read', get_stack()];
 
 			if (tracing_expression_reactive !== NOT_REACTIVE) {
-				var write_stack;
+				var set_stack;
 				if (signals.size === 1) {
-					write_stack = Array.from(signals)[0].stack;
+					set_stack = Array.from(signals)[0].stack;
+				}
+				var sub = null;
+				if (tracing_expressions.length !== 0) {
+					sub = tracing_expressions.slice();
+					tracing_expressions = [];
 				}
 				tracing_expressions.push({
 					changed: tracing_expression_reactive === REACTIVE_CHANGED,
 					label,
 					value,
 					time,
-					stacks: write_stack ? [read_stack, write_stack] : [read_stack],
-					sub: null
+					stacks: set_stack ? [read_stack, set_stack] : [read_stack],
+					sub
 				});
 
 				if (previously_tracing_expressions !== null) {

@@ -24,6 +24,7 @@ import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import { destroy_effect } from './effects.js';
 import { inspect_effects, set_inspect_effects } from './sources.js';
+import { get_stack } from '../dev/tracing.js';
 
 /**
  * @template V
@@ -55,6 +56,10 @@ export function derived(fn) {
 		version: 0,
 		parent: active_effect
 	};
+
+	if (DEV) {
+		signal.stack = ['created', get_stack()];
+	}
 
 	if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
 		var derived = /** @type {Derived} */ (active_reaction);
