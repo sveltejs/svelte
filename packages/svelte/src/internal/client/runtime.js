@@ -806,8 +806,8 @@ export function get(signal) {
 		set_tracing_expression_reactive(
 			signal.version > active_reaction.version || active_reaction.version === current_version
 				? updated
-					? REACTIVE_CHANGED_CACHED
-					: REACTIVE_CHANGED
+					? REACTIVE_CHANGED
+					: REACTIVE_CHANGED_CACHED
 				: REACTIVE_UNCHANGED
 		);
 	}
