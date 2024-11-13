@@ -189,7 +189,7 @@ export function get_stack() {
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
-			if (line.includes('svelte/src/internal')) {
+			if (line.includes('svelte/src/internal') || !line.includes('.svelte')) {
 				continue;
 			}
 			new_lines.push(line);
