@@ -28,7 +28,7 @@ import { visit_event_attribute } from './shared/events.js';
 import { process_children } from './shared/fragment.js';
 import {
 	build_render_statement,
-	build_template_literal,
+	build_template_chunk,
 	build_update,
 	build_update_assignment,
 	escape_inline_expression,
@@ -361,7 +361,7 @@ export function RegularElement(node, context) {
 		get_states_and_calls(trimmed);
 
 	if (states_and_calls && states_and_calls.states === 0) {
-		let { value, can_inline } = build_template_literal(trimmed, context.visit, child_state);
+		let { value, can_inline } = build_template_chunk(trimmed, context.visit, child_state);
 
 		// if the expression is inlinable we just push it to the template
 		if (can_inline) {

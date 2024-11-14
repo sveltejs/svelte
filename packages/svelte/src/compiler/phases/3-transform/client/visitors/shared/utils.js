@@ -63,7 +63,7 @@ export function escape_inline_expression(node, is_attr) {
  * @param {ComponentClientTransformState} state
  * @returns {{ value: Expression, has_state: boolean, has_call: boolean, can_inline: boolean }}
  */
-export function build_template_literal(values, visit, state) {
+export function build_template_chunk(values, visit, state) {
 	/** @type {Expression[]} */
 	const expressions = [];
 

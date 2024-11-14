@@ -4,7 +4,7 @@
 import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { is_inlinable_attribute } from '../../../../utils.js';
-import { build_template_literal, build_update, escape_inline_expression } from './utils.js';
+import { build_template_chunk, build_update, escape_inline_expression } from './utils.js';
 
 /**
  * Processes an array of template nodes, joining sibling text/expression nodes
@@ -69,11 +69,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 			return;
 		}
 
-		const { has_state, has_call, value, can_inline } = build_template_literal(
-			sequence,
-			visit,
-			state
-		);
+		const { has_state, has_call, value, can_inline } = build_template_chunk(sequence, visit, state);
 
 		if (can_inline) {
 			skipped += 1;
