@@ -50,16 +50,16 @@
 	}
 </script>
 
-<input placeholder="filter prefix" bind:value prefix} />
+<input placeholder="filter prefix" bind:value={prefix} />
 
-<select bind:value i} size={5}>
+<select bind:value={i} size={5}>
 	{#each filteredPeople as person, i}
 		<option value={i}>{person.last}, {person.first}</option>
 	{/each}
 </select>
 
-<label><input bind:value first} placeholder="first" /></label>
-<label><input bind:value last} placeholder="last" /></label>
+<label><input bind:value={first} placeholder="first" /></label>
+<label><input bind:value={last} placeholder="last" /></label>
 
 <div class="buttons">
 	<button on:click={create} disabled={!first || !last}>create</button>

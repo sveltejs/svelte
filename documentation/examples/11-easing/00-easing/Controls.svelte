@@ -18,7 +18,7 @@
 	<div class="easing-types">
 		<h3>Ease</h3>
 		{#if mobile}
-			<select bind:value current_ease}>
+			<select bind:value={current_ease}>
 				{#each [...eases] as [name]}
 					<option value={name} class:selected={name === current_ease}>
 						{name}
@@ -36,7 +36,7 @@
 		{/if}
 		<h3>Type</h3>
 		{#if mobile}
-			<select bind:value current_type}>
+			<select bind:value={current_type}>
 				{#each types as [name, type]}
 					<option value={type}>
 						{name}
@@ -56,7 +56,7 @@
 	<h4>Duration</h4>
 	<div class="duration">
 		<span>
-			<input type="number" bind:value duration} min="0" step="100" />
+			<input type="number" bind:value={duration} min="0" step="100" />
 			<button class="number" on:click={() => (duration -= 100)}>-</button>
 			<button class="number" on:click={() => (duration += 100)}>+</button>
 		</span>

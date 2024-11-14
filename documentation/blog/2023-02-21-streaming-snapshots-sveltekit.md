@@ -147,7 +147,7 @@ For example, here is how you would capture and restore the value of a textarea:
 
 <form method="POST">
 	<label for="comment">Comment</label>
-	<textarea id="comment" bind:value comment} />
+	<textarea id="comment" bind:value={comment} />
 	<button>Post comment</button>
 </form>
 ```

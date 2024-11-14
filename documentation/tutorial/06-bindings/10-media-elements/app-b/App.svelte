@@ -60,8 +60,7 @@
 		on:touchmove|preventDefault={handleMove}
 		on:mousedown={handleMousedown}
 		on:mouseup={handleMouseup}
-		bind:currentTime
-		time}
+		bind:currentTime={time}
 		bind:duration
 		bind:paused
 	>

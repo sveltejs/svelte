@@ -11,5 +11,5 @@ Elements with the `contenteditable` attribute support the following bindings:
 There are slight differences between each of these, read more about them [here](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent#Differences_from_innerText).
 
 ```svelte
-<div contenteditable="true" bind:innerHTML html} />
+<div contenteditable="true" bind:innerHTML={html} />
 ```

@@ -31,7 +31,7 @@
 
 <svelte:window on:resize={resize} />
 
-<svg bind:this svg}>
+<svg bind:this={svg}>
 	<!-- y axis -->
 	<g class="axis y-axis">
 		{#each yTicks as tick}

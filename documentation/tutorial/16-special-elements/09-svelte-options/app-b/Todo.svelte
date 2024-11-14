@@ -15,7 +15,7 @@
 
 <!-- the text will flash red whenever
      the `todo` object changes -->
-<button bind:this button} type="button" on:click>
+<button bind:this={button} type="button" on:click>
 	{todo.done ? '👍' : ''}
 	{todo.text}
 </button>

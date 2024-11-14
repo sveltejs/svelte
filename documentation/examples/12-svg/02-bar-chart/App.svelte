@@ -35,7 +35,7 @@
 
 <h2>US birthrate by year</h2>
 
-<div class="chart" bind:clientWidth width} bind:clientHeight height}>
+<div class="chart" bind:clientWidth={width} bind:clientHeight={height}>
 	<svg>
 		<!-- y axis -->
 		<g class="axis y-axis">

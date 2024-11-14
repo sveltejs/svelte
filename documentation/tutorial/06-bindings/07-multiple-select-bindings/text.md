@@ -9,7 +9,7 @@ Returning to our [earlier ice cream example](/tutorial/group-inputs), we can rep
 ```svelte
 <h2>Flavours</h2>
 
-<select multiple bind:value flavours}>
+<select multiple bind:value={flavours}>
 	{#each menu as flavour}
 		<option value={flavour}>
 			{flavour}

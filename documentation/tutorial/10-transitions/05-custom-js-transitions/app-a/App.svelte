@@ -9,7 +9,7 @@
 </script>
 
 <label>
-	<input type="checkbox" bind:checked visible} />
+	<input type="checkbox" bind:checked={visible} />
 	visible
 </label>
 

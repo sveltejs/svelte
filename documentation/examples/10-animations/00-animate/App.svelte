@@ -57,7 +57,7 @@
 		<h2>todo</h2>
 		{#each todos.filter((t) => !t.done) as todo (todo.id)}
 			<label in:receive={{ key: todo.id }} out:send={{ key: todo.id }} animate:flip>
-				<input type="checkbox" bind:checked todo.done} />
+				<input type="checkbox" bind:checked={todo.done} />
 				{todo.description}
 				<button on:click={() => remove(todo)}>x</button>
 			</label>
@@ -68,7 +68,7 @@
 		<h2>done</h2>
 		{#each todos.filter((t) => t.done) as todo (todo.id)}
 			<label in:receive={{ key: todo.id }} out:send={{ key: todo.id }} animate:flip>
-				<input type="checkbox" bind:checked todo.done} />
+				<input type="checkbox" bind:checked={todo.done} />
 				{todo.description}
 				<button on:click={() => remove(todo)}>x</button>
 			</label>

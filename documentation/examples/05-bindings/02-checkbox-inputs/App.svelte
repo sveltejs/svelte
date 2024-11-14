@@ -3,7 +3,7 @@
 </script>
 
 <label>
-	<input type="checkbox" bind:checked yes} />
+	<input type="checkbox" bind:checked={yes} />
 	Yes! Send me regular email spam
 </label>
 

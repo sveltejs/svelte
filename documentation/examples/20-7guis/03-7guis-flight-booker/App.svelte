@@ -37,13 +37,13 @@
 	}
 </script>
 
-<select bind:value isReturn}>
+<select bind:value={isReturn}>
 	<option value={false}>one-way flight</option>
 	<option value={true}>return flight</option>
 </select>
 
-<input type="date" bind:value start} />
-<input type="date" bind:value end} disabled={!isReturn} />
+<input type="date" bind:value={start} />
+<input type="date" bind:value={end} disabled={!isReturn} />
 
 <button on:click={bookFlight} disabled={isReturn && startDate >= endDate}>book</button>
 

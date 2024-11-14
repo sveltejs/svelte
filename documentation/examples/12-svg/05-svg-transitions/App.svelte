@@ -27,7 +27,7 @@
 {/if}
 
 <label>
-	<input type="checkbox" bind:checked visible} />
+	<input type="checkbox" bind:checked={visible} />
 	toggle me
 </label>
 
