@@ -268,8 +268,7 @@ export function legacy_pre_effect(deps, fn) {
 	/** @type {{ effect: null | Effect, ran: boolean }} */
 	var token = { effect: null, ran: false };
 
-	if(context.l !=null){
-
+	if(context.l !=null && context.l.r1 != null){
 		context.l.r1.push(token);
 	}
 
@@ -281,7 +280,10 @@ export function legacy_pre_effect(deps, fn) {
 		if (token.ran) return;
 
 		token.ran = true;
-		set(context.l.r2, true);
+
+		if(context.l!=null && context.l.r2 != null){
+			set(context.l.r2, true);
+		}
 		untrack(fn);
 	});
 }
