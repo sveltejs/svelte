@@ -87,8 +87,7 @@ export function Identifier(node, context) {
 	// no binding means global, and we can't inline e.g. `<span>{location}</span>`
 	// because it could change between component renders. if there _is_ a
 	// binding and it is outside module scope, the expression cannot
-	// be inlined (TODO allow inlining in more cases,
-	// e.g. primitive consts)
+	// be inlined (TODO allow inlining in more cases - e.g. primitive consts)
 	let can_inline = !!binding && !binding.scope.parent && binding.kind === 'normal';
 
 	if (binding) {
