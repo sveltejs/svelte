@@ -62,7 +62,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	 */
 	function flush_sequence(sequence) {
 		// TODO this should be folded into the `is_inlinable_sequence` block below,
-		// but it currently causes a test to fail
+		// but it currently causes the script-style-non-top-level test to fail
 		if (sequence.every((node) => node.type === 'Text')) {
 			skipped += 1;
 			state.template.push(sequence.map((node) => node.raw).join(''));
