@@ -1,3 +1,4 @@
+export { clsx } from 'clsx';
 export { FILENAME, HMR, NAMESPACE_SVG } from '../../constants.js';
 export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';

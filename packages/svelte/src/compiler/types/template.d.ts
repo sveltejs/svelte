@@ -452,6 +452,8 @@ export namespace AST {
 			expression: ExpressionMetadata;
 			/** May be set if this is an event attribute */
 			delegated: null | DelegatedEvent;
+			/** May be `true` if this is a `class` attribute that needs `clsx` */
+			is_dynamic_class: boolean;
 		};
 	}
 

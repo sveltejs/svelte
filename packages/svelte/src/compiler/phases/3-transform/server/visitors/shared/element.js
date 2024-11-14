@@ -85,10 +85,25 @@ export function build_element_attributes(node, context) {
 			} else {
 				if (attribute.name === 'class') {
 					class_index = attributes.length;
-				} else if (attribute.name === 'style') {
-					style_index = attributes.length;
+					if (attribute.metadata.is_dynamic_class) {
+						attributes.push({
+							...attribute,
+							value: {
+								.../** @type {AST.ExpressionTag} */ (attribute.value),
+								expression: b.call(
+									'$.clsx',
+									/** @type {AST.ExpressionTag} */ (attribute.value).expression,
+									b.literal(context.state.analysis.css.hash)
+								)
+							}
+						});
+					}
+				} else {
+					if (attribute.name === 'style') {
+						style_index = attributes.length;
+					}
+					attributes.push(attribute);
 				}
-				attributes.push(attribute);
 			}
 		} else if (attribute.type === 'BindDirective') {
 			if (attribute.name === 'value' && node.name === 'select') continue;
