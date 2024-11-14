@@ -1,5 +1,4 @@
 /** @import { Expression, Identifier } from 'estree' */
-/** @import { EachBlock } from '#compiler' */
 /** @import { Context } from '../types' */
 import is_reference from 'is-reference';
 import { should_proxy } from '../../3-transform/client/utils.js';
@@ -19,8 +18,6 @@ export function Identifier(node, context) {
 	if (!is_reference(node, parent)) {
 		return;
 	}
-
-	mark_subtree_dynamic(context.path);
 
 	// If we are using arguments outside of a function, then throw an error
 	if (
@@ -87,6 +84,12 @@ export function Identifier(node, context) {
 		}
 	}
 
+	// no binding means global, and we can't inline e.g. `<span>{location}</span>`
+	// because it could change between component renders. if there _is_ a
+	// binding and it is outside module scope, the expression cannot
+	// be inlined (TODO allow inlining in more cases - e.g. primitive consts)
+	let can_inline = !!binding && !binding.scope.parent && binding.kind === 'normal';
+
 	if (binding) {
 		if (context.state.expression) {
 			context.state.expression.dependencies.add(binding);
@@ -121,5 +124,18 @@ export function Identifier(node, context) {
 		) {
 			w.reactive_declaration_module_script_dependency(node);
 		}
+	}
+
+	if (!can_inline && context.state.expression) {
+		context.state.expression.can_inline = false;
+	}
+
+	/**
+	 * if the identifier is part of an expression tag of an attribute we want to check if it's inlinable
+	 * before marking the subtree as dynamic. This is because if it's inlinable it will be inlined in the template
+	 * directly making the whole thing actually static.
+	 */
+	if (!can_inline || !context.path.find((node) => node.type === 'Attribute')) {
+		mark_subtree_dynamic(context.path);
 	}
 }
