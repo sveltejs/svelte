@@ -14,7 +14,7 @@ import { dev, is_ignored, locator } from '../../../../state.js';
 import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { is_custom_element_node } from '../../../nodes.js';
-import { is_inlinable_attribute, is_inlinable_sequence } from '../../../utils.js';
+import { is_inlinable_attribute } from '../../../utils.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_getter, create_derived } from '../utils.js';
 import {
@@ -361,9 +361,10 @@ export function RegularElement(node, context) {
 		get_states_and_calls(trimmed);
 
 	if (states_and_calls && states_and_calls.states === 0) {
-		let { value } = build_template_literal(trimmed, context.visit, child_state);
+		let { value, can_inline } = build_template_literal(trimmed, context.visit, child_state);
+
 		// if the expression is inlinable we just push it to the template
-		if (is_inlinable_sequence(trimmed)) {
+		if (can_inline) {
 			state.template.push(escape_inline_expression(value));
 		} else {
 			// else we programmatically set the value

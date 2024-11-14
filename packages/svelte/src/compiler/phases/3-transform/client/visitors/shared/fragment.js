@@ -1,9 +1,9 @@
 /** @import { Expression } from 'estree' */
 /** @import { AST, SvelteNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
-import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
+import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { is_inlinable_attribute, is_inlinable_sequence } from '../../../../utils.js';
+import { is_inlinable_attribute } from '../../../../utils.js';
 import { build_template_literal, build_update, escape_inline_expression } from './utils.js';
 
 /**
@@ -61,7 +61,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	 * @param {Sequence} sequence
 	 */
 	function flush_sequence(sequence) {
-		// TODO this should be folded into the `is_inlinable_sequence` block below,
+		// TODO this should be folded into the `if (can_inline)` block below,
 		// but it currently causes the script-style-non-top-level test to fail
 		if (sequence.every((node) => node.type === 'Text')) {
 			skipped += 1;
@@ -69,9 +69,13 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 			return;
 		}
 
-		const { has_state, has_call, value } = build_template_literal(sequence, visit, state);
+		const { has_state, has_call, value, can_inline } = build_template_literal(
+			sequence,
+			visit,
+			state
+		);
 
-		if (is_inlinable_sequence(sequence)) {
+		if (can_inline) {
 			skipped += 1;
 			state.template.push(escape_inline_expression(value));
 			return;

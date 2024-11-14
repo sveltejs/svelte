@@ -61,7 +61,7 @@ export function escape_inline_expression(node, is_attr) {
  * @param {Array<AST.Text | AST.ExpressionTag>} values
  * @param {(node: SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
- * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
+ * @returns {{ value: Expression, has_state: boolean, has_call: boolean, can_inline: boolean }}
  */
 export function build_template_literal(values, visit, state) {
 	/** @type {Expression[]} */
@@ -75,6 +75,7 @@ export function build_template_literal(values, visit, state) {
 	let has_call = calls > 0;
 	let has_state = states > 0;
 	let contains_multiple_call_expression = calls > 1;
+	let can_inline = true;
 
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
@@ -86,6 +87,10 @@ export function build_template_literal(values, visit, state) {
 				quasi.value.cooked += node.expression.value + '';
 			}
 		} else {
+			if (!node.metadata.expression.can_inline) {
+				can_inline = false;
+			}
+
 			if (contains_multiple_call_expression) {
 				const id = b.id(state.scope.generate('stringified_text'));
 				state.init.push(
@@ -107,7 +112,7 @@ export function build_template_literal(values, visit, state) {
 			} else if (values.length === 1) {
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).
-				return { value: visit(node.expression, state), has_state, has_call };
+				return { value: visit(node.expression, state), has_state, has_call, can_inline };
 			} else {
 				expressions.push(b.logical('??', visit(node.expression, state), b.literal('')));
 			}
@@ -123,7 +128,7 @@ export function build_template_literal(values, visit, state) {
 
 	const value = b.template(quasis, expressions);
 
-	return { value, has_state, has_call };
+	return { value, has_state, has_call, can_inline };
 }
 
 /**
