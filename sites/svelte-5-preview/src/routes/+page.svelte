@@ -88,8 +88,7 @@
 />
 
 <Repl
-	bind:this
-	repl}
+	bind:this={repl}
 	autocomplete={true}
 	on:add={change_from_editor}
 	on:change={change_from_editor}

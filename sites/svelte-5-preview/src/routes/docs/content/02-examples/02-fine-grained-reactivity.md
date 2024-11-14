@@ -32,8 +32,8 @@ In Svelte 4, reactivity centres on the _component_ and the top-level state decla
 
 {#each todos as todo}
 	<div>
-		<input bind:value todo.text} />
-		<input type="checkbox" bind:checked todo.done} />
+		<input bind:value={todo.text} />
+		<input type="checkbox" bind:checked={todo.done} />
 	</div>
 {/each}
 

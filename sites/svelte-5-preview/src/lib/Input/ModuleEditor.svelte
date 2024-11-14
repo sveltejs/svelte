@@ -21,8 +21,7 @@
 <div class="editor-wrapper">
 	<div class="editor notranslate" translate="no">
 		<CodeMirror
-			bind:this
-			$module_editor}
+			bind:this={$module_editor}
 			diagnostics={() => {
 				if (error) {
 					return [

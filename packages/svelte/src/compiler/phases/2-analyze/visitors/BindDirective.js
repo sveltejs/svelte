@@ -24,7 +24,6 @@ export function BindDirective(node, context) {
 	validate_no_const_assignment(node, node.expression, context.state.scope, true);
 
 	const assignee = node.expression;
-
 	const left = object(assignee);
 
 	if (left === null) {

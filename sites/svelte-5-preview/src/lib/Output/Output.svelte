@@ -77,8 +77,7 @@
 <!-- component viewer -->
 <div class="tab-content" class:visible={selected?.type !== 'md' && view === 'result'}>
 	<Viewer
-		bind:error
-		runtimeError}
+		bind:error={runtimeError}
 		{status}
 		{relaxed}
 		{injectedJS}
@@ -90,11 +89,11 @@
 <!-- js output -->
 <div class="tab-content" class:visible={selected?.type !== 'md' && view === 'js'}>
 	{#if embedded}
-		<CodeMirror bind:this js_editor} readonly />
+		<CodeMirror bind:this={js_editor} readonly />
 	{:else}
 		<PaneWithPanel pos="50%" panel="Compiler options">
 			<div slot="main">
-				<CodeMirror bind:this js_editor} readonly />
+				<CodeMirror bind:this={js_editor} readonly />
 			</div>
 
 			<div slot="panel-body">
@@ -106,7 +105,7 @@
 
 <!-- css output -->
 <div class="tab-content" class:visible={selected?.type !== 'md' && view === 'css'}>
-	<CodeMirror bind:this css_editor} readonly />
+	<CodeMirror bind:this={css_editor} readonly />
 </div>
 
 <!-- ast output -->
