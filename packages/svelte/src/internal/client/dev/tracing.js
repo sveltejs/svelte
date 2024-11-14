@@ -6,8 +6,8 @@ import { DERIVED, STATE_SYMBOL } from '../constants.js';
 import {
 	active_reaction,
 	captured_signals,
-	current_version,
 	set_captured_signals,
+	trace_version,
 	untrack
 } from '../runtime.js';
 
@@ -40,7 +40,7 @@ function log_entry(signal, version, entry) {
 		}
 		if (captured.size > 0) {
 			for (const dep of captured) {
-				log_entry(dep, version);
+				log_entry(dep, signal.version);
 			}
 			return;
 		}
@@ -48,9 +48,7 @@ function log_entry(signal, version, entry) {
 	const type = (signal.f & DERIVED) !== 0 ? 'derived' : 'state';
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
 	const status =
-		signal.version > current_reaction.version || current_reaction.version === version
-			? 'dirty'
-			: 'clean';
+		signal.version > current_reaction.version || version === signal.version ? 'dirty' : 'clean';
 	// eslint-disable-next-line no-console
 	console.groupCollapsed(
 		`%c${type}`,
@@ -114,7 +112,7 @@ export function trace(fn, label) {
 		tracing_expressions = { entries: new Map(), reaction: active_reaction };
 
 		var start = performance.now();
-		var version = current_version;
+		var version = trace_version;
 		var value = fn();
 		var time = (performance.now() - start).toFixed(2);
 
@@ -164,6 +162,9 @@ export function get_stack() {
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
+			if (line.includes('validate_each_keys')) {
+				return null;
+			}
 			if (line.includes('svelte/src/internal') || !line.includes('.svelte')) {
 				continue;
 			}
