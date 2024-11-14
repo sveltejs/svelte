@@ -583,9 +583,6 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		);
 	}
 
-	// we need to special case textarea value because it's not an actual attribute
-	const inlinable_expression =
-		is_inlinable_attribute(attribute) && attribute.name !== 'value' && element.name !== 'textarea';
 	if (attribute.metadata.expression.has_state) {
 		if (has_call) {
 			state.init.push(build_update(update));
@@ -593,17 +590,23 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 			state.update.push(update);
 		}
 		return true;
-	} else {
-		if (inlinable_expression) {
-			// TODO would be great if we could avoid `$.attr` when we know the value
-			context.state.template.push(
-				b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
-			);
-		} else {
-			state.init.push(update);
-		}
-		return false;
 	}
+
+	// we need to special case textarea value because it's not an actual attribute
+	const can_inline =
+		(attribute.name !== 'value' || element.name !== 'textarea') &&
+		is_inlinable_attribute(attribute);
+
+	if (can_inline) {
+		// TODO would be great if we could avoid `$.attr` when we know the value
+		context.state.template.push(
+			b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
+		);
+	} else {
+		state.init.push(update);
+	}
+
+	return false;
 }
 
 /**
