@@ -131,9 +131,8 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 /**
  * @param {SvelteNode} node
- * @param {ComponentContext["state"]} state
  */
-function is_static_element(node, state) {
+function is_static_element(node) {
 	if (node.type !== 'RegularElement') return false;
 	if (node.fragment.metadata.dynamic) return false;
 	if (node.name.includes('-')) return false; // we're setting all attributes on custom elements through properties
