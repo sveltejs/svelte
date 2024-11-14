@@ -34,7 +34,7 @@ export function CallExpression(node, context) {
 		case '$inspect().with':
 			return transform_inspect_rune(node, context);
 
-		case '$trace':
+		case '$inspect.trace':
 			return b.empty;
 	}
 

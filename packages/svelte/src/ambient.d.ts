@@ -379,6 +379,12 @@ declare function $inspect<T extends any[]>(
 	...values: T
 ): { with: (fn: (type: 'init' | 'update', ...values: T) => void) => void };
 
+declare namespace $inspect {
+
+	export function trace(name: string): void;
+
+}
+
 /**
  * Retrieves the `this` reference of the custom element that contains this component. Example:
  *
@@ -399,5 +405,3 @@ declare function $inspect<T extends any[]>(
  * https://svelte.dev/docs/svelte/$host
  */
 declare function $host<El extends HTMLElement = HTMLElement>(): El;
-
-declare function $trace(name: string): void;

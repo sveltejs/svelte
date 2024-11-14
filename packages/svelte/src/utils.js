@@ -414,8 +414,8 @@ const RUNES = /** @type {const} */ ([
 	'$effect.root',
 	'$inspect',
 	'$inspect().with',
-	'$host',
-	'$trace'
+	'$inspect.trace',
+	'$host'
 ]);
 
 /**
