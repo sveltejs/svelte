@@ -215,6 +215,8 @@ const spread_props_handler = {
 		}
 	},
 	has(target, key) {
+		if (key === STATE_SYMBOL) return false;
+
 		for (let p of target.props) {
 			if (is_function(p)) p = p();
 			if (p != null && key in p) return true;
@@ -320,7 +322,7 @@ export function prop(props, key, flags, fallback) {
 		}
 
 		prop_value = get_fallback();
-		if (setter) setter(prop_value);
+		if (setter && (!is_entry_props || bindable)) setter(prop_value);
 	}
 
 	/** @type {() => V} */
