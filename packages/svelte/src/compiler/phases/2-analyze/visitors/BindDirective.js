@@ -122,6 +122,7 @@ export function BindDirective(node, context) {
 		}
 	}
 
+	// When dealing with bind getters/setters skip the specific binding validation
 	if (Array.isArray(node.expression)) {
 		return;
 	}
