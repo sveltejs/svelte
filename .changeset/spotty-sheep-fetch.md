@@ -1,5 +1,5 @@
 ---
-'svelte': patch
+'svelte': minor
 ---
 
-fix: avoid marking subtree as dynamic for inlined attributes
+feat: better inlining of static attributes
