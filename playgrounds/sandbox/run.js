@@ -48,12 +48,12 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 
 			fs.writeFileSync(`${cwd}/output/${file}.json`, JSON.stringify(ast, null, '\t'));
 
-			// try {
-			// 	const migrated = migrate(source);
-			// 	fs.writeFileSync(`${cwd}/output/${file}.migrated.svelte`, migrated.code);
-			// } catch (e) {
-			// 	console.warn(`Error migrating ${file}`, e);
-			// }
+			try {
+				const migrated = migrate(source);
+				fs.writeFileSync(`${cwd}/output/${file}.migrated.svelte`, migrated.code);
+			} catch (e) {
+				console.warn(`Error migrating ${file}`, e);
+			}
 		}
 
 		const compiled = compile(source, {
