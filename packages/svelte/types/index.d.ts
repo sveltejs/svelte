@@ -2687,9 +2687,7 @@ declare function $inspect<T extends any[]>(
 ): { with: (fn: (type: 'init' | 'update', ...values: T) => void) => void };
 
 declare namespace $inspect {
-
 	export function trace(name: string): void;
-
 }
 
 /**
