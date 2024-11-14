@@ -34,7 +34,6 @@ export function get_states_and_calls(values) {
 }
 
 /**
- * Escape the html in every quasi in the template literal
  * @param {Expression} node
  * @param {boolean} [is_attr]
  * @returns {Expression}
