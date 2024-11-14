@@ -356,6 +356,9 @@ export function RegularElement(node, context) {
 	// special case — if an element that only contains text, we don't need
 	// to descend into it if the text is non-reactive
 	const is_text = trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag');
+
+	// in the rare case that we have static text that can't be inlined
+	// (e.g. `<span>{location}</span>`), set `textContent` programmatically
 	const use_text_content =
 		is_text &&
 		trimmed.every((node) => node.type === 'Text' || !node.metadata.expression.has_state) &&
