@@ -296,7 +296,8 @@ export function prop(props, key, flags, fallback) {
 	var is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
 
 	var setter =
-		get_descriptor(props, key)?.set ?? (is_entry_props ? (v) => (props[key] = v) : undefined);
+		get_descriptor(props, key)?.set ??
+		(is_entry_props && bindable ? (v) => (props[key] = v) : undefined);
 
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;
@@ -322,7 +323,7 @@ export function prop(props, key, flags, fallback) {
 		}
 
 		prop_value = get_fallback();
-		if (setter && (!is_entry_props || bindable)) setter(prop_value);
+		if (setter) setter(prop_value);
 	}
 
 	/** @type {() => V} */

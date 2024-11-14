@@ -25,6 +25,6 @@
 		props.baz = 'baz';
 		props.buz = 'buz';
 	}}>reset</button
->
+> {props.foo} {props.bar} {props.baz} {props.buz}
 <div bind:this={div1}></div>
 <div bind:this={div2}></div>
