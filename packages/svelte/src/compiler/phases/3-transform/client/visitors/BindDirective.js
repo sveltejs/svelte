@@ -36,18 +36,26 @@ export function BindDirective(node, context) {
 		);
 	}
 
-	const get = b.thunk(/** @type {Expression} */ (context.visit(expression)));
+	let get, set;
 
-	/** @type {Expression | undefined} */
-	let set = b.unthunk(
-		b.arrow(
-			[b.id('$$value')],
-			/** @type {Expression} */ (context.visit(b.assignment('=', expression, b.id('$$value'))))
-		)
-	);
+	if (expression.type === 'SequenceExpression') {
+		const [get_expression, set_expression] = expression.expressions;
+		get = /** @type {Expression} */ (context.visit(get_expression));
+		set = /** @type {Expression} */ (context.visit(set_expression));
+	} else {
+		get = b.thunk(/** @type {Expression} */ (context.visit(expression)));
 
-	if (get === set) {
-		set = undefined;
+		/** @type {Expression | undefined} */
+		set = b.unthunk(
+			b.arrow(
+				[b.id('$$value')],
+				/** @type {Expression} */ (context.visit(b.assignment('=', expression, b.id('$$value'))))
+			)
+		);
+
+		if (get === set) {
+			set = undefined;
+		}
 	}
 
 	/** @type {CallExpression} */

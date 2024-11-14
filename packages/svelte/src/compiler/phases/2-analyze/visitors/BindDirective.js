@@ -20,6 +20,14 @@ export function BindDirective(node, context) {
 	validate_no_const_assignment(node, node.expression, context.state.scope, true);
 
 	const assignee = node.expression;
+
+	if (assignee.type === 'SequenceExpression') {
+		if (assignee.expressions.length !== 2) {
+			e.bind_invalid_expression(node);
+		}
+		return;
+	}
+
 	const left = object(assignee);
 
 	if (left === null) {

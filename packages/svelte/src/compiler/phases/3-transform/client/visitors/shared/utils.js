@@ -1,4 +1,4 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement, Super } from 'estree' */
+/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Statement, Super } from 'estree' */
 /** @import { AST, SvelteNode } from '#compiler' */
 /** @import { ComponentClientTransformState } from '../../types' */
 import { walk } from 'zimmerframe';
@@ -157,11 +157,19 @@ export function build_update_assignment(state, id, init, value, update) {
 
 /**
  * Serializes `bind:this` for components and elements.
- * @param {Identifier | MemberExpression} expression
+ * @param {Identifier | MemberExpression | SequenceExpression} expression
  * @param {Expression} value
  * @param {import('zimmerframe').Context<SvelteNode, ComponentClientTransformState>} context
  */
 export function build_bind_this(expression, value, { state, visit }) {
+	if (expression.type === 'SequenceExpression') {
+		const [get_expression, set_expression] = expression.expressions;
+		const get = /** @type {Expression} */ (visit(get_expression));
+		const set = /** @type {Expression} */ (visit(set_expression));
+
+		return b.call('$.bind_this', value, get, set);
+	}
+
 	/** @type {Identifier[]} */
 	const ids = [];
 
@@ -238,6 +246,9 @@ export function build_bind_this(expression, value, { state, visit }) {
  * @param {MemberExpression} expression
  */
 export function validate_binding(state, binding, expression) {
+	if (binding.expression.type === 'SequenceExpression') {
+		return;
+	}
 	// If we are referencing a $store.foo then we don't need to add validation
 	const left = object(binding.expression);
 	const left_binding = left && state.scope.get(left.name);

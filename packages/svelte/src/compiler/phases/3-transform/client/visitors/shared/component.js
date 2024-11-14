@@ -161,49 +161,63 @@ export function build_component(node, component_name, context, anchor = context.
 				push_prop(b.init(attribute.name, value));
 			}
 		} else if (attribute.type === 'BindDirective') {
-			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
+			if (attribute.expression.type === 'SequenceExpression') {
+				const [get_expression, set_expression] = attribute.expression.expressions;
+				const get = /** @type {Expression} */ (context.visit(get_expression));
+				const set = /** @type {Expression} */ (context.visit(set_expression));
+				const get_id = b.id(context.state.scope.generate('bind_get'));
+				const set_id = b.id(context.state.scope.generate('bind_set'));
 
-			if (
-				dev &&
-				expression.type === 'MemberExpression' &&
-				context.state.analysis.runes &&
-				!is_ignored(node, 'binding_property_non_reactive')
-			) {
-				validate_binding(context.state, attribute, expression);
-			}
+				context.state.init.push(b.var(get_id, get));
+				context.state.init.push(b.var(set_id, set));
 
-			if (attribute.name === 'this') {
-				bind_this = attribute.expression;
+				push_prop(b.get(attribute.name, [b.return(b.call(get_id))]));
+				push_prop(b.set(attribute.name, [b.stmt(b.call(set_id, b.id('$$value')))]));
 			} else {
-				if (dev) {
-					binding_initializers.push(
-						b.stmt(
-							b.call(
-								b.id('$.add_owner_effect'),
-								b.thunk(expression),
-								b.id(component_name),
-								is_ignored(node, 'ownership_invalid_binding') && b.true
-							)
-						)
-					);
+				const expression = /** @type {Expression} */ (context.visit(attribute.expression));
+
+				if (
+					dev &&
+					expression.type === 'MemberExpression' &&
+					context.state.analysis.runes &&
+					!is_ignored(node, 'binding_property_non_reactive')
+				) {
+					validate_binding(context.state, attribute, expression);
 				}
 
-				const is_store_sub =
-					attribute.expression.type === 'Identifier' &&
-					context.state.scope.get(attribute.expression.name)?.kind === 'store_sub';
-
-				if (is_store_sub) {
-					push_prop(
-						b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)])
-					);
+				if (attribute.name === 'this') {
+					bind_this = attribute.expression;
 				} else {
-					push_prop(b.get(attribute.name, [b.return(expression)]));
-				}
+					if (dev) {
+						binding_initializers.push(
+							b.stmt(
+								b.call(
+									b.id('$.add_owner_effect'),
+									b.thunk(expression),
+									b.id(component_name),
+									is_ignored(node, 'ownership_invalid_binding') && b.true
+								)
+							)
+						);
+					}
 
-				const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
-				push_prop(
-					b.set(attribute.name, [b.stmt(/** @type {Expression} */ (context.visit(assignment)))])
-				);
+					const is_store_sub =
+						attribute.expression.type === 'Identifier' &&
+						context.state.scope.get(attribute.expression.name)?.kind === 'store_sub';
+
+					if (is_store_sub) {
+						push_prop(
+							b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)])
+						);
+					} else {
+						push_prop(b.get(attribute.name, [b.return(expression)]));
+					}
+
+					const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
+					push_prop(
+						b.set(attribute.name, [b.stmt(/** @type {Expression} */ (context.visit(assignment)))])
+					);
+				}
 			}
 		}
 	}

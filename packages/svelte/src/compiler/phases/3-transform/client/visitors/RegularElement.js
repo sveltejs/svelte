@@ -450,6 +450,11 @@ function setup_select_synchronization(value_binding, context) {
 	if (context.state.analysis.runes) return;
 
 	let bound = value_binding.expression;
+
+	if (bound.type === 'SequenceExpression') {
+		return;
+	}
+
 	while (bound.type === 'MemberExpression') {
 		bound = /** @type {Identifier | MemberExpression} */ (bound.object);
 	}
