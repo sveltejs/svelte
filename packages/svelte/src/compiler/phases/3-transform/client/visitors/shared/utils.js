@@ -35,12 +35,12 @@ export function get_states_and_calls(values) {
 
 /**
  * Escape the html in every quasi in the template literal
- * @param {Expression} template
+ * @param {Expression} node
  * @param {boolean} [is_attr]
  */
-export function escape_inline_expression(template, is_attr) {
+export function escape_inline_expression(node, is_attr) {
 	walk(
-		/** @type {Node} */ (template),
+		/** @type {Node} */ (node),
 		{},
 		{
 			TemplateLiteral(node, { next }) {
@@ -60,7 +60,7 @@ export function escape_inline_expression(template, is_attr) {
 		}
 	);
 
-	return template;
+	return node;
 }
 
 /**
