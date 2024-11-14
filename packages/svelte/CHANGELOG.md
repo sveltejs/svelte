@@ -1,5 +1,17 @@
 # svelte
 
+## 5.1.17
+
+### Patch Changes
+
+- fix: account for `:has(...)` as part of `:root` ([#14229](https://github.com/sveltejs/svelte/pull/14229))
+
+- fix: prevent nested pseudo class from being marked as unused ([#14229](https://github.com/sveltejs/svelte/pull/14229))
+
+- fix: use strict equality for key block comparisons in runes mode ([#14285](https://github.com/sveltejs/svelte/pull/14285))
+
+- fix: bump `is-reference` dependency to fix `import.meta` bug ([#14286](https://github.com/sveltejs/svelte/pull/14286))
+
 ## 5.1.16
 
 ### Patch Changes
