@@ -14,7 +14,7 @@ import { dev, is_ignored, locator } from '../../../../state.js';
 import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { is_custom_element_node } from '../../../nodes.js';
-import { is_inlinable_expression } from '../../../utils.js';
+import { is_inlinable_attribute, is_inlinable_sequence } from '../../../utils.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_getter, create_derived } from '../utils.js';
 import {
@@ -363,7 +363,7 @@ export function RegularElement(node, context) {
 	if (states_and_calls && states_and_calls.states === 0) {
 		let { value } = build_template_literal(trimmed, context.visit, child_state);
 		// if the expression is inlinable we just push it to the template
-		if (is_inlinable_expression(trimmed)) {
+		if (is_inlinable_sequence(trimmed)) {
 			state.template.push(escape_inline_expression(value));
 		} else {
 			// else we programmatically set the value
@@ -380,7 +380,7 @@ export function RegularElement(node, context) {
 		let needs_reset =
 			trimmed.some((node) => node.type !== 'Text') &&
 			(!trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') ||
-				!is_inlinable_expression(trimmed));
+				!is_inlinable_sequence(trimmed));
 
 		// The same applies if it's a `<template>` element, since we need to
 		// set the value of `hydrate_node` to `node.content`
@@ -585,9 +585,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 
 	// we need to special case textarea value because it's not an actual attribute
 	const inlinable_expression =
-		is_inlinable_expression(attribute.value) &&
-		attribute.name !== 'value' &&
-		element.name !== 'textarea';
+		is_inlinable_attribute(attribute) && attribute.name !== 'value' && element.name !== 'textarea';
 	if (attribute.metadata.expression.has_state) {
 		if (has_call) {
 			state.init.push(build_update(update));
@@ -597,7 +595,10 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		return true;
 	} else {
 		if (inlinable_expression) {
-			context.state.template.push(` ${name}="`, escape_inline_expression(value, true), '"');
+			// TODO would be great if we could avoid `$.attr` when we know the value
+			context.state.template.push(
+				b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
+			);
 		} else {
 			state.init.push(update);
 		}

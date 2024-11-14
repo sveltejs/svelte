@@ -3,7 +3,7 @@
 /** @import { ComponentContext } from '../../types' */
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { is_inlinable_expression } from '../../../../utils.js';
+import { is_inlinable_attribute, is_inlinable_sequence } from '../../../../utils.js';
 import { build_template_literal, build_update, escape_inline_expression } from './utils.js';
 
 /**
@@ -84,7 +84,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 			state.update.push(update);
 		} else {
 			// if the expression is inlinable we just push it to the template
-			if (!is_text && is_inlinable_expression(sequence)) {
+			if (!is_text && is_inlinable_sequence(sequence)) {
 				state.template.push(escape_inline_expression(value));
 			} else {
 				// else we programmatically set the value
@@ -165,7 +165,7 @@ function is_static_element(node, state) {
 			!is_text_attribute(attribute) &&
 			// If the attribute is not a text attribute but is inlinable we will directly inline it in the
 			// the template so before returning false we need to check that the attribute is not inlinable
-			!is_inlinable_expression(attribute.value)
+			!is_inlinable_attribute(attribute)
 		) {
 			return false;
 		}

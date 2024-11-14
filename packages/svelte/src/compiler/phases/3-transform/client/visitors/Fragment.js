@@ -6,7 +6,7 @@ import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../../../cons
 import { dev } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
-import { is_inlinable_expression } from '../../../utils.js';
+import { is_inlinable_sequence } from '../../../utils.js';
 import { clean_nodes, infer_namespace } from '../../utils.js';
 import { process_children } from './shared/fragment.js';
 import { build_render_statement } from './shared/utils.js';
@@ -144,7 +144,7 @@ export function Fragment(node, context) {
 		const use_space_template =
 			trimmed.some((node) => node.type === 'ExpressionTag') &&
 			trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
-			!is_inlinable_expression(trimmed);
+			!is_inlinable_sequence(trimmed);
 
 		if (use_space_template) {
 			// special case — we can use `$.text` instead of creating a unique template
