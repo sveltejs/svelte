@@ -215,7 +215,8 @@ const spread_props_handler = {
 		}
 	},
 	has(target, key) {
-		if (key === STATE_SYMBOL) return false;
+		// To prevent a false positive `is_entry_props` in the `prop` function
+		if (key === STATE_SYMBOL || key === LEGACY_PROPS) return false;
 
 		for (let p of target.props) {
 			if (is_function(p)) p = p();
@@ -297,7 +298,7 @@ export function prop(props, key, flags, fallback) {
 
 	var setter =
 		get_descriptor(props, key)?.set ??
-		(is_entry_props && bindable ? (v) => (props[key] = v) : undefined);
+		(is_entry_props && bindable && key in props ? (v) => (props[key] = v) : undefined);
 
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;
@@ -318,7 +319,7 @@ export function prop(props, key, flags, fallback) {
 	};
 
 	if (prop_value === undefined && fallback !== undefined) {
-		if (setter && runes && !is_entry_props) {
+		if (setter && runes) {
 			e.props_invalid_value(key);
 		}
 

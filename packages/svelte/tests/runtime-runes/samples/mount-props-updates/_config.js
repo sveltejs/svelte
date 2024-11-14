@@ -5,9 +5,9 @@ export default test({
 	test({ assert, target }) {
 		assert.htmlEqual(
 			target.innerHTML,
-			// Even thought we're in runes mode, the buz fallback propagates back up in this case
+			// The buz fallback does not propagate back up
 			`
-			<button>reset</button> foo baz buz
+			<button>reset</button> foo baz
 			<div><button>update</button> foo bar baz buz</div>
 			<div><button>update</button> foo bar baz buz</div>
 			`
@@ -21,8 +21,10 @@ export default test({
 		assert.htmlEqual(
 			target.innerHTML,
 			// bar is not set in the parent because it's a readonly property
+			// baz is not set in the parent because while it's a bindable property,
+			// it wasn't set initially so it's treated as a readonly proeprty
 			`
-			<button>reset</button> foo 3 4
+			<button>reset</button> foo 3
 			<div><button>update</button> 1 2 3 4</div>
 			<div><button>update</button> 1 2 3 4</div>
 			`
