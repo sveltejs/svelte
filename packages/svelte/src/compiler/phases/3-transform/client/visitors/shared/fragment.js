@@ -12,10 +12,10 @@ import { build_template_chunk, build_update, escape_inline_expression } from './
  * corresponding template node references these updates are applied to.
  * @param {SvelteNode[]} nodes
  * @param {(is_text: boolean) => Expression} initial
- * @param {boolean} is_element
+ * @param {AST.RegularElement | null} element
  * @param {ComponentContext} context
  */
-export function process_children(nodes, initial, is_element, { visit, state }) {
+export function process_children(nodes, initial, element, { visit, state }) {
 	const within_bound_contenteditable = state.metadata.bound_contenteditable;
 	let prev = initial;
 	let skipped = 0;
@@ -65,7 +65,8 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 		if (can_inline) {
 			skipped += 1;
-			state.template.push(escape_inline_expression(value));
+			const raw = element?.name === 'script' || element?.name === 'style';
+			state.template.push(raw ? value : escape_inline_expression(value));
 			return;
 		}
 
@@ -100,7 +101,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 			if (is_static_element(node)) {
 				skipped += 1;
-			} else if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
+			} else if (node.type === 'EachBlock' && nodes.length === 1 && element) {
 				node.metadata.is_controlled = true;
 			} else {
 				const id = flush_node(false, node.type === 'RegularElement' ? node.name : 'node');

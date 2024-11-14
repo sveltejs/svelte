@@ -356,21 +356,17 @@ export function RegularElement(node, context) {
 	// special case — if an element that only contains text, we don't need
 	// to descend into it if the text is non-reactive
 	const is_text = trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag');
-	const states_and_calls = is_text && get_states_and_calls(trimmed);
+	const use_text_content =
+		is_text &&
+		trimmed.every((node) => node.type === 'Text' || !node.metadata.expression.has_state) &&
+		trimmed.some((node) => node.type === 'ExpressionTag' && !node.metadata.expression.can_inline);
 
-	if (states_and_calls && states_and_calls.states === 0) {
-		let { value, can_inline } = build_template_chunk(trimmed, context.visit, child_state);
+	if (use_text_content) {
+		let { value } = build_template_chunk(trimmed, context.visit, child_state);
 
-		// if the expression is inlinable we just push it to the template
-		if (can_inline) {
-			const raw = node.name === 'script' || node.name === 'style';
-			state.template.push(raw ? value : escape_inline_expression(value));
-		} else {
-			// else we programmatically set the value
-			child_state.init.push(
-				b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value))
-			);
-		}
+		child_state.init.push(
+			b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value))
+		);
 	} else {
 		/** @type {Expression} */
 		let arg = context.state.node;
@@ -391,7 +387,7 @@ export function RegularElement(node, context) {
 			arg = b.member(arg, 'content');
 		}
 
-		process_children(trimmed, (is_text) => b.call('$.child', arg, is_text && b.true), true, {
+		process_children(trimmed, (is_text) => b.call('$.child', arg, is_text && b.true), node, {
 			...context,
 			state: child_state
 		});
