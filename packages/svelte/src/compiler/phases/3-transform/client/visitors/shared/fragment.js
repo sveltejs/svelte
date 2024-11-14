@@ -1,10 +1,11 @@
 /** @import { Expression } from 'estree' */
 /** @import { AST, SvelteNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
+import { escape_html } from '../../../../../../escaping.js';
 import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { is_inlinable_attribute } from '../../../../utils.js';
-import { build_template_chunk, build_update, escape_inline_expression } from './utils.js';
+import { build_template_chunk, build_update } from './utils.js';
 
 /**
  * Processes an array of template nodes, joining sibling text/expression nodes
@@ -160,4 +161,28 @@ function is_static_element(node) {
 	}
 
 	return true;
+}
+
+/**
+ * @param {Expression} node
+ * @param {boolean} [is_attr]
+ * @returns {Expression}
+ */
+function escape_inline_expression(node, is_attr) {
+	if (node.type === 'Literal') {
+		if (typeof node.value === 'string') {
+			return b.literal(escape_html(node.value, is_attr));
+		}
+
+		return node;
+	}
+
+	if (node.type === 'TemplateLiteral') {
+		return b.template(
+			node.quasis.map((q) => b.quasi(escape_html(q.value.cooked, is_attr))),
+			node.expressions.map((expression) => escape_inline_expression(expression, is_attr))
+		);
+	}
+
+	return b.call('$.escape', node, is_attr && b.true);
 }

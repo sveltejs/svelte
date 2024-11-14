@@ -9,31 +9,6 @@ import { regex_is_valid_identifier } from '../../../../patterns.js';
 import { create_derived } from '../../utils.js';
 import is_reference from 'is-reference';
 import { locator } from '../../../../../state.js';
-import { escape_html } from '../../../../../../escaping.js';
-
-/**
- * @param {Expression} node
- * @param {boolean} [is_attr]
- * @returns {Expression}
- */
-export function escape_inline_expression(node, is_attr) {
-	if (node.type === 'Literal') {
-		if (typeof node.value === 'string') {
-			return b.literal(escape_html(node.value, is_attr));
-		}
-
-		return node;
-	}
-
-	if (node.type === 'TemplateLiteral') {
-		return b.template(
-			node.quasis.map((q) => b.quasi(escape_html(q.value.cooked, is_attr))),
-			node.expressions.map((expression) => escape_inline_expression(expression, is_attr))
-		);
-	}
-
-	return b.call('$.escape', node, is_attr && b.true);
-}
 
 /**
  * @param {Array<AST.Text | AST.ExpressionTag>} values
