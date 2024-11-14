@@ -123,8 +123,7 @@ export function set_untracked_writes(value) {
 }
 
 /** @type {number} Used by sources and deriveds for handling updates to unowned deriveds */
-export let current_version = 0;
-export let trace_version = 0;
+let current_version = 0;
 
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
@@ -505,7 +504,6 @@ function flush_queued_root_effects(root_effects) {
 
 	var previously_flushing_effect = is_flushing_effect;
 	is_flushing_effect = true;
-	trace_version = current_version;
 
 	try {
 		for (var i = 0; i < length; i++) {

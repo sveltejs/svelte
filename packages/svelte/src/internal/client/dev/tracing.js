@@ -3,23 +3,16 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
 import { define_property } from '../../shared/utils.js';
 import { DERIVED, STATE_SYMBOL } from '../constants.js';
-import {
-	active_reaction,
-	captured_signals,
-	set_captured_signals,
-	trace_version,
-	untrack
-} from '../runtime.js';
+import { active_reaction, captured_signals, set_captured_signals, untrack } from '../runtime.js';
 
 /** @type { any } */
 export let tracing_expressions = null;
 
 /**
  * @param { Value } signal
- * @param { number } version
  * @param { { read: Error[] } } [entry]
  */
-function log_entry(signal, version, entry) {
+function log_entry(signal, entry) {
 	const debug = signal.debug;
 	const value = signal.v;
 
@@ -40,7 +33,7 @@ function log_entry(signal, version, entry) {
 		}
 		if (captured.size > 0) {
 			for (const dep of captured) {
-				log_entry(dep, signal.version);
+				log_entry(dep);
 			}
 			return;
 		}
@@ -48,7 +41,8 @@ function log_entry(signal, version, entry) {
 	const type = (signal.f & DERIVED) !== 0 ? 'derived' : 'state';
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
 	const status =
-		signal.version > current_reaction.version || version === signal.version ? 'dirty' : 'clean';
+		signal.version > current_reaction.version || current_reaction.version === 0 ? 'dirty' : 'clean';
+
 	// eslint-disable-next-line no-console
 	console.groupCollapsed(
 		`%c${type}`,
@@ -61,7 +55,7 @@ function log_entry(signal, version, entry) {
 	if (type === 'derived') {
 		const deps = new Set(/** @type {Derived} */ (signal).deps);
 		for (const dep of deps) {
-			log_entry(dep, version);
+			log_entry(dep);
 		}
 	}
 
@@ -112,7 +106,6 @@ export function trace(fn, label) {
 		tracing_expressions = { entries: new Map(), reaction: active_reaction };
 
 		var start = performance.now();
-		var version = trace_version;
 		var value = fn();
 		var time = (performance.now() - start).toFixed(2);
 
@@ -128,7 +121,7 @@ export function trace(fn, label) {
 			tracing_expressions = null;
 
 			for (const [signal, entry] of entries) {
-				log_entry(signal, version, entry);
+				log_entry(signal, entry);
 			}
 			// eslint-disable-next-line no-console
 			console.groupEnd();
