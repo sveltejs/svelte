@@ -12,28 +12,6 @@ import { locator } from '../../../../../state.js';
 import { escape_html } from '../../../../../../escaping.js';
 
 /**
- * @param {Array<AST.Text | AST.ExpressionTag>} values
- */
-export function get_states_and_calls(values) {
-	let states = 0;
-	let calls = 0;
-	for (let i = 0; i < values.length; i++) {
-		const node = values[i];
-
-		if (node.type === 'ExpressionTag') {
-			if (node.metadata.expression.has_call) {
-				calls++;
-			}
-			if (node.metadata.expression.has_state) {
-				states++;
-			}
-		}
-	}
-
-	return { states, calls };
-}
-
-/**
  * @param {Expression} node
  * @param {boolean} [is_attr]
  * @returns {Expression}
@@ -70,55 +48,59 @@ export function build_template_chunk(values, visit, state) {
 	let quasi = b.quasi('');
 	const quasis = [quasi];
 
-	const { states, calls } = get_states_and_calls(values);
-
-	let has_call = calls > 0;
-	let has_state = states > 0;
-	let contains_multiple_call_expression = calls > 1;
+	let has_call = false;
+	let has_state = false;
 	let can_inline = true;
+	let contains_multiple_call_expression = false;
+
+	for (const node of values) {
+		if (node.type === 'ExpressionTag') {
+			if (node.metadata.expression.has_call) {
+				if (has_call) contains_multiple_call_expression = true;
+				has_call = true;
+			}
+
+			if (node.metadata.expression.has_state) {
+				has_state = true;
+			}
+
+			if (!node.metadata.expression.can_inline) {
+				can_inline = false;
+			}
+		}
+	}
 
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
 
 		if (node.type === 'Text') {
 			quasi.value.cooked += node.data;
-		} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
-			if (node.expression.value != null) {
-				quasi.value.cooked += node.expression.value + '';
-			}
 		} else {
-			if (!node.metadata.expression.can_inline) {
-				can_inline = false;
-			}
-
-			if (contains_multiple_call_expression) {
-				const id = b.id(state.scope.generate('stringified_text'));
-				state.init.push(
-					b.const(
-						id,
-						create_derived(
-							state,
-							b.thunk(
-								b.logical(
-									'??',
-									/** @type {Expression} */ (visit(node.expression, state)),
-									b.literal('')
-								)
-							)
-						)
-					)
-				);
-				expressions.push(b.call('$.get', id));
-			} else if (values.length === 1) {
-				// If we have a single expression, then pass that in directly to possibly avoid doing
-				// extra work in the template_effect (instead we do the work in set_text).
-				return { value: visit(node.expression, state), has_state, has_call, can_inline };
+			if (node.expression.type === 'Literal') {
+				if (node.expression.value != null) {
+					quasi.value.cooked += node.expression.value + '';
+				}
 			} else {
-				expressions.push(b.logical('??', visit(node.expression, state), b.literal('')));
-			}
+				if (contains_multiple_call_expression) {
+					const id = b.id(state.scope.generate('stringified_text'));
+					const expression = /** @type {Expression} */ (visit(node.expression, state));
 
-			quasi = b.quasi('', i + 1 === values.length);
-			quasis.push(quasi);
+					state.init.push(
+						b.const(id, create_derived(state, b.thunk(b.logical('??', expression, b.literal('')))))
+					);
+
+					expressions.push(b.call('$.get', id));
+				} else if (values.length === 1) {
+					// If we have a single expression, then pass that in directly to possibly avoid doing
+					// extra work in the template_effect (instead we do the work in set_text).
+					return { value: visit(node.expression, state), has_state, has_call, can_inline };
+				} else {
+					expressions.push(b.logical('??', visit(node.expression, state), b.literal('')));
+				}
+
+				quasi = b.quasi('', i + 1 === values.length);
+				quasis.push(quasi);
+			}
 		}
 	}
 
