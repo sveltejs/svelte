@@ -169,7 +169,7 @@ Any content inside the component tags that is _not_ a snippet declaration implic
 
 ```svelte
 <!--- file: App.svelte --->
-<Button>click me<Button>
+<Button>click me</Button>
 ```
 
 ```svelte

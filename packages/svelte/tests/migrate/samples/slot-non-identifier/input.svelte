@@ -15,6 +15,12 @@
 </Comp>
 
 <Comp>
+	<div slot="new">
+		reserved keyword
+	</div>
+</Comp>
+
+<Comp>
 	<div slot="stuff">
 		cool
 	</div>

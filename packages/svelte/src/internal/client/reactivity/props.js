@@ -13,7 +13,7 @@ import { derived, derived_safe_equal } from './deriveds.js';
 import {
 	active_effect,
 	get,
-	is_signals_recorded,
+	captured_signals,
 	set_active_effect,
 	untrack,
 	update
@@ -394,7 +394,7 @@ export function prop(props, key, flags, fallback) {
 	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
 		// legacy nonsense — need to ensure the source is invalidated when necessary
 		// also needed for when handling inspect logic so we can inspect the correct source signal
-		if (is_signals_recorded) {
+		if (captured_signals !== null) {
 			// set this so that we don't reset to the parent value if `d`
 			// is invalidated because of `invalidate_inner_signals` (rather
 			// than because the parent or child value changed)

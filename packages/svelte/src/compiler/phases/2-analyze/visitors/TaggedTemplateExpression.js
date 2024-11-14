@@ -10,6 +10,7 @@ export function TaggedTemplateExpression(node, context) {
 	if (context.state.expression && !is_pure(node.tag, context)) {
 		context.state.expression.has_call = true;
 		context.state.expression.has_state = true;
+		context.state.expression.can_inline = false;
 	}
 
 	if (node.tag.type === 'Identifier') {
