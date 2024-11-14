@@ -42,7 +42,7 @@ export function build_component(node, component_name, context, anchor = context.
 	/** @type {Property[]} */
 	const custom_css_props = [];
 
-	/** @type {Identifier | MemberExpression | null} */
+	/** @type {Identifier | MemberExpression | [Expression, Expression] | null} */
 	let bind_this = null;
 
 	/** @type {ExpressionStatement[]} */
@@ -162,17 +162,21 @@ export function build_component(node, component_name, context, anchor = context.
 			}
 		} else if (attribute.type === 'BindDirective') {
 			if (Array.isArray(attribute.expression)) {
-				const [get_expression, set_expression] = attribute.expression;
-				const get = /** @type {Expression} */ (context.visit(get_expression));
-				const set = /** @type {Expression} */ (context.visit(set_expression));
-				const get_id = b.id(context.state.scope.generate('bind_get'));
-				const set_id = b.id(context.state.scope.generate('bind_set'));
+				if (attribute.name === 'this') {
+					bind_this = attribute.expression;
+				} else {
+					const [get_expression, set_expression] = attribute.expression;
+					const get = /** @type {Expression} */ (context.visit(get_expression));
+					const set = /** @type {Expression} */ (context.visit(set_expression));
+					const get_id = b.id(context.state.scope.generate('bind_get'));
+					const set_id = b.id(context.state.scope.generate('bind_set'));
 
-				context.state.init.push(b.var(get_id, get));
-				context.state.init.push(b.var(set_id, set));
+					context.state.init.push(b.var(get_id, get));
+					context.state.init.push(b.var(set_id, set));
 
-				push_prop(b.get(attribute.name, [b.return(b.call(get_id))]));
-				push_prop(b.set(attribute.name, [b.stmt(b.call(set_id, b.id('$$value')))]));
+					push_prop(b.get(attribute.name, [b.return(b.call(get_id))]));
+					push_prop(b.set(attribute.name, [b.stmt(b.call(set_id, b.id('$$value')))]));
+				}
 			} else {
 				const expression = /** @type {Expression} */ (context.visit(attribute.expression));
 

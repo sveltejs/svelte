@@ -171,7 +171,7 @@ export function build_bind_this(expression, value, { state, visit }) {
 		const get = /** @type {Expression} */ (visit(get_expression));
 		const set = /** @type {Expression} */ (visit(set_expression));
 
-		return b.call('$.bind_this', value, get, set);
+		return b.call('$.bind_this', value, set, get);
 	}
 
 	/** @type {Identifier[]} */
