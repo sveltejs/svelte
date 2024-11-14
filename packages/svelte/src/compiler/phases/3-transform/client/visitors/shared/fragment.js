@@ -104,7 +104,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 			let child_state = state;
 
-			if (is_static_element(node, state)) {
+			if (is_static_element(node)) {
 				skipped += 1;
 			} else if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
 				node.metadata.is_controlled = true;
@@ -159,13 +159,7 @@ function is_static_element(node) {
 			return false;
 		}
 
-		if (
-			attribute.value !== true &&
-			!is_text_attribute(attribute) &&
-			// If the attribute is not a text attribute but is inlinable we will directly inline it in the
-			// the template so before returning false we need to check that the attribute is not inlinable
-			!is_inlinable_attribute(attribute)
-		) {
+		if (!is_inlinable_attribute(attribute)) {
 			return false;
 		}
 	}
