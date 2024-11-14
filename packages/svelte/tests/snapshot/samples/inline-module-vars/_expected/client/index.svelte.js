@@ -7,7 +7,7 @@ const __DECLARED_ASSET_2__ = "__VITE_ASSET__2AM7_y_e__ 1440w, __VITE_ASSET__2AM7
 const __DECLARED_ASSET_3__ = "__VITE_ASSET__2AM7_y_g__";
 const a = 1;
 const b = 2;
-var root = $.template(`<picture><source${$.attr("srcset", __DECLARED_ASSET_0__)} type="image/avif"> <source${$.attr("srcset", __DECLARED_ASSET_1__)} type="image/webp"> <source${$.attr("srcset", __DECLARED_ASSET_2__)} type="image/png"> <img${$.attr("src", __DECLARED_ASSET_3__)} alt="production test"${$.attr("width", 1440)}${$.attr("height", 1440)}></picture> <p>${$.escape(a ?? "")} + ${$.escape(b ?? "")} = ${$.escape(a + b ?? "")}</p>`, 1);
+var root = $.template(`<picture><source srcset="${__DECLARED_ASSET_0__}" type="image/avif"> <source srcset="${__DECLARED_ASSET_1__}" type="image/webp"> <source srcset="${__DECLARED_ASSET_2__}" type="image/png"> <img src="${__DECLARED_ASSET_3__}" alt="production test" width="1440" height="1440"></picture> <p>${$.escape(a ?? "")} + ${$.escape(b ?? "")} = ${$.escape(a + b ?? "")}</p>`, 1);
 
 export default function Inline_module_vars($$anchor) {
 	var fragment = root();
