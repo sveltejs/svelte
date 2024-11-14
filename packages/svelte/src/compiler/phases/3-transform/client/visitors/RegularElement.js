@@ -30,9 +30,7 @@ import {
 	build_render_statement,
 	build_template_chunk,
 	build_update,
-	build_update_assignment,
-	escape_inline_expression,
-	get_states_and_calls
+	build_update_assignment
 } from './shared/utils.js';
 
 /**
