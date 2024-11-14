@@ -267,7 +267,11 @@ export function legacy_pre_effect(deps, fn) {
 
 	/** @type {{ effect: null | Effect, ran: boolean }} */
 	var token = { effect: null, ran: false };
-	context.l.r1.push(token);
+
+	if(context.l !=null){
+
+		context.l.r1.push(token);
+	}
 
 	token.effect = render_effect(() => {
 		deps();
