@@ -1,5 +1,11 @@
 # svelte
 
+## 5.2.0
+
+### Minor Changes
+
+- feat: better inlining of static attributes ([#14269](https://github.com/sveltejs/svelte/pull/14269))
+
 ## 5.1.17
 
 ### Patch Changes
