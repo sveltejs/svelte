@@ -1,4 +1,4 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
+/** @import { Expression, ExpressionStatement, Identifier, Literal, MemberExpression, ObjectExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
@@ -596,10 +596,31 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		is_inlinable_attribute(attribute);
 
 	if (can_inline) {
-		// TODO would be great if we could avoid `$.attr` when we know the value
-		context.state.template.push(
-			b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
-		);
+		/** @type {Literal | undefined} */
+		let literal = undefined;
+
+		if (value.type === 'Literal') {
+			literal = value;
+		} else if (value.type === 'Identifier') {
+			const binding = context.state.scope.get(value.name);
+			if (binding && binding.initial?.type === 'Literal' && !binding.reassigned) {
+				literal = binding.initial;
+			}
+		}
+
+		if (literal && escape_html(literal.value, true) === String(literal.value)) {
+			if (is_boolean_attribute(name)) {
+				if (literal.value) {
+					context.state.template.push(` ${name}`);
+				}
+			} else {
+				context.state.template.push(` ${name}="`, value, '"');
+			}
+		} else {
+			context.state.template.push(
+				b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
+			);
+		}
 	} else {
 		state.init.push(update);
 	}

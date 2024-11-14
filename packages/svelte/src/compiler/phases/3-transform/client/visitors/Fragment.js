@@ -227,6 +227,8 @@ function join_template(items) {
 
 			const last = /** @type {TemplateElement} */ (expression.quasis.at(-1));
 			quasi.value.cooked += /** @type {string} */ (last.value.cooked);
+		} else if (expression.type === 'Literal') {
+			/** @type {string} */ (quasi.value.cooked) += expression.value;
 		} else {
 			template.expressions.push(expression);
 			template.quasis.push((quasi = b.quasi('')));
