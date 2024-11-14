@@ -16,16 +16,7 @@ export function BlockStatement(node, context) {
 			b.return(
 				b.call(
 					'$.trace',
-					b.thunk(
-						b.block(
-							node.body.map(
-								(n) =>
-									/** @type {Statement} */ (
-										context.visit(n, { ...context.state, trace_dependencies: true })
-									)
-							)
-						)
-					),
+					b.thunk(b.block(node.body.map((n) => /** @type {Statement} */ (context.visit(n))))),
 					b.literal(tracing)
 				)
 			)

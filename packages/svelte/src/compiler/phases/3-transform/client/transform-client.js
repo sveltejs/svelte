@@ -134,16 +134,14 @@ const visitors = {
 
 /**
  * @param {ComponentAnalysis} analysis
- * @param {string} source
  * @param {ValidatedCompileOptions} options
  * @returns {ESTree.Program}
  */
-export function client_component(analysis, source, options) {
+export function client_component(analysis, options) {
 	/** @type {ComponentClientTransformState} */
 	const state = {
 		analysis,
 		options,
-		source: source.split('\n'),
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
 		is_instance: false,
@@ -165,7 +163,6 @@ export function client_component(analysis, source, options) {
 		private_state: new Map(),
 		transform: {},
 		in_constructor: false,
-		trace_dependencies: false,
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		before_init: /** @type {any} */ (null),
@@ -646,23 +643,20 @@ export function client_component(analysis, source, options) {
 
 /**
  * @param {Analysis} analysis
- * @param {string} source
  * @param {ValidatedModuleCompileOptions} options
  * @returns {ESTree.Program}
  */
-export function client_module(analysis, source, options) {
+export function client_module(analysis, options) {
 	/** @type {ClientTransformState} */
 	const state = {
 		analysis,
 		options,
-		source: source.split('\n'),
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
 		public_state: new Map(),
 		private_state: new Map(),
 		transform: {},
-		in_constructor: false,
-		trace_dependencies: false
+		in_constructor: false
 	};
 
 	const module = /** @type {ESTree.Program} */ (
