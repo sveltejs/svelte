@@ -31,7 +31,7 @@ import {
 	build_template_literal,
 	build_update,
 	build_update_assignment,
-	escape_template_quasis,
+	escape_inline_expression,
 	get_states_and_calls
 } from './shared/utils.js';
 
@@ -364,7 +364,7 @@ export function RegularElement(node, context) {
 		let { value } = build_template_literal(trimmed, context.visit, child_state);
 		// if the expression is inlinable we just push it to the template
 		if (is_inlinable_expression(trimmed)) {
-			state.template.push(escape_template_quasis(value));
+			state.template.push(escape_inline_expression(value));
 		} else {
 			// else we programmatically set the value
 			child_state.init.push(
@@ -597,7 +597,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		return true;
 	} else {
 		if (inlinable_expression) {
-			context.state.template.push(` ${name}="`, escape_template_quasis(value, true), '"');
+			context.state.template.push(` ${name}="`, escape_inline_expression(value, true), '"');
 		} else {
 			state.init.push(update);
 		}

@@ -38,7 +38,7 @@ export function get_states_and_calls(values) {
  * @param {Expression} template
  * @param {boolean} [is_attr]
  */
-export function escape_template_quasis(template, is_attr) {
+export function escape_inline_expression(template, is_attr) {
 	walk(
 		/** @type {Node} */ (template),
 		{},
