@@ -364,8 +364,7 @@ export function RegularElement(node, context) {
 		let { value } = build_template_literal(trimmed, context.visit, child_state);
 		// if the expression is inlinable we just push it to the template
 		if (is_inlinable_expression(trimmed)) {
-			escape_template_quasis(value);
-			state.template.push(value);
+			state.template.push(escape_template_quasis(value));
 		} else {
 			// else we programmatically set the value
 			child_state.init.push(
@@ -598,8 +597,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		return true;
 	} else {
 		if (inlinable_expression) {
-			escape_template_quasis(value, true);
-			context.state.template.push(` ${name}="`, value, '"');
+			context.state.template.push(` ${name}="`, escape_template_quasis(value, true), '"');
 		} else {
 			state.init.push(update);
 		}

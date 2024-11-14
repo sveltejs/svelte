@@ -1,4 +1,4 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement, Super, TemplateLiteral, Literal } from 'estree' */
+/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement, Super, TemplateLiteral, Node } from 'estree' */
 /** @import { AST, SvelteNode } from '#compiler' */
 /** @import { ComponentClientTransformState } from '../../types' */
 import { walk } from 'zimmerframe';
@@ -35,12 +35,12 @@ export function get_states_and_calls(values) {
 
 /**
  * Escape the html in every quasi in the template literal
- * @param {SvelteNode} template
+ * @param {Expression} template
  * @param {boolean} [is_attr]
  */
 export function escape_template_quasis(template, is_attr) {
 	walk(
-		template,
+		/** @type {Node} */ (template),
 		{},
 		{
 			TemplateLiteral(node, { next }) {
@@ -59,6 +59,8 @@ export function escape_template_quasis(template, is_attr) {
 			}
 		}
 	);
+
+	return template;
 }
 
 /**
