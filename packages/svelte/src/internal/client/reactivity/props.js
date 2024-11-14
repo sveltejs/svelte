@@ -20,7 +20,13 @@ import {
 } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import { BRANCH_EFFECT, LEGACY_DERIVED_PROP, ROOT_EFFECT, STATE_SYMBOL } from '../constants.js';
+import {
+	BRANCH_EFFECT,
+	LEGACY_DERIVED_PROP,
+	LEGACY_PROPS,
+	ROOT_EFFECT,
+	STATE_SYMBOL
+} from '../constants.js';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
@@ -283,10 +289,12 @@ export function prop(props, key, flags, fallback) {
 		prop_value = /** @type {V} */ (props[key]);
 	}
 
+	// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
+	// or `createClassComponent(Component, props)`
+	var is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
+
 	var setter =
-		get_descriptor(props, key)?.set ??
-		// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
-		(STATE_SYMBOL in props ? (v) => (props[key] = v) : undefined);
+		get_descriptor(props, key)?.set ?? (is_entry_props ? (v) => (props[key] = v) : undefined);
 
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;
@@ -307,7 +315,7 @@ export function prop(props, key, flags, fallback) {
 	};
 
 	if (prop_value === undefined && fallback !== undefined) {
-		if (setter && runes) {
+		if (setter && runes && !is_entry_props) {
 			e.props_invalid_value(key);
 		}
 
