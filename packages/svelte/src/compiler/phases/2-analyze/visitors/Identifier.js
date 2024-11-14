@@ -1,5 +1,4 @@
 /** @import { Expression, Identifier } from 'estree' */
-/** @import { EachBlock } from '#compiler' */
 /** @import { Context } from '../types' */
 import is_reference from 'is-reference';
 import { should_proxy } from '../../3-transform/client/utils.js';
@@ -7,7 +6,6 @@ import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { is_rune } from '../../../../utils.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
-import { is_inlinable_expression } from '../../utils.js';
 
 /**
  * @param {Identifier} node
@@ -20,8 +18,6 @@ export function Identifier(node, context) {
 	if (!is_reference(node, parent)) {
 		return;
 	}
-
-	const attribute_parent = context.path.find((parent) => parent.type === 'Attribute');
 
 	// If we are using arguments outside of a function, then throw an error
 	if (
@@ -88,17 +84,17 @@ export function Identifier(node, context) {
 		}
 	}
 
+	// no binding means global, and we can't inline e.g. `<span>{location}</span>`
+	// because it could change between component renders. if there _is_ a
+	// binding and it is outside module scope, the expression cannot
+	// be inlined (TODO allow inlining in more cases,
+	// e.g. primitive consts)
+	let can_inline = !!binding && !binding.scope.parent;
+
 	if (binding) {
 		if (context.state.expression) {
 			context.state.expression.dependencies.add(binding);
 			context.state.expression.has_state ||= binding.kind !== 'normal';
-
-			// if the binding is outside module scope, the expression
-			// cannot be inlined (TODO allow inlining in more cases,
-			// e.g. primitive consts)
-			if (!!binding.scope.parent) {
-				context.state.expression.can_inline = false;
-			}
 		}
 
 		if (
@@ -129,10 +125,12 @@ export function Identifier(node, context) {
 		) {
 			w.reactive_declaration_module_script_dependency(node);
 		}
-	} else if (context.state.expression) {
-		// no binding means global, and we can't inline e.g. `<span>{location}</span>`
-		// because it could change between component renders
-		context.state.expression.can_inline = false;
+	}
+
+	if (!can_inline) {
+		if (context.state.expression) {
+			context.state.expression.can_inline = false;
+		}
 	}
 
 	/**
@@ -140,7 +138,7 @@ export function Identifier(node, context) {
 	 * before marking the subtree as dynamic. This is because if it's inlinable it will be inlined in the template
 	 * directly making the whole thing actually static.
 	 */
-	if (!attribute_parent || !is_inlinable_expression(attribute_parent.value)) {
+	if (!can_inline || !context.path.find((node) => node.type === 'Attribute')) {
 		mark_subtree_dynamic(context.path);
 	}
 }
