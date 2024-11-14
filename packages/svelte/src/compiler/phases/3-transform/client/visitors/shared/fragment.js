@@ -5,7 +5,6 @@
 import { escape_html } from '../../../../../../escaping.js';
 import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { is_inlinable_attribute } from '../../../../utils.js';
 import { build_template_chunk, build_update } from './utils.js';
 
 /**
@@ -156,7 +155,7 @@ function is_static_element(node) {
 			return false;
 		}
 
-		if (!is_inlinable_attribute(attribute)) {
+		if (!attribute.metadata.expression.can_inline) {
 			return false;
 		}
 	}

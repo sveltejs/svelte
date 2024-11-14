@@ -14,7 +14,6 @@ import { dev, is_ignored, locator } from '../../../../state.js';
 import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { is_custom_element_node } from '../../../nodes.js';
-import { is_inlinable_attribute } from '../../../utils.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_getter, create_derived } from '../utils.js';
 import {
@@ -593,7 +592,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 	// we need to special case textarea value because it's not an actual attribute
 	const can_inline =
 		(attribute.name !== 'value' || element.name !== 'textarea') &&
-		is_inlinable_attribute(attribute);
+		attribute.metadata.expression.can_inline;
 
 	if (can_inline) {
 		/** @type {Literal | undefined} */
