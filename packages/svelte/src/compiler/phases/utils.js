@@ -4,9 +4,10 @@
  * @param {AST.Attribute["value"]} value
  */
 export function is_inlinable_expression(value) {
-	if (value === true) return false; // not an expression
+	if (value === true) return true;
+
 	let nodes = Array.isArray(value) ? value : [value];
-	let has_expression_tag = false;
+
 	for (let value of nodes) {
 		if (value.type === 'ExpressionTag') {
 			if (!value.metadata.expression.can_inline) {
@@ -25,9 +26,8 @@ export function is_inlinable_expression(value) {
 			) {
 				return false;
 			}
-
-			has_expression_tag = true;
 		}
 	}
-	return has_expression_tag;
+
+	return true;
 }
