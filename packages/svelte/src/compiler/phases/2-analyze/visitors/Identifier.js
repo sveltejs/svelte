@@ -127,10 +127,8 @@ export function Identifier(node, context) {
 		}
 	}
 
-	if (!can_inline) {
-		if (context.state.expression) {
-			context.state.expression.can_inline = false;
-		}
+	if (!can_inline && context.state.expression) {
+		context.state.expression.can_inline = false;
 	}
 
 	/**
