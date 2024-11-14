@@ -1,4 +1,4 @@
-/** @import { AST } from '#compiler' */
+/** @import { AST, Css } from '#compiler' */
 /** @import { Node } from 'estree' */
 const UNKNOWN = {};
 
@@ -32,4 +32,86 @@ export function get_possible_values(chunk) {
 
 	if (values.has(UNKNOWN)) return null;
 	return values;
+}
+
+/**
+ * Returns all parent rules; root is last
+ * @param {Css.Rule | null} rule
+ */
+export function get_parent_rules(rule) {
+	const parents = [];
+
+	let parent = rule?.metadata.parent_rule;
+	while (parent) {
+		parents.push(parent);
+		parent = parent.metadata.parent_rule;
+	}
+
+	return parents;
+}
+
+/**
+ * True if is `:global(...)` or `:global` and no pseudo class that is scoped.
+ * @param {Css.RelativeSelector} relative_selector
+ * @returns {relative_selector is Css.RelativeSelector & { selectors: [Css.PseudoClassSelector, ...Array<Css.PseudoClassSelector | Css.PseudoElementSelector>] }}
+ */
+export function is_global(relative_selector) {
+	const first = relative_selector.selectors[0];
+
+	return (
+		first.type === 'PseudoClassSelector' &&
+		first.name === 'global' &&
+		(first.args === null ||
+			// Only these two selector types keep the whole selector global, because e.g.
+			// :global(button).x means that the selector is still scoped because of the .x
+			relative_selector.selectors.every(
+				(selector) =>
+					is_unscoped_pseudo_class(selector) || selector.type === 'PseudoElementSelector'
+			))
+	);
+}
+
+/**
+ * `true` if is a pseudo class that cannot be or is not scoped
+ * @param {Css.SimpleSelector} selector
+ */
+export function is_unscoped_pseudo_class(selector) {
+	return (
+		selector.type === 'PseudoClassSelector' &&
+		// These make the selector scoped
+		((selector.name !== 'has' &&
+			selector.name !== 'is' &&
+			selector.name !== 'where' &&
+			// Not is special because we want to scope as specific as possible, but because :not
+			// inverses the result, we want to leave the unscoped, too. The exception is more than
+			// one selector in the :not (.e.g :not(.x .y)), then .x and .y should be scoped
+			(selector.name !== 'not' ||
+				selector.args === null ||
+				selector.args.children.every((c) => c.children.length === 1))) ||
+			// selectors with has/is/where/not can also be global if all their children are global
+			selector.args === null ||
+			selector.args.children.every((c) => c.children.every((r) => is_global(r))))
+	);
+}
+
+/**
+ * True if is `:global(...)` or `:global`, irrespective of whether or not there are any pseudo classes that are scoped.
+ * Difference to `is_global`: `:global(x):has(y)` is `true` for `is_outer_global` but `false` for `is_global`.
+ * @param {Css.RelativeSelector} relative_selector
+ * @returns {relative_selector is Css.RelativeSelector & { selectors: [Css.PseudoClassSelector, ...Array<Css.PseudoClassSelector | Css.PseudoElementSelector>] }}
+ */
+export function is_outer_global(relative_selector) {
+	const first = relative_selector.selectors[0];
+
+	return (
+		first.type === 'PseudoClassSelector' &&
+		first.name === 'global' &&
+		(first.args === null ||
+			// Only these two selector types can keep the whole selector global, because e.g.
+			// :global(button).x means that the selector is still scoped because of the .x
+			relative_selector.selectors.every(
+				(selector) =>
+					selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector'
+			))
+	);
 }

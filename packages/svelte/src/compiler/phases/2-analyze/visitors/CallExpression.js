@@ -178,6 +178,7 @@ export function CallExpression(node, context) {
 		if (!is_pure(node.callee, context) || context.state.expression.dependencies.size > 0) {
 			context.state.expression.has_call = true;
 			context.state.expression.has_state = true;
+			context.state.expression.can_inline = false;
 		}
 	}
 }

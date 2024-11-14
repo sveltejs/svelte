@@ -24,7 +24,12 @@ const visitors = {
 		}
 	},
 	ComplexSelector(node, context) {
-		if (!node.metadata.used) {
+		if (
+			!node.metadata.used &&
+			// prevent double-marking of `.unused:is(.unused)`
+			(context.path.at(-2)?.type !== 'PseudoClassSelector' ||
+				/** @type {Css.ComplexSelector} */ (context.path.at(-4))?.metadata.used)
+		) {
 			const content = context.state.stylesheet.content;
 			const text = content.styles.substring(node.start - content.start, node.end - content.start);
 			w.css_unused_selector(node, text);

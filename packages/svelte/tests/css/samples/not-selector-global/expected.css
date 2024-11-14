@@ -27,3 +27,12 @@
 	span:not(p span) {
 		color: green;
 	}
+
+	.x {
+		.svelte-xyz:not(.foo) {
+			color: green;
+		}
+		&:not(.foo) {
+			color: green;
+		}
+	}
