@@ -61,15 +61,23 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	 * @param {Sequence} sequence
 	 */
 	function flush_sequence(sequence) {
+		// TODO this should be folded into the `is_inlinable_sequence` block below,
+		// but it currently causes a test to fail
 		if (sequence.every((node) => node.type === 'Text')) {
 			skipped += 1;
 			state.template.push(sequence.map((node) => node.raw).join(''));
 			return;
 		}
 
-		state.template.push(' ');
-
 		const { has_state, has_call, value } = build_template_literal(sequence, visit, state);
+
+		if (is_inlinable_sequence(sequence)) {
+			skipped += 1;
+			state.template.push(escape_inline_expression(value));
+			return;
+		}
+
+		state.template.push(' ');
 
 		// if this is a standalone `{expression}`, make sure we handle the case where
 		// no text node was created because the expression was empty during SSR
@@ -83,13 +91,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 		} else if (has_state && !within_bound_contenteditable) {
 			state.update.push(update);
 		} else {
-			// if the expression is inlinable we just push it to the template
-			if (!is_text && is_inlinable_sequence(sequence)) {
-				state.template.push(escape_inline_expression(value));
-			} else {
-				// else we programmatically set the value
-				state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
-			}
+			state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
 		}
 	}
 

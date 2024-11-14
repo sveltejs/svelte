@@ -89,7 +89,7 @@ export function Identifier(node, context) {
 	// binding and it is outside module scope, the expression cannot
 	// be inlined (TODO allow inlining in more cases,
 	// e.g. primitive consts)
-	let can_inline = !!binding && !binding.scope.parent;
+	let can_inline = !!binding && !binding.scope.parent && binding.kind === 'normal';
 
 	if (binding) {
 		if (context.state.expression) {
