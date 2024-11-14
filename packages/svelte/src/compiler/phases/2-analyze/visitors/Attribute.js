@@ -24,6 +24,10 @@ export function Attribute(node, context) {
 		}
 	}
 
+	if (node.name.startsWith('on')) {
+		mark_subtree_dynamic(context.path);
+	}
+
 	if (node.value !== true) {
 		for (const chunk of get_attribute_chunks(node.value)) {
 			if (chunk.type !== 'ExpressionTag') continue;

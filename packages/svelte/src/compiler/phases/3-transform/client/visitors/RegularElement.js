@@ -363,7 +363,7 @@ export function RegularElement(node, context) {
 	if (states_and_calls && states_and_calls.states === 0) {
 		let { value } = build_template_literal(trimmed, context.visit, child_state);
 		// if the expression is inlinable we just push it to the template
-		if (is_inlinable_expression(trimmed, context.state.scope)) {
+		if (is_inlinable_expression(trimmed)) {
 			escape_template_quasis(value);
 			state.template.push(value);
 		} else {
@@ -381,7 +381,7 @@ export function RegularElement(node, context) {
 		let needs_reset =
 			trimmed.some((node) => node.type !== 'Text') &&
 			(!trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') ||
-				!is_inlinable_expression(trimmed, context.state.scope));
+				!is_inlinable_expression(trimmed));
 
 		// The same applies if it's a `<template>` element, since we need to
 		// set the value of `hydrate_node` to `node.content`
@@ -586,7 +586,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 
 	// we need to special case textarea value because it's not an actual attribute
 	const inlinable_expression =
-		is_inlinable_expression(attribute.value, context.state.scope) &&
+		is_inlinable_expression(attribute.value) &&
 		attribute.name !== 'value' &&
 		element.name !== 'textarea';
 	if (attribute.metadata.expression.has_state) {

@@ -144,7 +144,7 @@ export function Fragment(node, context) {
 		const use_space_template =
 			trimmed.some((node) => node.type === 'ExpressionTag') &&
 			trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
-			!is_inlinable_expression(trimmed, context.state.scope);
+			!is_inlinable_expression(trimmed);
 
 		if (use_space_template) {
 			// special case — we can use `$.text` instead of creating a unique template

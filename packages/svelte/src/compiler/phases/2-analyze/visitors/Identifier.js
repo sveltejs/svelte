@@ -23,15 +23,6 @@ export function Identifier(node, context) {
 
 	const attribute_parent = context.path.find((parent) => parent.type === 'Attribute');
 
-	/**
-	 * if the identifier is part of an expression tag of an attribute we want to check if it's inlinable
-	 * before marking the subtree as dynamic. This is because if it's inlinable it will be inlined in the template
-	 * directly making the whole thing actually static.
-	 */
-	if (!attribute_parent || !is_inlinable_expression(attribute_parent.value, context.state.scope)) {
-		mark_subtree_dynamic(context.path);
-	}
-
 	// If we are using arguments outside of a function, then throw an error
 	if (
 		node.name === 'arguments' &&
@@ -101,6 +92,13 @@ export function Identifier(node, context) {
 		if (context.state.expression) {
 			context.state.expression.dependencies.add(binding);
 			context.state.expression.has_state ||= binding.kind !== 'normal';
+
+			// if the binding is outside module scope, the expression
+			// cannot be inlined (TODO allow inlining in more cases,
+			// e.g. primitive consts)
+			if (!!binding.scope.parent) {
+				context.state.expression.can_inline = false;
+			}
 		}
 
 		if (
@@ -131,5 +129,18 @@ export function Identifier(node, context) {
 		) {
 			w.reactive_declaration_module_script_dependency(node);
 		}
+	} else if (context.state.expression) {
+		// no binding means global, and we can't inline e.g. `<span>{location}</span>`
+		// because it could change between component renders
+		context.state.expression.can_inline = false;
+	}
+
+	/**
+	 * if the identifier is part of an expression tag of an attribute we want to check if it's inlinable
+	 * before marking the subtree as dynamic. This is because if it's inlinable it will be inlined in the template
+	 * directly making the whole thing actually static.
+	 */
+	if (!attribute_parent || !is_inlinable_expression(attribute_parent.value)) {
+		mark_subtree_dynamic(context.path);
 	}
 }

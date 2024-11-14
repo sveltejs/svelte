@@ -19,6 +19,7 @@ export function MemberExpression(node, context) {
 
 	if (context.state.expression && !is_pure(node, context)) {
 		context.state.expression.has_state = true;
+		context.state.expression.can_inline = false;
 	}
 
 	if (!is_safe_identifier(node, context.state.scope)) {
