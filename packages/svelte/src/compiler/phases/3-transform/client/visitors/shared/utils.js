@@ -37,30 +37,25 @@ export function get_states_and_calls(values) {
  * Escape the html in every quasi in the template literal
  * @param {Expression} node
  * @param {boolean} [is_attr]
+ * @returns {Expression}
  */
 export function escape_inline_expression(node, is_attr) {
-	walk(
-		/** @type {Node} */ (node),
-		{},
-		{
-			TemplateLiteral(node, { next }) {
-				for (let quasi of node.quasis) {
-					quasi.value.raw = escape_html(quasi.value.raw, is_attr);
-				}
-				next();
-			},
-			Literal(node, { next }) {
-				if (node.raw != null) {
-					node.raw = escape_html(node.raw, is_attr);
-				} else {
-					node.value = escape_html(node.value, is_attr);
-				}
-				next();
-			}
+	if (node.type === 'Literal') {
+		if (typeof node.value === 'string') {
+			return b.literal(escape_html(node.value, is_attr));
 		}
-	);
 
-	return node;
+		return node;
+	}
+
+	if (node.type === 'TemplateLiteral') {
+		return b.template(
+			node.quasis.map((q) => b.quasi(escape_html(q.value.cooked, is_attr))),
+			node.expressions.map((expression) => escape_inline_expression(expression, is_attr))
+		);
+	}
+
+	return b.call('$.escape', node, is_attr && b.true);
 }
 
 /**
