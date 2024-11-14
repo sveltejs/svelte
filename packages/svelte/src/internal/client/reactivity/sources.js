@@ -47,9 +47,10 @@ export function set_inspect_effects(v) {
 /**
  * @template V
  * @param {V} v
+ * @param {Error | null} [stack]
  * @returns {Source<V>}
  */
-export function source(v) {
+export function source(v, stack) {
 	/** @type {Value} */
 	var signal = {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
@@ -60,7 +61,8 @@ export function source(v) {
 	};
 
 	if (DEV) {
-		signal.stack = ['created', get_stack()];
+		signal.created = stack || get_stack();
+		signal.debug = null;
 	}
 
 	return signal;
@@ -169,7 +171,7 @@ export function internal_set(source, value) {
 		source.version = increment_version();
 
 		if (DEV) {
-			source.stack = ['updated', get_stack()];
+			source.updated = get_stack();
 		}
 
 		mark_reactions(source, DIRTY);

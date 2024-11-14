@@ -14,7 +14,6 @@ import {
 } from '../../../../constants.js';
 import { dev } from '../../../state.js';
 import { get_value } from './visitors/shared/declarations.js';
-import { walk } from 'zimmerframe';
 
 /**
  * @param {Binding} binding
@@ -351,62 +350,4 @@ export function is_inlinable_expression(node_or_nodes, state) {
 		}
 	}
 	return has_expression_tag;
-}
-
-/**
- * @param {Expression} node
- * @param {Expression} expression
- * @param {ClientTransformState} state
- */
-export function trace(node, expression, state) {
-	const loc = node.loc;
-	const source = state.source;
-	let code = '';
-	let bailout = false;
-
-	walk(expression, null, {
-		AwaitExpression() {
-			bailout = true;
-		}
-	});
-
-	if (bailout) {
-		return expression;
-	}
-
-	if (loc) {
-		const start = loc.start;
-		const end = loc.end;
-
-		if (start.line === end.line) {
-			code = source[start.line - 1].slice(start.column, end.column);
-		} else {
-			for (let i = start.line; i < end.line + 1; i++) {
-				const loc = source[i - 1];
-
-				if (i === start.line) {
-					code += loc.slice(start.column) + '\n';
-				} else if (i === end.line) {
-					code += loc.slice(0, end.column);
-				} else {
-					code += loc + '\n';
-				}
-			}
-		}
-	} else if (node.start !== undefined && node.end !== undefined) {
-		code = source.join('\n').slice(node.start, node.end);
-	} else {
-		return expression;
-	}
-
-	return b.call(
-		'$.trace',
-		b.thunk(expression),
-		b.literal(code),
-		node.type === 'CallExpression' ||
-			node.type === 'MemberExpression' ||
-			node.type === 'NewExpression'
-			? b.literal(true)
-			: undefined
-	);
 }

@@ -15,7 +15,7 @@ export function BlockStatement(node, context) {
 		return b.block([
 			b.return(
 				b.call(
-					'$.log_trace',
+					'$.trace',
 					b.thunk(
 						b.block(
 							node.body.map(

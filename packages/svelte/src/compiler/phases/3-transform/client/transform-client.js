@@ -17,7 +17,6 @@ import { BindDirective } from './visitors/BindDirective.js';
 import { BlockStatement } from './visitors/BlockStatement.js';
 import { BreakStatement } from './visitors/BreakStatement.js';
 import { CallExpression } from './visitors/CallExpression.js';
-import { NewExpression } from './visitors/NewExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
 import { Comment } from './visitors/Comment.js';
 import { Component } from './visitors/Component.js';
@@ -92,7 +91,6 @@ const visitors = {
 	BlockStatement,
 	BreakStatement,
 	CallExpression,
-	NewExpression,
 	ClassBody,
 	Comment,
 	Component,

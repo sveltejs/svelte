@@ -58,7 +58,7 @@ export function derived(fn) {
 	};
 
 	if (DEV) {
-		signal.stack = ['created', get_stack()];
+		signal.created = get_stack();
 	}
 
 	if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {

@@ -34,14 +34,7 @@ import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
 import { legacy_mode_flag } from '../flags/index.js';
-import {
-	tracing_expressions,
-	set_tracing_expression_reactive,
-	REACTIVE_UNCHANGED,
-	REACTIVE_CHANGED,
-	tracing_expression_reactive,
-	REACTIVE_CHANGED_CACHED
-} from './dev/tracing.js';
+import { tracing_expressions, get_stack } from './dev/tracing.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -130,7 +123,7 @@ export function set_untracked_writes(value) {
 }
 
 /** @type {number} Used by sources and deriveds for handling updates to unowned deriveds */
-let current_version = 0;
+export let current_version = 0;
 
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
@@ -786,30 +779,38 @@ export function get(signal) {
 		}
 	}
 
-	var updated = false;
+	var updated = true;
 
 	if (is_derived) {
 		derived = /** @type {Derived} */ (signal);
 
 		if (check_dirtiness(derived)) {
-			updated = true;
 			update_derived(derived);
+		} else {
+			updated = false;
 		}
 	}
 
 	if (
 		DEV &&
-		active_reaction !== null &&
 		tracing_expressions !== null &&
-		tracing_expression_reactive !== REACTIVE_UNCHANGED
+		active_reaction !== null &&
+		tracing_expressions.reaction === active_reaction
 	) {
-		set_tracing_expression_reactive(
-			signal.version > active_reaction.version || active_reaction.version === current_version
-				? updated
-					? REACTIVE_CHANGED
-					: REACTIVE_CHANGED_CACHED
-				: REACTIVE_UNCHANGED
-		);
+		// Used when mapping state between special blocks like `each`
+		if (signal.debug) {
+			signal.debug();
+		} else if (signal.created) {
+			var entry = tracing_expressions.entries.get(signal);
+
+			if (entry === undefined) {
+				entry = {
+					read: []
+				};
+				tracing_expressions.entries.set(signal, entry);
+			}
+			entry.read.push(get_stack());
+		}
 	}
 
 	return signal.v;
