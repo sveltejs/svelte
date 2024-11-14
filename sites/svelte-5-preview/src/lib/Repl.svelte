@@ -338,7 +338,7 @@
 
 <svelte:window on:beforeunload={before_unload} />
 
-<div class="container" class:toggleable={$toggleable} bind:clientWidth={width}>
+<div class="container" class:toggleable={$toggleable} bind:clientWidth width}>
 	<div class="viewport" class:output={show_output}>
 		<SplitPane
 			--color="var(--sk-text-4)"
@@ -374,7 +374,7 @@
 	</div>
 
 	{#if $toggleable}
-		<InputOutputToggle bind:checked={show_output} />
+		<InputOutputToggle bind:checked show_output} />
 	{/if}
 </div>
 

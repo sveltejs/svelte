@@ -11,32 +11,32 @@
 	<div class="option">
 		<span class="key">generate:</span>
 
-		<input id="client" type="radio" bind:group={$compile_options.generate} value="client" />
+		<input id="client" type="radio" bind:group $compile_options.generate} value="client" />
 		<label for="client"><span class="string">"client"</span></label>
 
-		<input id="server" type="radio" bind:group={$compile_options.generate} value="server" />
+		<input id="server" type="radio" bind:group $compile_options.generate} value="server" />
 		<label for="server"><span class="string">"server"</span>,</label>
 	</div>
 
 	<div class="option">
 		<span class="key">css:</span>
 
-		<input id="injected" type="radio" bind:group={$compile_options.css} value="injected" />
+		<input id="injected" type="radio" bind:group $compile_options.css} value="injected" />
 		<label for="injected"><span class="string">"injected"</span></label>
 
-		<input id="external" type="radio" bind:group={$compile_options.css} value="external" />
+		<input id="external" type="radio" bind:group $compile_options.css} value="external" />
 		<label for="external"><span class="string">"external"</span>,</label>
 	</div>
 
 	<label class="option">
 		<span class="key">dev:</span>
-		<Checkbox bind:checked={$compile_options.dev} />
+		<Checkbox bind:checked $compile_options.dev} />
 		<span class="boolean">{$compile_options.dev}</span>,
 	</label>
 
 	<label class="option">
 		<span class="key">hmr:</span>
-		<Checkbox bind:checked={$compile_options.hmr} />
+		<Checkbox bind:checked $compile_options.hmr} />
 		<span class="boolean">{$compile_options.hmr}</span>,
 	</label>
 	});

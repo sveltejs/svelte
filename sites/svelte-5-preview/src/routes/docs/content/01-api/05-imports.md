@@ -25,7 +25,7 @@ Forces any pending effects (including DOM updates) to be applied immediately, ra
 	}
 </script>
 
-<span bind:this={element}>{count}</span>
+<span bind:this element}>{count}</span>
 <button {onclick}>update</button>
 ```
 
@@ -140,14 +140,14 @@ Svelte provides reactive `SvelteMap`, `SvelteSet`, `SvelteDate` and `SvelteURL` 
 </script>
 
 <!-- changes to these... -->
-<input bind:value={url.protocol} />
-<input bind:value={url.hostname} />
-<input bind:value={url.pathname} />
+<input bind:value url.protocol} />
+<input bind:value url.hostname} />
+<input bind:value url.pathname} />
 
 <hr />
 
 <!-- will update `href` and vice versa -->
-<input bind:value={url.href} />
+<input bind:value url.href} />
 ```
 
 ## `svelte/events`

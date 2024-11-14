@@ -60,7 +60,7 @@
 <div class="chat">
 	<h1>Eliza</h1>
 
-	<div class="scrollable" bind:this={div}>
+	<div class="scrollable" bind:this div}>
 		{#each comments as comment}
 			<article class={comment.author}>
 				<span>{comment.text}</span>

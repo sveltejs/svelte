@@ -228,7 +228,7 @@ This is [no longer true in Svelte 5](/#H4sIAAAAAAAAE4WQwU7DMAyGX8VESANpXe8lq9Q8A
 	let Thing = $state();
 </script>
 
-<select bind:value={Thing}>
+<select bind:value Thing}>
 	<option value={A}>A</option>
 	<option value={B}>B</option>
 </select>

@@ -25,7 +25,7 @@
 		{/each}
 	</select>
 
-	<input bind:value={answer} />
+	<input bind:value answer} />
 
 	<button disabled={!answer} type="submit"> Submit </button>
 </form>

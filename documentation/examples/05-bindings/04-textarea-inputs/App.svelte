@@ -3,7 +3,7 @@
 	let text = `Some words are *italic*, some are **bold**`;
 </script>
 
-<textarea bind:value={text} />
+<textarea bind:value text} />
 
 {@html marked(text)}
 

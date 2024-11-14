@@ -18,31 +18,34 @@ export function BindDirective(node, context) {
 
 	const parent = /** @type {SvelteNode} */ (context.path.at(-1));
 
-	if (
-		dev &&
-		context.state.analysis.runes &&
-		expression.type === 'MemberExpression' &&
-		(node.name !== 'this' ||
-			context.path.some(
-				({ type }) =>
-					type === 'IfBlock' || type === 'EachBlock' || type === 'AwaitBlock' || type === 'KeyBlock'
-			)) &&
-		!is_ignored(node, 'binding_property_non_reactive')
-	) {
-		validate_binding(
-			context.state,
-			node,
-			/**@type {MemberExpression} */ (context.visit(expression))
-		);
-	}
-
 	let get, set;
 
-	if (expression.type === 'SequenceExpression') {
-		const [get_expression, set_expression] = expression.expressions;
+	if (Array.isArray(expression)) {
+		const [get_expression, set_expression] = expression;
 		get = /** @type {Expression} */ (context.visit(get_expression));
 		set = /** @type {Expression} */ (context.visit(set_expression));
 	} else {
+		if (
+			dev &&
+			context.state.analysis.runes &&
+			expression.type === 'MemberExpression' &&
+			(node.name !== 'this' ||
+				context.path.some(
+					({ type }) =>
+						type === 'IfBlock' ||
+						type === 'EachBlock' ||
+						type === 'AwaitBlock' ||
+						type === 'KeyBlock'
+				)) &&
+			!is_ignored(node, 'binding_property_non_reactive')
+		) {
+			validate_binding(
+				context.state,
+				node,
+				/**@type {MemberExpression} */ (context.visit(expression))
+			);
+		}
+
 		get = b.thunk(/** @type {Expression} */ (context.visit(expression)));
 
 		/** @type {Expression | undefined} */
@@ -220,10 +223,20 @@ export function BindDirective(node, context) {
 					);
 
 					if (value !== undefined) {
+						let group_expression;
+						if (Array.isArray(expression)) {
+							const get_id = b.id(context.state.scope.generate('bind_get'));
+
+							context.state.init.push(b.var(get_id, get));
+							group_expression = b.call(get_id);
+						} else {
+							group_expression = /** @type {Expression} */ (context.visit(expression));
+						}
+
 						group_getter = b.thunk(
 							b.block([
 								b.stmt(build_attribute_value(value, context).value),
-								b.return(/** @type {Expression} */ (context.visit(expression)))
+								b.return(group_expression)
 							])
 						);
 					}

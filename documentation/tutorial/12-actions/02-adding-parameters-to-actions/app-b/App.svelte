@@ -6,7 +6,7 @@
 </script>
 
 <label>
-	<input type="range" bind:value={duration} max={2000} step={100} />
+	<input type="range" bind:value duration} max={2000} step={100} />
 	{duration}ms
 </label>
 

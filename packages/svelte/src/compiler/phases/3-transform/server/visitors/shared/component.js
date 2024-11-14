@@ -81,8 +81,8 @@ export function build_inline_component(node, expression, context) {
 			const value = build_attribute_value(attribute.value, context, false, true);
 			push_prop(b.prop('init', b.key(attribute.name), value));
 		} else if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
-			if (attribute.expression.type === 'SequenceExpression') {
-				const [get_expression, set_expression] = attribute.expression.expressions;
+			if (Array.isArray(attribute.expression)) {
+				const [get_expression, set_expression] = attribute.expression;
 				const get = /** @type {Expression} */ (context.visit(get_expression));
 				const set = /** @type {Expression} */ (context.visit(set_expression));
 				const get_id = b.id(context.state.scope.generate('bind_get'));

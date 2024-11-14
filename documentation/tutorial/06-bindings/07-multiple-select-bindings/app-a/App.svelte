@@ -13,17 +13,17 @@
 <h2>Size</h2>
 
 <label>
-	<input type="radio" bind:group={scoops} value={1} />
+	<input type="radio" bind:group scoops} value={1} />
 	One scoop
 </label>
 
 <label>
-	<input type="radio" bind:group={scoops} value={2} />
+	<input type="radio" bind:group scoops} value={2} />
 	Two scoops
 </label>
 
 <label>
-	<input type="radio" bind:group={scoops} value={3} />
+	<input type="radio" bind:group scoops} value={3} />
 	Three scoops
 </label>
 
@@ -31,7 +31,7 @@
 
 {#each menu as flavour}
 	<label>
-		<input type="checkbox" bind:group={flavours} value={flavour} />
+		<input type="checkbox" bind:group flavours} value={flavour} />
 		{flavour}
 	</label>
 {/each}

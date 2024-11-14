@@ -15,12 +15,12 @@
 <div style="position: absolute; right: 1em;">
 	<label>
 		<h3>stiffness ({coords.stiffness})</h3>
-		<input bind:value={coords.stiffness} type="range" min="0" max="1" step="0.01" />
+		<input bind:value coords.stiffness} type="range" min="0" max="1" step="0.01" />
 	</label>
 
 	<label>
 		<h3>damping ({coords.damping})</h3>
-		<input bind:value={coords.damping} type="range" min="0" max="1" step="0.01" />
+		<input bind:value coords.damping} type="range" min="0" max="1" step="0.01" />
 	</label>
 </div>
 

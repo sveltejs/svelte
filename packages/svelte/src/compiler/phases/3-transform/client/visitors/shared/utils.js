@@ -157,13 +157,13 @@ export function build_update_assignment(state, id, init, value, update) {
 
 /**
  * Serializes `bind:this` for components and elements.
- * @param {Identifier | MemberExpression | SequenceExpression} expression
+ * @param {Identifier | MemberExpression | [Expression, Expression]} expression
  * @param {Expression} value
  * @param {import('zimmerframe').Context<SvelteNode, ComponentClientTransformState>} context
  */
 export function build_bind_this(expression, value, { state, visit }) {
-	if (expression.type === 'SequenceExpression') {
-		const [get_expression, set_expression] = expression.expressions;
+	if (Array.isArray(expression)) {
+		const [get_expression, set_expression] = expression;
 		const get = /** @type {Expression} */ (visit(get_expression));
 		const set = /** @type {Expression} */ (visit(set_expression));
 
@@ -246,7 +246,7 @@ export function build_bind_this(expression, value, { state, visit }) {
  * @param {MemberExpression} expression
  */
 export function validate_binding(state, binding, expression) {
-	if (binding.expression.type === 'SequenceExpression') {
+	if (Array.isArray(binding.expression)) {
 		return;
 	}
 	// If we are referencing a $store.foo then we don't need to add validation

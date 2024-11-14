@@ -11,7 +11,7 @@
 
 <h1 class:pin>{view}</h1>
 
-<Keypad bind:value={pin} on:submit={handleSubmit} />
+<Keypad bind:value pin} on:submit={handleSubmit} />
 
 <style>
 	h1 {

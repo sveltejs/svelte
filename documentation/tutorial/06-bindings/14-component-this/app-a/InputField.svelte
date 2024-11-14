@@ -6,4 +6,4 @@
 	}
 </script>
 
-<input bind:this={input} />
+<input bind:this input} />

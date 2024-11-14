@@ -193,7 +193,7 @@ To run _side-effects_ when the component is mounted to the DOM, and when values 
 	});
 </script>
 
-<canvas bind:this={canvas} width="100" height="100" />
+<canvas bind:this canvas} width="100" height="100" />
 ```
 
 The function passed to `$effect` will run when the component mounts, and will re-run after any changes to the values it reads that were declared with `$state` or `$derived` (including those passed in with `$props`). Re-runs are batched (i.e. changing `color` and `size` in the same moment won't cause two separate runs), and happen after any DOM updates have been applied.
@@ -346,12 +346,12 @@ You might be tempted to do something convoluted with effects to link one value t
 </script>
 
 <label>
-	<input type="range" bind:value={spent} max={total} />
+	<input type="range" bind:value spent} max={total} />
 	{spent}/{total} spent
 </label>
 
 <label>
-	<input type="range" bind:value={left} max={total} />
+	<input type="range" bind:value left} max={total} />
 	{left}/{total} left
 </label>
 ```
@@ -414,12 +414,12 @@ If you need to use bindings, for whatever reason (for example when you want some
 </script>
 
 <label>
-	<input type="range" bind:value={spent} max={total} />
+	<input type="range" bind:value spent} max={total} />
 	{spent}/{total} spent
 </label>
 
 <label>
-	<input type="range" bind:value={left.value} max={total} />
+	<input type="range" bind:value left.value} max={total} />
 	{left.value}/{total} left
 </label>
 ```
@@ -467,7 +467,7 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 	});
 </script>
 
-<div bind:this={div}>
+<div bind:this div}>
 	{#each messages as message}
 		<p>{message}</p>
 	{/each}
@@ -627,7 +627,7 @@ or array using [fine-grained reactivity](/docs/fine-grained-reactivity) will cau
 </script>
 
 <button onclick={() => count++}>Increment</button>
-<input bind:value={message} />
+<input bind:value message} />
 ```
 
 `$inspect` returns a property `with`, which you can invoke with a callback, which will then be invoked instead of `console.log`. The first argument to the callback is either `"init"` or `"update"`, all following arguments are the values passed to `$inspect`. [Demo:](/#H4sIAAAAAAAACkVQ24qDMBD9lSEUqlTqPlsj7ON-w7pQG8c2VCchmVSK-O-bKMs-DefKYRYx6BG9qL4XQd2EohKf1opC8Nsm4F84MkbsTXAqMbVXTltuWmp5RAZlAjFIOHjuGLOP_BKVqB00eYuKs82Qn2fNjyxLtcWeyUE2sCRry3qATQIpJRyD7WPVMf9TW-7xFu53dBcoSzAOrsqQNyOe2XUKr0Xi5kcMvdDB2wSYO-I9vKazplV1-T-d6ltgNgSG1KjVUy7ZtmdbdjqtzRcphxMS1-XubOITJtPrQWMvKnYB15_1F7KKadA_AQAA)

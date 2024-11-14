@@ -248,7 +248,8 @@
 						<input
 							autofocus
 							spellcheck={false}
-							bind:value={input_value}
+							bind:value
+							input_value}
 							on:focus={select_input}
 							on:blur={close_edit}
 							on:keydown={(e) => {

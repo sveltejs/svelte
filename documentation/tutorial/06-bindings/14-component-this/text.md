@@ -9,7 +9,7 @@ Just as you can bind to DOM elements, you can bind to component instances themse
 	let field;
 </script>
 
-<InputField bind:this={field} />
+<InputField bind:this field} />
 ```
 
 Now we can programmatically interact with this component using `field`.

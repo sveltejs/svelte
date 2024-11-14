@@ -37,7 +37,7 @@
 	$: current && runAnimations();
 </script>
 
-<div bind:offsetWidth={width} class="easing-vis">
+<div bind:offsetWidth width} class="easing-vis">
 	<svg viewBox="0 0 1400 1802">
 		<g class="canvas">
 			<Grid x={$time} y={$value} />

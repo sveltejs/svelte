@@ -31,7 +31,7 @@
 	<link rel="stylesheet" href="https://unpkg.com/mapbox-gl/dist/mapbox-gl.css" on:load={load} />
 </svelte:head>
 
-<div bind:this={container}>
+<div bind:this container}>
 	{#if map}
 		<slot />
 	{/if}

@@ -17,16 +17,13 @@ import { is_content_editable_binding, is_svg } from '../../../../utils.js';
  * @param {Context} context
  */
 export function BindDirective(node, context) {
+	if (Array.isArray(node.expression)) {
+		return;
+	}
+
 	validate_no_const_assignment(node, node.expression, context.state.scope, true);
 
 	const assignee = node.expression;
-
-	if (assignee.type === 'SequenceExpression') {
-		if (assignee.expressions.length !== 2) {
-			e.bind_invalid_expression(node);
-		}
-		return;
-	}
 
 	const left = object(assignee);
 

@@ -172,6 +172,10 @@
 
 > Expected whitespace
 
+## invalid_bind_directive
+
+> Bind directive getter/setter values (`bind:thing={ getter, setter }`) must be two JavaScript expressions separated by a single comma and enclosed in curly braces
+
 ## js_parse_error
 
 > %message%

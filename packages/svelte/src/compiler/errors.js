@@ -985,6 +985,15 @@ export function expected_whitespace(node) {
 }
 
 /**
+ * Bind directive getter/setter values (`bind:thing={ getter, setter }`) must be two JavaScript expressions separated by a single comma and enclosed in curly braces
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function invalid_bind_directive(node) {
+	e(node, "invalid_bind_directive", "Bind directive getter/setter values (`bind:thing={ getter, setter }`) must be two JavaScript expressions separated by a single comma and enclosed in curly braces");
+}
+
+/**
  * %message%
  * @param {null | number | NodeLike} node
  * @param {string} message

@@ -7,7 +7,7 @@ If a store is writable — i.e. it has a `set` method — you can bind to its va
 In this example we have a writable store `name` and a derived store `greeting`. Update the `<input>` element:
 
 ```svelte
-<input bind:value={$name} />
+<input bind:value $name} />
 ```
 
 Changing the input value will now update `name` and all its dependents.

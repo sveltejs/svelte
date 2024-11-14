@@ -14,7 +14,8 @@ On line 62, add `currentTime={time}`, `duration` and `paused` bindings:
 	on:touchmove|preventDefault={handleMove}
 	on:mousedown={handleMousedown}
 	on:mouseup={handleMouseup}
-	bind:currentTime={time}
+	bind:currentTime
+	time}
 	bind:duration
 	bind:paused
 >

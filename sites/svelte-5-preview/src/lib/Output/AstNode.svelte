@@ -77,7 +77,8 @@
 </script>
 
 <li
-	bind:this={list_item_el}
+	bind:this
+	list_item_el}
 	class:marked={!is_root && is_leaf}
 	on:mouseover={handle_mark_text}
 	on:focus={handle_mark_text}

@@ -254,7 +254,8 @@
 			<iframe
 				title="Result"
 				class:inited
-				bind:this={iframe}
+				bind:this
+				iframe}
 				sandbox={[
 					'allow-popups-to-escape-sandbox',
 					'allow-scripts',

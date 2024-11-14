@@ -20,9 +20,9 @@
 
 {#each todos as todo}
 	<div>
-		<input type="checkbox" bind:checked={todo.done} />
+		<input type="checkbox" bind:checked todo.done} />
 
-		<input placeholder="What needs to be done?" bind:value={todo.text} disabled={todo.done} />
+		<input placeholder="What needs to be done?" bind:value todo.text} disabled={todo.done} />
 	</div>
 {/each}
 

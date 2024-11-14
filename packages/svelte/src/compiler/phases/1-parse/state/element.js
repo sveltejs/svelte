@@ -13,6 +13,7 @@ import { create_attribute, create_expression_metadata } from '../../nodes.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../utils/ast.js';
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
+import { parse_expression_at } from '../acorn.js';
 
 const regex_invalid_unquoted_attribute_value = /^(\/>|[\s"'=<>`])/;
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
@@ -506,11 +507,53 @@ function read_attribute(parser) {
 	const colon_index = name.indexOf(':');
 	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
 
+	/** @type {Expression | [Expression, Expression] | null} */
+	let expression = null;
+
 	/** @type {true | AST.ExpressionTag | Array<AST.Text | AST.ExpressionTag>} */
 	let value = true;
 	if (parser.eat('=')) {
 		parser.allow_whitespace();
+		let value_start = 0;
+
+		// Validate the bind: value doesn't start with a paren
+		if (name.startsWith('bind:')) {
+			const start = parser.index;
+			parser.eat('{');
+			parser.allow_whitespace();
+			value_start = parser.index;
+			parser.index = start;
+		}
+
 		value = read_attribute_value(parser);
+
+		// bind can use a getter/setter pair {a, b}, so the attribute parsing above will capture
+		// a SequenceExpression. To ensure this is handled correctly, we use wrap the expression
+		// again in square brackets and parse it again. This should ensure it's an ArrayExpression
+		// with two elements and if not we can throw an appropiate error
+		if (
+			name.startsWith('bind:') &&
+			!Array.isArray(value) &&
+			value.expression.type === 'SequenceExpression'
+		) {
+			try {
+				const bind_getter_setter = parse_expression_at(
+					`[${parser.template.slice(value_start, value.expression.end)}]`,
+					parser.ts,
+					0
+				);
+
+				if (
+					bind_getter_setter.type !== 'ArrayExpression' ||
+					bind_getter_setter.elements.length !== 2
+				) {
+					e.invalid_bind_directive(value_start);
+				}
+				expression = /** @type {[Expression, Expression]} */ (bind_getter_setter.elements);
+			} catch {
+				e.invalid_bind_directive(value_start);
+			}
+		}
 		end = parser.index;
 	} else if (parser.match_regex(regex_starts_with_quote_characters)) {
 		e.expected_token(parser.index, '=');
@@ -540,15 +583,12 @@ function read_attribute(parser) {
 
 		const first_value = value === true ? undefined : Array.isArray(value) ? value[0] : value;
 
-		/** @type {Expression | null} */
-		let expression = null;
-
 		if (first_value) {
 			const attribute_contains_text =
 				/** @type {any[]} */ (value).length > 1 || first_value.type === 'Text';
 			if (attribute_contains_text) {
 				e.directive_invalid_value(/** @type {number} */ (first_value.start));
-			} else {
+			} else if (expression === null) {
 				// TODO throw a parser error in a future version here if this `[ExpressionTag]` instead of `ExpressionTag`,
 				// which means stringified value, which isn't allowed for some directives?
 				expression = first_value.expression;

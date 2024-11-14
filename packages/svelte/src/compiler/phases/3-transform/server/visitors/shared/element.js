@@ -110,15 +110,14 @@ export function build_element_attributes(node, context) {
 			if (binding?.omit_in_ssr) continue;
 
 			if (is_content_editable_binding(attribute.name)) {
-				content =
-					attribute.expression.type === 'SequenceExpression'
-						? b.call(/** @type {Expression} */ (context.visit(attribute.expression.expressions[0])))
-						: /** @type {Expression} */ (context.visit(attribute.expression));
+				content = Array.isArray(attribute.expression)
+					? b.call(/** @type {Expression} */ (context.visit(attribute.expression[0])))
+					: /** @type {Expression} */ (context.visit(attribute.expression));
 			} else if (attribute.name === 'value' && node.name === 'textarea') {
 				content = b.call(
 					'$.escape',
-					attribute.expression.type === 'SequenceExpression'
-						? b.call(/** @type {Expression} */ (context.visit(attribute.expression.expressions[0])))
+					Array.isArray(attribute.expression)
+						? b.call(/** @type {Expression} */ (context.visit(attribute.expression[0])))
 						: /** @type {Expression} */ (context.visit(attribute.expression))
 				);
 			} else if (attribute.name === 'group') {
@@ -134,10 +133,9 @@ export function build_element_attributes(node, context) {
 						is_text_attribute(attr) &&
 						attr.value[0].data === 'checkbox'
 				);
-				const attribute_expression =
-					attribute.expression.type === 'SequenceExpression'
-						? b.call(attribute.expression.expressions[0])
-						: attribute.expression;
+				const attribute_expression = Array.isArray(attribute.expression)
+					? b.call(attribute.expression[0])
+					: attribute.expression;
 
 				attributes.push(
 					create_attribute('checked', -1, -1, [
@@ -163,10 +161,9 @@ export function build_element_attributes(node, context) {
 					])
 				);
 			} else {
-				const attribute_expression =
-					attribute.expression.type === 'SequenceExpression'
-						? b.call(attribute.expression.expressions[0])
-						: attribute.expression;
+				const attribute_expression = Array.isArray(attribute.expression)
+					? b.call(attribute.expression[0])
+					: attribute.expression;
 
 				attributes.push(
 					create_attribute(attribute.name, -1, -1, [
