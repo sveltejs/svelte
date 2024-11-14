@@ -51,18 +51,35 @@ export function build_template_chunk(values, visit, state) {
 		if (node.type === 'Text') {
 			quasi.value.cooked += node.data;
 		} else {
-			if (node.expression.type === 'Literal') {
-				if (node.expression.value != null) {
-					quasi.value.cooked += node.expression.value + '';
+			const expression = /** @type {Expression} */ (visit(node.expression, state));
+
+			if (expression.type === 'Literal') {
+				if (expression.value != null) {
+					quasi.value.cooked += expression.value + '';
 				}
 			} else {
+				let value = expression;
+
+				// if we don't know the value, we need to add `?? ''` to replace
+				// `null` and `undefined` with the empty string
+				let needs_fallback = true;
+
+				if (value.type === 'Identifier') {
+					const binding = state.scope.get(value.name);
+
+					if (binding && binding.initial?.type === 'Literal' && !binding.reassigned) {
+						needs_fallback = binding.initial.value === null;
+					}
+				}
+
+				if (needs_fallback) {
+					value = b.logical('??', expression, b.literal(''));
+				}
+
 				if (contains_multiple_call_expression) {
 					const id = b.id(state.scope.generate('stringified_text'));
-					const expression = /** @type {Expression} */ (visit(node.expression, state));
 
-					state.init.push(
-						b.const(id, create_derived(state, b.thunk(b.logical('??', expression, b.literal('')))))
-					);
+					state.init.push(b.const(id, create_derived(state, b.thunk(value))));
 
 					expressions.push(b.call('$.get', id));
 				} else if (values.length === 1) {
@@ -70,7 +87,7 @@ export function build_template_chunk(values, visit, state) {
 					// extra work in the template_effect (instead we do the work in set_text).
 					return { value: visit(node.expression, state), has_state, has_call, can_inline };
 				} else {
-					expressions.push(b.logical('??', visit(node.expression, state), b.literal('')));
+					expressions.push(value);
 				}
 
 				quasi = b.quasi('', i + 1 === values.length);

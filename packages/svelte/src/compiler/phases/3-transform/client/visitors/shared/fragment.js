@@ -1,5 +1,6 @@
 /** @import { Expression } from 'estree' */
 /** @import { AST, SvelteNode } from '#compiler' */
+/** @import { Scope } from '../../../../scope.js' */
 /** @import { ComponentContext } from '../../types' */
 import { escape_html } from '../../../../../../escaping.js';
 import { is_event_attribute } from '../../../../../utils/ast.js';
@@ -67,7 +68,7 @@ export function process_children(nodes, initial, element, { visit, state }) {
 		if (can_inline) {
 			skipped += 1;
 			const raw = element?.name === 'script' || element?.name === 'style';
-			state.template.push(raw ? value : escape_inline_expression(value));
+			state.template.push(raw ? value : escape_inline_expression(value, state.scope));
 			return;
 		}
 
@@ -165,13 +166,13 @@ function is_static_element(node) {
 
 /**
  * @param {Expression} node
- * @param {boolean} [is_attr]
+ * @param {Scope} scope
  * @returns {Expression}
  */
-function escape_inline_expression(node, is_attr) {
+function escape_inline_expression(node, scope) {
 	if (node.type === 'Literal') {
 		if (typeof node.value === 'string') {
-			return b.literal(escape_html(node.value, is_attr));
+			return b.literal(escape_html(node.value));
 		}
 
 		return node;
@@ -179,10 +180,25 @@ function escape_inline_expression(node, is_attr) {
 
 	if (node.type === 'TemplateLiteral') {
 		return b.template(
-			node.quasis.map((q) => b.quasi(escape_html(q.value.cooked, is_attr))),
-			node.expressions.map((expression) => escape_inline_expression(expression, is_attr))
+			node.quasis.map((q) => b.quasi(escape_html(q.value.cooked))),
+			node.expressions.map((expression) => escape_inline_expression(expression, scope))
 		);
 	}
 
-	return b.call('$.escape', node, is_attr && b.true);
+	/**
+	 * If we can't determine the range of possible values statically, wrap in
+	 * `$.escape(...)`. TODO expand this to cover more cases
+	 */
+	let needs_escape = true;
+
+	if (node.type === 'Identifier') {
+		const binding = scope.get(node.name);
+
+		// TODO handle more cases
+		if (binding?.initial?.type === 'Literal' && !binding.reassigned) {
+			needs_escape = escape_html(binding.initial.value) !== String(binding.initial.value);
+		}
+	}
+
+	return needs_escape ? b.call('$.escape', node) : node;
 }
