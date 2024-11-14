@@ -377,10 +377,11 @@ export function RegularElement(node, context) {
 
 		// If `hydrate_node` is set inside the element, we need to reset it
 		// after the element has been hydrated (we don't need to reset if it's been inlined)
-		let needs_reset =
-			trimmed.some((node) => node.type !== 'Text') &&
-			(!trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') ||
-				!is_inlinable_sequence(trimmed));
+		let needs_reset = !trimmed.every(
+			(node) =>
+				node.type === 'Text' ||
+				(node.type === 'ExpressionTag' && node.metadata.expression.can_inline)
+		);
 
 		// The same applies if it's a `<template>` element, since we need to
 		// set the value of `hydrate_node` to `node.content`
