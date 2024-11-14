@@ -60,6 +60,8 @@ export function ExportNamedDeclaration(node, context) {
 
 		if (!context.state.ast_type /* .svelte.js module */ || context.state.ast_type === 'module') {
 			for (const specified of node.specifiers) {
+				if (specified.local.type !== 'Identifier') continue;
+
 				const binding = context.state.scope.get(specified.local.name);
 
 				if (!binding) continue;
