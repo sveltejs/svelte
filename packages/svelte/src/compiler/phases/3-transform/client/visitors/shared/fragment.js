@@ -61,14 +61,6 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	 * @param {Sequence} sequence
 	 */
 	function flush_sequence(sequence) {
-		// TODO this should be folded into the `if (can_inline)` block below,
-		// but it currently causes the script-style-non-top-level test to fail
-		if (sequence.every((node) => node.type === 'Text')) {
-			skipped += 1;
-			state.template.push(sequence.map((node) => node.raw).join(''));
-			return;
-		}
-
 		const { has_state, has_call, value, can_inline } = build_template_chunk(sequence, visit, state);
 
 		if (can_inline) {

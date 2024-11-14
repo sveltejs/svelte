@@ -355,17 +355,16 @@ export function RegularElement(node, context) {
 
 	// special case — if an element that only contains text, we don't need
 	// to descend into it if the text is non-reactive
-	const states_and_calls =
-		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
-		trimmed.some((node) => node.type === 'ExpressionTag') &&
-		get_states_and_calls(trimmed);
+	const is_text = trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag');
+	const states_and_calls = is_text && get_states_and_calls(trimmed);
 
 	if (states_and_calls && states_and_calls.states === 0) {
 		let { value, can_inline } = build_template_chunk(trimmed, context.visit, child_state);
 
 		// if the expression is inlinable we just push it to the template
 		if (can_inline) {
-			state.template.push(escape_inline_expression(value));
+			const raw = node.name === 'script' || node.name === 'style';
+			state.template.push(raw ? value : escape_inline_expression(value));
 		} else {
 			// else we programmatically set the value
 			child_state.init.push(
