@@ -40,10 +40,8 @@ Prior to Svelte 5, stores were the go-to solution for creating cross-component r
 
 ```ts
 /// file: state.svelte.js
-export const myGlobalState = $state({
-	user: {
-		/* ... */
-	}
+export const userState = $state({
+	name: 'name',
 	/* ... */
 });
 ```
@@ -51,9 +49,15 @@ export const myGlobalState = $state({
 ```svelte
 <!--- file: App.svelte --->
 <script>
-	import { myGlobalState } from './state.svelte';
-	// ...
+	import { userState } from './state.svelte';
 </script>
+
+<p>User name: {userState.name}</p>
+<button onclick={() => {
+	userState.name = 'new name';
+}}>
+	change name
+</button>
 ```
 
 Stores are still a good solution when you have complex asynchronous data streams or it's important to have more manual control over updating values or listening to changes. If you're familiar with RxJs and want to reuse that knowledge, the `$` also comes in handy for you.
