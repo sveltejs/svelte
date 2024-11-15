@@ -16,7 +16,7 @@ const common = {
 	/* eslint-disable */
 	rootDir: string(
 		typeof process !== 'undefined'
-			? process.cwd()
+			? process.cwd?.()
 			: // @ts-expect-error
 				typeof Deno !== 'undefined'
 				? // @ts-expect-error
