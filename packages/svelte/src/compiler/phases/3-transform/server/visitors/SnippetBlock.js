@@ -18,7 +18,7 @@ export function SnippetBlock(node, context) {
 	// @ts-expect-error - TODO remove this hack once $$render_inner for legacy bindings is gone
 	fn.___snippet = true;
 
-	const can_hoist = can_hoist_snippet(node, context.state.scope);
+	const can_hoist = can_hoist_snippet(node, context.state.scope, context.state.scopes);
 
 	if (context.path.length === 1 && context.path[0].type === 'Fragment' && can_hoist) {
 		context.state.hoisted.push(fn);

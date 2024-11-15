@@ -82,7 +82,7 @@ export function SnippetBlock(node, context) {
 
 	const declaration = b.const(node.expression, snippet);
 	const local_scope = context.state.scope;
-	const can_hoist = can_hoist_snippet(node, local_scope);
+	const can_hoist = can_hoist_snippet(node, local_scope, context.state.scopes);
 
 	// Top-level snippets are hoisted so they can be referenced in the `<script>`
 	if (context.path.length === 1 && context.path[0].type === 'Fragment') {
