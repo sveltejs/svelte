@@ -25,6 +25,13 @@ export function Attribute(node, context) {
 		}
 	}
 
+	// special case loading="lazy"
+	if (node.name === 'loading') {
+		if (parent.type === 'RegularElement' && parent.name === 'img') {
+			mark_subtree_dynamic(context.path);
+		}
+	}
+
 	if (node.name.startsWith('on')) {
 		mark_subtree_dynamic(context.path);
 	}
