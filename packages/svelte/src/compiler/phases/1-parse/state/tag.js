@@ -315,7 +315,10 @@ function open(parser) {
 				name
 			},
 			parameters: function_expression.params,
-			body: create_fragment()
+			body: create_fragment(),
+			metadata: {
+				can_hoist: false
+			}
 		});
 		parser.stack.push(block);
 		parser.fragments.push(block.body);

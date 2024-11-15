@@ -35,9 +35,7 @@ export function SnippetBlock(node, context) {
 		e.snippet_invalid_export(/** @type {any} */ (undefined_exports.get(name)));
 	}
 
-	node.metadata = {
-		can_hoist
-	};
+	node.metadata.can_hoist = can_hoist;
 
 	const { path } = context;
 	const parent = path.at(-2);

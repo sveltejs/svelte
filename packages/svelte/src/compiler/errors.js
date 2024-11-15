@@ -396,6 +396,15 @@ export function runes_mode_invalid_import(node, name) {
 }
 
 /**
+ * Cannot export snippet from a `<script module>` if it references logic or expressions inside the component
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function snippet_invalid_export(node) {
+	e(node, "snippet_invalid_export", "Cannot export snippet from a `<script module>` if it references logic or expressions inside the component");
+}
+
+/**
  * Cannot reassign or bind to snippet parameter
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -411,15 +420,6 @@ export function snippet_parameter_assignment(node) {
  */
 export function state_invalid_export(node) {
 	e(node, "state_invalid_export", "Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties");
-}
-
-/**
- * Cannot export snippet from a `<script module>` if it references logic or expressions inside the component
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function snippet_invalid_export(node) {
-	e(node, "snippet_invalid_export", "Cannot export snippet from a `<script module>` if it references logic or expressions inside the component");
 }
 
 /**
