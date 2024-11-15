@@ -7,7 +7,7 @@
 	let props = $state({ onerror: (e) => console.log('error caught') });
 </script>
 
-<svelte:boundary {...props}>
+<svelte:boundary onerror={props.onerror}>
 	{count > 0 ? throw_error() : null}
 </svelte:boundary>
 

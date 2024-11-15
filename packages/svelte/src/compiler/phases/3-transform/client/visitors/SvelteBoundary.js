@@ -11,33 +11,19 @@ export function SvelteBoundary(node, context) {
 	const nodes = [];
 	/** @type {Statement[]} */
 	const snippet_statements = [];
-	/** @type {Array<Property[] | Expression>} */
-	const props_and_spreads = [];
-
-	let has_spread = false;
+	/** @type {Array<Property[]>} */
+	const props = [];
 
 	const push_prop = (/** @type {Property} */ prop) => {
-		let current = props_and_spreads.at(-1);
+		let current = props.at(-1);
 		if (Array.isArray(current)) {
 			current.push(prop);
 		}
 		const arr = [prop];
-		props_and_spreads.push(arr);
+		props.push(arr);
 	};
 
 	for (const attribute of node.attributes) {
-		if (attribute.type === 'SpreadAttribute') {
-			const value = /** @type {Expression} */ (context.visit(attribute.expression, context.state));
-			has_spread = true;
-
-			if (attribute.metadata.expression.has_state) {
-				props_and_spreads.push(b.thunk(value));
-			} else {
-				props_and_spreads.push(value);
-			}
-			continue;
-		}
-
 		// Skip non-attributes with a single value
 		if (
 			attribute.type !== 'Attribute' ||
@@ -87,16 +73,7 @@ export function SvelteBoundary(node, context) {
 		)
 	);
 
-	const props_expression =
-		!has_spread && Array.isArray(props_and_spreads[0])
-			? b.object(props_and_spreads[0])
-			: props_and_spreads.length === 0
-				? b.object([])
-				: b.call(
-						'$.spread_props',
-						...props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))
-					);
-
+	const props_expression = b.object(props.length === 0 ? [] : props[0]);
 	const boundary = b.stmt(
 		b.call('$.boundary', context.state.node, b.arrow([b.id('$$anchor')], block), props_expression)
 	);

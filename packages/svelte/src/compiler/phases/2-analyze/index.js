@@ -60,6 +60,7 @@ import { SvelteFragment } from './visitors/SvelteFragment.js';
 import { SvelteHead } from './visitors/SvelteHead.js';
 import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { SvelteWindow } from './visitors/SvelteWindow.js';
+import { SvelteBoundary } from './visitors/SvelteBoundary.js';
 import { TaggedTemplateExpression } from './visitors/TaggedTemplateExpression.js';
 import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
@@ -171,6 +172,7 @@ const visitors = {
 	SvelteHead,
 	SvelteSelf,
 	SvelteWindow,
+	SvelteBoundary,
 	TaggedTemplateExpression,
 	Text,
 	TransitionDirective,
