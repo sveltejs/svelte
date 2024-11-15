@@ -4,6 +4,7 @@
 import { dev } from '../../../../state.js';
 import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
+import { can_hoist_snippet } from '../../utils.js';
 import { get_value } from './shared/declarations.js';
 
 /**
@@ -80,10 +81,16 @@ export function SnippetBlock(node, context) {
 	}
 
 	const declaration = b.const(node.expression, snippet);
+	const local_scope = context.state.scope;
+	const can_hoist = can_hoist_snippet(node, local_scope);
 
 	// Top-level snippets are hoisted so they can be referenced in the `<script>`
 	if (context.path.length === 1 && context.path[0].type === 'Fragment') {
-		context.state.analysis.top_level_snippets.push(declaration);
+		if (can_hoist) {
+			context.state.analysis.module_level_snippets.push(declaration);
+		} else {
+			context.state.analysis.top_level_snippets.push(declaration);
+		}
 	} else {
 		context.state.init.push(declaration);
 	}

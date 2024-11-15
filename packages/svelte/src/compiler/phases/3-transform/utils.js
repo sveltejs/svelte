@@ -1,5 +1,6 @@
 /** @import { Context } from 'zimmerframe' */
 /** @import { TransformState } from './types.js' */
+/** @import { Scope } from '../scope.js' */
 /** @import { AST, Binding, Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler' */
 /** @import { Node, Expression, CallExpression } from 'estree' */
 import {
@@ -451,4 +452,35 @@ export function transform_inspect_rune(node, context) {
 		const arg = node.arguments.map((arg) => /** @type {Expression} */ (visit(arg)));
 		return b.call('$.inspect', as_fn ? b.thunk(b.array(arg)) : b.array(arg));
 	}
+}
+
+/**
+ * @param {AST.SnippetBlock} node
+ * @param {Scope} scope
+ */
+export function can_hoist_snippet(node, scope) {
+	let can_hoist = true;
+
+	ref_loop: for (const [reference] of scope.references) {
+		const local_binding = scope.get(reference);
+
+		if (local_binding) {
+			if (local_binding.node === node.expression) {
+				continue;
+			}
+			/** @type {Scope | null} */
+			let current_scope = local_binding.scope;
+
+			while (current_scope !== null) {
+				if (current_scope === scope) {
+					continue ref_loop;
+				}
+				current_scope = current_scope.parent;
+			}
+			can_hoist = false;
+			break;
+		}
+	}
+
+	return can_hoist;
 }

@@ -2,17 +2,17 @@ import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 import TextInput from './Child.svelte';
 
+const snippet = ($$anchor) => {
+	$.next();
+
+	var text = $.text("Something");
+
+	$.append($$anchor, text);
+};
+
 var root = $.template(`<!> `, 1);
 
 export default function Bind_component_snippet($$anchor) {
-	const snippet = ($$anchor) => {
-		$.next();
-
-		var text = $.text("Something");
-
-		$.append($$anchor, text);
-	};
-
 	let value = $.state('');
 	const _snippet = snippet;
 	var fragment = root();

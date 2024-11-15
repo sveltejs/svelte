@@ -1,14 +1,13 @@
 import * as $ from "svelte/internal/server";
 import TextInput from './Child.svelte';
 
+function snippet($$payload) {
+	$$payload.out += `<!---->Something`;
+}
+
 export default function Bind_component_snippet($$payload) {
 	let value = '';
 	const _snippet = snippet;
-
-	function snippet($$payload) {
-		$$payload.out += `<!---->Something`;
-	}
-
 	let $$settled = true;
 	let $$inner_payload;
 

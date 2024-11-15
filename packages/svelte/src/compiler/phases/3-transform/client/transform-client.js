@@ -483,7 +483,7 @@ export function client_component(analysis, options) {
 		}
 	}
 
-	body = [...imports, ...body];
+	body = [...imports, ...analysis.module_level_snippets, ...body];
 
 	const component = b.function_declaration(
 		b.id(analysis.name),
