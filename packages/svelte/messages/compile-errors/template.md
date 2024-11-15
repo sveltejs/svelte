@@ -172,6 +172,10 @@
 
 > Expected whitespace
 
+## illegal_element_attribute
+
+> `<%name%>` does not support non-event attributes or spread attributes
+
 ## invalid_bind_directive
 
 > Bind directive getter/setter values (`bind:thing={ getter, setter }`) must be two JavaScript expressions separated by a single comma and enclosed in curly braces

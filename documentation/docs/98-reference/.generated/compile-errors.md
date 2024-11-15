@@ -412,6 +412,12 @@ Expected whitespace
 `$host()` can only be used inside custom element component instances
 ```
 
+### illegal_element_attribute
+
+```
+`<%name%>` does not support non-event attributes or spread attributes
+```
+
 ### import_svelte_internal_forbidden
 
 ```
