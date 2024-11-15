@@ -196,7 +196,7 @@ export function EachBlock(node, context) {
 					// forbidden in runes mode
 					return b.member(
 						each_node_meta.array_name ? b.call(each_node_meta.array_name) : collection,
-						index,
+						(flags & EACH_INDEX_REACTIVE) !== 0 ? get_value(index) : index,
 						true
 					);
 				}
@@ -208,7 +208,7 @@ export function EachBlock(node, context) {
 
 				const left = b.member(
 					each_node_meta.array_name ? b.call(each_node_meta.array_name) : collection,
-					index,
+					(flags & EACH_INDEX_REACTIVE) !== 0 ? get_value(index) : index,
 					true
 				);
 

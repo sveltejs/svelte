@@ -172,6 +172,10 @@
 
 > Expected whitespace
 
+## illegal_element_attribute
+
+> `<%name%>` does not support non-event attributes or spread attributes
+
 ## js_parse_error
 
 > %message%

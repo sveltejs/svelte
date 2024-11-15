@@ -1,5 +1,5 @@
 import { test } from '../../test';
 
 export default test({
-	warnings: []
+	html: `<h1></h1><img src="..." loading="lazy" />`
 });

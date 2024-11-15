@@ -30,7 +30,7 @@ export class SvelteDate extends Date {
 		);
 
 		for (const method of methods) {
-			if (method.startsWith('get') || method.startsWith('to')) {
+			if (method.startsWith('get') || method.startsWith('to') || method === 'valueOf') {
 				// @ts-ignore
 				proto[method] = function (...args) {
 					// don't memoize if there are arguments

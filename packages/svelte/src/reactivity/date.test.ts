@@ -588,6 +588,30 @@ test('Date.toLocaleString', () => {
 	cleanup();
 });
 
+test('Date.valueOf', () => {
+	const date = new SvelteDate(initial_date);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(date.valueOf());
+		});
+	});
+
+	flushSync();
+
+	assert.deepEqual(log, [initial_date.valueOf()]);
+
+	flushSync(() => {
+		date.setTime(date.getTime() + 10);
+	});
+
+	assert.deepEqual(log, [initial_date.valueOf(), new Date(initial_date.getTime() + 10).valueOf()]);
+
+	cleanup();
+});
+
 test('Date.instanceOf', () => {
 	assert.equal(new SvelteDate() instanceof Date, true);
 });

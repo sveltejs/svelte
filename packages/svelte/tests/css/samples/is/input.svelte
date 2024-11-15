@@ -28,6 +28,12 @@
 	:global(.foo) :is(.unused) {
 		color: red;
 	}
+	:global(.foo):is(x) {
+		color: green;
+	}
+	:global(.foo):is(.unused) {
+		color: red;
+	}
 
 	x :is(:global(html *)) {
 		color: green;
@@ -37,5 +43,14 @@
 	}
 	y :is(x *) {
 		color: green; /* matches z */
+	}
+
+	:global(.foo) {
+		:is(x) {
+			color: green;
+		}
+		:is(.unused) {
+			color: red;
+		}
 	}
 </style>

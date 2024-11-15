@@ -1,5 +1,69 @@
 # svelte
 
+## 5.2.0
+
+### Minor Changes
+
+- feat: better inlining of static attributes ([#14269](https://github.com/sveltejs/svelte/pull/14269))
+
+## 5.1.17
+
+### Patch Changes
+
+- fix: account for `:has(...)` as part of `:root` ([#14229](https://github.com/sveltejs/svelte/pull/14229))
+
+- fix: prevent nested pseudo class from being marked as unused ([#14229](https://github.com/sveltejs/svelte/pull/14229))
+
+- fix: use strict equality for key block comparisons in runes mode ([#14285](https://github.com/sveltejs/svelte/pull/14285))
+
+- fix: bump `is-reference` dependency to fix `import.meta` bug ([#14286](https://github.com/sveltejs/svelte/pull/14286))
+
+## 5.1.16
+
+### Patch Changes
+
+- fix: don't wrap pseudo classes inside `:global(...)` with another `:global(...)` during migration ([#14267](https://github.com/sveltejs/svelte/pull/14267))
+
+- fix: bail on named slots with that have reserved keywords during migration ([#14278](https://github.com/sveltejs/svelte/pull/14278))
+
+## 5.1.15
+
+### Patch Changes
+
+- fix: consider static attributes that are inlined in the template ([#14249](https://github.com/sveltejs/svelte/pull/14249))
+
+## 5.1.14
+
+### Patch Changes
+
+- fix: migration script messing with attributes ([#14260](https://github.com/sveltejs/svelte/pull/14260))
+
+- fix: do not treat reassigned synthetic binds as state in runes mode ([#14236](https://github.com/sveltejs/svelte/pull/14236))
+
+- fix: account for mutations in script module in ownership check ([#14253](https://github.com/sveltejs/svelte/pull/14253))
+
+- fix: consider img with loading attribute not static ([#14237](https://github.com/sveltejs/svelte/pull/14237))
+
+## 5.1.13
+
+### Patch Changes
+
+- fix: add migration task when there's a variable named that would conflict with a rune ([#14216](https://github.com/sveltejs/svelte/pull/14216))
+
+- fix: consider `valueOf` in the reactive methods of `SvelteDate` ([#14227](https://github.com/sveltejs/svelte/pull/14227))
+
+- fix: handle sibling combinators within `:has` ([#14213](https://github.com/sveltejs/svelte/pull/14213))
+
+- fix: consider variables with synthetic store sub as state ([#14195](https://github.com/sveltejs/svelte/pull/14195))
+
+- fix: read index as a source in legacy keyed each block ([#14208](https://github.com/sveltejs/svelte/pull/14208))
+
+- fix: account for shadowing children slot during migration ([#14224](https://github.com/sveltejs/svelte/pull/14224))
+
+- fix: ensure explicit nesting selector is always applied ([#14193](https://github.com/sveltejs/svelte/pull/14193))
+
+- fix: add `lang="ts"` attribute during migration if needed ([#14222](https://github.com/sveltejs/svelte/pull/14222))
+
 ## 5.1.12
 
 ### Patch Changes

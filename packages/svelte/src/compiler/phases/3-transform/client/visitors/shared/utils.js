@@ -1,4 +1,4 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement, Super } from 'estree' */
+/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement, Super, TemplateLiteral, Node } from 'estree' */
 /** @import { AST, SvelteNode } from '#compiler' */
 /** @import { ComponentClientTransformState } from '../../types' */
 import { walk } from 'zimmerframe';
@@ -12,83 +12,87 @@ import { locator } from '../../../../../state.js';
 
 /**
  * @param {Array<AST.Text | AST.ExpressionTag>} values
- */
-export function get_states_and_calls(values) {
-	let states = 0;
-	let calls = 0;
-	for (let i = 0; i < values.length; i++) {
-		const node = values[i];
-
-		if (node.type === 'ExpressionTag') {
-			if (node.metadata.expression.has_call) {
-				calls++;
-			}
-			if (node.metadata.expression.has_state) {
-				states++;
-			}
-		}
-	}
-
-	return { states, calls };
-}
-
-/**
- * @param {Array<AST.Text | AST.ExpressionTag>} values
  * @param {(node: SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
- * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
+ * @returns {{ value: Expression, has_state: boolean, has_call: boolean, can_inline: boolean }}
  */
-export function build_template_literal(values, visit, state) {
+export function build_template_chunk(values, visit, state) {
 	/** @type {Expression[]} */
 	const expressions = [];
 
 	let quasi = b.quasi('');
 	const quasis = [quasi];
 
-	const { states, calls } = get_states_and_calls(values);
+	let has_call = false;
+	let has_state = false;
+	let can_inline = true;
+	let contains_multiple_call_expression = false;
 
-	let has_call = calls > 0;
-	let has_state = states > 0;
-	let contains_multiple_call_expression = calls > 1;
+	for (const node of values) {
+		if (node.type === 'ExpressionTag') {
+			if (node.metadata.expression.has_call) {
+				if (has_call) contains_multiple_call_expression = true;
+				has_call = true;
+			}
+
+			if (node.metadata.expression.has_state) {
+				has_state = true;
+			}
+
+			if (!node.metadata.expression.can_inline) {
+				can_inline = false;
+			}
+		}
+	}
 
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
 
 		if (node.type === 'Text') {
 			quasi.value.cooked += node.data;
-		} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
-			if (node.expression.value != null) {
-				quasi.value.cooked += node.expression.value + '';
-			}
 		} else {
-			if (contains_multiple_call_expression) {
-				const id = b.id(state.scope.generate('stringified_text'));
-				state.init.push(
-					b.const(
-						id,
-						create_derived(
-							state,
-							b.thunk(
-								b.logical(
-									'??',
-									/** @type {Expression} */ (visit(node.expression, state)),
-									b.literal('')
-								)
-							)
-						)
-					)
-				);
-				expressions.push(b.call('$.get', id));
-			} else if (values.length === 1) {
-				// If we have a single expression, then pass that in directly to possibly avoid doing
-				// extra work in the template_effect (instead we do the work in set_text).
-				return { value: visit(node.expression, state), has_state, has_call };
-			} else {
-				expressions.push(b.logical('??', visit(node.expression, state), b.literal('')));
-			}
+			const expression = /** @type {Expression} */ (visit(node.expression, state));
 
-			quasi = b.quasi('', i + 1 === values.length);
-			quasis.push(quasi);
+			if (expression.type === 'Literal') {
+				if (expression.value != null) {
+					quasi.value.cooked += expression.value + '';
+				}
+			} else {
+				let value = expression;
+
+				// if we don't know the value, we need to add `?? ''` to replace
+				// `null` and `undefined` with the empty string
+				let needs_fallback = true;
+
+				if (value.type === 'Identifier') {
+					const binding = state.scope.get(value.name);
+
+					if (binding && binding.initial?.type === 'Literal' && !binding.reassigned) {
+						needs_fallback = binding.initial.value === null;
+					}
+				}
+
+				if (needs_fallback) {
+					value = b.logical('??', expression, b.literal(''));
+				}
+
+				if (contains_multiple_call_expression) {
+					const id = b.id(state.scope.generate('stringified_text'));
+
+					state.init.push(b.const(id, create_derived(state, b.thunk(value))));
+
+					expressions.push(b.call('$.get', id));
+				} else if (values.length === 1) {
+					// If we have a single expression, then pass that in directly to possibly avoid doing
+					// extra work in the template_effect (instead we do the work in set_text).
+					return { value: visit(node.expression, state), has_state, has_call, can_inline };
+				} else {
+					expressions.push(value);
+				}
+
+				quasi = b.quasi('', i + 1 === values.length);
+				quasis.push(quasi);
+			}
 		}
 	}
 
@@ -98,7 +102,7 @@ export function build_template_literal(values, visit, state) {
 
 	const value = b.template(quasis, expressions);
 
-	return { value, has_state, has_call };
+	return { value, has_state, has_call, can_inline };
 }
 
 /**

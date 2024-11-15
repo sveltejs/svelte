@@ -3,16 +3,16 @@
 /** @import { ClientTransformState, ComponentClientTransformState, ComponentContext } from './types.js' */
 /** @import { Analysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
-import * as b from '../../../utils/builders.js';
-import { extract_identifiers, is_simple_expression } from '../../../utils/ast.js';
 import {
-	PROPS_IS_LAZY_INITIAL,
+	PROPS_IS_BINDABLE,
 	PROPS_IS_IMMUTABLE,
+	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_RUNES,
-	PROPS_IS_UPDATED,
-	PROPS_IS_BINDABLE
+	PROPS_IS_UPDATED
 } from '../../../../constants.js';
 import { dev } from '../../../state.js';
+import { extract_identifiers, is_simple_expression } from '../../../utils/ast.js';
+import * as b from '../../../utils/builders.js';
 import { get_value } from './visitors/shared/declarations.js';
 
 /**
@@ -310,19 +310,4 @@ export function create_derived_block_argument(node, context) {
  */
 export function create_derived(state, arg) {
 	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
-}
-
-/**
- * Whether a variable can be referenced directly from template string.
- * @param {import('#compiler').Binding | undefined} binding
- * @returns {boolean}
- */
-export function can_inline_variable(binding) {
-	return (
-		!!binding &&
-		// in a `<script module>` block
-		!binding.scope.parent &&
-		// to prevent the need for escaping
-		binding.initial?.type === 'Literal'
-	);
 }
