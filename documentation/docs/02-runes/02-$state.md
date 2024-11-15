@@ -259,6 +259,7 @@ count.current = 1; // $effect logs 1
 ```
 
 ```js
+// @errors: 7006
 /// file: class.svelte.js
 function logger(counter) {
 	$effect(() => console.log(counter.count));
@@ -271,6 +272,28 @@ class Counter {
 let counter = new Counter();
 logger(counter); // $effect logs 0
 counter.increment(); // $effect logs 1
+```
+
+For the same reasons, you should not destructure reactive objects, because that means their value is read at that point in time, and not updated anymore from inside whatever created it.
+
+```js
+// @errors: 7006
+class Counter {
+	count = $state(0);
+	increment = () => { this.count++; }
+}
+
+// don't do this
+let { count, increment } = new Counter();
+count; // 0
+increment();
+count; // still 0
+
+// do this instead
+let counter = new Counter();
+counter.count; // 0
+counter.increment();
+counter.count; // 1
 ```
 
 ## `$state.snapshot`
