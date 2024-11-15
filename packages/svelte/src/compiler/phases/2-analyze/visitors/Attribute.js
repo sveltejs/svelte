@@ -18,18 +18,13 @@ export function Attribute(node, context) {
 
 	const parent = /** @type {SvelteNode} */ (context.path.at(-1));
 
-	// special case
-	if (node.name === 'value') {
-		if (parent.type === 'RegularElement' && parent.name === 'option') {
-			mark_subtree_dynamic(context.path);
-		}
-	}
-
-	// special case loading="lazy"
-	if (node.name === 'loading') {
-		if (parent.type === 'RegularElement' && parent.name === 'img') {
-			mark_subtree_dynamic(context.path);
-		}
+	if (
+		// special case for <option value=""/>
+		(node.name === 'value' && parent.type === 'RegularElement' && parent.name === 'option') ||
+		// special case <img loading="lazy" />
+		(node.name === 'loading' && parent.type === 'RegularElement' && parent.name === 'img')
+	) {
+		mark_subtree_dynamic(context.path);
 	}
 
 	if (node.name.startsWith('on')) {
