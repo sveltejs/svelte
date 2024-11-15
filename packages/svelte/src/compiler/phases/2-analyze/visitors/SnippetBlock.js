@@ -2,6 +2,7 @@
 /** @import { Context } from '../types' */
 import { validate_block_not_empty, validate_opening_tag } from './shared/utils.js';
 import * as e from '../../../errors.js';
+import { can_hoist_snippet } from '../../3-transform/utils.js';
 
 /**
  * @param {AST.SnippetBlock} node
@@ -21,6 +22,16 @@ export function SnippetBlock(node, context) {
 	}
 
 	context.next({ ...context.state, parent_element: null });
+
+	const local_scope = context.state.scope;
+	const can_hoist =
+		context.path.length === 1 &&
+		context.path[0].type === 'Fragment' &&
+		can_hoist_snippet(node, local_scope, context.state.scopes);
+
+	node.metadata = {
+		can_hoist
+	};
 
 	const { path } = context;
 	const parent = path.at(-2);

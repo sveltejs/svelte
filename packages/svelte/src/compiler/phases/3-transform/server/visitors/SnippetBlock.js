@@ -2,7 +2,6 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
-import { can_hoist_snippet } from '../../utils.js';
 
 /**
  * @param {AST.SnippetBlock} node
@@ -18,9 +17,7 @@ export function SnippetBlock(node, context) {
 	// @ts-expect-error - TODO remove this hack once $$render_inner for legacy bindings is gone
 	fn.___snippet = true;
 
-	const can_hoist = can_hoist_snippet(node, context.state.scope, context.state.scopes);
-
-	if (context.path.length === 1 && context.path[0].type === 'Fragment' && can_hoist) {
+	if (node.metadata.can_hoist) {
 		context.state.hoisted.push(fn);
 	} else {
 		context.state.init.push(fn);
