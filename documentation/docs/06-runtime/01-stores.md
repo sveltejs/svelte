@@ -38,6 +38,24 @@ Prior to Svelte 5, stores were the go-to solution for creating cross-component r
 - when extracting logic, it's better to take advantage of runes' universal reactivity: You can use runes outside the top level of components and even place them into JavaScript or TypeScript files (using a `.svelte.js` or `.svelte.ts` file ending)
 - when creating shared state, you can create a `$state` object containing the values you need and then manipulate said state
 
+```ts
+/// file: state.svelte.js
+export const myGlobalState = $state({
+	user: {
+		/* ... */
+	}
+	/* ... */
+});
+```
+
+```svelte
+<!--- file: App.svelte --->
+<script>
+	import { myGlobalState } from './state.svelte';
+	// ...
+</script>
+```
+
 Stores are still a good solution when you have complex asynchronous data streams or it's important to have more manual control over updating values or listening to changes. If you're familiar with RxJs and want to reuse that knowledge, the `$` also comes in handy for you.
 
 ## svelte/store
