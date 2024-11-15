@@ -33,7 +33,6 @@ export function read_script(parser, start, attributes) {
 	/** @type {Program} */
 	let ast;
 
-	debugger;
 	try {
 		ast = acorn.parse(source, parser.ts, true);
 	} catch (err) {
