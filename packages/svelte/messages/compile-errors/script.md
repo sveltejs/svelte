@@ -134,6 +134,10 @@
 
 > %name% cannot be used in runes mode
 
+## snippet_invalid_export
+
+> Cannot export snippet from a `<script module>` if it references logic or expressions inside the component
+
 ## snippet_parameter_assignment
 
 > Cannot reassign or bind to snippet parameter

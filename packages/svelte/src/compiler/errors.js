@@ -414,6 +414,15 @@ export function state_invalid_export(node) {
 }
 
 /**
+ * Cannot export snippet from a `<script module>` if it references logic or expressions inside the component
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function snippet_invalid_export(node) {
+	e(node, "snippet_invalid_export", "Cannot export snippet from a `<script module>` if it references logic or expressions inside the component");
+}
+
+/**
  * `%rune%(...)` can only be used as a variable declaration initializer or a class field
  * @param {null | number | NodeLike} node
  * @param {string} rune

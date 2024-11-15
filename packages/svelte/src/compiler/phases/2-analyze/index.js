@@ -438,7 +438,8 @@ export function analyze_component(root, source, options) {
 				: '',
 			keyframes: []
 		},
-		source
+		source,
+		undefined_exports: new Map()
 	};
 
 	if (!runes) {

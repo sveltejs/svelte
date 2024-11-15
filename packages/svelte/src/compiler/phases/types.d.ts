@@ -73,6 +73,7 @@ export interface ComponentAnalysis extends Analysis {
 		keyframes: string[];
 	};
 	source: string;
+	undefined_exports: Map<string, Node>;
 }
 
 declare module 'estree' {

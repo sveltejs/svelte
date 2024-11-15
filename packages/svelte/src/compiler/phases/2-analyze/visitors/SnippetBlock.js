@@ -28,6 +28,12 @@ export function SnippetBlock(node, context) {
 		context.path.length === 1 &&
 		context.path[0].type === 'Fragment' &&
 		can_hoist_snippet(node, local_scope, context.state.scopes);
+	const undefined_exports = context.state.analysis.undefined_exports;
+	const name = node.expression.name;
+
+	if (!can_hoist && undefined_exports.has(name)) {
+		e.snippet_invalid_export(/** @type {any} */ (undefined_exports.get(name)));
+	}
 
 	node.metadata = {
 		can_hoist

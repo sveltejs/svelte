@@ -27,7 +27,8 @@ export function ExportSpecifier(node, context) {
 			if (binding) binding.reassigned = binding.updated = true;
 		}
 	} else {
-		validate_export(node, context.state.scope, local_name);
+		const undefined_exports = context.state.analysis.undefined_exports;
+		validate_export(node, context.state.scope, local_name, undefined_exports);
 	}
 }
 
@@ -36,10 +37,14 @@ export function ExportSpecifier(node, context) {
  * @param {Node} node
  * @param {Scope} scope
  * @param {string} name
+ * @param {Map<string, Node>} undefined_exports
  */
-function validate_export(node, scope, name) {
+function validate_export(node, scope, name, undefined_exports) {
 	const binding = scope.get(name);
-	if (!binding) return;
+	if (!binding) {
+		undefined_exports.set(name, node);
+		return;
+	}
 
 	if (binding.kind === 'derived') {
 		e.derived_invalid_export(node);

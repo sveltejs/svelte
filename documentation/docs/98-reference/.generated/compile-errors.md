@@ -694,6 +694,12 @@ Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migra
 Cannot use explicit children snippet at the same time as implicit children content. Remove either the non-whitespace content or the children snippet block
 ```
 
+### snippet_invalid_export
+
+```
+Cannot export snippet from a `<script module>` if it references logic or expressions inside the component
+```
+
 ### snippet_invalid_rest_parameter
 
 ```
