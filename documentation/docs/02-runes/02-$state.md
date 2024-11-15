@@ -142,6 +142,7 @@ This can improve performance with large arrays and objects that you weren't plan
 Since there's no wrapper around `$state` or `$state.raw` (or [`$derived`]($derived)), you have to be aware of keeping reactivity alive when passing it across boundaries, e.g. when you pass a reactive object into or out of a function. The most succinct way of thinking about this is to treat `$state` and `$state.raw` (and [`$derived`]($derived)) as "just JavaScript", and reuse the knowledge of how normal JavaScript variables work when crossing boundaries. Take the following example:
 
 ```js
+// @errors: 7006
 function createTodo(initial) {
 	let text = initial;
 	let done = false;
@@ -161,6 +162,7 @@ todo.log(); // still logs "'wrong', false"
 The value change does not propagate back into the function body of `createTodo`, because `text` and `done` are read at the point of return, and are therefore a fixed value. To make that work, we have to bring the read and write into the scope of the function body. This can be done via getter/setters or via function calls:
 
 ```js
+// @errors: 7006
 function createTodo(initial) {
 	let text = initial;
 	let done = false;
@@ -186,11 +188,12 @@ todo.log(); // logs "'changed', true"
 What you could also do is to instead create an object and return that as a whole. While the variable itself is fixed in time, its properties are not, and so they can be changed from the outside and the changes are observable from within the function:
 
 ```js
+// @errors: 7006
 function createTodo(initial) {
 	const todo = { text: initial, done: false }
 	return {
 		todo,
-		log: () => console.log(text, done)
+		log: () => console.log(todo.text, todo.done)
 	}
 }
 
@@ -203,6 +206,7 @@ todo.log(); // logs "'right', true"
 Classes are similar, their properties are "live" due to the `this` context:
 
 ```js
+// @errors: 7006
 class Todo {
 	done = false;
 	text;
@@ -227,6 +231,7 @@ Notice how we didn't use _any_ Svelte specifics, this is just regular JavaScript
 As a consequence, the answer to preserving reactivity across boundaries is to use getters/setters or functions (in case of `$state`, `$state.raw` and `$derived`) or an object with mutable properties (in case of `$state`), or a class with reactive properties.
 
 ```js
+// @errors: 7006
 /// file: getters-setters-functions.svelte.js
 function doubler(count) {
 	const double = $derived(count() * 2)
@@ -242,6 +247,7 @@ count = 1; // $effect logs 2
 ```
 
 ```js
+// @errors: 7006
 /// file: mutable-object.svelte.js
 function logger(value) {
 	$effect(() => console.log(value.current));
@@ -264,7 +270,7 @@ class Counter {
 }
 let counter = new Counter();
 logger(counter); // $effect logs 0
-count.increment(); // $effect logs 1
+counter.increment(); // $effect logs 1
 ```
 
 ## `$state.snapshot`
