@@ -1,5 +1,4 @@
 /** @import { ExportSpecifier, Node } from 'estree' */
-/** @import { Binding } from '#compiler' */
 /** @import { Context } from '../types' */
 /** @import { Scope } from '../../scope' */
 import * as e from '../../../errors.js';
@@ -37,7 +36,7 @@ export function ExportSpecifier(node, context) {
  * @param {Node} node
  * @param {Scope} scope
  * @param {string} name
- * @param {Map<string, Node>} undefined_exports
+ * @param {Map<string, any>} undefined_exports
  */
 function validate_export(node, scope, name, undefined_exports) {
 	const binding = scope.get(name);
