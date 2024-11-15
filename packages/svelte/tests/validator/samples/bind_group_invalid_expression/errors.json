@@ -1,0 +1,14 @@
+[
+	{
+		"code": "bind_group_invalid_expression",
+		"message": "`bind:group` can only bind to an Identifier or MemberExpression",
+		"start": {
+			"line": 8,
+			"column": 38
+		},
+		"end": {
+			"line": 8,
+			"column": 84
+		}
+	}
+]

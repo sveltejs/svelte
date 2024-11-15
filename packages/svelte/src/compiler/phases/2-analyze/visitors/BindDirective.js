@@ -123,7 +123,12 @@ export function BindDirective(node, context) {
 	}
 
 	// When dealing with bind getters/setters skip the specific binding validation
+	// Group bindings aren't supported for getter/setters so we don't need to handle
+	// the metadata
 	if (Array.isArray(node.expression)) {
+		if (node.name === 'group') {
+			e.bind_group_invalid_expression(node);
+		}
 		return;
 	}
 

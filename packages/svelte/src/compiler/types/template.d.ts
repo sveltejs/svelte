@@ -14,8 +14,7 @@ import type {
 	Pattern,
 	Program,
 	ChainExpression,
-	SimpleCallExpression,
-	SequenceExpression
+	SimpleCallExpression
 } from 'estree';
 import type { Scope } from '../phases/scope';
 

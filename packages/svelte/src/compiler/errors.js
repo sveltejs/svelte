@@ -697,6 +697,15 @@ export function attribute_unquoted_sequence(node) {
 }
 
 /**
+ * `bind:group` can only bind to an Identifier or MemberExpression
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function bind_group_invalid_expression(node) {
+	e(node, "bind_group_invalid_expression", "`bind:group` can only bind to an Identifier or MemberExpression");
+}
+
+/**
  * Can only bind to an Identifier or MemberExpression
  * @param {null | number | NodeLike} node
  * @returns {never}

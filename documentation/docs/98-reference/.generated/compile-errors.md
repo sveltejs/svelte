@@ -78,6 +78,12 @@ Sequence expressions are not allowed as attribute/directive values in runes mode
 Attribute values containing `{...}` must be enclosed in quote marks, unless the value only contains the expression
 ```
 
+### bind_group_invalid_expression
+
+```
+`bind:group` can only bind to an Identifier or MemberExpression
+```
+
 ### bind_invalid_expression
 
 ```

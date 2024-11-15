@@ -120,7 +120,7 @@ export function build_element_attributes(node, context) {
 						? b.call(/** @type {Expression} */ (context.visit(attribute.expression[0])))
 						: /** @type {Expression} */ (context.visit(attribute.expression))
 				);
-			} else if (attribute.name === 'group') {
+			} else if (attribute.name === 'group' && !Array.isArray(attribute.expression)) {
 				const value_attribute = /** @type {AST.Attribute | undefined} */ (
 					node.attributes.find((attr) => attr.type === 'Attribute' && attr.name === 'value')
 				);
@@ -133,9 +133,6 @@ export function build_element_attributes(node, context) {
 						is_text_attribute(attr) &&
 						attr.value[0].data === 'checkbox'
 				);
-				const attribute_expression = Array.isArray(attribute.expression)
-					? b.call(attribute.expression[0])
-					: attribute.expression;
 
 				attributes.push(
 					create_attribute('checked', -1, -1, [
@@ -146,12 +143,12 @@ export function build_element_attributes(node, context) {
 							parent: attribute,
 							expression: is_checkbox
 								? b.call(
-										b.member(attribute_expression, 'includes'),
+										b.member(attribute.expression, 'includes'),
 										build_attribute_value(value_attribute.value, context)
 									)
 								: b.binary(
 										'===',
-										attribute_expression,
+										attribute.expression,
 										build_attribute_value(value_attribute.value, context)
 									),
 							metadata: {
