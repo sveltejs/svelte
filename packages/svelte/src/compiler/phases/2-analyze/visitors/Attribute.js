@@ -18,9 +18,14 @@ export function Attribute(node, context) {
 
 	const parent = /** @type {SvelteNode} */ (context.path.at(-1));
 
-	// special case
-	if (node.name === 'value') {
-		if (parent.type === 'RegularElement' && parent.name === 'option') {
+	if (parent.type === 'RegularElement') {
+		// special case <option value="" />
+		if (node.name === 'value' && parent.name === 'option') {
+			mark_subtree_dynamic(context.path);
+		}
+
+		// special case <img loading="lazy" />
+		if (node.name === 'loading' && parent.name === 'img') {
 			mark_subtree_dynamic(context.path);
 		}
 	}
