@@ -63,7 +63,7 @@ The context is then available to children of the component (including slotted co
 
 > [!NOTE] `setContext`/`getContext` must be called during component initialisation.
 
-Context is not inherently reactive. If you need reactive values in context then you can pass a `$state` object into context, whose properties _will_ be reactive.
+Context is not inherently reactive. If you need reactive values in context then you can pass a `$state` object into context, whose properties _will_ be reactive (for more info see ["passing `$state` across boundaries"]($state#Passing-$state-across-boundaries)).
 
 ```svelte
 <!--- file: Parent.svelte --->
@@ -72,6 +72,8 @@ Context is not inherently reactive. If you need reactive values in context then 
 
 	let value = $state({ count: 0 });
 	setContext('counter', value);
+	// careful: reassignments will _not_ change the value inside context:
+	// value = { count: 0 }
 </script>
 
 <button onclick={() => value.count++}>increment</button>

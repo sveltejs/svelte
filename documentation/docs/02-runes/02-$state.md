@@ -64,9 +64,35 @@ todos.push({
 
 > [!NOTE] When you update properties of proxies, the original object is _not_ mutated.
 
+Since `$state` stops at boundaries that are not simple arrays or objects, the following will not trigger any reactivity:
+
+```svelte
+<script>
+	class Todo {
+		done = false;
+		text;
+
+		constructor(text) {
+			this.text = text;
+		}
+	}
+
+	let todo = $state(new Todo('Buy groceries'));
+</script>
+
+<button onclick={
+	// this won't trigger a rerender
+	todo.done = !todo.done
+}>
+	[{todo.done ? 'x' : ' '}] {todo.text}
+</button>
+```
+
+You can however use `$state` _inside_ the class to make it work, as explained in the next section.
+
 ### Classes
 
-You can also use `$state` in class fields (whether public or private):
+You can use `$state` in class fields (whether public or private):
 
 ```js
 // @errors: 7006 2554
@@ -85,7 +111,7 @@ class Todo {
 }
 ```
 
-> [!NOTE] The compiler transforms `done` and `text` into `get`/`set` methods on the class prototype referencing private fields.
+Under the hood, the compiler transforms `done` and `text` into `get`/`set` methods on the class prototype referencing private fields. That means the properties are _not_ enumerable.
 
 ## `$state.raw`
 
@@ -110,6 +136,136 @@ person = {
 ```
 
 This can improve performance with large arrays and objects that you weren't planning to mutate anyway, since it avoids the cost of making them reactive. Note that raw state can _contain_ reactive state (for example, a raw array of reactive objects).
+
+## Passing `$state` across boundaries
+
+Since there's no wrapper around `$state` or `$state.raw` (or [`$derived`]($derived)), you have to be aware of keeping reactivity alive when passing it across boundaries, e.g. when you pass a reactive object into or out of a function. The most succinct way of thinking about this is to treat `$state` and `$state.raw` (and [`$derived`]($derived)) as "just JavaScript", and reuse the knowledge of how normal JavaScript variables work when crossing boundaries. Take the following example:
+
+```js
+function createTodo(initial) {
+	let text = initial;
+	let done = false;
+	return {
+		text,
+		done,
+		log: () => console.log(text, done)
+	}
+}
+
+const todo = createTodo('wrong');
+todo.log(); // logs "'wrong', false"
+todo.done = true;
+todo.log(); // still logs "'wrong', false"
+```
+
+The value change does not propagate back into the function body of `createTodo`, because `text` and `done` are read at the point of return, and are therefore a fixed value. To make that work, we have to bring the read and write into the scope of the function body. This can be done via getter/setters or via function calls:
+
+```js
+function createTodo(initial) {
+	let text = initial;
+	let done = false;
+	return {
+		// using getter/setter
+		get text() { return text },
+		set text(v) { text = v },
+		// using functions
+		isDone() { return done },
+		toggle() { done = !done },
+		// log
+		log: () => console.log(text, done)
+	}
+}
+
+const todo = createTodo('right');
+todo.log(); // logs "'right', false"
+todo.text = 'changed'; // invokes the setter
+todo.toggle(); // invokes the function
+todo.log(); // logs "'changed', true"
+```
+
+What you could also do is to instead create an object and return that as a whole. While the variable itself is fixed in time, its properties are not, and so they can be changed from the outside and the changes are observable from within the function:
+
+```js
+function createTodo(initial) {
+	const todo = { text: initial, done: false }
+	return {
+		todo,
+		log: () => console.log(text, done)
+	}
+}
+
+const todo = createTodo('right');
+todo.log(); // logs "'right', false"
+todo.todo.done = true; // mutates the object
+todo.log(); // logs "'right', true"
+```
+
+Classes are similar, their properties are "live" due to the `this` context:
+
+```js
+class Todo {
+	done = false;
+	text;
+
+	constructor(text) {
+		this.text = text;
+	}
+
+	log() {
+		console.log(this.done, this.text)
+	}
+}
+
+const todo = new Todo('right');
+todo.log(); // logs "'right', false"
+todo.done = true;
+todo.log(); // logs "'right', true"
+```
+
+Notice how we didn't use _any_ Svelte specifics, this is just regular JavaScript semantics. `$state` and `$state.raw` (and [`$derived`]($derived)) don't change these, they just add reactivity on top, so that when you change a variable something can happen in reaction to it.
+
+As a consequence, the answer to preserving reactivity across boundaries is to use getters/setters or functions (in case of `$state`, `$state.raw` and `$derived`) or an object with mutable properties (in case of `$state`), or a class with reactive properties.
+
+```js
+/// file: getters-setters-functions.svelte.js
+function doubler(count) {
+	const double = $derived(count() * 2)
+	return {
+		get current() { return double }
+	};
+}
+
+let count = $state(0);
+const double = doubler(() => count);
+$effect(() => console.log(double.current)); // $effect logs 0
+count = 1; // $effect logs 2
+```
+
+```js
+/// file: mutable-object.svelte.js
+function logger(value) {
+	$effect(() => console.log(value.current));
+}
+
+let count = $state({ current: 0 });
+logger(count); // $effect logs 0
+count.current = 1; // $effect logs 1
+```
+
+```js
+/// file: class.svelte.js
+function logger(counter) {
+	$effect(() => console.log(counter.count));
+}
+
+class Counter {
+	count = $state(0);
+	increment() { this.count++; }
+}
+let counter = new Counter();
+logger(counter); // $effect logs 0
+count.increment(); // $effect logs 1
+```
 
 ## `$state.snapshot`
 
