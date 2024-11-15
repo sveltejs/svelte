@@ -10,7 +10,7 @@ const ParserWithTS = acorn.Parser.extend(tsPlugin({ allowSatisfies: true }));
 /**
  * @param {string} source
  * @param {boolean} typescript
- * @param {boolean} is_script
+ * @param {boolean} [is_script]
  */
 export function parse(source, typescript, is_script) {
 	const parser = typescript ? ParserWithTS : acorn.Parser;
