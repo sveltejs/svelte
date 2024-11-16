@@ -184,6 +184,7 @@ export function is_pure(node, context) {
 	if (node.type !== 'Identifier' && node.type !== 'MemberExpression') {
 		return false;
 	}
+
 	if (node.type === 'MemberExpression' && node.object.type === 'Literal') {
 		return true;
 	}

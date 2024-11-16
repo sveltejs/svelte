@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure inline object literals are correctly serialised
+fix: treat property accesses of literals as pure
