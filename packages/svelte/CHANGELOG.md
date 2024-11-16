@@ -1,5 +1,11 @@
 # svelte
 
+## 5.2.2
+
+### Patch Changes
+
+- fix: treat property accesses of literals as pure ([#14325](https://github.com/sveltejs/svelte/pull/14325))
+
 ## 5.2.1
 
 ### Patch Changes
