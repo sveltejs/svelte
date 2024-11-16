@@ -109,7 +109,7 @@ export function trace(fn, label) {
 		var value = fn();
 		var time = (performance.now() - start).toFixed(2);
 
-		if (tracing_expressions.size === 0) {
+		if (tracing_expressions.entries.size === 0) {
 			// eslint-disable-next-line no-console
 			console.log(`${label} %cno reactive dependencies (${time}ms)`, 'color: grey');
 		} else {
