@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, Expression, Identifier, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
+/** @import { AssignmentExpression, Expression, Literal, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 /** @import { AnalysisState, Context } from '../../types' */
 /** @import { Scope } from '../../../scope' */
@@ -176,21 +176,42 @@ export function is_safe_identifier(expression, scope) {
 }
 
 /**
- * @param {Expression | Super} node
+ * @param {Expression | Literal | Super} node
  * @param {Context} context
  * @returns {boolean}
  */
 export function is_pure(node, context) {
+	if (node.type === 'Literal') {
+		return true;
+	}
+	if (node.type === 'CallExpression') {
+		if (!is_pure(node.callee, context)) {
+			return false;
+		}
+		for (let arg of node.arguments) {
+			if (!is_pure(arg.type === 'SpreadElement' ? arg.argument : arg, context)) {
+				return false;
+			}
+		}
+		return true;
+	}
 	if (node.type !== 'Identifier' && node.type !== 'MemberExpression') {
 		return false;
 	}
 
-	const left = object(node);
+	/** @type {Expression | Super | null} */
+	let left = node;
+	while (left.type === 'MemberExpression') {
+		left = left.object;
+	}
+
 	if (!left) return false;
 
 	if (left.type === 'Identifier') {
 		const binding = context.state.scope.get(left.name);
 		if (binding === null) return true; // globals are assumed to be safe
+	} else if (is_pure(left, context)) {
+		return true;
 	}
 
 	// TODO add more cases (safe Svelte imports, etc)
