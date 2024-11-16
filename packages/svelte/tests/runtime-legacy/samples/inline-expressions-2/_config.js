@@ -6,5 +6,6 @@ export default test({
 		<p>With text expression: 7.36</p>
 		<p>With text expression and function call: 7.36</p>
 		<p>With text expression and property access: 4</p>
+		<h1>Hello name!</h1>
 		<p>4</p>`
 });
