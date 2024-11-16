@@ -1,7 +1,7 @@
 /** @import { Visitors } from 'zimmerframe' */
 /** @import * as Compiler from '#compiler' */
 import { walk } from 'zimmerframe';
-import { get_possible_values } from './utils.js';
+import { get_parent_rules, get_possible_values, is_outer_global } from './utils.js';
 import { regex_ends_with_whitespace, regex_starts_with_whitespace } from '../../patterns.js';
 import { get_attribute_chunks, is_text_attribute } from '../../../utils/ast.js';
 
@@ -172,7 +172,7 @@ function get_relative_selectors(node) {
 }
 
 /**
- * Discard trailing `:global(...)` selectors without a `:has/is/where/not(...)` modifier, these are unused for scoping purposes
+ * Discard trailing `:global(...)` selectors, these are unused for scoping purposes
  * @param {Compiler.Css.ComplexSelector} node
  */
 function truncate(node) {
@@ -182,21 +182,22 @@ function truncate(node) {
 			// not after a :global selector
 			!metadata.is_global_like &&
 			!(first.type === 'PseudoClassSelector' && first.name === 'global' && first.args === null) &&
-			// not a :global(...) without a :has/is/where/not(...) modifier
-			(!metadata.is_global ||
-				selectors.some(
-					(selector) =>
-						selector.type === 'PseudoClassSelector' &&
-						selector.args !== null &&
-						(selector.name === 'has' ||
-							selector.name === 'is' ||
-							selector.name === 'where' ||
-							selector.name === 'not')
-				))
+			// not a :global(...) without a :has/is/where(...) modifier that is scoped
+			!metadata.is_global
 		);
 	});
 
-	return node.children.slice(0, i + 1);
+	return node.children.slice(0, i + 1).map((child) => {
+		// In case of `:root.y:has(...)`, `y` is unscoped, but everything in `:has(...)` should be scoped (if not global).
+		// To properly accomplish that, we gotta filter out all selector types except `:has`.
+		const root = child.selectors.find((s) => s.type === 'PseudoClassSelector' && s.name === 'root');
+		if (!root || child.metadata.is_global_like) return child;
+
+		return {
+			...child,
+			selectors: child.selectors.filter((s) => s.type === 'PseudoClassSelector' && s.name === 'has')
+		};
+	});
 }
 
 /**
@@ -334,7 +335,9 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  */
 function mark(relative_selector, element) {
-	relative_selector.metadata.scoped = true;
+	if (!is_outer_global(relative_selector)) {
+		relative_selector.metadata.scoped = true;
+	}
 	element.metadata.scoped = true;
 }
 
@@ -415,6 +418,21 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 		/** @type {Array<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} */
 		let sibling_elements; // do them lazy because it's rarely used and expensive to calculate
 
+		// If this is a :has inside a global selector, we gotta include the element itself, too,
+		// because the global selector might be for an element that's outside the component (e.g. :root).
+		const rules = [rule, ...get_parent_rules(rule)];
+		const include_self =
+			rules.some((r) => r.prelude.children.some((c) => c.children.some((s) => is_global(s, r)))) ||
+			rules[rules.length - 1].prelude.children.some((c) =>
+				c.children.some((r) =>
+					r.selectors.some((s) => s.type === 'PseudoClassSelector' && s.name === 'root')
+				)
+			);
+		if (include_self) {
+			child_elements.push(element);
+			descendant_elements.push(element);
+		}
+
 		walk(
 			/** @type {Compiler.SvelteNode} */ (element.fragment),
 			{ is_child: true },
@@ -460,7 +478,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 
 				const descendants =
 					left_most_combinator.name === '+' || left_most_combinator.name === '~'
-						? (sibling_elements ??= get_following_sibling_elements(element))
+						? (sibling_elements ??= get_following_sibling_elements(element, include_self))
 						: left_most_combinator.name === '>'
 							? child_elements
 							: descendant_elements;
@@ -481,20 +499,6 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 			}
 
 			if (!matched) {
-				if (relative_selector.metadata.is_global && !relative_selector.metadata.is_global_like) {
-					// Edge case: `:global(.x):has(.y)` where `.x` is global but `.y` doesn't match.
-					// Since `used` is set to `true` for `:global(.x)` in css-analyze beforehand, and
-					// we have no way of knowing if it's safe to set it back to `false`, we'll mark
-					// the inner selector as used and scoped to prevent it from being pruned, which could
-					// result in a invalid CSS output (e.g. `.x:has(/* unused .y */)`). The result
-					// can't match a real element, so the only drawback is the missing prune.
-					// TODO clean this up some day
-					complex_selectors[0].metadata.used = true;
-					complex_selectors[0].children.forEach((selector) => {
-						selector.metadata.scoped = true;
-					});
-				}
-
 				return false;
 			}
 		}
@@ -507,9 +511,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 
 		switch (selector.type) {
 			case 'PseudoClassSelector': {
-				if (name === 'host' || name === 'root') {
-					return false;
-				}
+				if (name === 'host' || name === 'root') return false;
 
 				if (
 					name === 'global' &&
@@ -529,7 +531,12 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				// with descendants, in which case we scope them all.
 				if (name === 'not' && selector.args) {
 					for (const complex_selector of selector.args.children) {
-						complex_selector.metadata.used = true;
+						walk(complex_selector, null, {
+							ComplexSelector(node, context) {
+								node.metadata.used = true;
+								context.next();
+							}
+						});
 						const relative = truncate(complex_selector);
 
 						if (complex_selector.children.length > 1) {
@@ -578,23 +585,6 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 					}
 
 					if (!matched) {
-						if (
-							relative_selector.metadata.is_global &&
-							!relative_selector.metadata.is_global_like
-						) {
-							// Edge case: `:global(.x):is(.y)` where `.x` is global but `.y` doesn't match.
-							// Since `used` is set to `true` for `:global(.x)` in css-analyze beforehand, and
-							// we have no way of knowing if it's safe to set it back to `false`, we'll mark
-							// the inner selector as used and scoped to prevent it from being pruned, which could
-							// result in a invalid CSS output (e.g. `.x:is(/* unused .y */)`). The result
-							// can't match a real element, so the only drawback is the missing prune.
-							// TODO clean this up some day
-							selector.args.children[0].metadata.used = true;
-							selector.args.children[0].children.forEach((selector) => {
-								selector.metadata.scoped = true;
-							});
-						}
-
 						return false;
 					}
 				}
@@ -662,7 +652,10 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				const parent = /** @type {Compiler.Css.Rule} */ (rule.metadata.parent_rule);
 
 				for (const complex_selector of parent.prelude.children) {
-					if (apply_selector(get_relative_selectors(complex_selector), parent, element, state)) {
+					if (
+						apply_selector(get_relative_selectors(complex_selector), parent, element, state) ||
+						complex_selector.children.every((s) => is_global(s, parent))
+					) {
 						complex_selector.metadata.used = true;
 						matched = true;
 					}
@@ -681,8 +674,11 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 	return true;
 }
 
-/** @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element */
-function get_following_sibling_elements(element) {
+/**
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
+ * @param {boolean} include_self
+ */
+function get_following_sibling_elements(element, include_self) {
 	/** @type {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.Root | null} */
 	let parent = get_element_parent(element);
 
@@ -721,6 +717,10 @@ function get_following_sibling_elements(element) {
 				found_parent = true;
 			}
 		}
+	}
+
+	if (include_self) {
+		sibling_elements.push(element);
 	}
 
 	return sibling_elements;

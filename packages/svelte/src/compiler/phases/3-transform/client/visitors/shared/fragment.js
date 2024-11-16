@@ -1,10 +1,11 @@
 /** @import { Expression } from 'estree' */
 /** @import { AST, SvelteNode } from '#compiler' */
+/** @import { Scope } from '../../../../scope.js' */
 /** @import { ComponentContext } from '../../types' */
-import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
+import { escape_html } from '../../../../../../escaping.js';
+import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { is_inlinable_expression } from '../../utils.js';
-import { build_template_literal, build_update } from './utils.js';
+import { build_template_chunk, build_update } from './utils.js';
 
 /**
  * Processes an array of template nodes, joining sibling text/expression nodes
@@ -12,10 +13,10 @@ import { build_template_literal, build_update } from './utils.js';
  * corresponding template node references these updates are applied to.
  * @param {SvelteNode[]} nodes
  * @param {(is_text: boolean) => Expression} initial
- * @param {boolean} is_element
+ * @param {AST.RegularElement | null} element
  * @param {ComponentContext} context
  */
-export function process_children(nodes, initial, is_element, { visit, state }) {
+export function process_children(nodes, initial, element, { visit, state }) {
 	const within_bound_contenteditable = state.metadata.bound_contenteditable;
 	let prev = initial;
 	let skipped = 0;
@@ -61,15 +62,16 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	 * @param {Sequence} sequence
 	 */
 	function flush_sequence(sequence) {
-		if (sequence.every((node) => node.type === 'Text')) {
+		const { has_state, has_call, value, can_inline } = build_template_chunk(sequence, visit, state);
+
+		if (can_inline) {
 			skipped += 1;
-			state.template.push(sequence.map((node) => node.raw).join(''));
+			const raw = element?.name === 'script' || element?.name === 'style';
+			state.template.push(raw ? value : escape_inline_expression(value, state.scope));
 			return;
 		}
 
 		state.template.push(' ');
-
-		const { has_state, has_call, value } = build_template_literal(sequence, visit, state);
 
 		// if this is a standalone `{expression}`, make sure we handle the case where
 		// no text node was created because the expression was empty during SSR
@@ -98,9 +100,9 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 			let child_state = state;
 
-			if (is_static_element(node, state)) {
+			if (is_static_element(node)) {
 				skipped += 1;
-			} else if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
+			} else if (node.type === 'EachBlock' && nodes.length === 1 && element) {
 				node.metadata.is_controlled = true;
 			} else {
 				const id = flush_node(false, node.type === 'RegularElement' ? node.name : 'node');
@@ -125,9 +127,8 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 /**
  * @param {SvelteNode} node
- * @param {ComponentContext["state"]} state
  */
-function is_static_element(node, state) {
+function is_static_element(node) {
 	if (node.type !== 'RegularElement') return false;
 	if (node.fragment.metadata.dynamic) return false;
 	if (node.name.includes('-')) return false; // we're setting all attributes on custom elements through properties
@@ -154,16 +155,49 @@ function is_static_element(node, state) {
 			return false;
 		}
 
-		if (
-			attribute.value !== true &&
-			!is_text_attribute(attribute) &&
-			// If the attribute is not a text attribute but is inlinable we will directly inline it in the
-			// the template so before returning false we need to check that the attribute is not inlinable
-			!is_inlinable_expression(attribute.value, state)
-		) {
+		if (!attribute.metadata.expression.can_inline) {
 			return false;
 		}
 	}
 
 	return true;
+}
+
+/**
+ * @param {Expression} node
+ * @param {Scope} scope
+ * @returns {Expression}
+ */
+function escape_inline_expression(node, scope) {
+	if (node.type === 'Literal') {
+		if (typeof node.value === 'string') {
+			return b.literal(escape_html(node.value));
+		}
+
+		return node;
+	}
+
+	if (node.type === 'TemplateLiteral') {
+		return b.template(
+			node.quasis.map((q) => b.quasi(escape_html(q.value.cooked))),
+			node.expressions.map((expression) => escape_inline_expression(expression, scope))
+		);
+	}
+
+	/**
+	 * If we can't determine the range of possible values statically, wrap in
+	 * `$.escape(...)`. TODO expand this to cover more cases
+	 */
+	let needs_escape = true;
+
+	if (node.type === 'Identifier') {
+		const binding = scope.get(node.name);
+
+		// TODO handle more cases
+		if (binding?.initial?.type === 'Literal' && !binding.reassigned) {
+			needs_escape = escape_html(binding.initial.value) !== String(binding.initial.value);
+		}
+	}
+
+	return needs_escape ? b.call('$.escape', node) : node;
 }

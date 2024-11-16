@@ -1,19 +1,10 @@
-import { dev_current_component_function, untrack } from './runtime.js';
+import { dev_current_component_function } from './runtime.js';
 import { get_descriptor, is_array } from '../shared/utils.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
 import { render_effect } from './reactivity/effects.js';
 import * as w from './warnings.js';
 import { capture_store_binding } from './reactivity/store.js';
-
-/** regex of all html void element names */
-const void_element_names =
-	/^(?:area|base|br|col|command|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/;
-
-/** @param {string} tag */
-function is_void(tag) {
-	return void_element_names.test(tag) || tag.toLowerCase() === '!doctype';
-}
 
 /**
  * @param {() => any} collection
