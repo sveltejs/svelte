@@ -201,7 +201,7 @@ export function is_pure(node, context) {
 
 	/** @type {Expression | Super | null} */
 	let left = node;
-	while (left.type === 'MemberExpression' && !left.computed) {
+	while (left.type === 'MemberExpression') {
 		left = left.object;
 	}
 
