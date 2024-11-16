@@ -1,5 +1,19 @@
 # svelte
 
+## 5.2.1
+
+### Patch Changes
+
+- fix: mark pseudo classes nested inside `:not` as used ([#14303](https://github.com/sveltejs/svelte/pull/14303))
+
+- fix: disallow invalid attributes for `<svelte:window>` and `<svelte:document>` ([#14228](https://github.com/sveltejs/svelte/pull/14228))
+
+- fix: ensure props passed to components via mount are updateable ([#14210](https://github.com/sveltejs/svelte/pull/14210))
+
+- fix: mark subtree dynamic for img with loading attribute ([#14317](https://github.com/sveltejs/svelte/pull/14317))
+
+- fix: avoid relying on Node specifics within compiler ([#14314](https://github.com/sveltejs/svelte/pull/14314))
+
 ## 5.2.0
 
 ### Minor Changes
