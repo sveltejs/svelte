@@ -317,7 +317,7 @@ When spreading props, local event handlers must go _after_ the spread, or they r
 > - import the function
 > - call the function to get a dispatch function
 > - call said dispatch function with a string and possibly a payload
-> - retrieve said payload on the other end through a `.details` property, because the event itself was always a `CustomEvent`
+> - retrieve said payload on the other end through a `.detail` property, because the event itself was always a `CustomEvent`
 >
 > It was always possible to use component callback props, but because you had to listen to DOM events using `on:`, it made sense to use `createEventDispatcher` for component events due to syntactical consistency. Now that we have event attributes (`onclick`), it's the other way around: Callback props are now the more sensible thing to do.
 >
