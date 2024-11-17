@@ -4,6 +4,7 @@
 import { empty_comment, build_attribute_value } from './utils.js';
 import * as b from '../../../../../utils/builders.js';
 import { is_element_node } from '../../../../nodes.js';
+import { is_hydratable } from '../../../../../../internal/server/hydration.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
@@ -268,13 +269,14 @@ export function build_inline_component(node, expression, context) {
 			)
 		);
 	} else {
-		if (dynamic) {
+		const hydratable = is_hydratable();
+		if (dynamic && hydratable) {
 			context.state.template.push(empty_comment);
 		}
 
 		context.state.template.push(statement);
 
-		if (!context.state.skip_hydration_boundaries) {
+		if (!context.state.skip_hydration_boundaries && hydratable) {
 			context.state.template.push(empty_comment);
 		}
 	}

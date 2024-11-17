@@ -1,6 +1,7 @@
-/** @import { BlockStatement, Expression, Literal, Property } from 'estree' */
+/** @import { BlockStatement, Expression, Literal, Property, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
+import { is_hydratable } from '../../../../../internal/server/hydration.js';
 import * as b from '../../../../utils/builders.js';
 import { empty_comment, build_attribute_value } from './shared/utils.js';
 
@@ -50,5 +51,12 @@ export function SlotElement(node, context) {
 		fallback
 	);
 
-	context.state.template.push(empty_comment, b.stmt(slot), empty_comment);
+	const templates = /** @type {Array<Expression | Statement>} */ ([b.stmt(slot)]);
+
+	if (is_hydratable()) {
+		templates.unshift(empty_comment);
+		templates.push(empty_comment);
+	}
+
+	context.state.template.push(...templates);
 }

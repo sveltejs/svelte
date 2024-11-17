@@ -1,6 +1,7 @@
-/** @import { BlockStatement, Expression, Pattern } from 'estree' */
+/** @import { BlockStatement, Expression, Pattern, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
+import { is_hydratable } from '../../../../../internal/server/hydration.js';
 import * as b from '../../../../utils/builders.js';
 import { empty_comment } from './shared/utils.js';
 
@@ -9,8 +10,8 @@ import { empty_comment } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function AwaitBlock(node, context) {
-	context.state.template.push(
-		empty_comment,
+	const hydratable = is_hydratable();
+	const templates = /** @type {Array<Expression | Statement>} */ ([
 		b.stmt(
 			b.call(
 				'$.await',
@@ -27,7 +28,13 @@ export function AwaitBlock(node, context) {
 					node.catch ? /** @type {BlockStatement} */ (context.visit(node.catch)) : b.block([])
 				)
 			)
-		),
-		empty_comment
-	);
+		)
+	]);
+
+	if (hydratable) {
+		templates.unshift(empty_comment);
+		templates.push(empty_comment);
+	}
+
+	context.state.template.push(...templates);
 }

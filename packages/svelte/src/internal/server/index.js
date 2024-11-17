@@ -14,7 +14,13 @@ import {
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
-import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import {
+	EMPTY_COMMENT,
+	BLOCK_CLOSE,
+	BLOCK_OPEN,
+	set_hydratable,
+	is_hydratable
+} from './hydration.js';
 import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_void } from '../../utils.js';
 import { reset_elements } from './dev.js';
@@ -61,7 +67,9 @@ export function assign_payload(p1, p2) {
  * @returns {void}
  */
 export function element(payload, tag, attributes_fn = noop, children_fn = noop) {
-	payload.out += '<!---->';
+	let hydratable = is_hydratable();
+
+	if (hydratable) payload.out += EMPTY_COMMENT;
 
 	if (tag) {
 		payload.out += `<${tag} `;
@@ -70,14 +78,14 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
 
 		if (!is_void(tag)) {
 			children_fn();
-			if (!RAW_TEXT_ELEMENTS.includes(tag)) {
+			if (!RAW_TEXT_ELEMENTS.includes(tag) && hydratable) {
 				payload.out += EMPTY_COMMENT;
 			}
 			payload.out += `</${tag}>`;
 		}
 	}
 
-	payload.out += '<!---->';
+	if (hydratable) payload.out += EMPTY_COMMENT;
 }
 
 /**
@@ -91,16 +99,20 @@ export let on_destroy = [];
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
  * @param {import('svelte').Component<Props> | ComponentType<SvelteComponent<Props>>} component
- * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }} [options]
+ * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>, hydratable?: boolean }} [options]
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
+	let hydratable = options?.hydratable ?? true;
+	console.log({ hydratable });
+	set_hydratable(hydratable);
+
 	/** @type {Payload} */
 	const payload = { out: '', css: new Set(), head: { title: '', out: '' } };
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
-	payload.out += BLOCK_OPEN;
+	if (hydratable) payload.out += BLOCK_OPEN;
 
 	let reset_reset_element;
 
@@ -125,7 +137,7 @@ export function render(component, options = {}) {
 		reset_reset_element();
 	}
 
-	payload.out += BLOCK_CLOSE;
+	if (hydratable) payload.out += BLOCK_CLOSE;
 	for (const cleanup of on_destroy) cleanup();
 	on_destroy = prev_on_destroy;
 
@@ -163,6 +175,8 @@ export function head(payload, fn) {
  * @returns {void}
  */
 export function css_props(payload, is_html, props, component, dynamic = false) {
+	let comment = is_hydratable() ? EMPTY_COMMENT : '';
+
 	const styles = style_object_to_string(props);
 
 	if (is_html) {
@@ -172,15 +186,15 @@ export function css_props(payload, is_html, props, component, dynamic = false) {
 	}
 
 	if (dynamic) {
-		payload.out += '<!---->';
+		payload.out += comment;
 	}
 
 	component();
 
 	if (is_html) {
-		payload.out += `<!----></svelte-css-wrapper>`;
+		payload.out += comment + `</svelte-css-wrapper>`;
 	} else {
-		payload.out += `<!----></g>`;
+		payload.out += comment + `</g>`;
 	}
 }
 

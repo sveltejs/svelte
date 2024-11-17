@@ -15,6 +15,7 @@ import type { CompileOptions } from '#compiler';
 interface SSRTest extends BaseTest {
 	compileOptions?: Partial<CompileOptions>;
 	props?: Record<string, any>;
+	hydratable?: boolean;
 	withoutNormalizeHtml?: boolean;
 	errors?: string[];
 }
@@ -33,7 +34,8 @@ const { test, run } = suite<SSRTest>(async (config, test_dir) => {
 
 	const Component = (await import(`${test_dir}/_output/server/main.svelte.js`)).default;
 	const expected_html = try_read_file(`${test_dir}/_expected.html`);
-	const rendered = render(Component, { props: config.props || {} });
+	console.log({ config });
+	const rendered = render(Component, { props: config.props || {}, hydratable: config.hydratable });
 	const { body, head } = rendered;
 
 	fs.writeFileSync(`${test_dir}/_output/rendered.html`, body);

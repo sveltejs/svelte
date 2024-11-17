@@ -1,6 +1,7 @@
 /** @import { Expression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
+import { is_hydratable } from '../../../../../internal/server/hydration.js';
 import { unwrap_optional } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { empty_comment } from './shared/utils.js';
@@ -29,7 +30,7 @@ export function RenderTag(node, context) {
 		)
 	);
 
-	if (!context.state.skip_hydration_boundaries) {
+	if (!context.state.skip_hydration_boundaries && is_hydratable()) {
 		context.state.template.push(empty_comment);
 	}
 }
