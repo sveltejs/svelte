@@ -169,11 +169,11 @@ This function is deprecated in Svelte 5. Instead, components should accept _call
 
 <Pump
 	---on:---inflate={(power) => {
-		size += power---.details---;
+		size += power---.detail---;
 		if (size > 75) burst = true;
 	}}
 	---on:---deflate={(power) => {
-		if (size > 0) size -= power---.details---;
+		if (size > 0) size -= power---.detail---;
 	}}
 />
 
