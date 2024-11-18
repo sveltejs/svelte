@@ -64,7 +64,11 @@ function clone(value, cloned, path, paths) {
 			cloned.set(value, copy);
 
 			for (let i = 0; i < value.length; i += 1) {
-				copy.push(clone(value[i], cloned, DEV ? `${path}[${i}]` : path, paths));
+				var element = value[i];
+				if (cloned.get(element) === null) {
+					cloned.set(element, copy);
+				}
+				copy.push(clone(element, cloned, DEV ? `${path}[${i}]` : path, paths));
 			}
 
 			return copy;
@@ -76,8 +80,11 @@ function clone(value, cloned, path, paths) {
 			cloned.set(value, copy);
 
 			for (var key in value) {
-				// @ts-expect-error
-				copy[key] = clone(value[key], cloned, DEV ? `${path}.${key}` : path, paths);
+				var prop = /** @type {any} */ (value[key]);
+				if (cloned.get(prop) === null) {
+					cloned.set(prop, copy);
+				}
+				copy[key] = clone(prop, cloned, DEV ? `${path}.${key}` : path, paths);
 			}
 
 			return copy;
@@ -88,6 +95,10 @@ function clone(value, cloned, path, paths) {
 		}
 
 		if (typeof (/** @type {T & { toJSON?: any } } */ (value).toJSON) === 'function') {
+			// To avoid cycles set the clone to null, so if we encounter it again later we can
+			// slot in the currently copied object instead
+			// @ts-ignore
+			cloned.set(value, null);
 			return clone(
 				/** @type {T & { toJSON(): any } } */ (value).toJSON(),
 				cloned,
