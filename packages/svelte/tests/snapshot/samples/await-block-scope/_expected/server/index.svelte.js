@@ -8,7 +8,7 @@ export default function Await_block_scope($$payload) {
 		counter.count += 1;
 	}
 
-	$$payload.out += `<button>clicks: ${$.escape(counter.count)}</button> <!---->`;
+	$$payload.out += `<button>clicks: ${$.escape(counter.count)}</button> ${$.empty()}`;
 	$.await(promise, () => {}, (counter) => {}, () => {});
-	$$payload.out += `<!----> ${$.escape(counter.count)}`;
+	$$payload.out += `${$.empty()} ${$.escape(counter.count)}`;
 }

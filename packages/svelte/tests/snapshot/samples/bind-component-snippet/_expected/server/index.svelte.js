@@ -6,7 +6,7 @@ export default function Bind_component_snippet($$payload) {
 	const _snippet = snippet;
 
 	function snippet($$payload) {
-		$$payload.out += `<!---->Something`;
+		$$payload.out += `${$.empty()}Something`;
 	}
 
 	let $$settled = true;
@@ -23,7 +23,7 @@ export default function Bind_component_snippet($$payload) {
 			}
 		});
 
-		$$payload.out += `<!----> value: ${$.escape(value)}`;
+		$$payload.out += `${$.empty()} value: ${$.escape(value)}`;
 	};
 
 	do {
