@@ -2,28 +2,22 @@
 /** @import { Component, Payload, RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
 export { FILENAME, HMR } from '../../constants.js';
+import {
+	ELEMENT_IS_NAMESPACED,
+	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
+	UNINITIALIZED
+} from '../../constants.js';
+import { subscribe_to_store } from '../../store/utils.js';
 import { attr } from '../shared/attributes.js';
 import { is_promise, noop } from '../shared/utils.js';
-import { subscribe_to_store } from '../../store/utils.js';
-import {
-	UNINITIALIZED,
-	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
-	ELEMENT_IS_NAMESPACED
-} from '../../constants.js';
 
-import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
-import { current_component, pop, push } from './context.js';
-import {
-	EMPTY_COMMENT,
-	BLOCK_CLOSE,
-	BLOCK_OPEN,
-	set_hydratable,
-	is_hydratable
-} from './hydration.js';
-import { validate_store } from '../shared/validate.js';
+import { escape_html } from '../../escaping.js';
 import { is_boolean_attribute, is_void } from '../../utils.js';
+import { validate_store } from '../shared/validate.js';
+import { current_component, pop, push } from './context.js';
 import { reset_elements } from './dev.js';
+import { close, empty, open, open_else, set_hydratable } from './hydration.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
@@ -67,9 +61,7 @@ export function assign_payload(p1, p2) {
  * @returns {void}
  */
 export function element(payload, tag, attributes_fn = noop, children_fn = noop) {
-	let hydratable = is_hydratable();
-
-	if (hydratable) payload.out += EMPTY_COMMENT;
+	payload.out += empty();
 
 	if (tag) {
 		payload.out += `<${tag} `;
@@ -78,14 +70,14 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
 
 		if (!is_void(tag)) {
 			children_fn();
-			if (!RAW_TEXT_ELEMENTS.includes(tag) && hydratable) {
-				payload.out += EMPTY_COMMENT;
+			if (!RAW_TEXT_ELEMENTS.includes(tag)) {
+				payload.out += empty();
 			}
 			payload.out += `</${tag}>`;
 		}
 	}
 
-	if (hydratable) payload.out += EMPTY_COMMENT;
+	payload.out += empty();
 }
 
 /**
@@ -99,20 +91,16 @@ export let on_destroy = [];
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
  * @param {import('svelte').Component<Props> | ComponentType<SvelteComponent<Props>>} component
- * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>, hydratable?: boolean }} [options]
+ * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }} [options]
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
-	let hydratable = options?.hydratable ?? true;
-	console.log({ hydratable });
-	set_hydratable(hydratable);
-
 	/** @type {Payload} */
 	const payload = { out: '', css: new Set(), head: { title: '', out: '' } };
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
-	if (hydratable) payload.out += BLOCK_OPEN;
+	payload.out += open();
 
 	let reset_reset_element;
 
@@ -137,7 +125,7 @@ export function render(component, options = {}) {
 		reset_reset_element();
 	}
 
-	if (hydratable) payload.out += BLOCK_CLOSE;
+	payload.out += close();
 	for (const cleanup of on_destroy) cleanup();
 	on_destroy = prev_on_destroy;
 
@@ -155,15 +143,36 @@ export function render(component, options = {}) {
 }
 
 /**
+ * Only available on the server and when compiling with the `server` option.
+ * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
+ * Unlike `render` it doesn't render any hydration marker.
+ * @template {Record<string, any>} Props
+ * @param {import('svelte').Component<Props> | ComponentType<SvelteComponent<Props>>} component
+ * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }} [options]
+ * @returns {RenderOutput}
+ */
+export function renderStaticHTML(component, options) {
+	set_hydratable(false);
+	let payload;
+	try {
+		payload = render(component, options);
+	} finally {
+		set_hydratable(true);
+	}
+
+	return payload;
+}
+
+/**
  * @param {Payload} payload
  * @param {(head_payload: Payload['head']) => void} fn
  * @returns {void}
  */
 export function head(payload, fn) {
 	const head_payload = payload.head;
-	head_payload.out += BLOCK_OPEN;
+	head_payload.out += open();
 	fn(head_payload);
-	head_payload.out += BLOCK_CLOSE;
+	head_payload.out += close();
 }
 
 /**
@@ -175,8 +184,6 @@ export function head(payload, fn) {
  * @returns {void}
  */
 export function css_props(payload, is_html, props, component, dynamic = false) {
-	let comment = is_hydratable() ? EMPTY_COMMENT : '';
-
 	const styles = style_object_to_string(props);
 
 	if (is_html) {
@@ -186,15 +193,15 @@ export function css_props(payload, is_html, props, component, dynamic = false) {
 	}
 
 	if (dynamic) {
-		payload.out += comment;
+		payload.out += empty();
 	}
 
 	component();
 
 	if (is_html) {
-		payload.out += comment + `</svelte-css-wrapper>`;
+		payload.out += empty() + `</svelte-css-wrapper>`;
 	} else {
-		payload.out += comment + `</g>`;
+		payload.out += empty() + `</g>`;
 	}
 }
 
@@ -537,13 +544,13 @@ export function once(get_value) {
 	};
 }
 
-export { attr };
+export { attr, close, empty, open, open_else };
 
 export { html } from './blocks/html.js';
 
-export { push, pop } from './context.js';
+export { pop, push } from './context.js';
 
-export { push_element, pop_element } from './dev.js';
+export { pop_element, push_element } from './dev.js';
 
 export { snapshot } from '../shared/clone.js';
 

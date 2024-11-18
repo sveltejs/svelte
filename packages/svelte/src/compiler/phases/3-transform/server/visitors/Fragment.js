@@ -3,7 +3,6 @@
 import { clean_nodes, infer_namespace } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import { empty_comment, process_children, build_template } from './shared/utils.js';
-import { is_hydratable } from '../../../../../internal/server/hydration.js';
 
 /**
  * @param {AST.Fragment} node
@@ -36,8 +35,7 @@ export function Fragment(node, context) {
 		context.visit(node, state);
 	}
 
-	if (is_text_first && is_hydratable()) {
-		console.log({ hid: is_hydratable() });
+	if (is_text_first) {
 		// insert `<!---->` to prevent this from being glued to the previous fragment
 		state.template.push(empty_comment);
 	}

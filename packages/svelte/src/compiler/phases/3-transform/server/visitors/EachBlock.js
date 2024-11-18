@@ -1,7 +1,6 @@
 /** @import { BlockStatement, Expression, Pattern, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
-import { BLOCK_OPEN_ELSE, is_hydratable } from '../../../../../internal/server/hydration.js';
 import * as b from '../../../../utils/builders.js';
 import { block_close, block_open } from './shared/utils.js';
 
@@ -10,7 +9,6 @@ import { block_close, block_open } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function EachBlock(node, context) {
-	const hydratable = is_hydratable();
 	const state = context.state;
 
 	const each_node_meta = node.metadata;
@@ -41,32 +39,21 @@ export function EachBlock(node, context) {
 	);
 
 	if (node.fallback) {
+		const open = b.stmt(b.assignment('+=', b.id('$$payload.out'), block_open));
+
 		const fallback = /** @type {BlockStatement} */ (context.visit(node.fallback));
 
-		const block = /** @type {Statement[]} */ ([for_loop]);
+		fallback.body.unshift(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.call('$.open_else'))));
 
-		if (hydratable) {
-			block.unshift(b.stmt(b.assignment('+=', b.id('$$payload.out'), block_open)));
-
-			fallback.body.unshift(
-				b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN_ELSE)))
-			);
-		}
-
-		const templates = /** @type {Array<Expression | Statement>} */ ([
-			b.if(b.binary('!==', b.member(array_id, 'length'), b.literal(0)), b.block(block), fallback)
-		]);
-		if (hydratable) {
-			templates.push(block_close);
-		}
-
-		state.template.push(...templates);
+		state.template.push(
+			b.if(
+				b.binary('!==', b.member(array_id, 'length'), b.literal(0)),
+				b.block([open, for_loop]),
+				fallback
+			),
+			block_close
+		);
 	} else {
-		const templates = /** @type {Array<Expression | Statement>} */ ([for_loop]);
-		if (hydratable) {
-			templates.unshift(block_open);
-			templates.push(block_close);
-		}
-		state.template.push(...templates);
+		state.template.push(block_open, for_loop, block_close);
 	}
 }
