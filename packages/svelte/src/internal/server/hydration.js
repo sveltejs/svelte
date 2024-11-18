@@ -32,10 +32,6 @@ export function empty() {
 	return EMPTY_COMMENT;
 }
 
-export function is_hydratable() {
-	return hydratable;
-}
-
 /**
  * @param {boolean} new_hydratable
  */
