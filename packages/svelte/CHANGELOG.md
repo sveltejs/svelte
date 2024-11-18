@@ -1,5 +1,11 @@
 # svelte
 
+## 5.2.3
+
+### Patch Changes
+
+- fix: ensure dynamic call expressions correctly generate output ([#14345](https://github.com/sveltejs/svelte/pull/14345))
+
 ## 5.2.2
 
 ### Patch Changes
