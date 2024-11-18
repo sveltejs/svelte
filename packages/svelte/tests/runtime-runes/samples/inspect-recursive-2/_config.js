@@ -7,9 +7,17 @@ export default test({
 
 	async test({ assert, logs }) {
 		var a = {
-			a: null
+			a: {}
 		};
 		a.a = a;
-		assert.deepEqual(logs, ['init', { a }]);
+
+		var b = {
+			a: {
+				b: {}
+			}
+		};
+		b.a.b = b;
+
+		assert.deepEqual(logs, ['init', a, 'init', b]);
 	}
 });
