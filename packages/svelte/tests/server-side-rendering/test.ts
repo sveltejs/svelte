@@ -6,7 +6,7 @@
 
 import * as fs from 'node:fs';
 import { assert } from 'vitest';
-import { render } from 'svelte/server';
+import { render, renderStaticHTML } from 'svelte/server';
 import { compile_directory, should_update_expected, try_read_file } from '../helpers.js';
 import { assert_html_equal_with_options } from '../html_equal.js';
 import { suite, type BaseTest } from '../suite.js';
@@ -15,7 +15,7 @@ import type { CompileOptions } from '#compiler';
 interface SSRTest extends BaseTest {
 	compileOptions?: Partial<CompileOptions>;
 	props?: Record<string, any>;
-	hydratable?: boolean;
+	static?: boolean;
 	withoutNormalizeHtml?: boolean;
 	errors?: string[];
 }
@@ -34,8 +34,8 @@ const { test, run } = suite<SSRTest>(async (config, test_dir) => {
 
 	const Component = (await import(`${test_dir}/_output/server/main.svelte.js`)).default;
 	const expected_html = try_read_file(`${test_dir}/_expected.html`);
-	console.log({ config });
-	const rendered = render(Component, { props: config.props || {}, hydratable: config.hydratable });
+	let fn = config.static === true ? renderStaticHTML : render;
+	const rendered = fn(Component, { props: config.props || {} });
 	const { body, head } = rendered;
 
 	fs.writeFileSync(`${test_dir}/_output/rendered.html`, body);
