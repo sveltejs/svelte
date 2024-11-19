@@ -1,5 +1,5 @@
-import { fastest_test } from '../utils.js';
-import * as $ from '../../packages/svelte/src/internal/client/index.js';
+import { fastest_test } from '../../utils.js';
+import * as $ from '../../../packages/svelte/src/internal/client/index.js';
 
 const COUNT = 1e5;
 
