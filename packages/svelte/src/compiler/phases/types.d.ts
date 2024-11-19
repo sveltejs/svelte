@@ -1,5 +1,5 @@
 import type { AST, Binding, Css, SvelteNode } from '#compiler';
-import type { Identifier, LabeledStatement, Program, VariableDeclaration } from 'estree';
+import type { Identifier, LabeledStatement, Node, Program } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
 
 export interface Js {

@@ -26,30 +26,18 @@ export function ExportSpecifier(node, context) {
 			if (binding) binding.reassigned = binding.updated = true;
 		}
 	} else {
-		const undefined_exports = context.state.analysis.undefined_exports;
-		validate_export(node, context.state.scope, local_name, undefined_exports);
-	}
-}
+		const binding = context.state.scope.get(local_name);
 
-/**
- *
- * @param {Node} node
- * @param {Scope} scope
- * @param {string} name
- * @param {Map<string, any>} undefined_exports
- */
-function validate_export(node, scope, name, undefined_exports) {
-	const binding = scope.get(name);
-	if (!binding) {
-		undefined_exports.set(name, node);
-		return;
-	}
+		if (binding) {
+			if (binding.kind === 'derived') {
+				e.derived_invalid_export(node);
+			}
 
-	if (binding.kind === 'derived') {
-		e.derived_invalid_export(node);
-	}
-
-	if ((binding.kind === 'state' || binding.kind === 'raw_state') && binding.reassigned) {
-		e.state_invalid_export(node);
+			if ((binding.kind === 'state' || binding.kind === 'raw_state') && binding.reassigned) {
+				e.state_invalid_export(node);
+			}
+		} else {
+			context.state.analysis.undefined_exports.set(local_name, node);
+		}
 	}
 }

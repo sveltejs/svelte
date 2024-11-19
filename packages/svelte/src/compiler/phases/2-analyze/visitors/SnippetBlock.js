@@ -28,16 +28,16 @@ export function SnippetBlock(node, context) {
 		context.path[0].type === 'Fragment' &&
 		can_hoist_snippet(context.state.scope, context.state.scopes);
 
-	const undefined_exports = context.state.analysis.undefined_exports;
 	const name = node.expression.name;
 
 	if (can_hoist) {
 		const binding = /** @type {Binding} */ (context.state.scope.get(name));
 		context.state.analysis.module.scope.declarations.set(name, binding);
-	}
-
-	if (!can_hoist && undefined_exports.has(name)) {
-		e.snippet_invalid_export(/** @type {any} */ (undefined_exports.get(name)));
+	} else {
+		const undefined_export = context.state.analysis.undefined_exports.get(name);
+		if (undefined_export) {
+			e.snippet_invalid_export(undefined_export);
+		}
 	}
 
 	node.metadata.can_hoist = can_hoist;
