@@ -45,7 +45,7 @@ export function bind_value(input, get, set = get) {
 		// If we are hydrating and the value has since changed, then use the update value
 		// from the input instead.
 		if (hydrating && input.defaultValue !== input.value) {
-			set(input.value);
+			set(is_numberlike_input(input) ? to_number(input.value) : input.value);
 			return;
 		}
 
