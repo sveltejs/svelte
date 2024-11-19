@@ -52,6 +52,10 @@ export function Attribute(node, context) {
 			node.metadata.expression.has_state ||= chunk.metadata.expression.has_state;
 			node.metadata.expression.has_call ||= chunk.metadata.expression.has_call;
 			node.metadata.expression.can_inline &&= chunk.metadata.expression.can_inline;
+
+			if (!node.metadata.expression.can_inline) {
+				mark_subtree_dynamic(context.path);
+			}
 		}
 
 		if (is_event_attribute(node)) {
