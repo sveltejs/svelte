@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: output template effect for svg xlink attribute
+fix: correctly update dynamic member expressions
