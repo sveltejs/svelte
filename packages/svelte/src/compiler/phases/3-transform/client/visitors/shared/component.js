@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Property, SequenceExpression, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
 /** @import { AST, TemplateNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
@@ -217,7 +217,11 @@ export function build_component(node, component_name, context, anchor = context.
 						push_prop(b.get(attribute.name, [b.return(expression)]));
 					}
 
-					const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
+					const assignment = b.assignment(
+						'=',
+						/** @type {Pattern} */ (expression),
+						b.id('$$value')
+					);
 					push_prop(
 						b.set(attribute.name, [b.stmt(/** @type {Expression} */ (context.visit(assignment)))])
 					);
