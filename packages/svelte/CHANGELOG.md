@@ -1,5 +1,17 @@
 # svelte
 
+## 5.2.4
+
+### Patch Changes
+
+- fix: ensure internal cloning can work circular values ([#14347](https://github.com/sveltejs/svelte/pull/14347))
+
+- fix: correctly update dynamic member expressions ([#14359](https://github.com/sveltejs/svelte/pull/14359))
+
+- fix: ensure is_pure takes into account $effect.tracking() ([#14333](https://github.com/sveltejs/svelte/pull/14333))
+
+- fix: coerce value to number when hydrating range/number input with changed value ([#14349](https://github.com/sveltejs/svelte/pull/14349))
+
 ## 5.2.3
 
 ### Patch Changes
