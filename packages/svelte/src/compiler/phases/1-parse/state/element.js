@@ -506,9 +506,6 @@ function read_attribute(parser) {
 	const colon_index = name.indexOf(':');
 	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
 
-	/** @type {Expression | null} */
-	let expression = null;
-
 	/** @type {true | AST.ExpressionTag | Array<AST.Text | AST.ExpressionTag>} */
 	let value = true;
 	if (parser.eat('=')) {
@@ -543,12 +540,15 @@ function read_attribute(parser) {
 
 		const first_value = value === true ? undefined : Array.isArray(value) ? value[0] : value;
 
+		/** @type {Expression | null} */
+		let expression = null;
+
 		if (first_value) {
 			const attribute_contains_text =
 				/** @type {any[]} */ (value).length > 1 || first_value.type === 'Text';
 			if (attribute_contains_text) {
 				e.directive_invalid_value(/** @type {number} */ (first_value.start));
-			} else if (expression === null) {
+			} else {
 				// TODO throw a parser error in a future version here if this `[ExpressionTag]` instead of `ExpressionTag`,
 				// which means stringified value, which isn't allowed for some directives?
 				expression = first_value.expression;
