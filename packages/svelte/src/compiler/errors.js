@@ -406,12 +406,12 @@ export function runes_mode_invalid_import(node, name) {
 }
 
 /**
- * Cannot export snippet from a `<script module>` if it references logic or expressions inside the component
+ * An exported snippet can only reference things declared in a `<script module>`, or other exportable snippets
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function snippet_invalid_export(node) {
-	e(node, "snippet_invalid_export", "Cannot export snippet from a `<script module>` if it references logic or expressions inside the component");
+	e(node, "snippet_invalid_export", "An exported snippet can only reference things declared in a `<script module>`, or other exportable snippets");
 }
 
 /**
