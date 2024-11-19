@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure is_pure takes into account runes
+fix: ensure is_pure takes into account $effect.tracking()

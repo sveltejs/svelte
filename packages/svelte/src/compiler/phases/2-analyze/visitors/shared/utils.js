@@ -203,7 +203,7 @@ export function is_pure(node, context) {
 		return false;
 	}
 
-	if (get_rune(b.call(node), context.state.scope) !== null) {
+	if (get_rune(b.call(node), context.state.scope) === '$effect.tracking') {
 		return false;
 	}
 
