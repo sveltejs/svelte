@@ -177,9 +177,7 @@ export async function renderStaticHTML(component, options) {
 	try {
 		payload = render_payload(component, options);
 		if (payload.async) {
-			for (let async_fn of payload.async) {
-				await async_fn();
-			}
+			await Promise.all(payload.async.map((fn) => fn()));
 		}
 
 		let head = payload.head.out + payload.head.title;
@@ -565,9 +563,7 @@ function await_block($$payload, promise, pending_fn, then_fn, catch_fn) {
 					}
 				}
 				if ($$payload.async && new_payload.async) {
-					for (let async_replace of new_payload.async) {
-						await async_replace();
-					}
+					await Promise.all(new_payload.async.map((fn) => fn()));
 				}
 				$$payload.out = $$payload.out.replace(replace_marker, new_payload.out);
 				$$payload.head.out = $$payload.head.out.replace(replace_marker, new_payload.head.out);
