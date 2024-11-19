@@ -1,46 +1,43 @@
-import { assert, fastest_test } from '../../utils.js';
-import * as $ from '../../../packages/svelte/src/internal/client/index.js';
+import { assert, fastest_test } from '../../../utils.js';
+import * as $ from 'svelte/internal/client';
 
 function setup() {
-	let head = $.state(0);
-	const double = $.derived(() => $.get(head) * 2);
-	const inverse = $.derived(() => -$.get(head));
-	let current = $.derived(() => {
-		let result = 0;
-		for (let i = 0; i < 20; i++) {
-			result += $.get(head) % 2 ? $.get(double) : $.get(inverse);
-		}
-		return result;
+	let heads = new Array(100).fill(null).map((_) => $.state(0));
+	const mux = $.derived(() => {
+		return Object.fromEntries(heads.map((h) => $.get(h)).entries());
 	});
-
-	let counter = 0;
+	const splited = heads
+		.map((_, index) => $.derived(() => $.get(mux)[index]))
+		.map((x) => $.derived(() => $.get(x) + 1));
 
 	const destroy = $.effect_root(() => {
-		$.render_effect(() => {
-			$.get(current);
-			counter++;
+		splited.forEach((x) => {
+			$.render_effect(() => {
+				$.get(x);
+			});
 		});
 	});
 
 	return {
 		destroy,
 		run() {
-			$.flush_sync(() => {
-				$.set(head, 1);
-			});
-			assert($.get(current) === 40);
-			counter = 0;
-			for (let i = 0; i < 100; i++) {
+			for (let i = 0; i < 10; i++) {
 				$.flush_sync(() => {
-					$.set(head, i);
+					$.set(heads[i], i);
 				});
+				assert($.get(splited[i]) === i + 1);
 			}
-			assert(counter === 100);
+			for (let i = 0; i < 10; i++) {
+				$.flush_sync(() => {
+					$.set(heads[i], i * 2);
+				});
+				assert($.get(splited[i]) === i * 2 + 1);
+			}
 		}
 	};
 }
 
-export async function kairo_unstable_unowned() {
+export async function kairo_mux_unowned() {
 	// Do 10 loops to warm up JIT
 	for (let i = 0; i < 10; i++) {
 		const { run, destroy } = setup();
@@ -59,13 +56,13 @@ export async function kairo_unstable_unowned() {
 	destroy();
 
 	return {
-		benchmark: 'kairo_unstable_unowned',
+		benchmark: 'kairo_mux_unowned',
 		time: timing.time.toFixed(2),
 		gc_time: timing.gc_time.toFixed(2)
 	};
 }
 
-export async function kairo_unstable_owned() {
+export async function kairo_mux_owned() {
 	let run, destroy;
 
 	const destroy_owned = $.effect_root(() => {
@@ -90,7 +87,7 @@ export async function kairo_unstable_owned() {
 	destroy_owned();
 
 	return {
-		benchmark: 'kairo_unstable_owned',
+		benchmark: 'kairo_mux_owned',
 		time: timing.time.toFixed(2),
 		gc_time: timing.gc_time.toFixed(2)
 	};
