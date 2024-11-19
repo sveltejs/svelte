@@ -129,6 +129,11 @@ export function BindDirective(node, context) {
 		if (node.name === 'group') {
 			e.bind_group_invalid_expression(node);
 		}
+
+		if (node.expression.expressions.length !== 2) {
+			e.invalid_bind_directive(node);
+		}
+
 		return;
 	}
 

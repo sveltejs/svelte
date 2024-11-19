@@ -13,7 +13,6 @@ import { create_attribute, create_expression_metadata } from '../../nodes.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../utils/ast.js';
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
-import { parse_expression_at } from '../acorn.js';
 
 const regex_invalid_unquoted_attribute_value = /^(\/>|[\s"'=<>`])/;
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
@@ -526,21 +525,6 @@ function read_attribute(parser) {
 		}
 
 		value = read_attribute_value(parser);
-
-		// bind can use a getter/setter pair {a, b}, so the attribute parsing above will capture
-		// a SequenceExpression. To ensure this is handled correctly, we use wrap the expression
-		// again in square brackets and parse it again. This should ensure it's an ArrayExpression
-		// with two elements and if not we can throw an appropiate error
-		if (
-			name.startsWith('bind:') &&
-			!Array.isArray(value) &&
-			value.expression.type === 'SequenceExpression'
-		) {
-			if (value.expression.expressions.length !== 2) {
-				e.invalid_bind_directive(value);
-			}
-		}
-
 		end = parser.index;
 	} else if (parser.match_regex(regex_starts_with_quote_characters)) {
 		e.expected_token(parser.index, '=');
