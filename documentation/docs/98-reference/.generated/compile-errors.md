@@ -87,7 +87,7 @@ Attribute values containing `{...}` must be enclosed in quote marks, unless the 
 ### bind_invalid_expression
 
 ```
-Can only bind to an Identifier or MemberExpression
+Can only bind to an Identifier or MemberExpression or a `{get, set}` pair
 ```
 
 ### bind_invalid_name
@@ -98,6 +98,12 @@ Can only bind to an Identifier or MemberExpression
 
 ```
 `bind:%name%` is not a valid binding. %explanation%
+```
+
+### bind_invalid_parens
+
+```
+`bind:%name%={get, set}` must not have surrounding parentheses
 ```
 
 ### bind_invalid_target
@@ -434,12 +440,6 @@ Imports of `svelte/internal/*` are forbidden. It contains private runtime code w
 
 ```
 The arguments keyword cannot be used within the template or at the top level of a component
-```
-
-### invalid_bind_directive
-
-```
-Bind directive getter/setter values (`bind:thing={ getter, setter }`) must be two JavaScript expressions separated by a single comma and enclosed in curly braces
 ```
 
 ### js_parse_error

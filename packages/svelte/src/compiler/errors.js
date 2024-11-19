@@ -706,12 +706,12 @@ export function bind_group_invalid_expression(node) {
 }
 
 /**
- * Can only bind to an Identifier or MemberExpression
+ * Can only bind to an Identifier or MemberExpression or a `{get, set}` pair
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function bind_invalid_expression(node) {
-	e(node, "bind_invalid_expression", "Can only bind to an Identifier or MemberExpression");
+	e(node, "bind_invalid_expression", "Can only bind to an Identifier or MemberExpression or a `{get, set}` pair");
 }
 
 /**
@@ -723,6 +723,16 @@ export function bind_invalid_expression(node) {
  */
 export function bind_invalid_name(node, name, explanation) {
 	e(node, "bind_invalid_name", explanation ? `\`bind:${name}\` is not a valid binding. ${explanation}` : `\`bind:${name}\` is not a valid binding`);
+}
+
+/**
+ * `bind:%name%={get, set}` must not have surrounding parentheses
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function bind_invalid_parens(node, name) {
+	e(node, "bind_invalid_parens", `\`bind:${name}={get, set}\` must not have surrounding parentheses`);
 }
 
 /**
@@ -1001,15 +1011,6 @@ export function expected_whitespace(node) {
  */
 export function illegal_element_attribute(node, name) {
 	e(node, "illegal_element_attribute", `\`<${name}>\` does not support non-event attributes or spread attributes`);
-}
-
-/**
- * Bind directive getter/setter values (`bind:thing={ getter, setter }`) must be two JavaScript expressions separated by a single comma and enclosed in curly braces
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function invalid_bind_directive(node) {
-	e(node, "invalid_bind_directive", "Bind directive getter/setter values (`bind:thing={ getter, setter }`) must be two JavaScript expressions separated by a single comma and enclosed in curly braces");
 }
 
 /**

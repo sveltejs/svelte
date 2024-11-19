@@ -56,13 +56,17 @@
 
 ## bind_invalid_expression
 
-> Can only bind to an Identifier or MemberExpression
+> Can only bind to an Identifier or MemberExpression or a `{get, set}` pair
 
 ## bind_invalid_name
 
 > `bind:%name%` is not a valid binding
 
 > `bind:%name%` is not a valid binding. %explanation%
+
+## bind_invalid_parens
+
+> `bind:%name%={get, set}` must not have surrounding parentheses
 
 ## bind_invalid_target
 
@@ -179,10 +183,6 @@
 ## illegal_element_attribute
 
 > `<%name%>` does not support non-event attributes or spread attributes
-
-## invalid_bind_directive
-
-> Bind directive getter/setter values (`bind:thing={ getter, setter }`) must be two JavaScript expressions separated by a single comma and enclosed in curly braces
 
 ## js_parse_error
 

@@ -133,12 +133,12 @@ export function BindDirective(node, context) {
 		let i = /** @type {number} */ (node.expression.start);
 		while (context.state.analysis.source[--i] !== '{') {
 			if (context.state.analysis.source[i] === '(') {
-				e.invalid_bind_directive(node);
+				e.bind_invalid_parens(node, node.name);
 			}
 		}
 
 		if (node.expression.expressions.length !== 2) {
-			e.invalid_bind_directive(node);
+			e.bind_invalid_expression(node);
 		}
 
 		return;
