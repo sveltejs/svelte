@@ -85,7 +85,7 @@ function clone(value, cloned, path, paths, original = null) {
 			}
 
 			for (var key in value) {
-				// @ts-ignore
+				// @ts-expect-error
 				copy[key] = clone(value[key], cloned, DEV ? `${path}.${key}` : path, paths);
 			}
 
