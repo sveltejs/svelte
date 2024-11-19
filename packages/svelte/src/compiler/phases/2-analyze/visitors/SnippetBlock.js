@@ -90,15 +90,9 @@ function can_hoist_snippet(node, scope, scopes, visited = new Set()) {
 			continue;
 		}
 
-		/** @type {Scope | null} */
-		let current_scope = binding.scope;
-
-		while (current_scope !== null) {
-			if (current_scope === scope) {
-				continue ref_loop;
-			}
-
-			current_scope = current_scope.parent;
+		// ignore bindings declared inside the snippet (e.g. the snippet's own parameters)
+		if (binding.scope.function_depth >= scope.function_depth) {
+			continue;
 		}
 
 		// Recursively check if another snippet can be hoisted
