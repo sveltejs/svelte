@@ -130,6 +130,13 @@ export function BindDirective(node, context) {
 			e.bind_group_invalid_expression(node);
 		}
 
+		let i = node.start;
+		while (context.state.analysis.source[--i] !== '{') {
+			if (context.state.analysis.source[i] === '(') {
+				e.invalid_bind_directive(node);
+			}
+		}
+
 		if (node.expression.expressions.length !== 2) {
 			e.invalid_bind_directive(node);
 		}
