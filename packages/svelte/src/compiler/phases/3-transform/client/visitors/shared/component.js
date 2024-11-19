@@ -168,7 +168,9 @@ export function build_component(node, component_name, context, anchor = context.
 					b.stmt(
 						b.call(
 							b.id('$.add_owner_effect'),
-							b.thunk(expression),
+							expression.type === 'SequenceExpression'
+								? expression.expressions[0]
+								: b.thunk(expression),
 							b.id(component_name),
 							is_ignored(node, 'ownership_invalid_binding') && b.true
 						)
