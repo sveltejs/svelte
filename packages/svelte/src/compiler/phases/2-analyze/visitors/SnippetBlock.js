@@ -27,7 +27,7 @@ export function SnippetBlock(node, context) {
 	const can_hoist =
 		context.path.length === 1 &&
 		context.path[0].type === 'Fragment' &&
-		can_hoist_snippet(node, local_scope, context.state.scopes);
+		can_hoist_snippet(local_scope, context.state.scopes);
 	const undefined_exports = context.state.analysis.undefined_exports;
 	const name = node.expression.name;
 
@@ -78,15 +78,14 @@ export function SnippetBlock(node, context) {
 }
 
 /**
- * @param {AST.SnippetBlock} node
  * @param {Map<SvelteNode, Scope>} scopes
  * @param {Scope} scope
  */
-function can_hoist_snippet(node, scope, scopes, visited = new Set()) {
-	ref_loop: for (const [reference] of scope.references) {
+function can_hoist_snippet(scope, scopes, visited = new Set()) {
+	for (const [reference] of scope.references) {
 		const binding = scope.get(reference);
 
-		if (!binding || binding.node === node.expression || binding.scope.function_depth === 0) {
+		if (!binding || binding.scope.function_depth === 0) {
 			continue;
 		}
 
@@ -95,21 +94,12 @@ function can_hoist_snippet(node, scope, scopes, visited = new Set()) {
 			continue;
 		}
 
-		// Recursively check if another snippet can be hoisted
-		if (binding.kind === 'normal') {
-			for (const ref of binding.references) {
-				const parent = ref.path.at(-1);
-				if (ref.node === binding.node && parent?.type === 'SnippetBlock') {
-					const ref_scope = scopes.get(parent);
-					if (visited.has(ref)) {
-						break;
-					}
-					visited.add(ref);
-					if (ref_scope && can_hoist_snippet(parent, ref_scope, scopes, visited)) {
-						continue ref_loop;
-					}
-					break;
-				}
+		if (binding.initial?.type === 'SnippetBlock') {
+			if (visited.has(binding)) continue;
+			visited.add(binding);
+
+			if (can_hoist_snippet(binding.scope, scopes, visited)) {
+				continue;
 			}
 		}
 
