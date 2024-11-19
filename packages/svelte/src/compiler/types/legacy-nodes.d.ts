@@ -50,7 +50,7 @@ export interface LegacyBinding extends BaseNode {
 	/** The 'x' in `bind:x` */
 	name: string;
 	/** The y in `bind:x={y}` */
-	expression: Identifier | MemberExpression | [Expression, Expression];
+	expression: Identifier | MemberExpression | SequenceExpression;
 }
 
 export interface LegacyBody extends BaseElement {

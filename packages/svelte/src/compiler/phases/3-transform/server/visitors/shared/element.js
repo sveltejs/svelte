@@ -109,18 +109,16 @@ export function build_element_attributes(node, context) {
 			const binding = binding_properties[attribute.name];
 			if (binding?.omit_in_ssr) continue;
 
-			if (is_content_editable_binding(attribute.name)) {
-				content = Array.isArray(attribute.expression)
-					? b.call(/** @type {Expression} */ (context.visit(attribute.expression[0])))
+			const get =
+				attribute.expression.type === 'SequenceExpression'
+					? b.call(/** @type {Expression} */ (context.visit(attribute.expression.expressions[0])))
 					: /** @type {Expression} */ (context.visit(attribute.expression));
+
+			if (is_content_editable_binding(attribute.name)) {
+				content = get;
 			} else if (attribute.name === 'value' && node.name === 'textarea') {
-				content = b.call(
-					'$.escape',
-					Array.isArray(attribute.expression)
-						? b.call(/** @type {Expression} */ (context.visit(attribute.expression[0])))
-						: /** @type {Expression} */ (context.visit(attribute.expression))
-				);
-			} else if (attribute.name === 'group' && !Array.isArray(attribute.expression)) {
+				content = b.call('$.escape', get);
+			} else if (attribute.name === 'group' && attribute.expression.type !== 'SequenceExpression') {
 				const value_attribute = /** @type {AST.Attribute | undefined} */ (
 					node.attributes.find((attr) => attr.type === 'Attribute' && attr.name === 'value')
 				);
@@ -158,10 +156,6 @@ export function build_element_attributes(node, context) {
 					])
 				);
 			} else {
-				const attribute_expression = Array.isArray(attribute.expression)
-					? b.call(attribute.expression[0])
-					: attribute.expression;
-
 				attributes.push(
 					create_attribute(attribute.name, -1, -1, [
 						{
@@ -169,7 +163,7 @@ export function build_element_attributes(node, context) {
 							start: -1,
 							end: -1,
 							parent: attribute,
-							expression: attribute_expression,
+							expression: get,
 							metadata: {
 								expression: create_expression_metadata()
 							}

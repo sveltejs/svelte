@@ -14,7 +14,8 @@ import type {
 	Pattern,
 	Program,
 	ChainExpression,
-	SimpleCallExpression
+	SimpleCallExpression,
+	SequenceExpression
 } from 'estree';
 import type { Scope } from '../phases/scope';
 
@@ -185,7 +186,7 @@ export namespace AST {
 		/** The 'x' in `bind:x` */
 		name: string;
 		/** The y in `bind:x={y}` */
-		expression: Identifier | MemberExpression | [Expression, Expression];
+		expression: Identifier | MemberExpression | SequenceExpression;
 		/** @internal */
 		metadata: {
 			binding_group_name: Identifier;

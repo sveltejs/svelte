@@ -507,7 +507,7 @@ function read_attribute(parser) {
 	const colon_index = name.indexOf(':');
 	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
 
-	/** @type {Expression | [Expression, Expression] | null} */
+	/** @type {Expression | null} */
 	let expression = null;
 
 	/** @type {true | AST.ExpressionTag | Array<AST.Text | AST.ExpressionTag>} */
@@ -536,24 +536,11 @@ function read_attribute(parser) {
 			!Array.isArray(value) &&
 			value.expression.type === 'SequenceExpression'
 		) {
-			try {
-				const bind_getter_setter = parse_expression_at(
-					`[${parser.template.slice(value_start, value.expression.end)}]`,
-					parser.ts,
-					0
-				);
-
-				if (
-					bind_getter_setter.type !== 'ArrayExpression' ||
-					bind_getter_setter.elements.length !== 2
-				) {
-					e.invalid_bind_directive(value_start);
-				}
-				expression = /** @type {[Expression, Expression]} */ (bind_getter_setter.elements);
-			} catch {
-				e.invalid_bind_directive(value_start);
+			if (value.expression.expressions.length !== 2) {
+				e.invalid_bind_directive(value);
 			}
 		}
+
 		end = parser.index;
 	} else if (parser.match_regex(regex_starts_with_quote_characters)) {
 		e.expected_token(parser.index, '=');

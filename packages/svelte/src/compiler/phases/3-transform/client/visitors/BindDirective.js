@@ -1,4 +1,4 @@
-/** @import { CallExpression, Expression, MemberExpression } from 'estree' */
+/** @import { CallExpression, Expression, MemberExpression, SequenceExpression } from 'estree' */
 /** @import { AST, SvelteNode } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
@@ -20,10 +20,8 @@ export function BindDirective(node, context) {
 
 	let get, set;
 
-	if (Array.isArray(expression)) {
-		const [get_expression, set_expression] = expression;
-		get = /** @type {Expression} */ (context.visit(get_expression));
-		set = /** @type {Expression} */ (context.visit(set_expression));
+	if (expression.type === 'SequenceExpression') {
+		[get, set] = /** @type {SequenceExpression} */ (context.visit(expression)).expressions;
 	} else {
 		if (
 			dev &&

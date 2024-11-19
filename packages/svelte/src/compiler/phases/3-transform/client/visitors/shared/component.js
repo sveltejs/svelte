@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Property, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Property, SequenceExpression, Statement } from 'estree' */
 /** @import { AST, TemplateNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
@@ -42,7 +42,7 @@ export function build_component(node, component_name, context, anchor = context.
 	/** @type {Property[]} */
 	const custom_css_props = [];
 
-	/** @type {Identifier | MemberExpression | [Expression, Expression] | null} */
+	/** @type {Identifier | MemberExpression | SequenceExpression | null} */
 	let bind_this = null;
 
 	/** @type {ExpressionStatement[]} */
@@ -161,13 +161,26 @@ export function build_component(node, component_name, context, anchor = context.
 				push_prop(b.init(attribute.name, value));
 			}
 		} else if (attribute.type === 'BindDirective') {
-			if (Array.isArray(attribute.expression)) {
+			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
+
+			if (dev && attribute.name !== 'this') {
+				binding_initializers.push(
+					b.stmt(
+						b.call(
+							b.id('$.add_owner_effect'),
+							b.thunk(expression),
+							b.id(component_name),
+							is_ignored(node, 'ownership_invalid_binding') && b.true
+						)
+					)
+				);
+			}
+
+			if (expression.type === 'SequenceExpression') {
 				if (attribute.name === 'this') {
 					bind_this = attribute.expression;
 				} else {
-					const [get_expression, set_expression] = attribute.expression;
-					const get = /** @type {Expression} */ (context.visit(get_expression));
-					const set = /** @type {Expression} */ (context.visit(set_expression));
+					const [get, set] = expression.expressions;
 					const get_id = b.id(context.state.scope.generate('bind_get'));
 					const set_id = b.id(context.state.scope.generate('bind_set'));
 
@@ -178,8 +191,6 @@ export function build_component(node, component_name, context, anchor = context.
 					push_prop(b.set(attribute.name, [b.stmt(b.call(set_id, b.id('$$value')))]));
 				}
 			} else {
-				const expression = /** @type {Expression} */ (context.visit(attribute.expression));
-
 				if (
 					dev &&
 					expression.type === 'MemberExpression' &&
@@ -192,19 +203,6 @@ export function build_component(node, component_name, context, anchor = context.
 				if (attribute.name === 'this') {
 					bind_this = attribute.expression;
 				} else {
-					if (dev) {
-						binding_initializers.push(
-							b.stmt(
-								b.call(
-									b.id('$.add_owner_effect'),
-									b.thunk(expression),
-									b.id(component_name),
-									is_ignored(node, 'ownership_invalid_binding') && b.true
-								)
-							)
-						);
-					}
-
 					const is_store_sub =
 						attribute.expression.type === 'Identifier' &&
 						context.state.scope.get(attribute.expression.name)?.kind === 'store_sub';
