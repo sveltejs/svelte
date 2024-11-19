@@ -1,4 +1,4 @@
-/** @import { CallExpression, Expression, MemberExpression, Pattern, SequenceExpression } from 'estree' */
+/** @import { CallExpression, Expression, MemberExpression, Pattern } from 'estree' */
 /** @import { AST, SvelteNode } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
