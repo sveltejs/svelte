@@ -126,16 +126,11 @@ export function Identifier(node, context) {
 		}
 	}
 
-	if (!can_inline && context.state.expression) {
-		context.state.expression.can_inline = false;
-	}
+	if (!can_inline) {
+		if (context.state.expression) {
+			context.state.expression.can_inline = false;
+		}
 
-	/**
-	 * if the identifier is part of an expression tag of an attribute we want to check if it's inlinable
-	 * before marking the subtree as dynamic. This is because if it's inlinable it will be inlined in the template
-	 * directly making the whole thing actually static.
-	 */
-	if (!can_inline || !context.path.find((node) => node.type === 'Attribute')) {
 		mark_subtree_dynamic(context.path);
 	}
 }
