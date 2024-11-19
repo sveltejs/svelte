@@ -38,6 +38,10 @@
 
 > `$effect()` can only be used as an expression statement
 
+## export_undefined
+
+> `%name%` is not defined
+
 ## global_reference_invalid
 
 > `%name%` is an illegal variable name. To reference a global variable called `%name%`, use `globalThis.%name%`

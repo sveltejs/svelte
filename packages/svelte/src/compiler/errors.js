@@ -169,6 +169,16 @@ export function effect_invalid_placement(node) {
 }
 
 /**
+ * `%name%` is not defined
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function export_undefined(node, name) {
+	e(node, "export_undefined", `\`${name}\` is not defined`);
+}
+
+/**
  * `%name%` is an illegal variable name. To reference a global variable called `%name%`, use `globalThis.%name%`
  * @param {null | number | NodeLike} node
  * @param {string} name

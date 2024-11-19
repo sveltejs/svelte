@@ -1,4 +1,4 @@
-/** @import { AST } from '#compiler' */
+/** @import { AST, Binding } from '#compiler' */
 /** @import { Context } from '../types' */
 import { validate_block_not_empty, validate_opening_tag } from './shared/utils.js';
 import * as e from '../../../errors.js';
@@ -30,6 +30,11 @@ export function SnippetBlock(node, context) {
 		can_hoist_snippet(node, local_scope, context.state.scopes);
 	const undefined_exports = context.state.analysis.undefined_exports;
 	const name = node.expression.name;
+
+	if (can_hoist) {
+		const binding = /** @type {Binding} */ (context.state.scope.get(name));
+		context.state.analysis.module.scope.declarations.set(name, binding);
+	}
 
 	if (!can_hoist && undefined_exports.has(name)) {
 		e.snippet_invalid_export(/** @type {any} */ (undefined_exports.get(name)));

@@ -692,6 +692,17 @@ export function analyze_component(root, source, options) {
 		analysis.reactive_statements = order_reactive_statements(analysis.reactive_statements);
 	}
 
+	for (const node of analysis.module.ast.body) {
+		if (node.type === 'ExportNamedDeclaration' && node.specifiers !== null) {
+			for (const specifier of node.specifiers) {
+				if (specifier.local.type !== 'Identifier') continue;
+
+				const binding = analysis.module.scope.get(specifier.local.name);
+				if (!binding) e.export_undefined(specifier, specifier.local.name);
+			}
+		}
+	}
+
 	if (analysis.event_directive_node && analysis.uses_event_attributes) {
 		e.mixed_event_handler_syntaxes(
 			analysis.event_directive_node,
