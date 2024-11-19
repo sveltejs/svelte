@@ -47,12 +47,12 @@ export function snapshot(value, skip_warning = false) {
  * @template T
  * @param {T} value
  * @param {Map<T, Snapshot<T>>} cloned
- * @param {null | T} json_instance
+ * @param {null | T} original The original value, if `value` was produced from a `toJSON` call
  * @param {string} path
  * @param {string[]} paths
  * @returns {Snapshot<T>}
  */
-function clone(value, cloned, json_instance, path, paths) {
+function clone(value, cloned, original, path, paths) {
 	if (typeof value === 'object' && value !== null) {
 		const unwrapped = cloned.get(value);
 		if (unwrapped !== undefined) return unwrapped;
@@ -63,8 +63,8 @@ function clone(value, cloned, json_instance, path, paths) {
 		if (is_array(value)) {
 			const copy = /** @type {Snapshot<any>} */ ([]);
 			cloned.set(value, copy);
-			if (json_instance !== null) {
-				cloned.set(json_instance, copy);
+			if (original !== null) {
+				cloned.set(original, copy);
 			}
 
 			for (let i = 0; i < value.length; i += 1) {
@@ -78,8 +78,8 @@ function clone(value, cloned, json_instance, path, paths) {
 			/** @type {Snapshot<any>} */
 			const copy = {};
 			cloned.set(value, copy);
-			if (json_instance !== null) {
-				cloned.set(json_instance, copy);
+			if (original !== null) {
+				cloned.set(original, copy);
 			}
 
 			for (var key in value) {
