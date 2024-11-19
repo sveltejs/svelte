@@ -1,4 +1,4 @@
-/** @import { CallExpression, Expression, MemberExpression, SequenceExpression } from 'estree' */
+/** @import { CallExpression, Expression, MemberExpression, Pattern, SequenceExpression } from 'estree' */
 /** @import { AST, SvelteNode } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
@@ -13,7 +13,7 @@ import { build_bind_this, validate_binding } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function BindDirective(node, context) {
-	const expression = node.expression;
+	const expression = /** @type {Expression} */ (context.visit(node.expression));
 	const property = binding_properties[node.name];
 
 	const parent = /** @type {SvelteNode} */ (context.path.at(-1));
@@ -21,7 +21,7 @@ export function BindDirective(node, context) {
 	let get, set;
 
 	if (expression.type === 'SequenceExpression') {
-		[get, set] = /** @type {SequenceExpression} */ (context.visit(expression)).expressions;
+		[get, set] = expression.expressions;
 	} else {
 		if (
 			dev &&
@@ -37,20 +37,20 @@ export function BindDirective(node, context) {
 				)) &&
 			!is_ignored(node, 'binding_property_non_reactive')
 		) {
-			validate_binding(
-				context.state,
-				node,
-				/**@type {MemberExpression} */ (context.visit(expression))
-			);
+			validate_binding(context.state, node, expression);
 		}
 
-		get = b.thunk(/** @type {Expression} */ (context.visit(expression)));
+		get = b.thunk(expression);
 
 		/** @type {Expression | undefined} */
 		set = b.unthunk(
 			b.arrow(
 				[b.id('$$value')],
-				/** @type {Expression} */ (context.visit(b.assignment('=', expression, b.id('$$value'))))
+				/** @type {Expression} */ (
+					context.visit(
+						b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value'))
+					)
+				)
 			)
 		);
 
@@ -171,7 +171,7 @@ export function BindDirective(node, context) {
 				break;
 
 			case 'this':
-				call = build_bind_this(expression, context.state.node, context);
+				call = build_bind_this(node.expression, context.state.node, context);
 				break;
 
 			case 'textContent':
@@ -221,21 +221,8 @@ export function BindDirective(node, context) {
 					);
 
 					if (value !== undefined) {
-						let group_expression;
-						if (Array.isArray(expression)) {
-							const get_id = b.id(context.state.scope.generate('bind_get'));
-
-							context.state.init.push(b.var(get_id, get));
-							group_expression = b.call(get_id);
-						} else {
-							group_expression = /** @type {Expression} */ (context.visit(expression));
-						}
-
 						group_getter = b.thunk(
-							b.block([
-								b.stmt(build_attribute_value(value, context).value),
-								b.return(group_expression)
-							])
+							b.block([b.stmt(build_attribute_value(value, context).value), b.return(expression)])
 						);
 					}
 				}
