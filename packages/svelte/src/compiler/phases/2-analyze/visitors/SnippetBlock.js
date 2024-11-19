@@ -83,46 +83,44 @@ export function SnippetBlock(node, context) {
  * @param {Scope} scope
  */
 function can_hoist_snippet(node, scope, scopes, visited = new Set()) {
-	let can_hoist = true;
-
 	ref_loop: for (const [reference] of scope.references) {
 		const binding = scope.get(reference);
 
-		if (binding) {
-			if (binding.node === node.expression || binding.scope.function_depth === 0) {
-				continue;
-			}
-			/** @type {Scope | null} */
-			let current_scope = binding.scope;
+		if (!binding || binding.node === node.expression || binding.scope.function_depth === 0) {
+			continue;
+		}
 
-			while (current_scope !== null) {
-				if (current_scope === scope) {
-					continue ref_loop;
-				}
-				current_scope = current_scope.parent;
+		/** @type {Scope | null} */
+		let current_scope = binding.scope;
+
+		while (current_scope !== null) {
+			if (current_scope === scope) {
+				continue ref_loop;
 			}
 
-			// Recursively check if another snippet can be hoisted
-			if (binding.kind === 'normal') {
-				for (const ref of binding.references) {
-					const parent = ref.path.at(-1);
-					if (ref.node === binding.node && parent?.type === 'SnippetBlock') {
-						const ref_scope = scopes.get(parent);
-						if (visited.has(ref)) {
-							break;
-						}
-						visited.add(ref);
-						if (ref_scope && can_hoist_snippet(parent, ref_scope, scopes, visited)) {
-							continue ref_loop;
-						}
+			current_scope = current_scope.parent;
+		}
+
+		// Recursively check if another snippet can be hoisted
+		if (binding.kind === 'normal') {
+			for (const ref of binding.references) {
+				const parent = ref.path.at(-1);
+				if (ref.node === binding.node && parent?.type === 'SnippetBlock') {
+					const ref_scope = scopes.get(parent);
+					if (visited.has(ref)) {
 						break;
 					}
+					visited.add(ref);
+					if (ref_scope && can_hoist_snippet(parent, ref_scope, scopes, visited)) {
+						continue ref_loop;
+					}
+					break;
 				}
 			}
-			can_hoist = false;
-			break;
 		}
+
+		return false;
 	}
 
-	return can_hoist;
+	return true;
 }
