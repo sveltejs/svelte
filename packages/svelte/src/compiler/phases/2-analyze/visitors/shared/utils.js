@@ -4,8 +4,10 @@
 /** @import { Scope } from '../../../scope' */
 /** @import { NodeLike } from '../../../../errors.js' */
 import * as e from '../../../../errors.js';
-import { extract_identifiers, object } from '../../../../utils/ast.js';
+import { extract_identifiers } from '../../../../utils/ast.js';
 import * as w from '../../../../warnings.js';
+import * as b from '../../../../utils/builders.js';
+import { get_rune } from '../../../scope.js';
 
 /**
  * @param {AssignmentExpression | UpdateExpression} node
@@ -184,6 +186,7 @@ export function is_pure(node, context) {
 	if (node.type === 'Literal') {
 		return true;
 	}
+
 	if (node.type === 'CallExpression') {
 		if (!is_pure(node.callee, context)) {
 			return false;
@@ -195,7 +198,12 @@ export function is_pure(node, context) {
 		}
 		return true;
 	}
+
 	if (node.type !== 'Identifier' && node.type !== 'MemberExpression') {
+		return false;
+	}
+
+	if (get_rune(b.call(node), context.state.scope) === '$effect.tracking') {
 		return false;
 	}
 

@@ -4,3 +4,4 @@
 <p>With text expression and property access: {"test".length}</p>
 <h1>Hello {('name').toUpperCase().toLowerCase()}!</h1>
 <p>{"test".length}</p>
+<h1>Tracking: {$effect.tracking()}</h1>
