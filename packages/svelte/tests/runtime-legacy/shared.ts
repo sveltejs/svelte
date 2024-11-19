@@ -272,7 +272,9 @@ async function run_test_variant(
 		if (variant === 'hydrate' || variant === 'ssr') {
 			config.before_test?.();
 			// ssr into target
-			const SsrSvelteComponent = (await import(`${cwd}/_output/server/main.svelte.js`)).default;
+			const SsrSvelteComponent = (
+				await import(`${cwd}/_output/server/main.svelte.js`).catch((e) => if(cwd.includes("transition-js-await-block")){ console.log(e.stack)})
+			).default;
 			const { html, head } = render(SsrSvelteComponent, {
 				props: config.server_props ?? config.props ?? {}
 			});

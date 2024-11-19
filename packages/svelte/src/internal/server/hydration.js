@@ -6,7 +6,7 @@ const BLOCK_OPEN_ELSE = `<!--${HYDRATION_START_ELSE}-->`;
 const BLOCK_CLOSE = `<!--${HYDRATION_END}-->`;
 const EMPTY_COMMENT = `<!---->`;
 
-let hydratable = true;
+export let hydratable = true;
 
 /**
  * @param {string} [hash]

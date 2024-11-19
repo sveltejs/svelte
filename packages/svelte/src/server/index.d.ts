@@ -38,4 +38,4 @@ export function renderStaticHTML<
 				component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
 				options: { props: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }
 			]
-): RenderOutput;
+): Promise<RenderOutput>;
