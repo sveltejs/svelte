@@ -6,7 +6,7 @@ let total_time = 0;
 let total_gc_time = 0;
 
 const suites = [
-	// { benchmarks: reactivity_benchmarks, name: 'reactivity benchmarks' },
+	{ benchmarks: reactivity_benchmarks, name: 'reactivity benchmarks' },
 	{ benchmarks: ssr_benchmarks, name: 'server-side rendering benchmarks' }
 ];
 
