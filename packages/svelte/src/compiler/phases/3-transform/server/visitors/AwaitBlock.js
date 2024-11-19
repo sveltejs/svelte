@@ -52,7 +52,7 @@ export function AwaitBlock(node, context) {
 					node.error
 						? [
 								/** @type {Pattern} */ (context.visit(node.error)),
-								b.assignment_pattern(b.id('$$payload'), b.id('$$payload'))
+								b.assignment_pattern(b.id('$$async_payload'), b.id('$$payload'))
 							]
 						: [],
 					catch_block
