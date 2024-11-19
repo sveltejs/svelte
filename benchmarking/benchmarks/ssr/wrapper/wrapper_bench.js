@@ -1,14 +1,14 @@
-import { render } from "svelte/server";
-import { fastest_test, read_file, write } from "../../../utils.js";
-import { compile } from "svelte/compiler";
+import { render } from 'svelte/server';
+import { fastest_test, read_file, write } from '../../../utils.js';
+import { compile } from 'svelte/compiler';
 
-const dir = `${process.cwd()}/benchmarking/benchmarks/ssr/wrapper`
+const dir = `${process.cwd()}/benchmarking/benchmarks/ssr/wrapper`;
 
 async function compile_svelte() {
 	const output = compile(read_file(`${dir}/App.svelte`), {
 		generate: 'server'
 	});
-	write(`${dir}/output/App.js`, output.js.code)
+	write(`${dir}/output/App.js`, output.js.code);
 
 	const module = await import(`${dir}/output/App.js`);
 
@@ -19,12 +19,12 @@ export async function wrapper_bench() {
 	const App = await compile_svelte();
 	// Do 3 loops to warm up JIT
 	for (let i = 0; i < 3; i++) {
-		render(App)
+		render(App);
 	}
 
 	const { timing } = await fastest_test(10, () => {
 		for (let i = 0; i < 100; i++) {
-			render(App)
+			render(App);
 		}
 	});
 

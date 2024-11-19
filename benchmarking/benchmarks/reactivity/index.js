@@ -1,7 +1,4 @@
-import {
-	kairo_avoidable_owned,
-	kairo_avoidable_unowned
-} from './kairo/kairo_avoidable.js';
+import { kairo_avoidable_owned, kairo_avoidable_unowned } from './kairo/kairo_avoidable.js';
 import { kairo_broad_owned, kairo_broad_unowned } from './kairo/kairo_broad.js';
 import { kairo_deep_owned, kairo_deep_unowned } from './kairo/kairo_deep.js';
 import { kairo_diamond_owned, kairo_diamond_unowned } from './kairo/kairo_diamond.js';
