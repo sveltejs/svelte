@@ -1,8 +1,8 @@
-/** @import { AST, Binding } from '#compiler' */
+/** @import { AST, Binding, SvelteNode } from '#compiler' */
+/** @import { Scope } from '../../scope' */
 /** @import { Context } from '../types' */
 import { validate_block_not_empty, validate_opening_tag } from './shared/utils.js';
 import * as e from '../../../errors.js';
-import { can_hoist_snippet } from '../../3-transform/utils.js';
 
 /**
  * @param {AST.SnippetBlock} node
@@ -75,4 +75,54 @@ export function SnippetBlock(node, context) {
 			e.snippet_conflict(node);
 		}
 	}
+}
+
+/**
+ * @param {AST.SnippetBlock} node
+ * @param {Map<SvelteNode, Scope>} scopes
+ * @param {Scope} scope
+ */
+function can_hoist_snippet(node, scope, scopes, visited = new Set()) {
+	let can_hoist = true;
+
+	ref_loop: for (const [reference] of scope.references) {
+		const local_binding = scope.get(reference);
+
+		if (local_binding) {
+			if (local_binding.node === node.expression || local_binding.scope.function_depth === 0) {
+				continue;
+			}
+			/** @type {Scope | null} */
+			let current_scope = local_binding.scope;
+
+			while (current_scope !== null) {
+				if (current_scope === scope) {
+					continue ref_loop;
+				}
+				current_scope = current_scope.parent;
+			}
+
+			// Recursively check if another snippet can be hoisted
+			if (local_binding.kind === 'normal') {
+				for (const ref of local_binding.references) {
+					const parent = ref.path.at(-1);
+					if (ref.node === local_binding.node && parent?.type === 'SnippetBlock') {
+						const ref_scope = scopes.get(parent);
+						if (visited.has(ref)) {
+							break;
+						}
+						visited.add(ref);
+						if (ref_scope && can_hoist_snippet(parent, ref_scope, scopes, visited)) {
+							continue ref_loop;
+						}
+						break;
+					}
+				}
+			}
+			can_hoist = false;
+			break;
+		}
+	}
+
+	return can_hoist;
 }
