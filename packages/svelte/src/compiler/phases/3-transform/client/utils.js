@@ -259,7 +259,8 @@ export function should_proxy(node, scope) {
 			binding.initial.type !== 'FunctionDeclaration' &&
 			binding.initial.type !== 'ClassDeclaration' &&
 			binding.initial.type !== 'ImportDeclaration' &&
-			binding.initial.type !== 'EachBlock'
+			binding.initial.type !== 'EachBlock' &&
+			binding.initial.type !== 'SnippetBlock'
 		) {
 			return should_proxy(binding.initial, null);
 		}

@@ -726,7 +726,7 @@ export function set_scope(node, { next, state }) {
 
 /**
  * Returns the name of the rune if the given expression is a `CallExpression` using a rune.
- * @param {Node | AST.EachBlock | null | undefined} node
+ * @param {Node | null | undefined} node
  * @param {Scope} scope
  */
 export function get_rune(node, scope) {
