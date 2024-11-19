@@ -22,7 +22,7 @@ export function snapshot(value, skip_warning = false) {
 		/** @type {string[]} */
 		const paths = [];
 
-		const copy = clone(value, new Map(), null, '', paths);
+		const copy = clone(value, new Map(), '', paths);
 		if (paths.length === 1 && paths[0] === '') {
 			// value could not be cloned
 			w.state_snapshot_uncloneable();
@@ -40,19 +40,19 @@ export function snapshot(value, skip_warning = false) {
 		return copy;
 	}
 
-	return clone(value, new Map(), null, '', empty);
+	return clone(value, new Map(), '', empty);
 }
 
 /**
  * @template T
  * @param {T} value
  * @param {Map<T, Snapshot<T>>} cloned
- * @param {null | T} original The original value, if `value` was produced from a `toJSON` call
  * @param {string} path
  * @param {string[]} paths
+ * @param {null | T} original The original value, if `value` was produced from a `toJSON` call
  * @returns {Snapshot<T>}
  */
-function clone(value, cloned, original, path, paths) {
+function clone(value, cloned, path, paths, original = null) {
 	if (typeof value === 'object' && value !== null) {
 		const unwrapped = cloned.get(value);
 		if (unwrapped !== undefined) return unwrapped;
@@ -63,12 +63,13 @@ function clone(value, cloned, original, path, paths) {
 		if (is_array(value)) {
 			const copy = /** @type {Snapshot<any>} */ ([]);
 			cloned.set(value, copy);
+
 			if (original !== null) {
 				cloned.set(original, copy);
 			}
 
 			for (let i = 0; i < value.length; i += 1) {
-				copy.push(clone(value[i], cloned, null, DEV ? `${path}[${i}]` : path, paths));
+				copy.push(clone(value[i], cloned, DEV ? `${path}[${i}]` : path, paths));
 			}
 
 			return copy;
@@ -78,13 +79,14 @@ function clone(value, cloned, original, path, paths) {
 			/** @type {Snapshot<any>} */
 			const copy = {};
 			cloned.set(value, copy);
+
 			if (original !== null) {
 				cloned.set(original, copy);
 			}
 
 			for (var key in value) {
 				// @ts-ignore
-				copy[key] = clone(value[key], cloned, null, DEV ? `${path}.${key}` : path, paths);
+				copy[key] = clone(value[key], cloned, DEV ? `${path}.${key}` : path, paths);
 			}
 
 			return copy;
@@ -95,14 +97,13 @@ function clone(value, cloned, original, path, paths) {
 		}
 
 		if (typeof (/** @type {T & { toJSON?: any } } */ (value).toJSON) === 'function') {
-			// Associate the instance with the toJSON clone
-			var ref_json_instance = value;
 			return clone(
 				/** @type {T & { toJSON(): any } } */ (value).toJSON(),
 				cloned,
-				ref_json_instance,
 				DEV ? `${path}.toJSON()` : path,
-				paths
+				paths,
+				// Associate the instance with the toJSON clone
+				value
 			);
 		}
 	}
