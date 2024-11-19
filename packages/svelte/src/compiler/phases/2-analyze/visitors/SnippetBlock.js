@@ -86,14 +86,14 @@ function can_hoist_snippet(node, scope, scopes, visited = new Set()) {
 	let can_hoist = true;
 
 	ref_loop: for (const [reference] of scope.references) {
-		const local_binding = scope.get(reference);
+		const binding = scope.get(reference);
 
-		if (local_binding) {
-			if (local_binding.node === node.expression || local_binding.scope.function_depth === 0) {
+		if (binding) {
+			if (binding.node === node.expression || binding.scope.function_depth === 0) {
 				continue;
 			}
 			/** @type {Scope | null} */
-			let current_scope = local_binding.scope;
+			let current_scope = binding.scope;
 
 			while (current_scope !== null) {
 				if (current_scope === scope) {
@@ -103,10 +103,10 @@ function can_hoist_snippet(node, scope, scopes, visited = new Set()) {
 			}
 
 			// Recursively check if another snippet can be hoisted
-			if (local_binding.kind === 'normal') {
-				for (const ref of local_binding.references) {
+			if (binding.kind === 'normal') {
+				for (const ref of binding.references) {
 					const parent = ref.path.at(-1);
-					if (ref.node === local_binding.node && parent?.type === 'SnippetBlock') {
+					if (ref.node === binding.node && parent?.type === 'SnippetBlock') {
 						const ref_scope = scopes.get(parent);
 						if (visited.has(ref)) {
 							break;
