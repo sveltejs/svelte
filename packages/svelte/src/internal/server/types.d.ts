@@ -13,6 +13,7 @@ export interface Component {
 
 export interface Payload {
 	out: string;
+	htmlAttributes: Map<string, string>;
 	css: Set<{ hash: string; code: string }>;
 	head: {
 		title: string;
@@ -27,4 +28,6 @@ export interface RenderOutput {
 	html: string;
 	/** HTML that goes somewhere into the `<body>` */
 	body: string;
+	/** Attributes that go onto the `<html>` */
+	htmlAttributes: string;
 }

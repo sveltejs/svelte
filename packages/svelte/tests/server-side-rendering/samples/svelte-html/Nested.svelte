@@ -1,0 +1,1 @@
+<svelte:html foo="bar"></svelte:html>

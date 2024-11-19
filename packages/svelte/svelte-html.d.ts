@@ -242,6 +242,7 @@ declare global {
 			'svelte:window': HTMLProps<'svelte:window', HTMLAttributes>;
 			'svelte:body': HTMLProps<'svelte:body', HTMLAttributes>;
 			'svelte:document': HTMLProps<'svelte:document', HTMLAttributes>;
+			'svelte:html': HTMLProps<'svelte:html', HTMLAttributes>;
 			'svelte:fragment': { slot?: string };
 			'svelte:head': { [name: string]: any };
 			// don't type svelte:options, it would override the types in svelte/elements and it isn't extendable anyway

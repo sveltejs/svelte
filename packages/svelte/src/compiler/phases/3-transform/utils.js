@@ -172,6 +172,7 @@ export function clean_nodes(
 			node.type === 'ConstTag' ||
 			node.type === 'DebugTag' ||
 			node.type === 'SvelteBody' ||
+			node.type === 'SvelteHTML' ||
 			node.type === 'SvelteWindow' ||
 			node.type === 'SvelteDocument' ||
 			node.type === 'SvelteHead' ||

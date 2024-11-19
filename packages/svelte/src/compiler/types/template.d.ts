@@ -307,6 +307,11 @@ export namespace AST {
 		};
 	}
 
+	export interface SvelteHTML extends BaseElement {
+		type: 'SvelteHTML';
+		name: 'svelte:html';
+	}
+
 	export interface SvelteBody extends BaseElement {
 		type: 'SvelteBody';
 		name: 'svelte:body';
@@ -491,6 +496,7 @@ export type ElementLike =
 	| AST.TitleElement
 	| AST.SlotElement
 	| AST.RegularElement
+	| AST.SvelteHTML
 	| AST.SvelteBody
 	| AST.SvelteComponent
 	| AST.SvelteDocument

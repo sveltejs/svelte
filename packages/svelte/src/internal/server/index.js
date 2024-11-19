@@ -31,9 +31,10 @@ const RAW_TEXT_ELEMENTS = ['textarea', 'script', 'style', 'title'];
  * @param {Payload} to_copy
  * @returns {Payload}
  */
-export function copy_payload({ out, css, head }) {
+export function copy_payload({ out, htmlAttributes, css, head }) {
 	return {
 		out,
+		htmlAttributes: new Map(htmlAttributes),
 		css: new Set(css),
 		head: {
 			title: head.title,
@@ -96,7 +97,12 @@ export let on_destroy = [];
  */
 export function render(component, options = {}) {
 	/** @type {Payload} */
-	const payload = { out: '', css: new Set(), head: { title: '', out: '' } };
+	const payload = {
+		out: '',
+		htmlAttributes: new Map(),
+		css: new Set(),
+		head: { title: '', out: '' }
+	};
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
@@ -138,7 +144,10 @@ export function render(component, options = {}) {
 	return {
 		head,
 		html: payload.out,
-		body: payload.out
+		body: payload.out,
+		htmlAttributes: [...payload.htmlAttributes]
+			.map(([name, value]) => `${name}="${value}"`)
+			.join(' ')
 	};
 }
 
@@ -526,6 +535,8 @@ export function once(get_value) {
 export { attr };
 
 export { html } from './blocks/html.js';
+
+export { svelte_html } from './blocks/svelte-html.js';
 
 export { push, pop } from './context.js';
 
