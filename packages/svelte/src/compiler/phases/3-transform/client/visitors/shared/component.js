@@ -219,7 +219,7 @@ export function build_component(node, component_name, context, anchor = context.
 
 					const assignment = b.assignment(
 						'=',
-						/** @type {Pattern} */ (expression),
+						/** @type {Pattern} */ (attribute.expression),
 						b.id('$$value')
 					);
 					push_prop(
