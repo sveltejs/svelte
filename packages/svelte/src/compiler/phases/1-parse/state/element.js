@@ -513,17 +513,6 @@ function read_attribute(parser) {
 	let value = true;
 	if (parser.eat('=')) {
 		parser.allow_whitespace();
-		let value_start = 0;
-
-		// Validate the bind: value doesn't start with a paren
-		if (name.startsWith('bind:')) {
-			const start = parser.index;
-			parser.eat('{');
-			parser.allow_whitespace();
-			value_start = parser.index;
-			parser.index = start;
-		}
-
 		value = read_attribute_value(parser);
 		end = parser.index;
 	} else if (parser.match_regex(regex_starts_with_quote_characters)) {
