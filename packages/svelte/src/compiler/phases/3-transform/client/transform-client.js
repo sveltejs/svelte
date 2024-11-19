@@ -163,6 +163,8 @@ export function client_component(analysis, options) {
 		private_state: new Map(),
 		transform: {},
 		in_constructor: false,
+		instance_level_snippets: [],
+		module_level_snippets: [],
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		before_init: /** @type {any} */ (null),
@@ -368,7 +370,7 @@ export function client_component(analysis, options) {
 		...store_setup,
 		...legacy_reactive_declarations,
 		...group_binding_declarations,
-		...analysis.top_level_snippets,
+		...state.instance_level_snippets,
 		.../** @type {ESTree.Statement[]} */ (instance.body),
 		analysis.runes || !analysis.needs_context
 			? b.empty
@@ -483,7 +485,7 @@ export function client_component(analysis, options) {
 		}
 	}
 
-	body = [...imports, ...analysis.module_level_snippets, ...body];
+	body = [...imports, ...state.module_level_snippets, ...body];
 
 	const component = b.function_declaration(
 		b.id(analysis.name),

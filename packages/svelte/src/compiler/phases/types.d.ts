@@ -62,8 +62,6 @@ export interface ComponentAnalysis extends Analysis {
 	/** If `true`, should append styles through JavaScript */
 	inject_styles: boolean;
 	reactive_statements: Map<LabeledStatement, ReactiveStatement>;
-	top_level_snippets: VariableDeclaration[];
-	module_level_snippets: VariableDeclaration[];
 	/** Identifiers that make up the `bind:group` expression -> internal group binding name */
 	binding_groups: Map<[key: string, bindings: Array<Binding | null>], Identifier>;
 	slot_names: Map<string, AST.SlotElement>;

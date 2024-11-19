@@ -6,7 +6,8 @@ import type {
 	PrivateIdentifier,
 	Expression,
 	AssignmentExpression,
-	UpdateExpression
+	UpdateExpression,
+	VariableDeclaration
 } from 'estree';
 import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
@@ -85,6 +86,11 @@ export interface ComponentClientTransformState extends ClientTransformState {
 
 	/** The $: calls, which will be ordered in the end */
 	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
+
+	/** Snippets hoisted to the instance */
+	readonly instance_level_snippets: VariableDeclaration[];
+	/** Snippets hoisted to the module */
+	readonly module_level_snippets: VariableDeclaration[];
 }
 
 export interface StateField {
