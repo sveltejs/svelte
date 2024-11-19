@@ -23,11 +23,11 @@ export function SnippetBlock(node, context) {
 
 	context.next({ ...context.state, parent_element: null });
 
-	const local_scope = context.state.scope;
 	const can_hoist =
 		context.path.length === 1 &&
 		context.path[0].type === 'Fragment' &&
-		can_hoist_snippet(local_scope, context.state.scopes);
+		can_hoist_snippet(context.state.scope, context.state.scopes);
+
 	const undefined_exports = context.state.analysis.undefined_exports;
 	const name = node.expression.name;
 
