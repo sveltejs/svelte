@@ -1,6 +1,6 @@
 /** @import { BlockStatement } from 'estree' */
 /** @import { AST } from '#compiler' */
-/** @import { ComponentContext, } from '../types.js' */
+/** @import { ComponentContext } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
 
 /**
