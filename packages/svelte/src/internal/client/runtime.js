@@ -796,7 +796,8 @@ export function safe_get(signal) {
 
 /**
  * Capture an array of all the signals that are read when `fn` is called
- * @param {Function} fn
+ * @template T
+ * @param {() => T} fn
  */
 export function capture_signals(fn) {
 	var previous_captured_signals = captured_signals;
