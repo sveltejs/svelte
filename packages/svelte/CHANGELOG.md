@@ -1,5 +1,17 @@
 # svelte
 
+## 5.2.5
+
+### Patch Changes
+
+- fix: correctly handle srcObject attribute on video elements ([#14369](https://github.com/sveltejs/svelte/pull/14369))
+
+- add `contentvisibilityautostatechange` event to element definitions ([#14373](https://github.com/sveltejs/svelte/pull/14373))
+
+- fix: tighten up `export default` validation ([#14368](https://github.com/sveltejs/svelte/pull/14368))
+
+- fix: include method definitions in class private fields ([#14365](https://github.com/sveltejs/svelte/pull/14365))
+
 ## 5.2.4
 
 ### Patch Changes
