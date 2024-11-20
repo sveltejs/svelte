@@ -67,6 +67,7 @@ import { TransitionDirective } from './visitors/TransitionDirective.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
+import { ConditionalExpression } from './visitors/ConditionalExpression.js';
 import is_reference from 'is-reference';
 import { mark_subtree_dynamic } from './visitors/shared/fragment.js';
 
@@ -177,7 +178,8 @@ const visitors = {
 	TitleElement,
 	UpdateExpression,
 	UseDirective,
-	VariableDeclarator
+	VariableDeclarator,
+	ConditionalExpression
 };
 
 /**

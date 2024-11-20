@@ -75,16 +75,6 @@ export function RegularElement(node, context) {
 		node.attributes.push(create_attribute('value', child.start, child.end, [child]));
 	}
 
-	if (
-		node.attributes.some(
-			(attribute) =>
-				attribute.type === 'Attribute' &&
-				(attribute.name === 'autofocus' || attribute.name === 'muted')
-		)
-	) {
-		mark_subtree_dynamic(context.path);
-	}
-
 	const binding = context.state.scope.get(node.name);
 	if (
 		binding !== null &&

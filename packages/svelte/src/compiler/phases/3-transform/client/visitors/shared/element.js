@@ -3,7 +3,7 @@
 /** @import { ComponentClientTransformState, ComponentContext } from '../../types' */
 import { normalize_attribute } from '../../../../../../utils.js';
 import { is_ignored } from '../../../../../state.js';
-import { get_attribute_expression, is_event_attribute } from '../../../../../utils/ast.js';
+import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { build_getter, create_derived } from '../../utils.js';
 import { build_template_chunk, build_update } from './utils.js';
