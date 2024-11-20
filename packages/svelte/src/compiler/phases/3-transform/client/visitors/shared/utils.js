@@ -45,7 +45,6 @@ export function build_template_chunk(values, visit, state) {
 	let quasi = b.quasi('');
 	const quasis = [quasi];
 
-	const { states, calls } = get_states_and_calls(values);
 
 	let has_call = false;
 	let has_state = false;
