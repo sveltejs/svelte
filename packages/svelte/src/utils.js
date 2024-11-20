@@ -192,7 +192,8 @@ const ATTRIBUTE_ALIASES = {
 	ismap: 'isMap',
 	nomodule: 'noModule',
 	playsinline: 'playsInline',
-	readonly: 'readOnly'
+	readonly: 'readOnly',
+	srcobject: 'srcObject'
 };
 
 /**
@@ -216,20 +217,11 @@ const DOM_PROPERTIES = [
 	'srcObject'
 ];
 
-/** @type {Map<string, string>} */
-let DOM_PROPERTIES_MAP;
-
 /**
  * @param {string} name
- * @returns {string | undefined}
  */
-export function get_dom_property(name) {
-	if (!DOM_PROPERTIES_MAP) {
-		DOM_PROPERTIES_MAP = new Map(
-			DOM_PROPERTIES.map((property) => [property.toLowerCase(), property])
-		);
-	}
-	return DOM_PROPERTIES_MAP.get(name);
+export function is_dom_property(name) {
+	return DOM_PROPERTIES.includes(name);
 }
 
 /**
