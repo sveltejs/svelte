@@ -1,7 +1,7 @@
 /** @import { ConditionalExpression } from 'estree' */
 /** @import { Context } from '../types' */
 
-import { mark_subtree_dynamic } from './shared/fragment';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
  * @param {ConditionalExpression} node
@@ -14,4 +14,6 @@ export function ConditionalExpression(node, context) {
 		context.state.expression.can_inline = false;
 		mark_subtree_dynamic(context.path);
 	}
+
+	context.next();
 }
