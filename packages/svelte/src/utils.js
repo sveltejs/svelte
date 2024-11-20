@@ -222,6 +222,17 @@ export function is_dom_property(name) {
 	return DOM_PROPERTIES.includes(name);
 }
 
+const NON_STATIC_PROPERTIES = ['autofocus', 'muted'];
+
+/**
+ * Returns `true` if the given attribute cannot be set through the template
+ * string, i.e. needs some kind of JavaScript handling to work.
+ * @param {string} name
+ */
+export function cannot_be_set_statically(name) {
+	return NON_STATIC_PROPERTIES.includes(name);
+}
+
 /**
  * Subset of delegated events which should be passive by default.
  * These two are already passive via browser defaults on window, document and body.

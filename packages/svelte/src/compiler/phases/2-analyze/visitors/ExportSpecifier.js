@@ -1,7 +1,6 @@
-/** @import { ExportSpecifier, Node } from 'estree' */
+/** @import { ExportSpecifier } from 'estree' */
 /** @import { Context } from '../types' */
-/** @import { Scope } from '../../scope' */
-import * as e from '../../../errors.js';
+import { validate_export } from './shared/utils.js';
 
 /**
  * @param {ExportSpecifier} node
@@ -26,18 +25,6 @@ export function ExportSpecifier(node, context) {
 			if (binding) binding.reassigned = binding.updated = true;
 		}
 	} else {
-		const binding = context.state.scope.get(local_name);
-
-		if (binding) {
-			if (binding.kind === 'derived') {
-				e.derived_invalid_export(node);
-			}
-
-			if ((binding.kind === 'state' || binding.kind === 'raw_state') && binding.reassigned) {
-				e.state_invalid_export(node);
-			}
-		} else {
-			context.state.analysis.undefined_exports.set(local_name, node);
-		}
+		validate_export(node, context.state.scope, local_name);
 	}
 }

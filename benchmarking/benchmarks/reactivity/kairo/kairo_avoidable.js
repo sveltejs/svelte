@@ -1,27 +1,19 @@
-import { assert, fastest_test } from '../../utils.js';
-import * as $ from '../../../packages/svelte/src/internal/client/index.js';
-
-let width = 5;
+import { assert, fastest_test } from '../../../utils.js';
+import * as $ from 'svelte/internal/client';
+import { busy } from './util.js';
 
 function setup() {
 	let head = $.state(0);
-	let current = [];
-	for (let i = 0; i < width; i++) {
-		current.push(
-			$.derived(() => {
-				return $.get(head) + 1;
-			})
-		);
-	}
-	let sum = $.derived(() => {
-		return current.map((x) => $.get(x)).reduce((a, b) => a + b, 0);
-	});
-	let counter = 0;
+	let computed1 = $.derived(() => $.get(head));
+	let computed2 = $.derived(() => ($.get(computed1), 0));
+	let computed3 = $.derived(() => (busy(), $.get(computed2) + 1)); // heavy computation
+	let computed4 = $.derived(() => $.get(computed3) + 2);
+	let computed5 = $.derived(() => $.get(computed4) + 3);
 
 	const destroy = $.effect_root(() => {
 		$.render_effect(() => {
-			$.get(sum);
-			counter++;
+			$.get(computed5);
+			busy(); // heavy side effect
 		});
 	});
 
@@ -31,20 +23,18 @@ function setup() {
 			$.flush_sync(() => {
 				$.set(head, 1);
 			});
-			assert($.get(sum) === 2 * width);
-			counter = 0;
-			for (let i = 0; i < 500; i++) {
+			assert($.get(computed5) === 6);
+			for (let i = 0; i < 1000; i++) {
 				$.flush_sync(() => {
 					$.set(head, i);
 				});
-				assert($.get(sum) === (i + 1) * width);
+				assert($.get(computed5) === 6);
 			}
-			assert(counter === 500);
 		}
 	};
 }
 
-export async function kairo_diamond_unowned() {
+export async function kairo_avoidable_unowned() {
 	// Do 10 loops to warm up JIT
 	for (let i = 0; i < 10; i++) {
 		const { run, destroy } = setup();
@@ -63,13 +53,13 @@ export async function kairo_diamond_unowned() {
 	destroy();
 
 	return {
-		benchmark: 'kairo_diamond_unowned',
+		benchmark: 'kairo_avoidable_unowned',
 		time: timing.time.toFixed(2),
 		gc_time: timing.gc_time.toFixed(2)
 	};
 }
 
-export async function kairo_diamond_owned() {
+export async function kairo_avoidable_owned() {
 	let run, destroy;
 
 	const destroy_owned = $.effect_root(() => {
@@ -94,7 +84,7 @@ export async function kairo_diamond_owned() {
 	destroy_owned();
 
 	return {
-		benchmark: 'kairo_diamond_owned',
+		benchmark: 'kairo_avoidable_owned',
 		time: timing.time.toFixed(2),
 		gc_time: timing.gc_time.toFixed(2)
 	};

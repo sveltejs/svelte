@@ -45,3 +45,6 @@
 </select>
 
 <img src="..." alt="" loading="lazy" />
+<div>
+	<img src="..." alt="" loading="lazy" />
+</div>

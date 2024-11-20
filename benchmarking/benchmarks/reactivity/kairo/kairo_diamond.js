@@ -1,30 +1,21 @@
-import { assert, fastest_test } from '../../utils.js';
-import * as $ from '../../../packages/svelte/src/internal/client/index.js';
+import { assert, fastest_test } from '../../../utils.js';
+import * as $ from 'svelte/internal/client';
 
-let width = 10;
-
-function count(number) {
-	return new Array(number)
-		.fill(0)
-		.map((_, i) => i + 1)
-		.reduce((x, y) => x + y, 0);
-}
+let width = 5;
 
 function setup() {
 	let head = $.state(0);
-	let current = head;
-	let list = [];
+	let current = [];
 	for (let i = 0; i < width; i++) {
-		let c = current;
-		list.push(current);
-		current = $.derived(() => {
-			return $.get(c) + 1;
-		});
+		current.push(
+			$.derived(() => {
+				return $.get(head) + 1;
+			})
+		);
 	}
 	let sum = $.derived(() => {
-		return list.map((x) => $.get(x)).reduce((a, b) => a + b, 0);
+		return current.map((x) => $.get(x)).reduce((a, b) => a + b, 0);
 	});
-
 	let counter = 0;
 
 	const destroy = $.effect_root(() => {
@@ -37,24 +28,23 @@ function setup() {
 	return {
 		destroy,
 		run() {
-			const constant = count(width);
 			$.flush_sync(() => {
 				$.set(head, 1);
 			});
-			assert($.get(sum) === constant);
+			assert($.get(sum) === 2 * width);
 			counter = 0;
-			for (let i = 0; i < 100; i++) {
+			for (let i = 0; i < 500; i++) {
 				$.flush_sync(() => {
 					$.set(head, i);
 				});
-				assert($.get(sum) === constant - width + i * width);
+				assert($.get(sum) === (i + 1) * width);
 			}
-			assert(counter === 100);
+			assert(counter === 500);
 		}
 	};
 }
 
-export async function kairo_triangle_unowned() {
+export async function kairo_diamond_unowned() {
 	// Do 10 loops to warm up JIT
 	for (let i = 0; i < 10; i++) {
 		const { run, destroy } = setup();
@@ -73,13 +63,13 @@ export async function kairo_triangle_unowned() {
 	destroy();
 
 	return {
-		benchmark: 'kairo_triangle_unowned',
+		benchmark: 'kairo_diamond_unowned',
 		time: timing.time.toFixed(2),
 		gc_time: timing.gc_time.toFixed(2)
 	};
 }
 
-export async function kairo_triangle_owned() {
+export async function kairo_diamond_owned() {
 	let run, destroy;
 
 	const destroy_owned = $.effect_root(() => {
@@ -104,7 +94,7 @@ export async function kairo_triangle_owned() {
 	destroy_owned();
 
 	return {
-		benchmark: 'kairo_triangle_owned',
+		benchmark: 'kairo_diamond_owned',
 		time: timing.time.toFixed(2),
 		gc_time: timing.gc_time.toFixed(2)
 	};
