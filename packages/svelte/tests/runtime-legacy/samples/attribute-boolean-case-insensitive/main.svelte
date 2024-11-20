@@ -1,1 +1,1 @@
-<input READONLY={!0} REQUIRED={!1}>
+<input READONLY={true} REQUIRED={false}>
