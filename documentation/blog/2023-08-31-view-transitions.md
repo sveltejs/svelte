@@ -263,3 +263,4 @@ You can find the demo code from this post [on GitHub](https://github.com/geoffri
 - [My Svelte Summit video showing how to use view transitions for FLIP animations](https://youtu.be/K95TQ-Yh7Cw)
 - [Fruit list demo](https://sveltekit-shared-element-transitions-codelab.vercel.app/fruits) ([source](https://github.com/geoffrich/sveltekit-view-transitions))
 - [Svelte Summit video list demo](https://http-203-svelte.vercel.app/) (based on a [Jake Archibald demo](https://http203-playlist.netlify.app/)) ([source](https://github.com/geoffrich/http-203-svelte))
+- [View Transitions API: Single Page Apps Without a Framework](https://www.debugbear.com/blog/view-transitions-spa-without-framework)
