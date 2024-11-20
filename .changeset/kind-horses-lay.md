@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-add content-visibility auto state change event
+add `contentvisibilityautostatechange` event to event definitions
