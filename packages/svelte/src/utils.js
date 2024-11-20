@@ -212,14 +212,14 @@ const DOM_PROPERTIES = [
 	'readOnly',
 	'value',
 	'inert',
-	'volume'
+	'volume',
+	'srcObject'
 ];
 
-/**
- * @param {string} name
- */
-export function is_dom_property(name) {
-	return DOM_PROPERTIES.includes(name);
+export const DOM_PROPERTIES_MAP = new Map();
+
+for (const property of DOM_PROPERTIES) {
+	DOM_PROPERTIES_MAP.set(property.toLowerCase(), property);
 }
 
 /**

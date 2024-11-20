@@ -6,7 +6,7 @@
 import { escape_html } from '../../../../../escaping.js';
 import {
 	is_boolean_attribute,
-	is_dom_property,
+	DOM_PROPERTIES_MAP,
 	is_load_error_element,
 	is_void
 } from '../../../../../utils.js';
@@ -557,8 +557,8 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		update = b.stmt(b.call('$.set_value', node_id, value));
 	} else if (name === 'checked') {
 		update = b.stmt(b.call('$.set_checked', node_id, value));
-	} else if (is_dom_property(name)) {
-		update = b.stmt(b.assignment('=', b.member(node_id, name), value));
+	} else if (DOM_PROPERTIES_MAP.has(name)) {
+		update = b.stmt(b.assignment('=', b.member(node_id, DOM_PROPERTIES_MAP.get(name)), value));
 	} else {
 		if (name === 'style' && attribute.metadata.expression.has_state && has_call) {
 			// ensure we're not creating a separate template effect for this so that
