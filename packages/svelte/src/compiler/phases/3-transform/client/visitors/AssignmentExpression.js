@@ -37,24 +37,19 @@ function build_assignment(operator, left, right, context) {
 		const private_state = context.state.private_state.get(left.property.name);
 
 		if (private_state !== undefined) {
-			let transformed = false;
 			let value = /** @type {Expression} */ (
 				context.visit(build_assignment_value(operator, left, right))
 			);
 
-			if (should_proxy(value, context.state.scope)) {
-				transformed = true;
-				value =
-					private_state.kind === 'raw_state'
-						? value
-						: build_proxy_reassignment(value, b.member(b.this, private_state.id));
+			if (private_state.kind !== 'raw_state' && should_proxy(value, context.state.scope)) {
+				value = build_proxy_reassignment(value, b.member(b.this, private_state.id));
 			}
 
-			if (!context.state.in_constructor) {
-				return b.call('$.set', left, value);
-			} else if (transformed) {
+			if (context.state.in_constructor) {
 				return b.assignment(operator, /** @type {Pattern} */ (context.visit(left)), value);
 			}
+
+			return b.call('$.set', left, value);
 		}
 	}
 
