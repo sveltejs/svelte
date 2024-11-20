@@ -38,7 +38,7 @@ export function get_states_and_calls(values) {
  * @param {ComponentClientTransformState} state
  * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
  */
-export function build_template_literal(values, visit, state) {
+export function build_template_chunk(values, visit, state) {
 	/** @type {Expression[]} */
 	const expressions = [];
 

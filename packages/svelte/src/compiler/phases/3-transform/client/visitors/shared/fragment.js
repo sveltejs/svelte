@@ -4,7 +4,7 @@
 import { cannot_be_set_statically } from '../../../../../../utils.js';
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { build_template_literal, build_update } from './utils.js';
+import { build_template_chunk, build_update } from './utils.js';
 
 /**
  * Processes an array of template nodes, joining sibling text/expression nodes
@@ -69,7 +69,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 		state.template.push(' ');
 
-		const { has_state, has_call, value } = build_template_literal(sequence, visit, state);
+		const { has_state, has_call, value } = build_template_chunk(sequence, visit, state);
 
 		// if this is a standalone `{expression}`, make sure we handle the case where
 		// no text node was created because the expression was empty during SSR

@@ -27,7 +27,7 @@ import {
 import { process_children } from './shared/fragment.js';
 import {
 	build_render_statement,
-	build_template_literal,
+	build_template_chunk,
 	build_update,
 	build_update_assignment,
 	get_states_and_calls
@@ -364,7 +364,7 @@ export function RegularElement(node, context) {
 				b.assignment(
 					'=',
 					b.member(context.state.node, 'textContent'),
-					build_template_literal(trimmed, context.visit, child_state).value
+					build_template_chunk(trimmed, context.visit, child_state).value
 				)
 			)
 		);
