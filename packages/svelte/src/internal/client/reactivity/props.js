@@ -20,7 +20,13 @@ import {
 } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import { BRANCH_EFFECT, LEGACY_DERIVED_PROP, ROOT_EFFECT } from '../constants.js';
+import {
+	BRANCH_EFFECT,
+	LEGACY_DERIVED_PROP,
+	LEGACY_PROPS,
+	ROOT_EFFECT,
+	STATE_SYMBOL
+} from '../constants.js';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
@@ -209,6 +215,9 @@ const spread_props_handler = {
 		}
 	},
 	has(target, key) {
+		// To prevent a false positive `is_entry_props` in the `prop` function
+		if (key === STATE_SYMBOL || key === LEGACY_PROPS) return false;
+
 		for (let p of target.props) {
 			if (is_function(p)) p = p();
 			if (p != null && key in p) return true;
@@ -282,7 +291,14 @@ export function prop(props, key, flags, fallback) {
 	} else {
 		prop_value = /** @type {V} */ (props[key]);
 	}
-	var setter = get_descriptor(props, key)?.set;
+
+	// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
+	// or `createClassComponent(Component, props)`
+	var is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
+
+	var setter =
+		get_descriptor(props, key)?.set ??
+		(is_entry_props && bindable && key in props ? (v) => (props[key] = v) : undefined);
 
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;

@@ -2,6 +2,7 @@
 /** @import { Component, Payload, RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
 export { FILENAME, HMR } from '../../constants.js';
+import { attr } from '../shared/attributes.js';
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
@@ -151,33 +152,6 @@ export function head(payload, fn) {
 	head_payload.out += BLOCK_OPEN;
 	fn(head_payload);
 	head_payload.out += BLOCK_CLOSE;
-}
-
-/**
- * `<div translate={false}>` should be rendered as `<div translate="no">` and _not_
- * `<div translate="false">`, which is equivalent to `<div translate="yes">`. There
- * may be other odd cases that need to be added to this list in future
- * @type {Record<string, Map<any, string>>}
- */
-const replacements = {
-	translate: new Map([
-		[true, 'yes'],
-		[false, 'no']
-	])
-};
-
-/**
- * @template V
- * @param {string} name
- * @param {V} value
- * @param {boolean} [is_boolean]
- * @returns {string}
- */
-export function attr(name, value, is_boolean = false) {
-	if (value == null || (!value && is_boolean) || (value === '' && name === 'class')) return '';
-	const normalized = (name in replacements && replacements[name].get(value)) || value;
-	const assignment = is_boolean ? '' : `="${escape_html(normalized, true)}"`;
-	return ` ${name}${assignment}`;
 }
 
 /**
@@ -548,6 +522,8 @@ export function once(get_value) {
 		return value;
 	};
 }
+
+export { attr };
 
 export { html } from './blocks/html.js';
 

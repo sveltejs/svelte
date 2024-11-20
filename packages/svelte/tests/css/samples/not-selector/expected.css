@@ -29,3 +29,7 @@
 	span.svelte-xyz:not(:focus) {
 		color: green;
 	}
+
+	p.svelte-xyz:not(:has(span)) {
+		color: green;
+	}

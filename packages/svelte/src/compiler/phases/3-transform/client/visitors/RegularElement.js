@@ -1,46 +1,36 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
+/** @import { Expression, ExpressionStatement, Identifier, Literal, MemberExpression, ObjectExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
+import { escape_html } from '../../../../../escaping.js';
 import {
 	is_boolean_attribute,
 	is_dom_property,
 	is_load_error_element,
 	is_void
 } from '../../../../../utils.js';
-import { escape_html } from '../../../../../escaping.js';
 import { dev, is_ignored, locator } from '../../../../state.js';
-import {
-	get_attribute_expression,
-	is_event_attribute,
-	is_text_attribute
-} from '../../../../utils/ast.js';
+import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
+import { build_getter, create_derived } from '../utils.js';
 import {
-	build_getter,
-	can_inline_variable,
-	create_derived,
-	is_inlinable_expression
-} from '../utils.js';
-import {
-	get_attribute_name,
 	build_attribute_value,
 	build_class_directives,
+	build_set_attributes,
 	build_style_directives,
-	build_set_attributes
+	get_attribute_name
 } from './shared/element.js';
+import { visit_event_attribute } from './shared/events.js';
 import { process_children } from './shared/fragment.js';
 import {
 	build_render_statement,
-	build_template_literal,
+	build_template_chunk,
 	build_update,
-	build_update_assignment,
-	get_states_and_calls
+	build_update_assignment
 } from './shared/utils.js';
-import { visit_event_attribute } from './shared/events.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -362,28 +352,32 @@ export function RegularElement(node, context) {
 
 	// special case — if an element that only contains text, we don't need
 	// to descend into it if the text is non-reactive
-	const states_and_calls =
-		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
-		trimmed.some((node) => node.type === 'ExpressionTag') &&
-		get_states_and_calls(trimmed);
+	const is_text = trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag');
 
-	if (states_and_calls && states_and_calls.states === 0) {
+	// in the rare case that we have static text that can't be inlined
+	// (e.g. `<span>{location}</span>`), set `textContent` programmatically
+	const use_text_content =
+		is_text &&
+		trimmed.every((node) => node.type === 'Text' || !node.metadata.expression.has_state) &&
+		trimmed.some((node) => node.type === 'ExpressionTag' && !node.metadata.expression.can_inline);
+
+	if (use_text_content) {
+		let { value } = build_template_chunk(trimmed, context.visit, child_state);
+
 		child_state.init.push(
-			b.stmt(
-				b.assignment(
-					'=',
-					b.member(context.state.node, 'textContent'),
-					build_template_literal(trimmed, context.visit, child_state).value
-				)
-			)
+			b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value))
 		);
 	} else {
 		/** @type {Expression} */
 		let arg = context.state.node;
 
 		// If `hydrate_node` is set inside the element, we need to reset it
-		// after the element has been hydrated
-		let needs_reset = trimmed.some((node) => node.type !== 'Text');
+		// after the element has been hydrated (we don't need to reset if it's been inlined)
+		let needs_reset = !trimmed.every(
+			(node) =>
+				node.type === 'Text' ||
+				(node.type === 'ExpressionTag' && node.metadata.expression.can_inline)
+		);
 
 		// The same applies if it's a `<template>` element, since we need to
 		// set the value of `hydrate_node` to `node.content`
@@ -393,7 +387,7 @@ export function RegularElement(node, context) {
 			arg = b.member(arg, 'content');
 		}
 
-		process_children(trimmed, (is_text) => b.call('$.child', arg, is_text && b.true), true, {
+		process_children(trimmed, (is_text) => b.call('$.child', arg, is_text && b.true), node, {
 			...context,
 			state: child_state
 		});
@@ -586,10 +580,6 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		);
 	}
 
-	const inlinable_expression =
-		attribute.value === true
-			? false // not an expression
-			: is_inlinable_expression(attribute.value, context.state);
 	if (attribute.metadata.expression.has_state) {
 		if (has_call) {
 			state.init.push(build_update(update));
@@ -597,14 +587,44 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 			state.update.push(update);
 		}
 		return true;
-	} else {
-		if (inlinable_expression) {
-			context.state.template.push(` ${name}="`, value, '"');
-		} else {
-			state.init.push(update);
-		}
-		return false;
 	}
+
+	// we need to special case textarea value because it's not an actual attribute
+	const can_inline =
+		(attribute.name !== 'value' || element.name !== 'textarea') &&
+		attribute.metadata.expression.can_inline;
+
+	if (can_inline) {
+		/** @type {Literal | undefined} */
+		let literal = undefined;
+
+		if (value.type === 'Literal') {
+			literal = value;
+		} else if (value.type === 'Identifier') {
+			const binding = context.state.scope.get(value.name);
+			if (binding && binding.initial?.type === 'Literal' && !binding.reassigned) {
+				literal = binding.initial;
+			}
+		}
+
+		if (literal && escape_html(literal.value, true) === String(literal.value)) {
+			if (is_boolean_attribute(name)) {
+				if (literal.value) {
+					context.state.template.push(` ${name}`);
+				}
+			} else {
+				context.state.template.push(` ${name}="`, value, '"');
+			}
+		} else {
+			context.state.template.push(
+				b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
+			);
+		}
+	} else {
+		state.init.push(update);
+	}
+
+	return false;
 }
 
 /**

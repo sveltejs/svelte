@@ -5,6 +5,7 @@ import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
 import { get_parent, unwrap_optional } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
  * @param {CallExpression} node
@@ -178,6 +179,8 @@ export function CallExpression(node, context) {
 		if (!is_pure(node.callee, context) || context.state.expression.dependencies.size > 0) {
 			context.state.expression.has_call = true;
 			context.state.expression.has_state = true;
+			context.state.expression.can_inline = false;
+			mark_subtree_dynamic(context.path);
 		}
 	}
 }

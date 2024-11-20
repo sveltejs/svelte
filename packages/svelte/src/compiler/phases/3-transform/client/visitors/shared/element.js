@@ -6,7 +6,7 @@ import { is_ignored } from '../../../../../state.js';
 import { get_attribute_expression, is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { build_getter, create_derived } from '../../utils.js';
-import { build_template_literal, build_update } from './utils.js';
+import { build_template_chunk, build_update } from './utils.js';
 
 /**
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
@@ -200,7 +200,7 @@ export function build_attribute_value(value, context) {
 		};
 	}
 
-	return build_template_literal(value, context.visit, context.state);
+	return build_template_chunk(value, context.visit, context.state);
 }
 
 /**
