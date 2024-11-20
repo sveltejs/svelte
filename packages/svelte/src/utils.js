@@ -216,15 +216,19 @@ const DOM_PROPERTIES = [
 	'srcObject'
 ];
 
-const DOM_PROPERTIES_MAP = new Map(
-	DOM_PROPERTIES.map((property) => [property.toLowerCase(), property])
-);
+/** @type {Map<string, string>} */
+let DOM_PROPERTIES_MAP;
 
 /**
  * @param {string} name
  * @returns {string | undefined}
  */
 export function get_dom_property(name) {
+	if (!DOM_PROPERTIES_MAP) {
+		DOM_PROPERTIES_MAP = new Map(
+			DOM_PROPERTIES.map((property) => [property.toLowerCase(), property])
+		);
+	}
 	return DOM_PROPERTIES_MAP.get(name);
 }
 
