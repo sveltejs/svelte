@@ -1,5 +1,5 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, Pattern, PrivateIdentifier, Statement } from 'estree' */
-/** @import { AST, Binding, SvelteNode } from '#compiler' */
+/** @import { Binding, SvelteNode } from '#compiler' */
 /** @import { ClientTransformState, ComponentClientTransformState, ComponentContext } from './types.js' */
 /** @import { Analysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
