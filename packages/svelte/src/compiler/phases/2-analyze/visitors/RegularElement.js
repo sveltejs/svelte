@@ -1,6 +1,6 @@
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
-import { cannot_be_set_statically, is_mathml, is_svg, is_void } from '../../../../utils.js';
+import { is_mathml, is_svg, is_void } from '../../../../utils.js';
 import {
 	is_tag_valid_with_ancestor,
 	is_tag_valid_with_parent
@@ -73,14 +73,6 @@ export function RegularElement(node, context) {
 	) {
 		const child = node.fragment.nodes[0];
 		node.attributes.push(create_attribute('value', child.start, child.end, [child]));
-	}
-
-	if (
-		node.attributes.some(
-			(attribute) => attribute.type === 'Attribute' && cannot_be_set_statically(attribute.name)
-		)
-	) {
-		mark_subtree_dynamic(context.path);
 	}
 
 	const binding = context.state.scope.get(node.name);
