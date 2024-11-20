@@ -47,9 +47,19 @@ export function build_template_chunk(values, visit, state) {
 
 	const { states, calls } = get_states_and_calls(values);
 
-	let has_call = calls > 0;
-	let has_state = states > 0;
-	let contains_multiple_call_expression = calls > 1;
+	let has_call = false;
+	let has_state = false;
+	let contains_multiple_call_expression = false;
+
+	for (const node of values) {
+		if (node.type === 'ExpressionTag') {
+			const metadata = node.metadata.expression;
+
+			contains_multiple_call_expression ||= has_call && metadata.has_call;
+			has_call ||= metadata.has_call;
+			has_state ||= metadata.has_state;
+		}
+	}
 
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
