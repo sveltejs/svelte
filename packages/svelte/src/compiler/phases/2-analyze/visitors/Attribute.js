@@ -30,10 +30,6 @@ export function Attribute(node, context) {
 		}
 	}
 
-	if (node.name === 'autofocus' || node.name === 'muted') {
-		mark_subtree_dynamic(context.path);
-	}
-
 	if (node.name.startsWith('on')) {
 		mark_subtree_dynamic(context.path);
 	}
