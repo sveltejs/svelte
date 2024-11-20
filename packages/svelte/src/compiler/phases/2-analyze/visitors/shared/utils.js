@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, Expression, Literal, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
+/** @import { AssignmentExpression, Expression, Literal, Node, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 /** @import { AnalysisState, Context } from '../../types' */
 /** @import { Scope } from '../../../scope' */
@@ -261,5 +261,24 @@ export function validate_identifier_name(binding, function_depth) {
 		) {
 			e.dollar_prefix_invalid(node);
 		}
+	}
+}
+
+/**
+ * Checks that the exported name is not a derived or reassigned state variable.
+ * @param {Node} node
+ * @param {Scope} scope
+ * @param {string} name
+ */
+export function validate_export(node, scope, name) {
+	const binding = scope.get(name);
+	if (!binding) return;
+
+	if (binding.kind === 'derived') {
+		e.derived_invalid_export(node);
+	}
+
+	if ((binding.kind === 'state' || binding.kind === 'raw_state') && binding.reassigned) {
+		e.state_invalid_export(node);
 	}
 }
