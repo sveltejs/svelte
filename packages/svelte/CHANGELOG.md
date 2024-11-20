@@ -1,5 +1,11 @@
 # svelte
 
+## 5.2.7
+
+### Patch Changes
+
+- fix: always use set for private identifiers ([#14378](https://github.com/sveltejs/svelte/pull/14378))
+
 ## 5.2.6
 
 ### Patch Changes
