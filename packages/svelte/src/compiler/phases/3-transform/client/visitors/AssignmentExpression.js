@@ -46,6 +46,8 @@ function build_assignment(operator, left, right, context) {
 			}
 
 			if (context.state.in_constructor) {
+				// inside the constructor, we can assign to `this.#foo.v` rather than using `$.set`,
+				// since nothing is tracking the signal at this point
 				return b.assignment(operator, /** @type {Pattern} */ (context.visit(left)), value);
 			}
 
