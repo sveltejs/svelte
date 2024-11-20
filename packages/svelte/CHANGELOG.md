@@ -1,5 +1,11 @@
 # svelte
 
+## 5.2.6
+
+### Patch Changes
+
+- fix: remove template expression inlining ([#14374](https://github.com/sveltejs/svelte/pull/14374))
+
 ## 5.2.5
 
 ### Patch Changes
