@@ -4,7 +4,6 @@
 import { cannot_be_set_statically } from '../../../../../../utils.js';
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { is_inlinable_expression } from '../../utils.js';
 import { build_template_literal, build_update } from './utils.js';
 
 /**
@@ -155,13 +154,7 @@ function is_static_element(node, state) {
 			return false;
 		}
 
-		if (
-			attribute.value !== true &&
-			!is_text_attribute(attribute) &&
-			// If the attribute is not a text attribute but is inlinable we will directly inline it in the
-			// the template so before returning false we need to check that the attribute is not inlinable
-			!is_inlinable_expression(attribute.value, state)
-		) {
+		if (attribute.value !== true && !is_text_attribute(attribute)) {
 			return false;
 		}
 	}

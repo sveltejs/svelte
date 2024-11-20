@@ -16,7 +16,7 @@ import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js'
 import * as b from '../../../../utils/builders.js';
 import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { build_getter, create_derived, is_inlinable_expression } from '../utils.js';
+import { build_getter, create_derived } from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
@@ -577,10 +577,6 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		);
 	}
 
-	const inlinable_expression =
-		attribute.value === true
-			? false // not an expression
-			: is_inlinable_expression(attribute.value, context.state);
 	if (attribute.metadata.expression.has_state) {
 		if (has_call) {
 			state.init.push(build_update(update));
@@ -589,11 +585,7 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		}
 		return true;
 	} else {
-		if (inlinable_expression) {
-			context.state.template.push(` ${name}="`, value, '"');
-		} else {
-			state.init.push(update);
-		}
+		state.init.push(update);
 		return false;
 	}
 }
