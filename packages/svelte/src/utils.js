@@ -216,9 +216,17 @@ const DOM_PROPERTIES = [
 	'srcObject'
 ];
 
-export const DOM_PROPERTIES_MAP = new Map(
+const DOM_PROPERTIES_MAP = new Map(
 	DOM_PROPERTIES.map((property) => [property.toLowerCase(), property])
 );
+
+/**
+ * @param {string} name
+ * @returns {string | undefined}
+ */
+export function get_dom_property(name) {
+	return DOM_PROPERTIES_MAP.get(name);
+}
 
 /**
  * Subset of delegated events which should be passive by default.

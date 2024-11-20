@@ -6,7 +6,7 @@
 import { escape_html } from '../../../../../escaping.js';
 import {
 	is_boolean_attribute,
-	DOM_PROPERTIES_MAP,
+	get_dom_property,
 	is_load_error_element,
 	is_void
 } from '../../../../../utils.js';
@@ -557,27 +557,31 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		update = b.stmt(b.call('$.set_value', node_id, value));
 	} else if (name === 'checked') {
 		update = b.stmt(b.call('$.set_checked', node_id, value));
-	} else if (DOM_PROPERTIES_MAP.has(name)) {
-		update = b.stmt(b.assignment('=', b.member(node_id, DOM_PROPERTIES_MAP.get(name)), value));
 	} else {
-		if (name === 'style' && attribute.metadata.expression.has_state && has_call) {
-			// ensure we're not creating a separate template effect for this so that
-			// potential style directives are added to the same effect and therefore always apply
-			const id = b.id(state.scope.generate('style_derived'));
-			state.init.push(b.const(id, create_derived(state, b.thunk(value))));
-			value = b.call('$.get', id);
-			has_call = false;
+		const dom_property = get_dom_property(name);
+
+		if (dom_property) {
+			update = b.stmt(b.assignment('=', b.member(node_id, dom_property), value));
+		} else {
+			if (name === 'style' && attribute.metadata.expression.has_state && has_call) {
+				// ensure we're not creating a separate template effect for this so that
+				// potential style directives are added to the same effect and therefore always apply
+				const id = b.id(state.scope.generate('style_derived'));
+				state.init.push(b.const(id, create_derived(state, b.thunk(value))));
+				value = b.call('$.get', id);
+				has_call = false;
+			}
+			const callee = name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute';
+			update = b.stmt(
+				b.call(
+					callee,
+					node_id,
+					b.literal(name),
+					value,
+					is_ignored(element, 'hydration_attribute_changed') && b.true
+				)
+			);
 		}
-		const callee = name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute';
-		update = b.stmt(
-			b.call(
-				callee,
-				node_id,
-				b.literal(name),
-				value,
-				is_ignored(element, 'hydration_attribute_changed') && b.true
-			)
-		);
 	}
 
 	if (attribute.metadata.expression.has_state) {
