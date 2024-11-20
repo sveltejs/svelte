@@ -1,5 +1,5 @@
-import { assert, fastest_test } from '../utils.js';
-import * as $ from '../../packages/svelte/src/internal/client/index.js';
+import { assert, fastest_test } from '../../utils.js';
+import * as $ from 'svelte/internal/client';
 
 /**
  * @param {number} n

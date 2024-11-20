@@ -1,25 +1,25 @@
-import { assert, fastest_test } from '../../utils.js';
-import * as $ from '../../../packages/svelte/src/internal/client/index.js';
+import { assert, fastest_test } from '../../../utils.js';
+import * as $ from 'svelte/internal/client';
 
 function setup() {
 	let head = $.state(0);
-	let last = head;
+	const double = $.derived(() => $.get(head) * 2);
+	const inverse = $.derived(() => -$.get(head));
+	let current = $.derived(() => {
+		let result = 0;
+		for (let i = 0; i < 20; i++) {
+			result += $.get(head) % 2 ? $.get(double) : $.get(inverse);
+		}
+		return result;
+	});
+
 	let counter = 0;
 
 	const destroy = $.effect_root(() => {
-		for (let i = 0; i < 50; i++) {
-			let current = $.derived(() => {
-				return $.get(head) + i;
-			});
-			let current2 = $.derived(() => {
-				return $.get(current) + 1;
-			});
-			$.render_effect(() => {
-				$.get(current2);
-				counter++;
-			});
-			last = current2;
-		}
+		$.render_effect(() => {
+			$.get(current);
+			counter++;
+		});
 	});
 
 	return {
@@ -28,19 +28,19 @@ function setup() {
 			$.flush_sync(() => {
 				$.set(head, 1);
 			});
+			assert($.get(current) === 40);
 			counter = 0;
-			for (let i = 0; i < 50; i++) {
+			for (let i = 0; i < 100; i++) {
 				$.flush_sync(() => {
 					$.set(head, i);
 				});
-				assert($.get(last) === i + 50);
 			}
-			assert(counter === 50 * 50);
+			assert(counter === 100);
 		}
 	};
 }
 
-export async function kairo_broad_unowned() {
+export async function kairo_unstable_unowned() {
 	// Do 10 loops to warm up JIT
 	for (let i = 0; i < 10; i++) {
 		const { run, destroy } = setup();
@@ -59,13 +59,13 @@ export async function kairo_broad_unowned() {
 	destroy();
 
 	return {
-		benchmark: 'kairo_broad_unowned',
+		benchmark: 'kairo_unstable_unowned',
 		time: timing.time.toFixed(2),
 		gc_time: timing.gc_time.toFixed(2)
 	};
 }
 
-export async function kairo_broad_owned() {
+export async function kairo_unstable_owned() {
 	let run, destroy;
 
 	const destroy_owned = $.effect_root(() => {
@@ -90,7 +90,7 @@ export async function kairo_broad_owned() {
 	destroy_owned();
 
 	return {
-		benchmark: 'kairo_broad_owned',
+		benchmark: 'kairo_unstable_owned',
 		time: timing.time.toFixed(2),
 		gc_time: timing.gc_time.toFixed(2)
 	};

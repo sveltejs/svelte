@@ -11,7 +11,7 @@ var root = $.template(`<picture><source srcset="${__DECLARED_ASSET_0__}" type="i
 
 export default function Inline_module_vars($$anchor) {
 	var fragment = root();
-	var p = $.sibling($.first_child(fragment), 2);
 
+	$.next(2);
 	$.append($$anchor, fragment);
 }

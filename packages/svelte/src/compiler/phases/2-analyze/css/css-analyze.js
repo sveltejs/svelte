@@ -150,8 +150,9 @@ const css_visitors = {
 			// So that nested selectors like `:root:not(.x)` are not marked as unused
 			for (const child of node.selectors) {
 				walk(/** @type {Css.Node} */ (child), null, {
-					ComplexSelector(node) {
+					ComplexSelector(node, context) {
 						node.metadata.used = true;
+						context.next();
 					}
 				});
 			}

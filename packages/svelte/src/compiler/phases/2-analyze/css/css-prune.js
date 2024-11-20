@@ -531,7 +531,12 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				// with descendants, in which case we scope them all.
 				if (name === 'not' && selector.args) {
 					for (const complex_selector of selector.args.children) {
-						complex_selector.metadata.used = true;
+						walk(complex_selector, null, {
+							ComplexSelector(node, context) {
+								node.metadata.used = true;
+								context.next();
+							}
+						});
 						const relative = truncate(complex_selector);
 
 						if (complex_selector.children.length > 1) {

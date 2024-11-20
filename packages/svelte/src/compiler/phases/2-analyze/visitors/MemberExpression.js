@@ -4,6 +4,7 @@ import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { object } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
  * @param {MemberExpression} node
@@ -20,6 +21,8 @@ export function MemberExpression(node, context) {
 	if (context.state.expression && !is_pure(node, context)) {
 		context.state.expression.has_state = true;
 		context.state.expression.can_inline = false;
+
+		mark_subtree_dynamic(context.path);
 	}
 
 	if (!is_safe_identifier(node, context.state.scope)) {

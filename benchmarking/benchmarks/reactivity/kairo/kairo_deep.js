@@ -1,43 +1,46 @@
-import { assert, fastest_test } from '../../utils.js';
-import * as $ from '../../../packages/svelte/src/internal/client/index.js';
+import { assert, fastest_test } from '../../../utils.js';
+import * as $ from 'svelte/internal/client';
+
+let len = 50;
+const iter = 50;
 
 function setup() {
-	let heads = new Array(100).fill(null).map((_) => $.state(0));
-	const mux = $.derived(() => {
-		return Object.fromEntries(heads.map((h) => $.get(h)).entries());
-	});
-	const splited = heads
-		.map((_, index) => $.derived(() => $.get(mux)[index]))
-		.map((x) => $.derived(() => $.get(x) + 1));
+	let head = $.state(0);
+	let current = head;
+	for (let i = 0; i < len; i++) {
+		let c = current;
+		current = $.derived(() => {
+			return $.get(c) + 1;
+		});
+	}
+	let counter = 0;
 
 	const destroy = $.effect_root(() => {
-		splited.forEach((x) => {
-			$.render_effect(() => {
-				$.get(x);
-			});
+		$.render_effect(() => {
+			$.get(current);
+			counter++;
 		});
 	});
 
 	return {
 		destroy,
 		run() {
-			for (let i = 0; i < 10; i++) {
+			$.flush_sync(() => {
+				$.set(head, 1);
+			});
+			counter = 0;
+			for (let i = 0; i < iter; i++) {
 				$.flush_sync(() => {
-					$.set(heads[i], i);
+					$.set(head, i);
 				});
-				assert($.get(splited[i]) === i + 1);
+				assert($.get(current) === len + i);
 			}
-			for (let i = 0; i < 10; i++) {
-				$.flush_sync(() => {
-					$.set(heads[i], i * 2);
-				});
-				assert($.get(splited[i]) === i * 2 + 1);
-			}
+			assert(counter === iter);
 		}
 	};
 }
 
-export async function kairo_mux_unowned() {
+export async function kairo_deep_unowned() {
 	// Do 10 loops to warm up JIT
 	for (let i = 0; i < 10; i++) {
 		const { run, destroy } = setup();
@@ -56,13 +59,13 @@ export async function kairo_mux_unowned() {
 	destroy();
 
 	return {
-		benchmark: 'kairo_mux_unowned',
+		benchmark: 'kairo_deep_unowned',
 		time: timing.time.toFixed(2),
 		gc_time: timing.gc_time.toFixed(2)
 	};
 }
 
-export async function kairo_mux_owned() {
+export async function kairo_deep_owned() {
 	let run, destroy;
 
 	const destroy_owned = $.effect_root(() => {
@@ -87,7 +90,7 @@ export async function kairo_mux_owned() {
 	destroy_owned();
 
 	return {
-		benchmark: 'kairo_mux_owned',
+		benchmark: 'kairo_deep_owned',
 		time: timing.time.toFixed(2),
 		gc_time: timing.gc_time.toFixed(2)
 	};
