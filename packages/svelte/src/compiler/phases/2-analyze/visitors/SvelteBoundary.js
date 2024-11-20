@@ -8,7 +8,7 @@ import * as e from '../../../errors.js';
  */
 export function SvelteBoundary(node, context) {
 	for (const attribute of node.attributes) {
-		if (attribute.type === 'SpreadAttribute') {
+		if (attribute.type !== 'Attribute') {
 			e.illegal_element_attribute(attribute, 'svelte:boundary');
 		}
 	}
