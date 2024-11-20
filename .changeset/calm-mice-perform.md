@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-chore: remove template expression inlining
+fix: remove template expression inlining
