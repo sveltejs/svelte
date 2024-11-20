@@ -28,7 +28,7 @@ export function ClassBody(node, context) {
 
 	for (const definition of node.body) {
 		if (
-			definition.type === 'PropertyDefinition' &&
+			(definition.type === 'PropertyDefinition' || definition.type === 'MethodDefinition') &&
 			(definition.key.type === 'Identifier' ||
 				definition.key.type === 'PrivateIdentifier' ||
 				definition.key.type === 'Literal')

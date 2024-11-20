@@ -1,0 +1,14 @@
+[
+	{
+		"code": "illegal_element_attribute",
+		"message": "`<svelte:window>` does not support non-event attributes or spread attributes",
+		"start": {
+			"line": 4,
+			"column": 15
+		},
+		"end": {
+			"line": 4,
+			"column": 21
+		}
+	}
+]

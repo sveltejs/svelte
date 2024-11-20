@@ -34,4 +34,13 @@
 	:global(span:not(p span)) {
 		color: green;
 	}
+
+	:global(.x) {
+		:not(.foo) {
+			color: green;
+		}
+		&:not(.foo) {
+			color: green;
+		}
+	}
 </style>

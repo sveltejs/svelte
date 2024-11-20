@@ -276,6 +276,8 @@ export function analyze_component(root, source, options) {
 	/** @type {Template} */
 	const template = { ast: root.fragment, scope, scopes };
 
+	let synthetic_stores_legacy_check = [];
+
 	// create synthetic bindings for store subscriptions
 	for (const [name, references] of module.scope.references) {
 		if (name[0] !== '$' || RESERVED.includes(name)) continue;
@@ -351,6 +353,22 @@ export function analyze_component(root, source, options) {
 				}
 			}
 
+			// we push to the array because at this moment in time we can't be sure if we are in legacy
+			// mode yet because we are still changing the module scope
+			synthetic_stores_legacy_check.push(() => {
+				// if we are creating a synthetic binding for a let declaration we should also declare
+				// the declaration as state in case it's reassigned and we are not in runes mode (the function will
+				// not be called if we are not in runes mode, that's why there's no !runes check here)
+				if (
+					declaration !== null &&
+					declaration.kind === 'normal' &&
+					declaration.declaration_kind === 'let' &&
+					declaration.reassigned
+				) {
+					declaration.kind = 'state';
+				}
+			});
+
 			const binding = instance.scope.declare(b.id(name), 'store_sub', 'synthetic');
 			binding.references = references;
 			instance.scope.references.set(name, references);
@@ -361,6 +379,12 @@ export function analyze_component(root, source, options) {
 	const component_name = get_component_name(options.filename);
 
 	const runes = options.runes ?? Array.from(module.scope.references.keys()).some(is_rune);
+
+	if (!runes) {
+		for (let check of synthetic_stores_legacy_check) {
+			check();
+		}
+	}
 
 	if (runes && root.module) {
 		const context = root.module.attributes.find((attribute) => attribute.name === 'context');
@@ -450,6 +474,10 @@ export function analyze_component(root, source, options) {
 				}
 			} else {
 				for (const specifier of node.specifiers) {
+					if (specifier.local.type !== 'Identifier' || specifier.exported.type !== 'Identifier') {
+						continue;
+					}
+
 					const binding = instance.scope.get(specifier.local.name);
 
 					if (
