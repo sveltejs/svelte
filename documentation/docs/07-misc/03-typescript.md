@@ -156,7 +156,7 @@ Not all elements have a dedicated type definition. For those without one, use `S
 </script>
 
 <div {...rest}>
-	{@render children()}
+	{@render children?.()}
 </div>
 ```
 
