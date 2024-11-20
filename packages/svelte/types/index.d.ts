@@ -1229,9 +1229,6 @@ declare module 'svelte/compiler' {
 			expression: Identifier;
 			parameters: Pattern[];
 			body: Fragment;
-			metadata: {
-				can_hoist: boolean;
-			};
 		}
 
 		export interface Attribute extends BaseNode {

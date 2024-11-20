@@ -438,6 +438,7 @@ export namespace AST {
 		expression: Identifier;
 		parameters: Pattern[];
 		body: Fragment;
+		/** @internal */
 		metadata: {
 			can_hoist: boolean;
 		};
