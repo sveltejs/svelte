@@ -29,8 +29,7 @@ import {
 	build_render_statement,
 	build_template_chunk,
 	build_update,
-	build_update_assignment,
-	get_states_and_calls
+	build_update_assignment
 } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 
