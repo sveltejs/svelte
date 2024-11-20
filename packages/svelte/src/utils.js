@@ -192,7 +192,8 @@ const ATTRIBUTE_ALIASES = {
 	ismap: 'isMap',
 	nomodule: 'noModule',
 	playsinline: 'playsInline',
-	readonly: 'readOnly'
+	readonly: 'readOnly',
+	srcobject: 'srcObject'
 };
 
 /**
@@ -212,7 +213,8 @@ const DOM_PROPERTIES = [
 	'readOnly',
 	'value',
 	'inert',
-	'volume'
+	'volume',
+	'srcObject'
 ];
 
 /**
