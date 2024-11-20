@@ -12,28 +12,6 @@ import { locator } from '../../../../../state.js';
 
 /**
  * @param {Array<AST.Text | AST.ExpressionTag>} values
- */
-export function get_states_and_calls(values) {
-	let states = 0;
-	let calls = 0;
-	for (let i = 0; i < values.length; i++) {
-		const node = values[i];
-
-		if (node.type === 'ExpressionTag') {
-			if (node.metadata.expression.has_call) {
-				calls++;
-			}
-			if (node.metadata.expression.has_state) {
-				states++;
-			}
-		}
-	}
-
-	return { states, calls };
-}
-
-/**
- * @param {Array<AST.Text | AST.ExpressionTag>} values
  * @param {(node: SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
  * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
