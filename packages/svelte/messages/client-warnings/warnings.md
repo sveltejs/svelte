@@ -86,7 +86,6 @@ Similarly, reactive properties of [deep state](https://svelte.dev/docs/svelte/$s
 
 When you [migrate this component](https://svelte.dev/docs/svelte/v5-migration-guide) to runes mode, the behaviour will change accordingly.
 
-
 ## state_proxy_equality_mismatch
 
 > Reactive `$state(...)` proxies and the values they proxy have different identities. Because of this, comparisons with `%operator%` will produce unexpected results

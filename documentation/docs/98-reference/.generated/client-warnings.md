@@ -92,6 +92,34 @@ Mutating a value outside the component that created it is strongly discouraged. 
 A `$:` statement (%location%) read reactive state that was not visible to the compiler. Updates to this state will not cause the statement to re-run. The behaviour of this code will change if you migrate it to runes mode
 ```
 
+In legacy mode, a `$:` [reactive statement](https://svelte.dev/docs/svelte/legacy-reactive-assignments) re-runs when the state it _references_ changes. This is determined at compile time, by analysing the code.
+
+In runes mode, effects and deriveds re-run when there are changes to the values that are read during the function's _execution_.
+
+Often, the result is the same — for example these can be considered equivalent:
+
+```js
+$: sum = a + b;
+```
+
+```js
+const sum = $derived(a + b);
+```
+
+In some cases — such as the one that triggered the above warning — they are _not_ the same:
+
+```js
+const add = () => a + b;
+
+// the compiler can't 'see' that `sum` depends on `a` and `b`, but
+// they _would_ be read while executing the `$derived` version
+$: sum = add();
+```
+
+Similarly, reactive properties of [deep state](https://svelte.dev/docs/svelte/$state#Deep-state) are not visible to the compiler. As such, changes to these properties will cause effects and deriveds to re-run but will _not_ cause `$:` statements to re-run.
+
+When you [migrate this component](https://svelte.dev/docs/svelte/v5-migration-guide) to runes mode, the behaviour will change accordingly.
+
 ### state_proxy_equality_mismatch
 
 ```
