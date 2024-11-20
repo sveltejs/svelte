@@ -1582,8 +1582,9 @@ declare module 'svelte/legacy' {
 	 * Support using the component as both a class and function during the transition period
 	 */
 	export type LegacyComponentType = {
-		new: (o: ComponentConstructorOptions) => SvelteComponent;
-	} & ((...args: Parameters<Component<Record<string, any>>>) => ReturnType<Component<Record<string, any>, Record<string, any>>>);
+		new (o: ComponentConstructorOptions): SvelteComponent;
+		(...args: Parameters<Component<Record<string, any>>>): ReturnType<Component<Record<string, any>, Record<string, any>>>;
+	};
 	/**
 	 * Substitute for the `trusted` event modifier
 	 * @deprecated
