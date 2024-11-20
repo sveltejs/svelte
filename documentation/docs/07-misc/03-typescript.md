@@ -142,7 +142,7 @@ In case you're writing a component that wraps a native element, you may want to 
 </script>
 
 <button {...rest}>
-	{@render children()}
+	{@render children?.()}
 </button>
 ```
 
