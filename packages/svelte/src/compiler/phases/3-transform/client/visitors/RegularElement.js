@@ -359,7 +359,7 @@ export function RegularElement(node, context) {
 		trimmed.every((node) => node.type === 'Text' || !node.metadata.expression.has_state) &&
 		trimmed.some((node) => node.type === 'ExpressionTag');
 
-	if (states_and_calls && states_and_calls.states === 0) {
+	if (use_text_content) {
 		child_state.init.push(
 			b.stmt(
 				b.assignment(

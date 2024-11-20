@@ -23,7 +23,6 @@ export function build_template_chunk(values, visit, state) {
 	let quasi = b.quasi('');
 	const quasis = [quasi];
 
-
 	let has_call = false;
 	let has_state = false;
 	let contains_multiple_call_expression = false;
