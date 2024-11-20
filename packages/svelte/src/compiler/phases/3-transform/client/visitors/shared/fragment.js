@@ -3,6 +3,7 @@
 /** @import { Scope } from '../../../../scope.js' */
 /** @import { ComponentContext } from '../../types' */
 import { escape_html } from '../../../../../../escaping.js';
+import { cannot_be_set_statically } from '../../../../../../utils.js';
 import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { build_template_chunk, build_update } from './utils.js';
@@ -142,7 +143,7 @@ function is_static_element(node) {
 			return false;
 		}
 
-		if (attribute.name === 'autofocus' || attribute.name === 'muted') {
+		if (cannot_be_set_statically(attribute.name)) {
 			return false;
 		}
 

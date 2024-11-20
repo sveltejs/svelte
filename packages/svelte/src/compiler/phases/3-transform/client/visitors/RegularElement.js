@@ -5,6 +5,7 @@
 /** @import { Scope } from '../../../scope' */
 import { escape_html } from '../../../../../escaping.js';
 import {
+	cannot_be_set_statically,
 	is_boolean_attribute,
 	is_dom_property,
 	is_load_error_element,
@@ -262,8 +263,7 @@ export function RegularElement(node, context) {
 
 			if (
 				!is_custom_element &&
-				attribute.name !== 'autofocus' &&
-				attribute.name !== 'muted' &&
+				!cannot_be_set_statically(attribute.name) &&
 				(attribute.value === true || is_text_attribute(attribute))
 			) {
 				const name = get_attribute_name(node, attribute);
