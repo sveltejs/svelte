@@ -151,8 +151,7 @@ export default function element(parser) {
 						svg: false,
 						mathml: false,
 						scoped: false,
-						has_spread: false,
-						path: []
+						has_spread: false
 					},
 					parent: null
 				}

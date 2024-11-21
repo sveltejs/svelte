@@ -724,7 +724,7 @@ export function analyze_component(root, source, options) {
 			warn_unused(analysis.css.ast);
 		}
 
-		outer: for (const { node } of analysis.elements) {
+		outer: for (const { node, path } of analysis.elements) {
 			if (node.type === 'RenderTag') continue;
 
 			if (node.metadata.scoped) {
@@ -780,8 +780,9 @@ export function analyze_component(root, source, options) {
 							}
 						])
 					);
+
 					if (is_custom_element_node(node) && node.attributes.length === 1) {
-						mark_subtree_dynamic(node.metadata.path);
+						mark_subtree_dynamic(path);
 					}
 				}
 			}
