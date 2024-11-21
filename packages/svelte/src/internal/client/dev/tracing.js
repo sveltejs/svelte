@@ -60,38 +60,25 @@ function log_entry(signal, entry) {
 		}
 	}
 
+	if (signal.created) {
+		// eslint-disable-next-line no-console
+		console.log(signal.created);
+	}
+
+	if (signal.updated) {
+		// eslint-disable-next-line no-console
+		console.log(signal.updated);
+	}
+
 	const read = entry?.read;
 
 	if (read && read.length > 0) {
-		// eslint-disable-next-line no-console
-		console.groupCollapsed('tracked');
 		for (var stack of read) {
 			// eslint-disable-next-line no-console
 			console.log(stack);
 		}
-		// eslint-disable-next-line no-console
-		console.groupEnd();
 	}
-	const created = signal.created;
 
-	if (created) {
-		// eslint-disable-next-line no-console
-		console.groupCollapsed('created');
-		// eslint-disable-next-line no-console
-		console.log(created);
-		// eslint-disable-next-line no-console
-		console.groupEnd();
-	}
-	const updated = signal.updated;
-
-	if (updated) {
-		// eslint-disable-next-line no-console
-		console.groupCollapsed('updated');
-		// eslint-disable-next-line no-console
-		console.log(updated);
-		// eslint-disable-next-line no-console
-		console.groupEnd();
-	}
 	// eslint-disable-next-line no-console
 	console.groupEnd();
 }
