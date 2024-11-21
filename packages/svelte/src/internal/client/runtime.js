@@ -809,7 +809,7 @@ export function get(signal) {
 				};
 				tracing_expressions.entries.set(signal, entry);
 			}
-			entry.read.push(get_stack());
+			entry.read.push(get_stack('TracedAt'));
 		}
 	}
 

@@ -26,7 +26,7 @@ export function proxy(value, parent = null, prev) {
 	/** @type {Error | null} */
 	var stack = null;
 	if (DEV) {
-		stack = get_stack();
+		stack = get_stack('CreatedAt');
 	}
 	// if non-proxyable, or is already a proxy, return `value`
 	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {

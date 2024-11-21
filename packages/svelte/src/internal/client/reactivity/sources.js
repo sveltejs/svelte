@@ -61,7 +61,7 @@ export function source(v, stack) {
 	};
 
 	if (DEV) {
-		signal.created = stack || get_stack();
+		signal.created = stack ?? get_stack('CreatedAt');
 		signal.debug = null;
 	}
 
@@ -171,7 +171,7 @@ export function internal_set(source, value) {
 		source.version = increment_version();
 
 		if (DEV) {
-			source.updated = get_stack();
+			source.updated = get_stack('UpdatedAt');
 		}
 
 		mark_reactions(source, DIRTY);

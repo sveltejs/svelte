@@ -38,7 +38,8 @@ function log_entry(signal, entry) {
 			return;
 		}
 	}
-	const type = (signal.f & DERIVED) !== 0 ? 'derived' : 'state';
+
+	const type = (signal.f & DERIVED) !== 0 ? '$derived' : '$state';
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
 	const status =
 		signal.version > current_reaction.version || current_reaction.version === 0 ? 'dirty' : 'clean';
@@ -52,45 +53,32 @@ function log_entry(signal, entry) {
 		typeof value === 'object' && STATE_SYMBOL in value ? snapshot(value, true) : value
 	);
 
-	if (type === 'derived') {
+	if (type === '$derived') {
 		const deps = new Set(/** @type {Derived} */ (signal).deps);
 		for (const dep of deps) {
 			log_entry(dep);
 		}
 	}
 
+	if (signal.created) {
+		// eslint-disable-next-line no-console
+		console.log(signal.created);
+	}
+
+	if (signal.updated) {
+		// eslint-disable-next-line no-console
+		console.log(signal.updated);
+	}
+
 	const read = entry?.read;
 
 	if (read && read.length > 0) {
-		// eslint-disable-next-line no-console
-		console.groupCollapsed('tracked');
 		for (var stack of read) {
 			// eslint-disable-next-line no-console
 			console.log(stack);
 		}
-		// eslint-disable-next-line no-console
-		console.groupEnd();
 	}
-	const created = signal.created;
 
-	if (created) {
-		// eslint-disable-next-line no-console
-		console.groupCollapsed('created');
-		// eslint-disable-next-line no-console
-		console.log(created);
-		// eslint-disable-next-line no-console
-		console.groupEnd();
-	}
-	const updated = signal.updated;
-
-	if (updated) {
-		// eslint-disable-next-line no-console
-		console.groupCollapsed('updated');
-		// eslint-disable-next-line no-console
-		console.log(updated);
-		// eslint-disable-next-line no-console
-		console.groupEnd();
-	}
 	// eslint-disable-next-line no-console
 	console.groupEnd();
 }
@@ -145,7 +133,7 @@ export function trace(fn, label) {
 	}
 }
 
-export function get_stack() {
+export function get_stack(label = 'TraceInvoked') {
 	let error = Error();
 	const stack = error.stack;
 
@@ -173,7 +161,7 @@ export function get_stack() {
 		});
 
 		define_property(error, 'name', {
-			value: 'TraceInvokedError'
+			value: `${label}Error`
 		});
 	}
 	return error;
