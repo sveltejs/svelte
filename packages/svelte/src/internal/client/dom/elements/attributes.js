@@ -13,6 +13,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../../runtime.js';
+import { destroy_effect, effect } from '../../reactivity/effects.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -325,17 +326,10 @@ export function set_attributes(
 		}
 	}
 
-	// On the first run, ensure that events are added after bindings so
-	// that their listeners fire after the binding listeners
-	if (!prev) {
-		queue_micro_task(() => {
-			if (!element.isConnected) return;
-			for (const [key, value, evt] of events) {
-				if (current[key] === value) {
-					evt();
-				}
-			}
-		});
+	for (const [key, value, evt] of events) {
+		if (current[key] === value) {
+			evt();
+		}
 	}
 
 	return current;
