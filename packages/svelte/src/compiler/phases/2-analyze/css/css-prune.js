@@ -942,7 +942,7 @@ function find_previous_sibling(node) {
 	while (current_node?.type === 'SlotElement') {
 		const slot_children = current_node.fragment.nodes;
 		if (slot_children.length > 0) {
-			current_node = slot_children.slice(-1)[0];
+			current_node = slot_children[slot_children.length - 1];
 		} else {
 			break;
 		}
