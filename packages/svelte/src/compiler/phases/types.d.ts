@@ -1,4 +1,4 @@
-import type { AST, Binding, Css, SvelteNode } from '#compiler';
+import type { AST, Binding, Css, SvelteNode, TemplateNode } from '#compiler';
 import type { Identifier, LabeledStatement, Program, VariableDeclaration } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
 
@@ -37,7 +37,10 @@ export interface ComponentAnalysis extends Analysis {
 	instance: Js;
 	template: Template;
 	/** Used for CSS pruning and scoping */
-	elements: Array<AST.RegularElement | AST.SvelteElement | AST.RenderTag>;
+	elements: Array<{
+		node: AST.RegularElement | AST.SvelteElement | AST.RenderTag;
+		path: SvelteNode[];
+	}>;
 	runes: boolean;
 	exports: Array<{ name: string; alias: string | null }>;
 	/** Whether the component uses `$$props` */
