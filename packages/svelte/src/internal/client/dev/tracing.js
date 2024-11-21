@@ -146,7 +146,10 @@ export function trace(fn, label) {
 	}
 }
 
-export function get_stack() {
+/**
+ * @param {string} label
+ */
+export function get_stack(label) {
 	let error = Error();
 	const stack = error.stack;
 
