@@ -680,13 +680,19 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
  * @param {boolean} include_self
  */
 function get_following_sibling_elements(element, include_self) {
-	/** @type {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.Root | null} */
-	let parent = get_element_parent(element);
+	const path = element.metadata.path;
+	let i = path.length;
 
-	if (!parent) {
-		parent = element;
-		while (parent?.type !== 'Root') {
-			parent = /** @type {any} */ (parent).parent;
+	/** @type {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null} */
+	let parent = null;
+	let nodes = /** @type {Compiler.AST.Fragment} */ (path[0]).nodes;
+
+	while (i--) {
+		const node = path[i];
+		if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
+			parent = node;
+			nodes = node.fragment.nodes;
+			break;
 		}
 	}
 
@@ -694,7 +700,7 @@ function get_following_sibling_elements(element, include_self) {
 	const sibling_elements = [];
 	let found_parent = false;
 
-	for (const el of parent.fragment.nodes) {
+	for (const el of nodes) {
 		if (found_parent) {
 			walk(
 				el,
@@ -709,13 +715,25 @@ function get_following_sibling_elements(element, include_self) {
 				}
 			);
 		} else {
-			/** @type {any} */
-			let child = element;
-			while (child !== el && child !== parent) {
-				child = child.parent;
-			}
-			if (child === el) {
+			// TODO this code is highly confusing
+			if (el === element) {
 				found_parent = true;
+			} else {
+				let path = element.metadata.path;
+				let i = path.length;
+
+				while (i--) {
+					let node = path[i];
+
+					if (node === parent) {
+						break;
+					}
+
+					if (node === el) {
+						found_parent = true;
+						break;
+					}
+				}
 			}
 		}
 	}
