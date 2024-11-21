@@ -1140,8 +1140,12 @@ function mark_as_probably(result) {
 function loop_child(children, adjacent_only) {
 	/** @type {Map<Compiler.AST.RegularElement, NodeExistsValue>} */
 	const result = new Map();
-	for (let i = children.length - 1; i >= 0; i--) {
+
+	let i = children.length;
+
+	while (i--) {
 		const child = children[i];
+
 		if (child.type === 'RegularElement') {
 			result.set(child, NODE_DEFINITELY_EXISTS);
 			if (adjacent_only) {
@@ -1159,5 +1163,6 @@ function loop_child(children, adjacent_only) {
 			}
 		}
 	}
+
 	return result;
 }
