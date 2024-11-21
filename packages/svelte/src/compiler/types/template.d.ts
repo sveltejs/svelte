@@ -167,6 +167,7 @@ export namespace AST {
 		metadata: {
 			dynamic: boolean;
 			args_with_call_expression: Set<number>;
+			path: SvelteNode[];
 		};
 	}
 
@@ -344,6 +345,7 @@ export namespace AST {
 			 */
 			mathml: boolean;
 			scoped: boolean;
+			path: SvelteNode[];
 		};
 	}
 
@@ -513,11 +515,6 @@ export type TemplateNode =
 	| Block;
 
 export type SvelteNode = Node | TemplateNode | AST.Fragment | Css.Node;
-
-export interface ElementWithPath {
-	node: AST.RegularElement | AST.SvelteElement | AST.RenderTag;
-	path: SvelteNode[];
-}
 
 declare module 'estree' {
 	export interface BaseNode {

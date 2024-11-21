@@ -19,12 +19,10 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
  */
 export function RegularElement(node, context) {
 	validate_element(node, context);
-
 	check_element(node, context);
 
 	node.metadata.path = [...context.path];
-
-	context.state.analysis.elements.push({ node, path: context.path });
+	context.state.analysis.elements.push(node);
 
 	// Special case: Move the children of <textarea> into a value attribute if they are dynamic
 	if (node.name === 'textarea' && node.fragment.nodes.length > 0) {

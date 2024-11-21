@@ -709,8 +709,8 @@ export function analyze_component(root, source, options) {
 		analyze_css(analysis.css.ast, analysis);
 
 		// mark nodes as scoped/unused/empty etc
-		for (const element of analysis.elements) {
-			prune(analysis.css.ast, element.node);
+		for (const node of analysis.elements) {
+			prune(analysis.css.ast, node);
 		}
 
 		const { comment } = analysis.css.ast.content;
@@ -724,7 +724,7 @@ export function analyze_component(root, source, options) {
 			warn_unused(analysis.css.ast);
 		}
 
-		outer: for (const { node } of analysis.elements) {
+		outer: for (const node of analysis.elements) {
 			if (node.type === 'RenderTag') continue;
 
 			if (node.metadata.scoped) {
