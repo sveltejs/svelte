@@ -1188,7 +1188,8 @@ declare module 'svelte/compiler' {
 		export interface EachBlock extends BaseNode {
 			type: 'EachBlock';
 			expression: Expression;
-			context: Pattern;
+			/** The `entry` in `{#each item as entry}`. `null` if `as` part is omitted */
+			context: Pattern | null;
 			body: Fragment;
 			fallback?: Fragment;
 			index?: string;

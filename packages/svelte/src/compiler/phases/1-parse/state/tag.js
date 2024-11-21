@@ -144,9 +144,8 @@ function open(parser) {
 			}
 		}
 
-		// TODO replace with guaranteed-not-conflicting identifier, or make context possibly null
-		/** @type {Pattern} */
-		let context = { type: 'Identifier', start: -1, end: -1, name: '_' };
+		/** @type {Pattern | null} */
+		let context = null;
 		let index;
 		let key;
 
@@ -177,10 +176,6 @@ function open(parser) {
 		}
 
 		if (parser.eat('(')) {
-			if (!has_as) {
-				e.expected_token(parser.index, '}');
-			}
-
 			parser.allow_whitespace();
 
 			key = read_expression(parser);
