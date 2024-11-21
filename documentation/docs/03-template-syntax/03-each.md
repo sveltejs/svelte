@@ -74,6 +74,30 @@ You can freely use destructuring and rest patterns in each blocks.
 {/each}
 ```
 
+## Each blocks without an item
+
+```svelte
+<!--- copy: false  --->
+{#each expression}...{/each}
+```
+
+```svelte
+<!--- copy: false  --->
+{#each expression, index}...{/each}
+```
+
+In case you just want to render an item `n` times, you can omit the `as` part
+
+```svelte
+{#each { length: 10 }}
+	<li>I am rendered 10 times</li>
+{/each}
+
+{#each array, index}
+	<li>I am item number {index}</li>
+{/each}
+```
+
 ## Else blocks
 
 ```svelte
