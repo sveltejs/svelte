@@ -209,8 +209,6 @@ export function set_attributes(
 
 	// @ts-expect-error
 	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});
-	/** @type {Array<[string, any, () => void]>} */
-	var events = [];
 
 	// since key is captured we use const
 	for (const key in next) {
@@ -277,15 +275,7 @@ export function set_attributes(
 						current[key].call(this, evt);
 					}
 
-					if (!prev) {
-						events.push([
-							key,
-							value,
-							() => (current[event_handle_key] = create_event(event_name, element, handle, opts))
-						]);
-					} else {
-						current[event_handle_key] = create_event(event_name, element, handle, opts);
-					}
+					current[event_handle_key] = create_event(event_name, element, handle, opts);
 				} else {
 					// @ts-ignore
 					element[`__${event_name}`] = value;
@@ -322,12 +312,6 @@ export function set_attributes(
 		if (key === 'style' && '__styles' in element) {
 			// reset styles to force style: directive to update
 			element.__styles = {};
-		}
-	}
-
-	for (const [key, value, evt] of events) {
-		if (current[key] === value) {
-			evt();
 		}
 	}
 
