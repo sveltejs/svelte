@@ -514,6 +514,11 @@ export type TemplateNode =
 
 export type SvelteNode = Node | TemplateNode | AST.Fragment | Css.Node;
 
+export interface ElementWithPath {
+	node: AST.RegularElement | AST.SvelteElement | AST.RenderTag;
+	path: SvelteNode[];
+}
+
 declare module 'estree' {
 	export interface BaseNode {
 		/** Added by the Svelte parser */
