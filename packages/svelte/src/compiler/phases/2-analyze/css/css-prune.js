@@ -867,15 +867,18 @@ function unquote(str) {
  * @returns {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null}
  */
 function get_element_parent(node) {
-	/** @type {Compiler.SvelteNode | null} */
-	let parent = node;
-	while (
-		// @ts-expect-error TODO figure out a more elegant solution
-		(parent = parent.parent) &&
-		parent.type !== 'RegularElement' &&
-		parent.type !== 'SvelteElement'
-	);
-	return parent ?? null;
+	let path = node.metadata.path;
+	let i = path.length;
+
+	while (i--) {
+		const parent = path[i];
+
+		if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
+			return parent;
+		}
+	}
+
+	return null;
 }
 
 /**
