@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure spread attribute events are attached synchronously
+fix: attach spread attribute events synchronously
