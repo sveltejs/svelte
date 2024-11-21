@@ -38,7 +38,8 @@ function log_entry(signal, entry) {
 			return;
 		}
 	}
-	const type = (signal.f & DERIVED) !== 0 ? 'derived' : 'state';
+
+	const type = (signal.f & DERIVED) !== 0 ? '$derived' : '$state';
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
 	const status =
 		signal.version > current_reaction.version || current_reaction.version === 0 ? 'dirty' : 'clean';
