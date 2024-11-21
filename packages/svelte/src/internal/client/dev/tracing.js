@@ -174,7 +174,8 @@ export function get_stack() {
 		});
 
 		define_property(error, 'name', {
-			value: 'TraceInvokedError'
+			// 'Error' suffix is required for stack traces to be rendered properly
+			value: `${label}Error`
 		});
 	}
 	return error;
