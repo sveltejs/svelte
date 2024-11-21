@@ -260,12 +260,15 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 	switch (name) {
 		case ' ':
 		case '>': {
-			let parent = /** @type {Compiler.TemplateNode | null} */ (element.parent);
-
 			let parent_matched = false;
 			let crossed_component_boundary = false;
 
-			while (parent) {
+			const path = element.metadata.path;
+			let i = path.length;
+
+			while (i--) {
+				const parent = path[i];
+
 				if (parent.type === 'Component' || parent.type === 'SvelteComponent') {
 					crossed_component_boundary = true;
 				}
@@ -289,8 +292,6 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 
 					if (name === '>') return parent_matched;
 				}
-
-				parent = /** @type {Compiler.TemplateNode | null} */ (parent.parent);
 			}
 
 			return parent_matched || parent_selectors.every((selector) => is_global(selector, rule));
