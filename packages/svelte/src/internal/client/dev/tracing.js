@@ -53,7 +53,7 @@ function log_entry(signal, entry) {
 		typeof value === 'object' && STATE_SYMBOL in value ? snapshot(value, true) : value
 	);
 
-	if (type === 'derived') {
+	if (type === '$derived') {
 		const deps = new Set(/** @type {Derived} */ (signal).deps);
 		for (const dep of deps) {
 			log_entry(dep);
