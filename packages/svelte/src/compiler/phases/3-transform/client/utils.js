@@ -3,16 +3,16 @@
 /** @import { ClientTransformState, ComponentClientTransformState, ComponentContext } from './types.js' */
 /** @import { Analysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
+import * as b from '../../../utils/builders.js';
+import { extract_identifiers, is_simple_expression } from '../../../utils/ast.js';
 import {
-	PROPS_IS_BINDABLE,
-	PROPS_IS_IMMUTABLE,
 	PROPS_IS_LAZY_INITIAL,
+	PROPS_IS_IMMUTABLE,
 	PROPS_IS_RUNES,
-	PROPS_IS_UPDATED
+	PROPS_IS_UPDATED,
+	PROPS_IS_BINDABLE
 } from '../../../../constants.js';
 import { dev } from '../../../state.js';
-import { extract_identifiers, is_simple_expression } from '../../../utils/ast.js';
-import * as b from '../../../utils/builders.js';
 import { get_value } from './visitors/shared/declarations.js';
 
 /**
