@@ -1,6 +1,6 @@
 /** @import { Payload } from '#server' */
 
-import { escape } from '..';
+import { escape_html } from '../../../escaping.js';
 
 /**
  * @param {Payload} payload
@@ -8,6 +8,6 @@ import { escape } from '..';
  */
 export function svelte_html(payload, attributes) {
 	for (const name in attributes) {
-		payload.htmlAttributes.set(name, escape(attributes[name], true));
+		payload.htmlAttributes.set(name, escape_html(attributes[name], true));
 	}
 }
