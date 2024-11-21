@@ -1,5 +1,67 @@
 # svelte
 
+## 5.2.7
+
+### Patch Changes
+
+- fix: always use set for private identifiers ([#14378](https://github.com/sveltejs/svelte/pull/14378))
+
+## 5.2.6
+
+### Patch Changes
+
+- fix: remove template expression inlining ([#14374](https://github.com/sveltejs/svelte/pull/14374))
+
+## 5.2.5
+
+### Patch Changes
+
+- fix: correctly handle srcObject attribute on video elements ([#14369](https://github.com/sveltejs/svelte/pull/14369))
+
+- add `contentvisibilityautostatechange` event to element definitions ([#14373](https://github.com/sveltejs/svelte/pull/14373))
+
+- fix: tighten up `export default` validation ([#14368](https://github.com/sveltejs/svelte/pull/14368))
+
+- fix: include method definitions in class private fields ([#14365](https://github.com/sveltejs/svelte/pull/14365))
+
+## 5.2.4
+
+### Patch Changes
+
+- fix: ensure internal cloning can work circular values ([#14347](https://github.com/sveltejs/svelte/pull/14347))
+
+- fix: correctly update dynamic member expressions ([#14359](https://github.com/sveltejs/svelte/pull/14359))
+
+- fix: ensure is_pure takes into account $effect.tracking() ([#14333](https://github.com/sveltejs/svelte/pull/14333))
+
+- fix: coerce value to number when hydrating range/number input with changed value ([#14349](https://github.com/sveltejs/svelte/pull/14349))
+
+## 5.2.3
+
+### Patch Changes
+
+- fix: ensure dynamic call expressions correctly generate output ([#14345](https://github.com/sveltejs/svelte/pull/14345))
+
+## 5.2.2
+
+### Patch Changes
+
+- fix: treat property accesses of literals as pure ([#14325](https://github.com/sveltejs/svelte/pull/14325))
+
+## 5.2.1
+
+### Patch Changes
+
+- fix: mark pseudo classes nested inside `:not` as used ([#14303](https://github.com/sveltejs/svelte/pull/14303))
+
+- fix: disallow invalid attributes for `<svelte:window>` and `<svelte:document>` ([#14228](https://github.com/sveltejs/svelte/pull/14228))
+
+- fix: ensure props passed to components via mount are updateable ([#14210](https://github.com/sveltejs/svelte/pull/14210))
+
+- fix: mark subtree dynamic for img with loading attribute ([#14317](https://github.com/sveltejs/svelte/pull/14317))
+
+- fix: avoid relying on Node specifics within compiler ([#14314](https://github.com/sveltejs/svelte/pull/14314))
+
 ## 5.2.0
 
 ### Minor Changes

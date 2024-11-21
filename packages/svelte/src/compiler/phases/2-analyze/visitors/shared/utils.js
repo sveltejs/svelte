@@ -1,11 +1,13 @@
-/** @import { AssignmentExpression, Expression, Identifier, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
+/** @import { AssignmentExpression, Expression, Literal, Node, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 /** @import { AnalysisState, Context } from '../../types' */
 /** @import { Scope } from '../../../scope' */
 /** @import { NodeLike } from '../../../../errors.js' */
 import * as e from '../../../../errors.js';
-import { extract_identifiers, object } from '../../../../utils/ast.js';
+import { extract_identifiers } from '../../../../utils/ast.js';
 import * as w from '../../../../warnings.js';
+import * as b from '../../../../utils/builders.js';
+import { get_rune } from '../../../scope.js';
 
 /**
  * @param {AssignmentExpression | UpdateExpression} node
@@ -176,21 +178,48 @@ export function is_safe_identifier(expression, scope) {
 }
 
 /**
- * @param {Expression | Super} node
+ * @param {Expression | Literal | Super} node
  * @param {Context} context
  * @returns {boolean}
  */
 export function is_pure(node, context) {
+	if (node.type === 'Literal') {
+		return true;
+	}
+
+	if (node.type === 'CallExpression') {
+		if (!is_pure(node.callee, context)) {
+			return false;
+		}
+		for (let arg of node.arguments) {
+			if (!is_pure(arg.type === 'SpreadElement' ? arg.argument : arg, context)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	if (node.type !== 'Identifier' && node.type !== 'MemberExpression') {
 		return false;
 	}
 
-	const left = object(node);
+	if (get_rune(b.call(node), context.state.scope) === '$effect.tracking') {
+		return false;
+	}
+
+	/** @type {Expression | Super | null} */
+	let left = node;
+	while (left.type === 'MemberExpression') {
+		left = left.object;
+	}
+
 	if (!left) return false;
 
 	if (left.type === 'Identifier') {
 		const binding = context.state.scope.get(left.name);
 		if (binding === null) return true; // globals are assumed to be safe
+	} else if (is_pure(left, context)) {
+		return true;
 	}
 
 	// TODO add more cases (safe Svelte imports, etc)
@@ -232,5 +261,24 @@ export function validate_identifier_name(binding, function_depth) {
 		) {
 			e.dollar_prefix_invalid(node);
 		}
+	}
+}
+
+/**
+ * Checks that the exported name is not a derived or reassigned state variable.
+ * @param {Node} node
+ * @param {Scope} scope
+ * @param {string} name
+ */
+export function validate_export(node, scope, name) {
+	const binding = scope.get(name);
+	if (!binding) return;
+
+	if (binding.kind === 'derived') {
+		e.derived_invalid_export(node);
+	}
+
+	if ((binding.kind === 'state' || binding.kind === 'raw_state') && binding.reassigned) {
+		e.state_invalid_export(node);
 	}
 }

@@ -141,14 +141,14 @@ export function Fragment(node, context) {
 		const id = b.id(context.state.scope.generate('fragment'));
 
 		const use_space_template =
-			trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
-			trimmed.some((node) => node.type === 'ExpressionTag' && !node.metadata.expression.can_inline);
+			trimmed.some((node) => node.type === 'ExpressionTag') &&
+			trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag');
 
 		if (use_space_template) {
 			// special case — we can use `$.text` instead of creating a unique template
 			const id = b.id(context.state.scope.generate('text'));
 
-			process_children(trimmed, () => id, null, {
+			process_children(trimmed, () => id, false, {
 				...context,
 				state
 			});
@@ -158,12 +158,12 @@ export function Fragment(node, context) {
 		} else {
 			if (is_standalone) {
 				// no need to create a template, we can just use the existing block's anchor
-				process_children(trimmed, () => b.id('$$anchor'), null, { ...context, state });
+				process_children(trimmed, () => b.id('$$anchor'), false, { ...context, state });
 			} else {
 				/** @type {(is_text: boolean) => Expression} */
 				const expression = (is_text) => b.call('$.first_child', id, is_text && b.true);
 
-				process_children(trimmed, expression, null, { ...context, state });
+				process_children(trimmed, expression, false, { ...context, state });
 
 				let flags = TEMPLATE_FRAGMENT;
 
