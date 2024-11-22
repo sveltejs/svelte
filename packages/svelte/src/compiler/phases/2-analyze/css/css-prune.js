@@ -260,12 +260,15 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 	switch (name) {
 		case ' ':
 		case '>': {
-			let parent = /** @type {Compiler.TemplateNode | null} */ (element.parent);
-
 			let parent_matched = false;
 			let crossed_component_boundary = false;
 
-			while (parent) {
+			const path = element.metadata.path;
+			let i = path.length;
+
+			while (i--) {
+				const parent = path[i];
+
 				if (parent.type === 'Component' || parent.type === 'SvelteComponent') {
 					crossed_component_boundary = true;
 				}
@@ -289,8 +292,6 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 
 					if (name === '>') return parent_matched;
 				}
-
-				parent = /** @type {Compiler.TemplateNode | null} */ (parent.parent);
 			}
 
 			return parent_matched || parent_selectors.every((selector) => is_global(selector, rule));
@@ -679,51 +680,50 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
  * @param {boolean} include_self
  */
 function get_following_sibling_elements(element, include_self) {
-	/** @type {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.Root | null} */
-	let parent = get_element_parent(element);
+	const path = element.metadata.path;
+	let i = path.length;
 
-	if (!parent) {
-		parent = element;
-		while (parent?.type !== 'Root') {
-			parent = /** @type {any} */ (parent).parent;
+	/** @type {Compiler.SvelteNode} */
+	let start = element;
+	let nodes = /** @type {Compiler.SvelteNode[]} */ (
+		/** @type {Compiler.AST.Fragment} */ (path[0]).nodes
+	);
+
+	// find the set of nodes to walk...
+	while (i--) {
+		const node = path[i];
+
+		if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
+			nodes = node.fragment.nodes;
+			break;
+		}
+
+		if (node.type !== 'Fragment') {
+			start = node;
 		}
 	}
 
 	/** @type {Array<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} */
-	const sibling_elements = [];
-	let found_parent = false;
+	const siblings = [];
 
-	for (const el of parent.fragment.nodes) {
-		if (found_parent) {
-			walk(
-				el,
-				{},
-				{
-					RegularElement(node) {
-						sibling_elements.push(node);
-					},
-					SvelteElement(node) {
-						sibling_elements.push(node);
-					}
-				}
-			);
-		} else {
-			/** @type {any} */
-			let child = element;
-			while (child !== el && child !== parent) {
-				child = child.parent;
+	// ...then walk them, starting from the node after the one
+	// containing the element in question
+	for (const node of nodes.slice(nodes.indexOf(start) + 1)) {
+		walk(node, null, {
+			RegularElement(node) {
+				siblings.push(node);
+			},
+			SvelteElement(node) {
+				siblings.push(node);
 			}
-			if (child === el) {
-				found_parent = true;
-			}
-		}
+		});
 	}
 
 	if (include_self) {
-		sibling_elements.push(element);
+		siblings.push(element);
 	}
 
-	return sibling_elements;
+	return siblings;
 }
 
 /**
@@ -867,15 +867,18 @@ function unquote(str) {
  * @returns {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null}
  */
 function get_element_parent(node) {
-	/** @type {Compiler.SvelteNode | null} */
-	let parent = node;
-	while (
-		// @ts-expect-error TODO figure out a more elegant solution
-		(parent = parent.parent) &&
-		parent.type !== 'RegularElement' &&
-		parent.type !== 'SvelteElement'
-	);
-	return parent ?? null;
+	let path = node.metadata.path;
+	let i = path.length;
+
+	while (i--) {
+		const parent = path[i];
+
+		if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
+			return parent;
+		}
+	}
+
+	return null;
 }
 
 /**
@@ -920,7 +923,7 @@ function find_previous_sibling(node) {
 	while (current_node?.type === 'SlotElement') {
 		const slot_children = current_node.fragment.nodes;
 		if (slot_children.length > 0) {
-			current_node = slot_children.slice(-1)[0];
+			current_node = slot_children[slot_children.length - 1];
 		} else {
 			break;
 		}
@@ -1118,8 +1121,12 @@ function mark_as_probably(result) {
 function loop_child(children, adjacent_only) {
 	/** @type {Map<Compiler.AST.RegularElement, NodeExistsValue>} */
 	const result = new Map();
-	for (let i = children.length - 1; i >= 0; i--) {
+
+	let i = children.length;
+
+	while (i--) {
 		const child = children[i];
+
 		if (child.type === 'RegularElement') {
 			result.set(child, NODE_DEFINITELY_EXISTS);
 			if (adjacent_only) {
@@ -1137,5 +1144,6 @@ function loop_child(children, adjacent_only) {
 			}
 		}
 	}
+
 	return result;
 }
