@@ -139,7 +139,7 @@ This can improve performance with large arrays and objects that you weren't plan
 
 ## Passing `$state` across boundaries
 
-Since there's no wrapper around `$state` or `$state.raw` (or [`$derived`]($derived)), you have to be aware of keeping reactivity alive when passing it across boundaries, e.g. when you pass a reactive object into or out of a function. The most succinct way of thinking about this is to treat `$state` and `$state.raw` (and [`$derived`]($derived)) as "just JavaScript", and reuse the knowledge of how normal JavaScript variables work when crossing boundaries. Take the following example:
+Since there's no wrapper around `$state`, `$state.raw`, or [`$derived`]($derived), you have to be aware of keeping reactivity alive when passing it across boundaries — e.g. when you pass a reactive object into or out of a function. The most succinct way of thinking about this is to treat `$state`, `$state.raw`, and [`$derived`]($derived) as "just JavaScript", and reuse the knowledge of how normal JavaScript variables work when crossing boundaries. Take the following example:
 
 ```js
 // @errors: 7006
