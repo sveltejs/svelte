@@ -955,7 +955,7 @@ function get_possible_element_siblings(node, adjacent_only) {
 			if (adjacent_only) {
 				break;
 			}
-		} else if (prev.type === 'EachBlock' || prev.type === 'IfBlock' || prev.type === 'AwaitBlock') {
+		} else if (is_block(prev)) {
 			const possible_last_child = get_possible_last_child(prev, adjacent_only);
 			add_to_map(possible_last_child, result);
 			if (adjacent_only && has_definite_elements(possible_last_child)) {
@@ -979,7 +979,7 @@ function get_possible_element_siblings(node, adjacent_only) {
 		while (
 			// @ts-expect-error TODO
 			(parent = parent?.parent) &&
-			(parent.type === 'EachBlock' || parent.type === 'IfBlock' || parent.type === 'AwaitBlock')
+			is_block(parent)
 		) {
 			const possible_siblings = get_possible_element_siblings(parent, adjacent_only);
 			add_to_map(possible_siblings, result);
@@ -1000,73 +1000,57 @@ function get_possible_element_siblings(node, adjacent_only) {
 }
 
 /**
- * @param {Compiler.AST.EachBlock | Compiler.AST.IfBlock | Compiler.AST.AwaitBlock} relative_selector
+ * @param {Compiler.AST.EachBlock | Compiler.AST.IfBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock} node
  * @param {boolean} adjacent_only
  * @returns {Map<Compiler.AST.RegularElement, NodeExistsValue>}
  */
-function get_possible_last_child(relative_selector, adjacent_only) {
+function get_possible_last_child(node, adjacent_only) {
 	/** @typedef {Map<Compiler.AST.RegularElement, NodeExistsValue>} NodeMap */
+
+	/** @type {Array<Compiler.AST.Fragment | undefined | null>} */
+	let fragments = [];
+
+	switch (node.type) {
+		case 'EachBlock':
+			fragments.push(node.body, node.fallback);
+			break;
+
+		case 'IfBlock':
+			fragments.push(node.consequent, node.alternate);
+			break;
+
+		case 'AwaitBlock':
+			fragments.push(node.pending, node.then, node.catch);
+			break;
+
+		case 'KeyBlock':
+			fragments.push(node.fragment);
+			break;
+	}
 
 	/** @type {NodeMap} */
 	const result = new Map();
-	if (relative_selector.type === 'EachBlock') {
-		/** @type {NodeMap} */
-		const each_result = loop_child(relative_selector.body.nodes, adjacent_only);
 
-		/** @type {NodeMap} */
-		const else_result = relative_selector.fallback
-			? loop_child(relative_selector.fallback.nodes, adjacent_only)
-			: new Map();
-		const not_exhaustive = !has_definite_elements(else_result);
-		if (not_exhaustive) {
-			mark_as_probably(each_result);
-			mark_as_probably(else_result);
+	let exhaustive = true;
+
+	for (const fragment of fragments) {
+		if (fragment == null) {
+			exhaustive = false;
+			continue;
 		}
-		add_to_map(each_result, result);
-		add_to_map(else_result, result);
-	} else if (relative_selector.type === 'IfBlock') {
-		/** @type {NodeMap} */
-		const if_result = loop_child(relative_selector.consequent.nodes, adjacent_only);
 
-		/** @type {NodeMap} */
-		const else_result = relative_selector.alternate
-			? loop_child(relative_selector.alternate.nodes, adjacent_only)
-			: new Map();
-		const not_exhaustive = !has_definite_elements(if_result) || !has_definite_elements(else_result);
-		if (not_exhaustive) {
-			mark_as_probably(if_result);
-			mark_as_probably(else_result);
-		}
-		add_to_map(if_result, result);
-		add_to_map(else_result, result);
-	} else if (relative_selector.type === 'AwaitBlock') {
-		/** @type {NodeMap} */
-		const pending_result = relative_selector.pending
-			? loop_child(relative_selector.pending.nodes, adjacent_only)
-			: new Map();
+		const map = loop_child(fragment.nodes, adjacent_only);
+		exhaustive &&= has_definite_elements(map);
 
-		/** @type {NodeMap} */
-		const then_result = relative_selector.then
-			? loop_child(relative_selector.then.nodes, adjacent_only)
-			: new Map();
-
-		/** @type {NodeMap} */
-		const catch_result = relative_selector.catch
-			? loop_child(relative_selector.catch.nodes, adjacent_only)
-			: new Map();
-		const not_exhaustive =
-			!has_definite_elements(pending_result) ||
-			!has_definite_elements(then_result) ||
-			!has_definite_elements(catch_result);
-		if (not_exhaustive) {
-			mark_as_probably(pending_result);
-			mark_as_probably(then_result);
-			mark_as_probably(catch_result);
-		}
-		add_to_map(pending_result, result);
-		add_to_map(then_result, result);
-		add_to_map(catch_result, result);
+		add_to_map(map, result);
 	}
+
+	if (!exhaustive) {
+		for (const key of result.keys()) {
+			result.set(key, NODE_PROBABLY_EXISTS);
+		}
+	}
+
 	return result;
 }
 
@@ -1107,13 +1091,6 @@ function higher_existence(exist1, exist2) {
 	return exist1 > exist2 ? exist1 : exist2;
 }
 
-/** @param {Map<Compiler.AST.RegularElement, NodeExistsValue>} result */
-function mark_as_probably(result) {
-	for (const key of result.keys()) {
-		result.set(key, NODE_PROBABLY_EXISTS);
-	}
-}
-
 /**
  * @param {Compiler.SvelteNode[]} children
  * @param {boolean} adjacent_only
@@ -1132,11 +1109,7 @@ function loop_child(children, adjacent_only) {
 			if (adjacent_only) {
 				break;
 			}
-		} else if (
-			child.type === 'EachBlock' ||
-			child.type === 'IfBlock' ||
-			child.type === 'AwaitBlock'
-		) {
+		} else if (is_block(child)) {
 			const child_result = get_possible_last_child(child, adjacent_only);
 			add_to_map(child_result, result);
 			if (adjacent_only && has_definite_elements(child_result)) {
@@ -1146,4 +1119,17 @@ function loop_child(children, adjacent_only) {
 	}
 
 	return result;
+}
+
+/**
+ * @param {Compiler.SvelteNode} node
+ * @returns {node is Compiler.AST.IfBlock | Compiler.AST.EachBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock}
+ */
+function is_block(node) {
+	return (
+		node.type === 'IfBlock' ||
+		node.type === 'EachBlock' ||
+		node.type === 'AwaitBlock' ||
+		node.type === 'KeyBlock'
+	);
 }
