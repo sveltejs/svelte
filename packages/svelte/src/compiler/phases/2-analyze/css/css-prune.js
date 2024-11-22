@@ -1049,7 +1049,9 @@ function get_possible_last_child(node, adjacent_only) {
 	}
 
 	if (!exhaustive) {
-		mark_as_probably(result);
+		for (const key of result.keys()) {
+			result.set(key, NODE_PROBABLY_EXISTS);
+		}
 	}
 
 	return result;
@@ -1090,13 +1092,6 @@ function higher_existence(exist1, exist2) {
 	// @ts-expect-error TODO figure out if this is a bug
 	if (exist1 === undefined || exist2 === undefined) return exist1 || exist2;
 	return exist1 > exist2 ? exist1 : exist2;
-}
-
-/** @param {Map<Compiler.AST.RegularElement, NodeExistsValue>} result */
-function mark_as_probably(result) {
-	for (const key of result.keys()) {
-		result.set(key, NODE_PROBABLY_EXISTS);
-	}
 }
 
 /**
