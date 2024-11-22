@@ -1042,7 +1042,12 @@ function get_possible_last_child(node, adjacent_only) {
 	let exhaustive = true;
 
 	for (const fragment of fragments) {
-		const map = fragment ? loop_child(fragment.nodes, adjacent_only) : new Map();
+		if (fragment == null) {
+			exhaustive = false;
+			continue;
+		}
+
+		const map = loop_child(fragment.nodes, adjacent_only);
 		exhaustive &&= has_definite_elements(map);
 
 		add_to_map(map, result);
