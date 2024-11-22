@@ -274,7 +274,7 @@ logger(counter); // $effect logs 0
 counter.increment(); // $effect logs 1
 ```
 
-For the same reasons, you should not destructure reactive objects, because that means their value is read at that point in time, and not updated anymore from inside whatever created it.
+For the same reasons, you should not destructure reactive objects — their value is read at that point in time, and not updated anymore from inside whatever created it.
 
 ```js
 // @errors: 7006
