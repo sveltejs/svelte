@@ -1,6 +1,12 @@
+
 	.d.svelte-xyz + .e:where(.svelte-xyz) { color: green; }
+	.a.svelte-xyz + .b:where(.svelte-xyz) { color: green; }
+	.a.svelte-xyz + .c:where(.svelte-xyz) { color: green; }
+	.a.svelte-xyz + .f:where(.svelte-xyz) { color: green; }
+	.b.svelte-xyz + .c:where(.svelte-xyz) { color: green; }
+	.c.svelte-xyz + .b:where(.svelte-xyz) { color: green; }
+	.c.svelte-xyz + .f:where(.svelte-xyz) { color: green; }
 
 	/* no match */
-	/* (unused) .a + .b { color: green; }*/
-	/* (unused) .b + .c { color: green; }*/
-	/* (unused) .c + .f { color: green; }*/
+	.a.svelte-xyz + .d:where(.svelte-xyz) { color: red; }
+	.d.svelte-xyz + .f:where(.svelte-xyz) { color: red; }

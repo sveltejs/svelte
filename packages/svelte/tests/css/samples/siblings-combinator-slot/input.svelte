@@ -4,11 +4,16 @@
 
 <style>
 	.d + .e { color: green; }
+	.a + .b { color: green; }
+	.a + .c { color: green; }
+	.a + .f { color: green; }
+	.b + .c { color: green; }
+	.c + .b { color: green; }
+	.c + .f { color: green; }
 
 	/* no match */
-	.a + .b { color: green; }
-	.b + .c { color: green; }
-	.c + .f { color: green; }
+	.a + .d { color: red; }
+	.d + .f { color: red; }
 </style>
 
 <div class="a"></div>
