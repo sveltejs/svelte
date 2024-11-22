@@ -955,12 +955,7 @@ function get_possible_element_siblings(node, adjacent_only) {
 			if (adjacent_only) {
 				break;
 			}
-		} else if (
-			prev.type === 'EachBlock' ||
-			prev.type === 'IfBlock' ||
-			prev.type === 'AwaitBlock' ||
-			prev.type === 'KeyBlock'
-		) {
+		} else if (is_block(prev)) {
 			const possible_last_child = get_possible_last_child(prev, adjacent_only);
 			add_to_map(possible_last_child, result);
 			if (adjacent_only && has_definite_elements(possible_last_child)) {
@@ -984,10 +979,7 @@ function get_possible_element_siblings(node, adjacent_only) {
 		while (
 			// @ts-expect-error TODO
 			(parent = parent?.parent) &&
-			(parent.type === 'EachBlock' ||
-				parent.type === 'IfBlock' ||
-				parent.type === 'AwaitBlock' ||
-				parent.type === 'KeyBlock')
+			is_block(parent)
 		) {
 			const possible_siblings = get_possible_element_siblings(parent, adjacent_only);
 			add_to_map(possible_siblings, result);
@@ -1117,11 +1109,7 @@ function loop_child(children, adjacent_only) {
 			if (adjacent_only) {
 				break;
 			}
-		} else if (
-			child.type === 'EachBlock' ||
-			child.type === 'IfBlock' ||
-			child.type === 'AwaitBlock'
-		) {
+		} else if (is_block(child)) {
 			const child_result = get_possible_last_child(child, adjacent_only);
 			add_to_map(child_result, result);
 			if (adjacent_only && has_definite_elements(child_result)) {
@@ -1131,4 +1119,17 @@ function loop_child(children, adjacent_only) {
 	}
 
 	return result;
+}
+
+/**
+ * @param {Compiler.SvelteNode} node
+ * @returns {node is Compiler.AST.IfBlock | Compiler.AST.EachBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock}
+ */
+function is_block(node) {
+	return (
+		node.type === 'IfBlock' ||
+		node.type === 'EachBlock' ||
+		node.type === 'AwaitBlock' ||
+		node.type === 'KeyBlock'
+	);
 }
