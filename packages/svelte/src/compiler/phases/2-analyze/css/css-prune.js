@@ -683,66 +683,47 @@ function get_following_sibling_elements(element, include_self) {
 	const path = element.metadata.path;
 	let i = path.length;
 
-	/** @type {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null} */
-	let parent = null;
-	let nodes = /** @type {Compiler.AST.Fragment} */ (path[0]).nodes;
+	/** @type {Compiler.SvelteNode} */
+	let start = element;
+	let nodes = /** @type {Compiler.SvelteNode[]} */ (
+		/** @type {Compiler.AST.Fragment} */ (path[0]).nodes
+	);
 
+	// find the set of nodes to walk...
 	while (i--) {
 		const node = path[i];
+
 		if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
-			parent = node;
 			nodes = node.fragment.nodes;
 			break;
+		}
+
+		if (node.type !== 'Fragment') {
+			start = node;
 		}
 	}
 
 	/** @type {Array<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} */
-	const sibling_elements = [];
-	let found_parent = false;
+	const siblings = [];
 
-	for (const el of nodes) {
-		if (found_parent) {
-			walk(
-				el,
-				{},
-				{
-					RegularElement(node) {
-						sibling_elements.push(node);
-					},
-					SvelteElement(node) {
-						sibling_elements.push(node);
-					}
-				}
-			);
-		} else {
-			// TODO this code is highly confusing
-			if (el === element) {
-				found_parent = true;
-			} else {
-				let path = element.metadata.path;
-				let i = path.length;
-
-				while (i--) {
-					let node = path[i];
-
-					if (node === parent) {
-						break;
-					}
-
-					if (node === el) {
-						found_parent = true;
-						break;
-					}
-				}
+	// ...then walk them, starting from the node after the one
+	// containing the element in question
+	for (const node of nodes.slice(nodes.indexOf(start) + 1)) {
+		walk(node, null, {
+			RegularElement(node) {
+				siblings.push(node);
+			},
+			SvelteElement(node) {
+				siblings.push(node);
 			}
-		}
+		});
 	}
 
 	if (include_self) {
-		sibling_elements.push(element);
+		siblings.push(element);
 	}
 
-	return sibling_elements;
+	return siblings;
 }
 
 /**
