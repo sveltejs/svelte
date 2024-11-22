@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: export private legacy ComponentType
+fix: provide temporary `LegacyComponentType`
