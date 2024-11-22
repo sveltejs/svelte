@@ -228,7 +228,7 @@ todo.log(); // logs "'right', true"
 
 Notice how we didn't use _any_ Svelte specifics, this is just regular JavaScript semantics. `$state` and `$state.raw` (and [`$derived`]($derived)) don't change these, they just add reactivity on top, so that when you change a variable something can happen in reaction to it.
 
-As a consequence, the answer to preserving reactivity across boundaries is to use getters/setters or functions (in case of `$state`, `$state.raw` and `$derived`) or an object with mutable properties (in case of `$state`), or a class with reactive properties.
+As a consequence, the answer to preserving reactivity across boundaries is to use getters/setters or functions (in case of `$state`, `$state.raw` and `$derived`), an object with mutable properties (in case of `$state`), or a class with reactive properties.
 
 ```js
 // @errors: 7006
