@@ -955,7 +955,12 @@ function get_possible_element_siblings(node, adjacent_only) {
 			if (adjacent_only) {
 				break;
 			}
-		} else if (prev.type === 'EachBlock' || prev.type === 'IfBlock' || prev.type === 'AwaitBlock') {
+		} else if (
+			prev.type === 'EachBlock' ||
+			prev.type === 'IfBlock' ||
+			prev.type === 'AwaitBlock' ||
+			prev.type === 'KeyBlock'
+		) {
 			const possible_last_child = get_possible_last_child(prev, adjacent_only);
 			add_to_map(possible_last_child, result);
 			if (adjacent_only && has_definite_elements(possible_last_child)) {
@@ -979,7 +984,10 @@ function get_possible_element_siblings(node, adjacent_only) {
 		while (
 			// @ts-expect-error TODO
 			(parent = parent?.parent) &&
-			(parent.type === 'EachBlock' || parent.type === 'IfBlock' || parent.type === 'AwaitBlock')
+			(parent.type === 'EachBlock' ||
+				parent.type === 'IfBlock' ||
+				parent.type === 'AwaitBlock' ||
+				parent.type === 'KeyBlock')
 		) {
 			const possible_siblings = get_possible_element_siblings(parent, adjacent_only);
 			add_to_map(possible_siblings, result);
@@ -1000,7 +1008,7 @@ function get_possible_element_siblings(node, adjacent_only) {
 }
 
 /**
- * @param {Compiler.AST.EachBlock | Compiler.AST.IfBlock | Compiler.AST.AwaitBlock} relative_selector
+ * @param {Compiler.AST.EachBlock | Compiler.AST.IfBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock} relative_selector
  * @param {boolean} adjacent_only
  * @returns {Map<Compiler.AST.RegularElement, NodeExistsValue>}
  */
@@ -1066,6 +1074,15 @@ function get_possible_last_child(relative_selector, adjacent_only) {
 		add_to_map(pending_result, result);
 		add_to_map(then_result, result);
 		add_to_map(catch_result, result);
+	} else if (relative_selector.type === 'KeyBlock') {
+		/** @type {NodeMap} */
+		const key_result = loop_child(relative_selector.fragment.nodes, adjacent_only);
+
+		const not_exhaustive = !has_definite_elements(key_result);
+		if (not_exhaustive) {
+			mark_as_probably(key_result);
+		}
+		add_to_map(key_result, result);
 	}
 	return result;
 }
