@@ -4,6 +4,7 @@
 import { walk } from 'zimmerframe';
 import * as e from '../../../errors.js';
 import { is_keyframes_node } from '../../css.js';
+import { is_global, is_unscoped_pseudo_class } from './utils.js';
 
 /**
  * @typedef {Visitors<
@@ -14,27 +15,6 @@ import { is_keyframes_node } from '../../css.js';
  *   }
  * >} CssVisitors
  */
-
-/**
- * True if is `:global(...)` or `:global`
- * @param {Css.RelativeSelector} relative_selector
- * @returns {relative_selector is Css.RelativeSelector & { selectors: [Css.PseudoClassSelector, ...Array<Css.PseudoClassSelector | Css.PseudoElementSelector>] }}
- */
-function is_global(relative_selector) {
-	const first = relative_selector.selectors[0];
-
-	return (
-		first.type === 'PseudoClassSelector' &&
-		first.name === 'global' &&
-		(first.args === null ||
-			// Only these two selector types keep the whole selector global, because e.g.
-			// :global(button).x means that the selector is still scoped because of the .x
-			relative_selector.selectors.every(
-				(selector) =>
-					selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector'
-			))
-	);
-}
 
 /**
  * True if is `:global`
@@ -119,11 +99,14 @@ const css_visitors = {
 			node.metadata.rule?.metadata.parent_rule &&
 			node.children[0]?.selectors[0]?.type === 'NestingSelector'
 		) {
+			const first = node.children[0]?.selectors[1];
+			const no_nesting_scope =
+				first?.type !== 'PseudoClassSelector' || is_unscoped_pseudo_class(first);
 			const parent_is_global = node.metadata.rule.metadata.parent_rule.prelude.children.some(
 				(child) => child.children.length === 1 && child.children[0].metadata.is_global
 			);
 			// mark `&:hover` in `:global(.foo) { &:hover { color: green }}` as used
-			if (parent_is_global) {
+			if (no_nesting_scope && parent_is_global) {
 				node.metadata.used = true;
 			}
 		}
@@ -156,9 +139,24 @@ const css_visitors = {
 					].includes(first.name));
 		}
 
-		node.metadata.is_global_like ||= !!node.selectors.find(
-			(child) => child.type === 'PseudoClassSelector' && child.name === 'root'
-		);
+		node.metadata.is_global_like ||=
+			node.selectors.some(
+				(child) => child.type === 'PseudoClassSelector' && child.name === 'root'
+			) &&
+			// :root.y:has(.x) is not a global selector because while .y is unscoped, .x inside `:has(...)` should be scoped
+			!node.selectors.some((child) => child.type === 'PseudoClassSelector' && child.name === 'has');
+
+		if (node.metadata.is_global_like || node.metadata.is_global) {
+			// So that nested selectors like `:root:not(.x)` are not marked as unused
+			for (const child of node.selectors) {
+				walk(/** @type {Css.Node} */ (child), null, {
+					ComplexSelector(node, context) {
+						node.metadata.used = true;
+						context.next();
+					}
+				});
+			}
+		}
 
 		context.next();
 	},

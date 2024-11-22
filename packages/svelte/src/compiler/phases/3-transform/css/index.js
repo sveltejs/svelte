@@ -292,6 +292,13 @@ const visitors = {
 					context.state.code.prependRight(global.start, '&');
 				}
 				continue;
+			} else {
+				// for any :global() or :global at the middle of compound selector
+				for (const selector of relative_selector.selectors) {
+					if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
+						remove_global_pseudo_class(selector, null, context.state);
+					}
+				}
 			}
 
 			if (relative_selector.metadata.scoped) {
@@ -303,13 +310,6 @@ const visitors = {
 						(selector.name === 'is' || selector.name === 'where')
 					) {
 						continue;
-					}
-				}
-
-				// for any :global() or :global at the middle of compound selector
-				for (const selector of relative_selector.selectors) {
-					if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-						remove_global_pseudo_class(selector, null, context.state);
 					}
 				}
 

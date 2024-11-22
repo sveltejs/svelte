@@ -1,5 +1,5 @@
 /** @import { ComponentConstructorOptions, ComponentType, SvelteComponent, Component } from 'svelte' */
-import { DIRTY, MAYBE_DIRTY } from '../internal/client/constants.js';
+import { DIRTY, LEGACY_PROPS, MAYBE_DIRTY } from '../internal/client/constants.js';
 import { user_pre_effect } from '../internal/client/reactivity/effects.js';
 import { mutable_source, set } from '../internal/client/reactivity/sources.js';
 import { hydrate, mount, unmount } from '../internal/client/render.js';
@@ -63,6 +63,11 @@ export function asClassComponent(component) {
 	};
 }
 
+/**
+ * Support using the component as both a class and function during the transition period
+ * @typedef  {{new (o: ComponentConstructorOptions): SvelteComponent;(...args: Parameters<Component<Record<string, any>>>): ReturnType<Component<Record<string, any>, Record<string, any>>>;}} LegacyComponentType
+ */
+
 class Svelte4Component {
 	/** @type {any} */
 	#events;
@@ -89,7 +94,7 @@ class Svelte4Component {
 		};
 
 		// Replicate coarse-grained props through a proxy that has a version source for
-		// each property, which is increment on updates to the property itself. Do not
+		// each property, which is incremented on updates to the property itself. Do not
 		// use our $state proxy because that one has fine-grained reactivity.
 		const props = new Proxy(
 			{ ...(options.props || {}), $$events: {} },
@@ -98,6 +103,9 @@ class Svelte4Component {
 					return get(sources.get(prop) ?? add_source(prop, Reflect.get(target, prop)));
 				},
 				has(target, prop) {
+					// Necessary to not throw "invalid binding" validation errors on the component side
+					if (prop === LEGACY_PROPS) return true;
+
 					get(sources.get(prop) ?? add_source(prop, Reflect.get(target, prop)));
 					return Reflect.has(target, prop);
 				},

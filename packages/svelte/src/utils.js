@@ -194,7 +194,8 @@ const ATTRIBUTE_ALIASES = {
 	playsinline: 'playsInline',
 	readonly: 'readOnly',
 	defaultvalue: 'defaultValue',
-	defaultchecked: 'defaultChecked'
+	defaultchecked: 'defaultChecked',
+	srcobject: 'srcObject'
 };
 
 /**
@@ -216,7 +217,8 @@ const DOM_PROPERTIES = [
 	'inert',
 	'volume',
 	'defaultValue',
-	'defaultChecked'
+	'defaultChecked',
+	'srcObject'
 ];
 
 /**

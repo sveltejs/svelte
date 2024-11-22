@@ -42,7 +42,7 @@ export function bind_value(input, get, set = get) {
 		// TODO Svelte 6: remove input.value check and set to empty string?
 		(get() == null && input.value)
 	) {
-		set(input.value);
+		set(is_numberlike_input(input) ? to_number(input.value) : input.value);
 	}
 
 	render_effect(() => {

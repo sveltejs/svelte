@@ -507,6 +507,7 @@ const instance_script = {
 			for (let specifier of node.specifiers) {
 				if (
 					specifier.type === 'ImportSpecifier' &&
+					specifier.imported.type === 'Identifier' &&
 					['beforeUpdate', 'afterUpdate'].includes(specifier.imported.name)
 				) {
 					const references = state.scope.references.get(specifier.local.name);
@@ -544,6 +545,8 @@ const instance_script = {
 
 		let count_removed = 0;
 		for (const specifier of node.specifiers) {
+			if (specifier.local.type !== 'Identifier') continue;
+
 			const binding = state.scope.get(specifier.local.name);
 			if (binding?.kind === 'bindable_prop') {
 				state.str.remove(

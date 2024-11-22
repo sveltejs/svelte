@@ -985,6 +985,16 @@ export function expected_whitespace(node) {
 }
 
 /**
+ * `<%name%>` does not support non-event attributes or spread attributes
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function illegal_element_attribute(node, name) {
+	e(node, "illegal_element_attribute", `\`<${name}>\` does not support non-event attributes or spread attributes`);
+}
+
+/**
  * %message%
  * @param {null | number | NodeLike} node
  * @param {string} message
