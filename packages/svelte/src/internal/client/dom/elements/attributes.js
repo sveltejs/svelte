@@ -85,6 +85,21 @@ export function set_checked(element, checked) {
 }
 
 /**
+ * Sets the `selected` attribute on an `option` element.
+ * Not set through the property because that doesn't reflect to the DOM,
+ * which means it wouldn't be taken into account when a form is reset.
+ * @param {HTMLOptionElement} element
+ * @param {boolean} selected
+ */
+export function set_selected(element, selected) {
+	if (selected) {
+		element.setAttribute('selected', '');
+	} else {
+		element.removeAttribute('selected');
+	}
+}
+
+/**
  * @param {Element} element
  * @param {string} attribute
  * @param {string | null} value
