@@ -114,20 +114,6 @@ Inputs that work together can use `bind:group`.
 <input type="checkbox" bind:group={fillings} value="Guac (extra)" />
 ```
 
-You can give the group a default value by setting the `checked` property on the elements that should be selected initially. This way, when the input is part of a form and its `form.reset()` method is invoked, it will revert to that value instead of the empty string (for radio groups) or the empty array (for checkbox groups). Note that for the initial render the value of the binding takes precedence if it's not `null` or `undefined`.
-
-```svelte
-<script>
-	let tortilla = $state('Plain');
-</script>
-
-<form>
-	<input type="radio" bind:group={tortilla} value="Plain" checked />
-	<input type="radio" bind:group={tortilla} value="Whole wheat" />
-	<input type="reset" value="Reset">
-</form>
-```
-
 > [!NOTE] `bind:group` only works if the inputs are in the same Svelte component.
 
 ## `<input bind:files>`
