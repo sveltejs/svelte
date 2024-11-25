@@ -20,6 +20,9 @@ export function RenderTag(node, context) {
 	node.metadata.dynamic =
 		callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
 
+	// TODO populate node.metadata.snippets with all the locally-defined snippets that this
+	// could refer to, and create bidirectional links
+
 	context.state.analysis.uses_render_tags = true;
 
 	const raw_args = unwrap_optional(node.expression).arguments;

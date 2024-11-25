@@ -315,7 +315,10 @@ function open(parser) {
 				name
 			},
 			parameters: function_expression.params,
-			body: create_fragment()
+			body: create_fragment(),
+			metadata: {
+				sites: new Set()
+			}
 		});
 		parser.stack.push(block);
 		parser.fragments.push(block.body);
@@ -609,7 +612,8 @@ function special(parser) {
 			expression: expression,
 			metadata: {
 				dynamic: false,
-				args_with_call_expression: new Set()
+				args_with_call_expression: new Set(),
+				snippets: []
 			}
 		});
 	}

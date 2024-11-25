@@ -168,6 +168,9 @@ export namespace AST {
 			dynamic: boolean;
 			args_with_call_expression: Set<number>;
 			path: SvelteNode[];
+			/** The set of locally-defined snippets that this render tag could correspond to,
+			 * used for CSS pruning purposes */
+			snippets: SnippetBlock[];
 		};
 	}
 
@@ -280,6 +283,9 @@ export namespace AST {
 		metadata: {
 			scopes: Record<string, Scope>;
 			dynamic: boolean;
+			/** The set of locally-defined snippets that this component tag could render,
+			 * used for CSS pruning purposes */
+			snippets: SnippetBlock[];
 		};
 	}
 
@@ -320,6 +326,9 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			scopes: Record<string, Scope>;
+			/** The set of locally-defined snippets that this component tag could render,
+			 * used for CSS pruning purposes */
+			snippets: SnippetBlock[];
 		};
 	}
 
@@ -371,6 +380,9 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			scopes: Record<string, Scope>;
+			/** The set of locally-defined snippets that this component tag could render,
+			 * used for CSS pruning purposes */
+			snippets: SnippetBlock[];
 		};
 	}
 
@@ -440,6 +452,12 @@ export namespace AST {
 		expression: Identifier;
 		parameters: Pattern[];
 		body: Fragment;
+		/** @internal */
+		metadata: {
+			/** The set of components/render tags that could render this snippet,
+			 * used for CSS pruning */
+			sites: Set<Component | SvelteComponent | RenderTag>;
+		};
 	}
 
 	export interface Attribute extends BaseNode {

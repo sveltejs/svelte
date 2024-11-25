@@ -15,6 +15,11 @@ import { mark_subtree_dynamic } from './fragment.js';
  * @param {Context} context
  */
 export function visit_component(node, context) {
+	node.metadata.snippets = [];
+
+	// TODO populate node.metadata.snippets with all the locally-defined snippets that this
+	// could refer to, and create bidirectional links
+
 	mark_subtree_dynamic(context.path);
 
 	for (const attribute of node.attributes) {
