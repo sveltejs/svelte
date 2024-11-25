@@ -944,15 +944,16 @@ function get_possible_element_siblings(node, adjacent_only) {
 	let prev = node;
 	while ((prev = find_previous_sibling(prev))) {
 		if (prev.type === 'RegularElement') {
-			if (
-				!prev.attributes.find(
-					(attr) => attr.type === 'Attribute' && attr.name.toLowerCase() === 'slot'
-				)
-			) {
+			const has_slot_attribute = prev.attributes.some(
+				(attr) => attr.type === 'Attribute' && attr.name.toLowerCase() === 'slot'
+			);
+
+			if (!has_slot_attribute) {
 				result.set(prev, NODE_DEFINITELY_EXISTS);
-			}
-			if (adjacent_only) {
-				break;
+
+				if (adjacent_only) {
+					return result;
+				}
 			}
 		} else if (is_block(prev)) {
 			const possible_last_child = get_possible_last_child(prev, adjacent_only);
@@ -971,27 +972,25 @@ function get_possible_element_siblings(node, adjacent_only) {
 		}
 	}
 
-	if (!prev || !adjacent_only) {
-		/** @type {Compiler.SvelteNode | null} */
-		let parent = node;
+	/** @type {Compiler.SvelteNode | null} */
+	let parent = node;
 
-		while (
-			// @ts-expect-error TODO
-			(parent = parent?.parent) &&
-			is_block(parent)
-		) {
-			const possible_siblings = get_possible_element_siblings(parent, adjacent_only);
-			add_to_map(possible_siblings, result);
+	while (
+		// @ts-expect-error TODO
+		(parent = parent?.parent) &&
+		is_block(parent)
+	) {
+		const possible_siblings = get_possible_element_siblings(parent, adjacent_only);
+		add_to_map(possible_siblings, result);
 
-			// @ts-expect-error
-			if (parent.type === 'EachBlock' && !parent.fallback?.nodes.includes(node)) {
-				// `{#each ...}<a /><b />{/each}` — `<b>` can be previous sibling of `<a />`
-				add_to_map(get_possible_last_child(parent, adjacent_only), result);
-			}
+		// @ts-expect-error
+		if (parent.type === 'EachBlock' && !parent.fallback?.nodes.includes(node)) {
+			// `{#each ...}<a /><b />{/each}` — `<b>` can be previous sibling of `<a />`
+			add_to_map(get_possible_last_child(parent, adjacent_only), result);
+		}
 
-			if (adjacent_only && has_definite_elements(possible_siblings)) {
-				break;
-			}
+		if (adjacent_only && has_definite_elements(possible_siblings)) {
+			break;
 		}
 	}
 
