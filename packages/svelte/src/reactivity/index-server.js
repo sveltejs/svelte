@@ -3,3 +3,7 @@ export const SvelteSet = globalThis.Set;
 export const SvelteMap = globalThis.Map;
 export const SvelteURL = globalThis.URL;
 export const SvelteURLSearchParams = globalThis.URLSearchParams;
+
+export class MediaQuery {
+	matches = false;
+}

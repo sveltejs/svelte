@@ -1630,6 +1630,7 @@ declare module 'svelte/legacy' {
 }
 
 declare module 'svelte/motion' {
+	import type { MediaQuery } from 'svelte/reactivity';
 	export interface Spring<T> extends Readable<T> {
 		set: (new_value: T, opts?: SpringUpdateOpts) => Promise<void>;
 		update: (fn: Updater<T>, opts?: SpringUpdateOpts) => Promise<void>;
@@ -1677,6 +1678,10 @@ declare module 'svelte/motion' {
 		interpolate?: (a: T, b: T) => (t: number) => T;
 	}
 	/**
+	 * A media query that matches if the user has requested reduced motion.
+	 * */
+	export const prefersReducedMotion: MediaQuery;
+	/**
 	 * The spring function in Svelte creates a store whose value is animated, with a motion that simulates the behavior of a spring. This means when the value changes, instead of transitioning at a steady rate, it "bounces" like a spring would, depending on the physics parameters provided. This adds a level of realism to the transitions and can enhance the user experience.
 	 *
 	 * */
@@ -1718,6 +1723,15 @@ declare module 'svelte/reactivity' {
 	export class SvelteURLSearchParams extends URLSearchParams {
 		
 		[REPLACE](params: URLSearchParams): void;
+		#private;
+	}
+	/**
+	 * Creates a media query and provides a `matches` property that reflects its current state.
+	 */
+	export class MediaQuery {
+		
+		constructor(query: string);
+		get matches(): boolean;
 		#private;
 	}
 
