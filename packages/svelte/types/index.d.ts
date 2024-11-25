@@ -1726,12 +1726,15 @@ declare module 'svelte/reactivity' {
 		#private;
 	}
 	/**
-	 * Creates a media query and provides a `matches` property that reflects its current state.
+	 * Creates a media query and provides a `current` property that reflects whether or not it matches.
 	 */
 	export class MediaQuery {
-		
-		constructor(query: string);
-		get matches(): boolean;
+		/**
+		 * @param query A media query string (don't forget the braces)
+		 * @param matches Fallback value for the server
+		 */
+		constructor(query: string, matches?: boolean | undefined);
+		get current(): boolean;
 		#private;
 	}
 

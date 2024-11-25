@@ -14,3 +14,10 @@ export class MediaQuery {
 		this.current = matches;
 	}
 }
+
+/**
+ * @param {any} _
+ */
+export function createStartStopNotifier(_) {
+	return () => {};
+}
