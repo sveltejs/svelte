@@ -7,7 +7,6 @@ import { get_attribute_chunks, is_text_attribute } from '../../../utils/ast.js';
 
 /**
  * @typedef {{
- *   stylesheet: Compiler.Css.StyleSheet;
  *   element: Compiler.AST.RegularElement | Compiler.AST.SvelteElement;
  *   from_render_tag: boolean;
  * }} State
@@ -61,9 +60,9 @@ export function prune(stylesheet, element) {
 		const parent = get_element_parent(element);
 		if (!parent) return;
 
-		walk(stylesheet, { stylesheet, element: parent, from_render_tag: true }, visitors);
+		walk(stylesheet, { element: parent, from_render_tag: true }, visitors);
 	} else {
-		walk(stylesheet, { stylesheet, element, from_render_tag: false }, visitors);
+		walk(stylesheet, { element, from_render_tag: false }, visitors);
 	}
 }
 
