@@ -8,7 +8,7 @@ import { effect_tracking, render_effect } from '../internal/client/reactivity/ef
  * "subscriber" count goes from 0 to 1 and back to 0.
  * @param {() => () => void} start
  */
-export function createStartStopNotifier(start) {
+export function createSubscriber(start) {
 	let subscribers = 0;
 	/** @type {() => void} */
 	let stop;

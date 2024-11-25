@@ -8,7 +8,7 @@ import { source } from '../internal/client/reactivity/sources.js';
 import { get as get_source } from '../internal/client/runtime.js';
 import { increment } from '../reactivity/utils.js';
 import { get, writable } from './shared/index.js';
-import { createStartStopNotifier } from '../reactivity/start-stop-notifier.js';
+import { createSubscriber } from '../reactivity/create-subscriber.js';
 
 export { derived, get, readable, readonly, writable } from './shared/index.js';
 
@@ -111,7 +111,7 @@ export function fromStore(store) {
 	let value = /** @type {V} */ (undefined);
 	let version = source(0);
 
-	const notify = createStartStopNotifier(() => {
+	const notify = createSubscriber(() => {
 		let ran = false;
 
 		const unsubscribe = store.subscribe((v) => {

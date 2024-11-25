@@ -1,7 +1,7 @@
 import { get } from '../internal/client/runtime.js';
 import { source } from '../internal/client/reactivity/sources.js';
 import { effect_tracking } from '../internal/client/reactivity/effects.js';
-import { createStartStopNotifier } from './start-stop-notifier.js';
+import { createSubscriber } from './create-subscriber.js';
 import { on } from '../events/index.js';
 import { increment } from './utils.js';
 
@@ -11,7 +11,7 @@ import { increment } from './utils.js';
 export class MediaQuery {
 	#query;
 	#version = source(0);
-	#notify = createStartStopNotifier(() => {
+	#notify = createSubscriber(() => {
 		return on(this.#query, 'change', () => increment(this.#version));
 	});
 
