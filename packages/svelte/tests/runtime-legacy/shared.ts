@@ -478,3 +478,13 @@ export function ok(value: any): asserts value {
 		throw new Error(`Expected truthy value, got ${value}`);
 	}
 }
+
+// @ts-expect-error JS DOM doesn't support it
+Window.prototype.matchMedia = (media) => {
+	return {
+		matches: false,
+		media,
+		addEventListener: () => {},
+		removeEventListener: () => {}
+	};
+};
