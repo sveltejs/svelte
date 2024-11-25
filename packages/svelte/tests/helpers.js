@@ -173,12 +173,15 @@ export function write(file, contents) {
 	fs.writeFileSync(file, contents);
 }
 
-// @ts-expect-error JS DOM doesn't support it
-Window.prototype.matchMedia = (media) => {
-	return {
-		matches: false,
-		media,
-		addEventListener: () => {},
-		removeEventListener: () => {}
+// Guard because not all test contexts load this with JSDOM
+if (typeof window !== 'undefined') {
+	// @ts-expect-error JS DOM doesn't support it
+	Window.prototype.matchMedia = (media) => {
+		return {
+			matches: false,
+			media,
+			addEventListener: () => {},
+			removeEventListener: () => {}
+		};
 	};
-};
+}
