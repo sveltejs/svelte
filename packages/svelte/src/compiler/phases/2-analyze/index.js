@@ -438,7 +438,9 @@ export function analyze_component(root, source, options) {
 				: '',
 			keyframes: []
 		},
-		source
+		source,
+		snippet_renderers: new Map(),
+		snippets: new Set()
 	};
 
 	if (!runes) {
@@ -696,6 +698,16 @@ export function analyze_component(root, source, options) {
 			analysis.event_directive_node,
 			analysis.event_directive_node.name
 		);
+	}
+
+	for (const [node, resolved] of analysis.snippet_renderers) {
+		if (!resolved) {
+			node.metadata.snippets = analysis.snippets;
+		}
+
+		for (const snippet of node.metadata.snippets) {
+			snippet.metadata.sites.add(node);
+		}
 	}
 
 	if (

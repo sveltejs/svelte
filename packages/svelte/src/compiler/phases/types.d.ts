@@ -72,6 +72,17 @@ export interface ComponentAnalysis extends Analysis {
 		keyframes: string[];
 	};
 	source: string;
+	/**
+	 * Every render tag/component, and whether it could be definitively resolved or not
+	 */
+	snippet_renderers: Map<
+		AST.RenderTag | AST.Component | AST.SvelteComponent | AST.SvelteSelf,
+		boolean
+	>;
+	/**
+	 * Every snippet that is declared locally
+	 */
+	snippets: Set<AST.SnippetBlock>;
 }
 
 declare module 'estree' {

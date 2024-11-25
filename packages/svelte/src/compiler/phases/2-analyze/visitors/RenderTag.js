@@ -17,12 +17,28 @@ export function RenderTag(node, context) {
 
 	const callee = unwrap_optional(node.expression).callee;
 
-	node.metadata.dynamic =
-		callee.type !== 'Identifier' || context.state.scope.get(callee.name)?.kind !== 'normal';
+	const binding = callee.type === 'Identifier' ? context.state.scope.get(callee.name) : undefined;
 
-	// TODO populate node.metadata.snippets with all the locally-defined snippets that this
-	// could refer to, and create bidirectional links
+	node.metadata.dynamic = binding?.kind !== 'normal';
 
+	/** If we can't unambiguously resolve this to a declaration, we
+	 * must assume the worst and link the render tag to every snippet
+	 */
+	let resolved =
+		callee.type === 'Identifier' &&
+		(!binding ||
+			binding.declaration_kind === 'import' ||
+			binding.kind === 'prop' ||
+			binding.kind === 'rest_prop' ||
+			binding.kind === 'bindable_prop' ||
+			binding?.initial?.type === 'SnippetBlock');
+
+	if (binding?.initial?.type === 'SnippetBlock') {
+		// if this render tag unambiguously references a local snippet, our job is easy
+		node.metadata.snippets.add(binding.initial);
+	}
+
+	context.state.analysis.snippet_renderers.set(node, resolved);
 	context.state.analysis.uses_render_tags = true;
 
 	const raw_args = unwrap_optional(node.expression).arguments;

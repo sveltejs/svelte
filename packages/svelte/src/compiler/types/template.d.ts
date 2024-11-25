@@ -170,7 +170,7 @@ export namespace AST {
 			path: SvelteNode[];
 			/** The set of locally-defined snippets that this render tag could correspond to,
 			 * used for CSS pruning purposes */
-			snippets: SnippetBlock[];
+			snippets: Set<SnippetBlock>;
 		};
 	}
 
@@ -285,7 +285,7 @@ export namespace AST {
 			dynamic: boolean;
 			/** The set of locally-defined snippets that this component tag could render,
 			 * used for CSS pruning purposes */
-			snippets: SnippetBlock[];
+			snippets: Set<SnippetBlock>;
 		};
 	}
 
@@ -328,7 +328,7 @@ export namespace AST {
 			scopes: Record<string, Scope>;
 			/** The set of locally-defined snippets that this component tag could render,
 			 * used for CSS pruning purposes */
-			snippets: SnippetBlock[];
+			snippets: Set<SnippetBlock>;
 		};
 	}
 
@@ -382,7 +382,7 @@ export namespace AST {
 			scopes: Record<string, Scope>;
 			/** The set of locally-defined snippets that this component tag could render,
 			 * used for CSS pruning purposes */
-			snippets: SnippetBlock[];
+			snippets: Set<SnippetBlock>;
 		};
 	}
 
@@ -456,7 +456,7 @@ export namespace AST {
 		metadata: {
 			/** The set of components/render tags that could render this snippet,
 			 * used for CSS pruning */
-			sites: Set<Component | SvelteComponent | RenderTag>;
+			sites: Set<Component | SvelteComponent | SvelteSelf | RenderTag>;
 		};
 	}
 

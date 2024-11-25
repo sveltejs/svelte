@@ -613,7 +613,7 @@ function special(parser) {
 			metadata: {
 				dynamic: false,
 				args_with_call_expression: new Set(),
-				snippets: []
+				snippets: new Set()
 			}
 		});
 	}
