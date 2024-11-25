@@ -1,15 +1,19 @@
 import { get } from '../internal/client/runtime.js';
-import { set, source } from '../internal/client/reactivity/sources.js';
+import { source } from '../internal/client/reactivity/sources.js';
 import { effect_tracking } from '../internal/client/reactivity/effects.js';
 import { createStartStopNotifier } from './start-stop-notifier.js';
+import { on } from '../events/index.js';
+import { increment } from './utils.js';
 
 /**
  * Creates a media query and provides a `current` property that reflects whether or not it matches.
  */
 export class MediaQuery {
-	#version = source(0);
 	#query;
-	#notify;
+	#version = source(0);
+	#notify = createStartStopNotifier(() => {
+		return on(this.#query, 'change', () => increment(this.#version));
+	});
 
 	get current() {
 		if (effect_tracking()) {
@@ -21,15 +25,11 @@ export class MediaQuery {
 	}
 
 	/**
-	 * @param {string} query A media query string (don't forget the braces)
+	 * @param {string} query A media query string
 	 * @param {boolean} [matches] Fallback value for the server
 	 */
 	constructor(query, matches) {
-		this.#query = window.matchMedia(query);
-		this.#notify = createStartStopNotifier(() => {
-			const listener = () => set(this.#version, this.#version.v + 1);
-			this.#query.addEventListener('change', listener);
-			return () => this.#query.removeEventListener('change', listener);
-		});
+		// For convenience (and because people likely forget them) we add the parentheses; double parantheses are not a problem
+		this.#query = window.matchMedia(`(${query})`);
 	}
 }
