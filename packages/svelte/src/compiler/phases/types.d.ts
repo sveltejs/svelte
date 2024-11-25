@@ -37,7 +37,7 @@ export interface ComponentAnalysis extends Analysis {
 	instance: Js;
 	template: Template;
 	/** Used for CSS pruning and scoping */
-	elements: Array<AST.RegularElement | AST.SvelteElement | AST.RenderTag>;
+	elements: Array<AST.RegularElement | AST.SvelteElement>;
 	runes: boolean;
 	exports: Array<{ name: string; alias: string | null }>;
 	/** Whether the component uses `$$props` */

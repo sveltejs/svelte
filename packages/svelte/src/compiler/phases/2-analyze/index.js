@@ -738,8 +738,6 @@ export function analyze_component(root, source, options) {
 		}
 
 		outer: for (const node of analysis.elements) {
-			if (node.type === 'RenderTag') continue;
-
 			if (node.metadata.scoped) {
 				// Dynamic elements in dom mode always use spread for attributes and therefore shouldn't have a class attribute added to them
 				// TODO this happens during the analysis phase, which shouldn't know anything about client vs server

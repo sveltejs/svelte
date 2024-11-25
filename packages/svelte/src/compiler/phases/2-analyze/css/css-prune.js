@@ -8,7 +8,6 @@ import { get_attribute_chunks, is_text_attribute } from '../../../utils/ast.js';
 /**
  * @typedef {{
  *   element: Compiler.AST.RegularElement | Compiler.AST.SvelteElement;
- *   from_render_tag: boolean;
  * }} State
  */
 /** @typedef {NODE_PROBABLY_EXISTS | NODE_DEFINITELY_EXISTS} NodeExistsValue */
@@ -53,17 +52,10 @@ const nesting_selector = {
 /**
  *
  * @param {Compiler.Css.StyleSheet} stylesheet
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag} element
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  */
 export function prune(stylesheet, element) {
-	if (element.type === 'RenderTag') {
-		const parent = get_element_parent(element);
-		if (!parent) return;
-
-		walk(stylesheet, { element: parent, from_render_tag: true }, visitors);
-	} else {
-		walk(stylesheet, { element, from_render_tag: false }, visitors);
-	}
+	walk(stylesheet, { element }, visitors);
 }
 
 /** @type {Visitors<Compiler.Css.Node, State>} */
@@ -77,38 +69,8 @@ const visitors = {
 	},
 	ComplexSelector(node, context) {
 		const selectors = get_relative_selectors(node);
-		const inner = selectors[selectors.length - 1];
 
-		if (context.state.from_render_tag) {
-			// We're searching for a match that crosses a render tag boundary. That means we have to both traverse up
-			// the element tree (to see if we find an entry point) but also remove selectors from the end (assuming
-			// they are part of the render tag we don't see). We do all possible combinations of both until we find a match.
-			/** @type {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null} */
-			let element = context.state.element;
-
-			while (element) {
-				const selectors_to_check = selectors.slice();
-
-				while (selectors_to_check.length > 0) {
-					selectors_to_check.pop();
-
-					if (
-						apply_selector(
-							selectors_to_check,
-							/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
-							element,
-							context.state
-						)
-					) {
-						mark(inner, element);
-						node.metadata.used = true;
-						return;
-					}
-				}
-
-				element = get_element_parent(element);
-			}
-		} else if (
+		if (
 			apply_selector(
 				selectors,
 				/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
@@ -116,7 +78,7 @@ const visitors = {
 				context.state
 			)
 		) {
-			mark(inner, context.state.element);
+			mark(selectors[selectors.length - 1], context.state.element);
 			node.metadata.used = true;
 		}
 
