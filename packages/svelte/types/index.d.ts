@@ -1730,13 +1730,20 @@ declare module 'svelte/reactivity' {
 	 */
 	export class MediaQuery {
 		/**
-		 * @param query A media query string (don't forget the braces)
+		 * @param query A media query string
 		 * @param matches Fallback value for the server
 		 */
 		constructor(query: string, matches?: boolean | undefined);
 		get current(): boolean;
 		#private;
 	}
+	/**
+	 * Returns a function that, when invoked in a reactive context, calls the `start` function once,
+	 * and calls the `stop` function returned from `start` when all reactive contexts it's called in
+	 * are destroyed. This is useful for creating a notifier that starts and stops when the
+	 * "subscriber" count goes from 0 to 1 and back to 0.
+	 * */
+	export function createSubscriber(start: () => (() => void) | void): () => void;
 
 	export {};
 }

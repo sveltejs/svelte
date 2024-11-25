@@ -18,6 +18,6 @@ export class MediaQuery {
 /**
  * @param {any} _
  */
-export function createStartStopNotifier(_) {
+export function createSubscriber(_) {
 	return () => {};
 }

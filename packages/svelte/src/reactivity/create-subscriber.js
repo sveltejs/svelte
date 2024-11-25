@@ -6,11 +6,11 @@ import { effect_tracking, render_effect } from '../internal/client/reactivity/ef
  * and calls the `stop` function returned from `start` when all reactive contexts it's called in
  * are destroyed. This is useful for creating a notifier that starts and stops when the
  * "subscriber" count goes from 0 to 1 and back to 0.
- * @param {() => () => void} start
+ * @param {() => (() => void) | void} start
  */
 export function createSubscriber(start) {
 	let subscribers = 0;
-	/** @type {() => void} */
+	/** @type {(() => void) | void} */
 	let stop;
 
 	return () => {
@@ -30,7 +30,8 @@ export function createSubscriber(start) {
 						subscribers -= 1;
 
 						if (subscribers === 0) {
-							stop();
+							stop?.();
+							stop = undefined;
 						}
 					});
 				};
