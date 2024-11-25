@@ -172,7 +172,7 @@ When the value of an `<option>` matches its text content, the attribute can be o
 </select>
 ```
 
-You can give the select a default value by setting the `selected` property on the elements that should be selected initially. This way, when the select is part of a form and its `form.reset()` method is invoked, it will revert to that value instead of the empty string (for single-value selects) or the empty array (for mult-value selects). Note that for the initial render the value of the binding takes precedence if it's not `null` or `undefined`.
+You can give the select a default value by setting the `selected` property on the elements that should be selected initially. This way, when the select is part of a form and its `form.reset()` method is invoked, it will revert to that value instead of the empty string (for single-value selects) or the empty array (for multi-value selects). Note that for the initial render the value of the binding takes precedence if it's not `undefined`.
 
 ```svelte
 <select bind:value={selected}>
