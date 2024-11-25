@@ -35,22 +35,8 @@ export default test({
 		const after_reset = [];
 
 		const reset = /** @type {HTMLInputElement} */ (target.querySelector('input[type=reset]'));
-		const [
-			test1,
-			test2,
-			test3,
-			test4,
-			test5,
-			test6,
-			test7,
-			test8,
-			test9,
-			test10,
-			test11,
-			test12,
-			test13
-		] = target.querySelectorAll('div');
-		const [test14, test15, test16, test17] = target.querySelectorAll('select');
+		const [test1, test2, test3, test4, test5] = target.querySelectorAll('div');
+		const [test6, test7, test8, test9] = target.querySelectorAll('select');
 
 		{
 			/** @type {NodeListOf<HTMLInputElement | HTMLTextAreaElement>} */
@@ -119,83 +105,11 @@ export default test({
 		}
 
 		{
-			/** @type {NodeListOf<HTMLInputElement>} */
-			const inputs = test6.querySelectorAll('input');
-			check_inputs(inputs, 'checked', [false, true, false]);
-
-			set_input(inputs[0], 'checked', true);
-			flushSync();
-			check_inputs(inputs, 'checked', [true, false, false]);
-
-			after_reset.push(() => check_inputs(inputs, 'checked', [false, true, false]));
-		}
-
-		{
-			/** @type {NodeListOf<HTMLInputElement>} */
-			const inputs = test7.querySelectorAll('input');
-			check_inputs(inputs, 'checked', [false, true, false]);
-
-			set_input(inputs[0], 'checked', true);
-			flushSync();
-			check_inputs(inputs, 'checked', [true, false, false]);
-
-			after_reset.push(() => check_inputs(inputs, 'checked', [false, true, false]));
-		}
-
-		{
-			/** @type {NodeListOf<HTMLInputElement>} */
-			const inputs = test8.querySelectorAll('input');
-			check_inputs(inputs, 'checked', [true, false, false]);
-
-			set_input(inputs[3], 'checked', true);
-			flushSync();
-			check_inputs(inputs, 'checked', [false, false, true]);
-
-			after_reset.push(() => check_inputs(inputs, 'checked', [false, true, false]));
-		}
-
-		{
-			/** @type {NodeListOf<HTMLInputElement>} */
-			const inputs = test9.querySelectorAll('input');
-			check_inputs(inputs, 'checked', [true, false, false]);
-
-			set_input(inputs[3], 'checked', true);
-			flushSync();
-			check_inputs(inputs, 'checked', [false, false, true]);
-
-			after_reset.push(() => check_inputs(inputs, 'checked', [false, true, false]));
-		}
-
-		{
-			/** @type {NodeListOf<HTMLInputElement>} */
-			const inputs = test12.querySelectorAll('input');
-			check_inputs(inputs, 'checked', [true, false, false]);
-
-			set_input(inputs[3], 'checked', true);
-			flushSync();
-			check_inputs(inputs, 'checked', [true, false, true]);
-
-			after_reset.push(() => check_inputs(inputs, 'checked', [false, true, false]));
-		}
-
-		{
-			/** @type {NodeListOf<HTMLInputElement>} */
-			const inputs = test13.querySelectorAll('input');
-			check_inputs(inputs, 'checked', [true, false, false]);
-
-			set_input(inputs[3], 'checked', true);
-			flushSync();
-			check_inputs(inputs, 'checked', [true, false, true]);
-
-			after_reset.push(() => check_inputs(inputs, 'checked', [false, true, false]));
-		}
-
-		{
 			/** @type {NodeListOf<HTMLOptionElement>} */
-			const options = test14.querySelectorAll('option');
+			const options = test6.querySelectorAll('option');
 			check_inputs(options, 'selected', [false, true, false]);
 
-			select_option(options[3]);
+			select_option(options[2]);
 			flushSync();
 			check_inputs(options, 'selected', [false, false, true]);
 
@@ -204,10 +118,10 @@ export default test({
 
 		{
 			/** @type {NodeListOf<HTMLOptionElement>} */
-			const options = test15.querySelectorAll('option');
+			const options = test7.querySelectorAll('option');
 			check_inputs(options, 'selected', [false, true, false]);
 
-			select_option(options[3]);
+			select_option(options[2]);
 			flushSync();
 			check_inputs(options, 'selected', [false, false, true]);
 
@@ -216,7 +130,7 @@ export default test({
 
 		{
 			/** @type {NodeListOf<HTMLOptionElement>} */
-			const options = test16.querySelectorAll('option');
+			const options = test8.querySelectorAll('option');
 			check_inputs(options, 'selected', [false, false, true]);
 
 			select_option(options[0]);
@@ -228,7 +142,7 @@ export default test({
 
 		{
 			/** @type {NodeListOf<HTMLOptionElement>} */
-			const options = test17.querySelectorAll('option');
+			const options = test9.querySelectorAll('option');
 			check_inputs(options, 'selected', [false, false, true]);
 
 			select_option(options[0]);

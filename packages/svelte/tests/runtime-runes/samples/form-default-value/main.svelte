@@ -26,24 +26,14 @@
 	let checked8 = $state(false);
 	let checked9 = $state(true);
 	let checked10 = $state(true);
-
-	let group1 = $state();
-	let group2 = $state();
-	let group3 = $state('a');
-	let group4 = $state('a');
-	let group5 = $state();
-	let group6 = $state();
-	let group7 = $state(['a']);
-	let group8 = $state(['a']);
+ 
 
 	let selected1 = $state();
 	let selected2 = $state();
 	let selected3 = $state('c');
 	let selected4 = $state('c');
-	let selected5 = $state();
-	let selected6 = $state();
-	let selected7 = $state(['c']);
-	let selected8 = $state(['c']);
+	let selected5 = $state(['c']);
+	let selected6 = $state(['c']);
 
 	let defaultValue = $state('x');
 	let defaultChecked = $state(true);
@@ -98,66 +88,7 @@
 		<input type="checkbox" defaultChecked={false} bind:checked={checked10} />
 	</div>
 
-	<p>Input group (radio)</p>
-	<!-- group with static checked, group=undefined -->
-	<div class="test-6">
-		<input type="radio" value="a" bind:group={group1} />
-		<input type="radio" value="b" bind:group={group1} checked />
-		<input type="radio" value="c" bind:group={group1} />
-	</div>
-
-	<!-- group with dynamic checked, group=undefined -->
-	<div class="test-7">
-		<input type="radio" value="a" bind:group={group2} />
-		<input type="radio" value="b" bind:group={group2} checked={defaultChecked} />
-		<input type="radio" value="c" bind:group={group2} />
-	</div>
-
-	<!-- group with static checked, group=something else than default -->
-	<div class="test-8">
-		<input type="radio" value="a" bind:group={group3} />
-		<input type="radio" value="b" bind:group={group3} checked />
-		<input type="radio" value="c" bind:group={group3} />
-	</div>
-
-	<!-- group with dynamic checked, group=something else than default -->
-	<div class="test-9">
-		<input type="radio" value="a" bind:group={group4} />
-		<input type="radio" value="b" bind:group={group4} checked={defaultChecked} />
-		<input type="radio" value="c" bind:group={group4} />
-	</div>
-
-	<p>Input group (checkbox)</p>
-    <!-- TODO, right now we say "group is undefined -> checked takes precedence";
-         that does not work with checkbox groups currently because it requires an empty array.
-         What to do? -->
-	<!-- group with static checked, group=undefined -->
-	<div class="test-10">
-		<!-- <input type="checkbox" value="a" bind:group={group5} />
-		<input type="checkbox" value="b" bind:group={group5} checked />
-		<input type="checkbox" value="c" bind:group={group5} /> -->
-	</div>
-
-	<!-- group with dynamic checked, group=undefined -->
-	<div class="test-11">
-		<!-- <input type="checkbox" value="a" bind:group={group6} />
-		<input type="checkbox" value="b" bind:group={group6} checked={defaultChecked} />
-		<input type="checkbox" value="c" bind:group={group6} /> -->
-	</div>
-
-	<!-- group with static checked, group=something else than default -->
-	<div class="test-12">
-		<input type="checkbox" value="a" bind:group={group7} />
-		<input type="checkbox" value="b" bind:group={group7} checked />
-		<input type="checkbox" value="c" bind:group={group7} />
-	</div>
-
-	<!-- group with dynamic checked, group=something else than default -->
-	<div class="test-13">
-		<input type="checkbox" value="a" bind:group={group8} />
-		<input type="checkbox" value="b" bind:group={group8} checked={defaultChecked} />
-		<input type="checkbox" value="c" bind:group={group8} />
-	</div>
+	<!-- no support for bind:group; too complex + we may deprecate it in favor of bind:checked={get,set} -->
 
 	<p>Select (single)</p>
 	<!-- select with static checked, value=undefined-->
@@ -189,32 +120,18 @@
 	</select>
 
 	<p>Select (multiple)</p>
-    <!-- TODO, right now we say "value is undefined -> selected takes precedence";
-         that does not work with multiple currently because it requires an empty array.
-         What to do? -->
-	<!-- select with static checked, value=undefined-->
-	<!-- <select multiple bind:value={selected5}>
-		<option value="a">A</option>
-		<option value="b" selected>B</option>
-		<option value="c">C</option>
-	</select> -->
-
-	<!-- select with dynamic checked, value=undefined-->
-	<!-- <select multiple bind:value={selected6}>
-		<option value="a">A</option>
-		<option value="b" selected={defaultChecked}>B</option>
-		<option value="c">C</option>
-	</select> -->
+    <!-- There's no possibility to have the selected attribute influence a multi select initially,
+	     because we require the value to be an array -->
 
 	<!-- select with static checked, value=something else than default-->
-	<select multiple bind:value={selected7}>
+	<select multiple bind:value={selected5}>
 		<option value="a">A</option>
 		<option value="b" selected>B</option>
 		<option value="c">C</option>
 	</select>
 
 	<!-- select with dynamic checked, value=something else than default-->
-	<select multiple bind:value={selected8}>
+	<select multiple bind:value={selected6}>
 		<option value="a">A</option>
 		<option value="b" selected={defaultChecked}>B</option>
 		<option value="c">C</option>
