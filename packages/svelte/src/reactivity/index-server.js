@@ -5,5 +5,12 @@ export const SvelteURL = globalThis.URL;
 export const SvelteURLSearchParams = globalThis.URLSearchParams;
 
 export class MediaQuery {
-	matches = false;
+	current;
+	/**
+	 * @param {string} query
+	 * @param {boolean} [matches]
+	 */
+	constructor(query, matches = false) {
+		this.current = matches;
+	}
 }

@@ -3,20 +3,22 @@ import { set, source } from '../internal/client/reactivity/sources.js';
 import { effect_tracking, render_effect } from '../internal/client/reactivity/effects.js';
 
 /**
- * Creates a media query and provides a `matches` property that reflects its current state.
+ * Creates a media query and provides a `current` property that reflects whether or not it matches.
  */
 export class MediaQuery {
-	#matches = source(false);
+	#version = source(0);
 	#subscribers = 0;
 	#query;
 	/** @type {any} */
 	#listener;
 
-	get matches() {
+	get current() {
 		if (effect_tracking()) {
+			get(this.#version);
+
 			render_effect(() => {
 				if (this.#subscribers === 0) {
-					this.#listener = () => set(this.#matches, this.#query.matches);
+					this.#listener = () => set(this.#version, this.#version.v + 1);
 					this.#query.addEventListener('change', this.#listener);
 				}
 
@@ -37,13 +39,14 @@ export class MediaQuery {
 			});
 		}
 
-		return get(this.#matches);
+		return this.#query.matches;
 	}
 
-	/** @param {string} query */
-	constructor(query) {
+	/**
+	 * @param {string} query A media query string (don't forget the braces)
+	 * @param {boolean} [matches] Fallback value for the server
+	 */
+	constructor(query, matches) {
 		this.#query = window.matchMedia(query);
-		console.log('MediaQuery.constructor', query, this.#query);
-		this.#matches.v = this.#query.matches;
 	}
 }
