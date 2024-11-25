@@ -1,5 +1,5 @@
 /** @import { TemplateNode } from '#client' */
-import { hydrate_node, hydrating, next, set_hydrate_node } from './hydration.js';
+import { hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
 import { get_descriptor } from '../../shared/utils.js';
