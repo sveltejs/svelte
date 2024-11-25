@@ -5,7 +5,7 @@ import * as e from '../../../errors.js';
 import { is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
-import { is_runes } from '../../../runtime.js';
+import { is_runes, untrack } from '../../../runtime.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -40,7 +40,7 @@ export function bind_value(input, get, set = get) {
 		(hydrating && input.defaultValue !== input.value) ||
 		// If defaultValue is set, then value == defaultValue
 		// TODO Svelte 6: remove input.value check and set to empty string?
-		(get() == null && input.value)
+		(untrack(get) == null && input.value)
 	) {
 		set(is_numberlike_input(input) ? to_number(input.value) : input.value);
 	}
@@ -189,7 +189,7 @@ export function bind_checked(input, get, set = get) {
 		// then use the update value from the input instead.
 		(hydrating && input.defaultChecked !== input.checked) ||
 		// If defaultChecked is set, then checked == defaultChecked
-		get() == null
+		untrack(get) == null
 	) {
 		set(input.checked);
 	}
