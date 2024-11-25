@@ -287,6 +287,7 @@ export function analyze_component(root, source, options) {
 
 		const store_name = name.slice(1);
 		const declaration = instance.scope.get(store_name);
+		const init = /** @type {Node | undefined} */ (declaration?.initial);
 
 		// If we're not in legacy mode through the compiler option, assume the user
 		// is referencing a rune and not a global store.
@@ -295,9 +296,9 @@ export function analyze_component(root, source, options) {
 			!is_rune(name) ||
 			(declaration !== null &&
 				// const state = $state(0) is valid
-				(get_rune(declaration.initial, instance.scope) === null ||
+				(get_rune(init, instance.scope) === null ||
 					// rune-line names received as props are valid too (but we have to protect against $props as store)
-					(store_name !== 'props' && get_rune(declaration.initial, instance.scope) === '$props')) &&
+					(store_name !== 'props' && get_rune(init, instance.scope) === '$props')) &&
 				// allow `import { derived } from 'svelte/store'` in the same file as `const x = $derived(..)` because one is not a subscription to the other
 				!(
 					name === '$derived' &&

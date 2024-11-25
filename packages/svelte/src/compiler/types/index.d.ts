@@ -291,7 +291,8 @@ export interface Binding {
 		| FunctionDeclaration
 		| ClassDeclaration
 		| ImportDeclaration
-		| AST.EachBlock;
+		| AST.EachBlock
+		| AST.SnippetBlock;
 	is_called: boolean;
 	references: { node: Identifier; path: SvelteNode[] }[];
 	mutated: boolean;
