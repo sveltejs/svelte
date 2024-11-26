@@ -767,14 +767,19 @@ export function get(signal) {
 	} else if (is_derived && /** @type {Derived} */ (signal).deps === null) {
 		var derived = /** @type {Derived} */ (signal);
 		var parent = derived.parent;
+		var target = derived;
 
-		if (
-			parent !== null &&
-			(parent.f & DERIVED) === 0 &&
-			!(/** @type {Effect} */ (parent).deriveds?.includes(derived))
-		) {
-			var parent_effect = /** @type {Effect} */ (parent);
-			(parent_effect.deriveds ??= []).push(derived);
+		while (parent !== null) {
+			if ((parent.f & DERIVED) !== 0) {
+				target = /** @type {Derived} */ (parent);
+				parent = /** @type {Derived} */ (parent.parent);
+			} else {
+				if (!(/** @type {Effect} */ (parent).deriveds?.includes(target))) {
+					var parent_effect = /** @type {Effect} */ (parent);
+					(parent_effect.deriveds ??= []).push(target);
+				}
+				break;
+			}
 		}
 	}
 
