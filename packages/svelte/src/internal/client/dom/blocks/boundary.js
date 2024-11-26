@@ -7,7 +7,6 @@ import {
 	active_reaction,
 	component_context,
 	handle_error,
-	is_throwing_error,
 	set_active_effect,
 	set_active_reaction,
 	set_component_context,
