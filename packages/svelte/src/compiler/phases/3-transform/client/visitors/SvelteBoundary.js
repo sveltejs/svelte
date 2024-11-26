@@ -1,45 +1,39 @@
-/** @import { BlockStatement, Statement, Property, Expression } from 'estree' */
+/** @import { BlockStatement, Statement, Expression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-
 import * as b from '../../../../utils/builders.js';
+
 /**
  * @param {AST.SvelteBoundary} node
  * @param {ComponentContext} context
  */
 export function SvelteBoundary(node, context) {
-	const nodes = [];
-
 	const props = b.object([]);
 
 	/** @type {Statement[]} */
 	const snippet_statements = [];
 
 	for (const attribute of node.attributes) {
-		// Skip non-attributes with a single value
-		if (
-			attribute.type !== 'Attribute' ||
-			attribute.value === true ||
-			Array.isArray(attribute.value)
-		) {
+		if (attribute.type !== 'Attribute' || attribute.value === true) {
+			// these can't exist, because they would have caused validation
+			// to fail, but typescript doesn't know that
 			continue;
 		}
 
-		// Currently we only support `onerror` and `failed` props
-		if (attribute.name === 'onerror' || attribute.name === 'failed') {
-			const value = /** @type {Expression} */ (
-				context.visit(attribute.value.expression, context.state)
-			);
+		const chunk = Array.isArray(attribute.value)
+			? /** @type {AST.ExpressionTag} */ (attribute.value[0])
+			: attribute.value;
 
-			if (attribute.metadata.expression.has_state) {
-				props.properties.push(
-					b.prop('get', b.id(attribute.name), b.function(null, [], b.block([b.return(value)])))
-				);
-			} else {
-				props.properties.push(b.prop('init', b.id(attribute.name), value));
-			}
+		const expression = /** @type {Expression} */ (context.visit(chunk.expression, context.state));
+
+		if (attribute.metadata.expression.has_state) {
+			props.properties.push(b.get(attribute.name, [b.return(expression)]));
+		} else {
+			props.properties.push(b.init(attribute.name, expression));
 		}
 	}
+
+	const nodes = [];
 
 	// Capture the `failed` implicit snippet prop
 	for (const child of node.fragment.nodes) {
@@ -54,15 +48,7 @@ export function SvelteBoundary(node, context) {
 		}
 	}
 
-	const block = /** @type {BlockStatement} */ (
-		context.visit(
-			{
-				...node.fragment,
-				nodes
-			},
-			{ ...context.state }
-		)
-	);
+	const block = /** @type {BlockStatement} */ (context.visit({ ...node.fragment, nodes }));
 
 	const boundary = b.stmt(
 		b.call('$.boundary', context.state.node, props, b.arrow([b.id('$$anchor')], block))
