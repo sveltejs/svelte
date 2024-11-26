@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: css pruning producing invalid css
+fix: correctly remove unused selectors in middle of selector lists
