@@ -771,11 +771,14 @@ export function get(signal) {
 
 		while (parent !== null) {
 			if ((parent.f & DERIVED) !== 0) {
-				target = /** @type {Derived} */ (parent);
-				parent = /** @type {Derived} */ (parent.parent);
+				var parent_derived = /** @type {Derived} */ (parent);
+
+				target = parent_derived;
+				parent = parent_derived.parent;
 			} else {
-				if (!(/** @type {Effect} */ (parent).deriveds?.includes(target))) {
-					var parent_effect = /** @type {Effect} */ (parent);
+				var parent_effect = /** @type {Effect} */ (parent);
+
+				if (!parent_effect.deriveds?.includes(target)) {
 					(parent_effect.deriveds ??= []).push(target);
 				}
 				break;
