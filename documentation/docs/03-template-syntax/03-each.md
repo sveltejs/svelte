@@ -86,16 +86,16 @@ You can freely use destructuring and rest patterns in each blocks.
 {#each expression, index}...{/each}
 ```
 
-In case you just want to render an item `n` times, you can omit the `as` part
+In case you just want to render something `n` times, you can omit the `as` part ([[demo](/playground/untitled#H4sIAAAAAAAAE3WR0W7CMAxFf8XKNAk0WsSeUEaRpn3Guoc0MbQiJFHiMlDVf18SOrZJ48259_jaVgZmxBEZZ28thgCNFV6xBdt1GgPj7wOji0t2EqI-wa_OleGEmpLWiID_6dIaQkMxhm1UdwKpRQhVzWSaVORJNdvWpqbhAYVsYQCNZk8thzWMC_DCHMZk3wPSThNQ088I3mghD9UwSwHwlLE5PMIzVFUFq3G7WUZ2OyUvU3JOuZU332wCXTRmtPy1NgzXZtUFp8WFw9536uWqpbIgPEaDsJBW90cTOHh0KGi2XsBq5-cT6-3nPauxXqHnsHJnCFZ3CvJVkyuCQ0mFF9TZyCQ162WGvteLKfG197Y3iv_pz_fmS68Hxt8iPBPj5HscP8YvCNX7uhYCAAA=)]):
 
 ```svelte
-{#each { length: 10 }}
-	<li>I am rendered 10 times</li>
-{/each}
-
-{#each array, index}
-	<li>I am item number {index}</li>
-{/each}
+<div class="chess-board">
+	{#each { length: 8 }, rank}
+		{#each { length: 8 }, file}
+			<div class:black={(rank + file) % 2 === 1}></div>
+		{/each}
+	{/each}
+</div>
 ```
 
 ## Else blocks
