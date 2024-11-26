@@ -11,14 +11,14 @@ import { increment } from './utils.js';
 export class MediaQuery {
 	#query;
 	#version = source(0);
-	#notify = createSubscriber(() => {
+	#subscribe = createSubscriber(() => {
 		return on(this.#query, 'change', () => increment(this.#version));
 	});
 
 	get current() {
 		if (effect_tracking()) {
 			get(this.#version);
-			this.#notify();
+			this.#subscribe();
 		}
 
 		return this.#query.matches;

@@ -111,7 +111,7 @@ export function fromStore(store) {
 	let value = /** @type {V} */ (undefined);
 	let version = source(0);
 
-	const notify = createSubscriber(() => {
+	const subscribe = createSubscriber(() => {
 		let ran = false;
 
 		const unsubscribe = store.subscribe((v) => {
@@ -127,7 +127,7 @@ export function fromStore(store) {
 	function current() {
 		if (effect_tracking()) {
 			get_source(version);
-			notify();
+			subscribe();
 			return value;
 		}
 
