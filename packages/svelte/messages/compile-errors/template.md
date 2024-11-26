@@ -282,6 +282,10 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 > `<svelte:body>` does not support non-event attributes or spread attributes
 
+## svelte_boundary_invalid_attribute
+
+> Valid attributes on `<svelte:boundary>` are `onerror` and `failed`
+
 ## svelte_component_invalid_this
 
 > Invalid component definition — must be an `{expression}`

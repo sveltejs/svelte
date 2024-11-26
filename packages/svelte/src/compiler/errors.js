@@ -1509,3 +1509,12 @@ export function unexpected_reserved_word(node, word) {
 export function void_element_invalid_content(node) {
 	e(node, "void_element_invalid_content", "Void elements cannot have children or closing tags");
 }
+
+/**
+ * Valid attributes on `<svelte:boundary>` are `onerror` and `failed`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_boundary_invalid_attribute(node) {
+	e(node, "svelte_boundary_invalid_attribute", "Valid attributes on `<svelte:boundary>` are `onerror` and `failed`");
+}
