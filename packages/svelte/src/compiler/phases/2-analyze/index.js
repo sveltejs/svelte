@@ -287,6 +287,7 @@ export function analyze_component(root, source, options) {
 
 		const store_name = name.slice(1);
 		const declaration = instance.scope.get(store_name);
+		const init = /** @type {Node | undefined} */ (declaration?.initial);
 
 		// If we're not in legacy mode through the compiler option, assume the user
 		// is referencing a rune and not a global store.
@@ -295,9 +296,9 @@ export function analyze_component(root, source, options) {
 			!is_rune(name) ||
 			(declaration !== null &&
 				// const state = $state(0) is valid
-				(get_rune(declaration.initial, instance.scope) === null ||
+				(get_rune(init, instance.scope) === null ||
 					// rune-line names received as props are valid too (but we have to protect against $props as store)
-					(store_name !== 'props' && get_rune(declaration.initial, instance.scope) === '$props')) &&
+					(store_name !== 'props' && get_rune(init, instance.scope) === '$props')) &&
 				// allow `import { derived } from 'svelte/store'` in the same file as `const x = $derived(..)` because one is not a subscription to the other
 				!(
 					name === '$derived' &&
@@ -709,8 +710,8 @@ export function analyze_component(root, source, options) {
 		analyze_css(analysis.css.ast, analysis);
 
 		// mark nodes as scoped/unused/empty etc
-		for (const element of analysis.elements) {
-			prune(analysis.css.ast, element);
+		for (const node of analysis.elements) {
+			prune(analysis.css.ast, node);
 		}
 
 		const { comment } = analysis.css.ast.content;
@@ -724,18 +725,18 @@ export function analyze_component(root, source, options) {
 			warn_unused(analysis.css.ast);
 		}
 
-		outer: for (const element of analysis.elements) {
-			if (element.type === 'RenderTag') continue;
+		outer: for (const node of analysis.elements) {
+			if (node.type === 'RenderTag') continue;
 
-			if (element.metadata.scoped) {
+			if (node.metadata.scoped) {
 				// Dynamic elements in dom mode always use spread for attributes and therefore shouldn't have a class attribute added to them
 				// TODO this happens during the analysis phase, which shouldn't know anything about client vs server
-				if (element.type === 'SvelteElement' && options.generate === 'client') continue;
+				if (node.type === 'SvelteElement' && options.generate === 'client') continue;
 
 				/** @type {AST.Attribute | undefined} */
 				let class_attribute = undefined;
 
-				for (const attribute of element.attributes) {
+				for (const attribute of node.attributes) {
 					if (attribute.type === 'SpreadAttribute') {
 						// The spread method appends the hash to the end of the class attribute on its own
 						continue outer;
@@ -757,8 +758,7 @@ export function analyze_component(root, source, options) {
 							data: ` ${analysis.css.hash}`,
 							raw: ` ${analysis.css.hash}`,
 							start: -1,
-							end: -1,
-							parent: null
+							end: -1
 						};
 
 						if (Array.isArray(class_attribute.value)) {
@@ -768,20 +768,19 @@ export function analyze_component(root, source, options) {
 						}
 					}
 				} else {
-					element.attributes.push(
+					node.attributes.push(
 						create_attribute('class', -1, -1, [
 							{
 								type: 'Text',
 								data: analysis.css.hash,
 								raw: analysis.css.hash,
-								parent: null,
 								start: -1,
 								end: -1
 							}
 						])
 					);
-					if (is_custom_element_node(element) && element.attributes.length === 1) {
-						mark_subtree_dynamic(element.metadata.path);
+					if (is_custom_element_node(node) && node.attributes.length === 1) {
+						mark_subtree_dynamic(node.metadata.path);
 					}
 				}
 			}

@@ -154,8 +154,10 @@ export function first_child(fragment, is_text) {
  */
 export function sibling(node, count = 1, is_text = false) {
 	let next_sibling = hydrating ? hydrate_node : node;
+	var last_sibling;
 
 	while (count--) {
+		last_sibling = next_sibling;
 		next_sibling = /** @type {TemplateNode} */ (get_next_sibling(next_sibling));
 	}
 
@@ -163,13 +165,20 @@ export function sibling(node, count = 1, is_text = false) {
 		return next_sibling;
 	}
 
-	var type = next_sibling.nodeType;
+	var type = next_sibling?.nodeType;
 
 	// if a sibling {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one
 	if (is_text && type !== 3) {
 		var text = create_text();
-		next_sibling?.before(text);
+		// If the next sibling is `null` and we're handling text then it's because
+		// the SSR content was empty for the text, so we need to generate a new text
+		// node and insert it after the last sibling
+		if (next_sibling === null) {
+			last_sibling?.after(text);
+		} else {
+			next_sibling.before(text);
+		}
 		set_hydrate_node(text);
 		return text;
 	}
