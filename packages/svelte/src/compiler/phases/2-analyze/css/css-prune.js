@@ -55,38 +55,37 @@ const nesting_selector = {
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  */
 export function prune(stylesheet, element) {
-	walk(stylesheet, { element }, visitors);
+	const state = { element };
+
+	walk(/** @type {Compiler.Css.Node} */ (stylesheet), state, {
+		Rule(node, context) {
+			if (node.metadata.is_global_block) {
+				context.visit(node.prelude);
+			} else {
+				context.next();
+			}
+		},
+		ComplexSelector(node, context) {
+			const selectors = get_relative_selectors(node);
+
+			if (
+				apply_selector(
+					selectors,
+					/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
+					context.state.element,
+					context.state
+				)
+			) {
+				mark(selectors[selectors.length - 1], context.state.element);
+				node.metadata.used = true;
+			}
+
+			// note: we don't call context.next() here, we only recurse into
+			// selectors that don't belong to rules (i.e. inside `:is(...)` etc)
+			// when we encounter them below
+		}
+	});
 }
-
-/** @type {Visitors<Compiler.Css.Node, State>} */
-const visitors = {
-	Rule(node, context) {
-		if (node.metadata.is_global_block) {
-			context.visit(node.prelude);
-		} else {
-			context.next();
-		}
-	},
-	ComplexSelector(node, context) {
-		const selectors = get_relative_selectors(node);
-
-		if (
-			apply_selector(
-				selectors,
-				/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
-				context.state.element,
-				context.state
-			)
-		) {
-			mark(selectors[selectors.length - 1], context.state.element);
-			node.metadata.used = true;
-		}
-
-		// note: we don't call context.next() here, we only recurse into
-		// selectors that don't belong to rules (i.e. inside `:is(...)` etc)
-		// when we encounter them below
-	}
-};
 
 /**
  * Retrieves the relative selectors (minus the trailing globals) from a complex selector.
@@ -103,16 +102,12 @@ function get_relative_selectors(node) {
 
 		// nesting could be inside pseudo classes like :is, :has or :where
 		for (let selector of selectors) {
-			walk(
-				selector,
-				{},
-				{
-					// @ts-ignore
-					NestingSelector() {
-						has_explicit_nesting_selector = true;
-					}
+			walk(selector, null, {
+				// @ts-ignore
+				NestingSelector() {
+					has_explicit_nesting_selector = true;
 				}
-			);
+			});
 			// if we found one we can break from the others
 			if (has_explicit_nesting_selector) break;
 		}
