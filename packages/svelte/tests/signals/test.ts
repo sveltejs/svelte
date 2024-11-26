@@ -740,7 +740,7 @@ describe('signals', () => {
 		};
 	});
 
-	test.only('nested deriveds clean up the releationships when used with untrack', () => {
+	test('nested deriveds clean up the releationships when used with untrack', () => {
 		return () => {
 			let a = render_effect(() => {});
 
