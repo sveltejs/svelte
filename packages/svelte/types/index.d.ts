@@ -1678,7 +1678,7 @@ declare module 'svelte/motion' {
 		interpolate?: (a: T, b: T) => (t: number) => T;
 	}
 	/**
-	 * A media query that matches if the user has requested reduced motion.
+	 * A [media query](https://svelte.dev/docs/svelte/svelte-reactivity#MediaQuery) that matches if the user [prefers reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion).
 	 * */
 	export const prefersReducedMotion: MediaQuery;
 	/**
