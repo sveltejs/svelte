@@ -108,6 +108,7 @@ function get_relative_selectors(node) {
 					has_explicit_nesting_selector = true;
 				}
 			});
+
 			// if we found one we can break from the others
 			if (has_explicit_nesting_selector) break;
 		}
