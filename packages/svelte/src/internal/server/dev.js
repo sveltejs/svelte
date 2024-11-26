@@ -36,10 +36,11 @@ function stringify(element) {
  * @param {Payload} payload
  * @param {Element} parent
  * @param {Element} child
+ * @param {string} message
  */
-function print_error(payload, parent, child) {
-	var message =
-		`node_invalid_placement_ssr: ${stringify(parent)} cannot contain ${stringify(child)}\n\n` +
+function print_error(payload, parent, child, message) {
+	message =
+		`node_invalid_placement_ssr: ${stringify(parent)} cannot contain ${stringify(child)} (${message})\n\n` +
 		'This can cause content to shift around as the browser repairs the HTML, and will likely result in a `hydration_mismatch` warning.';
 
 	if ((seen ??= new Set()).has(message)) return;
@@ -72,14 +73,16 @@ export function push_element(payload, tag, line, column) {
 		var ancestor = parent.parent;
 		var ancestors = [parent.tag];
 
-		if (!is_tag_valid_with_parent(tag, parent.tag)) {
-			print_error(payload, parent, child);
+		const message = is_tag_valid_with_parent(tag, parent.tag);
+		if (message) {
+			print_error(payload, parent, child, message);
 		}
 
 		while (ancestor != null) {
 			ancestors.push(ancestor.tag);
-			if (!is_tag_valid_with_ancestor(tag, ancestors)) {
-				print_error(payload, ancestor, child);
+			const message = is_tag_valid_with_ancestor(tag, ancestors);
+			if (message) {
+				print_error(payload, parent, child, message);
 			}
 			ancestor = ancestor.parent;
 		}

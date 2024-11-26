@@ -643,7 +643,7 @@ Svelte 5 components are no longer classes. Instantiate them using `mount` or `hy
 ### node_invalid_placement_ssr
 
 ```
-%thing% is invalid inside `<%parent%>`. When rendering this component on the server, the resulting HTML will be modified by the browser, likely resulting in a `hydration_mismatch` warning
+%message%. When rendering this component on the server, the resulting HTML will be modified by the browser, likely resulting in a `hydration_mismatch` warning
 ```
 
 HTML restricts where certain elements can appear. In case of a violation the browser will 'repair' the HTML in a way that breaks Svelte's assumptions about the structure of your components. Some examples:

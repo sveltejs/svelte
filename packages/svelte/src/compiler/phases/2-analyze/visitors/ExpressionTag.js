@@ -12,8 +12,9 @@ export function ExpressionTag(node, context) {
 	const in_attribute = context.path.at(-1)?.type === 'Attribute';
 
 	if (!in_attribute && context.state.parent_element) {
-		if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
-			e.node_invalid_placement(node, '`{expression}`', context.state.parent_element);
+		const message = is_tag_valid_with_parent('#text', context.state.parent_element);
+		if (message) {
+			e.node_invalid_placement(node, message);
 		}
 	}
 

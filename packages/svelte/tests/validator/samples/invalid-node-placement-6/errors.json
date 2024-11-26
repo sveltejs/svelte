@@ -1,7 +1,7 @@
 [
 	{
 		"code": "node_invalid_placement",
-		"message": "`<dt>` is invalid inside `<dd>`",
+		"message": "`<dt>` cannot be a child of `<dd>`. `<dd>` disallows these children: `<dt>`, `<dd>`",
 		"start": {
 			"line": 16,
 			"column": 3

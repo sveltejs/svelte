@@ -1024,14 +1024,13 @@ export function mixed_event_handler_syntaxes(node, name) {
 }
 
 /**
- * %thing% is invalid inside `<%parent%>`
+ * %message%
  * @param {null | number | NodeLike} node
- * @param {string} thing
- * @param {string} parent
+ * @param {string} message
  * @returns {never}
  */
-export function node_invalid_placement(node, thing, parent) {
-	e(node, "node_invalid_placement", `${thing} is invalid inside \`<${parent}>\``);
+export function node_invalid_placement(node, message) {
+	e(node, "node_invalid_placement", `${message}`);
 }
 
 /**

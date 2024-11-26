@@ -135,58 +135,70 @@ const disallowed_children = {
 };
 
 /**
- * Returns false if the tag is not allowed inside the ancestor tag (which is grandparent and above) such that it will result
+ * Returns an error message if the tag is not allowed inside the ancestor tag (which is grandparent and above) such that it will result
  * in the browser repairing the HTML, which will likely result in an error during hydration.
  * @param {string} tag
  * @param {string[]} ancestors All nodes starting with the parent, up until the ancestor, which means two entries minimum
- * @returns {boolean}
+ * @returns {string | null}
  */
 export function is_tag_valid_with_ancestor(tag, ancestors) {
-	if (tag.includes('-')) return true; // custom elements can be anything
+	if (tag.includes('-')) return null; // custom elements can be anything
 
 	const target = ancestors[ancestors.length - 1];
 	const disallowed = disallowed_children[target];
-	if (!disallowed) return true;
+	if (!disallowed) return null;
 
 	if ('reset_by' in disallowed && disallowed.reset_by) {
 		for (let i = ancestors.length - 2; i >= 0; i--) {
 			const ancestor = ancestors[i];
-			if (ancestor.includes('-')) return true; // custom elements can be anything
+			if (ancestor.includes('-')) return null; // custom elements can be anything
 
 			// A reset means that forbidden descendants are allowed again
 			if (disallowed.reset_by.includes(ancestors[i])) {
-				return true;
+				return null;
 			}
 		}
 	}
 
-	return 'descendant' in disallowed ? !disallowed.descendant.includes(tag) : true;
+	if ('descendant' in disallowed && disallowed.descendant.includes(tag)) {
+		return `\`<${tag}>\` cannot be a child of \`<${target}>\`. \`<${target}>\` disallows these children: ${disallowed.descendant.map((d) => `\`<${d}>\``).join(', ')}`;
+	}
+
+	return null;
 }
 
 /**
- * Returns false if the tag is not allowed inside the parent tag such that it will result
+ * Returns an error message if the tag is not allowed inside the parent tag such that it will result
  * in the browser repairing the HTML, which will likely result in an error during hydration.
  * @param {string} tag
  * @param {string} parent_tag
- * @returns {boolean}
+ * @returns {string | null}
  */
 export function is_tag_valid_with_parent(tag, parent_tag) {
-	if (tag.includes('-') || parent_tag?.includes('-')) return true; // custom elements can be anything
+	if (tag.includes('-') || parent_tag?.includes('-')) return null; // custom elements can be anything
 
 	const disallowed = disallowed_children[parent_tag];
 
 	if (disallowed) {
 		if ('direct' in disallowed && disallowed.direct.includes(tag)) {
-			return false;
+			return `\`<${tag}>\` cannot be a direct child of \`<${parent_tag}>\``;
 		}
 		if ('descendant' in disallowed && disallowed.descendant.includes(tag)) {
-			return false;
+			return `\`<${tag}>\` cannot be a child of \`<${parent_tag}>\``;
 		}
 		if ('only' in disallowed && disallowed.only) {
-			return disallowed.only.includes(tag);
+			if (disallowed.only.includes(tag)) {
+				return null;
+			} else {
+				return `\`<${tag}>\` cannot be a child of \`<${parent_tag}>\`. \`<${parent_tag}>\` only allows these children: ${disallowed.only.map((d) => `\`<${d}>\``).join(', ')}`;
+			}
 		}
 	}
 
+	// These tags are only valid with a few parents that have special child
+	// parsing rules - if we're down here, then none of those matched and
+	// so we allow it only if we don't know what the parent is, as all other
+	// cases are invalid (and we only get into this function if we know the parent).
 	switch (tag) {
 		case 'body':
 		case 'caption':
@@ -196,18 +208,17 @@ export function is_tag_valid_with_parent(tag, parent_tag) {
 		case 'frame':
 		case 'head':
 		case 'html':
-		case 'tbody':
-		case 'td':
-		case 'tfoot':
-		case 'th':
+			return `\`<${tag}>\` cannot be a child of \`<${parent_tag}>\``;
 		case 'thead':
+		case 'tbody':
+		case 'tfoot':
+			return `\`<${tag}>\` must be the child of a \`<table>\` (but got \`<${parent_tag}>\`)`;
+		case 'td':
+		case 'th':
+			return `\`<${tag}>\` must be the child of a \`<tr>\` (but got \`<${parent_tag}>\`)`;
 		case 'tr':
-			// These tags are only valid with a few parents that have special child
-			// parsing rules - if we're down here, then none of those matched and
-			// so we allow it only if we don't know what the parent is, as all other
-			// cases are invalid (and we only get into this function if we know the parent).
-			return false;
+			return `\`<tr>\` must be the child of a \`<thead>\`, \`<tbody>\`, or \`<tfoot>\` (but got \`<${parent_tag}>\`)`;
 	}
 
-	return true;
+	return null;
 }

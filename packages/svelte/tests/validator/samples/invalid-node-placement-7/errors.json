@@ -1,7 +1,7 @@
 [
 	{
 		"code": "node_invalid_placement",
-		"message": "`<tbody>` is invalid inside `<div>`",
+		"message": "`<tbody>` must be the child of a `<table>` (but got `<div>`)",
 		"start": {
 			"line": 8,
 			"column": 1

@@ -12,8 +12,9 @@ export function Text(node, context) {
 	const in_attribute = context.path.at(-1)?.type === 'Attribute';
 
 	if (!in_attribute && context.state.parent_element && regex_not_whitespace.test(node.data)) {
-		if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
-			e.node_invalid_placement(node, 'Text node', context.state.parent_element);
+		const message = is_tag_valid_with_parent('#text', context.state.parent_element);
+		if (message) {
+			e.node_invalid_placement(node, message);
 		}
 	}
 }
