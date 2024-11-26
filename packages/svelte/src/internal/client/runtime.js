@@ -850,9 +850,24 @@ export function get(signal) {
 	} else if (is_derived && /** @type {Derived} */ (signal).deps === null) {
 		var derived = /** @type {Derived} */ (signal);
 		var parent = derived.parent;
+		var target = derived;
 
-		if (parent !== null && !parent.deriveds?.includes(derived)) {
-			(parent.deriveds ??= []).push(derived);
+		while (parent !== null) {
+			// Attach the derived to the nearest parent effect, if there are deriveds
+			// in between then we also need to attach them too
+			if ((parent.f & DERIVED) !== 0) {
+				var parent_derived = /** @type {Derived} */ (parent);
+
+				target = parent_derived;
+				parent = parent_derived.parent;
+			} else {
+				var parent_effect = /** @type {Effect} */ (parent);
+
+				if (!parent_effect.deriveds?.includes(target)) {
+					(parent_effect.deriveds ??= []).push(target);
+				}
+				break;
+			}
 		}
 	}
 

@@ -46,8 +46,6 @@ export function convert(source, ast) {
 		walk(root, null, {
 			_(node, { next }) {
 				// @ts-ignore
-				delete node.parent;
-				// @ts-ignore
 				delete node.metadata;
 				next();
 			},
@@ -62,8 +60,6 @@ export function convert(source, ast) {
 						idx = node.fragment.nodes.length;
 					}
 
-					// @ts-ignore
-					delete options.__raw__.parent;
 					node.fragment.nodes.splice(idx, 0, /** @type {any} */ (options).__raw__);
 				}
 
@@ -86,14 +82,10 @@ export function convert(source, ast) {
 
 				if (instance) {
 					// @ts-ignore
-					delete instance.parent;
-					// @ts-ignore
 					delete instance.attributes;
 				}
 
 				if (module) {
-					// @ts-ignore
-					delete module.parent;
 					// @ts-ignore
 					delete module.attributes;
 				}

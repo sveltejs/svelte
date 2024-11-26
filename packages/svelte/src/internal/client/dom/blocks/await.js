@@ -14,6 +14,7 @@ import {
 } from '../../runtime.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
+import { UNINITIALIZED } from '../../../../constants.js';
 
 const PENDING = 0;
 const THEN = 1;
@@ -40,8 +41,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	/** @type {any} */
 	var component_function = DEV ? component_context?.function : null;
 
-	/** @type {V | Promise<V> | null} */
-	var input;
+	/** @type {V | Promise<V> | typeof UNINITIALIZED} */
+	var input = UNINITIALIZED;
 
 	/** @type {Effect | null} */
 	var pending_effect;
@@ -156,8 +157,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 			update(THEN, false);
 		}
 
-		// Set the input to null, in order to disable the promise callbacks
-		return () => (input = null);
+		// Set the input to something else, in order to disable the promise callbacks
+		return () => (input = UNINITIALIZED);
 	});
 
 	if (hydrating) {

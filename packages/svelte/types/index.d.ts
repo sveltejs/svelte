@@ -1585,6 +1585,13 @@ declare module 'svelte/legacy' {
 	 */
 	export function createBubbler(): (type: string) => (event: Event) => boolean;
 	/**
+	 * Support using the component as both a class and function during the transition period
+	 */
+	export type LegacyComponentType = {
+		new (o: ComponentConstructorOptions): SvelteComponent;
+		(...args: Parameters<Component<Record<string, any>>>): ReturnType<Component<Record<string, any>, Record<string, any>>>;
+	};
+	/**
 	 * Substitute for the `trusted` event modifier
 	 * @deprecated
 	 * */
@@ -2314,17 +2321,9 @@ declare module 'svelte/types/compiler/interfaces' {
 }declare module '*.svelte' {
 	// use prettier-ignore for a while because of https://github.com/sveltejs/language-tools/commit/026111228b5814a9109cc4d779d37fb02955fb8b
 	// prettier-ignore
-	import { SvelteComponent, Component, type ComponentConstructorOptions } from 'svelte'
-
-	// Support using the component as both a class and function during the transition period
-	// prettier-ignore
-	interface ComponentType {
-		(
-			...args: Parameters<Component<Record<string, any>>>
-		): ReturnType<Component<Record<string, any>, Record<string, any>>>
-		new (o: ComponentConstructorOptions): SvelteComponent
-	}
-	const Comp: ComponentType;
+	import { SvelteComponent } from 'svelte'
+	import { LegacyComponentType } from 'svelte/legacy';
+	const Comp: LegacyComponentType;
 	type Comp = SvelteComponent;
 	export default Comp;
 }

@@ -75,7 +75,7 @@ export class Scope {
 	 * @param {Identifier} node
 	 * @param {Binding['kind']} kind
 	 * @param {DeclarationKind} declaration_kind
-	 * @param {null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | AST.EachBlock} initial
+	 * @param {null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | AST.EachBlock | AST.SnippetBlock} initial
 	 * @returns {Binding}
 	 */
 	declare(node, kind, declaration_kind, initial = null) {
@@ -632,7 +632,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			if (is_top_level) {
 				scope = /** @type {Scope} */ (parent);
 			}
-			scope.declare(node.expression, 'normal', 'function', node.expression);
+			scope.declare(node.expression, 'normal', 'function', node);
 
 			const child_scope = state.scope.child();
 			scopes.set(node, child_scope);
@@ -726,7 +726,7 @@ export function set_scope(node, { next, state }) {
 
 /**
  * Returns the name of the rune if the given expression is a `CallExpression` using a rune.
- * @param {Node | AST.EachBlock | null | undefined} node
+ * @param {Node | null | undefined} node
  * @param {Scope} scope
  */
 export function get_rune(node, scope) {

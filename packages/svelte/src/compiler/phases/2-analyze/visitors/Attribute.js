@@ -1,7 +1,7 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression } from 'estree' */
 /** @import { AST, DelegatedEvent, SvelteNode } from '#compiler' */
 /** @import { Context } from '../types' */
-import { is_boolean_attribute, is_capture_event, is_delegated } from '../../../../utils.js';
+import { cannot_be_set_statically, is_capture_event, is_delegated } from '../../../../utils.js';
 import {
 	get_attribute_chunks,
 	get_attribute_expression,
@@ -30,12 +30,12 @@ export function Attribute(node, context) {
 		}
 	}
 
-	if (node.name.startsWith('on')) {
+	if (is_event_attribute(node)) {
 		mark_subtree_dynamic(context.path);
 	}
 
-	if (parent.type === 'RegularElement' && is_boolean_attribute(node.name.toLowerCase())) {
-		node.metadata.expression.can_inline = false;
+	if (cannot_be_set_statically(node.name)) {
+		mark_subtree_dynamic(context.path);
 	}
 
 	if (node.value !== true) {
@@ -51,7 +51,6 @@ export function Attribute(node, context) {
 
 			node.metadata.expression.has_state ||= chunk.metadata.expression.has_state;
 			node.metadata.expression.has_call ||= chunk.metadata.expression.has_call;
-			node.metadata.expression.can_inline &&= chunk.metadata.expression.can_inline;
 		}
 
 		if (is_event_attribute(node)) {

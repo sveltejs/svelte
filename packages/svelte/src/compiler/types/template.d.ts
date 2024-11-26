@@ -37,8 +37,6 @@ export namespace AST {
 		type: string;
 		start: number;
 		end: number;
-		/** @internal This is set during parsing on elements/components/expressions/text (but not attributes etc) */
-		parent: SvelteNode | null;
 	}
 
 	export interface Fragment {
@@ -167,6 +165,7 @@ export namespace AST {
 		metadata: {
 			dynamic: boolean;
 			args_with_call_expression: Set<number>;
+			path: SvelteNode[];
 		};
 	}
 
@@ -344,6 +343,7 @@ export namespace AST {
 			 */
 			mathml: boolean;
 			scoped: boolean;
+			path: SvelteNode[];
 		};
 	}
 
