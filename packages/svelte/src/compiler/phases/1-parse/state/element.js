@@ -56,7 +56,6 @@ export default function element(parser) {
 		const data = parser.read_until(regex_closing_comment);
 		parser.eat('-->', true);
 
-		/** @type {ReturnType<typeof parser.append<AST.Comment>>} */
 		parser.append({
 			type: 'Comment',
 			start,
