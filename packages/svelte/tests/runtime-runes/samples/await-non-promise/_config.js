@@ -2,7 +2,6 @@ import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
-	solo: true,
 	compileOptions: {
 		dev: true
 	},
@@ -11,7 +10,7 @@ export default test({
 		const p = target.querySelector('p');
 		ok(p);
 
-		assert.htmlEqual(p.outerHTML, `<p>0</p>`);
+		assert.htmlEqual(p.outerHTML, `<p></p>`);
 
 		btn1.click();
 		flushSync();

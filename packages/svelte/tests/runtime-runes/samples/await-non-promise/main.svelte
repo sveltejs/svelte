@@ -1,5 +1,5 @@
 <script>
-	let count = $state(0);
+	let count = $state();
 </script>
 
 <button onclick={() => count += 1}>increment</button>

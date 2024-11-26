@@ -42,7 +42,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	var component_function = DEV ? component_context?.function : null;
 
 	/** @type {V | Promise<V> | typeof UNINITIALIZED} */
-	var input;
+	var input = UNINITIALIZED;
 
 	/** @type {Effect | null} */
 	var pending_effect;
