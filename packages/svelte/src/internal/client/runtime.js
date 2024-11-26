@@ -29,7 +29,12 @@ import {
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { mutate, set, source } from './reactivity/sources.js';
-import { destroy_derived, execute_derived, update_derived } from './reactivity/deriveds.js';
+import {
+	destroy_derived,
+	execute_derived,
+	get_derived_parent_effect,
+	update_derived
+} from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
@@ -766,10 +771,10 @@ export function get(signal) {
 		}
 	} else if (is_derived && /** @type {Derived} */ (signal).deps === null) {
 		var derived = /** @type {Derived} */ (signal);
-		var parent = derived.parent;
+		var parent_effect = get_derived_parent_effect(derived);
 
-		if (parent !== null && !parent.deriveds?.includes(derived)) {
-			(parent.deriveds ??= []).push(derived);
+		if (parent_effect !== null && !parent_effect.deriveds?.includes(derived)) {
+			(parent_effect.deriveds ??= []).push(derived);
 		}
 	}
 

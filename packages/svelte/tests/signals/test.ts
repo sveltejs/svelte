@@ -739,4 +739,30 @@ describe('signals', () => {
 			assert.deepEqual(a.reactions, null);
 		};
 	});
+
+	test.only('nested deriveds clean up the releationships when used with untrack', () => {
+		return () => {
+			let a = render_effect(() => {});
+
+			const destroy = effect_root(() => {
+				a = render_effect(() => {
+					$.untrack(() => {
+						const b = derived(() => {
+							const c = derived(() => {});
+							$.untrack(() => {
+								$.get(c);
+							});
+						});
+						$.get(b);
+					});
+				});
+			});
+
+			assert.deepEqual(a.deriveds?.length, 1);
+
+			destroy();
+
+			assert.deepEqual(a.deriveds, null);
+		};
+	});
 });
