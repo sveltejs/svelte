@@ -10,9 +10,6 @@ import * as b from '../../../../utils/builders.js';
 export function SvelteBoundary(node, context) {
 	const props = b.object([]);
 
-	/** @type {Statement[]} */
-	const snippet_statements = [];
-
 	for (const attribute of node.attributes) {
 		if (attribute.type !== 'Attribute' || attribute.value === true) {
 			// these can't exist, because they would have caused validation
@@ -34,6 +31,9 @@ export function SvelteBoundary(node, context) {
 	}
 
 	const nodes = [];
+
+	/** @type {Statement[]} */
+	const snippet_statements = [];
 
 	// Capture the `failed` implicit snippet prop
 	for (const child of node.fragment.nodes) {
