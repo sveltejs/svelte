@@ -52,7 +52,7 @@ function with_boundary(boundary, fn) {
  * }} props
  * @returns {void}
  */
-export function boundary(node, boundary_fn, props) {
+export function boundary(node, props, boundary_fn) {
 	var anchor = node;
 
 	/** @type {Effect | null} */

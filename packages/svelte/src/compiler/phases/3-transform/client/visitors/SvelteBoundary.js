@@ -75,7 +75,7 @@ export function SvelteBoundary(node, context) {
 
 	const props_expression = b.object(props.length === 0 ? [] : props[0]);
 	const boundary = b.stmt(
-		b.call('$.boundary', context.state.node, b.arrow([b.id('$$anchor')], block), props_expression)
+		b.call('$.boundary', context.state.node, props_expression, b.arrow([b.id('$$anchor')], block))
 	);
 
 	context.state.template.push('<!>');
