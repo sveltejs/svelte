@@ -895,7 +895,7 @@ function get_possible_element_siblings(element, adjacent_only) {
 	let i = path.length;
 
 	while (i--) {
-		let current = node;
+		let fragment = /** @type {Compiler.AST.Fragment} */ (path[i--]);
 
 		// @ts-expect-error
 		while ((node = node.prev)) {
@@ -928,20 +928,14 @@ function get_possible_element_siblings(element, adjacent_only) {
 			}
 		}
 
-		let parent = path[i];
+		node = path[i];
 
-		if (parent.type === 'Fragment') {
-			parent = path[--i];
-		}
+		if (!node || !is_block(node)) break;
 
-		if (!parent || !is_block(parent)) break;
-
-		if (parent.type === 'EachBlock' && !parent.fallback?.nodes.includes(current)) {
+		if (node.type === 'EachBlock' && fragment === node.body) {
 			// `{#each ...}<a /><b />{/each}` — `<b>` can be previous sibling of `<a />`
-			add_to_map(get_possible_last_child(parent, adjacent_only), result);
+			add_to_map(get_possible_last_child(node, adjacent_only), result);
 		}
-
-		node = parent;
 	}
 
 	return result;
