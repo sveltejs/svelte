@@ -43,7 +43,6 @@ export function create_attribute(name, start, end, value) {
 		end,
 		name,
 		value,
-		parent: null,
 		metadata: {
 			expression: create_expression_metadata(),
 			delegated: null
