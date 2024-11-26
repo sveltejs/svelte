@@ -9,19 +9,11 @@ import * as b from '../../../../utils/builders.js';
  */
 export function SvelteBoundary(node, context) {
 	const nodes = [];
+
+	const props = b.object([]);
+
 	/** @type {Statement[]} */
 	const snippet_statements = [];
-	/** @type {Array<Property[]>} */
-	const props = [];
-
-	const push_prop = (/** @type {Property} */ prop) => {
-		let current = props.at(-1);
-		if (Array.isArray(current)) {
-			current.push(prop);
-		}
-		const arr = [prop];
-		props.push(arr);
-	};
 
 	for (const attribute of node.attributes) {
 		// Skip non-attributes with a single value
@@ -40,11 +32,11 @@ export function SvelteBoundary(node, context) {
 			);
 
 			if (attribute.metadata.expression.has_state) {
-				push_prop(
+				props.properties.push(
 					b.prop('get', b.id(attribute.name), b.function(null, [], b.block([b.return(value)])))
 				);
 			} else {
-				push_prop(b.prop('init', b.id(attribute.name), value));
+				props.properties.push(b.prop('init', b.id(attribute.name), value));
 			}
 		}
 	}
@@ -54,9 +46,8 @@ export function SvelteBoundary(node, context) {
 		if (child.type === 'SnippetBlock' && child.expression.name === 'failed') {
 			/** @type {Statement[]} */
 			const init = [];
-			const block_state = { ...context.state, init };
-			context.visit(child, block_state);
-			push_prop(b.prop('init', b.id('failed'), b.id('failed')));
+			context.visit(child, { ...context.state, init });
+			props.properties.push(b.prop('init', child.expression, child.expression));
 			snippet_statements.push(...init);
 		} else {
 			nodes.push(child);
@@ -73,9 +64,8 @@ export function SvelteBoundary(node, context) {
 		)
 	);
 
-	const props_expression = b.object(props.length === 0 ? [] : props[0]);
 	const boundary = b.stmt(
-		b.call('$.boundary', context.state.node, props_expression, b.arrow([b.id('$$anchor')], block))
+		b.call('$.boundary', context.state.node, props, b.arrow([b.id('$$anchor')], block))
 	);
 
 	context.state.template.push('<!>');
