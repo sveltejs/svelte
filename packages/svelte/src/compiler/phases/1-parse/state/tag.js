@@ -149,10 +149,7 @@ function open(parser) {
 		let index;
 		let key;
 
-		const has_as = parser.match('as');
-
-		if (has_as) {
-			parser.eat('as', true);
+		if (parser.eat('as')) {
 			parser.require_whitespace();
 
 			context = read_pattern(parser);
