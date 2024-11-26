@@ -58,7 +58,7 @@ export function derived(fn) {
 		reactions: null,
 		v: /** @type {V} */ (null),
 		version: 0,
-		parent: parent_derived || active_effect
+		parent: parent_derived ?? active_effect
 	};
 
 	if (parent_derived !== null) {
