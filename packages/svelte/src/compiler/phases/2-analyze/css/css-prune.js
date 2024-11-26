@@ -932,66 +932,66 @@ function find_previous_sibling(node) {
 }
 
 /**
- * @param {Compiler.SvelteNode} node
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  * @param {boolean} adjacent_only
  * @returns {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>}
  */
-function get_possible_element_siblings(node, adjacent_only) {
+function get_possible_element_siblings(element, adjacent_only) {
 	/** @type {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>} */
 	const result = new Map();
 
 	/** @type {Compiler.SvelteNode} */
-	let prev = node;
-	while ((prev = find_previous_sibling(prev))) {
-		if (prev.type === 'RegularElement') {
-			const has_slot_attribute = prev.attributes.some(
-				(attr) => attr.type === 'Attribute' && attr.name.toLowerCase() === 'slot'
-			);
+	let node = element;
+	let path = element.metadata.path;
+	let i = path.length;
 
-			if (!has_slot_attribute) {
-				result.set(prev, NODE_DEFINITELY_EXISTS);
+	while (i--) {
+		let current = node;
 
-				if (adjacent_only) {
+		while ((node = find_previous_sibling(node))) {
+			if (node.type === 'RegularElement') {
+				const has_slot_attribute = node.attributes.some(
+					(attr) => attr.type === 'Attribute' && attr.name.toLowerCase() === 'slot'
+				);
+
+				if (!has_slot_attribute) {
+					result.set(node, NODE_DEFINITELY_EXISTS);
+
+					if (adjacent_only) {
+						return result;
+					}
+				}
+			} else if (is_block(node)) {
+				const possible_last_child = get_possible_last_child(node, adjacent_only);
+				add_to_map(possible_last_child, result);
+				if (adjacent_only && has_definite_elements(possible_last_child)) {
 					return result;
 				}
+			} else if (
+				node.type === 'SlotElement' ||
+				node.type === 'RenderTag' ||
+				node.type === 'SvelteElement'
+			) {
+				result.set(node, NODE_PROBABLY_EXISTS);
+				// Special case: slots, render tags and svelte:element tags could resolve to no siblings,
+				// so we want to continue until we find a definite sibling even with the adjacent-only combinator
 			}
-		} else if (is_block(prev)) {
-			const possible_last_child = get_possible_last_child(prev, adjacent_only);
-			add_to_map(possible_last_child, result);
-			if (adjacent_only && has_definite_elements(possible_last_child)) {
-				return result;
-			}
-		} else if (
-			prev.type === 'SlotElement' ||
-			prev.type === 'RenderTag' ||
-			prev.type === 'SvelteElement'
-		) {
-			result.set(prev, NODE_PROBABLY_EXISTS);
-			// Special case: slots, render tags and svelte:element tags could resolve to no siblings,
-			// so we want to continue until we find a definite sibling even with the adjacent-only combinator
 		}
-	}
 
-	/** @type {Compiler.SvelteNode | null} */
-	let parent = node;
+		let parent = path[i];
 
-	while (
-		// @ts-expect-error TODO
-		(parent = parent?.parent) &&
-		is_block(parent)
-	) {
-		const possible_siblings = get_possible_element_siblings(parent, adjacent_only);
-		add_to_map(possible_siblings, result);
+		if (parent.type === 'Fragment') {
+			parent = path[--i];
+		}
 
-		// @ts-expect-error
-		if (parent.type === 'EachBlock' && !parent.fallback?.nodes.includes(node)) {
+		if (!parent || !is_block(parent)) break;
+
+		if (parent.type === 'EachBlock' && !parent.fallback?.nodes.includes(current)) {
 			// `{#each ...}<a /><b />{/each}` — `<b>` can be previous sibling of `<a />`
 			add_to_map(get_possible_last_child(parent, adjacent_only), result);
 		}
 
-		if (adjacent_only && has_definite_elements(possible_siblings)) {
-			break;
-		}
+		node = parent;
 	}
 
 	return result;
