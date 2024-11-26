@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-feat: adds error boundaries
+feat: add error boundaries with `<svelte:boundary>`
