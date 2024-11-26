@@ -114,7 +114,7 @@ let stack = [];
  */
 export function get_derived_parent_effect(derived) {
 	var parent = derived.parent;
-	if (parent !== null) {
+	while (parent !== null) {
 		if ((parent.f & DERIVED) === 0) {
 			return /** @type {Effect} */ (parent);
 		}
