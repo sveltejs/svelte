@@ -1,5 +1,17 @@
 # svelte
 
+## 5.2.9
+
+### Patch Changes
+
+- fix: show `:then` block for `null/undefined` value ([#14440](https://github.com/sveltejs/svelte/pull/14440))
+
+- fix: relax html parent validation ([#14442](https://github.com/sveltejs/svelte/pull/14442))
+
+- fix: prevent memory leak when creating deriveds inside untrack ([#14443](https://github.com/sveltejs/svelte/pull/14443))
+
+- fix: disregard TypeScript nodes when pruning CSS ([#14446](https://github.com/sveltejs/svelte/pull/14446))
+
 ## 5.2.8
 
 ### Patch Changes
