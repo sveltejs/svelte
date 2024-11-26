@@ -1,5 +1,31 @@
 # svelte
 
+## 5.2.9
+
+### Patch Changes
+
+- fix: show `:then` block for `null/undefined` value ([#14440](https://github.com/sveltejs/svelte/pull/14440))
+
+- fix: relax html parent validation ([#14442](https://github.com/sveltejs/svelte/pull/14442))
+
+- fix: prevent memory leak when creating deriveds inside untrack ([#14443](https://github.com/sveltejs/svelte/pull/14443))
+
+- fix: disregard TypeScript nodes when pruning CSS ([#14446](https://github.com/sveltejs/svelte/pull/14446))
+
+## 5.2.8
+
+### Patch Changes
+
+- fix: correctly prune each blocks ([#14403](https://github.com/sveltejs/svelte/pull/14403))
+
+- fix: provide temporary `LegacyComponentType` ([#14257](https://github.com/sveltejs/svelte/pull/14257))
+
+- fix: attach spread attribute events synchronously ([#14387](https://github.com/sveltejs/svelte/pull/14387))
+
+- fix: ensure last empty text node correctly hydrates ([#14425](https://github.com/sveltejs/svelte/pull/14425))
+
+- fix: correctly prune key blocks ([#14403](https://github.com/sveltejs/svelte/pull/14403))
+
 ## 5.2.7
 
 ### Patch Changes
