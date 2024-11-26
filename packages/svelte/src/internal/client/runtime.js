@@ -770,6 +770,8 @@ export function get(signal) {
 		var target = derived;
 
 		while (parent !== null) {
+			// Attach the derived to the nearest parent effect, if there are deriveds
+			// in between then we also need to attach them too
 			if ((parent.f & DERIVED) !== 0) {
 				var parent_derived = /** @type {Derived} */ (parent);
 
