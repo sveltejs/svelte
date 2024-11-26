@@ -888,17 +888,20 @@ function get_element_parent(node) {
 function get_possible_element_siblings(element, adjacent_only) {
 	/** @type {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>} */
 	const result = new Map();
+	const path = element.metadata.path;
 
 	/** @type {Compiler.SvelteNode} */
-	let node = element;
-	let path = element.metadata.path;
+	let current = element;
+
 	let i = path.length;
 
 	while (i--) {
-		let fragment = /** @type {Compiler.AST.Fragment} */ (path[i--]);
+		const fragment = /** @type {Compiler.AST.Fragment} */ (path[i--]);
+		let j = fragment.nodes.indexOf(current);
 
-		// @ts-expect-error
-		while ((node = node.prev)) {
+		while (j--) {
+			const node = fragment.nodes[j];
+
 			if (node.type === 'RegularElement') {
 				const has_slot_attribute = node.attributes.some(
 					(attr) => attr.type === 'Attribute' && attr.name.toLowerCase() === 'slot'
@@ -928,13 +931,13 @@ function get_possible_element_siblings(element, adjacent_only) {
 			}
 		}
 
-		node = path[i];
+		current = path[i];
 
-		if (!node || !is_block(node)) break;
+		if (!current || !is_block(current)) break;
 
-		if (node.type === 'EachBlock' && fragment === node.body) {
+		if (current.type === 'EachBlock' && fragment === current.body) {
 			// `{#each ...}<a /><b />{/each}` — `<b>` can be previous sibling of `<a />`
-			add_to_map(get_possible_last_child(node, adjacent_only), result);
+			add_to_map(get_possible_last_child(current, adjacent_only), result);
 		}
 	}
 
