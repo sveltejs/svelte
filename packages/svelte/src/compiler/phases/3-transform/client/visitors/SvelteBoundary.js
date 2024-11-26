@@ -80,6 +80,6 @@ export function SvelteBoundary(node, context) {
 
 	context.state.template.push('<!>');
 	context.state.init.push(
-		snippet_statements ? b.block([...snippet_statements, boundary]) : boundary
+		snippet_statements.length > 0 ? b.block([...snippet_statements, boundary]) : boundary
 	);
 }
