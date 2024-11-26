@@ -286,6 +286,10 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 > Valid attributes on `<svelte:boundary>` are `onerror` and `failed`
 
+## svelte_boundary_invalid_attribute_value
+
+> Attribute value must be a non-string expression
+
 ## svelte_component_invalid_this
 
 > Invalid component definition — must be an `{expression}`
