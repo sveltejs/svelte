@@ -768,8 +768,7 @@ export function analyze_component(root, source, options) {
 							data: ` ${analysis.css.hash}`,
 							raw: ` ${analysis.css.hash}`,
 							start: -1,
-							end: -1,
-							parent: null
+							end: -1
 						};
 
 						if (Array.isArray(class_attribute.value)) {
@@ -785,7 +784,6 @@ export function analyze_component(root, source, options) {
 								type: 'Text',
 								data: analysis.css.hash,
 								raw: analysis.css.hash,
-								parent: null,
 								start: -1,
 								end: -1
 							}

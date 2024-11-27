@@ -37,8 +37,6 @@ export namespace AST {
 		type: string;
 		start: number;
 		end: number;
-		/** @internal This is set during parsing on elements/components/expressions/text (but not attributes etc) */
-		parent: SvelteNode | null;
 	}
 
 	export interface Fragment {

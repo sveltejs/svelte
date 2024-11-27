@@ -15,7 +15,7 @@
     "@fontsource/fira-mono": "^5.0.8",
     "@lezer/common": "^1.2.1",
     "@sveltejs/adapter-vercel": "^5.4.3",
-    "@sveltejs/kit": "^2.5.24",
+    "@sveltejs/kit": "^2.8.3",
     "@sveltejs/site-kit": "6.0.0-next.64",
     "@sveltejs/vite-plugin-svelte": "^4.0.0-next.6",
     "@vercel/speed-insights": "^1.0.0",

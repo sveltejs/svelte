@@ -839,116 +839,63 @@ function get_element_parent(node) {
 }
 
 /**
- * Finds the given node's previous sibling in the DOM
- *
- * The Svelte `<slot>` is just a placeholder and is not actually real. Any children nodes
- * in `<slot>` are 'flattened' and considered as the same level as the `<slot>`'s siblings
- *
- * e.g.
- * ```html
- * <h1>Heading 1</h1>
- * <slot>
- *   <h2>Heading 2</h2>
- * </slot>
- * ```
- *
- * is considered to look like:
- * ```html
- * <h1>Heading 1</h1>
- * <h2>Heading 2</h2>
- * ```
- * @param {Compiler.SvelteNode} node
- * @returns {Compiler.SvelteNode}
- */
-function find_previous_sibling(node) {
-	/** @type {Compiler.SvelteNode} */
-	let current_node = node;
-
-	while (
-		// @ts-expect-error TODO
-		!current_node.prev &&
-		// @ts-expect-error TODO
-		current_node.parent?.type === 'SlotElement'
-	) {
-		// @ts-expect-error TODO
-		current_node = current_node.parent;
-	}
-
-	// @ts-expect-error
-	current_node = current_node.prev;
-
-	while (current_node?.type === 'SlotElement') {
-		const slot_children = current_node.fragment.nodes;
-		if (slot_children.length > 0) {
-			current_node = slot_children[slot_children.length - 1];
-		} else {
-			break;
-		}
-	}
-
-	return current_node;
-}
-
-/**
- * @param {Compiler.SvelteNode} node
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  * @param {boolean} adjacent_only
  * @returns {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>}
  */
-function get_possible_element_siblings(node, adjacent_only) {
+function get_possible_element_siblings(element, adjacent_only) {
 	/** @type {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>} */
 	const result = new Map();
+	const path = element.metadata.path;
 
 	/** @type {Compiler.SvelteNode} */
-	let prev = node;
-	while ((prev = find_previous_sibling(prev))) {
-		if (prev.type === 'RegularElement') {
-			const has_slot_attribute = prev.attributes.some(
-				(attr) => attr.type === 'Attribute' && attr.name.toLowerCase() === 'slot'
-			);
+	let current = element;
 
-			if (!has_slot_attribute) {
-				result.set(prev, NODE_DEFINITELY_EXISTS);
+	let i = path.length;
 
-				if (adjacent_only) {
+	while (i--) {
+		const fragment = /** @type {Compiler.AST.Fragment} */ (path[i--]);
+		let j = fragment.nodes.indexOf(current);
+
+		while (j--) {
+			const node = fragment.nodes[j];
+
+			if (node.type === 'RegularElement') {
+				const has_slot_attribute = node.attributes.some(
+					(attr) => attr.type === 'Attribute' && attr.name.toLowerCase() === 'slot'
+				);
+
+				if (!has_slot_attribute) {
+					result.set(node, NODE_DEFINITELY_EXISTS);
+
+					if (adjacent_only) {
+						return result;
+					}
+				}
+			} else if (is_block(node)) {
+				if (node.type === 'SlotElement') {
+					result.set(node, NODE_PROBABLY_EXISTS);
+				}
+
+				const possible_last_child = get_possible_last_child(node, adjacent_only);
+				add_to_map(possible_last_child, result);
+				if (adjacent_only && has_definite_elements(possible_last_child)) {
 					return result;
 				}
+			} else if (node.type === 'RenderTag' || node.type === 'SvelteElement') {
+				result.set(node, NODE_PROBABLY_EXISTS);
+				// Special case: slots, render tags and svelte:element tags could resolve to no siblings,
+				// so we want to continue until we find a definite sibling even with the adjacent-only combinator
 			}
-		} else if (is_block(prev)) {
-			const possible_last_child = get_possible_last_child(prev, adjacent_only);
-			add_to_map(possible_last_child, result);
-			if (adjacent_only && has_definite_elements(possible_last_child)) {
-				return result;
-			}
-		} else if (
-			prev.type === 'SlotElement' ||
-			prev.type === 'RenderTag' ||
-			prev.type === 'SvelteElement'
-		) {
-			result.set(prev, NODE_PROBABLY_EXISTS);
-			// Special case: slots, render tags and svelte:element tags could resolve to no siblings,
-			// so we want to continue until we find a definite sibling even with the adjacent-only combinator
 		}
-	}
 
-	/** @type {Compiler.SvelteNode | null} */
-	let parent = node;
+		current = path[i];
 
-	while (
-		// @ts-expect-error TODO
-		(parent = parent?.parent) &&
-		is_block(parent)
-	) {
-		const possible_siblings = get_possible_element_siblings(parent, adjacent_only);
-		add_to_map(possible_siblings, result);
+		if (!current || !is_block(current)) break;
 
-		// @ts-expect-error
-		if (parent.type === 'EachBlock' && !parent.fallback?.nodes.includes(node)) {
+		if (current.type === 'EachBlock' && fragment === current.body) {
 			// `{#each ...}<a /><b />{/each}` — `<b>` can be previous sibling of `<a />`
-			add_to_map(get_possible_last_child(parent, adjacent_only), result);
-		}
-
-		if (adjacent_only && has_definite_elements(possible_siblings)) {
-			break;
+			add_to_map(get_possible_last_child(current, adjacent_only), result);
 		}
 	}
 
@@ -956,7 +903,7 @@ function get_possible_element_siblings(node, adjacent_only) {
 }
 
 /**
- * @param {Compiler.AST.EachBlock | Compiler.AST.IfBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock} node
+ * @param {Compiler.AST.EachBlock | Compiler.AST.IfBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock | Compiler.AST.SlotElement} node
  * @param {boolean} adjacent_only
  * @returns {Map<Compiler.AST.RegularElement, NodeExistsValue>}
  */
@@ -980,6 +927,7 @@ function get_possible_last_child(node, adjacent_only) {
 			break;
 
 		case 'KeyBlock':
+		case 'SlotElement':
 			fragments.push(node.fragment);
 			break;
 	}
@@ -987,7 +935,7 @@ function get_possible_last_child(node, adjacent_only) {
 	/** @type {NodeMap} */
 	const result = new Map();
 
-	let exhaustive = true;
+	let exhaustive = node.type !== 'SlotElement';
 
 	for (const fragment of fragments) {
 		if (fragment == null) {
@@ -1079,13 +1027,14 @@ function loop_child(children, adjacent_only) {
 
 /**
  * @param {Compiler.SvelteNode} node
- * @returns {node is Compiler.AST.IfBlock | Compiler.AST.EachBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock}
+ * @returns {node is Compiler.AST.IfBlock | Compiler.AST.EachBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock | Compiler.AST.SlotElement}
  */
 function is_block(node) {
 	return (
 		node.type === 'IfBlock' ||
 		node.type === 'EachBlock' ||
 		node.type === 'AwaitBlock' ||
-		node.type === 'KeyBlock'
+		node.type === 'KeyBlock' ||
+		node.type === 'SlotElement'
 	);
 }
