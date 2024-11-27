@@ -20,7 +20,8 @@ export function RenderTag(node, context) {
 
 	node.metadata.dynamic = binding?.kind !== 'normal';
 
-	/** If we can't unambiguously resolve this to a declaration, we
+	/**
+	 * If we can't unambiguously resolve this to a declaration, we
 	 * must assume the worst and link the render tag to every snippet
 	 */
 	let resolved =
