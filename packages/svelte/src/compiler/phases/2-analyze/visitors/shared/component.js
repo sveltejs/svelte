@@ -1,5 +1,4 @@
 /** @import { AST } from '#compiler' */
-/** @import { Expression } from 'estree' */
 /** @import { AnalysisState, Context } from '../../types' */
 import * as e from '../../../../errors.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../../utils/ast.js';
@@ -24,27 +23,16 @@ export function visit_component(node, context) {
 	let resolved = true;
 
 	for (const attribute of node.attributes) {
-		/** @type {Expression | undefined} */
-		let expression;
-
 		if (attribute.type === 'SpreadAttribute' || attribute.type === 'BindDirective') {
 			resolved = false;
 			continue;
 		}
 
-		if (attribute.type !== 'Attribute' || attribute.value === true) {
+		if (attribute.type !== 'Attribute' || !is_expression_attribute(attribute)) {
 			continue;
 		}
 
-		if (Array.isArray(attribute.value)) {
-			if (attribute.value.length === 1 && attribute.value[0].type === 'ExpressionTag') {
-				expression = attribute.value[0].expression;
-			}
-		} else {
-			expression = attribute.value.expression;
-		}
-
-		if (!expression) continue;
+		const expression = get_attribute_expression(attribute);
 
 		if (expression.type === 'Identifier') {
 			const binding = context.state.scope.get(expression.name);
