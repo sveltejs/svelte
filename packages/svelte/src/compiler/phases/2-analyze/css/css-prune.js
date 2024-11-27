@@ -1,15 +1,9 @@
-/** @import { Visitors } from 'zimmerframe' */
 /** @import * as Compiler from '#compiler' */
 import { walk } from 'zimmerframe';
 import { get_parent_rules, get_possible_values, is_outer_global } from './utils.js';
 import { regex_ends_with_whitespace, regex_starts_with_whitespace } from '../../patterns.js';
 import { get_attribute_chunks, is_text_attribute } from '../../../utils/ast.js';
 
-/**
- * @typedef {{
- *   element: Compiler.AST.RegularElement | Compiler.AST.SvelteElement;
- * }} State
- */
 /** @typedef {NODE_PROBABLY_EXISTS | NODE_DEFINITELY_EXISTS} NodeExistsValue */
 
 const NODE_PROBABLY_EXISTS = 0;
@@ -55,9 +49,7 @@ const nesting_selector = {
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  */
 export function prune(stylesheet, element) {
-	const state = { element };
-
-	walk(/** @type {Compiler.Css.Node} */ (stylesheet), state, {
+	walk(/** @type {Compiler.Css.Node} */ (stylesheet), null, {
 		Rule(node, context) {
 			if (node.metadata.is_global_block) {
 				context.visit(node.prelude);
@@ -65,18 +57,13 @@ export function prune(stylesheet, element) {
 				context.next();
 			}
 		},
-		ComplexSelector(node, context) {
+		ComplexSelector(node) {
 			const selectors = get_relative_selectors(node);
 
 			if (
-				apply_selector(
-					selectors,
-					/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
-					context.state.element,
-					context.state
-				)
+				apply_selector(selectors, /** @type {Compiler.Css.Rule} */ (node.metadata.rule), element)
 			) {
-				mark(selectors[selectors.length - 1], context.state.element);
+				mark(selectors[selectors.length - 1], element);
 				node.metadata.used = true;
 			}
 
@@ -161,21 +148,15 @@ function truncate(node) {
  * @param {Compiler.Css.RelativeSelector[]} relative_selectors
  * @param {Compiler.Css.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
- * @param {State} state
  * @returns {boolean}
  */
-function apply_selector(relative_selectors, rule, element, state) {
+function apply_selector(relative_selectors, rule, element) {
 	const parent_selectors = relative_selectors.slice();
 	const relative_selector = parent_selectors.pop();
 
 	if (!relative_selector) return false;
 
-	const possible_match = relative_selector_might_apply_to_node(
-		relative_selector,
-		rule,
-		element,
-		state
-	);
+	const possible_match = relative_selector_might_apply_to_node(relative_selector, rule, element);
 
 	if (!possible_match) {
 		return false;
@@ -187,8 +168,7 @@ function apply_selector(relative_selectors, rule, element, state) {
 			relative_selector,
 			parent_selectors,
 			rule,
-			element,
-			state
+			element
 		);
 	}
 
@@ -209,10 +189,9 @@ function apply_selector(relative_selectors, rule, element, state) {
  * @param {Compiler.Css.RelativeSelector[]} parent_selectors
  * @param {Compiler.Css.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
- * @param {State} state
  * @returns {boolean}
  */
-function apply_combinator(combinator, relative_selector, parent_selectors, rule, node, state) {
+function apply_combinator(combinator, relative_selector, parent_selectors, rule, node) {
 	const name = combinator.name;
 
 	switch (name) {
@@ -228,9 +207,7 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 
 				if (parent.type === 'SnippetBlock') {
 					for (const site of parent.metadata.sites) {
-						if (
-							apply_combinator(combinator, relative_selector, parent_selectors, rule, site, state)
-						) {
+						if (apply_combinator(combinator, relative_selector, parent_selectors, rule, site)) {
 							return true;
 						}
 					}
@@ -239,7 +216,7 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 				}
 
 				if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
-					if (apply_selector(parent_selectors, rule, parent, state)) {
+					if (apply_selector(parent_selectors, rule, parent)) {
 						// TODO the `name === ' '` causes false positives, but removing it causes false negatives...
 						if (name === ' ') {
 							mark(parent_selectors[parent_selectors.length - 1], parent);
@@ -268,7 +245,7 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 						mark(relative_selector, node);
 						sibling_matched = true;
 					}
-				} else if (apply_selector(parent_selectors, rule, possible_sibling, state)) {
+				} else if (apply_selector(parent_selectors, rule, possible_sibling)) {
 					mark(relative_selector, node);
 					sibling_matched = true;
 				}
@@ -354,10 +331,9 @@ const regex_backslash_and_following_character = /\\(.)/g;
  * @param {Compiler.Css.RelativeSelector} relative_selector
  * @param {Compiler.Css.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
- * @param {State} state
- * @returns {boolean  }
+ * @returns {boolean}
  */
-function relative_selector_might_apply_to_node(relative_selector, rule, element, state) {
+function relative_selector_might_apply_to_node(relative_selector, rule, element) {
 	// Sort :has(...) selectors in one bucket and everything else into another
 	const has_selectors = [];
 	const other_selectors = [];
@@ -452,7 +428,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 					if (
 						selectors.length === 0 /* is :global(...) */ ||
 						(element.metadata.scoped && selector_matched) ||
-						apply_selector(selectors, rule, element, state)
+						apply_selector(selectors, rule, element)
 					) {
 						complex_selector.metadata.used = true;
 						selector_matched = matched = true;
@@ -482,7 +458,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				) {
 					const args = selector.args;
 					const complex_selector = args.children[0];
-					return apply_selector(complex_selector.children, rule, element, state);
+					return apply_selector(complex_selector.children, rule, element);
 				}
 
 				// We came across a :global, everything beyond it is global and therefore a potential match
@@ -531,7 +507,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 						if (is_global) {
 							complex_selector.metadata.used = true;
 							matched = true;
-						} else if (apply_selector(relative, rule, element, state)) {
+						} else if (apply_selector(relative, rule, element)) {
 							complex_selector.metadata.used = true;
 							matched = true;
 						} else if (complex_selector.children.length > 1 && (name == 'is' || name == 'where')) {
@@ -615,7 +591,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 
 				for (const complex_selector of parent.prelude.children) {
 					if (
-						apply_selector(get_relative_selectors(complex_selector), parent, element, state) ||
+						apply_selector(get_relative_selectors(complex_selector), parent, element) ||
 						complex_selector.children.every((s) => is_global(s, parent))
 					) {
 						complex_selector.metadata.used = true;
