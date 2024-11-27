@@ -1,25 +1,17 @@
-import { get } from '../internal/client/runtime.js';
-import { source } from '../internal/client/reactivity/sources.js';
-import { effect_tracking } from '../internal/client/reactivity/effects.js';
 import { createSubscriber } from './create-subscriber.js';
 import { on } from '../events/index.js';
-import { increment } from './utils.js';
 
 /**
  * Creates a media query and provides a `current` property that reflects whether or not it matches.
  */
 export class MediaQuery {
 	#query;
-	#version = source(0);
-	#subscribe = createSubscriber(() => {
-		return on(this.#query, 'change', () => increment(this.#version));
+	#subscribe = createSubscriber((update) => {
+		return on(this.#query, 'change', update);
 	});
 
 	get current() {
-		if (effect_tracking()) {
-			get(this.#version);
-			this.#subscribe();
-		}
+		this.#subscribe();
 
 		return this.#query.matches;
 	}

@@ -1741,9 +1741,38 @@ declare module 'svelte/reactivity' {
 	 * Returns a function that, when invoked in a reactive context, calls the `start` function once,
 	 * and calls the `stop` function returned from `start` when all reactive contexts it's called in
 	 * are destroyed. This is useful for creating a notifier that starts and stops when the
-	 * "subscriber" count goes from 0 to 1 and back to 0.
+	 * "subscriber" count goes from 0 to 1 and back to 0. Call the `update` function passed to the
+	 * `start` function to notify subscribers of an update.
+	 *
+	 * Usage example (reimplementing `MediaQuery`):
+	 *
+	 * ```js
+	 * import { createSubscriber, on } from 'svelte/reactivity';
+	 *
+	 * export class MediaQuery {
+	 * 	#query;
+	 * 	#subscribe = createSubscriber((update) => {
+	 * 		// add an event listener to update all subscribers when the match changes
+	 * 		return on(this.#query, 'change', update);
+	 * 	});
+	 *
+	 * 	get current() {
+	 * 		// If the `current` property is accessed in a reactive context, start a new
+	 * 		// subscription if there isn't one already. The subscription will under the
+	 * 		// hood ensure that whatever reactive context reads `current` will rerun when
+	 * 		// the match changes
+	 * 		this.#subscribe();
+	 * 		// Return the current state of the query
+	 * 		return this.#query.matches;
+	 * 	}
+	 *
+	 * 	constructor(query) {
+	 * 		this.#query = window.matchMedia(`(${query})`);
+	 * 	}
+	 * }
+	 * ```
 	 * */
-	export function createSubscriber(start: () => (() => void) | void): () => void;
+	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
 
 	export {};
 }

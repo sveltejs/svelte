@@ -4,9 +4,6 @@ import {
 	effect_tracking,
 	render_effect
 } from '../internal/client/reactivity/effects.js';
-import { source } from '../internal/client/reactivity/sources.js';
-import { get as get_source } from '../internal/client/runtime.js';
-import { increment } from '../reactivity/utils.js';
 import { get, writable } from './shared/index.js';
 import { createSubscriber } from '../reactivity/create-subscriber.js';
 
@@ -109,14 +106,13 @@ export function toStore(get, set) {
  */
 export function fromStore(store) {
 	let value = /** @type {V} */ (undefined);
-	let version = source(0);
 
-	const subscribe = createSubscriber(() => {
+	const subscribe = createSubscriber((update) => {
 		let ran = false;
 
 		const unsubscribe = store.subscribe((v) => {
 			value = v;
-			if (ran) increment(version);
+			if (ran) update();
 		});
 
 		ran = true;
@@ -126,7 +122,6 @@ export function fromStore(store) {
 
 	function current() {
 		if (effect_tracking()) {
-			get_source(version);
 			subscribe();
 			return value;
 		}
