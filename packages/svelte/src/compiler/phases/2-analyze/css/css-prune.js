@@ -207,11 +207,11 @@ function apply_selector(relative_selectors, rule, element, state) {
  * @param {Compiler.Css.RelativeSelector} relative_selector
  * @param {Compiler.Css.RelativeSelector[]} parent_selectors
  * @param {Compiler.Css.Rule} rule
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  * @param {State} state
  * @returns {boolean}
  */
-function apply_combinator(combinator, relative_selector, parent_selectors, rule, element, state) {
+function apply_combinator(combinator, relative_selector, parent_selectors, rule, node, state) {
 	const name = combinator.name;
 
 	switch (name) {
@@ -220,7 +220,7 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 			let parent_matched = false;
 			let crossed_component_boundary = false;
 
-			const path = element.metadata.path;
+			const path = node.metadata.path;
 			let i = path.length;
 
 			while (i--) {
@@ -261,7 +261,7 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 
 		case '+':
 		case '~': {
-			const siblings = get_possible_element_siblings(element, name === '+');
+			const siblings = get_possible_element_siblings(node, name === '+');
 
 			let sibling_matched = false;
 
@@ -269,18 +269,18 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 				if (possible_sibling.type === 'RenderTag' || possible_sibling.type === 'SlotElement') {
 					// `{@render foo()}<p>foo</p>` with `:global(.x) + p` is a match
 					if (parent_selectors.length === 1 && parent_selectors[0].metadata.is_global) {
-						mark(relative_selector, element);
+						mark(relative_selector, node);
 						sibling_matched = true;
 					}
 				} else if (apply_selector(parent_selectors, rule, possible_sibling, state)) {
-					mark(relative_selector, element);
+					mark(relative_selector, node);
 					sibling_matched = true;
 				}
 			}
 
 			return (
 				sibling_matched ||
-				(get_element_parent(element) === null &&
+				(get_element_parent(node) === null &&
 					parent_selectors.every((selector) => is_global(selector, rule)))
 			);
 		}
@@ -295,13 +295,16 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
  * Mark both the compound selector and the node it selects as encapsulated,
  * for transformation in a later step
  * @param {Compiler.Css.RelativeSelector} relative_selector
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  */
-function mark(relative_selector, element) {
+function mark(relative_selector, node) {
 	if (!is_outer_global(relative_selector)) {
 		relative_selector.metadata.scoped = true;
 	}
-	element.metadata.scoped = true;
+
+	if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
+		node.metadata.scoped = true;
+	}
 }
 
 /**
@@ -825,7 +828,7 @@ function unquote(str) {
 }
 
 /**
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag} node
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  * @returns {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null}
  */
 function get_element_parent(node) {
