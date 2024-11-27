@@ -844,17 +844,17 @@ function get_element_parent(node) {
 }
 
 /**
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  * @param {boolean} adjacent_only
  * @returns {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>}
  */
-function get_possible_element_siblings(element, adjacent_only) {
+function get_possible_element_siblings(node, adjacent_only) {
 	/** @type {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>} */
 	const result = new Map();
-	const path = element.metadata.path;
+	const path = node.metadata.path;
 
 	/** @type {Compiler.SvelteNode} */
-	let current = element;
+	let current = node;
 
 	let i = path.length;
 
@@ -896,7 +896,20 @@ function get_possible_element_siblings(element, adjacent_only) {
 
 		current = path[i];
 
-		if (!current || !is_block(current)) break;
+		if (!current) break;
+
+		if (current.type === 'SnippetBlock') {
+			for (const site of current.metadata.sites) {
+				const siblings = get_possible_element_siblings(site, adjacent_only);
+				add_to_map(siblings, result);
+
+				if (adjacent_only && current.metadata.sites.size === 1 && has_definite_elements(siblings)) {
+					return result;
+				}
+			}
+		}
+
+		if (!is_block(current)) break;
 
 		if (current.type === 'EachBlock' && fragment === current.body) {
 			// `{#each ...}<a /><b />{/each}` — `<b>` can be previous sibling of `<a />`

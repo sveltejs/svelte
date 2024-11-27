@@ -284,6 +284,7 @@ export namespace AST {
 			/** The set of locally-defined snippets that this component tag could render,
 			 * used for CSS pruning purposes */
 			snippets: Set<SnippetBlock>;
+			path: SvelteNode[];
 		};
 	}
 
@@ -327,6 +328,7 @@ export namespace AST {
 			/** The set of locally-defined snippets that this component tag could render,
 			 * used for CSS pruning purposes */
 			snippets: Set<SnippetBlock>;
+			path: SvelteNode[];
 		};
 	}
 
@@ -381,6 +383,7 @@ export namespace AST {
 			/** The set of locally-defined snippets that this component tag could render,
 			 * used for CSS pruning purposes */
 			snippets: Set<SnippetBlock>;
+			path: SvelteNode[];
 		};
 	}
 

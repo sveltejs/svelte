@@ -16,6 +16,8 @@ import { mark_subtree_dynamic } from './fragment.js';
  * @param {Context} context
  */
 export function visit_component(node, context) {
+	node.metadata.path = [...context.path];
+
 	// link this node to all the snippets that it could render, so that we can prune CSS correctly
 	node.metadata.snippets = new Set();
 
