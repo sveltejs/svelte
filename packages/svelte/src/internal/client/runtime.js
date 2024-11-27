@@ -237,24 +237,22 @@ export function check_dirtiness(reaction) {
 function propagate_error(error, effect) {
 	/** @type {Effect | null} */
 	var current = effect;
-	while (current !== null) {
-		/** @type {Effect | null} */
-		var parent = current.parent;
 
+	while (current !== null) {
 		if ((current.f & BOUNDARY_EFFECT) !== 0) {
 			try {
-				// @ts-ignore
+				// @ts-expect-error
 				current.fn(error);
+				return;
 			} catch {
 				// Remove boundary flag from effect
 				current.f ^= BOUNDARY_EFFECT;
-				current = parent;
-				continue;
 			}
-			return;
 		}
-		current = parent;
+
+		current = current.parent;
 	}
+
 	is_throwing_error = false;
 	throw error;
 }
