@@ -231,10 +231,15 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 				}
 
 				if (parent.type === 'SnippetBlock') {
-					// We assume the snippet might be rendered in a place where the parent selectors match.
-					// (We could do more static analysis and check the render tag reference to see if this snippet block continues
-					// with elements that actually match the selector, but that would be a lot of work for little gain)
-					return true;
+					for (const site of parent.metadata.sites) {
+						if (
+							apply_combinator(combinator, relative_selector, parent_selectors, rule, site, state)
+						) {
+							return true;
+						}
+					}
+
+					return false;
 				}
 
 				if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
