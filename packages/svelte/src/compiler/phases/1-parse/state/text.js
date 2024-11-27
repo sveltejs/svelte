@@ -12,7 +12,7 @@ export default function text(parser) {
 		data += parser.template[parser.index++];
 	}
 
-	/** @type {ReturnType<typeof parser.append<AST.Text>>} */
+	/** @type {AST.Text} */
 	parser.append({
 		type: 'Text',
 		start,

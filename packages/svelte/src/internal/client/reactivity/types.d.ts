@@ -23,7 +23,6 @@ export interface Reaction extends Signal {
 	fn: null | Function;
 	/** Signals that this signal reads from */
 	deps: null | Value[];
-	parent: Effect | null;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {
@@ -31,6 +30,8 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 	fn: () => V;
 	/** Reactions created inside this signal */
 	children: null | Reaction[];
+	/** Parent effect or derived */
+	parent: Effect | Derived | null;
 }
 
 export interface Effect extends Reaction {
@@ -58,6 +59,8 @@ export interface Effect extends Reaction {
 	first: null | Effect;
 	/** Last child effect created inside this signal */
 	last: null | Effect;
+	/** Parent effect */
+	parent: Effect | null;
 	/** Dev only */
 	component_function?: any;
 }
