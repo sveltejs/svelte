@@ -155,24 +155,12 @@ function apply_selector(relative_selectors, rule, element) {
 
 	if (!relative_selector) return false;
 
-	const possible_match = relative_selector_might_apply_to_node(relative_selector, rule, element);
-
-	if (!possible_match) {
+	if (!relative_selector_might_apply_to_node(relative_selector, rule, element)) {
 		return false;
 	}
 
-	if (relative_selector.combinator) {
-		const matched = apply_combinator(
-			relative_selector.combinator,
-			relative_selector,
-			parent_selectors,
-			rule,
-			element
-		);
-
-		if (!matched) {
-			return false;
-		}
+	if (!apply_combinator(relative_selector, parent_selectors, rule, element)) {
+		return false;
 	}
 
 	if (!is_outer_global(relative_selector)) {
@@ -185,16 +173,16 @@ function apply_selector(relative_selectors, rule, element) {
 }
 
 /**
- *
- * @param {Compiler.Css.Combinator} combinator
  * @param {Compiler.Css.RelativeSelector} relative_selector
  * @param {Compiler.Css.RelativeSelector[]} parent_selectors
  * @param {Compiler.Css.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  * @returns {boolean}
  */
-function apply_combinator(combinator, relative_selector, parent_selectors, rule, node) {
-	const name = combinator.name;
+function apply_combinator(relative_selector, parent_selectors, rule, node) {
+	if (!relative_selector.combinator) return true;
+
+	const name = relative_selector.combinator.name;
 
 	switch (name) {
 		case ' ':
@@ -209,7 +197,7 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 
 				if (parent.type === 'SnippetBlock') {
 					for (const site of parent.metadata.sites) {
-						if (apply_combinator(combinator, relative_selector, parent_selectors, rule, site)) {
+						if (apply_combinator(relative_selector, parent_selectors, rule, site)) {
 							return true;
 						}
 					}
