@@ -67,12 +67,12 @@ export function boundary(node, props, boundary_fn) {
 		// We re-use the effect's fn property to avoid allocation of an additional field
 		boundary.fn = (/** @type {unknown}} */ error) => {
 			var onerror = props.onerror;
-			let failed_snippet = props.failed;
+			let failed = props.failed;
 
 			// If we have nothing to capture the error then re-throw the error
 			// for another boundary to handle, additionaly, if we're creating
 			// the fallback and that too fails, then re-throw the error
-			if ((!onerror && !failed_snippet) || is_creating_fallback) {
+			if ((!onerror && !failed) || is_creating_fallback) {
 				throw error;
 			}
 
@@ -103,7 +103,7 @@ export function boundary(node, props, boundary_fn) {
 			}
 
 			// Handle the `failed` snippet fallback
-			if (failed_snippet) {
+			if (failed) {
 				// Ensure we create the boundary branch after the catch event cycle finishes
 				queue_micro_task(() => {
 					with_boundary(boundary, () => {
@@ -111,7 +111,7 @@ export function boundary(node, props, boundary_fn) {
 						is_creating_fallback = true;
 						try {
 							boundary_effect = branch(() => {
-								failed_snippet(
+								failed(
 									anchor,
 									() => error,
 									() => reset
