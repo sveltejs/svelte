@@ -56,7 +56,7 @@ function with_boundary(boundary, fn) {
 export function boundary(node, props, boundary_fn) {
 	var anchor = node;
 
-	/** @type {Effect | null} */
+	/** @type {Effect} */
 	var boundary_effect;
 
 	block(() => {
