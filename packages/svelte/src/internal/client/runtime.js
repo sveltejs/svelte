@@ -282,9 +282,11 @@ export function handle_error(error, effect, previous_effect, component_context) 
 		if (previous_effect === null) {
 			is_throwing_error = false;
 		}
+
 		if (should_rethrow_error(effect)) {
 			throw error;
 		}
+
 		return;
 	}
 
@@ -356,6 +358,7 @@ export function handle_error(error, effect, previous_effect, component_context) 
 	}
 
 	propagate_error(error, effect);
+
 	if (should_rethrow_error(effect)) {
 		throw error;
 	}
