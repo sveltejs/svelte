@@ -63,7 +63,6 @@ export function prune(stylesheet, element) {
 			if (
 				apply_selector(selectors, /** @type {Compiler.Css.Rule} */ (node.metadata.rule), element)
 			) {
-				mark(selectors[selectors.length - 1], element);
 				node.metadata.used = true;
 			}
 
@@ -163,13 +162,19 @@ function apply_selector(relative_selectors, rule, element) {
 	}
 
 	if (relative_selector.combinator) {
-		return apply_combinator(
+		const matched = apply_combinator(
 			relative_selector.combinator,
 			relative_selector,
 			parent_selectors,
 			rule,
 			element
 		);
+
+		if (matched) {
+			mark(relative_selector, element);
+		}
+
+		return matched;
 	}
 
 	// if this is the left-most non-global selector, mark it — we want
@@ -217,11 +222,6 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 
 				if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
 					if (apply_selector(parent_selectors, rule, parent)) {
-						// TODO the `name === ' '` causes false positives, but removing it causes false negatives...
-						if (name === ' ') {
-							mark(parent_selectors[parent_selectors.length - 1], parent);
-						}
-
 						parent_matched = true;
 					}
 
@@ -242,11 +242,9 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 				if (possible_sibling.type === 'RenderTag' || possible_sibling.type === 'SlotElement') {
 					// `{@render foo()}<p>foo</p>` with `:global(.x) + p` is a match
 					if (parent_selectors.length === 1 && parent_selectors[0].metadata.is_global) {
-						mark(relative_selector, node);
 						sibling_matched = true;
 					}
 				} else if (apply_selector(parent_selectors, rule, possible_sibling)) {
-					mark(relative_selector, node);
 					sibling_matched = true;
 				}
 			}
@@ -268,16 +266,14 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
  * Mark both the compound selector and the node it selects as encapsulated,
  * for transformation in a later step
  * @param {Compiler.Css.RelativeSelector} relative_selector
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} node
  */
 function mark(relative_selector, node) {
 	if (!is_outer_global(relative_selector)) {
 		relative_selector.metadata.scoped = true;
 	}
 
-	if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
-		node.metadata.scoped = true;
-	}
+	node.metadata.scoped = true;
 }
 
 /**
