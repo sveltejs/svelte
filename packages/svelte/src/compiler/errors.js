@@ -1024,13 +1024,13 @@ export function mixed_event_handler_syntaxes(node, name) {
 }
 
 /**
- * %message%
+ * %message%. The browser will 'repair' the HTML (by moving, removing, or inserting elements) which breaks Svelte's assumptions about the structure of your components.
  * @param {null | number | NodeLike} node
  * @param {string} message
  * @returns {never}
  */
 export function node_invalid_placement(node, message) {
-	e(node, "node_invalid_placement", `${message}`);
+	e(node, "node_invalid_placement", `${message}. The browser will 'repair' the HTML (by moving, removing, or inserting elements) which breaks Svelte's assumptions about the structure of your components.`);
 }
 
 /**
