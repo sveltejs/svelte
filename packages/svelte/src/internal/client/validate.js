@@ -2,9 +2,10 @@ import { dev_current_component_function } from './runtime.js';
 import { get_descriptor, is_array } from '../shared/utils.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
-import { render_effect } from './reactivity/effects.js';
+import { render_effect, teardown } from './reactivity/effects.js';
 import * as w from './warnings.js';
 import { capture_store_binding } from './reactivity/store.js';
+import { svelte_html_duplicate_attribute } from '../shared/warnings.js';
 
 /**
  * @param {() => any} collection
@@ -101,6 +102,30 @@ export function validate_binding(binding, get_object, get_property, line, column
 			w.binding_property_non_reactive(binding, location);
 
 			warned = true;
+		}
+	});
+}
+
+let svelte_html_attributes = new Map();
+
+/**
+ * @param {string} name
+ */
+export function validate_svelte_html_attribute(name) {
+	const count = svelte_html_attributes.get(name) || 0;
+
+	if (count > 0) {
+		svelte_html_duplicate_attribute(name);
+	}
+
+	svelte_html_attributes.set(name, count + 1);
+
+	teardown(() => {
+		const count = svelte_html_attributes.get(name) || 1;
+		if (count === 1) {
+			svelte_html_attributes.delete(name);
+		} else {
+			svelte_html_attributes.set(name, count - 1);
 		}
 	});
 }

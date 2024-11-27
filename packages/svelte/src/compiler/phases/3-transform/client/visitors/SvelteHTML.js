@@ -47,6 +47,12 @@ export function SvelteHTML(element, context) {
 				} else {
 					context.state.init.push(update);
 				}
+
+				if (context.state.options.dev) {
+					context.state.init.push(
+						b.stmt(b.call('$.validate_svelte_html_attribute', b.literal(name)))
+					);
+				}
 			}
 		}
 	}
