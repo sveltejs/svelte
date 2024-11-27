@@ -141,16 +141,12 @@ function get_relative_selectors(node) {
 
 		// nesting could be inside pseudo classes like :is, :has or :where
 		for (let selector of selectors) {
-			walk(
-				selector,
-				{},
-				{
-					// @ts-ignore
-					NestingSelector() {
-						has_explicit_nesting_selector = true;
-					}
+			walk(selector, null, {
+				// @ts-ignore
+				NestingSelector() {
+					has_explicit_nesting_selector = true;
 				}
-			);
+			});
 			// if we found one we can break from the others
 			if (has_explicit_nesting_selector) break;
 		}
@@ -881,17 +877,17 @@ function get_element_parent(node) {
 }
 
 /**
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} node
  * @param {boolean} adjacent_only
  * @returns {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>}
  */
-function get_possible_element_siblings(element, adjacent_only) {
+function get_possible_element_siblings(node, adjacent_only) {
 	/** @type {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>} */
 	const result = new Map();
-	const path = element.metadata.path;
+	const path = node.metadata.path;
 
 	/** @type {Compiler.SvelteNode} */
-	let current = element;
+	let current = node;
 
 	let i = path.length;
 
