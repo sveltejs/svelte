@@ -1,7 +1,7 @@
 [
 	{
 		"code": "node_invalid_placement",
-		"message": "`<tbody>` must be the child of a `<table>` (but got `<div>`)",
+		"message": "`<tbody>` must be the child of a `<table>` (but got `<div>`). The browser will 'repair' the HTML (by moving, removing, or inserting elements) which breaks Svelte's assumptions about the structure of your components.",
 		"start": {
 			"line": 8,
 			"column": 1
