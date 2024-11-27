@@ -153,23 +153,20 @@ function apply_selector(relative_selectors, rule, element) {
 	const parent_selectors = relative_selectors.slice();
 	const relative_selector = parent_selectors.pop();
 
-	if (!relative_selector) return false;
+	const matched =
+		!!relative_selector &&
+		relative_selector_might_apply_to_node(relative_selector, rule, element) &&
+		apply_combinator(relative_selector, parent_selectors, rule, element);
 
-	if (!relative_selector_might_apply_to_node(relative_selector, rule, element)) {
-		return false;
+	if (matched) {
+		if (!is_outer_global(relative_selector)) {
+			relative_selector.metadata.scoped = true;
+		}
+
+		element.metadata.scoped = true;
 	}
 
-	if (!apply_combinator(relative_selector, parent_selectors, rule, element)) {
-		return false;
-	}
-
-	if (!is_outer_global(relative_selector)) {
-		relative_selector.metadata.scoped = true;
-	}
-
-	element.metadata.scoped = true;
-
-	return true;
+	return matched;
 }
 
 /**
