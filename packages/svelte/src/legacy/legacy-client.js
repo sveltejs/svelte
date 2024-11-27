@@ -63,6 +63,11 @@ export function asClassComponent(component) {
 	};
 }
 
+/**
+ * Support using the component as both a class and function during the transition period
+ * @typedef  {{new (o: ComponentConstructorOptions): SvelteComponent;(...args: Parameters<Component<Record<string, any>>>): ReturnType<Component<Record<string, any>, Record<string, any>>>;}} LegacyComponentType
+ */
+
 class Svelte4Component {
 	/** @type {any} */
 	#events;

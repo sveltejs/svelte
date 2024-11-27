@@ -1,5 +1,7 @@
 import { performance, PerformanceObserver } from 'node:perf_hooks';
 import v8 from 'v8-natives';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 // Credit to https://github.com/milomg/js-reactivity-benchmark for the logic for timing + GC tracking.
 
@@ -95,4 +97,23 @@ export function assert(a) {
 	if (!a) {
 		throw new Error('Assertion failed');
 	}
+}
+
+/**
+ * @param {string} file
+ */
+export function read_file(file) {
+	return fs.readFileSync(file, 'utf-8').replace(/\r\n/g, '\n');
+}
+
+/**
+ * @param {string} file
+ * @param {string} contents
+ */
+export function write(file, contents) {
+	try {
+		fs.mkdirSync(path.dirname(file), { recursive: true });
+	} catch {}
+
+	fs.writeFileSync(file, contents);
 }

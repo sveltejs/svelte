@@ -1,5 +1,67 @@
 # svelte
 
+## 5.2.9
+
+### Patch Changes
+
+- fix: show `:then` block for `null/undefined` value ([#14440](https://github.com/sveltejs/svelte/pull/14440))
+
+- fix: relax html parent validation ([#14442](https://github.com/sveltejs/svelte/pull/14442))
+
+- fix: prevent memory leak when creating deriveds inside untrack ([#14443](https://github.com/sveltejs/svelte/pull/14443))
+
+- fix: disregard TypeScript nodes when pruning CSS ([#14446](https://github.com/sveltejs/svelte/pull/14446))
+
+## 5.2.8
+
+### Patch Changes
+
+- fix: correctly prune each blocks ([#14403](https://github.com/sveltejs/svelte/pull/14403))
+
+- fix: provide temporary `LegacyComponentType` ([#14257](https://github.com/sveltejs/svelte/pull/14257))
+
+- fix: attach spread attribute events synchronously ([#14387](https://github.com/sveltejs/svelte/pull/14387))
+
+- fix: ensure last empty text node correctly hydrates ([#14425](https://github.com/sveltejs/svelte/pull/14425))
+
+- fix: correctly prune key blocks ([#14403](https://github.com/sveltejs/svelte/pull/14403))
+
+## 5.2.7
+
+### Patch Changes
+
+- fix: always use set for private identifiers ([#14378](https://github.com/sveltejs/svelte/pull/14378))
+
+## 5.2.6
+
+### Patch Changes
+
+- fix: remove template expression inlining ([#14374](https://github.com/sveltejs/svelte/pull/14374))
+
+## 5.2.5
+
+### Patch Changes
+
+- fix: correctly handle srcObject attribute on video elements ([#14369](https://github.com/sveltejs/svelte/pull/14369))
+
+- add `contentvisibilityautostatechange` event to element definitions ([#14373](https://github.com/sveltejs/svelte/pull/14373))
+
+- fix: tighten up `export default` validation ([#14368](https://github.com/sveltejs/svelte/pull/14368))
+
+- fix: include method definitions in class private fields ([#14365](https://github.com/sveltejs/svelte/pull/14365))
+
+## 5.2.4
+
+### Patch Changes
+
+- fix: ensure internal cloning can work circular values ([#14347](https://github.com/sveltejs/svelte/pull/14347))
+
+- fix: correctly update dynamic member expressions ([#14359](https://github.com/sveltejs/svelte/pull/14359))
+
+- fix: ensure is_pure takes into account $effect.tracking() ([#14333](https://github.com/sveltejs/svelte/pull/14333))
+
+- fix: coerce value to number when hydrating range/number input with changed value ([#14349](https://github.com/sveltejs/svelte/pull/14349))
+
 ## 5.2.3
 
 ### Patch Changes

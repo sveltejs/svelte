@@ -60,6 +60,10 @@ export type AnimationEventHandler<T extends EventTarget> = EventHandler<Animatio
 export type TransitionEventHandler<T extends EventTarget> = EventHandler<TransitionEvent, T>;
 export type MessageEventHandler<T extends EventTarget> = EventHandler<MessageEvent, T>;
 export type ToggleEventHandler<T extends EventTarget> = EventHandler<ToggleEvent, T>;
+export type ContentVisibilityAutoStateChangeEventHandler<T extends EventTarget> = EventHandler<
+	ContentVisibilityAutoStateChangeEvent,
+	T
+>;
 
 export type FullAutoFill =
 	| AutoFill
@@ -156,6 +160,20 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:toggle'?: ToggleEventHandler<T> | undefined | null;
 	ontoggle?: ToggleEventHandler<T> | undefined | null;
 	ontogglecapture?: ToggleEventHandler<T> | undefined | null;
+
+	// Content visibility Events
+	'on:contentvisibilityautostatechange'?:
+		| ContentVisibilityAutoStateChangeEventHandler<T>
+		| undefined
+		| null;
+	oncontentvisibilityautostatechange?:
+		| ContentVisibilityAutoStateChangeEventHandler<T>
+		| undefined
+		| null;
+	oncontentvisibilityautostatechangecapture?:
+		| ContentVisibilityAutoStateChangeEventHandler<T>
+		| undefined
+		| null;
 
 	// Keyboard Events
 	'on:keydown'?: KeyboardEventHandler<T> | undefined | null;
