@@ -30,9 +30,11 @@ function with_boundary(boundary, fn) {
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
 	var previous_ctx = component_context;
+
 	set_active_effect(boundary);
 	set_active_reaction(boundary);
 	set_component_context(boundary.ctx);
+
 	try {
 		fn();
 	} finally {
@@ -44,11 +46,11 @@ function with_boundary(boundary, fn) {
 
 /**
  * @param {TemplateNode} node
- * @param {((anchor: Node) => void)} boundary_fn
  * @param {{
  * 	 onerror?: (error: unknown, reset: () => void) => void,
  *   failed?: (anchor: Node, error: () => unknown, reset: () => () => void) => void
  * }} props
+ * @param {((anchor: Node) => void)} boundary_fn
  * @returns {void}
  */
 export function boundary(node, props, boundary_fn) {
@@ -63,7 +65,7 @@ export function boundary(node, props, boundary_fn) {
 		var is_creating_fallback = false;
 
 		// We re-use the effect's fn property to avoid allocation of an additional field
-		boundary.fn = (/** @type { unknown }} */ error) => {
+		boundary.fn = (/** @type {unknown}} */ error) => {
 			var onerror = props.onerror;
 			let failed_snippet = props.failed;
 
