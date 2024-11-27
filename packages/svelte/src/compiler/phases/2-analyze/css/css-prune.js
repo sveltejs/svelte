@@ -898,6 +898,14 @@ function get_possible_element_siblings(node, adjacent_only) {
 
 		if (!current) break;
 
+		if (
+			current.type === 'Component' ||
+			current.type === 'SvelteComponent' ||
+			current.type === 'SvelteSelf'
+		) {
+			continue;
+		}
+
 		if (current.type === 'SnippetBlock') {
 			for (const site of current.metadata.sites) {
 				const siblings = get_possible_element_siblings(site, adjacent_only);
