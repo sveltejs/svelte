@@ -177,12 +177,7 @@ function apply_selector(relative_selectors, rule, element) {
 		return matched;
 	}
 
-	// if this is the left-most non-global selector, mark it — we want
-	// `x y z {...}` to become `x.blah y z.blah {...}`
-	const parent = parent_selectors[parent_selectors.length - 1];
-	if (!parent || is_global(parent, rule)) {
-		mark(relative_selector, element);
-	}
+	mark(relative_selector, element);
 
 	return true;
 }
