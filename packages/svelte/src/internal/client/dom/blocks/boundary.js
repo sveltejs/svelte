@@ -81,6 +81,7 @@ export function boundary(node, props, boundary_fn) {
 				if (boundary_effect) {
 					pause_effect(boundary_effect);
 				}
+
 				with_boundary(boundary, () => {
 					boundary_effect = null;
 					is_creating_fallback = false;
@@ -106,6 +107,7 @@ export function boundary(node, props, boundary_fn) {
 					with_boundary(boundary, () => {
 						boundary_effect = null;
 						is_creating_fallback = true;
+
 						try {
 							boundary_effect = branch(() => {
 								failed(
@@ -117,6 +119,7 @@ export function boundary(node, props, boundary_fn) {
 						} catch (error) {
 							handle_error(error, boundary, null, boundary.ctx);
 						}
+
 						reset_is_throwing_error();
 						is_creating_fallback = false;
 					});
