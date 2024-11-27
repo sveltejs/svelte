@@ -20,6 +20,9 @@ export function visit_component(node, context) {
 	// link this node to all the snippets that it could render, so that we can prune CSS correctly
 	node.metadata.snippets = new Set();
 
+	// 'resolved' means we know which snippets this component might render. if it is `false`,
+	// then `node.metadata.snippets` is populated with every locally defined snippet
+	// once analysis is complete
 	let resolved = true;
 
 	for (const attribute of node.attributes) {
@@ -34,26 +37,26 @@ export function visit_component(node, context) {
 
 		const expression = get_attribute_expression(attribute);
 
+		// given an attribute like `foo={bar}`, if `bar` resolves to an import or a prop
+		// then we know it doesn't reference a locally defined snippet. if it resolves
+		// to a `{#snippet bar()}` then we know _which_ snippet it resolves to. in all
+		// other cases, we can't know (without much more complex static analysis) which
+		// snippets the component might render, so we treat the component as unresolved
 		if (expression.type === 'Identifier') {
 			const binding = context.state.scope.get(expression.name);
 
-			if (
-				binding &&
+			resolved &&=
+				!!binding &&
 				binding.declaration_kind !== 'import' &&
 				binding.kind !== 'prop' &&
 				binding.kind !== 'rest_prop' &&
 				binding.kind !== 'bindable_prop' &&
-				binding.initial?.type !== 'SnippetBlock'
-			) {
-				resolved = false;
-			}
+				binding.initial?.type !== 'SnippetBlock';
 
 			if (binding?.initial?.type === 'SnippetBlock') {
 				node.metadata.snippets.add(binding.initial);
 			}
 		} else {
-			// we can't safely know which snippets this component could render,
-			// so we deopt. this _could_ result in unused CSS not being discarded
 			resolved = false;
 		}
 	}
