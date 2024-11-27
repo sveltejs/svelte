@@ -69,14 +69,12 @@ export function boundary(node, props, boundary_fn) {
 			var onerror = props.onerror;
 			let failed = props.failed;
 
-			// If we have nothing to capture the error then re-throw the error
-			// for another boundary to handle, additionaly, if we're creating
-			// the fallback and that too fails, then re-throw the error
+			// If we have nothing to capture the error, or if we hit an error while
+			// rendering the fallback, re-throw for another boundary to handle
 			if ((!onerror && !failed) || is_creating_fallback) {
 				throw error;
 			}
 
-			// Handle resetting the error boundary
 			var reset = () => {
 				if (boundary_effect) {
 					pause_effect(boundary_effect);
@@ -100,9 +98,8 @@ export function boundary(node, props, boundary_fn) {
 				set_hydrate_node(remove_nodes());
 			}
 
-			// Handle the `failed` snippet fallback
 			if (failed) {
-				// Ensure we create the boundary branch after the catch event cycle finishes
+				// Render the `failed` snippet in a microtask
 				queue_micro_task(() => {
 					with_boundary(boundary, () => {
 						boundary_effect = null;
