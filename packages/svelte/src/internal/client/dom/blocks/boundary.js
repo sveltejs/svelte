@@ -89,10 +89,7 @@ export function boundary(node, props, boundary_fn) {
 				});
 			};
 
-			// Handle the `onerror` event handler
-			if (onerror) {
-				onerror(error, reset);
-			}
+			onerror?.(error, reset);
 
 			if (boundary_effect) {
 				destroy_effect(boundary_effect);
