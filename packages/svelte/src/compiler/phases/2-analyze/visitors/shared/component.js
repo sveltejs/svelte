@@ -9,6 +9,7 @@ import {
 	validate_slot_attribute
 } from './attribute.js';
 import { mark_subtree_dynamic } from './fragment.js';
+import { is_resolved_snippet } from './snippets.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
@@ -45,13 +46,7 @@ export function visit_component(node, context) {
 		if (expression.type === 'Identifier') {
 			const binding = context.state.scope.get(expression.name);
 
-			resolved &&=
-				!!binding &&
-				binding.declaration_kind !== 'import' &&
-				binding.kind !== 'prop' &&
-				binding.kind !== 'rest_prop' &&
-				binding.kind !== 'bindable_prop' &&
-				binding.initial?.type !== 'SnippetBlock';
+			resolved &&= is_resolved_snippet(binding);
 
 			if (binding?.initial?.type === 'SnippetBlock') {
 				node.metadata.snippets.add(binding.initial);

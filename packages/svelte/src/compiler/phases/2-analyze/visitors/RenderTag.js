@@ -4,6 +4,7 @@ import { unwrap_optional } from '../../../utils/ast.js';
 import * as e from '../../../errors.js';
 import { validate_opening_tag } from './shared/utils.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
+import { is_resolved_snippet } from './shared/snippets.js';
 
 /**
  * @param {AST.RenderTag} node
@@ -16,7 +17,7 @@ export function RenderTag(node, context) {
 
 	const callee = unwrap_optional(node.expression).callee;
 
-	const binding = callee.type === 'Identifier' ? context.state.scope.get(callee.name) : undefined;
+	const binding = callee.type === 'Identifier' ? context.state.scope.get(callee.name) : null;
 
 	node.metadata.dynamic = binding?.kind !== 'normal';
 
@@ -24,14 +25,7 @@ export function RenderTag(node, context) {
 	 * If we can't unambiguously resolve this to a declaration, we
 	 * must assume the worst and link the render tag to every snippet
 	 */
-	let resolved =
-		callee.type === 'Identifier' &&
-		(!binding ||
-			binding.declaration_kind === 'import' ||
-			binding.kind === 'prop' ||
-			binding.kind === 'rest_prop' ||
-			binding.kind === 'bindable_prop' ||
-			binding?.initial?.type === 'SnippetBlock');
+	let resolved = callee.type === 'Identifier' && is_resolved_snippet(binding);
 
 	if (binding?.initial?.type === 'SnippetBlock') {
 		// if this render tag unambiguously references a local snippet, our job is easy
