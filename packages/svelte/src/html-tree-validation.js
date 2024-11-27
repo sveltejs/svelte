@@ -161,7 +161,7 @@ export function is_tag_valid_with_ancestor(tag, ancestors) {
 	}
 
 	if ('descendant' in disallowed && disallowed.descendant.includes(tag)) {
-		return `\`<${tag}>\` cannot be a child of \`<${target}>\`. \`<${target}>\` disallows these children: ${disallowed.descendant.map((d) => `\`<${d}>\``).join(', ')}`;
+		return `\`<${tag}>\` cannot be a child of \`<${target}>\``;
 	}
 
 	return null;
