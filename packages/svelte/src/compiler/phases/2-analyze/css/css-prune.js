@@ -170,30 +170,18 @@ function apply_selector(relative_selectors, rule, element) {
 			element
 		);
 
-		if (matched) {
-			mark(relative_selector, element);
+		if (!matched) {
+			return false;
 		}
-
-		return matched;
 	}
 
-	mark(relative_selector, element);
-
-	return true;
-}
-
-/**
- * Mark both the compound selector and the node it selects as encapsulated,
- * for transformation in a later step
- * @param {Compiler.Css.RelativeSelector} relative_selector
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} node
- */
-function mark(relative_selector, node) {
 	if (!is_outer_global(relative_selector)) {
 		relative_selector.metadata.scoped = true;
 	}
 
-	node.metadata.scoped = true;
+	element.metadata.scoped = true;
+
+	return true;
 }
 
 /**
