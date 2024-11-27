@@ -203,6 +203,7 @@ function apply_selector(relative_selectors, rule, element, state) {
 }
 
 /**
+ *
  * @param {Compiler.Css.Combinator} combinator
  * @param {Compiler.Css.RelativeSelector} relative_selector
  * @param {Compiler.Css.RelativeSelector[]} parent_selectors
@@ -218,17 +219,12 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 		case ' ':
 		case '>': {
 			let parent_matched = false;
-			let crossed_component_boundary = false;
 
 			const path = node.metadata.path;
 			let i = path.length;
 
 			while (i--) {
 				const parent = path[i];
-
-				if (parent.type === 'Component' || parent.type === 'SvelteComponent') {
-					crossed_component_boundary = true;
-				}
 
 				if (parent.type === 'SnippetBlock') {
 					for (const site of parent.metadata.sites) {
@@ -245,7 +241,7 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 				if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
 					if (apply_selector(parent_selectors, rule, parent, state)) {
 						// TODO the `name === ' '` causes false positives, but removing it causes false negatives...
-						if (name === ' ' || crossed_component_boundary) {
+						if (name === ' ') {
 							mark(parent_selectors[parent_selectors.length - 1], parent);
 						}
 
