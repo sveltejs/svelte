@@ -99,7 +99,6 @@ export function boundary(node, props, boundary_fn) {
 				// Render the `failed` snippet in a microtask
 				queue_micro_task(() => {
 					with_boundary(boundary, () => {
-						boundary_effect = null;
 						is_creating_fallback = true;
 
 						try {
