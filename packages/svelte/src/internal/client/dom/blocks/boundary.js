@@ -79,7 +79,6 @@ export function boundary(node, props, boundary_fn) {
 				pause_effect(boundary_effect);
 
 				with_boundary(boundary, () => {
-					boundary_effect = null;
 					is_creating_fallback = false;
 					boundary_effect = branch(() => boundary_fn(anchor));
 					reset_is_throwing_error();
