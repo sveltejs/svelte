@@ -335,10 +335,12 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 			descendant_elements.push(element);
 		}
 
-		walk(
-			/** @type {Compiler.SvelteNode} */ (element.fragment),
-			{ is_child: true },
-			{
+		/**
+		 * @param {Compiler.SvelteNode} node
+		 * @param {{ is_child: boolean }} state
+		 */
+		function walk_children(node, state) {
+			walk(node, state, {
 				_(node, context) {
 					if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
 						descendant_elements.push(node);
@@ -351,12 +353,18 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 						} else {
 							context.next();
 						}
+					} else if (node.type === 'RenderTag') {
+						for (const snippet of node.metadata.snippets) {
+							walk_children(snippet.body, context.state);
+						}
 					} else {
 						context.next();
 					}
 				}
-			}
-		);
+			});
+		}
+
+		walk_children(element.fragment, { is_child: true });
 
 		// :has(...) is special in that it means "look downwards in the CSS tree". Since our matching algorithm goes
 		// upwards and back-to-front, we need to first check the selectors inside :has(...), then check the rest of the
@@ -609,15 +617,26 @@ function get_following_sibling_elements(element, include_self) {
 
 	// ...then walk them, starting from the node after the one
 	// containing the element in question
-	for (const node of nodes.slice(nodes.indexOf(start) + 1)) {
+
+	/** @param {Compiler.SvelteNode} node */
+	function get_siblings(node) {
 		walk(node, null, {
 			RegularElement(node) {
 				siblings.push(node);
 			},
 			SvelteElement(node) {
 				siblings.push(node);
+			},
+			RenderTag(node) {
+				for (const snippet of node.metadata.snippets) {
+					get_siblings(snippet.body);
+				}
 			}
 		});
+	}
+
+	for (const node of nodes.slice(nodes.indexOf(start) + 1)) {
+		get_siblings(node);
 	}
 
 	if (include_self) {
