@@ -322,7 +322,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 
 		// If this is a :has inside a global selector, we gotta include the element itself, too,
 		// because the global selector might be for an element that's outside the component (e.g. :root).
-		const rules = [rule, ...get_parent_rules(rule)];
+		const rules = get_parent_rules(rule);
 		const include_self =
 			rules.some((r) => r.prelude.children.some((c) => c.children.some((s) => is_global(s, r)))) ||
 			rules[rules.length - 1].prelude.children.some((c) =>
