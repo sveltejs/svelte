@@ -12,6 +12,9 @@
 
 <style>
 	div div {
-		color: red;
+		color: green;
+	}
+	div:has(div) {
+		color: green;
 	}
 </style>

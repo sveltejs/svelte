@@ -346,6 +346,8 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 			descendant_elements.push(element);
 		}
 
+		const seen = new Set();
+
 		/**
 		 * @param {Compiler.SvelteNode} node
 		 * @param {{ is_child: boolean }} state
@@ -366,6 +368,9 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 						}
 					} else if (node.type === 'RenderTag') {
 						for (const snippet of node.metadata.snippets) {
+							if (seen.has(snippet)) continue;
+
+							seen.add(snippet);
 							walk_children(snippet.body, context.state);
 						}
 					} else {
@@ -629,6 +634,8 @@ function get_following_sibling_elements(element, include_self) {
 	// ...then walk them, starting from the node after the one
 	// containing the element in question
 
+	const seen = new Set();
+
 	/** @param {Compiler.SvelteNode} node */
 	function get_siblings(node) {
 		walk(node, null, {
@@ -640,6 +647,9 @@ function get_following_sibling_elements(element, include_self) {
 			},
 			RenderTag(node) {
 				for (const snippet of node.metadata.snippets) {
+					if (seen.has(snippet)) continue;
+
+					seen.add(snippet);
 					get_siblings(snippet.body);
 				}
 			}

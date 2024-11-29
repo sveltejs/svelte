@@ -1,4 +1,7 @@
 
 	div.svelte-xyz div:where(.svelte-xyz) {
-		color: red;
+		color: green;
+	}
+	div.svelte-xyz:has(div:where(.svelte-xyz)) {
+		color: green;
 	}
