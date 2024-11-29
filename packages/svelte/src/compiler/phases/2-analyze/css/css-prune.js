@@ -44,6 +44,12 @@ const nesting_selector = {
 };
 
 /**
+ * Snippets encountered already (avoids infinite loops)
+ * @type {Set<Compiler.AST.SnippetBlock>}
+ */
+const seen = new Set();
+
+/**
  *
  * @param {Compiler.Css.StyleSheet} stylesheet
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
@@ -59,6 +65,8 @@ export function prune(stylesheet, element) {
 		},
 		ComplexSelector(node) {
 			const selectors = get_relative_selectors(node);
+
+			seen.clear();
 
 			if (
 				apply_selector(selectors, /** @type {Compiler.Css.Rule} */ (node.metadata.rule), element)
@@ -193,6 +201,9 @@ function apply_combinator(relative_selector, parent_selectors, rule, node) {
 				const parent = path[i];
 
 				if (parent.type === 'SnippetBlock') {
+					if (seen.has(parent)) return true;
+					seen.add(parent);
+
 					for (const site of parent.metadata.sites) {
 						if (apply_combinator(relative_selector, parent_selectors, rule, site)) {
 							return true;

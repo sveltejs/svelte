@@ -1,0 +1,4 @@
+
+	div.svelte-xyz div:where(.svelte-xyz) {
+		color: red;
+	}
