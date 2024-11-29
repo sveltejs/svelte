@@ -191,9 +191,11 @@ async function run_test(
 
 	try {
 		const page = await browser.newPage();
-		page.on('console', (type) => {
+		page.on('console', (message) => {
+			let method = message.type();
+			if (method === 'warning') method = 'warn';
 			// @ts-ignore
-			console[type.type()](type.text());
+			console[method](message.text());
 		});
 
 		if (build_result_ssr) {
