@@ -1,5 +1,13 @@
 # svelte
 
+## 5.2.11
+
+### Patch Changes
+
+- fix: ignore text and expressions outside the template when validating HTML ([#14468](https://github.com/sveltejs/svelte/pull/14468))
+
+- fix: better account for render tags when pruning CSS ([#14456](https://github.com/sveltejs/svelte/pull/14456))
+
 ## 5.2.10
 
 ### Patch Changes
