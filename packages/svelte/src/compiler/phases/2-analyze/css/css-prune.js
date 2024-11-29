@@ -825,9 +825,10 @@ function get_element_parent(node) {
 /**
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  * @param {boolean} adjacent_only
+ * @param {Set<Compiler.AST.SnippetBlock>} seen
  * @returns {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>}
  */
-function get_possible_element_siblings(node, adjacent_only) {
+function get_possible_element_siblings(node, adjacent_only, seen = new Set()) {
 	/** @type {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>} */
 	const result = new Map();
 	const path = node.metadata.path;
@@ -886,8 +887,11 @@ function get_possible_element_siblings(node, adjacent_only) {
 		}
 
 		if (current.type === 'SnippetBlock') {
+			if (seen.has(current)) break;
+			seen.add(current);
+
 			for (const site of current.metadata.sites) {
-				const siblings = get_possible_element_siblings(site, adjacent_only);
+				const siblings = get_possible_element_siblings(site, adjacent_only, seen);
 				add_to_map(siblings, result);
 
 				if (adjacent_only && current.metadata.sites.size === 1 && has_definite_elements(siblings)) {
