@@ -79,7 +79,7 @@ async function run_test(
 			__CONFIG__: path.resolve(test_dir, '_config.js'),
 			'assert.js': assert_file
 		},
-		conditions: ['browser', 'development'],
+		conditions: ['browser', 'production'],
 		plugins: [
 			{
 				name: 'testing-runtime-browser',
@@ -132,7 +132,7 @@ async function run_test(
 				__MAIN_DOT_SVELTE__: path.resolve(test_dir, 'main.svelte'),
 				__CONFIG__: path.resolve(test_dir, '_config.js')
 			},
-			conditions: ['browser', 'development'],
+			conditions: ['browser', 'production'],
 			plugins: [
 				{
 					name: 'testing-runtime-browser-ssr',
