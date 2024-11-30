@@ -32,31 +32,26 @@ function build_assignment(operator, left, right, context) {
 	if (
 		context.state.analysis.runes &&
 		left.type === 'MemberExpression' &&
-		left.object.type === 'ThisExpression'
+		left.property.type === 'PrivateIdentifier'
 	) {
-		if (left.property.type === 'PrivateIdentifier') {
-			const private_state = context.state.private_state.get(left.property.name);
+		const private_state = context.state.private_state.get(left.property.name);
 
-			if (private_state !== undefined) {
-				let transformed = false;
-				let value = /** @type {Expression} */ (
-					context.visit(build_assignment_value(operator, left, right))
-				);
+		if (private_state !== undefined) {
+			let value = /** @type {Expression} */ (
+				context.visit(build_assignment_value(operator, left, right))
+			);
 
-				if (should_proxy(value, context.state.scope)) {
-					transformed = true;
-					value =
-						private_state.kind === 'raw_state'
-							? value
-							: build_proxy_reassignment(value, b.member(b.this, private_state.id));
-				}
-
-				if (!context.state.in_constructor) {
-					return b.call('$.set', left, value);
-				} else if (transformed) {
-					return b.assignment(operator, /** @type {Pattern} */ (context.visit(left)), value);
-				}
+			if (private_state.kind !== 'raw_state' && should_proxy(value, context.state.scope)) {
+				value = build_proxy_reassignment(value, b.member(b.this, private_state.id));
 			}
+
+			if (context.state.in_constructor) {
+				// inside the constructor, we can assign to `this.#foo.v` rather than using `$.set`,
+				// since nothing is tracking the signal at this point
+				return b.assignment(operator, /** @type {Pattern} */ (context.visit(left)), value);
+			}
+
+			return b.call('$.set', left, value);
 		}
 	}
 

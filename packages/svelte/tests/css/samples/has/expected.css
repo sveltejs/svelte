@@ -75,7 +75,7 @@
 	/* (unused) .unused x:has(y) {
 		color: red;
 	}*/
-	/* (unused) .unused:has(.unused)*/ x.svelte-xyz:has(y:where(.svelte-xyz)) {
+	/* (unused) .unused:has(.unused),*/ x.svelte-xyz:has(y:where(.svelte-xyz)) {
 		color: green;
 	}
 

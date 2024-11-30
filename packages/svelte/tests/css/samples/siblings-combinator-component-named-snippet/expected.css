@@ -1,0 +1,4 @@
+
+	x.svelte-xyz + y:where(.svelte-xyz) {
+		color: green;
+	}

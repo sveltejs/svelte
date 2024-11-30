@@ -278,7 +278,6 @@ export function clean_nodes(
 		trimmed.push({
 			type: 'Comment',
 			data: '',
-			parent: first.parent,
 			start: -1,
 			end: -1
 		});

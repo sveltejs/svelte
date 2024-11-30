@@ -438,7 +438,9 @@ export function analyze_component(root, source, options) {
 			keyframes: []
 		},
 		source,
-		undefined_exports: new Map()
+		undefined_exports: new Map(),
+		snippet_renderers: new Map(),
+		snippets: new Set()
 	};
 
 	if (!runes) {
@@ -709,6 +711,16 @@ export function analyze_component(root, source, options) {
 		);
 	}
 
+	for (const [node, resolved] of analysis.snippet_renderers) {
+		if (!resolved) {
+			node.metadata.snippets = analysis.snippets;
+		}
+
+		for (const snippet of node.metadata.snippets) {
+			snippet.metadata.sites.add(node);
+		}
+	}
+
 	if (
 		analysis.uses_render_tags &&
 		(analysis.uses_slots || (!analysis.custom_element && analysis.slot_names.size > 0))
@@ -721,8 +733,8 @@ export function analyze_component(root, source, options) {
 		analyze_css(analysis.css.ast, analysis);
 
 		// mark nodes as scoped/unused/empty etc
-		for (const element of analysis.elements) {
-			prune(analysis.css.ast, element);
+		for (const node of analysis.elements) {
+			prune(analysis.css.ast, node);
 		}
 
 		const { comment } = analysis.css.ast.content;
@@ -736,18 +748,16 @@ export function analyze_component(root, source, options) {
 			warn_unused(analysis.css.ast);
 		}
 
-		outer: for (const element of analysis.elements) {
-			if (element.type === 'RenderTag') continue;
-
-			if (element.metadata.scoped) {
+		outer: for (const node of analysis.elements) {
+			if (node.metadata.scoped) {
 				// Dynamic elements in dom mode always use spread for attributes and therefore shouldn't have a class attribute added to them
 				// TODO this happens during the analysis phase, which shouldn't know anything about client vs server
-				if (element.type === 'SvelteElement' && options.generate === 'client') continue;
+				if (node.type === 'SvelteElement' && options.generate === 'client') continue;
 
 				/** @type {AST.Attribute | undefined} */
 				let class_attribute = undefined;
 
-				for (const attribute of element.attributes) {
+				for (const attribute of node.attributes) {
 					if (attribute.type === 'SpreadAttribute') {
 						// The spread method appends the hash to the end of the class attribute on its own
 						continue outer;
@@ -769,8 +779,7 @@ export function analyze_component(root, source, options) {
 							data: ` ${analysis.css.hash}`,
 							raw: ` ${analysis.css.hash}`,
 							start: -1,
-							end: -1,
-							parent: null
+							end: -1
 						};
 
 						if (Array.isArray(class_attribute.value)) {
@@ -780,20 +789,19 @@ export function analyze_component(root, source, options) {
 						}
 					}
 				} else {
-					element.attributes.push(
+					node.attributes.push(
 						create_attribute('class', -1, -1, [
 							{
 								type: 'Text',
 								data: analysis.css.hash,
 								raw: analysis.css.hash,
-								parent: null,
 								start: -1,
 								end: -1
 							}
 						])
 					);
-					if (is_custom_element_node(element) && element.attributes.length === 1) {
-						mark_subtree_dynamic(element.metadata.path);
+					if (is_custom_element_node(node) && node.attributes.length === 1) {
+						mark_subtree_dynamic(node.metadata.path);
 					}
 				}
 			}
