@@ -212,12 +212,12 @@ export function is_tag_valid_with_parent(tag, parent_tag) {
 		case 'thead':
 		case 'tbody':
 		case 'tfoot':
-			return `\`<${tag}>\` must be the child of a \`<table>\` (but got \`<${parent_tag}>\`)`;
+			return `\`<${tag}>\` must be the child of a \`<table>\`, not a \`<${parent_tag}>\``;
 		case 'td':
 		case 'th':
-			return `\`<${tag}>\` must be the child of a \`<tr>\` (but got \`<${parent_tag}>\`)`;
+			return `\`<${tag}>\` must be the child of a \`<tr>\`, not a \`<${parent_tag}>\``;
 		case 'tr':
-			return `\`<tr>\` must be the child of a \`<thead>\`, \`<tbody>\`, or \`<tfoot>\` (but got \`<${parent_tag}>\`)`;
+			return `\`<tr>\` must be the child of a \`<thead>\`, \`<tbody>\`, or \`<tfoot>\`, not a \`<${parent_tag}>\``;
 	}
 
 	return null;
