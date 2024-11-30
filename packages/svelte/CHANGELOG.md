@@ -1,5 +1,15 @@
 # svelte
 
+## 5.2.12
+
+### Patch Changes
+
+- fix: upgrade to esm-env 1.2.1 to fix issues with non-Vite setups ([#14470](https://github.com/sveltejs/svelte/pull/14470))
+
+- fix: prevent infinite loops when pruning CSS ([#14474](https://github.com/sveltejs/svelte/pull/14474))
+
+- fix: generate correct code when encountering object expression statement ([#14480](https://github.com/sveltejs/svelte/pull/14480))
+
 ## 5.2.11
 
 ### Patch Changes
