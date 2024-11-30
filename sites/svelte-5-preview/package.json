@@ -19,7 +19,7 @@
     "@sveltejs/site-kit": "6.0.0-next.64",
     "@sveltejs/vite-plugin-svelte": "^4.0.0-next.6",
     "@vercel/speed-insights": "^1.0.0",
-    "esrap": "^1.2.2",
+    "esrap": "^1.2.3",
     "marked": "^9.0.0",
     "publint": "^0.2.7",
     "shiki": "^0.14.7",

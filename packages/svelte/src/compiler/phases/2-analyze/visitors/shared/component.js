@@ -51,7 +51,7 @@ export function visit_component(node, context) {
 			if (binding?.initial?.type === 'SnippetBlock') {
 				node.metadata.snippets.add(binding.initial);
 			}
-		} else {
+		} else if (expression.type !== 'Literal') {
 			resolved = false;
 		}
 	}

@@ -44,6 +44,12 @@ const nesting_selector = {
 };
 
 /**
+ * Snippets encountered already (avoids infinite loops)
+ * @type {Set<Compiler.AST.SnippetBlock>}
+ */
+const seen = new Set();
+
+/**
  *
  * @param {Compiler.Css.StyleSheet} stylesheet
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
@@ -59,6 +65,8 @@ export function prune(stylesheet, element) {
 		},
 		ComplexSelector(node) {
 			const selectors = get_relative_selectors(node);
+
+			seen.clear();
 
 			if (
 				apply_selector(selectors, /** @type {Compiler.Css.Rule} */ (node.metadata.rule), element)
@@ -193,6 +201,9 @@ function apply_combinator(relative_selector, parent_selectors, rule, node) {
 				const parent = path[i];
 
 				if (parent.type === 'SnippetBlock') {
+					if (seen.has(parent)) return true;
+					seen.add(parent);
+
 					for (const site of parent.metadata.sites) {
 						if (apply_combinator(relative_selector, parent_selectors, rule, site)) {
 							return true;
@@ -335,6 +346,8 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 			descendant_elements.push(element);
 		}
 
+		const seen = new Set();
+
 		/**
 		 * @param {Compiler.SvelteNode} node
 		 * @param {{ is_child: boolean }} state
@@ -355,6 +368,9 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 						}
 					} else if (node.type === 'RenderTag') {
 						for (const snippet of node.metadata.snippets) {
+							if (seen.has(snippet)) continue;
+
+							seen.add(snippet);
 							walk_children(snippet.body, context.state);
 						}
 					} else {
@@ -618,6 +634,8 @@ function get_following_sibling_elements(element, include_self) {
 	// ...then walk them, starting from the node after the one
 	// containing the element in question
 
+	const seen = new Set();
+
 	/** @param {Compiler.SvelteNode} node */
 	function get_siblings(node) {
 		walk(node, null, {
@@ -629,6 +647,9 @@ function get_following_sibling_elements(element, include_self) {
 			},
 			RenderTag(node) {
 				for (const snippet of node.metadata.snippets) {
+					if (seen.has(snippet)) continue;
+
+					seen.add(snippet);
 					get_siblings(snippet.body);
 				}
 			}
@@ -804,9 +825,10 @@ function get_element_parent(node) {
 /**
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  * @param {boolean} adjacent_only
+ * @param {Set<Compiler.AST.SnippetBlock>} seen
  * @returns {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>}
  */
-function get_possible_element_siblings(node, adjacent_only) {
+function get_possible_element_siblings(node, adjacent_only, seen = new Set()) {
 	/** @type {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>} */
 	const result = new Map();
 	const path = node.metadata.path;
@@ -865,8 +887,11 @@ function get_possible_element_siblings(node, adjacent_only) {
 		}
 
 		if (current.type === 'SnippetBlock') {
+			if (seen.has(current)) break;
+			seen.add(current);
+
 			for (const site of current.metadata.sites) {
-				const siblings = get_possible_element_siblings(site, adjacent_only);
+				const siblings = get_possible_element_siblings(site, adjacent_only, seen);
 				add_to_map(siblings, result);
 
 				if (adjacent_only && current.metadata.sites.size === 1 && has_definite_elements(siblings)) {
