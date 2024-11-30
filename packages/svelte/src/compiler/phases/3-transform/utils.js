@@ -1,6 +1,5 @@
 /** @import { Context } from 'zimmerframe' */
 /** @import { TransformState } from './types.js' */
-/** @import { Scope } from '../scope.js' */
 /** @import { AST, Binding, Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler' */
 /** @import { Node, Expression, CallExpression } from 'estree' */
 import {
