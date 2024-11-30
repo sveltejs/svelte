@@ -142,7 +142,7 @@
     "acorn-typescript": "^1.4.13",
     "aria-query": "^5.3.1",
     "axobject-query": "^4.1.0",
-    "esm-env": "^1.2.0",
+    "esm-env": "^1.2.1",
     "esrap": "^1.2.3",
     "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
