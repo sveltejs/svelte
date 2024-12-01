@@ -990,16 +990,17 @@ function get_parent_context(component_context) {
  * @returns {T}
  */
 export function update(signal, d = 1) {
-	var value = get(signal);
+	//@ts-ignore
+	var value = +get(signal);
 
 	if(typeof value === "bigint") {
 		//@ts-ignore
 		set(signal, value + BigInt(d));
 	}else {
 		//@ts-ignore
-		set(signal, +value + d);
+		set(signal, value + d);
 	}
-
+	//@ts-ignore
 	return value;
 }
 
@@ -1010,14 +1011,12 @@ export function update(signal, d = 1) {
  * @returns {T}
  */
 export function update_pre(signal, d = 1) {
-	var value = get(signal);
+	//@ts-ignore
+	var value = +get(signal);
 	
 	if(typeof value === "bigint") {
 		//@ts-ignore
 		d = BigInt(d);
-	}else {
-		//@ts-ignore
-		value = +value;
 	}
 	//@ts-ignore
 	return set(signal, value + d);
