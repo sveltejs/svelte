@@ -995,12 +995,13 @@ export function update(signal, d = 1) {
 	if(typeof value === "bigint") {
 		//@ts-ignore
 		set(signal, value + BigInt(d));
+		return value;
 	}else {
 		//@ts-ignore
 		set(signal, +value + d);
+		//@ts-ignore
+		return +value;
 	}
-	//@ts-ignore
-	return value;
 }
 
 /**
@@ -1014,13 +1015,11 @@ export function update_pre(signal, d = 1) {
 	
 	if(typeof value === "bigint") {
 		//@ts-ignore
-		d = BigInt(d);
+		return set(signal, value + BigInt(d));
 	}else{
 		//@ts-ignore
-		value = +value;
+		return set(signal, +value + d);
 	}
-	//@ts-ignore
-	return set(signal, value + d);
 }
 
 /**
