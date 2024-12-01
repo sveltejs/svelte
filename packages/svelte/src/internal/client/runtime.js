@@ -1068,23 +1068,32 @@ function get_parent_context(component_context) {
 }
 
 /**
- * @param {Value<number>} signal
+ * @template {number | bigint} T
+ * @param {Value<T>} signal
  * @param {1 | -1} [d]
- * @returns {number}
+ * @returns {T}
  */
 export function update(signal, d = 1) {
-	var value = +get(signal);
-	set(signal, value + d);
-	return value;
+	var value = get(signal);
+	var result = d === 1 ? value++ : value--;
+
+	set(signal, value);
+
+	// @ts-expect-error
+	return result;
 }
 
 /**
- * @param {Value<number>} signal
+ * @template {number | bigint} T
+ * @param {Value<T>} signal
  * @param {1 | -1} [d]
- * @returns {number}
+ * @returns {T}
  */
 export function update_pre(signal, d = 1) {
-	return set(signal, +get(signal) + d);
+	var value = get(signal);
+
+	// @ts-expect-error
+	return set(signal, d === 1 ? ++value : --value);
 }
 
 /**
