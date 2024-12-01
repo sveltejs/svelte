@@ -75,3 +75,5 @@ If an `onerror` function is provided, it will be called with the same two `error
 	</button>
 {/if}
 ```
+
+If an error occurs inside the `onerror` function (or if you rethrow the error), it will be handled by a parent boundary if such exists.
