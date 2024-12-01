@@ -6,6 +6,9 @@ title: <svelte:boundary>
 <svelte:boundary onerror={handler}>...</svelte:boundary>
 ```
 
+> [!NOTE]
+> This feature was added in 5.3.0
+
 Boundaries allow you to guard against errors in part of your app from breaking the app as a whole, and to recover from those errors.
 
 If an error occurs while rendering or updating the children of a `<svelte:boundary>`, or running any [`$effect`]($effect) functions contained therein, the contents will be removed.
