@@ -363,6 +363,11 @@ export namespace AST {
 		name: 'svelte:fragment';
 	}
 
+	export interface SvelteBoundary extends BaseElement {
+		type: 'SvelteBoundary';
+		name: 'svelte:boundary';
+	}
+
 	export interface SvelteHead extends BaseElement {
 		type: 'SvelteHead';
 		name: 'svelte:head';
@@ -520,7 +525,8 @@ export type ElementLike =
 	| AST.SvelteHead
 	| AST.SvelteOptionsRaw
 	| AST.SvelteSelf
-	| AST.SvelteWindow;
+	| AST.SvelteWindow
+	| AST.SvelteBoundary;
 
 export type TemplateNode =
 	| AST.Root

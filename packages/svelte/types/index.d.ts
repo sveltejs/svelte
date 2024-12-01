@@ -1163,6 +1163,11 @@ declare module 'svelte/compiler' {
 			name: 'svelte:fragment';
 		}
 
+		export interface SvelteBoundary extends BaseElement {
+			type: 'SvelteBoundary';
+			name: 'svelte:boundary';
+		}
+
 		export interface SvelteHead extends BaseElement {
 			type: 'SvelteHead';
 			name: 'svelte:head';
@@ -1280,7 +1285,8 @@ declare module 'svelte/compiler' {
 		| AST.SvelteHead
 		| AST.SvelteOptionsRaw
 		| AST.SvelteSelf
-		| AST.SvelteWindow;
+		| AST.SvelteWindow
+		| AST.SvelteBoundary;
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
 	 * For example, it can be used to convert a `<style lang="sass">` block into vanilla CSS.

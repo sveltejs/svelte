@@ -124,6 +124,7 @@ export {
 	update_store,
 	mark_store_binding
 } from './reactivity/store.js';
+export { boundary } from './dom/blocks/boundary.js';
 export { set_text } from './render.js';
 export {
 	get,

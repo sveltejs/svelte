@@ -1229,6 +1229,24 @@ export function svelte_body_illegal_attribute(node) {
 }
 
 /**
+ * Valid attributes on `<svelte:boundary>` are `onerror` and `failed`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_boundary_invalid_attribute(node) {
+	e(node, "svelte_boundary_invalid_attribute", "Valid attributes on `<svelte:boundary>` are `onerror` and `failed`");
+}
+
+/**
+ * Attribute value must be a non-string expression
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_boundary_invalid_attribute_value(node) {
+	e(node, "svelte_boundary_invalid_attribute_value", "Attribute value must be a non-string expression");
+}
+
+/**
  * Invalid component definition — must be an `{expression}`
  * @param {null | number | NodeLike} node
  * @returns {never}

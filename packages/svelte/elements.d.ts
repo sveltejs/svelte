@@ -2044,6 +2044,10 @@ export interface SvelteHTMLElements {
 		[name: string]: any;
 	};
 	'svelte:head': { [name: string]: any };
+	'svelte:boundary': {
+		onerror?: (error: unknown, reset: () => void) => void;
+		failed?: import('svelte').Snippet<[error: unknown, reset: () => void]>;
+	};
 
 	[name: string]: { [name: string]: any };
 }
