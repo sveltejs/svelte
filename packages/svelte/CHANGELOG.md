@@ -1,5 +1,11 @@
 # svelte
 
+## 5.3.0
+
+### Minor Changes
+
+- feat: add error boundaries with `<svelte:boundary>` ([#14211](https://github.com/sveltejs/svelte/pull/14211))
+
 ## 5.2.12
 
 ### Patch Changes
