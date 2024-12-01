@@ -1,5 +1,13 @@
 # svelte
 
+## 5.3.1
+
+### Patch Changes
+
+- fix: treat spread elements the same as call expressions ([#14488](https://github.com/sveltejs/svelte/pull/14488))
+
+- fix: correctly increment/decrement bigints ([#14485](https://github.com/sveltejs/svelte/pull/14485))
+
 ## 5.3.0
 
 ### Minor Changes
