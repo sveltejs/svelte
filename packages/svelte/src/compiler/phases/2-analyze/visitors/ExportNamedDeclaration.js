@@ -57,21 +57,5 @@ export function ExportNamedDeclaration(node, context) {
 				}
 			}
 		}
-
-		if (!context.state.ast_type /* .svelte.js module */ || context.state.ast_type === 'module') {
-			for (const specified of node.specifiers) {
-				const binding = context.state.scope.get(specified.local.name);
-
-				if (!binding) continue;
-
-				if (binding.kind === 'derived') {
-					e.derived_invalid_export(node);
-				}
-
-				if ((binding.kind === 'state' || binding.kind === 'raw_state') && binding.reassigned) {
-					e.state_invalid_export(node);
-				}
-			}
-		}
 	}
 }

@@ -128,8 +128,8 @@ let current_version = 0;
 // to prevent memory leaks, we skip adding the reaction.
 export let skip_reaction = false;
 // Handle collecting all signals which are read during a specific time frame
-export let is_signals_recorded = false;
-let captured_signals = new Set();
+/** @type {Set<Value> | null} */
+export let captured_signals = null;
 
 // Handling runtime component context
 /** @type {ComponentContext | null} */
@@ -732,7 +732,7 @@ export function get(signal) {
 		return value;
 	}
 
-	if (is_signals_recorded) {
+	if (captured_signals !== null) {
 		captured_signals.add(signal);
 	}
 
@@ -767,9 +767,24 @@ export function get(signal) {
 	} else if (is_derived && /** @type {Derived} */ (signal).deps === null) {
 		var derived = /** @type {Derived} */ (signal);
 		var parent = derived.parent;
+		var target = derived;
 
-		if (parent !== null && !parent.deriveds?.includes(derived)) {
-			(parent.deriveds ??= []).push(derived);
+		while (parent !== null) {
+			// Attach the derived to the nearest parent effect, if there are deriveds
+			// in between then we also need to attach them too
+			if ((parent.f & DERIVED) !== 0) {
+				var parent_derived = /** @type {Derived} */ (parent);
+
+				target = parent_derived;
+				parent = parent_derived.parent;
+			} else {
+				var parent_effect = /** @type {Effect} */ (parent);
+
+				if (!parent_effect.deriveds?.includes(target)) {
+					(parent_effect.deriveds ??= []).push(target);
+				}
+				break;
+			}
 		}
 	}
 
@@ -800,21 +815,18 @@ export function safe_get(signal) {
  * @param {() => any} fn
  */
 export function invalidate_inner_signals(fn) {
-	var previous_is_signals_recorded = is_signals_recorded;
 	var previous_captured_signals = captured_signals;
-	is_signals_recorded = true;
 	captured_signals = new Set();
 	var captured = captured_signals;
 	var signal;
 	try {
 		untrack(fn);
-	} finally {
-		is_signals_recorded = previous_is_signals_recorded;
-		if (is_signals_recorded) {
+		if (previous_captured_signals !== null) {
 			for (signal of captured_signals) {
 				previous_captured_signals.add(signal);
 			}
 		}
+	} finally {
 		captured_signals = previous_captured_signals;
 	}
 	for (signal of captured) {

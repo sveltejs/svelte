@@ -1,9 +1,14 @@
 <script>
-	let count = $state(43);
+	let count = $state();
 </script>
 
-{#await count}
-	loading
-{:then count}
-	{count}
-{/await}
+<button onclick={() => count = 1}>number</button>
+<button onclick={() => count = null}>nullify</button>
+
+<p>
+	{#await count}
+		loading
+	{:then count}
+		{count}
+	{/await}
+</p>

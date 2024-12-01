@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.1.15",
+  "version": "5.2.12",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -120,7 +120,7 @@
   "devDependencies": {
     "@jridgewell/trace-mapping": "^0.3.25",
     "@playwright/test": "^1.46.1",
-    "@rollup/plugin-commonjs": "^28.0.0",
+    "@rollup/plugin-commonjs": "^28.0.1",
     "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-virtual": "^3.0.2",
@@ -142,9 +142,9 @@
     "acorn-typescript": "^1.4.13",
     "aria-query": "^5.3.1",
     "axobject-query": "^4.1.0",
-    "esm-env": "^1.0.0",
-    "esrap": "^1.2.2",
-    "is-reference": "^3.0.2",
+    "esm-env": "^1.2.1",
+    "esrap": "^1.2.3",
+    "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.11",
     "zimmerframe": "^1.1.2"

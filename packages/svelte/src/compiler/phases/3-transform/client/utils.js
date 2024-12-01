@@ -1,5 +1,5 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, Pattern, PrivateIdentifier, Statement } from 'estree' */
-/** @import { AST, Binding, SvelteNode } from '#compiler' */
+/** @import { Binding, SvelteNode } from '#compiler' */
 /** @import { ClientTransformState, ComponentClientTransformState, ComponentContext } from './types.js' */
 /** @import { Analysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
@@ -259,7 +259,8 @@ export function should_proxy(node, scope) {
 			binding.initial.type !== 'FunctionDeclaration' &&
 			binding.initial.type !== 'ClassDeclaration' &&
 			binding.initial.type !== 'ImportDeclaration' &&
-			binding.initial.type !== 'EachBlock'
+			binding.initial.type !== 'EachBlock' &&
+			binding.initial.type !== 'SnippetBlock'
 		) {
 			return should_proxy(binding.initial, null);
 		}
@@ -310,44 +311,4 @@ export function create_derived_block_argument(node, context) {
  */
 export function create_derived(state, arg) {
 	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
-}
-
-/**
- * Whether a variable can be referenced directly from template string.
- * @param {import('#compiler').Binding | undefined} binding
- * @returns {boolean}
- */
-export function can_inline_variable(binding) {
-	return (
-		!!binding &&
-		// in a `<script module>` block
-		!binding.scope.parent &&
-		// to prevent the need for escaping
-		binding.initial?.type === 'Literal'
-	);
-}
-
-/**
- * @param {(AST.Text | AST.ExpressionTag) | (AST.Text | AST.ExpressionTag)[]} node_or_nodes
- * @param {import('./types.js').ComponentClientTransformState} state
- */
-export function is_inlinable_expression(node_or_nodes, state) {
-	let nodes = Array.isArray(node_or_nodes) ? node_or_nodes : [node_or_nodes];
-	let has_expression_tag = false;
-	for (let value of nodes) {
-		if (value.type === 'ExpressionTag') {
-			if (value.expression.type === 'Identifier') {
-				const binding = state.scope
-					.owner(value.expression.name)
-					?.declarations.get(value.expression.name);
-				if (!can_inline_variable(binding)) {
-					return false;
-				}
-			} else {
-				return false;
-			}
-			has_expression_tag = true;
-		}
-	}
-	return has_expression_tag;
 }

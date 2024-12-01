@@ -1,7 +1,7 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression } from 'estree' */
 /** @import { AST, DelegatedEvent, SvelteNode } from '#compiler' */
 /** @import { Context } from '../types' */
-import { is_capture_event, is_delegated } from '../../../../utils.js';
+import { cannot_be_set_statically, is_capture_event, is_delegated } from '../../../../utils.js';
 import {
 	get_attribute_chunks,
 	get_attribute_expression,
@@ -16,12 +16,26 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
 export function Attribute(node, context) {
 	context.next();
 
-	// special case
-	if (node.name === 'value') {
-		const parent = /** @type {SvelteNode} */ (context.path.at(-1));
-		if (parent.type === 'RegularElement' && parent.name === 'option') {
+	const parent = /** @type {SvelteNode} */ (context.path.at(-1));
+
+	if (parent.type === 'RegularElement') {
+		// special case <option value="" />
+		if (node.name === 'value' && parent.name === 'option') {
 			mark_subtree_dynamic(context.path);
 		}
+
+		// special case <img loading="lazy" />
+		if (node.name === 'loading' && parent.name === 'img') {
+			mark_subtree_dynamic(context.path);
+		}
+	}
+
+	if (is_event_attribute(node)) {
+		mark_subtree_dynamic(context.path);
+	}
+
+	if (cannot_be_set_statically(node.name)) {
+		mark_subtree_dynamic(context.path);
 	}
 
 	if (node.value !== true) {

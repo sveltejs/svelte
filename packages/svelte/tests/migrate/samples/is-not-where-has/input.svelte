@@ -47,6 +47,8 @@ what if i'm talking about `:has()` in my blog?
 	div :where(:global(.class:is(span:has(* > *)))){}
 	div :is(:global(.class:is(span:is(:hover)), .x)){}
 
+	:global(button:has(.is-active)){}
+
 	div{
 		p:has(&){
 

@@ -9,12 +9,63 @@ import {
 	validate_slot_attribute
 } from './attribute.js';
 import { mark_subtree_dynamic } from './fragment.js';
+import { is_resolved_snippet } from './snippets.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
  * @param {Context} context
  */
 export function visit_component(node, context) {
+	node.metadata.path = [...context.path];
+
+	// link this node to all the snippets that it could render, so that we can prune CSS correctly
+	node.metadata.snippets = new Set();
+
+	// 'resolved' means we know which snippets this component might render. if it is `false`,
+	// then `node.metadata.snippets` is populated with every locally defined snippet
+	// once analysis is complete
+	let resolved = true;
+
+	for (const attribute of node.attributes) {
+		if (attribute.type === 'SpreadAttribute' || attribute.type === 'BindDirective') {
+			resolved = false;
+			continue;
+		}
+
+		if (attribute.type !== 'Attribute' || !is_expression_attribute(attribute)) {
+			continue;
+		}
+
+		const expression = get_attribute_expression(attribute);
+
+		// given an attribute like `foo={bar}`, if `bar` resolves to an import or a prop
+		// then we know it doesn't reference a locally defined snippet. if it resolves
+		// to a `{#snippet bar()}` then we know _which_ snippet it resolves to. in all
+		// other cases, we can't know (without much more complex static analysis) which
+		// snippets the component might render, so we treat the component as unresolved
+		if (expression.type === 'Identifier') {
+			const binding = context.state.scope.get(expression.name);
+
+			resolved &&= is_resolved_snippet(binding);
+
+			if (binding?.initial?.type === 'SnippetBlock') {
+				node.metadata.snippets.add(binding.initial);
+			}
+		} else if (expression.type !== 'Literal') {
+			resolved = false;
+		}
+	}
+
+	if (resolved) {
+		for (const child of node.fragment.nodes) {
+			if (child.type === 'SnippetBlock') {
+				node.metadata.snippets.add(child);
+			}
+		}
+	}
+
+	context.state.analysis.snippet_renderers.set(node, resolved);
+
 	mark_subtree_dynamic(context.path);
 
 	for (const attribute of node.attributes) {

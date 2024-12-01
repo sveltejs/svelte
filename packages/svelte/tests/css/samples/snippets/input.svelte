@@ -26,7 +26,7 @@
 		color: green;
 	}
 	p .foo {
-		color: purple; /* doesn't match, but our static analysis doesn't handle this currently */
+		color: red;
 	}
 	span div {
 		color: red;
