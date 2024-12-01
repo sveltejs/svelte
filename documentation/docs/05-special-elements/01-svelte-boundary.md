@@ -31,7 +31,7 @@ If an `failed` snippet is provided, it will be rendered with the error that was 
 ```
 
 > [!NOTE]
-> As with [snippets passed to components](svelte/snippet#Passing-snippets-to-components), the `failed` snippet can be passed explicitly as a property...
+> As with [snippets passed to components](snippet#Passing-snippets-to-components), the `failed` snippet can be passed explicitly as a property...
 >
 > ```svelte
 > <svelte:boundary {failed}>...</svelte:boundary>
