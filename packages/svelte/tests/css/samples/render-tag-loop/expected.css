@@ -1,5 +1,5 @@
 
-	div div.svelte-xyz {
+	div.svelte-xyz div:where(.svelte-xyz) {
 		color: green;
 	}
 	/* (unused) div + div {
