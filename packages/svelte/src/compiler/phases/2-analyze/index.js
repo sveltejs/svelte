@@ -51,6 +51,7 @@ import { RenderTag } from './visitors/RenderTag.js';
 import { SlotElement } from './visitors/SlotElement.js';
 import { SnippetBlock } from './visitors/SnippetBlock.js';
 import { SpreadAttribute } from './visitors/SpreadAttribute.js';
+import { SpreadElement } from './visitors/SpreadElement.js';
 import { StyleDirective } from './visitors/StyleDirective.js';
 import { SvelteBody } from './visitors/SvelteBody.js';
 import { SvelteComponent } from './visitors/SvelteComponent.js';
@@ -163,6 +164,7 @@ const visitors = {
 	SlotElement,
 	SnippetBlock,
 	SpreadAttribute,
+	SpreadElement,
 	StyleDirective,
 	SvelteBody,
 	SvelteComponent,
