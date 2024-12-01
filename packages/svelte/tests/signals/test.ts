@@ -779,6 +779,6 @@ describe('signals', () => {
 			assert.equal($.get(count), 1n);
 			assert.doesNotThrow(() => $.update_pre(count, -1));
 			assert.equal($.get(count), 0n);
-		}
-	})
+		};
+	});
 });

@@ -992,11 +992,11 @@ function get_parent_context(component_context) {
 export function update(signal, d = 1) {
 	var value = get(signal);
 
-	if(typeof value === "bigint") {
+	if (typeof value === 'bigint') {
 		//@ts-ignore
 		set(signal, value + BigInt(d));
 		return value;
-	}else {
+	} else {
 		//@ts-ignore
 		set(signal, +value + d);
 		//@ts-ignore
@@ -1012,11 +1012,11 @@ export function update(signal, d = 1) {
  */
 export function update_pre(signal, d = 1) {
 	var value = get(signal);
-	
-	if(typeof value === "bigint") {
+
+	if (typeof value === 'bigint') {
 		//@ts-ignore
 		return set(signal, value + BigInt(d));
-	}else{
+	} else {
 		//@ts-ignore
 		return set(signal, +value + d);
 	}
