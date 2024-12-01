@@ -972,23 +972,43 @@ function get_parent_context(component_context) {
 }
 
 /**
- * @param {Value<number>} signal
+ * @template {number|bigint} T
+ * @param {Value<T>} signal
  * @param {1 | -1} [d]
- * @returns {number}
+ * @returns {T}
  */
 export function update(signal, d = 1) {
-	var value = +get(signal);
-	set(signal, value + d);
+	var value = get(signal);
+
+	if(typeof value === "bigint") {
+		//@ts-ignore
+		set(signal, value + BigInt(d));
+	}else {
+		//@ts-ignore
+		set(signal, +value + d);
+	}
+
 	return value;
 }
 
 /**
- * @param {Value<number>} signal
+ * @template {number|bigint} T
+ * @param {Value<T>} signal
  * @param {1 | -1} [d]
- * @returns {number}
+ * @returns {T}
  */
 export function update_pre(signal, d = 1) {
-	return set(signal, +get(signal) + d);
+	var value = get(signal);
+	
+	if(typeof value === "bigint") {
+		//@ts-ignore
+		d = BigInt(d);
+	}else {
+		//@ts-ignore
+		value = +value;
+	}
+	//@ts-ignore
+	return set(signal, value + d);
 }
 
 /**
