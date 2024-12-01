@@ -991,17 +991,12 @@ function get_parent_context(component_context) {
  */
 export function update(signal, d = 1) {
 	var value = get(signal);
+	var result = d === 1 ? value++ : value--;
 
-	if (typeof value === 'bigint') {
-		// @ts-expect-error
-		set(signal, value + BigInt(d));
-		return value;
-	}
+	set(signal, value);
 
 	// @ts-expect-error
-	set(signal, +value + d);
-	// @ts-expect-error
-	return +value;
+	return result;
 }
 
 /**
