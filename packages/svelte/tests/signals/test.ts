@@ -740,6 +740,32 @@ describe('signals', () => {
 		};
 	});
 
+	test('nested deriveds clean up the relationships when used with untrack', () => {
+		return () => {
+			let a = render_effect(() => {});
+
+			const destroy = effect_root(() => {
+				a = render_effect(() => {
+					$.untrack(() => {
+						const b = derived(() => {
+							const c = derived(() => {});
+							$.untrack(() => {
+								$.get(c);
+							});
+						});
+						$.get(b);
+					});
+				});
+			});
+
+			assert.deepEqual(a.deriveds?.length, 1);
+
+			destroy();
+
+			assert.deepEqual(a.deriveds, null);
+		};
+	});
+
 	test('bigint states update correctly', () => {
 		return () => {
 			const count = state(0n);
