@@ -323,11 +323,21 @@ var setters_cache = new Map();
 
 /** @param {Element} element */
 function get_setters(element) {
-	var setters = setters_cache.get(element.nodeName);
+	var name = element.nodeName;
+	var setters = setters_cache.get(name);
+
 	if (setters) return setters;
-	setters_cache.set(element.nodeName, (setters = []));
+
+	setters = [];
+
+	// Don't cache the result for custom elements while they aren't connected yet,
+	// because during their upgrade they might add more setters
+	if (!name.includes('-') || element.isConnected) {
+		setters_cache.set(name, setters);
+	}
+
 	var descriptors;
-	var proto = get_prototype_of(element);
+	var proto = element;
 	var element_proto = Element.prototype;
 
 	// Stop at Element, from there on there's only unnecessary setters we're not interested in
