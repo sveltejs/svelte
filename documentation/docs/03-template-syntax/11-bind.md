@@ -53,7 +53,7 @@ In the case of a numeric input (`type="number"` or `type="range"`), the value wi
 
 If the input is empty or invalid (in the case of `type="number"`), the value is `undefined`.
 
-You can give the input a default value by setting the `defaultValue` property. This way, when the input is part of a form and its `form.reset()` method is invoked, it will revert to that value instead of the empty string. Note that for the initial render the value of the binding takes precedence if it's not `null` or `undefined`.
+If an `<input>` has a `defaultValue` and is part of a form, it will revert to that value instead of the empty string when the form is reset. Note that for the initial render the value of the binding takes precedence unless it is `null` or `undefined`.
 
 ```svelte
 <script>
@@ -61,10 +61,13 @@ You can give the input a default value by setting the `defaultValue` property. T
 </script>
 
 <form>
-	<input bind:value defaultValue="x">
+	<input bind:value defaultValue="not the empty string">
 	<input type="reset" value="Reset">
 </form>
 ```
+
+> [!NOTE]
+> Use reset buttons sparingly, and ensure that users won't accidentally click them while trying to submit the form.
 
 ## `<input bind:checked>`
 
@@ -77,7 +80,7 @@ Checkbox and radio inputs can be bound with `bind:checked`:
 </label>
 ```
 
-You can give the input a default value by setting the `defaultChecked` property. This way, when the input is part of a form and its `form.reset()` method is invoked, it will revert to that value instead of `false`. Note that for the initial render the value of the binding takes precedence if it's not `null` or `undefined`.
+If an `<input>` has a `defaultChecked` attribute and is part of a form, it will revert to that value instead of `false` when the form is reset. Note that for the initial render the value of the binding takes precedence unless it is `null` or `undefined`.
 
 ```svelte
 <script>
@@ -172,7 +175,7 @@ When the value of an `<option>` matches its text content, the attribute can be o
 </select>
 ```
 
-You can give the select a default value by setting the `selected` property on the elements that should be selected initially. This way, when the select is part of a form and its `form.reset()` method is invoked, it will revert to that value instead of the empty string (for single-value selects) or the empty array (for multi-value selects). Note that for the initial render the value of the binding takes precedence if it's not `undefined`.
+You can give the `<select>` a default value by adding a `selected` attribute to the`<option>` (or options, in the case of `<select multiple>`) that should be initially selected. If the `<select>` is part of a form, it will revert to that selection when the form is reset. Note that for the initial render the value of the binding takes precedence if it's not `undefined`.
 
 ```svelte
 <select bind:value={selected}>

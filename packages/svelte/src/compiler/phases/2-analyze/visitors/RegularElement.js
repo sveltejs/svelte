@@ -1,6 +1,6 @@
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
-import { cannot_be_set_statically, is_mathml, is_svg, is_void } from '../../../../utils.js';
+import { is_mathml, is_svg, is_void } from '../../../../utils.js';
 import {
 	is_tag_valid_with_ancestor,
 	is_tag_valid_with_parent

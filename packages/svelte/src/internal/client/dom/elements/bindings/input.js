@@ -36,7 +36,7 @@ export function bind_value(input, get, set = get) {
 
 	if (
 		// If we are hydrating and the value has since changed,
-		// then use the update value from the input instead.
+		// then use the updated value from the input instead.
 		(hydrating && input.defaultValue !== input.value) ||
 		// If defaultValue is set, then value == defaultValue
 		// TODO Svelte 6: remove input.value check and set to empty string?
