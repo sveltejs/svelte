@@ -1,5 +1,11 @@
 # svelte
 
+## 5.4.0
+
+### Minor Changes
+
+- feat: support `#each` without `as` ([#14396](https://github.com/sveltejs/svelte/pull/14396))
+
 ## 5.3.2
 
 ### Patch Changes
