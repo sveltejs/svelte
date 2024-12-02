@@ -34,7 +34,6 @@ export function UpdateExpression(node, context) {
 	}
 
 	const left = object(argument);
-	if (left === null) return context.next();
 
 	if (left === argument) {
 		const transform = context.state.transform;
@@ -45,25 +44,32 @@ export function UpdateExpression(node, context) {
 		}
 	}
 
-	const assignment = /** @type {Expression} */ (
-		context.visit(
-			b.assignment(
-				node.operator === '++' ? '+=' : '-=',
-				/** @type {Pattern} */ (argument),
-				b.literal(1)
+	/** @type {Expression} */
+	let result;
+
+	if (left === null || !context.state.transform[left.name]) {
+		result = /** @type {Expression} */ (context.next());
+	} else {
+		const assignment = /** @type {Expression} */ (
+			context.visit(
+				b.assignment(
+					node.operator === '++' ? '+=' : '-=',
+					/** @type {Pattern} */ (argument),
+					b.literal(1)
+				)
 			)
-		)
-	);
+		);
 
-	const parent = /** @type {Node} */ (context.path.at(-1));
-	const is_standalone = parent.type === 'ExpressionStatement'; // TODO and possibly others, but not e.g. the `test` of a WhileStatement
+		const parent = /** @type {Node} */ (context.path.at(-1));
+		const is_standalone = parent.type === 'ExpressionStatement'; // TODO and possibly others, but not e.g. the `test` of a WhileStatement
 
-	const update =
-		node.prefix || is_standalone
-			? assignment
-			: b.binary(node.operator === '++' ? '-' : '+', assignment, b.literal(1));
+		result =
+			node.prefix || is_standalone
+				? assignment
+				: b.binary(node.operator === '++' ? '-' : '+', assignment, b.literal(1));
+	}
 
 	return is_ignored(node, 'ownership_invalid_mutation')
-		? b.call('$.skip_ownership_validation', b.thunk(update))
-		: update;
+		? b.call('$.skip_ownership_validation', b.thunk(result))
+		: result;
 }
