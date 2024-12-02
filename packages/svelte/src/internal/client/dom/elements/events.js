@@ -11,7 +11,6 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../../runtime.js';
-import { without_reactive_context } from './bindings/shared.js';
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -62,9 +61,7 @@ export function create_event(event_name, dom, handler, options) {
 			handle_event_propagation.call(dom, event);
 		}
 		if (!event.cancelBubble) {
-			return without_reactive_context(() => {
-				return handler.call(this, event);
-			});
+			return handler.call(this, event);
 		}
 	}
 

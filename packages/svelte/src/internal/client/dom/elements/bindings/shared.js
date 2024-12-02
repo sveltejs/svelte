@@ -32,23 +32,6 @@ export function listen(target, events, handler, call_handler_immediately = true)
 }
 
 /**
- * @template T
- * @param {() => T} fn
- */
-export function without_reactive_context(fn) {
-	var previous_reaction = active_reaction;
-	var previous_effect = active_effect;
-	set_active_reaction(null);
-	set_active_effect(null);
-	try {
-		return fn();
-	} finally {
-		set_active_reaction(previous_reaction);
-		set_active_effect(previous_effect);
-	}
-}
-
-/**
  * Listen to the given event, and then instantiate a global form reset listener if not already done,
  * to notify all bindings when the form is reset
  * @param {HTMLElement} element
@@ -57,7 +40,7 @@ export function without_reactive_context(fn) {
  * @param {() => void} [on_reset]
  */
 export function listen_to_event_and_reset_event(element, event, handler, on_reset = handler) {
-	element.addEventListener(event, () => without_reactive_context(handler));
+	element.addEventListener(event, handler);
 	// @ts-expect-error
 	const prev = element.__on_r;
 	if (prev) {
