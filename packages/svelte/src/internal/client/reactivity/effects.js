@@ -464,12 +464,12 @@ export function destroy_effect(effect, remove_dom = true) {
 	}
 
 	// `first` and `child` are nulled out in destroy_effect_children
+	// we don't null out `parent` so that error propagation can work correctly
 	effect.next =
 		effect.prev =
 		effect.teardown =
 		effect.ctx =
 		effect.deps =
-		effect.parent =
 		effect.fn =
 		effect.nodes_start =
 		effect.nodes_end =

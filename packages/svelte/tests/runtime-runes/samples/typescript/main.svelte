@@ -27,6 +27,10 @@
 		export type Foo = true
 	}
 
+	export function overload(a: boolean): boolean;
+	export function overload(b: string): number;
+	export function overload(c: any): any {}
+
 	export type { Hello };
 </script>
 

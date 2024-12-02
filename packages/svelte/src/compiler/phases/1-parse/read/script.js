@@ -84,7 +84,6 @@ export function read_script(parser, start, attributes) {
 		end: parser.index,
 		context,
 		content: ast,
-		parent: null,
 		// @ts-ignore
 		attributes
 	};

@@ -9,9 +9,9 @@ import * as e from '../../../errors.js';
  * @param {Context} context
  */
 export function Text(node, context) {
-	const in_attribute = context.path.at(-1)?.type === 'Attribute';
+	const in_template = context.path.at(-1)?.type === 'Fragment';
 
-	if (!in_attribute && context.state.parent_element && regex_not_whitespace.test(node.data)) {
+	if (in_template && context.state.parent_element && regex_not_whitespace.test(node.data)) {
 		if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
 			e.node_invalid_placement(node, 'Text node', context.state.parent_element);
 		}

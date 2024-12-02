@@ -277,7 +277,6 @@ export function clean_nodes(
 		trimmed.push({
 			type: 'Comment',
 			data: '',
-			parent: first.parent,
 			start: -1,
 			end: -1
 		});
@@ -306,6 +305,7 @@ export function clean_nodes(
 				parent.type === 'SnippetBlock' ||
 				parent.type === 'EachBlock' ||
 				parent.type === 'SvelteComponent' ||
+				parent.type === 'SvelteBoundary' ||
 				parent.type === 'Component' ||
 				parent.type === 'SvelteSelf') &&
 			first &&
