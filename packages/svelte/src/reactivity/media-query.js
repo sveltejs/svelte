@@ -33,7 +33,7 @@ export class MediaQuery {
 	 * @param {boolean} [matches] Fallback value for the server
 	 */
 	constructor(query, matches) {
-		// For convenience (and because people likely forget them) we add the parentheses; double parantheses are not a problem
+		// For convenience (and because people likely forget them) we add the parentheses; double parentheses are not a problem
 		this.#query = window.matchMedia(`(${query})`);
 	}
 }
