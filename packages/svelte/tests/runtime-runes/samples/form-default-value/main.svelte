@@ -139,3 +139,18 @@
 
 	<input type="reset" value="Reset" />
 </form>
+
+<p>
+	Bound values:
+	<span class="test-1">{value1} {value3} {value6} {value8}</span>
+	<span class="test-2">{value9} {value12} {value14} {value16}</span>
+	<span class="test-3">{checked2} {checked4}</span>
+	<span class="test-4">{checked6} {checked8}</span>
+	<span class="test-5">{checked10}</span>
+	<span class="test-6">{selected1}</span>
+	<span class="test-7">{selected2}</span>
+	<span class="test-8">{selected3}</span>
+	<span class="test-9">{selected4}</span>
+	<span class="test-10">{selected5}</span>
+	<span class="test-11">{selected6}</span>
+</p>
