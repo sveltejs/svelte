@@ -13,7 +13,8 @@ import { increment } from './utils.js';
  * Usage example (reimplementing `MediaQuery`):
  *
  * ```js
- * import { createSubscriber, on } from 'svelte/reactivity';
+ * import { createSubscriber } from 'svelte/reactivity';
+ * import { on } from 'svelte/events';
  *
  * export class MediaQuery {
  * 	#query;
