@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../assert';
 const tick = () => Promise.resolve();
 
@@ -18,7 +19,8 @@ export default test({
 		assert.equal(p.innerHTML, 'Context works');
 		assert.equal(getComputedStyle(button).color, 'rgb(255, 0, 0)');
 
-		await button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		flushSync();
 
 		assert.equal(el.counter.count, 1);
 		assert.equal(button.innerHTML, 'count: 1');

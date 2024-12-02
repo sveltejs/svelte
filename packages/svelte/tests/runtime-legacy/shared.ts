@@ -35,6 +35,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	ssrHtml?: string;
 	compileOptions?: Partial<CompileOptions>;
 	props?: Props;
+	server_props?: Props;
 	before_test?: () => void;
 	after_test?: () => void;
 	test?: (args: {
@@ -59,8 +60,10 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 		};
 		logs: any[];
 		warnings: any[];
+		errors: any[];
+		hydrate: Function;
 	}) => void | Promise<void>;
-	test_ssr?: (args: { assert: Assert }) => void | Promise<void>;
+	test_ssr?: (args: { logs: any[]; assert: Assert }) => void | Promise<void>;
 	accessors?: boolean;
 	immutable?: boolean;
 	intro?: boolean;
@@ -68,6 +71,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	error?: string;
 	runtime_error?: string;
 	warnings?: string[];
+	errors?: string[];
 	expect_unhandled_rejections?: boolean;
 	withoutNormalizeHtml?: boolean | 'only-strip-comments';
 	recover?: boolean;
@@ -94,6 +98,15 @@ afterAll(() => {
 	process.removeListener('unhandledRejection', unhandled_rejection_handler);
 });
 
+// eslint-disable-next-line no-console
+let console_log = console.log;
+
+// eslint-disable-next-line no-console
+let console_warn = console.warn;
+
+// eslint-disable-next-line no-console
+let console_error = console.error;
+
 export function runtime_suite(runes: boolean) {
 	return suite_with_variants<RuntimeTest, 'hydrate' | 'ssr' | 'dom', CompileOptions>(
 		['dom', 'hydrate', 'ssr'],
@@ -103,13 +116,22 @@ export function runtime_suite(runes: boolean) {
 				if (config.skip_mode?.includes('hydrate')) return true;
 			}
 
+			if (
+				variant === 'dom' &&
+				(config.skip_mode?.includes('client') || (config.mode && !config.mode.includes('client')))
+			) {
+				return 'no-test';
+			}
+
 			if (variant === 'ssr') {
 				if (
 					(config.mode && !config.mode.includes('server')) ||
 					(!config.test_ssr &&
 						config.html === undefined &&
 						config.ssrHtml === undefined &&
-						config.error === undefined)
+						config.error === undefined &&
+						config.runtime_error === undefined &&
+						!config.mode?.includes('server'))
 				) {
 					return 'no-test';
 				}
@@ -128,8 +150,13 @@ export function runtime_suite(runes: boolean) {
 }
 
 async function common_setup(cwd: string, runes: boolean | undefined, config: RuntimeTest) {
+	const force_hmr = process.env.HMR && config.compileOptions?.dev !== false && !config.error;
+
 	const compileOptions: CompileOptions = {
 		generate: 'client',
+		rootDir: cwd,
+		dev: force_hmr ? true : undefined,
+		hmr: force_hmr ? true : undefined,
 		...config.compileOptions,
 		immutable: config.immutable,
 		accessors: 'accessors' in config ? config.accessors : true,
@@ -155,11 +182,10 @@ async function run_test_variant(
 ) {
 	let unintended_error = false;
 
-	// eslint-disable-next-line no-console
-	const { log, warn } = console;
-
 	let logs: string[] = [];
 	let warnings: string[] = [];
+	let errors: string[] = [];
+	let manual_hydrate = false;
 
 	{
 		// use some crude static analysis to determine if logs/warnings are intercepted.
@@ -176,7 +202,13 @@ async function run_test_variant(
 
 		if (str.slice(0, i).includes('logs')) {
 			// eslint-disable-next-line no-console
-			console.log = (...args) => logs.push(...args);
+			console.log = (...args) => {
+				logs.push(...args);
+			};
+		}
+
+		if (str.slice(0, i).includes('hydrate')) {
+			manual_hydrate = true;
 		}
 
 		if (str.slice(0, i).includes('warnings') || config.warnings) {
@@ -189,6 +221,13 @@ async function run_test_variant(
 				} else {
 					warnings.push(...args);
 				}
+			};
+		}
+
+		if (str.slice(0, i).includes('errors') || config.errors) {
+			// eslint-disable-next-line no-console
+			console.error = (...args) => {
+				errors.push(...args);
 			};
 		}
 	}
@@ -222,6 +261,8 @@ async function run_test_variant(
 			e.preventDefault();
 		});
 
+		globalThis.requestAnimationFrame = globalThis.setTimeout;
+
 		let mod = await import(`${cwd}/_output/client/main.svelte.js`);
 
 		const target = window.document.querySelector('main') as HTMLElement;
@@ -232,7 +273,9 @@ async function run_test_variant(
 			config.before_test?.();
 			// ssr into target
 			const SsrSvelteComponent = (await import(`${cwd}/_output/server/main.svelte.js`)).default;
-			const { html, head } = render(SsrSvelteComponent, { props: config.props || {} });
+			const { html, head } = render(SsrSvelteComponent, {
+				props: config.server_props ?? config.props ?? {}
+			});
 
 			fs.writeFileSync(`${cwd}/_output/rendered.html`, html);
 			target.innerHTML = html;
@@ -270,6 +313,7 @@ async function run_test_variant(
 
 			if (config.test_ssr) {
 				await config.test_ssr({
+					logs,
 					// @ts-expect-error
 					assert: {
 						...assert,
@@ -283,42 +327,42 @@ async function run_test_variant(
 
 			config.before_test?.();
 
-			// eslint-disable-next-line no-console
-			const error = console.error;
-			// eslint-disable-next-line no-console
-			console.error = (error) => {
-				if (typeof error === 'string' && error.startsWith('Hydration failed')) {
-					throw new Error(error);
-				}
-			};
-
 			let instance: any;
 			let props: any;
+			let hydrate_fn: Function = () => {
+				throw new Error('Ensure dom mode is skipped');
+			};
 
 			if (runes) {
 				props = proxy({ ...(config.props || {}) });
-
-				const render = variant === 'hydrate' ? hydrate : mount;
-				instance = render(mod.default, {
-					target,
-					props,
-					intro: config.intro,
-					recover: config.recover ?? false
-				});
+				if (manual_hydrate) {
+					hydrate_fn = () => {
+						instance = hydrate(mod.default, {
+							target,
+							props,
+							intro: config.intro,
+							recover: config.recover ?? false
+						});
+					};
+				} else {
+					const render = variant === 'hydrate' ? hydrate : mount;
+					instance = render(mod.default, {
+						target,
+						props,
+						intro: config.intro,
+						recover: config.recover ?? false
+					});
+				}
 			} else {
 				instance = createClassComponent({
 					component: mod.default,
 					props: config.props,
 					target,
-					immutable: config.immutable,
 					intro: config.intro,
 					recover: config.recover ?? false,
 					hydrate: variant === 'hydrate'
 				});
 			}
-
-			// eslint-disable-next-line no-console
-			console.error = error;
 
 			if (config.error) {
 				unintended_error = true;
@@ -354,7 +398,9 @@ async function run_test_variant(
 						raf,
 						compileOptions,
 						logs,
-						warnings
+						warnings,
+						errors,
+						hydrate: hydrate_fn
 					});
 				}
 
@@ -371,10 +417,18 @@ async function run_test_variant(
 
 				if (config.warnings) {
 					assert.deepEqual(warnings, config.warnings);
-				} else if (warnings.length && console.warn === warn) {
+				} else if (warnings.length && console.warn === console_warn) {
 					unintended_error = true;
-					warn.apply(console, warnings);
+					console_warn.apply(console, warnings);
 					assert.fail('Received unexpected warnings');
+				}
+
+				if (config.errors) {
+					assert.deepEqual(errors, config.errors);
+				} else if (errors.length && console.error === console_error) {
+					unintended_error = true;
+					console_error.apply(console, errors);
+					assert.fail('Received unexpected errors');
 				}
 
 				assert_html_equal(
@@ -392,15 +446,16 @@ async function run_test_variant(
 		}
 	} catch (err) {
 		if (config.runtime_error) {
-			assert.equal((err as Error).message, config.runtime_error);
+			assert.include((err as Error).message, config.runtime_error);
 		} else if (config.error && !unintended_error) {
-			assert.equal((err as Error).message, config.error);
+			assert.include((err as Error).message, config.error);
 		} else {
 			throw err;
 		}
 	} finally {
-		console.log = log;
-		console.warn = warn;
+		console.log = console_log;
+		console.warn = console_warn;
+		console.error = console_error;
 
 		config.after_test?.();
 

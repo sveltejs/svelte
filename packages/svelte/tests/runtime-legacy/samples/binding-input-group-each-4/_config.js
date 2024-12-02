@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -37,7 +38,7 @@ export default test({
 		<label><input type="checkbox" value="3" checked> 3</label>
 		<p>3</p>
 	`,
-	async test({ assert, component, target, window }) {
+	test({ assert, component, target, window }) {
 		const inputs = target.querySelectorAll('input');
 		assert.equal(inputs[0].checked, true);
 		assert.equal(inputs[1].checked, false);
@@ -58,8 +59,8 @@ export default test({
 		const event = new window.Event('change');
 
 		inputs[2].checked = true;
-		await inputs[2].dispatchEvent(event);
-		await Promise.resolve();
+		inputs[2].dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -84,8 +85,8 @@ export default test({
 		);
 
 		inputs[9].checked = true;
-		await inputs[9].dispatchEvent(event);
-		await Promise.resolve();
+		inputs[9].dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -110,24 +111,24 @@ export default test({
 		);
 
 		inputs[4].checked = false;
-		await inputs[4].dispatchEvent(event);
-		await Promise.resolve();
+		inputs[4].dispatchEvent(event);
+		flushSync();
 
 		inputs[5].checked = true;
-		await inputs[5].dispatchEvent(event);
-		await Promise.resolve();
+		inputs[5].dispatchEvent(event);
+		flushSync();
 
 		inputs[6].checked = true;
-		await inputs[6].dispatchEvent(event);
-		await Promise.resolve();
+		inputs[6].dispatchEvent(event);
+		flushSync();
 
 		inputs[7].checked = true;
-		await inputs[7].dispatchEvent(event);
-		await Promise.resolve();
+		inputs[7].dispatchEvent(event);
+		flushSync();
 
 		inputs[11].checked = false;
-		await inputs[11].dispatchEvent(event);
-		await Promise.resolve();
+		inputs[11].dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

@@ -91,11 +91,32 @@ All other features, including stores, are still fully supported in runes mode.
 
 `beforeUpdate` and `afterUpdate` are deprecated — use `$effect.pre` and `$effect` instead, as these are more conservative about when they run code. Everything else will remain.
 
+### Prettier formatting is broken, what gives?
+
+`svelte-lsp` ships with a stable version of Svelte to support the largest number of people out of the box. To make the language server compatible with Svelte 5 you will need to install the latest versions of `prettier` and `prettier-plugin-svelte` in your project and create (or update) a `.prettierrc` file:
+
+```sh
+npm i --save-dev prettier-plugin-svelte prettier
+```
+
+```json
+/// file: .prettierrc
+{
+	"plugins": ["prettier-plugin-svelte"],
+	"overrides": [
+		{
+			"files": "*.svelte",
+			"options": { "parser": "svelte" }
+		}
+	]
+}
+```
+
 ## Schedule and future plans
 
 ### When is it coming out?
 
-When it's done. The goal is sometime in early 2024.
+When it's done. The goal is sometime in 2024.
 
 ### Should I prepare my code for Svelte 5?
 
@@ -112,7 +133,7 @@ npm install svelte@next
 You can also opt into Svelte 5 when creating a new SvelteKit project:
 
 ```bash
-npm create svelte@latest
+npx sv create
 ```
 
 ### What's left to do?
@@ -133,8 +154,8 @@ We appreciate your enthusiasm! We welcome issues on the [sveltejs/svelte](https:
 
 ### How can I share feedback or cool examples of what this enables?
 
-You can use the `#svelte-5-alpha` channel on the [Discord server](https://svelte.dev/chat) or the tag `#svelte-5-alpha` on social media.
+You can use the `#svelte-5-rc` channel on the [Discord server](https://svelte.dev/chat) or the tag `#svelte-5` on social media.
 
 ### My question wasn't answered. What gives?
 
-It must not have been asked frequently enough. To fix that, stop by the `#svelte-5-alpha` channel of the [Discord server](https://svelte.dev/chat).
+It must not have been asked frequently enough. To fix that, stop by the `#svelte-5-rc` channel of the [Discord server](https://svelte.dev/chat).

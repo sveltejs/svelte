@@ -2,9 +2,10 @@
  * @typedef BindingProperty
  * @property {string} [event] This is set if the binding corresponds to the property name on the dom element it's bound to
  * 							  and there's an event that notifies of a change to that property
- * @property {string} [type] Set this to `set` if updates are written to the dom property
+ * @property {boolean} [bidirectional] Set this to `true` if updates are written to the dom property
  * @property {boolean} [omit_in_ssr] Set this to true if the binding should not be included in SSR
  * @property {string[]} [valid_elements] If this is set, the binding is only valid on the given elements
+ * @property {string[]} [invalid_elements] If this is set, the binding is invalid on the given elements
  */
 
 /**
@@ -14,7 +15,8 @@ export const binding_properties = {
 	// media
 	currentTime: {
 		valid_elements: ['audio', 'video'],
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		bidirectional: true
 	},
 	duration: {
 		valid_elements: ['audio', 'video'],
@@ -24,7 +26,8 @@ export const binding_properties = {
 	focused: {},
 	paused: {
 		valid_elements: ['audio', 'video'],
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		bidirectional: true
 	},
 	buffered: {
 		valid_elements: ['audio', 'video'],
@@ -40,15 +43,18 @@ export const binding_properties = {
 	},
 	volume: {
 		valid_elements: ['audio', 'video'],
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		bidirectional: true
 	},
 	muted: {
 		valid_elements: ['audio', 'video'],
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		bidirectional: true
 	},
 	playbackRate: {
 		valid_elements: ['audio', 'video'],
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		bidirectional: true
 	},
 	seeking: {
 		valid_elements: ['audio', 'video'],
@@ -85,9 +91,18 @@ export const binding_properties = {
 		omit_in_ssr: true
 	},
 	// document
+	activeElement: {
+		valid_elements: ['svelte:document'],
+		omit_in_ssr: true
+	},
 	fullscreenElement: {
 		valid_elements: ['svelte:document'],
 		event: 'fullscreenchange',
+		omit_in_ssr: true
+	},
+	pointerLockElement: {
+		valid_elements: ['svelte:document'],
+		event: 'pointerlockchange',
 		omit_in_ssr: true
 	},
 	visibilityState: {
@@ -114,11 +129,13 @@ export const binding_properties = {
 	},
 	scrollX: {
 		valid_elements: ['svelte:window'],
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		bidirectional: true
 	},
 	scrollY: {
 		valid_elements: ['svelte:window'],
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		bidirectional: true
 	},
 	online: {
 		valid_elements: ['svelte:window'],
@@ -131,59 +148,80 @@ export const binding_properties = {
 	},
 	// dimensions
 	clientWidth: {
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
 	},
 	clientHeight: {
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
 	},
 	offsetWidth: {
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
 	},
 	offsetHeight: {
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
 	},
 	contentRect: {
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
 	},
 	contentBoxSize: {
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
 	},
 	borderBoxSize: {
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
 	},
 	devicePixelContentBoxSize: {
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		invalid_elements: ['svelte:window', 'svelte:document']
 	},
 	// checkbox/radio
 	indeterminate: {
 		event: 'change',
-		type: 'set',
+		bidirectional: true,
 		valid_elements: ['input'],
 		omit_in_ssr: true // no corresponding attribute
 	},
 	checked: {
-		valid_elements: ['input']
+		valid_elements: ['input'],
+		bidirectional: true
 	},
 	group: {
-		valid_elements: ['input']
+		valid_elements: ['input'],
+		bidirectional: true
 	},
 	// various
 	this: {
 		omit_in_ssr: true
 	},
-	innerText: {},
-	innerHTML: {},
-	textContent: {},
+	innerText: {
+		invalid_elements: ['svelte:window', 'svelte:document'],
+		bidirectional: true
+	},
+	innerHTML: {
+		invalid_elements: ['svelte:window', 'svelte:document'],
+		bidirectional: true
+	},
+	textContent: {
+		invalid_elements: ['svelte:window', 'svelte:document'],
+		bidirectional: true
+	},
 	open: {
 		event: 'toggle',
-		type: 'set',
+		bidirectional: true,
 		valid_elements: ['details']
 	},
 	value: {
-		valid_elements: ['input', 'textarea', 'select']
+		valid_elements: ['input', 'textarea', 'select'],
+		bidirectional: true
 	},
 	files: {
 		valid_elements: ['input'],
-		omit_in_ssr: true
+		omit_in_ssr: true,
+		bidirectional: true
 	}
 };

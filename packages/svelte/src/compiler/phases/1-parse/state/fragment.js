@@ -1,8 +1,9 @@
+/** @import { Parser } from '../index.js' */
 import element from './element.js';
 import tag from './tag.js';
 import text from './text.js';
 
-/** @param {import('../index.js').Parser} parser */
+/** @param {Parser} parser */
 export default function fragment(parser) {
 	if (parser.match('<')) {
 		return element;

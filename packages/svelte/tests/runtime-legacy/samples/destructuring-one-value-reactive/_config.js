@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -5,9 +6,10 @@ export default test({
 	<button>false</button>
 	<button>click handler marks foo as reactive</button>
 `,
-	async test({ assert, target }) {
+	test({ assert, target }) {
 		const btn = target.querySelector('button');
-		await btn?.click();
+		btn?.click();
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

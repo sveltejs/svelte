@@ -10,7 +10,7 @@ export default test({
 		ok(p);
 
 		const styles = window.getComputedStyle(p);
-		assert.equal(styles.color, 'green');
+		assert.equal(styles.color, 'rgb(0, 128, 0)');
 		assert.equal(styles.transform, 'translateX(45px)');
 		assert.equal(styles.border, '100px solid pink');
 

@@ -14,7 +14,7 @@ There are many ways to contribute to Svelte, and many of them do not involve wri
 - Simply start using Svelte. Go through the [Getting Started](https://svelte.dev/docs#getting-started) guide. Does everything work as expected? If not, we're always looking for improvements. Let us know by [opening an issue](#reporting-new-issues).
 - Look through the [open issues](https://github.com/sveltejs/svelte/issues). A good starting point would be issues tagged [good first issue](https://github.com/sveltejs/svelte/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22). Provide workarounds, ask for clarification, or suggest labels. Help [triage issues](#triaging-issues-and-pull-requests).
 - If you find an issue you would like to fix, [open a pull request](#pull-requests).
-- Read through our [tutorials](https://learn.svelte.dev/). If you find anything that is confusing or can be improved, you can make edits by clicking "Edit this page" at the bottom left of the tutorial page.
+- Read through our [tutorials](https://svelte.dev/tutorial). If you find anything that is confusing or can be improved, you can make edits by clicking "Edit this page" at the bottom left of the tutorial page.
 - Take a look at the [features requested](https://github.com/sveltejs/svelte/labels/feature%20request) by others in the community and consider opening a pull request if you see something you want to work on.
 
 Contributions are very welcome. If you think you need help planning your contribution, please ping us on Discord at [svelte.dev/chat](https://svelte.dev/chat) and let us know you are looking for a bit of help.
@@ -159,6 +159,10 @@ When adding a new breaking change, follow this template in your pull request:
 - **Why make this breaking change**:
 - **Severity (number of people affected x effort)**:
 ```
+
+### Reviewing pull requests
+
+If you'd like to manually test a pull request in another pnpm project, you can do so by running `pnpm add -D "github:sveltejs/svelte#path:packages/svelte&branch-name"` in that project.
 
 ## License
 

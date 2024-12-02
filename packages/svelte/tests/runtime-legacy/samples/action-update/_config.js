@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -5,7 +6,7 @@ export default test({
 		<button>action</button>
 	`,
 
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const button = target.querySelector('button');
 		ok(button);
 
@@ -13,7 +14,8 @@ export default test({
 		const leave = new window.MouseEvent('mouseleave');
 		const ctrlPress = new window.KeyboardEvent('keydown', { ctrlKey: true });
 
-		await button.dispatchEvent(enter);
+		button.dispatchEvent(enter);
+		flushSync();
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -22,7 +24,8 @@ export default test({
 		`
 		);
 
-		await window.dispatchEvent(ctrlPress);
+		window.dispatchEvent(ctrlPress);
+		flushSync();
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -31,7 +34,8 @@ export default test({
 		`
 		);
 
-		await button.dispatchEvent(leave);
+		button.dispatchEvent(leave);
+		flushSync();
 		assert.htmlEqual(
 			target.innerHTML,
 			`

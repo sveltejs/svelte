@@ -1,3 +1,4 @@
+/** @import { ModuleCompileOptions, ValidatedModuleCompileOptions, CompileOptions, ValidatedCompileOptions } from '#compiler' */
 import * as e from './errors.js';
 import * as w from './warnings.js';
 
@@ -8,7 +9,21 @@ import * as w from './warnings.js';
  */
 
 const common = {
-	filename: string(undefined),
+	filename: string('(unknown)'),
+
+	// default to process.cwd() where it exists to replicate svelte4 behavior (and make Deno work with this as well)
+	// see https://github.com/sveltejs/svelte/blob/b62fc8c8fd2640c9b99168f01b9d958cb2f7574f/packages/svelte/src/compiler/compile/Component.js#L211
+	/* eslint-disable */
+	rootDir: string(
+		typeof process !== 'undefined'
+			? process.cwd?.()
+			: // @ts-expect-error
+				typeof Deno !== 'undefined'
+				? // @ts-expect-error
+					Deno.cwd()
+				: undefined
+	),
+	/* eslint-enable */
 
 	dev: boolean(false),
 
@@ -24,18 +39,20 @@ const common = {
 		}
 
 		return input;
-	})
+	}),
+
+	warningFilter: fun(() => true)
 };
 
 export const validate_module_options =
-	/** @type {Validator<import('#compiler').ModuleCompileOptions, import('#compiler').ValidatedModuleCompileOptions>} */ (
+	/** @type {Validator<ModuleCompileOptions, ValidatedModuleCompileOptions>} */ (
 		object({
 			...common
 		})
 	);
 
 export const validate_component_options =
-	/** @type {Validator<import('#compiler').CompileOptions, import('#compiler').ValidatedCompileOptions>} */ (
+	/** @type {Validator<CompileOptions, ValidatedCompileOptions>} */ (
 		object({
 			...common,
 
@@ -73,15 +90,21 @@ export const validate_component_options =
 
 			immutable: deprecate(w.options_deprecated_immutable, boolean(false)),
 
-			legacy: object({
-				componentApi: boolean(false)
+			legacy: removed(
+				'The legacy option has been removed. If you are using this because of legacy.componentApi, use compatibility.componentApi instead'
+			),
+
+			compatibility: object({
+				componentApi: list([4, 5], 5)
 			}),
 
 			loopGuardTimeout: warn_removed(w.options_removed_loop_guard_timeout),
 
 			name: string(undefined),
 
-			namespace: list(['html', 'svg', 'foreign']),
+			namespace: list(['html', 'mathml', 'svg']),
+
+			modernAst: boolean(false),
 
 			outputFilename: string(undefined),
 
@@ -242,6 +265,20 @@ function string(fallback, allow_empty = true) {
 
 		if (!allow_empty && input === '') {
 			throw_error(`${keypath} cannot be empty`);
+		}
+
+		return input;
+	});
+}
+
+/**
+ * @param {string[]} fallback
+ * @returns {Validator}
+ */
+function string_array(fallback) {
+	return validator(fallback, (input, keypath) => {
+		if (input && !Array.isArray(input)) {
+			throw_error(`${keypath} should be a string array, if specified`);
 		}
 
 		return input;

@@ -3,7 +3,7 @@
 </script>
 
 <!-- valid -->
-<button on:click={() => {}}></button>
+<button on:click={() => {}}>click me</button>
 <!-- svelte-ignore a11y_interactive_supports_focus -->
 <div on:keydown={() => {}} role="button"></div>
 <input type="text" on:click={() => {}} />

@@ -4,6 +4,6 @@ export default test({
 	error: {
 		code: 'attribute_duplicate',
 		message: 'Attributes need to be unique',
-		position: [17, 17]
+		position: [17, 25]
 	}
 });

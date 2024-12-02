@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -18,7 +19,7 @@ export default test({
 		<pre>{"foo":"a","bar":"b","baz":"c"}</pre>
 	`,
 
-	async test({ assert, component, target, window }) {
+	test({ assert, component, target, window }) {
 		const input = target.querySelector('input');
 		ok(input);
 		const event = new window.Event('input');
@@ -27,8 +28,8 @@ export default test({
 
 		// edit bar
 		input.value = 'e';
-		await input.dispatchEvent(event);
-		await Promise.resolve();
+		input.dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -43,8 +44,8 @@ export default test({
 		assert.equal(input.value, 'c');
 
 		input.value = 'f';
-		await input.dispatchEvent(event);
-		await Promise.resolve();
+		input.dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -59,8 +60,8 @@ export default test({
 		assert.equal(input.value, 'a');
 
 		input.value = 'd';
-		await input.dispatchEvent(event);
-		await Promise.resolve();
+		input.dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

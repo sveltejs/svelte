@@ -1,8 +1,9 @@
+/** @import { Component } from '#server' */
 import { DEV } from 'esm-env';
 import { on_destroy } from './index.js';
 import * as e from '../shared/errors.js';
 
-/** @type {import('#server').Component | null} */
+/** @type {Component | null} */
 export var current_component = null;
 
 /**
@@ -53,12 +54,19 @@ function get_or_init_context_map(name) {
 	return (current_component.c ??= new Map(get_parent_context(current_component) || undefined));
 }
 
-export function push() {
+/**
+ * @param {Function} [fn]
+ */
+export function push(fn) {
 	current_component = { p: current_component, c: null, d: null };
+	if (DEV) {
+		// component function
+		current_component.function = fn;
+	}
 }
 
 export function pop() {
-	var component = /** @type {import('#server').Component} */ (current_component);
+	var component = /** @type {Component} */ (current_component);
 
 	var ondestroy = component.d;
 
@@ -70,7 +78,7 @@ export function pop() {
 }
 
 /**
- * @param {import('#server').Component} component_context
+ * @param {Component} component_context
  * @returns {Map<unknown, unknown> | null}
  */
 function get_parent_context(component_context) {

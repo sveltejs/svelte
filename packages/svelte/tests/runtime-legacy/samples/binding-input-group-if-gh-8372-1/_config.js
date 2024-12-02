@@ -1,7 +1,8 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
-	async test({ assert, target, component, window }) {
+	test({ assert, target, component, window }) {
 		const button = target.querySelector('button');
 		ok(button);
 		const clickEvent = new window.Event('click', { bubbles: true });
@@ -27,24 +28,29 @@ export default test({
 		validate_inputs(true, true);
 
 		input1.checked = false;
-		await input1.dispatchEvent(changeEvent);
+		input1.dispatchEvent(changeEvent);
+		flushSync();
 		assert.deepEqual(component.test, ['b']);
 
 		input2.checked = false;
-		await input2.dispatchEvent(changeEvent);
+		input2.dispatchEvent(changeEvent);
+		flushSync();
 		assert.deepEqual(component.test, []);
 
 		input1.checked = true;
 		input2.checked = true;
-		await input1.dispatchEvent(changeEvent);
-		await input2.dispatchEvent(changeEvent);
+		input1.dispatchEvent(changeEvent);
+		input2.dispatchEvent(changeEvent);
+		flushSync();
 		assert.deepEqual(component.test, ['a', 'b']);
 
-		await button.dispatchEvent(clickEvent);
+		button.dispatchEvent(clickEvent);
+		flushSync();
 		assert.deepEqual(component.test, ['a', 'b']); // should it be ['a'] only? valid arguments for both outcomes
 
 		input1.checked = false;
-		await input1.dispatchEvent(changeEvent);
+		input1.dispatchEvent(changeEvent);
+		flushSync();
 		assert.deepEqual(component.test, []);
 	}
 });

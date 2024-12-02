@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -11,13 +12,14 @@ export default test({
 		<p>value: initial</p>
 	`,
 
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const input = target.querySelector('input');
 		ok(input);
 		const event = new window.Event('input');
 
 		input.value = 'changed';
-		await input.dispatchEvent(event);
+		input.dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

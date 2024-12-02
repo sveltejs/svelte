@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -22,15 +23,15 @@ export default test({
 		<input type="checkbox" value="c" data-index="z-2">
 	`,
 
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const inputs = target.querySelectorAll('input');
 		const checked = new Set();
 
 		/** @param {number} i */
-		const checkInbox = async (i) => {
+		const checkInbox = (i) => {
 			checked.add(i);
 			inputs[i].checked = true;
-			await inputs[i].dispatchEvent(event);
+			inputs[i].dispatchEvent(event);
 		};
 
 		for (let i = 0; i < 18; i++) {
@@ -39,17 +40,20 @@ export default test({
 
 		const event = new window.Event('change');
 
-		await checkInbox(2);
+		checkInbox(2);
+		flushSync();
 		for (let i = 0; i < 18; i++) {
 			assert.equal(inputs[i].checked, checked.has(i));
 		}
 
-		await checkInbox(12);
+		checkInbox(12);
+		flushSync();
 		for (let i = 0; i < 18; i++) {
 			assert.equal(inputs[i].checked, checked.has(i));
 		}
 
-		await checkInbox(8);
+		checkInbox(8);
+		flushSync();
 		for (let i = 0; i < 18; i++) {
 			assert.equal(inputs[i].checked, checked.has(i));
 		}

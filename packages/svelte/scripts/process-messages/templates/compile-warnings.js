@@ -1,27 +1,19 @@
-import { getLocator } from 'locate-character';
+import { warnings, ignore_stack, ignore_map, warning_filter } from './state.js';
+import { CompileDiagnostic } from './utils/compile_diagnostic.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
 
-/** @type {import('#compiler').Warning[]} */
-let warnings = [];
+class InternalCompileWarning extends CompileDiagnostic {
+	name = 'CompileWarning';
 
-/** @type {string | undefined} */
-let filename;
-
-let locator = getLocator('', { offsetLine: 1 });
-
-/**
- * @param {{
- *   source: string;
- *   filename: string | undefined;
- * }} options
- * @returns {import('#compiler').Warning[]}
- */
-export function reset_warnings(options) {
-	filename = options.filename;
-	locator = getLocator(options.source, { offsetLine: 1 });
-
-	return (warnings = []);
+	/**
+	 * @param {string} code
+	 * @param {string} message
+	 * @param {[number, number] | undefined} position
+	 */
+	constructor(code, message, position) {
+		super(code, message, position);
+	}
 }
 
 /**
@@ -30,17 +22,24 @@ export function reset_warnings(options) {
  * @param {string} message
  */
 function w(node, code, message) {
-	// @ts-expect-error
-	if (node?.ignores?.has(code)) return;
+	let stack = ignore_stack;
+	if (node) {
+		stack = ignore_map.get(node) ?? ignore_stack;
+	}
+	if (stack && stack.at(-1)?.has(code)) return;
 
-	warnings.push({
+	const warning = new InternalCompileWarning(
 		code,
 		message,
-		filename,
-		start: node?.start !== undefined ? locator(node.start) : undefined,
-		end: node?.end !== undefined ? locator(node.end) : undefined
-	});
+		node && node.start !== undefined ? [node.start, node.end ?? node.start] : undefined
+	);
+
+	if (!warning_filter(warning)) return;
+
+	warnings.push(warning);
 }
+
+export const codes = CODES;
 
 /**
  * MESSAGE

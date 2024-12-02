@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -8,7 +9,8 @@ export default test({
 		assert.htmlEqual(count?.innerHTML ?? '', '0');
 		assert.htmlEqual(fallback?.innerHTML ?? '', 'fallback');
 
-		await count?.click();
+		count?.click();
+		flushSync();
 		assert.htmlEqual(count?.innerHTML ?? '', '1');
 		assert.htmlEqual(fallback?.innerHTML ?? '', 'fallback');
 	}

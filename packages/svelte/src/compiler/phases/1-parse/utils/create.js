@@ -1,11 +1,16 @@
+/** @import { AST } from '#compiler' */
+
 /**
  * @param {any} transparent
- * @returns {import('#compiler').Fragment}
+ * @returns {AST.Fragment}
  */
 export function create_fragment(transparent = false) {
 	return {
 		type: 'Fragment',
 		nodes: [],
-		transparent
+		metadata: {
+			transparent,
+			dynamic: false
+		}
 	};
 }

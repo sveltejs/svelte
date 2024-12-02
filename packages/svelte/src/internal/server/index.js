@@ -1,87 +1,44 @@
+/** @import { ComponentType, SvelteComponent } from 'svelte' */
+/** @import { Component, Payload, RenderOutput } from '#server' */
+/** @import { Store } from '#shared' */
+export { FILENAME, HMR } from '../../constants.js';
+import { attr } from '../shared/attributes.js';
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
 	UNINITIALIZED,
-	DOMBooleanAttributes,
-	RawTextElements,
-	disallowed_paragraph_contents,
-	interactive_elements,
-	is_tag_valid_with_parent
+	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
+	ELEMENT_IS_NAMESPACED
 } from '../../constants.js';
+
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
-import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
-
-/**
- * @typedef {{
- * 	tag: string;
- * 	parent: null | Element;
- * }} Element
- */
-
-/**
- * @typedef {{
- * 	head: string;
- * 	html: string;
- * }} RenderOutput
- */
-
-/**
- * @typedef {{
- * 	out: string;
- * 	anchor: number;
- * 	head: {
- * 		title: string;
- * 		out: string;
- * 		anchor: number;
- * 	};
- * }} Payload
- */
+import { is_boolean_attribute, is_void } from '../../utils.js';
+import { reset_elements } from './dev.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 const INVALID_ATTR_NAME_CHAR_REGEX =
 	/[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
 
-export const VoidElements = new Set([
-	'area',
-	'base',
-	'br',
-	'col',
-	'embed',
-	'hr',
-	'img',
-	'input',
-	'keygen',
-	'link',
-	'menuitem',
-	'meta',
-	'param',
-	'source',
-	'track',
-	'wbr'
-]);
-
-/**
- * @type {Element | null}
- */
-let current_element = null;
-
-/** @returns {Payload} */
-function create_payload() {
-	return { out: '', head: { title: '', out: '', anchor: 0 }, anchor: 0 };
-}
+/** List of elements that require raw contents and should not have SSR comments put in them */
+const RAW_TEXT_ELEMENTS = ['textarea', 'script', 'style', 'title'];
 
 /**
  * @param {Payload} to_copy
  * @returns {Payload}
  */
-export function copy_payload(to_copy) {
+export function copy_payload({ out, css, head }) {
 	return {
-		...to_copy,
-		head: { ...to_copy.head }
+		out,
+		css: new Set(css),
+		head: {
+			title: head.title,
+			out: head.out
+		}
 	};
 }
 
@@ -94,59 +51,6 @@ export function copy_payload(to_copy) {
 export function assign_payload(p1, p2) {
 	p1.out = p2.out;
 	p1.head = p2.head;
-	p1.anchor = p2.anchor;
-}
-
-/**
- * @param {Payload} payload
- * @param {string} message
- */
-function error_on_client(payload, message) {
-	message =
-		`Svelte SSR validation error:\n\n${message}\n\n` +
-		'Ensure your components render valid HTML as the browser will try to repair invalid HTML, ' +
-		'which may result in content being shifted around and will likely result in a hydration mismatch.';
-	// eslint-disable-next-line no-console
-	console.error(message);
-	payload.head.out += `<script>console.error(\`${message}\`)</script>`;
-}
-
-/**
- * @param {string} tag
- * @param {Payload} payload
- */
-export function push_element(tag, payload) {
-	if (current_element !== null && !is_tag_valid_with_parent(tag, current_element.tag)) {
-		error_on_client(payload, `<${tag}> is invalid inside <${current_element.tag}>`);
-	}
-	if (interactive_elements.has(tag)) {
-		let element = current_element;
-		while (element !== null) {
-			if (interactive_elements.has(element.tag)) {
-				error_on_client(payload, `<${tag}> is invalid inside <${element.tag}>`);
-			}
-			element = element.parent;
-		}
-	}
-	if (disallowed_paragraph_contents.includes(tag)) {
-		let element = current_element;
-		while (element !== null) {
-			if (element.tag === 'p') {
-				error_on_client(payload, `<${tag}> is invalid inside <p>`);
-			}
-			element = element.parent;
-		}
-	}
-	current_element = {
-		tag,
-		parent: current_element
-	};
-}
-
-export function pop_element() {
-	if (current_element !== null) {
-		current_element = current_element.parent;
-	}
 }
 
 /**
@@ -156,21 +60,24 @@ export function pop_element() {
  * @param {() => void} children_fn
  * @returns {void}
  */
-export function element(payload, tag, attributes_fn, children_fn) {
-	payload.out += `<${tag} `;
-	attributes_fn();
-	payload.out += `>`;
+export function element(payload, tag, attributes_fn = noop, children_fn = noop) {
+	payload.out += '<!---->';
 
-	if (!VoidElements.has(tag)) {
-		if (!RawTextElements.includes(tag)) {
-			payload.out += BLOCK_OPEN;
+	if (tag) {
+		payload.out += `<${tag} `;
+		attributes_fn();
+		payload.out += `>`;
+
+		if (!is_void(tag)) {
+			children_fn();
+			if (!RAW_TEXT_ELEMENTS.includes(tag)) {
+				payload.out += EMPTY_COMMENT;
+			}
+			payload.out += `</${tag}>`;
 		}
-		children_fn();
-		if (!RawTextElements.includes(tag)) {
-			payload.out += BLOCK_CLOSE;
-		}
-		payload.out += `</${tag}>`;
 	}
+
+	payload.out += '<!---->';
 }
 
 /**
@@ -180,36 +87,58 @@ export function element(payload, tag, attributes_fn, children_fn) {
 export let on_destroy = [];
 
 /**
- * @param {typeof import('svelte').SvelteComponent} component
- * @param {{ props: Record<string, any>; context?: Map<any, any> }} options
+ * Only available on the server and when compiling with the `server` option.
+ * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
+ * @template {Record<string, any>} Props
+ * @param {import('svelte').Component<Props> | ComponentType<SvelteComponent<Props>>} component
+ * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }} [options]
  * @returns {RenderOutput}
  */
-export function render(component, options) {
-	const payload = create_payload();
+export function render(component, options = {}) {
+	/** @type {Payload} */
+	const payload = { out: '', css: new Set(), head: { title: '', out: '' } };
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
 	payload.out += BLOCK_OPEN;
 
+	let reset_reset_element;
+
+	if (DEV) {
+		// prevent parent/child element state being corrupted by a bad render
+		reset_reset_element = reset_elements();
+	}
+
 	if (options.context) {
 		push();
-		/** @type {import('#server').Component} */ (current_component).c = options.context;
+		/** @type {Component} */ (current_component).c = options.context;
 	}
 
 	// @ts-expect-error
-	component(payload, options.props, {}, {});
+	component(payload, options.props ?? {}, {}, {});
 
 	if (options.context) {
 		pop();
+	}
+
+	if (reset_reset_element) {
+		reset_reset_element();
 	}
 
 	payload.out += BLOCK_CLOSE;
 	for (const cleanup of on_destroy) cleanup();
 	on_destroy = prev_on_destroy;
 
+	let head = payload.head.out + payload.head.title;
+
+	for (const { hash, code } of payload.css) {
+		head += `<style id="${hash}">${code}</style>`;
+	}
+
 	return {
-		head: payload.head.out || payload.head.title ? payload.head.out + payload.head.title : '',
-		html: payload.out
+		head,
+		html: payload.out,
+		body: payload.out
 	};
 }
 
@@ -220,22 +149,9 @@ export function render(component, options) {
  */
 export function head(payload, fn) {
 	const head_payload = payload.head;
-	payload.head.out += BLOCK_OPEN;
+	head_payload.out += BLOCK_OPEN;
 	fn(head_payload);
-	payload.head.out += BLOCK_CLOSE;
-}
-
-/**
- * @template V
- * @param {string} name
- * @param {V} value
- * @param {boolean} boolean
- * @returns {string}
- */
-export function attr(name, value, boolean) {
-	if (value == null || (!value && boolean) || (value === '' && name === 'class')) return '';
-	const assignment = boolean ? '' : `="${escape_html(value, true)}"`;
-	return ` ${name}${assignment}`;
+	head_payload.out += BLOCK_CLOSE;
 }
 
 /**
@@ -243,83 +159,76 @@ export function attr(name, value, boolean) {
  * @param {boolean} is_html
  * @param {Record<string, string>} props
  * @param {() => void} component
+ * @param {boolean} dynamic
  * @returns {void}
  */
-export function css_props(payload, is_html, props, component) {
+export function css_props(payload, is_html, props, component, dynamic = false) {
 	const styles = style_object_to_string(props);
+
 	if (is_html) {
-		payload.out += `<div style="display: contents; ${styles}"><!--[-->`;
+		payload.out += `<svelte-css-wrapper style="display: contents; ${styles}">`;
 	} else {
-		payload.out += `<g style="${styles}"><!--[-->`;
+		payload.out += `<g style="${styles}">`;
 	}
+
+	if (dynamic) {
+		payload.out += '<!---->';
+	}
+
 	component();
+
 	if (is_html) {
-		payload.out += `<!--]--></div>`;
+		payload.out += `<!----></svelte-css-wrapper>`;
 	} else {
-		payload.out += `<!--]--></g>`;
+		payload.out += `<!----></g>`;
 	}
 }
 
 /**
- * @param {Record<string, unknown>[]} attrs
- * @param {boolean} lowercase_attributes
- * @param {boolean} is_html
- * @param {string} class_hash
- * @param {{ styles: Record<string, string> | null; classes: string }} [additional]
+ * @param {Record<string, unknown>} attrs
+ * @param {Record<string, string>} [classes]
+ * @param {Record<string, string>} [styles]
+ * @param {number} [flags]
  * @returns {string}
  */
-export function spread_attributes(attrs, lowercase_attributes, is_html, class_hash, additional) {
-	/** @type {Record<string, unknown>} */
-	const merged_attrs = {};
-	let key;
+export function spread_attributes(attrs, classes, styles, flags = 0) {
+	if (styles) {
+		attrs.style = attrs.style
+			? style_object_to_string(merge_styles(/** @type {string} */ (attrs.style), styles))
+			: style_object_to_string(styles);
+	}
 
-	for (let i = 0; i < attrs.length; i++) {
-		const obj = attrs[i];
-		for (key in obj) {
-			// omit functions
-			if (typeof obj[key] !== 'function') {
-				merged_attrs[key] = obj[key];
+	if (classes) {
+		const classlist = attrs.class ? [attrs.class] : [];
+
+		for (const key in classes) {
+			if (classes[key]) {
+				classlist.push(key);
 			}
 		}
-	}
 
-	const styles = additional?.styles;
-	if (styles) {
-		if ('style' in merged_attrs) {
-			merged_attrs.style = style_object_to_string(
-				merge_styles(/** @type {string} */ (merged_attrs.style), styles)
-			);
-		} else {
-			merged_attrs.style = style_object_to_string(styles);
-		}
-	}
-
-	if (class_hash) {
-		if ('class' in merged_attrs) {
-			merged_attrs.class += ` ${class_hash}`;
-		} else {
-			merged_attrs.class = class_hash;
-		}
-	}
-	const classes = additional?.classes;
-	if (classes) {
-		if ('class' in merged_attrs) {
-			merged_attrs.class += ` ${classes}`;
-		} else {
-			merged_attrs.class = classes;
-		}
+		attrs.class = classlist.join(' ');
 	}
 
 	let attr_str = '';
 	let name;
 
-	for (name in merged_attrs) {
+	const is_html = (flags & ELEMENT_IS_NAMESPACED) === 0;
+	const lowercase = (flags & ELEMENT_PRESERVE_ATTRIBUTE_CASE) === 0;
+
+	for (name in attrs) {
+		// omit functions, internal svelte properties and invalid attribute names
+		if (typeof attrs[name] === 'function') continue;
+		if (name[0] === '$' && name[1] === '$') continue; // faster than name.startsWith('$$')
 		if (INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
-		if (lowercase_attributes) {
+
+		var value = attrs[name];
+
+		if (lowercase) {
 			name = name.toLowerCase();
 		}
-		const is_boolean = is_html && DOMBooleanAttributes.includes(name);
-		attr_str += attr(name, merged_attrs[name], is_boolean);
+
+		attr_str += attr(name, value, is_html && is_boolean_attribute(name));
 	}
 
 	return attr_str;
@@ -337,7 +246,12 @@ export function spread_props(props) {
 	for (let i = 0; i < props.length; i++) {
 		const obj = props[i];
 		for (key in obj) {
-			merged_props[key] = obj[key];
+			const desc = Object.getOwnPropertyDescriptor(obj, key);
+			if (desc) {
+				Object.defineProperty(merged_props, key, desc);
+			} else {
+				merged_props[key] = obj[key];
+			}
 		}
 	}
 	return merged_props;
@@ -354,7 +268,7 @@ export function stringify(value) {
 /** @param {Record<string, string>} style_object */
 function style_object_to_string(style_object) {
 	return Object.keys(style_object)
-		.filter(/** @param {any} key */ (key) => style_object[key])
+		.filter(/** @param {any} key */ (key) => style_object[key] != null && style_object[key] !== '')
 		.map(/** @param {any} key */ (key) => `${key}: ${escape_html(style_object[key], true)};`)
 		.join(' ');
 }
@@ -366,35 +280,35 @@ export function add_styles(style_object) {
 }
 
 /**
- * @param {string} style_attribute
- * @param {Record<string, string>} style_directive
+ * @param {string} attribute
+ * @param {Record<string, string>} styles
  */
-export function merge_styles(style_attribute, style_directive) {
+export function merge_styles(attribute, styles) {
 	/** @type {Record<string, string>} */
-	const style_object = {};
-	for (const individual_style of style_attribute.split(';')) {
-		const colon_index = individual_style.indexOf(':');
-		const name = individual_style.slice(0, colon_index).trim();
-		const value = individual_style.slice(colon_index + 1).trim();
-		if (!name) continue;
-		style_object[name] = value;
-	}
-	for (const name in style_directive) {
-		const value = style_directive[name];
-		if (value) {
-			style_object[name] = value;
-		} else {
-			delete style_object[name];
+	var merged = {};
+
+	if (attribute) {
+		for (var declaration of attribute.split(';')) {
+			var i = declaration.indexOf(':');
+			var name = declaration.slice(0, i).trim();
+			var value = declaration.slice(i + 1).trim();
+
+			if (name !== '') merged[name] = value;
 		}
 	}
-	return style_object;
+
+	for (name in styles) {
+		merged[name] = styles[name];
+	}
+
+	return merged;
 }
 
 /**
  * @template V
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('#shared').Store<V> | null | undefined} store
+ * @param {Store<V> | null | undefined} store
  * @returns {V}
  */
 export function store_get(store_values, store_name, store) {
@@ -421,7 +335,7 @@ export function store_get(store_values, store_name, store) {
 /**
  * Sets the new value of a store and returns that value.
  * @template V
- * @param {import('#shared').Store<V>} store
+ * @param {Store<V>} store
  * @param {V} value
  * @returns {V}
  */
@@ -435,10 +349,10 @@ export function store_set(store, value) {
  * @template V
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('#shared').Store<V>} store
+ * @param {Store<V>} store
  * @param {any} expression
  */
-export function mutate_store(store_values, store_name, store, expression) {
+export function store_mutate(store_values, store_name, store, expression) {
 	store_set(store, store_get(store_values, store_name, store));
 	return expression;
 }
@@ -446,7 +360,7 @@ export function mutate_store(store_values, store_name, store, expression) {
 /**
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('#shared').Store<number>} store
+ * @param {Store<number>} store
  * @param {1 | -1} [d]
  * @returns {number}
  */
@@ -459,7 +373,7 @@ export function update_store(store_values, store_name, store, d = 1) {
 /**
  * @param {Record<string, [any, any, any]>} store_values
  * @param {string} store_name
- * @param {import('#shared').Store<number>} store
+ * @param {Store<number>} store
  * @param {1 | -1} [d]
  * @returns {number}
  */
@@ -477,39 +391,24 @@ export function unsubscribe_stores(store_values) {
 }
 
 /**
- * @template V
- * @param {V} value
- * @param {() => V} fallback lazy because could contain side effects
- * @returns {V}
- */
-export function value_or_fallback(value, fallback) {
-	return value === undefined ? fallback() : value;
-}
-
-/**
- * @template V
- * @param {V} value
- * @param {() => Promise<V>} fallback lazy because could contain side effects
- * @returns {Promise<V>}
- */
-export async function value_or_fallback_async(value, fallback) {
-	return value === undefined ? fallback() : value;
-}
-
-/**
  * @param {Payload} payload
- * @param {void | ((payload: Payload, props: Record<string, unknown>) => void)} slot_fn
+ * @param {Record<string, any>} $$props
+ * @param {string} name
  * @param {Record<string, unknown>} slot_props
  * @param {null | (() => void)} fallback_fn
  * @returns {void}
  */
-export function slot(payload, slot_fn, slot_props, fallback_fn) {
-	if (slot_fn === undefined) {
-		if (fallback_fn !== null) {
-			fallback_fn();
-		}
-	} else {
+export function slot(payload, $$props, name, slot_props, fallback_fn) {
+	var slot_fn = $$props.$$slots?.[name];
+	// Interop: Can use snippets to fill slots
+	if (slot_fn === true) {
+		slot_fn = $$props[name === 'default' ? 'children' : name];
+	}
+
+	if (slot_fn !== undefined) {
 		slot_fn(payload, slot_props);
+	} else {
+		fallback_fn?.();
 	}
 }
 
@@ -541,11 +440,15 @@ export function sanitize_props(props) {
 
 /**
  * @param {Record<string, any>} props
- * @returns {Record<string, any>}
+ * @returns {Record<string, boolean>}
  */
 export function sanitize_slots(props) {
-	const sanitized = { ...props.$$slots };
-	if (props.children) sanitized.default = props.children;
+	/** @type {Record<string, boolean>} */
+	const sanitized = {};
+	if (props.children) sanitized.default = true;
+	for (const key in props.$$slots) {
+		sanitized[key] = true;
+	}
 	return sanitized;
 }
 
@@ -591,9 +494,12 @@ export { await_block as await };
 
 /** @param {any} array_like_or_iterator */
 export function ensure_array_like(array_like_or_iterator) {
-	return array_like_or_iterator?.length !== undefined
-		? array_like_or_iterator
-		: Array.from(array_like_or_iterator);
+	if (array_like_or_iterator) {
+		return array_like_or_iterator.length !== undefined
+			? array_like_or_iterator
+			: Array.from(array_like_or_iterator);
+	}
+	return [];
 }
 
 /**
@@ -619,13 +525,21 @@ export function once(get_value) {
 	};
 }
 
+export { attr };
+
+export { html } from './blocks/html.js';
+
 export { push, pop } from './context.js';
 
+export { push_element, pop_element } from './dev.js';
+
+export { snapshot } from '../shared/clone.js';
+
+export { fallback } from '../shared/utils.js';
+
 export {
-	add_snippet_symbol,
-	validate_component,
+	invalid_default_snippet,
 	validate_dynamic_element_tag,
-	validate_snippet,
 	validate_void_dynamic_element
 } from '../shared/validate.js';
 

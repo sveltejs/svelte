@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	export function preload({ foo }) {
 		return {
 			bar: foo * 2

@@ -1,0 +1,14 @@
+[
+	{
+		"code": "legacy_component_creation",
+		"message": "Svelte 5 components are no longer classes. Instantiate them using `mount` or `hydrate` (imported from 'svelte') instead.",
+		"start": {
+			"column": 1,
+			"line": 7
+		},
+		"end": {
+			"column": 26,
+			"line": 7
+		}
+	}
+]

@@ -1,3 +1,9 @@
 <style>
-	.x > :global {}
+	/* ok */
+	.x :global {
+	}
+
+	/* not ok */
+	.x > :global {
+	}
 </style>

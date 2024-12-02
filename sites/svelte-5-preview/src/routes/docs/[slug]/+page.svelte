@@ -18,7 +18,7 @@
 
 	<meta name="twitter:title" content="{data.page.title} • Docs • Svelte 5 preview" />
 	<meta name="twitter:description" content="{data.page.title} • Svelte 5 preview documentation" />
-	<meta name="Description" content="{data.page.title} • Svelte 5 preview documentation" />
+	<meta name="description" content="{data.page.title} • Svelte 5 preview documentation" />
 </svelte:head>
 
 <div class="text" id="docs-content" use:copy_code_descendants>

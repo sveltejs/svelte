@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -15,7 +16,7 @@ export default test({
 		</div>
 		<button>Button</button>
 	`,
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const input = target.querySelector('input');
 		ok(input);
 
@@ -23,8 +24,8 @@ export default test({
 		ok(button);
 
 		input.value = 'Awesome';
-		await input.dispatchEvent(new window.Event('input'));
-		await Promise.resolve();
+		input.dispatchEvent(new window.Event('input'));
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -37,8 +38,8 @@ export default test({
       `
 		);
 
-		await button.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-		await Promise.resolve();
+		button.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -54,8 +55,8 @@ export default test({
 		assert.equal(input.value, 'World');
 
 		input.value = 'Svelte';
-		await input.dispatchEvent(new window.Event('input'));
-		await Promise.resolve();
+		input.dispatchEvent(new window.Event('input'));
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

@@ -1,21 +1,20 @@
 <script>
-  let data = '';
+	let data = '';
 
-  if ($$slots.b) {
-    data = 'foo';
-  }
+	if ($$slots.b) {
+		data = 'foo';
+	}
 
-  export function getData() {
-    return data;
-  }
+	export function getData() {
+		return data;
+	}
 
-  function toString(data) {
-    const result = {};
-    const sortedKeys = Object.keys(data).sort();
-    // TODO added !! to make it work since $$slots exposes the slot functions - we need to decide what to do with them
-    sortedKeys.forEach((key) => (result[key] = !!data[key]));
-    return JSON.stringify(result);
-  }
+	function toString(data) {
+		const result = {};
+		const sortedKeys = Object.keys(data).sort();
+		sortedKeys.forEach((key) => (result[key] = data[key]));
+		return JSON.stringify(result);
+	}
 </script>
 
 <slot />
@@ -24,9 +23,9 @@
 $$slots: {toString($$slots)}
 
 {#if $$slots.b}
-  <div>
-    <slot name="b" />
-  </div>
+	<div>
+		<slot name="b" />
+	</div>
 {:else}
-  Slot b is not available
+	Slot b is not available
 {/if}

@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -11,14 +12,14 @@ export default test({
 		<p>foo</p>
 	`,
 
-	async test({ assert, component, target, window }) {
+	test({ assert, component, target, window }) {
 		const event = new window.MouseEvent('input');
 		const input = target.querySelector('input');
 		ok(input);
 
 		input.value = 'blah';
-		await input.dispatchEvent(event);
-		await Promise.resolve();
+		input.dispatchEvent(event);
+		flushSync();
 
 		assert.deepEqual(component.deep, { name: 'blah' });
 		assert.htmlEqual(

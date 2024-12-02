@@ -1,8 +1,25 @@
+/** @import { Context, Visitors } from 'zimmerframe' */
+/** @import { FunctionExpression, FunctionDeclaration } from 'estree' */
 import { walk } from 'zimmerframe';
 import * as b from '../../utils/builders.js';
+import * as e from '../../errors.js';
 
-/** @type {import('zimmerframe').Visitors<any, null>} */
+/**
+ * @param {FunctionExpression | FunctionDeclaration} node
+ * @param {Context<any, any>} context
+ */
+function remove_this_param(node, context) {
+	if (node.params[0]?.type === 'Identifier' && node.params[0].name === 'this') {
+		node.params.shift();
+	}
+	return context.next();
+}
+
+/** @type {Visitors<any, null>} */
 const visitors = {
+	Decorator(node) {
+		e.typescript_invalid_feature(node, 'decorators (related TSC proposal is not stage 4 yet)');
+	},
 	ImportDeclaration(node) {
 		if (node.importKind === 'type') return b.empty;
 
@@ -19,7 +36,11 @@ const visitors = {
 		if (node.exportKind === 'type') return b.empty;
 
 		if (node.declaration) {
-			return context.next();
+			const result = context.next();
+			if (result?.declaration?.type === 'EmptyStatement') {
+				return b.empty;
+			}
+			return result;
 		}
 
 		if (node.specifiers) {
@@ -39,6 +60,15 @@ const visitors = {
 		if (node.exportKind === 'type') return b.empty;
 		return node;
 	},
+	PropertyDefinition(node, { next }) {
+		if (node.accessor) {
+			e.typescript_invalid_feature(
+				node,
+				'accessor fields (related TSC proposal is not stage 4 yet)'
+			);
+		}
+		return next();
+	},
 	TSAsExpression(node, context) {
 		return context.visit(node.expression);
 	},
@@ -48,10 +78,61 @@ const visitors = {
 	TSNonNullExpression(node, context) {
 		return context.visit(node.expression);
 	},
+	TSTypeAnnotation() {
+		// This isn't correct, strictly speaking, and could result in invalid ASTs (like an empty statement within function parameters),
+		// but esrap, our printing tool, just ignores these AST nodes at invalid positions, so it's fine
+		return b.empty;
+	},
 	TSInterfaceDeclaration() {
 		return b.empty;
 	},
 	TSTypeAliasDeclaration() {
+		return b.empty;
+	},
+	TSTypeParameterDeclaration() {
+		return b.empty;
+	},
+	TSTypeParameterInstantiation() {
+		return b.empty;
+	},
+	TSEnumDeclaration(node) {
+		e.typescript_invalid_feature(node, 'enums');
+	},
+	TSParameterProperty(node, context) {
+		if ((node.readonly || node.accessibility) && context.path.at(-2)?.kind === 'constructor') {
+			e.typescript_invalid_feature(node, 'accessibility modifiers on constructor parameters');
+		}
+		return context.visit(node.parameter);
+	},
+	TSInstantiationExpression(node, context) {
+		return context.visit(node.expression);
+	},
+	FunctionExpression: remove_this_param,
+	FunctionDeclaration: remove_this_param,
+	TSDeclareFunction() {
+		return b.empty;
+	},
+	ClassDeclaration(node, context) {
+		if (node.declare) {
+			return b.empty;
+		}
+		return context.next();
+	},
+	VariableDeclaration(node, context) {
+		if (node.declare) {
+			return b.empty;
+		}
+		return context.next();
+	},
+	TSModuleDeclaration(node, context) {
+		if (!node.body) return b.empty;
+
+		// namespaces can contain non-type nodes
+		const cleaned = /** @type {any[]} */ (node.body.body).map((entry) => context.visit(entry));
+		if (cleaned.some((entry) => entry !== b.empty)) {
+			e.typescript_invalid_feature(node, 'namespaces with non-type nodes');
+		}
+
 		return b.empty;
 	}
 };

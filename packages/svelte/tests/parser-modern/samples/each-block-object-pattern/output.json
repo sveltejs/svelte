@@ -144,8 +144,7 @@
 											}
 										}
 									}
-								],
-								"transparent": true
+								]
 							}
 						},
 						{
@@ -155,8 +154,7 @@
 							"raw": "\n",
 							"data": "\n"
 						}
-					],
-					"transparent": false
+					]
 				},
 				"context": {
 					"type": "ObjectPattern",
@@ -310,8 +308,7 @@
 					]
 				}
 			}
-		],
-		"transparent": false
+		]
 	},
 	"options": null
 }

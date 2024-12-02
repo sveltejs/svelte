@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -8,10 +9,11 @@ export default test({
 		<button>Toggle Component</button>
 	`,
 
-	async test({ assert, window, target }) {
+	test({ assert, window, target }) {
 		const button = target.querySelector('button');
 		// @ts-ignore
-		await button.dispatchEvent(new window.Event('click'));
+		button.dispatchEvent(new window.Event('click'));
+		flushSync();
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -22,7 +24,8 @@ export default test({
 			`
 		);
 		// @ts-ignore
-		await button.dispatchEvent(new window.Event('click'));
+		button.dispatchEvent(new window.Event('click'));
+		flushSync();
 		assert.htmlEqual(
 			target.innerHTML,
 			`

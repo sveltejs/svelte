@@ -1,5 +1,5 @@
-<script context="module">
-  import Tooltip from './Tooltip.svelte';
+<script module>
+	import Tooltip from './Tooltip.svelte';
 
-  export const Widget = { Tooltip };
+	export const Widget = { Tooltip };
 </script>

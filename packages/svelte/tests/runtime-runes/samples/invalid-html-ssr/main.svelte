@@ -1,7 +1,11 @@
 <script>
-	import Component from "./Component.svelte";
+	import Form from './form.svelte';
+	import H1 from './h1.svelte';
 </script>
 
 <p>
-	<Component />
+	<H1 />
 </p>
+<form>
+	<Form />
+</form>

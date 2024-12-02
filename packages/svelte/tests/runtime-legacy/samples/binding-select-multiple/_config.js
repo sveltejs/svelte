@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -15,7 +16,7 @@ export default test({
 		<p>selected: two, three</p>
 	`,
 
-	async test({ assert, component, target, window }) {
+	test({ assert, component, target, window }) {
 		const select = target.querySelector('select');
 		ok(select);
 		const options = [...target.querySelectorAll('option')];
@@ -23,7 +24,8 @@ export default test({
 		const change = new window.Event('change');
 
 		options[1].selected = false;
-		await select.dispatchEvent(change);
+		select.dispatchEvent(change);
+		flushSync();
 
 		assert.deepEqual(component.selected, ['three']);
 		assert.htmlEqual(
@@ -40,7 +42,8 @@ export default test({
 		);
 
 		options[0].selected = true;
-		await select.dispatchEvent(change);
+		select.dispatchEvent(change);
+		flushSync();
 
 		assert.deepEqual(component.selected, ['one', 'three']);
 		assert.htmlEqual(

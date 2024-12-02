@@ -1,12 +1,28 @@
 <script>
-	/** @type {{children?: import('svelte').Snippet, foo_1?: import('svelte').Snippet<[any]>, dashed_name?: import('svelte').Snippet}} */
-	let { children, foo_1, dashed_name } = $props();
+	/**
+	 * @typedef {Object} Props
+	 * @property {import('svelte').Snippet} [children]
+	 * @property {import('svelte').Snippet<[any]>} [foo]
+	 * @property {import('svelte').Snippet} [bar]
+	 */
+
+	/** @type {Props} */
+	let { children, foo, bar } = $props();
 </script>
 
 <button>{@render children?.()}</button>
 
-{#if foo}
-	{@render foo_1?.({ foo, })}
+{#if foos}
+	{@render foo?.({ foo: foos, })}
 {/if}
 
-{@render dashed_name?.()}
+{#if bar}
+	{$$slots}
+	{@render bar?.()}
+{/if}
+
+{#if children}foo{/if}
+
+{#if children}foo{/if}
+
+{@render children?.({ header: "something", title: my_title, id, })}

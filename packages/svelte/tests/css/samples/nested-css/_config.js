@@ -75,29 +75,29 @@ export default test({
 		{
 			code: 'css_unused_selector',
 			end: {
-				character: 634,
+				character: 668,
 				column: 5,
-				line: 66
+				line: 70
 			},
 			message: 'Unused CSS selector "&.b"',
 			start: {
-				character: 631,
+				character: 665,
 				column: 2,
-				line: 66
+				line: 70
 			}
 		},
 		{
 			code: 'css_unused_selector',
 			end: {
-				character: 666,
+				character: 700,
 				column: 9,
-				line: 70
+				line: 74
 			},
 			message: 'Unused CSS selector ".unused"',
 			start: {
-				character: 659,
+				character: 693,
 				column: 2,
-				line: 70
+				line: 74
 			}
 		}
 	]

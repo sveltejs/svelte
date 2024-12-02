@@ -3,19 +3,19 @@
 	export let param = false;
 
 	function getInParam() {
-		return { 
-			duration: param ? 20 : 10,
-			css: t => {
-				return `opacity: ${t}`;
+		return {
+			duration: 100,
+			css: (t) => {
+				return `color: ${param ? 'red' : 'blue'}`;
 			}
 		};
 	}
 
 	function getOutParam() {
-		return { 
-			duration: param ? 15 : 5,
-			css: t => {
-				return `opacity: ${t}`;
+		return {
+			duration: 100,
+			css: (t) => {
+				return `color: ${param ? 'green' : 'yellow'}`;
 			}
 		};
 	}

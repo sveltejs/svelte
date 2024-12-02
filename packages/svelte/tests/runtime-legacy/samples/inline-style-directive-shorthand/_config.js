@@ -9,8 +9,8 @@ export default test({
 	test({ assert, component, target, window }) {
 		const [p1, p2] = target.querySelectorAll('p');
 
-		assert.equal(window.getComputedStyle(p1).color, 'red');
-		assert.equal(window.getComputedStyle(p2).color, 'red');
+		assert.equal(window.getComputedStyle(p1).color, 'rgb(255, 0, 0)');
+		assert.equal(window.getComputedStyle(p2).color, 'rgb(255, 0, 0)');
 
 		component.color = 'blue';
 		assert.htmlEqual(
@@ -21,7 +21,7 @@ export default test({
 		`
 		);
 
-		assert.equal(window.getComputedStyle(p1).color, 'blue');
-		assert.equal(window.getComputedStyle(p2).color, 'blue');
+		assert.equal(window.getComputedStyle(p1).color, 'rgb(0, 0, 255)');
+		assert.equal(window.getComputedStyle(p2).color, 'rgb(0, 0, 255)');
 	}
 });

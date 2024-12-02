@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 // Tests that default values apply every time and that they propagate back correctly for bindings
@@ -59,7 +60,7 @@ export default test({
 	<button>set everything to undefined</button>
 	`,
 
-	async test({ assert, target }) {
+	test({ assert, target }) {
 		const [
 			btn_5_1,
 			btn_undefined_1,
@@ -77,7 +78,8 @@ export default test({
 		btn_undefined_2.click();
 		btn_undefined_3.click();
 		btn_undefined_4.click();
-		await Promise.resolve();
+		flushSync();
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -140,7 +142,8 @@ export default test({
 		btn_5_2.click();
 		btn_5_3.click();
 		btn_5_4.click();
-		await Promise.resolve();
+		flushSync();
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -199,8 +202,9 @@ export default test({
 		`
 		);
 
-		await btn_all_10.click();
-		await Promise.resolve();
+		btn_all_10.click();
+		flushSync();
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -259,8 +263,9 @@ export default test({
 		`
 		);
 
-		await btn_all_undefined.click();
-		await Promise.resolve();
+		btn_all_undefined.click();
+		flushSync();
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`

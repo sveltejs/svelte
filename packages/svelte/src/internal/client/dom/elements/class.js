@@ -1,5 +1,4 @@
 import { hydrating } from '../hydration.js';
-import { set_class_name } from '../operations.js';
 
 /**
  * @param {SVGElement} dom
@@ -83,7 +82,7 @@ export function set_class(dom, value) {
 		if (value == null) {
 			dom.removeAttribute('class');
 		} else {
-			set_class_name(dom, next_class_name);
+			dom.className = next_class_name;
 		}
 
 		// @ts-expect-error need to add __className to patched prototype
@@ -108,8 +107,10 @@ function to_class(value) {
  */
 export function toggle_class(dom, class_name, value) {
 	if (value) {
+		if (dom.classList.contains(class_name)) return;
 		dom.classList.add(class_name);
 	} else {
+		if (!dom.classList.contains(class_name)) return;
 		dom.classList.remove(class_name);
 	}
 }

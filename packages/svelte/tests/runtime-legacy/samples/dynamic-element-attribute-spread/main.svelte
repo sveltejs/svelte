@@ -6,4 +6,4 @@
 	};
 </script>
 
-<svelte:element this="button" {...props}>Click me</svelte:element>
+<svelte:element this={"button"} {...props}>Click me</svelte:element>

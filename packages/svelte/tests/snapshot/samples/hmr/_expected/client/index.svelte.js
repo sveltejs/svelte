@@ -1,4 +1,5 @@
 import "svelte/internal/disclose-version";
+import "svelte/internal/flags/legacy";
 import * as $ from "svelte/internal/client";
 
 var root = $.template(`<h1>hello world</h1>`);
@@ -10,14 +11,11 @@ function Hmr($$anchor) {
 }
 
 if (import.meta.hot) {
-	const s = $.source(Hmr);
+	Hmr = $.hmr(Hmr, () => Hmr[$.HMR].source);
 
-	Hmr = $.hmr(s);
-
-	if (import.meta.hot.acceptExports) import.meta.hot.acceptExports(["default"], (module) => {
-		$.set(s, module.default);
-	}); else import.meta.hot.accept((module) => {
-		$.set(s, module.default);
+	import.meta.hot.accept((module) => {
+		module.default[$.HMR].source = Hmr[$.HMR].source;
+		$.set(Hmr[$.HMR].source, module.default[$.HMR].original);
 	});
 }
 

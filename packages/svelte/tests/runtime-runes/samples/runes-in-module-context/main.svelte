@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
   function createCounter() {
     let count = $state(0);
     let double = $derived(count * 2);

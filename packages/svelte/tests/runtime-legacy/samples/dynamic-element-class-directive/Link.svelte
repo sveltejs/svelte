@@ -2,7 +2,7 @@
 	export let item;
 </script>
 
-<svelte:element this="div" class:active={true}>
+<svelte:element this={"div"} class:active={true}>
 	{item.text}
 </svelte:element>
 

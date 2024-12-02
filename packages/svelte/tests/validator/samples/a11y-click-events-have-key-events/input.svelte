@@ -31,7 +31,7 @@
 <div class="foo"></div>
 
 <a href="http://x.y.z" on:click={noop}>foo</a>
-<button on:click={noop}></button>
+<button on:click={noop}>click me</button>
 <select on:click={noop}></select>
 
 <input type="button" on:click={noop} />

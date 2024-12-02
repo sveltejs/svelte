@@ -301,7 +301,7 @@
 	},
 	{
 		"code": "a11y_label_has_associated_control",
-		"message": "A form label must be associated with a control.",
+		"message": "A form label must be associated with a control",
 		"start": {
 			"line": 28,
 			"column": 0

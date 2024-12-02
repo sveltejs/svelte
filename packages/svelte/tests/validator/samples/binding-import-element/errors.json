@@ -1,0 +1,14 @@
+[
+	{
+		"code": "constant_binding",
+		"message": "Cannot bind to import",
+		"start": {
+			"line": 5,
+			"column": 7
+		},
+		"end": {
+			"line": 5,
+			"column": 25
+		}
+	}
+]

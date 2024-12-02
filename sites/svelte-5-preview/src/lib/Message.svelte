@@ -44,6 +44,10 @@
 </div>
 
 <style>
+	button {
+		white-space: pre;
+	}
+
 	.message {
 		position: relative;
 		color: white;

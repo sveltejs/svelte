@@ -1,48 +1,34 @@
+import { CompileDiagnostic } from './utils/compile_diagnostic.js';
+
 /** @typedef {{ start?: number, end?: number }} NodeLike */
 
-// interface is duplicated between here (used internally) and ./interfaces.js
-// (exposed publicly), and I'm not sure how to avoid that
-export class CompileError extends Error {
-	name = 'CompileError';
-
-	/** @type {import('#compiler').CompileError['filename']} */
-	filename = undefined;
-
-	/** @type {import('#compiler').CompileError['position']} */
-	position = undefined;
-
-	/** @type {import('#compiler').CompileError['start']} */
-	start = undefined;
-
-	/** @type {import('#compiler').CompileError['end']} */
-	end = undefined;
+class InternalCompileError extends Error {
+	message = ''; // ensure this property is enumerable
+	#diagnostic;
 
 	/**
-	 *
 	 * @param {string} code
 	 * @param {string} message
 	 * @param {[number, number] | undefined} position
 	 */
 	constructor(code, message, position) {
 		super(message);
-		this.code = code;
-		this.position = position;
+		this.stack = ''; // avoid unnecessary noise; don't set it as a class property or it becomes enumerable
+
+		// We want to extend from Error so that various bundler plugins properly handle it.
+		// But we also want to share the same object shape with that of warnings, therefore
+		// we create an instance of the shared class an copy over its properties.
+		this.#diagnostic = new CompileDiagnostic(code, message, position);
+		Object.assign(this, this.#diagnostic);
+		this.name = 'CompileError';
 	}
 
 	toString() {
-		let out = `${this.name}: ${this.message}`;
+		return this.#diagnostic.toString();
+	}
 
-		out += `\n(${this.code})`;
-
-		if (this.filename) {
-			out += `\n${this.filename}`;
-
-			if (this.start) {
-				out += `${this.start.line}:${this.start.column}`;
-			}
-		}
-
-		return out;
+	toJSON() {
+		return this.#diagnostic.toJSON();
 	}
 }
 
@@ -56,10 +42,10 @@ function e(node, code, message) {
 	const start = typeof node === 'number' ? node : node?.start;
 	const end = typeof node === 'number' ? node : node?.end;
 
-	throw new CompileError(
+	throw new InternalCompileError(
 		code,
 		message,
-		start !== undefined && end !== undefined ? [start, end] : undefined
+		start !== undefined ? [start, end ?? start] : undefined
 	);
 }
 

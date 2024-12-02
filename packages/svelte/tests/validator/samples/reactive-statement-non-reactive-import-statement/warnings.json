@@ -1,0 +1,14 @@
+[
+	{
+		"code": "reactive_declaration_non_reactive_property",
+		"message": "Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update",
+		"start": {
+			"line": 4,
+			"column": 11
+		},
+		"end": {
+			"line": 4,
+			"column": 19
+		}
+	}
+]

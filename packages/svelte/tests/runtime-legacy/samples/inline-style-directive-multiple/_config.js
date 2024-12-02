@@ -10,7 +10,7 @@ export default test({
 		ok(p);
 
 		let styles = window.getComputedStyle(p);
-		assert.equal(styles.color, 'red');
+		assert.equal(styles.color, 'rgb(255, 0, 0)');
 
 		component.myColor = 'pink';
 		component.width = '100vh';
@@ -22,7 +22,7 @@ export default test({
 			target.innerHTML,
 			'<p style="color: pink; width: 100vh; font-weight: 100; position: absolute;"></p>'
 		);
-		assert.equal(styles.color, 'pink');
+		assert.equal(styles.color, 'rgb(255, 192, 203)');
 		assert.equal(styles.width, '100vh');
 		assert.equal(styles.fontWeight, '100');
 		assert.equal(styles.position, 'absolute');

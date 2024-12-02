@@ -1,5 +1,13 @@
-import { HYDRATION_END, HYDRATION_START } from '../../../constants.js';
-import * as e from '../errors.js';
+/** @import { TemplateNode } from '#client' */
+
+import {
+	HYDRATION_END,
+	HYDRATION_ERROR,
+	HYDRATION_START,
+	HYDRATION_START_ELSE
+} from '../../../constants.js';
+import * as w from '../warnings.js';
+import { get_next_sibling } from './operations.js';
 
 /**
  * Use this variable to guard everything related to hydration code so it can be treeshaken out
@@ -13,59 +21,85 @@ export function set_hydrating(value) {
 }
 
 /**
- * Array of nodes to traverse for hydration. This will be null if we're not hydrating, but for
- * the sake of simplicity we're not going to use `null` checks everywhere and instead rely on
- * the `hydrating` flag to tell whether or not we're in hydration mode at which point this is set.
- * @type {import('#client').TemplateNode[]}
+ * The node that is currently being hydrated. This starts out as the first node inside the opening
+ * <!--[--> comment, and updates each time a component calls `$.child(...)` or `$.sibling(...)`.
+ * When entering a block (e.g. `{#if ...}`), `hydrate_node` is the block opening comment; by the
+ * time we leave the block it is the closing comment, which serves as the block's anchor.
+ * @type {TemplateNode}
  */
-export let hydrate_nodes = /** @type {any} */ (null);
+export let hydrate_node;
 
-/** @param {import('#client').TemplateNode[]} nodes */
-export function set_hydrate_nodes(nodes) {
-	hydrate_nodes = nodes;
+/** @param {TemplateNode} node */
+export function set_hydrate_node(node) {
+	if (node === null) {
+		w.hydration_mismatch();
+		throw HYDRATION_ERROR;
+	}
+
+	return (hydrate_node = node);
+}
+
+export function hydrate_next() {
+	return set_hydrate_node(/** @type {TemplateNode} */ (get_next_sibling(hydrate_node)));
+}
+
+/** @param {TemplateNode} node */
+export function reset(node) {
+	if (!hydrating) return;
+
+	// If the node has remaining siblings, something has gone wrong
+	if (get_next_sibling(hydrate_node) !== null) {
+		w.hydration_mismatch();
+		throw HYDRATION_ERROR;
+	}
+
+	hydrate_node = node;
 }
 
 /**
- * This function is only called when `hydrating` is true. If passed a `<!--[-->` opening
- * hydration marker, it finds the corresponding closing marker and sets `hydrate_nodes`
- * to everything between the markers, before returning the closing marker.
- * @param {Node} node
- * @returns {Node}
+ * @param {HTMLTemplateElement} template
  */
-export function hydrate_anchor(node) {
-	if (node.nodeType !== 8) {
-		return node;
+export function hydrate_template(template) {
+	if (hydrating) {
+		// @ts-expect-error TemplateNode doesn't include DocumentFragment, but it's actually fine
+		hydrate_node = template.content;
 	}
+}
 
-	var current = /** @type {Node | null} */ (node);
+export function next(count = 1) {
+	if (hydrating) {
+		var i = count;
+		var node = hydrate_node;
 
-	// TODO this could have false positives, if a user comment consisted of `[`. need to tighten that up
-	if (/** @type {Comment} */ (current)?.data !== HYDRATION_START) {
-		return node;
+		while (i--) {
+			node = /** @type {TemplateNode} */ (get_next_sibling(node));
+		}
+
+		hydrate_node = node;
 	}
+}
 
-	/** @type {Node[]} */
-	var nodes = [];
+/**
+ * Removes all nodes starting at `hydrate_node` up until the next hydration end comment
+ */
+export function remove_nodes() {
 	var depth = 0;
+	var node = hydrate_node;
 
-	while ((current = /** @type {Node} */ (current).nextSibling) !== null) {
-		if (current.nodeType === 8) {
-			var data = /** @type {Comment} */ (current).data;
+	while (true) {
+		if (node.nodeType === 8) {
+			var data = /** @type {Comment} */ (node).data;
 
-			if (data === HYDRATION_START) {
-				depth += 1;
-			} else if (data[0] === HYDRATION_END) {
-				if (depth === 0) {
-					hydrate_nodes = /** @type {import('#client').TemplateNode[]} */ (nodes);
-					return current;
-				}
-
+			if (data === HYDRATION_END) {
+				if (depth === 0) return node;
 				depth -= 1;
+			} else if (data === HYDRATION_START || data === HYDRATION_START_ELSE) {
+				depth += 1;
 			}
 		}
 
-		nodes.push(current);
+		var next = /** @type {TemplateNode} */ (get_next_sibling(node));
+		node.remove();
+		node = next;
 	}
-
-	e.hydration_missing_marker_close();
 }

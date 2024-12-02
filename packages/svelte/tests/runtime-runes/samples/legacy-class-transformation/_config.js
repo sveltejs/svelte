@@ -2,8 +2,8 @@ import { test } from '../../test';
 
 export default test({
 	compileOptions: {
-		legacy: {
-			componentApi: true
+		compatibility: {
+			componentApi: 4
 		}
 	},
 

@@ -5,7 +5,7 @@
 			"column": 16,
 			"line": 5
 		},
-		"message": "A form label must be associated with a control.",
+		"message": "A form label must be associated with a control",
 		"start": {
 			"column": 0,
 			"line": 5
@@ -17,7 +17,7 @@
 			"column": 30,
 			"line": 10
 		},
-		"message": "A form label must be associated with a control.",
+		"message": "A form label must be associated with a control",
 		"start": {
 			"column": 0,
 			"line": 10

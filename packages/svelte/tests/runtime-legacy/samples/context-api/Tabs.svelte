@@ -1,6 +1,6 @@
 
 
-<script context="module">
+<script module>
 	export const TABS = {};
 </script>
 

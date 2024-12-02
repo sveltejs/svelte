@@ -1,3 +1,4 @@
+
 	/* :global {*/
 		.x {
 			color: green;
@@ -8,6 +9,59 @@
 		.y {
 			color: green;
 		}
+	}
+
+	/* some css preprocessors de-nest :global blocks with a single child
+	   (e.g turn `:global { div { ... } }` into `:global div { ... }`),
+	   so we need to support it, too */
+	 div {
+		.y {
+			color: green;
+		}
+	}
+
+	div.svelte-xyz p {
+		.y {
+			color: green;
+		}
+	}
+
+	/* `div { :global { &.x { ...} } }` is allowed ... */
+	div.svelte-xyz {
+		/* :global {*/
+			&.x {
+				color: green;
+			}
+		/*}*/
+	}
+
+	/* ...wich is equivalent to `div :global { &.x { ...} }` ... */
+	div.svelte-xyz {
+		&.x {
+			color: green;
+		}
+	}
+
+	/* ...so `div :global.x` must be, too ... */
+	div.svelte-xyz.x {
+		color: green;
+	}
+
+	/* ...and therefore `div { :global.x { ... }` aswell */
+	div.svelte-xyz {
+		&.x {
+			color: green;
+		}
+	}
+
+	div.svelte-xyz {
+		&.x {
+			color: green;
+		}
+	}
+
+	div.svelte-xyz:is(html.dark-mode *) {
+		color: green;
 	}
 
 	/* (unused) .unused :global {

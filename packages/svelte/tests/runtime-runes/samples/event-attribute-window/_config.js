@@ -1,11 +1,12 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
 	html: `<p>0</p>`,
 
-	async test({ assert, target }) {
+	test({ assert, target }) {
 		target.click();
-		await Promise.resolve();
+		flushSync();
 		assert.htmlEqual(target.innerHTML, '<p>1</p>');
 	}
 });

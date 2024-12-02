@@ -3,9 +3,9 @@
 import './ambient.js';
 
 /**
- * @deprecated Svelte components were classes in Svelte 4. In Svelte 5, thy are not anymore.
- * Use `mount` or `createRoot` instead to instantiate components.
- * See [breaking changes](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes)
+ * @deprecated In Svelte 4, components are classes. In Svelte 5, they are functions.
+ * Use `mount` instead to instantiate components.
+ * See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
  * for more info.
  */
 export interface ComponentConstructorOptions<
@@ -17,6 +17,8 @@ export interface ComponentConstructorOptions<
 	context?: Map<any, any>;
 	hydrate?: boolean;
 	intro?: boolean;
+	recover?: boolean;
+	sync?: boolean;
 	$$inline?: boolean;
 }
 
@@ -34,32 +36,10 @@ type Properties<Props, Slots> = Props &
 		: {});
 
 /**
- * Can be used to create strongly typed Svelte components.
- *
- * #### Example:
- *
- * You have component library on npm called `component-library`, from which
- * you export a component called `MyComponent`. For Svelte+TypeScript users,
- * you want to provide typings. Therefore you create a `index.d.ts`:
- * ```ts
- * import { SvelteComponent } from "svelte";
- * export class MyComponent extends SvelteComponent<{foo: string}> {}
- * ```
- * Typing this makes it possible for IDEs like VS Code with the Svelte extension
- * to provide intellisense and to use the component like this in a Svelte file
- * with TypeScript:
- * ```svelte
- * <script lang="ts">
- * 	import { MyComponent } from "component-library";
- * </script>
- * <MyComponent foo={'bar'} />
- * ```
- *
  * This was the base class for Svelte components in Svelte 4. Svelte 5+ components
- * are completely different under the hood. You should only use this type for typing,
- * not actually instantiate components with `new` - use `mount` or `createRoot` instead.
- * See [breaking changes](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes)
- * for more info.
+ * are completely different under the hood. For typing, use `Component` instead.
+ * To instantiate components, use `mount` instead`.
+ * See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more info.
  */
 export class SvelteComponent<
 	Props extends Record<string, any> = Record<string, any>,
@@ -72,47 +52,45 @@ export class SvelteComponent<
 	[prop: string]: any;
 	/**
 	 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
-	 * is a stop-gap solution. Migrate towards using `mount` or `createRoot` instead. See
-	 * https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more info.
+	 * is a stop-gap solution. Migrate towards using `mount` instead. See
+	 * https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more info.
 	 */
 	constructor(options: ComponentConstructorOptions<Properties<Props, Slots>>);
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
-	 * */
+	 */
 	$$prop_def: Props; // Without Properties: unnecessary, causes type bugs
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
-	 *
-	 * */
+	 */
 	$$events_def: Events;
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
-	 *
-	 * */
+	 */
 	$$slot_def: Slots;
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
-	 * */
+	 */
 	$$bindings?: string;
 
 	/**
 	 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-	 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+	 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
 	 * for more info.
 	 */
 	$destroy(): void;
 
 	/**
 	 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-	 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+	 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
 	 * for more info.
 	 */
 	$on<K extends Extract<keyof Events, string>>(
@@ -122,14 +100,78 @@ export class SvelteComponent<
 
 	/**
 	 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-	 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+	 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
 	 * for more info.
 	 */
 	$set(props: Partial<Props>): void;
 }
 
+declare const brand: unique symbol;
+type Brand<B> = { [brand]: B };
+type Branded<T, B> = T & Brand<B>;
+
 /**
- * @deprecated Use `SvelteComponent` instead. See TODO for more information.
+ * Internal implementation details that vary between environments
+ */
+export type ComponentInternals = Branded<{}, 'ComponentInternals'>;
+
+/**
+ * Can be used to create strongly typed Svelte components.
+ *
+ * #### Example:
+ *
+ * You have component library on npm called `component-library`, from which
+ * you export a component called `MyComponent`. For Svelte+TypeScript users,
+ * you want to provide typings. Therefore you create a `index.d.ts`:
+ * ```ts
+ * import type { Component } from 'svelte';
+ * export declare const MyComponent: Component<{ foo: string }> {}
+ * ```
+ * Typing this makes it possible for IDEs like VS Code with the Svelte extension
+ * to provide intellisense and to use the component like this in a Svelte file
+ * with TypeScript:
+ * ```svelte
+ * <script lang="ts">
+ * 	import { MyComponent } from "component-library";
+ * </script>
+ * <MyComponent foo={'bar'} />
+ * ```
+ */
+export interface Component<
+	Props extends Record<string, any> = {},
+	Exports extends Record<string, any> = {},
+	Bindings extends keyof Props | '' = string
+> {
+	/**
+	 * @param internal An internal object used by Svelte. Do not use or modify.
+	 * @param props The props passed to the component.
+	 */
+	(
+		this: void,
+		internals: ComponentInternals,
+		props: Props
+	): {
+		/**
+		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
+		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+		 * for more info.
+		 */
+		$on?(type: string, callback: (e: any) => void): () => void;
+		/**
+		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
+		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+		 * for more info.
+		 */
+		$set?(props: Partial<Props>): void;
+	} & Exports;
+	/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+	element?: typeof HTMLElement;
+	/** Does not exist at runtime, for typing capabilities only. DO NOT USE */
+	z_$$bindings?: Bindings;
+}
+
+/**
+ * @deprecated Use `Component` instead. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more information.
  */
 export class SvelteComponentTyped<
 	Props extends Record<string, any> = Record<string, any>,
@@ -138,6 +180,9 @@ export class SvelteComponentTyped<
 > extends SvelteComponent<Props, Events, Slots> {}
 
 /**
+ * @deprecated The new `Component` type does not have a dedicated Events type. Use `ComponentProps` instead.
+ *
+ * @description
  * Convenience type to get the events the given component expects. Example:
  * ```html
  * <script lang="ts">
@@ -156,20 +201,46 @@ export type ComponentEvents<Comp extends SvelteComponent> =
 	Comp extends SvelteComponent<any, infer Events> ? Events : never;
 
 /**
- * Convenience type to get the props the given component expects. Example:
- * ```html
- * <script lang="ts">
- * 	import type { ComponentProps } from 'svelte';
- * 	import Component from './Component.svelte';
+ * Convenience type to get the props the given component expects.
  *
- * 	const props: ComponentProps<Component> = { foo: 'bar' }; // Errors if these aren't the correct props
- * </script>
+ * Example: Ensure a variable contains the props expected by `MyComponent`:
+ *
+ * ```ts
+ * import type { ComponentProps } from 'svelte';
+ * import MyComponent from './MyComponent.svelte';
+ *
+ * // Errors if these aren't the correct props expected by MyComponent.
+ * const props: ComponentProps<typeof MyComponent> = { foo: 'bar' };
+ * ```
+ *
+ * > [!NOTE] In Svelte 4, you would do `ComponentProps<MyComponent>` because `MyComponent` was a class.
+ *
+ * Example: A generic function that accepts some component and infers the type of its props:
+ *
+ * ```ts
+ * import type { Component, ComponentProps } from 'svelte';
+ * import MyComponent from './MyComponent.svelte';
+ *
+ * function withProps<TComponent extends Component<any>>(
+ * 	component: TComponent,
+ * 	props: ComponentProps<TComponent>
+ * ) {};
+ *
+ * // Errors if the second argument is not the correct props expected by the component in the first argument.
+ * withProps(MyComponent, { foo: 'bar' });
  * ```
  */
-export type ComponentProps<Comp extends SvelteComponent> =
-	Comp extends SvelteComponent<infer Props> ? Props : never;
+export type ComponentProps<Comp extends SvelteComponent | Component<any, any>> =
+	Comp extends SvelteComponent<infer Props>
+		? Props
+		: Comp extends Component<infer Props, any>
+			? Props
+			: never;
 
 /**
+ * @deprecated This type is obsolete when working with the new `Component` type.
+ *
+ * @description
  * Convenience type to get the type of a Svelte component. Useful for example in combination with
  * dynamic components using `<svelte:component>`.
  *
@@ -199,27 +270,29 @@ export type ComponentType<Comp extends SvelteComponent = SvelteComponent> = (new
 
 declare const SnippetReturn: unique symbol;
 
+// Use an interface instead of a type, makes for better intellisense info because the type is named in more situations.
 /**
  * The type of a `#snippet` block. You can use it to (for example) express that your component expects a snippet of a certain type:
  * ```ts
- * let { banner }: { banner: Snippet<{ text: string }> } = $props();
+ * let { banner }: { banner: Snippet<[{ text: string }]> } = $props();
  * ```
  * You can only call a snippet through the `{@render ...}` tag.
+ *
+ * https://svelte.dev/docs/svelte/snippet
+ *
+ * @template Parameters the parameters that the snippet expects (if any) as a tuple.
  */
-export type Snippet<T extends unknown[] = []> =
-	// this conditional allows tuples but not arrays. Arrays would indicate a
-	// rest parameter type, which is not supported. If rest parameters are added
-	// in the future, the condition can be removed.
-	number extends T['length']
-		? never
-		: {
-				(
-					this: void,
-					...args: T
-				): typeof SnippetReturn & {
-					_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-				};
-			};
+export interface Snippet<Parameters extends unknown[] = []> {
+	(
+		this: void,
+		// this conditional allows tuples but not arrays. Arrays would indicate a
+		// rest parameter type, which is not supported. If rest parameters are added
+		// in the future, the condition can be removed.
+		...args: number extends Parameters['length'] ? never : Parameters
+	): {
+		'{@render ...} must be called with a Snippet': "import type { Snippet } from 'svelte'";
+	} & typeof SnippetReturn;
+}
 
 interface DispatchOptions {
 	cancelable?: boolean;
@@ -237,5 +310,45 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 				: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
 	): boolean;
 }
+
+/**
+ * Defines the options accepted by the `mount()` function.
+ */
+export type MountOptions<Props extends Record<string, any> = Record<string, any>> = {
+	/**
+	 * Target element where the component will be mounted.
+	 */
+	target: Document | Element | ShadowRoot;
+	/**
+	 * Optional node inside `target`. When specified, it is used to render the component immediately before it.
+	 */
+	anchor?: Node;
+	/**
+	 * Allows the specification of events.
+	 * @deprecated Use callback props instead.
+	 */
+	events?: Record<string, (e: any) => any>;
+	/**
+	 * Can be accessed via `getContext()` at the component level.
+	 */
+	context?: Map<any, any>;
+	/**
+	 * Whether or not to play transitions on initial render.
+	 * @default true
+	 */
+	intro?: boolean;
+} & ({} extends Props
+	? {
+			/**
+			 * Component properties.
+			 */
+			props?: Props;
+		}
+	: {
+			/**
+			 * Component properties.
+			 */
+			props: Props;
+		});
 
 export * from './index-client.js';

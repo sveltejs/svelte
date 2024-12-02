@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 /** @type {string[]} */
@@ -17,7 +18,7 @@ export default test({
 	before_test() {
 		called = 0;
 	},
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		assert.equal(called, 1);
 
 		const input = target.querySelector('input');
@@ -25,7 +26,8 @@ export default test({
 
 		const event = new window.Event('input');
 		input.value = 'h';
-		await input.dispatchEvent(event);
+		input.dispatchEvent(event);
+		flushSync();
 
 		assert.equal(called, 2);
 		assert.equal(value.length, 3);

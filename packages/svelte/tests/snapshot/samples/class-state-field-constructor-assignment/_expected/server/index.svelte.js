@@ -1,7 +1,7 @@
 import * as $ from "svelte/internal/server";
 
 export default function Class_state_field_constructor_assignment($$payload, $$props) {
-	$.push(true);
+	$.push();
 
 	class Foo {
 		a;

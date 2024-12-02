@@ -1,41 +1,42 @@
-import { noop } from '../../../shared/utils.js';
+/** @import { AnimateFn, Animation, AnimationConfig, EachItem, Effect, TransitionFn, TransitionManager } from '#client' */
+import { noop, is_function } from '../../../shared/utils.js';
 import { effect } from '../../reactivity/effects.js';
-import { current_effect, untrack } from '../../runtime.js';
-import { raf } from '../../timing.js';
+import {
+	active_effect,
+	active_reaction,
+	set_active_effect,
+	set_active_reaction,
+	untrack
+} from '../../runtime.js';
 import { loop } from '../../loop.js';
 import { should_intro } from '../../render.js';
-import { is_function } from '../../utils.js';
 import { current_each_item } from '../blocks/each.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
 import { BLOCK_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '../../constants.js';
+import { queue_micro_task } from '../task.js';
 
 /**
- * @template T
- * @param {string} type
- * @param {T} [detail]
- * @param {any}params_0
- * @returns {Event}
- */
-function custom_event(type, detail, { bubbles = false, cancelable = false } = {}) {
-	const e = document.createEvent('CustomEvent');
-	e.initCustomEvent(type, bubbles, cancelable, detail);
-	return e;
-}
-
-/**
- * @param {Element} dom
+ * @param {Element} element
  * @param {'introstart' | 'introend' | 'outrostart' | 'outroend'} type
  * @returns {void}
  */
-function dispatch_event(dom, type) {
-	dom.dispatchEvent(custom_event(type));
+function dispatch_event(element, type) {
+	element.dispatchEvent(new CustomEvent(type));
 }
 
 /**
+ * Converts a property to the camel-case format expected by Element.animate(), KeyframeEffect(), and KeyframeEffect.setKeyframes().
  * @param {string} style
  * @returns {string}
  */
-function css_style_from_camel_case(style) {
+function css_property_to_camelcase(style) {
+	// in compliance with spec
+	if (style === 'float') return 'cssFloat';
+	if (style === 'offset') return 'cssOffset';
+
+	// do not rename custom @properties
+	if (style.startsWith('--')) return style;
+
 	const parts = style.split('-');
 	if (parts.length === 1) return parts[0];
 	return (
@@ -59,7 +60,7 @@ function css_to_keyframe(css) {
 		const [property, value] = part.split(':');
 		if (!property || value === undefined) break;
 
-		const formatted_property = css_style_from_camel_case(property.trim());
+		const formatted_property = css_property_to_camelcase(property.trim());
 		keyframe[formatted_property] = value.trim();
 	}
 	return keyframe;
@@ -73,11 +74,11 @@ const linear = (t) => t;
  * and attaches it to the block, so that moves can be animated following reconciliation.
  * @template P
  * @param {Element} element
- * @param {() => import('#client').AnimateFn<P | undefined>} get_fn
+ * @param {() => AnimateFn<P | undefined>} get_fn
  * @param {(() => P) | null} get_params
  */
 export function animation(element, get_fn, get_params) {
-	var item = /** @type {import('#client').EachItem} */ (current_each_item);
+	var item = /** @type {EachItem} */ (current_each_item);
 
 	/** @type {DOMRect} */
 	var from;
@@ -85,10 +86,10 @@ export function animation(element, get_fn, get_params) {
 	/** @type {DOMRect} */
 	var to;
 
-	/** @type {import('#client').Animation | undefined} */
+	/** @type {Animation | undefined} */
 	var animation;
 
-	/** @type {null | { position: string, width: string, height: string }} */
+	/** @type {null | { position: string, width: string, height: string, transform: string }} */
 	var original_styles = null;
 
 	item.a ??= {
@@ -116,20 +117,29 @@ export function animation(element, get_fn, get_params) {
 			}
 		},
 		fix() {
-			var computed_style = getComputedStyle(element);
+			// If an animation is already running, transforming the element is likely to fail,
+			// because the styles applied by the animation take precedence. In the case of crossfade,
+			// that means the `translate(...)` of the crossfade transition overrules the `translate(...)`
+			// we would apply below, leading to the element jumping somewhere to the top left.
+			if (element.getAnimations().length) return;
 
-			if (computed_style.position !== 'absolute' && computed_style.position !== 'fixed') {
+			// It's important to destructure these to get fixed values - the object itself has getters,
+			// and changing the style to 'absolute' can for example influence the width.
+			var { position, width, height } = getComputedStyle(element);
+
+			if (position !== 'absolute' && position !== 'fixed') {
 				var style = /** @type {HTMLElement | SVGElement} */ (element).style;
 
 				original_styles = {
 					position: style.position,
 					width: style.width,
-					height: style.height
+					height: style.height,
+					transform: style.transform
 				};
 
 				style.position = 'absolute';
-				style.width = computed_style.width;
-				style.height = computed_style.height;
+				style.width = width;
+				style.height = height;
 				var to = element.getBoundingClientRect();
 
 				if (from.left !== to.left || from.top !== to.top) {
@@ -145,6 +155,7 @@ export function animation(element, get_fn, get_params) {
 				style.position = original_styles.position;
 				style.width = original_styles.width;
 				style.height = original_styles.height;
+				style.transform = original_styles.transform;
 			}
 		}
 	};
@@ -163,73 +174,91 @@ export function animation(element, get_fn, get_params) {
  * @template P
  * @param {number} flags
  * @param {HTMLElement} element
- * @param {() => import('#client').TransitionFn<P | undefined>} get_fn
+ * @param {() => TransitionFn<P | undefined>} get_fn
  * @param {(() => P) | null} get_params
  * @returns {void}
  */
 export function transition(flags, element, get_fn, get_params) {
 	var is_intro = (flags & TRANSITION_IN) !== 0;
 	var is_outro = (flags & TRANSITION_OUT) !== 0;
+	var is_both = is_intro && is_outro;
 	var is_global = (flags & TRANSITION_GLOBAL) !== 0;
 
 	/** @type {'in' | 'out' | 'both'} */
-	var direction = is_intro && is_outro ? 'both' : is_intro ? 'in' : 'out';
+	var direction = is_both ? 'both' : is_intro ? 'in' : 'out';
 
-	/** @type {import('#client').AnimationConfig | ((opts: { direction: 'in' | 'out' }) => import('#client').AnimationConfig) | undefined} */
+	/** @type {AnimationConfig | ((opts: { direction: 'in' | 'out' }) => AnimationConfig) | undefined} */
 	var current_options;
 
 	var inert = element.inert;
 
-	/** @type {import('#client').Animation | undefined} */
+	/** @type {Animation | undefined} */
 	var intro;
 
-	/** @type {import('#client').Animation | undefined} */
+	/** @type {Animation | undefined} */
 	var outro;
 
-	/** @type {(() => void) | undefined} */
-	var reset;
-
 	function get_options() {
-		// If a transition is still ongoing, we use the existing options rather than generating
-		// new ones. This ensures that reversible transitions reverse smoothly, rather than
-		// jumping to a new spot because (for example) a different `duration` was used
-		return (current_options ??= get_fn()(element, get_params?.(), { direction }));
+		var previous_reaction = active_reaction;
+		var previous_effect = active_effect;
+		set_active_reaction(null);
+		set_active_effect(null);
+		try {
+			// If a transition is still ongoing, we use the existing options rather than generating
+			// new ones. This ensures that reversible transitions reverse smoothly, rather than
+			// jumping to a new spot because (for example) a different `duration` was used
+			return (current_options ??= get_fn()(element, get_params?.() ?? /** @type {P} */ ({}), {
+				direction
+			}));
+		} finally {
+			set_active_reaction(previous_reaction);
+			set_active_effect(previous_effect);
+		}
 	}
 
-	/** @type {import('#client').TransitionManager} */
+	/** @type {TransitionManager} */
 	var transition = {
 		is_global,
 		in() {
 			element.inert = inert;
 
-			if (is_intro) {
-				dispatch_event(element, 'introstart');
-				intro = animate(element, get_options(), outro, 1, () => {
-					dispatch_event(element, 'introend');
-					intro = current_options = undefined;
-				});
-			} else {
+			if (!is_intro) {
 				outro?.abort();
-				reset?.();
+				outro?.reset?.();
+				return;
 			}
+
+			if (!is_outro) {
+				// if we intro then outro then intro again, we want to abort the first intro,
+				// if it's not a bidirectional transition
+				intro?.abort();
+			}
+
+			dispatch_event(element, 'introstart');
+
+			intro = animate(element, get_options(), outro, 1, () => {
+				dispatch_event(element, 'introend');
+
+				// Ensure we cancel the animation to prevent leaking
+				intro?.abort();
+				intro = current_options = undefined;
+			});
 		},
 		out(fn) {
-			if (is_outro) {
-				element.inert = true;
-
-				dispatch_event(element, 'outrostart');
-				outro = animate(element, get_options(), intro, 0, () => {
-					dispatch_event(element, 'outroend');
-					outro = current_options = undefined;
-					fn?.();
-				});
-
-				// TODO arguably the outro should never null itself out until _all_ outros for this effect have completed...
-				// in that case we wouldn't need to store `reset` separately
-				reset = outro.reset;
-			} else {
+			if (!is_outro) {
 				fn?.();
+				current_options = undefined;
+				return;
 			}
+
+			element.inert = true;
+
+			dispatch_event(element, 'outrostart');
+
+			outro = animate(element, get_options(), intro, 0, () => {
+				dispatch_event(element, 'outroend');
+				fn?.();
+			});
 		},
 		stop: () => {
 			intro?.abort();
@@ -237,7 +266,7 @@ export function transition(flags, element, get_fn, get_params) {
 		}
 	};
 
-	var e = /** @type {import('#client').Effect} */ (current_effect);
+	var e = /** @type {Effect} */ (active_effect);
 
 	(e.transitions ??= []).push(transition);
 
@@ -245,10 +274,10 @@ export function transition(flags, element, get_fn, get_params) {
 	// parent (block) effect is where the state change happened. we can determine that by
 	// looking at whether the block effect is currently initializing
 	if (is_intro && should_intro) {
-		let run = is_global;
+		var run = is_global;
 
 		if (!run) {
-			var block = /** @type {import('#client').Effect | null} */ (e.parent);
+			var block = /** @type {Effect | null} */ (e.parent);
 
 			// skip over transparent blocks (e.g. snippets, else-if blocks)
 			while (block && (block.f & EFFECT_TRANSPARENT) !== 0) {
@@ -271,39 +300,47 @@ export function transition(flags, element, get_fn, get_params) {
 /**
  * Animates an element, according to the provided configuration
  * @param {Element} element
- * @param {import('#client').AnimationConfig | ((opts: { direction: 'in' | 'out' }) => import('#client').AnimationConfig)} options
- * @param {import('#client').Animation | undefined} counterpart The corresponding intro/outro to this outro/intro
+ * @param {AnimationConfig | ((opts: { direction: 'in' | 'out' }) => AnimationConfig)} options
+ * @param {Animation | undefined} counterpart The corresponding intro/outro to this outro/intro
  * @param {number} t2 The target `t` value — `1` for intro, `0` for outro
- * @param {(() => void) | undefined} callback
- * @returns {import('#client').Animation}
+ * @param {(() => void)} on_finish Called after successfully completing the animation
+ * @returns {Animation}
  */
-function animate(element, options, counterpart, t2, callback) {
+function animate(element, options, counterpart, t2, on_finish) {
+	var is_intro = t2 === 1;
+
 	if (is_function(options)) {
 		// In the case of a deferred transition (such as `crossfade`), `option` will be
 		// a function rather than an `AnimationConfig`. We need to call this function
-		// once DOM has been updated...
-		/** @type {import('#client').Animation} */
+		// once the DOM has been updated...
+		/** @type {Animation} */
 		var a;
+		var aborted = false;
 
-		effect(() => {
-			var o = untrack(() => options({ direction: t2 === 1 ? 'in' : 'out' }));
-			a = animate(element, o, counterpart, t2, callback);
+		queue_micro_task(() => {
+			if (aborted) return;
+			var o = options({ direction: is_intro ? 'in' : 'out' });
+			a = animate(element, o, counterpart, t2, on_finish);
 		});
 
 		// ...but we want to do so without using `async`/`await` everywhere, so
 		// we return a facade that allows everything to remain synchronous
 		return {
-			abort: () => a.abort(),
+			abort: () => {
+				aborted = true;
+				a?.abort();
+			},
 			deactivate: () => a.deactivate(),
 			reset: () => a.reset(),
-			t: (now) => a.t(now)
+			t: () => a.t()
 		};
 	}
 
 	counterpart?.deactivate();
 
 	if (!options?.duration) {
-		callback?.();
+		on_finish();
+
 		return {
 			abort: noop,
 			deactivate: noop,
@@ -312,96 +349,98 @@ function animate(element, options, counterpart, t2, callback) {
 		};
 	}
 
-	var { delay = 0, duration, css, tick, easing = linear } = options;
+	const { delay = 0, css, tick, easing = linear } = options;
 
-	var start = raf.now() + delay;
-	var t1 = counterpart?.t(start) ?? 1 - t2;
-	var delta = t2 - t1;
+	var keyframes = [];
 
-	duration *= Math.abs(delta);
-	var end = start + duration;
-
-	/** @type {Animation} */
-	var animation;
-
-	/** @type {import('#client').Task} */
-	var task;
-
-	if (css) {
-		// WAAPI
-		var keyframes = [];
-		var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
-
-		for (var i = 0; i <= n; i += 1) {
-			var t = t1 + delta * easing(i / n);
-			var styles = css(t, 1 - t);
-			keyframes.push(css_to_keyframe(styles));
+	if (is_intro && counterpart === undefined) {
+		if (tick) {
+			tick(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
 		}
 
-		animation = element.animate(keyframes, {
-			delay,
-			duration,
-			easing: 'linear',
-			fill: 'forwards'
-		});
-
-		animation.finished
-			.then(() => {
-				callback?.();
-
-				if (t2 === 1) {
-					animation.cancel();
-				}
-			})
-			.catch((e) => {
-				// Error for DOMException: The user aborted a request. This results in two things:
-				// - startTime is `null`
-				// - currentTime is `null`
-				// We can't use the existence of an AbortError as this error and error code is shared
-				// with other Web APIs such as fetch().
-
-				if (animation.startTime !== null && animation.currentTime !== null) {
-					throw e;
-				}
-			});
-	} else {
-		// Timer
-		if (t1 === 0) {
-			tick?.(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
+		if (css) {
+			var styles = css_to_keyframe(css(0, 1));
+			keyframes.push(styles, styles);
 		}
-
-		task = loop((now) => {
-			if (now >= end) {
-				tick?.(t2, 1 - t2);
-				callback?.();
-				return false;
-			}
-
-			if (now >= start) {
-				var p = t1 + delta * easing((now - start) / duration);
-				tick?.(p, 1 - p);
-			}
-
-			return true;
-		});
 	}
+
+	var get_t = () => 1 - t2;
+
+	// create a dummy animation that lasts as long as the delay (but with whatever devtools
+	// multiplier is in effect). in the common case that it is `0`, we keep it anyway so that
+	// the CSS keyframes aren't created until the DOM is updated
+	var animation = element.animate(keyframes, { duration: delay });
+
+	animation.onfinish = () => {
+		// for bidirectional transitions, we start from the current position,
+		// rather than doing a full intro/outro
+		var t1 = counterpart?.t() ?? 1 - t2;
+		counterpart?.abort();
+
+		var delta = t2 - t1;
+		var duration = /** @type {number} */ (options.duration) * Math.abs(delta);
+		var keyframes = [];
+
+		if (duration > 0) {
+			if (css) {
+				var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
+
+				for (var i = 0; i <= n; i += 1) {
+					var t = t1 + delta * easing(i / n);
+					var styles = css(t, 1 - t);
+					keyframes.push(css_to_keyframe(styles));
+				}
+			}
+
+			get_t = () => {
+				var time = /** @type {number} */ (
+					/** @type {globalThis.Animation} */ (animation).currentTime
+				);
+
+				return t1 + delta * easing(time / duration);
+			};
+
+			if (tick) {
+				loop(() => {
+					if (animation.playState !== 'running') return false;
+
+					var t = get_t();
+					tick(t, 1 - t);
+
+					return true;
+				});
+			}
+		}
+
+		animation = element.animate(keyframes, { duration, fill: 'forwards' });
+
+		animation.onfinish = () => {
+			get_t = () => t2;
+			tick?.(t2, 1 - t2);
+			on_finish();
+		};
+	};
 
 	return {
 		abort: () => {
-			animation?.cancel();
-			task?.abort();
+			if (animation) {
+				animation.cancel();
+				// This prevents memory leaks in Chromium
+				animation.effect = null;
+				// This prevents onfinish to be launched after cancel(),
+				// which can happen in some rare cases
+				// see https://github.com/sveltejs/svelte/issues/13681
+				animation.onfinish = noop;
+			}
 		},
 		deactivate: () => {
-			callback = undefined;
+			on_finish = noop;
 		},
 		reset: () => {
 			if (t2 === 0) {
 				tick?.(1, 0);
 			}
 		},
-		t: (now) => {
-			var t = t1 + delta * easing((now - start) / duration);
-			return Math.min(1, Math.max(0, t));
-		}
+		t: () => get_t()
 	};
 }

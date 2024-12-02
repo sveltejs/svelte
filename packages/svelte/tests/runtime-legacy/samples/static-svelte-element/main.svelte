@@ -1,3 +1,3 @@
 <div>
-	<svelte:element this="p" />
+	<svelte:element this={"p"} />
 </div>

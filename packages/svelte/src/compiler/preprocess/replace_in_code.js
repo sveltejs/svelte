@@ -1,10 +1,11 @@
+/** @import { Source, Replacement } from './private.js' */
 import { MappedCode } from '../utils/mapped_code.js';
 
 /**
  * @param {string} code_slice
  * @param {number} offset
- * @param {import('./private.js').Source} opts
- * @returns {import('./private.js').Source}
+ * @param {Source} opts
+ * @returns {Source}
  */
 export function slice_source(code_slice, offset, { file_basename, filename, get_location }) {
 	return {
@@ -22,7 +23,7 @@ export function slice_source(code_slice, offset, { file_basename, filename, get_
  */
 function calculate_replacements(re, get_replacement, source) {
 	/**
-	 * @type {Array<Promise<import('./private.js').Replacement>>}
+	 * @type {Array<Promise<Replacement>>}
 	 */
 	const replacements = [];
 	source.replace(re, (...match) => {
@@ -39,8 +40,8 @@ function calculate_replacements(re, get_replacement, source) {
 }
 
 /**
- * @param {import('./private.js').Replacement[]} replacements
- * @param {import('./private.js').Source} source
+ * @param {Replacement[]} replacements
+ * @param {Source} source
  * @returns {MappedCode}
  */
 function perform_replacements(replacements, source) {
@@ -62,7 +63,7 @@ function perform_replacements(replacements, source) {
 /**
  * @param {RegExp} regex
  * @param {(...match: any[]) => Promise<MappedCode>} get_replacement
- * @param {import('./private.js').Source} location
+ * @param {Source} location
  * @returns {Promise<MappedCode>}
  */
 export async function replace_in_code(regex, get_replacement, location) {

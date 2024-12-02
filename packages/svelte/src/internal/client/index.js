@@ -1,3 +1,5 @@
+export { FILENAME, HMR, NAMESPACE_SVG } from '../../constants.js';
+export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
 export {
@@ -5,9 +7,10 @@ export {
 	add_owner,
 	mark_module_start,
 	mark_module_end,
-	add_owner_effect
+	add_owner_effect,
+	skip_ownership_validation
 } from './dev/ownership.js';
-export { legacy_api } from './dev/legacy.js';
+export { check_target, legacy_api } from './dev/legacy.js';
 export { inspect } from './dev/inspect.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
@@ -15,24 +18,29 @@ export { key_block as key } from './dom/blocks/key.js';
 export { css_props } from './dom/blocks/css-props.js';
 export { index, each } from './dom/blocks/each.js';
 export { html } from './dom/blocks/html.js';
+export { sanitize_slots, slot } from './dom/blocks/slot.js';
 export { snippet, wrap_snippet } from './dom/blocks/snippet.js';
 export { component } from './dom/blocks/svelte-component.js';
 export { element } from './dom/blocks/svelte-element.js';
 export { head } from './dom/blocks/svelte-head.js';
+export { append_styles } from './dom/css.js';
 export { action } from './dom/elements/actions.js';
 export {
-	remove_input_attr_defaults,
+	remove_input_defaults,
 	set_attribute,
 	set_attributes,
 	set_custom_element_data,
-	set_dynamic_element_attributes,
-	set_xlink_attribute
+	set_xlink_attribute,
+	handle_lazy_img,
+	set_value,
+	set_checked
 } from './dom/elements/attributes.js';
 export { set_class, set_svg_class, set_mathml_class, toggle_class } from './dom/elements/class.js';
-export { event, delegate } from './dom/elements/events.js';
+export { apply, event, delegate, replay_events } from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
 export { set_style } from './dom/elements/style.js';
 export { animation, transition } from './dom/elements/transitions.js';
+export { bind_active_element } from './dom/elements/bindings/document.js';
 export { bind_checked, bind_files, bind_group, bind_value } from './dom/elements/bindings/input.js';
 export {
 	bind_buffered,
@@ -58,6 +66,7 @@ export {
 	bind_focused
 } from './dom/elements/bindings/universal.js';
 export { bind_window_scroll, bind_window_size } from './dom/elements/bindings/window.js';
+export { hydrate_template, next, reset } from './dom/hydration.js';
 export {
 	once,
 	preventDefault,
@@ -76,7 +85,7 @@ export {
 export {
 	append,
 	comment,
-	svg_template,
+	ns_template,
 	svg_template_with_script,
 	mathml_template,
 	template,
@@ -85,15 +94,17 @@ export {
 } from './dom/template.js';
 export { derived, derived_safe_equal } from './reactivity/deriveds.js';
 export {
-	effect_active,
+	effect_tracking,
 	effect_root,
 	legacy_pre_effect,
 	legacy_pre_effect_reset,
 	render_effect,
+	template_effect,
+	effect,
 	user_effect,
 	user_pre_effect
 } from './reactivity/effects.js';
-export { mutable_source, mutate, source, set } from './reactivity/sources.js';
+export { mutable_state, mutate, set, state } from './reactivity/sources.js';
 export {
 	prop,
 	rest_props,
@@ -104,30 +115,29 @@ export {
 } from './reactivity/props.js';
 export {
 	invalidate_store,
-	mutate_store,
+	store_mutate,
+	setup_stores,
 	store_get,
 	store_set,
 	store_unsub,
-	unsubscribe_on_destroy,
 	update_pre_store,
-	update_store
+	update_store,
+	mark_store_binding
 } from './reactivity/store.js';
-export { append_styles, sanitize_slots, set_text, slot, stringify } from './render.js';
+export { boundary } from './dom/blocks/boundary.js';
+export { set_text } from './render.js';
 export {
 	get,
+	safe_get,
 	invalidate_inner_signals,
 	flush_sync,
 	tick,
 	untrack,
 	update,
 	update_pre,
-	value_or_fallback,
-	value_or_fallback_async,
 	exclude_from_object,
 	pop,
 	push,
-	unwrap,
-	freeze,
 	deep_read,
 	deep_read_state,
 	getAllContexts,
@@ -135,13 +145,9 @@ export {
 	setContext,
 	hasContext
 } from './runtime.js';
-export {
-	validate_dynamic_component,
-	validate_each_keys,
-	validate_prop_bindings
-} from './validate.js';
+export { validate_binding, validate_each_keys, validate_prop_bindings } from './validate.js';
 export { raf } from './timing.js';
-export { proxy, snapshot } from './proxy.js';
+export { proxy } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
 export {
 	child,
@@ -150,12 +156,14 @@ export {
 	$window as window,
 	$document as document
 } from './dom/operations.js';
-export { noop } from '../shared/utils.js';
+export { attr } from '../shared/attributes.js';
+export { snapshot } from '../shared/clone.js';
+export { noop, fallback } from '../shared/utils.js';
 export {
-	add_snippet_symbol,
-	validate_component,
+	invalid_default_snippet,
 	validate_dynamic_element_tag,
-	validate_snippet,
 	validate_store,
 	validate_void_dynamic_element
 } from '../shared/validate.js';
+export { strict_equals, equals } from './dev/equality.js';
+export { log_if_contains_state } from './dev/console-log.js';

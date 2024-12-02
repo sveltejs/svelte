@@ -10,18 +10,18 @@ Learn more at the [Svelte website](https://svelte.dev), or stop by the [Discord 
 
 ## Getting started
 
-You can play around with Svelte in the [tutorial](https://learn.svelte.dev/), [examples](https://svelte.dev/examples), and [REPL](https://svelte.dev/repl).
+You can play around with Svelte in the [tutorial](https://svelte.dev/tutorial), [examples](https://svelte.dev/examples), and [REPL](https://svelte.dev/repl).
 
-When you're ready to build a full-fledge application, we recommend using [SvelteKit](https://kit.svelte.dev):
+When you're ready to build a full-fledge application, we recommend using [SvelteKit](https://svelte.dev/docs/kit):
 
 ```bash
-npm create svelte@latest my-app
+npx sv create my-app
 cd my-app
 npm install
 npm run dev
 ```
 
-See [the SvelteKit documentation](https://kit.svelte.dev/docs) to learn more.
+See [the SvelteKit documentation](https://svelte.dev/docs/kit) to learn more.
 
 ## Changelog
 

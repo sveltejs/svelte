@@ -1,3 +1,4 @@
+/** @import { SvelteComponent } from '../index.js' */
 import { asClassComponent as as_class_component, createClassComponent } from './legacy-client.js';
 import { render } from '../internal/server/index.js';
 
@@ -15,8 +16,8 @@ export { createClassComponent };
  * @template {Record<string, any>} Events
  * @template {Record<string, any>} Slots
  *
- * @param {import('../index.js').SvelteComponent<Props, Events, Slots>} component
- * @returns {typeof import('../index.js').SvelteComponent<Props, Events, Slots> & Exports}
+ * @param {SvelteComponent<Props, Events, Slots>} component
+ * @returns {typeof SvelteComponent<Props, Events, Slots> & Exports}
  */
 export function asClassComponent(component) {
 	const component_constructor = as_class_component(component);
@@ -27,7 +28,7 @@ export function asClassComponent(component) {
 		return {
 			css: { code: '', map: null },
 			head: result.head,
-			html: result.html
+			html: result.body
 		};
 	};
 	// @ts-expect-error this is present for SSR
@@ -47,3 +48,19 @@ export function asClassComponent(component) {
 export function run(fn) {
 	fn();
 }
+
+const noop = () => {};
+
+// event stuff, no need to worry about it for SSR but needs to be there or it will crash
+export {
+	noop as handlers,
+	noop as createBubbler,
+	noop as once,
+	noop as preventDefault,
+	noop as self,
+	noop as stopImmediatePropagation,
+	noop as stopPropagation,
+	noop as trusted,
+	noop as passive,
+	noop as nonpassive
+};

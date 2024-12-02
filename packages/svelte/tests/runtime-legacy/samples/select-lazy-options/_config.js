@@ -1,8 +1,10 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
 	async test({ assert, target }) {
-		await target.querySelector('button')?.click();
+		target.querySelector('button')?.click();
+		flushSync();
 		await Promise.resolve();
 
 		const options = target.querySelectorAll('option');

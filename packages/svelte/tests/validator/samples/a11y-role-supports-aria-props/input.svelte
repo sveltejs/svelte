@@ -4,7 +4,7 @@
 <article aria-autocomplete="inline"></article>
 <aside aria-modal="true"></aside>
 <body aria-invalid="true"></body>
-<button aria-valuemax="0"></button>
+<button aria-valuemax="0">click me</button>
 <datalist aria-valuenow="0"></datalist>
 <dd aria-rowindex="0"></dd>
 <dfn aria-colcount="0"></dfn>

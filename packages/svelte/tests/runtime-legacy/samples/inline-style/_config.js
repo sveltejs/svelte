@@ -10,6 +10,6 @@ export default test({
 		ok(div);
 
 		const styles = window.getComputedStyle(div);
-		assert.equal(styles.color, 'red');
+		assert.equal(styles.color, 'rgb(255, 0, 0)');
 	}
 });

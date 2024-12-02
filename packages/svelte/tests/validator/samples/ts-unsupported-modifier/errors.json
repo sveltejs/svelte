@@ -1,0 +1,14 @@
+[
+	{
+		"code": "typescript_invalid_feature",
+		"message": "TypeScript language features like accessibility modifiers on constructor parameters are not natively supported, and their use is generally discouraged. Outside of `<script>` tags, these features are not supported. For use within `<script>` tags, you will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler. If you are using `vitePreprocess`, make sure to specifically enable preprocessing script tags (`vitePreprocess({ script: true })`)",
+		"start": {
+			"line": 3,
+			"column": 14
+		},
+		"end": {
+			"line": 3,
+			"column": 31
+		}
+	}
+]

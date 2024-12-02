@@ -56,12 +56,10 @@
 										"attributes": [],
 										"fragment": {
 											"type": "Fragment",
-											"nodes": [],
-											"transparent": true
+											"nodes": []
 										}
 									}
-								],
-								"transparent": true
+								]
 							}
 						},
 						{
@@ -71,8 +69,7 @@
 							"raw": "\n",
 							"data": "\n"
 						}
-					],
-					"transparent": true
+					]
 				}
 			},
 			{
@@ -115,12 +112,10 @@
 										"attributes": [],
 										"fragment": {
 											"type": "Fragment",
-											"nodes": [],
-											"transparent": true
+											"nodes": []
 										}
 									}
-								],
-								"transparent": true
+								]
 							}
 						},
 						{
@@ -130,8 +125,7 @@
 							"raw": "\n",
 							"data": "\n"
 						}
-					],
-					"transparent": true
+					]
 				}
 			},
 			{
@@ -149,12 +143,10 @@
 				"attributes": [],
 				"fragment": {
 					"type": "Fragment",
-					"nodes": [],
-					"transparent": true
+					"nodes": []
 				}
 			}
-		],
-		"transparent": false
+		]
 	},
 	"options": null
 }

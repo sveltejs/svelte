@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -7,10 +8,13 @@ export default test({
 		<button>increase count</button>
 	`,
 
-	async test({ assert, target, logs }) {
+	test({ assert, target, logs }) {
 		const [toggle, increment] = target.querySelectorAll('button');
 
-		await increment?.click();
+		flushSync(() => {
+			increment?.click();
+		});
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -21,7 +25,10 @@ export default test({
 		);
 		assert.deepEqual(logs, []);
 
-		await toggle?.click();
+		flushSync(() => {
+			toggle?.click();
+		});
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -32,7 +39,10 @@ export default test({
 		);
 		assert.deepEqual(logs, [1]);
 
-		await increment?.click();
+		flushSync(() => {
+			increment?.click();
+		});
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -43,7 +53,10 @@ export default test({
 		);
 		assert.deepEqual(logs, [1]);
 
-		await toggle?.click();
+		flushSync(() => {
+			toggle?.click();
+		});
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`

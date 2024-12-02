@@ -1,8 +1,10 @@
-import type { ComponentContext, Dom, Equals, TransitionManager } from '#client';
+import type { ComponentContext, Dom, Equals, TemplateNode, TransitionManager } from '#client';
 
 export interface Signal {
 	/** Flags bitmask */
 	f: number;
+	/** Write version */
+	version: number;
 }
 
 export interface Value<V = unknown> extends Signal {
@@ -12,35 +14,39 @@ export interface Value<V = unknown> extends Signal {
 	equals: Equals;
 	/** The latest value for this signal */
 	v: V;
-	/** Write version */
-	version: number;
 }
 
 export interface Reaction extends Signal {
+	/** The associated component context */
+	ctx: null | ComponentContext;
 	/** The reaction function */
-	fn: Function;
+	fn: null | Function;
 	/** Signals that this signal reads from */
 	deps: null | Value[];
-	/** First child effect created inside this signal */
-	first: null | Effect;
-	/** Last child effect created inside this signal */
-	last: null | Effect;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {
 	/** The derived function */
 	fn: () => V;
-	/** Deriveds created inside this signal */
-	deriveds: null | Derived[];
+	/** Reactions created inside this signal */
+	children: null | Reaction[];
+	/** Parent effect or derived */
+	parent: Effect | Derived | null;
 }
 
 export interface Effect extends Reaction {
-	parent: Effect | null;
-	dom: Dom | null;
-	/** The associated component context */
-	ctx: null | ComponentContext;
+	/**
+	 * Branch effects store their start/end nodes so that they can be
+	 * removed when the effect is destroyed, or moved when an `each`
+	 * block is reconciled. In the case of a single text/element node,
+	 * `start` and `end` will be the same.
+	 */
+	nodes_start: null | TemplateNode;
+	nodes_end: null | TemplateNode;
+	/** Reactions created inside this signal */
+	deriveds: null | Derived[];
 	/** The effect function */
-	fn: () => void | (() => void);
+	fn: null | (() => void | (() => void));
 	/** The teardown function returned from the effect function */
 	teardown: null | (() => void);
 	/** Transition managers created with `$.transition` */
@@ -49,15 +55,15 @@ export interface Effect extends Reaction {
 	prev: null | Effect;
 	/** Next sibling child effect created inside the parent signal */
 	next: null | Effect;
+	/** First child effect created inside this signal */
+	first: null | Effect;
+	/** Last child effect created inside this signal */
+	last: null | Effect;
+	/** Parent effect */
+	parent: Effect | null;
 	/** Dev only */
 	component_function?: any;
 }
-
-export interface ValueDebug<V = unknown> extends Value<V> {
-	inspect: Set<Function>;
-}
-
-export interface DerivedDebug<V = unknown> extends Derived<V>, ValueDebug<V> {}
 
 export type Source<V = unknown> = Value<V>;
 

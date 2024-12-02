@@ -2,27 +2,26 @@ import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 
 export default function Function_prop_no_getter($$anchor) {
-	let count = $.source(0);
+	let count = $.state(0);
 
 	function onmouseup() {
 		$.set(count, $.get(count) + 2);
 	}
 
 	const plusOne = (num) => num + 1;
-	var fragment = $.comment();
-	var node = $.first_child(fragment);
 
-	Button(node, {
+	Button($$anchor, {
 		onmousedown: () => $.set(count, $.get(count) + 1),
 		onmouseup,
 		onmouseenter: () => $.set(count, $.proxy(plusOne($.get(count)))),
 		children: ($$anchor, $$slotProps) => {
-			var text = $.text($$anchor);
+			$.next();
 
-			$.render_effect(() => $.set_text(text, `clicks: ${$.stringify($.get(count))}`));
+			var text = $.text();
+
+			$.template_effect(() => $.set_text(text, `clicks: ${$.get(count) ?? ""}`));
 			$.append($$anchor, text);
-		}
+		},
+		$$slots: { default: true }
 	});
-
-	$.append($$anchor, fragment);
 }

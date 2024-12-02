@@ -1,7 +1,7 @@
 [
 	{
 		"code": "node_invalid_placement",
-		"message": "<div> is invalid inside <p>",
+		"message": "`<div>` is invalid inside `<p>`",
 		"start": {
 			"line": 4,
 			"column": 3

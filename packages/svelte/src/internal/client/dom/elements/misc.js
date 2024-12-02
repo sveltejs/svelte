@@ -1,6 +1,6 @@
 import { hydrating } from '../hydration.js';
-import { effect } from '../../reactivity/effects.js';
-import { clear_text_content } from '../operations.js';
+import { clear_text_content, get_first_child } from '../operations.js';
+import { queue_micro_task } from '../task.js';
 
 /**
  * @param {HTMLElement} dom
@@ -12,7 +12,7 @@ export function autofocus(dom, value) {
 		const body = document.body;
 		dom.autofocus = true;
 
-		effect(() => {
+		queue_micro_task(() => {
 			if (document.activeElement === body) {
 				dom.focus();
 			}
@@ -27,7 +27,32 @@ export function autofocus(dom, value) {
  * @returns {void}
  */
 export function remove_textarea_child(dom) {
-	if (hydrating && dom.firstChild !== null) {
+	if (hydrating && get_first_child(dom) !== null) {
 		clear_text_content(dom);
+	}
+}
+
+let listening_to_form_reset = false;
+
+export function add_form_reset_listener() {
+	if (!listening_to_form_reset) {
+		listening_to_form_reset = true;
+		document.addEventListener(
+			'reset',
+			(evt) => {
+				// Needs to happen one tick later or else the dom properties of the form
+				// elements have not updated to their reset values yet
+				Promise.resolve().then(() => {
+					if (!evt.defaultPrevented) {
+						for (const e of /**@type {HTMLFormElement} */ (evt.target).elements) {
+							// @ts-expect-error
+							e.__on_r?.();
+						}
+					}
+				});
+			},
+			// In the capture phase to guarantee we get noticed of it (no possiblity of stopPropagation)
+			{ capture: true }
+		);
 	}
 }

@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -7,7 +8,7 @@ export default test({
   <button>Increase count</button>
   `,
 
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const [multiplier, count] = target.querySelectorAll('button');
 		const clickEvent = new window.Event('click', { bubbles: true });
 		const span = /** @type {HTMLSpanElement} */ (target.querySelector('span'));
@@ -19,16 +20,20 @@ export default test({
 		const expect_span_to_be = (count, multiplier) =>
 			assert.htmlEqual(span.innerHTML, `${count} * ${multiplier} = ${count * multiplier}`);
 
-		await count.dispatchEvent(clickEvent);
+		count.dispatchEvent(clickEvent);
+		flushSync();
 		expect_span_to_be(1, 2);
 
-		await multiplier.dispatchEvent(clickEvent);
+		multiplier.dispatchEvent(clickEvent);
+		flushSync();
 		expect_span_to_be(1, 3);
 
-		await count.dispatchEvent(clickEvent);
+		count.dispatchEvent(clickEvent);
+		flushSync();
 		expect_span_to_be(2, 3);
 
-		await multiplier.dispatchEvent(clickEvent);
+		multiplier.dispatchEvent(clickEvent);
+		flushSync();
 		expect_span_to_be(2, 4);
 	}
 });

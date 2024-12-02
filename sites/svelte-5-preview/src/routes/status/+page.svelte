@@ -22,7 +22,7 @@
 				<h3>{suite.name}</h3>
 				<div class="grid">
 					{#each suite.tests as test}
-						<div title={test.title} class="result {test.status}" />
+						<div title={test.title} class="result {test.status}"></div>
 					{/each}
 				</div>
 			</section>

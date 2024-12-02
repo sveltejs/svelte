@@ -1,11 +1,15 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
 	html: `<button>clicks: 0</button>`,
 
-	async test({ assert, target }) {
+	test({ assert, target }) {
 		const btn = target.querySelector('button');
-		await btn?.click();
+
+		flushSync(() => {
+			btn?.click();
+		});
 
 		assert.htmlEqual(target.innerHTML, `<button>clicks: 1</button>`);
 	}

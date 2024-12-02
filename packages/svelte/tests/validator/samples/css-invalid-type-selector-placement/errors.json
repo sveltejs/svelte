@@ -1,7 +1,7 @@
 [
 	{
 		"code": "css_type_selector_invalid_placement",
-		"message": ":global(...) must not be followed with a type selector",
+		"message": "`:global(...)` must not be followed by a type selector",
 		"start": {
 			"line": 17,
 			"column": 14

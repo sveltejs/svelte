@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -6,12 +7,13 @@ export default test({
 		<p>count: 0</p>
 	`,
 
-	async test({ assert, component, target, window }) {
+	test({ assert, component, target, window }) {
 		const click = new window.MouseEvent('click', { bubbles: true });
 		const button = target.querySelector('button');
 		ok(button);
 
-		await button.dispatchEvent(click);
+		button.dispatchEvent(click);
+		flushSync();
 
 		assert.equal(component.x, 1);
 		assert.htmlEqual(
@@ -22,7 +24,8 @@ export default test({
 		`
 		);
 
-		await button.dispatchEvent(click);
+		button.dispatchEvent(click);
+		flushSync();
 
 		assert.equal(component.x, 2);
 		assert.htmlEqual(

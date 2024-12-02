@@ -22,7 +22,6 @@
 	<div class="editor notranslate" translate="no">
 		<CodeMirror
 			bind:this={$module_editor}
-			{autocomplete}
 			diagnostics={() => {
 				if (error) {
 					return [
@@ -30,7 +29,16 @@
 							severity: 'error',
 							from: error.position[0],
 							to: error.position[1],
-							message: error.message
+							message: error.message,
+							renderMessage: () => {
+								// TODO expose error codes, so we can link to docs in future
+								const span = document.createElement('span');
+								span.innerHTML = `${error.message
+									.replace(/&/g, '&amp;')
+									.replace(/</g, '&lt;')
+									.replace(/`(.+?)`/g, `<code>$1</code>`)}`;
+								return span;
+							}
 						}
 					];
 				}
@@ -40,7 +48,15 @@
 						severity: 'warning',
 						from: warning.start.character,
 						to: warning.end.character,
-						message: warning.message
+						message: warning.message,
+						renderMessage: () => {
+							const span = document.createElement('span');
+							span.innerHTML = `${warning.message
+								.replace(/&/g, '&amp;')
+								.replace(/</g, '&lt;')
+								.replace(/`(.+?)`/g, `<code>$1</code>`)} <strong>(${warning.code})</strong>`;
+							return span;
+						}
 					}));
 				}
 

@@ -12,7 +12,15 @@
 
 ## component_api_changed
 
-> %parent% called `%method%` on an instance of %component%, which is no longer valid in Svelte 5. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information
+> %parent% called `%method%` on an instance of %component%, which is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information
+
+## component_api_invalid_new
+
+> Attempted to instantiate %component% with `new %name%`, which is no longer valid in Svelte 5. If this component is not under your control, set the `compatibility.componentApi` compiler option to `4` to keep it working. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information
+
+## derived_references_self
+
+> A derived value cannot reference itself recursively
 
 ## each_key_duplicate
 
@@ -24,6 +32,10 @@
 
 > `%rune%` cannot be used inside an effect cleanup function
 
+## effect_in_unowned_derived
+
+> Effect cannot be created inside a `$derived` value that was not itself created inside an effect
+
 ## effect_orphan
 
 > `%rune%` can only be used inside an effect (e.g. during component initialisation)
@@ -32,13 +44,13 @@
 
 > Maximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops
 
-## hydration_missing_marker_close
+## hydration_failed
 
-> Missing hydration closing marker
+> Failed to hydrate the application
 
-## hydration_missing_marker_open
+## invalid_snippet
 
-> Missing hydration opening marker
+> Could not `{@render}` snippet due to the expression being `null` or `undefined`. Consider using optional chaining `{@render snippet?.()}`
 
 ## lifecycle_legacy_only
 
@@ -56,16 +68,18 @@
 
 > The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
 
+## state_descriptors_fixed
+
+> Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
+
 ## state_prototype_fixed
 
 > Cannot set prototype of `$state` object
 
+## state_unsafe_local_read
+
+> Reading state that was created inside the same derived is forbidden. Consider using `untrack` to read locally created state
+
 ## state_unsafe_mutation
 
-> Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. This can lead to unexpected errors and possibly cause infinite loops.
->
-> If the object is not meant to be reactive, declare it without `$state`
-
-## svelte_component_invalid_this_value
-
-> The `this={...}` property of a `<svelte:component>` must be a Svelte component, if defined
+> Updating state inside a derived or a template expression is forbidden. If the value should not be reactive, declare it without `$state`

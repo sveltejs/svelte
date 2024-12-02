@@ -1,3 +1,4 @@
-input/*
-output/*
-!.gitkeep
+/dist/client/*
+/dist/server/*
+/output
+/src/*

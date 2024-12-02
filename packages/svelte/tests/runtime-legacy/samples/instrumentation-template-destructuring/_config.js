@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -12,7 +13,9 @@ export default test({
 		const buttons = target.querySelectorAll('button');
 		const click = new window.MouseEvent('click', { bubbles: true });
 
-		await buttons[0].dispatchEvent(click);
+		buttons[0].dispatchEvent(click);
+		flushSync();
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -23,7 +26,9 @@ export default test({
 		`
 		);
 
-		await buttons[1].dispatchEvent(click);
+		buttons[1].dispatchEvent(click);
+		flushSync();
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`

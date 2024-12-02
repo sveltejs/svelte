@@ -1,7 +1,8 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const [input1, input2] = /** @type {NodeListOf<HTMLInputElement>} */ (
 			target.querySelectorAll('input[type=text]')
 		);
@@ -12,26 +13,28 @@ export default test({
 		const event = new window.Event('input');
 
 		input1.value = 'world';
-		await input1.dispatchEvent(event);
-		await Promise.resolve();
+		input1.dispatchEvent(event);
+		flushSync();
 		assert.equal(radio.checked, true);
 
 		input2.value = 'foo';
-		await input2.dispatchEvent(event);
-		await Promise.resolve();
+		input2.dispatchEvent(event);
+		flushSync();
 		assert.equal(radio.checked, false);
 
 		input1.value = 'foo';
-		await input1.dispatchEvent(event);
+		input1.dispatchEvent(event);
+		flushSync();
 		assert.equal(radio.checked, true);
 
 		input1.value = 'bar';
-		await input1.dispatchEvent(event);
+		input1.dispatchEvent(event);
+		flushSync();
 		assert.equal(radio.checked, false);
 
 		input2.value = 'bar';
-		await input2.dispatchEvent(event);
-		await Promise.resolve();
+		input2.dispatchEvent(event);
+		flushSync();
 		assert.equal(radio.checked, true);
 	}
 });

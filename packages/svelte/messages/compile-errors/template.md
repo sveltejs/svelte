@@ -46,6 +46,10 @@
 
 > 'type' attribute must be a static text value if input uses two-way binding
 
+## attribute_unquoted_sequence
+
+> Attribute values containing `{...}` must be enclosed in quote marks, unless the value only contains the expression
+
 ## bind_invalid_expression
 
 > Can only bind to an Identifier or MemberExpression
@@ -70,7 +74,7 @@
 
 ## block_invalid_continuation_placement
 
-> {:...} block is invalid at this position (did you forget to close the preceeding element or block?)
+> {:...} block is invalid at this position (did you forget to close the preceding element or block?)
 
 ## block_invalid_elseif
 
@@ -84,6 +88,10 @@
 
 > Block was left open
 
+## block_unexpected_character
+
+> Expected a `%character%` character immediately following the opening bracket
+
 ## block_unexpected_close
 
 > Unexpected block closing tag
@@ -91,6 +99,10 @@
 ## component_invalid_directive
 
 > This type of directive is not valid on components
+
+## const_tag_cycle
+
+> Cyclical dependency detected: %cycle%
 
 ## const_tag_invalid_expression
 
@@ -119,10 +131,6 @@
 ## element_invalid_closing_tag_autoclosed
 
 > `</%name%>` attempted to close element that was already automatically closed by `<%reason%>` (cannot nest `<%reason%>` inside `<%name%>`)
-
-## element_invalid_tag_name
-
-> Expected valid tag name
 
 ## element_unclosed
 
@@ -164,6 +172,10 @@
 
 > Expected whitespace
 
+## illegal_element_attribute
+
+> `<%name%>` does not support non-event attributes or spread attributes
+
 ## js_parse_error
 
 > %message%
@@ -174,11 +186,17 @@
 
 ## mixed_event_handler_syntaxes
 
-> Mixing old (on:%name%) and new syntaxes for event handling is not allowed. Use only the on%name% syntax.
+> Mixing old (on:%name%) and new syntaxes for event handling is not allowed. Use only the on%name% syntax
 
 ## node_invalid_placement
 
-> %thing% is invalid inside <%parent%>
+> %thing% is invalid inside `<%parent%>`
+
+HTML restricts where certain elements can appear. In case of a violation the browser will 'repair' the HTML in a way that breaks Svelte's assumptions about the structure of your components. Some examples:
+
+- `<p>hello <div>world</div></p>` will result in `<p>hello </p><div>world</div><p></p>` for example (the `<div>` autoclosed the `<p>` because `<p>` cannot contain block-level elements)
+- `<option><div>option a</div></option>` will result in `<option>option a</option>` (the `<div>` is removed)
+- `<table><tr><td>cell</td></tr></table>` will result in `<table><tbody><tr><td>cell</td></tr></tbody></table>` (a `<tbody>` is auto-inserted)
 
 ## render_tag_invalid_call_expression
 
@@ -194,11 +212,19 @@
 
 ## script_duplicate
 
-> A component can have a single top-level `<script>` element and/or a single top-level `<script context="module">` element
+> A component can have a single top-level `<script>` element and/or a single top-level `<script module>` element
+
+## script_invalid_attribute_value
+
+> If the `%name%` attribute is supplied, it must be a boolean attribute
 
 ## script_invalid_context
 
 > If the context attribute is supplied, its value must be "module"
+
+## script_reserved_attribute
+
+> The `%name%` attribute is reserved and cannot be used
 
 ## slot_attribute_duplicate
 
@@ -230,7 +256,7 @@
 
 ## slot_snippet_conflict
 
-> Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely.
+> Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely
 
 ## snippet_conflict
 
@@ -238,7 +264,11 @@
 
 ## snippet_invalid_rest_parameter
 
-> snippets do not support rest parameters; use an array instead
+> Snippets do not support rest parameters; use an array instead
+
+## snippet_shadowing_prop
+
+> This snippet is shadowing the prop `%prop%` with the same name
 
 ## style_directive_invalid_modifier
 
@@ -248,6 +278,18 @@
 
 > A component can have a single top-level `<style>` element
 
+## svelte_body_illegal_attribute
+
+> `<svelte:body>` does not support non-event attributes or spread attributes
+
+## svelte_boundary_invalid_attribute
+
+> Valid attributes on `<svelte:boundary>` are `onerror` and `failed`
+
+## svelte_boundary_invalid_attribute_value
+
+> Attribute value must be a non-string expression
+
 ## svelte_component_invalid_this
 
 > Invalid component definition — must be an `{expression}`
@@ -256,13 +298,9 @@
 
 > `<svelte:component>` must have a 'this' attribute
 
-## svelte_element_invalid_this
-
-> Invalid element definition — must be an `{expression}`
-
 ## svelte_element_missing_this
 
-> `<svelte:element>` must have a 'this' attribute
+> `<svelte:element>` must have a 'this' attribute with a value
 
 ## svelte_fragment_invalid_attribute
 
@@ -271,10 +309,6 @@
 ## svelte_fragment_invalid_placement
 
 > `<svelte:fragment>` must be the direct child of a component
-
-## svelte_fragment_invalid_slot
-
-> `<svelte:fragment>` slot attribute must have a static value
 
 ## svelte_head_illegal_attribute
 
@@ -306,11 +340,11 @@
 
 ## svelte_options_invalid_attribute_value
 
-> Valid values are %list%
+> Value must be %list%, if specified
 
 ## svelte_options_invalid_customelement
 
-> "customElement" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
+> "customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
 
 ## svelte_options_invalid_customelement_props
 
@@ -322,7 +356,15 @@
 
 ## svelte_options_invalid_tagname
 
-> Tag name must be two or more words joined by the "-" character
+> Tag name must be lowercase and hyphenated
+
+See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name for more information on valid tag names
+
+## svelte_options_reserved_tagname
+
+> Tag name is reserved
+
+See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name for more information on valid tag names
 
 ## svelte_options_unknown_attribute
 
@@ -331,6 +373,10 @@
 ## svelte_self_invalid_placement
 
 > `<svelte:self>` components can only exist inside `{#if}` blocks, `{#each}` blocks, `{#snippet}` blocks or slots passed to components
+
+## tag_invalid_name
+
+> Expected a valid element or component name. Components must have a valid variable name or dot notation expression
 
 ## tag_invalid_placement
 

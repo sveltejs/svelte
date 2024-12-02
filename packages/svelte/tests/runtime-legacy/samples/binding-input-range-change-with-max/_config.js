@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -13,7 +14,7 @@ export default test({
 		<p>10 of 10</p>
 	`,
 
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const input = target.querySelector('input');
 		ok(input);
 		assert.equal(input.value, '10');
@@ -25,8 +26,8 @@ export default test({
 
 		const button = target.querySelector('button');
 		ok(button);
-		await button.dispatchEvent(new window.Event('click', { bubbles: true }));
-		await Promise.resolve();
+		button.dispatchEvent(new window.Event('click', { bubbles: true }));
+		flushSync();
 
 		assert.equal(input.value, '20');
 		assert.htmlEqual(

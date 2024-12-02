@@ -2,12 +2,12 @@
 	"html": {
 		"type": "Fragment",
 		"start": 0,
-		"end": 89,
+		"end": 107,
 		"children": [
 			{
 				"type": "IfBlock",
 				"start": 0,
-				"end": 89,
+				"end": 107,
 				"expression": {
 					"type": "BinaryExpression",
 					"start": 5,
@@ -78,12 +78,12 @@
 				"else": {
 					"type": "ElseBlock",
 					"start": 58,
-					"end": 84,
+					"end": 102,
 					"children": [
 						{
 							"type": "IfBlock",
 							"start": 58,
-							"end": 89,
+							"end": 107,
 							"expression": {
 								"type": "BinaryExpression",
 								"start": 52,
@@ -151,6 +151,69 @@
 									]
 								}
 							],
+							"else": {
+								"type": "ElseBlock",
+								"start": 102,
+								"end": 102,
+								"children": [
+									{
+										"type": "IfBlock",
+										"start": 102,
+										"end": 107,
+										"expression": {
+											"type": "BinaryExpression",
+											"start": 94,
+											"end": 101,
+											"loc": {
+												"start": {
+													"line": 5,
+													"column": 10
+												},
+												"end": {
+													"line": 5,
+													"column": 17
+												}
+											},
+											"left": {
+												"type": "Identifier",
+												"start": 94,
+												"end": 95,
+												"loc": {
+													"start": {
+														"line": 5,
+														"column": 10
+													},
+													"end": {
+														"line": 5,
+														"column": 11
+													}
+												},
+												"name": "x"
+											},
+											"operator": "===",
+											"right": {
+												"type": "Literal",
+												"start": 100,
+												"end": 101,
+												"loc": {
+													"start": {
+														"line": 5,
+														"column": 16
+													},
+													"end": {
+														"line": 5,
+														"column": 17
+													}
+												},
+												"value": 1,
+												"raw": "1"
+											}
+										},
+										"children": [],
+										"elseif": true
+									}
+								]
+							},
 							"elseif": true
 						}
 					]

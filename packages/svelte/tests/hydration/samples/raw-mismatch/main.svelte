@@ -1,1 +1,5 @@
-{@html '<p>foo</p>'}
+<script>
+	let { html } = $props();
+</script>
+
+{@html html}

@@ -5,25 +5,26 @@ export default test({
 		componentName: /** @type {string | undefined} */ ('Slider1')
 	},
 	html: `
-		<div style="display: contents; --rail-color: rgb(0, 0, 0); --track-color: rgb(255, 0, 0);">
+		<svelte-css-wrapper style="display: contents; --rail-color: rgb(0, 0, 0); --track-color: rgb(255, 0, 0);">
 			<div id="component1">
 				<p class="svelte-q538ga">Slider1</p><span class="svelte-q538ga">Track</span>
 			</div>
-			<div style="display: contents; --rail-color: rgb(255, 255, 0); --track-color: rgb(255, 0, 255);">
+			<svelte-css-wrapper style="display: contents; --rail-color: rgb(255, 255, 0); --track-color: rgb(255, 0, 255);">
 				<div id="nest-component1">
 					<p class="svelte-q538ga">Slider1</p><span class="svelte-q538ga">Track</span></div>
 				</div>
-			</div>
-		<div style="display: contents; --rail-color: rgb(0, 255, 0); --track-color: rgb(0, 0, 255);">
+			</svelte-css-wrapper>
+		</svelte-css-wrapper>
+		<svelte-css-wrapper style="display: contents; --rail-color: rgb(0, 255, 0); --track-color: rgb(0, 0, 255);">
 			<div id="component2">
 				<p class="svelte-q538ga">Slider1</p><span class="svelte-q538ga">Track</span>
 			</div>
-			<div style="display: contents; --rail-color: rgb(255, 255, 0); --track-color: rgb(255, 0, 255);">
+			<svelte-css-wrapper style="display: contents; --rail-color: rgb(255, 255, 0); --track-color: rgb(255, 0, 255);">
 				<div id="nest-component2">
 					<p class="svelte-q538ga">Slider1</p><span class="svelte-q538ga">Track</span>
 				</div>
-			</div>
-		</div>
+			</svelte-css-wrapper>
+		</svelte-css-wrapper>
 	`,
 	test({ target, window, assert, component }) {
 		function assert_slider_1() {
@@ -35,7 +36,6 @@ export default test({
 			const nest_track_color1 = target.querySelector('#nest-component1 span');
 			const nest_rail_color2 = target.querySelector('#nest-component2 p');
 			const nest_track_color2 = target.querySelector('#nest-component2 span');
-
 			assert_ok(rail_color1);
 			assert_ok(track_color1);
 			assert_ok(rail_color2);
@@ -96,7 +96,7 @@ export default test({
 		component.componentName = 'Slider2';
 		assert_slider_2();
 		component.componentName = undefined;
-		assert.equal(window.document.querySelector('div'), null);
+		assert.equal(window.document.querySelector('div')?.firstElementChild, null);
 		component.componentName = 'Slider1';
 		assert_slider_1();
 	}

@@ -1,15 +1,17 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
 	html: `
     <input>
 	`,
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const input = target.querySelector('input');
 		ok(input);
 
 		input.value = 'a';
-		await input.dispatchEvent(new window.Event('input'));
+		input.dispatchEvent(new window.Event('input'));
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -20,7 +22,8 @@ export default test({
 		);
 
 		input.value = 'abc';
-		await input.dispatchEvent(new window.Event('input'));
+		input.dispatchEvent(new window.Event('input'));
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

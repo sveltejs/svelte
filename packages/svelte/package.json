@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.0.0-next.125",
+  "version": "5.4.0",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -53,6 +53,9 @@
     "./internal/disclose-version": {
       "default": "./src/internal/disclose-version.js"
     },
+    "./internal/flags/legacy": {
+      "default": "./src/internal/flags/legacy.js"
+    },
     "./internal/server": {
       "default": "./src/internal/server/index.js"
     },
@@ -76,11 +79,16 @@
     },
     "./store": {
       "types": "./types/index.d.ts",
-      "default": "./src/store/index.js"
+      "browser": "./src/store/index-client.js",
+      "default": "./src/store/index-server.js"
     },
     "./transition": {
       "types": "./types/index.d.ts",
       "default": "./src/transition/index.js"
+    },
+    "./events": {
+      "types": "./types/index.d.ts",
+      "default": "./src/events/index.js"
     }
   },
   "repository": {
@@ -93,6 +101,7 @@
   },
   "homepage": "https://svelte.dev",
   "keywords": [
+    "svelte",
     "UI",
     "framework",
     "templates",
@@ -101,52 +110,43 @@
   "scripts": {
     "build": "node scripts/process-messages && rollup -c && pnpm generate:types && node scripts/check-treeshakeability.js",
     "dev": "node scripts/process-messages && rollup -cw",
-    "check": "tsc && cd ./tests/types && tsc",
+    "check": "tsc --project tsconfig.runtime.json && tsc && cd ./tests/types && tsc",
     "check:watch": "tsc --watch",
     "generate:version": "node ./scripts/generate-version.js",
     "generate:types": "node ./scripts/generate-types.js && tsc -p tsconfig.generated.json",
     "prepublishOnly": "pnpm build",
-    "knip": "knip"
+    "knip": "pnpm dlx knip"
   },
   "devDependencies": {
-    "@jridgewell/trace-mapping": "^0.3.22",
-    "@playwright/test": "^1.35.1",
-    "@rollup/plugin-commonjs": "^25.0.7",
-    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@jridgewell/trace-mapping": "^0.3.25",
+    "@playwright/test": "^1.46.1",
+    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/aria-query": "^5.0.4",
-    "dts-buddy": "^0.4.7",
-    "esbuild": "^0.19.11",
-    "knip": "^4.2.1",
-    "rollup": "^4.9.5",
+    "@types/node": "^20.11.5",
+    "dts-buddy": "^0.5.3",
+    "esbuild": "^0.21.5",
+    "rollup": "^4.22.4",
     "source-map": "^0.7.4",
-    "tiny-glob": "^0.2.9"
+    "tiny-glob": "^0.2.9",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
   },
   "dependencies": {
-    "@ampproject/remapping": "^2.2.1",
-    "@jridgewell/sourcemap-codec": "^1.4.15",
+    "@ampproject/remapping": "^2.3.0",
+    "@jridgewell/sourcemap-codec": "^1.5.0",
     "@types/estree": "^1.0.5",
-    "acorn": "^8.11.3",
+    "acorn": "^8.12.1",
     "acorn-typescript": "^1.4.13",
-    "aria-query": "^5.3.0",
-    "axobject-query": "^4.0.0",
-    "esm-env": "^1.0.0",
-    "esrap": "^1.2.2",
-    "is-reference": "^3.0.2",
+    "aria-query": "^5.3.1",
+    "axobject-query": "^4.1.0",
+    "esm-env": "^1.2.1",
+    "esrap": "^1.2.3",
+    "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
-    "magic-string": "^0.30.5",
+    "magic-string": "^0.30.11",
     "zimmerframe": "^1.1.2"
-  },
-  "knip": {
-    "entry": [
-      "src/*/index.js",
-      "src/index-client.ts",
-      "src/index-server.ts",
-      "src/index.d.ts"
-    ],
-    "project": [
-      "src/**"
-    ]
   }
 }

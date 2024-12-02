@@ -1,13 +1,14 @@
+/** @import { AST, TemplateNode } from '#compiler' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
 import { regex_whitespace } from '../patterns.js';
-import { reserved } from './utils/names.js';
 import full_char_code_at from './utils/full_char_code_at.js';
 import * as e from '../../errors.js';
 import { create_fragment } from './utils/create.js';
 import read_options from './read/options.js';
-import { getLocator } from 'locate-character';
+import { is_reserved } from '../../../utils.js';
+import { disallow_children } from '../2-analyze/visitors/shared/special-element.js';
 
 const regex_position_indicator = / \(\d+:\d+\)$/;
 
@@ -27,13 +28,13 @@ export class Parser {
 	/** Whether we're parsing in TypeScript mode */
 	ts = false;
 
-	/** @type {import('#compiler').TemplateNode[]} */
+	/** @type {TemplateNode[]} */
 	stack = [];
 
-	/** @type {import('#compiler').Fragment[]} */
+	/** @type {AST.Fragment[]} */
 	fragments = [];
 
-	/** @type {import('#compiler').Root} */
+	/** @type {AST.Root} */
 	root;
 
 	/** @type {Record<string, boolean>} */
@@ -42,8 +43,6 @@ export class Parser {
 	/** @type {LastAutoClosedTag | undefined} */
 	last_auto_closed_tag;
 
-	locate;
-
 	/** @param {string} template */
 	constructor(template) {
 		if (typeof template !== 'string') {
@@ -51,7 +50,6 @@ export class Parser {
 		}
 
 		this.template = template.trimEnd();
-		this.locate = getLocator(this.template, { offsetLine: 1 });
 
 		let match_lang;
 
@@ -124,29 +122,18 @@ export class Parser {
 			(thing) => thing.type === 'SvelteOptions'
 		);
 		if (options_index !== -1) {
-			const options = /** @type {import('#compiler').SvelteOptionsRaw} */ (
-				this.root.fragment.nodes[options_index]
-			);
+			const options = /** @type {AST.SvelteOptionsRaw} */ (this.root.fragment.nodes[options_index]);
 			this.root.fragment.nodes.splice(options_index, 1);
 			this.root.options = read_options(options);
+
+			disallow_children(options);
+
 			// We need this for the old AST format
 			Object.defineProperty(this.root.options, '__raw__', {
 				value: options,
 				enumerable: false
 			});
 		}
-	}
-
-	/**
-	 * offset -> line/column
-	 * @param {number} start
-	 * @param {number} end
-	 */
-	get_location(start, end) {
-		return {
-			start: /** @type {import('locate-character').Location_1} */ (this.locate(start)),
-			end: /** @type {import('locate-character').Location_1} */ (this.locate(end))
-		};
 	}
 
 	current() {
@@ -236,7 +223,7 @@ export class Parser {
 
 		const identifier = this.template.slice(this.index, (this.index = i));
 
-		if (!allow_reserved && reserved.includes(identifier)) {
+		if (!allow_reserved && is_reserved(identifier)) {
 			e.unexpected_reserved_word(start, identifier);
 		}
 
@@ -275,37 +262,19 @@ export class Parser {
 	}
 
 	/**
-	 * @template T
-	 * @param {Omit<T, 'prev' | 'parent'>} node
+	 * @template {AST.Fragment['nodes'][number]} T
+	 * @param {T} node
 	 * @returns {T}
 	 */
 	append(node) {
-		const current = this.current();
-		const fragment = this.fragments.at(-1);
-
-		Object.defineProperties(node, {
-			prev: {
-				enumerable: false,
-				value: fragment?.nodes.at(-1) ?? null
-			},
-			parent: {
-				enumerable: false,
-				configurable: true,
-				value: current
-			}
-		});
-
-		// @ts-expect-error
-		fragment.nodes.push(node);
-
-		// @ts-expect-error
+		this.fragments.at(-1)?.nodes.push(node);
 		return node;
 	}
 }
 
 /**
  * @param {string} template
- * @returns {import('#compiler').Root}
+ * @returns {AST.Root}
  */
 export function parse(template) {
 	const parser = new Parser(template);

@@ -1,0 +1,1 @@
+<div color="red" style:color="red" class:color={true} ></div>

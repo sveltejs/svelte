@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
   export class Thing {
     data = $state();
 

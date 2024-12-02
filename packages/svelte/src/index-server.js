@@ -1,10 +1,11 @@
+/** @import { Component } from '#server' */
 import { current_component } from './internal/server/context.js';
 import { noop } from './internal/shared/utils.js';
 import * as e from './internal/server/errors.js';
 
 /** @param {() => void} fn */
 export function onDestroy(fn) {
-	var context = /** @type {import('#server').Component} */ (current_component);
+	var context = /** @type {Component} */ (current_component);
 	(context.d ??= []).push(fn);
 }
 
@@ -35,3 +36,5 @@ export function unmount() {
 export async function tick() {}
 
 export { getAllContexts, getContext, hasContext, setContext } from './internal/server/context.js';
+
+export { createRawSnippet } from './internal/server/blocks/snippet.js';

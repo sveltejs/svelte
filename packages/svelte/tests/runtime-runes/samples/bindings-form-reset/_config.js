@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -10,7 +11,8 @@ export default test({
 		);
 
 		await target.querySelector('button')?.click();
-		await Promise.resolve();
+		flushSync();
+
 		assert.htmlEqual(
 			p?.innerHTML || '',
 			`{"text":"","checkbox":false,"radio_group":null,"checkbox_group":[],"select":"a","textarea":""}`

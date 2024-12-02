@@ -6,6 +6,47 @@ var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
 /**
+ * `%binding%` (%location%) is binding to a non-reactive property
+ * @param {string} binding
+ * @param {string | undefined | null} [location]
+ */
+export function binding_property_non_reactive(binding, location) {
+	if (DEV) {
+		console.warn(`%c[svelte] binding_property_non_reactive\n%c${location ? `\`${binding}\` (${location}) is binding to a non-reactive property` : `\`${binding}\` is binding to a non-reactive property`}`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("binding_property_non_reactive");
+	}
+}
+
+/**
+ * Your `console.%method%` contained `$state` proxies. Consider using `$inspect(...)` or `$state.snapshot(...)` instead
+ * @param {string} method
+ */
+export function console_log_state(method) {
+	if (DEV) {
+		console.warn(`%c[svelte] console_log_state\n%cYour \`console.${method}\` contained \`$state\` proxies. Consider using \`$inspect(...)\` or \`$state.snapshot(...)\` instead`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("console_log_state");
+	}
+}
+
+/**
+ * %handler% should be a function. Did you mean to %suggestion%?
+ * @param {string} handler
+ * @param {string} suggestion
+ */
+export function event_handler_invalid(handler, suggestion) {
+	if (DEV) {
+		console.warn(`%c[svelte] event_handler_invalid\n%c${handler} should be a function. Did you mean to ${suggestion}?`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("event_handler_invalid");
+	}
+}
+
+/**
  * The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
  * @param {string} attribute
  * @param {string} html
@@ -13,7 +54,7 @@ var normal = 'font-weight: normal';
  */
 export function hydration_attribute_changed(attribute, html, value) {
 	if (DEV) {
-		console.warn(`%c[svelte] ${"hydration_attribute_changed"}\n%c${`The \`${attribute}\` attribute on \`${html}\` changed its value between server and client renders. The client value, \`${value}\`, will be ignored in favour of the server value`}`, bold, normal);
+		console.warn(`%c[svelte] hydration_attribute_changed\n%cThe \`${attribute}\` attribute on \`${html}\` changed its value between server and client renders. The client value, \`${value}\`, will be ignored in favour of the server value`, bold, normal);
 	} else {
 		// TODO print a link to the documentation
 		console.warn("hydration_attribute_changed");
@@ -21,14 +62,53 @@ export function hydration_attribute_changed(attribute, html, value) {
 }
 
 /**
- * Hydration failed because the initial UI does not match what was rendered on the server
+ * The value of an `{@html ...}` block %location% changed between server and client renders. The client value will be ignored in favour of the server value
+ * @param {string | undefined | null} [location]
  */
-export function hydration_mismatch() {
+export function hydration_html_changed(location) {
 	if (DEV) {
-		console.warn(`%c[svelte] ${"hydration_mismatch"}\n%c${"Hydration failed because the initial UI does not match what was rendered on the server"}`, bold, normal);
+		console.warn(`%c[svelte] hydration_html_changed\n%c${location ? `The value of an \`{@html ...}\` block ${location} changed between server and client renders. The client value will be ignored in favour of the server value` : "The value of an `{@html ...}` block changed between server and client renders. The client value will be ignored in favour of the server value"}`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("hydration_html_changed");
+	}
+}
+
+/**
+ * Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near %location%
+ * @param {string | undefined | null} [location]
+ */
+export function hydration_mismatch(location) {
+	if (DEV) {
+		console.warn(`%c[svelte] hydration_mismatch\n%c${location ? `Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near ${location}` : "Hydration failed because the initial UI does not match what was rendered on the server"}`, bold, normal);
 	} else {
 		// TODO print a link to the documentation
 		console.warn("hydration_mismatch");
+	}
+}
+
+/**
+ * The `render` function passed to `createRawSnippet` should return HTML for a single element
+ */
+export function invalid_raw_snippet_render() {
+	if (DEV) {
+		console.warn(`%c[svelte] invalid_raw_snippet_render\n%cThe \`render\` function passed to \`createRawSnippet\` should return HTML for a single element`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("invalid_raw_snippet_render");
+	}
+}
+
+/**
+ * Detected a migrated `$:` reactive block in `%filename%` that both accesses and updates the same reactive value. This may cause recursive updates when converted to an `$effect`.
+ * @param {string} filename
+ */
+export function legacy_recursive_reactive_block(filename) {
+	if (DEV) {
+		console.warn(`%c[svelte] legacy_recursive_reactive_block\n%cDetected a migrated \`$:\` reactive block in \`${filename}\` that both accesses and updates the same reactive value. This may cause recursive updates when converted to an \`$effect\`.`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("legacy_recursive_reactive_block");
 	}
 }
 
@@ -37,7 +117,7 @@ export function hydration_mismatch() {
  */
 export function lifecycle_double_unmount() {
 	if (DEV) {
-		console.warn(`%c[svelte] ${"lifecycle_double_unmount"}\n%c${"Tried to unmount a component that was not mounted"}`, bold, normal);
+		console.warn(`%c[svelte] lifecycle_double_unmount\n%cTried to unmount a component that was not mounted`, bold, normal);
 	} else {
 		// TODO print a link to the documentation
 		console.warn("lifecycle_double_unmount");
@@ -52,7 +132,7 @@ export function lifecycle_double_unmount() {
  */
 export function ownership_invalid_binding(parent, child, owner) {
 	if (DEV) {
-		console.warn(`%c[svelte] ${"ownership_invalid_binding"}\n%c${`${parent} passed a value to ${child} with \`bind:\`, but the value is owned by ${owner}. Consider creating a binding between ${owner} and ${parent}`}`, bold, normal);
+		console.warn(`%c[svelte] ownership_invalid_binding\n%c${parent} passed a value to ${child} with \`bind:\`, but the value is owned by ${owner}. Consider creating a binding between ${owner} and ${parent}`, bold, normal);
 	} else {
 		// TODO print a link to the documentation
 		console.warn("ownership_invalid_binding");
@@ -66,9 +146,22 @@ export function ownership_invalid_binding(parent, child, owner) {
  */
 export function ownership_invalid_mutation(component, owner) {
 	if (DEV) {
-		console.warn(`%c[svelte] ${"ownership_invalid_mutation"}\n%c${`${component} mutated a value owned by ${owner}. This is strongly discouraged. Consider passing values to child components with \`bind:\`, or use a callback instead`}`, bold, normal);
+		console.warn(`%c[svelte] ownership_invalid_mutation\n%c${component ? `${component} mutated a value owned by ${owner}. This is strongly discouraged. Consider passing values to child components with \`bind:\`, or use a callback instead` : "Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead"}`, bold, normal);
 	} else {
 		// TODO print a link to the documentation
 		console.warn("ownership_invalid_mutation");
+	}
+}
+
+/**
+ * Reactive `$state(...)` proxies and the values they proxy have different identities. Because of this, comparisons with `%operator%` will produce unexpected results
+ * @param {string} operator
+ */
+export function state_proxy_equality_mismatch(operator) {
+	if (DEV) {
+		console.warn(`%c[svelte] state_proxy_equality_mismatch\n%cReactive \`$state(...)\` proxies and the values they proxy have different identities. Because of this, comparisons with \`${operator}\` will produce unexpected results`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("state_proxy_equality_mismatch");
 	}
 }

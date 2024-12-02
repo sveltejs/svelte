@@ -5,7 +5,7 @@ import { tags as t } from '@lezer/highlight';
 const ERROR_HUE = 0;
 const WARNING_HUE = 40;
 
-const WARNING_FG = `hsl(${WARNING_HUE} 100% 40%)`;
+const WARNING_FG = `hsl(${WARNING_HUE} 100% 60%)`;
 const WARNING_BG = `hsl(${WARNING_HUE} 100% 40% / 0.5)`;
 
 const ERROR_FG = `hsl(${ERROR_HUE} 100% 40%)`;
@@ -80,28 +80,6 @@ const svelteThemeStyles = EditorView.theme(
 			color: '#ddd'
 		},
 
-		'.cm-tooltip': {
-			border: 'none',
-			backgroundColor: 'var(--sk-back-3)'
-		},
-		'.cm-diagnostic': {
-			padding: '0.2em 0.4em',
-			backgroundColor: 'var(--sk-back-3)',
-			color: 'var(--sk-text-1)',
-			border: 'none',
-			borderRadius: '2px',
-			position: 'relative',
-			top: '2px',
-			zIndex: 2
-		},
-		'.cm-diagnostic-error': {
-			border: `1px solid ${ERROR_FG}`,
-			filter: `drop-shadow(0px 0px 6px ${ERROR_BG})`
-		},
-		'.cm-diagnostic-warning': {
-			border: `1px solid ${WARNING_FG}`,
-			filter: `drop-shadow(0px 0px 6px ${WARNING_BG})`
-		},
 		// https://github.com/codemirror/lint/blob/271b35f5d31a7e3645eaccbfec608474022098e1/src/lint.ts#L620
 		'.cm-lintRange': {
 			backgroundPosition: 'left bottom',

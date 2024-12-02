@@ -1,0 +1,205 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 89,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "IfBlock",
+				"elseif": false,
+				"start": 0,
+				"end": 89,
+				"test": {
+					"type": "BinaryExpression",
+					"start": 5,
+					"end": 11,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 5
+						},
+						"end": {
+							"line": 1,
+							"column": 11
+						}
+					},
+					"left": {
+						"type": "Identifier",
+						"start": 5,
+						"end": 6,
+						"loc": {
+							"start": {
+								"line": 1,
+								"column": 5
+							},
+							"end": {
+								"line": 1,
+								"column": 6
+							}
+						},
+						"name": "x"
+					},
+					"operator": ">",
+					"right": {
+						"type": "Literal",
+						"start": 9,
+						"end": 11,
+						"loc": {
+							"start": {
+								"line": 1,
+								"column": 9
+							},
+							"end": {
+								"line": 1,
+								"column": 11
+							}
+						},
+						"value": 10,
+						"raw": "10"
+					}
+				},
+				"consequent": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 12,
+							"end": 14,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "RegularElement",
+							"start": 14,
+							"end": 41,
+							"name": "p",
+							"attributes": [],
+							"fragment": {
+								"type": "Fragment",
+								"nodes": [
+									{
+										"type": "Text",
+										"start": 17,
+										"end": 37,
+										"raw": "x is greater than 10",
+										"data": "x is greater than 10"
+									}
+								]
+							}
+						},
+						{
+							"type": "Text",
+							"start": 41,
+							"end": 42,
+							"raw": "\n",
+							"data": "\n"
+						}
+					]
+				},
+				"alternate": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"start": 42,
+							"end": 89,
+							"type": "IfBlock",
+							"elseif": true,
+							"test": {
+								"type": "BinaryExpression",
+								"start": 52,
+								"end": 57,
+								"loc": {
+									"start": {
+										"line": 3,
+										"column": 10
+									},
+									"end": {
+										"line": 3,
+										"column": 15
+									}
+								},
+								"left": {
+									"type": "Identifier",
+									"start": 52,
+									"end": 53,
+									"loc": {
+										"start": {
+											"line": 3,
+											"column": 10
+										},
+										"end": {
+											"line": 3,
+											"column": 11
+										}
+									},
+									"name": "x"
+								},
+								"operator": "<",
+								"right": {
+									"type": "Literal",
+									"start": 56,
+									"end": 57,
+									"loc": {
+										"start": {
+											"line": 3,
+											"column": 14
+										},
+										"end": {
+											"line": 3,
+											"column": 15
+										}
+									},
+									"value": 5,
+									"raw": "5"
+								}
+							},
+							"consequent": {
+								"type": "Fragment",
+								"nodes": [
+									{
+										"type": "Text",
+										"start": 58,
+										"end": 60,
+										"raw": "\n\t",
+										"data": "\n\t"
+									},
+									{
+										"type": "RegularElement",
+										"start": 60,
+										"end": 83,
+										"name": "p",
+										"attributes": [],
+										"fragment": {
+											"type": "Fragment",
+											"nodes": [
+												{
+													"type": "Text",
+													"start": 63,
+													"end": 79,
+													"raw": "x is less than 5",
+													"data": "x is less than 5"
+												}
+											]
+										}
+									},
+									{
+										"type": "Text",
+										"start": 83,
+										"end": 84,
+										"raw": "\n",
+										"data": "\n"
+									}
+								]
+							},
+							"alternate": null
+						}
+					]
+				}
+			}
+		]
+	},
+	"options": null
+}

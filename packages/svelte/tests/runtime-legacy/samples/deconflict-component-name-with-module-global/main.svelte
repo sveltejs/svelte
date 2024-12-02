@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	let set = new Set(['x']);
 </script>
 

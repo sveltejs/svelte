@@ -1,0 +1,15 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		// Ensure we don't use any methods that are not available in all browser for a long period of time
+		// so that people don't need to polyfill them. Example array.at(...) was introduced to Safari only in 2022
+		"target": "es2021",
+		"lib": ["es2021", "DOM", "DOM.Iterable"],
+		"types": [] // prevent automatic inclusion of @types/node
+	},
+	"include": ["./src/"],
+	// Compiler is allowed to use more recent methods; people using it in the browser are expected to know
+	// how to polyfill missing methods. Also make sure to not include test files as these include Vitest
+	// which then loads node globals.
+	"exclude": ["./src/compiler/**/*", "./src/**/*.test.ts"]
+}

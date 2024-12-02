@@ -1,27 +1,35 @@
 let uid = 1;
 
-const noop = () => {};
-
 export default class ReplProxy {
 	/** @type {HTMLIFrameElement} */
 	iframe;
 
 	/** @type {import("./proxy").Handlers} */
-	handlers = {
-		on_fetch_progress: noop,
-		on_console: noop,
-		on_error: noop,
-		on_console_group: noop,
-		on_console_group_collapsed: noop,
-		on_console_group_end: noop,
-		on_unhandled_rejection: noop
-	};
+	handlers;
 
 	/** @type {Map<number, { resolve: (value: any) => void, reject: (value: any) => void }>} */
 	pending_cmds = new Map();
 
-	/** @param {MessageEvent<any>} e */
-	handle_event = (e) => this.handle_repl_message(e);
+	/** @param {MessageEvent<any>} event */
+	handle_event = (event) => {
+		if (event.source !== this.iframe.contentWindow) return;
+
+		const { action, args } = event.data;
+
+		switch (action) {
+			case 'cmd_error':
+			case 'cmd_ok':
+				return this.handle_command_message(event.data);
+			case 'fetch_progress':
+				return this.handlers.on_fetch_progress(args.remaining);
+			case 'error':
+				return this.handlers.on_error(event.data);
+			case 'unhandledrejection':
+				return this.handlers.on_unhandled_rejection(event.data);
+			case 'console':
+				return this.handlers.on_console(event.data);
+		}
+	};
 
 	/**
 	 * @param {HTMLIFrameElement} iframe
@@ -74,35 +82,6 @@ export default class ReplProxy {
 			}
 		} else {
 			console.error('command not found', id, cmd_data, [...this.pending_cmds.keys()]);
-		}
-	}
-
-	/**
-	 * @param {MessageEvent<any>} event
-	 */
-	handle_repl_message(event) {
-		if (event.source !== this.iframe.contentWindow) return;
-
-		const { action, args } = event.data;
-
-		switch (action) {
-			case 'cmd_error':
-			case 'cmd_ok':
-				return this.handle_command_message(event.data);
-			case 'fetch_progress':
-				return this.handlers.on_fetch_progress(args.remaining);
-			case 'error':
-				return this.handlers.on_error(event.data);
-			case 'unhandledrejection':
-				return this.handlers.on_unhandled_rejection(event.data);
-			case 'console':
-				return this.handlers.on_console(event.data);
-			case 'console_group':
-				return this.handlers.on_console_group(event.data);
-			case 'console_group_collapsed':
-				return this.handlers.on_console_group_collapsed(event.data);
-			case 'console_group_end':
-				return this.handlers.on_console_group_end(event.data);
 		}
 	}
 

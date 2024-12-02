@@ -1,22 +1,18 @@
 import * as $ from "svelte/internal/server";
 import TextInput from './Child.svelte';
 
-export default function Bind_component_snippet($$payload, $$props) {
-	$.push(true);
-
+export default function Bind_component_snippet($$payload) {
 	let value = '';
 	const _snippet = snippet;
 
 	function snippet($$payload) {
-		$$payload.out += `Something`;
+		$$payload.out += `<!---->Something`;
 	}
 
 	let $$settled = true;
 	let $$inner_payload;
 
 	function $$render_inner($$payload) {
-		$$payload.out += `<!--[-->`;
-
 		TextInput($$payload, {
 			get value() {
 				return value;
@@ -27,7 +23,7 @@ export default function Bind_component_snippet($$payload, $$props) {
 			}
 		});
 
-		$$payload.out += `<!--]--> value: ${$.escape(value)}`;
+		$$payload.out += `<!----> value: ${$.escape(value)}`;
 	};
 
 	do {
@@ -37,5 +33,4 @@ export default function Bind_component_snippet($$payload, $$props) {
 	} while (!$$settled);
 
 	$.assign_payload($$payload, $$inner_payload);
-	$.pop();
 }

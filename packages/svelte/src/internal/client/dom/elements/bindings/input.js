@@ -1,23 +1,37 @@
 import { DEV } from 'esm-env';
-import { render_effect, effect } from '../../../reactivity/effects.js';
-import { stringify } from '../../../render.js';
-import { listen_to_event_and_reset_event } from './shared.js';
+import { render_effect, teardown } from '../../../reactivity/effects.js';
+import { listen_to_event_and_reset_event, without_reactive_context } from './shared.js';
 import * as e from '../../../errors.js';
+import { is } from '../../../proxy.js';
+import { queue_micro_task } from '../../task.js';
+import { hydrating } from '../../hydration.js';
+import { is_runes } from '../../../runtime.js';
 
 /**
  * @param {HTMLInputElement} input
- * @param {() => unknown} get_value
- * @param {(value: unknown) => void} update
+ * @param {() => unknown} get
+ * @param {(value: unknown) => void} set
  * @returns {void}
  */
-export function bind_value(input, get_value, update) {
+export function bind_value(input, get, set = get) {
+	var runes = is_runes();
+
 	listen_to_event_and_reset_event(input, 'input', () => {
 		if (DEV && input.type === 'checkbox') {
 			// TODO should this happen in prod too?
 			e.bind_invalid_checkbox_value();
 		}
 
-		update(is_numberlike_input(input) ? to_number(input.value) : input.value);
+		/** @type {unknown} */
+		var value = is_numberlike_input(input) ? to_number(input.value) : input.value;
+		set(value);
+
+		// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
+		// because we use mutable state which ensures the render effect always runs)
+		if (runes && value !== (value = get())) {
+			// @ts-expect-error the value is coerced on assignment
+			input.value = value ?? '';
+		}
 	});
 
 	render_effect(() => {
@@ -26,10 +40,14 @@ export function bind_value(input, get_value, update) {
 			e.bind_invalid_checkbox_value();
 		}
 
-		var value = get_value();
+		var value = get();
 
-		// @ts-ignore
-		input.__value = value;
+		// If we are hydrating and the value has since changed, then use the update value
+		// from the input instead.
+		if (hydrating && input.defaultValue !== input.value) {
+			set(is_numberlike_input(input) ? to_number(input.value) : input.value);
+			return;
+		}
 
 		if (is_numberlike_input(input) && value === to_number(input.value)) {
 			// handles 0 vs 00 case (see https://github.com/sveltejs/svelte/issues/9959)
@@ -42,31 +60,37 @@ export function bind_value(input, get_value, update) {
 			return;
 		}
 
-		input.value = stringify(value);
+		// don't set the value of the input if it's the same to allow
+		// minlength to work properly
+		if (value !== input.value) {
+			// @ts-expect-error the value is coerced on assignment
+			input.value = value ?? '';
+		}
 	});
 }
 
+/** @type {Set<HTMLInputElement[]>} */
+const pending = new Set();
+
 /**
- * @param {Array<HTMLInputElement>} inputs
+ * @param {HTMLInputElement[]} inputs
  * @param {null | [number]} group_index
  * @param {HTMLInputElement} input
- * @param {() => unknown} get_value
- * @param {(value: unknown) => void} update
+ * @param {() => unknown} get
+ * @param {(value: unknown) => void} set
  * @returns {void}
  */
-export function bind_group(inputs, group_index, input, get_value, update) {
+export function bind_group(inputs, group_index, input, get, set = get) {
 	var is_checkbox = input.getAttribute('type') === 'checkbox';
 	var binding_group = inputs;
 
+	// needs to be let or related code isn't treeshaken out if it's always false
+	let hydration_mismatch = false;
+
 	if (group_index !== null) {
 		for (var index of group_index) {
-			var group = binding_group;
-			// @ts-ignore
-			binding_group = group[index];
-			if (binding_group === undefined) {
-				// @ts-ignore
-				binding_group = group[index] = [];
-			}
+			// @ts-expect-error
+			binding_group = binding_group[index] ??= [];
 		}
 	}
 
@@ -83,14 +107,21 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 				value = get_binding_group_value(binding_group, value, input.checked);
 			}
 
-			update(value);
+			set(value);
 		},
 		// TODO better default value handling
-		() => update(is_checkbox ? [] : null)
+		() => set(is_checkbox ? [] : null)
 	);
 
 	render_effect(() => {
-		var value = get_value();
+		var value = get();
+
+		// If we are hydrating and the value has since changed, then use the update value
+		// from the input instead.
+		if (hydrating && input.defaultChecked !== input.checked) {
+			hydration_mismatch = true;
+			return;
+		}
 
 		if (is_checkbox) {
 			value = value || [];
@@ -98,44 +129,63 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 			input.checked = value.includes(input.__value);
 		} else {
 			// @ts-ignore
-			input.checked = input.__value === value;
+			input.checked = is(input.__value, value);
 		}
 	});
 
-	render_effect(() => {
-		return () => {
-			var index = binding_group.indexOf(input);
+	teardown(() => {
+		var index = binding_group.indexOf(input);
 
-			if (index !== -1) {
-				binding_group.splice(index, 1);
-			}
-		};
+		if (index !== -1) {
+			binding_group.splice(index, 1);
+		}
 	});
 
-	effect(() => {
-		// necessary to maintain binding group order in all insertion scenarios. TODO optimise
-		binding_group.sort((a, b) => (a.compareDocumentPosition(b) === 4 ? -1 : 1));
+	if (!pending.has(binding_group)) {
+		pending.add(binding_group);
+
+		queue_micro_task(() => {
+			// necessary to maintain binding group order in all insertion scenarios
+			binding_group.sort((a, b) => (a.compareDocumentPosition(b) === 4 ? -1 : 1));
+			pending.delete(binding_group);
+		});
+	}
+
+	queue_micro_task(() => {
+		if (hydration_mismatch) {
+			var value;
+
+			if (is_checkbox) {
+				value = get_binding_group_value(binding_group, value, input.checked);
+			} else {
+				var hydration_input = binding_group.find((input) => input.checked);
+				// @ts-ignore
+				value = hydration_input?.__value;
+			}
+
+			set(value);
+		}
 	});
 }
 
 /**
  * @param {HTMLInputElement} input
- * @param {() => unknown} get_value
- * @param {(value: unknown) => void} update
+ * @param {() => unknown} get
+ * @param {(value: unknown) => void} set
  * @returns {void}
  */
-export function bind_checked(input, get_value, update) {
+export function bind_checked(input, get, set = get) {
 	listen_to_event_and_reset_event(input, 'change', () => {
 		var value = input.checked;
-		update(value);
+		set(value);
 	});
 
-	if (get_value() == undefined) {
-		update(false);
+	if (get() == undefined) {
+		set(false);
 	}
 
 	render_effect(() => {
-		var value = get_value();
+		var value = get();
 		input.checked = Boolean(value);
 	});
 }
@@ -181,14 +231,15 @@ function to_number(value) {
 
 /**
  * @param {HTMLInputElement} input
- * @param {() => FileList | null} get_value
- * @param {(value: FileList | null) => void} update
+ * @param {() => FileList | null} get
+ * @param {(value: FileList | null) => void} set
  */
-export function bind_files(input, get_value, update) {
+export function bind_files(input, get, set = get) {
 	listen_to_event_and_reset_event(input, 'change', () => {
-		update(input.files);
+		set(input.files);
 	});
+
 	render_effect(() => {
-		input.files = get_value();
+		input.files = get();
 	});
 }

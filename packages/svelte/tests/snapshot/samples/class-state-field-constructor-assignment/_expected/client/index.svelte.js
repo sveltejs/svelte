@@ -5,7 +5,7 @@ export default function Class_state_field_constructor_assignment($$anchor, $$pro
 	$.push($$props, true);
 
 	class Foo {
-		#a = $.source();
+		#a = $.state();
 
 		get a() {
 			return $.get(this.#a);
@@ -15,10 +15,10 @@ export default function Class_state_field_constructor_assignment($$anchor, $$pro
 			$.set(this.#a, $.proxy(value));
 		}
 
-		#b = $.source();
+		#b = $.state();
 
 		constructor() {
-			this.#a.v = 1;
+			this.a = 1;
 			this.#b.v = 2;
 		}
 	}

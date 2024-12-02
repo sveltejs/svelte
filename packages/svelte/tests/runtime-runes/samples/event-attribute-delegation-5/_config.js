@@ -7,8 +7,8 @@ export default test({
 		btn?.click();
 		await Promise.resolve();
 		assert.deepEqual(logs, [
-			'button onclick',
 			'button on:click',
+			'button onclick',
 			'inner div on:click',
 			'outer div onclick'
 		]);

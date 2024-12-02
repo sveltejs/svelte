@@ -1,14 +1,17 @@
 import "svelte/internal/disclose-version";
+import "svelte/internal/flags/legacy";
 import * as $ from "svelte/internal/client";
 
 export default function Each_string_template($$anchor) {
 	var fragment = $.comment();
 	var node = $.first_child(fragment);
 
-	$.each(node, 1, () => ['foo', 'bar', 'baz'], $.index, ($$anchor, thing, $$index) => {
-		var text = $.text($$anchor);
+	$.each(node, 0, () => ['foo', 'bar', 'baz'], $.index, ($$anchor, thing) => {
+		$.next();
 
-		$.render_effect(() => $.set_text(text, `${$.stringify($.unwrap(thing))}, `));
+		var text = $.text();
+
+		$.template_effect(() => $.set_text(text, `${thing ?? ""}, `));
 		$.append($$anchor, text);
 	});
 

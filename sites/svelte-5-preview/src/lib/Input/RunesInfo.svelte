@@ -25,12 +25,9 @@
 	</button>
 
 	{#if open}
-		<!--
-			This is taken care of by the <svelte:window> above
-			svelte-ignore a11y-click-events-have-key-events
-			a11y-no-static-element-interactions
-		-->
-		<div class="modal-backdrop" on:click={() => (open = false)} />
+		<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions
+			(This is taken care of by the <svelte:window> above) -->
+		<div class="modal-backdrop" on:click={() => (open = false)}></div>
 		<div class="popup">
 			{#if $selected_name.endsWith('.svelte.js')}
 				<p>

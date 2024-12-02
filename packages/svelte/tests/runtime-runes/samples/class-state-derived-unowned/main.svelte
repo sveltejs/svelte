@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	class SomeLogic {
 		someValue = $state(0);
 		isAboveThree = $derived(this.someValue > 3);

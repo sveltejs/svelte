@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 const values = [{ name: 'Alpha' }, { name: 'Beta' }, { name: 'Gamma' }];
@@ -37,7 +38,7 @@ export default test({
 
 		<p>Beta</p>`,
 
-	async test({ assert, component, target, window }) {
+	test({ assert, component, target, window }) {
 		const inputs = target.querySelectorAll('input');
 		assert.equal(inputs[0].checked, false);
 		assert.equal(inputs[1].checked, true);
@@ -46,7 +47,8 @@ export default test({
 		const event = new window.Event('change');
 
 		inputs[0].checked = true;
-		await inputs[0].dispatchEvent(event);
+		inputs[0].dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	let PI = 3.14;
 </script>
 <script>

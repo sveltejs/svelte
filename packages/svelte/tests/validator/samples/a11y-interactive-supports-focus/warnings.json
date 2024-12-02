@@ -5,7 +5,7 @@
 			"column": 48,
 			"line": 11
 		},
-		"message": "Elements with the 'button' interactive role must have a tabindex value.",
+		"message": "Elements with the 'button' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 11
@@ -17,7 +17,7 @@
 			"column": 51,
 			"line": 12
 		},
-		"message": "Elements with the 'menuitem' interactive role must have a tabindex value.",
+		"message": "Elements with the 'menuitem' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 12
@@ -29,7 +29,7 @@
 			"column": 45,
 			"line": 13
 		},
-		"message": "Elements with the 'button' interactive role must have a tabindex value.",
+		"message": "Elements with the 'button' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 13
@@ -41,7 +41,7 @@
 			"column": 72,
 			"line": 14
 		},
-		"message": "Elements with the 'menuitem' interactive role must have a tabindex value.",
+		"message": "Elements with the 'menuitem' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 14
@@ -53,7 +53,7 @@
 			"column": 51,
 			"line": 15
 		},
-		"message": "Elements with the 'button' interactive role must have a tabindex value.",
+		"message": "Elements with the 'button' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 15
@@ -65,7 +65,7 @@
 			"column": 52,
 			"line": 16
 		},
-		"message": "Elements with the 'menuitem' interactive role must have a tabindex value.",
+		"message": "Elements with the 'menuitem' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 16
@@ -77,7 +77,7 @@
 			"column": 44,
 			"line": 17
 		},
-		"message": "Elements with the 'button' interactive role must have a tabindex value.",
+		"message": "Elements with the 'button' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 17
@@ -89,7 +89,7 @@
 			"column": 51,
 			"line": 18
 		},
-		"message": "Elements with the 'menuitem' interactive role must have a tabindex value.",
+		"message": "Elements with the 'menuitem' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 18
@@ -101,7 +101,7 @@
 			"column": 49,
 			"line": 19
 		},
-		"message": "Elements with the 'button' interactive role must have a tabindex value.",
+		"message": "Elements with the 'button' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 19
@@ -113,7 +113,7 @@
 			"column": 52,
 			"line": 20
 		},
-		"message": "Elements with the 'menuitem' interactive role must have a tabindex value.",
+		"message": "Elements with the 'menuitem' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 20
@@ -125,7 +125,7 @@
 			"column": 49,
 			"line": 21
 		},
-		"message": "Elements with the 'button' interactive role must have a tabindex value.",
+		"message": "Elements with the 'button' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 21
@@ -137,7 +137,7 @@
 			"column": 52,
 			"line": 22
 		},
-		"message": "Elements with the 'menuitem' interactive role must have a tabindex value.",
+		"message": "Elements with the 'menuitem' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 22
@@ -149,7 +149,7 @@
 			"column": 49,
 			"line": 23
 		},
-		"message": "Elements with the 'button' interactive role must have a tabindex value.",
+		"message": "Elements with the 'button' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 23
@@ -161,7 +161,7 @@
 			"column": 48,
 			"line": 24
 		},
-		"message": "Elements with the 'menuitem' interactive role must have a tabindex value.",
+		"message": "Elements with the 'menuitem' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 24
@@ -173,7 +173,7 @@
 			"column": 49,
 			"line": 25
 		},
-		"message": "Elements with the 'button' interactive role must have a tabindex value.",
+		"message": "Elements with the 'button' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 25
@@ -185,7 +185,7 @@
 			"column": 54,
 			"line": 26
 		},
-		"message": "Elements with the 'menuitem' interactive role must have a tabindex value.",
+		"message": "Elements with the 'menuitem' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 26
@@ -197,7 +197,7 @@
 			"column": 50,
 			"line": 27
 		},
-		"message": "Elements with the 'button' interactive role must have a tabindex value.",
+		"message": "Elements with the 'button' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 27
@@ -209,7 +209,7 @@
 			"column": 53,
 			"line": 28
 		},
-		"message": "Elements with the 'menuitem' interactive role must have a tabindex value.",
+		"message": "Elements with the 'menuitem' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 28
@@ -221,7 +221,7 @@
 			"column": 48,
 			"line": 29
 		},
-		"message": "Elements with the 'button' interactive role must have a tabindex value.",
+		"message": "Elements with the 'button' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 29
@@ -245,7 +245,7 @@
 			"column": 53,
 			"line": 30
 		},
-		"message": "Elements with the 'menuitem' interactive role must have a tabindex value.",
+		"message": "Elements with the 'menuitem' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 30
@@ -269,7 +269,7 @@
 			"column": 47,
 			"line": 31
 		},
-		"message": "Elements with the 'button' interactive role must have a tabindex value.",
+		"message": "Elements with the 'button' interactive role must have a tabindex value",
 		"start": {
 			"column": 0,
 			"line": 31

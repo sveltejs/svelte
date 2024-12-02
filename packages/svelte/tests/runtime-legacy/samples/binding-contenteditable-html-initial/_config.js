@@ -15,7 +15,7 @@ export default test({
 
 	ssrHtml: `
 		<editor contenteditable="true"><b>world</b></editor>
-		<p>hello null</p>
+		<p>hello </p>
 	`,
 
 	async test({ assert, component, target, window }) {

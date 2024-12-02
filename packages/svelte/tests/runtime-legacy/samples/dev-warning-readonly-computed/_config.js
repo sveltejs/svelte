@@ -1,8 +1,6 @@
 import { test } from '../../test';
 
 export default test({
-	skip: true, // TODO: needs fixing, error message is wrong
-
 	compileOptions: {
 		dev: true
 	},
@@ -17,7 +15,7 @@ export default test({
 			throw new Error('Expected an error');
 		} catch (err) {
 			// @ts-ignore
-			assert.equal(err.message, "<Main>: Cannot set read-only property 'foo'");
+			assert.equal(err.message, 'Cannot set property foo of #<Object> which has only a getter');
 		}
 	}
 });

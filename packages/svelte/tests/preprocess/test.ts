@@ -30,6 +30,7 @@ const { test, run } = suite<PreprocessTest>(async (config, cwd) => {
 	expect(result.dependencies).toEqual(config.dependencies || []);
 
 	if (fs.existsSync(`${cwd}/expected_map.json`)) {
+		delete (result.map as any).ignoreList;
 		const expected_map = JSON.parse(fs.readFileSync(`${cwd}/expected_map.json`, 'utf-8'));
 		// You can use https://sokra.github.io/source-map-visualization/#custom to visualize the source map
 		expect(JSON.parse(JSON.stringify(result.map))).toEqual(expected_map);

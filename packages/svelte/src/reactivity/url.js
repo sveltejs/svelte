@@ -1,9 +1,16 @@
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
+import { REPLACE, SvelteURLSearchParams } from './url-search-params.js';
 
-const REPLACE = Symbol();
+/** @type {SvelteURL | null} */
+let current_url = null;
 
-export class ReactiveURL extends URL {
+export function get_current_url() {
+	// ideally we'd just export `current_url` directly, but it seems Vitest doesn't respect live bindings
+	return current_url;
+}
+
+export class SvelteURL extends URL {
 	#protocol = source(super.protocol);
 	#username = source(super.username);
 	#password = source(super.password);
@@ -11,7 +18,8 @@ export class ReactiveURL extends URL {
 	#port = source(super.port);
 	#pathname = source(super.pathname);
 	#hash = source(super.hash);
-	#searchParams = new ReactiveURLSearchParams();
+	#search = source(super.search);
+	#searchParams;
 
 	/**
 	 * @param {string | URL} url
@@ -20,7 +28,10 @@ export class ReactiveURL extends URL {
 	constructor(url, base) {
 		url = new URL(url, base);
 		super(url);
-		this.#searchParams[REPLACE](url.searchParams);
+
+		current_url = this;
+		this.#searchParams = new SvelteURLSearchParams(url.searchParams);
+		current_url = null;
 	}
 
 	get hash() {
@@ -61,7 +72,7 @@ export class ReactiveURL extends URL {
 		get(this.#port);
 		get(this.#pathname);
 		get(this.#hash);
-		this.#searchParams.toString();
+		get(this.#search);
 		return super.href;
 	}
 
@@ -74,6 +85,7 @@ export class ReactiveURL extends URL {
 		set(this.#port, super.port);
 		set(this.#pathname, super.pathname);
 		set(this.#hash, super.hash);
+		set(this.#search, super.search);
 		this.#searchParams[REPLACE](super.searchParams);
 	}
 
@@ -114,13 +126,13 @@ export class ReactiveURL extends URL {
 	}
 
 	get search() {
-		const search = this.#searchParams?.toString();
-		return search ? `?${search}` : '';
+		return get(this.#search);
 	}
 
 	set search(value) {
 		super.search = value;
-		this.#searchParams[REPLACE](new URLSearchParams(value.replace(/^\?/, '')));
+		set(this.#search, value);
+		this.#searchParams[REPLACE](super.searchParams);
 	}
 
 	get username() {
@@ -149,120 +161,5 @@ export class ReactiveURL extends URL {
 
 	toJSON() {
 		return this.href;
-	}
-}
-
-export class ReactiveURLSearchParams extends URLSearchParams {
-	#version = source(0);
-
-	#increment_version() {
-		set(this.#version, this.#version.v + 1);
-	}
-
-	/**
-	 * @param {URLSearchParams} params
-	 */
-	[REPLACE](params) {
-		for (const key of [...super.keys()]) {
-			super.delete(key);
-		}
-
-		for (const [key, value] of params) {
-			super.append(key, value);
-		}
-
-		this.#increment_version();
-	}
-
-	/**
-	 * @param {string} name
-	 * @param {string} value
-	 * @returns {void}
-	 */
-	append(name, value) {
-		this.#increment_version();
-		return super.append(name, value);
-	}
-
-	/**
-	 * @param {string} name
-	 * @param {string=} value
-	 * @returns {void}
-	 */
-	delete(name, value) {
-		this.#increment_version();
-		return super.delete(name, value);
-	}
-
-	/**
-	 * @param {string} name
-	 * @returns {string|null}
-	 */
-	get(name) {
-		get(this.#version);
-		return super.get(name);
-	}
-
-	/**
-	 * @param {string} name
-	 * @returns {string[]}
-	 */
-	getAll(name) {
-		get(this.#version);
-		return super.getAll(name);
-	}
-
-	/**
-	 * @param {string} name
-	 * @param {string=} value
-	 * @returns {boolean}
-	 */
-	has(name, value) {
-		get(this.#version);
-		return super.has(name, value);
-	}
-
-	keys() {
-		get(this.#version);
-		return super.keys();
-	}
-
-	/**
-	 * @param {string} name
-	 * @param {string} value
-	 * @returns {void}
-	 */
-	set(name, value) {
-		this.#increment_version();
-		return super.set(name, value);
-	}
-
-	sort() {
-		this.#increment_version();
-		return super.sort();
-	}
-
-	toString() {
-		get(this.#version);
-		return super.toString();
-	}
-
-	values() {
-		get(this.#version);
-		return super.values();
-	}
-
-	entries() {
-		get(this.#version);
-		return super.entries();
-	}
-
-	[Symbol.iterator]() {
-		return this.entries();
-	}
-
-	get size() {
-		get(this.#version);
-		return super.size;
 	}
 }

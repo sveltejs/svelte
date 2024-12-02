@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -7,16 +8,15 @@ export default test({
 		<button></button>
 	`,
 
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const [p1, p2] = target.querySelectorAll('p');
 
-		assert.equal(window.getComputedStyle(p1).color, 'red');
-		assert.equal(window.getComputedStyle(p2).color, 'red');
+		assert.equal(window.getComputedStyle(p1).color, 'rgb(255, 0, 0)');
+		assert.equal(window.getComputedStyle(p2).color, 'rgb(255, 0, 0)');
 
 		const btn = target.querySelector('button');
-		console.log(btn);
 		btn?.click();
-		await Promise.resolve();
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -27,7 +27,7 @@ export default test({
 		`
 		);
 
-		assert.equal(window.getComputedStyle(p1).color, 'green');
-		assert.equal(window.getComputedStyle(p2).color, 'green');
+		assert.equal(window.getComputedStyle(p1).color, 'rgb(0, 128, 0)');
+		assert.equal(window.getComputedStyle(p2).color, 'rgb(0, 128, 0)');
 	}
 });

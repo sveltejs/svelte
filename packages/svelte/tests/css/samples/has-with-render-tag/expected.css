@@ -1,0 +1,11 @@
+
+	x.svelte-xyz:has(y:where(.svelte-xyz)) {
+		color: green;
+	}
+	p.svelte-xyz:has(+ y:where(.svelte-xyz)) {
+		color: green;
+	}
+
+	/* (unused) z:has(+ y) {
+		color: red;
+	}*/

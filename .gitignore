@@ -16,10 +16,11 @@ coverage
 .env.test
 
 # build output
-dist
 .vercel
 
 # OS-specific
 .DS_Store
 
 tmp
+
+benchmarking/compare/.results

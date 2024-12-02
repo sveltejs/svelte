@@ -14,14 +14,14 @@ export default test({
 
 		// @ts-expect-error
 		assert.deepEqual(ps[0].__svelte_meta.loc, {
-			filename: '.../samples/svelte-meta/main.svelte',
+			file: 'main.svelte',
 			line: 7,
 			column: 0
 		});
 
 		// @ts-expect-error
 		assert.deepEqual(ps[1].__svelte_meta.loc, {
-			filename: '.../samples/svelte-meta/main.svelte',
+			file: 'main.svelte',
 			line: 13,
 			column: 0
 		});
@@ -32,7 +32,7 @@ export default test({
 
 		// @ts-expect-error
 		assert.deepEqual(strong.__svelte_meta.loc, {
-			filename: '.../samples/svelte-meta/main.svelte',
+			file: 'main.svelte',
 			line: 10,
 			column: 1
 		});

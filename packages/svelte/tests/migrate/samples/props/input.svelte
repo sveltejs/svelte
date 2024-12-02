@@ -1,8 +1,9 @@
 <script>
-    export let readonly;
-    export let optional = 'foo';
-    export let binding;
-    export let bindingOptional = 'bar';
+	/** @type {Record<string, { href: string; title: string; }[]>} */
+	export let readonly;
+	export let optional = 'foo';
+	export let binding;
+	export let bindingOptional = 'bar';
 </script>
 
 {readonly}

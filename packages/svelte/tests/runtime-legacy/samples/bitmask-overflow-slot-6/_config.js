@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 // overflow bitmask + slot missing `let:`
@@ -9,10 +10,11 @@ export default test({
 		<button>Toggle outside</button>
 	`,
 
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const button = target.querySelectorAll('button')[1];
 		const div = target.querySelector('div');
-		await div?.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+		div?.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+		flushSync();
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -24,7 +26,8 @@ export default test({
 		`
 		);
 
-		await button.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+		button.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+		flushSync();
 		assert.htmlEqual(
 			target.innerHTML,
 			`

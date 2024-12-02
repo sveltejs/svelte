@@ -1,3 +1,4 @@
+/** @import { Location } from 'locate-character' */
 import * as assert from 'node:assert';
 import * as path from 'node:path';
 import { getLocator } from 'locate-character';
@@ -15,7 +16,7 @@ export function assert_mapped({ code, filename, input, input_code, preprocessed 
 	if (filename === undefined) filename = 'input.svelte';
 	if (input_code === undefined) input_code = code;
 
-	const source_loc = /** @type {import('locate-character').Location} */ (locate_input(input_code));
+	const source_loc = /** @type {Location} */ (locate_input(input_code));
 	assert.notEqual(source_loc, undefined, `failed to locate "${input_code}" in "${filename}"`);
 
 	const transformed_loc = preprocessed.locate_1(code);

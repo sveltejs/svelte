@@ -1,0 +1,48 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 17,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "IfBlock",
+				"elseif": false,
+				"start": 0,
+				"end": 17,
+				"test": {
+					"type": "Identifier",
+					"start": 5,
+					"end": 8,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 5
+						},
+						"end": {
+							"line": 1,
+							"column": 8
+						}
+					},
+					"name": "foo"
+				},
+				"consequent": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 9,
+							"end": 12,
+							"raw": "bar",
+							"data": "bar"
+						}
+					]
+				},
+				"alternate": null
+			}
+		]
+	},
+	"options": null
+}

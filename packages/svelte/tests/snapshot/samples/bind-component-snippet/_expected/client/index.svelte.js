@@ -2,20 +2,21 @@ import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal/client";
 import TextInput from './Child.svelte';
 
-var root_1 = $.template(`Something`, 1);
 var root = $.template(`<!> `, 1);
 
 export default function Bind_component_snippet($$anchor) {
-	var snippet = ($$anchor) => {
-		var fragment = root_1();
+	const snippet = ($$anchor) => {
+		$.next();
 
-		$.append($$anchor, fragment);
+		var text = $.text("Something");
+
+		$.append($$anchor, text);
 	};
 
-	let value = $.source('');
+	let value = $.state('');
 	const _snippet = snippet;
-	var fragment_1 = root();
-	var node = $.first_child(fragment_1);
+	var fragment = root();
+	var node = $.first_child(fragment);
 
 	TextInput(node, {
 		get value() {
@@ -26,8 +27,8 @@ export default function Bind_component_snippet($$anchor) {
 		}
 	});
 
-	var text = $.sibling(node, true);
+	var text_1 = $.sibling(node);
 
-	$.render_effect(() => $.set_text(text, ` value: ${$.stringify($.get(value))}`));
-	$.append($$anchor, fragment_1);
+	$.template_effect(() => $.set_text(text_1, ` value: ${$.get(value) ?? ""}`));
+	$.append($$anchor, fragment);
 }

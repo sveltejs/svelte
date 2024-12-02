@@ -1,6 +1,6 @@
 import type { Store } from '#shared';
 import { STATE_SYMBOL } from './constants.js';
-import type { Effect, Source, Value } from './reactivity/types.js';
+import type { Effect, Source, Value, Reaction } from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
@@ -15,7 +15,11 @@ export type ComponentContext = {
 	/** context */
 	c: null | Map<unknown, unknown>;
 	/** deferred effects */
-	e: null | Array<() => void | (() => void)>;
+	e: null | Array<{
+		fn: () => void | (() => void);
+		effect: null | Effect;
+		reaction: null | Reaction;
+	}>;
 	/** mounted */
 	m: boolean;
 	/**
@@ -71,7 +75,7 @@ export type EachState = {
 	/** a key -> item lookup */
 	items: Map<any, EachItem>;
 	/** head of the linked list of items */
-	next: EachItem | null;
+	first: EachItem | null;
 };
 
 export type EachItem = {
@@ -85,9 +89,7 @@ export type EachItem = {
 	i: number | Source<number>;
 	/** key */
 	k: unknown;
-	/** anchor for items inserted before this */
-	o: Comment | Text;
-	prev: EachItem | EachState;
+	prev: EachItem | null;
 	next: EachItem | null;
 };
 
@@ -123,7 +125,7 @@ export interface Animation {
 	/** Resets an animation to its starting state, if it uses `tick`. Exposed as a separate method so that an aborted `out:` can still reset even if the `outro` had already completed */
 	reset: () => void;
 	/** Get the `t` value (between `0` and `1`) of the animation, so that its counterpart can start from the right place */
-	t: (now: number) => number;
+	t: () => number;
 }
 
 export type TransitionFn<P> = (
@@ -150,9 +152,8 @@ export type StoreReferencesContainer = Record<
 	string,
 	{
 		store: Store<any> | null;
-		last_value: any;
 		unsubscribe: Function;
-		value: Source<any>;
+		source: Source<any>;
 	}
 >;
 
@@ -176,27 +177,16 @@ export type TaskCallback = (now: number) => boolean | void;
 
 export type TaskEntry = { c: TaskCallback; f: () => void };
 
-export interface ProxyMetadata<T = Record<string | symbol, any>> {
-	/** A map of signals associated to the properties that are reactive */
-	s: Map<string | symbol, Source<any>>;
-	/** A version counter, used within the proxy to signal changes in places where there's no other way to signal an update */
-	v: Source<number>;
-	/** `true` if the proxified object is an array */
-	a: boolean;
-	/** Immutable: Whether to use a source or mutable source under the hood */
-	i: boolean;
-	/** The associated proxy */
-	p: ProxyStateObject<T>;
-	/** The original target this proxy was created for */
-	t: T;
-	/** Dev-only — the components that 'own' this state, if any. `null` means no owners, i.e. everyone can mutate this state. */
+/** Dev-only */
+export interface ProxyMetadata {
+	/** The components that 'own' this state, if any. `null` means no owners, i.e. everyone can mutate this state. */
 	owners: null | Set<Function>;
-	/** Dev-only — the parent metadata object */
+	/** The parent metadata object */
 	parent: null | ProxyMetadata;
 }
 
 export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
-	[STATE_SYMBOL]: ProxyMetadata;
+	[STATE_SYMBOL]: T;
 };
 
 export * from './reactivity/types';

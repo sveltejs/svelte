@@ -10,7 +10,7 @@ export default test({
 		ok(p);
 
 		let styles = window.getComputedStyle(p);
-		assert.equal(styles.color, 'green');
+		assert.equal(styles.color, 'rgb(0, 128, 0)');
 
 		component.color = null;
 		assert.htmlEqual(target.innerHTML, '<p style=""></p>');
@@ -29,12 +29,12 @@ export default test({
 		assert.htmlEqual(target.innerHTML, '<p style="background-color: green;"></p>');
 		styles = window.getComputedStyle(p);
 		assert.equal(styles.color, '');
-		assert.equal(styles.backgroundColor, 'green');
+		assert.equal(styles.backgroundColor, 'rgb(0, 128, 0)');
 
 		component.color = 'purple';
 		assert.htmlEqual(target.innerHTML, '<p style="background-color: green; color: purple;"></p>');
 		styles = window.getComputedStyle(p);
-		assert.equal(styles.color, 'purple');
-		assert.equal(styles.backgroundColor, 'green');
+		assert.equal(styles.color, 'rgb(128, 0, 128)');
+		assert.equal(styles.backgroundColor, 'rgb(0, 128, 0)');
 	}
 });

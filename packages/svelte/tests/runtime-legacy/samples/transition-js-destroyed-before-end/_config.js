@@ -15,5 +15,7 @@ export default test({
 		component.$destroy();
 
 		raf.tick(100);
-	}
+	},
+
+	warnings: ['Tried to unmount a component that was not mounted']
 });

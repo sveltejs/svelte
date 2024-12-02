@@ -4,7 +4,7 @@
 	let foo_text;
 	let bar_text;
 
-	function foo(node, params) {
+	function foo(node, { duration = 100 }) {
 		foo_text = node.textContent;
 
 		return () => {
@@ -13,7 +13,7 @@
 			}
 
 			return {
-				duration: 100,
+				duration,
 				tick: t => {
 					node.foo = t;
 				}
@@ -21,7 +21,7 @@
 		};
 	}
 
-	function bar(node, params) {
+	function bar(node, { duration = 100 }) {
 		bar_text = node.textContent;
 
 		return () => {
@@ -30,7 +30,7 @@
 			}
 
 			return {
-				duration: 100,
+				duration,
 				tick: t => {
 					node.foo = t;
 				}

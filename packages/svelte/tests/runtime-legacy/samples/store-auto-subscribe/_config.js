@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 import { writable } from 'svelte/store';
 
@@ -10,13 +11,14 @@ export default test({
 		<button>count 0</button>
 	`,
 
-	async test({ assert, component, target, window }) {
+	test({ assert, component, target, window }) {
 		const button = target.querySelector('button');
 		ok(button);
 
 		const click = new window.MouseEvent('click', { bubbles: true });
 
-		await button.dispatchEvent(click);
+		button.dispatchEvent(click);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -25,7 +27,8 @@ export default test({
 		`
 		);
 
-		await component.count.set(42);
+		component.count.set(42);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

@@ -1,5 +1,5 @@
 <script>
-	import Sub from './sub.svelte'
+	import Sub from './sub.svelte';
 	let sub = $state();
 </script>
 

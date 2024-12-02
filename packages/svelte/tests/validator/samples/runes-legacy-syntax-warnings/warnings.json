@@ -5,7 +5,7 @@
 			"column": 13,
 			"line": 10
 		},
-		"message": "Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead.",
+		"message": "Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead",
 		"start": {
 			"column": 0,
 			"line": 10
@@ -17,7 +17,7 @@
 			"column": 24,
 			"line": 11
 		},
-		"message": "Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead.",
+		"message": "Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead",
 		"start": {
 			"column": 0,
 			"line": 11
@@ -29,7 +29,7 @@
 			"column": 22,
 			"line": 12
 		},
-		"message": "Using `on:click` to listen to the click event is deprecated. Use the event attribute `onclick` instead.",
+		"message": "Using `on:click` to listen to the click event is deprecated. Use the event attribute `onclick` instead",
 		"start": {
 			"column": 8,
 			"line": 12

@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -16,6 +17,7 @@ export default test({
 
 		input.value = '5.';
 		input.dispatchEvent(inputEvent);
+		flushSync();
 
 		// input type number has value === "" if ends with dot/comma
 		assert.equal(component.value, undefined);
@@ -23,12 +25,14 @@ export default test({
 
 		input.value = '5.5';
 		input.dispatchEvent(inputEvent);
+		flushSync();
 
 		assert.equal(component.value, 5.5);
 		assert.equal(input.value, '5.5');
 
 		input.value = '5.50';
 		input.dispatchEvent(inputEvent);
+		flushSync();
 
 		assert.equal(component.value, 5.5);
 		assert.equal(input.value, '5.50');

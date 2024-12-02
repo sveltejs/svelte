@@ -4,137 +4,268 @@
 
 	/** @type {import('./console').Log} */
 	export let log;
-	export let level = 1;
+	export let depth = 0;
 
 	function toggle_group_collapse() {
 		log.collapsed = !log.collapsed;
 	}
+
+	let style;
+
+	/** @param {string} text */
+	function sanitize_css(text) {
+		style ??= document.createElement('span').style;
+		style.cssText = text;
+
+		for (const key in style) {
+			const value = style[key];
+			if (typeof value === 'string' && value.includes('url(')) {
+				style[key] = value.replace(/url\([^)]+\)/g, '');
+			}
+		}
+
+		style.position = 'static';
+		return style.cssText;
+	}
+
+	/** @param {any[]} [args] */
+	function format_args(args = []) {
+		if (args.length === 0) return args;
+
+		if (typeof args[0] !== 'string') {
+			return args.map((value) => ({ type: 'value', value }));
+		}
+
+		args = args.slice();
+
+		const parts = args.shift().split(/(%[sdifoOc])/g);
+
+		const formatted = [];
+
+		if (parts[0] !== '') {
+			formatted.push({ type: 'value', value: parts[0] });
+		}
+
+		for (let i = 1; i < parts.length; i += 2) {
+			const type = parts[i];
+			const next = parts[i + 1];
+			const value = args.shift();
+
+			switch (type) {
+				case '%s':
+					formatted.push({ type: 'value', value: String(value), formatted: true });
+					break;
+
+				case '%d':
+				case '%i':
+					formatted.push({
+						type: 'value',
+						value: typeof value === 'symbol' ? NaN : parseInt(value, 10),
+						formatted: true
+					});
+					break;
+
+				case '%f':
+					formatted.push({
+						type: 'value',
+						value: typeof value === 'symbol' ? NaN : parseFloat(value),
+						formatted: true
+					});
+					break;
+
+				case '%o':
+				case '%O':
+					formatted.push({ type: 'value', value, formatted: true });
+					break;
+
+				case '%c':
+					formatted.push({
+						type: 'style',
+						style: sanitize_css(String(value)),
+						value: next,
+						formatted: true
+					});
+					break;
+			}
+
+			if (type !== '%c' && next !== '') {
+				formatted.push({ type: 'value', value: next, formatted: true });
+			}
+		}
+
+		for (const value of args) {
+			formatted.push({ type: 'value', value });
+		}
+
+		return formatted;
+	}
 </script>
 
-{#if log.args && log.level === 'table'}
-	<ConsoleTable data={log.args[0]} columns={log.args[1]} />
+{#if log.command === 'table'}
+	<ConsoleTable data={log.data} columns={log.columns} />
 {/if}
 
-<span class="log console-{log.level}" style="padding-left: {level * 15}px">
-	{#if log.count && log.count > 1}
-		<span class="count">{log.count}x</span>
-	{/if}
+<div class="{log.command} line" style="--indent: {depth * 15}px">
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<div
+		role="button"
+		tabindex="0"
+		on:click={toggle_group_collapse}
+		class="log"
+		class:expandable={log.stack || log.command === 'group'}
+	>
+		{#if log.count && log.count > 1}
+			<span class="count">{log.count}</span>
+		{/if}
 
-	{#if log.level === 'trace' || log.level === 'assert' || log.level === 'group'}
-		<button on:click={toggle_group_collapse}>
-			<span class="arrow" class:expand={!log.collapsed}> ▶️ </span>
-			{#if log.level === 'group'}
-				<span class="title">{log.label}</span>
-			{/if}
-		</button>
-	{/if}
+		{#if log.stack || log.command === 'group'}
+			<span class="arrow" class:expand={!log.collapsed}>{'\u25B6'}</span>
+		{/if}
 
-	{#if log.level === 'assert'}
-		<span class="assert">Assertion failed:</span>
-	{/if}
-
-	{#if log.level === 'clear'}
-		<span class="info">Console was cleared</span>
-	{:else if log.level === 'unclonable'}
-		<span class="info error">Message could not be cloned. Open devtools to see it</span>
-	{:else if log.level.startsWith('system')}
-		{#each log.args ?? [] as arg}
-			{arg}
-		{/each}
-	{:else if log.args && log.level === 'table'}
-		<JSONNode value={log.args[0]} />
-	{:else}
-		{#each log.args ?? [] as arg}
-			<JSONNode value={arg} />
-		{/each}
-	{/if}
-	{#each new Array(level - 1) as _, idx}
-		<div class="outline" style="left: {idx * 15 + 15}px" />
-	{/each}
-</span>
-
-{#if log.level === 'group' && !log.collapsed}
-	{#each log.logs ?? [] as childLog}
-		<svelte:self log={childLog} level={level + 1} />
-	{/each}
-{/if}
-
-{#if (log.level === 'trace' || log.level === 'assert') && !log.collapsed}
-	<div class="trace">
-		{#each log.stack?.split('\n').slice(2) ?? '' as stack}
-			<div>{stack.replace(/^\s*at\s+/, '')}</div>
-		{/each}
+		{#if log.command === 'clear'}
+			<span class="meta">Console was cleared</span>
+		{:else if log.command === 'unclonable'}
+			<span class="meta meta-error">Message could not be cloned. Open devtools to see it</span>
+		{:else if log.command === 'table'}
+			<JSONNode value={log.data} />
+		{:else}
+			<span class="values">
+				{#each format_args(log.args) as part}
+					<!-- we need to do some funky stuff to make whitespace behave as it does in devtools -->
+					{#if !part.formatted}
+						{' '}
+					{/if}{#if part.type === 'value'}
+						<JSONNode value={part.value} defaultExpandedLevel={log.expanded ? 1 : 0} />
+					{:else}
+						<span class="styled" style={part.style}>{part.value}</span>
+					{/if}
+				{/each}
+			</span>
+		{/if}
 	</div>
+
+	{#if log.stack && !log.collapsed}
+		<div class="stack">
+			{#each log.stack as line}
+				<span>{line.label}</span>
+				<span class="location">{line.location}</span>
+			{/each}
+		</div>
+	{/if}
+
+	{#each new Array(depth) as _, idx}
+		<div class="outline" style="left: {idx * 15 + 15}px"></div>
+	{/each}
+</div>
+
+{#if log.command === 'group' && !log.collapsed}
+	{#each log.logs ?? [] as childLog}
+		<svelte:self log={childLog} depth={depth + 1} />
+	{/each}
 {/if}
 
 <style>
-	.log {
-		border-bottom: 0.5px solid var(--sk-back-4);
-		padding: 5px 10px 0px;
-		display: flex;
+	.line {
+		--bg: var(--sk-back-1);
+		--border: var(--sk-back-3);
+		display: block;
 		position: relative;
-		font-size: 12px;
+		width: 100%;
+		text-align: left;
+		border-width: 1px;
+		border-style: solid none none none;
+		border-color: var(--border);
+		background: var(--bg);
+	}
+
+	.warn {
+		--bg: var(--warning-bg);
+		--border: var(--warning-border);
+	}
+
+	.error {
+		--bg: var(--error-bg);
+		--border: var(--error-border);
+	}
+
+	.warn,
+	.error {
+		border-style: solid none;
+
+		& + :global(&) {
+			border-top: none;
+		}
+	}
+
+	.group {
+		font-weight: 700;
+	}
+
+	.log {
+		padding: 0.5rem 1rem 0.5rem calc(1rem + var(--indent));
+		display: flex;
+		gap: 1rem;
+		width: 100%;
+		font-size: 1.2rem;
 		font-family: var(--sk-font-mono);
+		align-items: center;
 	}
 
-	.log > :global(*) {
-		margin-right: 10px;
-		font-family: var(--sk-font-mono);
-	}
-
-	.console-warn,
-	.console-system-warn {
-		background: hsla(50, 100%, 95%, 0.4);
-		border-color: #fff4c4;
-	}
-
-	.console-error,
-	.console-assert {
-		background: #fff0f0;
-		border-color: #fed6d7;
-	}
-
-	.console-group,
-	.arrow {
+	.log.expandable {
 		cursor: pointer;
-		user-select: none;
 	}
 
-	.console-trace,
-	.console-assert {
-		border-bottom: none;
+	.values {
+		display: block;
+		flex: 1;
 	}
 
-	.console-assert + .trace {
-		background: #fff0f0;
-		border-color: #fed6d7;
-	}
-
-	.trace {
-		border-bottom: 1px solid #eee;
-		font-size: 12px;
+	.stack {
+		display: grid;
+		grid-template-columns: minmax(0, auto) minmax(auto, 1fr);
+		grid-gap: 0 2rem;
+		font-size: 1.2rem;
 		font-family: var(--sk-font-mono);
-		padding: 4px 0 2px;
-	}
+		margin: 0 1rem 0.4rem calc(1em + var(--indent));
+		overflow: hidden;
 
-	.trace > :global(div) {
-		margin-left: 15px;
+		.location {
+			position: relative;
+			background: var(--bg);
+			&::before {
+				content: '';
+				position: absolute;
+				width: 1rem;
+				height: 100%;
+				left: -1rem;
+				top: 0;
+				background: linear-gradient(to right, transparent, var(--bg));
+			}
+		}
 	}
 
 	.count {
-		color: var(--sk-text-3, #999);
-		font-size: 12px;
-		line-height: 1.2;
+		position: relative;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		min-width: 1.5em;
+		height: 1.4em;
+		padding: 0.5em;
+		border-radius: 0.4rem;
+		background-color: var(--sk-text-3, #777);
+		color: var(--sk-back-1);
+		font-size: 1rem;
 	}
 
-	.info {
+	.meta {
 		color: var(--sk-text-2, #666);
 		font-family: var(--sk-font) !important;
 		font-size: 12px;
 	}
 
-	.error {
-		color: #da106e; /* todo make this a var */
+	.meta-error {
+		color: var(--error-fg);
 	}
 
 	.outline {
@@ -145,28 +276,17 @@
 	}
 
 	.arrow {
-		position: absolute;
-		font-size: 0.6em;
+		font-size: 0.9rem;
 		transition: 150ms;
 		transform-origin: 50% 50%;
-		transform: translateY(1px) translateX(-50%);
+		transform: translateY(-1px);
 	}
 
 	.arrow.expand {
-		transform: translateY(1px) translateX(-50%) rotateZ(90deg);
+		transform: translateY(0px) rotateZ(90deg);
 	}
 
-	.title {
-		font-family: var(--sk-font-mono);
-		font-size: 13px;
-		font-weight: bold;
-		padding-left: 11px;
-		height: 19px;
-	}
-
-	.assert {
-		padding-left: 11px;
-		font-weight: bold;
-		color: #da106e;
+	.styled {
+		white-space: pre-wrap;
 	}
 </style>

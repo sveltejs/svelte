@@ -1,15 +1,23 @@
 import * as e from '../errors.js';
-import { current_component_context } from '../runtime.js';
+import { component_context } from '../runtime.js';
+import { FILENAME } from '../../../constants.js';
 import { get_component } from './ownership.js';
 
+/** @param {Function & { [FILENAME]: string }} target */
+export function check_target(target) {
+	if (target) {
+		e.component_api_invalid_new(target[FILENAME] ?? 'a component', target.name);
+	}
+}
+
 export function legacy_api() {
-	const component = current_component_context?.function;
+	const component = component_context?.function;
 
 	/** @param {string} method */
 	function error(method) {
 		// @ts-expect-error
-		const parent = get_component()?.filename ?? 'Something';
-		e.component_api_changed(parent, method, component.filename);
+		const parent = get_component()?.[FILENAME] ?? 'Something';
+		e.component_api_changed(parent, method, component[FILENAME]);
 	}
 
 	return {

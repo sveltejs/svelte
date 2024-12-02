@@ -1,23 +1,25 @@
+/** @import { ValidatedCompileOptions, CompileResult, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { ComponentAnalysis, Analysis } from '../types' */
 import { print } from 'esrap';
 import { VERSION } from '../../../version.js';
 import { server_component, server_module } from './server/transform-server.js';
 import { client_component, client_module } from './client/transform-client.js';
-import { getLocator } from 'locate-character';
 import { render_stylesheet } from './css/index.js';
 import { merge_with_preprocessor_map, get_source_name } from '../../utils/mapped_code.js';
+import * as state from '../../state.js';
 
 /**
- * @param {import('../types').ComponentAnalysis} analysis
+ * @param {ComponentAnalysis} analysis
  * @param {string} source
- * @param {import('#compiler').ValidatedCompileOptions} options
- * @returns {import('#compiler').CompileResult}
+ * @param {ValidatedCompileOptions} options
+ * @returns {CompileResult}
  */
 export function transform_component(analysis, source, options) {
 	if (options.generate === false) {
 		return {
 			js: /** @type {any} */ (null),
 			css: null,
-			warnings: /** @type {any} */ (null), // set afterwards
+			warnings: state.warnings, // set afterwards
 			metadata: {
 				runes: analysis.runes
 			},
@@ -28,11 +30,12 @@ export function transform_component(analysis, source, options) {
 	const program =
 		options.generate === 'server'
 			? server_component(analysis, options)
-			: client_component(source, analysis, options);
+			: client_component(analysis, options);
 
 	const js_source_name = get_source_name(options.filename, options.outputFilename, 'input.svelte');
 	const js = print(program, {
 		// include source content; makes it easier/more robust looking up the source map code
+		// (else esrap does return null for source and sourceMapContent which may trip up tooling)
 		sourceMapContent: source,
 		sourceMapSource: js_source_name
 	});
@@ -46,7 +49,7 @@ export function transform_component(analysis, source, options) {
 	return {
 		js,
 		css,
-		warnings: /** @type {any} */ (null), // set afterwards. TODO apply preprocessor sourcemap
+		warnings: state.warnings, // set afterwards. TODO apply preprocessor sourcemap
 		metadata: {
 			runes: analysis.runes
 		},
@@ -55,17 +58,17 @@ export function transform_component(analysis, source, options) {
 }
 
 /**
- * @param {import('../types').Analysis} analysis
+ * @param {Analysis} analysis
  * @param {string} source
- * @param {import('#compiler').ValidatedModuleCompileOptions} options
- * @returns {import('#compiler').CompileResult}
+ * @param {ValidatedModuleCompileOptions} options
+ * @returns {CompileResult}
  */
 export function transform_module(analysis, source, options) {
 	if (options.generate === false) {
 		return {
 			js: /** @type {any} */ (null),
 			css: null,
-			warnings: /** @type {any} */ (null), // set afterwards
+			warnings: state.warnings, // set afterwards
 			metadata: {
 				runes: true
 			},
@@ -78,7 +81,7 @@ export function transform_module(analysis, source, options) {
 			? server_module(analysis, options)
 			: client_module(analysis, options);
 
-	const basename = (options.filename ?? 'Module').split(/[/\\]/).at(-1);
+	const basename = options.filename.split(/[/\\]/).at(-1);
 	if (program.body.length > 0) {
 		program.body[0].leadingComments = [
 			{
@@ -89,12 +92,17 @@ export function transform_module(analysis, source, options) {
 	}
 
 	return {
-		js: print(program, {}),
+		js: print(program, {
+			// include source content; makes it easier/more robust looking up the source map code
+			// (else esrap does return null for source and sourceMapContent which may trip up tooling)
+			sourceMapContent: source,
+			sourceMapSource: get_source_name(options.filename, undefined, 'input.svelte.js')
+		}),
 		css: null,
 		metadata: {
 			runes: true
 		},
-		warnings: /** @type {any} */ (null), // set afterwards
+		warnings: state.warnings, // set afterwards
 		ast: /** @type {any} */ (null) // set afterwards
 	};
 }

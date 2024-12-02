@@ -1,9 +1,10 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
 	html: '<div>x</div>',
 
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const event = new window.Event('resize');
 
 		Object.defineProperties(window, {
@@ -17,8 +18,8 @@ export default test({
 			}
 		});
 
-		await window.dispatchEvent(event);
-		await Promise.resolve();
+		window.dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

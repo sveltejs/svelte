@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 // Tests that fallback values are kept as long as the prop is not defined in the case of a spread
@@ -9,10 +10,11 @@ export default test({
 		<p>true fallback</p>
 	`,
 
-	async test({ assert, target }) {
+	test({ assert, target }) {
 		const [propA, propB] = target.querySelectorAll('button');
 
-		await propA.click();
+		propA.click();
+		flushSync();
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -22,7 +24,8 @@ export default test({
 			`
 		);
 
-		await propB.click();
+		propB.click();
+		flushSync();
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -32,7 +35,8 @@ export default test({
 			`
 		);
 
-		await propA.click();
+		propA.click();
+		flushSync();
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -42,7 +46,8 @@ export default test({
 			`
 		);
 
-		await propB.click();
+		propB.click();
+		flushSync();
 		assert.htmlEqual(
 			target.innerHTML,
 			`

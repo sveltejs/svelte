@@ -5,13 +5,18 @@
  * @param {boolean} [important]
  */
 export function set_style(dom, key, value, important) {
-	const style = dom.style;
-	const prev_value = style.getPropertyValue(key);
+	// @ts-expect-error
+	var styles = (dom.__styles ??= {});
+
+	if (styles[key] === value) {
+		return;
+	}
+
+	styles[key] = value;
+
 	if (value == null) {
-		if (prev_value !== '') {
-			style.removeProperty(key);
-		}
-	} else if (prev_value !== value) {
-		style.setProperty(key, value, important ? 'important' : '');
+		dom.style.removeProperty(key);
+	} else {
+		dom.style.setProperty(key, value, important ? 'important' : '');
 	}
 }

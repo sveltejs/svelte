@@ -403,8 +403,7 @@
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
-		"nodes": [],
-		"transparent": false
+		"nodes": []
 	},
 	"options": null
 }

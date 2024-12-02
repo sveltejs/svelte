@@ -1108,12 +1108,10 @@
 							"raw": "Foo",
 							"data": "Foo"
 						}
-					],
-					"transparent": true
+					]
 				}
 			}
-		],
-		"transparent": false
+		]
 	},
 	"options": null
 }

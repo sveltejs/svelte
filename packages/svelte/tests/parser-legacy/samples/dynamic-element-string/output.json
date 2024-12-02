@@ -2,7 +2,7 @@
 	"html": {
 		"type": "Fragment",
 		"start": 0,
-		"end": 101,
+		"end": 292,
 		"children": [
 			{
 				"type": "Element",
@@ -21,21 +21,145 @@
 				"data": "\n"
 			},
 			{
+				"type": "Comment",
+				"start": 45,
+				"end": 69,
+				"data": " prettier-ignore ",
+				"ignores": []
+			},
+			{
+				"type": "Text",
+				"start": 69,
+				"end": 70,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
 				"type": "Element",
 				"name": "svelte:element",
-				"start": 45,
-				"end": 101,
+				"start": 70,
+				"end": 114,
 				"tag": "div",
+				"attributes": [],
+				"children": []
+			},
+			{
+				"type": "Text",
+				"start": 114,
+				"end": 115,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "Element",
+				"name": "svelte:element",
+				"start": 115,
+				"end": 161,
+				"tag": {
+					"type": "Literal",
+					"start": 137,
+					"end": 142,
+					"loc": {
+						"start": {
+							"line": 4,
+							"column": 22
+						},
+						"end": {
+							"line": 4,
+							"column": 27
+						}
+					},
+					"value": "div",
+					"raw": "\"div\""
+				},
+				"attributes": [],
+				"children": []
+			},
+			{
+				"type": "Text",
+				"start": 161,
+				"end": 162,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "Comment",
+				"start": 162,
+				"end": 186,
+				"data": " prettier-ignore ",
+				"ignores": []
+			},
+			{
+				"type": "Text",
+				"start": 186,
+				"end": 187,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "Element",
+				"name": "svelte:element",
+				"start": 187,
+				"end": 233,
+				"tag": {
+					"type": "Literal",
+					"start": 209,
+					"end": 214,
+					"loc": {
+						"start": {
+							"line": 6,
+							"column": 22
+						},
+						"end": {
+							"line": 6,
+							"column": 27
+						}
+					},
+					"value": "div",
+					"raw": "'div'"
+				},
+				"attributes": [],
+				"children": []
+			},
+			{
+				"type": "Text",
+				"start": 233,
+				"end": 234,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "Element",
+				"name": "svelte:element",
+				"start": 234,
+				"end": 292,
+				"tag": {
+					"type": "Literal",
+					"start": 256,
+					"end": 261,
+					"loc": {
+						"start": {
+							"line": 7,
+							"column": 22
+						},
+						"end": {
+							"line": 7,
+							"column": 27
+						}
+					},
+					"value": "div",
+					"raw": "\"div\""
+				},
 				"attributes": [
 					{
 						"type": "Attribute",
-						"start": 72,
-						"end": 83,
+						"start": 263,
+						"end": 274,
 						"name": "class",
 						"value": [
 							{
-								"start": 79,
-								"end": 82,
+								"start": 270,
+								"end": 273,
 								"type": "Text",
 								"raw": "foo",
 								"data": "foo"

@@ -1,7 +1,16 @@
 <button><slot /></button>
 
-{#if foo}
-	<slot name="foo" {foo} />
+{#if foos}
+	<slot name="foo" foo={foos} />
 {/if}
 
-<slot name="dashed-name" />
+{#if $$slots.bar}
+	{$$slots}
+	<slot name="bar" />
+{/if}
+
+{#if $$slots.default}foo{/if}
+
+{#if $$slots['default']}foo{/if}
+
+<slot header="something" title={my_title} {id} />

@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	export const cursorIndex = writable(0);
 </script>
 
@@ -7,19 +7,20 @@
 	import { EditorState, Range, StateEffect, StateEffectType, StateField } from '@codemirror/state';
 	import { Decoration, EditorView } from '@codemirror/view';
 	import { codemirror, withCodemirrorInstance } from '@neocodemirror/svelte';
+	import { svelteLanguage } from '@replit/codemirror-lang-svelte';
+	import { javascriptLanguage } from '@codemirror/lang-javascript';
 	import { createEventDispatcher, tick } from 'svelte';
 	import { writable } from 'svelte/store';
+	import { get_repl_context } from '$lib/context.js';
 	import Message from './Message.svelte';
 	import { svelteTheme } from './theme.js';
+	import { autocomplete } from './autocomplete.js';
 
 	/** @type {import('@codemirror/lint').LintSource | undefined} */
 	export let diagnostics = undefined;
 
 	export let readonly = false;
 	export let tab = true;
-
-	/** @type {boolean} */
-	export let autocomplete = true;
 
 	/** @type {ReturnType<typeof createEventDispatcher<{ change: { value: string } }>>} */
 	const dispatch = createEventDispatcher();
@@ -192,57 +193,16 @@
 		}
 	});
 
-	import { svelteLanguage } from '@replit/codemirror-lang-svelte';
-	import { javascriptLanguage } from '@codemirror/lang-javascript';
-	import { snippetCompletion as snip } from '@codemirror/autocomplete';
-
-	/** @param {any} context */
-	function complete_svelte_runes(context) {
-		const word = context.matchBefore(/\w*/);
-		if (word.from === word.to && context.state.sliceDoc(word.from - 1, word.to) !== '$') {
-			return null;
-		}
-		return {
-			from: word.from - 1,
-			options: [
-				{ label: '$state', type: 'keyword', boost: 12 },
-				{ label: '$props', type: 'keyword', boost: 11 },
-				{ label: '$derived', type: 'keyword', boost: 10 },
-				snip('$derived.by(() => {\n\t${}\n});', {
-					label: '$derived.by',
-					type: 'keyword',
-					boost: 9
-				}),
-				snip('$effect(() => {\n\t${}\n});', { label: '$effect', type: 'keyword', boost: 8 }),
-				snip('$effect.pre(() => {\n\t${}\n});', {
-					label: '$effect.pre',
-					type: 'keyword',
-					boost: 7
-				}),
-				{ label: '$state.frozen', type: 'keyword', boost: 6 },
-				{ label: '$bindable', type: 'keyword', boost: 5 },
-				snip('$effect.root(() => {\n\t${}\n});', {
-					label: '$effect.root',
-					type: 'keyword',
-					boost: 4
-				}),
-				{ label: '$state.snapshot', type: 'keyword', boost: 3 },
-				snip('$effect.active()', {
-					label: '$effect.active',
-					type: 'keyword',
-					boost: 2
-				}),
-				{ label: '$inspect', type: 'keyword', boost: 1 }
-			]
-		};
-	}
+	const { files, selected } = get_repl_context();
 
 	const svelte_rune_completions = svelteLanguage.data.of({
-		autocomplete: complete_svelte_runes
+		/** @param {import('@codemirror/autocomplete').CompletionContext} context */
+		autocomplete: (context) => autocomplete(context, $selected, $files)
 	});
 
 	const js_rune_completions = javascriptLanguage.data.of({
-		autocomplete: complete_svelte_runes
+		/** @param {import('@codemirror/autocomplete').CompletionContext} context */
+		autocomplete: (context) => autocomplete(context, $selected, $files)
 	});
 </script>
 
@@ -266,7 +226,7 @@
 		},
 		lint: diagnostics,
 		lintOptions: { delay: 200 },
-		autocomplete,
+		autocomplete: true,
 		extensions: [svelte_rune_completions, js_rune_completions, watcher],
 		instanceStore: cmInstance
 	}}
@@ -286,6 +246,8 @@
 
 <style>
 	.codemirror-container {
+		--warning: hsl(40 100% 70%);
+		--error: hsl(0 100% 90%);
 		position: relative;
 		width: 100%;
 		height: 100%;
@@ -294,26 +256,134 @@
 		overflow: hidden;
 	}
 
-	.codemirror-container :global(.mark-text) {
-		background-color: var(--sk-selection-color);
-		backdrop-filter: opacity(40%);
+	:global(.dark) .codemirror-container {
+		--warning: hsl(40 100% 50%);
+		--error: hsl(0 100% 70%);
 	}
 
-	.codemirror-container :global(.cm-editor) {
-		height: 100%;
-	}
+	.codemirror-container :global {
+		* {
+			font: 400 var(--sk-text-xs) / 1.7 var(--sk-font-mono);
+		}
 
-	.codemirror-container :global(*) {
-		font: 400 var(--sk-text-xs) / 1.7 var(--sk-font-mono) !important;
-	}
+		.mark-text {
+			background-color: var(--sk-selection-color);
+			backdrop-filter: opacity(40%);
+		}
 
-	.codemirror-container :global(.error-loc) {
-		position: relative;
-		border-bottom: 2px solid #da106e;
-	}
+		.cm-editor {
+			height: 100%;
+		}
 
-	.codemirror-container :global(.error-line) {
-		background-color: rgba(200, 0, 0, 0.05);
+		.error-loc {
+			position: relative;
+			border-bottom: 2px solid #da106e;
+		}
+
+		.error-line {
+			background-color: rgba(200, 0, 0, 0.05);
+		}
+
+		.cm-tooltip {
+			border: none;
+			background: var(--sk-back-3);
+			font-family: var(--sk-font);
+			max-width: calc(100vw - 10em);
+			position: relative;
+			filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.1));
+		}
+
+		.cm-tooltip-section {
+			position: relative;
+			padding: 0.5em;
+			left: -13px;
+			background: var(--bg);
+			border-radius: 2px;
+			max-width: 64em;
+		}
+
+		.cm-tooltip-section::before {
+			content: '';
+			position: absolute;
+			left: 10px;
+			width: 8px;
+			height: 8px;
+			transform: rotate(45deg);
+			background-color: var(--bg);
+			border-radius: 2px;
+		}
+
+		.cm-tooltip-below .cm-tooltip-section {
+			top: 10px;
+		}
+
+		.cm-tooltip-above .cm-tooltip-section {
+			bottom: 10px;
+		}
+
+		.cm-tooltip-below .cm-tooltip-section::before {
+			top: -4px;
+		}
+
+		.cm-tooltip-above .cm-tooltip-section::before {
+			bottom: -4px;
+		}
+
+		.cm-tooltip:has(.cm-diagnostic) {
+			background: transparent;
+		}
+
+		.cm-tooltip:has(.cm-diagnostic-warning) {
+			--bg: var(--warning);
+			--fg: #222;
+		}
+
+		.cm-tooltip:has(.cm-diagnostic-error) {
+			--bg: var(--error);
+			--fg: #222;
+		}
+
+		.cm-diagnostic {
+			padding: 0.2em 0.4em;
+			position: relative;
+			border: none;
+			border-radius: 2px;
+		}
+
+		.cm-diagnostic:not(:last-child) {
+			border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+		}
+
+		.cm-diagnostic-error {
+			border: none;
+			filter: drop-shadow(0px 0px 6px var(--error-bg));
+		}
+
+		.cm-diagnostic :not(code) {
+			font-family: var(--sk-font);
+		}
+
+		.cm-diagnosticText {
+			color: var(--fg);
+			position: relative;
+			z-index: 2;
+		}
+
+		.cm-diagnosticText code {
+			color: inherit;
+			background-color: rgba(0, 0, 0, 0.05);
+			border-radius: 2px;
+			top: 0;
+			padding: 0.2em;
+			font-size: 0.9em;
+		}
+
+		.cm-diagnosticText strong {
+			font-size: 0.9em;
+			/* font-weight: 700; */
+			font-family: var(--sk-font-mono);
+			opacity: 0.7;
+		}
 	}
 
 	pre {

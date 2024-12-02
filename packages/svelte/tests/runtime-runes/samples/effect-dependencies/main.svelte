@@ -1,8 +1,8 @@
-<script context="module">
+<script module>
 	class Things {
 		tab = $state('A');
 
-		data = $state([{no: 1}, {no: 2}]);
+		data = $state([{ no: 1 }, { no: 2 }]);
 		list = $derived(this.filter());
 
 		filter() {
@@ -15,13 +15,13 @@
 </script>
 
 <div>
-		<button onclick={() => things.tab = 'A'} >A</button>
-		<button onclick={() => things.tab = 'B'} >B</button>
+	<button onclick={() => (things.tab = 'A')}>A</button>
+	<button onclick={() => (things.tab = 'B')}>B</button>
 </div>
 
 <div>
 	{#if things.tab === 'A'}
-			A
+		A
 	{:else}
 		B
 		{#each things.list as item}

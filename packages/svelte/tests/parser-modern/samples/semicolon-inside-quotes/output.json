@@ -98,8 +98,7 @@
 							"raw": "\n\tSemicolon inside quotes\n",
 							"data": "\n\tSemicolon inside quotes\n"
 						}
-					],
-					"transparent": true
+					]
 				}
 			},
 			{
@@ -109,8 +108,7 @@
 				"raw": "\n",
 				"data": "\n"
 			}
-		],
-		"transparent": false
+		]
 	},
 	"options": null
 }

@@ -1,1 +1,1 @@
-<!-- svelte-ignore foo bar -->
+<!-- svelte-ignore foo, bar -->

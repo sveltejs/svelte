@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -10,12 +11,12 @@ export default test({
 	<span class="content">3</span>
 	<button>Test</button>
 	`,
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		let [incrementBtn, ...buttons] = target.querySelectorAll('button');
 
 		const clickEvent = new window.MouseEvent('click', { bubbles: true });
-		await buttons[0].dispatchEvent(clickEvent);
-		await Promise.resolve();
+		buttons[0].dispatchEvent(clickEvent);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -30,8 +31,8 @@ export default test({
 		`
 		);
 
-		await buttons[0].dispatchEvent(clickEvent);
-		await Promise.resolve();
+		buttons[0].dispatchEvent(clickEvent);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -46,9 +47,10 @@ export default test({
 		`
 		);
 
-		await buttons[2].dispatchEvent(clickEvent);
-		await buttons[2].dispatchEvent(clickEvent);
-		await Promise.resolve();
+		buttons[2].dispatchEvent(clickEvent);
+		flushSync();
+		buttons[2].dispatchEvent(clickEvent);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -63,8 +65,8 @@ export default test({
 		`
 		);
 
-		await incrementBtn.dispatchEvent(clickEvent);
-		await Promise.resolve();
+		incrementBtn.dispatchEvent(clickEvent);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -83,8 +85,8 @@ export default test({
 
 		[incrementBtn, ...buttons] = target.querySelectorAll('button');
 
-		await buttons[3].dispatchEvent(clickEvent);
-		await Promise.resolve();
+		buttons[3].dispatchEvent(clickEvent);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

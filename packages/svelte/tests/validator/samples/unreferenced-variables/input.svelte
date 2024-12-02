@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
   var a1 = 1;
   let b1 = 1;
   const c1 = 1;
