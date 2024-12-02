@@ -201,16 +201,19 @@ function apply_combinator(relative_selector, parent_selectors, rule, node) {
 				const parent = path[i];
 
 				if (parent.type === 'SnippetBlock') {
-					if (seen.has(parent)) return true;
-					seen.add(parent);
+					if (seen.has(parent)) {
+						parent_matched = true;
+					} else {
+						seen.add(parent);
 
-					for (const site of parent.metadata.sites) {
-						if (apply_combinator(relative_selector, parent_selectors, rule, site)) {
-							return true;
+						for (const site of parent.metadata.sites) {
+							if (apply_combinator(relative_selector, parent_selectors, rule, site)) {
+								parent_matched = true;
+							}
 						}
 					}
 
-					return false;
+					break;
 				}
 
 				if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
