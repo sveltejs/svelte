@@ -1695,11 +1695,13 @@ declare module 'svelte/motion' {
 	 * 	let visible = $state(false);
 	 * </script>
 	 *
-	 * <button onclick={() => visible = !visible}>toggle</button>
+	 * <button onclick={() => visible = !visible}>
+	 * 	toggle
+	 * </button>
 	 *
 	 * {#if visible}
 	 * 	<p transition:fly={{ y: prefersReducedMotion.current ? 0 : 200 }}>
-	 * 	flies in, unless the user prefers reduced motion
+	 * 		flies in, unless the user prefers reduced motion
 	 * 	</p>
 	 * {/if}
 	 * ```
@@ -1751,6 +1753,18 @@ declare module 'svelte/reactivity' {
 	}
 	/**
 	 * Creates a media query and provides a `current` property that reflects whether or not it matches.
+	 *
+	 * Use it carefully — during server-side rendering, there is no way to know what the correct value should be, potentially causing content to change upon hydration.
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { MediaQuery } from 'svelte/reactivity';
+	 *
+	 * 	const large = new MediaQuery('min-width: 800px');
+	 * </script>
+	 *
+	 * <h1>{large.current ? 'large screen' : 'small screen'}</h1>
+	 * ```
 	 */
 	export class MediaQuery {
 		/**

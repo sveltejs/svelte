@@ -3,6 +3,18 @@ import { on } from '../events/index.js';
 
 /**
  * Creates a media query and provides a `current` property that reflects whether or not it matches.
+ *
+ * Use it carefully — during server-side rendering, there is no way to know what the correct value should be, potentially causing content to change upon hydration.
+ *
+ * ```svelte
+ * <script>
+ * 	import { MediaQuery } from 'svelte/reactivity';
+ *
+ * 	const large = new MediaQuery('min-width: 800px');
+ * </script>
+ *
+ * <h1>{large.current ? 'large screen' : 'small screen'}</h1>
+ * ```
  */
 export class MediaQuery {
 	#query;
