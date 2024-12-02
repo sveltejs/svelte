@@ -104,6 +104,9 @@ const visitors = {
 		}
 		return context.visit(node.parameter);
 	},
+	TSInstantiationExpression(node, context) {
+		return context.visit(node.expression);
+	},
 	FunctionExpression: remove_this_param,
 	FunctionDeclaration: remove_this_param,
 	TSDeclareFunction() {
