@@ -1,10 +1,4 @@
 import { teardown } from '../../../reactivity/effects.js';
-import {
-	active_effect,
-	active_reaction,
-	set_active_effect,
-	set_active_reaction
-} from '../../../runtime.js';
 import { add_form_reset_listener } from '../misc.js';
 
 /**
