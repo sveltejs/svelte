@@ -1776,36 +1776,41 @@ declare module 'svelte/reactivity' {
 		#private;
 	}
 	/**
-	 * Returns a function that, when invoked in a reactive context, calls the `start` function once,
-	 * and calls the `stop` function returned from `start` when all reactive contexts it's called in
-	 * are destroyed. This is useful for creating a notifier that starts and stops when the
-	 * "subscriber" count goes from 0 to 1 and back to 0. Call the `update` function passed to the
-	 * `start` function to notify subscribers of an update.
+	 * Returns a `subscribe` function that, if called in an effect (including expressions in the template),
+	 * calls its `start` callback with an `update` function. Whenever `update` is called, the effect re-runs.
 	 *
-	 * Usage example (reimplementing `MediaQuery`):
+	 * If `start` returns a function, it will be called when the effect is destroyed.
+	 *
+	 * If `subscribe` is called in multiple effects, `start` will only be called once as long as the effects
+	 * are active, and the returned teardown function will only be called when all effects are destroyed.
+	 *
+	 * It's best understood with an example. Here's an implementation of [`MediaQuery`](https://svelte.dev/docs/svelte/svelte-reactivity#MediaQuery):
 	 *
 	 * ```js
-	 * import { createSubscriber, on } from 'svelte/reactivity';
+	 * import { createSubscriber } from 'svelte/reactivity';
+	 * import { on } from 'svelte/events';
 	 *
 	 * export class MediaQuery {
 	 * 	#query;
-	 * 	#subscribe = createSubscriber((update) => {
-	 * 		// add an event listener to update all subscribers when the match changes
-	 * 		return on(this.#query, 'change', update);
-	 * 	});
-	 *
-	 * 	get current() {
-	 * 		// If the `current` property is accessed in a reactive context, start a new
-	 * 		// subscription if there isn't one already. The subscription will under the
-	 * 		// hood ensure that whatever reactive context reads `current` will rerun when
-	 * 		// the match changes
-	 * 		this.#subscribe();
-	 * 		// Return the current state of the query
-	 * 		return this.#query.matches;
-	 * 	}
+	 * 	#subscribe;
 	 *
 	 * 	constructor(query) {
 	 * 		this.#query = window.matchMedia(`(${query})`);
+	 *
+	 * 		this.#subscribe = createSubscriber((update) => {
+	 * 			// when the `change` event occurs, re-run any effects that read `this.current`
+	 * 			const off = on(this.#query, 'change', update);
+	 *
+	 * 			// stop listening when all the effects are destroyed
+	 * 			return () => off();
+	 * 		});
+	 * 	}
+	 *
+	 * 	get current() {
+	 * 		this.#subscribe();
+	 *
+	 * 		// Return the current state of the query, whether or not we're in an effect
+	 * 		return this.#query.matches;
 	 * 	}
 	 * }
 	 * ```
