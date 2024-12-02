@@ -11,7 +11,7 @@ If that's not you (yet), you may prefer to visit the [interactive tutorial](/tut
 We recommend using [SvelteKit](https://kit.svelte.dev/), the official application framework from the Svelte team:
 
 ```
-npm create svelte@latest myapp
+npm create svelte@6.4.0 myapp
 cd myapp
 npm install
 npm run dev
