@@ -16,6 +16,8 @@ export function SvelteElement(node, context) {
 	let tag = /** @type {Expression} */ (context.visit(node.tag));
 
 	if (dev) {
+		// Ensure getters/function calls aren't called multiple times.
+		// If we ever start referencing `tag` more than once in prod, move this out of the if block.
 		if (tag.type !== 'Identifier') {
 			const tag_id = context.state.scope.generate('$$tag');
 			context.state.init.push(b.const(tag_id, tag));
