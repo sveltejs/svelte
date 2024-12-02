@@ -1,7 +1,8 @@
 /** @import { Source } from '#client' */
+import { without_reactive_context } from '../internal/client/dom/elements/bindings/shared.js';
 import { derived } from '../internal/client/index.js';
 import { source, set } from '../internal/client/reactivity/sources.js';
-import { get, untrack } from '../internal/client/runtime.js';
+import { get } from '../internal/client/runtime.js';
 
 var inited = false;
 
@@ -46,7 +47,7 @@ export class SvelteDate extends Date {
 						// We don't want to associate the derived with the current
 						// reactive context, as that means the derived will get destroyed
 						// each time it re-fires
-						d = untrack(() =>
+						d = without_reactive_context(() =>
 							derived(() => {
 								get(this.#time);
 								// @ts-ignore
