@@ -1,5 +1,13 @@
 # svelte
 
+## 5.3.2
+
+### Patch Changes
+
+- fix: correctly prune CSS for elements inside snippets ([#14494](https://github.com/sveltejs/svelte/pull/14494))
+
+- fix: render attributes during SSR regardless of case ([#14492](https://github.com/sveltejs/svelte/pull/14492))
+
 ## 5.3.1
 
 ### Patch Changes
