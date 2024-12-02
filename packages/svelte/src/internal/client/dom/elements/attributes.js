@@ -93,7 +93,11 @@ export function set_checked(element, checked) {
  */
 export function set_selected(element, selected) {
 	if (selected) {
-		element.setAttribute('selected', '');
+		// The selected option could've changed via user selection, and
+		// setting the value without this check would set it back.
+		if (!element.hasAttribute('selected')) {
+			element.setAttribute('selected', '');
+		}
 	} else {
 		element.removeAttribute('selected');
 	}
