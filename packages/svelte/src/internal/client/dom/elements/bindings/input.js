@@ -16,20 +16,21 @@ import { is_runes, untrack } from '../../../runtime.js';
 export function bind_value(input, get, set = get) {
 	var runes = is_runes();
 
-	listen_to_event_and_reset_event(input, 'input', () => {
+	listen_to_event_and_reset_event(input, 'input', (is_reset) => {
 		if (DEV && input.type === 'checkbox') {
 			// TODO should this happen in prod too?
 			e.bind_invalid_checkbox_value();
 		}
 
-		/** @type {unknown} */
-		var value = is_numberlike_input(input) ? to_number(input.value) : input.value;
+		/** @type {any} */
+		var value = is_reset ? input.defaultValue : input.value;
+		value = is_numberlike_input(input) ? to_number(value) : value;
 		set(value);
 
 		// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
 		// because we use mutable state which ensures the render effect always runs)
 		if (runes && value !== (value = get())) {
-			// @ts-expect-error the value is coerced on assignment
+			// the value is coerced on assignment
 			input.value = value ?? '';
 		}
 	});
@@ -179,8 +180,8 @@ export function bind_group(inputs, group_index, input, get, set = get) {
  * @returns {void}
  */
 export function bind_checked(input, get, set = get) {
-	listen_to_event_and_reset_event(input, 'change', () => {
-		var value = input.checked;
+	listen_to_event_and_reset_event(input, 'change', (is_reset) => {
+		var value = is_reset ? input.defaultChecked : input.checked;
 		set(value);
 	});
 

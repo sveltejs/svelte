@@ -80,15 +80,16 @@ export function init_select(select, get_value) {
 export function bind_select_value(select, get, set = get) {
 	var mounting = true;
 
-	listen_to_event_and_reset_event(select, 'change', () => {
+	listen_to_event_and_reset_event(select, 'change', (is_reset) => {
+		var query = is_reset ? '[selected]' : ':checked';
 		/** @type {unknown} */
 		var value;
 
 		if (select.multiple) {
-			value = [].map.call(select.querySelectorAll(':checked'), get_option_value);
+			value = [].map.call(select.querySelectorAll(query), get_option_value);
 		} else {
 			/** @type {HTMLOptionElement | null} */
-			var selected_option = select.querySelector(':checked');
+			var selected_option = select.querySelector(query);
 			value = selected_option && get_option_value(selected_option);
 		}
 
