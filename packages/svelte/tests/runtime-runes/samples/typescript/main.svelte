@@ -8,7 +8,7 @@
 		console.log(this);
 	}
 
-	class Foo {
+	class Foo<T> {
 		public name: string;
 		x = 'x' as const;
 		constructor(name: string) {
@@ -32,6 +32,8 @@
 	export function overload(c: any): any {}
 
 	export type { Hello };
+
+	const TypedFoo = Foo<true>;
 </script>
 
 <script>
