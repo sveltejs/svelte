@@ -1,4 +1,4 @@
-/** @import { ArrowFunctionExpression, Expression, Identifier } from 'estree' */
+/** @import { ArrowFunctionExpression, Expression, Identifier, Pattern } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import read_pattern from '../read/context.js';
@@ -142,15 +142,24 @@ function open(parser) {
 				parser.index = end;
 			}
 		}
-		parser.eat('as', true);
-		parser.require_whitespace();
 
-		const context = read_pattern(parser);
-
-		parser.allow_whitespace();
-
+		/** @type {Pattern | null} */
+		let context = null;
 		let index;
 		let key;
+
+		if (parser.eat('as')) {
+			parser.require_whitespace();
+
+			context = read_pattern(parser);
+		} else {
+			// {#each Array.from({ length: 10 }), i} is read as a sequence expression,
+			// which is set back above - we now gotta reset the index as a consequence
+			// to properly read the , i part
+			parser.index = /** @type {number} */ (expression.end);
+		}
+
+		parser.allow_whitespace();
 
 		if (parser.eat(',')) {
 			parser.allow_whitespace();
@@ -314,7 +323,10 @@ function open(parser) {
 				name
 			},
 			parameters: function_expression.params,
-			body: create_fragment()
+			body: create_fragment(),
+			metadata: {
+				sites: new Set()
+			}
 		});
 		parser.stack.push(block);
 		parser.fragments.push(block.body);
@@ -605,7 +617,8 @@ function special(parser) {
 			metadata: {
 				dynamic: false,
 				args_with_call_expression: new Set(),
-				path: []
+				path: [],
+				snippets: new Set()
 			}
 		});
 	}

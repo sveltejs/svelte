@@ -1163,6 +1163,11 @@ declare module 'svelte/compiler' {
 			name: 'svelte:fragment';
 		}
 
+		export interface SvelteBoundary extends BaseElement {
+			type: 'SvelteBoundary';
+			name: 'svelte:boundary';
+		}
+
 		export interface SvelteHead extends BaseElement {
 			type: 'SvelteHead';
 			name: 'svelte:head';
@@ -1188,7 +1193,8 @@ declare module 'svelte/compiler' {
 		export interface EachBlock extends BaseNode {
 			type: 'EachBlock';
 			expression: Expression;
-			context: Pattern;
+			/** The `entry` in `{#each item as entry}`. `null` if `as` part is omitted */
+			context: Pattern | null;
 			body: Fragment;
 			fallback?: Fragment;
 			index?: string;
@@ -1280,7 +1286,8 @@ declare module 'svelte/compiler' {
 		| AST.SvelteHead
 		| AST.SvelteOptionsRaw
 		| AST.SvelteSelf
-		| AST.SvelteWindow;
+		| AST.SvelteWindow
+		| AST.SvelteBoundary;
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
 	 * For example, it can be used to convert a `<style lang="sass">` block into vanilla CSS.
@@ -1995,7 +2002,7 @@ declare module 'svelte/transition' {
 	 * */
 	export function slide(node: Element, { delay, duration, easing, axis }?: SlideParams | undefined): TransitionConfig;
 	/**
-	 * Animates the opacity and scale of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
+	 * Animates the opacity and scale of an element. `in` transitions animate from the provided values, passed as parameters, to an element's current (default) values. `out` transitions animate from an element's default values to the provided values.
 	 *
 	 * */
 	export function scale(node: Element, { delay, duration, easing, start, opacity }?: ScaleParams | undefined): TransitionConfig;

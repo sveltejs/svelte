@@ -14,13 +14,16 @@ import { build_template } from './shared/utils.js';
  */
 export function SvelteElement(node, context) {
 	let tag = /** @type {Expression} */ (context.visit(node.tag));
-	if (tag.type !== 'Identifier') {
-		const tag_id = context.state.scope.generate('$$tag');
-		context.state.init.push(b.const(tag_id, tag));
-		tag = b.id(tag_id);
-	}
 
 	if (dev) {
+		// Ensure getters/function calls aren't called multiple times.
+		// If we ever start referencing `tag` more than once in prod, move this out of the if block.
+		if (tag.type !== 'Identifier') {
+			const tag_id = context.state.scope.generate('$$tag');
+			context.state.init.push(b.const(tag_id, tag));
+			tag = b.id(tag_id);
+		}
+
 		if (node.fragment.nodes.length > 0) {
 			context.state.init.push(b.stmt(b.call('$.validate_void_dynamic_element', b.thunk(tag))));
 		}

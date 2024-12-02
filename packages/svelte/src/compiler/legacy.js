@@ -381,6 +381,20 @@ export function convert(source, ast) {
 					children: node.body.nodes.map((child) => visit(child))
 				};
 			},
+			// @ts-expect-error
+			SvelteBoundary(node, { visit }) {
+				remove_surrounding_whitespace_nodes(node.fragment.nodes);
+				return {
+					type: 'SvelteBoundary',
+					name: 'svelte:boundary',
+					start: node.start,
+					end: node.end,
+					attributes: node.attributes.map(
+						(child) => /** @type {Legacy.LegacyAttributeLike} */ (visit(child))
+					),
+					children: node.fragment.nodes.map((child) => visit(child))
+				};
+			},
 			RegularElement(node, { visit }) {
 				return {
 					type: 'Element',

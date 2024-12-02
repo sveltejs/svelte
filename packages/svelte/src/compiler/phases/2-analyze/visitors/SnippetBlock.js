@@ -8,6 +8,8 @@ import * as e from '../../../errors.js';
  * @param {Context} context
  */
 export function SnippetBlock(node, context) {
+	context.state.analysis.snippets.add(node);
+
 	validate_block_not_empty(node.body, context);
 
 	if (context.state.analysis.runes) {

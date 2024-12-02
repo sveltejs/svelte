@@ -166,6 +166,9 @@ export namespace AST {
 			dynamic: boolean;
 			args_with_call_expression: Set<number>;
 			path: SvelteNode[];
+			/** The set of locally-defined snippets that this render tag could correspond to,
+			 * used for CSS pruning purposes */
+			snippets: Set<SnippetBlock>;
 		};
 	}
 
@@ -278,6 +281,10 @@ export namespace AST {
 		metadata: {
 			scopes: Record<string, Scope>;
 			dynamic: boolean;
+			/** The set of locally-defined snippets that this component tag could render,
+			 * used for CSS pruning purposes */
+			snippets: Set<SnippetBlock>;
+			path: SvelteNode[];
 		};
 	}
 
@@ -318,6 +325,10 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			scopes: Record<string, Scope>;
+			/** The set of locally-defined snippets that this component tag could render,
+			 * used for CSS pruning purposes */
+			snippets: Set<SnippetBlock>;
+			path: SvelteNode[];
 		};
 	}
 
@@ -352,6 +363,11 @@ export namespace AST {
 		name: 'svelte:fragment';
 	}
 
+	export interface SvelteBoundary extends BaseElement {
+		type: 'SvelteBoundary';
+		name: 'svelte:boundary';
+	}
+
 	export interface SvelteHead extends BaseElement {
 		type: 'SvelteHead';
 		name: 'svelte:head';
@@ -369,6 +385,10 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			scopes: Record<string, Scope>;
+			/** The set of locally-defined snippets that this component tag could render,
+			 * used for CSS pruning purposes */
+			snippets: Set<SnippetBlock>;
+			path: SvelteNode[];
 		};
 	}
 
@@ -381,7 +401,8 @@ export namespace AST {
 	export interface EachBlock extends BaseNode {
 		type: 'EachBlock';
 		expression: Expression;
-		context: Pattern;
+		/** The `entry` in `{#each item as entry}`. `null` if `as` part is omitted */
+		context: Pattern | null;
 		body: Fragment;
 		fallback?: Fragment;
 		index?: string;
@@ -438,6 +459,12 @@ export namespace AST {
 		expression: Identifier;
 		parameters: Pattern[];
 		body: Fragment;
+		/** @internal */
+		metadata: {
+			/** The set of components/render tags that could render this snippet,
+			 * used for CSS pruning */
+			sites: Set<Component | SvelteComponent | SvelteSelf | RenderTag>;
+		};
 	}
 
 	export interface Attribute extends BaseNode {
@@ -499,7 +526,8 @@ export type ElementLike =
 	| AST.SvelteHead
 	| AST.SvelteOptionsRaw
 	| AST.SvelteSelf
-	| AST.SvelteWindow;
+	| AST.SvelteWindow
+	| AST.SvelteBoundary;
 
 export type TemplateNode =
 	| AST.Root

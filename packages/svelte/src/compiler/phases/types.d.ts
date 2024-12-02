@@ -37,7 +37,7 @@ export interface ComponentAnalysis extends Analysis {
 	instance: Js;
 	template: Template;
 	/** Used for CSS pruning and scoping */
-	elements: Array<AST.RegularElement | AST.SvelteElement | AST.RenderTag>;
+	elements: Array<AST.RegularElement | AST.SvelteElement>;
 	runes: boolean;
 	exports: Array<{ name: string; alias: string | null }>;
 	/** Whether the component uses `$$props` */
@@ -72,6 +72,17 @@ export interface ComponentAnalysis extends Analysis {
 		keyframes: string[];
 	};
 	source: string;
+	/**
+	 * Every render tag/component, and whether it could be definitively resolved or not
+	 */
+	snippet_renderers: Map<
+		AST.RenderTag | AST.Component | AST.SvelteComponent | AST.SvelteSelf,
+		boolean
+	>;
+	/**
+	 * Every snippet that is declared locally
+	 */
+	snippets: Set<AST.SnippetBlock>;
 }
 
 declare module 'estree' {

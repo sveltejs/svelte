@@ -762,6 +762,18 @@ A component can have a single top-level `<style>` element
 `<svelte:body>` does not support non-event attributes or spread attributes
 ```
 
+### svelte_boundary_invalid_attribute
+
+```
+Valid attributes on `<svelte:boundary>` are `onerror` and `failed`
+```
+
+### svelte_boundary_invalid_attribute_value
+
+```
+Attribute value must be a non-string expression
+```
+
 ### svelte_component_invalid_this
 
 ```
