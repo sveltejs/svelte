@@ -1,8 +1,7 @@
 /** @import { Source } from '#client' */
-import { DESTROYED } from '../internal/client/constants.js';
 import { derived } from '../internal/client/index.js';
 import { source, set } from '../internal/client/reactivity/sources.js';
-import { get } from '../internal/client/runtime.js';
+import { get, untrack } from '../internal/client/runtime.js';
 
 var inited = false;
 
@@ -43,12 +42,17 @@ export class SvelteDate extends Date {
 
 					var d = this.#deriveds.get(method);
 
-					if (d === undefined || (d.f & DESTROYED) !== 0) {
-						d = derived(() => {
-							get(this.#time);
-							// @ts-ignore
-							return date_proto[method].apply(this, args);
-						});
+					if (d === undefined) {
+						// We don't want to associate the derived with the current
+						// reactive context, as that means the derived will get destroyed
+						// each time it re-fires
+						d = untrack(() =>
+							derived(() => {
+								get(this.#time);
+								// @ts-ignore
+								return date_proto[method].apply(this, args);
+							})
+						);
 
 						this.#deriveds.set(method, d);
 					}
