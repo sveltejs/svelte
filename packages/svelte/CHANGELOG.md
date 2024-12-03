@@ -1,5 +1,15 @@
 # svelte
 
+## 5.5.1
+
+### Patch Changes
+
+- fix: don't throw with nullish actions ([#13559](https://github.com/sveltejs/svelte/pull/13559))
+
+- fix: leave update expressions untransformed unless a transformer is provided ([#14507](https://github.com/sveltejs/svelte/pull/14507))
+
+- chore: turn reactive_declaration_non_reactive_property into a runtime warning ([#14192](https://github.com/sveltejs/svelte/pull/14192))
+
 ## 5.5.0
 
 ### Minor Changes
