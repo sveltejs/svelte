@@ -562,9 +562,10 @@ function infinite_loop_guard() {
 				if (DEV) {
 					try {
 						handle_error(error, last_scheduled_effect, null, null);
-					} catch {
+					} catch (e) {
 						// Only log the effect stack if the error is re-thrown
 						log_effect_stack();
+						throw e;
 					}
 				} else {
 					handle_error(error, last_scheduled_effect, null, null);
