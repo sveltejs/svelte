@@ -260,6 +260,9 @@ Snippets declared at the top level of a `.svelte` file can be exported from a `<
 {/snippet}
 ```
 
+> [!NOTE]
+> This requires Svelte 5.5.0 or newer
+
 ## Programmatic snippets
 
 Snippets can be created programmatically with the [`createRawSnippet`](svelte#createRawSnippet) API. This is intended for advanced use cases.
