@@ -1737,14 +1737,14 @@ declare module 'svelte/motion' {
 		 * If `options.instant` is `true`, `spring.current` immediately matches `spring.target`.
 		 *
 		 * If `options.preserveMomentum` is provided, the spring will continue on its current trajectory for
-		 * the specified number of seconds. This is useful for things like 'fling' gestures.
+		 * the specified number of milliseconds. This is useful for things like 'fling' gestures.
 		 *
 		 * 
 		 */
 		set(value: T, options?: {
 			instant?: boolean;
 			preserveMomentum?: number;
-		} | undefined): Promise<any>;
+		} | undefined): Promise<unknown>;
 		get current(): T;
 		set damping(v: number);
 		get damping(): number;

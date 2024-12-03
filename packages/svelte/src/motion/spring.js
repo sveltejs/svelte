@@ -229,7 +229,7 @@ export class Spring {
 		if (!this.#task) {
 			this.#last_time = raf.now();
 
-			var inv_mass_recovery_rate = 1 / (this.#momentum * 60);
+			var inv_mass_recovery_rate = 1000 / (this.#momentum * 60);
 
 			this.#task ??= loop((now) => {
 				this.#inverse_mass = Math.min(this.#inverse_mass + inv_mass_recovery_rate, 1);
@@ -268,7 +268,7 @@ export class Spring {
 	 * If `options.instant` is `true`, `spring.current` immediately matches `spring.target`.
 	 *
 	 * If `options.preserveMomentum` is provided, the spring will continue on its current trajectory for
-	 * the specified number of seconds. This is useful for things like 'fling' gestures.
+	 * the specified number of milliseconds. This is useful for things like 'fling' gestures.
 	 *
 	 * @param {T} value
 	 * @param {{ instant?: boolean; preserveMomentum?: number }} [options]
