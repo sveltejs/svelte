@@ -1,5 +1,15 @@
 # svelte
 
+## 5.5.0
+
+### Minor Changes
+
+- feat: allow snippets to be exported from module scripts ([#14315](https://github.com/sveltejs/svelte/pull/14315))
+
+### Patch Changes
+
+- fix: ignore TypeScript generics on variables ([#14509](https://github.com/sveltejs/svelte/pull/14509))
+
 ## 5.4.0
 
 ### Minor Changes
