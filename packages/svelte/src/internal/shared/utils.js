@@ -47,7 +47,6 @@ export function run_all(arr) {
 /**
  * TODO replace with Promise.withResolvers once supported widely enough
  * @template T
- * @returns {PromiseWithResolvers<T>}
  */
 export function deferred() {
 	/** @type {(value: T) => void} */

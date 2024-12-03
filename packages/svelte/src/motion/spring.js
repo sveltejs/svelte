@@ -177,7 +177,7 @@ export class Spring {
 	/** @type {import('../internal/client/types').Task | null} */
 	#task = null;
 
-	/** @type {PromiseWithResolvers<any> | null} */
+	/** @type {ReturnType<typeof deferred> | null} */
 	#deferred = null;
 
 	/**
