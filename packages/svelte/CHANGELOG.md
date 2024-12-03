@@ -1,5 +1,15 @@
 # svelte
 
+## 5.5.3
+
+### Patch Changes
+
+- fix: don't try to add owners to non-`$state` class fields ([#14533](https://github.com/sveltejs/svelte/pull/14533))
+
+- fix: capture infinite_loop_guard in error boundary ([#14534](https://github.com/sveltejs/svelte/pull/14534))
+
+- fix: proxify values when assigning using `||=`, `&&=` and `??=` operators ([#14273](https://github.com/sveltejs/svelte/pull/14273))
+
 ## 5.5.2
 
 ### Patch Changes
