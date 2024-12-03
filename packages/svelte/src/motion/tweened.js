@@ -78,6 +78,7 @@ function get_interpolator(a, b) {
 /**
  * A tweened store in Svelte is a special type of store that provides smooth transitions between state values over time.
  *
+ * @deprecated Use [`Tween`](https://svelte.dev/docs/svelte/svelte-motion#Tween) instead
  * @template T
  * @param {T} [value]
  * @param {TweenedOptions<T>} [defaults]
