@@ -1,4 +1,4 @@
-import { Readable } from '../store/public.js';
+import { Readable, type Unsubscriber } from '../store/public.js';
 import { SpringUpdateOpts, TweenedOptions, Updater, SpringOpts } from './private.js';
 
 // TODO we do declaration merging here in order to not have a breaking change (renaming the Spring interface)
@@ -8,9 +8,13 @@ import { SpringUpdateOpts, TweenedOptions, Updater, SpringOpts } from './private
 export interface Spring<T> extends Readable<T> {
 	set(new_value: T, opts?: SpringUpdateOpts): Promise<void>;
 	/**
-	 * @deprecated Only exists on the Spring store
+	 * @deprecated Only exists on the legacy `spring` store, not the `Spring` class
 	 */
 	update: (fn: Updater<T>, opts?: SpringUpdateOpts) => Promise<void>;
+	/**
+	 * @deprecated Only exists on the legacy `spring` store, not the `Spring` class
+	 */
+	subscribe(fn: (value: T) => void): Unsubscriber;
 	precision: number;
 	damping: number;
 	stiffness: number;
@@ -65,12 +69,12 @@ export class Spring<T> {
 	stiffness: number;
 	/**
 	 * The end value of the spring.
-	 * This property only exists on the Spring class.
+	 * This property only exists on the `Spring` class, not the legacy `spring` store.
 	 */
 	target: T;
 	/**
 	 * The current value of the spring.
-	 * This property only exists on the Spring class.
+	 * This property only exists on the `Spring` class, not the legacy `spring` store.
 	 */
 	get current(): T;
 }
