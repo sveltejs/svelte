@@ -58,7 +58,7 @@ export class Spring<T> {
 	 * If `options.preserveMomentum` is provided, the spring will continue on its current trajectory for
 	 * the specified number of milliseconds. This is useful for things like 'fling' gestures.
 	 */
-	set(value: T, options?: { instant?: boolean; preserveMomentum?: number }): Promise<void>;
+	set(value: T, options?: SpringUpdateOpts): Promise<void>;
 
 	damping: number;
 	precision: number;

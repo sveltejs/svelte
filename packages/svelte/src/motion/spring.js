@@ -133,6 +133,7 @@ export function spring(value, opts = {}) {
 		});
 	}
 	/** @type {SpringStore<T>} */
+	// @ts-expect-error - class-only properties are missing
 	const spring = {
 		set,
 		update: (fn, opts) => set(fn(/** @type {T} */ (target_value), /** @type {T} */ (value)), opts),
@@ -271,7 +272,7 @@ export class Spring {
 	 * the specified number of milliseconds. This is useful for things like 'fling' gestures.
 	 *
 	 * @param {T} value
-	 * @param {{ instant?: boolean; preserveMomentum?: number }} [options]
+	 * @param {SpringUpdateOpts} [options]
 	 */
 	set(value, options) {
 		this.#deferred?.reject(new Error('Aborted'));

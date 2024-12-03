@@ -1694,7 +1694,7 @@ declare module 'svelte/motion' {
 		 * If `options.preserveMomentum` is provided, the spring will continue on its current trajectory for
 		 * the specified number of milliseconds. This is useful for things like 'fling' gestures.
 		 */
-		set(value: T, options?: { instant?: boolean; preserveMomentum?: number }): Promise<void>;
+		set(value: T, options?: SpringUpdateOpts): Promise<void>;
 
 		damping: number;
 		precision: number;
@@ -1745,6 +1745,14 @@ declare module 'svelte/motion' {
 		 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
 		 */
 		soft?: string | number | boolean;
+		/**
+		 * Only use this for the Spring class; does nothing when set on the spring store
+		 */
+		instant?: boolean;
+		/**
+		 * Only use this for the Spring class; does nothing when set on the spring store
+		 */
+		preserveMomentum?: number;
 	}
 
 	type Updater<T> = (target_value: T, value: T) => T;
