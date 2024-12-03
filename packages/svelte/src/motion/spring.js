@@ -1,6 +1,6 @@
 /** @import { Task } from '#client' */
 /** @import { SpringOpts, SpringUpdateOpts, TickContext } from './private.js' */
-/** @import { SpringStore } from './public.js' */
+/** @import { Spring as SpringStore } from './public.js' */
 import { writable } from '../store/shared/index.js';
 import { loop } from '../internal/client/loop.js';
 import { raf } from '../internal/client/timing.js';
@@ -182,7 +182,7 @@ export class Spring {
 
 	/**
 	 * @param {T} value
-	 * @param {{ stiffness?: number, damping?: number, precision?: number }} [options]
+	 * @param {SpringOpts} [options]
 	 */
 	constructor(value, options = {}) {
 		this.#current.v = this.#target.v = value;
@@ -207,7 +207,7 @@ export class Spring {
 	 * ```
 	 * @template U
 	 * @param {() => U} fn
-	 * @param {{ stiffness?: number, damping?: number, precision?: number }} [options]
+	 * @param {SpringOpts} [options]
 	 */
 	static of(fn, options) {
 		const spring = new Spring(fn(), options);

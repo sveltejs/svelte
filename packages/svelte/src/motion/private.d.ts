@@ -16,7 +16,13 @@ export interface SpringOpts {
 }
 
 export interface SpringUpdateOpts {
+	/**
+	 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
+	 */
 	hard?: any;
+	/**
+	 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
+	 */
 	soft?: string | number | boolean;
 }
 
