@@ -42,7 +42,7 @@ function build_assignment(operator, left, right, context) {
 			);
 
 			if (
-				private_state.kind !== 'raw_state' &&
+				private_state.kind === 'state' &&
 				['=', '||=', '&&=', '??='].includes(operator) &&
 				should_proxy(value, context.state.scope)
 			) {
