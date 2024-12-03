@@ -22,6 +22,8 @@ Given a case like this...
 You can fix this by separating it into two statements:
 
 ```js
+let object = { array: [0] };
+// ---cut---
 function add() {
 	object.array ??= [];
 	object.array.push(object.array.length);
@@ -95,16 +97,22 @@ In runes mode, effects and deriveds re-run when there are changes to the values 
 Often, the result is the same — for example these can be considered equivalent:
 
 ```js
+let a = 1, b = 2, sum = 3;
+// ---cut---
 $: sum = a + b;
 ```
 
 ```js
+let a = 1, b = 2;
+// ---cut---
 const sum = $derived(a + b);
 ```
 
 In some cases — such as the one that triggered the above warning — they are _not_ the same:
 
 ```js
+let a = 1, b = 2, sum = 3;
+// ---cut---
 const add = () => a + b;
 
 // the compiler can't 'see' that `sum` depends on `a` and `b`, but
