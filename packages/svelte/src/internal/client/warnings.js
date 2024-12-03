@@ -6,6 +6,20 @@ var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
 /**
+ * Assignment to `%property%` property (%location%) will evaluate to the right-hand side, not the value of `%property%` following the assignment. This may result in unexpected behaviour.
+ * @param {string} property
+ * @param {string} location
+ */
+export function assignment_value_stale(property, location) {
+	if (DEV) {
+		console.warn(`%c[svelte] assignment_value_stale\n%cAssignment to \`${property}\` property (${location}) will evaluate to the right-hand side, not the value of \`${property}\` following the assignment. This may result in unexpected behaviour.`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("assignment_value_stale");
+	}
+}
+
+/**
  * `%binding%` (%location%) is binding to a non-reactive property
  * @param {string} binding
  * @param {string | undefined | null} [location]
