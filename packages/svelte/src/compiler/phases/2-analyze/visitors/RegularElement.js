@@ -19,11 +19,9 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
  */
 export function RegularElement(node, context) {
 	validate_element(node, context);
-
-	check_element(node, context.state);
+	check_element(node, context);
 
 	node.metadata.path = [...context.path];
-
 	context.state.analysis.elements.push(node);
 
 	// Special case: Move the children of <textarea> into a value attribute if they are dynamic
@@ -73,16 +71,6 @@ export function RegularElement(node, context) {
 	) {
 		const child = node.fragment.nodes[0];
 		node.attributes.push(create_attribute('value', child.start, child.end, [child]));
-	}
-
-	if (
-		node.attributes.some(
-			(attribute) =>
-				attribute.type === 'Attribute' &&
-				(attribute.name === 'autofocus' || attribute.name === 'muted')
-		)
-	) {
-		mark_subtree_dynamic(context.path);
 	}
 
 	const binding = context.state.scope.get(node.name);

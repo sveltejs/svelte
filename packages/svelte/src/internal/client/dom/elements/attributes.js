@@ -5,7 +5,7 @@ import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '../../constants.js';
-import { queue_idle_task, queue_micro_task } from '../task.js';
+import { queue_idle_task } from '../task.js';
 import { is_capture_event, is_delegated, normalize_attribute } from '../../../../utils.js';
 import {
 	active_effect,
@@ -209,8 +209,6 @@ export function set_attributes(
 
 	// @ts-expect-error
 	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});
-	/** @type {Array<[string, any, () => void]>} */
-	var events = [];
 
 	// since key is captured we use const
 	for (const key in next) {
@@ -277,15 +275,7 @@ export function set_attributes(
 						current[key].call(this, evt);
 					}
 
-					if (!prev) {
-						events.push([
-							key,
-							value,
-							() => (current[event_handle_key] = create_event(event_name, element, handle, opts))
-						]);
-					} else {
-						current[event_handle_key] = create_event(event_name, element, handle, opts);
-					}
+					current[event_handle_key] = create_event(event_name, element, handle, opts);
 				} else {
 					// @ts-ignore
 					element[`__${event_name}`] = value;
@@ -323,19 +313,6 @@ export function set_attributes(
 			// reset styles to force style: directive to update
 			element.__styles = {};
 		}
-	}
-
-	// On the first run, ensure that events are added after bindings so
-	// that their listeners fire after the binding listeners
-	if (!prev) {
-		queue_micro_task(() => {
-			if (!element.isConnected) return;
-			for (const [key, value, evt] of events) {
-				if (current[key] === value) {
-					evt();
-				}
-			}
-		});
 	}
 
 	return current;

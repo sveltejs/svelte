@@ -121,4 +121,19 @@
 	x:has(~ y) {
 		color: red;
 	}
+
+	:global(.foo) {
+		:has(x) {
+			color: green;
+		}
+		:has(.unused) {
+			color: red;
+		}
+		&:has(x) {
+			color: green;
+		}
+		&:has(.unused) {
+			color: red;
+		}
+	}
 </style>

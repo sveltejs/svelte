@@ -1,0 +1,14 @@
+[
+	{
+		"code": "node_invalid_placement",
+		"message": "Text node is invalid inside `<tbody>`",
+		"start": {
+			"line": 3,
+			"column": 8
+		},
+		"end": {
+			"line": 3,
+			"column": 13
+		}
+	}
+]

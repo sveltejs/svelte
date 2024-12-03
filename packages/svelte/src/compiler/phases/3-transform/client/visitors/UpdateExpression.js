@@ -1,4 +1,4 @@
-/** @import { Expression, Node, Pattern, Statement, UpdateExpression } from 'estree' */
+/** @import { AssignmentExpression, Expression, UpdateExpression } from 'estree' */
 /** @import { Context } from '../types' */
 import { is_ignored } from '../../../../state.js';
 import { object } from '../../../../utils/ast.js';
@@ -34,34 +34,22 @@ export function UpdateExpression(node, context) {
 	}
 
 	const left = object(argument);
-	if (left === null) return context.next();
+	const transformers = left && context.state.transform[left.name];
 
-	if (left === argument) {
-		const transform = context.state.transform;
-		const update = transform[left.name]?.update;
-
-		if (update && Object.hasOwn(transform, left.name)) {
-			return update(node);
-		}
+	if (left === argument && transformers?.update) {
+		// we don't need to worry about ownership_invalid_mutation here, because
+		// we're not mutating but reassigning
+		return transformers.update(node);
 	}
 
-	const assignment = /** @type {Expression} */ (
-		context.visit(
-			b.assignment(
-				node.operator === '++' ? '+=' : '-=',
-				/** @type {Pattern} */ (argument),
-				b.literal(1)
-			)
-		)
-	);
+	let update = /** @type {Expression} */ (context.next());
 
-	const parent = /** @type {Node} */ (context.path.at(-1));
-	const is_standalone = parent.type === 'ExpressionStatement'; // TODO and possibly others, but not e.g. the `test` of a WhileStatement
-
-	const update =
-		node.prefix || is_standalone
-			? assignment
-			: b.binary(node.operator === '++' ? '-' : '+', assignment, b.literal(1));
+	if (left && transformers?.mutate) {
+		update = transformers.mutate(
+			left,
+			/** @type {AssignmentExpression | UpdateExpression} */ (update)
+		);
+	}
 
 	return is_ignored(node, 'ownership_invalid_mutation')
 		? b.call('$.skip_ownership_validation', b.thunk(update))

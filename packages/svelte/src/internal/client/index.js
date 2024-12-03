@@ -124,6 +124,7 @@ export {
 	update_store,
 	mark_store_binding
 } from './reactivity/store.js';
+export { boundary } from './dom/blocks/boundary.js';
 export { set_text } from './render.js';
 export {
 	get,
@@ -155,6 +156,7 @@ export {
 	$window as window,
 	$document as document
 } from './dom/operations.js';
+export { attr } from '../shared/attributes.js';
 export { snapshot } from '../shared/clone.js';
 export { noop, fallback } from '../shared/utils.js';
 export {

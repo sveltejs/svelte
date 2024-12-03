@@ -17,7 +17,7 @@ import {
 } from '../utils/ast.js';
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
 import { validate_component_options } from '../validate-options.js';
-import { is_svg, is_void } from '../../utils.js';
+import { is_reserved, is_svg, is_void } from '../../utils.js';
 import { regex_is_valid_identifier } from '../phases/patterns.js';
 
 const regex_style_tags = /(<style[^>]+>)([\S\s]*?)(<\/style>)/g;
@@ -40,9 +40,10 @@ class MigrationError extends Error {
  */
 function migrate_css(state) {
 	if (!state.analysis.css.ast?.start) return;
-	let code = state.str
+	const css_contents = state.str
 		.snip(state.analysis.css.ast.start, /** @type {number} */ (state.analysis.css.ast?.end))
 		.toString();
+	let code = css_contents;
 	let starting = 0;
 
 	// since we already blank css we can't work directly on `state.str` so we will create a copy that we can update
@@ -56,23 +57,28 @@ function migrate_css(state) {
 		) {
 			let start = code.indexOf('(') + 1;
 			let is_global = false;
+
 			const global_str = ':global';
 			const next_global = code.indexOf(global_str);
 			const str_between = code.substring(start, next_global);
 			if (!str_between.trim()) {
 				is_global = true;
 				start += global_str.length;
+			} else {
+				const prev_global = css_contents.lastIndexOf(global_str, starting);
+				if (prev_global > -1) {
+					const end =
+						find_closing_parenthesis(css_contents.indexOf('(', prev_global) + 1, css_contents) -
+						starting;
+					if (end > start) {
+						starting += end;
+						code = code.substring(end);
+						continue;
+					}
+				}
 			}
-			let parenthesis = 1;
-			let end = start;
-			let char = code[end];
-			// find the closing parenthesis
-			while (parenthesis !== 0 && char) {
-				if (char === '(') parenthesis++;
-				if (char === ')') parenthesis--;
-				end++;
-				char = code[end];
-			}
+
+			const end = find_closing_parenthesis(start, code);
 			if (start && end) {
 				if (!is_global && !code.startsWith(':not')) {
 					str.prependLeft(starting + start, ':global(');
@@ -87,6 +93,24 @@ function migrate_css(state) {
 		code = code.substring(1);
 	}
 	state.str.update(state.analysis.css.ast?.start, state.analysis.css.ast?.end, str.toString());
+}
+
+/**
+ * @param {number} start
+ * @param {string} code
+ */
+function find_closing_parenthesis(start, code) {
+	let parenthesis = 1;
+	let end = start;
+	let char = code[end];
+	// find the closing parenthesis
+	while (parenthesis !== 0 && char) {
+		if (char === '(') parenthesis++;
+		if (char === ')') parenthesis--;
+		end++;
+		char = code[end];
+	}
+	return end;
 }
 
 /**
@@ -483,6 +507,7 @@ const instance_script = {
 			for (let specifier of node.specifiers) {
 				if (
 					specifier.type === 'ImportSpecifier' &&
+					specifier.imported.type === 'Identifier' &&
 					['beforeUpdate', 'afterUpdate'].includes(specifier.imported.name)
 				) {
 					const references = state.scope.references.get(specifier.local.name);
@@ -520,6 +545,8 @@ const instance_script = {
 
 		let count_removed = 0;
 		for (const specifier of node.specifiers) {
+			if (specifier.local.type !== 'Identifier') continue;
+
 			const binding = state.scope.get(specifier.local.name);
 			if (binding?.kind === 'bindable_prop') {
 				state.str.remove(
@@ -1416,7 +1443,7 @@ function migrate_slot_usage(node, path, state) {
 			if (snippet_name === 'default') {
 				snippet_name = 'children';
 			}
-			if (!regex_is_valid_identifier.test(snippet_name)) {
+			if (!regex_is_valid_identifier.test(snippet_name) || is_reserved(snippet_name)) {
 				has_migration_task = true;
 				state.str.appendLeft(
 					node.start,

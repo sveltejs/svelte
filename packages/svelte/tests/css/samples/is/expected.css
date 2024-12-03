@@ -22,6 +22,12 @@
 	/* (unused) :global(.foo) :is(.unused) {
 		color: red;
 	}*/
+	.foo:is(x.svelte-xyz) {
+		color: green;
+	}
+	/* (unused) :global(.foo):is(.unused) {
+		color: red;
+	}*/
 
 	x.svelte-xyz :is(html *) {
 		color: green;
@@ -31,4 +37,13 @@
 	}
 	y.svelte-xyz :is(x:where(.svelte-xyz) :where(.svelte-xyz)) {
 		color: green; /* matches z */
+	}
+
+	.foo {
+		:is(x.svelte-xyz) {
+			color: green;
+		}
+		/* (unused) :is(.unused) {
+			color: red;
+		}*/
 	}
