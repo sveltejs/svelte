@@ -36,12 +36,7 @@ let todos = $state([
 ...modifying an individual todo's property will trigger updates to anything in your UI that depends on that specific property:
 
 ```js
-// @filename: ambient.d.ts
-declare global {
-	const todos: Array<{ done: boolean, text: string }>
-}
-
-// @filename: index.js
+let todos = [{ done: false, text: 'add more todos' }];
 // ---cut---
 todos[0].done = !todos[0].done;
 ```
@@ -64,6 +59,17 @@ todos.push({
 
 > [!NOTE] When you update properties of proxies, the original object is _not_ mutated.
 
+Note that if you destructure a reactive value, the references are not reactive — as in normal JavaScript, they are evaluated at the point of destructuring:
+
+```js
+let todos = [{ done: false, text: 'add more todos' }];
+// ---cut---
+let { done, text } = todos[0];
+
+// this will not affect the value of `done`
+todos[0].done = !todos[0].done;
+```
+
 ### Classes
 
 You can also use `$state` in class fields (whether public or private):
@@ -85,7 +91,42 @@ class Todo {
 }
 ```
 
-> [!NOTE] The compiler transforms `done` and `text` into `get`/`set` methods on the class prototype referencing private fields.
+> [!NOTE] The compiler transforms `done` and `text` into `get`/`set` methods on the class prototype referencing private fields. This means the properties are not enumerable.
+
+When calling methods in JavaScript, the value of [`this`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this) matters. This won't work, because `this` inside the `reset` method will be the `<button>` rather than the `Todo`:
+
+```svelte
+<button onclick={todo.reset}>
+	reset
+</button>
+```
+
+You can either use an inline function...
+
+```svelte
+<button onclick=+++{() => todo.reset()}>+++
+	reset
+</button>
+```
+
+...or use an arrow function in the class definition:
+
+```js
+// @errors: 7006 2554
+class Todo {
+	done = $state(false);
+	text = $state();
+
+	constructor(text) {
+		this.text = text;
+	}
+
+	+++reset = () => {+++
+		this.text = '';
+		this.done = false;
+	}
+}
+```
 
 ## `$state.raw`
 
