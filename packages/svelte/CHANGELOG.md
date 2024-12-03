@@ -1,5 +1,11 @@
 # svelte
 
+## 5.5.2
+
+### Patch Changes
+
+- fix: use correct reaction when lazily creating deriveds inside `SvelteDate` ([#14525](https://github.com/sveltejs/svelte/pull/14525))
+
 ## 5.5.1
 
 ### Patch Changes
