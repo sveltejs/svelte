@@ -1,10 +1,34 @@
-/** @import { Source } from '#client' */
-import { without_reactive_context } from '../internal/client/dom/elements/bindings/shared.js';
+/** @import { Source, Derived, Effect } from '#client' */
+import { DERIVED } from '../internal/client/constants.js';
 import { derived } from '../internal/client/index.js';
 import { source, set } from '../internal/client/reactivity/sources.js';
-import { get } from '../internal/client/runtime.js';
+import { active_reaction, get, set_active_reaction } from '../internal/client/runtime.js';
 
 var inited = false;
+
+/**
+ * @template T
+ * @param {() => T} fn
+ * @returns {T}
+ */
+function with_parent_effect(fn) {
+	var previous_reaction = active_reaction;
+	var parent_reaction = active_reaction;
+
+	while (parent_reaction !== null) {
+		if ((parent_reaction.f & DERIVED) === 0) {
+			break;
+		}
+		parent_reaction = /** @type {Derived | Effect} */ (parent_reaction).parent;
+	}
+
+	set_active_reaction(parent_reaction);
+	try {
+		return fn();
+	} finally {
+		set_active_reaction(previous_reaction);
+	}
+}
 
 export class SvelteDate extends Date {
 	#time = source(super.getTime());
@@ -44,10 +68,10 @@ export class SvelteDate extends Date {
 					var d = this.#deriveds.get(method);
 
 					if (d === undefined) {
-						// We don't want to associate the derived with the current
-						// reactive context, as that means the derived will get destroyed
-						// each time it re-fires
-						d = without_reactive_context(() =>
+						// Ensure we create the derived inside the nearest parent effect if
+						// we're inside a derived, otherwise the derived will be destroyed each
+						// time it re-runs
+						d = with_parent_effect(() =>
 							derived(() => {
 								get(this.#time);
 								// @ts-ignore
