@@ -1,4 +1,5 @@
 export { FILENAME, HMR, NAMESPACE_SVG } from '../../constants.js';
+export { assign, assign_and, assign_or, assign_nullish } from './dev/assign.js';
 export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
