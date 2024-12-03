@@ -1,5 +1,5 @@
 /** @import { Task } from '../internal/client/types' */
-/** @import { Tweened } from './public' */
+/** @import { TweenedStore } from './public' */
 /** @import { TweenedOptions } from './private' */
 import { writable } from '../store/shared/index.js';
 import { raf } from '../internal/client/timing.js';
@@ -79,7 +79,7 @@ function get_interpolator(a, b) {
  * @template T
  * @param {T} [value]
  * @param {TweenedOptions<T>} [defaults]
- * @returns {Tweened<T>}
+ * @returns {TweenedStore<T>}
  */
 export function tweened(value, defaults = {}) {
 	const store = writable(value);

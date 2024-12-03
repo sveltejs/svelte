@@ -1,6 +1,6 @@
 /** @import { Task } from '#client' */
 /** @import { SpringOpts, SpringUpdateOpts, TickContext } from './private.js' */
-/** @import { Spring } from './public.js' */
+/** @import { SpringStore } from './public.js' */
 import { writable } from '../store/shared/index.js';
 import { loop } from '../internal/client/loop.js';
 import { raf } from '../internal/client/timing.js';
@@ -57,10 +57,11 @@ function tick_spring(ctx, last_value, current_value, target_value) {
 /**
  * The spring function in Svelte creates a store whose value is animated, with a motion that simulates the behavior of a spring. This means when the value changes, instead of transitioning at a steady rate, it "bounces" like a spring would, depending on the physics parameters provided. This adds a level of realism to the transitions and can enhance the user experience.
  *
+ * @deprecated Use [`Spring`](https://svelte.dev/docs/svelte/svelte-motion#Spring) instead
  * @template [T=any]
  * @param {T} [value]
  * @param {SpringOpts} [opts]
- * @returns {Spring<T>}
+ * @returns {SpringStore<T>}
  */
 export function spring(value, opts = {}) {
 	const store = writable(value);
@@ -131,7 +132,7 @@ export function spring(value, opts = {}) {
 			});
 		});
 	}
-	/** @type {Spring<T>} */
+	/** @type {SpringStore<T>} */
 	const spring = {
 		set,
 		update: (fn, opts) => set(fn(/** @type {T} */ (target_value), /** @type {T} */ (value)), opts),
@@ -144,6 +145,19 @@ export function spring(value, opts = {}) {
 }
 
 /**
+ * A wrapper for a value that behaves in a spring-like fashion. Changes to `spring.target` will cause `spring.current` to
+ * move towards it over time, taking account of the `spring.stiffness` and `spring.damping` parameters.
+ *
+ * ```svelte
+ * <script>
+ * 	import { Spring } from 'svelte/motion';
+ *
+ * 	const spring = new Spring({ x: 0, y: 0 });
+ * </script>
+ *
+ * <input type="range" bind:value={spring.target} />
+ * <input type="range" bind:value={spring.current} disabled />
+ * ```
  * @template T
  */
 export class Spring {
@@ -152,8 +166,8 @@ export class Spring {
 	#precision = source(0.01);
 
 	#current = source(/** @type {T} */ (undefined));
+	#target = source(/** @type {T} */ (undefined));
 
-	#target_value = /** @type {T} */ (undefined);
 	#last_value = /** @type {T} */ (undefined);
 	#last_time = 0;
 
@@ -167,26 +181,47 @@ export class Spring {
 	#deferred = null;
 
 	/**
-	 * @param {T | (() => T)} value
+	 * @param {T} value
 	 * @param {{ stiffness?: number, damping?: number, precision?: number }} [options]
 	 */
 	constructor(value, options = {}) {
-		if (typeof value === 'function') {
-			render_effect(() => {
-				this.#update(/** @type {() => T} */ (value)());
-			});
-		} else {
-			this.#current.v = this.#target_value = value;
-		}
+		this.#current.v = this.#target.v = value;
 
 		if (typeof options.stiffness === 'number') this.#stiffness.v = clamp(options.stiffness, 0, 1);
 		if (typeof options.damping === 'number') this.#damping.v = clamp(options.damping, 0, 1);
 		if (typeof options.precision === 'number') this.#precision.v = options.precision;
 	}
 
+	/**
+	 * Create a spring whose value is bound to the return value of `fn`. This must be called
+	 * inside an effect root (for example, during component initialisation).
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { Spring } from 'svelte/motion';
+	 *
+	 * 	let { number } = $props();
+	 *
+	 * 	const spring = Spring.of(() => number);
+	 * </script>
+	 * ```
+	 * @template U
+	 * @param {() => U} fn
+	 * @param {{ stiffness?: number, damping?: number, precision?: number }} [options]
+	 */
+	static of(fn, options) {
+		const spring = new Spring(fn(), options);
+
+		render_effect(() => {
+			spring.set(fn());
+		});
+
+		return spring;
+	}
+
 	/** @param {T} value */
 	#update(value) {
-		this.#target_value = value;
+		set(this.#target, value);
 
 		this.#current.v ??= value;
 		this.#last_value ??= this.#current.v;
@@ -211,7 +246,7 @@ export class Spring {
 					dt: ((now - this.#last_time) * 60) / 1000
 				};
 
-				var next = tick_spring(ctx, this.#last_value, this.#current.v, this.#target_value);
+				var next = tick_spring(ctx, this.#last_value, this.#current.v, this.#target.v);
 				this.#last_value = this.#current.v;
 				this.#last_time = now;
 				set(this.#current, next);
@@ -228,6 +263,13 @@ export class Spring {
 	}
 
 	/**
+	 * Sets `spring.target` to `value` and returns a `Promise` if and when `spring.current` catches up to it.
+	 *
+	 * If `options.instant` is `true`, `spring.current` immediately matches `spring.target`.
+	 *
+	 * If `options.preserveMomentum` is provided, the spring will continue on its current trajectory for
+	 * the specified number of seconds. This is useful for things like 'fling' gestures.
+	 *
 	 * @param {T} value
 	 * @param {{ instant?: boolean; preserveMomentum?: number }} [options]
 	 */
@@ -237,7 +279,7 @@ export class Spring {
 		if (options?.instant || this.#current.v === undefined) {
 			this.#task?.abort();
 			this.#task = null;
-			set(this.#current, (this.#target_value = value));
+			set(this.#current, set(this.#target, value));
 			return Promise.resolve();
 		}
 
@@ -283,6 +325,14 @@ export class Spring {
 
 	set stiffness(v) {
 		set(this.#stiffness, clamp(v, 0, 1));
+	}
+
+	get target() {
+		return get(this.#target);
+	}
+
+	set target(v) {
+		this.set(v);
 	}
 }
 

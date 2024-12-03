@@ -1637,7 +1637,7 @@ declare module 'svelte/legacy' {
 }
 
 declare module 'svelte/motion' {
-	export interface Spring<T> extends Readable<T> {
+	export interface SpringStore<T> extends Readable<T> {
 		set: (new_value: T, opts?: SpringUpdateOpts) => Promise<void>;
 		update: (fn: Updater<T>, opts?: SpringUpdateOpts) => Promise<void>;
 		precision: number;
@@ -1645,7 +1645,7 @@ declare module 'svelte/motion' {
 		stiffness: number;
 	}
 
-	export interface Tweened<T> extends Readable<T> {
+	export interface TweenedStore<T> extends Readable<T> {
 		set(value: T, opts?: TweenedOptions<T>): Promise<void>;
 		update(updater: Updater<T>, opts?: TweenedOptions<T>): Promise<void>;
 	}
@@ -1686,13 +1686,81 @@ declare module 'svelte/motion' {
 	/**
 	 * The spring function in Svelte creates a store whose value is animated, with a motion that simulates the behavior of a spring. This means when the value changes, instead of transitioning at a steady rate, it "bounces" like a spring would, depending on the physics parameters provided. This adds a level of realism to the transitions and can enhance the user experience.
 	 *
+	 * @deprecated Use [`Spring`](https://svelte.dev/docs/svelte/svelte-motion#Spring) instead
 	 * */
-	export function spring<T = any>(value?: T | undefined, opts?: SpringOpts | undefined): Spring<T>;
+	export function spring<T = any>(value?: T | undefined, opts?: SpringOpts | undefined): SpringStore<T>;
+	/**
+	 * A wrapper for a value that behaves in a spring-like fashion. Changes to `spring.target` will cause `spring.current` to
+	 * move towards it over time, taking account of the `spring.stiffness` and `spring.damping` parameters.
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { Spring } from 'svelte/motion';
+	 *
+	 * 	const spring = new Spring({ x: 0, y: 0 });
+	 * </script>
+	 *
+	 * <input type="range" bind:value={spring.target} />
+	 * <input type="range" bind:value={spring.current} disabled />
+	 * ```
+	 * */
+	export class Spring<T> {
+		/**
+		 * Create a spring whose value is bound to the return value of `fn`. This must be called
+		 * inside an effect root (for example, during component initialisation).
+		 *
+		 * ```svelte
+		 * <script>
+		 * 	import { Spring } from 'svelte/motion';
+		 *
+		 * 	let { number } = $props();
+		 *
+		 * 	const spring = Spring.of(() => number);
+		 * </script>
+		 * ```
+		 * 
+		 */
+		static of<U>(fn: () => U, options?: {
+			stiffness?: number;
+			damping?: number;
+			precision?: number;
+		} | undefined): Spring<U>;
+		
+		constructor(value: T, options?: {
+			stiffness?: number;
+			damping?: number;
+			precision?: number;
+		} | undefined);
+		/**
+		 * Sets `spring.target` to `value` and returns a `Promise` if and when `spring.current` catches up to it.
+		 *
+		 * If `options.instant` is `true`, `spring.current` immediately matches `spring.target`.
+		 *
+		 * If `options.preserveMomentum` is provided, the spring will continue on its current trajectory for
+		 * the specified number of seconds. This is useful for things like 'fling' gestures.
+		 *
+		 * 
+		 */
+		set(value: T, options?: {
+			instant?: boolean;
+			preserveMomentum?: number;
+		} | undefined): Promise<any>;
+		get current(): T;
+		set damping(v: number);
+		get damping(): number;
+		set precision(v: number);
+		get precision(): number;
+		set stiffness(v: number);
+		get stiffness(): number;
+		set target(v: T);
+		get target(): T;
+		#private;
+	}
 	/**
 	 * A tweened store in Svelte is a special type of store that provides smooth transitions between state values over time.
 	 *
 	 * */
-	export function tweened<T>(value?: T | undefined, defaults?: TweenedOptions<T> | undefined): Tweened<T>;
+	export function tweened<T>(value?: T | undefined, defaults?: TweenedOptions<T> | undefined): TweenedStore<T>;
 
 	export {};
 }
