@@ -652,7 +652,7 @@ test('Date methods shared between deriveds', () => {
 			return date.getFullYear();
 		});
 		const year2 = derived(() => {
-			return (date.getTime(), date.getFullYear())
+			return date.getTime(), date.getFullYear();
 		});
 
 		render_effect(() => {
