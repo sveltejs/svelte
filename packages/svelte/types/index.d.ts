@@ -1697,7 +1697,7 @@ declare module 'svelte/motion' {
 	 * <script>
 	 * 	import { Spring } from 'svelte/motion';
 	 *
-	 * 	const spring = new Spring({ x: 0, y: 0 });
+	 * 	const spring = new Spring(0);
 	 * </script>
 	 *
 	 * <input type="range" bind:value={spring.target} />
@@ -1732,7 +1732,7 @@ declare module 'svelte/motion' {
 			precision?: number;
 		} | undefined);
 		/**
-		 * Sets `spring.target` to `value` and returns a `Promise` if and when `spring.current` catches up to it.
+		 * Sets `spring.target` to `value` and returns a `Promise` that resolves if and when `spring.current` catches up to it.
 		 *
 		 * If `options.instant` is `true`, `spring.current` immediately matches `spring.target`.
 		 *
@@ -1761,6 +1761,51 @@ declare module 'svelte/motion' {
 	 *
 	 * */
 	export function tweened<T>(value?: T | undefined, defaults?: TweenedOptions<T> | undefined): TweenedStore<T>;
+	/**
+	 * A wrapper for a value that tweens smoothly to its target value. Changes to `tween.target` will cause `tween.current` to
+	 * move towards it over time, taking account of the `delay`, `duration` and `easing` options.
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { Tween } from 'svelte/motion';
+	 *
+	 * 	const tween = new Tween(0);
+	 * </script>
+	 *
+	 * <input type="range" bind:value={tween.target} />
+	 * <input type="range" bind:value={tween.current} disabled />
+	 * ```
+	 * */
+	export class Tween<T> {
+		/**
+		 * Create a tween whose value is bound to the return value of `fn`. This must be called
+		 * inside an effect root (for example, during component initialisation).
+		 *
+		 * ```svelte
+		 * <script>
+		 * 	import { Tween } from 'svelte/motion';
+		 *
+		 * 	let { number } = $props();
+		 *
+		 * 	const tween = Tween.of(() => number);
+		 * </script>
+		 * ```
+		 * 
+		 */
+		static of<U>(fn: () => U, options?: TweenedOptions<U> | undefined): Tween<U>;
+		
+		constructor(value: T, options?: TweenedOptions<T>);
+		/**
+		 * Sets `tween.target` to `value` and returns a `Promise` that resolves if and when `tween.current` catches up to it.
+		 *
+		 * If `options` are provided, they will override the tween's defaults.
+		 * */
+		set(value: T, options?: TweenedOptions<T> | undefined): Promise<void>;
+		get current(): T;
+		set target(v: T);
+		get target(): T;
+		#private;
+	}
 
 	export {};
 }

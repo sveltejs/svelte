@@ -12,7 +12,7 @@ import { deferred, noop } from '../internal/shared/utils.js';
 
 /**
  * @template T
- * @param {TickContext<T>} ctx
+ * @param {TickContext} ctx
  * @param {T} last_value
  * @param {T} current_value
  * @param {T} target_value
@@ -108,7 +108,7 @@ export function spring(value, opts = {}) {
 					return false;
 				}
 				inv_mass = Math.min(inv_mass + inv_mass_recovery_rate, 1);
-				/** @type {TickContext<T>} */
+				/** @type {TickContext} */
 				const ctx = {
 					inv_mass,
 					opts: spring,
@@ -152,7 +152,7 @@ export function spring(value, opts = {}) {
  * <script>
  * 	import { Spring } from 'svelte/motion';
  *
- * 	const spring = new Spring({ x: 0, y: 0 });
+ * 	const spring = new Spring(0);
  * </script>
  *
  * <input type="range" bind:value={spring.target} />
@@ -234,7 +234,7 @@ export class Spring {
 			this.#task ??= loop((now) => {
 				this.#inverse_mass = Math.min(this.#inverse_mass + inv_mass_recovery_rate, 1);
 
-				/** @type {import('./private').TickContext<T>} */
+				/** @type {import('./private').TickContext} */
 				const ctx = {
 					inv_mass: this.#inverse_mass,
 					opts: {
@@ -263,7 +263,7 @@ export class Spring {
 	}
 
 	/**
-	 * Sets `spring.target` to `value` and returns a `Promise` if and when `spring.current` catches up to it.
+	 * Sets `spring.target` to `value` and returns a `Promise` that resolves if and when `spring.current` catches up to it.
 	 *
 	 * If `options.instant` is `true`, `spring.current` immediately matches `spring.target`.
 	 *

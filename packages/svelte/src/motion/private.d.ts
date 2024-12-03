@@ -1,4 +1,4 @@
-export interface TickContext<T> {
+export interface TickContext {
 	inv_mass: number;
 	dt: number;
 	opts: {
