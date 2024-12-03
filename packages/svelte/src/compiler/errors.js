@@ -169,6 +169,16 @@ export function effect_invalid_placement(node) {
 }
 
 /**
+ * `%name%` is not defined
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function export_undefined(node, name) {
+	e(node, "export_undefined", `\`${name}\` is not defined`);
+}
+
+/**
  * `%name%` is an illegal variable name. To reference a global variable called `%name%`, use `globalThis.%name%`
  * @param {null | number | NodeLike} node
  * @param {string} name
@@ -393,6 +403,15 @@ export function rune_renamed(node, name, replacement) {
  */
 export function runes_mode_invalid_import(node, name) {
 	e(node, "runes_mode_invalid_import", `${name} cannot be used in runes mode`);
+}
+
+/**
+ * An exported snippet can only reference things declared in a `<script module>`, or other exportable snippets
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function snippet_invalid_export(node) {
+	e(node, "snippet_invalid_export", "An exported snippet can only reference things declared in a `<script module>`, or other exportable snippets");
 }
 
 /**
