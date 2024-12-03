@@ -83,7 +83,7 @@ If you're using tools like Rollup or Webpack instead, install their respective S
 
 When using TypeScript, make sure your `tsconfig.json` is setup correctly.
 
-- Use a [`target`](https://www.typescriptlang.org/tsconfig/#target) of at least `ES2022`, or a `target` of at least `Es2015` alongside [`useDefineForClassFields`](https://www.typescriptlang.org/tsconfig/#useDefineForClassFields). This ensures that rune declarations on class fields are not messed with, which would break the Svelte compiler
+- Use a [`target`](https://www.typescriptlang.org/tsconfig/#target) of at least `ES2022`, or a `target` of at least `ES2015` alongside [`useDefineForClassFields`](https://www.typescriptlang.org/tsconfig/#useDefineForClassFields). This ensures that rune declarations on class fields are not messed with, which would break the Svelte compiler
 - Set [`verbatimModuleSyntax`](https://www.typescriptlang.org/tsconfig/#verbatimModuleSyntax) to `true` so that imports are left as-is
 - Set [`isolatedModules`](https://www.typescriptlang.org/tsconfig/#isolatedModules) to `true` so that each file is looked at in isolation. TypeScript has a few features which require cross-file analysis and compilation, which the Svelte compiler and tooling like Vite don't do. 
 
