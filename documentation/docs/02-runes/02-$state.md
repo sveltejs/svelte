@@ -168,3 +168,90 @@ To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snaps
 ```
 
 This is handy when you want to pass some state to an external library or API that doesn't expect a proxy, such as `structuredClone`.
+
+## Passing state into functions
+
+JavaScript is a _pass-by-value_ language — when you call a function, the arguments are the _values_ rather than the _variables_. In other words:
+
+```js
+/// file: index.js
+// @filename: index.js
+// ---cut---
+/**
+ * @param {number} a
+ * @param {number} b
+ */
+function add(a, b) {
+	return a + b;
+}
+
+let a = 1;
+let b = 2;
+let total = add(a, b);
+console.log(total); // 3
+
+a = 3;
+b = 4;
+console.log(total); // still 3!
+```
+
+If `add` wanted to have access to the _current_ values of `a` and `b`, and to return the current `total` value, you would need to use functions instead:
+
+```js
+/// file: index.js
+// @filename: index.js
+// ---cut---
+/**
+ * @param {() => number} getA
+ * @param {() => number} getB
+ */
+function add(+++getA, getB+++) {
+	return +++() => getA() + getB()+++;
+}
+
+let a = 1;
+let b = 2;
+let total = add+++(() => a, () => b)+++;
+console.log(+++total()+++); // 3
+
+a = 3;
+a = 4;
+console.log(+++total()+++); // 7
+```
+
+State in Svelte is no different — when you reference something declared with the `$state` rune...
+
+```js
+let a = +++$state(1)+++;
+let b = +++$state(2)+++;
+```
+
+...you're accessing its _current value_.
+
+Note that 'functions' is broad — it encompasses properties of proxies and [`get`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/get)/[`set`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/set) properties...
+
+```js
+/// file: index.js
+// @filename: index.js
+// ---cut---
+/**
+ * @param {{ a: number, b: number }} input
+ */
+function add(input) {
+	return {
+		get value() {
+			return input.a + input.b;
+		}
+	};
+}
+
+let input = $state({ a: 1, b: 2 });
+let total = add(input);
+console.log(total.value); // 3
+
+input.a = 3;
+input.b = 4;
+console.log(total.value); // 7
+```
+
+...though if you find yourself writing code like that, consider using [classes](#Classes) instead.
