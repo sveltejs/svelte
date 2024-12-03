@@ -1,5 +1,5 @@
 import type { AST, Binding, Css, SvelteNode } from '#compiler';
-import type { Identifier, LabeledStatement, Program, VariableDeclaration } from 'estree';
+import type { Identifier, LabeledStatement, Node, Program } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
 
 export interface Js {
@@ -62,7 +62,6 @@ export interface ComponentAnalysis extends Analysis {
 	/** If `true`, should append styles through JavaScript */
 	inject_styles: boolean;
 	reactive_statements: Map<LabeledStatement, ReactiveStatement>;
-	top_level_snippets: VariableDeclaration[];
 	/** Identifiers that make up the `bind:group` expression -> internal group binding name */
 	binding_groups: Map<[key: string, bindings: Array<Binding | null>], Identifier>;
 	slot_names: Map<string, AST.SlotElement>;
@@ -72,6 +71,7 @@ export interface ComponentAnalysis extends Analysis {
 		keyframes: string[];
 	};
 	source: string;
+	undefined_exports: Map<string, Node>;
 	/**
 	 * Every render tag/component, and whether it could be definitively resolved or not
 	 */

@@ -429,7 +429,6 @@ export function analyze_component(root, source, options) {
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
 		slot_names: new Map(),
-		top_level_snippets: [],
 		css: {
 			ast: root.css,
 			hash: root.css
@@ -443,6 +442,7 @@ export function analyze_component(root, source, options) {
 			keyframes: []
 		},
 		source,
+		undefined_exports: new Map(),
 		snippet_renderers: new Map(),
 		snippets: new Set()
 	};
@@ -695,6 +695,17 @@ export function analyze_component(root, source, options) {
 		}
 
 		analysis.reactive_statements = order_reactive_statements(analysis.reactive_statements);
+	}
+
+	for (const node of analysis.module.ast.body) {
+		if (node.type === 'ExportNamedDeclaration' && node.specifiers !== null) {
+			for (const specifier of node.specifiers) {
+				if (specifier.local.type !== 'Identifier') continue;
+
+				const binding = analysis.module.scope.get(specifier.local.name);
+				if (!binding) e.export_undefined(specifier, specifier.local.name);
+			}
+		}
 	}
 
 	if (analysis.event_directive_node && analysis.uses_event_attributes) {

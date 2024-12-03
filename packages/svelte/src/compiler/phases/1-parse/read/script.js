@@ -34,7 +34,7 @@ export function read_script(parser, start, attributes) {
 	let ast;
 
 	try {
-		ast = acorn.parse(source, parser.ts);
+		ast = acorn.parse(source, parser.ts, true);
 	} catch (err) {
 		parser.acorn_error(err);
 	}
