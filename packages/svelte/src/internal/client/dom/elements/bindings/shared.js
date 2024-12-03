@@ -34,7 +34,6 @@ export function listen(target, events, handler, call_handler_immediately = true)
 /**
  * @template T
  * @param {() => T} fn
- * @returns {T}
  */
 export function without_reactive_context(fn) {
 	var previous_reaction = active_reaction;
