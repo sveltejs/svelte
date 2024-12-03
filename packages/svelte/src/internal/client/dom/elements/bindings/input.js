@@ -1,6 +1,6 @@
 import { DEV } from 'esm-env';
 import { render_effect, teardown } from '../../../reactivity/effects.js';
-import { listen_to_event_and_reset_event, without_reactive_context } from './shared.js';
+import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
 import { is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
