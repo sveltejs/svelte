@@ -1,8 +1,7 @@
 /** @import { Source } from '#client' */
-import { DESTROYED } from '../internal/client/constants.js';
 import { derived } from '../internal/client/index.js';
 import { source, set } from '../internal/client/reactivity/sources.js';
-import { get } from '../internal/client/runtime.js';
+import { active_reaction, get, set_active_reaction } from '../internal/client/runtime.js';
 
 var inited = false;
 
@@ -11,6 +10,8 @@ export class SvelteDate extends Date {
 
 	/** @type {Map<keyof Date, Source<unknown>>} */
 	#deriveds = new Map();
+
+	#reaction = active_reaction;
 
 	/** @param {any[]} params */
 	constructor(...params) {
@@ -43,7 +44,12 @@ export class SvelteDate extends Date {
 
 					var d = this.#deriveds.get(method);
 
-					if (d === undefined || (d.f & DESTROYED) !== 0) {
+					if (d === undefined) {
+						// lazily create the derived, but as though it were being
+						// created at the same time as the class instance
+						const reaction = active_reaction;
+						set_active_reaction(this.#reaction);
+
 						d = derived(() => {
 							get(this.#time);
 							// @ts-ignore
@@ -51,6 +57,8 @@ export class SvelteDate extends Date {
 						});
 
 						this.#deriveds.set(method, d);
+
+						set_active_reaction(reaction);
 					}
 
 					return get(d);
