@@ -83,6 +83,10 @@ function build_assignment(operator, left, right, context) {
 		const path = context.path.map((node) => node.type);
 		const is_primitive = path.at(-1) === 'BindDirective' && path.at(-2) === 'RegularElement';
 
+		let value = /** @type {Expression} */ (
+			context.visit(build_assignment_value(operator, left, right))
+		);
+
 		if (
 			!is_primitive &&
 			binding.kind !== 'prop' &&
@@ -93,12 +97,8 @@ function build_assignment(operator, left, right, context) {
 			// other operators result in coercion
 			['=', '||=', '&&=', '??='].includes(operator)
 		) {
-			right = build_proxy_reassignment(right, object);
+			value = build_proxy_reassignment(value, object);
 		}
-
-		let value = /** @type {Expression} */ (
-			context.visit(build_assignment_value(operator, left, right))
-		);
 
 		return transform.assign(object, value);
 	}
