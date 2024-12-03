@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure SvelteDate cached methods have correct reactive context
+fix: use correct reaction when lazily creating deriveds inside `SvelteDate`
