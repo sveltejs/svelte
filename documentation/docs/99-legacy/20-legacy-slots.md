@@ -74,39 +74,45 @@ If no slotted content is provided, a component can define fallback content by pu
 
 Slots can be rendered zero or more times and can pass values _back_ to the parent using props. The parent exposes the values to the slot template using the `let:` directive.
 
-The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}`, and `<slot {item}>` is equivalent to `<slot item={item}>`.
-
 ```svelte
-<!-- FancyList.svelte -->
+<!--- file: FancyList.svelte --->
 <ul>
-	{#each items as item}
+	{#each items as data}
 		<li class="fancy">
-			<slot prop={item} />
+			<!-- 'item' here... -->
+			<slot item={process(data)} />
 		</li>
 	{/each}
 </ul>
+```
 
-<!-- App.svelte -->
-<FancyList {items} let:prop={thing}>
-	<div>{thing.text}</div>
+```svelte
+<!--- file: App.svelte --->
+<!-- ...corresponds to 'item' here: -->
+<FancyList {items} let:item={processed}>
+	<div>{processed.text}</div>
 </FancyList>
 ```
+
+The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}`, and `<slot {item}>` is equivalent to `<slot item={item}>`.
 
 Named slots can also expose values. The `let:` directive goes on the element with the `slot` attribute.
 
 ```svelte
-<!-- FancyList.svelte -->
+<!--- file: FancyList.svelte --->
 <ul>
 	{#each items as item}
 		<li class="fancy">
-			<slot name="item" {item} />
+			<slot name="item" item={process(data)} />
 		</li>
 	{/each}
 </ul>
 
 <slot name="footer" />
+```
 
-<!-- App.svelte -->
+```svelte
+<!--- file: App.svelte --->
 <FancyList {items}>
 	<div slot="item" let:item>{item.text}</div>
 	<p slot="footer">Copyright (c) 2019 Svelte Industries</p>
