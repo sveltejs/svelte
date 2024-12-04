@@ -1,5 +1,11 @@
 # svelte
 
+## 5.6.1
+
+### Patch Changes
+
+- fix: handle static form values in combination with default values ([#14555](https://github.com/sveltejs/svelte/pull/14555))
+
 ## 5.6.0
 
 ### Minor Changes
