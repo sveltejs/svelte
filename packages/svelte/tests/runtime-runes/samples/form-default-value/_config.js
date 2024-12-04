@@ -37,7 +37,7 @@ export default test({
 		const after_reset = [];
 
 		const reset = /** @type {HTMLInputElement} */ (target.querySelector('input[type=reset]'));
-		const [test1, test2, test3, test4, test5] = target.querySelectorAll('div');
+		const [test1, test2, test3, test4, test5, test12] = target.querySelectorAll('div');
 		const [test6, test7, test8, test9] = target.querySelectorAll('select');
 		const [
 			test1_span,
@@ -198,6 +198,20 @@ export default test({
 			after_reset.push(() => {
 				check_inputs(options, 'selected', [false, true, false]);
 				assert.htmlEqual(test9_span.innerHTML, 'b');
+			});
+		}
+
+		{
+			/** @type {NodeListOf<HTMLInputElement | HTMLTextAreaElement>} */
+			const inputs = test12.querySelectorAll('input, textarea');
+			assert.equal(inputs[0].value, 'x');
+			assert.equal(/** @type {HTMLInputElement} */ (inputs[1]).checked, true);
+			assert.equal(inputs[2].value, 'x');
+
+			after_reset.push(() => {
+				assert.equal(inputs[0].value, 'y');
+				assert.equal(/** @type {HTMLInputElement} */ (inputs[1]).checked, false);
+				assert.equal(inputs[2].value, 'y');
 			});
 		}
 

@@ -137,6 +137,13 @@
 		<option value="c">C</option>
 	</select>
 
+	<p>Static values</p>
+	<div class="test-12">
+		<input value="x" defaultValue="y" />
+		<input type="checkbox" checked defaultChecked={false} />
+		<textarea defaultValue="y">x</textarea>
+	</div>
+
 	<input type="reset" value="Reset" />
 </form>
 

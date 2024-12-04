@@ -104,6 +104,28 @@ export function set_selected(element, selected) {
 }
 
 /**
+ * Applies the default checked property without influencing the current checked property.
+ * @param {HTMLInputElement} element
+ * @param {boolean} checked
+ */
+export function set_default_checked(element, checked) {
+	const existing_value = element.checked;
+	element.defaultChecked = checked;
+	element.checked = existing_value;
+}
+
+/**
+ * Applies the default value property without influencing the current value property.
+ * @param {HTMLInputElement | HTMLTextAreaElement} element
+ * @param {string} value
+ */
+export function set_default_value(element, value) {
+	const existing_value = element.value;
+	element.defaultValue = value;
+	element.value = existing_value;
+}
+
+/**
  * @param {Element} element
  * @param {string} attribute
  * @param {string | null} value
