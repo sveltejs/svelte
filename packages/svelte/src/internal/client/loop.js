@@ -7,6 +7,8 @@ import { raf } from './timing.js';
  * @returns {void}
  */
 function run_tasks() {
+	// use `raf.now()` instead of the `requestAnimationFrame` callback argument, because
+	// otherwise things can get wonky https://github.com/sveltejs/svelte/pull/14541
 	const now = raf.now();
 
 	raf.tasks.forEach((task) => {
