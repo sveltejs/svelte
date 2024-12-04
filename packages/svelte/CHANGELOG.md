@@ -1,5 +1,11 @@
 # svelte
 
+## 5.6.2
+
+### Patch Changes
+
+- chore: make if blocks tree-shakable ([#14549](https://github.com/sveltejs/svelte/pull/14549))
+
 ## 5.6.1
 
 ### Patch Changes
