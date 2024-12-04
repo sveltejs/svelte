@@ -13,7 +13,7 @@ import { HYDRATION_START_ELSE } from '../../../../constants.js';
 
 /**
  * @param {TemplateNode} node
- * @param {(branch: (flag: 0 | 1, fn: (anchor: Node) => void) => void) => void} fn
+ * @param {(branch: (fn: (anchor: Node) => void, flag?: boolean) => void) => void} fn
  * @param {boolean} [elseif] True if this is an `{:else if ...}` block rather than an `{#if ...}`, as that affects which transitions are considered 'local'
  * @returns {void}
  */
@@ -37,9 +37,9 @@ export function if_block(node, fn, elseif = false) {
 
 	var has_branch = false;
 
-	const set_branch = (/** @type {0 | 1} */ flag, /** @type {(anchor: Node) => void} */ fn) => {
+	const set_branch = (/** @type {(anchor: Node) => void} */ fn, flag = true) => {
 		has_branch = true;
-		update_branch(flag === 0, fn);
+		update_branch(flag, fn);
 	};
 
 	const update_branch = (
