@@ -32,12 +32,7 @@ export function IfBlock(node, context) {
 			b.block([
 				b.if(
 					/** @type {Expression} */ (context.visit(node.test)),
-					b.stmt(
-						b.call(
-							b.id('$$render'),
-							b.id(consequent_id)
-						)
-					),
+					b.stmt(b.call(b.id('$$render'), b.id(consequent_id))),
 					alternate_id
 						? b.stmt(
 								b.call(
