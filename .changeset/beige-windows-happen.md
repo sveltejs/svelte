@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-chore: make if blocks dead code eliminable
+chore: make if blocks tree-shakable
