@@ -163,10 +163,12 @@ export function is_tag_valid_with_ancestor(child_tag, ancestors, child_loc, ance
 	}
 
 	if ('descendant' in disallowed && disallowed.descendant.includes(child_tag)) {
-		const child = child_loc ? `<${child_tag}> (${child_loc})` : `<${child_tag}>`;
-		const ancestor = ancestor_loc ? `<${ancestor_tag}> (${ancestor_loc})` : `<${ancestor_tag}>`;
+		const child = child_loc ? `\`<${child_tag}>\` (${child_loc})` : `\`<${child_tag}>\``;
+		const ancestor = ancestor_loc
+			? `\`<${ancestor_tag}>\` (${ancestor_loc})`
+			: `\`<${ancestor_tag}>\``;
 
-		return `\`${child}\` cannot be a descendant of \`${ancestor}\``;
+		return `${child} cannot be a descendant of ${ancestor}`;
 	}
 
 	return null;
@@ -186,23 +188,23 @@ export function is_tag_valid_with_parent(child_tag, parent_tag, child_loc, paren
 
 	const disallowed = disallowed_children[parent_tag];
 
-	const child = child_loc ? `<${child_tag}> (${child_loc})` : `<${child_tag}>`;
-	const parent = parent_loc ? `<${parent_tag}> (${parent_loc})` : `<${parent_tag}>`;
+	const child = child_loc ? `\`<${child_tag}>\` (${child_loc})` : `\`<${child_tag}>\``;
+	const parent = parent_loc ? `\`<${parent_tag}>\` (${parent_loc})` : `\`<${parent_tag}>\``;
 
 	if (disallowed) {
 		if ('direct' in disallowed && disallowed.direct.includes(child_tag)) {
-			return `\`${child}\` cannot be a direct child of \`${parent}\``;
+			return `${child} cannot be a direct child of ${parent}`;
 		}
 
 		if ('descendant' in disallowed && disallowed.descendant.includes(child_tag)) {
-			return `\`${child}\` cannot be a child of \`${parent}\``;
+			return `${child} cannot be a child of ${parent}`;
 		}
 
 		if ('only' in disallowed && disallowed.only) {
 			if (disallowed.only.includes(child_tag)) {
 				return null;
 			} else {
-				return `\`${child}\` cannot be a child of \`${parent}\`. \`<${parent_tag}>\` only allows these children: ${disallowed.only.map((d) => `\`<${d}>\``).join(', ')}`;
+				return `${child} cannot be a child of ${parent}. \`<${parent_tag}>\` only allows these children: ${disallowed.only.map((d) => `\`<${d}>\``).join(', ')}`;
 			}
 		}
 	}
@@ -220,16 +222,16 @@ export function is_tag_valid_with_parent(child_tag, parent_tag, child_loc, paren
 		case 'frame':
 		case 'head':
 		case 'html':
-			return `\`${child}\` cannot be a child of \`${parent}\``;
+			return `${child} cannot be a child of ${parent}`;
 		case 'thead':
 		case 'tbody':
 		case 'tfoot':
-			return `\`${child}\` must be the child of a \`<table>\`, not a \`${parent}\``;
+			return `${child} must be the child of a \`<table>\`, not a ${parent}`;
 		case 'td':
 		case 'th':
-			return `\`${child}\` must be the child of a \`<tr>\`, not a \`${parent}\``;
+			return `${child} must be the child of a \`<tr>\`, not a ${parent}`;
 		case 'tr':
-			return `\`<tr>\` must be the child of a \`<thead>\`, \`<tbody>\`, or \`<tfoot>\`, not a \`${parent}\``;
+			return `\`<tr>\` must be the child of a \`<thead>\`, \`<tbody>\`, or \`<tfoot>\`, not a ${parent}`;
 	}
 
 	return null;
