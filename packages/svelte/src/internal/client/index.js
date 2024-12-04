@@ -35,7 +35,9 @@ export {
 	handle_lazy_img,
 	set_value,
 	set_checked,
-	set_selected
+	set_selected,
+	set_default_checked,
+	set_default_value
 } from './dom/elements/attributes.js';
 export { set_class, set_svg_class, set_mathml_class, toggle_class } from './dom/elements/class.js';
 export { apply, event, delegate, replay_events } from './dom/elements/events.js';
