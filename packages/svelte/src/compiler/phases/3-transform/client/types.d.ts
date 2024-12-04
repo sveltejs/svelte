@@ -6,7 +6,8 @@ import type {
 	PrivateIdentifier,
 	Expression,
 	AssignmentExpression,
-	UpdateExpression
+	UpdateExpression,
+	VariableDeclaration
 } from 'estree';
 import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
@@ -31,7 +32,7 @@ export interface ClientTransformState extends TransformState {
 			/** turn `foo = bar` into e.g. `$.set(foo, bar)` */
 			assign?: (node: Identifier, value: Expression) => Expression;
 			/** turn `foo.bar = baz` into e.g. `$.mutate(foo, $.get(foo).bar = baz);` */
-			mutate?: (node: Identifier, mutation: AssignmentExpression) => Expression;
+			mutate?: (node: Identifier, mutation: AssignmentExpression | UpdateExpression) => Expression;
 			/** turn `foo++` into e.g. `$.update(foo)` */
 			update?: (node: UpdateExpression) => Expression;
 		}
@@ -54,10 +55,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	/** Stuff that happens after the render effect (control blocks, dynamic elements, bindings, actions, etc) */
 	readonly after_update: Statement[];
 	/** The HTML template string */
-	readonly template: {
-		push_quasi: (q: string) => void;
-		push_expression: (e: Expression) => void;
-	};
+	readonly template: Array<string | Expression>;
 	readonly locations: SourceLocation[];
 	readonly metadata: {
 		namespace: Namespace;
@@ -88,6 +86,11 @@ export interface ComponentClientTransformState extends ClientTransformState {
 
 	/** The $: calls, which will be ordered in the end */
 	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
+
+	/** Snippets hoisted to the instance */
+	readonly instance_level_snippets: VariableDeclaration[];
+	/** Snippets hoisted to the module */
+	readonly module_level_snippets: VariableDeclaration[];
 }
 
 export interface StateField {

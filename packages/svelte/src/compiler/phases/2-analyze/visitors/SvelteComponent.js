@@ -12,5 +12,7 @@ export function SvelteComponent(node, context) {
 		w.svelte_component_deprecated(node);
 	}
 
+	context.visit(node.expression);
+
 	visit_component(node, context);
 }

@@ -24,7 +24,7 @@ function create_if(node, context, index) {
  * @param {ComponentContext} context
  */
 export function IfBlock(node, context) {
-	context.state.template.push_quasi('<!>');
+	context.state.template.push('<!>');
 
 	let index = 0;
 

@@ -142,12 +142,17 @@ const disallowed_children = {
  * @returns {boolean}
  */
 export function is_tag_valid_with_ancestor(tag, ancestors) {
+	if (tag.includes('-')) return true; // custom elements can be anything
+
 	const target = ancestors[ancestors.length - 1];
 	const disallowed = disallowed_children[target];
 	if (!disallowed) return true;
 
 	if ('reset_by' in disallowed && disallowed.reset_by) {
 		for (let i = ancestors.length - 2; i >= 0; i--) {
+			const ancestor = ancestors[i];
+			if (ancestor.includes('-')) return true; // custom elements can be anything
+
 			// A reset means that forbidden descendants are allowed again
 			if (disallowed.reset_by.includes(ancestors[i])) {
 				return true;
@@ -162,23 +167,23 @@ export function is_tag_valid_with_ancestor(tag, ancestors) {
  * Returns false if the tag is not allowed inside the parent tag such that it will result
  * in the browser repairing the HTML, which will likely result in an error during hydration.
  * @param {string} tag
- * @param {string | null} parent_tag
+ * @param {string} parent_tag
  * @returns {boolean}
  */
 export function is_tag_valid_with_parent(tag, parent_tag) {
-	if (parent_tag !== null) {
-		const disallowed = disallowed_children[parent_tag];
+	if (tag.includes('-') || parent_tag?.includes('-')) return true; // custom elements can be anything
 
-		if (disallowed) {
-			if ('direct' in disallowed && disallowed.direct.includes(tag)) {
-				return false;
-			}
-			if ('descendant' in disallowed && disallowed.descendant.includes(tag)) {
-				return false;
-			}
-			if ('only' in disallowed && disallowed.only) {
-				return disallowed.only.includes(tag);
-			}
+	const disallowed = disallowed_children[parent_tag];
+
+	if (disallowed) {
+		if ('direct' in disallowed && disallowed.direct.includes(tag)) {
+			return false;
+		}
+		if ('descendant' in disallowed && disallowed.descendant.includes(tag)) {
+			return false;
+		}
+		if ('only' in disallowed && disallowed.only) {
+			return disallowed.only.includes(tag);
 		}
 	}
 

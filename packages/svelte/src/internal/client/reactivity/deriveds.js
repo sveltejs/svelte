@@ -1,14 +1,24 @@
 /** @import { Derived, Effect } from '#client' */
 import { DEV } from 'esm-env';
-import { CLEAN, DERIVED, DESTROYED, DIRTY, MAYBE_DIRTY, UNOWNED } from '../constants.js';
 import {
-	current_reaction,
-	current_effect,
+	CLEAN,
+	DERIVED,
+	DESTROYED,
+	DIRTY,
+	EFFECT_HAS_DERIVED,
+	MAYBE_DIRTY,
+	UNOWNED
+} from '../constants.js';
+import {
+	active_reaction,
+	active_effect,
 	remove_reactions,
 	set_signal_status,
-	current_skip_reaction,
+	skip_reaction,
 	update_reaction,
-	increment_version
+	increment_version,
+	set_active_effect,
+	component_context
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -22,24 +32,37 @@ import { inspect_effects, set_inspect_effects } from './sources.js';
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
-	let flags = DERIVED | DIRTY;
-	if (current_effect === null) flags |= UNOWNED;
+	var flags = DERIVED | DIRTY;
+
+	if (active_effect === null) {
+		flags |= UNOWNED;
+	} else {
+		// Since deriveds are evaluated lazily, any effects created inside them are
+		// created too late to ensure that the parent effect is added to the tree
+		active_effect.f |= EFFECT_HAS_DERIVED;
+	}
+
+	var parent_derived =
+		active_reaction !== null && (active_reaction.f & DERIVED) !== 0
+			? /** @type {Derived} */ (active_reaction)
+			: null;
 
 	/** @type {Derived<V>} */
 	const signal = {
 		children: null,
+		ctx: component_context,
 		deps: null,
 		equals,
 		f: flags,
 		fn,
 		reactions: null,
 		v: /** @type {V} */ (null),
-		version: 0
+		version: 0,
+		parent: parent_derived ?? active_effect
 	};
 
-	if (current_reaction !== null && (current_reaction.f & DERIVED) !== 0) {
-		var derived = /** @type {Derived} */ (current_reaction);
-		(derived.children ??= []).push(signal);
+	if (parent_derived !== null) {
+		(parent_derived.children ??= []).push(signal);
 	}
 
 	return signal;
@@ -87,10 +110,29 @@ let stack = [];
 
 /**
  * @param {Derived} derived
- * @returns {void}
+ * @returns {Effect | null}
  */
-export function update_derived(derived) {
+function get_derived_parent_effect(derived) {
+	var parent = derived.parent;
+	while (parent !== null) {
+		if ((parent.f & DERIVED) === 0) {
+			return /** @type {Effect} */ (parent);
+		}
+		parent = parent.parent;
+	}
+	return null;
+}
+
+/**
+ * @template T
+ * @param {Derived} derived
+ * @returns {T}
+ */
+export function execute_derived(derived) {
 	var value;
+	var prev_active_effect = active_effect;
+
+	set_active_effect(get_derived_parent_effect(derived));
 
 	if (DEV) {
 		let prev_inspect_effects = inspect_effects;
@@ -105,18 +147,30 @@ export function update_derived(derived) {
 			destroy_derived_children(derived);
 			value = update_reaction(derived);
 		} finally {
+			set_active_effect(prev_active_effect);
 			set_inspect_effects(prev_inspect_effects);
 			stack.pop();
 		}
 	} else {
-		destroy_derived_children(derived);
-		value = update_reaction(derived);
+		try {
+			destroy_derived_children(derived);
+			value = update_reaction(derived);
+		} finally {
+			set_active_effect(prev_active_effect);
+		}
 	}
 
+	return value;
+}
+
+/**
+ * @param {Derived} derived
+ * @returns {void}
+ */
+export function update_derived(derived) {
+	var value = execute_derived(derived);
 	var status =
-		(current_skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null
-			? MAYBE_DIRTY
-			: CLEAN;
+		(skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null ? MAYBE_DIRTY : CLEAN;
 
 	set_signal_status(derived, status);
 
@@ -127,20 +181,13 @@ export function update_derived(derived) {
 }
 
 /**
- * @param {Derived} signal
+ * @param {Derived} derived
  * @returns {void}
  */
-function destroy_derived(signal) {
-	destroy_derived_children(signal);
-	remove_reactions(signal, 0);
-	set_signal_status(signal, DESTROYED);
+export function destroy_derived(derived) {
+	destroy_derived_children(derived);
+	remove_reactions(derived, 0);
+	set_signal_status(derived, DESTROYED);
 
-	// TODO we need to ensure we remove the derived from any parent derives
-
-	signal.children =
-		signal.deps =
-		signal.reactions =
-		// @ts-expect-error `signal.fn` cannot be `null` while the signal is alive
-		signal.fn =
-			null;
+	derived.v = derived.children = derived.deps = derived.ctx = derived.reactions = null;
 }

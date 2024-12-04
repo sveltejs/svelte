@@ -44,6 +44,8 @@ export function init_operations() {
 	// @ts-expect-error
 	element_prototype.__attributes = null;
 	// @ts-expect-error
+	element_prototype.__styles = null;
+	// @ts-expect-error
 	element_prototype.__e = undefined;
 
 	// @ts-expect-error
@@ -89,9 +91,10 @@ export function get_next_sibling(node) {
  * Don't mark this as side-effect-free, hydration needs to walk all nodes
  * @template {Node} N
  * @param {N} node
+ * @param {boolean} is_text
  * @returns {Node | null}
  */
-export function child(node) {
+export function child(node, is_text) {
 	if (!hydrating) {
 		return get_first_child(node);
 	}
@@ -101,6 +104,11 @@ export function child(node) {
 	// Child can be null if we have an element with a single child, like `<p>{text}</p>`, where `text` is empty
 	if (child === null) {
 		child = hydrate_node.appendChild(create_text());
+	} else if (is_text && child.nodeType !== 3) {
+		var text = create_text();
+		child?.before(text);
+		set_hydrate_node(text);
+		return text;
 	}
 
 	set_hydrate_node(child);
@@ -146,8 +154,10 @@ export function first_child(fragment, is_text) {
  */
 export function sibling(node, count = 1, is_text = false) {
 	let next_sibling = hydrating ? hydrate_node : node;
+	var last_sibling;
 
 	while (count--) {
+		last_sibling = next_sibling;
 		next_sibling = /** @type {TemplateNode} */ (get_next_sibling(next_sibling));
 	}
 
@@ -155,13 +165,20 @@ export function sibling(node, count = 1, is_text = false) {
 		return next_sibling;
 	}
 
-	var type = next_sibling.nodeType;
+	var type = next_sibling?.nodeType;
 
 	// if a sibling {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one
 	if (is_text && type !== 3) {
 		var text = create_text();
-		next_sibling?.before(text);
+		// If the next sibling is `null` and we're handling text then it's because
+		// the SSR content was empty for the text, so we need to generate a new text
+		// node and insert it after the last sibling
+		if (next_sibling === null) {
+			last_sibling?.after(text);
+		} else {
+			next_sibling.before(text);
+		}
 		set_hydrate_node(text);
 		return text;
 	}

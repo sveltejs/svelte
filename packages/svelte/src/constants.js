@@ -44,7 +44,8 @@ export const IGNORABLE_RUNTIME_WARNINGS = /** @type {const} */ ([
 	'hydration_attribute_changed',
 	'hydration_html_changed',
 	'ownership_invalid_binding',
-	'ownership_invalid_mutation'
+	'ownership_invalid_mutation',
+	'reactive_declaration_non_reactive_property'
 ]);
 
 /**

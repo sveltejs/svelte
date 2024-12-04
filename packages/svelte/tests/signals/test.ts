@@ -488,7 +488,6 @@ describe('signals', () => {
 			assert.equal(a?.deps?.length, 1);
 			assert.equal(s?.reactions?.length, 1);
 			destroy();
-			assert.equal(a?.deps?.length, 1);
 			assert.equal(s?.reactions, null);
 		};
 	});
@@ -723,6 +722,63 @@ describe('signals', () => {
 
 			set.add('test');
 			assert.equal($.get(d), true);
+		};
+	});
+
+	test('deriveds read inside the root/branches are cleaned up', () => {
+		return () => {
+			const a = state(0);
+
+			const destroy = effect_root(() => {
+				const b = derived(() => $.get(a));
+				$.get(b);
+			});
+
+			destroy();
+
+			assert.deepEqual(a.reactions, null);
+		};
+	});
+
+	test('nested deriveds clean up the relationships when used with untrack', () => {
+		return () => {
+			let a = render_effect(() => {});
+
+			const destroy = effect_root(() => {
+				a = render_effect(() => {
+					$.untrack(() => {
+						const b = derived(() => {
+							const c = derived(() => {});
+							$.untrack(() => {
+								$.get(c);
+							});
+						});
+						$.get(b);
+					});
+				});
+			});
+
+			assert.deepEqual(a.deriveds?.length, 1);
+
+			destroy();
+
+			assert.deepEqual(a.deriveds, null);
+		};
+	});
+
+	test('bigint states update correctly', () => {
+		return () => {
+			const count = state(0n);
+
+			assert.doesNotThrow(() => $.update(count));
+			assert.equal($.get(count), 1n);
+			assert.doesNotThrow(() => $.update(count, -1));
+			assert.equal($.get(count), 0n);
+
+			assert.doesNotThrow(() => $.update_pre(count));
+			assert.equal($.get(count), 1n);
+			assert.doesNotThrow(() => $.update_pre(count, -1));
+			assert.equal($.get(count), 0n);
 		};
 	});
 });

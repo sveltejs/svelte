@@ -261,15 +261,41 @@ This is a footgun. In runes mode, if you want to concatenate stuff you must wrap
 
 Note that Svelte 5 will also warn if you have a single expression wrapped in quotes, like `answer="{42}"` — in Svelte 6, that will cause the value to be converted to a string, rather than passed as a number.
 
+### HTML structure is stricter
+
+In Svelte 4, you were allowed to write HTML code that would be repaired by the browser when server side rendering it. For example you could write this...
+
+```svelte
+<table>
+	<tr>
+		<td>hi</td>
+	</tr>
+</table>
+```
+
+... and the browser would auto-insert a `<tbody>` element:
+
+```svelte
+<table>
+	<tbody>
+		<tr>
+			<td>hi</td>
+		</tr>
+	</tbody>
+</table>
+```
+
+Svelte 5 is more strict about the HTML structure and will throw a compiler error in cases where the browser would repair the DOM.
+
 ## Other breaking changes
 
 ### Stricter `@const` assignment validation
 
 Assignments to destructured parts of a `@const` declaration are no longer allowed. It was an oversight that this was ever allowed.
 
-### :is(...) and :where(...) are scoped
+### :is(...), :where(...), :has(...) and :not(...) are scoped
 
-Previously, Svelte did not analyse selectors inside `:is(...)` and `:where(...)`, effectively treating them as global. Svelte 5 analyses them in the context of the current component. As such, some selectors may now be treated as unused if they were relying on this treatment. To fix this, use `:global(...)` inside the `:is(...)/:where(...)` selectors.
+Previously, Svelte did not analyse selectors inside `:is(...)`, `:where(...)`, `:has(...)` and `:not(...)`, effectively treating them as global. Svelte 5 analyses them in the context of the current component. As such, some selectors may now be treated as unused if they were relying on this treatment. To fix this, use `:global(...)` inside the `:is(...)/:where(...)/:has(...)/:not(...)` selectors.
 
 When using Tailwind's `@apply` directive, add a `:global` selector to preserve rules that use Tailwind-generated `:is(...)` selectors:
 
@@ -402,5 +428,9 @@ Svelte 5 makes use of comments during server side rendering which are used for m
 ### `onevent` attributes are delegated
 
 Event attributes replace event directives: Instead of `on:click={handler}` you write `onclick={handler}`. For backwards compatibility the `on:event` syntax is still supported and behaves the same as in Svelte 4. Some of the `onevent` attributes however are delegated, which means you need to take care to not stop event propagation on those manually, as they then might never reach the listener for this event type at the root.
+
+### `--style-props` uses a different element
+
+Svelte 5 uses an extra `<svelte-css-wrapper>` element instead of a `<div>` to wrap the component when using CSS custom properties.
 
 <!-- TODO in final docs, add link to corresponding section for more details -->

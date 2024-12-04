@@ -1,4 +1,4 @@
-/** @import { AnalysisState } from '../../types.js' */
+/** @import { Context } from '../../types.js' */
 /** @import { AST, SvelteNode, TemplateNode } from '#compiler' */
 /** @import { ARIARoleDefinitionKey, ARIARoleRelationConcept, ARIAProperty, ARIAPropertyDefinition, ARIARoleDefinition } from 'aria-query' */
 import { roles as roles_map, aria, elementRoles } from 'aria-query';
@@ -403,9 +403,9 @@ const a11y_required_attributes = {
 	object: ['title', 'aria-label', 'aria-labelledby']
 };
 const a11y_distracting_elements = ['blink', 'marquee'];
+
+// this excludes `<a>` and `<button>` because they are handled separately
 const a11y_required_content = [
-	// anchor-has-content
-	'a',
 	// heading-has-content
 	'h1',
 	'h2',
@@ -582,16 +582,17 @@ function get_implicit_role(name, attribute_map) {
 const invisible_elements = ['meta', 'html', 'script', 'style'];
 
 /**
- * @param {SvelteNode | null} parent
+ * @param {SvelteNode[]} path
  * @param {string[]} elements
  */
-function is_parent(parent, elements) {
-	while (parent) {
+function is_parent(path, elements) {
+	let i = path.length;
+	while (i--) {
+		const parent = path[i];
 		if (parent.type === 'SvelteElement') return true; // unknown, play it safe, so we don't warn
 		if (parent.type === 'RegularElement') {
 			return elements.includes(parent.name);
 		}
-		parent = /** @type {TemplateNode} */ (parent).parent;
 	}
 	return false;
 }
@@ -683,9 +684,9 @@ function get_static_text_value(attribute) {
 
 /**
  * @param {AST.RegularElement | AST.SvelteElement} node
- * @param {AnalysisState} state
+ * @param {Context} context
  */
-export function check_element(node, state) {
+export function check_element(node, context) {
 	/** @type {Map<string, AST.Attribute>} */
 	const attribute_map = new Map();
 
@@ -792,7 +793,7 @@ export function check_element(node, state) {
 					}
 
 					// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
-					const is_parent_section_or_article = is_parent(node.parent, ['section', 'article']);
+					const is_parent_section_or_article = is_parent(context.path, ['section', 'article']);
 					if (!is_parent_section_or_article) {
 						const has_nested_redundant_role =
 							current_role === a11y_nested_implicit_semantics.get(node.name);
@@ -989,16 +990,17 @@ export function check_element(node, state) {
 	}
 
 	// element-specific checks
-	let contains_a11y_label = false;
+	const is_labelled = attribute_map.has('aria-label') || attribute_map.has('aria-labelledby');
+
+	if (node.name === 'a' || node.name === 'button') {
+		const is_hidden = get_static_value(attribute_map.get('aria-hidden')) === 'true';
+
+		if (!is_hidden && !is_labelled && !has_content(node)) {
+			w.a11y_consider_explicit_label(node);
+		}
+	}
 
 	if (node.name === 'a') {
-		const aria_label_attribute = attribute_map.get('aria-label');
-		if (aria_label_attribute) {
-			if (get_static_value(aria_label_attribute) !== '') {
-				contains_a11y_label = true;
-			}
-		}
-
 		const href = attribute_map.get('href') || attribute_map.get('xlink:href');
 		if (href) {
 			const href_value = get_static_text_value(href);
@@ -1113,7 +1115,7 @@ export function check_element(node, state) {
 	}
 
 	if (node.name === 'figcaption') {
-		if (!is_parent(node.parent, ['figure'])) {
+		if (!is_parent(context.path, ['figure'])) {
 			w.a11y_figcaption_parent(node);
 		}
 	}
@@ -1139,11 +1141,41 @@ export function check_element(node, state) {
 
 	// Check content
 	if (
-		!contains_a11y_label &&
+		!is_labelled &&
 		!has_contenteditable_binding &&
 		a11y_required_content.includes(node.name) &&
-		node.fragment.nodes.length === 0
+		!has_content(node)
 	) {
 		w.a11y_missing_content(node, node.name);
+	}
+}
+
+/**
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ */
+function has_content(element) {
+	for (const node of element.fragment.nodes) {
+		if (node.type === 'Text') {
+			if (node.data.trim() === '') {
+				continue;
+			}
+		}
+
+		if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
+			if (
+				node.name === 'img' &&
+				node.attributes.some((node) => node.type === 'Attribute' && node.name === 'alt')
+			) {
+				return true;
+			}
+
+			if (!has_content(node)) {
+				continue;
+			}
+		}
+
+		// assume everything else has content — this will result in false positives
+		// (e.g. an empty `{#if ...}{/if}`) but that's probably fine
+		return true;
 	}
 }

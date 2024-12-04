@@ -1,11 +1,12 @@
 /** @import { ComponentContext, ComponentContextLegacy } from '#client' */
 /** @import { EventDispatcher } from './index.js' */
 /** @import { NotFunction } from './internal/types.js' */
-import { current_component_context, flush_sync, untrack } from './internal/client/runtime.js';
+import { component_context, flush_sync, untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/shared/utils.js';
 import { user_effect } from './internal/client/index.js';
 import * as e from './internal/client/errors.js';
 import { lifecycle_outside_component } from './internal/shared/errors.js';
+import { legacy_mode_flag } from './internal/flags/index.js';
 
 /**
  * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
@@ -14,20 +15,19 @@ import { lifecycle_outside_component } from './internal/shared/errors.js';
  *
  * If a function is returned _synchronously_ from `onMount`, it will be called when the component is unmounted.
  *
- * `onMount` does not run inside a [server-side component](https://svelte.dev/docs#run-time-server-side-component-api).
+ * `onMount` does not run inside [server-side components](https://svelte.dev/docs/svelte/svelte-server#render).
  *
- * https://svelte.dev/docs/svelte#onmount
  * @template T
  * @param {() => NotFunction<T> | Promise<NotFunction<T>> | (() => any)} fn
  * @returns {void}
  */
 export function onMount(fn) {
-	if (current_component_context === null) {
+	if (component_context === null) {
 		lifecycle_outside_component('onMount');
 	}
 
-	if (current_component_context.l !== null) {
-		init_update_callbacks(current_component_context).m.push(fn);
+	if (legacy_mode_flag && component_context.l !== null) {
+		init_update_callbacks(component_context).m.push(fn);
 	} else {
 		user_effect(() => {
 			const cleanup = untrack(fn);
@@ -42,12 +42,11 @@ export function onMount(fn) {
  * Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the
  * only one that runs inside a server-side component.
  *
- * https://svelte.dev/docs/svelte#ondestroy
  * @param {() => any} fn
  * @returns {void}
  */
 export function onDestroy(fn) {
-	if (current_component_context === null) {
+	if (component_context === null) {
 		lifecycle_outside_component('onDestroy');
 	}
 
@@ -66,7 +65,7 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
 }
 
 /**
- * Creates an event dispatcher that can be used to dispatch [component events](https://svelte.dev/docs#template-syntax-component-directives-on-eventname).
+ * Creates an event dispatcher that can be used to dispatch [component events](https://svelte.dev/docs/svelte/legacy-on#Component-events).
  * Event dispatchers are functions that can take two arguments: `name` and `detail`.
  *
  * Component events created with `createEventDispatcher` create a
@@ -84,20 +83,19 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
  * }>();
  * ```
  *
- * https://svelte.dev/docs/svelte#createeventdispatcher
- * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte-5-preview.vercel.app/docs/deprecations#createeventdispatcher
+ * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte.dev/docs/svelte/v5-migration-guide#Event-changes-Component-events
  * @template {Record<string, any>} [EventMap = any]
  * @returns {EventDispatcher<EventMap>}
  */
 export function createEventDispatcher() {
-	const component_context = current_component_context;
-	if (component_context === null) {
+	const active_component_context = component_context;
+	if (active_component_context === null) {
 		lifecycle_outside_component('createEventDispatcher');
 	}
 
 	return (type, detail, options) => {
 		const events = /** @type {Record<string, Function | Function[]>} */ (
-			component_context.s.$$events
+			active_component_context.s.$$events
 		)?.[/** @type {any} */ (type)];
 
 		if (events) {
@@ -106,7 +104,7 @@ export function createEventDispatcher() {
 			// in a server (non-DOM) environment?
 			const event = create_custom_event(/** @type {string} */ (type), detail, options);
 			for (const fn of callbacks) {
-				fn.call(component_context.x, event);
+				fn.call(active_component_context.x, event);
 			}
 			return !event.defaultPrevented;
 		}
@@ -124,21 +122,20 @@ export function createEventDispatcher() {
  *
  * In runes mode use `$effect.pre` instead.
  *
- * https://svelte.dev/docs/svelte#beforeupdate
- * @deprecated Use `$effect.pre` instead — see https://svelte-5-preview.vercel.app/docs/deprecations#beforeupdate-and-afterupdate
+ * @deprecated Use `$effect.pre` instead — see https://svelte.dev/docs/svelte/$effect#$effect.pre
  * @param {() => void} fn
  * @returns {void}
  */
 export function beforeUpdate(fn) {
-	if (current_component_context === null) {
+	if (component_context === null) {
 		lifecycle_outside_component('beforeUpdate');
 	}
 
-	if (current_component_context.l === null) {
+	if (component_context.l === null) {
 		e.lifecycle_legacy_only('beforeUpdate');
 	}
 
-	init_update_callbacks(current_component_context).b.push(fn);
+	init_update_callbacks(component_context).b.push(fn);
 }
 
 /**
@@ -148,21 +145,20 @@ export function beforeUpdate(fn) {
  *
  * In runes mode use `$effect` instead.
  *
- * https://svelte.dev/docs/svelte#afterupdate
- * @deprecated Use `$effect` instead — see https://svelte-5-preview.vercel.app/docs/deprecations#beforeupdate-and-afterupdate
+ * @deprecated Use `$effect` instead — see https://svelte.dev/docs/svelte/$effect
  * @param {() => void} fn
  * @returns {void}
  */
 export function afterUpdate(fn) {
-	if (current_component_context === null) {
+	if (component_context === null) {
 		lifecycle_outside_component('afterUpdate');
 	}
 
-	if (current_component_context.l === null) {
+	if (component_context.l === null) {
 		e.lifecycle_legacy_only('afterUpdate');
 	}
 
-	init_update_callbacks(current_component_context).a.push(fn);
+	init_update_callbacks(component_context).a.push(fn);
 }
 
 /**

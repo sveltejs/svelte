@@ -74,7 +74,7 @@
 
 ## block_invalid_continuation_placement
 
-> {:...} block is invalid at this position (did you forget to close the preceeding element or block?)
+> {:...} block is invalid at this position (did you forget to close the preceding element or block?)
 
 ## block_invalid_elseif
 
@@ -171,6 +171,10 @@
 ## expected_whitespace
 
 > Expected whitespace
+
+## illegal_element_attribute
+
+> `<%name%>` does not support non-event attributes or spread attributes
 
 ## js_parse_error
 
@@ -278,6 +282,14 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 > `<svelte:body>` does not support non-event attributes or spread attributes
 
+## svelte_boundary_invalid_attribute
+
+> Valid attributes on `<svelte:boundary>` are `onerror` and `failed`
+
+## svelte_boundary_invalid_attribute_value
+
+> Attribute value must be a non-string expression
+
 ## svelte_component_invalid_this
 
 > Invalid component definition — must be an `{expression}`
@@ -344,7 +356,15 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 ## svelte_options_invalid_tagname
 
-> Tag name must be two or more words joined by the "-" character
+> Tag name must be lowercase and hyphenated
+
+See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name for more information on valid tag names
+
+## svelte_options_reserved_tagname
+
+> Tag name is reserved
+
+See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name for more information on valid tag names
 
 ## svelte_options_unknown_attribute
 

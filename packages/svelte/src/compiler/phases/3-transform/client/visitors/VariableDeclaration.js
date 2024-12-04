@@ -1,7 +1,6 @@
 /** @import { CallExpression, Expression, Identifier, Literal, VariableDeclaration, VariableDeclarator } from 'estree' */
 /** @import { Binding } from '#compiler' */
-/** @import { ComponentContext } from '../types' */
-/** @import { Scope } from '../../../scope' */
+/** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
 import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
@@ -267,7 +266,7 @@ export function VariableDeclaration(node, context) {
 			declarations.push(
 				...create_state_declarators(
 					declarator,
-					context.state.scope,
+					context.state,
 					/** @type {Expression} */ (declarator.init && context.visit(declarator.init))
 				)
 			);
@@ -287,12 +286,17 @@ export function VariableDeclaration(node, context) {
 /**
  * Creates the output for a state declaration in legacy mode.
  * @param {VariableDeclarator} declarator
- * @param {Scope} scope
+ * @param {ComponentClientTransformState} scope
  * @param {Expression} value
  */
-function create_state_declarators(declarator, scope, value) {
+function create_state_declarators(declarator, { scope, analysis }, value) {
 	if (declarator.id.type === 'Identifier') {
-		return [b.declarator(declarator.id, b.call('$.mutable_state', value))];
+		return [
+			b.declarator(
+				declarator.id,
+				b.call('$.mutable_state', value, analysis.immutable ? b.true : undefined)
+			)
+		];
 	}
 
 	const tmp = scope.generate('tmp');
@@ -304,7 +308,9 @@ function create_state_declarators(declarator, scope, value) {
 			const binding = scope.get(/** @type {Identifier} */ (path.node).name);
 			return b.declarator(
 				path.node,
-				binding?.kind === 'state' ? b.call('$.mutable_state', value) : value
+				binding?.kind === 'state'
+					? b.call('$.mutable_state', value, analysis.immutable ? b.true : undefined)
+					: value
 			);
 		})
 	];

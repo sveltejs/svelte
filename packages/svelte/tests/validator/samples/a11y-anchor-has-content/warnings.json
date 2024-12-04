@@ -1,7 +1,7 @@
 [
 	{
-		"code": "a11y_missing_content",
-		"message": "`<a>` element should have child content",
+		"code": "a11y_consider_explicit_label",
+		"message": "Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute",
 		"start": {
 			"line": 1,
 			"column": 0

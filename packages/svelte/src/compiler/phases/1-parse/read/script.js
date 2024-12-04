@@ -34,7 +34,7 @@ export function read_script(parser, start, attributes) {
 	let ast;
 
 	try {
-		ast = acorn.parse(source, parser.ts);
+		ast = acorn.parse(source, parser.ts, true);
 	} catch (err) {
 		parser.acorn_error(err);
 	}
@@ -74,8 +74,6 @@ export function read_script(parser, start, attributes) {
 				e.script_invalid_context(attribute);
 			}
 
-			w.script_context_deprecated(attribute);
-
 			context = 'module';
 		}
 	}
@@ -86,7 +84,6 @@ export function read_script(parser, start, attributes) {
 		end: parser.index,
 		context,
 		content: ast,
-		parent: null,
 		// @ts-ignore
 		attributes
 	};

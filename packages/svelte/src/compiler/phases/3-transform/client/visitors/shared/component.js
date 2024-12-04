@@ -2,7 +2,7 @@
 /** @import { AST, TemplateNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
-import { get_attribute_chunks } from '../../../../../utils/ast.js';
+import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { create_derived } from '../../utils.js';
 import { build_bind_this, validate_binding } from '../shared/utils.js';
@@ -45,9 +45,7 @@ export function build_component(node, component_name, context, anchor = context.
 	/** @type {Identifier | MemberExpression | null} */
 	let bind_this = null;
 
-	/**
-	 * @type {ExpressionStatement[]}
-	 */
+	/** @type {ExpressionStatement[]} */
 	const binding_initializers = [];
 
 	/**
@@ -178,19 +176,39 @@ export function build_component(node, component_name, context, anchor = context.
 				bind_this = attribute.expression;
 			} else {
 				if (dev) {
-					binding_initializers.push(
-						b.stmt(
-							b.call(
-								b.id('$.add_owner_effect'),
-								b.thunk(expression),
-								b.id(component_name),
-								is_ignored(node, 'ownership_invalid_binding') && b.true
+					const left = object(attribute.expression);
+					let binding;
+					if (left?.type === 'Identifier') {
+						binding = context.state.scope.get(left.name);
+					}
+					// Only run ownership addition on $state fields.
+					// Theoretically someone could create a `$state` while creating `$state.raw` or inside a `$derived.by`,
+					// but that feels so much of an edge case that it doesn't warrant a perf hit for the common case.
+					if (binding?.kind !== 'derived' && binding?.kind !== 'raw_state') {
+						binding_initializers.push(
+							b.stmt(
+								b.call(
+									b.id('$.add_owner_effect'),
+									b.thunk(expression),
+									b.id(component_name),
+									is_ignored(node, 'ownership_invalid_binding') && b.true
+								)
 							)
-						)
-					);
+						);
+					}
 				}
 
-				push_prop(b.get(attribute.name, [b.return(expression)]));
+				const is_store_sub =
+					attribute.expression.type === 'Identifier' &&
+					context.state.scope.get(attribute.expression.name)?.kind === 'store_sub';
+
+				if (is_store_sub) {
+					push_prop(
+						b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)])
+					);
+				} else {
+					push_prop(b.get(attribute.name, [b.return(expression)]));
+				}
 
 				const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
 				push_prop(
@@ -216,6 +234,9 @@ export function build_component(node, component_name, context, anchor = context.
 	/** @type {Statement[]} */
 	const snippet_declarations = [];
 
+	/** @type {import('estree').Property[]} */
+	const serialized_slots = [];
+
 	// Group children by slot
 	for (const child of node.fragment.nodes) {
 		if (child.type === 'SnippetBlock') {
@@ -229,6 +250,11 @@ export function build_component(node, component_name, context, anchor = context.
 
 			push_prop(b.prop('init', child.expression, child.expression));
 
+			// Interop: allows people to pass snippets when component still uses slots
+			serialized_slots.push(
+				b.init(child.expression.name === 'children' ? 'default' : child.expression.name, b.true)
+			);
+
 			continue;
 		}
 
@@ -238,8 +264,6 @@ export function build_component(node, component_name, context, anchor = context.
 	}
 
 	// Serialize each slot
-	/** @type {Property[]} */
-	const serialized_slots = [];
 	for (const slot_name of Object.keys(children)) {
 		const block = /** @type {BlockStatement} */ (
 			context.visit(
@@ -271,7 +295,14 @@ export function build_component(node, component_name, context, anchor = context.
 		);
 
 		if (slot_name === 'default' && !has_children_prop) {
-			if (lets.length === 0 && children.default.every((node) => node.type !== 'SvelteFragment')) {
+			if (
+				lets.length === 0 &&
+				children.default.every(
+					(node) =>
+						node.type !== 'SvelteFragment' ||
+						!node.attributes.some((attr) => attr.type === 'LetDirective')
+				)
+			) {
 				// create `children` prop...
 				push_prop(
 					b.init(
@@ -357,10 +388,10 @@ export function build_component(node, component_name, context, anchor = context.
 	}
 
 	if (Object.keys(custom_css_props).length > 0) {
-		context.state.template.push_quasi(
+		context.state.template.push(
 			context.state.metadata.namespace === 'svg'
 				? '<g><!></g>'
-				: '<div style="display: contents"><!></div>'
+				: '<svelte-css-wrapper style="display: contents"><!></svelte-css-wrapper>'
 		);
 
 		statements.push(
@@ -369,7 +400,7 @@ export function build_component(node, component_name, context, anchor = context.
 			b.stmt(b.call('$.reset', anchor))
 		);
 	} else {
-		context.state.template.push_quasi('<!>');
+		context.state.template.push('<!>');
 		statements.push(b.stmt(fn(anchor)));
 	}
 

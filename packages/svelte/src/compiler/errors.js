@@ -3,8 +3,9 @@
 import { CompileDiagnostic } from './utils/compile_diagnostic.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
-class InternalCompileError extends CompileDiagnostic {
-	name = 'CompileError';
+class InternalCompileError extends Error {
+	message = ''; // ensure this property is enumerable
+	#diagnostic;
 
 	/**
 	 * @param {string} code
@@ -12,7 +13,22 @@ class InternalCompileError extends CompileDiagnostic {
 	 * @param {[number, number] | undefined} position
 	 */
 	constructor(code, message, position) {
-		super(code, message, position);
+		super(message);
+		this.stack = ''; // avoid unnecessary noise; don't set it as a class property or it becomes enumerable
+		// We want to extend from Error so that various bundler plugins properly handle it.
+		// But we also want to share the same object shape with that of warnings, therefore
+		// we create an instance of the shared class an copy over its properties.
+		this.#diagnostic = new CompileDiagnostic(code, message, position);
+		Object.assign(this, this.#diagnostic);
+		this.name = 'CompileError';
+	}
+
+	toString() {
+		return this.#diagnostic.toString();
+	}
+
+	toJSON() {
+		return this.#diagnostic.toJSON();
 	}
 }
 
@@ -150,6 +166,16 @@ export function each_item_invalid_assignment(node) {
  */
 export function effect_invalid_placement(node) {
 	e(node, "effect_invalid_placement", "`$effect()` can only be used as an expression statement");
+}
+
+/**
+ * `%name%` is not defined
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function export_undefined(node, name) {
+	e(node, "export_undefined", `\`${name}\` is not defined`);
 }
 
 /**
@@ -377,6 +403,15 @@ export function rune_renamed(node, name, replacement) {
  */
 export function runes_mode_invalid_import(node, name) {
 	e(node, "runes_mode_invalid_import", `${name} cannot be used in runes mode`);
+}
+
+/**
+ * An exported snippet can only reference things declared in a `<script module>`, or other exportable snippets
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function snippet_invalid_export(node) {
+	e(node, "snippet_invalid_export", "An exported snippet can only reference things declared in a `<script module>`, or other exportable snippets");
 }
 
 /**
@@ -731,12 +766,12 @@ export function block_duplicate_clause(node, name) {
 }
 
 /**
- * {:...} block is invalid at this position (did you forget to close the preceeding element or block?)
+ * {:...} block is invalid at this position (did you forget to close the preceding element or block?)
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function block_invalid_continuation_placement(node) {
-	e(node, "block_invalid_continuation_placement", "{:...} block is invalid at this position (did you forget to close the preceeding element or block?)");
+	e(node, "block_invalid_continuation_placement", "{:...} block is invalid at this position (did you forget to close the preceding element or block?)");
 }
 
 /**
@@ -966,6 +1001,16 @@ export function expected_token(node, token) {
  */
 export function expected_whitespace(node) {
 	e(node, "expected_whitespace", "Expected whitespace");
+}
+
+/**
+ * `<%name%>` does not support non-event attributes or spread attributes
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function illegal_element_attribute(node, name) {
+	e(node, "illegal_element_attribute", `\`<${name}>\` does not support non-event attributes or spread attributes`);
 }
 
 /**
@@ -1203,6 +1248,24 @@ export function svelte_body_illegal_attribute(node) {
 }
 
 /**
+ * Valid attributes on `<svelte:boundary>` are `onerror` and `failed`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_boundary_invalid_attribute(node) {
+	e(node, "svelte_boundary_invalid_attribute", "Valid attributes on `<svelte:boundary>` are `onerror` and `failed`");
+}
+
+/**
+ * Attribute value must be a non-string expression
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_boundary_invalid_attribute_value(node) {
+	e(node, "svelte_boundary_invalid_attribute_value", "Attribute value must be a non-string expression");
+}
+
+/**
  * Invalid component definition — must be an `{expression}`
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -1352,12 +1415,21 @@ export function svelte_options_invalid_customelement_shadow(node) {
 }
 
 /**
- * Tag name must be two or more words joined by the "-" character
+ * Tag name must be lowercase and hyphenated
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function svelte_options_invalid_tagname(node) {
-	e(node, "svelte_options_invalid_tagname", "Tag name must be two or more words joined by the \"-\" character");
+	e(node, "svelte_options_invalid_tagname", "Tag name must be lowercase and hyphenated");
+}
+
+/**
+ * Tag name is reserved
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_options_reserved_tagname(node) {
+	e(node, "svelte_options_reserved_tagname", "Tag name is reserved");
 }
 
 /**

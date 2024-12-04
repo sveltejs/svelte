@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, Property } from 'estree' */
+/** @import { BlockStatement, Expression, Literal, Property } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
@@ -15,8 +15,7 @@ export function SlotElement(node, context) {
 	/** @type {Expression[]} */
 	const spreads = [];
 
-	/** @type {Expression} */
-	let expression = b.call('$.default_slot', b.id('$$props'));
+	let name = b.literal('default');
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'SpreadAttribute') {
@@ -25,7 +24,7 @@ export function SlotElement(node, context) {
 			const value = build_attribute_value(attribute.value, context, false, true);
 
 			if (attribute.name === 'name') {
-				expression = b.member(b.member_id('$$props.$$slots'), value, true, true);
+				name = /** @type {Literal} */ (value);
 			} else if (attribute.name !== 'slot') {
 				props.push(b.init(attribute.name, value));
 			}
@@ -42,7 +41,14 @@ export function SlotElement(node, context) {
 			? b.literal(null)
 			: b.thunk(/** @type {BlockStatement} */ (context.visit(node.fragment)));
 
-	const slot = b.call('$.slot', b.id('$$payload'), expression, props_expression, fallback);
+	const slot = b.call(
+		'$.slot',
+		b.id('$$payload'),
+		b.id('$$props'),
+		name,
+		props_expression,
+		fallback
+	);
 
 	context.state.template.push(empty_comment, b.stmt(slot), empty_comment);
 }

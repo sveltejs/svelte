@@ -192,7 +192,8 @@ const ATTRIBUTE_ALIASES = {
 	ismap: 'isMap',
 	nomodule: 'noModule',
 	playsinline: 'playsInline',
-	readonly: 'readOnly'
+	readonly: 'readOnly',
+	srcobject: 'srcObject'
 };
 
 /**
@@ -212,7 +213,8 @@ const DOM_PROPERTIES = [
 	'readOnly',
 	'value',
 	'inert',
-	'volume'
+	'volume',
+	'srcObject'
 ];
 
 /**
@@ -222,7 +224,27 @@ export function is_dom_property(name) {
 	return DOM_PROPERTIES.includes(name);
 }
 
-const PASSIVE_EVENTS = ['wheel', 'mousewheel', 'touchstart', 'touchmove'];
+const NON_STATIC_PROPERTIES = ['autofocus', 'muted'];
+
+/**
+ * Returns `true` if the given attribute cannot be set through the template
+ * string, i.e. needs some kind of JavaScript handling to work.
+ * @param {string} name
+ */
+export function cannot_be_set_statically(name) {
+	return NON_STATIC_PROPERTIES.includes(name);
+}
+
+/**
+ * Subset of delegated events which should be passive by default.
+ * These two are already passive via browser defaults on window, document and body.
+ * But since
+ * - we're delegating them
+ * - they happen often
+ * - they apply to mobile which is generally less performant
+ * we're marking them as passive by default for other elements, too.
+ */
+const PASSIVE_EVENTS = ['touchstart', 'touchmove'];
 
 /**
  * Returns `true` if `name` is a passive event

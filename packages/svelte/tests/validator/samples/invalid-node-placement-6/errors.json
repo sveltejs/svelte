@@ -3,11 +3,11 @@
 		"code": "node_invalid_placement",
 		"message": "`<dt>` is invalid inside `<dd>`",
 		"start": {
-			"line": 11,
+			"line": 16,
 			"column": 3
 		},
 		"end": {
-			"line": 11,
+			"line": 16,
 			"column": 19
 		}
 	}

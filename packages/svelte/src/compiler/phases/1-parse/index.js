@@ -262,30 +262,12 @@ export class Parser {
 	}
 
 	/**
-	 * @template T
-	 * @param {Omit<T, 'prev' | 'parent'>} node
+	 * @template {AST.Fragment['nodes'][number]} T
+	 * @param {T} node
 	 * @returns {T}
 	 */
 	append(node) {
-		const current = this.current();
-		const fragment = this.fragments.at(-1);
-
-		Object.defineProperties(node, {
-			prev: {
-				enumerable: false,
-				value: fragment?.nodes.at(-1) ?? null
-			},
-			parent: {
-				enumerable: false,
-				configurable: true,
-				value: current
-			}
-		});
-
-		// @ts-expect-error
-		fragment.nodes.push(node);
-
-		// @ts-expect-error
+		this.fragments.at(-1)?.nodes.push(node);
 		return node;
 	}
 }

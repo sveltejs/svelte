@@ -1,8 +1,0 @@
-{
-	"$schema": "http://openapi.vercel.sh/vercel.json",
-	"github": {
-		"silent": true
-	},
-	"buildCommand": "echo \"TODO reinstate in future: cd ../../packages/svelte && pnpm prepublishOnly && cd ../../sites/svelte.dev && pnpm rebuild sharp && pnpm build\"",
-	"outputDirectory": "placeholder"
-}

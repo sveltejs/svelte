@@ -17,6 +17,8 @@ export interface Value<V = unknown> extends Signal {
 }
 
 export interface Reaction extends Signal {
+	/** The associated component context */
+	ctx: null | ComponentContext;
 	/** The reaction function */
 	fn: null | Function;
 	/** Signals that this signal reads from */
@@ -28,10 +30,11 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 	fn: () => V;
 	/** Reactions created inside this signal */
 	children: null | Reaction[];
+	/** Parent effect or derived */
+	parent: Effect | Derived | null;
 }
 
 export interface Effect extends Reaction {
-	parent: Effect | null;
 	/**
 	 * Branch effects store their start/end nodes so that they can be
 	 * removed when the effect is destroyed, or moved when an `each`
@@ -40,8 +43,8 @@ export interface Effect extends Reaction {
 	 */
 	nodes_start: null | TemplateNode;
 	nodes_end: null | TemplateNode;
-	/** The associated component context */
-	ctx: null | ComponentContext;
+	/** Reactions created inside this signal */
+	deriveds: null | Derived[];
 	/** The effect function */
 	fn: null | (() => void | (() => void));
 	/** The teardown function returned from the effect function */
@@ -56,6 +59,8 @@ export interface Effect extends Reaction {
 	first: null | Effect;
 	/** Last child effect created inside this signal */
 	last: null | Effect;
+	/** Parent effect */
+	parent: Effect | null;
 	/** Dev only */
 	component_function?: any;
 }

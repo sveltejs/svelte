@@ -1,6 +1,4 @@
-# Temporarily ignore this file to avoid merge conflicts.
-# see: https://github.com/sveltejs/svelte/pull/9609
-documentation/docs/05-misc/03-typescript.md
+documentation/docs/
 
 packages/**/dist/*.js
 packages/**/build/*.js

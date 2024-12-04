@@ -59,6 +59,7 @@ export function build_inline_component(node, expression, context) {
 			props_and_spreads.push(props);
 		}
 	}
+
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
 			if (!slot_scope_applies_to_itself) {
@@ -102,6 +103,9 @@ export function build_inline_component(node, expression, context) {
 	/** @type {Statement[]} */
 	const snippet_declarations = [];
 
+	/** @type {Property[]} */
+	const serialized_slots = [];
+
 	// Group children by slot
 	for (const child of node.fragment.nodes) {
 		if (child.type === 'SnippetBlock') {
@@ -114,6 +118,11 @@ export function build_inline_component(node, expression, context) {
 			});
 
 			push_prop(b.prop('init', child.expression, child.expression));
+
+			// Interop: allows people to pass snippets when component still uses slots
+			serialized_slots.push(
+				b.init(child.expression.name === 'children' ? 'default' : child.expression.name, b.true)
+			);
 
 			continue;
 		}
@@ -142,9 +151,6 @@ export function build_inline_component(node, expression, context) {
 	}
 
 	// Serialize each slot
-	/** @type {Property[]} */
-	const serialized_slots = [];
-
 	for (const slot_name of Object.keys(children)) {
 		const block = /** @type {BlockStatement} */ (
 			context.visit(
@@ -196,7 +202,11 @@ export function build_inline_component(node, expression, context) {
 		if (slot_name === 'default' && !has_children_prop) {
 			if (
 				lets.default.length === 0 &&
-				children.default.every((node) => node.type !== 'SvelteFragment')
+				children.default.every(
+					(node) =>
+						node.type !== 'SvelteFragment' ||
+						!node.attributes.some((attr) => attr.type === 'LetDirective')
+				)
 			) {
 				// create `children` prop...
 				push_prop(b.prop('init', b.id('children'), slot_fn));

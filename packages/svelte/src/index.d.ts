@@ -5,7 +5,7 @@ import './ambient.js';
 /**
  * @deprecated In Svelte 4, components are classes. In Svelte 5, they are functions.
  * Use `mount` instead to instantiate components.
- * See [breaking changes](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes)
+ * See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
  * for more info.
  */
 export interface ComponentConstructorOptions<
@@ -38,8 +38,8 @@ type Properties<Props, Slots> = Props &
 /**
  * This was the base class for Svelte components in Svelte 4. Svelte 5+ components
  * are completely different under the hood. For typing, use `Component` instead.
- * To instantiate components, use `mount` instead`.
- * See [breaking changes documentation](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes) for more info.
+ * To instantiate components, use `mount` instead.
+ * See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more info.
  */
 export class SvelteComponent<
 	Props extends Record<string, any> = Record<string, any>,
@@ -53,7 +53,7 @@ export class SvelteComponent<
 	/**
 	 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
 	 * is a stop-gap solution. Migrate towards using `mount` instead. See
-	 * https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more info.
+	 * https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more info.
 	 */
 	constructor(options: ComponentConstructorOptions<Properties<Props, Slots>>);
 	/**
@@ -83,14 +83,14 @@ export class SvelteComponent<
 
 	/**
 	 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-	 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+	 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
 	 * for more info.
 	 */
 	$destroy(): void;
 
 	/**
 	 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-	 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+	 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
 	 * for more info.
 	 */
 	$on<K extends Extract<keyof Events, string>>(
@@ -100,7 +100,7 @@ export class SvelteComponent<
 
 	/**
 	 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-	 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+	 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
 	 * for more info.
 	 */
 	$set(props: Partial<Props>): void;
@@ -153,13 +153,13 @@ export interface Component<
 	): {
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
 		 * for more info.
 		 */
 		$on?(type: string, callback: (e: any) => void): () => void;
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
 		 * for more info.
 		 */
 		$set?(props: Partial<Props>): void;
@@ -171,7 +171,7 @@ export interface Component<
 }
 
 /**
- * @deprecated Use `Component` instead. See [breaking changes documentation](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes) for more information.
+ * @deprecated Use `Component` instead. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more information.
  */
 export class SvelteComponentTyped<
 	Props extends Record<string, any> = Record<string, any>,
@@ -210,8 +210,10 @@ export type ComponentEvents<Comp extends SvelteComponent> =
  * import MyComponent from './MyComponent.svelte';
  *
  * // Errors if these aren't the correct props expected by MyComponent.
- * const props: ComponentProps<MyComponent> = { foo: 'bar' };
+ * const props: ComponentProps<typeof MyComponent> = { foo: 'bar' };
  * ```
+ *
+ * > [!NOTE] In Svelte 4, you would do `ComponentProps<MyComponent>` because `MyComponent` was a class.
  *
  * Example: A generic function that accepts some component and infers the type of its props:
  *
@@ -276,7 +278,7 @@ declare const SnippetReturn: unique symbol;
  * ```
  * You can only call a snippet through the `{@render ...}` tag.
  *
- * https://svelte-5-preview.vercel.app/docs/snippets
+ * https://svelte.dev/docs/svelte/snippet
  *
  * @template Parameters the parameters that the snippet expects (if any) as a tuple.
  */
@@ -308,5 +310,45 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 				: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
 	): boolean;
 }
+
+/**
+ * Defines the options accepted by the `mount()` function.
+ */
+export type MountOptions<Props extends Record<string, any> = Record<string, any>> = {
+	/**
+	 * Target element where the component will be mounted.
+	 */
+	target: Document | Element | ShadowRoot;
+	/**
+	 * Optional node inside `target`. When specified, it is used to render the component immediately before it.
+	 */
+	anchor?: Node;
+	/**
+	 * Allows the specification of events.
+	 * @deprecated Use callback props instead.
+	 */
+	events?: Record<string, (e: any) => any>;
+	/**
+	 * Can be accessed via `getContext()` at the component level.
+	 */
+	context?: Map<any, any>;
+	/**
+	 * Whether or not to play transitions on initial render.
+	 * @default true
+	 */
+	intro?: boolean;
+} & ({} extends Props
+	? {
+			/**
+			 * Component properties.
+			 */
+			props?: Props;
+		}
+	: {
+			/**
+			 * Component properties.
+			 */
+			props: Props;
+		});
 
 export * from './index-client.js';

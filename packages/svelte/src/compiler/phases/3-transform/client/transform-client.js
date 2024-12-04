@@ -4,7 +4,7 @@
 /** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';
 import * as b from '../../../utils/builders.js';
-import { build_getter } from './utils.js';
+import { build_getter, is_state_source } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
 import { dev, filename } from '../../../state.js';
 import { AnimateDirective } from './visitors/AnimateDirective.js';
@@ -48,6 +48,7 @@ import { SvelteComponent } from './visitors/SvelteComponent.js';
 import { SvelteDocument } from './visitors/SvelteDocument.js';
 import { SvelteElement } from './visitors/SvelteElement.js';
 import { SvelteFragment } from './visitors/SvelteFragment.js';
+import { SvelteBoundary } from './visitors/SvelteBoundary.js';
 import { SvelteHead } from './visitors/SvelteHead.js';
 import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { SvelteWindow } from './visitors/SvelteWindow.js';
@@ -66,7 +67,12 @@ const visitors = {
 			const transform = { ...state.transform };
 
 			for (const [name, binding] of scope.declarations) {
-				if (binding.kind === 'normal') {
+				if (
+					binding.kind === 'normal' ||
+					// Reads of `$state(...)` declarations are not
+					// transformed if they are never reassigned
+					(binding.kind === 'state' && !is_state_source(binding, state.analysis))
+				) {
 					delete transform[name];
 				}
 			}
@@ -117,6 +123,7 @@ const visitors = {
 	SvelteDocument,
 	SvelteElement,
 	SvelteFragment,
+	SvelteBoundary,
 	SvelteHead,
 	SvelteSelf,
 	SvelteWindow,
@@ -158,6 +165,8 @@ export function client_component(analysis, options) {
 		private_state: new Map(),
 		transform: {},
 		in_constructor: false,
+		instance_level_snippets: [],
+		module_level_snippets: [],
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		before_init: /** @type {any} */ (null),
@@ -207,7 +216,9 @@ export function client_component(analysis, options) {
 
 	for (const [name, binding] of analysis.instance.scope.declarations) {
 		if (binding.kind === 'legacy_reactive') {
-			legacy_reactive_declarations.push(b.const(name, b.call('$.mutable_state')));
+			legacy_reactive_declarations.push(
+				b.const(name, b.call('$.mutable_state', undefined, analysis.immutable ? b.true : undefined))
+			);
 		}
 		if (binding.kind === 'store_sub') {
 			if (store_setup.length === 0) {
@@ -269,6 +280,10 @@ export function client_component(analysis, options) {
 			} else if (!dev) {
 				return b.init(alias ?? name, expression);
 			}
+		}
+
+		if (binding?.kind === 'prop' || binding?.kind === 'bindable_prop') {
+			return [getter, b.set(alias ?? name, [b.stmt(b.call(name, b.id('$$value')))])];
 		}
 
 		if (binding?.kind === 'state' || binding?.kind === 'raw_state') {
@@ -357,9 +372,11 @@ export function client_component(analysis, options) {
 		...store_setup,
 		...legacy_reactive_declarations,
 		...group_binding_declarations,
-		...analysis.top_level_snippets,
+		...state.instance_level_snippets,
 		.../** @type {ESTree.Statement[]} */ (instance.body),
-		analysis.runes || !analysis.needs_context ? b.empty : b.stmt(b.call('$.init')),
+		analysis.runes || !analysis.needs_context
+			? b.empty
+			: b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)),
 		.../** @type {ESTree.Statement[]} */ (template.body)
 	]);
 
@@ -386,9 +403,7 @@ export function client_component(analysis, options) {
 		state.hoisted.push(b.const('$$css', b.object([b.init('hash', hash), b.init('code', code)])));
 
 		component_block.body.unshift(
-			b.stmt(
-				b.call('$.append_styles', b.id('$$anchor'), b.id('$$css'), options.customElement && b.true)
-			)
+			b.stmt(b.call('$.append_styles', b.id('$$anchor'), b.id('$$css')))
 		);
 	}
 
@@ -472,7 +487,7 @@ export function client_component(analysis, options) {
 		}
 	}
 
-	body = [...imports, ...body];
+	body = [...imports, ...state.module_level_snippets, ...body];
 
 	const component = b.function_declaration(
 		b.id(analysis.name),
@@ -494,18 +509,7 @@ export function client_component(analysis, options) {
 
 		if (analysis.css.hash) {
 			// remove existing `<style>` element, in case CSS changed
-			accept_fn_body.unshift(
-				b.stmt(
-					b.call(
-						b.member(
-							b.call('document.querySelector', b.literal('#' + analysis.css.hash)),
-							'remove',
-							false,
-							true
-						)
-					)
-				)
-			);
+			accept_fn_body.unshift(b.stmt(b.call('$.cleanup_styles', b.literal(analysis.css.hash))));
 		}
 
 		const hmr = b.block([
@@ -529,6 +533,10 @@ export function client_component(analysis, options) {
 
 		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'))));
 		body.push(b.stmt(b.call(b.id('$.mark_module_end'), b.id(analysis.name))));
+	}
+
+	if (!analysis.runes) {
+		body.unshift(b.imports([], 'svelte/internal/flags/legacy'));
 	}
 
 	if (options.discloseVersion) {
@@ -561,17 +569,19 @@ export function client_component(analysis, options) {
 
 	if (analysis.custom_element) {
 		const ce = analysis.custom_element;
+		const ce_props = typeof ce === 'boolean' ? {} : ce.props || {};
 
 		/** @type {ESTree.Property[]} */
 		const props_str = [];
 
-		for (const [name, binding] of properties) {
-			const key = binding.prop_alias ?? name;
-			const prop_def = typeof ce === 'boolean' ? {} : ce.props?.[key] || {};
+		for (const [name, prop_def] of Object.entries(ce_props)) {
+			const binding = analysis.instance.scope.get(name);
+			const key = binding?.prop_alias ?? name;
+
 			if (
 				!prop_def.type &&
-				binding.initial?.type === 'Literal' &&
-				typeof binding.initial.value === 'boolean'
+				binding?.initial?.type === 'Literal' &&
+				typeof binding?.initial.value === 'boolean'
 			) {
 				prop_def.type = 'Boolean';
 			}
@@ -585,7 +595,15 @@ export function client_component(analysis, options) {
 					].filter(Boolean)
 				)
 			);
+
 			props_str.push(b.init(key, value));
+		}
+
+		for (const [name, binding] of properties) {
+			const key = binding.prop_alias ?? name;
+			if (ce_props[key]) continue;
+
+			props_str.push(b.init(key, b.object([])));
 		}
 
 		const slots_str = b.array([...analysis.slot_names.keys()].map((name) => b.literal(name)));

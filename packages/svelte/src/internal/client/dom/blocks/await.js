@@ -1,19 +1,20 @@
 /** @import { Effect, Source, TemplateNode } from '#client' */
-import { is_promise, noop } from '../../../shared/utils.js';
+import { DEV } from 'esm-env';
+import { is_promise } from '../../../shared/utils.js';
+import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
+import { internal_set, mutable_source, source } from '../../reactivity/sources.js';
 import {
-	current_component_context,
+	component_context,
 	flush_sync,
 	is_runes,
-	set_current_component_context,
-	set_current_effect,
-	set_current_reaction,
+	set_active_effect,
+	set_active_reaction,
+	set_component_context,
 	set_dev_current_component_function
 } from '../../runtime.js';
-import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
-import { DEV } from 'esm-env';
-import { queue_micro_task } from '../task.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
-import { mutable_source, set, source } from '../../reactivity/sources.js';
+import { queue_micro_task } from '../task.js';
+import { UNINITIALIZED } from '../../../../constants.js';
 
 const PENDING = 0;
 const THEN = 1;
@@ -35,13 +36,13 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 	var anchor = node;
 	var runes = is_runes();
-	var component_context = current_component_context;
+	var active_component_context = component_context;
 
 	/** @type {any} */
 	var component_function = DEV ? component_context?.function : null;
 
-	/** @type {V | Promise<V>} */
-	var input;
+	/** @type {V | Promise<V> | typeof UNINITIALIZED} */
+	var input = UNINITIALIZED;
 
 	/** @type {Effect | null} */
 	var pending_effect;
@@ -64,48 +65,50 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 		resolved = true;
 
 		if (restore) {
-			set_current_effect(effect);
-			set_current_reaction(effect); // TODO do we need both?
-			set_current_component_context(component_context);
+			set_active_effect(effect);
+			set_active_reaction(effect); // TODO do we need both?
+			set_component_context(active_component_context);
 			if (DEV) set_dev_current_component_function(component_function);
 		}
 
-		if (state === PENDING && pending_fn) {
-			if (pending_effect) resume_effect(pending_effect);
-			else pending_effect = branch(() => pending_fn(anchor));
-		}
+		try {
+			if (state === PENDING && pending_fn) {
+				if (pending_effect) resume_effect(pending_effect);
+				else pending_effect = branch(() => pending_fn(anchor));
+			}
 
-		if (state === THEN && then_fn) {
-			if (then_effect) resume_effect(then_effect);
-			else then_effect = branch(() => then_fn(anchor, input_source));
-		}
+			if (state === THEN && then_fn) {
+				if (then_effect) resume_effect(then_effect);
+				else then_effect = branch(() => then_fn(anchor, input_source));
+			}
 
-		if (state === CATCH && catch_fn) {
-			if (catch_effect) resume_effect(catch_effect);
-			else catch_effect = branch(() => catch_fn(anchor, error_source));
-		}
+			if (state === CATCH && catch_fn) {
+				if (catch_effect) resume_effect(catch_effect);
+				else catch_effect = branch(() => catch_fn(anchor, error_source));
+			}
 
-		if (state !== PENDING && pending_effect) {
-			pause_effect(pending_effect, () => (pending_effect = null));
-		}
+			if (state !== PENDING && pending_effect) {
+				pause_effect(pending_effect, () => (pending_effect = null));
+			}
 
-		if (state !== THEN && then_effect) {
-			pause_effect(then_effect, () => (then_effect = null));
-		}
+			if (state !== THEN && then_effect) {
+				pause_effect(then_effect, () => (then_effect = null));
+			}
 
-		if (state !== CATCH && catch_effect) {
-			pause_effect(catch_effect, () => (catch_effect = null));
-		}
+			if (state !== CATCH && catch_effect) {
+				pause_effect(catch_effect, () => (catch_effect = null));
+			}
+		} finally {
+			if (restore) {
+				if (DEV) set_dev_current_component_function(null);
+				set_component_context(null);
+				set_active_reaction(null);
+				set_active_effect(null);
 
-		if (restore) {
-			if (DEV) set_dev_current_component_function(null);
-			set_current_component_context(null);
-			set_current_reaction(null);
-			set_current_effect(null);
-
-			// without this, the DOM does not update until two ticks after the promise
-			// resolves, which is unexpected behaviour (and somewhat irksome to test)
-			flush_sync();
+				// without this, the DOM does not update until two ticks after the promise
+				// resolves, which is unexpected behaviour (and somewhat irksome to test)
+				flush_sync();
+			}
 		}
 	}
 
@@ -120,13 +123,21 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 			promise.then(
 				(value) => {
 					if (promise !== input) return;
-					set(input_source, value);
+					// we technically could use `set` here since it's on the next microtick
+					// but let's use internal_set for consistency and just to be safe
+					internal_set(input_source, value);
 					update(THEN, true);
 				},
 				(error) => {
 					if (promise !== input) return;
-					set(error_source, error);
+					// we technically could use `set` here since it's on the next microtick
+					// but let's use internal_set for consistency and just to be safe
+					internal_set(error_source, error);
 					update(CATCH, true);
+					if (!catch_fn) {
+						// Rethrow the error if no catch block exists
+						throw error_source.v;
+					}
 				}
 			);
 
@@ -142,13 +153,12 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 				});
 			}
 		} else {
-			set(input_source, input);
+			internal_set(input_source, input);
 			update(THEN, false);
 		}
 
-		// Inert effects are proactively detached from the effect tree. Returning a noop
-		// teardown function is an easy way to ensure that this is not discarded
-		return noop;
+		// Set the input to something else, in order to disable the promise callbacks
+		return () => (input = UNINITIALIZED);
 	});
 
 	if (hydrating) {

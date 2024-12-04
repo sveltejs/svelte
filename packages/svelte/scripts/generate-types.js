@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { createBundle } from 'dts-buddy';
 
@@ -37,7 +38,7 @@ await createBundle({
 		[`${pkg.name}/server`]: `${dir}/src/server/index.d.ts`,
 		[`${pkg.name}/store`]: `${dir}/src/store/public.d.ts`,
 		[`${pkg.name}/transition`]: `${dir}/src/transition/public.d.ts`,
-		[`${pkg.name}/events`]: `${dir}/src/events/index.js`,
+		[`${pkg.name}/events`]: `${dir}/src/events/public.d.ts`,
 		// TODO remove in Svelte 6
 		[`${pkg.name}/types/compiler/preprocess`]: `${dir}/src/compiler/preprocess/legacy-public.d.ts`,
 		[`${pkg.name}/types/compiler/interfaces`]: `${dir}/src/compiler/types/legacy-interfaces.d.ts`

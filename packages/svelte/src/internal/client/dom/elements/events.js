@@ -5,6 +5,13 @@ import { hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
 import { FILENAME } from '../../../../constants.js';
 import * as w from '../../warnings.js';
+import {
+	active_effect,
+	active_reaction,
+	set_active_effect,
+	set_active_reaction
+} from '../../runtime.js';
+import { without_reactive_context } from './bindings/shared.js';
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -55,7 +62,9 @@ export function create_event(event_name, dom, handler, options) {
 			handle_event_propagation.call(dom, event);
 		}
 		if (!event.cancelBubble) {
-			return handler.call(this, event);
+			return without_reactive_context(() => {
+				return handler.call(this, event);
+			});
 		}
 	}
 
@@ -83,30 +92,6 @@ export function create_event(event_name, dom, handler, options) {
  * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
  * (with attributes like `onclick`), which use event delegation for performance reasons
  *
- * @template {HTMLElement} Element
- * @template {keyof HTMLElementEventMap} Type
- * @overload
- * @param {Element} element
- * @param {Type} type
- * @param {(this: Element, event: HTMLElementEventMap[Type]) => any} handler
- * @param {AddEventListenerOptions} [options]
- * @returns {() => void}
- */
-
-/**
- * Attaches an event handler to an element and returns a function that removes the handler. Using this
- * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
- * (with attributes like `onclick`), which use event delegation for performance reasons
- *
- * @overload
- * @param {EventTarget} element
- * @param {string} type
- * @param {EventListener} handler
- * @param {AddEventListenerOptions} [options]
- * @returns {() => void}
- */
-
-/**
  * @param {EventTarget} element
  * @param {string} type
  * @param {EventListener} handler
@@ -220,6 +205,16 @@ export function handle_event_propagation(event) {
 		}
 	});
 
+	// This started because of Chromium issue https://chromestatus.com/feature/5128696823545856,
+	// where removal or moving of of the DOM can cause sync `blur` events to fire, which can cause logic
+	// to run inside the current `active_reaction`, which isn't what we want at all. However, on reflection,
+	// it's probably best that all event handled by Svelte have this behaviour, as we don't really want
+	// an event handler to run in the context of another reaction or effect.
+	var previous_reaction = active_reaction;
+	var previous_effect = active_effect;
+	set_active_reaction(null);
+	set_active_effect(null);
+
 	try {
 		/**
 		 * @type {unknown}
@@ -277,6 +272,8 @@ export function handle_event_propagation(event) {
 		event.__root = handler_element;
 		// @ts-ignore remove proxy on currentTarget
 		delete event.currentTarget;
+		set_active_reaction(previous_reaction);
+		set_active_effect(previous_effect);
 	}
 }
 
@@ -310,7 +307,7 @@ export function apply(
 
 	if (typeof handler === 'function') {
 		handler.apply(element, args);
-	} else if (has_side_effects || handler != null) {
+	} else if (has_side_effects || handler != null || error) {
 		const filename = component?.[FILENAME];
 		const location = loc ? ` at ${filename}:${loc[0]}:${loc[1]}` : ` in ${filename}`;
 

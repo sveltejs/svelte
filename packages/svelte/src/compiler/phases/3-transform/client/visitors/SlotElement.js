@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Property } from 'estree' */
+/** @import { BlockStatement, Expression, ExpressionStatement, Literal, Property } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
@@ -10,7 +10,7 @@ import { build_attribute_value } from './shared/element.js';
  */
 export function SlotElement(node, context) {
 	// <slot {a}>fallback</slot>  -->   $.slot($$slots.default, { get a() { .. } }, () => ...fallback);
-	context.state.template.push_quasi('<!>');
+	context.state.template.push('<!>');
 
 	/** @type {Property[]} */
 	const props = [];
@@ -23,7 +23,6 @@ export function SlotElement(node, context) {
 
 	let is_default = true;
 
-	/** @type {Expression} */
 	let name = b.literal('default');
 
 	for (const attribute of node.attributes) {
@@ -33,7 +32,7 @@ export function SlotElement(node, context) {
 			const { value } = build_attribute_value(attribute.value, context);
 
 			if (attribute.name === 'name') {
-				name = value;
+				name = /** @type {Literal} */ (value);
 				is_default = false;
 			} else if (attribute.name !== 'slot') {
 				if (attribute.metadata.expression.has_state) {
@@ -58,10 +57,14 @@ export function SlotElement(node, context) {
 			? b.literal(null)
 			: b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.fragment)));
 
-	const expression = is_default
-		? b.call('$.default_slot', b.id('$$props'))
-		: b.member(b.member(b.id('$$props'), '$$slots'), name, true, true);
+	const slot = b.call(
+		'$.slot',
+		context.state.node,
+		b.id('$$props'),
+		name,
+		props_expression,
+		fallback
+	);
 
-	const slot = b.call('$.slot', context.state.node, expression, props_expression, fallback);
 	context.state.init.push(b.stmt(slot));
 }

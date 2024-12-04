@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.0.0-next.246",
+  "version": "5.5.3",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -52,6 +52,9 @@
     },
     "./internal/disclose-version": {
       "default": "./src/internal/disclose-version.js"
+    },
+    "./internal/flags/legacy": {
+      "default": "./src/internal/flags/legacy.js"
     },
     "./internal/server": {
       "default": "./src/internal/server/index.js"
@@ -117,15 +120,15 @@
   "devDependencies": {
     "@jridgewell/trace-mapping": "^0.3.25",
     "@playwright/test": "^1.46.1",
-    "@rollup/plugin-commonjs": "^25.0.7",
-    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/aria-query": "^5.0.4",
     "@types/node": "^20.11.5",
     "dts-buddy": "^0.5.3",
     "esbuild": "^0.21.5",
-    "rollup": "^4.21.0",
+    "rollup": "^4.22.4",
     "source-map": "^0.7.4",
     "tiny-glob": "^0.2.9",
     "typescript": "^5.5.4",
@@ -139,9 +142,9 @@
     "acorn-typescript": "^1.4.13",
     "aria-query": "^5.3.1",
     "axobject-query": "^4.1.0",
-    "esm-env": "^1.0.0",
-    "esrap": "^1.2.2",
-    "is-reference": "^3.0.2",
+    "esm-env": "^1.2.1",
+    "esrap": "^1.2.3",
+    "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.11",
     "zimmerframe": "^1.1.2"

@@ -178,6 +178,20 @@ Duplicate attributes/properties on elements — which now includes event handler
 </button>
 ```
 
+When spreading props, local event handlers must go _after_ the spread, or they risk being overwritten:
+
+```svelte
+<button
+	{...props}
+	onclick={(e) => {
+		doStuff(e);
+		props.onclick?.(e);
+	}}
+>
+	...
+</button>
+```
+
 ## Why the change?
 
 By deprecating `createEventDispatcher` and the `on:` directive in favour of callback props and normal element properties, we:

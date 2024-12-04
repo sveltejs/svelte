@@ -1,5 +1,5 @@
 /** @import { ComponentContext, Effect, TemplateNode } from '#client' */
-/** @import { Component, ComponentType, SvelteComponent } from '../../index.js' */
+/** @import { Component, ComponentType, SvelteComponent, MountOptions } from '../../index.js' */
 import { DEV } from 'esm-env';
 import {
 	clear_text_content,
@@ -9,7 +9,7 @@ import {
 	init_operations
 } from './dom/operations.js';
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
-import { push, pop, current_component_context, current_effect } from './runtime.js';
+import { push, pop, component_context, active_effect } from './runtime.js';
 import { effect_root, branch } from './reactivity/effects.js';
 import {
 	hydrate_next,
@@ -48,11 +48,13 @@ export function set_should_intro(value) {
  * @returns {void}
  */
 export function set_text(text, value) {
+	// For objects, we apply string coercion (which might make things like $state array references in the template reactive) before diffing
+	var str = value == null ? '' : typeof value === 'object' ? value + '' : value;
 	// @ts-expect-error
-	if (value !== (text.__t ??= text.nodeValue)) {
+	if (str !== (text.__t ??= text.nodeValue)) {
 		// @ts-expect-error
-		text.__t = value;
-		text.nodeValue = value == null ? '' : value + '';
+		text.__t = str;
+		text.nodeValue = str == null ? '' : str + '';
 	}
 }
 
@@ -63,26 +65,11 @@ export function set_text(text, value) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
  * @param {ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>} component
- * @param {{} extends Props ? {
- * 		target: Document | Element | ShadowRoot;
- * 		anchor?: Node;
- * 		props?: Props;
- * 		events?: Record<string, (e: any) => any>;
- * 		context?: Map<any, any>;
- * 		intro?: boolean;
- * 	}: {
- * 		target: Document | Element | ShadowRoot;
- * 		props: Props;
- * 		anchor?: Node;
- * 		events?: Record<string, (e: any) => any>;
- * 		context?: Map<any, any>;
- * 		intro?: boolean;
- * 	}} options
+ * @param {MountOptions<Props>} options
  * @returns {Exports}
  */
 export function mount(component, options) {
-	const anchor = options.anchor ?? options.target.appendChild(create_text());
-	return _mount(component, { ...options, anchor });
+	return _mount(component, options);
 }
 
 /**
@@ -174,14 +161,7 @@ const document_listeners = new Map();
 /**
  * @template {Record<string, any>} Exports
  * @param {ComponentType<SvelteComponent<any>> | Component<any>} Component
- * @param {{
- * 		target: Document | Element | ShadowRoot;
- * 		anchor: Node;
- * 		props?: any;
- * 		events?: any;
- * 		context?: Map<any, any>;
- * 		intro?: boolean;
- * 	}} options
+ * @param {MountOptions} options
  * @returns {Exports}
  */
 function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
@@ -225,10 +205,12 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 	var component = undefined;
 
 	var unmount = effect_root(() => {
+		var anchor_node = anchor ?? target.appendChild(create_text());
+
 		branch(() => {
 			if (context) {
 				push({});
-				var ctx = /** @type {ComponentContext} */ (current_component_context);
+				var ctx = /** @type {ComponentContext} */ (component_context);
 				ctx.c = context;
 			}
 
@@ -238,16 +220,16 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			}
 
 			if (hydrating) {
-				assign_nodes(/** @type {TemplateNode} */ (anchor), null);
+				assign_nodes(/** @type {TemplateNode} */ (anchor_node), null);
 			}
 
 			should_intro = intro;
 			// @ts-expect-error the public typings are not what the actual function looks like
-			component = Component(anchor, props) || {};
+			component = Component(anchor_node, props) || {};
 			should_intro = true;
 
 			if (hydrating) {
-				/** @type {Effect} */ (current_effect).nodes_end = hydrate_node;
+				/** @type {Effect} */ (active_effect).nodes_end = hydrate_node;
 			}
 
 			if (context) {
@@ -271,6 +253,9 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 
 			root_event_handles.delete(event_handle);
 			mounted_components.delete(component);
+			if (anchor_node !== anchor) {
+				anchor_node.parentNode?.removeChild(anchor_node);
+			}
 		};
 	});
 

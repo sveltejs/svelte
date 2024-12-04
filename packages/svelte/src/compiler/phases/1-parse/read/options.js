@@ -3,8 +3,6 @@
 import { NAMESPACE_MATHML, NAMESPACE_SVG } from '../../../../constants.js';
 import * as e from '../../../errors.js';
 
-const regex_valid_tag_name = /^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/;
-
 /**
  * @param {AST.SvelteOptionsRaw} node
  * @returns {AST.Root['options']}
@@ -229,6 +227,21 @@ function get_boolean_value(attribute) {
 	return value;
 }
 
+// https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name
+const tag_name_char =
+	'[a-z0-9_.\xB7\xC0-\xD6\xD8-\xF6\xF8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u{10000}-\u{EFFFF}-]';
+const regex_valid_tag_name = new RegExp(`^[a-z]${tag_name_char}*-${tag_name_char}*$`, 'u');
+const reserved_tag_names = [
+	'annotation-xml',
+	'color-profile',
+	'font-face',
+	'font-face-src',
+	'font-face-uri',
+	'font-face-format',
+	'font-face-name',
+	'missing-glyph'
+];
+
 /**
  * @param {any} attribute
  * @param {string | null} tag
@@ -238,7 +251,11 @@ function validate_tag(attribute, tag) {
 	if (typeof tag !== 'string') {
 		e.svelte_options_invalid_tagname(attribute);
 	}
-	if (tag && !regex_valid_tag_name.test(tag)) {
-		e.svelte_options_invalid_tagname(attribute);
+	if (tag) {
+		if (!regex_valid_tag_name.test(tag)) {
+			e.svelte_options_invalid_tagname(attribute);
+		} else if (reserved_tag_names.includes(tag)) {
+			e.svelte_options_reserved_tagname(attribute);
+		}
 	}
 }

@@ -1,17 +1,14 @@
 import "svelte/internal/disclose-version";
+import "svelte/internal/flags/legacy";
 import * as $ from "svelte/internal/client";
 
 var root = $.template(`<p></p> <p></p> <!>`, 1);
 
 export default function Purity($$anchor) {
-	let min = 0;
-	let max = 100;
-	let number = 50;
-	let value = 'hello';
 	var fragment = root();
 	var p = $.first_child(fragment);
 
-	p.textContent = Math.max(min, Math.min(max, number));
+	p.textContent = Math.max(0, Math.min(0, 100));
 
 	var p_1 = $.sibling(p, 2);
 
@@ -19,6 +16,6 @@ export default function Purity($$anchor) {
 
 	var node = $.sibling(p_1, 2);
 
-	Child(node, { prop: encodeURIComponent(value) });
+	Child(node, { prop: encodeURIComponent('hello') });
 	$.append($$anchor, fragment);
 }

@@ -135,7 +135,6 @@ export function build_element_attributes(node, context) {
 							type: 'ExpressionTag',
 							start: -1,
 							end: -1,
-							parent: attribute,
 							expression: is_checkbox
 								? b.call(
 										b.member(attribute.expression, 'includes'),
@@ -159,7 +158,6 @@ export function build_element_attributes(node, context) {
 							type: 'ExpressionTag',
 							start: -1,
 							end: -1,
-							parent: attribute,
 							expression: attribute.expression,
 							metadata: {
 								expression: create_expression_metadata()
@@ -217,7 +215,7 @@ export function build_element_attributes(node, context) {
 	} else {
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 			if (attribute.value === true || is_text_attribute(attribute)) {
-				const name = get_attribute_name(node, attribute, context);
+				const name = get_attribute_name(node, attribute);
 				const literal_value = /** @type {Literal} */ (
 					build_attribute_value(
 						attribute.value,
@@ -239,7 +237,7 @@ export function build_element_attributes(node, context) {
 				continue;
 			}
 
-			const name = get_attribute_name(node, attribute, context);
+			const name = get_attribute_name(node, attribute);
 			const value = build_attribute_value(
 				attribute.value,
 				context,
@@ -264,9 +262,8 @@ export function build_element_attributes(node, context) {
 /**
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {AST.Attribute} attribute
- * @param {{ state: { namespace: Namespace }}} context
  */
-function get_attribute_name(element, attribute, context) {
+function get_attribute_name(element, attribute) {
 	let name = attribute.name;
 	if (!element.metadata.svg && !element.metadata.mathml) {
 		name = name.toLowerCase();
@@ -334,7 +331,7 @@ function build_element_spread_attributes(
 	const object = b.object(
 		attributes.map((attribute) => {
 			if (attribute.type === 'Attribute') {
-				const name = get_attribute_name(element, attribute, context);
+				const name = get_attribute_name(element, attribute);
 				const value = build_attribute_value(
 					attribute.value,
 					context,
@@ -377,7 +374,6 @@ function build_class_directives(class_directives, class_attribute) {
 			type: 'Text',
 			start: -1,
 			end: -1,
-			parent: class_attribute,
 			data: ' ',
 			raw: ' '
 		});
@@ -387,7 +383,6 @@ function build_class_directives(class_directives, class_attribute) {
 		type: 'ExpressionTag',
 		start: -1,
 		end: -1,
-		parent: class_attribute,
 		expression: b.call(
 			b.member(b.call(b.member(b.array(expressions), 'filter'), b.id('Boolean')), b.id('join')),
 			b.literal(' ')

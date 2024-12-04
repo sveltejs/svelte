@@ -14,6 +14,7 @@ import {
 } from '../utils/ast.js';
 import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
+import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
 
 export class Scope {
 	/** @type {ScopeRoot} */
@@ -74,24 +75,10 @@ export class Scope {
 	 * @param {Identifier} node
 	 * @param {Binding['kind']} kind
 	 * @param {DeclarationKind} declaration_kind
-	 * @param {null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | AST.EachBlock} initial
+	 * @param {null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | AST.EachBlock | AST.SnippetBlock} initial
 	 * @returns {Binding}
 	 */
 	declare(node, kind, declaration_kind, initial = null) {
-		if (node.name === '$') {
-			e.dollar_binding_invalid(node);
-		}
-
-		if (
-			node.name.startsWith('$') &&
-			declaration_kind !== 'synthetic' &&
-			declaration_kind !== 'param' &&
-			declaration_kind !== 'rest_param' &&
-			this.function_depth <= 1
-		) {
-			e.dollar_prefix_invalid(node);
-		}
-
 		if (this.parent) {
 			if (declaration_kind === 'var' && this.#porous) {
 				return this.parent.declare(node, kind, declaration_kind);
@@ -123,6 +110,9 @@ export class Scope {
 			prop_alias: null,
 			metadata: null
 		};
+
+		validate_identifier_name(binding, this.function_depth);
+
 		this.declarations.set(node.name, binding);
 		this.root.conflicts.add(node.name);
 		return binding;
@@ -353,7 +343,14 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		// references
 		Identifier(node, { path, state }) {
 			const parent = path.at(-1);
-			if (parent && is_reference(node, /** @type {Node} */ (parent))) {
+			if (
+				parent &&
+				is_reference(node, /** @type {Node} */ (parent)) &&
+				// TSTypeAnnotation, TSInterfaceDeclaration etc - these are normally already filtered out,
+				// but for the migration they aren't, so we need to filter them out here
+				// TODO -> once migration script is gone we can remove this check
+				!parent.type.startsWith('TS')
+			) {
 				references.push([state.scope, { node, path: path.slice() }]);
 			}
 		},
@@ -394,6 +391,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			if (node.expression) {
 				for (const id of extract_identifiers_from_destructuring(node.expression)) {
 					const binding = scope.declare(id, 'template', 'const');
+					scope.reference(id, [context.path[context.path.length - 1], node]);
 					bindings.push(binding);
 				}
 			} else {
@@ -405,6 +403,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					end: node.end
 				};
 				const binding = scope.declare(id, 'template', 'const');
+				scope.reference(id, [context.path[context.path.length - 1], node]);
 				bindings.push(binding);
 			}
 		},
@@ -528,31 +527,33 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			const scope = state.scope.child();
 			scopes.set(node, scope);
 
-			// declarations
-			for (const id of extract_identifiers(node.context)) {
-				const binding = scope.declare(id, 'each', 'const');
+			if (node.context) {
+				// declarations
+				for (const id of extract_identifiers(node.context)) {
+					const binding = scope.declare(id, 'each', 'const');
 
-				let inside_rest = false;
-				let is_rest_id = false;
-				walk(node.context, null, {
-					Identifier(node) {
-						if (inside_rest && node === id) {
-							is_rest_id = true;
+					let inside_rest = false;
+					let is_rest_id = false;
+					walk(node.context, null, {
+						Identifier(node) {
+							if (inside_rest && node === id) {
+								is_rest_id = true;
+							}
+						},
+						RestElement(_, { next }) {
+							const prev = inside_rest;
+							inside_rest = true;
+							next();
+							inside_rest = prev;
 						}
-					},
-					RestElement(_, { next }) {
-						const prev = inside_rest;
-						inside_rest = true;
-						next();
-						inside_rest = prev;
-					}
-				});
+					});
 
-				binding.metadata = { inside_rest: is_rest_id };
+					binding.metadata = { inside_rest: is_rest_id };
+				}
+
+				// Visit to pick up references from default initializers
+				visit(node.context, { scope });
 			}
-
-			// Visit to pick up references from default initializers
-			visit(node.context, { scope });
 
 			if (node.index) {
 				const is_keyed =
@@ -633,7 +634,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			if (is_top_level) {
 				scope = /** @type {Scope} */ (parent);
 			}
-			scope.declare(node.expression, 'normal', 'function', node.expression);
+			scope.declare(node.expression, 'normal', 'function', node);
 
 			const child_scope = state.scope.child();
 			scopes.set(node, child_scope);
@@ -727,7 +728,7 @@ export function set_scope(node, { next, state }) {
 
 /**
  * Returns the name of the rune if the given expression is a `CallExpression` using a rune.
- * @param {Node | AST.EachBlock | null | undefined} node
+ * @param {Node | null | undefined} node
  * @param {Scope} scope
  */
 export function get_rune(node, scope) {

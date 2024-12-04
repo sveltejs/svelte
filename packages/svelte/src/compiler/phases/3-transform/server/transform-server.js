@@ -38,6 +38,7 @@ import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
+import { SvelteBoundary } from './visitors/SvelteBoundary.js';
 
 /** @type {Visitors} */
 const global_visitors = {
@@ -75,7 +76,8 @@ const template_visitors = {
 	SvelteFragment,
 	SvelteHead,
 	SvelteSelf,
-	TitleElement
+	TitleElement,
+	SvelteBoundary
 };
 
 /**
@@ -344,7 +346,7 @@ export function server_component(analysis, options) {
 						b.block([
 							b.throw_error(
 								`Component.render(...) is no longer valid in Svelte 5. ` +
-									'See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information'
+									'See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information'
 							)
 						])
 					)

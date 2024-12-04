@@ -23,7 +23,7 @@ export function is_element_node(node) {
 
 /**
  * @param {AST.RegularElement | AST.SvelteElement} node
- * @returns {boolean}
+ * @returns {node is AST.RegularElement}
  */
 export function is_custom_element_node(node) {
 	return node.type === 'RegularElement' && node.name.includes('-');
@@ -43,7 +43,6 @@ export function create_attribute(name, start, end, value) {
 		end,
 		name,
 		value,
-		parent: null,
 		metadata: {
 			expression: create_expression_metadata(),
 			delegated: null

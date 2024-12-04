@@ -6,6 +6,20 @@ var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
 /**
+ * Assignment to `%property%` property (%location%) will evaluate to the right-hand side, not the value of `%property%` following the assignment. This may result in unexpected behaviour.
+ * @param {string} property
+ * @param {string} location
+ */
+export function assignment_value_stale(property, location) {
+	if (DEV) {
+		console.warn(`%c[svelte] assignment_value_stale\n%cAssignment to \`${property}\` property (${location}) will evaluate to the right-hand side, not the value of \`${property}\` following the assignment. This may result in unexpected behaviour.`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("assignment_value_stale");
+	}
+}
+
+/**
  * `%binding%` (%location%) is binding to a non-reactive property
  * @param {string} binding
  * @param {string | undefined | null} [location]
@@ -16,6 +30,19 @@ export function binding_property_non_reactive(binding, location) {
 	} else {
 		// TODO print a link to the documentation
 		console.warn("binding_property_non_reactive");
+	}
+}
+
+/**
+ * Your `console.%method%` contained `$state` proxies. Consider using `$inspect(...)` or `$state.snapshot(...)` instead
+ * @param {string} method
+ */
+export function console_log_state(method) {
+	if (DEV) {
+		console.warn(`%c[svelte] console_log_state\n%cYour \`console.${method}\` contained \`$state\` proxies. Consider using \`$inspect(...)\` or \`$state.snapshot(...)\` instead`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("console_log_state");
 	}
 }
 
@@ -87,6 +114,19 @@ export function invalid_raw_snippet_render() {
 }
 
 /**
+ * Detected a migrated `$:` reactive block in `%filename%` that both accesses and updates the same reactive value. This may cause recursive updates when converted to an `$effect`.
+ * @param {string} filename
+ */
+export function legacy_recursive_reactive_block(filename) {
+	if (DEV) {
+		console.warn(`%c[svelte] legacy_recursive_reactive_block\n%cDetected a migrated \`$:\` reactive block in \`${filename}\` that both accesses and updates the same reactive value. This may cause recursive updates when converted to an \`$effect\`.`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("legacy_recursive_reactive_block");
+	}
+}
+
+/**
  * Tried to unmount a component that was not mounted
  */
 export function lifecycle_double_unmount() {
@@ -124,6 +164,19 @@ export function ownership_invalid_mutation(component, owner) {
 	} else {
 		// TODO print a link to the documentation
 		console.warn("ownership_invalid_mutation");
+	}
+}
+
+/**
+ * A `$:` statement (%location%) read reactive state that was not visible to the compiler. Updates to this state will not cause the statement to re-run. The behaviour of this code will change if you migrate it to runes mode
+ * @param {string} location
+ */
+export function reactive_declaration_non_reactive_property(location) {
+	if (DEV) {
+		console.warn(`%c[svelte] reactive_declaration_non_reactive_property\n%cA \`$:\` statement (${location}) read reactive state that was not visible to the compiler. Updates to this state will not cause the statement to re-run. The behaviour of this code will change if you migrate it to runes mode`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("reactive_declaration_non_reactive_property");
 	}
 }
 

@@ -42,12 +42,11 @@ export function process_children(nodes, { visit, state }) {
 			const node = sequence[i];
 
 			if (node.type === 'Text' || node.type === 'Comment') {
-				quasi.value.raw += sanitize_template_string(
-					node.type === 'Comment' ? `<!--${node.data}-->` : escape_html(node.data)
-				);
+				quasi.value.cooked +=
+					node.type === 'Comment' ? `<!--${node.data}-->` : escape_html(node.data);
 			} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
 				if (node.expression.value != null) {
-					quasi.value.raw += sanitize_template_string(escape_html(node.expression.value + ''));
+					quasi.value.cooked += escape_html(node.expression.value + '');
 				}
 			} else {
 				expressions.push(b.call('$.escape', /** @type {Expression} */ (visit(node.expression))));
@@ -55,6 +54,10 @@ export function process_children(nodes, { visit, state }) {
 				quasi = b.quasi('', i + 1 === sequence.length);
 				quasis.push(quasi);
 			}
+		}
+
+		for (const quasi of quasis) {
+			quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
 		}
 
 		state.template.push(b.template(quasis, expressions));
@@ -95,8 +98,8 @@ function is_statement(node) {
  * @returns {Statement[]}
  */
 export function build_template(template, out = b.id('$$payload.out'), operator = '+=') {
-	/** @type {TemplateElement[]} */
-	let quasis = [];
+	/** @type {string[]} */
+	let strings = [];
 
 	/** @type {Expression[]} */
 	let expressions = [];
@@ -105,8 +108,19 @@ export function build_template(template, out = b.id('$$payload.out'), operator =
 	const statements = [];
 
 	const flush = () => {
-		statements.push(b.stmt(b.assignment(operator, out, b.template(quasis, expressions))));
-		quasis = [];
+		statements.push(
+			b.stmt(
+				b.assignment(
+					operator,
+					out,
+					b.template(
+						strings.map((cooked, i) => b.quasi(cooked, i === strings.length - 1)),
+						expressions
+					)
+				)
+			)
+		);
+		strings = [];
 		expressions = [];
 	};
 
@@ -114,30 +128,30 @@ export function build_template(template, out = b.id('$$payload.out'), operator =
 		const node = template[i];
 
 		if (is_statement(node)) {
-			if (quasis.length !== 0) {
+			if (strings.length !== 0) {
 				flush();
 			}
 
 			statements.push(node);
 		} else {
-			let last = quasis.at(-1);
-			if (!last) quasis.push((last = b.quasi('', false)));
+			if (strings.length === 0) {
+				strings.push('');
+			}
 
 			if (node.type === 'Literal') {
-				last.value.raw +=
-					typeof node.value === 'string' ? sanitize_template_string(node.value) : node.value;
+				strings[strings.length - 1] += node.value;
 			} else if (node.type === 'TemplateLiteral') {
-				last.value.raw += node.quasis[0].value.raw;
-				quasis.push(...node.quasis.slice(1));
+				strings[strings.length - 1] += node.quasis[0].value.cooked;
+				strings.push(...node.quasis.slice(1).map((q) => /** @type {string} */ (q.value.cooked)));
 				expressions.push(...node.expressions);
 			} else {
 				expressions.push(node);
-				quasis.push(b.quasi('', i + 1 === template.length || is_statement(template[i + 1])));
+				strings.push('');
 			}
 		}
 	}
 
-	if (quasis.length !== 0) {
+	if (strings.length !== 0) {
 		flush();
 	}
 

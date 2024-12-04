@@ -23,7 +23,7 @@ const regex_starts_with_quote_characters = /^["']/;
 const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]+))/;
 const regex_valid_element_name =
 	/^(?:![a-zA-Z]+|[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|[a-zA-Z][a-zA-Z0-9]*:[a-zA-Z][a-zA-Z0-9-]*[a-zA-Z0-9])$/;
-const regex_valid_component_name =
+export const regex_valid_component_name =
 	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#identifiers adjusted for our needs
 	// (must start with uppercase letter if no dots, can contain dots)
 	/^(?:\p{Lu}[$\u200c\u200d\p{ID_Continue}.]*|\p{ID_Start}[$\u200c\u200d\p{ID_Continue}]*(?:\.[$\u200c\u200d\p{ID_Continue}]+)+)$/u;
@@ -43,7 +43,8 @@ const meta_tags = new Map([
 	['svelte:element', 'SvelteElement'],
 	['svelte:component', 'SvelteComponent'],
 	['svelte:self', 'SvelteSelf'],
-	['svelte:fragment', 'SvelteFragment']
+	['svelte:fragment', 'SvelteFragment'],
+	['svelte:boundary', 'SvelteBoundary']
 ]);
 
 /** @param {Parser} parser */
@@ -56,7 +57,6 @@ export default function element(parser) {
 		const data = parser.read_until(regex_closing_comment);
 		parser.eat('-->', true);
 
-		/** @type {ReturnType<typeof parser.append<AST.Comment>>} */
 		parser.append({
 			type: 'Comment',
 			start,
@@ -151,9 +151,9 @@ export default function element(parser) {
 						svg: false,
 						mathml: false,
 						scoped: false,
-						has_spread: false
-					},
-					parent: null
+						has_spread: false,
+						path: []
+					}
 				}
 			: /** @type {ElementLike} */ ({
 					type,
@@ -162,7 +162,6 @@ export default function element(parser) {
 					name,
 					attributes: [],
 					fragment: create_fragment(true),
-					parent: null,
 					metadata: {
 						// unpopulated at first, differs between types
 					}
@@ -347,8 +346,7 @@ export default function element(parser) {
 			end,
 			type: 'Text',
 			data,
-			raw: data,
-			parent: null
+			raw: data
 		};
 
 		element.fragment.nodes.push(node);
@@ -421,8 +419,7 @@ function read_static_attribute(parser) {
 				end: quoted ? parser.index - 1 : parser.index,
 				type: 'Text',
 				raw: raw,
-				data: decode_character_references(raw, true),
-				parent: null
+				data: decode_character_references(raw, true)
 			}
 		];
 	}
@@ -456,7 +453,6 @@ function read_attribute(parser) {
 				start,
 				end: parser.index,
 				expression,
-				parent: null,
 				metadata: {
 					expression: create_expression_metadata()
 				}
@@ -485,7 +481,6 @@ function read_attribute(parser) {
 					type: 'Identifier',
 					name
 				},
-				parent: null,
 				metadata: {
 					expression: create_expression_metadata()
 				}
@@ -530,7 +525,6 @@ function read_attribute(parser) {
 				name: directive_name,
 				modifiers: /** @type {Array<'important'>} */ (modifiers),
 				value,
-				parent: null,
 				metadata: {
 					expression: create_expression_metadata()
 				}
@@ -555,18 +549,19 @@ function read_attribute(parser) {
 		}
 
 		/** @type {Directive} */
-		// @ts-expect-error TODO can't figure out this error
 		const directive = {
 			start,
 			end,
 			type,
 			name: directive_name,
-			modifiers,
 			expression,
 			metadata: {
 				expression: create_expression_metadata()
 			}
 		};
+
+		// @ts-expect-error we do this separately from the declaration to avoid upsetting typescript
+		directive.modifiers = modifiers;
 
 		if (directive.type === 'TransitionDirective') {
 			const direction = name.slice(0, colon_index);
@@ -622,8 +617,7 @@ function read_attribute_value(parser) {
 				end: parser.index - 1,
 				type: 'Text',
 				raw: '',
-				data: '',
-				parent: null
+				data: ''
 			}
 		];
 	}
@@ -680,8 +674,7 @@ function read_sequence(parser, done, location) {
 		end: -1,
 		type: 'Text',
 		raw: '',
-		data: '',
-		parent: null
+		data: ''
 	};
 
 	/** @type {Array<AST.Text | AST.ExpressionTag>} */
@@ -728,7 +721,6 @@ function read_sequence(parser, done, location) {
 				start: index,
 				end: parser.index,
 				expression,
-				parent: null,
 				metadata: {
 					expression: create_expression_metadata()
 				}
@@ -741,8 +733,7 @@ function read_sequence(parser, done, location) {
 				end: -1,
 				type: 'Text',
 				raw: '',
-				data: '',
-				parent: null
+				data: ''
 			};
 		} else {
 			current_chunk.raw += parser.template[parser.index++];

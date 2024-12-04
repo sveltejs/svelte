@@ -1,6 +1,6 @@
 /** @import { CallExpression, Expression } from 'estree' */
 /** @import { Context } from '../types' */
-import { is_ignored } from '../../../../state.js';
+import { dev, is_ignored } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { get_rune } from '../../../scope.js';
 import { transform_inspect_rune } from '../../utils.js';
@@ -33,6 +33,29 @@ export function CallExpression(node, context) {
 		case '$inspect':
 		case '$inspect().with':
 			return transform_inspect_rune(node, context);
+	}
+
+	if (
+		dev &&
+		node.callee.type === 'MemberExpression' &&
+		node.callee.object.type === 'Identifier' &&
+		node.callee.object.name === 'console' &&
+		context.state.scope.get('console') === null &&
+		node.callee.property.type === 'Identifier' &&
+		['debug', 'dir', 'error', 'group', 'groupCollapsed', 'info', 'log', 'trace', 'warn'].includes(
+			node.callee.property.name
+		)
+	) {
+		return b.call(
+			node.callee,
+			b.spread(
+				b.call(
+					'$.log_if_contains_state',
+					b.literal(node.callee.property.name),
+					.../** @type {Expression[]} */ (node.arguments.map((arg) => context.visit(arg)))
+				)
+			)
+		);
 	}
 
 	context.next();

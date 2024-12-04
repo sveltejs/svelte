@@ -19,9 +19,9 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
  */
 export function RegularElement(node, context) {
 	validate_element(node, context);
+	check_element(node, context);
 
-	check_element(node, context.state);
-
+	node.metadata.path = [...context.path];
 	context.state.analysis.elements.push(node);
 
 	// Special case: Move the children of <textarea> into a value attribute if they are dynamic
@@ -162,4 +162,17 @@ export function RegularElement(node, context) {
 	}
 
 	context.next({ ...context.state, parent_element: node.name });
+
+	// Special case: <a> tags are valid in both the SVG and HTML namespace.
+	// If there's no parent, look downwards to see if it's the parent of a SVG or HTML element.
+	if (node.name === 'a' && !context.state.parent_element) {
+		for (const child of node.fragment.nodes) {
+			if (child.type === 'RegularElement') {
+				if (child.metadata.svg && child.name !== 'svg') {
+					node.metadata.svg = true;
+					break;
+				}
+			}
+		}
+	}
 }

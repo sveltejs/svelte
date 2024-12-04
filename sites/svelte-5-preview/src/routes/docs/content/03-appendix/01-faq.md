@@ -133,7 +133,7 @@ npm install svelte@next
 You can also opt into Svelte 5 when creating a new SvelteKit project:
 
 ```bash
-npm create svelte@latest
+npx sv create
 ```
 
 ### What's left to do?

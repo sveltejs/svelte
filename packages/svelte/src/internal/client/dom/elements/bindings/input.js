@@ -2,24 +2,36 @@ import { DEV } from 'esm-env';
 import { render_effect, teardown } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
-import { get_proxied_value, is } from '../../../proxy.js';
+import { is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
+import { is_runes } from '../../../runtime.js';
 
 /**
  * @param {HTMLInputElement} input
- * @param {() => unknown} get_value
- * @param {(value: unknown) => void} update
+ * @param {() => unknown} get
+ * @param {(value: unknown) => void} set
  * @returns {void}
  */
-export function bind_value(input, get_value, update) {
+export function bind_value(input, get, set = get) {
+	var runes = is_runes();
+
 	listen_to_event_and_reset_event(input, 'input', () => {
 		if (DEV && input.type === 'checkbox') {
 			// TODO should this happen in prod too?
 			e.bind_invalid_checkbox_value();
 		}
 
-		update(is_numberlike_input(input) ? to_number(input.value) : input.value);
+		/** @type {unknown} */
+		var value = is_numberlike_input(input) ? to_number(input.value) : input.value;
+		set(value);
+
+		// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
+		// because we use mutable state which ensures the render effect always runs)
+		if (runes && value !== (value = get())) {
+			// @ts-expect-error the value is coerced on assignment
+			input.value = value ?? '';
+		}
 	});
 
 	render_effect(() => {
@@ -28,12 +40,12 @@ export function bind_value(input, get_value, update) {
 			e.bind_invalid_checkbox_value();
 		}
 
-		var value = get_value();
+		var value = get();
 
 		// If we are hydrating and the value has since changed, then use the update value
 		// from the input instead.
 		if (hydrating && input.defaultValue !== input.value) {
-			update(input.value);
+			set(is_numberlike_input(input) ? to_number(input.value) : input.value);
 			return;
 		}
 
@@ -48,8 +60,12 @@ export function bind_value(input, get_value, update) {
 			return;
 		}
 
-		// @ts-expect-error the value is coerced on assignment
-		input.value = value ?? '';
+		// don't set the value of the input if it's the same to allow
+		// minlength to work properly
+		if (value !== input.value) {
+			// @ts-expect-error the value is coerced on assignment
+			input.value = value ?? '';
+		}
 	});
 }
 
@@ -60,11 +76,11 @@ const pending = new Set();
  * @param {HTMLInputElement[]} inputs
  * @param {null | [number]} group_index
  * @param {HTMLInputElement} input
- * @param {() => unknown} get_value
- * @param {(value: unknown) => void} update
+ * @param {() => unknown} get
+ * @param {(value: unknown) => void} set
  * @returns {void}
  */
-export function bind_group(inputs, group_index, input, get_value, update) {
+export function bind_group(inputs, group_index, input, get, set = get) {
 	var is_checkbox = input.getAttribute('type') === 'checkbox';
 	var binding_group = inputs;
 
@@ -91,14 +107,14 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 				value = get_binding_group_value(binding_group, value, input.checked);
 			}
 
-			update(value);
+			set(value);
 		},
 		// TODO better default value handling
-		() => update(is_checkbox ? [] : null)
+		() => set(is_checkbox ? [] : null)
 	);
 
 	render_effect(() => {
-		var value = get_value();
+		var value = get();
 
 		// If we are hydrating and the value has since changed, then use the update value
 		// from the input instead.
@@ -110,7 +126,7 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 		if (is_checkbox) {
 			value = value || [];
 			// @ts-ignore
-			input.checked = get_proxied_value(value).includes(get_proxied_value(input.__value));
+			input.checked = value.includes(input.__value);
 		} else {
 			// @ts-ignore
 			input.checked = is(input.__value, value);
@@ -147,29 +163,29 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 				value = hydration_input?.__value;
 			}
 
-			update(value);
+			set(value);
 		}
 	});
 }
 
 /**
  * @param {HTMLInputElement} input
- * @param {() => unknown} get_value
- * @param {(value: unknown) => void} update
+ * @param {() => unknown} get
+ * @param {(value: unknown) => void} set
  * @returns {void}
  */
-export function bind_checked(input, get_value, update) {
+export function bind_checked(input, get, set = get) {
 	listen_to_event_and_reset_event(input, 'change', () => {
 		var value = input.checked;
-		update(value);
+		set(value);
 	});
 
-	if (get_value() == undefined) {
-		update(false);
+	if (get() == undefined) {
+		set(false);
 	}
 
 	render_effect(() => {
-		var value = get_value();
+		var value = get();
 		input.checked = Boolean(value);
 	});
 }
@@ -215,15 +231,15 @@ function to_number(value) {
 
 /**
  * @param {HTMLInputElement} input
- * @param {() => FileList | null} get_value
- * @param {(value: FileList | null) => void} update
+ * @param {() => FileList | null} get
+ * @param {(value: FileList | null) => void} set
  */
-export function bind_files(input, get_value, update) {
+export function bind_files(input, get, set = get) {
 	listen_to_event_and_reset_event(input, 'change', () => {
-		update(input.files);
+		set(input.files);
 	});
 
 	render_effect(() => {
-		input.files = get_value();
+		input.files = get();
 	});
 }

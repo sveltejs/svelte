@@ -50,6 +50,7 @@ export const codes = [
 	"a11y_autocomplete_valid",
 	"a11y_autofocus",
 	"a11y_click_events_have_key_events",
+	"a11y_consider_explicit_label",
 	"a11y_distracting_elements",
 	"a11y_figcaption_index",
 	"a11y_figcaption_parent",
@@ -101,7 +102,6 @@ export const codes = [
 	"perf_avoid_nested_class",
 	"reactive_declaration_invalid_placement",
 	"reactive_declaration_module_script_dependency",
-	"reactive_declaration_non_reactive_property",
 	"state_referenced_locally",
 	"store_rune_conflict",
 	"css_unused_selector",
@@ -120,7 +120,8 @@ export const codes = [
 	"script_unknown_attribute",
 	"slot_element_deprecated",
 	"svelte_component_deprecated",
-	"svelte_element_invalid_this"
+	"svelte_element_invalid_this",
+	"svelte_self_deprecated"
 ];
 
 /**
@@ -172,6 +173,14 @@ export function a11y_autofocus(node) {
  */
 export function a11y_click_events_have_key_events(node) {
 	w(node, "a11y_click_events_have_key_events", "Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type=\"button\">` or `<a>` might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details");
+}
+
+/**
+ * Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute
+ * @param {null | NodeLike} node
+ */
+export function a11y_consider_explicit_label(node) {
+	w(node, "a11y_consider_explicit_label", "Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute");
 }
 
 /**
@@ -355,12 +364,12 @@ export function a11y_missing_attribute(node, name, article, sequence) {
 }
 
 /**
- * `<%name%>` element should have child content
+ * `<%name%>` element should contain text
  * @param {null | NodeLike} node
  * @param {string} name
  */
 export function a11y_missing_content(node, name) {
-	w(node, "a11y_missing_content", `\`<${name}>\` element should have child content`);
+	w(node, "a11y_missing_content", `\`<${name}>\` element should contain text`);
 }
 
 /**
@@ -632,14 +641,6 @@ export function reactive_declaration_module_script_dependency(node) {
 }
 
 /**
- * Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update
- * @param {null | NodeLike} node
- */
-export function reactive_declaration_non_reactive_property(node) {
-	w(node, "reactive_declaration_non_reactive_property", "Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update");
-}
-
-/**
  * State referenced in its own scope will never update. Did you mean to reference it inside a closure?
  * @param {null | NodeLike} node
  */
@@ -800,4 +801,14 @@ export function svelte_component_deprecated(node) {
  */
 export function svelte_element_invalid_this(node) {
 	w(node, "svelte_element_invalid_this", "`this` should be an `{expression}`. Using a string attribute value will cause an error in future versions of Svelte");
+}
+
+/**
+ * `<svelte:self>` is deprecated — use self-imports (e.g. `import %name% from './%basename%'`) instead
+ * @param {null | NodeLike} node
+ * @param {string} name
+ * @param {string} basename
+ */
+export function svelte_self_deprecated(node, name, basename) {
+	w(node, "svelte_self_deprecated", `\`<svelte:self>\` is deprecated — use self-imports (e.g. \`import ${name} from './${basename}'\`) instead`);
 }

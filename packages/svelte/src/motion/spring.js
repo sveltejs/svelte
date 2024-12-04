@@ -53,7 +53,6 @@ function tick_spring(ctx, last_value, current_value, target_value) {
 /**
  * The spring function in Svelte creates a store whose value is animated, with a motion that simulates the behavior of a spring. This means when the value changes, instead of transitioning at a steady rate, it "bounces" like a spring would, depending on the physics parameters provided. This adds a level of realism to the transitions and can enhance the user experience.
  *
- * https://svelte.dev/docs/svelte-motion#spring
  * @template [T=any]
  * @param {T} [value]
  * @param {SpringOpts} [opts]

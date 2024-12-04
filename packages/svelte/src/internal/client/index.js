@@ -1,4 +1,6 @@
-export { FILENAME, HMR } from '../../constants.js';
+export { FILENAME, HMR, NAMESPACE_SVG } from '../../constants.js';
+export { assign, assign_and, assign_or, assign_nullish } from './dev/assign.js';
+export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
 export {
@@ -29,7 +31,6 @@ export {
 	set_attribute,
 	set_attributes,
 	set_custom_element_data,
-	set_dynamic_element_attributes,
 	set_xlink_attribute,
 	handle_lazy_img,
 	set_value,
@@ -80,8 +81,7 @@ export {
 	add_legacy_event_listener,
 	bubble_event,
 	reactive_import,
-	update_legacy_props,
-	default_slot
+	update_legacy_props
 } from './dom/legacy/misc.js';
 export {
 	append,
@@ -122,8 +122,10 @@ export {
 	store_set,
 	store_unsub,
 	update_pre_store,
-	update_store
+	update_store,
+	mark_store_binding
 } from './reactivity/store.js';
+export { boundary } from './dom/blocks/boundary.js';
 export { set_text } from './render.js';
 export {
 	get,
@@ -155,6 +157,7 @@ export {
 	$window as window,
 	$document as document
 } from './dom/operations.js';
+export { attr } from '../shared/attributes.js';
 export { snapshot } from '../shared/clone.js';
 export { noop, fallback } from '../shared/utils.js';
 export {
@@ -164,3 +167,4 @@ export {
 	validate_void_dynamic_element
 } from '../shared/validate.js';
 export { strict_equals, equals } from './dev/equality.js';
+export { log_if_contains_state } from './dev/console-log.js';

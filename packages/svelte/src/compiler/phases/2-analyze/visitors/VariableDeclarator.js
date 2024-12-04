@@ -2,7 +2,7 @@
 /** @import { Binding } from '#compiler' */
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
-import { ensure_no_module_import_conflict } from './shared/utils.js';
+import { ensure_no_module_import_conflict, validate_identifier_name } from './shared/utils.js';
 import * as e from '../../../errors.js';
 import { extract_paths } from '../../../utils/ast.js';
 import { equal } from '../../../utils/assert.js';
@@ -17,6 +17,11 @@ export function VariableDeclarator(node, context) {
 	if (context.state.analysis.runes) {
 		const init = node.init;
 		const rune = get_rune(init, context.state.scope);
+		const paths = extract_paths(node.id);
+
+		for (const path of paths) {
+			validate_identifier_name(context.state.scope.get(/** @type {Identifier} */ (path.node).name));
+		}
 
 		// TODO feels like this should happen during scope creation?
 		if (
@@ -26,7 +31,7 @@ export function VariableDeclarator(node, context) {
 			rune === '$derived.by' ||
 			rune === '$props'
 		) {
-			for (const path of extract_paths(node.id)) {
+			for (const path of paths) {
 				// @ts-ignore this fails in CI for some insane reason
 				const binding = /** @type {Binding} */ (context.state.scope.get(path.node.name));
 				binding.kind =

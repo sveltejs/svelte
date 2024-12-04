@@ -12,9 +12,9 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
  */
 export function SvelteElement(node, context) {
 	validate_element(node, context);
+	check_element(node, context);
 
-	check_element(node, context.state);
-
+	node.metadata.path = [...context.path];
 	context.state.analysis.elements.push(node);
 
 	const xmlns = /** @type {AST.Attribute & { value: [AST.Text] } | undefined} */ (
@@ -35,9 +35,10 @@ export function SvelteElement(node, context) {
 				ancestor.type === 'Component' ||
 				ancestor.type === 'SvelteComponent' ||
 				ancestor.type === 'SvelteFragment' ||
-				ancestor.type === 'SnippetBlock'
+				ancestor.type === 'SnippetBlock' ||
+				i === 0
 			) {
-				// Inside a slot or a snippet -> this resets the namespace, so assume the component namespace
+				// Root element, or inside a slot or a snippet -> this resets the namespace, so assume the component namespace
 				node.metadata.svg = context.state.options.namespace === 'svg';
 				node.metadata.mathml = context.state.options.namespace === 'mathml';
 				break;

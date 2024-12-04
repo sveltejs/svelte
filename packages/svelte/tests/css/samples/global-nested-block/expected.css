@@ -8,6 +8,15 @@
 
 		.x {
 			color: green;
+			&:hover {
+				color: green;
+			}
+			&div {
+				color: green;
+			}
+			/* (unused) .unused {
+				color: red;
+			}*/
 		}
 
 		p:where(.svelte-xyz) {

@@ -1,6 +1,6 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
-import { source, set } from '../internal/client/reactivity/sources.js';
+import { set, source } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
 
@@ -22,7 +22,7 @@ export class SvelteMap extends Map {
 		super();
 
 		// If the value is invalid then the native exception will fire here
-		if (DEV) new Map(value);
+		if (DEV) value = new Map(value);
 
 		if (value) {
 			for (var [key, v] of value) {
@@ -94,13 +94,25 @@ export class SvelteMap extends Map {
 		var s = sources.get(key);
 		var prev_res = super.get(key);
 		var res = super.set(key, value);
+		var version = this.#version;
 
 		if (s === undefined) {
 			sources.set(key, source(0));
 			set(this.#size, super.size);
-			increment(this.#version);
+			increment(version);
 		} else if (prev_res !== value) {
 			increment(s);
+
+			// if not every reaction of s is a reaction of version we need to also include version
+			var v_reactions = version.reactions === null ? null : new Set(version.reactions);
+			var needs_version_increase =
+				v_reactions === null ||
+				!s.reactions?.every((r) =>
+					/** @type {NonNullable<typeof v_reactions>} */ (v_reactions).has(r)
+				);
+			if (needs_version_increase) {
+				increment(version);
+			}
 		}
 
 		return res;

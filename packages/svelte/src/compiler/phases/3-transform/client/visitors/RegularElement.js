@@ -4,6 +4,7 @@
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
 import {
+	cannot_be_set_statically,
 	is_boolean_attribute,
 	is_dom_property,
 	is_load_error_element,
@@ -11,28 +12,24 @@ import {
 } from '../../../../../utils.js';
 import { escape_html } from '../../../../../escaping.js';
 import { dev, is_ignored, locator } from '../../../../state.js';
-import {
-	get_attribute_expression,
-	is_event_attribute,
-	is_text_attribute
-} from '../../../../utils/ast.js';
+import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { build_getter, can_inline_variable } from '../utils.js';
+import { build_getter, create_derived } from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
 	build_class_directives,
-	build_style_directives
+	build_style_directives,
+	build_set_attributes
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
 import {
 	build_render_statement,
-	build_template_literal,
+	build_template_chunk,
 	build_update,
-	build_update_assignment,
-	get_states_and_calls
+	build_update_assignment
 } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 
@@ -54,21 +51,27 @@ export function RegularElement(node, context) {
 	}
 
 	if (node.name === 'noscript') {
-		context.state.template.push_quasi('<noscript></noscript>');
+		context.state.template.push('<noscript></noscript>');
 		return;
+	}
+
+	const is_custom_element = is_custom_element_node(node);
+
+	if (node.name === 'video' || is_custom_element) {
+		// cloneNode is faster, but it does not instantiate the underlying class of the
+		// custom element until the template is connected to the dom, which would
+		// cause problems when setting properties on the custom element.
+		// Therefore we need to use importNode instead, which doesn't have this caveat.
+		// Additionally, Webkit browsers need importNode for video elements for autoplay
+		// to work correctly.
+		context.state.metadata.context.template_needs_import_node = true;
 	}
 
 	if (node.name === 'script') {
 		context.state.metadata.context.template_contains_script_tag = true;
 	}
 
-	const metadata = context.state.metadata;
-	const child_metadata = {
-		...context.state.metadata,
-		namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
-	};
-
-	context.state.template.push_quasi(`<${node.name}`);
+	context.state.template.push(`<${node.name}`);
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];
@@ -79,151 +82,176 @@ export function RegularElement(node, context) {
 	/** @type {AST.StyleDirective[]} */
 	const style_directives = [];
 
+	/** @type {Array<AST.AnimateDirective | AST.BindDirective | AST.OnDirective | AST.TransitionDirective | AST.UseDirective>} */
+	const other_directives = [];
+
 	/** @type {ExpressionStatement[]} */
 	const lets = [];
 
-	const is_custom_element = is_custom_element_node(node);
-	let needs_input_reset = false;
-	let needs_content_reset = false;
+	/** @type {Map<string, AST.Attribute>} */
+	const lookup = new Map();
 
-	/** @type {AST.BindDirective | null} */
-	let value_binding = null;
+	/** @type {Map<string, AST.BindDirective>} */
+	const bindings = new Map();
 
-	/** If true, needs `__value` for inputs */
-	let needs_special_value_handling = node.name === 'option' || node.name === 'select';
-	let is_content_editable = false;
-	let has_content_editable_binding = false;
-	let img_might_be_lazy = false;
-	let might_need_event_replaying = false;
-	let has_direction_attribute = false;
-	let has_style_attribute = false;
-
-	if (is_custom_element) {
-		// cloneNode is faster, but it does not instantiate the underlying class of the
-		// custom element until the template is connected to the dom, which would
-		// cause problems when setting properties on the custom element.
-		// Therefore we need to use importNode instead, which doesn't have this caveat.
-		metadata.context.template_needs_import_node = true;
-	}
-
-	// visit let directives first, to set state
-	for (const attribute of node.attributes) {
-		if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
-		}
-	}
+	let has_spread = node.metadata.has_spread;
+	let has_use = false;
 
 	for (const attribute of node.attributes) {
-		if (attribute.type === 'Attribute') {
-			attributes.push(attribute);
-			if (node.name === 'img' && attribute.name === 'loading') {
-				img_might_be_lazy = true;
-			}
-			if (attribute.name === 'dir') {
-				has_direction_attribute = true;
-			}
-			if (attribute.name === 'style') {
-				has_style_attribute = true;
-			}
-			if (
-				(attribute.name === 'value' || attribute.name === 'checked') &&
-				!is_text_attribute(attribute)
-			) {
-				needs_input_reset = true;
-				needs_content_reset = true;
-			} else if (
-				attribute.name === 'contenteditable' &&
-				(attribute.value === true ||
-					(is_text_attribute(attribute) && attribute.value[0].data === 'true'))
-			) {
-				is_content_editable = true;
-			}
-		} else if (attribute.type === 'SpreadAttribute') {
-			attributes.push(attribute);
-			needs_input_reset = true;
-			needs_content_reset = true;
-			if (is_load_error_element(node.name)) {
-				might_need_event_replaying = true;
-			}
-		} else if (attribute.type === 'ClassDirective') {
-			class_directives.push(attribute);
-		} else if (attribute.type === 'StyleDirective') {
-			style_directives.push(attribute);
-		} else if (attribute.type === 'OnDirective') {
-			const handler = /** @type {Expression} */ (context.visit(attribute));
-			const has_action_directive = node.attributes.find((a) => a.type === 'UseDirective');
+		switch (attribute.type) {
+			case 'AnimateDirective':
+				other_directives.push(attribute);
+				break;
 
-			context.state.after_update.push(
-				b.stmt(has_action_directive ? b.call('$.effect', b.thunk(handler)) : handler)
-			);
-		} else if (attribute.type !== 'LetDirective') {
-			if (attribute.type === 'BindDirective') {
-				if (attribute.name === 'group' || attribute.name === 'checked') {
-					needs_special_value_handling = true;
-					needs_input_reset = true;
-				} else if (attribute.name === 'value') {
-					value_binding = attribute;
-					needs_content_reset = true;
-					needs_input_reset = true;
-				} else if (
-					attribute.name === 'innerHTML' ||
-					attribute.name === 'innerText' ||
-					attribute.name === 'textContent'
-				) {
-					has_content_editable_binding = true;
+			case 'Attribute':
+				// `is` attributes need to be part of the template, otherwise they break
+				if (attribute.name === 'is' && context.state.metadata.namespace === 'html') {
+					const { value } = build_attribute_value(attribute.value, context);
+
+					if (value.type === 'Literal' && typeof value.value === 'string') {
+						context.state.template.push(` is="${escape_html(value.value, true)}"`);
+						continue;
+					}
 				}
-			} else if (attribute.type === 'UseDirective' && is_load_error_element(node.name)) {
-				might_need_event_replaying = true;
-			}
-			context.visit(attribute);
+
+				attributes.push(attribute);
+				lookup.set(attribute.name, attribute);
+				break;
+
+			case 'BindDirective':
+				bindings.set(attribute.name, attribute);
+				other_directives.push(attribute);
+				break;
+
+			case 'ClassDirective':
+				class_directives.push(attribute);
+				break;
+
+			case 'LetDirective':
+				// visit let directives before everything else, to set state
+				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+				break;
+
+			case 'OnDirective':
+				other_directives.push(attribute);
+				break;
+
+			case 'SpreadAttribute':
+				attributes.push(attribute);
+				break;
+
+			case 'StyleDirective':
+				style_directives.push(attribute);
+				break;
+
+			case 'TransitionDirective':
+				other_directives.push(attribute);
+				break;
+
+			case 'UseDirective':
+				has_use = true;
+				other_directives.push(attribute);
+				break;
 		}
 	}
 
-	if (is_content_editable && has_content_editable_binding) {
-		child_metadata.bound_contenteditable = true;
+	/** @type {typeof state} */
+	const element_state = { ...context.state, init: [], after_update: [] };
+
+	for (const attribute of other_directives) {
+		if (attribute.type === 'OnDirective') {
+			const handler = /** @type {Expression} */ (context.visit(attribute));
+
+			if (has_use) {
+				element_state.init.push(b.stmt(b.call('$.effect', b.thunk(handler))));
+			} else {
+				element_state.after_update.push(b.stmt(handler));
+			}
+		} else {
+			context.visit(attribute, element_state);
+		}
 	}
 
-	if (needs_input_reset && node.name === 'input') {
+	if (
+		node.name === 'input' &&
+		(has_spread ||
+			bindings.has('value') ||
+			bindings.has('checked') ||
+			bindings.has('group') ||
+			attributes.some(
+				(attribute) =>
+					attribute.type === 'Attribute' &&
+					(attribute.name === 'value' || attribute.name === 'checked') &&
+					!is_text_attribute(attribute)
+			))
+	) {
 		context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
 	}
 
-	if (needs_content_reset && node.name === 'textarea') {
-		context.state.init.push(b.stmt(b.call('$.remove_textarea_child', context.state.node)));
+	if (node.name === 'textarea') {
+		const attribute = lookup.get('value') ?? lookup.get('checked');
+		const needs_content_reset = attribute && !is_text_attribute(attribute);
+
+		if (has_spread || bindings.has('value') || needs_content_reset) {
+			context.state.init.push(b.stmt(b.call('$.remove_textarea_child', context.state.node)));
+		}
 	}
 
-	if (value_binding !== null && node.name === 'select') {
-		setup_select_synchronization(value_binding, context);
+	if (node.name === 'select' && bindings.has('value')) {
+		setup_select_synchronization(/** @type {AST.BindDirective} */ (bindings.get('value')), context);
 	}
-
-	const node_id = context.state.node;
 
 	// Let bindings first, they can be used on attributes
 	context.state.init.push(...lets);
 
+	const node_id = context.state.node;
+
 	// Then do attributes
-	let is_attributes_reactive = false;
-	if (node.metadata.has_spread) {
-		if (node.name === 'img') {
-			img_might_be_lazy = true;
-		}
-		build_element_spread_attributes(
+	let is_attributes_reactive = has_spread;
+
+	if (has_spread) {
+		const attributes_id = b.id(context.state.scope.generate('attributes'));
+
+		build_set_attributes(
 			attributes,
 			context,
 			node,
 			node_id,
-			// If value binding exists, that one takes care of calling $.init_select
-			value_binding === null && node.name === 'select'
+			attributes_id,
+			(node.metadata.svg || node.metadata.mathml || is_custom_element_node(node)) && b.true,
+			node.name.includes('-') && b.true,
+			context.state
 		);
-		is_attributes_reactive = true;
+
+		// If value binding exists, that one takes care of calling $.init_select
+		if (node.name === 'select' && !bindings.has('value')) {
+			context.state.init.push(
+				b.stmt(b.call('$.init_select', node_id, b.thunk(b.member(attributes_id, 'value'))))
+			);
+
+			context.state.update.push(
+				b.if(
+					b.binary('in', b.literal('value'), attributes_id),
+					b.block([
+						// This ensures a one-way street to the DOM in case it's <select {value}>
+						// and not <select bind:value>. We need it in addition to $.init_select
+						// because the select value is not reflected as an attribute, so the
+						// mutation observer wouldn't notice.
+						b.stmt(b.call('$.select_option', node_id, b.member(attributes_id, 'value')))
+					])
+				)
+			);
+		}
 	} else {
+		/** If true, needs `__value` for inputs */
+		const needs_special_value_handling =
+			node.name === 'option' ||
+			node.name === 'select' ||
+			bindings.has('group') ||
+			bindings.has('checked');
+
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 			if (is_event_attribute(attribute)) {
-				if (
-					(attribute.name === 'onload' || attribute.name === 'onerror') &&
-					is_load_error_element(node.name)
-				) {
-					might_need_event_replaying = true;
-				}
 				visit_event_attribute(attribute, context);
 				continue;
 			}
@@ -235,14 +263,14 @@ export function RegularElement(node, context) {
 
 			if (
 				!is_custom_element &&
-				attribute.name !== 'autofocus' &&
+				!cannot_be_set_statically(attribute.name) &&
 				(attribute.value === true || is_text_attribute(attribute))
 			) {
-				const name = get_attribute_name(node, attribute, context);
+				const name = get_attribute_name(node, attribute);
 				const value = is_text_attribute(attribute) ? attribute.value[0].data : true;
 
 				if (name !== 'class' || value) {
-					context.state.template.push_quasi(
+					context.state.template.push(
 						` ${attribute.name}${
 							is_boolean_attribute(name) && value === true
 								? ''
@@ -260,35 +288,46 @@ export function RegularElement(node, context) {
 		}
 	}
 
+	// class/style directives must be applied last since they could override class/style attributes
+	build_class_directives(class_directives, node_id, context, is_attributes_reactive);
+	build_style_directives(style_directives, node_id, context, is_attributes_reactive);
+
 	// Apply the src and loading attributes for <img> elements after the element is appended to the document
-	if (img_might_be_lazy) {
+	if (node.name === 'img' && (has_spread || lookup.has('loading'))) {
 		context.state.after_update.push(b.stmt(b.call('$.handle_lazy_img', node_id)));
 	}
 
-	// class/style directives must be applied last since they could override class/style attributes
-	build_class_directives(class_directives, node_id, context, is_attributes_reactive);
-	build_style_directives(
-		style_directives,
-		node_id,
-		context,
-		is_attributes_reactive,
-		has_style_attribute || node.metadata.has_spread
-	);
-
-	if (might_need_event_replaying) {
+	if (
+		is_load_error_element(node.name) &&
+		(has_spread || has_use || lookup.has('onload') || lookup.has('onerror'))
+	) {
 		context.state.after_update.push(b.stmt(b.call('$.replay_events', node_id)));
 	}
 
-	context.state.template.push_quasi('>');
+	context.state.template.push('>');
 
-	/** @type {SourceLocation[]} */
-	const child_locations = [];
+	const metadata = {
+		...context.state.metadata,
+		namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
+	};
+
+	if (bindings.has('innerHTML') || bindings.has('innerText') || bindings.has('textContent')) {
+		const contenteditable = lookup.get('contenteditable');
+
+		if (
+			contenteditable &&
+			(contenteditable.value === true ||
+				(is_text_attribute(contenteditable) && contenteditable.value[0].data === 'true'))
+		) {
+			metadata.bound_contenteditable = true;
+		}
+	}
 
 	/** @type {ComponentClientTransformState} */
 	const state = {
 		...context.state,
-		metadata: child_metadata,
-		locations: child_locations,
+		metadata,
+		locations: [],
 		scope: /** @type {Scope} */ (context.state.scopes.get(node.fragment)),
 		preserve_whitespace:
 			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
@@ -298,14 +337,11 @@ export function RegularElement(node, context) {
 		node,
 		node.fragment.nodes,
 		context.path,
-		child_metadata.namespace,
+		state.metadata.namespace,
 		state,
 		node.name === 'script' || state.preserve_whitespace,
 		state.options.preserveComments
 	);
-
-	/** Whether or not we need to wrap the children in `{...}` to avoid declaration conflicts */
-	const has_declaration = node.fragment.nodes.some((node) => node.type === 'SnippetBlock');
 
 	/** @type {typeof state} */
 	const child_state = { ...state, init: [], update: [], after_update: [] };
@@ -316,18 +352,20 @@ export function RegularElement(node, context) {
 
 	// special case — if an element that only contains text, we don't need
 	// to descend into it if the text is non-reactive
-	const states_and_calls =
+	// in the rare case that we have static text that can't be inlined
+	// (e.g. `<span>{location}</span>`), set `textContent` programmatically
+	const use_text_content =
 		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
-		trimmed.some((node) => node.type === 'ExpressionTag') &&
-		get_states_and_calls(trimmed);
+		trimmed.every((node) => node.type === 'Text' || !node.metadata.expression.has_state) &&
+		trimmed.some((node) => node.type === 'ExpressionTag');
 
-	if (states_and_calls && states_and_calls.states === 0) {
+	if (use_text_content) {
 		child_state.init.push(
 			b.stmt(
 				b.assignment(
 					'=',
 					b.member(context.state.node, 'textContent'),
-					build_template_literal(trimmed, context.visit, child_state).value
+					build_template_chunk(trimmed, context.visit, child_state).value
 				)
 			)
 		);
@@ -347,7 +385,7 @@ export function RegularElement(node, context) {
 			arg = b.member(arg, 'content');
 		}
 
-		process_children(trimmed, () => b.call('$.child', arg), true, {
+		process_children(trimmed, (is_text) => b.call('$.child', arg, is_text && b.true), true, {
 			...context,
 			state: child_state
 		});
@@ -357,34 +395,40 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (has_declaration) {
+	if (node.fragment.nodes.some((node) => node.type === 'SnippetBlock')) {
+		// Wrap children in `{...}` to avoid declaration conflicts
 		context.state.init.push(
 			b.block([
 				...child_state.init,
+				...element_state.init,
 				child_state.update.length > 0 ? build_render_statement(child_state.update) : b.empty,
-				...child_state.after_update
+				...child_state.after_update,
+				...element_state.after_update
 			])
 		);
 	} else if (node.fragment.metadata.dynamic) {
-		context.state.init.push(...child_state.init);
+		context.state.init.push(...child_state.init, ...element_state.init);
 		context.state.update.push(...child_state.update);
-		context.state.after_update.push(...child_state.after_update);
+		context.state.after_update.push(...child_state.after_update, ...element_state.after_update);
+	} else {
+		context.state.init.push(...element_state.init);
+		context.state.after_update.push(...element_state.after_update);
 	}
 
-	if (has_direction_attribute) {
+	if (lookup.has('dir')) {
 		// This fixes an issue with Chromium where updates to text content within an element
 		// does not update the direction when set to auto. If we just re-assign the dir, this fixes it.
 		const dir = b.member(node_id, 'dir');
 		context.state.update.push(b.stmt(b.assignment('=', dir, dir)));
 	}
 
-	if (child_locations.length > 0) {
+	if (state.locations.length > 0) {
 		// @ts-expect-error
-		location.push(child_locations);
+		location.push(state.locations);
 	}
 
 	if (!is_void(node.name)) {
-		context.state.template.push_quasi(`</${node.name}>`);
+		context.state.template.push(`</${node.name}>`);
 	}
 }
 
@@ -443,108 +487,6 @@ function setup_select_synchronization(value_binding, context) {
 }
 
 /**
- * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
- * @param {ComponentContext} context
- * @param {AST.RegularElement} element
- * @param {Identifier} element_id
- * @param {boolean} needs_select_handling
- */
-function build_element_spread_attributes(
-	attributes,
-	context,
-	element,
-	element_id,
-	needs_select_handling
-) {
-	let needs_isolation = false;
-
-	/** @type {ObjectExpression['properties']} */
-	const values = [];
-
-	for (const attribute of attributes) {
-		if (attribute.type === 'Attribute') {
-			const name = get_attribute_name(element, attribute, context);
-			// TODO: handle has_call
-			const { value } = build_attribute_value(attribute.value, context);
-
-			if (
-				name === 'is' &&
-				value.type === 'Literal' &&
-				context.state.metadata.namespace === 'html'
-			) {
-				context.state.template.push_quasi(` is="${escape_html(value.value, true)}"`);
-				continue;
-			}
-
-			if (
-				is_event_attribute(attribute) &&
-				(get_attribute_expression(attribute).type === 'ArrowFunctionExpression' ||
-					get_attribute_expression(attribute).type === 'FunctionExpression')
-			) {
-				// Give the event handler a stable ID so it isn't removed and readded on every update
-				const id = context.state.scope.generate('event_handler');
-				context.state.init.push(b.var(id, value));
-				values.push(b.init(attribute.name, b.id(id)));
-			} else {
-				values.push(b.init(name, value));
-			}
-		} else {
-			values.push(b.spread(/** @type {Expression} */ (context.visit(attribute))));
-		}
-
-		needs_isolation ||=
-			attribute.type === 'SpreadAttribute' && attribute.metadata.expression.has_call;
-	}
-
-	const preserve_attribute_case =
-		element.metadata.svg || element.metadata.mathml || is_custom_element_node(element);
-	const id = b.id(context.state.scope.generate('attributes'));
-
-	const update = b.stmt(
-		b.assignment(
-			'=',
-			id,
-			b.call(
-				'$.set_attributes',
-				element_id,
-				id,
-				b.object(values),
-				context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
-				preserve_attribute_case && b.true,
-				is_ignored(element, 'hydration_attribute_changed') && b.true
-			)
-		)
-	);
-
-	context.state.init.push(b.let(id));
-
-	// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
-	if (needs_isolation) {
-		context.state.init.push(build_update(update));
-	} else {
-		context.state.update.push(update);
-	}
-
-	if (needs_select_handling) {
-		context.state.init.push(
-			b.stmt(b.call('$.init_select', element_id, b.thunk(b.member(id, 'value'))))
-		);
-		context.state.update.push(
-			b.if(
-				b.binary('in', b.literal('value'), id),
-				b.block([
-					// This ensures a one-way street to the DOM in case it's <select {value}>
-					// and not <select bind:value>. We need it in addition to $.init_select
-					// because the select value is not reflected as an attribute, so the
-					// mutation observer wouldn't notice.
-					b.stmt(b.call('$.select_option', element_id, b.member(id, 'value')))
-				])
-			)
-		);
-	}
-}
-
-/**
  * Serializes an assignment to an element property by adding relevant statements to either only
  * the init or the the init and update arrays, depending on whether or not the value is dynamic.
  * Resulting code for static looks something like this:
@@ -574,7 +516,7 @@ function build_element_spread_attributes(
  */
 function build_element_attribute_update_assignment(element, node_id, attribute, context) {
 	const state = context.state;
-	const name = get_attribute_name(element, attribute, context);
+	const name = get_attribute_name(element, attribute);
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
 	let { has_call, value } = build_attribute_value(attribute.value, context);
@@ -584,10 +526,24 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		return false;
 	}
 
+	// Special case for Firefox who needs it set as a property in order to work
+	if (name === 'muted') {
+		state.init.push(b.stmt(b.assignment('=', b.member(node_id, b.id('muted')), value)));
+		return false;
+	}
+
 	/** @type {Statement} */
 	let update;
 
 	if (name === 'class') {
+		if (attribute.metadata.expression.has_state && has_call) {
+			// ensure we're not creating a separate template effect for this so that
+			// potential class directives are added to the same effect and therefore always apply
+			const id = b.id(state.scope.generate('class_derived'));
+			state.init.push(b.const(id, create_derived(state, b.thunk(value))));
+			value = b.call('$.get', id);
+			has_call = false;
+		}
 		update = b.stmt(
 			b.call(
 				is_svg ? '$.set_svg_class' : is_mathml ? '$.set_mathml_class' : '$.set_class',
@@ -602,6 +558,14 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 	} else if (is_dom_property(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, name), value));
 	} else {
+		if (name === 'style' && attribute.metadata.expression.has_state && has_call) {
+			// ensure we're not creating a separate template effect for this so that
+			// potential style directives are added to the same effect and therefore always apply
+			const id = b.id(state.scope.generate('style_derived'));
+			state.init.push(b.const(id, create_derived(state, b.thunk(value))));
+			value = b.call('$.get', id);
+			has_call = false;
+		}
 		const callee = name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute';
 		update = b.stmt(
 			b.call(
@@ -614,13 +578,6 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		);
 	}
 
-	const inlinable_expression =
-		attribute.value === true
-			? false // not an expression
-			: is_inlinable_expression(
-					Array.isArray(attribute.value) ? attribute.value : [attribute.value],
-					context.state
-				);
 	if (attribute.metadata.expression.has_state) {
 		if (has_call) {
 			state.init.push(build_update(update));
@@ -629,39 +586,9 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		}
 		return true;
 	} else {
-		if (inlinable_expression) {
-			context.state.template.push_quasi(` ${name}="`);
-			context.state.template.push_expression(value);
-			context.state.template.push_quasi('"');
-		} else {
-			state.init.push(update);
-		}
+		state.init.push(update);
 		return false;
 	}
-}
-
-/**
- * @param {(AST.Text | AST.ExpressionTag)[]} nodes
- * @param {import('../types.js').ComponentClientTransformState} state
- */
-function is_inlinable_expression(nodes, state) {
-	let has_expression_tag = false;
-	for (let value of nodes) {
-		if (value.type === 'ExpressionTag') {
-			if (value.expression.type === 'Identifier') {
-				const binding = state.scope
-					.owner(value.expression.name)
-					?.declarations.get(value.expression.name);
-				if (!can_inline_variable(binding)) {
-					return false;
-				}
-			} else {
-				return false;
-			}
-			has_expression_tag = true;
-		}
-	}
-	return has_expression_tag;
 }
 
 /**

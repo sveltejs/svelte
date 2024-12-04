@@ -2,6 +2,7 @@
 /** @import { Component, Payload, RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
 export { FILENAME, HMR } from '../../constants.js';
+import { attr } from '../shared/attributes.js';
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
@@ -101,9 +102,11 @@ export function render(component, options = {}) {
 	on_destroy = [];
 	payload.out += BLOCK_OPEN;
 
+	let reset_reset_element;
+
 	if (DEV) {
 		// prevent parent/child element state being corrupted by a bad render
-		reset_elements();
+		reset_reset_element = reset_elements();
 	}
 
 	if (options.context) {
@@ -116,6 +119,10 @@ export function render(component, options = {}) {
 
 	if (options.context) {
 		pop();
+	}
+
+	if (reset_reset_element) {
+		reset_reset_element();
 	}
 
 	payload.out += BLOCK_CLOSE;
@@ -148,19 +155,6 @@ export function head(payload, fn) {
 }
 
 /**
- * @template V
- * @param {string} name
- * @param {V} value
- * @param {boolean} [is_boolean]
- * @returns {string}
- */
-export function attr(name, value, is_boolean = false) {
-	if (value == null || (!value && is_boolean) || (value === '' && name === 'class')) return '';
-	const assignment = is_boolean ? '' : `="${escape_html(value, true)}"`;
-	return ` ${name}${assignment}`;
-}
-
-/**
  * @param {Payload} payload
  * @param {boolean} is_html
  * @param {Record<string, string>} props
@@ -172,7 +166,7 @@ export function css_props(payload, is_html, props, component, dynamic = false) {
 	const styles = style_object_to_string(props);
 
 	if (is_html) {
-		payload.out += `<div style="display: contents; ${styles}">`;
+		payload.out += `<svelte-css-wrapper style="display: contents; ${styles}">`;
 	} else {
 		payload.out += `<g style="${styles}">`;
 	}
@@ -184,7 +178,7 @@ export function css_props(payload, is_html, props, component, dynamic = false) {
 	component();
 
 	if (is_html) {
-		payload.out += `<!----></div>`;
+		payload.out += `<!----></svelte-css-wrapper>`;
 	} else {
 		payload.out += `<!----></g>`;
 	}
@@ -228,11 +222,13 @@ export function spread_attributes(attrs, classes, styles, flags = 0) {
 		if (name[0] === '$' && name[1] === '$') continue; // faster than name.startsWith('$$')
 		if (INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
 
+		var value = attrs[name];
+
 		if (lowercase) {
 			name = name.toLowerCase();
 		}
 
-		attr_str += attr(name, attrs[name], is_html && is_boolean_attribute(name));
+		attr_str += attr(name, value, is_html && is_boolean_attribute(name));
 	}
 
 	return attr_str;
@@ -250,7 +246,12 @@ export function spread_props(props) {
 	for (let i = 0; i < props.length; i++) {
 		const obj = props[i];
 		for (key in obj) {
-			merged_props[key] = obj[key];
+			const desc = Object.getOwnPropertyDescriptor(obj, key);
+			if (desc) {
+				Object.defineProperty(merged_props, key, desc);
+			} else {
+				merged_props[key] = obj[key];
+			}
 		}
 	}
 	return merged_props;
@@ -391,12 +392,19 @@ export function unsubscribe_stores(store_values) {
 
 /**
  * @param {Payload} payload
- * @param {void | ((payload: Payload, props: Record<string, unknown>) => void)} slot_fn
+ * @param {Record<string, any>} $$props
+ * @param {string} name
  * @param {Record<string, unknown>} slot_props
  * @param {null | (() => void)} fallback_fn
  * @returns {void}
  */
-export function slot(payload, slot_fn, slot_props, fallback_fn) {
+export function slot(payload, $$props, name, slot_props, fallback_fn) {
+	var slot_fn = $$props.$$slots?.[name];
+	// Interop: Can use snippets to fill slots
+	if (slot_fn === true) {
+		slot_fn = $$props[name === 'default' ? 'children' : name];
+	}
+
 	if (slot_fn !== undefined) {
 		slot_fn(payload, slot_props);
 	} else {
@@ -486,9 +494,12 @@ export { await_block as await };
 
 /** @param {any} array_like_or_iterator */
 export function ensure_array_like(array_like_or_iterator) {
-	return array_like_or_iterator?.length !== undefined
-		? array_like_or_iterator
-		: Array.from(array_like_or_iterator);
+	if (array_like_or_iterator) {
+		return array_like_or_iterator.length !== undefined
+			? array_like_or_iterator
+			: Array.from(array_like_or_iterator);
+	}
+	return [];
 }
 
 /**
@@ -514,6 +525,8 @@ export function once(get_value) {
 	};
 }
 
+export { attr };
+
 export { html } from './blocks/html.js';
 
 export { push, pop } from './context.js';
@@ -531,5 +544,3 @@ export {
 } from '../shared/validate.js';
 
 export { escape_html as escape };
-
-export { default_slot } from '../client/dom/legacy/misc.js';

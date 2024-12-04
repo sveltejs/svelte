@@ -12,52 +12,39 @@ import { locator } from '../../../../../state.js';
 
 /**
  * @param {Array<AST.Text | AST.ExpressionTag>} values
- */
-export function get_states_and_calls(values) {
-	let states = 0;
-	let calls = 0;
-	for (let i = 0; i < values.length; i++) {
-		const node = values[i];
-
-		if (node.type === 'ExpressionTag') {
-			if (node.metadata.expression.has_call) {
-				calls++;
-			}
-			if (node.metadata.expression.has_state) {
-				states++;
-			}
-		}
-	}
-
-	return { states, calls };
-}
-
-/**
- * @param {Array<AST.Text | AST.ExpressionTag>} values
  * @param {(node: SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
+ * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
  */
-export function build_template_literal(values, visit, state) {
+export function build_template_chunk(values, visit, state) {
 	/** @type {Expression[]} */
 	const expressions = [];
 
 	let quasi = b.quasi('');
 	const quasis = [quasi];
 
-	const { states, calls } = get_states_and_calls(values);
+	let has_call = false;
+	let has_state = false;
+	let contains_multiple_call_expression = false;
 
-	let has_call = calls > 0;
-	let has_state = states > 0;
-	let contains_multiple_call_expression = calls > 1;
+	for (const node of values) {
+		if (node.type === 'ExpressionTag') {
+			const metadata = node.metadata.expression;
+
+			contains_multiple_call_expression ||= has_call && metadata.has_call;
+			has_call ||= metadata.has_call;
+			has_state ||= metadata.has_state;
+		}
+	}
 
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
 
 		if (node.type === 'Text') {
-			quasi.value.raw += sanitize_template_string(node.data);
+			quasi.value.cooked += node.data;
 		} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
 			if (node.expression.value != null) {
-				quasi.value.raw += sanitize_template_string(node.expression.value + '');
+				quasi.value.cooked += node.expression.value + '';
 			}
 		} else {
 			if (contains_multiple_call_expression) {
@@ -89,6 +76,10 @@ export function build_template_literal(values, visit, state) {
 			quasi = b.quasi('', i + 1 === values.length);
 			quasis.push(quasi);
 		}
+	}
+
+	for (const quasi of quasis) {
+		quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
 	}
 
 	const value = b.template(quasis, expressions);

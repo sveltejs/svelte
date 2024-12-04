@@ -1,13 +1,18 @@
 import { DEV } from 'esm-env';
 import { hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
-import { NAMESPACE_SVG } from '../../../../constants.js';
 import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '../../constants.js';
-import { queue_idle_task, queue_micro_task } from '../task.js';
+import { queue_idle_task } from '../task.js';
 import { is_capture_event, is_delegated, normalize_attribute } from '../../../../utils.js';
+import {
+	active_effect,
+	active_reaction,
+	set_active_effect,
+	set_active_reaction
+} from '../../runtime.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -55,8 +60,13 @@ export function remove_input_defaults(input) {
 export function set_value(element, value) {
 	// @ts-expect-error
 	var attributes = (element.__attributes ??= {});
-
-	if (attributes.value === (attributes.value = value)) return;
+	if (
+		attributes.value === (attributes.value = value) ||
+		// @ts-expect-error
+		// `progress` elements always need their value set when its `0`
+		(element.value === value && (value !== 0 || element.nodeName !== 'PROGRESS'))
+	)
+		return;
 	// @ts-expect-error
 	element.value = value;
 }
@@ -81,8 +91,6 @@ export function set_checked(element, checked) {
  * @param {boolean} [skip_warning]
  */
 export function set_attribute(element, attribute, value, skip_warning) {
-	value = value == null ? null : value + '';
-
 	// @ts-expect-error
 	var attributes = (element.__attributes ??= {});
 
@@ -95,7 +103,7 @@ export function set_attribute(element, attribute, value, skip_warning) {
 			(attribute === 'href' && element.nodeName === 'LINK')
 		) {
 			if (!skip_warning) {
-				check_src_in_dev_hydration(element, attribute, value);
+				check_src_in_dev_hydration(element, attribute, value ?? '');
 			}
 
 			// If we reset these attributes, they would result in another network request, which we want to avoid.
@@ -108,13 +116,21 @@ export function set_attribute(element, attribute, value, skip_warning) {
 
 	if (attributes[attribute] === (attributes[attribute] = value)) return;
 
+	if (attribute === 'style' && '__styles' in element) {
+		// reset styles to force style: directive to update
+		element.__styles = {};
+	}
+
 	if (attribute === 'loading') {
 		// @ts-expect-error
 		element[LOADING_ATTR_SYMBOL] = value;
 	}
 
-	if (value === null) {
+	if (value == null) {
 		element.removeAttribute(attribute);
+	} else if (typeof value !== 'string' && get_setters(element).includes(attribute)) {
+		// @ts-ignore
+		element[attribute] = value;
 	} else {
 		element.setAttribute(attribute, value);
 	}
@@ -135,20 +151,24 @@ export function set_xlink_attribute(dom, attribute, value) {
  * @param {any} value
  */
 export function set_custom_element_data(node, prop, value) {
-	if (prop in node) {
-		// Reading the prop could cause an error, we don't want this to fail everything else
-		try {
-			var curr_val = node[prop];
-		} catch {
+	// We need to ensure that setting custom element props, which can
+	// invoke lifecycle methods on other custom elements, does not also
+	// associate those lifecycle methods with the current active reaction
+	// or effect
+	var previous_reaction = active_reaction;
+	var previous_effect = active_effect;
+
+	set_active_reaction(null);
+	set_active_effect(null);
+	try {
+		if (get_setters(node).includes(prop)) {
+			node[prop] = value;
+		} else {
 			set_attribute(node, prop, value);
-			return;
 		}
-		var next_val = typeof curr_val === 'boolean' && value === '' ? true : value;
-		if (typeof curr_val !== 'object' || curr_val !== next_val) {
-			node[prop] = next_val;
-		}
-	} else {
-		set_attribute(node, prop, value);
+	} finally {
+		set_active_reaction(previous_reaction);
+		set_active_effect(previous_effect);
 	}
 }
 
@@ -158,7 +178,8 @@ export function set_custom_element_data(node, prop, value) {
  * @param {Record<string, any> | undefined} prev
  * @param {Record<string, any>} next New attributes - this function mutates this object
  * @param {string} [css_hash]
- * @param {boolean} preserve_attribute_case
+ * @param {boolean} [preserve_attribute_case]
+ * @param {boolean} [is_custom_element]
  * @param {boolean} [skip_warning]
  * @returns {Record<string, any>}
  */
@@ -168,7 +189,8 @@ export function set_attributes(
 	next,
 	css_hash,
 	preserve_attribute_case = false,
-	skip_warning
+	is_custom_element = false,
+	skip_warning = false
 ) {
 	var current = prev || {};
 	var is_option_element = element.tagName === 'OPTION';
@@ -183,13 +205,10 @@ export function set_attributes(
 		next.class = next.class ? next.class + ' ' + css_hash : css_hash;
 	}
 
-	var setters = setters_cache.get(element.nodeName);
-	if (!setters) setters_cache.set(element.nodeName, (setters = get_setters(element)));
+	var setters = get_setters(element);
 
 	// @ts-expect-error
 	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});
-	/** @type {Array<[string, any, () => void]>} */
-	var events = [];
 
 	// since key is captured we use const
 	for (const key in next) {
@@ -256,29 +275,21 @@ export function set_attributes(
 						current[key].call(this, evt);
 					}
 
-					if (!prev) {
-						events.push([
-							key,
-							value,
-							() => (current[event_handle_key] = create_event(event_name, element, handle, opts))
-						]);
-					} else {
-						current[event_handle_key] = create_event(event_name, element, handle, opts);
-					}
+					current[event_handle_key] = create_event(event_name, element, handle, opts);
 				} else {
 					// @ts-ignore
 					element[`__${event_name}`] = value;
 					delegate([event_name]);
 				}
+			} else if (delegated) {
+				// @ts-ignore
+				element[`__${event_name}`] = undefined;
 			}
-		} else if (value == null) {
-			attributes[key] = null;
-			element.removeAttribute(key);
-		} else if (key === 'style') {
+		} else if (key === 'style' && value != null) {
 			element.style.cssText = value + '';
 		} else if (key === 'autofocus') {
 			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
-		} else if (key === '__value' || key === 'value') {
+		} else if (key === '__value' || (key === 'value' && value != null)) {
 			// @ts-ignore
 			element.value = element[key] = element.__value = value;
 		} else {
@@ -287,95 +298,48 @@ export function set_attributes(
 				name = normalize_attribute(name);
 			}
 
-			if (setters.includes(name)) {
-				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
-					if (!skip_warning) check_src_in_dev_hydration(element, name, value);
-				} else {
-					// @ts-ignore
-					element[name] = value;
-				}
+			if (value == null && !is_custom_element) {
+				attributes[key] = null;
+				element.removeAttribute(key);
+			} else if (setters.includes(name) && (is_custom_element || typeof value !== 'string')) {
+				// @ts-ignore
+				element[name] = value;
 			} else if (typeof value !== 'function') {
-				set_attribute(element, name, value);
+				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
+					if (!skip_warning) check_src_in_dev_hydration(element, name, value ?? '');
+				} else {
+					set_attribute(element, name, value);
+				}
 			}
 		}
-	}
-
-	// On the first run, ensure that events are added after bindings so
-	// that their listeners fire after the binding listeners
-	if (!prev) {
-		queue_micro_task(() => {
-			if (!element.isConnected) return;
-			for (const [key, value, evt] of events) {
-				if (current[key] === value) {
-					evt();
-				}
-			}
-		});
+		if (key === 'style' && '__styles' in element) {
+			// reset styles to force style: directive to update
+			element.__styles = {};
+		}
 	}
 
 	return current;
 }
-
-/**
- * @param {Element} node
- * @param {Record<string, any> | undefined} prev
- * @param {Record<string, any>} next The new attributes - this function mutates this object
- * @param {string} [css_hash]
- */
-export function set_dynamic_element_attributes(node, prev, next, css_hash) {
-	if (node.tagName.includes('-')) {
-		for (var key in prev) {
-			if (!(key in next)) {
-				next[key] = null;
-			}
-		}
-
-		if (css_hash !== undefined) {
-			next.class = next.class ? next.class + ' ' + css_hash : css_hash;
-		}
-
-		for (key in next) {
-			set_custom_element_data(node, key, next[key]);
-		}
-
-		return next;
-	}
-
-	return set_attributes(
-		/** @type {Element & ElementCSSInlineStyle} */ (node),
-		prev,
-		next,
-		css_hash,
-		node.namespaceURI !== NAMESPACE_SVG
-	);
-}
-
-/**
- * List of attributes that should always be set through the attr method,
- * because updating them through the property setter doesn't work reliably.
- * In the example of `width`/`height`, the problem is that the setter only
- * accepts numeric values, but the attribute can also be set to a string like `50%`.
- * In case of draggable trying to set `element.draggable='false'` will actually set
- * draggable to `true`. If this list becomes too big, rethink this approach.
- */
-var always_set_through_set_attribute = ['width', 'height', 'draggable'];
 
 /** @type {Map<string, string[]>} */
 var setters_cache = new Map();
 
 /** @param {Element} element */
 function get_setters(element) {
-	/** @type {string[]} */
-	var setters = [];
+	var setters = setters_cache.get(element.nodeName);
+	if (setters) return setters;
+	setters_cache.set(element.nodeName, (setters = []));
 	var descriptors;
 	var proto = get_prototype_of(element);
+	var element_proto = Element.prototype;
 
 	// Stop at Element, from there on there's only unnecessary setters we're not interested in
-	while (proto.constructor.name !== 'Element') {
+	// Do not use contructor.name here as that's unreliable in some browser environments
+	while (element_proto !== proto) {
 		descriptors = get_descriptors(proto);
 
 		for (var key in descriptors) {
-			if (descriptors[key].set && !always_set_through_set_attribute.includes(key)) {
+			if (descriptors[key].set) {
 				setters.push(key);
 			}
 		}
@@ -389,12 +353,12 @@ function get_setters(element) {
 /**
  * @param {any} element
  * @param {string} attribute
- * @param {string | null} value
+ * @param {string} value
  */
 function check_src_in_dev_hydration(element, attribute, value) {
 	if (!DEV) return;
 	if (attribute === 'srcset' && srcset_url_equal(element, value)) return;
-	if (src_url_equal(element.getAttribute(attribute) ?? '', value ?? '')) return;
+	if (src_url_equal(element.getAttribute(attribute) ?? '', value)) return;
 
 	w.hydration_attribute_changed(
 		attribute,
@@ -420,12 +384,12 @@ function split_srcset(srcset) {
 
 /**
  * @param {HTMLSourceElement | HTMLImageElement} element
- * @param {string | undefined | null} srcset
+ * @param {string} srcset
  * @returns {boolean}
  */
 function srcset_url_equal(element, srcset) {
 	var element_urls = split_srcset(element.srcset);
-	var urls = split_srcset(srcset ?? '');
+	var urls = split_srcset(srcset);
 
 	return (
 		urls.length === element_urls.length &&

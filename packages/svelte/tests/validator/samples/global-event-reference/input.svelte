@@ -2,8 +2,8 @@
     let onclick;
 </script>
 
-<button {onclick}></button>
-<button onclick={onclick}></button>
+<button {onclick}>click me</button>
+<button onclick={onclick}>click me</button>
 
-<button {onkeydown}></button>
-<button onkeydown={onkeydown}></button>
+<button {onkeydown}>click me</button>
+<button onkeydown={onkeydown}>click me</button>

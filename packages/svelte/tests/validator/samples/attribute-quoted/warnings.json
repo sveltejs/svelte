@@ -40,11 +40,11 @@
 		"message": "Quoted attributes on components and custom elements will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes",
 		"start": {
 			"column": 14,
-			"line": 18
+			"line": 19
 		},
 		"end": {
 			"column": 27,
-			"line": 18
+			"line": 19
 		}
 	},
 	{
@@ -52,11 +52,11 @@
 		"message": "Quoted attributes on components and custom elements will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes",
 		"start": {
 			"column": 16,
-			"line": 21
+			"line": 22
 		},
 		"end": {
 			"column": 29,
-			"line": 21
+			"line": 22
 		}
 	}
 ]

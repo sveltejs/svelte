@@ -110,7 +110,7 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	cssHash?: CssHashGetter;
 	/**
-	 * If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.
+	 * If `true`, your HTML comments will be preserved in the output. By default, they are stripped out.
 	 *
 	 * @default false
 	 */
@@ -279,7 +279,8 @@ export interface Binding {
 		| 'snippet'
 		| 'store_sub'
 		| 'legacy_reactive'
-		| 'template';
+		| 'template'
+		| 'snippet';
 	declaration_kind: DeclarationKind;
 	/**
 	 * What the value was initialized with.
@@ -291,7 +292,8 @@ export interface Binding {
 		| FunctionDeclaration
 		| ClassDeclaration
 		| ImportDeclaration
-		| AST.EachBlock;
+		| AST.EachBlock
+		| AST.SnippetBlock;
 	is_called: boolean;
 	references: { node: Identifier; path: SvelteNode[] }[];
 	mutated: boolean;

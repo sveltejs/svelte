@@ -31,11 +31,11 @@ import {
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-import { source, mutable_source, set } from '../../reactivity/sources.js';
+import { source, mutable_source, internal_set } from '../../reactivity/sources.js';
 import { array_from, is_array } from '../../../shared/utils.js';
 import { INERT } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
-import { current_effect } from '../../runtime.js';
+import { active_effect, active_reaction } from '../../runtime.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -132,6 +132,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	/** @type {Effect | null} */
 	var fallback = null;
 
+	var was_empty = false;
+
 	block(() => {
 		var collection = get_collection();
 
@@ -142,6 +144,13 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				: array_from(collection);
 
 		var length = array.length;
+
+		if (was_empty && length === 0) {
+			// ignore updates if the array is empty,
+			// and it already was empty on previous run
+			return;
+		}
+		was_empty = length === 0;
 
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
@@ -195,7 +204,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 
 		if (!hydrating) {
-			reconcile(array, state, anchor, render_fn, flags, get_key);
+			var effect = /** @type {Effect} */ (active_reaction);
+			reconcile(array, state, anchor, render_fn, flags, (effect.f & INERT) !== 0, get_key);
 		}
 
 		if (fallback_fn !== null) {
@@ -216,6 +226,14 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			// continue in hydration mode
 			set_hydrating(true);
 		}
+
+		// When we mount the each block for the first time, the collection won't be
+		// connected to this effect as the effect hasn't finished running yet and its deps
+		// won't be assigned. However, it's possible that when reconciling the each block
+		// that a mutation occurred and it's made the collection MAYBE_DIRTY, so reading the
+		// collection again can provide consistency to the reactive graph again as the deriveds
+		// will now be `CLEAN`.
+		get_collection();
 	});
 
 	if (hydrating) {
@@ -231,10 +249,11 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
  * @param {Element | Comment | Text} anchor
  * @param {(anchor: Node, item: MaybeSource<V>, index: number | Source<number>) => void} render_fn
  * @param {number} flags
+ * @param {boolean} is_inert
  * @param {(value: V, index: number) => any} get_key
  * @returns {void}
  */
-function reconcile(array, state, anchor, render_fn, flags, get_key) {
+function reconcile(array, state, anchor, render_fn, flags, is_inert, get_key) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 
@@ -373,7 +392,11 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 			stashed = [];
 
 			while (current !== null && current.k !== key) {
-				(seen ??= new Set()).add(current);
+				// If the each block isn't inert and an item has an effect that is already inert,
+				// skip over adding it to our seen Set as the item is already being handled
+				if (is_inert || (current.e.f & INERT) === 0) {
+					(seen ??= new Set()).add(current);
+				}
 				stashed.push(current);
 				current = current.next;
 			}
@@ -394,7 +417,10 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		var to_destroy = seen === undefined ? [] : array_from(seen);
 
 		while (current !== null) {
-			to_destroy.push(current);
+			// If the each block isn't inert, then inert effects are currently outroing and will be removed once the transition is finished
+			if (is_inert || (current.e.f & INERT) === 0) {
+				to_destroy.push(current);
+			}
 			current = current.next;
 		}
 
@@ -426,8 +452,8 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
 		});
 	}
 
-	/** @type {Effect} */ (current_effect).first = state.first && state.first.e;
-	/** @type {Effect} */ (current_effect).last = prev && prev.e;
+	/** @type {Effect} */ (active_effect).first = state.first && state.first.e;
+	/** @type {Effect} */ (active_effect).last = prev && prev.e;
 }
 
 /**
@@ -439,11 +465,11 @@ function reconcile(array, state, anchor, render_fn, flags, get_key) {
  */
 function update_item(item, value, index, type) {
 	if ((type & EACH_ITEM_REACTIVE) !== 0) {
-		set(item.v, value);
+		internal_set(item.v, value);
 	}
 
 	if ((type & EACH_INDEX_REACTIVE) !== 0) {
-		set(/** @type {Value<number>} */ (item.i), index);
+		internal_set(/** @type {Value<number>} */ (item.i), index);
 	} else {
 		item.i = index;
 	}
@@ -464,27 +490,27 @@ function update_item(item, value, index, type) {
  */
 function create_item(anchor, state, prev, next, value, key, index, render_fn, flags) {
 	var previous_each_item = current_each_item;
+	var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
+	var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
+
+	var v = reactive ? (mutable ? mutable_source(value) : source(value)) : value;
+	var i = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
+
+	/** @type {EachItem} */
+	var item = {
+		i,
+		v,
+		k: key,
+		a: null,
+		// @ts-expect-error
+		e: null,
+		prev,
+		next
+	};
+
+	current_each_item = item;
 
 	try {
-		var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
-		var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
-
-		var v = reactive ? (mutable ? mutable_source(value) : source(value)) : value;
-		var i = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
-
-		/** @type {EachItem} */
-		var item = {
-			i,
-			v,
-			k: key,
-			a: null,
-			// @ts-expect-error
-			e: null,
-			prev,
-			next
-		};
-
-		current_each_item = item;
 		item.e = branch(() => render_fn(anchor, v, i), hydrating);
 
 		item.e.prev = prev && prev.e;

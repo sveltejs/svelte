@@ -15,12 +15,12 @@ export { default as preprocess } from './preprocess/index.js';
 /**
  * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
  *
- * https://svelte.dev/docs/svelte-compiler#svelte-compile
  * @param {string} source The component source code
  * @param {CompileOptions} options The compiler options
  * @returns {CompileResult}
  */
 export function compile(source, options) {
+	source = remove_bom(source);
 	state.reset_warning_filter(options.warningFilter);
 	const validated = validate_component_options(options, '');
 	state.reset(source, validated);
@@ -54,12 +54,12 @@ export function compile(source, options) {
 /**
  * `compileModule` takes your JavaScript source code containing runes, and turns it into a JavaScript module.
  *
- * https://svelte.dev/docs/svelte-compiler#svelte-compile
  * @param {string} source The component source code
  * @param {ModuleCompileOptions} options
  * @returns {CompileResult}
  */
 export function compileModule(source, options) {
+	source = remove_bom(source);
 	state.reset_warning_filter(options.warningFilter);
 	const validated = validate_module_options(options, '');
 	state.reset(source, validated);
@@ -74,7 +74,6 @@ export function compileModule(source, options) {
  * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
  * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
  *
- * https://svelte.dev/docs/svelte-compiler#svelte-parse
  * @overload
  * @param {string} source
  * @param {{ filename?: string; modern: true }} options
@@ -87,7 +86,6 @@ export function compileModule(source, options) {
  * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
  * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
  *
- * https://svelte.dev/docs/svelte-compiler#svelte-parse
  * @overload
  * @param {string} source
  * @param {{ filename?: string; modern?: false }} [options]
@@ -100,12 +98,12 @@ export function compileModule(source, options) {
  * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
  * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
  *
- * https://svelte.dev/docs/svelte-compiler#svelte-parse
  * @param {string} source
  * @param {{ filename?: string; rootDir?: string; modern?: boolean }} [options]
  * @returns {AST.Root | LegacyRoot}
  */
 export function parse(source, { filename, rootDir, modern } = {}) {
+	source = remove_bom(source);
 	state.reset_warning_filter(() => false);
 	state.reset(source, { filename: filename ?? '(unknown)', rootDir });
 
@@ -122,7 +120,6 @@ function to_public_ast(source, ast, modern) {
 	if (modern) {
 		const clean = (/** @type {any} */ node) => {
 			delete node.metadata;
-			delete node.parent;
 		};
 
 		ast.options?.attributes.forEach((attribute) => {
@@ -143,6 +140,17 @@ function to_public_ast(source, ast, modern) {
 	}
 
 	return convert(source, ast);
+}
+
+/**
+ * Remove the byte order mark from a string if it's present since it would mess with our template generation logic
+ * @param {string} source
+ */
+function remove_bom(source) {
+	if (source.charCodeAt(0) === 0xfeff) {
+		return source.slice(1);
+	}
+	return source;
 }
 
 /**
