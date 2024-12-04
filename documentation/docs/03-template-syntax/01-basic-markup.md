@@ -211,3 +211,12 @@ You can add a special comment starting with `@component` that will show up when 
 	</h1>
 </main>
 ````
+
+You can document components with the `@component` tag. These comments will appear when hovering over a component in IDEs with support such as VS Code with [the Svelte VS Code extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+
+```svelte
+<!--
+@component this is a component description
+-->
+<h1>Hello world</h1>
+```
