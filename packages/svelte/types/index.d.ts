@@ -35,7 +35,7 @@ declare module 'svelte' {
 	/**
 	 * This was the base class for Svelte components in Svelte 4. Svelte 5+ components
 	 * are completely different under the hood. For typing, use `Component` instead.
-	 * To instantiate components, use `mount` instead`.
+	 * To instantiate components, use `mount` instead.
 	 * See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more info.
 	 */
 	export class SvelteComponent<
@@ -812,7 +812,7 @@ declare module 'svelte/compiler' {
 		 */
 		cssHash?: CssHashGetter;
 		/**
-		 * If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.
+		 * If `true`, your HTML comments will be preserved in the output. By default, they are stripped out.
 		 *
 		 * @default false
 		 */
@@ -1163,6 +1163,11 @@ declare module 'svelte/compiler' {
 			name: 'svelte:fragment';
 		}
 
+		export interface SvelteBoundary extends BaseElement {
+			type: 'SvelteBoundary';
+			name: 'svelte:boundary';
+		}
+
 		export interface SvelteHead extends BaseElement {
 			type: 'SvelteHead';
 			name: 'svelte:head';
@@ -1188,7 +1193,8 @@ declare module 'svelte/compiler' {
 		export interface EachBlock extends BaseNode {
 			type: 'EachBlock';
 			expression: Expression;
-			context: Pattern;
+			/** The `entry` in `{#each item as entry}`. `null` if `as` part is omitted */
+			context: Pattern | null;
 			body: Fragment;
 			fallback?: Fragment;
 			index?: string;
@@ -1280,7 +1286,8 @@ declare module 'svelte/compiler' {
 		| AST.SvelteHead
 		| AST.SvelteOptionsRaw
 		| AST.SvelteSelf
-		| AST.SvelteWindow;
+		| AST.SvelteWindow
+		| AST.SvelteBoundary;
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
 	 * For example, it can be used to convert a `<style lang="sass">` block into vanilla CSS.
@@ -1578,6 +1585,13 @@ declare module 'svelte/legacy' {
 	 * @deprecated Use this only as a temporary solution to migrate your automatically delegated events in Svelte 5.
 	 */
 	export function createBubbler(): (type: string) => (event: Event) => boolean;
+	/**
+	 * Support using the component as both a class and function during the transition period
+	 */
+	export type LegacyComponentType = {
+		new (o: ComponentConstructorOptions): SvelteComponent;
+		(...args: Parameters<Component<Record<string, any>>>): ReturnType<Component<Record<string, any>, Record<string, any>>>;
+	};
 	/**
 	 * Substitute for the `trusted` event modifier
 	 * @deprecated
@@ -1935,7 +1949,7 @@ declare module 'svelte/transition' {
 	 * */
 	export function slide(node: Element, { delay, duration, easing, axis }?: SlideParams | undefined): TransitionConfig;
 	/**
-	 * Animates the opacity and scale of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
+	 * Animates the opacity and scale of an element. `in` transitions animate from the provided values, passed as parameters, to an element's current (default) values. `out` transitions animate from an element's default values to the provided values.
 	 *
 	 * */
 	export function scale(node: Element, { delay, duration, easing, start, opacity }?: ScaleParams | undefined): TransitionConfig;
@@ -1947,7 +1961,7 @@ declare module 'svelte/transition' {
 		getTotalLength(): number;
 	}, { delay, speed, duration, easing }?: DrawParams | undefined): TransitionConfig;
 	/**
-	 * The `crossfade` function creates a pair of [transitions](https://svelte.dev/docs#template-syntax-element-directives-transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
+	 * The `crossfade` function creates a pair of [transitions](https://svelte.dev/docs/svelte/transition) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
 	 *
 	 * */
 	export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
@@ -2183,7 +2197,7 @@ declare module 'svelte/types/compiler/interfaces' {
 		 */
 		cssHash?: CssHashGetter;
 		/**
-		 * If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.
+		 * If `true`, your HTML comments will be preserved in the output. By default, they are stripped out.
 		 *
 		 * @default false
 		 */
@@ -2308,17 +2322,9 @@ declare module 'svelte/types/compiler/interfaces' {
 }declare module '*.svelte' {
 	// use prettier-ignore for a while because of https://github.com/sveltejs/language-tools/commit/026111228b5814a9109cc4d779d37fb02955fb8b
 	// prettier-ignore
-	import { SvelteComponent, Component, type ComponentConstructorOptions } from 'svelte'
-
-	// Support using the component as both a class and function during the transition period
-	// prettier-ignore
-	interface ComponentType {
-		(
-			...args: Parameters<Component<Record<string, any>>>
-		): ReturnType<Component<Record<string, any>, Record<string, any>>>
-		new (o: ComponentConstructorOptions): SvelteComponent
-	}
-	const Comp: ComponentType;
+	import { SvelteComponent } from 'svelte'
+	import { LegacyComponentType } from 'svelte/legacy';
+	const Comp: LegacyComponentType;
 	type Comp = SvelteComponent;
 	export default Comp;
 }

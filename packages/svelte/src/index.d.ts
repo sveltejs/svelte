@@ -38,7 +38,7 @@ type Properties<Props, Slots> = Props &
 /**
  * This was the base class for Svelte components in Svelte 4. Svelte 5+ components
  * are completely different under the hood. For typing, use `Component` instead.
- * To instantiate components, use `mount` instead`.
+ * To instantiate components, use `mount` instead.
  * See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more info.
  */
 export class SvelteComponent<

@@ -169,7 +169,7 @@ Any content inside the component tags that is _not_ a snippet declaration implic
 
 ```svelte
 <!--- file: App.svelte --->
-<Button>click me<Button>
+<Button>click me</Button>
 ```
 
 ```svelte
@@ -245,6 +245,23 @@ We can tighten things up further by declaring a generic, so that `data` and `row
 	} = $props();
 </script>
 ```
+
+## Exporting snippets
+
+Snippets declared at the top level of a `.svelte` file can be exported from a `<script module>` for use in other components, provided they don't reference any declarations in a non-module `<script>` (whether directly or indirectly, via other snippets) ([demo](/playground/untitled#H4sIAAAAAAAAE3WPwY7CMAxEf8UyB1hRgdhjl13Bga8gHFJipEqtGyUGFUX5dxJUtEB3b9bYM_MckHVLWOKut50TMuC5tpbEY4GnuiGP5T6gXG0-ykLSB8vW2oW_UCNZq7Snv_Rjx0Kc4kpc-6OrrfwoVlK3uQ4CaGMgwsl1LUwXy0f54J9-KV4vf20cNo7YkMu22aqAz4-oOLUI9YKluDPF4h_at-hX5PFyzA1tZ84N3fGpf8YfUU6GvDumLqDKmEqCjjCHUEX4hqDTWCU5PJ6Or38c4g1cPu9tnAEAAA==)):
+
+```svelte
+<script module>
+	export { add };
+</script>
+
+{#snippet add(a, b)}
+	{a} + {b} = {a + b}
+{/snippet}
+```
+
+> [!NOTE]
+> This requires Svelte 5.5.0 or newer
 
 ## Programmatic snippets
 

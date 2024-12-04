@@ -588,6 +588,30 @@ test('Date.toLocaleString', () => {
 	cleanup();
 });
 
+test('Date.valueOf', () => {
+	const date = new SvelteDate(initial_date);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(date.valueOf());
+		});
+	});
+
+	flushSync();
+
+	assert.deepEqual(log, [initial_date.valueOf()]);
+
+	flushSync(() => {
+		date.setTime(date.getTime() + 10);
+	});
+
+	assert.deepEqual(log, [initial_date.valueOf(), new Date(initial_date.getTime() + 10).valueOf()]);
+
+	cleanup();
+});
+
 test('Date.instanceOf', () => {
 	assert.equal(new SvelteDate() instanceof Date, true);
 });
@@ -615,6 +639,36 @@ test('Date methods invoked for the first time in a derived', () => {
 	});
 
 	assert.deepEqual(log, [0, 1, 2]);
+
+	cleanup();
+});
+
+test('Date methods shared between deriveds', () => {
+	const date = new SvelteDate(initial_date);
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		const year = derived(() => {
+			return date.getFullYear();
+		});
+		const year2 = derived(() => {
+			return date.getTime(), date.getFullYear();
+		});
+
+		render_effect(() => {
+			log.push(get(year) + '/' + get(year2).toString());
+		});
+
+		flushSync(() => {
+			date.setFullYear(date.getFullYear() + 1);
+		});
+
+		flushSync(() => {
+			date.setFullYear(date.getFullYear() + 1);
+		});
+	});
+
+	assert.deepEqual(log, ['2023/2023', '2024/2024', '2025/2025']);
 
 	cleanup();
 });

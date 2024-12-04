@@ -32,6 +32,7 @@ import {
 	BLOCK_EFFECT
 } from '../constants.js';
 import * as e from '../errors.js';
+import { legacy_mode_flag } from '../../flags/index.js';
 
 export let inspect_effects = new Set();
 
@@ -80,7 +81,7 @@ export function mutable_source(initial_value, immutable = false) {
 
 	// bind the signal to the component context, in case we need to
 	// track updates to trigger beforeUpdate/afterUpdate callbacks
-	if (component_context !== null && component_context.l !== null) {
+	if (legacy_mode_flag && component_context !== null && component_context.l !== null) {
 		(component_context.l.s ??= []).push(s);
 	}
 

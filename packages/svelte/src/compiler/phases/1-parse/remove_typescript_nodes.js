@@ -36,7 +36,11 @@ const visitors = {
 		if (node.exportKind === 'type') return b.empty;
 
 		if (node.declaration) {
-			return context.next();
+			const result = context.next();
+			if (result?.declaration?.type === 'EmptyStatement') {
+				return b.empty;
+			}
+			return result;
 		}
 
 		if (node.specifiers) {
@@ -56,13 +60,14 @@ const visitors = {
 		if (node.exportKind === 'type') return b.empty;
 		return node;
 	},
-	PropertyDefinition(node) {
+	PropertyDefinition(node, { next }) {
 		if (node.accessor) {
 			e.typescript_invalid_feature(
 				node,
 				'accessor fields (related TSC proposal is not stage 4 yet)'
 			);
 		}
+		return next();
 	},
 	TSAsExpression(node, context) {
 		return context.visit(node.expression);
@@ -94,10 +99,13 @@ const visitors = {
 		e.typescript_invalid_feature(node, 'enums');
 	},
 	TSParameterProperty(node, context) {
-		if (node.accessibility && context.path.at(-2)?.kind === 'constructor') {
+		if ((node.readonly || node.accessibility) && context.path.at(-2)?.kind === 'constructor') {
 			e.typescript_invalid_feature(node, 'accessibility modifiers on constructor parameters');
 		}
-		return node.parameter;
+		return context.visit(node.parameter);
+	},
+	TSInstantiationExpression(node, context) {
+		return context.visit(node.expression);
 	},
 	FunctionExpression: remove_this_param,
 	FunctionDeclaration: remove_this_param,

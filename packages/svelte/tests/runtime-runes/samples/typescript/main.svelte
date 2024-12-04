@@ -8,8 +8,12 @@
 		console.log(this);
 	}
 
-	class Foo {
-		constructor(readonly name: string) {}
+	class Foo<T> {
+		public name: string;
+		x = 'x' as const;
+		constructor(name: string) {
+			this.name = name;
+		}
 	}
 
 	declare const declared_const: number;
@@ -23,7 +27,13 @@
 		export type Foo = true
 	}
 
+	export function overload(a: boolean): boolean;
+	export function overload(b: string): number;
+	export function overload(c: any): any {}
+
 	export type { Hello };
+
+	const TypedFoo = Foo<true>;
 </script>
 
 <script>

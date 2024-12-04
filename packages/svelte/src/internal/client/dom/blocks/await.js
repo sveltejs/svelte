@@ -14,6 +14,7 @@ import {
 } from '../../runtime.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
+import { UNINITIALIZED } from '../../../../constants.js';
 
 const PENDING = 0;
 const THEN = 1;
@@ -40,8 +41,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	/** @type {any} */
 	var component_function = DEV ? component_context?.function : null;
 
-	/** @type {V | Promise<V> | null} */
-	var input;
+	/** @type {V | Promise<V> | typeof UNINITIALIZED} */
+	var input = UNINITIALIZED;
 
 	/** @type {Effect | null} */
 	var pending_effect;
@@ -70,42 +71,44 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 			if (DEV) set_dev_current_component_function(component_function);
 		}
 
-		if (state === PENDING && pending_fn) {
-			if (pending_effect) resume_effect(pending_effect);
-			else pending_effect = branch(() => pending_fn(anchor));
-		}
+		try {
+			if (state === PENDING && pending_fn) {
+				if (pending_effect) resume_effect(pending_effect);
+				else pending_effect = branch(() => pending_fn(anchor));
+			}
 
-		if (state === THEN && then_fn) {
-			if (then_effect) resume_effect(then_effect);
-			else then_effect = branch(() => then_fn(anchor, input_source));
-		}
+			if (state === THEN && then_fn) {
+				if (then_effect) resume_effect(then_effect);
+				else then_effect = branch(() => then_fn(anchor, input_source));
+			}
 
-		if (state === CATCH && catch_fn) {
-			if (catch_effect) resume_effect(catch_effect);
-			else catch_effect = branch(() => catch_fn(anchor, error_source));
-		}
+			if (state === CATCH && catch_fn) {
+				if (catch_effect) resume_effect(catch_effect);
+				else catch_effect = branch(() => catch_fn(anchor, error_source));
+			}
 
-		if (state !== PENDING && pending_effect) {
-			pause_effect(pending_effect, () => (pending_effect = null));
-		}
+			if (state !== PENDING && pending_effect) {
+				pause_effect(pending_effect, () => (pending_effect = null));
+			}
 
-		if (state !== THEN && then_effect) {
-			pause_effect(then_effect, () => (then_effect = null));
-		}
+			if (state !== THEN && then_effect) {
+				pause_effect(then_effect, () => (then_effect = null));
+			}
 
-		if (state !== CATCH && catch_effect) {
-			pause_effect(catch_effect, () => (catch_effect = null));
-		}
+			if (state !== CATCH && catch_effect) {
+				pause_effect(catch_effect, () => (catch_effect = null));
+			}
+		} finally {
+			if (restore) {
+				if (DEV) set_dev_current_component_function(null);
+				set_component_context(null);
+				set_active_reaction(null);
+				set_active_effect(null);
 
-		if (restore) {
-			if (DEV) set_dev_current_component_function(null);
-			set_component_context(null);
-			set_active_reaction(null);
-			set_active_effect(null);
-
-			// without this, the DOM does not update until two ticks after the promise
-			// resolves, which is unexpected behaviour (and somewhat irksome to test)
-			flush_sync();
+				// without this, the DOM does not update until two ticks after the promise
+				// resolves, which is unexpected behaviour (and somewhat irksome to test)
+				flush_sync();
+			}
 		}
 	}
 
@@ -154,8 +157,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 			update(THEN, false);
 		}
 
-		// Set the input to null, in order to disable the promise callbacks
-		return () => (input = null);
+		// Set the input to something else, in order to disable the promise callbacks
+		return () => (input = UNINITIALIZED);
 	});
 
 	if (hydrating) {

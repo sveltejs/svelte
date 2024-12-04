@@ -400,6 +400,12 @@ Expected token %token%
 Expected whitespace
 ```
 
+### export_undefined
+
+```
+`%name%` is not defined
+```
+
 ### global_reference_invalid
 
 ```
@@ -410,6 +416,12 @@ Expected whitespace
 
 ```
 `$host()` can only be used inside custom element component instances
+```
+
+### illegal_element_attribute
+
+```
+`<%name%>` does not support non-event attributes or spread attributes
 ```
 
 ### import_svelte_internal_forbidden
@@ -688,6 +700,30 @@ Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migra
 Cannot use explicit children snippet at the same time as implicit children content. Remove either the non-whitespace content or the children snippet block
 ```
 
+### snippet_invalid_export
+
+```
+An exported snippet can only reference things declared in a `<script module>`, or other exportable snippets
+```
+
+It's possible to export a snippet from a `<script module>` block, but only if it doesn't reference anything defined inside a non-module-level `<script>`. For example you can't do this...
+
+```svelte
+<script module>
+	export { greeting };
+</script>
+
+<script>
+	let message = 'hello';
+</script>
+
+{#snippet greeting(name)}
+	<p>{message} {name}!</p>
+{/snippet}
+```
+
+...because `greeting` references `message`, which is defined in the second `<script>`.
+
 ### snippet_invalid_rest_parameter
 
 ```
@@ -754,6 +790,18 @@ A component can have a single top-level `<style>` element
 
 ```
 `<svelte:body>` does not support non-event attributes or spread attributes
+```
+
+### svelte_boundary_invalid_attribute
+
+```
+Valid attributes on `<svelte:boundary>` are `onerror` and `failed`
+```
+
+### svelte_boundary_invalid_attribute_value
+
+```
+Attribute value must be a non-string expression
 ```
 
 ### svelte_component_invalid_this

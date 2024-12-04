@@ -136,7 +136,7 @@ export function slide(node, { delay = 0, duration = 400, easing = cubic_out, axi
 }
 
 /**
- * Animates the opacity and scale of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
+ * Animates the opacity and scale of an element. `in` transitions animate from the provided values, passed as parameters, to an element's current (default) values. `out` transitions animate from an element's default values to the provided values.
  *
  * @param {Element} node
  * @param {ScaleParams} [params]
@@ -209,7 +209,7 @@ function assign(tar, src) {
 }
 
 /**
- * The `crossfade` function creates a pair of [transitions](https://svelte.dev/docs#template-syntax-element-directives-transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
+ * The `crossfade` function creates a pair of [transitions](https://svelte.dev/docs/svelte/transition) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
  *
  * @param {CrossfadeParams & {
  * 	fallback?: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;

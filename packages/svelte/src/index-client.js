@@ -6,6 +6,7 @@ import { is_array } from './internal/shared/utils.js';
 import { user_effect } from './internal/client/index.js';
 import * as e from './internal/client/errors.js';
 import { lifecycle_outside_component } from './internal/shared/errors.js';
+import { legacy_mode_flag } from './internal/flags/index.js';
 
 /**
  * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
@@ -25,7 +26,7 @@ export function onMount(fn) {
 		lifecycle_outside_component('onMount');
 	}
 
-	if (component_context.l !== null) {
+	if (legacy_mode_flag && component_context.l !== null) {
 		init_update_callbacks(component_context).m.push(fn);
 	} else {
 		user_effect(() => {

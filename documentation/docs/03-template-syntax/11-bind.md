@@ -223,6 +223,8 @@ All visible elements have the following readonly bindings, measured with a `Resi
 </div>
 ```
 
+> [!NOTE] `display: inline` elements do not have a width or height (except for elements with 'intrinsic' dimensions, like `<img>` and `<canvas>`), and cannot be observed with a `ResizeObserver`. You will need to change the `display` style of these elements to something else, such as `inline-block`.
+
 ## bind:this
 
 ```svelte

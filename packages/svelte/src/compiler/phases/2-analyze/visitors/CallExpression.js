@@ -5,6 +5,7 @@ import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
 import { get_parent, unwrap_optional } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
  * @param {CallExpression} node

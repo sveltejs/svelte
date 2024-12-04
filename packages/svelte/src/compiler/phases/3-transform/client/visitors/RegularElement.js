@@ -4,6 +4,7 @@
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
 import {
+	cannot_be_set_statically,
 	is_boolean_attribute,
 	is_dom_property,
 	is_load_error_element,
@@ -11,15 +12,11 @@ import {
 } from '../../../../../utils.js';
 import { escape_html } from '../../../../../escaping.js';
 import { dev, is_ignored, locator } from '../../../../state.js';
-import {
-	get_attribute_expression,
-	is_event_attribute,
-	is_text_attribute
-} from '../../../../utils/ast.js';
+import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { build_getter, can_inline_variable, create_derived } from '../utils.js';
+import { build_getter, create_derived } from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
@@ -30,10 +27,9 @@ import {
 import { process_children } from './shared/fragment.js';
 import {
 	build_render_statement,
-	build_template_literal,
+	build_template_chunk,
 	build_update,
-	build_update_assignment,
-	get_states_and_calls
+	build_update_assignment
 } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 
@@ -267,8 +263,7 @@ export function RegularElement(node, context) {
 
 			if (
 				!is_custom_element &&
-				attribute.name !== 'autofocus' &&
-				attribute.name !== 'muted' &&
+				!cannot_be_set_statically(attribute.name) &&
 				(attribute.value === true || is_text_attribute(attribute))
 			) {
 				const name = get_attribute_name(node, attribute);
@@ -357,18 +352,20 @@ export function RegularElement(node, context) {
 
 	// special case — if an element that only contains text, we don't need
 	// to descend into it if the text is non-reactive
-	const states_and_calls =
+	// in the rare case that we have static text that can't be inlined
+	// (e.g. `<span>{location}</span>`), set `textContent` programmatically
+	const use_text_content =
 		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
-		trimmed.some((node) => node.type === 'ExpressionTag') &&
-		get_states_and_calls(trimmed);
+		trimmed.every((node) => node.type === 'Text' || !node.metadata.expression.has_state) &&
+		trimmed.some((node) => node.type === 'ExpressionTag');
 
-	if (states_and_calls && states_and_calls.states === 0) {
+	if (use_text_content) {
 		child_state.init.push(
 			b.stmt(
 				b.assignment(
 					'=',
 					b.member(context.state.node, 'textContent'),
-					build_template_literal(trimmed, context.visit, child_state).value
+					build_template_chunk(trimmed, context.visit, child_state).value
 				)
 			)
 		);
@@ -581,13 +578,6 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		);
 	}
 
-	const inlinable_expression =
-		attribute.value === true
-			? false // not an expression
-			: is_inlinable_expression(
-					Array.isArray(attribute.value) ? attribute.value : [attribute.value],
-					context.state
-				);
 	if (attribute.metadata.expression.has_state) {
 		if (has_call) {
 			state.init.push(build_update(update));
@@ -596,37 +586,9 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		}
 		return true;
 	} else {
-		if (inlinable_expression) {
-			context.state.template.push(` ${name}="`, value, '"');
-		} else {
-			state.init.push(update);
-		}
+		state.init.push(update);
 		return false;
 	}
-}
-
-/**
- * @param {(AST.Text | AST.ExpressionTag)[]} nodes
- * @param {import('../types.js').ComponentClientTransformState} state
- */
-function is_inlinable_expression(nodes, state) {
-	let has_expression_tag = false;
-	for (let value of nodes) {
-		if (value.type === 'ExpressionTag') {
-			if (value.expression.type === 'Identifier') {
-				const binding = state.scope
-					.owner(value.expression.name)
-					?.declarations.get(value.expression.name);
-				if (!can_inline_variable(binding)) {
-					return false;
-				}
-			} else {
-				return false;
-			}
-			has_expression_tag = true;
-		}
-	}
-	return has_expression_tag;
 }
 
 /**

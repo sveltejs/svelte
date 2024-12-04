@@ -1,6 +1,7 @@
 import { flushSync } from 'svelte';
 import { test } from '../../test';
 
+// This test mainly checks that all types are properly ignored by the compiler
 export default test({
 	html: '<button>clicks: 0</button>',
 
