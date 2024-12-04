@@ -1043,14 +1043,13 @@ export function mixed_event_handler_syntaxes(node, name) {
 }
 
 /**
- * %thing% is invalid inside `<%parent%>`
+ * %message%. The browser will 'repair' the HTML (by moving, removing, or inserting elements) which breaks Svelte's assumptions about the structure of your components.
  * @param {null | number | NodeLike} node
- * @param {string} thing
- * @param {string} parent
+ * @param {string} message
  * @returns {never}
  */
-export function node_invalid_placement(node, thing, parent) {
-	e(node, "node_invalid_placement", `${thing} is invalid inside \`<${parent}>\``);
+export function node_invalid_placement(node, message) {
+	e(node, "node_invalid_placement", `${message}. The browser will 'repair' the HTML (by moving, removing, or inserting elements) which breaks Svelte's assumptions about the structure of your components.`);
 }
 
 /**
