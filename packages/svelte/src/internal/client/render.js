@@ -204,8 +204,6 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 	// @ts-expect-error will be defined because the render effect runs synchronously
 	var component = undefined;
 
-	let outro = false;
-
 	var unmount = effect_root(() => {
 		var anchor_node = anchor ?? target.appendChild(create_text());
 
