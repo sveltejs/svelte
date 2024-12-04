@@ -204,6 +204,8 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 	// @ts-expect-error will be defined because the render effect runs synchronously
 	var component = undefined;
 
+	let outro = false;
+
 	var unmount = effect_root(() => {
 		var anchor_node = anchor ?? target.appendChild(create_text());
 
@@ -272,12 +274,13 @@ let mounted_components = new WeakMap();
 /**
  * Unmounts a component that was previously mounted using `mount` or `hydrate`.
  * @param {Record<string, any>} component
+ * @param {{ outro?: boolean }} [options]
  */
-export function unmount(component) {
+export function unmount(component, options) {
 	const fn = mounted_components.get(component);
 
 	if (fn) {
-		fn();
+		fn(options);
 	} else if (DEV) {
 		w.lifecycle_double_unmount();
 	}
