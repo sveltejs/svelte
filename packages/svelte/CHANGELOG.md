@@ -1,5 +1,15 @@
 # svelte
 
+## 5.5.4
+
+### Patch Changes
+
+- fix: better error messages for invalid HTML trees ([#14445](https://github.com/sveltejs/svelte/pull/14445))
+
+- fix: remove spreaded event handlers when they become nullish ([#14546](https://github.com/sveltejs/svelte/pull/14546))
+
+- fix: respect the unidirectional nature of time ([#14541](https://github.com/sveltejs/svelte/pull/14541))
+
 ## 5.5.3
 
 ### Patch Changes
