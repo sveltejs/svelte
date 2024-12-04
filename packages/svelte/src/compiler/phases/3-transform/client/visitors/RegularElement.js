@@ -172,20 +172,28 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (
-		node.name === 'input' &&
-		(has_spread ||
-			bindings.has('value') ||
-			bindings.has('checked') ||
-			bindings.has('group') ||
-			attributes.some(
-				(attribute) =>
-					attribute.type === 'Attribute' &&
-					(attribute.name === 'value' || attribute.name === 'checked') &&
-					!is_text_attribute(attribute)
-			))
-	) {
-		context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
+	if (node.name === 'input') {
+		const has_value_attribute = attributes.some(
+			(attribute) =>
+				attribute.type === 'Attribute' &&
+				(attribute.name === 'value' || attribute.name === 'checked') &&
+				!is_text_attribute(attribute)
+		);
+		const has_default_value_attribute = attributes.some(
+			(attribute) =>
+				attribute.type === 'Attribute' &&
+				(attribute.name === 'defaultValue' || attribute.name === 'defaultChecked')
+		);
+		if (
+			!has_default_value_attribute &&
+			(has_spread ||
+				bindings.has('value') ||
+				bindings.has('checked') ||
+				bindings.has('group') ||
+				(!bindings.has('group') && has_value_attribute))
+		) {
+			context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
+		}
 	}
 
 	if (node.name === 'textarea') {
@@ -555,6 +563,8 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		update = b.stmt(b.call('$.set_value', node_id, value));
 	} else if (name === 'checked') {
 		update = b.stmt(b.call('$.set_checked', node_id, value));
+	} else if (name === 'selected') {
+		update = b.stmt(b.call('$.set_selected', node_id, value));
 	} else if (is_dom_property(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, name), value));
 	} else {
