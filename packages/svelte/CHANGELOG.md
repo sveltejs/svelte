@@ -1,5 +1,11 @@
 # svelte
 
+## 5.6.0
+
+### Minor Changes
+
+- feat: support `defaultValue/defaultChecked` for inputs ([#14289](https://github.com/sveltejs/svelte/pull/14289))
+
 ## 5.5.4
 
 ### Patch Changes
