@@ -281,6 +281,9 @@ export function set_attributes(
 					element[`__${event_name}`] = value;
 					delegate([event_name]);
 				}
+			} else if (delegated) {
+				// @ts-ignore
+				element[`__${event_name}`] = undefined;
 			}
 		} else if (key === 'style' && value != null) {
 			element.style.cssText = value + '';
