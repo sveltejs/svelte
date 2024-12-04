@@ -8,6 +8,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>initial</title>
+</svelte:head>
+
 <button onclick={toggle}>
 	toggle
 </button>
