@@ -172,6 +172,10 @@
 
 > Expected whitespace
 
+## unterminated_string_constant
+
+> Unterminated string constant
+
 ## illegal_element_attribute
 
 > `<%name%>` does not support non-event attributes or spread attributes
