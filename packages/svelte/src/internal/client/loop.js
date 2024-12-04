@@ -4,10 +4,11 @@ import { raf } from './timing.js';
 // TODO move this into timing.js where it probably belongs
 
 /**
- * @param {number} now
  * @returns {void}
  */
-function run_tasks(now) {
+function run_tasks() {
+	const now = raf.now();
+
 	raf.tasks.forEach((task) => {
 		if (!task.c(now)) {
 			raf.tasks.delete(task);
