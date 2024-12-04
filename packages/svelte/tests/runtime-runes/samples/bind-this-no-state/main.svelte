@@ -1,6 +1,6 @@
 <script>
 	import { tick } from 'svelte';
-	
+
 	let selected = $state(-1);
 	let current = $state();
 
