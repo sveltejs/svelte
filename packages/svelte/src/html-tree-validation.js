@@ -137,12 +137,14 @@ const disallowed_children = {
 /**
  * Returns an error message if the tag is not allowed inside the ancestor tag (which is grandparent and above) such that it will result
  * in the browser repairing the HTML, which will likely result in an error during hydration.
- * @param {string} tag
+ * @param {string} child_tag
  * @param {string[]} ancestors All nodes starting with the parent, up until the ancestor, which means two entries minimum
+ * @param {string} [child_loc]
+ * @param {string} [ancestor_loc]
  * @returns {string | null}
  */
-export function is_tag_valid_with_ancestor(tag, ancestors) {
-	if (tag.includes('-')) return null; // custom elements can be anything
+export function is_tag_valid_with_ancestor(child_tag, ancestors, child_loc, ancestor_loc) {
+	if (child_tag.includes('-')) return null; // custom elements can be anything
 
 	const target = ancestors[ancestors.length - 1];
 	const disallowed = disallowed_children[target];
@@ -160,8 +162,11 @@ export function is_tag_valid_with_ancestor(tag, ancestors) {
 		}
 	}
 
-	if ('descendant' in disallowed && disallowed.descendant.includes(tag)) {
-		return `\`<${tag}>\` cannot be a descendant of \`<${target}>\``;
+	if ('descendant' in disallowed && disallowed.descendant.includes(child_tag)) {
+		const child = child_loc ? `<${child_tag}> (${child_loc})` : `<${child_tag}>`;
+		const ancestor = ancestor_loc ? `<${target}> (${ancestor_loc})` : `<${target}>`;
+
+		return `\`${child}\` cannot be a descendant of \`${ancestor}\``;
 	}
 
 	return null;
@@ -170,27 +175,34 @@ export function is_tag_valid_with_ancestor(tag, ancestors) {
 /**
  * Returns an error message if the tag is not allowed inside the parent tag such that it will result
  * in the browser repairing the HTML, which will likely result in an error during hydration.
- * @param {string} tag
+ * @param {string} child_tag
  * @param {string} parent_tag
+ * @param {string} [child_loc]
+ * @param {string} [parent_loc]
  * @returns {string | null}
  */
-export function is_tag_valid_with_parent(tag, parent_tag) {
-	if (tag.includes('-') || parent_tag?.includes('-')) return null; // custom elements can be anything
+export function is_tag_valid_with_parent(child_tag, parent_tag, child_loc, parent_loc) {
+	if (child_tag.includes('-') || parent_tag?.includes('-')) return null; // custom elements can be anything
 
 	const disallowed = disallowed_children[parent_tag];
 
+	const child = child_loc ? `<${child_tag}> (${child_loc})` : `<${child_tag}>`;
+	const parent = parent_loc ? `<${parent_tag}> (${parent_loc})` : `<${parent_tag}>`;
+
 	if (disallowed) {
-		if ('direct' in disallowed && disallowed.direct.includes(tag)) {
-			return `\`<${tag}>\` cannot be a direct child of \`<${parent_tag}>\``;
+		if ('direct' in disallowed && disallowed.direct.includes(child_tag)) {
+			return `\`${child}\` cannot be a direct child of \`${parent}\``;
 		}
-		if ('descendant' in disallowed && disallowed.descendant.includes(tag)) {
-			return `\`<${tag}>\` cannot be a child of \`<${parent_tag}>\``;
+
+		if ('descendant' in disallowed && disallowed.descendant.includes(child_tag)) {
+			return `\`${child}\` cannot be a child of \`${parent}\``;
 		}
+
 		if ('only' in disallowed && disallowed.only) {
-			if (disallowed.only.includes(tag)) {
+			if (disallowed.only.includes(child_tag)) {
 				return null;
 			} else {
-				return `\`<${tag}>\` cannot be a child of \`<${parent_tag}>\`. \`<${parent_tag}>\` only allows these children: ${disallowed.only.map((d) => `\`<${d}>\``).join(', ')}`;
+				return `\`${child}\` cannot be a child of \`${parent}\`. \`<${parent_tag}>\` only allows these children: ${disallowed.only.map((d) => `\`<${d}>\``).join(', ')}`;
 			}
 		}
 	}
@@ -199,7 +211,7 @@ export function is_tag_valid_with_parent(tag, parent_tag) {
 	// parsing rules - if we're down here, then none of those matched and
 	// so we allow it only if we don't know what the parent is, as all other
 	// cases are invalid (and we only get into this function if we know the parent).
-	switch (tag) {
+	switch (child_tag) {
 		case 'body':
 		case 'caption':
 		case 'col':
@@ -208,16 +220,16 @@ export function is_tag_valid_with_parent(tag, parent_tag) {
 		case 'frame':
 		case 'head':
 		case 'html':
-			return `\`<${tag}>\` cannot be a child of \`<${parent_tag}>\``;
+			return `\`${child}\` cannot be a child of \`${parent}\``;
 		case 'thead':
 		case 'tbody':
 		case 'tfoot':
-			return `\`<${tag}>\` must be the child of a \`<table>\`, not a \`<${parent_tag}>\``;
+			return `\`${child}\` must be the child of a \`<table>\`, not a \`${parent}\``;
 		case 'td':
 		case 'th':
-			return `\`<${tag}>\` must be the child of a \`<tr>\`, not a \`<${parent_tag}>\``;
+			return `\`${child}\` must be the child of a \`<tr>\`, not a \`${parent}\``;
 		case 'tr':
-			return `\`<tr>\` must be the child of a \`<thead>\`, \`<tbody>\`, or \`<tfoot>\`, not a \`<${parent_tag}>\``;
+			return `\`<tr>\` must be the child of a \`<thead>\`, \`<tbody>\`, or \`<tfoot>\`, not a \`${parent}\``;
 	}
 
 	return null;
