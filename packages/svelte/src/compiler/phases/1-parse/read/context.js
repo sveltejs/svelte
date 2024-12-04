@@ -120,7 +120,6 @@ function read_expression_length(parser, start) {
  * @param {Parser} parser
  * @param {number} start
  * @param {number} quote
- * @returns {number}
  */
 function read_string_length(parser, start, quote) {
 	let i = start;

@@ -7,7 +7,6 @@ export function is_quote(code) {
 	return code === SINGLE_QUOTE || code === DOUBLE_QUOTE || code === BACK_QUOTE;
 }
 
-
 /** @param {number} code */
 export function is_back_quote(code) {
 	return code === BACK_QUOTE;
