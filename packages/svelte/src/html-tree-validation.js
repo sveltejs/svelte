@@ -146,8 +146,8 @@ const disallowed_children = {
 export function is_tag_valid_with_ancestor(child_tag, ancestors, child_loc, ancestor_loc) {
 	if (child_tag.includes('-')) return null; // custom elements can be anything
 
-	const target = ancestors[ancestors.length - 1];
-	const disallowed = disallowed_children[target];
+	const ancestor_tag = ancestors[ancestors.length - 1];
+	const disallowed = disallowed_children[ancestor_tag];
 	if (!disallowed) return null;
 
 	if ('reset_by' in disallowed && disallowed.reset_by) {
@@ -164,7 +164,7 @@ export function is_tag_valid_with_ancestor(child_tag, ancestors, child_loc, ance
 
 	if ('descendant' in disallowed && disallowed.descendant.includes(child_tag)) {
 		const child = child_loc ? `<${child_tag}> (${child_loc})` : `<${child_tag}>`;
-		const ancestor = ancestor_loc ? `<${target}> (${ancestor_loc})` : `<${target}>`;
+		const ancestor = ancestor_loc ? `<${ancestor_tag}> (${ancestor_loc})` : `<${ancestor_tag}>`;
 
 		return `\`${child}\` cannot be a descendant of \`${ancestor}\``;
 	}
