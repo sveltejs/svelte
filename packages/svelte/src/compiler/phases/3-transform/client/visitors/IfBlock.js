@@ -35,8 +35,7 @@ export function IfBlock(node, context) {
 					b.stmt(
 						b.call(
 							b.id('$$render'),
-							b.id(consequent_id),
-							node.alternate ? b.literal(true) : undefined
+							b.id(consequent_id)
 						)
 					),
 					alternate_id
