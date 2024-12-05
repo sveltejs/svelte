@@ -5,6 +5,7 @@ import { on } from '../events/index.js';
  * Creates a media query and provides a `current` property that reflects whether or not it matches.
  *
  * Use it carefully — during server-side rendering, there is no way to know what the correct value should be, potentially causing content to change upon hydration.
+ * If you can use the media query in CSS to achieve the same effect, do that.
  *
  * ```svelte
  * <script>
