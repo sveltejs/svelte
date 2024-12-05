@@ -13,7 +13,6 @@ import { dev } from '../../../state.js';
  *   hash: string;
  *   minify: boolean;
  *   selector: string;
- *   is_global_block: boolean;
  *   keyframes: string[];
  *   specificity: {
  *     bumped: boolean
@@ -37,7 +36,6 @@ export function render_stylesheet(source, analysis, options) {
 		minify: analysis.inject_styles && !options.dev,
 		selector: `.${analysis.css.hash}`,
 		keyframes: analysis.css.keyframes,
-		is_global_block: false,
 		specificity: {
 			bumped: false
 		}
@@ -80,7 +78,7 @@ const visitors = {
 		context.state.code.addSourcemapLocation(node.end);
 		context.next();
 	},
-	Atrule(node, { state, next }) {
+	Atrule(node, { state, next, path }) {
 		if (is_keyframes_node(node)) {
 			let start = node.start + node.name.length + 1;
 			while (state.code.original[start] === ' ') start += 1;
@@ -89,7 +87,7 @@ const visitors = {
 
 			if (node.prelude.startsWith('-global-')) {
 				state.code.remove(start, start + 8);
-			} else if (!state.is_global_block) {
+			} else if (!is_global_block(path)) {
 				state.code.prependRight(start, `${state.hash}-`);
 			}
 
@@ -136,7 +134,7 @@ const visitors = {
 			}
 		}
 	},
-	Rule(node, { state, next, visit }) {
+	Rule(node, { state, next, visit, path }) {
 		if (state.minify) {
 			remove_preceding_whitespace(node.start, state);
 			remove_preceding_whitespace(node.block.end - 1, state);
@@ -156,7 +154,7 @@ const visitors = {
 			return;
 		}
 
-		if (!is_used(node) && !state.is_global_block) {
+		if (!is_used(node) && !is_global_block(path)) {
 			if (state.minify) {
 				state.code.remove(node.start, node.end);
 			} else {
@@ -185,17 +183,17 @@ const visitors = {
 				}
 
 				// don't recurse into selectors but visit the body
-				visit(node.block, { ...state, is_global_block: true });
+				visit(node.block);
 				return;
 			}
 		}
 
-		next({ ...state, is_global_block: node.metadata.is_global_block || state.is_global_block });
+		next();
 	},
 	SelectorList(node, { state, next, path }) {
 		// Only add comments if we're not inside a complex selector that itself is unused or a global block
 		if (
-			!state.is_global_block &&
+			!is_global_block(path) &&
 			!path.find((n) => n.type === 'ComplexSelector' && !n.metadata.used)
 		) {
 			const children = node.children;
@@ -360,6 +358,14 @@ const visitors = {
 		}
 	}
 };
+
+/**
+ *
+ * @param {Array<Css.Node>} path
+ */
+function is_global_block(path) {
+	return path.some((node) => node.type === 'Rule' && node.metadata.is_global_block);
+}
 
 /**
  * @param {Css.PseudoClassSelector} selector
