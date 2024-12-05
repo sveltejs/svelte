@@ -13,6 +13,7 @@ import { dev } from '../../../state.js';
  *   hash: string;
  *   minify: boolean;
  *   selector: string;
+ *   is_global_block: boolean;
  *   keyframes: string[];
  *   specificity: {
  *     bumped: boolean
@@ -36,6 +37,7 @@ export function render_stylesheet(source, analysis, options) {
 		minify: analysis.inject_styles && !options.dev,
 		selector: `.${analysis.css.hash}`,
 		keyframes: analysis.css.keyframes,
+		is_global_block: false,
 		specificity: {
 			bumped: false
 		}
@@ -154,7 +156,7 @@ const visitors = {
 			return;
 		}
 
-		if (!is_used(node)) {
+		if (!is_used(node) && !state.is_global_block) {
 			if (state.minify) {
 				state.code.remove(node.start, node.end);
 			} else {
@@ -182,20 +184,20 @@ const visitors = {
 					state.code.appendLeft(node.block.end, '*/');
 				}
 
-				// don't recurse into selector or body
+				// don't recurse into selectors but visit the body
+				visit(node.block, { ...state, is_global_block: true });
 				return;
 			}
-
-			// don't recurse into body
-			visit(node.prelude);
-			return;
 		}
 
-		next();
+		next({ ...state, is_global_block: node.metadata.is_global_block || state.is_global_block });
 	},
 	SelectorList(node, { state, next, path }) {
-		// Only add comments if we're not inside a complex selector that itself is unused
-		if (!path.find((n) => n.type === 'ComplexSelector' && !n.metadata.used)) {
+		// Only add comments if we're not inside a complex selector that itself is unused or a global block
+		if (
+			!state.is_global_block &&
+			!path.find((n) => n.type === 'ComplexSelector' && !n.metadata.used)
+		) {
 			const children = node.children;
 			let pruning = false;
 			let prune_start = children[0].start;
