@@ -60,6 +60,7 @@ export function remove_input_defaults(input) {
 export function set_value(element, value) {
 	// @ts-expect-error
 	var attributes = (element.__attributes ??= {});
+
 	if (
 		attributes.value ===
 			(attributes.value =
@@ -68,8 +69,10 @@ export function set_value(element, value) {
 		// @ts-expect-error
 		// `progress` elements always need their value set when its `0`
 		(element.value === value && (value !== 0 || element.nodeName !== 'PROGRESS'))
-	)
+	) {
 		return;
+	}
+
 	// @ts-expect-error
 	element.value = value;
 }
@@ -82,7 +85,15 @@ export function set_checked(element, checked) {
 	// @ts-expect-error
 	var attributes = (element.__attributes ??= {});
 
-	if (attributes.checked === (attributes.checked = checked)) return;
+	if (
+		attributes.checked ===
+		(attributes.checked =
+			// treat null and undefined the same for the initial value
+			checked ?? undefined)
+	) {
+		return;
+	}
+
 	// @ts-expect-error
 	element.checked = checked;
 }

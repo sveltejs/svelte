@@ -28,12 +28,16 @@
 	let checked2 = $state();
 	let checked3 = $state();
 	let checked4 = $state();
-	let checked5 = $state(false);
-	let checked6 = $state(false);
-	let checked7 = $state(false);
-	let checked8 = $state(false);
-	let checked9 = $state(true);
-	let checked10 = $state(true);
+	let checked5 = $state(null);
+	let checked6 = $state(null);
+	let checked7 = $state(null);
+	let checked8 = $state(null);
+	let checked9 = $state(false);
+	let checked10 = $state(false);
+	let checked11 = $state(false);
+	let checked12 = $state(false);
+	let checked13 = $state(true);
+	let checked14 = $state(true);
  
 
 	let selected1 = $state();
@@ -94,7 +98,7 @@
 		<input type="checkbox" defaultChecked bind:checked={checked4} />
 	</div>
 
-	<!-- defaultChecked=true, checked=false -->
+	<!-- defaultChecked=true, checked=null -->
 	<div class="test-5">
 		<input type="checkbox" {defaultChecked} checked={checked5} />
 		<input type="checkbox" {defaultChecked} bind:checked={checked6} />
@@ -102,10 +106,18 @@
 		<input type="checkbox" defaultChecked bind:checked={checked8} />
 	</div>
 
-	<!-- defaultChecked=false, checked=true -->
+	<!-- defaultChecked=true, checked=false -->
 	<div class="test-6">
-		<input type="checkbox" defaultChecked={false} checked={checked9} />
-		<input type="checkbox" defaultChecked={false} bind:checked={checked10} />
+		<input type="checkbox" {defaultChecked} checked={checked9} />
+		<input type="checkbox" {defaultChecked} bind:checked={checked10} />
+		<input type="checkbox" defaultChecked checked={checked11} />
+		<input type="checkbox" defaultChecked bind:checked={checked12} />
+	</div>
+
+	<!-- defaultChecked=false, checked=true -->
+	<div class="test-7">
+		<input type="checkbox" defaultChecked={false} checked={checked13} />
+		<input type="checkbox" defaultChecked={false} bind:checked={checked14} />
 	</div>
 
 	<!-- no support for bind:group; too complex + we may deprecate it in favor of bind:checked={get,set} -->
@@ -158,7 +170,7 @@
 	</select>
 
 	<p>Static values</p>
-	<div class="test-12">
+	<div class="test-14">
 		<input value="x" defaultValue="y" />
 		<input type="checkbox" checked defaultChecked={false} />
 		<textarea defaultValue="y">x</textarea>
@@ -174,11 +186,12 @@
 	<span class="test-3">{value17} {value20} {value22} {value24}</span>
 	<span class="test-4">{checked2} {checked4}</span>
 	<span class="test-5">{checked6} {checked8}</span>
-	<span class="test-6">{checked10}</span>
-	<span class="test-7">{selected1}</span>
-	<span class="test-8">{selected2}</span>
-	<span class="test-9">{selected3}</span>
-	<span class="test-10">{selected4}</span>
-	<span class="test-11">{selected5}</span>
-	<span class="test-12">{selected6}</span>
+	<span class="test-6">{checked10} {checked12}</span>
+	<span class="test-7">{checked14}</span>
+	<span class="test-8">{selected1}</span>
+	<span class="test-9">{selected2}</span>
+	<span class="test-10">{selected3}</span>
+	<span class="test-11">{selected4}</span>
+	<span class="test-12">{selected5}</span>
+	<span class="test-13">{selected6}</span>
 </p>

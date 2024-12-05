@@ -37,8 +37,9 @@ export default test({
 		const after_reset = [];
 
 		const reset = /** @type {HTMLInputElement} */ (target.querySelector('input[type=reset]'));
-		const [test1, test2, test3, test4, test5, test6, test13] = target.querySelectorAll('div');
-		const [test7, test8, test9, test10] = target.querySelectorAll('select');
+		const [test1, test2, test3, test4, test5, test6, test7, test14] =
+			target.querySelectorAll('div');
+		const [test8, test9, test10, test11] = target.querySelectorAll('select');
 		const [
 			test1_span,
 			test2_span,
@@ -49,7 +50,8 @@ export default test({
 			test7_span,
 			test8_span,
 			test9_span,
-			test10_span
+			test10_span,
+			test11_span
 		] = target.querySelectorAll('span');
 
 		{
@@ -133,6 +135,13 @@ export default test({
 		{
 			/** @type {NodeListOf<HTMLInputElement>} */
 			const inputs = test5.querySelectorAll('input');
+			check_inputs(inputs, 'checked', true);
+			assert.htmlEqual(test5_span.innerHTML, 'true true');
+
+			for (const input of inputs) {
+				set_input(input, 'checked', false);
+			}
+			flushSync();
 			check_inputs(inputs, 'checked', false);
 			assert.htmlEqual(test5_span.innerHTML, 'false false');
 
@@ -145,29 +154,24 @@ export default test({
 		{
 			/** @type {NodeListOf<HTMLInputElement>} */
 			const inputs = test6.querySelectorAll('input');
-			check_inputs(inputs, 'checked', true);
-			assert.htmlEqual(test6_span.innerHTML, 'true');
+			check_inputs(inputs, 'checked', false);
+			assert.htmlEqual(test6_span.innerHTML, 'false false');
 
 			after_reset.push(() => {
-				check_inputs(inputs, 'checked', false);
-				assert.htmlEqual(test6_span.innerHTML, 'false');
+				check_inputs(inputs, 'checked', true);
+				assert.htmlEqual(test6_span.innerHTML, 'true true');
 			});
 		}
 
 		{
-			/** @type {NodeListOf<HTMLOptionElement>} */
-			const options = test7.querySelectorAll('option');
-			check_inputs(options, 'selected', [false, true, false]);
-			assert.htmlEqual(test7_span.innerHTML, 'b');
-
-			select_option(options[2]);
-			flushSync();
-			check_inputs(options, 'selected', [false, false, true]);
-			assert.htmlEqual(test7_span.innerHTML, 'c');
+			/** @type {NodeListOf<HTMLInputElement>} */
+			const inputs = test7.querySelectorAll('input');
+			check_inputs(inputs, 'checked', true);
+			assert.htmlEqual(test7_span.innerHTML, 'true');
 
 			after_reset.push(() => {
-				check_inputs(options, 'selected', [false, true, false]);
-				assert.htmlEqual(test7_span.innerHTML, 'b');
+				check_inputs(inputs, 'checked', false);
+				assert.htmlEqual(test7_span.innerHTML, 'false');
 			});
 		}
 
@@ -191,13 +195,13 @@ export default test({
 		{
 			/** @type {NodeListOf<HTMLOptionElement>} */
 			const options = test9.querySelectorAll('option');
+			check_inputs(options, 'selected', [false, true, false]);
+			assert.htmlEqual(test9_span.innerHTML, 'b');
+
+			select_option(options[2]);
+			flushSync();
 			check_inputs(options, 'selected', [false, false, true]);
 			assert.htmlEqual(test9_span.innerHTML, 'c');
-
-			select_option(options[0]);
-			flushSync();
-			check_inputs(options, 'selected', [true, false, false]);
-			assert.htmlEqual(test9_span.innerHTML, 'a');
 
 			after_reset.push(() => {
 				check_inputs(options, 'selected', [false, true, false]);
@@ -223,8 +227,25 @@ export default test({
 		}
 
 		{
+			/** @type {NodeListOf<HTMLOptionElement>} */
+			const options = test11.querySelectorAll('option');
+			check_inputs(options, 'selected', [false, false, true]);
+			assert.htmlEqual(test11_span.innerHTML, 'c');
+
+			select_option(options[0]);
+			flushSync();
+			check_inputs(options, 'selected', [true, false, false]);
+			assert.htmlEqual(test11_span.innerHTML, 'a');
+
+			after_reset.push(() => {
+				check_inputs(options, 'selected', [false, true, false]);
+				assert.htmlEqual(test11_span.innerHTML, 'b');
+			});
+		}
+
+		{
 			/** @type {NodeListOf<HTMLInputElement | HTMLTextAreaElement>} */
-			const inputs = test13.querySelectorAll('input, textarea');
+			const inputs = test14.querySelectorAll('input, textarea');
 			assert.equal(inputs[0].value, 'x');
 			assert.equal(/** @type {HTMLInputElement} */ (inputs[1]).checked, true);
 			assert.equal(inputs[2].value, 'x');
