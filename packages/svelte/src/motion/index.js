@@ -25,6 +25,7 @@ export * from './tweened.js';
  * {/if}
  * ```
  * @type {MediaQuery}
+ * @since 5.7.0
  */
 export const prefersReducedMotion = /*@__PURE__*/ new MediaQuery(
 	'(prefers-reduced-motion: reduce)'

@@ -15,6 +15,7 @@ import { on } from '../events/index.js';
  *
  * <h1>{large.current ? 'large screen' : 'small screen'}</h1>
  * ```
+ * @since 5.7.0
  */
 export class MediaQuery {
 	#query;

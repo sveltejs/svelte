@@ -43,6 +43,7 @@ import { increment } from './utils.js';
  * }
  * ```
  * @param {(update: () => void) => (() => void) | void} start
+ * @since 5.7.0
  */
 export function createSubscriber(start) {
 	let subscribers = 0;

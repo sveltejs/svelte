@@ -1705,7 +1705,8 @@ declare module 'svelte/motion' {
 	 * 	</p>
 	 * {/if}
 	 * ```
-	 * */
+	 * @since 5.7.0
+	 */
 	export const prefersReducedMotion: MediaQuery;
 	/**
 	 * The spring function in Svelte creates a store whose value is animated, with a motion that simulates the behavior of a spring. This means when the value changes, instead of transitioning at a steady rate, it "bounces" like a spring would, depending on the physics parameters provided. This adds a level of realism to the transitions and can enhance the user experience.
@@ -1765,6 +1766,7 @@ declare module 'svelte/reactivity' {
 	 *
 	 * <h1>{large.current ? 'large screen' : 'small screen'}</h1>
 	 * ```
+	 * @since 5.7.0
 	 */
 	export class MediaQuery {
 		/**
@@ -1814,7 +1816,8 @@ declare module 'svelte/reactivity' {
 	 * 	}
 	 * }
 	 * ```
-	 * */
+	 * @since 5.7.0
+	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
 
 	export {};
