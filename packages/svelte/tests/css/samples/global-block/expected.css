@@ -73,6 +73,12 @@
 		.x{
 			animation: svelte-xyz-test 1s;
 		}
+
+		@keyframes test-in{
+			to{
+				opacity: 1;
+			}
+		}
 	/*}*/
 
 	@keyframes svelte-xyz-test{

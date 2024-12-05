@@ -89,7 +89,7 @@ const visitors = {
 
 			if (node.prelude.startsWith('-global-')) {
 				state.code.remove(start, start + 8);
-			} else {
+			} else if (!state.is_global_block) {
 				state.code.prependRight(start, `${state.hash}-`);
 			}
 
