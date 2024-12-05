@@ -20,6 +20,8 @@ import { determine_slot } from '../../../../../utils/slot.js';
 export function build_component(node, component_name, context, anchor = context.state.node) {
 	/** @type {Array<Property[] | Expression>} */
 	const props_and_spreads = [];
+	/** @type {Array<() => void>} */
+	const delayed_props = [];
 
 	/** @type {ExpressionStatement[]} */
 	const lets = [];
@@ -63,14 +65,23 @@ export function build_component(node, component_name, context, anchor = context.
 
 	/**
 	 * @param {Property} prop
+	 * @param {boolean} [delay]
 	 */
-	function push_prop(prop) {
-		const current = props_and_spreads.at(-1);
-		const current_is_props = Array.isArray(current);
-		const props = current_is_props ? current : [];
-		props.push(prop);
-		if (!current_is_props) {
-			props_and_spreads.push(props);
+	function push_prop(prop, delay = false) {
+		const do_push = () => {
+			const current = props_and_spreads.at(-1);
+			const current_is_props = Array.isArray(current);
+			const props = current_is_props ? current : [];
+			props.push(prop);
+			if (!current_is_props) {
+				props_and_spreads.push(props);
+			}
+		};
+
+		if (delay) {
+			delayed_props.push(do_push);
+		} else {
+			do_push();
 		}
 	}
 
@@ -202,21 +213,26 @@ export function build_component(node, component_name, context, anchor = context.
 					attribute.expression.type === 'Identifier' &&
 					context.state.scope.get(attribute.expression.name)?.kind === 'store_sub';
 
+				// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
 				if (is_store_sub) {
 					push_prop(
-						b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)])
+						b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)]),
+						true
 					);
 				} else {
-					push_prop(b.get(attribute.name, [b.return(expression)]));
+					push_prop(b.get(attribute.name, [b.return(expression)]), true);
 				}
 
 				const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
 				push_prop(
-					b.set(attribute.name, [b.stmt(/** @type {Expression} */ (context.visit(assignment)))])
+					b.set(attribute.name, [b.stmt(/** @type {Expression} */ (context.visit(assignment)))]),
+					true
 				);
 			}
 		}
 	}
+
+	delayed_props.forEach((fn) => fn());
 
 	if (slot_scope_applies_to_itself) {
 		context.state.init.push(...lets);
