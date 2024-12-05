@@ -13,7 +13,6 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^4.0.0-next.6",
-    "nodemon": "^3.0.3",
     "polka": "^1.0.0-next.25",
     "svelte": "workspace:*",
     "tiny-glob": "^0.2.9",

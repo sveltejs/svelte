@@ -17,6 +17,9 @@ export function SnippetBlock(node, context) {
 	// @ts-expect-error - TODO remove this hack once $$render_inner for legacy bindings is gone
 	fn.___snippet = true;
 
-	// TODO hoist where possible
-	context.state.init.push(fn);
+	if (node.metadata.can_hoist) {
+		context.state.hoisted.push(fn);
+	} else {
+		context.state.init.push(fn);
+	}
 }

@@ -38,6 +38,10 @@
 
 > `$effect()` can only be used as an expression statement
 
+## export_undefined
+
+> `%name%` is not defined
+
 ## global_reference_invalid
 
 > `%name%` is an illegal variable name. To reference a global variable called `%name%`, use `globalThis.%name%`
@@ -133,6 +137,28 @@
 ## runes_mode_invalid_import
 
 > %name% cannot be used in runes mode
+
+## snippet_invalid_export
+
+> An exported snippet can only reference things declared in a `<script module>`, or other exportable snippets
+
+It's possible to export a snippet from a `<script module>` block, but only if it doesn't reference anything defined inside a non-module-level `<script>`. For example you can't do this...
+
+```svelte
+<script module>
+	export { greeting };
+</script>
+
+<script>
+	let message = 'hello';
+</script>
+
+{#snippet greeting(name)}
+	<p>{message} {name}!</p>
+{/snippet}
+```
+
+...because `greeting` references `message`, which is defined in the second `<script>`.
 
 ## snippet_parameter_assignment
 

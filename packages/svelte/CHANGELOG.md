@@ -1,5 +1,193 @@
 # svelte
 
+## 5.6.2
+
+### Patch Changes
+
+- chore: make if blocks tree-shakable ([#14549](https://github.com/sveltejs/svelte/pull/14549))
+
+## 5.6.1
+
+### Patch Changes
+
+- fix: handle static form values in combination with default values ([#14555](https://github.com/sveltejs/svelte/pull/14555))
+
+## 5.6.0
+
+### Minor Changes
+
+- feat: support `defaultValue/defaultChecked` for inputs ([#14289](https://github.com/sveltejs/svelte/pull/14289))
+
+## 5.5.4
+
+### Patch Changes
+
+- fix: better error messages for invalid HTML trees ([#14445](https://github.com/sveltejs/svelte/pull/14445))
+
+- fix: remove spreaded event handlers when they become nullish ([#14546](https://github.com/sveltejs/svelte/pull/14546))
+
+- fix: respect the unidirectional nature of time ([#14541](https://github.com/sveltejs/svelte/pull/14541))
+
+## 5.5.3
+
+### Patch Changes
+
+- fix: don't try to add owners to non-`$state` class fields ([#14533](https://github.com/sveltejs/svelte/pull/14533))
+
+- fix: capture infinite_loop_guard in error boundary ([#14534](https://github.com/sveltejs/svelte/pull/14534))
+
+- fix: proxify values when assigning using `||=`, `&&=` and `??=` operators ([#14273](https://github.com/sveltejs/svelte/pull/14273))
+
+## 5.5.2
+
+### Patch Changes
+
+- fix: use correct reaction when lazily creating deriveds inside `SvelteDate` ([#14525](https://github.com/sveltejs/svelte/pull/14525))
+
+## 5.5.1
+
+### Patch Changes
+
+- fix: don't throw with nullish actions ([#13559](https://github.com/sveltejs/svelte/pull/13559))
+
+- fix: leave update expressions untransformed unless a transformer is provided ([#14507](https://github.com/sveltejs/svelte/pull/14507))
+
+- chore: turn reactive_declaration_non_reactive_property into a runtime warning ([#14192](https://github.com/sveltejs/svelte/pull/14192))
+
+## 5.5.0
+
+### Minor Changes
+
+- feat: allow snippets to be exported from module scripts ([#14315](https://github.com/sveltejs/svelte/pull/14315))
+
+### Patch Changes
+
+- fix: ignore TypeScript generics on variables ([#14509](https://github.com/sveltejs/svelte/pull/14509))
+
+## 5.4.0
+
+### Minor Changes
+
+- feat: support `#each` without `as` ([#14396](https://github.com/sveltejs/svelte/pull/14396))
+
+## 5.3.2
+
+### Patch Changes
+
+- fix: correctly prune CSS for elements inside snippets ([#14494](https://github.com/sveltejs/svelte/pull/14494))
+
+- fix: render attributes during SSR regardless of case ([#14492](https://github.com/sveltejs/svelte/pull/14492))
+
+## 5.3.1
+
+### Patch Changes
+
+- fix: treat spread elements the same as call expressions ([#14488](https://github.com/sveltejs/svelte/pull/14488))
+
+- fix: correctly increment/decrement bigints ([#14485](https://github.com/sveltejs/svelte/pull/14485))
+
+## 5.3.0
+
+### Minor Changes
+
+- feat: add error boundaries with `<svelte:boundary>` ([#14211](https://github.com/sveltejs/svelte/pull/14211))
+
+## 5.2.12
+
+### Patch Changes
+
+- fix: upgrade to esm-env 1.2.1 to fix issues with non-Vite setups ([#14470](https://github.com/sveltejs/svelte/pull/14470))
+
+- fix: prevent infinite loops when pruning CSS ([#14474](https://github.com/sveltejs/svelte/pull/14474))
+
+- fix: generate correct code when encountering object expression statement ([#14480](https://github.com/sveltejs/svelte/pull/14480))
+
+## 5.2.11
+
+### Patch Changes
+
+- fix: ignore text and expressions outside the template when validating HTML ([#14468](https://github.com/sveltejs/svelte/pull/14468))
+
+- fix: better account for render tags when pruning CSS ([#14456](https://github.com/sveltejs/svelte/pull/14456))
+
+## 5.2.10
+
+### Patch Changes
+
+- fix: correctly remove unused selectors in middle of selector lists ([#14448](https://github.com/sveltejs/svelte/pull/14448))
+
+- chore: upgrade esm-env for Vite 6 support ([#14460](https://github.com/sveltejs/svelte/pull/14460))
+
+- fix: strip exported TypeScript function overloads ([#14458](https://github.com/sveltejs/svelte/pull/14458))
+
+## 5.2.9
+
+### Patch Changes
+
+- fix: show `:then` block for `null/undefined` value ([#14440](https://github.com/sveltejs/svelte/pull/14440))
+
+- fix: relax html parent validation ([#14442](https://github.com/sveltejs/svelte/pull/14442))
+
+- fix: prevent memory leak when creating deriveds inside untrack ([#14443](https://github.com/sveltejs/svelte/pull/14443))
+
+- fix: disregard TypeScript nodes when pruning CSS ([#14446](https://github.com/sveltejs/svelte/pull/14446))
+
+## 5.2.8
+
+### Patch Changes
+
+- fix: correctly prune each blocks ([#14403](https://github.com/sveltejs/svelte/pull/14403))
+
+- fix: provide temporary `LegacyComponentType` ([#14257](https://github.com/sveltejs/svelte/pull/14257))
+
+- fix: attach spread attribute events synchronously ([#14387](https://github.com/sveltejs/svelte/pull/14387))
+
+- fix: ensure last empty text node correctly hydrates ([#14425](https://github.com/sveltejs/svelte/pull/14425))
+
+- fix: correctly prune key blocks ([#14403](https://github.com/sveltejs/svelte/pull/14403))
+
+## 5.2.7
+
+### Patch Changes
+
+- fix: always use set for private identifiers ([#14378](https://github.com/sveltejs/svelte/pull/14378))
+
+## 5.2.6
+
+### Patch Changes
+
+- fix: remove template expression inlining ([#14374](https://github.com/sveltejs/svelte/pull/14374))
+
+## 5.2.5
+
+### Patch Changes
+
+- fix: correctly handle srcObject attribute on video elements ([#14369](https://github.com/sveltejs/svelte/pull/14369))
+
+- add `contentvisibilityautostatechange` event to element definitions ([#14373](https://github.com/sveltejs/svelte/pull/14373))
+
+- fix: tighten up `export default` validation ([#14368](https://github.com/sveltejs/svelte/pull/14368))
+
+- fix: include method definitions in class private fields ([#14365](https://github.com/sveltejs/svelte/pull/14365))
+
+## 5.2.4
+
+### Patch Changes
+
+- fix: ensure internal cloning can work circular values ([#14347](https://github.com/sveltejs/svelte/pull/14347))
+
+- fix: correctly update dynamic member expressions ([#14359](https://github.com/sveltejs/svelte/pull/14359))
+
+- fix: ensure is_pure takes into account $effect.tracking() ([#14333](https://github.com/sveltejs/svelte/pull/14333))
+
+- fix: coerce value to number when hydrating range/number input with changed value ([#14349](https://github.com/sveltejs/svelte/pull/14349))
+
+## 5.2.3
+
+### Patch Changes
+
+- fix: ensure dynamic call expressions correctly generate output ([#14345](https://github.com/sveltejs/svelte/pull/14345))
+
 ## 5.2.2
 
 ### Patch Changes

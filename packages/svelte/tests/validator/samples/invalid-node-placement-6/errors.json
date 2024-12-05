@@ -1,7 +1,7 @@
 [
 	{
 		"code": "node_invalid_placement",
-		"message": "`<dt>` is invalid inside `<dd>`",
+		"message": "`<dt>` cannot be a descendant of `<dd>`. The browser will 'repair' the HTML (by moving, removing, or inserting elements) which breaks Svelte's assumptions about the structure of your components.",
 		"start": {
 			"line": 16,
 			"column": 3

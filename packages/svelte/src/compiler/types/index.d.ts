@@ -279,7 +279,8 @@ export interface Binding {
 		| 'snippet'
 		| 'store_sub'
 		| 'legacy_reactive'
-		| 'template';
+		| 'template'
+		| 'snippet';
 	declaration_kind: DeclarationKind;
 	/**
 	 * What the value was initialized with.
@@ -291,7 +292,8 @@ export interface Binding {
 		| FunctionDeclaration
 		| ClassDeclaration
 		| ImportDeclaration
-		| AST.EachBlock;
+		| AST.EachBlock
+		| AST.SnippetBlock;
 	is_called: boolean;
 	references: { node: Identifier; path: SvelteNode[] }[];
 	mutated: boolean;
@@ -317,8 +319,6 @@ export interface ExpressionMetadata {
 	has_state: boolean;
 	/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
 	has_call: boolean;
-	/** True if the expression can be inlined into a template */
-	can_inline: boolean;
 }
 
 export * from './template.js';

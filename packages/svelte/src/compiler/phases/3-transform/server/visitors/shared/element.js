@@ -82,7 +82,8 @@ export function build_element_attributes(node, context) {
 				) {
 					events_to_capture.add(attribute.name);
 				}
-			} else {
+				// the defaultValue/defaultChecked properties don't exist as attributes
+			} else if (attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked') {
 				if (attribute.name === 'class') {
 					class_index = attributes.length;
 				} else if (attribute.name === 'style') {
@@ -135,7 +136,6 @@ export function build_element_attributes(node, context) {
 							type: 'ExpressionTag',
 							start: -1,
 							end: -1,
-							parent: attribute,
 							expression: is_checkbox
 								? b.call(
 										b.member(attribute.expression, 'includes'),
@@ -159,7 +159,6 @@ export function build_element_attributes(node, context) {
 							type: 'ExpressionTag',
 							start: -1,
 							end: -1,
-							parent: attribute,
 							expression: attribute.expression,
 							metadata: {
 								expression: create_expression_metadata()
@@ -376,7 +375,6 @@ function build_class_directives(class_directives, class_attribute) {
 			type: 'Text',
 			start: -1,
 			end: -1,
-			parent: class_attribute,
 			data: ' ',
 			raw: ' '
 		});
@@ -386,7 +384,6 @@ function build_class_directives(class_directives, class_attribute) {
 		type: 'ExpressionTag',
 		start: -1,
 		end: -1,
-		parent: class_attribute,
 		expression: b.call(
 			b.member(b.call(b.member(b.array(expressions), 'filter'), b.id('Boolean')), b.id('join')),
 			b.literal(' ')

@@ -102,7 +102,6 @@ export const codes = [
 	"perf_avoid_nested_class",
 	"reactive_declaration_invalid_placement",
 	"reactive_declaration_module_script_dependency",
-	"reactive_declaration_non_reactive_property",
 	"state_referenced_locally",
 	"store_rune_conflict",
 	"css_unused_selector",
@@ -642,14 +641,6 @@ export function reactive_declaration_module_script_dependency(node) {
 }
 
 /**
- * Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update
- * @param {null | NodeLike} node
- */
-export function reactive_declaration_non_reactive_property(node) {
-	w(node, "reactive_declaration_non_reactive_property", "Properties of objects and arrays are not reactive unless in runes mode. Changes to this property will not cause the reactive statement to update");
-}
-
-/**
  * State referenced in its own scope will never update. Did you mean to reference it inside a closure?
  * @param {null | NodeLike} node
  */
@@ -763,13 +754,12 @@ export function event_directive_deprecated(node, name) {
 }
 
 /**
- * %thing% is invalid inside `<%parent%>`. When rendering this component on the server, the resulting HTML will be modified by the browser, likely resulting in a `hydration_mismatch` warning
+ * %message%. When rendering this component on the server, the resulting HTML will be modified by the browser (by moving, removing, or inserting elements), likely resulting in a `hydration_mismatch` warning
  * @param {null | NodeLike} node
- * @param {string} thing
- * @param {string} parent
+ * @param {string} message
  */
-export function node_invalid_placement_ssr(node, thing, parent) {
-	w(node, "node_invalid_placement_ssr", `${thing} is invalid inside \`<${parent}>\`. When rendering this component on the server, the resulting HTML will be modified by the browser, likely resulting in a \`hydration_mismatch\` warning`);
+export function node_invalid_placement_ssr(node, message) {
+	w(node, "node_invalid_placement_ssr", `${message}. When rendering this component on the server, the resulting HTML will be modified by the browser (by moving, removing, or inserting elements), likely resulting in a \`hydration_mismatch\` warning`);
 }
 
 /**

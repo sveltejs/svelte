@@ -2,7 +2,7 @@
 /** @import { AST, TemplateNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
-import { get_attribute_chunks } from '../../../../../utils/ast.js';
+import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { create_derived } from '../../utils.js';
 import { build_bind_this, validate_binding } from '../shared/utils.js';
@@ -176,16 +176,26 @@ export function build_component(node, component_name, context, anchor = context.
 				bind_this = attribute.expression;
 			} else {
 				if (dev) {
-					binding_initializers.push(
-						b.stmt(
-							b.call(
-								b.id('$.add_owner_effect'),
-								b.thunk(expression),
-								b.id(component_name),
-								is_ignored(node, 'ownership_invalid_binding') && b.true
+					const left = object(attribute.expression);
+					let binding;
+					if (left?.type === 'Identifier') {
+						binding = context.state.scope.get(left.name);
+					}
+					// Only run ownership addition on $state fields.
+					// Theoretically someone could create a `$state` while creating `$state.raw` or inside a `$derived.by`,
+					// but that feels so much of an edge case that it doesn't warrant a perf hit for the common case.
+					if (binding?.kind !== 'derived' && binding?.kind !== 'raw_state') {
+						binding_initializers.push(
+							b.stmt(
+								b.call(
+									b.id('$.add_owner_effect'),
+									b.thunk(expression),
+									b.id(component_name),
+									is_ignored(node, 'ownership_invalid_binding') && b.true
+								)
 							)
-						)
-					);
+						);
+					}
 				}
 
 				const is_store_sub =

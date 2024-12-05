@@ -34,14 +34,11 @@ function stringify(element) {
 
 /**
  * @param {Payload} payload
- * @param {Element | null} parent
- * @param {Element} child
+ * @param {string} message
  */
-function print_error(payload, parent, child) {
-	var message =
-		(parent === null
-			? `node_invalid_placement_ssr: ${stringify(child)} needs a valid parent element\n\n`
-			: `node_invalid_placement_ssr: ${stringify(parent)} cannot contain ${stringify(child)}\n\n`) +
+function print_error(payload, message) {
+	message =
+		`node_invalid_placement_ssr: ${message}\n\n` +
 		'This can cause content to shift around as the browser repairs the HTML, and will likely result in a `hydration_mismatch` warning.';
 
 	if ((seen ??= new Set()).has(message)) return;
@@ -74,19 +71,25 @@ export function push_element(payload, tag, line, column) {
 		var ancestor = parent.parent;
 		var ancestors = [parent.tag];
 
-		if (!is_tag_valid_with_parent(tag, parent.tag)) {
-			print_error(payload, parent, child);
-		}
+		const child_loc = filename ? `${filename}:${line}:${column}` : undefined;
+		const parent_loc = parent.filename
+			? `${parent.filename}:${parent.line}:${parent.column}`
+			: undefined;
+
+		const message = is_tag_valid_with_parent(tag, parent.tag, child_loc, parent_loc);
+		if (message) print_error(payload, message);
 
 		while (ancestor != null) {
 			ancestors.push(ancestor.tag);
-			if (!is_tag_valid_with_ancestor(tag, ancestors)) {
-				print_error(payload, ancestor, child);
-			}
+			const ancestor_loc = ancestor.filename
+				? `${ancestor.filename}:${ancestor.line}:${ancestor.column}`
+				: undefined;
+
+			const message = is_tag_valid_with_ancestor(tag, ancestors, child_loc, ancestor_loc);
+			if (message) print_error(payload, message);
+
 			ancestor = ancestor.parent;
 		}
-	} else if (!is_tag_valid_with_parent(tag, null)) {
-		print_error(payload, null, child);
 	}
 
 	parent = child;

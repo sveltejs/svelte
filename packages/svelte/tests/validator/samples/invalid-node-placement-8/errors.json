@@ -1,0 +1,14 @@
+[
+	{
+		"code": "node_invalid_placement",
+		"message": "`<#text>` cannot be a child of `<tbody>`. `<tbody>` only allows these children: `<tr>`, `<style>`, `<script>`, `<template>`. The browser will 'repair' the HTML (by moving, removing, or inserting elements) which breaks Svelte's assumptions about the structure of your components.",
+		"start": {
+			"line": 3,
+			"column": 8
+		},
+		"end": {
+			"line": 3,
+			"column": 13
+		}
+	}
+]

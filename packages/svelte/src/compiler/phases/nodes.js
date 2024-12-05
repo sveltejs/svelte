@@ -43,7 +43,6 @@ export function create_attribute(name, start, end, value) {
 		end,
 		name,
 		value,
-		parent: null,
 		metadata: {
 			expression: create_expression_metadata(),
 			delegated: null
@@ -58,7 +57,6 @@ export function create_expression_metadata() {
 	return {
 		dependencies: new Set(),
 		has_state: false,
-		has_call: false,
-		can_inline: true
+		has_call: false
 	};
 }
