@@ -1,5 +1,17 @@
 # svelte
 
+## 5.7.0
+
+### Minor Changes
+
+- feat: add `createSubscriber` function for creating reactive values that depend on subscriptions ([#14422](https://github.com/sveltejs/svelte/pull/14422))
+
+- feat: add reactive `MediaQuery` class, and a `prefersReducedMotion` class instance ([#14422](https://github.com/sveltejs/svelte/pull/14422))
+
+### Patch Changes
+
+- fix: treat `undefined` and `null` the same for the initial input value ([#14562](https://github.com/sveltejs/svelte/pull/14562))
+
 ## 5.6.2
 
 ### Patch Changes
