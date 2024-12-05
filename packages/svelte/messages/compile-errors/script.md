@@ -186,6 +186,18 @@ It's possible to export a snippet from a `<script module>` block, but only if it
 
 Using a `$` prefix to refer to the value of a store is only possible inside `.svelte` files, where Svelte can automatically create subscriptions when a component is mounted and unsubscribe when the component is unmounted. Consider migrating to runes instead.
 
+## trace_rune_duplicate
+
+> `$track` must only be used once within the same block statement
+
+## trace_rune_invalid_argument
+
+> `$track` requires a string argument for the trace name
+
+## trace_rune_invalid_location
+
+> `$track` must be placed directly inside a block statement
+
 ## typescript_invalid_feature
 
 > TypeScript language features like %feature% are not natively supported, and their use is generally discouraged. Outside of `<script>` tags, these features are not supported. For use within `<script>` tags, you will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler. If you are using `vitePreprocess`, make sure to specifically enable preprocessing script tags (`vitePreprocess({ script: true })`)

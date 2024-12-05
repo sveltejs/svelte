@@ -958,6 +958,24 @@ A `<textarea>` can have either a value attribute or (equivalently) child content
 `<title>` can only contain text and {tags}
 ```
 
+### trace_rune_duplicate
+
+```
+`$track` must only be used once within the same block statement
+```
+
+### trace_rune_invalid_argument
+
+```
+`$track` requires a string argument for the trace name
+```
+
+### trace_rune_invalid_location
+
+```
+`$track` must be placed directly inside a block statement
+```
+
 ### transition_conflict
 
 ```

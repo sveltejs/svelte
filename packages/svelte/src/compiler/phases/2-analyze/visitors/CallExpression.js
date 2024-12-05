@@ -141,18 +141,16 @@ export function CallExpression(node, context) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 			}
 			if (node.arguments[0].type !== 'Literal' || typeof node.arguments[0].value !== 'string') {
-				throw new Error('TODO: $track requires a string argument');
+				e.trace_rune_invalid_argument(node);
 			}
 			if (parent.type !== 'ExpressionStatement' || context.path.at(-2)?.type !== 'BlockStatement') {
-				throw new Error('TODO: $track must be inside a block statement');
+				e.trace_rune_invalid_location(node);
 			}
-
 			if (context.state.scope.tracing) {
-				throw new Error('TODO: $track must only be used once within the same block statement');
+				e.trace_rune_duplicate(node);
 			}
 
 			if (dev) {
-				// TODO should we validate if tracing is already enabled in this or a parent scope?
 				context.state.scope.tracing = node.arguments[0].value;
 			}
 

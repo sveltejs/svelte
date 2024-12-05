@@ -470,6 +470,33 @@ export function store_invalid_subscription_module(node) {
 }
 
 /**
+ * `$track` requires a string argument for the trace name
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function trace_rune_invalid_argument(node) {
+	e(node, "trace_rune_invalid_argument", "`$track` requires a string argument for the trace name");
+}
+
+/**
+ * `$track` must be placed directly inside a block statement
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function trace_rune_invalid_location(node) {
+	e(node, "trace_rune_invalid_location", "`$track` must be placed directly inside a block statement");
+}
+
+/**
+ * `$track` must only be used once within the same block statement
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function trace_rune_duplicate(node) {
+	e(node, "trace_rune_duplicate", "`$track` must only be used once within the same block statement");
+}
+
+/**
  * TypeScript language features like %feature% are not natively supported, and their use is generally discouraged. Outside of `<script>` tags, these features are not supported. For use within `<script>` tags, you will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler. If you are using `vitePreprocess`, make sure to specifically enable preprocessing script tags (`vitePreprocess({ script: true })`)
  * @param {null | number | NodeLike} node
  * @param {string} feature
