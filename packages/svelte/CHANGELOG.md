@@ -1,5 +1,11 @@
 # svelte
 
+## 5.7.1
+
+### Patch Changes
+
+- fix: ensure bindings always take precedence over spreads ([#14575](https://github.com/sveltejs/svelte/pull/14575))
+
 ## 5.7.0
 
 ### Minor Changes
