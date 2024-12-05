@@ -470,6 +470,15 @@ export function store_invalid_subscription_module(node) {
 }
 
 /**
+ * `$track` must only be used once within the same block statement
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function trace_rune_duplicate(node) {
+	e(node, "trace_rune_duplicate", "`$track` must only be used once within the same block statement");
+}
+
+/**
  * `$track` requires a string argument for the trace name
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -485,15 +494,6 @@ export function trace_rune_invalid_argument(node) {
  */
 export function trace_rune_invalid_location(node) {
 	e(node, "trace_rune_invalid_location", "`$track` must be placed directly inside a block statement");
-}
-
-/**
- * `$track` must only be used once within the same block statement
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function trace_rune_duplicate(node) {
-	e(node, "trace_rune_duplicate", "`$track` must only be used once within the same block statement");
 }
 
 /**

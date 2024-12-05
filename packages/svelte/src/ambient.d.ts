@@ -372,6 +372,21 @@ declare function $inspect<T extends any[]>(
 ): { with: (fn: (type: 'init' | 'update', ...values: T) => void) => void };
 
 declare namespace $inspect {
+	/**
+	 * Traces the reactive graph of the tracking reactive context. Must be placed within a block statement.
+	 * Example:
+	 *
+	 * ```svelte
+	 * <script>
+	 *   let count = $state(0);
+	 *
+	 *   $effect(() => {
+	 *     $inspect.trace('my effect');
+	 *
+	 *     count;
+	 *   });
+	 * </script>
+	 */
 	export function trace(name: string): void;
 }
 
