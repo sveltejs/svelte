@@ -172,10 +172,6 @@
 
 > Expected whitespace
 
-## unterminated_string_constant
-
-> Unterminated string constant
-
 ## illegal_element_attribute
 
 > `<%name%>` does not support non-event attributes or spread attributes
@@ -413,6 +409,10 @@ See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-ele
 ## unexpected_reserved_word
 
 > '%word%' is a reserved word in JavaScript and cannot be used here
+
+## unterminated_string_constant
+
+> Unterminated string constant
 
 ## void_element_invalid_content
 

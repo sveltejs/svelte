@@ -102,7 +102,10 @@ function read_expression_length(parser, start) {
 			} else if (is_bracket_close(code)) {
 				const popped = /** @type {number} */ (bracket_stack.pop());
 				if (!is_bracket_pair(popped, code)) {
-					e.expected_token(i, String.fromCharCode(/** @type {number} */(get_bracket_close(popped))));
+					e.expected_token(
+						i,
+						String.fromCharCode(/** @type {number} */ (get_bracket_close(popped)))
+					);
 				}
 				if (bracket_stack.length === 0) {
 					i += code <= 0xffff ? 1 : 2;
@@ -145,10 +148,11 @@ function read_string_length(parser, start, quote) {
 		if (
 			i < parser.template.length - 1 &&
 			is_back_quote(quote) &&
-			code === DOLAR && full_char_code_at(parser.template, i + 1) === LEFT_BRACKET
+			code === DOLAR &&
+			full_char_code_at(parser.template, i + 1) === LEFT_BRACKET
 		) {
 			i++;
-			i = read_expression_length(parser, i)
+			i = read_expression_length(parser, i);
 		} else {
 			i += code <= 0xffff ? 1 : 2;
 		}

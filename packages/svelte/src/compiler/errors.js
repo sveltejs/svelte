@@ -1004,15 +1004,6 @@ export function expected_whitespace(node) {
 }
 
 /**
- * Unterminated string constant
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function unterminated_string_constant(node) {
-	e(node, "unterminated_string_constant", "Unterminated string constant");
-}
-
-/**
  * `<%name%>` does not support non-event attributes or spread attributes
  * @param {null | number | NodeLike} node
  * @param {string} name
@@ -1544,6 +1535,15 @@ export function unexpected_eof(node) {
  */
 export function unexpected_reserved_word(node, word) {
 	e(node, "unexpected_reserved_word", `'${word}' is a reserved word in JavaScript and cannot be used here`);
+}
+
+/**
+ * Unterminated string constant
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function unterminated_string_constant(node) {
+	e(node, "unterminated_string_constant", "Unterminated string constant");
 }
 
 /**

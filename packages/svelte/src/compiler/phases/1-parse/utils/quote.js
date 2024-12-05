@@ -1,4 +1,4 @@
-const SINGLE_QUOTE = '\''.charCodeAt(0);
+const SINGLE_QUOTE = "'".charCodeAt(0);
 const DOUBLE_QUOTE = '"'.charCodeAt(0);
 const BACK_QUOTE = '`'.charCodeAt(0);
 
