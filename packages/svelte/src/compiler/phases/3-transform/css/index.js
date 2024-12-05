@@ -87,7 +87,7 @@ const visitors = {
 
 			if (node.prelude.startsWith('-global-')) {
 				state.code.remove(start, start + 8);
-			} else if (!is_global_block(path)) {
+			} else if (!is_in_global_block(path)) {
 				state.code.prependRight(start, `${state.hash}-`);
 			}
 
@@ -154,7 +154,7 @@ const visitors = {
 			return;
 		}
 
-		if (!is_used(node) && !is_global_block(path)) {
+		if (!is_used(node) && !is_in_global_block(path)) {
 			if (state.minify) {
 				state.code.remove(node.start, node.end);
 			} else {
@@ -193,7 +193,7 @@ const visitors = {
 	SelectorList(node, { state, next, path }) {
 		// Only add comments if we're not inside a complex selector that itself is unused or a global block
 		if (
-			!is_global_block(path) &&
+			!is_in_global_block(path) &&
 			!path.find((n) => n.type === 'ComplexSelector' && !n.metadata.used)
 		) {
 			const children = node.children;
@@ -363,7 +363,7 @@ const visitors = {
  *
  * @param {Array<Css.Node>} path
  */
-function is_global_block(path) {
+function is_in_global_block(path) {
 	return path.some((node) => node.type === 'Rule' && node.metadata.is_global_block);
 }
 
