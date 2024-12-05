@@ -37,8 +37,8 @@ export default test({
 		const after_reset = [];
 
 		const reset = /** @type {HTMLInputElement} */ (target.querySelector('input[type=reset]'));
-		const [test1, test2, test3, test4, test5, test12] = target.querySelectorAll('div');
-		const [test6, test7, test8, test9] = target.querySelectorAll('select');
+		const [test1, test2, test3, test4, test5, test6, test13] = target.querySelectorAll('div');
+		const [test7, test8, test9, test10] = target.querySelectorAll('select');
 		const [
 			test1_span,
 			test2_span,
@@ -48,7 +48,8 @@ export default test({
 			test6_span,
 			test7_span,
 			test8_span,
-			test9_span
+			test9_span,
+			test10_span
 		] = target.querySelectorAll('span');
 
 		{
@@ -74,8 +75,8 @@ export default test({
 		{
 			/** @type {NodeListOf<HTMLInputElement | HTMLTextAreaElement>} */
 			const inputs = test2.querySelectorAll('input, textarea');
-			check_inputs(inputs, 'value', 'y');
-			assert.htmlEqual(test2_span.innerHTML, 'y y y y');
+			check_inputs(inputs, 'value', 'x');
+			assert.htmlEqual(test2_span.innerHTML, 'x x x x');
 
 			for (const input of inputs) {
 				set_input(input, 'value', 'foo');
@@ -85,33 +86,41 @@ export default test({
 			assert.htmlEqual(test2_span.innerHTML, 'foo foo foo foo');
 
 			after_reset.push(() => {
+				console.log('-------------');
 				check_inputs(inputs, 'value', 'x');
 				assert.htmlEqual(test2_span.innerHTML, 'x x x x');
 			});
 		}
 
 		{
-			/** @type {NodeListOf<HTMLInputElement>} */
-			const inputs = test3.querySelectorAll('input');
-			check_inputs(inputs, 'checked', true);
-			assert.htmlEqual(test3_span.innerHTML, 'true true');
+			/** @type {NodeListOf<HTMLInputElement | HTMLTextAreaElement>} */
+			const inputs = test3.querySelectorAll('input, textarea');
+			check_inputs(inputs, 'value', 'y');
+			assert.htmlEqual(test3_span.innerHTML, 'y y y y');
 
 			for (const input of inputs) {
-				set_input(input, 'checked', false);
+				set_input(input, 'value', 'foo');
 			}
 			flushSync();
-			check_inputs(inputs, 'checked', false);
-			assert.htmlEqual(test3_span.innerHTML, 'false false');
+			check_inputs(inputs, 'value', 'foo');
+			assert.htmlEqual(test3_span.innerHTML, 'foo foo foo foo');
 
 			after_reset.push(() => {
-				check_inputs(inputs, 'checked', true);
-				assert.htmlEqual(test3_span.innerHTML, 'true true');
+				check_inputs(inputs, 'value', 'x');
+				assert.htmlEqual(test3_span.innerHTML, 'x x x x');
 			});
 		}
 
 		{
 			/** @type {NodeListOf<HTMLInputElement>} */
 			const inputs = test4.querySelectorAll('input');
+			check_inputs(inputs, 'checked', true);
+			assert.htmlEqual(test4_span.innerHTML, 'true true');
+
+			for (const input of inputs) {
+				set_input(input, 'checked', false);
+			}
+			flushSync();
 			check_inputs(inputs, 'checked', false);
 			assert.htmlEqual(test4_span.innerHTML, 'false false');
 
@@ -124,29 +133,24 @@ export default test({
 		{
 			/** @type {NodeListOf<HTMLInputElement>} */
 			const inputs = test5.querySelectorAll('input');
-			check_inputs(inputs, 'checked', true);
-			assert.htmlEqual(test5_span.innerHTML, 'true');
+			check_inputs(inputs, 'checked', false);
+			assert.htmlEqual(test5_span.innerHTML, 'false false');
 
 			after_reset.push(() => {
-				check_inputs(inputs, 'checked', false);
-				assert.htmlEqual(test5_span.innerHTML, 'false');
+				check_inputs(inputs, 'checked', true);
+				assert.htmlEqual(test5_span.innerHTML, 'true true');
 			});
 		}
 
 		{
-			/** @type {NodeListOf<HTMLOptionElement>} */
-			const options = test6.querySelectorAll('option');
-			check_inputs(options, 'selected', [false, true, false]);
-			assert.htmlEqual(test6_span.innerHTML, 'b');
-
-			select_option(options[2]);
-			flushSync();
-			check_inputs(options, 'selected', [false, false, true]);
-			assert.htmlEqual(test6_span.innerHTML, 'c');
+			/** @type {NodeListOf<HTMLInputElement>} */
+			const inputs = test6.querySelectorAll('input');
+			check_inputs(inputs, 'checked', true);
+			assert.htmlEqual(test6_span.innerHTML, 'true');
 
 			after_reset.push(() => {
-				check_inputs(options, 'selected', [false, true, false]);
-				assert.htmlEqual(test6_span.innerHTML, 'b');
+				check_inputs(inputs, 'checked', false);
+				assert.htmlEqual(test6_span.innerHTML, 'false');
 			});
 		}
 
@@ -170,13 +174,13 @@ export default test({
 		{
 			/** @type {NodeListOf<HTMLOptionElement>} */
 			const options = test8.querySelectorAll('option');
+			check_inputs(options, 'selected', [false, true, false]);
+			assert.htmlEqual(test8_span.innerHTML, 'b');
+
+			select_option(options[2]);
+			flushSync();
 			check_inputs(options, 'selected', [false, false, true]);
 			assert.htmlEqual(test8_span.innerHTML, 'c');
-
-			select_option(options[0]);
-			flushSync();
-			check_inputs(options, 'selected', [true, false, false]);
-			assert.htmlEqual(test8_span.innerHTML, 'a');
 
 			after_reset.push(() => {
 				check_inputs(options, 'selected', [false, true, false]);
@@ -202,8 +206,25 @@ export default test({
 		}
 
 		{
+			/** @type {NodeListOf<HTMLOptionElement>} */
+			const options = test10.querySelectorAll('option');
+			check_inputs(options, 'selected', [false, false, true]);
+			assert.htmlEqual(test10_span.innerHTML, 'c');
+
+			select_option(options[0]);
+			flushSync();
+			check_inputs(options, 'selected', [true, false, false]);
+			assert.htmlEqual(test10_span.innerHTML, 'a');
+
+			after_reset.push(() => {
+				check_inputs(options, 'selected', [false, true, false]);
+				assert.htmlEqual(test10_span.innerHTML, 'b');
+			});
+		}
+
+		{
 			/** @type {NodeListOf<HTMLInputElement | HTMLTextAreaElement>} */
-			const inputs = test12.querySelectorAll('input, textarea');
+			const inputs = test13.querySelectorAll('input, textarea');
 			assert.equal(inputs[0].value, 'x');
 			assert.equal(/** @type {HTMLInputElement} */ (inputs[1]).checked, true);
 			assert.equal(inputs[2].value, 'x');
