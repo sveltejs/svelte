@@ -3,7 +3,11 @@
 </script>
 
 {#if condition}
-	<p>foo</p>
-{:else}
-	<p>bar</p>
+	<slot />
 {/if}
+
+<div>
+	<slot />
+</div>
+
+hello

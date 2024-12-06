@@ -9,7 +9,7 @@ import {
 	set_hydrating
 } from '../hydration.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
-import { HYDRATION_START_ELSE } from '../../../../constants.js';
+import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
 
 /**
  * @param {TemplateNode} node
@@ -30,8 +30,8 @@ export function if_block(node, fn, elseif = false) {
 	/** @type {Effect | null} */
 	var alternate_effect = null;
 
-	/** @type {boolean | null} */
-	var condition = null;
+	/** @type {UNINITIALIZED | boolean | null} */
+	var condition = UNINITIALIZED;
 
 	var flags = elseif ? EFFECT_TRANSPARENT : 0;
 
@@ -54,7 +54,7 @@ export function if_block(node, fn, elseif = false) {
 		if (hydrating) {
 			const is_else = /** @type {Comment} */ (anchor).data === HYDRATION_START_ELSE;
 
-			if (condition === is_else) {
+			if (!!condition === is_else) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
 				// This could happen with `{#if browser}...{/if}`, for example
 				anchor = remove_nodes();
