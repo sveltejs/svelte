@@ -14,8 +14,7 @@ import { get_attribute_expression, is_expression_attribute } from '../../../util
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
 
-const regex_invalid_unquoted_attribute_value_or_self_closing_tag = /^(\/>|[\s"'=<>`])/;
-const regex_invalid_unquoted_attribute_value = /^[\s"'=<>`]/;
+const regex_invalid_unquoted_attribute_value = /^(\/>|[\s"'=<>`])/;
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
 const regex_closing_comment = /-->/;
 const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
@@ -635,15 +634,9 @@ function read_attribute_value(parser) {
 	try {
 		value = read_sequence(
 			parser,
-			/** @param {number} chunk_length */
-			(chunk_length) => {
+			() => {
 				// handle common case of quote marks existing outside of regex for performance reasons
-				if (quote_mark) return !!parser.match(quote_mark);
-
-				// if chunk is not empty, handle possibility of self-closing tag
-				if (chunk_length > 0) {
-					return !!parser.match_regex(regex_invalid_unquoted_attribute_value_or_self_closing_tag);
-				}
+				if (quote_mark) return parser.match(quote_mark);
 				return !!parser.match_regex(regex_invalid_unquoted_attribute_value);
 			},
 			'in attribute value'
@@ -677,7 +670,7 @@ function read_attribute_value(parser) {
 
 /**
  * @param {Parser} parser
- * @param {(value: number) => boolean} done
+ * @param {() => boolean} done
  * @param {string} location
  * @returns {any[]}
  */
@@ -707,7 +700,7 @@ function read_sequence(parser, done, location) {
 	while (parser.index < parser.template.length) {
 		const index = parser.index;
 
-		if (done(current_chunk.raw.length)) {
+		if (done()) {
 			flush(parser.index);
 			return chunks;
 		} else if (parser.eat('{')) {
