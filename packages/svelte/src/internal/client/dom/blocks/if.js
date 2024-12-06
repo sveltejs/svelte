@@ -4,9 +4,9 @@ import {
 	hydrate_next,
 	hydrate_node,
 	hydrating,
-	remove_nodes,
 	set_hydrate_node,
-	set_hydrating
+	set_hydrating,
+	traverse_nodes
 } from '../hydration.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { HYDRATION_START_ELSE } from '../../../../constants.js';
@@ -46,7 +46,7 @@ export function if_block(node, fn, elseif = false) {
 		/** @type {boolean | null} */ new_condition,
 		/** @type {null | ((anchor: Node) => void)} */ fn
 	) => {
-		if (condition === (condition = new_condition)) return;
+		if (condition === (condition = new_condition) && !hydrating) return;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
@@ -57,11 +57,14 @@ export function if_block(node, fn, elseif = false) {
 			if (condition === is_else) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
 				// This could happen with `{#if browser}...{/if}`, for example
-				anchor = remove_nodes();
+				anchor = traverse_nodes(true);
 
 				set_hydrate_node(anchor);
 				set_hydrating(false);
 				mismatch = true;
+			} else if (!fn) {
+				anchor = traverse_nodes();
+				set_hydrate_node(anchor);
 			}
 		}
 

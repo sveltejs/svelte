@@ -17,7 +17,7 @@ import {
 	hydrate_node,
 	hydrating,
 	next,
-	remove_nodes,
+	traverse_nodes,
 	set_hydrate_node
 } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
@@ -92,7 +92,7 @@ export function boundary(node, props, boundary_fn) {
 			} else if (hydrating) {
 				set_hydrate_node(hydrate_open);
 				next();
-				set_hydrate_node(remove_nodes());
+				set_hydrate_node(traverse_nodes(true));
 			}
 
 			if (failed) {

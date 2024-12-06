@@ -12,7 +12,7 @@ import {
 	hydrate_next,
 	hydrate_node,
 	hydrating,
-	remove_nodes,
+	traverse_nodes,
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
@@ -160,7 +160,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 			if (is_else !== (length === 0)) {
 				// hydration mismatch — remove the server-rendered DOM and start over
-				anchor = remove_nodes();
+				anchor = traverse_nodes(true);
 
 				set_hydrate_node(anchor);
 				set_hydrating(false);
@@ -199,7 +199,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 			// remove excess nodes
 			if (length > 0) {
-				set_hydrate_node(remove_nodes());
+				set_hydrate_node(traverse_nodes(true));
 			}
 		}
 
