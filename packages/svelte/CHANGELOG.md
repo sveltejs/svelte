@@ -1,5 +1,11 @@
 # svelte
 
+## 5.8.1
+
+### Patch Changes
+
+- fix: reinstate missing prefersReducedMotion export ([#14586](https://github.com/sveltejs/svelte/pull/14586))
+
 ## 5.8.0
 
 ### Minor Changes
