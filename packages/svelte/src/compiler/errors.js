@@ -169,6 +169,16 @@ export function effect_invalid_placement(node) {
 }
 
 /**
+ * `%name%` is not defined
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function export_undefined(node, name) {
+	e(node, "export_undefined", `\`${name}\` is not defined`);
+}
+
+/**
  * `%name%` is an illegal variable name. To reference a global variable called `%name%`, use `globalThis.%name%`
  * @param {null | number | NodeLike} node
  * @param {string} name
@@ -393,6 +403,15 @@ export function rune_renamed(node, name, replacement) {
  */
 export function runes_mode_invalid_import(node, name) {
 	e(node, "runes_mode_invalid_import", `${name} cannot be used in runes mode`);
+}
+
+/**
+ * An exported snippet can only reference things declared in a `<script module>`, or other exportable snippets
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function snippet_invalid_export(node) {
+	e(node, "snippet_invalid_export", "An exported snippet can only reference things declared in a `<script module>`, or other exportable snippets");
 }
 
 /**
@@ -1024,14 +1043,13 @@ export function mixed_event_handler_syntaxes(node, name) {
 }
 
 /**
- * %thing% is invalid inside `<%parent%>`
+ * %message%. The browser will 'repair' the HTML (by moving, removing, or inserting elements) which breaks Svelte's assumptions about the structure of your components.
  * @param {null | number | NodeLike} node
- * @param {string} thing
- * @param {string} parent
+ * @param {string} message
  * @returns {never}
  */
-export function node_invalid_placement(node, thing, parent) {
-	e(node, "node_invalid_placement", `${thing} is invalid inside \`<${parent}>\``);
+export function node_invalid_placement(node, message) {
+	e(node, "node_invalid_placement", `${message}. The browser will 'repair' the HTML (by moving, removing, or inserting elements) which breaks Svelte's assumptions about the structure of your components.`);
 }
 
 /**
@@ -1226,6 +1244,24 @@ export function style_duplicate(node) {
  */
 export function svelte_body_illegal_attribute(node) {
 	e(node, "svelte_body_illegal_attribute", "`<svelte:body>` does not support non-event attributes or spread attributes");
+}
+
+/**
+ * Valid attributes on `<svelte:boundary>` are `onerror` and `failed`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_boundary_invalid_attribute(node) {
+	e(node, "svelte_boundary_invalid_attribute", "Valid attributes on `<svelte:boundary>` are `onerror` and `failed`");
+}
+
+/**
+ * Attribute value must be a non-string expression
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_boundary_invalid_attribute_value(node) {
+	e(node, "svelte_boundary_invalid_attribute_value", "Attribute value must be a non-string expression");
 }
 
 /**

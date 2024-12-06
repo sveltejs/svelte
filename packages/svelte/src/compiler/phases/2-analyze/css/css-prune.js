@@ -1,16 +1,9 @@
-/** @import { Visitors } from 'zimmerframe' */
 /** @import * as Compiler from '#compiler' */
 import { walk } from 'zimmerframe';
 import { get_parent_rules, get_possible_values, is_outer_global } from './utils.js';
 import { regex_ends_with_whitespace, regex_starts_with_whitespace } from '../../patterns.js';
 import { get_attribute_chunks, is_text_attribute } from '../../../utils/ast.js';
 
-/**
- * @typedef {{
- *   element: Compiler.AST.RegularElement | Compiler.AST.SvelteElement;
- *   from_render_tag: boolean;
- * }} State
- */
 /** @typedef {NODE_PROBABLY_EXISTS | NODE_DEFINITELY_EXISTS} NodeExistsValue */
 
 const NODE_PROBABLY_EXISTS = 0;
@@ -51,80 +44,42 @@ const nesting_selector = {
 };
 
 /**
+ * Snippets encountered already (avoids infinite loops)
+ * @type {Set<Compiler.AST.SnippetBlock>}
+ */
+const seen = new Set();
+
+/**
  *
  * @param {Compiler.Css.StyleSheet} stylesheet
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag} element
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  */
 export function prune(stylesheet, element) {
-	if (element.type === 'RenderTag') {
-		const parent = get_element_parent(element);
-		if (!parent) return;
-
-		walk(stylesheet, { element: parent, from_render_tag: true }, visitors);
-	} else {
-		walk(stylesheet, { element, from_render_tag: false }, visitors);
-	}
-}
-
-/** @type {Visitors<Compiler.Css.Node, State>} */
-const visitors = {
-	Rule(node, context) {
-		if (node.metadata.is_global_block) {
-			context.visit(node.prelude);
-		} else {
-			context.next();
-		}
-	},
-	ComplexSelector(node, context) {
-		const selectors = get_relative_selectors(node);
-		const inner = selectors[selectors.length - 1];
-
-		if (context.state.from_render_tag) {
-			// We're searching for a match that crosses a render tag boundary. That means we have to both traverse up
-			// the element tree (to see if we find an entry point) but also remove selectors from the end (assuming
-			// they are part of the render tag we don't see). We do all possible combinations of both until we find a match.
-			/** @type {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null} */
-			let element = context.state.element;
-
-			while (element) {
-				const selectors_to_check = selectors.slice();
-
-				while (selectors_to_check.length > 0) {
-					selectors_to_check.pop();
-
-					if (
-						apply_selector(
-							selectors_to_check,
-							/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
-							element,
-							context.state
-						)
-					) {
-						mark(inner, element);
-						node.metadata.used = true;
-						return;
-					}
-				}
-
-				element = get_element_parent(element);
+	walk(/** @type {Compiler.Css.Node} */ (stylesheet), null, {
+		Rule(node, context) {
+			if (node.metadata.is_global_block) {
+				context.visit(node.prelude);
+			} else {
+				context.next();
 			}
-		} else if (
-			apply_selector(
-				selectors,
-				/** @type {Compiler.Css.Rule} */ (node.metadata.rule),
-				context.state.element,
-				context.state
-			)
-		) {
-			mark(inner, context.state.element);
-			node.metadata.used = true;
-		}
+		},
+		ComplexSelector(node) {
+			const selectors = get_relative_selectors(node);
 
-		// note: we don't call context.next() here, we only recurse into
-		// selectors that don't belong to rules (i.e. inside `:is(...)` etc)
-		// when we encounter them below
-	}
-};
+			seen.clear();
+
+			if (
+				apply_selector(selectors, /** @type {Compiler.Css.Rule} */ (node.metadata.rule), element)
+			) {
+				node.metadata.used = true;
+			}
+
+			// note: we don't call context.next() here, we only recurse into
+			// selectors that don't belong to rules (i.e. inside `:is(...)` etc)
+			// when we encounter them below
+		}
+	});
+}
 
 /**
  * Retrieves the relative selectors (minus the trailing globals) from a complex selector.
@@ -141,16 +96,13 @@ function get_relative_selectors(node) {
 
 		// nesting could be inside pseudo classes like :is, :has or :where
 		for (let selector of selectors) {
-			walk(
-				selector,
-				{},
-				{
-					// @ts-ignore
-					NestingSelector() {
-						has_explicit_nesting_selector = true;
-					}
+			walk(selector, null, {
+				// @ts-ignore
+				NestingSelector() {
+					has_explicit_nesting_selector = true;
 				}
-			);
+			});
+
 			// if we found one we can break from the others
 			if (has_explicit_nesting_selector) break;
 		}
@@ -203,89 +155,69 @@ function truncate(node) {
  * @param {Compiler.Css.RelativeSelector[]} relative_selectors
  * @param {Compiler.Css.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
- * @param {State} state
  * @returns {boolean}
  */
-function apply_selector(relative_selectors, rule, element, state) {
+function apply_selector(relative_selectors, rule, element) {
 	const parent_selectors = relative_selectors.slice();
 	const relative_selector = parent_selectors.pop();
 
-	if (!relative_selector) return false;
+	const matched =
+		!!relative_selector &&
+		relative_selector_might_apply_to_node(relative_selector, rule, element) &&
+		apply_combinator(relative_selector, parent_selectors, rule, element);
 
-	const possible_match = relative_selector_might_apply_to_node(
-		relative_selector,
-		rule,
-		element,
-		state
-	);
+	if (matched) {
+		if (!is_outer_global(relative_selector)) {
+			relative_selector.metadata.scoped = true;
+		}
 
-	if (!possible_match) {
-		return false;
+		element.metadata.scoped = true;
 	}
 
-	if (relative_selector.combinator) {
-		return apply_combinator(
-			relative_selector.combinator,
-			relative_selector,
-			parent_selectors,
-			rule,
-			element,
-			state
-		);
-	}
-
-	// if this is the left-most non-global selector, mark it — we want
-	// `x y z {...}` to become `x.blah y z.blah {...}`
-	const parent = parent_selectors[parent_selectors.length - 1];
-	if (!parent || is_global(parent, rule)) {
-		mark(relative_selector, element);
-	}
-
-	return true;
+	return matched;
 }
 
 /**
- * @param {Compiler.Css.Combinator} combinator
  * @param {Compiler.Css.RelativeSelector} relative_selector
  * @param {Compiler.Css.RelativeSelector[]} parent_selectors
  * @param {Compiler.Css.Rule} rule
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
- * @param {State} state
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  * @returns {boolean}
  */
-function apply_combinator(combinator, relative_selector, parent_selectors, rule, element, state) {
-	const name = combinator.name;
+function apply_combinator(relative_selector, parent_selectors, rule, node) {
+	if (!relative_selector.combinator) return true;
+
+	const name = relative_selector.combinator.name;
 
 	switch (name) {
 		case ' ':
 		case '>': {
 			let parent_matched = false;
-			let crossed_component_boundary = false;
 
-			const path = element.metadata.path;
+			const path = node.metadata.path;
 			let i = path.length;
 
 			while (i--) {
 				const parent = path[i];
 
-				if (parent.type === 'Component' || parent.type === 'SvelteComponent') {
-					crossed_component_boundary = true;
-				}
-
 				if (parent.type === 'SnippetBlock') {
-					// We assume the snippet might be rendered in a place where the parent selectors match.
-					// (We could do more static analysis and check the render tag reference to see if this snippet block continues
-					// with elements that actually match the selector, but that would be a lot of work for little gain)
-					return true;
+					if (seen.has(parent)) {
+						parent_matched = true;
+					} else {
+						seen.add(parent);
+
+						for (const site of parent.metadata.sites) {
+							if (apply_combinator(relative_selector, parent_selectors, rule, site)) {
+								parent_matched = true;
+							}
+						}
+					}
+
+					break;
 				}
 
 				if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
-					if (apply_selector(parent_selectors, rule, parent, state)) {
-						// TODO the `name === ' '` causes false positives, but removing it causes false negatives...
-						if (name === ' ' || crossed_component_boundary) {
-							mark(parent_selectors[parent_selectors.length - 1], parent);
-						}
-
+					if (apply_selector(parent_selectors, rule, parent)) {
 						parent_matched = true;
 					}
 
@@ -298,7 +230,7 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 
 		case '+':
 		case '~': {
-			const siblings = get_possible_element_siblings(element, name === '+');
+			const siblings = get_possible_element_siblings(node, name === '+');
 
 			let sibling_matched = false;
 
@@ -306,18 +238,16 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 				if (possible_sibling.type === 'RenderTag' || possible_sibling.type === 'SlotElement') {
 					// `{@render foo()}<p>foo</p>` with `:global(.x) + p` is a match
 					if (parent_selectors.length === 1 && parent_selectors[0].metadata.is_global) {
-						mark(relative_selector, element);
 						sibling_matched = true;
 					}
-				} else if (apply_selector(parent_selectors, rule, possible_sibling, state)) {
-					mark(relative_selector, element);
+				} else if (apply_selector(parent_selectors, rule, possible_sibling)) {
 					sibling_matched = true;
 				}
 			}
 
 			return (
 				sibling_matched ||
-				(get_element_parent(element) === null &&
+				(get_element_parent(node) === null &&
 					parent_selectors.every((selector) => is_global(selector, rule)))
 			);
 		}
@@ -326,19 +256,6 @@ function apply_combinator(combinator, relative_selector, parent_selectors, rule,
 			// TODO other combinators
 			return true;
 	}
-}
-
-/**
- * Mark both the compound selector and the node it selects as encapsulated,
- * for transformation in a later step
- * @param {Compiler.Css.RelativeSelector} relative_selector
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
- */
-function mark(relative_selector, element) {
-	if (!is_outer_global(relative_selector)) {
-		relative_selector.metadata.scoped = true;
-	}
-	element.metadata.scoped = true;
 }
 
 /**
@@ -392,10 +309,9 @@ const regex_backslash_and_following_character = /\\(.)/g;
  * @param {Compiler.Css.RelativeSelector} relative_selector
  * @param {Compiler.Css.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
- * @param {State} state
- * @returns {boolean  }
+ * @returns {boolean}
  */
-function relative_selector_might_apply_to_node(relative_selector, rule, element, state) {
+function relative_selector_might_apply_to_node(relative_selector, rule, element) {
 	// Sort :has(...) selectors in one bucket and everything else into another
 	const has_selectors = [];
 	const other_selectors = [];
@@ -420,7 +336,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 
 		// If this is a :has inside a global selector, we gotta include the element itself, too,
 		// because the global selector might be for an element that's outside the component (e.g. :root).
-		const rules = [rule, ...get_parent_rules(rule)];
+		const rules = get_parent_rules(rule);
 		const include_self =
 			rules.some((r) => r.prelude.children.some((c) => c.children.some((s) => is_global(s, r)))) ||
 			rules[rules.length - 1].prelude.children.some((c) =>
@@ -433,10 +349,14 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 			descendant_elements.push(element);
 		}
 
-		walk(
-			/** @type {Compiler.SvelteNode} */ (element.fragment),
-			{ is_child: true },
-			{
+		const seen = new Set();
+
+		/**
+		 * @param {Compiler.SvelteNode} node
+		 * @param {{ is_child: boolean }} state
+		 */
+		function walk_children(node, state) {
+			walk(node, state, {
 				_(node, context) {
 					if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
 						descendant_elements.push(node);
@@ -449,12 +369,21 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 						} else {
 							context.next();
 						}
+					} else if (node.type === 'RenderTag') {
+						for (const snippet of node.metadata.snippets) {
+							if (seen.has(snippet)) continue;
+
+							seen.add(snippet);
+							walk_children(snippet.body, context.state);
+						}
 					} else {
 						context.next();
 					}
 				}
-			}
-		);
+			});
+		}
+
+		walk_children(element.fragment, { is_child: true });
 
 		// :has(...) is special in that it means "look downwards in the CSS tree". Since our matching algorithm goes
 		// upwards and back-to-front, we need to first check the selectors inside :has(...), then check the rest of the
@@ -490,7 +419,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 					if (
 						selectors.length === 0 /* is :global(...) */ ||
 						(element.metadata.scoped && selector_matched) ||
-						apply_selector(selectors, rule, element, state)
+						apply_selector(selectors, rule, element)
 					) {
 						complex_selector.metadata.used = true;
 						selector_matched = matched = true;
@@ -520,7 +449,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 				) {
 					const args = selector.args;
 					const complex_selector = args.children[0];
-					return apply_selector(complex_selector.children, rule, element, state);
+					return apply_selector(complex_selector.children, rule, element);
 				}
 
 				// We came across a :global, everything beyond it is global and therefore a potential match
@@ -569,7 +498,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 						if (is_global) {
 							complex_selector.metadata.used = true;
 							matched = true;
-						} else if (apply_selector(relative, rule, element, state)) {
+						} else if (apply_selector(relative, rule, element)) {
 							complex_selector.metadata.used = true;
 							matched = true;
 						} else if (complex_selector.children.length > 1 && (name == 'is' || name == 'where')) {
@@ -653,7 +582,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 
 				for (const complex_selector of parent.prelude.children) {
 					if (
-						apply_selector(get_relative_selectors(complex_selector), parent, element, state) ||
+						apply_selector(get_relative_selectors(complex_selector), parent, element) ||
 						complex_selector.children.every((s) => is_global(s, parent))
 					) {
 						complex_selector.metadata.used = true;
@@ -707,15 +636,31 @@ function get_following_sibling_elements(element, include_self) {
 
 	// ...then walk them, starting from the node after the one
 	// containing the element in question
-	for (const node of nodes.slice(nodes.indexOf(start) + 1)) {
+
+	const seen = new Set();
+
+	/** @param {Compiler.SvelteNode} node */
+	function get_siblings(node) {
 		walk(node, null, {
 			RegularElement(node) {
 				siblings.push(node);
 			},
 			SvelteElement(node) {
 				siblings.push(node);
+			},
+			RenderTag(node) {
+				for (const snippet of node.metadata.snippets) {
+					if (seen.has(snippet)) continue;
+
+					seen.add(snippet);
+					get_siblings(snippet.body);
+				}
 			}
 		});
+	}
+
+	for (const node of nodes.slice(nodes.indexOf(start) + 1)) {
+		get_siblings(node);
 	}
 
 	if (include_self) {
@@ -862,7 +807,7 @@ function unquote(str) {
 }
 
 /**
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag} node
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  * @returns {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null}
  */
 function get_element_parent(node) {
@@ -881,17 +826,18 @@ function get_element_parent(node) {
 }
 
 /**
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  * @param {boolean} adjacent_only
+ * @param {Set<Compiler.AST.SnippetBlock>} seen
  * @returns {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>}
  */
-function get_possible_element_siblings(element, adjacent_only) {
+function get_possible_element_siblings(node, adjacent_only, seen = new Set()) {
 	/** @type {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>} */
 	const result = new Map();
-	const path = element.metadata.path;
+	const path = node.metadata.path;
 
 	/** @type {Compiler.SvelteNode} */
-	let current = element;
+	let current = node;
 
 	let i = path.length;
 
@@ -933,7 +879,31 @@ function get_possible_element_siblings(element, adjacent_only) {
 
 		current = path[i];
 
-		if (!current || !is_block(current)) break;
+		if (!current) break;
+
+		if (
+			current.type === 'Component' ||
+			current.type === 'SvelteComponent' ||
+			current.type === 'SvelteSelf'
+		) {
+			continue;
+		}
+
+		if (current.type === 'SnippetBlock') {
+			if (seen.has(current)) break;
+			seen.add(current);
+
+			for (const site of current.metadata.sites) {
+				const siblings = get_possible_element_siblings(site, adjacent_only, seen);
+				add_to_map(siblings, result);
+
+				if (adjacent_only && current.metadata.sites.size === 1 && has_definite_elements(siblings)) {
+					return result;
+				}
+			}
+		}
+
+		if (!is_block(current)) break;
 
 		if (current.type === 'EachBlock' && fragment === current.body) {
 			// `{#each ...}<a /><b />{/each}` — `<b>` can be previous sibling of `<a />`

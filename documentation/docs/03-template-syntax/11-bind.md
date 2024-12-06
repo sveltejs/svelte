@@ -53,6 +53,22 @@ In the case of a numeric input (`type="number"` or `type="range"`), the value wi
 
 If the input is empty or invalid (in the case of `type="number"`), the value is `undefined`.
 
+Since 5.6.0, if an `<input>` has a `defaultValue` and is part of a form, it will revert to that value instead of the empty string when the form is reset. Note that for the initial render the value of the binding takes precedence unless it is `null` or `undefined`.
+
+```svelte
+<script>
+	let value = $state('');
+</script>
+
+<form>
+	<input bind:value defaultValue="not the empty string">
+	<input type="reset" value="Reset">
+</form>
+```
+
+> [!NOTE]
+> Use reset buttons sparingly, and ensure that users won't accidentally click them while trying to submit the form.
+
 ## `<input bind:checked>`
 
 Checkbox and radio inputs can be bound with `bind:checked`:
@@ -64,16 +80,29 @@ Checkbox and radio inputs can be bound with `bind:checked`:
 </label>
 ```
 
+Since 5.6.0, if an `<input>` has a `defaultChecked` attribute and is part of a form, it will revert to that value instead of `false` when the form is reset. Note that for the initial render the value of the binding takes precedence unless it is `null` or `undefined`.
+
+```svelte
+<script>
+	let checked = $state(true);
+</script>
+
+<form>
+	<input type="checkbox" bind:checked defaultChecked={true}>
+	<input type="reset" value="Reset">
+</form>
+```
+
 ## `<input bind:group>`
 
 Inputs that work together can use `bind:group`.
 
 ```svelte
 <script>
-	let tortilla = 'Plain';
+	let tortilla = $state('Plain');
 
 	/** @type {Array<string>} */
-	let fillings = [];
+	let fillings = $state([]);
 </script>
 
 <!-- grouped radio inputs are mutually exclusive -->
@@ -143,6 +172,16 @@ When the value of an `<option>` matches its text content, the attribute can be o
 	<option>Beans</option>
 	<option>Cheese</option>
 	<option>Guac (extra)</option>
+</select>
+```
+
+You can give the `<select>` a default value by adding a `selected` attribute to the`<option>` (or options, in the case of `<select multiple>`) that should be initially selected. If the `<select>` is part of a form, it will revert to that selection when the form is reset. Note that for the initial render the value of the binding takes precedence if it's not `undefined`.
+
+```svelte
+<select bind:value={selected}>
+	<option value={a}>a</option>
+	<option value={b} selected>b</option>
+	<option value={c}>c</option>
 </select>
 ```
 

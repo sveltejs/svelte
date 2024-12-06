@@ -10,17 +10,43 @@ const ParserWithTS = acorn.Parser.extend(tsPlugin({ allowSatisfies: true }));
 /**
  * @param {string} source
  * @param {boolean} typescript
+ * @param {boolean} [is_script]
  */
-export function parse(source, typescript) {
+export function parse(source, typescript, is_script) {
 	const parser = typescript ? ParserWithTS : acorn.Parser;
 	const { onComment, add_comments } = get_comment_handlers(source);
+	// @ts-ignore
+	const parse_statement = parser.prototype.parseStatement;
 
-	const ast = parser.parse(source, {
-		onComment,
-		sourceType: 'module',
-		ecmaVersion: 13,
-		locations: true
-	});
+	// If we're dealing with a <script> then it might contain an export
+	// for something that doesn't exist directly inside but is inside the
+	// component instead, so we need to ensure that Acorn doesn't throw
+	// an error in these cases
+	if (is_script) {
+		// @ts-ignore
+		parser.prototype.parseStatement = function (...args) {
+			const v = parse_statement.call(this, ...args);
+			// @ts-ignore
+			this.undefinedExports = {};
+			return v;
+		};
+	}
+
+	let ast;
+
+	try {
+		ast = parser.parse(source, {
+			onComment,
+			sourceType: 'module',
+			ecmaVersion: 13,
+			locations: true
+		});
+	} finally {
+		if (is_script) {
+			// @ts-ignore
+			parser.prototype.parseStatement = parse_statement;
+		}
+	}
 
 	if (typescript) amend(source, ast);
 	add_comments(ast);

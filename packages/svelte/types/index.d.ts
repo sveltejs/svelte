@@ -35,7 +35,7 @@ declare module 'svelte' {
 	/**
 	 * This was the base class for Svelte components in Svelte 4. Svelte 5+ components
 	 * are completely different under the hood. For typing, use `Component` instead.
-	 * To instantiate components, use `mount` instead`.
+	 * To instantiate components, use `mount` instead.
 	 * See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more info.
 	 */
 	export class SvelteComponent<
@@ -50,7 +50,7 @@ declare module 'svelte' {
 		/**
 		 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
 		 * is a stop-gap solution. Migrate towards using `mount` instead. See
-		 * https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more info.
+		 * [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more info.
 		 */
 		constructor(options: ComponentConstructorOptions<Properties<Props, Slots>>);
 		/**
@@ -80,14 +80,14 @@ declare module 'svelte' {
 
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+		 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 		 * for more info.
 		 */
 		$destroy(): void;
 
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+		 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 		 * for more info.
 		 */
 		$on<K extends Extract<keyof Events, string>>(
@@ -97,7 +97,7 @@ declare module 'svelte' {
 
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+		 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 		 * for more info.
 		 */
 		$set(props: Partial<Props>): void;
@@ -150,13 +150,13 @@ declare module 'svelte' {
 		): {
 			/**
 			 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-			 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+			 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 			 * for more info.
 			 */
 			$on?(type: string, callback: (e: any) => void): () => void;
 			/**
 			 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-			 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+			 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 			 * for more info.
 			 */
 			$set?(props: Partial<Props>): void;
@@ -385,7 +385,7 @@ declare module 'svelte' {
 	 * }>();
 	 * ```
 	 *
-	 * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte.dev/docs/svelte/v5-migration-guide#Event-changes-Component-events
+	 * @deprecated Use callback props and/or the `$host()` rune instead — see [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Event-changes-Component-events)
 	 * */
 	export function createEventDispatcher<EventMap extends Record<string, any> = any>(): EventDispatcher<EventMap>;
 	/**
@@ -395,7 +395,7 @@ declare module 'svelte' {
 	 *
 	 * In runes mode use `$effect.pre` instead.
 	 *
-	 * @deprecated Use `$effect.pre` instead — see https://svelte.dev/docs/svelte/$effect#$effect.pre
+	 * @deprecated Use [`$effect.pre`](https://svelte.dev/docs/svelte/$effect#$effect.pre) instead
 	 * */
 	export function beforeUpdate(fn: () => void): void;
 	/**
@@ -405,7 +405,7 @@ declare module 'svelte' {
 	 *
 	 * In runes mode use `$effect` instead.
 	 *
-	 * @deprecated Use `$effect` instead — see https://svelte.dev/docs/svelte/$effect
+	 * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
 	 * */
 	export function afterUpdate(fn: () => void): void;
 	/**
@@ -1168,6 +1168,11 @@ declare module 'svelte/compiler' {
 			name: 'svelte:fragment';
 		}
 
+		export interface SvelteBoundary extends BaseElement {
+			type: 'SvelteBoundary';
+			name: 'svelte:boundary';
+		}
+
 		export interface SvelteHead extends BaseElement {
 			type: 'SvelteHead';
 			name: 'svelte:head';
@@ -1193,7 +1198,8 @@ declare module 'svelte/compiler' {
 		export interface EachBlock extends BaseNode {
 			type: 'EachBlock';
 			expression: Expression;
-			context: Pattern;
+			/** The `entry` in `{#each item as entry}`. `null` if `as` part is omitted */
+			context: Pattern | null;
 			body: Fragment;
 			fallback?: Fragment;
 			index?: string;
@@ -1286,7 +1292,8 @@ declare module 'svelte/compiler' {
 		| AST.SvelteHead
 		| AST.SvelteOptionsRaw
 		| AST.SvelteSelf
-		| AST.SvelteWindow;
+		| AST.SvelteWindow
+		| AST.SvelteBoundary;
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
 	 * For example, it can be used to convert a `<style lang="sass">` block into vanilla CSS.
@@ -1636,6 +1643,7 @@ declare module 'svelte/legacy' {
 }
 
 declare module 'svelte/motion' {
+	import type { MediaQuery } from 'svelte/reactivity';
 	export interface Spring<T> extends Readable<T> {
 		set: (new_value: T, opts?: SpringUpdateOpts) => Promise<void>;
 		update: (fn: Updater<T>, opts?: SpringUpdateOpts) => Promise<void>;
@@ -1683,6 +1691,30 @@ declare module 'svelte/motion' {
 		interpolate?: (a: T, b: T) => (t: number) => T;
 	}
 	/**
+	 * A [media query](https://svelte.dev/docs/svelte/svelte-reactivity#MediaQuery) that matches if the user [prefers reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion).
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { prefersReducedMotion } from 'svelte/motion';
+	 * 	import { fly } from 'svelte/transition';
+	 *
+	 * 	let visible = $state(false);
+	 * </script>
+	 *
+	 * <button onclick={() => visible = !visible}>
+	 * 	toggle
+	 * </button>
+	 *
+	 * {#if visible}
+	 * 	<p transition:fly={{ y: prefersReducedMotion.current ? 0 : 200 }}>
+	 * 		flies in, unless the user prefers reduced motion
+	 * 	</p>
+	 * {/if}
+	 * ```
+	 * @since 5.7.0
+	 */
+	export const prefersReducedMotion: MediaQuery;
+	/**
 	 * The spring function in Svelte creates a store whose value is animated, with a motion that simulates the behavior of a spring. This means when the value changes, instead of transitioning at a steady rate, it "bounces" like a spring would, depending on the physics parameters provided. This adds a level of realism to the transitions and can enhance the user experience.
 	 *
 	 * */
@@ -1726,6 +1758,74 @@ declare module 'svelte/reactivity' {
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
+	/**
+	 * Creates a media query and provides a `current` property that reflects whether or not it matches.
+	 *
+	 * Use it carefully — during server-side rendering, there is no way to know what the correct value should be, potentially causing content to change upon hydration.
+	 * If you can use the media query in CSS to achieve the same effect, do that.
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { MediaQuery } from 'svelte/reactivity';
+	 *
+	 * 	const large = new MediaQuery('min-width: 800px');
+	 * </script>
+	 *
+	 * <h1>{large.current ? 'large screen' : 'small screen'}</h1>
+	 * ```
+	 * @since 5.7.0
+	 */
+	export class MediaQuery {
+		/**
+		 * @param query A media query string
+		 * @param matches Fallback value for the server
+		 */
+		constructor(query: string, matches?: boolean | undefined);
+		get current(): boolean;
+		#private;
+	}
+	/**
+	 * Returns a `subscribe` function that, if called in an effect (including expressions in the template),
+	 * calls its `start` callback with an `update` function. Whenever `update` is called, the effect re-runs.
+	 *
+	 * If `start` returns a function, it will be called when the effect is destroyed.
+	 *
+	 * If `subscribe` is called in multiple effects, `start` will only be called once as long as the effects
+	 * are active, and the returned teardown function will only be called when all effects are destroyed.
+	 *
+	 * It's best understood with an example. Here's an implementation of [`MediaQuery`](https://svelte.dev/docs/svelte/svelte-reactivity#MediaQuery):
+	 *
+	 * ```js
+	 * import { createSubscriber } from 'svelte/reactivity';
+	 * import { on } from 'svelte/events';
+	 *
+	 * export class MediaQuery {
+	 * 	#query;
+	 * 	#subscribe;
+	 *
+	 * 	constructor(query) {
+	 * 		this.#query = window.matchMedia(`(${query})`);
+	 *
+	 * 		this.#subscribe = createSubscriber((update) => {
+	 * 			// when the `change` event occurs, re-run any effects that read `this.current`
+	 * 			const off = on(this.#query, 'change', update);
+	 *
+	 * 			// stop listening when all the effects are destroyed
+	 * 			return () => off();
+	 * 		});
+	 * 	}
+	 *
+	 * 	get current() {
+	 * 		this.#subscribe();
+	 *
+	 * 		// Return the current state of the query, whether or not we're in an effect
+	 * 		return this.#query.matches;
+	 * 	}
+	 * }
+	 * ```
+	 * @since 5.7.0
+	 */
+	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
 
 	export {};
 }
@@ -1950,7 +2050,7 @@ declare module 'svelte/transition' {
 	 * */
 	export function slide(node: Element, { delay, duration, easing, axis }?: SlideParams | undefined): TransitionConfig;
 	/**
-	 * Animates the opacity and scale of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
+	 * Animates the opacity and scale of an element. `in` transitions animate from the provided values, passed as parameters, to an element's current (default) values. `out` transitions animate from an element's default values to the provided values.
 	 *
 	 * */
 	export function scale(node: Element, { delay, duration, easing, start, opacity }?: ScaleParams | undefined): TransitionConfig;

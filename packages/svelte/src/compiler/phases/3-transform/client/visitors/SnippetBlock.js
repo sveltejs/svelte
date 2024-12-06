@@ -83,7 +83,11 @@ export function SnippetBlock(node, context) {
 
 	// Top-level snippets are hoisted so they can be referenced in the `<script>`
 	if (context.path.length === 1 && context.path[0].type === 'Fragment') {
-		context.state.analysis.top_level_snippets.push(declaration);
+		if (node.metadata.can_hoist) {
+			context.state.module_level_snippets.push(declaration);
+		} else {
+			context.state.instance_level_snippets.push(declaration);
+		}
 	} else {
 		context.state.init.push(declaration);
 	}
