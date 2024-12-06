@@ -278,8 +278,11 @@ async function run_test_variant(
 			});
 
 			if (htmlAttributes) {
-				for (const [key, value] of htmlAttributes.split(' ').map((attr) => attr.split('='))) {
-					window.document.documentElement.setAttribute(key, value.slice(1, -1));
+				for (const [key, value] of htmlAttributes.split('" ').map((attr) => attr.split('='))) {
+					window.document.documentElement.setAttribute(
+						key,
+						value.slice(1, value.endsWith('"') ? -1 : undefined)
+					);
 				}
 			}
 
