@@ -1,8 +1,7 @@
-/** @import { ExpressionStatement } from 'estree' */
+/** @import { ExpressionStatement, Property } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import { is_dom_property, normalize_attribute } from '../../../../../utils.js';
-import { is_ignored } from '../../../../state.js';
+import { normalize_attribute } from '../../../../../utils.js';
 import { is_event_attribute } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { build_attribute_value } from './shared/element.js';
@@ -13,7 +12,8 @@ import { visit_event_attribute } from './shared/events.js';
  * @param {ComponentContext} context
  */
 export function SvelteHTML(element, context) {
-	const node_id = b.id('$.document.documentElement');
+	/** @type {Property[]} */
+	const attributes = [];
 
 	for (const attribute of element.attributes) {
 		if (attribute.type === 'Attribute') {
@@ -21,32 +21,9 @@ export function SvelteHTML(element, context) {
 				visit_event_attribute(attribute, context);
 			} else {
 				const name = normalize_attribute(attribute.name);
-				const { value, has_state } = build_attribute_value(attribute.value, context);
+				const { value } = build_attribute_value(attribute.value, context);
 
-				/** @type {ExpressionStatement} */
-				let update;
-
-				if (name === 'class') {
-					update = b.stmt(b.call('$.set_class', node_id, value));
-				} else if (is_dom_property(name)) {
-					update = b.stmt(b.assignment('=', b.member(node_id, name), value));
-				} else {
-					update = b.stmt(
-						b.call(
-							'$.set_attribute',
-							node_id,
-							b.literal(name),
-							value,
-							is_ignored(element, 'hydration_attribute_changed') && b.true
-						)
-					);
-				}
-
-				if (has_state) {
-					context.state.update.push(update);
-				} else {
-					context.state.init.push(update);
-				}
+				attributes.push(b.init(name, value));
 
 				if (context.state.options.dev) {
 					context.state.init.push(
@@ -55,5 +32,9 @@ export function SvelteHTML(element, context) {
 				}
 			}
 		}
+	}
+
+	if (attributes.length > 0) {
+		context.state.init.push(b.stmt(b.call('$.svelte_html', b.arrow([], b.object(attributes)))));
 	}
 }
