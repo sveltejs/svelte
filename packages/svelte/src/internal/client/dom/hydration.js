@@ -81,6 +81,7 @@ export function next(count = 1) {
 
 /**
  * Removes all nodes starting at `hydrate_node` up until the next hydration end comment
+ * @param {boolean} [remove]
  */
 export function traverse_nodes(remove = false) {
 	var depth = 0;
