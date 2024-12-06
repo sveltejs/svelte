@@ -85,4 +85,4 @@ export interface Tweened<T> extends Readable<T> {
 	update(updater: Updater<T>, opts?: TweenedOptions<T>): Promise<void>;
 }
 
-export { spring, tweened, Tween } from './index.js';
+export { prefersReducedMotion, spring, tweened, Tween } from './index.js';
