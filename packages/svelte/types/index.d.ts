@@ -1671,6 +1671,7 @@ declare module 'svelte/motion' {
 	 * <input type="range" bind:value={spring.target} />
 	 * <input type="range" bind:value={spring.current} disabled />
 	 * ```
+	 * @since 5.8.0
 	 */
 	export class Spring<T> {
 		constructor(value: T, options?: SpringOpts);
