@@ -1637,6 +1637,7 @@ declare module 'svelte/legacy' {
 }
 
 declare module 'svelte/motion' {
+	import type { MediaQuery } from 'svelte/reactivity';
 	// TODO we do declaration merging here in order to not have a breaking change (renaming the Spring interface)
 	// this means both the Spring class and the Spring interface are merged into one with some things only
 	// existing on one side. In Svelte 6, remove the type definition and move the jsdoc onto the class in spring.js
@@ -1767,6 +1768,30 @@ declare module 'svelte/motion' {
 		easing?: (t: number) => number;
 		interpolate?: (a: T, b: T) => (t: number) => T;
 	}
+	/**
+	 * A [media query](https://svelte.dev/docs/svelte/svelte-reactivity#MediaQuery) that matches if the user [prefers reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion).
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { prefersReducedMotion } from 'svelte/motion';
+	 * 	import { fly } from 'svelte/transition';
+	 *
+	 * 	let visible = $state(false);
+	 * </script>
+	 *
+	 * <button onclick={() => visible = !visible}>
+	 * 	toggle
+	 * </button>
+	 *
+	 * {#if visible}
+	 * 	<p transition:fly={{ y: prefersReducedMotion.current ? 0 : 200 }}>
+	 * 		flies in, unless the user prefers reduced motion
+	 * 	</p>
+	 * {/if}
+	 * ```
+	 * @since 5.7.0
+	 */
+	export const prefersReducedMotion: MediaQuery;
 	/**
 	 * The spring function in Svelte creates a store whose value is animated, with a motion that simulates the behavior of a spring. This means when the value changes, instead of transitioning at a steady rate, it "bounces" like a spring would, depending on the physics parameters provided. This adds a level of realism to the transitions and can enhance the user experience.
 	 *
