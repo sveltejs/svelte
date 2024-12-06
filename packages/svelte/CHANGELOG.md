@@ -1,5 +1,77 @@
 # svelte
 
+## 5.7.1
+
+### Patch Changes
+
+- fix: ensure bindings always take precedence over spreads ([#14575](https://github.com/sveltejs/svelte/pull/14575))
+
+## 5.7.0
+
+### Minor Changes
+
+- feat: add `createSubscriber` function for creating reactive values that depend on subscriptions ([#14422](https://github.com/sveltejs/svelte/pull/14422))
+
+- feat: add reactive `MediaQuery` class, and a `prefersReducedMotion` class instance ([#14422](https://github.com/sveltejs/svelte/pull/14422))
+
+### Patch Changes
+
+- fix: treat `undefined` and `null` the same for the initial input value ([#14562](https://github.com/sveltejs/svelte/pull/14562))
+
+## 5.6.2
+
+### Patch Changes
+
+- chore: make if blocks tree-shakable ([#14549](https://github.com/sveltejs/svelte/pull/14549))
+
+## 5.6.1
+
+### Patch Changes
+
+- fix: handle static form values in combination with default values ([#14555](https://github.com/sveltejs/svelte/pull/14555))
+
+## 5.6.0
+
+### Minor Changes
+
+- feat: support `defaultValue/defaultChecked` for inputs ([#14289](https://github.com/sveltejs/svelte/pull/14289))
+
+## 5.5.4
+
+### Patch Changes
+
+- fix: better error messages for invalid HTML trees ([#14445](https://github.com/sveltejs/svelte/pull/14445))
+
+- fix: remove spreaded event handlers when they become nullish ([#14546](https://github.com/sveltejs/svelte/pull/14546))
+
+- fix: respect the unidirectional nature of time ([#14541](https://github.com/sveltejs/svelte/pull/14541))
+
+## 5.5.3
+
+### Patch Changes
+
+- fix: don't try to add owners to non-`$state` class fields ([#14533](https://github.com/sveltejs/svelte/pull/14533))
+
+- fix: capture infinite_loop_guard in error boundary ([#14534](https://github.com/sveltejs/svelte/pull/14534))
+
+- fix: proxify values when assigning using `||=`, `&&=` and `??=` operators ([#14273](https://github.com/sveltejs/svelte/pull/14273))
+
+## 5.5.2
+
+### Patch Changes
+
+- fix: use correct reaction when lazily creating deriveds inside `SvelteDate` ([#14525](https://github.com/sveltejs/svelte/pull/14525))
+
+## 5.5.1
+
+### Patch Changes
+
+- fix: don't throw with nullish actions ([#13559](https://github.com/sveltejs/svelte/pull/13559))
+
+- fix: leave update expressions untransformed unless a transformer is provided ([#14507](https://github.com/sveltejs/svelte/pull/14507))
+
+- chore: turn reactive_declaration_non_reactive_property into a runtime warning ([#14192](https://github.com/sveltejs/svelte/pull/14192))
+
 ## 5.5.0
 
 ### Minor Changes

@@ -642,3 +642,33 @@ test('Date methods invoked for the first time in a derived', () => {
 
 	cleanup();
 });
+
+test('Date methods shared between deriveds', () => {
+	const date = new SvelteDate(initial_date);
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		const year = derived(() => {
+			return date.getFullYear();
+		});
+		const year2 = derived(() => {
+			return date.getTime(), date.getFullYear();
+		});
+
+		render_effect(() => {
+			log.push(get(year) + '/' + get(year2).toString());
+		});
+
+		flushSync(() => {
+			date.setFullYear(date.getFullYear() + 1);
+		});
+
+		flushSync(() => {
+			date.setFullYear(date.getFullYear() + 1);
+		});
+	});
+
+	assert.deepEqual(log, ['2023/2023', '2024/2024', '2025/2025']);
+
+	cleanup();
+});

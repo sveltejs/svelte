@@ -171,6 +171,7 @@ export function tweened(value, defaults = {}) {
  * <input type="range" bind:value={tween.current} disabled />
  * ```
  * @template T
+ * @since 5.8.0
  */
 export class Tween {
 	#current = source(/** @type {T} */ (undefined));

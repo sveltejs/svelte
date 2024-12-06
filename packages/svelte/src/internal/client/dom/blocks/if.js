@@ -13,13 +13,11 @@ import { HYDRATION_START_ELSE } from '../../../../constants.js';
 
 /**
  * @param {TemplateNode} node
- * @param {() => boolean} get_condition
- * @param {(anchor: Node) => void} consequent_fn
- * @param {null | ((anchor: Node) => void)} [alternate_fn]
+ * @param {(branch: (fn: (anchor: Node) => void, flag?: boolean) => void) => void} fn
  * @param {boolean} [elseif] True if this is an `{:else if ...}` block rather than an `{#if ...}`, as that affects which transitions are considered 'local'
  * @returns {void}
  */
-export function if_block(node, get_condition, consequent_fn, alternate_fn = null, elseif = false) {
+export function if_block(node, fn, elseif = false) {
 	if (hydrating) {
 		hydrate_next();
 	}
@@ -37,8 +35,18 @@ export function if_block(node, get_condition, consequent_fn, alternate_fn = null
 
 	var flags = elseif ? EFFECT_TRANSPARENT : 0;
 
-	block(() => {
-		if (condition === (condition = !!get_condition())) return;
+	var has_branch = false;
+
+	const set_branch = (/** @type {(anchor: Node) => void} */ fn, flag = true) => {
+		has_branch = true;
+		update_branch(flag, fn);
+	};
+
+	const update_branch = (
+		/** @type {boolean | null} */ new_condition,
+		/** @type {null | ((anchor: Node) => void)} */ fn
+	) => {
+		if (condition === (condition = new_condition)) return;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
@@ -60,8 +68,8 @@ export function if_block(node, get_condition, consequent_fn, alternate_fn = null
 		if (condition) {
 			if (consequent_effect) {
 				resume_effect(consequent_effect);
-			} else {
-				consequent_effect = branch(() => consequent_fn(anchor));
+			} else if (fn) {
+				consequent_effect = branch(() => fn(anchor));
 			}
 
 			if (alternate_effect) {
@@ -72,8 +80,8 @@ export function if_block(node, get_condition, consequent_fn, alternate_fn = null
 		} else {
 			if (alternate_effect) {
 				resume_effect(alternate_effect);
-			} else if (alternate_fn) {
-				alternate_effect = branch(() => alternate_fn(anchor));
+			} else if (fn) {
+				alternate_effect = branch(() => fn(anchor));
 			}
 
 			if (consequent_effect) {
@@ -86,6 +94,14 @@ export function if_block(node, get_condition, consequent_fn, alternate_fn = null
 		if (mismatch) {
 			// continue in hydration mode
 			set_hydrating(true);
+		}
+	};
+
+	block(() => {
+		has_branch = false;
+		fn(set_branch);
+		if (!has_branch) {
+			update_branch(null, null);
 		}
 	}, flags);
 

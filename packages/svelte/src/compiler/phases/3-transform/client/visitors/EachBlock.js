@@ -214,7 +214,10 @@ export function EachBlock(node, context) {
 
 				return b.sequence([b.assignment('=', left, value), ...sequence]);
 			},
-			mutate: (_, mutation) => b.sequence([mutation, ...sequence])
+			mutate: (_, mutation) => {
+				uses_index = true;
+				return b.sequence([mutation, ...sequence]);
+			}
 		};
 
 		delete key_state.transform[node.context.name];

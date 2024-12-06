@@ -50,7 +50,7 @@ declare module 'svelte' {
 		/**
 		 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
 		 * is a stop-gap solution. Migrate towards using `mount` instead. See
-		 * https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more info.
+		 * [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more info.
 		 */
 		constructor(options: ComponentConstructorOptions<Properties<Props, Slots>>);
 		/**
@@ -80,14 +80,14 @@ declare module 'svelte' {
 
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+		 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 		 * for more info.
 		 */
 		$destroy(): void;
 
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+		 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 		 * for more info.
 		 */
 		$on<K extends Extract<keyof Events, string>>(
@@ -97,7 +97,7 @@ declare module 'svelte' {
 
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+		 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 		 * for more info.
 		 */
 		$set(props: Partial<Props>): void;
@@ -150,13 +150,13 @@ declare module 'svelte' {
 		): {
 			/**
 			 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-			 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+			 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 			 * for more info.
 			 */
 			$on?(type: string, callback: (e: any) => void): () => void;
 			/**
 			 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-			 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+			 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 			 * for more info.
 			 */
 			$set?(props: Partial<Props>): void;
@@ -385,7 +385,7 @@ declare module 'svelte' {
 	 * }>();
 	 * ```
 	 *
-	 * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte.dev/docs/svelte/v5-migration-guide#Event-changes-Component-events
+	 * @deprecated Use callback props and/or the `$host()` rune instead — see [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Event-changes-Component-events)
 	 * */
 	export function createEventDispatcher<EventMap extends Record<string, any> = any>(): EventDispatcher<EventMap>;
 	/**
@@ -395,7 +395,7 @@ declare module 'svelte' {
 	 *
 	 * In runes mode use `$effect.pre` instead.
 	 *
-	 * @deprecated Use `$effect.pre` instead — see https://svelte.dev/docs/svelte/$effect#$effect.pre
+	 * @deprecated Use [`$effect.pre`](https://svelte.dev/docs/svelte/$effect#$effect.pre) instead
 	 * */
 	export function beforeUpdate(fn: () => void): void;
 	/**
@@ -405,7 +405,7 @@ declare module 'svelte' {
 	 *
 	 * In runes mode use `$effect` instead.
 	 *
-	 * @deprecated Use `$effect` instead — see https://svelte.dev/docs/svelte/$effect
+	 * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
 	 * */
 	export function afterUpdate(fn: () => void): void;
 	/**
@@ -1793,7 +1793,8 @@ declare module 'svelte/motion' {
 	 * <input type="range" bind:value={tween.target} />
 	 * <input type="range" bind:value={tween.current} disabled />
 	 * ```
-	 * */
+	 * @since 5.8.0
+	 */
 	export class Tween<T> {
 		/**
 		 * Create a tween whose value is bound to the return value of `fn`. This must be called
@@ -1858,6 +1859,74 @@ declare module 'svelte/reactivity' {
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
+	/**
+	 * Creates a media query and provides a `current` property that reflects whether or not it matches.
+	 *
+	 * Use it carefully — during server-side rendering, there is no way to know what the correct value should be, potentially causing content to change upon hydration.
+	 * If you can use the media query in CSS to achieve the same effect, do that.
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { MediaQuery } from 'svelte/reactivity';
+	 *
+	 * 	const large = new MediaQuery('min-width: 800px');
+	 * </script>
+	 *
+	 * <h1>{large.current ? 'large screen' : 'small screen'}</h1>
+	 * ```
+	 * @since 5.7.0
+	 */
+	export class MediaQuery {
+		/**
+		 * @param query A media query string
+		 * @param matches Fallback value for the server
+		 */
+		constructor(query: string, matches?: boolean | undefined);
+		get current(): boolean;
+		#private;
+	}
+	/**
+	 * Returns a `subscribe` function that, if called in an effect (including expressions in the template),
+	 * calls its `start` callback with an `update` function. Whenever `update` is called, the effect re-runs.
+	 *
+	 * If `start` returns a function, it will be called when the effect is destroyed.
+	 *
+	 * If `subscribe` is called in multiple effects, `start` will only be called once as long as the effects
+	 * are active, and the returned teardown function will only be called when all effects are destroyed.
+	 *
+	 * It's best understood with an example. Here's an implementation of [`MediaQuery`](https://svelte.dev/docs/svelte/svelte-reactivity#MediaQuery):
+	 *
+	 * ```js
+	 * import { createSubscriber } from 'svelte/reactivity';
+	 * import { on } from 'svelte/events';
+	 *
+	 * export class MediaQuery {
+	 * 	#query;
+	 * 	#subscribe;
+	 *
+	 * 	constructor(query) {
+	 * 		this.#query = window.matchMedia(`(${query})`);
+	 *
+	 * 		this.#subscribe = createSubscriber((update) => {
+	 * 			// when the `change` event occurs, re-run any effects that read `this.current`
+	 * 			const off = on(this.#query, 'change', update);
+	 *
+	 * 			// stop listening when all the effects are destroyed
+	 * 			return () => off();
+	 * 		});
+	 * 	}
+	 *
+	 * 	get current() {
+	 * 		this.#subscribe();
+	 *
+	 * 		// Return the current state of the query, whether or not we're in an effect
+	 * 		return this.#query.matches;
+	 * 	}
+	 * }
+	 * ```
+	 * @since 5.7.0
+	 */
+	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
 
 	export {};
 }

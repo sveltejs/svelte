@@ -160,6 +160,7 @@ export function spring(value, opts = {}) {
  * <input type="range" bind:value={spring.current} disabled />
  * ```
  * @template T
+ * @since 5.8.0
  */
 export class Spring {
 	#stiffness = source(0.15);

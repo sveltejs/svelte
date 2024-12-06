@@ -53,8 +53,8 @@ export function without_reactive_context(fn) {
  * to notify all bindings when the form is reset
  * @param {HTMLElement} element
  * @param {string} event
- * @param {() => void} handler
- * @param {() => void} [on_reset]
+ * @param {(is_reset?: true) => void} handler
+ * @param {(is_reset?: true) => void} [on_reset]
  */
 export function listen_to_event_and_reset_event(element, event, handler, on_reset = handler) {
 	element.addEventListener(event, () => without_reactive_context(handler));
@@ -65,11 +65,11 @@ export function listen_to_event_and_reset_event(element, event, handler, on_rese
 		// @ts-expect-error
 		element.__on_r = () => {
 			prev();
-			on_reset();
+			on_reset(true);
 		};
 	} else {
 		// @ts-expect-error
-		element.__on_r = on_reset;
+		element.__on_r = () => on_reset(true);
 	}
 
 	add_form_reset_listener();

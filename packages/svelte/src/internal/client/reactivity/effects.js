@@ -16,7 +16,8 @@ import {
 	set_is_flushing_effect,
 	set_signal_status,
 	untrack,
-	skip_reaction
+	skip_reaction,
+	capture_signals
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -39,10 +40,13 @@ import {
 } from '../constants.js';
 import { set } from './sources.js';
 import * as e from '../errors.js';
+import * as w from '../warnings.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { destroy_derived } from './deriveds.js';
+import { FILENAME } from '../../../constants.js';
+import { get_location } from '../dev/location.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -261,13 +265,20 @@ export function effect(fn) {
  * Internal representation of `$: ..`
  * @param {() => any} deps
  * @param {() => void | (() => void)} fn
+ * @param {number} [line]
+ * @param {number} [column]
  */
-export function legacy_pre_effect(deps, fn) {
+export function legacy_pre_effect(deps, fn, line, column) {
 	var context = /** @type {ComponentContextLegacy} */ (component_context);
 
 	/** @type {{ effect: null | Effect, ran: boolean }} */
 	var token = { effect: null, ran: false };
 	context.l.r1.push(token);
+
+	if (DEV && line !== undefined) {
+		var location = get_location(line, column);
+		var explicit_deps = capture_signals(deps);
+	}
 
 	token.effect = render_effect(() => {
 		deps();
@@ -278,7 +289,18 @@ export function legacy_pre_effect(deps, fn) {
 
 		token.ran = true;
 		set(context.l.r2, true);
-		untrack(fn);
+
+		if (DEV && location) {
+			var implicit_deps = capture_signals(() => untrack(fn));
+
+			for (var signal of implicit_deps) {
+				if (!explicit_deps.has(signal)) {
+					w.reactive_declaration_non_reactive_property(/** @type {string} */ (location));
+				}
+			}
+		} else {
+			untrack(fn);
+		}
 	});
 }
 

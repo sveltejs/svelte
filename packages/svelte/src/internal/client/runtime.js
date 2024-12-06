@@ -48,6 +48,9 @@ let scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
 
+/** @type {Effect | null} */
+let last_scheduled_effect = null;
+
 export let is_flushing_effect = false;
 export let is_destroying_effect = false;
 
@@ -532,27 +535,47 @@ export function update_effect(effect) {
 	}
 }
 
+function log_effect_stack() {
+	// eslint-disable-next-line no-console
+	console.error(
+		'Last ten effects were: ',
+		dev_effect_stack.slice(-10).map((d) => d.fn)
+	);
+	dev_effect_stack = [];
+}
+
 function infinite_loop_guard() {
 	if (flush_count > 1000) {
 		flush_count = 0;
-		if (DEV) {
-			try {
-				e.effect_update_depth_exceeded();
-			} catch (error) {
+		try {
+			e.effect_update_depth_exceeded();
+		} catch (error) {
+			if (DEV) {
 				// stack is garbage, ignore. Instead add a console.error message.
 				define_property(error, 'stack', {
 					value: ''
 				});
-				// eslint-disable-next-line no-console
-				console.error(
-					'Last ten effects were: ',
-					dev_effect_stack.slice(-10).map((d) => d.fn)
-				);
-				dev_effect_stack = [];
+			}
+			// Try and handle the error so it can be caught at a boundary, that's
+			// if there's an effect available from when it was last scheduled
+			if (last_scheduled_effect !== null) {
+				if (DEV) {
+					try {
+						handle_error(error, last_scheduled_effect, null, null);
+					} catch (e) {
+						// Only log the effect stack if the error is re-thrown
+						log_effect_stack();
+						throw e;
+					}
+				} else {
+					handle_error(error, last_scheduled_effect, null, null);
+				}
+			} else {
+				if (DEV) {
+					log_effect_stack();
+				}
 				throw error;
 			}
-		} else {
-			e.effect_update_depth_exceeded();
 		}
 	}
 	flush_count++;
@@ -637,8 +660,10 @@ function process_deferred() {
 	const previous_queued_root_effects = queued_root_effects;
 	queued_root_effects = [];
 	flush_queued_root_effects(previous_queued_root_effects);
+
 	if (!is_micro_task_queued) {
 		flush_count = 0;
+		last_scheduled_effect = null;
 		if (DEV) {
 			dev_effect_stack = [];
 		}
@@ -656,6 +681,8 @@ export function schedule_effect(signal) {
 			queueMicrotask(process_deferred);
 		}
 	}
+
+	last_scheduled_effect = signal;
 
 	var effect = signal;
 
@@ -776,6 +803,7 @@ export function flush_sync(fn) {
 		}
 
 		flush_count = 0;
+		last_scheduled_effect = null;
 		if (DEV) {
 			dev_effect_stack = [];
 		}
@@ -894,15 +922,17 @@ export function safe_get(signal) {
 }
 
 /**
- * Invokes a function and captures all signals that are read during the invocation,
- * then invalidates them.
- * @param {() => any} fn
+ * Capture an array of all the signals that are read when `fn` is called
+ * @template T
+ * @param {() => T} fn
  */
-export function invalidate_inner_signals(fn) {
+export function capture_signals(fn) {
 	var previous_captured_signals = captured_signals;
 	captured_signals = new Set();
+
 	var captured = captured_signals;
 	var signal;
+
 	try {
 		untrack(fn);
 		if (previous_captured_signals !== null) {
@@ -913,7 +943,19 @@ export function invalidate_inner_signals(fn) {
 	} finally {
 		captured_signals = previous_captured_signals;
 	}
-	for (signal of captured) {
+
+	return captured;
+}
+
+/**
+ * Invokes a function and captures all signals that are read during the invocation,
+ * then invalidates them.
+ * @param {() => any} fn
+ */
+export function invalidate_inner_signals(fn) {
+	var captured = capture_signals(() => untrack(fn));
+
+	for (var signal of captured) {
 		// Go one level up because derived signals created as part of props in legacy mode
 		if ((signal.f & LEGACY_DERIVED_PROP) !== 0) {
 			for (const dep of /** @type {Derived} */ (signal).deps || []) {
