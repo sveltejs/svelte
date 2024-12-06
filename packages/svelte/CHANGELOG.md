@@ -1,5 +1,17 @@
 # svelte
 
+## 5.8.1
+
+### Patch Changes
+
+- fix: reinstate missing prefersReducedMotion export ([#14586](https://github.com/sveltejs/svelte/pull/14586))
+
+## 5.8.0
+
+### Minor Changes
+
+- feat: add `Spring` and `Tween` classes to `svelte/motion` ([#11519](https://github.com/sveltejs/svelte/pull/11519))
+
 ## 5.7.1
 
 ### Patch Changes
