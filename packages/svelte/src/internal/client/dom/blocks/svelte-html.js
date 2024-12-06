@@ -22,16 +22,22 @@ export function svelte_html(get_attributes) {
 		attributes = get_attributes();
 
 		for (const name in attributes) {
+			const current = (current_setters[name] ??= []);
+			const idx = current.findIndex(([owner]) => owner === own);
+			const old = idx === -1 ? null : current.splice(idx, 1)[0][1];
+
 			let value = attributes[name];
-			current_setters[name] = (current_setters[name] ?? []).filter(([owner]) => owner !== own);
-			current_setters[name].unshift([own, value]);
+			current.push([own, value]);
 
 			// Do nothing on initial render during hydration: If there are attribute duplicates, the last value
 			// wins, which could result in needless hydration repairs from earlier values.
 			if (hydrating) continue;
 
 			if (name === 'class') {
-				set_class(node, current_setters[name].map(([_, value]) => value).join(' '));
+				// Avoid unrelated attribute changes from triggering class changes
+				if (old !== value) {
+					set_class(node, current_setters[name].map(([_, text]) => text).join(' '));
+				}
 			} else {
 				set_attribute(node, name, value);
 			}
@@ -45,9 +51,11 @@ export function svelte_html(get_attributes) {
 			const current = current_setters[name];
 
 			if (name === 'class') {
-				set_class(node, current.map(([_, value]) => value).join(' '));
-			} else if (old[0][0] === own) {
-				set_attribute(node, name, current[0]?.[1]);
+				set_class(node, current.map(([_, text]) => text).join(' '));
+
+				// If this was the last one setting this attribute, revert to the previous value
+			} else if (old[old.length - 1][0] === own) {
+				set_attribute(node, name, current[current.length - 1]?.[1]);
 			}
 		}
 	});
