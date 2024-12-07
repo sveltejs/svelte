@@ -132,7 +132,7 @@ function clone(value, cloned, path, paths, original = null) {
 }
 
 // Patches `structuredClone` to work with `$state` proxies
-if (DEV) {
+if (DEV && "structuredClone" in globalThis) {
 	/**
 	 * Creates a deep clone of an object.
 	 * [MDN Reference](https://developer.mozilla.org/docs/Web/API/structuredClone)
