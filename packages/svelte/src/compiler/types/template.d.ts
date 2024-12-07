@@ -520,6 +520,7 @@ export type ElementLike =
 	| AST.SlotElement
 	| AST.RegularElement
 	| AST.SvelteBody
+	| AST.SvelteBoundary
 	| AST.SvelteComponent
 	| AST.SvelteDocument
 	| AST.SvelteElement
