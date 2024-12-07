@@ -1,5 +1,5 @@
 /** @import { BlockStatement, Expression, Pattern, Property, Statement } from 'estree' */
-/** @import { AST, TemplateNode } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { empty_comment, build_attribute_value } from './utils.js';
 import * as b from '../../../../../utils/builders.js';
@@ -31,7 +31,7 @@ export function build_inline_component(node, expression, context) {
 		scope: node.metadata.scopes.default
 	};
 
-	/** @type {Record<string, TemplateNode[]>} */
+	/** @type {Record<string, AST.TemplateNode[]>} */
 	const children = {};
 
 	/**

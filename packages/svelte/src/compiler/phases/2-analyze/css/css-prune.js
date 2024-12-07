@@ -352,7 +352,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 		const seen = new Set();
 
 		/**
-		 * @param {Compiler.SvelteNode} node
+		 * @param {Compiler.AST.SvelteNode} node
 		 * @param {{ is_child: boolean }} state
 		 */
 		function walk_children(node, state) {
@@ -611,9 +611,9 @@ function get_following_sibling_elements(element, include_self) {
 	const path = element.metadata.path;
 	let i = path.length;
 
-	/** @type {Compiler.SvelteNode} */
+	/** @type {Compiler.AST.SvelteNode} */
 	let start = element;
-	let nodes = /** @type {Compiler.SvelteNode[]} */ (
+	let nodes = /** @type {Compiler.AST.SvelteNode[]} */ (
 		/** @type {Compiler.AST.Fragment} */ (path[0]).nodes
 	);
 
@@ -639,7 +639,7 @@ function get_following_sibling_elements(element, include_self) {
 
 	const seen = new Set();
 
-	/** @param {Compiler.SvelteNode} node */
+	/** @param {Compiler.AST.SvelteNode} node */
 	function get_siblings(node) {
 		walk(node, null, {
 			RegularElement(node) {
@@ -836,7 +836,7 @@ function get_possible_element_siblings(node, adjacent_only, seen = new Set()) {
 	const result = new Map();
 	const path = node.metadata.path;
 
-	/** @type {Compiler.SvelteNode} */
+	/** @type {Compiler.AST.SvelteNode} */
 	let current = node;
 
 	let i = path.length;
@@ -1008,7 +1008,7 @@ function higher_existence(exist1, exist2) {
 }
 
 /**
- * @param {Compiler.SvelteNode[]} children
+ * @param {Compiler.AST.SvelteNode[]} children
  * @param {boolean} adjacent_only
  */
 function loop_child(children, adjacent_only) {
@@ -1038,7 +1038,7 @@ function loop_child(children, adjacent_only) {
 }
 
 /**
- * @param {Compiler.SvelteNode} node
+ * @param {Compiler.AST.SvelteNode} node
  * @returns {node is Compiler.AST.IfBlock | Compiler.AST.EachBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock | Compiler.AST.SlotElement}
  */
 function is_block(node) {
