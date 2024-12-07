@@ -498,51 +498,56 @@ export namespace AST {
 		content: Program;
 		attributes: Attribute[];
 	}
+
+	export type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
+
+	export type Directive =
+		| AST.AnimateDirective
+		| AST.BindDirective
+		| AST.ClassDirective
+		| AST.LetDirective
+		| AST.OnDirective
+		| AST.StyleDirective
+		| AST.TransitionDirective
+		| AST.UseDirective;
+
+	export type Block =
+		| AST.EachBlock
+		| AST.IfBlock
+		| AST.AwaitBlock
+		| AST.KeyBlock
+		| AST.SnippetBlock;
+
+	export type ElementLike =
+		| AST.Component
+		| AST.TitleElement
+		| AST.SlotElement
+		| AST.RegularElement
+		| AST.SvelteBody
+		| AST.SvelteBoundary
+		| AST.SvelteComponent
+		| AST.SvelteDocument
+		| AST.SvelteElement
+		| AST.SvelteFragment
+		| AST.SvelteHead
+		| AST.SvelteOptionsRaw
+		| AST.SvelteSelf
+		| AST.SvelteWindow
+		| AST.SvelteBoundary;
+
+	export type TemplateNode =
+		| AST.Root
+		| AST.Text
+		| Tag
+		| ElementLike
+		| AST.Attribute
+		| AST.SpreadAttribute
+		| Directive
+		| AST.Comment
+		| Block;
+
+	export type SvelteNode = Node | TemplateNode | AST.Fragment | Css.Node;
 }
-
-type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
-
-export type Directive =
-	| AST.AnimateDirective
-	| AST.BindDirective
-	| AST.ClassDirective
-	| AST.LetDirective
-	| AST.OnDirective
-	| AST.StyleDirective
-	| AST.TransitionDirective
-	| AST.UseDirective;
-
-export type Block = AST.EachBlock | AST.IfBlock | AST.AwaitBlock | AST.KeyBlock | AST.SnippetBlock;
-
-export type ElementLike =
-	| AST.Component
-	| AST.TitleElement
-	| AST.SlotElement
-	| AST.RegularElement
-	| AST.SvelteBody
-	| AST.SvelteBoundary
-	| AST.SvelteComponent
-	| AST.SvelteDocument
-	| AST.SvelteElement
-	| AST.SvelteFragment
-	| AST.SvelteHead
-	| AST.SvelteOptionsRaw
-	| AST.SvelteSelf
-	| AST.SvelteWindow
-	| AST.SvelteBoundary;
-
-export type TemplateNode =
-	| AST.Root
-	| AST.Text
-	| Tag
-	| ElementLike
-	| AST.Attribute
-	| AST.SpreadAttribute
-	| Directive
-	| AST.Comment
-	| Block;
-
-export type SvelteNode = Node | TemplateNode | AST.Fragment | Css.Node;
 
 declare module 'estree' {
 	export interface BaseNode {
