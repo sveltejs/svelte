@@ -23,6 +23,9 @@ export function ClassBody(node, context) {
 	/** @type {Map<string, StateField>} */
 	const private_state = new Map();
 
+	/** @type {Map<(MethodDefinition|PropertyDefinition)["key"], string>} */
+	const definition_names = new Map();
+
 	/** @type {string[]} */
 	const private_ids = [];
 
@@ -34,8 +37,11 @@ export function ClassBody(node, context) {
 				definition.key.type === 'Literal')
 		) {
 			const type = definition.key.type;
-			const name = get_name(definition.key);
+			const name = get_name(definition.key, public_state);
 			if (!name) continue;
+
+			// we store the deconflicted name in the map so that we can access it later
+			definition_names.set(definition.key, name);
 
 			const is_private = type === 'PrivateIdentifier';
 			if (is_private) private_ids.push(name);
@@ -96,7 +102,7 @@ export function ClassBody(node, context) {
 				definition.key.type === 'PrivateIdentifier' ||
 				definition.key.type === 'Literal')
 		) {
-			const name = get_name(definition.key);
+			const name = definition_names.get(definition.key);
 			if (!name) continue;
 
 			const is_private = definition.key.type === 'PrivateIdentifier';
@@ -210,10 +216,20 @@ export function ClassBody(node, context) {
 
 /**
  * @param {Identifier | PrivateIdentifier | Literal} node
+ * @param {Map<string, StateField>} public_state
  */
-function get_name(node) {
+function get_name(node, public_state) {
 	if (node.type === 'Literal') {
-		return node.value?.toString().replace(regex_invalid_identifier_chars, '_');
+		let name = node.value?.toString().replace(regex_invalid_identifier_chars, '_');
+
+		// the above could generate conflicts because it has to generate a valid identifier
+		// so stuff like `0` and `1` or `state%` and `state^` will result in the same string
+		// so we have to de-conflict. We can only check `public_state` because private state
+		// can't have literal keys
+		while (name && public_state.has(name)) {
+			name = '_' + name;
+		}
+		return name;
 	} else {
 		return node.name;
 	}
