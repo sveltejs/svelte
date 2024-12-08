@@ -500,7 +500,7 @@ export namespace AST {
 		attributes: Attribute[];
 	}
 
-	export type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
+	export type AttributeLike = Attribute | SpreadAttribute | Directive;
 
 	export type Directive =
 		| AST.AnimateDirective
@@ -535,6 +535,8 @@ export namespace AST {
 		| AST.SvelteSelf
 		| AST.SvelteWindow
 		| AST.SvelteBoundary;
+
+	export type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
 
 	export type TemplateNode =
 		| AST.Root
