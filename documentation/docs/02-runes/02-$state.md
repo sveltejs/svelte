@@ -109,6 +109,14 @@ You can either use an inline function...
 </button>
 ```
 
+...or re-bind the function to its object...
+
+```svelte
+<button onclick=+++{todo.reset.bind(todo)}>+++
+	reset
+</button>
+```
+
 ...or use an arrow function in the class definition:
 
 ```js
