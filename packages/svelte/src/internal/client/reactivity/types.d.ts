@@ -14,6 +14,10 @@ export interface Value<V = unknown> extends Signal {
 	equals: Equals;
 	/** The latest value for this signal */
 	v: V;
+	/** Dev only */
+	created?: Error | null;
+	updated?: Error | null;
+	debug?: null | (() => void);
 }
 
 export interface Reaction extends Signal {
