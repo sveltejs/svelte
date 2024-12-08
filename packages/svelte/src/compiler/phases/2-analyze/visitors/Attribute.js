@@ -1,5 +1,5 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression } from 'estree' */
-/** @import { AST, DelegatedEvent, SvelteNode } from '#compiler' */
+/** @import { AST, DelegatedEvent } from '#compiler' */
 /** @import { Context } from '../types' */
 import { cannot_be_set_statically, is_capture_event, is_delegated } from '../../../../utils.js';
 import {
@@ -16,7 +16,7 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
 export function Attribute(node, context) {
 	context.next();
 
-	const parent = /** @type {SvelteNode} */ (context.path.at(-1));
+	const parent = /** @type {AST.SvelteNode} */ (context.path.at(-1));
 
 	if (parent.type === 'RegularElement') {
 		// special case <option value="" />

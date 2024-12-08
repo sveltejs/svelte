@@ -9,7 +9,7 @@ import type {
 	UpdateExpression,
 	VariableDeclaration
 } from 'estree';
-import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
+import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
 import type { SourceLocation } from '#shared';
@@ -98,14 +98,14 @@ export interface StateField {
 	id: PrivateIdentifier;
 }
 
-export type Context = import('zimmerframe').Context<SvelteNode, ClientTransformState>;
-export type Visitors = import('zimmerframe').Visitors<SvelteNode, any>;
+export type Context = import('zimmerframe').Context<AST.SvelteNode, ClientTransformState>;
+export type Visitors = import('zimmerframe').Visitors<AST.SvelteNode, any>;
 
 export type ComponentContext = import('zimmerframe').Context<
-	SvelteNode,
+	AST.SvelteNode,
 	ComponentClientTransformState
 >;
 export type ComponentVisitors = import('zimmerframe').Visitors<
-	SvelteNode,
+	AST.SvelteNode,
 	ComponentClientTransformState
 >;

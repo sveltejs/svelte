@@ -1,5 +1,5 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
-/** @import { AST, TemplateNode } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
@@ -35,7 +35,7 @@ export function build_component(node, component_name, context, anchor = context.
 		}
 	};
 
-	/** @type {Record<string, TemplateNode[]>} */
+	/** @type {Record<string, AST.TemplateNode[]>} */
 	const children = {};
 
 	/** @type {Record<string, Expression[]>} */

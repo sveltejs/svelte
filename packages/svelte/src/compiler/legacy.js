@@ -1,5 +1,5 @@
 /** @import { Expression } from 'estree' */
-/** @import { AST, SvelteNode, TemplateNode } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import * as Legacy from './types/legacy-nodes.js' */
 import { walk } from 'zimmerframe';
 import {
@@ -11,7 +11,7 @@ import { extract_svelte_ignore } from './utils/extract_svelte_ignore.js';
 
 /**
  * Some of the legacy Svelte AST nodes remove whitespace from the start and end of their children.
- * @param {TemplateNode[]} nodes
+ * @param {AST.TemplateNode[]} nodes
  */
 function remove_surrounding_whitespace_nodes(nodes) {
 	const first = nodes.at(0);
@@ -40,7 +40,7 @@ function remove_surrounding_whitespace_nodes(nodes) {
  * @returns {Legacy.LegacyRoot}
  */
 export function convert(source, ast) {
-	const root = /** @type {SvelteNode | Legacy.LegacySvelteNode} */ (ast);
+	const root = /** @type {AST.SvelteNode | Legacy.LegacySvelteNode} */ (ast);
 
 	return /** @type {Legacy.LegacyRoot} */ (
 		walk(root, null, {
