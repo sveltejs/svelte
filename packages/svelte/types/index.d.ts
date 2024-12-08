@@ -1258,7 +1258,7 @@ declare module 'svelte/compiler' {
 			attributes: Attribute[];
 		}
 
-		export type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
+		export type AttributeLike = Attribute | SpreadAttribute | Directive;
 
 		export type Directive =
 			| AST.AnimateDirective
@@ -1294,6 +1294,8 @@ declare module 'svelte/compiler' {
 			| AST.SvelteWindow
 			| AST.SvelteBoundary;
 
+		export type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
+
 		export type TemplateNode =
 			| AST.Root
 			| AST.Text
@@ -1306,6 +1308,8 @@ declare module 'svelte/compiler' {
 			| Block;
 
 		export type SvelteNode = Node | TemplateNode | AST.Fragment | Css.Node;
+
+		export type { Css };
 	}
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
