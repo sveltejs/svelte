@@ -110,14 +110,17 @@ export function build_element_attributes(node, context) {
 			const binding = binding_properties[attribute.name];
 			if (binding?.omit_in_ssr) continue;
 
+			let expression = /** @type {Expression} */ (context.visit(attribute.expression));
+
+			if (expression.type === 'SequenceExpression') {
+				expression = b.call(expression.expressions[0]);
+			}
+
 			if (is_content_editable_binding(attribute.name)) {
-				content = /** @type {Expression} */ (context.visit(attribute.expression));
+				content = expression;
 			} else if (attribute.name === 'value' && node.name === 'textarea') {
-				content = b.call(
-					'$.escape',
-					/** @type {Expression} */ (context.visit(attribute.expression))
-				);
-			} else if (attribute.name === 'group') {
+				content = b.call('$.escape', expression);
+			} else if (attribute.name === 'group' && attribute.expression.type !== 'SequenceExpression') {
 				const value_attribute = /** @type {AST.Attribute | undefined} */ (
 					node.attributes.find((attr) => attr.type === 'Attribute' && attr.name === 'value')
 				);
@@ -130,6 +133,7 @@ export function build_element_attributes(node, context) {
 						is_text_attribute(attr) &&
 						attr.value[0].data === 'checkbox'
 				);
+
 				attributes.push(
 					create_attribute('checked', -1, -1, [
 						{
@@ -159,7 +163,7 @@ export function build_element_attributes(node, context) {
 							type: 'ExpressionTag',
 							start: -1,
 							end: -1,
-							expression: attribute.expression,
+							expression,
 							metadata: {
 								expression: create_expression_metadata()
 							}
