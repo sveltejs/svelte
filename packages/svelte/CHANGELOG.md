@@ -1,5 +1,15 @@
 # svelte
 
+## 5.9.0
+
+### Minor Changes
+
+- feat: add support for bind getters/setters ([#14307](https://github.com/sveltejs/svelte/pull/14307))
+
+### Patch Changes
+
+- fix: always run `if` block code the first time ([#14597](https://github.com/sveltejs/svelte/pull/14597))
+
 ## 5.8.1
 
 ### Patch Changes

@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Property, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
@@ -44,7 +44,7 @@ export function build_component(node, component_name, context, anchor = context.
 	/** @type {Property[]} */
 	const custom_css_props = [];
 
-	/** @type {Identifier | MemberExpression | null} */
+	/** @type {Identifier | MemberExpression | SequenceExpression | null} */
 	let bind_this = null;
 
 	/** @type {ExpressionStatement[]} */
@@ -174,60 +174,83 @@ export function build_component(node, component_name, context, anchor = context.
 		} else if (attribute.type === 'BindDirective') {
 			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
 
-			if (
-				dev &&
-				expression.type === 'MemberExpression' &&
-				context.state.analysis.runes &&
-				!is_ignored(node, 'binding_property_non_reactive')
-			) {
-				validate_binding(context.state, attribute, expression);
+			if (dev && attribute.name !== 'this' && attribute.expression.type !== 'SequenceExpression') {
+				const left = object(attribute.expression);
+				let binding;
+
+				if (left?.type === 'Identifier') {
+					binding = context.state.scope.get(left.name);
+				}
+
+				// Only run ownership addition on $state fields.
+				// Theoretically someone could create a `$state` while creating `$state.raw` or inside a `$derived.by`,
+				// but that feels so much of an edge case that it doesn't warrant a perf hit for the common case.
+				if (binding?.kind !== 'derived' && binding?.kind !== 'raw_state') {
+					binding_initializers.push(
+						b.stmt(
+							b.call(
+								b.id('$.add_owner_effect'),
+								b.thunk(expression),
+								b.id(component_name),
+								is_ignored(node, 'ownership_invalid_binding') && b.true
+							)
+						)
+					);
+				}
 			}
 
-			if (attribute.name === 'this') {
-				bind_this = attribute.expression;
+			if (expression.type === 'SequenceExpression') {
+				if (attribute.name === 'this') {
+					bind_this = attribute.expression;
+				} else {
+					const [get, set] = expression.expressions;
+					const get_id = b.id(context.state.scope.generate('bind_get'));
+					const set_id = b.id(context.state.scope.generate('bind_set'));
+
+					context.state.init.push(b.var(get_id, get));
+					context.state.init.push(b.var(set_id, set));
+
+					push_prop(b.get(attribute.name, [b.return(b.call(get_id))]));
+					push_prop(b.set(attribute.name, [b.stmt(b.call(set_id, b.id('$$value')))]));
+				}
 			} else {
-				if (dev) {
-					const left = object(attribute.expression);
-					let binding;
-					if (left?.type === 'Identifier') {
-						binding = context.state.scope.get(left.name);
-					}
-					// Only run ownership addition on $state fields.
-					// Theoretically someone could create a `$state` while creating `$state.raw` or inside a `$derived.by`,
-					// but that feels so much of an edge case that it doesn't warrant a perf hit for the common case.
-					if (binding?.kind !== 'derived' && binding?.kind !== 'raw_state') {
-						binding_initializers.push(
-							b.stmt(
-								b.call(
-									b.id('$.add_owner_effect'),
-									b.thunk(expression),
-									b.id(component_name),
-									is_ignored(node, 'ownership_invalid_binding') && b.true
-								)
-							)
-						);
-					}
+				if (
+					dev &&
+					expression.type === 'MemberExpression' &&
+					context.state.analysis.runes &&
+					!is_ignored(node, 'binding_property_non_reactive')
+				) {
+					validate_binding(context.state, attribute, expression);
 				}
 
-				const is_store_sub =
-					attribute.expression.type === 'Identifier' &&
-					context.state.scope.get(attribute.expression.name)?.kind === 'store_sub';
+				if (attribute.name === 'this') {
+					bind_this = attribute.expression;
+				} else {
+					const is_store_sub =
+						attribute.expression.type === 'Identifier' &&
+						context.state.scope.get(attribute.expression.name)?.kind === 'store_sub';
 
-				// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
-				if (is_store_sub) {
+					// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
+					if (is_store_sub) {
+						push_prop(
+							b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)]),
+							true
+						);
+					} else {
+						push_prop(b.get(attribute.name, [b.return(expression)]), true);
+					}
+
+					const assignment = b.assignment(
+						'=',
+						/** @type {Pattern} */ (attribute.expression),
+						b.id('$$value')
+					);
+
 					push_prop(
-						b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)]),
+						b.set(attribute.name, [b.stmt(/** @type {Expression} */ (context.visit(assignment)))]),
 						true
 					);
-				} else {
-					push_prop(b.get(attribute.name, [b.return(expression)]), true);
 				}
-
-				const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
-				push_prop(
-					b.set(attribute.name, [b.stmt(/** @type {Expression} */ (context.visit(assignment)))]),
-					true
-				);
 			}
 		}
 	}
