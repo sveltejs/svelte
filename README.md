@@ -1,4 +1,9 @@
-[![Cybernetically enhanced web apps: Svelte](https://sveltejs.github.io/assets/banner.png)](https://svelte.dev)
+<a href="https://svelte.dev">
+	<picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/sveltejs/svelte/master/assets/banner_dark.png">
+      <img src="https://raw.githubusercontent.com/sveltejs/svelte/master/assets/banner.png" alt="Svelte - web development for the rest of us" />
+  </picture>
+</a>
 
 [![license](https://img.shields.io/npm/l/svelte.svg)](LICENSE.md) [![Chat](https://img.shields.io/discord/457912077277855764?label=chat&logo=discord)](https://svelte.dev/chat)
 
@@ -26,7 +31,7 @@ Please see the [Contributing Guide](CONTRIBUTING.md) and the [`svelte`](packages
 
 ### svelte.dev
 
-The source code for https://svelte.dev lives in the [sites](https://github.com/sveltejs/svelte/tree/master/sites/svelte.dev) folder, with all the documentation right [here](https://github.com/sveltejs/svelte/tree/master/documentation). The site is built with [SvelteKit](https://svelte.dev/docs/kit).
+The source code for https://svelte.dev lives in the [svelte.dev](https://github.com/sveltejs/svelte.dev) repository, with all the documentation right [here](https://github.com/sveltejs/svelte/tree/main/documentation). The site is built with [SvelteKit](https://svelte.dev/docs/kit).
 
 ## Is svelte.dev down?
 
