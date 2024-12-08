@@ -550,6 +550,8 @@ export namespace AST {
 		| Block;
 
 	export type SvelteNode = Node | TemplateNode | AST.Fragment | Css.Node;
+
+	export type { Css };
 }
 
 declare module 'estree' {
