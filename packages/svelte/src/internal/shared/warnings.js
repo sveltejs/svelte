@@ -36,3 +36,16 @@ ${properties}`
 		console.warn("state_snapshot_uncloneable");
 	}
 }
+
+/**
+ * Duplicate attribute '%name%' across multiple `<svelte:html>` blocks, the latest value will be used.
+ * @param {string} name
+ */
+export function svelte_html_duplicate_attribute(name) {
+	if (DEV) {
+		console.warn(`%c[svelte] svelte_html_duplicate_attribute\n%cDuplicate attribute '${name}' across multiple \`<svelte:html>\` blocks, the latest value will be used.`, bold, normal);
+	} else {
+		// TODO print a link to the documentation
+		console.warn("svelte_html_duplicate_attribute");
+	}
+}
