@@ -14,6 +14,8 @@ import { parse_expression_at } from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
 import * as e from '../../../errors.js';
 import { locator } from '../../../state.js';
+import read_expression from './expression.js';
+import { is_back_quote, is_quote } from '../utils/quote.js';
 
 /**
  * @param {Parser} parser
@@ -41,33 +43,11 @@ export default function read_pattern(parser) {
 		};
 	}
 
-	if (!is_bracket_open(code)) {
-		e.expected_pattern(i);
-	}
-
-	const bracket_stack = [code];
-	i += code <= 0xffff ? 1 : 2;
-
-	while (i < parser.template.length) {
-		const code = full_char_code_at(parser.template, i);
-		if (is_bracket_open(code)) {
-			bracket_stack.push(code);
-		} else if (is_bracket_close(code)) {
-			const popped = /** @type {number} */ (bracket_stack.pop());
-			if (!is_bracket_pair(popped, code)) {
-				e.expected_token(i, String.fromCharCode(/** @type {number} */ (get_bracket_close(popped))));
-			}
-			if (bracket_stack.length === 0) {
-				i += code <= 0xffff ? 1 : 2;
-				break;
-			}
-		}
-		i += code <= 0xffff ? 1 : 2;
-	}
-
+	i = read_expression_length(parser, start);
 	parser.index = i;
 
 	const pattern_string = parser.template.slice(start, i);
+
 	try {
 		// the length of the `space_with_newline` has to be start - 1
 		// because we added a `(` in front of the pattern_string,
@@ -95,6 +75,95 @@ export default function read_pattern(parser) {
 	} catch (error) {
 		parser.acorn_error(error);
 	}
+}
+
+/**
+ * @param {Parser} parser
+ * @param {number} start
+ */
+function read_expression_length(parser, start) {
+	let i = start;
+	const code = full_char_code_at(parser.template, i);
+
+	if (!is_bracket_open(code)) {
+		e.expected_pattern(i);
+	}
+
+	const bracket_stack = [code];
+	i += code <= 0xffff ? 1 : 2;
+
+	while (i < parser.template.length) {
+		let code = full_char_code_at(parser.template, i);
+		if (is_quote(code)) {
+			i = read_string_length(parser, i, code);
+		} else {
+			if (is_bracket_open(code)) {
+				bracket_stack.push(code);
+			} else if (is_bracket_close(code)) {
+				const popped = /** @type {number} */ (bracket_stack.pop());
+				if (!is_bracket_pair(popped, code)) {
+					e.expected_token(
+						i,
+						String.fromCharCode(/** @type {number} */ (get_bracket_close(popped)))
+					);
+				}
+				if (bracket_stack.length === 0) {
+					i += code <= 0xffff ? 1 : 2;
+					break;
+				}
+			}
+			i += code <= 0xffff ? 1 : 2;
+		}
+	}
+
+	return i;
+}
+
+/**
+ * @param {Parser} parser
+ * @param {number} start
+ * @param {number} quote
+ */
+function read_string_length(parser, start, quote) {
+	let i = start;
+	i += quote <= 0xffff ? 1 : 2;
+
+	const BACKSLASH = '\\'.charCodeAt(0);
+	const DOLAR = '$'.charCodeAt(0);
+	const LEFT_BRACKET = '{'.charCodeAt(0);
+
+	let is_escaped = false;
+	while (i < parser.template.length) {
+		const code = full_char_code_at(parser.template, i);
+		if (!is_escaped && code === quote) {
+			break;
+		}
+
+		if (!is_escaped && code === BACKSLASH) {
+			is_escaped = true;
+		} else if (is_escaped) {
+			is_escaped = false;
+		}
+
+		if (
+			i < parser.template.length - 1 &&
+			is_back_quote(quote) &&
+			code === DOLAR &&
+			full_char_code_at(parser.template, i + 1) === LEFT_BRACKET
+		) {
+			i++;
+			i = read_expression_length(parser, i);
+		} else {
+			i += code <= 0xffff ? 1 : 2;
+		}
+	}
+
+	const code = full_char_code_at(parser.template, i);
+	if (code !== quote) {
+		e.unterminated_string_constant(start);
+	}
+
+	return i + (code <= 0xffff ? 1 : 2);
 }
 
 /**
