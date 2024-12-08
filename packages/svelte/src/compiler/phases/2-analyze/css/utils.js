@@ -39,15 +39,14 @@ export function get_possible_values(chunk) {
  * @param {Css.Rule | null} rule
  */
 export function get_parent_rules(rule) {
-	const parents = [];
+	const rules = [];
 
-	let parent = rule?.metadata.parent_rule;
-	while (parent) {
-		parents.push(parent);
-		parent = parent.metadata.parent_rule;
+	while (rule) {
+		rules.push(rule);
+		rule = rule.metadata.parent_rule;
 	}
 
-	return parents;
+	return rules;
 }
 
 /**

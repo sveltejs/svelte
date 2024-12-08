@@ -46,7 +46,14 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 				modern: true
 			});
 
-			fs.writeFileSync(`${cwd}/output/${file}.json`, JSON.stringify(ast, null, '\t'));
+			fs.writeFileSync(
+				`${cwd}/output/${file}.json`,
+				JSON.stringify(
+					ast,
+					(key, value) => (typeof value === 'bigint' ? ['BigInt', value.toString()] : value),
+					'\t'
+				)
+			);
 
 			try {
 				const migrated = migrate(source);

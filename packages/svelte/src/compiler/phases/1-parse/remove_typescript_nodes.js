@@ -36,7 +36,11 @@ const visitors = {
 		if (node.exportKind === 'type') return b.empty;
 
 		if (node.declaration) {
-			return context.next();
+			const result = context.next();
+			if (result?.declaration?.type === 'EmptyStatement') {
+				return b.empty;
+			}
+			return result;
 		}
 
 		if (node.specifiers) {
@@ -99,6 +103,9 @@ const visitors = {
 			e.typescript_invalid_feature(node, 'accessibility modifiers on constructor parameters');
 		}
 		return context.visit(node.parameter);
+	},
+	TSInstantiationExpression(node, context) {
+		return context.visit(node.expression);
 	},
 	FunctionExpression: remove_this_param,
 	FunctionDeclaration: remove_this_param,

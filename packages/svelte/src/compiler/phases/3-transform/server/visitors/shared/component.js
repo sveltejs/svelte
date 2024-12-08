@@ -13,6 +13,8 @@ import { is_element_node } from '../../../../nodes.js';
 export function build_inline_component(node, expression, context) {
 	/** @type {Array<Property[] | Expression>} */
 	const props_and_spreads = [];
+	/** @type {Array<() => void>} */
+	const delayed_props = [];
 
 	/** @type {Property[]} */
 	const custom_css_props = [];
@@ -49,14 +51,23 @@ export function build_inline_component(node, expression, context) {
 
 	/**
 	 * @param {Property} prop
+	 * @param {boolean} [delay]
 	 */
-	function push_prop(prop) {
-		const current = props_and_spreads.at(-1);
-		const current_is_props = Array.isArray(current);
-		const props = current_is_props ? current : [];
-		props.push(prop);
-		if (!current_is_props) {
-			props_and_spreads.push(props);
+	function push_prop(prop, delay = false) {
+		const do_push = () => {
+			const current = props_and_spreads.at(-1);
+			const current_is_props = Array.isArray(current);
+			const props = current_is_props ? current : [];
+			props.push(prop);
+			if (!current_is_props) {
+				props_and_spreads.push(props);
+			}
+		};
+
+		if (delay) {
+			delayed_props.push(do_push);
+		} else {
+			do_push();
 		}
 	}
 
@@ -93,12 +104,14 @@ export function build_inline_component(node, expression, context) {
 				push_prop(b.get(attribute.name, [b.return(b.call(get_id))]));
 				push_prop(b.set(attribute.name, [b.stmt(b.call(set_id, b.id('$$value')))]));
 			} else {
-				// TODO this needs to turn the whole thing into a while loop because the binding could be mutated eagerly in the child
+				// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
 				push_prop(
 					b.get(attribute.name, [
 						b.return(/** @type {Expression} */ (context.visit(attribute.expression)))
-					])
+					]),
+					true
 				);
+
 				push_prop(
 					b.set(attribute.name, [
 						b.stmt(
@@ -107,11 +120,14 @@ export function build_inline_component(node, expression, context) {
 							)
 						),
 						b.stmt(b.assignment('=', b.id('$$settled'), b.false))
-					])
+					]),
+					true
 				);
 			}
 		}
 	}
+
+	delayed_props.forEach((fn) => fn());
 
 	/** @type {Statement[]} */
 	const snippet_declarations = [];

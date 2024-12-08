@@ -60,13 +60,19 @@ export function remove_input_defaults(input) {
 export function set_value(element, value) {
 	// @ts-expect-error
 	var attributes = (element.__attributes ??= {});
+
 	if (
-		attributes.value === (attributes.value = value) ||
+		attributes.value ===
+			(attributes.value =
+				// treat null and undefined the same for the initial value
+				value ?? undefined) ||
 		// @ts-expect-error
 		// `progress` elements always need their value set when its `0`
 		(element.value === value && (value !== 0 || element.nodeName !== 'PROGRESS'))
-	)
+	) {
 		return;
+	}
+
 	// @ts-expect-error
 	element.value = value;
 }
@@ -79,9 +85,58 @@ export function set_checked(element, checked) {
 	// @ts-expect-error
 	var attributes = (element.__attributes ??= {});
 
-	if (attributes.checked === (attributes.checked = checked)) return;
+	if (
+		attributes.checked ===
+		(attributes.checked =
+			// treat null and undefined the same for the initial value
+			checked ?? undefined)
+	) {
+		return;
+	}
+
 	// @ts-expect-error
 	element.checked = checked;
+}
+
+/**
+ * Sets the `selected` attribute on an `option` element.
+ * Not set through the property because that doesn't reflect to the DOM,
+ * which means it wouldn't be taken into account when a form is reset.
+ * @param {HTMLOptionElement} element
+ * @param {boolean} selected
+ */
+export function set_selected(element, selected) {
+	if (selected) {
+		// The selected option could've changed via user selection, and
+		// setting the value without this check would set it back.
+		if (!element.hasAttribute('selected')) {
+			element.setAttribute('selected', '');
+		}
+	} else {
+		element.removeAttribute('selected');
+	}
+}
+
+/**
+ * Applies the default checked property without influencing the current checked property.
+ * @param {HTMLInputElement} element
+ * @param {boolean} checked
+ */
+export function set_default_checked(element, checked) {
+	const existing_value = element.checked;
+	element.defaultChecked = checked;
+	element.checked = existing_value;
+}
+
+/**
+ * Applies the default value property without influencing the current value property.
+ * @param {HTMLInputElement | HTMLTextAreaElement} element
+ * @param {string} value
+ */
+export function set_default_value(element, value) {
+	const existing_value = element.value;
+	element.defaultValue = value;
+	element.value = existing_value;
 }
 
 /**
@@ -281,6 +336,9 @@ export function set_attributes(
 					element[`__${event_name}`] = value;
 					delegate([event_name]);
 				}
+			} else if (delegated) {
+				// @ts-ignore
+				element[`__${event_name}`] = undefined;
 			}
 		} else if (key === 'style' && value != null) {
 			element.style.cssText = value + '';

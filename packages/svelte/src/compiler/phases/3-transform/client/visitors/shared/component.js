@@ -2,7 +2,7 @@
 /** @import { AST, TemplateNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
-import { get_attribute_chunks } from '../../../../../utils/ast.js';
+import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { create_derived } from '../../utils.js';
 import { build_bind_this, validate_binding } from '../shared/utils.js';
@@ -20,6 +20,8 @@ import { determine_slot } from '../../../../../utils/slot.js';
 export function build_component(node, component_name, context, anchor = context.state.node) {
 	/** @type {Array<Property[] | Expression>} */
 	const props_and_spreads = [];
+	/** @type {Array<() => void>} */
+	const delayed_props = [];
 
 	/** @type {ExpressionStatement[]} */
 	const lets = [];
@@ -63,14 +65,23 @@ export function build_component(node, component_name, context, anchor = context.
 
 	/**
 	 * @param {Property} prop
+	 * @param {boolean} [delay]
 	 */
-	function push_prop(prop) {
-		const current = props_and_spreads.at(-1);
-		const current_is_props = Array.isArray(current);
-		const props = current_is_props ? current : [];
-		props.push(prop);
-		if (!current_is_props) {
-			props_and_spreads.push(props);
+	function push_prop(prop, delay = false) {
+		const do_push = () => {
+			const current = props_and_spreads.at(-1);
+			const current_is_props = Array.isArray(current);
+			const props = current_is_props ? current : [];
+			props.push(prop);
+			if (!current_is_props) {
+				props_and_spreads.push(props);
+			}
+		};
+
+		if (delay) {
+			delayed_props.push(do_push);
+		} else {
+			do_push();
 		}
 	}
 
@@ -163,19 +174,29 @@ export function build_component(node, component_name, context, anchor = context.
 		} else if (attribute.type === 'BindDirective') {
 			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
 
-			if (dev && attribute.name !== 'this') {
-				binding_initializers.push(
-					b.stmt(
-						b.call(
-							b.id('$.add_owner_effect'),
-							expression.type === 'SequenceExpression'
-								? expression.expressions[0]
-								: b.thunk(expression),
-							b.id(component_name),
-							is_ignored(node, 'ownership_invalid_binding') && b.true
+			if (dev && attribute.name !== 'this' && attribute.expression.type !== 'SequenceExpression') {
+				const left = object(attribute.expression);
+				let binding;
+
+				if (left?.type === 'Identifier') {
+					binding = context.state.scope.get(left.name);
+				}
+
+				// Only run ownership addition on $state fields.
+				// Theoretically someone could create a `$state` while creating `$state.raw` or inside a `$derived.by`,
+				// but that feels so much of an edge case that it doesn't warrant a perf hit for the common case.
+				if (binding?.kind !== 'derived' && binding?.kind !== 'raw_state') {
+					binding_initializers.push(
+						b.stmt(
+							b.call(
+								b.id('$.add_owner_effect'),
+								b.thunk(expression),
+								b.id(component_name),
+								is_ignored(node, 'ownership_invalid_binding') && b.true
+							)
 						)
-					)
-				);
+					);
+				}
 			}
 
 			if (expression.type === 'SequenceExpression') {
@@ -209,12 +230,14 @@ export function build_component(node, component_name, context, anchor = context.
 						attribute.expression.type === 'Identifier' &&
 						context.state.scope.get(attribute.expression.name)?.kind === 'store_sub';
 
+					// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
 					if (is_store_sub) {
 						push_prop(
-							b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)])
+							b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)]),
+							true
 						);
 					} else {
-						push_prop(b.get(attribute.name, [b.return(expression)]));
+						push_prop(b.get(attribute.name, [b.return(expression)]), true);
 					}
 
 					const assignment = b.assignment(
@@ -222,13 +245,17 @@ export function build_component(node, component_name, context, anchor = context.
 						/** @type {Pattern} */ (attribute.expression),
 						b.id('$$value')
 					);
+
 					push_prop(
-						b.set(attribute.name, [b.stmt(/** @type {Expression} */ (context.visit(assignment)))])
+						b.set(attribute.name, [b.stmt(/** @type {Expression} */ (context.visit(assignment)))]),
+						true
 					);
 				}
 			}
 		}
 	}
+
+	delayed_props.forEach((fn) => fn());
 
 	if (slot_scope_applies_to_itself) {
 		context.state.init.push(...lets);

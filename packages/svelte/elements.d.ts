@@ -1103,6 +1103,11 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	step?: number | string | undefined | null;
 	type?: HTMLInputTypeAttribute | undefined | null;
 	value?: any;
+	// needs both casing variants because language tools does lowercase names of non-shorthand attributes
+	defaultValue?: any;
+	defaultvalue?: any;
+	defaultChecked?: any;
+	defaultchecked?: any;
 	width?: number | string | undefined | null;
 	webkitdirectory?: boolean | undefined | null;
 
@@ -1384,6 +1389,9 @@ export interface HTMLTextareaAttributes extends HTMLAttributes<HTMLTextAreaEleme
 	required?: boolean | undefined | null;
 	rows?: number | undefined | null;
 	value?: string | string[] | number | undefined | null;
+	// needs both casing variants because language tools does lowercase names of non-shorthand attributes
+	defaultValue?: string | string[] | number | undefined | null;
+	defaultvalue?: string | string[] | number | undefined | null;
 	wrap?: 'hard' | 'soft' | undefined | null;
 
 	'on:change'?: ChangeEventHandler<HTMLTextAreaElement> | undefined | null;
@@ -2044,6 +2052,10 @@ export interface SvelteHTMLElements {
 		[name: string]: any;
 	};
 	'svelte:head': { [name: string]: any };
+	'svelte:boundary': {
+		onerror?: (error: unknown, reset: () => void) => void;
+		failed?: import('svelte').Snippet<[error: unknown, reset: () => void]>;
+	};
 
 	[name: string]: { [name: string]: any };
 }
