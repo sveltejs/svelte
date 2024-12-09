@@ -100,7 +100,7 @@ export function CallExpression(node, context) {
 					parent.id.elements.length !== 2 ||
 					parent.id.elements[0]?.type !== 'Identifier')
 			) {
-				e.state_invalid_opaque_declaration(node);
+				e.state_invalid_opaque_declaration(node, rune);
 			}
 
 			break;

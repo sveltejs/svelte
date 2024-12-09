@@ -433,12 +433,13 @@ export function state_invalid_export(node) {
 }
 
 /**
- * `$state.opaque` must be declared with an array destructuring pattern (e.g. `let [state, invalidate] = $state.opaque(data);`)
+ * `%rune%(...)` must be declared with an array destructuring pattern (e.g. `let [state, invalidate] = $state.opaque(data);`)
  * @param {null | number | NodeLike} node
+ * @param {string} rune
  * @returns {never}
  */
-export function state_invalid_opaque_declaration(node) {
-	e(node, "state_invalid_opaque_declaration", "`$state.opaque` must be declared with an array destructuring pattern (e.g. `let [state, invalidate] = $state.opaque(data);`)");
+export function state_invalid_opaque_declaration(node, rune) {
+	e(node, "state_invalid_opaque_declaration", `\`${rune}(...)\` must be declared with an array destructuring pattern (e.g. \`let [state, invalidate] = $state.opaque(data);\`)`);
 }
 
 /**

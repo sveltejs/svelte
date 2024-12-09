@@ -170,7 +170,7 @@ It's possible to export a snippet from a `<script module>` block, but only if it
 
 ## state_invalid_opaque_declaration
 
-> `$state.opaque` must be declared with an array destructuring pattern (e.g. `let [state, invalidate] = $state.opaque(data);`)
+> `%rune%(...)` must be declared with an array destructuring pattern (e.g. `let [state, invalidate] = $state.opaque(data);`)
 
 ## state_invalid_placement
 
