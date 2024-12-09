@@ -1,5 +1,11 @@
 # svelte
 
+## 5.9.1
+
+### Patch Changes
+
+- fix: mark subtree dynamic for bind with sequence expressions ([#14626](https://github.com/sveltejs/svelte/pull/14626))
+
 ## 5.9.0
 
 ### Minor Changes
