@@ -4,9 +4,7 @@
  * @returns {never}
  */
 export function CODE(PARAMETER) {
-	const error = new Error(
-		`${'CODE'}\n${MESSAGE}\nSee https://svelte.dev/e/${'CODE'} for more info`
-	);
+	const error = new Error(`${'CODE'}\n${MESSAGE}\nhttps://svelte.dev/e/${'CODE'}`);
 	error.name = 'Svelte error';
 	throw error;
 }
