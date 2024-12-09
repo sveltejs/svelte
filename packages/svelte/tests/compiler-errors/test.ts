@@ -5,13 +5,11 @@ import { suite, type BaseTest } from '../suite';
 import { read_file } from '../helpers.js';
 
 interface CompilerErrorTest extends BaseTest {
-	error:
-		| {
-				code: string;
-				message: string;
-				position?: [number, number];
-		  }
-		| false;
+	error: {
+		code: string;
+		message: string;
+		position?: [number, number];
+	};
 }
 
 const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
@@ -27,9 +25,6 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 				generate: 'client'
 			});
 		} catch (e) {
-			if (config.error === false) {
-				assert.fail('Unexpected error');
-			}
 			const error = e as CompileError;
 
 			caught_error = true;
@@ -42,7 +37,7 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 			}
 		}
 
-		if (config.error !== false && !caught_error) {
+		if (!caught_error) {
 			assert.fail('Expected an error');
 		}
 	}
@@ -55,9 +50,6 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 				generate: 'client'
 			});
 		} catch (e) {
-			if (config.error === false) {
-				assert.fail('Unexpected error');
-			}
 			const error = e as CompileError;
 
 			caught_error = true;
@@ -70,7 +62,7 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 			}
 		}
 
-		if (config.error !== false && !caught_error) {
+		if (!caught_error) {
 			assert.fail('Expected an error');
 		}
 	}
