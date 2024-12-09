@@ -438,7 +438,7 @@ export function state_invalid_export(node) {
  * @returns {never}
  */
 export function state_invalid_opaque_declaration(node) {
-	e(node, "state_invalid_opaque_declaration", "`$state.opaque(...)` must be declared with an destructured array pattern and the state expression and invalidate expression must be an identifier (e.g. `let [state, invalidate] = $state.opaque(data);`)");
+	e(node, "state_invalid_opaque_declaration", `\`$state.opaque(...)\` must be declared with an destructured array pattern and the state expression and invalidate expression must be an identifier (e.g. \`let [state, invalidate] = $state.opaque(data);\`)\nhttps://svelte.dev/e/state_invalid_opaque_declaration`);
 }
 
 /**
