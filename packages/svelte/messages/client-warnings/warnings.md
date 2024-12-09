@@ -52,9 +52,9 @@ The easiest way to log a value as it changes over time is to use the [`$inspect`
 
 > The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
 
-Certain attributes like `src` on an `<img>` element will not be repaired during hydration, i.e. the server value will be kept. That's because for some attributes it is very expensive to properly calculate whether or not their value has really changed.
+Certain attributes like `src` on an `<img>` element will not be repaired during hydration, i.e. the server value will be kept. That's because updating these attributes can cause the image to be refetched (or in the case of an `<iframe>`, for the frame to be reloaded), even if they resolve to the same resource.
 
-To fix this, either silence the warning with an ignore comment, or ensure that the value stays the same between server and client. If you really need the value to change on hydration, you can force an update like this:
+To fix this, either silence the warning with a [`svelte-ignore`](basic-markup#Comments) comment, or ensure that the value stays the same between server and client. If you really need the value to change on hydration, you can force an update like this:
 
 ```svelte
 <script>
@@ -83,9 +83,9 @@ To fix this, either silence the warning with an ignore comment, or ensure that t
 
 > The value of an `{@html ...}` block %location% changed between server and client renders. The client value will be ignored in favour of the server value
 
-If the a `{@html ...}` value changes between the server and the client, it will not be repaired during hydration, i.e. the server value will be kept. That's because it is very expensive to properly calculate whether or not their value have really changed.
+If the `{@html ...}` value changes between the server and the client, it will not be repaired during hydration, i.e. the server value will be kept. That's because change detection during hydration is expensive and usually unnecessary.
 
-To fix this, either silence the warning with an ignore comment, or ensure that the value stays the same between server and client. If you really need the value to change on hydration, you can force an update like this:
+To fix this, either silence the warning with a [`svelte-ignore`](basic-markup#Comments) comment, or ensure that the value stays the same between server and client. If you really need the value to change on hydration, you can force an update like this:
 
 ```svelte
 <script>
@@ -168,7 +168,7 @@ Consider the following code:
 
 `Child` is mutating `person` which is owned by `App` without being explicitly "allowed" to do so. This is strongly discouraged since it can create code that is hard to reason about at scale ("who mutated this value?"), hence the warning.
 
-To fix it, either create callback props to communicate via events with `App`, or mark `person` as [`$bindable`]($bindable).
+To fix it, either create callback props to communicate changes, or mark `person` as [`$bindable`]($bindable).
 
 ## reactive_declaration_non_reactive_property
 
