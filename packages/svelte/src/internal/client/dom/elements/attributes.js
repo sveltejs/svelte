@@ -347,15 +347,27 @@ export function set_attributes(
 		} else if (key === '__value' || (key === 'value' && value != null)) {
 			// @ts-ignore
 			element.value = element[key] = element.__value = value;
+		} else if (key === 'defaultValue') {
+			/** @type {HTMLInputElement} */ (element).defaultValue = value;
+		} else if (key === 'defaultChecked') {
+			/** @type {HTMLInputElement} */ (element).defaultChecked = value;
+		} else if (key === 'selected' && is_option_element) {
+			set_selected(/** @type {HTMLOptionElement} */ (element), value);
 		} else {
 			var name = key;
 			if (!preserve_attribute_case) {
 				name = normalize_attribute(name);
 			}
-
 			if (value == null && !is_custom_element) {
 				attributes[key] = null;
+				let default_value_reset = /**@type {HTMLInputElement}*/ (element).defaultValue;
+				let default_checked_reset = /**@type {HTMLInputElement}*/ (element).defaultChecked;
 				element.removeAttribute(key);
+				if (key === 'value') {
+					/**@type {HTMLInputElement}*/ (element).defaultValue = default_value_reset;
+				} else if (key === 'checked') {
+					/**@type {HTMLInputElement}*/ (element).defaultChecked = default_checked_reset;
+				}
 			} else if (setters.includes(name) && (is_custom_element || typeof value !== 'string')) {
 				// @ts-ignore
 				element[name] = value;
