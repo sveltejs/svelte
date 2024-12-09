@@ -5,7 +5,7 @@ import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
 import { get_parent, unwrap_optional } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
-import { mark_subtree_dynamic } from './shared/fragment.js';
+import { dev } from '../../../state.js';
 
 /**
  * @param {CallExpression} node
@@ -132,6 +132,26 @@ export function CallExpression(node, context) {
 		case '$inspect().with':
 			if (node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+			}
+
+			break;
+
+		case '$inspect.trace':
+			if (node.arguments.length !== 1) {
+				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+			}
+			if (node.arguments[0].type !== 'Literal' || typeof node.arguments[0].value !== 'string') {
+				e.trace_rune_invalid_argument(node);
+			}
+			if (parent.type !== 'ExpressionStatement' || context.path.at(-2)?.type !== 'BlockStatement') {
+				e.trace_rune_invalid_location(node);
+			}
+			if (context.state.scope.tracing) {
+				e.trace_rune_duplicate(node);
+			}
+
+			if (dev) {
+				context.state.scope.tracing = node.arguments[0].value;
 			}
 
 			break;
