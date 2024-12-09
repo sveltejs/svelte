@@ -9,3 +9,9 @@
 > The following properties cannot be cloned with `$state.snapshot` — the return value contains the originals:
 >
 > %properties%
+
+## svelte_html_duplicate_attribute
+
+> Duplicate attribute '%name%' across multiple `<svelte:html>` blocks, the latest value will be used.
+
+This warning appears when you have multiple `<svelte:html>` blocks across several files, and they set the same attribute. In that case, the latest value wins. On the server and on the client for static attributes, that's the last occurence of the attribute. On the client for dynamic attributes that's the value which was updated last across all `<svelte:html>` blocks.

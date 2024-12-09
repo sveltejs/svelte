@@ -1136,6 +1136,11 @@ declare module 'svelte/compiler' {
 			type: 'RegularElement';
 		}
 
+		export interface SvelteHTML extends BaseElement {
+			type: 'SvelteHTML';
+			name: 'svelte:html';
+		}
+
 		export interface SvelteBody extends BaseElement {
 			type: 'SvelteBody';
 			name: 'svelte:body';
@@ -1278,6 +1283,7 @@ declare module 'svelte/compiler' {
 		| AST.TitleElement
 		| AST.SlotElement
 		| AST.RegularElement
+		| AST.SvelteHTML
 		| AST.SvelteBody
 		| AST.SvelteComponent
 		| AST.SvelteDocument
@@ -1984,6 +1990,8 @@ declare module 'svelte/server' {
 		html: string;
 		/** HTML that goes somewhere into the `<body>` */
 		body: string;
+		/** Attributes that go onto the `<html>` */
+		htmlAttributes: string;
 	}
 
 	export {};
