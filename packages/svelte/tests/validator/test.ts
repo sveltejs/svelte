@@ -14,7 +14,7 @@ interface ValidatorTest extends BaseTest {
 }
 
 /**
- * Remove the "See https://svelte.dev/e/..." link
+ * Remove the "https://svelte.dev/e/..." link
  */
 function strip_link(message: string) {
 	return message.slice(0, message.lastIndexOf('\n'));
