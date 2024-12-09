@@ -751,8 +751,10 @@ Cannot export state from a module if it is reassigned. Either export a function 
 ### state_invalid_opaque_declaration
 
 ```
-`$state.opaque(...)` must be declared with an destructured array pattern (e.g. `let [state, invalidate] = $state.opaque(data);`)
+`$state.opaque(...)` must be declared with an destructured array pattern and the state expression must be an identifier.
 ```
+
+For example: `let [state, invalidate] = $state.opaque(data);`
 
 ### state_invalid_placement
 

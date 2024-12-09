@@ -433,12 +433,12 @@ export function state_invalid_export(node) {
 }
 
 /**
- * `$state.opaque(...)` must be declared with an destructured array pattern (e.g. `let [state, invalidate] = $state.opaque(data);`)
+ * `$state.opaque(...)` must be declared with an destructured array pattern and the state expression must be an identifier.
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function state_invalid_opaque_declaration(node) {
-	e(node, "state_invalid_opaque_declaration", "`$state.opaque(...)` must be declared with an destructured array pattern (e.g. `let [state, invalidate] = $state.opaque(data);`)");
+	e(node, "state_invalid_opaque_declaration", "`$state.opaque(...)` must be declared with an destructured array pattern and the state expression must be an identifier.");
 }
 
 /**
