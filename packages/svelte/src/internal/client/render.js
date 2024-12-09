@@ -272,12 +272,13 @@ let mounted_components = new WeakMap();
 /**
  * Unmounts a component that was previously mounted using `mount` or `hydrate`.
  * @param {Record<string, any>} component
+ * @param {{ outro?: boolean }} [options]
  */
-export function unmount(component) {
+export function unmount(component, options) {
 	const fn = mounted_components.get(component);
 
 	if (fn) {
-		fn();
+		fn(options);
 	} else if (DEV) {
 		w.lifecycle_double_unmount();
 	}

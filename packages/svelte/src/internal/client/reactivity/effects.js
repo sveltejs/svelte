@@ -244,12 +244,19 @@ export function inspect_effect(fn) {
 /**
  * Internal representation of `$effect.root(...)`
  * @param {() => void | (() => void)} fn
- * @returns {() => void}
+ * @returns {(options?: { outro?: boolean }) => void}
  */
 export function effect_root(fn) {
 	const effect = create_effect(ROOT_EFFECT, fn, true);
-	return () => {
-		destroy_effect(effect);
+
+	return (options = {}) => {
+		if (options.outro) {
+			pause_effect(effect, () => {
+				destroy_effect(effect);
+			});
+		} else {
+			destroy_effect(effect);
+		}
 	};
 }
 

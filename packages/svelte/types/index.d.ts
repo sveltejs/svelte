@@ -448,8 +448,11 @@ declare module 'svelte' {
 	}): Exports;
 	/**
 	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
-	 * */
-	export function unmount(component: Record<string, any>): void;
+	 * 
+	 */
+	export function unmount(component: Record<string, any>, options?: {
+		outro?: boolean;
+	} | undefined): void;
 	/**
 	 * Returns a promise that resolves once any pending state changes have been applied.
 	 * */
