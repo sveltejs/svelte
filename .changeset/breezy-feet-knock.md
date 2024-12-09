@@ -1,5 +1,5 @@
 ---
-'svelte': patch
+'svelte': minor
 ---
 
-chore: provide links to documentation for errors/warnings
+feat: provide links to documentation for errors/warnings
