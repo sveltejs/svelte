@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, Pattern, Property, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
 /** @import { AST, TemplateNode } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { empty_comment, build_attribute_value } from './utils.js';
@@ -92,24 +92,38 @@ export function build_inline_component(node, expression, context) {
 			const value = build_attribute_value(attribute.value, context, false, true);
 			push_prop(b.prop('init', b.key(attribute.name), value));
 		} else if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
-			// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
-			push_prop(
-				b.get(attribute.name, [
-					b.return(/** @type {Expression} */ (context.visit(attribute.expression)))
-				]),
-				true
-			);
-			push_prop(
-				b.set(attribute.name, [
-					b.stmt(
-						/** @type {Expression} */ (
-							context.visit(b.assignment('=', attribute.expression, b.id('$$value')))
-						)
-					),
-					b.stmt(b.assignment('=', b.id('$$settled'), b.false))
-				]),
-				true
-			);
+			if (attribute.expression.type === 'SequenceExpression') {
+				const [get, set] = /** @type {SequenceExpression} */ (context.visit(attribute.expression))
+					.expressions;
+				const get_id = b.id(context.state.scope.generate('bind_get'));
+				const set_id = b.id(context.state.scope.generate('bind_set'));
+
+				context.state.init.push(b.var(get_id, get));
+				context.state.init.push(b.var(set_id, set));
+
+				push_prop(b.get(attribute.name, [b.return(b.call(get_id))]));
+				push_prop(b.set(attribute.name, [b.stmt(b.call(set_id, b.id('$$value')))]));
+			} else {
+				// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
+				push_prop(
+					b.get(attribute.name, [
+						b.return(/** @type {Expression} */ (context.visit(attribute.expression)))
+					]),
+					true
+				);
+
+				push_prop(
+					b.set(attribute.name, [
+						b.stmt(
+							/** @type {Expression} */ (
+								context.visit(b.assignment('=', attribute.expression, b.id('$$value')))
+							)
+						),
+						b.stmt(b.assignment('=', b.id('$$settled'), b.false))
+					]),
+					true
+				);
+			}
 		}
 	}
 

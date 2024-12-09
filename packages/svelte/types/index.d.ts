@@ -606,7 +606,7 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression } from 'estree';
+	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
 	import type { SourceMap } from 'magic-string';
 	import type { Location } from 'locate-character';
 	/**
@@ -1047,7 +1047,7 @@ declare module 'svelte/compiler' {
 			/** The 'x' in `bind:x` */
 			name: string;
 			/** The y in `bind:x={y}` */
-			expression: Identifier | MemberExpression;
+			expression: Identifier | MemberExpression | SequenceExpression;
 		}
 
 		/** A `class:` directive */

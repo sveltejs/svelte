@@ -66,6 +66,31 @@ The easiest way to log a value as it changes over time is to use the [`$inspect`
 The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
 ```
 
+Certain attributes like `src` on an `<img>` element will not be repaired during hydration, i.e. the server value will be kept. That's because updating these attributes can cause the image to be refetched (or in the case of an `<iframe>`, for the frame to be reloaded), even if they resolve to the same resource.
+
+To fix this, either silence the warning with a [`svelte-ignore`](basic-markup#Comments) comment, or ensure that the value stays the same between server and client. If you really need the value to change on hydration, you can force an update like this:
+
+```svelte
+<script>
+	let { src } = $props();
+
+	if (typeof window !== 'undefined') {
+		// stash the value...
+		const initial = src;
+
+		// unset it...
+		src = undefined;
+
+		$effect(() => {
+			// ...and reset after we've mounted
+			src = initial;
+		});
+	}
+</script>
+
+<img {src} />
+```
+
 ### hydration_html_changed
 
 ```
@@ -74,6 +99,31 @@ The value of an `{@html ...}` block changed between server and client renders. T
 
 ```
 The value of an `{@html ...}` block %location% changed between server and client renders. The client value will be ignored in favour of the server value
+```
+
+If the `{@html ...}` value changes between the server and the client, it will not be repaired during hydration, i.e. the server value will be kept. That's because change detection during hydration is expensive and usually unnecessary.
+
+To fix this, either silence the warning with a [`svelte-ignore`](basic-markup#Comments) comment, or ensure that the value stays the same between server and client. If you really need the value to change on hydration, you can force an update like this:
+
+```svelte
+<script>
+	let { markup } = $props();
+
+	if (typeof window !== 'undefined') {
+		// stash the value...
+		const initial = markup;
+
+		// unset it...
+		markup = undefined;
+
+		$effect(() => {
+			// ...and reset after we've mounted
+			markup = initial;
+		});
+	}
+</script>
+
+{@html markup}
 ```
 
 ### hydration_mismatch
@@ -85,6 +135,10 @@ Hydration failed because the initial UI does not match what was rendered on the 
 ```
 Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near %location%
 ```
+
+This warning is thrown when Svelte encounters an error while hydrating the HTML from the server. During hydration, Svelte walks the DOM, expecting a certain structure. If that structure is different (for example because the HTML was repaired by the DOM because of invalid HTML), then Svelte will run into issues, resulting in this warning.
+
+During development, this error is often preceeded by a `console.error` detailing the offending HTML, which needs fixing.
 
 ### invalid_raw_snippet_render
 
@@ -110,6 +164,10 @@ Tried to unmount a component that was not mounted
 %parent% passed a value to %child% with `bind:`, but the value is owned by %owner%. Consider creating a binding between %owner% and %parent%
 ```
 
+Consider three components `GrandParent`, `Parent` and `Child`. If you do `<GrandParent bind:value>`, inside `GrandParent` pass on the variable via `<Parent {value} />` (note the missing `bind:`) and then do `<Child bind:value>` inside `Parent`, this warning is thrown.
+
+To fix it, `bind:` to the value instead of just passing a property (i.e. in this example do `<Parent bind:value />`).
+
 ### ownership_invalid_mutation
 
 ```
@@ -119,6 +177,32 @@ Mutating a value outside the component that created it is strongly discouraged. 
 ```
 %component% mutated a value owned by %owner%. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead
 ```
+
+Consider the following code:
+
+```svelte
+<!--- file: App.svelte --->
+<script>
+	import Child from './Child.svelte';
+	let person = $state({ name: 'Florida', surname: 'Man' });
+</script>
+
+<Child {person} />
+```
+
+```svelte
+<!--- file: Child.svelte --->
+<script>
+	let { person } = $props();
+</script>
+
+<input bind:value={person.name}>
+<input bind:value={person.surname}>
+```
+
+`Child` is mutating `person` which is owned by `App` without being explicitly "allowed" to do so. This is strongly discouraged since it can create code that is hard to reason about at scale ("who mutated this value?"), hence the warning.
+
+To fix it, either create callback props to communicate changes, or mark `person` as [`$bindable`]($bindable).
 
 ### reactive_declaration_non_reactive_property
 

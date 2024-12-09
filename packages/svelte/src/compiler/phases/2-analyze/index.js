@@ -698,7 +698,7 @@ export function analyze_component(root, source, options) {
 	}
 
 	for (const node of analysis.module.ast.body) {
-		if (node.type === 'ExportNamedDeclaration' && node.specifiers !== null) {
+		if (node.type === 'ExportNamedDeclaration' && node.specifiers !== null && node.source == null) {
 			for (const specifier of node.specifiers) {
 				if (specifier.local.type !== 'Identifier') continue;
 
