@@ -71,4 +71,21 @@
 			color: red;
 		}
 	}
+	:global{
+		.x{
+			animation: test 1s;
+		}
+
+		@keyframes test-in{
+			to{
+				opacity: 1;
+			}
+		}
+	}
+
+	@keyframes test{
+		to{
+			opacity: 1;
+		}
+	}
 </style>
