@@ -128,7 +128,7 @@ export function each_key_duplicate(a, b, value) {
  */
 export function effect_in_teardown(rune) {
 	if (DEV) {
-		const error = new Error(`effect_in_teardown\n\`${rune}\` cannot be used inside an effect cleanup function\nSee https://svelte.dev/e/each_key_duplicate for more infoeffect_in_teardown for more info`);
+		const error = new Error(`effect_in_teardown\n\`${rune}\` cannot be used inside an effect cleanup function\nSee https://svelte.dev/e/effect_in_teardown for more info`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -143,7 +143,7 @@ export function effect_in_teardown(rune) {
  */
 export function effect_in_unowned_derived() {
 	if (DEV) {
-		const error = new Error(`effect_in_unowned_derived\nEffect cannot be created inside a \`$derived\` value that was not itself created inside an effect\nSee https://svelte.dev/e/each_key_duplicate for more infoeffect_in_unowned_derived for more info`);
+		const error = new Error(`effect_in_unowned_derived\nEffect cannot be created inside a \`$derived\` value that was not itself created inside an effect\nSee https://svelte.dev/e/effect_in_unowned_derived for more info`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -159,7 +159,7 @@ export function effect_in_unowned_derived() {
  */
 export function effect_orphan(rune) {
 	if (DEV) {
-		const error = new Error(`effect_orphan\n\`${rune}\` can only be used inside an effect (e.g. during component initialisation)\nSee https://svelte.dev/e/each_key_duplicate for more infoeffect_orphan for more info`);
+		const error = new Error(`effect_orphan\n\`${rune}\` can only be used inside an effect (e.g. during component initialisation)\nSee https://svelte.dev/e/effect_orphan for more info`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -174,7 +174,7 @@ export function effect_orphan(rune) {
  */
 export function effect_update_depth_exceeded() {
 	if (DEV) {
-		const error = new Error(`effect_update_depth_exceeded\nMaximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops\nSee https://svelte.dev/e/each_key_duplicate for more infoeffect_update_depth_exceeded for more info`);
+		const error = new Error(`effect_update_depth_exceeded\nMaximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops\nSee https://svelte.dev/e/effect_update_depth_exceeded for more info`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -189,7 +189,7 @@ export function effect_update_depth_exceeded() {
  */
 export function hydration_failed() {
 	if (DEV) {
-		const error = new Error(`hydration_failed\nFailed to hydrate the application\nSee https://svelte.dev/e/each_key_duplicate for more infohydration_failed for more info`);
+		const error = new Error(`hydration_failed\nFailed to hydrate the application\nSee https://svelte.dev/e/hydration_failed for more info`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -204,7 +204,7 @@ export function hydration_failed() {
  */
 export function invalid_snippet() {
 	if (DEV) {
-		const error = new Error(`invalid_snippet\nCould not \`{@render}\` snippet due to the expression being \`null\` or \`undefined\`. Consider using optional chaining \`{@render snippet?.()}\`\nSee https://svelte.dev/e/each_key_duplicate for more infoinvalid_snippet for more info`);
+		const error = new Error(`invalid_snippet\nCould not \`{@render}\` snippet due to the expression being \`null\` or \`undefined\`. Consider using optional chaining \`{@render snippet?.()}\`\nSee https://svelte.dev/e/invalid_snippet for more info`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -220,7 +220,7 @@ export function invalid_snippet() {
  */
 export function lifecycle_legacy_only(name) {
 	if (DEV) {
-		const error = new Error(`lifecycle_legacy_only\n\`${name}(...)\` cannot be used in runes mode\nSee https://svelte.dev/e/each_key_duplicate for more infolifecycle_legacy_only for more info`);
+		const error = new Error(`lifecycle_legacy_only\n\`${name}(...)\` cannot be used in runes mode\nSee https://svelte.dev/e/lifecycle_legacy_only for more info`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -236,7 +236,7 @@ export function lifecycle_legacy_only(name) {
  */
 export function props_invalid_value(key) {
 	if (DEV) {
-		const error = new Error(`props_invalid_value\nCannot do \`bind:${key}={undefined}\` when \`${key}\` has a fallback value\nSee https://svelte.dev/e/each_key_duplicate for more infoprops_invalid_value for more info`);
+		const error = new Error(`props_invalid_value\nCannot do \`bind:${key}={undefined}\` when \`${key}\` has a fallback value\nSee https://svelte.dev/e/props_invalid_value for more info`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -252,7 +252,7 @@ export function props_invalid_value(key) {
  */
 export function props_rest_readonly(property) {
 	if (DEV) {
-		const error = new Error(`props_rest_readonly\nRest element properties of \`$props()\` such as \`${property}\` are readonly\nSee https://svelte.dev/e/each_key_duplicate for more infoprops_rest_readonly for more info`);
+		const error = new Error(`props_rest_readonly\nRest element properties of \`$props()\` such as \`${property}\` are readonly\nSee https://svelte.dev/e/props_rest_readonly for more info`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -268,7 +268,7 @@ export function props_rest_readonly(property) {
  */
 export function rune_outside_svelte(rune) {
 	if (DEV) {
-		const error = new Error(`rune_outside_svelte\nThe \`${rune}\` rune is only available inside \`.svelte\` and \`.svelte.js/ts\` files\nSee https://svelte.dev/e/each_key_duplicate for more inforune_outside_svelte for more info`);
+		const error = new Error(`rune_outside_svelte\nThe \`${rune}\` rune is only available inside \`.svelte\` and \`.svelte.js/ts\` files\nSee https://svelte.dev/e/rune_outside_svelte for more info`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -283,7 +283,7 @@ export function rune_outside_svelte(rune) {
  */
 export function state_descriptors_fixed() {
 	if (DEV) {
-		const error = new Error(`state_descriptors_fixed\nProperty descriptors defined on \`$state\` objects must contain \`value\` and always be \`enumerable\`, \`configurable\` and \`writable\`.\nSee https://svelte.dev/e/each_key_duplicate for more infostate_descriptors_fixed for more info`);
+		const error = new Error(`state_descriptors_fixed\nProperty descriptors defined on \`$state\` objects must contain \`value\` and always be \`enumerable\`, \`configurable\` and \`writable\`.\nSee https://svelte.dev/e/state_descriptors_fixed for more info`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -298,7 +298,7 @@ export function state_descriptors_fixed() {
  */
 export function state_prototype_fixed() {
 	if (DEV) {
-		const error = new Error(`state_prototype_fixed\nCannot set prototype of \`$state\` object\nSee https://svelte.dev/e/each_key_duplicate for more infostate_prototype_fixed for more info`);
+		const error = new Error(`state_prototype_fixed\nCannot set prototype of \`$state\` object\nSee https://svelte.dev/e/state_prototype_fixed for more info`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -313,7 +313,7 @@ export function state_prototype_fixed() {
  */
 export function state_unsafe_local_read() {
 	if (DEV) {
-		const error = new Error(`state_unsafe_local_read\nReading state that was created inside the same derived is forbidden. Consider using \`untrack\` to read locally created state\nSee https://svelte.dev/e/each_key_duplicate for more infostate_unsafe_local_read for more info`);
+		const error = new Error(`state_unsafe_local_read\nReading state that was created inside the same derived is forbidden. Consider using \`untrack\` to read locally created state\nSee https://svelte.dev/e/state_unsafe_local_read for more info`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -328,7 +328,7 @@ export function state_unsafe_local_read() {
  */
 export function state_unsafe_mutation() {
 	if (DEV) {
-		const error = new Error(`state_unsafe_mutation\nUpdating state inside a derived or a template expression is forbidden. If the value should not be reactive, declare it without \`$state\`\nSee https://svelte.dev/e/each_key_duplicate for more infostate_unsafe_mutation for more info`);
+		const error = new Error(`state_unsafe_mutation\nUpdating state inside a derived or a template expression is forbidden. If the value should not be reactive, declare it without \`$state\`\nSee https://svelte.dev/e/state_unsafe_mutation for more info`);
 
 		error.name = 'Svelte error';
 		throw error;

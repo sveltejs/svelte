@@ -493,7 +493,7 @@ export function a11y_role_supports_aria_props_implicit(node, attribute, role, na
  * @param {string | undefined | null} [suggestion]
  */
 export function a11y_unknown_aria_attribute(node, attribute, suggestion) {
-	w(node, "a11y_unknown_aria_attribute", `${suggestion ? `Unknown aria attribute 'aria-${attribute}'. Did you mean '${suggestion}'?` : `Unknown aria attribute 'aria-${attribute}'`}\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more info`);
+	w(node, "a11y_unknown_aria_attribute", `${suggestion ? `Unknown aria attribute 'aria-${attribute}'. Did you mean '${suggestion}'?` : `Unknown aria attribute 'aria-${attribute}'`}\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more info`);
 }
 
 /**
@@ -503,7 +503,7 @@ export function a11y_unknown_aria_attribute(node, attribute, suggestion) {
  * @param {string | undefined | null} [suggestion]
  */
 export function a11y_unknown_role(node, role, suggestion) {
-	w(node, "a11y_unknown_role", `${suggestion ? `Unknown role '${role}'. Did you mean '${suggestion}'?` : `Unknown role '${role}'`}\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more info`);
+	w(node, "a11y_unknown_role", `${suggestion ? `Unknown role '${role}'. Did you mean '${suggestion}'?` : `Unknown role '${role}'`}\nSee https://svelte.dev/e/a11y_unknown_role for more info`);
 }
 
 /**
@@ -513,7 +513,7 @@ export function a11y_unknown_role(node, role, suggestion) {
  * @param {string} suggestion
  */
 export function legacy_code(node, code, suggestion) {
-	w(node, "legacy_code", `\`${code}\` is no longer valid — please use \`${suggestion}\` instead\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infolegacy_code for more info`);
+	w(node, "legacy_code", `\`${code}\` is no longer valid — please use \`${suggestion}\` instead\nSee https://svelte.dev/e/legacy_code for more info`);
 }
 
 /**
@@ -523,7 +523,7 @@ export function legacy_code(node, code, suggestion) {
  * @param {string | undefined | null} [suggestion]
  */
 export function unknown_code(node, code, suggestion) {
-	w(node, "unknown_code", `${suggestion ? `\`${code}\` is not a recognised code (did you mean \`${suggestion}\`?)` : `\`${code}\` is not a recognised code`}\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more info`);
+	w(node, "unknown_code", `${suggestion ? `\`${code}\` is not a recognised code (did you mean \`${suggestion}\`?)` : `\`${code}\` is not a recognised code`}\nSee https://svelte.dev/e/unknown_code for more info`);
 }
 
 /**
@@ -531,7 +531,7 @@ export function unknown_code(node, code, suggestion) {
  * @param {null | NodeLike} node
  */
 export function options_deprecated_accessors(node) {
-	w(node, "options_deprecated_accessors", `The \`accessors\` option has been deprecated. It will have no effect in runes mode\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infooptions_deprecated_accessors for more info`);
+	w(node, "options_deprecated_accessors", `The \`accessors\` option has been deprecated. It will have no effect in runes mode\nSee https://svelte.dev/e/options_deprecated_accessors for more info`);
 }
 
 /**
@@ -539,7 +539,7 @@ export function options_deprecated_accessors(node) {
  * @param {null | NodeLike} node
  */
 export function options_deprecated_immutable(node) {
-	w(node, "options_deprecated_immutable", `The \`immutable\` option has been deprecated. It will have no effect in runes mode\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infooptions_deprecated_immutable for more info`);
+	w(node, "options_deprecated_immutable", `The \`immutable\` option has been deprecated. It will have no effect in runes mode\nSee https://svelte.dev/e/options_deprecated_immutable for more info`);
 }
 
 /**
@@ -547,7 +547,7 @@ export function options_deprecated_immutable(node) {
  * @param {null | NodeLike} node
  */
 export function options_missing_custom_element(node) {
-	w(node, "options_missing_custom_element", `The \`customElement\` option is used when generating a custom element. Did you forget the \`customElement: true\` compile option?\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infooptions_missing_custom_element for more info`);
+	w(node, "options_missing_custom_element", `The \`customElement\` option is used when generating a custom element. Did you forget the \`customElement: true\` compile option?\nSee https://svelte.dev/e/options_missing_custom_element for more info`);
 }
 
 /**
@@ -555,7 +555,7 @@ export function options_missing_custom_element(node) {
  * @param {null | NodeLike} node
  */
 export function options_removed_enable_sourcemap(node) {
-	w(node, "options_removed_enable_sourcemap", `The \`enableSourcemap\` option has been removed. Source maps are always generated now, and tooling can choose to ignore them\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infooptions_removed_enable_sourcemap for more info`);
+	w(node, "options_removed_enable_sourcemap", `The \`enableSourcemap\` option has been removed. Source maps are always generated now, and tooling can choose to ignore them\nSee https://svelte.dev/e/options_removed_enable_sourcemap for more info`);
 }
 
 /**
@@ -563,7 +563,7 @@ export function options_removed_enable_sourcemap(node) {
  * @param {null | NodeLike} node
  */
 export function options_removed_hydratable(node) {
-	w(node, "options_removed_hydratable", `The \`hydratable\` option has been removed. Svelte components are always hydratable now\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infooptions_removed_hydratable for more info`);
+	w(node, "options_removed_hydratable", `The \`hydratable\` option has been removed. Svelte components are always hydratable now\nSee https://svelte.dev/e/options_removed_hydratable for more info`);
 }
 
 /**
@@ -571,7 +571,7 @@ export function options_removed_hydratable(node) {
  * @param {null | NodeLike} node
  */
 export function options_removed_loop_guard_timeout(node) {
-	w(node, "options_removed_loop_guard_timeout", `The \`loopGuardTimeout\` option has been removed\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infooptions_removed_loop_guard_timeout for more info`);
+	w(node, "options_removed_loop_guard_timeout", `The \`loopGuardTimeout\` option has been removed\nSee https://svelte.dev/e/options_removed_loop_guard_timeout for more info`);
 }
 
 /**
@@ -579,7 +579,7 @@ export function options_removed_loop_guard_timeout(node) {
  * @param {null | NodeLike} node
  */
 export function options_renamed_ssr_dom(node) {
-	w(node, "options_renamed_ssr_dom", `\`generate: "dom"\` and \`generate: "ssr"\` options have been renamed to "client" and "server" respectively\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infooptions_renamed_ssr_dom for more info`);
+	w(node, "options_renamed_ssr_dom", `\`generate: "dom"\` and \`generate: "ssr"\` options have been renamed to "client" and "server" respectively\nSee https://svelte.dev/e/options_renamed_ssr_dom for more info`);
 }
 
 /**
@@ -588,7 +588,7 @@ export function options_renamed_ssr_dom(node) {
  * @param {string} name
  */
 export function export_let_unused(node, name) {
-	w(node, "export_let_unused", `Component has unused export property '${name}'. If it is for external reference only, please consider using \`export const ${name}\`\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infoexport_let_unused for more info`);
+	w(node, "export_let_unused", `Component has unused export property '${name}'. If it is for external reference only, please consider using \`export const ${name}\`\nSee https://svelte.dev/e/export_let_unused for more info`);
 }
 
 /**
@@ -596,7 +596,7 @@ export function export_let_unused(node, name) {
  * @param {null | NodeLike} node
  */
 export function legacy_component_creation(node) {
-	w(node, "legacy_component_creation", `Svelte 5 components are no longer classes. Instantiate them using \`mount\` or \`hydrate\` (imported from 'svelte') instead.\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infolegacy_component_creation for more info`);
+	w(node, "legacy_component_creation", `Svelte 5 components are no longer classes. Instantiate them using \`mount\` or \`hydrate\` (imported from 'svelte') instead.\nSee https://svelte.dev/e/legacy_component_creation for more info`);
 }
 
 /**
@@ -605,7 +605,7 @@ export function legacy_component_creation(node) {
  * @param {string} name
  */
 export function non_reactive_update(node, name) {
-	w(node, "non_reactive_update", `\`${name}\` is updated, but is not declared with \`$state(...)\`. Changing its value will not correctly trigger updates\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infonon_reactive_update for more info`);
+	w(node, "non_reactive_update", `\`${name}\` is updated, but is not declared with \`$state(...)\`. Changing its value will not correctly trigger updates\nSee https://svelte.dev/e/non_reactive_update for more info`);
 }
 
 /**
@@ -613,7 +613,7 @@ export function non_reactive_update(node, name) {
  * @param {null | NodeLike} node
  */
 export function perf_avoid_inline_class(node) {
-	w(node, "perf_avoid_inline_class", `Avoid 'new class' — instead, declare the class at the top level scope\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infoperf_avoid_inline_class for more info`);
+	w(node, "perf_avoid_inline_class", `Avoid 'new class' — instead, declare the class at the top level scope\nSee https://svelte.dev/e/perf_avoid_inline_class for more info`);
 }
 
 /**
@@ -621,7 +621,7 @@ export function perf_avoid_inline_class(node) {
  * @param {null | NodeLike} node
  */
 export function perf_avoid_nested_class(node) {
-	w(node, "perf_avoid_nested_class", `Avoid declaring classes below the top level scope\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infoperf_avoid_nested_class for more info`);
+	w(node, "perf_avoid_nested_class", `Avoid declaring classes below the top level scope\nSee https://svelte.dev/e/perf_avoid_nested_class for more info`);
 }
 
 /**
@@ -629,7 +629,7 @@ export function perf_avoid_nested_class(node) {
  * @param {null | NodeLike} node
  */
 export function reactive_declaration_invalid_placement(node) {
-	w(node, "reactive_declaration_invalid_placement", `Reactive declarations only exist at the top level of the instance script\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more inforeactive_declaration_invalid_placement for more info`);
+	w(node, "reactive_declaration_invalid_placement", `Reactive declarations only exist at the top level of the instance script\nSee https://svelte.dev/e/reactive_declaration_invalid_placement for more info`);
 }
 
 /**
@@ -637,7 +637,7 @@ export function reactive_declaration_invalid_placement(node) {
  * @param {null | NodeLike} node
  */
 export function reactive_declaration_module_script_dependency(node) {
-	w(node, "reactive_declaration_module_script_dependency", `Reassignments of module-level declarations will not cause reactive statements to update\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more inforeactive_declaration_module_script_dependency for more info`);
+	w(node, "reactive_declaration_module_script_dependency", `Reassignments of module-level declarations will not cause reactive statements to update\nSee https://svelte.dev/e/reactive_declaration_module_script_dependency for more info`);
 }
 
 /**
@@ -645,7 +645,7 @@ export function reactive_declaration_module_script_dependency(node) {
  * @param {null | NodeLike} node
  */
 export function state_referenced_locally(node) {
-	w(node, "state_referenced_locally", `State referenced in its own scope will never update. Did you mean to reference it inside a closure?\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infostate_referenced_locally for more info`);
+	w(node, "state_referenced_locally", `State referenced in its own scope will never update. Did you mean to reference it inside a closure?\nSee https://svelte.dev/e/state_referenced_locally for more info`);
 }
 
 /**
@@ -654,7 +654,7 @@ export function state_referenced_locally(node) {
  * @param {string} name
  */
 export function store_rune_conflict(node, name) {
-	w(node, "store_rune_conflict", `It looks like you're using the \`$${name}\` rune, but there is a local binding called \`${name}\`. Referencing a local variable with a \`$\` prefix will create a store subscription. Please rename \`${name}\` to avoid the ambiguity\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infostore_rune_conflict for more info`);
+	w(node, "store_rune_conflict", `It looks like you're using the \`$${name}\` rune, but there is a local binding called \`${name}\`. Referencing a local variable with a \`$\` prefix will create a store subscription. Please rename \`${name}\` to avoid the ambiguity\nSee https://svelte.dev/e/store_rune_conflict for more info`);
 }
 
 /**
@@ -663,7 +663,7 @@ export function store_rune_conflict(node, name) {
  * @param {string} name
  */
 export function css_unused_selector(node, name) {
-	w(node, "css_unused_selector", `Unused CSS selector "${name}"\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infocss_unused_selector for more info`);
+	w(node, "css_unused_selector", `Unused CSS selector "${name}"\nSee https://svelte.dev/e/css_unused_selector for more info`);
 }
 
 /**
@@ -671,7 +671,7 @@ export function css_unused_selector(node, name) {
  * @param {null | NodeLike} node
  */
 export function attribute_avoid_is(node) {
-	w(node, "attribute_avoid_is", `The "is" attribute is not supported cross-browser and should be avoided\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infoattribute_avoid_is for more info`);
+	w(node, "attribute_avoid_is", `The "is" attribute is not supported cross-browser and should be avoided\nSee https://svelte.dev/e/attribute_avoid_is for more info`);
 }
 
 /**
@@ -680,7 +680,7 @@ export function attribute_avoid_is(node) {
  * @param {string} name
  */
 export function attribute_global_event_reference(node, name) {
-	w(node, "attribute_global_event_reference", `You are referencing \`globalThis.${name}\`. Did you forget to declare a variable with that name?\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infoattribute_global_event_reference for more info`);
+	w(node, "attribute_global_event_reference", `You are referencing \`globalThis.${name}\`. Did you forget to declare a variable with that name?\nSee https://svelte.dev/e/attribute_global_event_reference for more info`);
 }
 
 /**
@@ -688,7 +688,7 @@ export function attribute_global_event_reference(node, name) {
  * @param {null | NodeLike} node
  */
 export function attribute_illegal_colon(node) {
-	w(node, "attribute_illegal_colon", `Attributes should not contain ':' characters to prevent ambiguity with Svelte directives\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infoattribute_illegal_colon for more info`);
+	w(node, "attribute_illegal_colon", `Attributes should not contain ':' characters to prevent ambiguity with Svelte directives\nSee https://svelte.dev/e/attribute_illegal_colon for more info`);
 }
 
 /**
@@ -698,7 +698,7 @@ export function attribute_illegal_colon(node) {
  * @param {string} right
  */
 export function attribute_invalid_property_name(node, wrong, right) {
-	w(node, "attribute_invalid_property_name", `'${wrong}' is not a valid HTML attribute. Did you mean '${right}'?\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infoattribute_invalid_property_name for more info`);
+	w(node, "attribute_invalid_property_name", `'${wrong}' is not a valid HTML attribute. Did you mean '${right}'?\nSee https://svelte.dev/e/attribute_invalid_property_name for more info`);
 }
 
 /**
@@ -706,7 +706,7 @@ export function attribute_invalid_property_name(node, wrong, right) {
  * @param {null | NodeLike} node
  */
 export function attribute_quoted(node) {
-	w(node, "attribute_quoted", `Quoted attributes on components and custom elements will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infoattribute_quoted for more info`);
+	w(node, "attribute_quoted", `Quoted attributes on components and custom elements will be stringified in a future version of Svelte. If this isn't what you want, remove the quotes\nSee https://svelte.dev/e/attribute_quoted for more info`);
 }
 
 /**
@@ -715,7 +715,7 @@ export function attribute_quoted(node) {
  * @param {string} name
  */
 export function bind_invalid_each_rest(node, name) {
-	w(node, "bind_invalid_each_rest", `The rest operator (...) will create a new object and binding '${name}' with the original object will not work\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infobind_invalid_each_rest for more info`);
+	w(node, "bind_invalid_each_rest", `The rest operator (...) will create a new object and binding '${name}' with the original object will not work\nSee https://svelte.dev/e/bind_invalid_each_rest for more info`);
 }
 
 /**
@@ -723,7 +723,7 @@ export function bind_invalid_each_rest(node, name) {
  * @param {null | NodeLike} node
  */
 export function block_empty(node) {
-	w(node, "block_empty", `Empty block\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infoblock_empty for more info`);
+	w(node, "block_empty", `Empty block\nSee https://svelte.dev/e/block_empty for more info`);
 }
 
 /**
@@ -732,7 +732,7 @@ export function block_empty(node) {
  * @param {string} name
  */
 export function component_name_lowercase(node, name) {
-	w(node, "component_name_lowercase", `\`<${name}>\` will be treated as an HTML element unless it begins with a capital letter\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infocomponent_name_lowercase for more info`);
+	w(node, "component_name_lowercase", `\`<${name}>\` will be treated as an HTML element unless it begins with a capital letter\nSee https://svelte.dev/e/component_name_lowercase for more info`);
 }
 
 /**
@@ -741,7 +741,7 @@ export function component_name_lowercase(node, name) {
  * @param {string} name
  */
 export function element_invalid_self_closing_tag(node, name) {
-	w(node, "element_invalid_self_closing_tag", `Self-closing HTML tags for non-void elements are ambiguous — use \`<${name} ...></${name}>\` rather than \`<${name} ... />\`\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infoelement_invalid_self_closing_tag for more info`);
+	w(node, "element_invalid_self_closing_tag", `Self-closing HTML tags for non-void elements are ambiguous — use \`<${name} ...></${name}>\` rather than \`<${name} ... />\`\nSee https://svelte.dev/e/element_invalid_self_closing_tag for more info`);
 }
 
 /**
@@ -750,7 +750,7 @@ export function element_invalid_self_closing_tag(node, name) {
  * @param {string} name
  */
 export function event_directive_deprecated(node, name) {
-	w(node, "event_directive_deprecated", `Using \`on:${name}\` to listen to the ${name} event is deprecated. Use the event attribute \`on${name}\` instead\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infoevent_directive_deprecated for more info`);
+	w(node, "event_directive_deprecated", `Using \`on:${name}\` to listen to the ${name} event is deprecated. Use the event attribute \`on${name}\` instead\nSee https://svelte.dev/e/event_directive_deprecated for more info`);
 }
 
 /**
@@ -759,7 +759,7 @@ export function event_directive_deprecated(node, name) {
  * @param {string} message
  */
 export function node_invalid_placement_ssr(node, message) {
-	w(node, "node_invalid_placement_ssr", `${message}. When rendering this component on the server, the resulting HTML will be modified by the browser (by moving, removing, or inserting elements), likely resulting in a \`hydration_mismatch\` warning\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infonode_invalid_placement_ssr for more info`);
+	w(node, "node_invalid_placement_ssr", `${message}. When rendering this component on the server, the resulting HTML will be modified by the browser (by moving, removing, or inserting elements), likely resulting in a \`hydration_mismatch\` warning\nSee https://svelte.dev/e/node_invalid_placement_ssr for more info`);
 }
 
 /**
@@ -767,7 +767,7 @@ export function node_invalid_placement_ssr(node, message) {
  * @param {null | NodeLike} node
  */
 export function script_context_deprecated(node) {
-	w(node, "script_context_deprecated", `\`context="module"\` is deprecated, use the \`module\` attribute instead\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infoscript_context_deprecated for more info`);
+	w(node, "script_context_deprecated", `\`context="module"\` is deprecated, use the \`module\` attribute instead\nSee https://svelte.dev/e/script_context_deprecated for more info`);
 }
 
 /**
@@ -775,7 +775,7 @@ export function script_context_deprecated(node) {
  * @param {null | NodeLike} node
  */
 export function script_unknown_attribute(node) {
-	w(node, "script_unknown_attribute", `Unrecognized attribute — should be one of \`generics\`, \`lang\` or \`module\`. If this exists for a preprocessor, ensure that the preprocessor removes it\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infoscript_unknown_attribute for more info`);
+	w(node, "script_unknown_attribute", `Unrecognized attribute — should be one of \`generics\`, \`lang\` or \`module\`. If this exists for a preprocessor, ensure that the preprocessor removes it\nSee https://svelte.dev/e/script_unknown_attribute for more info`);
 }
 
 /**
@@ -783,7 +783,7 @@ export function script_unknown_attribute(node) {
  * @param {null | NodeLike} node
  */
 export function slot_element_deprecated(node) {
-	w(node, "slot_element_deprecated", `Using \`<slot>\` to render parent content is deprecated. Use \`{@render ...}\` tags instead\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infoslot_element_deprecated for more info`);
+	w(node, "slot_element_deprecated", `Using \`<slot>\` to render parent content is deprecated. Use \`{@render ...}\` tags instead\nSee https://svelte.dev/e/slot_element_deprecated for more info`);
 }
 
 /**
@@ -791,7 +791,7 @@ export function slot_element_deprecated(node) {
  * @param {null | NodeLike} node
  */
 export function svelte_component_deprecated(node) {
-	w(node, "svelte_component_deprecated", `\`<svelte:component>\` is deprecated in runes mode — components are dynamic by default\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infosvelte_component_deprecated for more info`);
+	w(node, "svelte_component_deprecated", `\`<svelte:component>\` is deprecated in runes mode — components are dynamic by default\nSee https://svelte.dev/e/svelte_component_deprecated for more info`);
 }
 
 /**
@@ -799,7 +799,7 @@ export function svelte_component_deprecated(node) {
  * @param {null | NodeLike} node
  */
 export function svelte_element_invalid_this(node) {
-	w(node, "svelte_element_invalid_this", `\`this\` should be an \`{expression}\`. Using a string attribute value will cause an error in future versions of Svelte\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infosvelte_element_invalid_this for more info`);
+	w(node, "svelte_element_invalid_this", `\`this\` should be an \`{expression}\`. Using a string attribute value will cause an error in future versions of Svelte\nSee https://svelte.dev/e/svelte_element_invalid_this for more info`);
 }
 
 /**
@@ -809,5 +809,5 @@ export function svelte_element_invalid_this(node) {
  * @param {string} basename
  */
 export function svelte_self_deprecated(node, name, basename) {
-	w(node, "svelte_self_deprecated", `\`<svelte:self>\` is deprecated — use self-imports (e.g. \`import ${name} from './${basename}'\`) instead\nSee https://svelte.dev/e/a11y_unknown_aria_attribute for more infoa11y_unknown_role for more infounknown_code for more infosvelte_self_deprecated for more info`);
+	w(node, "svelte_self_deprecated", `\`<svelte:self>\` is deprecated — use self-imports (e.g. \`import ${name} from './${basename}'\`) instead\nSee https://svelte.dev/e/svelte_self_deprecated for more info`);
 }
