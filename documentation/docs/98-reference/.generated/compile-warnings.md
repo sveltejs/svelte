@@ -798,12 +798,13 @@ This warning is thrown when the compiler detects the following:
 In this case, the state reassignment will not be noticed by whatever you passed it to. For example, if you pass the state to a function, that function will not notice the updates:
 
 ```svelte
-<!--- Parent.svelte --->
+<!--- file: Parent.svelte --->
 <script>
 	import { setContext } from 'svelte';
 
 	let count = $state(0);
-    // warning: state referenced locally
+
+	// warning: state_referenced_locally
 	setContext('count', count);
 </script>
 
@@ -813,7 +814,7 @@ In this case, the state reassignment will not be noticed by whatever you passed 
 ```
 
 ```svelte
-<!--- Child.svelte --->
+<!--- file: Child.svelte --->
 <script>
 	import { getContext } from 'svelte';
 
@@ -824,15 +825,15 @@ In this case, the state reassignment will not be noticed by whatever you passed 
 <p>The count is {count}</p>
 ```
 
-To fix this, reference the variable such that it is lazily evaluated. For the above example, this can be achieved by wrapping the count in a function:
+To fix this, reference the variable such that it is lazily evaluated. For the above example, this can be achieved by wrapping `count` in a function:
 
 ```svelte
-<!--- Parent.svelte --->
+<!--- file: Parent.svelte --->
 <script>
 	import { setContext } from 'svelte';
 
 	let count = $state(0);
-	setContext('count', () => count);
+	setContext('count', +++() => count+++);
 </script>
 
 <button onclick={() => count++}>
@@ -841,7 +842,7 @@ To fix this, reference the variable such that it is lazily evaluated. For the ab
 ```
 
 ```svelte
-<!--- Child.svelte --->
+<!--- file: Child.svelte --->
 <script>
 	import { getContext } from 'svelte';
 
@@ -849,10 +850,10 @@ To fix this, reference the variable such that it is lazily evaluated. For the ab
 </script>
 
 <!-- This will update -->
-<p>The count is {count()}</p>
+<p>The count is {+++count()+++}</p>
 ```
 
-For more info, see [the docs on `$state`]($state#Passing-state-into-functions)
+For more info, see [Passing state into functions]($state#Passing-state-into-functions).
 
 ### store_rune_conflict
 
