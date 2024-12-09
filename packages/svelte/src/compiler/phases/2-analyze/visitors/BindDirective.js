@@ -11,6 +11,7 @@ import * as w from '../../../warnings.js';
 import { binding_properties } from '../../bindings.js';
 import fuzzymatch from '../../1-parse/utils/fuzzymatch.js';
 import { is_content_editable_binding, is_svg } from '../../../../utils.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
  * @param {AST.BindDirective} node
@@ -140,6 +141,8 @@ export function BindDirective(node, context) {
 		if (node.expression.expressions.length !== 2) {
 			e.bind_invalid_expression(node);
 		}
+
+		mark_subtree_dynamic(context.path);
 
 		return;
 	}
