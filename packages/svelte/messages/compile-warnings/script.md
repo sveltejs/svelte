@@ -69,7 +69,8 @@ In this case, the state reassignment will not be noticed by whatever you passed 
 	import { setContext } from 'svelte';
 
 	let count = $state(0);
-    // warning: state referenced locally
+
+	// warning: state_referenced_locally
 	setContext('count', count);
 </script>
 
