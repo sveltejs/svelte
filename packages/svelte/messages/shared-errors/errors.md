@@ -5,14 +5,14 @@
 This error would be thrown in a setup like this:
 
 ```svelte
-<!--- Parent.svelte --->
+<!--- file: Parent.svelte --->
 <List {items} let:entry>
     <span>{entry}</span>
 </List>
 ```
 
 ```svelte
-<!--- List.svelte --->
+<!--- file: List.svelte --->
 <script>
     let { items, children } = $props();
 </script>
