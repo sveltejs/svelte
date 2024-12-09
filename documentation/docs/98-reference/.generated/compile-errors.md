@@ -748,6 +748,12 @@ This snippet is shadowing the prop `%prop%` with the same name
 Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties
 ```
 
+### state_invalid_opaque_declaration
+
+```
+`$state.opaque` must be declared with an array destructuring pattern (e.g. `let [state, invalidate] = $state.opaque(data);`)
+```
+
 ### state_invalid_placement
 
 ```

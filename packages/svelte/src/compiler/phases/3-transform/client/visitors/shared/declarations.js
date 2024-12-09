@@ -1,4 +1,4 @@
-/** @import { Identifier } from 'estree' */
+/** @import { Expression, Identifier } from 'estree' */
 /** @import { ComponentContext, Context } from '../../types' */
 import { is_state_source } from '../../utils.js';
 import * as b from '../../../../../utils/builders.js';
@@ -46,6 +46,16 @@ export function add_state_transformers(context) {
 						node.argument,
 						node.operator === '--' && b.literal(-1)
 					);
+				}
+			};
+		} else if (binding.kind === 'opaque_state') {
+			context.state.transform[name] = {
+				read: binding.declaration_kind === 'var' ? (node) => b.call('$.safe_get', node) : get_value,
+				assign: (node, value) => {
+					return b.assignment('=', b.member(node, b.id('v')), /** @type {Expression} */ (value));
+				},
+				update: (node) => {
+					return b.update(node.operator, b.member(node.argument, b.id('v')), node.prefix);
 				}
 			};
 		}

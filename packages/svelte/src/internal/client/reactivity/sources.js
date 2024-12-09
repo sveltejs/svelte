@@ -20,7 +20,7 @@ import {
 	set_is_flushing_effect,
 	is_flushing_effect
 } from '../runtime.js';
-import { equals, safe_equals } from './equality.js';
+import { equals, opaque_equals, safe_equals } from './equality.js';
 import {
 	CLEAN,
 	DERIVED,
@@ -86,6 +86,17 @@ export function mutable_source(initial_value, immutable = false) {
 	}
 
 	return s;
+}
+
+/**
+ * @template V
+ * @param {V} v
+ * @returns {Source<V>}
+ */
+export function opaque_state(v) {
+	var s = source(v);
+	s.equals = opaque_equals;
+	return push_derived_source(s);
 }
 
 /**
