@@ -56,5 +56,5 @@ function e(node, code, message) {
  * @returns {never}
  */
 export function CODE(node, PARAMETER) {
-	e(node, 'CODE', MESSAGE);
+	e(node, 'CODE', `${MESSAGE}\nhttps://svelte.dev/e/${'CODE'}`);
 }
