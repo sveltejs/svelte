@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-feat: add $state.opqaue rune
+feat: adds $state.opaque rune
