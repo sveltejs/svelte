@@ -98,7 +98,8 @@ export function CallExpression(node, context) {
 				(parent.type !== 'VariableDeclarator' ||
 					parent.id.type !== 'ArrayPattern' ||
 					parent.id.elements.length !== 2 ||
-					parent.id.elements[0]?.type !== 'Identifier')
+					parent.id.elements[0]?.type !== 'Identifier' ||
+					parent.id.elements[1]?.type !== 'Identifier')
 			) {
 				e.state_invalid_opaque_declaration(node);
 			}
