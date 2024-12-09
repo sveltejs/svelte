@@ -47,5 +47,5 @@ export const codes = CODES;
  * @param {string} PARAMETER
  */
 export function CODE(node, PARAMETER) {
-	w(node, 'CODE', MESSAGE);
+	w(node, 'CODE', `${MESSAGE}\nSee https://svelte.dev/e/${'CODE'} for more info`);
 }

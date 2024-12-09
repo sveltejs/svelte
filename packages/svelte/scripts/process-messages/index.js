@@ -355,10 +355,11 @@ function transform(name, dest) {
 						}
 
 						if (message.type === 'TemplateLiteral') {
-							quasi.value.raw += message.quasis[0].value.raw + q.value.raw;
+							quasi.value.raw += message.quasis[0].value.raw;
 							out.quasis.push(...message.quasis.slice(1));
 							out.expressions.push(...message.expressions);
 							quasi = message.quasis[message.quasis.length - 1];
+							quasi.value.raw += q.value.raw;
 							continue;
 						}
 					}

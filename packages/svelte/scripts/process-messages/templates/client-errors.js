@@ -7,11 +7,12 @@ import { DEV } from 'esm-env';
  */
 export function CODE(PARAMETER) {
 	if (DEV) {
-		const error = new Error(`${'CODE'}\n${MESSAGE}`);
+		const error = new Error(
+			`${'CODE'}\n${MESSAGE}\nSee https://svelte.dev/e/${'CODE'} for more info`
+		);
 		error.name = 'Svelte error';
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error('CODE');
+		throw new Error(`${'CODE'} (https://svelte.dev/e/${'CODE'})`);
 	}
 }
