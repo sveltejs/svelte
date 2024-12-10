@@ -409,6 +409,13 @@ declare module 'svelte' {
 	 * */
 	export function afterUpdate(fn: () => void): void;
 	/**
+	 * The `onFrame` function schedules a callback to run on `requestAnimationFrame`. It must be called inside an effect (e.g. during component initialisation).
+	 *
+	 * `onFrame` does not run inside [server-side components](https://svelte.dev/docs/svelte/svelte-server#render).
+	 *
+	 * */
+	export function onFrame<T>(fn: () => NotFunction<T> | Promise<NotFunction<T>> | (() => any)): void;
+	/**
 	 * Synchronously flushes any pending state changes and those that result from it.
 	 * */
 	export function flushSync(fn?: (() => void) | undefined): void;
