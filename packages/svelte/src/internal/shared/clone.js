@@ -61,7 +61,7 @@ function clone(value, cloned, path, paths, original = null) {
 		if (value instanceof Set) return /** @type {Snapshot<T>} */ (new Set(value));
 
 		if (is_array(value)) {
-			const copy = /** @type {Snapshot<any>} */ ([]);
+			const copy = /** @type {Snapshot<any>} */ (Array(value.length));
 			cloned.set(value, copy);
 
 			if (original !== null) {
@@ -69,7 +69,9 @@ function clone(value, cloned, path, paths, original = null) {
 			}
 
 			for (let i = 0; i < value.length; i += 1) {
-				copy.push(clone(value[i], cloned, DEV ? `${path}[${i}]` : path, paths));
+				if (value[i] !== undefined) {
+					copy[i] = clone(value[i], cloned, DEV ? `${path}[${i}]` : path, paths);
+				}
 			}
 
 			return copy;
