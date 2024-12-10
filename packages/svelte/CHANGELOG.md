@@ -1,5 +1,21 @@
 # svelte
 
+## 5.10.1
+
+### Patch Changes
+
+- fix: ensure snippet hoisting works in the correct scope ([#14642](https://github.com/sveltejs/svelte/pull/14642))
+
+- fix: ensure $state.snapshot clones holey arrays correctly ([#14657](https://github.com/sveltejs/svelte/pull/14657))
+
+- fix: restore input binding selection position ([#14649](https://github.com/sveltejs/svelte/pull/14649))
+
+- fix: transform everything that is not a selector inside `:global` ([#14577](https://github.com/sveltejs/svelte/pull/14577))
+
+- Overwrite Spring.#last_value when using .set() with {instant: true} ([#14656](https://github.com/sveltejs/svelte/pull/14656))
+
+- fix: don't emit assignment warnings for bindings ([#14651](https://github.com/sveltejs/svelte/pull/14651))
+
 ## 5.10.0
 
 ### Minor Changes
