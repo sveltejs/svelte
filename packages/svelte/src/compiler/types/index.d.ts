@@ -7,7 +7,6 @@ import type {
 } from 'estree';
 import type { SourceMap } from 'magic-string';
 import type { Scope } from '../phases/scope.js';
-import type { Css } from './css.js';
 import type { AST, Namespace } from './template.js';
 import type { ICompileDiagnostic } from '../utils/compile_diagnostic.js';
 
@@ -322,7 +321,6 @@ export interface ExpressionMetadata {
 }
 
 export * from './template.js';
-export { Css };
 
 // TODO this chain is a bit weird
 export { ReactiveStatement } from '../phases/types.js';

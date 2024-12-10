@@ -943,7 +943,7 @@ declare module 'svelte/compiler' {
 			options: SvelteOptions | null;
 			fragment: Fragment;
 			/** The parsed `<style>` element, if exists */
-			css: Css.StyleSheet | null;
+			css: AST.CSS.StyleSheet | null;
 			/** The parsed `<script>` element, if exists */
 			instance: Script | null;
 			/** The parsed `<script module>` element, if exists */
@@ -1307,9 +1307,9 @@ declare module 'svelte/compiler' {
 			| AST.Comment
 			| Block;
 
-		export type SvelteNode = Node | TemplateNode | AST.Fragment | Css.Node;
+		export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node;
 
-		export type { Css };
+		export type { _CSS as CSS };
 	}
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
@@ -1336,7 +1336,17 @@ declare module 'svelte/compiler' {
 	} | undefined): {
 		code: string;
 	};
-	namespace Css {
+	type ICompileDiagnostic = {
+		code: string;
+		message: string;
+		stack?: string;
+		filename?: string;
+		start?: Location;
+		end?: Location;
+		position?: [number, number];
+		frame?: string;
+	};
+	namespace _CSS {
 		export interface BaseNode {
 			start: number;
 			end: number;
@@ -1494,16 +1504,6 @@ declare module 'svelte/compiler' {
 			| SimpleSelector
 			| Declaration;
 	}
-	type ICompileDiagnostic = {
-		code: string;
-		message: string;
-		stack?: string;
-		filename?: string;
-		start?: Location;
-		end?: Location;
-		position?: [number, number];
-		frame?: string;
-	};
 
 	export {};
 }

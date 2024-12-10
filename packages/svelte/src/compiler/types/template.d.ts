@@ -1,4 +1,4 @@
-import type { Binding, Css, ExpressionMetadata } from '#compiler';
+import type { Binding, ExpressionMetadata } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
@@ -18,6 +18,7 @@ import type {
 	SequenceExpression
 } from 'estree';
 import type { Scope } from '../phases/scope';
+import type { _CSS } from './css';
 
 /**
  * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -66,7 +67,7 @@ export namespace AST {
 		options: SvelteOptions | null;
 		fragment: Fragment;
 		/** The parsed `<style>` element, if exists */
-		css: Css.StyleSheet | null;
+		css: AST.CSS.StyleSheet | null;
 		/** The parsed `<script>` element, if exists */
 		instance: Script | null;
 		/** The parsed `<script module>` element, if exists */
@@ -549,9 +550,9 @@ export namespace AST {
 		| AST.Comment
 		| Block;
 
-	export type SvelteNode = Node | TemplateNode | AST.Fragment | Css.Node;
+	export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node;
 
-	export type { Css as CSS };
+	export type { _CSS as CSS };
 }
 
 declare module 'estree' {
