@@ -1,7 +1,7 @@
 import { run_all } from '../../shared/utils.js';
 
 // Fallback for when requestIdleCallback is not available
-const request_idle_callback =
+export const request_idle_callback =
 	typeof requestIdleCallback === 'undefined'
 		? (/** @type {() => void} */ cb) => setTimeout(cb, 1)
 		: requestIdleCallback;
