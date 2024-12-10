@@ -606,7 +606,7 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
+	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
 	import type { SourceMap } from 'magic-string';
 	import type { Location } from 'locate-character';
 	/**
@@ -943,7 +943,7 @@ declare module 'svelte/compiler' {
 			options: SvelteOptions | null;
 			fragment: Fragment;
 			/** The parsed `<style>` element, if exists */
-			css: Css.StyleSheet | null;
+			css: AST.CSS.StyleSheet | null;
 			/** The parsed `<script>` element, if exists */
 			instance: Script | null;
 			/** The parsed `<script module>` element, if exists */
@@ -1257,37 +1257,60 @@ declare module 'svelte/compiler' {
 			content: Program;
 			attributes: Attribute[];
 		}
+
+		export type AttributeLike = Attribute | SpreadAttribute | Directive;
+
+		export type Directive =
+			| AST.AnimateDirective
+			| AST.BindDirective
+			| AST.ClassDirective
+			| AST.LetDirective
+			| AST.OnDirective
+			| AST.StyleDirective
+			| AST.TransitionDirective
+			| AST.UseDirective;
+
+		export type Block =
+			| AST.EachBlock
+			| AST.IfBlock
+			| AST.AwaitBlock
+			| AST.KeyBlock
+			| AST.SnippetBlock;
+
+		export type ElementLike =
+			| AST.Component
+			| AST.TitleElement
+			| AST.SlotElement
+			| AST.RegularElement
+			| AST.SvelteBody
+			| AST.SvelteBoundary
+			| AST.SvelteComponent
+			| AST.SvelteDocument
+			| AST.SvelteElement
+			| AST.SvelteFragment
+			| AST.SvelteHead
+			| AST.SvelteOptionsRaw
+			| AST.SvelteSelf
+			| AST.SvelteWindow
+			| AST.SvelteBoundary;
+
+		export type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
+
+		export type TemplateNode =
+			| AST.Root
+			| AST.Text
+			| Tag
+			| ElementLike
+			| AST.Attribute
+			| AST.SpreadAttribute
+			| Directive
+			| AST.Comment
+			| Block;
+
+		export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node;
+
+		export type { _CSS as CSS };
 	}
-
-	type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
-
-	type Directive =
-		| AST.AnimateDirective
-		| AST.BindDirective
-		| AST.ClassDirective
-		| AST.LetDirective
-		| AST.OnDirective
-		| AST.StyleDirective
-		| AST.TransitionDirective
-		| AST.UseDirective;
-
-	type Block = AST.EachBlock | AST.IfBlock | AST.AwaitBlock | AST.KeyBlock | AST.SnippetBlock;
-
-	type ElementLike =
-		| AST.Component
-		| AST.TitleElement
-		| AST.SlotElement
-		| AST.RegularElement
-		| AST.SvelteBody
-		| AST.SvelteComponent
-		| AST.SvelteDocument
-		| AST.SvelteElement
-		| AST.SvelteFragment
-		| AST.SvelteHead
-		| AST.SvelteOptionsRaw
-		| AST.SvelteSelf
-		| AST.SvelteWindow
-		| AST.SvelteBoundary;
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
 	 * For example, it can be used to convert a `<style lang="sass">` block into vanilla CSS.
@@ -1313,7 +1336,17 @@ declare module 'svelte/compiler' {
 	} | undefined): {
 		code: string;
 	};
-	namespace Css {
+	type ICompileDiagnostic = {
+		code: string;
+		message: string;
+		stack?: string;
+		filename?: string;
+		start?: Location;
+		end?: Location;
+		position?: [number, number];
+		frame?: string;
+	};
+	namespace _CSS {
 		export interface BaseNode {
 			start: number;
 			end: number;
@@ -1471,16 +1504,6 @@ declare module 'svelte/compiler' {
 			| SimpleSelector
 			| Declaration;
 	}
-	type ICompileDiagnostic = {
-		code: string;
-		message: string;
-		stack?: string;
-		filename?: string;
-		start?: Location;
-		end?: Location;
-		position?: [number, number];
-		frame?: string;
-	};
 
 	export {};
 }

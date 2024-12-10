@@ -7,8 +7,7 @@ import type {
 } from 'estree';
 import type { SourceMap } from 'magic-string';
 import type { Scope } from '../phases/scope.js';
-import type { Css } from './css.js';
-import type { AST, Namespace, SvelteNode } from './template.js';
+import type { AST, Namespace } from './template.js';
 import type { ICompileDiagnostic } from '../utils/compile_diagnostic.js';
 
 /** The return value of `compile` from `svelte/compiler` */
@@ -295,7 +294,7 @@ export interface Binding {
 		| AST.EachBlock
 		| AST.SnippetBlock;
 	is_called: boolean;
-	references: { node: Identifier; path: SvelteNode[] }[];
+	references: { node: Identifier; path: AST.SvelteNode[] }[];
 	mutated: boolean;
 	reassigned: boolean;
 	/** `true` if mutated _or_ reassigned */
@@ -322,7 +321,6 @@ export interface ExpressionMetadata {
 }
 
 export * from './template.js';
-export { Css };
 
 // TODO this chain is a bit weird
 export { ReactiveStatement } from '../phases/types.js';

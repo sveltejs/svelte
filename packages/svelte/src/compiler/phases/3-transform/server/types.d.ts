@@ -1,5 +1,5 @@
 import type { Expression, Statement, ModuleDeclaration, LabeledStatement } from 'estree';
-import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
+import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
 import type { StateField } from '../client/types.js';
@@ -25,14 +25,14 @@ export interface ComponentServerTransformState extends ServerTransformState {
 	readonly skip_hydration_boundaries: boolean;
 }
 
-export type Context = import('zimmerframe').Context<SvelteNode, ServerTransformState>;
-export type Visitors = import('zimmerframe').Visitors<SvelteNode, ServerTransformState>;
+export type Context = import('zimmerframe').Context<AST.SvelteNode, ServerTransformState>;
+export type Visitors = import('zimmerframe').Visitors<AST.SvelteNode, ServerTransformState>;
 
 export type ComponentContext = import('zimmerframe').Context<
-	SvelteNode,
+	AST.SvelteNode,
 	ComponentServerTransformState
 >;
 export type ComponentVisitors = import('zimmerframe').Visitors<
-	SvelteNode,
+	AST.SvelteNode,
 	ComponentServerTransformState
 >;

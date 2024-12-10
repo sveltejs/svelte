@@ -1,5 +1,5 @@
 /** @import { Expression } from 'estree' */
-/** @import { AST, SvelteNode } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { cannot_be_set_statically } from '../../../../../../utils.js';
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
@@ -10,7 +10,7 @@ import { build_template_chunk, build_update } from './utils.js';
  * Processes an array of template nodes, joining sibling text/expression nodes
  * (e.g. `{a} b {c}`) into a single update function. Along the way it creates
  * corresponding template node references these updates are applied to.
- * @param {SvelteNode[]} nodes
+ * @param {AST.SvelteNode[]} nodes
  * @param {(is_text: boolean) => Expression} initial
  * @param {boolean} is_element
  * @param {ComponentContext} context
@@ -124,7 +124,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 }
 
 /**
- * @param {SvelteNode} node
+ * @param {AST.SvelteNode} node
  * @param {ComponentContext["state"]} state
  */
 function is_static_element(node, state) {
