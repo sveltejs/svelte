@@ -119,7 +119,8 @@ const runes = [
 	{ snippet: '$effect.root(() => {\n\t${}\n})' },
 	{ snippet: '$state.snapshot(${})' },
 	{ snippet: '$effect.tracking()' },
-	{ snippet: '$inspect(${});', test: is_statement }
+	{ snippet: '$inspect(${});', test: is_statement },
+	{ snippet: '$inspect.trace(${})' }
 ];
 
 const options = runes.map(({ snippet, test }, i) => ({

@@ -431,6 +431,7 @@ const RUNES = /** @type {const} */ ([
 	'$effect.root',
 	'$inspect',
 	'$inspect().with',
+	'$inspect.trace',
 	'$host'
 ]);
 
