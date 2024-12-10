@@ -58,12 +58,12 @@ export const outerHeight = new ReactiveValue(
 export const screenLeft = new ReactiveValue(
 	BROWSER ? () => window.screenLeft : () => undefined,
 	(update) => {
-		let screenLeft = window.screenLeft;
+		let value = window.screenLeft;
 
 		let frame = requestAnimationFrame(function check() {
 			frame = requestAnimationFrame(check);
 
-			if (screenLeft !== (screenLeft = window.screenLeft)) {
+			if (value !== (value = window.screenLeft)) {
 				update();
 			}
 		});
@@ -80,12 +80,12 @@ export const screenLeft = new ReactiveValue(
 export const screenTop = new ReactiveValue(
 	BROWSER ? () => window.screenTop : () => undefined,
 	(update) => {
-		let screenTop = window.screenTop;
+		let value = window.screenTop;
 
 		let frame = requestAnimationFrame(function check() {
 			frame = requestAnimationFrame(check);
 
-			if (screenTop !== (screenTop = window.screenTop)) {
+			if (value !== (value = window.screenTop)) {
 				update();
 			}
 		});
