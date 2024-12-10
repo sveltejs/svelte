@@ -1999,152 +1999,16 @@ declare module 'svelte/reactivity/window' {
 	 * `devicePixelRatio.current` is a reactive view of `window.devicePixelRatio`. On the server it is `undefined`.
 	 * Note that behaviour differs between browsers — on Chrome it will respond to the current zoom level,
 	 * on Firefox and Safari it won't
-	 */
+	 * */
 	export const devicePixelRatio: {
-		"__#19@#dpr": Source<number | undefined>;
-		"__#19@#update"(): void;
-		readonly current: number;
+		get current(): number;
 	};
-	// For all the core internal objects, we use single-character property strings.
-	// This not only reduces code-size and parsing, but it also improves the performance
-	// when the JS VM JITs the code.
-
-	type ComponentContext = {
-		/** parent */
-		p: null | ComponentContext;
-		/** context */
-		c: null | Map<unknown, unknown>;
-		/** deferred effects */
-		e: null | Array<{
-			fn: () => void | (() => void);
-			effect: null | Effect;
-			reaction: null | Reaction;
-		}>;
-		/** mounted */
-		m: boolean;
-		/**
-		 * props — needed for legacy mode lifecycle functions, and for `createEventDispatcher`
-		 * @deprecated remove in 6.0
-		 */
-		s: Record<string, unknown>;
-		/**
-		 * exports (and props, if `accessors: true`) — needed for `createEventDispatcher`
-		 * @deprecated remove in 6.0
-		 */
-		x: Record<string, any> | null;
-		/**
-		 * legacy stuff
-		 * @deprecated remove in 6.0
-		 */
-		l: null | {
-			/** local signals (needed for beforeUpdate/afterUpdate) */
-			s: null | Source[];
-			/** update_callbacks */
-			u: null | {
-				/** afterUpdate callbacks */
-				a: Array<() => void>;
-				/** beforeUpdate callbacks */
-				b: Array<() => void>;
-				/** onMount callbacks */
-				m: Array<() => any>;
-			};
-			/** `$:` statements */
-			r1: any[];
-			/** This tracks whether `$:` statements have run in the current cycle, to ensure they only run once */
-			r2: Source<boolean>;
-		};
-		/**
-		 * dev mode only: the component function
-		 */
-		function?: any;
-	};
-
-	type Equals = (this: Value, value: unknown) => boolean;
-
-	type TemplateNode = Text | Element | Comment;
-
-	interface TransitionManager {
-		/** Whether the `global` modifier was used (i.e. `transition:fade|global`) */
-		is_global: boolean;
-		/** Called inside `resume_effect` */
-		in: () => void;
-		/** Called inside `pause_effect` */
-		out: (callback?: () => void) => void;
-		/** Called inside `destroy_effect` */
-		stop: () => void;
-	}
 	class ReactiveValue<T> {
 		
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
 		get current(): T;
 		#private;
 	}
-	interface Signal {
-		/** Flags bitmask */
-		f: number;
-		/** Write version */
-		version: number;
-	}
-
-	interface Value<V = unknown> extends Signal {
-		/** Signals that read from this signal */
-		reactions: null | Reaction[];
-		/** Equality function */
-		equals: Equals;
-		/** The latest value for this signal */
-		v: V;
-	}
-
-	interface Reaction extends Signal {
-		/** The associated component context */
-		ctx: null | ComponentContext;
-		/** The reaction function */
-		fn: null | Function;
-		/** Signals that this signal reads from */
-		deps: null | Value[];
-	}
-
-	interface Derived<V = unknown> extends Value<V>, Reaction {
-		/** The derived function */
-		fn: () => V;
-		/** Reactions created inside this signal */
-		children: null | Reaction[];
-		/** Parent effect or derived */
-		parent: Effect | Derived | null;
-	}
-
-	interface Effect extends Reaction {
-		/**
-		 * Branch effects store their start/end nodes so that they can be
-		 * removed when the effect is destroyed, or moved when an `each`
-		 * block is reconciled. In the case of a single text/element node,
-		 * `start` and `end` will be the same.
-		 */
-		nodes_start: null | TemplateNode;
-		nodes_end: null | TemplateNode;
-		/** Reactions created inside this signal */
-		deriveds: null | Derived[];
-		/** The effect function */
-		fn: null | (() => void | (() => void));
-		/** The teardown function returned from the effect function */
-		teardown: null | (() => void);
-		/** Transition managers created with `$.transition` */
-		transitions: null | TransitionManager[];
-		/** Next sibling child effect created inside the parent signal */
-		prev: null | Effect;
-		/** Next sibling child effect created inside the parent signal */
-		next: null | Effect;
-		/** First child effect created inside this signal */
-		first: null | Effect;
-		/** Last child effect created inside this signal */
-		last: null | Effect;
-		/** Parent effect */
-		parent: Effect | null;
-		/** Dev only */
-		component_function?: any;
-	}
-
-	type Source<V = unknown> = Value<V>;
 
 	export {};
 }
