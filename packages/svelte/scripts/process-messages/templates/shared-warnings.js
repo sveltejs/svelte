@@ -15,7 +15,6 @@ export function CODE(PARAMETER) {
 			normal
 		);
 	} else {
-		// TODO print a link to the documentation
 		console.warn(`https://svelte.dev/e/${'CODE'}`);
 	}
 }
