@@ -551,7 +551,7 @@ export namespace AST {
 
 	export type SvelteNode = Node | TemplateNode | AST.Fragment | Css.Node;
 
-	export type { Css };
+	export type { Css as CSS };
 }
 
 declare module 'estree' {
