@@ -70,7 +70,7 @@ function clone(value, cloned, path, paths, original = null) {
 
 			for (var i = 0; i < value.length; i += 1) {
 				var element = value[i];
-				if (i in element) {
+				if (i in value) {
 					copy[i] = clone(element, cloned, DEV ? `${path}[${i}]` : path, paths);
 				}
 			}
