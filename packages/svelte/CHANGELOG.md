@@ -1,5 +1,11 @@
 # svelte
 
+## 5.10.2
+
+### Patch Changes
+
+- fix: take into account registration state when setting custom element props ([#14508](https://github.com/sveltejs/svelte/pull/14508))
+
 ## 5.10.1
 
 ### Patch Changes
