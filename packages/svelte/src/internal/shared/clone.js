@@ -54,23 +54,24 @@ export function snapshot(value, skip_warning = false) {
  */
 function clone(value, cloned, path, paths, original = null) {
 	if (typeof value === 'object' && value !== null) {
-		const unwrapped = cloned.get(value);
+		var unwrapped = cloned.get(value);
 		if (unwrapped !== undefined) return unwrapped;
 
 		if (value instanceof Map) return /** @type {Snapshot<T>} */ (new Map(value));
 		if (value instanceof Set) return /** @type {Snapshot<T>} */ (new Set(value));
 
 		if (is_array(value)) {
-			const copy = /** @type {Snapshot<any>} */ (Array(value.length));
+			var copy = /** @type {Snapshot<any>} */ (Array(value.length));
 			cloned.set(value, copy);
 
 			if (original !== null) {
 				cloned.set(original, copy);
 			}
 
-			for (let i = 0; i < value.length; i += 1) {
-				if (value[i] !== undefined) {
-					copy[i] = clone(value[i], cloned, DEV ? `${path}[${i}]` : path, paths);
+			for (var i = 0; i < value.length; i += 1) {
+				var element = value[i];
+				if (element !== undefined) {
+					copy[i] = clone(element, cloned, DEV ? `${path}[${i}]` : path, paths);
 				}
 			}
 
@@ -79,7 +80,7 @@ function clone(value, cloned, path, paths, original = null) {
 
 		if (get_prototype_of(value) === object_prototype) {
 			/** @type {Snapshot<any>} */
-			const copy = {};
+			copy = {};
 			cloned.set(value, copy);
 
 			if (original !== null) {
