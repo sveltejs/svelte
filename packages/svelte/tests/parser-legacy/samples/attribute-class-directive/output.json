@@ -15,6 +15,7 @@
 						"end": 22,
 						"type": "Class",
 						"name": "foo",
+						"modifiers": [],
 						"expression": {
 							"type": "Identifier",
 							"start": 16,
@@ -30,8 +31,7 @@
 								}
 							},
 							"name": "isFoo"
-						},
-						"modifiers": []
+						}
 					}
 				],
 				"children": []

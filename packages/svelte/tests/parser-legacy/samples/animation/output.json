@@ -20,8 +20,8 @@
 								"end": 50,
 								"type": "Animation",
 								"name": "flip",
-								"expression": null,
-								"modifiers": []
+								"modifiers": [],
+								"expression": null
 							}
 						],
 						"children": [

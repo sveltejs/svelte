@@ -15,8 +15,8 @@
 						"end": 20,
 						"type": "Action",
 						"name": "autofocus",
-						"expression": null,
-						"modifiers": []
+						"modifiers": [],
+						"expression": null
 					}
 				],
 				"children": []

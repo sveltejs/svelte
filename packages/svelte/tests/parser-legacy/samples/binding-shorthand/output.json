@@ -22,13 +22,13 @@
 						"end": 46,
 						"type": "Binding",
 						"name": "foo",
+						"modifiers": [],
 						"expression": {
 							"start": 43,
 							"end": 46,
 							"type": "Identifier",
 							"name": "foo"
-						},
-						"modifiers": []
+						}
 					}
 				],
 				"children": []
