@@ -335,6 +335,7 @@ var setters_cache = new Map();
 /** @param {Element} element */
 function get_setters(element) {
 	var setters = setters_cache.get(element.nodeName);
+	if (setters) return setters;
 	setters_cache.set(element.nodeName, (setters = []));
 
 	var descriptors;
