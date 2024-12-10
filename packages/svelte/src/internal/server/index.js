@@ -224,6 +224,22 @@ export function spread_attributes(attrs, classes, styles, flags = 0) {
 
 		var value = attrs[name];
 
+		if (is_html) {
+			if (name === 'defaultvalue') {
+				if (attrs.value == null) {
+					name = 'value';
+				} else {
+					continue;
+				}
+			} else if (name === 'defaultchecked') {
+				if (attrs.checked == null) {
+					name = 'checked';
+				} else {
+					continue;
+				}
+			}
+		}
+
 		if (lowercase) {
 			name = name.toLowerCase();
 		}

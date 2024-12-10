@@ -46,7 +46,7 @@ export function build_element_attributes(node, context) {
 	/** @type {Expression | null} */
 	let content = null;
 
-	let has_spread = false;
+	let needs_spread = false;
 	// Use the index to keep the attributes order which is important for spreading
 	let class_index = -1;
 	let style_index = -1;
@@ -82,8 +82,28 @@ export function build_element_attributes(node, context) {
 				) {
 					events_to_capture.add(attribute.name);
 				}
-				// the defaultValue/defaultChecked properties don't exist as attributes
-			} else if (attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked') {
+			} else if (
+				(node.name === 'input' || node.name === 'textarea') &&
+				(attribute.name === 'defaultValue' || attribute.name === 'defaultChecked')
+			) {
+				// If there's a defaultValue but not value attribute, we turn it into a value attribute (same for checked).
+				// If we can't, then we need to use a spread in order to be able to detect at runtime whether or not
+				// the value/checked value is nullish, in which case defaultValue/defaultChecked should be used.
+				const replacement_name = attribute.name === 'defaultValue' ? 'value' : 'checked';
+				if (
+					!node.attributes.some(
+						(attr) =>
+							attr.type === 'SpreadAttribute' ||
+							((attr.type === 'BindDirective' || attr.type === 'Attribute') &&
+								attr.name === replacement_name)
+					)
+				) {
+					attributes.push({ ...attribute, name: replacement_name });
+				} else {
+					needs_spread = true;
+					attributes.push(attribute);
+				}
+			} else {
 				if (attribute.name === 'class') {
 					class_index = attributes.length;
 				} else if (attribute.name === 'style') {
@@ -173,7 +193,7 @@ export function build_element_attributes(node, context) {
 			}
 		} else if (attribute.type === 'SpreadAttribute') {
 			attributes.push(attribute);
-			has_spread = true;
+			needs_spread = true;
 			if (is_load_error_element(node.name)) {
 				events_to_capture.add('onload');
 				events_to_capture.add('onerror');
@@ -194,7 +214,7 @@ export function build_element_attributes(node, context) {
 		}
 	}
 
-	if (class_directives.length > 0 && !has_spread) {
+	if (class_directives.length > 0 && !needs_spread) {
 		const class_attribute = build_class_directives(
 			class_directives,
 			/** @type {AST.Attribute | null} */ (attributes[class_index] ?? null)
@@ -204,7 +224,7 @@ export function build_element_attributes(node, context) {
 		}
 	}
 
-	if (style_directives.length > 0 && !has_spread) {
+	if (style_directives.length > 0 && !needs_spread) {
 		build_style_directives(
 			style_directives,
 			/** @type {AST.Attribute | null} */ (attributes[style_index] ?? null),
@@ -215,7 +235,7 @@ export function build_element_attributes(node, context) {
 		}
 	}
 
-	if (has_spread) {
+	if (needs_spread) {
 		build_element_spread_attributes(node, attributes, style_directives, class_directives, context);
 	} else {
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {

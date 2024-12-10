@@ -344,36 +344,58 @@ export function set_attributes(
 			element.style.cssText = value + '';
 		} else if (key === 'autofocus') {
 			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
-		} else if (key === '__value' || (key === 'value' && value != null)) {
-			// @ts-ignore
-			element.value = element[key] = element.__value = value;
-		} else if (key === 'selected' && is_option_element) {
+		} else if (
+			key === '__value' ||
+			(key === 'value' &&
+				// For <input> element we don't want to fall through to removeAttribute below,
+				// because that attribute corresponds to the defaultValue, not the value property
+				(value != null || !is_custom_element))
+		) {
+			set_value(element, value);
+		} else if (key === 'checked' && (value != null || !is_custom_element)) {
+			set_checked(element, value);
+		} else if (is_option_element && key === 'selected') {
 			set_selected(/** @type {HTMLOptionElement} */ (element), value);
 		} else {
 			var name = key;
 			if (!preserve_attribute_case) {
 				name = normalize_attribute(name);
 			}
-			let is_default_value_or_checked = name === 'defaultValue' || name === 'defaultChecked';
 
-			if (value == null && !is_custom_element && !is_default_value_or_checked) {
+			if (value == null && !is_custom_element && key !== 'checked') {
 				attributes[key] = null;
-				// if we remove the value/checked attributes this also for some reasons reset
-				// the default value so we need to keep track of it and reassign it after the remove
-				let default_value_reset = /**@type {HTMLInputElement}*/ (element).defaultValue;
-				let default_checked_reset = /**@type {HTMLInputElement}*/ (element).defaultChecked;
 				element.removeAttribute(key);
-				if (key === 'value') {
-					/**@type {HTMLInputElement}*/ (element).defaultValue = default_value_reset;
-				} else if (key === 'checked') {
-					/**@type {HTMLInputElement}*/ (element).defaultChecked = default_checked_reset;
-				}
 			} else if (
-				is_default_value_or_checked ||
-				(setters.includes(name) && (is_custom_element || typeof value !== 'string'))
+				// is_default_value_or_checked ||
+				setters.includes(name) &&
+				(is_custom_element ||
+					typeof value !== 'string' ||
+					name === 'defaultValue' ||
+					name === 'defaultChecked')
 			) {
+				// if we adjust the value/checked attributes this also for some reasons reset
+				// the default value so we need to keep track of it and reassign it after the remove
+				let default_value_reset;
+				let default_checked_reset;
+				if (hydrating) {
+					default_value_reset = /**@type {HTMLInputElement}*/ (element).value;
+					default_checked_reset = /**@type {HTMLInputElement}*/ (element).checked;
+				}
+
 				// @ts-ignore
 				element[name] = value;
+
+				if (hydrating) {
+					if (key === 'defaultValue') {
+						/**@type {HTMLInputElement}*/ (element).value = /** @type {string} */ (
+							default_value_reset
+						);
+					} else if (key === 'defaultChecked') {
+						/**@type {HTMLInputElement}*/ (element).checked = /** @type {boolean} */ (
+							default_checked_reset
+						);
+					}
+				}
 			} else if (typeof value !== 'function') {
 				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
 					if (!skip_warning) check_src_in_dev_hydration(element, name, value ?? '');
