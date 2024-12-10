@@ -5,7 +5,7 @@ export default test({
 	html: `<button>items: null</button>`,
 
 	test({ assert, target }) {
-		const [btn1, btn2] = target.querySelectorAll('button');
+		const [btn1] = target.querySelectorAll('button');
 
 		flushSync(() => btn1.click());
 		assert.htmlEqual(target.innerHTML, `<button>items: [0]</button>`);
