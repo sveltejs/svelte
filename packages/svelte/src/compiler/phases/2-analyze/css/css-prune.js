@@ -69,7 +69,11 @@ export function prune(stylesheet, element) {
 			seen.clear();
 
 			if (
-				apply_selector(selectors, /** @type {Compiler.AST.CSS.Rule} */ (node.metadata.rule), element)
+				apply_selector(
+					selectors,
+					/** @type {Compiler.AST.CSS.Rule} */ (node.metadata.rule),
+					element
+				)
 			) {
 				node.metadata.used = true;
 			}
