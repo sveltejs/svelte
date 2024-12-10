@@ -628,12 +628,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		SnippetBlock(node, context) {
 			const state = context.state;
-			// Special-case for root-level snippets: they become part of the instance scope
-			const is_top_level = !context.path.at(-2);
 			let scope = state.scope;
-			if (is_top_level) {
-				scope = /** @type {Scope} */ (parent);
-			}
+
 			scope.declare(node.expression, 'normal', 'function', node);
 
 			const child_scope = state.scope.child();
