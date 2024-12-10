@@ -97,6 +97,21 @@ export const screenTop = new ReactiveValue(
 );
 
 /**
+ * `online.current` is a reactive view of `navigator.onLine`. On the server it is `undefined`
+ */
+export const online = new ReactiveValue(
+	BROWSER ? () => navigator.onLine : () => undefined,
+	(update) => {
+		const unsub_online = on(window, 'online', update);
+		const unsub_offline = on(window, 'offline', update);
+		return () => {
+			unsub_online();
+			unsub_offline();
+		};
+	}
+);
+
+/**
  * `devicePixelRatio.current` is a reactive view of `window.devicePixelRatio`. On the server it is `undefined`.
  * Note that behaviour differs between browsers — on Chrome it will respond to the current zoom level,
  * on Firefox and Safari it won't

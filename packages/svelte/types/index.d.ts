@@ -1996,6 +1996,10 @@ declare module 'svelte/reactivity/window' {
 	 */
 	export const screenTop: ReactiveValue<number | undefined>;
 	/**
+	 * `online.current` is a reactive view of `navigator.onLine`. On the server it is `undefined`
+	 */
+	export const online: ReactiveValue<boolean | undefined>;
+	/**
 	 * `devicePixelRatio.current` is a reactive view of `window.devicePixelRatio`. On the server it is `undefined`.
 	 * Note that behaviour differs between browsers — on Chrome it will respond to the current zoom level,
 	 * on Firefox and Safari it won't
