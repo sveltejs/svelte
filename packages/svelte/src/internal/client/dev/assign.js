@@ -1,3 +1,4 @@
+import { untrack } from '../runtime.js';
 import * as w from '../warnings.js';
 import { sanitize_location } from './location.js';
 
@@ -23,7 +24,12 @@ function compare(a, b, property, location) {
  * @param {string} location
  */
 export function assign(object, property, value, location) {
-	return compare((object[property] = value), object[property], property, location);
+	return compare(
+		(object[property] = value),
+		untrack(() => object[property]),
+		property,
+		location
+	);
 }
 
 /**
@@ -33,7 +39,12 @@ export function assign(object, property, value, location) {
  * @param {string} location
  */
 export function assign_and(object, property, value, location) {
-	return compare((object[property] &&= value), object[property], property, location);
+	return compare(
+		(object[property] &&= value),
+		untrack(() => object[property]),
+		property,
+		location
+	);
 }
 
 /**
@@ -43,7 +54,12 @@ export function assign_and(object, property, value, location) {
  * @param {string} location
  */
 export function assign_or(object, property, value, location) {
-	return compare((object[property] ||= value), object[property], property, location);
+	return compare(
+		(object[property] ||= value),
+		untrack(() => object[property]),
+		property,
+		location
+	);
 }
 
 /**
@@ -53,5 +69,10 @@ export function assign_or(object, property, value, location) {
  * @param {string} location
  */
 export function assign_nullish(object, property, value, location) {
-	return compare((object[property] ??= value), object[property], property, location);
+	return compare(
+		(object[property] ??= value),
+		untrack(() => object[property]),
+		property,
+		location
+	);
 }
