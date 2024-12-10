@@ -282,6 +282,7 @@ export class Spring {
 			this.#task?.abort();
 			this.#task = null;
 			set(this.#current, set(this.#target, value));
+			this.#last_value = value;
 			return Promise.resolve();
 		}
 
