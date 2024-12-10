@@ -25,6 +25,7 @@
 						"end": 147,
 						"type": "OnDirective",
 						"name": "click",
+						"modifiers": [],
 						"expression": {
 							"type": "ArrowFunctionExpression",
 							"start": 73,
@@ -315,8 +316,7 @@
 									}
 								]
 							}
-						},
-						"modifiers": []
+						}
 					}
 				],
 				"fragment": {
