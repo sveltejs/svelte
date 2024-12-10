@@ -347,10 +347,6 @@ export function set_attributes(
 		} else if (key === '__value' || (key === 'value' && value != null)) {
 			// @ts-ignore
 			element.value = element[key] = element.__value = value;
-		} else if (key === 'defaultValue') {
-			/** @type {HTMLInputElement} */ (element).defaultValue = value;
-		} else if (key === 'defaultChecked') {
-			/** @type {HTMLInputElement} */ (element).defaultChecked = value;
 		} else if (key === 'selected' && is_option_element) {
 			set_selected(/** @type {HTMLOptionElement} */ (element), value);
 		} else {
@@ -358,8 +354,12 @@ export function set_attributes(
 			if (!preserve_attribute_case) {
 				name = normalize_attribute(name);
 			}
-			if (value == null && !is_custom_element) {
+			let is_default_value_or_checked = name === 'defaultValue' || name === 'defaultChecked';
+
+			if (value == null && !is_custom_element && !is_default_value_or_checked) {
 				attributes[key] = null;
+				// if we remove the value/checked attributes this also for some reasons reset
+				// the default value so we need to keep track of it and reassign it after the remove
 				let default_value_reset = /**@type {HTMLInputElement}*/ (element).defaultValue;
 				let default_checked_reset = /**@type {HTMLInputElement}*/ (element).defaultChecked;
 				element.removeAttribute(key);
@@ -368,7 +368,10 @@ export function set_attributes(
 				} else if (key === 'checked') {
 					/**@type {HTMLInputElement}*/ (element).defaultChecked = default_checked_reset;
 				}
-			} else if (setters.includes(name) && (is_custom_element || typeof value !== 'string')) {
+			} else if (
+				is_default_value_or_checked ||
+				(setters.includes(name) && (is_custom_element || typeof value !== 'string'))
+			) {
 				// @ts-ignore
 				element[name] = value;
 			} else if (typeof value !== 'function') {
