@@ -1,5 +1,5 @@
 /** @import { AssignmentExpression, AssignmentOperator, Expression, Pattern } from 'estree' */
-/** @import { SvelteNode } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context, ServerTransformState } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
 import { build_assignment_value } from '../../../../utils/ast.js';
@@ -18,7 +18,7 @@ export function AssignmentExpression(node, context) {
  * @param {AssignmentOperator} operator
  * @param {Pattern} left
  * @param {Expression} right
- * @param {import('zimmerframe').Context<SvelteNode, ServerTransformState>} context
+ * @param {import('zimmerframe').Context<AST.SvelteNode, ServerTransformState>} context
  * @returns {Expression | null}
  */
 function build_assignment(operator, left, right, context) {

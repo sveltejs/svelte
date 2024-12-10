@@ -1,17 +1,17 @@
-import type { AST, Binding, Css, SvelteNode } from '#compiler';
+import type { AST, Binding } from '#compiler';
 import type { Identifier, LabeledStatement, Node, Program } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
 
 export interface Js {
 	ast: Program;
 	scope: Scope;
-	scopes: Map<SvelteNode, Scope>;
+	scopes: Map<AST.SvelteNode, Scope>;
 }
 
 export interface Template {
 	ast: AST.Fragment;
 	scope: Scope;
-	scopes: Map<SvelteNode, Scope>;
+	scopes: Map<AST.SvelteNode, Scope>;
 }
 
 export interface ReactiveStatement {
@@ -66,7 +66,7 @@ export interface ComponentAnalysis extends Analysis {
 	binding_groups: Map<[key: string, bindings: Array<Binding | null>], Identifier>;
 	slot_names: Map<string, AST.SlotElement>;
 	css: {
-		ast: Css.StyleSheet | null;
+		ast: AST.CSS.StyleSheet | null;
 		hash: string;
 		keyframes: string[];
 	};
