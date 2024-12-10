@@ -201,7 +201,7 @@ export function set_xlink_attribute(dom, attribute, value) {
 }
 
 /**
- * @param {any} node
+ * @param {HTMLElement} node
  * @param {string} prop
  * @param {any} value
  */
@@ -216,10 +216,21 @@ export function set_custom_element_data(node, prop, value) {
 	set_active_reaction(null);
 	set_active_effect(null);
 	try {
-		if (get_setters(node).includes(prop)) {
+		if (
+			// Don't compute setters for custom elements while they aren't registered yet,
+			// because during their upgrade/instantiation they might add more setters.
+			// Instead, fall back to a simple "an object, then set as property" heuristic.
+			setters_cache.has(node.nodeName) || customElements.get(node.tagName.toLowerCase())
+				? get_setters(node).includes(prop)
+				: value && typeof value === 'object'
+		) {
+			// @ts-expect-error
 			node[prop] = value;
 		} else {
-			set_attribute(node, prop, value);
+			// We did getters etc checks already, stringify before passing to set_attribute
+			// to ensure it doesn't invoke the same logic again, and potentially populating
+			// the setters cache too early.
+			set_attribute(node, prop, value == null ? value : String(value));
 		}
 	} finally {
 		set_active_reaction(previous_reaction);
@@ -384,8 +395,9 @@ function get_setters(element) {
 	var setters = setters_cache.get(element.nodeName);
 	if (setters) return setters;
 	setters_cache.set(element.nodeName, (setters = []));
+
 	var descriptors;
-	var proto = get_prototype_of(element);
+	var proto = element; // In the case of custom elements there might be setters on the instance
 	var element_proto = Element.prototype;
 
 	// Stop at Element, from there on there's only unnecessary setters we're not interested in
