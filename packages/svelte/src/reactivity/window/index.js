@@ -1,7 +1,7 @@
 import { BROWSER } from 'esm-env';
 import { on } from '../../events/index.js';
 import { ReactiveValue } from '../reactive-value.js';
-import { get } from '../../internal/client';
+import { get } from '../../internal/client/index.js';
 import { set, source } from '../../internal/client/reactivity/sources.js';
 
 /**
