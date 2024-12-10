@@ -13,7 +13,6 @@ export function invalid_default_snippet() {
 		error.name = 'Svelte error';
 		throw error;
 	} else {
-		// TODO print a link to the documentation
 		throw new Error(`https://svelte.dev/e/invalid_default_snippet`);
 	}
 }
@@ -30,7 +29,6 @@ export function lifecycle_outside_component(name) {
 		error.name = 'Svelte error';
 		throw error;
 	} else {
-		// TODO print a link to the documentation
 		throw new Error(`https://svelte.dev/e/lifecycle_outside_component`);
 	}
 }
@@ -47,7 +45,6 @@ export function store_invalid_shape(name) {
 		error.name = 'Svelte error';
 		throw error;
 	} else {
-		// TODO print a link to the documentation
 		throw new Error(`https://svelte.dev/e/store_invalid_shape`);
 	}
 }
@@ -63,7 +60,6 @@ export function svelte_element_invalid_this_value() {
 		error.name = 'Svelte error';
 		throw error;
 	} else {
-		// TODO print a link to the documentation
 		throw new Error(`https://svelte.dev/e/svelte_element_invalid_this_value`);
 	}
 }
