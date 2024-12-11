@@ -319,10 +319,30 @@ export default function element(parser) {
 	parser.append(element);
 
 	const self_closing = parser.eat('/') || is_void(name);
+	const closed = parser.eat('>', true, false);
 
-	parser.eat('>', true);
+	// Loose parsing mode
+	if (!closed) {
+		// We may have eaten an opening `<` of the next element and treated is as an attribute...
+		const last = element.attributes.at(-1);
+		if (last?.type === 'Attribute' && last.name === '<') {
+			parser.index = last.start;
+			element.attributes.pop();
+		}
+		// ... or we may have eaten part of a following block
+		else {
+			const prev_1 = parser.template[parser.index - 1];
+			const prev_2 = parser.template[parser.index - 2];
+			const current = parser.template[parser.index];
+			if (prev_2 === '{' && prev_1 === '/') {
+				parser.index -= 2;
+			} else if (prev_1 === '{' && (current === '#' || current === '@' || current === ':')) {
+				parser.index -= 1;
+			}
+		}
+	}
 
-	if (self_closing) {
+	if (self_closing || !closed) {
 		// don't push self-closing elements onto the stack
 		element.end = parser.index;
 	} else if (name === 'textarea') {
@@ -464,6 +484,14 @@ function read_attribute(parser) {
 			const name = parser.read_identifier();
 
 			if (name === null) {
+				if (
+					parser.loose &&
+					(parser.match('#') || parser.match('/') || parser.match('@') || parser.match(':'))
+				) {
+					// We're likely in an unclosed opening tag and did read part of a block.
+					// Return null to not crash the parser so it can continue with closing the tag.
+					return null;
+				}
 				e.attribute_empty_shorthand(start);
 			}
 
@@ -740,5 +768,9 @@ function read_sequence(parser, done, location) {
 		}
 	}
 
-	e.unexpected_eof(parser.template.length);
+	if (parser.loose) {
+		return chunks;
+	} else {
+		e.unexpected_eof(parser.template.length);
+	}
 }
