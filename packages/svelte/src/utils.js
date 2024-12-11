@@ -447,5 +447,5 @@ const RAW_TEXT_ELEMENTS = /** @type {const} */ (['textarea', 'script', 'style', 
 
 /** @param {string} name */
 export function is_raw_text_element(name) {
-	return RAW_TEXT_ELEMENTS.includes(name);
+	return RAW_TEXT_ELEMENTS.includes(/** @type {RAW_TEXT_ELEMENTS[number]} */ (name));
 }
