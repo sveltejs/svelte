@@ -142,7 +142,7 @@ const visitors = {
 
 		// keep empty rules in dev, because it's convenient to
 		// see them in devtools
-		if (!dev && is_empty(node)) {
+		if (!dev && is_empty(node, is_in_global_block(path))) {
 			if (state.minify) {
 				state.code.remove(node.start, node.end);
 			} else {
@@ -398,8 +398,11 @@ function remove_preceding_whitespace(end, state) {
 	if (start < end) state.code.remove(start, end);
 }
 
-/** @param {Css.Rule} rule */
-function is_empty(rule) {
+/**
+ *  @param {Css.Rule} rule
+ * @param {boolean} is_in_global_block
+ */
+function is_empty(rule, is_in_global_block) {
 	if (rule.metadata.is_global_block) {
 		return rule.block.children.length === 0;
 	}
@@ -410,7 +413,9 @@ function is_empty(rule) {
 		}
 
 		if (child.type === 'Rule') {
-			if (is_used(child) && !is_empty(child)) return false;
+			if ((is_used(child) || is_in_global_block) && !is_empty(child, is_in_global_block)) {
+				return false;
+			}
 		}
 
 		if (child.type === 'Atrule') {
