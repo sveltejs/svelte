@@ -2,7 +2,7 @@
 	"html": {
 		"type": "Fragment",
 		"start": 0,
-		"end": 140,
+		"end": 164,
 		"children": [
 			{
 				"type": "Element",
@@ -200,6 +200,42 @@
 					}
 				],
 				"children": []
+			},
+			{
+				"type": "Text",
+				"start": 140,
+				"end": 145,
+				"raw": "\n\nasd",
+				"data": "\n\nasd"
+			},
+			{
+				"type": "MustacheTag",
+				"start": 145,
+				"end": 149,
+				"expression": {
+					"type": "Identifier",
+					"start": 146,
+					"end": 148,
+					"name": ""
+				}
+			},
+			{
+				"type": "Text",
+				"start": 149,
+				"end": 153,
+				"raw": "asd\n",
+				"data": "asd\n"
+			},
+			{
+				"type": "MustacheTag",
+				"start": 153,
+				"end": 164,
+				"expression": {
+					"type": "Identifier",
+					"start": 154,
+					"end": 163,
+					"name": ""
+				}
 			}
 		]
 	}

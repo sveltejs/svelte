@@ -2,7 +2,7 @@
 	"css": null,
 	"js": [],
 	"start": 0,
-	"end": 140,
+	"end": 164,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
@@ -210,6 +210,42 @@
 				"fragment": {
 					"type": "Fragment",
 					"nodes": []
+				}
+			},
+			{
+				"type": "Text",
+				"start": 140,
+				"end": 145,
+				"raw": "\n\nasd",
+				"data": "\n\nasd"
+			},
+			{
+				"type": "ExpressionTag",
+				"start": 145,
+				"end": 149,
+				"expression": {
+					"type": "Identifier",
+					"start": 146,
+					"end": 148,
+					"name": ""
+				}
+			},
+			{
+				"type": "Text",
+				"start": 149,
+				"end": 153,
+				"raw": "asd\n",
+				"data": "asd\n"
+			},
+			{
+				"type": "ExpressionTag",
+				"start": 153,
+				"end": 164,
+				"expression": {
+					"type": "Identifier",
+					"start": 154,
+					"end": 163,
+					"name": ""
 				}
 			}
 		]
