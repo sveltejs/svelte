@@ -53,7 +53,7 @@ export const outerHeight = new ReactiveValue(
 );
 
 /**
- * `screenLeft.current` is a reactive view of `window.screenLeft`. On the server it is `undefined`.
+ * `screenLeft.current` is a reactive view of `window.screenLeft`. It is updated inside a `requestAnimationFrame` callback. On the server it is `undefined`.
  */
 export const screenLeft = new ReactiveValue(
 	BROWSER ? () => window.screenLeft : () => undefined,
@@ -75,7 +75,7 @@ export const screenLeft = new ReactiveValue(
 );
 
 /**
- * `screenTop.current` is a reactive view of `window.screenTop`. On the server it is `undefined`.
+ * `screenTop.current` is a reactive view of `window.screenTop`. It is updated inside a `requestAnimationFrame` callback. On the server it is `undefined`.
  */
 export const screenTop = new ReactiveValue(
 	BROWSER ? () => window.screenTop : () => undefined,

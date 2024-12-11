@@ -1988,11 +1988,11 @@ declare module 'svelte/reactivity/window' {
 	 */
 	export const outerHeight: ReactiveValue<number | undefined>;
 	/**
-	 * `screenLeft.current` is a reactive view of `window.screenLeft`. On the server it is `undefined`.
+	 * `screenLeft.current` is a reactive view of `window.screenLeft`. It is updated inside a `requestAnimationFrame` callback. On the server it is `undefined`.
 	 */
 	export const screenLeft: ReactiveValue<number | undefined>;
 	/**
-	 * `screenTop.current` is a reactive view of `window.screenTop`. On the server it is `undefined`.
+	 * `screenTop.current` is a reactive view of `window.screenTop`. It is updated inside a `requestAnimationFrame` callback. On the server it is `undefined`.
 	 */
 	export const screenTop: ReactiveValue<number | undefined>;
 	/**
