@@ -12,7 +12,9 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 		.replace(/\s+$/, '')
 		.replace(/\r/g, '');
 
-	const actual = JSON.parse(JSON.stringify(parse(input)));
+	const actual = JSON.parse(
+		JSON.stringify(parse(input, { loose: cwd.split('/').pop()!.startsWith('loose-') }))
+	);
 
 	// run `UPDATE_SNAPSHOTS=true pnpm test parser` to update parser tests
 	if (process.env.UPDATE_SNAPSHOTS) {

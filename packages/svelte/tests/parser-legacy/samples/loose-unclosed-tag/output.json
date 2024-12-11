@@ -1,0 +1,119 @@
+{
+	"html": {
+		"type": "Fragment",
+		"start": 0,
+		"end": 59,
+		"children": [
+			{
+				"type": "Element",
+				"start": 0,
+				"end": 20,
+				"name": "div",
+				"attributes": [],
+				"children": [
+					{
+						"type": "Text",
+						"start": 5,
+						"end": 7,
+						"raw": "\n\t",
+						"data": "\n\t"
+					},
+					{
+						"type": "InlineComponent",
+						"start": 7,
+						"end": 14,
+						"name": "Comp",
+						"attributes": [],
+						"children": [
+							{
+								"type": "Text",
+								"start": 13,
+								"end": 14,
+								"raw": "\n",
+								"data": "\n"
+							}
+						]
+					}
+				]
+			},
+			{
+				"type": "Text",
+				"start": 20,
+				"end": 22,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "Element",
+				"start": 22,
+				"end": 42,
+				"name": "div",
+				"attributes": [],
+				"children": [
+					{
+						"type": "Text",
+						"start": 27,
+						"end": 29,
+						"raw": "\n\t",
+						"data": "\n\t"
+					},
+					{
+						"type": "Element",
+						"start": 29,
+						"end": 36,
+						"name": "span",
+						"attributes": [],
+						"children": [
+							{
+								"type": "Text",
+								"start": 35,
+								"end": 36,
+								"raw": "\n",
+								"data": "\n"
+							}
+						]
+					}
+				]
+			},
+			{
+				"type": "Text",
+				"start": 42,
+				"end": 44,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "Element",
+				"start": 44,
+				"end": 59,
+				"name": "div",
+				"attributes": [],
+				"children": [
+					{
+						"type": "Text",
+						"start": 49,
+						"end": 50,
+						"raw": "\n",
+						"data": "\n"
+					},
+					{
+						"type": "Element",
+						"start": 50,
+						"end": 59,
+						"name": "p",
+						"attributes": [],
+						"children": [
+							{
+								"type": "Text",
+								"start": 53,
+								"end": 55,
+								"raw": "hi",
+								"data": "hi"
+							}
+						]
+					}
+				]
+			}
+		]
+	}
+}

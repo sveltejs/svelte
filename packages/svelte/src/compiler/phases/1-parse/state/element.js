@@ -80,7 +80,7 @@ export default function element(parser) {
 
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
 		while (/** @type {AST.RegularElement} */ (parent).name !== name) {
-			if (parent.type !== 'RegularElement') {
+			if (parent.type !== 'RegularElement' && !parser.loose) {
 				if (parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name) {
 					e.element_invalid_closing_tag_autoclosed(start, name, parser.last_auto_closed_tag.reason);
 				} else {
