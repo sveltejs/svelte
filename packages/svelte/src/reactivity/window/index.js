@@ -124,7 +124,7 @@ export const online = new ReactiveValue(
  * `devicePixelRatio.current` is a reactive view of `window.devicePixelRatio`. On the server it is `undefined`.
  * Note that behaviour differs between browsers — on Chrome it will respond to the current zoom level,
  * on Firefox and Safari it won't.
- * @type {{ get current(): number }}
+ * @type {{ get current(): number | undefined }}
  * @since 5.11.0
  */
 export const devicePixelRatio = /* @__PURE__ */ new (class DevicePixelRatio {
@@ -144,11 +144,13 @@ export const devicePixelRatio = /* @__PURE__ */ new (class DevicePixelRatio {
 	}
 
 	constructor() {
-		this.#update();
+		if (BROWSER) {
+			this.#update();
+		}
 	}
 
 	get current() {
 		get(this.#dpr);
-		return window.devicePixelRatio;
+		return BROWSER ? window.devicePixelRatio : undefined;
 	}
 })();
