@@ -6,5 +6,9 @@
 	<span>
 </div>
 
+{#if foo}
+	<div>
+{/if}
+
 <div>
 <p>hi</p>

@@ -2,7 +2,7 @@
 	"html": {
 		"type": "Fragment",
 		"start": 0,
-		"end": 59,
+		"end": 83,
 		"children": [
 			{
 				"type": "Element",
@@ -83,30 +83,76 @@
 				"data": "\n\n"
 			},
 			{
-				"type": "Element",
+				"type": "IfBlock",
 				"start": 44,
-				"end": 59,
+				"end": 66,
+				"expression": {
+					"type": "Identifier",
+					"start": 49,
+					"end": 52,
+					"loc": {
+						"start": {
+							"line": 9,
+							"column": 5
+						},
+						"end": {
+							"line": 9,
+							"column": 8
+						}
+					},
+					"name": "foo"
+				},
+				"children": [
+					{
+						"type": "Element",
+						"start": 55,
+						"end": 61,
+						"name": "div",
+						"attributes": [],
+						"children": [
+							{
+								"type": "Text",
+								"start": 60,
+								"end": 61,
+								"raw": "\n",
+								"data": "\n"
+							}
+						]
+					}
+				]
+			},
+			{
+				"type": "Text",
+				"start": 66,
+				"end": 68,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "Element",
+				"start": 68,
+				"end": 83,
 				"name": "div",
 				"attributes": [],
 				"children": [
 					{
 						"type": "Text",
-						"start": 49,
-						"end": 50,
+						"start": 73,
+						"end": 74,
 						"raw": "\n",
 						"data": "\n"
 					},
 					{
 						"type": "Element",
-						"start": 50,
-						"end": 59,
+						"start": 74,
+						"end": 83,
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
 								"type": "Text",
-								"start": 53,
-								"end": 55,
+								"start": 77,
+								"end": 79,
 								"raw": "hi",
 								"data": "hi"
 							}
