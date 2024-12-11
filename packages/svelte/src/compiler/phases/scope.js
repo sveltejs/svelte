@@ -527,31 +527,33 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			const scope = state.scope.child();
 			scopes.set(node, scope);
 
-			// declarations
-			for (const id of extract_identifiers(node.context)) {
-				const binding = scope.declare(id, 'each', 'const');
+			if (node.context) {
+				// declarations
+				for (const id of extract_identifiers(node.context)) {
+					const binding = scope.declare(id, 'each', 'const');
 
-				let inside_rest = false;
-				let is_rest_id = false;
-				walk(node.context, null, {
-					Identifier(node) {
-						if (inside_rest && node === id) {
-							is_rest_id = true;
+					let inside_rest = false;
+					let is_rest_id = false;
+					walk(node.context, null, {
+						Identifier(node) {
+							if (inside_rest && node === id) {
+								is_rest_id = true;
+							}
+						},
+						RestElement(_, { next }) {
+							const prev = inside_rest;
+							inside_rest = true;
+							next();
+							inside_rest = prev;
 						}
-					},
-					RestElement(_, { next }) {
-						const prev = inside_rest;
-						inside_rest = true;
-						next();
-						inside_rest = prev;
-					}
-				});
+					});
 
-				binding.metadata = { inside_rest: is_rest_id };
+					binding.metadata = { inside_rest: is_rest_id };
+				}
+
+				// Visit to pick up references from default initializers
+				visit(node.context, { scope });
 			}
-
-			// Visit to pick up references from default initializers
-			visit(node.context, { scope });
 
 			if (node.index) {
 				const is_keyed =
@@ -626,12 +628,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		SnippetBlock(node, context) {
 			const state = context.state;
-			// Special-case for root-level snippets: they become part of the instance scope
-			const is_top_level = !context.path.at(-2);
 			let scope = state.scope;
-			if (is_top_level) {
-				scope = /** @type {Scope} */ (parent);
-			}
+
 			scope.declare(node.expression, 'normal', 'function', node);
 
 			const child_scope = state.scope.child();

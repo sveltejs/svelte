@@ -48,6 +48,7 @@ import { SvelteComponent } from './visitors/SvelteComponent.js';
 import { SvelteDocument } from './visitors/SvelteDocument.js';
 import { SvelteElement } from './visitors/SvelteElement.js';
 import { SvelteFragment } from './visitors/SvelteFragment.js';
+import { SvelteBoundary } from './visitors/SvelteBoundary.js';
 import { SvelteHead } from './visitors/SvelteHead.js';
 import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { SvelteWindow } from './visitors/SvelteWindow.js';
@@ -122,6 +123,7 @@ const visitors = {
 	SvelteDocument,
 	SvelteElement,
 	SvelteFragment,
+	SvelteBoundary,
 	SvelteHead,
 	SvelteSelf,
 	SvelteWindow,
@@ -163,6 +165,8 @@ export function client_component(analysis, options) {
 		private_state: new Map(),
 		transform: {},
 		in_constructor: false,
+		instance_level_snippets: [],
+		module_level_snippets: [],
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		before_init: /** @type {any} */ (null),
@@ -368,7 +372,7 @@ export function client_component(analysis, options) {
 		...store_setup,
 		...legacy_reactive_declarations,
 		...group_binding_declarations,
-		...analysis.top_level_snippets,
+		...state.instance_level_snippets,
 		.../** @type {ESTree.Statement[]} */ (instance.body),
 		analysis.runes || !analysis.needs_context
 			? b.empty
@@ -483,7 +487,7 @@ export function client_component(analysis, options) {
 		}
 	}
 
-	body = [...imports, ...body];
+	body = [...imports, ...state.module_level_snippets, ...body];
 
 	const component = b.function_declaration(
 		b.id(analysis.name),

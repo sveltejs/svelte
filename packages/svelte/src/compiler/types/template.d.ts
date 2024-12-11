@@ -14,7 +14,8 @@ import type {
 	Pattern,
 	Program,
 	ChainExpression,
-	SimpleCallExpression
+	SimpleCallExpression,
+	SequenceExpression
 } from 'estree';
 import type { Scope } from '../phases/scope';
 
@@ -37,8 +38,6 @@ export namespace AST {
 		type: string;
 		start: number;
 		end: number;
-		/** @internal This is set during parsing on elements/components/expressions/text (but not attributes etc) */
-		parent: SvelteNode | null;
 	}
 
 	export interface Fragment {
@@ -168,6 +167,9 @@ export namespace AST {
 			dynamic: boolean;
 			args_with_call_expression: Set<number>;
 			path: SvelteNode[];
+			/** The set of locally-defined snippets that this render tag could correspond to,
+			 * used for CSS pruning purposes */
+			snippets: Set<SnippetBlock>;
 		};
 	}
 
@@ -186,7 +188,7 @@ export namespace AST {
 		/** The 'x' in `bind:x` */
 		name: string;
 		/** The y in `bind:x={y}` */
-		expression: Identifier | MemberExpression;
+		expression: Identifier | MemberExpression | SequenceExpression;
 		/** @internal */
 		metadata: {
 			binding_group_name: Identifier;
@@ -280,6 +282,10 @@ export namespace AST {
 		metadata: {
 			scopes: Record<string, Scope>;
 			dynamic: boolean;
+			/** The set of locally-defined snippets that this component tag could render,
+			 * used for CSS pruning purposes */
+			snippets: Set<SnippetBlock>;
+			path: SvelteNode[];
 		};
 	}
 
@@ -320,6 +326,10 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			scopes: Record<string, Scope>;
+			/** The set of locally-defined snippets that this component tag could render,
+			 * used for CSS pruning purposes */
+			snippets: Set<SnippetBlock>;
+			path: SvelteNode[];
 		};
 	}
 
@@ -354,6 +364,11 @@ export namespace AST {
 		name: 'svelte:fragment';
 	}
 
+	export interface SvelteBoundary extends BaseElement {
+		type: 'SvelteBoundary';
+		name: 'svelte:boundary';
+	}
+
 	export interface SvelteHead extends BaseElement {
 		type: 'SvelteHead';
 		name: 'svelte:head';
@@ -371,6 +386,10 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			scopes: Record<string, Scope>;
+			/** The set of locally-defined snippets that this component tag could render,
+			 * used for CSS pruning purposes */
+			snippets: Set<SnippetBlock>;
+			path: SvelteNode[];
 		};
 	}
 
@@ -383,7 +402,8 @@ export namespace AST {
 	export interface EachBlock extends BaseNode {
 		type: 'EachBlock';
 		expression: Expression;
-		context: Pattern;
+		/** The `entry` in `{#each item as entry}`. `null` if `as` part is omitted */
+		context: Pattern | null;
 		body: Fragment;
 		fallback?: Fragment;
 		index?: string;
@@ -440,6 +460,13 @@ export namespace AST {
 		expression: Identifier;
 		parameters: Pattern[];
 		body: Fragment;
+		/** @internal */
+		metadata: {
+			can_hoist: boolean;
+			/** The set of components/render tags that could render this snippet,
+			 * used for CSS pruning */
+			sites: Set<Component | SvelteComponent | SvelteSelf | RenderTag>;
+		};
 	}
 
 	export interface Attribute extends BaseNode {
@@ -501,7 +528,8 @@ export type ElementLike =
 	| AST.SvelteHead
 	| AST.SvelteOptionsRaw
 	| AST.SvelteSelf
-	| AST.SvelteWindow;
+	| AST.SvelteWindow
+	| AST.SvelteBoundary;
 
 export type TemplateNode =
 	| AST.Root

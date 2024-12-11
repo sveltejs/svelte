@@ -765,4 +765,20 @@ describe('signals', () => {
 			assert.deepEqual(a.deriveds, null);
 		};
 	});
+
+	test('bigint states update correctly', () => {
+		return () => {
+			const count = state(0n);
+
+			assert.doesNotThrow(() => $.update(count));
+			assert.equal($.get(count), 1n);
+			assert.doesNotThrow(() => $.update(count, -1));
+			assert.equal($.get(count), 0n);
+
+			assert.doesNotThrow(() => $.update_pre(count));
+			assert.equal($.get(count), 1n);
+			assert.doesNotThrow(() => $.update_pre(count, -1));
+			assert.equal($.get(count), 0n);
+		};
+	});
 });

@@ -51,6 +51,7 @@ import { RenderTag } from './visitors/RenderTag.js';
 import { SlotElement } from './visitors/SlotElement.js';
 import { SnippetBlock } from './visitors/SnippetBlock.js';
 import { SpreadAttribute } from './visitors/SpreadAttribute.js';
+import { SpreadElement } from './visitors/SpreadElement.js';
 import { StyleDirective } from './visitors/StyleDirective.js';
 import { SvelteBody } from './visitors/SvelteBody.js';
 import { SvelteComponent } from './visitors/SvelteComponent.js';
@@ -60,6 +61,7 @@ import { SvelteFragment } from './visitors/SvelteFragment.js';
 import { SvelteHead } from './visitors/SvelteHead.js';
 import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { SvelteWindow } from './visitors/SvelteWindow.js';
+import { SvelteBoundary } from './visitors/SvelteBoundary.js';
 import { TaggedTemplateExpression } from './visitors/TaggedTemplateExpression.js';
 import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
@@ -162,6 +164,7 @@ const visitors = {
 	SlotElement,
 	SnippetBlock,
 	SpreadAttribute,
+	SpreadElement,
 	StyleDirective,
 	SvelteBody,
 	SvelteComponent,
@@ -171,6 +174,7 @@ const visitors = {
 	SvelteHead,
 	SvelteSelf,
 	SvelteWindow,
+	SvelteBoundary,
 	TaggedTemplateExpression,
 	Text,
 	TransitionDirective,
@@ -425,7 +429,6 @@ export function analyze_component(root, source, options) {
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
 		slot_names: new Map(),
-		top_level_snippets: [],
 		css: {
 			ast: root.css,
 			hash: root.css
@@ -438,7 +441,10 @@ export function analyze_component(root, source, options) {
 				: '',
 			keyframes: []
 		},
-		source
+		source,
+		undefined_exports: new Map(),
+		snippet_renderers: new Map(),
+		snippets: new Set()
 	};
 
 	if (!runes) {
@@ -691,11 +697,32 @@ export function analyze_component(root, source, options) {
 		analysis.reactive_statements = order_reactive_statements(analysis.reactive_statements);
 	}
 
+	for (const node of analysis.module.ast.body) {
+		if (node.type === 'ExportNamedDeclaration' && node.specifiers !== null && node.source == null) {
+			for (const specifier of node.specifiers) {
+				if (specifier.local.type !== 'Identifier') continue;
+
+				const binding = analysis.module.scope.get(specifier.local.name);
+				if (!binding) e.export_undefined(specifier, specifier.local.name);
+			}
+		}
+	}
+
 	if (analysis.event_directive_node && analysis.uses_event_attributes) {
 		e.mixed_event_handler_syntaxes(
 			analysis.event_directive_node,
 			analysis.event_directive_node.name
 		);
+	}
+
+	for (const [node, resolved] of analysis.snippet_renderers) {
+		if (!resolved) {
+			node.metadata.snippets = analysis.snippets;
+		}
+
+		for (const snippet of node.metadata.snippets) {
+			snippet.metadata.sites.add(node);
+		}
 	}
 
 	if (
@@ -726,8 +753,6 @@ export function analyze_component(root, source, options) {
 		}
 
 		outer: for (const node of analysis.elements) {
-			if (node.type === 'RenderTag') continue;
-
 			if (node.metadata.scoped) {
 				// Dynamic elements in dom mode always use spread for attributes and therefore shouldn't have a class attribute added to them
 				// TODO this happens during the analysis phase, which shouldn't know anything about client vs server
@@ -758,8 +783,7 @@ export function analyze_component(root, source, options) {
 							data: ` ${analysis.css.hash}`,
 							raw: ` ${analysis.css.hash}`,
 							start: -1,
-							end: -1,
-							parent: null
+							end: -1
 						};
 
 						if (Array.isArray(class_attribute.value)) {
@@ -775,7 +799,6 @@ export function analyze_component(root, source, options) {
 								type: 'Text',
 								data: analysis.css.hash,
 								raw: analysis.css.hash,
-								parent: null,
 								start: -1,
 								end: -1
 							}

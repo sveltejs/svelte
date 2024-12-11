@@ -47,8 +47,8 @@ export function EachBlock(node, context) {
 
 	const key_is_item =
 		node.key?.type === 'Identifier' &&
-		node.context.type === 'Identifier' &&
-		node.context.name === node.key.name;
+		node.context?.type === 'Identifier' &&
+		node.context?.name === node.key.name;
 
 	// if the each block expression references a store subscription, we need
 	// to use mutable stores internally
@@ -147,7 +147,7 @@ export function EachBlock(node, context) {
 	// which needs a reference to the index
 	const index =
 		each_node_meta.contains_group_binding || !node.index ? each_node_meta.index : b.id(node.index);
-	const item = node.context.type === 'Identifier' ? node.context : b.id('$$item');
+	const item = node.context?.type === 'Identifier' ? node.context : b.id('$$item');
 
 	let uses_index = each_node_meta.contains_group_binding;
 	let key_uses_index = false;
@@ -185,7 +185,7 @@ export function EachBlock(node, context) {
 	if (!context.state.analysis.runes) sequence.push(invalidate);
 	if (invalidate_store) sequence.push(invalidate_store);
 
-	if (node.context.type === 'Identifier') {
+	if (node.context?.type === 'Identifier') {
 		const binding = /** @type {Binding} */ (context.state.scope.get(node.context.name));
 
 		child_state.transform[node.context.name] = {
@@ -214,11 +214,14 @@ export function EachBlock(node, context) {
 
 				return b.sequence([b.assignment('=', left, value), ...sequence]);
 			},
-			mutate: (_, mutation) => b.sequence([mutation, ...sequence])
+			mutate: (_, mutation) => {
+				uses_index = true;
+				return b.sequence([mutation, ...sequence]);
+			}
 		};
 
 		delete key_state.transform[node.context.name];
-	} else {
+	} else if (node.context) {
 		const unwrapped = (flags & EACH_ITEM_REACTIVE) !== 0 ? b.call('$.get', item) : item;
 
 		for (const path of extract_paths(node.context)) {
@@ -260,11 +263,12 @@ export function EachBlock(node, context) {
 	let key_function = b.id('$.index');
 
 	if (node.metadata.keyed) {
+		const pattern = /** @type {Pattern} */ (node.context); // can only be keyed when a context is provided
 		const expression = /** @type {Expression} */ (
 			context.visit(/** @type {Expression} */ (node.key), key_state)
 		);
 
-		key_function = b.arrow(key_uses_index ? [node.context, index] : [node.context], expression);
+		key_function = b.arrow(key_uses_index ? [pattern, index] : [pattern], expression);
 	}
 
 	if (node.index && each_node_meta.contains_group_binding) {

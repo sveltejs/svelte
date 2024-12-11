@@ -38,7 +38,7 @@ type Properties<Props, Slots> = Props &
 /**
  * This was the base class for Svelte components in Svelte 4. Svelte 5+ components
  * are completely different under the hood. For typing, use `Component` instead.
- * To instantiate components, use `mount` instead`.
+ * To instantiate components, use `mount` instead.
  * See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more info.
  */
 export class SvelteComponent<
@@ -53,7 +53,7 @@ export class SvelteComponent<
 	/**
 	 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
 	 * is a stop-gap solution. Migrate towards using `mount` instead. See
-	 * https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more info.
+	 * [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more info.
 	 */
 	constructor(options: ComponentConstructorOptions<Properties<Props, Slots>>);
 	/**
@@ -83,14 +83,14 @@ export class SvelteComponent<
 
 	/**
 	 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-	 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+	 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 	 * for more info.
 	 */
 	$destroy(): void;
 
 	/**
 	 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-	 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+	 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 	 * for more info.
 	 */
 	$on<K extends Extract<keyof Events, string>>(
@@ -100,7 +100,7 @@ export class SvelteComponent<
 
 	/**
 	 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-	 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+	 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 	 * for more info.
 	 */
 	$set(props: Partial<Props>): void;
@@ -153,13 +153,13 @@ export interface Component<
 	): {
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+		 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 		 * for more info.
 		 */
 		$on?(type: string, callback: (e: any) => void): () => void;
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+		 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 		 * for more info.
 		 */
 		$set?(props: Partial<Props>): void;

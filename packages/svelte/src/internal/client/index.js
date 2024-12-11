@@ -1,4 +1,5 @@
 export { FILENAME, HMR, NAMESPACE_SVG } from '../../constants.js';
+export { assign, assign_and, assign_or, assign_nullish } from './dev/assign.js';
 export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
@@ -33,7 +34,10 @@ export {
 	set_xlink_attribute,
 	handle_lazy_img,
 	set_value,
-	set_checked
+	set_checked,
+	set_selected,
+	set_default_checked,
+	set_default_value
 } from './dom/elements/attributes.js';
 export { set_class, set_svg_class, set_mathml_class, toggle_class } from './dom/elements/class.js';
 export { apply, event, delegate, replay_events } from './dom/elements/events.js';
@@ -124,6 +128,7 @@ export {
 	update_store,
 	mark_store_binding
 } from './reactivity/store.js';
+export { boundary } from './dom/blocks/boundary.js';
 export { set_text } from './render.js';
 export {
 	get,

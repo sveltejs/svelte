@@ -6,7 +6,7 @@
  * @returns {never}
  */
 export function lifecycle_function_unavailable(name) {
-	const error = new Error(`lifecycle_function_unavailable\n\`${name}(...)\` is not available on the server`);
+	const error = new Error(`lifecycle_function_unavailable\n\`${name}(...)\` is not available on the server\nhttps://svelte.dev/e/lifecycle_function_unavailable`);
 
 	error.name = 'Svelte error';
 	throw error;

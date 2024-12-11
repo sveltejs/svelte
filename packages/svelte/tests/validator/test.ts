@@ -13,6 +13,13 @@ interface ValidatorTest extends BaseTest {
 	};
 }
 
+/**
+ * Remove the "https://svelte.dev/e/..." link
+ */
+function strip_link(message: string) {
+	return message.slice(0, message.lastIndexOf('\n'));
+}
+
 const { test, run } = suite<ValidatorTest>(async (config, cwd) => {
 	const expected_warnings = try_load_json(`${cwd}/warnings.json`) || [];
 	const expected_errors = try_load_json(`${cwd}/errors.json`);
@@ -40,7 +47,7 @@ const { test, run } = suite<ValidatorTest>(async (config, cwd) => {
 		assert.deepEqual(
 			warnings.map((w) => ({
 				code: w.code,
-				message: w.message,
+				message: strip_link(w.message),
 				start: { line: w.start?.line, column: w.start?.column },
 				end: { line: w.end?.line, column: w.end?.column }
 			})),
@@ -56,7 +63,7 @@ const { test, run } = suite<ValidatorTest>(async (config, cwd) => {
 		assert.deepEqual(
 			{
 				code: error.code,
-				message: error.message,
+				message: strip_link(error.message),
 				start: { line: error.start?.line, column: error.start?.column },
 				end: { line: error.end?.line, column: error.end?.column }
 			},
