@@ -481,7 +481,7 @@ function read_attribute(parser) {
 			return spread;
 		} else {
 			const value_start = parser.index;
-			const name = parser.read_identifier();
+			let name = parser.read_identifier();
 
 			if (name === null) {
 				if (
@@ -491,8 +491,12 @@ function read_attribute(parser) {
 					// We're likely in an unclosed opening tag and did read part of a block.
 					// Return null to not crash the parser so it can continue with closing the tag.
 					return null;
+				} else if (parser.loose && parser.match('}')) {
+					// Likely in the middle of typing, just created the shorthand
+					name = '';
+				} else {
+					e.attribute_empty_shorthand(start);
 				}
-				e.attribute_empty_shorthand(start);
 			}
 
 			parser.allow_whitespace();

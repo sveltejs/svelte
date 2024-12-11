@@ -39,6 +39,38 @@ export default function read_expression(parser) {
 
 		return /** @type {Expression} */ (node);
 	} catch (err) {
+		if (parser.loose) {
+			// Find the next } and treat it as the end of the expression
+			let index = parser.index;
+			let num_braces = 0;
+			while (index < parser.template.length) {
+				const char = parser.template[index];
+				if (char === '{') num_braces += 1;
+				if (char === '}') {
+					if (num_braces === 0) {
+						// We assume that there's some kind of whitespace or the start of the closing tag after the closing brace,
+						// else this hints at a wrong counting of braces (e.g. in the case of foo={'hi}'})
+						if (!/[\s>/]/.test(parser.template[index + 1])) {
+							num_braces += 1;
+							continue;
+						}
+
+						const start = parser.index;
+						parser.index = index;
+						// We don't know what the expression is and signal this by returning an empty identifier
+						return {
+							type: 'Identifier',
+							start,
+							end: index,
+							name: ''
+						};
+					}
+					num_braces -= 1;
+				}
+				index += 1;
+			}
+		}
+
 		parser.acorn_error(err);
 	}
 }
