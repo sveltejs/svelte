@@ -46,7 +46,7 @@ export function hydrate_next() {
 		// If we're hydrating inside a <script> or <style> element then there is no
 		// closing anchor
 		if (parent_node_name === 'SCRIPT' || parent_node_name === 'STYLE') {
-			return;
+			return hydrate_node;
 		}
 	}
 	return set_hydrate_node(sibling);
