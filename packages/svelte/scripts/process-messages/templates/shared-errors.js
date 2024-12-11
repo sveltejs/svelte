@@ -11,7 +11,6 @@ export function CODE(PARAMETER) {
 		error.name = 'Svelte error';
 		throw error;
 	} else {
-		// TODO print a link to the documentation
 		throw new Error(`https://svelte.dev/e/${'CODE'}`);
 	}
 }
