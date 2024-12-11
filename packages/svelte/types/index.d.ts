@@ -2015,7 +2015,7 @@ declare module 'svelte/reactivity/window' {
 	 * @since 5.11.0
 	 */
 	export const devicePixelRatio: {
-		get current(): number;
+		get current(): number | undefined;
 	};
 	class ReactiveValue<T> {
 		
