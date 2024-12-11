@@ -279,34 +279,43 @@ function open(parser) {
 		parser.require_whitespace();
 
 		const name_start = parser.index;
-		const name = parser.read_identifier();
+		let name = parser.read_identifier();
 		const name_end = parser.index;
 
 		if (name === null) {
-			e.expected_identifier(parser.index);
+			if (parser.loose) {
+				name = '';
+			} else {
+				e.expected_identifier(parser.index);
+			}
 		}
 
 		parser.allow_whitespace();
 
 		const params_start = parser.index;
 
-		parser.eat('(', true);
-		let parentheses = 1;
+		const matched = parser.eat('(', true, false);
 
-		while (parser.index < parser.template.length && (!parser.match(')') || parentheses !== 1)) {
-			if (parser.match('(')) parentheses++;
-			if (parser.match(')')) parentheses--;
-			parser.index += 1;
+		if (matched) {
+			let parentheses = 1;
+
+			while (parser.index < parser.template.length && (!parser.match(')') || parentheses !== 1)) {
+				if (parser.match('(')) parentheses++;
+				if (parser.match(')')) parentheses--;
+				parser.index += 1;
+			}
+
+			parser.eat(')', true);
 		}
-
-		parser.eat(')', true);
 
 		const prelude = parser.template.slice(0, params_start).replace(/\S/g, ' ');
 		const params = parser.template.slice(params_start, parser.index);
 
-		let function_expression = /** @type {ArrowFunctionExpression} */ (
-			parse_expression_at(prelude + `${params} => {}`, parser.ts, params_start)
-		);
+		let function_expression = matched
+			? /** @type {ArrowFunctionExpression} */ (
+					parse_expression_at(prelude + `${params} => {}`, parser.ts, params_start)
+				)
+			: { params: [] };
 
 		parser.allow_whitespace();
 		parser.eat('}', true);
