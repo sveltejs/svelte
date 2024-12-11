@@ -40,7 +40,16 @@ export function set_hydrate_node(node) {
 }
 
 export function hydrate_next() {
-	return set_hydrate_node(/** @type {TemplateNode} */ (get_next_sibling(hydrate_node)));
+	var sibling = /** @type {TemplateNode} */ (get_next_sibling(hydrate_node));
+	if (sibling === null) {
+		var parent_node_name = hydrate_node.parentNode?.nodeName;
+		// If we're hydrating inside a <script> or <style> element then there is no
+		// closing anchor
+		if (parent_node_name === 'SCRIPT' || parent_node_name === 'STYLE') {
+			return;
+		}
+	}
+	return set_hydrate_node(sibling);
 }
 
 /** @param {TemplateNode} node */

@@ -64,7 +64,7 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
 	payload.out += '<!---->';
 
 	if (tag) {
-		payload.out += `<${tag} `;
+		payload.out += `<${tag}`;
 		attributes_fn();
 		payload.out += `>`;
 
