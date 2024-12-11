@@ -1,5 +1,11 @@
 # svelte
 
+## 5.11.2
+
+### Patch Changes
+
+- fix: correctly handle ssr for `reactivity/window` ([#14681](https://github.com/sveltejs/svelte/pull/14681))
+
 ## 5.11.1
 
 ### Patch Changes
