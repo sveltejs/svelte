@@ -1,5 +1,13 @@
 # svelte
 
+## 5.11.1
+
+### Patch Changes
+
+- fix: account for global block in `is_empty` ([#14677](https://github.com/sveltejs/svelte/pull/14677))
+
+- fix: remove overzealous `reactive_declaration_non_reactive_property` warning ([#14663](https://github.com/sveltejs/svelte/pull/14663))
+
 ## 5.11.0
 
 ### Minor Changes
