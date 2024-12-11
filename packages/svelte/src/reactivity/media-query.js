@@ -1,5 +1,5 @@
-import { createSubscriber } from './create-subscriber.js';
 import { on } from '../events/index.js';
+import { ReactiveValue } from './reactive-value.js';
 
 /**
  * Creates a media query and provides a `current` property that reflects whether or not it matches.
@@ -16,26 +16,19 @@ import { on } from '../events/index.js';
  *
  * <h1>{large.current ? 'large screen' : 'small screen'}</h1>
  * ```
+ * @extends {ReactiveValue<boolean>}
  * @since 5.7.0
  */
-export class MediaQuery {
-	#query;
-	#subscribe = createSubscriber((update) => {
-		return on(this.#query, 'change', update);
-	});
-
-	get current() {
-		this.#subscribe();
-
-		return this.#query.matches;
-	}
-
+export class MediaQuery extends ReactiveValue {
 	/**
 	 * @param {string} query A media query string
-	 * @param {boolean} [matches] Fallback value for the server
+	 * @param {boolean} [fallback] Fallback value for the server
 	 */
-	constructor(query, matches) {
-		// For convenience (and because people likely forget them) we add the parentheses; double parentheses are not a problem
-		this.#query = window.matchMedia(`(${query})`);
+	constructor(query, fallback) {
+		const q = window.matchMedia(`(${query})`);
+		super(
+			() => q.matches,
+			(update) => on(q, 'change', update)
+		);
 	}
 }
