@@ -1964,45 +1964,45 @@ declare module 'svelte/reactivity' {
 
 declare module 'svelte/reactivity/window' {
 	/**
-	 * `scrollX.current` is a reactive view of `window.scrollX`. On the server it is `undefined`
+	 * `scrollX.current` is a reactive view of `window.scrollX`. On the server it is `undefined`.
 	 */
 	export const scrollX: ReactiveValue<number | undefined>;
 	/**
-	 * `scrollY.current` is a reactive view of `window.scrollY`. On the server it is `undefined`
+	 * `scrollY.current` is a reactive view of `window.scrollY`. On the server it is `undefined`.
 	 */
 	export const scrollY: ReactiveValue<number | undefined>;
 	/**
-	 * `innerWidth.current` is a reactive view of `window.innerWidth`. On the server it is `undefined`
+	 * `innerWidth.current` is a reactive view of `window.innerWidth`. On the server it is `undefined`.
 	 */
 	export const innerWidth: ReactiveValue<number | undefined>;
 	/**
-	 * `innerHeight.current` is a reactive view of `window.innerHeight`. On the server it is `undefined`
+	 * `innerHeight.current` is a reactive view of `window.innerHeight`. On the server it is `undefined`.
 	 */
 	export const innerHeight: ReactiveValue<number | undefined>;
 	/**
-	 * `outerWidth.current` is a reactive view of `window.outerWidth`. On the server it is `undefined`
+	 * `outerWidth.current` is a reactive view of `window.outerWidth`. On the server it is `undefined`.
 	 */
 	export const outerWidth: ReactiveValue<number | undefined>;
 	/**
-	 * `outerHeight.current` is a reactive view of `window.outerHeight`. On the server it is `undefined`
+	 * `outerHeight.current` is a reactive view of `window.outerHeight`. On the server it is `undefined`.
 	 */
 	export const outerHeight: ReactiveValue<number | undefined>;
 	/**
-	 * `screenLeft.current` is a reactive view of `window.screenLeft`. On the server it is `undefined`
+	 * `screenLeft.current` is a reactive view of `window.screenLeft`. On the server it is `undefined`.
 	 */
 	export const screenLeft: ReactiveValue<number | undefined>;
 	/**
-	 * `screenTop.current` is a reactive view of `window.screenTop`. On the server it is `undefined`
+	 * `screenTop.current` is a reactive view of `window.screenTop`. On the server it is `undefined`.
 	 */
 	export const screenTop: ReactiveValue<number | undefined>;
 	/**
-	 * `online.current` is a reactive view of `navigator.onLine`. On the server it is `undefined`
+	 * `online.current` is a reactive view of `navigator.onLine`. On the server it is `undefined`.
 	 */
 	export const online: ReactiveValue<boolean | undefined>;
 	/**
 	 * `devicePixelRatio.current` is a reactive view of `window.devicePixelRatio`. On the server it is `undefined`.
 	 * Note that behaviour differs between browsers — on Chrome it will respond to the current zoom level,
-	 * on Firefox and Safari it won't
+	 * on Firefox and Safari it won't.
 	 * */
 	export const devicePixelRatio: {
 		get current(): number;
