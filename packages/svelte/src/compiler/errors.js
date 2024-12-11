@@ -14,7 +14,7 @@ class InternalCompileError extends Error {
 	 */
 	constructor(code, message, position) {
 		super(message);
-		// this.stack = ''; // avoid unnecessary noise; don't set it as a class property or it becomes enumerable
+		this.stack = ''; // avoid unnecessary noise; don't set it as a class property or it becomes enumerable
 		// We want to extend from Error so that various bundler plugins properly handle it.
 		// But we also want to share the same object shape with that of warnings, therefore
 		// we create an instance of the shared class an copy over its properties.
