@@ -354,22 +354,25 @@ export function set_attributes(
 			if (!preserve_attribute_case) {
 				name = normalize_attribute(name);
 			}
-			let is_default_value_or_checked = name === 'defaultValue' || name === 'defaultChecked';
 
-			if (value == null && !is_custom_element && !is_default_value_or_checked) {
+			var is_default = name === 'defaultValue' || name === 'defaultChecked';
+
+			if (value == null && !is_custom_element && !is_default) {
 				attributes[key] = null;
-				// if we remove the value/checked attributes this also for some reasons reset
-				// the default value so we need to keep track of it and reassign it after the remove
-				let default_value_reset = /**@type {HTMLInputElement}*/ (element).defaultValue;
-				let default_checked_reset = /**@type {HTMLInputElement}*/ (element).defaultChecked;
+
+				// removing value/checked also removes defaultValue/defaultChecked — preserve
+				let default_value = /** @type {HTMLInputElement} */ (element).defaultValue;
+				let default_checked = /** @type {HTMLInputElement} */ (element).defaultChecked;
+
 				element.removeAttribute(key);
+
 				if (key === 'value') {
-					/**@type {HTMLInputElement}*/ (element).defaultValue = default_value_reset;
+					/** @type {HTMLInputElement} */ (element).defaultValue = default_value;
 				} else if (key === 'checked') {
-					/**@type {HTMLInputElement}*/ (element).defaultChecked = default_checked_reset;
+					/** @type {HTMLInputElement} */ (element).defaultChecked = default_checked;
 				}
 			} else if (
-				is_default_value_or_checked ||
+				is_default ||
 				(setters.includes(name) && (is_custom_element || typeof value !== 'string'))
 			) {
 				// @ts-ignore
