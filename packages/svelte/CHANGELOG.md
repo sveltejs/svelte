@@ -1,5 +1,17 @@
 # svelte
 
+## 5.11.3
+
+### Patch Changes
+
+- fix: allow unquoted slash in attributes ([#14615](https://github.com/sveltejs/svelte/pull/14615))
+
+- fix: better handle hydration of script/style elements ([#14683](https://github.com/sveltejs/svelte/pull/14683))
+
+- fix: make `defaultValue` work with spread ([#14640](https://github.com/sveltejs/svelte/pull/14640))
+
+- fix: avoid mutation validation for invalidate_inner_signals ([#14688](https://github.com/sveltejs/svelte/pull/14688))
+
 ## 5.11.2
 
 ### Patch Changes
