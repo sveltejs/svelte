@@ -775,7 +775,7 @@ Reassignments of module-level declarations will not cause reactive statements to
 ```
 
 ```svelte
-<script ---context="module"--- +++context+++>
+<script ---context="module"--- +++module+++>
 	let foo = 'bar';
 </script>
 ```
