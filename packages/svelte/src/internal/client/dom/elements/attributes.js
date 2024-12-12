@@ -360,16 +360,21 @@ export function set_attributes(
 			if (value == null && !is_custom_element && !is_default) {
 				attributes[key] = null;
 
-				// removing value/checked also removes defaultValue/defaultChecked — preserve
-				let default_value = /** @type {HTMLInputElement} */ (element).defaultValue;
-				let default_checked = /** @type {HTMLInputElement} */ (element).defaultChecked;
+				if (name === 'value' || name === 'checked') {
+					// removing value/checked also removes defaultValue/defaultChecked — preserve
+					let input = /** @type {HTMLInputElement} */ (element);
 
-				element.removeAttribute(key);
-
-				if (key === 'value') {
-					/** @type {HTMLInputElement} */ (element).defaultValue = default_value;
-				} else if (key === 'checked') {
-					/** @type {HTMLInputElement} */ (element).defaultChecked = default_checked;
+					if (name === 'value') {
+						let prev = input.defaultValue;
+						input.removeAttribute(name);
+						input.defaultValue = prev;
+					} else {
+						let prev = input.defaultChecked;
+						input.removeAttribute(name);
+						input.defaultChecked = prev;
+					}
+				} else {
+					element.removeAttribute(key);
 				}
 			} else if (
 				is_default ||
