@@ -339,7 +339,7 @@ function transform(name, dest) {
 				};
 
 				for (let i = 0; i < node.expressions.length; i += 1) {
-					const q = node.quasis[i + 1];
+					const q = structuredClone(node.quasis[i + 1]);
 					const e = node.expressions[i];
 
 					if (e.type === 'Literal' && e.value === 'CODE') {
@@ -355,10 +355,12 @@ function transform(name, dest) {
 						}
 
 						if (message.type === 'TemplateLiteral') {
-							quasi.value.raw += message.quasis[0].value.raw + q.value.raw;
-							out.quasis.push(...message.quasis.slice(1));
-							out.expressions.push(...message.expressions);
-							quasi = message.quasis[message.quasis.length - 1];
+							const m = structuredClone(message);
+							quasi.value.raw += m.quasis[0].value.raw;
+							out.quasis.push(...m.quasis.slice(1));
+							out.expressions.push(...m.expressions);
+							quasi = m.quasis[m.quasis.length - 1];
+							quasi.value.raw += q.value.raw;
 							continue;
 						}
 					}

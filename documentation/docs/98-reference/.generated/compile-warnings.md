@@ -610,6 +610,20 @@ Empty block
 Unused CSS selector "%name%"
 ```
 
+Svelte traverses both the template and the `<style>` tag to find out which of the CSS selectors are not used within the template, so it can remove them.
+
+In some situations a selector may target an element that is not 'visible' to the compiler, for example because it is part of an `{@html ...}` tag or you're overriding styles in a child component. In these cases, use [`:global`](/docs/svelte/global-styles) to preserve the selector as-is:
+
+```svelte
+<div class="post">{@html content}</div>
+
+<style>
+  .post :global {
+    p {...}
+  }
+</style>
+```
+
 ### element_invalid_self_closing_tag
 
 ```
@@ -621,6 +635,8 @@ Self-closing HTML tags for non-void elements are ambiguous — use `<%name% ...>
 ```
 Using `on:%name%` to listen to the %name% event is deprecated. Use the event attribute `on%name%` instead
 ```
+
+See [the migration guide](v5-migration-guide#Event-changes) for more info.
 
 ### export_let_unused
 
@@ -639,6 +655,8 @@ Component has unused export property '%name%'. If it is for external reference o
 ```
 Svelte 5 components are no longer classes. Instantiate them using `mount` or `hydrate` (imported from 'svelte') instead.
 ```
+
+See the [migration guide](v5-migration-guide#Components-are-no-longer-classes) for more info.
 
 ### node_invalid_placement_ssr
 
@@ -659,6 +677,30 @@ This code will work when the component is rendered on the client (which is why t
 ```
 `%name%` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
 ```
+
+This warning is thrown when the compiler detects the following:
+- a variable was declared without `$state` or `$state.raw`
+- the variable is reassigned
+- the variable is read in a reactive context
+
+In this case, changing the value will not correctly trigger updates. Example:
+
+```svelte
+<script>
+	let reactive = $state('reactive');
+	let stale = 'stale';
+</script>
+
+<p>This value updates: {reactive}</p>
+<p>This value does not update: {stale}</p>
+
+<button onclick={() => {
+	stale = 'updated';
+	reactive = 'updated';
+}}>update</button>
+```
+
+To fix this, wrap your variable declaration with `$state`.
 
 ### options_deprecated_accessors
 
@@ -732,6 +774,12 @@ Reassignments of module-level declarations will not cause reactive statements to
 `context="module"` is deprecated, use the `module` attribute instead
 ```
 
+```svelte
+<script ---context="module"--- +++context+++>
+	let foo = 'bar';
+</script>
+```
+
 ### script_unknown_attribute
 
 ```
@@ -744,11 +792,78 @@ Unrecognized attribute — should be one of `generics`, `lang` or `module`. If t
 Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead
 ```
 
+See [the migration guide](v5-migration-guide#Snippets-instead-of-slots) for more info.
+
 ### state_referenced_locally
 
 ```
 State referenced in its own scope will never update. Did you mean to reference it inside a closure?
 ```
+
+This warning is thrown when the compiler detects the following:
+- A reactive variable is declared
+- the variable is reassigned
+- the variable is referenced inside the same scope it is declared and it is a non-reactive context
+
+In this case, the state reassignment will not be noticed by whatever you passed it to. For example, if you pass the state to a function, that function will not notice the updates:
+
+```svelte
+<!--- file: Parent.svelte --->
+<script>
+	import { setContext } from 'svelte';
+
+	let count = $state(0);
+
+	// warning: state_referenced_locally
+	setContext('count', count);
+</script>
+
+<button onclick={() => count++}>
+	increment
+</button>
+```
+
+```svelte
+<!--- file: Child.svelte --->
+<script>
+	import { getContext } from 'svelte';
+
+	const count = getContext('count');
+</script>
+
+<!-- This will never update -->
+<p>The count is {count}</p>
+```
+
+To fix this, reference the variable such that it is lazily evaluated. For the above example, this can be achieved by wrapping `count` in a function:
+
+```svelte
+<!--- file: Parent.svelte --->
+<script>
+	import { setContext } from 'svelte';
+
+	let count = $state(0);
+	setContext('count', +++() => count+++);
+</script>
+
+<button onclick={() => count++}>
+	increment
+</button>
+```
+
+```svelte
+<!--- file: Child.svelte --->
+<script>
+	import { getContext } from 'svelte';
+
+	const count = getContext('count');
+</script>
+
+<!-- This will update -->
+<p>The count is {+++count()+++}</p>
+```
+
+For more info, see [Passing state into functions]($state#Passing-state-into-functions).
 
 ### store_rune_conflict
 
@@ -804,6 +919,8 @@ A derived value may be used in other contexts:
 ```
 `<svelte:self>` is deprecated — use self-imports (e.g. `import %name% from './%basename%'`) instead
 ```
+
+See [the note in the docs](legacy-svelte-self) for more info.
 
 ### unknown_code
 

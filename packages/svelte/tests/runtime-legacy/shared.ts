@@ -216,8 +216,18 @@ async function run_test_variant(
 			console.warn = (...args) => {
 				if (args[0].startsWith('%c[svelte]')) {
 					// TODO convert this to structured data, for more robust comparison?
-					const message = args[0];
-					warnings.push(message.slice(message.indexOf('%c', 2) + 2));
+
+					let message = args[0];
+					message = message.slice(message.indexOf('%c', 2) + 2);
+
+					// Remove the "https://svelte.dev/e/..." link at the end
+					const lines = message.split('\n');
+					if (lines.at(-1)?.startsWith('https://svelte.dev/e/')) {
+						lines.pop();
+					}
+					message = lines.join('\n');
+
+					warnings.push(message);
 				} else {
 					warnings.push(...args);
 				}

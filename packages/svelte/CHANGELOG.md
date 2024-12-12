@@ -1,5 +1,73 @@
 # svelte
 
+## 5.11.2
+
+### Patch Changes
+
+- fix: correctly handle ssr for `reactivity/window` ([#14681](https://github.com/sveltejs/svelte/pull/14681))
+
+## 5.11.1
+
+### Patch Changes
+
+- fix: account for global block in `is_empty` ([#14677](https://github.com/sveltejs/svelte/pull/14677))
+
+- fix: remove overzealous `reactive_declaration_non_reactive_property` warning ([#14663](https://github.com/sveltejs/svelte/pull/14663))
+
+## 5.11.0
+
+### Minor Changes
+
+- feat: add `svelte/reactivity/window` module ([#14660](https://github.com/sveltejs/svelte/pull/14660))
+
+### Patch Changes
+
+- fix: take into account registration state when setting custom element props ([#14508](https://github.com/sveltejs/svelte/pull/14508))
+
+## 5.10.1
+
+### Patch Changes
+
+- fix: ensure snippet hoisting works in the correct scope ([#14642](https://github.com/sveltejs/svelte/pull/14642))
+
+- fix: ensure $state.snapshot clones holey arrays correctly ([#14657](https://github.com/sveltejs/svelte/pull/14657))
+
+- fix: restore input binding selection position ([#14649](https://github.com/sveltejs/svelte/pull/14649))
+
+- fix: transform everything that is not a selector inside `:global` ([#14577](https://github.com/sveltejs/svelte/pull/14577))
+
+- Overwrite Spring.#last_value when using .set() with {instant: true} ([#14656](https://github.com/sveltejs/svelte/pull/14656))
+
+- fix: don't emit assignment warnings for bindings ([#14651](https://github.com/sveltejs/svelte/pull/14651))
+
+## 5.10.0
+
+### Minor Changes
+
+- feat: provide links to documentation for errors/warnings ([#14629](https://github.com/sveltejs/svelte/pull/14629))
+
+### Patch Changes
+
+- fix: allow exports with source from script module even if no bind is present ([#14620](https://github.com/sveltejs/svelte/pull/14620))
+
+- fix: deconflict `get_name` for literal class properties ([#14607](https://github.com/sveltejs/svelte/pull/14607))
+
+## 5.9.1
+
+### Patch Changes
+
+- fix: mark subtree dynamic for bind with sequence expressions ([#14626](https://github.com/sveltejs/svelte/pull/14626))
+
+## 5.9.0
+
+### Minor Changes
+
+- feat: add support for bind getters/setters ([#14307](https://github.com/sveltejs/svelte/pull/14307))
+
+### Patch Changes
+
+- fix: always run `if` block code the first time ([#14597](https://github.com/sveltejs/svelte/pull/14597))
+
 ## 5.8.1
 
 ### Patch Changes

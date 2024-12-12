@@ -23,8 +23,6 @@ Iterating over values can be done with an each block. The values in question can
 </ul>
 ```
 
-You can use each blocks to iterate over any array or array-like value — that is, any object with a `length` property.
-
 An each block can also specify an _index_, equivalent to the second argument in an `array.map(...)` callback:
 
 ```svelte

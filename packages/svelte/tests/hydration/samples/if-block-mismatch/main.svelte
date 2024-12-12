@@ -2,7 +2,7 @@
 	let { condition } = $props();
 </script>
 
-{#if true}
+{#if condition}
 	<p>foo</p>
 {:else}
 	<p>bar</p>

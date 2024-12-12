@@ -78,7 +78,7 @@ const visitors = {
 		context.state.code.addSourcemapLocation(node.end);
 		context.next();
 	},
-	Atrule(node, { state, next }) {
+	Atrule(node, { state, next, path }) {
 		if (is_keyframes_node(node)) {
 			let start = node.start + node.name.length + 1;
 			while (state.code.original[start] === ' ') start += 1;
@@ -87,7 +87,7 @@ const visitors = {
 
 			if (node.prelude.startsWith('-global-')) {
 				state.code.remove(start, start + 8);
-			} else {
+			} else if (!is_in_global_block(path)) {
 				state.code.prependRight(start, `${state.hash}-`);
 			}
 
@@ -134,7 +134,7 @@ const visitors = {
 			}
 		}
 	},
-	Rule(node, { state, next, visit }) {
+	Rule(node, { state, next, visit, path }) {
 		if (state.minify) {
 			remove_preceding_whitespace(node.start, state);
 			remove_preceding_whitespace(node.block.end - 1, state);
@@ -142,7 +142,7 @@ const visitors = {
 
 		// keep empty rules in dev, because it's convenient to
 		// see them in devtools
-		if (!dev && is_empty(node)) {
+		if (!dev && is_empty(node, is_in_global_block(path))) {
 			if (state.minify) {
 				state.code.remove(node.start, node.end);
 			} else {
@@ -154,7 +154,7 @@ const visitors = {
 			return;
 		}
 
-		if (!is_used(node)) {
+		if (!is_used(node) && !is_in_global_block(path)) {
 			if (state.minify) {
 				state.code.remove(node.start, node.end);
 			} else {
@@ -182,20 +182,20 @@ const visitors = {
 					state.code.appendLeft(node.block.end, '*/');
 				}
 
-				// don't recurse into selector or body
+				// don't recurse into selectors but visit the body
+				visit(node.block);
 				return;
 			}
-
-			// don't recurse into body
-			visit(node.prelude);
-			return;
 		}
 
 		next();
 	},
 	SelectorList(node, { state, next, path }) {
-		// Only add comments if we're not inside a complex selector that itself is unused
-		if (!path.find((n) => n.type === 'ComplexSelector' && !n.metadata.used)) {
+		// Only add comments if we're not inside a complex selector that itself is unused or a global block
+		if (
+			!is_in_global_block(path) &&
+			!path.find((n) => n.type === 'ComplexSelector' && !n.metadata.used)
+		) {
 			const children = node.children;
 			let pruning = false;
 			let prune_start = children[0].start;
@@ -360,6 +360,14 @@ const visitors = {
 };
 
 /**
+ *
+ * @param {Array<Css.Node>} path
+ */
+function is_in_global_block(path) {
+	return path.some((node) => node.type === 'Rule' && node.metadata.is_global_block);
+}
+
+/**
  * @param {Css.PseudoClassSelector} selector
  * @param {Css.Combinator | null} combinator
  * @param {State} state
@@ -390,8 +398,11 @@ function remove_preceding_whitespace(end, state) {
 	if (start < end) state.code.remove(start, end);
 }
 
-/** @param {Css.Rule} rule */
-function is_empty(rule) {
+/**
+ *  @param {Css.Rule} rule
+ * @param {boolean} is_in_global_block
+ */
+function is_empty(rule, is_in_global_block) {
 	if (rule.metadata.is_global_block) {
 		return rule.block.children.length === 0;
 	}
@@ -402,7 +413,9 @@ function is_empty(rule) {
 		}
 
 		if (child.type === 'Rule') {
-			if (is_used(child) && !is_empty(child)) return false;
+			if ((is_used(child) || is_in_global_block) && !is_empty(child, is_in_global_block)) {
+				return false;
+			}
 		}
 
 		if (child.type === 'Atrule') {
