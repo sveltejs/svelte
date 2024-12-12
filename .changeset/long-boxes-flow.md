@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-Allow unquoted slash in attributes
+fix: allow unquoted slash in attributes
