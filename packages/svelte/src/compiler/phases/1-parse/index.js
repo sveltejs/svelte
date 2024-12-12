@@ -1,4 +1,4 @@
-/** @import { AST, TemplateNode } from '#compiler' */
+/** @import { AST } from '#compiler' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
@@ -28,7 +28,7 @@ export class Parser {
 	/** Whether we're parsing in TypeScript mode */
 	ts = false;
 
-	/** @type {TemplateNode[]} */
+	/** @type {AST.TemplateNode[]} */
 	stack = [];
 
 	/** @type {AST.Fragment[]} */

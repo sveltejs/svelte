@@ -1,6 +1,6 @@
 import type { AST } from '#compiler';
 
-export namespace Css {
+export namespace _CSS {
 	export interface BaseNode {
 		start: number;
 		end: number;
