@@ -29,7 +29,7 @@ import {
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
-import { mutate, set, source } from './reactivity/sources.js';
+import { internal_set, set, source } from './reactivity/sources.js';
 import { destroy_derived, execute_derived, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
@@ -960,11 +960,12 @@ export function invalidate_inner_signals(fn) {
 		if ((signal.f & LEGACY_DERIVED_PROP) !== 0) {
 			for (const dep of /** @type {Derived} */ (signal).deps || []) {
 				if ((dep.f & DERIVED) === 0) {
-					mutate(dep, null /* doesnt matter */);
+					// Use internal_set instead of set here and below to avoid mutation validation
+					internal_set(dep, dep.v);
 				}
 			}
 		} else {
-			mutate(signal, null /* doesnt matter */);
+			internal_set(signal, signal.v);
 		}
 	}
 }
