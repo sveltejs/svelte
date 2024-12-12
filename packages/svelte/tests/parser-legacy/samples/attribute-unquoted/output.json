@@ -2,7 +2,7 @@
 	"html": {
 		"type": "Fragment",
 		"start": 0,
-		"end": 40,
+		"end": 62,
 		"children": [
 			{
 				"type": "Element",
@@ -62,6 +62,45 @@
 						"type": "Text",
 						"start": 32,
 						"end": 36,
+						"raw": "home",
+						"data": "home"
+					}
+				]
+			},
+			{
+				"type": "Text",
+				"start": 40,
+				"end": 41,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "Element",
+				"start": 41,
+				"end": 62,
+				"name": "a",
+				"attributes": [
+					{
+						"type": "Attribute",
+						"start": 44,
+						"end": 53,
+						"name": "href",
+						"value": [
+							{
+								"start": 49,
+								"end": 53,
+								"type": "Text",
+								"raw": "/foo",
+								"data": "/foo"
+							}
+						]
+					}
+				],
+				"children": [
+					{
+						"type": "Text",
+						"start": 54,
+						"end": 58,
 						"raw": "home",
 						"data": "home"
 					}
