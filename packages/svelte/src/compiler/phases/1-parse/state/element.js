@@ -505,7 +505,7 @@ function read_attribute(parser) {
 	if (parser.eat('=')) {
 		parser.allow_whitespace();
 
-		if (parser.template[parser.index] === '/') {
+		if (parser.template[parser.index] === '/' && parser.template[parser.index + 1] === '>') {
 			const char_start = parser.index;
 			parser.index++; // consume '/'
 			value = [
