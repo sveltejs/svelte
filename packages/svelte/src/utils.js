@@ -441,3 +441,11 @@ const RUNES = /** @type {const} */ ([
 export function is_rune(name) {
 	return RUNES.includes(/** @type {RUNES[number]} */ (name));
 }
+
+/** List of elements that require raw contents and should not have SSR comments put in them */
+const RAW_TEXT_ELEMENTS = /** @type {const} */ (['textarea', 'script', 'style', 'title']);
+
+/** @param {string} name */
+export function is_raw_text_element(name) {
+	return RAW_TEXT_ELEMENTS.includes(/** @type {RAW_TEXT_ELEMENTS[number]} */ (name));
+}
