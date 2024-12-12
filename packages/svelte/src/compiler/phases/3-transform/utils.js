@@ -346,8 +346,33 @@ export function infer_namespace(namespace, parent, nodes) {
 			return new_namespace;
 		}
 	}
+	const elements = nodes.filter((n) => n.type === 'RegularElement');
+	/** @type {Namespace | null} */
+	let new_namespace = null;
 
-	return namespace;
+	// Check the elements within the fragment and look for consistent namespaces.
+	// If we have no namespaces or they are mixed, then fallback to existing namespace
+	for (const element of elements) {
+		const metadata = element.metadata;
+
+		if (metadata.mathml) {
+			if (new_namespace === null || new_namespace === 'mathml') {
+				new_namespace = 'mathml';
+			} else {
+				new_namespace = 'html';
+			}
+		} else if (metadata.svg) {
+			if (new_namespace === null || new_namespace === 'svg') {
+				new_namespace = 'svg';
+			} else {
+				new_namespace = 'html';
+			}
+		} else {
+			new_namespace = 'html';
+		}
+	}
+
+	return new_namespace ?? namespace;
 }
 
 /**

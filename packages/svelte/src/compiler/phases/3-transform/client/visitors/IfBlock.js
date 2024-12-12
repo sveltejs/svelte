@@ -4,40 +4,6 @@
 import * as b from '../../../../utils/builders.js';
 
 /**
- * @param {AST.Fragment} fragment
- * @return {Namespace}
- */
-function get_namespace(fragment) {
-	const elements = fragment.nodes.filter((n) => n.type === 'RegularElement');
-	/** @type {Namespace | null} */
-	let namespace = null;
-
-	// Check the elements within the fragment and look for consistent namespaces.
-	// If we have no namespaces or they are mixed, then fallback to `html`
-	for (const element of elements) {
-		const metadata = element.metadata;
-
-		if (metadata.mathml) {
-			if (namespace === null || namespace === 'mathml') {
-				namespace = 'mathml';
-			} else {
-				namespace = 'html';
-			}
-		} else if (metadata.svg) {
-			if (namespace === null || namespace === 'svg') {
-				namespace = 'svg';
-			} else {
-				namespace = 'html';
-			}
-		} else {
-			namespace = 'html';
-		}
-	}
-
-	return namespace ?? 'html';
-}
-
-/**
  * @param {AST.IfBlock} node
  * @param {ComponentContext} context
  */
@@ -45,13 +11,7 @@ export function IfBlock(node, context) {
 	context.state.template.push('<!>');
 	const statements = [];
 
-	const consequent_namespace = get_namespace(node.consequent);
-	const consequent = /** @type {BlockStatement} */ (
-		context.visit(node.consequent, {
-			...context.state,
-			metadata: { ...context.state.metadata, namespace: consequent_namespace }
-		})
-	);
+	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
 	const consequent_id = context.state.scope.generate('consequent');
 
 	statements.push(b.var(b.id(consequent_id), b.arrow([b.id('$$anchor')], consequent)));
@@ -59,13 +19,7 @@ export function IfBlock(node, context) {
 	let alternate_id;
 
 	if (node.alternate) {
-		const alternate_namespace = get_namespace(node.consequent);
-		const alternate = /** @type {BlockStatement} */ (
-			context.visit(node.alternate, {
-				...context.state,
-				metadata: { ...context.state.metadata, namespace: alternate_namespace }
-			})
-		);
+		const alternate = /** @type {BlockStatement} */ (context.visit(node.alternate));
 		alternate_id = context.state.scope.generate('alternate');
 		statements.push(b.var(b.id(alternate_id), b.arrow([b.id('$$anchor')], alternate)));
 	}
