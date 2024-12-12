@@ -1,5 +1,17 @@
 # svelte
 
+## 5.12.0
+
+### Minor Changes
+
+- feat: expose more AST types from `"svelte/compiler"` ([#14601](https://github.com/sveltejs/svelte/pull/14601))
+
+### Patch Changes
+
+- fix: don't add parenthesis to media query if already present ([#14699](https://github.com/sveltejs/svelte/pull/14699))
+
+- fix: ensure if block paths retain correct template namespacing ([#14685](https://github.com/sveltejs/svelte/pull/14685))
+
 ## 5.11.3
 
 ### Patch Changes
