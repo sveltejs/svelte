@@ -1,5 +1,5 @@
 /** @import { BlockStatement, Expression } from 'estree' */
-/** @import { AST, Namespace } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
 
