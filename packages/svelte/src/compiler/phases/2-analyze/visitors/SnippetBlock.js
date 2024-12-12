@@ -99,8 +99,9 @@ function can_hoist_snippet(scope, scopes, visited = new Set()) {
 		if (binding.initial?.type === 'SnippetBlock') {
 			if (visited.has(binding)) continue;
 			visited.add(binding);
+			const snippet_scope = /** @type {Scope} */ (scopes.get(binding.initial));
 
-			if (can_hoist_snippet(binding.scope, scopes, visited)) {
+			if (can_hoist_snippet(snippet_scope, scopes, visited)) {
 				continue;
 			}
 		}

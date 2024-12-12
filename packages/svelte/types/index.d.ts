@@ -1923,16 +1923,15 @@ declare module 'svelte/reactivity' {
 	 *
 	 * <h1>{large.current ? 'large screen' : 'small screen'}</h1>
 	 * ```
+	 * @extends {ReactiveValue<boolean>}
 	 * @since 5.7.0
 	 */
-	export class MediaQuery {
+	export class MediaQuery extends ReactiveValue<boolean> {
 		/**
 		 * @param query A media query string
-		 * @param matches Fallback value for the server
+		 * @param fallback Fallback value for the server
 		 */
-		constructor(query: string, matches?: boolean | undefined);
-		get current(): boolean;
-		#private;
+		constructor(query: string, fallback?: boolean | undefined);
 	}
 	/**
 	 * Returns a `subscribe` function that, if called in an effect (including expressions in the template),
@@ -1976,6 +1975,77 @@ declare module 'svelte/reactivity' {
 	 * @since 5.7.0
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
+	class ReactiveValue<T> {
+		
+		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
+		get current(): T;
+		#private;
+	}
+
+	export {};
+}
+
+declare module 'svelte/reactivity/window' {
+	/**
+	 * `scrollX.current` is a reactive view of `window.scrollX`. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const scrollX: ReactiveValue<number | undefined>;
+	/**
+	 * `scrollY.current` is a reactive view of `window.scrollY`. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const scrollY: ReactiveValue<number | undefined>;
+	/**
+	 * `innerWidth.current` is a reactive view of `window.innerWidth`. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const innerWidth: ReactiveValue<number | undefined>;
+	/**
+	 * `innerHeight.current` is a reactive view of `window.innerHeight`. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const innerHeight: ReactiveValue<number | undefined>;
+	/**
+	 * `outerWidth.current` is a reactive view of `window.outerWidth`. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const outerWidth: ReactiveValue<number | undefined>;
+	/**
+	 * `outerHeight.current` is a reactive view of `window.outerHeight`. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const outerHeight: ReactiveValue<number | undefined>;
+	/**
+	 * `screenLeft.current` is a reactive view of `window.screenLeft`. It is updated inside a `requestAnimationFrame` callback. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const screenLeft: ReactiveValue<number | undefined>;
+	/**
+	 * `screenTop.current` is a reactive view of `window.screenTop`. It is updated inside a `requestAnimationFrame` callback. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const screenTop: ReactiveValue<number | undefined>;
+	/**
+	 * `online.current` is a reactive view of `navigator.onLine`. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const online: ReactiveValue<boolean | undefined>;
+	/**
+	 * `devicePixelRatio.current` is a reactive view of `window.devicePixelRatio`. On the server it is `undefined`.
+	 * Note that behaviour differs between browsers — on Chrome it will respond to the current zoom level,
+	 * on Firefox and Safari it won't.
+	 * @since 5.11.0
+	 */
+	export const devicePixelRatio: {
+		get current(): number | undefined;
+	};
+	class ReactiveValue<T> {
+		
+		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
+		get current(): T;
+		#private;
+	}
 
 	export {};
 }

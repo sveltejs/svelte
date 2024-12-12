@@ -30,8 +30,17 @@ export function bind_value(input, get, set = get) {
 		// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
 		// because we use mutable state which ensures the render effect always runs)
 		if (runes && value !== (value = get())) {
+			var start = input.selectionStart;
+			var end = input.selectionEnd;
+
 			// the value is coerced on assignment
 			input.value = value ?? '';
+
+			// Restore selection
+			if (end !== null) {
+				input.selectionStart = start;
+				input.selectionEnd = Math.min(end, input.value.length);
+			}
 		}
 	});
 
