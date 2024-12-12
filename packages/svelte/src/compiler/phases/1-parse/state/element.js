@@ -504,8 +504,24 @@ function read_attribute(parser) {
 	let value = true;
 	if (parser.eat('=')) {
 		parser.allow_whitespace();
-		value = read_attribute_value(parser);
-		end = parser.index;
+
+		if (parser.template[parser.index] === '/' && parser.template[parser.index + 1] === '>') {
+			const char_start = parser.index;
+			parser.index++; // consume '/'
+			value = [
+				{
+					start: char_start,
+					end: char_start + 1,
+					type: 'Text',
+					raw: '/',
+					data: '/'
+				}
+			];
+			end = parser.index;
+		} else {
+			value = read_attribute_value(parser);
+			end = parser.index;
+		}
 	} else if (parser.match_regex(regex_starts_with_quote_characters)) {
 		e.expected_token(parser.index, '=');
 	}
