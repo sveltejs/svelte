@@ -1,6 +1,8 @@
 import { on } from '../events/index.js';
 import { ReactiveValue } from './reactive-value.js';
 
+const parenthesis_regex = /\(.+\)/;
+
 /**
  * Creates a media query and provides a `current` property that reflects whether or not it matches.
  *
@@ -25,7 +27,8 @@ export class MediaQuery extends ReactiveValue {
 	 * @param {boolean} [fallback] Fallback value for the server
 	 */
 	constructor(query, fallback) {
-		const q = window.matchMedia(`(${query})`);
+		let final_query = parenthesis_regex.test(query) ? query : `(${query})`;
+		const q = window.matchMedia(final_query);
 		super(
 			() => q.matches,
 			(update) => on(q, 'change', update)
