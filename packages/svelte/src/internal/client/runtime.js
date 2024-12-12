@@ -960,6 +960,7 @@ export function invalidate_inner_signals(fn) {
 		if ((signal.f & LEGACY_DERIVED_PROP) !== 0) {
 			for (const dep of /** @type {Derived} */ (signal).deps || []) {
 				if ((dep.f & DERIVED) === 0) {
+					// Use internal_set instead of set here and below to avoid mutation validation
 					internal_set(dep, dep.v);
 				}
 			}
