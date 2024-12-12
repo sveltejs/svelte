@@ -2,7 +2,7 @@
 	"html": {
 		"type": "Fragment",
 		"start": 0,
-		"end": 83,
+		"end": 160,
 		"children": [
 			{
 				"type": "Element",
@@ -46,7 +46,7 @@
 			{
 				"type": "Element",
 				"start": 22,
-				"end": 42,
+				"end": 51,
 				"name": "div",
 				"attributes": [],
 				"children": [
@@ -58,45 +58,98 @@
 						"data": "\n\t"
 					},
 					{
-						"type": "Element",
+						"type": "InlineComponent",
 						"start": 29,
-						"end": 36,
-						"name": "span",
-						"attributes": [],
-						"children": [
+						"end": 45,
+						"name": "Comp",
+						"attributes": [
 							{
-								"type": "Text",
+								"type": "Attribute",
 								"start": 35,
-								"end": 36,
-								"raw": "\n",
-								"data": "\n"
+								"end": 44,
+								"name": "foo",
+								"value": [
+									{
+										"type": "MustacheTag",
+										"start": 39,
+										"end": 44,
+										"expression": {
+											"type": "Identifier",
+											"start": 40,
+											"end": 43,
+											"loc": {
+												"start": {
+													"line": 6,
+													"column": 12
+												},
+												"end": {
+													"line": 6,
+													"column": 15
+												}
+											},
+											"name": "bar"
+										}
+									}
+								]
 							}
-						]
+						],
+						"children": []
 					}
 				]
 			},
 			{
 				"type": "Text",
-				"start": 42,
-				"end": 44,
+				"start": 51,
+				"end": 53,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "Element",
+				"start": 53,
+				"end": 72,
+				"name": "div",
+				"attributes": [],
+				"children": [
+					{
+						"type": "Text",
+						"start": 58,
+						"end": 60,
+						"raw": "\n\t",
+						"data": "\n\t"
+					},
+					{
+						"type": "Element",
+						"start": 60,
+						"end": 66,
+						"name": "span",
+						"attributes": [],
+						"children": []
+					}
+				]
+			},
+			{
+				"type": "Text",
+				"start": 72,
+				"end": 74,
 				"raw": "\n\n",
 				"data": "\n\n"
 			},
 			{
 				"type": "IfBlock",
-				"start": 44,
-				"end": 66,
+				"start": 74,
+				"end": 96,
 				"expression": {
 					"type": "Identifier",
-					"start": 49,
-					"end": 52,
+					"start": 79,
+					"end": 82,
 					"loc": {
 						"start": {
-							"line": 9,
+							"line": 13,
 							"column": 5
 						},
 						"end": {
-							"line": 9,
+							"line": 13,
 							"column": 8
 						}
 					},
@@ -105,15 +158,15 @@
 				"children": [
 					{
 						"type": "Element",
-						"start": 55,
-						"end": 61,
+						"start": 85,
+						"end": 91,
 						"name": "div",
 						"attributes": [],
 						"children": [
 							{
 								"type": "Text",
-								"start": 60,
-								"end": 61,
+								"start": 90,
+								"end": 91,
 								"raw": "\n",
 								"data": "\n"
 							}
@@ -123,40 +176,123 @@
 			},
 			{
 				"type": "Text",
-				"start": 66,
-				"end": 68,
+				"start": 96,
+				"end": 98,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "IfBlock",
+				"start": 98,
+				"end": 130,
+				"expression": {
+					"type": "Identifier",
+					"start": 103,
+					"end": 106,
+					"loc": {
+						"start": {
+							"line": 17,
+							"column": 5
+						},
+						"end": {
+							"line": 17,
+							"column": 8
+						}
+					},
+					"name": "foo"
+				},
+				"children": [
+					{
+						"type": "InlineComponent",
+						"start": 109,
+						"end": 125,
+						"name": "Comp",
+						"attributes": [
+							{
+								"type": "Attribute",
+								"start": 115,
+								"end": 124,
+								"name": "foo",
+								"value": [
+									{
+										"type": "MustacheTag",
+										"start": 119,
+										"end": 124,
+										"expression": {
+											"type": "Identifier",
+											"start": 120,
+											"end": 123,
+											"loc": {
+												"start": {
+													"line": 18,
+													"column": 12
+												},
+												"end": {
+													"line": 18,
+													"column": 15
+												}
+											},
+											"name": "bar"
+										}
+									}
+								]
+							}
+						],
+						"children": []
+					}
+				]
+			},
+			{
+				"type": "Text",
+				"start": 130,
+				"end": 132,
 				"raw": "\n\n",
 				"data": "\n\n"
 			},
 			{
 				"type": "Element",
-				"start": 68,
-				"end": 83,
+				"start": 132,
+				"end": 160,
 				"name": "div",
 				"attributes": [],
 				"children": [
 					{
 						"type": "Text",
-						"start": 73,
-						"end": 74,
+						"start": 137,
+						"end": 138,
 						"raw": "\n",
 						"data": "\n"
 					},
 					{
 						"type": "Element",
-						"start": 74,
-						"end": 83,
+						"start": 138,
+						"end": 147,
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
 								"type": "Text",
-								"start": 77,
-								"end": 79,
+								"start": 141,
+								"end": 143,
 								"raw": "hi",
 								"data": "hi"
 							}
 						]
+					},
+					{
+						"type": "Text",
+						"start": 147,
+						"end": 149,
+						"raw": "\n\n",
+						"data": "\n\n"
+					},
+					{
+						"type": "Element",
+						"start": 149,
+						"end": 160,
+						"name": "open-ended",
+						"attributes": [],
+						"children": []
 					}
 				]
 			}

@@ -23,6 +23,12 @@ export class Parser {
 	template;
 
 	/**
+	 * @readonly
+	 * @type {string}
+	 */
+	template_untrimmed;
+
+	/**
 	 * Whether or not we're in loose parsing mode, in which
 	 * case we try to continue parsing as much as possible
 	 * @type {boolean}
@@ -60,6 +66,7 @@ export class Parser {
 		}
 
 		this.loose = loose;
+		this.template_untrimmed = template;
 		this.template = template.trimEnd();
 
 		let match_lang;
