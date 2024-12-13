@@ -167,7 +167,7 @@ export function VariableDeclaration(node, context) {
 						b.arrow(
 							[b.id('$$fn')],
 							b.sequence([
-								b.call(b.id('$$fn'), b.member(state_id, b.id('v'))),
+								b.chain_call(b.id('$$fn'), b.member(state_id, b.id('v'))),
 								b.call('$.set', state_id, b.member(state_id, b.id('v')))
 							])
 						)

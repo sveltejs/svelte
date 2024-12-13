@@ -98,7 +98,7 @@ export function VariableDeclaration(node, context) {
 				const invalidation_id = /** @type {Identifier} */ (pattern.elements[1]);
 				declarations.push(
 					b.declarator(state_id, value),
-					b.declarator(invalidation_id, b.arrow([b.id('$$fn')], b.call(b.id('$$fn'), state_id)))
+					b.declarator(invalidation_id, b.arrow([b.id('$$fn')], b.chain_call(b.id('$$fn'), state_id)))
 				);
 				continue;
 			}
