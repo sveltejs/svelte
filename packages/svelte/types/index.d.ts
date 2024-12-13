@@ -2691,8 +2691,8 @@ declare namespace $state {
 	 *
 	 * @param initial The initial value
 	 */
-	export function opaque<T>(initial: T): [T, () => void];
-	export function opaque<T>(): [T | undefined, () => void];
+	export function opaque<T>(initial: T): [T, (mutate?: (value: T) => void) => void];
+	export function opaque<T>(): [T | undefined, (mutate?: (value: T) => void) => void];
 
 	/**
 	 * To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:

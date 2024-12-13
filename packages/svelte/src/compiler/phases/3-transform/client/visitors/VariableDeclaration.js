@@ -164,7 +164,13 @@ export function VariableDeclaration(node, context) {
 					b.declarator(state_id, b.call('$.opaque_state', value)),
 					b.declarator(
 						invalidation_id,
-						b.thunk(b.call('$.set', state_id, b.member(state_id, b.id('v'))))
+						b.arrow(
+							[b.id('$$fn')],
+							b.sequence([
+								b.call(b.id('$$fn'), b.member(state_id, b.id('v'))),
+								b.call('$.set', state_id, b.member(state_id, b.id('v')))
+							])
+						)
 					)
 				);
 				continue;
