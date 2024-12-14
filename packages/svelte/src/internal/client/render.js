@@ -272,9 +272,9 @@ let mounted_components = new WeakMap();
 /**
  * Unmounts a component that was previously mounted using `mount` or `hydrate`.
  *
- * If `options.outro` is `true`, [transitions](https://svelte.dev/docs/svelte/transition) will play before the component is removed from the DOM.
+ * Since 5.13.0, if `options.outro` is `true`, [transitions](https://svelte.dev/docs/svelte/transition) will play before the component is removed from the DOM.
  *
- * Returns a `Promise` that resolves after transitions have completed if `options.outro` is true, or immediately otherwise.
+ * Returns a `Promise` that resolves after transitions have completed if `options.outro` is true, or immediately otherwise (prior to 5.13.0, returns `void`).
  *
  * ```js
  * import { mount, unmount } from 'svelte';
