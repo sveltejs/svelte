@@ -252,7 +252,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			}
 
 			root_event_handles.delete(event_handle);
-			mounted_components.delete(component);
+
 			if (anchor_node !== anchor) {
 				anchor_node.parentNode?.removeChild(anchor_node);
 			}
@@ -293,6 +293,7 @@ export function unmount(component, options) {
 	const fn = mounted_components.get(component);
 
 	if (fn) {
+		mounted_components.delete(component);
 		return fn(options);
 	}
 
