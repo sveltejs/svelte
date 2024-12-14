@@ -15,7 +15,8 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 	const actual = JSON.parse(
 		JSON.stringify(
 			parse(input, {
-				modern: true
+				modern: true,
+				loose: cwd.split('/').pop()!.startsWith('loose-')
 			})
 		)
 	);
