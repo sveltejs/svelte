@@ -470,15 +470,6 @@ export function store_invalid_subscription_module(node) {
 }
 
 /**
- * `$inspect.trace` must only be used once within the same block statement
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function trace_rune_duplicate(node) {
-	e(node, "trace_rune_duplicate", `\`$inspect.trace\` must only be used once within the same block statement\nhttps://svelte.dev/e/trace_rune_duplicate`);
-}
-
-/**
  * `$inspect.trace` requires a string argument for the trace name
  * @param {null | number | NodeLike} node
  * @returns {never}

@@ -186,10 +186,6 @@ It's possible to export a snippet from a `<script module>` block, but only if it
 
 Using a `$` prefix to refer to the value of a store is only possible inside `.svelte` files, where Svelte can automatically create subscriptions when a component is mounted and unsubscribe when the component is unmounted. Consider migrating to runes instead.
 
-## trace_rune_duplicate
-
-> `$inspect.trace` must only be used once within the same block statement
-
 ## trace_rune_invalid_argument
 
 > `$inspect.trace` requires a string argument for the trace name

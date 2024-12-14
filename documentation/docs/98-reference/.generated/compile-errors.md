@@ -970,12 +970,6 @@ A `<textarea>` can have either a value attribute or (equivalently) child content
 `<title>` can only contain text and {tags}
 ```
 
-### trace_rune_duplicate
-
-```
-`$inspect.trace` must only be used once within the same block statement
-```
-
 ### trace_rune_invalid_argument
 
 ```

@@ -157,9 +157,6 @@ export function CallExpression(node, context) {
 			) {
 				e.trace_rune_invalid_location(node);
 			}
-			if (context.state.scope.tracing) {
-				e.trace_rune_duplicate(node);
-			}
 
 			if (dev) {
 				context.state.scope.tracing = node.arguments[0].value;
