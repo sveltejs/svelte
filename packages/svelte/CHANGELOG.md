@@ -1,5 +1,13 @@
 # svelte
 
+## 5.13.0
+
+### Minor Changes
+
+- feat: add `outro` option to `unmount` ([#14540](https://github.com/sveltejs/svelte/pull/14540))
+
+- feat: provide loose parser mode ([#14691](https://github.com/sveltejs/svelte/pull/14691))
+
 ## 5.12.0
 
 ### Minor Changes
