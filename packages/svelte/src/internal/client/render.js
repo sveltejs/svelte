@@ -10,7 +10,7 @@ import {
 } from './dom/operations.js';
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
 import { push, pop, component_context, active_effect } from './runtime.js';
-import { effect_root, branch } from './reactivity/effects.js';
+import { component_root, branch } from './reactivity/effects.js';
 import {
 	hydrate_next,
 	hydrate_node,
@@ -204,7 +204,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 	// @ts-expect-error will be defined because the render effect runs synchronously
 	var component = undefined;
 
-	var unmount = effect_root(() => {
+	var unmount = component_root(() => {
 		var anchor_node = anchor ?? target.appendChild(create_text());
 
 		branch(() => {

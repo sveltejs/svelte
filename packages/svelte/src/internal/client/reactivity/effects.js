@@ -244,9 +244,22 @@ export function inspect_effect(fn) {
 /**
  * Internal representation of `$effect.root(...)`
  * @param {() => void | (() => void)} fn
- * @returns {(options?: { outro?: boolean }) => void}
+ * @returns {() => void}
  */
 export function effect_root(fn) {
+	const effect = create_effect(ROOT_EFFECT, fn, true);
+
+	return () => {
+		destroy_effect(effect);
+	};
+}
+
+/**
+ * An effect root whose children can transition out
+ * @param {() => void} fn
+ * @returns {(options?: { outro?: boolean }) => void}
+ */
+export function component_root(fn) {
 	const effect = create_effect(ROOT_EFFECT, fn, true);
 
 	return (options = {}) => {
