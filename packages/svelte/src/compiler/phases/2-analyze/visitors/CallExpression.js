@@ -143,7 +143,15 @@ export function CallExpression(node, context) {
 			if (node.arguments[0].type !== 'Literal' || typeof node.arguments[0].value !== 'string') {
 				e.trace_rune_invalid_argument(node);
 			}
-			if (parent.type !== 'ExpressionStatement' || context.path.at(-2)?.type !== 'BlockStatement') {
+			if (
+				parent.type !== 'ExpressionStatement' ||
+				context.path.at(-2)?.type !== 'BlockStatement' ||
+				!(
+					context.path.at(-3)?.type === 'FunctionDeclaration' ||
+					context.path.at(-3)?.type === 'FunctionExpression' ||
+					context.path.at(-3)?.type === 'ArrowFunctionExpression'
+				)
+			) {
 				e.trace_rune_invalid_location(node);
 			}
 			if (context.state.scope.tracing) {
