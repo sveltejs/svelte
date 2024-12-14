@@ -192,7 +192,7 @@ Using a `$` prefix to refer to the value of a store is only possible inside `.sv
 
 ## trace_rune_invalid_location
 
-> `$inspect.trace` must be placed directly inside a function and be the first statement
+> `$inspect.trace(...)` must be the first statement of a function body
 
 ## typescript_invalid_feature
 
