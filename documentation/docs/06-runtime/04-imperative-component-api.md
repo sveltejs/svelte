@@ -47,6 +47,8 @@ const app = mount(App, { target: document.body });
 unmount(app, { outro: true });
 ```
 
+Returns a `Promise` that resolves after transitions have completed if `options.outro` is true, or immediately otherwise.
+
 ## `render`
 
 Only available on the server and when compiling with the `server` option. Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app:

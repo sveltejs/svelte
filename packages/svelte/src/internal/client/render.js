@@ -274,6 +274,8 @@ let mounted_components = new WeakMap();
  *
  * If `options.outro` is `true`, [transitions](https://svelte.dev/docs/svelte/transition) will play before the component is removed from the DOM.
  *
+ * Returns a `Promise` that resolves after transitions have completed if `options.outro` is true, or immediately otherwise.
+ *
  * ```js
  * import { mount, unmount } from 'svelte';
  * import App from './App.svelte';
@@ -285,13 +287,18 @@ let mounted_components = new WeakMap();
  * ```
  * @param {Record<string, any>} component
  * @param {{ outro?: boolean }} [options]
+ * @returns {Promise<void>}
  */
 export function unmount(component, options) {
 	const fn = mounted_components.get(component);
 
 	if (fn) {
-		fn(options);
-	} else if (DEV) {
+		return fn(options);
+	}
+
+	if (DEV) {
 		w.lifecycle_double_unmount();
 	}
+
+	return Promise.resolve();
 }

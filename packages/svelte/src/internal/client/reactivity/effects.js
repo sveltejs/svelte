@@ -257,19 +257,23 @@ export function effect_root(fn) {
 /**
  * An effect root whose children can transition out
  * @param {() => void} fn
- * @returns {(options?: { outro?: boolean }) => void}
+ * @returns {(options?: { outro?: boolean }) => Promise<void>}
  */
 export function component_root(fn) {
 	const effect = create_effect(ROOT_EFFECT, fn, true);
 
 	return (options = {}) => {
-		if (options.outro) {
-			pause_effect(effect, () => {
+		return new Promise((fulfil) => {
+			if (options.outro) {
+				pause_effect(effect, () => {
+					destroy_effect(effect);
+					fulfil(undefined);
+				});
+			} else {
 				destroy_effect(effect);
-			});
-		} else {
-			destroy_effect(effect);
-		}
+				fulfil(undefined);
+			}
+		});
 	};
 }
 
