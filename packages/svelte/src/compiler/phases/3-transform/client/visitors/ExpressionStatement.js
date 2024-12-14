@@ -20,6 +20,10 @@ export function ExpressionStatement(node, context) {
 
 			return b.stmt(expr);
 		}
+
+		if (rune === '$inspect.trace') {
+			return b.empty;
+		}
 	}
 
 	context.next();
