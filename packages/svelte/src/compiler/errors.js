@@ -488,12 +488,12 @@ export function trace_rune_invalid_argument(node) {
 }
 
 /**
- * `$inspect.trace` must be placed directly inside a block statement
+ * `$inspect.trace` must be placed directly inside a function and be the first statement
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function trace_rune_invalid_location(node) {
-	e(node, "trace_rune_invalid_location", `\`$inspect.trace\` must be placed directly inside a block statement\nhttps://svelte.dev/e/trace_rune_invalid_location`);
+	e(node, "trace_rune_invalid_location", `\`$inspect.trace\` must be placed directly inside a function and be the first statement\nhttps://svelte.dev/e/trace_rune_invalid_location`);
 }
 
 /**

@@ -985,7 +985,7 @@ A `<textarea>` can have either a value attribute or (equivalently) child content
 ### trace_rune_invalid_location
 
 ```
-`$inspect.trace` must be placed directly inside a block statement
+`$inspect.trace` must be placed directly inside a function and be the first statement
 ```
 
 ### transition_conflict
