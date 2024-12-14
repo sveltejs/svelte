@@ -448,8 +448,24 @@ declare module 'svelte' {
 	}): Exports;
 	/**
 	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
+	 *
+	 * If `options.outro` is `true`, [transitions](https://svelte.dev/docs/svelte/transition) will play before the component is removed from the DOM.
+	 *
+	 * Returns a `Promise` that resolves after transitions have completed if `options.outro` is true, or immediately otherwise.
+	 *
+	 * ```js
+	 * import { mount, unmount } from 'svelte';
+	 * import App from './App.svelte';
+	 *
+	 * const app = mount(App, { target: document.body });
+	 *
+	 * // later...
+	 * unmount(app, { outro: true });
+	 * ```
 	 * */
-	export function unmount(component: Record<string, any>): void;
+	export function unmount(component: Record<string, any>, options?: {
+		outro?: boolean;
+	} | undefined): Promise<void>;
 	/**
 	 * Returns a promise that resolves once any pending state changes have been applied.
 	 * */

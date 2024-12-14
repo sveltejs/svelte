@@ -33,18 +33,21 @@ Note that unlike calling `new App(...)` in Svelte 4, things like effects (includ
 
 ## `unmount`
 
-Unmounts a component created with [`mount`](#mount) or [`hydrate`](#hydrate):
+Unmounts a component that was previously created with [`mount`](#mount) or [`hydrate`](#hydrate).
+
+If `options.outro` is `true`, [transitions](transition) will play before the component is removed from the DOM:
 
 ```js
-// @errors: 1109
 import { mount, unmount } from 'svelte';
 import App from './App.svelte';
 
-const app = mount(App, {...});
+const app = mount(App, { target: document.body });
 
 // later
-unmount(app);
+unmount(app, { outro: true });
 ```
+
+Returns a `Promise` that resolves after transitions have completed if `options.outro` is true, or immediately otherwise.
 
 ## `render`
 
