@@ -18,7 +18,7 @@ export default test({
 2: 
 3: unterminated template
                         ^`,
-			message: 'Unexpected end of input',
+			message: 'Unexpected end of input\nhttps://svelte.dev/e/unexpected_eof',
 			position: [30, 30],
 			start: {
 				character: 30,

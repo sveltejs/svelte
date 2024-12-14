@@ -248,8 +248,32 @@ export function inspect_effect(fn) {
  */
 export function effect_root(fn) {
 	const effect = create_effect(ROOT_EFFECT, fn, true);
+
 	return () => {
 		destroy_effect(effect);
+	};
+}
+
+/**
+ * An effect root whose children can transition out
+ * @param {() => void} fn
+ * @returns {(options?: { outro?: boolean }) => Promise<void>}
+ */
+export function component_root(fn) {
+	const effect = create_effect(ROOT_EFFECT, fn, true);
+
+	return (options = {}) => {
+		return new Promise((fulfil) => {
+			if (options.outro) {
+				pause_effect(effect, () => {
+					destroy_effect(effect);
+					fulfil(undefined);
+				});
+			} else {
+				destroy_effect(effect);
+				fulfil(undefined);
+			}
+		});
 	};
 }
 
@@ -265,20 +289,13 @@ export function effect(fn) {
  * Internal representation of `$: ..`
  * @param {() => any} deps
  * @param {() => void | (() => void)} fn
- * @param {number} [line]
- * @param {number} [column]
  */
-export function legacy_pre_effect(deps, fn, line, column) {
+export function legacy_pre_effect(deps, fn) {
 	var context = /** @type {ComponentContextLegacy} */ (component_context);
 
 	/** @type {{ effect: null | Effect, ran: boolean }} */
 	var token = { effect: null, ran: false };
 	context.l.r1.push(token);
-
-	if (DEV && line !== undefined) {
-		var location = get_location(line, column);
-		var explicit_deps = capture_signals(deps);
-	}
 
 	token.effect = render_effect(() => {
 		deps();
@@ -289,18 +306,7 @@ export function legacy_pre_effect(deps, fn, line, column) {
 
 		token.ran = true;
 		set(context.l.r2, true);
-
-		if (DEV && location) {
-			var implicit_deps = capture_signals(() => untrack(fn));
-
-			for (var signal of implicit_deps) {
-				if (!explicit_deps.has(signal)) {
-					w.reactive_declaration_non_reactive_property(/** @type {string} */ (location));
-				}
-			}
-		} else {
-			untrack(fn);
-		}
+		untrack(fn);
 	});
 }
 

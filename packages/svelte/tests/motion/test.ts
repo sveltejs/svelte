@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+import '../helpers.js'; // for the matchMedia polyfill
 import { describe, it, assert } from 'vitest';
 import { get } from 'svelte/store';
 import { spring, tweened } from 'svelte/motion';

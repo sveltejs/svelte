@@ -50,11 +50,6 @@ export function LabeledStatement(node, context) {
 		sequence.push(serialized);
 	}
 
-	const location =
-		dev && !is_ignored(node, 'reactive_declaration_non_reactive_property')
-			? locator(/** @type {number} */ (node.start))
-			: undefined;
-
 	// these statements will be topologically ordered later
 	context.state.legacy_reactive_statements.set(
 		node,
@@ -62,9 +57,7 @@ export function LabeledStatement(node, context) {
 			b.call(
 				'$.legacy_pre_effect',
 				sequence.length > 0 ? b.thunk(b.sequence(sequence)) : b.thunk(b.block([])),
-				b.thunk(b.block(body)),
-				location && b.literal(location.line),
-				location && b.literal(location.column)
+				b.thunk(b.block(body))
 			)
 		)
 	);

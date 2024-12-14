@@ -9,9 +9,12 @@ var normal = 'font-weight: normal';
  */
 export function CODE(PARAMETER) {
 	if (DEV) {
-		console.warn(`%c[svelte] ${'CODE'}\n%c${MESSAGE}`, bold, normal);
+		console.warn(
+			`%c[svelte] ${'CODE'}\n%c${MESSAGE}\nhttps://svelte.dev/e/${'CODE'}`,
+			bold,
+			normal
+		);
 	} else {
-		// TODO print a link to the documentation
-		console.warn('CODE');
+		console.warn(`https://svelte.dev/e/${'CODE'}`);
 	}
 }
