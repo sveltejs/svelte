@@ -336,7 +336,7 @@ export default function element(parser) {
 
 	// Loose parsing mode
 	if (!closed) {
-		// We may have eaten an opening `<` of the next element and treated is as an attribute...
+		// We may have eaten an opening `<` of the next element and treated it as an attribute...
 		const last = element.attributes.at(-1);
 		if (last?.type === 'Attribute' && last.name === '<') {
 			parser.index = last.start;
