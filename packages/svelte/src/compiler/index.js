@@ -98,6 +98,8 @@ export function compileModule(source, options) {
  * The `modern` option (`false` by default in Svelte 5) makes the parser return a modern AST instead of the legacy AST.
  * `modern` will become `true` by default in Svelte 6, and the option will be removed in Svelte 7.
  *
+ * The `loose` option, available since 5.13.0, tries to always return an AST even if the input will not successfully compile.
+ *
  * @param {string} source
  * @param {{ filename?: string; rootDir?: string; modern?: boolean; loose?: boolean }} [options]
  * @returns {AST.Root | LegacyRoot}
