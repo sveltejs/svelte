@@ -3031,7 +3031,7 @@ declare function $inspect<T extends any[]>(
 
 declare namespace $inspect {
 	/**
-	 * Traces the reactive graph of the tracking reactive context. Must be placed within a block statement.
+	 * Traces the reactive graph of the tracking reactive context. Must be placed directly within a function body.
 	 * Example:
 	 *
 	 * ```svelte
