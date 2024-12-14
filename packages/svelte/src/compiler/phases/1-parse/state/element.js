@@ -1,5 +1,5 @@
 /** @import { Expression } from 'estree' */
-/** @import { AST, Directive, ElementLike, TemplateNode } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { is_void } from '../../../../utils.js';
 import read_expression from '../read/expression.js';
@@ -28,7 +28,7 @@ export const regex_valid_component_name =
 	// (must start with uppercase letter if no dots, can contain dots)
 	/^(?:\p{Lu}[$\u200c\u200d\p{ID_Continue}.]*|\p{ID_Start}[$\u200c\u200d\p{ID_Continue}]*(?:\.[$\u200c\u200d\p{ID_Continue}]+)+)$/u;
 
-/** @type {Map<string, ElementLike['type']>} */
+/** @type {Map<string, AST.ElementLike['type']>} */
 const root_only_meta_tags = new Map([
 	['svelte:head', 'SvelteHead'],
 	['svelte:options', 'SvelteOptions'],
@@ -37,7 +37,7 @@ const root_only_meta_tags = new Map([
 	['svelte:body', 'SvelteBody']
 ]);
 
-/** @type {Map<string, ElementLike['type']>} */
+/** @type {Map<string, AST.ElementLike['type']>} */
 const meta_tags = new Map([
 	...root_only_meta_tags,
 	['svelte:element', 'SvelteElement'],
@@ -137,7 +137,7 @@ export default function element(parser) {
 					? 'SlotElement'
 					: 'RegularElement';
 
-	/** @type {ElementLike} */
+	/** @type {AST.ElementLike} */
 	const element =
 		type === 'RegularElement'
 			? {
@@ -155,7 +155,7 @@ export default function element(parser) {
 						path: []
 					}
 				}
-			: /** @type {ElementLike} */ ({
+			: /** @type {AST.ElementLike} */ ({
 					type,
 					start,
 					end: -1,
@@ -358,7 +358,7 @@ export default function element(parser) {
 	}
 }
 
-/** @param {TemplateNode[]} stack */
+/** @param {AST.TemplateNode[]} stack */
 function parent_is_head(stack) {
 	let i = stack.length;
 	while (i--) {
@@ -369,7 +369,7 @@ function parent_is_head(stack) {
 	return false;
 }
 
-/** @param {TemplateNode[]} stack */
+/** @param {AST.TemplateNode[]} stack */
 function parent_is_shadowroot_template(stack) {
 	// https://developer.chrome.com/docs/css-ui/declarative-shadow-dom#building_a_declarative_shadow_root
 	let i = stack.length;
@@ -433,7 +433,7 @@ function read_static_attribute(parser) {
 
 /**
  * @param {Parser} parser
- * @returns {AST.Attribute | AST.SpreadAttribute | Directive | null}
+ * @returns {AST.Attribute | AST.SpreadAttribute | AST.Directive | null}
  */
 function read_attribute(parser) {
 	const start = parser.index;
@@ -504,8 +504,24 @@ function read_attribute(parser) {
 	let value = true;
 	if (parser.eat('=')) {
 		parser.allow_whitespace();
-		value = read_attribute_value(parser);
-		end = parser.index;
+
+		if (parser.template[parser.index] === '/' && parser.template[parser.index + 1] === '>') {
+			const char_start = parser.index;
+			parser.index++; // consume '/'
+			value = [
+				{
+					start: char_start,
+					end: char_start + 1,
+					type: 'Text',
+					raw: '/',
+					data: '/'
+				}
+			];
+			end = parser.index;
+		} else {
+			value = read_attribute_value(parser);
+			end = parser.index;
+		}
 	} else if (parser.match_regex(regex_starts_with_quote_characters)) {
 		e.expected_token(parser.index, '=');
 	}
@@ -548,7 +564,7 @@ function read_attribute(parser) {
 			}
 		}
 
-		/** @type {Directive} */
+		/** @type {AST.Directive} */
 		const directive = {
 			start,
 			end,

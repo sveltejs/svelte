@@ -1,4 +1,4 @@
-/** @import { AST, Binding, SvelteNode } from '#compiler' */
+/** @import { AST, Binding } from '#compiler' */
 /** @import { Scope } from '../../scope' */
 /** @import { Context } from '../types' */
 import { validate_block_not_empty, validate_opening_tag } from './shared/utils.js';
@@ -80,7 +80,7 @@ export function SnippetBlock(node, context) {
 }
 
 /**
- * @param {Map<SvelteNode, Scope>} scopes
+ * @param {Map<AST.SvelteNode, Scope>} scopes
  * @param {Scope} scope
  */
 function can_hoist_snippet(scope, scopes, visited = new Set()) {
@@ -99,8 +99,9 @@ function can_hoist_snippet(scope, scopes, visited = new Set()) {
 		if (binding.initial?.type === 'SnippetBlock') {
 			if (visited.has(binding)) continue;
 			visited.add(binding);
+			const snippet_scope = /** @type {Scope} */ (scopes.get(binding.initial));
 
-			if (can_hoist_snippet(binding.scope, scopes, visited)) {
+			if (can_hoist_snippet(snippet_scope, scopes, visited)) {
 				continue;
 			}
 		}

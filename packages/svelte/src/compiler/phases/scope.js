@@ -1,6 +1,6 @@
 /** @import { ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
-/** @import { AST, Binding, DeclarationKind, ElementLike, SvelteNode } from '#compiler' */
+/** @import { AST, Binding, DeclarationKind } from '#compiler' */
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { create_expression_metadata } from './nodes.js';
@@ -48,7 +48,7 @@ export class Scope {
 	/**
 	 * A set of all the names referenced with this scope
 	 * — useful for generating unique names
-	 * @type {Map<string, { node: Identifier; path: SvelteNode[] }[]>}
+	 * @type {Map<string, { node: Identifier; path: AST.SvelteNode[] }[]>}
 	 */
 	references = new Map();
 
@@ -179,7 +179,7 @@ export class Scope {
 
 	/**
 	 * @param {Identifier} node
-	 * @param {SvelteNode[]} path
+	 * @param {AST.SvelteNode[]} path
 	 */
 	reference(node, path) {
 		path = [...path]; // ensure that mutations to path afterwards don't affect this reference
@@ -225,7 +225,7 @@ export class ScopeRoot {
 }
 
 /**
- * @param {SvelteNode} ast
+ * @param {AST.SvelteNode} ast
  * @param {ScopeRoot} root
  * @param {boolean} allow_reactive_declarations
  * @param {Scope | null} parent
@@ -235,7 +235,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 	/**
 	 * A map of node->associated scope. A node appearing in this map does not necessarily mean that it created a scope
-	 * @type {Map<SvelteNode, Scope>}
+	 * @type {Map<AST.SvelteNode, Scope>}
 	 */
 	const scopes = new Map();
 	const scope = new Scope(root, parent, false);
@@ -244,7 +244,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	/** @type {State} */
 	const state = { scope };
 
-	/** @type {[Scope, { node: Identifier; path: SvelteNode[] }][]} */
+	/** @type {[Scope, { node: Identifier; path: AST.SvelteNode[] }][]} */
 	const references = [];
 
 	/** @type {[Scope, Pattern | MemberExpression][]} */
@@ -269,7 +269,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	}
 
 	/**
-	 * @type {Visitor<Node, State, SvelteNode>}
+	 * @type {Visitor<Node, State, AST.SvelteNode>}
 	 */
 	const create_block_scope = (node, { state, next }) => {
 		const scope = state.scope.child(true);
@@ -279,7 +279,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<ElementLike, State, SvelteNode>}
+	 * @type {Visitor<AST.ElementLike, State, AST.SvelteNode>}
 	 */
 	const SvelteFragment = (node, { state, next }) => {
 		const scope = state.scope.child();
@@ -288,7 +288,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<AST.Component | AST.SvelteComponent | AST.SvelteSelf, State, SvelteNode>}
+	 * @type {Visitor<AST.Component | AST.SvelteComponent | AST.SvelteSelf, State, AST.SvelteNode>}
 	 */
 	const Component = (node, context) => {
 		node.metadata.scopes = {
@@ -329,7 +329,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<AST.AnimateDirective | AST.TransitionDirective | AST.UseDirective, State, SvelteNode>}
+	 * @type {Visitor<AST.AnimateDirective | AST.TransitionDirective | AST.UseDirective, State, AST.SvelteNode>}
 	 */
 	const SvelteDirective = (node, { state, path, visit }) => {
 		state.scope.reference(b.id(node.name.split('.')[0]), path);
@@ -628,12 +628,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		SnippetBlock(node, context) {
 			const state = context.state;
-			// Special-case for root-level snippets: they become part of the instance scope
-			const is_top_level = !context.path.at(-2);
 			let scope = state.scope;
-			if (is_top_level) {
-				scope = /** @type {Scope} */ (parent);
-			}
+
 			scope.declare(node.expression, 'normal', 'function', node);
 
 			const child_scope = state.scope.child();
@@ -717,9 +713,9 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 }
 
 /**
- * @template {{ scope: Scope, scopes: Map<SvelteNode, Scope> }} State
- * @param {SvelteNode} node
- * @param {Context<SvelteNode, State>} context
+ * @template {{ scope: Scope, scopes: Map<AST.SvelteNode, Scope> }} State
+ * @param {AST.SvelteNode} node
+ * @param {Context<AST.SvelteNode, State>} context
  */
 export function set_scope(node, { next, state }) {
 	const scope = state.scopes.get(node);

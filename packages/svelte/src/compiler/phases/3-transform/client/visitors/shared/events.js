@@ -1,5 +1,5 @@
 /** @import { Expression } from 'estree' */
-/** @import { AST, ExpressionMetadata, SvelteNode } from '#compiler' */
+/** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { is_capture_event, is_passive_event } from '../../../../../../utils.js';
 import { dev, locator } from '../../../../../state.js';
@@ -68,7 +68,7 @@ export function visit_event_attribute(node, context) {
 			)
 		);
 
-		const type = /** @type {SvelteNode} */ (context.path.at(-1)).type;
+		const type = /** @type {AST.SvelteNode} */ (context.path.at(-1)).type;
 
 		if (type === 'SvelteDocument' || type === 'SvelteWindow' || type === 'SvelteBody') {
 			// These nodes are above the component tree, and its events should run parent first

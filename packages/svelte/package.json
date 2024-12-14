@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.5.3",
+  "version": "5.12.0",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -72,6 +72,10 @@
       "types": "./types/index.d.ts",
       "browser": "./src/reactivity/index-client.js",
       "default": "./src/reactivity/index-server.js"
+    },
+    "./reactivity/window": {
+      "types": "./types/index.d.ts",
+      "default": "./src/reactivity/window/index.js"
     },
     "./server": {
       "types": "./types/index.d.ts",

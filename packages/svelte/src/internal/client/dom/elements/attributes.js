@@ -60,13 +60,19 @@ export function remove_input_defaults(input) {
 export function set_value(element, value) {
 	// @ts-expect-error
 	var attributes = (element.__attributes ??= {});
+
 	if (
-		attributes.value === (attributes.value = value) ||
+		attributes.value ===
+			(attributes.value =
+				// treat null and undefined the same for the initial value
+				value ?? undefined) ||
 		// @ts-expect-error
 		// `progress` elements always need their value set when its `0`
 		(element.value === value && (value !== 0 || element.nodeName !== 'PROGRESS'))
-	)
+	) {
 		return;
+	}
+
 	// @ts-expect-error
 	element.value = value;
 }
@@ -79,9 +85,58 @@ export function set_checked(element, checked) {
 	// @ts-expect-error
 	var attributes = (element.__attributes ??= {});
 
-	if (attributes.checked === (attributes.checked = checked)) return;
+	if (
+		attributes.checked ===
+		(attributes.checked =
+			// treat null and undefined the same for the initial value
+			checked ?? undefined)
+	) {
+		return;
+	}
+
 	// @ts-expect-error
 	element.checked = checked;
+}
+
+/**
+ * Sets the `selected` attribute on an `option` element.
+ * Not set through the property because that doesn't reflect to the DOM,
+ * which means it wouldn't be taken into account when a form is reset.
+ * @param {HTMLOptionElement} element
+ * @param {boolean} selected
+ */
+export function set_selected(element, selected) {
+	if (selected) {
+		// The selected option could've changed via user selection, and
+		// setting the value without this check would set it back.
+		if (!element.hasAttribute('selected')) {
+			element.setAttribute('selected', '');
+		}
+	} else {
+		element.removeAttribute('selected');
+	}
+}
+
+/**
+ * Applies the default checked property without influencing the current checked property.
+ * @param {HTMLInputElement} element
+ * @param {boolean} checked
+ */
+export function set_default_checked(element, checked) {
+	const existing_value = element.checked;
+	element.defaultChecked = checked;
+	element.checked = existing_value;
+}
+
+/**
+ * Applies the default value property without influencing the current value property.
+ * @param {HTMLInputElement | HTMLTextAreaElement} element
+ * @param {string} value
+ */
+export function set_default_value(element, value) {
+	const existing_value = element.value;
+	element.defaultValue = value;
+	element.value = existing_value;
 }
 
 /**
@@ -146,7 +201,7 @@ export function set_xlink_attribute(dom, attribute, value) {
 }
 
 /**
- * @param {any} node
+ * @param {HTMLElement} node
  * @param {string} prop
  * @param {any} value
  */
@@ -161,10 +216,21 @@ export function set_custom_element_data(node, prop, value) {
 	set_active_reaction(null);
 	set_active_effect(null);
 	try {
-		if (get_setters(node).includes(prop)) {
+		if (
+			// Don't compute setters for custom elements while they aren't registered yet,
+			// because during their upgrade/instantiation they might add more setters.
+			// Instead, fall back to a simple "an object, then set as property" heuristic.
+			setters_cache.has(node.nodeName) || customElements.get(node.tagName.toLowerCase())
+				? get_setters(node).includes(prop)
+				: value && typeof value === 'object'
+		) {
+			// @ts-expect-error
 			node[prop] = value;
 		} else {
-			set_attribute(node, prop, value);
+			// We did getters etc checks already, stringify before passing to set_attribute
+			// to ensure it doesn't invoke the same logic again, and potentially populating
+			// the setters cache too early.
+			set_attribute(node, prop, value == null ? value : String(value));
 		}
 	} finally {
 		set_active_reaction(previous_reaction);
@@ -281,6 +347,9 @@ export function set_attributes(
 					element[`__${event_name}`] = value;
 					delegate([event_name]);
 				}
+			} else if (delegated) {
+				// @ts-ignore
+				element[`__${event_name}`] = undefined;
 			}
 		} else if (key === 'style' && value != null) {
 			element.style.cssText = value + '';
@@ -289,16 +358,39 @@ export function set_attributes(
 		} else if (key === '__value' || (key === 'value' && value != null)) {
 			// @ts-ignore
 			element.value = element[key] = element.__value = value;
+		} else if (key === 'selected' && is_option_element) {
+			set_selected(/** @type {HTMLOptionElement} */ (element), value);
 		} else {
 			var name = key;
 			if (!preserve_attribute_case) {
 				name = normalize_attribute(name);
 			}
 
-			if (value == null && !is_custom_element) {
+			var is_default = name === 'defaultValue' || name === 'defaultChecked';
+
+			if (value == null && !is_custom_element && !is_default) {
 				attributes[key] = null;
-				element.removeAttribute(key);
-			} else if (setters.includes(name) && (is_custom_element || typeof value !== 'string')) {
+
+				if (name === 'value' || name === 'checked') {
+					// removing value/checked also removes defaultValue/defaultChecked — preserve
+					let input = /** @type {HTMLInputElement} */ (element);
+
+					if (name === 'value') {
+						let prev = input.defaultValue;
+						input.removeAttribute(name);
+						input.defaultValue = prev;
+					} else {
+						let prev = input.defaultChecked;
+						input.removeAttribute(name);
+						input.defaultChecked = prev;
+					}
+				} else {
+					element.removeAttribute(key);
+				}
+			} else if (
+				is_default ||
+				(setters.includes(name) && (is_custom_element || typeof value !== 'string'))
+			) {
 				// @ts-ignore
 				element[name] = value;
 			} else if (typeof value !== 'function') {
@@ -326,8 +418,9 @@ function get_setters(element) {
 	var setters = setters_cache.get(element.nodeName);
 	if (setters) return setters;
 	setters_cache.set(element.nodeName, (setters = []));
+
 	var descriptors;
-	var proto = get_prototype_of(element);
+	var proto = element; // In the case of custom elements there might be setters on the instance
 	var element_proto = Element.prototype;
 
 	// Stop at Element, from there on there's only unnecessary setters we're not interested in

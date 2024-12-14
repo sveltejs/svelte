@@ -114,15 +114,12 @@ export function RegularElement(node, context) {
 
 			if (!past_parent) {
 				if (ancestor.type === 'RegularElement' && ancestor.name === context.state.parent_element) {
-					if (!is_tag_valid_with_parent(node.name, context.state.parent_element)) {
+					const message = is_tag_valid_with_parent(node.name, context.state.parent_element);
+					if (message) {
 						if (only_warn) {
-							w.node_invalid_placement_ssr(
-								node,
-								`\`<${node.name}>\``,
-								context.state.parent_element
-							);
+							w.node_invalid_placement_ssr(node, message);
 						} else {
-							e.node_invalid_placement(node, `\`<${node.name}>\``, context.state.parent_element);
+							e.node_invalid_placement(node, message);
 						}
 					}
 
@@ -131,11 +128,12 @@ export function RegularElement(node, context) {
 			} else if (ancestor.type === 'RegularElement') {
 				ancestors.push(ancestor.name);
 
-				if (!is_tag_valid_with_ancestor(node.name, ancestors)) {
+				const message = is_tag_valid_with_ancestor(node.name, ancestors);
+				if (message) {
 					if (only_warn) {
-						w.node_invalid_placement_ssr(node, `\`<${node.name}>\``, ancestor.name);
+						w.node_invalid_placement_ssr(node, message);
 					} else {
-						e.node_invalid_placement(node, `\`<${node.name}>\``, ancestor.name);
+						e.node_invalid_placement(node, message);
 					}
 				}
 			} else if (

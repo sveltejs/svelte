@@ -126,7 +126,7 @@ test('uncloneable value', () => {
 
 	assert.equal(fn, copy);
 	assert.deepEqual(warnings(), [
-		'%c[svelte] state_snapshot_uncloneable\n%cValue cannot be cloned with `$state.snapshot` — the original value was returned'
+		'%c[svelte] state_snapshot_uncloneable\n%cValue cannot be cloned with `$state.snapshot` — the original value was returned\nhttps://svelte.dev/e/state_snapshot_uncloneable'
 	]);
 });
 
@@ -160,7 +160,8 @@ test('uncloneable properties', () => {
 - <value>.c[4]
 - <value>.c[5]
 - <value>.c[6]
-- <value>.c[7]`
+- <value>.c[7]
+https://svelte.dev/e/state_snapshot_uncloneable`
 	]);
 });
 
@@ -181,6 +182,7 @@ test('many uncloneable properties', () => {
 - <value>[4]
 - <value>[5]
 - <value>[6]
-- ...and 93 more`
+- ...and 93 more
+https://svelte.dev/e/state_snapshot_uncloneable`
 	]);
 });

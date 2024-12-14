@@ -1,4 +1,4 @@
-/** @import { AST, SvelteNode } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import * as ESTree from 'estree' */
 import { walk } from 'zimmerframe';
 import * as b from '../utils/builders.js';
@@ -393,7 +393,7 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
  * Like `path.at(x)`, but skips over `TSNonNullExpression` and `TSAsExpression` nodes and eases assertions a bit
  * by removing the `| undefined` from the resulting type.
  *
- * @template {SvelteNode} T
+ * @template {AST.SvelteNode} T
  * @param {T[]} path
  * @param {number} at
  */

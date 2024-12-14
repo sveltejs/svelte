@@ -78,10 +78,16 @@ Sequence expressions are not allowed as attribute/directive values in runes mode
 Attribute values containing `{...}` must be enclosed in quote marks, unless the value only contains the expression
 ```
 
+### bind_group_invalid_expression
+
+```
+`bind:group` can only bind to an Identifier or MemberExpression
+```
+
 ### bind_invalid_expression
 
 ```
-Can only bind to an Identifier or MemberExpression
+Can only bind to an Identifier or MemberExpression or a `{get, set}` pair
 ```
 
 ### bind_invalid_name
@@ -92,6 +98,12 @@ Can only bind to an Identifier or MemberExpression
 
 ```
 `bind:%name%` is not a valid binding. %explanation%
+```
+
+### bind_invalid_parens
+
+```
+`bind:%name%={get, set}` must not have surrounding parentheses
 ```
 
 ### bind_invalid_target
@@ -487,12 +499,12 @@ A component cannot have a default export
 ### node_invalid_placement
 
 ```
-%thing% is invalid inside `<%parent%>`
+%message%. The browser will 'repair' the HTML (by moving, removing, or inserting elements) which breaks Svelte's assumptions about the structure of your components.
 ```
 
 HTML restricts where certain elements can appear. In case of a violation the browser will 'repair' the HTML in a way that breaks Svelte's assumptions about the structure of your components. Some examples:
 
-- `<p>hello <div>world</div></p>` will result in `<p>hello </p><div>world</div><p></p>` for example (the `<div>` autoclosed the `<p>` because `<p>` cannot contain block-level elements)
+- `<p>hello <div>world</div></p>` will result in `<p>hello </p><div>world</div><p></p>` (the `<div>` autoclosed the `<p>` because `<p>` cannot contain block-level elements)
 - `<option><div>option a</div></option>` will result in `<option>option a</option>` (the `<div>` is removed)
 - `<table><tr><td>cell</td></tr></table>` will result in `<table><tbody><tr><td>cell</td></tr></tbody></table>` (a `<tbody>` is auto-inserted)
 

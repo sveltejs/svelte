@@ -193,6 +193,8 @@ const ATTRIBUTE_ALIASES = {
 	nomodule: 'noModule',
 	playsinline: 'playsInline',
 	readonly: 'readOnly',
+	defaultvalue: 'defaultValue',
+	defaultchecked: 'defaultChecked',
 	srcobject: 'srcObject'
 };
 
@@ -214,6 +216,8 @@ const DOM_PROPERTIES = [
 	'value',
 	'inert',
 	'volume',
+	'defaultValue',
+	'defaultChecked',
 	'srcObject'
 ];
 
@@ -224,7 +228,7 @@ export function is_dom_property(name) {
 	return DOM_PROPERTIES.includes(name);
 }
 
-const NON_STATIC_PROPERTIES = ['autofocus', 'muted'];
+const NON_STATIC_PROPERTIES = ['autofocus', 'muted', 'defaultValue', 'defaultChecked'];
 
 /**
  * Returns `true` if the given attribute cannot be set through the template
@@ -436,4 +440,12 @@ const RUNES = /** @type {const} */ ([
  */
 export function is_rune(name) {
 	return RUNES.includes(/** @type {RUNES[number]} */ (name));
+}
+
+/** List of elements that require raw contents and should not have SSR comments put in them */
+const RAW_TEXT_ELEMENTS = /** @type {const} */ (['textarea', 'script', 'style', 'title']);
+
+/** @param {string} name */
+export function is_raw_text_element(name) {
+	return RAW_TEXT_ELEMENTS.includes(/** @type {RAW_TEXT_ELEMENTS[number]} */ (name));
 }
