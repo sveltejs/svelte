@@ -271,6 +271,18 @@ let mounted_components = new WeakMap();
 
 /**
  * Unmounts a component that was previously mounted using `mount` or `hydrate`.
+ *
+ * If `options.outro` is `true`, [transitions](https://svelte.dev/docs/svelte/transition) will play before the component is removed from the DOM.
+ *
+ * ```js
+ * import { mount, unmount } from 'svelte';
+ * import App from './App.svelte';
+ *
+ * const app = mount(App, { target: document.body });
+ *
+ * // later...
+ * unmount(app, { outro: true });
+ * ```
  * @param {Record<string, any>} component
  * @param {{ outro?: boolean }} [options]
  */
