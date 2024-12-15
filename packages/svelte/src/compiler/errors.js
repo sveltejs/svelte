@@ -216,6 +216,15 @@ export function inspect_trace_invalid_placement(node) {
 }
 
 /**
+ * `$inspect.trace(...)` cannot be used inside a generator function
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function inspect_trace_generator(node) {
+	e(node, "inspect_trace_generator", `\`$inspect.trace(...)\` cannot be used inside a generator function\nhttps://svelte.dev/e/inspect_trace_generator`);
+}
+
+/**
  * The arguments keyword cannot be used within the template or at the top level of a component
  * @param {null | number | NodeLike} node
  * @returns {never}

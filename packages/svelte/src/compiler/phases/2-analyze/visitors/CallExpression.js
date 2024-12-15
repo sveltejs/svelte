@@ -158,6 +158,10 @@ export function CallExpression(node, context) {
 				e.inspect_trace_invalid_placement(node);
 			}
 
+			if (fn.generator) {
+				e.inspect_trace_generator(node);
+			}
+
 			if (dev) {
 				if (node.arguments[0]) {
 					context.state.scope.tracing = b.thunk(/** @type {Expression} */ (node.arguments[0]));
