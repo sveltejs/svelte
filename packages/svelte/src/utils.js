@@ -450,3 +450,11 @@ const RAW_TEXT_ELEMENTS = /** @type {const} */ (['textarea', 'script', 'style', 
 export function is_raw_text_element(name) {
 	return RAW_TEXT_ELEMENTS.includes(/** @type {RAW_TEXT_ELEMENTS[number]} */ (name));
 }
+
+/**
+ * Prevent devtools trying to make `location` a clickable link by inserting a zero-width space
+ * @param {string | undefined} location
+ */
+export function sanitize_location(location) {
+	return location?.replace(/\//g, '/\u200b');
+}

@@ -1,6 +1,8 @@
+/** @import { Location } from 'locate-character' */
 /** @import { CompileOptions } from './types' */
 /** @import { AST, Warning } from '#compiler' */
 import { getLocator } from 'locate-character';
+import { sanitize_location } from '../utils.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
 
@@ -27,6 +29,14 @@ export let source;
 export let dev;
 
 export let locator = getLocator('', { offsetLine: 1 });
+
+/**
+ * @param {AST.SvelteNode & { start?: number | undefined }} node
+ */
+export function locate_node(node) {
+	const loc = /** @type {Location} */ (locator(/** @type {number} */ (node.start)));
+	return `${sanitize_location(filename)}:${loc?.line}:${loc.column}`;
+}
 
 /** @type {NonNullable<CompileOptions['warningFilter']>} */
 export let warning_filter;
