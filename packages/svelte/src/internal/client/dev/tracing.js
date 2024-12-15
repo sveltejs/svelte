@@ -85,10 +85,10 @@ function log_entry(signal, entry) {
 
 /**
  * @template T
+ * @param {() => string} label
  * @param {() => T} fn
- * @param {string} label
  */
-export function trace(fn, label) {
+export function trace(label, fn) {
 	var previously_tracing_expressions = tracing_expressions;
 	try {
 		tracing_expressions = { entries: new Map(), reaction: active_reaction };
@@ -99,10 +99,10 @@ export function trace(fn, label) {
 
 		if (tracing_expressions.entries.size === 0) {
 			// eslint-disable-next-line no-console
-			console.log(`${label} %cno reactive dependencies (${time}ms)`, 'color: grey');
+			console.log(`${label()} %cno reactive dependencies (${time}ms)`, 'color: grey');
 		} else {
 			// eslint-disable-next-line no-console
-			console.group(`${label} %c(${time}ms)`, 'color: grey');
+			console.group(`${label()} %c(${time}ms)`, 'color: grey');
 
 			var entries = tracing_expressions.entries;
 

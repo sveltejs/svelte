@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, Statement } from 'estree' */
 /** @import { ComponentContext } from '../types' */
 import { add_state_transformers } from './shared/declarations.js';
 import * as b from '../../../../utils/builders.js';
@@ -16,8 +16,8 @@ export function BlockStatement(node, context) {
 			b.return(
 				b.call(
 					'$.trace',
-					b.thunk(b.block(node.body.map((n) => /** @type {Statement} */ (context.visit(n))))),
-					b.literal(tracing)
+					/** @type {Expression} */ (context.visit(tracing)),
+					b.thunk(b.block(node.body.map((n) => /** @type {Statement} */ (context.visit(n)))))
 				)
 			)
 		]);

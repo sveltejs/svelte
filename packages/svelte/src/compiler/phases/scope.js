@@ -60,7 +60,7 @@ export class Scope {
 
 	/**
 	 * If tracing of reactive dependencies is enabled for this scope
-	 * @type {null | string}
+	 * @type {null | Expression}
 	 */
 	tracing = null;
 

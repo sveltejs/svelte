@@ -1,4 +1,4 @@
-/** @import { ArrowFunctionExpression, CallExpression, FunctionDeclaration, FunctionExpression, Identifier, VariableDeclarator } from 'estree' */
+/** @import { ArrowFunctionExpression, CallExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, VariableDeclarator } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
@@ -6,6 +6,7 @@ import * as e from '../../../errors.js';
 import { get_parent, unwrap_optional } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
 import { dev, locate_node, source } from '../../../state.js';
+import * as b from '../../../utils/builders.js';
 
 /**
  * @param {CallExpression} node
@@ -141,13 +142,6 @@ export function CallExpression(node, context) {
 				e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
 			}
 
-			if (
-				node.arguments[0] &&
-				(node.arguments[0].type !== 'Literal' || typeof node.arguments[0].value !== 'string')
-			) {
-				e.trace_rune_invalid_argument(node);
-			}
-
 			const grand_parent = context.path.at(-2);
 			const fn = context.path.at(-3);
 
@@ -166,12 +160,12 @@ export function CallExpression(node, context) {
 
 			if (dev) {
 				if (node.arguments[0]) {
-					context.state.scope.tracing = /** @type {string} */ (node.arguments[0].value);
+					context.state.scope.tracing = b.thunk(/** @type {Expression} */ (node.arguments[0]));
 				} else {
 					const label = get_function_label(context.path.slice(0, -2));
 					const loc = `(${locate_node(fn)})`;
 
-					context.state.scope.tracing = label ? label + ' ' + loc : loc;
+					context.state.scope.tracing = b.thunk(b.literal(label ? label + ' ' + loc : loc));
 				}
 			}
 
