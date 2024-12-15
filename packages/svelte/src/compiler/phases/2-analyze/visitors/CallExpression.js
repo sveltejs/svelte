@@ -155,7 +155,7 @@ export function CallExpression(node, context) {
 				) ||
 				grand_parent.body[0] !== parent
 			) {
-				e.trace_rune_invalid_location(node);
+				e.inspect_trace_invalid_placement(node);
 			}
 
 			if (dev) {

@@ -442,6 +442,12 @@ Expected whitespace
 Imports of `svelte/internal/*` are forbidden. It contains private runtime code which is subject to change without notice. If you're importing from `svelte/internal/*` to work around a limitation of Svelte, please open an issue at https://github.com/sveltejs/svelte and explain your use case
 ```
 
+### inspect_trace_invalid_placement
+
+```
+`$inspect.trace(...)` must be the first statement of a function body
+```
+
 ### invalid_arguments_usage
 
 ```
@@ -968,18 +974,6 @@ A `<textarea>` can have either a value attribute or (equivalently) child content
 
 ```
 `<title>` can only contain text and {tags}
-```
-
-### trace_rune_invalid_argument
-
-```
-`$inspect.trace` requires a string argument for the trace name
-```
-
-### trace_rune_invalid_location
-
-```
-`$inspect.trace(...)` must be the first statement of a function body
 ```
 
 ### transition_conflict

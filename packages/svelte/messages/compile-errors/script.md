@@ -54,6 +54,10 @@
 
 > Imports of `svelte/internal/*` are forbidden. It contains private runtime code which is subject to change without notice. If you're importing from `svelte/internal/*` to work around a limitation of Svelte, please open an issue at https://github.com/sveltejs/svelte and explain your use case
 
+## inspect_trace_invalid_placement
+
+> `$inspect.trace(...)` must be the first statement of a function body
+
 ## invalid_arguments_usage
 
 > The arguments keyword cannot be used within the template or at the top level of a component
@@ -185,14 +189,6 @@ It's possible to export a snippet from a `<script module>` block, but only if it
 > Cannot reference store value outside a `.svelte` file
 
 Using a `$` prefix to refer to the value of a store is only possible inside `.svelte` files, where Svelte can automatically create subscriptions when a component is mounted and unsubscribe when the component is unmounted. Consider migrating to runes instead.
-
-## trace_rune_invalid_argument
-
-> `$inspect.trace` requires a string argument for the trace name
-
-## trace_rune_invalid_location
-
-> `$inspect.trace(...)` must be the first statement of a function body
 
 ## typescript_invalid_feature
 

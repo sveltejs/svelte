@@ -470,21 +470,12 @@ export function store_invalid_subscription_module(node) {
 }
 
 /**
- * `$inspect.trace` requires a string argument for the trace name
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function trace_rune_invalid_argument(node) {
-	e(node, "trace_rune_invalid_argument", `\`$inspect.trace\` requires a string argument for the trace name\nhttps://svelte.dev/e/trace_rune_invalid_argument`);
-}
-
-/**
  * `$inspect.trace(...)` must be the first statement of a function body
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function trace_rune_invalid_location(node) {
-	e(node, "trace_rune_invalid_location", `\`$inspect.trace(...)\` must be the first statement of a function body\nhttps://svelte.dev/e/trace_rune_invalid_location`);
+export function inspect_trace_invalid_placement(node) {
+	e(node, "inspect_trace_invalid_placement", `\`$inspect.trace(...)\` must be the first statement of a function body\nhttps://svelte.dev/e/inspect_trace_invalid_placement`);
 }
 
 /**
