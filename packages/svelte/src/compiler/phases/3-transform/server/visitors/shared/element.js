@@ -86,6 +86,7 @@ export function build_element_attributes(node, context) {
 			} else if (attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked') {
 				if (attribute.name === 'class') {
 					class_index = attributes.length;
+
 					if (attribute.metadata.is_dynamic_class) {
 						attributes.push({
 							...attribute,
@@ -98,11 +99,14 @@ export function build_element_attributes(node, context) {
 								)
 							}
 						});
+					} else {
+						attributes.push(attribute);
 					}
 				} else {
 					if (attribute.name === 'style') {
 						style_index = attributes.length;
 					}
+
 					attributes.push(attribute);
 				}
 			}
