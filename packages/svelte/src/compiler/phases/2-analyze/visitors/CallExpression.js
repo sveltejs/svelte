@@ -166,10 +166,10 @@ export function CallExpression(node, context) {
 				if (node.arguments[0]) {
 					context.state.scope.tracing = b.thunk(/** @type {Expression} */ (node.arguments[0]));
 				} else {
-					const label = get_function_label(context.path.slice(0, -2));
+					const label = get_function_label(context.path.slice(0, -2)) ?? 'trace';
 					const loc = `(${locate_node(fn)})`;
 
-					context.state.scope.tracing = b.thunk(b.literal(label ? label + ' ' + loc : loc));
+					context.state.scope.tracing = b.thunk(b.literal(label + ' ' + loc));
 				}
 			}
 
@@ -244,5 +244,9 @@ function get_function_label(nodes) {
 
 	if (parent.type === 'Property' && !parent.computed) {
 		return /** @type {Identifier} */ (parent.key).name;
+	}
+
+	if (parent.type === 'VariableDeclarator' && parent.id.type === 'Identifier') {
+		return parent.id.name;
 	}
 }
