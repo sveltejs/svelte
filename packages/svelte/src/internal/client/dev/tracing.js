@@ -146,10 +146,17 @@ export function get_stack(label) {
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
+
+			if (line === 'Error') {
+				continue;
+			}
 			if (line.includes('validate_each_keys')) {
 				return null;
 			}
-			if (line.includes('svelte/src/internal') || !line.includes('.svelte')) {
+			if (
+				line.includes('svelte/src/internal') ||
+				(!line.includes('.svelte') && (line.includes('.js') || line.includes('.ts')))
+			) {
 				continue;
 			}
 			new_lines.push(line);
