@@ -67,7 +67,7 @@ export function set_mathml_class(dom, value) {
 export function set_class(dom, value, hash) {
 	// @ts-expect-error need to add __className to patched prototype
 	var prev_class_name = dom.__className;
-	var next_class_name = to_class(value) + (hash != null ? ' ' + hash : '');
+	var next_class_name = to_class(value) + (hash ? ' ' + hash : '');
 
 	if (hydrating && dom.className === next_class_name) {
 		// In case of hydration don't reset the class as it's already correct.
