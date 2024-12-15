@@ -153,10 +153,7 @@ export function get_stack(label) {
 			if (line.includes('validate_each_keys')) {
 				return null;
 			}
-			if (
-				line.includes('svelte/src/internal') ||
-				(!line.includes('.svelte') && (line.includes('.js') || line.includes('.ts')))
-			) {
+			if (line.includes('svelte/src/internal')) {
 				continue;
 			}
 			new_lines.push(line);
