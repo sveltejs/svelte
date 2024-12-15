@@ -171,6 +171,7 @@ export function CallExpression(node, context) {
 
 			break;
 		}
+
 		case '$state.snapshot':
 			if (node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
