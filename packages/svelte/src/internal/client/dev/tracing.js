@@ -3,6 +3,7 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
 import { define_property } from '../../shared/utils.js';
 import { DERIVED, STATE_SYMBOL } from '../constants.js';
+import { effect_tracking } from '../reactivity/effects.js';
 import { active_reaction, captured_signals, set_captured_signals, untrack } from '../runtime.js';
 
 /** @type { any } */
@@ -97,7 +98,10 @@ export function trace(label, fn) {
 		var value = fn();
 		var time = (performance.now() - start).toFixed(2);
 
-		if (tracing_expressions.entries.size === 0) {
+		if (!effect_tracking()) {
+			// eslint-disable-next-line no-console
+			console.log(`${label()} %cran outside of an effect (${time}ms)`, 'color: grey');
+		} else if (tracing_expressions.entries.size === 0) {
 			// eslint-disable-next-line no-console
 			console.log(`${label()} %cno reactive dependencies (${time}ms)`, 'color: grey');
 		} else {
