@@ -906,15 +906,11 @@ export function get(signal) {
 		}
 	}
 
-	var updated = true;
-
 	if (is_derived) {
 		derived = /** @type {Derived} */ (signal);
 
 		if (check_dirtiness(derived)) {
 			update_derived(derived);
-		} else {
-			updated = false;
 		}
 	}
 
