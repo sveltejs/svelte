@@ -1,4 +1,4 @@
-/** @import { MemberExpression, Expression, Super, PrivateIdentifier } from 'estree' */
+/** @import { MemberExpression } from 'estree' */
 /** @import { Context } from '../types' */
 import * as b from '../../../../utils/builders.js';
 
