@@ -927,11 +927,10 @@ export function get(signal) {
 			var entry = tracing_expressions.entries.get(signal);
 
 			if (entry === undefined) {
-				entry = {
-					read: []
-				};
+				entry = { read: [] };
 				tracing_expressions.entries.set(signal, entry);
 			}
+
 			entry.read.push(get_stack('TracedAt'));
 		}
 	}
