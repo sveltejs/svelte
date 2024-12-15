@@ -27,6 +27,7 @@ export function VariableDeclaration(node, context) {
 				rune === '$effect.tracking' ||
 				rune === '$effect.root' ||
 				rune === '$inspect' ||
+				rune === '$inspect.trace' ||
 				rune === '$state.snapshot' ||
 				rune === '$host'
 			) {

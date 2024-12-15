@@ -59,6 +59,12 @@ export class Scope {
 	function_depth = 0;
 
 	/**
+	 * If tracing of reactive dependencies is enabled for this scope
+	 * @type {null | Expression}
+	 */
+	tracing = null;
+
+	/**
 	 *
 	 * @param {ScopeRoot} root
 	 * @param {Scope | null} parent

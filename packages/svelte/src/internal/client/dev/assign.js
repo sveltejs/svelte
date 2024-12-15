@@ -1,6 +1,6 @@
+import { sanitize_location } from '../../../utils.js';
 import { untrack } from '../runtime.js';
 import * as w from '../warnings.js';
-import { sanitize_location } from './location.js';
 
 /**
  *

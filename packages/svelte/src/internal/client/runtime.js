@@ -35,6 +35,7 @@ import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
 import { legacy_mode_flag } from '../flags/index.js';
+import { tracing_expressions, get_stack } from './dev/tracing.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -135,6 +136,11 @@ export let skip_reaction = false;
 // Handle collecting all signals which are read during a specific time frame
 /** @type {Set<Value> | null} */
 export let captured_signals = null;
+
+/** @param {Set<Value> | null} value */
+export function set_captured_signals(value) {
+	captured_signals = value;
+}
 
 // Handling runtime component context
 /** @type {ComponentContext | null} */
@@ -356,7 +362,7 @@ export function handle_error(error, effect, previous_effect, component_context) 
 			new_lines.push(line);
 		}
 		define_property(error, 'stack', {
-			value: error.stack + new_lines.join('\n')
+			value: new_lines.join('\n')
 		});
 	}
 
@@ -905,6 +911,27 @@ export function get(signal) {
 
 		if (check_dirtiness(derived)) {
 			update_derived(derived);
+		}
+	}
+
+	if (
+		DEV &&
+		tracing_expressions !== null &&
+		active_reaction !== null &&
+		tracing_expressions.reaction === active_reaction
+	) {
+		// Used when mapping state between special blocks like `each`
+		if (signal.debug) {
+			signal.debug();
+		} else if (signal.created) {
+			var entry = tracing_expressions.entries.get(signal);
+
+			if (entry === undefined) {
+				entry = { read: [] };
+				tracing_expressions.entries.set(signal, entry);
+			}
+
+			entry.read.push(get_stack('TracedAt'));
 		}
 	}
 
