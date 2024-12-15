@@ -207,21 +207,21 @@ export function import_svelte_internal_forbidden(node) {
 }
 
 /**
- * `$inspect.trace(...)` must be the first statement of a function body
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function inspect_trace_invalid_placement(node) {
-	e(node, "inspect_trace_invalid_placement", `\`$inspect.trace(...)\` must be the first statement of a function body\nhttps://svelte.dev/e/inspect_trace_invalid_placement`);
-}
-
-/**
  * `$inspect.trace(...)` cannot be used inside a generator function
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function inspect_trace_generator(node) {
 	e(node, "inspect_trace_generator", `\`$inspect.trace(...)\` cannot be used inside a generator function\nhttps://svelte.dev/e/inspect_trace_generator`);
+}
+
+/**
+ * `$inspect.trace(...)` must be the first statement of a function body
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function inspect_trace_invalid_placement(node) {
+	e(node, "inspect_trace_invalid_placement", `\`$inspect.trace(...)\` must be the first statement of a function body\nhttps://svelte.dev/e/inspect_trace_invalid_placement`);
 }
 
 /**

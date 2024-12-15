@@ -45,7 +45,7 @@ $inspect(stuff).with(console.trace);
 
 ## $inspect.trace(...)
 
-This rune, added in 5.14, causes the surrounding function to be _traced_ in development. Any time the function re-runs as part of an [effect]($effect), information will be printed to the console about which pieces of reactive state caused the effect to fire.
+This rune, added in 5.14, causes the surrounding function to be _traced_ in development. Any time the function re-runs as part of an [effect]($effect) or a [derived]($derived), information will be printed to the console about which pieces of reactive state caused the effect to fire.
 
 ```svelte
 <script>
