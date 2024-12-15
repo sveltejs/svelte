@@ -1,5 +1,11 @@
 # svelte
 
+## 5.14.0
+
+### Minor Changes
+
+- feat: adds $inspect.trace rune ([#14290](https://github.com/sveltejs/svelte/pull/14290))
+
 ## 5.13.0
 
 ### Minor Changes
