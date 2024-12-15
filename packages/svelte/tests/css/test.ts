@@ -12,6 +12,14 @@ function normalize_warning(warning: Warning) {
 	delete warning.filename;
 	delete warning.position;
 	delete warning.frame;
+
+	// Remove the "https://svelte.dev/e/..." link at the end
+	const lines = warning.message.split('\n');
+	if (lines.at(-1)?.startsWith('https://svelte.dev/e/')) {
+		lines.pop();
+	}
+	warning.message = lines.join('\n');
+
 	return warning;
 }
 
@@ -26,6 +34,13 @@ interface CssTest extends BaseTest {
 	compileOptions?: Partial<CompileOptions>;
 	warnings?: Warning[];
 	props?: Record<string, any>;
+}
+
+/**
+ * Remove the "https://svelte.dev/e/..." link
+ */
+function strip_link(message: string) {
+	return message.slice(0, message.lastIndexOf('\n'));
 }
 
 const { test, run } = suite<CssTest>(async (config, cwd) => {

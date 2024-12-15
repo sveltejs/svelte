@@ -1,5 +1,5 @@
 /** @import { Expression } from 'estree' */
-/** @import { AST, Directive, ElementLike, TemplateNode } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { is_void } from '../../../../utils.js';
 import read_expression from '../read/expression.js';
@@ -9,10 +9,11 @@ import { decode_character_references } from '../utils/html.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { create_fragment } from '../utils/create.js';
-import { create_attribute, create_expression_metadata } from '../../nodes.js';
+import { create_attribute, create_expression_metadata, is_element_node } from '../../nodes.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../utils/ast.js';
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
+import { regex_whitespace } from '../../patterns.js';
 
 const regex_invalid_unquoted_attribute_value = /^(\/>|[\s"'=<>`])/;
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
@@ -28,7 +29,7 @@ export const regex_valid_component_name =
 	// (must start with uppercase letter if no dots, can contain dots)
 	/^(?:\p{Lu}[$\u200c\u200d\p{ID_Continue}.]*|\p{ID_Start}[$\u200c\u200d\p{ID_Continue}]*(?:\.[$\u200c\u200d\p{ID_Continue}]+)+)$/u;
 
-/** @type {Map<string, ElementLike['type']>} */
+/** @type {Map<string, AST.ElementLike['type']>} */
 const root_only_meta_tags = new Map([
 	['svelte:head', 'SvelteHead'],
 	['svelte:options', 'SvelteOptions'],
@@ -37,13 +38,14 @@ const root_only_meta_tags = new Map([
 	['svelte:body', 'SvelteBody']
 ]);
 
-/** @type {Map<string, ElementLike['type']>} */
+/** @type {Map<string, AST.ElementLike['type']>} */
 const meta_tags = new Map([
 	...root_only_meta_tags,
 	['svelte:element', 'SvelteElement'],
 	['svelte:component', 'SvelteComponent'],
 	['svelte:self', 'SvelteSelf'],
-	['svelte:fragment', 'SvelteFragment']
+	['svelte:fragment', 'SvelteFragment'],
+	['svelte:boundary', 'SvelteBoundary']
 ]);
 
 /** @param {Parser} parser */
@@ -56,7 +58,6 @@ export default function element(parser) {
 		const data = parser.read_until(regex_closing_comment);
 		parser.eat('-->', true);
 
-		/** @type {ReturnType<typeof parser.append<AST.Comment>>} */
 		parser.append({
 			type: 'Comment',
 			start,
@@ -80,7 +81,19 @@ export default function element(parser) {
 
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
 		while (/** @type {AST.RegularElement} */ (parent).name !== name) {
-			if (parent.type !== 'RegularElement') {
+			if (parser.loose) {
+				// If the previous element did interpret the next opening tag as an attribute, backtrack
+				if (is_element_node(parent)) {
+					const last = parent.attributes.at(-1);
+					if (last?.type === 'Attribute' && last.name === `<${name}`) {
+						parser.index = last.start;
+						parent.attributes.pop();
+						break;
+					}
+				}
+			}
+
+			if (parent.type !== 'RegularElement' && !parser.loose) {
 				if (parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name) {
 					e.element_invalid_closing_tag_autoclosed(start, name, parser.last_auto_closed_tag.reason);
 				} else {
@@ -137,7 +150,7 @@ export default function element(parser) {
 					? 'SlotElement'
 					: 'RegularElement';
 
-	/** @type {ElementLike} */
+	/** @type {AST.ElementLike} */
 	const element =
 		type === 'RegularElement'
 			? {
@@ -153,17 +166,15 @@ export default function element(parser) {
 						scoped: false,
 						has_spread: false,
 						path: []
-					},
-					parent: null
+					}
 				}
-			: /** @type {ElementLike} */ ({
+			: /** @type {AST.ElementLike} */ ({
 					type,
 					start,
 					end: -1,
 					name,
 					attributes: [],
 					fragment: create_fragment(true),
-					parent: null,
 					metadata: {
 						// unpopulated at first, differs between types
 					}
@@ -321,10 +332,41 @@ export default function element(parser) {
 	parser.append(element);
 
 	const self_closing = parser.eat('/') || is_void(name);
+	const closed = parser.eat('>', true, false);
 
-	parser.eat('>', true);
+	// Loose parsing mode
+	if (!closed) {
+		// We may have eaten an opening `<` of the next element and treated it as an attribute...
+		const last = element.attributes.at(-1);
+		if (last?.type === 'Attribute' && last.name === '<') {
+			parser.index = last.start;
+			element.attributes.pop();
+		} else {
+			// ... or we may have eaten part of a following block ...
+			const prev_1 = parser.template[parser.index - 1];
+			const prev_2 = parser.template[parser.index - 2];
+			const current = parser.template[parser.index];
+			if (prev_2 === '{' && prev_1 === '/') {
+				parser.index -= 2;
+			} else if (prev_1 === '{' && (current === '#' || current === '@' || current === ':')) {
+				parser.index -= 1;
+			} else {
+				// ... or we're followed by whitespace, for example near the end of the template,
+				// which we want to take in so that language tools has more room to work with
+				parser.allow_whitespace();
+				if (parser.index === parser.template.length) {
+					while (
+						parser.index < parser.template_untrimmed.length &&
+						regex_whitespace.test(parser.template_untrimmed[parser.index])
+					) {
+						parser.index++;
+					}
+				}
+			}
+		}
+	}
 
-	if (self_closing) {
+	if (self_closing || !closed) {
 		// don't push self-closing elements onto the stack
 		element.end = parser.index;
 	} else if (name === 'textarea') {
@@ -348,8 +390,7 @@ export default function element(parser) {
 			end,
 			type: 'Text',
 			data,
-			raw: data,
-			parent: null
+			raw: data
 		};
 
 		element.fragment.nodes.push(node);
@@ -361,7 +402,7 @@ export default function element(parser) {
 	}
 }
 
-/** @param {TemplateNode[]} stack */
+/** @param {AST.TemplateNode[]} stack */
 function parent_is_head(stack) {
 	let i = stack.length;
 	while (i--) {
@@ -372,7 +413,7 @@ function parent_is_head(stack) {
 	return false;
 }
 
-/** @param {TemplateNode[]} stack */
+/** @param {AST.TemplateNode[]} stack */
 function parent_is_shadowroot_template(stack) {
 	// https://developer.chrome.com/docs/css-ui/declarative-shadow-dom#building_a_declarative_shadow_root
 	let i = stack.length;
@@ -422,8 +463,7 @@ function read_static_attribute(parser) {
 				end: quoted ? parser.index - 1 : parser.index,
 				type: 'Text',
 				raw: raw,
-				data: decode_character_references(raw, true),
-				parent: null
+				data: decode_character_references(raw, true)
 			}
 		];
 	}
@@ -437,7 +477,7 @@ function read_static_attribute(parser) {
 
 /**
  * @param {Parser} parser
- * @returns {AST.Attribute | AST.SpreadAttribute | Directive | null}
+ * @returns {AST.Attribute | AST.SpreadAttribute | AST.Directive | null}
  */
 function read_attribute(parser) {
 	const start = parser.index;
@@ -457,7 +497,6 @@ function read_attribute(parser) {
 				start,
 				end: parser.index,
 				expression,
-				parent: null,
 				metadata: {
 					expression: create_expression_metadata()
 				}
@@ -466,10 +505,22 @@ function read_attribute(parser) {
 			return spread;
 		} else {
 			const value_start = parser.index;
-			const name = parser.read_identifier();
+			let name = parser.read_identifier();
 
 			if (name === null) {
-				e.attribute_empty_shorthand(start);
+				if (
+					parser.loose &&
+					(parser.match('#') || parser.match('/') || parser.match('@') || parser.match(':'))
+				) {
+					// We're likely in an unclosed opening tag and did read part of a block.
+					// Return null to not crash the parser so it can continue with closing the tag.
+					return null;
+				} else if (parser.loose && parser.match('}')) {
+					// Likely in the middle of typing, just created the shorthand
+					name = '';
+				} else {
+					e.attribute_empty_shorthand(start);
+				}
 			}
 
 			parser.allow_whitespace();
@@ -486,7 +537,6 @@ function read_attribute(parser) {
 					type: 'Identifier',
 					name
 				},
-				parent: null,
 				metadata: {
 					expression: create_expression_metadata()
 				}
@@ -510,8 +560,24 @@ function read_attribute(parser) {
 	let value = true;
 	if (parser.eat('=')) {
 		parser.allow_whitespace();
-		value = read_attribute_value(parser);
-		end = parser.index;
+
+		if (parser.template[parser.index] === '/' && parser.template[parser.index + 1] === '>') {
+			const char_start = parser.index;
+			parser.index++; // consume '/'
+			value = [
+				{
+					start: char_start,
+					end: char_start + 1,
+					type: 'Text',
+					raw: '/',
+					data: '/'
+				}
+			];
+			end = parser.index;
+		} else {
+			value = read_attribute_value(parser);
+			end = parser.index;
+		}
 	} else if (parser.match_regex(regex_starts_with_quote_characters)) {
 		e.expected_token(parser.index, '=');
 	}
@@ -531,7 +597,6 @@ function read_attribute(parser) {
 				name: directive_name,
 				modifiers: /** @type {Array<'important'>} */ (modifiers),
 				value,
-				parent: null,
 				metadata: {
 					expression: create_expression_metadata()
 				}
@@ -555,19 +620,20 @@ function read_attribute(parser) {
 			}
 		}
 
-		/** @type {Directive} */
-		// @ts-expect-error TODO can't figure out this error
+		/** @type {AST.Directive} */
 		const directive = {
 			start,
 			end,
 			type,
 			name: directive_name,
-			modifiers,
 			expression,
 			metadata: {
 				expression: create_expression_metadata()
 			}
 		};
+
+		// @ts-expect-error we do this separately from the declaration to avoid upsetting typescript
+		directive.modifiers = modifiers;
 
 		if (directive.type === 'TransitionDirective') {
 			const direction = name.slice(0, colon_index);
@@ -623,8 +689,7 @@ function read_attribute_value(parser) {
 				end: parser.index - 1,
 				type: 'Text',
 				raw: '',
-				data: '',
-				parent: null
+				data: ''
 			}
 		];
 	}
@@ -681,8 +746,7 @@ function read_sequence(parser, done, location) {
 		end: -1,
 		type: 'Text',
 		raw: '',
-		data: '',
-		parent: null
+		data: ''
 	};
 
 	/** @type {Array<AST.Text | AST.ExpressionTag>} */
@@ -729,7 +793,6 @@ function read_sequence(parser, done, location) {
 				start: index,
 				end: parser.index,
 				expression,
-				parent: null,
 				metadata: {
 					expression: create_expression_metadata()
 				}
@@ -742,13 +805,16 @@ function read_sequence(parser, done, location) {
 				end: -1,
 				type: 'Text',
 				raw: '',
-				data: '',
-				parent: null
+				data: ''
 			};
 		} else {
 			current_chunk.raw += parser.template[parser.index++];
 		}
 	}
 
-	e.unexpected_eof(parser.template.length);
+	if (parser.loose) {
+		return chunks;
+	} else {
+		e.unexpected_eof(parser.template.length);
+	}
 }

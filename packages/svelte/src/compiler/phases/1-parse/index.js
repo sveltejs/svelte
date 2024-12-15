@@ -1,4 +1,4 @@
-/** @import { AST, TemplateNode } from '#compiler' */
+/** @import { AST } from '#compiler' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
@@ -22,13 +22,26 @@ export class Parser {
 	 */
 	template;
 
+	/**
+	 * @readonly
+	 * @type {string}
+	 */
+	template_untrimmed;
+
+	/**
+	 * Whether or not we're in loose parsing mode, in which
+	 * case we try to continue parsing as much as possible
+	 * @type {boolean}
+	 */
+	loose;
+
 	/** */
 	index = 0;
 
 	/** Whether we're parsing in TypeScript mode */
 	ts = false;
 
-	/** @type {TemplateNode[]} */
+	/** @type {AST.TemplateNode[]} */
 	stack = [];
 
 	/** @type {AST.Fragment[]} */
@@ -43,12 +56,17 @@ export class Parser {
 	/** @type {LastAutoClosedTag | undefined} */
 	last_auto_closed_tag;
 
-	/** @param {string} template */
-	constructor(template) {
+	/**
+	 * @param {string} template
+	 * @param {boolean} loose
+	 */
+	constructor(template, loose) {
 		if (typeof template !== 'string') {
 			throw new TypeError('Template must be a string');
 		}
 
+		this.loose = loose;
+		this.template_untrimmed = template;
 		this.template = template.trimEnd();
 
 		let match_lang;
@@ -88,7 +106,9 @@ export class Parser {
 		if (this.stack.length > 1) {
 			const current = this.current();
 
-			if (current.type === 'RegularElement') {
+			if (this.loose) {
+				current.end = this.template.length;
+			} else if (current.type === 'RegularElement') {
 				current.end = current.start + 1;
 				e.element_unclosed(current, current.name);
 			} else {
@@ -151,14 +171,15 @@ export class Parser {
 	/**
 	 * @param {string} str
 	 * @param {boolean} required
+	 * @param {boolean} required_in_loose
 	 */
-	eat(str, required = false) {
+	eat(str, required = false, required_in_loose = true) {
 		if (this.match(str)) {
 			this.index += str.length;
 			return true;
 		}
 
-		if (required) {
+		if (required && (!this.loose || required_in_loose)) {
 			e.expected_token(this.index, str);
 		}
 
@@ -233,6 +254,7 @@ export class Parser {
 	/** @param {RegExp} pattern */
 	read_until(pattern) {
 		if (this.index >= this.template.length) {
+			if (this.loose) return '';
 			e.unexpected_eof(this.template.length);
 		}
 
@@ -262,40 +284,23 @@ export class Parser {
 	}
 
 	/**
-	 * @template T
-	 * @param {Omit<T, 'prev' | 'parent'>} node
+	 * @template {AST.Fragment['nodes'][number]} T
+	 * @param {T} node
 	 * @returns {T}
 	 */
 	append(node) {
-		const current = this.current();
-		const fragment = this.fragments.at(-1);
-
-		Object.defineProperties(node, {
-			prev: {
-				enumerable: false,
-				value: fragment?.nodes.at(-1) ?? null
-			},
-			parent: {
-				enumerable: false,
-				configurable: true,
-				value: current
-			}
-		});
-
-		// @ts-expect-error
-		fragment.nodes.push(node);
-
-		// @ts-expect-error
+		this.fragments.at(-1)?.nodes.push(node);
 		return node;
 	}
 }
 
 /**
  * @param {string} template
+ * @param {boolean} [loose]
  * @returns {AST.Root}
  */
-export function parse(template) {
-	const parser = new Parser(template);
+export function parse(template, loose = false) {
+	const parser = new Parser(template, loose);
 	return parser.root;
 }
 

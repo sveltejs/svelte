@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.1.16",
+  "version": "5.13.0",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -73,6 +73,10 @@
       "browser": "./src/reactivity/index-client.js",
       "default": "./src/reactivity/index-server.js"
     },
+    "./reactivity/window": {
+      "types": "./types/index.d.ts",
+      "default": "./src/reactivity/window/index.js"
+    },
     "./server": {
       "types": "./types/index.d.ts",
       "default": "./src/server/index.js"
@@ -120,7 +124,7 @@
   "devDependencies": {
     "@jridgewell/trace-mapping": "^0.3.25",
     "@playwright/test": "^1.46.1",
-    "@rollup/plugin-commonjs": "^28.0.0",
+    "@rollup/plugin-commonjs": "^28.0.1",
     "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-virtual": "^3.0.2",
@@ -143,9 +147,9 @@
     "aria-query": "^5.3.1",
     "axobject-query": "^4.1.0",
     "clsx": "^2.1.1",
-    "esm-env": "^1.0.0",
-    "esrap": "^1.2.2",
-    "is-reference": "^3.0.2",
+    "esm-env": "^1.2.1",
+    "esrap": "^1.2.3",
+    "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.11",
     "zimmerframe": "^1.1.2"

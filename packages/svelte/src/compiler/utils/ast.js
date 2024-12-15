@@ -1,4 +1,4 @@
-/** @import { AST, SvelteNode } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import * as ESTree from 'estree' */
 import { walk } from 'zimmerframe';
 import * as b from '../utils/builders.js';
@@ -393,7 +393,7 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
  * Like `path.at(x)`, but skips over `TSNonNullExpression` and `TSAsExpression` nodes and eases assertions a bit
  * by removing the `| undefined` from the resulting type.
  *
- * @template {SvelteNode} T
+ * @template {AST.SvelteNode} T
  * @param {T[]} path
  * @param {number} at
  */
@@ -433,7 +433,11 @@ export function is_simple_expression(node) {
 	}
 
 	if (node.type === 'BinaryExpression' || node.type === 'LogicalExpression') {
-		return is_simple_expression(node.left) && is_simple_expression(node.right);
+		return (
+			node.left.type !== 'PrivateIdentifier' &&
+			is_simple_expression(node.left) &&
+			is_simple_expression(node.right)
+		);
 	}
 
 	return false;
@@ -475,7 +479,10 @@ export function is_expression_async(expression) {
 		case 'AssignmentExpression':
 		case 'BinaryExpression':
 		case 'LogicalExpression': {
-			return is_expression_async(expression.left) || is_expression_async(expression.right);
+			return (
+				(expression.left.type !== 'PrivateIdentifier' && is_expression_async(expression.left)) ||
+				is_expression_async(expression.right)
+			);
 		}
 		case 'CallExpression':
 		case 'NewExpression': {

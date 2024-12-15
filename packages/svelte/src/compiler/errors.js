@@ -52,7 +52,7 @@ function e(node, code, message) {
  * @returns {never}
  */
 export function options_invalid_value(node, details) {
-	e(node, "options_invalid_value", `Invalid compiler option: ${details}`);
+	e(node, "options_invalid_value", `Invalid compiler option: ${details}\nhttps://svelte.dev/e/options_invalid_value`);
 }
 
 /**
@@ -62,7 +62,7 @@ export function options_invalid_value(node, details) {
  * @returns {never}
  */
 export function options_removed(node, details) {
-	e(node, "options_removed", `Invalid compiler option: ${details}`);
+	e(node, "options_removed", `Invalid compiler option: ${details}\nhttps://svelte.dev/e/options_removed`);
 }
 
 /**
@@ -72,7 +72,7 @@ export function options_removed(node, details) {
  * @returns {never}
  */
 export function options_unrecognised(node, keypath) {
-	e(node, "options_unrecognised", `Unrecognised compiler option ${keypath}`);
+	e(node, "options_unrecognised", `Unrecognised compiler option ${keypath}\nhttps://svelte.dev/e/options_unrecognised`);
 }
 
 /**
@@ -81,7 +81,7 @@ export function options_unrecognised(node, keypath) {
  * @returns {never}
  */
 export function bindable_invalid_location(node) {
-	e(node, "bindable_invalid_location", "`$bindable()` can only be used inside a `$props()` declaration");
+	e(node, "bindable_invalid_location", `\`$bindable()\` can only be used inside a \`$props()\` declaration\nhttps://svelte.dev/e/bindable_invalid_location`);
 }
 
 /**
@@ -91,7 +91,7 @@ export function bindable_invalid_location(node) {
  * @returns {never}
  */
 export function constant_assignment(node, thing) {
-	e(node, "constant_assignment", `Cannot assign to ${thing}`);
+	e(node, "constant_assignment", `Cannot assign to ${thing}\nhttps://svelte.dev/e/constant_assignment`);
 }
 
 /**
@@ -101,7 +101,7 @@ export function constant_assignment(node, thing) {
  * @returns {never}
  */
 export function constant_binding(node, thing) {
-	e(node, "constant_binding", `Cannot bind to ${thing}`);
+	e(node, "constant_binding", `Cannot bind to ${thing}\nhttps://svelte.dev/e/constant_binding`);
 }
 
 /**
@@ -111,7 +111,7 @@ export function constant_binding(node, thing) {
  * @returns {never}
  */
 export function declaration_duplicate(node, name) {
-	e(node, "declaration_duplicate", `\`${name}\` has already been declared`);
+	e(node, "declaration_duplicate", `\`${name}\` has already been declared\nhttps://svelte.dev/e/declaration_duplicate`);
 }
 
 /**
@@ -120,7 +120,7 @@ export function declaration_duplicate(node, name) {
  * @returns {never}
  */
 export function declaration_duplicate_module_import(node) {
-	e(node, "declaration_duplicate_module_import", "Cannot declare a variable with the same name as an import inside `<script module>`");
+	e(node, "declaration_duplicate_module_import", `Cannot declare a variable with the same name as an import inside \`<script module>\`\nhttps://svelte.dev/e/declaration_duplicate_module_import`);
 }
 
 /**
@@ -129,7 +129,7 @@ export function declaration_duplicate_module_import(node) {
  * @returns {never}
  */
 export function derived_invalid_export(node) {
-	e(node, "derived_invalid_export", "Cannot export derived state from a module. To expose the current derived value, export a function returning its value");
+	e(node, "derived_invalid_export", `Cannot export derived state from a module. To expose the current derived value, export a function returning its value\nhttps://svelte.dev/e/derived_invalid_export`);
 }
 
 /**
@@ -138,7 +138,7 @@ export function derived_invalid_export(node) {
  * @returns {never}
  */
 export function dollar_binding_invalid(node) {
-	e(node, "dollar_binding_invalid", "The $ name is reserved, and cannot be used for variables and imports");
+	e(node, "dollar_binding_invalid", `The $ name is reserved, and cannot be used for variables and imports\nhttps://svelte.dev/e/dollar_binding_invalid`);
 }
 
 /**
@@ -147,7 +147,7 @@ export function dollar_binding_invalid(node) {
  * @returns {never}
  */
 export function dollar_prefix_invalid(node) {
-	e(node, "dollar_prefix_invalid", "The $ prefix is reserved, and cannot be used for variables and imports");
+	e(node, "dollar_prefix_invalid", `The $ prefix is reserved, and cannot be used for variables and imports\nhttps://svelte.dev/e/dollar_prefix_invalid`);
 }
 
 /**
@@ -156,7 +156,7 @@ export function dollar_prefix_invalid(node) {
  * @returns {never}
  */
 export function each_item_invalid_assignment(node) {
-	e(node, "each_item_invalid_assignment", "Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)");
+	e(node, "each_item_invalid_assignment", `Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. \`array[i] = value\` instead of \`entry = value\`)\nhttps://svelte.dev/e/each_item_invalid_assignment`);
 }
 
 /**
@@ -165,7 +165,17 @@ export function each_item_invalid_assignment(node) {
  * @returns {never}
  */
 export function effect_invalid_placement(node) {
-	e(node, "effect_invalid_placement", "`$effect()` can only be used as an expression statement");
+	e(node, "effect_invalid_placement", `\`$effect()\` can only be used as an expression statement\nhttps://svelte.dev/e/effect_invalid_placement`);
+}
+
+/**
+ * `%name%` is not defined
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function export_undefined(node, name) {
+	e(node, "export_undefined", `\`${name}\` is not defined\nhttps://svelte.dev/e/export_undefined`);
 }
 
 /**
@@ -175,7 +185,7 @@ export function effect_invalid_placement(node) {
  * @returns {never}
  */
 export function global_reference_invalid(node, name) {
-	e(node, "global_reference_invalid", `\`${name}\` is an illegal variable name. To reference a global variable called \`${name}\`, use \`globalThis.${name}\``);
+	e(node, "global_reference_invalid", `\`${name}\` is an illegal variable name. To reference a global variable called \`${name}\`, use \`globalThis.${name}\`\nhttps://svelte.dev/e/global_reference_invalid`);
 }
 
 /**
@@ -184,7 +194,7 @@ export function global_reference_invalid(node, name) {
  * @returns {never}
  */
 export function host_invalid_placement(node) {
-	e(node, "host_invalid_placement", "`$host()` can only be used inside custom element component instances");
+	e(node, "host_invalid_placement", `\`$host()\` can only be used inside custom element component instances\nhttps://svelte.dev/e/host_invalid_placement`);
 }
 
 /**
@@ -193,7 +203,7 @@ export function host_invalid_placement(node) {
  * @returns {never}
  */
 export function import_svelte_internal_forbidden(node) {
-	e(node, "import_svelte_internal_forbidden", "Imports of `svelte/internal/*` are forbidden. It contains private runtime code which is subject to change without notice. If you're importing from `svelte/internal/*` to work around a limitation of Svelte, please open an issue at https://github.com/sveltejs/svelte and explain your use case");
+	e(node, "import_svelte_internal_forbidden", `Imports of \`svelte/internal/*\` are forbidden. It contains private runtime code which is subject to change without notice. If you're importing from \`svelte/internal/*\` to work around a limitation of Svelte, please open an issue at https://github.com/sveltejs/svelte and explain your use case\nhttps://svelte.dev/e/import_svelte_internal_forbidden`);
 }
 
 /**
@@ -202,7 +212,7 @@ export function import_svelte_internal_forbidden(node) {
  * @returns {never}
  */
 export function invalid_arguments_usage(node) {
-	e(node, "invalid_arguments_usage", "The arguments keyword cannot be used within the template or at the top level of a component");
+	e(node, "invalid_arguments_usage", `The arguments keyword cannot be used within the template or at the top level of a component\nhttps://svelte.dev/e/invalid_arguments_usage`);
 }
 
 /**
@@ -211,7 +221,7 @@ export function invalid_arguments_usage(node) {
  * @returns {never}
  */
 export function legacy_export_invalid(node) {
-	e(node, "legacy_export_invalid", "Cannot use `export let` in runes mode — use `$props()` instead");
+	e(node, "legacy_export_invalid", `Cannot use \`export let\` in runes mode — use \`$props()\` instead\nhttps://svelte.dev/e/legacy_export_invalid`);
 }
 
 /**
@@ -220,7 +230,7 @@ export function legacy_export_invalid(node) {
  * @returns {never}
  */
 export function legacy_props_invalid(node) {
-	e(node, "legacy_props_invalid", "Cannot use `$$props` in runes mode");
+	e(node, "legacy_props_invalid", `Cannot use \`$$props\` in runes mode\nhttps://svelte.dev/e/legacy_props_invalid`);
 }
 
 /**
@@ -229,7 +239,7 @@ export function legacy_props_invalid(node) {
  * @returns {never}
  */
 export function legacy_reactive_statement_invalid(node) {
-	e(node, "legacy_reactive_statement_invalid", "`$:` is not allowed in runes mode, use `$derived` or `$effect` instead");
+	e(node, "legacy_reactive_statement_invalid", `\`$:\` is not allowed in runes mode, use \`$derived\` or \`$effect\` instead\nhttps://svelte.dev/e/legacy_reactive_statement_invalid`);
 }
 
 /**
@@ -238,7 +248,7 @@ export function legacy_reactive_statement_invalid(node) {
  * @returns {never}
  */
 export function legacy_rest_props_invalid(node) {
-	e(node, "legacy_rest_props_invalid", "Cannot use `$$restProps` in runes mode");
+	e(node, "legacy_rest_props_invalid", `Cannot use \`$$restProps\` in runes mode\nhttps://svelte.dev/e/legacy_rest_props_invalid`);
 }
 
 /**
@@ -247,7 +257,7 @@ export function legacy_rest_props_invalid(node) {
  * @returns {never}
  */
 export function module_illegal_default_export(node) {
-	e(node, "module_illegal_default_export", "A component cannot have a default export");
+	e(node, "module_illegal_default_export", `A component cannot have a default export\nhttps://svelte.dev/e/module_illegal_default_export`);
 }
 
 /**
@@ -256,7 +266,7 @@ export function module_illegal_default_export(node) {
  * @returns {never}
  */
 export function props_duplicate(node) {
-	e(node, "props_duplicate", "Cannot use `$props()` more than once");
+	e(node, "props_duplicate", `Cannot use \`$props()\` more than once\nhttps://svelte.dev/e/props_duplicate`);
 }
 
 /**
@@ -265,7 +275,7 @@ export function props_duplicate(node) {
  * @returns {never}
  */
 export function props_illegal_name(node) {
-	e(node, "props_illegal_name", "Declaring or accessing a prop starting with `$$` is illegal (they are reserved for Svelte internals)");
+	e(node, "props_illegal_name", `Declaring or accessing a prop starting with \`$$\` is illegal (they are reserved for Svelte internals)\nhttps://svelte.dev/e/props_illegal_name`);
 }
 
 /**
@@ -274,7 +284,7 @@ export function props_illegal_name(node) {
  * @returns {never}
  */
 export function props_invalid_identifier(node) {
-	e(node, "props_invalid_identifier", "`$props()` can only be used with an object destructuring pattern");
+	e(node, "props_invalid_identifier", `\`$props()\` can only be used with an object destructuring pattern\nhttps://svelte.dev/e/props_invalid_identifier`);
 }
 
 /**
@@ -283,7 +293,7 @@ export function props_invalid_identifier(node) {
  * @returns {never}
  */
 export function props_invalid_pattern(node) {
-	e(node, "props_invalid_pattern", "`$props()` assignment must not contain nested properties or computed keys");
+	e(node, "props_invalid_pattern", `\`$props()\` assignment must not contain nested properties or computed keys\nhttps://svelte.dev/e/props_invalid_pattern`);
 }
 
 /**
@@ -292,7 +302,7 @@ export function props_invalid_pattern(node) {
  * @returns {never}
  */
 export function props_invalid_placement(node) {
-	e(node, "props_invalid_placement", "`$props()` can only be used at the top level of components as a variable declaration initializer");
+	e(node, "props_invalid_placement", `\`$props()\` can only be used at the top level of components as a variable declaration initializer\nhttps://svelte.dev/e/props_invalid_placement`);
 }
 
 /**
@@ -302,7 +312,7 @@ export function props_invalid_placement(node) {
  * @returns {never}
  */
 export function reactive_declaration_cycle(node, cycle) {
-	e(node, "reactive_declaration_cycle", `Cyclical dependency detected: ${cycle}`);
+	e(node, "reactive_declaration_cycle", `Cyclical dependency detected: ${cycle}\nhttps://svelte.dev/e/reactive_declaration_cycle`);
 }
 
 /**
@@ -312,7 +322,7 @@ export function reactive_declaration_cycle(node, cycle) {
  * @returns {never}
  */
 export function rune_invalid_arguments(node, rune) {
-	e(node, "rune_invalid_arguments", `\`${rune}\` cannot be called with arguments`);
+	e(node, "rune_invalid_arguments", `\`${rune}\` cannot be called with arguments\nhttps://svelte.dev/e/rune_invalid_arguments`);
 }
 
 /**
@@ -323,7 +333,7 @@ export function rune_invalid_arguments(node, rune) {
  * @returns {never}
  */
 export function rune_invalid_arguments_length(node, rune, args) {
-	e(node, "rune_invalid_arguments_length", `\`${rune}\` must be called with ${args}`);
+	e(node, "rune_invalid_arguments_length", `\`${rune}\` must be called with ${args}\nhttps://svelte.dev/e/rune_invalid_arguments_length`);
 }
 
 /**
@@ -332,7 +342,7 @@ export function rune_invalid_arguments_length(node, rune, args) {
  * @returns {never}
  */
 export function rune_invalid_computed_property(node) {
-	e(node, "rune_invalid_computed_property", "Cannot access a computed property of a rune");
+	e(node, "rune_invalid_computed_property", `Cannot access a computed property of a rune\nhttps://svelte.dev/e/rune_invalid_computed_property`);
 }
 
 /**
@@ -342,7 +352,7 @@ export function rune_invalid_computed_property(node) {
  * @returns {never}
  */
 export function rune_invalid_name(node, name) {
-	e(node, "rune_invalid_name", `\`${name}\` is not a valid rune`);
+	e(node, "rune_invalid_name", `\`${name}\` is not a valid rune\nhttps://svelte.dev/e/rune_invalid_name`);
 }
 
 /**
@@ -352,7 +362,7 @@ export function rune_invalid_name(node, name) {
  * @returns {never}
  */
 export function rune_invalid_usage(node, rune) {
-	e(node, "rune_invalid_usage", `Cannot use \`${rune}\` rune in non-runes mode`);
+	e(node, "rune_invalid_usage", `Cannot use \`${rune}\` rune in non-runes mode\nhttps://svelte.dev/e/rune_invalid_usage`);
 }
 
 /**
@@ -361,7 +371,7 @@ export function rune_invalid_usage(node, rune) {
  * @returns {never}
  */
 export function rune_missing_parentheses(node) {
-	e(node, "rune_missing_parentheses", "Cannot use rune without parentheses");
+	e(node, "rune_missing_parentheses", `Cannot use rune without parentheses\nhttps://svelte.dev/e/rune_missing_parentheses`);
 }
 
 /**
@@ -371,7 +381,7 @@ export function rune_missing_parentheses(node) {
  * @returns {never}
  */
 export function rune_removed(node, name) {
-	e(node, "rune_removed", `The \`${name}\` rune has been removed`);
+	e(node, "rune_removed", `The \`${name}\` rune has been removed\nhttps://svelte.dev/e/rune_removed`);
 }
 
 /**
@@ -382,7 +392,7 @@ export function rune_removed(node, name) {
  * @returns {never}
  */
 export function rune_renamed(node, name, replacement) {
-	e(node, "rune_renamed", `\`${name}\` is now \`${replacement}\``);
+	e(node, "rune_renamed", `\`${name}\` is now \`${replacement}\`\nhttps://svelte.dev/e/rune_renamed`);
 }
 
 /**
@@ -392,7 +402,16 @@ export function rune_renamed(node, name, replacement) {
  * @returns {never}
  */
 export function runes_mode_invalid_import(node, name) {
-	e(node, "runes_mode_invalid_import", `${name} cannot be used in runes mode`);
+	e(node, "runes_mode_invalid_import", `${name} cannot be used in runes mode\nhttps://svelte.dev/e/runes_mode_invalid_import`);
+}
+
+/**
+ * An exported snippet can only reference things declared in a `<script module>`, or other exportable snippets
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function snippet_invalid_export(node) {
+	e(node, "snippet_invalid_export", `An exported snippet can only reference things declared in a \`<script module>\`, or other exportable snippets\nhttps://svelte.dev/e/snippet_invalid_export`);
 }
 
 /**
@@ -401,7 +420,7 @@ export function runes_mode_invalid_import(node, name) {
  * @returns {never}
  */
 export function snippet_parameter_assignment(node) {
-	e(node, "snippet_parameter_assignment", "Cannot reassign or bind to snippet parameter");
+	e(node, "snippet_parameter_assignment", `Cannot reassign or bind to snippet parameter\nhttps://svelte.dev/e/snippet_parameter_assignment`);
 }
 
 /**
@@ -410,7 +429,7 @@ export function snippet_parameter_assignment(node) {
  * @returns {never}
  */
 export function state_invalid_export(node) {
-	e(node, "state_invalid_export", "Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties");
+	e(node, "state_invalid_export", `Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties\nhttps://svelte.dev/e/state_invalid_export`);
 }
 
 /**
@@ -420,7 +439,7 @@ export function state_invalid_export(node) {
  * @returns {never}
  */
 export function state_invalid_placement(node, rune) {
-	e(node, "state_invalid_placement", `\`${rune}(...)\` can only be used as a variable declaration initializer or a class field`);
+	e(node, "state_invalid_placement", `\`${rune}(...)\` can only be used as a variable declaration initializer or a class field\nhttps://svelte.dev/e/state_invalid_placement`);
 }
 
 /**
@@ -429,7 +448,7 @@ export function state_invalid_placement(node, rune) {
  * @returns {never}
  */
 export function store_invalid_scoped_subscription(node) {
-	e(node, "store_invalid_scoped_subscription", "Cannot subscribe to stores that are not declared at the top level of the component");
+	e(node, "store_invalid_scoped_subscription", `Cannot subscribe to stores that are not declared at the top level of the component\nhttps://svelte.dev/e/store_invalid_scoped_subscription`);
 }
 
 /**
@@ -438,7 +457,7 @@ export function store_invalid_scoped_subscription(node) {
  * @returns {never}
  */
 export function store_invalid_subscription(node) {
-	e(node, "store_invalid_subscription", "Cannot reference store value inside `<script module>`");
+	e(node, "store_invalid_subscription", `Cannot reference store value inside \`<script module>\`\nhttps://svelte.dev/e/store_invalid_subscription`);
 }
 
 /**
@@ -447,7 +466,7 @@ export function store_invalid_subscription(node) {
  * @returns {never}
  */
 export function store_invalid_subscription_module(node) {
-	e(node, "store_invalid_subscription_module", "Cannot reference store value outside a `.svelte` file");
+	e(node, "store_invalid_subscription_module", `Cannot reference store value outside a \`.svelte\` file\nhttps://svelte.dev/e/store_invalid_subscription_module`);
 }
 
 /**
@@ -457,7 +476,7 @@ export function store_invalid_subscription_module(node) {
  * @returns {never}
  */
 export function typescript_invalid_feature(node, feature) {
-	e(node, "typescript_invalid_feature", `TypeScript language features like ${feature} are not natively supported, and their use is generally discouraged. Outside of \`<script>\` tags, these features are not supported. For use within \`<script>\` tags, you will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler. If you are using \`vitePreprocess\`, make sure to specifically enable preprocessing script tags (\`vitePreprocess({ script: true })\`)`);
+	e(node, "typescript_invalid_feature", `TypeScript language features like ${feature} are not natively supported, and their use is generally discouraged. Outside of \`<script>\` tags, these features are not supported. For use within \`<script>\` tags, you will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler. If you are using \`vitePreprocess\`, make sure to specifically enable preprocessing script tags (\`vitePreprocess({ script: true })\`)\nhttps://svelte.dev/e/typescript_invalid_feature`);
 }
 
 /**
@@ -466,7 +485,7 @@ export function typescript_invalid_feature(node, feature) {
  * @returns {never}
  */
 export function css_empty_declaration(node) {
-	e(node, "css_empty_declaration", "Declaration cannot be empty");
+	e(node, "css_empty_declaration", `Declaration cannot be empty\nhttps://svelte.dev/e/css_empty_declaration`);
 }
 
 /**
@@ -475,7 +494,7 @@ export function css_empty_declaration(node) {
  * @returns {never}
  */
 export function css_expected_identifier(node) {
-	e(node, "css_expected_identifier", "Expected a valid CSS identifier");
+	e(node, "css_expected_identifier", `Expected a valid CSS identifier\nhttps://svelte.dev/e/css_expected_identifier`);
 }
 
 /**
@@ -485,7 +504,7 @@ export function css_expected_identifier(node) {
  * @returns {never}
  */
 export function css_global_block_invalid_combinator(node, name) {
-	e(node, "css_global_block_invalid_combinator", `A \`:global\` selector cannot follow a \`${name}\` combinator`);
+	e(node, "css_global_block_invalid_combinator", `A \`:global\` selector cannot follow a \`${name}\` combinator\nhttps://svelte.dev/e/css_global_block_invalid_combinator`);
 }
 
 /**
@@ -494,7 +513,7 @@ export function css_global_block_invalid_combinator(node, name) {
  * @returns {never}
  */
 export function css_global_block_invalid_declaration(node) {
-	e(node, "css_global_block_invalid_declaration", "A top-level `:global {...}` block can only contain rules, not declarations");
+	e(node, "css_global_block_invalid_declaration", `A top-level \`:global {...}\` block can only contain rules, not declarations\nhttps://svelte.dev/e/css_global_block_invalid_declaration`);
 }
 
 /**
@@ -503,7 +522,7 @@ export function css_global_block_invalid_declaration(node) {
  * @returns {never}
  */
 export function css_global_block_invalid_list(node) {
-	e(node, "css_global_block_invalid_list", "A `:global` selector cannot be part of a selector list with more than one item");
+	e(node, "css_global_block_invalid_list", `A \`:global\` selector cannot be part of a selector list with more than one item\nhttps://svelte.dev/e/css_global_block_invalid_list`);
 }
 
 /**
@@ -512,7 +531,7 @@ export function css_global_block_invalid_list(node) {
  * @returns {never}
  */
 export function css_global_block_invalid_modifier(node) {
-	e(node, "css_global_block_invalid_modifier", "A `:global` selector cannot modify an existing selector");
+	e(node, "css_global_block_invalid_modifier", `A \`:global\` selector cannot modify an existing selector\nhttps://svelte.dev/e/css_global_block_invalid_modifier`);
 }
 
 /**
@@ -521,7 +540,7 @@ export function css_global_block_invalid_modifier(node) {
  * @returns {never}
  */
 export function css_global_block_invalid_modifier_start(node) {
-	e(node, "css_global_block_invalid_modifier_start", "A `:global` selector can only be modified if it is a descendant of other selectors");
+	e(node, "css_global_block_invalid_modifier_start", `A \`:global\` selector can only be modified if it is a descendant of other selectors\nhttps://svelte.dev/e/css_global_block_invalid_modifier_start`);
 }
 
 /**
@@ -530,7 +549,7 @@ export function css_global_block_invalid_modifier_start(node) {
  * @returns {never}
  */
 export function css_global_invalid_placement(node) {
-	e(node, "css_global_invalid_placement", "`:global(...)` can be at the start or end of a selector sequence, but not in the middle");
+	e(node, "css_global_invalid_placement", `\`:global(...)\` can be at the start or end of a selector sequence, but not in the middle\nhttps://svelte.dev/e/css_global_invalid_placement`);
 }
 
 /**
@@ -539,7 +558,7 @@ export function css_global_invalid_placement(node) {
  * @returns {never}
  */
 export function css_global_invalid_selector(node) {
-	e(node, "css_global_invalid_selector", "`:global(...)` must contain exactly one selector");
+	e(node, "css_global_invalid_selector", `\`:global(...)\` must contain exactly one selector\nhttps://svelte.dev/e/css_global_invalid_selector`);
 }
 
 /**
@@ -548,7 +567,7 @@ export function css_global_invalid_selector(node) {
  * @returns {never}
  */
 export function css_global_invalid_selector_list(node) {
-	e(node, "css_global_invalid_selector_list", "`:global(...)` must not contain type or universal selectors when used in a compound selector");
+	e(node, "css_global_invalid_selector_list", `\`:global(...)\` must not contain type or universal selectors when used in a compound selector\nhttps://svelte.dev/e/css_global_invalid_selector_list`);
 }
 
 /**
@@ -557,7 +576,7 @@ export function css_global_invalid_selector_list(node) {
  * @returns {never}
  */
 export function css_nesting_selector_invalid_placement(node) {
-	e(node, "css_nesting_selector_invalid_placement", "Nesting selectors can only be used inside a rule or as the first selector inside a lone `:global(...)`");
+	e(node, "css_nesting_selector_invalid_placement", `Nesting selectors can only be used inside a rule or as the first selector inside a lone \`:global(...)\`\nhttps://svelte.dev/e/css_nesting_selector_invalid_placement`);
 }
 
 /**
@@ -566,7 +585,7 @@ export function css_nesting_selector_invalid_placement(node) {
  * @returns {never}
  */
 export function css_selector_invalid(node) {
-	e(node, "css_selector_invalid", "Invalid selector");
+	e(node, "css_selector_invalid", `Invalid selector\nhttps://svelte.dev/e/css_selector_invalid`);
 }
 
 /**
@@ -575,7 +594,7 @@ export function css_selector_invalid(node) {
  * @returns {never}
  */
 export function css_type_selector_invalid_placement(node) {
-	e(node, "css_type_selector_invalid_placement", "`:global(...)` must not be followed by a type selector");
+	e(node, "css_type_selector_invalid_placement", `\`:global(...)\` must not be followed by a type selector\nhttps://svelte.dev/e/css_type_selector_invalid_placement`);
 }
 
 /**
@@ -584,7 +603,7 @@ export function css_type_selector_invalid_placement(node) {
  * @returns {never}
  */
 export function animation_duplicate(node) {
-	e(node, "animation_duplicate", "An element can only have one 'animate' directive");
+	e(node, "animation_duplicate", `An element can only have one 'animate' directive\nhttps://svelte.dev/e/animation_duplicate`);
 }
 
 /**
@@ -593,7 +612,7 @@ export function animation_duplicate(node) {
  * @returns {never}
  */
 export function animation_invalid_placement(node) {
-	e(node, "animation_invalid_placement", "An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block");
+	e(node, "animation_invalid_placement", `An element that uses the \`animate:\` directive must be the only child of a keyed \`{#each ...}\` block\nhttps://svelte.dev/e/animation_invalid_placement`);
 }
 
 /**
@@ -602,7 +621,7 @@ export function animation_invalid_placement(node) {
  * @returns {never}
  */
 export function animation_missing_key(node) {
-	e(node, "animation_missing_key", "An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block. Did you forget to add a key to your each block?");
+	e(node, "animation_missing_key", `An element that uses the \`animate:\` directive must be the only child of a keyed \`{#each ...}\` block. Did you forget to add a key to your each block?\nhttps://svelte.dev/e/animation_missing_key`);
 }
 
 /**
@@ -611,7 +630,7 @@ export function animation_missing_key(node) {
  * @returns {never}
  */
 export function attribute_contenteditable_dynamic(node) {
-	e(node, "attribute_contenteditable_dynamic", "'contenteditable' attribute cannot be dynamic if element uses two-way binding");
+	e(node, "attribute_contenteditable_dynamic", `'contenteditable' attribute cannot be dynamic if element uses two-way binding\nhttps://svelte.dev/e/attribute_contenteditable_dynamic`);
 }
 
 /**
@@ -620,7 +639,7 @@ export function attribute_contenteditable_dynamic(node) {
  * @returns {never}
  */
 export function attribute_contenteditable_missing(node) {
-	e(node, "attribute_contenteditable_missing", "'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings");
+	e(node, "attribute_contenteditable_missing", `'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings\nhttps://svelte.dev/e/attribute_contenteditable_missing`);
 }
 
 /**
@@ -629,7 +648,7 @@ export function attribute_contenteditable_missing(node) {
  * @returns {never}
  */
 export function attribute_duplicate(node) {
-	e(node, "attribute_duplicate", "Attributes need to be unique");
+	e(node, "attribute_duplicate", `Attributes need to be unique\nhttps://svelte.dev/e/attribute_duplicate`);
 }
 
 /**
@@ -638,7 +657,7 @@ export function attribute_duplicate(node) {
  * @returns {never}
  */
 export function attribute_empty_shorthand(node) {
-	e(node, "attribute_empty_shorthand", "Attribute shorthand cannot be empty");
+	e(node, "attribute_empty_shorthand", `Attribute shorthand cannot be empty\nhttps://svelte.dev/e/attribute_empty_shorthand`);
 }
 
 /**
@@ -647,7 +666,7 @@ export function attribute_empty_shorthand(node) {
  * @returns {never}
  */
 export function attribute_invalid_event_handler(node) {
-	e(node, "attribute_invalid_event_handler", "Event attribute must be a JavaScript expression, not a string");
+	e(node, "attribute_invalid_event_handler", `Event attribute must be a JavaScript expression, not a string\nhttps://svelte.dev/e/attribute_invalid_event_handler`);
 }
 
 /**
@@ -656,7 +675,7 @@ export function attribute_invalid_event_handler(node) {
  * @returns {never}
  */
 export function attribute_invalid_multiple(node) {
-	e(node, "attribute_invalid_multiple", "'multiple' attribute must be static if select uses two-way binding");
+	e(node, "attribute_invalid_multiple", `'multiple' attribute must be static if select uses two-way binding\nhttps://svelte.dev/e/attribute_invalid_multiple`);
 }
 
 /**
@@ -666,7 +685,7 @@ export function attribute_invalid_multiple(node) {
  * @returns {never}
  */
 export function attribute_invalid_name(node, name) {
-	e(node, "attribute_invalid_name", `'${name}' is not a valid attribute name`);
+	e(node, "attribute_invalid_name", `'${name}' is not a valid attribute name\nhttps://svelte.dev/e/attribute_invalid_name`);
 }
 
 /**
@@ -675,7 +694,7 @@ export function attribute_invalid_name(node, name) {
  * @returns {never}
  */
 export function attribute_invalid_sequence_expression(node) {
-	e(node, "attribute_invalid_sequence_expression", "Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses");
+	e(node, "attribute_invalid_sequence_expression", `Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses\nhttps://svelte.dev/e/attribute_invalid_sequence_expression`);
 }
 
 /**
@@ -684,7 +703,7 @@ export function attribute_invalid_sequence_expression(node) {
  * @returns {never}
  */
 export function attribute_invalid_type(node) {
-	e(node, "attribute_invalid_type", "'type' attribute must be a static text value if input uses two-way binding");
+	e(node, "attribute_invalid_type", `'type' attribute must be a static text value if input uses two-way binding\nhttps://svelte.dev/e/attribute_invalid_type`);
 }
 
 /**
@@ -693,16 +712,25 @@ export function attribute_invalid_type(node) {
  * @returns {never}
  */
 export function attribute_unquoted_sequence(node) {
-	e(node, "attribute_unquoted_sequence", "Attribute values containing `{...}` must be enclosed in quote marks, unless the value only contains the expression");
+	e(node, "attribute_unquoted_sequence", `Attribute values containing \`{...}\` must be enclosed in quote marks, unless the value only contains the expression\nhttps://svelte.dev/e/attribute_unquoted_sequence`);
 }
 
 /**
- * Can only bind to an Identifier or MemberExpression
+ * `bind:group` can only bind to an Identifier or MemberExpression
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function bind_group_invalid_expression(node) {
+	e(node, "bind_group_invalid_expression", `\`bind:group\` can only bind to an Identifier or MemberExpression\nhttps://svelte.dev/e/bind_group_invalid_expression`);
+}
+
+/**
+ * Can only bind to an Identifier or MemberExpression or a `{get, set}` pair
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function bind_invalid_expression(node) {
-	e(node, "bind_invalid_expression", "Can only bind to an Identifier or MemberExpression");
+	e(node, "bind_invalid_expression", `Can only bind to an Identifier or MemberExpression or a \`{get, set}\` pair\nhttps://svelte.dev/e/bind_invalid_expression`);
 }
 
 /**
@@ -713,7 +741,17 @@ export function bind_invalid_expression(node) {
  * @returns {never}
  */
 export function bind_invalid_name(node, name, explanation) {
-	e(node, "bind_invalid_name", explanation ? `\`bind:${name}\` is not a valid binding. ${explanation}` : `\`bind:${name}\` is not a valid binding`);
+	e(node, "bind_invalid_name", `${explanation ? `\`bind:${name}\` is not a valid binding. ${explanation}` : `\`bind:${name}\` is not a valid binding`}\nhttps://svelte.dev/e/bind_invalid_name`);
+}
+
+/**
+ * `bind:%name%={get, set}` must not have surrounding parentheses
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function bind_invalid_parens(node, name) {
+	e(node, "bind_invalid_parens", `\`bind:${name}={get, set}\` must not have surrounding parentheses\nhttps://svelte.dev/e/bind_invalid_parens`);
 }
 
 /**
@@ -724,7 +762,7 @@ export function bind_invalid_name(node, name, explanation) {
  * @returns {never}
  */
 export function bind_invalid_target(node, name, elements) {
-	e(node, "bind_invalid_target", `\`bind:${name}\` can only be used with ${elements}`);
+	e(node, "bind_invalid_target", `\`bind:${name}\` can only be used with ${elements}\nhttps://svelte.dev/e/bind_invalid_target`);
 }
 
 /**
@@ -733,7 +771,7 @@ export function bind_invalid_target(node, name, elements) {
  * @returns {never}
  */
 export function bind_invalid_value(node) {
-	e(node, "bind_invalid_value", "Can only bind to state or props");
+	e(node, "bind_invalid_value", `Can only bind to state or props\nhttps://svelte.dev/e/bind_invalid_value`);
 }
 
 /**
@@ -743,7 +781,7 @@ export function bind_invalid_value(node) {
  * @returns {never}
  */
 export function block_duplicate_clause(node, name) {
-	e(node, "block_duplicate_clause", `${name} cannot appear more than once within a block`);
+	e(node, "block_duplicate_clause", `${name} cannot appear more than once within a block\nhttps://svelte.dev/e/block_duplicate_clause`);
 }
 
 /**
@@ -752,7 +790,7 @@ export function block_duplicate_clause(node, name) {
  * @returns {never}
  */
 export function block_invalid_continuation_placement(node) {
-	e(node, "block_invalid_continuation_placement", "{:...} block is invalid at this position (did you forget to close the preceding element or block?)");
+	e(node, "block_invalid_continuation_placement", `{:...} block is invalid at this position (did you forget to close the preceding element or block?)\nhttps://svelte.dev/e/block_invalid_continuation_placement`);
 }
 
 /**
@@ -761,7 +799,7 @@ export function block_invalid_continuation_placement(node) {
  * @returns {never}
  */
 export function block_invalid_elseif(node) {
-	e(node, "block_invalid_elseif", "'elseif' should be 'else if'");
+	e(node, "block_invalid_elseif", `'elseif' should be 'else if'\nhttps://svelte.dev/e/block_invalid_elseif`);
 }
 
 /**
@@ -772,7 +810,7 @@ export function block_invalid_elseif(node) {
  * @returns {never}
  */
 export function block_invalid_placement(node, name, location) {
-	e(node, "block_invalid_placement", `{#${name} ...} block cannot be ${location}`);
+	e(node, "block_invalid_placement", `{#${name} ...} block cannot be ${location}\nhttps://svelte.dev/e/block_invalid_placement`);
 }
 
 /**
@@ -781,7 +819,7 @@ export function block_invalid_placement(node, name, location) {
  * @returns {never}
  */
 export function block_unclosed(node) {
-	e(node, "block_unclosed", "Block was left open");
+	e(node, "block_unclosed", `Block was left open\nhttps://svelte.dev/e/block_unclosed`);
 }
 
 /**
@@ -791,7 +829,7 @@ export function block_unclosed(node) {
  * @returns {never}
  */
 export function block_unexpected_character(node, character) {
-	e(node, "block_unexpected_character", `Expected a \`${character}\` character immediately following the opening bracket`);
+	e(node, "block_unexpected_character", `Expected a \`${character}\` character immediately following the opening bracket\nhttps://svelte.dev/e/block_unexpected_character`);
 }
 
 /**
@@ -800,7 +838,7 @@ export function block_unexpected_character(node, character) {
  * @returns {never}
  */
 export function block_unexpected_close(node) {
-	e(node, "block_unexpected_close", "Unexpected block closing tag");
+	e(node, "block_unexpected_close", `Unexpected block closing tag\nhttps://svelte.dev/e/block_unexpected_close`);
 }
 
 /**
@@ -809,7 +847,7 @@ export function block_unexpected_close(node) {
  * @returns {never}
  */
 export function component_invalid_directive(node) {
-	e(node, "component_invalid_directive", "This type of directive is not valid on components");
+	e(node, "component_invalid_directive", `This type of directive is not valid on components\nhttps://svelte.dev/e/component_invalid_directive`);
 }
 
 /**
@@ -819,7 +857,7 @@ export function component_invalid_directive(node) {
  * @returns {never}
  */
 export function const_tag_cycle(node, cycle) {
-	e(node, "const_tag_cycle", `Cyclical dependency detected: ${cycle}`);
+	e(node, "const_tag_cycle", `Cyclical dependency detected: ${cycle}\nhttps://svelte.dev/e/const_tag_cycle`);
 }
 
 /**
@@ -828,7 +866,7 @@ export function const_tag_cycle(node, cycle) {
  * @returns {never}
  */
 export function const_tag_invalid_expression(node) {
-	e(node, "const_tag_invalid_expression", "{@const ...} must consist of a single variable declaration");
+	e(node, "const_tag_invalid_expression", `{@const ...} must consist of a single variable declaration\nhttps://svelte.dev/e/const_tag_invalid_expression`);
 }
 
 /**
@@ -837,7 +875,7 @@ export function const_tag_invalid_expression(node) {
  * @returns {never}
  */
 export function const_tag_invalid_placement(node) {
-	e(node, "const_tag_invalid_placement", "`{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>` or `<Component>`");
+	e(node, "const_tag_invalid_placement", `\`{@const}\` must be the immediate child of \`{#snippet}\`, \`{#if}\`, \`{:else if}\`, \`{:else}\`, \`{#each}\`, \`{:then}\`, \`{:catch}\`, \`<svelte:fragment>\` or \`<Component>\`\nhttps://svelte.dev/e/const_tag_invalid_placement`);
 }
 
 /**
@@ -846,7 +884,7 @@ export function const_tag_invalid_placement(node) {
  * @returns {never}
  */
 export function debug_tag_invalid_arguments(node) {
-	e(node, "debug_tag_invalid_arguments", "{@debug ...} arguments must be identifiers, not arbitrary expressions");
+	e(node, "debug_tag_invalid_arguments", `{@debug ...} arguments must be identifiers, not arbitrary expressions\nhttps://svelte.dev/e/debug_tag_invalid_arguments`);
 }
 
 /**
@@ -855,7 +893,7 @@ export function debug_tag_invalid_arguments(node) {
  * @returns {never}
  */
 export function directive_invalid_value(node) {
-	e(node, "directive_invalid_value", "Directive value must be a JavaScript expression enclosed in curly braces");
+	e(node, "directive_invalid_value", `Directive value must be a JavaScript expression enclosed in curly braces\nhttps://svelte.dev/e/directive_invalid_value`);
 }
 
 /**
@@ -865,7 +903,7 @@ export function directive_invalid_value(node) {
  * @returns {never}
  */
 export function directive_missing_name(node, type) {
-	e(node, "directive_missing_name", `\`${type}\` name cannot be empty`);
+	e(node, "directive_missing_name", `\`${type}\` name cannot be empty\nhttps://svelte.dev/e/directive_missing_name`);
 }
 
 /**
@@ -875,7 +913,7 @@ export function directive_missing_name(node, type) {
  * @returns {never}
  */
 export function element_invalid_closing_tag(node, name) {
-	e(node, "element_invalid_closing_tag", `\`</${name}>\` attempted to close an element that was not open`);
+	e(node, "element_invalid_closing_tag", `\`</${name}>\` attempted to close an element that was not open\nhttps://svelte.dev/e/element_invalid_closing_tag`);
 }
 
 /**
@@ -886,7 +924,7 @@ export function element_invalid_closing_tag(node, name) {
  * @returns {never}
  */
 export function element_invalid_closing_tag_autoclosed(node, name, reason) {
-	e(node, "element_invalid_closing_tag_autoclosed", `\`</${name}>\` attempted to close element that was already automatically closed by \`<${reason}>\` (cannot nest \`<${reason}>\` inside \`<${name}>\`)`);
+	e(node, "element_invalid_closing_tag_autoclosed", `\`</${name}>\` attempted to close element that was already automatically closed by \`<${reason}>\` (cannot nest \`<${reason}>\` inside \`<${name}>\`)\nhttps://svelte.dev/e/element_invalid_closing_tag_autoclosed`);
 }
 
 /**
@@ -896,7 +934,7 @@ export function element_invalid_closing_tag_autoclosed(node, name, reason) {
  * @returns {never}
  */
 export function element_unclosed(node, name) {
-	e(node, "element_unclosed", `\`<${name}>\` was left open`);
+	e(node, "element_unclosed", `\`<${name}>\` was left open\nhttps://svelte.dev/e/element_unclosed`);
 }
 
 /**
@@ -905,7 +943,7 @@ export function element_unclosed(node, name) {
  * @returns {never}
  */
 export function event_handler_invalid_component_modifier(node) {
-	e(node, "event_handler_invalid_component_modifier", "Event modifiers other than 'once' can only be used on DOM elements");
+	e(node, "event_handler_invalid_component_modifier", `Event modifiers other than 'once' can only be used on DOM elements\nhttps://svelte.dev/e/event_handler_invalid_component_modifier`);
 }
 
 /**
@@ -915,7 +953,7 @@ export function event_handler_invalid_component_modifier(node) {
  * @returns {never}
  */
 export function event_handler_invalid_modifier(node, list) {
-	e(node, "event_handler_invalid_modifier", `Valid event modifiers are ${list}`);
+	e(node, "event_handler_invalid_modifier", `Valid event modifiers are ${list}\nhttps://svelte.dev/e/event_handler_invalid_modifier`);
 }
 
 /**
@@ -926,7 +964,7 @@ export function event_handler_invalid_modifier(node, list) {
  * @returns {never}
  */
 export function event_handler_invalid_modifier_combination(node, modifier1, modifier2) {
-	e(node, "event_handler_invalid_modifier_combination", `The '${modifier1}' and '${modifier2}' modifiers cannot be used together`);
+	e(node, "event_handler_invalid_modifier_combination", `The '${modifier1}' and '${modifier2}' modifiers cannot be used together\nhttps://svelte.dev/e/event_handler_invalid_modifier_combination`);
 }
 
 /**
@@ -935,7 +973,7 @@ export function event_handler_invalid_modifier_combination(node, modifier1, modi
  * @returns {never}
  */
 export function expected_attribute_value(node) {
-	e(node, "expected_attribute_value", "Expected attribute value");
+	e(node, "expected_attribute_value", `Expected attribute value\nhttps://svelte.dev/e/expected_attribute_value`);
 }
 
 /**
@@ -944,7 +982,7 @@ export function expected_attribute_value(node) {
  * @returns {never}
  */
 export function expected_block_type(node) {
-	e(node, "expected_block_type", "Expected 'if', 'each', 'await', 'key' or 'snippet'");
+	e(node, "expected_block_type", `Expected 'if', 'each', 'await', 'key' or 'snippet'\nhttps://svelte.dev/e/expected_block_type`);
 }
 
 /**
@@ -953,7 +991,7 @@ export function expected_block_type(node) {
  * @returns {never}
  */
 export function expected_identifier(node) {
-	e(node, "expected_identifier", "Expected an identifier");
+	e(node, "expected_identifier", `Expected an identifier\nhttps://svelte.dev/e/expected_identifier`);
 }
 
 /**
@@ -962,7 +1000,7 @@ export function expected_identifier(node) {
  * @returns {never}
  */
 export function expected_pattern(node) {
-	e(node, "expected_pattern", "Expected identifier or destructure pattern");
+	e(node, "expected_pattern", `Expected identifier or destructure pattern\nhttps://svelte.dev/e/expected_pattern`);
 }
 
 /**
@@ -972,7 +1010,7 @@ export function expected_pattern(node) {
  * @returns {never}
  */
 export function expected_token(node, token) {
-	e(node, "expected_token", `Expected token ${token}`);
+	e(node, "expected_token", `Expected token ${token}\nhttps://svelte.dev/e/expected_token`);
 }
 
 /**
@@ -981,7 +1019,17 @@ export function expected_token(node, token) {
  * @returns {never}
  */
 export function expected_whitespace(node) {
-	e(node, "expected_whitespace", "Expected whitespace");
+	e(node, "expected_whitespace", `Expected whitespace\nhttps://svelte.dev/e/expected_whitespace`);
+}
+
+/**
+ * `<%name%>` does not support non-event attributes or spread attributes
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function illegal_element_attribute(node, name) {
+	e(node, "illegal_element_attribute", `\`<${name}>\` does not support non-event attributes or spread attributes\nhttps://svelte.dev/e/illegal_element_attribute`);
 }
 
 /**
@@ -991,7 +1039,7 @@ export function expected_whitespace(node) {
  * @returns {never}
  */
 export function js_parse_error(node, message) {
-	e(node, "js_parse_error", `${message}`);
+	e(node, "js_parse_error", `${message}\nhttps://svelte.dev/e/js_parse_error`);
 }
 
 /**
@@ -1000,7 +1048,7 @@ export function js_parse_error(node, message) {
  * @returns {never}
  */
 export function let_directive_invalid_placement(node) {
-	e(node, "let_directive_invalid_placement", "`let:` directive at invalid position");
+	e(node, "let_directive_invalid_placement", `\`let:\` directive at invalid position\nhttps://svelte.dev/e/let_directive_invalid_placement`);
 }
 
 /**
@@ -1010,18 +1058,17 @@ export function let_directive_invalid_placement(node) {
  * @returns {never}
  */
 export function mixed_event_handler_syntaxes(node, name) {
-	e(node, "mixed_event_handler_syntaxes", `Mixing old (on:${name}) and new syntaxes for event handling is not allowed. Use only the on${name} syntax`);
+	e(node, "mixed_event_handler_syntaxes", `Mixing old (on:${name}) and new syntaxes for event handling is not allowed. Use only the on${name} syntax\nhttps://svelte.dev/e/mixed_event_handler_syntaxes`);
 }
 
 /**
- * %thing% is invalid inside `<%parent%>`
+ * %message%. The browser will 'repair' the HTML (by moving, removing, or inserting elements) which breaks Svelte's assumptions about the structure of your components.
  * @param {null | number | NodeLike} node
- * @param {string} thing
- * @param {string} parent
+ * @param {string} message
  * @returns {never}
  */
-export function node_invalid_placement(node, thing, parent) {
-	e(node, "node_invalid_placement", `${thing} is invalid inside \`<${parent}>\``);
+export function node_invalid_placement(node, message) {
+	e(node, "node_invalid_placement", `${message}. The browser will 'repair' the HTML (by moving, removing, or inserting elements) which breaks Svelte's assumptions about the structure of your components.\nhttps://svelte.dev/e/node_invalid_placement`);
 }
 
 /**
@@ -1030,7 +1077,7 @@ export function node_invalid_placement(node, thing, parent) {
  * @returns {never}
  */
 export function render_tag_invalid_call_expression(node) {
-	e(node, "render_tag_invalid_call_expression", "Calling a snippet function using apply, bind or call is not allowed");
+	e(node, "render_tag_invalid_call_expression", `Calling a snippet function using apply, bind or call is not allowed\nhttps://svelte.dev/e/render_tag_invalid_call_expression`);
 }
 
 /**
@@ -1039,7 +1086,7 @@ export function render_tag_invalid_call_expression(node) {
  * @returns {never}
  */
 export function render_tag_invalid_expression(node) {
-	e(node, "render_tag_invalid_expression", "`{@render ...}` tags can only contain call expressions");
+	e(node, "render_tag_invalid_expression", `\`{@render ...}\` tags can only contain call expressions\nhttps://svelte.dev/e/render_tag_invalid_expression`);
 }
 
 /**
@@ -1048,7 +1095,7 @@ export function render_tag_invalid_expression(node) {
  * @returns {never}
  */
 export function render_tag_invalid_spread_argument(node) {
-	e(node, "render_tag_invalid_spread_argument", "cannot use spread arguments in `{@render ...}` tags");
+	e(node, "render_tag_invalid_spread_argument", `cannot use spread arguments in \`{@render ...}\` tags\nhttps://svelte.dev/e/render_tag_invalid_spread_argument`);
 }
 
 /**
@@ -1057,7 +1104,7 @@ export function render_tag_invalid_spread_argument(node) {
  * @returns {never}
  */
 export function script_duplicate(node) {
-	e(node, "script_duplicate", "A component can have a single top-level `<script>` element and/or a single top-level `<script module>` element");
+	e(node, "script_duplicate", `A component can have a single top-level \`<script>\` element and/or a single top-level \`<script module>\` element\nhttps://svelte.dev/e/script_duplicate`);
 }
 
 /**
@@ -1067,7 +1114,7 @@ export function script_duplicate(node) {
  * @returns {never}
  */
 export function script_invalid_attribute_value(node, name) {
-	e(node, "script_invalid_attribute_value", `If the \`${name}\` attribute is supplied, it must be a boolean attribute`);
+	e(node, "script_invalid_attribute_value", `If the \`${name}\` attribute is supplied, it must be a boolean attribute\nhttps://svelte.dev/e/script_invalid_attribute_value`);
 }
 
 /**
@@ -1076,7 +1123,7 @@ export function script_invalid_attribute_value(node, name) {
  * @returns {never}
  */
 export function script_invalid_context(node) {
-	e(node, "script_invalid_context", "If the context attribute is supplied, its value must be \"module\"");
+	e(node, "script_invalid_context", `If the context attribute is supplied, its value must be "module"\nhttps://svelte.dev/e/script_invalid_context`);
 }
 
 /**
@@ -1086,7 +1133,7 @@ export function script_invalid_context(node) {
  * @returns {never}
  */
 export function script_reserved_attribute(node, name) {
-	e(node, "script_reserved_attribute", `The \`${name}\` attribute is reserved and cannot be used`);
+	e(node, "script_reserved_attribute", `The \`${name}\` attribute is reserved and cannot be used\nhttps://svelte.dev/e/script_reserved_attribute`);
 }
 
 /**
@@ -1097,7 +1144,7 @@ export function script_reserved_attribute(node, name) {
  * @returns {never}
  */
 export function slot_attribute_duplicate(node, name, component) {
-	e(node, "slot_attribute_duplicate", `Duplicate slot name '${name}' in <${component}>`);
+	e(node, "slot_attribute_duplicate", `Duplicate slot name '${name}' in <${component}>\nhttps://svelte.dev/e/slot_attribute_duplicate`);
 }
 
 /**
@@ -1106,7 +1153,7 @@ export function slot_attribute_duplicate(node, name, component) {
  * @returns {never}
  */
 export function slot_attribute_invalid(node) {
-	e(node, "slot_attribute_invalid", "slot attribute must be a static value");
+	e(node, "slot_attribute_invalid", `slot attribute must be a static value\nhttps://svelte.dev/e/slot_attribute_invalid`);
 }
 
 /**
@@ -1115,7 +1162,7 @@ export function slot_attribute_invalid(node) {
  * @returns {never}
  */
 export function slot_attribute_invalid_placement(node) {
-	e(node, "slot_attribute_invalid_placement", "Element with a slot='...' attribute must be a child of a component or a descendant of a custom element");
+	e(node, "slot_attribute_invalid_placement", `Element with a slot='...' attribute must be a child of a component or a descendant of a custom element\nhttps://svelte.dev/e/slot_attribute_invalid_placement`);
 }
 
 /**
@@ -1124,7 +1171,7 @@ export function slot_attribute_invalid_placement(node) {
  * @returns {never}
  */
 export function slot_default_duplicate(node) {
-	e(node, "slot_default_duplicate", "Found default slot content alongside an explicit slot=\"default\"");
+	e(node, "slot_default_duplicate", `Found default slot content alongside an explicit slot="default"\nhttps://svelte.dev/e/slot_default_duplicate`);
 }
 
 /**
@@ -1133,7 +1180,7 @@ export function slot_default_duplicate(node) {
  * @returns {never}
  */
 export function slot_element_invalid_attribute(node) {
-	e(node, "slot_element_invalid_attribute", "`<slot>` can only receive attributes and (optionally) let directives");
+	e(node, "slot_element_invalid_attribute", `\`<slot>\` can only receive attributes and (optionally) let directives\nhttps://svelte.dev/e/slot_element_invalid_attribute`);
 }
 
 /**
@@ -1142,7 +1189,7 @@ export function slot_element_invalid_attribute(node) {
  * @returns {never}
  */
 export function slot_element_invalid_name(node) {
-	e(node, "slot_element_invalid_name", "slot attribute must be a static value");
+	e(node, "slot_element_invalid_name", `slot attribute must be a static value\nhttps://svelte.dev/e/slot_element_invalid_name`);
 }
 
 /**
@@ -1151,7 +1198,7 @@ export function slot_element_invalid_name(node) {
  * @returns {never}
  */
 export function slot_element_invalid_name_default(node) {
-	e(node, "slot_element_invalid_name_default", "`default` is a reserved word — it cannot be used as a slot name");
+	e(node, "slot_element_invalid_name_default", `\`default\` is a reserved word — it cannot be used as a slot name\nhttps://svelte.dev/e/slot_element_invalid_name_default`);
 }
 
 /**
@@ -1160,7 +1207,7 @@ export function slot_element_invalid_name_default(node) {
  * @returns {never}
  */
 export function slot_snippet_conflict(node) {
-	e(node, "slot_snippet_conflict", "Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migrate towards `{@render ...}` tags completely");
+	e(node, "slot_snippet_conflict", `Cannot use \`<slot>\` syntax and \`{@render ...}\` tags in the same component. Migrate towards \`{@render ...}\` tags completely\nhttps://svelte.dev/e/slot_snippet_conflict`);
 }
 
 /**
@@ -1169,7 +1216,7 @@ export function slot_snippet_conflict(node) {
  * @returns {never}
  */
 export function snippet_conflict(node) {
-	e(node, "snippet_conflict", "Cannot use explicit children snippet at the same time as implicit children content. Remove either the non-whitespace content or the children snippet block");
+	e(node, "snippet_conflict", `Cannot use explicit children snippet at the same time as implicit children content. Remove either the non-whitespace content or the children snippet block\nhttps://svelte.dev/e/snippet_conflict`);
 }
 
 /**
@@ -1178,7 +1225,7 @@ export function snippet_conflict(node) {
  * @returns {never}
  */
 export function snippet_invalid_rest_parameter(node) {
-	e(node, "snippet_invalid_rest_parameter", "Snippets do not support rest parameters; use an array instead");
+	e(node, "snippet_invalid_rest_parameter", `Snippets do not support rest parameters; use an array instead\nhttps://svelte.dev/e/snippet_invalid_rest_parameter`);
 }
 
 /**
@@ -1188,7 +1235,7 @@ export function snippet_invalid_rest_parameter(node) {
  * @returns {never}
  */
 export function snippet_shadowing_prop(node, prop) {
-	e(node, "snippet_shadowing_prop", `This snippet is shadowing the prop \`${prop}\` with the same name`);
+	e(node, "snippet_shadowing_prop", `This snippet is shadowing the prop \`${prop}\` with the same name\nhttps://svelte.dev/e/snippet_shadowing_prop`);
 }
 
 /**
@@ -1197,7 +1244,7 @@ export function snippet_shadowing_prop(node, prop) {
  * @returns {never}
  */
 export function style_directive_invalid_modifier(node) {
-	e(node, "style_directive_invalid_modifier", "`style:` directive can only use the `important` modifier");
+	e(node, "style_directive_invalid_modifier", `\`style:\` directive can only use the \`important\` modifier\nhttps://svelte.dev/e/style_directive_invalid_modifier`);
 }
 
 /**
@@ -1206,7 +1253,7 @@ export function style_directive_invalid_modifier(node) {
  * @returns {never}
  */
 export function style_duplicate(node) {
-	e(node, "style_duplicate", "A component can have a single top-level `<style>` element");
+	e(node, "style_duplicate", `A component can have a single top-level \`<style>\` element\nhttps://svelte.dev/e/style_duplicate`);
 }
 
 /**
@@ -1215,7 +1262,25 @@ export function style_duplicate(node) {
  * @returns {never}
  */
 export function svelte_body_illegal_attribute(node) {
-	e(node, "svelte_body_illegal_attribute", "`<svelte:body>` does not support non-event attributes or spread attributes");
+	e(node, "svelte_body_illegal_attribute", `\`<svelte:body>\` does not support non-event attributes or spread attributes\nhttps://svelte.dev/e/svelte_body_illegal_attribute`);
+}
+
+/**
+ * Valid attributes on `<svelte:boundary>` are `onerror` and `failed`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_boundary_invalid_attribute(node) {
+	e(node, "svelte_boundary_invalid_attribute", `Valid attributes on \`<svelte:boundary>\` are \`onerror\` and \`failed\`\nhttps://svelte.dev/e/svelte_boundary_invalid_attribute`);
+}
+
+/**
+ * Attribute value must be a non-string expression
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_boundary_invalid_attribute_value(node) {
+	e(node, "svelte_boundary_invalid_attribute_value", `Attribute value must be a non-string expression\nhttps://svelte.dev/e/svelte_boundary_invalid_attribute_value`);
 }
 
 /**
@@ -1224,7 +1289,7 @@ export function svelte_body_illegal_attribute(node) {
  * @returns {never}
  */
 export function svelte_component_invalid_this(node) {
-	e(node, "svelte_component_invalid_this", "Invalid component definition — must be an `{expression}`");
+	e(node, "svelte_component_invalid_this", `Invalid component definition — must be an \`{expression}\`\nhttps://svelte.dev/e/svelte_component_invalid_this`);
 }
 
 /**
@@ -1233,7 +1298,7 @@ export function svelte_component_invalid_this(node) {
  * @returns {never}
  */
 export function svelte_component_missing_this(node) {
-	e(node, "svelte_component_missing_this", "`<svelte:component>` must have a 'this' attribute");
+	e(node, "svelte_component_missing_this", `\`<svelte:component>\` must have a 'this' attribute\nhttps://svelte.dev/e/svelte_component_missing_this`);
 }
 
 /**
@@ -1242,7 +1307,7 @@ export function svelte_component_missing_this(node) {
  * @returns {never}
  */
 export function svelte_element_missing_this(node) {
-	e(node, "svelte_element_missing_this", "`<svelte:element>` must have a 'this' attribute with a value");
+	e(node, "svelte_element_missing_this", `\`<svelte:element>\` must have a 'this' attribute with a value\nhttps://svelte.dev/e/svelte_element_missing_this`);
 }
 
 /**
@@ -1251,7 +1316,7 @@ export function svelte_element_missing_this(node) {
  * @returns {never}
  */
 export function svelte_fragment_invalid_attribute(node) {
-	e(node, "svelte_fragment_invalid_attribute", "`<svelte:fragment>` can only have a slot attribute and (optionally) a let: directive");
+	e(node, "svelte_fragment_invalid_attribute", `\`<svelte:fragment>\` can only have a slot attribute and (optionally) a let: directive\nhttps://svelte.dev/e/svelte_fragment_invalid_attribute`);
 }
 
 /**
@@ -1260,7 +1325,7 @@ export function svelte_fragment_invalid_attribute(node) {
  * @returns {never}
  */
 export function svelte_fragment_invalid_placement(node) {
-	e(node, "svelte_fragment_invalid_placement", "`<svelte:fragment>` must be the direct child of a component");
+	e(node, "svelte_fragment_invalid_placement", `\`<svelte:fragment>\` must be the direct child of a component\nhttps://svelte.dev/e/svelte_fragment_invalid_placement`);
 }
 
 /**
@@ -1269,7 +1334,7 @@ export function svelte_fragment_invalid_placement(node) {
  * @returns {never}
  */
 export function svelte_head_illegal_attribute(node) {
-	e(node, "svelte_head_illegal_attribute", "`<svelte:head>` cannot have attributes nor directives");
+	e(node, "svelte_head_illegal_attribute", `\`<svelte:head>\` cannot have attributes nor directives\nhttps://svelte.dev/e/svelte_head_illegal_attribute`);
 }
 
 /**
@@ -1279,7 +1344,7 @@ export function svelte_head_illegal_attribute(node) {
  * @returns {never}
  */
 export function svelte_meta_duplicate(node, name) {
-	e(node, "svelte_meta_duplicate", `A component can only have one \`<${name}>\` element`);
+	e(node, "svelte_meta_duplicate", `A component can only have one \`<${name}>\` element\nhttps://svelte.dev/e/svelte_meta_duplicate`);
 }
 
 /**
@@ -1289,7 +1354,7 @@ export function svelte_meta_duplicate(node, name) {
  * @returns {never}
  */
 export function svelte_meta_invalid_content(node, name) {
-	e(node, "svelte_meta_invalid_content", `<${name}> cannot have children`);
+	e(node, "svelte_meta_invalid_content", `<${name}> cannot have children\nhttps://svelte.dev/e/svelte_meta_invalid_content`);
 }
 
 /**
@@ -1299,7 +1364,7 @@ export function svelte_meta_invalid_content(node, name) {
  * @returns {never}
  */
 export function svelte_meta_invalid_placement(node, name) {
-	e(node, "svelte_meta_invalid_placement", `\`<${name}>\` tags cannot be inside elements or blocks`);
+	e(node, "svelte_meta_invalid_placement", `\`<${name}>\` tags cannot be inside elements or blocks\nhttps://svelte.dev/e/svelte_meta_invalid_placement`);
 }
 
 /**
@@ -1309,7 +1374,7 @@ export function svelte_meta_invalid_placement(node, name) {
  * @returns {never}
  */
 export function svelte_meta_invalid_tag(node, list) {
-	e(node, "svelte_meta_invalid_tag", `Valid \`<svelte:...>\` tag names are ${list}`);
+	e(node, "svelte_meta_invalid_tag", `Valid \`<svelte:...>\` tag names are ${list}\nhttps://svelte.dev/e/svelte_meta_invalid_tag`);
 }
 
 /**
@@ -1318,7 +1383,7 @@ export function svelte_meta_invalid_tag(node, list) {
  * @returns {never}
  */
 export function svelte_options_deprecated_tag(node) {
-	e(node, "svelte_options_deprecated_tag", "\"tag\" option is deprecated — use \"customElement\" instead");
+	e(node, "svelte_options_deprecated_tag", `"tag" option is deprecated — use "customElement" instead\nhttps://svelte.dev/e/svelte_options_deprecated_tag`);
 }
 
 /**
@@ -1327,7 +1392,7 @@ export function svelte_options_deprecated_tag(node) {
  * @returns {never}
  */
 export function svelte_options_invalid_attribute(node) {
-	e(node, "svelte_options_invalid_attribute", "`<svelte:options>` can only receive static attributes");
+	e(node, "svelte_options_invalid_attribute", `\`<svelte:options>\` can only receive static attributes\nhttps://svelte.dev/e/svelte_options_invalid_attribute`);
 }
 
 /**
@@ -1337,7 +1402,7 @@ export function svelte_options_invalid_attribute(node) {
  * @returns {never}
  */
 export function svelte_options_invalid_attribute_value(node, list) {
-	e(node, "svelte_options_invalid_attribute_value", `Value must be ${list}, if specified`);
+	e(node, "svelte_options_invalid_attribute_value", `Value must be ${list}, if specified\nhttps://svelte.dev/e/svelte_options_invalid_attribute_value`);
 }
 
 /**
@@ -1346,7 +1411,7 @@ export function svelte_options_invalid_attribute_value(node, list) {
  * @returns {never}
  */
 export function svelte_options_invalid_customelement(node) {
-	e(node, "svelte_options_invalid_customelement", "\"customElement\" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: \"open\" | \"none\"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }");
+	e(node, "svelte_options_invalid_customelement", `"customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }\nhttps://svelte.dev/e/svelte_options_invalid_customelement`);
 }
 
 /**
@@ -1355,7 +1420,7 @@ export function svelte_options_invalid_customelement(node) {
  * @returns {never}
  */
 export function svelte_options_invalid_customelement_props(node) {
-	e(node, "svelte_options_invalid_customelement_props", "\"props\" must be a statically analyzable object literal of the form \"{ [key: string]: { attribute?: string; reflect?: boolean; type?: \"String\" | \"Boolean\" | \"Number\" | \"Array\" | \"Object\" }\"");
+	e(node, "svelte_options_invalid_customelement_props", `"props" must be a statically analyzable object literal of the form "{ [key: string]: { attribute?: string; reflect?: boolean; type?: "String" | "Boolean" | "Number" | "Array" | "Object" }"\nhttps://svelte.dev/e/svelte_options_invalid_customelement_props`);
 }
 
 /**
@@ -1364,7 +1429,7 @@ export function svelte_options_invalid_customelement_props(node) {
  * @returns {never}
  */
 export function svelte_options_invalid_customelement_shadow(node) {
-	e(node, "svelte_options_invalid_customelement_shadow", "\"shadow\" must be either \"open\" or \"none\"");
+	e(node, "svelte_options_invalid_customelement_shadow", `"shadow" must be either "open" or "none"\nhttps://svelte.dev/e/svelte_options_invalid_customelement_shadow`);
 }
 
 /**
@@ -1373,7 +1438,7 @@ export function svelte_options_invalid_customelement_shadow(node) {
  * @returns {never}
  */
 export function svelte_options_invalid_tagname(node) {
-	e(node, "svelte_options_invalid_tagname", "Tag name must be lowercase and hyphenated");
+	e(node, "svelte_options_invalid_tagname", `Tag name must be lowercase and hyphenated\nhttps://svelte.dev/e/svelte_options_invalid_tagname`);
 }
 
 /**
@@ -1382,7 +1447,7 @@ export function svelte_options_invalid_tagname(node) {
  * @returns {never}
  */
 export function svelte_options_reserved_tagname(node) {
-	e(node, "svelte_options_reserved_tagname", "Tag name is reserved");
+	e(node, "svelte_options_reserved_tagname", `Tag name is reserved\nhttps://svelte.dev/e/svelte_options_reserved_tagname`);
 }
 
 /**
@@ -1392,7 +1457,7 @@ export function svelte_options_reserved_tagname(node) {
  * @returns {never}
  */
 export function svelte_options_unknown_attribute(node, name) {
-	e(node, "svelte_options_unknown_attribute", `\`<svelte:options>\` unknown attribute '${name}'`);
+	e(node, "svelte_options_unknown_attribute", `\`<svelte:options>\` unknown attribute '${name}'\nhttps://svelte.dev/e/svelte_options_unknown_attribute`);
 }
 
 /**
@@ -1401,7 +1466,7 @@ export function svelte_options_unknown_attribute(node, name) {
  * @returns {never}
  */
 export function svelte_self_invalid_placement(node) {
-	e(node, "svelte_self_invalid_placement", "`<svelte:self>` components can only exist inside `{#if}` blocks, `{#each}` blocks, `{#snippet}` blocks or slots passed to components");
+	e(node, "svelte_self_invalid_placement", `\`<svelte:self>\` components can only exist inside \`{#if}\` blocks, \`{#each}\` blocks, \`{#snippet}\` blocks or slots passed to components\nhttps://svelte.dev/e/svelte_self_invalid_placement`);
 }
 
 /**
@@ -1410,7 +1475,7 @@ export function svelte_self_invalid_placement(node) {
  * @returns {never}
  */
 export function tag_invalid_name(node) {
-	e(node, "tag_invalid_name", "Expected a valid element or component name. Components must have a valid variable name or dot notation expression");
+	e(node, "tag_invalid_name", `Expected a valid element or component name. Components must have a valid variable name or dot notation expression\nhttps://svelte.dev/e/tag_invalid_name`);
 }
 
 /**
@@ -1421,7 +1486,7 @@ export function tag_invalid_name(node) {
  * @returns {never}
  */
 export function tag_invalid_placement(node, name, location) {
-	e(node, "tag_invalid_placement", `{@${name} ...} tag cannot be ${location}`);
+	e(node, "tag_invalid_placement", `{@${name} ...} tag cannot be ${location}\nhttps://svelte.dev/e/tag_invalid_placement`);
 }
 
 /**
@@ -1430,7 +1495,7 @@ export function tag_invalid_placement(node, name, location) {
  * @returns {never}
  */
 export function textarea_invalid_content(node) {
-	e(node, "textarea_invalid_content", "A `<textarea>` can have either a value attribute or (equivalently) child content, but not both");
+	e(node, "textarea_invalid_content", `A \`<textarea>\` can have either a value attribute or (equivalently) child content, but not both\nhttps://svelte.dev/e/textarea_invalid_content`);
 }
 
 /**
@@ -1439,7 +1504,7 @@ export function textarea_invalid_content(node) {
  * @returns {never}
  */
 export function title_illegal_attribute(node) {
-	e(node, "title_illegal_attribute", "`<title>` cannot have attributes nor directives");
+	e(node, "title_illegal_attribute", `\`<title>\` cannot have attributes nor directives\nhttps://svelte.dev/e/title_illegal_attribute`);
 }
 
 /**
@@ -1448,7 +1513,7 @@ export function title_illegal_attribute(node) {
  * @returns {never}
  */
 export function title_invalid_content(node) {
-	e(node, "title_invalid_content", "`<title>` can only contain text and {tags}");
+	e(node, "title_invalid_content", `\`<title>\` can only contain text and {tags}\nhttps://svelte.dev/e/title_invalid_content`);
 }
 
 /**
@@ -1459,7 +1524,7 @@ export function title_invalid_content(node) {
  * @returns {never}
  */
 export function transition_conflict(node, type, existing) {
-	e(node, "transition_conflict", `Cannot use \`${type}:\` alongside existing \`${existing}:\` directive`);
+	e(node, "transition_conflict", `Cannot use \`${type}:\` alongside existing \`${existing}:\` directive\nhttps://svelte.dev/e/transition_conflict`);
 }
 
 /**
@@ -1469,7 +1534,7 @@ export function transition_conflict(node, type, existing) {
  * @returns {never}
  */
 export function transition_duplicate(node, type) {
-	e(node, "transition_duplicate", `Cannot use multiple \`${type}:\` directives on a single element`);
+	e(node, "transition_duplicate", `Cannot use multiple \`${type}:\` directives on a single element\nhttps://svelte.dev/e/transition_duplicate`);
 }
 
 /**
@@ -1478,7 +1543,7 @@ export function transition_duplicate(node, type) {
  * @returns {never}
  */
 export function unexpected_eof(node) {
-	e(node, "unexpected_eof", "Unexpected end of input");
+	e(node, "unexpected_eof", `Unexpected end of input\nhttps://svelte.dev/e/unexpected_eof`);
 }
 
 /**
@@ -1488,7 +1553,7 @@ export function unexpected_eof(node) {
  * @returns {never}
  */
 export function unexpected_reserved_word(node, word) {
-	e(node, "unexpected_reserved_word", `'${word}' is a reserved word in JavaScript and cannot be used here`);
+	e(node, "unexpected_reserved_word", `'${word}' is a reserved word in JavaScript and cannot be used here\nhttps://svelte.dev/e/unexpected_reserved_word`);
 }
 
 /**
@@ -1497,5 +1562,5 @@ export function unexpected_reserved_word(node, word) {
  * @returns {never}
  */
 export function void_element_invalid_content(node) {
-	e(node, "void_element_invalid_content", "Void elements cannot have children or closing tags");
+	e(node, "void_element_invalid_content", `Void elements cannot have children or closing tags\nhttps://svelte.dev/e/void_element_invalid_content`);
 }

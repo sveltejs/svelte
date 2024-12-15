@@ -1,4 +1,4 @@
-/** @import { AST, Css } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Node } from 'estree' */
 const UNKNOWN = {};
 
@@ -36,24 +36,23 @@ export function get_possible_values(chunk) {
 
 /**
  * Returns all parent rules; root is last
- * @param {Css.Rule | null} rule
+ * @param {AST.CSS.Rule | null} rule
  */
 export function get_parent_rules(rule) {
-	const parents = [];
+	const rules = [];
 
-	let parent = rule?.metadata.parent_rule;
-	while (parent) {
-		parents.push(parent);
-		parent = parent.metadata.parent_rule;
+	while (rule) {
+		rules.push(rule);
+		rule = rule.metadata.parent_rule;
 	}
 
-	return parents;
+	return rules;
 }
 
 /**
  * True if is `:global(...)` or `:global` and no pseudo class that is scoped.
- * @param {Css.RelativeSelector} relative_selector
- * @returns {relative_selector is Css.RelativeSelector & { selectors: [Css.PseudoClassSelector, ...Array<Css.PseudoClassSelector | Css.PseudoElementSelector>] }}
+ * @param {AST.CSS.RelativeSelector} relative_selector
+ * @returns {relative_selector is AST.CSS.RelativeSelector & { selectors: [AST.CSS.PseudoClassSelector, ...Array<AST.CSS.PseudoClassSelector | AST.CSS.PseudoElementSelector>] }}
  */
 export function is_global(relative_selector) {
 	const first = relative_selector.selectors[0];
@@ -73,7 +72,7 @@ export function is_global(relative_selector) {
 
 /**
  * `true` if is a pseudo class that cannot be or is not scoped
- * @param {Css.SimpleSelector} selector
+ * @param {AST.CSS.SimpleSelector} selector
  */
 export function is_unscoped_pseudo_class(selector) {
 	return (
@@ -97,8 +96,8 @@ export function is_unscoped_pseudo_class(selector) {
 /**
  * True if is `:global(...)` or `:global`, irrespective of whether or not there are any pseudo classes that are scoped.
  * Difference to `is_global`: `:global(x):has(y)` is `true` for `is_outer_global` but `false` for `is_global`.
- * @param {Css.RelativeSelector} relative_selector
- * @returns {relative_selector is Css.RelativeSelector & { selectors: [Css.PseudoClassSelector, ...Array<Css.PseudoClassSelector | Css.PseudoElementSelector>] }}
+ * @param {AST.CSS.RelativeSelector} relative_selector
+ * @returns {relative_selector is AST.CSS.RelativeSelector & { selectors: [AST.CSS.PseudoClassSelector, ...Array<AST.CSS.PseudoClassSelector | AST.CSS.PseudoElementSelector>] }}
  */
 export function is_outer_global(relative_selector) {
 	const first = relative_selector.selectors[0];

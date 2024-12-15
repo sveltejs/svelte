@@ -3,6 +3,7 @@
 /** @import { Store } from '#shared' */
 export { clsx } from 'clsx';
 export { FILENAME, HMR } from '../../constants.js';
+import { attr } from '../shared/attributes.js';
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
@@ -16,16 +17,13 @@ import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
 import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
-import { is_boolean_attribute, is_void } from '../../utils.js';
+import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
 import { reset_elements } from './dev.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 const INVALID_ATTR_NAME_CHAR_REGEX =
 	/[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
-
-/** List of elements that require raw contents and should not have SSR comments put in them */
-const RAW_TEXT_ELEMENTS = ['textarea', 'script', 'style', 'title'];
 
 /**
  * @param {Payload} to_copy
@@ -64,13 +62,13 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
 	payload.out += '<!---->';
 
 	if (tag) {
-		payload.out += `<${tag} `;
+		payload.out += `<${tag}`;
 		attributes_fn();
 		payload.out += `>`;
 
 		if (!is_void(tag)) {
 			children_fn();
-			if (!RAW_TEXT_ELEMENTS.includes(tag)) {
+			if (!is_raw_text_element(tag)) {
 				payload.out += EMPTY_COMMENT;
 			}
 			payload.out += `</${tag}>`;
@@ -155,33 +153,6 @@ export function head(payload, fn) {
 }
 
 /**
- * `<div translate={false}>` should be rendered as `<div translate="no">` and _not_
- * `<div translate="false">`, which is equivalent to `<div translate="yes">`. There
- * may be other odd cases that need to be added to this list in future
- * @type {Record<string, Map<any, string>>}
- */
-const replacements = {
-	translate: new Map([
-		[true, 'yes'],
-		[false, 'no']
-	])
-};
-
-/**
- * @template V
- * @param {string} name
- * @param {V} value
- * @param {boolean} [is_boolean]
- * @returns {string}
- */
-export function attr(name, value, is_boolean = false) {
-	if (value == null || (!value && is_boolean) || (value === '' && name === 'class')) return '';
-	const normalized = (name in replacements && replacements[name].get(value)) || value;
-	const assignment = is_boolean ? '' : `="${escape_html(normalized, true)}"`;
-	return ` ${name}${assignment}`;
-}
-
-/**
  * @param {Payload} payload
  * @param {boolean} is_html
  * @param {Record<string, string>} props
@@ -249,11 +220,13 @@ export function spread_attributes(attrs, classes, styles, flags = 0) {
 		if (name[0] === '$' && name[1] === '$') continue; // faster than name.startsWith('$$')
 		if (INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
 
+		var value = attrs[name];
+
 		if (lowercase) {
 			name = name.toLowerCase();
 		}
 
-		attr_str += attr(name, attrs[name], is_html && is_boolean_attribute(name));
+		attr_str += attr(name, value, is_html && is_boolean_attribute(name));
 	}
 
 	return attr_str;
@@ -549,6 +522,8 @@ export function once(get_value) {
 		return value;
 	};
 }
+
+export { attr };
 
 export { html } from './blocks/html.js';
 

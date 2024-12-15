@@ -1,17 +1,17 @@
-import type { AST, Binding, Css, SvelteNode } from '#compiler';
-import type { Identifier, LabeledStatement, Program, VariableDeclaration } from 'estree';
+import type { AST, Binding } from '#compiler';
+import type { Identifier, LabeledStatement, Node, Program } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
 
 export interface Js {
 	ast: Program;
 	scope: Scope;
-	scopes: Map<SvelteNode, Scope>;
+	scopes: Map<AST.SvelteNode, Scope>;
 }
 
 export interface Template {
 	ast: AST.Fragment;
 	scope: Scope;
-	scopes: Map<SvelteNode, Scope>;
+	scopes: Map<AST.SvelteNode, Scope>;
 }
 
 export interface ReactiveStatement {
@@ -37,7 +37,7 @@ export interface ComponentAnalysis extends Analysis {
 	instance: Js;
 	template: Template;
 	/** Used for CSS pruning and scoping */
-	elements: Array<AST.RegularElement | AST.SvelteElement | AST.RenderTag>;
+	elements: Array<AST.RegularElement | AST.SvelteElement>;
 	runes: boolean;
 	exports: Array<{ name: string; alias: string | null }>;
 	/** Whether the component uses `$$props` */
@@ -62,16 +62,27 @@ export interface ComponentAnalysis extends Analysis {
 	/** If `true`, should append styles through JavaScript */
 	inject_styles: boolean;
 	reactive_statements: Map<LabeledStatement, ReactiveStatement>;
-	top_level_snippets: VariableDeclaration[];
 	/** Identifiers that make up the `bind:group` expression -> internal group binding name */
 	binding_groups: Map<[key: string, bindings: Array<Binding | null>], Identifier>;
 	slot_names: Map<string, AST.SlotElement>;
 	css: {
-		ast: Css.StyleSheet | null;
+		ast: AST.CSS.StyleSheet | null;
 		hash: string;
 		keyframes: string[];
 	};
 	source: string;
+	undefined_exports: Map<string, Node>;
+	/**
+	 * Every render tag/component, and whether it could be definitively resolved or not
+	 */
+	snippet_renderers: Map<
+		AST.RenderTag | AST.Component | AST.SvelteComponent | AST.SvelteSelf,
+		boolean
+	>;
+	/**
+	 * Every snippet that is declared locally
+	 */
+	snippets: Set<AST.SnippetBlock>;
 }
 
 declare module 'estree' {

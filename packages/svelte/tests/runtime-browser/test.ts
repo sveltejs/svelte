@@ -79,6 +79,7 @@ async function run_test(
 			__CONFIG__: path.resolve(test_dir, '_config.js'),
 			'assert.js': assert_file
 		},
+		conditions: ['browser', 'production'],
 		plugins: [
 			{
 				name: 'testing-runtime-browser',
@@ -131,6 +132,7 @@ async function run_test(
 				__MAIN_DOT_SVELTE__: path.resolve(test_dir, 'main.svelte'),
 				__CONFIG__: path.resolve(test_dir, '_config.js')
 			},
+			conditions: ['browser', 'production'],
 			plugins: [
 				{
 					name: 'testing-runtime-browser-ssr',
@@ -191,9 +193,11 @@ async function run_test(
 
 	try {
 		const page = await browser.newPage();
-		page.on('console', (type) => {
+		page.on('console', (message) => {
+			let method = message.type();
+			if (method === 'warning') method = 'warn';
 			// @ts-ignore
-			console[type.type()](type.text());
+			console[method](message.text());
 		});
 
 		if (build_result_ssr) {

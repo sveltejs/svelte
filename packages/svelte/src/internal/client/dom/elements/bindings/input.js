@@ -1,11 +1,11 @@
 import { DEV } from 'esm-env';
 import { render_effect, teardown } from '../../../reactivity/effects.js';
-import { listen_to_event_and_reset_event, without_reactive_context } from './shared.js';
+import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
 import { is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
-import { is_runes } from '../../../runtime.js';
+import { is_runes, untrack } from '../../../runtime.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -16,23 +16,44 @@ import { is_runes } from '../../../runtime.js';
 export function bind_value(input, get, set = get) {
 	var runes = is_runes();
 
-	listen_to_event_and_reset_event(input, 'input', () => {
+	listen_to_event_and_reset_event(input, 'input', (is_reset) => {
 		if (DEV && input.type === 'checkbox') {
 			// TODO should this happen in prod too?
 			e.bind_invalid_checkbox_value();
 		}
 
-		/** @type {unknown} */
-		var value = is_numberlike_input(input) ? to_number(input.value) : input.value;
+		/** @type {any} */
+		var value = is_reset ? input.defaultValue : input.value;
+		value = is_numberlike_input(input) ? to_number(value) : value;
 		set(value);
 
 		// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
 		// because we use mutable state which ensures the render effect always runs)
 		if (runes && value !== (value = get())) {
-			// @ts-expect-error the value is coerced on assignment
+			var start = input.selectionStart;
+			var end = input.selectionEnd;
+
+			// the value is coerced on assignment
 			input.value = value ?? '';
+
+			// Restore selection
+			if (end !== null) {
+				input.selectionStart = start;
+				input.selectionEnd = Math.min(end, input.value.length);
+			}
 		}
 	});
+
+	if (
+		// If we are hydrating and the value has since changed,
+		// then use the updated value from the input instead.
+		(hydrating && input.defaultValue !== input.value) ||
+		// If defaultValue is set, then value == defaultValue
+		// TODO Svelte 6: remove input.value check and set to empty string?
+		(untrack(get) == null && input.value)
+	) {
+		set(is_numberlike_input(input) ? to_number(input.value) : input.value);
+	}
 
 	render_effect(() => {
 		if (DEV && input.type === 'checkbox') {
@@ -41,13 +62,6 @@ export function bind_value(input, get, set = get) {
 		}
 
 		var value = get();
-
-		// If we are hydrating and the value has since changed, then use the update value
-		// from the input instead.
-		if (hydrating && input.defaultValue !== input.value) {
-			set(input.value);
-			return;
-		}
 
 		if (is_numberlike_input(input) && value === to_number(input.value)) {
 			// handles 0 vs 00 case (see https://github.com/sveltejs/svelte/issues/9959)
@@ -175,13 +189,19 @@ export function bind_group(inputs, group_index, input, get, set = get) {
  * @returns {void}
  */
 export function bind_checked(input, get, set = get) {
-	listen_to_event_and_reset_event(input, 'change', () => {
-		var value = input.checked;
+	listen_to_event_and_reset_event(input, 'change', (is_reset) => {
+		var value = is_reset ? input.defaultChecked : input.checked;
 		set(value);
 	});
 
-	if (get() == undefined) {
-		set(false);
+	if (
+		// If we are hydrating and the value has since changed,
+		// then use the update value from the input instead.
+		(hydrating && input.defaultChecked !== input.checked) ||
+		// If defaultChecked is set, then checked == defaultChecked
+		untrack(get) == null
+	) {
+		set(input.checked);
 	}
 
 	render_effect(() => {

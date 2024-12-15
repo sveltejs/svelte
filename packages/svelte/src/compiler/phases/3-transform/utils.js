@@ -1,6 +1,6 @@
 /** @import { Context } from 'zimmerframe' */
 /** @import { TransformState } from './types.js' */
-/** @import { AST, Binding, Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler' */
+/** @import { AST, Binding, Namespace, ValidatedCompileOptions } from '#compiler' */
 /** @import { Node, Expression, CallExpression } from 'estree' */
 import {
 	regex_ends_with_whitespaces,
@@ -33,7 +33,7 @@ export function is_hoisted_function(node) {
 
 /**
  * Match Svelte 4 behaviour by sorting ConstTag nodes in topological order
- * @param {SvelteNode[]} nodes
+ * @param {AST.SvelteNode[]} nodes
  * @param {TransformState} state
  */
 function sort_const_tags(nodes, state) {
@@ -133,9 +133,9 @@ function sort_const_tags(nodes, state) {
  *   unless it's whitespace-only, in which case collapse to a single whitespace for all cases
  *   except when it's children of certain elements where we know ignore whitespace (like td/option/head),
  *   in which case we remove it entirely
- * @param {SvelteNode} parent
- * @param {SvelteNode[]} nodes
- * @param {SvelteNode[]} path
+ * @param {AST.SvelteNode} parent
+ * @param {AST.SvelteNode[]} nodes
+ * @param {AST.SvelteNode[]} path
  * @param {Namespace} namespace
  * @param {TransformState & { options: ValidatedCompileOptions }} state
  * @param {boolean} preserve_whitespace
@@ -157,10 +157,10 @@ export function clean_nodes(
 		nodes = sort_const_tags(nodes, state);
 	}
 
-	/** @type {SvelteNode[]} */
+	/** @type {AST.SvelteNode[]} */
 	const hoisted = [];
 
-	/** @type {SvelteNode[]} */
+	/** @type {AST.SvelteNode[]} */
 	const regular = [];
 
 	for (const node of nodes) {
@@ -277,7 +277,6 @@ export function clean_nodes(
 		trimmed.push({
 			type: 'Comment',
 			data: '',
-			parent: first.parent,
 			start: -1,
 			end: -1
 		});
@@ -306,6 +305,7 @@ export function clean_nodes(
 				parent.type === 'SnippetBlock' ||
 				parent.type === 'EachBlock' ||
 				parent.type === 'SvelteComponent' ||
+				parent.type === 'SvelteBoundary' ||
 				parent.type === 'Component' ||
 				parent.type === 'SvelteSelf') &&
 			first &&
@@ -316,8 +316,8 @@ export function clean_nodes(
 /**
  * Infers the namespace for the children of a node that should be used when creating the `$.template(...)`.
  * @param {Namespace} namespace
- * @param {SvelteNode} parent
- * @param {SvelteNode[]} nodes
+ * @param {AST.SvelteNode} parent
+ * @param {AST.SvelteNode[]} nodes
  */
 export function infer_namespace(namespace, parent, nodes) {
 	if (parent.type === 'RegularElement' && parent.name === 'foreignObject') {
@@ -347,14 +347,31 @@ export function infer_namespace(namespace, parent, nodes) {
 		}
 	}
 
-	return namespace;
+	/** @type {Namespace | null} */
+	let new_namespace = null;
+
+	// Check the elements within the fragment and look for consistent namespaces.
+	// If we have no namespaces or they are mixed, then fallback to existing namespace
+	for (const node of nodes) {
+		if (node.type !== 'RegularElement') continue;
+
+		if (node.metadata.mathml) {
+			new_namespace = new_namespace === null || new_namespace === 'mathml' ? 'mathml' : 'html';
+		} else if (node.metadata.svg) {
+			new_namespace = new_namespace === null || new_namespace === 'svg' ? 'svg' : 'html';
+		} else {
+			return 'html';
+		}
+	}
+
+	return new_namespace ?? namespace;
 }
 
 /**
  * Heuristic: Keep current namespace, unless we find a regular element,
  * in which case we always want html, or we only find svg nodes,
  * in which case we assume svg.
- * @param {SvelteNode[]} nodes
+ * @param {AST.SvelteNode[]} nodes
  * @param {Namespace | 'keep' | 'maybe_html'} namespace
  */
 function check_nodes_for_namespace(nodes, namespace) {

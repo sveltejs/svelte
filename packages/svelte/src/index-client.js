@@ -83,7 +83,7 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
  * }>();
  * ```
  *
- * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte.dev/docs/svelte/v5-migration-guide#Event-changes-Component-events
+ * @deprecated Use callback props and/or the `$host()` rune instead — see [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Event-changes-Component-events)
  * @template {Record<string, any>} [EventMap = any]
  * @returns {EventDispatcher<EventMap>}
  */
@@ -122,7 +122,7 @@ export function createEventDispatcher() {
  *
  * In runes mode use `$effect.pre` instead.
  *
- * @deprecated Use `$effect.pre` instead — see https://svelte.dev/docs/svelte/$effect#$effect.pre
+ * @deprecated Use [`$effect.pre`](https://svelte.dev/docs/svelte/$effect#$effect.pre) instead
  * @param {() => void} fn
  * @returns {void}
  */
@@ -145,7 +145,7 @@ export function beforeUpdate(fn) {
  *
  * In runes mode use `$effect` instead.
  *
- * @deprecated Use `$effect` instead — see https://svelte.dev/docs/svelte/$effect
+ * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
  * @param {() => void} fn
  * @returns {void}
  */

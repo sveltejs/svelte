@@ -169,11 +169,11 @@ This function is deprecated in Svelte 5. Instead, components should accept _call
 
 <Pump
 	---on:---inflate={(power) => {
-		size += power---.details---;
+		size += power---.detail---;
 		if (size > 75) burst = true;
 	}}
 	---on:---deflate={(power) => {
-		if (size > 0) size -= power---.details---;
+		if (size > 0) size -= power---.detail---;
 	}}
 />
 
@@ -317,7 +317,7 @@ When spreading props, local event handlers must go _after_ the spread, or they r
 > - import the function
 > - call the function to get a dispatch function
 > - call said dispatch function with a string and possibly a payload
-> - retrieve said payload on the other end through a `.details` property, because the event itself was always a `CustomEvent`
+> - retrieve said payload on the other end through a `.detail` property, because the event itself was always a `CustomEvent`
 >
 > It was always possible to use component callback props, but because you had to listen to DOM events using `on:`, it made sense to use `createEventDispatcher` for component events due to syntactical consistency. Now that we have event attributes (`onclick`), it's the other way around: Callback props are now the more sensible thing to do.
 >
@@ -822,6 +822,8 @@ The `foreign` namespace was only useful for Svelte Native, which we're planning 
 `beforeUpdate` no longer runs twice on initial render if it modifies a variable referenced in the template.
 
 `afterUpdate` callbacks in a parent component will now run after `afterUpdate` callbacks in any child components.
+
+`beforeUpdate/afterUpdate` no longer run when the component contains a `<slot>` and its content is updated.
 
 Both functions are disallowed in runes mode — use `$effect.pre(...)` and `$effect(...)` instead.
 

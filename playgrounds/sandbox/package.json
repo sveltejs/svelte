@@ -6,14 +6,13 @@
   "scripts": {
     "prepare": "node scripts/create-app-svelte.js",
     "dev": "vite --host",
-    "ssr": "node ./ssr-dev.js",
+    "ssr": "node --conditions=development ./ssr-dev.js",
     "build": "vite build --outDir dist/client && vite build --outDir dist/server --ssr ssr-prod.js",
     "prod": "npm run build && node dist/server/ssr-prod",
     "preview": "vite preview"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^4.0.0-next.6",
-    "nodemon": "^3.0.3",
     "polka": "^1.0.0-next.25",
     "svelte": "workspace:*",
     "tiny-glob": "^0.2.9",

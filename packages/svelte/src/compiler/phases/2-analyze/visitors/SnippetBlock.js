@@ -1,4 +1,5 @@
-/** @import { AST } from '#compiler' */
+/** @import { AST, Binding } from '#compiler' */
+/** @import { Scope } from '../../scope' */
 /** @import { Context } from '../types' */
 import { validate_block_not_empty, validate_opening_tag } from './shared/utils.js';
 import * as e from '../../../errors.js';
@@ -8,6 +9,8 @@ import * as e from '../../../errors.js';
  * @param {Context} context
  */
 export function SnippetBlock(node, context) {
+	context.state.analysis.snippets.add(node);
+
 	validate_block_not_empty(node.body, context);
 
 	if (context.state.analysis.runes) {
@@ -21,6 +24,25 @@ export function SnippetBlock(node, context) {
 	}
 
 	context.next({ ...context.state, parent_element: null });
+
+	const can_hoist =
+		context.path.length === 1 &&
+		context.path[0].type === 'Fragment' &&
+		can_hoist_snippet(context.state.scope, context.state.scopes);
+
+	const name = node.expression.name;
+
+	if (can_hoist) {
+		const binding = /** @type {Binding} */ (context.state.scope.get(name));
+		context.state.analysis.module.scope.declarations.set(name, binding);
+	} else {
+		const undefined_export = context.state.analysis.undefined_exports.get(name);
+		if (undefined_export) {
+			e.snippet_invalid_export(undefined_export);
+		}
+	}
+
+	node.metadata.can_hoist = can_hoist;
 
 	const { path } = context;
 	const parent = path.at(-2);
@@ -55,4 +77,37 @@ export function SnippetBlock(node, context) {
 			e.snippet_conflict(node);
 		}
 	}
+}
+
+/**
+ * @param {Map<AST.SvelteNode, Scope>} scopes
+ * @param {Scope} scope
+ */
+function can_hoist_snippet(scope, scopes, visited = new Set()) {
+	for (const [reference] of scope.references) {
+		const binding = scope.get(reference);
+
+		if (!binding || binding.scope.function_depth === 0) {
+			continue;
+		}
+
+		// ignore bindings declared inside the snippet (e.g. the snippet's own parameters)
+		if (binding.scope.function_depth >= scope.function_depth) {
+			continue;
+		}
+
+		if (binding.initial?.type === 'SnippetBlock') {
+			if (visited.has(binding)) continue;
+			visited.add(binding);
+			const snippet_scope = /** @type {Scope} */ (scopes.get(binding.initial));
+
+			if (can_hoist_snippet(snippet_scope, scopes, visited)) {
+				continue;
+			}
+		}
+
+		return false;
+	}
+
+	return true;
 }

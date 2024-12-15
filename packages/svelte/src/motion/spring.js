@@ -1,14 +1,18 @@
 /** @import { Task } from '#client' */
 /** @import { SpringOpts, SpringUpdateOpts, TickContext } from './private.js' */
-/** @import { Spring } from './public.js' */
+/** @import { Spring as SpringStore } from './public.js' */
 import { writable } from '../store/shared/index.js';
 import { loop } from '../internal/client/loop.js';
 import { raf } from '../internal/client/timing.js';
 import { is_date } from './utils.js';
+import { set, source } from '../internal/client/reactivity/sources.js';
+import { render_effect } from '../internal/client/reactivity/effects.js';
+import { get } from '../internal/client/runtime.js';
+import { deferred, noop } from '../internal/shared/utils.js';
 
 /**
  * @template T
- * @param {TickContext<T>} ctx
+ * @param {TickContext} ctx
  * @param {T} last_value
  * @param {T} current_value
  * @param {T} target_value
@@ -53,10 +57,11 @@ function tick_spring(ctx, last_value, current_value, target_value) {
 /**
  * The spring function in Svelte creates a store whose value is animated, with a motion that simulates the behavior of a spring. This means when the value changes, instead of transitioning at a steady rate, it "bounces" like a spring would, depending on the physics parameters provided. This adds a level of realism to the transitions and can enhance the user experience.
  *
+ * @deprecated Use [`Spring`](https://svelte.dev/docs/svelte/svelte-motion#Spring) instead
  * @template [T=any]
  * @param {T} [value]
  * @param {SpringOpts} [opts]
- * @returns {Spring<T>}
+ * @returns {SpringStore<T>}
  */
 export function spring(value, opts = {}) {
 	const store = writable(value);
@@ -103,7 +108,7 @@ export function spring(value, opts = {}) {
 					return false;
 				}
 				inv_mass = Math.min(inv_mass + inv_mass_recovery_rate, 1);
-				/** @type {TickContext<T>} */
+				/** @type {TickContext} */
 				const ctx = {
 					inv_mass,
 					opts: spring,
@@ -127,7 +132,8 @@ export function spring(value, opts = {}) {
 			});
 		});
 	}
-	/** @type {Spring<T>} */
+	/** @type {SpringStore<T>} */
+	// @ts-expect-error - class-only properties are missing
 	const spring = {
 		set,
 		update: (fn, opts) => set(fn(/** @type {T} */ (target_value), /** @type {T} */ (value)), opts),
@@ -137,4 +143,207 @@ export function spring(value, opts = {}) {
 		precision
 	};
 	return spring;
+}
+
+/**
+ * A wrapper for a value that behaves in a spring-like fashion. Changes to `spring.target` will cause `spring.current` to
+ * move towards it over time, taking account of the `spring.stiffness` and `spring.damping` parameters.
+ *
+ * ```svelte
+ * <script>
+ * 	import { Spring } from 'svelte/motion';
+ *
+ * 	const spring = new Spring(0);
+ * </script>
+ *
+ * <input type="range" bind:value={spring.target} />
+ * <input type="range" bind:value={spring.current} disabled />
+ * ```
+ * @template T
+ * @since 5.8.0
+ */
+export class Spring {
+	#stiffness = source(0.15);
+	#damping = source(0.8);
+	#precision = source(0.01);
+
+	#current = source(/** @type {T} */ (undefined));
+	#target = source(/** @type {T} */ (undefined));
+
+	#last_value = /** @type {T} */ (undefined);
+	#last_time = 0;
+
+	#inverse_mass = 1;
+	#momentum = 0;
+
+	/** @type {import('../internal/client/types').Task | null} */
+	#task = null;
+
+	/** @type {ReturnType<typeof deferred> | null} */
+	#deferred = null;
+
+	/**
+	 * @param {T} value
+	 * @param {SpringOpts} [options]
+	 */
+	constructor(value, options = {}) {
+		this.#current.v = this.#target.v = value;
+
+		if (typeof options.stiffness === 'number') this.#stiffness.v = clamp(options.stiffness, 0, 1);
+		if (typeof options.damping === 'number') this.#damping.v = clamp(options.damping, 0, 1);
+		if (typeof options.precision === 'number') this.#precision.v = options.precision;
+	}
+
+	/**
+	 * Create a spring whose value is bound to the return value of `fn`. This must be called
+	 * inside an effect root (for example, during component initialisation).
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { Spring } from 'svelte/motion';
+	 *
+	 * 	let { number } = $props();
+	 *
+	 * 	const spring = Spring.of(() => number);
+	 * </script>
+	 * ```
+	 * @template U
+	 * @param {() => U} fn
+	 * @param {SpringOpts} [options]
+	 */
+	static of(fn, options) {
+		const spring = new Spring(fn(), options);
+
+		render_effect(() => {
+			spring.set(fn());
+		});
+
+		return spring;
+	}
+
+	/** @param {T} value */
+	#update(value) {
+		set(this.#target, value);
+
+		this.#current.v ??= value;
+		this.#last_value ??= this.#current.v;
+
+		if (!this.#task) {
+			this.#last_time = raf.now();
+
+			var inv_mass_recovery_rate = 1000 / (this.#momentum * 60);
+
+			this.#task ??= loop((now) => {
+				this.#inverse_mass = Math.min(this.#inverse_mass + inv_mass_recovery_rate, 1);
+
+				/** @type {import('./private').TickContext} */
+				const ctx = {
+					inv_mass: this.#inverse_mass,
+					opts: {
+						stiffness: this.#stiffness.v,
+						damping: this.#damping.v,
+						precision: this.#precision.v
+					},
+					settled: true,
+					dt: ((now - this.#last_time) * 60) / 1000
+				};
+
+				var next = tick_spring(ctx, this.#last_value, this.#current.v, this.#target.v);
+				this.#last_value = this.#current.v;
+				this.#last_time = now;
+				set(this.#current, next);
+
+				if (ctx.settled) {
+					this.#task = null;
+				}
+
+				return !ctx.settled;
+			});
+		}
+
+		return this.#task.promise;
+	}
+
+	/**
+	 * Sets `spring.target` to `value` and returns a `Promise` that resolves if and when `spring.current` catches up to it.
+	 *
+	 * If `options.instant` is `true`, `spring.current` immediately matches `spring.target`.
+	 *
+	 * If `options.preserveMomentum` is provided, the spring will continue on its current trajectory for
+	 * the specified number of milliseconds. This is useful for things like 'fling' gestures.
+	 *
+	 * @param {T} value
+	 * @param {SpringUpdateOpts} [options]
+	 */
+	set(value, options) {
+		this.#deferred?.reject(new Error('Aborted'));
+
+		if (options?.instant || this.#current.v === undefined) {
+			this.#task?.abort();
+			this.#task = null;
+			set(this.#current, set(this.#target, value));
+			this.#last_value = value;
+			return Promise.resolve();
+		}
+
+		if (options?.preserveMomentum) {
+			this.#inverse_mass = 0;
+			this.#momentum = options.preserveMomentum;
+		}
+
+		var d = (this.#deferred = deferred());
+		d.promise.catch(noop);
+
+		this.#update(value).then(() => {
+			if (d !== this.#deferred) return;
+			d.resolve(undefined);
+		});
+
+		return d.promise;
+	}
+
+	get current() {
+		return get(this.#current);
+	}
+
+	get damping() {
+		return get(this.#damping);
+	}
+
+	set damping(v) {
+		set(this.#damping, clamp(v, 0, 1));
+	}
+
+	get precision() {
+		return get(this.#precision);
+	}
+
+	set precision(v) {
+		set(this.#precision, v);
+	}
+
+	get stiffness() {
+		return get(this.#stiffness);
+	}
+
+	set stiffness(v) {
+		set(this.#stiffness, clamp(v, 0, 1));
+	}
+
+	get target() {
+		return get(this.#target);
+	}
+
+	set target(v) {
+		this.set(v);
+	}
+}
+
+/**
+ * @param {number} n
+ * @param {number} min
+ * @param {number} max
+ */
+function clamp(n, min, max) {
+	return Math.max(min, Math.min(max, n));
 }

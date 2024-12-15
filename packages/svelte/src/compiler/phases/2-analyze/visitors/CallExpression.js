@@ -1,17 +1,18 @@
 /** @import { CallExpression, VariableDeclarator } from 'estree' */
-/** @import { AST, SvelteNode } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
 import { get_parent, unwrap_optional } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
  * @param {CallExpression} node
  * @param {Context} context
  */
 export function CallExpression(node, context) {
-	const parent = /** @type {SvelteNode} */ (get_parent(context.path, -1));
+	const parent = /** @type {AST.SvelteNode} */ (get_parent(context.path, -1));
 
 	const rune = get_rune(node, context.state.scope);
 

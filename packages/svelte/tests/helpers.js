@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import glob from 'tiny-glob/sync.js';
 import { VERSION, compile, compileModule, preprocess } from 'svelte/compiler';
+import { vi } from 'vitest';
 
 /**
  * @param {string} file
@@ -171,4 +172,17 @@ export function write(file, contents) {
 	} catch {}
 
 	fs.writeFileSync(file, contents);
+}
+
+// Guard because not all test contexts load this with JSDOM
+if (typeof window !== 'undefined') {
+	// @ts-expect-error JS DOM doesn't support it
+	Window.prototype.matchMedia = vi.fn((media) => {
+		return {
+			matches: false,
+			media,
+			addEventListener: () => {},
+			removeEventListener: () => {}
+		};
+	});
 }

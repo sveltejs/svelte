@@ -35,7 +35,7 @@ declare module 'svelte' {
 	/**
 	 * This was the base class for Svelte components in Svelte 4. Svelte 5+ components
 	 * are completely different under the hood. For typing, use `Component` instead.
-	 * To instantiate components, use `mount` instead`.
+	 * To instantiate components, use `mount` instead.
 	 * See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more info.
 	 */
 	export class SvelteComponent<
@@ -50,7 +50,7 @@ declare module 'svelte' {
 		/**
 		 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
 		 * is a stop-gap solution. Migrate towards using `mount` instead. See
-		 * https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more info.
+		 * [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more info.
 		 */
 		constructor(options: ComponentConstructorOptions<Properties<Props, Slots>>);
 		/**
@@ -80,14 +80,14 @@ declare module 'svelte' {
 
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+		 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 		 * for more info.
 		 */
 		$destroy(): void;
 
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+		 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 		 * for more info.
 		 */
 		$on<K extends Extract<keyof Events, string>>(
@@ -97,7 +97,7 @@ declare module 'svelte' {
 
 		/**
 		 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-		 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+		 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 		 * for more info.
 		 */
 		$set(props: Partial<Props>): void;
@@ -150,13 +150,13 @@ declare module 'svelte' {
 		): {
 			/**
 			 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-			 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+			 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 			 * for more info.
 			 */
 			$on?(type: string, callback: (e: any) => void): () => void;
 			/**
 			 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
-			 * is a stop-gap solution. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
+			 * is a stop-gap solution. See [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes)
 			 * for more info.
 			 */
 			$set?(props: Partial<Props>): void;
@@ -385,7 +385,7 @@ declare module 'svelte' {
 	 * }>();
 	 * ```
 	 *
-	 * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte.dev/docs/svelte/v5-migration-guide#Event-changes-Component-events
+	 * @deprecated Use callback props and/or the `$host()` rune instead — see [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Event-changes-Component-events)
 	 * */
 	export function createEventDispatcher<EventMap extends Record<string, any> = any>(): EventDispatcher<EventMap>;
 	/**
@@ -395,7 +395,7 @@ declare module 'svelte' {
 	 *
 	 * In runes mode use `$effect.pre` instead.
 	 *
-	 * @deprecated Use `$effect.pre` instead — see https://svelte.dev/docs/svelte/$effect#$effect.pre
+	 * @deprecated Use [`$effect.pre`](https://svelte.dev/docs/svelte/$effect#$effect.pre) instead
 	 * */
 	export function beforeUpdate(fn: () => void): void;
 	/**
@@ -405,7 +405,7 @@ declare module 'svelte' {
 	 *
 	 * In runes mode use `$effect` instead.
 	 *
-	 * @deprecated Use `$effect` instead — see https://svelte.dev/docs/svelte/$effect
+	 * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
 	 * */
 	export function afterUpdate(fn: () => void): void;
 	/**
@@ -448,8 +448,24 @@ declare module 'svelte' {
 	}): Exports;
 	/**
 	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
+	 *
+	 * Since 5.13.0, if `options.outro` is `true`, [transitions](https://svelte.dev/docs/svelte/transition) will play before the component is removed from the DOM.
+	 *
+	 * Returns a `Promise` that resolves after transitions have completed if `options.outro` is true, or immediately otherwise (prior to 5.13.0, returns `void`).
+	 *
+	 * ```js
+	 * import { mount, unmount } from 'svelte';
+	 * import App from './App.svelte';
+	 *
+	 * const app = mount(App, { target: document.body });
+	 *
+	 * // later...
+	 * unmount(app, { outro: true });
+	 * ```
 	 * */
-	export function unmount(component: Record<string, any>): void;
+	export function unmount(component: Record<string, any>, options?: {
+		outro?: boolean;
+	} | undefined): Promise<void>;
 	/**
 	 * Returns a promise that resolves once any pending state changes have been applied.
 	 * */
@@ -606,7 +622,7 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression } from 'estree';
+	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
 	import type { SourceMap } from 'magic-string';
 	import type { Location } from 'locate-character';
 	/**
@@ -632,6 +648,7 @@ declare module 'svelte/compiler' {
 	export function parse(source: string, options: {
 		filename?: string;
 		modern: true;
+		loose?: boolean;
 	}): AST.Root;
 	/**
 	 * The parse function parses a component, returning only its abstract syntax tree.
@@ -643,6 +660,7 @@ declare module 'svelte/compiler' {
 	export function parse(source: string, options?: {
 		filename?: string;
 		modern?: false;
+		loose?: boolean;
 	} | undefined): Record<string, any>;
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
@@ -943,7 +961,7 @@ declare module 'svelte/compiler' {
 			options: SvelteOptions | null;
 			fragment: Fragment;
 			/** The parsed `<style>` element, if exists */
-			css: Css.StyleSheet | null;
+			css: AST.CSS.StyleSheet | null;
 			/** The parsed `<script>` element, if exists */
 			instance: Script | null;
 			/** The parsed `<script module>` element, if exists */
@@ -1047,7 +1065,7 @@ declare module 'svelte/compiler' {
 			/** The 'x' in `bind:x` */
 			name: string;
 			/** The y in `bind:x={y}` */
-			expression: Identifier | MemberExpression;
+			expression: Identifier | MemberExpression | SequenceExpression;
 		}
 
 		/** A `class:` directive */
@@ -1163,6 +1181,11 @@ declare module 'svelte/compiler' {
 			name: 'svelte:fragment';
 		}
 
+		export interface SvelteBoundary extends BaseElement {
+			type: 'SvelteBoundary';
+			name: 'svelte:boundary';
+		}
+
 		export interface SvelteHead extends BaseElement {
 			type: 'SvelteHead';
 			name: 'svelte:head';
@@ -1188,7 +1211,8 @@ declare module 'svelte/compiler' {
 		export interface EachBlock extends BaseNode {
 			type: 'EachBlock';
 			expression: Expression;
-			context: Pattern;
+			/** The `entry` in `{#each item as entry}`. `null` if `as` part is omitted */
+			context: Pattern | null;
 			body: Fragment;
 			fallback?: Fragment;
 			index?: string;
@@ -1251,36 +1275,60 @@ declare module 'svelte/compiler' {
 			content: Program;
 			attributes: Attribute[];
 		}
+
+		export type AttributeLike = Attribute | SpreadAttribute | Directive;
+
+		export type Directive =
+			| AST.AnimateDirective
+			| AST.BindDirective
+			| AST.ClassDirective
+			| AST.LetDirective
+			| AST.OnDirective
+			| AST.StyleDirective
+			| AST.TransitionDirective
+			| AST.UseDirective;
+
+		export type Block =
+			| AST.EachBlock
+			| AST.IfBlock
+			| AST.AwaitBlock
+			| AST.KeyBlock
+			| AST.SnippetBlock;
+
+		export type ElementLike =
+			| AST.Component
+			| AST.TitleElement
+			| AST.SlotElement
+			| AST.RegularElement
+			| AST.SvelteBody
+			| AST.SvelteBoundary
+			| AST.SvelteComponent
+			| AST.SvelteDocument
+			| AST.SvelteElement
+			| AST.SvelteFragment
+			| AST.SvelteHead
+			| AST.SvelteOptionsRaw
+			| AST.SvelteSelf
+			| AST.SvelteWindow
+			| AST.SvelteBoundary;
+
+		export type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
+
+		export type TemplateNode =
+			| AST.Root
+			| AST.Text
+			| Tag
+			| ElementLike
+			| AST.Attribute
+			| AST.SpreadAttribute
+			| Directive
+			| AST.Comment
+			| Block;
+
+		export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node;
+
+		export type { _CSS as CSS };
 	}
-
-	type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
-
-	type Directive =
-		| AST.AnimateDirective
-		| AST.BindDirective
-		| AST.ClassDirective
-		| AST.LetDirective
-		| AST.OnDirective
-		| AST.StyleDirective
-		| AST.TransitionDirective
-		| AST.UseDirective;
-
-	type Block = AST.EachBlock | AST.IfBlock | AST.AwaitBlock | AST.KeyBlock | AST.SnippetBlock;
-
-	type ElementLike =
-		| AST.Component
-		| AST.TitleElement
-		| AST.SlotElement
-		| AST.RegularElement
-		| AST.SvelteBody
-		| AST.SvelteComponent
-		| AST.SvelteDocument
-		| AST.SvelteElement
-		| AST.SvelteFragment
-		| AST.SvelteHead
-		| AST.SvelteOptionsRaw
-		| AST.SvelteSelf
-		| AST.SvelteWindow;
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
 	 * For example, it can be used to convert a `<style lang="sass">` block into vanilla CSS.
@@ -1306,7 +1354,17 @@ declare module 'svelte/compiler' {
 	} | undefined): {
 		code: string;
 	};
-	namespace Css {
+	type ICompileDiagnostic = {
+		code: string;
+		message: string;
+		stack?: string;
+		filename?: string;
+		start?: Location;
+		end?: Location;
+		position?: [number, number];
+		frame?: string;
+	};
+	namespace _CSS {
 		export interface BaseNode {
 			start: number;
 			end: number;
@@ -1464,16 +1522,6 @@ declare module 'svelte/compiler' {
 			| SimpleSelector
 			| Declaration;
 	}
-	type ICompileDiagnostic = {
-		code: string;
-		message: string;
-		stack?: string;
-		filename?: string;
-		start?: Location;
-		end?: Location;
-		position?: [number, number];
-		frame?: string;
-	};
 
 	export {};
 }
@@ -1579,6 +1627,13 @@ declare module 'svelte/legacy' {
 	 */
 	export function createBubbler(): (type: string) => (event: Event) => boolean;
 	/**
+	 * Support using the component as both a class and function during the transition period
+	 */
+	export type LegacyComponentType = {
+		new (o: ComponentConstructorOptions): SvelteComponent;
+		(...args: Parameters<Component<Record<string, any>>>): ReturnType<Component<Record<string, any>, Record<string, any>>>;
+	};
+	/**
 	 * Substitute for the `trusted` event modifier
 	 * @deprecated
 	 * */
@@ -1623,12 +1678,84 @@ declare module 'svelte/legacy' {
 }
 
 declare module 'svelte/motion' {
+	import type { MediaQuery } from 'svelte/reactivity';
+	// TODO we do declaration merging here in order to not have a breaking change (renaming the Spring interface)
+	// this means both the Spring class and the Spring interface are merged into one with some things only
+	// existing on one side. In Svelte 6, remove the type definition and move the jsdoc onto the class in spring.js
+
 	export interface Spring<T> extends Readable<T> {
-		set: (new_value: T, opts?: SpringUpdateOpts) => Promise<void>;
+		set(new_value: T, opts?: SpringUpdateOpts): Promise<void>;
+		/**
+		 * @deprecated Only exists on the legacy `spring` store, not the `Spring` class
+		 */
 		update: (fn: Updater<T>, opts?: SpringUpdateOpts) => Promise<void>;
+		/**
+		 * @deprecated Only exists on the legacy `spring` store, not the `Spring` class
+		 */
+		subscribe(fn: (value: T) => void): Unsubscriber;
 		precision: number;
 		damping: number;
 		stiffness: number;
+	}
+
+	/**
+	 * A wrapper for a value that behaves in a spring-like fashion. Changes to `spring.target` will cause `spring.current` to
+	 * move towards it over time, taking account of the `spring.stiffness` and `spring.damping` parameters.
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { Spring } from 'svelte/motion';
+	 *
+	 * 	const spring = new Spring(0);
+	 * </script>
+	 *
+	 * <input type="range" bind:value={spring.target} />
+	 * <input type="range" bind:value={spring.current} disabled />
+	 * ```
+	 * @since 5.8.0
+	 */
+	export class Spring<T> {
+		constructor(value: T, options?: SpringOpts);
+
+		/**
+		 * Create a spring whose value is bound to the return value of `fn`. This must be called
+		 * inside an effect root (for example, during component initialisation).
+		 *
+		 * ```svelte
+		 * <script>
+		 * 	import { Spring } from 'svelte/motion';
+		 *
+		 * 	let { number } = $props();
+		 *
+		 * 	const spring = Spring.of(() => number);
+		 * </script>
+		 * ```
+		 */
+		static of<U>(fn: () => U, options?: SpringOpts): Spring<U>;
+
+		/**
+		 * Sets `spring.target` to `value` and returns a `Promise` that resolves if and when `spring.current` catches up to it.
+		 *
+		 * If `options.instant` is `true`, `spring.current` immediately matches `spring.target`.
+		 *
+		 * If `options.preserveMomentum` is provided, the spring will continue on its current trajectory for
+		 * the specified number of milliseconds. This is useful for things like 'fling' gestures.
+		 */
+		set(value: T, options?: SpringUpdateOpts): Promise<void>;
+
+		damping: number;
+		precision: number;
+		stiffness: number;
+		/**
+		 * The end value of the spring.
+		 * This property only exists on the `Spring` class, not the legacy `spring` store.
+		 */
+		target: T;
+		/**
+		 * The current value of the spring.
+		 * This property only exists on the `Spring` class, not the legacy `spring` store.
+		 */
+		get current(): T;
 	}
 
 	export interface Tweened<T> extends Readable<T> {
@@ -1657,8 +1784,22 @@ declare module 'svelte/motion' {
 	}
 
 	interface SpringUpdateOpts {
+		/**
+		 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
+		 */
 		hard?: any;
+		/**
+		 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
+		 */
 		soft?: string | number | boolean;
+		/**
+		 * Only use this for the Spring class; does nothing when set on the spring store
+		 */
+		instant?: boolean;
+		/**
+		 * Only use this for the Spring class; does nothing when set on the spring store
+		 */
+		preserveMomentum?: number;
 	}
 
 	type Updater<T> = (target_value: T, value: T) => T;
@@ -1670,15 +1811,87 @@ declare module 'svelte/motion' {
 		interpolate?: (a: T, b: T) => (t: number) => T;
 	}
 	/**
+	 * A [media query](https://svelte.dev/docs/svelte/svelte-reactivity#MediaQuery) that matches if the user [prefers reduced motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion).
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { prefersReducedMotion } from 'svelte/motion';
+	 * 	import { fly } from 'svelte/transition';
+	 *
+	 * 	let visible = $state(false);
+	 * </script>
+	 *
+	 * <button onclick={() => visible = !visible}>
+	 * 	toggle
+	 * </button>
+	 *
+	 * {#if visible}
+	 * 	<p transition:fly={{ y: prefersReducedMotion.current ? 0 : 200 }}>
+	 * 		flies in, unless the user prefers reduced motion
+	 * 	</p>
+	 * {/if}
+	 * ```
+	 * @since 5.7.0
+	 */
+	export const prefersReducedMotion: MediaQuery;
+	/**
 	 * The spring function in Svelte creates a store whose value is animated, with a motion that simulates the behavior of a spring. This means when the value changes, instead of transitioning at a steady rate, it "bounces" like a spring would, depending on the physics parameters provided. This adds a level of realism to the transitions and can enhance the user experience.
 	 *
+	 * @deprecated Use [`Spring`](https://svelte.dev/docs/svelte/svelte-motion#Spring) instead
 	 * */
 	export function spring<T = any>(value?: T | undefined, opts?: SpringOpts | undefined): Spring<T>;
 	/**
 	 * A tweened store in Svelte is a special type of store that provides smooth transitions between state values over time.
 	 *
+	 * @deprecated Use [`Tween`](https://svelte.dev/docs/svelte/svelte-motion#Tween) instead
 	 * */
 	export function tweened<T>(value?: T | undefined, defaults?: TweenedOptions<T> | undefined): Tweened<T>;
+	/**
+	 * A wrapper for a value that tweens smoothly to its target value. Changes to `tween.target` will cause `tween.current` to
+	 * move towards it over time, taking account of the `delay`, `duration` and `easing` options.
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { Tween } from 'svelte/motion';
+	 *
+	 * 	const tween = new Tween(0);
+	 * </script>
+	 *
+	 * <input type="range" bind:value={tween.target} />
+	 * <input type="range" bind:value={tween.current} disabled />
+	 * ```
+	 * @since 5.8.0
+	 */
+	export class Tween<T> {
+		/**
+		 * Create a tween whose value is bound to the return value of `fn`. This must be called
+		 * inside an effect root (for example, during component initialisation).
+		 *
+		 * ```svelte
+		 * <script>
+		 * 	import { Tween } from 'svelte/motion';
+		 *
+		 * 	let { number } = $props();
+		 *
+		 * 	const tween = Tween.of(() => number);
+		 * </script>
+		 * ```
+		 * 
+		 */
+		static of<U>(fn: () => U, options?: TweenedOptions<U> | undefined): Tween<U>;
+		
+		constructor(value: T, options?: TweenedOptions<T>);
+		/**
+		 * Sets `tween.target` to `value` and returns a `Promise` that resolves if and when `tween.current` catches up to it.
+		 *
+		 * If `options` are provided, they will override the tween's defaults.
+		 * */
+		set(value: T, options?: TweenedOptions<T> | undefined): Promise<void>;
+		get current(): T;
+		set target(v: T);
+		get target(): T;
+		#private;
+	}
 
 	export {};
 }
@@ -1711,6 +1924,144 @@ declare module 'svelte/reactivity' {
 	export class SvelteURLSearchParams extends URLSearchParams {
 		
 		[REPLACE](params: URLSearchParams): void;
+		#private;
+	}
+	/**
+	 * Creates a media query and provides a `current` property that reflects whether or not it matches.
+	 *
+	 * Use it carefully — during server-side rendering, there is no way to know what the correct value should be, potentially causing content to change upon hydration.
+	 * If you can use the media query in CSS to achieve the same effect, do that.
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { MediaQuery } from 'svelte/reactivity';
+	 *
+	 * 	const large = new MediaQuery('min-width: 800px');
+	 * </script>
+	 *
+	 * <h1>{large.current ? 'large screen' : 'small screen'}</h1>
+	 * ```
+	 * @extends {ReactiveValue<boolean>}
+	 * @since 5.7.0
+	 */
+	export class MediaQuery extends ReactiveValue<boolean> {
+		/**
+		 * @param query A media query string
+		 * @param fallback Fallback value for the server
+		 */
+		constructor(query: string, fallback?: boolean | undefined);
+	}
+	/**
+	 * Returns a `subscribe` function that, if called in an effect (including expressions in the template),
+	 * calls its `start` callback with an `update` function. Whenever `update` is called, the effect re-runs.
+	 *
+	 * If `start` returns a function, it will be called when the effect is destroyed.
+	 *
+	 * If `subscribe` is called in multiple effects, `start` will only be called once as long as the effects
+	 * are active, and the returned teardown function will only be called when all effects are destroyed.
+	 *
+	 * It's best understood with an example. Here's an implementation of [`MediaQuery`](https://svelte.dev/docs/svelte/svelte-reactivity#MediaQuery):
+	 *
+	 * ```js
+	 * import { createSubscriber } from 'svelte/reactivity';
+	 * import { on } from 'svelte/events';
+	 *
+	 * export class MediaQuery {
+	 * 	#query;
+	 * 	#subscribe;
+	 *
+	 * 	constructor(query) {
+	 * 		this.#query = window.matchMedia(`(${query})`);
+	 *
+	 * 		this.#subscribe = createSubscriber((update) => {
+	 * 			// when the `change` event occurs, re-run any effects that read `this.current`
+	 * 			const off = on(this.#query, 'change', update);
+	 *
+	 * 			// stop listening when all the effects are destroyed
+	 * 			return () => off();
+	 * 		});
+	 * 	}
+	 *
+	 * 	get current() {
+	 * 		this.#subscribe();
+	 *
+	 * 		// Return the current state of the query, whether or not we're in an effect
+	 * 		return this.#query.matches;
+	 * 	}
+	 * }
+	 * ```
+	 * @since 5.7.0
+	 */
+	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
+	class ReactiveValue<T> {
+		
+		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
+		get current(): T;
+		#private;
+	}
+
+	export {};
+}
+
+declare module 'svelte/reactivity/window' {
+	/**
+	 * `scrollX.current` is a reactive view of `window.scrollX`. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const scrollX: ReactiveValue<number | undefined>;
+	/**
+	 * `scrollY.current` is a reactive view of `window.scrollY`. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const scrollY: ReactiveValue<number | undefined>;
+	/**
+	 * `innerWidth.current` is a reactive view of `window.innerWidth`. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const innerWidth: ReactiveValue<number | undefined>;
+	/**
+	 * `innerHeight.current` is a reactive view of `window.innerHeight`. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const innerHeight: ReactiveValue<number | undefined>;
+	/**
+	 * `outerWidth.current` is a reactive view of `window.outerWidth`. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const outerWidth: ReactiveValue<number | undefined>;
+	/**
+	 * `outerHeight.current` is a reactive view of `window.outerHeight`. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const outerHeight: ReactiveValue<number | undefined>;
+	/**
+	 * `screenLeft.current` is a reactive view of `window.screenLeft`. It is updated inside a `requestAnimationFrame` callback. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const screenLeft: ReactiveValue<number | undefined>;
+	/**
+	 * `screenTop.current` is a reactive view of `window.screenTop`. It is updated inside a `requestAnimationFrame` callback. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const screenTop: ReactiveValue<number | undefined>;
+	/**
+	 * `online.current` is a reactive view of `navigator.onLine`. On the server it is `undefined`.
+	 * @since 5.11.0
+	 */
+	export const online: ReactiveValue<boolean | undefined>;
+	/**
+	 * `devicePixelRatio.current` is a reactive view of `window.devicePixelRatio`. On the server it is `undefined`.
+	 * Note that behaviour differs between browsers — on Chrome it will respond to the current zoom level,
+	 * on Firefox and Safari it won't.
+	 * @since 5.11.0
+	 */
+	export const devicePixelRatio: {
+		get current(): number | undefined;
+	};
+	class ReactiveValue<T> {
+		
+		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
+		get current(): T;
 		#private;
 	}
 
@@ -1935,7 +2286,7 @@ declare module 'svelte/transition' {
 	 * */
 	export function slide(node: Element, { delay, duration, easing, axis }?: SlideParams | undefined): TransitionConfig;
 	/**
-	 * Animates the opacity and scale of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
+	 * Animates the opacity and scale of an element. `in` transitions animate from the provided values, passed as parameters, to an element's current (default) values. `out` transitions animate from an element's default values to the provided values.
 	 *
 	 * */
 	export function scale(node: Element, { delay, duration, easing, start, opacity }?: ScaleParams | undefined): TransitionConfig;
@@ -2308,17 +2659,9 @@ declare module 'svelte/types/compiler/interfaces' {
 }declare module '*.svelte' {
 	// use prettier-ignore for a while because of https://github.com/sveltejs/language-tools/commit/026111228b5814a9109cc4d779d37fb02955fb8b
 	// prettier-ignore
-	import { SvelteComponent, Component, type ComponentConstructorOptions } from 'svelte'
-
-	// Support using the component as both a class and function during the transition period
-	// prettier-ignore
-	interface ComponentType {
-		(
-			...args: Parameters<Component<Record<string, any>>>
-		): ReturnType<Component<Record<string, any>, Record<string, any>>>
-		new (o: ComponentConstructorOptions): SvelteComponent
-	}
-	const Comp: ComponentType;
+	import { SvelteComponent } from 'svelte'
+	import { LegacyComponentType } from 'svelte/legacy';
+	const Comp: LegacyComponentType;
 	type Comp = SvelteComponent;
 	export default Comp;
 }

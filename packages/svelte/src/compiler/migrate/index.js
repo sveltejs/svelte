@@ -2,7 +2,7 @@
 /** @import { Visitors } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
 /** @import { Scope, ScopeRoot } from '../phases/scope.js' */
-/** @import { AST, Binding, SvelteNode, ValidatedCompileOptions } from '#compiler' */
+/** @import { AST, Binding, ValidatedCompileOptions } from '#compiler' */
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
 import { parse } from '../phases/1-parse/index.js';
@@ -479,7 +479,7 @@ export function migrate(source, { filename, use_ts } = {}) {
  * }} State
  */
 
-/** @type {Visitors<SvelteNode, State>} */
+/** @type {Visitors<AST.SvelteNode, State>} */
 const instance_script = {
 	_(node, { state, next }) {
 		// @ts-expect-error
@@ -507,6 +507,7 @@ const instance_script = {
 			for (let specifier of node.specifiers) {
 				if (
 					specifier.type === 'ImportSpecifier' &&
+					specifier.imported.type === 'Identifier' &&
 					['beforeUpdate', 'afterUpdate'].includes(specifier.imported.name)
 				) {
 					const references = state.scope.references.get(specifier.local.name);
@@ -544,6 +545,8 @@ const instance_script = {
 
 		let count_removed = 0;
 		for (const specifier of node.specifiers) {
+			if (specifier.local.type !== 'Identifier') continue;
+
 			const binding = state.scope.get(specifier.local.name);
 			if (binding?.kind === 'bindable_prop') {
 				state.str.remove(
@@ -1047,7 +1050,7 @@ function trim_block(state, start, end) {
 	}
 }
 
-/** @type {Visitors<SvelteNode, State>} */
+/** @type {Visitors<AST.SvelteNode, State>} */
 const template = {
 	Identifier(node, { state, path }) {
 		handle_identifier(node, state, path);
@@ -1407,7 +1410,7 @@ const template = {
 
 /**
  * @param {AST.RegularElement | AST.SvelteElement | AST.SvelteComponent | AST.Component | AST.SlotElement | AST.SvelteFragment} node
- * @param {SvelteNode[]} path
+ * @param {AST.SvelteNode[]} path
  * @param {State} state
  */
 function migrate_slot_usage(node, path, state) {
@@ -1577,7 +1580,7 @@ function migrate_slot_usage(node, path, state) {
 /**
  * @param {VariableDeclarator} declarator
  * @param {State} state
- * @param {SvelteNode[]} path
+ * @param {AST.SvelteNode[]} path
  */
 function extract_type_and_comment(declarator, state, path) {
 	const str = state.str;

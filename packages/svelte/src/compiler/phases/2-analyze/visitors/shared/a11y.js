@@ -1,5 +1,5 @@
-/** @import { AnalysisState } from '../../types.js' */
-/** @import { AST, SvelteNode, TemplateNode } from '#compiler' */
+/** @import { Context } from '../../types.js' */
+/** @import { AST } from '#compiler' */
 /** @import { ARIARoleDefinitionKey, ARIARoleRelationConcept, ARIAProperty, ARIAPropertyDefinition, ARIARoleDefinition } from 'aria-query' */
 import { roles as roles_map, aria, elementRoles } from 'aria-query';
 // @ts-expect-error package doesn't provide typings
@@ -582,16 +582,17 @@ function get_implicit_role(name, attribute_map) {
 const invisible_elements = ['meta', 'html', 'script', 'style'];
 
 /**
- * @param {SvelteNode | null} parent
+ * @param {AST.SvelteNode[]} path
  * @param {string[]} elements
  */
-function is_parent(parent, elements) {
-	while (parent) {
+function is_parent(path, elements) {
+	let i = path.length;
+	while (i--) {
+		const parent = path[i];
 		if (parent.type === 'SvelteElement') return true; // unknown, play it safe, so we don't warn
 		if (parent.type === 'RegularElement') {
 			return elements.includes(parent.name);
 		}
-		parent = /** @type {TemplateNode} */ (parent).parent;
 	}
 	return false;
 }
@@ -683,9 +684,9 @@ function get_static_text_value(attribute) {
 
 /**
  * @param {AST.RegularElement | AST.SvelteElement} node
- * @param {AnalysisState} state
+ * @param {Context} context
  */
-export function check_element(node, state) {
+export function check_element(node, context) {
 	/** @type {Map<string, AST.Attribute>} */
 	const attribute_map = new Map();
 
@@ -792,7 +793,7 @@ export function check_element(node, state) {
 					}
 
 					// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
-					const is_parent_section_or_article = is_parent(node.parent, ['section', 'article']);
+					const is_parent_section_or_article = is_parent(context.path, ['section', 'article']);
 					if (!is_parent_section_or_article) {
 						const has_nested_redundant_role =
 							current_role === a11y_nested_implicit_semantics.get(node.name);
@@ -1061,7 +1062,7 @@ export function check_element(node, state) {
 	}
 
 	if (node.name === 'label') {
-		/** @param {TemplateNode} node */
+		/** @param {AST.TemplateNode} node */
 		const has_input_child = (node) => {
 			let has = false;
 			walk(
@@ -1114,7 +1115,7 @@ export function check_element(node, state) {
 	}
 
 	if (node.name === 'figcaption') {
-		if (!is_parent(node.parent, ['figure'])) {
+		if (!is_parent(context.path, ['figure'])) {
 			w.a11y_figcaption_parent(node);
 		}
 	}

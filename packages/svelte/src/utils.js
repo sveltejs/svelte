@@ -192,7 +192,10 @@ const ATTRIBUTE_ALIASES = {
 	ismap: 'isMap',
 	nomodule: 'noModule',
 	playsinline: 'playsInline',
-	readonly: 'readOnly'
+	readonly: 'readOnly',
+	defaultvalue: 'defaultValue',
+	defaultchecked: 'defaultChecked',
+	srcobject: 'srcObject'
 };
 
 /**
@@ -212,7 +215,10 @@ const DOM_PROPERTIES = [
 	'readOnly',
 	'value',
 	'inert',
-	'volume'
+	'volume',
+	'defaultValue',
+	'defaultChecked',
+	'srcObject'
 ];
 
 /**
@@ -220,6 +226,17 @@ const DOM_PROPERTIES = [
  */
 export function is_dom_property(name) {
 	return DOM_PROPERTIES.includes(name);
+}
+
+const NON_STATIC_PROPERTIES = ['autofocus', 'muted', 'defaultValue', 'defaultChecked'];
+
+/**
+ * Returns `true` if the given attribute cannot be set through the template
+ * string, i.e. needs some kind of JavaScript handling to work.
+ * @param {string} name
+ */
+export function cannot_be_set_statically(name) {
+	return NON_STATIC_PROPERTIES.includes(name);
 }
 
 /**
@@ -423,4 +440,12 @@ const RUNES = /** @type {const} */ ([
  */
 export function is_rune(name) {
 	return RUNES.includes(/** @type {RUNES[number]} */ (name));
+}
+
+/** List of elements that require raw contents and should not have SSR comments put in them */
+const RAW_TEXT_ELEMENTS = /** @type {const} */ (['textarea', 'script', 'style', 'title']);
+
+/** @param {string} name */
+export function is_raw_text_element(name) {
+	return RAW_TEXT_ELEMENTS.includes(/** @type {RAW_TEXT_ELEMENTS[number]} */ (name));
 }
