@@ -180,6 +180,10 @@ export function portal_outlet(payload, id) {
  * @returns {void}
  */
 export function portal(payload, target, content) {
+	payload.out += EMPTY_COMMENT;
+
+	if (typeof target === 'string') return; // targets a CSS selector - not possible in SSR, ignore
+
 	const portal = payload.portals.get(target);
 	if (!portal)
 		throw new Error(
@@ -191,7 +195,6 @@ export function portal(payload, target, content) {
 	content(tmp_payload);
 	tmp_payload.out += EMPTY_COMMENT;
 	portal.content.push(tmp_payload.out);
-	payload.out += EMPTY_COMMENT;
 }
 
 /**
