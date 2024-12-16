@@ -1,6 +1,13 @@
 import * as w from '../warnings.js';
 import { get_proxied_value } from '../proxy.js';
 
+/**
+ * @param {any} v
+ */
+function is_object(v) {
+	return typeof v === 'object' && v !== null;
+}
+
 export function init_array_prototype_warnings() {
 	const array_prototype = Array.prototype;
 	// The REPL ends up here over and over, and this prevents it from adding more and more patches
@@ -16,7 +23,7 @@ export function init_array_prototype_warnings() {
 	array_prototype.indexOf = function (item, from_index) {
 		const index = indexOf.call(this, item, from_index);
 
-		if (index === -1) {
+		if (index === -1 && is_object(item)) {
 			const test = indexOf.call(get_proxied_value(this), get_proxied_value(item), from_index);
 
 			if (test !== -1) {
@@ -32,7 +39,7 @@ export function init_array_prototype_warnings() {
 		// `arguments` inside so passing undefined is different from not passing anything
 		const index = lastIndexOf.call(this, item, from_index ?? this.length - 1);
 
-		if (index === -1) {
+		if (index === -1 && is_object(item)) {
 			// we need to specify this.length - 1 because it's probably using something like
 			// `arguments` inside so passing undefined is different from not passing anything
 			const test = lastIndexOf.call(
@@ -52,7 +59,7 @@ export function init_array_prototype_warnings() {
 	array_prototype.includes = function (item, from_index) {
 		const has = includes.call(this, item, from_index);
 
-		if (!has) {
+		if (!has && is_object(item)) {
 			const test = includes.call(get_proxied_value(this), get_proxied_value(item), from_index);
 
 			if (test) {
