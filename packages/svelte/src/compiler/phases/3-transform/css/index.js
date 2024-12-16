@@ -1,5 +1,5 @@
 /** @import { Visitors } from 'zimmerframe' */
-/** @import { ValidatedCompileOptions, Css } from '#compiler' */
+/** @import { AST, ValidatedCompileOptions } from '#compiler' */
 /** @import { ComponentAnalysis } from '../../types.js' */
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
@@ -41,9 +41,9 @@ export function render_stylesheet(source, analysis, options) {
 		}
 	};
 
-	const ast = /** @type {Css.StyleSheet} */ (analysis.css.ast);
+	const ast = /** @type {AST.CSS.StyleSheet} */ (analysis.css.ast);
 
-	walk(/** @type {Css.Node} */ (ast), state, visitors);
+	walk(/** @type {AST.CSS.Node} */ (ast), state, visitors);
 
 	code.remove(0, ast.content.start);
 	code.remove(/** @type {number} */ (ast.content.end), source.length);
@@ -71,7 +71,7 @@ export function render_stylesheet(source, analysis, options) {
 	return css;
 }
 
-/** @type {Visitors<Css.Node, State>} */
+/** @type {Visitors<AST.CSS.Node, State>} */
 const visitors = {
 	_: (node, context) => {
 		context.state.code.addSourcemapLocation(node.start);
@@ -259,7 +259,7 @@ const visitors = {
 		if (parent?.type === 'Rule') {
 			specificity = { bumped: false };
 
-			/** @type {Css.Rule | null} */
+			/** @type {AST.CSS.Rule | null} */
 			let rule = parent.metadata.parent_rule;
 
 			while (rule) {
@@ -278,7 +278,7 @@ const visitors = {
 
 		for (const relative_selector of node.children) {
 			if (relative_selector.metadata.is_global) {
-				const global = /** @type {Css.PseudoClassSelector} */ (relative_selector.selectors[0]);
+				const global = /** @type {AST.CSS.PseudoClassSelector} */ (relative_selector.selectors[0]);
 				remove_global_pseudo_class(global, relative_selector.combinator, context.state);
 
 				if (
@@ -361,15 +361,15 @@ const visitors = {
 
 /**
  *
- * @param {Array<Css.Node>} path
+ * @param {Array<AST.CSS.Node>} path
  */
 function is_in_global_block(path) {
 	return path.some((node) => node.type === 'Rule' && node.metadata.is_global_block);
 }
 
 /**
- * @param {Css.PseudoClassSelector} selector
- * @param {Css.Combinator | null} combinator
+ * @param {AST.CSS.PseudoClassSelector} selector
+ * @param {AST.CSS.Combinator | null} combinator
  * @param {State} state
  */
 function remove_global_pseudo_class(selector, combinator, state) {
@@ -399,7 +399,7 @@ function remove_preceding_whitespace(end, state) {
 }
 
 /**
- *  @param {Css.Rule} rule
+ *  @param {AST.CSS.Rule} rule
  * @param {boolean} is_in_global_block
  */
 function is_empty(rule, is_in_global_block) {
@@ -426,14 +426,14 @@ function is_empty(rule, is_in_global_block) {
 	return true;
 }
 
-/** @param {Css.Rule} rule */
+/** @param {AST.CSS.Rule} rule */
 function is_used(rule) {
 	return rule.prelude.children.some((selector) => selector.metadata.used);
 }
 
 /**
  *
- * @param {Css.Rule} node
+ * @param {AST.CSS.Rule} node
  * @param {MagicString} code
  */
 function escape_comment_close(node, code) {

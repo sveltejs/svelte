@@ -1,6 +1,8 @@
-/** @import { CompileOptions, SvelteNode } from './types' */
-/** @import { Warning } from '#compiler' */
+/** @import { Location } from 'locate-character' */
+/** @import { CompileOptions } from './types' */
+/** @import { AST, Warning } from '#compiler' */
 import { getLocator } from 'locate-character';
+import { sanitize_location } from '../utils.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
 
@@ -28,6 +30,14 @@ export let dev;
 
 export let locator = getLocator('', { offsetLine: 1 });
 
+/**
+ * @param {AST.SvelteNode & { start?: number | undefined }} node
+ */
+export function locate_node(node) {
+	const loc = /** @type {Location} */ (locator(/** @type {number} */ (node.start)));
+	return `${sanitize_location(filename)}:${loc?.line}:${loc.column}`;
+}
+
 /** @type {NonNullable<CompileOptions['warningFilter']>} */
 export let warning_filter;
 
@@ -41,7 +51,7 @@ export let ignore_stack = [];
  * For each node the list of warnings that should be ignored for that node.
  * Exists in addition to `ignore_stack` because not all warnings are emitted
  * while the stack is being built.
- * @type {Map<SvelteNode | NodeLike, Set<string>[]>}
+ * @type {Map<AST.SvelteNode | NodeLike, Set<string>[]>}
  */
 export let ignore_map = new Map();
 
@@ -66,7 +76,7 @@ export function reset_warning_filter(fn = () => true) {
 }
 
 /**
- * @param {SvelteNode | NodeLike} node
+ * @param {AST.SvelteNode | NodeLike} node
  * @param {import('../constants.js').IGNORABLE_RUNTIME_WARNINGS[number]} code
  * @returns
  */

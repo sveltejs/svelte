@@ -5,11 +5,10 @@ import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydr
 import { create_fragment_from_html } from '../reconciler.js';
 import { assign_nodes } from '../template.js';
 import * as w from '../../warnings.js';
-import { hash } from '../../../../utils.js';
+import { hash, sanitize_location } from '../../../../utils.js';
 import { DEV } from 'esm-env';
 import { dev_current_component_function } from '../../runtime.js';
 import { get_first_child, get_next_sibling } from '../operations.js';
-import { sanitize_location } from '../../dev/location.js';
 
 /**
  * @param {Element} element

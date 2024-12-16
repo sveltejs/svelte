@@ -1,5 +1,4 @@
 /** @import { AssignmentExpression } from 'estree' */
-/** @import { SvelteNode } from '#compiler' */
 /** @import { Context } from '../types' */
 import { extract_identifiers, object } from '../../../utils/ast.js';
 import { validate_assignment } from './shared/utils.js';

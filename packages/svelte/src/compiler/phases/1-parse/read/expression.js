@@ -3,6 +3,7 @@
 import { parse_expression_at } from '../acorn.js';
 import { regex_whitespace } from '../../patterns.js';
 import * as e from '../../../errors.js';
+import { find_matching_bracket } from '../utils/bracket.js';
 
 /**
  * @param {Parser} parser
@@ -39,6 +40,22 @@ export default function read_expression(parser) {
 
 		return /** @type {Expression} */ (node);
 	} catch (err) {
+		if (parser.loose) {
+			// Find the next } and treat it as the end of the expression
+			const end = find_matching_bracket(parser.template, parser.index, '{');
+			if (end) {
+				const start = parser.index;
+				parser.index = end;
+				// We don't know what the expression is and signal this by returning an empty identifier
+				return {
+					type: 'Identifier',
+					start,
+					end,
+					name: ''
+				};
+			}
+		}
+
 		parser.acorn_error(err);
 	}
 }

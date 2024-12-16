@@ -1,4 +1,4 @@
-/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, Reaction, TemplateNode, TransitionManager } from '#client' */
+/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
 import {
 	check_dirtiness,
 	component_context,
@@ -16,8 +16,7 @@ import {
 	set_is_flushing_effect,
 	set_signal_status,
 	untrack,
-	skip_reaction,
-	capture_signals
+	skip_reaction
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -40,13 +39,10 @@ import {
 } from '../constants.js';
 import { set } from './sources.js';
 import * as e from '../errors.js';
-import * as w from '../warnings.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { destroy_derived } from './deriveds.js';
-import { FILENAME } from '../../../constants.js';
-import { get_location } from '../dev/location.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -248,8 +244,32 @@ export function inspect_effect(fn) {
  */
 export function effect_root(fn) {
 	const effect = create_effect(ROOT_EFFECT, fn, true);
+
 	return () => {
 		destroy_effect(effect);
+	};
+}
+
+/**
+ * An effect root whose children can transition out
+ * @param {() => void} fn
+ * @returns {(options?: { outro?: boolean }) => Promise<void>}
+ */
+export function component_root(fn) {
+	const effect = create_effect(ROOT_EFFECT, fn, true);
+
+	return (options = {}) => {
+		return new Promise((fulfil) => {
+			if (options.outro) {
+				pause_effect(effect, () => {
+					destroy_effect(effect);
+					fulfil(undefined);
+				});
+			} else {
+				destroy_effect(effect);
+				fulfil(undefined);
+			}
+		});
 	};
 }
 

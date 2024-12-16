@@ -57,7 +57,7 @@ This code will work when the component is rendered on the client (which is why t
 > `context="module"` is deprecated, use the `module` attribute instead
 
 ```svelte
-<script ---context="module"--- +++context+++>
+<script ---context="module"--- +++module+++>
 	let foo = 'bar';
 </script>
 ```

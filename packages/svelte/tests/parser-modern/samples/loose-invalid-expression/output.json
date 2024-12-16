@@ -1,0 +1,254 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 164,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "RegularElement",
+				"start": 0,
+				"end": 14,
+				"name": "div",
+				"attributes": [
+					{
+						"type": "Attribute",
+						"start": 5,
+						"end": 7,
+						"name": "",
+						"value": {
+							"type": "ExpressionTag",
+							"start": 6,
+							"end": 6,
+							"expression": {
+								"start": 6,
+								"end": 6,
+								"type": "Identifier",
+								"name": ""
+							}
+						}
+					}
+				],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": []
+				}
+			},
+			{
+				"type": "Text",
+				"start": 14,
+				"end": 15,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "RegularElement",
+				"start": 15,
+				"end": 33,
+				"name": "div",
+				"attributes": [
+					{
+						"type": "Attribute",
+						"start": 20,
+						"end": 26,
+						"name": "foo",
+						"value": {
+							"type": "ExpressionTag",
+							"start": 24,
+							"end": 26,
+							"expression": {
+								"type": "Identifier",
+								"start": 25,
+								"end": 25,
+								"name": ""
+							}
+						}
+					}
+				],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": []
+				}
+			},
+			{
+				"type": "Text",
+				"start": 33,
+				"end": 35,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "RegularElement",
+				"start": 35,
+				"end": 55,
+				"name": "div",
+				"attributes": [
+					{
+						"type": "Attribute",
+						"start": 40,
+						"end": 48,
+						"name": "foo",
+						"value": {
+							"type": "ExpressionTag",
+							"start": 44,
+							"end": 48,
+							"expression": {
+								"type": "Identifier",
+								"start": 45,
+								"end": 47,
+								"name": ""
+							}
+						}
+					}
+				],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": []
+				}
+			},
+			{
+				"type": "Text",
+				"start": 55,
+				"end": 56,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "RegularElement",
+				"start": 56,
+				"end": 80,
+				"name": "div",
+				"attributes": [
+					{
+						"type": "Attribute",
+						"start": 61,
+						"end": 73,
+						"name": "foo",
+						"value": {
+							"type": "ExpressionTag",
+							"start": 65,
+							"end": 73,
+							"expression": {
+								"type": "Identifier",
+								"start": 66,
+								"end": 72,
+								"name": ""
+							}
+						}
+					}
+				],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": []
+				}
+			},
+			{
+				"type": "Text",
+				"start": 80,
+				"end": 81,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "Component",
+				"start": 81,
+				"end": 113,
+				"name": "Component",
+				"attributes": [
+					{
+						"type": "Attribute",
+						"start": 92,
+						"end": 110,
+						"name": "onclick",
+						"value": {
+							"type": "ExpressionTag",
+							"start": 100,
+							"end": 110,
+							"expression": {
+								"type": "Identifier",
+								"start": 101,
+								"end": 109,
+								"name": ""
+							}
+						}
+					}
+				],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": []
+				}
+			},
+			{
+				"type": "Text",
+				"start": 113,
+				"end": 115,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "RegularElement",
+				"start": 115,
+				"end": 140,
+				"name": "input",
+				"attributes": [
+					{
+						"start": 122,
+						"end": 137,
+						"type": "BindDirective",
+						"name": "value",
+						"expression": {
+							"type": "Identifier",
+							"start": 134,
+							"end": 136,
+							"name": ""
+						},
+						"modifiers": []
+					}
+				],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": []
+				}
+			},
+			{
+				"type": "Text",
+				"start": 140,
+				"end": 145,
+				"raw": "\n\nasd",
+				"data": "\n\nasd"
+			},
+			{
+				"type": "ExpressionTag",
+				"start": 145,
+				"end": 149,
+				"expression": {
+					"type": "Identifier",
+					"start": 146,
+					"end": 148,
+					"name": ""
+				}
+			},
+			{
+				"type": "Text",
+				"start": 149,
+				"end": 153,
+				"raw": "asd\n",
+				"data": "asd\n"
+			},
+			{
+				"type": "ExpressionTag",
+				"start": 153,
+				"end": 164,
+				"expression": {
+					"type": "Identifier",
+					"start": 154,
+					"end": 163,
+					"name": ""
+				}
+			}
+		]
+	},
+	"options": null
+}

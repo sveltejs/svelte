@@ -358,16 +358,39 @@ export function set_attributes(
 		} else if (key === '__value' || (key === 'value' && value != null)) {
 			// @ts-ignore
 			element.value = element[key] = element.__value = value;
+		} else if (key === 'selected' && is_option_element) {
+			set_selected(/** @type {HTMLOptionElement} */ (element), value);
 		} else {
 			var name = key;
 			if (!preserve_attribute_case) {
 				name = normalize_attribute(name);
 			}
 
-			if (value == null && !is_custom_element) {
+			var is_default = name === 'defaultValue' || name === 'defaultChecked';
+
+			if (value == null && !is_custom_element && !is_default) {
 				attributes[key] = null;
-				element.removeAttribute(key);
-			} else if (setters.includes(name) && (is_custom_element || typeof value !== 'string')) {
+
+				if (name === 'value' || name === 'checked') {
+					// removing value/checked also removes defaultValue/defaultChecked — preserve
+					let input = /** @type {HTMLInputElement} */ (element);
+
+					if (name === 'value') {
+						let prev = input.defaultValue;
+						input.removeAttribute(name);
+						input.defaultValue = prev;
+					} else {
+						let prev = input.defaultChecked;
+						input.removeAttribute(name);
+						input.defaultChecked = prev;
+					}
+				} else {
+					element.removeAttribute(key);
+				}
+			} else if (
+				is_default ||
+				(setters.includes(name) && (is_custom_element || typeof value !== 'string'))
+			) {
 				// @ts-ignore
 				element[name] = value;
 			} else if (typeof value !== 'function') {

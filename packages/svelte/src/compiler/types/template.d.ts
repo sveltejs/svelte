@@ -1,4 +1,4 @@
-import type { Binding, Css, ExpressionMetadata } from '#compiler';
+import type { Binding, ExpressionMetadata } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
@@ -18,6 +18,7 @@ import type {
 	SequenceExpression
 } from 'estree';
 import type { Scope } from '../phases/scope';
+import type { _CSS } from './css';
 
 /**
  * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -66,7 +67,7 @@ export namespace AST {
 		options: SvelteOptions | null;
 		fragment: Fragment;
 		/** The parsed `<style>` element, if exists */
-		css: Css.StyleSheet | null;
+		css: AST.CSS.StyleSheet | null;
 		/** The parsed `<script>` element, if exists */
 		instance: Script | null;
 		/** The parsed `<script module>` element, if exists */
@@ -504,51 +505,61 @@ export namespace AST {
 		content: Program;
 		attributes: Attribute[];
 	}
+
+	export type AttributeLike = Attribute | SpreadAttribute | Directive;
+
+	export type Directive =
+		| AST.AnimateDirective
+		| AST.BindDirective
+		| AST.ClassDirective
+		| AST.LetDirective
+		| AST.OnDirective
+		| AST.StyleDirective
+		| AST.TransitionDirective
+		| AST.UseDirective;
+
+	export type Block =
+		| AST.EachBlock
+		| AST.IfBlock
+		| AST.AwaitBlock
+		| AST.KeyBlock
+		| AST.SnippetBlock;
+
+	export type ElementLike =
+		| AST.Component
+		| AST.TitleElement
+		| AST.SlotElement
+		| AST.RegularElement
+		| AST.SvelteHTML
+		| AST.SvelteBody
+		| AST.SvelteBoundary
+		| AST.SvelteComponent
+		| AST.SvelteDocument
+		| AST.SvelteElement
+		| AST.SvelteFragment
+		| AST.SvelteHead
+		| AST.SvelteOptionsRaw
+		| AST.SvelteSelf
+		| AST.SvelteWindow
+		| AST.SvelteBoundary;
+
+	export type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
+
+	export type TemplateNode =
+		| AST.Root
+		| AST.Text
+		| Tag
+		| ElementLike
+		| AST.Attribute
+		| AST.SpreadAttribute
+		| Directive
+		| AST.Comment
+		| Block;
+
+	export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node;
+
+	export type { _CSS as CSS };
 }
-
-type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
-
-export type Directive =
-	| AST.AnimateDirective
-	| AST.BindDirective
-	| AST.ClassDirective
-	| AST.LetDirective
-	| AST.OnDirective
-	| AST.StyleDirective
-	| AST.TransitionDirective
-	| AST.UseDirective;
-
-export type Block = AST.EachBlock | AST.IfBlock | AST.AwaitBlock | AST.KeyBlock | AST.SnippetBlock;
-
-export type ElementLike =
-	| AST.Component
-	| AST.TitleElement
-	| AST.SlotElement
-	| AST.RegularElement
-	| AST.SvelteHTML
-	| AST.SvelteBody
-	| AST.SvelteComponent
-	| AST.SvelteDocument
-	| AST.SvelteElement
-	| AST.SvelteFragment
-	| AST.SvelteHead
-	| AST.SvelteOptionsRaw
-	| AST.SvelteSelf
-	| AST.SvelteWindow
-	| AST.SvelteBoundary;
-
-export type TemplateNode =
-	| AST.Root
-	| AST.Text
-	| Tag
-	| ElementLike
-	| AST.Attribute
-	| AST.SpreadAttribute
-	| Directive
-	| AST.Comment
-	| Block;
-
-export type SvelteNode = Node | TemplateNode | AST.Fragment | Css.Node;
 
 declare module 'estree' {
 	export interface BaseNode {

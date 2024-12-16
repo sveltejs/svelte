@@ -1,5 +1,43 @@
 # svelte
 
+## 5.14.0
+
+### Minor Changes
+
+- feat: adds $inspect.trace rune ([#14290](https://github.com/sveltejs/svelte/pull/14290))
+
+## 5.13.0
+
+### Minor Changes
+
+- feat: add `outro` option to `unmount` ([#14540](https://github.com/sveltejs/svelte/pull/14540))
+
+- feat: provide loose parser mode ([#14691](https://github.com/sveltejs/svelte/pull/14691))
+
+## 5.12.0
+
+### Minor Changes
+
+- feat: expose more AST types from `"svelte/compiler"` ([#14601](https://github.com/sveltejs/svelte/pull/14601))
+
+### Patch Changes
+
+- fix: don't add parenthesis to media query if already present ([#14699](https://github.com/sveltejs/svelte/pull/14699))
+
+- fix: ensure if block paths retain correct template namespacing ([#14685](https://github.com/sveltejs/svelte/pull/14685))
+
+## 5.11.3
+
+### Patch Changes
+
+- fix: allow unquoted slash in attributes ([#14615](https://github.com/sveltejs/svelte/pull/14615))
+
+- fix: better handle hydration of script/style elements ([#14683](https://github.com/sveltejs/svelte/pull/14683))
+
+- fix: make `defaultValue` work with spread ([#14640](https://github.com/sveltejs/svelte/pull/14640))
+
+- fix: avoid mutation validation for invalidate_inner_signals ([#14688](https://github.com/sveltejs/svelte/pull/14688))
+
 ## 5.11.2
 
 ### Patch Changes

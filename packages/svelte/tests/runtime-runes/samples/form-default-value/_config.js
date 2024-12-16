@@ -68,7 +68,6 @@ export default test({
 			assert.htmlEqual(test1_span.innerHTML, 'foo foo foo foo');
 
 			after_reset.push(() => {
-				console.log('-------------');
 				check_inputs(inputs, 'value', 'x');
 				assert.htmlEqual(test1_span.innerHTML, 'x x x x');
 			});
@@ -88,7 +87,6 @@ export default test({
 			assert.htmlEqual(test2_span.innerHTML, 'foo foo foo foo');
 
 			after_reset.push(() => {
-				console.log('-------------');
 				check_inputs(inputs, 'value', 'x');
 				assert.htmlEqual(test2_span.innerHTML, 'x x x x');
 			});

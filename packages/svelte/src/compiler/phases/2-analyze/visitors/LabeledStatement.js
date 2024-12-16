@@ -1,5 +1,5 @@
 /** @import { Expression, LabeledStatement } from 'estree' */
-/** @import { AST, ReactiveStatement, SvelteNode } from '#compiler' */
+/** @import { AST, ReactiveStatement } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import { extract_identifiers, object } from '../../../utils/ast.js';
@@ -11,7 +11,7 @@ import * as w from '../../../warnings.js';
  */
 export function LabeledStatement(node, context) {
 	if (node.label.name === '$') {
-		const parent = /** @type {SvelteNode} */ (context.path.at(-1));
+		const parent = /** @type {AST.SvelteNode} */ (context.path.at(-1));
 
 		const is_reactive_statement =
 			context.state.ast_type === 'instance' && parent.type === 'Program';

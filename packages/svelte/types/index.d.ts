@@ -448,8 +448,24 @@ declare module 'svelte' {
 	}): Exports;
 	/**
 	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
+	 *
+	 * Since 5.13.0, if `options.outro` is `true`, [transitions](https://svelte.dev/docs/svelte/transition) will play before the component is removed from the DOM.
+	 *
+	 * Returns a `Promise` that resolves after transitions have completed if `options.outro` is true, or immediately otherwise (prior to 5.13.0, returns `void`).
+	 *
+	 * ```js
+	 * import { mount, unmount } from 'svelte';
+	 * import App from './App.svelte';
+	 *
+	 * const app = mount(App, { target: document.body });
+	 *
+	 * // later...
+	 * unmount(app, { outro: true });
+	 * ```
 	 * */
-	export function unmount(component: Record<string, any>): void;
+	export function unmount(component: Record<string, any>, options?: {
+		outro?: boolean;
+	} | undefined): Promise<void>;
 	/**
 	 * Returns a promise that resolves once any pending state changes have been applied.
 	 * */
@@ -606,7 +622,7 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
+	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
 	import type { SourceMap } from 'magic-string';
 	import type { Location } from 'locate-character';
 	/**
@@ -632,6 +648,7 @@ declare module 'svelte/compiler' {
 	export function parse(source: string, options: {
 		filename?: string;
 		modern: true;
+		loose?: boolean;
 	}): AST.Root;
 	/**
 	 * The parse function parses a component, returning only its abstract syntax tree.
@@ -643,6 +660,7 @@ declare module 'svelte/compiler' {
 	export function parse(source: string, options?: {
 		filename?: string;
 		modern?: false;
+		loose?: boolean;
 	} | undefined): Record<string, any>;
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
@@ -943,7 +961,7 @@ declare module 'svelte/compiler' {
 			options: SvelteOptions | null;
 			fragment: Fragment;
 			/** The parsed `<style>` element, if exists */
-			css: Css.StyleSheet | null;
+			css: AST.CSS.StyleSheet | null;
 			/** The parsed `<script>` element, if exists */
 			instance: Script | null;
 			/** The parsed `<script module>` element, if exists */
@@ -1262,38 +1280,61 @@ declare module 'svelte/compiler' {
 			content: Program;
 			attributes: Attribute[];
 		}
+
+		export type AttributeLike = Attribute | SpreadAttribute | Directive;
+
+		export type Directive =
+			| AST.AnimateDirective
+			| AST.BindDirective
+			| AST.ClassDirective
+			| AST.LetDirective
+			| AST.OnDirective
+			| AST.StyleDirective
+			| AST.TransitionDirective
+			| AST.UseDirective;
+
+		export type Block =
+			| AST.EachBlock
+			| AST.IfBlock
+			| AST.AwaitBlock
+			| AST.KeyBlock
+			| AST.SnippetBlock;
+
+		export type ElementLike =
+			| AST.Component
+			| AST.TitleElement
+			| AST.SlotElement
+			| AST.RegularElement
+			| AST.SvelteHTML
+			| AST.SvelteBody
+			| AST.SvelteBoundary
+			| AST.SvelteComponent
+			| AST.SvelteDocument
+			| AST.SvelteElement
+			| AST.SvelteFragment
+			| AST.SvelteHead
+			| AST.SvelteOptionsRaw
+			| AST.SvelteSelf
+			| AST.SvelteWindow
+			| AST.SvelteBoundary;
+
+		export type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
+
+		export type TemplateNode =
+			| AST.Root
+			| AST.Text
+			| Tag
+			| ElementLike
+			| AST.Attribute
+			| AST.SpreadAttribute
+			| Directive
+			| AST.Comment
+			| Block;
+
+		export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node;
+
+		export type { _CSS as CSS };
 	}
-
-	type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
-
-	type Directive =
-		| AST.AnimateDirective
-		| AST.BindDirective
-		| AST.ClassDirective
-		| AST.LetDirective
-		| AST.OnDirective
-		| AST.StyleDirective
-		| AST.TransitionDirective
-		| AST.UseDirective;
-
-	type Block = AST.EachBlock | AST.IfBlock | AST.AwaitBlock | AST.KeyBlock | AST.SnippetBlock;
-
-	type ElementLike =
-		| AST.Component
-		| AST.TitleElement
-		| AST.SlotElement
-		| AST.RegularElement
-		| AST.SvelteHTML
-		| AST.SvelteBody
-		| AST.SvelteComponent
-		| AST.SvelteDocument
-		| AST.SvelteElement
-		| AST.SvelteFragment
-		| AST.SvelteHead
-		| AST.SvelteOptionsRaw
-		| AST.SvelteSelf
-		| AST.SvelteWindow
-		| AST.SvelteBoundary;
 	/**
 	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
 	 * For example, it can be used to convert a `<style lang="sass">` block into vanilla CSS.
@@ -1319,7 +1360,17 @@ declare module 'svelte/compiler' {
 	} | undefined): {
 		code: string;
 	};
-	namespace Css {
+	type ICompileDiagnostic = {
+		code: string;
+		message: string;
+		stack?: string;
+		filename?: string;
+		start?: Location;
+		end?: Location;
+		position?: [number, number];
+		frame?: string;
+	};
+	namespace _CSS {
 		export interface BaseNode {
 			start: number;
 			end: number;
@@ -1477,16 +1528,6 @@ declare module 'svelte/compiler' {
 			| SimpleSelector
 			| Declaration;
 	}
-	type ICompileDiagnostic = {
-		code: string;
-		message: string;
-		stack?: string;
-		filename?: string;
-		start?: Location;
-		end?: Location;
-		position?: [number, number];
-		frame?: string;
-	};
 
 	export {};
 }
@@ -2995,6 +3036,25 @@ declare function $bindable<T>(fallback?: T): T;
 declare function $inspect<T extends any[]>(
 	...values: T
 ): { with: (fn: (type: 'init' | 'update', ...values: T) => void) => void };
+
+declare namespace $inspect {
+	/**
+	 * Tracks which reactive state changes caused an effect to re-run. Must be the first
+	 * statement of a function body. Example:
+	 *
+	 * ```svelte
+	 * <script>
+	 *   let count = $state(0);
+	 *
+	 *   $effect(() => {
+	 *     $inspect.trace('my effect');
+	 *
+	 *     count;
+	 *   });
+	 * </script>
+	 */
+	export function trace(name: string): void;
+}
 
 /**
  * Retrieves the `this` reference of the custom element that contains this component. Example:

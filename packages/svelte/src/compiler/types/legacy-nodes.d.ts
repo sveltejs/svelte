@@ -1,4 +1,4 @@
-import type { AST, Css } from '#compiler';
+import type { AST } from '#compiler';
 import type {
 	ArrayExpression,
 	AssignmentExpression,
@@ -260,7 +260,7 @@ export interface LegacyStyle extends BaseNode {
 
 export interface LegacySelector extends BaseNode {
 	type: 'Selector';
-	children: Array<Css.Combinator | Css.SimpleSelector>;
+	children: Array<AST.CSS.Combinator | AST.CSS.SimpleSelector>;
 }
 
 export type LegacyCssNode = LegacyStyle | LegacySelector;
