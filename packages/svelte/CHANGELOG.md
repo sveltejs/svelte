@@ -1,5 +1,11 @@
 # svelte
 
+## 5.14.1
+
+### Patch Changes
+
+- fix: improve unowned derived performance ([#14724](https://github.com/sveltejs/svelte/pull/14724))
+
 ## 5.14.0
 
 ### Minor Changes
