@@ -1,5 +1,6 @@
 /** @import { TemplateNode } from '#client' */
 import { HYDRATION_END, HYDRATION_START, HYDRATION_START_ELSE } from '../../../../constants.js';
+import { PortalKey } from '../../../shared/svelte-portal.js';
 import { block, remove_nodes, render_effect } from '../../reactivity/effects.js';
 import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from '../hydration.js';
 import { get_next_sibling } from '../operations.js';
@@ -44,23 +45,30 @@ export function portal_outlet(node, id) {
  * @returns {void}
  */
 export function portal(target, content) {
-	const is_css_selector = typeof target === 'string';
+	if (target == null) return;
+
+	const is_dom_node = target instanceof Element;
+	if (!is_dom_node && !(target instanceof PortalKey)) {
+		throw new Error(
+			'TODO error code: target can only be a key instantiated with createPortalKey, or a DOM node'
+		);
+	}
+
 	const portal = portals.get(target);
+	if (!is_dom_node && !portal)
+		throw new Error(
+			'TODO error code: No portal found for given target. Make sure portal target exists before referencing it'
+		);
 
 	let previous_hydrating = false;
 	let previous_hydrate_node = null;
 	// TODO right now the portal is rendered before the given anchor. Is that confusing for people and they'd rather have it as
 	// the first child _inside_ the anchor if the anchor is an element?
-	var anchor = is_css_selector ? document.querySelector(target) : portal?.anchor;
-
-	if (!anchor)
-		throw new Error(
-			'TODO error code: No portal found for given target. Make sure portal target exists before referencing it'
-		);
+	var anchor = is_dom_node ? target : portal.anchor;
 
 	if (hydrating) {
 		previous_hydrating = true;
-		if (is_css_selector) {
+		if (is_dom_node) {
 			// These are not SSR'd, so temporarily disable hydration to properly insert them
 			set_hydrating(false);
 		} else {
@@ -81,7 +89,7 @@ export function portal(target, content) {
 	});
 
 	if (previous_hydrating) {
-		if (is_css_selector) {
+		if (is_dom_node) {
 			set_hydrating(true);
 		} else {
 			portal.anchor = hydrate_node; // so that next head block starts from the correct node

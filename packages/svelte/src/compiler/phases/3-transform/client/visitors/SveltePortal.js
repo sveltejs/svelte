@@ -17,13 +17,16 @@ export function SveltePortal(node, context) {
 	context.state.template.push('<!>');
 
 	if (target) {
-		// TODO handle reactive targets? Doesn't really make sense IMHO
-		const value = build_attribute_value(/** @type {AST.Attribute} */ (target).value, context);
+		const { value, has_state } = build_attribute_value(
+			/** @type {AST.Attribute} */ (target).value,
+			context
+		);
 		const body = /** @type {BlockStatement} */ (
 			context.visit(node.fragment, { ...context.state, transform: { ...context.state.transform } })
 		);
+		const portal = b.call('$.portal', value, b.arrow([b.id('$$anchor')], body));
 		context.state.init.push(
-			b.stmt(b.call('$.portal', value.value, b.arrow([b.id('$$anchor')], body)))
+			b.stmt(has_state ? b.call('$.render_effect', b.thunk(portal)) : portal)
 		);
 	} else {
 		// TODO reactive sources? Doesn't really make sense IMHO

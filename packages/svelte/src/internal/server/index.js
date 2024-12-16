@@ -18,6 +18,7 @@ import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
 import { reset_elements } from './dev.js';
+import { PortalKey } from '../shared/svelte-portal.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
@@ -182,7 +183,13 @@ export function portal_outlet(payload, id) {
 export function portal(payload, target, content) {
 	payload.out += EMPTY_COMMENT;
 
-	if (typeof target === 'string') return; // targets a CSS selector - not possible in SSR, ignore
+	if (!target) return; // probably targets a DOM node - not possible in SSR, ignore
+
+	if (!(target instanceof PortalKey)) {
+		throw new Error(
+			'TODO error code: target can only be a key instantiated with createPortalKey, or a DOM node'
+		);
+	}
 
 	const portal = payload.portals.get(target);
 	if (!portal)
