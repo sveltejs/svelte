@@ -62,9 +62,19 @@ export function portal(target, content) {
 
 	let previous_hydrating = false;
 	let previous_hydrate_node = null;
-	// TODO right now the portal is rendered before the given anchor. Is that confusing for people and they'd rather have it as
-	// the first child _inside_ the anchor if the anchor is an element?
-	var anchor = is_dom_node ? target : portal.anchor;
+
+	/** @type {TemplateNode} */
+	var anchor;
+	if (is_dom_node) {
+		// Our rendering logic always prepends elements to the anchor. To not confuse users,
+		// adjust the anchor such that the content is portaled _into_ the target.
+		anchor = /** @type {TemplateNode} */ (/** @type {Element} */ (target).firstChild);
+		if (!anchor) {
+			target.appendChild((anchor = document.createTextNode('')));
+		}
+	} else {
+		anchor = portal.anchor;
+	}
 
 	if (hydrating) {
 		previous_hydrating = true;
