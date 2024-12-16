@@ -39,6 +39,7 @@ import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 import { SvelteBoundary } from './visitors/SvelteBoundary.js';
+import { SveltePortal } from './visitors/SveltePortal.js';
 
 /** @type {Visitors} */
 const global_visitors = {
@@ -77,7 +78,8 @@ const template_visitors = {
 	SvelteHead,
 	SvelteSelf,
 	TitleElement,
-	SvelteBoundary
+	SvelteBoundary,
+	SveltePortal
 };
 
 /**

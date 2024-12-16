@@ -14,6 +14,7 @@ export interface Component {
 export interface Payload {
 	out: string;
 	css: Set<{ hash: string; code: string }>;
+	portals: Map<any, { idx: number; content: string[] }>;
 	head: {
 		title: string;
 		out: string;

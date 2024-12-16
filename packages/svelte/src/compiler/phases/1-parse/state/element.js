@@ -45,7 +45,8 @@ const meta_tags = new Map([
 	['svelte:component', 'SvelteComponent'],
 	['svelte:self', 'SvelteSelf'],
 	['svelte:fragment', 'SvelteFragment'],
-	['svelte:boundary', 'SvelteBoundary']
+	['svelte:boundary', 'SvelteBoundary'],
+	['svelte:portal', 'SveltePortal']
 ]);
 
 /** @param {Parser} parser */

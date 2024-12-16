@@ -24,6 +24,7 @@ export { sanitize_slots, slot } from './dom/blocks/slot.js';
 export { snippet, wrap_snippet } from './dom/blocks/snippet.js';
 export { component } from './dom/blocks/svelte-component.js';
 export { element } from './dom/blocks/svelte-element.js';
+export { portal, portal_outlet } from './dom/blocks/svelte-portal.js';
 export { head } from './dom/blocks/svelte-head.js';
 export { append_styles } from './dom/css.js';
 export { action } from './dom/elements/actions.js';

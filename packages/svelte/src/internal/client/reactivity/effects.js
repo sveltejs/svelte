@@ -446,18 +446,7 @@ export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
 	if ((remove_dom || (effect.f & HEAD_EFFECT) !== 0) && effect.nodes_start !== null) {
-		/** @type {TemplateNode | null} */
-		var node = effect.nodes_start;
-		var end = effect.nodes_end;
-
-		while (node !== null) {
-			/** @type {TemplateNode | null} */
-			var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
-
-			node.remove();
-			node = next;
-		}
-
+		remove_nodes(effect);
 		removed = true;
 	}
 
@@ -498,6 +487,22 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.nodes_start =
 		effect.nodes_end =
 			null;
+}
+
+/**
+ * @param {Effect} effect
+ */
+export function remove_nodes(effect) {
+	var node = /** @type {TemplateNode | null} */ (effect.nodes_start);
+	var end = effect.nodes_end;
+
+	while (node !== null) {
+		/** @type {TemplateNode | null} */
+		var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
+
+		node.remove();
+		node = next;
+	}
 }
 
 /**

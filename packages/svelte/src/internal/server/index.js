@@ -28,10 +28,11 @@ const INVALID_ATTR_NAME_CHAR_REGEX =
  * @param {Payload} to_copy
  * @returns {Payload}
  */
-export function copy_payload({ out, css, head }) {
+export function copy_payload({ out, css, head, portals }) {
 	return {
 		out,
 		css: new Set(css),
+		portals: new Map(portals),
 		head: {
 			title: head.title,
 			out: head.out
@@ -93,7 +94,7 @@ export let on_destroy = [];
  */
 export function render(component, options = {}) {
 	/** @type {Payload} */
-	const payload = { out: '', css: new Set(), head: { title: '', out: '' } };
+	const payload = { out: '', css: new Set(), portals: new Map(), head: { title: '', out: '' } };
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
@@ -126,6 +127,16 @@ export function render(component, options = {}) {
 	for (const cleanup of on_destroy) cleanup();
 	on_destroy = prev_on_destroy;
 
+	let out = payload.out;
+
+	// Fill portals
+	let offset = 0;
+	for (const portal of payload.portals.values()) {
+		out =
+			out.slice(0, portal.idx + offset) + portal.content.join('') + out.slice(portal.idx + offset);
+		offset += portal.content.length;
+	}
+
 	let head = payload.head.out + payload.head.title;
 
 	for (const { hash, code } of payload.css) {
@@ -134,8 +145,8 @@ export function render(component, options = {}) {
 
 	return {
 		head,
-		html: payload.out,
-		body: payload.out
+		html: out,
+		body: out
 	};
 }
 
@@ -149,6 +160,38 @@ export function head(payload, fn) {
 	head_payload.out += BLOCK_OPEN;
 	fn(head_payload);
 	head_payload.out += BLOCK_CLOSE;
+}
+
+/**
+ * @param {Payload} payload
+ * @param {any} id
+ * @returns {void}
+ */
+export function portal_outlet(payload, id) {
+	payload.out += BLOCK_OPEN;
+	payload.portals.set(id, { idx: payload.out.length, content: [] });
+	payload.out += BLOCK_CLOSE;
+}
+
+/**
+ * @param {Payload} payload
+ * @param {any} target
+ * @param {(p: Payload) => void} content
+ * @returns {void}
+ */
+export function portal(payload, target, content) {
+	const portal = payload.portals.get(target);
+	if (!portal)
+		throw new Error(
+			'TODO error code: No portal found for given target. Make sure portal target exists before referencing it'
+		);
+
+	/** @type {Payload} */
+	const tmp_payload = { ...payload, out: '' };
+	content(tmp_payload);
+	tmp_payload.out += EMPTY_COMMENT;
+	portal.content.push(tmp_payload.out);
+	payload.out += EMPTY_COMMENT;
 }
 
 /**

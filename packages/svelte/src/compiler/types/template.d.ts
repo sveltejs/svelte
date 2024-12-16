@@ -370,6 +370,11 @@ export namespace AST {
 		name: 'svelte:boundary';
 	}
 
+	export interface SveltePortal extends BaseElement {
+		type: 'SveltePortal';
+		name: 'svelte:portal';
+	}
+
 	export interface SvelteHead extends BaseElement {
 		type: 'SvelteHead';
 		name: 'svelte:head';
@@ -535,7 +540,8 @@ export namespace AST {
 		| AST.SvelteOptionsRaw
 		| AST.SvelteSelf
 		| AST.SvelteWindow
-		| AST.SvelteBoundary;
+		| AST.SvelteBoundary
+		| AST.SveltePortal;
 
 	export type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
 
