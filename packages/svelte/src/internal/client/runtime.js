@@ -231,8 +231,8 @@ export function check_dirtiness(reaction) {
 		}
 
 		// Unowned signals should never be marked as clean unless they
-		// are used within an active_effect
-		if (!is_unowned || active_effect !== null) {
+		// are used within an active_effect without skip_reaction
+		if (!is_unowned || (active_effect !== null && !skip_reaction)) {
 			set_signal_status(reaction, CLEAN);
 		}
 	}
