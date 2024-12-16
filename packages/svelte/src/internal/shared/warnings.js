@@ -41,9 +41,8 @@ ${properties}`
  */
 export function svelte_html_duplicate_attribute(name) {
 	if (DEV) {
-		console.warn(`%c[svelte] svelte_html_duplicate_attribute\n%cDuplicate attribute '${name}' across multiple \`<svelte:html>\` blocks, the latest value will be used.`, bold, normal);
+		console.warn(`%c[svelte] svelte_html_duplicate_attribute\n%cDuplicate attribute '${name}' across multiple \`<svelte:html>\` blocks, the latest value will be used.\nhttps://svelte.dev/e/svelte_html_duplicate_attribute`, bold, normal);
 	} else {
-		// TODO print a link to the documentation
-		console.warn("svelte_html_duplicate_attribute");
+		console.warn(`https://svelte.dev/e/svelte_html_duplicate_attribute`);
 	}
 }
