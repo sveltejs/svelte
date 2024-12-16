@@ -1,7 +1,6 @@
 /** @import { TemplateNode } from '#client' */
 import { hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { DEV } from 'esm-env';
-import { init_array_prototype_warnings } from '../dev/equality.js';
 import { get_descriptor } from '../../shared/utils.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
@@ -54,8 +53,6 @@ export function init_operations() {
 	if (DEV) {
 		// @ts-expect-error
 		element_prototype.__svelte_meta = null;
-
-		init_array_prototype_warnings();
 	}
 }
 
