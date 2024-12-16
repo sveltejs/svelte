@@ -1,5 +1,5 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement, Super } from 'estree' */
-/** @import { AST, SvelteNode } from '#compiler' */
+/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Statement, Super } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
@@ -12,7 +12,7 @@ import { locator } from '../../../../../state.js';
 
 /**
  * @param {Array<AST.Text | AST.ExpressionTag>} values
- * @param {(node: SvelteNode, state: any) => any} visit
+ * @param {(node: AST.SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
  * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
  */
@@ -143,11 +143,16 @@ export function build_update_assignment(state, id, init, value, update) {
 
 /**
  * Serializes `bind:this` for components and elements.
- * @param {Identifier | MemberExpression} expression
+ * @param {Identifier | MemberExpression | SequenceExpression} expression
  * @param {Expression} value
- * @param {import('zimmerframe').Context<SvelteNode, ComponentClientTransformState>} context
+ * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentClientTransformState>} context
  */
 export function build_bind_this(expression, value, { state, visit }) {
+	if (expression.type === 'SequenceExpression') {
+		const [get, set] = /** @type {SequenceExpression} */ (visit(expression)).expressions;
+		return b.call('$.bind_this', value, set, get);
+	}
+
 	/** @type {Identifier[]} */
 	const ids = [];
 
@@ -224,6 +229,9 @@ export function build_bind_this(expression, value, { state, visit }) {
  * @param {MemberExpression} expression
  */
 export function validate_binding(state, binding, expression) {
+	if (binding.expression.type === 'SequenceExpression') {
+		return;
+	}
 	// If we are referencing a $store.foo then we don't need to add validation
 	const left = object(binding.expression);
 	const left_binding = left && state.scope.get(left.name);

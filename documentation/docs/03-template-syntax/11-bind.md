@@ -12,9 +12,33 @@ The general syntax is `bind:property={expression}`, where `expression` is an _lv
 <input bind:value />
 ```
 
+
 Svelte creates an event listener that updates the bound value. If an element already has a listener for the same event, that listener will be fired before the bound value is updated.
 
 Most bindings are _two-way_, meaning that changes to the value will affect the element and vice versa. A few bindings are _readonly_, meaning that changing their value will have no effect on the element.
+
+## Function bindings
+
+You can also use `bind:property={get, set}`, where `get` and `set` are functions, allowing you to perform validation and transformation:
+
+```svelte
+<input bind:value={
+	() => value,
+	(v) => value = v.toLowerCase()}
+/>
+```
+
+In the case of readonly bindings like [dimension bindings](#Dimensions), the `get` value should be `null`:
+
+```svelte
+<div
+	bind:clientWidth={null, redraw}
+	bind:clientHeight={null, redraw}
+>...</div>
+```
+
+> [!NOTE]
+> Function bindings are available in Svelte 5.9.0 and newer.
 
 ## `<input bind:value>`
 

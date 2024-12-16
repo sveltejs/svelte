@@ -16,16 +16,13 @@ import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
 import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
-import { is_boolean_attribute, is_void } from '../../utils.js';
+import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
 import { reset_elements } from './dev.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 const INVALID_ATTR_NAME_CHAR_REGEX =
 	/[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
-
-/** List of elements that require raw contents and should not have SSR comments put in them */
-const RAW_TEXT_ELEMENTS = ['textarea', 'script', 'style', 'title'];
 
 /**
  * @param {Payload} to_copy
@@ -64,13 +61,13 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
 	payload.out += '<!---->';
 
 	if (tag) {
-		payload.out += `<${tag} `;
+		payload.out += `<${tag}`;
 		attributes_fn();
 		payload.out += `>`;
 
 		if (!is_void(tag)) {
 			children_fn();
-			if (!RAW_TEXT_ELEMENTS.includes(tag)) {
+			if (!is_raw_text_element(tag)) {
 				payload.out += EMPTY_COMMENT;
 			}
 			payload.out += `</${tag}>`;

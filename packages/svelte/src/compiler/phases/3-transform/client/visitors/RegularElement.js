@@ -450,6 +450,11 @@ function setup_select_synchronization(value_binding, context) {
 	if (context.state.analysis.runes) return;
 
 	let bound = value_binding.expression;
+
+	if (bound.type === 'SequenceExpression') {
+		return;
+	}
+
 	while (bound.type === 'MemberExpression') {
 		bound = /** @type {Identifier | MemberExpression} */ (bound.object);
 	}
@@ -484,10 +489,7 @@ function setup_select_synchronization(value_binding, context) {
 			b.call(
 				'$.template_effect',
 				b.thunk(
-					b.block([
-						b.stmt(/** @type {Expression} */ (context.visit(value_binding.expression))),
-						b.stmt(invalidator)
-					])
+					b.block([b.stmt(/** @type {Expression} */ (context.visit(bound))), b.stmt(invalidator)])
 				)
 			)
 		)

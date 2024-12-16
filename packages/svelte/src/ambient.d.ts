@@ -371,6 +371,25 @@ declare function $inspect<T extends any[]>(
 	...values: T
 ): { with: (fn: (type: 'init' | 'update', ...values: T) => void) => void };
 
+declare namespace $inspect {
+	/**
+	 * Tracks which reactive state changes caused an effect to re-run. Must be the first
+	 * statement of a function body. Example:
+	 *
+	 * ```svelte
+	 * <script>
+	 *   let count = $state(0);
+	 *
+	 *   $effect(() => {
+	 *     $inspect.trace('my effect');
+	 *
+	 *     count;
+	 *   });
+	 * </script>
+	 */
+	export function trace(name: string): void;
+}
+
 /**
  * Retrieves the `this` reference of the custom element that contains this component. Example:
  *

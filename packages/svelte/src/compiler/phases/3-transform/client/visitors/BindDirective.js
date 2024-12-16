@@ -1,5 +1,5 @@
-/** @import { CallExpression, Expression, MemberExpression } from 'estree' */
-/** @import { AST, SvelteNode } from '#compiler' */
+/** @import { CallExpression, Expression, Pattern } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
@@ -13,41 +13,50 @@ import { build_bind_this, validate_binding } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function BindDirective(node, context) {
-	const expression = node.expression;
+	const expression = /** @type {Expression} */ (context.visit(node.expression));
 	const property = binding_properties[node.name];
 
-	const parent = /** @type {SvelteNode} */ (context.path.at(-1));
+	const parent = /** @type {AST.SvelteNode} */ (context.path.at(-1));
 
-	if (
-		dev &&
-		context.state.analysis.runes &&
-		expression.type === 'MemberExpression' &&
-		(node.name !== 'this' ||
-			context.path.some(
-				({ type }) =>
-					type === 'IfBlock' || type === 'EachBlock' || type === 'AwaitBlock' || type === 'KeyBlock'
-			)) &&
-		!is_ignored(node, 'binding_property_non_reactive')
-	) {
-		validate_binding(
-			context.state,
-			node,
-			/**@type {MemberExpression} */ (context.visit(expression))
+	let get, set;
+
+	if (expression.type === 'SequenceExpression') {
+		[get, set] = expression.expressions;
+	} else {
+		if (
+			dev &&
+			context.state.analysis.runes &&
+			expression.type === 'MemberExpression' &&
+			(node.name !== 'this' ||
+				context.path.some(
+					({ type }) =>
+						type === 'IfBlock' ||
+						type === 'EachBlock' ||
+						type === 'AwaitBlock' ||
+						type === 'KeyBlock'
+				)) &&
+			!is_ignored(node, 'binding_property_non_reactive')
+		) {
+			validate_binding(context.state, node, expression);
+		}
+
+		get = b.thunk(expression);
+
+		/** @type {Expression | undefined} */
+		set = b.unthunk(
+			b.arrow(
+				[b.id('$$value')],
+				/** @type {Expression} */ (
+					context.visit(
+						b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value'))
+					)
+				)
+			)
 		);
-	}
 
-	const get = b.thunk(/** @type {Expression} */ (context.visit(expression)));
-
-	/** @type {Expression | undefined} */
-	let set = b.unthunk(
-		b.arrow(
-			[b.id('$$value')],
-			/** @type {Expression} */ (context.visit(b.assignment('=', expression, b.id('$$value'))))
-		)
-	);
-
-	if (get === set) {
-		set = undefined;
+		if (get === set) {
+			set = undefined;
+		}
 	}
 
 	/** @type {CallExpression} */
@@ -162,7 +171,7 @@ export function BindDirective(node, context) {
 				break;
 
 			case 'this':
-				call = build_bind_this(expression, context.state.node, context);
+				call = build_bind_this(node.expression, context.state.node, context);
 				break;
 
 			case 'textContent':
@@ -213,10 +222,7 @@ export function BindDirective(node, context) {
 
 					if (value !== undefined) {
 						group_getter = b.thunk(
-							b.block([
-								b.stmt(build_attribute_value(value, context).value),
-								b.return(/** @type {Expression} */ (context.visit(expression)))
-							])
+							b.block([b.stmt(build_attribute_value(value, context).value), b.return(expression)])
 						);
 					}
 				}

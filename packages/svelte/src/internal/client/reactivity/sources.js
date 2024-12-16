@@ -33,6 +33,7 @@ import {
 } from '../constants.js';
 import * as e from '../errors.js';
 import { legacy_mode_flag } from '../../flags/index.js';
+import { get_stack } from '../dev/tracing.js';
 
 export let inspect_effects = new Set();
 
@@ -46,16 +47,25 @@ export function set_inspect_effects(v) {
 /**
  * @template V
  * @param {V} v
+ * @param {Error | null} [stack]
  * @returns {Source<V>}
  */
-export function source(v) {
-	return {
+export function source(v, stack) {
+	/** @type {Value} */
+	var signal = {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
 		v,
 		reactions: null,
 		equals,
 		version: 0
 	};
+
+	if (DEV) {
+		signal.created = stack ?? get_stack('CreatedAt');
+		signal.debug = null;
+	}
+
+	return signal;
 }
 
 /**
@@ -159,6 +169,10 @@ export function internal_set(source, value) {
 	if (!source.equals(value)) {
 		source.v = value;
 		source.version = increment_version();
+
+		if (DEV) {
+			source.updated = get_stack('UpdatedAt');
+		}
 
 		mark_reactions(source, DIRTY);
 
