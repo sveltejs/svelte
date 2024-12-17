@@ -195,6 +195,10 @@ export function spread_attributes(attrs, classes, styles, flags = 0) {
 			: style_object_to_string(styles);
 	}
 
+	if (attrs.class) {
+		attrs.class = clsx(attrs.class);
+	}
+
 	if (classes) {
 		const classlist = attrs.class ? [attrs.class] : [];
 
