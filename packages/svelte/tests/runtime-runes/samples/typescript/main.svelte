@@ -24,7 +24,7 @@
 
 	declare module 'foobar' {}
 	namespace SomeNamespace {
-		export type Foo = true
+		export type Foo = true;
 	}
 
 	export function overload(a: boolean): boolean;
