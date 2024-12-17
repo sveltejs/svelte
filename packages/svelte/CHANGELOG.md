@@ -1,5 +1,13 @@
 # svelte
 
+## 5.14.2
+
+### Patch Changes
+
+- fix: correctly highlight first rerun of `$inspect.trace` ([#14734](https://github.com/sveltejs/svelte/pull/14734))
+
+- chore: more loose parser improvements ([#14733](https://github.com/sveltejs/svelte/pull/14733))
+
 ## 5.14.1
 
 ### Patch Changes
