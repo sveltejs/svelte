@@ -2,7 +2,7 @@
 	"html": {
 		"type": "Fragment",
 		"start": 0,
-		"end": 164,
+		"end": 217,
 		"children": [
 			{
 				"type": "Element",
@@ -234,6 +234,78 @@
 					"type": "Identifier",
 					"start": 154,
 					"end": 163,
+					"name": ""
+				}
+			},
+			{
+				"type": "Text",
+				"start": 164,
+				"end": 166,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "IfBlock",
+				"start": 166,
+				"end": 179,
+				"expression": {
+					"type": "Identifier",
+					"start": 171,
+					"end": 173,
+					"name": ""
+				},
+				"children": []
+			},
+			{
+				"type": "Text",
+				"start": 179,
+				"end": 181,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "EachBlock",
+				"start": 181,
+				"end": 217,
+				"children": [],
+				"context": {
+					"type": "Identifier",
+					"name": "item",
+					"start": 197,
+					"loc": {
+						"start": {
+							"line": 15,
+							"column": 16,
+							"character": 197
+						},
+						"end": {
+							"line": 15,
+							"column": 20,
+							"character": 201
+						}
+					},
+					"end": 201
+				},
+				"expression": {
+					"type": "Identifier",
+					"start": 188,
+					"end": 193,
+					"loc": {
+						"start": {
+							"line": 15,
+							"column": 7
+						},
+						"end": {
+							"line": 15,
+							"column": 12
+						}
+					},
+					"name": "array"
+				},
+				"key": {
+					"type": "Identifier",
+					"start": 203,
+					"end": 208,
 					"name": ""
 				}
 			}

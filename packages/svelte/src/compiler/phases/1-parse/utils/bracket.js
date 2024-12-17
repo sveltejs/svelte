@@ -4,6 +4,8 @@ const SQUARE_BRACKET_OPEN = '['.charCodeAt(0);
 const SQUARE_BRACKET_CLOSE = ']'.charCodeAt(0);
 const CURLY_BRACKET_OPEN = '{'.charCodeAt(0);
 const CURLY_BRACKET_CLOSE = '}'.charCodeAt(0);
+const PARENTHESES_OPEN = '('.charCodeAt(0);
+const PARENTHESES_CLOSE = ')'.charCodeAt(0);
 
 /** @param {number} code */
 export function is_bracket_open(code) {
@@ -33,6 +35,9 @@ export function get_bracket_close(open) {
 	}
 	if (open === CURLY_BRACKET_OPEN) {
 		return CURLY_BRACKET_CLOSE;
+	}
+	if (open === PARENTHESES_OPEN) {
+		return PARENTHESES_CLOSE;
 	}
 }
 

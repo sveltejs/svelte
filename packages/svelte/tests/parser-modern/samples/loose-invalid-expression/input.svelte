@@ -9,3 +9,7 @@
 
 asd{a.}asd
 {foo[bar.]}
+
+{#if x.}{/if}
+
+{#each array as item (item.)}{/each}

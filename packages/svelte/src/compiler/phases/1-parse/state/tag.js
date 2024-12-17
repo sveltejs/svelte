@@ -174,7 +174,7 @@ function open(parser) {
 		if (parser.eat('(')) {
 			parser.allow_whitespace();
 
-			key = read_expression(parser);
+			key = read_expression(parser, '(');
 			parser.allow_whitespace();
 			parser.eat(')', true);
 			parser.allow_whitespace();
