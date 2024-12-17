@@ -15,3 +15,9 @@ asd{a.}asd
 {#each array as item (item.)}{/each}
 
 {#each obj. as item}{/each}
+
+{#await x.}{/await}
+
+{#await x. then y}{/await}
+
+{#await x. catch y}{/await}
