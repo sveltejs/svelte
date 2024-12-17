@@ -23,8 +23,8 @@ export function svelte_html(get_attributes) {
 
 		for (const name in attributes) {
 			const current = (current_setters[name] ??= []);
-			const idx = current.findIndex(([owner]) => owner === own);
-			const old = idx === -1 ? null : current.splice(idx, 1)[0][1];
+			const index = current.findIndex(([owner]) => owner === own);
+			const old = index === -1 ? null : current.splice(index, 1)[0][1];
 
 			let value = attributes[name];
 			current.push([own, value]);
