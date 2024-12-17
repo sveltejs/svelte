@@ -483,7 +483,7 @@ export namespace AST {
 			/** May be set if this is an event attribute */
 			delegated: null | DelegatedEvent;
 			/** May be `true` if this is a `class` attribute that needs `clsx` */
-			is_dynamic_class: boolean;
+			needs_clsx: boolean;
 		};
 	}
 

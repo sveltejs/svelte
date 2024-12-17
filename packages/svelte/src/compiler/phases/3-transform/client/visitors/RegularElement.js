@@ -553,7 +553,7 @@ function build_element_attribute_update_assignment(
 	let update;
 
 	if (name === 'class') {
-		if (attribute.metadata.is_dynamic_class) {
+		if (attribute.metadata.needs_clsx) {
 			value = b.call('$.clsx', value);
 		}
 
@@ -571,7 +571,7 @@ function build_element_attribute_update_assignment(
 				is_svg ? '$.set_svg_class' : is_mathml ? '$.set_mathml_class' : '$.set_class',
 				node_id,
 				value,
-				attribute.metadata.is_dynamic_class ? b.literal(context.state.analysis.css.hash) : undefined
+				attribute.metadata.needs_clsx ? b.literal(context.state.analysis.css.hash) : undefined
 			)
 		);
 	} else if (name === 'value') {

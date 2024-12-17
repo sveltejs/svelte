@@ -1,4 +1,3 @@
-export { clsx } from 'clsx';
 export { FILENAME, HMR, NAMESPACE_SVG } from '../../constants.js';
 export { assign, assign_and, assign_or, assign_nullish } from './dev/assign.js';
 export { cleanup_styles } from './dev/css.js';
@@ -161,7 +160,7 @@ export {
 	$window as window,
 	$document as document
 } from './dom/operations.js';
-export { attr } from '../shared/attributes.js';
+export { attr, clsx } from '../shared/attributes.js';
 export { snapshot } from '../shared/clone.js';
 export { noop, fallback } from '../shared/utils.js';
 export {

@@ -87,16 +87,22 @@ export function build_element_attributes(node, context) {
 				if (attribute.name === 'class') {
 					class_index = attributes.length;
 
-					if (attribute.metadata.is_dynamic_class) {
+					if (attribute.metadata.needs_clsx) {
+						const clsx_value = b.call(
+							'$.clsx',
+							/** @type {AST.ExpressionTag} */ (attribute.value).expression
+						);
 						attributes.push({
 							...attribute,
 							value: {
 								.../** @type {AST.ExpressionTag} */ (attribute.value),
-								expression: b.call(
-									'$.clsx',
-									/** @type {AST.ExpressionTag} */ (attribute.value).expression,
-									b.literal(context.state.analysis.css.hash)
-								)
+								expression: context.state.analysis.css.hash
+									? b.binary(
+											'+',
+											b.binary('+', clsx_value, b.literal(' ')),
+											b.literal(context.state.analysis.css.hash)
+										)
+									: clsx_value
 							}
 						});
 					} else {

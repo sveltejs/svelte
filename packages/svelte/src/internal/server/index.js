@@ -1,9 +1,8 @@
 /** @import { ComponentType, SvelteComponent } from 'svelte' */
 /** @import { Component, Payload, RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
-export { clsx } from 'clsx';
 export { FILENAME, HMR } from '../../constants.js';
-import { attr } from '../shared/attributes.js';
+import { attr, clsx } from '../shared/attributes.js';
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
@@ -523,7 +522,7 @@ export function once(get_value) {
 	};
 }
 
-export { attr };
+export { attr, clsx };
 
 export { html } from './blocks/html.js';
 
