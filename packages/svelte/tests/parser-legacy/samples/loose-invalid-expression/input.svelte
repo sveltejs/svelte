@@ -13,3 +13,5 @@ asd{a.}asd
 {#if x.}{/if}
 
 {#each array as item (item.)}{/each}
+
+{#each obj. as item}{/each}

@@ -180,7 +180,20 @@ function open(parser) {
 			parser.allow_whitespace();
 		}
 
-		parser.eat('}', true);
+		const matches = parser.eat('}', true, false);
+
+		// Parser may have read the `as` as part of the expression (e.g. in `{#each foo. as x}`)
+		if (!matches && parser.template.slice(parser.index - 4, parser.index) === ' as ') {
+			const prev_index = parser.index;
+			context = read_pattern(parser);
+			parser.eat('}', true);
+			expression = {
+				type: 'Identifier',
+				name: '',
+				start: expression.start,
+				end: prev_index - 4
+			};
+		}
 
 		/** @type {AST.EachBlock} */
 		const block = parser.append({

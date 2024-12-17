@@ -2,7 +2,7 @@
 	"css": null,
 	"js": [],
 	"start": 0,
-	"end": 217,
+	"end": 246,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
@@ -326,6 +326,46 @@
 					"start": 203,
 					"end": 208,
 					"name": ""
+				}
+			},
+			{
+				"type": "Text",
+				"start": 217,
+				"end": 219,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "EachBlock",
+				"start": 219,
+				"end": 246,
+				"expression": {
+					"type": "Identifier",
+					"name": "",
+					"start": 226,
+					"end": 230
+				},
+				"body": {
+					"type": "Fragment",
+					"nodes": []
+				},
+				"context": {
+					"type": "Identifier",
+					"name": "item",
+					"start": 234,
+					"loc": {
+						"start": {
+							"line": 17,
+							"column": 15,
+							"character": 234
+						},
+						"end": {
+							"line": 17,
+							"column": 19,
+							"character": 238
+						}
+					},
+					"end": 238
 				}
 			}
 		]
