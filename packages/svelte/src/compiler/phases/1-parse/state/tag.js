@@ -174,13 +174,30 @@ function open(parser) {
 		if (parser.eat('(')) {
 			parser.allow_whitespace();
 
-			key = read_expression(parser);
+			key = read_expression(parser, '(');
 			parser.allow_whitespace();
 			parser.eat(')', true);
 			parser.allow_whitespace();
 		}
 
-		parser.eat('}', true);
+		const matches = parser.eat('}', true, false);
+
+		if (!matches) {
+			// Parser may have read the `as` as part of the expression (e.g. in `{#each foo. as x}`)
+			if (parser.template.slice(parser.index - 4, parser.index) === ' as ') {
+				const prev_index = parser.index;
+				context = read_pattern(parser);
+				parser.eat('}', true);
+				expression = {
+					type: 'Identifier',
+					name: '',
+					start: expression.start,
+					end: prev_index - 4
+				};
+			} else {
+				parser.eat('}', true); // rerun to produce the parser error
+			}
+		}
 
 		/** @type {AST.EachBlock} */
 		const block = parser.append({
@@ -246,7 +263,39 @@ function open(parser) {
 			parser.fragments.push(block.pending);
 		}
 
-		parser.eat('}', true);
+		const matches = parser.eat('}', true, false);
+
+		// Parser may have read the `then/catch` as part of the expression (e.g. in `{#await foo. then x}`)
+		if (!matches) {
+			if (parser.template.slice(parser.index - 6, parser.index) === ' then ') {
+				const prev_index = parser.index;
+				block.value = read_pattern(parser);
+				parser.eat('}', true);
+				block.expression = {
+					type: 'Identifier',
+					name: '',
+					start: expression.start,
+					end: prev_index - 6
+				};
+				block.then = block.pending;
+				block.pending = null;
+			} else if (parser.template.slice(parser.index - 7, parser.index) === ' catch ') {
+				const prev_index = parser.index;
+				block.error = read_pattern(parser);
+				parser.eat('}', true);
+				block.expression = {
+					type: 'Identifier',
+					name: '',
+					start: expression.start,
+					end: prev_index - 7
+				};
+				block.catch = block.pending;
+				block.pending = null;
+			} else {
+				parser.eat('}', true); // rerun to produce the parser error
+			}
+		}
+
 		parser.stack.push(block);
 
 		return;

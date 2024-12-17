@@ -123,8 +123,11 @@ export default function element(parser) {
 	}
 
 	if (!regex_valid_element_name.test(name) && !regex_valid_component_name.test(name)) {
-		const bounds = { start: start + 1, end: start + 1 + name.length };
-		e.tag_invalid_name(bounds);
+		// <div. -> in the middle of typing -> allow in loose mode
+		if (!parser.loose || !name.endsWith('.')) {
+			const bounds = { start: start + 1, end: start + 1 + name.length };
+			e.tag_invalid_name(bounds);
+		}
 	}
 
 	if (root_only_meta_tags.has(name)) {
@@ -141,7 +144,7 @@ export default function element(parser) {
 
 	const type = meta_tags.has(name)
 		? meta_tags.get(name)
-		: regex_valid_component_name.test(name)
+		: regex_valid_component_name.test(name) || (parser.loose && name.endsWith('.'))
 			? 'Component'
 			: name === 'title' && parent_is_head(parser.stack)
 				? 'TitleElement'

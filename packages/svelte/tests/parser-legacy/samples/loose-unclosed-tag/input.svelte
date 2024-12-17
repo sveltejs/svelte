@@ -10,6 +10,14 @@
 	<span
 </div>
 
+<div>
+	<Comp.
+</div>
+
+<div>
+	<comp.
+</div>
+
 {#if foo}
 	<div>
 {/if}
