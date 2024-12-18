@@ -12,13 +12,17 @@ import { visit_event_attribute } from './shared/events.js';
  * @param {ComponentContext} context
  */
 export function SvelteHTML(element, context) {
+	const event_context = {
+		...context,
+		state: { ...context.state, node: b.id('$.document.documentElement') }
+	};
 	/** @type {Property[]} */
 	const attributes = [];
 
 	for (const attribute of element.attributes) {
 		if (attribute.type === 'Attribute') {
 			if (is_event_attribute(attribute)) {
-				visit_event_attribute(attribute, context);
+				visit_event_attribute(attribute, event_context);
 			} else {
 				const name = normalize_attribute(attribute.name);
 				const { value } = build_attribute_value(attribute.value, context);

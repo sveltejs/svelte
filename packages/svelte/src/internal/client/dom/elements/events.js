@@ -117,8 +117,14 @@ export function event(event_name, dom, handler, capture, passive) {
 	var options = { capture, passive };
 	var target_handler = create_event(event_name, dom, handler, options);
 
-	// @ts-ignore
-	if (dom === document.body || dom === window || dom === document) {
+	if (
+		// @ts-ignore
+		dom === window ||
+		// @ts-ignore
+		dom === document ||
+		dom === document.body ||
+		dom === document.documentElement
+	) {
 		teardown(() => {
 			dom.removeEventListener(event_name, target_handler, options);
 		});
