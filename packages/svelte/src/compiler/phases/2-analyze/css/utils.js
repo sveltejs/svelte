@@ -4,14 +4,37 @@ const UNKNOWN = {};
 
 /**
  * @param {Node} node
+ * @param {boolean} is_class
  * @param {Set<any>} set
  */
-function gather_possible_values(node, set) {
+function gather_possible_values(node, is_class, set) {
 	if (node.type === 'Literal') {
 		set.add(String(node.value));
 	} else if (node.type === 'ConditionalExpression') {
-		gather_possible_values(node.consequent, set);
-		gather_possible_values(node.alternate, set);
+		gather_possible_values(node.consequent, is_class, set);
+		gather_possible_values(node.alternate, is_class, set);
+	} else if (is_class && node.type === 'ArrayExpression') {
+		for (const entry of node.elements) {
+			if (entry) {
+				gather_possible_values(entry, is_class, set);
+			} else {
+				set.add(UNKNOWN);
+			}
+		}
+	} else if (is_class && node.type === 'ObjectExpression') {
+		for (const property of node.properties) {
+			if (
+				property.type === 'Property' &&
+				!property.computed &&
+				(property.key.type === 'Identifier' || property.key.type === 'Literal')
+			) {
+				set.add(
+					property.key.type === 'Identifier' ? property.key.name : String(property.key.value)
+				);
+			} else {
+				set.add(UNKNOWN);
+			}
+		}
 	} else {
 		set.add(UNKNOWN);
 	}
@@ -19,15 +42,16 @@ function gather_possible_values(node, set) {
 
 /**
  * @param {AST.Text | AST.ExpressionTag} chunk
+ * @param {boolean} is_class
  * @returns {Set<string> | null}
  */
-export function get_possible_values(chunk) {
+export function get_possible_values(chunk, is_class) {
 	const values = new Set();
 
 	if (chunk.type === 'Text') {
 		values.add(chunk.data);
 	} else {
-		gather_possible_values(chunk.expression, values);
+		gather_possible_values(chunk.expression, is_class, values);
 	}
 
 	if (values.has(UNKNOWN)) return null;
