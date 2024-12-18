@@ -11,8 +11,13 @@ export function ExpressionStatement(node, context) {
 	if (node.expression.type === 'CallExpression') {
 		const rune = get_rune(node.expression, context.state.scope);
 
-		if (rune === '$effect' || rune === '$effect.pre') {
-			const callee = rune === '$effect' ? '$.user_effect' : '$.user_pre_effect';
+		if (rune === '$effect' || rune === '$effect.pre' || rune === '$effect.yield') {
+			const callee =
+				rune === '$effect'
+					? '$.user_effect'
+					: rune === '$effect.yield'
+						? '$.user_yield_effect'
+						: '$.user_pre_effect';
 			const func = /** @type {Expression} */ (context.visit(node.expression.arguments[0]));
 
 			const expr = b.call(callee, /** @type {Expression} */ (func));

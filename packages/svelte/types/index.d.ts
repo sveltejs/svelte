@@ -2913,6 +2913,8 @@ declare namespace $effect {
 	 */
 	export function pre(fn: () => void | (() => void)): void;
 
+	export function yield(fn: () => void | (() => void)): void;
+
 	/**
 	 * The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template.
 	 *

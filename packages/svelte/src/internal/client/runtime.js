@@ -25,9 +25,10 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	BOUNDARY_EFFECT
+	BOUNDARY_EFFECT,
+	YIELD_EFFECT
 } from './constants.js';
-import { flush_tasks } from './dom/task.js';
+import { flush_tasks, queue_yield_task } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { internal_set, set, source } from './reactivity/sources.js';
 import { destroy_derived, execute_derived, update_derived } from './reactivity/deriveds.js';
@@ -622,6 +623,37 @@ function flush_queued_root_effects(root_effects) {
 }
 
 /**
+ * @param {Effect} effect
+ * @returns {void}
+ */
+function flush_effect(effect) {
+	if ((effect.f & (DESTROYED | INERT)) === 0) {
+		try {
+			if (check_dirtiness(effect)) {
+				update_effect(effect);
+
+				// Effects with no dependencies or teardown do not get added to the effect tree.
+				// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
+				// don't know if we need to keep them until they are executed. Doing the check
+				// here (rather than in `update_effect`) allows us to skip the work for
+				// immediate effects.
+				if (effect.deps === null && effect.first === null && effect.nodes_start === null) {
+					if (effect.teardown === null) {
+						// remove this effect from the graph
+						unlink_effect(effect);
+					} else {
+						// keep the effect in the graph, but free up some memory
+						effect.fn = null;
+					}
+				}
+			}
+		} catch (error) {
+			handle_error(error, effect, null, effect.ctx);
+		}
+	}
+}
+
+/**
  * @param {Array<Effect>} effects
  * @returns {void}
  */
@@ -632,30 +664,7 @@ function flush_queued_effects(effects) {
 	for (var i = 0; i < length; i++) {
 		var effect = effects[i];
 
-		if ((effect.f & (DESTROYED | INERT)) === 0) {
-			try {
-				if (check_dirtiness(effect)) {
-					update_effect(effect);
-
-					// Effects with no dependencies or teardown do not get added to the effect tree.
-					// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
-					// don't know if we need to keep them until they are executed. Doing the check
-					// here (rather than in `update_effect`) allows us to skip the work for
-					// immediate effects.
-					if (effect.deps === null && effect.first === null && effect.nodes_start === null) {
-						if (effect.teardown === null) {
-							// remove this effect from the graph
-							unlink_effect(effect);
-						} else {
-							// keep the effect in the graph, but free up some memory
-							effect.fn = null;
-						}
-					}
-				}
-			} catch (error) {
-				handle_error(error, effect, null, effect.ctx);
-			}
-		}
+		flush_effect(effect);
 	}
 }
 
@@ -682,7 +691,11 @@ function process_deferred() {
  * @returns {void}
  */
 export function schedule_effect(signal) {
-	if (scheduler_mode === FLUSH_MICROTASK) {
+	if ((signal.f & YIELD_EFFECT) !== 0) {
+		queue_yield_task(() => {
+			flush_effect(signal);
+		});
+	} else if (scheduler_mode === FLUSH_MICROTASK) {
 		if (!is_micro_task_queued) {
 			is_micro_task_queued = true;
 			queueMicrotask(process_deferred);
