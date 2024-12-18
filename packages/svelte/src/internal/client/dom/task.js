@@ -94,4 +94,7 @@ export function flush_tasks() {
 	if (is_idle_task_queued) {
 		process_idle_tasks();
 	}
+	if (is_yield_task_queued) {
+		process_yield_tasks();
+	}
 }
