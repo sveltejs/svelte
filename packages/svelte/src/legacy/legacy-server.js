@@ -21,14 +21,15 @@ export { createClassComponent };
  */
 export function asClassComponent(component) {
 	const component_constructor = as_class_component(component);
-	/** @type {(props?: {}, opts?: { $$slots?: {}; context?: Map<any, any>; }) => { html: any; css: { code: string; map: any; }; head: string; } } */
+	/** @type {(props?: {}, opts?: { $$slots?: {}; context?: Map<any, any>; }) => { html: any; css: { code: string; map: any; }; head: string; htmlAttributes: string } } */
 	const _render = (props, { context } = {}) => {
 		// @ts-expect-error the typings are off, but this will work if the component is compiled in SSR mode
 		const result = render(component, { props, context });
 		return {
 			css: { code: '', map: null },
 			head: result.head,
-			html: result.body
+			html: result.body,
+			htmlAttributes: result.htmlAttributes
 		};
 	};
 	// @ts-expect-error this is present for SSR
