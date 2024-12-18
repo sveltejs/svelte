@@ -143,8 +143,9 @@ export function render(component, options = {}) {
 		html: payload.out,
 		body: payload.out,
 		htmlAttributes: [...payload.htmlAttributes]
-			.map(([name, value]) => `${name}="${value}"`)
-			.join(' ')
+			.map(([name, value]) => attr(name, value, is_boolean_attribute(name)))
+			.join('')
+			.trim()
 	};
 }
 

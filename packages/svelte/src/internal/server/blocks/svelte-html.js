@@ -1,6 +1,5 @@
 /** @import { Payload } from '#server' */
 
-import { escape_html } from '../../../escaping.js';
 import { svelte_html_duplicate_attribute } from '../../shared/warnings.js';
 
 /**
@@ -14,12 +13,12 @@ export function svelte_html(payload, attributes) {
 		if (payload.htmlAttributes.has(name)) {
 			if (name === 'class') {
 				// Don't bother deduplicating class names, the browser handles it just fine
-				value = `${payload.htmlAttributes.get(name)} ${value}`;
+				value = `${payload.htmlAttributes.get(name)} ${value}`.trim();
 			} else {
 				svelte_html_duplicate_attribute(name);
 			}
 		}
 
-		payload.htmlAttributes.set(name, escape_html(value, true));
+		payload.htmlAttributes.set(name, value);
 	}
 }
