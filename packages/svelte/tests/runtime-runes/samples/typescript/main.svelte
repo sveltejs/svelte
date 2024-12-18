@@ -16,6 +16,8 @@
 		}
 	}
 
+	class MyClass implements Hello {}
+
 	declare const declared_const: number;
 	declare function declared_fn(): void;
 	declare class declared_class {

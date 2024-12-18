@@ -698,16 +698,8 @@ export function analyze_component(root, source, options) {
 	}
 
 	for (const node of analysis.module.ast.body) {
-		if (
-			node.type === 'ExportNamedDeclaration' &&
-			// @ts-expect-error
-			node.exportKind !== 'type' &&
-			node.specifiers !== null &&
-			node.source == null
-		) {
+		if (node.type === 'ExportNamedDeclaration' && node.specifiers !== null && node.source == null) {
 			for (const specifier of node.specifiers) {
-				// @ts-expect-error
-				if (specifier.exportKind === 'type') continue;
 				if (specifier.local.type !== 'Identifier') continue;
 
 				const binding = analysis.module.scope.get(specifier.local.name);
