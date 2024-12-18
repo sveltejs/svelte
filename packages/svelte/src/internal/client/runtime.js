@@ -403,12 +403,13 @@ export function update_reaction(reaction) {
 
 		if ((flags & EFFECT) !== 0 && /** @type {Function} */ (reaction.fn).length > 0) {
 			var controller = new AbortController();
-			var inner = /** @type {Function} */ (0, reaction.fn)(controller.signal);
+			var signal = controller.signal;
+			var inner = /** @type {Function} */ (0, reaction.fn)({ signal });
 
 			result = () => {
 				controller.abort('effect destroyed');
 				inner?.();
-			}
+			};
 		} else {
 			result = /** @type {Function} */ (0, reaction.fn)();
 		}
