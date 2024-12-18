@@ -86,10 +86,23 @@ export function RegularElement(node, context) {
 		(attribute) => attribute.type === 'SpreadAttribute'
 	);
 
-	node.metadata.svg =
-		is_svg(node.name) ||
-		(node.name === 'a' &&
-			context.path.some((n) => n.type === 'RegularElement' && n.name === 'svg'));
+	const is_svg_element = () => {
+		if (is_svg(node.name)) {
+			return true;
+		}
+		if (node.name === 'a') {
+			for (let i = context.path.length - 1; i >= 0; i--) {
+				const ancestor = context.path[i];
+				if (ancestor.type === 'RegularElement') {
+					return ancestor.metadata.svg;
+				}
+			}
+		}
+
+		return false;
+	};
+
+	node.metadata.svg = is_svg_element();
 	node.metadata.mathml = is_mathml(node.name);
 
 	if (is_custom_element_node(node) && node.attributes.length > 0) {
