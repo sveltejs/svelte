@@ -693,8 +693,8 @@ function process_microtask_effects() {
 export function schedule_effect(signal) {
 	if ((signal.f & YIELD_EFFECT) !== 0) {
 		queue_yield_task(() => {
-			process_microtask_effects();
 			flush_effect(signal);
+			process_microtask_effects();
 		});
 	} else if (scheduler_mode === FLUSH_MICROTASK) {
 		if (!is_micro_task_queued) {
