@@ -1,6 +1,6 @@
 /** @import { ComponentContext, Derived, Effect, Reaction, Signal, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
-import { define_property, get_descriptors, get_prototype_of } from '../shared/utils.js';
+import { define_property, get_descriptors, get_prototype_of, run_all } from '../shared/utils.js';
 import {
 	destroy_block_effect_children,
 	destroy_effect_children,
@@ -398,7 +398,21 @@ export function update_reaction(reaction) {
 	component_context = reaction.ctx;
 
 	try {
-		var result = /** @type {Function} */ (0, reaction.fn)();
+		/** @type {any} */
+		var result;
+
+		if ((flags & EFFECT) !== 0 && /** @type {Function} */ (reaction.fn).length > 0) {
+			var controller = new AbortController();
+			var inner = /** @type {Function} */ (0, reaction.fn)(controller.signal);
+
+			result = () => {
+				controller.abort('effect destroyed');
+				inner?.();
+			}
+		} else {
+			result = /** @type {Function} */ (0, reaction.fn)();
+		}
+
 		var deps = reaction.deps;
 
 		if (new_deps !== null) {
@@ -524,12 +538,8 @@ export function update_effect(effect) {
 		destroy_effect_deriveds(effect);
 
 		execute_effect_teardown(effect);
-		var teardown = update_reaction(effect) ?? null;
-		// Avoid doing an instanceof check on the hot-path
-		effect.teardown =
-			teardown === null || typeof teardown === 'function' || teardown instanceof AbortController
-				? teardown
-				: null;
+		var teardown = update_reaction(effect);
+		effect.teardown = typeof teardown === 'function' ? teardown : null;
 		effect.version = current_version;
 
 		if (DEV) {
