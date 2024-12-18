@@ -28,7 +28,7 @@ import {
 	BOUNDARY_EFFECT,
 	YIELD_EFFECT
 } from './constants.js';
-import { flush_tasks, scheduler_yield } from './dom/task.js';
+import { flush_tasks, schedule_yield } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { internal_set, set, source } from './reactivity/sources.js';
 import { destroy_derived, execute_derived, update_derived } from './reactivity/deriveds.js';
@@ -40,7 +40,6 @@ import { tracing_expressions, get_stack } from './dev/tracing.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
-const FLUSH_YIELD = 2;
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */
 const handled_errors = new WeakSet();
@@ -51,8 +50,8 @@ let scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
 let is_yield_queued = false;
-/** @type {Array<() => void>} */
-let queued_yield_tasks = [];
+/** @type {Effect[]} */
+let queued_yield_effects = [];
 
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
@@ -665,7 +664,7 @@ function flush_queued_effects(effects) {
 	}
 }
 
-function flush_effects(yielded_effects = false) {
+function flush_deferred_effects(yielded_effects = false) {
 	is_micro_task_queued = false;
 	if (flush_count > 1001) {
 		return;
@@ -685,47 +684,24 @@ function flush_effects(yielded_effects = false) {
 
 function flush_yield_effects() {
 	is_yield_queued = false;
-	var tasks = queued_yield_tasks.slice();
-	queued_yield_tasks = [];
-	var previous_scheduler_mode = scheduler_mode;
-	scheduler_mode = FLUSH_YIELD;
-	try {
-		run_all(tasks);
-	} finally {
-		scheduler_mode = previous_scheduler_mode;
-	}
-	flush_effects(true);
-}
 
-/**
- * @param {() => void} fn
- */
-export function queue_yield(fn) {
-	if (!is_yield_queued) {
-		is_yield_queued = true;
-		scheduler_yield(flush_yield_effects);
+	for (var i = 0; i < queued_yield_effects.length; i++) {
+		var effect = queued_yield_effects[i];
+		if ((effect.f & (DESTROYED | INERT)) === 0) {
+			last_scheduled_effect = effect;
+
+			mark_parent_effects(effect);
+		}
 	}
-	queued_yield_tasks.push(fn);
+	queued_yield_effects = [];
+	flush_deferred_effects(true);
 }
 
 /**
  * @param {Effect} signal
  * @returns {void}
  */
-export function schedule_effect(signal) {
-	if (scheduler_mode !== FLUSH_YIELD && (signal.f & YIELD_EFFECT) !== 0) {
-		queue_yield(() => {
-			schedule_effect(signal);
-		});
-	} else if (scheduler_mode !== FLUSH_SYNC) {
-		if (!is_micro_task_queued) {
-			is_micro_task_queued = true;
-			queueMicrotask(flush_effects);
-		}
-	}
-
-	last_scheduled_effect = signal;
-
+function mark_parent_effects(signal) {
 	var effect = signal;
 
 	while (effect.parent !== null) {
@@ -739,6 +715,30 @@ export function schedule_effect(signal) {
 	}
 
 	queued_root_effects.push(effect);
+}
+
+/**
+ * @param {Effect} signal
+ * @returns {void}
+ */
+export function schedule_effect(signal) {
+	if (scheduler_mode !== FLUSH_SYNC) {
+		if ((signal.f & YIELD_EFFECT) !== 0) {
+			if (!is_yield_queued) {
+				is_yield_queued = true;
+				schedule_yield(flush_yield_effects);
+			}
+			queued_yield_effects.push(signal);
+			return;
+		}
+		if (!is_micro_task_queued) {
+			is_micro_task_queued = true;
+			queueMicrotask(flush_deferred_effects);
+		}
+	}
+
+	last_scheduled_effect = signal;
+	mark_parent_effects(signal);
 }
 
 /**
