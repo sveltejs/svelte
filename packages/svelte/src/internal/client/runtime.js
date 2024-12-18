@@ -668,7 +668,7 @@ function flush_queued_effects(effects) {
 	}
 }
 
-function process_deferred() {
+function process_microtask_effects() {
 	is_micro_task_queued = false;
 	if (flush_count > 1001) {
 		return;
@@ -693,12 +693,13 @@ function process_deferred() {
 export function schedule_effect(signal) {
 	if ((signal.f & YIELD_EFFECT) !== 0) {
 		queue_yield_task(() => {
+			process_microtask_effects();
 			flush_effect(signal);
 		});
 	} else if (scheduler_mode === FLUSH_MICROTASK) {
 		if (!is_micro_task_queued) {
 			is_micro_task_queued = true;
-			queueMicrotask(process_deferred);
+			queueMicrotask(process_microtask_effects);
 		}
 	}
 
