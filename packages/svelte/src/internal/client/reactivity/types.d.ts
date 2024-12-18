@@ -52,7 +52,7 @@ export interface Effect extends Reaction {
 	/** The effect function */
 	fn: null | (() => void | (() => void));
 	/** The teardown function returned from the effect function */
-	teardown: null | (() => void) | AbortController;
+	teardown: null | (() => void);
 	/** Transition managers created with `$.transition` */
 	transitions: null | TransitionManager[];
 	/** Next sibling child effect created inside the parent signal */

@@ -1,6 +1,6 @@
 /** @import { ComponentContext, Derived, Effect, Reaction, Signal, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
-import { define_property, get_descriptors, get_prototype_of, run_all } from '../shared/utils.js';
+import { define_property, get_descriptors, get_prototype_of } from '../shared/utils.js';
 import {
 	destroy_block_effect_children,
 	destroy_effect_children,
