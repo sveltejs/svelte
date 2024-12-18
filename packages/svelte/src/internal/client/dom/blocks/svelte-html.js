@@ -19,7 +19,7 @@ export function svelte_html(get_attributes) {
 	/** @type {Record<string, any>} Does _not_ contain event listeners, those are handled separately */
 	let attributes;
 
-	const set_html_attributes = () => {
+	render_effect(() => {
 		attributes = get_attributes();
 
 		for (const name in attributes) {
@@ -30,29 +30,30 @@ export function svelte_html(get_attributes) {
 			let value = attributes[name];
 			current.push({ owner: self, value });
 
+			const set = () => {
+				if (name === 'class') {
+					// Avoid unrelated attribute changes from triggering class changes
+					if (old !== value) {
+						set_class(node, current_setters[name].map((e) => e.value).join(' '));
+					}
+				} else {
+					set_attribute(node, name, value);
+				}
+			};
+
 			// Defer hydration on initial render during hydration: If there are attribute duplicates, the last value
 			// wins, so we wait until all values have been set to see if we're actually the last one that sets the value.
 			if (hydrating) {
 				effect(() => {
 					if (current[current.length - 1].owner === self) {
-						untrack(set_html_attributes);
+						set();
 					}
 				});
-				return;
-			}
-
-			if (name === 'class') {
-				// Avoid unrelated attribute changes from triggering class changes
-				if (old !== value) {
-					set_class(node, current_setters[name].map((e) => e.value).join(' '));
-				}
 			} else {
-				set_attribute(node, name, value);
+				set();
 			}
 		}
-	};
-
-	render_effect(set_html_attributes);
+	});
 
 	teardown(() => {
 		for (const name in attributes) {
