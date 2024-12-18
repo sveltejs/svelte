@@ -16,7 +16,7 @@ export function CallExpression(node, context) {
 		return b.id('undefined');
 	}
 
-	if (rune === '$effect.tracking') {
+	if (rune === '$effect.tracking' || rune === '$effect.active') {
 		return b.literal(false);
 	}
 

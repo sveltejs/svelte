@@ -174,6 +174,14 @@ export function effect_tracking() {
 }
 
 /**
+ * Internal representation of `$effect.active()`
+ * @returns {boolean}
+ */
+export function effect_active() {
+	return active_effect !== null;
+}
+
+/**
  * @param {() => void} fn
  */
 export function teardown(fn) {
