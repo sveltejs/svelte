@@ -381,11 +381,7 @@ export function execute_effect_teardown(effect) {
 		set_is_destroying_effect(true);
 		set_active_reaction(null);
 		try {
-			if (typeof teardown === 'function') {
-				teardown.call(null);
-			} else {
-				teardown.abort('effect destroyed');
-			}
+			teardown.call(null);
 		} finally {
 			set_is_destroying_effect(previously_destroying_effect);
 			set_active_reaction(previous_reaction);
