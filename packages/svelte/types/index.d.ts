@@ -2892,7 +2892,9 @@ declare namespace $derived {
  * https://svelte.dev/docs/svelte/$effect
  * @param fn The function to execute
  */
-declare function $effect(fn: (input: { signal: AbortSignal }) => void | ((input: { signal: AbortSignal }) => void)): void;
+declare function $effect(
+	fn: (input: { signal: AbortSignal }) => void | (() => void) | Promise<void>
+): void;
 
 declare namespace $effect {
 	/**
@@ -2911,7 +2913,9 @@ declare namespace $effect {
 	 * https://svelte.dev/docs/svelte/$effect#$effect.pre
 	 * @param fn The function to execute
 	 */
-	export function pre(fn: (input: { signal: AbortSignal }) => void | ((input: { signal: AbortSignal }) => void)): void;
+	export function pre(
+		fn: (input: { signal: AbortSignal }) => void | (() => void) | Promise<void>
+	): void;
 
 	/**
 	 * The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template.
