@@ -8,6 +8,10 @@
 		console.log(this);
 	}
 
+	function foo(): string {
+		return ""!;
+	}
+
 	class Foo<T> {
 		public name: string;
 		x = 'x' as const;
@@ -15,6 +19,8 @@
 			this.name = name;
 		}
 	}
+
+	class MyClass implements Hello {}
 
 	declare const declared_const: number;
 	declare function declared_fn(): void;
