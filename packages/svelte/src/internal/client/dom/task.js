@@ -8,7 +8,6 @@ export const request_idle_callback =
 		: requestIdleCallback;
 
 // Fallback for when scheduler.yield is not available
-// TODO: find a proper polyfill for Safari, this doesn't work
 export const schedule_yield =
 	// @ts-ignore
 	typeof scheduler === 'undefined'
