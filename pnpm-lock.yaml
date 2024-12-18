@@ -84,8 +84,8 @@ importers:
         specifier: ^1.2.1
         version: 1.2.1
       esrap:
-        specifier: ^1.3.0
-        version: 1.3.0
+        specifier: ^1.3.1
+        version: link:../../../../esrap
       is-reference:
         specifier: ^3.0.3
         version: 3.0.3
@@ -1138,9 +1138,6 @@ packages:
   esquery@1.5.0:
     resolution: {integrity: sha512-YQLXUplAwJgCydQ78IMJywZCceoqk1oH01OERdSAJc/7U2AylwjhSCLDEtqwg811idIS/9fIU5GjG73IgjKMVg==}
     engines: {node: '>=0.10'}
-
-  esrap@1.3.0:
-    resolution: {integrity: sha512-LPT4X5Ur2sGnkQscwgWXRPVDuQrbuJbrStLmVXVXd+lGQ/HoYmcAa47t0Egzw1bYHwhF0w+6DTkxL1Xctp10XQ==}
 
   esrecurse@4.3.0:
     resolution: {integrity: sha512-KmfKL3b6G+RXvP8N1vr3Tq1kL/oCFgn2NYXEtqP8/L3pKapUA4G8cFVaoF3SU323CD4XypR/ffioHmkti6/Tag==}
@@ -3387,11 +3384,6 @@ snapshots:
   esquery@1.5.0:
     dependencies:
       estraverse: 5.3.0
-
-  esrap@1.3.0:
-    dependencies:
-      '@jridgewell/sourcemap-codec': 1.5.0
-      '@typescript-eslint/types': 8.2.0
 
   esrecurse@4.3.0:
     dependencies:
