@@ -1,5 +1,13 @@
 # svelte
 
+## 5.14.4
+
+### Patch Changes
+
+- fix: remove implements from class declarations ([#14749](https://github.com/sveltejs/svelte/pull/14749))
+
+- fix: remove unwanted properties from both replaced and unreplaced nodes ([#14744](https://github.com/sveltejs/svelte/pull/14744))
+
 ## 5.14.3
 
 ### Patch Changes
