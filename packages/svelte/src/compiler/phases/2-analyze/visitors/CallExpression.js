@@ -95,7 +95,7 @@ export function CallExpression(node, context) {
 
 		case '$effect':
 		case '$effect.pre':
-		case '$effect.yield':
+		case '$effect.post':
 			if (parent.type !== 'ExpressionStatement') {
 				e.effect_invalid_placement(node);
 			}

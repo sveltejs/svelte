@@ -26,7 +26,7 @@ import {
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
 	BOUNDARY_EFFECT,
-	YIELD_EFFECT
+	POST_EFFECT
 } from './constants.js';
 import { flush_tasks, schedule_yield } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -49,9 +49,9 @@ export let is_throwing_error = false;
 let scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
-let is_yield_queued = false;
+let is_post_task_queued = false;
 /** @type {Effect[]} */
-let queued_yield_effects = [];
+let queued_post_effects = [];
 
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
@@ -594,10 +594,10 @@ function infinite_loop_guard() {
 
 /**
  * @param {Array<Effect>} root_effects
- * @param {boolean} yielded_effects
+ * @param {boolean} post_effects
  * @returns {void}
  */
-function flush_queued_root_effects(root_effects, yielded_effects) {
+function flush_queued_root_effects(root_effects, post_effects) {
 	var length = root_effects.length;
 	if (length === 0) {
 		return;
@@ -618,7 +618,7 @@ function flush_queued_root_effects(root_effects, yielded_effects) {
 			/** @type {Effect[]} */
 			var collected_effects = [];
 
-			process_effects(effect, collected_effects, yielded_effects);
+			process_effects(effect, collected_effects, post_effects);
 			flush_queued_effects(collected_effects);
 		}
 	} finally {
@@ -664,14 +664,14 @@ function flush_queued_effects(effects) {
 	}
 }
 
-function flush_deferred_effects(yielded_effects = false) {
+function flush_deferred_effects(post_effects = false) {
 	is_micro_task_queued = false;
 	if (flush_count > 1001) {
 		return;
 	}
 	const previous_queued_root_effects = queued_root_effects;
 	queued_root_effects = [];
-	flush_queued_root_effects(previous_queued_root_effects, yielded_effects);
+	flush_queued_root_effects(previous_queued_root_effects, post_effects);
 
 	if (!is_micro_task_queued) {
 		flush_count = 0;
@@ -682,18 +682,18 @@ function flush_deferred_effects(yielded_effects = false) {
 	}
 }
 
-function flush_yield_effects() {
-	is_yield_queued = false;
+function flush_post_effects() {
+	is_post_task_queued = false;
 
-	for (var i = 0; i < queued_yield_effects.length; i++) {
-		var effect = queued_yield_effects[i];
+	for (var i = 0; i < queued_post_effects.length; i++) {
+		var effect = queued_post_effects[i];
 		if ((effect.f & (DESTROYED | INERT)) === 0) {
 			last_scheduled_effect = effect;
 
 			mark_parent_effects(effect);
 		}
 	}
-	queued_yield_effects = [];
+	queued_post_effects = [];
 	flush_deferred_effects(true);
 }
 
@@ -723,12 +723,12 @@ function mark_parent_effects(signal) {
  */
 export function schedule_effect(signal) {
 	if (scheduler_mode !== FLUSH_SYNC) {
-		if ((signal.f & YIELD_EFFECT) !== 0) {
-			if (!is_yield_queued) {
-				is_yield_queued = true;
-				schedule_yield(flush_yield_effects);
+		if ((signal.f & POST_EFFECT) !== 0) {
+			if (!is_post_task_queued) {
+				is_post_task_queued = true;
+				schedule_yield(flush_post_effects);
 			}
-			queued_yield_effects.push(signal);
+			queued_post_effects.push(signal);
 			return;
 		}
 		if (!is_micro_task_queued) {
@@ -750,10 +750,10 @@ export function schedule_effect(signal) {
  *
  * @param {Effect} effect
  * @param {Effect[]} collected_effects
- * @param {boolean} yielded_effects
+ * @param {boolean} post_effects
  * @returns {void}
  */
-function process_effects(effect, collected_effects, yielded_effects) {
+function process_effects(effect, collected_effects, post_effects) {
 	var current_effect = effect.first;
 	var effects = [];
 
@@ -783,7 +783,7 @@ function process_effects(effect, collected_effects, yielded_effects) {
 					current_effect = child;
 					continue;
 				}
-			} else if ((flags & EFFECT) !== 0 || (yielded_effects && (flags & YIELD_EFFECT) !== 0)) {
+			} else if ((flags & EFFECT) !== 0 || (post_effects && (flags & POST_EFFECT) !== 0)) {
 				effects.push(current_effect);
 			}
 		}
@@ -812,7 +812,7 @@ function process_effects(effect, collected_effects, yielded_effects) {
 	for (var i = 0; i < effects.length; i++) {
 		child = effects[i];
 		collected_effects.push(child);
-		process_effects(child, collected_effects, yielded_effects);
+		process_effects(child, collected_effects, post_effects);
 	}
 }
 

@@ -13,7 +13,7 @@ export function ExpressionStatement(node, context) {
 	if (
 		rune === '$effect' ||
 		rune === '$effect.pre' ||
-		rune === '$effect.yield' ||
+		rune === '$effect.post' ||
 		rune === '$effect.root' ||
 		rune === '$inspect.trace'
 	) {

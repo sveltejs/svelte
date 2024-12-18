@@ -108,7 +108,7 @@ export {
 	effect,
 	user_effect,
 	user_pre_effect,
-	user_yield_effect
+	user_post_effect
 } from './reactivity/effects.js';
 export { mutable_state, mutate, set, state } from './reactivity/sources.js';
 export {

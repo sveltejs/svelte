@@ -36,7 +36,7 @@ import {
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
 	EFFECT_HAS_DERIVED,
-	YIELD_EFFECT
+	POST_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
 import * as e from '../errors.js';
@@ -46,7 +46,7 @@ import { get_next_sibling } from '../dom/operations.js';
 import { destroy_derived } from './deriveds.js';
 
 /**
- * @param {'$effect' | '$effect.pre' | '$effect.yield' | '$inspect'} rune
+ * @param {'$effect' | '$effect.pre' | '$effect.post' | '$inspect'} rune
  */
 export function validate_effect(rune) {
 	if (active_effect === null && active_reaction === null) {
@@ -233,19 +233,19 @@ export function user_pre_effect(fn) {
 }
 
 /**
- * Internal representation of `$effect.yield(...)`
+ * Internal representation of `$effect.post(...)`
  * @param {() => void | (() => void)} fn
  * @returns {Effect}
  */
-export function user_yield_effect(fn) {
-	validate_effect('$effect.yield');
+export function user_post_effect(fn) {
+	validate_effect('$effect.post');
 	if (DEV) {
 		define_property(fn, 'name', {
-			value: '$effect.yield'
+			value: '$effect.post'
 		});
 	}
 
-	return yield_effect(fn);
+	return post_effect(fn);
 }
 
 /** @param {() => void | (() => void)} fn */
@@ -301,8 +301,8 @@ export function effect(fn) {
  * @param {() => void | (() => void)} fn
  * @returns {Effect}
  */
-export function yield_effect(fn) {
-	return create_effect(YIELD_EFFECT, fn, false);
+export function post_effect(fn) {
+	return create_effect(POST_EFFECT, fn, false);
 }
 
 /**

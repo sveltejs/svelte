@@ -12,11 +12,11 @@ export const schedule_yield =
 	// @ts-ignore
 	typeof scheduler === 'undefined'
 		? (/** @type {() => void} */ cb) => {
-			// For Safari, we fallback to using MessageChannel
-			const channel = new MessageChannel();
-			channel.port1.onmessage = cb;
-			channel.port2.postMessage(undefined);
-		}
+				// For Safari, we fallback to using MessageChannel
+				const channel = new MessageChannel();
+				channel.port1.onmessage = cb;
+				channel.port2.postMessage(undefined);
+			}
 		: async (/** @type {() => void} */ fn) => {
 				// @ts-ignore
 				await scheduler.yield();
