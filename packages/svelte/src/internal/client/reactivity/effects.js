@@ -178,7 +178,12 @@ export function effect_tracking() {
  * @returns {boolean}
  */
 export function effect_active() {
-	return active_effect !== null;
+	if (is_destroying_effect) {
+		return false;
+	}
+	return (
+		active_effect !== null || (active_reaction !== null && (active_reaction.f & UNOWNED) === 0)
+	);
 }
 
 /**
