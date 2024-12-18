@@ -18,14 +18,14 @@ function remove_this_param(node, context) {
 /** @type {Visitors<any, null>} */
 const visitors = {
 	_(node, context) {
-		context.next();
+		const n = context.next() ?? node;
 
 		// TODO there may come a time when we decide to preserve type annotations.
 		// until that day comes, we just delete them so they don't confuse esrap
-		delete node.typeAnnotation;
-		delete node.typeParameters;
-		delete node.returnType;
-		delete node.accessibility;
+		delete n.typeAnnotation;
+		delete n.typeParameters;
+		delete n.returnType;
+		delete n.accessibility;
 	},
 	Decorator(node) {
 		e.typescript_invalid_feature(node, 'decorators (related TSC proposal is not stage 4 yet)');
