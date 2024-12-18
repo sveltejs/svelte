@@ -524,8 +524,12 @@ export function update_effect(effect) {
 		destroy_effect_deriveds(effect);
 
 		execute_effect_teardown(effect);
-		var teardown = update_reaction(effect);
-		effect.teardown = typeof teardown === 'function' ? teardown : null;
+		var teardown = update_reaction(effect) ?? null;
+		// Avoid doing an instanceof check on the hot-path
+		effect.teardown =
+			teardown === null || typeof teardown === 'function' || teardown instanceof AbortController
+				? teardown
+				: null;
 		effect.version = current_version;
 
 		if (DEV) {
