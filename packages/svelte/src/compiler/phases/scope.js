@@ -433,7 +433,13 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		ImportDeclaration(node, { state }) {
+			// @ts-expect-error
+			if (node.importKind === 'type') return;
+
 			for (const specifier of node.specifiers) {
+				// @ts-expect-error
+				if (specifier.importKind === 'type') continue;
+
 				state.scope.declare(specifier.local, 'normal', 'import', node);
 			}
 		},
