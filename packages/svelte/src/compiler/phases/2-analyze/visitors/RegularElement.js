@@ -86,7 +86,10 @@ export function RegularElement(node, context) {
 		(attribute) => attribute.type === 'SpreadAttribute'
 	);
 
-	node.metadata.svg = is_svg(node.name);
+	node.metadata.svg =
+		is_svg(node.name) ||
+		(node.name === 'a' &&
+			context.path.some((n) => n.type === 'RegularElement' && n.name === 'svg'));
 	node.metadata.mathml = is_mathml(node.name);
 
 	if (is_custom_element_node(node) && node.attributes.length > 0) {

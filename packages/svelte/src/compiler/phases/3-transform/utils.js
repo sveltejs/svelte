@@ -347,11 +347,6 @@ export function infer_namespace(namespace, parent, nodes) {
 		}
 	}
 
-	// If we're already in a non-html namespace, continue using that
-	if (namespace !== 'html') {
-		return namespace;
-	}
-
 	/** @type {Namespace | null} */
 	let new_namespace = null;
 
