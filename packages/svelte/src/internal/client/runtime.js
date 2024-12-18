@@ -1,6 +1,6 @@
 /** @import { ComponentContext, Derived, Effect, Reaction, Signal, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
-import { define_property, get_descriptors, get_prototype_of } from '../shared/utils.js';
+import { define_property, get_descriptors, get_prototype_of, run_all } from '../shared/utils.js';
 import {
 	destroy_block_effect_children,
 	destroy_effect_children,
@@ -28,7 +28,7 @@ import {
 	BOUNDARY_EFFECT,
 	YIELD_EFFECT
 } from './constants.js';
-import { flush_tasks, queue_yield_task } from './dom/task.js';
+import { flush_tasks, scheduler_yield } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { internal_set, set, source } from './reactivity/sources.js';
 import { destroy_derived, execute_derived, update_derived } from './reactivity/deriveds.js';
@@ -40,6 +40,7 @@ import { tracing_expressions, get_stack } from './dev/tracing.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
+const FLUSH_YIELD = 2;
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */
 const handled_errors = new WeakSet();
@@ -49,6 +50,9 @@ export let is_throwing_error = false;
 let scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
+let is_yield_queued = false;
+/** @type {Array<() => void>} */
+let queued_yield_tasks = [];
 
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
@@ -591,9 +595,10 @@ function infinite_loop_guard() {
 
 /**
  * @param {Array<Effect>} root_effects
+ * @param {boolean} yielded_effects
  * @returns {void}
  */
-function flush_queued_root_effects(root_effects) {
+function flush_queued_root_effects(root_effects, yielded_effects) {
 	var length = root_effects.length;
 	if (length === 0) {
 		return;
@@ -614,42 +619,11 @@ function flush_queued_root_effects(root_effects) {
 			/** @type {Effect[]} */
 			var collected_effects = [];
 
-			process_effects(effect, collected_effects);
+			process_effects(effect, collected_effects, yielded_effects);
 			flush_queued_effects(collected_effects);
 		}
 	} finally {
 		is_flushing_effect = previously_flushing_effect;
-	}
-}
-
-/**
- * @param {Effect} effect
- * @returns {void}
- */
-function flush_effect(effect) {
-	if ((effect.f & (DESTROYED | INERT)) === 0) {
-		try {
-			if (check_dirtiness(effect)) {
-				update_effect(effect);
-
-				// Effects with no dependencies or teardown do not get added to the effect tree.
-				// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
-				// don't know if we need to keep them until they are executed. Doing the check
-				// here (rather than in `update_effect`) allows us to skip the work for
-				// immediate effects.
-				if (effect.deps === null && effect.first === null && effect.nodes_start === null) {
-					if (effect.teardown === null) {
-						// remove this effect from the graph
-						unlink_effect(effect);
-					} else {
-						// keep the effect in the graph, but free up some memory
-						effect.fn = null;
-					}
-				}
-			}
-		} catch (error) {
-			handle_error(error, effect, null, effect.ctx);
-		}
 	}
 }
 
@@ -664,18 +638,41 @@ function flush_queued_effects(effects) {
 	for (var i = 0; i < length; i++) {
 		var effect = effects[i];
 
-		flush_effect(effect);
+		if ((effect.f & (DESTROYED | INERT)) === 0) {
+			try {
+				if (check_dirtiness(effect)) {
+					update_effect(effect);
+
+					// Effects with no dependencies or teardown do not get added to the effect tree.
+					// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
+					// don't know if we need to keep them until they are executed. Doing the check
+					// here (rather than in `update_effect`) allows us to skip the work for
+					// immediate effects.
+					if (effect.deps === null && effect.first === null && effect.nodes_start === null) {
+						if (effect.teardown === null) {
+							// remove this effect from the graph
+							unlink_effect(effect);
+						} else {
+							// keep the effect in the graph, but free up some memory
+							effect.fn = null;
+						}
+					}
+				}
+			} catch (error) {
+				handle_error(error, effect, null, effect.ctx);
+			}
+		}
 	}
 }
 
-function process_microtask_effects() {
+function flush_effects(yielded_effects = false) {
 	is_micro_task_queued = false;
 	if (flush_count > 1001) {
 		return;
 	}
 	const previous_queued_root_effects = queued_root_effects;
 	queued_root_effects = [];
-	flush_queued_root_effects(previous_queued_root_effects);
+	flush_queued_root_effects(previous_queued_root_effects, yielded_effects);
 
 	if (!is_micro_task_queued) {
 		flush_count = 0;
@@ -686,20 +683,44 @@ function process_microtask_effects() {
 	}
 }
 
+function flush_yield_effects() {
+	is_yield_queued = false;
+	var tasks = queued_yield_tasks.slice();
+	queued_yield_tasks = [];
+	var previous_scheduler_mode = scheduler_mode;
+	scheduler_mode = FLUSH_YIELD;
+	try {
+		run_all(tasks);
+	} finally {
+		scheduler_mode = previous_scheduler_mode;
+	}
+	flush_effects(true);
+}
+
+/**
+ * @param {() => void} fn
+ */
+export function queue_yield(fn) {
+	if (!is_yield_queued) {
+		is_yield_queued = true;
+		scheduler_yield(flush_yield_effects);
+	}
+	queued_yield_tasks.push(fn);
+}
+
 /**
  * @param {Effect} signal
  * @returns {void}
  */
 export function schedule_effect(signal) {
-	if ((signal.f & YIELD_EFFECT) !== 0) {
-		queue_yield_task(() => {
-			flush_effect(signal);
-			process_microtask_effects();
+	if (scheduler_mode !== FLUSH_YIELD && (signal.f & YIELD_EFFECT) !== 0) {
+		queue_yield(() => {
+			schedule_effect(signal);
 		});
-	} else if (scheduler_mode === FLUSH_MICROTASK) {
+	} else if (scheduler_mode !== FLUSH_SYNC) {
 		if (!is_micro_task_queued) {
 			is_micro_task_queued = true;
-			queueMicrotask(process_microtask_effects);
+			queueMicrotask(flush_effects);
 		}
 	}
 
@@ -729,9 +750,10 @@ export function schedule_effect(signal) {
  *
  * @param {Effect} effect
  * @param {Effect[]} collected_effects
+ * @param {boolean} yielded_effects
  * @returns {void}
  */
-function process_effects(effect, collected_effects) {
+function process_effects(effect, collected_effects, yielded_effects) {
 	var current_effect = effect.first;
 	var effects = [];
 
@@ -761,7 +783,7 @@ function process_effects(effect, collected_effects) {
 					current_effect = child;
 					continue;
 				}
-			} else if ((flags & EFFECT) !== 0) {
+			} else if ((flags & EFFECT) !== 0 || (yielded_effects && (flags & YIELD_EFFECT) !== 0)) {
 				effects.push(current_effect);
 			}
 		}
@@ -790,7 +812,7 @@ function process_effects(effect, collected_effects) {
 	for (var i = 0; i < effects.length; i++) {
 		child = effects[i];
 		collected_effects.push(child);
-		process_effects(child, collected_effects);
+		process_effects(child, collected_effects, yielded_effects);
 	}
 }
 
@@ -814,7 +836,7 @@ export function flush_sync(fn) {
 		queued_root_effects = root_effects;
 		is_micro_task_queued = false;
 
-		flush_queued_root_effects(previous_queued_root_effects);
+		flush_queued_root_effects(previous_queued_root_effects, true);
 
 		var result = fn?.();
 
