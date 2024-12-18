@@ -1,4 +1,5 @@
-import { render_effect, teardown } from '../../reactivity/effects.js';
+import { effect, render_effect, teardown } from '../../reactivity/effects.js';
+import { untrack } from '../../runtime.js';
 import { set_attribute } from '../elements/attributes.js';
 import { set_class } from '../elements/class.js';
 import { hydrating } from '../hydration.js';
@@ -15,10 +16,10 @@ export function svelte_html(get_attributes) {
 	// @ts-expect-error
 	const current_setters = (node.__attributes_setters ??= {});
 
-	/** @type {Record<string, any>} */
+	/** @type {Record<string, any>} Does _not_ contain event listeners, those are handled separately */
 	let attributes;
 
-	render_effect(() => {
+	const set_html_attributes = () => {
 		attributes = get_attributes();
 
 		for (const name in attributes) {
@@ -29,9 +30,16 @@ export function svelte_html(get_attributes) {
 			let value = attributes[name];
 			current.push({ owner: self, value });
 
-			// Do nothing on initial render during hydration: If there are attribute duplicates, the last value
-			// wins, which could result in needless hydration repairs from earlier values.
-			if (hydrating) continue;
+			// Defer hydration on initial render during hydration: If there are attribute duplicates, the last value
+			// wins, so we wait until all values have been set to see if we're actually the last one that sets the value.
+			if (hydrating) {
+				effect(() => {
+					if (current[current.length - 1].owner === self) {
+						untrack(set_html_attributes);
+					}
+				});
+				return;
+			}
 
 			if (name === 'class') {
 				// Avoid unrelated attribute changes from triggering class changes
@@ -42,7 +50,9 @@ export function svelte_html(get_attributes) {
 				set_attribute(node, name, value);
 			}
 		}
-	});
+	};
+
+	render_effect(set_html_attributes);
 
 	teardown(() => {
 		for (const name in attributes) {
