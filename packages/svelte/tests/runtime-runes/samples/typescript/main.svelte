@@ -8,6 +8,10 @@
 		console.log(this);
 	}
 
+	function foo(): string {
+		return ""!;
+	}
+
 	class Foo<T> {
 		public name: string;
 		x = 'x' as const;
