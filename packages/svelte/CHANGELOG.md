@@ -1,5 +1,13 @@
 # svelte
 
+## 5.14.3
+
+### Patch Changes
+
+- fix: bump esrap, prevent malformed AST ([#14742](https://github.com/sveltejs/svelte/pull/14742))
+
+- fix: compare array contents for equality mismatch detections, not the arrays themselves ([#14738](https://github.com/sveltejs/svelte/pull/14738))
+
 ## 5.14.2
 
 ### Patch Changes
