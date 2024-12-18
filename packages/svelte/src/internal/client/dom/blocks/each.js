@@ -36,6 +36,7 @@ import { array_from, is_array } from '../../../shared/utils.js';
 import { INERT } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
 import { active_effect, active_reaction } from '../../runtime.js';
+import { DEV } from 'esm-env';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -191,7 +192,18 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 				var value = array[i];
 				var key = get_key(value, i);
-				item = create_item(hydrate_node, state, prev, null, value, key, i, render_fn, flags);
+				item = create_item(
+					hydrate_node,
+					state,
+					prev,
+					null,
+					value,
+					key,
+					i,
+					render_fn,
+					flags,
+					get_collection
+				);
 				state.items.set(key, item);
 
 				prev = item;
@@ -205,7 +217,16 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 		if (!hydrating) {
 			var effect = /** @type {Effect} */ (active_reaction);
-			reconcile(array, state, anchor, render_fn, flags, (effect.f & INERT) !== 0, get_key);
+			reconcile(
+				array,
+				state,
+				anchor,
+				render_fn,
+				flags,
+				(effect.f & INERT) !== 0,
+				get_key,
+				get_collection
+			);
 		}
 
 		if (fallback_fn !== null) {
@@ -251,9 +272,10 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
  * @param {number} flags
  * @param {boolean} is_inert
  * @param {(value: V, index: number) => any} get_key
+ * @param {() => V[]} get_collection
  * @returns {void}
  */
-function reconcile(array, state, anchor, render_fn, flags, is_inert, get_key) {
+function reconcile(array, state, anchor, render_fn, flags, is_inert, get_key, get_collection) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 
@@ -319,7 +341,8 @@ function reconcile(array, state, anchor, render_fn, flags, is_inert, get_key) {
 				key,
 				i,
 				render_fn,
-				flags
+				flags,
+				get_collection
 			);
 
 			items.set(key, prev);
@@ -486,15 +509,37 @@ function update_item(item, value, index, type) {
  * @param {number} index
  * @param {(anchor: Node, item: V | Source<V>, index: number | Value<number>) => void} render_fn
  * @param {number} flags
+ * @param {() => V[]} get_collection
  * @returns {EachItem}
  */
-function create_item(anchor, state, prev, next, value, key, index, render_fn, flags) {
+function create_item(
+	anchor,
+	state,
+	prev,
+	next,
+	value,
+	key,
+	index,
+	render_fn,
+	flags,
+	get_collection
+) {
 	var previous_each_item = current_each_item;
 	var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
 	var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
 
 	var v = reactive ? (mutable ? mutable_source(value) : source(value)) : value;
 	var i = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
+
+	if (DEV && reactive) {
+		// For tracing purposes, we need to link the source signal we create with the
+		// collection + index so that tracing works as intended
+		/** @type {Value} */ (v).debug = () => {
+			var collection_index = typeof i === 'number' ? index : i.v;
+			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+			get_collection()[collection_index];
+		};
+	}
 
 	/** @type {EachItem} */
 	var item = {

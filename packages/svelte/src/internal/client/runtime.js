@@ -35,6 +35,7 @@ import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
 import { legacy_mode_flag } from '../flags/index.js';
+import { tracing_expressions, get_stack } from './dev/tracing.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -126,8 +127,8 @@ export function set_untracked_writes(value) {
 	untracked_writes = value;
 }
 
-/** @type {number} Used by sources and deriveds for handling updates to unowned deriveds */
-let current_version = 0;
+/** @type {number} Used by sources and deriveds for handling updates to unowned deriveds it starts from 1 to differentiate between a created effect and a run one for tracing */
+let current_version = 1;
 
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
@@ -135,6 +136,11 @@ export let skip_reaction = false;
 // Handle collecting all signals which are read during a specific time frame
 /** @type {Set<Value> | null} */
 export let captured_signals = null;
+
+/** @param {Set<Value> | null} value */
+export function set_captured_signals(value) {
+	captured_signals = value;
+}
 
 // Handling runtime component context
 /** @type {ComponentContext | null} */
@@ -224,8 +230,9 @@ export function check_dirtiness(reaction) {
 			}
 		}
 
-		// Unowned signals should never be marked as clean.
-		if (!is_unowned) {
+		// Unowned signals should never be marked as clean unless they
+		// are used within an active_effect without skip_reaction
+		if (!is_unowned || (active_effect !== null && !skip_reaction)) {
 			set_signal_status(reaction, CLEAN);
 		}
 	}
@@ -356,7 +363,7 @@ export function handle_error(error, effect, previous_effect, component_context) 
 			new_lines.push(line);
 		}
 		define_property(error, 'stack', {
-			value: error.stack + new_lines.join('\n')
+			value: new_lines.join('\n')
 		});
 	}
 
@@ -905,6 +912,27 @@ export function get(signal) {
 
 		if (check_dirtiness(derived)) {
 			update_derived(derived);
+		}
+	}
+
+	if (
+		DEV &&
+		tracing_expressions !== null &&
+		active_reaction !== null &&
+		tracing_expressions.reaction === active_reaction
+	) {
+		// Used when mapping state between special blocks like `each`
+		if (signal.debug) {
+			signal.debug();
+		} else if (signal.created) {
+			var entry = tracing_expressions.entries.get(signal);
+
+			if (entry === undefined) {
+				entry = { read: [] };
+				tracing_expressions.entries.set(signal, entry);
+			}
+
+			entry.read.push(get_stack('TracedAt'));
 		}
 	}
 
