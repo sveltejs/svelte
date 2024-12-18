@@ -40,5 +40,9 @@
 		"./tests/runtime-browser/test-ssr.ts",
 		"./tests/*/samples/*/_config.js"
 	],
-	"exclude": ["./scripts/process-messages/templates/", "./scripts/_bundle.js", "./src/compiler/optimizer/"]
+	"exclude": [
+		"./scripts/process-messages/templates/",
+		"./scripts/_bundle.js",
+		"./src/compiler/optimizer/"
+	]
 }
