@@ -1,5 +1,15 @@
 # svelte
 
+## 5.14.5
+
+### Patch Changes
+
+- fix: bump esrap dependency ([#14765](https://github.com/sveltejs/svelte/pull/14765))
+
+- fix: ensure svg namespace for `<a>` elements is correct ([#14756](https://github.com/sveltejs/svelte/pull/14756))
+
+- fix: treeshake `$inspect.trace` code if unused ([#14770](https://github.com/sveltejs/svelte/pull/14770))
+
 ## 5.14.4
 
 ### Patch Changes
