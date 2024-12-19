@@ -393,13 +393,21 @@ export function RegularElement(node, context) {
 			arg = b.member(arg, 'content');
 		}
 
-		process_children(trimmed, (is_text) => b.call('$.child', arg, is_text && b.true), true, {
-			...context,
-			state: child_state
-		});
+		process_children(
+			trimmed,
+			(is_text) => b.call('$.child', arg, is_text && b.true),
+			true,
+			{
+				...context,
+				state: child_state
+			},
+			node.name === 'pre'
+		);
 
 		if (needs_reset) {
-			child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
+			child_state.init.push(
+				b.stmt(b.call('$.reset', context.state.node, node.name === 'pre' ? b.true : undefined))
+			);
 		}
 	}
 

@@ -14,8 +14,9 @@ import { build_template_chunk, build_update } from './utils.js';
  * @param {(is_text: boolean) => Expression} initial
  * @param {boolean} is_element
  * @param {ComponentContext} context
+ * @param {boolean} [is_pre]
  */
-export function process_children(nodes, initial, is_element, { visit, state }) {
+export function process_children(nodes, initial, is_element, { visit, state }, is_pre = false) {
 	const within_bound_contenteditable = state.metadata.bound_contenteditable;
 	let prev = initial;
 	let skipped = 0;
@@ -62,7 +63,13 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	 */
 	function flush_sequence(sequence) {
 		if (sequence.every((node) => node.type === 'Text')) {
-			skipped += 1;
+			// a pre tag for some reason skips the first text node if it's a single
+			// \n so if that's the case we need to not increase skipped or hydration
+			// will fail because `child` will return the actual child and `sibling will
+			// return a text node
+			if (!(is_pre && sequence.length === 1 && sequence[0].raw === '\n')) {
+				skipped += 1;
+			}
 			state.template.push(sequence.map((node) => node.raw).join(''));
 			return;
 		}
