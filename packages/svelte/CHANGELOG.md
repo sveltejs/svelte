@@ -1,5 +1,13 @@
 # svelte
 
+## 5.14.6
+
+### Patch Changes
+
+- fix: treeshake `$inspect.trace` code if unused in modules ([#14774](https://github.com/sveltejs/svelte/pull/14774))
+
+- fix: Improve typescript DX for $inspect, $props, $bindable, and $host ([#14777](https://github.com/sveltejs/svelte/pull/14777))
+
 ## 5.14.5
 
 ### Patch Changes
