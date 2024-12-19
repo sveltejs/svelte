@@ -33,7 +33,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: pnpm build && { [ "`git status --porcelain=v1`" == "" ] || (echo "Generated types have changed — please regenerate types locally and commit the changes after you have reviewed them"; git diff; exit 1); }
+        run: pnpm build && { [ "`git status --porcelain=v1`" == "" ] || (echo "Generated types have changed — please regenerate types locally with `cd packages/svelte && pnpm generate:types` and commit the changes after you have reviewed them"; git diff; exit 1); }
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
