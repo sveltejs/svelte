@@ -6,19 +6,56 @@ const UNKNOWN = {};
  * @param {Node} node
  * @param {boolean} is_class
  * @param {Set<any>} set
+ * @param {boolean} is_nested
  */
-function gather_possible_values(node, is_class, set) {
+function gather_possible_values(node, is_class, set, is_nested = false) {
+	if (set.has(UNKNOWN)) {
+		// no point traversing any further
+		return;
+	}
+
 	if (node.type === 'Literal') {
 		set.add(String(node.value));
 	} else if (node.type === 'ConditionalExpression') {
-		gather_possible_values(node.consequent, is_class, set);
-		gather_possible_values(node.alternate, is_class, set);
+		gather_possible_values(node.consequent, is_class, set, is_nested);
+		gather_possible_values(node.alternate, is_class, set, is_nested);
+	} else if (node.type === 'LogicalExpression') {
+		if (node.operator === '&&') {
+			// && is a special case, because the only way the left
+			// hand value can be included is if it's falsy. this is
+			// a bit of extra work but it's worth it because
+			// `class={[condition && 'blah']}` is common,
+			// and we don't want to deopt on `condition`
+			const left = new Set();
+			gather_possible_values(node.left, is_class, left, is_nested);
+
+			if (left.has(UNKNOWN)) {
+				// add all non-nullish falsy values, unless this is a `class` attribute that
+				// will be processed by cslx, in which case falsy values are removed, unless
+				// they're not inside an array/object (TODO 6.0 remove that last part)
+				if (!is_class || !is_nested) {
+					set.add('');
+					set.add(false);
+					set.add(NaN);
+					set.add(0); // -0 and 0n are also falsy, but stringify to '0'
+				}
+			} else {
+				for (const value of left) {
+					if (!value) {
+						set.add(value);
+					}
+				}
+			}
+
+			gather_possible_values(node.right, is_class, set, is_nested);
+		} else {
+			gather_possible_values(node.left, is_class, set, is_nested);
+			gather_possible_values(node.right, is_class, set, is_nested);
+		}
 	} else if (is_class && node.type === 'ArrayExpression') {
 		for (const entry of node.elements) {
 			if (entry) {
-				gather_possible_values(entry, is_class, set);
-			} else {
-				set.add(UNKNOWN);
+				gather_possible_values(entry, is_class, set, true);
 			}
 		}
 	} else if (is_class && node.type === 'ObjectExpression') {
@@ -43,7 +80,7 @@ function gather_possible_values(node, is_class, set) {
 /**
  * @param {AST.Text | AST.ExpressionTag} chunk
  * @param {boolean} is_class
- * @returns {Set<string> | null}
+ * @returns {Set<string | number | boolean> | null}
  */
 export function get_possible_values(chunk, is_class) {
 	const values = new Set();
