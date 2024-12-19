@@ -4,10 +4,11 @@ import polka from 'polka';
 import { render } from 'svelte/server';
 import App from './src/main.svelte';
 
-const { head, body } = render(App);
+const { head, body, htmlAttributes } = render(App);
 
 const rendered = fs
 	.readFileSync(path.resolve('./dist/client/index.html'), 'utf-8')
+	.replace('%htmlAttributes%', htmlAttributes)
 	.replace(`<!--ssr-body-->`, body)
 	.replace(`<!--ssr-head-->`, head);
 

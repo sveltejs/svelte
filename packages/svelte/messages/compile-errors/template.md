@@ -322,6 +322,10 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 > `<svelte:head>` cannot have attributes nor directives
 
+## svelte_html_illegal_attribute
+
+> `<svelte:html>` can only have regular attributes
+
 ## svelte_meta_duplicate
 
 > A component can only have one `<%name%>` element
