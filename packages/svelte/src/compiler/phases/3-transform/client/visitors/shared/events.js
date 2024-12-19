@@ -70,7 +70,12 @@ export function visit_event_attribute(node, context) {
 
 		const type = /** @type {AST.SvelteNode} */ (context.path.at(-1)).type;
 
-		if (type === 'SvelteDocument' || type === 'SvelteWindow' || type === 'SvelteBody') {
+		if (
+			type === 'SvelteDocument' ||
+			type === 'SvelteWindow' ||
+			type === 'SvelteBody' ||
+			type === 'SvelteHTML'
+		) {
 			// These nodes are above the component tree, and its events should run parent first
 			context.state.init.push(statement);
 		} else {

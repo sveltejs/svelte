@@ -25,6 +25,7 @@ export { snippet, wrap_snippet } from './dom/blocks/snippet.js';
 export { component } from './dom/blocks/svelte-component.js';
 export { element } from './dom/blocks/svelte-element.js';
 export { head } from './dom/blocks/svelte-head.js';
+export { svelte_html } from './dom/blocks/svelte-html.js';
 export { append_styles } from './dom/css.js';
 export { action } from './dom/elements/actions.js';
 export {
@@ -150,7 +151,12 @@ export {
 	setContext,
 	hasContext
 } from './runtime.js';
-export { validate_binding, validate_each_keys, validate_prop_bindings } from './validate.js';
+export {
+	validate_binding,
+	validate_each_keys,
+	validate_prop_bindings,
+	validate_svelte_html_attribute
+} from './validate.js';
 export { raf } from './timing.js';
 export { proxy } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';

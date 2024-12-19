@@ -4,7 +4,7 @@
 import * as b from '../../../../../utils/builders.js';
 
 /**
- *
+ * Puts all event listeners onto the given element
  * @param {AST.SvelteBody | AST.SvelteDocument | AST.SvelteWindow} node
  * @param {string} id
  * @param {ComponentContext} context
