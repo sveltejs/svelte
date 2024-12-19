@@ -485,6 +485,13 @@ declare module 'svelte' {
 	 * */
 	export function untrack<T>(fn: () => T): T;
 	/**
+	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived),
+	 * any state updates to state is allowed.
+	 *
+	 * ```
+	 * */
+	export function unsafe<T>(fn: () => T): T;
+	/**
 	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
 	 * Must be called during component initialisation.
 	 *
