@@ -1,5 +1,5 @@
 ---
-title: class:
+title: class
 ---
 
 Svelte provides ergonomic helpers to conditionally set classes on elements.
