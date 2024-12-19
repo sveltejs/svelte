@@ -21,6 +21,7 @@
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
+      "worker": "./src/index-server.js",
       "browser": "./src/index-client.js",
       "default": "./src/index-server.js"
     },
@@ -64,6 +65,7 @@
     },
     "./legacy": {
       "types": "./types/index.d.ts",
+      "worker": "./src/legacy/legacy-server.js",
       "browser": "./src/legacy/legacy-client.js",
       "default": "./src/legacy/legacy-server.js"
     },
@@ -73,6 +75,7 @@
     },
     "./reactivity": {
       "types": "./types/index.d.ts",
+      "worker": "./src/reactivity/index-server.js",
       "browser": "./src/reactivity/index-client.js",
       "default": "./src/reactivity/index-server.js"
     },
@@ -86,6 +89,7 @@
     },
     "./store": {
       "types": "./types/index.d.ts",
+      "worker": "./src/store/index-server.js",
       "browser": "./src/store/index-client.js",
       "default": "./src/store/index-server.js"
     },
