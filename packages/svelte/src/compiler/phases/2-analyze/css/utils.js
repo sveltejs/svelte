@@ -80,7 +80,7 @@ function gather_possible_values(node, is_class, set, is_nested = false) {
 /**
  * @param {AST.Text | AST.ExpressionTag} chunk
  * @param {boolean} is_class
- * @returns {Set<string | number | boolean> | null}
+ * @returns {string[] | null}
  */
 export function get_possible_values(chunk, is_class) {
 	const values = new Set();
@@ -92,7 +92,7 @@ export function get_possible_values(chunk, is_class) {
 	}
 
 	if (values.has(UNKNOWN)) return null;
-	return values;
+	return [...values].map((value) => String(value));
 }
 
 /**

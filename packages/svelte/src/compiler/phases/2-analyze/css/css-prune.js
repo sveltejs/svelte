@@ -784,7 +784,7 @@ function attribute_matches(node, name, expected_value, operator, case_insensitiv
 					prev_values.push(current_possible_value);
 				}
 			});
-			if (prev_values.length < current_possible_values.size) {
+			if (prev_values.length < current_possible_values.length) {
 				prev_values.push(' ');
 			}
 			if (prev_values.length > 20) {
