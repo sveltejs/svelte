@@ -1039,7 +1039,6 @@ export function untrack(fn) {
  * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived),
  * any state updates to state is allowed.
  *
- * ```
  * @template T
  * @param {() => T} fn
  * @returns {T}

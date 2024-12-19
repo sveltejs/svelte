@@ -488,7 +488,6 @@ declare module 'svelte' {
 	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived),
 	 * any state updates to state is allowed.
 	 *
-	 * ```
 	 * */
 	export function unsafe<T>(fn: () => T): T;
 	/**
