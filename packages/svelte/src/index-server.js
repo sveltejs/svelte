@@ -14,7 +14,8 @@ export {
 	noop as afterUpdate,
 	noop as onMount,
 	noop as flushSync,
-	run as untrack
+	run as untrack,
+	run as unsafe
 } from './internal/shared/utils.js';
 
 export function createEventDispatcher() {

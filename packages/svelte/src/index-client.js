@@ -187,7 +187,8 @@ export {
 	hasContext,
 	setContext,
 	tick,
-	untrack
+	untrack,
+	unsafe
 } from './internal/client/runtime.js';
 
 export { createRawSnippet } from './internal/client/dom/blocks/snippet.js';
