@@ -389,7 +389,6 @@ function transform(name, dest) {
 		ast.body.push(clone);
 	}
 
-	// @ts-expect-error
 	const module = esrap.print(ast);
 
 	fs.writeFileSync(
