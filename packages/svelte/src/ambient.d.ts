@@ -118,6 +118,35 @@ declare namespace $state {
 	 */
 	export function raw<T>(initial: T): T;
 	export function raw<T>(): T | undefined;
+
+	/**
+	 * Declares state that is _not_ known to Svelte and thus is completely opaque to
+	 * reassignments and mutations. To let Svelte know that the value has changed,
+	 * you must invoke its invalidate function manually.
+	 *
+	 * Example:
+	 * ```ts
+	 * <script>
+	 *   let [items, invalidate] = $state.opaque([0]);
+	 *
+	 *   const addItem = () => {
+	 *     items.push(items.length);
+	 *     invalidate();
+	 *   };
+	 * </script>
+	 *
+	 * <button on:click={addItem}>
+	 *   {items.join(', ')}
+	 * </button>
+	 * ```
+	 *
+	 * https://svelte.dev/docs/svelte/$state#$state.opaque
+	 *
+	 * @param initial The initial value
+	 */
+	export function opaque<T>(initial: T): [T, (mutate?: (value: T) => void) => void];
+	export function opaque<T>(): [T | undefined, (mutate?: (value: T) => void) => void];
+
 	/**
 	 * To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
 	 *

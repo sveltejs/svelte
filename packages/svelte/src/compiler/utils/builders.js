@@ -132,6 +132,17 @@ export function call(callee, ...args) {
 
 /**
  * @param {string | ESTree.Expression} callee
+ * @param {...(ESTree.Expression | ESTree.SpreadElement | false | undefined)} args
+ * @returns {ESTree.ChainExpression}
+ */
+export function chain_call(callee, ...args) {
+	const expression = /** @type {ESTree.SimpleCallExpression} */ (call(callee, ...args));
+	expression.optional = true;
+	return { type: 'ChainExpression', expression };
+}
+
+/**
+ * @param {string | ESTree.Expression} callee
  * @param {...ESTree.Expression} args
  * @returns {ESTree.ChainExpression}
  */
