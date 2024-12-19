@@ -243,13 +243,15 @@ export function analyze_module(ast, options) {
 		}
 	}
 
+	const analysis = { runes: true, tracing: false };
+
 	walk(
 		/** @type {Node} */ (ast),
 		{
 			scope,
 			scopes,
 			// @ts-expect-error TODO
-			analysis: { runes: true }
+			analysis
 		},
 		visitors
 	);
@@ -259,7 +261,8 @@ export function analyze_module(ast, options) {
 		name: options.filename,
 		accessors: false,
 		runes: true,
-		immutable: true
+		immutable: true,
+		tracing: analysis.tracing
 	};
 }
 
