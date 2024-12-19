@@ -34,7 +34,7 @@ import { destroy_derived, execute_derived, update_derived } from './reactivity/d
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
-import { legacy_mode_flag } from '../flags/index.js';
+import { legacy_mode_flag, tracing_mode_flag } from '../flags/index.js';
 import { tracing_expressions, get_stack } from './dev/tracing.js';
 
 const FLUSH_MICROTASK = 0;
@@ -917,6 +917,7 @@ export function get(signal) {
 
 	if (
 		DEV &&
+		tracing_mode_flag &&
 		tracing_expressions !== null &&
 		active_reaction !== null &&
 		tracing_expressions.reaction === active_reaction

@@ -56,6 +56,9 @@
     "./internal/flags/legacy": {
       "default": "./src/internal/flags/legacy.js"
     },
+    "./internal/flags/tracing": {
+      "default": "./src/internal/flags/tracing.js"
+    },
     "./internal/server": {
       "default": "./src/internal/server/index.js"
     },

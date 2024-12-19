@@ -408,6 +408,7 @@ export function analyze_component(root, source, options) {
 		template,
 		elements: [],
 		runes,
+		tracing: false,
 		immutable: runes || options.immutable,
 		exports: [],
 		uses_props: false,

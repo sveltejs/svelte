@@ -58,6 +58,7 @@ for (const key in pkg.exports) {
 	if (key === './internal') continue;
 	if (key === './internal/disclose-version') continue;
 	if (key === './internal/flags/legacy') continue;
+	if (key === './internal/flags/tracing') continue;
 
 	for (const type of ['browser', 'default']) {
 		if (!pkg.exports[key][type]) continue;
@@ -91,6 +92,7 @@ const bundle = await bundle_code(
 </script>
 
 <svelte:head><title>hi</title></svelte:head>
+<input bind:value={foo} />
 
 <a href={foo} class={foo}>a</a>
 <a {...foo}>a</a>
@@ -132,6 +134,15 @@ if (!bundle.includes('component_context.l')) {
 	failed = true;
 	// eslint-disable-next-line no-console
 	console.error(`❌ Legacy code not treeshakeable`);
+}
+
+if (!bundle.includes(`'CreatedAt'`)) {
+	// eslint-disable-next-line no-console
+	console.error(`✅ $inspect.trace code treeshakeable`);
+} else {
+	failed = true;
+	// eslint-disable-next-line no-console
+	console.error(`❌ $inspect.trace code not treeshakeable`);
 }
 
 if (failed) {
