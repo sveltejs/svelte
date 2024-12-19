@@ -34,7 +34,6 @@ export function transform_component(analysis, source, options) {
 
 	const js_source_name = get_source_name(options.filename, options.outputFilename, 'input.svelte');
 
-	// @ts-expect-error
 	const js = print(program, {
 		// include source content; makes it easier/more robust looking up the source map code
 		// (else esrap does return null for source and sourceMapContent which may trip up tooling)
@@ -95,7 +94,6 @@ export function transform_module(analysis, source, options) {
 	}
 
 	return {
-		// @ts-expect-error
 		js: print(program, {
 			// include source content; makes it easier/more robust looking up the source map code
 			// (else esrap does return null for source and sourceMapContent which may trip up tooling)
