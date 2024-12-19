@@ -26,7 +26,7 @@ Please see the [Contributing Guide](CONTRIBUTING.md) and the [`svelte`](packages
 
 ### svelte.dev
 
-The source code for https://svelte.dev lives in the [sites](https://github.com/sveltejs/svelte/tree/master/sites/svelte.dev) folder, with all the documentation right [here](https://github.com/sveltejs/svelte/tree/master/documentation). The site is built with [SvelteKit](https://svelte.dev/docs/kit).
+The source code for https://svelte.dev lives in the [svelte.dev](https://github.com/sveltejs/svelte.dev/tree/main/apps/svelte.dev) repository, with all the documentation right [here](https://github.com/sveltejs/svelte.dev/tree/main/apps/svelte.dev/content/docs/svelte). The site is built with [SvelteKit](https://svelte.dev/docs/kit/introduction).
 
 ## Is svelte.dev down?
 
