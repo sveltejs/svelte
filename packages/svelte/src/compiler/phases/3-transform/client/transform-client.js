@@ -539,6 +539,10 @@ export function client_component(analysis, options) {
 		body.unshift(b.imports([], 'svelte/internal/flags/legacy'));
 	}
 
+	if (analysis.tracing) {
+		body.unshift(b.imports([], 'svelte/internal/flags/tracing'));
+	}
+
 	if (options.discloseVersion) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}
@@ -667,9 +671,15 @@ export function client_module(analysis, options) {
 		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, visitors)
 	);
 
+	const body = [b.import_all('$', 'svelte/internal/client')];
+
+	if (analysis.tracing) {
+		body.push(b.imports([], 'svelte/internal/flags/tracing'));
+	}
+
 	return {
 		type: 'Program',
 		sourceType: 'module',
-		body: [b.import_all('$', 'svelte/internal/client'), ...module.body]
+		body: [...body, ...module.body]
 	};
 }

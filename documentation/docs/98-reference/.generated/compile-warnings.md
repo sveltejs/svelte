@@ -630,6 +630,32 @@ In some situations a selector may target an element that is not 'visible' to the
 Self-closing HTML tags for non-void elements are ambiguous — use `<%name% ...></%name%>` rather than `<%name% ... />`
 ```
 
+In HTML, there's [no such thing as a self-closing tag](https://jakearchibald.com/2023/against-self-closing-tags-in-html/). While this _looks_ like a self-contained element with some text next to it...
+
+```html
+<div>
+	<span class="icon" /> some text!
+</div>
+```
+
+...a spec-compliant HTML parser (such as a browser) will in fact parse it like this, with the text _inside_ the icon:
+
+```html
+<div>
+	<span class="icon"> some text! </span>
+</div>
+```
+
+Some templating languages (including Svelte) will 'fix' HTML by turning `<span />` into `<span></span>`. Others adhere to the spec. Both result in ambiguity and confusion when copy-pasting code between different contexts, and as such Svelte prompts you to resolve the ambiguity directly by having an explicit closing tag.
+
+To automate this, run the dedicated migration:
+
+```bash
+npx sv migrate self-closing-tags
+```
+
+In a future version of Svelte, self-closing tags may be upgraded from a warning to an error.
+
 ### event_directive_deprecated
 
 ```
