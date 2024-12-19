@@ -46,6 +46,8 @@ await createBundle({
 	}
 });
 
+fs.appendFileSync(`${dir}/types/index.d.ts`, '\n');
+
 const types = fs.readFileSync(`${dir}/types/index.d.ts`, 'utf-8');
 
 const bad_links = [...types.matchAll(/\]\((\/[^)]+)\)/g)];
