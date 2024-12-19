@@ -5,7 +5,7 @@ export default test({
 	async test({ assert, target, window }) {
 		const [btn1] = target.querySelectorAll('button');
 
-		assert.htmlEqual(window.document.head.innerHTML, ``);
+		assert.htmlEqual(window.document.head.innerHTML, `<title>initial</title>`);
 
 		flushSync(() => {
 			btn1.click();
@@ -17,6 +17,6 @@ export default test({
 			btn1.click();
 		});
 
-		assert.htmlEqual(window.document.head.innerHTML, `<title>hello world</title>`);
+		assert.htmlEqual(window.document.head.innerHTML, `<title>initial</title>`);
 	}
 });
