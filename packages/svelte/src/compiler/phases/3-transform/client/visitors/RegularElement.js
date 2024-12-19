@@ -553,6 +553,10 @@ function build_element_attribute_update_assignment(
 	let update;
 
 	if (name === 'class') {
+		if (attribute.metadata.needs_clsx) {
+			value = b.call('$.clsx', value);
+		}
+
 		if (attribute.metadata.expression.has_state && has_call) {
 			// ensure we're not creating a separate template effect for this so that
 			// potential class directives are added to the same effect and therefore always apply
@@ -561,11 +565,13 @@ function build_element_attribute_update_assignment(
 			value = b.call('$.get', id);
 			has_call = false;
 		}
+
 		update = b.stmt(
 			b.call(
 				is_svg ? '$.set_svg_class' : is_mathml ? '$.set_mathml_class' : '$.set_class',
 				node_id,
-				value
+				value,
+				attribute.metadata.needs_clsx ? b.literal(context.state.analysis.css.hash) : undefined
 			)
 		);
 	} else if (name === 'value') {
