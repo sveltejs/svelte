@@ -23,6 +23,10 @@ import { defineConfig } from +++'vitest/config'+++;
 
 export default defineConfig({
 	// ...
+	// Tell Vitest to run in a browser-like environment to allow some runes to function as if they were running in the browser
+	test: {
+		environment: 'jsdom'
+	},
 	// Tell Vitest to use the `browser` entry points in `package.json` files, even though it's running in Node
 	resolve: process.env.VITEST
 		? {
@@ -104,6 +108,8 @@ test('Effect', () => {
 	cleanup();
 });
 ```
+
+> [!NOTE] `$effect.root` is ignored in a backend testing environment. If your `vite.config.js` or `vitest.config.ts` do not specify a browser-like environment, the code in the test defined above will not run, and the test will misleadingly report that it was successful (because there was no code to run).
 
 ### Component testing
 
