@@ -2,82 +2,89 @@
 title: class
 ---
 
-Svelte provides ergonomic helpers to conditionally set classes on elements.
+There are two ways to set classes on elements: the `class` attribute, and the `class:` directive.
 
-## class
+## Attributes
 
-Since Svelte 5.15, you can pass an object or array to the `class` attribute to conditionally set classes on elements. The logic is as follows:
-
-- Primitive: All truthy values are added, all falsy not
-- `Object`: All truthy keys are added to the element class
-- `Array`: Objects and primitives are handled according to the two previous descriptions, nested arrays are flattened
+Primitive values are treated like any other attribute:
 
 ```svelte
-<!-- These are equivalent -->
-<div class={isCool ? 'cool' : ''}>...</div>
-<div class={{ cool: isCool }}>...</div>
-<div class={[ isCool && 'cool' ]}>...</div>
+<div class={large ? 'large' : 'small'}>...</div>
 ```
 
-You can use this to conditionally set many classes at once, including those that have special characters.
+> [!NOTE]
+> For historical reasons, falsy values (like `false` and `NaN`) are stringified (`class="false"`), though `class={undefined}` (or `null`) cause the attribute to be omitted altogether. In a future version of Svelte, all falsy values will cause `class` to be omitted.
+
+### Objects and arrays
+
+Since Svelte 5.15, `class` can be an object or array, and is converted to a string using [clsx](https://github.com/lukeed/clsx/).
+
+If the value is an object, the truthy keys are added:
 
 ```svelte
-<!-- These are equivalent -->
-<div class={{ 'bg-blue-700 sm:w-1/2': useTailwind }}>...</div>
-<div class={[ useTailwind && 'bg-blue-700 sm:w-1/2' ]}>...</div>
-```
-
-Since `class` itself takes these values, you can use the same syntax on component properties when forwarding those to the `class` attribute.
-
-```svelte
-<!--- file: App.svelte --->
 <script>
-    import Button from './Button.svelte';
-    let useTailwind = $state(false);
+	let { cool } = $props();
 </script>
 
-<Button
-    onclick={() => useTailwind = true}
-    class={{ 'bg-blue-700 sm:w-1/2': useTailwind }}
->
-    Give in
-</Button>
+<!-- results in `class="cool"` if `cool` is truthy,
+     `class="lame"` otherwise -->
+<div class={{ cool, lame: !cool }}>...</div>
 ```
+
+If the value is an array, the truthy values are combined:
+
+```svelte
+<!-- if `faded` and `large` are both truthy, results in
+     `class="saturate-0 opacity-50 scale-200"` -->
+<div class={[faded && 'saturate-0 opacity-50', large && 'scale-200']}>...</div>
+```
+
+Note that whether we're using the array or object form, we can set multiple classes simultaneously with a single condition, which is particularly useful if you're using things like Tailwind.
+
+Arrays can contain arrays and objects, and clsx will flatten them. This is useful for combining local classes with props, for example:
 
 ```svelte
 <!--- file: Button.svelte --->
 <script>
-    let { children, ...rest } = $props();
+	let props = $props();
 </script>
 
-<!-- rest contains class, and the value is appropriately stringified -->
-<button {...rest}>
-    {@render children()}
+<button {...props} class={['cool-button', props.class]}>
+	{@render props.children?.()}
 </button>
 ```
 
-Under the hood this is using [`clsx`](https://github.com/lukeed/clsx), so if you need more details on the syntax, you can visit its documentation.
+The user of this component has the same flexibility to use a mixture of objects, arrays and strings:
 
-## class:
+```svelte
+<!--- file: App.svelte --->
+<script>
+	import Button from './Button.svelte';
+	let useTailwind = $state(false);
+</script>
 
-The `class:` directive is a convenient way to conditionally set classes on elements, as an alternative to using conditional expressions inside `class` attributes:
+<Button
+	onclick={() => useTailwind = true}
+	class={{ 'bg-blue-700 sm:w-1/2': useTailwind }}
+>
+	Accept the inevitability of Tailwind
+</Button>
+```
+
+## The `class:` directive
+
+Prior to Svelte 5.15, the `class:` directive was the most convenient way to set classes on elements conditionally.
 
 ```svelte
 <!-- These are equivalent -->
-<div class={isCool ? 'cool' : ''}>...</div>
-<div class:cool={isCool}>...</div>
+<div class={{ cool, lame: !cool }}>...</div>
+<div class:cool={cool} class:lame={!cool}>...</div>
 ```
 
 As with other directives, we can use a shorthand when the name of the class coincides with the value:
 
 ```svelte
-<div class:cool>...</div>
+<div class:cool class:lame={!cool}>...</div>
 ```
 
-Multiple `class:` directives can be added to a single element:
-
-```svelte
-<div class:cool class:lame={!cool} class:potato>...</div>
-```
-
-> [!NOTE] Since Svelte 5.15, you have the same expressive power with extra features on the `class` attribute itself, so use that instead if possible
+> [!NOTE] Unless you're using an older version of Svelte, consider avoiding `class:`, since the attribute is more powerful and composable.
