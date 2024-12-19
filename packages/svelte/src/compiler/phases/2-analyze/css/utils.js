@@ -41,7 +41,7 @@ function gather_possible_values(node, is_class, set, is_nested = false) {
 				}
 			} else {
 				for (const value of left) {
-					if (!value) {
+					if (!value && value != undefined && (!is_class || !is_nested)) {
 						set.add(value);
 					}
 				}
