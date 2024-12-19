@@ -539,6 +539,10 @@ export function client_component(analysis, options) {
 		body.unshift(b.imports([], 'svelte/internal/flags/legacy'));
 	}
 
+	if (analysis.tracing) {
+		body.unshift(b.imports([], 'svelte/internal/flags/tracing'));
+	}
+
 	if (options.discloseVersion) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}

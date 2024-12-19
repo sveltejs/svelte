@@ -14,6 +14,7 @@ import { STATE_SYMBOL, STATE_SYMBOL_METADATA } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 import { get_stack } from './dev/tracing.js';
+import { tracing_mode_flag } from '../flags/index.js';
 
 /**
  * @template T
@@ -25,7 +26,7 @@ import { get_stack } from './dev/tracing.js';
 export function proxy(value, parent = null, prev) {
 	/** @type {Error | null} */
 	var stack = null;
-	if (DEV) {
+	if (DEV && tracing_mode_flag) {
 		stack = get_stack('CreatedAt');
 	}
 	// if non-proxyable, or is already a proxy, return `value`
