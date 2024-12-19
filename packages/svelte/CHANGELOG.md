@@ -1,5 +1,11 @@
 # svelte
 
+## 5.15.0
+
+### Minor Changes
+
+- feat: add "worker" exports condition to better support bundling for worker-based environments ([#14779](https://github.com/sveltejs/svelte/pull/14779))
+
 ## 5.14.6
 
 ### Patch Changes
