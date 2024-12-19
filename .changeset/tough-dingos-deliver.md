@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure $inspect.trace code is treeshaken out if unused
+fix: treeshake `$inspect.trace` code if unused
