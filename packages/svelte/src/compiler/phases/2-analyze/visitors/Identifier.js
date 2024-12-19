@@ -53,10 +53,6 @@ export function Identifier(node, context) {
 				parent = /** @type {Expression} */ (context.path[--i]);
 
 				if (!is_rune(name)) {
-					if (name === '$effect.active') {
-						e.rune_renamed(parent, '$effect.active', '$effect.tracking');
-					}
-
 					if (name === '$state.frozen') {
 						e.rune_renamed(parent, '$state.frozen', '$state.raw');
 					}
