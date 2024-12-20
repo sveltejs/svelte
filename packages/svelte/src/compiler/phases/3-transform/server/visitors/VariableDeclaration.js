@@ -1,4 +1,4 @@
-/** @import { VariableDeclaration, VariableDeclarator, Expression, CallExpression, Pattern, Identifier } from 'estree' */
+/** @import { ArrayPattern, VariableDeclaration, VariableDeclarator, Expression, CallExpression, Pattern, Identifier } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { Context } from '../types.js' */
 /** @import { Scope } from '../../../scope.js' */
@@ -88,6 +88,20 @@ export function VariableDeclaration(node, context) {
 			if (rune === '$derived') {
 				declarations.push(
 					b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), value)
+				);
+				continue;
+			}
+
+			if (rune === '$state.opaque') {
+				const pattern = /** @type {ArrayPattern} */ (declarator.id);
+				const state_id = /** @type {Identifier} */ (pattern.elements[0]);
+				const invalidation_id = /** @type {Identifier} */ (pattern.elements[1]);
+				declarations.push(
+					b.declarator(state_id, value),
+					b.declarator(
+						invalidation_id,
+						b.arrow([b.id('$$fn')], b.chain_call(b.id('$$fn'), state_id))
+					)
 				);
 				continue;
 			}
