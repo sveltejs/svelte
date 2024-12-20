@@ -17,7 +17,7 @@ Primitive values are treated like any other attribute:
 
 ### Objects and arrays
 
-Since Svelte 5.15, `class` can be an object or array, and is converted to a string using [clsx](https://github.com/lukeed/clsx/).
+Since Svelte 5.15, `class` can be an object or array, and is converted to a string using [clsx](https://github.com/lukeed/clsx).
 
 If the value is an object, the truthy keys are added:
 
