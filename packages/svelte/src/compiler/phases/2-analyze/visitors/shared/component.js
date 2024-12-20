@@ -74,7 +74,8 @@ export function visit_component(node, context) {
 			attribute.type !== 'SpreadAttribute' &&
 			attribute.type !== 'LetDirective' &&
 			attribute.type !== 'OnDirective' &&
-			attribute.type !== 'BindDirective'
+			attribute.type !== 'BindDirective' &&
+			attribute.type !== 'UseTag'
 		) {
 			e.component_invalid_directive(attribute);
 		}

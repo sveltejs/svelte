@@ -252,6 +252,15 @@ export function build_component(node, component_name, context, anchor = context.
 					);
 				}
 			}
+		} else if (attribute.type === 'UseTag') {
+			push_prop(
+				b.prop(
+					'init',
+					b.call('Symbol', b.literal('@use')),
+					b.thunk(/** @type {Expression} */ (context.visit(attribute.expression))),
+					true
+				)
+			);
 		}
 	}
 

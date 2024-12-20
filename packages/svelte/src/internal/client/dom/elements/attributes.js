@@ -13,6 +13,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../../runtime.js';
+import { attach } from './attachments.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -405,6 +406,10 @@ export function set_attributes(
 			// reset styles to force style: directive to update
 			element.__styles = {};
 		}
+	}
+
+	for (let symbol of Object.getOwnPropertySymbols(next)) {
+		attach(element, next[symbol]);
 	}
 
 	return current;
