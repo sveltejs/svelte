@@ -1,7 +1,14 @@
 /** @import { Snapshot } from './types' */
 import { DEV } from 'esm-env';
+import { STATE_SYMBOL } from '../client/constants.js';
 import * as w from './warnings.js';
-import { get_prototype_of, is_array, object_prototype } from './utils.js';
+import {
+	get_prototype_of,
+	is_array,
+	object_prototype,
+	structured_clone,
+	is_object
+} from './utils.js';
 
 /**
  * In dev, we keep track of which properties could not be cloned. In prod
@@ -96,7 +103,7 @@ function clone(value, cloned, path, paths, original = null) {
 		}
 
 		if (value instanceof Date) {
-			return /** @type {Snapshot<T>} */ (structuredClone(value));
+			return /** @type {Snapshot<T>} */ (structured_clone(value));
 		}
 
 		if (typeof (/** @type {T & { toJSON?: any } } */ (value).toJSON) === 'function') {
@@ -117,7 +124,7 @@ function clone(value, cloned, path, paths, original = null) {
 	}
 
 	try {
-		return /** @type {Snapshot<T>} */ (structuredClone(value));
+		return /** @type {Snapshot<T>} */ (structured_clone(value));
 	} catch (e) {
 		if (DEV) {
 			paths.push(path);
@@ -125,4 +132,41 @@ function clone(value, cloned, path, paths, original = null) {
 
 		return /** @type {Snapshot<T>} */ (value);
 	}
+}
+
+// Patches `structuredClone` to work with `$state` proxies
+if (DEV && "structuredClone" in globalThis) {
+	/**
+	 * Creates a deep clone of an object.
+	 * [MDN Reference](https://developer.mozilla.org/docs/Web/API/structuredClone)
+	 * @template T
+	 * @param {T} value
+	 * @param {StructuredSerializeOptions} options
+	 * @returns {T}
+	 */
+	//@ts-expect-error
+	globalThis.structuredClone = function structuredClone(value, options) {
+		/**
+		 * @param {any[]} keys
+		 * @param {object} object
+		 * @returns {boolean}
+		 */
+		function in_object(keys, object) {
+			let result = true;
+			for (let key of keys) {
+				result &&= key in object;
+			}
+			return result;
+		}
+		// the `transfer` property in options can't really be patched easily, so the original structuredClone is used
+		if (is_object(options) && 'transfer' in options && is_object(value)) {
+			//@ts-expect-error
+			if (in_object(['f', 'v', 'equals', 'reactions', 'version'], value) || STATE_SYMBOL in value) // not quite sure if the first condition is necessary
+				//@ts-expect-error
+				value = snapshot(value);
+			return structured_clone(value, options);
+		}
+		//@ts-expect-error
+		return snapshot(value);
+	};
 }
