@@ -252,11 +252,11 @@ export function build_component(node, component_name, context, anchor = context.
 					);
 				}
 			}
-		} else if (attribute.type === 'UseTag') {
+		} else if (attribute.type === 'AttachTag') {
 			push_prop(
 				b.prop(
 					'init',
-					b.call('Symbol', b.literal('@use')),
+					b.call('Symbol', b.literal('@attach')),
 					b.thunk(/** @type {Expression} */ (context.visit(attribute.expression))),
 					true
 				)

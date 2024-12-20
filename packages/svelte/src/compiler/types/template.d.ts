@@ -174,9 +174,9 @@ export namespace AST {
 		};
 	}
 
-	/** A `{@use foo(...)} tag */
-	export interface UseTag extends BaseNode {
-		type: 'UseTag';
+	/** A `{@attach foo(...)} tag */
+	export interface AttachTag extends BaseNode {
+		type: 'AttachTag';
 		expression: Expression;
 	}
 
@@ -279,7 +279,7 @@ export namespace AST {
 
 	interface BaseElement extends BaseNode {
 		name: string;
-		attributes: Array<Attribute | SpreadAttribute | Directive | UseTag>;
+		attributes: Array<Attribute | SpreadAttribute | Directive | AttachTag>;
 		fragment: Fragment;
 	}
 
@@ -553,7 +553,7 @@ export namespace AST {
 		| AST.Attribute
 		| AST.SpreadAttribute
 		| Directive
-		| AST.UseTag
+		| AST.AttachTag
 		| AST.Comment
 		| Block;
 

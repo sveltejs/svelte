@@ -2,7 +2,7 @@
 	"css": null,
 	"js": [],
 	"start": 0,
-	"end": 51,
+	"end": 57,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
@@ -10,25 +10,25 @@
 			{
 				"type": "RegularElement",
 				"start": 0,
-				"end": 51,
+				"end": 57,
 				"name": "div",
 				"attributes": [
 					{
-						"type": "UseTag",
+						"type": "AttachTag",
 						"start": 5,
-						"end": 24,
+						"end": 27,
 						"expression": {
 							"type": "ArrowFunctionExpression",
-							"start": 11,
-							"end": 23,
+							"start": 14,
+							"end": 26,
 							"loc": {
 								"start": {
 									"line": 1,
-									"column": 11
+									"column": 14
 								},
 								"end": {
 									"line": 1,
-									"column": 23
+									"column": 26
 								}
 							},
 							"id": null,
@@ -38,16 +38,16 @@
 							"params": [
 								{
 									"type": "Identifier",
-									"start": 12,
-									"end": 16,
+									"start": 15,
+									"end": 19,
 									"loc": {
 										"start": {
 											"line": 1,
-											"column": 12
+											"column": 15
 										},
 										"end": {
 											"line": 1,
-											"column": 16
+											"column": 19
 										}
 									},
 									"name": "node"
@@ -55,16 +55,16 @@
 							],
 							"body": {
 								"type": "BlockStatement",
-								"start": 21,
-								"end": 23,
+								"start": 24,
+								"end": 26,
 								"loc": {
 									"start": {
 										"line": 1,
-										"column": 21
+										"column": 24
 									},
 									"end": {
 										"line": 1,
-										"column": 23
+										"column": 26
 									}
 								},
 								"body": []
@@ -72,21 +72,21 @@
 						}
 					},
 					{
-						"type": "UseTag",
-						"start": 25,
-						"end": 44,
+						"type": "AttachTag",
+						"start": 28,
+						"end": 50,
 						"expression": {
 							"type": "ArrowFunctionExpression",
-							"start": 31,
-							"end": 43,
+							"start": 37,
+							"end": 49,
 							"loc": {
 								"start": {
 									"line": 1,
-									"column": 31
+									"column": 37
 								},
 								"end": {
 									"line": 1,
-									"column": 43
+									"column": 49
 								}
 							},
 							"id": null,
@@ -96,16 +96,16 @@
 							"params": [
 								{
 									"type": "Identifier",
-									"start": 32,
-									"end": 36,
+									"start": 38,
+									"end": 42,
 									"loc": {
 										"start": {
 											"line": 1,
-											"column": 32
+											"column": 38
 										},
 										"end": {
 											"line": 1,
-											"column": 36
+											"column": 42
 										}
 									},
 									"name": "node"
@@ -113,16 +113,16 @@
 							],
 							"body": {
 								"type": "BlockStatement",
-								"start": 41,
-								"end": 43,
+								"start": 47,
+								"end": 49,
 								"loc": {
 									"start": {
 										"line": 1,
-										"column": 41
+										"column": 47
 									},
 									"end": {
 										"line": 1,
-										"column": 43
+										"column": 49
 									}
 								},
 								"body": []

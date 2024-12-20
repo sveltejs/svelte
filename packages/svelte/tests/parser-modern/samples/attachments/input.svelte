@@ -1,1 +1,1 @@
-<div {@use (node) => {}} {@use (node) => {}}></div>
+<div {@attach (node) => {}} {@attach (node) => {}}></div>

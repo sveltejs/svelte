@@ -4,10 +4,10 @@
 import * as b from '../../../../utils/builders.js';
 
 /**
- * @param {AST.UseTag} node
+ * @param {AST.AttachTag} node
  * @param {ComponentContext} context
  */
-export function UseTag(node, context) {
+export function AttachTag(node, context) {
 	context.state.init.push(
 		b.stmt(
 			b.call(
