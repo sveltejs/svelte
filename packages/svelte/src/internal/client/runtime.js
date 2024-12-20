@@ -82,6 +82,8 @@ export let untracking = false;
 
 export let unsafe_mutations = false;
 
+export let unsafe_mutation_inside_effect = false;
+
 /** @param {null | Reaction} reaction */
 export function set_active_reaction(reaction) {
 	active_reaction = reaction;
@@ -517,8 +519,10 @@ export function update_effect(effect) {
 
 	var previous_effect = active_effect;
 	var previous_component_context = component_context;
+	var previous_unsafe_mutation_inside_effect = unsafe_mutation_inside_effect;
 
 	active_effect = effect;
+	unsafe_mutation_inside_effect = false;
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
@@ -536,6 +540,18 @@ export function update_effect(effect) {
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
+
+		// If unsafe() has been used within the effect, then we might need
+		// to schedule another update for this effect in case the unsafe mutation
+		// has caused a this effect to become invalidated again
+		if (unsafe_mutation_inside_effect && (effect.f & CLEAN) !== 0) {
+			set_signal_status(effect, MAYBE_DIRTY);
+			if (check_dirtiness(effect)) {
+				set_signal_status(effect, DIRTY);
+				schedule_effect(effect);
+			}
+		}
+
 		effect.version = current_version;
 
 		if (DEV) {
@@ -545,6 +561,7 @@ export function update_effect(effect) {
 		handle_error(error, effect, previous_effect, previous_component_context || effect.ctx);
 	} finally {
 		active_effect = previous_effect;
+		unsafe_mutation_inside_effect = previous_unsafe_mutation_inside_effect;
 
 		if (DEV) {
 			dev_current_component_function = previous_component_fn;
@@ -1047,7 +1064,13 @@ export function unsafe(fn) {
 	var previous_unsafe_mutations = unsafe_mutations;
 	try {
 		unsafe_mutations = true;
-		return fn();
+		var val = fn();
+
+		if (is_flushing_effect) {
+			unsafe_mutation_inside_effect = true;
+		}
+
+		return val;
 	} finally {
 		unsafe_mutations = previous_unsafe_mutations;
 	}
