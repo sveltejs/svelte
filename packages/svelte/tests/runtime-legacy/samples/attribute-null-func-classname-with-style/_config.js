@@ -40,7 +40,7 @@ export default test({
 		assert.equal(div.className, 'true svelte-x1o6ra');
 
 		component.testName = {};
-		assert.equal(div.className, '[object Object] svelte-x1o6ra');
+		assert.equal(div.className, ' svelte-x1o6ra');
 
 		component.testName = '';
 		assert.equal(div.className, ' svelte-x1o6ra');

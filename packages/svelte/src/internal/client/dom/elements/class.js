@@ -3,12 +3,13 @@ import { hydrating } from '../hydration.js';
 /**
  * @param {SVGElement} dom
  * @param {string} value
+ * @param {string} [hash]
  * @returns {void}
  */
-export function set_svg_class(dom, value) {
+export function set_svg_class(dom, value, hash) {
 	// @ts-expect-error need to add __className to patched prototype
 	var prev_class_name = dom.__className;
-	var next_class_name = to_class(value);
+	var next_class_name = to_class(value, hash);
 
 	if (hydrating && dom.getAttribute('class') === next_class_name) {
 		// In case of hydration don't reset the class as it's already correct.
@@ -32,12 +33,13 @@ export function set_svg_class(dom, value) {
 /**
  * @param {MathMLElement} dom
  * @param {string} value
+ * @param {string} [hash]
  * @returns {void}
  */
-export function set_mathml_class(dom, value) {
+export function set_mathml_class(dom, value, hash) {
 	// @ts-expect-error need to add __className to patched prototype
 	var prev_class_name = dom.__className;
-	var next_class_name = to_class(value);
+	var next_class_name = to_class(value, hash);
 
 	if (hydrating && dom.getAttribute('class') === next_class_name) {
 		// In case of hydration don't reset the class as it's already correct.
@@ -61,12 +63,13 @@ export function set_mathml_class(dom, value) {
 /**
  * @param {HTMLElement} dom
  * @param {string} value
+ * @param {string} [hash]
  * @returns {void}
  */
-export function set_class(dom, value) {
+export function set_class(dom, value, hash) {
 	// @ts-expect-error need to add __className to patched prototype
 	var prev_class_name = dom.__className;
-	var next_class_name = to_class(value);
+	var next_class_name = to_class(value, hash);
 
 	if (hydrating && dom.className === next_class_name) {
 		// In case of hydration don't reset the class as it's already correct.
@@ -79,7 +82,7 @@ export function set_class(dom, value) {
 		// Removing the attribute when the value is only an empty string causes
 		// peformance issues vs simply making the className an empty string. So
 		// we should only remove the class if the the value is nullish.
-		if (value == null) {
+		if (value == null && !hash) {
 			dom.removeAttribute('class');
 		} else {
 			dom.className = next_class_name;
@@ -93,10 +96,11 @@ export function set_class(dom, value) {
 /**
  * @template V
  * @param {V} value
+ * @param {string} [hash]
  * @returns {string | V}
  */
-function to_class(value) {
-	return value == null ? '' : value;
+function to_class(value, hash) {
+	return (value == null ? '' : value) + (hash ? ' ' + hash : '');
 }
 
 /**
