@@ -552,7 +552,7 @@ export function update_effect(effect) {
 		// to ensure consistency of the graph
 		if (unsafe_sources !== null && (effect.f & CLEAN) !== 0) {
 			for (let i = 0; i < /** @type {Source[]} */ (unsafe_sources).length; i++) {
-				mark_reactions(unsafe_sources[i], DIRTY);
+				mark_reactions(unsafe_sources[i], DIRTY, true);
 			}
 		}
 

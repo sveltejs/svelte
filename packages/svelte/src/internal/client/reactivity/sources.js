@@ -239,9 +239,10 @@ export function internal_set(source, value) {
 /**
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
+ * @param {boolean} [unsafe] mark all reactions for unsafe mutations
  * @returns {void}
  */
-export function mark_reactions(signal, status) {
+export function mark_reactions(signal, status, unsafe = false) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -253,23 +254,25 @@ export function mark_reactions(signal, status) {
 		var flags = reaction.f;
 
 		// Skip any effects that are already dirty
-		if ((flags & DIRTY) !== 0) continue;
+		if ((flags & DIRTY) !== 0 && !unsafe) continue;
 
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === active_effect) continue;
 
-		// Inspect effects need to run immediately, so that the stack trace makes sense
-		if (DEV && (flags & INSPECT_EFFECT) !== 0) {
+		// Inspect effects need to run immediately, so that the stack trace makes sense.
+		// Skip doing this for the unsafe mutations as they will have already been added
+		// in the unsafe() wrapper
+		if (DEV && !unsafe && (flags & INSPECT_EFFECT) !== 0) {
 			inspect_effects.add(reaction);
 			continue;
 		}
 
 		set_signal_status(reaction, status);
 
-		// If the signal a) was previously clean or b) is an unowned derived, then mark it
-		if ((flags & (CLEAN | UNOWNED)) !== 0) {
+		// If the signal a) was previously clean or b) is an unowned derived then mark it
+		if ((flags & (CLEAN | UNOWNED)) !== 0 || unsafe) {
 			if ((flags & DERIVED) !== 0) {
-				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
+				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY, unsafe);
 			} else {
 				schedule_effect(/** @type {Effect} */ (reaction));
 			}
