@@ -41,10 +41,19 @@ export function validate_each_keys(collection, key_fn) {
 /**
  * @param {Record<string, any>} $$props
  * @param {string[]} bindable
+ * @param {string[]} non_bindable
  * @param {string[]} exports
  * @param {Function & { [FILENAME]: string }} component
+ * @param {boolean} has_rest
  */
-export function validate_prop_bindings($$props, bindable, exports, component) {
+export function validate_prop_bindings(
+	$$props,
+	bindable,
+	non_bindable,
+	exports,
+	component,
+	has_rest
+) {
 	for (const key in $$props) {
 		var setter = get_descriptor($$props, key)?.set;
 		var name = component.name;
@@ -55,7 +64,9 @@ export function validate_prop_bindings($$props, bindable, exports, component) {
 			}
 
 			if (!bindable.includes(key)) {
-				e.bind_not_bindable(key, component[FILENAME], name);
+				if (has_rest || non_bindable.includes(key)) {
+					e.bind_not_bindable(key, component[FILENAME], name);
+				}
 			}
 		}
 	}

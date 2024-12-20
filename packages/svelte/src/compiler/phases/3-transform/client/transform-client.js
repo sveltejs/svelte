@@ -296,16 +296,26 @@ export function client_component(analysis, options) {
 
 	const properties = [...analysis.instance.scope.declarations].filter(
 		([name, binding]) =>
-			(binding.kind === 'prop' || binding.kind === 'bindable_prop') && !name.startsWith('$$')
+			(binding.kind === 'prop' ||
+				binding.kind === 'bindable_prop' ||
+				binding.kind === 'rest_prop') &&
+			!name.startsWith('$$')
 	);
 
 	if (dev && analysis.runes) {
 		const exports = analysis.exports.map(({ name, alias }) => b.literal(alias ?? name));
 		/** @type {ESTree.Literal[]} */
 		const bindable = [];
+		const non_bindable = [];
+		let has_rest = false;
+
 		for (const [name, binding] of properties) {
 			if (binding.kind === 'bindable_prop') {
 				bindable.push(b.literal(binding.prop_alias ?? name));
+			} else if (binding.kind === 'rest_prop') {
+				has_rest = true;
+			} else {
+				non_bindable.push(b.literal(binding.prop_alias ?? name));
 			}
 		}
 		instance.body.unshift(
@@ -314,8 +324,10 @@ export function client_component(analysis, options) {
 					'$.validate_prop_bindings',
 					b.id('$$props'),
 					b.array(bindable),
+					b.array(non_bindable),
 					b.array(exports),
-					b.id(`${analysis.name}`)
+					b.id(`${analysis.name}`),
+					b.literal(has_rest)
 				)
 			)
 		);
