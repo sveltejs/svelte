@@ -18,7 +18,10 @@ import {
 	set_derived_sources,
 	check_dirtiness,
 	set_is_flushing_effect,
-	is_flushing_effect
+	is_flushing_effect,
+	unsafe_mutating,
+	unsafe_sources,
+	set_unsafe_sources
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -147,6 +150,7 @@ export function mutate(source, value) {
 export function set(source, value) {
 	if (
 		active_reaction !== null &&
+		!unsafe_mutating &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 &&
 		// If the source was created locally within the current derived, then
@@ -169,6 +173,14 @@ export function internal_set(source, value) {
 	if (!source.equals(value)) {
 		source.v = value;
 		source.version = increment_version();
+
+		if (unsafe_mutating) {
+			if (unsafe_sources === null) {
+				set_unsafe_sources([source]);
+			} else {
+				unsafe_sources.push(source);
+			}
+		}
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
@@ -227,9 +239,10 @@ export function internal_set(source, value) {
 /**
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
+ * @param {boolean} [unsafe] mark all reactions for unsafe mutations
  * @returns {void}
  */
-function mark_reactions(signal, status) {
+export function mark_reactions(signal, status, unsafe = false) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -241,23 +254,25 @@ function mark_reactions(signal, status) {
 		var flags = reaction.f;
 
 		// Skip any effects that are already dirty
-		if ((flags & DIRTY) !== 0) continue;
+		if ((flags & DIRTY) !== 0 && !unsafe) continue;
 
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === active_effect) continue;
 
-		// Inspect effects need to run immediately, so that the stack trace makes sense
-		if (DEV && (flags & INSPECT_EFFECT) !== 0) {
+		// Inspect effects need to run immediately, so that the stack trace makes sense.
+		// Skip doing this for the unsafe mutations as they will have already been added
+		// in the unsafe() wrapper
+		if (DEV && !unsafe && (flags & INSPECT_EFFECT) !== 0) {
 			inspect_effects.add(reaction);
 			continue;
 		}
 
 		set_signal_status(reaction, status);
 
-		// If the signal a) was previously clean or b) is an unowned derived, then mark it
-		if ((flags & (CLEAN | UNOWNED)) !== 0) {
+		// If the signal a) was previously clean or b) is an unowned derived then mark it
+		if ((flags & (CLEAN | UNOWNED)) !== 0 || unsafe) {
 			if ((flags & DERIVED) !== 0) {
-				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
+				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY, unsafe);
 			} else {
 				schedule_effect(/** @type {Effect} */ (reaction));
 			}

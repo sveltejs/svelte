@@ -781,4 +781,115 @@ describe('signals', () => {
 			assert.equal($.get(count), 0n);
 		};
 	});
+
+	test('unsafe() correctly ensures graph consistency', () => {
+		return () => {
+			const output: any[] = [];
+
+			const destroy = effect_root(() => {
+				const a = state(0);
+				const b = state(0);
+				const c = derived(() => {
+					$.unsafe(() => {
+						set(b, $.get(a) + 1);
+					});
+					return $.get(a);
+				});
+
+				render_effect(() => {
+					output.push('b' + $.get(b));
+				});
+
+				render_effect(() => {
+					output.push('b' + $.get(b), 'c' + $.get(c));
+				});
+
+				flushSync();
+
+				set(a, 1);
+
+				flushSync();
+			});
+
+			destroy();
+
+			assert.deepEqual(output, ['b0', 'b0', 'c0', 'b1', 'b1', 'c0', 'b2', 'c1', 'b2']);
+		};
+	});
+
+	test('unsafe() correctly ensures graph consistency #2', () => {
+		return () => {
+			const output: any[] = [];
+
+			const destroy = effect_root(() => {
+				const a = state(0);
+				const b = state(0);
+				const c = derived(() => {
+					$.unsafe(() => {
+						set(b, $.get(a) + 1);
+					});
+					return $.get(a);
+				});
+				let d = derived(() => $.get(b));
+
+				render_effect(() => {
+					output.push('d' + $.get(d));
+				});
+
+				render_effect(() => {
+					output.push('d' + $.get(d), 'c' + $.get(c));
+				});
+
+				flushSync();
+
+				set(a, 1);
+
+				flushSync();
+			});
+
+			destroy();
+
+			assert.deepEqual(output, ['d0', 'd0', 'c0', 'd1', 'd1', 'c0', 'd2', 'c1', 'd2']);
+		};
+	});
+
+	test('unsafe() correctly ensures graph consistency #3', () => {
+		return () => {
+			const output: any[] = [];
+
+			const destroy = effect_root(() => {
+				const a = state(0);
+				const b = state(0);
+				const c = derived(() => {
+					$.unsafe(() => {
+						set(b, $.get(a) + 1);
+					});
+					return $.get(a);
+				});
+				let d = state(true);
+				let e = derived(() => $.get(b));
+
+				render_effect(() => {
+					if ($.get(d)) {
+						return;
+					}
+					output.push('e' + $.get(e), 'c' + $.get(c));
+				});
+
+				flushSync();
+
+				set(d, false);
+
+				flushSync();
+
+				set(a, 1);
+
+				flushSync();
+			});
+
+			destroy();
+
+			assert.deepEqual(output, ['e0', 'c0', 'e1', 'c0', 'e2', 'c1']);
+		};
+	});
 });
