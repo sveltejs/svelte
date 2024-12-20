@@ -82,7 +82,7 @@ export function RegularElement(node, context) {
 	/** @type {AST.StyleDirective[]} */
 	const style_directives = [];
 
-	/** @type {Array<AST.AnimateDirective | AST.BindDirective | AST.OnDirective | AST.TransitionDirective | AST.UseDirective>} */
+	/** @type {Array<AST.AnimateDirective | AST.BindDirective | AST.OnDirective | AST.TransitionDirective | AST.UseDirective | AST.UseTag>} */
 	const other_directives = [];
 
 	/** @type {ExpressionStatement[]} */
@@ -150,6 +150,10 @@ export function RegularElement(node, context) {
 
 			case 'UseDirective':
 				has_use = true;
+				other_directives.push(attribute);
+				break;
+
+			case 'UseTag':
 				other_directives.push(attribute);
 				break;
 		}

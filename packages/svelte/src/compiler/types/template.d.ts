@@ -553,6 +553,7 @@ export namespace AST {
 		| AST.Attribute
 		| AST.SpreadAttribute
 		| Directive
+		| AST.UseTag
 		| AST.Comment
 		| Block;
 
