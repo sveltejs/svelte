@@ -1,0 +1,141 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 51,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "RegularElement",
+				"start": 0,
+				"end": 51,
+				"name": "div",
+				"attributes": [
+					{
+						"type": "UseTag",
+						"start": 5,
+						"end": 24,
+						"expression": {
+							"type": "ArrowFunctionExpression",
+							"start": 11,
+							"end": 23,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 11
+								},
+								"end": {
+									"line": 1,
+									"column": 23
+								}
+							},
+							"id": null,
+							"expression": false,
+							"generator": false,
+							"async": false,
+							"params": [
+								{
+									"type": "Identifier",
+									"start": 12,
+									"end": 16,
+									"loc": {
+										"start": {
+											"line": 1,
+											"column": 12
+										},
+										"end": {
+											"line": 1,
+											"column": 16
+										}
+									},
+									"name": "node"
+								}
+							],
+							"body": {
+								"type": "BlockStatement",
+								"start": 21,
+								"end": 23,
+								"loc": {
+									"start": {
+										"line": 1,
+										"column": 21
+									},
+									"end": {
+										"line": 1,
+										"column": 23
+									}
+								},
+								"body": []
+							}
+						}
+					},
+					{
+						"type": "UseTag",
+						"start": 25,
+						"end": 44,
+						"expression": {
+							"type": "ArrowFunctionExpression",
+							"start": 31,
+							"end": 43,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 31
+								},
+								"end": {
+									"line": 1,
+									"column": 43
+								}
+							},
+							"id": null,
+							"expression": false,
+							"generator": false,
+							"async": false,
+							"params": [
+								{
+									"type": "Identifier",
+									"start": 32,
+									"end": 36,
+									"loc": {
+										"start": {
+											"line": 1,
+											"column": 32
+										},
+										"end": {
+											"line": 1,
+											"column": 36
+										}
+									},
+									"name": "node"
+								}
+							],
+							"body": {
+								"type": "BlockStatement",
+								"start": 41,
+								"end": 43,
+								"loc": {
+									"start": {
+										"line": 1,
+										"column": 41
+									},
+									"end": {
+										"line": 1,
+										"column": 43
+									}
+								},
+								"body": []
+							}
+						}
+					}
+				],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": []
+				}
+			}
+		]
+	},
+	"options": null
+}

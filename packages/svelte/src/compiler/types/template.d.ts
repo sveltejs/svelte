@@ -174,6 +174,12 @@ export namespace AST {
 		};
 	}
 
+	/** A `{@use foo(...)} tag */
+	export interface UseTag extends BaseNode {
+		type: 'UseTag';
+		expression: Expression;
+	}
+
 	/** An `animate:` directive */
 	export interface AnimateDirective extends BaseNode {
 		type: 'AnimateDirective';
@@ -273,7 +279,7 @@ export namespace AST {
 
 	interface BaseElement extends BaseNode {
 		name: string;
-		attributes: Array<Attribute | SpreadAttribute | Directive>;
+		attributes: Array<Attribute | SpreadAttribute | Directive | UseTag>;
 		fragment: Fragment;
 	}
 
