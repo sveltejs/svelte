@@ -19,7 +19,9 @@ import {
 	check_dirtiness,
 	set_is_flushing_effect,
 	is_flushing_effect,
-	unsafe_mutations
+	unsafe_mutating,
+	unsafe_sources,
+	set_unsafe_sources
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -148,7 +150,7 @@ export function mutate(source, value) {
 export function set(source, value) {
 	if (
 		active_reaction !== null &&
-		!unsafe_mutations &&
+		!unsafe_mutating &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 &&
 		// If the source was created locally within the current derived, then
@@ -171,6 +173,14 @@ export function internal_set(source, value) {
 	if (!source.equals(value)) {
 		source.v = value;
 		source.version = increment_version();
+
+		if (unsafe_mutating) {
+			if (unsafe_sources === null) {
+				set_unsafe_sources([source]);
+			} else {
+				unsafe_sources.push(source);
+			}
+		}
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
@@ -231,7 +241,7 @@ export function internal_set(source, value) {
  * @param {number} status should be DIRTY or MAYBE_DIRTY
  * @returns {void}
  */
-function mark_reactions(signal, status) {
+export function mark_reactions(signal, status) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 

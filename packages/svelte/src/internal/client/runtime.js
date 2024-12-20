@@ -29,7 +29,7 @@ import {
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
-import { internal_set, set, source } from './reactivity/sources.js';
+import { internal_set, mark_reactions, set, source } from './reactivity/sources.js';
 import { destroy_derived, execute_derived, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
@@ -80,9 +80,15 @@ export let active_reaction = null;
 
 export let untracking = false;
 
-export let unsafe_mutations = false;
+export let unsafe_mutating = false;
 
-export let unsafe_mutation_inside_effect = false;
+/** @type {null | Source[]} */
+export let unsafe_sources = null;
+
+/** @param {Source[] | null} value */
+export function set_unsafe_sources(value) {
+	unsafe_sources = value;
+}
 
 /** @param {null | Reaction} reaction */
 export function set_active_reaction(reaction) {
@@ -394,7 +400,7 @@ export function update_reaction(reaction) {
 	var prev_derived_sources = derived_sources;
 	var previous_component_context = component_context;
 	var previous_untracking = untracking;
-	var previous_unsafe_mutations = unsafe_mutations;
+	var previous_unsafe_mutating = unsafe_mutating;
 	var flags = reaction.f;
 
 	new_deps = /** @type {null | Value[]} */ (null);
@@ -405,7 +411,7 @@ export function update_reaction(reaction) {
 	derived_sources = null;
 	component_context = reaction.ctx;
 	untracking = false;
-	unsafe_mutations = false;
+	unsafe_mutating = false;
 
 	try {
 		var result = /** @type {Function} */ (0, reaction.fn)();
@@ -445,7 +451,7 @@ export function update_reaction(reaction) {
 		derived_sources = prev_derived_sources;
 		component_context = previous_component_context;
 		untracking = previous_untracking;
-		unsafe_mutations = previous_unsafe_mutations;
+		unsafe_mutating = previous_unsafe_mutating;
 	}
 }
 
@@ -519,10 +525,10 @@ export function update_effect(effect) {
 
 	var previous_effect = active_effect;
 	var previous_component_context = component_context;
-	var previous_unsafe_mutation_inside_effect = unsafe_mutation_inside_effect;
+	var previous_unsafe_sources = unsafe_sources;
 
 	active_effect = effect;
-	unsafe_mutation_inside_effect = false;
+	unsafe_sources = null;
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
@@ -539,17 +545,14 @@ export function update_effect(effect) {
 
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
-		var is_init = effect.version === 0;
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 
-		// If unsafe() has been used within the effect on the first time
-		// it's run, then we might need to schedule the effect to run again
-		// if it has a dependency that has been invalidated
-		if (unsafe_mutation_inside_effect && is_init && (effect.f & CLEAN) !== 0) {
-			set_signal_status(effect, MAYBE_DIRTY);
-			if (check_dirtiness(effect)) {
-				set_signal_status(effect, DIRTY);
-				schedule_effect(effect);
+		// If unsafe() has been used within the effect then we will need
+		// to re-invalidate any unsafe sources that were already invalidated
+		// to ensure consistency of the graph
+		if (unsafe_sources !== null && (effect.f & CLEAN) !== 0) {
+			for (let i = 0; i < /** @type {Source[]} */ (unsafe_sources).length; i++) {
+				mark_reactions(unsafe_sources[i], DIRTY);
 			}
 		}
 
@@ -562,7 +565,7 @@ export function update_effect(effect) {
 		handle_error(error, effect, previous_effect, previous_component_context || effect.ctx);
 	} finally {
 		active_effect = previous_effect;
-		unsafe_mutation_inside_effect = previous_unsafe_mutation_inside_effect;
+		unsafe_sources = previous_unsafe_sources;
 
 		if (DEV) {
 			dev_current_component_function = previous_component_fn;
@@ -1062,18 +1065,12 @@ export function untrack(fn) {
  * @returns {T}
  */
 export function unsafe(fn) {
-	var previous_unsafe_mutations = unsafe_mutations;
+	var previous_unsafe_mutating = unsafe_mutating;
 	try {
-		unsafe_mutations = true;
-		var val = fn();
-
-		if (is_flushing_effect) {
-			unsafe_mutation_inside_effect = true;
-		}
-
-		return val;
+		unsafe_mutating = true;
+		return fn();
 	} finally {
-		unsafe_mutations = previous_unsafe_mutations;
+		unsafe_mutating = previous_unsafe_mutating;
 	}
 }
 
