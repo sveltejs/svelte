@@ -539,12 +539,13 @@ export function update_effect(effect) {
 
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
+		var is_init = effect.version === 0;
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 
-		// If unsafe() has been used within the effect, then we might need
-		// to schedule another update for this effect in case the unsafe mutation
-		// has caused a this effect to become invalidated again
-		if (unsafe_mutation_inside_effect && (effect.f & CLEAN) !== 0) {
+		// If unsafe() has been used within the effect on the first time
+		// it's run, then we might need to schedule the effect to run again
+		// if it has a dependency that has been invalidated
+		if (unsafe_mutation_inside_effect && is_init && (effect.f & CLEAN) !== 0) {
 			set_signal_status(effect, MAYBE_DIRTY);
 			if (check_dirtiness(effect)) {
 				set_signal_status(effect, DIRTY);
