@@ -79,12 +79,12 @@ export function RenderTag(node, context) {
 
 /** 
  * @param {AST.Text | AST.Tag | AST.ElementLike | AST.Comment | AST.Block} child
- * @param {boolean} renderSnippet
+ * @param {boolean} render_snippet
  * @returns {boolean}
 */
-function is_animate_directive(child, renderSnippet = false) {
+function is_animate_directive(child, render_snippet = false) {
 	if (child.type === 'RenderTag') {
-		if(renderSnippet) return false // Prevent infinite recursion
+		if(render_snippet) return false // Prevent infinite recursion
 		for (const snippet_block of child.metadata.snippets) {
 			if(snippet_block.body.nodes.includes(child)) break
 			return snippet_block.body.nodes.some(n => is_animate_directive(n, true));
