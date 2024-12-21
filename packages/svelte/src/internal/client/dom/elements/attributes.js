@@ -409,7 +409,7 @@ export function set_attributes(
 	}
 
 	for (let symbol of Object.getOwnPropertySymbols(next)) {
-		attach(element, next[symbol]);
+		attach(element, () => next[symbol]);
 	}
 
 	return current;
