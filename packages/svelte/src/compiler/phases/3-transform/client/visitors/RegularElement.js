@@ -1,4 +1,4 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
@@ -22,7 +22,8 @@ import {
 	build_attribute_value,
 	build_class_directives,
 	build_style_directives,
-	build_set_attributes
+	build_set_attributes,
+	build_display_directive
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
 import {
@@ -422,7 +423,8 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (display_directive) {
+	if (display_directive || node.fragment.nodes.some((node) => node.type === 'SnippetBlock')) {
+		// Wrap children in `{...}` to avoid declaration conflicts
 		const block = b.block([
 			...child_state.init,
 			...element_state.init,
@@ -430,47 +432,13 @@ export function RegularElement(node, context) {
 			...child_state.after_update,
 			...element_state.after_update
 		]);
-
-		const visibility = b.thunk(
-			/** @type {Expression} */ (context.visit(display_directive.expression))
-		);
-
-		/** @type {Expression | undefined} */
-		let value = undefined;
-
-		/** @type {Expression | undefined} */
-		let important = undefined;
-
-		if (style_display) {
-			value =
-				style_display.value === true
-					? build_getter({ name: style_display.name, type: 'Identifier' }, context.state)
-					: build_attribute_value(style_display.value, context).value;
-
-			if (style_display.metadata.expression.has_call) {
-				const id = b.id(state.scope.generate('style_directive'));
-
-				state.init.push(b.const(id, create_derived(state, b.thunk(value))));
-				value = b.call('$.get', id);
-			}
-			value = b.thunk(value);
-			important = style_display.modifiers.includes('important') ? b.true : undefined;
+		if (display_directive) {
+			context.state.init.push(
+				build_display_directive(node_id, display_directive, style_display, block, context)
+			);
+		} else {
+			context.state.init.push(block);
 		}
-
-		context.state.init.push(
-			b.stmt(b.call('$.display', node_id, visibility, b.arrow([], block), value, important))
-		);
-	} else if (node.fragment.nodes.some((node) => node.type === 'SnippetBlock')) {
-		// Wrap children in `{...}` to avoid declaration conflicts
-		context.state.init.push(
-			b.block([
-				...child_state.init,
-				...element_state.init,
-				child_state.update.length > 0 ? build_render_statement(child_state.update) : b.empty,
-				...child_state.after_update,
-				...element_state.after_update
-			])
-		);
 	} else if (node.fragment.metadata.dynamic) {
 		context.state.init.push(...child_state.init, ...element_state.init);
 		context.state.update.push(...child_state.update);

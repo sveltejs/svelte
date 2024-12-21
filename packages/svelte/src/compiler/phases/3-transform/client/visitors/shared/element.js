@@ -1,4 +1,4 @@
-/** @import { Expression, Identifier, ObjectExpression } from 'estree' */
+/** @import { BlockStatement, Expression, Identifier, ObjectExpression } from 'estree' */
 /** @import { AST, Namespace } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../../types' */
 import { normalize_attribute } from '../../../../../../utils.js';
@@ -213,4 +213,39 @@ export function get_attribute_name(element, attribute) {
 	}
 
 	return attribute.name;
+}
+
+/**
+ * @param {Identifier} node_id
+ * @param {AST.DisplayDirective} display
+ * @param {AST.StyleDirective | null} style
+ * @param {BlockStatement} block
+ * @param {ComponentContext} context
+ */
+export function build_display_directive(node_id, display, style, block, context) {
+	const visibility = b.thunk(/** @type {Expression} */ (context.visit(display.expression)));
+
+	/** @type {Expression | undefined} */
+	let value = undefined;
+
+	/** @type {Expression | undefined} */
+	let important = undefined;
+
+	if (style) {
+		value =
+			style.value === true
+				? build_getter({ name: style.name, type: 'Identifier' }, context.state)
+				: build_attribute_value(style.value, context).value;
+
+		if (style.metadata.expression.has_call) {
+			const id = b.id(context.state.scope.generate('style_directive'));
+
+			context.state.init.push(b.const(id, create_derived(context.state, b.thunk(value))));
+			value = b.call('$.get', id);
+		}
+		value = b.thunk(value);
+		important = style.modifiers.includes('important') ? b.true : undefined;
+	}
+
+	return b.stmt(b.call('$.display', node_id, visibility, b.arrow([], block), value, important));
 }

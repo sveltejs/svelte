@@ -12,6 +12,7 @@ import { determine_namespace_for_children } from '../../utils.js';
 import {
 	build_attribute_value,
 	build_class_directives,
+	build_display_directive,
 	build_set_attributes,
 	build_style_directives
 } from './shared/element.js';
@@ -35,6 +36,12 @@ export function SvelteElement(node, context) {
 
 	/** @type {AST.StyleDirective[]} */
 	const style_directives = [];
+
+	/** @type {AST.DisplayDirective | null} */
+	let display_directive = null;
+
+	/** @type {AST.StyleDirective | null} */
+	let style_display = null;
 
 	/** @type {ExpressionStatement[]} */
 	const lets = [];
@@ -73,8 +80,18 @@ export function SvelteElement(node, context) {
 		} else if (attribute.type === 'OnDirective') {
 			const handler = /** @type {Expression} */ (context.visit(attribute, inner_context.state));
 			inner_context.state.after_update.push(b.stmt(handler));
+		} else if (attribute.type === 'DisplayDirective') {
+			display_directive = attribute;
 		} else {
 			context.visit(attribute, inner_context.state);
+		}
+	}
+
+	if (display_directive !== null) {
+		const idx = style_directives.findIndex((d) => d.name === 'display');
+		if (idx > 0) {
+			style_display = style_directives[idx];
+			style_directives.splice(idx, 1);
 		}
 	}
 
@@ -140,6 +157,14 @@ export function SvelteElement(node, context) {
 
 	const location = dev && locator(node.start);
 
+	let render_element = b.block(inner);
+
+	if (display_directive) {
+		render_element = b.block([
+			build_display_directive(element_id, display_directive, style_display, render_element, context)
+		]);
+	}
+
 	context.state.init.push(
 		b.stmt(
 			b.call(
@@ -147,7 +172,7 @@ export function SvelteElement(node, context) {
 				context.state.node,
 				get_tag,
 				node.metadata.svg || node.metadata.mathml ? b.true : b.false,
-				inner.length > 0 && b.arrow([element_id, b.id('$$anchor')], b.block(inner)),
+				inner.length > 0 && b.arrow([element_id, b.id('$$anchor')], render_element),
 				dynamic_namespace && b.thunk(build_attribute_value(dynamic_namespace, context).value),
 				location && b.array([b.literal(location.line), b.literal(location.column)])
 			)
