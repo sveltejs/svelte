@@ -23,6 +23,22 @@ export function display(node, get_visibility, render_fn, get_value, default_impo
 	/** @type {string | null | undefined | typeof UNINITIALIZED} */
 	let prev_value = UNINITIALIZED;
 
+	// special case when style:display is missing
+	// we get the style value from the node :
+	if (get_value === undefined) {
+		/** @type {string | null} */
+		let anchor_display = null;
+		get_value = () => {
+			if (prev_visible !== false) {
+				anchor_display = anchor.style.display || null;
+				if (anchor_display) {
+					default_important = anchor.style.getPropertyPriority('display') === 'important';
+				}
+			}
+			return anchor_display;
+		};
+	}
+
 	const effect = block(render_fn);
 	template_effect(() => {
 		const visible = !!get_visibility();
