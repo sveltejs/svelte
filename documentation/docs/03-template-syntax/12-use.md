@@ -55,7 +55,7 @@ The `Action` interface receives three optional type arguments — a node type (w
 	/**
 	 * @type {import('svelte/action').Action<
 	 * 	HTMLDivElement,
-	 * 	null,
+	 * 	undefined,
 	 * 	{
 	 * 		onswiperight: (e: CustomEvent) => void;
 	 * 		onswipeleft: (e: CustomEvent) => void;
