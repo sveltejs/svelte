@@ -276,13 +276,14 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
  * @returns {void}
  */
 function reconcile(array, state, anchor, render_fn, flags, is_inert, get_key, get_collection) {
-	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 
 	var length = array.length;
 	var items = state.items;
 	var first = state.first;
 	var current = first;
+
+	var is_animated = items.get(get_key(array[0], 0))?.a !== null;
 
 	/** @type {undefined | Set<EachItem>} */
 	var seen;

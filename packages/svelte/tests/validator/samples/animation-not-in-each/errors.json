@@ -1,7 +1,7 @@
 [
 	{
 		"code": "animation_invalid_placement",
-		"message": "An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block",
+		"message": "An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block, or an only child of a snippet",
 		"start": {
 			"line": 5,
 			"column": 5
