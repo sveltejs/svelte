@@ -63,6 +63,12 @@ export function RenderTag(node, context) {
 		}
 		else if (!parent.key) {
 			e.animation_missing_key(parent);
+		} else if (parent.body.nodes.filter((n) =>
+			n.type !== 'Comment' &&
+			n.type !== 'ConstTag' &&
+			(n.type !== 'Text' || n.data.trim() !== '')).length > 1
+		) {
+			e.animation_invalid_placement(node);
 		}
 	}
 
