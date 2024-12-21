@@ -55,7 +55,7 @@ export function RenderTag(node, context) {
 	}
 	
 	const parent = context.path.at(-2);
-	const is_animated = snippet?.body.nodes.some(is_animate_directive);
+	const is_animated = snippet?.body.nodes.some(n => is_animate_directive(n));
 
 	if(is_animated) {
 		if (parent?.type !== 'EachBlock') {
@@ -77,11 +77,17 @@ export function RenderTag(node, context) {
 	context.next({ ...context.state, render_tag: node });
 }
 
-/** @param {AST.Text | AST.Tag | AST.ElementLike | AST.Comment | AST.Block} child */
-function is_animate_directive(child) {
+/** 
+ * @param {AST.Text | AST.Tag | AST.ElementLike | AST.Comment | AST.Block} child
+ * @param {boolean} renderSnippet
+ * @returns {boolean}
+*/
+function is_animate_directive(child, renderSnippet = false) {
 	if (child.type === 'RenderTag') {
+		if(renderSnippet) return false // Prevent infinite recursion
 		for (const snippet_block of child.metadata.snippets) {
-			return snippet_block.body.nodes.some(is_animate_directive);
+			if(snippet_block.body.nodes.includes(child)) break
+			return snippet_block.body.nodes.some(n => is_animate_directive(n, true));
 		}
 	}
 	if (child.type !== 'RegularElement' && child.type !== 'SvelteElement') return false;
