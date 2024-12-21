@@ -27,9 +27,13 @@ export function RenderTag(node, context) {
 	 */
 	let resolved = callee.type === 'Identifier' && is_resolved_snippet(binding);
 
+	/** @type {AST.SnippetBlock | undefined} */
+	let snippet
+
 	if (binding?.initial?.type === 'SnippetBlock') {
 		// if this render tag unambiguously references a local snippet, our job is easy
-		node.metadata.snippets.add(binding.initial);
+		snippet = binding.initial
+		node.metadata.snippets.add(snippet);
 	}
 
 	context.state.analysis.snippet_renderers.set(node, resolved);
@@ -49,8 +53,31 @@ export function RenderTag(node, context) {
 	) {
 		e.render_tag_invalid_call_expression(node);
 	}
+	
+	const parent = context.path.at(-2);
+	const is_animated = snippet?.body.nodes.some(is_animate_directive);
+
+	if(is_animated) {
+		if (parent?.type !== 'EachBlock') {
+			e.animation_invalid_placement(node);
+		}
+		else if (!parent.key) {
+			e.animation_missing_key(parent);
+		}
+	}
 
 	mark_subtree_dynamic(context.path);
 
 	context.next({ ...context.state, render_tag: node });
+}
+
+/** @param {AST.Text | AST.Tag | AST.ElementLike | AST.Comment | AST.Block} child */
+function is_animate_directive(child) {
+	if (child.type === 'RenderTag') {
+		for (const snippet_block of child.metadata.snippets) {
+			return snippet_block.body.nodes.some(is_animate_directive);
+		}
+	}
+	if (child.type !== 'RegularElement' && child.type !== 'SvelteElement') return false;
+	return child.attributes.some((attr) => attr.type === 'AnimateDirective');
 }
