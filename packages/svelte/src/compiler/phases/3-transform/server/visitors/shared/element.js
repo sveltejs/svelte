@@ -1,4 +1,4 @@
-/** @import { Expression, Literal } from 'estree' */
+/** @import { Expression, Literal, Property } from 'estree' */
 /** @import { AST, Namespace } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../../types.js' */
 import {
@@ -42,6 +42,9 @@ export function build_element_attributes(node, context) {
 
 	/** @type {AST.StyleDirective[]} */
 	const style_directives = [];
+
+	/** @type {AST.DisplayDirective | null} */
+	let display_directive = null;
 
 	/** @type {Expression | null} */
 	let content = null;
@@ -189,6 +192,8 @@ export function build_element_attributes(node, context) {
 			style_directives.push(attribute);
 		} else if (attribute.type === 'LetDirective') {
 			// do nothing, these are handled inside `build_inline_component`
+		} else if (attribute.type === 'DisplayDirective') {
+			display_directive = attribute;
 		} else {
 			context.visit(attribute);
 		}
@@ -204,8 +209,9 @@ export function build_element_attributes(node, context) {
 		}
 	}
 
-	if (style_directives.length > 0 && !has_spread) {
+	if ((display_directive !== null || style_directives.length > 0) && !has_spread) {
 		build_style_directives(
+			display_directive,
 			style_directives,
 			/** @type {AST.Attribute | null} */ (attributes[style_index] ?? null),
 			context
@@ -216,7 +222,14 @@ export function build_element_attributes(node, context) {
 	}
 
 	if (has_spread) {
-		build_element_spread_attributes(node, attributes, style_directives, class_directives, context);
+		build_element_spread_attributes(
+			node,
+			attributes,
+			display_directive,
+			style_directives,
+			class_directives,
+			context
+		);
 	} else {
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 			if (attribute.value === true || is_text_attribute(attribute)) {
@@ -282,6 +295,7 @@ function get_attribute_name(element, attribute) {
  *
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
+ * @param {AST.DisplayDirective | null } display_directive
  * @param {AST.StyleDirective[]} style_directives
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
@@ -289,6 +303,7 @@ function get_attribute_name(element, attribute) {
 function build_element_spread_attributes(
 	element,
 	attributes,
+	display_directive,
 	style_directives,
 	class_directives,
 	context
@@ -314,7 +329,7 @@ function build_element_spread_attributes(
 		classes = b.object(properties);
 	}
 
-	if (style_directives.length > 0) {
+	if (style_directives.length > 0 || display_directive !== null) {
 		const properties = style_directives.map((directive) =>
 			b.init(
 				directive.name,
@@ -323,7 +338,7 @@ function build_element_spread_attributes(
 					: build_attribute_value(directive.value, context, true)
 			)
 		);
-
+		handle_display_directive(display_directive, properties, context);
 		styles = b.object(properties);
 	}
 
@@ -402,11 +417,32 @@ function build_class_directives(class_directives, class_attribute) {
 }
 
 /**
+ * @param {AST.DisplayDirective | null} display_directive
+ * @param {Property[]} styles
+ * @param {ComponentContext} context
+ */
+function handle_display_directive(display_directive, styles, context) {
+	if (display_directive !== null) {
+		let display = styles.find((s) => s.key.type === 'Identifier' && s.key.name === 'display');
+		if (display === undefined) {
+			display = b.init('display', b.literal(null));
+			styles.push(display);
+		}
+		display.value = b.conditional(
+			/** @type {Expression} */ (context.visit(display_directive.expression)),
+			/** @type {Expression} */ (display.value),
+			b.literal('none !important')
+		);
+	}
+}
+
+/**
+ * @param {AST.DisplayDirective | null} display_directive
  * @param {AST.StyleDirective[]} style_directives
  * @param {AST.Attribute | null} style_attribute
  * @param {ComponentContext} context
  */
-function build_style_directives(style_directives, style_attribute, context) {
+function build_style_directives(display_directive, style_directives, style_attribute, context) {
 	const styles = style_directives.map((directive) => {
 		let value =
 			directive.value === true
@@ -417,6 +453,8 @@ function build_style_directives(style_directives, style_attribute, context) {
 		}
 		return b.init(directive.name, value);
 	});
+
+	handle_display_directive(display_directive, styles, context);
 
 	const arg =
 		style_attribute === null

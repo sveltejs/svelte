@@ -494,6 +494,15 @@ export namespace AST {
 		};
 	}
 
+	export interface DisplayDirective extends BaseNode {
+		type: 'DisplayDirective';
+		expression: Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
+	}
+
 	export interface Script extends BaseNode {
 		type: 'Script';
 		context: 'default' | 'module';
@@ -511,7 +520,8 @@ export namespace AST {
 		| AST.OnDirective
 		| AST.StyleDirective
 		| AST.TransitionDirective
-		| AST.UseDirective;
+		| AST.UseDirective
+		| AST.DisplayDirective;
 
 	export type Block =
 		| AST.EachBlock

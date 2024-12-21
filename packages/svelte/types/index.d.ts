@@ -1269,6 +1269,11 @@ declare module 'svelte/compiler' {
 			expression: Expression;
 		}
 
+		export interface DisplayDirective extends BaseNode {
+			type: 'DisplayDirective';
+			expression: Expression;
+		}
+
 		export interface Script extends BaseNode {
 			type: 'Script';
 			context: 'default' | 'module';
@@ -1286,7 +1291,8 @@ declare module 'svelte/compiler' {
 			| AST.OnDirective
 			| AST.StyleDirective
 			| AST.TransitionDirective
-			| AST.UseDirective;
+			| AST.UseDirective
+			| AST.DisplayDirective;
 
 		export type Block =
 			| AST.EachBlock

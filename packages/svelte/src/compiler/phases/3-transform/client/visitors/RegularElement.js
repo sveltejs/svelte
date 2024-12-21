@@ -82,6 +82,12 @@ export function RegularElement(node, context) {
 	/** @type {AST.StyleDirective[]} */
 	const style_directives = [];
 
+	/** @type {AST.DisplayDirective | null} */
+	let display_directive = null;
+
+	/** @type {AST.StyleDirective | null} */
+	let style_display = null;
+
 	/** @type {Array<AST.AnimateDirective | AST.BindDirective | AST.OnDirective | AST.TransitionDirective | AST.UseDirective>} */
 	const other_directives = [];
 
@@ -152,6 +158,19 @@ export function RegularElement(node, context) {
 				has_use = true;
 				other_directives.push(attribute);
 				break;
+
+			case 'DisplayDirective':
+				display_directive = attribute;
+				break;
+		}
+	}
+
+	if (display_directive) {
+		// When we have a #display directive, the style:display directive must be handheld differently
+		const index = style_directives.findIndex((d) => d.name === 'display');
+		if (index >= 0) {
+			style_display = style_directives[index];
+			style_directives.splice(index, 1);
 		}
 	}
 
@@ -403,7 +422,45 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (node.fragment.nodes.some((node) => node.type === 'SnippetBlock')) {
+	if (display_directive) {
+		const block = b.block([
+			...child_state.init,
+			...element_state.init,
+			child_state.update.length > 0 ? build_render_statement(child_state.update) : b.empty,
+			...child_state.after_update,
+			...element_state.after_update
+		]);
+
+		const visibility = b.thunk(
+			/** @type {Expression} */ (context.visit(display_directive.expression))
+		);
+
+		/** @type {Expression | undefined} */
+		let value = undefined;
+
+		/** @type {Expression | undefined} */
+		let important = undefined;
+
+		if (style_display) {
+			value =
+				style_display.value === true
+					? build_getter({ name: style_display.name, type: 'Identifier' }, context.state)
+					: build_attribute_value(style_display.value, context).value;
+
+			if (style_display.metadata.expression.has_call) {
+				const id = b.id(state.scope.generate('style_directive'));
+
+				state.init.push(b.const(id, create_derived(state, b.thunk(value))));
+				value = b.call('$.get', id);
+			}
+			value = b.thunk(value);
+			important = style_display.modifiers.includes('important') ? b.true : undefined;
+		}
+
+		context.state.init.push(
+			b.stmt(b.call('$.display', node_id, visibility, b.arrow([], block), value, important))
+		);
+	} else if (node.fragment.nodes.some((node) => node.type === 'SnippetBlock')) {
 		// Wrap children in `{...}` to avoid declaration conflicts
 		context.state.init.push(
 			b.block([
