@@ -524,21 +524,34 @@ export function update_effect(effect) {
 		destroy_effect_deriveds(effect);
 
 		execute_effect_teardown(effect);
+
+		var sources;
+		var deps = effect.deps;
+
+		if (DEV && tracing_mode_flag && deps !== null) {
+			sources = new Map();
+			for (let i = 0; i < deps.length; i++) {
+				var dep = deps[i];
+				if ((dep.f & DERIVED) === 0) {
+					sources.set(dep, dep.version);
+				}
+			}
+		}
+
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 		effect.version = current_version;
 
-		var version = current_version;
-		var deps = effect.deps;
+		deps = effect.deps;
 
 		// In DEV, we need to handle a case where $inspect.trace() might
 		// incorrectly state a source dependency has not changed when it has.
 		// That's beacuse that source was changed by the same effect, causing
 		// the versions to match. We can avoid this by incrementing the version
-		if (DEV && (effect.f & DIRTY) !== 0 && deps !== null) {
+		if (DEV && tracing_mode_flag && (effect.f & DIRTY) !== 0 && deps !== null) {
 			for (let i = 0; i < deps.length; i++) {
-				var dep = deps[i];
-				if ((dep.f & DERIVED) === 0 && dep.version === version) {
+				dep = deps[i];
+				if (sources?.has(dep) && sources.get(dep) !== dep.version) {
 					dep.version = increment_version();
 				}
 			}
