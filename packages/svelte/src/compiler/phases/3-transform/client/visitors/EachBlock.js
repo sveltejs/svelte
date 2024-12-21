@@ -346,8 +346,8 @@ function collect_transitive_dependencies(binding, seen = new Set()) {
 /** @param {AST.Text | AST.Tag | AST.ElementLike | AST.Comment | AST.Block} child */
 function is_animate_directive(child) {
 	if (child.type === 'RenderTag') {
-		for (const snippetBlock of child.metadata.snippets) {
-			return snippetBlock.body.nodes.some(is_animate_directive);
+		for (const snippet_block of child.metadata.snippets) {
+			return snippet_block.body.nodes.some(is_animate_directive);
 		}
 	}
 	if (child.type !== 'RegularElement' && child.type !== 'SvelteElement') return false;
