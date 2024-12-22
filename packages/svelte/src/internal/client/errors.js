@@ -336,3 +336,18 @@ export function state_unsafe_mutation() {
 		throw new Error(`https://svelte.dev/e/state_unsafe_mutation`);
 	}
 }
+
+/**
+ * To correctly clone a `$state` proxy, use `$state.snapshot` instead of `structuredClone`
+ * @returns {never}
+ */
+export function structured_clone_state_proxy() {
+	if (DEV) {
+		const error = new Error(`structured_clone_state_proxy\nTo correctly clone a \`$state\` proxy, use \`$state.snapshot\` instead of \`structuredClone\`\nhttps://svelte.dev/e/structured_clone_state_proxy`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/structured_clone_state_proxy`);
+	}
+}

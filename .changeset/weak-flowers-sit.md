@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-patch structuredClone in dev to clone $state proxies
+patch structuredClone in dev to error on $state proxies
