@@ -171,6 +171,8 @@ export function CallExpression(node, context) {
 
 					context.state.scope.tracing = b.thunk(b.literal(label + ' ' + loc));
 				}
+
+				context.state.analysis.tracing = true;
 			}
 
 			break;

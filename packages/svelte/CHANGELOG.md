@@ -1,5 +1,59 @@
 # svelte
 
+## 5.15.0
+
+### Minor Changes
+
+- feat: add "worker" exports condition to better support bundling for worker-based environments ([#14779](https://github.com/sveltejs/svelte/pull/14779))
+
+## 5.14.6
+
+### Patch Changes
+
+- fix: treeshake `$inspect.trace` code if unused in modules ([#14774](https://github.com/sveltejs/svelte/pull/14774))
+
+- fix: Improve typescript DX for $inspect, $props, $bindable, and $host ([#14777](https://github.com/sveltejs/svelte/pull/14777))
+
+## 5.14.5
+
+### Patch Changes
+
+- fix: bump esrap dependency ([#14765](https://github.com/sveltejs/svelte/pull/14765))
+
+- fix: ensure svg namespace for `<a>` elements is correct ([#14756](https://github.com/sveltejs/svelte/pull/14756))
+
+- fix: treeshake `$inspect.trace` code if unused ([#14770](https://github.com/sveltejs/svelte/pull/14770))
+
+## 5.14.4
+
+### Patch Changes
+
+- fix: remove implements from class declarations ([#14749](https://github.com/sveltejs/svelte/pull/14749))
+
+- fix: remove unwanted properties from both replaced and unreplaced nodes ([#14744](https://github.com/sveltejs/svelte/pull/14744))
+
+## 5.14.3
+
+### Patch Changes
+
+- fix: bump esrap, prevent malformed AST ([#14742](https://github.com/sveltejs/svelte/pull/14742))
+
+- fix: compare array contents for equality mismatch detections, not the arrays themselves ([#14738](https://github.com/sveltejs/svelte/pull/14738))
+
+## 5.14.2
+
+### Patch Changes
+
+- fix: correctly highlight first rerun of `$inspect.trace` ([#14734](https://github.com/sveltejs/svelte/pull/14734))
+
+- chore: more loose parser improvements ([#14733](https://github.com/sveltejs/svelte/pull/14733))
+
+## 5.14.1
+
+### Patch Changes
+
+- fix: improve unowned derived performance ([#14724](https://github.com/sveltejs/svelte/pull/14724))
+
 ## 5.14.0
 
 ### Minor Changes

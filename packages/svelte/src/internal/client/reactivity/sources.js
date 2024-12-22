@@ -32,7 +32,7 @@ import {
 	BLOCK_EFFECT
 } from '../constants.js';
 import * as e from '../errors.js';
-import { legacy_mode_flag } from '../../flags/index.js';
+import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
 
 export let inspect_effects = new Set();
@@ -60,7 +60,7 @@ export function source(v, stack) {
 		version: 0
 	};
 
-	if (DEV) {
+	if (DEV && tracing_mode_flag) {
 		signal.created = stack ?? get_stack('CreatedAt');
 		signal.debug = null;
 	}
@@ -170,7 +170,7 @@ export function internal_set(source, value) {
 		source.v = value;
 		source.version = increment_version();
 
-		if (DEV) {
+		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
 		}
 

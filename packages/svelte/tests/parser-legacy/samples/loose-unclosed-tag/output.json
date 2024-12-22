@@ -2,7 +2,7 @@
 	"html": {
 		"type": "Fragment",
 		"start": 0,
-		"end": 160,
+		"end": 204,
 		"children": [
 			{
 				"type": "Element",
@@ -136,20 +136,82 @@
 				"data": "\n\n"
 			},
 			{
-				"type": "IfBlock",
+				"type": "Element",
 				"start": 74,
+				"end": 94,
+				"name": "div",
+				"attributes": [],
+				"children": [
+					{
+						"type": "Text",
+						"start": 79,
+						"end": 81,
+						"raw": "\n\t",
+						"data": "\n\t"
+					},
+					{
+						"type": "InlineComponent",
+						"start": 81,
+						"end": 88,
+						"name": "Comp.",
+						"attributes": [],
+						"children": []
+					}
+				]
+			},
+			{
+				"type": "Text",
+				"start": 94,
 				"end": 96,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "Element",
+				"start": 96,
+				"end": 116,
+				"name": "div",
+				"attributes": [],
+				"children": [
+					{
+						"type": "Text",
+						"start": 101,
+						"end": 103,
+						"raw": "\n\t",
+						"data": "\n\t"
+					},
+					{
+						"type": "InlineComponent",
+						"start": 103,
+						"end": 110,
+						"name": "comp.",
+						"attributes": [],
+						"children": []
+					}
+				]
+			},
+			{
+				"type": "Text",
+				"start": 116,
+				"end": 118,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "IfBlock",
+				"start": 118,
+				"end": 140,
 				"expression": {
 					"type": "Identifier",
-					"start": 79,
-					"end": 82,
+					"start": 123,
+					"end": 126,
 					"loc": {
 						"start": {
-							"line": 13,
+							"line": 21,
 							"column": 5
 						},
 						"end": {
-							"line": 13,
+							"line": 21,
 							"column": 8
 						}
 					},
@@ -158,15 +220,15 @@
 				"children": [
 					{
 						"type": "Element",
-						"start": 85,
-						"end": 91,
+						"start": 129,
+						"end": 135,
 						"name": "div",
 						"attributes": [],
 						"children": [
 							{
 								"type": "Text",
-								"start": 90,
-								"end": 91,
+								"start": 134,
+								"end": 135,
 								"raw": "\n",
 								"data": "\n"
 							}
@@ -176,26 +238,26 @@
 			},
 			{
 				"type": "Text",
-				"start": 96,
-				"end": 98,
+				"start": 140,
+				"end": 142,
 				"raw": "\n\n",
 				"data": "\n\n"
 			},
 			{
 				"type": "IfBlock",
-				"start": 98,
-				"end": 130,
+				"start": 142,
+				"end": 174,
 				"expression": {
 					"type": "Identifier",
-					"start": 103,
-					"end": 106,
+					"start": 147,
+					"end": 150,
 					"loc": {
 						"start": {
-							"line": 17,
+							"line": 25,
 							"column": 5
 						},
 						"end": {
-							"line": 17,
+							"line": 25,
 							"column": 8
 						}
 					},
@@ -204,31 +266,31 @@
 				"children": [
 					{
 						"type": "InlineComponent",
-						"start": 109,
-						"end": 125,
+						"start": 153,
+						"end": 169,
 						"name": "Comp",
 						"attributes": [
 							{
 								"type": "Attribute",
-								"start": 115,
-								"end": 124,
+								"start": 159,
+								"end": 168,
 								"name": "foo",
 								"value": [
 									{
 										"type": "MustacheTag",
-										"start": 119,
-										"end": 124,
+										"start": 163,
+										"end": 168,
 										"expression": {
 											"type": "Identifier",
-											"start": 120,
-											"end": 123,
+											"start": 164,
+											"end": 167,
 											"loc": {
 												"start": {
-													"line": 18,
+													"line": 26,
 													"column": 12
 												},
 												"end": {
-													"line": 18,
+													"line": 26,
 													"column": 15
 												}
 											},
@@ -244,36 +306,36 @@
 			},
 			{
 				"type": "Text",
-				"start": 130,
-				"end": 132,
+				"start": 174,
+				"end": 176,
 				"raw": "\n\n",
 				"data": "\n\n"
 			},
 			{
 				"type": "Element",
-				"start": 132,
-				"end": 160,
+				"start": 176,
+				"end": 204,
 				"name": "div",
 				"attributes": [],
 				"children": [
 					{
 						"type": "Text",
-						"start": 137,
-						"end": 138,
+						"start": 181,
+						"end": 182,
 						"raw": "\n",
 						"data": "\n"
 					},
 					{
 						"type": "Element",
-						"start": 138,
-						"end": 147,
+						"start": 182,
+						"end": 191,
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
 								"type": "Text",
-								"start": 141,
-								"end": 143,
+								"start": 185,
+								"end": 187,
 								"raw": "hi",
 								"data": "hi"
 							}
@@ -281,15 +343,15 @@
 					},
 					{
 						"type": "Text",
-						"start": 147,
-						"end": 149,
+						"start": 191,
+						"end": 193,
 						"raw": "\n\n",
 						"data": "\n\n"
 					},
 					{
 						"type": "Element",
-						"start": 149,
-						"end": 160,
+						"start": 193,
+						"end": 204,
 						"name": "open-ended",
 						"attributes": [],
 						"children": []

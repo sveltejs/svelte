@@ -34,7 +34,7 @@ import { destroy_derived, execute_derived, update_derived } from './reactivity/d
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
-import { legacy_mode_flag } from '../flags/index.js';
+import { legacy_mode_flag, tracing_mode_flag } from '../flags/index.js';
 import { tracing_expressions, get_stack } from './dev/tracing.js';
 
 const FLUSH_MICROTASK = 0;
@@ -127,8 +127,8 @@ export function set_untracked_writes(value) {
 	untracked_writes = value;
 }
 
-/** @type {number} Used by sources and deriveds for handling updates to unowned deriveds */
-let current_version = 0;
+/** @type {number} Used by sources and deriveds for handling updates to unowned deriveds it starts from 1 to differentiate between a created effect and a run one for tracing */
+let current_version = 1;
 
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
@@ -230,8 +230,9 @@ export function check_dirtiness(reaction) {
 			}
 		}
 
-		// Unowned signals should never be marked as clean.
-		if (!is_unowned) {
+		// Unowned signals should never be marked as clean unless they
+		// are used within an active_effect without skip_reaction
+		if (!is_unowned || (active_effect !== null && !skip_reaction)) {
 			set_signal_status(reaction, CLEAN);
 		}
 	}
@@ -916,6 +917,7 @@ export function get(signal) {
 
 	if (
 		DEV &&
+		tracing_mode_flag &&
 		tracing_expressions !== null &&
 		active_reaction !== null &&
 		tracing_expressions.reaction === active_reaction

@@ -27,6 +27,7 @@ export interface Analysis {
 	name: string; // TODO should this be filename? it's used in `compileModule` as well as `compile`
 	runes: boolean;
 	immutable: boolean;
+	tracing: boolean;
 
 	// TODO figure out if we can move this to ComponentAnalysis
 	accessors: boolean;
@@ -39,6 +40,7 @@ export interface ComponentAnalysis extends Analysis {
 	/** Used for CSS pruning and scoping */
 	elements: Array<AST.RegularElement | AST.SvelteElement>;
 	runes: boolean;
+	tracing: boolean;
 	exports: Array<{ name: string; alias: string | null }>;
 	/** Whether the component uses `$$props` */
 	uses_props: boolean;

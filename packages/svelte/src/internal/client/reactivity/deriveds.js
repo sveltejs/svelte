@@ -25,6 +25,7 @@ import * as e from '../errors.js';
 import { destroy_effect } from './effects.js';
 import { inspect_effects, set_inspect_effects } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
+import { tracing_mode_flag } from '../../flags/index.js';
 
 /**
  * @template V
@@ -62,7 +63,7 @@ export function derived(fn) {
 		parent: parent_derived ?? active_effect
 	};
 
-	if (DEV) {
+	if (DEV && tracing_mode_flag) {
 		signal.created = get_stack('CreatedAt');
 	}
 
