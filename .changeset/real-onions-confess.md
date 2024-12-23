@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure logic blocks keep consitent namespacing
+fix: ensure logic blocks keep consistent namespacing

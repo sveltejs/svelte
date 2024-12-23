@@ -350,7 +350,10 @@ export function infer_namespace(namespace, parent, nodes) {
 	// If the parent block is a control block, we want to keep the namespace if it's not html
 	if (
 		namespace !== 'html' &&
-		(parent.type === 'EachBlock' || parent.type === 'AwaitBlock' || parent.type === 'KeyBlock')
+		(parent.type === 'IfBlock' ||
+			parent.type === 'EachBlock' ||
+			parent.type === 'AwaitBlock' ||
+			parent.type === 'KeyBlock')
 	) {
 		return namespace;
 	}
