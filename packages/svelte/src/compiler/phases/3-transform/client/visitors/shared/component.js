@@ -257,7 +257,7 @@ export function build_component(node, component_name, context, anchor = context.
 			push_prop(
 				b.prop(
 					'get',
-					b.call('Symbol', b.literal('@attach')),
+					b.call('$.create_attachment_key'),
 					/** @type {Expression} */ (context.visit(attribute.expression)),
 					true
 				)

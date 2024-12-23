@@ -30,6 +30,7 @@ await createBundle({
 		[pkg.name]: `${dir}/src/index.d.ts`,
 		[`${pkg.name}/action`]: `${dir}/src/action/public.d.ts`,
 		[`${pkg.name}/animate`]: `${dir}/src/animate/public.d.ts`,
+		[`${pkg.name}/attachments`]: `${dir}/src/attachments/public.d.ts`,
 		[`${pkg.name}/compiler`]: `${dir}/src/compiler/public.d.ts`,
 		[`${pkg.name}/easing`]: `${dir}/src/easing/index.js`,
 		[`${pkg.name}/legacy`]: `${dir}/src/legacy/legacy-client.js`,

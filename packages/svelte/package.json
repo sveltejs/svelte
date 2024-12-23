@@ -33,6 +33,10 @@
       "types": "./types/index.d.ts",
       "default": "./src/animate/index.js"
     },
+    "./attachments": {
+      "types": "./types/index.d.ts",
+      "default": "./src/attachments/index.js"
+    },
     "./compiler": {
       "types": "./types/index.d.ts",
       "require": "./compiler/index.js",
