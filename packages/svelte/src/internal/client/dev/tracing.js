@@ -15,7 +15,7 @@ export let tracing_expressions = null;
  */
 function log_entry(signal, entry) {
 	const debug = signal.debug;
-	const value = signal.v;
+	const value = signal.trace_need_increase ? signal.trace_v : signal.v;
 
 	if (value === UNINITIALIZED) {
 		return;
