@@ -133,9 +133,3 @@ Reading state that was created inside the same derived is forbidden. Consider us
 ```
 Updating state inside a derived or a template expression is forbidden. If the value should not be reactive, declare it without `$state`
 ```
-
-### structured_clone_state_proxy
-
-```
-To correctly clone a `$state` proxy, use `$state.snapshot` instead of `structuredClone`
-```

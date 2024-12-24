@@ -2,7 +2,7 @@
 import { DEV } from 'esm-env';
 import { STATE_SYMBOL } from '../client/constants.js';
 import * as w from './warnings.js';
-import * as e from '../client/errors.js';
+import * as e from './errors.js';
 import {
 	get_prototype_of,
 	is_array,

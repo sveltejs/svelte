@@ -60,6 +60,12 @@ Certain lifecycle methods can only be used during component initialisation. To f
 `%name%` is not a store with a `subscribe` method
 ```
 
+### structured_clone_state_proxy
+
+```
+To correctly clone a `$state` proxy, use `$state.snapshot` instead of `structuredClone`
+```
+
 ### svelte_element_invalid_this_value
 
 ```
