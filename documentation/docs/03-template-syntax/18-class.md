@@ -17,7 +17,7 @@ Primitive values are treated like any other attribute:
 
 ### Objects and arrays
 
-Since Svelte 5.15, `class` can be an object or array, and is converted to a string using [clsx](https://github.com/lukeed/clsx).
+Since Svelte 5.16, `class` can be an object or array, and is converted to a string using [clsx](https://github.com/lukeed/clsx).
 
 If the value is an object, the truthy keys are added:
 
@@ -73,7 +73,7 @@ The user of this component has the same flexibility to use a mixture of objects,
 
 ## The `class:` directive
 
-Prior to Svelte 5.15, the `class:` directive was the most convenient way to set classes on elements conditionally.
+Prior to Svelte 5.16, the `class:` directive was the most convenient way to set classes on elements conditionally.
 
 ```svelte
 <!-- These are equivalent -->
