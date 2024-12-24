@@ -161,7 +161,7 @@ export {
 	$window as window,
 	$document as document
 } from './dom/operations.js';
-export { attr } from '../shared/attributes.js';
+export { attr, clsx } from '../shared/attributes.js';
 export { snapshot } from '../shared/clone.js';
 export { noop, fallback } from '../shared/utils.js';
 export {
