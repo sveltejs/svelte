@@ -106,7 +106,6 @@ const visitors = {
 				const character = state.code.original[index];
 
 				if (regex_css_name_boundary.test(character)) {
-					// TODO FIX
 					if (state.keyframes.includes(name)) {
 						state.code.prependRight(index - name.length, `${state.hash}-`);
 					}
