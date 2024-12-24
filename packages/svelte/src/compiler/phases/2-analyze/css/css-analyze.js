@@ -28,11 +28,19 @@ function is_global_block_selector(simple_selector) {
 	);
 }
 
+/**
+ *
+ * @param {Array<AST.CSS.Node>} path
+ */
+function is_in_global_block(path) {
+	return path.some((node) => node.type === 'Rule' && node.metadata.is_global_block);
+}
+
 /** @type {CssVisitors} */
 const css_visitors = {
 	Atrule(node, context) {
 		if (is_keyframes_node(node)) {
-			if (!node.prelude.startsWith('-global-')) {
+			if (!node.prelude.startsWith('-global-') && !is_in_global_block(context.path)) {
 				context.state.keyframes.push(node.prelude);
 			}
 		}
