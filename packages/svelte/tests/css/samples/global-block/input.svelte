@@ -76,6 +76,10 @@
 			animation: test 1s;
 		}
 
+		.y{
+			animation: test-in 1s;
+		}
+
 		@keyframes test-in{
 			to{
 				opacity: 1;

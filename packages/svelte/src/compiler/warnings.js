@@ -168,11 +168,11 @@ export function a11y_autofocus(node) {
 }
 
 /**
- * Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details
+ * Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
  * @param {null | NodeLike} node
  */
 export function a11y_click_events_have_key_events(node) {
-	w(node, "a11y_click_events_have_key_events", `Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as \`<button type="button">\` or \`<a>\` might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details\nhttps://svelte.dev/e/a11y_click_events_have_key_events`);
+	w(node, "a11y_click_events_have_key_events", `Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as \`<button type="button">\` or \`<a>\` might be more appropriate\nhttps://svelte.dev/e/a11y_click_events_have_key_events`);
 }
 
 /**

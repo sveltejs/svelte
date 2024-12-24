@@ -45,7 +45,8 @@ export function create_attribute(name, start, end, value) {
 		value,
 		metadata: {
 			expression: create_expression_metadata(),
-			delegated: null
+			delegated: null,
+			needs_clsx: false
 		}
 	};
 }

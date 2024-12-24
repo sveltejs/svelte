@@ -86,10 +86,35 @@ export function build_element_attributes(node, context) {
 			} else if (attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked') {
 				if (attribute.name === 'class') {
 					class_index = attributes.length;
-				} else if (attribute.name === 'style') {
-					style_index = attributes.length;
+
+					if (attribute.metadata.needs_clsx) {
+						const clsx_value = b.call(
+							'$.clsx',
+							/** @type {AST.ExpressionTag} */ (attribute.value).expression
+						);
+						attributes.push({
+							...attribute,
+							value: {
+								.../** @type {AST.ExpressionTag} */ (attribute.value),
+								expression: context.state.analysis.css.hash
+									? b.binary(
+											'+',
+											b.binary('+', clsx_value, b.literal(' ')),
+											b.literal(context.state.analysis.css.hash)
+										)
+									: clsx_value
+							}
+						});
+					} else {
+						attributes.push(attribute);
+					}
+				} else {
+					if (attribute.name === 'style') {
+						style_index = attributes.length;
+					}
+
+					attributes.push(attribute);
 				}
-				attributes.push(attribute);
 			}
 		} else if (attribute.type === 'BindDirective') {
 			if (attribute.name === 'value' && node.name === 'select') continue;
