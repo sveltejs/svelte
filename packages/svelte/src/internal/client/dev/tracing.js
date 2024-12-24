@@ -119,7 +119,7 @@ export function trace(label, fn) {
 			console.groupEnd();
 		}
 
-		if (previously_tracing_expressions !== null) {
+		if (previously_tracing_expressions !== null && tracing_expressions !== null) {
 			for (const [signal, entry] of tracing_expressions.entries) {
 				var prev_entry = previously_tracing_expressions.get(signal);
 
