@@ -8,7 +8,7 @@ export default test({
 
 	html: 'true',
 
-	skip: /^v4/.test(process.version), // node 4 apparently does some dumb stuff
+	skip: /^v4/.test(process.version), // node 4 apparently does some weird stuff
 
 	async test({ assert, component, target, window }) {
 		const event = new window.Event('click');

@@ -591,7 +591,7 @@ export function convert(source, ast) {
 			Text(node, { path }) {
 				const parent = path.at(-1);
 				if (parent?.type === 'RegularElement' && parent.name === 'style') {
-					// these text nodes are missing `raw` for some dumb reason
+					// these text nodes are missing `raw` for some reason
 					return /** @type {AST.Text} */ ({
 						type: 'Text',
 						start: node.start,
