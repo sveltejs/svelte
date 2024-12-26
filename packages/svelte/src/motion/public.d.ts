@@ -5,7 +5,7 @@ import { SpringUpdateOpts, TweenedOptions, Updater, SpringOpts } from './private
 // this means both the Spring class and the Spring interface are merged into one with some things only
 // existing on one side. In Svelte 6, remove the type definition and move the jsdoc onto the class in spring.js
 
-export interface Spring<T> extends Readable<T> {
+export interface Spring<T extends number> extends Readable<T> {
 	set(new_value: T, opts?: SpringUpdateOpts): Promise<void>;
 	/**
 	 * @deprecated Only exists on the legacy `spring` store, not the `Spring` class
@@ -36,7 +36,7 @@ export interface Spring<T> extends Readable<T> {
  * ```
  * @since 5.8.0
  */
-export class Spring<T> {
+export class Spring<T extends number> {
 	constructor(value: T, options?: SpringOpts);
 
 	/**
@@ -53,7 +53,7 @@ export class Spring<T> {
 	 * </script>
 	 * ```
 	 */
-	static of<U>(fn: () => U, options?: SpringOpts): Spring<U>;
+	static of<U extends number>(fn: () => U, options?: SpringOpts): Spring<U>;
 
 	/**
 	 * Sets `spring.target` to `value` and returns a `Promise` that resolves if and when `spring.current` catches up to it.
@@ -80,7 +80,7 @@ export class Spring<T> {
 	get current(): T;
 }
 
-export interface Tweened<T> extends Readable<T> {
+export interface Tweened<T extends number> extends Readable<T> {
 	set(value: T, opts?: TweenedOptions<T>): Promise<void>;
 	update(updater: Updater<T>, opts?: TweenedOptions<T>): Promise<void>;
 }
