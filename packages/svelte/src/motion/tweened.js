@@ -286,6 +286,7 @@ export class Tween {
 	}
 
 	set target(v) {
+    //@ts-ignore
 		this.set(v);
 	}
 }
