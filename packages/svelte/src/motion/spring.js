@@ -11,7 +11,7 @@ import { get } from '../internal/client/runtime.js';
 import { deferred, noop } from '../internal/shared/utils.js';
 
 /**
- * @template {number} T
+ * @template T
  * @param {TickContext} ctx
  * @param {T} last_value
  * @param {T} current_value
