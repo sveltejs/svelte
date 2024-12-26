@@ -11,7 +11,7 @@ import { get } from '../internal/client/runtime.js';
 import { deferred, noop } from '../internal/shared/utils.js';
 
 /**
- * @template T
+ * @template {number} T
  * @param {TickContext} ctx
  * @param {T} last_value
  * @param {T} current_value
@@ -58,7 +58,7 @@ function tick_spring(ctx, last_value, current_value, target_value) {
  * The spring function in Svelte creates a store whose value is animated, with a motion that simulates the behavior of a spring. This means when the value changes, instead of transitioning at a steady rate, it "bounces" like a spring would, depending on the physics parameters provided. This adds a level of realism to the transitions and can enhance the user experience.
  *
  * @deprecated Use [`Spring`](https://svelte.dev/docs/svelte/svelte-motion#Spring) instead
- * @template [T=any]
+ * @template {number} T
  * @param {T} [value]
  * @param {SpringOpts} [opts]
  * @returns {SpringStore<T>}
@@ -159,7 +159,7 @@ export function spring(value, opts = {}) {
  * <input type="range" bind:value={spring.target} />
  * <input type="range" bind:value={spring.current} disabled />
  * ```
- * @template T
+ * @template {number} T
  * @since 5.8.0
  */
 export class Spring {
@@ -207,7 +207,7 @@ export class Spring {
 	 * 	const spring = Spring.of(() => number);
 	 * </script>
 	 * ```
-	 * @template U
+	 * @template {number} U
 	 * @param {() => U} fn
 	 * @param {SpringOpts} [options]
 	 */
