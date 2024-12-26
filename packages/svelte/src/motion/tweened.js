@@ -79,7 +79,7 @@ function get_interpolator(a, b) {
  * A tweened store in Svelte is a special type of store that provides smooth transitions between state values over time.
  *
  * @deprecated Use [`Tween`](https://svelte.dev/docs/svelte/svelte-motion#Tween) instead
- * @template T
+ * @template {number} T
  * @param {T} [value]
  * @param {TweenedOptions<T>} [defaults]
  * @returns {Tweened<T>}
@@ -170,7 +170,7 @@ export function tweened(value, defaults = {}) {
  * <input type="range" bind:value={tween.target} />
  * <input type="range" bind:value={tween.current} disabled />
  * ```
- * @template T
+ * @template {number} T
  * @since 5.8.0
  */
 export class Tween {
@@ -205,7 +205,7 @@ export class Tween {
 	 * 	const tween = Tween.of(() => number);
 	 * </script>
 	 * ```
-	 * @template U
+	 * @template {number} U
 	 * @param {() => U} fn
 	 * @param {TweenedOptions<U>} [options]
 	 */
