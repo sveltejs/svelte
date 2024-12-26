@@ -167,10 +167,10 @@ export class Spring {
 	#damping = source(0.8);
 	#precision = source(0.01);
 
-	#current = source(/** @type {T} */ (undefined));
-	#target = source(/** @type {T} */ (undefined));
+	#current = source(/** @type {T | undefined} */ (undefined));
+	#target = source(/** @type {T | undefined} */ (undefined));
 
-	#last_value = /** @type {T} */ (undefined);
+	#last_value = /** @type {T | undefined} */ (undefined);
 	#last_time = 0;
 
 	#inverse_mass = 1;
