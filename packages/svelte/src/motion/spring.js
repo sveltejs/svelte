@@ -113,6 +113,7 @@ export function spring(value, opts = {}) {
 					inv_mass,
 					opts: spring,
 					settled: true,
+          //@ts-ignore
 					dt: ((now - last_time) * 60) / 1000
 				};
 				// @ts-ignore
