@@ -174,8 +174,8 @@ export function tweened(value, defaults = {}) {
  * @since 5.8.0
  */
 export class Tween {
-	#current = source(/** @type {T} */ (undefined));
-	#target = source(/** @type {T} */ (undefined));
+	#current = source(/** @type {T | undefined} */ (undefined));
+	#target = source(/** @type {T | undefined} */ (undefined));
 
 	/** @type {TweenedOptions<T>} */
 	#defaults;
