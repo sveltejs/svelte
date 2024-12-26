@@ -28,12 +28,17 @@ function tick_spring(ctx, last_value, current_value, target_value) {
 		const damper = ctx.opts.damping * velocity;
 		const acceleration = (spring - damper) * ctx.inv_mass;
 		const d = (velocity + acceleration) * ctx.dt;
-		if (Math.abs(d) < ctx.opts.precision && Math.abs(delta) < ctx.opts.precision) {
+		if (
+			Math.abs(d) < ctx.opts.precision &&
+			Math.abs(delta) < ctx.opts.precision
+		) {
 			return target_value; // settled
 		} else {
 			ctx.settled = false; // signal loop to keep ticking
 			// @ts-ignore
-			return is_date(current_value) ? new Date(current_value.getTime() + d) : current_value + d;
+			return is_date(current_value)
+				? new Date(current_value.getTime() + d)
+				: current_value + d;
 		}
 	} else if (Array.isArray(current_value)) {
 		// @ts-ignore
@@ -45,7 +50,12 @@ function tick_spring(ctx, last_value, current_value, target_value) {
 		const next_value = {};
 		for (const k in current_value) {
 			// @ts-ignore
-			next_value[k] = tick_spring(ctx, last_value[k], current_value[k], target_value[k]);
+			next_value[k] = tick_spring(
+				ctx,
+				last_value[k],
+				current_value[k],
+				target_value[k]
+			);
 		}
 		// @ts-ignore
 		return next_value;
@@ -87,7 +97,11 @@ export function spring(value, opts = {}) {
 	function set(new_value, opts = {}) {
 		target_value = new_value;
 		const token = (current_token = {});
-		if (value == null || opts.hard || (spring.stiffness >= 1 && spring.damping >= 1)) {
+		if (
+			value == null ||
+			opts.hard ||
+			(spring.stiffness >= 1 && spring.damping >= 1)
+		) {
 			cancel_task = true; // cancel any running animation
 			last_time = raf.now();
 			last_value = new_value;
@@ -113,11 +127,16 @@ export function spring(value, opts = {}) {
 					inv_mass,
 					opts: spring,
 					settled: true,
-          //@ts-ignore
+					//@ts-ignore
 					dt: ((now - last_time) * 60) / 1000
 				};
 				// @ts-ignore
-				const next_value = tick_spring(ctx, last_value, value, target_value);
+				const next_value = tick_spring(
+					ctx,
+					last_value,
+					value,
+					target_value
+				);
 				last_time = now;
 				last_value = /** @type {T} */ (value);
 				store.set((value = /** @type {T} */ (next_value)));
@@ -137,7 +156,11 @@ export function spring(value, opts = {}) {
 	// @ts-expect-error - class-only properties are missing
 	const spring = {
 		set,
-		update: (fn, opts) => set(fn(/** @type {T} */ (target_value), /** @type {T} */ (value)), opts),
+		update: (fn, opts) =>
+			set(
+				fn(/** @type {T} */ (target_value), /** @type {T} */ (value)),
+				opts
+			),
 		subscribe: store.subscribe,
 		stiffness,
 		damping,
@@ -190,9 +213,12 @@ export class Spring {
 	constructor(value, options = {}) {
 		this.#current.v = this.#target.v = value;
 
-		if (typeof options.stiffness === 'number') this.#stiffness.v = clamp(options.stiffness, 0, 1);
-		if (typeof options.damping === 'number') this.#damping.v = clamp(options.damping, 0, 1);
-		if (typeof options.precision === 'number') this.#precision.v = options.precision;
+		if (typeof options.stiffness === 'number')
+			this.#stiffness.v = clamp(options.stiffness, 0, 1);
+		if (typeof options.damping === 'number')
+			this.#damping.v = clamp(options.damping, 0, 1);
+		if (typeof options.precision === 'number')
+			this.#precision.v = options.precision;
 	}
 
 	/**
@@ -235,7 +261,10 @@ export class Spring {
 			var inv_mass_recovery_rate = 1000 / (this.#momentum * 60);
 
 			this.#task ??= loop((now) => {
-				this.#inverse_mass = Math.min(this.#inverse_mass + inv_mass_recovery_rate, 1);
+				this.#inverse_mass = Math.min(
+					this.#inverse_mass + inv_mass_recovery_rate,
+					1
+				);
 
 				/** @type {import('./private').TickContext} */
 				const ctx = {
@@ -249,7 +278,12 @@ export class Spring {
 					dt: ((now - this.#last_time) * 60) / 1000
 				};
 
-				var next = tick_spring(ctx, this.#last_value, this.#current.v, this.#target.v);
+				var next = tick_spring(
+					ctx,
+					this.#last_value,
+					this.#current.v,
+					this.#target.v
+				);
 				this.#last_value = this.#current.v;
 				this.#last_time = now;
 				set(this.#current, next);
@@ -336,7 +370,7 @@ export class Spring {
 	}
 
 	set target(v) {
-    //@ts-ignore
+		//@ts-ignore
 		this.set(v);
 	}
 }
