@@ -10,7 +10,12 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
  */
 export function StyleDirective(node, context) {
 	if (node.modifiers.length > 1 || (node.modifiers.length && node.modifiers[0] !== 'important')) {
-		e.style_directive_invalid_modifier(node);
+		if (
+			node.name !== 'display' ||
+			node.modifiers.findIndex((m) => m !== 'important' && m !== 'transition') >= 0
+		) {
+			e.style_directive_invalid_modifier(node);
+		}
 	}
 
 	mark_subtree_dynamic(context.path);

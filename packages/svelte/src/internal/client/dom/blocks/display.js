@@ -7,7 +7,7 @@ import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
  * @param {HTMLElement} node
  * @param {() => any} get_visibility
  * @param {() => void} render_fn
- * @param {()=>string|null} [get_value]
+ * @param {()=>string|boolean|null} [get_value]
  * @param {boolean} [default_important]
  * @returns {void}
  */
@@ -41,8 +41,14 @@ export function display(node, get_visibility, render_fn, get_value, default_impo
 
 	const effect = block(render_fn);
 	template_effect(() => {
-		const visible = !!get_visibility();
-		const value = visible ? get_value?.() : 'none';
+		let display_value = get_value?.();
+		if (display_value === true) {
+			display_value = null;
+		} else if (display_value === false) {
+			display_value = 'none';
+		}
+		const visible = get_visibility !== null ? !!get_visibility() : display_value !== 'none';
+		const value = visible ? display_value : 'none';
 
 		if (visible === prev_visible && value === prev_value) {
 			return;

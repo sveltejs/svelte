@@ -217,13 +217,15 @@ export function get_attribute_name(element, attribute) {
 
 /**
  * @param {Identifier} node_id
- * @param {AST.DisplayDirective} display
+ * @param {AST.DisplayDirective | null} display
  * @param {AST.StyleDirective | null} style
  * @param {BlockStatement} block
  * @param {ComponentContext} context
  */
 export function build_display_directive(node_id, display, style, block, context) {
-	const visibility = b.thunk(/** @type {Expression} */ (context.visit(display.expression)));
+	const visibility = display
+		? b.thunk(/** @type {Expression} */ (context.visit(display.expression)))
+		: b.literal(null);
 
 	/** @type {Expression | undefined} */
 	let value = undefined;

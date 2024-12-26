@@ -148,7 +148,11 @@ export function RegularElement(node, context) {
 				break;
 
 			case 'StyleDirective':
-				style_directives.push(attribute);
+				if (attribute.name === 'display' && attribute.modifiers.includes('transition')) {
+					style_display = attribute;
+				} else {
+					style_directives.push(attribute);
+				}
 				break;
 
 			case 'TransitionDirective':
@@ -167,6 +171,10 @@ export function RegularElement(node, context) {
 	}
 
 	if (display_directive) {
+		if (style_display !== null) {
+			// TODO
+			throw new Error('#display and style:display|transition forbidden');
+		}
 		// When we have a #display directive, the style:display directive must be handheld differently
 		const index = style_directives.findIndex((d) => d.name === 'display');
 		if (index >= 0) {
@@ -423,7 +431,11 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (display_directive || node.fragment.nodes.some((node) => node.type === 'SnippetBlock')) {
+	if (
+		style_display ||
+		display_directive ||
+		node.fragment.nodes.some((node) => node.type === 'SnippetBlock')
+	) {
 		// Wrap children in `{...}` to avoid declaration conflicts
 		const block = b.block([
 			...child_state.init,
@@ -432,7 +444,7 @@ export function RegularElement(node, context) {
 			...child_state.after_update,
 			...element_state.after_update
 		]);
-		if (display_directive) {
+		if (display_directive || style_display) {
 			context.state.init.push(
 				build_display_directive(node_id, display_directive, style_display, block, context)
 			);
