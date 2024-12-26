@@ -66,14 +66,14 @@ function tick_spring(ctx, last_value, current_value, target_value) {
 export function spring(value, opts = {}) {
 	const store = writable(value);
 	const { stiffness = 0.15, damping = 0.8, precision = 0.01 } = opts;
-	/** @type {number} */
+	/** @type {number | undefined} */
 	let last_time;
 	/** @type {Task | null} */
 	let task;
 	/** @type {object} */
 	let current_token;
 
-	let last_value = /** @type {T} */ (value);
+	let last_value = /** @type {T | undefined} */ (value);
 	let target_value = /** @type {T | undefined} */ (value);
 
 	let inv_mass = 1;
