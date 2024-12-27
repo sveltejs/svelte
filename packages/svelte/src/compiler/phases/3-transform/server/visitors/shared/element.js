@@ -448,6 +448,9 @@ function build_style_directives(display_directive, style_directives, style_attri
 			directive.value === true
 				? b.id(directive.name)
 				: build_attribute_value(directive.value, context, true);
+		if (directive.name === 'display' && directive.modifiers.includes('transition')) {
+			value = b.call('$.get_display', value);
+		}
 		if (directive.modifiers.includes('important')) {
 			value = b.binary('+', value, b.literal(' !important'));
 		}

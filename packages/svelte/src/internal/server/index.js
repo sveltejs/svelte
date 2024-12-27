@@ -270,6 +270,13 @@ function style_object_to_string(style_object) {
 		.join(' ');
 }
 
+/** @param {string|boolean} value */
+export function get_display(value) {
+	if (value === true) return null;
+	if (value === false) return 'none';
+	return value;
+}
+
 /** @param {Record<string, string>} style_object */
 export function add_styles(style_object) {
 	const styles = style_object_to_string(style_object);
