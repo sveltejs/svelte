@@ -27,8 +27,8 @@ If the value is an object, the truthy keys are added:
 </script>
 
 <!-- results in `class="cool"` if `cool` is truthy,
-     `class="lame"` otherwise -->
-<div class={{ cool, lame: !cool }}>...</div>
+     `class="uncool"` otherwise -->
+<div class={{ cool, uncool: !cool }}>...</div>
 ```
 
 If the value is an array, the truthy values are combined:
@@ -77,14 +77,14 @@ Prior to Svelte 5.16, the `class:` directive was the most convenient way to set 
 
 ```svelte
 <!-- These are equivalent -->
-<div class={{ cool, lame: !cool }}>...</div>
-<div class:cool={cool} class:lame={!cool}>...</div>
+<div class={{ cool, uncool: !cool }}>...</div>
+<div class:cool={cool} class:uncool={!cool}>...</div>
 ```
 
 As with other directives, we can use a shorthand when the name of the class coincides with the value:
 
 ```svelte
-<div class:cool class:lame={!cool}>...</div>
+<div class:cool class:uncool={!cool}>...</div>
 ```
 
 > [!NOTE] Unless you're using an older version of Svelte, consider avoiding `class:`, since the attribute is more powerful and composable.
