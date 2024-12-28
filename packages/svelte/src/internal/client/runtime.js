@@ -205,14 +205,16 @@ export function check_dirtiness(reaction) {
 				reaction.f ^= DISCONNECTED;
 			}
 
-			var dirty = false;
+			var unowned_dirty = false;
 
 			for (i = 0; i < dependencies.length; i++) {
 				var dependency = dependencies[i];
 
-				if (!dirty && check_dirtiness(/** @type {Derived} */ (dependency))) {
+				if (!unowned_dirty && check_dirtiness(/** @type {Derived} */ (dependency))) {
 					update_derived(/** @type {Derived} */ (dependency));
 				}
+
+				var version_mismatch = dependency.version > reaction.version;
 
 				// If we are working with an unowned signal as part of an effect (due to !skip_reaction)
 				// and the version hasn't changed, we still need to check that this reaction
@@ -224,16 +226,15 @@ export function check_dirtiness(reaction) {
 					!dependency?.reactions?.includes(reaction)
 				) {
 					(dependency.reactions ??= []).push(reaction);
-				}
-
-				if (dependency.version > reaction.version) {
-					// We can't just return here as we might have other dependencies that are unowned
-					// ad need to be linked to the reaction again
-					dirty = true;
+					if (version_mismatch) {
+						unowned_dirty = true;
+					}
+				} else if (version_mismatch) {
+					return true
 				}
 			}
 
-			if (dirty) {
+			if (unowned_dirty) {
 				return true;
 			}
 		}
