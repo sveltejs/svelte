@@ -205,10 +205,12 @@ export function check_dirtiness(reaction) {
 				reaction.f ^= DISCONNECTED;
 			}
 
+			var dirty = false;
+
 			for (i = 0; i < dependencies.length; i++) {
 				var dependency = dependencies[i];
 
-				if (check_dirtiness(/** @type {Derived} */ (dependency))) {
+				if (!dirty && check_dirtiness(/** @type {Derived} */ (dependency))) {
 					update_derived(/** @type {Derived} */ (dependency));
 				}
 
@@ -225,8 +227,14 @@ export function check_dirtiness(reaction) {
 				}
 
 				if (dependency.version > reaction.version) {
-					return true;
+					// We can't just return here as we might have other dependencies that are unowned
+					// ad need to be linked to the reaction again
+					dirty = true;
 				}
+			}
+
+			if (dirty) {
+				return true;
 			}
 		}
 
