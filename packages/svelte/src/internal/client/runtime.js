@@ -219,18 +219,16 @@ export function check_dirtiness(reaction) {
 				// If we are working with an unowned signal as part of an effect (due to !skip_reaction)
 				// and the version hasn't changed, we still need to check that this reaction
 				// is linked to the dependency source – otherwise future updates will not be caught.
-				if (
-					is_unowned &&
-					active_effect !== null &&
-					!skip_reaction &&
-					!dependency?.reactions?.includes(reaction)
-				) {
-					(dependency.reactions ??= []).push(reaction);
+				if (is_unowned && active_effect !== null && !skip_reaction) {
+					if (!dependency?.reactions?.includes(reaction)) {
+						(dependency.reactions ??= []).push(reaction);
+					}
+
 					if (version_mismatch) {
 						unowned_dirty = true;
 					}
 				} else if (version_mismatch) {
-					return true
+					return true;
 				}
 			}
 
