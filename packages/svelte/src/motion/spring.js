@@ -1,6 +1,6 @@
 /** @import { Task } from '#client' */
 /** @import { SpringOpts, SpringUpdateOpts, TickContext } from './private.js' */
-/** @import { Spring as SpringStore } from './public.js' */
+/** @import { MotionRecord, Spring as SpringStore } from './public.js' */
 import { writable } from '../store/shared/index.js';
 import { loop } from '../internal/client/loop.js';
 import { raf } from '../internal/client/timing.js';
@@ -58,7 +58,7 @@ function tick_spring(ctx, last_value, current_value, target_value) {
  * The spring function in Svelte creates a store whose value is animated, with a motion that simulates the behavior of a spring. This means when the value changes, instead of transitioning at a steady rate, it "bounces" like a spring would, depending on the physics parameters provided. This adds a level of realism to the transitions and can enhance the user experience.
  *
  * @deprecated Use [`Spring`](https://svelte.dev/docs/svelte/svelte-motion#Spring) instead
- * @template [T=any]
+ * @template {MotionRecord[string]} [T=any]
  * @param {T} [value]
  * @param {SpringOpts} [opts]
  * @returns {SpringStore<T>}
@@ -159,7 +159,7 @@ export function spring(value, opts = {}) {
  * <input type="range" bind:value={spring.target} />
  * <input type="range" bind:value={spring.current} disabled />
  * ```
- * @template T
+ * @template {MotionRecord[string]} T
  * @since 5.8.0
  */
 export class Spring {
@@ -167,9 +167,10 @@ export class Spring {
 	#damping = source(0.8);
 	#precision = source(0.01);
 
-	#current = source(/** @type {T} */ (undefined));
-	#target = source(/** @type {T} */ (undefined));
-
+	#current;
+	#target;
+	
+	// @ts-expect-error Undefined doesn't satisfy the constraint of T.
 	#last_value = /** @type {T} */ (undefined);
 	#last_time = 0;
 
@@ -187,7 +188,8 @@ export class Spring {
 	 * @param {SpringOpts} [options]
 	 */
 	constructor(value, options = {}) {
-		this.#current.v = this.#target.v = value;
+		this.#current = source(value);
+		this.#target = source(value);
 
 		if (typeof options.stiffness === 'number') this.#stiffness.v = clamp(options.stiffness, 0, 1);
 		if (typeof options.damping === 'number') this.#damping.v = clamp(options.damping, 0, 1);
@@ -207,7 +209,7 @@ export class Spring {
 	 * 	const spring = Spring.of(() => number);
 	 * </script>
 	 * ```
-	 * @template U
+	 * @template {MotionRecord[string]} U
 	 * @param {() => U} fn
 	 * @param {SpringOpts} [options]
 	 */
