@@ -51,7 +51,9 @@ function log_entry(signal, entry) {
 		status !== 'clean'
 			? 'color: CornflowerBlue; font-weight: bold'
 			: 'color: grey; font-weight: bold',
-		typeof value === 'object' && STATE_SYMBOL in value ? snapshot(value, true) : value
+		typeof value === 'object' && value !== null && STATE_SYMBOL in value
+			? snapshot(value, true)
+			: value
 	);
 
 	if (type === '$derived') {

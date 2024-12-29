@@ -1,5 +1,15 @@
 # svelte
 
+## 5.16.0
+
+### Minor Changes
+
+- feat: allow `class` attribute to be an object or array, using `clsx` ([#14714](https://github.com/sveltejs/svelte/pull/14714))
+
+### Patch Changes
+
+- fix: don't include keyframes in global scope in the keyframes to rename ([#14822](https://github.com/sveltejs/svelte/pull/14822))
+
 ## 5.15.0
 
 ### Minor Changes

@@ -773,6 +773,8 @@ export function analyze_component(root, source, options) {
 
 					if (attribute.type !== 'Attribute') continue;
 					if (attribute.name.toLowerCase() !== 'class') continue;
+					// The dynamic class method appends the hash to the end of the class attribute on its own
+					if (attribute.metadata.needs_clsx) continue outer;
 
 					class_attribute = attribute;
 				}
