@@ -1575,6 +1575,15 @@ export function unexpected_reserved_word(node, word) {
 }
 
 /**
+ * Unterminated string constant
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function unterminated_string_constant(node) {
+	e(node, "unterminated_string_constant", "Unterminated string constant");
+}
+
+/**
  * Void elements cannot have children or closing tags
  * @param {null | number | NodeLike} node
  * @returns {never}
