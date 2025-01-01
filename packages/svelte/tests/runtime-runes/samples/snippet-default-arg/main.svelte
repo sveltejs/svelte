@@ -1,9 +1,9 @@
 <script>
-	import { untrack } from 'svelte';
+	import { unsafe, untrack } from 'svelte';
 
 	let count = $state(0);
 	function default_arg() {
-		untrack(() => count++);
+		untrack(() => unsafe(() => count++));
 		return 1;
 	}
 </script>

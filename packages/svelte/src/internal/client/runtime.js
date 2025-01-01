@@ -29,7 +29,7 @@ import {
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
-import { internal_set, set, source } from './reactivity/sources.js';
+import { internal_set, mark_reactions, set, source } from './reactivity/sources.js';
 import { destroy_derived, execute_derived, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
@@ -77,6 +77,18 @@ let dev_effect_stack = [];
 
 /** @type {null | Reaction} */
 export let active_reaction = null;
+
+export let untracking = false;
+
+export let unsafe_mutating = false;
+
+/** @type {null | Source[]} */
+export let unsafe_sources = null;
+
+/** @param {Source[] | null} value */
+export function set_unsafe_sources(value) {
+	unsafe_sources = value;
+}
 
 /** @param {null | Reaction} reaction */
 export function set_active_reaction(reaction) {
@@ -387,6 +399,8 @@ export function update_reaction(reaction) {
 	var previous_skip_reaction = skip_reaction;
 	var prev_derived_sources = derived_sources;
 	var previous_component_context = component_context;
+	var previous_untracking = untracking;
+	var previous_unsafe_mutating = unsafe_mutating;
 	var flags = reaction.f;
 
 	new_deps = /** @type {null | Value[]} */ (null);
@@ -396,6 +410,8 @@ export function update_reaction(reaction) {
 	skip_reaction = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	derived_sources = null;
 	component_context = reaction.ctx;
+	untracking = false;
+	unsafe_mutating = false;
 
 	try {
 		var result = /** @type {Function} */ (0, reaction.fn)();
@@ -434,6 +450,8 @@ export function update_reaction(reaction) {
 		skip_reaction = previous_skip_reaction;
 		derived_sources = prev_derived_sources;
 		component_context = previous_component_context;
+		untracking = previous_untracking;
+		unsafe_mutating = previous_unsafe_mutating;
 	}
 }
 
@@ -507,8 +525,10 @@ export function update_effect(effect) {
 
 	var previous_effect = active_effect;
 	var previous_component_context = component_context;
+	var previous_unsafe_sources = unsafe_sources;
 
 	active_effect = effect;
+	unsafe_sources = null;
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
@@ -526,6 +546,16 @@ export function update_effect(effect) {
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
+
+		// If unsafe() has been used within the effect then we will need
+		// to re-invalidate any unsafe sources that were already invalidated
+		// to ensure consistency of the graph
+		if (unsafe_sources !== null && (effect.f & CLEAN) !== 0) {
+			for (let i = 0; i < /** @type {Source[]} */ (unsafe_sources).length; i++) {
+				mark_reactions(unsafe_sources[i], DIRTY, true);
+			}
+		}
+
 		effect.version = current_version;
 
 		if (DEV) {
@@ -535,6 +565,7 @@ export function update_effect(effect) {
 		handle_error(error, effect, previous_effect, previous_component_context || effect.ctx);
 	} finally {
 		active_effect = previous_effect;
+		unsafe_sources = previous_unsafe_sources;
 
 		if (DEV) {
 			dev_current_component_function = previous_component_fn;
@@ -856,7 +887,7 @@ export function get(signal) {
 	}
 
 	// Register the dependency on the current reaction signal.
-	if (active_reaction !== null) {
+	if (active_reaction !== null && !untracking) {
 		if (derived_sources !== null && derived_sources.includes(signal)) {
 			e.state_unsafe_local_read();
 		}
@@ -1016,12 +1047,30 @@ export function invalidate_inner_signals(fn) {
  * @returns {T}
  */
 export function untrack(fn) {
-	const previous_reaction = active_reaction;
+	var previous_untracking = untracking;
 	try {
-		active_reaction = null;
+		untracking = true;
 		return fn();
 	} finally {
-		active_reaction = previous_reaction;
+		untracking = previous_untracking;
+	}
+}
+
+/**
+ * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived),
+ * any state updates to state is allowed.
+ *
+ * @template T
+ * @param {() => T} fn
+ * @returns {T}
+ */
+export function unsafe(fn) {
+	var previous_unsafe_mutating = unsafe_mutating;
+	try {
+		unsafe_mutating = true;
+		return fn();
+	} finally {
+		unsafe_mutating = previous_unsafe_mutating;
 	}
 }
 

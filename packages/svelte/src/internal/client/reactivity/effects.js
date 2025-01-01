@@ -16,7 +16,8 @@ import {
 	set_is_flushing_effect,
 	set_signal_status,
 	untrack,
-	skip_reaction
+	skip_reaction,
+	untracking
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -164,7 +165,7 @@ function create_effect(type, fn, sync, push = true) {
  * @returns {boolean}
  */
 export function effect_tracking() {
-	if (active_reaction === null) {
+	if (active_reaction === null || untracking) {
 		return false;
 	}
 
