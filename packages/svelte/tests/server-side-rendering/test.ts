@@ -16,6 +16,7 @@ interface SSRTest extends BaseTest {
 	compileOptions?: Partial<CompileOptions>;
 	props?: Record<string, any>;
 	withoutNormalizeHtml?: boolean;
+	htmlAttributes?: string;
 	errors?: string[];
 }
 
@@ -34,7 +35,7 @@ const { test, run } = suite<SSRTest>(async (config, test_dir) => {
 	const Component = (await import(`${test_dir}/_output/server/main.svelte.js`)).default;
 	const expected_html = try_read_file(`${test_dir}/_expected.html`);
 	const rendered = render(Component, { props: config.props || {} });
-	const { body, head } = rendered;
+	const { body, head, htmlAttributes } = rendered;
 
 	fs.writeFileSync(`${test_dir}/_output/rendered.html`, body);
 
@@ -73,6 +74,10 @@ const { test, run } = suite<SSRTest>(async (config, test_dir) => {
 				throw error;
 			}
 		}
+	}
+
+	if (config.htmlAttributes) {
+		assert.deepEqual(htmlAttributes, config.htmlAttributes);
 	}
 
 	if (errors.length > 0) {

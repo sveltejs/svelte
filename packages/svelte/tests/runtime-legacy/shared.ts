@@ -283,12 +283,21 @@ async function run_test_variant(
 			config.before_test?.();
 			// ssr into target
 			const SsrSvelteComponent = (await import(`${cwd}/_output/server/main.svelte.js`)).default;
-			const { html, head } = render(SsrSvelteComponent, {
+			const { head, body, htmlAttributes } = render(SsrSvelteComponent, {
 				props: config.server_props ?? config.props ?? {}
 			});
 
-			fs.writeFileSync(`${cwd}/_output/rendered.html`, html);
-			target.innerHTML = html;
+			if (htmlAttributes) {
+				for (const [key, value] of htmlAttributes.split('" ').map((attr) => attr.split('='))) {
+					window.document.documentElement.setAttribute(
+						key,
+						value.slice(1, value.endsWith('"') ? -1 : undefined)
+					);
+				}
+			}
+
+			fs.writeFileSync(`${cwd}/_output/rendered.html`, body);
+			target.innerHTML = body;
 
 			if (head) {
 				fs.writeFileSync(`${cwd}/_output/rendered_head.html`, head);

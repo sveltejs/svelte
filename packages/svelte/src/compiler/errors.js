@@ -1356,6 +1356,15 @@ export function svelte_head_illegal_attribute(node) {
 }
 
 /**
+ * `<svelte:html>` can only have regular attributes
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_html_illegal_attribute(node) {
+	e(node, "svelte_html_illegal_attribute", `\`<svelte:html>\` can only have regular attributes\nhttps://svelte.dev/e/svelte_html_illegal_attribute`);
+}
+
+/**
  * A component can only have one `<%name%>` element
  * @param {null | number | NodeLike} node
  * @param {string} name
