@@ -199,11 +199,12 @@ export function check_dirtiness(reaction) {
 			var dependency;
 			var is_disconnected = (flags & DISCONNECTED) !== 0;
 			var is_unowned_connected = is_unowned && active_effect !== null && !skip_reaction;
+			var length = dependencies.length;
 
 			// If we are working with a disconnected or an unowned signal that is now connected (due to an active effect)
 			// then we need to re-connect the reaction to the dependency
 			if (is_disconnected || is_unowned_connected) {
-				for (i = 0; i < dependencies.length; i++) {
+				for (i = 0; i < length; i++) {
 					dependency = dependencies[i];
 
 					if (!dependency?.reactions?.includes(reaction)) {
@@ -216,7 +217,7 @@ export function check_dirtiness(reaction) {
 				}
 			}
 
-			for (i = 0; i < dependencies.length; i++) {
+			for (i = 0; i < length; i++) {
 				dependency = dependencies[i];
 
 				if (check_dirtiness(/** @type {Derived} */ (dependency))) {
