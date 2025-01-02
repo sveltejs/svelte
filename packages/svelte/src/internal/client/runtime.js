@@ -196,44 +196,34 @@ export function check_dirtiness(reaction) {
 
 		if (dependencies !== null) {
 			var i;
+			var dependency;
+			var depedency_needs_linking =
+				(flags & DISCONNECTED) !== 0 || (is_unowned && active_effect !== null && !skip_reaction);
 
-			if ((flags & DISCONNECTED) !== 0) {
+			// If we are working with a disconnected or an unowned signal as part of an effect (due to !skip_reaction)
+			// then we need to re-connect the reaction to the dependency
+			if (depedency_needs_linking) {
 				for (i = 0; i < dependencies.length; i++) {
-					(dependencies[i].reactions ??= []).push(reaction);
+					dependency = dependencies[i];
+
+					if (!dependency?.reactions?.includes(reaction)) {
+						(dependency.reactions ??= []).push(reaction);
+					}
 				}
 
 				reaction.f ^= DISCONNECTED;
 			}
 
-			var unowned_dirty = false;
-
 			for (i = 0; i < dependencies.length; i++) {
-				var dependency = dependencies[i];
+				dependency = dependencies[i];
 
-				if (!unowned_dirty && check_dirtiness(/** @type {Derived} */ (dependency))) {
+				if (check_dirtiness(/** @type {Derived} */ (dependency))) {
 					update_derived(/** @type {Derived} */ (dependency));
 				}
 
-				var version_mismatch = dependency.version > reaction.version;
-
-				// If we are working with an unowned signal as part of an effect (due to !skip_reaction)
-				// and the version hasn't changed, we still need to check that this reaction
-				// is linked to the dependency source – otherwise future updates will not be caught.
-				if (is_unowned && active_effect !== null && !skip_reaction) {
-					if (!dependency?.reactions?.includes(reaction)) {
-						(dependency.reactions ??= []).push(reaction);
-					}
-
-					if (version_mismatch) {
-						unowned_dirty = true;
-					}
-				} else if (version_mismatch) {
+				if (dependency.version > reaction.version) {
 					return true;
 				}
-			}
-
-			if (unowned_dirty) {
-				return true;
 			}
 		}
 
