@@ -140,8 +140,14 @@ let person = $state.raw({
 	age: 49
 });
 
-// this will have no effect
+// this will have no effect EDIT this line incorrect actualy here the console .log
 person.age += 1;
+
+we see the age is 50 !!!
+
+![image](https://github.com/user-attachments/assets/e5ac841f-747e-468b-aabd-dd0680af4605)
+
+
 
 // this will work, because we're creating a new person
 person = {
