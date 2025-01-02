@@ -1103,7 +1103,7 @@ declare module 'svelte/compiler' {
 			name: string;
 			/** The 'y' in `style:x={y}` */
 			value: true | ExpressionTag | Array<ExpressionTag | Text>;
-			modifiers: Array<'important'>;
+			modifiers: Array<'important' | 'transition'>;
 		}
 
 		// TODO have separate in/out/transition directives
@@ -1269,6 +1269,11 @@ declare module 'svelte/compiler' {
 			expression: Expression;
 		}
 
+		export interface DisplayDirective extends BaseNode {
+			type: 'DisplayDirective';
+			expression: Expression;
+		}
+
 		export interface Script extends BaseNode {
 			type: 'Script';
 			context: 'default' | 'module';
@@ -1286,7 +1291,8 @@ declare module 'svelte/compiler' {
 			| AST.OnDirective
 			| AST.StyleDirective
 			| AST.TransitionDirective
-			| AST.UseDirective;
+			| AST.UseDirective
+			| AST.DisplayDirective;
 
 		export type Block =
 			| AST.EachBlock

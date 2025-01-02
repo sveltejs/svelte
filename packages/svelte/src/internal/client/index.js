@@ -17,6 +17,7 @@ export { inspect } from './dev/inspect.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
 export { key_block as key } from './dom/blocks/key.js';
+export { display } from './dom/blocks/display.js';
 export { css_props } from './dom/blocks/css-props.js';
 export { index, each } from './dom/blocks/each.js';
 export { html } from './dom/blocks/html.js';
