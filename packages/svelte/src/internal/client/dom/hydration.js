@@ -43,12 +43,24 @@ export function hydrate_next() {
 	return set_hydrate_node(/** @type {TemplateNode} */ (get_next_sibling(hydrate_node)));
 }
 
-/** @param {TemplateNode} node */
-export function reset(node) {
+/**
+ *  @param {TemplateNode} node
+ * @param {boolean} [is_pre]
+ */
+export function reset(node, is_pre = false) {
 	if (!hydrating) return;
 
+	let sibling = get_next_sibling(hydrate_node);
+	// if the first text child of a pre tag is a single \n
+	// we don't skip to the sibling (for some reason if the firstChild
+	// of a pre tag is a single \n text node it's skipped by the browser)
+	// it might happen that the at this point there's still a \n sibling
+	// in that case is fine to get the next sibling and check for that
+	if (is_pre && sibling) {
+		sibling = get_next_sibling(sibling);
+	}
 	// If the node has remaining siblings, something has gone wrong
-	if (get_next_sibling(hydrate_node) !== null) {
+	if (sibling !== null) {
 		w.hydration_mismatch();
 		throw HYDRATION_ERROR;
 	}
