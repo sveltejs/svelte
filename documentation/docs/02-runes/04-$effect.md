@@ -149,15 +149,15 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 	import { tick } from 'svelte';
 
 	let div = $state();
-	let messages = $state([]);
-
-	// ...
+	let messages = $state(["ddd"]);
 
 	$effect.pre(() => {
 		if (!div) return; // not yet mounted
 
 		// reference `messages` array length so that this code re-runs whenever it changes
-		messages.length;
+    // No need this line this for old svelte syntax you have to refrence like array = array.push(x) 
+		//messages.length;
+
 
 		// autoscroll when new messages are added
 		if (div.offsetHeight + div.scrollTop > div.scrollHeight - 20) {
@@ -173,6 +173,8 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 		<p>{message}</p>
 	{/each}
 </div>
+
+<input bind:value={messages} />
 ```
 
 Apart from the timing, `$effect.pre` works exactly like `$effect`.
