@@ -790,7 +790,7 @@ describe('signals', () => {
 			const b = state(0);
 			const c = derived(() => {
 				$.get(a);
-				return $.get(b)
+				return $.get(b);
 			});
 
 			$.get(c);
