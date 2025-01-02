@@ -196,4 +196,6 @@ You can, of course, separate the type declaration from the annotation:
 </script>
 ```
 
+> [!NOTE] Interfaces for native DOM elements are provided in the `svelte/elements` module (see [Typing wrapper components](typescript#Typing-wrapper-components))
+
 Adding types is recommended, as it ensures that people using your component can easily discover which props they should provide.
