@@ -2,12 +2,14 @@
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import read_pattern from '../read/context.js';
-import read_expression from '../read/expression.js';
+import read_expression, { get_loose_identifier } from '../read/expression.js';
 import * as e from '../../../errors.js';
 import { create_fragment } from '../utils/create.js';
 import { walk } from 'zimmerframe';
 import { parse_expression_at } from '../acorn.js';
 import { create_expression_metadata } from '../../nodes.js';
+import { find_matching_bracket } from '../utils/bracket.js';
+import exp from 'node:constants';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
@@ -87,7 +89,7 @@ function open(parser) {
 		// we get a valid expression
 		while (!expression) {
 			try {
-				expression = read_expression(parser);
+				expression = read_expression(parser, undefined, true);
 			} catch (err) {
 				end = /** @type {any} */ (err).position[0] - 2;
 
@@ -95,7 +97,15 @@ function open(parser) {
 					end -= 1;
 				}
 
-				if (end <= start) throw err;
+				if (end <= start) {
+					if (parser.loose) {
+						expression = get_loose_identifier(parser);
+						if (expression) {
+							break;
+						}
+					}
+					throw err;
+				}
 
 				// @ts-expect-error parser.template is meant to be readonly, this is a special case
 				parser.template = template.slice(0, end);
