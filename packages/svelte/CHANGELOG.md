@@ -1,5 +1,11 @@
 # svelte
 
+## 5.16.2
+
+### Patch Changes
+
+- fix: correctly highlight sources reassigned inside `trace` ([#14811](https://github.com/sveltejs/svelte/pull/14811))
+
 ## 5.16.1
 
 ### Patch Changes
