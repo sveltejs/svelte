@@ -1,15 +1,13 @@
 /** @import { ArrowFunctionExpression, Expression, Identifier, Pattern } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
+import { walk } from 'zimmerframe';
+import * as e from '../../../errors.js';
+import { create_expression_metadata } from '../../nodes.js';
+import { parse_expression_at } from '../acorn.js';
 import read_pattern from '../read/context.js';
 import read_expression, { get_loose_identifier } from '../read/expression.js';
-import * as e from '../../../errors.js';
 import { create_fragment } from '../utils/create.js';
-import { walk } from 'zimmerframe';
-import { parse_expression_at } from '../acorn.js';
-import { create_expression_metadata } from '../../nodes.js';
-import { find_matching_bracket } from '../utils/bracket.js';
-import exp from 'node:constants';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
