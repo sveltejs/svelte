@@ -91,9 +91,9 @@ export function validate_element(node, context) {
 			validate_attribute_name(attribute);
 		} else if (attribute.type === 'AnimateDirective') {
 			const parent = context.path.at(-2);
-			if (parent?.type !== 'EachBlock') {
+			if (parent?.type !== 'EachBlock' && parent?.type !== 'SnippetBlock') {
 				e.animation_invalid_placement(attribute);
-			} else if (!parent.key) {
+			} else if (parent.type === 'EachBlock' && !parent.key) {
 				e.animation_missing_key(attribute);
 			} else if (
 				parent.body.nodes.filter(
