@@ -28,3 +28,7 @@ export function not_equal(a, b) {
 export function safe_equals(value) {
 	return !safe_not_equal(value, this.v);
 }
+
+export function opaque_equals() {
+	return false;
+}

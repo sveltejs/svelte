@@ -1,4 +1,4 @@
-/** @import { CallExpression, Expression, Identifier, Literal, VariableDeclaration, VariableDeclarator } from 'estree' */
+/** @import { ArrayPattern, CallExpression, Expression, Identifier, Literal, VariableDeclaration, VariableDeclarator } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
@@ -154,6 +154,26 @@ export function VariableDeclaration(node, context) {
 					);
 				}
 
+				continue;
+			}
+
+			if (rune === '$state.opaque') {
+				const pattern = /** @type {ArrayPattern} */ (declarator.id);
+				const state_id = /** @type {Identifier} */ (pattern.elements[0]);
+				const invalidation_id = /** @type {Identifier} */ (pattern.elements[1]);
+				declarations.push(
+					b.declarator(state_id, b.call('$.opaque_state', value)),
+					b.declarator(
+						invalidation_id,
+						b.arrow(
+							[b.id('$$fn')],
+							b.sequence([
+								b.chain_call(b.id('$$fn'), b.member(state_id, b.id('v'))),
+								b.call('$.set', state_id, b.member(state_id, b.id('v')))
+							])
+						)
+					)
+				);
 				continue;
 			}
 

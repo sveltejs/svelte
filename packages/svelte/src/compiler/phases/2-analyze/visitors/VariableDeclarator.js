@@ -27,11 +27,15 @@ export function VariableDeclarator(node, context) {
 		if (
 			rune === '$state' ||
 			rune === '$state.raw' ||
+			rune === '$state.opaque' ||
 			rune === '$derived' ||
 			rune === '$derived.by' ||
 			rune === '$props'
 		) {
-			for (const path of paths) {
+			for (let i = 0; i < paths.length; i++) {
+				if (rune === '$state.opaque' && i === 1) continue;
+
+				const path = paths[i];
 				// @ts-ignore this fails in CI for some insane reason
 				const binding = /** @type {Binding} */ (context.state.scope.get(path.node.name));
 				binding.kind =
@@ -39,11 +43,13 @@ export function VariableDeclarator(node, context) {
 						? 'state'
 						: rune === '$state.raw'
 							? 'raw_state'
-							: rune === '$derived' || rune === '$derived.by'
-								? 'derived'
-								: path.is_rest
-									? 'rest_prop'
-									: 'prop';
+							: rune === '$state.opaque'
+								? 'opaque_state'
+								: rune === '$derived' || rune === '$derived.by'
+									? 'derived'
+									: path.is_rest
+										? 'rest_prop'
+										: 'prop';
 			}
 		}
 
