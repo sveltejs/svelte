@@ -433,7 +433,7 @@ declare namespace $inspect {
 	 *   });
 	 * </script>
 	 */
-	export function trace(name: string): void;
+	export function trace(name?: string): void;
 
 	// prevent intellisense from being unhelpful
 	/** @deprecated */

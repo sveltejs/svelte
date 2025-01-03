@@ -15,7 +15,7 @@ export let tracing_expressions = null;
  */
 function log_entry(signal, entry) {
 	const debug = signal.debug;
-	const value = signal.v;
+	const value = signal.trace_need_increase ? signal.trace_v : signal.v;
 
 	if (value === UNINITIALIZED) {
 		return;
@@ -121,7 +121,7 @@ export function trace(label, fn) {
 			console.groupEnd();
 		}
 
-		if (previously_tracing_expressions !== null) {
+		if (previously_tracing_expressions !== null && tracing_expressions !== null) {
 			for (const [signal, entry] of tracing_expressions.entries) {
 				var prev_entry = previously_tracing_expressions.get(signal);
 

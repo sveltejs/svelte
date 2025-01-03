@@ -167,11 +167,16 @@ export function set(source, value) {
  */
 export function internal_set(source, value) {
 	if (!source.equals(value)) {
+		var old_value = source.v;
 		source.v = value;
 		source.version = increment_version();
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
+			if (active_effect != null) {
+				source.trace_need_increase = true;
+				source.trace_v ??= old_value;
+			}
 		}
 
 		mark_reactions(source, DIRTY);
