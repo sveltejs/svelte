@@ -230,7 +230,7 @@ export class Tween {
 	set(value, options) {
 		set(this.#target, value);
 
-		let previous_value = this.#current.v;
+		let previous_value = this.#current;
 		let previous_task = this.#task;
 
 		let started = false;
@@ -254,10 +254,10 @@ export class Tween {
 			if (!started) {
 				started = true;
 
-				fn = interpolate(/** @type {any} */ (previous_value), value);
+				fn = interpolate(/** @type {any} */ (previous_value.v), value);
 
 				if (typeof duration === 'function') {
-					duration = duration(/** @type {any} */ (previous_value), value);
+					duration = duration(/** @type {any} */ (previous_value.v), value);
 				}
 
 				previous_task?.abort();
