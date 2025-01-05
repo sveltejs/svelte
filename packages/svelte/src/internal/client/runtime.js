@@ -207,6 +207,8 @@ export function check_dirtiness(reaction) {
 				for (i = 0; i < length; i++) {
 					dependency = dependencies[i];
 
+					// We always re-add all reactions (even duplicates) if the derived was
+					// previously disconnected
 					if (is_disconnected || !dependency?.reactions?.includes(reaction)) {
 						(dependency.reactions ??= []).push(reaction);
 					}
