@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure logic blocks keep consistent namespacing
+fix: inherit correct namespace for `<title>` elements
