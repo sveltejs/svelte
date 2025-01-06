@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-Don't worry if you don't know Svelte yet! You can ignore all the nice features SvelteKit brings on top for now and dive into it later.
+Don't worry if you don't know SvelteKit yet! You can ignore all the nice features SvelteKit brings on top for now and dive into it later.
 
 ## Alternatives to SvelteKit
 
