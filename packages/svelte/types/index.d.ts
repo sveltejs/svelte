@@ -1340,7 +1340,7 @@ declare module 'svelte/compiler' {
 	/**
 	 * The current version, as set in package.json.
 	 *
-	 * See [Svelte version](https://svelte.dev/docs/svelte-compiler#svelte-version)
+	 * https://svelte.dev/docs/svelte-compiler#svelte-version
 	 * */
 	export const VERSION: string;
 	/**
