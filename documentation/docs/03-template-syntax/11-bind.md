@@ -130,18 +130,57 @@ Inputs that work together can use `bind:group`.
 </script>
 
 <!-- grouped radio inputs are mutually exclusive -->
-<input type="radio" bind:group={tortilla} value="Plain" />
-<input type="radio" bind:group={tortilla} value="Whole wheat" />
-<input type="radio" bind:group={tortilla} value="Spinach" />
+<label><input type="radio" bind:group={tortilla} value="Plain" />Plain</label>
+<label><input type="radio" bind:group={tortilla} value="Whole wheat" />Whole wheat</label>
+<label><input type="radio" bind:group={tortilla} value="Spinach" />Spinach</label>
 
 <!-- grouped checkbox inputs populate an array -->
-<input type="checkbox" bind:group={fillings} value="Rice" />
-<input type="checkbox" bind:group={fillings} value="Beans" />
-<input type="checkbox" bind:group={fillings} value="Cheese" />
-<input type="checkbox" bind:group={fillings} value="Guac (extra)" />
+<label><input type="checkbox" bind:group={fillings} value="Rice" /> Rice</label>
+<label><input type="checkbox" bind:group={fillings} value="Beans" />Beans</label>
+<label><input type="checkbox" bind:group={fillings} value="Cheese" /> Cheese</label>
+<label><input type="checkbox" bind:group={fillings} value="Guac (extra)" />Guac</label>
 ```
 
 > [!NOTE] `bind:group` only works if the inputs are in the same Svelte component.
+
+`bind:group` can be used with component props with help of [bind-property](#bind:property-for-components):
+
+```javascript
+// sharedState.svelte.js
+export const tortilla = $state({selectedValue: ""});
+export const fillings = $state({selectedValues: []});
+```
+
+```svelte
+<!-- App.svelte -->
+<script>
+	import { tortilla, fillings } from './sharedState.svelte.js';
+	import Selection from './Selection.svelte';
+</script>
+
+<Selection bind:tortilla={tortilla.selectedValue} bind:fillings={fillings.selectedValues} />
+```
+
+```svelte
+<!-- Selection.svelte -->
+<script>
+	let { tortilla = $bindable(), fillings = $bindable() } = $props();
+</script>
+
+<!-- grouped radio inputs are mutually exclusive -->
+<label><input type="radio" bind:group={tortilla} value="Plain" />Plain</label>
+<label><input type="radio" bind:group={tortilla} value="Whole wheat" />Whole wheat</label>
+<label><input type="radio" bind:group={tortilla} value="Spinach" />Spinach</label>
+
+<!-- grouped checkbox inputs populate an array -->
+<label><input type="checkbox" bind:group={fillings} value="Rice" /> Rice</label>
+<label><input type="checkbox" bind:group={fillings} value="Beans" />Beans</label>
+<label><input type="checkbox" bind:group={fillings} value="Cheese" /> Cheese</label>
+<label><input type="checkbox" bind:group={fillings} value="Guac (extra)" />Guac</label>
+```
+
+> [!NOTE] `bind:group` only works if the inputs are in the same Svelte component, you can't pass down a single $state to multiple components (with different values).
+
 
 ## `<input bind:files>`
 
