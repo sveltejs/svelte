@@ -18,6 +18,8 @@
 <Child class={[ foo, bar ]} />
 <Child {...spread} />
 
+<applied-to-custom-element class={{ foo, bar }}></applied-to-custom-element>
+
 <button onclick={() => {
     foo = null;
     bar = 'bar';
