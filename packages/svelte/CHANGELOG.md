@@ -1,5 +1,13 @@
 # svelte
 
+## 5.16.4
+
+### Patch Changes
+
+- fix: use cached indexOf array prototype method internally ([#14912](https://github.com/sveltejs/svelte/pull/14912))
+
+- fix: make Tween work with continuous target changes ([#14895](https://github.com/sveltejs/svelte/pull/14895))
+
 ## 5.16.3
 
 ### Patch Changes
