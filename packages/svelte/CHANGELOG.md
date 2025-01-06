@@ -1,5 +1,13 @@
 # svelte
 
+## 5.16.3
+
+### Patch Changes
+
+- fix: correctly parse `each` with loose parser ([#14887](https://github.com/sveltejs/svelte/pull/14887))
+
+- fix: apply `clsx` logic to custom element `class` attributes ([#14907](https://github.com/sveltejs/svelte/pull/14907))
+
 ## 5.16.2
 
 ### Patch Changes
