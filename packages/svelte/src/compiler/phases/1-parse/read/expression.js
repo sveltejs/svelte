@@ -63,8 +63,8 @@ export default function read_expression(parser, opening_token, disallow_loose) {
 
 		return /** @type {Expression} */ (node);
 	} catch (err) {
-		 // If we are in an each loop we need the error to be thrown in cases like
-		 // `as { y = z }` so we still throw and handle the error there
+		// If we are in an each loop we need the error to be thrown in cases like
+		// `as { y = z }` so we still throw and handle the error there
 		if (parser.loose && !disallow_loose) {
 			const expression = get_loose_identifier(parser, opening_token);
 			if (expression) {
