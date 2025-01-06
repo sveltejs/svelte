@@ -29,10 +29,10 @@ export function get_loose_identifier(parser, opening_token) {
 /**
  * @param {Parser} parser
  * @param {string} [opening_token]
- * @param {boolean} [is_each]
+ * @param {boolean} [disallow_loose]
  * @returns {Expression}
  */
-export default function read_expression(parser, opening_token, is_each) {
+export default function read_expression(parser, opening_token, disallow_loose) {
 	try {
 		const node = parse_expression_at(parser.template, parser.ts, parser.index);
 
@@ -63,15 +63,9 @@ export default function read_expression(parser, opening_token, is_each) {
 
 		return /** @type {Expression} */ (node);
 	} catch (err) {
-		/**
-		 * If we are in an each loop we need the error to be thrown in cases like
-		 *
-		 * `as { y = z }`
-		 *
-		 * so we still throw and handle the error there
-		 */
-		if (parser.loose && !is_each) {
-			// Find the next } and treat it as the end of the expression
+		 // If we are in an each loop we need the error to be thrown in cases like
+		 // `as { y = z }` so we still throw and handle the error there
+		if (parser.loose && !disallow_loose) {
 			const expression = get_loose_identifier(parser, opening_token);
 			if (expression) {
 				return expression;
