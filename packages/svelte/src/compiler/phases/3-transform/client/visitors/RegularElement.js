@@ -571,7 +571,9 @@ function build_element_attribute_update_assignment(
 				is_svg ? '$.set_svg_class' : is_mathml ? '$.set_mathml_class' : '$.set_class',
 				node_id,
 				value,
-				attribute.metadata.needs_clsx ? b.literal(context.state.analysis.css.hash) : undefined
+				attribute.metadata.needs_clsx && context.state.analysis.css.hash
+					? b.literal(context.state.analysis.css.hash)
+					: undefined
 			)
 		);
 	} else if (name === 'value') {
@@ -647,6 +649,14 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
 	const state = context.state;
 	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
 	let { has_call, value } = build_attribute_value(attribute.value, context);
+
+	// We assume that noone's going to redefine the semantics of the class attribute on custom elements, i.e. it's still used for CSS classes
+	if (name === 'class' && attribute.metadata.needs_clsx) {
+		if (context.state.analysis.css.hash) {
+			value = b.array([value, b.literal(context.state.analysis.css.hash)]);
+		}
+		value = b.call('$.clsx', value);
+	}
 
 	const update = b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), value));
 
