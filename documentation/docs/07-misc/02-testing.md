@@ -57,14 +57,14 @@ test('Multiplier', () => {
 /// file: multiplier.js
 /**
  * @param {number} initial
- * @param {number} mult
+ * @param {number} k
  */
-export function multiplier(initial, mult) {
+export function multiplier(initial, k) {
 	let count = initial;
 
 	return {
 		get value() {
-			return count * mult;
+			return count * k;
 		},
 		/** @param {number} c */
 		set: (c) => {
@@ -100,12 +100,12 @@ test('Multiplier', () => {
 /// file: multiplier.svelte.js
 /**
  * @param {() => number} getCount
- * @param {number} mult
+ * @param {number} k
  */
-export function multiplier(getCount, mult) {
+export function multiplier(getCount, k) {
 	return {
 		get value() {
-			return getCount() * mult;
+			return getCount() * k;
 		}
 	};
 }
