@@ -240,6 +240,15 @@ export class Tween {
 			interpolate = get_interpolator
 		} = { ...this.#defaults, ...options };
 
+		if (duration === 0) {
+			if (previous_task) {
+				previous_task.abort();
+				previous_task = null;
+			}
+			set(this.#current, value);
+			return Promise.resolve();
+		}
+
 		const start = raf.now() + delay;
 
 		/** @type {(t: number) => T} */
