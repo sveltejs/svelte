@@ -1,14 +1,15 @@
 import { test } from '../../test';
 
 export default test({
-	solo: true,
 	ssrHtml: `
-	<div></div>
-	<div inert="">some div <button>click</button></div>
+		<div></div>
+		<div inert="">some div <button>click</button></div>
 	`,
+
 	get props() {
 		return { inert: true };
 	},
+
 	test({ assert, target, component }) {
 		const [div1, div2] = target.querySelectorAll('div');
 		assert.ok(!div1.inert);
