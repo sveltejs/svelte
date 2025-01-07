@@ -58,7 +58,8 @@ The `Action` interface receives three optional type arguments — a node type (w
 	 * 		onswiperight: (e: CustomEvent) => void;
 	 * 		onswipeleft: (e: CustomEvent) => void;
 	 * 		// ...
-	 * }>}
+	 * 	}
+	 * >}
 	 */
 	function gestures(node) {
 		$effect(() => {
