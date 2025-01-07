@@ -5,6 +5,7 @@
 import {
 	regex_ends_with_whitespaces,
 	regex_not_whitespace,
+	regex_starts_with_newline,
 	regex_starts_with_whitespaces
 } from '../patterns.js';
 import * as b from '../../utils/builders.js';
@@ -270,19 +271,19 @@ export function clean_nodes(
 
 	var first = trimmed[0];
 
-	// initial newline inside a `<pre>` is disregarded
-	if (
-		parent.type === 'RegularElement' &&
-		parent.name === 'pre' &&
-		first.type === 'Text' &&
-		first.data[0] === '\n'
-	) {
-		first.data = first.data.slice(1);
-		first.raw = first.raw.slice(1);
-
-		if (first.data === '') {
-			trimmed.shift();
-			first = trimmed[0];
+	// initial newline inside a `<pre>` is disregarded, if not followed by another newline
+	if (parent.type === 'RegularElement' && parent.name === 'pre' && first.type === 'Text') {
+		const text = first.data.replace(regex_starts_with_newline, '');
+		if (text !== first.data) {
+			const tmp = text.replace(regex_starts_with_newline, '');
+			if (text === tmp) {
+				first.data = text;
+				first.raw = first.raw.replace(regex_starts_with_newline, '');
+				if (first.data === '') {
+					trimmed.shift();
+					first = trimmed[0];
+				}
+			}
 		}
 	}
 
