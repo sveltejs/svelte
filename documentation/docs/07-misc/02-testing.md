@@ -53,6 +53,26 @@ test('Multiplier', () => {
 });
 ```
 
+```js
+/// file: multiplier.js
+/**
+ * @param {number} initial
+ * @param {number} mult
+ */
+export function multiplier(initial, mult) {
+	let count = initial;
+
+	return {
+		get value() {
+			return count * mult;
+		},
+		set: (c) => {
+			count = c;
+		}
+	};
+}
+```
+
 ### Using runes inside your test files
 
 It is possible to use runes inside your test files. First ensure your bundler knows to route the file through the Svelte compiler before running the test by adding `.svelte` to the filename (e.g `multiplier.svelte.test.js`). After that, you can use runes inside your tests.
@@ -73,6 +93,21 @@ test('Multiplier', () => {
 
 	expect(double.value).toEqual(10);
 });
+```
+
+```js
+/// file: multiplier.svelte.js
+/**
+ * @param {() => number} getCount
+ * @param {number} mult
+ */
+export function multiplier(getCount, mult) {
+	return {
+		get value() {
+			return getCount() * mult;
+		}
+	};
+}
 ```
 
 If the code being tested uses effects, you need to wrap the test inside `$effect.root`:
@@ -103,6 +138,27 @@ test('Effect', () => {
 
 	cleanup();
 });
+```
+
+```js
+/// file: logger.svelte.js
+/**
+ * @param {() => any} getValue
+ */
+export function logger(getValue) {
+	/** @type {any[]} */
+	let log = $state([]);
+
+	$effect(() => {
+		log.push(getValue());
+	});
+
+	return {
+		get value() {
+			return log;
+		}
+	};
+}
 ```
 
 ### Component testing
