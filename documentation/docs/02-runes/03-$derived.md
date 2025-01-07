@@ -19,6 +19,21 @@ Derived state is declared with the `$derived` rune:
 
 The expression inside `$derived(...)` should be free of side-effects. Svelte will disallow state changes (e.g. `count++`) inside derived expressions.
 
+Subsequents results of a `$derived` expression are compared against its previous value. If they are referentially the same, the `$derived` won't propagate an update to its dependencies.
+
+```svelte
+<script>
+	let count = $state(0);
+	let always_0 = $derived(count * 0);
+</script>
+
+<button onclick={() => count++}>
+	<!-- this will never trigger a rerender, because the value stays the same -->
+	{always_0}
+</button>
+```
+
+
 As with `$state`, you can mark class fields as `$derived`.
 
 > [!NOTE] Code in Svelte components is only executed once at creation. Without the `$derived` rune, `doubled` would maintain its original value even when `count` changes.
