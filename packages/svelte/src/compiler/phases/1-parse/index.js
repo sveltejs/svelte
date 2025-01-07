@@ -3,7 +3,6 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
 import { regex_whitespace } from '../patterns.js';
-import full_char_code_at from './utils/full_char_code_at.js';
 import * as e from '../../errors.js';
 import { create_fragment } from './utils/create.js';
 import read_options from './read/options.js';
@@ -230,13 +229,13 @@ export class Parser {
 
 		let i = this.index;
 
-		const code = full_char_code_at(this.template, i);
+		const code = /** @type {number} */ (this.template.codePointAt(i));
 		if (!isIdentifierStart(code, true)) return null;
 
 		i += code <= 0xffff ? 1 : 2;
 
 		while (i < this.template.length) {
-			const code = full_char_code_at(this.template, i);
+			const code = /** @type {number} */ (this.template.codePointAt(i));
 
 			if (!isIdentifierChar(code, true)) break;
 			i += code <= 0xffff ? 1 : 2;
