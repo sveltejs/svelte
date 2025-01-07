@@ -40,7 +40,7 @@ You can now write unit tests for code inside your `.js/.ts` files:
 /// file: multiplier.svelte.test.js
 import { flushSync } from 'svelte';
 import { expect, test } from 'vitest';
-import { multiplier } from './multiplier.js';
+import { multiplier } from './multiplier.svelte.js';
 
 test('Multiplier', () => {
 	let double = multiplier(0, 2);
