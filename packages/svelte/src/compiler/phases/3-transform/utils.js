@@ -270,6 +270,22 @@ export function clean_nodes(
 
 	var first = trimmed[0];
 
+	// initial newline inside a `<pre>` is disregarded
+	if (
+		parent.type === 'RegularElement' &&
+		parent.name === 'pre' &&
+		first.type === 'Text' &&
+		first.data[0] === '\n'
+	) {
+		first.data = first.data.slice(1);
+		first.raw = first.raw.slice(1);
+
+		if (first.data === '') {
+			trimmed.shift();
+			first = trimmed[0];
+		}
+	}
+
 	// Special case: Add a comment if this is a lone script tag. This ensures that our run_scripts logic in template.js
 	// will always be able to call node.replaceWith() on the script tag in order to make it run. If we don't add this
 	// and would still call node.replaceWith() on the script tag, it would be a no-op because the script tag has no parent.
