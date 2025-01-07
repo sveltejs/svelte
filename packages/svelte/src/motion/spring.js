@@ -108,12 +108,17 @@ export function spring(value, opts = {}) {
 					return false;
 				}
 				inv_mass = Math.min(inv_mass + inv_mass_recovery_rate, 1);
+
+				// clamp elapsed time to 1/30th of a second, so that longer pauses
+				// (blocked thread or inactive tab) don't cause the spring to go haywire
+				const elapsed = Math.min(now - last_time, 1000 / 30);
+
 				/** @type {TickContext} */
 				const ctx = {
 					inv_mass,
 					opts: spring,
 					settled: true,
-					dt: ((now - last_time) * 60) / 1000
+					dt: (elapsed * 60) / 1000
 				};
 				// @ts-ignore
 				const next_value = tick_spring(ctx, last_value, value, target_value);
@@ -236,6 +241,10 @@ export class Spring {
 			this.#task ??= loop((now) => {
 				this.#inverse_mass = Math.min(this.#inverse_mass + inv_mass_recovery_rate, 1);
 
+				// clamp elapsed time to 1/30th of a second, so that longer pauses
+				// (blocked thread or inactive tab) don't cause the spring to go haywire
+				const elapsed = Math.min(now - this.#last_time, 1000 / 30);
+
 				/** @type {import('./private').TickContext} */
 				const ctx = {
 					inv_mass: this.#inverse_mass,
@@ -245,7 +254,7 @@ export class Spring {
 						precision: this.#precision.v
 					},
 					settled: true,
-					dt: ((now - this.#last_time) * 60) / 1000
+					dt: (elapsed * 60) / 1000
 				};
 
 				var next = tick_spring(ctx, this.#last_value, this.#current.v, this.#target.v);
