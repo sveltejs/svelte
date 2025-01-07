@@ -230,9 +230,6 @@ export class Tween {
 	set(value, options) {
 		set(this.#target, value);
 
-		let previous_task = this.#task;
-
-		let started = false;
 		let {
 			delay = 0,
 			duration = 400,
@@ -241,10 +238,7 @@ export class Tween {
 		} = { ...this.#defaults, ...options };
 
 		if (duration === 0) {
-			if (previous_task) {
-				previous_task.abort();
-				previous_task = null;
-			}
+			this.#task?.abort();
 			set(this.#current, value);
 			return Promise.resolve();
 		}
@@ -253,6 +247,8 @@ export class Tween {
 
 		/** @type {(t: number) => T} */
 		let fn;
+		let started = false;
+		let previous_task = this.#task;
 
 		this.#task = loop((now) => {
 			if (now < start) {
