@@ -1,5 +1,17 @@
 # svelte
 
+## 5.16.6
+
+### Patch Changes
+
+- fix: Make Tween duration 0 set current to target immediately ([#14937](https://github.com/sveltejs/svelte/pull/14937))
+
+- fix: guard against `customElements` being unavailable in browser extension contexts ([#14933](https://github.com/sveltejs/svelte/pull/14933))
+
+- fix: treat `inert` as a boolean attribute ([#14935](https://github.com/sveltejs/svelte/pull/14935))
+
+- fix: remove leading newline from `<pre>` contents ([#14922](https://github.com/sveltejs/svelte/pull/14922))
+
 ## 5.16.5
 
 ### Patch Changes
