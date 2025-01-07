@@ -19,7 +19,7 @@ Derived state is declared with the `$derived` rune:
 
 The expression inside `$derived(...)` should be free of side-effects. Svelte will disallow state changes (e.g. `count++`) inside derived expressions.
 
-Subsequents results of a `$derived` expression are compared against its previous value. If they are referentially the same, the `$derived` won't propagate an update to its dependencies.
+Subsequent results of a `$derived` expression are compared against its previous value. If they are referentially the same, the `$derived` won't propagate an update to its dependencies.
 
 ```svelte
 <script>
