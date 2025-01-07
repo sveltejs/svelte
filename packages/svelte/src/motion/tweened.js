@@ -230,9 +230,6 @@ export class Tween {
 	set(value, options) {
 		set(this.#target, value);
 
-		let previous_task = this.#task;
-
-		let started = false;
 		let {
 			delay = 0,
 			duration = 400,
@@ -240,10 +237,18 @@ export class Tween {
 			interpolate = get_interpolator
 		} = { ...this.#defaults, ...options };
 
+		if (duration === 0) {
+			this.#task?.abort();
+			set(this.#current, value);
+			return Promise.resolve();
+		}
+
 		const start = raf.now() + delay;
 
 		/** @type {(t: number) => T} */
 		let fn;
+		let started = false;
+		let previous_task = this.#task;
 
 		this.#task = loop((now) => {
 			if (now < start) {
