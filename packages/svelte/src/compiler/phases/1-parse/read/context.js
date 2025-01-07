@@ -6,8 +6,6 @@ import { parse_expression_at } from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
 import * as e from '../../../errors.js';
 import { locator } from '../../../state.js';
-import read_expression from './expression.js';
-import { is_back_quote, is_quote } from '../utils/quote.js';
 
 /**
  * @param {Parser} parser
@@ -35,7 +33,11 @@ export default function read_pattern(parser) {
 		};
 	}
 
-	i = read_expression_length(parser, start);
+	if (!is_bracket_open(parser.template[i])) {
+		e.expected_pattern(i);
+	}
+
+	i = match_bracket(parser, start);
 	parser.index = i;
 
 	const pattern_string = parser.template.slice(start, i);
@@ -73,41 +75,36 @@ export default function read_pattern(parser) {
  * @param {Parser} parser
  * @param {number} start
  */
-function read_expression_length(parser, start) {
-	let i = start;
-
-	if (!is_bracket_open(parser.template[i])) {
-		e.expected_pattern(i);
-	}
-
+function match_bracket(parser, start) {
 	const bracket_stack = [];
 
+	let i = start;
+
 	while (i < parser.template.length) {
-		let char = parser.template[i];
+		let char = parser.template[i++];
 
-		if (is_quote(char)) {
-			i = read_string_length(parser, i + 1, char);
-		} else {
-			if (is_bracket_open(char)) {
-				bracket_stack.push(char);
-			} else if (is_bracket_close(char)) {
-				const popped = /** @type {string} */ (bracket_stack.pop());
-				const expected = /** @type {string} */ (get_bracket_close(popped));
+		if (char === "'" || char === '"' || char === '`') {
+			i = match_quote(parser, i, char);
+			continue;
+		}
 
-				if (char !== expected) {
-					e.expected_token(i, expected);
-				}
+		if (is_bracket_open(char)) {
+			bracket_stack.push(char);
+		} else if (is_bracket_close(char)) {
+			const popped = /** @type {string} */ (bracket_stack.pop());
+			const expected = /** @type {string} */ (get_bracket_close(popped));
 
-				if (bracket_stack.length === 0) {
-					return i + 1;
-				}
+			if (char !== expected) {
+				e.expected_token(i - 1, expected);
 			}
 
-			i += 1;
+			if (bracket_stack.length === 0) {
+				return i;
+			}
 		}
 	}
 
-	return i;
+	e.unexpected_eof(parser.template.length);
 }
 
 /**
@@ -115,36 +112,25 @@ function read_expression_length(parser, start) {
  * @param {number} start
  * @param {string} quote
  */
-function read_string_length(parser, start, quote) {
+function match_quote(parser, start, quote) {
+	let is_escaped = false;
 	let i = start;
 
-	const BACKSLASH = '\\';
-	const DOLAR = '$';
-	const LEFT_BRACKET = '{';
-
-	let is_escaped = false;
 	while (i < parser.template.length) {
-		const char = parser.template[i];
+		const char = parser.template[i++];
 
 		if (!is_escaped && char === quote) {
-			return i + 1;
+			return i;
 		}
 
-		if (!is_escaped && char === BACKSLASH) {
+		if (!is_escaped && char === '\\') {
 			is_escaped = true;
 		} else if (is_escaped) {
 			is_escaped = false;
 		}
 
-		if (
-			i < parser.template.length - 1 &&
-			is_back_quote(quote) &&
-			char === DOLAR &&
-			parser.template[i + 1] === LEFT_BRACKET
-		) {
-			i = read_expression_length(parser, i + 1);
-		} else {
-			i += 1;
+		if (quote === '`' && char === '$' && parser.template[i] === '{') {
+			i = match_bracket(parser, i);
 		}
 	}
 
