@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.5.4",
+  "version": "5.16.6",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -21,6 +21,7 @@
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
+      "worker": "./src/index-server.js",
       "browser": "./src/index-client.js",
       "default": "./src/index-server.js"
     },
@@ -56,11 +57,15 @@
     "./internal/flags/legacy": {
       "default": "./src/internal/flags/legacy.js"
     },
+    "./internal/flags/tracing": {
+      "default": "./src/internal/flags/tracing.js"
+    },
     "./internal/server": {
       "default": "./src/internal/server/index.js"
     },
     "./legacy": {
       "types": "./types/index.d.ts",
+      "worker": "./src/legacy/legacy-server.js",
       "browser": "./src/legacy/legacy-client.js",
       "default": "./src/legacy/legacy-server.js"
     },
@@ -70,8 +75,13 @@
     },
     "./reactivity": {
       "types": "./types/index.d.ts",
+      "worker": "./src/reactivity/index-server.js",
       "browser": "./src/reactivity/index-client.js",
       "default": "./src/reactivity/index-server.js"
+    },
+    "./reactivity/window": {
+      "types": "./types/index.d.ts",
+      "default": "./src/reactivity/window/index.js"
     },
     "./server": {
       "types": "./types/index.d.ts",
@@ -79,6 +89,7 @@
     },
     "./store": {
       "types": "./types/index.d.ts",
+      "worker": "./src/store/index-server.js",
       "browser": "./src/store/index-client.js",
       "default": "./src/store/index-server.js"
     },
@@ -142,8 +153,9 @@
     "acorn-typescript": "^1.4.13",
     "aria-query": "^5.3.1",
     "axobject-query": "^4.1.0",
+    "clsx": "^2.1.1",
     "esm-env": "^1.2.1",
-    "esrap": "^1.2.3",
+    "esrap": "^1.3.2",
     "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.11",

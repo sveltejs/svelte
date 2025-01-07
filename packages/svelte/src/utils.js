@@ -156,6 +156,7 @@ const DOM_BOOLEAN_ATTRIBUTES = [
 	'formnovalidate',
 	'hidden',
 	'indeterminate',
+	'inert',
 	'ismap',
 	'loop',
 	'multiple',
@@ -214,7 +215,6 @@ const DOM_PROPERTIES = [
 	'playsInline',
 	'readOnly',
 	'value',
-	'inert',
 	'volume',
 	'defaultValue',
 	'defaultChecked',
@@ -431,6 +431,7 @@ const RUNES = /** @type {const} */ ([
 	'$effect.root',
 	'$inspect',
 	'$inspect().with',
+	'$inspect.trace',
 	'$host'
 ]);
 
@@ -440,4 +441,20 @@ const RUNES = /** @type {const} */ ([
  */
 export function is_rune(name) {
 	return RUNES.includes(/** @type {RUNES[number]} */ (name));
+}
+
+/** List of elements that require raw contents and should not have SSR comments put in them */
+const RAW_TEXT_ELEMENTS = /** @type {const} */ (['textarea', 'script', 'style', 'title']);
+
+/** @param {string} name */
+export function is_raw_text_element(name) {
+	return RAW_TEXT_ELEMENTS.includes(/** @type {RAW_TEXT_ELEMENTS[number]} */ (name));
+}
+
+/**
+ * Prevent devtools trying to make `location` a clickable link by inserting a zero-width space
+ * @param {string | undefined} location
+ */
+export function sanitize_location(location) {
+	return location?.replace(/\//g, '/\u200b');
 }

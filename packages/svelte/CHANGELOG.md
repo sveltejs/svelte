@@ -1,5 +1,275 @@
 # svelte
 
+## 5.16.6
+
+### Patch Changes
+
+- fix: Make Tween duration 0 set current to target immediately ([#14937](https://github.com/sveltejs/svelte/pull/14937))
+
+- fix: guard against `customElements` being unavailable in browser extension contexts ([#14933](https://github.com/sveltejs/svelte/pull/14933))
+
+- fix: treat `inert` as a boolean attribute ([#14935](https://github.com/sveltejs/svelte/pull/14935))
+
+- fix: remove leading newline from `<pre>` contents ([#14922](https://github.com/sveltejs/svelte/pull/14922))
+
+## 5.16.5
+
+### Patch Changes
+
+- fix: inherit correct namespace for `<title>` elements ([#14817](https://github.com/sveltejs/svelte/pull/14817))
+
+- fix: don't throw `bind_invalid_export` if there's also a bindable prop with the same name ([#14813](https://github.com/sveltejs/svelte/pull/14813))
+
+## 5.16.4
+
+### Patch Changes
+
+- fix: use cached indexOf array prototype method internally ([#14912](https://github.com/sveltejs/svelte/pull/14912))
+
+- fix: make Tween work with continuous target changes ([#14895](https://github.com/sveltejs/svelte/pull/14895))
+
+## 5.16.3
+
+### Patch Changes
+
+- fix: correctly parse `each` with loose parser ([#14887](https://github.com/sveltejs/svelte/pull/14887))
+
+- fix: apply `clsx` logic to custom element `class` attributes ([#14907](https://github.com/sveltejs/svelte/pull/14907))
+
+## 5.16.2
+
+### Patch Changes
+
+- fix: ensure disconnected deriveds correctly connect again ([#14899](https://github.com/sveltejs/svelte/pull/14899))
+
+- fix: correctly highlight sources reassigned inside `trace` ([#14811](https://github.com/sveltejs/svelte/pull/14811))
+
+## 5.16.1
+
+### Patch Changes
+
+- fix: ensure unowned deriveds correctly get re-linked to the graph ([#14855](https://github.com/sveltejs/svelte/pull/14855))
+
+- fix: ensure $inspect.trace works correctly with null values ([#14853](https://github.com/sveltejs/svelte/pull/14853))
+
+## 5.16.0
+
+### Minor Changes
+
+- feat: allow `class` attribute to be an object or array, using `clsx` ([#14714](https://github.com/sveltejs/svelte/pull/14714))
+
+### Patch Changes
+
+- fix: don't include keyframes in global scope in the keyframes to rename ([#14822](https://github.com/sveltejs/svelte/pull/14822))
+
+## 5.15.0
+
+### Minor Changes
+
+- feat: add "worker" exports condition to better support bundling for worker-based environments ([#14779](https://github.com/sveltejs/svelte/pull/14779))
+
+## 5.14.6
+
+### Patch Changes
+
+- fix: treeshake `$inspect.trace` code if unused in modules ([#14774](https://github.com/sveltejs/svelte/pull/14774))
+
+- fix: Improve typescript DX for $inspect, $props, $bindable, and $host ([#14777](https://github.com/sveltejs/svelte/pull/14777))
+
+## 5.14.5
+
+### Patch Changes
+
+- fix: bump esrap dependency ([#14765](https://github.com/sveltejs/svelte/pull/14765))
+
+- fix: ensure svg namespace for `<a>` elements is correct ([#14756](https://github.com/sveltejs/svelte/pull/14756))
+
+- fix: treeshake `$inspect.trace` code if unused ([#14770](https://github.com/sveltejs/svelte/pull/14770))
+
+## 5.14.4
+
+### Patch Changes
+
+- fix: remove implements from class declarations ([#14749](https://github.com/sveltejs/svelte/pull/14749))
+
+- fix: remove unwanted properties from both replaced and unreplaced nodes ([#14744](https://github.com/sveltejs/svelte/pull/14744))
+
+## 5.14.3
+
+### Patch Changes
+
+- fix: bump esrap, prevent malformed AST ([#14742](https://github.com/sveltejs/svelte/pull/14742))
+
+- fix: compare array contents for equality mismatch detections, not the arrays themselves ([#14738](https://github.com/sveltejs/svelte/pull/14738))
+
+## 5.14.2
+
+### Patch Changes
+
+- fix: correctly highlight first rerun of `$inspect.trace` ([#14734](https://github.com/sveltejs/svelte/pull/14734))
+
+- chore: more loose parser improvements ([#14733](https://github.com/sveltejs/svelte/pull/14733))
+
+## 5.14.1
+
+### Patch Changes
+
+- fix: improve unowned derived performance ([#14724](https://github.com/sveltejs/svelte/pull/14724))
+
+## 5.14.0
+
+### Minor Changes
+
+- feat: adds $inspect.trace rune ([#14290](https://github.com/sveltejs/svelte/pull/14290))
+
+## 5.13.0
+
+### Minor Changes
+
+- feat: add `outro` option to `unmount` ([#14540](https://github.com/sveltejs/svelte/pull/14540))
+
+- feat: provide loose parser mode ([#14691](https://github.com/sveltejs/svelte/pull/14691))
+
+## 5.12.0
+
+### Minor Changes
+
+- feat: expose more AST types from `"svelte/compiler"` ([#14601](https://github.com/sveltejs/svelte/pull/14601))
+
+### Patch Changes
+
+- fix: don't add parenthesis to media query if already present ([#14699](https://github.com/sveltejs/svelte/pull/14699))
+
+- fix: ensure if block paths retain correct template namespacing ([#14685](https://github.com/sveltejs/svelte/pull/14685))
+
+## 5.11.3
+
+### Patch Changes
+
+- fix: allow unquoted slash in attributes ([#14615](https://github.com/sveltejs/svelte/pull/14615))
+
+- fix: better handle hydration of script/style elements ([#14683](https://github.com/sveltejs/svelte/pull/14683))
+
+- fix: make `defaultValue` work with spread ([#14640](https://github.com/sveltejs/svelte/pull/14640))
+
+- fix: avoid mutation validation for invalidate_inner_signals ([#14688](https://github.com/sveltejs/svelte/pull/14688))
+
+## 5.11.2
+
+### Patch Changes
+
+- fix: correctly handle ssr for `reactivity/window` ([#14681](https://github.com/sveltejs/svelte/pull/14681))
+
+## 5.11.1
+
+### Patch Changes
+
+- fix: account for global block in `is_empty` ([#14677](https://github.com/sveltejs/svelte/pull/14677))
+
+- fix: remove overzealous `reactive_declaration_non_reactive_property` warning ([#14663](https://github.com/sveltejs/svelte/pull/14663))
+
+## 5.11.0
+
+### Minor Changes
+
+- feat: add `svelte/reactivity/window` module ([#14660](https://github.com/sveltejs/svelte/pull/14660))
+
+### Patch Changes
+
+- fix: take into account registration state when setting custom element props ([#14508](https://github.com/sveltejs/svelte/pull/14508))
+
+## 5.10.1
+
+### Patch Changes
+
+- fix: ensure snippet hoisting works in the correct scope ([#14642](https://github.com/sveltejs/svelte/pull/14642))
+
+- fix: ensure $state.snapshot clones holey arrays correctly ([#14657](https://github.com/sveltejs/svelte/pull/14657))
+
+- fix: restore input binding selection position ([#14649](https://github.com/sveltejs/svelte/pull/14649))
+
+- fix: transform everything that is not a selector inside `:global` ([#14577](https://github.com/sveltejs/svelte/pull/14577))
+
+- Overwrite Spring.#last_value when using .set() with {instant: true} ([#14656](https://github.com/sveltejs/svelte/pull/14656))
+
+- fix: don't emit assignment warnings for bindings ([#14651](https://github.com/sveltejs/svelte/pull/14651))
+
+## 5.10.0
+
+### Minor Changes
+
+- feat: provide links to documentation for errors/warnings ([#14629](https://github.com/sveltejs/svelte/pull/14629))
+
+### Patch Changes
+
+- fix: allow exports with source from script module even if no bind is present ([#14620](https://github.com/sveltejs/svelte/pull/14620))
+
+- fix: deconflict `get_name` for literal class properties ([#14607](https://github.com/sveltejs/svelte/pull/14607))
+
+## 5.9.1
+
+### Patch Changes
+
+- fix: mark subtree dynamic for bind with sequence expressions ([#14626](https://github.com/sveltejs/svelte/pull/14626))
+
+## 5.9.0
+
+### Minor Changes
+
+- feat: add support for bind getters/setters ([#14307](https://github.com/sveltejs/svelte/pull/14307))
+
+### Patch Changes
+
+- fix: always run `if` block code the first time ([#14597](https://github.com/sveltejs/svelte/pull/14597))
+
+## 5.8.1
+
+### Patch Changes
+
+- fix: reinstate missing prefersReducedMotion export ([#14586](https://github.com/sveltejs/svelte/pull/14586))
+
+## 5.8.0
+
+### Minor Changes
+
+- feat: add `Spring` and `Tween` classes to `svelte/motion` ([#11519](https://github.com/sveltejs/svelte/pull/11519))
+
+## 5.7.1
+
+### Patch Changes
+
+- fix: ensure bindings always take precedence over spreads ([#14575](https://github.com/sveltejs/svelte/pull/14575))
+
+## 5.7.0
+
+### Minor Changes
+
+- feat: add `createSubscriber` function for creating reactive values that depend on subscriptions ([#14422](https://github.com/sveltejs/svelte/pull/14422))
+
+- feat: add reactive `MediaQuery` class, and a `prefersReducedMotion` class instance ([#14422](https://github.com/sveltejs/svelte/pull/14422))
+
+### Patch Changes
+
+- fix: treat `undefined` and `null` the same for the initial input value ([#14562](https://github.com/sveltejs/svelte/pull/14562))
+
+## 5.6.2
+
+### Patch Changes
+
+- chore: make if blocks tree-shakable ([#14549](https://github.com/sveltejs/svelte/pull/14549))
+
+## 5.6.1
+
+### Patch Changes
+
+- fix: handle static form values in combination with default values ([#14555](https://github.com/sveltejs/svelte/pull/14555))
+
+## 5.6.0
+
+### Minor Changes
+
+- feat: support `defaultValue/defaultChecked` for inputs ([#14289](https://github.com/sveltejs/svelte/pull/14289))
+
 ## 5.5.4
 
 ### Patch Changes

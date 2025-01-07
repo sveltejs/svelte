@@ -1,11 +1,11 @@
 import type { Scope } from '../scope.js';
 import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
-import type { ExpressionMetadata, AST, ValidatedCompileOptions, SvelteNode } from '#compiler';
+import type { AST, ExpressionMetadata, ValidatedCompileOptions } from '#compiler';
 import type { LabeledStatement } from 'estree';
 
 export interface AnalysisState {
 	scope: Scope;
-	scopes: Map<SvelteNode, Scope>;
+	scopes: Map<AST.SvelteNode, Scope>;
 	analysis: ComponentAnalysis;
 	options: ValidatedCompileOptions;
 	ast_type: 'instance' | 'template' | 'module';
@@ -31,11 +31,11 @@ export interface AnalysisState {
 }
 
 export type Context<State extends AnalysisState = AnalysisState> = import('zimmerframe').Context<
-	SvelteNode,
+	AST.SvelteNode,
 	State
 >;
 
 export type Visitors<State extends AnalysisState = AnalysisState> = import('zimmerframe').Visitors<
-	SvelteNode,
+	AST.SvelteNode,
 	State
 >;

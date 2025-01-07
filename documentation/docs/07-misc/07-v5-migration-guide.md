@@ -823,6 +823,8 @@ The `foreign` namespace was only useful for Svelte Native, which we're planning 
 
 `afterUpdate` callbacks in a parent component will now run after `afterUpdate` callbacks in any child components.
 
+`beforeUpdate/afterUpdate` no longer run when the component contains a `<slot>` and its content is updated.
+
 Both functions are disallowed in runes mode — use `$effect.pre(...)` and `$effect(...)` instead.
 
 ### `contenteditable` behavior change

@@ -1,5 +1,5 @@
 /** @import * as ESTree from 'estree' */
-/** @import { ValidatedCompileOptions, AST, ValidatedModuleCompileOptions, SvelteNode } from '#compiler' */
+/** @import { AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { ComponentAnalysis, Analysis } from '../../types' */
 /** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';
@@ -178,7 +178,7 @@ export function client_component(analysis, options) {
 	};
 
 	const module = /** @type {ESTree.Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, visitors)
+		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, visitors)
 	);
 
 	const instance_state = {
@@ -190,12 +190,12 @@ export function client_component(analysis, options) {
 	};
 
 	const instance = /** @type {ESTree.Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.instance.ast), instance_state, visitors)
+		walk(/** @type {AST.SvelteNode} */ (analysis.instance.ast), instance_state, visitors)
 	);
 
 	const template = /** @type {ESTree.Program} */ (
 		walk(
-			/** @type {SvelteNode} */ (analysis.template.ast),
+			/** @type {AST.SvelteNode} */ (analysis.template.ast),
 			{
 				...state,
 				transform: instance_state.transform,
@@ -539,6 +539,10 @@ export function client_component(analysis, options) {
 		body.unshift(b.imports([], 'svelte/internal/flags/legacy'));
 	}
 
+	if (analysis.tracing) {
+		body.unshift(b.imports([], 'svelte/internal/flags/tracing'));
+	}
+
 	if (options.discloseVersion) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}
@@ -664,12 +668,18 @@ export function client_module(analysis, options) {
 	};
 
 	const module = /** @type {ESTree.Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, visitors)
+		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, visitors)
 	);
+
+	const body = [b.import_all('$', 'svelte/internal/client')];
+
+	if (analysis.tracing) {
+		body.push(b.imports([], 'svelte/internal/flags/tracing'));
+	}
 
 	return {
 		type: 'Program',
 		sourceType: 'module',
-		body: [b.import_all('$', 'svelte/internal/client'), ...module.body]
+		body: [...body, ...module.body]
 	};
 }

@@ -8,7 +8,7 @@ import {
 	get_attribute_expression,
 	is_event_attribute
 } from '../../../../utils/ast.js';
-import { dev, filename, is_ignored, locator } from '../../../../state.js';
+import { dev, filename, is_ignored, locate_node, locator } from '../../../../state.js';
 import { build_proxy_reassignment, should_proxy } from '../utils.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
 
@@ -169,11 +169,19 @@ function build_assignment(operator, left, right, context) {
 		}
 	}
 
+	// special case — ignore `bind:prop={getter, (v) => (...)}` / `bind:value={x.y}`
+	if (
+		path.at(-1) === 'Component' ||
+		path.at(-1) === 'SvelteComponent' ||
+		(path.at(-1) === 'ArrowFunctionExpression' &&
+			path.at(-2) === 'SequenceExpression' &&
+			(path.at(-3) === 'Component' || path.at(-3) === 'SvelteComponent'))
+	) {
+		should_transform = false;
+	}
+
 	if (left.type === 'MemberExpression' && should_transform) {
 		const callee = callees[operator];
-
-		const loc = /** @type {Location} */ (locator(/** @type {number} */ (left.start)));
-		const location = `${filename}:${loc.line}:${loc.column}`;
 
 		return /** @type {Expression} */ (
 			context.visit(
@@ -186,7 +194,7 @@ function build_assignment(operator, left, right, context) {
 							: b.literal(/** @type {Identifier} */ (left.property).name)
 					),
 					right,
-					b.literal(location)
+					b.literal(locate_node(left))
 				)
 			)
 		);

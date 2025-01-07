@@ -1,6 +1,6 @@
 /** @import { ComponentContext, Derived, Effect, Reaction, Signal, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
-import { define_property, get_descriptors, get_prototype_of } from '../shared/utils.js';
+import { define_property, get_descriptors, get_prototype_of, index_of } from '../shared/utils.js';
 import {
 	destroy_block_effect_children,
 	destroy_effect_children,
@@ -29,12 +29,13 @@ import {
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
-import { mutate, set, source } from './reactivity/sources.js';
+import { internal_set, set, source } from './reactivity/sources.js';
 import { destroy_derived, execute_derived, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
-import { legacy_mode_flag } from '../flags/index.js';
+import { legacy_mode_flag, tracing_mode_flag } from '../flags/index.js';
+import { tracing_expressions, get_stack } from './dev/tracing.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -126,8 +127,8 @@ export function set_untracked_writes(value) {
 	untracked_writes = value;
 }
 
-/** @type {number} Used by sources and deriveds for handling updates to unowned deriveds */
-let current_version = 0;
+/** @type {number} Used by sources and deriveds for handling updates to unowned deriveds it starts from 1 to differentiate between a created effect and a run one for tracing */
+let current_version = 1;
 
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
@@ -135,6 +136,11 @@ export let skip_reaction = false;
 // Handle collecting all signals which are read during a specific time frame
 /** @type {Set<Value> | null} */
 export let captured_signals = null;
+
+/** @param {Set<Value> | null} value */
+export function set_captured_signals(value) {
+	captured_signals = value;
+}
 
 // Handling runtime component context
 /** @type {ComponentContext | null} */
@@ -190,32 +196,34 @@ export function check_dirtiness(reaction) {
 
 		if (dependencies !== null) {
 			var i;
+			var dependency;
+			var is_disconnected = (flags & DISCONNECTED) !== 0;
+			var is_unowned_connected = is_unowned && active_effect !== null && !skip_reaction;
+			var length = dependencies.length;
 
-			if ((flags & DISCONNECTED) !== 0) {
-				for (i = 0; i < dependencies.length; i++) {
-					(dependencies[i].reactions ??= []).push(reaction);
+			// If we are working with a disconnected or an unowned signal that is now connected (due to an active effect)
+			// then we need to re-connect the reaction to the dependency
+			if (is_disconnected || is_unowned_connected) {
+				for (i = 0; i < length; i++) {
+					dependency = dependencies[i];
+
+					// We always re-add all reactions (even duplicates) if the derived was
+					// previously disconnected
+					if (is_disconnected || !dependency?.reactions?.includes(reaction)) {
+						(dependency.reactions ??= []).push(reaction);
+					}
 				}
 
-				reaction.f ^= DISCONNECTED;
+				if (is_disconnected) {
+					reaction.f ^= DISCONNECTED;
+				}
 			}
 
-			for (i = 0; i < dependencies.length; i++) {
-				var dependency = dependencies[i];
+			for (i = 0; i < length; i++) {
+				dependency = dependencies[i];
 
 				if (check_dirtiness(/** @type {Derived} */ (dependency))) {
 					update_derived(/** @type {Derived} */ (dependency));
-				}
-
-				// If we are working with an unowned signal as part of an effect (due to !skip_reaction)
-				// and the version hasn't changed, we still need to check that this reaction
-				// is linked to the dependency source – otherwise future updates will not be caught.
-				if (
-					is_unowned &&
-					active_effect !== null &&
-					!skip_reaction &&
-					!dependency?.reactions?.includes(reaction)
-				) {
-					(dependency.reactions ??= []).push(reaction);
 				}
 
 				if (dependency.version > reaction.version) {
@@ -224,8 +232,9 @@ export function check_dirtiness(reaction) {
 			}
 		}
 
-		// Unowned signals should never be marked as clean.
-		if (!is_unowned) {
+		// Unowned signals should never be marked as clean unless they
+		// are used within an active_effect without skip_reaction
+		if (!is_unowned || (active_effect !== null && !skip_reaction)) {
 			set_signal_status(reaction, CLEAN);
 		}
 	}
@@ -356,7 +365,7 @@ export function handle_error(error, effect, previous_effect, component_context) 
 			new_lines.push(line);
 		}
 		define_property(error, 'stack', {
-			value: error.stack + new_lines.join('\n')
+			value: new_lines.join('\n')
 		});
 	}
 
@@ -439,7 +448,7 @@ export function update_reaction(reaction) {
 function remove_reaction(signal, dependency) {
 	let reactions = dependency.reactions;
 	if (reactions !== null) {
-		var index = reactions.indexOf(signal);
+		var index = index_of.call(reactions, signal);
 		if (index !== -1) {
 			var new_length = reactions.length - 1;
 			if (new_length === 0) {
@@ -520,6 +529,23 @@ export function update_effect(effect) {
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 		effect.version = current_version;
+
+		var deps = effect.deps;
+
+		// In DEV, we need to handle a case where $inspect.trace() might
+		// incorrectly state a source dependency has not changed when it has.
+		// That's beacuse that source was changed by the same effect, causing
+		// the versions to match. We can avoid this by incrementing the version
+		if (DEV && tracing_mode_flag && (effect.f & DIRTY) !== 0 && deps !== null) {
+			for (let i = 0; i < deps.length; i++) {
+				var dep = deps[i];
+				if (dep.trace_need_increase) {
+					dep.version = increment_version();
+					dep.trace_need_increase = undefined;
+					dep.trace_v = undefined;
+				}
+			}
+		}
 
 		if (DEV) {
 			dev_effect_stack.push(effect);
@@ -908,6 +934,28 @@ export function get(signal) {
 		}
 	}
 
+	if (
+		DEV &&
+		tracing_mode_flag &&
+		tracing_expressions !== null &&
+		active_reaction !== null &&
+		tracing_expressions.reaction === active_reaction
+	) {
+		// Used when mapping state between special blocks like `each`
+		if (signal.debug) {
+			signal.debug();
+		} else if (signal.created) {
+			var entry = tracing_expressions.entries.get(signal);
+
+			if (entry === undefined) {
+				entry = { read: [] };
+				tracing_expressions.entries.set(signal, entry);
+			}
+
+			entry.read.push(get_stack('TracedAt'));
+		}
+	}
+
 	return signal.v;
 }
 
@@ -960,11 +1008,12 @@ export function invalidate_inner_signals(fn) {
 		if ((signal.f & LEGACY_DERIVED_PROP) !== 0) {
 			for (const dep of /** @type {Derived} */ (signal).deps || []) {
 				if ((dep.f & DERIVED) === 0) {
-					mutate(dep, null /* doesnt matter */);
+					// Use internal_set instead of set here and below to avoid mutation validation
+					internal_set(dep, dep.v);
 				}
 			}
 		} else {
-			mutate(signal, null /* doesnt matter */);
+			internal_set(signal, signal.v);
 		}
 	}
 }

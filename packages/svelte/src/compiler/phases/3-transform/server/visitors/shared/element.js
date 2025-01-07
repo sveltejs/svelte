@@ -1,5 +1,5 @@
 /** @import { Expression, Literal } from 'estree' */
-/** @import { AST, Namespace, SvelteNode } from '#compiler' */
+/** @import { AST, Namespace } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../../types.js' */
 import {
 	get_attribute_chunks,
@@ -31,7 +31,7 @@ const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
  * Writes the output to the template output. Some elements may have attributes on them that require the
  * their output to be the child content instead. In this case, an object is returned.
  * @param {AST.RegularElement | AST.SvelteElement} node
- * @param {import('zimmerframe').Context<SvelteNode, ComponentServerTransformState>} context
+ * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentServerTransformState>} context
  */
 export function build_element_attributes(node, context) {
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
@@ -86,10 +86,35 @@ export function build_element_attributes(node, context) {
 			} else if (attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked') {
 				if (attribute.name === 'class') {
 					class_index = attributes.length;
-				} else if (attribute.name === 'style') {
-					style_index = attributes.length;
+
+					if (attribute.metadata.needs_clsx) {
+						const clsx_value = b.call(
+							'$.clsx',
+							/** @type {AST.ExpressionTag} */ (attribute.value).expression
+						);
+						attributes.push({
+							...attribute,
+							value: {
+								.../** @type {AST.ExpressionTag} */ (attribute.value),
+								expression: context.state.analysis.css.hash
+									? b.binary(
+											'+',
+											b.binary('+', clsx_value, b.literal(' ')),
+											b.literal(context.state.analysis.css.hash)
+										)
+									: clsx_value
+							}
+						});
+					} else {
+						attributes.push(attribute);
+					}
+				} else {
+					if (attribute.name === 'style') {
+						style_index = attributes.length;
+					}
+
+					attributes.push(attribute);
 				}
-				attributes.push(attribute);
 			}
 		} else if (attribute.type === 'BindDirective') {
 			if (attribute.name === 'value' && node.name === 'select') continue;
@@ -110,14 +135,17 @@ export function build_element_attributes(node, context) {
 			const binding = binding_properties[attribute.name];
 			if (binding?.omit_in_ssr) continue;
 
+			let expression = /** @type {Expression} */ (context.visit(attribute.expression));
+
+			if (expression.type === 'SequenceExpression') {
+				expression = b.call(expression.expressions[0]);
+			}
+
 			if (is_content_editable_binding(attribute.name)) {
-				content = /** @type {Expression} */ (context.visit(attribute.expression));
+				content = expression;
 			} else if (attribute.name === 'value' && node.name === 'textarea') {
-				content = b.call(
-					'$.escape',
-					/** @type {Expression} */ (context.visit(attribute.expression))
-				);
-			} else if (attribute.name === 'group') {
+				content = b.call('$.escape', expression);
+			} else if (attribute.name === 'group' && attribute.expression.type !== 'SequenceExpression') {
 				const value_attribute = /** @type {AST.Attribute | undefined} */ (
 					node.attributes.find((attr) => attr.type === 'Attribute' && attr.name === 'value')
 				);
@@ -130,6 +158,7 @@ export function build_element_attributes(node, context) {
 						is_text_attribute(attr) &&
 						attr.value[0].data === 'checkbox'
 				);
+
 				attributes.push(
 					create_attribute('checked', -1, -1, [
 						{
@@ -159,7 +188,7 @@ export function build_element_attributes(node, context) {
 							type: 'ExpressionTag',
 							start: -1,
 							end: -1,
-							expression: attribute.expression,
+							expression,
 							metadata: {
 								expression: create_expression_metadata()
 							}

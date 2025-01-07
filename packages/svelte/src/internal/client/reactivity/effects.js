@@ -1,4 +1,4 @@
-/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, Reaction, TemplateNode, TransitionManager } from '#client' */
+/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
 import {
 	check_dirtiness,
 	component_context,
@@ -16,8 +16,7 @@ import {
 	set_is_flushing_effect,
 	set_signal_status,
 	untrack,
-	skip_reaction,
-	capture_signals
+	skip_reaction
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -40,13 +39,10 @@ import {
 } from '../constants.js';
 import { set } from './sources.js';
 import * as e from '../errors.js';
-import * as w from '../warnings.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { destroy_derived } from './deriveds.js';
-import { FILENAME } from '../../../constants.js';
-import { get_location } from '../dev/location.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -248,8 +244,32 @@ export function inspect_effect(fn) {
  */
 export function effect_root(fn) {
 	const effect = create_effect(ROOT_EFFECT, fn, true);
+
 	return () => {
 		destroy_effect(effect);
+	};
+}
+
+/**
+ * An effect root whose children can transition out
+ * @param {() => void} fn
+ * @returns {(options?: { outro?: boolean }) => Promise<void>}
+ */
+export function component_root(fn) {
+	const effect = create_effect(ROOT_EFFECT, fn, true);
+
+	return (options = {}) => {
+		return new Promise((fulfil) => {
+			if (options.outro) {
+				pause_effect(effect, () => {
+					destroy_effect(effect);
+					fulfil(undefined);
+				});
+			} else {
+				destroy_effect(effect);
+				fulfil(undefined);
+			}
+		});
 	};
 }
 
@@ -265,20 +285,13 @@ export function effect(fn) {
  * Internal representation of `$: ..`
  * @param {() => any} deps
  * @param {() => void | (() => void)} fn
- * @param {number} [line]
- * @param {number} [column]
  */
-export function legacy_pre_effect(deps, fn, line, column) {
+export function legacy_pre_effect(deps, fn) {
 	var context = /** @type {ComponentContextLegacy} */ (component_context);
 
 	/** @type {{ effect: null | Effect, ran: boolean }} */
 	var token = { effect: null, ran: false };
 	context.l.r1.push(token);
-
-	if (DEV && line !== undefined) {
-		var location = get_location(line, column);
-		var explicit_deps = capture_signals(deps);
-	}
 
 	token.effect = render_effect(() => {
 		deps();
@@ -289,18 +302,7 @@ export function legacy_pre_effect(deps, fn, line, column) {
 
 		token.ran = true;
 		set(context.l.r2, true);
-
-		if (DEV && location) {
-			var implicit_deps = capture_signals(() => untrack(fn));
-
-			for (var signal of implicit_deps) {
-				if (!explicit_deps.has(signal)) {
-					w.reactive_declaration_non_reactive_property(/** @type {string} */ (location));
-				}
-			}
-		} else {
-			untrack(fn);
-		}
+		untrack(fn);
 	});
 }
 

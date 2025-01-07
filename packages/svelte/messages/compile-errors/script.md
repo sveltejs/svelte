@@ -54,6 +54,14 @@
 
 > Imports of `svelte/internal/*` are forbidden. It contains private runtime code which is subject to change without notice. If you're importing from `svelte/internal/*` to work around a limitation of Svelte, please open an issue at https://github.com/sveltejs/svelte and explain your use case
 
+## inspect_trace_generator
+
+> `$inspect.trace(...)` cannot be used inside a generator function
+
+## inspect_trace_invalid_placement
+
+> `$inspect.trace(...)` must be the first statement of a function body
+
 ## invalid_arguments_usage
 
 > The arguments keyword cannot be used within the template or at the top level of a component

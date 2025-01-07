@@ -291,7 +291,7 @@ export function RegularElement(node, context) {
 
 			const is = is_custom_element
 				? build_custom_element_attribute_update_assignment(node_id, attribute, context)
-				: build_element_attribute_update_assignment(node, node_id, attribute, context);
+				: build_element_attribute_update_assignment(node, node_id, attribute, attributes, context);
 			if (is) is_attributes_reactive = true;
 		}
 	}
@@ -450,6 +450,11 @@ function setup_select_synchronization(value_binding, context) {
 	if (context.state.analysis.runes) return;
 
 	let bound = value_binding.expression;
+
+	if (bound.type === 'SequenceExpression') {
+		return;
+	}
+
 	while (bound.type === 'MemberExpression') {
 		bound = /** @type {Identifier | MemberExpression} */ (bound.object);
 	}
@@ -484,10 +489,7 @@ function setup_select_synchronization(value_binding, context) {
 			b.call(
 				'$.template_effect',
 				b.thunk(
-					b.block([
-						b.stmt(/** @type {Expression} */ (context.visit(value_binding.expression))),
-						b.stmt(invalidator)
-					])
+					b.block([b.stmt(/** @type {Expression} */ (context.visit(bound))), b.stmt(invalidator)])
 				)
 			)
 		)
@@ -519,10 +521,17 @@ function setup_select_synchronization(value_binding, context) {
  * @param {AST.RegularElement} element
  * @param {Identifier} node_id
  * @param {AST.Attribute} attribute
+ * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
  * @param {ComponentContext} context
  * @returns {boolean}
  */
-function build_element_attribute_update_assignment(element, node_id, attribute, context) {
+function build_element_attribute_update_assignment(
+	element,
+	node_id,
+	attribute,
+	attributes,
+	context
+) {
 	const state = context.state;
 	const name = get_attribute_name(element, attribute);
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
@@ -544,6 +553,10 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 	let update;
 
 	if (name === 'class') {
+		if (attribute.metadata.needs_clsx) {
+			value = b.call('$.clsx', value);
+		}
+
 		if (attribute.metadata.expression.has_state && has_call) {
 			// ensure we're not creating a separate template effect for this so that
 			// potential class directives are added to the same effect and therefore always apply
@@ -552,11 +565,15 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 			value = b.call('$.get', id);
 			has_call = false;
 		}
+
 		update = b.stmt(
 			b.call(
 				is_svg ? '$.set_svg_class' : is_mathml ? '$.set_mathml_class' : '$.set_class',
 				node_id,
-				value
+				value,
+				attribute.metadata.needs_clsx && context.state.analysis.css.hash
+					? b.literal(context.state.analysis.css.hash)
+					: undefined
 			)
 		);
 	} else if (name === 'value') {
@@ -565,6 +582,26 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		update = b.stmt(b.call('$.set_checked', node_id, value));
 	} else if (name === 'selected') {
 		update = b.stmt(b.call('$.set_selected', node_id, value));
+	} else if (
+		// If we would just set the defaultValue property, it would override the value property,
+		// because it is set in the template which implicitly means it's also setting the default value,
+		// and if one updates the default value while the input is pristine it will also update the
+		// current value, which is not what we want, which is why we need to do some extra work.
+		name === 'defaultValue' &&
+		(attributes.some(
+			(attr) => attr.type === 'Attribute' && attr.name === 'value' && is_text_attribute(attr)
+		) ||
+			(element.name === 'textarea' && element.fragment.nodes.length > 0))
+	) {
+		update = b.stmt(b.call('$.set_default_value', node_id, value));
+	} else if (
+		// See defaultValue comment
+		name === 'defaultChecked' &&
+		attributes.some(
+			(attr) => attr.type === 'Attribute' && attr.name === 'checked' && attr.value === true
+		)
+	) {
+		update = b.stmt(b.call('$.set_default_checked', node_id, value));
 	} else if (is_dom_property(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, name), value));
 	} else {
@@ -612,6 +649,14 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
 	const state = context.state;
 	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
 	let { has_call, value } = build_attribute_value(attribute.value, context);
+
+	// We assume that noone's going to redefine the semantics of the class attribute on custom elements, i.e. it's still used for CSS classes
+	if (name === 'class' && attribute.metadata.needs_clsx) {
+		if (context.state.analysis.css.hash) {
+			value = b.array([value, b.literal(context.state.analysis.css.hash)]);
+		}
+		value = b.call('$.clsx', value);
+	}
 
 	const update = b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), value));
 

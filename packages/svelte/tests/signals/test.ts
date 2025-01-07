@@ -781,4 +781,37 @@ describe('signals', () => {
 			assert.equal($.get(count), 0n);
 		};
 	});
+
+	test('unowned deriveds correctly re-attach to their source', () => {
+		const log: any[] = [];
+
+		return () => {
+			const a = state(0);
+			const b = state(0);
+			const c = derived(() => {
+				$.get(a);
+				return $.get(b);
+			});
+
+			$.get(c);
+
+			set(a, 1);
+
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(c));
+				});
+			});
+
+			assert.deepEqual(log, [0]);
+
+			set(b, 1);
+
+			flushSync();
+
+			assert.deepEqual(log, [0, 1]);
+
+			destroy();
+		};
+	});
 });

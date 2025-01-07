@@ -1,5 +1,5 @@
 /** @import { Expression, Node, Program } from 'estree' */
-/** @import { Binding, AST, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import { walk } from 'zimmerframe';
@@ -243,13 +243,15 @@ export function analyze_module(ast, options) {
 		}
 	}
 
+	const analysis = { runes: true, tracing: false };
+
 	walk(
 		/** @type {Node} */ (ast),
 		{
 			scope,
 			scopes,
 			// @ts-expect-error TODO
-			analysis: { runes: true }
+			analysis
 		},
 		visitors
 	);
@@ -259,7 +261,8 @@ export function analyze_module(ast, options) {
 		name: options.filename,
 		accessors: false,
 		runes: true,
-		immutable: true
+		immutable: true,
+		tracing: analysis.tracing
 	};
 }
 
@@ -408,6 +411,7 @@ export function analyze_component(root, source, options) {
 		template,
 		elements: [],
 		runes,
+		tracing: false,
 		immutable: runes || options.immutable,
 		exports: [],
 		uses_props: false,
@@ -525,7 +529,7 @@ export function analyze_component(root, source, options) {
 
 		// more legacy nonsense: if an `each` binding is reassigned/mutated,
 		// treat the expression as being mutated as well
-		walk(/** @type {SvelteNode} */ (template.ast), null, {
+		walk(/** @type {AST.SvelteNode} */ (template.ast), null, {
 			EachBlock(node) {
 				const scope = /** @type {Scope} */ (template.scopes.get(node));
 
@@ -608,7 +612,7 @@ export function analyze_component(root, source, options) {
 				reactive_statements: new Map()
 			};
 
-			walk(/** @type {SvelteNode} */ (ast), state, visitors);
+			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
 		}
 
 		// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
@@ -677,7 +681,7 @@ export function analyze_component(root, source, options) {
 				function_depth: scope.function_depth
 			};
 
-			walk(/** @type {SvelteNode} */ (ast), state, visitors);
+			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
 		}
 
 		for (const [name, binding] of instance.scope.declarations) {
@@ -698,7 +702,7 @@ export function analyze_component(root, source, options) {
 	}
 
 	for (const node of analysis.module.ast.body) {
-		if (node.type === 'ExportNamedDeclaration' && node.specifiers !== null) {
+		if (node.type === 'ExportNamedDeclaration' && node.specifiers !== null && node.source == null) {
 			for (const specifier of node.specifiers) {
 				if (specifier.local.type !== 'Identifier') continue;
 
@@ -769,6 +773,8 @@ export function analyze_component(root, source, options) {
 
 					if (attribute.type !== 'Attribute') continue;
 					if (attribute.name.toLowerCase() !== 'class') continue;
+					// The dynamic class method appends the hash to the end of the class attribute on its own
+					if (attribute.metadata.needs_clsx) continue outer;
 
 					class_attribute = attribute;
 				}

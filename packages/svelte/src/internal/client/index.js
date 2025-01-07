@@ -12,6 +12,7 @@ export {
 	skip_ownership_validation
 } from './dev/ownership.js';
 export { check_target, legacy_api } from './dev/legacy.js';
+export { trace } from './dev/tracing.js';
 export { inspect } from './dev/inspect.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
@@ -35,7 +36,9 @@ export {
 	handle_lazy_img,
 	set_value,
 	set_checked,
-	set_selected
+	set_selected,
+	set_default_checked,
+	set_default_value
 } from './dom/elements/attributes.js';
 export { set_class, set_svg_class, set_mathml_class, toggle_class } from './dom/elements/class.js';
 export { apply, event, delegate, replay_events } from './dom/elements/events.js';
@@ -158,7 +161,7 @@ export {
 	$window as window,
 	$document as document
 } from './dom/operations.js';
-export { attr } from '../shared/attributes.js';
+export { attr, clsx } from '../shared/attributes.js';
 export { snapshot } from '../shared/clone.js';
 export { noop, fallback } from '../shared/utils.js';
 export {

@@ -1,4 +1,5 @@
 import { escape_html } from '../../escaping.js';
+import { clsx as _clsx } from 'clsx';
 
 /**
  * `<div translate={false}>` should be rendered as `<div translate="no">` and _not_
@@ -25,4 +26,17 @@ export function attr(name, value, is_boolean = false) {
 	const normalized = (name in replacements && replacements[name].get(value)) || value;
 	const assignment = is_boolean ? '' : `="${escape_html(normalized, true)}"`;
 	return ` ${name}${assignment}`;
+}
+
+/**
+ * Small wrapper around clsx to preserve Svelte's (weird) handling of falsy values.
+ * TODO Svelte 6 revisit this, and likely turn all falsy values into the empty string (what clsx also does)
+ * @param  {any} value
+ */
+export function clsx(value) {
+	if (typeof value === 'object') {
+		return _clsx(value);
+	} else {
+		return value ?? '';
+	}
 }

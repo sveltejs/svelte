@@ -1,17 +1,77 @@
-/** @import { AST, Css } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Node } from 'estree' */
 const UNKNOWN = {};
 
 /**
  * @param {Node} node
+ * @param {boolean} is_class
  * @param {Set<any>} set
+ * @param {boolean} is_nested
  */
-function gather_possible_values(node, set) {
+function gather_possible_values(node, is_class, set, is_nested = false) {
+	if (set.has(UNKNOWN)) {
+		// no point traversing any further
+		return;
+	}
+
 	if (node.type === 'Literal') {
 		set.add(String(node.value));
 	} else if (node.type === 'ConditionalExpression') {
-		gather_possible_values(node.consequent, set);
-		gather_possible_values(node.alternate, set);
+		gather_possible_values(node.consequent, is_class, set, is_nested);
+		gather_possible_values(node.alternate, is_class, set, is_nested);
+	} else if (node.type === 'LogicalExpression') {
+		if (node.operator === '&&') {
+			// && is a special case, because the only way the left
+			// hand value can be included is if it's falsy. this is
+			// a bit of extra work but it's worth it because
+			// `class={[condition && 'blah']}` is common,
+			// and we don't want to deopt on `condition`
+			const left = new Set();
+			gather_possible_values(node.left, is_class, left, is_nested);
+
+			if (left.has(UNKNOWN)) {
+				// add all non-nullish falsy values, unless this is a `class` attribute that
+				// will be processed by cslx, in which case falsy values are removed, unless
+				// they're not inside an array/object (TODO 6.0 remove that last part)
+				if (!is_class || !is_nested) {
+					set.add('');
+					set.add(false);
+					set.add(NaN);
+					set.add(0); // -0 and 0n are also falsy, but stringify to '0'
+				}
+			} else {
+				for (const value of left) {
+					if (!value && value != undefined && (!is_class || !is_nested)) {
+						set.add(value);
+					}
+				}
+			}
+
+			gather_possible_values(node.right, is_class, set, is_nested);
+		} else {
+			gather_possible_values(node.left, is_class, set, is_nested);
+			gather_possible_values(node.right, is_class, set, is_nested);
+		}
+	} else if (is_class && node.type === 'ArrayExpression') {
+		for (const entry of node.elements) {
+			if (entry) {
+				gather_possible_values(entry, is_class, set, true);
+			}
+		}
+	} else if (is_class && node.type === 'ObjectExpression') {
+		for (const property of node.properties) {
+			if (
+				property.type === 'Property' &&
+				!property.computed &&
+				(property.key.type === 'Identifier' || property.key.type === 'Literal')
+			) {
+				set.add(
+					property.key.type === 'Identifier' ? property.key.name : String(property.key.value)
+				);
+			} else {
+				set.add(UNKNOWN);
+			}
+		}
 	} else {
 		set.add(UNKNOWN);
 	}
@@ -19,24 +79,25 @@ function gather_possible_values(node, set) {
 
 /**
  * @param {AST.Text | AST.ExpressionTag} chunk
- * @returns {Set<string> | null}
+ * @param {boolean} is_class
+ * @returns {string[] | null}
  */
-export function get_possible_values(chunk) {
+export function get_possible_values(chunk, is_class) {
 	const values = new Set();
 
 	if (chunk.type === 'Text') {
 		values.add(chunk.data);
 	} else {
-		gather_possible_values(chunk.expression, values);
+		gather_possible_values(chunk.expression, is_class, values);
 	}
 
 	if (values.has(UNKNOWN)) return null;
-	return values;
+	return [...values].map((value) => String(value));
 }
 
 /**
  * Returns all parent rules; root is last
- * @param {Css.Rule | null} rule
+ * @param {AST.CSS.Rule | null} rule
  */
 export function get_parent_rules(rule) {
 	const rules = [];
@@ -51,8 +112,8 @@ export function get_parent_rules(rule) {
 
 /**
  * True if is `:global(...)` or `:global` and no pseudo class that is scoped.
- * @param {Css.RelativeSelector} relative_selector
- * @returns {relative_selector is Css.RelativeSelector & { selectors: [Css.PseudoClassSelector, ...Array<Css.PseudoClassSelector | Css.PseudoElementSelector>] }}
+ * @param {AST.CSS.RelativeSelector} relative_selector
+ * @returns {relative_selector is AST.CSS.RelativeSelector & { selectors: [AST.CSS.PseudoClassSelector, ...Array<AST.CSS.PseudoClassSelector | AST.CSS.PseudoElementSelector>] }}
  */
 export function is_global(relative_selector) {
 	const first = relative_selector.selectors[0];
@@ -72,7 +133,7 @@ export function is_global(relative_selector) {
 
 /**
  * `true` if is a pseudo class that cannot be or is not scoped
- * @param {Css.SimpleSelector} selector
+ * @param {AST.CSS.SimpleSelector} selector
  */
 export function is_unscoped_pseudo_class(selector) {
 	return (
@@ -96,8 +157,8 @@ export function is_unscoped_pseudo_class(selector) {
 /**
  * True if is `:global(...)` or `:global`, irrespective of whether or not there are any pseudo classes that are scoped.
  * Difference to `is_global`: `:global(x):has(y)` is `true` for `is_outer_global` but `false` for `is_global`.
- * @param {Css.RelativeSelector} relative_selector
- * @returns {relative_selector is Css.RelativeSelector & { selectors: [Css.PseudoClassSelector, ...Array<Css.PseudoClassSelector | Css.PseudoElementSelector>] }}
+ * @param {AST.CSS.RelativeSelector} relative_selector
+ * @returns {relative_selector is AST.CSS.RelativeSelector & { selectors: [AST.CSS.PseudoClassSelector, ...Array<AST.CSS.PseudoClassSelector | AST.CSS.PseudoElementSelector>] }}
  */
 export function is_outer_global(relative_selector) {
 	const first = relative_selector.selectors[0];

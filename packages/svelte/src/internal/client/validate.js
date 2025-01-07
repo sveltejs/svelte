@@ -50,7 +50,7 @@ export function validate_prop_bindings($$props, bindable, exports, component) {
 		var name = component.name;
 
 		if (setter) {
-			if (exports.includes(key)) {
+			if (exports.includes(key) && !bindable.includes(key)) {
 				e.bind_invalid_export(component[FILENAME], key, name);
 			}
 

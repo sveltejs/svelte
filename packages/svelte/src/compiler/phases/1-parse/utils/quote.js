@@ -1,13 +1,13 @@
-const SINGLE_QUOTE = "'".charCodeAt(0);
-const DOUBLE_QUOTE = '"'.charCodeAt(0);
-const BACK_QUOTE = '`'.charCodeAt(0);
+const SINGLE_QUOTE = "'";
+const DOUBLE_QUOTE = '"';
+const BACK_QUOTE = '`';
 
-/** @param {number} code */
-export function is_quote(code) {
-	return code === SINGLE_QUOTE || code === DOUBLE_QUOTE || code === BACK_QUOTE;
+/** @param {string} char */
+export function is_quote(char) {
+	return char === SINGLE_QUOTE || char === DOUBLE_QUOTE || char === BACK_QUOTE;
 }
 
-/** @param {number} code */
-export function is_back_quote(code) {
-	return code === BACK_QUOTE;
+/** @param {string} char */
+export function is_back_quote(char) {
+	return char === BACK_QUOTE;
 }

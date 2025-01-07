@@ -8,13 +8,12 @@ import { DEV } from 'esm-env';
  */
 export function invalid_default_snippet() {
 	if (DEV) {
-		const error = new Error(`invalid_default_snippet\nCannot use \`{@render children(...)}\` if the parent component uses \`let:\` directives. Consider using a named snippet instead`);
+		const error = new Error(`invalid_default_snippet\nCannot use \`{@render children(...)}\` if the parent component uses \`let:\` directives. Consider using a named snippet instead\nhttps://svelte.dev/e/invalid_default_snippet`);
 
 		error.name = 'Svelte error';
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("invalid_default_snippet");
+		throw new Error(`https://svelte.dev/e/invalid_default_snippet`);
 	}
 }
 
@@ -25,13 +24,12 @@ export function invalid_default_snippet() {
  */
 export function lifecycle_outside_component(name) {
 	if (DEV) {
-		const error = new Error(`lifecycle_outside_component\n\`${name}(...)\` can only be used during component initialisation`);
+		const error = new Error(`lifecycle_outside_component\n\`${name}(...)\` can only be used during component initialisation\nhttps://svelte.dev/e/lifecycle_outside_component`);
 
 		error.name = 'Svelte error';
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("lifecycle_outside_component");
+		throw new Error(`https://svelte.dev/e/lifecycle_outside_component`);
 	}
 }
 
@@ -42,13 +40,12 @@ export function lifecycle_outside_component(name) {
  */
 export function store_invalid_shape(name) {
 	if (DEV) {
-		const error = new Error(`store_invalid_shape\n\`${name}\` is not a store with a \`subscribe\` method`);
+		const error = new Error(`store_invalid_shape\n\`${name}\` is not a store with a \`subscribe\` method\nhttps://svelte.dev/e/store_invalid_shape`);
 
 		error.name = 'Svelte error';
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("store_invalid_shape");
+		throw new Error(`https://svelte.dev/e/store_invalid_shape`);
 	}
 }
 
@@ -58,12 +55,11 @@ export function store_invalid_shape(name) {
  */
 export function svelte_element_invalid_this_value() {
 	if (DEV) {
-		const error = new Error(`svelte_element_invalid_this_value\nThe \`this\` prop on \`<svelte:element>\` must be a string, if defined`);
+		const error = new Error(`svelte_element_invalid_this_value\nThe \`this\` prop on \`<svelte:element>\` must be a string, if defined\nhttps://svelte.dev/e/svelte_element_invalid_this_value`);
 
 		error.name = 'Svelte error';
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("svelte_element_invalid_this_value");
+		throw new Error(`https://svelte.dev/e/svelte_element_invalid_this_value`);
 	}
 }

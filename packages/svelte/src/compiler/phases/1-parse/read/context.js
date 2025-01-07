@@ -1,15 +1,7 @@
 /** @import { Location } from 'locate-character' */
 /** @import { Pattern } from 'estree' */
 /** @import { Parser } from '../index.js' */
-// @ts-expect-error acorn type definitions are borked in the release we use
-import { isIdentifierStart } from 'acorn';
-import full_char_code_at from '../utils/full_char_code_at.js';
-import {
-	is_bracket_open,
-	is_bracket_close,
-	is_bracket_pair,
-	get_bracket_close
-} from '../utils/bracket.js';
+import { is_bracket_open, is_bracket_close, get_bracket_close } from '../utils/bracket.js';
 import { parse_expression_at } from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
 import * as e from '../../../errors.js';
@@ -25,9 +17,9 @@ export default function read_pattern(parser) {
 	const start = parser.index;
 	let i = parser.index;
 
-	const code = full_char_code_at(parser.template, i);
-	if (isIdentifierStart(code, true)) {
-		const name = /** @type {string} */ (parser.read_identifier());
+	const name = parser.read_identifier();
+
+	if (name !== null) {
 		const annotation = read_type_annotation(parser);
 
 		return {
@@ -83,36 +75,35 @@ export default function read_pattern(parser) {
  */
 function read_expression_length(parser, start) {
 	let i = start;
-	const code = full_char_code_at(parser.template, i);
 
-	if (!is_bracket_open(code)) {
+	if (!is_bracket_open(parser.template[i])) {
 		e.expected_pattern(i);
 	}
 
-	const bracket_stack = [code];
-	i += code <= 0xffff ? 1 : 2;
+	const bracket_stack = [];
 
 	while (i < parser.template.length) {
-		let code = full_char_code_at(parser.template, i);
-		if (is_quote(code)) {
-			i = read_string_length(parser, i, code);
+		let char = parser.template[i];
+
+		if (is_quote(char)) {
+			i = read_string_length(parser, i + 1, char);
 		} else {
-			if (is_bracket_open(code)) {
-				bracket_stack.push(code);
-			} else if (is_bracket_close(code)) {
-				const popped = /** @type {number} */ (bracket_stack.pop());
-				if (!is_bracket_pair(popped, code)) {
-					e.expected_token(
-						i,
-						String.fromCharCode(/** @type {number} */ (get_bracket_close(popped)))
-					);
+			if (is_bracket_open(char)) {
+				bracket_stack.push(char);
+			} else if (is_bracket_close(char)) {
+				const popped = /** @type {string} */ (bracket_stack.pop());
+				const expected = /** @type {string} */ (get_bracket_close(popped));
+
+				if (char !== expected) {
+					e.expected_token(i, expected);
 				}
+
 				if (bracket_stack.length === 0) {
-					i += code <= 0xffff ? 1 : 2;
-					break;
+					return i + 1;
 				}
 			}
-			i += code <= 0xffff ? 1 : 2;
+
+			i += 1;
 		}
 	}
 
@@ -122,24 +113,24 @@ function read_expression_length(parser, start) {
 /**
  * @param {Parser} parser
  * @param {number} start
- * @param {number} quote
+ * @param {string} quote
  */
 function read_string_length(parser, start, quote) {
 	let i = start;
-	i += quote <= 0xffff ? 1 : 2;
 
-	const BACKSLASH = '\\'.charCodeAt(0);
-	const DOLAR = '$'.charCodeAt(0);
-	const LEFT_BRACKET = '{'.charCodeAt(0);
+	const BACKSLASH = '\\';
+	const DOLAR = '$';
+	const LEFT_BRACKET = '{';
 
 	let is_escaped = false;
 	while (i < parser.template.length) {
-		const code = full_char_code_at(parser.template, i);
-		if (!is_escaped && code === quote) {
-			break;
+		const char = parser.template[i];
+
+		if (!is_escaped && char === quote) {
+			return i + 1;
 		}
 
-		if (!is_escaped && code === BACKSLASH) {
+		if (!is_escaped && char === BACKSLASH) {
 			is_escaped = true;
 		} else if (is_escaped) {
 			is_escaped = false;
@@ -148,22 +139,16 @@ function read_string_length(parser, start, quote) {
 		if (
 			i < parser.template.length - 1 &&
 			is_back_quote(quote) &&
-			code === DOLAR &&
-			full_char_code_at(parser.template, i + 1) === LEFT_BRACKET
+			char === DOLAR &&
+			parser.template[i + 1] === LEFT_BRACKET
 		) {
-			i++;
-			i = read_expression_length(parser, i);
+			i = read_expression_length(parser, i + 1);
 		} else {
-			i += code <= 0xffff ? 1 : 2;
+			i += 1;
 		}
 	}
 
-	const code = full_char_code_at(parser.template, i);
-	if (code !== quote) {
-		e.unterminated_string_constant(start);
-	}
-
-	return i + (code <= 0xffff ? 1 : 2);
+	e.unterminated_string_constant(start);
 }
 
 /**

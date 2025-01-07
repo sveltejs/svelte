@@ -21,6 +21,7 @@ import { component_context, active_effect } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { assign_nodes } from '../template.js';
+import { is_raw_text_element } from '../../../../utils.js';
 
 /**
  * @param {Comment | Element} node
@@ -116,6 +117,11 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				assign_nodes(element, element);
 
 				if (render_fn) {
+					if (hydrating && is_raw_text_element(next_tag)) {
+						// prevent hydration glitches
+						element.append(document.createComment(''));
+					}
+
 					// If hydrating, use the existing ssr comment as the anchor so that the
 					// inner open and close methods can pick up the existing nodes correctly
 					var child_anchor = /** @type {TemplateNode} */ (
