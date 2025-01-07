@@ -54,13 +54,13 @@ test('Multiplier', () => {
 ```
 
 ```js
-/// file: multiplier.js
+/// file: multiplier.svelte.js
 /**
  * @param {number} initial
  * @param {number} k
  */
 export function multiplier(initial, k) {
-	let count = initial;
+	let count = $state(initial);
 
 	return {
 		get value() {
