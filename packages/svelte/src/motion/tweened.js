@@ -72,7 +72,8 @@ function get_interpolator(a, b) {
 		return (t) => a + t * delta;
 	}
 
-	throw new Error(`Cannot interpolate ${type} values`);
+	// for non-numeric values, snap to the final value immediately
+	return () => b;
 }
 
 /**
