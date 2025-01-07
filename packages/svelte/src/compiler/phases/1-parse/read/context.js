@@ -3,7 +3,6 @@
 /** @import { Parser } from '../index.js' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart } from 'acorn';
-import full_char_code_at from '../utils/full_char_code_at.js';
 import {
 	is_bracket_open,
 	is_bracket_close,
@@ -23,7 +22,8 @@ export default function read_pattern(parser) {
 	const start = parser.index;
 	let i = parser.index;
 
-	const code = full_char_code_at(parser.template, i);
+	const code = parser.code_point_at(i);
+
 	if (isIdentifierStart(code, true)) {
 		const name = /** @type {string} */ (parser.read_identifier());
 		const annotation = read_type_annotation(parser);
@@ -49,7 +49,8 @@ export default function read_pattern(parser) {
 	i += code <= 0xffff ? 1 : 2;
 
 	while (i < parser.template.length) {
-		const code = full_char_code_at(parser.template, i);
+		const code = parser.code_point_at(i);
+
 		if (is_bracket_open(code)) {
 			bracket_stack.push(code);
 		} else if (is_bracket_close(code)) {

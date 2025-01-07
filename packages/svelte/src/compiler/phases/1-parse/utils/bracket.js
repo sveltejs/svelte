@@ -1,5 +1,3 @@
-import full_char_code_at from './full_char_code_at.js';
-
 const SQUARE_BRACKET_OPEN = '['.charCodeAt(0);
 const SQUARE_BRACKET_CLOSE = ']'.charCodeAt(0);
 const CURLY_BRACKET_OPEN = '{'.charCodeAt(0);
@@ -132,7 +130,7 @@ function count_leading_backslashes(string, search_start_index) {
  * @returns {number | undefined} The index of the closing bracket, or undefined if not found.
  */
 export function find_matching_bracket(template, index, open) {
-	const open_code = full_char_code_at(open, 0);
+	const open_code = open.charCodeAt(0);
 	const close_code = get_bracket_close(open_code);
 	let brackets = 1;
 	let i = index;
@@ -159,7 +157,7 @@ export function find_matching_bracket(template, index, open) {
 				continue;
 			}
 			default: {
-				const code = full_char_code_at(template, i);
+				const code = template.codePointAt(i);
 				if (code === open_code) {
 					brackets++;
 				} else if (code === close_code) {
