@@ -66,6 +66,7 @@ export function multiplier(initial, mult) {
 		get value() {
 			return count * mult;
 		},
+		/** @param {number} c */
 		set: (c) => {
 			count = c;
 		}
