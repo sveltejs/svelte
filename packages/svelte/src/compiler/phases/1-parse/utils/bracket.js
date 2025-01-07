@@ -15,17 +15,6 @@ export function is_bracket_close(char) {
 	return char === SQUARE_BRACKET_CLOSE || char === CURLY_BRACKET_CLOSE;
 }
 
-/**
- * @param {string} open
- * @param {string} close
- */
-export function is_bracket_pair(open, close) {
-	return (
-		(open === SQUARE_BRACKET_OPEN && close === SQUARE_BRACKET_CLOSE) ||
-		(open === CURLY_BRACKET_OPEN && close === CURLY_BRACKET_CLOSE)
-	);
-}
-
 /** @param {string} open */
 export function get_bracket_close(open) {
 	if (open === SQUARE_BRACKET_OPEN) {

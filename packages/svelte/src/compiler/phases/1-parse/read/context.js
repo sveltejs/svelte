@@ -1,13 +1,7 @@
 /** @import { Location } from 'locate-character' */
 /** @import { Pattern } from 'estree' */
 /** @import { Parser } from '../index.js' */
-// @ts-expect-error acorn type definitions are borked in the release we use
-import {
-	is_bracket_open,
-	is_bracket_close,
-	is_bracket_pair,
-	get_bracket_close
-} from '../utils/bracket.js';
+import { is_bracket_open, is_bracket_close, get_bracket_close } from '../utils/bracket.js';
 import { parse_expression_at } from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
 import * as e from '../../../errors.js';
@@ -53,9 +47,12 @@ export default function read_pattern(parser) {
 			bracket_stack.push(char);
 		} else if (is_bracket_close(char)) {
 			const popped = /** @type {string} */ (bracket_stack.pop());
-			if (!is_bracket_pair(popped, char)) {
-				e.expected_token(i, /** @type {string} */ (get_bracket_close(popped)));
+			const expected = /** @type {string} */ (get_bracket_close(popped));
+
+			if (char !== expected) {
+				e.expected_token(i, expected);
 			}
+
 			if (bracket_stack.length === 0) {
 				i += 1;
 				break;
