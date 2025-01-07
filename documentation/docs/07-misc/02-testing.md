@@ -76,7 +76,7 @@ export function multiplier(initial, k) {
 
 ### Using runes inside your test files
 
-It is possible to use runes inside your test files. First ensure your bundler knows to route the file through the Svelte compiler before running the test by adding `.svelte` to the filename (e.g `multiplier.svelte.test.js`). After that, you can use runes inside your tests.
+Since Vitest processes your test files the same way as your source files, you can use runes inside your tests as long as the filename includes `.svelte`:
 
 ```js
 /// file: multiplier.svelte.test.js
