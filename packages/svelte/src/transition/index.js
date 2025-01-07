@@ -108,10 +108,16 @@ var slide_warning = false;
 export function slide(node, { delay = 0, duration = 400, easing = cubic_out, axis = 'y' } = {}) {
 	const style = getComputedStyle(node);
 
-	if (DEV && style.display.startsWith('table-') && !slide_warning) {
+	if (
+		DEV &&
+		!slide_warning &&
+		(style.display.includes('table') ||
+			style.display.includes('inline') ||
+			style.display === 'contents')
+	) {
 		slide_warning = true;
 		Promise.resolve().then(() => (slide_warning = false));
-		w.transition_slide_display_table(style.display);
+		w.transition_slide_display(style.display);
 	}
 
 	const opacity = +style.opacity;

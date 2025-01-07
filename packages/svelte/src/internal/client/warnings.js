@@ -171,10 +171,10 @@ export function state_proxy_equality_mismatch(operator) {
  * The `slide` transition does not work correctly with elements with `display: %value%`
  * @param {string} value
  */
-export function transition_slide_display_table(value) {
+export function transition_slide_display(value) {
 	if (DEV) {
-		console.warn(`%c[svelte] transition_slide_display_table\n%cThe \`slide\` transition does not work correctly with elements with \`display: ${value}\`\nhttps://svelte.dev/e/transition_slide_display_table`, bold, normal);
+		console.warn(`%c[svelte] transition_slide_display\n%cThe \`slide\` transition does not work correctly with elements with \`display: ${value}\`\nhttps://svelte.dev/e/transition_slide_display`, bold, normal);
 	} else {
-		console.warn(`https://svelte.dev/e/transition_slide_display_table`);
+		console.warn(`https://svelte.dev/e/transition_slide_display`);
 	}
 }
