@@ -119,14 +119,17 @@ function match_quote(parser, start, quote) {
 	while (i < parser.template.length) {
 		const char = parser.template[i++];
 
-		if (!is_escaped && char === quote) {
+		if (is_escaped) {
+			is_escaped = false;
+			continue;
+		}
+
+		if (char === quote) {
 			return i;
 		}
 
-		if (!is_escaped && char === '\\') {
+		if (char === '\\') {
 			is_escaped = true;
-		} else if (is_escaped) {
-			is_escaped = false;
 		}
 
 		if (quote === '`' && char === '$' && parser.template[i] === '{') {
