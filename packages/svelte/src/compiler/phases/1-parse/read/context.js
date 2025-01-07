@@ -2,7 +2,6 @@
 /** @import { Pattern } from 'estree' */
 /** @import { Parser } from '../index.js' */
 // @ts-expect-error acorn type definitions are borked in the release we use
-import { isIdentifierStart } from 'acorn';
 import {
 	is_bracket_open,
 	is_bracket_close,
@@ -22,10 +21,9 @@ export default function read_pattern(parser) {
 	const start = parser.index;
 	let i = parser.index;
 
-	const code = parser.code_point_at(i);
+	const name = parser.read_identifier();
 
-	if (isIdentifierStart(code, true)) {
-		const name = /** @type {string} */ (parser.read_identifier());
+	if (name !== null) {
 		const annotation = read_type_annotation(parser);
 
 		return {
@@ -41,29 +39,29 @@ export default function read_pattern(parser) {
 		};
 	}
 
-	if (!is_bracket_open(code)) {
+	if (!is_bracket_open(parser.template[i])) {
 		e.expected_pattern(i);
 	}
 
-	const bracket_stack = [code];
-	i += code <= 0xffff ? 1 : 2;
+	/** @type {string[]} */
+	const bracket_stack = [];
 
 	while (i < parser.template.length) {
-		const code = parser.code_point_at(i);
+		const char = parser.template[i];
 
-		if (is_bracket_open(code)) {
-			bracket_stack.push(code);
-		} else if (is_bracket_close(code)) {
-			const popped = /** @type {number} */ (bracket_stack.pop());
-			if (!is_bracket_pair(popped, code)) {
-				e.expected_token(i, String.fromCharCode(/** @type {number} */ (get_bracket_close(popped))));
+		if (is_bracket_open(char)) {
+			bracket_stack.push(char);
+		} else if (is_bracket_close(char)) {
+			const popped = /** @type {string} */ (bracket_stack.pop());
+			if (!is_bracket_pair(popped, char)) {
+				e.expected_token(i, /** @type {string} */ (get_bracket_close(popped)));
 			}
 			if (bracket_stack.length === 0) {
-				i += code <= 0xffff ? 1 : 2;
+				i += 1;
 				break;
 			}
 		}
-		i += code <= 0xffff ? 1 : 2;
+		i += 1;
 	}
 
 	parser.index = i;

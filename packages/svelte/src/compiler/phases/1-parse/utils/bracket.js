@@ -1,23 +1,23 @@
-const SQUARE_BRACKET_OPEN = '['.charCodeAt(0);
-const SQUARE_BRACKET_CLOSE = ']'.charCodeAt(0);
-const CURLY_BRACKET_OPEN = '{'.charCodeAt(0);
-const CURLY_BRACKET_CLOSE = '}'.charCodeAt(0);
-const PARENTHESES_OPEN = '('.charCodeAt(0);
-const PARENTHESES_CLOSE = ')'.charCodeAt(0);
+const SQUARE_BRACKET_OPEN = '[';
+const SQUARE_BRACKET_CLOSE = ']';
+const CURLY_BRACKET_OPEN = '{';
+const CURLY_BRACKET_CLOSE = '}';
+const PARENTHESES_OPEN = '(';
+const PARENTHESES_CLOSE = ')';
 
-/** @param {number} code */
-export function is_bracket_open(code) {
-	return code === SQUARE_BRACKET_OPEN || code === CURLY_BRACKET_OPEN;
+/** @param {string} char */
+export function is_bracket_open(char) {
+	return char === SQUARE_BRACKET_OPEN || char === CURLY_BRACKET_OPEN;
 }
 
-/** @param {number} code */
-export function is_bracket_close(code) {
-	return code === SQUARE_BRACKET_CLOSE || code === CURLY_BRACKET_CLOSE;
+/** @param {string} char */
+export function is_bracket_close(char) {
+	return char === SQUARE_BRACKET_CLOSE || char === CURLY_BRACKET_CLOSE;
 }
 
 /**
- * @param {number} open
- * @param {number} close
+ * @param {string} open
+ * @param {string} close
  */
 export function is_bracket_pair(open, close) {
 	return (
@@ -26,14 +26,16 @@ export function is_bracket_pair(open, close) {
 	);
 }
 
-/** @param {number} open */
+/** @param {string} open */
 export function get_bracket_close(open) {
 	if (open === SQUARE_BRACKET_OPEN) {
 		return SQUARE_BRACKET_CLOSE;
 	}
+
 	if (open === CURLY_BRACKET_OPEN) {
 		return CURLY_BRACKET_CLOSE;
 	}
+
 	if (open === PARENTHESES_OPEN) {
 		return PARENTHESES_CLOSE;
 	}
@@ -130,8 +132,7 @@ function count_leading_backslashes(string, search_start_index) {
  * @returns {number | undefined} The index of the closing bracket, or undefined if not found.
  */
 export function find_matching_bracket(template, index, open) {
-	const open_code = open.charCodeAt(0);
-	const close_code = get_bracket_close(open_code);
+	const close = get_bracket_close(open);
 	let brackets = 1;
 	let i = index;
 	while (brackets > 0 && i < template.length) {
@@ -157,10 +158,10 @@ export function find_matching_bracket(template, index, open) {
 				continue;
 			}
 			default: {
-				const code = template.codePointAt(i);
-				if (code === open_code) {
+				const char = template[i];
+				if (char === open) {
 					brackets++;
-				} else if (code === close_code) {
+				} else if (char === close) {
 					brackets--;
 				}
 				if (brackets === 0) {

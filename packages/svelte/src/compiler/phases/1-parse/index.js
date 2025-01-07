@@ -213,11 +213,6 @@ export class Parser {
 		}
 	}
 
-	/** @param {number} i */
-	code_point_at(i) {
-		return /** @type {number} */ (this.template.codePointAt(i));
-	}
-
 	/**
 	 * Search for a regex starting at the current index and return the result if it matches
 	 * @param {RegExp} pattern  Should have a ^ anchor at the start so the regex doesn't search past the beginning, resulting in worse performance
@@ -234,13 +229,13 @@ export class Parser {
 
 		let i = this.index;
 
-		const code = this.code_point_at(i);
+		const code = /** @type {number} */ (this.template.codePointAt(i));
 		if (!isIdentifierStart(code, true)) return null;
 
 		i += code <= 0xffff ? 1 : 2;
 
 		while (i < this.template.length) {
-			const code = this.code_point_at(i);
+			const code = /** @type {number} */ (this.template.codePointAt(i));
 
 			if (!isIdentifierChar(code, true)) break;
 			i += code <= 0xffff ? 1 : 2;
