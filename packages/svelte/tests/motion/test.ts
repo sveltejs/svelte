@@ -46,7 +46,7 @@ describe('motion', () => {
 
 			size.set(100, { duration: 0 });
 			assert.equal(size.current, 100);
-		})
+		});
 	});
 
 	it('updates correctly when initialized with a `null`-ish value', () => {
