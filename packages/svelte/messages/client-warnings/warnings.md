@@ -186,3 +186,11 @@ To fix it, either create callback props to communicate changes, or mark `person`
 ```
 
 To resolve this, ensure you're comparing values where both values were created with `$state(...)`, or neither were. Note that `$state.raw(...)` will _not_ create a state proxy.
+
+## transition_slide_display_table
+
+> The `slide` transition does not work correctly with elements with `display: %value%`
+
+The [slide](/docs/svelte/svelte-transition#slide) transition works by animating the `height` of the element. Setting `height` to a value smaller than the element's natural height has no effect if the element's [`display`](https://developer.mozilla.org/en-US/docs/Web/CSS/display) style starts with `table` (which is the default state of table elements such as `<tr>`).
+
+Consider using a `flex` or `grid` layout instead.
