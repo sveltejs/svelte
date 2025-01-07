@@ -1580,7 +1580,7 @@ export function unexpected_reserved_word(node, word) {
  * @returns {never}
  */
 export function unterminated_string_constant(node) {
-	e(node, "unterminated_string_constant", "Unterminated string constant");
+	e(node, "unterminated_string_constant", `Unterminated string constant\nhttps://svelte.dev/e/unterminated_string_constant`);
 }
 
 /**
