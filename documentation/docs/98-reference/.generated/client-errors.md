@@ -133,3 +133,27 @@ Reading state that was created inside the same derived is forbidden. Consider us
 ```
 Updating state inside a derived or a template expression is forbidden. If the value should not be reactive, declare it without `$state`
 ```
+
+This error is thrown in a situation like this:
+
+```svelte
+<script>
+    let count = $state(0);
+    let multiple = $derived.by(() => {
+        const result = count * 2;
+        if (result > 10) {
+            count = 0;
+        }
+        return result;
+    });
+</script>
+
+<button onclick={() => count++}>{count} / {multiple}</button>
+```
+
+Here, the `$derived` updates `count`, which is `$state` and therefore forbidden to do. It is forbidden because the reactive graph could become unstable as a result, leading to subtle bugs, like values being stale or effects firing in the wrong order. To prevent this, Svelte errors when detecting an update to a `$state` variable.
+
+To fix this:
+- See if it's possible to refactor your `$derived` such that the update becomes unnecessary
+- Think about why you need to update `$state` inside a `$derived` in the first place. Maybe it's because you're using `bind:`, which leads you down a bad code path, and separating input and output path (by splitting it up to an attribute and an event, or by using [Function bindings](bind#Function-bindings)) makes it possible avoid the update
+- If it's unavoidable, you may need to use an [`$effect`]($effect) instead. This could include splitting parts of the `$derived` into an [`$effect`]($effect) which does the updates
