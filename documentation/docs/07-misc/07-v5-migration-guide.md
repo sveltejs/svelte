@@ -597,28 +597,57 @@ export declare const MyComponent: Component<{
 
 To declare that a component of a certain type is required:
 
-```svelte
-<script lang="ts">
-	import type { ---SvelteComponent--- +++Component+++ } from 'svelte';
-	import {
-		ComponentA,
-		ComponentB
-	} from 'component-library';
+```js
+import { ComponentA, ComponentB } from 'component-library';
+---import type { SvelteComponent } from 'svelte';---
++++import type { Component } from 'svelte';+++
 
-	---let component: typeof SvelteComponent<{ foo: string }>---
-	+++let component: Component<{ foo: string }>+++ = $state(
-		Math.random() ? ComponentA : ComponentB
-	);
-</script>
-
-<svelte:component this={component} foo="bar" />
+---let C: typeof SvelteComponent<{ foo: string }> = $state(---
++++let C: Component<{ foo: string }> = $state(+++
+	Math.random() ? ComponentA : ComponentB
+);
 ```
 
-The two utility types `ComponentEvents` and `ComponentType` are also deprecated. `ComponentEvents` is obsolete because events are defined as callback props now, and `ComponentType` is obsolete because the new `Component` type is the component type already (e.g. `ComponentType<SvelteComponent<{ prop: string }>>` == `Component<{ prop: string }>`).
+The two utility types `ComponentEvents` and `ComponentType` are also deprecated. `ComponentEvents` is obsolete because events are defined as callback props now, and `ComponentType` is obsolete because the new `Component` type is the component type already (i.e. `ComponentType<SvelteComponent<{ prop: string }>>` is equivalent to `Component<{ prop: string }>`).
 
 ### bind:this changes
 
 Because components are no longer classes, using `bind:this` no longer returns a class instance with `$set`, `$on` and `$destroy` methods on it. It only returns the instance exports (`export function/const`) and, if you're using the `accessors` option, a getter/setter-pair for each property.
+
+## `<svelte:component>` is no longer necessary
+
+In Svelte 4, components are _static_ — if you render `<Thing>`, and the value of `Thing` changes, [nothing happens](/playground/7f1fa24f0ab44c1089dcbb03568f8dfa?version=4.2.18). To make it dynamic you had to use `<svelte:component>`.
+
+This is no longer true in Svelte 5:
+
+```svelte
+<script>
+	import A from './A.svelte';
+	import B from './B.svelte';
+
+	let Thing = $state();
+</script>
+
+<select bind:value={Thing}>
+	<option value={A}>A</option>
+	<option value={B}>B</option>
+</select>
+
+<!-- these are equivalent -->
+<Thing />
+<svelte:component this={Thing} />
+```
+While migrating, keep in mind that your component's name should be capitalized (`Thing`) to distinguish it from elements, unless using dot notation.
+
+### Dot notation indicates a component
+
+In Svelte 4, `<foo.bar>` would create an element with a tag name of `"foo.bar"`. In Svelte 5, `foo.bar` is treated as a component instead. This is particularly useful inside `each` blocks:
+
+```svelte
+{#each items as item}
+	<item.component {...item.props} />
+{/each}
+```
 
 ## Whitespace handling changed
 
@@ -652,16 +681,6 @@ The `legacy` compiler option, which generated bulkier but IE-friendly code, no l
 ## The `children` prop is reserved
 
 Content inside component tags becomes a snippet prop called `children`. You cannot have a separate prop by that name.
-
-## Dot notation indicates a component
-
-In Svelte 4, `<foo.bar>` would create an element with a tag name of `"foo.bar"`. In Svelte 5, `foo.bar` is treated as a component instead. This is particularly useful inside `each` blocks:
-
-```svelte
-{#each items as item}
-	<item.component {...item.props} />
-{/each}
-```
 
 ## Breaking changes in runes mode
 
@@ -699,30 +718,6 @@ In Svelte 4, doing the following triggered reactivity:
 ```
 
 This is because the Svelte compiler treated the assignment to `foo.value` as an instruction to update anything that referenced `foo`. In Svelte 5, reactivity is determined at runtime rather than compile time, so you should define `value` as a reactive `$state` field on the `Foo` class. Wrapping `new Foo()` with `$state(...)` will have no effect — only vanilla objects and arrays are made deeply reactive.
-
-### `<svelte:component>` is no longer necessary
-
-In Svelte 4, components are _static_ — if you render `<Thing>`, and the value of `Thing` changes, [nothing happens](/playground/7f1fa24f0ab44c1089dcbb03568f8dfa?version=4.2.18). To make it dynamic you must use `<svelte:component>`.
-
-This is no longer true in Svelte 5:
-
-```svelte
-<script>
-	import A from './A.svelte';
-	import B from './B.svelte';
-
-	let Thing = $state();
-</script>
-
-<select bind:value={Thing}>
-	<option value={A}>A</option>
-	<option value={B}>B</option>
-</select>
-
-<!-- these are equivalent -->
-<Thing />
-<svelte:component this={Thing} />
-```
 
 ### Touch and wheel events are passive
 
