@@ -299,28 +299,6 @@ export function client_component(analysis, options) {
 			(binding.kind === 'prop' || binding.kind === 'bindable_prop') && !name.startsWith('$$')
 	);
 
-	if (dev && analysis.runes) {
-		const exports = analysis.exports.map(({ name, alias }) => b.literal(alias ?? name));
-		/** @type {ESTree.Literal[]} */
-		const bindable = [];
-		for (const [name, binding] of properties) {
-			if (binding.kind === 'bindable_prop') {
-				bindable.push(b.literal(binding.prop_alias ?? name));
-			}
-		}
-		instance.body.unshift(
-			b.stmt(
-				b.call(
-					'$.validate_prop_bindings',
-					b.id('$$props'),
-					b.array(bindable),
-					b.array(exports),
-					b.id(`${analysis.name}`)
-				)
-			)
-		);
-	}
-
 	if (analysis.accessors) {
 		for (const [name, binding] of properties) {
 			const key = binding.prop_alias ?? name;

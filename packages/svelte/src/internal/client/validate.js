@@ -1,5 +1,5 @@
 import { dev_current_component_function } from './runtime.js';
-import { get_descriptor, is_array } from '../shared/utils.js';
+import { is_array } from '../shared/utils.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
 import { render_effect } from './reactivity/effects.js';
@@ -36,29 +36,6 @@ export function validate_each_keys(collection, key_fn) {
 			keys.set(key, i);
 		}
 	});
-}
-
-/**
- * @param {Record<string, any>} $$props
- * @param {string[]} bindable
- * @param {string[]} exports
- * @param {Function & { [FILENAME]: string }} component
- */
-export function validate_prop_bindings($$props, bindable, exports, component) {
-	for (const key in $$props) {
-		var setter = get_descriptor($$props, key)?.set;
-		var name = component.name;
-
-		if (setter) {
-			if (exports.includes(key) && !bindable.includes(key)) {
-				e.bind_invalid_export(component[FILENAME], key, name);
-			}
-
-			if (!bindable.includes(key)) {
-				e.bind_not_bindable(key, component[FILENAME], name);
-			}
-		}
-	}
 }
 
 /**
