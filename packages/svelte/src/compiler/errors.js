@@ -151,12 +151,12 @@ export function dollar_prefix_invalid(node) {
 }
 
 /**
- * Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)
+ * Cannot reassign or bind to the each block argument itself in runes mode. Use the array and index variables instead: For reassignments `array[i] = value` instead of `entry = value`, for bindings `bind:prop={array[i]}` instead of `bind:prop={value}`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function each_item_invalid_assignment(node) {
-	e(node, "each_item_invalid_assignment", `Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. \`array[i] = value\` instead of \`entry = value\`)\nhttps://svelte.dev/e/each_item_invalid_assignment`);
+	e(node, "each_item_invalid_assignment", `Cannot reassign or bind to the each block argument itself in runes mode. Use the array and index variables instead: For reassignments \`array[i] = value\` instead of \`entry = value\`, for bindings \`bind:prop={array[i]}\` instead of \`bind:prop={value}\`\nhttps://svelte.dev/e/each_item_invalid_assignment`);
 }
 
 /**

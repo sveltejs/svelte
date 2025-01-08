@@ -32,7 +32,37 @@
 
 ## each_item_invalid_assignment
 
-> Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)
+> Cannot reassign or bind to the each block argument itself in runes mode. Use the array and index variables instead: For reassignments `array[i] = value` instead of `entry = value`, for bindings `bind:prop={array[i]}` instead of `bind:prop={value}`
+
+In legacy mode, it was possible to reassign or bind to the each block argument itself:
+
+```svelte
+<script>
+	let array = [1, 2, 3];
+</script>
+
+{#each array as entry}
+	<!-- reassignment -->
+	<button on:click={() => entry = 4}>change</button>
+	<!-- binding -->
+	<input bind:value={entry}>
+{/each}
+```
+
+This is no longer possible in runes mode, because the array could also be a computed value such as `{#each array.filter((i) => i % 2)}`, at which point things get unstable. Svelte therefore requires you to be explicit about what to bind to, requiring a stable reference. Therefore, use the array and index variables instead:
+
+```svelte
+<script>
+	let array = $state([1, 2, 3]);
+</script>
+
+{#each array as entry, idx}
+	<!-- reassignment -->
+	<button onclick={() => array[idx] = 4}>change</button>
+	<!-- binding -->
+	<input bind:value={array[idx]}>
+{/each}
+```
 
 ## effect_invalid_placement
 
