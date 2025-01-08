@@ -166,3 +166,15 @@ export function state_proxy_equality_mismatch(operator) {
 		console.warn(`https://svelte.dev/e/state_proxy_equality_mismatch`);
 	}
 }
+
+/**
+ * The `slide` transition does not work correctly for elements with `display: %value%`
+ * @param {string} value
+ */
+export function transition_slide_display(value) {
+	if (DEV) {
+		console.warn(`%c[svelte] transition_slide_display\n%cThe \`slide\` transition does not work correctly for elements with \`display: ${value}\`\nhttps://svelte.dev/e/transition_slide_display`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/transition_slide_display`);
+	}
+}
