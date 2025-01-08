@@ -597,39 +597,18 @@ export declare const MyComponent: Component<{
 
 To declare that a component of a certain type is required:
 
-```svelte
-<script lang="ts">
-	import type { ---SvelteComponent--- +++Component+++ } from 'svelte';
-	import {
-		ComponentA,
-		ComponentB
-	} from 'component-library';
+```js
+import { ComponentA, ComponentB } from 'component-library';
+---import type { SvelteComponent } from 'svelte';---
++++import type { Component } from 'svelte';+++
 
-	---let component: typeof SvelteComponent<{ foo: string }>---
-	+++let component: Component<{ foo: string }>+++ = $state(
-		Math.random() ? ComponentA : ComponentB
-	);
-</script>
-
-<svelte:component this={component} foo="bar" />
-```
-Or using the [new syntax](#svelte:component-is-no-longer-necessary):
-
-```svelte
-<script lang="ts">
-	import type { Component } from 'svelte';
-	import {
-		ComponentA,
-		ComponentB
-	} from 'component-library';
-	let Component: Component<{ foo: string }> = $state(
-		Math.random() ? ComponentA : ComponentB
-	);
-</script>
-<Component foo="bar" />
+---let C: typeof SvelteComponent<{ foo: string }> = $state(---
++++let C: Component<{ foo: string }> = $state(+++
+	Math.random() ? ComponentA : ComponentB
+);
 ```
 
-The two utility types `ComponentEvents` and `ComponentType` are also deprecated. `ComponentEvents` is obsolete because events are defined as callback props now, and `ComponentType` is obsolete because the new `Component` type is the component type already (e.g. `ComponentType<SvelteComponent<{ prop: string }>>` == `Component<{ prop: string }>`).
+The two utility types `ComponentEvents` and `ComponentType` are also deprecated. `ComponentEvents` is obsolete because events are defined as callback props now, and `ComponentType` is obsolete because the new `Component` type is the component type already (i.e. `ComponentType<SvelteComponent<{ prop: string }>>` is equivalent to `Component<{ prop: string }>`).
 
 ### bind:this changes
 
@@ -658,7 +637,7 @@ This is no longer true in Svelte 5:
 <Thing />
 <svelte:component this={Thing} />
 ```
-While migrating, keep in mind that your user-defined component's name should be capitalized (`Thing`) to distinguish it from a normal HTML element and avoid incorrect types.
+While migrating, keep in mind that your component's name should be capitalized (`Thing`) to distinguish it from elements, unless using dot notation.
 
 ### Dot notation indicates a component
 
