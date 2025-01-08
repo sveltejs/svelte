@@ -37,33 +37,11 @@ export default function read_pattern(parser) {
 		e.expected_pattern(i);
 	}
 
-	/** @type {string[]} */
-	const bracket_stack = [];
-
-	while (i < parser.template.length) {
-		const char = parser.template[i];
-
-		if (is_bracket_open(char)) {
-			bracket_stack.push(char);
-		} else if (is_bracket_close(char)) {
-			const popped = /** @type {string} */ (bracket_stack.pop());
-			const expected = /** @type {string} */ (get_bracket_close(popped));
-
-			if (char !== expected) {
-				e.expected_token(i, expected);
-			}
-
-			if (bracket_stack.length === 0) {
-				i += 1;
-				break;
-			}
-		}
-		i += 1;
-	}
-
+	i = match_bracket(parser, start);
 	parser.index = i;
 
 	const pattern_string = parser.template.slice(start, i);
+
 	try {
 		// the length of the `space_with_newline` has to be start - 1
 		// because we added a `(` in front of the pattern_string,
@@ -91,6 +69,75 @@ export default function read_pattern(parser) {
 	} catch (error) {
 		parser.acorn_error(error);
 	}
+}
+
+/**
+ * @param {Parser} parser
+ * @param {number} start
+ */
+function match_bracket(parser, start) {
+	const bracket_stack = [];
+
+	let i = start;
+
+	while (i < parser.template.length) {
+		let char = parser.template[i++];
+
+		if (char === "'" || char === '"' || char === '`') {
+			i = match_quote(parser, i, char);
+			continue;
+		}
+
+		if (is_bracket_open(char)) {
+			bracket_stack.push(char);
+		} else if (is_bracket_close(char)) {
+			const popped = /** @type {string} */ (bracket_stack.pop());
+			const expected = /** @type {string} */ (get_bracket_close(popped));
+
+			if (char !== expected) {
+				e.expected_token(i - 1, expected);
+			}
+
+			if (bracket_stack.length === 0) {
+				return i;
+			}
+		}
+	}
+
+	e.unexpected_eof(parser.template.length);
+}
+
+/**
+ * @param {Parser} parser
+ * @param {number} start
+ * @param {string} quote
+ */
+function match_quote(parser, start, quote) {
+	let is_escaped = false;
+	let i = start;
+
+	while (i < parser.template.length) {
+		const char = parser.template[i++];
+
+		if (is_escaped) {
+			is_escaped = false;
+			continue;
+		}
+
+		if (char === quote) {
+			return i;
+		}
+
+		if (char === '\\') {
+			is_escaped = true;
+		}
+
+		if (quote === '`' && char === '$' && parser.template[i] === '{') {
+			i = match_bracket(parser, i);
+		}
+	}
+
+	e.unterminated_string_constant(start);
 }
 
 /**

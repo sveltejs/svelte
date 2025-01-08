@@ -418,6 +418,10 @@ See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-ele
 
 > '%word%' is a reserved word in JavaScript and cannot be used here
 
+## unterminated_string_constant
+
+> Unterminated string constant
+
 ## void_element_invalid_content
 
 > Void elements cannot have children or closing tags
