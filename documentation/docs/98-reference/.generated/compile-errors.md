@@ -331,7 +331,7 @@ The $ prefix is reserved, and cannot be used for variables and imports
 ### each_item_invalid_assignment
 
 ```
-Cannot reassign or bind to the each block argument itself in runes mode. Use the array and index variables instead: For reassignments `array[i] = value` instead of `entry = value`, for bindings `bind:prop={array[i]}` instead of `bind:prop={value}`
+Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`, or `bind:value={array[i]}` instead of `bind:value={entry}`)
 ```
 
 In legacy mode, it was possible to reassign or bind to the each block argument itself:
@@ -344,23 +344,25 @@ In legacy mode, it was possible to reassign or bind to the each block argument i
 {#each array as entry}
 	<!-- reassignment -->
 	<button on:click={() => entry = 4}>change</button>
+
 	<!-- binding -->
 	<input bind:value={entry}>
 {/each}
 ```
 
-This is no longer possible in runes mode, because the array could also be a computed value such as `{#each array.filter((i) => i % 2)}`, at which point things get unstable. Svelte therefore requires you to be explicit about what to bind to, requiring a stable reference. Therefore, use the array and index variables instead:
+This turned out to be buggy and unpredictable, particularly when working with derived values (such as `array.map(...)`), and as such is forbidden in runes mode. You can achieve the same outcome by using the index instead:
 
 ```svelte
 <script>
 	let array = $state([1, 2, 3]);
 </script>
 
-{#each array as entry, idx}
+{#each array as entry, i}
 	<!-- reassignment -->
-	<button onclick={() => array[idx] = 4}>change</button>
+	<button onclick={() => array[i] = 4}>change</button>
+
 	<!-- binding -->
-	<input bind:value={array[idx]}>
+	<input bind:value={array[i]}>
 {/each}
 ```
 
