@@ -47,7 +47,7 @@ function log_entry(signal, entry) {
 	// eslint-disable-next-line no-console
 	console.groupCollapsed(
 		`%c${type}`,
-		!dirty ? 'color: CornflowerBlue; font-weight: bold' : 'color: grey; font-weight: bold',
+		dirty ? 'color: CornflowerBlue; font-weight: bold' : 'color: grey; font-weight: bold',
 		typeof value === 'object' && value !== null && STATE_SYMBOL in value
 			? snapshot(value, true)
 			: value
