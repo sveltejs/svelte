@@ -57,10 +57,10 @@ export function derived(fn) {
 		equals,
 		f: flags,
 		fn,
-		r_version: 0,
 		reactions: null,
+		rv: 0,
 		v: /** @type {V} */ (null),
-		w_version: 0,
+		wv: 0,
 		parent: parent_derived ?? active_effect
 	};
 
@@ -183,7 +183,7 @@ export function update_derived(derived) {
 
 	if (!derived.equals(value)) {
 		derived.v = value;
-		derived.w_version = increment_write_version();
+		derived.wv = increment_write_version();
 	}
 }
 

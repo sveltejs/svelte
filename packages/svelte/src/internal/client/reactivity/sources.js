@@ -57,8 +57,8 @@ export function source(v, stack) {
 		v,
 		reactions: null,
 		equals,
-		r_version: 0,
-		w_version: 0
+		rv: 0,
+		wv: 0
 	};
 
 	if (DEV && tracing_mode_flag) {
@@ -170,7 +170,7 @@ export function internal_set(source, value) {
 	if (!source.equals(value)) {
 		var old_value = source.v;
 		source.v = value;
-		source.w_version = increment_write_version();
+		source.wv = increment_write_version();
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
