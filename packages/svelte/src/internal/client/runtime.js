@@ -128,7 +128,8 @@ export function set_untracked_writes(value) {
 }
 
 /** @type {number} Used by sources and deriveds for handling updates to unowned deriveds it starts from 1 to differentiate between a created effect and a run one for tracing */
-let current_version = 1;
+let write_version = 1;
+let read_version = 0;
 
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
@@ -168,8 +169,8 @@ export function set_dev_current_component_function(fn) {
 	dev_current_component_function = fn;
 }
 
-export function increment_version() {
-	return ++current_version;
+export function increment_write_version() {
+	return ++write_version;
 }
 
 /** @returns {boolean} */
@@ -226,7 +227,7 @@ export function check_dirtiness(reaction) {
 					update_derived(/** @type {Derived} */ (dependency));
 				}
 
-				if (dependency.version > reaction.version) {
+				if (dependency.w_version > reaction.w_version) {
 					return true;
 				}
 			}
@@ -398,6 +399,7 @@ export function update_reaction(reaction) {
 	skip_reaction = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	derived_sources = null;
 	component_context = reaction.ctx;
+	read_version++;
 
 	try {
 		var result = /** @type {Function} */ (0, reaction.fn)();
@@ -528,7 +530,7 @@ export function update_effect(effect) {
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
-		effect.version = current_version;
+		effect.w_version = write_version;
 
 		var deps = effect.deps;
 
@@ -540,7 +542,7 @@ export function update_effect(effect) {
 			for (let i = 0; i < deps.length; i++) {
 				var dep = deps[i];
 				if (dep.trace_need_increase) {
-					dep.version = increment_version();
+					dep.w_version = increment_write_version();
 					dep.trace_need_increase = undefined;
 					dep.trace_v = undefined;
 				}
@@ -880,27 +882,29 @@ export function get(signal) {
 			e.state_unsafe_local_read();
 		}
 		var deps = active_reaction.deps;
+		if (signal.r_version < read_version) {
+			signal.r_version = read_version;
+			// If the signal is accessing the same dependencies in the same
+			// order as it did last time, increment `skipped_deps`
+			// rather than updating `new_deps`, which creates GC cost
+			if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
+				skipped_deps++;
+			} else if (new_deps === null) {
+				new_deps = [signal];
+			} else {
+				new_deps.push(signal);
+			}
 
-		// If the signal is accessing the same dependencies in the same
-		// order as it did last time, increment `skipped_deps`
-		// rather than updating `new_deps`, which creates GC cost
-		if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
-			skipped_deps++;
-		} else if (new_deps === null) {
-			new_deps = [signal];
-		} else {
-			new_deps.push(signal);
-		}
-
-		if (
-			untracked_writes !== null &&
-			active_effect !== null &&
-			(active_effect.f & CLEAN) !== 0 &&
-			(active_effect.f & BRANCH_EFFECT) === 0 &&
-			untracked_writes.includes(signal)
-		) {
-			set_signal_status(active_effect, DIRTY);
-			schedule_effect(active_effect);
+			if (
+				untracked_writes !== null &&
+				active_effect !== null &&
+				(active_effect.f & CLEAN) !== 0 &&
+				(active_effect.f & BRANCH_EFFECT) === 0 &&
+				untracked_writes.includes(signal)
+			) {
+				set_signal_status(active_effect, DIRTY);
+				schedule_effect(active_effect);
+			}
 		}
 	} else if (is_derived && /** @type {Derived} */ (signal).deps === null) {
 		var derived = /** @type {Derived} */ (signal);

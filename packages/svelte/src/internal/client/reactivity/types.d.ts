@@ -4,18 +4,20 @@ export interface Signal {
 	/** Flags bitmask */
 	f: number;
 	/** Write version */
-	version: number;
+	w_version: number;
 }
 
 export interface Value<V = unknown> extends Signal {
-	/** Signals that read from this signal */
-	reactions: null | Reaction[];
+	created?: Error | null;
 	/** Equality function */
 	equals: Equals;
+	/** Signals that read from this signal */
+	reactions: null | Reaction[];
+	/** Read version */
+	r_version: number;
 	/** The latest value for this signal */
 	v: V;
 	/** Dev only */
-	created?: Error | null;
 	updated?: Error | null;
 	trace_need_increase?: boolean;
 	trace_v?: V;
@@ -36,6 +38,8 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 	fn: () => V;
 	/** Reactions created inside this signal */
 	children: null | Reaction[];
+	/** Read version */
+	r_version: number;
 	/** Parent effect or derived */
 	parent: Effect | Derived | null;
 }

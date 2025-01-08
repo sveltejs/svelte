@@ -110,7 +110,7 @@ function create_effect(type, fn, sync, push = true) {
 		prev: null,
 		teardown: null,
 		transitions: null,
-		version: 0
+		w_version: 0
 	};
 
 	if (DEV) {

@@ -43,7 +43,9 @@ function log_entry(signal, entry) {
 	const type = (signal.f & DERIVED) !== 0 ? '$derived' : '$state';
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
 	const status =
-		signal.version > current_reaction.version || current_reaction.version === 0 ? 'dirty' : 'clean';
+		signal.w_version > current_reaction.w_version || current_reaction.w_version === 0
+			? 'dirty'
+			: 'clean';
 
 	// eslint-disable-next-line no-console
 	console.groupCollapsed(
