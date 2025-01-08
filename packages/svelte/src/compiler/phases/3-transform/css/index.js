@@ -1,5 +1,5 @@
 /** @import { Visitors } from 'zimmerframe' */
-/** @import { ValidatedCompileOptions, Css } from '#compiler' */
+/** @import { AST, ValidatedCompileOptions } from '#compiler' */
 /** @import { ComponentAnalysis } from '../../types.js' */
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
@@ -11,6 +11,7 @@ import { dev } from '../../../state.js';
  * @typedef {{
  *   code: MagicString;
  *   hash: string;
+ *   minify: boolean;
  *   selector: string;
  *   keyframes: string[];
  *   specificity: {
@@ -32,6 +33,7 @@ export function render_stylesheet(source, analysis, options) {
 	const state = {
 		code,
 		hash: analysis.css.hash,
+		minify: analysis.inject_styles && !options.dev,
 		selector: `.${analysis.css.hash}`,
 		keyframes: analysis.css.keyframes,
 		specificity: {
@@ -39,12 +41,15 @@ export function render_stylesheet(source, analysis, options) {
 		}
 	};
 
-	const ast = /** @type {Css.StyleSheet} */ (analysis.css.ast);
+	const ast = /** @type {AST.CSS.StyleSheet} */ (analysis.css.ast);
 
-	walk(/** @type {Css.Node} */ (ast), state, visitors);
+	walk(/** @type {AST.CSS.Node} */ (ast), state, visitors);
 
 	code.remove(0, ast.content.start);
 	code.remove(/** @type {number} */ (ast.content.end), source.length);
+	if (state.minify) {
+		remove_preceding_whitespace(ast.content.end, state);
+	}
 
 	const css = {
 		code: code.toString(),
@@ -66,14 +71,14 @@ export function render_stylesheet(source, analysis, options) {
 	return css;
 }
 
-/** @type {Visitors<Css.Node, State>} */
+/** @type {Visitors<AST.CSS.Node, State>} */
 const visitors = {
 	_: (node, context) => {
 		context.state.code.addSourcemapLocation(node.start);
 		context.state.code.addSourcemapLocation(node.end);
 		context.next();
 	},
-	Atrule(node, { state, next }) {
+	Atrule(node, { state, next, path }) {
 		if (is_keyframes_node(node)) {
 			let start = node.start + node.name.length + 1;
 			while (state.code.original[start] === ' ') start += 1;
@@ -82,7 +87,7 @@ const visitors = {
 
 			if (node.prelude.startsWith('-global-')) {
 				state.code.remove(start, start + 8);
-			} else {
+			} else if (!is_in_global_block(path)) {
 				state.code.prependRight(start, `${state.hash}-`);
 			}
 
@@ -116,22 +121,47 @@ const visitors = {
 
 				index++;
 			}
+		} else if (state.minify) {
+			remove_preceding_whitespace(node.start, state);
+
+			// Don't minify whitespace in custom properties, since some browsers (Chromium < 99)
+			// treat --foo: ; and --foo:; differently
+			if (!node.property.startsWith('--')) {
+				let start = node.start + node.property.length + 1;
+				let end = start;
+				while (/\s/.test(state.code.original[end])) end++;
+				if (end > start) state.code.remove(start, end);
+			}
 		}
 	},
-	Rule(node, { state, next, visit }) {
+	Rule(node, { state, next, visit, path }) {
+		if (state.minify) {
+			remove_preceding_whitespace(node.start, state);
+			remove_preceding_whitespace(node.block.end - 1, state);
+		}
+
 		// keep empty rules in dev, because it's convenient to
 		// see them in devtools
-		if (!dev && is_empty(node)) {
-			state.code.prependRight(node.start, '/* (empty) ');
-			state.code.appendLeft(node.end, '*/');
-			escape_comment_close(node, state.code);
+		if (!dev && is_empty(node, is_in_global_block(path))) {
+			if (state.minify) {
+				state.code.remove(node.start, node.end);
+			} else {
+				state.code.prependRight(node.start, '/* (empty) ');
+				state.code.appendLeft(node.end, '*/');
+				escape_comment_close(node, state.code);
+			}
+
 			return;
 		}
 
-		if (!is_used(node)) {
-			state.code.prependRight(node.start, '/* (unused) ');
-			state.code.appendLeft(node.end, '*/');
-			escape_comment_close(node, state.code);
+		if (!is_used(node) && !is_in_global_block(path)) {
+			if (state.minify) {
+				state.code.remove(node.start, node.end);
+			} else {
+				state.code.prependRight(node.start, '/* (unused) ');
+				state.code.appendLeft(node.end, '*/');
+				escape_comment_close(node, state.code);
+			}
 
 			return;
 		}
@@ -141,54 +171,82 @@ const visitors = {
 
 			if (selector.children.length === 1 && selector.children[0].selectors.length === 1) {
 				// `:global {...}`
-				state.code.prependRight(node.start, '/* ');
-				state.code.appendLeft(node.block.start + 1, '*/');
+				if (state.minify) {
+					state.code.remove(node.start, node.block.start + 1);
+					state.code.remove(node.block.end - 1, node.end);
+				} else {
+					state.code.prependRight(node.start, '/* ');
+					state.code.appendLeft(node.block.start + 1, '*/');
 
-				state.code.prependRight(node.block.end - 1, '/*');
-				state.code.appendLeft(node.block.end, '*/');
+					state.code.prependRight(node.block.end - 1, '/*');
+					state.code.appendLeft(node.block.end, '*/');
+				}
 
-				// don't recurse into selector or body
+				// don't recurse into selectors but visit the body
+				visit(node.block);
 				return;
 			}
-
-			// don't recurse into body
-			visit(node.prelude);
-			return;
 		}
 
 		next();
 	},
 	SelectorList(node, { state, next, path }) {
-		// Only add comments if we're not inside a complex selector that itself is unused
-		if (!path.find((n) => n.type === 'ComplexSelector' && !n.metadata.used)) {
+		// Only add comments if we're not inside a complex selector that itself is unused or a global block
+		if (
+			!is_in_global_block(path) &&
+			!path.find((n) => n.type === 'ComplexSelector' && !n.metadata.used)
+		) {
+			const children = node.children;
 			let pruning = false;
-			let last = node.children[0].start;
+			let prune_start = children[0].start;
+			let last = prune_start;
+			let has_previous_used = false;
 
-			for (let i = 0; i < node.children.length; i += 1) {
-				const selector = node.children[i];
+			for (let i = 0; i < children.length; i += 1) {
+				const selector = children[i];
 
 				if (selector.metadata.used === pruning) {
 					if (pruning) {
 						let i = selector.start;
 						while (state.code.original[i] !== ',') i--;
 
-						state.code.overwrite(i, i + 1, '*/');
+						if (state.minify) {
+							state.code.remove(prune_start, has_previous_used ? i : i + 1);
+						} else {
+							state.code.appendRight(has_previous_used ? i : i + 1, '*/');
+						}
 					} else {
 						if (i === 0) {
-							state.code.prependRight(selector.start, '/* (unused) ');
+							if (state.minify) {
+								prune_start = selector.start;
+							} else {
+								state.code.prependRight(selector.start, '/* (unused) ');
+							}
 						} else {
-							state.code.overwrite(last, selector.start, ' /* (unused) ');
+							if (state.minify) {
+								prune_start = last;
+							} else {
+								state.code.overwrite(last, selector.start, ` /* (unused) `);
+							}
 						}
 					}
 
 					pruning = !pruning;
 				}
 
+				if (!pruning && selector.metadata.used) {
+					has_previous_used = true;
+				}
+
 				last = selector.end;
 			}
 
 			if (pruning) {
-				state.code.appendLeft(last, '*/');
+				if (state.minify) {
+					state.code.remove(prune_start, last);
+				} else {
+					state.code.appendLeft(last, '*/');
+				}
 			}
 		}
 
@@ -201,7 +259,7 @@ const visitors = {
 		if (parent?.type === 'Rule') {
 			specificity = { bumped: false };
 
-			/** @type {Css.Rule | null} */
+			/** @type {AST.CSS.Rule | null} */
 			let rule = parent.metadata.parent_rule;
 
 			while (rule) {
@@ -218,29 +276,10 @@ const visitors = {
 	ComplexSelector(node, context) {
 		const before_bumped = context.state.specificity.bumped;
 
-		/**
-		 * @param {Css.PseudoClassSelector} selector
-		 * @param {Css.Combinator | null} combinator
-		 */
-		function remove_global_pseudo_class(selector, combinator) {
-			if (selector.args === null) {
-				let start = selector.start;
-				if (combinator?.name === ' ') {
-					// div :global.x becomes div.x
-					while (/\s/.test(context.state.code.original[start - 1])) start--;
-				}
-				context.state.code.remove(start, selector.start + ':global'.length);
-			} else {
-				context.state.code
-					.remove(selector.start, selector.start + ':global('.length)
-					.remove(selector.end - 1, selector.end);
-			}
-		}
-
 		for (const relative_selector of node.children) {
 			if (relative_selector.metadata.is_global) {
-				const global = /** @type {Css.PseudoClassSelector} */ (relative_selector.selectors[0]);
-				remove_global_pseudo_class(global, relative_selector.combinator);
+				const global = /** @type {AST.CSS.PseudoClassSelector} */ (relative_selector.selectors[0]);
+				remove_global_pseudo_class(global, relative_selector.combinator, context.state);
 
 				if (
 					node.metadata.rule?.metadata.parent_rule &&
@@ -251,6 +290,13 @@ const visitors = {
 					context.state.code.prependRight(global.start, '&');
 				}
 				continue;
+			} else {
+				// for any :global() or :global at the middle of compound selector
+				for (const selector of relative_selector.selectors) {
+					if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
+						remove_global_pseudo_class(selector, null, context.state);
+					}
+				}
 			}
 
 			if (relative_selector.metadata.scoped) {
@@ -262,13 +308,6 @@ const visitors = {
 						(selector.name === 'is' || selector.name === 'where')
 					) {
 						continue;
-					}
-				}
-
-				// for any :global() or :global at the middle of compound selector
-				for (const selector of relative_selector.selectors) {
-					if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-						remove_global_pseudo_class(selector, null);
 					}
 				}
 
@@ -320,8 +359,50 @@ const visitors = {
 	}
 };
 
-/** @param {Css.Rule} rule */
-function is_empty(rule) {
+/**
+ *
+ * @param {Array<AST.CSS.Node>} path
+ */
+function is_in_global_block(path) {
+	return path.some((node) => node.type === 'Rule' && node.metadata.is_global_block);
+}
+
+/**
+ * @param {AST.CSS.PseudoClassSelector} selector
+ * @param {AST.CSS.Combinator | null} combinator
+ * @param {State} state
+ */
+function remove_global_pseudo_class(selector, combinator, state) {
+	if (selector.args === null) {
+		let start = selector.start;
+		if (combinator?.name === ' ') {
+			// div :global.x becomes div.x
+			while (/\s/.test(state.code.original[start - 1])) start--;
+		}
+		state.code.remove(start, selector.start + ':global'.length);
+	} else {
+		state.code
+			.remove(selector.start, selector.start + ':global('.length)
+			.remove(selector.end - 1, selector.end);
+	}
+}
+
+/**
+ * Walk backwards until we find a non-whitespace character
+ * @param {number} end
+ * @param {State} state
+ */
+function remove_preceding_whitespace(end, state) {
+	let start = end;
+	while (/\s/.test(state.code.original[start - 1])) start--;
+	if (start < end) state.code.remove(start, end);
+}
+
+/**
+ *  @param {AST.CSS.Rule} rule
+ * @param {boolean} is_in_global_block
+ */
+function is_empty(rule, is_in_global_block) {
 	if (rule.metadata.is_global_block) {
 		return rule.block.children.length === 0;
 	}
@@ -332,7 +413,9 @@ function is_empty(rule) {
 		}
 
 		if (child.type === 'Rule') {
-			if (is_used(child) && !is_empty(child)) return false;
+			if ((is_used(child) || is_in_global_block) && !is_empty(child, is_in_global_block)) {
+				return false;
+			}
 		}
 
 		if (child.type === 'Atrule') {
@@ -343,14 +426,14 @@ function is_empty(rule) {
 	return true;
 }
 
-/** @param {Css.Rule} rule */
+/** @param {AST.CSS.Rule} rule */
 function is_used(rule) {
 	return rule.prelude.children.some((selector) => selector.metadata.used);
 }
 
 /**
  *
- * @param {Css.Rule} node
+ * @param {AST.CSS.Rule} node
  * @param {MagicString} code
  */
 function escape_comment_close(node, code) {

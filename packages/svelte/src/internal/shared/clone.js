@@ -49,22 +49,30 @@ export function snapshot(value, skip_warning = false) {
  * @param {Map<T, Snapshot<T>>} cloned
  * @param {string} path
  * @param {string[]} paths
+ * @param {null | T} original The original value, if `value` was produced from a `toJSON` call
  * @returns {Snapshot<T>}
  */
-function clone(value, cloned, path, paths) {
+function clone(value, cloned, path, paths, original = null) {
 	if (typeof value === 'object' && value !== null) {
-		const unwrapped = cloned.get(value);
+		var unwrapped = cloned.get(value);
 		if (unwrapped !== undefined) return unwrapped;
 
 		if (value instanceof Map) return /** @type {Snapshot<T>} */ (new Map(value));
 		if (value instanceof Set) return /** @type {Snapshot<T>} */ (new Set(value));
 
 		if (is_array(value)) {
-			const copy = /** @type {Snapshot<any>} */ ([]);
+			var copy = /** @type {Snapshot<any>} */ (Array(value.length));
 			cloned.set(value, copy);
 
-			for (let i = 0; i < value.length; i += 1) {
-				copy.push(clone(value[i], cloned, DEV ? `${path}[${i}]` : path, paths));
+			if (original !== null) {
+				cloned.set(original, copy);
+			}
+
+			for (var i = 0; i < value.length; i += 1) {
+				var element = value[i];
+				if (i in value) {
+					copy[i] = clone(element, cloned, DEV ? `${path}[${i}]` : path, paths);
+				}
 			}
 
 			return copy;
@@ -72,8 +80,12 @@ function clone(value, cloned, path, paths) {
 
 		if (get_prototype_of(value) === object_prototype) {
 			/** @type {Snapshot<any>} */
-			const copy = {};
+			copy = {};
 			cloned.set(value, copy);
+
+			if (original !== null) {
+				cloned.set(original, copy);
+			}
 
 			for (var key in value) {
 				// @ts-expect-error
@@ -92,7 +104,9 @@ function clone(value, cloned, path, paths) {
 				/** @type {T & { toJSON(): any } } */ (value).toJSON(),
 				cloned,
 				DEV ? `${path}.toJSON()` : path,
-				paths
+				paths,
+				// Associate the instance with the toJSON clone
+				value
 			);
 		}
 	}

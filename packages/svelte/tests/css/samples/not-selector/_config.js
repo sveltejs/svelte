@@ -4,58 +4,30 @@ export default test({
 	warnings: [
 		{
 			code: 'css_unused_selector',
-			message: 'Unused CSS selector ":not(.unused)"',
+			message: 'Unused CSS selector "span :not(.foo)"',
 			start: {
-				line: 8,
+				line: 26,
 				column: 1,
-				character: 89
+				character: 276
 			},
 			end: {
-				line: 8,
-				column: 14,
-				character: 102
+				line: 26,
+				column: 16,
+				character: 291
 			}
 		},
 		{
 			code: 'css_unused_selector',
-			message: 'Unused CSS selector ":not(.foo):not(.unused)"',
+			message: 'Unused CSS selector "span :not(.unused)"',
 			start: {
-				line: 18,
+				line: 29,
 				column: 1,
-				character: 221
-			},
-			end: {
-				line: 18,
-				column: 24,
-				character: 244
-			}
-		},
-		{
-			code: 'css_unused_selector',
-			message: 'Unused CSS selector "p :not(.foo)"',
-			start: {
-				line: 25,
-				column: 1,
-				character: 300
-			},
-			end: {
-				line: 25,
-				column: 13,
 				character: 312
-			}
-		},
-		{
-			code: 'css_unused_selector',
-			message: 'Unused CSS selector ":global(.x) :not(.unused)"',
-			start: {
-				line: 34,
-				column: 1,
-				character: 469
 			},
 			end: {
-				line: 34,
-				column: 26,
-				character: 494
+				line: 29,
+				column: 19,
+				character: 330
 			}
 		}
 	]

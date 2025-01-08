@@ -18,8 +18,9 @@ export function ImportDeclaration(node, context) {
 			for (const specifier of node.specifiers) {
 				if (specifier.type === 'ImportSpecifier') {
 					if (
-						specifier.imported.name === 'beforeUpdate' ||
-						specifier.imported.name === 'afterUpdate'
+						specifier.imported.type === 'Identifier' &&
+						(specifier.imported.name === 'beforeUpdate' ||
+							specifier.imported.name === 'afterUpdate')
 					) {
 						e.runes_mode_invalid_import(specifier, specifier.imported.name);
 					}

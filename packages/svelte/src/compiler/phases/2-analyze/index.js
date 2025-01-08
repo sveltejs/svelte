@@ -1,5 +1,5 @@
 /** @import { Expression, Node, Program } from 'estree' */
-/** @import { Binding, AST, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import { walk } from 'zimmerframe';
@@ -51,6 +51,7 @@ import { RenderTag } from './visitors/RenderTag.js';
 import { SlotElement } from './visitors/SlotElement.js';
 import { SnippetBlock } from './visitors/SnippetBlock.js';
 import { SpreadAttribute } from './visitors/SpreadAttribute.js';
+import { SpreadElement } from './visitors/SpreadElement.js';
 import { StyleDirective } from './visitors/StyleDirective.js';
 import { SvelteBody } from './visitors/SvelteBody.js';
 import { SvelteComponent } from './visitors/SvelteComponent.js';
@@ -60,9 +61,11 @@ import { SvelteFragment } from './visitors/SvelteFragment.js';
 import { SvelteHead } from './visitors/SvelteHead.js';
 import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { SvelteWindow } from './visitors/SvelteWindow.js';
+import { SvelteBoundary } from './visitors/SvelteBoundary.js';
 import { TaggedTemplateExpression } from './visitors/TaggedTemplateExpression.js';
 import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
+import { TransitionDirective } from './visitors/TransitionDirective.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
@@ -161,6 +164,7 @@ const visitors = {
 	SlotElement,
 	SnippetBlock,
 	SpreadAttribute,
+	SpreadElement,
 	StyleDirective,
 	SvelteBody,
 	SvelteComponent,
@@ -170,8 +174,10 @@ const visitors = {
 	SvelteHead,
 	SvelteSelf,
 	SvelteWindow,
+	SvelteBoundary,
 	TaggedTemplateExpression,
 	Text,
+	TransitionDirective,
 	TitleElement,
 	UpdateExpression,
 	UseDirective,
@@ -237,13 +243,15 @@ export function analyze_module(ast, options) {
 		}
 	}
 
+	const analysis = { runes: true, tracing: false };
+
 	walk(
 		/** @type {Node} */ (ast),
 		{
 			scope,
 			scopes,
 			// @ts-expect-error TODO
-			analysis: { runes: true }
+			analysis
 		},
 		visitors
 	);
@@ -253,7 +261,8 @@ export function analyze_module(ast, options) {
 		name: options.filename,
 		accessors: false,
 		runes: true,
-		immutable: true
+		immutable: true,
+		tracing: analysis.tracing
 	};
 }
 
@@ -274,6 +283,8 @@ export function analyze_component(root, source, options) {
 	/** @type {Template} */
 	const template = { ast: root.fragment, scope, scopes };
 
+	let synthetic_stores_legacy_check = [];
+
 	// create synthetic bindings for store subscriptions
 	for (const [name, references] of module.scope.references) {
 		if (name[0] !== '$' || RESERVED.includes(name)) continue;
@@ -283,6 +294,7 @@ export function analyze_component(root, source, options) {
 
 		const store_name = name.slice(1);
 		const declaration = instance.scope.get(store_name);
+		const init = /** @type {Node | undefined} */ (declaration?.initial);
 
 		// If we're not in legacy mode through the compiler option, assume the user
 		// is referencing a rune and not a global store.
@@ -291,9 +303,9 @@ export function analyze_component(root, source, options) {
 			!is_rune(name) ||
 			(declaration !== null &&
 				// const state = $state(0) is valid
-				(get_rune(declaration.initial, instance.scope) === null ||
+				(get_rune(init, instance.scope) === null ||
 					// rune-line names received as props are valid too (but we have to protect against $props as store)
-					(store_name !== 'props' && get_rune(declaration.initial, instance.scope) === '$props')) &&
+					(store_name !== 'props' && get_rune(init, instance.scope) === '$props')) &&
 				// allow `import { derived } from 'svelte/store'` in the same file as `const x = $derived(..)` because one is not a subscription to the other
 				!(
 					name === '$derived' &&
@@ -349,6 +361,22 @@ export function analyze_component(root, source, options) {
 				}
 			}
 
+			// we push to the array because at this moment in time we can't be sure if we are in legacy
+			// mode yet because we are still changing the module scope
+			synthetic_stores_legacy_check.push(() => {
+				// if we are creating a synthetic binding for a let declaration we should also declare
+				// the declaration as state in case it's reassigned and we are not in runes mode (the function will
+				// not be called if we are not in runes mode, that's why there's no !runes check here)
+				if (
+					declaration !== null &&
+					declaration.kind === 'normal' &&
+					declaration.declaration_kind === 'let' &&
+					declaration.reassigned
+				) {
+					declaration.kind = 'state';
+				}
+			});
+
 			const binding = instance.scope.declare(b.id(name), 'store_sub', 'synthetic');
 			binding.references = references;
 			instance.scope.references.set(name, references);
@@ -359,6 +387,12 @@ export function analyze_component(root, source, options) {
 	const component_name = get_component_name(options.filename);
 
 	const runes = options.runes ?? Array.from(module.scope.references.keys()).some(is_rune);
+
+	if (!runes) {
+		for (let check of synthetic_stores_legacy_check) {
+			check();
+		}
+	}
 
 	if (runes && root.module) {
 		const context = root.module.attributes.find((attribute) => attribute.name === 'context');
@@ -377,6 +411,7 @@ export function analyze_component(root, source, options) {
 		template,
 		elements: [],
 		runes,
+		tracing: false,
 		immutable: runes || options.immutable,
 		exports: [],
 		uses_props: false,
@@ -398,7 +433,6 @@ export function analyze_component(root, source, options) {
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
 		slot_names: new Map(),
-		top_level_snippets: [],
 		css: {
 			ast: root.css,
 			hash: root.css
@@ -411,7 +445,10 @@ export function analyze_component(root, source, options) {
 				: '',
 			keyframes: []
 		},
-		source
+		source,
+		undefined_exports: new Map(),
+		snippet_renderers: new Map(),
+		snippets: new Set()
 	};
 
 	if (!runes) {
@@ -448,6 +485,10 @@ export function analyze_component(root, source, options) {
 				}
 			} else {
 				for (const specifier of node.specifiers) {
+					if (specifier.local.type !== 'Identifier' || specifier.exported.type !== 'Identifier') {
+						continue;
+					}
+
 					const binding = instance.scope.get(specifier.local.name);
 
 					if (
@@ -488,7 +529,7 @@ export function analyze_component(root, source, options) {
 
 		// more legacy nonsense: if an `each` binding is reassigned/mutated,
 		// treat the expression as being mutated as well
-		walk(/** @type {SvelteNode} */ (template.ast), null, {
+		walk(/** @type {AST.SvelteNode} */ (template.ast), null, {
 			EachBlock(node) {
 				const scope = /** @type {Scope} */ (template.scopes.get(node));
 
@@ -505,7 +546,11 @@ export function analyze_component(root, source, options) {
 								if (is_reference(node, parent)) {
 									const binding = context.state.scope.get(node.name);
 
-									if (binding && binding.kind === 'normal') {
+									if (
+										binding &&
+										binding.kind === 'normal' &&
+										binding.declaration_kind !== 'import'
+									) {
 										binding.kind = 'state';
 										binding.mutated = binding.updated = true;
 									}
@@ -567,7 +612,7 @@ export function analyze_component(root, source, options) {
 				reactive_statements: new Map()
 			};
 
-			walk(/** @type {SvelteNode} */ (ast), state, visitors);
+			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
 		}
 
 		// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
@@ -636,7 +681,7 @@ export function analyze_component(root, source, options) {
 				function_depth: scope.function_depth
 			};
 
-			walk(/** @type {SvelteNode} */ (ast), state, visitors);
+			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
 		}
 
 		for (const [name, binding] of instance.scope.declarations) {
@@ -656,11 +701,32 @@ export function analyze_component(root, source, options) {
 		analysis.reactive_statements = order_reactive_statements(analysis.reactive_statements);
 	}
 
+	for (const node of analysis.module.ast.body) {
+		if (node.type === 'ExportNamedDeclaration' && node.specifiers !== null && node.source == null) {
+			for (const specifier of node.specifiers) {
+				if (specifier.local.type !== 'Identifier') continue;
+
+				const binding = analysis.module.scope.get(specifier.local.name);
+				if (!binding) e.export_undefined(specifier, specifier.local.name);
+			}
+		}
+	}
+
 	if (analysis.event_directive_node && analysis.uses_event_attributes) {
 		e.mixed_event_handler_syntaxes(
 			analysis.event_directive_node,
 			analysis.event_directive_node.name
 		);
+	}
+
+	for (const [node, resolved] of analysis.snippet_renderers) {
+		if (!resolved) {
+			node.metadata.snippets = analysis.snippets;
+		}
+
+		for (const snippet of node.metadata.snippets) {
+			snippet.metadata.sites.add(node);
+		}
 	}
 
 	if (
@@ -675,8 +741,8 @@ export function analyze_component(root, source, options) {
 		analyze_css(analysis.css.ast, analysis);
 
 		// mark nodes as scoped/unused/empty etc
-		for (const element of analysis.elements) {
-			prune(analysis.css.ast, element);
+		for (const node of analysis.elements) {
+			prune(analysis.css.ast, node);
 		}
 
 		const { comment } = analysis.css.ast.content;
@@ -690,18 +756,16 @@ export function analyze_component(root, source, options) {
 			warn_unused(analysis.css.ast);
 		}
 
-		outer: for (const element of analysis.elements) {
-			if (element.type === 'RenderTag') continue;
-
-			if (element.metadata.scoped) {
+		outer: for (const node of analysis.elements) {
+			if (node.metadata.scoped) {
 				// Dynamic elements in dom mode always use spread for attributes and therefore shouldn't have a class attribute added to them
 				// TODO this happens during the analysis phase, which shouldn't know anything about client vs server
-				if (element.type === 'SvelteElement' && options.generate === 'client') continue;
+				if (node.type === 'SvelteElement' && options.generate === 'client') continue;
 
 				/** @type {AST.Attribute | undefined} */
 				let class_attribute = undefined;
 
-				for (const attribute of element.attributes) {
+				for (const attribute of node.attributes) {
 					if (attribute.type === 'SpreadAttribute') {
 						// The spread method appends the hash to the end of the class attribute on its own
 						continue outer;
@@ -709,6 +773,8 @@ export function analyze_component(root, source, options) {
 
 					if (attribute.type !== 'Attribute') continue;
 					if (attribute.name.toLowerCase() !== 'class') continue;
+					// The dynamic class method appends the hash to the end of the class attribute on its own
+					if (attribute.metadata.needs_clsx) continue outer;
 
 					class_attribute = attribute;
 				}
@@ -723,8 +789,7 @@ export function analyze_component(root, source, options) {
 							data: ` ${analysis.css.hash}`,
 							raw: ` ${analysis.css.hash}`,
 							start: -1,
-							end: -1,
-							parent: null
+							end: -1
 						};
 
 						if (Array.isArray(class_attribute.value)) {
@@ -734,20 +799,19 @@ export function analyze_component(root, source, options) {
 						}
 					}
 				} else {
-					element.attributes.push(
+					node.attributes.push(
 						create_attribute('class', -1, -1, [
 							{
 								type: 'Text',
 								data: analysis.css.hash,
 								raw: analysis.css.hash,
-								parent: null,
 								start: -1,
 								end: -1
 							}
 						])
 					);
-					if (is_custom_element_node(element) && element.attributes.length === 1) {
-						mark_subtree_dynamic(element.metadata.path);
+					if (is_custom_element_node(node) && node.attributes.length === 1) {
+						mark_subtree_dynamic(node.metadata.path);
 					}
 				}
 			}

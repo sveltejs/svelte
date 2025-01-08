@@ -6,6 +6,8 @@ import { raf } from '../internal/client/timing.js';
 import { loop } from '../internal/client/loop.js';
 import { linear } from '../easing/index.js';
 import { is_date } from './utils.js';
+import { set, source } from '../internal/client/reactivity/sources.js';
+import { get, render_effect } from 'svelte/internal/client';
 
 /**
  * @template T
@@ -70,12 +72,14 @@ function get_interpolator(a, b) {
 		return (t) => a + t * delta;
 	}
 
-	throw new Error(`Cannot interpolate ${type} values`);
+	// for non-numeric values, snap to the final value immediately
+	return () => b;
 }
 
 /**
  * A tweened store in Svelte is a special type of store that provides smooth transitions between state values over time.
  *
+ * @deprecated Use [`Tween`](https://svelte.dev/docs/svelte/svelte-motion#Tween) instead
  * @template T
  * @param {T} [value]
  * @param {TweenedOptions<T>} [defaults]
@@ -151,4 +155,144 @@ export function tweened(value, defaults = {}) {
 			set(fn(/** @type {any} */ (target_value), /** @type {any} */ (value)), opts),
 		subscribe: store.subscribe
 	};
+}
+
+/**
+ * A wrapper for a value that tweens smoothly to its target value. Changes to `tween.target` will cause `tween.current` to
+ * move towards it over time, taking account of the `delay`, `duration` and `easing` options.
+ *
+ * ```svelte
+ * <script>
+ * 	import { Tween } from 'svelte/motion';
+ *
+ * 	const tween = new Tween(0);
+ * </script>
+ *
+ * <input type="range" bind:value={tween.target} />
+ * <input type="range" bind:value={tween.current} disabled />
+ * ```
+ * @template T
+ * @since 5.8.0
+ */
+export class Tween {
+	#current = source(/** @type {T} */ (undefined));
+	#target = source(/** @type {T} */ (undefined));
+
+	/** @type {TweenedOptions<T>} */
+	#defaults;
+
+	/** @type {import('../internal/client/types').Task | null} */
+	#task = null;
+
+	/**
+	 * @param {T} value
+	 * @param {TweenedOptions<T>} options
+	 */
+	constructor(value, options = {}) {
+		this.#current.v = this.#target.v = value;
+		this.#defaults = options;
+	}
+
+	/**
+	 * Create a tween whose value is bound to the return value of `fn`. This must be called
+	 * inside an effect root (for example, during component initialisation).
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { Tween } from 'svelte/motion';
+	 *
+	 * 	let { number } = $props();
+	 *
+	 * 	const tween = Tween.of(() => number);
+	 * </script>
+	 * ```
+	 * @template U
+	 * @param {() => U} fn
+	 * @param {TweenedOptions<U>} [options]
+	 */
+	static of(fn, options) {
+		const tween = new Tween(fn(), options);
+
+		render_effect(() => {
+			tween.set(fn());
+		});
+
+		return tween;
+	}
+
+	/**
+	 * Sets `tween.target` to `value` and returns a `Promise` that resolves if and when `tween.current` catches up to it.
+	 *
+	 * If `options` are provided, they will override the tween's defaults.
+	 * @param {T} value
+	 * @param {TweenedOptions<T>} [options]
+	 * @returns
+	 */
+	set(value, options) {
+		set(this.#target, value);
+
+		let {
+			delay = 0,
+			duration = 400,
+			easing = linear,
+			interpolate = get_interpolator
+		} = { ...this.#defaults, ...options };
+
+		if (duration === 0) {
+			this.#task?.abort();
+			set(this.#current, value);
+			return Promise.resolve();
+		}
+
+		const start = raf.now() + delay;
+
+		/** @type {(t: number) => T} */
+		let fn;
+		let started = false;
+		let previous_task = this.#task;
+
+		this.#task = loop((now) => {
+			if (now < start) {
+				return true;
+			}
+
+			if (!started) {
+				started = true;
+
+				const prev = this.#current.v;
+
+				fn = interpolate(prev, value);
+
+				if (typeof duration === 'function') {
+					duration = duration(prev, value);
+				}
+
+				previous_task?.abort();
+			}
+
+			const elapsed = now - start;
+
+			if (elapsed > /** @type {number} */ (duration)) {
+				set(this.#current, value);
+				return false;
+			}
+
+			set(this.#current, fn(easing(elapsed / /** @type {number} */ (duration))));
+			return true;
+		});
+
+		return this.#task.promise;
+	}
+
+	get current() {
+		return get(this.#current);
+	}
+
+	get target() {
+		return get(this.#target);
+	}
+
+	set target(v) {
+		this.set(v);
+	}
 }

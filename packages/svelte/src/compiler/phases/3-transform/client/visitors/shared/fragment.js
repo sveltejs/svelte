@@ -1,15 +1,16 @@
 /** @import { Expression } from 'estree' */
-/** @import { AST, SvelteNode } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
+import { cannot_be_set_statically } from '../../../../../../utils.js';
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { build_template_literal, build_update } from './utils.js';
+import { build_template_chunk, build_update } from './utils.js';
 
 /**
  * Processes an array of template nodes, joining sibling text/expression nodes
  * (e.g. `{a} b {c}`) into a single update function. Along the way it creates
  * corresponding template node references these updates are applied to.
- * @param {SvelteNode[]} nodes
+ * @param {AST.SvelteNode[]} nodes
  * @param {(is_text: boolean) => Expression} initial
  * @param {boolean} is_element
  * @param {ComponentContext} context
@@ -68,7 +69,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 		state.template.push(' ');
 
-		const { has_state, has_call, value } = build_template_literal(sequence, visit, state);
+		const { has_state, has_call, value } = build_template_chunk(sequence, visit, state);
 
 		// if this is a standalone `{expression}`, make sure we handle the case where
 		// no text node was created because the expression was empty during SSR
@@ -97,7 +98,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 			let child_state = state;
 
-			if (is_static_element(node)) {
+			if (is_static_element(node, state)) {
 				skipped += 1;
 			} else if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
 				node.metadata.is_controlled = true;
@@ -123,11 +124,13 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 }
 
 /**
- * @param {SvelteNode} node
+ * @param {AST.SvelteNode} node
+ * @param {ComponentContext["state"]} state
  */
-function is_static_element(node) {
+function is_static_element(node, state) {
 	if (node.type !== 'RegularElement') return false;
 	if (node.fragment.metadata.dynamic) return false;
+	if (node.name.includes('-')) return false; // we're setting all attributes on custom elements through properties
 
 	for (const attribute of node.attributes) {
 		if (attribute.type !== 'Attribute') {
@@ -138,11 +141,7 @@ function is_static_element(node) {
 			return false;
 		}
 
-		if (attribute.value !== true && !is_text_attribute(attribute)) {
-			return false;
-		}
-
-		if (attribute.name === 'autofocus' || attribute.name === 'muted') {
+		if (cannot_be_set_statically(attribute.name)) {
 			return false;
 		}
 
@@ -150,8 +149,13 @@ function is_static_element(node) {
 			return false;
 		}
 
-		if (node.name.includes('-')) {
-			return false; // we're setting all attributes on custom elements through properties
+		// We need to apply src and loading after appending the img to the DOM for lazy loading to work
+		if (node.name === 'img' && attribute.name === 'loading') {
+			return false;
+		}
+
+		if (attribute.value !== true && !is_text_attribute(attribute)) {
+			return false;
 		}
 	}
 

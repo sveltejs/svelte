@@ -8,9 +8,19 @@
 		console.log(this);
 	}
 
-	class Foo {
-		constructor(readonly name: string) {}
+	function foo(): string {
+		return ""!;
 	}
+
+	class Foo<T> {
+		public name: string;
+		x = 'x' as const;
+		constructor(name: string) {
+			this.name = name;
+		}
+	}
+
+	class MyClass implements Hello {}
 
 	declare const declared_const: number;
 	declare function declared_fn(): void;
@@ -20,10 +30,16 @@
 
 	declare module 'foobar' {}
 	namespace SomeNamespace {
-		export type Foo = true
+		export type Foo = true;
 	}
 
+	export function overload(a: boolean): boolean;
+	export function overload(b: string): number;
+	export function overload(c: any): any {}
+
 	export type { Hello };
+
+	const TypedFoo = Foo<true>;
 </script>
 
 <script>

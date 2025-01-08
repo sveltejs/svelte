@@ -30,3 +30,21 @@
 <cant-skip>
 	<custom-elements with="attributes"></custom-elements>
 </cant-skip>
+
+<div>
+	<!-- svelte-ignore a11y_autofocus -->
+	<input autofocus />
+</div>
+
+<div>
+	<source muted />
+</div>
+
+<select>
+	<option value="a">a</option>
+</select>
+
+<img src="..." alt="" loading="lazy" />
+<div>
+	<img src="..." alt="" loading="lazy" />
+</div>

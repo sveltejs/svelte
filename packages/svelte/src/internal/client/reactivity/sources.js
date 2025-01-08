@@ -12,7 +12,7 @@ import {
 	set_untracked_writes,
 	set_signal_status,
 	untrack,
-	increment_version,
+	increment_write_version,
 	update_effect,
 	derived_sources,
 	set_derived_sources,
@@ -32,6 +32,8 @@ import {
 	BLOCK_EFFECT
 } from '../constants.js';
 import * as e from '../errors.js';
+import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
+import { get_stack } from '../dev/tracing.js';
 
 export let inspect_effects = new Set();
 
@@ -45,16 +47,26 @@ export function set_inspect_effects(v) {
 /**
  * @template V
  * @param {V} v
+ * @param {Error | null} [stack]
  * @returns {Source<V>}
  */
-export function source(v) {
-	return {
+export function source(v, stack) {
+	/** @type {Value} */
+	var signal = {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
 		v,
 		reactions: null,
 		equals,
-		version: 0
+		rv: 0,
+		wv: 0
 	};
+
+	if (DEV && tracing_mode_flag) {
+		signal.created = stack ?? get_stack('CreatedAt');
+		signal.debug = null;
+	}
+
+	return signal;
 }
 
 /**
@@ -80,7 +92,7 @@ export function mutable_source(initial_value, immutable = false) {
 
 	// bind the signal to the component context, in case we need to
 	// track updates to trigger beforeUpdate/afterUpdate callbacks
-	if (component_context !== null && component_context.l !== null) {
+	if (legacy_mode_flag && component_context !== null && component_context.l !== null) {
 		(component_context.l.s ??= []).push(s);
 	}
 
@@ -156,8 +168,17 @@ export function set(source, value) {
  */
 export function internal_set(source, value) {
 	if (!source.equals(value)) {
+		var old_value = source.v;
 		source.v = value;
-		source.version = increment_version();
+		source.wv = increment_write_version();
+
+		if (DEV && tracing_mode_flag) {
+			source.updated = get_stack('UpdatedAt');
+			if (active_effect != null) {
+				source.trace_need_increase = true;
+				source.trace_v ??= old_value;
+			}
+		}
 
 		mark_reactions(source, DIRTY);
 

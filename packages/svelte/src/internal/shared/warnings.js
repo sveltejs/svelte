@@ -11,10 +11,9 @@ var normal = 'font-weight: normal';
  */
 export function dynamic_void_element_content(tag) {
 	if (DEV) {
-		console.warn(`%c[svelte] dynamic_void_element_content\n%c\`<svelte:element this="${tag}">\` is a void element — it cannot have content`, bold, normal);
+		console.warn(`%c[svelte] dynamic_void_element_content\n%c\`<svelte:element this="${tag}">\` is a void element — it cannot have content\nhttps://svelte.dev/e/dynamic_void_element_content`, bold, normal);
 	} else {
-		// TODO print a link to the documentation
-		console.warn("dynamic_void_element_content");
+		console.warn(`https://svelte.dev/e/dynamic_void_element_content`);
 	}
 }
 
@@ -30,9 +29,8 @@ export function state_snapshot_uncloneable(properties) {
 			? `The following properties cannot be cloned with \`$state.snapshot\` — the return value contains the originals:
 
 ${properties}`
-			: "Value cannot be cloned with `$state.snapshot` — the original value was returned"}`, bold, normal);
+			: "Value cannot be cloned with `$state.snapshot` — the original value was returned"}\nhttps://svelte.dev/e/state_snapshot_uncloneable`, bold, normal);
 	} else {
-		// TODO print a link to the documentation
-		console.warn("state_snapshot_uncloneable");
+		console.warn(`https://svelte.dev/e/state_snapshot_uncloneable`);
 	}
 }

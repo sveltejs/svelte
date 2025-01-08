@@ -5,7 +5,7 @@ import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydr
 import { create_fragment_from_html } from '../reconciler.js';
 import { assign_nodes } from '../template.js';
 import * as w from '../../warnings.js';
-import { hash } from '../../../../utils.js';
+import { hash, sanitize_location } from '../../../../utils.js';
 import { DEV } from 'esm-env';
 import { dev_current_component_function } from '../../runtime.js';
 import { get_first_child, get_next_sibling } from '../operations.js';
@@ -28,9 +28,7 @@ function check_hash(element, server_hash, value) {
 		location = `in ${dev_current_component_function[FILENAME]}`;
 	}
 
-	w.hydration_html_changed(
-		location?.replace(/\//g, '/\u200b') // prevent devtools trying to make it a clickable link by inserting a zero-width space
-	);
+	w.hydration_html_changed(sanitize_location(location));
 }
 
 /**

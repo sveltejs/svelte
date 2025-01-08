@@ -12,9 +12,33 @@ The general syntax is `bind:property={expression}`, where `expression` is an _lv
 <input bind:value />
 ```
 
+
 Svelte creates an event listener that updates the bound value. If an element already has a listener for the same event, that listener will be fired before the bound value is updated.
 
 Most bindings are _two-way_, meaning that changes to the value will affect the element and vice versa. A few bindings are _readonly_, meaning that changing their value will have no effect on the element.
+
+## Function bindings
+
+You can also use `bind:property={get, set}`, where `get` and `set` are functions, allowing you to perform validation and transformation:
+
+```svelte
+<input bind:value={
+	() => value,
+	(v) => value = v.toLowerCase()}
+/>
+```
+
+In the case of readonly bindings like [dimension bindings](#Dimensions), the `get` value should be `null`:
+
+```svelte
+<div
+	bind:clientWidth={null, redraw}
+	bind:clientHeight={null, redraw}
+>...</div>
+```
+
+> [!NOTE]
+> Function bindings are available in Svelte 5.9.0 and newer.
 
 ## `<input bind:value>`
 
@@ -53,6 +77,22 @@ In the case of a numeric input (`type="number"` or `type="range"`), the value wi
 
 If the input is empty or invalid (in the case of `type="number"`), the value is `undefined`.
 
+Since 5.6.0, if an `<input>` has a `defaultValue` and is part of a form, it will revert to that value instead of the empty string when the form is reset. Note that for the initial render the value of the binding takes precedence unless it is `null` or `undefined`.
+
+```svelte
+<script>
+	let value = $state('');
+</script>
+
+<form>
+	<input bind:value defaultValue="not the empty string">
+	<input type="reset" value="Reset">
+</form>
+```
+
+> [!NOTE]
+> Use reset buttons sparingly, and ensure that users won't accidentally click them while trying to submit the form.
+
 ## `<input bind:checked>`
 
 Checkbox and radio inputs can be bound with `bind:checked`:
@@ -64,16 +104,29 @@ Checkbox and radio inputs can be bound with `bind:checked`:
 </label>
 ```
 
+Since 5.6.0, if an `<input>` has a `defaultChecked` attribute and is part of a form, it will revert to that value instead of `false` when the form is reset. Note that for the initial render the value of the binding takes precedence unless it is `null` or `undefined`.
+
+```svelte
+<script>
+	let checked = $state(true);
+</script>
+
+<form>
+	<input type="checkbox" bind:checked defaultChecked={true}>
+	<input type="reset" value="Reset">
+</form>
+```
+
 ## `<input bind:group>`
 
 Inputs that work together can use `bind:group`.
 
 ```svelte
 <script>
-	let tortilla = 'Plain';
+	let tortilla = $state('Plain');
 
 	/** @type {Array<string>} */
-	let fillings = [];
+	let fillings = $state([]);
 </script>
 
 <!-- grouped radio inputs are mutually exclusive -->
@@ -143,6 +196,16 @@ When the value of an `<option>` matches its text content, the attribute can be o
 	<option>Beans</option>
 	<option>Cheese</option>
 	<option>Guac (extra)</option>
+</select>
+```
+
+You can give the `<select>` a default value by adding a `selected` attribute to the`<option>` (or options, in the case of `<select multiple>`) that should be initially selected. If the `<select>` is part of a form, it will revert to that selection when the form is reset. Note that for the initial render the value of the binding takes precedence if it's not `undefined`.
+
+```svelte
+<select bind:value={selected}>
+	<option value={a}>a</option>
+	<option value={b} selected>b</option>
+	<option value={c}>c</option>
 </select>
 ```
 
@@ -223,6 +286,8 @@ All visible elements have the following readonly bindings, measured with a `Resi
 </div>
 ```
 
+> [!NOTE] `display: inline` elements do not have a width or height (except for elements with 'intrinsic' dimensions, like `<img>` and `<canvas>`), and cannot be observed with a `ResizeObserver`. You will need to change the `display` style of these elements to something else, such as `inline-block`.
+
 ## bind:this
 
 ```svelte
@@ -230,7 +295,7 @@ All visible elements have the following readonly bindings, measured with a `Resi
 bind:this={dom_node}
 ```
 
-To get a reference to a DOM node, use `bind:this`. The value will be `undefined` until the component is mounted — in other words, you should read it inside an effect or an event handler, but not during component initialisation:
+To get a reference to a DOM node, use `bind:this`. The value will be `undefined` until the component is mounted — in other words, you should read it inside an effect or an event handler, but not during component initialisation:
 
 ```svelte
 <script>

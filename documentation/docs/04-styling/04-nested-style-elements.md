@@ -2,7 +2,7 @@
 title: Nested <style> elements
 ---
 
-There should only be 1 top-level `<style>` tag per component.
+There can only be one top-level `<style>` tag per component.
 
 However, it is possible to have a `<style>` tag nested inside other elements or logic blocks.
 

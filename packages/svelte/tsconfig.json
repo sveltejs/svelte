@@ -25,6 +25,7 @@
 			"svelte/motion": ["./src/motion/public.d.ts"],
 			"svelte/server": ["./src/server/index.d.ts"],
 			"svelte/store": ["./src/store/public.d.ts"],
+			"svelte/reactivity": ["./src/reactivity/index-client.js"],
 			"#compiler": ["./src/compiler/types/index.d.ts"],
 			"#client": ["./src/internal/client/types.d.ts"],
 			"#server": ["./src/internal/server/types.d.ts"],
@@ -39,5 +40,9 @@
 		"./tests/runtime-browser/test-ssr.ts",
 		"./tests/*/samples/*/_config.js"
 	],
-	"exclude": ["./scripts/process-messages/templates/", "./src/compiler/optimizer/"]
+	"exclude": [
+		"./scripts/process-messages/templates/",
+		"./scripts/_bundle.js",
+		"./src/compiler/optimizer/"
+	]
 }

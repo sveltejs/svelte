@@ -77,7 +77,14 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 				// TODO convert this to structured data, for more robust comparison?
 				const text = args[0];
 				const code = text.slice(11, text.indexOf('\n%c', 11));
-				const message = text.slice(text.indexOf('%c', 2) + 2);
+				let message = text.slice(text.indexOf('%c', 2) + 2);
+
+				// Remove the "https://svelte.dev/e/..." link at the end
+				const lines = message.split('\n');
+				if (lines.at(-1)?.startsWith('https://svelte.dev/e/')) {
+					lines.pop();
+				}
+				message = lines.join('\n');
 
 				if (typeof message === 'string' && code === 'hydration_mismatch') {
 					got_hydration_error = true;

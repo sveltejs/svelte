@@ -36,7 +36,7 @@ In Svelte 4, a `$:` statement at the top level of a component could be used to d
 </script>
 ```
 
-As with `$state`, nothing else changes. `double` is still the number itself, and you read it directly, without a wrapper like `.value` or `getCount()`.
+As with `$state`, nothing else changes. `double` is still the number itself, and you read it directly, without a wrapper like `.value` or `getDouble()`.
 
 A `$:` statement could also be used to create side effects. In Svelte 5, this is achieved using the `$effect` rune:
 
@@ -169,11 +169,11 @@ This function is deprecated in Svelte 5. Instead, components should accept _call
 
 <Pump
 	---on:---inflate={(power) => {
-		size += power---.details---;
+		size += power---.detail---;
 		if (size > 75) burst = true;
 	}}
 	---on:---deflate={(power) => {
-		if (size > 0) size -= power---.details---;
+		if (size > 0) size -= power---.detail---;
 	}}
 />
 
@@ -317,11 +317,11 @@ When spreading props, local event handlers must go _after_ the spread, or they r
 > - import the function
 > - call the function to get a dispatch function
 > - call said dispatch function with a string and possibly a payload
-> - retrieve said payload on the other end through a `.details` property, because the event itself was always a `CustomEvent`
+> - retrieve said payload on the other end through a `.detail` property, because the event itself was always a `CustomEvent`
 >
-> It was always possible to use component callback props, but because you had to listen to dom events using `on:`, it made sense to use `createEventDispatcher` for component events due to syntactical consistency. Now that we have event attributes (`onclick`), it's the other way around: Callback props are now the more sensible thing to do.
+> It was always possible to use component callback props, but because you had to listen to DOM events using `on:`, it made sense to use `createEventDispatcher` for component events due to syntactical consistency. Now that we have event attributes (`onclick`), it's the other way around: Callback props are now the more sensible thing to do.
 >
-> The removal of event modifiers is arguably one of the changes that seems like a step back for those who've liked the shorthand syntax of event modifiers. Given that they are not used that frequently, we traded a smaller surface area for more explicitness. Modifiers also were inconsistent, because most of them were only useable on Dom elements.
+> The removal of event modifiers is arguably one of the changes that seems like a step back for those who've liked the shorthand syntax of event modifiers. Given that they are not used that frequently, we traded a smaller surface area for more explicitness. Modifiers also were inconsistent, because most of them were only useable on DOM elements.
 >
 > Multiple listeners for the same event are also no longer possible, but it was something of an anti-pattern anyway, since it impedes readability: if there are many attributes, it becomes harder to spot that there are two handlers unless they are right next to each other. It also implies that the two handlers are independent, when in fact something like `event.stopImmediatePropagation()` inside `one` would prevent `two` from being called.
 >
@@ -411,7 +411,7 @@ If you wanted multiple UI placeholders, you had to use named slots. In Svelte 5,
 </main>
 
 <footer>
-	---<slot name="header" />---
+	---<slot name="footer" />---
 	+++{@render footer()}+++
 </footer>
 ```
@@ -476,7 +476,7 @@ We thought the same, which is why we provide a migration script to do most of th
 
 - bump core dependencies in your `package.json`
 - migrate to runes (`let` -> `$state` etc)
-- migrate to event attributes for Dom elements (`on:click` -> `onclick`)
+- migrate to event attributes for DOM elements (`on:click` -> `onclick`)
 - migrate slot creations to render tags (`<slot />` -> `{@render children()}`)
 - migrate slot usages to snippets (`<div slot="x">...</div>` -> `{#snippet x()}<div>...</div>{/snippet}`)
 - migrate obvious component creations (`new Component(...)` -> `mount(Component, ...)`)
@@ -634,13 +634,14 @@ To declare that a component of a certain type is required:
 
 ```svelte
 <script lang="ts">
-	import type { Component } from 'svelte';
+	import type { ---SvelteComponent--- +++Component+++ } from 'svelte';
 	import {
 		ComponentA,
 		ComponentB
 	} from 'component-library';
 
-	let component: Component<{ foo: string }> = $state(
+	---let component: typeof SvelteComponent<{ foo: string }>---
+	+++let component: Component<{ foo: string }>+++ = $state(
 		Math.random() ? ComponentA : ComponentB
 	);
 </script>
@@ -856,6 +857,8 @@ The `foreign` namespace was only useful for Svelte Native, which we're planning 
 `beforeUpdate` no longer runs twice on initial render if it modifies a variable referenced in the template.
 
 `afterUpdate` callbacks in a parent component will now run after `afterUpdate` callbacks in any child components.
+
+`beforeUpdate/afterUpdate` no longer run when the component contains a `<slot>` and its content is updated.
 
 Both functions are disallowed in runes mode — use `$effect.pre(...)` and `$effect(...)` instead.
 

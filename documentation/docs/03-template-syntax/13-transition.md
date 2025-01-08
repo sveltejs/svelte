@@ -68,7 +68,7 @@ transition = (node: HTMLElement, params: any, options: { direction: 'in' | 'out'
 
 Transitions can use custom functions. If the returned object has a `css` function, Svelte will generate keyframes for a [web animation](https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API).
 
-The `t` argument passed to `css` is a value between `0` and `1` after the `easing` function has been applied. _In_ transitions run from `0` to `1`, _out_ transitions run from `1` to `0` — in other words, `1` is the element's natural state, as though no transition had been applied. The `u` argument is equal to `1 - t`.
+The `t` argument passed to `css` is a value between `0` and `1` after the `easing` function has been applied. _In_ transitions run from `0` to `1`, _out_ transitions run from `1` to `0` — in other words, `1` is the element's natural state, as though no transition had been applied. The `u` argument is equal to `1 - t`.
 
 The function is called repeatedly _before_ the transition begins, with different `t` and `u` arguments.
 
@@ -169,4 +169,3 @@ An element with transitions will dispatch the following events in addition to an
 	</p>
 {/if}
 ```
-

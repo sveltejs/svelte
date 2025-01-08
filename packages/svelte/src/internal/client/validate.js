@@ -1,18 +1,10 @@
-import { dev_current_component_function, untrack } from './runtime.js';
-import { get_descriptor, is_array } from '../shared/utils.js';
+import { dev_current_component_function } from './runtime.js';
+import { is_array } from '../shared/utils.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
 import { render_effect } from './reactivity/effects.js';
 import * as w from './warnings.js';
-
-/** regex of all html void element names */
-const void_element_names =
-	/^(?:area|base|br|col|command|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/;
-
-/** @param {string} tag */
-function is_void(tag) {
-	return void_element_names.test(tag) || tag.toLowerCase() === '!doctype';
-}
+import { capture_store_binding } from './reactivity/store.js';
 
 /**
  * @param {() => any} collection
@@ -36,7 +28,7 @@ export function validate_each_keys(collection, key_fn) {
 				const b = String(i);
 
 				/** @type {string | null} */
-				let k = String(array[i]);
+				let k = String(key);
 				if (k.startsWith('[object ')) k = null;
 
 				e.each_key_duplicate(a, b, k);
@@ -44,29 +36,6 @@ export function validate_each_keys(collection, key_fn) {
 			keys.set(key, i);
 		}
 	});
-}
-
-/**
- * @param {Record<string, any>} $$props
- * @param {string[]} bindable
- * @param {string[]} exports
- * @param {Function & { [FILENAME]: string }} component
- */
-export function validate_prop_bindings($$props, bindable, exports, component) {
-	for (const key in $$props) {
-		var setter = get_descriptor($$props, key)?.set;
-		var name = component.name;
-
-		if (setter) {
-			if (exports.includes(key)) {
-				e.bind_invalid_export(component[FILENAME], key, name);
-			}
-
-			if (!bindable.includes(key)) {
-				e.bind_not_bindable(key, component[FILENAME], name);
-			}
-		}
-	}
 }
 
 /**
@@ -84,7 +53,10 @@ export function validate_binding(binding, get_object, get_property, line, column
 	render_effect(() => {
 		if (warned) return;
 
-		var object = get_object();
+		var [object, is_store_sub] = capture_store_binding(get_object);
+
+		if (is_store_sub) return;
+
 		var property = get_property();
 
 		var ran = false;

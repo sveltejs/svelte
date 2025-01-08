@@ -1,14 +1,11 @@
 /** @import { Readable, Writable } from './public.js' */
-import { noop } from '../internal/shared/utils.js';
 import {
 	effect_root,
 	effect_tracking,
 	render_effect
 } from '../internal/client/reactivity/effects.js';
-import { source } from '../internal/client/reactivity/sources.js';
-import { get as get_source, tick } from '../internal/client/runtime.js';
-import { increment } from '../reactivity/utils.js';
 import { get, writable } from './shared/index.js';
+import { createSubscriber } from '../reactivity/create-subscriber.js';
 
 export { derived, get, readable, readonly, writable } from './shared/index.js';
 
@@ -42,8 +39,11 @@ export { derived, get, readable, readonly, writable } from './shared/index.js';
  * @returns {Writable<V> | Readable<V>}
  */
 export function toStore(get, set) {
-	const store = writable(get(), (set) => {
-		let ran = false;
+	let init_value = get();
+	const store = writable(init_value, (set) => {
+		// If the value has changed before we call subscribe, then
+		// we need to treat the value as already having run
+		let ran = init_value !== get();
 
 		// TODO do we need a different implementation on the server?
 		const teardown = effect_root(() => {
@@ -106,40 +106,23 @@ export function toStore(get, set) {
  */
 export function fromStore(store) {
 	let value = /** @type {V} */ (undefined);
-	let version = source(0);
-	let subscribers = 0;
 
-	let unsubscribe = noop;
+	const subscribe = createSubscriber((update) => {
+		let ran = false;
+
+		const unsubscribe = store.subscribe((v) => {
+			value = v;
+			if (ran) update();
+		});
+
+		ran = true;
+
+		return unsubscribe;
+	});
 
 	function current() {
 		if (effect_tracking()) {
-			get_source(version);
-
-			render_effect(() => {
-				if (subscribers === 0) {
-					let ran = false;
-
-					unsubscribe = store.subscribe((v) => {
-						value = v;
-						if (ran) increment(version);
-					});
-
-					ran = true;
-				}
-
-				subscribers += 1;
-
-				return () => {
-					subscribers -= 1;
-
-					tick().then(() => {
-						if (subscribers === 0) {
-							unsubscribe();
-						}
-					});
-				};
-			});
-
+			subscribe();
 			return value;
 		}
 

@@ -16,7 +16,7 @@ export function EachBlock(node, context) {
 	validate_block_not_empty(node.fallback, context);
 
 	const id = node.context;
-	if (id.type === 'Identifier' && (id.name === '$state' || id.name === '$derived')) {
+	if (id?.type === 'Identifier' && (id.name === '$state' || id.name === '$derived')) {
 		// TODO weird that this is necessary
 		e.state_invalid_placement(node, id.name);
 	}
