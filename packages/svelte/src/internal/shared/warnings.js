@@ -34,3 +34,15 @@ ${properties}`
 		console.warn(`https://svelte.dev/e/state_snapshot_uncloneable`);
 	}
 }
+
+/**
+ * Duplicate attribute '%name%' across multiple `<svelte:html>` blocks, the latest value will be used.
+ * @param {string} name
+ */
+export function svelte_html_duplicate_attribute(name) {
+	if (DEV) {
+		console.warn(`%c[svelte] svelte_html_duplicate_attribute\n%cDuplicate attribute '${name}' across multiple \`<svelte:html>\` blocks, the latest value will be used.\nhttps://svelte.dev/e/svelte_html_duplicate_attribute`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/svelte_html_duplicate_attribute`);
+	}
+}

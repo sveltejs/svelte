@@ -34,6 +34,7 @@ const root_only_meta_tags = new Map([
 	['svelte:head', 'SvelteHead'],
 	['svelte:options', 'SvelteOptions'],
 	['svelte:window', 'SvelteWindow'],
+	['svelte:html', 'SvelteHTML'],
 	['svelte:document', 'SvelteDocument'],
 	['svelte:body', 'SvelteBody']
 ]);

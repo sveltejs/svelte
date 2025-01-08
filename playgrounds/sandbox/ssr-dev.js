@@ -23,9 +23,10 @@ polka()
 		const template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
 		const transformed_template = await vite.transformIndexHtml(req.url, template);
 		const { default: App } = await vite.ssrLoadModule('/src/main.svelte');
-		const { head, body } = render(App);
+		const { head, body, htmlAttributes } = render(App);
 
 		const html = transformed_template
+			.replace('%htmlAttributes%', htmlAttributes)
 			.replace(`<!--ssr-head-->`, head)
 			.replace(`<!--ssr-body-->`, body)
 			// check that Safari doesn't break hydration

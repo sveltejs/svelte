@@ -864,6 +864,12 @@ Invalid component definition — must be an `{expression}`
 `<svelte:head>` cannot have attributes nor directives
 ```
 
+### svelte_html_illegal_attribute
+
+```
+`<svelte:html>` can only have regular attributes
+```
+
 ### svelte_meta_duplicate
 
 ```
