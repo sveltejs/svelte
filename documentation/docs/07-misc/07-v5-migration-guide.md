@@ -339,7 +339,31 @@ When spreading props, local event handlers must go _after_ the spread, or they r
 
 In Svelte 4, content can be passed to components using slots. Svelte 5 replaces them with snippets which are more powerful and flexible, and as such slots are deprecated in Svelte 5.
 
-They continue to work, however, and you can mix and match snippets and slots in your components.
+They continue to work, however, and you can pass snippets to a component that uses slots:
+
+```svelte
+<!--- file: Child.svelte --->
+<slot />
+<hr />
+<slot name="foo" message="hello" />
+```
+
+```svelte
+<!--- file: Parent.svelte --->
+<script>
+	import Child from './Child.svelte';
+</script>
+
+<Child>
+	default child content
+
+	{#snippet foo({ message })}
+		message from child: {message}
+	{/snippet}
+</Child>
+```
+
+(The reverse is not true — you cannot pass slotted content to a component that uses [`{@render ...}`](/docs/svelte/@render) tags.)
 
 When using custom elements, you should still use `<slot />` like before. In a future version, when Svelte removes its internal version of slots, it will leave those slots as-is, i.e. output a regular DOM tag instead of transforming it.
 
