@@ -125,11 +125,11 @@ An effect only reruns when the object it reads changes, not when a property insi
 <p>{state.value} doubled is {derived.value}</p>
 ```
 
-An effect only depends on the values that it read the last time it ran. This implementation detail has interesting implications for effects that have conditional short-circuiting code.
+An effect only depends on the values that it read the last time it ran. This has interesting implications for effects that have conditional code.
 
-For instance, if `a` is `false` in the code snippet below, the `a || b` operation will proceed to read `a` and _then_ `b`. This double read causes the effect to depend on both `a` and `b`, which in turn causes the effect to rerun whenever any of `a` or `b` change.
+For instance, if `a` is `true` in the code snippet below, the code inside the `if` block will run and `b` will be evaluated. As such, changes to either `a` or `b` [will cause the effect to re-run](/#H4sIAAAAAAAAE3WQTWrDMBCFrzIRAcsQkr1rC3KIruouJHUURNWxscalRejuleqEQElXQu99b_6SIP2BohPPxJ4DvomDcD5gFN1LEvw9V68KRb-S53k-xk8MXDWjIz7S7USMxKWM6KNd_MxqpLE0YNAwwD6yZpROh4jt080xj5zi7dE5tCxlC4OCVKWRS4c4BTyG6SKbZSXydGm2WhvgHUjd3vA_AdM1BzBXnHN9cv31p_u01JuVeSKYyAZv34e0DVAX2OmsNPgISef-tHHq30RdbGeyMr8Jc0-USzF-seh4WTG_5h_LyPoejwEAAA==).
 
-On the other hand, if `a` is `true`, changes to `b` will [not cause this effect to rerun](/#H4sIAAAAAAAAE3WQ0WrDMAxFf0U1hTow1vcsMfQ7lj3YjlxEXTvEymC4_vfFC6Ewtidxde8RkrJw5DGJ9j2LoO8oWnGZJvEi-GuqIn2iZ1x1istsa6dLdqaJ1RAG9sigoYdjYs0onfYJm7fdMX85q3dE59CylA30CnJtDWxjSNHjq49XeZqXEChcT9usLUAOpIbHA0yzM78oColGhDVofLS3neZSS6mqOz-XD51ZmGOAGKwne-vztk-956CL0kAJsi7decupf4l658EUZX4I8yTWt93jSI5wFC3PC5aP8g0Aje5DcQEAAA==) because the `a || b` operation _exits early_ as soon as it encounters the first truthy operand. By exiting early, the effect will have only read `a`, which causes the effect to _only_ depend on `a`, not `b`.
+Conversely, if `a` is `false`, `b` will not be evaluated, and the effect will _only_ re-run when `a` changes.
 
 ```ts
 let a = false;
@@ -138,8 +138,8 @@ let b = false;
 $effect(() => {
 	console.log('running');
 
-	if (a || b) {
-		console.log('inside if block');
+	if (a) {
+		console.log('b:', b);
 	}
 });
 ```
