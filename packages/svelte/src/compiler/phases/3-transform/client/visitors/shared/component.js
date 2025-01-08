@@ -93,6 +93,8 @@ export function build_component(node, component_name, context, anchor = context.
 		}
 	}
 
+	const ownerships_effects = new Map();
+
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
 			if (!slot_scope_applies_to_itself) {
@@ -185,17 +187,23 @@ export function build_component(node, component_name, context, anchor = context.
 				// Only run ownership addition on $state fields.
 				// Theoretically someone could create a `$state` while creating `$state.raw` or inside a `$derived.by`,
 				// but that feels so much of an edge case that it doesn't warrant a perf hit for the common case.
-				if (binding?.kind !== 'derived' && binding?.kind !== 'raw_state') {
-					binding_initializers.push(
-						b.stmt(
-							b.call(
-								b.id('$.add_owner_effect'),
-								b.thunk(expression),
-								b.id(component_name),
-								is_ignored(node, 'ownership_invalid_binding') && b.true
+				if (
+					binding?.kind !== 'derived' &&
+					binding?.kind !== 'raw_state' &&
+					!ownerships_effects.has(left?.name)
+				) {
+					ownerships_effects.set(left?.name, () => {
+						binding_initializers.push(
+							b.stmt(
+								b.call(
+									b.id('$.add_owner_effect'),
+									b.thunk(expression),
+									b.id(component_name),
+									is_ignored(node, 'ownership_invalid_binding') && b.true
+								)
 							)
-						)
-					);
+						);
+					});
 				}
 			}
 
@@ -253,6 +261,10 @@ export function build_component(node, component_name, context, anchor = context.
 				}
 			}
 		}
+	}
+
+	for (let [, ownership_effect] of ownerships_effects) {
+		ownership_effect();
 	}
 
 	delayed_props.forEach((fn) => fn());
