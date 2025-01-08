@@ -51,7 +51,7 @@ export async function kairo_deep_unowned() {
 	const { run, destroy } = setup();
 
 	const { timing } = await fastest_test(10, () => {
-		for (let i = 0; i < 100; i++) {
+		for (let i = 0; i < 1000; i++) {
 			run();
 		}
 	});
@@ -80,7 +80,7 @@ export async function kairo_deep_owned() {
 	});
 
 	const { timing } = await fastest_test(10, () => {
-		for (let i = 0; i < 100; i++) {
+		for (let i = 0; i < 1000; i++) {
 			run();
 		}
 	});
