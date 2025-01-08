@@ -12,7 +12,7 @@ import {
 	set_untracked_writes,
 	set_signal_status,
 	untrack,
-	increment_version,
+	increment_write_version,
 	update_effect,
 	derived_sources,
 	set_derived_sources,
@@ -57,7 +57,8 @@ export function source(v, stack) {
 		v,
 		reactions: null,
 		equals,
-		version: 0
+		rv: 0,
+		wv: 0
 	};
 
 	if (DEV && tracing_mode_flag) {
@@ -169,7 +170,7 @@ export function internal_set(source, value) {
 	if (!source.equals(value)) {
 		var old_value = source.v;
 		source.v = value;
-		source.version = increment_version();
+		source.wv = increment_write_version();
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');

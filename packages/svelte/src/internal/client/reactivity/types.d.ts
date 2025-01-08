@@ -4,14 +4,16 @@ export interface Signal {
 	/** Flags bitmask */
 	f: number;
 	/** Write version */
-	version: number;
+	wv: number;
 }
 
 export interface Value<V = unknown> extends Signal {
-	/** Signals that read from this signal */
-	reactions: null | Reaction[];
 	/** Equality function */
 	equals: Equals;
+	/** Signals that read from this signal */
+	reactions: null | Reaction[];
+	/** Read version */
+	rv: number;
 	/** The latest value for this signal */
 	v: V;
 	/** Dev only */

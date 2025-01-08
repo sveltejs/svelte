@@ -296,6 +296,7 @@ describe('signals', () => {
 		const destroy = effect_root(() => {
 			user_effect(() => {
 				log.push($.get(calc));
+				$.get(calc);
 			});
 		});
 
@@ -306,7 +307,7 @@ describe('signals', () => {
 			flushSync(() => set(count, 4));
 			flushSync(() => set(count, 0));
 			// Ensure we're not leaking consumers
-			assert.deepEqual(count.reactions?.length, 2);
+			assert.deepEqual(count.reactions?.length, 1);
 			assert.deepEqual(calc.reactions?.length, 1);
 			assert.deepEqual(log, [0, 2, 'limit', 0]);
 			destroy();

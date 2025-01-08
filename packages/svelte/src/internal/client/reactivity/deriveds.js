@@ -16,7 +16,7 @@ import {
 	set_signal_status,
 	skip_reaction,
 	update_reaction,
-	increment_version,
+	increment_write_version,
 	set_active_effect,
 	component_context
 } from '../runtime.js';
@@ -58,8 +58,9 @@ export function derived(fn) {
 		f: flags,
 		fn,
 		reactions: null,
+		rv: 0,
 		v: /** @type {V} */ (null),
-		version: 0,
+		wv: 0,
 		parent: parent_derived ?? active_effect
 	};
 
@@ -182,7 +183,7 @@ export function update_derived(derived) {
 
 	if (!derived.equals(value)) {
 		derived.v = value;
-		derived.version = increment_version();
+		derived.wv = increment_write_version();
 	}
 }
 

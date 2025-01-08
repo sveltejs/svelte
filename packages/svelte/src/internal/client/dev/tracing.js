@@ -42,15 +42,12 @@ function log_entry(signal, entry) {
 
 	const type = (signal.f & DERIVED) !== 0 ? '$derived' : '$state';
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
-	const status =
-		signal.version > current_reaction.version || current_reaction.version === 0 ? 'dirty' : 'clean';
+	const dirty = signal.wv > current_reaction.wv || current_reaction.wv === 0;
 
 	// eslint-disable-next-line no-console
 	console.groupCollapsed(
 		`%c${type}`,
-		status !== 'clean'
-			? 'color: CornflowerBlue; font-weight: bold'
-			: 'color: grey; font-weight: bold',
+		dirty ? 'color: CornflowerBlue; font-weight: bold' : 'color: grey; font-weight: bold',
 		typeof value === 'object' && value !== null && STATE_SYMBOL in value
 			? snapshot(value, true)
 			: value
