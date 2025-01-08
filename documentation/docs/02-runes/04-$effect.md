@@ -193,53 +193,7 @@ The `$effect.tracking` rune is an advanced feature that tells you whether or not
 <p>in template: {$effect.tracking()}</p> <!-- true -->
 ```
 
-This allows you to (for example) add things like subscriptions without causing memory leaks, by putting them in child effects. Here's a `readable` function that listens to changes from a callback function as long as it's inside a tracking context:
-
-```ts
-import { tick } from 'svelte';
-
-export default function readable<T>(
-	initial_value: T,
-	start: (callback: (update: (v: T) => T) => T) => () => void
-) {
-	let value = $state(initial_value);
-
-	let subscribers = 0;
-	let stop: null | (() => void) = null;
-
-	return {
-		get value() {
-			// If in a tracking context ...
-			if ($effect.tracking()) {
-				$effect(() => {
-					// ...and there's no subscribers yet...
-					if (subscribers === 0) {
-						// ...invoke the function and listen to changes to update state
-						stop = start((fn) => (value = fn(value)));
-					}
-
-					subscribers++;
-
-					// The return callback is called once a listener unlistens
-					return () => {
-						tick().then(() => {
-							subscribers--;
-							// If it was the last subscriber...
-							if (subscribers === 0) {
-								// ...stop listening to changes
-								stop?.();
-								stop = null;
-							}
-						});
-					};
-				});
-			}
-
-			return value;
-		}
-	};
-}
-```
+It is used to implement abstractions like [`createSubscriber`](/docs/svelte/svelte-reactivity#createSubscriber), which will create listeners to update reactive values but _only_ if those values are being tracked (rather than, for example, read inside an event handler).
 
 ## `$effect.root`
 
