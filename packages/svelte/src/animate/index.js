@@ -19,8 +19,17 @@ export function flip(node, { from, to }, params = {}) {
 	var dsx = from.width / to.width;
 	var dsy = from.height / to.height;
 
-	var dx = (from.left + dsx * ox - (to.left + ox)) / zoom;
-	var dy = (from.top + dsy * oy - (to.top + oy)) / zoom;
+	ox /= node.clientWidth;
+	oy /= node.clientHeight;
+
+	var fromx = from.left + from.width * ox;
+	var tox = to.left + to.width * ox;
+
+	var fromy = from.top + from.height * oy;
+	var toy = to.top + to.height * oy;
+
+	var dx = ((fromx - tox) * (node.clientWidth / to.width)) / zoom;
+	var dy = ((fromy - toy) * (node.clientHeight / to.height)) / zoom;
 	var { delay = 0, duration = (d) => Math.sqrt(d) * 120, easing = cubicOut } = params;
 
 	return {
@@ -32,7 +41,8 @@ export function flip(node, { from, to }, params = {}) {
 			var y = u * dy;
 			var sx = t + u * dsx;
 			var sy = t + u * dsy;
-			return `transform: ${transform} scale(${sx}, ${sy}) translate(${x}px, ${y}px);`;
+
+			return `transform: ${transform} translate(${x}px, ${y}px) scale(${sx}, ${sy});`;
 		}
 	};
 }
