@@ -77,13 +77,15 @@ export function Program(_, context) {
 					return b.call(
 						'$.store_mutate',
 						get_store(),
-						b.assignment(
-							mutation.operator,
-							/** @type {MemberExpression} */ (
-								replace(/** @type {MemberExpression} */ (mutation.left))
-							),
-							mutation.right
-						),
+						mutation.type === 'AssignmentExpression'
+							? b.assignment(
+									mutation.operator,
+									/** @type {MemberExpression} */ (
+										replace(/** @type {MemberExpression} */ (mutation.left))
+									),
+									mutation.right
+								)
+							: b.update(mutation.operator, replace(mutation.argument), mutation.prefix),
 						untracked
 					);
 				},

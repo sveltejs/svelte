@@ -9,9 +9,12 @@ import * as e from '../../../errors.js';
  * @param {Context} context
  */
 export function Text(node, context) {
-	if (node.parent && context.state.parent_element && regex_not_whitespace.test(node.data)) {
-		if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
-			e.node_invalid_placement(node, 'Text node', context.state.parent_element);
+	const in_template = context.path.at(-1)?.type === 'Fragment';
+
+	if (in_template && context.state.parent_element && regex_not_whitespace.test(node.data)) {
+		const message = is_tag_valid_with_parent('#text', context.state.parent_element);
+		if (message) {
+			e.node_invalid_placement(node, message);
 		}
 	}
 }

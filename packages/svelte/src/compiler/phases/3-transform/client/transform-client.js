@@ -1,5 +1,5 @@
 /** @import * as ESTree from 'estree' */
-/** @import { ValidatedCompileOptions, AST, ValidatedModuleCompileOptions, SvelteNode } from '#compiler' */
+/** @import { AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { ComponentAnalysis, Analysis } from '../../types' */
 /** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';
@@ -48,6 +48,7 @@ import { SvelteComponent } from './visitors/SvelteComponent.js';
 import { SvelteDocument } from './visitors/SvelteDocument.js';
 import { SvelteElement } from './visitors/SvelteElement.js';
 import { SvelteFragment } from './visitors/SvelteFragment.js';
+import { SvelteBoundary } from './visitors/SvelteBoundary.js';
 import { SvelteHead } from './visitors/SvelteHead.js';
 import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { SvelteWindow } from './visitors/SvelteWindow.js';
@@ -122,6 +123,7 @@ const visitors = {
 	SvelteDocument,
 	SvelteElement,
 	SvelteFragment,
+	SvelteBoundary,
 	SvelteHead,
 	SvelteSelf,
 	SvelteWindow,
@@ -163,6 +165,8 @@ export function client_component(analysis, options) {
 		private_state: new Map(),
 		transform: {},
 		in_constructor: false,
+		instance_level_snippets: [],
+		module_level_snippets: [],
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		before_init: /** @type {any} */ (null),
@@ -174,7 +178,7 @@ export function client_component(analysis, options) {
 	};
 
 	const module = /** @type {ESTree.Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, visitors)
+		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, visitors)
 	);
 
 	const instance_state = {
@@ -186,12 +190,12 @@ export function client_component(analysis, options) {
 	};
 
 	const instance = /** @type {ESTree.Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.instance.ast), instance_state, visitors)
+		walk(/** @type {AST.SvelteNode} */ (analysis.instance.ast), instance_state, visitors)
 	);
 
 	const template = /** @type {ESTree.Program} */ (
 		walk(
-			/** @type {SvelteNode} */ (analysis.template.ast),
+			/** @type {AST.SvelteNode} */ (analysis.template.ast),
 			{
 				...state,
 				transform: instance_state.transform,
@@ -295,28 +299,6 @@ export function client_component(analysis, options) {
 			(binding.kind === 'prop' || binding.kind === 'bindable_prop') && !name.startsWith('$$')
 	);
 
-	if (dev && analysis.runes) {
-		const exports = analysis.exports.map(({ name, alias }) => b.literal(alias ?? name));
-		/** @type {ESTree.Literal[]} */
-		const bindable = [];
-		for (const [name, binding] of properties) {
-			if (binding.kind === 'bindable_prop') {
-				bindable.push(b.literal(binding.prop_alias ?? name));
-			}
-		}
-		instance.body.unshift(
-			b.stmt(
-				b.call(
-					'$.validate_prop_bindings',
-					b.id('$$props'),
-					b.array(bindable),
-					b.array(exports),
-					b.id(`${analysis.name}`)
-				)
-			)
-		);
-	}
-
 	if (analysis.accessors) {
 		for (const [name, binding] of properties) {
 			const key = binding.prop_alias ?? name;
@@ -368,7 +350,7 @@ export function client_component(analysis, options) {
 		...store_setup,
 		...legacy_reactive_declarations,
 		...group_binding_declarations,
-		...analysis.top_level_snippets,
+		...state.instance_level_snippets,
 		.../** @type {ESTree.Statement[]} */ (instance.body),
 		analysis.runes || !analysis.needs_context
 			? b.empty
@@ -483,7 +465,7 @@ export function client_component(analysis, options) {
 		}
 	}
 
-	body = [...imports, ...body];
+	body = [...imports, ...state.module_level_snippets, ...body];
 
 	const component = b.function_declaration(
 		b.id(analysis.name),
@@ -531,6 +513,14 @@ export function client_component(analysis, options) {
 		body.push(b.stmt(b.call(b.id('$.mark_module_end'), b.id(analysis.name))));
 	}
 
+	if (!analysis.runes) {
+		body.unshift(b.imports([], 'svelte/internal/flags/legacy'));
+	}
+
+	if (analysis.tracing) {
+		body.unshift(b.imports([], 'svelte/internal/flags/tracing'));
+	}
+
 	if (options.discloseVersion) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}
@@ -561,17 +551,19 @@ export function client_component(analysis, options) {
 
 	if (analysis.custom_element) {
 		const ce = analysis.custom_element;
+		const ce_props = typeof ce === 'boolean' ? {} : ce.props || {};
 
 		/** @type {ESTree.Property[]} */
 		const props_str = [];
 
-		for (const [name, binding] of properties) {
-			const key = binding.prop_alias ?? name;
-			const prop_def = typeof ce === 'boolean' ? {} : ce.props?.[key] || {};
+		for (const [name, prop_def] of Object.entries(ce_props)) {
+			const binding = analysis.instance.scope.get(name);
+			const key = binding?.prop_alias ?? name;
+
 			if (
 				!prop_def.type &&
-				binding.initial?.type === 'Literal' &&
-				typeof binding.initial.value === 'boolean'
+				binding?.initial?.type === 'Literal' &&
+				typeof binding?.initial.value === 'boolean'
 			) {
 				prop_def.type = 'Boolean';
 			}
@@ -585,7 +577,15 @@ export function client_component(analysis, options) {
 					].filter(Boolean)
 				)
 			);
+
 			props_str.push(b.init(key, value));
+		}
+
+		for (const [name, binding] of properties) {
+			const key = binding.prop_alias ?? name;
+			if (ce_props[key]) continue;
+
+			props_str.push(b.init(key, b.object([])));
 		}
 
 		const slots_str = b.array([...analysis.slot_names.keys()].map((name) => b.literal(name)));
@@ -646,12 +646,18 @@ export function client_module(analysis, options) {
 	};
 
 	const module = /** @type {ESTree.Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, visitors)
+		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, visitors)
 	);
+
+	const body = [b.import_all('$', 'svelte/internal/client')];
+
+	if (analysis.tracing) {
+		body.push(b.imports([], 'svelte/internal/flags/tracing'));
+	}
 
 	return {
 		type: 'Program',
 		sourceType: 'module',
-		body: [b.import_all('$', 'svelte/internal/client'), ...module.body]
+		body: [...body, ...module.body]
 	};
 }

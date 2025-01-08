@@ -20,7 +20,10 @@ export function UseDirective(node, context) {
 		context.state.node,
 		b.arrow(
 			params,
-			b.call(/** @type {Expression} */ (context.visit(parse_directive_name(node.name))), ...params)
+			b.maybe_call(
+				/** @type {Expression} */ (context.visit(parse_directive_name(node.name))),
+				...params
+			)
 		)
 	];
 
@@ -29,6 +32,6 @@ export function UseDirective(node, context) {
 	}
 
 	// actions need to run after attribute updates in order with bindings/events
-	context.state.after_update.push(b.stmt(b.call('$.action', ...args)));
+	context.state.init.push(b.stmt(b.call('$.action', ...args)));
 	context.next();
 }

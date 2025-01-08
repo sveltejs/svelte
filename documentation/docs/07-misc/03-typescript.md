@@ -40,6 +40,19 @@ If you want to use one of these features, you need to setup up a `script` prepro
 
 To use non-type-only TypeScript features within Svelte components, you need to add a preprocessor that will turn TypeScript into JavaScript.
 
+```ts
+/// file: svelte.config.js
+// @noErrors
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+
+const config = {
+	// Note the additional `{ script: true }`
+	preprocess: vitePreprocess({ script: true })
+};
+
+export default config;
+```
+
 ### Using SvelteKit or Vite
 
 The easiest way to get started is scaffolding a new SvelteKit project by typing `npx sv create`, following the prompts and choosing the TypeScript option.
@@ -47,7 +60,7 @@ The easiest way to get started is scaffolding a new SvelteKit project by typing 
 ```ts
 /// file: svelte.config.js
 // @noErrors
-import { vitePreprocess } from '@sveltejs/kit/vite';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 const config = {
 	preprocess: vitePreprocess()
@@ -58,17 +71,6 @@ export default config;
 
 If you don't need or want all the features SvelteKit has to offer, you can scaffold a Svelte-flavoured Vite project instead by typing `npm create vite@latest` and selecting the `svelte-ts` option.
 
-```ts
-/// file: svelte.config.js
-import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
-
-const config = {
-	preprocess: vitePreprocess()
-};
-
-export default config;
-```
-
 In both cases, a `svelte.config.js` with `vitePreprocess` will be added. Vite/SvelteKit will read from this config file.
 
 ### Other build tools
@@ -76,6 +78,14 @@ In both cases, a `svelte.config.js` with `vitePreprocess` will be added. Vite/Sv
 If you're using tools like Rollup or Webpack instead, install their respective Svelte plugins. For Rollup that's [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) and for Webpack that's [svelte-loader](https://github.com/sveltejs/svelte-loader). For both, you need to install `typescript` and `svelte-preprocess` and add the preprocessor to the plugin config (see the respective READMEs for more info). If you're starting a new project, you can also use the [rollup](https://github.com/sveltejs/template) or [webpack](https://github.com/sveltejs/template-webpack) template to scaffold the setup from a script.
 
 > [!NOTE] If you're starting a new project, we recommend using SvelteKit or Vite instead
+
+## tsconfig.json settings
+
+When using TypeScript, make sure your `tsconfig.json` is setup correctly.
+
+- Use a [`target`](https://www.typescriptlang.org/tsconfig/#target) of at least `ES2022`, or a `target` of at least `ES2015` alongside [`useDefineForClassFields`](https://www.typescriptlang.org/tsconfig/#useDefineForClassFields). This ensures that rune declarations on class fields are not messed with, which would break the Svelte compiler
+- Set [`verbatimModuleSyntax`](https://www.typescriptlang.org/tsconfig/#verbatimModuleSyntax) to `true` so that imports are left as-is
+- Set [`isolatedModules`](https://www.typescriptlang.org/tsconfig/#isolatedModules) to `true` so that each file is looked at in isolation. TypeScript has a few features which require cross-file analysis and compilation, which the Svelte compiler and tooling like Vite don't do. 
 
 ## Typing `$props`
 
@@ -132,7 +142,7 @@ The content of `generics` is what you would put between the `<...>` tags of a ge
 
 ## Typing wrapper components
 
-In case you're writing a component that wraps a native element, you may want to expose all the attributes of underlying element to the user. In that case, use (or extend from) one of the interfaces provided by `svelte/elements`. Here's an example for a `Button` component:
+In case you're writing a component that wraps a native element, you may want to expose all the attributes of the underlying element to the user. In that case, use (or extend from) one of the interfaces provided by `svelte/elements`. Here's an example for a `Button` component:
 
 ```svelte
 <script lang="ts">
@@ -142,8 +152,22 @@ In case you're writing a component that wraps a native element, you may want to 
 </script>
 
 <button {...rest}>
-	{@render children()}
+	{@render children?.()}
 </button>
+```
+
+Not all elements have a dedicated type definition. For those without one, use `SvelteHTMLElements`:
+
+```svelte
+<script lang="ts">
+	import type { SvelteHTMLElements } from 'svelte/elements';
+
+	let { children, ...rest }: SvelteHTMLElements['div'] = $props();
+</script>
+
+<div {...rest}>
+	{@render children?.()}
+</div>
 ```
 
 ## Typing `$state`
@@ -195,7 +219,9 @@ Using it together with dynamic components to restrict what kinds of component ca
 <DynamicComponent prop="foo" />
 ```
 
-Closely related to the `Component` type is the `ComponentProps` type which extracts the properties a component expects.
+> [!LEGACY] In Svelte 4, components were of type `SvelteComponent`
+
+To extract the properties from a component, use `ComponentProps`.
 
 ```ts
 import type { Component, ComponentProps } from 'svelte';
@@ -209,6 +235,19 @@ function withProps<TComponent extends Component<any>>(
 // Errors if the second argument is not the correct props expected
 // by the component in the first argument.
 withProps(MyComponent, { foo: 'bar' });
+```
+
+To declare that a variable expects the constructor or instance type of a component:
+
+```svelte
+<script lang="ts">
+	import MyComponent from './MyComponent.svelte';
+
+	let componentConstructor: typeof MyComponent = MyComponent;
+	let componentInstance: MyComponent;
+</script>
+
+<MyComponent bind:this={componentInstance} />
 ```
 
 ## Enhancing built-in DOM types

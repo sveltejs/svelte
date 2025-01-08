@@ -10,7 +10,7 @@ import {
 } from './dom/operations.js';
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
 import { push, pop, component_context, active_effect } from './runtime.js';
-import { effect_root, branch } from './reactivity/effects.js';
+import { component_root, branch } from './reactivity/effects.js';
 import {
 	hydrate_next,
 	hydrate_node,
@@ -204,7 +204,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 	// @ts-expect-error will be defined because the render effect runs synchronously
 	var component = undefined;
 
-	var unmount = effect_root(() => {
+	var unmount = component_root(() => {
 		var anchor_node = anchor ?? target.appendChild(create_text());
 
 		branch(() => {
@@ -252,7 +252,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			}
 
 			root_event_handles.delete(event_handle);
-			mounted_components.delete(component);
+
 			if (anchor_node !== anchor) {
 				anchor_node.parentNode?.removeChild(anchor_node);
 			}
@@ -271,14 +271,35 @@ let mounted_components = new WeakMap();
 
 /**
  * Unmounts a component that was previously mounted using `mount` or `hydrate`.
+ *
+ * Since 5.13.0, if `options.outro` is `true`, [transitions](https://svelte.dev/docs/svelte/transition) will play before the component is removed from the DOM.
+ *
+ * Returns a `Promise` that resolves after transitions have completed if `options.outro` is true, or immediately otherwise (prior to 5.13.0, returns `void`).
+ *
+ * ```js
+ * import { mount, unmount } from 'svelte';
+ * import App from './App.svelte';
+ *
+ * const app = mount(App, { target: document.body });
+ *
+ * // later...
+ * unmount(app, { outro: true });
+ * ```
  * @param {Record<string, any>} component
+ * @param {{ outro?: boolean }} [options]
+ * @returns {Promise<void>}
  */
-export function unmount(component) {
+export function unmount(component, options) {
 	const fn = mounted_components.get(component);
 
 	if (fn) {
-		fn();
-	} else if (DEV) {
+		mounted_components.delete(component);
+		return fn(options);
+	}
+
+	if (DEV) {
 		w.lifecycle_double_unmount();
 	}
+
+	return Promise.resolve();
 }

@@ -32,11 +32,47 @@
 
 ## each_item_invalid_assignment
 
-> Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)
+> Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`, or `bind:value={array[i]}` instead of `bind:value={entry}`)
+
+In legacy mode, it was possible to reassign or bind to the each block argument itself:
+
+```svelte
+<script>
+	let array = [1, 2, 3];
+</script>
+
+{#each array as entry}
+	<!-- reassignment -->
+	<button on:click={() => entry = 4}>change</button>
+
+	<!-- binding -->
+	<input bind:value={entry}>
+{/each}
+```
+
+This turned out to be buggy and unpredictable, particularly when working with derived values (such as `array.map(...)`), and as such is forbidden in runes mode. You can achieve the same outcome by using the index instead:
+
+```svelte
+<script>
+	let array = $state([1, 2, 3]);
+</script>
+
+{#each array as entry, i}
+	<!-- reassignment -->
+	<button onclick={() => array[i] = 4}>change</button>
+
+	<!-- binding -->
+	<input bind:value={array[i]}>
+{/each}
+```
 
 ## effect_invalid_placement
 
 > `$effect()` can only be used as an expression statement
+
+## export_undefined
+
+> `%name%` is not defined
 
 ## global_reference_invalid
 
@@ -49,6 +85,14 @@
 ## import_svelte_internal_forbidden
 
 > Imports of `svelte/internal/*` are forbidden. It contains private runtime code which is subject to change without notice. If you're importing from `svelte/internal/*` to work around a limitation of Svelte, please open an issue at https://github.com/sveltejs/svelte and explain your use case
+
+## inspect_trace_generator
+
+> `$inspect.trace(...)` cannot be used inside a generator function
+
+## inspect_trace_invalid_placement
+
+> `$inspect.trace(...)` must be the first statement of a function body
 
 ## invalid_arguments_usage
 
@@ -133,6 +177,28 @@
 ## runes_mode_invalid_import
 
 > %name% cannot be used in runes mode
+
+## snippet_invalid_export
+
+> An exported snippet can only reference things declared in a `<script module>`, or other exportable snippets
+
+It's possible to export a snippet from a `<script module>` block, but only if it doesn't reference anything defined inside a non-module-level `<script>`. For example you can't do this...
+
+```svelte
+<script module>
+	export { greeting };
+</script>
+
+<script>
+	let message = 'hello';
+</script>
+
+{#snippet greeting(name)}
+	<p>{message} {name}!</p>
+{/snippet}
+```
+
+...because `greeting` references `message`, which is defined in the second `<script>`.
 
 ## snippet_parameter_assignment
 

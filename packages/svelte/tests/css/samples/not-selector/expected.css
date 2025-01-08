@@ -1,33 +1,35 @@
 
-	.svelte-xyz:not(.foo:where(.svelte-xyz)) {
-		color: green;
-	}
-	/* (unused) :not(.unused) {
-		color: red;
-	}*/
 	.svelte-xyz:not(.foo) {
 		color: green;
 	}
+	.svelte-xyz:not(.unused) {
+		color: green;
+	}
+	.svelte-xyz:not(p) {
+		color: green;
+	}
 
-	.svelte-xyz:not(.foo:where(.svelte-xyz)):not(.unused) {
+	.svelte-xyz:not(.foo):not(.unused) {
 		color: green;
 	}
-	/* (unused) :not(.foo):not(.unused) {
+
+	p.svelte-xyz:not(.foo) {
+		color: green;
+	}
+	/* (unused) span :not(.foo) {
+		color: red;
+	}*/
+	/* (unused) span :not(.unused) {
 		color: red;
 	}*/
 
-	p.svelte-xyz:not(.foo:where(.svelte-xyz)) {
+	span.svelte-xyz:not(p:where(.svelte-xyz) span:where(.svelte-xyz)) {
 		color: green;
 	}
-	/* (unused) p :not(.foo) {
-		color: red;
-	}*/
-	.x:not(.foo.svelte-xyz) {
+	span.svelte-xyz:not(:focus) {
 		color: green;
 	}
-	.x:not(.unused.svelte-xyz) {
-		color: red; /* TODO would be nice to prune this one day */
+
+	p.svelte-xyz:not(:has(span)) {
+		color: green;
 	}
-	/* (unused) :global(.x) :not(.unused) {
-		color: red;
-	}*/

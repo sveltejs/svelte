@@ -1,5 +1,5 @@
-/** @import { BlockStatement, Expression, Pattern, Property, Statement } from 'estree' */
-/** @import { AST, TemplateNode } from '#compiler' */
+/** @import { BlockStatement, Expression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { empty_comment, build_attribute_value } from './utils.js';
 import * as b from '../../../../../utils/builders.js';
@@ -13,6 +13,8 @@ import { is_element_node } from '../../../../nodes.js';
 export function build_inline_component(node, expression, context) {
 	/** @type {Array<Property[] | Expression>} */
 	const props_and_spreads = [];
+	/** @type {Array<() => void>} */
+	const delayed_props = [];
 
 	/** @type {Property[]} */
 	const custom_css_props = [];
@@ -29,7 +31,7 @@ export function build_inline_component(node, expression, context) {
 		scope: node.metadata.scopes.default
 	};
 
-	/** @type {Record<string, TemplateNode[]>} */
+	/** @type {Record<string, AST.TemplateNode[]>} */
 	const children = {};
 
 	/**
@@ -49,14 +51,23 @@ export function build_inline_component(node, expression, context) {
 
 	/**
 	 * @param {Property} prop
+	 * @param {boolean} [delay]
 	 */
-	function push_prop(prop) {
-		const current = props_and_spreads.at(-1);
-		const current_is_props = Array.isArray(current);
-		const props = current_is_props ? current : [];
-		props.push(prop);
-		if (!current_is_props) {
-			props_and_spreads.push(props);
+	function push_prop(prop, delay = false) {
+		const do_push = () => {
+			const current = props_and_spreads.at(-1);
+			const current_is_props = Array.isArray(current);
+			const props = current_is_props ? current : [];
+			props.push(prop);
+			if (!current_is_props) {
+				props_and_spreads.push(props);
+			}
+		};
+
+		if (delay) {
+			delayed_props.push(do_push);
+		} else {
+			do_push();
 		}
 	}
 
@@ -81,24 +92,42 @@ export function build_inline_component(node, expression, context) {
 			const value = build_attribute_value(attribute.value, context, false, true);
 			push_prop(b.prop('init', b.key(attribute.name), value));
 		} else if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
-			// TODO this needs to turn the whole thing into a while loop because the binding could be mutated eagerly in the child
-			push_prop(
-				b.get(attribute.name, [
-					b.return(/** @type {Expression} */ (context.visit(attribute.expression)))
-				])
-			);
-			push_prop(
-				b.set(attribute.name, [
-					b.stmt(
-						/** @type {Expression} */ (
-							context.visit(b.assignment('=', attribute.expression, b.id('$$value')))
-						)
-					),
-					b.stmt(b.assignment('=', b.id('$$settled'), b.false))
-				])
-			);
+			if (attribute.expression.type === 'SequenceExpression') {
+				const [get, set] = /** @type {SequenceExpression} */ (context.visit(attribute.expression))
+					.expressions;
+				const get_id = b.id(context.state.scope.generate('bind_get'));
+				const set_id = b.id(context.state.scope.generate('bind_set'));
+
+				context.state.init.push(b.var(get_id, get));
+				context.state.init.push(b.var(set_id, set));
+
+				push_prop(b.get(attribute.name, [b.return(b.call(get_id))]));
+				push_prop(b.set(attribute.name, [b.stmt(b.call(set_id, b.id('$$value')))]));
+			} else {
+				// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
+				push_prop(
+					b.get(attribute.name, [
+						b.return(/** @type {Expression} */ (context.visit(attribute.expression)))
+					]),
+					true
+				);
+
+				push_prop(
+					b.set(attribute.name, [
+						b.stmt(
+							/** @type {Expression} */ (
+								context.visit(b.assignment('=', attribute.expression, b.id('$$value')))
+							)
+						),
+						b.stmt(b.assignment('=', b.id('$$settled'), b.false))
+					]),
+					true
+				);
+			}
 		}
 	}
+
+	delayed_props.forEach((fn) => fn());
 
 	/** @type {Statement[]} */
 	const snippet_declarations = [];

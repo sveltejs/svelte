@@ -60,6 +60,10 @@ export type AnimationEventHandler<T extends EventTarget> = EventHandler<Animatio
 export type TransitionEventHandler<T extends EventTarget> = EventHandler<TransitionEvent, T>;
 export type MessageEventHandler<T extends EventTarget> = EventHandler<MessageEvent, T>;
 export type ToggleEventHandler<T extends EventTarget> = EventHandler<ToggleEvent, T>;
+export type ContentVisibilityAutoStateChangeEventHandler<T extends EventTarget> = EventHandler<
+	ContentVisibilityAutoStateChangeEvent,
+	T
+>;
 
 export type FullAutoFill =
 	| AutoFill
@@ -156,6 +160,20 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:toggle'?: ToggleEventHandler<T> | undefined | null;
 	ontoggle?: ToggleEventHandler<T> | undefined | null;
 	ontogglecapture?: ToggleEventHandler<T> | undefined | null;
+
+	// Content visibility Events
+	'on:contentvisibilityautostatechange'?:
+		| ContentVisibilityAutoStateChangeEventHandler<T>
+		| undefined
+		| null;
+	oncontentvisibilityautostatechange?:
+		| ContentVisibilityAutoStateChangeEventHandler<T>
+		| undefined
+		| null;
+	oncontentvisibilityautostatechangecapture?:
+		| ContentVisibilityAutoStateChangeEventHandler<T>
+		| undefined
+		| null;
 
 	// Keyboard Events
 	'on:keydown'?: KeyboardEventHandler<T> | undefined | null;
@@ -723,7 +741,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	accesskey?: string | undefined | null;
 	autocapitalize?: 'characters' | 'off' | 'on' | 'none' | 'sentences' | 'words' | undefined | null;
 	autofocus?: boolean | undefined | null;
-	class?: string | undefined | null;
+	class?: string | import('clsx').ClassArray | import('clsx').ClassDictionary | undefined | null;
 	contenteditable?: Booleanish | 'inherit' | 'plaintext-only' | undefined | null;
 	contextmenu?: string | undefined | null;
 	dir?: 'ltr' | 'rtl' | 'auto' | undefined | null;
@@ -1085,6 +1103,11 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	step?: number | string | undefined | null;
 	type?: HTMLInputTypeAttribute | undefined | null;
 	value?: any;
+	// needs both casing variants because language tools does lowercase names of non-shorthand attributes
+	defaultValue?: any;
+	defaultvalue?: any;
+	defaultChecked?: any;
+	defaultchecked?: any;
 	width?: number | string | undefined | null;
 	webkitdirectory?: boolean | undefined | null;
 
@@ -1366,6 +1389,9 @@ export interface HTMLTextareaAttributes extends HTMLAttributes<HTMLTextAreaEleme
 	required?: boolean | undefined | null;
 	rows?: number | undefined | null;
 	value?: string | string[] | number | undefined | null;
+	// needs both casing variants because language tools does lowercase names of non-shorthand attributes
+	defaultValue?: string | string[] | number | undefined | null;
+	defaultvalue?: string | string[] | number | undefined | null;
 	wrap?: 'hard' | 'soft' | undefined | null;
 
 	'on:change'?: ChangeEventHandler<HTMLTextAreaElement> | undefined | null;
@@ -1496,7 +1522,7 @@ export interface SvelteWindowAttributes extends HTMLAttributes<Window> {
 export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DOMAttributes<T> {
 	// Attributes which also defined in HTMLAttributes
 	className?: string | undefined | null;
-	class?: string | undefined | null;
+	class?: string | import('clsx').ClassArray | import('clsx').ClassDictionary | undefined | null;
 	color?: string | undefined | null;
 	height?: number | string | undefined | null;
 	id?: string | undefined | null;
@@ -2026,6 +2052,10 @@ export interface SvelteHTMLElements {
 		[name: string]: any;
 	};
 	'svelte:head': { [name: string]: any };
+	'svelte:boundary': {
+		onerror?: (error: unknown, reset: () => void) => void;
+		failed?: import('svelte').Snippet<[error: unknown, reset: () => void]>;
+	};
 
 	[name: string]: { [name: string]: any };
 }

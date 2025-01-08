@@ -1,5 +1,5 @@
 /** @import { Program } from 'estree' */
-/** @import { AST, Directive } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import * as acorn from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
@@ -16,7 +16,7 @@ const ALLOWED_ATTRIBUTES = ['context', 'generics', 'lang', 'module'];
 /**
  * @param {Parser} parser
  * @param {number} start
- * @param {Array<AST.Attribute | AST.SpreadAttribute | Directive>} attributes
+ * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.Directive>} attributes
  * @returns {AST.Script}
  */
 export function read_script(parser, start, attributes) {
@@ -34,7 +34,7 @@ export function read_script(parser, start, attributes) {
 	let ast;
 
 	try {
-		ast = acorn.parse(source, parser.ts);
+		ast = acorn.parse(source, parser.ts, true);
 	} catch (err) {
 		parser.acorn_error(err);
 	}
@@ -84,7 +84,6 @@ export function read_script(parser, start, attributes) {
 		end: parser.index,
 		context,
 		content: ast,
-		parent: null,
 		// @ts-ignore
 		attributes
 	};

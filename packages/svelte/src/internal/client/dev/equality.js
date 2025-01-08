@@ -17,10 +17,11 @@ export function init_array_prototype_warnings() {
 		const index = indexOf.call(this, item, from_index);
 
 		if (index === -1) {
-			const test = indexOf.call(get_proxied_value(this), get_proxied_value(item), from_index);
-
-			if (test !== -1) {
-				w.state_proxy_equality_mismatch('array.indexOf(...)');
+			for (let i = from_index ?? 0; i < this.length; i += 1) {
+				if (get_proxied_value(this[i]) === item) {
+					w.state_proxy_equality_mismatch('array.indexOf(...)');
+					break;
+				}
 			}
 		}
 
@@ -33,16 +34,11 @@ export function init_array_prototype_warnings() {
 		const index = lastIndexOf.call(this, item, from_index ?? this.length - 1);
 
 		if (index === -1) {
-			// we need to specify this.length - 1 because it's probably using something like
-			// `arguments` inside so passing undefined is different from not passing anything
-			const test = lastIndexOf.call(
-				get_proxied_value(this),
-				get_proxied_value(item),
-				from_index ?? this.length - 1
-			);
-
-			if (test !== -1) {
-				w.state_proxy_equality_mismatch('array.lastIndexOf(...)');
+			for (let i = 0; i <= (from_index ?? this.length - 1); i += 1) {
+				if (get_proxied_value(this[i]) === item) {
+					w.state_proxy_equality_mismatch('array.lastIndexOf(...)');
+					break;
+				}
 			}
 		}
 
@@ -53,10 +49,11 @@ export function init_array_prototype_warnings() {
 		const has = includes.call(this, item, from_index);
 
 		if (!has) {
-			const test = includes.call(get_proxied_value(this), get_proxied_value(item), from_index);
-
-			if (test) {
-				w.state_proxy_equality_mismatch('array.includes(...)');
+			for (let i = 0; i < this.length; i += 1) {
+				if (get_proxied_value(this[i]) === item) {
+					w.state_proxy_equality_mismatch('array.includes(...)');
+					break;
+				}
 			}
 		}
 

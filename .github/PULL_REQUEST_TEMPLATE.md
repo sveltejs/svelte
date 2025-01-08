@@ -4,6 +4,7 @@
 - [ ] Prefix your PR title with `feat:`, `fix:`, `chore:`, or `docs:`.
 - [ ] This message body should clearly illustrate what problems it solves.
 - [ ] Ideally, include a test that fails without this PR but passes with it.
+- [ ] If this PR changes code within `packages/svelte/src`, add a changeset (`npx changeset`).
 
 ### Tests and linting
 

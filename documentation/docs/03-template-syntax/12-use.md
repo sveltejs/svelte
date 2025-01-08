@@ -45,22 +45,21 @@ The action is only called once (but not during server-side rendering) — it wil
 
 ## Typing
 
-The `Action` interface receives three optional type arguments — a node type (which can be `Element`, if the action applies to everything), a parameter, and any custom event handlers created by the action.:
+The `Action` interface receives three optional type arguments — a node type (which can be `Element`, if the action applies to everything), a parameter, and any custom event handlers created by the action:
 
 ```svelte
 <!--- file: App.svelte --->
 <script>
-	import { on } from 'svelte/events';
-
 	/**
 	 * @type {import('svelte/action').Action<
 	 * 	HTMLDivElement,
-	 * 	null,
+	 * 	undefined,
 	 * 	{
 	 * 		onswiperight: (e: CustomEvent) => void;
 	 * 		onswipeleft: (e: CustomEvent) => void;
 	 * 		// ...
-	 * }>}
+	 * 	}
+	 * >}
 	 */
 	function gestures(node) {
 		$effect(() => {

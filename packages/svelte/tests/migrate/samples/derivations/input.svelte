@@ -6,7 +6,7 @@
 	// no semicolon at the end
 	$: time_8 = count * 8
 	$: ({ time_16 } = { time_16: count * 16 })
-	// preceeding let that doesn't do anything
+	// preceding let that doesn't do anything
 	let time_32;
 	$: time_32 = count * doubled;
 	let very_high;

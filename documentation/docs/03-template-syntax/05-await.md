@@ -39,7 +39,7 @@ Await blocks allow you to branch on the three possible states of a [`Promise`](h
 
 > [!NOTE] During server-side rendering, only the pending branch will be rendered.
 >
-> If the provided expression is not a `Promise` only the `:then` branch will be rendered, including during server-side rendering.
+> If the provided expression is not a `Promise`, only the `:then` branch will be rendered, including during server-side rendering.
 
 The `catch` block can be omitted if you don't need to render anything when the promise rejects (or no error is possible).
 
@@ -68,3 +68,12 @@ Similarly, if you only want to show the error state, you can omit the `then` blo
 	<p>The error is {error}</p>
 {/await}
 ```
+
+> [!NOTE] You can use `#await` with [`import(...)`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import) to render components lazily:
+>
+> ```svelte
+> {#await import('./Component.svelte') then { default: Component }}
+> 	<Component />
+> {/await}
+> ```
+

@@ -1,6 +1,9 @@
 <x>
 	<y>
 		<z></z>
+		{#if foo}
+			<d></d>
+		{/if}
 	</y>
 </x>
 <c></c>
@@ -89,7 +92,13 @@
 	x:has(> y) {
 		color: green;
 	}
+	y:has(> d) {
+		color: green;
+	}
 	x:has(> z) {
+		color: red;
+	}
+	x:has(> d) {
 		color: red;
 	}
 	x > y:has(z) {
@@ -101,5 +110,30 @@
 	}
 	x:has(y) + c {
 		color: green;
+	}
+
+	x:has(+ c) {
+		color: green;
+	}
+	x:has(~ c) {
+		color: green;
+	}
+	x:has(~ y) {
+		color: red;
+	}
+
+	:global(.foo) {
+		:has(x) {
+			color: green;
+		}
+		:has(.unused) {
+			color: red;
+		}
+		&:has(x) {
+			color: green;
+		}
+		&:has(.unused) {
+			color: red;
+		}
 	}
 </style>

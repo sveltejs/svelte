@@ -6,7 +6,7 @@ import { is_ignored } from '../../../../../state.js';
 import { get_attribute_expression, is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { build_getter, create_derived } from '../../utils.js';
-import { build_template_literal, build_update } from './utils.js';
+import { build_template_chunk, build_update } from './utils.js';
 
 /**
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
@@ -94,14 +94,12 @@ export function build_set_attributes(
  * @param {Identifier} element_id
  * @param {ComponentContext} context
  * @param {boolean} is_attributes_reactive
- * @param {boolean} force_check Should be `true` if we can't rely on our cached value, because for example there's also a `style` attribute
  */
 export function build_style_directives(
 	style_directives,
 	element_id,
 	context,
-	is_attributes_reactive,
-	force_check
+	is_attributes_reactive
 ) {
 	const state = context.state;
 
@@ -126,8 +124,7 @@ export function build_style_directives(
 				element_id,
 				b.literal(directive.name),
 				value,
-				/** @type {Expression} */ (directive.modifiers.includes('important') ? b.true : undefined),
-				force_check ? b.true : undefined
+				/** @type {Expression} */ (directive.modifiers.includes('important') ? b.true : undefined)
 			)
 		);
 
@@ -203,7 +200,7 @@ export function build_attribute_value(value, context) {
 		};
 	}
 
-	return build_template_literal(value, context.visit, context.state);
+	return build_template_chunk(value, context.visit, context.state);
 }
 
 /**
