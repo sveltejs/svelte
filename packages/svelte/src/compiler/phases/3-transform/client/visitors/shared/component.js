@@ -2,7 +2,11 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
-import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
+import {
+	extract_all_identifiers_from_expression,
+	get_attribute_chunks,
+	object
+} from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { create_derived } from '../../utils.js';
 import { build_bind_this, validate_binding } from '../shared/utils.js';
@@ -220,6 +224,32 @@ export function build_component(node, component_name, context, anchor = context.
 
 					push_prop(b.get(attribute.name, [b.return(b.call(get_id))]));
 					push_prop(b.set(attribute.name, [b.stmt(b.call(set_id, b.id('$$value')))]));
+					if (dev) {
+						const [, get_ids] = extract_all_identifiers_from_expression(get);
+
+						for (let get_id of get_ids) {
+							const binding = context.state.scope.get(get_id.name);
+							if (
+								binding &&
+								binding.kind !== 'derived' &&
+								binding.kind !== 'raw_state' &&
+								!ownerships_effects.has(get_id.name)
+							) {
+								ownerships_effects.set(get_id.name, () => {
+									binding_initializers.push(
+										b.stmt(
+											b.call(
+												b.id('$.add_owner_effect'),
+												b.thunk(get_id),
+												b.id(component_name),
+												is_ignored(node, 'ownership_invalid_binding') && b.true
+											)
+										)
+									);
+								});
+							}
+						}
+					}
 				}
 			} else {
 				if (
