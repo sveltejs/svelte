@@ -331,7 +331,39 @@ The $ prefix is reserved, and cannot be used for variables and imports
 ### each_item_invalid_assignment
 
 ```
-Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)
+Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`, or `bind:value={array[i]}` instead of `bind:value={entry}`)
+```
+
+In legacy mode, it was possible to reassign or bind to the each block argument itself:
+
+```svelte
+<script>
+	let array = [1, 2, 3];
+</script>
+
+{#each array as entry}
+	<!-- reassignment -->
+	<button on:click={() => entry = 4}>change</button>
+
+	<!-- binding -->
+	<input bind:value={entry}>
+{/each}
+```
+
+This turned out to be buggy and unpredictable, particularly when working with derived values (such as `array.map(...)`), and as such is forbidden in runes mode. You can achieve the same outcome by using the index instead:
+
+```svelte
+<script>
+	let array = $state([1, 2, 3]);
+</script>
+
+{#each array as entry, i}
+	<!-- reassignment -->
+	<button onclick={() => array[i] = 4}>change</button>
+
+	<!-- binding -->
+	<input bind:value={array[i]}>
+{/each}
 ```
 
 ### effect_invalid_placement
