@@ -11,26 +11,36 @@ import { cubicOut } from '../easing/index.js';
  * @returns {AnimationConfig}
  */
 export function flip(node, { from, to }, params = {}) {
-	var style = getComputedStyle(node);
-	var zoom = get_zoom(node); // https://drafts.csswg.org/css-viewport/#effective-zoom
+	var { delay = 0, duration = (d) => Math.sqrt(d) * 120, easing = cubicOut } = params;
 
+	var style = getComputedStyle(node);
+
+	// find the transform origin, expressed as a pair of values between 0 and 1
 	var transform = style.transform === 'none' ? '' : style.transform;
 	var [ox, oy] = style.transformOrigin.split(' ').map(parseFloat);
-	var dsx = from.width / to.width;
-	var dsy = from.height / to.height;
-
 	ox /= node.clientWidth;
 	oy /= node.clientHeight;
 
-	var fromx = from.left + from.width * ox;
-	var tox = to.left + to.width * ox;
+	// calculate effect of parent transforms and zoom
+	var zoom = get_zoom(node); // https://drafts.csswg.org/css-viewport/#effective-zoom
+	var sx = node.clientWidth / to.width / zoom;
+	var sy = node.clientHeight / to.height / zoom;
 
-	var fromy = from.top + from.height * oy;
-	var toy = to.top + to.height * oy;
+	// find the starting position of the transform origin
+	var fx = from.left + from.width * ox;
+	var fy = from.top + from.height * oy;
 
-	var dx = ((fromx - tox) * (node.clientWidth / to.width)) / zoom;
-	var dy = ((fromy - toy) * (node.clientHeight / to.height)) / zoom;
-	var { delay = 0, duration = (d) => Math.sqrt(d) * 120, easing = cubicOut } = params;
+	// find the ending position of the transform origin
+	var tx = to.left + to.width * ox;
+	var ty = to.top + to.height * oy;
+
+	// find the translation at the start of the transform
+	var dx = (fx - tx) * sx;
+	var dy = (fy - ty) * sy;
+
+	// find the relative scale at the start of the transform
+	var dsx = from.width / to.width;
+	var dsy = from.height / to.height;
 
 	return {
 		delay,
