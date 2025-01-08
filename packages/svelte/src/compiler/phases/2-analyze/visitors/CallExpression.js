@@ -1,17 +1,19 @@
-/** @import { CallExpression, VariableDeclarator } from 'estree' */
-/** @import { AST, SvelteNode } from '#compiler' */
+/** @import { ArrowFunctionExpression, CallExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, VariableDeclarator } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
 import { get_parent, unwrap_optional } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
+import { dev, locate_node, source } from '../../../state.js';
+import * as b from '../../../utils/builders.js';
 
 /**
  * @param {CallExpression} node
  * @param {Context} context
  */
 export function CallExpression(node, context) {
-	const parent = /** @type {SvelteNode} */ (get_parent(context.path, -1));
+	const parent = /** @type {AST.SvelteNode} */ (get_parent(context.path, -1));
 
 	const rune = get_rune(node, context.state.scope);
 
@@ -135,6 +137,47 @@ export function CallExpression(node, context) {
 
 			break;
 
+		case '$inspect.trace': {
+			if (node.arguments.length > 1) {
+				e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
+			}
+
+			const grand_parent = context.path.at(-2);
+			const fn = context.path.at(-3);
+
+			if (
+				parent.type !== 'ExpressionStatement' ||
+				grand_parent?.type !== 'BlockStatement' ||
+				!(
+					fn?.type === 'FunctionDeclaration' ||
+					fn?.type === 'FunctionExpression' ||
+					fn?.type === 'ArrowFunctionExpression'
+				) ||
+				grand_parent.body[0] !== parent
+			) {
+				e.inspect_trace_invalid_placement(node);
+			}
+
+			if (fn.generator) {
+				e.inspect_trace_generator(node);
+			}
+
+			if (dev) {
+				if (node.arguments[0]) {
+					context.state.scope.tracing = b.thunk(/** @type {Expression} */ (node.arguments[0]));
+				} else {
+					const label = get_function_label(context.path.slice(0, -2)) ?? 'trace';
+					const loc = `(${locate_node(fn)})`;
+
+					context.state.scope.tracing = b.thunk(b.literal(label + ' ' + loc));
+				}
+
+				context.state.analysis.tracing = true;
+			}
+
+			break;
+		}
+
 		case '$state.snapshot':
 			if (node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
@@ -179,5 +222,33 @@ export function CallExpression(node, context) {
 			context.state.expression.has_call = true;
 			context.state.expression.has_state = true;
 		}
+	}
+}
+
+/**
+ * @param {AST.SvelteNode[]} nodes
+ */
+function get_function_label(nodes) {
+	const fn = /** @type {FunctionExpression | FunctionDeclaration | ArrowFunctionExpression} */ (
+		nodes.at(-1)
+	);
+
+	if ((fn.type === 'FunctionDeclaration' || fn.type === 'FunctionExpression') && fn.id != null) {
+		return fn.id.name;
+	}
+
+	const parent = nodes.at(-2);
+	if (!parent) return;
+
+	if (parent.type === 'CallExpression') {
+		return source.slice(parent.callee.start, parent.callee.end) + '(...)';
+	}
+
+	if (parent.type === 'Property' && !parent.computed) {
+		return /** @type {Identifier} */ (parent.key).name;
+	}
+
+	if (parent.type === 'VariableDeclarator' && parent.id.type === 'Identifier') {
+		return parent.id.name;
 	}
 }

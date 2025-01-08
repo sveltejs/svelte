@@ -1,17 +1,9 @@
 declare module '*.svelte' {
 	// use prettier-ignore for a while because of https://github.com/sveltejs/language-tools/commit/026111228b5814a9109cc4d779d37fb02955fb8b
 	// prettier-ignore
-	import { SvelteComponent, Component, type ComponentConstructorOptions } from 'svelte'
-
-	// Support using the component as both a class and function during the transition period
-	// prettier-ignore
-	interface ComponentType {
-		(
-			...args: Parameters<Component<Record<string, any>>>
-		): ReturnType<Component<Record<string, any>, Record<string, any>>>
-		new (o: ComponentConstructorOptions): SvelteComponent
-	}
-	const Comp: ComponentType;
+	import { SvelteComponent } from 'svelte'
+	import { LegacyComponentType } from 'svelte/legacy';
+	const Comp: LegacyComponentType;
 	type Comp = SvelteComponent;
 	export default Comp;
 }
@@ -346,6 +338,29 @@ declare namespace $effect {
  */
 declare function $props(): any;
 
+declare namespace $props {
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
+}
+
 /**
  * Declares a prop as bindable, meaning the parent component can use `bind:propName={value}` to bind to it.
  *
@@ -356,6 +371,29 @@ declare function $props(): any;
  * https://svelte.dev/docs/svelte/$bindable
  */
 declare function $bindable<T>(fallback?: T): T;
+
+declare namespace $bindable {
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
+}
 
 /**
  * Inspects one or more values whenever they, or the properties they contain, change. Example:
@@ -379,6 +417,46 @@ declare function $inspect<T extends any[]>(
 	...values: T
 ): { with: (fn: (type: 'init' | 'update', ...values: T) => void) => void };
 
+declare namespace $inspect {
+	/**
+	 * Tracks which reactive state changes caused an effect to re-run. Must be the first
+	 * statement of a function body. Example:
+	 *
+	 * ```svelte
+	 * <script>
+	 *   let count = $state(0);
+	 *
+	 *   $effect(() => {
+	 *     $inspect.trace('my effect');
+	 *
+	 *     count;
+	 *   });
+	 * </script>
+	 */
+	export function trace(name?: string): void;
+
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
+}
+
 /**
  * Retrieves the `this` reference of the custom element that contains this component. Example:
  *
@@ -399,3 +477,26 @@ declare function $inspect<T extends any[]>(
  * https://svelte.dev/docs/svelte/$host
  */
 declare function $host<El extends HTMLElement = HTMLElement>(): El;
+
+declare namespace $host {
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
+}

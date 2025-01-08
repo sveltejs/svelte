@@ -1,4 +1,4 @@
-/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, Reaction, TemplateNode, TransitionManager } from '#client' */
+/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
 import {
 	check_dirtiness,
 	component_context,
@@ -110,7 +110,7 @@ function create_effect(type, fn, sync, push = true) {
 		prev: null,
 		teardown: null,
 		transitions: null,
-		version: 0
+		wv: 0
 	};
 
 	if (DEV) {
@@ -244,8 +244,32 @@ export function inspect_effect(fn) {
  */
 export function effect_root(fn) {
 	const effect = create_effect(ROOT_EFFECT, fn, true);
+
 	return () => {
 		destroy_effect(effect);
+	};
+}
+
+/**
+ * An effect root whose children can transition out
+ * @param {() => void} fn
+ * @returns {(options?: { outro?: boolean }) => Promise<void>}
+ */
+export function component_root(fn) {
+	const effect = create_effect(ROOT_EFFECT, fn, true);
+
+	return (options = {}) => {
+		return new Promise((fulfil) => {
+			if (options.outro) {
+				pause_effect(effect, () => {
+					destroy_effect(effect);
+					fulfil(undefined);
+				});
+			} else {
+				destroy_effect(effect);
+				fulfil(undefined);
+			}
+		});
 	};
 }
 
@@ -464,12 +488,12 @@ export function destroy_effect(effect, remove_dom = true) {
 	}
 
 	// `first` and `child` are nulled out in destroy_effect_children
+	// we don't null out `parent` so that error propagation can work correctly
 	effect.next =
 		effect.prev =
 		effect.teardown =
 		effect.ctx =
 		effect.deps =
-		effect.parent =
 		effect.fn =
 		effect.nodes_start =
 		effect.nodes_end =

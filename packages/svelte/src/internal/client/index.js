@@ -1,4 +1,5 @@
 export { FILENAME, HMR, NAMESPACE_SVG } from '../../constants.js';
+export { assign, assign_and, assign_or, assign_nullish } from './dev/assign.js';
 export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
@@ -11,6 +12,7 @@ export {
 	skip_ownership_validation
 } from './dev/ownership.js';
 export { check_target, legacy_api } from './dev/legacy.js';
+export { trace } from './dev/tracing.js';
 export { inspect } from './dev/inspect.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
@@ -33,7 +35,10 @@ export {
 	set_xlink_attribute,
 	handle_lazy_img,
 	set_value,
-	set_checked
+	set_checked,
+	set_selected,
+	set_default_checked,
+	set_default_value
 } from './dom/elements/attributes.js';
 export { set_class, set_svg_class, set_mathml_class, toggle_class } from './dom/elements/class.js';
 export { apply, event, delegate, replay_events } from './dom/elements/events.js';
@@ -124,6 +129,7 @@ export {
 	update_store,
 	mark_store_binding
 } from './reactivity/store.js';
+export { boundary } from './dom/blocks/boundary.js';
 export { set_text } from './render.js';
 export {
 	get,
@@ -144,7 +150,7 @@ export {
 	setContext,
 	hasContext
 } from './runtime.js';
-export { validate_binding, validate_each_keys, validate_prop_bindings } from './validate.js';
+export { validate_binding, validate_each_keys } from './validate.js';
 export { raf } from './timing.js';
 export { proxy } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
@@ -155,6 +161,7 @@ export {
 	$window as window,
 	$document as document
 } from './dom/operations.js';
+export { attr, clsx } from '../shared/attributes.js';
 export { snapshot } from '../shared/clone.js';
 export { noop, fallback } from '../shared/utils.js';
 export {

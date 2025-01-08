@@ -32,20 +32,6 @@ export default test({
 		},
 		{
 			code: 'css_unused_selector',
-			message: 'Unused CSS selector ".unused"',
-			start: {
-				line: 14,
-				column: 7,
-				character: 117
-			},
-			end: {
-				line: 14,
-				column: 14,
-				character: 124
-			}
-		},
-		{
-			code: 'css_unused_selector',
 			message: 'Unused CSS selector ":global(.foo) :is(.unused)"',
 			start: {
 				line: 28,
@@ -60,16 +46,30 @@ export default test({
 		},
 		{
 			code: 'css_unused_selector',
-			message: 'Unused CSS selector ".unused"',
+			message: 'Unused CSS selector ":global(.foo):is(.unused)"',
 			start: {
-				line: 28,
-				column: 19,
-				character: 292
+				line: 34,
+				column: 1,
+				character: 363
 			},
 			end: {
-				line: 28,
+				line: 34,
 				column: 26,
-				character: 299
+				character: 388
+			}
+		},
+		{
+			code: 'css_unused_selector',
+			message: 'Unused CSS selector ":is(.unused)"',
+			start: {
+				line: 52,
+				column: 2,
+				character: 636
+			},
+			end: {
+				line: 52,
+				column: 14,
+				character: 648
 			}
 		}
 	]

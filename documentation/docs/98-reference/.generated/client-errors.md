@@ -21,14 +21,18 @@ A component is attempting to bind to a non-bindable property `%key%` belonging t
 ### component_api_changed
 
 ```
-%parent% called `%method%` on an instance of %component%, which is no longer valid in Svelte 5. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information
+%parent% called `%method%` on an instance of %component%, which is no longer valid in Svelte 5
 ```
+
+See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more information.
 
 ### component_api_invalid_new
 
 ```
-Attempted to instantiate %component% with `new %name%`, which is no longer valid in Svelte 5. If this component is not under your control, set the `compatibility.componentApi` compiler option to `4` to keep it working. See https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes for more information
+Attempted to instantiate %component% with `new %name%`, which is no longer valid in Svelte 5. If this component is not under your control, set the `compatibility.componentApi` compiler option to `4` to keep it working.
 ```
+
+See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more information.
 
 ### derived_references_self
 

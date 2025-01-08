@@ -6,6 +6,7 @@ import { is_array } from './internal/shared/utils.js';
 import { user_effect } from './internal/client/index.js';
 import * as e from './internal/client/errors.js';
 import { lifecycle_outside_component } from './internal/shared/errors.js';
+import { legacy_mode_flag } from './internal/flags/index.js';
 
 /**
  * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
@@ -25,7 +26,7 @@ export function onMount(fn) {
 		lifecycle_outside_component('onMount');
 	}
 
-	if (component_context.l !== null) {
+	if (legacy_mode_flag && component_context.l !== null) {
 		init_update_callbacks(component_context).m.push(fn);
 	} else {
 		user_effect(() => {
@@ -82,7 +83,7 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
  * }>();
  * ```
  *
- * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte.dev/docs/svelte/v5-migration-guide#Event-changes-Component-events
+ * @deprecated Use callback props and/or the `$host()` rune instead — see [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Event-changes-Component-events)
  * @template {Record<string, any>} [EventMap = any]
  * @returns {EventDispatcher<EventMap>}
  */
@@ -121,7 +122,7 @@ export function createEventDispatcher() {
  *
  * In runes mode use `$effect.pre` instead.
  *
- * @deprecated Use `$effect.pre` instead — see https://svelte.dev/docs/svelte/$effect#$effect.pre
+ * @deprecated Use [`$effect.pre`](https://svelte.dev/docs/svelte/$effect#$effect.pre) instead
  * @param {() => void} fn
  * @returns {void}
  */
@@ -144,7 +145,7 @@ export function beforeUpdate(fn) {
  *
  * In runes mode use `$effect` instead.
  *
- * @deprecated Use `$effect` instead — see https://svelte.dev/docs/svelte/$effect
+ * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
  * @param {() => void} fn
  * @returns {void}
  */

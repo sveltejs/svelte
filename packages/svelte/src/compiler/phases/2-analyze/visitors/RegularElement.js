@@ -19,11 +19,9 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
  */
 export function RegularElement(node, context) {
 	validate_element(node, context);
-
-	check_element(node, context.state);
+	check_element(node, context);
 
 	node.metadata.path = [...context.path];
-
 	context.state.analysis.elements.push(node);
 
 	// Special case: Move the children of <textarea> into a value attribute if they are dynamic
@@ -75,16 +73,6 @@ export function RegularElement(node, context) {
 		node.attributes.push(create_attribute('value', child.start, child.end, [child]));
 	}
 
-	if (
-		node.attributes.some(
-			(attribute) =>
-				attribute.type === 'Attribute' &&
-				(attribute.name === 'autofocus' || attribute.name === 'muted')
-		)
-	) {
-		mark_subtree_dynamic(context.path);
-	}
-
 	const binding = context.state.scope.get(node.name);
 	if (
 		binding !== null &&
@@ -98,7 +86,26 @@ export function RegularElement(node, context) {
 		(attribute) => attribute.type === 'SpreadAttribute'
 	);
 
-	node.metadata.svg = is_svg(node.name);
+	const is_svg_element = () => {
+		if (is_svg(node.name)) {
+			return true;
+		}
+
+		if (node.name === 'a' || node.name === 'title') {
+			let i = context.path.length;
+
+			while (i--) {
+				const ancestor = context.path[i];
+				if (ancestor.type === 'RegularElement') {
+					return ancestor.metadata.svg;
+				}
+			}
+		}
+
+		return false;
+	};
+
+	node.metadata.svg = is_svg_element();
 	node.metadata.mathml = is_mathml(node.name);
 
 	if (is_custom_element_node(node) && node.attributes.length > 0) {
@@ -126,15 +133,12 @@ export function RegularElement(node, context) {
 
 			if (!past_parent) {
 				if (ancestor.type === 'RegularElement' && ancestor.name === context.state.parent_element) {
-					if (!is_tag_valid_with_parent(node.name, context.state.parent_element)) {
+					const message = is_tag_valid_with_parent(node.name, context.state.parent_element);
+					if (message) {
 						if (only_warn) {
-							w.node_invalid_placement_ssr(
-								node,
-								`\`<${node.name}>\``,
-								context.state.parent_element
-							);
+							w.node_invalid_placement_ssr(node, message);
 						} else {
-							e.node_invalid_placement(node, `\`<${node.name}>\``, context.state.parent_element);
+							e.node_invalid_placement(node, message);
 						}
 					}
 
@@ -143,11 +147,12 @@ export function RegularElement(node, context) {
 			} else if (ancestor.type === 'RegularElement') {
 				ancestors.push(ancestor.name);
 
-				if (!is_tag_valid_with_ancestor(node.name, ancestors)) {
+				const message = is_tag_valid_with_ancestor(node.name, ancestors);
+				if (message) {
 					if (only_warn) {
-						w.node_invalid_placement_ssr(node, `\`<${node.name}>\``, ancestor.name);
+						w.node_invalid_placement_ssr(node, message);
 					} else {
-						e.node_invalid_placement(node, `\`<${node.name}>\``, ancestor.name);
+						e.node_invalid_placement(node, message);
 					}
 				}
 			} else if (

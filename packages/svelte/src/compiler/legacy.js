@@ -1,5 +1,5 @@
 /** @import { Expression } from 'estree' */
-/** @import { AST, SvelteNode, TemplateNode } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import * as Legacy from './types/legacy-nodes.js' */
 import { walk } from 'zimmerframe';
 import {
@@ -11,7 +11,7 @@ import { extract_svelte_ignore } from './utils/extract_svelte_ignore.js';
 
 /**
  * Some of the legacy Svelte AST nodes remove whitespace from the start and end of their children.
- * @param {TemplateNode[]} nodes
+ * @param {AST.TemplateNode[]} nodes
  */
 function remove_surrounding_whitespace_nodes(nodes) {
 	const first = nodes.at(0);
@@ -40,13 +40,11 @@ function remove_surrounding_whitespace_nodes(nodes) {
  * @returns {Legacy.LegacyRoot}
  */
 export function convert(source, ast) {
-	const root = /** @type {SvelteNode | Legacy.LegacySvelteNode} */ (ast);
+	const root = /** @type {AST.SvelteNode | Legacy.LegacySvelteNode} */ (ast);
 
 	return /** @type {Legacy.LegacyRoot} */ (
 		walk(root, null, {
 			_(node, { next }) {
-				// @ts-ignore
-				delete node.parent;
 				// @ts-ignore
 				delete node.metadata;
 				next();
@@ -62,8 +60,6 @@ export function convert(source, ast) {
 						idx = node.fragment.nodes.length;
 					}
 
-					// @ts-ignore
-					delete options.__raw__.parent;
 					node.fragment.nodes.splice(idx, 0, /** @type {any} */ (options).__raw__);
 				}
 
@@ -86,14 +82,10 @@ export function convert(source, ast) {
 
 				if (instance) {
 					// @ts-ignore
-					delete instance.parent;
-					// @ts-ignore
 					delete instance.attributes;
 				}
 
 				if (module) {
-					// @ts-ignore
-					delete module.parent;
 					// @ts-ignore
 					delete module.attributes;
 				}
@@ -387,6 +379,20 @@ export function convert(source, ast) {
 					expression: node.expression,
 					parameters: node.parameters,
 					children: node.body.nodes.map((child) => visit(child))
+				};
+			},
+			// @ts-expect-error
+			SvelteBoundary(node, { visit }) {
+				remove_surrounding_whitespace_nodes(node.fragment.nodes);
+				return {
+					type: 'SvelteBoundary',
+					name: 'svelte:boundary',
+					start: node.start,
+					end: node.end,
+					attributes: node.attributes.map(
+						(child) => /** @type {Legacy.LegacyAttributeLike} */ (visit(child))
+					),
+					children: node.fragment.nodes.map((child) => visit(child))
 				};
 			},
 			RegularElement(node, { visit }) {

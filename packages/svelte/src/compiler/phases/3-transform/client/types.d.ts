@@ -6,9 +6,10 @@ import type {
 	PrivateIdentifier,
 	Expression,
 	AssignmentExpression,
-	UpdateExpression
+	UpdateExpression,
+	VariableDeclaration
 } from 'estree';
-import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
+import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
 import type { SourceLocation } from '#shared';
@@ -31,7 +32,7 @@ export interface ClientTransformState extends TransformState {
 			/** turn `foo = bar` into e.g. `$.set(foo, bar)` */
 			assign?: (node: Identifier, value: Expression) => Expression;
 			/** turn `foo.bar = baz` into e.g. `$.mutate(foo, $.get(foo).bar = baz);` */
-			mutate?: (node: Identifier, mutation: AssignmentExpression) => Expression;
+			mutate?: (node: Identifier, mutation: AssignmentExpression | UpdateExpression) => Expression;
 			/** turn `foo++` into e.g. `$.update(foo)` */
 			update?: (node: UpdateExpression) => Expression;
 		}
@@ -85,6 +86,11 @@ export interface ComponentClientTransformState extends ClientTransformState {
 
 	/** The $: calls, which will be ordered in the end */
 	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
+
+	/** Snippets hoisted to the instance */
+	readonly instance_level_snippets: VariableDeclaration[];
+	/** Snippets hoisted to the module */
+	readonly module_level_snippets: VariableDeclaration[];
 }
 
 export interface StateField {
@@ -92,14 +98,14 @@ export interface StateField {
 	id: PrivateIdentifier;
 }
 
-export type Context = import('zimmerframe').Context<SvelteNode, ClientTransformState>;
-export type Visitors = import('zimmerframe').Visitors<SvelteNode, any>;
+export type Context = import('zimmerframe').Context<AST.SvelteNode, ClientTransformState>;
+export type Visitors = import('zimmerframe').Visitors<AST.SvelteNode, any>;
 
 export type ComponentContext = import('zimmerframe').Context<
-	SvelteNode,
+	AST.SvelteNode,
 	ComponentClientTransformState
 >;
 export type ComponentVisitors = import('zimmerframe').Visitors<
-	SvelteNode,
+	AST.SvelteNode,
 	ComponentClientTransformState
 >;

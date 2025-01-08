@@ -1,6 +1,8 @@
+/** @import { Location } from 'locate-character' */
 /** @import { Expression, LabeledStatement, Statement } from 'estree' */
 /** @import { ReactiveStatement } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
+import { dev, is_ignored, locator } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { build_getter } from '../utils.js';
 

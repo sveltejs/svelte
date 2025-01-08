@@ -59,6 +59,9 @@ export function get_component() {
 		}
 
 		for (const module of modules) {
+			if (module.end == null) {
+				return null;
+			}
 			if (module.start.line < entry.line && module.end.line > entry.line) {
 				return module.component;
 			}

@@ -12,6 +12,13 @@ interface CompilerErrorTest extends BaseTest {
 	};
 }
 
+/**
+ * Remove the "https://svelte.dev/e/..." link
+ */
+function strip_link(message: string) {
+	return message.slice(0, message.lastIndexOf('\n'));
+}
+
 const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 	if (!fs.existsSync(`${cwd}/main.svelte`) && !fs.existsSync(`${cwd}/main.svelte.js`)) {
 		throw new Error('Expected main.svelte or main.svelte.js');
@@ -30,7 +37,7 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 			caught_error = true;
 
 			expect(error.code).toBe(config.error.code);
-			expect(error.message).toBe(config.error.message);
+			expect(strip_link(error.message)).toBe(config.error.message);
 
 			if (config.error.position) {
 				expect(error.position).toEqual(config.error.position);
@@ -55,7 +62,7 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 			caught_error = true;
 
 			expect(error.code).toEqual(config.error.code);
-			expect(error.message).toEqual(config.error.message);
+			expect(strip_link(error.message)).toEqual(config.error.message);
 
 			if (config.error.position) {
 				expect(error.position).toEqual(config.error.position);

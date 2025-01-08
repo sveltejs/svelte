@@ -34,17 +34,45 @@
 
 > Self-closing HTML tags for non-void elements are ambiguous — use `<%name% ...></%name%>` rather than `<%name% ... />`
 
+In HTML, there's [no such thing as a self-closing tag](https://jakearchibald.com/2023/against-self-closing-tags-in-html/). While this _looks_ like a self-contained element with some text next to it...
+
+```html
+<div>
+	<span class="icon" /> some text!
+</div>
+```
+
+...a spec-compliant HTML parser (such as a browser) will in fact parse it like this, with the text _inside_ the icon:
+
+```html
+<div>
+	<span class="icon"> some text! </span>
+</div>
+```
+
+Some templating languages (including Svelte) will 'fix' HTML by turning `<span />` into `<span></span>`. Others adhere to the spec. Both result in ambiguity and confusion when copy-pasting code between different contexts, and as such Svelte prompts you to resolve the ambiguity directly by having an explicit closing tag.
+
+To automate this, run the dedicated migration:
+
+```bash
+npx sv migrate self-closing-tags
+```
+
+In a future version of Svelte, self-closing tags may be upgraded from a warning to an error.
+
 ## event_directive_deprecated
 
 > Using `on:%name%` to listen to the %name% event is deprecated. Use the event attribute `on%name%` instead
 
+See [the migration guide](v5-migration-guide#Event-changes) for more info.
+
 ## node_invalid_placement_ssr
 
-> %thing% is invalid inside `<%parent%>`. When rendering this component on the server, the resulting HTML will be modified by the browser, likely resulting in a `hydration_mismatch` warning
+> %message%. When rendering this component on the server, the resulting HTML will be modified by the browser (by moving, removing, or inserting elements), likely resulting in a `hydration_mismatch` warning
 
 HTML restricts where certain elements can appear. In case of a violation the browser will 'repair' the HTML in a way that breaks Svelte's assumptions about the structure of your components. Some examples:
 
-- `<p>hello <div>world</div></p>` will result in `<p>hello </p><div>world</div><p></p>` for example (the `<div>` autoclosed the `<p>` because `<p>` cannot contain block-level elements)
+- `<p>hello <div>world</div></p>` will result in `<p>hello </p><div>world</div><p></p>` (the `<div>` autoclosed the `<p>` because `<p>` cannot contain block-level elements)
 - `<option><div>option a</div></option>` will result in `<option>option a</option>` (the `<div>` is removed)
 - `<table><tr><td>cell</td></tr></table>` will result in `<table><tbody><tr><td>cell</td></tr></tbody></table>` (a `<tbody>` is auto-inserted)
 
@@ -54,6 +82,12 @@ This code will work when the component is rendered on the client (which is why t
 
 > `context="module"` is deprecated, use the `module` attribute instead
 
+```svelte
+<script ---context="module"--- +++module+++>
+	let foo = 'bar';
+</script>
+```
+
 ## script_unknown_attribute
 
 > Unrecognized attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
@@ -61,6 +95,8 @@ This code will work when the component is rendered on the client (which is why t
 ## slot_element_deprecated
 
 > Using `<slot>` to render parent content is deprecated. Use `{@render ...}` tags instead
+
+See [the migration guide](v5-migration-guide#Snippets-instead-of-slots) for more info.
 
 ## svelte_component_deprecated
 
@@ -104,3 +140,5 @@ A derived value may be used in other contexts:
 ## svelte_self_deprecated
 
 > `<svelte:self>` is deprecated — use self-imports (e.g. `import %name% from './%basename%'`) instead
+
+See [the note in the docs](legacy-svelte-self) for more info.

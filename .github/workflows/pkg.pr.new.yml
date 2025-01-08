@@ -21,4 +21,22 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - run: pnpx pkg-pr-new publish --compact --no-template './packages/svelte'
+      - run: pnpx pkg-pr-new publish --comment=off --json output.json --compact --no-template './packages/svelte'
+      - name: Add metadata to output
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const output = JSON.parse(fs.readFileSync('output.json', 'utf8'));
+            output.number = context.issue.number;
+            output.event_name = context.eventName;
+            output.ref = context.ref;
+            fs.writeFileSync('output.json', JSON.stringify(output), 'utf8');
+      - name: Upload output
+        uses: actions/upload-artifact@v4
+        with:
+          name: output
+          path: ./output.json
+
+      - run: ls -R .

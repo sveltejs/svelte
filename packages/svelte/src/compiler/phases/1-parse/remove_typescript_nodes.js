@@ -17,6 +17,16 @@ function remove_this_param(node, context) {
 
 /** @type {Visitors<any, null>} */
 const visitors = {
+	_(node, context) {
+		const n = context.next() ?? node;
+
+		// TODO there may come a time when we decide to preserve type annotations.
+		// until that day comes, we just delete them so they don't confuse esrap
+		delete n.typeAnnotation;
+		delete n.typeParameters;
+		delete n.returnType;
+		delete n.accessibility;
+	},
 	Decorator(node) {
 		e.typescript_invalid_feature(node, 'decorators (related TSC proposal is not stage 4 yet)');
 	},
@@ -36,7 +46,11 @@ const visitors = {
 		if (node.exportKind === 'type') return b.empty;
 
 		if (node.declaration) {
-			return context.next();
+			const result = context.next();
+			if (result?.declaration?.type === 'EmptyStatement') {
+				return b.empty;
+			}
+			return result;
 		}
 
 		if (node.specifiers) {
@@ -56,13 +70,14 @@ const visitors = {
 		if (node.exportKind === 'type') return b.empty;
 		return node;
 	},
-	PropertyDefinition(node) {
+	PropertyDefinition(node, { next }) {
 		if (node.accessor) {
 			e.typescript_invalid_feature(
 				node,
 				'accessor fields (related TSC proposal is not stage 4 yet)'
 			);
 		}
+		return next();
 	},
 	TSAsExpression(node, context) {
 		return context.visit(node.expression);
@@ -73,31 +88,23 @@ const visitors = {
 	TSNonNullExpression(node, context) {
 		return context.visit(node.expression);
 	},
-	TSTypeAnnotation() {
-		// This isn't correct, strictly speaking, and could result in invalid ASTs (like an empty statement within function parameters),
-		// but esrap, our printing tool, just ignores these AST nodes at invalid positions, so it's fine
-		return b.empty;
-	},
 	TSInterfaceDeclaration() {
 		return b.empty;
 	},
 	TSTypeAliasDeclaration() {
 		return b.empty;
 	},
-	TSTypeParameterDeclaration() {
-		return b.empty;
-	},
-	TSTypeParameterInstantiation() {
-		return b.empty;
-	},
 	TSEnumDeclaration(node) {
 		e.typescript_invalid_feature(node, 'enums');
 	},
 	TSParameterProperty(node, context) {
-		if (node.accessibility && context.path.at(-2)?.kind === 'constructor') {
+		if ((node.readonly || node.accessibility) && context.path.at(-2)?.kind === 'constructor') {
 			e.typescript_invalid_feature(node, 'accessibility modifiers on constructor parameters');
 		}
-		return node.parameter;
+		return context.visit(node.parameter);
+	},
+	TSInstantiationExpression(node, context) {
+		return context.visit(node.expression);
 	},
 	FunctionExpression: remove_this_param,
 	FunctionDeclaration: remove_this_param,
@@ -108,6 +115,7 @@ const visitors = {
 		if (node.declare) {
 			return b.empty;
 		}
+		delete node.implements;
 		return context.next();
 	},
 	VariableDeclaration(node, context) {

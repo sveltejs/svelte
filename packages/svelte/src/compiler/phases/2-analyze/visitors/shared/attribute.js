@@ -1,4 +1,4 @@
-/** @import { AST, ElementLike } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../../types' */
 import * as e from '../../../../errors.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
@@ -22,7 +22,7 @@ export function validate_attribute_name(attribute) {
 
 /**
  * @param {AST.Attribute} attribute
- * @param {ElementLike} parent
+ * @param {AST.ElementLike} parent
  */
 export function validate_attribute(attribute, parent) {
 	if (

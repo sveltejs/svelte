@@ -1,4 +1,4 @@
-/** @import { Expression, Identifier, Statement } from 'estree' */
+/** @import { Expression, Identifier, Statement, TemplateElement } from 'estree' */
 /** @import { AST, Namespace } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
@@ -212,12 +212,34 @@ function join_template(items) {
 	let quasi = b.quasi('');
 	const template = b.template([quasi], []);
 
+	/**
+	 * @param {Expression} expression
+	 */
+	function push(expression) {
+		if (expression.type === 'TemplateLiteral') {
+			for (let i = 0; i < expression.expressions.length; i += 1) {
+				const q = expression.quasis[i];
+				const e = expression.expressions[i];
+
+				quasi.value.cooked += /** @type {string} */ (q.value.cooked);
+				push(e);
+			}
+
+			const last = /** @type {TemplateElement} */ (expression.quasis.at(-1));
+			quasi.value.cooked += /** @type {string} */ (last.value.cooked);
+		} else if (expression.type === 'Literal') {
+			/** @type {string} */ (quasi.value.cooked) += expression.value;
+		} else {
+			template.expressions.push(expression);
+			template.quasis.push((quasi = b.quasi('')));
+		}
+	}
+
 	for (const item of items) {
 		if (typeof item === 'string') {
 			quasi.value.cooked += item;
 		} else {
-			template.expressions.push(item);
-			template.quasis.push((quasi = b.quasi('')));
+			push(item);
 		}
 	}
 

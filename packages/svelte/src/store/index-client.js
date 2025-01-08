@@ -1,14 +1,11 @@
 /** @import { Readable, Writable } from './public.js' */
-import { noop } from '../internal/shared/utils.js';
 import {
 	effect_root,
 	effect_tracking,
 	render_effect
 } from '../internal/client/reactivity/effects.js';
-import { source } from '../internal/client/reactivity/sources.js';
-import { get as get_source, tick } from '../internal/client/runtime.js';
-import { increment } from '../reactivity/utils.js';
 import { get, writable } from './shared/index.js';
+import { createSubscriber } from '../reactivity/create-subscriber.js';
 
 export { derived, get, readable, readonly, writable } from './shared/index.js';
 
@@ -109,43 +106,23 @@ export function toStore(get, set) {
  */
 export function fromStore(store) {
 	let value = /** @type {V} */ (undefined);
-	let version = source(0);
-	let subscribers = 0;
 
-	let unsubscribe = noop;
+	const subscribe = createSubscriber((update) => {
+		let ran = false;
+
+		const unsubscribe = store.subscribe((v) => {
+			value = v;
+			if (ran) update();
+		});
+
+		ran = true;
+
+		return unsubscribe;
+	});
 
 	function current() {
 		if (effect_tracking()) {
-			get_source(version);
-
-			render_effect(() => {
-				if (subscribers === 0) {
-					let ran = false;
-
-					unsubscribe = store.subscribe((v) => {
-						value = v;
-						if (ran) increment(version);
-					});
-
-					ran = true;
-				}
-
-				subscribers += 1;
-
-				return () => {
-					tick().then(() => {
-						// Only count down after timeout, else we would reach 0 before our own render effect reruns,
-						// but reach 1 again when the tick callback of the prior teardown runs. That would mean we
-						// re-subcribe unnecessarily and create a memory leak because the old subscription is never cleaned up.
-						subscribers -= 1;
-
-						if (subscribers === 0) {
-							unsubscribe();
-						}
-					});
-				};
-			});
-
+			subscribe();
 			return value;
 		}
 

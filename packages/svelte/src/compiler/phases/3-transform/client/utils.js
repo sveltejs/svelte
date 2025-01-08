@@ -1,5 +1,5 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, Pattern, PrivateIdentifier, Statement } from 'estree' */
-/** @import { Binding, SvelteNode } from '#compiler' */
+/** @import { AST, Binding } from '#compiler' */
 /** @import { ClientTransformState, ComponentClientTransformState, ComponentContext } from './types.js' */
 /** @import { Analysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
@@ -259,7 +259,8 @@ export function should_proxy(node, scope) {
 			binding.initial.type !== 'FunctionDeclaration' &&
 			binding.initial.type !== 'ClassDeclaration' &&
 			binding.initial.type !== 'ImportDeclaration' &&
-			binding.initial.type !== 'EachBlock'
+			binding.initial.type !== 'EachBlock' &&
+			binding.initial.type !== 'SnippetBlock'
 		) {
 			return should_proxy(binding.initial, null);
 		}
@@ -270,7 +271,7 @@ export function should_proxy(node, scope) {
 
 /**
  * @param {Pattern} node
- * @param {import('zimmerframe').Context<SvelteNode, ComponentClientTransformState>} context
+ * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentClientTransformState>} context
  * @returns {{ id: Pattern, declarations: null | Statement[] }}
  */
 export function create_derived_block_argument(node, context) {
@@ -310,19 +311,4 @@ export function create_derived_block_argument(node, context) {
  */
 export function create_derived(state, arg) {
 	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
-}
-
-/**
- * Whether a variable can be referenced directly from template string.
- * @param {import('#compiler').Binding | undefined} binding
- * @returns {boolean}
- */
-export function can_inline_variable(binding) {
-	return (
-		!!binding &&
-		// in a `<script module>` block
-		!binding.scope.parent &&
-		// to prevent the need for escaping
-		binding.initial?.type === 'Literal'
-	);
 }

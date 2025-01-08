@@ -4,16 +4,24 @@ export interface Signal {
 	/** Flags bitmask */
 	f: number;
 	/** Write version */
-	version: number;
+	wv: number;
 }
 
 export interface Value<V = unknown> extends Signal {
-	/** Signals that read from this signal */
-	reactions: null | Reaction[];
 	/** Equality function */
 	equals: Equals;
+	/** Signals that read from this signal */
+	reactions: null | Reaction[];
+	/** Read version */
+	rv: number;
 	/** The latest value for this signal */
 	v: V;
+	/** Dev only */
+	created?: Error | null;
+	updated?: Error | null;
+	trace_need_increase?: boolean;
+	trace_v?: V;
+	debug?: null | (() => void);
 }
 
 export interface Reaction extends Signal {
@@ -23,7 +31,6 @@ export interface Reaction extends Signal {
 	fn: null | Function;
 	/** Signals that this signal reads from */
 	deps: null | Value[];
-	parent: Effect | null;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {
@@ -31,6 +38,8 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 	fn: () => V;
 	/** Reactions created inside this signal */
 	children: null | Reaction[];
+	/** Parent effect or derived */
+	parent: Effect | Derived | null;
 }
 
 export interface Effect extends Reaction {
@@ -58,6 +67,8 @@ export interface Effect extends Reaction {
 	first: null | Effect;
 	/** Last child effect created inside this signal */
 	last: null | Effect;
+	/** Parent effect */
+	parent: Effect | null;
 	/** Dev only */
 	component_function?: any;
 }

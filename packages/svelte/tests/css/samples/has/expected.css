@@ -27,9 +27,9 @@
 	/* (unused) x:has(.unused) {
 		color: red;
 	}*/
-	.foo:has(.unused.svelte-xyz) {
+	/* (unused) :global(.foo):has(.unused) {
 		color: red;
-	}
+	}*/
 
 	x.svelte-xyz:has(y:where(.svelte-xyz) /* (unused) .unused*/) {
 		color: green;
@@ -75,7 +75,7 @@
 	/* (unused) .unused x:has(y) {
 		color: red;
 	}*/
-	/* (unused) .unused:has(.unused)*/ x.svelte-xyz:has(y:where(.svelte-xyz)) {
+	/* (unused) .unused:has(.unused),*/ x.svelte-xyz:has(y:where(.svelte-xyz)) {
 		color: green;
 	}
 
@@ -100,4 +100,29 @@
 	}
 	x.svelte-xyz:has(y:where(.svelte-xyz)) + c:where(.svelte-xyz) {
 		color: green;
+	}
+
+	x.svelte-xyz:has(+ c:where(.svelte-xyz)) {
+		color: green;
+	}
+	x.svelte-xyz:has(~ c:where(.svelte-xyz)) {
+		color: green;
+	}
+	/* (unused) x:has(~ y) {
+		color: red;
+	}*/
+
+	.foo {
+		.svelte-xyz:has(x:where(.svelte-xyz)) {
+			color: green;
+		}
+		/* (unused) :has(.unused) {
+			color: red;
+		}*/
+		&:has(x.svelte-xyz) {
+			color: green;
+		}
+		/* (unused) &:has(.unused) {
+			color: red;
+		}*/
 	}

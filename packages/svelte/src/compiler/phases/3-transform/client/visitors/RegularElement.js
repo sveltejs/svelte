@@ -4,6 +4,7 @@
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
 import {
+	cannot_be_set_statically,
 	is_boolean_attribute,
 	is_dom_property,
 	is_load_error_element,
@@ -11,15 +12,11 @@ import {
 } from '../../../../../utils.js';
 import { escape_html } from '../../../../../escaping.js';
 import { dev, is_ignored, locator } from '../../../../state.js';
-import {
-	get_attribute_expression,
-	is_event_attribute,
-	is_text_attribute
-} from '../../../../utils/ast.js';
+import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { build_getter, can_inline_variable, create_derived } from '../utils.js';
+import { build_getter, create_derived } from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
@@ -30,10 +27,9 @@ import {
 import { process_children } from './shared/fragment.js';
 import {
 	build_render_statement,
-	build_template_literal,
+	build_template_chunk,
 	build_update,
-	build_update_assignment,
-	get_states_and_calls
+	build_update_assignment
 } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 
@@ -176,20 +172,28 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (
-		node.name === 'input' &&
-		(has_spread ||
-			bindings.has('value') ||
-			bindings.has('checked') ||
-			bindings.has('group') ||
-			attributes.some(
-				(attribute) =>
-					attribute.type === 'Attribute' &&
-					(attribute.name === 'value' || attribute.name === 'checked') &&
-					!is_text_attribute(attribute)
-			))
-	) {
-		context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
+	if (node.name === 'input') {
+		const has_value_attribute = attributes.some(
+			(attribute) =>
+				attribute.type === 'Attribute' &&
+				(attribute.name === 'value' || attribute.name === 'checked') &&
+				!is_text_attribute(attribute)
+		);
+		const has_default_value_attribute = attributes.some(
+			(attribute) =>
+				attribute.type === 'Attribute' &&
+				(attribute.name === 'defaultValue' || attribute.name === 'defaultChecked')
+		);
+		if (
+			!has_default_value_attribute &&
+			(has_spread ||
+				bindings.has('value') ||
+				bindings.has('checked') ||
+				bindings.has('group') ||
+				(!bindings.has('group') && has_value_attribute))
+		) {
+			context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
+		}
 	}
 
 	if (node.name === 'textarea') {
@@ -267,8 +271,7 @@ export function RegularElement(node, context) {
 
 			if (
 				!is_custom_element &&
-				attribute.name !== 'autofocus' &&
-				attribute.name !== 'muted' &&
+				!cannot_be_set_statically(attribute.name) &&
 				(attribute.value === true || is_text_attribute(attribute))
 			) {
 				const name = get_attribute_name(node, attribute);
@@ -288,7 +291,7 @@ export function RegularElement(node, context) {
 
 			const is = is_custom_element
 				? build_custom_element_attribute_update_assignment(node_id, attribute, context)
-				: build_element_attribute_update_assignment(node, node_id, attribute, context);
+				: build_element_attribute_update_assignment(node, node_id, attribute, attributes, context);
 			if (is) is_attributes_reactive = true;
 		}
 	}
@@ -357,18 +360,20 @@ export function RegularElement(node, context) {
 
 	// special case — if an element that only contains text, we don't need
 	// to descend into it if the text is non-reactive
-	const states_and_calls =
+	// in the rare case that we have static text that can't be inlined
+	// (e.g. `<span>{location}</span>`), set `textContent` programmatically
+	const use_text_content =
 		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
-		trimmed.some((node) => node.type === 'ExpressionTag') &&
-		get_states_and_calls(trimmed);
+		trimmed.every((node) => node.type === 'Text' || !node.metadata.expression.has_state) &&
+		trimmed.some((node) => node.type === 'ExpressionTag');
 
-	if (states_and_calls && states_and_calls.states === 0) {
+	if (use_text_content) {
 		child_state.init.push(
 			b.stmt(
 				b.assignment(
 					'=',
 					b.member(context.state.node, 'textContent'),
-					build_template_literal(trimmed, context.visit, child_state).value
+					build_template_chunk(trimmed, context.visit, child_state).value
 				)
 			)
 		);
@@ -445,6 +450,11 @@ function setup_select_synchronization(value_binding, context) {
 	if (context.state.analysis.runes) return;
 
 	let bound = value_binding.expression;
+
+	if (bound.type === 'SequenceExpression') {
+		return;
+	}
+
 	while (bound.type === 'MemberExpression') {
 		bound = /** @type {Identifier | MemberExpression} */ (bound.object);
 	}
@@ -479,10 +489,7 @@ function setup_select_synchronization(value_binding, context) {
 			b.call(
 				'$.template_effect',
 				b.thunk(
-					b.block([
-						b.stmt(/** @type {Expression} */ (context.visit(value_binding.expression))),
-						b.stmt(invalidator)
-					])
+					b.block([b.stmt(/** @type {Expression} */ (context.visit(bound))), b.stmt(invalidator)])
 				)
 			)
 		)
@@ -514,10 +521,17 @@ function setup_select_synchronization(value_binding, context) {
  * @param {AST.RegularElement} element
  * @param {Identifier} node_id
  * @param {AST.Attribute} attribute
+ * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
  * @param {ComponentContext} context
  * @returns {boolean}
  */
-function build_element_attribute_update_assignment(element, node_id, attribute, context) {
+function build_element_attribute_update_assignment(
+	element,
+	node_id,
+	attribute,
+	attributes,
+	context
+) {
 	const state = context.state;
 	const name = get_attribute_name(element, attribute);
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
@@ -539,6 +553,10 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 	let update;
 
 	if (name === 'class') {
+		if (attribute.metadata.needs_clsx) {
+			value = b.call('$.clsx', value);
+		}
+
 		if (attribute.metadata.expression.has_state && has_call) {
 			// ensure we're not creating a separate template effect for this so that
 			// potential class directives are added to the same effect and therefore always apply
@@ -547,17 +565,43 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 			value = b.call('$.get', id);
 			has_call = false;
 		}
+
 		update = b.stmt(
 			b.call(
 				is_svg ? '$.set_svg_class' : is_mathml ? '$.set_mathml_class' : '$.set_class',
 				node_id,
-				value
+				value,
+				attribute.metadata.needs_clsx && context.state.analysis.css.hash
+					? b.literal(context.state.analysis.css.hash)
+					: undefined
 			)
 		);
 	} else if (name === 'value') {
 		update = b.stmt(b.call('$.set_value', node_id, value));
 	} else if (name === 'checked') {
 		update = b.stmt(b.call('$.set_checked', node_id, value));
+	} else if (name === 'selected') {
+		update = b.stmt(b.call('$.set_selected', node_id, value));
+	} else if (
+		// If we would just set the defaultValue property, it would override the value property,
+		// because it is set in the template which implicitly means it's also setting the default value,
+		// and if one updates the default value while the input is pristine it will also update the
+		// current value, which is not what we want, which is why we need to do some extra work.
+		name === 'defaultValue' &&
+		(attributes.some(
+			(attr) => attr.type === 'Attribute' && attr.name === 'value' && is_text_attribute(attr)
+		) ||
+			(element.name === 'textarea' && element.fragment.nodes.length > 0))
+	) {
+		update = b.stmt(b.call('$.set_default_value', node_id, value));
+	} else if (
+		// See defaultValue comment
+		name === 'defaultChecked' &&
+		attributes.some(
+			(attr) => attr.type === 'Attribute' && attr.name === 'checked' && attr.value === true
+		)
+	) {
+		update = b.stmt(b.call('$.set_default_checked', node_id, value));
 	} else if (is_dom_property(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, name), value));
 	} else {
@@ -581,13 +625,6 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		);
 	}
 
-	const inlinable_expression =
-		attribute.value === true
-			? false // not an expression
-			: is_inlinable_expression(
-					Array.isArray(attribute.value) ? attribute.value : [attribute.value],
-					context.state
-				);
 	if (attribute.metadata.expression.has_state) {
 		if (has_call) {
 			state.init.push(build_update(update));
@@ -596,37 +633,9 @@ function build_element_attribute_update_assignment(element, node_id, attribute, 
 		}
 		return true;
 	} else {
-		if (inlinable_expression) {
-			context.state.template.push(` ${name}="`, value, '"');
-		} else {
-			state.init.push(update);
-		}
+		state.init.push(update);
 		return false;
 	}
-}
-
-/**
- * @param {(AST.Text | AST.ExpressionTag)[]} nodes
- * @param {import('../types.js').ComponentClientTransformState} state
- */
-function is_inlinable_expression(nodes, state) {
-	let has_expression_tag = false;
-	for (let value of nodes) {
-		if (value.type === 'ExpressionTag') {
-			if (value.expression.type === 'Identifier') {
-				const binding = state.scope
-					.owner(value.expression.name)
-					?.declarations.get(value.expression.name);
-				if (!can_inline_variable(binding)) {
-					return false;
-				}
-			} else {
-				return false;
-			}
-			has_expression_tag = true;
-		}
-	}
-	return has_expression_tag;
 }
 
 /**
@@ -640,6 +649,14 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
 	const state = context.state;
 	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
 	let { has_call, value } = build_attribute_value(attribute.value, context);
+
+	// We assume that noone's going to redefine the semantics of the class attribute on custom elements, i.e. it's still used for CSS classes
+	if (name === 'class' && attribute.metadata.needs_clsx) {
+		if (context.state.analysis.css.hash) {
+			value = b.array([value, b.literal(context.state.analysis.css.hash)]);
+		}
+		value = b.call('$.clsx', value);
+	}
 
 	const update = b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), value));
 

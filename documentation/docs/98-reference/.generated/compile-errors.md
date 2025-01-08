@@ -78,10 +78,16 @@ Sequence expressions are not allowed as attribute/directive values in runes mode
 Attribute values containing `{...}` must be enclosed in quote marks, unless the value only contains the expression
 ```
 
+### bind_group_invalid_expression
+
+```
+`bind:group` can only bind to an Identifier or MemberExpression
+```
+
 ### bind_invalid_expression
 
 ```
-Can only bind to an Identifier or MemberExpression
+Can only bind to an Identifier or MemberExpression or a `{get, set}` pair
 ```
 
 ### bind_invalid_name
@@ -92,6 +98,12 @@ Can only bind to an Identifier or MemberExpression
 
 ```
 `bind:%name%` is not a valid binding. %explanation%
+```
+
+### bind_invalid_parens
+
+```
+`bind:%name%={get, set}` must not have surrounding parentheses
 ```
 
 ### bind_invalid_target
@@ -319,7 +331,39 @@ The $ prefix is reserved, and cannot be used for variables and imports
 ### each_item_invalid_assignment
 
 ```
-Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)
+Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`, or `bind:value={array[i]}` instead of `bind:value={entry}`)
+```
+
+In legacy mode, it was possible to reassign or bind to the each block argument itself:
+
+```svelte
+<script>
+	let array = [1, 2, 3];
+</script>
+
+{#each array as entry}
+	<!-- reassignment -->
+	<button on:click={() => entry = 4}>change</button>
+
+	<!-- binding -->
+	<input bind:value={entry}>
+{/each}
+```
+
+This turned out to be buggy and unpredictable, particularly when working with derived values (such as `array.map(...)`), and as such is forbidden in runes mode. You can achieve the same outcome by using the index instead:
+
+```svelte
+<script>
+	let array = $state([1, 2, 3]);
+</script>
+
+{#each array as entry, i}
+	<!-- reassignment -->
+	<button onclick={() => array[i] = 4}>change</button>
+
+	<!-- binding -->
+	<input bind:value={array[i]}>
+{/each}
 ```
 
 ### effect_invalid_placement
@@ -400,6 +444,12 @@ Expected token %token%
 Expected whitespace
 ```
 
+### export_undefined
+
+```
+`%name%` is not defined
+```
+
 ### global_reference_invalid
 
 ```
@@ -412,10 +462,28 @@ Expected whitespace
 `$host()` can only be used inside custom element component instances
 ```
 
+### illegal_element_attribute
+
+```
+`<%name%>` does not support non-event attributes or spread attributes
+```
+
 ### import_svelte_internal_forbidden
 
 ```
 Imports of `svelte/internal/*` are forbidden. It contains private runtime code which is subject to change without notice. If you're importing from `svelte/internal/*` to work around a limitation of Svelte, please open an issue at https://github.com/sveltejs/svelte and explain your use case
+```
+
+### inspect_trace_generator
+
+```
+`$inspect.trace(...)` cannot be used inside a generator function
+```
+
+### inspect_trace_invalid_placement
+
+```
+`$inspect.trace(...)` must be the first statement of a function body
 ```
 
 ### invalid_arguments_usage
@@ -475,12 +543,12 @@ A component cannot have a default export
 ### node_invalid_placement
 
 ```
-%thing% is invalid inside `<%parent%>`
+%message%. The browser will 'repair' the HTML (by moving, removing, or inserting elements) which breaks Svelte's assumptions about the structure of your components.
 ```
 
 HTML restricts where certain elements can appear. In case of a violation the browser will 'repair' the HTML in a way that breaks Svelte's assumptions about the structure of your components. Some examples:
 
-- `<p>hello <div>world</div></p>` will result in `<p>hello </p><div>world</div><p></p>` for example (the `<div>` autoclosed the `<p>` because `<p>` cannot contain block-level elements)
+- `<p>hello <div>world</div></p>` will result in `<p>hello </p><div>world</div><p></p>` (the `<div>` autoclosed the `<p>` because `<p>` cannot contain block-level elements)
 - `<option><div>option a</div></option>` will result in `<option>option a</option>` (the `<div>` is removed)
 - `<table><tr><td>cell</td></tr></table>` will result in `<table><tbody><tr><td>cell</td></tr></tbody></table>` (a `<tbody>` is auto-inserted)
 
@@ -688,6 +756,30 @@ Cannot use `<slot>` syntax and `{@render ...}` tags in the same component. Migra
 Cannot use explicit children snippet at the same time as implicit children content. Remove either the non-whitespace content or the children snippet block
 ```
 
+### snippet_invalid_export
+
+```
+An exported snippet can only reference things declared in a `<script module>`, or other exportable snippets
+```
+
+It's possible to export a snippet from a `<script module>` block, but only if it doesn't reference anything defined inside a non-module-level `<script>`. For example you can't do this...
+
+```svelte
+<script module>
+	export { greeting };
+</script>
+
+<script>
+	let message = 'hello';
+</script>
+
+{#snippet greeting(name)}
+	<p>{message} {name}!</p>
+{/snippet}
+```
+
+...because `greeting` references `message`, which is defined in the second `<script>`.
+
 ### snippet_invalid_rest_parameter
 
 ```
@@ -754,6 +846,18 @@ A component can have a single top-level `<style>` element
 
 ```
 `<svelte:body>` does not support non-event attributes or spread attributes
+```
+
+### svelte_boundary_invalid_attribute
+
+```
+Valid attributes on `<svelte:boundary>` are `onerror` and `failed`
+```
+
+### svelte_boundary_invalid_attribute_value
+
+```
+Attribute value must be a non-string expression
 ```
 
 ### svelte_component_invalid_this
@@ -938,6 +1042,12 @@ Unexpected end of input
 
 ```
 '%word%' is a reserved word in JavaScript and cannot be used here
+```
+
+### unterminated_string_constant
+
+```
+Unterminated string constant
 ```
 
 ### void_element_invalid_content

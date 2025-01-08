@@ -5,31 +5,31 @@
 <style>
 	.a + .e { color: green; }
 	.a + .f { color: green; }
+	.a + .g { color: green; }
 	.b + .c { color: green; }
 	.b + .d { color: green; }
 	.c + .e { color: green; }
 	.c + .f { color: green; }
+	.c + .g { color: green; }
+	.c + .k { color: green; }
 	.d + .e { color: green; }
 	.d + .f { color: green; }
 	.e + .e { color: green; }
 	.i + .j { color: green; }
 	.g + .h + .j { color: green; }
 	.g + .i + .j { color: green; }
+	.g + .j { color: green; }
 	.m + .m { color: green; }
 	.m + .l { color: green; }
 	.l + .m { color: green; }
 
 	/* no match */
-	.a + .c { color: green; }
-	.a + .g { color: green; }
-	.b + .e { color: green; }
-	.c + .g { color: green; }
-	.c + .k { color: green; }
-	.d + .d { color: green; }
-	.e + .f { color: green; }
-	.f + .f { color: green; }
-	.g + .j { color: green; }
-	.g + .h + .i + .j { color: green; }
+	.a + .c { color: red; }
+	.b + .e { color: red; }
+	.d + .d { color: red; }
+	.e + .f { color: red; }
+	.f + .f { color: red; }
+	.g + .h + .i + .j { color: red; }
 </style>
 
 <div class="a"></div>

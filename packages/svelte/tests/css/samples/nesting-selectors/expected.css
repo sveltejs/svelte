@@ -1,0 +1,37 @@
+
+	nav.svelte-xyz {
+		header:where(.svelte-xyz):has(&){
+			color: green;
+		}
+		/* (unused) .unused:has(&){
+			color: red;
+		}*/
+	}
+
+	header.svelte-xyz {
+		> nav:where(.svelte-xyz) {
+			color: green;
+
+			&.active {
+				color: green;
+			}
+
+			/* (unused) &.unused {
+				color: red;
+			}*/
+		}
+	}
+
+	header.svelte-xyz {
+		& > nav:where(.svelte-xyz) {
+			color: green;
+
+			&.active {
+				color: green;
+			}
+
+			/* (unused) &.unused {
+				color: red;
+			}*/
+		}
+	}
