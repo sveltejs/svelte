@@ -127,7 +127,7 @@ An effect only reruns when the object it reads changes, not when a property insi
 
 An effect only depends on the values that it read the last time it ran. This has interesting implications for effects that have conditional code.
 
-For instance, if `a` is `true` in the code snippet below, the code inside the `if` block will run and `b` will be evaluated. As such, changes to either `a` or `b` [will cause the effect to re-run](/#H4sIAAAAAAAAE3WQTWrDMBCFrzIRAcsQkr1rC3KIruouJHUURNWxscalRejuleqEQElXQu99b_6SIP2BohPPxJ4DvomDcD5gFN1LEvw9V68KRb-S53k-xk8MXDWjIz7S7USMxKWM6KNd_MxqpLE0YNAwwD6yZpROh4jt080xj5zi7dE5tCxlC4OCVKWRS4c4BTyG6SKbZSXydGm2WhvgHUjd3vA_AdM1BzBXnHN9cv31p_u01JuVeSKYyAZv34e0DVAX2OmsNPgISef-tHHq30RdbGeyMr8Jc0-USzF-seh4WTG_5h_LyPoejwEAAA==).
+For instance, if `a` is `true` in the code snippet below, the code inside the `if` block will run and `b` will be evaluated. As such, changes to either `a` or `b` [will cause the effect to re-run](/playground/untitled#H4sIAAAAAAAAE3WQTWrDMBCFrzIRAcsQkr1rC3KIruouJHUURNWxscalRejuleqEQElXQu99b_6SIP2BohPPxJ4DvomDcD5gFN1LEvw9V68KRb-S53k-xk8MXDWjIz7S7USMxKWM6KNd_MxqpLE0YNAwwD6yZpROh4jt080xj5zi7dE5tCxlC4OCVKWRS4c4BTyG6SKbZSXydGm2WhvgHUjd3vA_AdM1BzBXnHN9cv31p_u01JuVeSKYyAZv34e0DVAX2OmsNPgISef-tHHq30RdbGeyMr8Jc0-USzF-seh4WTG_5h_LyPoejwEAAA==).
 
 Conversely, if `a` is `false`, `b` will not be evaluated, and the effect will _only_ re-run when `a` changes.
 
