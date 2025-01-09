@@ -424,10 +424,13 @@ export function update_reaction(reaction) {
 				reaction.deps = deps = new_deps;
 			}
 
-			if (!skip_reaction) {
-				for (i = skipped_deps; i < deps.length; i++) {
-					(deps[i].reactions ??= []).push(reaction);
+			for (i = skipped_deps; i < deps.length; i++) {
+				var dep = deps[i];
+				if (!skip_reaction) {
+					(dep.reactions ??= []).push(reaction);
 				}
+				// Reset read version back to 0
+				dep.rv = 0;
 			}
 		} else if (deps !== null && skipped_deps < deps.length) {
 			remove_reactions(reaction, skipped_deps);
