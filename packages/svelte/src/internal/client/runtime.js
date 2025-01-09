@@ -434,7 +434,7 @@ export function update_reaction(reaction) {
 			deps.length = skipped_deps;
 		}
 
-		// If we are returning to an previous reaction then 
+		// If we are returning to an previous reaction then
 		// we need to increment the read version to ensure that
 		// any dependencies in this reaction aren't marked with
 		// the same version
