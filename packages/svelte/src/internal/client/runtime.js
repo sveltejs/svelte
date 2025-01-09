@@ -429,11 +429,12 @@ export function update_reaction(reaction) {
 				if (!skip_reaction) {
 					(dep.reactions ??= []).push(reaction);
 				}
-				// Reset read version back to 0, otherwise if we are
-				// returning to an existing reaction from before then
-				// and it uses this depedency too then it will be the
-				// same read version as the current global read version
-				// and not correctly be added as a dependency
+				// Reset read version back to 0. If we are
+				// returning to an previous reaction and
+				// it were to read this depedency too and we
+				// didn't reset the read version, then it would
+				// not be added as a dependency to that reaction
+				// as the global read version won't have changed
 				dep.rv = 0;
 			}
 		} else if (deps !== null && skipped_deps < deps.length) {
