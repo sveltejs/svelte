@@ -424,22 +424,22 @@ export function update_reaction(reaction) {
 				reaction.deps = deps = new_deps;
 			}
 
-			for (i = skipped_deps; i < deps.length; i++) {
-				var dep = deps[i];
-				if (!skip_reaction) {
-					(dep.reactions ??= []).push(reaction);
+			if (!skip_reaction) {
+				for (i = skipped_deps; i < deps.length; i++) {
+					(deps[i].reactions ??= []).push(reaction);
 				}
-				// Reset read version back to 0. If we are
-				// returning to an previous reaction and
-				// it were to read this depedency too and we
-				// didn't reset the read version, then it would
-				// not be added as a dependency to that reaction
-				// as the global read version won't have changed
-				dep.rv = 0;
 			}
 		} else if (deps !== null && skipped_deps < deps.length) {
 			remove_reactions(reaction, skipped_deps);
 			deps.length = skipped_deps;
+		}
+
+		// If we are returning to an previous reaction then 
+		// we need to increment the read version to ensure that
+		// any dependencies in this reaction aren't marked with
+		// the same version
+		if (previous_reaction !== null) {
+			read_version++;
 		}
 
 		return result;
