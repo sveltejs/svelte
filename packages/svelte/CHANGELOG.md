@@ -1,5 +1,11 @@
 # svelte
 
+## 5.17.3
+
+### Patch Changes
+
+- fix: reset dependency read versions after reaction execution ([#14964](https://github.com/sveltejs/svelte/pull/14964))
+
 ## 5.17.2
 
 ### Patch Changes
