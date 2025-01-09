@@ -1,5 +1,15 @@
 # svelte
 
+## 5.17.2
+
+### Patch Changes
+
+- fix: account for parent scale when animating elements ([#14957](https://github.com/sveltejs/svelte/pull/14957))
+
+- fix: apply `overflow: hidden` style when transitioning elements, where necessary ([#14930](https://github.com/sveltejs/svelte/pull/14930))
+
+- fix: properly add owners to function bindings ([#14962](https://github.com/sveltejs/svelte/pull/14962))
+
 ## 5.17.1
 
 ### Patch Changes
