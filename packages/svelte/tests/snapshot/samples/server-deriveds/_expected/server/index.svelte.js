@@ -1,14 +1,11 @@
-import * as $ from "svelte/internal/server";
+import * as $ from 'svelte/internal/server';
 
 export default function Server_deriveds($$payload, $$props) {
 	$.push();
 
 	// destructuring stuff on the server needs a bit more code
 	// so that every identifier is a function
-	let stuff = {
-		foo: true,
-		bar: [1, 2, { baz: 'baz' }]
-	};
+	let stuff = { foo: true, bar: [1, 2, { baz: 'baz' }] };
 
 	let {
 			foo: foo_1,
