@@ -272,7 +272,7 @@ export function clean_nodes(
 	var first = trimmed[0];
 
 	// initial newline inside a `<pre>` is disregarded, if not followed by another newline
-	if (parent.type === 'RegularElement' && parent.name === 'pre' && first.type === 'Text') {
+	if (parent.type === 'RegularElement' && parent.name === 'pre' && first?.type === 'Text') {
 		const text = first.data.replace(regex_starts_with_newline, '');
 		if (text !== first.data) {
 			const tmp = text.replace(regex_starts_with_newline, '');
