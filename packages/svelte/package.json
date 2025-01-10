@@ -155,7 +155,7 @@
     "axobject-query": "^4.1.0",
     "clsx": "^2.1.1",
     "esm-env": "^1.2.1",
-    "esrap": "^1.4.1",
+    "esrap": "^1.4.2",
     "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.11",
