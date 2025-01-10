@@ -1,4 +1,4 @@
-import * as $ from "svelte/internal/server";
+import * as $ from 'svelte/internal/server';
 
 export default function State_proxy_literal($$payload) {
 	let str = '';
@@ -11,5 +11,5 @@ export default function State_proxy_literal($$payload) {
 		tpl = ``;
 	}
 
-	$$payload.out += `<input${$.attr("value", str)}> <input${$.attr("value", tpl)}> <button>reset</button>`;
+	$$payload.out += `<input${$.attr('value', str)}> <input${$.attr('value', tpl)}> <button>reset</button>`;
 }

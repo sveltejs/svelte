@@ -1,5 +1,5 @@
-import "svelte/internal/disclose-version";
-import * as $ from "svelte/internal/client";
+import 'svelte/internal/disclose-version';
+import * as $ from 'svelte/internal/client';
 
 function increment(_, counter) {
 	counter.count += 1;
@@ -26,11 +26,11 @@ export default function Await_block_scope($$anchor) {
 	var text_1 = $.sibling(node);
 
 	$.template_effect(() => {
-		$.set_text(text, `clicks: ${counter.count ?? ""}`);
-		$.set_text(text_1, ` ${counter.count ?? ""}`);
+		$.set_text(text, `clicks: ${counter.count ?? ''}`);
+		$.set_text(text_1, ` ${counter.count ?? ''}`);
 	});
 
 	$.append($$anchor, fragment);
 }
 
-$.delegate(["click"]);
+$.delegate(['click']);

@@ -1,4 +1,4 @@
-import * as $ from "svelte/internal/server";
+import * as $ from 'svelte/internal/server';
 
 export default function Props_identifier($$payload, $$props) {
 	$.push();

@@ -1,5 +1,5 @@
-import "svelte/internal/disclose-version";
-import * as $ from "svelte/internal/client";
+import 'svelte/internal/disclose-version';
+import * as $ from 'svelte/internal/client';
 
 var root = $.template(`<div></div> <svg></svg> <custom-element></custom-element> <div></div> <svg></svg> <custom-element></custom-element>`, 3);
 
@@ -13,20 +13,20 @@ export default function Main($$anchor) {
 	var custom_element = $.sibling(svg, 2);
 	var div_1 = $.sibling(custom_element, 2);
 
-	$.template_effect(() => $.set_attribute(div_1, "foobar", y()));
+	$.template_effect(() => $.set_attribute(div_1, 'foobar', y()));
 
 	var svg_1 = $.sibling(div_1, 2);
 
-	$.template_effect(() => $.set_attribute(svg_1, "viewBox", y()));
+	$.template_effect(() => $.set_attribute(svg_1, 'viewBox', y()));
 
 	var custom_element_1 = $.sibling(svg_1, 2);
 
-	$.template_effect(() => $.set_custom_element_data(custom_element_1, "fooBar", y()));
+	$.template_effect(() => $.set_custom_element_data(custom_element_1, 'fooBar', y()));
 
 	$.template_effect(() => {
-		$.set_attribute(div, "foobar", x);
-		$.set_attribute(svg, "viewBox", x);
-		$.set_custom_element_data(custom_element, "fooBar", x);
+		$.set_attribute(div, 'foobar', x);
+		$.set_attribute(svg, 'viewBox', x);
+		$.set_custom_element_data(custom_element, 'fooBar', x);
 	});
 
 	$.append($$anchor, fragment);
