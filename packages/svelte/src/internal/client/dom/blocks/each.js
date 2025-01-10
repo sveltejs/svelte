@@ -35,8 +35,9 @@ import { source, mutable_source, internal_set } from '../../reactivity/sources.j
 import { array_from, is_array } from '../../../shared/utils.js';
 import { INERT } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
-import { active_effect, active_reaction } from '../../runtime.js';
+import { active_effect, active_reaction, get } from '../../runtime.js';
 import { DEV } from 'esm-env';
+import { derived_safe_equal } from '../../reactivity/deriveds.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -135,15 +136,17 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 	var was_empty = false;
 
-	block(() => {
+	// TODO: ideally we could use derived for runes mode but because of the ability
+	// to use a store which can be mutated, we can't do that here as mutating a store
+	// will still result in the collection array being the same from the store
+	var each_array = derived_safe_equal(() => {
 		var collection = get_collection();
 
-		var array = is_array(collection)
-			? collection
-			: collection == null
-				? []
-				: array_from(collection);
+		return is_array(collection) ? collection : collection == null ? [] : array_from(collection);
+	});
 
+	block(() => {
+		var array = get(each_array);
 		var length = array.length;
 
 		if (was_empty && length === 0) {
@@ -254,7 +257,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		// that a mutation occurred and it's made the collection MAYBE_DIRTY, so reading the
 		// collection again can provide consistency to the reactive graph again as the deriveds
 		// will now be `CLEAN`.
-		get_collection();
+		get(each_array);
 	});
 
 	if (hydrating) {
