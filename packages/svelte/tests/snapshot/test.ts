@@ -7,11 +7,13 @@ import { VERSION } from 'svelte/compiler';
 
 interface SnapshotTest extends BaseTest {
 	compileOptions?: Partial<import('#compiler').CompileOptions>;
+	mode?: ('client' | 'server')[];
 }
 
 const { test, run } = suite<SnapshotTest>(async (config, cwd) => {
-	await compile_directory(cwd, 'client', config.compileOptions);
-	await compile_directory(cwd, 'server', config.compileOptions);
+	for (const mode of config?.mode ?? ['server', 'client']) {
+		await compile_directory(cwd, mode, config.compileOptions);
+	}
 
 	// run `UPDATE_SNAPSHOTS=true pnpm test snapshot` to update snapshot tests
 	if (process.env.UPDATE_SNAPSHOTS) {
