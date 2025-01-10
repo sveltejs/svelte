@@ -4,7 +4,7 @@
 
 ## animation_invalid_placement
 
-> An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block
+> An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block, or an only child of a snippet
 
 ## animation_missing_key
 

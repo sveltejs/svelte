@@ -625,12 +625,12 @@ export function animation_duplicate(node) {
 }
 
 /**
- * An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block
+ * An element that uses the `animate:` directive must be the only child of a keyed `{#each ...}` block, or an only child of a snippet
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function animation_invalid_placement(node) {
-	e(node, "animation_invalid_placement", `An element that uses the \`animate:\` directive must be the only child of a keyed \`{#each ...}\` block\nhttps://svelte.dev/e/animation_invalid_placement`);
+	e(node, "animation_invalid_placement", `An element that uses the \`animate:\` directive must be the only child of a keyed \`{#each ...}\` block, or an only child of a snippet\nhttps://svelte.dev/e/animation_invalid_placement`);
 }
 
 /**
