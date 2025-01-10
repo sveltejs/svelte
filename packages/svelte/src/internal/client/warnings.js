@@ -76,7 +76,7 @@ export function hydration_attribute_changed(attribute, html, value) {
  */
 export function hydration_html_changed(location) {
 	if (DEV) {
-		console.warn(`%c[svelte] hydration_html_changed\n%c${location ? `The value of an \`{@html ...}\` block ${location} changed between server and client renders. The client value will be ignored in favour of the server value` : "The value of an `{@html ...}` block changed between server and client renders. The client value will be ignored in favour of the server value"}\nhttps://svelte.dev/e/hydration_html_changed`, bold, normal);
+		console.warn(`%c[svelte] hydration_html_changed\n%c${location ? `The value of an \`{@html ...}\` block ${location} changed between server and client renders. The client value will be ignored in favour of the server value` : 'The value of an `{@html ...}` block changed between server and client renders. The client value will be ignored in favour of the server value'}\nhttps://svelte.dev/e/hydration_html_changed`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/hydration_html_changed`);
 	}
@@ -88,7 +88,7 @@ export function hydration_html_changed(location) {
  */
 export function hydration_mismatch(location) {
 	if (DEV) {
-		console.warn(`%c[svelte] hydration_mismatch\n%c${location ? `Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near ${location}` : "Hydration failed because the initial UI does not match what was rendered on the server"}\nhttps://svelte.dev/e/hydration_mismatch`, bold, normal);
+		console.warn(`%c[svelte] hydration_mismatch\n%c${location ? `Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near ${location}` : 'Hydration failed because the initial UI does not match what was rendered on the server'}\nhttps://svelte.dev/e/hydration_mismatch`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/hydration_mismatch`);
 	}
@@ -149,7 +149,7 @@ export function ownership_invalid_binding(parent, child, owner) {
  */
 export function ownership_invalid_mutation(component, owner) {
 	if (DEV) {
-		console.warn(`%c[svelte] ownership_invalid_mutation\n%c${component ? `${component} mutated a value owned by ${owner}. This is strongly discouraged. Consider passing values to child components with \`bind:\`, or use a callback instead` : "Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead"}\nhttps://svelte.dev/e/ownership_invalid_mutation`, bold, normal);
+		console.warn(`%c[svelte] ownership_invalid_mutation\n%c${component ? `${component} mutated a value owned by ${owner}. This is strongly discouraged. Consider passing values to child components with \`bind:\`, or use a callback instead` : 'Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead'}\nhttps://svelte.dev/e/ownership_invalid_mutation`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/ownership_invalid_mutation`);
 	}

@@ -29,7 +29,7 @@ export function state_snapshot_uncloneable(properties) {
 			? `The following properties cannot be cloned with \`$state.snapshot\` — the return value contains the originals:
 
 ${properties}`
-			: "Value cannot be cloned with `$state.snapshot` — the original value was returned"}\nhttps://svelte.dev/e/state_snapshot_uncloneable`, bold, normal);
+			: 'Value cannot be cloned with `$state.snapshot` — the original value was returned'}\nhttps://svelte.dev/e/state_snapshot_uncloneable`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/state_snapshot_uncloneable`);
 	}
