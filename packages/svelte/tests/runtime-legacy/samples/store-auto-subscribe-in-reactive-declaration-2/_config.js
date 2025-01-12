@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -6,10 +7,9 @@ export default test({
 		<div>Hello World</div>
 	`,
 
-	async test({ assert, component, target }) {
-		await component.update_value('Hi Svelte');
-		await Promise.resolve();
-		await Promise.resolve();
+	test({ assert, component, target }) {
+		component.update_value('Hi Svelte');
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
