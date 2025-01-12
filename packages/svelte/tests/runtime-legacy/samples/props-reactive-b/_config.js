@@ -14,7 +14,7 @@ export default test({
 
 	test({ assert, component, target }) {
 		component.$set({ a: 4 });
-		flushSync()
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -26,7 +26,7 @@ export default test({
 		);
 
 		component.$set({ b: 5 });
-		flushSync()
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
