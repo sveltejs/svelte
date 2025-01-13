@@ -464,8 +464,12 @@ export function update_reaction(reaction) {
 
 		// If we're inside an effect and we have untracked writes, then we need to
 		// ensure that if any of those untracked writes result in re-invalidation
-		// of the current effect, then we need to re-schedule the current effect
-		if (untracked_writes !== null && (reaction.f & (DERIVED | MAYBE_DIRTY | DIRTY)) === 0) {
+		// of the current effect, then that happens accordingly
+		if (
+			is_runes() &&
+			untracked_writes !== null &&
+			(reaction.f & (DERIVED | MAYBE_DIRTY | DIRTY)) === 0
+		) {
 			for (i = 0; i < /** @type {Source[]} */ (untracked_writes).length; i++) {
 				schedule_possible_effect_self_invalidation(
 					untracked_writes[i],

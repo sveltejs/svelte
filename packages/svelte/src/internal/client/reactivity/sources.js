@@ -3,7 +3,6 @@ import { DEV } from 'esm-env';
 import {
 	component_context,
 	active_reaction,
-	new_deps,
 	active_effect,
 	untracked_writes,
 	get,
@@ -194,7 +193,6 @@ export function internal_set(source, value) {
 			(active_effect.f & CLEAN) !== 0 &&
 			(active_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0
 		) {
-
 			if (untracked_writes === null) {
 				set_untracked_writes([source]);
 			} else {
