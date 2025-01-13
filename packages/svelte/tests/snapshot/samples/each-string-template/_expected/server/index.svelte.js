@@ -1,4 +1,4 @@
-import * as $ from "svelte/internal/server";
+import * as $ from 'svelte/internal/server';
 
 export default function Each_string_template($$payload) {
 	const each_array = $.ensure_array_like(['foo', 'bar', 'baz']);

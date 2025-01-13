@@ -80,12 +80,15 @@ importers:
       axobject-query:
         specifier: ^4.1.0
         version: 4.1.0
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
       esm-env:
         specifier: ^1.2.1
         version: 1.2.1
       esrap:
-        specifier: ^1.3.2
-        version: 1.3.2
+        specifier: ^1.4.2
+        version: 1.4.2
       is-reference:
         specifier: ^3.0.3
         version: 3.0.3
@@ -890,6 +893,10 @@ packages:
     resolution: {integrity: sha512-NIxF55hv4nSqQswkAeiOi1r83xy8JldOFDTWiug55KBu9Jnblncd2U6ViHmYgHf01TPZS77NJBhBMKdWj9HQMQ==}
     engines: {node: '>=8'}
 
+  clsx@2.1.1:
+    resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
+    engines: {node: '>=6'}
+
   color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
     engines: {node: '>=7.0.0'}
@@ -1111,8 +1118,8 @@ packages:
     resolution: {integrity: sha512-YQLXUplAwJgCydQ78IMJywZCceoqk1oH01OERdSAJc/7U2AylwjhSCLDEtqwg811idIS/9fIU5GjG73IgjKMVg==}
     engines: {node: '>=0.10'}
 
-  esrap@1.3.2:
-    resolution: {integrity: sha512-C4PXusxYhFT98GjLSmb20k9PREuUdporer50dhzGuJu9IJXktbMddVCMLAERl5dAHyAi73GWWCE4FVHGP1794g==}
+  esrap@1.4.2:
+    resolution: {integrity: sha512-FhVlJzvTw7ZLxYZ7RyHwQCFE64dkkpzGNNnphaGCLwjqGk1SQcqzbgdx9FowPCktx6NOSHkzvcZ3vsvdH54YXA==}
 
   esrecurse@4.3.0:
     resolution: {integrity: sha512-KmfKL3b6G+RXvP8N1vr3Tq1kL/oCFgn2NYXEtqP8/L3pKapUA4G8cFVaoF3SU323CD4XypR/ffioHmkti6/Tag==}
@@ -3055,6 +3062,8 @@ snapshots:
 
   ci-info@3.9.0: {}
 
+  clsx@2.1.1: {}
+
   color-convert@2.0.1:
     dependencies:
       color-name: 1.1.4
@@ -3315,7 +3324,7 @@ snapshots:
     dependencies:
       estraverse: 5.3.0
 
-  esrap@1.3.2:
+  esrap@1.4.2:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
 

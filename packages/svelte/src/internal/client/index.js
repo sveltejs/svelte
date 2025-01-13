@@ -151,7 +151,7 @@ export {
 	setContext,
 	hasContext
 } from './runtime.js';
-export { validate_binding, validate_each_keys, validate_prop_bindings } from './validate.js';
+export { validate_binding, validate_each_keys } from './validate.js';
 export { raf } from './timing.js';
 export { proxy } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
@@ -162,7 +162,7 @@ export {
 	$window as window,
 	$document as document
 } from './dom/operations.js';
-export { attr } from '../shared/attributes.js';
+export { attr, clsx } from '../shared/attributes.js';
 export { snapshot } from '../shared/clone.js';
 export { noop, fallback } from '../shared/utils.js';
 export {

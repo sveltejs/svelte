@@ -52,7 +52,7 @@ Your `console.%method%` contained `$state` proxies. Consider using `$inspect(...
 
 When logging a [proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy), browser devtools will log the proxy itself rather than the value it represents. In the case of Svelte, the 'target' of a `$state` proxy might not resemble its current value, which can be confusing.
 
-The easiest way to log a value as it changes over time is to use the [`$inspect`](https://svelte.dev/docs/svelte/$inspect) rune. Alternatively, to log things on a one-off basis (for example, inside an event handler) you can use [`$state.snapshot`](https://svelte.dev/docs/svelte/$state#$state.snapshot) to take a snapshot of the current value.
+The easiest way to log a value as it changes over time is to use the [`$inspect`](/docs/svelte/$inspect) rune. Alternatively, to log things on a one-off basis (for example, inside an event handler) you can use [`$state.snapshot`](/docs/svelte/$state#$state.snapshot) to take a snapshot of the current value.
 
 ### event_handler_invalid
 
@@ -222,3 +222,15 @@ Reactive `$state(...)` proxies and the values they proxy have different identiti
 ```
 
 To resolve this, ensure you're comparing values where both values were created with `$state(...)`, or neither were. Note that `$state.raw(...)` will _not_ create a state proxy.
+
+### transition_slide_display
+
+```
+The `slide` transition does not work correctly for elements with `display: %value%`
+```
+
+The [slide](/docs/svelte/svelte-transition#slide) transition works by animating the `height` of the element, which requires a `display` style like `block`, `flex` or `grid`. It does not work for:
+
+- `display: inline` (which is the default for elements like `<span>`), and its variants like `inline-block`, `inline-flex` and `inline-grid`
+- `display: table` and `table-[name]`, which are the defaults for elements like `<table>` and `<tr>`
+- `display: contents`

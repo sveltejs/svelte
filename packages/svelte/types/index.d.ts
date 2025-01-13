@@ -275,7 +275,7 @@ declare module 'svelte' {
 	 * ```
 	 * You can only call a snippet through the `{@render ...}` tag.
 	 *
-	 * https://svelte.dev/docs/svelte/snippet
+	 * See the [snippet documentation](https://svelte.dev/docs/svelte/snippet) for more info.
 	 *
 	 * @template Parameters the parameters that the snippet expects (if any) as a tuple.
 	 */
@@ -1339,8 +1339,6 @@ declare module 'svelte/compiler' {
 	} | undefined): Promise<Processed>;
 	/**
 	 * The current version, as set in package.json.
-	 *
-	 * https://svelte.dev/docs/svelte-compiler#svelte-version
 	 * */
 	export const VERSION: string;
 	/**
@@ -3091,7 +3089,7 @@ declare namespace $inspect {
 	 *   });
 	 * </script>
 	 */
-	export function trace(name: string): void;
+	export function trace(name?: string): void;
 
 	// prevent intellisense from being unhelpful
 	/** @deprecated */

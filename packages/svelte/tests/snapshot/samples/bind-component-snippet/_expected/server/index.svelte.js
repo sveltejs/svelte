@@ -1,4 +1,4 @@
-import * as $ from "svelte/internal/server";
+import * as $ from 'svelte/internal/server';
 import TextInput from './Child.svelte';
 
 function snippet($$payload) {

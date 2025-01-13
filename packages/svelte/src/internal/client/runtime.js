@@ -1,6 +1,6 @@
 /** @import { ComponentContext, Derived, Effect, Reaction, Signal, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
-import { define_property, get_descriptors, get_prototype_of } from '../shared/utils.js';
+import { define_property, get_descriptors, get_prototype_of, index_of } from '../shared/utils.js';
 import {
 	destroy_block_effect_children,
 	destroy_effect_children,
@@ -127,8 +127,14 @@ export function set_untracked_writes(value) {
 	untracked_writes = value;
 }
 
-/** @type {number} Used by sources and deriveds for handling updates to unowned deriveds it starts from 1 to differentiate between a created effect and a run one for tracing */
-let current_version = 1;
+/**
+ * @type {number} Used by sources and deriveds for handling updates.
+ * Version starts from 1 so that unowned deriveds differentiate between a created effect and a run one for tracing
+ **/
+let write_version = 1;
+
+/** @type {number} Used to version each read of a source of derived to avoid duplicating depedencies inside a reaction */
+let read_version = 0;
 
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
@@ -168,8 +174,8 @@ export function set_dev_current_component_function(fn) {
 	dev_current_component_function = fn;
 }
 
-export function increment_version() {
-	return ++current_version;
+export function increment_write_version() {
+	return ++write_version;
 }
 
 /** @returns {boolean} */
@@ -196,35 +202,37 @@ export function check_dirtiness(reaction) {
 
 		if (dependencies !== null) {
 			var i;
+			var dependency;
+			var is_disconnected = (flags & DISCONNECTED) !== 0;
+			var is_unowned_connected = is_unowned && active_effect !== null && !skip_reaction;
+			var length = dependencies.length;
 
-			if ((flags & DISCONNECTED) !== 0) {
-				for (i = 0; i < dependencies.length; i++) {
-					(dependencies[i].reactions ??= []).push(reaction);
+			// If we are working with a disconnected or an unowned signal that is now connected (due to an active effect)
+			// then we need to re-connect the reaction to the dependency
+			if (is_disconnected || is_unowned_connected) {
+				for (i = 0; i < length; i++) {
+					dependency = dependencies[i];
+
+					// We always re-add all reactions (even duplicates) if the derived was
+					// previously disconnected
+					if (is_disconnected || !dependency?.reactions?.includes(reaction)) {
+						(dependency.reactions ??= []).push(reaction);
+					}
 				}
 
-				reaction.f ^= DISCONNECTED;
+				if (is_disconnected) {
+					reaction.f ^= DISCONNECTED;
+				}
 			}
 
-			for (i = 0; i < dependencies.length; i++) {
-				var dependency = dependencies[i];
+			for (i = 0; i < length; i++) {
+				dependency = dependencies[i];
 
 				if (check_dirtiness(/** @type {Derived} */ (dependency))) {
 					update_derived(/** @type {Derived} */ (dependency));
 				}
 
-				// If we are working with an unowned signal as part of an effect (due to !skip_reaction)
-				// and the version hasn't changed, we still need to check that this reaction
-				// is linked to the dependency source – otherwise future updates will not be caught.
-				if (
-					is_unowned &&
-					active_effect !== null &&
-					!skip_reaction &&
-					!dependency?.reactions?.includes(reaction)
-				) {
-					(dependency.reactions ??= []).push(reaction);
-				}
-
-				if (dependency.version > reaction.version) {
+				if (dependency.wv > reaction.wv) {
 					return true;
 				}
 			}
@@ -396,6 +404,7 @@ export function update_reaction(reaction) {
 	skip_reaction = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	derived_sources = null;
 	component_context = reaction.ctx;
+	read_version++;
 
 	try {
 		var result = /** @type {Function} */ (0, reaction.fn)();
@@ -425,6 +434,14 @@ export function update_reaction(reaction) {
 			deps.length = skipped_deps;
 		}
 
+		// If we are returning to an previous reaction then
+		// we need to increment the read version to ensure that
+		// any dependencies in this reaction aren't marked with
+		// the same version
+		if (previous_reaction !== null) {
+			read_version++;
+		}
+
 		return result;
 	} finally {
 		new_deps = previous_deps;
@@ -446,7 +463,7 @@ export function update_reaction(reaction) {
 function remove_reaction(signal, dependency) {
 	let reactions = dependency.reactions;
 	if (reactions !== null) {
-		var index = reactions.indexOf(signal);
+		var index = index_of.call(reactions, signal);
 		if (index !== -1) {
 			var new_length = reactions.length - 1;
 			if (new_length === 0) {
@@ -526,7 +543,24 @@ export function update_effect(effect) {
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
-		effect.version = current_version;
+		effect.wv = write_version;
+
+		var deps = effect.deps;
+
+		// In DEV, we need to handle a case where $inspect.trace() might
+		// incorrectly state a source dependency has not changed when it has.
+		// That's beacuse that source was changed by the same effect, causing
+		// the versions to match. We can avoid this by incrementing the version
+		if (DEV && tracing_mode_flag && (effect.f & DIRTY) !== 0 && deps !== null) {
+			for (let i = 0; i < deps.length; i++) {
+				var dep = deps[i];
+				if (dep.trace_need_increase) {
+					dep.wv = increment_write_version();
+					dep.trace_need_increase = undefined;
+					dep.trace_v = undefined;
+				}
+			}
+		}
 
 		if (DEV) {
 			dev_effect_stack.push(effect);
@@ -861,27 +895,29 @@ export function get(signal) {
 			e.state_unsafe_local_read();
 		}
 		var deps = active_reaction.deps;
+		if (signal.rv < read_version) {
+			signal.rv = read_version;
+			// If the signal is accessing the same dependencies in the same
+			// order as it did last time, increment `skipped_deps`
+			// rather than updating `new_deps`, which creates GC cost
+			if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
+				skipped_deps++;
+			} else if (new_deps === null) {
+				new_deps = [signal];
+			} else {
+				new_deps.push(signal);
+			}
 
-		// If the signal is accessing the same dependencies in the same
-		// order as it did last time, increment `skipped_deps`
-		// rather than updating `new_deps`, which creates GC cost
-		if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
-			skipped_deps++;
-		} else if (new_deps === null) {
-			new_deps = [signal];
-		} else {
-			new_deps.push(signal);
-		}
-
-		if (
-			untracked_writes !== null &&
-			active_effect !== null &&
-			(active_effect.f & CLEAN) !== 0 &&
-			(active_effect.f & BRANCH_EFFECT) === 0 &&
-			untracked_writes.includes(signal)
-		) {
-			set_signal_status(active_effect, DIRTY);
-			schedule_effect(active_effect);
+			if (
+				untracked_writes !== null &&
+				active_effect !== null &&
+				(active_effect.f & CLEAN) !== 0 &&
+				(active_effect.f & BRANCH_EFFECT) === 0 &&
+				untracked_writes.includes(signal)
+			) {
+				set_signal_status(active_effect, DIRTY);
+				schedule_effect(active_effect);
+			}
 		}
 	} else if (is_derived && /** @type {Derived} */ (signal).deps === null) {
 		var derived = /** @type {Derived} */ (signal);

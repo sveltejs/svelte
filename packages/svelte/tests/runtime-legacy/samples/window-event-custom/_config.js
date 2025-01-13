@@ -1,14 +1,16 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
 	html: '<p>escaped: false</p>',
 
-	async test({ assert, target, window }) {
+	test({ assert, target, window }) {
 		const event = new window.KeyboardEvent('keydown', {
 			key: 'Escape'
 		});
 
-		await window.dispatchEvent(event);
+		window.dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

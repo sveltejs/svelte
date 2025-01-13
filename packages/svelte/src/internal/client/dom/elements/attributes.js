@@ -14,6 +14,7 @@ import {
 	set_active_reaction
 } from '../../runtime.js';
 import { attach, is_attachment_key } from './attachments.js';
+import { clsx } from '../../../shared/attributes.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -221,7 +222,10 @@ export function set_custom_element_data(node, prop, value) {
 			// Don't compute setters for custom elements while they aren't registered yet,
 			// because during their upgrade/instantiation they might add more setters.
 			// Instead, fall back to a simple "an object, then set as property" heuristic.
-			setters_cache.has(node.nodeName) || customElements.get(node.tagName.toLowerCase())
+			setters_cache.has(node.nodeName) ||
+			// customElements may not be available in browser extension contexts
+			!customElements ||
+			customElements.get(node.tagName.toLowerCase())
 				? get_setters(node).includes(prop)
 				: value && typeof value === 'object'
 		) {
@@ -266,6 +270,10 @@ export function set_attributes(
 		if (!(key in next)) {
 			next[key] = null;
 		}
+	}
+
+	if (next.class) {
+		next.class = clsx(next.class);
 	}
 
 	if (css_hash !== undefined) {

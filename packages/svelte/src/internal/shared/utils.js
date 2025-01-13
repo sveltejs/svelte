@@ -1,6 +1,7 @@
 // Store the references to globals in case someone tries to monkey patch these, causing the below
 // to de-opt (this occurs often when using popular extensions).
 export var is_array = Array.isArray;
+export var index_of = Array.prototype.indexOf;
 export var array_from = Array.from;
 export var object_keys = Object.keys;
 export var define_property = Object.defineProperty;

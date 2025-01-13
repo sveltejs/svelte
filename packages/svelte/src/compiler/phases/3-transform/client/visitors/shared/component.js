@@ -174,23 +174,32 @@ export function build_component(node, component_name, context, anchor = context.
 		} else if (attribute.type === 'BindDirective') {
 			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
 
-			if (dev && attribute.name !== 'this' && attribute.expression.type !== 'SequenceExpression') {
-				const left = object(attribute.expression);
-				let binding;
+			if (dev && attribute.name !== 'this') {
+				let should_add_owner = true;
 
-				if (left?.type === 'Identifier') {
-					binding = context.state.scope.get(left.name);
+				if (attribute.expression.type !== 'SequenceExpression') {
+					const left = object(attribute.expression);
+
+					if (left?.type === 'Identifier') {
+						const binding = context.state.scope.get(left.name);
+
+						// Only run ownership addition on $state fields.
+						// Theoretically someone could create a `$state` while creating `$state.raw` or inside a `$derived.by`,
+						// but that feels so much of an edge case that it doesn't warrant a perf hit for the common case.
+						if (binding?.kind === 'derived' || binding?.kind === 'raw_state') {
+							should_add_owner = false;
+						}
+					}
 				}
 
-				// Only run ownership addition on $state fields.
-				// Theoretically someone could create a `$state` while creating `$state.raw` or inside a `$derived.by`,
-				// but that feels so much of an edge case that it doesn't warrant a perf hit for the common case.
-				if (binding?.kind !== 'derived' && binding?.kind !== 'raw_state') {
+				if (should_add_owner) {
 					binding_initializers.push(
 						b.stmt(
 							b.call(
 								b.id('$.add_owner_effect'),
-								b.thunk(expression),
+								expression.type === 'SequenceExpression'
+									? expression.expressions[0]
+									: b.thunk(expression),
 								b.id(component_name),
 								is_ignored(node, 'ownership_invalid_binding') && b.true
 							)

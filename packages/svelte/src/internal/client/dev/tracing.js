@@ -15,7 +15,7 @@ export let tracing_expressions = null;
  */
 function log_entry(signal, entry) {
 	const debug = signal.debug;
-	const value = signal.v;
+	const value = signal.trace_need_increase ? signal.trace_v : signal.v;
 
 	if (value === UNINITIALIZED) {
 		return;
@@ -42,16 +42,15 @@ function log_entry(signal, entry) {
 
 	const type = (signal.f & DERIVED) !== 0 ? '$derived' : '$state';
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
-	const status =
-		signal.version > current_reaction.version || current_reaction.version === 0 ? 'dirty' : 'clean';
+	const dirty = signal.wv > current_reaction.wv || current_reaction.wv === 0;
 
 	// eslint-disable-next-line no-console
 	console.groupCollapsed(
 		`%c${type}`,
-		status !== 'clean'
-			? 'color: CornflowerBlue; font-weight: bold'
-			: 'color: grey; font-weight: bold',
-		typeof value === 'object' && STATE_SYMBOL in value ? snapshot(value, true) : value
+		dirty ? 'color: CornflowerBlue; font-weight: bold' : 'color: grey; font-weight: bold',
+		typeof value === 'object' && value !== null && STATE_SYMBOL in value
+			? snapshot(value, true)
+			: value
 	);
 
 	if (type === '$derived') {
@@ -119,7 +118,7 @@ export function trace(label, fn) {
 			console.groupEnd();
 		}
 
-		if (previously_tracing_expressions !== null) {
+		if (previously_tracing_expressions !== null && tracing_expressions !== null) {
 			for (const [signal, entry] of tracing_expressions.entries) {
 				var prev_entry = previously_tracing_expressions.get(signal);
 

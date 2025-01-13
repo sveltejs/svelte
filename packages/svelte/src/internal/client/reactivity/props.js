@@ -297,8 +297,10 @@ export function prop(props, key, flags, fallback) {
 	var is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
 
 	var setter =
-		get_descriptor(props, key)?.set ??
-		(is_entry_props && bindable && key in props ? (v) => (props[key] = v) : undefined);
+		(bindable &&
+			(get_descriptor(props, key)?.set ??
+				(is_entry_props && key in props && ((v) => (props[key] = v))))) ||
+		undefined;
 
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;
