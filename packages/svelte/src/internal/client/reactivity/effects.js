@@ -143,8 +143,7 @@ function create_effect(type, fn, sync, push = true) {
 		effect.first === null &&
 		effect.nodes_start === null &&
 		effect.teardown === null &&
-		(effect.f & EFFECT_HAS_DERIVED) === 0 &&
-		(effect.f & BOUNDARY_EFFECT) === 0;
+		(effect.f & (EFFECT_HAS_DERIVED | BOUNDARY_EFFECT)) === 0;
 
 	if (!inert && !is_root && push) {
 		if (parent_effect !== null) {
