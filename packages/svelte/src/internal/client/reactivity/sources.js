@@ -29,7 +29,8 @@ import {
 	INSPECT_EFFECT,
 	UNOWNED,
 	MAYBE_DIRTY,
-	BLOCK_EFFECT
+	BLOCK_EFFECT,
+	ROOT_EFFECT
 } from '../constants.js';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -191,17 +192,13 @@ export function internal_set(source, value) {
 			is_runes() &&
 			active_effect !== null &&
 			(active_effect.f & CLEAN) !== 0 &&
-			(active_effect.f & BRANCH_EFFECT) === 0
+			(active_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0
 		) {
-			if (new_deps !== null && new_deps.includes(source)) {
-				set_signal_status(active_effect, DIRTY);
-				schedule_effect(active_effect);
+
+			if (untracked_writes === null) {
+				set_untracked_writes([source]);
 			} else {
-				if (untracked_writes === null) {
-					set_untracked_writes([source]);
-				} else {
-					untracked_writes.push(source);
-				}
+				untracked_writes.push(source);
 			}
 		}
 
