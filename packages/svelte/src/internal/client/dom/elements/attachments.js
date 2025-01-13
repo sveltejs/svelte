@@ -25,6 +25,6 @@ export function is_attachment_key(key) {
  */
 export function attach(node, get_fn) {
 	effect(() => {
-		get_fn()(node);
+		return get_fn()(node);
 	});
 }
