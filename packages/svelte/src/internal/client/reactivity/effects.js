@@ -35,7 +35,8 @@ import {
 	INSPECT_EFFECT,
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
-	EFFECT_HAS_DERIVED
+	EFFECT_HAS_DERIVED,
+	BOUNDARY_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
 import * as e from '../errors.js';
@@ -142,7 +143,7 @@ function create_effect(type, fn, sync, push = true) {
 		effect.first === null &&
 		effect.nodes_start === null &&
 		effect.teardown === null &&
-		(effect.f & EFFECT_HAS_DERIVED) === 0;
+		(effect.f & (EFFECT_HAS_DERIVED | BOUNDARY_EFFECT)) === 0;
 
 	if (!inert && !is_root && push) {
 		if (parent_effect !== null) {
