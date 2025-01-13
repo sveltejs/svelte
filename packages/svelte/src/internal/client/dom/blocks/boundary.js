@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode, } from '#client' */
 
-import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '../../constants.js';
+import { BOUNDARY_EFFECT, EFFECT_HAS_DERIVED, EFFECT_TRANSPARENT } from '../../constants.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import {
 	active_effect,
@@ -117,6 +117,9 @@ export function boundary(node, props, boundary_fn) {
 						is_creating_fallback = false;
 					});
 				});
+				// Since the boundary is lazy, so we need to ensure the parent
+				// knows that is will have children in the future
+				boundary.f |= EFFECT_HAS_DERIVED;
 			}
 		};
 
