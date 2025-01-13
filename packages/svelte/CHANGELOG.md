@@ -1,5 +1,17 @@
 # svelte
 
+## 5.17.4
+
+### Patch Changes
+
+- fix: never consider inert boundary effects ([#14999](https://github.com/sveltejs/svelte/pull/14999))
+
+- fix: store access on component destroy ([#14968](https://github.com/sveltejs/svelte/pull/14968))
+
+- fix: correctly transform `pre` with no content ([#14973](https://github.com/sveltejs/svelte/pull/14973))
+
+- fix: wrap each block expression in derived to encapsulate effects ([#14967](https://github.com/sveltejs/svelte/pull/14967))
+
 ## 5.17.3
 
 ### Patch Changes
