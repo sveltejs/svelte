@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure signal write invalidation within effects is persistent
+fix: ensure signal write invalidation within effects is consistent
