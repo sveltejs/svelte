@@ -621,6 +621,19 @@ declare module 'svelte/animate' {
 	export {};
 }
 
+declare module 'svelte/attachments' {
+	/**
+	 * Creates a `Symbol` that Svelte recognises as an attachment key
+	 */
+	export function createAttachmentKey(): symbol;
+	/**
+	 * Returns `true` if the symbol was created with `createAttachmentKey`
+	 * */
+	export function isAttachmentKey(key: string | symbol): boolean;
+
+	export {};
+}
+
 declare module 'svelte/compiler' {
 	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
 	import type { SourceMap } from 'magic-string';
@@ -1050,6 +1063,12 @@ declare module 'svelte/compiler' {
 			expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
 		}
 
+		/** A `{@attach foo(...)} tag */
+		export interface AttachTag extends BaseNode {
+			type: 'AttachTag';
+			expression: Expression;
+		}
+
 		/** An `animate:` directive */
 		export interface AnimateDirective extends BaseNode {
 			type: 'AnimateDirective';
@@ -1132,7 +1151,7 @@ declare module 'svelte/compiler' {
 
 		interface BaseElement extends BaseNode {
 			name: string;
-			attributes: Array<Attribute | SpreadAttribute | Directive>;
+			attributes: Array<Attribute | SpreadAttribute | Directive | AttachTag>;
 			fragment: Fragment;
 		}
 
@@ -1322,6 +1341,7 @@ declare module 'svelte/compiler' {
 			| AST.Attribute
 			| AST.SpreadAttribute
 			| Directive
+			| AST.AttachTag
 			| AST.Comment
 			| Block;
 
