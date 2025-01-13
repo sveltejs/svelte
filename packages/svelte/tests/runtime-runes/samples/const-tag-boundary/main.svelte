@@ -8,7 +8,7 @@
 <svelte:boundary>
 	{@const double = test * 2}
 	{#snippet failed()}
-		{double}
+		<p>{double}</p>
 	{/snippet}
 	<FlakyComponent />
 </svelte:boundary>

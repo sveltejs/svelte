@@ -2,7 +2,16 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	html: '<button></button> 2',
-	mode: ['client']
-	// TODO fix reactivity lost in failed snippet and add a test here
+	html: '<button></button><p>2</p>',
+	mode: ['client'],
+	test({ target, assert }) {
+		const btn = target.querySelector('button');
+		const p = target.querySelector('p');
+
+		flushSync(() => {
+			btn?.click();
+		});
+
+		assert.equal(p?.innerHTML, '4');
+	}
 });
