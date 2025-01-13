@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -17,7 +18,7 @@ export default test({
 		<p>indeterminate? true</p>
 	`,
 
-	async test({ assert, component, target, window }) {
+	test({ assert, component, target, window }) {
 		const input = target.querySelector('input');
 		ok(input);
 
@@ -28,7 +29,8 @@ export default test({
 
 		input.checked = true;
 		input.indeterminate = false;
-		await input.dispatchEvent(event);
+		input.dispatchEvent(event);
+		flushSync();
 
 		assert.equal(component.indeterminate, false);
 		assert.equal(component.checked, true);

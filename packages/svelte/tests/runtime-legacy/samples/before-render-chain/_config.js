@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -9,8 +10,9 @@ export default test({
 		<span>1</span>
 	`,
 
-	async test({ assert, component, target }) {
-		await component.list.update();
+	test({ assert, component, target }) {
+		component.list.update();
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

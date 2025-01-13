@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -6,29 +7,35 @@ export default test({
 		<p>42</p>
 	`,
 
-	async test({ assert, component, target }) {
-		await component.updateStore(undefined);
-		await Promise.resolve();
+	test({ assert, component, target }) {
+		component.updateStore(undefined);
+		flushSync();
+
 		assert.htmlEqual(target.innerHTML, '<p></p><p>42</p>');
 
-		await component.updateStore(33);
-		await Promise.resolve();
+		component.updateStore(33);
+		flushSync();
+
 		assert.htmlEqual(target.innerHTML, '<p>33</p><p>42</p>');
 
-		await component.updateStore(undefined);
-		await Promise.resolve();
+		component.updateStore(undefined);
+		flushSync();
+
 		assert.htmlEqual(target.innerHTML, '<p></p><p>42</p>');
 
-		await component.updateVar(undefined);
-		await Promise.resolve();
+		component.updateVar(undefined);
+		flushSync();
+
 		assert.htmlEqual(target.innerHTML, '<p></p><p></p>');
 
-		await component.updateVar(33);
-		await Promise.resolve();
+		component.updateVar(33);
+		flushSync();
+
 		assert.htmlEqual(target.innerHTML, '<p></p><p>33</p>');
 
-		await component.updateVar(undefined);
-		await Promise.resolve();
+		component.updateVar(undefined);
+		flushSync();
+
 		assert.htmlEqual(target.innerHTML, '<p></p><p></p>');
 	}
 });
