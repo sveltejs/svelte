@@ -621,19 +621,6 @@ declare module 'svelte/animate' {
 	export {};
 }
 
-declare module 'svelte/attachments' {
-	/**
-	 * Creates a `Symbol` that Svelte recognises as an attachment key
-	 */
-	export function createAttachmentKey(): symbol;
-	/**
-	 * Returns `true` if the symbol was created with `createAttachmentKey`
-	 * */
-	export function isAttachmentKey(key: string | symbol): boolean;
-
-	export {};
-}
-
 declare module 'svelte/compiler' {
 	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
 	import type { SourceMap } from 'magic-string';

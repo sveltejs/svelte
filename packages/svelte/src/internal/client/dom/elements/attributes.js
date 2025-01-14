@@ -13,7 +13,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../../runtime.js';
-import { attach, is_attachment_key } from './attachments.js';
+import { attach } from './attachments.js';
 import { clsx } from '../../../shared/attributes.js';
 
 /**
@@ -417,9 +417,7 @@ export function set_attributes(
 	}
 
 	for (let symbol of Object.getOwnPropertySymbols(next)) {
-		if (is_attachment_key(symbol)) {
-			attach(element, () => next[symbol]);
-		}
+		attach(element, () => next[symbol]);
 	}
 
 	return current;

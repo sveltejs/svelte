@@ -1,8 +1,6 @@
 <script>
-	import { createAttachmentKey } from 'svelte/attachments';
-
 	let stuff = $state({
-		[createAttachmentKey()]: () => console.log('hello')
+		[Symbol()]: () => console.log('hello')
 	});
 </script>
 
