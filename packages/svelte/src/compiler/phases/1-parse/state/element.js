@@ -496,14 +496,14 @@ function read_attribute(parser) {
 			parser.eat('}', true);
 
 			/** @type {AST.AttachTag} */
-			const use = {
+			const attachment = {
 				type: 'AttachTag',
 				start,
 				end: parser.index,
 				expression
 			};
 
-			return use;
+			return attachment;
 		}
 
 		if (parser.eat('...')) {
