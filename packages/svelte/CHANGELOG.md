@@ -1,5 +1,19 @@
 # svelte
 
+## 5.18.0
+
+### Minor Changes
+
+- feat: allow `<template>` elements to contain any child ([#15007](https://github.com/sveltejs/svelte/pull/15007))
+
+### Patch Changes
+
+- fix: ensure resume effects are scheduled in topological order ([#15012](https://github.com/sveltejs/svelte/pull/15012))
+
+- fix: bump esrap ([#15015](https://github.com/sveltejs/svelte/pull/15015))
+
+- fix: remove listener on `bind_current_time` teardown ([#15013](https://github.com/sveltejs/svelte/pull/15013))
+
 ## 5.17.5
 
 ### Patch Changes
