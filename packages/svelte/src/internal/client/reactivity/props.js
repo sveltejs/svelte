@@ -231,6 +231,7 @@ const spread_props_handler = {
 
 		for (let p of target.props) {
 			if (is_function(p)) p = p();
+			if (!p) continue;
 
 			for (const key in p) {
 				if (!keys.includes(key)) keys.push(key);
