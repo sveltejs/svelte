@@ -18,7 +18,7 @@ const REGEX_HTML_COMMENT_CLOSE = /-->/;
 /**
  * @param {Parser} parser
  * @param {number} start
- * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.Directive>} attributes
+ * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.Directive | AST.AttachTag>} attributes
  * @returns {AST.CSS.StyleSheet}
  */
 export default function read_style(parser, start, attributes) {
