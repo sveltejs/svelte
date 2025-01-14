@@ -3,7 +3,6 @@ import { DEV } from 'esm-env';
 import {
 	component_context,
 	active_reaction,
-	new_deps,
 	active_effect,
 	untracked_writes,
 	get,
@@ -29,7 +28,8 @@ import {
 	INSPECT_EFFECT,
 	UNOWNED,
 	MAYBE_DIRTY,
-	BLOCK_EFFECT
+	BLOCK_EFFECT,
+	ROOT_EFFECT
 } from '../constants.js';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -182,26 +182,20 @@ export function internal_set(source, value) {
 
 		mark_reactions(source, DIRTY);
 
-		// If the current signal is running for the first time, it won't have any
-		// reactions as we only allocate and assign the reactions after the signal
-		// has fully executed. So in the case of ensuring it registers the reaction
+		// It's possible that the current reaction might not have up-to-date dependencies
+		// whilst it's actively running. So in the case of ensuring it registers the reaction
 		// properly for itself, we need to ensure the current effect actually gets
 		// scheduled. i.e: `$effect(() => x++)`
 		if (
 			is_runes() &&
 			active_effect !== null &&
 			(active_effect.f & CLEAN) !== 0 &&
-			(active_effect.f & BRANCH_EFFECT) === 0
+			(active_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0
 		) {
-			if (new_deps !== null && new_deps.includes(source)) {
-				set_signal_status(active_effect, DIRTY);
-				schedule_effect(active_effect);
+			if (untracked_writes === null) {
+				set_untracked_writes([source]);
 			} else {
-				if (untracked_writes === null) {
-					set_untracked_writes([source]);
-				} else {
-					untracked_writes.push(source);
-				}
+				untracked_writes.push(source);
 			}
 		}
 

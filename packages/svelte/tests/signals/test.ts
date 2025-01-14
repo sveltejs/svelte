@@ -402,6 +402,42 @@ describe('signals', () => {
 		};
 	});
 
+	test('schedules rerun when writing to signal before reading it from derived', (runes) => {
+		if (!runes) return () => {};
+		let log: any[] = [];
+
+		const value = state(1);
+		const double = derived(() => $.get(value) * 2);
+
+		user_effect(() => {
+			set(value, 10);
+			log.push($.get(double));
+		});
+
+		return () => {
+			flushSync();
+			assert.deepEqual(log, [20]);
+		};
+	});
+
+	test('schedules rerun when writing to signal after reading it from derived', (runes) => {
+		if (!runes) return () => {};
+		let log: any[] = [];
+
+		const value = state(1);
+		const double = derived(() => $.get(value) * 2);
+
+		user_effect(() => {
+			log.push($.get(double));
+			set(value, 10);
+		});
+
+		return () => {
+			flushSync();
+			assert.deepEqual(log, [2, 20]);
+		};
+	});
+
 	test('effect teardown is removed on re-run', () => {
 		const count = state(0);
 		let first = true;

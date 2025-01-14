@@ -383,6 +383,34 @@ export function handle_error(error, effect, previous_effect, component_context) 
 }
 
 /**
+ * @param {Value} signal
+ * @param {Effect} effect
+ * @param {number} [depth]
+ */
+function schedule_possible_effect_self_invalidation(signal, effect, depth = 0) {
+	var reactions = signal.reactions;
+	if (reactions === null) return;
+
+	for (var i = 0; i < reactions.length; i++) {
+		var reaction = reactions[i];
+		if ((reaction.f & DERIVED) !== 0) {
+			schedule_possible_effect_self_invalidation(
+				/** @type {Derived} */ (reaction),
+				effect,
+				depth + 1
+			);
+		} else if (effect === reaction) {
+			if (depth === 0) {
+				set_signal_status(reaction, DIRTY);
+			} else if ((reaction.f & CLEAN) !== 0) {
+				set_signal_status(reaction, MAYBE_DIRTY);
+			}
+			schedule_effect(/** @type {Effect} */ (reaction));
+		}
+	}
+}
+
+/**
  * @template V
  * @param {Reaction} reaction
  * @returns {V}
@@ -432,6 +460,22 @@ export function update_reaction(reaction) {
 		} else if (deps !== null && skipped_deps < deps.length) {
 			remove_reactions(reaction, skipped_deps);
 			deps.length = skipped_deps;
+		}
+
+		// If we're inside an effect and we have untracked writes, then we need to
+		// ensure that if any of those untracked writes result in re-invalidation
+		// of the current effect, then that happens accordingly
+		if (
+			is_runes() &&
+			untracked_writes !== null &&
+			(reaction.f & (DERIVED | MAYBE_DIRTY | DIRTY)) === 0
+		) {
+			for (i = 0; i < /** @type {Source[]} */ (untracked_writes).length; i++) {
+				schedule_possible_effect_self_invalidation(
+					untracked_writes[i],
+					/** @type {Effect} */ (reaction)
+				);
+			}
 		}
 
 		// If we are returning to an previous reaction then
@@ -906,17 +950,6 @@ export function get(signal) {
 				new_deps = [signal];
 			} else {
 				new_deps.push(signal);
-			}
-
-			if (
-				untracked_writes !== null &&
-				active_effect !== null &&
-				(active_effect.f & CLEAN) !== 0 &&
-				(active_effect.f & BRANCH_EFFECT) === 0 &&
-				untracked_writes.includes(signal)
-			) {
-				set_signal_status(active_effect, DIRTY);
-				schedule_effect(active_effect);
 			}
 		}
 	} else if (is_derived && /** @type {Derived} */ (signal).deps === null) {
