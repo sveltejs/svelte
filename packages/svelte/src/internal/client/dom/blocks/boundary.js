@@ -1,7 +1,13 @@
 /** @import { Effect, TemplateNode, } from '#client' */
 
-import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '../../constants.js';
-import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
+import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT, INERT } from '../../constants.js';
+import {
+	block,
+	branch,
+	destroy_effect,
+	pause_effect,
+	resume_effect
+} from '../../reactivity/effects.js';
 import {
 	active_effect,
 	active_reaction,
@@ -20,7 +26,11 @@ import {
 	remove_nodes,
 	set_hydrate_node
 } from '../hydration.js';
+import { get_next_sibling } from '../operations.js';
 import { queue_micro_task } from '../task.js';
+
+const SUSPEND_INCREMENT = Symbol();
+const SUSPEND_DECREMENT = Symbol();
 
 /**
  * @param {Effect} boundary
@@ -49,6 +59,7 @@ function with_boundary(boundary, fn) {
  * @param {{
  * 	 onerror?: (error: unknown, reset: () => void) => void,
  *   failed?: (anchor: Node, error: () => unknown, reset: () => () => void) => void
+ *   pending?: (anchor: Node) => void
  * }} props
  * @param {((anchor: Node) => void)} boundary_fn
  * @returns {void}
@@ -58,14 +69,95 @@ export function boundary(node, props, boundary_fn) {
 
 	/** @type {Effect} */
 	var boundary_effect;
+	/** @type {Effect | null} */
+	var suspended_effect = null;
+	/** @type {DocumentFragment | null} */
+	var suspended_fragment = null;
+	var suspend_count = 0;
 
 	block(() => {
 		var boundary = /** @type {Effect} */ (active_effect);
 		var hydrate_open = hydrate_node;
 		var is_creating_fallback = false;
 
-		// We re-use the effect's fn property to avoid allocation of an additional field
-		boundary.fn = (/** @type {unknown}} */ error) => {
+		const render_snippet = (/** @type { () => void } */ snippet_fn) => {
+			// Render the snippet in a microtask
+			queue_micro_task(() => {
+				with_boundary(boundary, () => {
+					is_creating_fallback = true;
+
+					try {
+						boundary_effect = branch(() => {
+							snippet_fn();
+						});
+					} catch (error) {
+						handle_error(error, boundary, null, boundary.ctx);
+					}
+
+					reset_is_throwing_error();
+					is_creating_fallback = false;
+				});
+			});
+		};
+
+		// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
+		boundary.fn = (/** @type {unknown} */ input) => {
+			let pending = props.pending;
+
+			if (input === SUSPEND_INCREMENT) {
+				if (!pending) {
+					return false;
+				}
+				suspend_count++;
+
+				if (suspended_effect === null) {
+					var effect = boundary_effect;
+					suspended_effect = boundary_effect;
+
+					pause_effect(suspended_effect, () => {
+						/** @type {TemplateNode | null} */
+						var node = effect.nodes_start;
+						var end = effect.nodes_end;
+						suspended_fragment = document.createDocumentFragment();
+
+						while (node !== null) {
+							/** @type {TemplateNode | null} */
+							var sibling =
+								node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
+
+							node.remove();
+							suspended_fragment.append(node);
+							node = sibling;
+						}
+					}, false);
+
+					render_snippet(() => {
+						pending(anchor);
+					});
+				}
+				return true;
+			}
+
+			if (input === SUSPEND_DECREMENT) {
+				if (!pending) {
+					return false;
+				}
+				suspend_count--;
+
+				if (suspend_count === 0 && suspended_effect !== null) {
+					if (boundary_effect) {
+						destroy_effect(boundary_effect);
+					}
+					boundary_effect = suspended_effect;
+					suspended_effect = null;
+					anchor.before(/** @type {DocumentFragment} */ (suspended_fragment));
+					resume_effect(boundary_effect);
+				}
+
+				return true;
+			}
+
+			var error = input;
 			var onerror = props.onerror;
 			let failed = props.failed;
 
@@ -96,26 +188,12 @@ export function boundary(node, props, boundary_fn) {
 			}
 
 			if (failed) {
-				// Render the `failed` snippet in a microtask
-				queue_micro_task(() => {
-					with_boundary(boundary, () => {
-						is_creating_fallback = true;
-
-						try {
-							boundary_effect = branch(() => {
-								failed(
-									anchor,
-									() => error,
-									() => reset
-								);
-							});
-						} catch (error) {
-							handle_error(error, boundary, null, boundary.ctx);
-						}
-
-						reset_is_throwing_error();
-						is_creating_fallback = false;
-					});
+				render_snippet(() => {
+					failed(
+						anchor,
+						() => error,
+						() => reset
+					);
 				});
 			}
 		};
@@ -130,5 +208,33 @@ export function boundary(node, props, boundary_fn) {
 
 	if (hydrating) {
 		anchor = hydrate_node;
+	}
+}
+
+export function suspend() {
+	var current = active_effect;
+
+	while (current !== null) {
+		if ((current.f & BOUNDARY_EFFECT) !== 0) {
+			// @ts-ignore
+			if (current.fn(SUSPEND_INCREMENT)) {
+				return;
+			}
+		}
+		current = current.parent;
+	}
+}
+
+export function unsuspend() {
+	var current = active_effect;
+
+	while (current !== null) {
+		if ((current.f & BOUNDARY_EFFECT) !== 0) {
+			// @ts-ignore
+			if (current.fn(SUSPEND_DECREMENT)) {
+				return;
+			}
+		}
+		current = current.parent;
 	}
 }

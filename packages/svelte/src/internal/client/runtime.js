@@ -776,7 +776,7 @@ export function schedule_effect(signal) {
 		var flags = effect.f;
 
 		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
-			if ((flags & CLEAN) === 0) return;
+			if ((flags & CLEAN) === 0) return
 			effect.f ^= CLEAN;
 		}
 	}
