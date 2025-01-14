@@ -602,16 +602,20 @@ export function resume_effect(effect) {
  */
 function resume_children(effect, local) {
 	if ((effect.f & INERT) === 0) return;
+	effect.f ^= INERT;
 
-	// If a dependency of this effect changed while it was paused,
-	// apply the change now
-	if (check_dirtiness(effect)) {
-		update_effect(effect);
+	// Ensure the effect is marked as clean again so that any dirty child
+	// effects can schedule themselves for execution
+	if ((effect.f & CLEAN) === 0) {
+		effect.f ^= CLEAN;
 	}
 
-	// Ensure we toggle the flag after possibly updating the effect so that
-	// each block logic can correctly operate on inert items
-	effect.f ^= INERT;
+	// If a dependency of this effect changed while it was paused,
+	// schedule the effect to update
+	if (check_dirtiness(effect)) {
+		set_signal_status(effect, DIRTY);
+		schedule_effect(effect);
+	}
 
 	var child = effect.first;
 
