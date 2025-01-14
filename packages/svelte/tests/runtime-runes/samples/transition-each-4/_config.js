@@ -30,6 +30,6 @@ export default test({
 			'<button>Toggle</button><div style=""><div>3</div><div>4</div></div>'
 		);
 
-		assert.deepEqual(logs, ['$effect.pre', '$effect.pre', '$effect', '$effect'])
+		assert.deepEqual(logs, ['$effect.pre', '$effect.pre', '$effect', '$effect']);
 	}
 });
