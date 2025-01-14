@@ -412,7 +412,6 @@ describe('signals', () => {
 		user_effect(() => {
 			set(value, 10);
 			log.push($.get(double));
-			set(value, 10);
 		});
 
 		return () => {

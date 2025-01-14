@@ -182,9 +182,8 @@ export function internal_set(source, value) {
 
 		mark_reactions(source, DIRTY);
 
-		// If the current signal is running for the first time, it won't have any
-		// reactions as we only allocate and assign the reactions after the signal
-		// has fully executed. So in the case of ensuring it registers the reaction
+		// It's possible that the current reaction might not have up-to-date dependencies
+		// whilst it's actively running. So in the case of ensuring it registers the reaction
 		// properly for itself, we need to ensure the current effect actually gets
 		// scheduled. i.e: `$effect(() => x++)`
 		if (
