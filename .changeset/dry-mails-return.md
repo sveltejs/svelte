@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-feat: allow every children in `template` tags
+feat: allow `<template>` elements to contain any child
