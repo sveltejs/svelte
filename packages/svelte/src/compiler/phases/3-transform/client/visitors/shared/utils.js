@@ -61,12 +61,14 @@ export function build_template_chunk(values, visit, state) {
 									'??',
 									/** @type {Expression} */ (visit(node.expression, state)),
 									b.literal('')
-								)
+								),
+								is_async
 							)
 						)
 					)
 				);
-				expressions.push(b.call('$.get', id));
+
+				expressions.push(is_async ? b.await(b.call('$.get', id)) : b.call('$.get', id));
 			} else if (values.length === 1) {
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).

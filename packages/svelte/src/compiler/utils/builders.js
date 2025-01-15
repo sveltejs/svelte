@@ -426,12 +426,15 @@ export function thunk(expression, async = false) {
 
 /**
  * Replace "(arg) => func(arg)" to "func"
- * @param {ESTree.Expression} expression
+ * @param {ESTree.ArrowFunctionExpression} expression
  * @returns {ESTree.Expression}
  */
 export function unthunk(expression) {
+	if (expression.async && expression.body.type === 'AwaitExpression') {
+		return unthunk(arrow(expression.params, expression.body.argument));
+	}
+
 	if (
-		expression.type === 'ArrowFunctionExpression' &&
 		expression.async === false &&
 		expression.body.type === 'CallExpression' &&
 		expression.body.callee.type === 'Identifier' &&
