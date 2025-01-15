@@ -106,6 +106,7 @@ export function boundary(node, props, boundary_fn) {
 
 			if (input === SUSPEND_INCREMENT) {
 				if (!pending) {
+					// TODO in this case we need to find the parent boundary
 					return false;
 				}
 
@@ -150,6 +151,7 @@ export function boundary(node, props, boundary_fn) {
 
 			if (input === SUSPEND_DECREMENT) {
 				if (!pending) {
+					// TODO in this case we need to find the parent boundary
 					return false;
 				}
 
@@ -268,9 +270,21 @@ export async function preserve_context(promise) {
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
 
-	const [suspend, unsuspend] = create_suspense();
+	let boundary = active_effect;
+	while (boundary !== null) {
+		if ((boundary.f & BOUNDARY_EFFECT) !== 0) {
+			break;
+		}
 
-	suspend();
+		boundary = boundary.parent;
+	}
+
+	if (boundary === null) {
+		throw new Error('cannot suspend outside a boundary');
+	}
+
+	// @ts-ignore
+	boundary.fn(SUSPEND_INCREMENT);
 
 	const value = await promise;
 
@@ -280,7 +294,9 @@ export async function preserve_context(promise) {
 			set_active_reaction(previous_reaction);
 			set_component_context(previous_component_context);
 
-			unsuspend();
+			// @ts-ignore
+			boundary.fn(SUSPEND_DECREMENT);
+
 			return value;
 		}
 	};
