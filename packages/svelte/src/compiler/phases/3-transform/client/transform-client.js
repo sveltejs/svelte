@@ -355,7 +355,7 @@ export function client_component(analysis, options) {
 	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
 	if (dev) push_args.push(b.id(analysis.name));
 
-	const component_block = b.block([
+	let component_block = b.block([
 		...store_setup,
 		...legacy_reactive_declarations,
 		...group_binding_declarations,
@@ -366,6 +366,24 @@ export function client_component(analysis, options) {
 			: b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)),
 		.../** @type {ESTree.Statement[]} */ (template.body)
 	]);
+
+	if (analysis.is_async) {
+		const body = b.function_declaration(
+			b.id('$$body'),
+			[b.id('$$anchor'), b.id('$$props')],
+			component_block
+		);
+		body.async = true;
+
+		state.hoisted.push(body);
+
+		component_block = b.block([
+			b.var('fragment', b.call('$.comment')),
+			b.var('node', b.call('$.first_child', b.id('fragment'))),
+			b.stmt(b.call(body.id, b.id('node'), b.id('$$props'))),
+			b.stmt(b.call('$.append', b.id('$$anchor'), b.id('fragment')))
+		]);
+	}
 
 	if (!analysis.runes) {
 		// Bind static exports to props so that people can access them with bind:x

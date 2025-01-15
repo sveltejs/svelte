@@ -85,6 +85,10 @@ export interface ComponentAnalysis extends Analysis {
 	 * Every snippet that is declared locally
 	 */
 	snippets: Set<AST.SnippetBlock>;
+	/**
+	 * true if uses top-level await
+	 */
+	is_async: boolean;
 }
 
 declare module 'estree' {
