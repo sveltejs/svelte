@@ -27,7 +27,11 @@ import {
 	DISCONNECTED,
 	BOUNDARY_EFFECT
 } from './constants.js';
-import { flush_after_tasks, flush_before_micro_tasks } from './dom/task.js';
+import {
+	flush_idle_tasks,
+	flush_boundary_micro_tasks,
+	flush_post_micro_tasks
+} from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { internal_set, set, source } from './reactivity/sources.js';
 import { destroy_derived, execute_derived, update_derived } from './reactivity/deriveds.js';
@@ -812,6 +816,9 @@ function process_effects(effect, collected_effects) {
 					current_effect.f ^= CLEAN;
 				} else {
 					try {
+						if ((flags & BOUNDARY_EFFECT) !== 0) {
+							flush_boundary_micro_tasks();
+						}
 						if (check_dirtiness(current_effect)) {
 							update_effect(current_effect);
 						}
@@ -879,12 +886,13 @@ export function flush_sync(fn) {
 		queued_root_effects = root_effects;
 		is_micro_task_queued = false;
 
-		flush_before_micro_tasks();
 		flush_queued_root_effects(previous_queued_root_effects);
 
 		var result = fn?.();
 
-		flush_after_tasks();
+		flush_boundary_micro_tasks();
+		flush_post_micro_tasks();
+		flush_idle_tasks();
 		if (queued_root_effects.length > 0 || root_effects.length > 0) {
 			flush_sync();
 		}

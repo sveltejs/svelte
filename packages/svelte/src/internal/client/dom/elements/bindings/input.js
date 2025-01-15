@@ -3,7 +3,7 @@ import { render_effect, teardown } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
 import { is } from '../../../proxy.js';
-import { queue_after_micro_task } from '../../task.js';
+import { queue_post_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
 import { is_runes, untrack } from '../../../runtime.js';
 
@@ -158,14 +158,14 @@ export function bind_group(inputs, group_index, input, get, set = get) {
 	if (!pending.has(binding_group)) {
 		pending.add(binding_group);
 
-		queue_after_micro_task(() => {
+		queue_post_micro_task(() => {
 			// necessary to maintain binding group order in all insertion scenarios
 			binding_group.sort((a, b) => (a.compareDocumentPosition(b) === 4 ? -1 : 1));
 			pending.delete(binding_group);
 		});
 	}
 
-	queue_after_micro_task(() => {
+	queue_post_micro_task(() => {
 		if (hydration_mismatch) {
 			var value;
 
