@@ -76,6 +76,7 @@ export function CallExpression(node, context) {
 
 		case '$state':
 		case '$state.raw':
+		case '$state.opaque':
 		case '$derived':
 		case '$derived.by':
 			if (
@@ -87,8 +88,21 @@ export function CallExpression(node, context) {
 
 			if ((rune === '$derived' || rune === '$derived.by') && node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
-			} else if (rune === '$state' && node.arguments.length > 1) {
+			} else if (
+				(rune === '$state' || rune === '$state.raw' || rune === '$state.opaque') &&
+				node.arguments.length > 1
+			) {
 				e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
+			}
+			if (
+				rune === '$state.opaque' &&
+				(parent.type !== 'VariableDeclarator' ||
+					parent.id.type !== 'ArrayPattern' ||
+					parent.id.elements.length !== 2 ||
+					parent.id.elements[0]?.type !== 'Identifier' ||
+					parent.id.elements[1]?.type !== 'Identifier')
+			) {
+				e.state_invalid_opaque_declaration(node);
 			}
 
 			break;
