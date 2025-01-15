@@ -191,5 +191,3 @@ export {
 } from './internal/client/runtime.js';
 
 export { createRawSnippet } from './internal/client/dom/blocks/snippet.js';
-
-export { create_suspense } from './internal/client/dom/blocks/boundary.js';

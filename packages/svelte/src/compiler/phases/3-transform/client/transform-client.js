@@ -12,6 +12,7 @@ import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
+import { AwaitExpression } from './visitors/AwaitExpression.js';
 import { BinaryExpression } from './visitors/BinaryExpression.js';
 import { BindDirective } from './visitors/BindDirective.js';
 import { BlockStatement } from './visitors/BlockStatement.js';
@@ -87,6 +88,7 @@ const visitors = {
 	AssignmentExpression,
 	Attribute,
 	AwaitBlock,
+	AwaitExpression,
 	BinaryExpression,
 	BindDirective,
 	BlockStatement,

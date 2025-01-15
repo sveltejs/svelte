@@ -318,6 +318,8 @@ export interface ExpressionMetadata {
 	has_state: boolean;
 	/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
 	has_call: boolean;
+	/** True if the expression contains `await` */
+	is_async: boolean;
 }
 
 export * from './template.js';

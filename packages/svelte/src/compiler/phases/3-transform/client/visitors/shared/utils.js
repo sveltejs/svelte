@@ -14,7 +14,7 @@ import { locator } from '../../../../../state.js';
  * @param {Array<AST.Text | AST.ExpressionTag>} values
  * @param {(node: AST.SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
- * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
+ * @returns {{ value: Expression, has_state: boolean, has_call: boolean, is_async: boolean }}
  */
 export function build_template_chunk(values, visit, state) {
 	/** @type {Expression[]} */
@@ -25,6 +25,7 @@ export function build_template_chunk(values, visit, state) {
 
 	let has_call = false;
 	let has_state = false;
+	let is_async = false;
 	let contains_multiple_call_expression = false;
 
 	for (const node of values) {
@@ -34,6 +35,7 @@ export function build_template_chunk(values, visit, state) {
 			contains_multiple_call_expression ||= has_call && metadata.has_call;
 			has_call ||= metadata.has_call;
 			has_state ||= metadata.has_state;
+			is_async ||= metadata.is_async;
 		}
 	}
 
@@ -68,7 +70,7 @@ export function build_template_chunk(values, visit, state) {
 			} else if (values.length === 1) {
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).
-				return { value: visit(node.expression, state), has_state, has_call };
+				return { value: visit(node.expression, state), has_state, has_call, is_async };
 			} else {
 				expressions.push(b.logical('??', visit(node.expression, state), b.literal('')));
 			}
@@ -84,17 +86,18 @@ export function build_template_chunk(values, visit, state) {
 
 	const value = b.template(quasis, expressions);
 
-	return { value, has_state, has_call };
+	return { value, has_state, has_call, is_async };
 }
 
 /**
  * @param {Statement} statement
+ * @param {boolean} is_async
  */
-export function build_update(statement) {
+export function build_update(statement, is_async) {
 	const body =
 		statement.type === 'ExpressionStatement' ? statement.expression : b.block([statement]);
 
-	return b.stmt(b.call('$.template_effect', b.thunk(body)));
+	return b.stmt(b.call('$.template_effect', b.thunk(body, is_async)));
 }
 
 /**

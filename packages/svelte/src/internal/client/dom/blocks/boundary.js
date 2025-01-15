@@ -248,3 +248,30 @@ export function create_suspense() {
 
 	return [suspend, unsuspend];
 }
+
+/**
+ * @template T
+ * @param {Promise<T>} promise
+ * @returns {Promise<T>}
+ */
+export async function preserve_context(promise) {
+	if (!active_effect) {
+		return promise;
+	}
+
+	var previous_effect = active_effect;
+	var previous_reaction = active_reaction;
+	var previous_component_context = component_context;
+
+	const [suspend, unsuspend] = create_suspense();
+
+	try {
+		suspend();
+		return await promise;
+	} finally {
+		set_active_effect(previous_effect);
+		set_active_reaction(previous_reaction);
+		set_component_context(previous_component_context);
+		unsuspend();
+	}
+}
