@@ -136,14 +136,16 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 	var was_empty = false;
 
-	// TODO: ideally we could use derived for runes mode but because of the ability
-	// to use a store which can be mutated, we can't do that here as mutating a store
-	// will still result in the collection array being the same from the store
+	// We wrap this in a derived to ensure possible effects created as a result are associated with the derived,
+	// rather than the each effect. Because people can mutate arrays and trigger reactivity through other means still,
+	// we need to use derived_safe_equal.
 	var each_array = derived_safe_equal(() => {
 		var collection = get_collection();
 
 		return is_array(collection) ? collection : collection == null ? [] : array_from(collection);
 	});
+
+	var first_run = true;
 
 	block(() => {
 		var array = get(each_array);
@@ -257,7 +259,10 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		// that a mutation occurred and it's made the collection MAYBE_DIRTY, so reading the
 		// collection again can provide consistency to the reactive graph again as the deriveds
 		// will now be `CLEAN`.
-		get(each_array);
+		if (first_run) {
+			first_run = false;
+			get(each_array);
+		}
 	});
 
 	if (hydrating) {
