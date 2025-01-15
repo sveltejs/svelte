@@ -108,9 +108,8 @@ export function boundary(node, props, boundary_fn) {
 				if (!pending) {
 					return false;
 				}
-				suspend_count++;
 
-				if (suspended_effect === null) {
+				if (suspend_count++ === 0) {
 					queue_micro_task(() => {
 						var effect = boundary_effect;
 						suspended_effect = boundary_effect;
@@ -141,6 +140,7 @@ export function boundary(node, props, boundary_fn) {
 						});
 					});
 				}
+
 				return true;
 			}
 
@@ -148,9 +148,8 @@ export function boundary(node, props, boundary_fn) {
 				if (!pending) {
 					return false;
 				}
-				suspend_count--;
 
-				if (suspend_count === 0 && suspended_effect !== null) {
+				if (--suspend_count === 0 && suspended_effect !== null) {
 					if (boundary_effect) {
 						destroy_effect(boundary_effect);
 					}
