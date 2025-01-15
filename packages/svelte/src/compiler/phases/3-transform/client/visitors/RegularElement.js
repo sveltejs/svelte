@@ -1,4 +1,4 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
@@ -22,7 +22,8 @@ import {
 	build_attribute_value,
 	build_class_directives,
 	build_style_directives,
-	build_set_attributes
+	build_set_attributes,
+	build_display_directive
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
 import {
@@ -81,6 +82,12 @@ export function RegularElement(node, context) {
 
 	/** @type {AST.StyleDirective[]} */
 	const style_directives = [];
+
+	/** @type {AST.DisplayDirective | null} */
+	let display_directive = null;
+
+	/** @type {AST.StyleDirective | null} */
+	let style_display = null;
 
 	/** @type {Array<AST.AnimateDirective | AST.BindDirective | AST.OnDirective | AST.TransitionDirective | AST.UseDirective>} */
 	const other_directives = [];
@@ -141,7 +148,11 @@ export function RegularElement(node, context) {
 				break;
 
 			case 'StyleDirective':
-				style_directives.push(attribute);
+				if (attribute.name === 'display' && attribute.modifiers.includes('transition')) {
+					style_display = attribute;
+				} else {
+					style_directives.push(attribute);
+				}
 				break;
 
 			case 'TransitionDirective':
@@ -152,6 +163,23 @@ export function RegularElement(node, context) {
 				has_use = true;
 				other_directives.push(attribute);
 				break;
+
+			case 'DisplayDirective':
+				display_directive = attribute;
+				break;
+		}
+	}
+
+	if (display_directive) {
+		if (style_display !== null) {
+			// TODO
+			throw new Error('#display and style:display|transition forbidden');
+		}
+		// When we have a #display directive, the style:display directive must be handheld differently
+		const index = style_directives.findIndex((d) => d.name === 'display');
+		if (index >= 0) {
+			style_display = style_directives[index];
+			style_directives.splice(index, 1);
 		}
 	}
 
@@ -403,17 +431,26 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (node.fragment.nodes.some((node) => node.type === 'SnippetBlock')) {
+	if (
+		style_display ||
+		display_directive ||
+		node.fragment.nodes.some((node) => node.type === 'SnippetBlock')
+	) {
 		// Wrap children in `{...}` to avoid declaration conflicts
-		context.state.init.push(
-			b.block([
-				...child_state.init,
-				...element_state.init,
-				child_state.update.length > 0 ? build_render_statement(child_state.update) : b.empty,
-				...child_state.after_update,
-				...element_state.after_update
-			])
-		);
+		const block = b.block([
+			...child_state.init,
+			...element_state.init,
+			child_state.update.length > 0 ? build_render_statement(child_state.update) : b.empty,
+			...child_state.after_update,
+			...element_state.after_update
+		]);
+		if (display_directive || style_display) {
+			context.state.init.push(
+				build_display_directive(node_id, display_directive, style_display, block, context)
+			);
+		} else {
+			context.state.init.push(block);
+		}
 	} else if (node.fragment.metadata.dynamic) {
 		context.state.init.push(...child_state.init, ...element_state.init);
 		context.state.update.push(...child_state.update);

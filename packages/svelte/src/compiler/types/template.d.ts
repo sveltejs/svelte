@@ -240,7 +240,7 @@ export namespace AST {
 		name: string;
 		/** The 'y' in `style:x={y}` */
 		value: true | ExpressionTag | Array<ExpressionTag | Text>;
-		modifiers: Array<'important'>;
+		modifiers: Array<'important' | 'transition'>;
 		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
@@ -496,6 +496,15 @@ export namespace AST {
 		};
 	}
 
+	export interface DisplayDirective extends BaseNode {
+		type: 'DisplayDirective';
+		expression: Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
+	}
+
 	export interface Script extends BaseNode {
 		type: 'Script';
 		context: 'default' | 'module';
@@ -513,7 +522,8 @@ export namespace AST {
 		| AST.OnDirective
 		| AST.StyleDirective
 		| AST.TransitionDirective
-		| AST.UseDirective;
+		| AST.UseDirective
+		| AST.DisplayDirective;
 
 	export type Block =
 		| AST.EachBlock
