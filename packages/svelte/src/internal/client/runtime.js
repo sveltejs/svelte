@@ -25,7 +25,8 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	BOUNDARY_EFFECT
+	BOUNDARY_EFFECT,
+	REACTION_IS_UPDATING
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
@@ -435,6 +436,7 @@ export function update_reaction(reaction) {
 	read_version++;
 
 	try {
+		reaction.f |= REACTION_IS_UPDATING;
 		var result = /** @type {Function} */ (0, reaction.fn)();
 		var deps = reaction.deps;
 
@@ -488,6 +490,7 @@ export function update_reaction(reaction) {
 
 		return result;
 	} finally {
+		reaction.f ^= REACTION_IS_UPDATING;
 		new_deps = previous_deps;
 		skipped_deps = previous_skipped_deps;
 		untracked_writes = previous_untracked_writes;
@@ -776,7 +779,7 @@ export function schedule_effect(signal) {
 		var flags = effect.f;
 
 		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
-			if ((flags & CLEAN) === 0) return
+			if ((flags & CLEAN) === 0) return;
 			effect.f ^= CLEAN;
 		}
 	}
@@ -938,18 +941,40 @@ export function get(signal) {
 		if (derived_sources !== null && derived_sources.includes(signal)) {
 			e.state_unsafe_local_read();
 		}
+
 		var deps = active_reaction.deps;
-		if (signal.rv < read_version) {
-			signal.rv = read_version;
-			// If the signal is accessing the same dependencies in the same
-			// order as it did last time, increment `skipped_deps`
-			// rather than updating `new_deps`, which creates GC cost
-			if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
-				skipped_deps++;
-			} else if (new_deps === null) {
-				new_deps = [signal];
-			} else {
-				new_deps.push(signal);
+
+		if ((active_reaction.f & REACTION_IS_UPDATING) !== 0) {
+			// we're in the effect init/update cycle
+			if (signal.rv < read_version) {
+				signal.rv = read_version;
+
+				// If the signal is accessing the same dependencies in the same
+				// order as it did last time, increment `skipped_deps`
+				// rather than updating `new_deps`, which creates GC cost
+				if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
+					skipped_deps++;
+				} else if (new_deps === null) {
+					new_deps = [signal];
+				} else {
+					new_deps.push(signal);
+				}
+			}
+		} else {
+			// we're adding a dependency outside the init/update cycle
+			// (i.e. after an `await`)
+			// TODO we probably want to disable this for user effects,
+			// otherwise it's a breaking change, albeit a desirable one?
+			if (deps === null) {
+				deps = [signal];
+			} else if (!deps.includes(signal)) {
+				deps.push(signal);
+			}
+
+			if (signal.reactions === null) {
+				signal.reactions = [active_reaction];
+			} else if (!signal.reactions.includes(active_reaction)) {
+				signal.reactions.push(active_reaction);
 			}
 		}
 	} else if (is_derived && /** @type {Derived} */ (signal).deps === null) {

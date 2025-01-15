@@ -7,10 +7,15 @@ import * as b from '../../../../utils/builders.js';
  * @param {ComponentContext} context
  */
 export function AwaitExpression(node, context) {
-	return b.await(
-		b.call(
-			'$.preserve_context',
-			node.argument && /** @type {Expression} */ (context.visit(node.argument))
+	return b.call(
+		b.member(
+			b.await(
+				b.call(
+					'$.preserve_context',
+					node.argument && /** @type {Expression} */ (context.visit(node.argument))
+				)
+			),
+			'read'
 		)
 	);
 }
