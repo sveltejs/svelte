@@ -816,10 +816,9 @@ function process_effects(effect, collected_effects) {
 					current_effect.f ^= CLEAN;
 				} else {
 					try {
-						if ((flags & BOUNDARY_EFFECT) !== 0) {
-							flush_boundary_micro_tasks();
-						}
-						if (check_dirtiness(current_effect)) {
+						// If the effect is dirty, then we need to update it, it might also turn inert
+						// because of async work during calling check_dirtiness
+						if (check_dirtiness(current_effect) && (current_effect.f & INERT) === 0) {
 							update_effect(current_effect);
 						}
 					} catch (error) {
