@@ -13,7 +13,7 @@ import {
 	set_dev_current_component_function
 } from '../../runtime.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
-import { queue_micro_task } from '../task.js';
+import { queue_after_micro_task } from '../task.js';
 import { UNINITIALIZED } from '../../../../constants.js';
 
 const PENDING = 0;
@@ -148,7 +148,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 			} else {
 				// Wait a microtask before checking if we should show the pending state as
 				// the promise might have resolved by the next microtask.
-				queue_micro_task(() => {
+				queue_after_micro_task(() => {
 					if (!resolved) update(PENDING, true);
 				});
 			}

@@ -2,7 +2,7 @@
 import { teardown } from '../../reactivity/effects.js';
 import { define_property, is_array } from '../../../shared/utils.js';
 import { hydrating } from '../hydration.js';
-import { queue_micro_task } from '../task.js';
+import { queue_after_micro_task } from '../task.js';
 import { FILENAME } from '../../../../constants.js';
 import * as w from '../../warnings.js';
 import {
@@ -77,7 +77,7 @@ export function create_event(event_name, dom, handler, options) {
 		event_name.startsWith('touch') ||
 		event_name === 'wheel'
 	) {
-		queue_micro_task(() => {
+		queue_after_micro_task(() => {
 			dom.addEventListener(event_name, target_handler, options);
 		});
 	} else {

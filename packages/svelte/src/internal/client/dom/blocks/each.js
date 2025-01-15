@@ -34,7 +34,7 @@ import {
 import { source, mutable_source, internal_set } from '../../reactivity/sources.js';
 import { array_from, is_array } from '../../../shared/utils.js';
 import { INERT } from '../../constants.js';
-import { queue_micro_task } from '../task.js';
+import { queue_after_micro_task } from '../task.js';
 import { active_effect, active_reaction, get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
@@ -470,7 +470,7 @@ function reconcile(array, state, anchor, render_fn, flags, is_inert, get_key, ge
 	}
 
 	if (is_animated) {
-		queue_micro_task(() => {
+		queue_after_micro_task(() => {
 			if (to_animate === undefined) return;
 			for (item of to_animate) {
 				item.a?.apply();

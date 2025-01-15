@@ -27,7 +27,7 @@ import {
 	set_hydrate_node
 } from '../hydration.js';
 import { get_next_sibling } from '../operations.js';
-import { queue_micro_task } from '../task.js';
+import { queue_before_micro_task } from '../task.js';
 
 const SUSPEND_INCREMENT = Symbol();
 const SUSPEND_DECREMENT = Symbol();
@@ -107,7 +107,7 @@ export function boundary(node, props, boundary_fn) {
 				}
 
 				if (suspend_count++ === 0) {
-					queue_micro_task(() => {
+					queue_before_micro_task(() => {
 						if (suspended_effect) {
 							return;
 						}
@@ -151,7 +151,7 @@ export function boundary(node, props, boundary_fn) {
 				}
 
 				if (--suspend_count === 0) {
-					queue_micro_task(() => {
+					queue_before_micro_task(() => {
 						if (!suspended_effect) {
 							return;
 						}
@@ -199,7 +199,7 @@ export function boundary(node, props, boundary_fn) {
 			}
 
 			if (failed) {
-				queue_micro_task(() => {
+				queue_before_micro_task(() => {
 					render_snippet(() => {
 						failed(
 							anchor,
