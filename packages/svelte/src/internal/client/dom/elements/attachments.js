@@ -6,6 +6,6 @@ import { effect } from '../../reactivity/effects.js';
  */
 export function attach(node, get_fn) {
 	effect(() => {
-		return get_fn()(node);
+		return (get_fn())?.(node);
 	});
 }
