@@ -108,10 +108,6 @@ export function boundary(node, props, boundary_fn) {
 
 				if (suspend_count++ === 0) {
 					queue_micro_task(() => {
-						if (suspended_effect) {
-							return;
-						}
-
 						var effect = boundary_effect;
 						suspended_effect = boundary_effect;
 
@@ -150,20 +146,14 @@ export function boundary(node, props, boundary_fn) {
 					return false;
 				}
 
-				if (--suspend_count === 0) {
-					queue_micro_task(() => {
-						if (!suspended_effect) {
-							return;
-						}
-
-						if (boundary_effect) {
-							destroy_effect(boundary_effect);
-						}
-						boundary_effect = suspended_effect;
-						suspended_effect = null;
-						anchor.before(/** @type {DocumentFragment} */ (suspended_fragment));
-						resume_effect(boundary_effect);
-					});
+				if (--suspend_count === 0 && suspended_effect !== null) {
+					if (boundary_effect) {
+						destroy_effect(boundary_effect);
+					}
+					boundary_effect = suspended_effect;
+					suspended_effect = null;
+					anchor.before(/** @type {DocumentFragment} */ (suspended_fragment));
+					resume_effect(boundary_effect);
 				}
 
 				return true;
