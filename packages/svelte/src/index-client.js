@@ -192,4 +192,4 @@ export {
 
 export { createRawSnippet } from './internal/client/dom/blocks/snippet.js';
 
-export { suspend, unsuspend } from './internal/client/dom/blocks/boundary.js';
+export { create_suspense } from './internal/client/dom/blocks/boundary.js';

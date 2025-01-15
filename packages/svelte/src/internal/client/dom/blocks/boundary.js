@@ -111,28 +111,34 @@ export function boundary(node, props, boundary_fn) {
 				suspend_count++;
 
 				if (suspended_effect === null) {
-					var effect = boundary_effect;
-					suspended_effect = boundary_effect;
+					queue_micro_task(() => {
+						var effect = boundary_effect;
+						suspended_effect = boundary_effect;
 
-					pause_effect(suspended_effect, () => {
-						/** @type {TemplateNode | null} */
-						var node = effect.nodes_start;
-						var end = effect.nodes_end;
-						suspended_fragment = document.createDocumentFragment();
+						pause_effect(
+							suspended_effect,
+							() => {
+								/** @type {TemplateNode | null} */
+								var node = effect.nodes_start;
+								var end = effect.nodes_end;
+								suspended_fragment = document.createDocumentFragment();
 
-						while (node !== null) {
-							/** @type {TemplateNode | null} */
-							var sibling =
-								node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
+								while (node !== null) {
+									/** @type {TemplateNode | null} */
+									var sibling =
+										node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
 
-							node.remove();
-							suspended_fragment.append(node);
-							node = sibling;
-						}
-					}, false);
+									node.remove();
+									suspended_fragment.append(node);
+									node = sibling;
+								}
+							},
+							false
+						);
 
-					render_snippet(() => {
-						pending(anchor);
+						render_snippet(() => {
+							pending(anchor);
+						});
 					});
 				}
 				return true;
@@ -211,13 +217,17 @@ export function boundary(node, props, boundary_fn) {
 	}
 }
 
-export function suspend() {
-	var current = active_effect;
+/**
+ * @param {Effect | null} effect
+ * @param {typeof SUSPEND_INCREMENT | typeof SUSPEND_DECREMENT} trigger
+ */
+function trigger_suspense(effect, trigger) {
+	var current = effect;
 
 	while (current !== null) {
 		if ((current.f & BOUNDARY_EFFECT) !== 0) {
 			// @ts-ignore
-			if (current.fn(SUSPEND_INCREMENT)) {
+			if (current.fn(trigger)) {
 				return;
 			}
 		}
@@ -225,16 +235,16 @@ export function suspend() {
 	}
 }
 
-export function unsuspend() {
+export function create_suspense() {
 	var current = active_effect;
 
-	while (current !== null) {
-		if ((current.f & BOUNDARY_EFFECT) !== 0) {
-			// @ts-ignore
-			if (current.fn(SUSPEND_DECREMENT)) {
-				return;
-			}
-		}
-		current = current.parent;
-	}
+	const suspend = () => {
+		trigger_suspense(current, SUSPEND_INCREMENT);
+	};
+
+	const unsuspend = () => {
+		trigger_suspense(current, SUSPEND_DECREMENT);
+	};
+
+	return [suspend, unsuspend];
 }
