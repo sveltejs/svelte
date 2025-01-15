@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode, } from '#client' */
 
-import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT, INERT } from '../../constants.js';
+import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '../../constants.js';
 import {
 	block,
 	branch,
@@ -81,22 +81,19 @@ export function boundary(node, props, boundary_fn) {
 		var is_creating_fallback = false;
 
 		const render_snippet = (/** @type { () => void } */ snippet_fn) => {
-			// Render the snippet in a microtask
-			queue_micro_task(() => {
-				with_boundary(boundary, () => {
-					is_creating_fallback = true;
+			with_boundary(boundary, () => {
+				is_creating_fallback = true;
 
-					try {
-						boundary_effect = branch(() => {
-							snippet_fn();
-						});
-					} catch (error) {
-						handle_error(error, boundary, null, boundary.ctx);
-					}
+				try {
+					boundary_effect = branch(() => {
+						snippet_fn();
+					});
+				} catch (error) {
+					handle_error(error, boundary, null, boundary.ctx);
+				}
 
-					reset_is_throwing_error();
-					is_creating_fallback = false;
-				});
+				reset_is_throwing_error();
+				is_creating_fallback = false;
 			});
 		};
 
@@ -203,12 +200,14 @@ export function boundary(node, props, boundary_fn) {
 			}
 
 			if (failed) {
-				render_snippet(() => {
-					failed(
-						anchor,
-						() => error,
-						() => reset
-					);
+				queue_micro_task(() => {
+					render_snippet(() => {
+						failed(
+							anchor,
+							() => error,
+							() => reset
+						);
+					});
 				});
 			}
 		};
