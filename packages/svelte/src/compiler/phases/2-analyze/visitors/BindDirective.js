@@ -132,8 +132,19 @@ export function BindDirective(node, context) {
 		}
 
 		let i = /** @type {number} */ (node.expression.start);
+		let leading_comments_start = /**@type {any}*/ (node.expression.leadingComments?.at(0))?.start;
+		let leading_comments_end = /**@type {any}*/ (node.expression.leadingComments?.at(-1))?.end;
 		while (context.state.analysis.source[--i] !== '{') {
-			if (context.state.analysis.source[i] === '(') {
+			if (
+				context.state.analysis.source[i] === '(' &&
+				// if the parenthesis is in a leading comment we don't need to throw the error
+				!(
+					leading_comments_start &&
+					leading_comments_end &&
+					i <= leading_comments_end &&
+					i >= leading_comments_start
+				)
+			) {
 				e.bind_invalid_parens(node, node.name);
 			}
 		}
