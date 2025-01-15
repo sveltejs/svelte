@@ -453,7 +453,7 @@ In Svelte 4, you would pass data to a `<slot />` and then retrieve it with `let:
 > - the `let:` syntax was confusing to many people as it _creates_ a variable whereas all other `:` directives _receive_ a variable
 > - the scope of a variable declared with `let:` wasn't clear. In the example above, it may look like you can use the `item` slot prop in the `empty` slot, but that's not true
 > - named slots had to be applied to an element using the `slot` attribute. Sometimes you didn't want to create an element, so we had to add the `<svelte:fragment>` API
-> - named slots could also be applied to a component, which changed the semantics of where `let:` directives are available (even today us maintainers often don't know which way around it works)
+> - named slots could also be applied to a component, which changed the semantics of where `let:` directives are available (even today we maintainers often don't know which way around it works)
 >
 > Snippets solve all of these problems by being much more readable and clear. At the same time they're more powerful as they allow you to define sections of UI that you can render _anywhere_, not just passing them as props to a component.
 
