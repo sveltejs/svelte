@@ -6,6 +6,10 @@ import { effect } from '../../reactivity/effects.js';
  */
 export function attach(node, get_fn) {
 	effect(() => {
-		return (get_fn())?.(node);
+		const fn = get_fn();
+
+		// we use `&&` rather than `?.` so that things like
+		// `{@attach DEV && something_dev_only()}` work
+		return fn && fn(node);
 	});
 }
