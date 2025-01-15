@@ -75,6 +75,9 @@ export interface ComponentClientTransformState extends ClientTransformState {
 			 */
 			template_contains_script_tag: boolean;
 		};
+		// TODO it would be nice if these were colocated with the arrays they pertain to
+		init_is_async: boolean;
+		update_is_async: boolean;
 	};
 	readonly preserve_whitespace: boolean;
 

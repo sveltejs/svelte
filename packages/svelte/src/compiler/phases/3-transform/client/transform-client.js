@@ -159,7 +159,9 @@ export function client_component(analysis, options) {
 				template_contains_script_tag: false
 			},
 			namespace: options.namespace,
-			bound_contenteditable: false
+			bound_contenteditable: false,
+			init_is_async: false,
+			update_is_async: false
 		},
 		events: new Set(),
 		preserve_whitespace: options.preserveWhitespace,

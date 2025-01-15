@@ -74,7 +74,9 @@ export function Fragment(node, context) {
 				template_contains_script_tag: false
 			},
 			namespace,
-			bound_contenteditable: context.state.metadata.bound_contenteditable
+			bound_contenteditable: context.state.metadata.bound_contenteditable,
+			init_is_async: false,
+			update_is_async: false
 		}
 	};
 
@@ -190,7 +192,7 @@ export function Fragment(node, context) {
 	}
 
 	if (state.update.length > 0) {
-		body.push(build_render_statement(state.update));
+		body.push(build_render_statement(state.update, state.metadata.update_is_async));
 	}
 
 	body.push(...state.after_update);

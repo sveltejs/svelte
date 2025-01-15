@@ -409,7 +409,9 @@ export function RegularElement(node, context) {
 			b.block([
 				...child_state.init,
 				...element_state.init,
-				child_state.update.length > 0 ? build_render_statement(child_state.update) : b.empty,
+				child_state.update.length > 0
+					? build_render_statement(child_state.update, child_state.metadata.update_is_async)
+					: b.empty,
 				...child_state.after_update,
 				...element_state.after_update
 			])
@@ -418,6 +420,9 @@ export function RegularElement(node, context) {
 		context.state.init.push(...child_state.init, ...element_state.init);
 		context.state.update.push(...child_state.update);
 		context.state.after_update.push(...child_state.after_update, ...element_state.after_update);
+
+		context.state.metadata.init_is_async ||= child_state.metadata.init_is_async;
+		context.state.metadata.update_is_async ||= child_state.metadata.update_is_async;
 	} else {
 		context.state.init.push(...element_state.init);
 		context.state.after_update.push(...element_state.after_update);
@@ -627,9 +632,10 @@ function build_element_attribute_update_assignment(
 
 	if (attribute.metadata.expression.has_state) {
 		if (has_call) {
-			state.init.push(build_update(update));
+			state.init.push(build_update(update, attribute.metadata.expression.is_async));
 		} else {
 			state.update.push(update);
+			state.metadata.update_is_async ||= attribute.metadata.expression.is_async;
 		}
 		return true;
 	} else {
@@ -662,12 +668,16 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
 
 	if (attribute.metadata.expression.has_state) {
 		if (has_call) {
-			state.init.push(build_update(update));
+			state.init.push(build_update(update, attribute.metadata.expression.is_async));
 		} else {
 			state.update.push(update);
+			state.metadata.update_is_async ||= attribute.metadata.expression.is_async;
 		}
 		return true;
 	} else {
+		if (attribute.metadata.expression.is_async) {
+			throw new Error('TODO top-level await');
+		}
 		state.init.push(update);
 		return false;
 	}

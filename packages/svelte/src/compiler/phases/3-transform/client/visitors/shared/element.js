@@ -29,6 +29,7 @@ export function build_set_attributes(
 	state
 ) {
 	let has_state = false;
+	let is_async = false;
 
 	/** @type {ObjectExpression['properties']} */
 	const values = [];
@@ -63,6 +64,8 @@ export function build_set_attributes(
 			}
 			values.push(b.spread(value));
 		}
+
+		is_async ||= attribute.metadata.expression.is_async;
 	}
 
 	const call = b.call(
@@ -80,6 +83,7 @@ export function build_set_attributes(
 		context.state.init.push(b.let(attributes_id));
 		const update = b.stmt(b.assignment('=', attributes_id, call));
 		context.state.update.push(update);
+		context.state.metadata.update_is_async ||= is_async;
 		return true;
 	}
 
@@ -104,7 +108,7 @@ export function build_style_directives(
 	const state = context.state;
 
 	for (const directive of style_directives) {
-		const { has_state, has_call } = directive.metadata.expression;
+		const { has_state, has_call, is_async } = directive.metadata.expression;
 
 		let value =
 			directive.value === true
@@ -129,10 +133,14 @@ export function build_style_directives(
 		);
 
 		if (!is_attributes_reactive && has_call) {
-			state.init.push(build_update(update));
+			state.init.push(build_update(update, is_async));
 		} else if (is_attributes_reactive || has_state || has_call) {
 			state.update.push(update);
+			state.metadata.update_is_async ||= is_async;
 		} else {
+			if (is_async) {
+				throw new Error('TODO top-level await');
+			}
 			state.init.push(update);
 		}
 	}
@@ -154,7 +162,7 @@ export function build_class_directives(
 ) {
 	const state = context.state;
 	for (const directive of class_directives) {
-		const { has_state, has_call } = directive.metadata.expression;
+		const { has_state, has_call, is_async } = directive.metadata.expression;
 		let value = /** @type {Expression} */ (context.visit(directive.expression));
 
 		if (has_call) {
@@ -167,10 +175,14 @@ export function build_class_directives(
 		const update = b.stmt(b.call('$.toggle_class', element_id, b.literal(directive.name), value));
 
 		if (!is_attributes_reactive && has_call) {
-			state.init.push(build_update(update));
+			state.init.push(build_update(update, is_async));
 		} else if (is_attributes_reactive || has_state || has_call) {
 			state.update.push(update);
+			state.metadata.update_is_async ||= is_async;
 		} else {
+			if (is_async) {
+				throw new Error('TODO top-level await');
+			}
 			state.init.push(update);
 		}
 	}

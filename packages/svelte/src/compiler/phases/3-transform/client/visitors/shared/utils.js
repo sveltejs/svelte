@@ -102,11 +102,12 @@ export function build_update(statement, is_async) {
 
 /**
  * @param {Statement[]} update
+ * @param {boolean} is_async
  */
-export function build_render_statement(update) {
+export function build_render_statement(update, is_async) {
 	return update.length === 1
-		? build_update(update[0])
-		: b.stmt(b.call('$.template_effect', b.thunk(b.block(update))));
+		? build_update(update[0], is_async)
+		: b.stmt(b.call('$.template_effect', b.thunk(b.block(update), is_async)));
 }
 
 /**

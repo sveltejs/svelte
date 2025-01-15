@@ -82,7 +82,11 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 			state.init.push(build_update(update, is_async));
 		} else if (has_state && !within_bound_contenteditable) {
 			state.update.push(update);
+			state.metadata.update_is_async ||= is_async;
 		} else {
+			if (is_async) {
+				throw new Error('TODO top-level await');
+			}
 			state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
 		}
 	}
