@@ -94,6 +94,10 @@ export function build_component(node, component_name, context, anchor = context.
 	}
 
 	for (const attribute of node.attributes) {
+		if (attribute.type === 'Attribute' || attribute.type === 'SpreadAttribute') {
+			context.state.metadata.init_is_async ||= attribute.metadata.expression.is_async;
+		}
+
 		if (attribute.type === 'LetDirective') {
 			if (!slot_scope_applies_to_itself) {
 				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute, states.default)));
