@@ -247,14 +247,15 @@ export function trigger_async_boundary(effect, trigger) {
 /**
  * @template T
  * @param {Promise<T>} promise
+ * @param {boolean} block
  * @returns {Promise<{ read: () => T }>}
  */
-export async function preserve_context(promise) {
+export function preserve_context(promise, block = false) {
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
 
-	let boundary = active_effect;
+	let boundary = block ? active_effect : null;
 	while (boundary !== null) {
 		if ((boundary.f & BOUNDARY_EFFECT) !== 0) {
 			break;
@@ -263,25 +264,25 @@ export async function preserve_context(promise) {
 		boundary = boundary.parent;
 	}
 
-	if (boundary === null) {
+	if (block && boundary === null) {
 		throw new Error('cannot suspend outside a boundary');
 	}
 
 	// @ts-ignore
-	boundary.fn(ASYNC_INCREMENT);
+	boundary?.fn(ASYNC_INCREMENT);
 
-	const value = await promise;
+	return promise.then((value) => {
+		return {
+			read() {
+				set_active_effect(previous_effect);
+				set_active_reaction(previous_reaction);
+				set_component_context(previous_component_context);
 
-	return {
-		read() {
-			set_active_effect(previous_effect);
-			set_active_reaction(previous_reaction);
-			set_component_context(previous_component_context);
+				// @ts-ignore
+				boundary?.fn(ASYNC_DECREMENT);
 
-			// @ts-ignore
-			boundary.fn(ASYNC_DECREMENT);
-
-			return value;
-		}
-	};
+				return value;
+			}
+		};
+	});
 }

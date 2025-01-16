@@ -265,7 +265,8 @@ export function analyze_module(ast, options) {
 		runes: true,
 		immutable: true,
 		tracing: analysis.tracing,
-		async_deriveds: new Set()
+		async_deriveds: new Set(),
+		blocking_awaits: new Set()
 	};
 }
 
@@ -453,7 +454,8 @@ export function analyze_component(root, source, options) {
 		snippet_renderers: new Map(),
 		snippets: new Set(),
 		is_async: false,
-		async_deriveds: new Set()
+		async_deriveds: new Set(),
+		blocking_awaits: new Set()
 	};
 
 	if (!runes) {

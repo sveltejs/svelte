@@ -6,15 +6,22 @@
  * @param {Context} context
  */
 export function AwaitExpression(node, context) {
-	if (!context.state.analysis.runes) {
-		throw new Error('TODO runes mode only');
+	const tla = context.state.ast_type === 'instance' && context.state.function_depth === 1;
+	const blocking = tla || !!context.state.expression;
+
+	if (blocking) {
+		if (!context.state.analysis.runes) {
+			throw new Error('TODO runes mode only');
+		}
+
+		context.state.analysis.blocking_awaits.add(node);
 	}
 
 	if (context.state.expression) {
 		context.state.expression.is_async = true;
 	}
 
-	if (context.state.ast_type === 'instance' && context.state.scope.function_depth === 1) {
+	if (tla) {
 		context.state.analysis.is_async = true;
 	}
 

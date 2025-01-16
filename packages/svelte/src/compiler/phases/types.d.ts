@@ -1,5 +1,12 @@
 import type { AST, Binding } from '#compiler';
-import type { CallExpression, Identifier, LabeledStatement, Node, Program } from 'estree';
+import type {
+	AwaitExpression,
+	CallExpression,
+	Identifier,
+	LabeledStatement,
+	Node,
+	Program
+} from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
 
 export interface Js {
@@ -34,6 +41,9 @@ export interface Analysis {
 
 	/** A set of deriveds that contain `await` expressions */
 	async_deriveds: Set<CallExpression>;
+
+	/** A set of `await` expressions that should trigger suspense */
+	blocking_awaits: Set<AwaitExpression>;
 }
 
 export interface ComponentAnalysis extends Analysis {
