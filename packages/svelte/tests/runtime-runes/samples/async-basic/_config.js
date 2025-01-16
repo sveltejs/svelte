@@ -2,7 +2,7 @@ import { tick } from 'svelte';
 import { deferred } from '../../../../src/internal/shared/utils.js';
 import { test } from '../../test';
 
-/** @type {PromiseWithResolvers<string>} */
+/** @type {ReturnType<typeof deferred>} */
 let d;
 
 export default test({
