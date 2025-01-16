@@ -266,7 +266,7 @@ export function analyze_module(ast, options) {
 		immutable: true,
 		tracing: analysis.tracing,
 		async_deriveds: new Set(),
-		blocking_awaits: new Set()
+		suspenders: new Set()
 	};
 }
 
@@ -455,7 +455,7 @@ export function analyze_component(root, source, options) {
 		snippets: new Set(),
 		is_async: false,
 		async_deriveds: new Set(),
-		blocking_awaits: new Set()
+		suspenders: new Set()
 	};
 
 	if (!runes) {

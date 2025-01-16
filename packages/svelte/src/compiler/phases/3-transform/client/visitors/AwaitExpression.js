@@ -7,22 +7,21 @@ import * as b from '../../../../utils/builders.js';
  * @param {ComponentContext} context
  */
 export function AwaitExpression(node, context) {
-	if (!context.state.analysis.runes) {
+	const suspend = context.state.analysis.suspenders.has(node);
+
+	if (!suspend) {
 		return context.next();
 	}
-
-	const block = context.state.analysis.blocking_awaits.has(node);
 
 	return b.call(
 		b.member(
 			b.await(
 				b.call(
-					'$.preserve_context',
-					node.argument && /** @type {Expression} */ (context.visit(node.argument)),
-					block && b.true
+					'$.suspend',
+					node.argument && /** @type {Expression} */ (context.visit(node.argument))
 				)
 			),
-			'read'
+			'exit'
 		)
 	);
 }

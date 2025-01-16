@@ -27,7 +27,7 @@ import { destroy_effect, render_effect } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
-import { preserve_context } from '../dom/blocks/boundary.js';
+import { suspend } from '../dom/blocks/boundary.js';
 
 /**
  * @template V
@@ -103,7 +103,9 @@ export async function async_derived(fn) {
 		// TODO what happens when the promise rejects?
 	});
 
-	(await preserve_context(promise)).read();
+	// wait for the initial promise
+	(await suspend(promise)).exit();
+
 	return () => get(value);
 }
 

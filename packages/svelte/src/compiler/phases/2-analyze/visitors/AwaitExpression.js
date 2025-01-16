@@ -14,7 +14,7 @@ export function AwaitExpression(node, context) {
 			throw new Error('TODO runes mode only');
 		}
 
-		context.state.analysis.blocking_awaits.add(node);
+		context.state.analysis.suspenders.add(node);
 	}
 
 	if (context.state.expression) {

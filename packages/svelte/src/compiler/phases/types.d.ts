@@ -43,7 +43,7 @@ export interface Analysis {
 	async_deriveds: Set<CallExpression>;
 
 	/** A set of `await` expressions that should trigger suspense */
-	blocking_awaits: Set<AwaitExpression>;
+	suspenders: Set<AwaitExpression>;
 }
 
 export interface ComponentAnalysis extends Analysis {
