@@ -71,7 +71,7 @@ The user of this component has the same flexibility to use a mixture of objects,
 </Button>
 ```
 
-Svelte also exposes the `ClassValue` type, which is the type of the value that `class` can take. This is useful if you want to use a type-safe class name in component props:
+Svelte also exposes the `ClassValue` type, which is the type of the value that the `class` attribute on elements accept. This is useful if you want to use a type-safe class name in component props:
 
 ```svelte
 <script lang="ts">
