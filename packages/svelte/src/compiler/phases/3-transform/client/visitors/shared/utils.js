@@ -48,7 +48,7 @@ export function build_template_chunk(values, visit, state) {
 			}
 		} else {
 			if (node.metadata.expression.has_call && contains_multiple_call_expression) {
-				const id = b.id(state.scope.generate('stringified_text'));
+				const id = b.id(state.scope.generate('expression'));
 				state.init.push(
 					b.const(
 						id,
