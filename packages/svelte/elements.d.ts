@@ -2059,3 +2059,5 @@ export interface SvelteHTMLElements {
 
 	[name: string]: { [name: string]: any };
 }
+
+export type ClassValue = import('clsx').ClassValue;
