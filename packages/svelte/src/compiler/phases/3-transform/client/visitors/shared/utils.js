@@ -47,7 +47,7 @@ export function build_template_chunk(values, visit, state) {
 				quasi.value.cooked += node.expression.value + '';
 			}
 		} else {
-			if (contains_multiple_call_expression) {
+			if (node.metadata.expression.has_call && contains_multiple_call_expression) {
 				const id = b.id(state.scope.generate('stringified_text'));
 				state.init.push(
 					b.const(
