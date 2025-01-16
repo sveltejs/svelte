@@ -264,7 +264,8 @@ export function analyze_module(ast, options) {
 		accessors: false,
 		runes: true,
 		immutable: true,
-		tracing: analysis.tracing
+		tracing: analysis.tracing,
+		async_deriveds: new Set()
 	};
 }
 
@@ -451,7 +452,8 @@ export function analyze_component(root, source, options) {
 		undefined_exports: new Map(),
 		snippet_renderers: new Map(),
 		snippets: new Set(),
-		is_async: false
+		is_async: false,
+		async_deriveds: new Set()
 	};
 
 	if (!runes) {

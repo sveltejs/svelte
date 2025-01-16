@@ -158,13 +158,28 @@ export function VariableDeclaration(node, context) {
 			}
 
 			if (rune === '$derived' || rune === '$derived.by') {
+				const is_async = context.state.analysis.async_deriveds.has(
+					/** @type {CallExpression} */ (init)
+				);
+
 				if (declarator.id.type === 'Identifier') {
-					declarations.push(
-						b.declarator(
-							declarator.id,
-							b.call('$.derived', rune === '$derived.by' ? value : b.thunk(value))
-						)
-					);
+					if (is_async) {
+						declarations.push(
+							b.declarator(
+								declarator.id,
+								b.await(
+									b.call('$.async_derived', rune === '$derived.by' ? value : b.thunk(value, true))
+								)
+							)
+						);
+					} else {
+						declarations.push(
+							b.declarator(
+								declarator.id,
+								b.call('$.derived', rune === '$derived.by' ? value : b.thunk(value))
+							)
+						);
+					}
 				} else {
 					const bindings = extract_paths(declarator.id);
 

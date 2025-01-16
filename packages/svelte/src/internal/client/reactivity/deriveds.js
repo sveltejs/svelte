@@ -18,14 +18,16 @@ import {
 	update_reaction,
 	increment_write_version,
 	set_active_effect,
-	component_context
+	component_context,
+	get
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import { destroy_effect } from './effects.js';
-import { inspect_effects, set_inspect_effects } from './sources.js';
+import { destroy_effect, render_effect } from './effects.js';
+import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
+import { preserve_context } from '../dom/blocks/boundary.js';
 
 /**
  * @template V
@@ -73,6 +75,36 @@ export function derived(fn) {
 	}
 
 	return signal;
+}
+
+/**
+ * @template V
+ * @param {() => Promise<V>} fn
+ * @returns {Promise<() => V>}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export async function async_derived(fn) {
+	if (!active_effect) {
+		throw new Error('TODO cannot create unowned async derived');
+	}
+
+	let promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
+	let value = source(/** @type {V} */ (undefined));
+
+	render_effect(() => {
+		const current = (promise = fn());
+
+		promise.then((v) => {
+			if (promise === current) {
+				internal_set(value, v);
+			}
+		});
+
+		// TODO what happens when the promise rejects?
+	});
+
+	(await preserve_context(promise)).read();
+	return () => get(value);
 }
 
 /**

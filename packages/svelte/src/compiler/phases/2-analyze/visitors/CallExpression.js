@@ -7,6 +7,7 @@ import { get_parent, unwrap_optional } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
 import { dev, locate_node, source } from '../../../state.js';
 import * as b from '../../../utils/builders.js';
+import { create_expression_metadata } from '../../nodes.js';
 
 /**
  * @param {CallExpression} node
@@ -207,7 +208,19 @@ export function CallExpression(node, context) {
 	}
 
 	// `$inspect(foo)` or `$derived(foo) should not trigger the `static-state-reference` warning
-	if (rune === '$inspect' || rune === '$derived') {
+	if (rune === '$derived') {
+		const expression = create_expression_metadata();
+
+		context.next({
+			...context.state,
+			function_depth: context.state.function_depth + 1,
+			expression
+		});
+
+		if (expression.is_async) {
+			context.state.analysis.async_deriveds.add(node);
+		}
+	} else if (rune === '$inspect') {
 		context.next({ ...context.state, function_depth: context.state.function_depth + 1 });
 	} else {
 		context.next();
