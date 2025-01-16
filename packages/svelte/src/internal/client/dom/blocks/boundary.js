@@ -27,10 +27,10 @@ import {
 	set_hydrate_node
 } from '../hydration.js';
 import { get_next_sibling } from '../operations.js';
-import { queue_micro_task } from '../task.js';
+import { queue_boundary_micro_task } from '../task.js';
 
-const SUSPEND_INCREMENT = Symbol();
-const SUSPEND_DECREMENT = Symbol();
+const ASYNC_INCREMENT = Symbol();
+const ASYNC_DECREMENT = Symbol();
 
 /**
  * @param {Effect} boundary
@@ -70,10 +70,10 @@ export function boundary(node, props, boundary_fn) {
 	/** @type {Effect} */
 	var boundary_effect;
 	/** @type {Effect | null} */
-	var suspended_effect = null;
+	var async_effect = null;
 	/** @type {DocumentFragment | null} */
-	var suspended_fragment = null;
-	var suspend_count = 0;
+	var async_fragment = null;
+	var async_count = 0;
 
 	block(() => {
 		var boundary = /** @type {Effect} */ (active_effect);
@@ -101,28 +101,28 @@ export function boundary(node, props, boundary_fn) {
 		boundary.fn = (/** @type {unknown} */ input) => {
 			let pending = props.pending;
 
-			if (input === SUSPEND_INCREMENT) {
+			if (input === ASYNC_INCREMENT) {
 				if (!pending) {
 					// TODO in this case we need to find the parent boundary
 					return false;
 				}
 
-				if (suspend_count++ === 0) {
-					queue_micro_task(() => {
-						if (suspended_effect) {
+				if (async_count++ === 0) {
+					queue_boundary_micro_task(() => {
+						if (async_effect) {
 							return;
 						}
 
 						var effect = boundary_effect;
-						suspended_effect = boundary_effect;
+						async_effect = boundary_effect;
 
 						pause_effect(
-							suspended_effect,
+							async_effect,
 							() => {
 								/** @type {TemplateNode | null} */
 								var node = effect.nodes_start;
 								var end = effect.nodes_end;
-								suspended_fragment = document.createDocumentFragment();
+								async_fragment = document.createDocumentFragment();
 
 								while (node !== null) {
 									/** @type {TemplateNode | null} */
@@ -130,7 +130,7 @@ export function boundary(node, props, boundary_fn) {
 										node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
 
 									node.remove();
-									suspended_fragment.append(node);
+									async_fragment.append(node);
 									node = sibling;
 								}
 							},
@@ -146,23 +146,23 @@ export function boundary(node, props, boundary_fn) {
 				return true;
 			}
 
-			if (input === SUSPEND_DECREMENT) {
+			if (input === ASYNC_DECREMENT) {
 				if (!pending) {
 					// TODO in this case we need to find the parent boundary
 					return false;
 				}
 
-				if (--suspend_count === 0) {
-					queue_micro_task(() => {
-						if (!suspended_effect) {
+				if (--async_count === 0) {
+					queue_boundary_micro_task(() => {
+						if (!async_effect) {
 							return;
 						}
 						if (boundary_effect) {
 							destroy_effect(boundary_effect);
 						}
-						boundary_effect = suspended_effect;
-						suspended_effect = null;
-						anchor.before(/** @type {DocumentFragment} */ (suspended_fragment));
+						boundary_effect = async_effect;
+						async_effect = null;
+						anchor.before(/** @type {DocumentFragment} */ (async_fragment));
 						resume_effect(boundary_effect);
 					});
 				}
@@ -201,7 +201,7 @@ export function boundary(node, props, boundary_fn) {
 			}
 
 			if (failed) {
-				queue_micro_task(() => {
+				queue_boundary_micro_task(() => {
 					render_snippet(() => {
 						failed(
 							anchor,
@@ -228,9 +228,9 @@ export function boundary(node, props, boundary_fn) {
 
 /**
  * @param {Effect | null} effect
- * @param {typeof SUSPEND_INCREMENT | typeof SUSPEND_DECREMENT} trigger
+ * @param {typeof ASYNC_INCREMENT | typeof ASYNC_DECREMENT} trigger
  */
-function trigger_suspense(effect, trigger) {
+export function trigger_async_boundary(effect, trigger) {
 	var current = effect;
 
 	while (current !== null) {
@@ -242,20 +242,6 @@ function trigger_suspense(effect, trigger) {
 		}
 		current = current.parent;
 	}
-}
-
-export function create_suspense() {
-	var current = active_effect;
-
-	const suspend = () => {
-		trigger_suspense(current, SUSPEND_INCREMENT);
-	};
-
-	const unsuspend = () => {
-		trigger_suspense(current, SUSPEND_DECREMENT);
-	};
-
-	return [suspend, unsuspend];
 }
 
 /**
@@ -282,7 +268,7 @@ export async function preserve_context(promise) {
 	}
 
 	// @ts-ignore
-	boundary.fn(SUSPEND_INCREMENT);
+	boundary.fn(ASYNC_INCREMENT);
 
 	const value = await promise;
 
@@ -293,7 +279,7 @@ export async function preserve_context(promise) {
 			set_component_context(previous_component_context);
 
 			// @ts-ignore
-			boundary.fn(SUSPEND_DECREMENT);
+			boundary.fn(ASYNC_DECREMENT);
 
 			return value;
 		}
