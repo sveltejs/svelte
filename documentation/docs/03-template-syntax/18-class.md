@@ -71,6 +71,18 @@ The user of this component has the same flexibility to use a mixture of objects,
 </Button>
 ```
 
+Svelte also exposes the `ClassValue` type, which is the type of value that the `class` attribute on elements accept. This is useful if you want to use a type-safe class name in component props:
+
+```svelte
+<script lang="ts">
+	import type { ClassValue } from 'svelte/elements';
+
+	const props: { class: ClassValue } = $props();
+</script>
+
+<div class={['original', props.class]}>...</div>
+```
+
 ## The `class:` directive
 
 Prior to Svelte 5.16, the `class:` directive was the most convenient way to set classes on elements conditionally.
