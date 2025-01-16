@@ -391,7 +391,7 @@ function open(parser) {
 			parameters: function_expression.params,
 			body: create_fragment(),
 			metadata: {
-				can_hoist: false,
+				can_hoist: undefined,
 				sites: new Set()
 			}
 		});
