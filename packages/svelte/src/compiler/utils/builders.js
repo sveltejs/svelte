@@ -30,16 +30,17 @@ export function assignment_pattern(left, right) {
 /**
  * @param {Array<ESTree.Pattern>} params
  * @param {ESTree.BlockStatement | ESTree.Expression} body
+ * @param {boolean} async
  * @returns {ESTree.ArrowFunctionExpression}
  */
-export function arrow(params, body) {
+export function arrow(params, body, async = false) {
 	return {
 		type: 'ArrowFunctionExpression',
 		params,
 		body,
 		expression: body.type !== 'BlockStatement',
 		generator: false,
-		async: false,
+		async,
 		metadata: /** @type {any} */ (null) // should not be used by codegen
 	};
 }
@@ -214,16 +215,17 @@ export function export_default(declaration) {
  * @param {ESTree.Identifier} id
  * @param {ESTree.Pattern[]} params
  * @param {ESTree.BlockStatement} body
+ * @param {boolean} async
  * @returns {ESTree.FunctionDeclaration}
  */
-export function function_declaration(id, params, body) {
+export function function_declaration(id, params, body, async = false) {
 	return {
 		type: 'FunctionDeclaration',
 		id,
 		params,
 		body,
 		generator: false,
-		async: false,
+		async,
 		metadata: /** @type {any} */ (null) // should not be used by codegen
 	};
 }
@@ -419,9 +421,7 @@ export function template(elements, expressions) {
  * @returns {ESTree.Expression}
  */
 export function thunk(expression, async = false) {
-	const fn = arrow([], expression);
-	if (async) fn.async = true;
-	return unthunk(fn);
+	return unthunk(arrow([], expression, async));
 }
 
 /**

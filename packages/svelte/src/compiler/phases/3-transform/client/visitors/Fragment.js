@@ -204,6 +204,21 @@ export function Fragment(node, context) {
 		body.push(close);
 	}
 
+	const async =
+		state.metadata.init_is_async || (state.analysis.is_async && context.path.length === 0);
+
+	if (async) {
+		// TODO need to create bookends for hydration to work
+		return b.block([
+			b.function_declaration(b.id('$$body'), [b.id('$$anchor')], b.block(body), true),
+
+			b.var('fragment', b.call('$.comment')),
+			b.var('node', b.call('$.first_child', b.id('fragment'))),
+			b.stmt(b.call(b.id('$$body'), b.id('node'))),
+			b.stmt(b.call('$.append', b.id('$$anchor'), b.id('fragment')))
+		]);
+	}
+
 	return b.block(body);
 }
 
