@@ -199,6 +199,12 @@ export function BindDirective(node, context) {
 			throw new Error('Cannot find declaration for bind:group');
 		}
 
+		const snippet_parent = context.path.find((parent) => parent.type === 'SnippetBlock');
+
+		if (snippet_parent) {
+			snippet_parent.metadata.can_hoist = false;
+		}
+
 		// Traverse the path upwards and find all EachBlocks who are (indirectly) contributing to bind:group,
 		// i.e. one of their declarations is referenced in the binding. This allows group bindings to work
 		// correctly when referencing a variable declared in an EachBlock by using the index of the each block

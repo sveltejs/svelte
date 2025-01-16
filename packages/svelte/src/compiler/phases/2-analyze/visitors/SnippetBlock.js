@@ -42,7 +42,8 @@ export function SnippetBlock(node, context) {
 		}
 	}
 
-	node.metadata.can_hoist = can_hoist;
+	node.metadata.can_hoist =
+		node.metadata.can_hoist != null ? node.metadata.can_hoist && can_hoist : can_hoist;
 
 	const { path } = context;
 	const parent = path.at(-2);
