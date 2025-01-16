@@ -816,9 +816,7 @@ function process_effects(effect, collected_effects) {
 					current_effect.f ^= CLEAN;
 				} else {
 					try {
-						// If the effect is dirty, then we need to update it, it might also turn inert
-						// because of async work during calling check_dirtiness
-						if (check_dirtiness(current_effect) && (current_effect.f & INERT) === 0) {
+						if (check_dirtiness(current_effect)) {
 							update_effect(current_effect);
 						}
 					} catch (error) {
