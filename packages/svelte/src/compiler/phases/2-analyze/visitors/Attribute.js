@@ -64,6 +64,9 @@ export function Attribute(node, context) {
 
 			node.metadata.expression.has_state ||= chunk.metadata.expression.has_state;
 			node.metadata.expression.has_call ||= chunk.metadata.expression.has_call;
+			chunk.metadata.expression.dependencies.forEach((dependency) =>
+				node.metadata.expression.dependencies.add(dependency)
+			);
 		}
 
 		if (is_event_attribute(node)) {
