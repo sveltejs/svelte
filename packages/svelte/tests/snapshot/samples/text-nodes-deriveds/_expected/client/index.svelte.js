@@ -20,7 +20,11 @@ export default function Text_nodes_deriveds($$anchor) {
 	const expression_1 = $.derived(() => text2() ?? '');
 	var text = $.child(p);
 
-	$.template_effect(() => $.set_text(text, `${$.get(expression)}${$.get(expression_1)}`));
 	$.reset(p);
+
+	$.template_effect(() => {
+		$.set_text(text, `${$.get(expression)}${$.get(expression_1)}`);
+	});
+
 	$.append($$anchor, p);
 }
