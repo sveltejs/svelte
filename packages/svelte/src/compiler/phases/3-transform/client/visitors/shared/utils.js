@@ -68,7 +68,7 @@ function compare_expressions(a, b) {
  * @param {Array<AST.Text | AST.ExpressionTag>} values
  * @param {(node: AST.SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
- * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
+ * @returns {{ value: Expression, has_state: boolean }}
  */
 export function build_template_chunk(values, visit, state) {
 	/** @type {Expression[]} */
@@ -77,17 +77,7 @@ export function build_template_chunk(values, visit, state) {
 	let quasi = b.quasi('');
 	const quasis = [quasi];
 
-	let has_call = false;
 	let has_state = false;
-
-	for (const node of values) {
-		if (node.type === 'ExpressionTag') {
-			const metadata = node.metadata.expression;
-
-			has_call ||= metadata.has_call;
-			has_state ||= metadata.has_state;
-		}
-	}
 
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
@@ -101,6 +91,8 @@ export function build_template_chunk(values, visit, state) {
 		} else {
 			let value = /** @type {Expression} */ (visit(node.expression, state));
 
+			has_state ||= node.metadata.expression.has_state;
+
 			if (node.metadata.expression.has_call) {
 				value = get_expression_id(state, value);
 			}
@@ -108,7 +100,7 @@ export function build_template_chunk(values, visit, state) {
 			if (values.length === 1) {
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).
-				return { value, has_state, has_call };
+				return { value, has_state };
 			} else {
 				expressions.push(b.logical('??', value, b.literal('')));
 			}
@@ -124,7 +116,7 @@ export function build_template_chunk(values, visit, state) {
 
 	const value = b.template(quasis, expressions);
 
-	return { value, has_state, has_call };
+	return { value, has_state };
 }
 
 /**

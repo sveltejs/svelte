@@ -35,7 +35,7 @@ export function build_set_attributes(
 
 	for (const attribute of attributes) {
 		if (attribute.type === 'Attribute') {
-			const { value } = build_attribute_value(attribute.value, context);
+			const value = build_attribute_value(attribute.value, context);
 
 			if (
 				is_event_attribute(attribute) &&
@@ -109,7 +109,7 @@ export function build_style_directives(
 		let value =
 			directive.value === true
 				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
-				: build_attribute_value(directive.value, context).value;
+				: build_attribute_value(directive.value, context);
 
 		if (has_call) {
 			const id = b.id(state.scope.generate('style_directive'));
@@ -176,18 +176,18 @@ export function build_class_directives(
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
  * @param {boolean} [is_custom_element]
- * @returns {{ value: Expression }}
+ * @returns {Expression}
  */
 export function build_attribute_value(value, context, is_custom_element = false) {
 	if (value === true) {
-		return { value: b.literal(true) };
+		return b.literal(true);
 	}
 
 	if (!Array.isArray(value) || value.length === 1) {
 		const chunk = Array.isArray(value) ? value[0] : value;
 
 		if (chunk.type === 'Text') {
-			return { value: b.literal(chunk.data) };
+			return b.literal(chunk.data);
 		}
 
 		let expression = /** @type {Expression} */ (context.visit(chunk.expression));
@@ -204,12 +204,10 @@ export function build_attribute_value(value, context, is_custom_element = false)
 			expression = b.call('$.get', id);
 		}
 
-		return {
-			value: expression
-		};
+		return expression;
 	}
 
-	return build_template_chunk(value, context.visit, context.state);
+	return build_template_chunk(value, context.visit, context.state).value;
 }
 
 /**
