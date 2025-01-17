@@ -14,7 +14,7 @@ import { locator } from '../../../../../state.js';
  * @param {ComponentClientTransformState} state
  * @param {Expression} value
  */
-function get_expression_id(state, value) {
+export function get_expression_id(state, value) {
 	for (let i = 0; i < state.expressions.length; i += 1) {
 		if (compare_expressions(state.expressions[i], value)) {
 			return b.id(`$${i}`);
