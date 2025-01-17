@@ -1,12 +1,12 @@
 /** @import { Expression, Identifier, ObjectExpression } from 'estree' */
-/** @import { AST, Namespace } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../../types' */
 import { normalize_attribute } from '../../../../../../utils.js';
 import { is_ignored } from '../../../../../state.js';
-import { get_attribute_expression, is_event_attribute } from '../../../../../utils/ast.js';
+import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { build_getter, create_derived } from '../../utils.js';
-import { build_template_chunk, build_update } from './utils.js';
+import { build_template_chunk } from './utils.js';
 
 /**
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
@@ -128,9 +128,7 @@ export function build_style_directives(
 			)
 		);
 
-		if (!is_attributes_reactive && has_call) {
-			state.init.push(build_update(update));
-		} else if (is_attributes_reactive || has_state || has_call) {
+		if (has_state || is_attributes_reactive) {
 			state.update.push(update);
 		} else {
 			state.init.push(update);
@@ -166,9 +164,7 @@ export function build_class_directives(
 
 		const update = b.stmt(b.call('$.toggle_class', element_id, b.literal(directive.name), value));
 
-		if (!is_attributes_reactive && has_call) {
-			state.init.push(build_update(update));
-		} else if (is_attributes_reactive || has_state || has_call) {
+		if (is_attributes_reactive || has_state) {
 			state.update.push(update);
 		} else {
 			state.init.push(update);
