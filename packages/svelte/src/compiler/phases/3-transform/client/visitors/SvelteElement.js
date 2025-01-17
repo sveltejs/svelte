@@ -45,7 +45,6 @@ export function SvelteElement(node, context) {
 		state: {
 			...context.state,
 			node: element_id,
-			before_init: [],
 			init: [],
 			update: [],
 			after_update: []
