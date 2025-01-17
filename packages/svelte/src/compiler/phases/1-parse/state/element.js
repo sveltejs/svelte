@@ -485,6 +485,25 @@ function read_static_attribute(parser) {
 function read_attribute(parser) {
 	const start = parser.index;
 
+	if (parser.eat('#display={')) {
+		parser.allow_whitespace();
+		const expression = read_expression(parser);
+		parser.allow_whitespace();
+		parser.eat('}', true);
+
+		/** @type {AST.DisplayDirective} */
+		const display = {
+			type: 'DisplayDirective',
+			start,
+			end: parser.index,
+			expression,
+			metadata: {
+				expression: create_expression_metadata()
+			}
+		};
+		return display;
+	}
+
 	if (parser.eat('{')) {
 		parser.allow_whitespace();
 
