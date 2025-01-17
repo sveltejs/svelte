@@ -1,5 +1,17 @@
 # svelte
 
+## 5.19.0
+
+### Minor Changes
+
+- feat: Expose `ClassValue` from `svelte/elements` ([#15035](https://github.com/sveltejs/svelte/pull/15035))
+
+### Patch Changes
+
+- fix: create fewer deriveds for concatenated strings ([#15041](https://github.com/sveltejs/svelte/pull/15041))
+
+- fix: correctly parse leading comments in function binding ([#15020](https://github.com/sveltejs/svelte/pull/15020))
+
 ## 5.18.0
 
 ### Minor Changes
