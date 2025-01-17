@@ -45,15 +45,15 @@ export function build_template_chunk(values, visit, state) {
 				quasi.value.cooked += node.expression.value + '';
 			}
 		} else {
-			const value = /** @type {Expression} */ (visit(node.expression, state));
+			let value = /** @type {Expression} */ (visit(node.expression, state));
 
 			if (node.metadata.expression.has_call) {
 				const id = b.id(state.scope.generate('expression'));
-				state.init.push(
-					b.const(id, create_derived(state, b.thunk(b.logical('??', value, b.literal('')))))
-				);
-				expressions.push(b.call('$.get', id));
-			} else if (values.length === 1) {
+				state.init.push(b.const(id, create_derived(state, b.thunk(value))));
+				value = b.call('$.get', id);
+			}
+
+			if (values.length === 1) {
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).
 				return { value, has_state, has_call };
