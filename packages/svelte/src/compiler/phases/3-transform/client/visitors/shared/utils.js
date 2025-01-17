@@ -86,16 +86,6 @@ export function build_template_chunk(values, visit, state) {
 }
 
 /**
- * @param {Statement} statement
- */
-export function build_update(statement) {
-	const body =
-		statement.type === 'ExpressionStatement' ? statement.expression : b.block([statement]);
-
-	return b.stmt(b.call('$.template_effect', b.thunk(body)));
-}
-
-/**
  * @param {Statement[]} update
  */
 export function build_render_statement(update) {

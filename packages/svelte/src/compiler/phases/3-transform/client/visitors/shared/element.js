@@ -175,9 +175,10 @@ export function build_class_directives(
 /**
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
+ * @param {boolean} [is_custom_element]
  * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
  */
-export function build_attribute_value(value, context) {
+export function build_attribute_value(value, context, is_custom_element = false) {
 	if (value === true) {
 		return { has_state: false, has_call: false, value: b.literal(true) };
 	}
@@ -191,7 +192,7 @@ export function build_attribute_value(value, context) {
 
 		let expression = /** @type {Expression} */ (context.visit(chunk.expression));
 
-		if (chunk.metadata.expression.has_call) {
+		if (chunk.metadata.expression.has_call && !is_custom_element) {
 			// TODO this is temporary
 			const id = b.id(context.state.scope.generate('expression'));
 			context.state.init.push(

@@ -1,4 +1,4 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
+/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
@@ -28,7 +28,6 @@ import { process_children } from './shared/fragment.js';
 import {
 	build_render_statement,
 	build_template_chunk,
-	build_update,
 	build_update_assignment
 } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
@@ -644,7 +643,7 @@ function build_element_attribute_update_assignment(
 function build_custom_element_attribute_update_assignment(node_id, attribute, context) {
 	const state = context.state;
 	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
-	let { has_call, value } = build_attribute_value(attribute.value, context);
+	let { value } = build_attribute_value(attribute.value, context, true);
 
 	// We assume that noone's going to redefine the semantics of the class attribute on custom elements, i.e. it's still used for CSS classes
 	if (name === 'class' && attribute.metadata.needs_clsx) {
@@ -657,11 +656,9 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
 	const update = b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), value));
 
 	if (attribute.metadata.expression.has_state) {
-		if (has_call) {
-			state.init.push(build_update(update));
-		} else {
-			state.update.push(update);
-		}
+		// this is different from other updates — it doesn't get grouped,
+		// because set_custom_element_data may not be idempotent
+		state.init.push(b.stmt(b.call('$.template_effect', b.thunk(update.expression))));
 		return true;
 	} else {
 		state.init.push(update);
