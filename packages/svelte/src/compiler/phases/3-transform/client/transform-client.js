@@ -171,6 +171,7 @@ export function client_component(analysis, options) {
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		init: /** @type {any} */ (null),
 		update: /** @type {any} */ (null),
+		expressions: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),
 		template: /** @type {any} */ (null),
 		locations: /** @type {any} */ (null)

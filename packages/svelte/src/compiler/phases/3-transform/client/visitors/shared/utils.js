@@ -6,9 +6,63 @@ import { object } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_is_valid_identifier } from '../../../../patterns.js';
-import { create_derived } from '../../utils.js';
 import is_reference from 'is-reference';
 import { locator } from '../../../../../state.js';
+
+/**
+ *
+ * @param {ComponentClientTransformState} state
+ * @param {Expression} value
+ */
+function get_expression_id(state, value) {
+	for (let i = 0; i < state.expressions.length; i += 1) {
+		if (compare_expressions(state.expressions[i], value)) {
+			return b.id(`$${i}`);
+		}
+	}
+
+	return b.id(`$${state.expressions.push(value) - 1}`);
+}
+
+/**
+ * Returns true of two expressions have an identical AST shape
+ * @param {Expression} a
+ * @param {Expression} b
+ */
+function compare_expressions(a, b) {
+	if (a.type !== b.type) {
+		return false;
+	}
+
+	for (const key in a) {
+		if (key === 'type' || key === 'metadata' || key === 'loc' || key === 'start' || key === 'end') {
+			continue;
+		}
+
+		const va = /** @type {any} */ (a)[key];
+		const vb = /** @type {any} */ (b)[key];
+
+		if ((typeof va === 'object') !== (typeof vb === 'object')) {
+			return false;
+		}
+
+		if (typeof va !== 'object' || va === null || vb === null) {
+			if (va !== vb) return false;
+		} else if (Array.isArray(va)) {
+			if (va.length !== vb.length) {
+				return false;
+			}
+
+			if (va.some((v, i) => !compare_expressions(v, vb[i]))) {
+				return false;
+			}
+		} else if (!compare_expressions(va, vb)) {
+			return false;
+		}
+	}
+
+	return true;
+}
 
 /**
  * @param {Array<AST.Text | AST.ExpressionTag>} values
@@ -48,9 +102,7 @@ export function build_template_chunk(values, visit, state) {
 			let value = /** @type {Expression} */ (visit(node.expression, state));
 
 			if (node.metadata.expression.has_call) {
-				const id = b.id(state.scope.generate('expression'));
-				state.init.push(b.const(id, create_derived(state, b.thunk(value))));
-				value = b.call('$.get', id);
+				value = get_expression_id(state, value);
 			}
 
 			if (values.length === 1) {
@@ -76,10 +128,21 @@ export function build_template_chunk(values, visit, state) {
 }
 
 /**
- * @param {Statement[]} update
+ * @param {ComponentClientTransformState} state
  */
-export function build_render_statement(update) {
-	return b.stmt(b.call('$.template_effect', b.thunk(b.block(update))));
+export function build_render_statement(state) {
+	return b.stmt(
+		b.call(
+			'$.template_effect',
+			b.arrow(
+				state.expressions.map((_, i) => b.id(`$${i}`)),
+				b.block(state.update)
+			),
+			state.expressions.length > 0 &&
+				b.array(state.expressions.map((expression) => b.thunk(expression))),
+			state.expressions.length > 0 && !state.analysis.runes && b.id('$.derived_safe_equal')
+		)
+	);
 }
 
 /**
