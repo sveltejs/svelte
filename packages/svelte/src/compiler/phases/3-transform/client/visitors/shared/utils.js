@@ -25,13 +25,11 @@ export function build_template_chunk(values, visit, state) {
 
 	let has_call = false;
 	let has_state = false;
-	let contains_multiple_call_expression = false;
 
 	for (const node of values) {
 		if (node.type === 'ExpressionTag') {
 			const metadata = node.metadata.expression;
 
-			contains_multiple_call_expression ||= has_call && metadata.has_call;
 			has_call ||= metadata.has_call;
 			has_state ||= metadata.has_state;
 		}
@@ -47,7 +45,7 @@ export function build_template_chunk(values, visit, state) {
 				quasi.value.cooked += node.expression.value + '';
 			}
 		} else {
-			if (node.metadata.expression.has_call && contains_multiple_call_expression) {
+			if (node.metadata.expression.has_call) {
 				const id = b.id(state.scope.generate('expression'));
 				state.init.push(
 					b.const(
@@ -101,9 +99,7 @@ export function build_update(statement) {
  * @param {Statement[]} update
  */
 export function build_render_statement(update) {
-	return update.length === 1
-		? build_update(update[0])
-		: b.stmt(b.call('$.template_effect', b.thunk(b.block(update))));
+	return b.stmt(b.call('$.template_effect', b.thunk(b.block(update))));
 }
 
 /**

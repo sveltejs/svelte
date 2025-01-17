@@ -46,7 +46,11 @@ export default function Skip_static_subtree($$anchor, $$props) {
 	var img_1 = $.child(div_2);
 
 	$.reset(div_2);
-	$.template_effect(() => $.set_text(text, $$props.title));
+
+	$.template_effect(() => {
+		$.set_text(text, $$props.title);
+	});
+
 	$.handle_lazy_img(img);
 	$.handle_lazy_img(img_1);
 	$.append($$anchor, fragment);
