@@ -1,6 +1,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
+import { get_rune } from '../../scope.js';
 import { validate_opening_tag } from './shared/utils.js';
 
 /**
@@ -10,6 +11,13 @@ import { validate_opening_tag } from './shared/utils.js';
 export function ConstTag(node, context) {
 	if (context.state.analysis.runes) {
 		validate_opening_tag(node, context.state, '@');
+	}
+
+	for (let declaration of node.declaration.declarations) {
+		const rune = get_rune(declaration.init, context.state.scope);
+		if (rune) {
+			e.const_tag_invalid_rune_usage(declaration.init, rune);
+		}
 	}
 
 	const parent = context.path.at(-1);

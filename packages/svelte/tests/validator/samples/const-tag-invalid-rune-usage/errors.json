@@ -1,0 +1,14 @@
+[
+	{
+		"code": "const_tag_invalid_rune_usage",
+		"message": "Can't use $derived as initialization of a `{@const}` tag",
+		"start": {
+			"line": 2,
+			"column": 15
+		},
+		"end": {
+			"line": 2,
+			"column": 26
+		}
+	}
+]

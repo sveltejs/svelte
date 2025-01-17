@@ -120,6 +120,10 @@
 
 > `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>`, `<svelte:boundary` or `<Component>`
 
+## const_tag_invalid_rune_usage
+
+> Can't use %name% as initialization of a `{@const}` tag
+
 ## debug_tag_invalid_arguments
 
 > {@debug ...} arguments must be identifiers, not arbitrary expressions

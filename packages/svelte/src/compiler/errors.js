@@ -897,6 +897,16 @@ export function const_tag_invalid_placement(node) {
 }
 
 /**
+ * Can't use %name% as initialization of a `{@const}` tag
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function const_tag_invalid_rune_usage(node, name) {
+	e(node, 'const_tag_invalid_rune_usage', `Can't use ${name} as initialization of a \`{@const}\` tag\nhttps://svelte.dev/e/const_tag_invalid_rune_usage`);
+}
+
+/**
  * {@debug ...} arguments must be identifiers, not arbitrary expressions
  * @param {null | number | NodeLike} node
  * @returns {never}
