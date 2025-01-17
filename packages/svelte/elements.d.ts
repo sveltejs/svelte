@@ -840,6 +840,8 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	readonly 'bind:borderBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 	readonly 'bind:devicePixelContentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 
+	attachments: Array<(node: T) => void | (() => void)>;
+
 	// SvelteKit
 	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
 	'data-sveltekit-noscroll'?: true | '' | 'off' | undefined | null;
@@ -859,9 +861,6 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 
 	// allow any data- attribute
 	[key: `data-${string}`]: any;
-
-	// allow any attachment
-	[key: symbol]: (node: T) => void | (() => void);
 }
 
 export type HTMLAttributeAnchorTarget = '_self' | '_blank' | '_parent' | '_top' | (string & {});

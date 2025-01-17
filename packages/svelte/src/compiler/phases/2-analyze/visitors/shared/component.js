@@ -75,8 +75,7 @@ export function visit_component(node, context) {
 			attribute.type !== 'SpreadAttribute' &&
 			attribute.type !== 'LetDirective' &&
 			attribute.type !== 'OnDirective' &&
-			attribute.type !== 'BindDirective' &&
-			attribute.type !== 'AttachTag'
+			attribute.type !== 'BindDirective'
 		) {
 			e.component_invalid_directive(attribute);
 		}
@@ -109,10 +108,6 @@ export function visit_component(node, context) {
 
 		if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
 			context.state.analysis.uses_component_bindings = true;
-		}
-
-		if (attribute.type === 'AttachTag') {
-			disallow_unparenthesized_sequences(attribute.expression, context.state.analysis.source);
 		}
 	}
 

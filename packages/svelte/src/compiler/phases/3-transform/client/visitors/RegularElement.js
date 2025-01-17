@@ -82,7 +82,7 @@ export function RegularElement(node, context) {
 	/** @type {AST.StyleDirective[]} */
 	const style_directives = [];
 
-	/** @type {Array<AST.AnimateDirective | AST.BindDirective | AST.OnDirective | AST.TransitionDirective | AST.UseDirective | AST.AttachTag>} */
+	/** @type {Array<AST.AnimateDirective | AST.BindDirective | AST.OnDirective | AST.TransitionDirective | AST.UseDirective>} */
 	const other_directives = [];
 
 	/** @type {ExpressionStatement[]} */
@@ -112,6 +112,19 @@ export function RegularElement(node, context) {
 						context.state.template.push(` is="${escape_html(value.value, true)}"`);
 						continue;
 					}
+				}
+
+				if (attribute.name === 'attachments') {
+					context.state.init.push(
+						b.stmt(
+							b.call(
+								'$.attach',
+								context.state.node,
+								b.thunk(/** @type {Expression} */ (context.visit(attribute.value.expression)))
+							)
+						)
+					);
+					continue;
 				}
 
 				attributes.push(attribute);
@@ -150,10 +163,6 @@ export function RegularElement(node, context) {
 
 			case 'UseDirective':
 				has_use = true;
-				other_directives.push(attribute);
-				break;
-
-			case 'AttachTag':
 				other_directives.push(attribute);
 				break;
 		}

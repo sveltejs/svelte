@@ -480,31 +480,13 @@ function read_static_attribute(parser) {
 
 /**
  * @param {Parser} parser
- * @returns {AST.Attribute | AST.SpreadAttribute | AST.Directive | AST.AttachTag | null}
+ * @returns {AST.Attribute | AST.SpreadAttribute | AST.Directive | null}
  */
 function read_attribute(parser) {
 	const start = parser.index;
 
 	if (parser.eat('{')) {
 		parser.allow_whitespace();
-
-		if (parser.eat('@attach')) {
-			parser.require_whitespace();
-
-			const expression = read_expression(parser);
-			parser.allow_whitespace();
-			parser.eat('}', true);
-
-			/** @type {AST.AttachTag} */
-			const attachment = {
-				type: 'AttachTag',
-				start,
-				end: parser.index,
-				expression
-			};
-
-			return attachment;
-		}
 
 		if (parser.eat('...')) {
 			const expression = read_expression(parser);

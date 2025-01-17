@@ -2,4 +2,4 @@
 	import Child from './Child.svelte';
 </script>
 
-<Child {@attach (node) => node.textContent = 'set from component'} />
+<Child attachments={[(node) => node.textContent = 'set from component']} />

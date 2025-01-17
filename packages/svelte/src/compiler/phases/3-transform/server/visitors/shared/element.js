@@ -73,7 +73,6 @@ export function build_element_attributes(node, context) {
 					// effect on the selected value after the user interacts with the select element (the value _property_ does, but not the attribute)
 					attributes.push(attribute);
 				}
-
 				// omit event handlers except for special cases
 			} else if (is_event_attribute(attribute)) {
 				if (
@@ -82,6 +81,8 @@ export function build_element_attributes(node, context) {
 				) {
 					events_to_capture.add(attribute.name);
 				}
+			} else if (attribute.name === 'attachments') {
+				continue;
 				// the defaultValue/defaultChecked properties don't exist as attributes
 			} else if (attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked') {
 				if (attribute.name === 'class') {

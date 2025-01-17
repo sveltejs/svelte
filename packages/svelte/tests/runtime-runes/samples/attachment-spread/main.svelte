@@ -1,6 +1,6 @@
 <script>
 	let stuff = $state({
-		[Symbol()]: () => console.log('hello')
+		attachments: [() => console.log('hello')]
 	});
 </script>
 

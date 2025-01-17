@@ -222,6 +222,7 @@ export function spread_attributes(attrs, classes, styles, flags = 0) {
 		if (typeof attrs[name] === 'function') continue;
 		if (name[0] === '$' && name[1] === '$') continue; // faster than name.startsWith('$$')
 		if (INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
+		if (name === 'attachments') continue;
 
 		var value = attrs[name];
 

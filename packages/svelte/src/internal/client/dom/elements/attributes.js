@@ -246,8 +246,8 @@ export function set_custom_element_data(node, prop, value) {
 /**
  * Spreads attributes onto a DOM element, taking into account the currently set attributes
  * @param {Element & ElementCSSInlineStyle} element
- * @param {Record<string | symbol, any> | undefined} prev
- * @param {Record<string | symbol, any>} next New attributes - this function mutates this object
+ * @param {Record<string, any> | undefined} prev
+ * @param {Record<string, any>} next New attributes - this function mutates this object
  * @param {string} [css_hash]
  * @param {boolean} [preserve_attribute_case]
  * @param {boolean} [is_custom_element]
@@ -313,6 +313,11 @@ export function set_attributes(
 		if (value === prev_value) continue;
 
 		current[key] = value;
+
+		if (key === 'attachments') {
+			attach(element, () => value);
+			continue;
+		}
 
 		var prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
 		if (prefix === '$$') continue;
@@ -414,10 +419,6 @@ export function set_attributes(
 			// reset styles to force style: directive to update
 			element.__styles = {};
 		}
-	}
-
-	for (let symbol of Object.getOwnPropertySymbols(next)) {
-		attach(element, () => next[symbol]);
 	}
 
 	return current;

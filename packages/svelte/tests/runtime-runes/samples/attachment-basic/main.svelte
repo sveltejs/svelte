@@ -1,1 +1,1 @@
-<div {@attach (node) => node.textContent = node.nodeName}></div>
+<div attachments={[(node) => node.textContent = node.nodeName]}></div>
