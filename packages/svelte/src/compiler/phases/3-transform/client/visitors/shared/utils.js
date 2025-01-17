@@ -128,7 +128,9 @@ export function build_render_statement(state) {
 			'$.template_effect',
 			b.arrow(
 				state.expressions.map((_, i) => b.id(`$${i}`)),
-				b.block(state.update)
+				state.update.length === 1 && state.update[0].type === 'ExpressionStatement'
+					? state.update[0].expression
+					: b.block(state.update)
 			),
 			state.expressions.length > 0 &&
 				b.array(state.expressions.map((expression) => b.thunk(expression))),
