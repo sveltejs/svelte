@@ -1,6 +1,6 @@
 import { flushSync } from 'svelte';
 import { raf as svelte_raf } from 'svelte/internal/client';
-import { queue_micro_task } from '../src/internal/client/dom/task.js';
+import { queue_post_micro_task } from '../src/internal/client/dom/task.js';
 
 export const raf = {
 	animations: new Set(),
@@ -132,7 +132,7 @@ class Animation {
 	/** @param {() => {}} fn */
 	set onfinish(fn) {
 		if (this.#duration === 0) {
-			queue_micro_task(fn);
+			queue_post_micro_task(fn);
 		} else {
 			this.#onfinish = () => {
 				fn();

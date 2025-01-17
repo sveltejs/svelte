@@ -528,15 +528,20 @@ export function unlink_effect(effect) {
  * A paused effect does not update, and the DOM subtree becomes inert.
  * @param {Effect} effect
  * @param {() => void} [callback]
+ * @param {boolean} [destroy]
  */
-export function pause_effect(effect, callback) {
+export function pause_effect(effect, callback, destroy = true) {
 	/** @type {TransitionManager[]} */
 	var transitions = [];
 
-	pause_children(effect, transitions, true);
+	pause_children(effect, transitions, true, destroy);
 
 	run_out_transitions(transitions, () => {
-		destroy_effect(effect);
+		if (destroy) {
+			destroy_effect(effect);
+		} else {
+			execute_effect_teardown(effect);
+		}
 		if (callback) callback();
 	});
 }
@@ -561,8 +566,9 @@ export function run_out_transitions(transitions, fn) {
  * @param {Effect} effect
  * @param {TransitionManager[]} transitions
  * @param {boolean} local
+ * @param {boolean} [destroy]
  */
-export function pause_children(effect, transitions, local) {
+export function pause_children(effect, transitions, local, destroy = true) {
 	if ((effect.f & INERT) !== 0) return;
 	effect.f ^= INERT;
 
@@ -582,7 +588,7 @@ export function pause_children(effect, transitions, local) {
 		// TODO we don't need to call pause_children recursively with a linked list in place
 		// it's slightly more involved though as we have to account for `transparent` changing
 		// through the tree.
-		pause_children(child, transitions, transparent ? local : false);
+		pause_children(child, transitions, transparent ? local : false, destroy);
 		child = sibling;
 	}
 }

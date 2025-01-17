@@ -39,7 +39,10 @@ export function SvelteBoundary(node, context) {
 
 	// Capture the `failed` implicit snippet prop
 	for (const child of node.fragment.nodes) {
-		if (child.type === 'SnippetBlock' && child.expression.name === 'failed') {
+		if (
+			child.type === 'SnippetBlock' &&
+			(child.expression.name === 'failed' || child.expression.name === 'pending')
+		) {
 			// we need to delay the visit of the snippets in case they access a ConstTag that is declared
 			// after the snippets so that the visitor for the const tag can be updated
 			snippets_visits.push(() => {

@@ -27,7 +27,11 @@ import {
 	DISCONNECTED,
 	BOUNDARY_EFFECT
 } from './constants.js';
-import { flush_tasks } from './dom/task.js';
+import {
+	flush_idle_tasks,
+	flush_boundary_micro_tasks,
+	flush_post_micro_tasks
+} from './dom/task.js';
 import { add_owner } from './dev/ownership.js';
 import { internal_set, set, source } from './reactivity/sources.js';
 import { destroy_derived, execute_derived, update_derived } from './reactivity/deriveds.js';
@@ -737,11 +741,12 @@ function flush_queued_effects(effects) {
 	}
 }
 
-function process_deferred() {
+function flushed_deferred() {
 	is_micro_task_queued = false;
 	if (flush_count > 1001) {
 		return;
 	}
+	// flush_before_process_microtasks();
 	const previous_queued_root_effects = queued_root_effects;
 	queued_root_effects = [];
 	flush_queued_root_effects(previous_queued_root_effects);
@@ -763,7 +768,7 @@ export function schedule_effect(signal) {
 	if (scheduler_mode === FLUSH_MICROTASK) {
 		if (!is_micro_task_queued) {
 			is_micro_task_queued = true;
-			queueMicrotask(process_deferred);
+			queueMicrotask(flushed_deferred);
 		}
 	}
 
@@ -882,7 +887,9 @@ export function flush_sync(fn) {
 
 		var result = fn?.();
 
-		flush_tasks();
+		flush_boundary_micro_tasks();
+		flush_post_micro_tasks();
+		flush_idle_tasks();
 		if (queued_root_effects.length > 0 || root_effects.length > 0) {
 			flush_sync();
 		}
