@@ -123,14 +123,13 @@ export function Fragment(node, context) {
 
 		add_template(template_name, args);
 
-		body.push(b.var(id, b.call(template_name)), ...state.init);
+		body.push(b.var(id, b.call(template_name)));
 		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 	} else if (is_single_child_not_needing_template) {
 		context.visit(trimmed[0], state);
-		body.push(...state.init);
 	} else if (trimmed.length === 1 && trimmed[0].type === 'Text') {
 		const id = b.id(context.state.scope.generate('text'));
-		body.push(b.var(id, b.call('$.text', b.literal(trimmed[0].data))), ...state.init);
+		body.push(b.var(id, b.call('$.text', b.literal(trimmed[0].data))));
 		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 	} else if (trimmed.length > 0) {
 		const id = b.id(context.state.scope.generate('fragment'));
@@ -148,7 +147,7 @@ export function Fragment(node, context) {
 				state
 			});
 
-			body.push(b.var(id, b.call('$.text')), ...state.init);
+			body.push(b.var(id, b.call('$.text')));
 			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 		} else {
 			if (is_standalone) {
@@ -177,12 +176,10 @@ export function Fragment(node, context) {
 
 				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 			}
-
-			body.push(...state.init);
 		}
-	} else {
-		body.push(...state.init);
 	}
+
+	body.push(...state.init);
 
 	if (state.update.length > 0) {
 		body.push(build_render_statement(state.update));
