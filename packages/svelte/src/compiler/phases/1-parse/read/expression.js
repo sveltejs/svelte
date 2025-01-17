@@ -38,6 +38,10 @@ export default function read_expression(parser, opening_token, disallow_loose) {
 
 		let num_parens = 0;
 
+		if (node.leadingComments !== undefined && node.leadingComments.length > 0) {
+			parser.index = node.leadingComments.at(-1).end;
+		}
+
 		for (let i = parser.index; i < /** @type {number} */ (node.start); i += 1) {
 			if (parser.template[i] === '(') num_parens += 1;
 		}
