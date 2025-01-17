@@ -16,11 +16,11 @@ export default function Text_nodes_deriveds($$anchor) {
 	}
 
 	var p = root();
-	const stringified_text = $.derived(() => text1() ?? '');
-	const stringified_text_1 = $.derived(() => text2() ?? '');
+	const expression = $.derived(() => text1() ?? '');
+	const expression_1 = $.derived(() => text2() ?? '');
 	var text = $.child(p);
 
-	$.template_effect(() => $.set_text(text, `${$.get(stringified_text)}${$.get(stringified_text_1)}`));
+	$.template_effect(() => $.set_text(text, `${$.get(expression)}${$.get(expression_1)}`));
 	$.reset(p);
 	$.append($$anchor, p);
 }
