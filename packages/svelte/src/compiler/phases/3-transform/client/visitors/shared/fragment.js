@@ -4,7 +4,7 @@
 import { cannot_be_set_statically } from '../../../../../../utils.js';
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { build_template_chunk, build_update } from './utils.js';
+import { build_template_chunk } from './utils.js';
 
 /**
  * Processes an array of template nodes, joining sibling text/expression nodes
