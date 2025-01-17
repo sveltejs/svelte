@@ -28,7 +28,8 @@ import { process_children } from './shared/fragment.js';
 import {
 	build_render_statement,
 	build_template_chunk,
-	build_update_assignment
+	build_update_assignment,
+	get_expression_id
 } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 
@@ -535,7 +536,10 @@ function build_element_attribute_update_assignment(
 	const name = get_attribute_name(element, attribute);
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
-	let value = build_attribute_value(attribute.value, context);
+
+	let value = build_attribute_value(attribute.value, context, (value) =>
+		get_expression_id(state, value)
+	);
 
 	if (name === 'autofocus') {
 		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
@@ -626,7 +630,7 @@ function build_element_attribute_update_assignment(
 function build_custom_element_attribute_update_assignment(node_id, attribute, context) {
 	const state = context.state;
 	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
-	let value = build_attribute_value(attribute.value, context, true);
+	let value = build_attribute_value(attribute.value, context, (value) => value);
 
 	// We assume that noone's going to redefine the semantics of the class attribute on custom elements, i.e. it's still used for CSS classes
 	if (name === 'class' && attribute.metadata.needs_clsx) {
@@ -661,7 +665,9 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
  */
 function build_element_special_value_attribute(element, node_id, attribute, context) {
 	const state = context.state;
-	const value = build_attribute_value(attribute.value, context);
+	const value = build_attribute_value(attribute.value, context, (value) =>
+		get_expression_id(state, value)
+	);
 
 	const inner_assignment = b.assignment(
 		'=',

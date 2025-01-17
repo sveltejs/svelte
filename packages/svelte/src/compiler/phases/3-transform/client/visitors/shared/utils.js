@@ -68,9 +68,15 @@ function compare_expressions(a, b) {
  * @param {Array<AST.Text | AST.ExpressionTag>} values
  * @param {(node: AST.SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
+ * @param {(value: Expression) => Expression} memoize
  * @returns {{ value: Expression, has_state: boolean }}
  */
-export function build_template_chunk(values, visit, state) {
+export function build_template_chunk(
+	values,
+	visit,
+	state,
+	memoize = (value) => get_expression_id(state, value)
+) {
 	/** @type {Expression[]} */
 	const expressions = [];
 
@@ -94,7 +100,7 @@ export function build_template_chunk(values, visit, state) {
 			has_state ||= node.metadata.expression.has_state;
 
 			if (node.metadata.expression.has_call) {
-				value = get_expression_id(state, value);
+				value = memoize(value);
 			}
 
 			if (values.length === 1) {

@@ -7,8 +7,8 @@ export default test({
 		const button = target.querySelector('button');
 
 		assert.deepEqual(logs, [
-			'updated class directive',
 			'updated class attribute',
+			'updated class directive',
 			'updated style attribute',
 			'updated style directive'
 		]);
@@ -21,8 +21,8 @@ export default test({
 		flushSync(() => button?.click());
 
 		assert.deepEqual(logs, [
-			'updated class directive',
 			'updated class attribute',
+			'updated class directive',
 			'updated style attribute',
 			'updated style directive',
 			'updated class attribute',

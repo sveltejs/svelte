@@ -165,10 +165,21 @@ export function build_class_directives(
 /**
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
- * @param {boolean} [is_custom_element]
+ * @param {(value: Expression) => Expression} memoize
  * @returns {Expression}
  */
-export function build_attribute_value(value, context, is_custom_element = false) {
+export function build_attribute_value(
+	value,
+	context,
+	memoize = (value) => {
+		// TODO this is temporary
+		const id = b.id(context.state.scope.generate('expression'));
+		context.state.init.push(
+			b.const(id, create_derived(context.state, b.thunk(b.logical('??', value, b.literal('')))))
+		);
+		return b.call('$.get', id);
+	}
+) {
 	if (value === true) {
 		return b.literal(true);
 	}
@@ -182,22 +193,14 @@ export function build_attribute_value(value, context, is_custom_element = false)
 
 		let expression = /** @type {Expression} */ (context.visit(chunk.expression));
 
-		if (chunk.metadata.expression.has_call && !is_custom_element) {
-			// TODO this is temporary
-			const id = b.id(context.state.scope.generate('expression'));
-			context.state.init.push(
-				b.const(
-					id,
-					create_derived(context.state, b.thunk(b.logical('??', expression, b.literal(''))))
-				)
-			);
-			expression = b.call('$.get', id);
+		if (chunk.metadata.expression.has_call) {
+			expression = memoize(expression);
 		}
 
 		return expression;
 	}
 
-	return build_template_chunk(value, context.visit, context.state).value;
+	return build_template_chunk(value, context.visit, context.state, memoize).value;
 }
 
 /**
