@@ -535,7 +535,7 @@ function build_element_attribute_update_assignment(
 	const name = get_attribute_name(element, attribute);
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
-	let { has_call, value } = build_attribute_value(attribute.value, context);
+	let { value } = build_attribute_value(attribute.value, context);
 
 	if (name === 'autofocus') {
 		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));

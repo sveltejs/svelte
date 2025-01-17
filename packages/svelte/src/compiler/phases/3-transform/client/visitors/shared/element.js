@@ -176,18 +176,18 @@ export function build_class_directives(
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
  * @param {boolean} [is_custom_element]
- * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
+ * @returns {{ value: Expression, has_state: boolean }}
  */
 export function build_attribute_value(value, context, is_custom_element = false) {
 	if (value === true) {
-		return { has_state: false, has_call: false, value: b.literal(true) };
+		return { has_state: false, value: b.literal(true) };
 	}
 
 	if (!Array.isArray(value) || value.length === 1) {
 		const chunk = Array.isArray(value) ? value[0] : value;
 
 		if (chunk.type === 'Text') {
-			return { has_state: false, has_call: false, value: b.literal(chunk.data) };
+			return { has_state: false, value: b.literal(chunk.data) };
 		}
 
 		let expression = /** @type {Expression} */ (context.visit(chunk.expression));
@@ -206,7 +206,6 @@ export function build_attribute_value(value, context, is_custom_element = false)
 
 		return {
 			has_state: chunk.metadata.expression.has_state,
-			has_call: chunk.metadata.expression.has_call,
 			value: expression
 		};
 	}
