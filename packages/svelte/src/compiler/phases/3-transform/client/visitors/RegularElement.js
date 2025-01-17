@@ -626,11 +626,7 @@ function build_element_attribute_update_assignment(
 	}
 
 	if (attribute.metadata.expression.has_state) {
-		if (has_call) {
-			state.init.push(build_update(update));
-		} else {
-			state.update.push(update);
-		}
+		state.update.push(update);
 		return true;
 	} else {
 		state.init.push(update);

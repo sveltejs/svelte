@@ -193,10 +193,24 @@ export function build_attribute_value(value, context) {
 			return { has_state: false, has_call: false, value: b.literal(chunk.data) };
 		}
 
+		let expression = /** @type {Expression} */ (context.visit(chunk.expression));
+
+		if (chunk.metadata.expression.has_call) {
+			// TODO this is temporary
+			const id = b.id(context.state.scope.generate('expression'));
+			context.state.init.push(
+				b.const(
+					id,
+					create_derived(context.state, b.thunk(b.logical('??', expression, b.literal(''))))
+				)
+			);
+			expression = b.call('$.get', id);
+		}
+
 		return {
 			has_state: chunk.metadata.expression.has_state,
 			has_call: chunk.metadata.expression.has_call,
-			value: /** @type {Expression} */ (context.visit(chunk.expression))
+			value: expression
 		};
 	}
 
