@@ -14,7 +14,7 @@ import { locator } from '../../../../../state.js';
  * @param {Array<AST.Text | AST.ExpressionTag>} values
  * @param {(node: AST.SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
- * @returns {{ value: Expression, has_state: boolean, has_call: boolean, is_async: boolean }}
+ * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
  */
 export function build_template_chunk(values, visit, state) {
 	/** @type {Expression[]} */
@@ -26,16 +26,15 @@ export function build_template_chunk(values, visit, state) {
 	let has_call = false;
 	let has_state = false;
 	let is_async = false;
-	let contains_multiple_call_expression = false;
+	let should_memoize = false;
 
 	for (const node of values) {
 		if (node.type === 'ExpressionTag') {
 			const metadata = node.metadata.expression;
 
-			contains_multiple_call_expression ||= has_call && metadata.has_call;
+			should_memoize ||= (has_call || is_async) && (metadata.has_call || metadata.is_async);
 			has_call ||= metadata.has_call;
 			has_state ||= metadata.has_state;
-			is_async ||= metadata.is_async;
 		}
 	}
 
@@ -49,32 +48,26 @@ export function build_template_chunk(values, visit, state) {
 				quasi.value.cooked += node.expression.value + '';
 			}
 		} else {
-			if (contains_multiple_call_expression) {
-				const id = b.id(state.scope.generate('stringified_text'));
+			const expression = /** @type {Expression} */ (visit(node.expression, state));
+
+			if (node.metadata.expression.is_async) {
+				const id = b.id(state.scope.generate('expression'));
+				state.metadata.async.push({ id, expression: b.logical('??', expression, b.literal('')) });
+
+				expressions.push(b.call(id));
+			} else if (node.metadata.expression.has_call && should_memoize) {
+				const id = b.id(state.scope.generate('expression'));
 				state.init.push(
-					b.const(
-						id,
-						create_derived(
-							state,
-							b.thunk(
-								b.logical(
-									'??',
-									/** @type {Expression} */ (visit(node.expression, state)),
-									b.literal('')
-								),
-								is_async
-							)
-						)
-					)
+					b.const(id, create_derived(state, b.thunk(b.logical('??', expression, b.literal('')))))
 				);
 
-				expressions.push(is_async ? b.await(b.call('$.get', id)) : b.call('$.get', id));
+				expressions.push(b.call('$.get', id));
 			} else if (values.length === 1) {
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).
-				return { value: visit(node.expression, state), has_state, has_call, is_async };
+				return { value: expression, has_state, has_call };
 			} else {
-				expressions.push(b.logical('??', visit(node.expression, state), b.literal('')));
+				expressions.push(b.logical('??', expression, b.literal('')));
 			}
 
 			quasi = b.quasi('', i + 1 === values.length);
@@ -88,28 +81,26 @@ export function build_template_chunk(values, visit, state) {
 
 	const value = b.template(quasis, expressions);
 
-	return { value, has_state, has_call, is_async };
+	return { value, has_state, has_call };
 }
 
 /**
  * @param {Statement} statement
- * @param {boolean} is_async
  */
-export function build_update(statement, is_async) {
+export function build_update(statement) {
 	const body =
 		statement.type === 'ExpressionStatement' ? statement.expression : b.block([statement]);
 
-	return b.stmt(b.call('$.template_effect', b.thunk(body, is_async)));
+	return b.stmt(b.call('$.template_effect', b.thunk(body)));
 }
 
 /**
  * @param {Statement[]} update
- * @param {boolean} is_async
  */
-export function build_render_statement(update, is_async) {
+export function build_render_statement(update) {
 	return update.length === 1
-		? build_update(update[0], is_async)
-		: b.stmt(b.call('$.template_effect', b.thunk(b.block(update), is_async)));
+		? build_update(update[0])
+		: b.stmt(b.call('$.template_effect', b.thunk(b.block(update))));
 }
 
 /**

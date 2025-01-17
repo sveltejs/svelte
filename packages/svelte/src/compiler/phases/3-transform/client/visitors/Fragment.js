@@ -75,8 +75,7 @@ export function Fragment(node, context) {
 			},
 			namespace,
 			bound_contenteditable: context.state.metadata.bound_contenteditable,
-			init_is_async: false,
-			update_is_async: false
+			async: []
 		}
 	};
 
@@ -192,7 +191,7 @@ export function Fragment(node, context) {
 	}
 
 	if (state.update.length > 0) {
-		body.push(build_render_statement(state.update, state.metadata.update_is_async));
+		body.push(build_render_statement(state.update));
 	}
 
 	body.push(...state.after_update);
@@ -205,12 +204,41 @@ export function Fragment(node, context) {
 	}
 
 	const async =
-		state.metadata.init_is_async || (state.analysis.is_async && context.path.length === 0);
+		state.metadata.async.length > 0 || (state.analysis.is_async && context.path.length === 0);
 
 	if (async) {
 		// TODO need to create bookends for hydration to work
 		return b.block([
-			b.function_declaration(b.id('$$body'), [b.id('$$anchor')], b.block(body), true),
+			b.function_declaration(
+				b.id('$$body'),
+				[b.id('$$anchor')],
+				b.block([
+					b.var(
+						b.array_pattern(state.metadata.async.map(({ id }) => id)),
+						b.call(
+							b.member(
+								b.await(
+									b.call(
+										'$.suspend',
+										b.call(
+											'Promise.all',
+											b.array(
+												state.metadata.async.map(({ expression }) =>
+													b.call('$.async_derived', b.thunk(expression, true))
+												)
+											)
+										)
+									)
+								),
+								'exit'
+							)
+						)
+					),
+					...body,
+					b.stmt(b.call('$.exit'))
+				]),
+				true
+			),
 
 			b.var('fragment', b.call('$.comment')),
 			b.var('node', b.call('$.first_child', b.id('fragment'))),

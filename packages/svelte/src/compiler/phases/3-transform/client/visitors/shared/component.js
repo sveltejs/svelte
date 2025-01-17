@@ -94,10 +94,6 @@ export function build_component(node, component_name, context, anchor = context.
 	}
 
 	for (const attribute of node.attributes) {
-		if (attribute.type === 'Attribute' || attribute.type === 'SpreadAttribute') {
-			context.state.metadata.init_is_async ||= attribute.metadata.expression.is_async;
-		}
-
 		if (attribute.type === 'LetDirective') {
 			if (!slot_scope_applies_to_itself) {
 				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute, states.default)));
@@ -169,10 +165,11 @@ export function build_component(node, component_name, context, anchor = context.
 					const id = b.id(context.state.scope.generate(attribute.name));
 
 					if (attribute.metadata.expression.is_async) {
-						// TODO parallelise these
-						context.state.init.push(
-							b.var(id, b.await(b.call('$.async_derived', b.thunk(arg, true))))
-						);
+						context.state.metadata.async.push({
+							id,
+							expression: arg
+						});
+
 						arg = b.call(id);
 					} else {
 						context.state.init.push(b.var(id, create_derived(context.state, b.thunk(value))));

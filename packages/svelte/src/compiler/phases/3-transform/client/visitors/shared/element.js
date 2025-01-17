@@ -83,7 +83,6 @@ export function build_set_attributes(
 		context.state.init.push(b.let(attributes_id));
 		const update = b.stmt(b.assignment('=', attributes_id, call));
 		context.state.update.push(update);
-		context.state.metadata.update_is_async ||= is_async;
 		return true;
 	}
 
@@ -115,7 +114,9 @@ export function build_style_directives(
 				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
 				: build_attribute_value(directive.value, context).value;
 
-		if (has_call) {
+		if (is_async) {
+			throw new Error('TODO');
+		} else if (has_call) {
 			const id = b.id(state.scope.generate('style_directive'));
 
 			state.init.push(b.const(id, create_derived(state, b.thunk(value))));
@@ -133,14 +134,10 @@ export function build_style_directives(
 		);
 
 		if (!is_attributes_reactive && has_call) {
-			state.init.push(build_update(update, is_async));
+			state.init.push(build_update(update));
 		} else if (is_attributes_reactive || has_state || has_call) {
 			state.update.push(update);
-			state.metadata.update_is_async ||= is_async;
 		} else {
-			if (is_async) {
-				throw new Error('TODO top-level await');
-			}
 			state.init.push(update);
 		}
 	}
@@ -165,7 +162,9 @@ export function build_class_directives(
 		const { has_state, has_call, is_async } = directive.metadata.expression;
 		let value = /** @type {Expression} */ (context.visit(directive.expression));
 
-		if (has_call) {
+		if (is_async) {
+			throw new Error('TODO');
+		} else if (has_call) {
 			const id = b.id(state.scope.generate('class_directive'));
 
 			state.init.push(b.const(id, create_derived(state, b.thunk(value))));
@@ -175,14 +174,10 @@ export function build_class_directives(
 		const update = b.stmt(b.call('$.toggle_class', element_id, b.literal(directive.name), value));
 
 		if (!is_attributes_reactive && has_call) {
-			state.init.push(build_update(update, is_async));
+			state.init.push(build_update(update));
 		} else if (is_attributes_reactive || has_state || has_call) {
 			state.update.push(update);
-			state.metadata.update_is_async ||= is_async;
 		} else {
-			if (is_async) {
-				throw new Error('TODO top-level await');
-			}
 			state.init.push(update);
 		}
 	}

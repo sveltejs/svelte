@@ -160,8 +160,7 @@ export function client_component(analysis, options) {
 			},
 			namespace: options.namespace,
 			bound_contenteditable: false,
-			init_is_async: false,
-			update_is_async: false
+			async: []
 		},
 		events: new Set(),
 		preserve_whitespace: options.preserveWhitespace,

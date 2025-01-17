@@ -285,3 +285,9 @@ export async function suspend(promise) {
 		}
 	};
 }
+
+export function exit() {
+	set_active_effect(null);
+	set_active_reaction(null);
+	set_component_context(null);
+}

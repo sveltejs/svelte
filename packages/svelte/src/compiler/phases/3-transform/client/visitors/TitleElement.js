@@ -8,7 +8,7 @@ import { build_template_chunk } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function TitleElement(node, context) {
-	const { has_state, is_async, value } = build_template_chunk(
+	const { has_state, value } = build_template_chunk(
 		/** @type {any} */ (node.fragment.nodes),
 		context.visit,
 		context.state
@@ -18,12 +18,7 @@ export function TitleElement(node, context) {
 
 	if (has_state) {
 		context.state.update.push(statement);
-		context.state.metadata.update_is_async ||= is_async;
 	} else {
-		if (is_async) {
-			throw new Error('TODO top-level await');
-		}
-
 		context.state.init.push(statement);
 	}
 }

@@ -123,12 +123,7 @@ export function SvelteElement(node, context) {
 	/** @type {Statement[]} */
 	const inner = inner_context.state.init;
 	if (inner_context.state.update.length > 0) {
-		inner.push(
-			build_render_statement(
-				inner_context.state.update,
-				inner_context.state.metadata.update_is_async
-			)
-		);
+		inner.push(build_render_statement(inner_context.state.update));
 	}
 	inner.push(...inner_context.state.after_update);
 	inner.push(
