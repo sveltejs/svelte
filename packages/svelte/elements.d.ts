@@ -741,7 +741,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	accesskey?: string | undefined | null;
 	autocapitalize?: 'characters' | 'off' | 'on' | 'none' | 'sentences' | 'words' | undefined | null;
 	autofocus?: boolean | undefined | null;
-	class?: string | import('clsx').ClassArray | import('clsx').ClassDictionary | undefined | null;
+	class?: ClassValue | undefined | null;
 	contenteditable?: Booleanish | 'inherit' | 'plaintext-only' | undefined | null;
 	contextmenu?: string | undefined | null;
 	dir?: 'ltr' | 'rtl' | 'auto' | undefined | null;
@@ -1522,7 +1522,7 @@ export interface SvelteWindowAttributes extends HTMLAttributes<Window> {
 export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DOMAttributes<T> {
 	// Attributes which also defined in HTMLAttributes
 	className?: string | undefined | null;
-	class?: string | import('clsx').ClassArray | import('clsx').ClassDictionary | undefined | null;
+	class?: ClassValue | undefined | null;
 	color?: string | undefined | null;
 	height?: number | string | undefined | null;
 	id?: string | undefined | null;
@@ -2059,3 +2059,5 @@ export interface SvelteHTMLElements {
 
 	[name: string]: { [name: string]: any };
 }
+
+export type ClassValue = string | import('clsx').ClassArray | import('clsx').ClassDictionary;

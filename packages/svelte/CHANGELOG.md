@@ -1,5 +1,31 @@
 # svelte
 
+## 5.19.0
+
+### Minor Changes
+
+- feat: Expose `ClassValue` from `svelte/elements` ([#15035](https://github.com/sveltejs/svelte/pull/15035))
+
+### Patch Changes
+
+- fix: create fewer deriveds for concatenated strings ([#15041](https://github.com/sveltejs/svelte/pull/15041))
+
+- fix: correctly parse leading comments in function binding ([#15020](https://github.com/sveltejs/svelte/pull/15020))
+
+## 5.18.0
+
+### Minor Changes
+
+- feat: allow `<template>` elements to contain any child ([#15007](https://github.com/sveltejs/svelte/pull/15007))
+
+### Patch Changes
+
+- fix: ensure resume effects are scheduled in topological order ([#15012](https://github.com/sveltejs/svelte/pull/15012))
+
+- fix: bump esrap ([#15015](https://github.com/sveltejs/svelte/pull/15015))
+
+- fix: remove listener on `bind_current_time` teardown ([#15013](https://github.com/sveltejs/svelte/pull/15013))
+
 ## 5.17.5
 
 ### Patch Changes
