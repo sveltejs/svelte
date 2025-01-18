@@ -23,7 +23,7 @@ export function SvelteBoundary(node, context) {
 
 		const expression = /** @type {Expression} */ (context.visit(chunk.expression, context.state));
 
-		if (attribute.metadata.expression.has_state) {
+		if (chunk.metadata.expression.has_state) {
 			props.properties.push(b.get(attribute.name, [b.return(expression)]));
 		} else {
 			props.properties.push(b.init(attribute.name, expression));

@@ -1,12 +1,12 @@
 /** @import { Expression, Identifier, ObjectExpression } from 'estree' */
-/** @import { AST, Namespace } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../../types' */
 import { normalize_attribute } from '../../../../../../utils.js';
 import { is_ignored } from '../../../../../state.js';
-import { get_attribute_expression, is_event_attribute } from '../../../../../utils/ast.js';
+import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { build_getter, create_derived } from '../../utils.js';
-import { build_template_chunk, build_update } from './utils.js';
+import { build_template_chunk, get_expression_id } from './utils.js';
 
 /**
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
@@ -28,14 +28,16 @@ export function build_set_attributes(
 	is_custom_element,
 	state
 ) {
-	let has_state = false;
+	let is_dynamic = false;
 
 	/** @type {ObjectExpression['properties']} */
 	const values = [];
 
 	for (const attribute of attributes) {
 		if (attribute.type === 'Attribute') {
-			const { value } = build_attribute_value(attribute.value, context);
+			const { value, has_state } = build_attribute_value(attribute.value, context, (value) =>
+				get_expression_id(context.state, value)
+			);
 
 			if (
 				is_event_attribute(attribute) &&
@@ -49,10 +51,10 @@ export function build_set_attributes(
 				values.push(b.init(attribute.name, value));
 			}
 
-			has_state ||= attribute.metadata.expression.has_state;
+			is_dynamic ||= has_state;
 		} else {
 			// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
-			has_state = true;
+			is_dynamic = true;
 
 			let value = /** @type {Expression} */ (context.visit(attribute));
 
@@ -68,7 +70,7 @@ export function build_set_attributes(
 	const call = b.call(
 		'$.set_attributes',
 		element_id,
-		has_state ? attributes_id : b.literal(null),
+		is_dynamic ? attributes_id : b.literal(null),
 		b.object(values),
 		context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
 		preserve_attribute_case,
@@ -76,7 +78,7 @@ export function build_set_attributes(
 		is_ignored(element, 'hydration_attribute_changed') && b.true
 	);
 
-	if (has_state) {
+	if (is_dynamic) {
 		context.state.init.push(b.let(attributes_id));
 		const update = b.stmt(b.assignment('=', attributes_id, call));
 		context.state.update.push(update);
@@ -104,19 +106,14 @@ export function build_style_directives(
 	const state = context.state;
 
 	for (const directive of style_directives) {
-		const { has_state, has_call } = directive.metadata.expression;
+		const { has_state } = directive.metadata.expression;
 
 		let value =
 			directive.value === true
 				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
-				: build_attribute_value(directive.value, context).value;
-
-		if (has_call) {
-			const id = b.id(state.scope.generate('style_directive'));
-
-			state.init.push(b.const(id, create_derived(state, b.thunk(value))));
-			value = b.call('$.get', id);
-		}
+				: build_attribute_value(directive.value, context, (value) =>
+						get_expression_id(context.state, value)
+					).value;
 
 		const update = b.stmt(
 			b.call(
@@ -128,9 +125,7 @@ export function build_style_directives(
 			)
 		);
 
-		if (!is_attributes_reactive && has_call) {
-			state.init.push(build_update(update));
-		} else if (is_attributes_reactive || has_state || has_call) {
+		if (has_state || is_attributes_reactive) {
 			state.update.push(update);
 		} else {
 			state.init.push(update);
@@ -158,17 +153,12 @@ export function build_class_directives(
 		let value = /** @type {Expression} */ (context.visit(directive.expression));
 
 		if (has_call) {
-			const id = b.id(state.scope.generate('class_directive'));
-
-			state.init.push(b.const(id, create_derived(state, b.thunk(value))));
-			value = b.call('$.get', id);
+			value = get_expression_id(state, value);
 		}
 
 		const update = b.stmt(b.call('$.toggle_class', element_id, b.literal(directive.name), value));
 
-		if (!is_attributes_reactive && has_call) {
-			state.init.push(build_update(update));
-		} else if (is_attributes_reactive || has_state || has_call) {
+		if (is_attributes_reactive || has_state) {
 			state.update.push(update);
 		} else {
 			state.init.push(update);
@@ -179,28 +169,30 @@ export function build_class_directives(
 /**
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
- * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
+ * @param {(value: Expression) => Expression} memoize
+ * @returns {{ value: Expression, has_state: boolean }}
  */
-export function build_attribute_value(value, context) {
+export function build_attribute_value(value, context, memoize = (value) => value) {
 	if (value === true) {
-		return { has_state: false, has_call: false, value: b.literal(true) };
+		return { value: b.literal(true), has_state: false };
 	}
 
 	if (!Array.isArray(value) || value.length === 1) {
 		const chunk = Array.isArray(value) ? value[0] : value;
 
 		if (chunk.type === 'Text') {
-			return { has_state: false, has_call: false, value: b.literal(chunk.data) };
+			return { value: b.literal(chunk.data), has_state: false };
 		}
 
+		let expression = /** @type {Expression} */ (context.visit(chunk.expression));
+
 		return {
-			has_state: chunk.metadata.expression.has_state,
-			has_call: chunk.metadata.expression.has_call,
-			value: /** @type {Expression} */ (context.visit(chunk.expression))
+			value: chunk.metadata.expression.has_call ? memoize(expression) : expression,
+			has_state: chunk.metadata.expression.has_state
 		};
 	}
 
-	return build_template_chunk(value, context.visit, context.state);
+	return build_template_chunk(value, context.visit, context.state, memoize);
 }
 
 /**

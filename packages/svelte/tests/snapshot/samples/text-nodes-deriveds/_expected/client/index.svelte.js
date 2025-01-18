@@ -16,11 +16,9 @@ export default function Text_nodes_deriveds($$anchor) {
 	}
 
 	var p = root();
-	const expression = $.derived(() => text1() ?? '');
-	const expression_1 = $.derived(() => text2() ?? '');
 	var text = $.child(p);
 
-	$.template_effect(() => $.set_text(text, `${$.get(expression)}${$.get(expression_1)}`));
 	$.reset(p);
+	$.template_effect(($0, $1) => $.set_text(text, `${$0 ?? ''}${$1 ?? ''}`), [text1, text2]);
 	$.append($$anchor, p);
 }

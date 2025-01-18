@@ -43,7 +43,8 @@ import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
-import { destroy_derived } from './deriveds.js';
+import { derived, derived_safe_equal, destroy_derived } from './deriveds.js';
+import { legacy_mode_flag } from '../../flags/index.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -343,16 +344,21 @@ export function render_effect(fn) {
 }
 
 /**
- * @param {() => void | (() => void)} fn
+ * @param {(...expressions: any) => void | (() => void)} fn
+ * @param {Array<() => any>} thunks
  * @returns {Effect}
  */
-export function template_effect(fn) {
+export function template_effect(fn, thunks = [], d = derived) {
+	const deriveds = thunks.map(d);
+	const effect = () => fn(...deriveds.map(get));
+
 	if (DEV) {
-		define_property(fn, 'name', {
+		define_property(effect, 'name', {
 			value: '{expression}'
 		});
 	}
-	return block(fn);
+
+	return block(effect);
 }
 
 /**

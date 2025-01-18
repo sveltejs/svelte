@@ -479,7 +479,6 @@ export namespace AST {
 		value: true | ExpressionTag | Array<Text | ExpressionTag>;
 		/** @internal */
 		metadata: {
-			expression: ExpressionMetadata;
 			/** May be set if this is an event attribute */
 			delegated: null | DelegatedEvent;
 			/** May be `true` if this is a `class` attribute that needs `clsx` */

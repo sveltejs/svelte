@@ -1,4 +1,4 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
+/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
@@ -16,7 +16,7 @@ import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js'
 import * as b from '../../../../utils/builders.js';
 import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { build_getter, create_derived } from '../utils.js';
+import { build_getter } from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
@@ -28,8 +28,8 @@ import { process_children } from './shared/fragment.js';
 import {
 	build_render_statement,
 	build_template_chunk,
-	build_update,
-	build_update_assignment
+	build_update_assignment,
+	get_expression_id
 } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 
@@ -409,7 +409,7 @@ export function RegularElement(node, context) {
 			b.block([
 				...child_state.init,
 				...element_state.init,
-				child_state.update.length > 0 ? build_render_statement(child_state.update) : b.empty,
+				child_state.update.length > 0 ? build_render_statement(child_state) : b.empty,
 				...child_state.after_update,
 				...element_state.after_update
 			])
@@ -536,7 +536,10 @@ function build_element_attribute_update_assignment(
 	const name = get_attribute_name(element, attribute);
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
-	let { has_call, value } = build_attribute_value(attribute.value, context);
+
+	let { value, has_state } = build_attribute_value(attribute.value, context, (value) =>
+		get_expression_id(state, value)
+	);
 
 	if (name === 'autofocus') {
 		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
@@ -555,15 +558,6 @@ function build_element_attribute_update_assignment(
 	if (name === 'class') {
 		if (attribute.metadata.needs_clsx) {
 			value = b.call('$.clsx', value);
-		}
-
-		if (attribute.metadata.expression.has_state && has_call) {
-			// ensure we're not creating a separate template effect for this so that
-			// potential class directives are added to the same effect and therefore always apply
-			const id = b.id(state.scope.generate('class_derived'));
-			state.init.push(b.const(id, create_derived(state, b.thunk(value))));
-			value = b.call('$.get', id);
-			has_call = false;
 		}
 
 		update = b.stmt(
@@ -605,14 +599,6 @@ function build_element_attribute_update_assignment(
 	} else if (is_dom_property(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, name), value));
 	} else {
-		if (name === 'style' && attribute.metadata.expression.has_state && has_call) {
-			// ensure we're not creating a separate template effect for this so that
-			// potential style directives are added to the same effect and therefore always apply
-			const id = b.id(state.scope.generate('style_derived'));
-			state.init.push(b.const(id, create_derived(state, b.thunk(value))));
-			value = b.call('$.get', id);
-			has_call = false;
-		}
 		const callee = name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute';
 		update = b.stmt(
 			b.call(
@@ -625,12 +611,8 @@ function build_element_attribute_update_assignment(
 		);
 	}
 
-	if (attribute.metadata.expression.has_state) {
-		if (has_call) {
-			state.init.push(build_update(update));
-		} else {
-			state.update.push(update);
-		}
+	if (has_state) {
+		state.update.push(update);
 		return true;
 	} else {
 		state.init.push(update);
@@ -648,7 +630,7 @@ function build_element_attribute_update_assignment(
 function build_custom_element_attribute_update_assignment(node_id, attribute, context) {
 	const state = context.state;
 	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
-	let { has_call, value } = build_attribute_value(attribute.value, context);
+	let { value, has_state } = build_attribute_value(attribute.value, context);
 
 	// We assume that noone's going to redefine the semantics of the class attribute on custom elements, i.e. it's still used for CSS classes
 	if (name === 'class' && attribute.metadata.needs_clsx) {
@@ -660,12 +642,10 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
 
 	const update = b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), value));
 
-	if (attribute.metadata.expression.has_state) {
-		if (has_call) {
-			state.init.push(build_update(update));
-		} else {
-			state.update.push(update);
-		}
+	if (has_state) {
+		// this is different from other updates — it doesn't get grouped,
+		// because set_custom_element_data may not be idempotent
+		state.init.push(b.stmt(b.call('$.template_effect', b.thunk(update.expression))));
 		return true;
 	} else {
 		state.init.push(update);
@@ -685,7 +665,9 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
  */
 function build_element_special_value_attribute(element, node_id, attribute, context) {
 	const state = context.state;
-	const { value } = build_attribute_value(attribute.value, context);
+	const { value, has_state } = build_attribute_value(attribute.value, context, (value) =>
+		get_expression_id(state, value)
+	);
 
 	const inner_assignment = b.assignment(
 		'=',
@@ -719,7 +701,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 		state.init.push(b.stmt(b.call('$.init_select', node_id, b.thunk(value))));
 	}
 
-	if (attribute.metadata.expression.has_state) {
+	if (has_state) {
 		const id = state.scope.generate(`${node_id.name}_value`);
 		build_update_assignment(
 			state,
