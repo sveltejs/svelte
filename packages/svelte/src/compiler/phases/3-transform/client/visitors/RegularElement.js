@@ -106,7 +106,7 @@ export function RegularElement(node, context) {
 			case 'Attribute':
 				// `is` attributes need to be part of the template, otherwise they break
 				if (attribute.name === 'is' && context.state.metadata.namespace === 'html') {
-					const value = build_attribute_value(attribute.value, context);
+					const { value } = build_attribute_value(attribute.value, context);
 
 					if (value.type === 'Literal' && typeof value.value === 'string') {
 						context.state.template.push(` is="${escape_html(value.value, true)}"`);
@@ -537,7 +537,7 @@ function build_element_attribute_update_assignment(
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
 
-	let value = build_attribute_value(attribute.value, context, (value) =>
+	let { value, has_state } = build_attribute_value(attribute.value, context, (value) =>
 		get_expression_id(state, value)
 	);
 
@@ -611,7 +611,7 @@ function build_element_attribute_update_assignment(
 		);
 	}
 
-	if (attribute.metadata.expression.has_state) {
+	if (has_state) {
 		state.update.push(update);
 		return true;
 	} else {
@@ -630,7 +630,7 @@ function build_element_attribute_update_assignment(
 function build_custom_element_attribute_update_assignment(node_id, attribute, context) {
 	const state = context.state;
 	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
-	let value = build_attribute_value(attribute.value, context);
+	let { value, has_state } = build_attribute_value(attribute.value, context);
 
 	// We assume that noone's going to redefine the semantics of the class attribute on custom elements, i.e. it's still used for CSS classes
 	if (name === 'class' && attribute.metadata.needs_clsx) {
@@ -642,7 +642,7 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
 
 	const update = b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), value));
 
-	if (attribute.metadata.expression.has_state) {
+	if (has_state) {
 		// this is different from other updates — it doesn't get grouped,
 		// because set_custom_element_data may not be idempotent
 		state.init.push(b.stmt(b.call('$.template_effect', b.thunk(update.expression))));
@@ -665,7 +665,7 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
  */
 function build_element_special_value_attribute(element, node_id, attribute, context) {
 	const state = context.state;
-	const value = build_attribute_value(attribute.value, context, (value) =>
+	const { value, has_state } = build_attribute_value(attribute.value, context, (value) =>
 		get_expression_id(state, value)
 	);
 
@@ -701,7 +701,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 		state.init.push(b.stmt(b.call('$.init_select', node_id, b.thunk(value))));
 	}
 
-	if (attribute.metadata.expression.has_state) {
+	if (has_state) {
 		const id = state.scope.generate(`${node_id.name}_value`);
 		build_update_assignment(
 			state,

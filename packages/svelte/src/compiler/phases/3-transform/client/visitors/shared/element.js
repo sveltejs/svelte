@@ -28,14 +28,14 @@ export function build_set_attributes(
 	is_custom_element,
 	state
 ) {
-	let has_state = false;
+	let is_dynamic = false;
 
 	/** @type {ObjectExpression['properties']} */
 	const values = [];
 
 	for (const attribute of attributes) {
 		if (attribute.type === 'Attribute') {
-			const value = build_attribute_value(attribute.value, context, (value) =>
+			const { value, has_state } = build_attribute_value(attribute.value, context, (value) =>
 				get_expression_id(context.state, value)
 			);
 
@@ -51,10 +51,10 @@ export function build_set_attributes(
 				values.push(b.init(attribute.name, value));
 			}
 
-			has_state ||= attribute.metadata.expression.has_state;
+			is_dynamic ||= has_state;
 		} else {
 			// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
-			has_state = true;
+			is_dynamic = true;
 
 			let value = /** @type {Expression} */ (context.visit(attribute));
 
@@ -70,7 +70,7 @@ export function build_set_attributes(
 	const call = b.call(
 		'$.set_attributes',
 		element_id,
-		has_state ? attributes_id : b.literal(null),
+		is_dynamic ? attributes_id : b.literal(null),
 		b.object(values),
 		context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
 		preserve_attribute_case,
@@ -78,7 +78,7 @@ export function build_set_attributes(
 		is_ignored(element, 'hydration_attribute_changed') && b.true
 	);
 
-	if (has_state) {
+	if (is_dynamic) {
 		context.state.init.push(b.let(attributes_id));
 		const update = b.stmt(b.assignment('=', attributes_id, call));
 		context.state.update.push(update);
@@ -113,7 +113,7 @@ export function build_style_directives(
 				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
 				: build_attribute_value(directive.value, context, (value) =>
 						get_expression_id(context.state, value)
-					);
+					).value;
 
 		const update = b.stmt(
 			b.call(
@@ -170,26 +170,29 @@ export function build_class_directives(
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
  * @param {(value: Expression) => Expression} memoize
- * @returns {Expression}
+ * @returns {{ value: Expression, has_state: boolean }}
  */
 export function build_attribute_value(value, context, memoize = (value) => value) {
 	if (value === true) {
-		return b.literal(true);
+		return { value: b.literal(true), has_state: false };
 	}
 
 	if (!Array.isArray(value) || value.length === 1) {
 		const chunk = Array.isArray(value) ? value[0] : value;
 
 		if (chunk.type === 'Text') {
-			return b.literal(chunk.data);
+			return { value: b.literal(chunk.data), has_state: false };
 		}
 
 		let expression = /** @type {Expression} */ (context.visit(chunk.expression));
 
-		return chunk.metadata.expression.has_call ? memoize(expression) : expression;
+		return {
+			value: chunk.metadata.expression.has_call ? memoize(expression) : expression,
+			has_state: chunk.metadata.expression.has_state
+		};
 	}
 
-	return build_template_chunk(value, context.visit, context.state, memoize).value;
+	return build_template_chunk(value, context.visit, context.state, memoize);
 }
 
 /**

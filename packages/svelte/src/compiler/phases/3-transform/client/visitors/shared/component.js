@@ -137,7 +137,7 @@ export function build_component(node, component_name, context, anchor = context.
 						build_attribute_value(attribute.value, context, (value) =>
 							// TODO put the derived in the local block
 							memoize_expression(context.state, value)
-						)
+						).value
 					)
 				);
 				continue;
@@ -151,11 +151,11 @@ export function build_component(node, component_name, context, anchor = context.
 				has_children_prop = true;
 			}
 
-			const value = build_attribute_value(attribute.value, context, (value) =>
+			const { value, has_state } = build_attribute_value(attribute.value, context, (value) =>
 				memoize_expression(context.state, value)
 			);
 
-			if (attribute.metadata.expression.has_state) {
+			if (has_state) {
 				let arg = value;
 
 				// When we have a non-simple computation, anything other than an Identifier or Member expression,
