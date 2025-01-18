@@ -3,6 +3,7 @@
 /** @import { ComponentContext } from '../types' */
 import * as b from '../../../../utils/builders.js';
 import { build_attribute_value } from './shared/element.js';
+import { memoize_expression } from './shared/utils.js';
 
 /**
  * @param {AST.SlotElement} node
@@ -29,7 +30,9 @@ export function SlotElement(node, context) {
 		if (attribute.type === 'SpreadAttribute') {
 			spreads.push(b.thunk(/** @type {Expression} */ (context.visit(attribute))));
 		} else if (attribute.type === 'Attribute') {
-			const value = build_attribute_value(attribute.value, context);
+			const value = build_attribute_value(attribute.value, context, (value) =>
+				memoize_expression(context.state, value)
+			);
 
 			if (attribute.name === 'name') {
 				name = /** @type {Literal} */ (value);

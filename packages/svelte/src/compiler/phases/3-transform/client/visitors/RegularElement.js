@@ -630,7 +630,7 @@ function build_element_attribute_update_assignment(
 function build_custom_element_attribute_update_assignment(node_id, attribute, context) {
 	const state = context.state;
 	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
-	let value = build_attribute_value(attribute.value, context, (value) => value);
+	let value = build_attribute_value(attribute.value, context);
 
 	// We assume that noone's going to redefine the semantics of the class attribute on custom elements, i.e. it's still used for CSS classes
 	if (name === 'class' && attribute.metadata.needs_clsx) {

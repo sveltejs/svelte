@@ -35,7 +35,9 @@ export function build_set_attributes(
 
 	for (const attribute of attributes) {
 		if (attribute.type === 'Attribute') {
-			const value = build_attribute_value(attribute.value, context);
+			const value = build_attribute_value(attribute.value, context, (value) =>
+				get_expression_id(context.state, value)
+			);
 
 			if (
 				is_event_attribute(attribute) &&
@@ -109,7 +111,9 @@ export function build_style_directives(
 		let value =
 			directive.value === true
 				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
-				: build_attribute_value(directive.value, context);
+				: build_attribute_value(directive.value, context, (value) =>
+						get_expression_id(context.state, value)
+					);
 
 		const update = b.stmt(
 			b.call(
@@ -168,18 +172,7 @@ export function build_class_directives(
  * @param {(value: Expression) => Expression} memoize
  * @returns {Expression}
  */
-export function build_attribute_value(
-	value,
-	context,
-	memoize = (value) => {
-		// TODO this is temporary
-		const id = b.id(context.state.scope.generate('expression'));
-		context.state.init.push(
-			b.const(id, create_derived(context.state, b.thunk(b.logical('??', value, b.literal('')))))
-		);
-		return b.call('$.get', id);
-	}
-) {
+export function build_attribute_value(value, context, memoize = (value) => value) {
 	if (value === true) {
 		return b.literal(true);
 	}
@@ -193,11 +186,7 @@ export function build_attribute_value(
 
 		let expression = /** @type {Expression} */ (context.visit(chunk.expression));
 
-		if (chunk.metadata.expression.has_call) {
-			expression = memoize(expression);
-		}
-
-		return expression;
+		return chunk.metadata.expression.has_call ? memoize(expression) : expression;
 	}
 
 	return build_template_chunk(value, context.visit, context.state, memoize).value;
