@@ -107,7 +107,8 @@ export {
 	template_effect,
 	effect,
 	user_effect,
-	user_pre_effect
+	user_pre_effect,
+	script_effect
 } from './reactivity/effects.js';
 export { mutable_state, mutate, set, state } from './reactivity/sources.js';
 export {
@@ -129,7 +130,7 @@ export {
 	update_store,
 	mark_store_binding
 } from './reactivity/store.js';
-export { boundary } from './dom/blocks/boundary.js';
+export { boundary, await_derived, maybe_yield } from './dom/blocks/boundary.js';
 export { set_text } from './render.js';
 export {
 	get,

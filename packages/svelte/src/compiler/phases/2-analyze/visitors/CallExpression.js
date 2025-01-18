@@ -3,7 +3,7 @@
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
-import { get_parent, unwrap_optional } from '../../../utils/ast.js';
+import { extract_identifiers, get_parent, unwrap_optional } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
 import { dev, locate_node, source } from '../../../state.js';
 import * as b from '../../../utils/builders.js';
@@ -123,6 +123,52 @@ export function CallExpression(node, context) {
 
 			break;
 
+			case '$await': {
+				if (node.arguments.length !== 1) {
+					e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+				}
+
+				const declarator = context.path.at(-1);
+				const declaration = context.path.at(-2);
+				const program = context.path.at(-3);
+
+				if (context.state.ast_type !== 'instance') {
+					throw new Error('TODO: $await can only be used at the top-level of a component');
+				}
+				if (
+					declarator?.type !== 'VariableDeclarator' ||
+					declarator?.id.type !== 'ArrayPattern' ||
+					declaration?.type !== 'VariableDeclaration' ||
+					declaration?.declarations.length !== 1 ||
+					context.state.function_depth !== 1 ||
+					program?.type !== 'Program'
+				) {
+					throw new Error('TODO: invalid usage of $await in component');
+				}
+
+				const [async_derived, derived_promise] = declarator.id.elements;
+
+				if (async_derived) {
+					for (const id of extract_identifiers(async_derived)) {
+						const binding = context.state.scope.get(id.name);
+						if (binding !== null) {
+							binding.kind = 'async_derived';
+						}
+					}
+				}
+
+				if (derived_promise) {
+					for (const id of extract_identifiers(derived_promise)) {
+						const binding = context.state.scope.get(id.name);
+						if (binding !== null) {
+							binding.kind = 'derived';
+						}
+					}
+				}
+
+				break;
+			}
+
 		case '$inspect':
 			if (node.arguments.length < 1) {
 				e.rune_invalid_arguments_length(node, rune, 'one or more arguments');
@@ -207,7 +253,7 @@ export function CallExpression(node, context) {
 	}
 
 	// `$inspect(foo)` or `$derived(foo) should not trigger the `static-state-reference` warning
-	if (rune === '$inspect' || rune === '$derived') {
+	if (rune === '$inspect' || rune === '$derived' || rune === '$await') {
 		context.next({ ...context.state, function_depth: context.state.function_depth + 1 });
 	} else {
 		context.next();

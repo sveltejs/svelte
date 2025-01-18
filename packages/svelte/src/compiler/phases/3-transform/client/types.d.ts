@@ -7,7 +7,8 @@ import type {
 	Expression,
 	AssignmentExpression,
 	UpdateExpression,
-	VariableDeclaration
+	VariableDeclaration,
+	Directive
 } from 'estree';
 import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
@@ -91,6 +92,8 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly instance_level_snippets: VariableDeclaration[];
 	/** Snippets hoisted to the module */
 	readonly module_level_snippets: VariableDeclaration[];
+
+	target_statements: null | Array<ModuleDeclaration | Statement | Directive>;
 }
 
 export interface StateField {

@@ -6,6 +6,7 @@ import { ensure_no_module_import_conflict, validate_identifier_name } from './sh
 import * as e from '../../../errors.js';
 import { extract_paths } from '../../../utils/ast.js';
 import { equal } from '../../../utils/assert.js';
+import { create_expression_metadata } from '../../nodes.js';
 
 /**
  * @param {VariableDeclarator} node
@@ -29,21 +30,42 @@ export function VariableDeclarator(node, context) {
 			rune === '$state.raw' ||
 			rune === '$derived' ||
 			rune === '$derived.by' ||
-			rune === '$props'
+			rune === '$props' ||
+			rune === '$await'
 		) {
-			for (const path of paths) {
-				// @ts-ignore this fails in CI for some insane reason
-				const binding = /** @type {Binding} */ (context.state.scope.get(path.node.name));
-				binding.kind =
-					rune === '$state'
-						? 'state'
-						: rune === '$state.raw'
-							? 'raw_state'
-							: rune === '$derived' || rune === '$derived.by'
-								? 'derived'
-								: path.is_rest
-									? 'rest_prop'
-									: 'prop';
+			let metadata = create_expression_metadata();
+
+			if (rune !== '$await') {
+				for (const path of paths) {
+					// @ts-ignore this fails in CI for some insane reason
+					const binding = /** @type {Binding} */ (context.state.scope.get(path.node.name));
+					binding.kind =
+						rune === '$state'
+							? 'state'
+							: rune === '$state.raw'
+								? 'raw_state'
+								: rune === '$derived' || rune === '$derived.by'
+									? 'derived'
+									: path.is_rest
+										? 'rest_prop'
+										: 'prop';
+				}
+			}
+
+			context.visit(node.id);
+			if (node.init) {
+				context.visit(node.init);
+				if (node.init.type === 'CallExpression' && node.init.arguments.length > 0) {
+					context.visit(node.init.arguments[0], { ...context.state, expression: metadata });
+
+					if (metadata.async_dependencies.size > 0) {
+						for (const path of paths) {
+							// @ts-ignore
+							const binding = /** @type {Binding} */ (context.state.scope.get(path.node.name));
+							metadata.async_dependencies.forEach((dep) => binding.async_dependencies.add(dep));
+						}
+					}
+				}
 			}
 		}
 
@@ -103,6 +125,8 @@ export function VariableDeclarator(node, context) {
 				}
 			}
 		}
+
+		return;
 	} else {
 		if (node.init?.type === 'CallExpression') {
 			const callee = node.init.callee;

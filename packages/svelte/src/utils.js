@@ -429,6 +429,7 @@ const RUNES = /** @type {const} */ ([
 	'$effect.pre',
 	'$effect.tracking',
 	'$effect.root',
+	'$await',
 	'$inspect',
 	'$inspect().with',
 	'$inspect.trace',

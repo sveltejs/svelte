@@ -105,6 +105,7 @@ export class Scope {
 			node,
 			references: [],
 			legacy_dependencies: [],
+			async_dependencies: new Set(),
 			initial,
 			reassigned: false,
 			mutated: false,

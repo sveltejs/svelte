@@ -88,9 +88,25 @@ export function Identifier(node, context) {
 	}
 
 	if (binding) {
-		if (context.state.expression) {
-			context.state.expression.dependencies.add(binding);
-			context.state.expression.has_state ||= binding.kind !== 'normal';
+		if (binding.kind === 'async_derived') {
+			debugger
+		}
+
+		const expression = context.state.expression;
+
+		if (expression) {
+			expression.dependencies.add(binding);
+
+			if (
+				binding.kind === 'async_derived'
+			) {
+				expression.async_dependencies.add(binding);
+			}
+			expression.has_state ||= binding.kind !== 'normal';
+
+			binding.async_dependencies.forEach((dep) => {
+				expression.async_dependencies.add(dep);
+			});
 		}
 
 		if (

@@ -20,6 +20,7 @@ export function add_state_transformers(context) {
 		if (
 			is_state_source(binding, context.state.analysis) ||
 			binding.kind === 'derived' ||
+			binding.kind === 'async_derived' ||
 			binding.kind === 'legacy_reactive'
 		) {
 			context.state.transform[name] = {

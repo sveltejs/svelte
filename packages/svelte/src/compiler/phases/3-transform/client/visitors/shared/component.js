@@ -167,7 +167,30 @@ export function build_component(node, component_name, context, anchor = context.
 					arg = b.call('$.get', id);
 				}
 
-				push_prop(b.get(attribute.name, [b.return(arg)]));
+				const expression_metadata = attribute.metadata.expression;
+				const async_dependencies = [...expression_metadata.async_dependencies];
+
+				if (async_dependencies.length > 0) {
+					push_prop(
+						b.get(attribute.name, [
+							b.stmt(
+								b.call(
+									'$.maybe_yield',
+									b.thunk(
+										b.sequence(
+											async_dependencies.map(
+												(v) => /** @type {Expression} */ (context.visit(b.id(v.node.name)))
+											)
+										)
+									)
+								)
+							),
+							b.return(arg)
+						])
+					);
+				} else {
+					push_prop(b.get(attribute.name, [b.return(arg)]));
+				}
 			} else {
 				push_prop(b.init(attribute.name, value));
 			}

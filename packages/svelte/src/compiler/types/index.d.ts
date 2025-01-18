@@ -274,6 +274,7 @@ export interface Binding {
 		| 'state'
 		| 'raw_state'
 		| 'derived'
+		| 'async_derived'
 		| 'each'
 		| 'snippet'
 		| 'store_sub'
@@ -302,6 +303,8 @@ export interface Binding {
 	scope: Scope;
 	/** For `legacy_reactive`: its reactive dependencies */
 	legacy_dependencies: Binding[];
+	/** All the transitive async or prop (as they might be async) bindings that this binding uses */
+	async_dependencies: Set<Binding>;
 	/** Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props() */
 	prop_alias: string | null;
 	/** Additional metadata, varies per binding type */
@@ -318,6 +321,8 @@ export interface ExpressionMetadata {
 	has_state: boolean;
 	/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
 	has_call: boolean;
+	/** All the transitive async or prop (as they might be async) bindings that are used inside this expression */
+	async_dependencies: Set<Binding>;
 }
 
 export * from './template.js';

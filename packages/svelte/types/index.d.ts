@@ -3157,4 +3157,6 @@ declare namespace $host {
 	export const toString: never;
 }
 
+declare function $async<V>(value: Promise<V>): [V, undefined | Promise<V>];
+
 //# sourceMappingURL=index.d.ts.map

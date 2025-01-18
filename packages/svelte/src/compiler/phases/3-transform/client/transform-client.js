@@ -174,7 +174,8 @@ export function client_component(analysis, options) {
 		update: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),
 		template: /** @type {any} */ (null),
-		locations: /** @type {any} */ (null)
+		locations: /** @type {any} */ (null),
+		target_statements: null
 	};
 
 	const module = /** @type {ESTree.Program} */ (
@@ -192,6 +193,8 @@ export function client_component(analysis, options) {
 	const instance = /** @type {ESTree.Program} */ (
 		walk(/** @type {AST.SvelteNode} */ (analysis.instance.ast), instance_state, visitors)
 	);
+
+	const target_statements = instance_state.target_statements;
 
 	const template = /** @type {ESTree.Program} */ (
 		walk(
@@ -351,7 +354,7 @@ export function client_component(analysis, options) {
 	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
 	if (dev) push_args.push(b.id(analysis.name));
 
-	const component_block = b.block([
+	const component_block_statements = [
 		...store_setup,
 		...legacy_reactive_declarations,
 		...group_binding_declarations,
@@ -359,9 +362,16 @@ export function client_component(analysis, options) {
 		.../** @type {ESTree.Statement[]} */ (instance.body),
 		analysis.runes || !analysis.needs_context
 			? b.empty
-			: b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)),
-		.../** @type {ESTree.Statement[]} */ (template.body)
-	]);
+			: b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined))
+	];
+
+	if (target_statements === null) {
+		component_block_statements.push(.../** @type {ESTree.Statement[]} */ (template.body));
+	} else {
+		target_statements.push(.../** @type {ESTree.Statement[]} */ (template.body));
+	}
+
+	const component_block = b.block(component_block_statements);
 
 	if (!analysis.runes) {
 		// Bind static exports to props so that people can access them with bind:x

@@ -34,7 +34,6 @@ import {
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
-
 export let inspect_effects = new Set();
 
 /**

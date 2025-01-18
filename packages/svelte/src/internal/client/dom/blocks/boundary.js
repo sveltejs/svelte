@@ -1,6 +1,16 @@
-/** @import { Effect, TemplateNode, } from '#client' */
+/** @import { Effect, Source, TemplateNode, } from '#client' */
 
-import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '../../constants.js';
+import { UNINITIALIZED } from '../../../../constants.js';
+import {
+	AWAIT_EFFECT,
+	BOUNDARY_EFFECT,
+	DESTROYED,
+	DIRTY,
+	EFFECT_TRANSPARENT,
+	INERT,
+	PENDING
+} from '../../constants.js';
+import { derived } from '../../reactivity/deriveds.js';
 import {
 	block,
 	branch,
@@ -8,6 +18,7 @@ import {
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
+import { internal_set, source } from '../../reactivity/sources.js';
 import {
 	active_effect,
 	active_reaction,
@@ -16,7 +27,12 @@ import {
 	set_active_effect,
 	set_active_reaction,
 	set_component_context,
-	reset_is_throwing_error
+	reset_is_throwing_error,
+	get,
+	set_is_within_await,
+	untrack,
+	schedule_effect,
+	set_signal_status
 } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -27,7 +43,7 @@ import {
 	set_hydrate_node
 } from '../hydration.js';
 import { get_next_sibling } from '../operations.js';
-import { queue_boundary_micro_task } from '../task.js';
+import { flush_boundary_micro_tasks, queue_boundary_micro_task } from '../task.js';
 
 const ASYNC_INCREMENT = Symbol();
 const ASYNC_DECREMENT = Symbol();
@@ -240,4 +256,75 @@ export function trigger_async_boundary(effect, trigger) {
 		}
 		current = current.parent;
 	}
+	throw new Error('Cannot use `$await` without a parent `<svelte:boundary pending={...}>`');
+}
+
+/**
+ * @template V
+ * @param {() => Promise<V>} fn
+ */
+export function await_derived(fn) {
+	var current = /**  @type {Effect} */ (active_effect);
+	/** @type {Source<V | typeof UNINITIALIZED>} */
+	var value = source(UNINITIALIZED);
+	// We mark the source signal as inert as it's value
+	// can throw if in an async pending state
+	value.f ^= INERT;
+	/** @type {Promise<V> | typeof UNINITIALIZED} */
+	var previous_promise = UNINITIALIZED;
+	var derived_promise = derived(fn);
+
+	block(() => {
+		var promise = get(derived_promise);
+		get(value);
+
+		var should_suspend = previous_promise !== promise;
+		previous_promise = promise;
+
+		if (should_suspend) {
+			trigger_async_boundary(current, ASYNC_INCREMENT);
+			set_is_within_await(true);
+
+			// If we're updating, then we need to flush the boundary microtasks
+			if (current.parent?.first !== null) {
+				flush_boundary_micro_tasks();
+			}
+
+			if (promise) {
+				promise.then((v) => {
+					if (previous_promise !== promise || (current.f & DESTROYED) !== 0) {
+						return;
+					}
+					internal_set(value, v);
+					//set_signal_status(current, DIRTY);
+					trigger_async_boundary(current, ASYNC_DECREMENT);
+				});
+
+				promise.catch((e) => {
+					handle_error(e, current, null, current.ctx);
+				});
+			}
+		}
+
+		return value.v;
+	}, AWAIT_EFFECT);
+
+	var pending = derived(() => {
+		var promise = get(derived_promise);
+		if (previous_promise === promise) {
+			return null;
+		}
+
+		// Wait a microtask to let the UI flush
+		return promise.then((r) => r);
+	});
+
+	return [value, pending];
+}
+
+/**
+ * @param {() => any} fn
+ */
+export function maybe_yield(fn) {
+	untrack(fn);
 }

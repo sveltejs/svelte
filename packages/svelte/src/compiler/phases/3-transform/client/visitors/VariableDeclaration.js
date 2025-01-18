@@ -194,6 +194,10 @@ export function VariableDeclaration(node, context) {
 				}
 				continue;
 			}
+
+			if (rune === '$await') {
+				declarations.push(b.declarator(declarator.id, b.call('$.await_derived', b.thunk(value))));
+			}
 		}
 	} else {
 		for (const declarator of node.declarations) {

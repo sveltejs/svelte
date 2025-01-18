@@ -1,14 +1,14 @@
 /** @import { Expression, ImportDeclaration, MemberExpression, Program } from 'estree' */
 /** @import { ComponentContext } from '../types' */
-import { build_getter, is_prop_source } from '../utils.js';
+import { build_getter, is_prop_source, wrap_unsafe_async_statements } from '../utils.js';
 import * as b from '../../../../utils/builders.js';
 import { add_state_transformers } from './shared/declarations.js';
 
 /**
- * @param {Program} _
+ * @param {Program} node
  * @param {ComponentContext} context
  */
-export function Program(_, context) {
+export function Program(node, context) {
 	if (!context.state.analysis.runes) {
 		context.state.transform['$$props'] = {
 			read: (node) => ({ ...node, name: '$$sanitized_props' })
@@ -136,6 +136,16 @@ export function Program(_, context) {
 	}
 
 	add_state_transformers(context);
+
+	if (context.state.analysis.instance && context.state.analysis.runes) {
+		const [statements, target_statements] = wrap_unsafe_async_statements(node.body, context);
+		context.state.target_statements = target_statements;
+
+		return {
+			...node,
+			body: statements
+		};
+	}
 
 	context.next();
 }

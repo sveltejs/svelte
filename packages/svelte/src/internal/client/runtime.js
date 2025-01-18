@@ -25,7 +25,9 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	BOUNDARY_EFFECT
+	BOUNDARY_EFFECT,
+	AWAIT_EFFECT,
+	PENDING
 } from './constants.js';
 import {
 	flush_idle_tasks,
@@ -58,6 +60,7 @@ let last_scheduled_effect = null;
 
 export let is_flushing_effect = false;
 export let is_destroying_effect = false;
+export let is_within_await = false;
 
 /** @param {boolean} value */
 export function set_is_flushing_effect(value) {
@@ -67,6 +70,11 @@ export function set_is_flushing_effect(value) {
 /** @param {boolean} value */
 export function set_is_destroying_effect(value) {
 	is_destroying_effect = value;
+}
+
+/** @param {boolean} value */
+export function set_is_within_await(value) {
+	is_within_await = value;
 }
 
 // Handle effect queues
@@ -572,6 +580,7 @@ export function update_effect(effect) {
 
 	var previous_effect = active_effect;
 	var previous_component_context = component_context;
+	var previous_is_within_await = is_within_await;
 
 	active_effect = effect;
 
@@ -614,9 +623,16 @@ export function update_effect(effect) {
 			dev_effect_stack.push(effect);
 		}
 	} catch (error) {
+		if (error === PENDING) {
+			set_signal_status(effect, DIRTY);
+			return;
+		}
 		handle_error(error, effect, previous_effect, previous_component_context || effect.ctx);
 	} finally {
 		active_effect = previous_effect;
+		if ((flags & AWAIT_EFFECT) === 0 || previous_effect === null) {
+			is_within_await = previous_is_within_await;
+		}
 
 		if (DEV) {
 			dev_current_component_function = previous_component_fn;
@@ -746,7 +762,6 @@ function flushed_deferred() {
 	if (flush_count > 1001) {
 		return;
 	}
-	// flush_before_process_microtasks();
 	const previous_queued_root_effects = queued_root_effects;
 	queued_root_effects = [];
 	flush_queued_root_effects(previous_queued_root_effects);
@@ -810,7 +825,7 @@ function process_effects(effect, collected_effects) {
 		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 		var sibling = current_effect.next;
 
-		if (!is_skippable_branch && (flags & INERT) === 0) {
+		if (!is_skippable_branch && ((flags & INERT) === 0 || (flags & AWAIT_EFFECT) !== 0)) {
 			if ((flags & RENDER_EFFECT) !== 0) {
 				if (is_branch) {
 					current_effect.f ^= CLEAN;
@@ -820,7 +835,11 @@ function process_effects(effect, collected_effects) {
 							update_effect(current_effect);
 						}
 					} catch (error) {
-						handle_error(error, current_effect, null, current_effect.ctx);
+						if (error === PENDING) {
+							set_signal_status(current_effect, DIRTY);
+						} else {
+							handle_error(error, current_effect, null, current_effect.ctx);
+						}
 					}
 				}
 
@@ -1013,7 +1032,16 @@ export function get(signal) {
 		}
 	}
 
-	return signal.v;
+	value = signal.v;
+
+	if (
+		(flags & INERT) !== 0 &&
+		(is_within_await || (active_effect !== null && (active_effect.f & INERT) !== 0))
+	) {
+		throw PENDING;
+	}
+
+	return value;
 }
 
 /**
@@ -1269,6 +1297,9 @@ export function exclude_from_object(obj, keys) {
  * @returns {void}
  */
 export function push(props, runes = false, fn) {
+	if (is_within_await && !runes) {
+		throw new Error('Cannot use $await in a component that renders a legacy component')
+	}
 	component_context = {
 		p: component_context,
 		c: null,

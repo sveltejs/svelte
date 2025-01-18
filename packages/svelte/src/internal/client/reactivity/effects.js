@@ -16,7 +16,8 @@ import {
 	set_is_flushing_effect,
 	set_signal_status,
 	untrack,
-	skip_reaction
+	skip_reaction,
+	is_within_await
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -36,7 +37,8 @@ import {
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
 	EFFECT_HAS_DERIVED,
-	BOUNDARY_EFFECT
+	BOUNDARY_EFFECT,
+	TEMPLATE_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
 import * as e from '../errors.js';
@@ -118,27 +120,36 @@ function create_effect(type, fn, sync, push = true) {
 		effect.component_function = dev_current_component_function;
 	}
 
-	if (sync) {
-		var previously_flushing_effect = is_flushing_effect;
+	var should_run_effect =
+		!is_within_await ||
+		(type & BRANCH_EFFECT) !== 0 ||
+		((type & BLOCK_EFFECT) !== 0 && (type & TEMPLATE_EFFECT) === 0);
 
-		try {
-			set_is_flushing_effect(true);
-			update_effect(effect);
-			effect.f |= EFFECT_RAN;
-		} catch (e) {
-			destroy_effect(effect);
-			throw e;
-		} finally {
-			set_is_flushing_effect(previously_flushing_effect);
+	if (should_run_effect) {
+		if (sync) {
+			var previously_flushing_effect = is_flushing_effect;
+
+			try {
+				set_is_flushing_effect(true);
+				update_effect(effect);
+				effect.f |= EFFECT_RAN;
+			} catch (e) {
+				destroy_effect(effect);
+				throw e;
+			} finally {
+				set_is_flushing_effect(previously_flushing_effect);
+			}
+		} else if (fn !== null) {
+			schedule_effect(effect);
 		}
-	} else if (fn !== null) {
-		schedule_effect(effect);
 	}
 
 	// if an effect has no dependencies, no DOM and no teardown function,
 	// don't bother adding it to the effect tree
 	var inert =
+		should_run_effect &&
 		sync &&
+		!is_within_await &&
 		effect.deps === null &&
 		effect.first === null &&
 		effect.nodes_start === null &&
@@ -352,7 +363,7 @@ export function template_effect(fn) {
 			value: '{expression}'
 		});
 	}
-	return block(fn);
+	return block(fn, TEMPLATE_EFFECT);
 }
 
 /**
@@ -369,6 +380,16 @@ export function block(fn, flags = 0) {
  */
 export function branch(fn, push = true) {
 	return create_effect(RENDER_EFFECT | BRANCH_EFFECT, fn, true, push);
+}
+
+/**
+ * @param {(() => void)} fn
+ */
+export function script_effect(fn) {
+	if (active_effect === null || !is_within_await) {
+		return fn();
+	}
+	return create_effect(RENDER_EFFECT, () => untrack(fn), true);
 }
 
 /**

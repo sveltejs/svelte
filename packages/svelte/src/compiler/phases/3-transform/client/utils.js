@@ -1,10 +1,11 @@
-/** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, Pattern, PrivateIdentifier, Statement } from 'estree' */
+/** @import { ArrowFunctionExpression, Expression, CallExpression, VariableDeclarator, FunctionDeclaration, FunctionExpression, Identifier, Pattern, PrivateIdentifier, Statement, VariableDeclaration, ModuleDeclaration, Directive } from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 /** @import { ClientTransformState, ComponentClientTransformState, ComponentContext } from './types.js' */
 /** @import { Analysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
 import * as b from '../../../utils/builders.js';
 import { extract_identifiers, is_simple_expression } from '../../../utils/ast.js';
+import { get_rune } from '../../scope.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
@@ -311,4 +312,108 @@ export function create_derived_block_argument(node, context) {
  */
 export function create_derived(state, arg) {
 	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
+}
+
+/**
+ * @param {(ModuleDeclaration | Statement | Directive)[]} statements
+ * @param {ComponentContext} context
+ * @returns {[(ModuleDeclaration | Statement | Directive)[], null | (ModuleDeclaration | Statement | Directive)[]]}
+ */
+export function wrap_unsafe_async_statements(statements, context) {
+	/** @type {(ModuleDeclaration | Statement | Directive)[]} */
+	const new_statements = [];
+	let target_block_statements = new_statements;
+	let is_unsafe = true;
+
+	const push_unsafe_statement = (/** @type {Statement} */ statement) => {
+		if (is_unsafe) {
+			const block_statments = [statement];
+			const script_template = b.stmt(b.call('$.script_effect', b.thunk(b.block(block_statments))));
+			target_block_statements.push(script_template);
+			target_block_statements = block_statments;
+			is_unsafe = false;
+		} else {
+			target_block_statements.push(statement);
+		}
+	};
+
+	for (const statement of statements) {
+		const visited = /** @type {Statement} */ (context.visit(statement));
+
+		if (
+			statement.type === 'FunctionDeclaration' ||
+			statement.type === 'ClassDeclaration' ||
+			statement.type === 'EmptyStatement' ||
+			statement.type === 'ImportDeclaration' ||
+			statement.type === 'ExportNamedDeclaration' ||
+			statement.type === 'ExportAllDeclaration' ||
+			statement.type === 'ExportDefaultDeclaration'
+		) {
+			target_block_statements.push(visited);
+			continue;
+		}
+
+		if (statement.type === 'VariableDeclaration') {
+			if (statement.declarations.length === 1) {
+				const declarator = statement.declarations[0];
+				const init = declarator.init;
+
+				// Safe declaration
+				if (
+					init == null ||
+					init.type === 'Literal' ||
+					init.type === 'FunctionExpression' ||
+					init.type === 'ArrowFunctionExpression' ||
+					(init.type === 'ArrayExpression' && init.elements.length === 0) ||
+					(init.type === 'ObjectExpression' && init.properties.length === 0)
+				) {
+					target_block_statements.push(visited);
+					continue;
+				}
+				// Handle runes
+				if (init.type === 'CallExpression') {
+					const rune = get_rune(init, context.state.scope);
+
+					if (rune === '$props' || rune === '$derived' || rune === '$derived.by') {
+						target_block_statements.push(visited);
+						continue;
+					}
+					if (rune === '$await') {
+						target_block_statements.push(visited);
+						is_unsafe = true;
+						continue;
+					}
+				}
+			}
+			// TODO: we can probably better handle multiple declarators
+			push_unsafe_statement(visited);
+			continue;
+		}
+
+		if (statement.type === 'ExpressionStatement') {
+			const expression = statement.expression;
+
+			// Handle runes
+			if (expression.type === 'CallExpression') {
+				const rune = get_rune(expression, context.state.scope);
+
+				if (rune === '$effect' || rune === '$effect.pre') {
+					target_block_statements.push(visited);
+					continue;
+				}
+			}
+
+			// Assume all expression statement expressions are unsafe
+			push_unsafe_statement(visited);
+			continue;
+		}
+
+		// Assume all other top-level statements are unsafe
+		push_unsafe_statement(visited);
+	}
+
+	return [
+		new_statements,
+		new_statements === target_block_statements ? null : target_block_statements
+	];
 }
