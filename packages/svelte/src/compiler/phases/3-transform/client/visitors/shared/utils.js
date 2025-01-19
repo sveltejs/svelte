@@ -119,7 +119,22 @@ export function build_template_chunk(
 				// extra work in the template_effect (instead we do the work in set_text).
 				return { value, has_state };
 			} else {
-				expressions.push(b.logical('??', value, b.literal('')));
+				let expression = value;
+				// only add nullish coallescence if it hasn't been added already
+				if (value.type === 'LogicalExpression' && value.operator === '??') {
+					const { right } = value;
+					// `undefined` isn't a Literal (due to pre-ES5 shenanigans), so the only nullish literal is `null`
+					// however, you _can_ make a variable called `undefined` in a Svelte component, so we can't just treat it the same way
+					if (right.type !== 'Literal') {
+						expression = b.logical('??', value, b.literal(''));
+					} else if (right.value === null) {
+						// if they do something weird like `stuff ?? null`, replace `null` with empty string
+						value.right = b.literal('');
+					}
+				} else {
+					expression = b.logical('??', value, b.literal(''));
+				}
+				expressions.push(expression);
 			}
 
 			quasi = b.quasi('', i + 1 === values.length);
