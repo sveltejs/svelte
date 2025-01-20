@@ -109,7 +109,7 @@ export function boundary(node, props, boundary_fn) {
 
 				if (async_count++ === 0) {
 					queue_boundary_micro_task(() => {
-						if (async_effect) {
+						if (async_effect || !boundary_effect) {
 							return;
 						}
 
