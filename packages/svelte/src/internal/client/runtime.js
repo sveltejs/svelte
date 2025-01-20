@@ -1094,6 +1094,68 @@ export function untrack(fn) {
 	}
 }
 
+/**
+ * @param {any[]} a
+ * @param {any[]} b
+ */
+function diff(a, b) {
+	if (b.length === 0 || a.length !== b.length) return true;
+	for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return true;
+}
+
+/**
+ * @template T
+ * @param {() => any[]} track_fn
+ * @param {(deps: any[], prev: any[]) => T | (() => void)} effect_fn
+ * @returns {() => T}
+ */
+export function tracked(track_fn, effect_fn) {
+	/** @type {Source<any[]>} */
+	var deps = source([]);
+	/** @type {Source<any>} */
+	var current = source(undefined);
+	/** @type {Effect} */
+	var effect;
+
+	const possible_cleanup = () => {
+		var value = current.v;
+		if (!is_destroying_effect) {
+			return value;
+		}
+		if (!value) return;
+
+		/** @type {any[]} */
+		var prev_deps = deps.v;
+		var next_deps = track_fn();
+		var flags = /** @type {Effect} */ (effect).f;
+
+		if ((flags & DESTROYED) !== 0 || diff(prev_deps, next_deps)) {
+			value();
+		}
+	}
+
+	return () => {
+		effect = /** @type {Effect} */ (active_effect);
+		/** @type {any[]} */
+		var prev_deps = deps.v;
+		var next_deps = track_fn();
+		var value = current.v;
+		deps.v = next_deps;
+
+		if (diff(prev_deps, next_deps)) {
+			value = untrack(() => {
+				return effect_fn(next_deps, prev_deps);
+			});
+			current.v = value;
+		}
+
+		if (typeof value === 'function') {
+			return possible_cleanup;
+		}
+		return value;
+	};
+}
+
 const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
 
 /**
