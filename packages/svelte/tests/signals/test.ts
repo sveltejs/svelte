@@ -803,6 +803,46 @@ describe('signals', () => {
 		};
 	});
 
+	test('deriveds containing effects work correctly when used with untrack', () => {
+		return () => {
+			let a = render_effect(() => {});
+			let b = state(0);
+			let c;
+			let effects = [];
+
+			const destroy = effect_root(() => {
+				a = render_effect(() => {
+					c = derived(() => {
+						$.untrack(() => {
+							effects.push(
+								effect(() => {
+									$.get(b);
+								})
+							);
+						});
+						$.get(b);
+					});
+					$.get(c);
+				});
+			});
+
+			assert.deepEqual(c!.children?.length, 1);
+			assert.deepEqual(a.first, a.last);
+
+			set(b, 1);
+
+			flushSync();
+
+			assert.deepEqual(c!.children?.length, 1);
+			assert.deepEqual(a.first, a.last);
+
+			destroy();
+
+			assert.deepEqual(a.deriveds, null);
+			assert.deepEqual(a.first, null);
+		};
+	});
+
 	test('bigint states update correctly', () => {
 		return () => {
 			const count = state(0n);
