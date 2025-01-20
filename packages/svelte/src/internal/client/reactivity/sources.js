@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value, ValueOptions } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	component_context,
@@ -47,10 +47,11 @@ export function set_inspect_effects(v) {
 /**
  * @template V
  * @param {V} v
+ * @param {ValueOptions} [o]
  * @param {Error | null} [stack]
  * @returns {Source<V>}
  */
-export function source(v, stack) {
+export function source(v, o, stack) {
 	/** @type {Value} */
 	var signal = {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
@@ -58,7 +59,8 @@ export function source(v, stack) {
 		reactions: null,
 		equals,
 		rv: 0,
-		wv: 0
+		wv: 0,
+		o
 	};
 
 	if (DEV && tracing_mode_flag) {
@@ -72,9 +74,18 @@ export function source(v, stack) {
 /**
  * @template V
  * @param {V} v
+ * @param {ValueOptions} [o]
  */
-export function state(v) {
-	return push_derived_source(source(v));
+export function state(v, o) {
+	return push_derived_source(source(v, o));
+}
+
+/**
+ * @param {Source} source
+ * @returns {ValueOptions | undefined}
+ */
+export function get_options(source) {
+	return source.o;
 }
 
 /**
@@ -171,6 +182,7 @@ export function internal_set(source, value) {
 		var old_value = source.v;
 		source.v = value;
 		source.wv = increment_write_version();
+		untrack(() => source.o?.onchange?.());
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');

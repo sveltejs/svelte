@@ -1,4 +1,4 @@
-/** @import { ProxyMetadata, ProxyStateObject, Source } from '#client' */
+/** @import { ProxyMetadata, ProxyStateObject, Source, ValueOptions } from '#client' */
 import { DEV } from 'esm-env';
 import { get, component_context, active_effect } from './runtime.js';
 import {
@@ -19,11 +19,12 @@ import { tracing_mode_flag } from '../flags/index.js';
 /**
  * @template T
  * @param {T} value
+ * @param {ValueOptions} [options]
  * @param {ProxyMetadata | null} [parent]
  * @param {Source<T>} [prev] dev mode only
  * @returns {T}
  */
-export function proxy(value, parent = null, prev) {
+export function proxy(value, options, parent = null, prev) {
 	/** @type {Error | null} */
 	var stack = null;
 	if (DEV && tracing_mode_flag) {
@@ -48,7 +49,7 @@ export function proxy(value, parent = null, prev) {
 	if (is_proxied_array) {
 		// We need to create the length source eagerly to ensure that
 		// mutations to the array are properly synced with our proxy
-		sources.set('length', source(/** @type {any[]} */ (value).length, stack));
+		sources.set('length', source(/** @type {any[]} */ (value).length, options, stack));
 	}
 
 	/** @type {ProxyMetadata} */
@@ -94,10 +95,10 @@ export function proxy(value, parent = null, prev) {
 			var s = sources.get(prop);
 
 			if (s === undefined) {
-				s = source(descriptor.value, stack);
+				s = source(descriptor.value, options, stack);
 				sources.set(prop, s);
 			} else {
-				set(s, proxy(descriptor.value, metadata));
+				set(s, proxy(descriptor.value, options, metadata));
 			}
 
 			return true;
@@ -108,7 +109,7 @@ export function proxy(value, parent = null, prev) {
 
 			if (s === undefined) {
 				if (prop in target) {
-					sources.set(prop, source(UNINITIALIZED, stack));
+					sources.set(prop, source(UNINITIALIZED, options, stack));
 				}
 			} else {
 				// When working with arrays, we need to also ensure we update the length when removing
@@ -142,7 +143,7 @@ export function proxy(value, parent = null, prev) {
 
 			// create a source, but only if it's an own property and not a prototype property
 			if (s === undefined && (!exists || get_descriptor(target, prop)?.writable)) {
-				s = source(proxy(exists ? target[prop] : UNINITIALIZED, metadata), stack);
+				s = source(proxy(exists ? target[prop] : UNINITIALIZED, options, metadata), options, stack);
 				sources.set(prop, s);
 			}
 
@@ -210,7 +211,7 @@ export function proxy(value, parent = null, prev) {
 				(active_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 			) {
 				if (s === undefined) {
-					s = source(has ? proxy(target[prop], metadata) : UNINITIALIZED, stack);
+					s = source(has ? proxy(target[prop], options, metadata) : UNINITIALIZED, options, stack);
 					sources.set(prop, s);
 				}
 
@@ -237,7 +238,7 @@ export function proxy(value, parent = null, prev) {
 						// If the item exists in the original, we need to create a uninitialized source,
 						// else a later read of the property would result in a source being created with
 						// the value of the original item at that index.
-						other_s = source(UNINITIALIZED, stack);
+						other_s = source(UNINITIALIZED, options, stack);
 						sources.set(i + '', other_s);
 					}
 				}
@@ -249,13 +250,13 @@ export function proxy(value, parent = null, prev) {
 			// object property before writing to that property.
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
-					s = source(undefined, stack);
-					set(s, proxy(value, metadata));
+					s = source(undefined, options, stack);
+					set(s, proxy(value, options, metadata));
 					sources.set(prop, s);
 				}
 			} else {
 				has = s.v !== UNINITIALIZED;
-				set(s, proxy(value, metadata));
+				set(s, proxy(value, options, metadata));
 			}
 
 			if (DEV) {

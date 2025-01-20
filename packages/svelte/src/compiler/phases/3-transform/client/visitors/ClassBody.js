@@ -116,11 +116,32 @@ export function ClassBody(node, context) {
 						context.visit(definition.value.arguments[0], child_state)
 					);
 
+					let options =
+						definition.value.arguments.length === 2
+							? /** @type {Expression} **/ (
+									context.visit(definition.value.arguments[1], child_state)
+								)
+							: undefined;
+
+					let proxied = should_proxy(init, context.state.scope);
+
+					if (field.kind === 'state' && proxied && options != null) {
+						let generated = 'state_options';
+						let i = 0;
+						while (private_ids.includes(generated)) {
+							generated = `state_options_${i++}`;
+						}
+						private_ids.push(generated);
+						body.push(b.prop_def(b.private_id(generated), options));
+						options = b.member(b.this, `#${generated}`);
+					}
+
 					value =
 						field.kind === 'state'
 							? b.call(
 									'$.state',
-									should_proxy(init, context.state.scope) ? b.call('$.proxy', init) : init
+									should_proxy(init, context.state.scope) ? b.call('$.proxy', init, options) : init,
+									options
 								)
 							: field.kind === 'raw_state'
 								? b.call('$.state', init)

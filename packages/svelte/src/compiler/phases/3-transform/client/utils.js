@@ -50,7 +50,9 @@ export function build_getter(node, state) {
  * @param {Expression} previous
  */
 export function build_proxy_reassignment(value, previous) {
-	return dev ? b.call('$.proxy', value, b.null, previous) : b.call('$.proxy', value);
+	return dev
+		? b.call('$.proxy', value, b.call('$.get_options', previous), b.null, previous)
+		: b.call('$.proxy', value, b.call('$.get_options', previous));
 }
 
 /**

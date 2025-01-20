@@ -23,7 +23,7 @@ export default function Bind_component_snippet($$anchor) {
 			return $.get(value);
 		},
 		set value($$value) {
-			$.set(value, $.proxy($$value));
+			$.set(value, $.proxy($$value, $.get_options(value)));
 		}
 	});
 

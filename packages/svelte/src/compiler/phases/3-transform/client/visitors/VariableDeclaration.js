@@ -113,28 +113,37 @@ export function VariableDeclaration(node, context) {
 			const args = /** @type {CallExpression} */ (init).arguments;
 			const value =
 				args.length === 0 ? b.id('undefined') : /** @type {Expression} */ (context.visit(args[0]));
+			let options =
+				args.length === 2 ? /** @type {Expression} */ (context.visit(args[1])) : undefined;
 
 			if (rune === '$state' || rune === '$state.raw') {
 				/**
 				 * @param {Identifier} id
 				 * @param {Expression} value
+				 * @param {Expression} [options]
 				 */
-				const create_state_declarator = (id, value) => {
+				const create_state_declarator = (id, value, options) => {
 					const binding = /** @type {import('#compiler').Binding} */ (
 						context.state.scope.get(id.name)
 					);
-					if (rune === '$state' && should_proxy(value, context.state.scope)) {
-						value = b.call('$.proxy', value);
+					const proxied = rune === '$state' && should_proxy(value, context.state.scope);
+					if (proxied) {
+						if (options != null) {
+							const generated = context.state.scope.generate('state_options');
+							declarations.push(b.declarator(generated, options));
+							options = b.id(generated);
+						}
+						value = b.call('$.proxy', value, options);
 					}
 					if (is_state_source(binding, context.state.analysis)) {
-						value = b.call('$.state', value);
+						value = b.call('$.state', value, options);
 					}
 					return value;
 				};
 
 				if (declarator.id.type === 'Identifier') {
 					declarations.push(
-						b.declarator(declarator.id, create_state_declarator(declarator.id, value))
+						b.declarator(declarator.id, create_state_declarator(declarator.id, value, options))
 					);
 				} else {
 					const tmp = context.state.scope.generate('tmp');
@@ -147,7 +156,7 @@ export function VariableDeclaration(node, context) {
 							return b.declarator(
 								path.node,
 								binding?.kind === 'state' || binding?.kind === 'raw_state'
-									? create_state_declarator(binding.node, value)
+									? create_state_declarator(binding.node, value, options)
 									: value
 							);
 						})

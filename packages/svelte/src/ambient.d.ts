@@ -20,6 +20,7 @@ declare module '*.svelte' {
  *
  * @param initial The initial value
  */
+declare function $state<T>(initial?: T, options?: import('svelte').StateOptions): T;
 declare function $state<T>(initial: T): T;
 declare function $state<T>(): T | undefined;
 

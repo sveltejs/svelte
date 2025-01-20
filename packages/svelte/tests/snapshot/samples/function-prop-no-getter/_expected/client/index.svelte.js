@@ -13,7 +13,7 @@ export default function Function_prop_no_getter($$anchor) {
 	Button($$anchor, {
 		onmousedown: () => $.set(count, $.get(count) + 1),
 		onmouseup,
-		onmouseenter: () => $.set(count, $.proxy(plusOne($.get(count)))),
+		onmouseenter: () => $.set(count, $.proxy(plusOne($.get(count)), $.get_options(count))),
 		children: ($$anchor, $$slotProps) => {
 			$.next();
 
