@@ -1090,12 +1090,12 @@ export function invalidate_inner_signals(fn) {
  * @returns {T}
  */
 export function untrack(fn) {
-	const previous_reaction = active_reaction;
+	var previous_untracking = untracking;
 	try {
-		active_reaction = null;
+		untracking = true;
 		return fn();
 	} finally {
-		active_reaction = previous_reaction;
+		untracking = previous_untracking;
 	}
 }
 
