@@ -5,7 +5,7 @@ import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { create_derived } from '../../utils.js';
-import { build_bind_this, validate_binding } from '../shared/utils.js';
+import { build_bind_this, memoize_expression, validate_binding } from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
@@ -132,7 +132,13 @@ export function build_component(node, component_name, context, anchor = context.
 		} else if (attribute.type === 'Attribute') {
 			if (attribute.name.startsWith('--')) {
 				custom_css_props.push(
-					b.init(attribute.name, build_attribute_value(attribute.value, context).value)
+					b.init(
+						attribute.name,
+						build_attribute_value(attribute.value, context, (value) =>
+							// TODO put the derived in the local block
+							memoize_expression(context.state, value)
+						).value
+					)
 				);
 				continue;
 			}
@@ -145,9 +151,11 @@ export function build_component(node, component_name, context, anchor = context.
 				has_children_prop = true;
 			}
 
-			const { value } = build_attribute_value(attribute.value, context);
+			const { value, has_state } = build_attribute_value(attribute.value, context, (value) =>
+				memoize_expression(context.state, value)
+			);
 
-			if (attribute.metadata.expression.has_state) {
+			if (has_state) {
 				let arg = value;
 
 				// When we have a non-simple computation, anything other than an Identifier or Member expression,

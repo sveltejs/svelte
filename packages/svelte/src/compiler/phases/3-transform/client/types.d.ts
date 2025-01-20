@@ -47,13 +47,13 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly is_instance: boolean;
 
 	/** Stuff that happens before the render effect(s) */
-	readonly before_init: Statement[];
-	/** Stuff that happens before the render effect(s) */
 	readonly init: Statement[];
 	/** Stuff that happens inside the render effect */
 	readonly update: Statement[];
 	/** Stuff that happens after the render effect (control blocks, dynamic elements, bindings, actions, etc) */
 	readonly after_update: Statement[];
+	/** Expressions used inside the render effect */
+	readonly expressions: Expression[];
 	/** The HTML template string */
 	readonly template: Array<string | Expression>;
 	readonly locations: SourceLocation[];

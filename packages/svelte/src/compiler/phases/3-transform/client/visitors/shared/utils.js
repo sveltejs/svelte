@@ -6,37 +6,95 @@ import { object } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_is_valid_identifier } from '../../../../patterns.js';
-import { create_derived } from '../../utils.js';
 import is_reference from 'is-reference';
 import { locator } from '../../../../../state.js';
+import { create_derived } from '../../utils.js';
+
+/**
+ * @param {ComponentClientTransformState} state
+ * @param {Expression} value
+ */
+export function memoize_expression(state, value) {
+	const id = b.id(state.scope.generate('expression'));
+	state.init.push(b.const(id, create_derived(state, b.thunk(value))));
+	return b.call('$.get', id);
+}
+
+/**
+ *
+ * @param {ComponentClientTransformState} state
+ * @param {Expression} value
+ */
+export function get_expression_id(state, value) {
+	for (let i = 0; i < state.expressions.length; i += 1) {
+		if (compare_expressions(state.expressions[i], value)) {
+			return b.id(`$${i}`);
+		}
+	}
+
+	return b.id(`$${state.expressions.push(value) - 1}`);
+}
+
+/**
+ * Returns true of two expressions have an identical AST shape
+ * @param {Expression} a
+ * @param {Expression} b
+ */
+function compare_expressions(a, b) {
+	if (a.type !== b.type) {
+		return false;
+	}
+
+	for (const key in a) {
+		if (key === 'type' || key === 'metadata' || key === 'loc' || key === 'start' || key === 'end') {
+			continue;
+		}
+
+		const va = /** @type {any} */ (a)[key];
+		const vb = /** @type {any} */ (b)[key];
+
+		if ((typeof va === 'object') !== (typeof vb === 'object')) {
+			return false;
+		}
+
+		if (typeof va !== 'object' || va === null || vb === null) {
+			if (va !== vb) return false;
+		} else if (Array.isArray(va)) {
+			if (va.length !== vb.length) {
+				return false;
+			}
+
+			if (va.some((v, i) => !compare_expressions(v, vb[i]))) {
+				return false;
+			}
+		} else if (!compare_expressions(va, vb)) {
+			return false;
+		}
+	}
+
+	return true;
+}
 
 /**
  * @param {Array<AST.Text | AST.ExpressionTag>} values
  * @param {(node: AST.SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
- * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
+ * @param {(value: Expression) => Expression} memoize
+ * @returns {{ value: Expression, has_state: boolean }}
  */
-export function build_template_chunk(values, visit, state) {
+export function build_template_chunk(
+	values,
+	visit,
+	state,
+	memoize = (value) => get_expression_id(state, value)
+) {
 	/** @type {Expression[]} */
 	const expressions = [];
 
 	let quasi = b.quasi('');
 	const quasis = [quasi];
 
-	let has_call = false;
 	let has_state = false;
-	let is_async = false;
-	let should_memoize = false;
-
-	for (const node of values) {
-		if (node.type === 'ExpressionTag') {
-			const metadata = node.metadata.expression;
-
-			should_memoize ||= (has_call || is_async) && (metadata.has_call || metadata.is_async);
-			has_call ||= metadata.has_call;
-			has_state ||= metadata.has_state;
-		}
-	}
 
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
@@ -48,26 +106,35 @@ export function build_template_chunk(values, visit, state) {
 				quasi.value.cooked += node.expression.value + '';
 			}
 		} else {
-			const expression = /** @type {Expression} */ (visit(node.expression, state));
+			let value = /** @type {Expression} */ (visit(node.expression, state));
 
-			if (node.metadata.expression.is_async) {
-				const id = b.id(state.scope.generate('expression'));
-				state.metadata.async.push({ id, expression: b.logical('??', expression, b.literal('')) });
+			has_state ||= node.metadata.expression.has_state;
 
-				expressions.push(b.call(id));
-			} else if (node.metadata.expression.has_call && should_memoize) {
-				const id = b.id(state.scope.generate('expression'));
-				state.init.push(
-					b.const(id, create_derived(state, b.thunk(b.logical('??', expression, b.literal('')))))
-				);
+			if (node.metadata.expression.has_call) {
+				value = memoize(value);
+			}
 
-				expressions.push(b.call('$.get', id));
-			} else if (values.length === 1) {
+			if (values.length === 1) {
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).
-				return { value: expression, has_state, has_call };
+				return { value, has_state };
 			} else {
-				expressions.push(b.logical('??', expression, b.literal('')));
+				let expression = value;
+				// only add nullish coallescence if it hasn't been added already
+				if (value.type === 'LogicalExpression' && value.operator === '??') {
+					const { right } = value;
+					// `undefined` isn't a Literal (due to pre-ES5 shenanigans), so the only nullish literal is `null`
+					// however, you _can_ make a variable called `undefined` in a Svelte component, so we can't just treat it the same way
+					if (right.type !== 'Literal') {
+						expression = b.logical('??', value, b.literal(''));
+					} else if (right.value === null) {
+						// if they do something weird like `stuff ?? null`, replace `null` with empty string
+						value.right = b.literal('');
+					}
+				} else {
+					expression = b.logical('??', value, b.literal(''));
+				}
+				expressions.push(expression);
 			}
 
 			quasi = b.quasi('', i + 1 === values.length);
@@ -81,26 +148,27 @@ export function build_template_chunk(values, visit, state) {
 
 	const value = b.template(quasis, expressions);
 
-	return { value, has_state, has_call };
+	return { value, has_state };
 }
 
 /**
- * @param {Statement} statement
+ * @param {ComponentClientTransformState} state
  */
-export function build_update(statement) {
-	const body =
-		statement.type === 'ExpressionStatement' ? statement.expression : b.block([statement]);
-
-	return b.stmt(b.call('$.template_effect', b.thunk(body)));
-}
-
-/**
- * @param {Statement[]} update
- */
-export function build_render_statement(update) {
-	return update.length === 1
-		? build_update(update[0])
-		: b.stmt(b.call('$.template_effect', b.thunk(b.block(update))));
+export function build_render_statement(state) {
+	return b.stmt(
+		b.call(
+			'$.template_effect',
+			b.arrow(
+				state.expressions.map((_, i) => b.id(`$${i}`)),
+				state.update.length === 1 && state.update[0].type === 'ExpressionStatement'
+					? state.update[0].expression
+					: b.block(state.update)
+			),
+			state.expressions.length > 0 &&
+				b.array(state.expressions.map((expression) => b.thunk(expression))),
+			state.expressions.length > 0 && !state.analysis.runes && b.id('$.derived_safe_equal')
+		)
+	);
 }
 
 /**
