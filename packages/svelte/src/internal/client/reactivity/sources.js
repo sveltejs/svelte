@@ -238,15 +238,6 @@ export function internal_set(source, value) {
 		source.v = value;
 		source.wv = increment_write_version();
 
-		var onchange = source.o?.onchange;
-		if (onchange) {
-			if (onchange_batch) {
-				onchange_batch.add(onchange);
-			} else {
-				onchange();
-			}
-		}
-
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
 			if (active_effect != null) {
@@ -271,6 +262,15 @@ export function internal_set(source, value) {
 				set_untracked_writes([source]);
 			} else {
 				untracked_writes.push(source);
+			}
+		}
+
+		var onchange = source.o?.onchange;
+		if (onchange) {
+			if (onchange_batch) {
+				onchange_batch.add(onchange);
+			} else {
+				onchange();
 			}
 		}
 
