@@ -259,6 +259,15 @@ export function bind_files(input, get, set = get) {
 		set(input.files);
 	});
 
+	if (
+		// If we are hydrating and the value has since changed,
+		// then use the updated value from the input instead.
+		hydrating &&
+		input.files
+	) {
+		set(input.files);
+	}
+
 	render_effect(() => {
 		input.files = get();
 	});
