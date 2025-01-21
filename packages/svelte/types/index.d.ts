@@ -1050,9 +1050,9 @@ declare module 'svelte/compiler' {
 			expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
 		}
 
-		/** A `{@attach foo(...)} tag */
-		export interface AttachTag extends BaseNode {
-			type: 'AttachTag';
+		/** An `attach(...)` attribute */
+		export interface Attachment extends BaseNode {
+			type: 'Attachment';
 			attachments: Array<Expression | SpreadElement>;
 		}
 
@@ -1138,7 +1138,7 @@ declare module 'svelte/compiler' {
 
 		interface BaseElement extends BaseNode {
 			name: string;
-			attributes: Array<Attribute | SpreadAttribute | Directive | AttachTag>;
+			attributes: Array<Attribute | SpreadAttribute | Directive | Attachment>;
 			fragment: Fragment;
 		}
 
@@ -1328,7 +1328,7 @@ declare module 'svelte/compiler' {
 			| AST.Attribute
 			| AST.SpreadAttribute
 			| Directive
-			| AST.AttachTag
+			| AST.Attachment
 			| AST.Comment
 			| Block;
 
