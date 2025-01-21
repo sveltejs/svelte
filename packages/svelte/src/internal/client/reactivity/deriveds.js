@@ -27,7 +27,7 @@ import { destroy_effect, render_effect } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
-import { suspend } from '../dom/blocks/boundary.js';
+import { exit, suspend } from '../dom/blocks/boundary.js';
 
 /**
  * @template V
@@ -94,9 +94,12 @@ export function async_derived(fn) {
 	render_effect(() => {
 		const current = (promise = fn());
 
-		promise.then((v) => {
+		suspend(promise).then((v) => {
 			if (promise === current) {
-				internal_set(value, v);
+				internal_set(value, v.exit());
+
+				// TODO at the very least the naming is weird here
+				exit();
 			}
 		});
 

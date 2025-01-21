@@ -19,11 +19,14 @@ export default test({
 	async test({ assert, target, component }) {
 		d.resolve('cool');
 		await Promise.resolve();
+		await Promise.resolve();
+		await Promise.resolve();
 		await tick();
 		assert.htmlEqual(target.innerHTML, '<p class="cool">hello</p>');
 
 		d = deferred();
 		component.promise = d.promise;
+		await tick();
 		assert.htmlEqual(target.innerHTML, '<p>pending</p>');
 
 		d.resolve('neat');
