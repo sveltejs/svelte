@@ -9,12 +9,14 @@ import {
 	object_prototype
 } from '../shared/utils.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
-import { source, set, state } from './reactivity/sources.js';
+import { source, set, state, batch_onchange } from './reactivity/sources.js';
 import { STATE_SYMBOL, STATE_SYMBOL_METADATA } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 import { get_stack } from './dev/tracing.js';
 import { tracing_mode_flag } from '../flags/index.js';
+
+const array_methods = ['push', 'pop', 'shift', 'unshift', 'splice', 'reverse', 'sort'];
 
 /**
  * @template T
@@ -168,7 +170,13 @@ export function proxy(value, options, parent = null, prev) {
 				return v === UNINITIALIZED ? undefined : v;
 			}
 
-			return Reflect.get(target, prop, receiver);
+			v = Reflect.get(target, prop, receiver);
+
+			if (is_proxied_array && array_methods.includes(/** @type {string} */ (prop))) {
+				return batch_onchange(v);
+			}
+
+			return v;
 		},
 
 		getOwnPropertyDescriptor(target, prop) {

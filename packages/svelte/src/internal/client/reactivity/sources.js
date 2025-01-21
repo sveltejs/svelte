@@ -45,6 +45,32 @@ export function set_inspect_effects(v) {
 	inspect_effects = v;
 }
 
+/** @type {null | Set<() => void>} */
+let onchange_batch = null;
+
+/**
+ * @param {Function} fn
+ */
+export function batch_onchange(fn) {
+	// @ts-expect-error
+	return function (...args) {
+		let previous_onchange_batch = onchange_batch;
+
+		try {
+			onchange_batch = new Set();
+
+			// @ts-expect-error
+			return fn.apply(this, args);
+		} finally {
+			for (const onchange of /** @type {Set<() => void>} */ (onchange_batch)) {
+				onchange();
+			}
+
+			onchange_batch = previous_onchange_batch;
+		}
+	};
+}
+
 /**
  * @template V
  * @param {V} v
@@ -191,7 +217,15 @@ export function internal_set(source, value) {
 		var old_value = source.v;
 		source.v = value;
 		source.wv = increment_write_version();
-		untrack(() => source.o?.onchange?.());
+
+		var onchange = source.o?.onchange;
+		if (onchange) {
+			if (onchange_batch) {
+				onchange_batch.add(onchange);
+			} else {
+				onchange();
+			}
+		}
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
