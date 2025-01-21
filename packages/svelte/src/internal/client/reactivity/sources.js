@@ -265,15 +265,6 @@ export function internal_set(source, value) {
 			}
 		}
 
-		var onchange = source.o?.onchange;
-		if (onchange) {
-			if (onchange_batch) {
-				onchange_batch.add(onchange);
-			} else {
-				onchange();
-			}
-		}
-
 		if (DEV && inspect_effects.size > 0) {
 			const inspects = Array.from(inspect_effects);
 			var previously_flushing_effect = is_flushing_effect;
@@ -293,6 +284,15 @@ export function internal_set(source, value) {
 				set_is_flushing_effect(previously_flushing_effect);
 			}
 			inspect_effects.clear();
+		}
+
+		var onchange = source.o?.onchange;
+		if (onchange) {
+			if (onchange_batch) {
+				onchange_batch.add(onchange);
+			} else {
+				onchange();
+			}
 		}
 	}
 
