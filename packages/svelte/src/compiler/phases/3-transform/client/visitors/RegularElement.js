@@ -648,9 +648,6 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
 		state.init.push(b.stmt(b.call('$.template_effect', b.thunk(update.expression))));
 		return true;
 	} else {
-		if (attribute.metadata.expression.is_async) {
-			throw new Error('TODO top-level await');
-		}
 		state.init.push(update);
 		return false;
 	}

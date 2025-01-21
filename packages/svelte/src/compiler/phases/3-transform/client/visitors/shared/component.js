@@ -172,17 +172,8 @@ export function build_component(node, component_name, context, anchor = context.
 				if (should_wrap_in_derived) {
 					const id = b.id(context.state.scope.generate(attribute.name));
 
-					if (attribute.metadata.expression.is_async) {
-						context.state.metadata.async.push({
-							id,
-							expression: arg
-						});
-
-						arg = b.call(id);
-					} else {
-						context.state.init.push(b.var(id, create_derived(context.state, b.thunk(value))));
-						arg = b.call('$.get', id);
-					}
+					context.state.init.push(b.var(id, create_derived(context.state, b.thunk(value))));
+					arg = b.call('$.get', id);
 				}
 
 				push_prop(b.get(attribute.name, [b.return(arg)]));
