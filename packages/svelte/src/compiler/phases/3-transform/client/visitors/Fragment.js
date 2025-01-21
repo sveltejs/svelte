@@ -199,47 +199,6 @@ export function Fragment(node, context) {
 	const async =
 		state.metadata.async.length > 0 || (state.analysis.is_async && context.path.length === 0);
 
-	if (async) {
-		// TODO need to create bookends for hydration to work
-		return b.block([
-			b.function_declaration(
-				b.id('$$body'),
-				[b.id('$$anchor')],
-				b.block([
-					b.var(
-						b.array_pattern(state.metadata.async.map(({ id }) => id)),
-						b.call(
-							b.member(
-								b.await(
-									b.call(
-										'$.suspend',
-										b.call(
-											'Promise.all',
-											b.array(
-												state.metadata.async.map(({ expression }) =>
-													b.call('$.async_derived', b.thunk(expression, true))
-												)
-											)
-										)
-									)
-								),
-								'exit'
-							)
-						)
-					),
-					...body,
-					b.stmt(b.call('$.exit'))
-				]),
-				true
-			),
-
-			b.var('fragment', b.call('$.comment')),
-			b.var('node', b.call('$.first_child', b.id('fragment'))),
-			b.stmt(b.call(b.id('$$body'), b.id('node'))),
-			b.stmt(b.call('$.append', b.id('$$anchor'), b.id('fragment')))
-		]);
-	}
-
 	return b.block(body);
 }
 
