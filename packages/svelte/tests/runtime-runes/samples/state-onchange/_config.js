@@ -4,6 +4,11 @@ import { test } from '../../test';
 export default test({
 	async test({ assert, target, logs }) {
 		const [btn, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9] = target.querySelectorAll('button');
+
+		assert.deepEqual(logs, ['constructor count', 'constructor proxy']);
+
+		logs.length = 0;
+
 		flushSync(() => {
 			btn.click();
 		});

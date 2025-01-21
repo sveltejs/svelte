@@ -46,16 +46,6 @@ export function build_getter(node, state) {
 }
 
 /**
- * @param {Expression} value
- * @param {Expression} previous
- */
-export function build_proxy_reassignment(value, previous) {
-	return dev
-		? b.call('$.proxy', value, b.call('$.get_options', previous), b.null, previous)
-		: b.call('$.proxy', value, b.call('$.get_options', previous));
-}
-
-/**
  * @param {FunctionDeclaration | FunctionExpression | ArrowFunctionExpression} node
  * @param {ComponentContext} context
  * @returns {Pattern[]}

@@ -9,7 +9,7 @@ import {
 	is_event_attribute
 } from '../../../../utils/ast.js';
 import { dev, filename, is_ignored, locate_node, locator } from '../../../../state.js';
-import { build_proxy_reassignment, should_proxy } from '../utils.js';
+import { should_proxy } from '../utils.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
 
 /**
@@ -70,17 +70,15 @@ function build_assignment(operator, left, right, context) {
 				is_non_coercive_operator(operator) &&
 				should_proxy(value, context.state.scope);
 
-			if (context.state.in_constructor) {
-				// inside the constructor, we can assign to `this.#foo.v` rather than using `$.set`,
-				// since nothing is tracking the signal at this point
-				return b.assignment(
-					operator,
-					/** @type {Pattern} */ (context.visit(left)),
-					needs_proxy ? build_proxy_reassignment(value, b.member(b.this, private_state.id)) : value
-				);
-			}
-
-			return b.call('$.set', left, value, needs_proxy && b.true, dev && needs_proxy && b.true);
+			return b.call(
+				// inside the constructor, we use `$.simple_set` rather than using `$.set`,
+				// that only assign the value and eventually call onchange since nothing is tracking the signal at this point
+				context.state.in_constructor ? '$.simple_set' : '$.set',
+				left,
+				value,
+				needs_proxy && b.true,
+				dev && needs_proxy && b.true
+			);
 		}
 	}
 

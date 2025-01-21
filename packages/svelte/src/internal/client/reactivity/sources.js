@@ -210,6 +210,26 @@ export function set(source, value, should_proxy = false, needs_previous = false)
  * @template V
  * @param {Source<V>} source
  * @param {V} value
+ * @param {boolean} [should_proxy]
+ * @param {boolean} [needs_previous]
+ * @returns {V}
+ */
+export function simple_set(source, value, should_proxy = false, needs_previous = false) {
+	let new_value = should_proxy
+		? needs_previous
+			? proxy(value, source.o, null, source)
+			: proxy(value, source.o)
+		: value;
+
+	source.v = new_value;
+
+	return new_value;
+}
+
+/**
+ * @template V
+ * @param {Source<V>} source
+ * @param {V} value
  * @returns {V}
  */
 export function internal_set(source, value) {
