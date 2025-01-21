@@ -14,7 +14,7 @@
 				"name": "div",
 				"attributes": [
 					{
-						"type": "AttachTag",
+						"type": "Attachment",
 						"start": 5,
 						"end": 13,
 						"attachments": [
@@ -35,13 +35,6 @@
 								"name": "a"
 							}
 						]
-					},
-					{
-						"type": "Attribute",
-						"start": 13,
-						"end": 14,
-						"name": ")",
-						"value": true
 					}
 				],
 				"fragment": {
@@ -63,7 +56,7 @@
 				"name": "div",
 				"attributes": [
 					{
-						"type": "AttachTag",
+						"type": "Attachment",
 						"start": 27,
 						"end": 41,
 						"attachments": [
@@ -116,13 +109,6 @@
 								"name": "c"
 							}
 						]
-					},
-					{
-						"type": "Attribute",
-						"start": 41,
-						"end": 42,
-						"name": ")",
-						"value": true
 					}
 				],
 				"fragment": {
@@ -144,7 +130,7 @@
 				"name": "div",
 				"attributes": [
 					{
-						"type": "AttachTag",
+						"type": "Attachment",
 						"start": 55,
 						"end": 70,
 						"attachments": [
@@ -180,13 +166,6 @@
 								}
 							}
 						]
-					},
-					{
-						"type": "Attribute",
-						"start": 70,
-						"end": 71,
-						"name": ")",
-						"value": true
 					}
 				],
 				"fragment": {
@@ -208,7 +187,7 @@
 				"name": "div",
 				"attributes": [
 					{
-						"type": "AttachTag",
+						"type": "Attachment",
 						"start": 84,
 						"end": 108,
 						"attachments": [
@@ -292,13 +271,6 @@
 								}
 							}
 						]
-					},
-					{
-						"type": "Attribute",
-						"start": 108,
-						"end": 109,
-						"name": ")",
-						"value": true
 					}
 				],
 				"fragment": {
@@ -320,7 +292,7 @@
 				"name": "div",
 				"attributes": [
 					{
-						"type": "AttachTag",
+						"type": "Attachment",
 						"start": 122,
 						"end": 141,
 						"attachments": [
@@ -378,13 +350,6 @@
 								}
 							}
 						]
-					},
-					{
-						"type": "Attribute",
-						"start": 141,
-						"end": 142,
-						"name": ")",
-						"value": true
 					}
 				],
 				"fragment": {
