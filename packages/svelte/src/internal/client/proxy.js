@@ -174,8 +174,8 @@ export function proxy(value, options, parent = null, prev) {
 
 			if (
 				is_proxied_array &&
-				array_methods.includes(/** @type {string} */ (prop)) &&
-				options?.onchange != null
+				options?.onchange != null &&
+				array_methods.includes(/** @type {string} */ (prop))
 			) {
 				return batch_onchange(v);
 			}
