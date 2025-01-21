@@ -172,7 +172,11 @@ export function proxy(value, options, parent = null, prev) {
 
 			v = Reflect.get(target, prop, receiver);
 
-			if (is_proxied_array && array_methods.includes(/** @type {string} */ (prop))) {
+			if (
+				is_proxied_array &&
+				array_methods.includes(/** @type {string} */ (prop)) &&
+				options?.onchange != null
+			) {
 				return batch_onchange(v);
 			}
 
