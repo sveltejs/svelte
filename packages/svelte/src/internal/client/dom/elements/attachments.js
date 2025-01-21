@@ -11,7 +11,7 @@ export function attach(node, get_fn) {
 		if (Array.isArray(attachment)) {
 			for (const fn of attachment) {
 				if (fn) {
-					$effect(() => fn(node));
+					effect(() => fn(node));
 				}
 			}
 		} else if (attachment) {

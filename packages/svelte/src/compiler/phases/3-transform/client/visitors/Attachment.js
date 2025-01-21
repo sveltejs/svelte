@@ -9,26 +9,18 @@ import * as b from '../../../../utils/builders.js';
  */
 export function Attachment(node, context) {
 	for (const attachment of node.attachments) {
-		if (attachment.type === 'SpreadElement') {
-			context.state.init.push(
-				b.stmt(
-					b.call(
-						'$.attach_all',
-						context.state.node,
-						b.thunk(/** @type {Expression} */ (context.visit(attachment.argument)))
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.attach',
+					context.state.node,
+					b.thunk(
+						/** @type {Expression} */ (
+							context.visit(attachment.type === 'SpreadElement' ? attachment.argument : attachment)
+						)
 					)
 				)
-			);
-		} else {
-			context.state.init.push(
-				b.stmt(
-					b.call(
-						'$.attach',
-						context.state.node,
-						b.thunk(/** @type {Expression} */ (context.visit(attachment)))
-					)
-				)
-			);
-		}
+			)
+		);
 	}
 }
