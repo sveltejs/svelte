@@ -19,6 +19,8 @@ export default test({
 	async test({ assert, target }) {
 		d.resolve('hello');
 		await Promise.resolve();
+		await Promise.resolve();
+		await Promise.resolve();
 		await tick();
 		assert.htmlEqual(target.innerHTML, '<p>hello</p>');
 	}

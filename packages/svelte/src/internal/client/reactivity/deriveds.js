@@ -1,4 +1,4 @@
-/** @import { Derived, Effect } from '#client' */
+/** @import { Derived, Effect, Source } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	CLEAN,
@@ -80,10 +80,10 @@ export function derived(fn) {
 /**
  * @template V
  * @param {() => Promise<V>} fn
- * @returns {Promise<() => V>}
+ * @returns {Promise<Source<V>>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export async function async_derived(fn) {
+export function async_derived(fn) {
 	if (!active_effect) {
 		throw new Error('TODO cannot create unowned async derived');
 	}
@@ -103,10 +103,7 @@ export async function async_derived(fn) {
 		// TODO what happens when the promise rejects?
 	});
 
-	// wait for the initial promise
-	(await suspend(promise)).exit();
-
-	return () => get(value);
+	return promise.then(() => value);
 }
 
 /**

@@ -35,8 +35,10 @@ export function build_set_attributes(
 
 	for (const attribute of attributes) {
 		if (attribute.type === 'Attribute') {
-			const { value, has_state } = build_attribute_value(attribute.value, context, (value) =>
-				get_expression_id(context.state, value)
+			const { value, has_state } = build_attribute_value(
+				attribute.value,
+				context,
+				(value, is_async) => get_expression_id(context.state, value, is_async)
 			);
 
 			if (
@@ -111,8 +113,8 @@ export function build_style_directives(
 		let value =
 			directive.value === true
 				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
-				: build_attribute_value(directive.value, context, (value) =>
-						get_expression_id(context.state, value)
+				: build_attribute_value(directive.value, context, (value, is_async) =>
+						get_expression_id(context.state, value, is_async)
 					).value;
 
 		const update = b.stmt(
@@ -149,11 +151,11 @@ export function build_class_directives(
 ) {
 	const state = context.state;
 	for (const directive of class_directives) {
-		const { has_state, has_call } = directive.metadata.expression;
+		const { has_state, has_call, is_async } = directive.metadata.expression;
 		let value = /** @type {Expression} */ (context.visit(directive.expression));
 
-		if (has_call) {
-			value = get_expression_id(state, value);
+		if (has_call || is_async) {
+			value = get_expression_id(state, value, is_async);
 		}
 
 		const update = b.stmt(b.call('$.toggle_class', element_id, b.literal(directive.name), value));
@@ -169,7 +171,7 @@ export function build_class_directives(
 /**
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
- * @param {(value: Expression) => Expression} memoize
+ * @param {(value: Expression, is_async: boolean) => Expression} memoize
  * @returns {{ value: Expression, has_state: boolean }}
  */
 export function build_attribute_value(value, context, memoize = (value) => value) {
@@ -187,7 +189,10 @@ export function build_attribute_value(value, context, memoize = (value) => value
 		let expression = /** @type {Expression} */ (context.visit(chunk.expression));
 
 		return {
-			value: chunk.metadata.expression.has_call ? memoize(expression) : expression,
+			value:
+				chunk.metadata.expression.has_call || chunk.metadata.expression.is_async
+					? memoize(expression, chunk.metadata.expression.is_async)
+					: expression,
 			has_state: chunk.metadata.expression.has_state
 		};
 	}

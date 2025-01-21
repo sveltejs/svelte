@@ -1,4 +1,4 @@
-/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
+/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager, Value } from '#client' */
 import {
 	check_dirtiness,
 	component_context,
@@ -44,7 +44,8 @@ import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
-import { derived, destroy_derived } from './deriveds.js';
+import { async_derived, derived, destroy_derived } from './deriveds.js';
+import { suspend } from '../dom/blocks/boundary.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -345,11 +346,18 @@ export function render_effect(fn) {
 
 /**
  * @param {(...expressions: any) => void | (() => void)} fn
- * @param {Array<() => any>} thunks
- * @returns {Effect}
+ * @param {Array<() => any>} sync
+ * @param {Array<() => Promise<any>>} async
  */
-export function template_effect(fn, thunks = [], d = derived) {
-	const deriveds = thunks.map(d);
+export async function template_effect(fn, sync = [], async = [], d = derived) {
+	/** @type {Value[]} */
+	const deriveds = sync.map(d);
+
+	if (async.length > 0) {
+		const async_deriveds = (await suspend(Promise.all(async.map(async_derived)))).exit();
+		deriveds.push(...async_deriveds);
+	}
+
 	const effect = () => fn(...deriveds.map(get));
 
 	if (DEV) {
@@ -358,7 +366,7 @@ export function template_effect(fn, thunks = [], d = derived) {
 		});
 	}
 
-	return block(effect);
+	block(effect);
 }
 
 /**

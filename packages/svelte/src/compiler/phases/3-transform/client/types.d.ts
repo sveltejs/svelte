@@ -53,7 +53,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	/** Stuff that happens after the render effect (control blocks, dynamic elements, bindings, actions, etc) */
 	readonly after_update: Statement[];
 	/** Expressions used inside the render effect */
-	readonly expressions: Expression[];
+	readonly expressions: Array<{ id: Identifier; expression: Expression; is_async: boolean }>;
 	/** The HTML template string */
 	readonly template: Array<string | Expression>;
 	readonly locations: SourceLocation[];

@@ -23,16 +23,20 @@ export function memoize_expression(state, value) {
 /**
  *
  * @param {ComponentClientTransformState} state
- * @param {Expression} value
+ * @param {Expression} expression
+ * @param {boolean} is_async
  */
-export function get_expression_id(state, value) {
+export function get_expression_id(state, expression, is_async) {
 	for (let i = 0; i < state.expressions.length; i += 1) {
-		if (compare_expressions(state.expressions[i], value)) {
-			return b.id(`$${i}`);
+		if (compare_expressions(state.expressions[i].expression, expression)) {
+			return state.expressions[i].id;
 		}
 	}
 
-	return b.id(`$${state.expressions.push(value) - 1}`);
+	const id = b.id(''); // filled in later
+	state.expressions.push({ id, expression, is_async });
+
+	return id;
 }
 
 /**
@@ -79,14 +83,14 @@ function compare_expressions(a, b) {
  * @param {Array<AST.Text | AST.ExpressionTag>} values
  * @param {(node: AST.SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
- * @param {(value: Expression) => Expression} memoize
- * @returns {{ value: Expression, has_state: boolean }}
+ * @param {(value: Expression, is_async: boolean) => Expression} memoize
+ * @returns {{ value: Expression, has_state: boolean, is_async: boolean }}
  */
 export function build_template_chunk(
 	values,
 	visit,
 	state,
-	memoize = (value) => get_expression_id(state, value)
+	memoize = (value, is_async) => get_expression_id(state, value, is_async)
 ) {
 	/** @type {Expression[]} */
 	const expressions = [];
@@ -95,6 +99,7 @@ export function build_template_chunk(
 	const quasis = [quasi];
 
 	let has_state = false;
+	let is_async = false;
 
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
@@ -108,16 +113,17 @@ export function build_template_chunk(
 		} else {
 			let value = /** @type {Expression} */ (visit(node.expression, state));
 
-			has_state ||= node.metadata.expression.has_state;
+			is_async ||= node.metadata.expression.is_async;
+			has_state ||= is_async || node.metadata.expression.has_state;
 
-			if (node.metadata.expression.has_call) {
-				value = memoize(value);
+			if (node.metadata.expression.has_call || node.metadata.expression.is_async) {
+				value = memoize(value, node.metadata.expression.is_async);
 			}
 
 			if (values.length === 1) {
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).
-				return { value, has_state };
+				return { value, has_state, is_async };
 			} else {
 				let expression = value;
 				// only add nullish coallescence if it hasn't been added already
@@ -148,25 +154,34 @@ export function build_template_chunk(
 
 	const value = b.template(quasis, expressions);
 
-	return { value, has_state };
+	return { value, has_state, is_async };
 }
 
 /**
  * @param {ComponentClientTransformState} state
  */
 export function build_render_statement(state) {
+	const sync = state.expressions.filter(({ is_async }) => !is_async);
+	const async = state.expressions.filter(({ is_async }) => is_async);
+
+	const all = [...sync, ...async];
+
+	for (let i = 0; i < all.length; i += 1) {
+		all[i].id.name = `$${i}`;
+	}
+
 	return b.stmt(
 		b.call(
 			'$.template_effect',
 			b.arrow(
-				state.expressions.map((_, i) => b.id(`$${i}`)),
+				all.map(({ id }) => id),
 				state.update.length === 1 && state.update[0].type === 'ExpressionStatement'
 					? state.update[0].expression
 					: b.block(state.update)
 			),
-			state.expressions.length > 0 &&
-				b.array(state.expressions.map((expression) => b.thunk(expression))),
-			state.expressions.length > 0 && !state.analysis.runes && b.id('$.derived_safe_equal')
+			all.length > 0 && b.array(sync.map(({ expression }) => b.thunk(expression))),
+			async.length > 0 && b.array(async.map(({ expression }) => b.thunk(expression, true))),
+			!state.analysis.runes && sync.length > 0 && b.id('$.derived_safe_equal')
 		)
 	);
 }
