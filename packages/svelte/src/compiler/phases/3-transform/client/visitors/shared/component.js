@@ -171,7 +171,6 @@ export function build_component(node, component_name, context, anchor = context.
 
 				if (should_wrap_in_derived) {
 					const id = b.id(context.state.scope.generate(attribute.name));
-
 					context.state.init.push(b.var(id, create_derived(context.state, b.thunk(value))));
 					arg = b.call('$.get', id);
 				}
