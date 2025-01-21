@@ -45,11 +45,30 @@ export function set_inspect_effects(v) {
 	inspect_effects = v;
 }
 
-let call_onchange = true;
+/** @type {null | Set<() => void>} */
+let onchange_batch = null;
 
-/** @param {boolean} v */
-export function set_call_onchange(v) {
-	call_onchange = v;
+/**
+ * @param {Function} fn
+ */
+export function batch_onchange(fn) {
+	// @ts-expect-error
+	return function (...args) {
+		let previous_onchange_batch = onchange_batch;
+
+		try {
+			onchange_batch = new Set();
+
+			// @ts-expect-error
+			return fn.apply(this, args);
+		} finally {
+			for (const onchange of /** @type {Set<() => void>} */ (onchange_batch)) {
+				onchange();
+			}
+
+			onchange_batch = previous_onchange_batch;
+		}
+	};
 }
 
 /**
@@ -199,8 +218,13 @@ export function internal_set(source, value) {
 		source.v = value;
 		source.wv = increment_write_version();
 
-		if (call_onchange) {
-			untrack(() => source.o?.onchange?.());
+		var onchange = source.o?.onchange;
+		if (onchange) {
+			if (onchange_batch) {
+				onchange_batch.add(onchange);
+			} else {
+				onchange();
+			}
 		}
 
 		if (DEV && tracing_mode_flag) {

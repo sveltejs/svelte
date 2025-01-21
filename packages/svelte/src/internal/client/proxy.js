@@ -9,7 +9,7 @@ import {
 	object_prototype
 } from '../shared/utils.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
-import { source, set, state, set_call_onchange } from './reactivity/sources.js';
+import { source, set, state, batch_onchange } from './reactivity/sources.js';
 import { STATE_SYMBOL, STATE_SYMBOL_METADATA } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
@@ -173,16 +173,7 @@ export function proxy(value, options, parent = null, prev) {
 			const value = Reflect.get(target, prop, receiver);
 
 			if (is_proxied_array && array_methods.includes(/** @type {string} */ (prop))) {
-				// @ts-expect-error
-				return (...args) => {
-					set_call_onchange(false);
-					const result = value.apply(receiver, args);
-					set_call_onchange(true);
-
-					options?.onchange?.();
-
-					return result;
-				};
+				return batch_onchange(value);
 			}
 
 			return value;
