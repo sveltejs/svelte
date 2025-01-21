@@ -17,8 +17,7 @@ import {
 	set_derived_sources,
 	check_dirtiness,
 	set_is_flushing_effect,
-	is_flushing_effect,
-	untracking
+	is_flushing_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -149,7 +148,6 @@ export function mutate(source, value) {
 export function set(source, value) {
 	if (
 		active_reaction !== null &&
-		!untracking &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 &&
 		// If the source was created locally within the current derived, then

@@ -78,8 +78,6 @@ let dev_effect_stack = [];
 /** @type {null | Reaction} */
 export let active_reaction = null;
 
-export let untracking = false;
-
 /** @param {null | Reaction} reaction */
 export function set_active_reaction(reaction) {
 	active_reaction = reaction;
@@ -425,7 +423,6 @@ export function update_reaction(reaction) {
 	var previous_skip_reaction = skip_reaction;
 	var prev_derived_sources = derived_sources;
 	var previous_component_context = component_context;
-	var previous_untracking = untracking;
 	var flags = reaction.f;
 
 	new_deps = /** @type {null | Value[]} */ (null);
@@ -435,7 +432,6 @@ export function update_reaction(reaction) {
 	skip_reaction = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	derived_sources = null;
 	component_context = reaction.ctx;
-	untracking = false;
 	read_version++;
 
 	try {
@@ -499,7 +495,6 @@ export function update_reaction(reaction) {
 		skip_reaction = previous_skip_reaction;
 		derived_sources = prev_derived_sources;
 		component_context = previous_component_context;
-		untracking = previous_untracking;
 	}
 }
 
@@ -939,7 +934,7 @@ export function get(signal) {
 	}
 
 	// Register the dependency on the current reaction signal.
-	if (active_reaction !== null && !untracking) {
+	if (active_reaction !== null) {
 		if (derived_sources !== null && derived_sources.includes(signal)) {
 			e.state_unsafe_local_read();
 		}
@@ -1090,12 +1085,12 @@ export function invalidate_inner_signals(fn) {
  * @returns {T}
  */
 export function untrack(fn) {
-	var previous_untracking = untracking;
+	const previous_reaction = active_reaction;
 	try {
-		untracking = true;
+		active_reaction = null;
 		return fn();
 	} finally {
-		untracking = previous_untracking;
+		active_reaction = previous_reaction;
 	}
 }
 

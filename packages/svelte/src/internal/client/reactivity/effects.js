@@ -16,8 +16,7 @@ import {
 	set_is_flushing_effect,
 	set_signal_status,
 	untrack,
-	skip_reaction,
-	untracking
+	skip_reaction
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -44,7 +43,8 @@ import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
-import { derived, destroy_derived } from './deriveds.js';
+import { derived, derived_safe_equal, destroy_derived } from './deriveds.js';
+import { legacy_mode_flag } from '../../flags/index.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -166,7 +166,7 @@ function create_effect(type, fn, sync, push = true) {
  * @returns {boolean}
  */
 export function effect_tracking() {
-	if (active_reaction === null || untracking) {
+	if (active_reaction === null) {
 		return false;
 	}
 
