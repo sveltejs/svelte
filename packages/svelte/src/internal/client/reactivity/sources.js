@@ -45,6 +45,13 @@ export function set_inspect_effects(v) {
 	inspect_effects = v;
 }
 
+let call_onchange = true;
+
+/** @param {boolean} v */
+export function set_call_onchange(v) {
+	call_onchange = v;
+}
+
 /**
  * @template V
  * @param {V} v
@@ -191,7 +198,10 @@ export function internal_set(source, value) {
 		var old_value = source.v;
 		source.v = value;
 		source.wv = increment_write_version();
-		untrack(() => source.o?.onchange?.());
+
+		if (call_onchange) {
+			untrack(() => source.o?.onchange?.());
+		}
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
