@@ -116,7 +116,7 @@ export function mutable_state(v, immutable = false) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 function push_derived_source(source) {
-	if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
+	if (active_reaction !== null && !untracking && (active_reaction.f & DERIVED) !== 0) {
 		if (derived_sources === null) {
 			set_derived_sources([source]);
 		} else {
