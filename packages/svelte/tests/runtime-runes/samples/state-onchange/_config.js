@@ -3,7 +3,7 @@ import { test } from '../../test';
 
 export default test({
 	async test({ assert, target, logs }) {
-		const [btn, btn2, btn3, btn4, btn5, btn6] = target.querySelectorAll('button');
+		const [btn, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9] = target.querySelectorAll('button');
 		flushSync(() => {
 			btn.click();
 		});
@@ -39,6 +39,48 @@ export default test({
 			'class count',
 			'class proxy',
 			'class proxy'
+		]);
+
+		flushSync(() => {
+			btn7.click();
+		});
+		assert.deepEqual(logs, [
+			'count',
+			'proxy',
+			'proxy',
+			'class count',
+			'class proxy',
+			'class proxy',
+			'arr'
+		]);
+
+		flushSync(() => {
+			btn8.click();
+		});
+		assert.deepEqual(logs, [
+			'count',
+			'proxy',
+			'proxy',
+			'class count',
+			'class proxy',
+			'class proxy',
+			'arr',
+			'arr'
+		]);
+
+		flushSync(() => {
+			btn9.click();
+		});
+		assert.deepEqual(logs, [
+			'count',
+			'proxy',
+			'proxy',
+			'class count',
+			'class proxy',
+			'class proxy',
+			'arr',
+			'arr',
+			'arr'
 		]);
 	}
 });
