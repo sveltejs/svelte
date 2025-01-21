@@ -147,6 +147,35 @@ person = {
 
 This can improve performance with large arrays and objects that you weren't planning to mutate anyway, since it avoids the cost of making them reactive. Note that raw state can _contain_ reactive state (for example, a raw array of reactive objects).
 
+## State options
+
+Both `$state` and `$state.raw` can optionally accept a second argument. This argument allow you to specify an `onchange` function that will be called synchronously whenever the object change (for `$state` it will also be called for deep mutations).
+
+The `onchange` function is untracked so even if you assign within an `$effect` it will not cause unwanted dependencies.
+
+```js
+let count = $state(0, {
+	onchange(){
+		console.log("count is now", count);
+	}
+});
+
+// this will log "count is now 1"
+count++;
+```
+
+this could be especially useful if you want to sync some stateful variable that could be mutated without using an effect.
+
+```js
+let array = $state([], {
+	onchange(){
+		localStorage.setItem('array', JSON.stringify(array));
+	}
+});
+
+array.push(array.length);
+```
+
 ## `$state.snapshot`
 
 To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
