@@ -131,7 +131,7 @@ export function ClassBody(node, context) {
 								? b.call('$.assignable_proxy', init, options)
 								: b.call('$.state', init, options)
 							: field.kind === 'raw_state'
-								? b.call('$.state', init)
+								? b.call('$.state', init, options)
 								: field.kind === 'derived_by'
 									? b.call('$.derived', init)
 									: b.call('$.derived', b.thunk(init));
