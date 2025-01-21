@@ -15,7 +15,8 @@ import type {
 	Program,
 	ChainExpression,
 	SimpleCallExpression,
-	SequenceExpression
+	SequenceExpression,
+	SpreadElement
 } from 'estree';
 import type { Scope } from '../phases/scope';
 import type { _CSS } from './css';
@@ -174,10 +175,10 @@ export namespace AST {
 		};
 	}
 
-	/** A `{@attach foo(...)} tag */
-	export interface AttachTag extends BaseNode {
-		type: 'AttachTag';
-		expression: Expression;
+	/** An `attach(...)` attribute */
+	export interface Attachment extends BaseNode {
+		type: 'Attachment';
+		attachments: Array<Expression | SpreadElement>;
 	}
 
 	/** An `animate:` directive */
@@ -279,7 +280,7 @@ export namespace AST {
 
 	interface BaseElement extends BaseNode {
 		name: string;
-		attributes: Array<Attribute | SpreadAttribute | Directive | AttachTag>;
+		attributes: Array<Attribute | SpreadAttribute | Directive | Attachment>;
 		fragment: Fragment;
 	}
 
@@ -555,7 +556,7 @@ export namespace AST {
 		| AST.Attribute
 		| AST.SpreadAttribute
 		| Directive
-		| AST.AttachTag
+		| AST.Attachment
 		| AST.Comment
 		| Block;
 

@@ -622,7 +622,7 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
+	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression, SpreadElement } from 'estree';
 	import type { SourceMap } from 'magic-string';
 	import type { Location } from 'locate-character';
 	/**
@@ -1050,10 +1050,10 @@ declare module 'svelte/compiler' {
 			expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
 		}
 
-		/** A `{@attach foo(...)} tag */
-		export interface AttachTag extends BaseNode {
-			type: 'AttachTag';
-			expression: Expression;
+		/** An `attach(...)` attribute */
+		export interface Attachment extends BaseNode {
+			type: 'Attachment';
+			attachments: Array<Expression | SpreadElement>;
 		}
 
 		/** An `animate:` directive */
@@ -1138,7 +1138,7 @@ declare module 'svelte/compiler' {
 
 		interface BaseElement extends BaseNode {
 			name: string;
-			attributes: Array<Attribute | SpreadAttribute | Directive | AttachTag>;
+			attributes: Array<Attribute | SpreadAttribute | Directive | Attachment>;
 			fragment: Fragment;
 		}
 
@@ -1328,7 +1328,7 @@ declare module 'svelte/compiler' {
 			| AST.Attribute
 			| AST.SpreadAttribute
 			| Directive
-			| AST.AttachTag
+			| AST.Attachment
 			| AST.Comment
 			| Block;
 
