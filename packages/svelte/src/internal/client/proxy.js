@@ -9,7 +9,7 @@ import {
 	object_prototype
 } from '../shared/utils.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
-import { source, set } from './reactivity/sources.js';
+import { source, set, state } from './reactivity/sources.js';
 import { STATE_SYMBOL, STATE_SYMBOL_METADATA } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
@@ -316,6 +316,17 @@ export function proxy(value, options, parent = null, prev) {
 			e.state_prototype_fixed();
 		}
 	});
+}
+
+/**
+ * @template T
+ * @param {T} value
+ * @param {ValueOptions} [options]
+ * @returns {Source<T>}
+ */
+
+export function assignable_proxy(value, options) {
+	return state(proxy(value, options), options);
 }
 
 /**

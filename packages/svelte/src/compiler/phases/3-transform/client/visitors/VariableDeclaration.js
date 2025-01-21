@@ -127,15 +127,12 @@ export function VariableDeclaration(node, context) {
 						context.state.scope.get(id.name)
 					);
 					const proxied = rune === '$state' && should_proxy(value, context.state.scope);
-					if (proxied) {
-						if (options != null) {
-							const generated = context.state.scope.generate('state_options');
-							declarations.push(b.declarator(generated, options));
-							options = b.id(generated);
-						}
+					const is_state = is_state_source(binding, context.state.analysis);
+					if (proxied && is_state) {
+						value = b.call('$.assignable_proxy', value, options);
+					} else if (proxied) {
 						value = b.call('$.proxy', value, options);
-					}
-					if (is_state_source(binding, context.state.analysis)) {
+					} else if (is_state) {
 						value = b.call('$.state', value, options);
 					}
 					return value;

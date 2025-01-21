@@ -125,24 +125,11 @@ export function ClassBody(node, context) {
 
 					let proxied = should_proxy(init, context.state.scope);
 
-					if (field.kind === 'state' && proxied && options != null) {
-						let generated = 'state_options';
-						let i = 0;
-						while (private_ids.includes(generated)) {
-							generated = `state_options_${i++}`;
-						}
-						private_ids.push(generated);
-						body.push(b.prop_def(b.private_id(generated), options));
-						options = b.member(b.this, `#${generated}`);
-					}
-
 					value =
 						field.kind === 'state'
-							? b.call(
-									'$.state',
-									should_proxy(init, context.state.scope) ? b.call('$.proxy', init, options) : init,
-									options
-								)
+							? should_proxy(init, context.state.scope)
+								? b.call('$.assignable_proxy', init, options)
+								: b.call('$.state', init, options)
 							: field.kind === 'raw_state'
 								? b.call('$.state', init)
 								: field.kind === 'derived_by'
