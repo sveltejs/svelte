@@ -82,7 +82,7 @@ export function RegularElement(node, context) {
 	/** @type {AST.StyleDirective[]} */
 	const style_directives = [];
 
-	/** @type {Array<AST.AnimateDirective | AST.BindDirective | AST.OnDirective | AST.TransitionDirective | AST.UseDirective | AST.AttachTag>} */
+	/** @type {Array<AST.AnimateDirective | AST.BindDirective | AST.OnDirective | AST.TransitionDirective | AST.UseDirective | AST.Attachment>} */
 	const other_directives = [];
 
 	/** @type {ExpressionStatement[]} */
@@ -153,7 +153,7 @@ export function RegularElement(node, context) {
 				other_directives.push(attribute);
 				break;
 
-			case 'AttachTag':
+			case 'Attachment':
 				other_directives.push(attribute);
 				break;
 		}

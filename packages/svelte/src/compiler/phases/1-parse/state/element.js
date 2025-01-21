@@ -1,4 +1,4 @@
-/** @import { Expression } from 'estree' */
+/** @import { CallExpression, Expression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { is_void } from '../../../../utils.js';
@@ -14,6 +14,8 @@ import { get_attribute_expression, is_expression_attribute } from '../../../util
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
 import { regex_whitespace } from '../../patterns.js';
+import { find_matching_bracket } from '../utils/bracket.js';
+import { parse_expression_at } from '../acorn.js';
 
 const regex_invalid_unquoted_attribute_value = /^(\/>|[\s"'=<>`])/;
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
@@ -480,31 +482,37 @@ function read_static_attribute(parser) {
 
 /**
  * @param {Parser} parser
- * @returns {AST.Attribute | AST.SpreadAttribute | AST.Directive | AST.AttachTag | null}
+ * @returns {AST.Attribute | AST.SpreadAttribute | AST.Directive | AST.Attachment | null}
  */
 function read_attribute(parser) {
 	const start = parser.index;
 
+	if (parser.match('attach(')) {
+		const end = find_matching_bracket(parser.template, start + 7, '(');
+
+		if (end === undefined) {
+			e.unexpected_eof(parser.template.length);
+		}
+
+		const sliced = parser.template.slice(0, end + 1);
+
+		const call = /** @type {CallExpression} */ (parse_expression_at(sliced, parser.ts, start));
+
+		/** @type {AST.Attachment} */
+		const attachment = {
+			type: 'Attachment',
+			start,
+			end,
+			attachments: call.arguments
+		};
+
+		parser.index = end + 1;
+
+		return attachment;
+	}
+
 	if (parser.eat('{')) {
 		parser.allow_whitespace();
-
-		if (parser.eat('@attach')) {
-			parser.require_whitespace();
-
-			const expression = read_expression(parser);
-			parser.allow_whitespace();
-			parser.eat('}', true);
-
-			/** @type {AST.AttachTag} */
-			const attachment = {
-				type: 'AttachTag',
-				start,
-				end: parser.index,
-				expression
-			};
-
-			return attachment;
-		}
 
 		if (parser.eat('...')) {
 			const expression = read_expression(parser);

@@ -1,1 +1,1 @@
-<div {@attach (node) => node.textContent = node.nodeName}></div>
+<div attach((node) => node.textContent = node.nodeName)></div>

@@ -2,7 +2,7 @@
 	"css": null,
 	"js": [],
 	"start": 0,
-	"end": 57,
+	"end": 149,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
@@ -10,124 +10,381 @@
 			{
 				"type": "RegularElement",
 				"start": 0,
-				"end": 57,
+				"end": 21,
 				"name": "div",
 				"attributes": [
 					{
 						"type": "AttachTag",
 						"start": 5,
-						"end": 27,
-						"expression": {
-							"type": "ArrowFunctionExpression",
-							"start": 14,
-							"end": 26,
-							"loc": {
-								"start": {
-									"line": 1,
-									"column": 14
+						"end": 13,
+						"attachments": [
+							{
+								"type": "Identifier",
+								"start": 12,
+								"end": 13,
+								"loc": {
+									"start": {
+										"line": 1,
+										"column": 12
+									},
+									"end": {
+										"line": 1,
+										"column": 13
+									}
 								},
-								"end": {
-									"line": 1,
-									"column": 26
-								}
+								"name": "a"
+							}
+						]
+					},
+					{
+						"type": "Attribute",
+						"start": 13,
+						"end": 14,
+						"name": ")",
+						"value": true
+					}
+				],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": []
+				}
+			},
+			{
+				"type": "Text",
+				"start": 21,
+				"end": 22,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "RegularElement",
+				"start": 22,
+				"end": 49,
+				"name": "div",
+				"attributes": [
+					{
+						"type": "AttachTag",
+						"start": 27,
+						"end": 41,
+						"attachments": [
+							{
+								"type": "Identifier",
+								"start": 34,
+								"end": 35,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 12
+									},
+									"end": {
+										"line": 2,
+										"column": 13
+									}
+								},
+								"name": "a"
 							},
-							"id": null,
-							"expression": false,
-							"generator": false,
-							"async": false,
-							"params": [
-								{
+							{
+								"type": "Identifier",
+								"start": 37,
+								"end": 38,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 15
+									},
+									"end": {
+										"line": 2,
+										"column": 16
+									}
+								},
+								"name": "b"
+							},
+							{
+								"type": "Identifier",
+								"start": 40,
+								"end": 41,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 18
+									},
+									"end": {
+										"line": 2,
+										"column": 19
+									}
+								},
+								"name": "c"
+							}
+						]
+					},
+					{
+						"type": "Attribute",
+						"start": 41,
+						"end": 42,
+						"name": ")",
+						"value": true
+					}
+				],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": []
+				}
+			},
+			{
+				"type": "Text",
+				"start": 49,
+				"end": 50,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "RegularElement",
+				"start": 50,
+				"end": 78,
+				"name": "div",
+				"attributes": [
+					{
+						"type": "AttachTag",
+						"start": 55,
+						"end": 70,
+						"attachments": [
+							{
+								"type": "SpreadElement",
+								"start": 62,
+								"end": 70,
+								"loc": {
+									"start": {
+										"line": 3,
+										"column": 12
+									},
+									"end": {
+										"line": 3,
+										"column": 20
+									}
+								},
+								"argument": {
 									"type": "Identifier",
-									"start": 15,
-									"end": 19,
+									"start": 65,
+									"end": 70,
 									"loc": {
 										"start": {
-											"line": 1,
+											"line": 3,
 											"column": 15
 										},
 										"end": {
-											"line": 1,
-											"column": 19
+											"line": 3,
+											"column": 20
 										}
 									},
-									"name": "node"
+									"name": "stuff"
 								}
-							],
-							"body": {
-								"type": "BlockStatement",
-								"start": 24,
-								"end": 26,
-								"loc": {
-									"start": {
-										"line": 1,
-										"column": 24
-									},
-									"end": {
-										"line": 1,
-										"column": 26
-									}
-								},
-								"body": []
 							}
-						}
+						]
 					},
 					{
+						"type": "Attribute",
+						"start": 70,
+						"end": 71,
+						"name": ")",
+						"value": true
+					}
+				],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": []
+				}
+			},
+			{
+				"type": "Text",
+				"start": 78,
+				"end": 79,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "RegularElement",
+				"start": 79,
+				"end": 116,
+				"name": "div",
+				"attributes": [
+					{
 						"type": "AttachTag",
-						"start": 28,
-						"end": 50,
-						"expression": {
-							"type": "ArrowFunctionExpression",
-							"start": 37,
-							"end": 49,
-							"loc": {
-								"start": {
-									"line": 1,
-									"column": 37
-								},
-								"end": {
-									"line": 1,
-									"column": 49
-								}
-							},
-							"id": null,
-							"expression": false,
-							"generator": false,
-							"async": false,
-							"params": [
-								{
-									"type": "Identifier",
-									"start": 38,
-									"end": 42,
-									"loc": {
-										"start": {
-											"line": 1,
-											"column": 38
-										},
-										"end": {
-											"line": 1,
-											"column": 42
-										}
-									},
-									"name": "node"
-								}
-							],
-							"body": {
-								"type": "BlockStatement",
-								"start": 47,
-								"end": 49,
+						"start": 84,
+						"end": 108,
+						"attachments": [
+							{
+								"type": "Identifier",
+								"start": 91,
+								"end": 92,
 								"loc": {
 									"start": {
-										"line": 1,
-										"column": 47
+										"line": 4,
+										"column": 12
 									},
 									"end": {
-										"line": 1,
-										"column": 49
+										"line": 4,
+										"column": 13
 									}
 								},
-								"body": []
+								"name": "a"
+							},
+							{
+								"type": "Identifier",
+								"start": 94,
+								"end": 95,
+								"loc": {
+									"start": {
+										"line": 4,
+										"column": 15
+									},
+									"end": {
+										"line": 4,
+										"column": 16
+									}
+								},
+								"name": "b"
+							},
+							{
+								"type": "Identifier",
+								"start": 97,
+								"end": 98,
+								"loc": {
+									"start": {
+										"line": 4,
+										"column": 18
+									},
+									"end": {
+										"line": 4,
+										"column": 19
+									}
+								},
+								"name": "c"
+							},
+							{
+								"type": "SpreadElement",
+								"start": 100,
+								"end": 108,
+								"loc": {
+									"start": {
+										"line": 4,
+										"column": 21
+									},
+									"end": {
+										"line": 4,
+										"column": 29
+									}
+								},
+								"argument": {
+									"type": "Identifier",
+									"start": 103,
+									"end": 108,
+									"loc": {
+										"start": {
+											"line": 4,
+											"column": 24
+										},
+										"end": {
+											"line": 4,
+											"column": 29
+										}
+									},
+									"name": "stuff"
+								}
 							}
-						}
+						]
+					},
+					{
+						"type": "Attribute",
+						"start": 108,
+						"end": 109,
+						"name": ")",
+						"value": true
+					}
+				],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": []
+				}
+			},
+			{
+				"type": "Text",
+				"start": 116,
+				"end": 117,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "RegularElement",
+				"start": 117,
+				"end": 149,
+				"name": "div",
+				"attributes": [
+					{
+						"type": "AttachTag",
+						"start": 122,
+						"end": 141,
+						"attachments": [
+							{
+								"type": "ArrowFunctionExpression",
+								"start": 129,
+								"end": 141,
+								"loc": {
+									"start": {
+										"line": 5,
+										"column": 12
+									},
+									"end": {
+										"line": 5,
+										"column": 24
+									}
+								},
+								"id": null,
+								"expression": false,
+								"generator": false,
+								"async": false,
+								"params": [
+									{
+										"type": "Identifier",
+										"start": 130,
+										"end": 134,
+										"loc": {
+											"start": {
+												"line": 5,
+												"column": 13
+											},
+											"end": {
+												"line": 5,
+												"column": 17
+											}
+										},
+										"name": "node"
+									}
+								],
+								"body": {
+									"type": "BlockStatement",
+									"start": 139,
+									"end": 141,
+									"loc": {
+										"start": {
+											"line": 5,
+											"column": 22
+										},
+										"end": {
+											"line": 5,
+											"column": 24
+										}
+									},
+									"body": []
+								}
+							}
+						]
+					},
+					{
+						"type": "Attribute",
+						"start": 141,
+						"end": 142,
+						"name": ")",
+						"value": true
 					}
 				],
 				"fragment": {

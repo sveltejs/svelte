@@ -622,7 +622,7 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
+	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression, SpreadElement } from 'estree';
 	import type { SourceMap } from 'magic-string';
 	import type { Location } from 'locate-character';
 	/**
@@ -1053,7 +1053,7 @@ declare module 'svelte/compiler' {
 		/** A `{@attach foo(...)} tag */
 		export interface AttachTag extends BaseNode {
 			type: 'AttachTag';
-			expression: Expression;
+			attachments: Array<Expression | SpreadElement>;
 		}
 
 		/** An `animate:` directive */
