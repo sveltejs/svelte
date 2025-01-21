@@ -65,21 +65,22 @@ function build_assignment(operator, left, right, context) {
 				context.visit(build_assignment_value(operator, left, right))
 			);
 
-			if (
+			const needs_proxy =
 				private_state.kind === 'state' &&
 				is_non_coercive_operator(operator) &&
-				should_proxy(value, context.state.scope)
-			) {
-				value = build_proxy_reassignment(value, b.member(b.this, private_state.id));
-			}
+				should_proxy(value, context.state.scope);
 
 			if (context.state.in_constructor) {
 				// inside the constructor, we can assign to `this.#foo.v` rather than using `$.set`,
 				// since nothing is tracking the signal at this point
-				return b.assignment(operator, /** @type {Pattern} */ (context.visit(left)), value);
+				return b.assignment(
+					operator,
+					/** @type {Pattern} */ (context.visit(left)),
+					needs_proxy ? build_proxy_reassignment(value, b.member(b.this, private_state.id)) : value
+				);
 			}
 
-			return b.call('$.set', left, value);
+			return b.call('$.set', left, value, needs_proxy && b.true, dev && needs_proxy && b.true);
 		}
 	}
 
@@ -113,19 +114,17 @@ function build_assignment(operator, left, right, context) {
 			context.visit(build_assignment_value(operator, left, right))
 		);
 
-		if (
+		return transform.assign(
+			object,
+			value,
 			!is_primitive &&
-			binding.kind !== 'prop' &&
-			binding.kind !== 'bindable_prop' &&
-			binding.kind !== 'raw_state' &&
-			context.state.analysis.runes &&
-			should_proxy(right, context.state.scope) &&
-			is_non_coercive_operator(operator)
-		) {
-			value = build_proxy_reassignment(value, object);
-		}
-
-		return transform.assign(object, value);
+				binding.kind !== 'prop' &&
+				binding.kind !== 'bindable_prop' &&
+				binding.kind !== 'raw_state' &&
+				context.state.analysis.runes &&
+				should_proxy(right, context.state.scope) &&
+				is_non_coercive_operator(operator)
+		);
 	}
 
 	// mutation

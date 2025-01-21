@@ -34,6 +34,7 @@ import {
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
+import { proxy } from '../proxy.js';
 
 export let inspect_effects = new Set();
 
@@ -154,9 +155,11 @@ export function mutate(source, value) {
  * @template V
  * @param {Source<V>} source
  * @param {V} value
+ * @param {boolean} [should_proxy]
+ * @param {boolean} [needs_previous]
  * @returns {V}
  */
-export function set(source, value) {
+export function set(source, value, should_proxy = false, needs_previous = false) {
 	if (
 		active_reaction !== null &&
 		is_runes() &&
@@ -168,7 +171,13 @@ export function set(source, value) {
 		e.state_unsafe_mutation();
 	}
 
-	return internal_set(source, value);
+	let new_value = should_proxy
+		? needs_previous
+			? proxy(value, source.o, null, source)
+			: proxy(value, source.o)
+		: value;
+
+	return internal_set(source, new_value);
 }
 
 /**

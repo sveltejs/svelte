@@ -5,7 +5,7 @@ import { dev, is_ignored } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { regex_invalid_identifier_chars } from '../../../patterns.js';
 import { get_rune } from '../../../scope.js';
-import { build_proxy_reassignment, should_proxy } from '../utils.js';
+import { should_proxy } from '../utils.js';
 
 /**
  * @param {ClassBody} node
@@ -160,7 +160,7 @@ export function ClassBody(node, context) {
 								'set',
 								definition.key,
 								[value],
-								[b.stmt(b.call('$.set', member, build_proxy_reassignment(value, prev)))]
+								[b.stmt(b.call('$.set', member, value, b.true, dev && b.true))]
 							)
 						);
 					}
