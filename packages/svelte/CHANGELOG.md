@@ -1,5 +1,17 @@
 # svelte
 
+## 5.19.1
+
+### Patch Changes
+
+- fix: omit unnecessary nullish coallescing in template expressions ([#15056](https://github.com/sveltejs/svelte/pull/15056))
+
+- fix: more efficient template effect grouping ([#15050](https://github.com/sveltejs/svelte/pull/15050))
+
+- fix: ensure untrack correctly retains the active reaction ([#15065](https://github.com/sveltejs/svelte/pull/15065))
+
+- fix: initialize `files` bind on hydration ([#15059](https://github.com/sveltejs/svelte/pull/15059))
+
 ## 5.19.0
 
 ### Minor Changes
