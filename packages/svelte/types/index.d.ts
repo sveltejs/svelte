@@ -2776,6 +2776,7 @@ declare namespace $state {
 	 *
 	 * @param initial The initial value
 	 */
+	export function raw<T>(initial?: T, options?: import('svelte').StateOptions): T;
 	export function raw<T>(initial: T): T;
 	export function raw<T>(): T | undefined;
 	/**
