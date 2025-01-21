@@ -349,15 +349,21 @@ export function render_effect(fn) {
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
  */
-export async function template_effect(fn, sync = [], async = [], d = derived) {
-	/** @type {Value[]} */
-	const deriveds = sync.map(d);
-
+export function template_effect(fn, sync = [], async = [], d = derived) {
 	if (async.length > 0) {
-		const async_deriveds = (await suspend(Promise.all(async.map(async_derived)))).exit();
-		deriveds.push(...async_deriveds);
+		suspend(Promise.all(async.map(async_derived))).then((result) => {
+			create_template_effect(fn, [...sync.map(d), ...result.exit()]);
+		});
+	} else {
+		create_template_effect(fn, sync.map(d));
 	}
+}
 
+/**
+ * @param {(...expressions: any) => void | (() => void)} fn
+ * @param {Value[]} deriveds
+ */
+function create_template_effect(fn, deriveds) {
 	const effect = () => fn(...deriveds.map(get));
 
 	if (DEV) {
