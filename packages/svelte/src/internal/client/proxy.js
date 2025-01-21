@@ -170,13 +170,13 @@ export function proxy(value, options, parent = null, prev) {
 				return v === UNINITIALIZED ? undefined : v;
 			}
 
-			const value = Reflect.get(target, prop, receiver);
+			v = Reflect.get(target, prop, receiver);
 
 			if (is_proxied_array && array_methods.includes(/** @type {string} */ (prop))) {
-				return batch_onchange(value);
+				return batch_onchange(v);
 			}
 
-			return value;
+			return v;
 		},
 
 		getOwnPropertyDescriptor(target, prop) {
