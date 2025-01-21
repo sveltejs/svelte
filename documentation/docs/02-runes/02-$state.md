@@ -65,6 +65,33 @@ let { done, text } = todos[0];
 todos[0].done = !todos[0].done;
 ```
 
+### Re-assignment vs Mutation
+
+When you are in the .svelte file, you can use re-assignments (making a variable `=` something else) or mutations to trigger re-renders .
+
+```js
+<script>
+	let num = $state(5);
+</script>
+
+<h1>{num}</h1>
+<button onclick={() => num = 7}>change</button>
+```
+
+However, once you pass a rune into a function, you can only use mutable types like arrays and objects. Only mutation operations will trigger re-rendering of states.
+
+```js
+function inc(x) {
+	x++; // function only receives the value of x and not the rune, no re-rendering occurs
+}
+
+function addElem(arr) {
+	arr.push(1); // this triggers re-rendering
+}
+```
+> [!NOTE] Mutation operations include .push, .splice ... where the original object is modified ad opposed to creating a new, different instance.
+
+
 ### Classes
 
 You can also use `$state` in class fields (whether public or private):
@@ -250,3 +277,5 @@ console.log(total.value); // 7
 ```
 
 ...though if you find yourself writing code like that, consider using [classes](#Classes) instead.
+
+
