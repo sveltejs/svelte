@@ -593,6 +593,13 @@ declare module 'svelte/action' {
 	export {};
 }
 
+declare module 'svelte/attachments' {
+	/**
+	 * A unique symbol used for defining the attachments to be applied to an element or component.
+	 */
+	export const AttachmentsKey: unique symbol;
+}
+
 declare module 'svelte/animate' {
 	// todo: same as Transition, should it be shared?
 	export interface AnimationConfig {
@@ -1881,10 +1888,10 @@ declare module 'svelte/motion' {
 		 * 	const tween = Tween.of(() => number);
 		 * </script>
 		 * ```
-		 * 
+		 *
 		 */
 		static of<U>(fn: () => U, options?: TweenedOptions<U> | undefined): Tween<U>;
-		
+
 		constructor(value: T, options?: TweenedOptions<T>);
 		/**
 		 * Sets `tween.target` to `value` and returns a `Promise` that resolves if and when `tween.current` catches up to it.
@@ -1903,21 +1910,21 @@ declare module 'svelte/motion' {
 
 declare module 'svelte/reactivity' {
 	export class SvelteDate extends Date {
-		
+
 		constructor(...params: any[]);
 		#private;
 	}
 	export class SvelteSet<T> extends Set<T> {
-		
+
 		constructor(value?: Iterable<T> | null | undefined);
-		
+
 		add(value: T): this;
 		#private;
 	}
 	export class SvelteMap<K, V> extends Map<K, V> {
-		
+
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
-		
+
 		set(key: K, value: V): this;
 		#private;
 	}
@@ -1927,7 +1934,7 @@ declare module 'svelte/reactivity' {
 	}
 	const REPLACE: unique symbol;
 	export class SvelteURLSearchParams extends URLSearchParams {
-		
+
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
@@ -1999,7 +2006,7 @@ declare module 'svelte/reactivity' {
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
 	class ReactiveValue<T> {
-		
+
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
 		get current(): T;
 		#private;
@@ -2064,7 +2071,7 @@ declare module 'svelte/reactivity/window' {
 		get current(): number | undefined;
 	};
 	class ReactiveValue<T> {
-		
+
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
 		get current(): T;
 		#private;
