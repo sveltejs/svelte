@@ -1,7 +1,7 @@
 import { test } from '../../test';
 
 export default test({
-  html: `
+	html: `
 		<form novalidate></form>
 		<form novalidate></form>
 `
