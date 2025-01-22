@@ -149,7 +149,7 @@ This can improve performance with large arrays and objects that you weren't plan
 
 ## State options
 
-Both `$state` and `$state.raw` can optionally accept a second argument. This argument allow you to specify an `onchange` function that will be called synchronously whenever the object change (for `$state` it will also be called for deep mutations).
+Both `$state` and `$state.raw` can optionally accept a second argument. This allows you to specify an `onchange` function that will be called synchronously whenever the state value changes (for `$state` it will also be called for deep mutations).
 
 The `onchange` function is untracked so even if you assign within an `$effect` it will not cause unwanted dependencies.
 
