@@ -196,7 +196,8 @@ const ATTRIBUTE_ALIASES = {
 	readonly: 'readOnly',
 	defaultvalue: 'defaultValue',
 	defaultchecked: 'defaultChecked',
-	srcobject: 'srcObject'
+	srcobject: 'srcObject',
+	novalidate: 'noValidate'
 };
 
 /**
