@@ -60,7 +60,10 @@ function open(parser) {
 			end: -1,
 			test: read_expression(parser),
 			consequent: create_fragment(),
-			alternate: null
+			alternate: null,
+			metadata: {
+				expression: create_expression_metadata()
+			}
 		});
 
 		parser.allow_whitespace();
@@ -441,7 +444,10 @@ function next(parser) {
 				elseif: true,
 				test: expression,
 				consequent: create_fragment(),
-				alternate: null
+				alternate: null,
+				metadata: {
+					expression: create_expression_metadata()
+				}
 			});
 
 			parser.stack.push(child);

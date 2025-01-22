@@ -24,6 +24,11 @@ export function IfBlock(node, context) {
 		statements.push(b.var(b.id(alternate_id), b.arrow([b.id('$$anchor')], alternate)));
 	}
 
+	const { is_async } = node.metadata.expression;
+
+	const expression = /** @type {Expression} */ (context.visit(node.test));
+	const test = is_async ? b.call('$.get', b.id('$$condition')) : expression;
+
 	/** @type {Expression[]} */
 	const args = [
 		context.state.node,
@@ -31,7 +36,7 @@ export function IfBlock(node, context) {
 			[b.id('$$render')],
 			b.block([
 				b.if(
-					/** @type {Expression} */ (context.visit(node.test)),
+					test,
 					b.stmt(b.call(b.id('$$render'), b.id(consequent_id))),
 					alternate_id
 						? b.stmt(
@@ -74,5 +79,18 @@ export function IfBlock(node, context) {
 
 	statements.push(b.stmt(b.call('$.if', ...args)));
 
-	context.state.init.push(b.block(statements));
+	if (is_async) {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.async',
+					context.state.node,
+					b.array([b.thunk(expression, true)]),
+					b.arrow([context.state.node, b.id('$$condition')], b.block(statements))
+				)
+			)
+		);
+	} else {
+		context.state.init.push(b.block(statements));
+	}
 }
