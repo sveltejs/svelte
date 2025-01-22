@@ -49,10 +49,10 @@ export function replay_events(dom) {
 /**
  * @param {string} event_name
  * @param {EventTarget} dom
- * @param {EventListener} handler
- * @param {AddEventListenerOptions} options
+ * @param {EventListener} [handler]
+ * @param {AddEventListenerOptions} [options]
  */
-export function create_event(event_name, dom, handler, options) {
+export function create_event(event_name, dom, handler, options = {}) {
 	/**
 	 * @this {EventTarget}
 	 */
@@ -63,7 +63,7 @@ export function create_event(event_name, dom, handler, options) {
 		}
 		if (!event.cancelBubble) {
 			return without_reactive_context(() => {
-				return handler.call(this, event);
+				return handler?.call(this, event);
 			});
 		}
 	}
@@ -108,8 +108,8 @@ export function on(element, type, handler, options = {}) {
 /**
  * @param {string} event_name
  * @param {Element} dom
- * @param {EventListener} handler
- * @param {boolean} capture
+ * @param {EventListener} [handler]
+ * @param {boolean} [capture]
  * @param {boolean} [passive]
  * @returns {void}
  */

@@ -541,8 +541,10 @@ function build_element_attribute_update_assignment(
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
 
-	let { value, has_state } = build_attribute_value(attribute.value, context, (value, is_async) =>
-		get_expression_id(state, value, is_async)
+	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
+		metadata.has_call || metadata.is_async
+			? get_expression_id(state, value, metadata.is_async)
+			: value
 	);
 
 	if (name === 'autofocus') {
@@ -669,8 +671,10 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
  */
 function build_element_special_value_attribute(element, node_id, attribute, context) {
 	const state = context.state;
-	const { value, has_state } = build_attribute_value(attribute.value, context, (value, is_async) =>
-		get_expression_id(state, value, is_async)
+	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
+		metadata.has_call || metadata.is_async
+			? get_expression_id(state, value, metadata.is_async)
+			: value
 	);
 
 	const inner_assignment = b.assignment(

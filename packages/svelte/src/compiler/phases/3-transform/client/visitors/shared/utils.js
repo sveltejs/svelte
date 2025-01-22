@@ -1,5 +1,5 @@
 /** @import { Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Statement, Super } from 'estree' */
-/** @import { AST } from '#compiler' */
+/** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentClientTransformState } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
@@ -83,14 +83,17 @@ function compare_expressions(a, b) {
  * @param {Array<AST.Text | AST.ExpressionTag>} values
  * @param {(node: AST.SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
- * @param {(value: Expression, is_async: boolean) => Expression} memoize
- * @returns {{ value: Expression, has_state: boolean, is_async: boolean }}
+ * @param {(value: Expression, metadata: ExpressionMetadata) => Expression} memoize
+ * @returns {{ value: Expression, has_state: boolean }}
  */
 export function build_template_chunk(
 	values,
 	visit,
 	state,
-	memoize = (value, is_async) => get_expression_id(state, value, is_async)
+	memoize = (value, metadata) =>
+		metadata.has_call || metadata.is_async
+			? get_expression_id(state, value, metadata.is_async)
+			: value
 ) {
 	/** @type {Expression[]} */
 	const expressions = [];
@@ -111,19 +114,18 @@ export function build_template_chunk(
 				quasi.value.cooked += node.expression.value + '';
 			}
 		} else {
-			let value = /** @type {Expression} */ (visit(node.expression, state));
+			let value = memoize(
+				/** @type {Expression} */ (visit(node.expression, state)),
+				node.metadata.expression
+			);
 
 			is_async ||= node.metadata.expression.is_async;
 			has_state ||= is_async || node.metadata.expression.has_state;
 
-			if (node.metadata.expression.has_call || node.metadata.expression.is_async) {
-				value = memoize(value, node.metadata.expression.is_async);
-			}
-
 			if (values.length === 1) {
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).
-				return { value, has_state, is_async };
+				return { value, has_state };
 			} else {
 				let expression = value;
 				// only add nullish coallescence if it hasn't been added already
@@ -154,7 +156,7 @@ export function build_template_chunk(
 
 	const value = b.template(quasis, expressions);
 
-	return { value, has_state, is_async };
+	return { value, has_state };
 }
 
 /**

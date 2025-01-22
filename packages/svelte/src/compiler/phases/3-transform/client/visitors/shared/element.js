@@ -1,11 +1,11 @@
 /** @import { Expression, Identifier, ObjectExpression } from 'estree' */
-/** @import { AST } from '#compiler' */
+/** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../../types' */
 import { normalize_attribute } from '../../../../../../utils.js';
 import { is_ignored } from '../../../../../state.js';
 import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { build_getter, create_derived } from '../../utils.js';
+import { build_getter } from '../../utils.js';
 import { build_template_chunk, get_expression_id } from './utils.js';
 
 /**
@@ -38,7 +38,10 @@ export function build_set_attributes(
 			const { value, has_state } = build_attribute_value(
 				attribute.value,
 				context,
-				(value, is_async) => get_expression_id(context.state, value, is_async)
+				(value, metadata) =>
+					metadata.has_call || metadata.is_async
+						? get_expression_id(context.state, value, metadata.is_async)
+						: value
 			);
 
 			if (
@@ -60,11 +63,10 @@ export function build_set_attributes(
 
 			let value = /** @type {Expression} */ (context.visit(attribute));
 
-			if (attribute.metadata.expression.has_call) {
-				const id = b.id(state.scope.generate('spread_with_call'));
-				state.init.push(b.const(id, create_derived(state, b.thunk(value))));
-				value = b.call('$.get', id);
+			if (attribute.metadata.expression.has_call || attribute.metadata.expression.is_async) {
+				value = get_expression_id(context.state, value, attribute.metadata.expression.is_async);
 			}
+
 			values.push(b.spread(value));
 		}
 	}
@@ -113,8 +115,10 @@ export function build_style_directives(
 		let value =
 			directive.value === true
 				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
-				: build_attribute_value(directive.value, context, (value, is_async) =>
-						get_expression_id(context.state, value, is_async)
+				: build_attribute_value(directive.value, context, (value, metadata) =>
+						metadata.has_call || metadata.is_async
+							? get_expression_id(context.state, value, metadata.is_async)
+							: value
 					).value;
 
 		const update = b.stmt(
@@ -171,30 +175,26 @@ export function build_class_directives(
 /**
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
- * @param {(value: Expression, is_async: boolean) => Expression} memoize
- * @returns {{ value: Expression, has_state: boolean, is_async: boolean }}
+ * @param {(value: Expression, metadata: ExpressionMetadata) => Expression} memoize
+ * @returns {{ value: Expression, has_state: boolean }}
  */
 export function build_attribute_value(value, context, memoize = (value) => value) {
 	if (value === true) {
-		return { value: b.literal(true), has_state: false, is_async: false };
+		return { value: b.literal(true), has_state: false };
 	}
 
 	if (!Array.isArray(value) || value.length === 1) {
 		const chunk = Array.isArray(value) ? value[0] : value;
 
 		if (chunk.type === 'Text') {
-			return { value: b.literal(chunk.data), has_state: false, is_async: false };
+			return { value: b.literal(chunk.data), has_state: false };
 		}
 
 		let expression = /** @type {Expression} */ (context.visit(chunk.expression));
 
 		return {
-			value:
-				chunk.metadata.expression.has_call || chunk.metadata.expression.is_async
-					? memoize(expression, chunk.metadata.expression.is_async)
-					: expression,
-			has_state: chunk.metadata.expression.has_state,
-			is_async: chunk.metadata.expression.is_async
+			value: memoize(expression, chunk.metadata.expression),
+			has_state: chunk.metadata.expression.has_state
 		};
 	}
 
