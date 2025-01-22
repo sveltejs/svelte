@@ -1,5 +1,5 @@
 <script>
-	let { num } = $props();
+	let { value } = $props();
 </script>
 
-<p>{num}</p>
+<h1>{value}</h1>

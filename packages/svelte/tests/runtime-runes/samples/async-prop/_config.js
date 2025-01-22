@@ -22,7 +22,7 @@ export default test({
 		await Promise.resolve();
 		await Promise.resolve();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>hello</p>');
+		assert.htmlEqual(target.innerHTML, '<h1>hello</h1>');
 
 		d = deferred();
 		component.promise = d.promise;
@@ -32,6 +32,6 @@ export default test({
 		d.resolve('hello again');
 		await Promise.resolve();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>hello again</p>');
+		assert.htmlEqual(target.innerHTML, '<h1>hello again</h1>');
 	}
 });
