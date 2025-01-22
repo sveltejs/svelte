@@ -172,18 +172,18 @@ export function build_class_directives(
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
  * @param {(value: Expression, is_async: boolean) => Expression} memoize
- * @returns {{ value: Expression, has_state: boolean }}
+ * @returns {{ value: Expression, has_state: boolean, is_async: boolean }}
  */
 export function build_attribute_value(value, context, memoize = (value) => value) {
 	if (value === true) {
-		return { value: b.literal(true), has_state: false };
+		return { value: b.literal(true), has_state: false, is_async: false };
 	}
 
 	if (!Array.isArray(value) || value.length === 1) {
 		const chunk = Array.isArray(value) ? value[0] : value;
 
 		if (chunk.type === 'Text') {
-			return { value: b.literal(chunk.data), has_state: false };
+			return { value: b.literal(chunk.data), has_state: false, is_async: false };
 		}
 
 		let expression = /** @type {Expression} */ (context.visit(chunk.expression));
@@ -193,7 +193,8 @@ export function build_attribute_value(value, context, memoize = (value) => value
 				chunk.metadata.expression.has_call || chunk.metadata.expression.is_async
 					? memoize(expression, chunk.metadata.expression.is_async)
 					: expression,
-			has_state: chunk.metadata.expression.has_state
+			has_state: chunk.metadata.expression.has_state,
+			is_async: chunk.metadata.expression.is_async
 		};
 	}
 
