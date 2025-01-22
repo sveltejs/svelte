@@ -26,7 +26,11 @@ export function is_element_node(node) {
  * @returns {boolean}
  */
 export function is_custom_element_node(node) {
-	return node.type === 'RegularElement' && (node.name.includes('-') || node.attributes.some((attr) => attr.type === 'Attribute' && attr.name === 'is'));
+	return (
+		node.type === 'RegularElement' &&
+		(node.name.includes('-') ||
+			node.attributes.some((attr) => attr.type === 'Attribute' && attr.name === 'is'))
+	);
 }
 
 /**
