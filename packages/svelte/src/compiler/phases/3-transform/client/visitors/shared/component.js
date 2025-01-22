@@ -134,9 +134,9 @@ export function build_component(node, component_name, context, anchor = context.
 				custom_css_props.push(
 					b.init(
 						attribute.name,
-						build_attribute_value(attribute.value, context, (value) =>
+						build_attribute_value(attribute.value, context, (value, metadata) =>
 							// TODO put the derived in the local block
-							memoize_expression(context.state, value)
+							metadata.has_call ? memoize_expression(context.state, value) : value
 						).value
 					)
 				);
@@ -151,31 +151,29 @@ export function build_component(node, component_name, context, anchor = context.
 				has_children_prop = true;
 			}
 
-			const { value, has_state } = build_attribute_value(attribute.value, context, (value) =>
-				memoize_expression(context.state, value)
+			const { value, has_state } = build_attribute_value(
+				attribute.value,
+				context,
+				(value, metadata) => {
+					if (!metadata.has_state) return value;
+
+					// When we have a non-simple computation, anything other than an Identifier or Member expression,
+					// then there's a good chance it needs to be memoized to avoid over-firing when read within the
+					// child component (e.g. `active={i === index}`)
+					const should_wrap_in_derived = get_attribute_chunks(attribute.value).some((n) => {
+						return (
+							n.type === 'ExpressionTag' &&
+							n.expression.type !== 'Identifier' &&
+							n.expression.type !== 'MemberExpression'
+						);
+					});
+
+					return should_wrap_in_derived ? memoize_expression(context.state, value) : value;
+				}
 			);
 
 			if (has_state) {
-				let arg = value;
-
-				// When we have a non-simple computation, anything other than an Identifier or Member expression,
-				// then there's a good chance it needs to be memoized to avoid over-firing when read within the
-				// child component.
-				const should_wrap_in_derived = get_attribute_chunks(attribute.value).some((n) => {
-					return (
-						n.type === 'ExpressionTag' &&
-						n.expression.type !== 'Identifier' &&
-						n.expression.type !== 'MemberExpression'
-					);
-				});
-
-				if (should_wrap_in_derived) {
-					const id = b.id(context.state.scope.generate(attribute.name));
-					context.state.init.push(b.var(id, create_derived(context.state, b.thunk(value))));
-					arg = b.call('$.get', id);
-				}
-
-				push_prop(b.get(attribute.name, [b.return(arg)]));
+				push_prop(b.get(attribute.name, [b.return(value)]));
 			} else {
 				push_prop(b.init(attribute.name, value));
 			}

@@ -1,5 +1,5 @@
 /** @import { Expression, Identifier, ObjectExpression } from 'estree' */
-/** @import { AST } from '#compiler' */
+/** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../../types' */
 import { normalize_attribute } from '../../../../../../utils.js';
 import { is_ignored } from '../../../../../state.js';
@@ -35,8 +35,10 @@ export function build_set_attributes(
 
 	for (const attribute of attributes) {
 		if (attribute.type === 'Attribute') {
-			const { value, has_state } = build_attribute_value(attribute.value, context, (value) =>
-				get_expression_id(context.state, value)
+			const { value, has_state } = build_attribute_value(
+				attribute.value,
+				context,
+				(value, metadata) => (metadata.has_call ? get_expression_id(context.state, value) : value)
 			);
 
 			if (
@@ -111,8 +113,8 @@ export function build_style_directives(
 		let value =
 			directive.value === true
 				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
-				: build_attribute_value(directive.value, context, (value) =>
-						get_expression_id(context.state, value)
+				: build_attribute_value(directive.value, context, (value, metadata) =>
+						metadata.has_call ? get_expression_id(context.state, value) : value
 					).value;
 
 		const update = b.stmt(
@@ -169,7 +171,7 @@ export function build_class_directives(
 /**
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
- * @param {(value: Expression) => Expression} memoize
+ * @param {(value: Expression, metadata: ExpressionMetadata) => Expression} memoize
  * @returns {{ value: Expression, has_state: boolean }}
  */
 export function build_attribute_value(value, context, memoize = (value) => value) {
@@ -187,7 +189,7 @@ export function build_attribute_value(value, context, memoize = (value) => value
 		let expression = /** @type {Expression} */ (context.visit(chunk.expression));
 
 		return {
-			value: chunk.metadata.expression.has_call ? memoize(expression) : expression,
+			value: memoize(expression, chunk.metadata.expression),
 			has_state: chunk.metadata.expression.has_state
 		};
 	}
