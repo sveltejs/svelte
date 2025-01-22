@@ -63,7 +63,7 @@ export function create_event(event_name, dom, handler, options) {
 		}
 		if (!event.cancelBubble) {
 			return without_reactive_context(() => {
-				return handler.call(this, event);
+				return handler?.call(this, event);
 			});
 		}
 	}
