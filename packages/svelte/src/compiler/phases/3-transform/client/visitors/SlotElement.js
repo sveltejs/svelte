@@ -30,8 +30,10 @@ export function SlotElement(node, context) {
 		if (attribute.type === 'SpreadAttribute') {
 			spreads.push(b.thunk(/** @type {Expression} */ (context.visit(attribute))));
 		} else if (attribute.type === 'Attribute') {
-			const { value, has_state } = build_attribute_value(attribute.value, context, (value) =>
-				memoize_expression(context.state, value)
+			const { value, has_state } = build_attribute_value(
+				attribute.value,
+				context,
+				(value, metadata) => (metadata.has_call ? memoize_expression(context.state, value) : value)
 			);
 
 			if (attribute.name === 'name') {
