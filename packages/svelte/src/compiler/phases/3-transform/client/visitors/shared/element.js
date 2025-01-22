@@ -40,7 +40,10 @@ export function build_set_attributes(
 				context,
 				(value, metadata) =>
 					metadata.has_call || metadata.is_async
-						? get_expression_id(context.state, value, metadata.is_async)
+						? get_expression_id(
+								metadata.is_async ? context.state.async_expressions : context.state.expressions,
+								value
+							)
 						: value
 			);
 
@@ -64,7 +67,12 @@ export function build_set_attributes(
 			let value = /** @type {Expression} */ (context.visit(attribute));
 
 			if (attribute.metadata.expression.has_call || attribute.metadata.expression.is_async) {
-				value = get_expression_id(context.state, value, attribute.metadata.expression.is_async);
+				value = get_expression_id(
+					attribute.metadata.expression.is_async
+						? context.state.async_expressions
+						: context.state.expressions,
+					value
+				);
 			}
 
 			values.push(b.spread(value));
@@ -117,7 +125,10 @@ export function build_style_directives(
 				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
 				: build_attribute_value(directive.value, context, (value, metadata) =>
 						metadata.has_call || metadata.is_async
-							? get_expression_id(context.state, value, metadata.is_async)
+							? get_expression_id(
+									metadata.is_async ? context.state.async_expressions : context.state.expressions,
+									value
+								)
 							: value
 					).value;
 
@@ -159,7 +170,7 @@ export function build_class_directives(
 		let value = /** @type {Expression} */ (context.visit(directive.expression));
 
 		if (has_call || is_async) {
-			value = get_expression_id(state, value, is_async);
+			value = get_expression_id(is_async ? state.async_expressions : state.expressions, value);
 		}
 
 		const update = b.stmt(b.call('$.toggle_class', element_id, b.literal(directive.name), value));

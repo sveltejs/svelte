@@ -543,7 +543,7 @@ function build_element_attribute_update_assignment(
 
 	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
 		metadata.has_call || metadata.is_async
-			? get_expression_id(state, value, metadata.is_async)
+			? get_expression_id(metadata.is_async ? state.async_expressions : state.expressions, value)
 			: value
 	);
 
@@ -673,7 +673,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 	const state = context.state;
 	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
 		metadata.has_call || metadata.is_async
-			? get_expression_id(state, value, metadata.is_async)
+			? get_expression_id(metadata.is_async ? state.async_expressions : state.expressions, value)
 			: value
 	);
 

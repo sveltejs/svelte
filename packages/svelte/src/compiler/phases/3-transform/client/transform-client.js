@@ -175,6 +175,7 @@ export function client_component(analysis, options) {
 		init: /** @type {any} */ (null),
 		update: /** @type {any} */ (null),
 		expressions: /** @type {any} */ (null),
+		async_expressions: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),
 		template: /** @type {any} */ (null),
 		locations: /** @type {any} */ (null)

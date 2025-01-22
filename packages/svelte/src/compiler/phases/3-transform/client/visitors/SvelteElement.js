@@ -48,6 +48,7 @@ export function SvelteElement(node, context) {
 			init: [],
 			update: [],
 			expressions: [],
+			async_expressions: [],
 			after_update: []
 		}
 	};

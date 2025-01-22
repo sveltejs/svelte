@@ -1,6 +1,6 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Statement, Super } from 'estree' */
+/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Super } from 'estree' */
 /** @import { AST, ExpressionMetadata } from '#compiler' */
-/** @import { ComponentClientTransformState } from '../../types' */
+/** @import { ComponentClientTransformState, MemoizedExpression } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
@@ -22,19 +22,18 @@ export function memoize_expression(state, value) {
 
 /**
  *
- * @param {ComponentClientTransformState} state
+ * @param {MemoizedExpression[]} expressions
  * @param {Expression} expression
- * @param {boolean} is_async
  */
-export function get_expression_id(state, expression, is_async) {
-	for (let i = 0; i < state.expressions.length; i += 1) {
-		if (compare_expressions(state.expressions[i].expression, expression)) {
-			return state.expressions[i].id;
+export function get_expression_id(expressions, expression) {
+	for (let i = 0; i < expressions.length; i += 1) {
+		if (compare_expressions(expressions[i].expression, expression)) {
+			return expressions[i].id;
 		}
 	}
 
-	const id = b.id(''); // filled in later
-	state.expressions.push({ id, expression, is_async });
+	const id = b.id('~'); // filled in later
+	expressions.push({ id, expression });
 
 	return id;
 }
@@ -92,7 +91,7 @@ export function build_template_chunk(
 	state,
 	memoize = (value, metadata) =>
 		metadata.has_call || metadata.is_async
-			? get_expression_id(state, value, metadata.is_async)
+			? get_expression_id(metadata.is_async ? state.async_expressions : state.expressions, value)
 			: value
 ) {
 	/** @type {Expression[]} */
@@ -163,8 +162,8 @@ export function build_template_chunk(
  * @param {ComponentClientTransformState} state
  */
 export function build_render_statement(state) {
-	const sync = state.expressions.filter(({ is_async }) => !is_async);
-	const async = state.expressions.filter(({ is_async }) => is_async);
+	const sync = state.expressions;
+	const async = state.async_expressions;
 
 	const all = [...sync, ...async];
 
