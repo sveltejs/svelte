@@ -18,6 +18,7 @@
 			"acorn-typescript": ["./src/compiler/phases/1-parse/ambient.d.ts"],
 			"svelte": ["./src/index.d.ts"],
 			"svelte/action": ["./src/action/public.d.ts"],
+			"svelte/attachments": ["./src/attachments/public.d.ts"],
 			"svelte/compiler": ["./src/compiler/public.d.ts"],
 			"svelte/events": ["./src/events/public.d.ts"],
 			"svelte/internal/client": ["./src/internal/client/index.js"],
