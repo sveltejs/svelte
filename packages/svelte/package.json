@@ -29,6 +29,9 @@
     "./action": {
       "types": "./types/index.d.ts"
     },
+    "./attachments": {
+      "types": "./types/index.d.ts"
+    },
     "./animate": {
       "types": "./types/index.d.ts",
       "default": "./src/animate/index.js"
