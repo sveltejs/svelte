@@ -4,6 +4,7 @@
 import { cannot_be_set_statically } from '../../../../../../utils.js';
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
+import { is_custom_element_node } from '../../../../nodes.js';
 import { build_template_chunk } from './utils.js';
 
 /**
@@ -128,7 +129,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 function is_static_element(node, state) {
 	if (node.type !== 'RegularElement') return false;
 	if (node.fragment.metadata.dynamic) return false;
-	if (node.name.includes('-')) return false; // we're setting all attributes on custom elements through properties
+	if (is_custom_element_node(node)) return false; // we're setting all attributes on custom elements through properties
 
 	for (const attribute of node.attributes) {
 		if (attribute.type !== 'Attribute') {
