@@ -8,7 +8,16 @@ const pkg = JSON.parse(fs.readFileSync(`${dir}/package.json`, 'utf-8'));
 
 // For people not using moduleResolution: 'bundler', we need to generate these files. Think about removing this in Svelte 6 or 7
 // It may look weird, but the imports MUST be ending with index.js to be properly resolved in all TS modes
-for (const name of ['action', 'animate', 'easing', 'motion', 'store', 'transition', 'legacy']) {
+for (const name of [
+	'action',
+	'attachments',
+	'animate',
+	'easing',
+	'motion',
+	'store',
+	'transition',
+	'legacy'
+]) {
 	fs.writeFileSync(`${dir}/${name}.d.ts`, "import './types/index.js';\n");
 }
 
