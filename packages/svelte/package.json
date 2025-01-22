@@ -30,7 +30,8 @@
       "types": "./types/index.d.ts"
     },
     "./attachments": {
-      "types": "./types/index.d.ts"
+      "types": "./types/index.d.ts",
+      "default": "./src/attachments/index.js"
     },
     "./animate": {
       "types": "./types/index.d.ts",
