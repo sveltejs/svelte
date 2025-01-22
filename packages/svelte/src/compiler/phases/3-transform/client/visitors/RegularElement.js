@@ -227,7 +227,7 @@ export function RegularElement(node, context) {
 			node_id,
 			attributes_id,
 			(node.metadata.svg || node.metadata.mathml || is_custom_element_node(node)) && b.true,
-			node.name.includes('-') && b.true,
+			is_custom_element_node(node) && b.true,
 			context.state
 		);
 
