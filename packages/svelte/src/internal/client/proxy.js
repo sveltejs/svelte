@@ -10,7 +10,7 @@ import {
 } from '../shared/utils.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
 import { source, set, state, batch_onchange } from './reactivity/sources.js';
-import { STATE_SYMBOL, STATE_SYMBOL_METADATA } from './constants.js';
+import { PROXY_ONCHANGE_SYMBOL, STATE_SYMBOL, STATE_SYMBOL_METADATA } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 import { get_stack } from './dev/tracing.js';
@@ -33,7 +33,13 @@ export function proxy(value, options, parent = null, prev) {
 		stack = get_stack('CreatedAt');
 	}
 	// if non-proxyable, or is already a proxy, return `value`
-	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
+	if (typeof value !== 'object' || value === null) {
+		return value;
+	}
+
+	if (STATE_SYMBOL in value) {
+		// @ts-ignore
+		value[PROXY_ONCHANGE_SYMBOL] = options?.onchange;
 		return value;
 	}
 
@@ -237,6 +243,14 @@ export function proxy(value, options, parent = null, prev) {
 		},
 
 		set(target, prop, value, receiver) {
+			if (prop === PROXY_ONCHANGE_SYMBOL && options?.onchange != null) {
+				const old_onchange = options.onchange;
+				options.onchange = () => {
+					old_onchange();
+					value();
+				};
+				return true;
+			}
 			var s = sources.get(prop);
 			var has = prop in target;
 
