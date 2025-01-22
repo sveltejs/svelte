@@ -1,1 +1,1 @@
-export { ATTACHMENTS_SYMBOL as AttachmentsKey } from '../internal/client/constants.js';
+export const AttachmentsKey = Symbol.for('svelte.attachments');
