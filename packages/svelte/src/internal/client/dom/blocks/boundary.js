@@ -244,6 +244,9 @@ export function trigger_async_boundary(effect, trigger) {
 	}
 }
 
+// TODO separate this stuff out — suspending and context preservation should
+// be distinct concepts
+
 /**
  * @template T
  * @param {Promise<T>} promise

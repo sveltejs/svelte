@@ -167,8 +167,19 @@ export function VariableDeclaration(node, context) {
 						declarations.push(
 							b.declarator(
 								declarator.id,
-								b.await(
-									b.call('$.async_derived', rune === '$derived.by' ? value : b.thunk(value, true))
+								b.call(
+									b.member(
+										b.await(
+											b.call(
+												'$.suspend',
+												b.call(
+													'$.async_derived',
+													rune === '$derived.by' ? value : b.thunk(value, true)
+												)
+											)
+										),
+										'exit'
+									)
 								)
 							)
 						);

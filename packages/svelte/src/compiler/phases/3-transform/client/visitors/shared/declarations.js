@@ -18,18 +18,6 @@ export function get_value(node) {
 export function add_state_transformers(context) {
 	for (const [name, binding] of context.state.scope.declarations) {
 		if (
-			binding.kind === 'derived' &&
-			context.state.analysis.async_deriveds.has(/** @type {CallExpression} */ (binding.initial))
-		) {
-			// async deriveds are a special case
-			context.state.transform[name] = {
-				read: b.call
-			};
-
-			continue;
-		}
-
-		if (
 			is_state_source(binding, context.state.analysis) ||
 			binding.kind === 'derived' ||
 			binding.kind === 'legacy_reactive'
