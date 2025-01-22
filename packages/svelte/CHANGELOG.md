@@ -1,5 +1,11 @@
 # svelte
 
+## 5.19.2
+
+### Patch Changes
+
+- fix: address regression with untrack ([#15079](https://github.com/sveltejs/svelte/pull/15079))
+
 ## 5.19.1
 
 ### Patch Changes
