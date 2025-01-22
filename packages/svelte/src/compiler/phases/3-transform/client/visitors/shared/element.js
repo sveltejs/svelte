@@ -5,7 +5,7 @@ import { normalize_attribute } from '../../../../../../utils.js';
 import { is_ignored } from '../../../../../state.js';
 import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { build_getter, create_derived } from '../../utils.js';
+import { build_getter } from '../../utils.js';
 import { build_template_chunk, get_expression_id } from './utils.js';
 
 /**
@@ -61,10 +61,9 @@ export function build_set_attributes(
 			let value = /** @type {Expression} */ (context.visit(attribute));
 
 			if (attribute.metadata.expression.has_call) {
-				const id = b.id(state.scope.generate('spread_with_call'));
-				state.init.push(b.const(id, create_derived(state, b.thunk(value))));
-				value = b.call('$.get', id);
+				value = get_expression_id(context.state, value);
 			}
+
 			values.push(b.spread(value));
 		}
 	}
