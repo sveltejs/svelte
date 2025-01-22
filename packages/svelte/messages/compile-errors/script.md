@@ -158,6 +158,10 @@ This turned out to be buggy and unpredictable, particularly when working with de
 
 > `%name%` is not a valid rune
 
+## rune_invalid_options
+
+> Options for `%rune%` needs to be declared inline
+
 ## rune_invalid_usage
 
 > Cannot use `%rune%` rune in non-runes mode

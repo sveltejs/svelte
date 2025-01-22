@@ -1,0 +1,14 @@
+[
+	{
+		"code": "rune_invalid_options",
+		"end": {
+			"column": 29,
+			"line": 3
+		},
+		"start": {
+			"column": 22,
+			"line": 3
+		},
+		"message": "Options for `$state` needs to be declared inline"
+	}
+]
