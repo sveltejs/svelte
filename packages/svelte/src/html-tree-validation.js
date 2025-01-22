@@ -1,4 +1,11 @@
 /**
+ * @typedef {{
+ * 	tag: string;
+ * 	custom_element: boolean;
+ * }} Element
+ */
+
+/**
  * Map of elements that have certain elements that are not allowed inside them, in the sense that they will auto-close the parent/ancestor element.
  * Theoretically one could take advantage of it but most of the time it will just result in confusing behavior and break when SSR'd.
  * There are more elements that are invalid inside other elements, but they're not auto-closed and so don't break SSR and are therefore not listed here.
@@ -137,33 +144,33 @@ const disallowed_children = {
 /**
  * Returns an error message if the tag is not allowed inside the ancestor tag (which is grandparent and above) such that it will result
  * in the browser repairing the HTML, which will likely result in an error during hydration.
- * @param {string} child_tag
- * @param {string[]} ancestors All nodes starting with the parent, up until the ancestor, which means two entries minimum
+ * @param {Element} child_node
+ * @param {Element[]} ancestors All nodes starting with the parent, up until the ancestor, which means two entries minimum
  * @param {string} [child_loc]
  * @param {string} [ancestor_loc]
  * @returns {string | null}
  */
-export function is_tag_valid_with_ancestor(child_tag, ancestors, child_loc, ancestor_loc) {
-	if (child_tag.includes('-')) return null; // custom elements can be anything
+export function is_tag_valid_with_ancestor(child_node, ancestors, child_loc, ancestor_loc) {
+	if (child_node.custom_element) return null; // custom elements can be anything
 
-	const ancestor_tag = ancestors[ancestors.length - 1];
+	const ancestor_tag = ancestors[ancestors.length - 1].tag;
 	const disallowed = disallowed_children[ancestor_tag];
 	if (!disallowed) return null;
 
 	if ('reset_by' in disallowed && disallowed.reset_by) {
 		for (let i = ancestors.length - 2; i >= 0; i--) {
 			const ancestor = ancestors[i];
-			if (ancestor.includes('-')) return null; // custom elements can be anything
+			if (ancestor.custom_element) return null; // custom elements can be anything
 
 			// A reset means that forbidden descendants are allowed again
-			if (disallowed.reset_by.includes(ancestors[i])) {
+			if (disallowed.reset_by.includes(ancestors[i].tag)) {
 				return null;
 			}
 		}
 	}
 
-	if ('descendant' in disallowed && disallowed.descendant.includes(child_tag)) {
-		const child = child_loc ? `\`<${child_tag}>\` (${child_loc})` : `\`<${child_tag}>\``;
+	if ('descendant' in disallowed && disallowed.descendant.includes(child_node.tag)) {
+		const child = child_loc ? `\`<${child_node.tag}>\` (${child_loc})` : `\`<${child_node.tag}>\``;
 		const ancestor = ancestor_loc
 			? `\`<${ancestor_tag}>\` (${ancestor_loc})`
 			: `\`<${ancestor_tag}>\``;
@@ -177,36 +184,38 @@ export function is_tag_valid_with_ancestor(child_tag, ancestors, child_loc, ance
 /**
  * Returns an error message if the tag is not allowed inside the parent tag such that it will result
  * in the browser repairing the HTML, which will likely result in an error during hydration.
- * @param {string} child_tag
- * @param {string} parent_tag
+ * @param {Element} child_node
+ * @param {Element} parent_node
  * @param {string} [child_loc]
  * @param {string} [parent_loc]
  * @returns {string | null}
  */
-export function is_tag_valid_with_parent(child_tag, parent_tag, child_loc, parent_loc) {
-	if (child_tag.includes('-') || parent_tag?.includes('-')) return null; // custom elements can be anything
+export function is_tag_valid_with_parent(child_node, parent_node, child_loc, parent_loc) {
+	if (child_node.custom_element || parent_node?.custom_element) return null; // custom elements can be anything
 
-	if (parent_tag === 'template') return null; // no errors or warning should be thrown in immediate children of template tags
+	if (parent_node.tag === 'template') return null; // no errors or warning should be thrown in immediate children of template tags
 
-	const disallowed = disallowed_children[parent_tag];
+	const disallowed = disallowed_children[parent_node.tag];
 
-	const child = child_loc ? `\`<${child_tag}>\` (${child_loc})` : `\`<${child_tag}>\``;
-	const parent = parent_loc ? `\`<${parent_tag}>\` (${parent_loc})` : `\`<${parent_tag}>\``;
+	const child = child_loc ? `\`<${child_node.tag}>\` (${child_loc})` : `\`<${child_node.tag}>\``;
+	const parent = parent_loc
+		? `\`<${parent_node.tag}>\` (${parent_loc})`
+		: `\`<${parent_node.tag}>\``;
 
 	if (disallowed) {
-		if ('direct' in disallowed && disallowed.direct.includes(child_tag)) {
+		if ('direct' in disallowed && disallowed.direct.includes(child_node.tag)) {
 			return `${child} cannot be a direct child of ${parent}`;
 		}
 
-		if ('descendant' in disallowed && disallowed.descendant.includes(child_tag)) {
+		if ('descendant' in disallowed && disallowed.descendant.includes(child_node.tag)) {
 			return `${child} cannot be a child of ${parent}`;
 		}
 
 		if ('only' in disallowed && disallowed.only) {
-			if (disallowed.only.includes(child_tag)) {
+			if (disallowed.only.includes(child_node.tag)) {
 				return null;
 			} else {
-				return `${child} cannot be a child of ${parent}. \`<${parent_tag}>\` only allows these children: ${disallowed.only.map((d) => `\`<${d}>\``).join(', ')}`;
+				return `${child} cannot be a child of ${parent}. \`<${parent_node.tag}>\` only allows these children: ${disallowed.only.map((d) => `\`<${d}>\``).join(', ')}`;
 			}
 		}
 	}
@@ -215,7 +224,7 @@ export function is_tag_valid_with_parent(child_tag, parent_tag, child_loc, paren
 	// parsing rules - if we're down here, then none of those matched and
 	// so we allow it only if we don't know what the parent is, as all other
 	// cases are invalid (and we only get into this function if we know the parent).
-	switch (child_tag) {
+	switch (child_node.tag) {
 		case 'body':
 		case 'caption':
 		case 'col':

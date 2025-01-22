@@ -47,6 +47,7 @@ export function SvelteElement(node, context) {
 					'$.push_element',
 					b.id('$$payload'),
 					tag,
+					b.literal(false),
 					b.literal(location.line),
 					b.literal(location.column)
 				)

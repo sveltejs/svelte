@@ -5,6 +5,7 @@
 import { is_void } from '../../../../../utils.js';
 import { dev, locator } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
+import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_element_attributes } from './shared/element.js';
 import { process_children, build_template } from './shared/utils.js';
@@ -62,6 +63,7 @@ export function RegularElement(node, context) {
 					'$.push_element',
 					b.id('$$payload'),
 					b.literal(node.name),
+					b.literal(is_custom_element_node(node)),
 					b.literal(location.line),
 					b.literal(location.column)
 				)
