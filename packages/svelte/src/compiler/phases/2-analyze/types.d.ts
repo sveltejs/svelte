@@ -10,10 +10,10 @@ export interface AnalysisState {
 	options: ValidatedCompileOptions;
 	ast_type: 'instance' | 'template' | 'module';
 	/**
-	 * The parent element. `null` if the parent is `svelte:element`, `#snippet`, a component or the root.
+	 * Tag name of the parent element. `null` if the parent is `svelte:element`, `#snippet`, a component or the root.
 	 * Parent doesn't necessarily mean direct path predecessor because there could be `#each`, `#if` etc in-between.
 	 */
-	parent_element: AST.RegularElement | null;
+	parent_element: string | null;
 	has_props_rune: boolean;
 	/** Which slots the current parent component has */
 	component_slots: Set<string>;

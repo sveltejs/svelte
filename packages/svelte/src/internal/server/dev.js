@@ -9,7 +9,6 @@ import { current_component } from './context.js';
 /**
  * @typedef {{
  * 	tag: string;
- * 	custom_element: boolean;
  * 	parent: null | Element;
  *  filename: null | string;
  *  line: number;
@@ -61,49 +60,32 @@ export function reset_elements() {
 /**
  * @param {Payload} payload
  * @param {string} tag
- * @param {boolean} custom_element
  * @param {number} line
  * @param {number} column
  */
-export function push_element(payload, tag, custom_element, line, column) {
+export function push_element(payload, tag, line, column) {
 	var filename = /** @type {Component} */ (current_component).function[FILENAME];
-	var child = { tag, custom_element, parent, filename, line, column };
+	var child = { tag, parent, filename, line, column };
 
 	if (parent !== null) {
 		var ancestor = parent.parent;
-		var ancestors = [parent];
+		var ancestors = [parent.tag];
 
 		const child_loc = filename ? `${filename}:${line}:${column}` : undefined;
 		const parent_loc = parent.filename
 			? `${parent.filename}:${parent.line}:${parent.column}`
 			: undefined;
 
-		const message = is_tag_valid_with_parent(
-			{
-				tag,
-				custom_element
-			},
-			parent,
-			child_loc,
-			parent_loc
-		);
+		const message = is_tag_valid_with_parent(tag, parent.tag, child_loc, parent_loc);
 		if (message) print_error(payload, message);
 
 		while (ancestor != null) {
-			ancestors.push(ancestor);
+			ancestors.push(ancestor.tag);
 			const ancestor_loc = ancestor.filename
 				? `${ancestor.filename}:${ancestor.line}:${ancestor.column}`
 				: undefined;
 
-			const message = is_tag_valid_with_ancestor(
-				{
-					tag,
-					custom_element
-				},
-				ancestors,
-				child_loc,
-				ancestor_loc
-			);
+			const message = is_tag_valid_with_ancestor(tag, ancestors, child_loc, ancestor_loc);
 			if (message) print_error(payload, message);
 
 			ancestor = ancestor.parent;

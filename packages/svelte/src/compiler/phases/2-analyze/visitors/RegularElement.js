@@ -116,12 +116,7 @@ export function RegularElement(node, context) {
 	if (context.state.parent_element) {
 		let past_parent = false;
 		let only_warn = false;
-		const ancestors = [
-			{
-				tag: context.state.parent_element.name,
-				custom_element: is_custom_element_node(context.state.parent_element)
-			}
-		];
+		const ancestors = [context.state.parent_element];
 
 		for (let i = context.path.length - 1; i >= 0; i--) {
 			const ancestor = context.path[i];
@@ -137,20 +132,8 @@ export function RegularElement(node, context) {
 			}
 
 			if (!past_parent) {
-				if (
-					ancestor.type === 'RegularElement' &&
-					ancestor.name === context.state.parent_element.name
-				) {
-					const message = is_tag_valid_with_parent(
-						{
-							tag: node.name,
-							custom_element: is_custom_element_node(node)
-						},
-						{
-							tag: context.state.parent_element.name,
-							custom_element: is_custom_element_node(context.state.parent_element)
-						}
-					);
+				if (ancestor.type === 'RegularElement' && ancestor.name === context.state.parent_element) {
+					const message = is_tag_valid_with_parent(node.name, context.state.parent_element);
 					if (message) {
 						if (only_warn) {
 							w.node_invalid_placement_ssr(node, message);
@@ -162,18 +145,9 @@ export function RegularElement(node, context) {
 					past_parent = true;
 				}
 			} else if (ancestor.type === 'RegularElement') {
-				ancestors.push({
-					tag: ancestor.name,
-					custom_element: is_custom_element_node(ancestor)
-				});
+				ancestors.push(ancestor.name);
 
-				const message = is_tag_valid_with_ancestor(
-					{
-						tag: node.name,
-						custom_element: is_custom_element_node(node)
-					},
-					ancestors
-				);
+				const message = is_tag_valid_with_ancestor(node.name, ancestors);
 				if (message) {
 					if (only_warn) {
 						w.node_invalid_placement_ssr(node, message);
@@ -204,7 +178,7 @@ export function RegularElement(node, context) {
 		w.element_invalid_self_closing_tag(node, node.name);
 	}
 
-	context.next({ ...context.state, parent_element: node });
+	context.next({ ...context.state, parent_element: node.name });
 
 	// Special case: <a> tags are valid in both the SVG and HTML namespace.
 	// If there's no parent, look downwards to see if it's the parent of a SVG or HTML element.
