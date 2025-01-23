@@ -266,10 +266,10 @@ export function trigger_async_boundary(effect, trigger) {
 
 /**
  * @template T
- * @param {Promise<T>} promise
+ * @param {() => Promise<T> | Promise<T>} input
  * @returns {Promise<{ exit: () => T }>}
  */
-export async function suspend(promise) {
+export async function suspend(input) {
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
@@ -289,6 +289,12 @@ export async function suspend(promise) {
 
 	// @ts-ignore
 	boundary?.fn(ASYNC_INCREMENT);
+
+	const promise = typeof input === 'function' ? input() : input;
+	// Ensure we reset the context back so it doesn't leak
+	set_active_effect(previous_effect);
+	set_active_reaction(previous_reaction);
+	set_component_context(previous_component_context);
 
 	const value = await promise;
 
