@@ -18,7 +18,7 @@ export function AwaitExpression(node, context) {
 			b.await(
 				b.call(
 					'$.suspend',
-					node.argument && b.thunk(/** @type {Expression} */ (context.visit(node.argument)))
+					node.argument && /** @type {Expression} */ (context.visit(node.argument))
 				)
 			),
 			'exit'
