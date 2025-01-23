@@ -23,9 +23,21 @@
 	const values = [...Object.values(obj)];
 
 	delete obj.key;
+
+	let arr_2 = $state([{ count: 1 }, { count: 1 }], {
+		onchange(){
+			console.log("arr_2");
+		}
+	});
+
+	const item_4 = arr_2[0];
+
+	arr_2.length = 0;
 </script>
 
 <button onclick={()=> item.count++}>{item.count}</button>
 <button onclick={()=> item_2.count++}>{item_2.count}</button>
 <button onclick={()=> item_3.count++}>{item_3.count}</button>
 <button onclick={()=> values[0].count++}>{values[0].count}</button>
+<button onclick={()=> item_4.count++}>{item_4.count}</button>
+<button onclick={()=> arr.push(item)}>push</button>
