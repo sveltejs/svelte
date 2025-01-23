@@ -28,6 +28,7 @@ import {
 } from '../hydration.js';
 import { get_next_sibling } from '../operations.js';
 import { queue_boundary_micro_task, queue_post_micro_task } from '../task.js';
+import * as e from '../../../shared/errors.js';
 
 const ASYNC_INCREMENT = Symbol();
 const ASYNC_DECREMENT = Symbol();
@@ -290,7 +291,7 @@ export async function suspend(input) {
 	}
 
 	if (boundary === null) {
-		throw new Error('cannot suspend outside a boundary');
+		e.await_outside_boundary();
 	}
 
 	// @ts-ignore
