@@ -19,6 +19,17 @@ export function assignment_value_stale(property, location) {
 }
 
 /**
+ * Detected an unnecessary async waterfall
+ */
+export function await_waterfall() {
+	if (DEV) {
+		console.warn(`%c[svelte] await_waterfall\n%cDetected an unnecessary async waterfall\nhttps://svelte.dev/e/await_waterfall`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/await_waterfall`);
+	}
+}
+
+/**
  * `%binding%` (%location%) is binding to a non-reactive property
  * @param {string} binding
  * @param {string | undefined | null} [location]

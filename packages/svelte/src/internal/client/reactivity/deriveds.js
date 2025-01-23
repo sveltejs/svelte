@@ -23,6 +23,7 @@ import {
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
+import * as w from '../warnings.js';
 import { block, destroy_effect } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
@@ -77,6 +78,9 @@ export function derived(fn) {
 	return signal;
 }
 
+// Used for waterfall detection
+var async_deps = new Set();
+
 /**
  * @template V
  * @param {() => Promise<V>} fn
@@ -84,16 +88,18 @@ export function derived(fn) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function async_derived(fn) {
-	let effect = /** @type {Effect | null} */ (active_effect);
+	let parent = /** @type {Effect | null} */ (active_effect);
 
-	if (effect === null) {
+	if (parent === null) {
 		throw new Error('TODO cannot create unowned async derived');
 	}
 
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var value = source(/** @type {V} */ (undefined));
 
-	block(async () => {
+	var current_deps = new Set(async_deps);
+
+	var effect = block(async () => {
 		var current = (promise = fn());
 
 		var restore = capture();
@@ -102,16 +108,45 @@ export function async_derived(fn) {
 		try {
 			var v = await promise;
 
-			if ((effect.f & DESTROYED) !== 0) {
+			// check to see if we just created an unnecessary waterfall
+			if (current_deps.size > 0) {
+				var justified = false;
+
+				if (effect.deps !== null) {
+					for (const dep of effect.deps) {
+						if (current_deps.has(dep)) {
+							justified = true;
+							break;
+						}
+					}
+				}
+
+				if (!justified) {
+					w.await_waterfall();
+				}
+			}
+
+			if ((parent.f & DESTROYED) !== 0) {
 				return;
 			}
 
 			if (promise === current) {
 				restore();
 				internal_set(value, v);
+
+				// make a note that we're updating this derived,
+				// so that we can detect waterfalls
+				async_deps.add(value);
+
+				// TODO we want to clear this after we've updated effects.
+				// `queue_post_micro_task` appears to run too early.
+				// for now, as a POC, use setTimeout
+				setTimeout(() => {
+					async_deps.delete(value);
+				});
 			}
 		} catch (e) {
-			handle_error(e, effect, null, effect.ctx);
+			handle_error(e, parent, null, parent.ctx);
 		} finally {
 			unsuspend();
 

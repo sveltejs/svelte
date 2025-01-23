@@ -99,6 +99,7 @@ export function set_active_effect(effect) {
 }
 
 // TODO remove this, once we're satisfied that we're not leaking context
+/* @__PURE__ */
 setInterval(() => {
 	if (active_effect !== null || active_reaction !== null) {
 		debugger;

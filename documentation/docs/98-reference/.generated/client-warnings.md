@@ -34,6 +34,14 @@ function add() {
 }
 ```
 
+### await_waterfall
+
+```
+Detected an unnecessary async waterfall
+```
+
+TODO
+
 ### binding_property_non_reactive
 
 ```
