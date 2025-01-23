@@ -371,7 +371,7 @@ export function client_component(analysis, options) {
 		const body = b.function_declaration(
 			b.id('$$body'),
 			[b.id('$$anchor'), b.id('$$props')],
-			component_block
+			b.block([...component_block.body, b.stmt(b.call('$.exit'))])
 		);
 		body.async = true;
 

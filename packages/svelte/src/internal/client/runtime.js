@@ -98,6 +98,13 @@ export function set_active_effect(effect) {
 	active_effect = effect;
 }
 
+// TODO remove this, once we're satisfied that we're not leaking context
+setInterval(() => {
+	if (active_effect !== null || active_reaction !== null) {
+		debugger;
+	}
+});
+
 /**
  * When sources are created within a derived, we record them so that we can safely allow
  * local mutations to these sources without the side-effect error being invoked unnecessarily.

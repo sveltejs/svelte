@@ -297,6 +297,10 @@ export async function suspend(promise) {
 	// @ts-ignore
 	boundary?.fn(ASYNC_INCREMENT);
 
+	// prevent the active effect from outstaying its welcome
+	// TODO is a microtask too late? is this correct?
+	queue_post_micro_task(exit);
+
 	const value = await promise;
 
 	return {
