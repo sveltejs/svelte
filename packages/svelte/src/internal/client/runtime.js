@@ -973,10 +973,6 @@ export function get(signal) {
 				}
 			}
 		} else {
-			// TODO: this doesn't handle removing dependencies from its previous reactions,
-			// so if it were to conditionally not use a dependency, it would still be tracked
-			// because we don't have any form of cleanup
-
 			// we're adding a dependency outside the init/update cycle
 			// (i.e. after an `await`)
 			// TODO we probably want to disable this for user effects,
