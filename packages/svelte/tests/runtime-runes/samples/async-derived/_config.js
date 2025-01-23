@@ -17,12 +17,33 @@ export default test({
 		};
 	},
 
-	async test({ assert, target }) {
-		d.resolve('hello');
+	async test({ assert, target, component }) {
+		d.resolve(42);
+		await Promise.resolve();
 		await Promise.resolve();
 		await Promise.resolve();
 		await Promise.resolve();
 		await tick();
 		assert.htmlEqual(target.innerHTML, '<p>42</p>');
+
+		component.num = 2;
+		await Promise.resolve();
+		await Promise.resolve();
+		await Promise.resolve();
+		await Promise.resolve();
+		await tick();
+		assert.htmlEqual(target.innerHTML, '<p>84</p>');
+
+		d = deferred();
+		component.promise = d.promise;
+		await tick();
+		assert.htmlEqual(target.innerHTML, '<p>pending</p>');
+
+		d.resolve(43);
+		await Promise.resolve();
+		await Promise.resolve();
+		await Promise.resolve();
+		await tick();
+		assert.htmlEqual(target.innerHTML, '<p>86</p>');
 	}
 });
