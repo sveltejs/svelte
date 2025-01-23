@@ -1,6 +1,16 @@
 import { test } from '../../test';
 
 export default test({
+	// JSDOM lacks support for some of these attributes, so we'll skip it for now.
+	//
+	// See:
+	//  - `async`: https://github.com/jsdom/jsdom/issues/1564
+	//  - `nomodule`: https://github.com/jsdom/jsdom/issues/2475
+	//  - `autofocus`: https://github.com/jsdom/jsdom/issues/3041
+	//  - `inert`: https://github.com/jsdom/jsdom/issues/3605
+	//  - etc...: https://github.com/jestjs/jest/issues/139#issuecomment-592673550
+	skip_mode: ['client'],
+
 	html: `
 	<script nomodule async defer></script>
 	<form novalidate></form>
