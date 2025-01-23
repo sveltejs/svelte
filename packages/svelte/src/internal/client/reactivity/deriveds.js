@@ -29,6 +29,7 @@ import { inspect_effects, internal_set, set_inspect_effects, source } from './so
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
 import { capture, suspend } from '../dom/blocks/boundary.js';
+import { flush_boundary_micro_tasks } from '../dom/task.js';
 
 /**
  * @template V
@@ -99,11 +100,18 @@ export function async_derived(fn) {
 
 	var current_deps = new Set(async_deps);
 
-	var effect = block(async () => {
+	block(async () => {
+		var effect = /** @type {Effect} */ (active_effect);
 		var current = (promise = fn());
 
 		var restore = capture();
 		var unsuspend = suspend();
+
+		// Ensure the effect tree is paused/resume otherwise user-effects will
+		// not run correctly
+		if (effect.deps !== null) {
+			flush_boundary_micro_tasks();
+		}
 
 		try {
 			var v = await promise;

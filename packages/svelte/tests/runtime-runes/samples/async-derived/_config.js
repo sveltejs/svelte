@@ -17,8 +17,10 @@ export default test({
 		};
 	},
 
-	async test({ assert, target, component }) {
+	async test({ assert, target, component, logs }) {
 		d.resolve(42);
+		await Promise.resolve();
+		await Promise.resolve();
 		await Promise.resolve();
 		await Promise.resolve();
 		await Promise.resolve();
@@ -28,6 +30,8 @@ export default test({
 		assert.htmlEqual(target.innerHTML, '<p>42</p>');
 
 		component.num = 2;
+		await Promise.resolve();
+		await Promise.resolve();
 		await Promise.resolve();
 		await Promise.resolve();
 		await Promise.resolve();
@@ -42,7 +46,11 @@ export default test({
 		d.resolve(43);
 		await Promise.resolve();
 		await Promise.resolve();
+		await Promise.resolve();
+		await Promise.resolve();
 		await tick();
 		assert.htmlEqual(target.innerHTML, '<p>86</p>');
+
+		assert.deepEqual(logs, ['should run', 42, 1, 84, 2, 86, 2]);
 	}
 });
