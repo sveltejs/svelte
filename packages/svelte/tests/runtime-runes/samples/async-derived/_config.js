@@ -51,6 +51,19 @@ export default test({
 		await tick();
 		assert.htmlEqual(target.innerHTML, '<p>86</p>');
 
-		assert.deepEqual(logs, ['should run', 42, 1, 42, 2, 84, 2, 86, 2]);
+		assert.deepEqual(logs, [
+			'$effect.pre 42 1',
+			'template 42 1',
+			'$effect 42 1',
+			'$effect.pre 42 2',
+			'template 42 2',
+			'$effect 42 2',
+			'$effect.pre 84 2',
+			'template 84 2',
+			'$effect 84 2',
+			'$effect.pre 86 2',
+			'template 86 2',
+			'$effect 86 2'
+		]);
 	}
 });

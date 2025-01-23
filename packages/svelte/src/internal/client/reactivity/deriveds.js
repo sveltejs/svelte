@@ -19,7 +19,8 @@ import {
 	increment_write_version,
 	set_active_effect,
 	component_context,
-	handle_error
+	handle_error,
+	get
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -100,9 +101,11 @@ export function async_derived(fn) {
 
 	var current_deps = new Set(async_deps);
 
+	var derived_promise = derived(fn);
+
 	block(async () => {
 		var effect = /** @type {Effect} */ (active_effect);
-		var current = (promise = fn());
+		var current = (promise = get(derived_promise));
 
 		var restore = capture();
 		var unsuspend = suspend();
