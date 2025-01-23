@@ -51,6 +51,6 @@ export default test({
 		await tick();
 		assert.htmlEqual(target.innerHTML, '<p>86</p>');
 
-		assert.deepEqual(logs, ['should run', 42, 1, 84, 2, 86, 2]);
+		assert.deepEqual(logs, ['should run', 42, 1, 42, 2, 84, 2, 86, 2]);
 	}
 });
