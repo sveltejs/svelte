@@ -295,17 +295,15 @@ export function suspend() {
 /**
  * @template T
  * @param {Promise<T>} promise
- * @returns {Promise<{ restore: () => T }>}
+ * @returns {Promise<() => T>}
  */
 export async function save(promise) {
 	var restore = capture();
 	var value = await promise;
 
-	return {
-		restore() {
-			restore();
-			return value;
-		}
+	return () => {
+		restore();
+		return value;
 	};
 }
 

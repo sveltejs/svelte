@@ -168,17 +168,14 @@ export function VariableDeclaration(node, context) {
 							b.declarator(
 								declarator.id,
 								b.call(
-									b.member(
-										b.await(
+									b.await(
+										b.call(
+											'$.save',
 											b.call(
-												'$.save',
-												b.call(
-													'$.async_derived',
-													rune === '$derived.by' ? value : b.thunk(value, true)
-												)
+												'$.async_derived',
+												rune === '$derived.by' ? value : b.thunk(value, true)
 											)
-										),
-										'restore'
+										)
 									)
 								)
 							)
