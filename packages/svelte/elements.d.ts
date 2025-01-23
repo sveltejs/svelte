@@ -31,7 +31,7 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.8
 
-import { AttachmentsKey } from 'svelte/attachments';
+import { Attachments } from 'svelte/attachments';
 
 // Note: We also allow `null` as a valid value because Svelte treats this the same as `undefined`
 
@@ -863,7 +863,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	[key: `data-${string}`]: any;
 
 	// allow any attachment
-	[AttachmentsKey]: Array<(node: T) => void | (() => void)>;
+	[Attachments]: Array<(node: T) => void | (() => void)>;
 }
 
 export type HTMLAttributeAnchorTarget = '_self' | '_blank' | '_parent' | '_top' | (string & {});

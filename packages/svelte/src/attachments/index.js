@@ -1,1 +1,1 @@
-export const AttachmentsKey = Symbol.for('svelte.attachments');
+export const Attachments = Symbol.for('svelte.attachments');
