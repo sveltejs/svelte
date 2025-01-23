@@ -18,7 +18,8 @@ import {
 	update_reaction,
 	increment_write_version,
 	set_active_effect,
-	component_context
+	component_context,
+	handle_error
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -83,7 +84,9 @@ export function derived(fn) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function async_derived(fn) {
-	if (!active_effect) {
+	let effect = /** @type {Effect | null} */ (active_effect);
+
+	if (effect === null) {
 		throw new Error('TODO cannot create unowned async derived');
 	}
 
@@ -91,9 +94,14 @@ export function async_derived(fn) {
 	var value = source(/** @type {V} */ (undefined));
 
 	block(() => {
-		const current = (promise = fn());
+		var current = (promise = fn());
+		var derived_promise = suspend(promise);
 
-		suspend(promise).then((v) => {
+		derived_promise.then((v) => {
+			if ((effect.f & DESTROYED) !== 0) {
+				return;
+			}
+
 			if (promise === current) {
 				internal_set(value, v.exit());
 
@@ -102,7 +110,9 @@ export function async_derived(fn) {
 			}
 		});
 
-		// TODO what happens when the promise rejects?
+		derived_promise.catch(e => {
+			handle_error(e, effect, null, effect.ctx);
+		});
 	}, EFFECT_HAS_DERIVED);
 
 	return promise.then(() => value);

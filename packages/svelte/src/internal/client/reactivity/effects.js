@@ -350,8 +350,14 @@ export function render_effect(fn) {
  * @param {Array<() => Promise<any>>} async
  */
 export function template_effect(fn, sync = [], async = [], d = derived) {
+	let effect = /** @type {Effect} */ (active_effect);
+
 	if (async.length > 0) {
 		suspend(Promise.all(async.map(async_derived))).then((result) => {
+			if ((effect.f & DESTROYED) !== 0) {
+				return;
+			}
+
 			create_template_effect(fn, [...sync.map(d), ...result.exit()]);
 		});
 	} else {
@@ -364,7 +370,7 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
  * @param {Value[]} deriveds
  */
 function create_template_effect(fn, deriveds) {
-	const effect = () => fn(...deriveds.map(get));
+	var effect = () => fn(...deriveds.map(get));
 
 	if (DEV) {
 		define_property(effect, 'name', {
