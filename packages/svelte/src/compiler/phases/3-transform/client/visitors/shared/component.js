@@ -165,6 +165,14 @@ export function build_component(node, component_name, context, anchor = context.
 			} else {
 				props_and_spreads.push(expression);
 			}
+
+			// Handle attachments from spread attributes
+			const symbol = b.call('Symbol.for', b.literal('svelte.attachments'));
+			const member = b.member(expression, symbol, true); // computed property
+			const default_empty = b.array([]);
+			const attachments_expr = b.logical('??', member, default_empty);
+
+			all_attachments.push(b.spread(attachments_expr));
 		} else if (attribute.type === 'Attribute') {
 			if (attribute.name.startsWith('--')) {
 				custom_css_props.push(
