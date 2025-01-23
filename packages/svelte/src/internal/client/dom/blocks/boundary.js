@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode, } from '#client' */
 
-import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '../../constants.js';
+import { BOUNDARY_EFFECT, DESTROYED, EFFECT_TRANSPARENT } from '../../constants.js';
 import {
 	block,
 	branch,
@@ -27,7 +27,7 @@ import {
 	set_hydrate_node
 } from '../hydration.js';
 import { get_next_sibling } from '../operations.js';
-import { queue_boundary_micro_task } from '../task.js';
+import { queue_boundary_micro_task, queue_post_micro_task } from '../task.js';
 
 const ASYNC_INCREMENT = Symbol();
 const ASYNC_DECREMENT = Symbol();
@@ -231,6 +231,14 @@ export function boundary(node, props, boundary_fn) {
 			// need to use hydration boundary comments to report whether
 			// the pending or main block was rendered for a given
 			// boundary, and hydrate accordingly
+			queueMicrotask(() => {
+				if ((!boundary_effect || boundary_effect.f & DESTROYED) !== 0) return;
+
+				destroy_effect(boundary_effect);
+				with_boundary(boundary, () => {
+					boundary_effect = branch(() => boundary_fn(anchor));
+				});
+			});
 		} else {
 			boundary_effect = branch(() => boundary_fn(anchor));
 		}
