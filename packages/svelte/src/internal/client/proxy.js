@@ -306,6 +306,9 @@ export function proxy(value, options, parent = null, prev) {
 				for (var i = value; i < /** @type {Source<number>} */ (s).v; i += 1) {
 					var other_s = sources.get(i + '');
 					if (other_s !== undefined) {
+						if (typeof other_s.v === 'object' && other_s.v !== null && STATE_SYMBOL in other_s.v) {
+							other_s.v[PROXY_ONCHANGE_SYMBOL](options?.onchange, true);
+						}
 						set(other_s, UNINITIALIZED);
 					} else if (i in target) {
 						// If the item exists in the original, we need to create a uninitialized source,
