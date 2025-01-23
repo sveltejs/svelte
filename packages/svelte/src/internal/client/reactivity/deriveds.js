@@ -27,7 +27,7 @@ import { block, destroy_effect } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
-import { exit, save } from '../dom/blocks/boundary.js';
+import { capture, suspend } from '../dom/blocks/boundary.js';
 
 /**
  * @template V
@@ -93,26 +93,31 @@ export function async_derived(fn) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var value = source(/** @type {V} */ (undefined));
 
-	block(() => {
+	block(async () => {
 		var current = (promise = fn());
-		var derived_promise = save(promise);
 
-		derived_promise.then((v) => {
+		var restore = capture();
+		var unsuspend = suspend();
+
+		try {
+			var v = await promise;
+
 			if ((effect.f & DESTROYED) !== 0) {
 				return;
 			}
 
 			if (promise === current) {
-				internal_set(value, v.restore());
-
-				// TODO at the very least the naming is weird here
-				exit();
+				restore();
+				internal_set(value, v);
 			}
-		});
-
-		derived_promise.catch((e) => {
+		} catch (e) {
 			handle_error(e, effect, null, effect.ctx);
-		});
+		} finally {
+			unsuspend();
+
+			// TODO we should probably null out active effect here,
+			// rather than inside `restore()`
+		}
 	}, EFFECT_HAS_DERIVED);
 
 	return promise.then(() => value);
