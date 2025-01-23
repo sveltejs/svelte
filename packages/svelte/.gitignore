@@ -3,6 +3,7 @@
 /compiler/index.js
 
 /action.d.ts
+/attachments.d.ts
 /animate.d.ts
 /compiler.d.ts
 /easing.d.ts
