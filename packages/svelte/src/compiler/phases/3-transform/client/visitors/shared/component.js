@@ -267,7 +267,7 @@ export function build_component(node, component_name, context, anchor = context.
 				push_prop(
 					b.prop(
 						'get',
-						b.call('Symbol'),
+						b.call("Symbol.for('svelte.attachments')"),
 						/** @type {Expression} */ (
 							context.visit(attachment.type === 'SpreadElement' ? attachment.argument : attachment)
 						),
