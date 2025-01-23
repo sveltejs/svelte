@@ -283,11 +283,15 @@ export function EachBlock(node, context) {
 		);
 	}
 
+	const { is_async } = node.metadata.expression;
+
+	const thunk = each_node_meta.array_name ?? b.thunk(collection, is_async);
+
 	/** @type {Expression[]} */
 	const args = [
 		context.state.node,
 		b.literal(flags),
-		each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
+		is_async ? b.thunk(b.call('$.get', b.id('$$collection'))) : thunk,
 		key_function,
 		b.arrow(
 			uses_index ? [b.id('$$anchor'), item, index] : [b.id('$$anchor'), item],
@@ -301,7 +305,23 @@ export function EachBlock(node, context) {
 		);
 	}
 
-	context.state.init.push(b.stmt(b.call('$.each', ...args)));
+	if (is_async) {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.async',
+					context.state.node,
+					b.array([thunk]),
+					b.arrow(
+						[context.state.node, b.id('$$collection')],
+						b.block([b.stmt(b.call('$.each', ...args))])
+					)
+				)
+			)
+		);
+	} else {
+		context.state.init.push(b.stmt(b.call('$.each', ...args)));
+	}
 }
 
 /**
