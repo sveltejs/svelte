@@ -6,6 +6,8 @@
 Cannot await outside a `<svelte:boundary>` with a `pending` snippet
 ```
 
+TODO
+
 ### invalid_default_snippet
 
 ```

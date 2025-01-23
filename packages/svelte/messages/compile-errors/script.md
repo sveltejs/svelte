@@ -98,6 +98,10 @@ This turned out to be buggy and unpredictable, particularly when working with de
 
 > The arguments keyword cannot be used within the template or at the top level of a component
 
+## legacy_await_invalid
+
+> Cannot use `await` at the top level of a component, or in the template, unless in runes mode
+
 ## legacy_export_invalid
 
 > Cannot use `export let` in runes mode — use `$props()` instead

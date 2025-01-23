@@ -1,5 +1,6 @@
 /** @import { AwaitExpression } from 'estree' */
 /** @import { Context } from '../types' */
+import * as e from '../../../errors.js';
 
 /**
  * @param {AwaitExpression} node
@@ -32,7 +33,7 @@ export function AwaitExpression(node, context) {
 
 	if (suspend) {
 		if (!context.state.analysis.runes) {
-			throw new Error('TODO runes mode only');
+			e.legacy_await_invalid(node);
 		}
 
 		context.state.analysis.suspenders.set(node, preserve_context);

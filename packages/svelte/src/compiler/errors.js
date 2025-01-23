@@ -498,6 +498,15 @@ export function typescript_invalid_feature(node, feature) {
 }
 
 /**
+ * Cannot use `await` at the top level of a component, or in the template, unless in runes mode
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function legacy_await_invalid(node) {
+	e(node, 'legacy_await_invalid', `Cannot use \`await\` at the top level of a component, or in the template, unless in runes mode\nhttps://svelte.dev/e/legacy_await_invalid`);
+}
+
+/**
  * Declaration cannot be empty
  * @param {null | number | NodeLike} node
  * @returns {never}

@@ -3,6 +3,21 @@
 import { DEV } from 'esm-env';
 
 /**
+ * Cannot await outside a `<svelte:boundary>` with a `pending` snippet
+ * @returns {never}
+ */
+export function await_outside_boundary() {
+	if (DEV) {
+		const error = new Error(`await_outside_boundary\nCannot await outside a \`<svelte:boundary>\` with a \`pending\` snippet\nhttps://svelte.dev/e/await_outside_boundary`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/await_outside_boundary`);
+	}
+}
+
+/**
  * Cannot use `{@render children(...)}` if the parent component uses `let:` directives. Consider using a named snippet instead
  * @returns {never}
  */
@@ -61,20 +76,5 @@ export function svelte_element_invalid_this_value() {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/svelte_element_invalid_this_value`);
-	}
-}
-
-/**
- * Cannot await outside a `<svelte:boundary>` with a `pending` snippet
- * @returns {never}
- */
-export function await_outside_boundary() {
-	if (DEV) {
-		const error = new Error(`await_outside_boundary\nCannot await outside a \`<svelte:boundary>\` with a \`pending\` snippet\nhttps://svelte.dev/e/await_outside_boundary`);
-
-		error.name = 'Svelte error';
-		throw error;
-	} else {
-		throw new Error(`https://svelte.dev/e/await_outside_boundary`);
 	}
 }
