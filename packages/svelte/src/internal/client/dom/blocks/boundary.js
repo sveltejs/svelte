@@ -232,8 +232,6 @@ export function boundary(node, props, boundary_fn) {
 			// the pending or main block was rendered for a given
 			// boundary, and hydrate accordingly
 			queueMicrotask(() => {
-				if ((!boundary_effect || boundary_effect.f & DESTROYED) !== 0) return;
-
 				destroy_effect(boundary_effect);
 				with_boundary(boundary, () => {
 					boundary_effect = branch(() => boundary_fn(anchor));
