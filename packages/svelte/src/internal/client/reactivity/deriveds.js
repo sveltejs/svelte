@@ -18,12 +18,11 @@ import {
 	update_reaction,
 	increment_write_version,
 	set_active_effect,
-	component_context,
-	get
+	component_context
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import { destroy_effect, render_effect } from './effects.js';
+import { block, destroy_effect } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
@@ -88,10 +87,10 @@ export function async_derived(fn) {
 		throw new Error('TODO cannot create unowned async derived');
 	}
 
-	let promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
-	let value = source(/** @type {V} */ (undefined));
+	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
+	var value = source(/** @type {V} */ (undefined));
 
-	render_effect(() => {
+	block(() => {
 		const current = (promise = fn());
 
 		suspend(promise).then((v) => {
@@ -104,7 +103,7 @@ export function async_derived(fn) {
 		});
 
 		// TODO what happens when the promise rejects?
-	});
+	}, EFFECT_HAS_DERIVED);
 
 	return promise.then(() => value);
 }

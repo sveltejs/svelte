@@ -272,7 +272,7 @@ export function trigger_async_boundary(effect, trigger) {
 
 /**
  * @template T
- * @param {() => Promise<T> | Promise<T>} input
+ * @param {(() => Promise<T>) | Promise<T>} input
  * @returns {Promise<{ exit: () => T }>}
  */
 export async function suspend(input) {
