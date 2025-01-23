@@ -299,32 +299,11 @@ export function suspend() {
  */
 export async function save(promise) {
 	var restore = capture();
-
-	let boundary = active_effect;
-	while (boundary !== null) {
-		if ((boundary.f & BOUNDARY_EFFECT) !== 0) {
-			break;
-		}
-
-		boundary = boundary.parent;
-	}
-
-	if (boundary === null) {
-		e.await_outside_boundary();
-	}
-
-	// @ts-ignore
-	boundary?.fn(ASYNC_INCREMENT);
-
-	const value = await promise;
+	var value = await promise;
 
 	return {
 		restore() {
 			restore();
-
-			// @ts-ignore
-			boundary?.fn(ASYNC_DECREMENT);
-
 			return value;
 		}
 	};
