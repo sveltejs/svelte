@@ -170,7 +170,10 @@ const DOM_BOOLEAN_ATTRIBUTES = [
 	'reversed',
 	'seamless',
 	'selected',
-	'webkitdirectory'
+	'webkitdirectory',
+	'defer',
+	'disablepictureinpicture',
+	'disableremoteplayback'
 ];
 
 /**
@@ -197,7 +200,10 @@ const ATTRIBUTE_ALIASES = {
 	defaultvalue: 'defaultValue',
 	defaultchecked: 'defaultChecked',
 	srcobject: 'srcObject',
-	novalidate: 'noValidate'
+	novalidate: 'noValidate',
+	allowfullscreen: 'allowFullscreen',
+	disablepictureinpicture: 'disablePictureInPicture',
+	disableremoteplayback: 'disableRemotePlayback'
 };
 
 /**
@@ -219,7 +225,11 @@ const DOM_PROPERTIES = [
 	'volume',
 	'defaultValue',
 	'defaultChecked',
-	'srcObject'
+	'srcObject',
+	'noValidate',
+	'allowFullscreen',
+	'disablePictureInPicture',
+	'disableRemotePlayback'
 ];
 
 /**
