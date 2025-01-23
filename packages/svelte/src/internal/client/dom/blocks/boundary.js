@@ -268,6 +268,30 @@ export function capture() {
 	};
 }
 
+export function suspend() {
+	var boundary = active_effect;
+
+	while (boundary !== null) {
+		if ((boundary.f & BOUNDARY_EFFECT) !== 0) {
+			break;
+		}
+
+		boundary = boundary.parent;
+	}
+
+	if (boundary === null) {
+		e.await_outside_boundary();
+	}
+
+	// @ts-ignore
+	boundary?.fn(ASYNC_INCREMENT);
+
+	return function unsuspend() {
+		// @ts-ignore
+		boundary?.fn(ASYNC_DECREMENT);
+	};
+}
+
 /**
  * @template T
  * @param {Promise<T>} promise
