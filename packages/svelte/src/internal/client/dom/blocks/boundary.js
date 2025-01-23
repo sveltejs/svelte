@@ -250,24 +250,6 @@ export function boundary(node, props, boundary_fn) {
 	}
 }
 
-/**
- * @param {Effect | null} effect
- * @param {typeof ASYNC_INCREMENT | typeof ASYNC_DECREMENT} trigger
- */
-export function trigger_async_boundary(effect, trigger) {
-	var current = effect;
-
-	while (current !== null) {
-		if ((current.f & BOUNDARY_EFFECT) !== 0) {
-			// @ts-ignore
-			if (current.fn(trigger)) {
-				return;
-			}
-		}
-		current = current.parent;
-	}
-}
-
 // TODO separate this stuff out — suspending and context preservation should
 // be distinct concepts
 
