@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, Statement, SpreadElement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
@@ -9,6 +9,39 @@ import { build_bind_this, validate_binding } from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
+
+/**
+ * @param {Property} prop
+ * @param {ComponentContext} context
+ * @returns {boolean}
+ */
+function is_attachments_prop(prop, context) {
+	if (prop.key.type !== 'Identifier') {
+		return false;
+	}
+
+	const binding = context.state.scope?.get?.(prop.key.name) ?? undefined;
+	const expression = prop.computed && prop.key.type === 'Identifier' ? prop.key : binding?.initial;
+
+	if (!expression || expression.type !== 'CallExpression') {
+		return false;
+	}
+
+	if (
+		expression.callee.type !== 'MemberExpression' ||
+		expression.callee.object.type !== 'Identifier' ||
+		expression.callee.object.name !== 'Symbol' ||
+		expression.callee.property.type !== 'Identifier' ||
+		expression.callee.property.name !== 'for' ||
+		expression.arguments.length !== 1 ||
+		expression.arguments[0].type !== 'Literal' ||
+		expression.arguments[0].value !== 'svelte.attachments'
+	) {
+		return false;
+	}
+
+	return true;
+}
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
@@ -49,6 +82,9 @@ export function build_component(node, component_name, context, anchor = context.
 
 	/** @type {ExpressionStatement[]} */
 	const binding_initializers = [];
+
+	/** @type {Array<Expression | SpreadElement>} */
+	const all_attachments = [];
 
 	/**
 	 * If this component has a slot property, it is a named slot within another component. In this case
@@ -262,23 +298,35 @@ export function build_component(node, component_name, context, anchor = context.
 				}
 			}
 		} else if (attribute.type === 'Attachment') {
-			// TODO do we need to create a derived here?
 			for (const attachment of attribute.attachments) {
-				push_prop(
-					b.prop(
-						'get',
-						b.call("Symbol.for('svelte.attachments')"),
-						/** @type {Expression} */ (
-							context.visit(attachment.type === 'SpreadElement' ? attachment.argument : attachment)
-						),
-						true
-					)
-				);
+				if (attachment.type === 'SpreadElement') {
+					const visited = /** @type {ExpressionStatement} */ (context.visit(attachment.argument));
+					all_attachments.push(b.spread(visited.expression));
+				} else {
+					const visited = /** @type {ExpressionStatement} */ (context.visit(attachment));
+					all_attachments.push(visited.expression);
+				}
 			}
 		}
 	}
 
 	delayed_props.forEach((fn) => fn());
+
+	if (all_attachments.length > 0) {
+		const attachment_symbol = b.member(
+			b.id('Symbol'),
+			b.call('for', b.literal('svelte.attachments'))
+		);
+
+		push_prop(
+			b.prop(
+				'init',
+				attachment_symbol,
+				b.array(all_attachments),
+				true // Mark as computed property
+			)
+		);
+	}
 
 	if (slot_scope_applies_to_itself) {
 		context.state.init.push(...lets);

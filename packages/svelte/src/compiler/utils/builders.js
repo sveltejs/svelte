@@ -229,12 +229,21 @@ export function function_declaration(id, params, body) {
 }
 
 /**
- * @param {string} name
+ * @param {string | ESTree.Expression} name_or_expr
  * @param {ESTree.Statement[]} body
- * @returns {ESTree.Property & { value: ESTree.FunctionExpression}}}
+ * @returns {ESTree.Property & { value: ESTree.FunctionExpression }}
  */
-export function get(name, body) {
-	return prop('get', key(name), function_builder(null, [], block(body)));
+export function get(name_or_expr, body) {
+	let key_expr;
+	let computed = false;
+	if (typeof name_or_expr === 'string') {
+		key_expr = key(name_or_expr);
+		computed = key_expr.type !== 'Identifier';
+	} else {
+		key_expr = name_or_expr;
+		computed = true;
+	}
+	return prop('get', key_expr, function_builder(null, [], block(body)), computed);
 }
 
 /**
@@ -380,12 +389,21 @@ export function sequence(expressions) {
 }
 
 /**
- * @param {string} name
+ * @param {string | ESTree.Expression} name_or_expr
  * @param {ESTree.Statement[]} body
- * @returns {ESTree.Property & { value: ESTree.FunctionExpression}}
+ * @returns {ESTree.Property & { value: ESTree.FunctionExpression }}
  */
-export function set(name, body) {
-	return prop('set', key(name), function_builder(null, [id('$$value')], block(body)));
+export function set(name_or_expr, body) {
+	let key_expr;
+	let computed = false;
+	if (typeof name_or_expr === 'string') {
+		key_expr = key(name_or_expr);
+		computed = key_expr.type !== 'Identifier';
+	} else {
+		key_expr = name_or_expr;
+		computed = true;
+	}
+	return prop('set', key_expr, function_builder(null, [id('$$value')], block(body)), computed);
 }
 
 /**
