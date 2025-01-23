@@ -326,7 +326,10 @@ function open(parser) {
 			start,
 			end: -1,
 			expression,
-			fragment: create_fragment()
+			fragment: create_fragment(),
+			metadata: {
+				expression: create_expression_metadata()
+			}
 		});
 
 		parser.stack.push(block);

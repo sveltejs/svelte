@@ -434,6 +434,7 @@ export namespace AST {
 		test: Expression;
 		consequent: Fragment;
 		alternate: Fragment | null;
+		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
 		};
@@ -457,6 +458,10 @@ export namespace AST {
 		type: 'KeyBlock';
 		expression: Expression;
 		fragment: Fragment;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	export interface SnippetBlock extends BaseNode {
