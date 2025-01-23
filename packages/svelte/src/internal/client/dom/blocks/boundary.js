@@ -217,7 +217,24 @@ export function boundary(node, props, boundary_fn) {
 			hydrate_next();
 		}
 
-		boundary_effect = branch(() => boundary_fn(anchor));
+		const pending = props.pending;
+
+		if (hydrating && pending) {
+			boundary_effect = branch(() => pending(anchor));
+
+			// ...now what? we need to start rendering `boundary_fn` offscreen,
+			// and either insert the resulting fragment (if nothing suspends)
+			// or keep the pending effect alive until it unsuspends.
+			// not exactly sure how to do that.
+
+			// future work: when we have some form of async SSR, we will
+			// need to use hydration boundary comments to report whether
+			// the pending or main block was rendered for a given
+			// boundary, and hydrate accordingly
+		} else {
+			boundary_effect = branch(() => boundary_fn(anchor));
+		}
+
 		reset_is_throwing_error();
 	}, EFFECT_TRANSPARENT | BOUNDARY_EFFECT);
 
