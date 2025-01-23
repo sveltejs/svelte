@@ -281,6 +281,8 @@ export function capture() {
 		// prevent the active effect from outstaying its welcome
 		if (should_exit) {
 			queue_post_micro_task(exit);
+		} else {
+			debugger
 		}
 	};
 }
@@ -317,6 +319,7 @@ export async function script_suspend(fn) {
 	const restore = capture();
 	const unsuspend = suspend();
 	try {
+		exit();
 		return await fn();
 	} finally {
 		restore(false);

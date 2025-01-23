@@ -15,7 +15,11 @@ export function AwaitExpression(node, context) {
 	}
 
 	const inside_derived = context.path.some(
-		(n) => n.type === 'CallExpression' && get_rune(n, context.state.scope) === '$derived'
+		(n) =>
+			n.type === 'VariableDeclaration' &&
+			n.declarations.some(
+				(d) => d.init?.type === 'CallExpression' && get_rune(d.init, context.state.scope) === '$derived'
+			)
 	);
 
 	const expression = b.call(
