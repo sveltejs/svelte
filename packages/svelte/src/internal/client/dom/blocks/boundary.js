@@ -253,15 +253,28 @@ export function boundary(node, props, boundary_fn) {
 // TODO separate this stuff out — suspending and context preservation should
 // be distinct concepts
 
-/**
- * @template T
- * @param {Promise<T>} promise
- * @returns {Promise<{ exit: () => T }>}
- */
-export async function suspend(promise) {
+function capture() {
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
+
+	return function restore() {
+		set_active_effect(previous_effect);
+		set_active_reaction(previous_reaction);
+		set_component_context(previous_component_context);
+
+		// prevent the active effect from outstaying its welcome
+		queue_post_micro_task(exit);
+	};
+}
+
+/**
+ * @template T
+ * @param {Promise<T>} promise
+ * @returns {Promise<{ restore: () => T }>}
+ */
+export async function save(promise) {
+	var restore = capture();
 
 	let boundary = active_effect;
 	while (boundary !== null) {
@@ -282,13 +295,8 @@ export async function suspend(promise) {
 	const value = await promise;
 
 	return {
-		exit() {
-			set_active_effect(previous_effect);
-			set_active_reaction(previous_reaction);
-			set_component_context(previous_component_context);
-
-			// prevent the active effect from outstaying its welcome
-			queue_post_micro_task(exit);
+		restore() {
+			restore();
 
 			// @ts-ignore
 			boundary?.fn(ASYNC_DECREMENT);

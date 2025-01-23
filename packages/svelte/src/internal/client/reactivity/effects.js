@@ -45,7 +45,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { async_derived, derived, destroy_derived } from './deriveds.js';
-import { suspend } from '../dom/blocks/boundary.js';
+import { save } from '../dom/blocks/boundary.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -353,12 +353,12 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
 	let effect = /** @type {Effect} */ (active_effect);
 
 	if (async.length > 0) {
-		suspend(Promise.all(async.map(async_derived))).then((result) => {
+		save(Promise.all(async.map(async_derived))).then((result) => {
 			if ((effect.f & DESTROYED) !== 0) {
 				return;
 			}
 
-			create_template_effect(fn, [...sync.map(d), ...result.exit()]);
+			create_template_effect(fn, [...sync.map(d), ...result.restore()]);
 		});
 	} else {
 		create_template_effect(fn, sync.map(d));

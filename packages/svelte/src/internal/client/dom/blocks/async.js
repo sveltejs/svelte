@@ -1,7 +1,7 @@
 /** @import { TemplateNode, Value } from '#client' */
 
 import { async_derived } from '../../reactivity/deriveds.js';
-import { suspend } from './boundary.js';
+import { save } from './boundary.js';
 
 /**
  * @param {TemplateNode} node
@@ -11,7 +11,7 @@ import { suspend } from './boundary.js';
 export function async(node, expressions, fn) {
 	// TODO handle hydration
 
-	suspend(Promise.all(expressions.map(async_derived))).then((result) => {
-		fn(node, ...result.exit());
+	save(Promise.all(expressions.map(async_derived))).then((result) => {
+		fn(node, ...result.restore());
 	});
 }

@@ -14,7 +14,7 @@ export function AwaitExpression(node, context) {
 	if (context.state.expression) {
 		suspend = true;
 
-		// wrap the expression in `(await $.suspend(...)).exit()` if necessary,
+		// wrap the expression in `(await $.save(...)).restore()` if necessary,
 		// i.e. whether anything could potentially be read _after_ the await
 		let i = context.path.length;
 		while (i--) {

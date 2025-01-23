@@ -16,12 +16,9 @@ export function AwaitExpression(node, context) {
 	return b.call(
 		b.member(
 			b.await(
-				b.call(
-					'$.suspend',
-					node.argument && /** @type {Expression} */ (context.visit(node.argument))
-				)
+				b.call('$.save', node.argument && /** @type {Expression} */ (context.visit(node.argument)))
 			),
-			'exit'
+			'restore'
 		)
 	);
 }

@@ -27,7 +27,7 @@ import { block, destroy_effect } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
-import { exit, suspend } from '../dom/blocks/boundary.js';
+import { exit, save } from '../dom/blocks/boundary.js';
 
 /**
  * @template V
@@ -95,7 +95,7 @@ export function async_derived(fn) {
 
 	block(() => {
 		var current = (promise = fn());
-		var derived_promise = suspend(promise);
+		var derived_promise = save(promise);
 
 		derived_promise.then((v) => {
 			if ((effect.f & DESTROYED) !== 0) {
@@ -103,14 +103,14 @@ export function async_derived(fn) {
 			}
 
 			if (promise === current) {
-				internal_set(value, v.exit());
+				internal_set(value, v.restore());
 
 				// TODO at the very least the naming is weird here
 				exit();
 			}
 		});
 
-		derived_promise.catch(e => {
+		derived_promise.catch((e) => {
 			handle_error(e, effect, null, effect.ctx);
 		});
 	}, EFFECT_HAS_DERIVED);

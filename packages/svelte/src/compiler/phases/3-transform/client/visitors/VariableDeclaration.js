@@ -171,14 +171,14 @@ export function VariableDeclaration(node, context) {
 									b.member(
 										b.await(
 											b.call(
-												'$.suspend',
+												'$.save',
 												b.call(
 													'$.async_derived',
 													rune === '$derived.by' ? value : b.thunk(value, true)
 												)
 											)
 										),
-										'exit'
+										'restore'
 									)
 								)
 							)
