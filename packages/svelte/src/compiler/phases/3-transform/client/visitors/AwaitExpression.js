@@ -1,10 +1,10 @@
 /** @import { AwaitExpression, Expression } from 'estree' */
-/** @import { ComponentContext } from '../types' */
+/** @import { Context } from '../types' */
 import * as b from '../../../../utils/builders.js';
 
 /**
  * @param {AwaitExpression} node
- * @param {ComponentContext} context
+ * @param {Context} context
  */
 export function AwaitExpression(node, context) {
 	const suspend = context.state.analysis.suspenders.has(node);
