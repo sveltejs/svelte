@@ -273,13 +273,17 @@ export function capture() {
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
 
-	return function restore() {
+	return function restore(should_exit = true) {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
 
 		// prevent the active effect from outstaying its welcome
-		queue_post_micro_task(exit);
+		if (should_exit) {
+			queue_post_micro_task(exit);
+		} else {
+			debugger
+		}
 	};
 }
 
@@ -305,6 +309,22 @@ export function suspend() {
 		// @ts-ignore
 		boundary?.fn(ASYNC_DECREMENT);
 	};
+}
+
+/**
+ * @template T
+ * @param {() => Promise<T>} fn
+ */
+export async function script_suspend(fn) {
+	const restore = capture();
+	const unsuspend = suspend();
+	try {
+		exit();
+		return await fn();
+	} finally {
+		restore(false);
+		unsuspend();
+	}
 }
 
 /**
