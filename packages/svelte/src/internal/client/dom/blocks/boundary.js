@@ -253,7 +253,7 @@ export function boundary(node, props, boundary_fn) {
 // TODO separate this stuff out — suspending and context preservation should
 // be distinct concepts
 
-function capture() {
+export function capture() {
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
