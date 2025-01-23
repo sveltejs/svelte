@@ -7,6 +7,9 @@ import * as b from '../../../../utils/builders.js';
  * @param {ComponentContext} context
  */
 export function AwaitExpression(node, context) {
+	// `has`, not `get`, because all top-level await expressions should
+	// block regardless of whether they need context preservation
+	// in the client output
 	const suspend = context.state.analysis.suspenders.has(node);
 
 	if (!suspend) {

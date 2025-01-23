@@ -42,8 +42,8 @@ export interface Analysis {
 	/** A set of deriveds that contain `await` expressions */
 	async_deriveds: Set<CallExpression>;
 
-	/** A set of `await` expressions that should trigger suspense */
-	suspenders: Set<AwaitExpression>;
+	/** A map of `await` expressions that should block, and whether they should preserve context */
+	suspenders: Map<AwaitExpression, boolean>;
 }
 
 export interface ComponentAnalysis extends Analysis {

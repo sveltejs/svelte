@@ -7,7 +7,7 @@ import * as b from '../../../../utils/builders.js';
  * @param {Context} context
  */
 export function AwaitExpression(node, context) {
-	const suspend = context.state.analysis.suspenders.has(node);
+	const suspend = context.state.analysis.suspenders.get(node);
 
 	if (!suspend) {
 		return context.next();

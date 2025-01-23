@@ -8,8 +8,11 @@
 export function AwaitExpression(node, context) {
 	const tla = context.state.ast_type === 'instance' && context.state.function_depth === 1;
 	let suspend = tla;
+	let preserve_context = tla;
 
 	if (context.state.expression) {
+		suspend = true;
+
 		// wrap the expression in `(await $.suspend(...)).exit()` if necessary,
 		// i.e. whether anything could potentially be read _after_ the await
 		let i = context.path.length;
@@ -23,7 +26,7 @@ export function AwaitExpression(node, context) {
 
 			// TODO make this more accurate — we don't need to call suspend
 			// if this is the last thing that could be read
-			suspend = true;
+			preserve_context = true;
 		}
 	}
 
@@ -32,7 +35,7 @@ export function AwaitExpression(node, context) {
 			throw new Error('TODO runes mode only');
 		}
 
-		context.state.analysis.suspenders.add(node);
+		context.state.analysis.suspenders.set(node, preserve_context);
 	}
 
 	if (context.state.expression) {
