@@ -234,6 +234,15 @@ export function invalid_arguments_usage(node) {
 }
 
 /**
+ * Cannot use `await` at the top level of a component, or in the template, unless in runes mode
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function legacy_await_invalid(node) {
+	e(node, 'legacy_await_invalid', `Cannot use \`await\` at the top level of a component, or in the template, unless in runes mode\nhttps://svelte.dev/e/legacy_await_invalid`);
+}
+
+/**
  * Cannot use `export let` in runes mode — use `$props()` instead
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -495,15 +504,6 @@ export function store_invalid_subscription_module(node) {
  */
 export function typescript_invalid_feature(node, feature) {
 	e(node, 'typescript_invalid_feature', `TypeScript language features like ${feature} are not natively supported, and their use is generally discouraged. Outside of \`<script>\` tags, these features are not supported. For use within \`<script>\` tags, you will need to use a preprocessor to convert it to JavaScript before it gets passed to the Svelte compiler. If you are using \`vitePreprocess\`, make sure to specifically enable preprocessing script tags (\`vitePreprocess({ script: true })\`)\nhttps://svelte.dev/e/typescript_invalid_feature`);
-}
-
-/**
- * Cannot use `await` at the top level of a component, or in the template, unless in runes mode
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function legacy_await_invalid(node) {
-	e(node, 'legacy_await_invalid', `Cannot use \`await\` at the top level of a component, or in the template, unless in runes mode\nhttps://svelte.dev/e/legacy_await_invalid`);
 }
 
 /**
