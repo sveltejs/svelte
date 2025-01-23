@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode, } from '#client' */
 
-import { BOUNDARY_EFFECT, DESTROYED, EFFECT_TRANSPARENT } from '../../constants.js';
+import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '../../constants.js';
 import {
 	block,
 	branch,
@@ -76,6 +76,13 @@ export function boundary(node, props, boundary_fn) {
 	var async_fragment = null;
 	var async_count = 0;
 
+	/** @type {Effect | null} */
+	var parent_boundary = /** @type {Effect} */ (active_effect).parent;
+
+	while (parent_boundary !== null && (parent_boundary.f & BOUNDARY_EFFECT) === 0) {
+		parent_boundary = parent_boundary.parent;
+	}
+
 	block(() => {
 		var boundary = /** @type {Effect} */ (active_effect);
 		var hydrate_open = hydrate_node;
@@ -104,8 +111,12 @@ export function boundary(node, props, boundary_fn) {
 
 			if (input === ASYNC_INCREMENT) {
 				if (!pending) {
-					// TODO in this case we need to find the parent boundary
-					return false;
+					if (!parent_boundary) {
+						e.await_outside_boundary();
+					}
+
+					// @ts-ignore
+					return parent_boundary.fn(input);
 				}
 
 				if (async_count++ === 0) {
@@ -149,8 +160,12 @@ export function boundary(node, props, boundary_fn) {
 
 			if (input === ASYNC_DECREMENT) {
 				if (!pending) {
-					// TODO in this case we need to find the parent boundary
-					return false;
+					if (!parent_boundary) {
+						e.await_outside_boundary();
+					}
+
+					// @ts-ignore
+					return parent_boundary.fn(input);
 				}
 
 				if (--async_count === 0) {
