@@ -20,7 +20,6 @@ export default test({
 		d.resolve('cool');
 		await Promise.resolve();
 		await Promise.resolve();
-		await Promise.resolve();
 		await tick();
 		flushSync();
 		assert.htmlEqual(target.innerHTML, '<p class="cool">hello</p>');
@@ -31,7 +30,6 @@ export default test({
 		assert.htmlEqual(target.innerHTML, '<p>pending</p>');
 
 		d.resolve('neat');
-		await Promise.resolve();
 		await tick();
 		assert.htmlEqual(target.innerHTML, '<p class="neat">hello</p>');
 	}
