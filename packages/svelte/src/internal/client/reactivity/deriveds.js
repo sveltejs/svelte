@@ -145,7 +145,7 @@ export function async_derived(fn) {
 				async_deps.add(value);
 
 				// TODO we want to clear this after we've updated effects.
-				// `queue_post_micro_task` appears to run too early.
+				// `queue_micro_task` appears to run too early.
 				// for now, as a POC, use setTimeout
 				setTimeout(() => {
 					async_deps.delete(value);

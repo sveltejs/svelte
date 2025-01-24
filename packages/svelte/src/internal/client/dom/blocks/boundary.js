@@ -27,7 +27,7 @@ import {
 	set_hydrate_node
 } from '../hydration.js';
 import { get_next_sibling } from '../operations.js';
-import { queue_boundary_micro_task, queue_post_micro_task } from '../task.js';
+import { queue_boundary_micro_task, queue_micro_task } from '../task.js';
 import * as e from '../../../shared/errors.js';
 
 const ASYNC_INCREMENT = Symbol();
@@ -254,7 +254,7 @@ export function capture() {
 		set_component_context(previous_component_context);
 
 		// prevent the active effect from outstaying its welcome
-		queue_post_micro_task(exit);
+		queue_micro_task(exit);
 	};
 }
 

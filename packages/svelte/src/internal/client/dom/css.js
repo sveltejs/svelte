@@ -1,5 +1,5 @@
 import { DEV } from 'esm-env';
-import { queue_post_micro_task } from './task.js';
+import { queue_micro_task } from './task.js';
 import { register_style } from '../dev/css.js';
 
 /**
@@ -7,8 +7,8 @@ import { register_style } from '../dev/css.js';
  * @param {{ hash: string, code: string }} css
  */
 export function append_styles(anchor, css) {
-	// Use `queue_post_micro_task` to ensure `anchor` is in the DOM, otherwise getRootNode() will yield wrong results
-	queue_post_micro_task(() => {
+	// Use `queue_micro_task` to ensure `anchor` is in the DOM, otherwise getRootNode() will yield wrong results
+	queue_micro_task(() => {
 		var root = anchor.getRootNode();
 
 		var target = /** @type {ShadowRoot} */ (root).host

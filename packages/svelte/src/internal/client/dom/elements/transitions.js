@@ -13,7 +13,7 @@ import { should_intro } from '../../render.js';
 import { current_each_item } from '../blocks/each.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
 import { BLOCK_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '../../constants.js';
-import { queue_post_micro_task } from '../task.js';
+import { queue_micro_task } from '../task.js';
 
 /**
  * @param {Element} element
@@ -326,7 +326,7 @@ function animate(element, options, counterpart, t2, on_finish) {
 		var a;
 		var aborted = false;
 
-		queue_post_micro_task(() => {
+		queue_micro_task(() => {
 			if (aborted) return;
 			var o = options({ direction: is_intro ? 'in' : 'out' });
 			a = animate(element, o, counterpart, t2, on_finish);

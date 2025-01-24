@@ -59,7 +59,7 @@ export function queue_boundary_micro_task(fn) {
 /**
  * @param {() => void} fn
  */
-export function queue_post_micro_task(fn) {
+export function queue_micro_task(fn) {
 	if (!is_micro_task_queued) {
 		is_micro_task_queued = true;
 		queueMicrotask(flush_all_micro_tasks);
