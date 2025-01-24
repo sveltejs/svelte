@@ -7,12 +7,7 @@ import * as b from '../../../../utils/builders.js';
  * @param {Context} context
  */
 export function AwaitExpression(node, context) {
-	// `has`, not `get`, because all top-level await expressions should
-	// block regardless of whether they need context preservation
-	// in the client output
-	const suspend = context.state.analysis.suspenders.has(node);
-
-	if (!suspend) {
+	if (context.state.scope.function_depth > 1) {
 		return context.next();
 	}
 

@@ -8,7 +8,7 @@ import { get_rune } from '../../../scope.js';
  * @param {Context} context
  */
 export function AwaitExpression(node, context) {
-	const suspend = context.state.analysis.suspenders.get(node);
+	const suspend = context.state.analysis.context_preserving_awaits.has(node);
 
 	if (!suspend) {
 		return context.next();
@@ -18,7 +18,8 @@ export function AwaitExpression(node, context) {
 		(n) =>
 			n.type === 'VariableDeclaration' &&
 			n.declarations.some(
-				(d) => d.init?.type === 'CallExpression' && get_rune(d.init, context.state.scope) === '$derived'
+				(d) =>
+					d.init?.type === 'CallExpression' && get_rune(d.init, context.state.scope) === '$derived'
 			)
 	);
 

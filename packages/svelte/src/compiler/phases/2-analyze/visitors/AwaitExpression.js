@@ -32,12 +32,12 @@ export function AwaitExpression(node, context) {
 		}
 	}
 
-	if (suspend) {
-		if (!context.state.analysis.runes) {
-			e.legacy_await_invalid(node);
-		}
+	if (suspend && !context.state.analysis.runes) {
+		e.legacy_await_invalid(node);
+	}
 
-		context.state.analysis.suspenders.set(node, preserve_context);
+	if (preserve_context) {
+		context.state.analysis.context_preserving_awaits.add(node);
 	}
 
 	context.next();
