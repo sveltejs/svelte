@@ -12,6 +12,7 @@ export function AwaitExpression(node, context) {
 	let preserve_context = tla;
 
 	if (context.state.expression) {
+		context.state.expression.is_async = true;
 		suspend = true;
 
 		// wrap the expression in `(await $.save(...)).restore()` if necessary,
@@ -20,14 +21,10 @@ export function AwaitExpression(node, context) {
 		while (i--) {
 			const parent = context.path[i];
 
-			if (
-				// @ts-expect-error we could probably use a neater/more robust mechanism
-				parent.metadata?.expression === context.state.expression ||
-				// @ts-expect-error
-				parent.metadata?.arguments?.includes(context.state.expression)
-			) {
-				break;
-			}
+			// stop walking up when we find a node with metadata, because that
+			// means we've hit the template node containing the expression
+			// @ts-expect-error we could probably use a neater/more robust mechanism
+			if (parent.metadata) break;
 
 			// TODO make this more accurate — we don't need to call suspend
 			// if this is the last thing that could be read
@@ -41,10 +38,6 @@ export function AwaitExpression(node, context) {
 		}
 
 		context.state.analysis.suspenders.set(node, preserve_context);
-	}
-
-	if (context.state.expression) {
-		context.state.expression.is_async = true;
 	}
 
 	context.next();
