@@ -135,6 +135,10 @@ export namespace AST {
 	export interface HtmlTag extends BaseNode {
 		type: 'HtmlTag';
 		expression: Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** An HTML comment */

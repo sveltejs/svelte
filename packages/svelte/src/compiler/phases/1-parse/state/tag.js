@@ -613,7 +613,10 @@ function special(parser) {
 			type: 'HtmlTag',
 			start,
 			end: parser.index,
-			expression
+			expression,
+			metadata: {
+				expression: create_expression_metadata()
+			}
 		});
 
 		return;
