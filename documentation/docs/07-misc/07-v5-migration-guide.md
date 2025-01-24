@@ -51,6 +51,8 @@ A `$:` statement could also be used to create side effects. In Svelte 5, this is
 </script>
 ```
 
+Note that [when `$effect` runs is different than `$:`]($effect#Understanding-dependencies).
+
 > [!DETAILS] Why we did this
 > `$:` was a great shorthand and easy to get started with: you could slap a `$:` in front of most code and it would somehow work. This intuitiveness was also its drawback the more complicated your code became, because it wasn't as easy to reason about. Was the intent of the code to create a derivation, or a side effect? With `$derived` and `$effect`, you have a bit more up-front decision making to do (spoiler alert: 90% of the time you want `$derived`), but future-you and other developers on your team will have an easier time.
 >
