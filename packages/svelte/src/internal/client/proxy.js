@@ -33,12 +33,13 @@ function clone_options(options) {
 /**
  * @template T
  * @param {T} value
- * @param {ValueOptions} [options]
+ * @param {ValueOptions} [_options]
  * @param {ProxyMetadata | null} [parent]
  * @param {Source<T>} [prev] dev mode only
  * @returns {T}
  */
-export function proxy(value, options, parent = null, prev) {
+export function proxy(value, _options, parent = null, prev) {
+	let options = clone_options(_options);
 	/** @type {Error | null} */
 	var stack = null;
 	if (DEV && tracing_mode_flag) {
@@ -80,7 +81,10 @@ export function proxy(value, options, parent = null, prev) {
 	if (is_proxied_array) {
 		// We need to create the length source eagerly to ensure that
 		// mutations to the array are properly synced with our proxy
-		sources.set('length', source(/** @type {any[]} */ (value).length, options, stack));
+		sources.set(
+			'length',
+			source(/** @type {any[]} */ (value).length, clone_options(options), stack)
+		);
 	}
 
 	/** @type {ProxyMetadata} */
@@ -183,9 +187,9 @@ export function proxy(value, options, parent = null, prev) {
 					// to the onchanges array or we set every source onchange
 					// to the passed in value (if it's undefined it will make the chain stop)
 					if (options?.onchange != null && value && !remove) {
-						onchanges.add(value);
+						onchanges?.add?.(value);
 					} else if (options?.onchange != null && value) {
-						onchanges.delete(value);
+						onchanges?.delete?.(value);
 					} else {
 						options = {
 							onchange: value
