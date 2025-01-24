@@ -846,7 +846,7 @@ function process_effects(effect, collected_effects) {
 					try {
 						if (check_dirtiness(current_effect)) {
 							update_effect(current_effect);
-							if ((current_effect.f & IS_ASYNC) !== 0 && !suspended) {
+							if ((flags & IS_ASYNC) !== 0 && !suspended) {
 								suspended = true;
 							}
 						}
