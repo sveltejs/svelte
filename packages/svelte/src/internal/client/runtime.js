@@ -844,15 +844,11 @@ function process_effects(effect, collected_effects) {
 					current_effect.f ^= CLEAN;
 				} else if (!skip_suspended) {
 					try {
-						var is_async_effect = (current_effect.f & IS_ASYNC) !== 0;
-
 						if (check_dirtiness(current_effect)) {
 							update_effect(current_effect);
-							if (!suspended && is_async_effect) {
+							if (!suspended && (current_effect.f & IS_ASYNC) !== 0) {
 								suspended = true;
 							}
-						} else if (!suspended && is_async_effect && current_effect.deps === null) {
-							suspended = true;
 						}
 					} catch (error) {
 						handle_error(error, current_effect, null, current_effect.ctx);
