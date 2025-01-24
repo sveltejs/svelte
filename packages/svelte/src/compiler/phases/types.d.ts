@@ -43,7 +43,7 @@ export interface Analysis {
 	/** A set of deriveds that contain `await` expressions */
 	async_deriveds: Set<CallExpression>;
 
-	/** A map of `await` expressions that should preserve context */
+	/** A set of `await` expressions that should preserve context */
 	context_preserving_awaits: Set<AwaitExpression>;
 }
 
