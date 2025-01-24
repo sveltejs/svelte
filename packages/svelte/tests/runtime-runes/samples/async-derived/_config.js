@@ -54,9 +54,9 @@ export default test({
 			'template 42 1',
 			'$effect 42 1',
 			'outside boundary 2',
-			'$effect.pre 84 2', // TODO: why is this observed during tests, but not during runtime?
-			'template 84 2', // TODO: why is this observed during tests, but not during runtime?
-			'$effect 84 2', // TODO: why is this observed during tests, but not during runtime?
+			'$effect.pre 84 2',
+			'template 84 2',
+			'$effect 84 2',
 			'$effect.pre 86 2',
 			'template 86 2',
 			'$effect 86 2'
