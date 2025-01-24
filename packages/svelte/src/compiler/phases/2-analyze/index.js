@@ -243,7 +243,15 @@ export function analyze_module(ast, options) {
 		}
 	}
 
-	const analysis = { runes: true, tracing: false };
+	/** @type {Analysis} */
+	const analysis = {
+		module: { ast, scope, scopes },
+		name: options.filename,
+		accessors: false,
+		runes: true,
+		immutable: true,
+		tracing: false
+	};
 
 	walk(
 		/** @type {Node} */ (ast),
@@ -256,14 +264,7 @@ export function analyze_module(ast, options) {
 		visitors
 	);
 
-	return {
-		module: { ast, scope, scopes },
-		name: options.filename,
-		accessors: false,
-		runes: true,
-		immutable: true,
-		tracing: analysis.tracing
-	};
+	return analysis;
 }
 
 /**
