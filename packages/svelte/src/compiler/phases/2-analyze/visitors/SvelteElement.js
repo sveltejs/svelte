@@ -62,5 +62,17 @@ export function SvelteElement(node, context) {
 
 	mark_subtree_dynamic(context.path);
 
-	context.next({ ...context.state, parent_element: null });
+	context.visit(node.tag, {
+		...context.state,
+		expression: node.metadata.expression
+	});
+
+	for (const attribute of node.attributes) {
+		context.visit(attribute);
+	}
+
+	context.visit(node.fragment, {
+		...context.state,
+		parent_element: null
+	});
 }

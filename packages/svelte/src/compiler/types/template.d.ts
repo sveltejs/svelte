@@ -349,6 +349,7 @@ export namespace AST {
 		tag: Expression;
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			/**
 			 * `true` if this is an svg element. The boolean may not be accurate because
 			 * the tag is dynamic, but we do our best to infer it from the template.

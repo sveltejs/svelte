@@ -33,7 +33,7 @@ export function SvelteElement(node, context) {
 	const style_directives = [];
 
 	/** @type {ExpressionStatement[]} */
-	const lets = [];
+	const statements = [];
 
 	// Create a temporary context which picks up the init/update statements.
 	// They'll then be added to the function parameter of $.element
@@ -66,7 +66,7 @@ export function SvelteElement(node, context) {
 		} else if (attribute.type === 'StyleDirective') {
 			style_directives.push(attribute);
 		} else if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+			statements.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 		} else if (attribute.type === 'OnDirective') {
 			const handler = /** @type {Expression} */ (context.visit(attribute, inner_context.state));
 			inner_context.state.after_update.push(b.stmt(handler));
@@ -74,9 +74,6 @@ export function SvelteElement(node, context) {
 			context.visit(attribute, inner_context.state);
 		}
 	}
-
-	// Let bindings first, they can be used on attributes
-	context.state.init.push(...lets); // create computeds in the outer context; the dynamic element is the single child of this slot
 
 	// Then do attributes
 	let is_attributes_reactive = false;
@@ -108,15 +105,6 @@ export function SvelteElement(node, context) {
 	build_class_directives(class_directives, element_id, inner_context, is_attributes_reactive);
 	build_style_directives(style_directives, element_id, inner_context, is_attributes_reactive);
 
-	const get_tag = b.thunk(/** @type {Expression} */ (context.visit(node.tag)));
-
-	if (dev) {
-		if (node.fragment.nodes.length > 0) {
-			context.state.init.push(b.stmt(b.call('$.validate_void_dynamic_element', get_tag)));
-		}
-		context.state.init.push(b.stmt(b.call('$.validate_dynamic_element_tag', get_tag)));
-	}
-
 	/** @type {Statement[]} */
 	const inner = inner_context.state.init;
 	if (inner_context.state.update.length > 0) {
@@ -135,9 +123,21 @@ export function SvelteElement(node, context) {
 		).body
 	);
 
+	const { is_async } = node.metadata.expression;
+
+	const expression = /** @type {Expression} */ (context.visit(node.tag));
+	const get_tag = b.thunk(is_async ? b.call('$.get', b.id('$$tag')) : expression);
+
+	if (dev) {
+		if (node.fragment.nodes.length > 0) {
+			statements.push(b.stmt(b.call('$.validate_void_dynamic_element', get_tag)));
+		}
+		statements.push(b.stmt(b.call('$.validate_dynamic_element_tag', get_tag)));
+	}
+
 	const location = dev && locator(node.start);
 
-	context.state.init.push(
+	statements.push(
 		b.stmt(
 			b.call(
 				'$.element',
@@ -150,4 +150,19 @@ export function SvelteElement(node, context) {
 			)
 		)
 	);
+
+	if (is_async) {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.async',
+					context.state.node,
+					b.array([b.thunk(expression, true)]),
+					b.arrow([context.state.node, b.id('$$tag')], b.block(statements))
+				)
+			)
+		);
+	} else {
+		context.state.init.push(statements.length === 1 ? statements[0] : b.block(statements));
+	}
 }
