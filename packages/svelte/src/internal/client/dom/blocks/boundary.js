@@ -243,23 +243,18 @@ export function boundary(node, props, boundary_fn) {
 	}
 }
 
-// TODO separate this stuff out — suspending and context preservation should
-// be distinct concepts
-
 export function capture() {
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
 
-	return function restore(should_exit = true) {
+	return function restore() {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
 
 		// prevent the active effect from outstaying its welcome
-		if (should_exit) {
-			queue_post_micro_task(exit);
-		}
+		queue_post_micro_task(exit);
 	};
 }
 
@@ -297,22 +292,6 @@ export function suspend() {
 
 /**
  * @template T
- * @param {() => Promise<T>} fn
- */
-export async function script_suspend(fn) {
-	const restore = capture();
-	const unsuspend = suspend();
-	try {
-		exit();
-		return await fn();
-	} finally {
-		restore(false);
-		unsuspend();
-	}
-}
-
-/**
- * @template T
  * @param {Promise<T>} promise
  * @returns {Promise<() => T>}
  */
@@ -326,7 +305,7 @@ export async function save(promise) {
 	};
 }
 
-export function exit() {
+function exit() {
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
