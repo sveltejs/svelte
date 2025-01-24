@@ -245,7 +245,17 @@ export function analyze_module(ast, options) {
 		}
 	}
 
-	const analysis = { runes: true, tracing: false };
+	/** @type {Analysis} */
+	const analysis = {
+		module: { ast, scope, scopes, is_async },
+		name: options.filename,
+		accessors: false,
+		runes: true,
+		immutable: true,
+		tracing: false,
+		async_deriveds: new Set(),
+		context_preserving_awaits: new Set()
+	};
 
 	walk(
 		/** @type {Node} */ (ast),
@@ -258,16 +268,7 @@ export function analyze_module(ast, options) {
 		visitors
 	);
 
-	return {
-		module: { ast, scope, scopes, is_async },
-		name: options.filename,
-		accessors: false,
-		runes: true,
-		immutable: true,
-		tracing: analysis.tracing,
-		async_deriveds: new Set(),
-		context_preserving_awaits: new Set()
-	};
+	return analysis;
 }
 
 /**
