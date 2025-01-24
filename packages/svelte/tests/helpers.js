@@ -86,7 +86,8 @@ export async function compile_directory(
 				const compiled = compileModule(text, {
 					filename: opts.filename,
 					generate: opts.generate,
-					dev: opts.dev
+					dev: opts.dev,
+					experimental: opts.experimental
 				});
 				write(out, compiled.js.code.replace(`v${VERSION}`, 'VERSION'));
 			} else {

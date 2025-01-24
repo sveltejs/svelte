@@ -157,6 +157,9 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 		rootDir: cwd,
 		dev: force_hmr ? true : undefined,
 		hmr: force_hmr ? true : undefined,
+		experimental: {
+			async: true
+		},
 		...config.compileOptions,
 		immutable: config.immutable,
 		accessors: 'accessors' in config ? config.accessors : true,

@@ -32,8 +32,14 @@ export function AwaitExpression(node, context) {
 		}
 	}
 
-	if (suspend && !context.state.analysis.runes) {
-		e.legacy_await_invalid(node);
+	if (suspend) {
+		if (!context.state.options.experimental.async) {
+			e.experimental_async(node);
+		}
+
+		if (!context.state.analysis.runes) {
+			e.legacy_await_invalid(node);
+		}
 	}
 
 	if (preserve_context) {

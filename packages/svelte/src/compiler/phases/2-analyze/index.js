@@ -263,7 +263,9 @@ export function analyze_module(ast, options) {
 			scope,
 			scopes,
 			// @ts-expect-error TODO
-			analysis
+			analysis,
+			// @ts-expect-error TODO
+			options
 		},
 		visitors
 	);
