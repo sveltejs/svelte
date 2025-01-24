@@ -37,7 +37,9 @@ import {
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
 	EFFECT_HAS_DERIVED,
-	BOUNDARY_EFFECT
+	BOUNDARY_EFFECT,
+	IS_ASYNC,
+	TEMPLATE_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
 import * as e from '../errors.js';
@@ -145,7 +147,7 @@ function create_effect(type, fn, sync, push = true) {
 		effect.first === null &&
 		effect.nodes_start === null &&
 		effect.teardown === null &&
-		(effect.f & (EFFECT_HAS_DERIVED | BOUNDARY_EFFECT)) === 0;
+		(effect.f & (EFFECT_HAS_DERIVED | BOUNDARY_EFFECT | IS_ASYNC)) === 0;
 
 	if (!inert && !is_root && push) {
 		if (parent_effect !== null) {
@@ -385,7 +387,7 @@ function create_template_effect(fn, deriveds) {
 		});
 	}
 
-	block(effect);
+	block(effect, TEMPLATE_EFFECT);
 }
 
 /**

@@ -26,7 +26,9 @@ import {
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
 	BOUNDARY_EFFECT,
-	REACTION_IS_UPDATING
+	REACTION_IS_UPDATING,
+	IS_ASYNC,
+	TEMPLATE_EFFECT
 } from './constants.js';
 import {
 	flush_idle_tasks,
@@ -102,6 +104,7 @@ export function set_active_effect(effect) {
 /* @__PURE__ */
 setInterval(() => {
 	if (active_effect !== null || active_reaction !== null) {
+		// eslint-disable-next-line no-debugger
 		debugger;
 	}
 });
@@ -819,6 +822,7 @@ export function schedule_effect(signal) {
 function process_effects(effect, collected_effects) {
 	var current_effect = effect.first;
 	var effects = [];
+	var suspended = false;
 
 	main_loop: while (current_effect !== null) {
 		var flags = current_effect.f;
@@ -827,13 +831,25 @@ function process_effects(effect, collected_effects) {
 		var sibling = current_effect.next;
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
+			var skip_suspended =
+				suspended &&
+				(flags & BRANCH_EFFECT) === 0 &&
+				((flags & BLOCK_EFFECT) === 0 || (flags & TEMPLATE_EFFECT) !== 0);
+
 			if ((flags & RENDER_EFFECT) !== 0) {
 				if (is_branch) {
 					current_effect.f ^= CLEAN;
-				} else {
+				} else if (!skip_suspended) {
 					try {
+						var is_async_effect = (current_effect.f & IS_ASYNC) !== 0;
+
 						if (check_dirtiness(current_effect)) {
 							update_effect(current_effect);
+							if (!suspended && is_async_effect) {
+								suspended = true;
+							}
+						} else if (!suspended && is_async_effect && current_effect.deps === null) {
+							suspended = true;
 						}
 					} catch (error) {
 						handle_error(error, current_effect, null, current_effect.ctx);
@@ -846,7 +862,7 @@ function process_effects(effect, collected_effects) {
 					current_effect = child;
 					continue;
 				}
-			} else if ((flags & EFFECT) !== 0) {
+			} else if ((flags & EFFECT) !== 0 && !skip_suspended) {
 				effects.push(current_effect);
 			}
 		}
@@ -857,6 +873,10 @@ function process_effects(effect, collected_effects) {
 			while (parent !== null) {
 				if (effect === parent) {
 					break main_loop;
+				}
+				// TODO: we need to know that this boundary has a valid `pending`
+				if (suspended && (parent.f & BOUNDARY_EFFECT) !== 0) {
+					suspended = false;
 				}
 				var parent_sibling = parent.next;
 				if (parent_sibling !== null) {

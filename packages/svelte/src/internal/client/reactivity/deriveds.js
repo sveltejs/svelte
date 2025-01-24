@@ -6,6 +6,7 @@ import {
 	DESTROYED,
 	DIRTY,
 	EFFECT_HAS_DERIVED,
+	IS_ASYNC,
 	MAYBE_DIRTY,
 	UNOWNED
 } from '../constants.js';
@@ -158,7 +159,7 @@ export function async_derived(fn) {
 			// TODO we should probably null out active effect here,
 			// rather than inside `restore()`
 		}
-	}, EFFECT_HAS_DERIVED);
+	}, IS_ASYNC);
 
 	return promise.then(() => value);
 }
