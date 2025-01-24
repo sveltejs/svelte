@@ -4,12 +4,12 @@
 	let value = $derived((await promise) * num);
 
 	$effect(() => {
-		console.log('should run');
+		console.log(`$effect ${value} ${num}`);
 	});
 
-	$effect(() => {
-		console.log(value, num);
+	$effect.pre(() => {
+		console.log(`$effect.pre ${value} ${num}`);
 	});
 </script>
 
-<p>{value}</p>
+<p>{value}{console.log(`template ${value} ${num}`)}</p>

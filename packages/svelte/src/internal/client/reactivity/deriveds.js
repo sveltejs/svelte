@@ -6,6 +6,7 @@ import {
 	DESTROYED,
 	DIRTY,
 	EFFECT_HAS_DERIVED,
+	IS_ASYNC,
 	MAYBE_DIRTY,
 	UNOWNED
 } from '../constants.js';
@@ -19,7 +20,8 @@ import {
 	increment_write_version,
 	set_active_effect,
 	component_context,
-	handle_error
+	handle_error,
+	get
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -100,18 +102,14 @@ export function async_derived(fn) {
 
 	var current_deps = new Set(async_deps);
 
+	var derived_promise = derived(fn);
+
 	block(async () => {
 		var effect = /** @type {Effect} */ (active_effect);
-		var current = (promise = fn());
+		var current = (promise = get(derived_promise));
 
 		var restore = capture();
 		var unsuspend = suspend();
-
-		// Ensure the effect tree is paused/resume otherwise user-effects will
-		// not run correctly
-		if (effect.deps !== null) {
-			flush_boundary_micro_tasks();
-		}
 
 		try {
 			var v = await promise;
@@ -161,7 +159,7 @@ export function async_derived(fn) {
 			// TODO we should probably null out active effect here,
 			// rather than inside `restore()`
 		}
-	}, EFFECT_HAS_DERIVED);
+	}, IS_ASYNC);
 
 	return promise.then(() => value);
 }

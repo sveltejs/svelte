@@ -281,8 +281,6 @@ export function capture() {
 		// prevent the active effect from outstaying its welcome
 		if (should_exit) {
 			queue_post_micro_task(exit);
-		} else {
-			debugger
 		}
 	};
 }
