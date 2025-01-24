@@ -16,7 +16,7 @@ export default test({
 		};
 	},
 
-	async test({ assert, target }) {
+	async test({ assert, target, component }) {
 		d.resolve('hello');
 		await Promise.resolve();
 		await Promise.resolve();
