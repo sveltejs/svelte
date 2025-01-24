@@ -271,7 +271,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
  * @param {Array<V>} array
  * @param {EachState} state
  * @param {Element | Comment | Text} anchor
- * @param {(anchor: Node, item: MaybeSource<V>, index: number | Source<number>) => void} render_fn
+ * @param {(anchor: Node, item: MaybeSource<V>, index: number | Source<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
  * @param {boolean} is_inert
  * @param {(value: V, index: number) => any} get_key
@@ -510,7 +510,7 @@ function update_item(item, value, index, type) {
  * @param {V} value
  * @param {unknown} key
  * @param {number} index
- * @param {(anchor: Node, item: V | Source<V>, index: number | Value<number>) => void} render_fn
+ * @param {(anchor: Node, item: V | Source<V>, index: number | Value<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
  * @param {() => V[]} get_collection
  * @returns {EachItem}
@@ -559,7 +559,7 @@ function create_item(
 	current_each_item = item;
 
 	try {
-		item.e = branch(() => render_fn(anchor, v, i), hydrating);
+		item.e = branch(() => render_fn(anchor, v, i, get_collection), hydrating);
 
 		item.e.prev = prev && prev.e;
 		item.e.next = next && next.e;
