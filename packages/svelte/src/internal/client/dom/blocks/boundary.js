@@ -76,19 +76,12 @@ export function boundary(node, props, boundary_fn) {
 	var async_fragment = null;
 	var async_count = 0;
 
-	/** @type {Effect | null} */
-	var parent_boundary = /** @type {Effect} */ (active_effect).parent;
-
-	while (parent_boundary !== null && (parent_boundary.f & BOUNDARY_EFFECT) === 0) {
-		parent_boundary = parent_boundary.parent;
-	}
-
 	block(() => {
 		var boundary = /** @type {Effect} */ (active_effect);
 		var hydrate_open = hydrate_node;
 		var is_creating_fallback = false;
 
-		const render_snippet = (/** @type { () => void } */ snippet_fn) => {
+		var render_snippet = (/** @type { () => void } */ snippet_fn) => {
 			with_boundary(boundary, () => {
 				is_creating_fallback = true;
 
@@ -107,18 +100,9 @@ export function boundary(node, props, boundary_fn) {
 
 		// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
 		boundary.fn = (/** @type {unknown} */ input) => {
-			let pending = props.pending;
+			let pending = /** @type {(anchor: Node) => void} */ (props.pending);
 
 			if (input === ASYNC_INCREMENT) {
-				if (!pending) {
-					if (!parent_boundary) {
-						e.await_outside_boundary();
-					}
-
-					// @ts-ignore
-					return parent_boundary.fn(input);
-				}
-
 				if (async_count++ === 0) {
 					queue_boundary_micro_task(() => {
 						if (async_effect || !boundary_effect) {
@@ -159,15 +143,6 @@ export function boundary(node, props, boundary_fn) {
 			}
 
 			if (input === ASYNC_DECREMENT) {
-				if (!pending) {
-					if (!parent_boundary) {
-						e.await_outside_boundary();
-					}
-
-					// @ts-ignore
-					return parent_boundary.fn(input);
-				}
-
 				if (--async_count === 0) {
 					queue_boundary_micro_task(() => {
 						if (!async_effect) {
@@ -229,6 +204,11 @@ export function boundary(node, props, boundary_fn) {
 			}
 		};
 
+		if (props.pending) {
+			// @ts-ignore
+			boundary.fn.pending = true;
+		}
+
 		if (hydrating) {
 			hydrate_next();
 		}
@@ -285,11 +265,19 @@ export function capture() {
 	};
 }
 
+/**
+ * @param {Effect} boundary
+ */
+export function is_pending_boundary(boundary) {
+	// @ts-ignore
+	return boundary.fn.pending;
+}
+
 export function suspend() {
 	var boundary = active_effect;
 
 	while (boundary !== null) {
-		if ((boundary.f & BOUNDARY_EFFECT) !== 0) {
+		if ((boundary.f & BOUNDARY_EFFECT) !== 0 && is_pending_boundary(boundary)) {
 			break;
 		}
 

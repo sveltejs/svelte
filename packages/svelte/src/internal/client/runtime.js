@@ -43,6 +43,7 @@ import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../flags/index.js';
 import { tracing_expressions, get_stack } from './dev/tracing.js';
+import { is_pending_boundary } from './dom/blocks/boundary.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -873,8 +874,7 @@ function process_effects(effect, collected_effects) {
 				if (effect === parent) {
 					break main_loop;
 				}
-				// TODO: we need to know that this boundary has a valid `pending`
-				if (suspended && (parent.f & BOUNDARY_EFFECT) !== 0) {
+				if (suspended && (parent.f & BOUNDARY_EFFECT) !== 0 && is_pending_boundary(parent)) {
 					suspended = false;
 				}
 				var parent_sibling = parent.next;
