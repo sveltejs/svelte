@@ -26,21 +26,17 @@ export default test({
 
 		await btn1?.click();
 		await tick();
-		await tick();
 		assert.htmlEqual(target.innerHTML, get_html(1));
 
 		await btn2?.click();
-		await tick();
 		await tick();
 		assert.htmlEqual(target.innerHTML, get_html(2));
 
 		await btn1?.click();
 		await tick();
-		await tick();
 		assert.htmlEqual(target.innerHTML, get_html(1));
 
 		await btn3?.click();
-		await tick();
 		await tick();
 		assert.htmlEqual(target.innerHTML, get_html(3));
 	}
