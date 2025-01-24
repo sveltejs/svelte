@@ -35,10 +35,6 @@ export function EachBlock(node, context) {
 		context.state.template.push('<!>');
 	}
 
-	if (each_node_meta.array_name !== null) {
-		context.state.init.push(b.const(each_node_meta.array_name, b.thunk(collection)));
-	}
-
 	let flags = 0;
 
 	if (node.metadata.keyed && node.index) {
@@ -120,8 +116,21 @@ export function EachBlock(node, context) {
 		return [array, ...transitive_dependencies];
 	});
 
-	if (each_node_meta.array_name) {
-		indirect_dependencies.push(b.call(each_node_meta.array_name));
+	/** @type {Identifier | null} */
+	let collection_id = null;
+
+	// Check if inner scope shadows something from outer scope.
+	// This is necessary because we need access to the array expression of the each block
+	// in the inner scope if bindings are used, in order to invalidate the array.
+	for (const [name] of context.state.scope.declarations) {
+		if (context.state.scope.parent?.get(name) != null) {
+			collection_id = context.state.scope.root.unique('$$array');
+			break;
+		}
+	}
+
+	if (collection_id) {
+		indirect_dependencies.push(b.call(collection_id));
 	} else {
 		indirect_dependencies.push(collection);
 
@@ -195,7 +204,7 @@ export function EachBlock(node, context) {
 					// TODO 6.0 this only applies in legacy mode, reassignments are
 					// forbidden in runes mode
 					return b.member(
-						each_node_meta.array_name ? b.call(each_node_meta.array_name) : collection,
+						collection_id ? b.call(collection_id) : collection,
 						(flags & EACH_INDEX_REACTIVE) !== 0 ? get_value(index) : index,
 						true
 					);
@@ -207,7 +216,7 @@ export function EachBlock(node, context) {
 				uses_index = true;
 
 				const left = b.member(
-					each_node_meta.array_name ? b.call(each_node_meta.array_name) : collection,
+					collection_id ? b.call(collection_id) : collection,
 					(flags & EACH_INDEX_REACTIVE) !== 0 ? get_value(index) : index,
 					true
 				);
@@ -283,16 +292,17 @@ export function EachBlock(node, context) {
 		);
 	}
 
+	const render_args = [b.id('$$anchor'), item];
+	if (uses_index || collection_id) render_args.push(index);
+	if (collection_id) render_args.push(collection_id);
+
 	/** @type {Expression[]} */
 	const args = [
 		context.state.node,
 		b.literal(flags),
-		each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
+		b.thunk(collection),
 		key_function,
-		b.arrow(
-			uses_index ? [b.id('$$anchor'), item, index] : [b.id('$$anchor'), item],
-			b.block(declarations.concat(block.body))
-		)
+		b.arrow(render_args, b.block(declarations.concat(block.body)))
 	];
 
 	if (node.fallback) {
