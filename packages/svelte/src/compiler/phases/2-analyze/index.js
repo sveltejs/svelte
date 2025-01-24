@@ -460,7 +460,6 @@ export function analyze_component(root, source, options) {
 		undefined_exports: new Map(),
 		snippet_renderers: new Map(),
 		snippets: new Set(),
-		is_async: false,
 		async_deriveds: new Set(),
 		suspenders: new Map()
 	};

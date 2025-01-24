@@ -197,9 +197,6 @@ export function Fragment(node, context) {
 		body.push(close);
 	}
 
-	const async =
-		state.metadata.async.length > 0 || (state.analysis.is_async && context.path.length === 0);
-
 	return b.block(body);
 }
 

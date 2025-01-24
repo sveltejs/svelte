@@ -367,7 +367,7 @@ export function client_component(analysis, options) {
 		.../** @type {ESTree.Statement[]} */ (template.body)
 	]);
 
-	if (analysis.is_async) {
+	if (analysis.instance.is_async) {
 		const body = b.function_declaration(
 			b.id('$$body'),
 			[b.id('$$anchor'), b.id('$$props')],

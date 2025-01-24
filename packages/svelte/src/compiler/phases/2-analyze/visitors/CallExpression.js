@@ -207,9 +207,6 @@ export function CallExpression(node, context) {
 
 		if (expression.is_async) {
 			context.state.analysis.async_deriveds.add(node);
-
-			context.state.analysis.is_async ||=
-				context.state.ast_type === 'instance' && context.state.function_depth === 1;
 		}
 	} else if (rune === '$inspect') {
 		context.next({ ...context.state, function_depth: context.state.function_depth + 1 });
