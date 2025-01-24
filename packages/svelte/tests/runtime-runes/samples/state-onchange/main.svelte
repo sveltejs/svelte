@@ -37,7 +37,7 @@
 
 
 		constructor(){
-			this.#in_constructor++;
+			this.#in_constructor = 42;
 			this.#in_constructor_proxy.count++;
 		}
 	}

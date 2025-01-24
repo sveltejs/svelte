@@ -225,6 +225,8 @@ export function simple_set(source, value, should_proxy = false, needs_previous =
 
 	source.v = new_value;
 
+	source.o?.onchange?.();
+
 	return new_value;
 }
 
