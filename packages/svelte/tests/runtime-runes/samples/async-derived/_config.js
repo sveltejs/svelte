@@ -32,7 +32,6 @@ export default test({
 		await Promise.resolve();
 		await Promise.resolve();
 		await Promise.resolve();
-		await Promise.resolve();
 		await tick();
 		assert.htmlEqual(target.innerHTML, '<p>84</p>');
 
@@ -42,7 +41,6 @@ export default test({
 		assert.htmlEqual(target.innerHTML, '<p>pending</p>');
 
 		d.resolve(43);
-		await Promise.resolve();
 		await Promise.resolve();
 		await Promise.resolve();
 		await tick();
