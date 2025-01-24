@@ -3,7 +3,7 @@
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
-import { get_parent, unwrap_optional } from '../../../utils/ast.js';
+import { get_parent } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
 import { dev, locate_node, source } from '../../../state.js';
 import * as b from '../../../utils/builders.js';
@@ -185,18 +185,6 @@ export function CallExpression(node, context) {
 			}
 
 			break;
-	}
-
-	if (context.state.render_tag) {
-		// Find out which of the render tag arguments contains this call expression
-		const arg_idx = unwrap_optional(context.state.render_tag.expression).arguments.findIndex(
-			(arg) => arg === node || context.path.includes(arg)
-		);
-
-		// -1 if this is the call expression of the render tag itself
-		if (arg_idx !== -1) {
-			context.state.render_tag.metadata.args_with_call_expression.add(arg_idx);
-		}
 	}
 
 	if (node.callee.type === 'Identifier') {

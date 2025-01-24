@@ -20,8 +20,12 @@ export function AwaitExpression(node, context) {
 		while (i--) {
 			const parent = context.path[i];
 
-			// @ts-expect-error we could probably use a neater/more robust mechanism
-			if (parent.metadata?.expression === context.state.expression) {
+			if (
+				// @ts-expect-error we could probably use a neater/more robust mechanism
+				parent.metadata?.expression === context.state.expression ||
+				// @ts-expect-error
+				parent.metadata?.arguments?.includes(context.state.expression)
+			) {
 				break;
 			}
 

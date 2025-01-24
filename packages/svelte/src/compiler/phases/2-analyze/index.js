@@ -618,7 +618,6 @@ export function analyze_component(root, source, options) {
 				has_props_rune: false,
 				component_slots: new Set(),
 				expression: null,
-				render_tag: null,
 				private_derived_state: [],
 				function_depth: scope.function_depth,
 				instance_scope: instance.scope,
@@ -690,7 +689,6 @@ export function analyze_component(root, source, options) {
 				reactive_statements: analysis.reactive_statements,
 				component_slots: new Set(),
 				expression: null,
-				render_tag: null,
 				private_derived_state: [],
 				function_depth: scope.function_depth
 			};

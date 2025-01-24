@@ -6,8 +6,6 @@ import { test } from '../../test';
 let d;
 
 export default test({
-	skip: true,
-
 	html: `<p>pending</p>`,
 
 	get props() {
