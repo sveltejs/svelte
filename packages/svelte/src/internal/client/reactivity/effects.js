@@ -99,6 +99,10 @@ function create_effect(type, fn, sync, push = true) {
 		}
 	}
 
+	if (parent_effect !== null && (parent_effect.f & INERT) !== 0) {
+		type |= INERT;
+	}
+
 	/** @type {Effect} */
 	var effect = {
 		ctx: component_context,
