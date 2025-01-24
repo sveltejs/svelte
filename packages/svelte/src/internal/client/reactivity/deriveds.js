@@ -161,7 +161,7 @@ export function async_derived(fn) {
 		}
 	}, IS_ASYNC);
 
-	return promise.then(() => value);
+	return Promise.resolve(promise).then(() => value);
 }
 
 /**
