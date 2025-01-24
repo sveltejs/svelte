@@ -5,6 +5,7 @@ import * as e from '../../../errors.js';
 import { validate_opening_tag } from './shared/utils.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 import { is_resolved_snippet } from './shared/snippets.js';
+import { create_expression_metadata } from '../../nodes.js';
 
 /**
  * @param {AST.RenderTag} node
@@ -15,7 +16,8 @@ export function RenderTag(node, context) {
 
 	node.metadata.path = [...context.path];
 
-	const callee = unwrap_optional(node.expression).callee;
+	const expression = unwrap_optional(node.expression);
+	const callee = expression.callee;
 
 	const binding = callee.type === 'Identifier' ? context.state.scope.get(callee.name) : null;
 
@@ -52,5 +54,15 @@ export function RenderTag(node, context) {
 
 	mark_subtree_dynamic(context.path);
 
-	context.next({ ...context.state, render_tag: node });
+	context.visit(callee);
+
+	for (const arg of expression.arguments) {
+		const metadata = create_expression_metadata();
+		node.metadata.arguments.push(metadata);
+
+		context.visit(arg, {
+			...context.state,
+			expression: metadata
+		});
+	}
 }

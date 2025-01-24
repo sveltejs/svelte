@@ -166,7 +166,7 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			dynamic: boolean;
-			args_with_call_expression: Set<number>;
+			arguments: ExpressionMetadata[];
 			path: SvelteNode[];
 			/** The set of locally-defined snippets that this render tag could correspond to,
 			 * used for CSS pruning purposes */
