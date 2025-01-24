@@ -212,6 +212,11 @@ export interface ModuleCompileOptions {
 	 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 	 */
 	warningFilter?: (warning: Warning) => boolean;
+	/** Experimental options */
+	experimental?: {
+		/** Allow `await` keyword in deriveds, template expressions, and the top level of components */
+		async?: boolean;
+	};
 }
 
 // The following two somewhat scary looking types ensure that certain types are required but can be undefined still

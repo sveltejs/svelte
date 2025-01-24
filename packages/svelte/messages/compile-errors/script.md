@@ -70,6 +70,10 @@ This turned out to be buggy and unpredictable, particularly when working with de
 
 > `$effect()` can only be used as an expression statement
 
+## experimental_async
+
+> Cannot use `await` in deriveds and template expressions, or at the top level of a component, unless the `experimental.async` compiler option is `true`
+
 ## export_undefined
 
 > `%name%` is not defined
@@ -100,7 +104,7 @@ This turned out to be buggy and unpredictable, particularly when working with de
 
 ## legacy_await_invalid
 
-> Cannot use `await` at the top level of a component, or in the template, unless in runes mode
+> Cannot use `await` in deriveds and template expressions, or at the top level of a component, unless in runes mode
 
 ## legacy_export_invalid
 
