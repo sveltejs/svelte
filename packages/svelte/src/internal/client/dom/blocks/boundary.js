@@ -204,10 +204,8 @@ export function boundary(node, props, boundary_fn) {
 			}
 		};
 
-		if (props.pending) {
-			// @ts-ignore
-			boundary.fn.pending = true;
-		}
+		// @ts-ignore
+		boundary.fn.is_pending = () => props.pending;
 
 		if (hydrating) {
 			hydrate_next();
@@ -270,7 +268,7 @@ export function capture() {
  */
 export function is_pending_boundary(boundary) {
 	// @ts-ignore
-	return boundary.fn.pending;
+	return boundary.fn.is_pending();
 }
 
 export function suspend() {
