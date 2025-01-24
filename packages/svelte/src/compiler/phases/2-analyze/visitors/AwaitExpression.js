@@ -47,9 +47,5 @@ export function AwaitExpression(node, context) {
 		context.state.expression.is_async = true;
 	}
 
-	if (tla) {
-		context.state.analysis.is_async = true;
-	}
-
 	context.next();
 }
