@@ -1,10 +1,10 @@
 /** @import { AwaitExpression } from 'estree' */
-/** @import { ComponentContext } from '../types.js' */
+/** @import { Context } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
 
 /**
  * @param {AwaitExpression} node
- * @param {ComponentContext} context
+ * @param {Context} context
  */
 export function AwaitExpression(node, context) {
 	// `has`, not `get`, because all top-level await expressions should
