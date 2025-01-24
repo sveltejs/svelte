@@ -831,6 +831,9 @@ function process_effects(effect, collected_effects) {
 		var sibling = current_effect.next;
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
+			// We only want to skip suspended effects if they are not branches or block effects,
+			// with the exception of template effects, which are technically block effects but also
+			// have a special flag that we used to detect them
 			var skip_suspended =
 				suspended &&
 				(flags & BRANCH_EFFECT) === 0 &&
