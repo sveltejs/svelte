@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-chore: refactor task microtask dispatching + boundary scheduling
+feat: support `await` in components
