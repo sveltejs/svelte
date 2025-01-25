@@ -25,13 +25,11 @@ import {
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import * as w from '../warnings.js';
 import { block, destroy_effect } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
 import { capture, suspend } from '../dom/blocks/boundary.js';
-import { flush_boundary_micro_tasks } from '../dom/task.js';
 
 /**
  * @template V
@@ -97,10 +95,8 @@ export function async_derived(fn) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var value = source(/** @type {V} */ (undefined));
 
-	var derived_promise = derived(fn);
-
 	block(async () => {
-		var current = (promise = get(derived_promise));
+		var current = (promise = fn());
 
 		var restore = capture();
 		var unsuspend = suspend();
