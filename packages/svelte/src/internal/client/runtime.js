@@ -761,12 +761,13 @@ function flush_queued_effects(effects) {
 	}
 }
 
-function flushed_deferred() {
+function flush_deferred() {
 	is_micro_task_queued = false;
+
 	if (flush_count > 1001) {
 		return;
 	}
-	// flush_before_process_microtasks();
+
 	const previous_queued_root_effects = queued_root_effects;
 	queued_root_effects = [];
 	flush_queued_root_effects(previous_queued_root_effects);
@@ -774,6 +775,7 @@ function flushed_deferred() {
 	if (!is_micro_task_queued) {
 		flush_count = 0;
 		last_scheduled_effect = null;
+
 		if (DEV) {
 			dev_effect_stack = [];
 		}
@@ -788,7 +790,7 @@ export function schedule_effect(signal) {
 	if (scheduler_mode === FLUSH_MICROTASK) {
 		if (!is_micro_task_queued) {
 			is_micro_task_queued = true;
-			queueMicrotask(flushed_deferred);
+			queueMicrotask(flush_deferred);
 		}
 	}
 
