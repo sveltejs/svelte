@@ -1,7 +1,7 @@
 [
 	{
 		"code": "rune_invalid_placement",
-		"message": "Can't use `$derived` here",
+		"message": "Can't use `$derived` rune here",
 		"start": {
 			"line": 2,
 			"column": 15
