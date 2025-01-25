@@ -81,6 +81,8 @@ export function boundary(node, props, boundary_fn) {
 		var hydrate_open = hydrate_node;
 		var is_creating_fallback = false;
 
+		var inited = false;
+
 		var render_snippet = (/** @type { () => void } */ snippet_fn) => {
 			with_boundary(boundary, () => {
 				is_creating_fallback = true;
@@ -103,6 +105,8 @@ export function boundary(node, props, boundary_fn) {
 			let pending = /** @type {(anchor: Node) => void} */ (props.pending);
 
 			if (input === ASYNC_INCREMENT) {
+				if (inited) return true;
+
 				if (async_count++ === 0) {
 					queue_boundary_micro_task(() => {
 						if (async_effect || !boundary_effect) {
@@ -143,8 +147,13 @@ export function boundary(node, props, boundary_fn) {
 			}
 
 			if (input === ASYNC_DECREMENT) {
+				if (inited) return true;
+
 				if (--async_count === 0) {
 					queue_boundary_micro_task(() => {
+						if (async_count === 0) {
+							inited = true;
+						}
 						if (!async_effect) {
 							return;
 						}
