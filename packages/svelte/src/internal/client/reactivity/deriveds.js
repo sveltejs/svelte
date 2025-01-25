@@ -81,9 +81,6 @@ export function derived(fn) {
 	return signal;
 }
 
-// Used for waterfall detection
-var async_deps = new Set();
-
 /**
  * @template V
  * @param {() => Promise<V>} fn
@@ -100,12 +97,9 @@ export function async_derived(fn) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var value = source(/** @type {V} */ (undefined));
 
-	var current_deps = new Set(async_deps);
-
 	var derived_promise = derived(fn);
 
 	block(async () => {
-		var effect = /** @type {Effect} */ (active_effect);
 		var current = (promise = get(derived_promise));
 
 		var restore = capture();
@@ -114,24 +108,6 @@ export function async_derived(fn) {
 		try {
 			var v = await promise;
 
-			// check to see if we just created an unnecessary waterfall
-			if (current_deps.size > 0) {
-				var justified = false;
-
-				if (effect.deps !== null) {
-					for (const dep of effect.deps) {
-						if (current_deps.has(dep)) {
-							justified = true;
-							break;
-						}
-					}
-				}
-
-				if (!justified) {
-					w.await_waterfall();
-				}
-			}
-
 			if ((parent.f & DESTROYED) !== 0) {
 				return;
 			}
@@ -139,17 +115,6 @@ export function async_derived(fn) {
 			if (promise === current) {
 				restore();
 				internal_set(value, v);
-
-				// make a note that we're updating this derived,
-				// so that we can detect waterfalls
-				async_deps.add(value);
-
-				// TODO we want to clear this after we've updated effects.
-				// `queue_micro_task` appears to run too early.
-				// for now, as a POC, use setTimeout
-				setTimeout(() => {
-					async_deps.delete(value);
-				});
 			}
 		} catch (e) {
 			handle_error(e, parent, null, parent.ctx);
