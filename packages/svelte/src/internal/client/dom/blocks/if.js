@@ -70,42 +70,45 @@ export function if_block(node, fn, elseif = false) {
 			active_fork.f ^= FORK_ROOT;
 
 			const fragment = document.createDocumentFragment();
-			const offscreen_condition = condition;
 			const offscreen_anchor = document.createComment('');
 
 			fragment.append(offscreen_anchor);
 
-			const offscreen_effect = fn && branch(() => fn(offscreen_anchor));
+			try {
+				const offscreen_effect = fn && branch(() => fn(offscreen_anchor));
 
-			active_fork.branches.push(() => {
-				anchor.before(fragment);
+				active_fork.branches.push(() => {
+					anchor.before(fragment);
 
-				if (condition) {
-					if (consequent_effect) {
-						resume_effect(consequent_effect);
-					} else {
-						consequent_effect = offscreen_effect;
-
-						if (alternate_effect) {
-							pause_effect(alternate_effect, () => {
-								alternate_effect = null;
-							});
-						}
-					}
-				} else {
-					if (alternate_effect) {
-						resume_effect(alternate_effect);
-					} else {
-						alternate_effect = offscreen_effect;
-
+					if (condition) {
 						if (consequent_effect) {
-							pause_effect(consequent_effect, () => {
-								consequent_effect = null;
-							});
+							resume_effect(consequent_effect);
+						} else {
+							consequent_effect = offscreen_effect;
+
+							if (alternate_effect) {
+								pause_effect(alternate_effect, () => {
+									alternate_effect = null;
+								});
+							}
+						}
+					} else {
+						if (alternate_effect) {
+							resume_effect(alternate_effect);
+						} else {
+							alternate_effect = offscreen_effect;
+
+							if (consequent_effect) {
+								pause_effect(consequent_effect, () => {
+									consequent_effect = null;
+								});
+							}
 						}
 					}
-				}
-			});
+				});
+			} finally {
+				active_fork.f |= FORK_ROOT;
+			}
 
 			return;
 		}

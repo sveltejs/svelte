@@ -145,6 +145,10 @@ export function fork(fn) {
 			flush_sync();
 
 			revert(active_fork);
+
+			if (f.pending === 0) {
+				f.callback();
+			}
 		});
 	} finally {
 		active_fork = null;
