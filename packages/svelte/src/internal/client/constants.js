@@ -30,3 +30,5 @@ export const STATE_SYMBOL = Symbol('$state');
 export const STATE_SYMBOL_METADATA = Symbol('$state metadata');
 export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
+
+export const FORK_ROOT = 1 << 1;

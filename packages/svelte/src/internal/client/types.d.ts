@@ -185,8 +185,10 @@ export interface SourceFork {
 }
 
 export interface Fork {
+	f: number;
 	sources: Map<Source, SourceFork>;
 	pending: number;
+	branches: Array<() => void>;
 	callback: (error?: Error) => void;
 }
 

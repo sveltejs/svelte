@@ -1,5 +1,5 @@
 /** @import { Derived, Effect, Fork, Value } from '#client' */
-import { BLOCK_EFFECT, DERIVED, DIRTY, TEMPLATE_EFFECT } from './constants.js';
+import { BLOCK_EFFECT, DERIVED, DIRTY, FORK_ROOT, TEMPLATE_EFFECT } from './constants.js';
 import { queue_micro_task } from './dom/task.js';
 import { flush_sync, schedule_effect, set_signal_status } from './runtime.js';
 
@@ -19,8 +19,10 @@ export function set_active_fork(fork) {
  */
 function create_fork(callback) {
 	return {
+		f: FORK_ROOT,
 		pending: 0,
 		sources: new Map(),
+		branches: [],
 		callback
 	};
 }
@@ -79,6 +81,10 @@ function apply_fork(fork) {
 		source.wv = saved.next_wv;
 
 		mark_effects(source);
+	}
+
+	for (const fn of fork.branches) {
+		fn();
 	}
 }
 
