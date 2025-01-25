@@ -96,41 +96,51 @@ export function async_derived(fn) {
 		throw new Error('TODO cannot create unowned async derived');
 	}
 
-	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
+	var current = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var value = source(/** @type {V} */ (undefined));
 
 	var derived_promise = derived(fn);
 
 	block(async () => {
-		var current = (promise = get(derived_promise));
+		var promise = get(derived_promise);
 
 		var restore = capture();
 		var unsuspend = suspend();
+		var fork = active_fork;
 
 		try {
+			if (fork === null) {
+				current = promise;
+			}
+
 			var v = await promise;
 
 			if ((parent.f & DESTROYED) !== 0) {
 				return;
 			}
 
-			if (promise === current) {
+			if (fork !== null) {
 				restore();
 
-				var prev = { v: value.v, wv: value.wv };
+				var prev_v = value.v;
+				var prev_wv = value.wv;
 
 				internal_set(value, v);
+				flush_sync();
 
-				if (active_fork) {
-					flush_sync();
-
-					// revert
-					value.v = prev.v;
-					value.wv = prev.wv;
-				}
+				// revert
+				value.v = prev_v;
+				value.wv = prev_wv;
+			} else if (current === promise) {
+				restore();
+				internal_set(value, v);
 			}
 		} catch (e) {
-			handle_error(e, parent, null, parent.ctx);
+			if (fork !== null) {
+				// TODO reject fork
+			} else {
+				handle_error(e, parent, null, parent.ctx);
+			}
 		} finally {
 			unsuspend();
 
@@ -139,7 +149,7 @@ export function async_derived(fn) {
 		}
 	}, IS_ASYNC);
 
-	return Promise.resolve(promise).then(() => value);
+	return Promise.resolve(current).then(() => value);
 }
 
 /**
