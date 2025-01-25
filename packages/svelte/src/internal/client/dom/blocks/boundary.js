@@ -68,15 +68,17 @@ function with_boundary(boundary, fn) {
 export function boundary(node, props, boundary_fn) {
 	var anchor = node;
 
-	/** @type {Effect} */
-	var boundary_effect;
-	/** @type {Effect | null} */
-	var async_effect = null;
-	/** @type {DocumentFragment | null} */
-	var async_fragment = null;
-	var async_count = 0;
-
 	block(() => {
+		/** @type {Effect} */
+		var boundary_effect;
+
+		/** @type {Effect | null} */
+		var async_effect = null;
+
+		/** @type {DocumentFragment | null} */
+		var async_fragment = null;
+
+		var async_count = 0;
 		var boundary = /** @type {Effect} */ (active_effect);
 		var hydrate_open = hydrate_node;
 		var is_creating_fallback = false;
