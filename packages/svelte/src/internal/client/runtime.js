@@ -44,6 +44,7 @@ import { FILENAME } from '../../constants.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../flags/index.js';
 import { tracing_expressions, get_stack } from './dev/tracing.js';
 import { is_pending_boundary } from './dom/blocks/boundary.js';
+import { active_fork } from './fork.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;

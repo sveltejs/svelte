@@ -30,11 +30,13 @@ import {
 	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	TEMPLATE_EFFECT
 } from '../constants.js';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
+import { active_fork } from '../fork.js';
 
 export let inspect_effects = new Set();
 
@@ -171,8 +173,26 @@ export function set(source, value) {
 export function internal_set(source, value) {
 	if (!source.equals(value)) {
 		var old_value = source.v;
+		var old_write_version = source.wv;
+
 		source.v = value;
 		source.wv = increment_write_version();
+
+		if (active_fork !== null) {
+			var source_fork = active_fork.sources.get(source);
+
+			if (source_fork) {
+				source_fork.next_v = value;
+				source_fork.next_wv = source.wv;
+			} else {
+				active_fork.sources.set(source, {
+					v: old_value,
+					wv: old_write_version,
+					next_v: value,
+					next_wv: source.wv
+				});
+			}
+		}
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
@@ -254,13 +274,22 @@ function mark_reactions(signal, status) {
 			continue;
 		}
 
-		set_signal_status(reaction, status);
+		// in a fork, only schedule block effects (that are not also template effects)
+		// TODO we refer to too many things as 'blocks', it's confusing
+		var skip =
+			active_fork !== null &&
+			(flags & DERIVED) === 0 &&
+			((flags & BLOCK_EFFECT) === 0 || (flags & TEMPLATE_EFFECT) !== 0);
+
+		if (!skip) {
+			set_signal_status(reaction, status);
+		}
 
 		// If the signal a) was previously clean or b) is an unowned derived, then mark it
 		if ((flags & (CLEAN | UNOWNED)) !== 0) {
 			if ((flags & DERIVED) !== 0) {
 				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
-			} else {
+			} else if (!skip) {
 				schedule_effect(/** @type {Effect} */ (reaction));
 			}
 		}

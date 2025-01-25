@@ -419,6 +419,9 @@ declare module 'svelte' {
 		render: () => string;
 		setup?: (element: Element) => void | (() => void);
 	}): Snippet<Params>;
+	export function fork(fn: () => void): Promise<{
+		apply: () => void;
+	}>;
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
 	/**

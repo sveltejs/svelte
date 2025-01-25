@@ -29,6 +29,7 @@ import {
 import { get_next_sibling } from '../operations.js';
 import { queue_boundary_micro_task, queue_micro_task } from '../task.js';
 import * as e from '../../../shared/errors.js';
+import { active_fork, decrement_fork, increment_fork, set_active_fork } from '../../fork.js';
 
 const ASYNC_INCREMENT = Symbol();
 const ASYNC_DECREMENT = Symbol();
@@ -249,11 +250,13 @@ export function capture() {
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
+	var previous_fork = active_fork;
 
 	return function restore() {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
+		set_active_fork(previous_fork);
 
 		// prevent the active effect from outstaying its welcome
 		queue_micro_task(exit);
@@ -269,6 +272,12 @@ export function is_pending_boundary(boundary) {
 }
 
 export function suspend() {
+	if (active_fork !== null) {
+		var fork = active_fork;
+		increment_fork(fork);
+		return () => decrement_fork(fork);
+	}
+
 	var boundary = active_effect;
 
 	while (boundary !== null) {
@@ -311,4 +320,5 @@ function exit() {
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
+	set_active_fork(null);
 }

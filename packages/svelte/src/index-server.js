@@ -35,6 +35,8 @@ export function unmount() {
 
 export async function tick() {}
 
+export async function fork() {}
+
 export { getAllContexts, getContext, hasContext, setContext } from './internal/server/context.js';
 
 export { createRawSnippet } from './internal/server/blocks/snippet.js';

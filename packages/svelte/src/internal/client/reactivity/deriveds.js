@@ -21,7 +21,8 @@ import {
 	set_active_effect,
 	component_context,
 	handle_error,
-	get
+	get,
+	flush_sync
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -32,6 +33,7 @@ import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
 import { capture, suspend } from '../dom/blocks/boundary.js';
 import { flush_boundary_micro_tasks } from '../dom/task.js';
+import { active_fork } from '../fork.js';
 
 /**
  * @template V
@@ -114,7 +116,18 @@ export function async_derived(fn) {
 
 			if (promise === current) {
 				restore();
+
+				var prev = { v: value.v, wv: value.wv };
+
 				internal_set(value, v);
+
+				if (active_fork) {
+					flush_sync();
+
+					// revert
+					value.v = prev.v;
+					value.wv = prev.wv;
+				}
 			}
 		} catch (e) {
 			handle_error(e, parent, null, parent.ctx);

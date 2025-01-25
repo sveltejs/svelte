@@ -177,6 +177,19 @@ export type TaskCallback = (now: number) => boolean | void;
 
 export type TaskEntry = { c: TaskCallback; f: () => void };
 
+export interface SourceFork {
+	v: any;
+	wv: number;
+	next_v: any;
+	next_wv: number;
+}
+
+export interface Fork {
+	sources: Map<Source, SourceFork>;
+	pending: number;
+	callback: (error?: Error) => void;
+}
+
 /** Dev-only */
 export interface ProxyMetadata {
 	/** The components that 'own' this state, if any. `null` means no owners, i.e. everyone can mutate this state. */

@@ -191,3 +191,5 @@ export {
 } from './internal/client/runtime.js';
 
 export { createRawSnippet } from './internal/client/dom/blocks/snippet.js';
+
+export { fork } from './internal/client/fork.js';
