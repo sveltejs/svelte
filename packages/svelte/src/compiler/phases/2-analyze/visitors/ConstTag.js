@@ -16,7 +16,7 @@ export function ConstTag(node, context) {
 	for (let declaration of node.declaration.declarations) {
 		const rune = get_rune(declaration.init, context.state.scope);
 		if (rune) {
-			e.const_tag_invalid_rune_usage(declaration.init, rune);
+			e.rune_invalid_placement(declaration.init, rune);
 		}
 	}
 
