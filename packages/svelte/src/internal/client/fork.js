@@ -40,13 +40,15 @@ export function decrement_fork(fork) {
 
 	queue_micro_task(() => {
 		if (fork.pending === 0) {
-			// TODO if the state that was originally set inside the
-			// fork callback was updated in the meantime, reject
-			// the fork. Also need to handle a case like
-			// `{#if a || b}` where the fork makes `a`
-			// truthy but `b` became truthy in the
-			// meantime — requires a 'rebase'
-			fork.callback();
+			if (is_valid(fork)) {
+				// TODO we also need to handle a case like
+				// `{#if a || b}` where the fork makes `a`
+				// truthy but `b` became truthy in the
+				// meantime — requires a 'rebase'
+				fork.callback();
+			} else {
+				fork.callback(new Error('stale fork'));
+			}
 		}
 	});
 }
@@ -54,8 +56,23 @@ export function decrement_fork(fork) {
 /**
  * @param {Fork} fork
  */
+function is_valid(fork) {
+	for (const [source, source_fork] of fork.sources) {
+		if (source.wv > source_fork.wv) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/**
+ * @param {Fork} fork
+ */
 function apply_fork(fork) {
-	// TODO check the fork is still valid and error otherwise
+	if (!is_valid(fork)) {
+		throw new Error('stale fork');
+	}
 
 	for (const [source, saved] of fork.sources) {
 		source.v = saved.next_v;
