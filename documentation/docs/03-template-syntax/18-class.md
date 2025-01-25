@@ -85,7 +85,7 @@ Svelte also exposes the `ClassValue` type, which is the type of value that the `
 
 ## The `class:` directive
 
-Prior to Svelte 5.16, the `class:` directive was the most convenient way to set classes on elements conditionally.
+For simple cases, the `class:` directive offers a convenient way to set classes on elements conditionally.
 
 ```svelte
 <!-- These are equivalent -->
@@ -98,5 +98,3 @@ As with other directives, we can use a shorthand when the name of the class coin
 ```svelte
 <div class:cool class:lame={!cool}>...</div>
 ```
-
-> [!NOTE] Unless you're using an older version of Svelte, consider avoiding `class:`, since the attribute is more powerful and composable.
