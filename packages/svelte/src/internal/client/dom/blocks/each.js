@@ -33,11 +33,12 @@ import {
 } from '../../reactivity/effects.js';
 import { source, mutable_source, internal_set } from '../../reactivity/sources.js';
 import { array_from, is_array } from '../../../shared/utils.js';
-import { INERT } from '../../constants.js';
+import { FORK_ROOT, INERT } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
 import { active_effect, active_reaction, get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
+import { active_fork } from '../../fork.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -453,19 +454,27 @@ function reconcile(array, state, anchor, render_fn, flags, is_inert, get_key, ge
 		var destroy_length = to_destroy.length;
 
 		if (destroy_length > 0) {
-			var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
+			function destroy() {
+				var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
 
-			if (is_animated) {
-				for (i = 0; i < destroy_length; i += 1) {
-					to_destroy[i].a?.measure();
+				if (is_animated) {
+					for (i = 0; i < destroy_length; i += 1) {
+						to_destroy[i].a?.measure();
+					}
+
+					for (i = 0; i < destroy_length; i += 1) {
+						to_destroy[i].a?.fix();
+					}
 				}
 
-				for (i = 0; i < destroy_length; i += 1) {
-					to_destroy[i].a?.fix();
-				}
+				pause_effects(state, to_destroy, controlled_anchor, items);
 			}
 
-			pause_effects(state, to_destroy, controlled_anchor, items);
+			if (active_fork !== null) {
+				active_fork.branches.push(destroy);
+			} else {
+				destroy();
+			}
 		}
 	}
 
@@ -559,6 +568,20 @@ function create_item(
 	current_each_item = item;
 
 	try {
+		if (active_fork !== null && (active_fork.f & FORK_ROOT) !== 0) {
+			active_fork.f ^= FORK_ROOT;
+
+			const onscreen_anchor = anchor;
+
+			const fragment = document.createDocumentFragment();
+			anchor = document.createComment('');
+			fragment.append(anchor);
+
+			active_fork.branches.push(() => {
+				onscreen_anchor.before(fragment);
+			});
+		}
+
 		item.e = branch(() => render_fn(anchor, v, i, get_collection), hydrating);
 
 		item.e.prev = prev && prev.e;
@@ -578,6 +601,10 @@ function create_item(
 
 		return item;
 	} finally {
+		if (active_fork !== null) {
+			active_fork.f |= FORK_ROOT;
+		}
+
 		current_each_item = previous_each_item;
 	}
 }
