@@ -79,7 +79,8 @@ export function CallExpression(node, context) {
 		case '$derived':
 		case '$derived.by':
 			if (
-				parent.type !== 'VariableDeclarator' &&
+				(parent.type !== 'VariableDeclarator' ||
+					get_parent(context.path, -3).type === 'ConstTag') &&
 				!(parent.type === 'PropertyDefinition' && !parent.static && !parent.computed)
 			) {
 				e.state_invalid_placement(node, rune);
