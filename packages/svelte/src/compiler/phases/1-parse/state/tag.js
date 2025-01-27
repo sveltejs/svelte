@@ -706,7 +706,7 @@ function special(parser) {
 			expression: /** @type {AST.RenderTag['expression']} */ (expression),
 			metadata: {
 				dynamic: false,
-				args_with_call_expression: new Set(),
+				arguments: [],
 				path: [],
 				snippets: new Set()
 			}

@@ -1,5 +1,5 @@
 /** @import { Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Statement, Super } from 'estree' */
-/** @import { AST } from '#compiler' */
+/** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentClientTransformState } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
@@ -79,14 +79,14 @@ function compare_expressions(a, b) {
  * @param {Array<AST.Text | AST.ExpressionTag>} values
  * @param {(node: AST.SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
- * @param {(value: Expression) => Expression} memoize
+ * @param {(value: Expression, metadata: ExpressionMetadata) => Expression} memoize
  * @returns {{ value: Expression, has_state: boolean }}
  */
 export function build_template_chunk(
 	values,
 	visit,
 	state,
-	memoize = (value) => get_expression_id(state, value)
+	memoize = (value, metadata) => (metadata.has_call ? get_expression_id(state, value) : value)
 ) {
 	/** @type {Expression[]} */
 	const expressions = [];
@@ -106,35 +106,34 @@ export function build_template_chunk(
 				quasi.value.cooked += node.expression.value + '';
 			}
 		} else {
-			let value = /** @type {Expression} */ (visit(node.expression, state));
+			let value = memoize(
+				/** @type {Expression} */ (visit(node.expression, state)),
+				node.metadata.expression
+			);
 
 			has_state ||= node.metadata.expression.has_state;
-
-			if (node.metadata.expression.has_call) {
-				value = memoize(value);
-			}
 
 			if (values.length === 1) {
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).
 				return { value, has_state };
 			} else {
-				let expression = value;
-				// only add nullish coallescence if it hasn't been added already
-				if (value.type === 'LogicalExpression' && value.operator === '??') {
-					const { right } = value;
-					// `undefined` isn't a Literal (due to pre-ES5 shenanigans), so the only nullish literal is `null`
-					// however, you _can_ make a variable called `undefined` in a Svelte component, so we can't just treat it the same way
-					if (right.type !== 'Literal') {
-						expression = b.logical('??', value, b.literal(''));
-					} else if (right.value === null) {
-						// if they do something weird like `stuff ?? null`, replace `null` with empty string
-						value.right = b.literal('');
+				// add `?? ''` where necessary (TODO optimise more cases)
+				if (
+					value.type === 'LogicalExpression' &&
+					value.right.type === 'Literal' &&
+					(value.operator === '??' || value.operator === '||')
+				) {
+					// `foo ?? null` -=> `foo ?? ''`
+					// otherwise leave the expression untouched
+					if (value.right.value === null) {
+						value = { ...value, right: b.literal('') };
 					}
 				} else {
-					expression = b.logical('??', value, b.literal(''));
+					value = b.logical('??', value, b.literal(''));
 				}
-				expressions.push(expression);
+
+				expressions.push(value);
 			}
 
 			quasi = b.quasi('', i + 1 === values.length);

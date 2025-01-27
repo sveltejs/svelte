@@ -270,41 +270,6 @@ export function should_proxy(node, scope) {
 }
 
 /**
- * @param {Pattern} node
- * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentClientTransformState>} context
- * @returns {{ id: Pattern, declarations: null | Statement[] }}
- */
-export function create_derived_block_argument(node, context) {
-	if (node.type === 'Identifier') {
-		context.state.transform[node.name] = { read: get_value };
-		return { id: node, declarations: null };
-	}
-
-	const pattern = /** @type {Pattern} */ (context.visit(node));
-	const identifiers = extract_identifiers(node);
-
-	const id = b.id('$$source');
-	const value = b.id('$$value');
-
-	const block = b.block([
-		b.var(pattern, b.call('$.get', id)),
-		b.return(b.object(identifiers.map((identifier) => b.prop('init', identifier, identifier))))
-	]);
-
-	const declarations = [b.var(value, create_derived(context.state, b.thunk(block)))];
-
-	for (const id of identifiers) {
-		context.state.transform[id.name] = { read: get_value };
-
-		declarations.push(
-			b.var(id, create_derived(context.state, b.thunk(b.member(b.call('$.get', value), id))))
-		);
-	}
-
-	return { id, declarations };
-}
-
-/**
  * Svelte legacy mode should use safe equals in most places, runes mode shouldn't
  * @param {ComponentClientTransformState} state
  * @param {Expression} arg
