@@ -256,7 +256,7 @@ export function capture() {
 		set_component_context(previous_component_context);
 
 		// prevent the active effect from outstaying its welcome
-		queue_micro_task(exit);
+		queue_boundary_micro_task(exit);
 	};
 }
 
