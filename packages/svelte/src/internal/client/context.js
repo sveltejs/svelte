@@ -185,6 +185,11 @@ export function pop(component) {
 	return component || /** @type {T} */ ({});
 }
 
+/** @returns {boolean} */
+export function is_runes() {
+	return !legacy_mode_flag || (component_context !== null && component_context.l === null);
+}
+
 /**
  * @param {string} name
  * @returns {Map<unknown, unknown>}

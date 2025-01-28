@@ -27,15 +27,16 @@ import {
 	BOUNDARY_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
-import { internal_set, set } from './reactivity/sources.js';
+import { internal_set } from './reactivity/sources.js';
 import { destroy_derived, execute_derived, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
-import { legacy_mode_flag, tracing_mode_flag } from '../flags/index.js';
+import { tracing_mode_flag } from '../flags/index.js';
 import { tracing_expressions, get_stack } from './dev/tracing.js';
 import {
 	component_context,
 	dev_current_component_function,
+	is_runes,
 	set_component_context,
 	set_dev_current_component_function
 } from './context.js';
@@ -155,11 +156,6 @@ export function set_captured_signals(value) {
 
 export function increment_write_version() {
 	return ++write_version;
-}
-
-/** @returns {boolean} */
-export function is_runes() {
-	return !legacy_mode_flag || (component_context !== null && component_context.l === null);
 }
 
 /**
@@ -1092,35 +1088,6 @@ export function set_signal_status(signal, status) {
 }
 
 /**
- * @template {number | bigint} T
- * @param {Value<T>} signal
- * @param {1 | -1} [d]
- * @returns {T}
- */
-export function update(signal, d = 1) {
-	var value = get(signal);
-	var result = d === 1 ? value++ : value--;
-
-	set(signal, value);
-
-	// @ts-expect-error
-	return result;
-}
-
-/**
- * @template {number | bigint} T
- * @param {Value<T>} signal
- * @param {1 | -1} [d]
- * @returns {T}
- */
-export function update_pre(signal, d = 1) {
-	var value = get(signal);
-
-	// @ts-expect-error
-	return set(signal, d === 1 ? ++value : --value);
-}
-
-/**
  * @param {Record<string, unknown>} obj
  * @param {string[]} keys
  * @returns {Record<string, unknown>}
@@ -1210,38 +1177,4 @@ export function deep_read(value, visited = new Set()) {
 			}
 		}
 	}
-}
-
-if (DEV) {
-	/**
-	 * @param {string} rune
-	 */
-	function throw_rune_error(rune) {
-		if (!(rune in globalThis)) {
-			// TODO if people start adjusting the "this can contain runes" config through v-p-s more, adjust this message
-			/** @type {any} */
-			let value; // let's hope noone modifies this global, but belts and braces
-			Object.defineProperty(globalThis, rune, {
-				configurable: true,
-				// eslint-disable-next-line getter-return
-				get: () => {
-					if (value !== undefined) {
-						return value;
-					}
-
-					e.rune_outside_svelte(rune);
-				},
-				set: (v) => {
-					value = v;
-				}
-			});
-		}
-	}
-
-	throw_rune_error('$state');
-	throw_rune_error('$effect');
-	throw_rune_error('$derived');
-	throw_rune_error('$inspect');
-	throw_rune_error('$props');
-	throw_rune_error('$bindable');
 }

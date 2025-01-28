@@ -8,7 +8,7 @@ import {
 	render_effect,
 	user_effect
 } from '../../src/internal/client/reactivity/effects';
-import { state, set } from '../../src/internal/client/reactivity/sources';
+import { state, set, update, update_pre } from '../../src/internal/client/reactivity/sources';
 import type { Derived, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
@@ -875,14 +875,14 @@ describe('signals', () => {
 		return () => {
 			const count = state(0n);
 
-			assert.doesNotThrow(() => $.update(count));
+			assert.doesNotThrow(() => update(count));
 			assert.equal($.get(count), 1n);
-			assert.doesNotThrow(() => $.update(count, -1));
+			assert.doesNotThrow(() => update(count, -1));
 			assert.equal($.get(count), 0n);
 
-			assert.doesNotThrow(() => $.update_pre(count));
+			assert.doesNotThrow(() => update_pre(count));
 			assert.equal($.get(count), 1n);
-			assert.doesNotThrow(() => $.update_pre(count, -1));
+			assert.doesNotThrow(() => update_pre(count, -1));
 			assert.equal($.get(count), 0n);
 		};
 	});
