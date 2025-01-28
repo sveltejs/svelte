@@ -27,7 +27,7 @@ export default test({
 		d = deferred();
 		component.promise = d.promise;
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>pending</p>');
+		assert.htmlEqual(target.innerHTML, '<p>a</p><p>b</p><p>c</p>');
 
 		d.resolve(['d', 'e', 'f']);
 		await tick();
