@@ -62,10 +62,10 @@ function with_boundary(boundary, fn) {
  *   failed?: (anchor: Node, error: () => unknown, reset: () => () => void) => void
  *   pending?: (anchor: Node) => void
  * }} props
- * @param {((anchor: Node) => void)} boundary_fn
+ * @param {((anchor: Node) => void)} children
  * @returns {void}
  */
-export function boundary(node, props, boundary_fn) {
+export function boundary(node, props, children) {
 	var anchor = node;
 
 	block(() => {
@@ -161,7 +161,7 @@ export function boundary(node, props, boundary_fn) {
 
 			with_boundary(boundary, () => {
 				is_creating_fallback = false;
-				boundary_effect = branch(() => boundary_fn(anchor));
+				boundary_effect = branch(() => children(anchor));
 				reset_is_throwing_error();
 			});
 		}
@@ -241,11 +241,11 @@ export function boundary(node, props, boundary_fn) {
 			queueMicrotask(() => {
 				destroy_effect(boundary_effect);
 				with_boundary(boundary, () => {
-					boundary_effect = branch(() => boundary_fn(anchor));
+					boundary_effect = branch(() => children(anchor));
 				});
 			});
 		} else {
-			boundary_effect = branch(() => boundary_fn(anchor));
+			boundary_effect = branch(() => children(anchor));
 		}
 
 		reset_is_throwing_error();
