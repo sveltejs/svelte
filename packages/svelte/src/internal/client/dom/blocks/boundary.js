@@ -91,9 +91,7 @@ export function boundary(node, props, children) {
 				is_creating_fallback = true;
 
 				try {
-					boundary_effect = branch(() => {
-						snippet_fn();
-					});
+					boundary_effect = branch(snippet_fn);
 				} catch (error) {
 					handle_error(error, boundary, null, boundary.ctx);
 				}
