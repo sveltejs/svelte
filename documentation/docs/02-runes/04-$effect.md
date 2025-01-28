@@ -28,7 +28,7 @@ You can create an effect with the `$effect` rune ([demo](/playground/untitled#H4
 <canvas bind:this={canvas} width="100" height="100" />
 ```
 
-When Svelte runs an effect function, it tracks which pieces of state (and derived state) are accessed (unless accessed inside [`untrack`](svelte#untrack)), and re-runs the function when that state later changes.
+When Svelte runs an effect function, it tracks which pieces of state (and derived state) are accessed (unless accessed inside [`untrack`](svelte#untrack)), and re-runs the function when that state later changes. Internally, Svelte uses effects to manage changes to the template — e.g. to update the text in `<h1>hello {name}!</h1>` when `name` changes.
 
 > [!NOTE] If you're having difficulty understanding why your `$effect` is rerunning or is not running see [understanding dependencies](#Understanding-dependencies). Effects are triggered differently than the `$:` blocks you may be used to if coming from Svelte 4.
 
