@@ -73,10 +73,10 @@ export function boundary(node, props, children) {
 		var boundary_effect;
 
 		/** @type {Effect | null} */
-		var async_effect = null;
+		var offscreen_effect = null;
 
 		/** @type {DocumentFragment | null} */
-		var async_fragment = null;
+		var offscreen_fragment = null;
 
 		var async_count = 0;
 		var boundary = /** @type {Effect} */ (active_effect);
@@ -104,20 +104,20 @@ export function boundary(node, props, children) {
 		}
 
 		function suspend() {
-			if (async_effect || !boundary_effect) {
+			if (offscreen_effect || !boundary_effect) {
 				return;
 			}
 
 			var effect = boundary_effect;
-			async_effect = boundary_effect;
+			offscreen_effect = boundary_effect;
 
 			pause_effect(
-				async_effect,
+				boundary_effect,
 				() => {
 					/** @type {TemplateNode | null} */
 					var node = effect.nodes_start;
 					var end = effect.nodes_end;
-					async_fragment = document.createDocumentFragment();
+					offscreen_fragment = document.createDocumentFragment();
 
 					while (node !== null) {
 						/** @type {TemplateNode | null} */
@@ -125,7 +125,7 @@ export function boundary(node, props, children) {
 							node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
 
 						node.remove();
-						async_fragment.append(node);
+						offscreen_fragment.append(node);
 						node = sibling;
 					}
 				},
@@ -142,7 +142,7 @@ export function boundary(node, props, children) {
 		}
 
 		function unsuspend() {
-			if (!async_effect) {
+			if (!offscreen_effect) {
 				return;
 			}
 
@@ -150,9 +150,9 @@ export function boundary(node, props, children) {
 				destroy_effect(boundary_effect);
 			}
 
-			boundary_effect = async_effect;
-			async_effect = null;
-			anchor.before(/** @type {DocumentFragment} */ (async_fragment));
+			boundary_effect = offscreen_effect;
+			offscreen_effect = null;
+			anchor.before(/** @type {DocumentFragment} */ (offscreen_fragment));
 			resume_effect(boundary_effect);
 		}
 
