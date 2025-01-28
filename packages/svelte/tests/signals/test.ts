@@ -803,6 +803,33 @@ describe('signals', () => {
 		};
 	});
 
+	test('nested deriveds do not connect inside parent deriveds if unused', () => {
+		return () => {
+			let a = render_effect(() => {});
+			let b: Derived<void> | undefined;
+
+			const destroy = effect_root(() => {
+				a = render_effect(() => {
+					$.untrack(() => {
+						b = derived(() => {
+							derived(() => {});
+							derived(() => {});
+							derived(() => {});
+						});
+						$.get(b);
+					});
+				});
+			});
+
+			assert.deepEqual(a.deriveds?.length, 1);
+			assert.deepEqual(b?.children, null);
+
+			destroy();
+
+			assert.deepEqual(a.deriveds, null);
+		};
+	});
+
 	test('deriveds containing effects work correctly when used with untrack', () => {
 		return () => {
 			let a = render_effect(() => {});

@@ -68,10 +68,6 @@ export function derived(fn) {
 		signal.created = get_stack('CreatedAt');
 	}
 
-	if (parent_derived !== null) {
-		(parent_derived.children ??= []).push(signal);
-	}
-
 	return signal;
 }
 
