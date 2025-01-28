@@ -30,7 +30,10 @@ import {
 	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	IS_ASYNC,
+	BOUNDARY_EFFECT,
+	BOUNDARY_SUSPENDED
 } from '../constants.js';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -252,6 +255,22 @@ function mark_reactions(signal, status) {
 		if (DEV && (flags & INSPECT_EFFECT) !== 0) {
 			inspect_effects.add(reaction);
 			continue;
+		}
+
+		// if we're about to trip an async derived, mark the boundary as
+		// suspended _before_ we actually process effects
+		if ((flags & IS_ASYNC) !== 0) {
+			let boundary = /** @type {Derived} */ (reaction).parent;
+
+			while (boundary !== null && (boundary.f & BOUNDARY_EFFECT) === 0) {
+				boundary = boundary.parent;
+			}
+
+			if (boundary === null) {
+				// TODO this is presumably an error — throw here?
+			} else {
+				boundary.f |= BOUNDARY_SUSPENDED;
+			}
 		}
 
 		set_signal_status(reaction, status);

@@ -28,7 +28,8 @@ import {
 	BOUNDARY_EFFECT,
 	REACTION_IS_UPDATING,
 	IS_ASYNC,
-	TEMPLATE_EFFECT
+	TEMPLATE_EFFECT,
+	BOUNDARY_SUSPENDED
 } from './constants.js';
 import {
 	flush_idle_tasks,
@@ -843,15 +844,16 @@ function process_effects(effect, collected_effects) {
 				((flags & BLOCK_EFFECT) === 0 || (flags & TEMPLATE_EFFECT) !== 0);
 
 			if ((flags & RENDER_EFFECT) !== 0) {
-				if (is_branch) {
-					current_effect.f ^= CLEAN;
+				if ((flags & BOUNDARY_EFFECT) !== 0) {
+					suspended = (flags & BOUNDARY_SUSPENDED) !== 0;
+				} else if (is_branch) {
+					if (!suspended) {
+						current_effect.f ^= CLEAN;
+					}
 				} else if (!skip_suspended) {
 					try {
 						if (check_dirtiness(current_effect)) {
 							update_effect(current_effect);
-							if ((flags & IS_ASYNC) !== 0 && !suspended) {
-								suspended = true;
-							}
 						}
 					} catch (error) {
 						handle_error(error, current_effect, null, current_effect.ctx);
@@ -876,9 +878,16 @@ function process_effects(effect, collected_effects) {
 				if (effect === parent) {
 					break main_loop;
 				}
-				if (suspended && (parent.f & BOUNDARY_EFFECT) !== 0 && is_pending_boundary(parent)) {
-					suspended = false;
+
+				if ((parent.f & BOUNDARY_EFFECT) !== 0) {
+					let boundary = parent.parent;
+					while (boundary !== null && (boundary.f & BOUNDARY_EFFECT) === 0) {
+						boundary = boundary.parent;
+					}
+
+					suspended = boundary === null ? false : (boundary.f & BOUNDARY_SUSPENDED) !== 0;
 				}
+
 				var parent_sibling = parent.next;
 				if (parent_sibling !== null) {
 					current_effect = parent_sibling;

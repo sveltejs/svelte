@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode, } from '#client' */
 
-import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '../../constants.js';
+import { BOUNDARY_EFFECT, BOUNDARY_SUSPENDED, EFFECT_TRANSPARENT } from '../../constants.js';
 import {
 	block,
 	branch,
@@ -16,7 +16,8 @@ import {
 	set_active_effect,
 	set_active_reaction,
 	set_component_context,
-	reset_is_throwing_error
+	reset_is_throwing_error,
+	schedule_effect
 } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -117,18 +118,8 @@ export function boundary(node, props, children) {
 			pause_effect(
 				effect,
 				() => {
-					var node = effect.nodes_start;
-					var end = effect.nodes_end;
-
 					offscreen_fragment = document.createDocumentFragment();
-
-					while (node !== null) {
-						/** @type {TemplateNode | null} */
-						var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
-
-						offscreen_fragment.append(node);
-						node = next;
-					}
+					move_effect(effect, offscreen_fragment);
 				},
 				false
 			);
@@ -146,7 +137,9 @@ export function boundary(node, props, children) {
 			}
 
 			if (pending_effect !== null) {
-				pause_effect(pending_effect);
+				pause_effect(pending_effect, () => {
+					pending_effect = null;
+				});
 			}
 
 			anchor.before(/** @type {DocumentFragment} */ (offscreen_fragment));
@@ -159,7 +152,9 @@ export function boundary(node, props, children) {
 
 		function reset() {
 			if (failed_effect !== null) {
-				pause_effect(failed_effect);
+				pause_effect(failed_effect, () => {
+					failed_effect = null;
+				});
 			}
 
 			main_effect = with_boundary(boundary, () => {
@@ -176,16 +171,32 @@ export function boundary(node, props, children) {
 		// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
 		boundary.fn = (/** @type {unknown} */ input) => {
 			if (input === ASYNC_INCREMENT) {
-				if (async_count++ === 0) {
-					queue_boundary_micro_task(suspend);
-				}
+				async_count++;
+
+				// TODO post-init, show the pending snippet after a timeout
 
 				return;
 			}
 
 			if (input === ASYNC_DECREMENT) {
 				if (--async_count === 0) {
-					queue_boundary_micro_task(unsuspend);
+					boundary.f ^= BOUNDARY_SUSPENDED;
+
+					if (pending_effect) {
+						pause_effect(pending_effect, () => {
+							pending_effect = null;
+						});
+					}
+
+					if (offscreen_fragment) {
+						anchor.before(offscreen_fragment);
+						offscreen_fragment = null;
+					}
+
+					if (main_effect !== null) {
+						// TODO do we also need to `resume_effect` here?
+						schedule_effect(main_effect);
+					}
 				}
 
 				return;
@@ -260,6 +271,17 @@ export function boundary(node, props, children) {
 			});
 		} else {
 			main_effect = branch(() => children(anchor));
+
+			if (async_count > 0) {
+				if (pending) {
+					offscreen_fragment = document.createDocumentFragment();
+					move_effect(main_effect, offscreen_fragment);
+
+					pending_effect = branch(() => pending(anchor));
+				} else {
+					// TODO trigger pending boundary on parent
+				}
+			}
 		}
 
 		reset_is_throwing_error();
@@ -267,6 +289,24 @@ export function boundary(node, props, children) {
 
 	if (hydrating) {
 		anchor = hydrate_node;
+	}
+}
+
+/**
+ *
+ * @param {Effect} effect
+ * @param {DocumentFragment} fragment
+ */
+function move_effect(effect, fragment) {
+	var node = effect.nodes_start;
+	var end = effect.nodes_end;
+
+	while (node !== null) {
+		/** @type {TemplateNode | null} */
+		var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
+
+		fragment.append(node);
+		node = next;
 	}
 }
 
