@@ -35,7 +35,8 @@ const ASYNC_DECREMENT = Symbol();
 
 /**
  * @param {Effect} boundary
- * @param {() => void} fn
+ * @param {() => Effect | null} fn
+ * @returns {Effect | null}
  */
 function with_boundary(boundary, fn) {
 	var previous_effect = active_effect;
@@ -47,7 +48,7 @@ function with_boundary(boundary, fn) {
 	set_component_context(boundary.ctx);
 
 	try {
-		fn();
+		return fn();
 	} finally {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
@@ -69,11 +70,14 @@ export function boundary(node, props, children) {
 	var anchor = node;
 
 	block(() => {
-		/** @type {Effect} */
-		var boundary_effect;
+		/** @type {Effect | null} */
+		var main_effect = null;
 
 		/** @type {Effect | null} */
-		var offscreen_effect = null;
+		var pending_effect = null;
+
+		/** @type {Effect | null} */
+		var failed_effect = null;
 
 		/** @type {DocumentFragment | null} */
 		var offscreen_fragment = null;
@@ -85,32 +89,33 @@ export function boundary(node, props, children) {
 
 		/**
 		 * @param {() => void} snippet_fn
+		 * @returns {Effect | null}
 		 */
 		function render_snippet(snippet_fn) {
-			with_boundary(boundary, () => {
+			return with_boundary(boundary, () => {
 				is_creating_fallback = true;
 
 				try {
-					boundary_effect = branch(snippet_fn);
+					return branch(snippet_fn);
 				} catch (error) {
 					handle_error(error, boundary, null, boundary.ctx);
+					return null;
+				} finally {
+					reset_is_throwing_error();
+					is_creating_fallback = false;
 				}
-
-				reset_is_throwing_error();
-				is_creating_fallback = false;
 			});
 		}
 
 		function suspend() {
-			if (offscreen_effect || !boundary_effect) {
+			if (offscreen_fragment || !main_effect) {
 				return;
 			}
 
-			var effect = boundary_effect;
-			offscreen_effect = boundary_effect;
+			var effect = main_effect;
 
 			pause_effect(
-				boundary_effect,
+				effect,
 				() => {
 					var node = effect.nodes_start;
 					var end = effect.nodes_end;
@@ -131,34 +136,40 @@ export function boundary(node, props, children) {
 			const pending = props.pending;
 
 			if (pending) {
-				render_snippet(() => {
-					pending(anchor);
-				});
+				pending_effect = render_snippet(() => pending(anchor));
 			}
 		}
 
 		function unsuspend() {
-			if (!offscreen_effect) {
+			if (!offscreen_fragment) {
 				return;
 			}
 
-			if (boundary_effect) {
-				destroy_effect(boundary_effect);
+			if (pending_effect !== null) {
+				pause_effect(pending_effect);
 			}
 
-			boundary_effect = offscreen_effect;
-			offscreen_effect = null;
 			anchor.before(/** @type {DocumentFragment} */ (offscreen_fragment));
-			resume_effect(boundary_effect);
+			offscreen_fragment = null;
+
+			if (main_effect !== null) {
+				resume_effect(main_effect);
+			}
 		}
 
 		function reset() {
-			pause_effect(boundary_effect);
+			if (failed_effect !== null) {
+				pause_effect(failed_effect);
+			}
 
-			with_boundary(boundary, () => {
+			main_effect = with_boundary(boundary, () => {
 				is_creating_fallback = false;
-				boundary_effect = branch(() => children(anchor));
-				reset_is_throwing_error();
+
+				try {
+					return branch(() => children(anchor));
+				} finally {
+					reset_is_throwing_error();
+				}
 			});
 		}
 
@@ -192,9 +203,15 @@ export function boundary(node, props, children) {
 
 			onerror?.(error, reset);
 
-			if (boundary_effect) {
-				destroy_effect(boundary_effect);
-			} else if (hydrating) {
+			if (main_effect) {
+				destroy_effect(main_effect);
+			}
+
+			if (failed_effect) {
+				destroy_effect(failed_effect);
+			}
+
+			if (hydrating) {
 				set_hydrate_node(hydrate_open);
 				next();
 				set_hydrate_node(remove_nodes());
@@ -202,7 +219,7 @@ export function boundary(node, props, children) {
 
 			if (failed) {
 				queue_boundary_micro_task(() => {
-					render_snippet(() => {
+					failed_effect = render_snippet(() => {
 						failed(
 							anchor,
 							() => error,
@@ -223,7 +240,7 @@ export function boundary(node, props, children) {
 		const pending = props.pending;
 
 		if (hydrating && pending) {
-			boundary_effect = branch(() => pending(anchor));
+			pending_effect = branch(() => pending(anchor));
 
 			// ...now what? we need to start rendering `boundary_fn` offscreen,
 			// and either insert the resulting fragment (if nothing suspends)
@@ -235,13 +252,14 @@ export function boundary(node, props, children) {
 			// the pending or main block was rendered for a given
 			// boundary, and hydrate accordingly
 			queueMicrotask(() => {
-				destroy_effect(boundary_effect);
-				with_boundary(boundary, () => {
-					boundary_effect = branch(() => children(anchor));
+				destroy_effect(/** @type {Effect} */ (pending_effect));
+
+				main_effect = with_boundary(boundary, () => {
+					return branch(() => children(anchor));
 				});
 			});
 		} else {
-			boundary_effect = branch(() => children(anchor));
+			main_effect = branch(() => children(anchor));
 		}
 
 		reset_is_throwing_error();
