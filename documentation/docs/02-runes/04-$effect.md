@@ -4,7 +4,7 @@ title: $effect
 
 Effects are used for making your application perform _actions_. You might use them to do things like call a third-party library, draw on a `<canvas>` element, or make a network request. It's important to distinguish these actions from updating state, which should not be done inside an effect.
 
-> [!NOTE] Your application will become a nightmare to deal with almost immediately if you try to update state inside an effect. If you're tempted to use an effect to update state, see [when not to use `$effect`](#When-not-to-use-$effect) to learn about alternative approaches.
+> [!NOTE] Updating state inside an effect is considered an anti-pattern and may lead to never-ending cycles of state updates. If you're tempted to use an effect to update state, see [when not to use `$effect`](#When-not-to-use-$effect) to learn about alternative approaches.
 
 You can create an effect with the `$effect` rune ([demo](/playground/untitled#H4sIAAAAAAAAE31S246bMBD9lZF3pSRSAqTVvrCAVPUP2sdSKY4ZwJJjkD0hSVH-vbINuWxXfQH5zMyZc2ZmZLVUaFn6a2R06ZGlHmBrpvnBvb71fWQHVOSwPbf4GS46TajJspRlVhjZU1HqkhQSWPkHIYdXS5xw-Zas3ueI6FRn7qHFS11_xSRZhIxbFtcDtw7SJb1iXaOg5XIFeQGjzyPRaevYNOGZIJ8qogbpe8CWiy_VzEpTXiQUcvPDkSVrSNZz1UlW1N5eLcqmpdXUvaQ4BmqlhZNUCgxuzFHDqUWNAxrYeUM76AzsnOsdiJbrBp_71lKpn3RRbii-4P3f-IMsRxS-wcDV_bL4PmSdBa2wl7pKnbp8DMgVvJm8ZNskKRkEM_OzyOKQFkgqOYBQ3Nq89Ns0nbIl81vMFN-jKoLMTOr-SOBOJS-Z8f5Y6D1wdcR8dFqvEBdetK-PHwj-z-cH8oHPY54wRJ8Ys7iSQ3Bg3VA9azQbmC9k35kKzYa6PoVtfwbbKVnBixBiGn7Pq0rqJoUtHiCZwAM3jdTPWCVtr_glhVrhecIa3vuksJ_b7TqFs4DPyriSjd5IwoNNQaAmNI-ESfR2p8zimzvN1swdCkvJHPH6-_oX8o1SgcIDAAA=)):
 
