@@ -112,9 +112,9 @@ export function boundary(node, props, children) {
 			pause_effect(
 				boundary_effect,
 				() => {
-					/** @type {TemplateNode | null} */
 					var node = effect.nodes_start;
 					var end = effect.nodes_end;
+
 					offscreen_fragment = document.createDocumentFragment();
 
 					while (node !== null) {
