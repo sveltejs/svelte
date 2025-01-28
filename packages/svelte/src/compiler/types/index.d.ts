@@ -273,6 +273,7 @@ export interface Binding {
 		| 'rest_prop'
 		| 'state'
 		| 'raw_state'
+		| 'opaque_state'
 		| 'derived'
 		| 'each'
 		| 'snippet'
