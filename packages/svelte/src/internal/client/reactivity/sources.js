@@ -1,7 +1,6 @@
 /** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
-	component_context,
 	active_reaction,
 	active_effect,
 	untracked_writes,
@@ -35,6 +34,7 @@ import {
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
+import { component_context } from '../context.js';
 
 export let inspect_effects = new Set();
 
