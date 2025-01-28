@@ -33,6 +33,7 @@ import * as e from '../../../shared/errors.js';
 
 const ASYNC_INCREMENT = Symbol();
 const ASYNC_DECREMENT = Symbol();
+const ADD_CALLBACK = Symbol();
 
 /**
  * @param {Effect} boundary
@@ -88,6 +89,9 @@ export function boundary(node, props, children) {
 		var hydrate_open = hydrate_node;
 		var is_creating_fallback = false;
 
+		/** @type {Function[]} */
+		var callbacks = [];
+
 		/**
 		 * @param {() => void} snippet_fn
 		 * @returns {Effect | null}
@@ -106,48 +110,6 @@ export function boundary(node, props, children) {
 					is_creating_fallback = false;
 				}
 			});
-		}
-
-		function suspend() {
-			if (offscreen_fragment || !main_effect) {
-				return;
-			}
-
-			var effect = main_effect;
-
-			pause_effect(
-				effect,
-				() => {
-					offscreen_fragment = document.createDocumentFragment();
-					move_effect(effect, offscreen_fragment);
-				},
-				false
-			);
-
-			const pending = props.pending;
-
-			if (pending) {
-				pending_effect = render_snippet(() => pending(anchor));
-			}
-		}
-
-		function unsuspend() {
-			if (!offscreen_fragment) {
-				return;
-			}
-
-			if (pending_effect !== null) {
-				pause_effect(pending_effect, () => {
-					pending_effect = null;
-				});
-			}
-
-			anchor.before(/** @type {DocumentFragment} */ (offscreen_fragment));
-			offscreen_fragment = null;
-
-			if (main_effect !== null) {
-				resume_effect(main_effect);
-			}
 		}
 
 		function reset() {
@@ -169,7 +131,7 @@ export function boundary(node, props, children) {
 		}
 
 		// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
-		boundary.fn = (/** @type {unknown} */ input) => {
+		boundary.fn = (/** @type {unknown} */ input, /** @type {Function} */ payload) => {
 			if (input === ASYNC_INCREMENT) {
 				async_count++;
 
@@ -181,6 +143,12 @@ export function boundary(node, props, children) {
 			if (input === ASYNC_DECREMENT) {
 				if (--async_count === 0) {
 					boundary.f ^= BOUNDARY_SUSPENDED;
+
+					for (const callback of callbacks) {
+						callback();
+					}
+
+					callbacks.length = 0;
 
 					if (pending_effect) {
 						pause_effect(pending_effect, () => {
@@ -199,6 +167,11 @@ export function boundary(node, props, children) {
 					}
 				}
 
+				return;
+			}
+
+			if (input === ADD_CALLBACK) {
+				callbacks.push(payload);
 				return;
 			}
 
@@ -376,4 +349,28 @@ function exit() {
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
+}
+
+/**
+ * @param {Effect | null} effect
+ */
+export function find_boundary(effect) {
+	while (effect !== null && (effect.f & BOUNDARY_EFFECT) === 0) {
+		effect = effect.parent;
+	}
+
+	return effect;
+}
+
+/**
+ * @param {Effect | null} boundary
+ * @param {Function} fn
+ */
+export function add_boundary_callback(boundary, fn) {
+	if (boundary === null) {
+		throw new Error('TODO');
+	}
+
+	// @ts-ignore
+	boundary.fn(ADD_CALLBACK, fn);
 }

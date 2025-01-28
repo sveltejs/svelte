@@ -10,6 +10,8 @@ import {
 } from '../hydration.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
+import { active_effect, suspended } from '../../runtime.js';
+import { add_boundary_callback, find_boundary } from './boundary.js';
 
 /**
  * @param {TemplateNode} node
@@ -42,6 +44,46 @@ export function if_block(node, fn, elseif = false) {
 		update_branch(flag, fn);
 	};
 
+	/** @type {DocumentFragment | null} */
+	var offscreen_fragment = null;
+
+	/** @type {Effect | null} */
+	var pending_effect = null;
+
+	var boundary = find_boundary(active_effect);
+
+	function commit() {
+		if (offscreen_fragment !== null) {
+			anchor.before(offscreen_fragment);
+			offscreen_fragment = null;
+		}
+
+		if (condition) {
+			consequent_effect = pending_effect;
+		} else {
+			alternate_effect = pending_effect;
+		}
+
+		var current_effect = condition ? consequent_effect : alternate_effect;
+		var previous_effect = condition ? alternate_effect : consequent_effect;
+
+		if (current_effect !== null) {
+			resume_effect(current_effect);
+		}
+
+		if (previous_effect !== null) {
+			pause_effect(previous_effect, () => {
+				if (condition) {
+					alternate_effect = null;
+				} else {
+					consequent_effect = null;
+				}
+			});
+		}
+
+		pending_effect = null;
+	}
+
 	const update_branch = (
 		/** @type {boolean | null} */ new_condition,
 		/** @type {null | ((anchor: Node) => void)} */ fn
@@ -65,30 +107,19 @@ export function if_block(node, fn, elseif = false) {
 			}
 		}
 
-		if (condition) {
-			if (consequent_effect) {
-				resume_effect(consequent_effect);
-			} else if (fn) {
-				consequent_effect = branch(() => fn(anchor));
-			}
+		var target = anchor;
 
-			if (alternate_effect) {
-				pause_effect(alternate_effect, () => {
-					alternate_effect = null;
-				});
-			}
+		if (suspended) {
+			offscreen_fragment = document.createDocumentFragment();
+			offscreen_fragment.append((target = document.createComment('')));
+		}
+
+		pending_effect = fn && branch(() => fn(target));
+
+		if (suspended) {
+			add_boundary_callback(boundary, commit);
 		} else {
-			if (alternate_effect) {
-				resume_effect(alternate_effect);
-			} else if (fn) {
-				alternate_effect = branch(() => fn(anchor));
-			}
-
-			if (consequent_effect) {
-				pause_effect(consequent_effect, () => {
-					consequent_effect = null;
-				});
-			}
+			commit();
 		}
 
 		if (mismatch) {

@@ -27,7 +27,6 @@ import {
 	DISCONNECTED,
 	BOUNDARY_EFFECT,
 	REACTION_IS_UPDATING,
-	IS_ASYNC,
 	TEMPLATE_EFFECT,
 	BOUNDARY_SUSPENDED
 } from './constants.js';
@@ -44,7 +43,6 @@ import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../flags/index.js';
 import { tracing_expressions, get_stack } from './dev/tracing.js';
-import { is_pending_boundary } from './dom/blocks/boundary.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -88,6 +86,8 @@ let dev_effect_stack = [];
 export let active_reaction = null;
 
 export let untracking = false;
+
+export let suspended = false;
 
 /** @param {null | Reaction} reaction */
 export function set_active_reaction(reaction) {
@@ -826,7 +826,7 @@ export function schedule_effect(signal) {
 function process_effects(effect, collected_effects) {
 	var current_effect = effect.first;
 	var effects = [];
-	var suspended = false;
+	suspended = false;
 
 	main_loop: while (current_effect !== null) {
 		var flags = current_effect.f;

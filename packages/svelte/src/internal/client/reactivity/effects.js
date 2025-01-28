@@ -567,20 +567,15 @@ export function unlink_effect(effect) {
  * A paused effect does not update, and the DOM subtree becomes inert.
  * @param {Effect} effect
  * @param {() => void} [callback]
- * @param {boolean} [destroy]
  */
-export function pause_effect(effect, callback, destroy = true) {
+export function pause_effect(effect, callback) {
 	/** @type {TransitionManager[]} */
 	var transitions = [];
 
 	pause_children(effect, transitions, true);
 
 	run_out_transitions(transitions, () => {
-		if (destroy) {
-			destroy_effect(effect);
-		} else {
-			execute_effect_teardown(effect);
-		}
+		destroy_effect(effect);
 		if (callback) callback();
 	});
 }
