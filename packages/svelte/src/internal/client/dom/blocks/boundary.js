@@ -83,7 +83,10 @@ export function boundary(node, props, boundary_fn) {
 		var hydrate_open = hydrate_node;
 		var is_creating_fallback = false;
 
-		var render_snippet = (/** @type { () => void } */ snippet_fn) => {
+		/**
+		 * @param {() => void} snippet_fn
+		 */
+		function render_snippet(snippet_fn) {
 			with_boundary(boundary, () => {
 				is_creating_fallback = true;
 
@@ -98,69 +101,87 @@ export function boundary(node, props, boundary_fn) {
 				reset_is_throwing_error();
 				is_creating_fallback = false;
 			});
-		};
+		}
+
+		function suspend() {
+			if (async_effect || !boundary_effect) {
+				return;
+			}
+
+			var effect = boundary_effect;
+			async_effect = boundary_effect;
+
+			pause_effect(
+				async_effect,
+				() => {
+					/** @type {TemplateNode | null} */
+					var node = effect.nodes_start;
+					var end = effect.nodes_end;
+					async_fragment = document.createDocumentFragment();
+
+					while (node !== null) {
+						/** @type {TemplateNode | null} */
+						var sibling =
+							node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
+
+						node.remove();
+						async_fragment.append(node);
+						node = sibling;
+					}
+				},
+				false
+			);
+
+			const pending = props.pending;
+
+			if (pending) {
+				render_snippet(() => {
+					pending(anchor);
+				});
+			}
+		}
+
+		function unsuspend() {
+			if (!async_effect) {
+				return;
+			}
+
+			if (boundary_effect) {
+				destroy_effect(boundary_effect);
+			}
+
+			boundary_effect = async_effect;
+			async_effect = null;
+			anchor.before(/** @type {DocumentFragment} */ (async_fragment));
+			resume_effect(boundary_effect);
+		}
+
+		function reset() {
+			pause_effect(boundary_effect);
+
+			with_boundary(boundary, () => {
+				is_creating_fallback = false;
+				boundary_effect = branch(() => boundary_fn(anchor));
+				reset_is_throwing_error();
+			});
+		}
 
 		// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
 		boundary.fn = (/** @type {unknown} */ input) => {
-			let pending = /** @type {(anchor: Node) => void} */ (props.pending);
-
 			if (input === ASYNC_INCREMENT) {
 				if (async_count++ === 0) {
-					queue_boundary_micro_task(() => {
-						if (async_effect || !boundary_effect) {
-							return;
-						}
-
-						var effect = boundary_effect;
-						async_effect = boundary_effect;
-
-						pause_effect(
-							async_effect,
-							() => {
-								/** @type {TemplateNode | null} */
-								var node = effect.nodes_start;
-								var end = effect.nodes_end;
-								async_fragment = document.createDocumentFragment();
-
-								while (node !== null) {
-									/** @type {TemplateNode | null} */
-									var sibling =
-										node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
-
-									node.remove();
-									async_fragment.append(node);
-									node = sibling;
-								}
-							},
-							false
-						);
-
-						render_snippet(() => {
-							pending(anchor);
-						});
-					});
+					queue_boundary_micro_task(suspend);
 				}
 
-				return true;
+				return;
 			}
 
 			if (input === ASYNC_DECREMENT) {
 				if (--async_count === 0) {
-					queue_boundary_micro_task(() => {
-						if (!async_effect) {
-							return;
-						}
-						if (boundary_effect) {
-							destroy_effect(boundary_effect);
-						}
-						boundary_effect = async_effect;
-						async_effect = null;
-						anchor.before(/** @type {DocumentFragment} */ (async_fragment));
-						resume_effect(boundary_effect);
-					});
+					queue_boundary_micro_task(unsuspend);
 				}
 
-				return true;
+				return;
 			}
 
 			var error = input;
@@ -169,19 +190,9 @@ export function boundary(node, props, boundary_fn) {
 
 			// If we have nothing to capture the error, or if we hit an error while
 			// rendering the fallback, re-throw for another boundary to handle
-			if ((!onerror && !failed) || is_creating_fallback) {
+			if (is_creating_fallback || (!onerror && !failed)) {
 				throw error;
 			}
-
-			var reset = () => {
-				pause_effect(boundary_effect);
-
-				with_boundary(boundary, () => {
-					is_creating_fallback = false;
-					boundary_effect = branch(() => boundary_fn(anchor));
-					reset_is_throwing_error();
-				});
-			};
 
 			onerror?.(error, reset);
 
