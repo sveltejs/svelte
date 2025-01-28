@@ -5,7 +5,7 @@ import { dev, is_ignored } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { regex_invalid_identifier_chars } from '../../../patterns.js';
 import { get_rune } from '../../../scope.js';
-import { build_proxy_reassignment, should_proxy } from '../utils.js';
+import { should_proxy } from '../utils.js';
 
 /**
  * @param {ClassBody} node
@@ -116,14 +116,22 @@ export function ClassBody(node, context) {
 						context.visit(definition.value.arguments[0], child_state)
 					);
 
+					let options =
+						definition.value.arguments.length === 2
+							? /** @type {Expression} **/ (
+									context.visit(definition.value.arguments[1], child_state)
+								)
+							: undefined;
+
+					let proxied = should_proxy(init, context.state.scope);
+
 					value =
 						field.kind === 'state'
-							? b.call(
-									'$.state',
-									should_proxy(init, context.state.scope) ? b.call('$.proxy', init) : init
-								)
+							? should_proxy(init, context.state.scope)
+								? b.call('$.assignable_proxy', init, options)
+								: b.call('$.state', init, options)
 							: field.kind === 'raw_state'
-								? b.call('$.state', init)
+								? b.call('$.state', init, options)
 								: field.kind === 'derived_by'
 									? b.call('$.derived', init)
 									: b.call('$.derived', b.thunk(init));
@@ -152,7 +160,7 @@ export function ClassBody(node, context) {
 								'set',
 								definition.key,
 								[value],
-								[b.stmt(b.call('$.set', member, build_proxy_reassignment(value, prev)))]
+								[b.stmt(b.call('$.set', member, value, b.true, dev && b.true))]
 							)
 						);
 					}

@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value, ValueOptions } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	component_context,
@@ -35,6 +35,7 @@ import {
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
+import { proxy } from '../proxy.js';
 
 export let inspect_effects = new Set();
 
@@ -45,13 +46,40 @@ export function set_inspect_effects(v) {
 	inspect_effects = v;
 }
 
+/** @type {null | Set<() => void>} */
+let onchange_batch = null;
+
+/**
+ * @param {Function} fn
+ */
+export function batch_onchange(fn) {
+	// @ts-expect-error
+	return function (...args) {
+		let previous_onchange_batch = onchange_batch;
+
+		try {
+			onchange_batch = new Set();
+
+			// @ts-expect-error
+			return fn.apply(this, args);
+		} finally {
+			for (const onchange of /** @type {Set<() => void>} */ (onchange_batch)) {
+				onchange();
+			}
+
+			onchange_batch = previous_onchange_batch;
+		}
+	};
+}
+
 /**
  * @template V
  * @param {V} v
+ * @param {ValueOptions} [o]
  * @param {Error | null} [stack]
  * @returns {Source<V>}
  */
-export function source(v, stack) {
+export function source(v, o, stack) {
 	/** @type {Value} */
 	var signal = {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
@@ -59,7 +87,8 @@ export function source(v, stack) {
 		reactions: null,
 		equals,
 		rv: 0,
-		wv: 0
+		wv: 0,
+		o
 	};
 
 	if (DEV && tracing_mode_flag) {
@@ -73,9 +102,18 @@ export function source(v, stack) {
 /**
  * @template V
  * @param {V} v
+ * @param {ValueOptions} [o]
  */
-export function state(v) {
-	return push_derived_source(source(v));
+export function state(v, o) {
+	return push_derived_source(source(v, o));
+}
+
+/**
+ * @param {Source} source
+ * @returns {ValueOptions | undefined}
+ */
+export function get_options(source) {
+	return source.o;
 }
 
 /**
@@ -144,9 +182,11 @@ export function mutate(source, value) {
  * @template V
  * @param {Source<V>} source
  * @param {V} value
+ * @param {boolean} [should_proxy]
+ * @param {boolean} [needs_previous]
  * @returns {V}
  */
-export function set(source, value) {
+export function set(source, value, should_proxy = false, needs_previous = false) {
 	if (
 		active_reaction !== null &&
 		!untracking &&
@@ -159,7 +199,35 @@ export function set(source, value) {
 		e.state_unsafe_mutation();
 	}
 
-	return internal_set(source, value);
+	let new_value = should_proxy
+		? needs_previous
+			? proxy(value, source.o, null, source)
+			: proxy(value, source.o)
+		: value;
+
+	return internal_set(source, new_value);
+}
+
+/**
+ * @template V
+ * @param {Source<V>} source
+ * @param {V} value
+ * @param {boolean} [should_proxy]
+ * @param {boolean} [needs_previous]
+ * @returns {V}
+ */
+export function simple_set(source, value, should_proxy = false, needs_previous = false) {
+	let new_value = should_proxy
+		? needs_previous
+			? proxy(value, source.o, null, source)
+			: proxy(value, source.o)
+		: value;
+
+	source.v = new_value;
+
+	source.o?.onchange?.();
+
+	return new_value;
 }
 
 /**
@@ -220,6 +288,15 @@ export function internal_set(source, value) {
 				set_is_flushing_effect(previously_flushing_effect);
 			}
 			inspect_effects.clear();
+		}
+
+		var onchange = source.o?.onchange;
+		if (onchange) {
+			if (onchange_batch) {
+				onchange_batch.add(onchange);
+			} else {
+				onchange();
+			}
 		}
 	}
 
