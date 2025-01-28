@@ -1,12 +1,13 @@
 /** @import { ComponentContext, ComponentContextLegacy } from '#client' */
 /** @import { EventDispatcher } from './index.js' */
 /** @import { NotFunction } from './internal/types.js' */
-import { component_context, flush_sync, untrack } from './internal/client/runtime.js';
+import { flush_sync, untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/shared/utils.js';
 import { user_effect } from './internal/client/index.js';
 import * as e from './internal/client/errors.js';
 import { lifecycle_outside_component } from './internal/shared/errors.js';
 import { legacy_mode_flag } from './internal/flags/index.js';
+import { component_context } from './internal/client/context.js';
 
 /**
  * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
@@ -179,15 +180,7 @@ export function flushSync(fn) {
 	flush_sync(fn);
 }
 
+export { getContext, getAllContexts, hasContext, setContext } from './internal/client/context.js';
 export { hydrate, mount, unmount } from './internal/client/render.js';
-
-export {
-	getContext,
-	getAllContexts,
-	hasContext,
-	setContext,
-	tick,
-	untrack
-} from './internal/client/runtime.js';
-
+export { tick, untrack } from './internal/client/runtime.js';
 export { createRawSnippet } from './internal/client/dom/blocks/snippet.js';

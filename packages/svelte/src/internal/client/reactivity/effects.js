@@ -1,10 +1,8 @@
 /** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
 import {
 	check_dirtiness,
-	component_context,
 	active_effect,
 	active_reaction,
-	dev_current_component_function,
 	update_effect,
 	get,
 	is_destroying_effect,
@@ -45,6 +43,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { derived, destroy_derived } from './deriveds.js';
+import { component_context, dev_current_component_function } from '../context.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune

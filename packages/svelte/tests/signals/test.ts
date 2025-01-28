@@ -1,6 +1,7 @@
 import { describe, assert, it } from 'vitest';
 import { flushSync } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
+import { push, pop } from '../../src/internal/client/context';
 import {
 	effect,
 	effect_root,
@@ -22,13 +23,13 @@ import { SvelteSet } from '../../src/reactivity/set';
 function run_test(runes: boolean, fn: (runes: boolean) => () => void) {
 	return () => {
 		// Create a component context to test runes vs legacy mode
-		$.push({}, runes);
+		push({}, runes);
 		// Create a render context so that effect validations etc don't fail
 		let execute: any;
 		const destroy = effect_root(() => {
 			execute = fn(runes);
 		});
-		$.pop();
+		pop();
 		execute();
 		destroy();
 	};

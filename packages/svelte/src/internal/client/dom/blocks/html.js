@@ -7,7 +7,7 @@ import { assign_nodes } from '../template.js';
 import * as w from '../../warnings.js';
 import { hash, sanitize_location } from '../../../../utils.js';
 import { DEV } from 'esm-env';
-import { dev_current_component_function } from '../../runtime.js';
+import { dev_current_component_function } from '../../context.js';
 import { get_first_child, get_next_sibling } from '../operations.js';
 
 /**

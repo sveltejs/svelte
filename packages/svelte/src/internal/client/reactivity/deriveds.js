@@ -17,8 +17,7 @@ import {
 	skip_reaction,
 	update_reaction,
 	increment_write_version,
-	set_active_effect,
-	component_context
+	set_active_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -26,6 +25,7 @@ import { destroy_effect } from './effects.js';
 import { inspect_effects, set_inspect_effects } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
+import { component_context } from '../context.js';
 
 /**
  * @template V
