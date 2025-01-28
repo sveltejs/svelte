@@ -58,10 +58,12 @@ export function if_block(node, fn, elseif = false) {
 			offscreen_fragment = null;
 		}
 
-		if (condition) {
-			consequent_effect = pending_effect;
-		} else {
-			alternate_effect = pending_effect;
+		if (pending_effect) {
+			if (condition) {
+				consequent_effect = pending_effect;
+			} else {
+				alternate_effect = pending_effect;
+			}
 		}
 
 		var current_effect = condition ? consequent_effect : alternate_effect;
@@ -114,7 +116,9 @@ export function if_block(node, fn, elseif = false) {
 			offscreen_fragment.append((target = document.createComment('')));
 		}
 
-		pending_effect = fn && branch(() => fn(target));
+		if (condition ? !consequent_effect : !alternate_effect) {
+			pending_effect = fn && branch(() => fn(target));
+		}
 
 		if (suspended) {
 			add_boundary_callback(boundary, commit);
