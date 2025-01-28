@@ -1018,26 +1018,30 @@ export function get(signal) {
 				signal.reactions.push(active_reaction);
 			}
 		}
-	} else if (is_derived && /** @type {Derived} */ (signal).deps === null) {
+	}
+
+	if (
+		is_derived &&
+		/** @type {Derived} */ (signal).deps === null &&
+		(active_reaction === null || untracking || (active_reaction.f & DERIVED) !== 0)
+	) {
 		var derived = /** @type {Derived} */ (signal);
 		var parent = derived.parent;
-		var target = derived;
 
-		while (parent !== null) {
-			// Attach the derived to the nearest parent effect, if there are deriveds
-			// in between then we also need to attach them too
+		if (parent !== null) {
+			// Attach the derived to the nearest parent effect or derived
 			if ((parent.f & DERIVED) !== 0) {
 				var parent_derived = /** @type {Derived} */ (parent);
 
-				target = parent_derived;
-				parent = parent_derived.parent;
+				if (!parent_derived.children?.includes(derived)) {
+					(parent_derived.children ??= []).push(derived);
+				}
 			} else {
 				var parent_effect = /** @type {Effect} */ (parent);
 
-				if (!parent_effect.deriveds?.includes(target)) {
-					(parent_effect.deriveds ??= []).push(target);
+				if (!parent_effect.deriveds?.includes(derived)) {
+					(parent_effect.deriveds ??= []).push(derived);
 				}
-				break;
 			}
 		}
 	}

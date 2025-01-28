@@ -1,5 +1,15 @@
 # svelte
 
+## 5.19.4
+
+### Patch Changes
+
+- fix: Add `bind:focused` property to `HTMLAttributes` type ([#15122](https://github.com/sveltejs/svelte/pull/15122))
+
+- fix: lazily connect derievds (in deriveds) to their parent ([#15129](https://github.com/sveltejs/svelte/pull/15129))
+
+- fix: disallow $state/$derived in const tags ([#15115](https://github.com/sveltejs/svelte/pull/15115))
+
 ## 5.19.3
 
 ### Patch Changes
