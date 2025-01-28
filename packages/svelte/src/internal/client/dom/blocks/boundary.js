@@ -119,12 +119,10 @@ export function boundary(node, props, children) {
 
 					while (node !== null) {
 						/** @type {TemplateNode | null} */
-						var sibling =
-							node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
+						var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
 
-						node.remove();
 						offscreen_fragment.append(node);
-						node = sibling;
+						node = next;
 					}
 				},
 				false
