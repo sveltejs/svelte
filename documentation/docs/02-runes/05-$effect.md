@@ -2,7 +2,7 @@
 title: $effect
 ---
 
-Effects are used for making your application perform _actions_. You might use it to do things like call a third-party library, draw on a `<canvas>` element, or make a network request. It's important to distinguish these actions from updating state, which should not be done inside an effect.
+Effects are used for making your application perform _actions_. You might use them to do things like call a third-party library, draw on a `<canvas>` element, or make a network request. It's important to distinguish these actions from updating state, which should not be done inside an effect.
 
 > [!NOTE] Your application will become a nightmare to deal with almost immediately if you try to update state inside an effect. If you're tempted to use an effect to update state, see [when not to use `$effect`](#When-not-to-use-$effect) to learn about alternative approaches.
 
