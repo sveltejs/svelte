@@ -133,6 +133,7 @@ export function boundary(node, props, children) {
 		// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
 		boundary.fn = (/** @type {unknown} */ input, /** @type {Function} */ payload) => {
 			if (input === ASYNC_INCREMENT) {
+				boundary.f |= BOUNDARY_SUSPENDED;
 				async_count++;
 
 				// TODO post-init, show the pending snippet after a timeout
@@ -246,6 +247,8 @@ export function boundary(node, props, children) {
 			main_effect = branch(() => children(anchor));
 
 			if (async_count > 0) {
+				boundary.f |= BOUNDARY_SUSPENDED;
+
 				if (pending) {
 					offscreen_fragment = document.createDocumentFragment();
 					move_effect(main_effect, offscreen_fragment);
