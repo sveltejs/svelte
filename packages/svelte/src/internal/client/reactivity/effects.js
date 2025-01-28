@@ -573,7 +573,7 @@ export function pause_effect(effect, callback, destroy = true) {
 	/** @type {TransitionManager[]} */
 	var transitions = [];
 
-	pause_children(effect, transitions, true, destroy);
+	pause_children(effect, transitions, true);
 
 	run_out_transitions(transitions, () => {
 		if (destroy) {
@@ -605,9 +605,8 @@ export function run_out_transitions(transitions, fn) {
  * @param {Effect} effect
  * @param {TransitionManager[]} transitions
  * @param {boolean} local
- * @param {boolean} [destroy]
  */
-export function pause_children(effect, transitions, local, destroy = true) {
+export function pause_children(effect, transitions, local) {
 	if ((effect.f & INERT) !== 0) return;
 	effect.f ^= INERT;
 
@@ -627,7 +626,7 @@ export function pause_children(effect, transitions, local, destroy = true) {
 		// TODO we don't need to call pause_children recursively with a linked list in place
 		// it's slightly more involved though as we have to account for `transparent` changing
 		// through the tree.
-		pause_children(child, transitions, transparent ? local : false, destroy);
+		pause_children(child, transitions, transparent ? local : false);
 		child = sibling;
 	}
 }
