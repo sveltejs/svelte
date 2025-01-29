@@ -110,7 +110,7 @@ export {
 	user_effect,
 	user_pre_effect
 } from './reactivity/effects.js';
-export { mutable_state, mutate, set, state } from './reactivity/sources.js';
+export { mutable_state, mutate, set, state, update, update_pre } from './reactivity/sources.js';
 export {
 	prop,
 	rest_props,
@@ -139,8 +139,6 @@ export {
 	flush_sync,
 	tick,
 	untrack,
-	update,
-	update_pre,
 	exclude_from_object,
 	deep_read,
 	deep_read_state

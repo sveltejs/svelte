@@ -2,7 +2,7 @@
 import { UNINITIALIZED } from '../../../../constants.js';
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
 import { not_equal, safe_not_equal } from '../../reactivity/equality.js';
-import { is_runes } from '../../runtime.js';
+import { is_runes } from '../../context.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 
 /**

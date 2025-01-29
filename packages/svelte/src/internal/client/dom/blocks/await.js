@@ -3,12 +3,13 @@ import { DEV } from 'esm-env';
 import { is_promise } from '../../../shared/utils.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { internal_set, mutable_source, source } from '../../reactivity/sources.js';
-import { flush_sync, is_runes, set_active_effect, set_active_reaction } from '../../runtime.js';
+import { flush_sync, set_active_effect, set_active_reaction } from '../../runtime.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
 import { UNINITIALIZED } from '../../../../constants.js';
 import {
 	component_context,
+	is_runes,
 	set_component_context,
 	set_dev_current_component_function
 } from '../../context.js';
