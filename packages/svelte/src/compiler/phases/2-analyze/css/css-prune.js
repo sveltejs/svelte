@@ -651,13 +651,17 @@ function get_following_sibling_elements(element, include_self) {
 				if (node === element) {
 					skip = false;
 					if (include_self) siblings.push(node);
-				} else if (!skip) siblings.push(node);
+				} else if (!skip) {
+					siblings.push(node);
+				}
 			},
 			SvelteElement(node) {
 				if (node === element) {
 					skip = false;
 					if (include_self) siblings.push(node);
-				} else if (!skip) siblings.push(node);
+				} else if (!skip) {
+					siblings.push(node);
+				}
 			},
 			RenderTag(node) {
 				for (const snippet of node.metadata.snippets) {
