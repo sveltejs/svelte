@@ -9,15 +9,6 @@ export default test({
 			btn1.click();
 		});
 
-		assert.deepEqual(logs, [
-			'computing C',
-			'computing B',
-			'a',
-			'foo',
-			'computing B',
-			'aaa',
-			'computing C'
-			'foo'
-		]);
+		assert.deepEqual(logs, ['computing C', 'computing B', 'a', 'foo', 'computing B', 'aaa', 'foo']);
 	}
 });

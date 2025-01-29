@@ -481,6 +481,7 @@ describe('signals', () => {
 					effect(() => {
 						log.push('inner', $.get(inner));
 					});
+					return $.get(outer);
 				});
 			});
 		});
