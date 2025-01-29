@@ -69,7 +69,7 @@ describe('signals', () => {
 		};
 	});
 
-	test('multiple effects with state and derived in it#1', () => {
+	test('multiple effects with state and derived in it #1', () => {
 		const log: string[] = [];
 
 		let count = state(0);
@@ -90,7 +90,7 @@ describe('signals', () => {
 		};
 	});
 
-	test('multiple effects with state and derived in it#2', () => {
+	test('multiple effects with state and derived in it #2', () => {
 		const log: string[] = [];
 
 		let count = state(0);
@@ -591,6 +591,46 @@ describe('signals', () => {
 			flushSync();
 			assert.equal(a?.deps?.length, 1);
 			assert.equal(s?.reactions?.length, 1);
+			destroy();
+			assert.equal(s?.reactions, null);
+		};
+	});
+
+	test('mixed nested deriveds correctly cleanup when no longer connected to graph #3', () => {
+		let a: Derived<unknown>;
+		let b: Derived<unknown>;
+		let s = state(0);
+		let logs: any[] = [];
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				a = derived(() => {
+					b = derived(() => {
+						return $.get(s);
+					});
+					effect_root(() => {
+						$.get(b);
+					});
+					render_effect(() => {
+						debugger
+						logs.push($.get(b));
+					});
+					$.get(s);
+				});
+				$.get(a);
+			});
+		});
+
+		return () => {
+			flushSync();
+			assert.equal(a?.deps?.length, 1);
+			assert.equal(s?.reactions?.length, 2);
+
+			set(s, 1);
+			flushSync();
+
+			assert.deepEqual(logs, [0, 1]);
+
 			destroy();
 			assert.equal(s?.reactions, null);
 		};

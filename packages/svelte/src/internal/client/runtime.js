@@ -418,8 +418,12 @@ export function update_reaction(reaction) {
 	skip_reaction =
 		(flags & UNOWNED) !== 0 &&
 		(!is_flushing_effect ||
+			// If we were previously not in a reactive context and we're reading an unowned derived
+			// that was created inside another derived, then we don't fully know the real owner and thus
+			// we need to skip adding any reactions for this unowned
+				((previous_reaction === null || previous_untracking) &&
 				(/** @type {Derived} */ (reaction).parent !== null &&
-				(/** @type {Derived} */ (reaction).parent.f & DERIVED) !== 0));
+				(/** @type {Derived} */ (reaction).parent.f & DERIVED) !== 0)));
 
 	derived_sources = null;
 	set_component_context(reaction.ctx);
