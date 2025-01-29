@@ -1,9 +1,10 @@
 /** @import { Effect, TemplateNode } from '#client' */
 import { UNINITIALIZED } from '../../../../constants.js';
-import { block, branch, pause_effect } from '../../reactivity/effects.js';
+import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { not_equal, safe_not_equal } from '../../reactivity/equality.js';
-import { is_runes } from '../../runtime.js';
+import { active_effect, is_runes, suspended } from '../../runtime.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
+import { add_boundary_callback, find_boundary } from './boundary.js';
 
 /**
  * @template V
@@ -25,15 +26,48 @@ export function key_block(node, get_key, render_fn) {
 	/** @type {Effect} */
 	var effect;
 
+	/** @type {Effect | null} */
+	var pending_effect = null;
+
+	/** @type {DocumentFragment | null} */
+	var offscreen_fragment = null;
+
+	var boundary = find_boundary(active_effect);
+
 	var changed = is_runes() ? not_equal : safe_not_equal;
+
+	function commit() {
+		if (effect) {
+			pause_effect(effect);
+		}
+
+		if (offscreen_fragment !== null) {
+			anchor.before(offscreen_fragment);
+			offscreen_fragment = null;
+		}
+
+		if (pending_effect !== null) {
+			effect = pending_effect;
+			pending_effect = null;
+		}
+	}
 
 	block(() => {
 		if (changed(key, (key = get_key()))) {
-			if (effect) {
-				pause_effect(effect);
+			var target = anchor;
+
+			if (suspended) {
+				offscreen_fragment = document.createDocumentFragment();
+				offscreen_fragment.append((target = document.createComment('')));
 			}
 
-			effect = branch(() => render_fn(anchor));
+			pending_effect = branch(() => render_fn(target));
+
+			if (suspended) {
+				add_boundary_callback(boundary, commit);
+			} else {
+				commit();
+			}
 		}
 	});
 
