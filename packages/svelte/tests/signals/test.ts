@@ -279,10 +279,6 @@ describe('signals', () => {
 
 			$.get(c);
 
-			// Ensure we're not leaking
-			assert.equal(a.reactions?.[0], nested.at(-2));
-			assert.equal(b.reactions?.[0], nested.at(-1));
-
 			destroy();
 
 			assert.equal(a.reactions, null);
@@ -511,7 +507,7 @@ describe('signals', () => {
 				set(inner, 2);
 				$.get(a);
 			});
-			assert.deepEqual(log, ['inner', 2]);
+			assert.deepEqual(log, ['outer', 1, 'inner', 2]);
 			destroy();
 		};
 	});
@@ -883,59 +879,6 @@ describe('signals', () => {
 		};
 	});
 
-	test('nested deriveds clean up the relationships when used with untrack', () => {
-		return () => {
-			let a = render_effect(() => {});
-
-			const destroy = effect_root(() => {
-				a = render_effect(() => {
-					$.untrack(() => {
-						const b = derived(() => {
-							const c = derived(() => {});
-							$.untrack(() => {
-								$.get(c);
-							});
-						});
-						$.get(b);
-					});
-				});
-			});
-
-			assert.deepEqual(a.deriveds?.length, 1);
-
-			destroy();
-
-			assert.deepEqual(a.deriveds, null);
-		};
-	});
-
-	test('nested deriveds do not connect inside parent deriveds if unused', () => {
-		return () => {
-			let a = render_effect(() => {});
-			let b: Derived<void> | undefined;
-
-			const destroy = effect_root(() => {
-				a = render_effect(() => {
-					$.untrack(() => {
-						b = derived(() => {
-							derived(() => {});
-							derived(() => {});
-							derived(() => {});
-						});
-						$.get(b);
-					});
-				});
-			});
-
-			assert.deepEqual(a.deriveds?.length, 1);
-			assert.deepEqual(b?.effects, null);
-
-			destroy();
-
-			assert.deepEqual(a.deriveds, null);
-		};
-	});
-
 	test('deriveds containing effects work correctly', () => {
 		return () => {
 			let a = render_effect(() => {});
@@ -969,7 +912,6 @@ describe('signals', () => {
 
 			destroy();
 
-			assert.equal(a.deriveds, null);
 			assert.equal(a.first, null);
 
 			assert.equal(effects.length, 2);
@@ -1013,7 +955,6 @@ describe('signals', () => {
 
 			destroy();
 
-			assert.equal(a.deriveds, null);
 			assert.equal(a.first, null);
 
 			assert.equal(effects.length, 2);

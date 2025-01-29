@@ -4,7 +4,6 @@ import { define_property, get_descriptors, get_prototype_of, index_of } from '..
 import {
 	destroy_block_effect_children,
 	destroy_effect_children,
-	destroy_effect_deriveds,
 	execute_effect_teardown,
 	unlink_effect
 } from './reactivity/effects.js';
@@ -580,7 +579,6 @@ export function update_effect(effect) {
 		} else {
 			destroy_effect_children(effect);
 		}
-		destroy_effect_deriveds(effect);
 
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
@@ -962,15 +960,8 @@ export function get(signal) {
 			// If the derived is owned by another derived then mark it as unowned
 			// as the derived value might have been referenced in a different context
 			// since and thus its parent might not be its true owner anymore
-			if ((parent.f & DERIVED) !== 0 && (parent.f & UNOWNED) === 0) {
+			if ((parent.f & UNOWNED) === 0) {
 				derived.f ^= UNOWNED;
-			} else {
-				// Otherwise we can attach the derieved to the parent effect
-				var parent_effect = /** @type {Effect} */ (parent);
-
-				if (!parent_effect.deriveds?.includes(derived)) {
-					(parent_effect.deriveds ??= []).push(derived);
-				}
 			}
 		}
 	}
