@@ -1,5 +1,13 @@
 # svelte
 
+## 5.19.5
+
+### Patch Changes
+
+- fix: improve derived connection to ownership graph ([#15137](https://github.com/sveltejs/svelte/pull/15137))
+
+- fix: correctly look for sibling elements inside blocks and components when pruning CSS ([#15106](https://github.com/sveltejs/svelte/pull/15106))
+
 ## 5.19.4
 
 ### Patch Changes

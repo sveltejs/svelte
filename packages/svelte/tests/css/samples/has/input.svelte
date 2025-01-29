@@ -3,6 +3,8 @@
 		<z></z>
 		{#if foo}
 			<d></d>
+			<e></e>
+			<f></f>
 		{/if}
 	</y>
 </x>
@@ -119,6 +121,16 @@
 		color: green;
 	}
 	x:has(~ y) {
+		color: red;
+	}
+
+	d:has(+ e) {
+		color: green;
+	}
+	d:has(~ f) {
+		color: green;
+	}
+	f:has(~ d) {
 		color: red;
 	}
 

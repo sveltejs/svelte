@@ -8,16 +8,9 @@ import {
 	PROPS_IS_UPDATED
 } from '../../../constants.js';
 import { get_descriptor, is_function } from '../../shared/utils.js';
-import { mutable_source, set, source } from './sources.js';
+import { mutable_source, set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
-import {
-	active_effect,
-	get,
-	captured_signals,
-	set_active_effect,
-	untrack,
-	update
-} from '../runtime.js';
+import { active_effect, get, captured_signals, set_active_effect, untrack } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import {

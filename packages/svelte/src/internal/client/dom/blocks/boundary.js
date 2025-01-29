@@ -1,21 +1,14 @@
 /** @import { Effect, TemplateNode, } from '#client' */
 
 import { BOUNDARY_EFFECT, BOUNDARY_SUSPENDED, EFFECT_TRANSPARENT } from '../../constants.js';
-import {
-	block,
-	branch,
-	destroy_effect,
-	pause_effect,
-	resume_effect
-} from '../../reactivity/effects.js';
+import { component_context, set_component_context } from '../../context.js';
+import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import {
 	active_effect,
 	active_reaction,
-	component_context,
 	handle_error,
 	set_active_effect,
 	set_active_reaction,
-	set_component_context,
 	reset_is_throwing_error,
 	schedule_effect
 } from '../../runtime.js';

@@ -4,8 +4,6 @@ import { define_property, get_descriptors, get_prototype_of, index_of } from '..
 import {
 	destroy_block_effect_children,
 	destroy_effect_children,
-	destroy_effect_deriveds,
-	effect,
 	execute_effect_teardown,
 	unlink_effect
 } from './reactivity/effects.js';
@@ -35,14 +33,24 @@ import {
 	flush_boundary_micro_tasks,
 	flush_post_micro_tasks
 } from './dom/task.js';
-import { add_owner } from './dev/ownership.js';
-import { internal_set, set, source } from './reactivity/sources.js';
-import { destroy_derived, execute_derived, update_derived } from './reactivity/deriveds.js';
+import { internal_set } from './reactivity/sources.js';
+import {
+	destroy_derived,
+	destroy_derived_effects,
+	execute_derived,
+	update_derived
+} from './reactivity/deriveds.js';
 import * as e from './errors.js';
-import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
-import { legacy_mode_flag, tracing_mode_flag } from '../flags/index.js';
+import { tracing_mode_flag } from '../flags/index.js';
 import { tracing_expressions, get_stack } from './dev/tracing.js';
+import {
+	component_context,
+	dev_current_component_function,
+	is_runes,
+	set_component_context,
+	set_dev_current_component_function
+} from './context.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -168,39 +176,8 @@ export function set_captured_signals(value) {
 	captured_signals = value;
 }
 
-// Handling runtime component context
-/** @type {ComponentContext | null} */
-export let component_context = null;
-
-/** @param {ComponentContext | null} context */
-export function set_component_context(context) {
-	component_context = context;
-}
-
-/**
- * The current component function. Different from current component context:
- * ```html
- * <!-- App.svelte -->
- * <Foo>
- *   <Bar /> <!-- context == Foo.svelte, function == App.svelte -->
- * </Foo>
- * ```
- * @type {ComponentContext['function']}
- */
-export let dev_current_component_function = null;
-
-/** @param {ComponentContext['function']} fn */
-export function set_dev_current_component_function(fn) {
-	dev_current_component_function = fn;
-}
-
 export function increment_write_version() {
 	return ++write_version;
-}
-
-/** @returns {boolean} */
-export function is_runes() {
-	return !legacy_mode_flag || (component_context !== null && component_context.l === null);
 }
 
 /**
@@ -450,9 +427,18 @@ export function update_reaction(reaction) {
 	skipped_deps = 0;
 	untracked_writes = null;
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
-	skip_reaction = !is_flushing_effect && (flags & UNOWNED) !== 0;
+	// prettier-ignore
+	skip_reaction =
+		(flags & UNOWNED) !== 0 &&
+		(!is_flushing_effect ||
+			// If we were previously not in a reactive context and we're reading an unowned derived
+			// that was created inside another reaction, then we don't fully know the real owner and thus
+			// we need to skip adding any reactions for this unowned
+				((previous_reaction === null || previous_untracking) &&
+				/** @type {Derived} */ (reaction).parent !== null));
+
 	derived_sources = null;
-	component_context = reaction.ctx;
+	set_component_context(reaction.ctx);
 	untracking = false;
 	read_version++;
 
@@ -518,7 +504,7 @@ export function update_reaction(reaction) {
 		active_reaction = previous_reaction;
 		skip_reaction = previous_skip_reaction;
 		derived_sources = prev_derived_sources;
-		component_context = previous_component_context;
+		set_component_context(previous_component_context);
 		untracking = previous_untracking;
 	}
 }
@@ -560,6 +546,8 @@ function remove_reaction(signal, dependency) {
 		if ((dependency.f & (UNOWNED | DISCONNECTED)) === 0) {
 			dependency.f ^= DISCONNECTED;
 		}
+		// Disconnect any reactions owned by this reaction
+		destroy_derived_effects(/** @type {Derived} **/ (dependency));
 		remove_reactions(/** @type {Derived} **/ (dependency), 0);
 	}
 }
@@ -598,7 +586,7 @@ export function update_effect(effect) {
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
-		dev_current_component_function = effect.component_function;
+		set_dev_current_component_function(effect.component_function);
 	}
 
 	try {
@@ -607,7 +595,6 @@ export function update_effect(effect) {
 		} else {
 			destroy_effect_children(effect);
 		}
-		destroy_effect_deriveds(effect);
 
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
@@ -640,7 +627,7 @@ export function update_effect(effect) {
 		active_effect = previous_effect;
 
 		if (DEV) {
-			dev_current_component_function = previous_component_fn;
+			set_dev_current_component_function(previous_component_fn);
 		}
 	}
 }
@@ -1027,30 +1014,20 @@ export function get(signal) {
 				signal.reactions.push(active_reaction);
 			}
 		}
-	}
-
-	if (
+	} else if (
 		is_derived &&
 		/** @type {Derived} */ (signal).deps === null &&
-		(active_reaction === null || untracking || (active_reaction.f & DERIVED) !== 0)
+		/** @type {Derived} */ (signal).effects === null
 	) {
 		var derived = /** @type {Derived} */ (signal);
 		var parent = derived.parent;
 
 		if (parent !== null) {
-			// Attach the derived to the nearest parent effect or derived
-			if ((parent.f & DERIVED) !== 0) {
-				var parent_derived = /** @type {Derived} */ (parent);
-
-				if (!parent_derived.children?.includes(derived)) {
-					(parent_derived.children ??= []).push(derived);
-				}
-			} else {
-				var parent_effect = /** @type {Effect} */ (parent);
-
-				if (!parent_effect.deriveds?.includes(derived)) {
-					(parent_effect.deriveds ??= []).push(derived);
-				}
+			// If the derived is owned by another derived then mark it as unowned
+			// as the derived value might have been referenced in a different context
+			// since and thus its parent might not be its true owner anymore
+			if ((parent.f & UNOWNED) === 0) {
+				derived.f ^= UNOWNED;
 			}
 		}
 	}
@@ -1185,138 +1162,6 @@ export function set_signal_status(signal, status) {
 }
 
 /**
- * Retrieves the context that belongs to the closest parent component with the specified `key`.
- * Must be called during component initialisation.
- *
- * @template T
- * @param {any} key
- * @returns {T}
- */
-export function getContext(key) {
-	const context_map = get_or_init_context_map('getContext');
-	const result = /** @type {T} */ (context_map.get(key));
-
-	if (DEV) {
-		const fn = /** @type {ComponentContext} */ (component_context).function;
-		if (fn) {
-			add_owner(result, fn, true);
-		}
-	}
-
-	return result;
-}
-
-/**
- * Associates an arbitrary `context` object with the current component and the specified `key`
- * and returns that object. The context is then available to children of the component
- * (including slotted content) with `getContext`.
- *
- * Like lifecycle functions, this must be called during component initialisation.
- *
- * @template T
- * @param {any} key
- * @param {T} context
- * @returns {T}
- */
-export function setContext(key, context) {
-	const context_map = get_or_init_context_map('setContext');
-	context_map.set(key, context);
-	return context;
-}
-
-/**
- * Checks whether a given `key` has been set in the context of a parent component.
- * Must be called during component initialisation.
- *
- * @param {any} key
- * @returns {boolean}
- */
-export function hasContext(key) {
-	const context_map = get_or_init_context_map('hasContext');
-	return context_map.has(key);
-}
-
-/**
- * Retrieves the whole context map that belongs to the closest parent component.
- * Must be called during component initialisation. Useful, for example, if you
- * programmatically create a component and want to pass the existing context to it.
- *
- * @template {Map<any, any>} [T=Map<any, any>]
- * @returns {T}
- */
-export function getAllContexts() {
-	const context_map = get_or_init_context_map('getAllContexts');
-
-	if (DEV) {
-		const fn = component_context?.function;
-		if (fn) {
-			for (const value of context_map.values()) {
-				add_owner(value, fn, true);
-			}
-		}
-	}
-
-	return /** @type {T} */ (context_map);
-}
-
-/**
- * @param {string} name
- * @returns {Map<unknown, unknown>}
- */
-function get_or_init_context_map(name) {
-	if (component_context === null) {
-		lifecycle_outside_component(name);
-	}
-
-	return (component_context.c ??= new Map(get_parent_context(component_context) || undefined));
-}
-
-/**
- * @param {ComponentContext} component_context
- * @returns {Map<unknown, unknown> | null}
- */
-function get_parent_context(component_context) {
-	let parent = component_context.p;
-	while (parent !== null) {
-		const context_map = parent.c;
-		if (context_map !== null) {
-			return context_map;
-		}
-		parent = parent.p;
-	}
-	return null;
-}
-
-/**
- * @template {number | bigint} T
- * @param {Value<T>} signal
- * @param {1 | -1} [d]
- * @returns {T}
- */
-export function update(signal, d = 1) {
-	var value = get(signal);
-	var result = d === 1 ? value++ : value--;
-
-	set(signal, value);
-
-	// @ts-expect-error
-	return result;
-}
-
-/**
- * @template {number | bigint} T
- * @param {Value<T>} signal
- * @param {1 | -1} [d]
- * @returns {T}
- */
-export function update_pre(signal, d = 1) {
-	var value = get(signal);
-
-	// @ts-expect-error
-	return set(signal, d === 1 ? ++value : --value);
-}
-
-/**
  * @param {Record<string, unknown>} obj
  * @param {string[]} keys
  * @returns {Record<string, unknown>}
@@ -1332,78 +1177,6 @@ export function exclude_from_object(obj, keys) {
 	}
 
 	return result;
-}
-
-/**
- * @param {Record<string, unknown>} props
- * @param {any} runes
- * @param {Function} [fn]
- * @returns {void}
- */
-export function push(props, runes = false, fn) {
-	component_context = {
-		p: component_context,
-		c: null,
-		e: null,
-		m: false,
-		s: props,
-		x: null,
-		l: null
-	};
-
-	if (legacy_mode_flag && !runes) {
-		component_context.l = {
-			s: null,
-			u: null,
-			r1: [],
-			r2: source(false)
-		};
-	}
-
-	if (DEV) {
-		// component function
-		component_context.function = fn;
-		dev_current_component_function = fn;
-	}
-}
-
-/**
- * @template {Record<string, any>} T
- * @param {T} [component]
- * @returns {T}
- */
-export function pop(component) {
-	const context_stack_item = component_context;
-	if (context_stack_item !== null) {
-		if (component !== undefined) {
-			context_stack_item.x = component;
-		}
-		const component_effects = context_stack_item.e;
-		if (component_effects !== null) {
-			var previous_effect = active_effect;
-			var previous_reaction = active_reaction;
-			context_stack_item.e = null;
-			try {
-				for (var i = 0; i < component_effects.length; i++) {
-					var component_effect = component_effects[i];
-					set_active_effect(component_effect.effect);
-					set_active_reaction(component_effect.reaction);
-					effect(component_effect.fn);
-				}
-			} finally {
-				set_active_effect(previous_effect);
-				set_active_reaction(previous_reaction);
-			}
-		}
-		component_context = context_stack_item.p;
-		if (DEV) {
-			dev_current_component_function = context_stack_item.p?.function ?? null;
-		}
-		context_stack_item.m = true;
-	}
-	// Micro-optimization: Don't set .a above to the empty object
-	// so it can be garbage-collected when the return here is unused
-	return component || /** @type {T} */ ({});
 }
 
 /**
@@ -1478,38 +1251,4 @@ export function deep_read(value, visited = new Set()) {
 			}
 		}
 	}
-}
-
-if (DEV) {
-	/**
-	 * @param {string} rune
-	 */
-	function throw_rune_error(rune) {
-		if (!(rune in globalThis)) {
-			// TODO if people start adjusting the "this can contain runes" config through v-p-s more, adjust this message
-			/** @type {any} */
-			let value; // let's hope noone modifies this global, but belts and braces
-			Object.defineProperty(globalThis, rune, {
-				configurable: true,
-				// eslint-disable-next-line getter-return
-				get: () => {
-					if (value !== undefined) {
-						return value;
-					}
-
-					e.rune_outside_svelte(rune);
-				},
-				set: (v) => {
-					value = v;
-				}
-			});
-		}
-	}
-
-	throw_rune_error('$state');
-	throw_rune_error('$effect');
-	throw_rune_error('$derived');
-	throw_rune_error('$inspect');
-	throw_rune_error('$props');
-	throw_rune_error('$bindable');
 }

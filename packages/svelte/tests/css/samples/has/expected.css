@@ -112,6 +112,16 @@
 		color: red;
 	}*/
 
+	d.svelte-xyz:has(+ e:where(.svelte-xyz)) {
+		color: green;
+	}
+	d.svelte-xyz:has(~ f:where(.svelte-xyz)) {
+		color: green;
+	}
+	/* (unused) f:has(~ d) {
+		color: red;
+	}*/
+
 	.foo {
 		.svelte-xyz:has(x:where(.svelte-xyz)) {
 			color: green;

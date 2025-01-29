@@ -638,19 +638,30 @@ function get_following_sibling_elements(element, include_self) {
 	/** @type {Array<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} */
 	const siblings = [];
 
-	// ...then walk them, starting from the node after the one
-	// containing the element in question
+	// ...then walk them, starting from the node containing the element in question
+	// skipping nodes that appears before the element
 
 	const seen = new Set();
+	let skip = true;
 
 	/** @param {Compiler.AST.SvelteNode} node */
 	function get_siblings(node) {
 		walk(node, null, {
 			RegularElement(node) {
-				siblings.push(node);
+				if (node === element) {
+					skip = false;
+					if (include_self) siblings.push(node);
+				} else if (!skip) {
+					siblings.push(node);
+				}
 			},
 			SvelteElement(node) {
-				siblings.push(node);
+				if (node === element) {
+					skip = false;
+					if (include_self) siblings.push(node);
+				} else if (!skip) {
+					siblings.push(node);
+				}
 			},
 			RenderTag(node) {
 				for (const snippet of node.metadata.snippets) {
@@ -663,12 +674,8 @@ function get_following_sibling_elements(element, include_self) {
 		});
 	}
 
-	for (const node of nodes.slice(nodes.indexOf(start) + 1)) {
+	for (const node of nodes.slice(nodes.indexOf(start))) {
 		get_siblings(node);
-	}
-
-	if (include_self) {
-		siblings.push(element);
 	}
 
 	return siblings;

@@ -1,8 +1,9 @@
 /** @import { Effect, TemplateNode } from '#client' */
 import { UNINITIALIZED } from '../../../../constants.js';
-import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
+import { block, branch, pause_effect } from '../../reactivity/effects.js';
 import { not_equal, safe_not_equal } from '../../reactivity/equality.js';
-import { active_effect, is_runes, suspended } from '../../runtime.js';
+import { active_effect, suspended } from '../../runtime.js';
+import { is_runes } from '../../context.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { add_boundary_callback, find_boundary } from './boundary.js';
 
