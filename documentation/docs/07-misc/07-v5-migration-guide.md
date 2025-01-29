@@ -743,6 +743,19 @@ In runes mode, properties are never accessible on the component instance. You ca
 </script>
 ```
 
+Alternatively, if the place where they are instantiated is under your control, you can also make use of runes inside `.js/.ts` files by adjusting their ending to include `.svelte`, i.e. `.svelte.js` or `.svelte.ts`, and then use `$state`:
+
+```js
++++import { mount } from 'svelte';+++
+import App from './App.svelte'
+
+---const app = new App({ target: document.getElementById("app"), props: { foo: 'bar' } });
+app.foo = 'baz'---
++++const props = $state({ foo: 'bar' });
+const app = mount(App, { target: document.getElementById("app"), props });
+props.foo = 'baz';+++
+```
+
 ### `immutable` option is ignored
 
 Setting the `immutable` option has no effect in runes mode. This concept is replaced by how `$state` and its variations work.
