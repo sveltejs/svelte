@@ -612,7 +612,6 @@ describe('signals', () => {
 						$.get(b);
 					});
 					render_effect(() => {
-						debugger
 						logs.push($.get(b));
 					});
 					$.get(s);
