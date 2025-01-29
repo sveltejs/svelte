@@ -53,7 +53,7 @@ export function validate_effect(rune) {
 		e.effect_orphan(rune);
 	}
 
-	if (active_reaction !== null && (active_reaction.f & UNOWNED) !== 0) {
+	if (active_reaction !== null && (active_reaction.f & UNOWNED) !== 0 && active_effect === null) {
 		e.effect_in_unowned_derived();
 	}
 
@@ -99,7 +99,6 @@ function create_effect(type, fn, sync, push = true) {
 	var effect = {
 		ctx: component_context,
 		deps: null,
-		deriveds: null,
 		nodes_start: null,
 		nodes_end: null,
 		f: type | DIRTY,
@@ -153,7 +152,7 @@ function create_effect(type, fn, sync, push = true) {
 		// if we're in a derived, add the effect there too
 		if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
 			var derived = /** @type {Derived} */ (active_reaction);
-			(derived.children ??= []).push(effect);
+			(derived.effects ??= []).push(effect);
 		}
 	}
 
@@ -397,22 +396,6 @@ export function execute_effect_teardown(effect) {
 
 /**
  * @param {Effect} signal
- * @returns {void}
- */
-export function destroy_effect_deriveds(signal) {
-	var deriveds = signal.deriveds;
-
-	if (deriveds !== null) {
-		signal.deriveds = null;
-
-		for (var i = 0; i < deriveds.length; i += 1) {
-			destroy_derived(deriveds[i]);
-		}
-	}
-}
-
-/**
- * @param {Effect} signal
  * @param {boolean} remove_dom
  * @returns {void}
  */
@@ -468,7 +451,6 @@ export function destroy_effect(effect, remove_dom = true) {
 	}
 
 	destroy_effect_children(effect, remove_dom && !removed);
-	destroy_effect_deriveds(effect);
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);
 
