@@ -953,10 +953,9 @@ export function get(signal) {
 
 		if (parent !== null) {
 			// If the derived is owned by another derived then mark it as unowned
-			// as the derived value might have been shared and thus we cannot determine
-			// a true
+			// as the derived value might have been referenced in a different context
+			// since and thus its parent might not be its true owner anymore
 			if ((parent.f & DERIVED) !== 0 && (parent.f & UNOWNED) === 0) {
-				debugger;
 				derived.f ^= UNOWNED;
 			} else {
 				// Otherwise we can attach the derieved to the parent effect
