@@ -414,7 +414,13 @@ export function update_reaction(reaction) {
 	skipped_deps = 0;
 	untracked_writes = null;
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
-	skip_reaction = !is_flushing_effect && (flags & UNOWNED) !== 0;
+	// prettier-ignore
+	skip_reaction =
+		(flags & UNOWNED) !== 0 &&
+		(!is_flushing_effect ||
+				(/** @type {Derived} */ (reaction).parent !== null &&
+				(/** @type {Derived} */ (reaction).parent.f & DERIVED) !== 0));
+
 	derived_sources = null;
 	set_component_context(reaction.ctx);
 	untracking = false;
@@ -946,14 +952,14 @@ export function get(signal) {
 		var parent = derived.parent;
 
 		if (parent !== null) {
-			// Attach the derived to the nearest parent effect or derived
-			if ((parent.f & DERIVED) !== 0) {
-				var parent_derived = /** @type {Derived} */ (parent);
-
-				if (!parent_derived.children?.includes(derived)) {
-					(parent_derived.children ??= []).push(derived);
-				}
+			// If the derived is owned by another derived then mark it as unowned
+			// as the derived value might have been shared and thus we cannot determine
+			// a true
+			if ((parent.f & DERIVED) !== 0 && (parent.f & UNOWNED) === 0) {
+				debugger;
+				derived.f ^= UNOWNED;
 			} else {
+				// Otherwise we can attach the derieved to the parent effect
 				var parent_effect = /** @type {Effect} */ (parent);
 
 				if (!parent_effect.deriveds?.includes(derived)) {

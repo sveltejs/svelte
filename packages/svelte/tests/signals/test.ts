@@ -538,6 +538,64 @@ describe('signals', () => {
 		};
 	});
 
+	test('mixed nested deriveds correctly cleanup when no longer connected to graph #1', () => {
+		let a: Derived<unknown>;
+		let b: Derived<unknown>;
+		let s = state(0);
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				a = derived(() => {
+					b = derived(() => {
+						$.get(s);
+					});
+					$.untrack(() => {
+						$.get(b);
+					});
+					$.get(s);
+				});
+				$.get(a);
+			});
+		});
+
+		return () => {
+			flushSync();
+			assert.equal(a?.deps?.length, 1);
+			assert.equal(s?.reactions?.length, 1);
+			destroy();
+			assert.equal(s?.reactions, null);
+		};
+	});
+
+	test('mixed nested deriveds correctly cleanup when no longer connected to graph #2', () => {
+		let a: Derived<unknown>;
+		let b: Derived<unknown>;
+		let s = state(0);
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				a = derived(() => {
+					b = derived(() => {
+						$.get(s);
+					});
+					effect_root(() => {
+						$.get(b);
+					});
+					$.get(s);
+				});
+				$.get(a);
+			});
+		});
+
+		return () => {
+			flushSync();
+			assert.equal(a?.deps?.length, 1);
+			assert.equal(s?.reactions?.length, 1);
+			destroy();
+			assert.equal(s?.reactions, null);
+		};
+	});
+
 	test('deriveds update upon reconnection #1', () => {
 		let a = state(false);
 		let b = state(false);
