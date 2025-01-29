@@ -1,6 +1,7 @@
-/** @import { ProxyMetadata, ProxyStateObject, Source } from '#client' */
+/** @import { ProxyMetadata, Source } from '#client' */
 import { DEV } from 'esm-env';
-import { get, component_context, active_effect } from './runtime.js';
+import { get, active_effect } from './runtime.js';
+import { component_context } from './context.js';
 import {
 	array_prototype,
 	get_descriptor,

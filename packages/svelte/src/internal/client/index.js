@@ -1,4 +1,5 @@
 export { FILENAME, HMR, NAMESPACE_SVG } from '../../constants.js';
+export { push, pop } from './context.js';
 export { assign, assign_and, assign_or, assign_nullish } from './dev/assign.js';
 export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';
@@ -110,7 +111,7 @@ export {
 	user_effect,
 	user_pre_effect
 } from './reactivity/effects.js';
-export { mutable_state, mutate, set, state } from './reactivity/sources.js';
+export { mutable_state, mutate, set, state, update, update_pre } from './reactivity/sources.js';
 export {
 	prop,
 	rest_props,
@@ -139,17 +140,9 @@ export {
 	flush_sync,
 	tick,
 	untrack,
-	update,
-	update_pre,
 	exclude_from_object,
-	pop,
-	push,
 	deep_read,
-	deep_read_state,
-	getAllContexts,
-	getContext,
-	setContext,
-	hasContext
+	deep_read_state
 } from './runtime.js';
 export { validate_binding, validate_each_keys } from './validate.js';
 export { raf } from './timing.js';

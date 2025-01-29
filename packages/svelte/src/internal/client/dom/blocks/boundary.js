@@ -1,6 +1,7 @@
 /** @import { Effect, TemplateNode, } from '#client' */
 
 import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '../../constants.js';
+import { component_context, set_component_context } from '../../context.js';
 import {
 	block,
 	branch,
@@ -11,11 +12,9 @@ import {
 import {
 	active_effect,
 	active_reaction,
-	component_context,
 	handle_error,
 	set_active_effect,
 	set_active_reaction,
-	set_component_context,
 	reset_is_throwing_error
 } from '../../runtime.js';
 import {
