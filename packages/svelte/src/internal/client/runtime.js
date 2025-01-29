@@ -28,7 +28,12 @@ import {
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set, set } from './reactivity/sources.js';
-import { destroy_derived, execute_derived, update_derived } from './reactivity/deriveds.js';
+import {
+	destroy_derived,
+	destroy_derived_children,
+	execute_derived,
+	update_derived
+} from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../flags/index.js';
@@ -517,6 +522,8 @@ function remove_reaction(signal, dependency) {
 		if ((dependency.f & (UNOWNED | DISCONNECTED)) === 0) {
 			dependency.f ^= DISCONNECTED;
 		}
+		// Disconnect any reactions owned by this reaction
+		destroy_derived_children(/** @type {Derived} **/ (dependency));
 		remove_reactions(/** @type {Derived} **/ (dependency), 0);
 	}
 }
@@ -934,13 +941,7 @@ export function get(signal) {
 				new_deps.push(signal);
 			}
 		}
-	}
-
-	if (
-		is_derived &&
-		/** @type {Derived} */ (signal).deps === null &&
-		(active_reaction === null || untracking || (active_reaction.f & DERIVED) !== 0)
-	) {
+	} else if (is_derived && /** @type {Derived} */ (signal).deps === null) {
 		var derived = /** @type {Derived} */ (signal);
 		var parent = derived.parent;
 

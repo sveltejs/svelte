@@ -87,7 +87,7 @@ export function derived_safe_equal(fn) {
  * @param {Derived} derived
  * @returns {void}
  */
-function destroy_derived_children(derived) {
+export function destroy_derived_children(derived) {
 	var children = derived.children;
 
 	if (children !== null) {
