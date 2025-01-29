@@ -9,6 +9,8 @@ import { hash, sanitize_location } from '../../../../utils.js';
 import { DEV } from 'esm-env';
 import { dev_current_component_function } from '../../context.js';
 import { get_first_child, get_next_sibling } from '../operations.js';
+import { active_effect, suspended } from '../../runtime.js';
+import { add_boundary_callback, find_boundary } from './boundary.js';
 
 /**
  * @param {Element} element
@@ -47,14 +49,9 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 	/** @type {Effect | undefined} */
 	var effect;
 
-	block(() => {
-		if (value === (value = get_value() ?? '')) {
-			if (hydrating) {
-				hydrate_next();
-			}
-			return;
-		}
+	var boundary = find_boundary(active_effect);
 
+	function commit() {
 		if (effect !== undefined) {
 			destroy_effect(effect);
 			effect = undefined;
@@ -118,5 +115,18 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 				anchor.before(node);
 			}
 		});
+	}
+
+	block(() => {
+		if (value === (value = get_value() ?? '')) {
+			if (hydrating) hydrate_next();
+			return;
+		}
+
+		if (suspended) {
+			add_boundary_callback(boundary, commit);
+		} else {
+			commit();
+		}
 	});
 }
