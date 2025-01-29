@@ -35,8 +35,12 @@ import { component_context } from '../context.js';
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
 	var flags = DERIVED | DIRTY;
+	var parent_derived =
+		active_reaction !== null && (active_reaction.f & DERIVED) !== 0
+			? /** @type {Derived} */ (active_reaction)
+			: null;
 
-	if (active_effect === null) {
+	if (active_effect === null || (parent_derived !== null && (parent_derived.f & UNOWNED) !== 0)) {
 		flags |= UNOWNED;
 	} else {
 		// Since deriveds are evaluated lazily, any effects created inside them are
@@ -44,16 +48,11 @@ export function derived(fn) {
 		active_effect.f |= EFFECT_HAS_DERIVED;
 	}
 
-	var parent_derived =
-		active_reaction !== null && (active_reaction.f & DERIVED) !== 0
-			? /** @type {Derived} */ (active_reaction)
-			: null;
-
 	/** @type {Derived<V>} */
 	const signal = {
-		children: null,
 		ctx: component_context,
 		deps: null,
+		effects: null,
 		equals,
 		f: flags,
 		fn,
@@ -87,19 +86,14 @@ export function derived_safe_equal(fn) {
  * @param {Derived} derived
  * @returns {void}
  */
-export function destroy_derived_children(derived) {
-	var children = derived.children;
+export function destroy_derived_effects(derived) {
+	var effects = derived.effects;
 
-	if (children !== null) {
-		derived.children = null;
+	if (effects !== null) {
+		derived.effects = null;
 
-		for (var i = 0; i < children.length; i += 1) {
-			var child = children[i];
-			if ((child.f & DERIVED) !== 0) {
-				destroy_derived(/** @type {Derived} */ (child));
-			} else {
-				destroy_effect(/** @type {Effect} */ (child));
-			}
+		for (var i = 0; i < effects.length; i += 1) {
+			destroy_effect(/** @type {Effect} */ (effects[i]));
 		}
 	}
 }
@@ -147,7 +141,7 @@ export function execute_derived(derived) {
 
 			stack.push(derived);
 
-			destroy_derived_children(derived);
+			destroy_derived_effects(derived);
 			value = update_reaction(derived);
 		} finally {
 			set_active_effect(prev_active_effect);
@@ -156,7 +150,7 @@ export function execute_derived(derived) {
 		}
 	} else {
 		try {
-			destroy_derived_children(derived);
+			destroy_derived_effects(derived);
 			value = update_reaction(derived);
 		} finally {
 			set_active_effect(prev_active_effect);
@@ -188,9 +182,9 @@ export function update_derived(derived) {
  * @returns {void}
  */
 export function destroy_derived(derived) {
-	destroy_derived_children(derived);
+	destroy_derived_effects(derived);
 	remove_reactions(derived, 0);
 	set_signal_status(derived, DESTROYED);
 
-	derived.v = derived.children = derived.deps = derived.ctx = derived.reactions = null;
+	derived.v = derived.deps = derived.ctx = derived.reactions = null;
 }

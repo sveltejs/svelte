@@ -53,7 +53,7 @@ export function validate_effect(rune) {
 		e.effect_orphan(rune);
 	}
 
-	if (active_reaction !== null && (active_reaction.f & UNOWNED) !== 0) {
+	if (active_reaction !== null && (active_reaction.f & UNOWNED) !== 0 && active_effect === null) {
 		e.effect_in_unowned_derived();
 	}
 
@@ -153,7 +153,7 @@ function create_effect(type, fn, sync, push = true) {
 		// if we're in a derived, add the effect there too
 		if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
 			var derived = /** @type {Derived} */ (active_reaction);
-			(derived.children ??= []).push(effect);
+			(derived.effects ??= []).push(effect);
 		}
 	}
 

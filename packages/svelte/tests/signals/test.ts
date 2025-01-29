@@ -928,7 +928,7 @@ describe('signals', () => {
 			});
 
 			assert.deepEqual(a.deriveds?.length, 1);
-			assert.deepEqual(b?.children, null);
+			assert.deepEqual(b?.effects, null);
 
 			destroy();
 
@@ -957,14 +957,14 @@ describe('signals', () => {
 				});
 			});
 
-			assert.equal(c!.children?.length, 1);
+			assert.equal(c!.effects?.length, 1);
 			assert.equal(a.first, a.last);
 
 			set(b, 1);
 
 			flushSync();
 
-			assert.equal(c!.children?.length, 1);
+			assert.equal(c!.effects?.length, 1);
 			assert.equal(a.first, a.last);
 
 			destroy();
@@ -1001,14 +1001,14 @@ describe('signals', () => {
 				});
 			});
 
-			assert.equal(c!.children?.length, 1);
+			assert.equal(c!.effects?.length, 1);
 			assert.equal(a.first, a.last);
 
 			set(b, 1);
 
 			flushSync();
 
-			assert.equal(c!.children?.length, 1);
+			assert.equal(c!.effects?.length, 1);
 			assert.equal(a.first, a.last);
 
 			destroy();

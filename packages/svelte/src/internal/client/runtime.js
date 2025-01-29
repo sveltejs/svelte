@@ -30,7 +30,7 @@ import { flush_tasks } from './dom/task.js';
 import { internal_set, set } from './reactivity/sources.js';
 import {
 	destroy_derived,
-	destroy_derived_children,
+	destroy_derived_effects,
 	execute_derived,
 	update_derived
 } from './reactivity/deriveds.js';
@@ -419,11 +419,10 @@ export function update_reaction(reaction) {
 		(flags & UNOWNED) !== 0 &&
 		(!is_flushing_effect ||
 			// If we were previously not in a reactive context and we're reading an unowned derived
-			// that was created inside another derived, then we don't fully know the real owner and thus
+			// that was created inside another reaction, then we don't fully know the real owner and thus
 			// we need to skip adding any reactions for this unowned
 				((previous_reaction === null || previous_untracking) &&
-				(/** @type {Derived} */ (reaction).parent !== null &&
-				(/** @type {Derived} */ (reaction).parent.f & DERIVED) !== 0)));
+				/** @type {Derived} */ (reaction).parent !== null));
 
 	derived_sources = null;
 	set_component_context(reaction.ctx);
@@ -533,7 +532,7 @@ function remove_reaction(signal, dependency) {
 			dependency.f ^= DISCONNECTED;
 		}
 		// Disconnect any reactions owned by this reaction
-		destroy_derived_children(/** @type {Derived} **/ (dependency));
+		destroy_derived_effects(/** @type {Derived} **/ (dependency));
 		remove_reactions(/** @type {Derived} **/ (dependency), 0);
 	}
 }
@@ -951,11 +950,18 @@ export function get(signal) {
 				new_deps.push(signal);
 			}
 		}
-	} else if (is_derived && /** @type {Derived} */ (signal).deps === null) {
+	} else if (
+		is_derived &&
+		/** @type {Derived} */ (signal).deps === null &&
+		/** @type {Derived} */ (signal).effects === null
+	) {
 		var derived = /** @type {Derived} */ (signal);
 		var parent = derived.parent;
 
 		if (parent !== null) {
+			// if ((parent.f & UNOWNED) === 0) {
+			// 	derived.f ^= UNOWNED;
+			// }
 			// If the derived is owned by another derived then mark it as unowned
 			// as the derived value might have been referenced in a different context
 			// since and thus its parent might not be its true owner anymore
