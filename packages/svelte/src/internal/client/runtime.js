@@ -216,6 +216,9 @@ export function check_dirtiness(reaction) {
 				}
 
 				if (dependency.wv > reaction.wv) {
+					if (is_unowned) {
+						reaction.wv = dependency.wv;
+					}
 					return true;
 				}
 			}

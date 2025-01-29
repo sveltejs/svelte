@@ -507,7 +507,7 @@ describe('signals', () => {
 				set(inner, 2);
 				$.get(a);
 			});
-			assert.deepEqual(log, ['outer', 1, 'inner', 2]);
+			assert.deepEqual(log, ['inner', 2]);
 			destroy();
 		};
 	});
