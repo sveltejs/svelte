@@ -959,9 +959,6 @@ export function get(signal) {
 		var parent = derived.parent;
 
 		if (parent !== null) {
-			// if ((parent.f & UNOWNED) === 0) {
-			// 	derived.f ^= UNOWNED;
-			// }
 			// If the derived is owned by another derived then mark it as unowned
 			// as the derived value might have been referenced in a different context
 			// since and thus its parent might not be its true owner anymore
