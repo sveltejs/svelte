@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode, } from '#client' */
 
-import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '../../constants.js';
+import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT, IS_ASYNC } from '../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
 import {
 	block,
@@ -313,6 +313,26 @@ export function suspend() {
 	return function unsuspend() {
 		// @ts-ignore
 		boundary?.fn?.(ASYNC_DECREMENT);
+	};
+}
+
+/**
+ * @template T
+ * @param {Promise<T>} promise
+ * @returns {Promise<() => T>}
+ */
+export async function maybe_save(promise) {
+	if (active_reaction === null || (active_reaction.f & IS_ASYNC) === 0) {
+		var value = await promise;
+		return () => value;
+	}
+
+	var restore = capture();
+	value = await promise;
+
+	return () => {
+		restore();
+		return value;
 	};
 }
 

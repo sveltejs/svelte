@@ -131,7 +131,7 @@ export {
 	update_store,
 	mark_store_binding
 } from './reactivity/store.js';
-export { boundary, save, suspend } from './dom/blocks/boundary.js';
+export { boundary, maybe_save, save, suspend } from './dom/blocks/boundary.js';
 export { set_text } from './render.js';
 export {
 	get,

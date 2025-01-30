@@ -10,7 +10,11 @@ export function AwaitExpression(node, context) {
 	const suspend = context.state.analysis.context_preserving_awaits.has(node);
 
 	if (!suspend) {
-		return context.next();
+		return b.call(
+			b.await(
+				b.call('$.maybe_save', node.argument && /** @type {Expression} */ (context.visit(node.argument)))
+			)
+		);
 	}
 
 	return b.call(
