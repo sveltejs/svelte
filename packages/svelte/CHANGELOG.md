@@ -1,5 +1,21 @@
 # svelte
 
+## 5.19.6
+
+### Patch Changes
+
+- fix: do not prune selectors like `:global(.foo):has(.scoped)` ([#15140](https://github.com/sveltejs/svelte/pull/15140))
+
+- fix: don't error on slot prop inside block inside other component ([#15148](https://github.com/sveltejs/svelte/pull/15148))
+
+- fix: ensure reactions are correctly attached for unowned deriveds ([#15158](https://github.com/sveltejs/svelte/pull/15158))
+
+- fix: silence a11y attribute warnings when spread attributes present ([#15150](https://github.com/sveltejs/svelte/pull/15150))
+
+- fix: prevent false-positive ownership validations due to hot reload ([#15154](https://github.com/sveltejs/svelte/pull/15154))
+
+- fix: widen ownership when calling setContext ([#15153](https://github.com/sveltejs/svelte/pull/15153))
+
 ## 5.19.5
 
 ### Patch Changes
