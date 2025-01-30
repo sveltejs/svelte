@@ -148,4 +148,11 @@
 			color: red;
 		}
 	}
+
+	:global(.foo):has(x) {
+		color: green;
+	}
+	:global(.foo):has(.unused) {
+		color: red;
+	}
 </style>

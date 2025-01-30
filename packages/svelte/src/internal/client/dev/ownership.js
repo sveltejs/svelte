@@ -109,7 +109,7 @@ export function mark_module_end(component) {
 
 /**
  * @param {any} object
- * @param {any} owner
+ * @param {any | null} owner
  * @param {boolean} [global]
  * @param {boolean} [skip_warning]
  */
@@ -120,7 +120,7 @@ export function add_owner(object, owner, global = false, skip_warning = false) {
 		if (metadata && !has_owner(metadata, component)) {
 			let original = get_owner(metadata);
 
-			if (owner[FILENAME] !== component[FILENAME] && !skip_warning) {
+			if (owner && owner[FILENAME] !== component[FILENAME] && !skip_warning) {
 				w.ownership_invalid_binding(component[FILENAME], owner[FILENAME], original[FILENAME]);
 			}
 		}
@@ -165,7 +165,7 @@ export function widen_ownership(from, to) {
 
 /**
  * @param {any} object
- * @param {Function} owner
+ * @param {Function | null} owner If `null`, then the object is globally owned and will not be checked
  * @param {Set<any>} seen
  */
 function add_owner_to_object(object, owner, seen) {
@@ -174,7 +174,11 @@ function add_owner_to_object(object, owner, seen) {
 	if (metadata) {
 		// this is a state proxy, add owner directly, if not globally shared
 		if ('owners' in metadata && metadata.owners != null) {
-			metadata.owners.add(owner);
+			if (owner) {
+				metadata.owners.add(owner);
+			} else {
+				metadata.owners = null;
+			}
 		}
 	} else if (object && typeof object === 'object') {
 		if (seen.has(object)) return;
@@ -216,6 +220,10 @@ function has_owner(metadata, component) {
 
 	return (
 		metadata.owners.has(component) ||
+		// This helps avoid false positives when using HMR, where the component function is replaced
+		[...metadata.owners].some(
+			(owner) => /** @type {any} */ (owner)[FILENAME] === /** @type {any} */ (component)?.[FILENAME]
+		) ||
 		(metadata.parent !== null && has_owner(metadata.parent, component))
 	);
 }

@@ -136,3 +136,10 @@
 			color: red;
 		}*/
 	}
+
+	.foo:has(x.svelte-xyz) {
+		color: green;
+	}
+	/* (unused) :global(.foo):has(.unused) {
+		color: red;
+	}*/
