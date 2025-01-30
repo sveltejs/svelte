@@ -32,6 +32,32 @@ import * as e from '../../../shared/errors.js';
 const ASYNC_INCREMENT = Symbol();
 const ASYNC_DECREMENT = Symbol();
 
+const native_then = Promise.prototype.then;
+
+// @ts-ignore
+Promise.prototype.then = function (
+	/** @type {(value: any) => any} */ resolved,
+	/** @type {(reason: any) => any} */ rejected
+) {
+	if (active_reaction === null || (active_reaction.f & IS_ASYNC) === 0) {
+		return native_then.call(this, resolved, rejected);
+	}
+
+	var restore = capture();
+
+	/** @param {any} value */
+	function wrapped_resolved(value) {
+		restore();
+		try {
+			return resolved(value);
+		} finally {
+			exit();
+		}
+	}
+
+	return native_then.call(this, wrapped_resolved, rejected);
+};
+
 /**
  * @param {Effect} boundary
  * @param {() => Effect | null} fn
