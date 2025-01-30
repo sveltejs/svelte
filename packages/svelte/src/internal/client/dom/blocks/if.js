@@ -12,6 +12,7 @@ import { block, branch, pause_effect, resume_effect } from '../../reactivity/eff
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
 import { active_effect, suspended } from '../../runtime.js';
 import { add_boundary_callback, find_boundary } from './boundary.js';
+import { should_defer_append } from '../operations.js';
 
 /**
  * @param {TemplateNode} node
@@ -109,9 +110,10 @@ export function if_block(node, fn, elseif = false) {
 			}
 		}
 
+		var defer = boundary !== null && should_defer_append();
 		var target = anchor;
 
-		if (suspended) {
+		if (defer) {
 			offscreen_fragment = document.createDocumentFragment();
 			offscreen_fragment.append((target = document.createComment('')));
 		}
@@ -120,7 +122,7 @@ export function if_block(node, fn, elseif = false) {
 			pending_effect = fn && branch(() => fn(target));
 		}
 
-		if (suspended) {
+		if (defer) {
 			add_boundary_callback(boundary, commit);
 		} else {
 			commit();

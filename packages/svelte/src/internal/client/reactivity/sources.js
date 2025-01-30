@@ -285,22 +285,6 @@ function mark_reactions(signal, status) {
 			continue;
 		}
 
-		// if we're about to trip an async derived, mark the boundary as
-		// suspended _before_ we actually process effects
-		if ((flags & IS_ASYNC) !== 0) {
-			let boundary = /** @type {Derived} */ (reaction).parent;
-
-			while (boundary !== null && (boundary.f & BOUNDARY_EFFECT) === 0) {
-				boundary = boundary.parent;
-			}
-
-			if (boundary === null) {
-				// TODO this is presumably an error — throw here?
-			} else {
-				boundary.f |= BOUNDARY_SUSPENDED;
-			}
-		}
-
 		set_signal_status(reaction, status);
 
 		// If the signal a) was previously clean or b) is an unowned derived, then mark it

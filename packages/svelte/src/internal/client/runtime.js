@@ -31,7 +31,8 @@ import {
 import {
 	flush_idle_tasks,
 	flush_boundary_micro_tasks,
-	flush_post_micro_tasks
+	flush_post_micro_tasks,
+	queue_micro_task
 } from './dom/task.js';
 import { internal_set } from './reactivity/sources.js';
 import {
@@ -51,6 +52,7 @@ import {
 	set_component_context,
 	set_dev_current_component_function
 } from './context.js';
+import { add_boundary_effect, release_boundary } from './dom/blocks/boundary.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -808,12 +810,12 @@ export function schedule_effect(signal) {
  *
  * @param {Effect} effect
  * @param {Effect[]} collected_effects
+ * @param {Effect} [boundary]
  * @returns {void}
  */
-function process_effects(effect, collected_effects) {
+function process_effects(effect, collected_effects, boundary) {
 	var current_effect = effect.first;
 	var effects = [];
-	suspended = false;
 
 	main_loop: while (current_effect !== null) {
 		var flags = current_effect.f;
@@ -822,22 +824,27 @@ function process_effects(effect, collected_effects) {
 		var sibling = current_effect.next;
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
-			// We only want to skip suspended effects if they are not branches or block effects,
-			// with the exception of template effects, which are technically block effects but also
-			// have a special flag `TEMPLATE_EFFECT` that we can use to identify them
-			var skip_suspended =
-				suspended &&
+			// Inside a boundary, defer everything except block/branch effects
+			var defer =
+				boundary !== undefined &&
 				(flags & BRANCH_EFFECT) === 0 &&
 				((flags & BLOCK_EFFECT) === 0 || (flags & TEMPLATE_EFFECT) !== 0);
 
-			if ((flags & RENDER_EFFECT) !== 0) {
+			if (defer) {
+				add_boundary_effect(/** @type {Effect} */ (boundary), current_effect);
+			} else if ((flags & BOUNDARY_EFFECT) !== 0) {
+				process_effects(current_effect, collected_effects, current_effect);
+
+				if ((current_effect.f & BOUNDARY_SUSPENDED) === 0) {
+					// no more async work to happen
+					release_boundary(current_effect);
+				}
+			} else if ((flags & RENDER_EFFECT) !== 0) {
 				if ((flags & BOUNDARY_EFFECT) !== 0) {
-					suspended = (flags & BOUNDARY_SUSPENDED) !== 0;
+					// TODO do we need to do anything here?
 				} else if (is_branch) {
-					if (!suspended) {
-						current_effect.f ^= CLEAN;
-					}
-				} else if (!skip_suspended) {
+					current_effect.f ^= CLEAN;
+				} else {
 					// Ensure we set the effect to be the active reaction
 					// to ensure that unowned deriveds are correctly tracked
 					// because we're flushing the current effect
@@ -860,7 +867,7 @@ function process_effects(effect, collected_effects) {
 					current_effect = child;
 					continue;
 				}
-			} else if ((flags & EFFECT) !== 0 && !skip_suspended) {
+			} else if ((flags & EFFECT) !== 0) {
 				effects.push(current_effect);
 			}
 		}
@@ -871,15 +878,6 @@ function process_effects(effect, collected_effects) {
 			while (parent !== null) {
 				if (effect === parent) {
 					break main_loop;
-				}
-
-				if ((parent.f & BOUNDARY_EFFECT) !== 0) {
-					let boundary = parent.parent;
-					while (boundary !== null && (boundary.f & BOUNDARY_EFFECT) === 0) {
-						boundary = boundary.parent;
-					}
-
-					suspended = boundary === null ? false : (boundary.f & BOUNDARY_SUSPENDED) !== 0;
 				}
 
 				var parent_sibling = parent.next;

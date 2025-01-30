@@ -1,6 +1,11 @@
 /** @import { Effect, TemplateNode, } from '#client' */
 
-import { BOUNDARY_EFFECT, BOUNDARY_SUSPENDED, EFFECT_TRANSPARENT } from '../../constants.js';
+import {
+	BOUNDARY_EFFECT,
+	BOUNDARY_SUSPENDED,
+	EFFECT_TRANSPARENT,
+	RENDER_EFFECT
+} from '../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import {
@@ -10,7 +15,9 @@ import {
 	set_active_effect,
 	set_active_reaction,
 	reset_is_throwing_error,
-	schedule_effect
+	schedule_effect,
+	check_dirtiness,
+	update_effect
 } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -28,6 +35,9 @@ import { run_all } from '../../../shared/utils.js';
 const ASYNC_INCREMENT = Symbol();
 const ASYNC_DECREMENT = Symbol();
 const ADD_CALLBACK = Symbol();
+const ADD_RENDER_EFFECT = Symbol();
+const ADD_EFFECT = Symbol();
+const RELEASE = Symbol();
 
 /**
  * @param {Effect} boundary
@@ -86,6 +96,12 @@ export function boundary(node, props, children) {
 		/** @type {Array<() => void>} */
 		var callbacks = [];
 
+		/** @type {Effect[]} */
+		var render_effects = [];
+
+		/** @type {Effect[]} */
+		var effects = [];
+
 		/**
 		 * @param {() => void} snippet_fn
 		 * @returns {Effect | null}
@@ -125,7 +141,19 @@ export function boundary(node, props, children) {
 		}
 
 		function unsuspend() {
-			boundary.f ^= BOUNDARY_SUSPENDED;
+			if ((boundary.f & BOUNDARY_SUSPENDED) !== 0) {
+				boundary.f ^= BOUNDARY_SUSPENDED;
+			}
+
+			for (const e of render_effects) {
+				try {
+					if (check_dirtiness(e)) {
+						update_effect(e);
+					}
+				} catch (error) {
+					handle_error(error, e, null, e.ctx);
+				}
+			}
 
 			run_all(callbacks);
 			callbacks.length = 0;
@@ -141,14 +169,21 @@ export function boundary(node, props, children) {
 				offscreen_fragment = null;
 			}
 
-			if (main_effect !== null) {
-				// TODO do we also need to `resume_effect` here?
-				schedule_effect(main_effect);
+			// TODO this timing is wrong, effects need to ~somehow~ end up
+			// in the right place
+			for (const e of effects) {
+				try {
+					if (check_dirtiness(e)) {
+						update_effect(e);
+					}
+				} catch (error) {
+					handle_error(error, e, null, e.ctx);
+				}
 			}
 		}
 
 		// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
-		boundary.fn = (/** @type {unknown} */ input, /** @type {() => void} */ payload) => {
+		boundary.fn = (/** @type {unknown} */ input, /** @type {any} */ payload) => {
 			if (input === ASYNC_INCREMENT) {
 				boundary.f |= BOUNDARY_SUSPENDED;
 				async_count++;
@@ -160,7 +195,12 @@ export function boundary(node, props, children) {
 
 			if (input === ASYNC_DECREMENT) {
 				if (--async_count === 0) {
-					queue_boundary_micro_task(unsuspend);
+					unsuspend();
+
+					if (main_effect !== null) {
+						// TODO do we also need to `resume_effect` here?
+						schedule_effect(main_effect);
+					}
 				}
 
 				return;
@@ -168,6 +208,21 @@ export function boundary(node, props, children) {
 
 			if (input === ADD_CALLBACK) {
 				callbacks.push(payload);
+				return;
+			}
+
+			if (input === ADD_RENDER_EFFECT) {
+				render_effects.push(payload);
+				return;
+			}
+
+			if (input === ADD_EFFECT) {
+				render_effects.push(payload);
+				return;
+			}
+
+			if (input === RELEASE) {
+				unsuspend();
 				return;
 			}
 
@@ -371,4 +426,21 @@ export function add_boundary_callback(boundary, fn) {
 
 	// @ts-ignore
 	boundary.fn(ADD_CALLBACK, fn);
+}
+
+/**
+ * @param {Effect} boundary
+ * @param {Effect} effect
+ */
+export function add_boundary_effect(boundary, effect) {
+	// @ts-ignore
+	boundary.fn((effect.f & RENDER_EFFECT) !== 0 ? ADD_RENDER_EFFECT : ADD_EFFECT, effect);
+}
+
+/**
+ * @param {Effect} boundary
+ */
+export function release_boundary(boundary) {
+	// @ts-ignore
+	boundary.fn?.(RELEASE);
 }
