@@ -23,6 +23,7 @@ import {
 import { get_next_sibling } from '../operations.js';
 import { queue_boundary_micro_task } from '../task.js';
 import * as e from '../../../shared/errors.js';
+import { run_all } from '../../../shared/utils.js';
 
 const ASYNC_INCREMENT = Symbol();
 const ASYNC_DECREMENT = Symbol();
@@ -82,7 +83,7 @@ export function boundary(node, props, children) {
 		var hydrate_open = hydrate_node;
 		var is_creating_fallback = false;
 
-		/** @type {Function[]} */
+		/** @type {Array<() => void>} */
 		var callbacks = [];
 
 		/**
@@ -124,7 +125,7 @@ export function boundary(node, props, children) {
 		}
 
 		// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
-		boundary.fn = (/** @type {unknown} */ input, /** @type {Function} */ payload) => {
+		boundary.fn = (/** @type {unknown} */ input, /** @type {() => void} */ payload) => {
 			if (input === ASYNC_INCREMENT) {
 				boundary.f |= BOUNDARY_SUSPENDED;
 				async_count++;
@@ -138,10 +139,7 @@ export function boundary(node, props, children) {
 				if (--async_count === 0) {
 					boundary.f ^= BOUNDARY_SUSPENDED;
 
-					for (const callback of callbacks) {
-						callback();
-					}
-
+					run_all(callbacks);
 					callbacks.length = 0;
 
 					if (pending_effect) {
