@@ -124,6 +124,29 @@ export function boundary(node, props, children) {
 			});
 		}
 
+		function unsuspend() {
+			boundary.f ^= BOUNDARY_SUSPENDED;
+
+			run_all(callbacks);
+			callbacks.length = 0;
+
+			if (pending_effect) {
+				pause_effect(pending_effect, () => {
+					pending_effect = null;
+				});
+			}
+
+			if (offscreen_fragment) {
+				anchor.before(offscreen_fragment);
+				offscreen_fragment = null;
+			}
+
+			if (main_effect !== null) {
+				// TODO do we also need to `resume_effect` here?
+				schedule_effect(main_effect);
+			}
+		}
+
 		// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
 		boundary.fn = (/** @type {unknown} */ input, /** @type {() => void} */ payload) => {
 			if (input === ASYNC_INCREMENT) {
@@ -137,26 +160,7 @@ export function boundary(node, props, children) {
 
 			if (input === ASYNC_DECREMENT) {
 				if (--async_count === 0) {
-					boundary.f ^= BOUNDARY_SUSPENDED;
-
-					run_all(callbacks);
-					callbacks.length = 0;
-
-					if (pending_effect) {
-						pause_effect(pending_effect, () => {
-							pending_effect = null;
-						});
-					}
-
-					if (offscreen_fragment) {
-						anchor.before(offscreen_fragment);
-						offscreen_fragment = null;
-					}
-
-					if (main_effect !== null) {
-						// TODO do we also need to `resume_effect` here?
-						schedule_effect(main_effect);
-					}
+					queue_boundary_micro_task(unsuspend);
 				}
 
 				return;
