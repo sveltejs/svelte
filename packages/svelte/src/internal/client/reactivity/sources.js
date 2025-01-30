@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
+/** @import { Derived, Effect, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	active_reaction,
@@ -28,10 +28,7 @@ import {
 	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
-	ROOT_EFFECT,
-	IS_ASYNC,
-	BOUNDARY_EFFECT,
-	BOUNDARY_SUSPENDED
+	ROOT_EFFECT
 } from '../constants.js';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
