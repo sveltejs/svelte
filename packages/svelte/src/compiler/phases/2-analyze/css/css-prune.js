@@ -339,13 +339,18 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 		let sibling_elements; // do them lazy because it's rarely used and expensive to calculate
 
 		// If this is a :has inside a global selector, we gotta include the element itself, too,
-		// because the global selector might be for an element that's outside the component (e.g. :root).
+		// because the global selector might be for an element that's outside the component,
+		// e.g. :root:has(.scoped), :global(.foo):has(.scoped), or :root { &:has(.scoped) {} }
 		const rules = get_parent_rules(rule);
 		const include_self =
 			rules.some((r) => r.prelude.children.some((c) => c.children.some((s) => is_global(s, r)))) ||
 			rules[rules.length - 1].prelude.children.some((c) =>
 				c.children.some((r) =>
-					r.selectors.some((s) => s.type === 'PseudoClassSelector' && s.name === 'root')
+					r.selectors.some(
+						(s) =>
+							s.type === 'PseudoClassSelector' &&
+							(s.name === 'root' || (s.name === 'global' && s.args))
+					)
 				)
 			);
 		if (include_self) {

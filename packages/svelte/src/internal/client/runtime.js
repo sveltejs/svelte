@@ -838,12 +838,19 @@ function process_effects(effect, collected_effects) {
 						current_effect.f ^= CLEAN;
 					}
 				} else if (!skip_suspended) {
+					// Ensure we set the effect to be the active reaction
+					// to ensure that unowned deriveds are correctly tracked
+					// because we're flushing the current effect
+					var previous_active_reaction = active_reaction;
 					try {
+						active_reaction = current_effect;
 						if (check_dirtiness(current_effect)) {
 							update_effect(current_effect);
 						}
 					} catch (error) {
 						handle_error(error, current_effect, null, current_effect.ctx);
+					} finally {
+						active_reaction = previous_active_reaction;
 					}
 				}
 
@@ -1022,13 +1029,11 @@ export function get(signal) {
 		var derived = /** @type {Derived} */ (signal);
 		var parent = derived.parent;
 
-		if (parent !== null) {
+		if (parent !== null && (parent.f & UNOWNED) === 0) {
 			// If the derived is owned by another derived then mark it as unowned
 			// as the derived value might have been referenced in a different context
 			// since and thus its parent might not be its true owner anymore
-			if ((parent.f & UNOWNED) === 0) {
-				derived.f ^= UNOWNED;
-			}
+			derived.f ^= UNOWNED;
 		}
 	}
 
