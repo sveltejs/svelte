@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode } from '#client' */
 import { FILENAME, HYDRATION_ERROR } from '../../../../constants.js';
-import { block, branch, destroy_effect } from '../../reactivity/effects.js';
+import { block, branch, destroy_effect, template_effect } from '../../reactivity/effects.js';
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
 import { create_fragment_from_html } from '../reconciler.js';
 import { assign_nodes } from '../template.js';
@@ -49,9 +49,12 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 	/** @type {Effect | undefined} */
 	var effect;
 
-	var boundary = find_boundary(active_effect);
+	template_effect(() => {
+		if (value === (value = get_value() ?? '')) {
+			if (hydrating) hydrate_next();
+			return;
+		}
 
-	function commit() {
 		if (effect !== undefined) {
 			destroy_effect(effect);
 			effect = undefined;
@@ -115,18 +118,5 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 				anchor.before(node);
 			}
 		});
-	}
-
-	block(() => {
-		if (value === (value = get_value() ?? '')) {
-			if (hydrating) hydrate_next();
-			return;
-		}
-
-		if (suspended) {
-			add_boundary_callback(boundary, commit);
-		} else {
-			commit();
-		}
 	});
 }
