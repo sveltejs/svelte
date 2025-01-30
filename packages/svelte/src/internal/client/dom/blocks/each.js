@@ -218,21 +218,25 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			}
 		}
 
-		if (!hydrating) {
+		if (hydrating) {
+			if (length === 0 && fallback_fn) {
+				fallback = branch(() => fallback_fn(anchor));
+			}
+		} else {
 			reconcile(array, state, anchor, render_fn, flags, get_key, get_collection);
-		}
 
-		if (fallback_fn !== null) {
-			if (length === 0) {
-				if (fallback) {
-					resume_effect(fallback);
-				} else {
-					fallback = branch(() => fallback_fn(anchor));
+			if (fallback_fn !== null) {
+				if (length === 0) {
+					if (fallback) {
+						resume_effect(fallback);
+					} else {
+						fallback = branch(() => fallback_fn(anchor));
+					}
+				} else if (fallback !== null) {
+					pause_effect(fallback, () => {
+						fallback = null;
+					});
 				}
-			} else if (fallback !== null) {
-				pause_effect(fallback, () => {
-					fallback = null;
-				});
 			}
 		}
 
