@@ -8,7 +8,7 @@ It cannot appear at the top level of your markup; it must be inside an if or eac
 
 ```svelte
 <script>
-	export let count;
+	let { count } = $props();
 </script>
 
 {#if count > 0}
@@ -25,7 +25,7 @@ It cannot appear at the top level of your markup; it must be inside an if or eac
 > <!--- file: App.svelte --->
 > <script>
 > 	import Self from './App.svelte'
-> 	export let count;
+> 	let { count } = $props();
 > </script>
 >
 > {#if count > 0}
