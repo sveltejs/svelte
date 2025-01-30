@@ -312,7 +312,7 @@ export function suspend() {
 
 	return function unsuspend() {
 		// @ts-ignore
-		boundary?.fn(ASYNC_DECREMENT);
+		boundary?.fn?.(ASYNC_DECREMENT);
 	};
 }
 
