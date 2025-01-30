@@ -219,17 +219,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 
 		if (!hydrating) {
-			var effect = /** @type {Effect} */ (active_reaction);
-			reconcile(
-				array,
-				state,
-				anchor,
-				render_fn,
-				flags,
-				(effect.f & INERT) !== 0,
-				get_key,
-				get_collection
-			);
+			reconcile(array, state, anchor, render_fn, flags, get_key, get_collection);
 		}
 
 		if (fallback_fn !== null) {
@@ -273,12 +263,11 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
  * @param {Element | Comment | Text} anchor
  * @param {(anchor: Node, item: MaybeSource<V>, index: number | Source<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
- * @param {boolean} is_inert
  * @param {(value: V, index: number) => any} get_key
  * @param {() => V[]} get_collection
  * @returns {void}
  */
-function reconcile(array, state, anchor, render_fn, flags, is_inert, get_key, get_collection) {
+function reconcile(array, state, anchor, render_fn, flags, get_key, get_collection) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 
@@ -420,7 +409,7 @@ function reconcile(array, state, anchor, render_fn, flags, is_inert, get_key, ge
 			while (current !== null && current.k !== key) {
 				// If the each block isn't inert and an item has an effect that is already inert,
 				// skip over adding it to our seen Set as the item is already being handled
-				if (is_inert || (current.e.f & INERT) === 0) {
+				if ((current.e.f & INERT) === 0) {
 					(seen ??= new Set()).add(current);
 				}
 				stashed.push(current);
@@ -444,7 +433,7 @@ function reconcile(array, state, anchor, render_fn, flags, is_inert, get_key, ge
 
 		while (current !== null) {
 			// If the each block isn't inert, then inert effects are currently outroing and will be removed once the transition is finished
-			if (is_inert || (current.e.f & INERT) === 0) {
+			if ((current.e.f & INERT) === 0) {
 				to_destroy.push(current);
 			}
 			current = current.next;
