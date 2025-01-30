@@ -220,6 +220,10 @@ function has_owner(metadata, component) {
 
 	return (
 		metadata.owners.has(component) ||
+		// This helps avoid false positives when using HMR, where the component function is replaced
+		[...metadata.owners].some(
+			(owner) => /** @type {any} */ (owner)[FILENAME] === /** @type {any} */ (component)?.[FILENAME]
+		) ||
 		(metadata.parent !== null && has_owner(metadata.parent, component))
 	);
 }
