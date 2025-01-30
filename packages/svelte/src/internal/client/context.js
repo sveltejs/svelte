@@ -8,7 +8,8 @@ import {
 	active_effect,
 	active_reaction,
 	set_active_effect,
-	set_active_reaction
+	set_active_reaction,
+	untrack
 } from './runtime.js';
 import { effect } from './reactivity/effects.js';
 import { legacy_mode_flag } from '../flags/index.js';
@@ -49,14 +50,6 @@ export function set_dev_current_component_function(fn) {
 export function getContext(key) {
 	const context_map = get_or_init_context_map('getContext');
 	const result = /** @type {T} */ (context_map.get(key));
-
-	if (DEV) {
-		const fn = /** @type {ComponentContext} */ (component_context).function;
-		if (fn) {
-			add_owner(result, fn, true);
-		}
-	}
-
 	return result;
 }
 
@@ -74,6 +67,15 @@ export function getContext(key) {
  */
 export function setContext(key, context) {
 	const context_map = get_or_init_context_map('setContext');
+
+	if (DEV) {
+		// When state is put into context, we treat as if it's global from now on.
+		// We do for performance reasons (it's for example very expensive to call
+		// getContext on a big object many times when part of a list component)
+		// and danger of false positives.
+		untrack(() => add_owner(context, null, true));
+	}
+
 	context_map.set(key, context);
 	return context;
 }
@@ -100,16 +102,6 @@ export function hasContext(key) {
  */
 export function getAllContexts() {
 	const context_map = get_or_init_context_map('getAllContexts');
-
-	if (DEV) {
-		const fn = component_context?.function;
-		if (fn) {
-			for (const value of context_map.values()) {
-				add_owner(value, fn, true);
-			}
-		}
-	}
-
 	return /** @type {T} */ (context_map);
 }
 
