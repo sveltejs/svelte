@@ -97,8 +97,6 @@ export let active_reaction = null;
 
 export let untracking = false;
 
-export let suspended = false;
-
 /** @param {null | Reaction} reaction */
 export function set_active_reaction(reaction) {
 	active_reaction = reaction;

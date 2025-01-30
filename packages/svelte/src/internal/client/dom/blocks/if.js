@@ -10,7 +10,7 @@ import {
 } from '../hydration.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
-import { active_effect, suspended } from '../../runtime.js';
+import { active_effect } from '../../runtime.js';
 import { add_boundary_callback, find_boundary } from './boundary.js';
 import { should_defer_append } from '../operations.js';
 

@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode } from '#client' */
 import { FILENAME, HYDRATION_ERROR } from '../../../../constants.js';
-import { block, branch, destroy_effect, template_effect } from '../../reactivity/effects.js';
+import { branch, destroy_effect, template_effect } from '../../reactivity/effects.js';
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
 import { create_fragment_from_html } from '../reconciler.js';
 import { assign_nodes } from '../template.js';
@@ -9,8 +9,6 @@ import { hash, sanitize_location } from '../../../../utils.js';
 import { DEV } from 'esm-env';
 import { dev_current_component_function } from '../../context.js';
 import { get_first_child, get_next_sibling } from '../operations.js';
-import { active_effect, suspended } from '../../runtime.js';
-import { add_boundary_callback, find_boundary } from './boundary.js';
 
 /**
  * @param {Element} element

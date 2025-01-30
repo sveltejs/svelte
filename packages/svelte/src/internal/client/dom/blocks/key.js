@@ -2,10 +2,11 @@
 import { UNINITIALIZED } from '../../../../constants.js';
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
 import { not_equal, safe_not_equal } from '../../reactivity/equality.js';
-import { active_effect, suspended } from '../../runtime.js';
+import { active_effect } from '../../runtime.js';
 import { is_runes } from '../../context.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { add_boundary_callback, find_boundary } from './boundary.js';
+import { should_defer_append } from '../operations.js';
 
 /**
  * @template V
@@ -57,14 +58,16 @@ export function key_block(node, get_key, render_fn) {
 		if (changed(key, (key = get_key()))) {
 			var target = anchor;
 
-			if (suspended) {
+			var defer = boundary !== null && should_defer_append();
+
+			if (defer) {
 				offscreen_fragment = document.createDocumentFragment();
 				offscreen_fragment.append((target = document.createComment('')));
 			}
 
 			pending_effect = branch(() => render_fn(target));
 
-			if (suspended) {
+			if (defer) {
 				add_boundary_callback(boundary, commit);
 			} else {
 				commit();
