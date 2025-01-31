@@ -293,7 +293,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 							i,
 							render_fn,
 							flags,
-							get_collection
+							get_collection,
+							true
 						);
 
 						pending_items.set(key, item);
@@ -406,28 +407,34 @@ function reconcile(
 
 		if (item === undefined) {
 			var pending = pending_items.get(key);
+
 			if (pending !== undefined) {
 				pending_items.delete(key);
 				items.set(key, pending);
-				item = pending;
+
+				var next = prev && prev.next;
+
+				link(state, prev, pending);
+				link(state, pending, next);
+
+				move(pending, next, anchor);
+				prev = pending;
+			} else {
+				var child_anchor = current ? /** @type {TemplateNode} */ (current.e.nodes_start) : anchor;
+
+				prev = create_item(
+					child_anchor,
+					state,
+					prev,
+					prev === null ? state.first : prev.next,
+					value,
+					key,
+					i,
+					render_fn,
+					flags,
+					get_collection
+				);
 			}
-		}
-
-		if (item === undefined) {
-			var child_anchor = current ? /** @type {TemplateNode} */ (current.e.nodes_start) : anchor;
-
-			prev = create_item(
-				child_anchor,
-				state,
-				prev,
-				prev === null ? state.first : prev.next,
-				value,
-				key,
-				i,
-				render_fn,
-				flags,
-				get_collection
-			);
 
 			items.set(key, prev);
 
@@ -604,6 +611,7 @@ function update_item(item, value, index, type) {
  * @param {(anchor: Node, item: V | Source<V>, index: number | Value<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
  * @param {() => V[]} get_collection
+ * @param {boolean} [deferred]
  * @returns {EachItem}
  */
 function create_item(
@@ -616,7 +624,8 @@ function create_item(
 	index,
 	render_fn,
 	flags,
-	get_collection
+	get_collection,
+	deferred
 ) {
 	var previous_each_item = current_each_item;
 	var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
@@ -661,7 +670,9 @@ function create_item(
 		item.e.next = next && next.e;
 
 		if (prev === null) {
-			state.first = item;
+			if (!deferred) {
+				state.first = item;
+			}
 		} else {
 			prev.next = item;
 			prev.e.next = item.e;
