@@ -93,8 +93,8 @@ export function boundary(node, props, children) {
 		var hydrate_open = hydrate_node;
 		var is_creating_fallback = false;
 
-		/** @type {Array<() => void>} */
-		var callbacks = [];
+		/** @type {Set<() => void>} */
+		var callbacks = new Set();
 
 		/** @type {Effect[]} */
 		var render_effects = [];
@@ -155,8 +155,8 @@ export function boundary(node, props, children) {
 				}
 			}
 
-			run_all(callbacks);
-			callbacks.length = 0;
+			for (const fn of callbacks) fn();
+			callbacks.clear();
 
 			if (pending_effect) {
 				pause_effect(pending_effect, () => {
@@ -205,7 +205,7 @@ export function boundary(node, props, children) {
 			}
 
 			if (input === ADD_CALLBACK) {
-				callbacks.push(payload);
+				callbacks.add(payload);
 				return;
 			}
 

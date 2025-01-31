@@ -401,7 +401,17 @@ function reconcile(
 	for (i = 0; i < length; i += 1) {
 		value = array[i];
 		key = get_key(value, i);
-		item = items.get(key) ?? pending_items.get(key);
+
+		item = items.get(key);
+
+		if (item === undefined) {
+			var pending = pending_items.get(key);
+			if (pending !== undefined) {
+				pending_items.delete(key);
+				items.set(key, pending);
+				item = pending;
+			}
+		}
 
 		if (item === undefined) {
 			var child_anchor = current ? /** @type {TemplateNode} */ (current.e.nodes_start) : anchor;
@@ -550,12 +560,17 @@ function reconcile(
 	}
 
 	// TODO this seems super weird... should be `each_effect`, but that doesn't seem to work?
-	if (active_effect !== null) {
-		active_effect.first = state.first && state.first.e;
-		active_effect.last = prev && prev.e;
-	}
+	// if (active_effect !== null) {
+	// 	active_effect.first = state.first && state.first.e;
+	// 	active_effect.last = prev && prev.e;
+	// }
 
-	pending_items.clear();
+	each_effect.first = state.first && state.first.e;
+	each_effect.last = prev && prev.e;
+
+	for (var unused of pending_items.values()) {
+		destroy_effect(unused.e);
+	}
 }
 
 /**
