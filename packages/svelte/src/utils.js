@@ -436,6 +436,7 @@ const RUNES = /** @type {const} */ ([
 	'$bindable',
 	'$derived',
 	'$derived.by',
+	'$derived.async',
 	'$effect',
 	'$effect.pre',
 	'$effect.tracking',
@@ -443,9 +444,7 @@ const RUNES = /** @type {const} */ ([
 	'$inspect',
 	'$inspect().with',
 	'$inspect.trace',
-	'$host',
-	'$async',
-	'$async.defer'
+	'$host'
 ]);
 
 /**

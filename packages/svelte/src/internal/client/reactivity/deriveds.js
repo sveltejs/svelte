@@ -77,11 +77,11 @@ export function derived(fn) {
 /**
  * @template V
  * @param {() => Promise<V>} fn
- * @param {boolean} [deferred]
+ * @param {{ defer?: boolean }} [options]
  * @returns {Promise<Source<V>>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function async_derived(fn, deferred = false) {
+export function async_derived(fn, options = {}) {
 	let parent = /** @type {Effect | null} */ (active_effect);
 
 	if (parent === null) {
@@ -90,6 +90,7 @@ export function async_derived(fn, deferred = false) {
 
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var value = source(/** @type {V} */ (undefined));
+	var deferred = options.defer === true;
 
 	block(async () => {
 		var current = (promise = fn());

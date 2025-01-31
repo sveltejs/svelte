@@ -512,6 +512,8 @@ declare module 'svelte' {
 	 * ```
 	 * */
 	export function untrack<T>(fn: () => T): T;
+
+	export function isDeferred(fn: () => any): boolean;
 	type Getters<T> = {
 		[K in keyof T]: () => T[K];
 	};
@@ -2862,6 +2864,8 @@ declare namespace $derived {
 	 */
 	export function by<T>(fn: () => T): T;
 
+	export function async<T>(expression: T, options?: { defer?: boolean }): T;
+
 	// prevent intellisense from being unhelpful
 	/** @deprecated */
 	export const apply: never;
@@ -2882,12 +2886,6 @@ declare namespace $derived {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
-}
-
-declare function $async<T>(expression: T): T;
-
-declare namespace $async {
-	export function defer<T>(expression: T): T;
 }
 
 /**

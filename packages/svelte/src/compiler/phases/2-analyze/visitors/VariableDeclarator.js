@@ -29,8 +29,7 @@ export function VariableDeclarator(node, context) {
 			rune === '$state.raw' ||
 			rune === '$derived' ||
 			rune === '$derived.by' ||
-			rune === '$async' ||
-			rune === '$async.defer' ||
+			rune === '$derived.async' ||
 			rune === '$props'
 		) {
 			for (const path of paths) {
@@ -41,10 +40,7 @@ export function VariableDeclarator(node, context) {
 						? 'state'
 						: rune === '$state.raw'
 							? 'raw_state'
-							: rune === '$derived' ||
-								  rune === '$derived.by' ||
-								  rune === '$async' ||
-								  rune === '$async.defer'
+							: rune === '$derived' || rune === '$derived.by' || rune === '$derived.async'
 								? 'derived'
 								: path.is_rest
 									? 'rest_prop'

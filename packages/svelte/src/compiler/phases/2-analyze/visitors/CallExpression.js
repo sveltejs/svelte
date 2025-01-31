@@ -95,8 +95,7 @@ export function CallExpression(node, context) {
 
 			break;
 
-		case '$async':
-		case '$async.defer': {
+		case '$derived.async': {
 			if (
 				parent.type !== 'VariableDeclarator' ||
 				get_parent(context.path, -3).type === 'ConstTag'
@@ -104,8 +103,8 @@ export function CallExpression(node, context) {
 				e.state_invalid_placement(node, rune);
 			}
 
-			if (node.arguments.length !== 1) {
-				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+			if (node.arguments.length !== 1 && node.arguments.length !== 2) {
+				e.rune_invalid_arguments_length(node, rune, 'one or two arguments');
 			}
 
 			break;
@@ -221,7 +220,7 @@ export function CallExpression(node, context) {
 			function_depth: context.state.function_depth + 1,
 			expression
 		});
-	} else if (rune === '$inspect' || rune === '$async' || rune === '$async.defer') {
+	} else if (rune === '$inspect' || rune === '$derived.async') {
 		context.next({ ...context.state, function_depth: context.state.function_depth + 1 });
 	} else {
 		context.next();
