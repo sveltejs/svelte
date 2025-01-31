@@ -969,15 +969,6 @@ export function get(signal) {
 		captured_signals.add(signal);
 	}
 
-	if (DEV && from_async_derived) {
-		var tracking = (from_async_derived.f & REACTION_IS_UPDATING) !== 0;
-		var was_read = from_async_derived.deps !== null && from_async_derived.deps.includes(signal);
-
-		if (!tracking && !was_read) {
-			w.await_reactivity_loss();
-		}
-	}
-
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null && !untracking) {
 		if (derived_sources !== null && derived_sources.includes(signal)) {
@@ -1043,25 +1034,35 @@ export function get(signal) {
 		}
 	}
 
-	if (
-		DEV &&
-		tracing_mode_flag &&
-		tracing_expressions !== null &&
-		active_reaction !== null &&
-		tracing_expressions.reaction === active_reaction
-	) {
-		// Used when mapping state between special blocks like `each`
-		if (signal.debug) {
-			signal.debug();
-		} else if (signal.created) {
-			var entry = tracing_expressions.entries.get(signal);
+	if (DEV) {
+		if (from_async_derived) {
+			var tracking = (from_async_derived.f & REACTION_IS_UPDATING) !== 0;
+			var was_read = from_async_derived.deps !== null && from_async_derived.deps.includes(signal);
 
-			if (entry === undefined) {
-				entry = { read: [] };
-				tracing_expressions.entries.set(signal, entry);
+			if (!tracking && !was_read) {
+				w.await_reactivity_loss();
 			}
+		}
 
-			entry.read.push(get_stack('TracedAt'));
+		if (
+			tracing_mode_flag &&
+			tracing_expressions !== null &&
+			active_reaction !== null &&
+			tracing_expressions.reaction === active_reaction
+		) {
+			// Used when mapping state between special blocks like `each`
+			if (signal.debug) {
+				signal.debug();
+			} else if (signal.created) {
+				var entry = tracing_expressions.entries.get(signal);
+
+				if (entry === undefined) {
+					entry = { read: [] };
+					tracing_expressions.entries.set(signal, entry);
+				}
+
+				entry.read.push(get_stack('TracedAt'));
+			}
 		}
 	}
 
