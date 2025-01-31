@@ -637,7 +637,7 @@ function create_item(
 	try {
 		if (anchor === null) {
 			var fragment = document.createDocumentFragment();
-			fragment.append((anchor = document.createComment('')));
+			fragment.append((anchor = create_text()));
 		}
 
 		item.e = branch(() => render_fn(/** @type {Node} */ (anchor), v, i, get_collection), hydrating);

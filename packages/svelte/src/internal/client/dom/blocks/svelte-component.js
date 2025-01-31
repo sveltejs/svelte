@@ -3,7 +3,7 @@ import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
 import { active_effect } from '../../runtime.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
-import { should_defer_append } from '../operations.js';
+import { create_text, should_defer_append } from '../operations.js';
 import { add_boundary_callback, find_boundary } from './boundary.js';
 
 /**
@@ -59,10 +59,14 @@ export function component(node, get_component, render_fn) {
 
 			if (defer) {
 				offscreen_fragment = document.createDocumentFragment();
-				offscreen_fragment.append((target = document.createComment('')));
+				offscreen_fragment.append((target = create_text()));
 			}
 
 			pending_effect = branch(() => render_fn(target, component));
+
+			if (defer) {
+				target.remove();
+			}
 		}
 
 		if (defer) {
