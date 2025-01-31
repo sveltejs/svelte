@@ -30,8 +30,7 @@ import {
 import {
 	flush_idle_tasks,
 	flush_boundary_micro_tasks,
-	flush_post_micro_tasks,
-	queue_micro_task
+	flush_post_micro_tasks
 } from './dom/task.js';
 import { internal_set } from './reactivity/sources.js';
 import {
