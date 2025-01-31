@@ -820,10 +820,8 @@ function process_effects(effect, collected_effects, boundary) {
 		var sibling = current_effect.next;
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
-			// Inside a boundary, defer everything except block/branch effects
-			var defer = boundary !== undefined && !is_branch && (flags & BLOCK_EFFECT) === 0;
-
-			if (defer) {
+			if (boundary !== undefined && (flags & (BLOCK_EFFECT | BRANCH_EFFECT)) === 0) {
+				// Inside a boundary, defer everything except block/branch effects
 				add_boundary_effect(/** @type {Effect} */ (boundary), current_effect);
 			} else if ((flags & BOUNDARY_EFFECT) !== 0) {
 				process_effects(current_effect, collected_effects, current_effect);
