@@ -238,10 +238,17 @@ export function boundary(node, props, children) {
 
 			if (main_effect) {
 				destroy_effect(main_effect);
+				main_effect = null;
+			}
+
+			if (pending_effect) {
+				destroy_effect(pending_effect);
+				pending_effect = null;
 			}
 
 			if (failed_effect) {
 				destroy_effect(failed_effect);
+				failed_effect = null;
 			}
 
 			if (hydrating) {

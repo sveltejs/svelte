@@ -52,8 +52,9 @@ export function component(node, get_component, render_fn) {
 	block(() => {
 		if (component === (component = get_component())) return;
 
+		var defer = boundary !== null && should_defer_append();
+
 		if (component) {
-			var defer = boundary !== null && should_defer_append();
 			var target = anchor;
 
 			if (defer) {
@@ -61,13 +62,13 @@ export function component(node, get_component, render_fn) {
 				offscreen_fragment.append((target = document.createComment('')));
 			}
 
-			pending_effect = branch(() => render_fn(anchor, component));
+			pending_effect = branch(() => render_fn(target, component));
+		}
 
-			if (defer) {
-				add_boundary_callback(boundary, commit);
-			} else {
-				commit();
-			}
+		if (defer) {
+			add_boundary_callback(boundary, commit);
+		} else {
+			commit();
 		}
 	}, EFFECT_TRANSPARENT);
 
