@@ -190,22 +190,21 @@ export function ClassBody(node, context) {
 				'method',
 				b.id('$.ADD_OWNER'),
 				[b.id('owner')],
-				Array.from(public_state)
-					// Only run ownership addition on $state fields.
-					// Theoretically someone could create a `$state` while creating `$state.raw` or inside a `$derived.by`,
-					// but that feels so much of an edge case that it doesn't warrant a perf hit for the common case.
-					.filter(([_, { kind }]) => kind === 'state')
-					.map(([name]) =>
-						b.stmt(
-							b.call(
-								'$.add_owner',
-								b.call('$.get', b.member(b.this, b.private_id(name))),
-								b.id('owner'),
-								b.literal(false),
-								is_ignored(node, 'ownership_invalid_binding') && b.true
-							)
+				[
+					b.stmt(
+						b.call(
+							'$.add_owner_to_class',
+							b.this,
+							b.id('owner'),
+							b.array(
+								Array.from(public_state).map(([name]) =>
+									b.thunk(b.call('$.get', b.member(b.this, b.private_id(name))))
+								)
+							),
+							is_ignored(node, 'ownership_invalid_binding') && b.true
 						)
-					),
+					)
+				],
 				true
 			)
 		);
