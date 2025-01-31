@@ -259,7 +259,7 @@ export function update_pre(source, d = 1) {
  * @param {number} status should be DIRTY or MAYBE_DIRTY
  * @returns {void}
  */
-function mark_reactions(signal, status) {
+export function mark_reactions(signal, status) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 

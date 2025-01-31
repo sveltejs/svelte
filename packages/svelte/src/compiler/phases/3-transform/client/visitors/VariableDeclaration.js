@@ -157,12 +157,23 @@ export function VariableDeclaration(node, context) {
 				continue;
 			}
 
-			if (rune === '$async') {
+			if (rune === '$async' || rune === '$async.defer') {
 				if (declarator.id.type === 'Identifier') {
 					declarations.push(
 						b.declarator(
 							declarator.id,
-							b.call(b.await(b.call('$.save', b.call('$.async_derived', b.thunk(value, true)))))
+							b.call(
+								b.await(
+									b.call(
+										'$.save',
+										b.call(
+											'$.async_derived',
+											b.thunk(value, true),
+											rune === '$async.defer' && b.literal(true)
+										)
+									)
+								)
+							)
 						)
 					);
 				} else {

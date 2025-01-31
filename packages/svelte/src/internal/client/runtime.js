@@ -26,7 +26,8 @@ import {
 	BOUNDARY_EFFECT,
 	REACTION_IS_UPDATING,
 	IS_ASYNC,
-	TEMPLATE_EFFECT
+	TEMPLATE_EFFECT,
+	IS_DEFERRED
 } from './constants.js';
 import {
 	flush_idle_tasks,
@@ -841,7 +842,7 @@ function process_effects(effect, collected_effects) {
 						active_reaction = current_effect;
 						if (check_dirtiness(current_effect)) {
 							update_effect(current_effect);
-							if ((flags & IS_ASYNC) !== 0 && !suspended) {
+							if ((flags & IS_ASYNC) !== 0 && (flags & IS_DEFERRED) === 0 && !suspended) {
 								suspended = true;
 							}
 						}
@@ -1247,4 +1248,18 @@ export function deep_read(value, visited = new Set()) {
 			}
 		}
 	}
+}
+
+/**
+ * @param {() => any} fn
+ */
+export function isDeferred(fn) {
+  var signals = capture_signals(fn);
+	fn();
+	for (var signal of signals) {
+		if ((signal.f & IS_DEFERRED) !== 0) {
+			return true;
+		}
+	}
+	return false;
 }

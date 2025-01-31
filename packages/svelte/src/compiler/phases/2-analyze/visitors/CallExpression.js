@@ -95,7 +95,8 @@ export function CallExpression(node, context) {
 
 			break;
 
-		case '$async': {
+		case '$async':
+		case '$async.defer': {
 			if (
 				parent.type !== 'VariableDeclarator' ||
 				get_parent(context.path, -3).type === 'ConstTag'
@@ -220,7 +221,7 @@ export function CallExpression(node, context) {
 			function_depth: context.state.function_depth + 1,
 			expression
 		});
-	} else if (rune === '$inspect' || rune === '$async') {
+	} else if (rune === '$inspect' || rune === '$async' || rune === '$async.defer') {
 		context.next({ ...context.state, function_depth: context.state.function_depth + 1 });
 	} else {
 		context.next();

@@ -444,7 +444,8 @@ const RUNES = /** @type {const} */ ([
 	'$inspect().with',
 	'$inspect.trace',
 	'$host',
-	'$async'
+	'$async',
+	'$async.defer'
 ]);
 
 /**

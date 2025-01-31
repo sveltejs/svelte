@@ -24,7 +24,8 @@ export const EFFECT_HAS_DERIVED = 1 << 21;
 
 // Flags used for async
 export const IS_ASYNC = 1 << 22;
-export const REACTION_IS_UPDATING = 1 << 23;
+export const IS_DEFERRED = 1 << 23;
+export const REACTION_IS_UPDATING = 1 << 24;
 
 export const STATE_SYMBOL = Symbol('$state');
 export const STATE_SYMBOL_METADATA = Symbol('$state metadata');

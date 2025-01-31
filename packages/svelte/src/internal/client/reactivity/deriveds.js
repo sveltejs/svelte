@@ -7,6 +7,7 @@ import {
 	DIRTY,
 	EFFECT_HAS_DERIVED,
 	IS_ASYNC,
+	IS_DEFERRED,
 	MAYBE_DIRTY,
 	UNOWNED
 } from '../constants.js';
@@ -24,7 +25,7 @@ import {
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import { block, destroy_effect } from './effects.js';
-import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
+import { inspect_effects, internal_set, mark_reactions, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
 import { capture, suspend } from '../dom/blocks/boundary.js';
@@ -76,10 +77,11 @@ export function derived(fn) {
 /**
  * @template V
  * @param {() => Promise<V>} fn
+ * @param {boolean} [deferred]
  * @returns {Promise<Source<V>>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function async_derived(fn) {
+export function async_derived(fn, deferred = false) {
 	let parent = /** @type {Effect | null} */ (active_effect);
 
 	if (parent === null) {
@@ -93,7 +95,12 @@ export function async_derived(fn) {
 		var current = (promise = fn());
 
 		var restore = capture();
-		var unsuspend = suspend();
+		var unsuspend = !deferred ? suspend() : undefined;
+
+		if (deferred && (value.f & IS_DEFERRED) === 0) {
+			value.f ^= IS_DEFERRED;
+			mark_reactions(value, DIRTY);
+		}
 
 		try {
 			var v = await promise;
@@ -109,12 +116,15 @@ export function async_derived(fn) {
 		} catch (e) {
 			handle_error(e, parent, null, parent.ctx);
 		} finally {
-			unsuspend();
+			if (deferred && (value.f & IS_DEFERRED) !== 0) {
+				value.f ^= IS_DEFERRED;
+			}
+			unsuspend?.();
 
 			// TODO we should probably null out active effect here,
 			// rather than inside `restore()`
 		}
-	}, IS_ASYNC);
+	}, IS_ASYNC | (deferred ? IS_DEFERRED : 0));
 
 	return Promise.resolve(promise).then(() => value);
 }

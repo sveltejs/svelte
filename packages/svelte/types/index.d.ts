@@ -2884,6 +2884,12 @@ declare namespace $derived {
 	export const toString: never;
 }
 
+declare function $async<T>(expression: T): T;
+
+declare namespace $async {
+	export function defer<T>(expression: T): T;
+}
+
 /**
  * Runs code when a component is mounted to the DOM, and then whenever its dependencies change, i.e. `$state` or `$derived` values.
  * The timing of the execution is after the DOM has been updated.
