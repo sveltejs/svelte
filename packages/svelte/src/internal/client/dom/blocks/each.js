@@ -20,7 +20,8 @@ import {
 	clear_text_content,
 	create_text,
 	get_first_child,
-	get_next_sibling
+	get_next_sibling,
+	should_defer_append
 } from '../operations.js';
 import {
 	block,
@@ -35,10 +36,10 @@ import { source, mutable_source, internal_set } from '../../reactivity/sources.j
 import { array_from, is_array } from '../../../shared/utils.js';
 import { INERT } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
-import { active_effect, active_reaction, get } from '../../runtime.js';
+import { active_effect, get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
-import { find_boundary } from './boundary.js';
+import { add_boundary_callback, find_boundary } from './boundary.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -64,17 +65,18 @@ export function index(_, i) {
  * Pause multiple effects simultaneously, and coordinate their
  * subsequent destruction. Used in each blocks
  * @param {EachState} state
- * @param {EachItem[]} items
+ * @param {EachItem[]} to_destroy
  * @param {null | Node} controlled_anchor
- * @param {Map<any, EachItem>} items_map
  */
-function pause_effects(state, items, controlled_anchor, items_map) {
+function pause_effects(state, to_destroy, controlled_anchor) {
+	var items_map = state.items;
+
 	/** @type {TransitionManager[]} */
 	var transitions = [];
-	var length = items.length;
+	var length = to_destroy.length;
 
 	for (var i = 0; i < length; i++) {
-		pause_children(items[i].e, transitions, true);
+		pause_children(to_destroy[i].e, transitions, true);
 	}
 
 	var is_controlled = length > 0 && transitions.length === 0 && controlled_anchor !== null;
@@ -87,12 +89,12 @@ function pause_effects(state, items, controlled_anchor, items_map) {
 		clear_text_content(parent_node);
 		parent_node.append(/** @type {Element} */ (controlled_anchor));
 		items_map.clear();
-		link(state, items[0].prev, items[length - 1].next);
+		link(state, to_destroy[0].prev, to_destroy[length - 1].next);
 	}
 
 	run_out_transitions(transitions, () => {
 		for (var i = 0; i < length; i++) {
-			var item = items[i];
+			var item = to_destroy[i];
 			if (!is_controlled) {
 				items_map.delete(item.k);
 				link(state, item.prev, item.next);
@@ -139,6 +141,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 	var boundary = find_boundary(active_effect);
 
+	/** @type {Map<any, EachItem>} */
+	var pending_items = new Map();
+
 	// TODO: ideally we could use derived for runes mode but because of the ability
 	// to use a store which can be mutated, we can't do that here as mutating a store
 	// will still result in the collection array being the same from the store
@@ -151,8 +156,21 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	/** @type {V[]} */
 	var array;
 
+	/** @type {Effect} */
+	var each_effect;
+
 	function commit() {
-		reconcile(array, state, anchor, render_fn, flags, get_key, get_collection);
+		reconcile(
+			each_effect,
+			array,
+			state,
+			pending_items,
+			anchor,
+			render_fn,
+			flags,
+			get_key,
+			get_collection
+		);
 
 		if (fallback_fn !== null) {
 			if (array.length === 0) {
@@ -170,6 +188,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	}
 
 	block(() => {
+		// store a reference to the effect so that we can update the start/end nodes in reconciliation
+		each_effect ??= /** @type {Effect} */ (active_effect);
+
 		array = get(each_array);
 		var length = array.length;
 
@@ -247,7 +268,42 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				fallback = branch(() => fallback_fn(anchor));
 			}
 		} else {
-			commit();
+			var defer = boundary !== null && should_defer_append();
+
+			if (defer) {
+				for (i = 0; i < length; i += 1) {
+					value = array[i];
+					key = get_key(value, i);
+
+					var existing = state.items.get(key) ?? pending_items.get(key);
+
+					if (existing) {
+						// update before reconciliation, to trigger any async updates
+						if ((flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0) {
+							update_item(existing, value, i, flags);
+						}
+					} else {
+						var item = create_item(
+							null,
+							state,
+							null,
+							null,
+							value,
+							key,
+							i,
+							render_fn,
+							flags,
+							get_collection
+						);
+
+						pending_items.set(key, item);
+					}
+				}
+
+				add_boundary_callback(boundary, commit);
+			} else {
+				commit();
+			}
 		}
 
 		if (mismatch) {
@@ -272,8 +328,10 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 /**
  * Add, remove, or reorder items output by an each block as its input changes
  * @template V
+ * @param {Effect} each_effect
  * @param {Array<V>} array
  * @param {EachState} state
+ * @param {Map<any, EachItem>} pending_items
  * @param {Element | Comment | Text} anchor
  * @param {(anchor: Node, item: MaybeSource<V>, index: number | Source<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
@@ -281,7 +339,17 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
  * @param {() => V[]} get_collection
  * @returns {void}
  */
-function reconcile(array, state, anchor, render_fn, flags, get_key, get_collection) {
+function reconcile(
+	each_effect,
+	array,
+	state,
+	pending_items,
+	anchor,
+	render_fn,
+	flags,
+	get_key,
+	get_collection
+) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 
@@ -333,7 +401,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key, get_collecti
 	for (i = 0; i < length; i += 1) {
 		value = array[i];
 		key = get_key(value, i);
-		item = items.get(key);
+		item = items.get(key) ?? pending_items.get(key);
 
 		if (item === undefined) {
 			var child_anchor = current ? /** @type {TemplateNode} */ (current.e.nodes_start) : anchor;
@@ -468,7 +536,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key, get_collecti
 				}
 			}
 
-			pause_effects(state, to_destroy, controlled_anchor, items);
+			pause_effects(state, to_destroy, controlled_anchor);
 		}
 	}
 
@@ -481,8 +549,13 @@ function reconcile(array, state, anchor, render_fn, flags, get_key, get_collecti
 		});
 	}
 
-	/** @type {Effect} */ (active_effect).first = state.first && state.first.e;
-	/** @type {Effect} */ (active_effect).last = prev && prev.e;
+	// TODO this seems super weird... should be `each_effect`, but that doesn't seem to work?
+	if (active_effect !== null) {
+		active_effect.first = state.first && state.first.e;
+		active_effect.last = prev && prev.e;
+	}
+
+	pending_items.clear();
 }
 
 /**
@@ -506,7 +579,7 @@ function update_item(item, value, index, type) {
 
 /**
  * @template V
- * @param {Node} anchor
+ * @param {Node | null} anchor
  * @param {EachState} state
  * @param {EachItem | null} prev
  * @param {EachItem | null} next
@@ -562,7 +635,12 @@ function create_item(
 	current_each_item = item;
 
 	try {
-		item.e = branch(() => render_fn(anchor, v, i, get_collection), hydrating);
+		if (anchor === null) {
+			var fragment = document.createDocumentFragment();
+			fragment.append((anchor = document.createComment('')));
+		}
+
+		item.e = branch(() => render_fn(/** @type {Node} */ (anchor), v, i, get_collection), hydrating);
 
 		item.e.prev = prev && prev.e;
 		item.e.next = next && next.e;
@@ -596,7 +674,7 @@ function move(item, next, anchor) {
 	var dest = next ? /** @type {TemplateNode} */ (next.e.nodes_start) : anchor;
 	var node = /** @type {TemplateNode} */ (item.e.nodes_start);
 
-	while (node !== end) {
+	while (node !== null && node !== end) {
 		var next_node = /** @type {TemplateNode} */ (get_next_sibling(node));
 		dest.before(node);
 		node = next_node;
