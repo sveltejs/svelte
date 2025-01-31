@@ -25,7 +25,6 @@ import {
 	DISCONNECTED,
 	BOUNDARY_EFFECT,
 	REACTION_IS_UPDATING,
-	TEMPLATE_EFFECT,
 	BOUNDARY_SUSPENDED
 } from './constants.js';
 import {
@@ -823,10 +822,7 @@ function process_effects(effect, collected_effects, boundary) {
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
 			// Inside a boundary, defer everything except block/branch effects
-			var defer =
-				boundary !== undefined &&
-				!is_branch &&
-				((flags & BLOCK_EFFECT) === 0 || (flags & TEMPLATE_EFFECT) !== 0);
+			var defer = boundary !== undefined && !is_branch && (flags & BLOCK_EFFECT) === 0;
 
 			if (defer) {
 				add_boundary_effect(/** @type {Effect} */ (boundary), current_effect);

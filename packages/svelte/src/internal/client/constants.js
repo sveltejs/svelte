@@ -5,7 +5,6 @@ export const BLOCK_EFFECT = 1 << 4;
 export const BRANCH_EFFECT = 1 << 5;
 export const ROOT_EFFECT = 1 << 6;
 export const BOUNDARY_EFFECT = 1 << 7;
-export const TEMPLATE_EFFECT = 1 << 8;
 export const UNOWNED = 1 << 9;
 export const DISCONNECTED = 1 << 10;
 export const CLEAN = 1 << 11;

@@ -9,8 +9,7 @@ import {
 	EFFECT,
 	MAYBE_DIRTY,
 	RENDER_EFFECT,
-	ROOT_EFFECT,
-	TEMPLATE_EFFECT
+	ROOT_EFFECT
 } from '../constants.js';
 
 /**
@@ -38,8 +37,6 @@ export function log_effect_tree(effect) {
 		label = 'root';
 	} else if ((flags & BOUNDARY_EFFECT) !== 0) {
 		label = 'boundary';
-	} else if ((flags & TEMPLATE_EFFECT) !== 0) {
-		label = 'template';
 	} else if ((flags & BLOCK_EFFECT) !== 0) {
 		label = 'block';
 	} else if ((flags & BRANCH_EFFECT) !== 0) {

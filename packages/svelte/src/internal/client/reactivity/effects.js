@@ -35,8 +35,7 @@ import {
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
 	EFFECT_HAS_DERIVED,
-	BOUNDARY_EFFECT,
-	TEMPLATE_EFFECT
+	BOUNDARY_EFFECT
 } from '../constants.js';
 import { set } from './sources.js';
 import * as e from '../errors.js';
@@ -388,7 +387,7 @@ function create_template_effect(fn, deriveds) {
 		});
 	}
 
-	create_effect(RENDER_EFFECT | TEMPLATE_EFFECT, effect, true);
+	create_effect(RENDER_EFFECT, effect, true);
 }
 
 /**
