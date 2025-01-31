@@ -19,6 +19,17 @@ export function assignment_value_stale(property, location) {
 }
 
 /**
+ * Detected reactivity loss
+ */
+export function await_reactivity_loss() {
+	if (DEV) {
+		console.warn(`%c[svelte] await_reactivity_loss\n%cDetected reactivity loss\nhttps://svelte.dev/e/await_reactivity_loss`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/await_reactivity_loss`);
+	}
+}
+
+/**
  * Detected an unnecessary async waterfall
  */
 export function await_waterfall() {

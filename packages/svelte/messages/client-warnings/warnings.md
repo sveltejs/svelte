@@ -30,6 +30,12 @@ function add() {
 }
 ```
 
+## await_reactivity_loss
+
+> Detected reactivity loss
+
+TODO
+
 ## await_waterfall
 
 > Detected an unnecessary async waterfall

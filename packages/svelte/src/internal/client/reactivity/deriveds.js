@@ -29,6 +29,14 @@ import { tracing_mode_flag } from '../../flags/index.js';
 import { capture, suspend } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 
+/** @type {Effect | null} */
+export let from_async_derived = null;
+
+/** @param {Effect | null} v */
+export function set_from_async_derived(v) {
+	from_async_derived = v;
+}
+
 /**
  * @template V
  * @param {() => V} fn
@@ -88,8 +96,11 @@ export function async_derived(fn) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var value = source(/** @type {V} */ (undefined));
 
+	// TODO this isn't a block
 	block(async () => {
+		if (DEV) from_async_derived = active_effect;
 		var current = (promise = fn());
+		if (DEV) from_async_derived = null;
 
 		var restore = capture();
 		var unsuspend = suspend();
@@ -103,6 +114,8 @@ export function async_derived(fn) {
 
 			if (promise === current) {
 				restore();
+				from_async_derived = null;
+
 				internal_set(value, v);
 			}
 		} catch (e) {

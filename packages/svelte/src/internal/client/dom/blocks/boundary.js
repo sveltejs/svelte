@@ -30,6 +30,8 @@ import {
 import { get_next_sibling } from '../operations.js';
 import { queue_boundary_micro_task } from '../task.js';
 import * as e from '../../../shared/errors.js';
+import { DEV } from 'esm-env';
+import { from_async_derived, set_from_async_derived } from '../../reactivity/deriveds.js';
 
 const ASYNC_INCREMENT = Symbol();
 const ASYNC_DECREMENT = Symbol();
@@ -340,15 +342,23 @@ function move_effect(effect, fragment) {
 	}
 }
 
-export function capture() {
+export function capture(track = true) {
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
 
+	if (DEV && !track) {
+		var was_from_async_derived = from_async_derived;
+	}
+
 	return function restore() {
-		set_active_effect(previous_effect);
-		set_active_reaction(previous_reaction);
-		set_component_context(previous_component_context);
+		if (track) {
+			set_active_effect(previous_effect);
+			set_active_reaction(previous_reaction);
+			set_component_context(previous_component_context);
+		} else if (DEV) {
+			set_from_async_derived(was_from_async_derived);
+		}
 
 		// prevent the active effect from outstaying its welcome
 		queue_boundary_micro_task(exit);
@@ -390,10 +400,11 @@ export function suspend() {
 /**
  * @template T
  * @param {Promise<T>} promise
+ * @param {boolean} [track]
  * @returns {Promise<() => T>}
  */
-export async function save(promise) {
-	var restore = capture();
+export async function save(promise, track = true) {
+	var restore = capture(track);
 	var value = await promise;
 
 	return () => {

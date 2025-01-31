@@ -37,6 +37,7 @@ import {
 	destroy_derived,
 	destroy_derived_effects,
 	execute_derived,
+	from_async_derived,
 	update_derived
 } from './reactivity/deriveds.js';
 import * as e from './errors.js';
@@ -51,6 +52,7 @@ import {
 	set_dev_current_component_function
 } from './context.js';
 import { add_boundary_effect, commit_boundary } from './dom/blocks/boundary.js';
+import * as w from './warnings.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -965,6 +967,15 @@ export function get(signal) {
 
 	if (captured_signals !== null) {
 		captured_signals.add(signal);
+	}
+
+	if (DEV && from_async_derived) {
+		var tracking = (from_async_derived.f & REACTION_IS_UPDATING) !== 0;
+		var was_read = from_async_derived.deps !== null && from_async_derived.deps.includes(signal);
+
+		if (!tracking && !was_read) {
+			w.await_reactivity_loss();
+		}
 	}
 
 	// Register the dependency on the current reaction signal.
