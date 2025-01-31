@@ -38,6 +38,7 @@ import {
 	destroy_derived_effects,
 	execute_derived,
 	from_async_derived,
+	recent_async_deriveds,
 	update_derived
 } from './reactivity/deriveds.js';
 import * as e from './errors.js';
@@ -1064,6 +1065,8 @@ export function get(signal) {
 				entry.read.push(get_stack('TracedAt'));
 			}
 		}
+
+		recent_async_deriveds.delete(signal);
 	}
 
 	return signal.v;

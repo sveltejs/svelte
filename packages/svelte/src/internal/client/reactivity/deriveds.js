@@ -22,6 +22,7 @@ import {
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
+import * as w from '../warnings.js';
 import { block, destroy_effect } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
@@ -36,6 +37,8 @@ export let from_async_derived = null;
 export function set_from_async_derived(v) {
 	from_async_derived = v;
 }
+
+export const recent_async_deriveds = new Set();
 
 /**
  * @template V
@@ -117,6 +120,17 @@ export function async_derived(fn) {
 				from_async_derived = null;
 
 				internal_set(value, v);
+
+				if (DEV) {
+					recent_async_deriveds.add(value);
+
+					setTimeout(() => {
+						if (recent_async_deriveds.has(value)) {
+							w.await_waterfall();
+							recent_async_deriveds.delete(value);
+						}
+					});
+				}
 			}
 		} catch (e) {
 			handle_error(e, parent, null, parent.ctx);
