@@ -19,7 +19,7 @@ import { legacy_mode_flag } from './internal/flags/index.js';
  *
  * `onMount` runs only once. If you need reactivity, you can use [`$effect`](https://svelte.dev/docs/svelte/$effect),
  * which also runs when the component is mounted to the DOM.
- * 
+ *
  * @template T
  * @param {() => NotFunction<T> | Promise<NotFunction<T>> | (() => any)} fn
  * @returns {void}
