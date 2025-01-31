@@ -933,11 +933,9 @@ function get_possible_element_siblings(node, adjacent_only, seen = new Set()) {
 /**
  * @param {Compiler.AST.EachBlock | Compiler.AST.IfBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock | Compiler.AST.SlotElement} node
  * @param {boolean} adjacent_only
- * @returns {Map<Compiler.AST.RegularElement, NodeExistsValue>}
+ * @returns {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement, NodeExistsValue>}
  */
 function get_possible_last_child(node, adjacent_only) {
-	/** @typedef {Map<Compiler.AST.RegularElement, NodeExistsValue>} NodeMap */
-
 	/** @type {Array<Compiler.AST.Fragment | undefined | null>} */
 	let fragments = [];
 
@@ -960,7 +958,7 @@ function get_possible_last_child(node, adjacent_only) {
 			break;
 	}
 
-	/** @type {NodeMap} */
+	/** @type {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement, NodeExistsValue>} NodeMap */
 	const result = new Map();
 
 	let exhaustive = node.type !== 'SlotElement';
@@ -1001,9 +999,10 @@ function has_definite_elements(result) {
 }
 
 /**
- * @template T
- * @param {Map<T, NodeExistsValue>} from
- * @param {Map<T, NodeExistsValue>} to
+ * @template T2
+ * @template {T2} T1
+ * @param {Map<T1, NodeExistsValue>} from
+ * @param {Map<T2, NodeExistsValue>} to
  * @returns {void}
  */
 function add_to_map(from, to) {
@@ -1028,7 +1027,7 @@ function higher_existence(exist1, exist2) {
  * @param {boolean} adjacent_only
  */
 function loop_child(children, adjacent_only) {
-	/** @type {Map<Compiler.AST.RegularElement, NodeExistsValue>} */
+	/** @type {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement, NodeExistsValue>} */
 	const result = new Map();
 
 	let i = children.length;
@@ -1041,6 +1040,8 @@ function loop_child(children, adjacent_only) {
 			if (adjacent_only) {
 				break;
 			}
+		} else if (child.type === 'SvelteElement') {
+			result.set(child, NODE_PROBABLY_EXISTS);
 		} else if (is_block(child)) {
 			const child_result = get_possible_last_child(child, adjacent_only);
 			add_to_map(child_result, result);
