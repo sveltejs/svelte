@@ -28,12 +28,12 @@ You can also use `bind:property={get, set}`, where `get` and `set` are functions
 />
 ```
 
-In the case of readonly bindings like [dimension bindings](#Dimensions), the `get` value should be `null`:
+In the case of readonly bindings like [dimension bindings](#Dimensions), the `set` value should be `null`:
 
 ```svelte
 <div
-	bind:clientWidth={null, redraw}
-	bind:clientHeight={null, redraw}
+	bind:clientWidth={redraw, null}
+	bind:clientHeight={redraw, null}
 >...</div>
 ```
 
