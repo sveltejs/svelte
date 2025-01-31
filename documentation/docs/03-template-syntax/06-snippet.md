@@ -228,22 +228,29 @@ Snippets implement the `Snippet` interface imported from `'svelte'`:
 
 With this change, red squigglies will appear if you try and use the component without providing a `data` prop and a `row` snippet. Notice that the type argument provided to `Snippet` is a tuple, since snippets can have multiple parameters.
 
-We can tighten things up further by declaring a generic, so that `data` and `row` refer to the same type:
+We can tighten things up further by declaring a Fruit type, so that `data` and `row` refer to the same type. Now a row snippet will error if the shape is not used.
 
 ```svelte
-<script lang="ts" generics="T">
+<script lang="ts">
 	import type { Snippet } from 'svelte';
+
+  type Fruit = {
+    name: string;
+    qty: number;
+    price: number;
+  }
 
 	let {
 		data,
 		children,
 		row
 	}: {
-		data: T[];
+		data: Fruit[];
 		children: Snippet;
-		row: Snippet<[T]>;
+		row: Snippet<[Fruit]>;
 	} = $props();
 </script>
+
 ```
 
 ## Exporting snippets
