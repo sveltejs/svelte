@@ -52,7 +52,7 @@ import {
 	set_component_context,
 	set_dev_current_component_function
 } from './context.js';
-import { add_boundary_effect, release_boundary } from './dom/blocks/boundary.js';
+import { add_boundary_effect, commit_boundary } from './dom/blocks/boundary.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -825,7 +825,7 @@ function process_effects(effect, collected_effects, boundary) {
 			// Inside a boundary, defer everything except block/branch effects
 			var defer =
 				boundary !== undefined &&
-				(flags & BRANCH_EFFECT) === 0 &&
+				!is_branch &&
 				((flags & BLOCK_EFFECT) === 0 || (flags & TEMPLATE_EFFECT) !== 0);
 
 			if (defer) {
@@ -835,12 +835,10 @@ function process_effects(effect, collected_effects, boundary) {
 
 				if ((current_effect.f & BOUNDARY_SUSPENDED) === 0) {
 					// no more async work to happen
-					release_boundary(current_effect);
+					commit_boundary(current_effect);
 				}
 			} else if ((flags & RENDER_EFFECT) !== 0) {
-				if ((flags & BOUNDARY_EFFECT) !== 0) {
-					// TODO do we need to do anything here?
-				} else if (is_branch) {
+				if (is_branch) {
 					current_effect.f ^= CLEAN;
 				} else {
 					// Ensure we set the effect to be the active reaction

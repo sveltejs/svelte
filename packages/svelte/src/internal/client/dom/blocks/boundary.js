@@ -30,14 +30,13 @@ import {
 import { get_next_sibling } from '../operations.js';
 import { queue_boundary_micro_task } from '../task.js';
 import * as e from '../../../shared/errors.js';
-import { run_all } from '../../../shared/utils.js';
 
 const ASYNC_INCREMENT = Symbol();
 const ASYNC_DECREMENT = Symbol();
 const ADD_CALLBACK = Symbol();
 const ADD_RENDER_EFFECT = Symbol();
 const ADD_EFFECT = Symbol();
-const RELEASE = Symbol();
+const COMMIT = Symbol();
 
 /**
  * @param {Effect} boundary
@@ -219,7 +218,7 @@ export function boundary(node, props, children) {
 				return;
 			}
 
-			if (input === RELEASE) {
+			if (input === COMMIT) {
 				unsuspend();
 				return;
 			}
@@ -445,7 +444,7 @@ export function add_boundary_effect(boundary, effect) {
 /**
  * @param {Effect} boundary
  */
-export function release_boundary(boundary) {
+export function commit_boundary(boundary) {
 	// @ts-ignore
-	boundary.fn?.(RELEASE);
+	boundary.fn?.(COMMIT);
 }
