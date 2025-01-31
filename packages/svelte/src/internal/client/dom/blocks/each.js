@@ -38,6 +38,7 @@ import { queue_micro_task } from '../task.js';
 import { active_effect, active_reaction, get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
+import { find_boundary } from './boundary.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -136,6 +137,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 	var was_empty = false;
 
+	var boundary = find_boundary(active_effect);
+
 	// TODO: ideally we could use derived for runes mode but because of the ability
 	// to use a store which can be mutated, we can't do that here as mutating a store
 	// will still result in the collection array being the same from the store
@@ -145,8 +148,29 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		return is_array(collection) ? collection : collection == null ? [] : array_from(collection);
 	});
 
+	/** @type {V[]} */
+	var array;
+
+	function commit() {
+		reconcile(array, state, anchor, render_fn, flags, get_key, get_collection);
+
+		if (fallback_fn !== null) {
+			if (array.length === 0) {
+				if (fallback) {
+					resume_effect(fallback);
+				} else {
+					fallback = branch(() => fallback_fn(anchor));
+				}
+			} else if (fallback !== null) {
+				pause_effect(fallback, () => {
+					fallback = null;
+				});
+			}
+		}
+	}
+
 	block(() => {
-		var array = get(each_array);
+		array = get(each_array);
 		var length = array.length;
 
 		if (was_empty && length === 0) {
@@ -223,21 +247,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				fallback = branch(() => fallback_fn(anchor));
 			}
 		} else {
-			reconcile(array, state, anchor, render_fn, flags, get_key, get_collection);
-
-			if (fallback_fn !== null) {
-				if (length === 0) {
-					if (fallback) {
-						resume_effect(fallback);
-					} else {
-						fallback = branch(() => fallback_fn(anchor));
-					}
-				} else if (fallback !== null) {
-					pause_effect(fallback, () => {
-						fallback = null;
-					});
-				}
-			}
+			commit();
 		}
 
 		if (mismatch) {
