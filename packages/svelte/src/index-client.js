@@ -217,5 +217,5 @@ export function flushSync(fn) {
 
 export { getContext, getAllContexts, hasContext, setContext } from './internal/client/context.js';
 export { hydrate, mount, unmount } from './internal/client/render.js';
-export { tick, untrack, isDeferred } from './internal/client/runtime.js';
+export { tick, untrack, isPending } from './internal/client/runtime.js';
 export { createRawSnippet } from './internal/client/dom/blocks/snippet.js';
