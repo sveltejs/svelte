@@ -298,6 +298,12 @@ Invalid selector
 Cannot declare a variable with the same name as an import inside `<script module>`
 ```
 
+### derived_await_invalid
+
+```
+Cannot use `await` inside `$derived` rune, use `$async` rune instead
+```
+
 ### derived_invalid_export
 
 ```
@@ -507,7 +513,7 @@ The arguments keyword cannot be used within the template or at the top level of 
 ### legacy_await_invalid
 
 ```
-Cannot use `await` in deriveds and template expressions, or at the top level of a component, unless in runes mode
+Cannot use `await` in template expressions, or at the top level of a component, unless in runes mode
 ```
 
 ### legacy_export_invalid

@@ -18,6 +18,10 @@
 
 > Cannot declare a variable with the same name as an import inside `<script module>`
 
+## derived_await_invalid
+
+> Cannot use `await` inside `$derived` rune, use `$async` rune instead
+
 ## derived_invalid_export
 
 > Cannot export derived state from a module. To expose the current derived value, export a function returning its value
@@ -104,7 +108,7 @@ This turned out to be buggy and unpredictable, particularly when working with de
 
 ## legacy_await_invalid
 
-> Cannot use `await` in deriveds and template expressions, or at the top level of a component, unless in runes mode
+> Cannot use `await` in template expressions, or at the top level of a component, unless in runes mode
 
 ## legacy_export_invalid
 

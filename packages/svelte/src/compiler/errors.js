@@ -124,6 +124,15 @@ export function declaration_duplicate_module_import(node) {
 }
 
 /**
+ * Cannot use `await` inside `$derived` rune, use `$async` rune instead
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function derived_await_invalid(node) {
+	e(node, 'derived_await_invalid', `Cannot use \`await\` inside \`$derived\` rune, use \`$async\` rune instead\nhttps://svelte.dev/e/derived_await_invalid`);
+}
+
+/**
  * Cannot export derived state from a module. To expose the current derived value, export a function returning its value
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -243,12 +252,12 @@ export function invalid_arguments_usage(node) {
 }
 
 /**
- * Cannot use `await` in deriveds and template expressions, or at the top level of a component, unless in runes mode
+ * Cannot use `await` in template expressions, or at the top level of a component, unless in runes mode
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function legacy_await_invalid(node) {
-	e(node, 'legacy_await_invalid', `Cannot use \`await\` in deriveds and template expressions, or at the top level of a component, unless in runes mode\nhttps://svelte.dev/e/legacy_await_invalid`);
+	e(node, 'legacy_await_invalid', `Cannot use \`await\` in template expressions, or at the top level of a component, unless in runes mode\nhttps://svelte.dev/e/legacy_await_invalid`);
 }
 
 /**

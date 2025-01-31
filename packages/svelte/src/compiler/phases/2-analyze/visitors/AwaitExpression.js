@@ -1,6 +1,7 @@
 /** @import { AwaitExpression } from 'estree' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
+import { get_rune } from '../../scope.js';
 
 /**
  * @param {AwaitExpression} node
@@ -39,6 +40,16 @@ export function AwaitExpression(node, context) {
 
 		if (!context.state.analysis.runes) {
 			e.legacy_await_invalid(node);
+		}
+
+		if (
+			context.state.ast_type === 'instance' &&
+			context.state.function_depth === 2 &&
+			context.path.findLast(
+				(n) => n.type === 'CallExpression' && get_rune(n, context.state.scope) === '$derived'
+			)
+		) {
+			e.derived_await_invalid(node);
 		}
 	}
 

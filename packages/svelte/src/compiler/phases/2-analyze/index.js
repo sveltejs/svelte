@@ -253,7 +253,6 @@ export function analyze_module(ast, options) {
 		runes: true,
 		immutable: true,
 		tracing: false,
-		async_deriveds: new Set(),
 		context_preserving_awaits: new Set()
 	};
 
@@ -463,7 +462,6 @@ export function analyze_component(root, source, options) {
 		undefined_exports: new Map(),
 		snippet_renderers: new Map(),
 		snippets: new Set(),
-		async_deriveds: new Set(),
 		context_preserving_awaits: new Set()
 	};
 

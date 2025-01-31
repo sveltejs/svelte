@@ -40,9 +40,6 @@ export interface Analysis {
 	// TODO figure out if we can move this to ComponentAnalysis
 	accessors: boolean;
 
-	/** A set of deriveds that contain `await` expressions */
-	async_deriveds: Set<CallExpression>;
-
 	/** A set of `await` expressions that should preserve context */
 	context_preserving_awaits: Set<AwaitExpression>;
 }

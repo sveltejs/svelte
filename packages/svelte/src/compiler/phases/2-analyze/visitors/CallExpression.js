@@ -3,7 +3,7 @@
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
-import { get_parent } from '../../../utils/ast.js';
+import { extract_identifiers, get_parent } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
 import { dev, locate_node, source } from '../../../state.js';
 import * as b from '../../../utils/builders.js';
@@ -94,6 +94,21 @@ export function CallExpression(node, context) {
 			}
 
 			break;
+
+		case '$async': {
+			if (
+				parent.type !== 'VariableDeclarator' ||
+				get_parent(context.path, -3).type === 'ConstTag'
+			) {
+				e.state_invalid_placement(node, rune);
+			}
+
+			if (node.arguments.length !== 1) {
+				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+			}
+
+			break;
+		}
 
 		case '$effect':
 		case '$effect.pre':
@@ -205,11 +220,7 @@ export function CallExpression(node, context) {
 			function_depth: context.state.function_depth + 1,
 			expression
 		});
-
-		if (expression.is_async) {
-			context.state.analysis.async_deriveds.add(node);
-		}
-	} else if (rune === '$inspect') {
+	} else if (rune === '$inspect' || rune === '$async') {
 		context.next({ ...context.state, function_depth: context.state.function_depth + 1 });
 	} else {
 		context.next();

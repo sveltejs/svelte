@@ -443,7 +443,8 @@ const RUNES = /** @type {const} */ ([
 	'$inspect',
 	'$inspect().with',
 	'$inspect.trace',
-	'$host'
+	'$host',
+	'$async'
 ]);
 
 /**
