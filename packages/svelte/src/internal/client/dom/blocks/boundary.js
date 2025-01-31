@@ -169,8 +169,6 @@ export function boundary(node, props, children) {
 				offscreen_fragment = null;
 			}
 
-			// TODO this timing is wrong, effects need to ~somehow~ end up
-			// in the right place
 			for (const e of effects) {
 				try {
 					if (check_dirtiness(e)) {
@@ -217,7 +215,7 @@ export function boundary(node, props, children) {
 			}
 
 			if (input === ADD_EFFECT) {
-				render_effects.push(payload);
+				effects.push(payload);
 				return;
 			}
 
