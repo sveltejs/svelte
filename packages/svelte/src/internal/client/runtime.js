@@ -1253,7 +1253,7 @@ export function deep_read(value, visited = new Set()) {
 /**
  * @param {() => any} fn
  */
-export function isDeferred(fn) {
+export function isPending(fn) {
   var signals = capture_signals(fn);
 	fn();
 	for (var signal of signals) {

@@ -90,7 +90,7 @@ export function async_derived(fn, options = {}) {
 
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var value = source(/** @type {V} */ (undefined));
-	var deferred = options.defer === true;
+	var deferred = options.defer !== false;
 
 	block(async () => {
 		var current = (promise = fn());
