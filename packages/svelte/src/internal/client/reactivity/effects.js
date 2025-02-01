@@ -598,10 +598,18 @@ function resume_children(effect, local) {
 	}
 
 	// If a dependency of this effect changed while it was paused,
-	// schedule the effect to update
-	if (check_dirtiness(effect)) {
-		set_signal_status(effect, DIRTY);
-		schedule_effect(effect);
+	// schedule the effect to update and ensure we set the effect
+	// to be the active reaction to ensure that unowned deriveds
+	// are correctly tracked because we're resuming the effect
+	var previous_reaction = active_reaction;
+	try {
+		set_active_reaction(effect);
+		if (check_dirtiness(effect)) {
+			set_signal_status(effect, DIRTY);
+			schedule_effect(effect);
+		}
+	} finally {
+		set_active_reaction(previous_reaction);
 	}
 
 	var child = effect.first;
