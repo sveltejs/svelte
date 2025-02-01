@@ -16,8 +16,7 @@ import {
 	check_dirtiness,
 	set_is_flushing_effect,
 	is_flushing_effect,
-	untracking,
-	set_active_reaction
+	untracking
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -212,14 +211,8 @@ export function internal_set(source, value) {
 					if ((effect.f & CLEAN) !== 0) {
 						set_signal_status(effect, MAYBE_DIRTY);
 					}
-					var previous_reaction = active_reaction;
-					try {
-						set_active_reaction(effect);
-						if (check_dirtiness(effect)) {
-							update_effect(effect);
-						}
-					} finally {
-						set_active_reaction(previous_reaction);
+					if (check_dirtiness(effect)) {
+						update_effect(effect);
 					}
 				}
 			} finally {
