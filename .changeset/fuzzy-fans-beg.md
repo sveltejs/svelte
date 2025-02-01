@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: esnure resuming effects works correctly with unowned dependencies
+fix: ensure resuming effects works correctly with unowned dependencies
