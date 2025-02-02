@@ -140,7 +140,7 @@ export function async_derived(fn) {
 			// TODO we should probably null out active effect here,
 			// rather than inside `restore()`
 		}
-	});
+	}, EFFECT_HAS_DERIVED);
 
 	return Promise.resolve(promise).then(() => value);
 }

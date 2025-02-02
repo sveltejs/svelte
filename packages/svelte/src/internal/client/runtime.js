@@ -997,18 +997,14 @@ export function get(signal) {
 		} else {
 			// we're adding a dependency outside the init/update cycle
 			// (i.e. after an `await`)
-			// TODO we probably want to disable this for user effects,
-			// otherwise it's a breaking change, albeit a desirable one?
-			if (deps === null) {
-				deps = [signal];
-			} else if (!deps.includes(signal)) {
-				deps.push(signal);
-			}
+			(active_reaction.deps ??= []).push(signal);
 
-			if (signal.reactions === null) {
+			var reactions = signal.reactions;
+
+			if (reactions === null) {
 				signal.reactions = [active_reaction];
-			} else if (!signal.reactions.includes(active_reaction)) {
-				signal.reactions.push(active_reaction);
+			} else if (!reactions.includes(active_reaction)) {
+				reactions.push(active_reaction);
 			}
 		}
 	} else if (
