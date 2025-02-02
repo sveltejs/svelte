@@ -50,6 +50,8 @@ export interface ComponentAnalysis extends Analysis {
 	uses_slots: boolean;
 	uses_component_bindings: boolean;
 	uses_render_tags: boolean;
+	/** Whether the component uses `$$uid` */
+	uses_uid: boolean;
 	needs_context: boolean;
 	needs_props: boolean;
 	/** Set to the first event directive (on:x) found on a DOM element in the code */

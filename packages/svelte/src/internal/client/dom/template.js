@@ -249,3 +249,24 @@ export function append(anchor, dom) {
 
 	anchor.before(/** @type {Node} */ (dom));
 }
+
+let NEXT_UID = 100;
+
+/**
+ * Create (or hydrate) an unique UID for the component instance.
+ */
+export function create_uid() {
+	let uid;
+	if (
+		hydrating &&
+		hydrate_node &&
+		hydrate_node.nodeType === Node.COMMENT_NODE &&
+		hydrate_node.textContent?.startsWith('#s')
+	) {
+		uid = hydrate_node.textContent.substring(1);
+		hydrate_next();
+	} else {
+		uid = 'c' + NEXT_UID++;
+	}
+	return uid;
+}

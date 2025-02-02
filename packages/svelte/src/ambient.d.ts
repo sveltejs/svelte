@@ -500,3 +500,5 @@ declare namespace $host {
 	/** @deprecated */
 	export const toString: never;
 }
+
+declare const $$uid: string;

@@ -35,6 +35,10 @@ export function Identifier(node, context) {
 		context.state.analysis.uses_slots = true;
 	}
 
+	if (node.name === '$$uid') {
+		context.state.analysis.uses_uid = true;
+	}
+
 	if (context.state.analysis.runes) {
 		if (
 			is_rune(node.name) &&

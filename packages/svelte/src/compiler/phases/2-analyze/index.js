@@ -220,7 +220,7 @@ function get_component_name(filename) {
 	return name[0].toUpperCase() + name.slice(1);
 }
 
-const RESERVED = ['$$props', '$$restProps', '$$slots'];
+const RESERVED = ['$$props', '$$restProps', '$$slots', '$$uid'];
 
 /**
  * @param {Program} ast

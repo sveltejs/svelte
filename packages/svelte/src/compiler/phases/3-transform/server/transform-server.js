@@ -244,6 +244,10 @@ export function server_component(analysis, options) {
 		.../** @type {Statement[]} */ (template.body)
 	]);
 
+	if (analysis.uses_uid) {
+		component_block.body.unshift(b.const('$$uid', b.call('$.create_uid', b.id('$$payload'))));
+	}
+
 	let should_inject_context = dev || analysis.needs_context;
 
 	if (should_inject_context) {

@@ -565,6 +565,10 @@ export function client_component(analysis, options) {
 		component_block.body.unshift(b.stmt(b.call('$.check_target', b.id('new.target'))));
 	}
 
+	if (analysis.uses_uid) {
+		component_block.body.unshift(b.const('$$uid', b.call('$.create_uid')));
+	}
+
 	if (state.events.size > 0) {
 		body.push(
 			b.stmt(b.call('$.delegate', b.array(Array.from(state.events).map((name) => b.literal(name)))))
