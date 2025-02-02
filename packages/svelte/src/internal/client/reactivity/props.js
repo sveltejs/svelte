@@ -8,16 +8,9 @@ import {
 	PROPS_IS_UPDATED
 } from '../../../constants.js';
 import { get_descriptor, is_function } from '../../shared/utils.js';
-import { mutable_source, set, source } from './sources.js';
+import { mutable_source, set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
-import {
-	active_effect,
-	get,
-	captured_signals,
-	set_active_effect,
-	untrack,
-	update
-} from '../runtime.js';
+import { active_effect, get, captured_signals, set_active_effect, untrack } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import {
@@ -297,8 +290,10 @@ export function prop(props, key, flags, fallback) {
 	var is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
 
 	var setter =
-		get_descriptor(props, key)?.set ??
-		(is_entry_props && bindable && key in props ? (v) => (props[key] = v) : undefined);
+		(bindable &&
+			(get_descriptor(props, key)?.set ??
+				(is_entry_props && key in props && ((v) => (props[key] = v))))) ||
+		undefined;
 
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;

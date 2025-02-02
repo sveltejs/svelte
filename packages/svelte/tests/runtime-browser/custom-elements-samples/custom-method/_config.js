@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../assert';
 const tick = () => Promise.resolve();
 
@@ -8,7 +9,8 @@ export default test({
 		/** @type {any} */
 		const el = target.querySelector('custom-element');
 
-		await el.updateFoo(42);
+		el.updateFoo(42);
+		flushSync();
 
 		const p = el.shadowRoot.querySelector('p');
 		assert.equal(p.textContent, '42');

@@ -33,10 +33,7 @@ If a component defines `@keyframes`, the name is scoped to the component using t
 
 	/* these keyframes are only accessible inside this component */
 	@keyframes bounce {
-		/* ... *.
+		/* ... */
 	}
 </style>
 ```
-
-
-

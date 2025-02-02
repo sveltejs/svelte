@@ -1,12 +1,8 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, ObjectExpression, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, ExpressionStatement, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import { dev, is_ignored, locator } from '../../../../state.js';
-import {
-	get_attribute_expression,
-	is_event_attribute,
-	is_text_attribute
-} from '../../../../utils/ast.js';
+import { dev, locator } from '../../../../state.js';
+import { is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { determine_namespace_for_children } from '../../utils.js';
 import {
@@ -15,7 +11,7 @@ import {
 	build_set_attributes,
 	build_style_directives
 } from './shared/element.js';
-import { build_render_statement, build_update } from './shared/utils.js';
+import { build_render_statement } from './shared/utils.js';
 
 /**
  * @param {AST.SvelteElement} node
@@ -49,9 +45,9 @@ export function SvelteElement(node, context) {
 		state: {
 			...context.state,
 			node: element_id,
-			before_init: [],
 			init: [],
 			update: [],
+			expressions: [],
 			after_update: []
 		}
 	};
@@ -123,7 +119,7 @@ export function SvelteElement(node, context) {
 	/** @type {Statement[]} */
 	const inner = inner_context.state.init;
 	if (inner_context.state.update.length > 0) {
-		inner.push(build_render_statement(inner_context.state.update));
+		inner.push(build_render_statement(inner_context.state));
 	}
 	inner.push(...inner_context.state.after_update);
 	inner.push(

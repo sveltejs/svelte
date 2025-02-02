@@ -5,7 +5,8 @@ import * as e from '../../../errors.js';
 import { is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
-import { is_runes, untrack } from '../../../runtime.js';
+import { untrack } from '../../../runtime.js';
+import { is_runes } from '../../../context.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -258,6 +259,15 @@ export function bind_files(input, get, set = get) {
 	listen_to_event_and_reset_event(input, 'change', () => {
 		set(input.files);
 	});
+
+	if (
+		// If we are hydrating and the value has since changed,
+		// then use the updated value from the input instead.
+		hydrating &&
+		input.files
+	) {
+		set(input.files);
+	}
 
 	render_effect(() => {
 		input.files = get();

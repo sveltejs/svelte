@@ -61,9 +61,6 @@ export function Attribute(node, context) {
 			) {
 				continue;
 			}
-
-			node.metadata.expression.has_state ||= chunk.metadata.expression.has_state;
-			node.metadata.expression.has_call ||= chunk.metadata.expression.has_call;
 		}
 
 		if (is_event_attribute(node)) {

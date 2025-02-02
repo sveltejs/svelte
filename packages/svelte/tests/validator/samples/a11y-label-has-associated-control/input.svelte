@@ -10,3 +10,4 @@
 <label>E <span></span></label>
 <label>F {#if true}<input type="text" />{/if}</label>
 <LabelComponent>G <input type="text" /></LabelComponent>
+<label {...forMightBeInHere}>E <span></span></label>

@@ -30,7 +30,7 @@ export default test({
 	async test({ assert, code_client }) {
 		// Check that the css source map embedded in the js is accurate
 		const match = code_client.match(
-			/code: "(.*?)(?:\\n\/\*# sourceMappingURL=data:(.*?);charset=(.*?);base64,(.*?) \*\/)?"/
+			/code: '(.*?)(?:\\n\/\*# sourceMappingURL=data:(.*?);charset=(.*?);base64,(.*?) \*\/)?'/
 		);
 
 		assert.ok(match);

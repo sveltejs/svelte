@@ -171,6 +171,7 @@ function build_assignment(operator, left, right, context) {
 
 	// special case — ignore `bind:prop={getter, (v) => (...)}` / `bind:value={x.y}`
 	if (
+		path.at(-1) === 'BindDirective' ||
 		path.at(-1) === 'Component' ||
 		path.at(-1) === 'SvelteComponent' ||
 		(path.at(-1) === 'ArrowFunctionExpression' &&

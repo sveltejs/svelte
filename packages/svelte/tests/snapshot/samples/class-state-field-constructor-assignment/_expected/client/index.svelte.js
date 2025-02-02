@@ -1,5 +1,5 @@
-import "svelte/internal/disclose-version";
-import * as $ from "svelte/internal/client";
+import 'svelte/internal/disclose-version';
+import * as $ from 'svelte/internal/client';
 
 export default function Class_state_field_constructor_assignment($$anchor, $$props) {
 	$.push($$props, true);

@@ -339,13 +339,18 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 		let sibling_elements; // do them lazy because it's rarely used and expensive to calculate
 
 		// If this is a :has inside a global selector, we gotta include the element itself, too,
-		// because the global selector might be for an element that's outside the component (e.g. :root).
+		// because the global selector might be for an element that's outside the component,
+		// e.g. :root:has(.scoped), :global(.foo):has(.scoped), or :root { &:has(.scoped) {} }
 		const rules = get_parent_rules(rule);
 		const include_self =
 			rules.some((r) => r.prelude.children.some((c) => c.children.some((s) => is_global(s, r)))) ||
 			rules[rules.length - 1].prelude.children.some((c) =>
 				c.children.some((r) =>
-					r.selectors.some((s) => s.type === 'PseudoClassSelector' && s.name === 'root')
+					r.selectors.some(
+						(s) =>
+							s.type === 'PseudoClassSelector' &&
+							(s.name === 'root' || (s.name === 'global' && s.args))
+					)
 				)
 			);
 		if (include_self) {
@@ -638,19 +643,30 @@ function get_following_sibling_elements(element, include_self) {
 	/** @type {Array<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} */
 	const siblings = [];
 
-	// ...then walk them, starting from the node after the one
-	// containing the element in question
+	// ...then walk them, starting from the node containing the element in question
+	// skipping nodes that appears before the element
 
 	const seen = new Set();
+	let skip = true;
 
 	/** @param {Compiler.AST.SvelteNode} node */
 	function get_siblings(node) {
 		walk(node, null, {
 			RegularElement(node) {
-				siblings.push(node);
+				if (node === element) {
+					skip = false;
+					if (include_self) siblings.push(node);
+				} else if (!skip) {
+					siblings.push(node);
+				}
 			},
 			SvelteElement(node) {
-				siblings.push(node);
+				if (node === element) {
+					skip = false;
+					if (include_self) siblings.push(node);
+				} else if (!skip) {
+					siblings.push(node);
+				}
 			},
 			RenderTag(node) {
 				for (const snippet of node.metadata.snippets) {
@@ -663,12 +679,8 @@ function get_following_sibling_elements(element, include_self) {
 		});
 	}
 
-	for (const node of nodes.slice(nodes.indexOf(start) + 1)) {
+	for (const node of nodes.slice(nodes.indexOf(start))) {
 		get_siblings(node);
-	}
-
-	if (include_self) {
-		siblings.push(element);
 	}
 
 	return siblings;

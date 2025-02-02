@@ -4,7 +4,8 @@
 import { cannot_be_set_statically } from '../../../../../../utils.js';
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { build_template_chunk, build_update } from './utils.js';
+import { is_custom_element_node } from '../../../../nodes.js';
+import { build_template_chunk } from './utils.js';
 
 /**
  * Processes an array of template nodes, joining sibling text/expression nodes
@@ -69,7 +70,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 		state.template.push(' ');
 
-		const { has_state, has_call, value } = build_template_chunk(sequence, visit, state);
+		const { has_state, value } = build_template_chunk(sequence, visit, state);
 
 		// if this is a standalone `{expression}`, make sure we handle the case where
 		// no text node was created because the expression was empty during SSR
@@ -78,9 +79,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 		const update = b.stmt(b.call('$.set_text', id, value));
 
-		if (has_call && !within_bound_contenteditable) {
-			state.init.push(build_update(update));
-		} else if (has_state && !within_bound_contenteditable) {
+		if (has_state && !within_bound_contenteditable) {
 			state.update.push(update);
 		} else {
 			state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
@@ -130,7 +129,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 function is_static_element(node, state) {
 	if (node.type !== 'RegularElement') return false;
 	if (node.fragment.metadata.dynamic) return false;
-	if (node.name.includes('-')) return false; // we're setting all attributes on custom elements through properties
+	if (is_custom_element_node(node)) return false; // we're setting all attributes on custom elements through properties
 
 	for (const attribute of node.attributes) {
 		if (attribute.type !== 'Attribute') {

@@ -79,7 +79,8 @@ export function CallExpression(node, context) {
 		case '$derived':
 		case '$derived.by':
 			if (
-				parent.type !== 'VariableDeclarator' &&
+				(parent.type !== 'VariableDeclarator' ||
+					get_parent(context.path, -3).type === 'ConstTag') &&
 				!(parent.type === 'PropertyDefinition' && !parent.static && !parent.computed)
 			) {
 				e.state_invalid_placement(node, rune);
@@ -184,18 +185,6 @@ export function CallExpression(node, context) {
 			}
 
 			break;
-	}
-
-	if (context.state.render_tag) {
-		// Find out which of the render tag arguments contains this call expression
-		const arg_idx = unwrap_optional(context.state.render_tag.expression).arguments.findIndex(
-			(arg) => arg === node || context.path.includes(arg)
-		);
-
-		// -1 if this is the call expression of the render tag itself
-		if (arg_idx !== -1) {
-			context.state.render_tag.metadata.args_with_call_expression.add(arg_idx);
-		}
 	}
 
 	if (node.callee.type === 'Identifier') {

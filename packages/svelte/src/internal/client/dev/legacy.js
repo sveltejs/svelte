@@ -1,5 +1,5 @@
 import * as e from '../errors.js';
-import { component_context } from '../runtime.js';
+import { component_context } from '../context.js';
 import { FILENAME } from '../../../constants.js';
 import { get_component } from './ownership.js';
 

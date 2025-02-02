@@ -23,7 +23,7 @@ export function SvelteBoundary(node, context) {
 
 		const expression = /** @type {Expression} */ (context.visit(chunk.expression, context.state));
 
-		if (attribute.metadata.expression.has_state) {
+		if (chunk.metadata.expression.has_state) {
 			props.properties.push(b.get(attribute.name, [b.return(expression)]));
 		} else {
 			props.properties.push(b.init(attribute.name, expression));
@@ -33,20 +33,33 @@ export function SvelteBoundary(node, context) {
 	const nodes = [];
 
 	/** @type {Statement[]} */
-	const snippet_statements = [];
+	const external_statements = [];
+
+	const snippets_visits = [];
 
 	// Capture the `failed` implicit snippet prop
 	for (const child of node.fragment.nodes) {
 		if (child.type === 'SnippetBlock' && child.expression.name === 'failed') {
+			// we need to delay the visit of the snippets in case they access a ConstTag that is declared
+			// after the snippets so that the visitor for the const tag can be updated
+			snippets_visits.push(() => {
+				/** @type {Statement[]} */
+				const init = [];
+				context.visit(child, { ...context.state, init });
+				props.properties.push(b.prop('init', child.expression, child.expression));
+				external_statements.push(...init);
+			});
+		} else if (child.type === 'ConstTag') {
 			/** @type {Statement[]} */
 			const init = [];
 			context.visit(child, { ...context.state, init });
-			props.properties.push(b.prop('init', child.expression, child.expression));
-			snippet_statements.push(...init);
+			external_statements.push(...init);
 		} else {
 			nodes.push(child);
 		}
 	}
+
+	snippets_visits.forEach((visit) => visit());
 
 	const block = /** @type {BlockStatement} */ (context.visit({ ...node.fragment, nodes }));
 
@@ -56,6 +69,6 @@ export function SvelteBoundary(node, context) {
 
 	context.state.template.push('<!>');
 	context.state.init.push(
-		snippet_statements.length > 0 ? b.block([...snippet_statements, boundary]) : boundary
+		external_statements.length > 0 ? b.block([...external_statements, boundary]) : boundary
 	);
 }

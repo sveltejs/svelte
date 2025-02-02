@@ -1,4 +1,4 @@
-import * as $ from "svelte/internal/server";
+import * as $ from 'svelte/internal/server';
 
 export default function Skip_static_subtree($$payload, $$props) {
 	let { title, content } = $$props;
