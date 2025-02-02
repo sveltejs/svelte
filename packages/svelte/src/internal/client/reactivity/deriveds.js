@@ -5,7 +5,7 @@ import {
 	DERIVED,
 	DESTROYED,
 	DIRTY,
-	EFFECT_HAS_DERIVED,
+	EFFECT_PRESERVED,
 	MAYBE_DIRTY,
 	UNOWNED
 } from '../constants.js';
@@ -58,7 +58,7 @@ export function derived(fn) {
 	} else {
 		// Since deriveds are evaluated lazily, any effects created inside them are
 		// created too late to ensure that the parent effect is added to the tree
-		active_effect.f |= EFFECT_HAS_DERIVED;
+		active_effect.f |= EFFECT_PRESERVED;
 	}
 
 	/** @type {Derived<V>} */
@@ -140,7 +140,7 @@ export function async_derived(fn) {
 			// TODO we should probably null out active effect here,
 			// rather than inside `restore()`
 		}
-	}, EFFECT_HAS_DERIVED);
+	}, EFFECT_PRESERVED);
 
 	return Promise.resolve(promise).then(() => value);
 }

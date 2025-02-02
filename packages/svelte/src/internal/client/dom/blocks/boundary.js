@@ -3,6 +3,7 @@
 import {
 	BOUNDARY_EFFECT,
 	BOUNDARY_SUSPENDED,
+	EFFECT_PRESERVED,
 	EFFECT_TRANSPARENT,
 	RENDER_EFFECT
 } from '../../constants.js';
@@ -62,6 +63,8 @@ function with_boundary(boundary, fn) {
 		set_component_context(previous_ctx);
 	}
 }
+
+var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED | BOUNDARY_EFFECT;
 
 /**
  * @param {TemplateNode} node
@@ -317,7 +320,7 @@ export function boundary(node, props, children) {
 		}
 
 		reset_is_throwing_error();
-	}, EFFECT_TRANSPARENT | BOUNDARY_EFFECT);
+	}, flags);
 
 	if (hydrating) {
 		anchor = hydrate_node;
