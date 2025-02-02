@@ -419,6 +419,7 @@ export function analyze_component(root, source, options) {
 		uses_slots: false,
 		uses_component_bindings: false,
 		uses_render_tags: false,
+		uses_uid: false,
 		needs_context: false,
 		needs_props: false,
 		event_directive_node: null,
