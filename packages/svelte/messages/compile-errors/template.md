@@ -118,7 +118,7 @@
 
 ## const_tag_invalid_placement
 
-> `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>` or `<Component>`
+> `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>`, `<svelte:boundary` or `<Component>`
 
 ## debug_tag_invalid_arguments
 
@@ -417,6 +417,10 @@ See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-ele
 ## unexpected_reserved_word
 
 > '%word%' is a reserved word in JavaScript and cannot be used here
+
+## unterminated_string_constant
+
+> Unterminated string constant
 
 ## void_element_invalid_content
 

@@ -72,7 +72,8 @@ function get_interpolator(a, b) {
 		return (t) => a + t * delta;
 	}
 
-	throw new Error(`Cannot interpolate ${type} values`);
+	// for non-numeric values, snap to the final value immediately
+	return () => b;
 }
 
 /**
@@ -230,10 +231,6 @@ export class Tween {
 	set(value, options) {
 		set(this.#target, value);
 
-		let previous_value = this.#current.v;
-		let previous_task = this.#task;
-
-		let started = false;
 		let {
 			delay = 0,
 			duration = 400,
@@ -241,10 +238,18 @@ export class Tween {
 			interpolate = get_interpolator
 		} = { ...this.#defaults, ...options };
 
+		if (duration === 0) {
+			this.#task?.abort();
+			set(this.#current, value);
+			return Promise.resolve();
+		}
+
 		const start = raf.now() + delay;
 
 		/** @type {(t: number) => T} */
 		let fn;
+		let started = false;
+		let previous_task = this.#task;
 
 		this.#task = loop((now) => {
 			if (now < start) {
@@ -254,10 +259,12 @@ export class Tween {
 			if (!started) {
 				started = true;
 
-				fn = interpolate(/** @type {any} */ (previous_value), value);
+				const prev = this.#current.v;
+
+				fn = interpolate(prev, value);
 
 				if (typeof duration === 'function') {
-					duration = duration(/** @type {any} */ (previous_value), value);
+					duration = duration(prev, value);
 				}
 
 				previous_task?.abort();

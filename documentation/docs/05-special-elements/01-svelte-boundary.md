@@ -13,7 +13,7 @@ Boundaries allow you to guard against errors in part of your app from breaking t
 
 If an error occurs while rendering or updating the children of a `<svelte:boundary>`, or running any [`$effect`]($effect) functions contained therein, the contents will be removed.
 
-Errors occurring outside the rendering process (for example, in event handlers) are _not_ caught by error boundaries.
+Errors occurring outside the rendering process (for example, in event handlers or after a `setTimeout` or async work) are _not_ caught by error boundaries.
 
 ## Properties
 

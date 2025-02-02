@@ -1,4 +1,4 @@
-import * as $ from "svelte/internal/server";
+import * as $ from 'svelte/internal/server';
 
 export default function Await_block_scope($$payload) {
 	let counter = { count: 0 };

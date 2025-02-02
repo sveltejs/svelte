@@ -26,6 +26,15 @@ function mkdirp(dir) {
 	} catch {}
 }
 
+/**
+ * @param {string} file
+ * @param {string} contents
+ */
+function write(file, contents) {
+	mkdirp(path.dirname(file));
+	fs.writeFileSync(file, contents);
+}
+
 const svelte_modules = glob('**/*.svelte', { cwd: `${cwd}/src` });
 const js_modules = glob('**/*.js', { cwd: `${cwd}/src` });
 
@@ -46,7 +55,7 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 				modern: true
 			});
 
-			fs.writeFileSync(
+			write(
 				`${cwd}/output/${file}.json`,
 				JSON.stringify(
 					ast,
@@ -57,7 +66,7 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 
 			try {
 				const migrated = migrate(source);
-				fs.writeFileSync(`${cwd}/output/${file}.migrated.svelte`, migrated.code);
+				write(`${cwd}/output/${file}.migrated.svelte`, migrated.code);
 			} catch (e) {
 				console.warn(`Error migrating ${file}`, e);
 			}
@@ -75,15 +84,12 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 			console.warn(warning.frame);
 		}
 
-		fs.writeFileSync(
-			output_js,
-			compiled.js.code + '\n//# sourceMappingURL=' + path.basename(output_map)
-		);
+		write(output_js, compiled.js.code + '\n//# sourceMappingURL=' + path.basename(output_map));
 
-		fs.writeFileSync(output_map, compiled.js.map.toString());
+		write(output_map, compiled.js.map.toString());
 
 		if (compiled.css) {
-			fs.writeFileSync(output_css, compiled.css.code);
+			write(output_css, compiled.css.code);
 		}
 	}
 
@@ -100,6 +106,6 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 		const output_js = `${cwd}/output/${generate}/${file}`;
 
 		mkdirp(path.dirname(output_js));
-		fs.writeFileSync(output_js, compiled.js.code);
+		write(output_js, compiled.js.code);
 	}
 }

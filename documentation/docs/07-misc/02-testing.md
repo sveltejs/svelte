@@ -40,7 +40,7 @@ You can now write unit tests for code inside your `.js/.ts` files:
 /// file: multiplier.svelte.test.js
 import { flushSync } from 'svelte';
 import { expect, test } from 'vitest';
-import { multiplier } from './multiplier.js';
+import { multiplier } from './multiplier.svelte.js';
 
 test('Multiplier', () => {
 	let double = multiplier(0, 2);
@@ -53,9 +53,30 @@ test('Multiplier', () => {
 });
 ```
 
+```js
+/// file: multiplier.svelte.js
+/**
+ * @param {number} initial
+ * @param {number} k
+ */
+export function multiplier(initial, k) {
+	let count = $state(initial);
+
+	return {
+		get value() {
+			return count * k;
+		},
+		/** @param {number} c */
+		set: (c) => {
+			count = c;
+		}
+	};
+}
+```
+
 ### Using runes inside your test files
 
-It is possible to use runes inside your test files. First ensure your bundler knows to route the file through the Svelte compiler before running the test by adding `.svelte` to the filename (e.g `multiplier.svelte.test.js`). After that, you can use runes inside your tests.
+Since Vitest processes your test files the same way as your source files, you can use runes inside your tests as long as the filename includes `.svelte`:
 
 ```js
 /// file: multiplier.svelte.test.js
@@ -73,6 +94,21 @@ test('Multiplier', () => {
 
 	expect(double.value).toEqual(10);
 });
+```
+
+```js
+/// file: multiplier.svelte.js
+/**
+ * @param {() => number} getCount
+ * @param {number} k
+ */
+export function multiplier(getCount, k) {
+	return {
+		get value() {
+			return getCount() * k;
+		}
+	};
+}
 ```
 
 If the code being tested uses effects, you need to wrap the test inside `$effect.root`:
@@ -103,6 +139,27 @@ test('Effect', () => {
 
 	cleanup();
 });
+```
+
+```js
+/// file: logger.svelte.js
+/**
+ * @param {() => any} getValue
+ */
+export function logger(getValue) {
+	/** @type {any[]} */
+	let log = $state([]);
+
+	$effect(() => {
+		log.push(getValue());
+	});
+
+	return {
+		get value() {
+			return log;
+		}
+	};
+}
 ```
 
 ### Component testing

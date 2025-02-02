@@ -5,6 +5,7 @@
 import {
 	regex_ends_with_whitespaces,
 	regex_not_whitespace,
+	regex_starts_with_newline,
 	regex_starts_with_whitespaces
 } from '../patterns.js';
 import * as b from '../../utils/builders.js';
@@ -269,6 +270,22 @@ export function clean_nodes(
 	}
 
 	var first = trimmed[0];
+
+	// initial newline inside a `<pre>` is disregarded, if not followed by another newline
+	if (parent.type === 'RegularElement' && parent.name === 'pre' && first?.type === 'Text') {
+		const text = first.data.replace(regex_starts_with_newline, '');
+		if (text !== first.data) {
+			const tmp = text.replace(regex_starts_with_newline, '');
+			if (text === tmp) {
+				first.data = text;
+				first.raw = first.raw.replace(regex_starts_with_newline, '');
+				if (first.data === '') {
+					trimmed.shift();
+					first = trimmed[0];
+				}
+			}
+		}
+	}
 
 	// Special case: Add a comment if this is a lone script tag. This ensures that our run_scripts logic in template.js
 	// will always be able to call node.replaceWith() on the script tag in order to make it run. If we don't add this

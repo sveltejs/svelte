@@ -1,4 +1,8 @@
 /** @import { BlurParams, CrossfadeParams, DrawParams, FadeParams, FlyParams, ScaleParams, SlideParams, TransitionConfig } from './public' */
+
+import { DEV } from 'esm-env';
+import * as w from '../internal/client/warnings.js';
+
 /** @param {number} x */
 const linear = (x) => x;
 
@@ -92,6 +96,8 @@ export function fly(
 	};
 }
 
+var slide_warning = false;
+
 /**
  * Slides an element in and out.
  *
@@ -101,6 +107,13 @@ export function fly(
  */
 export function slide(node, { delay = 0, duration = 400, easing = cubic_out, axis = 'y' } = {}) {
 	const style = getComputedStyle(node);
+
+	if (DEV && !slide_warning && /(contents|inline|table)/.test(style.display)) {
+		slide_warning = true;
+		Promise.resolve().then(() => (slide_warning = false));
+		w.transition_slide_display(style.display);
+	}
+
 	const opacity = +style.opacity;
 	const primary_property = axis === 'y' ? 'height' : 'width';
 	const primary_property_value = parseFloat(style[primary_property]);
@@ -131,7 +144,8 @@ export function slide(node, { delay = 0, duration = 400, easing = cubic_out, axi
 			`margin-${secondary_properties[0]}: ${t * margin_start_value}px;` +
 			`margin-${secondary_properties[1]}: ${t * margin_end_value}px;` +
 			`border-${secondary_properties[0]}-width: ${t * border_width_start_value}px;` +
-			`border-${secondary_properties[1]}-width: ${t * border_width_end_value}px;`
+			`border-${secondary_properties[1]}-width: ${t * border_width_end_value}px;` +
+			`min-${primary_property}: 0`
 	};
 }
 

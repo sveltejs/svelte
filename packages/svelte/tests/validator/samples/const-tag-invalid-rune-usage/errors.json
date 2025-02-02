@@ -1,0 +1,14 @@
+[
+	{
+		"code": "state_invalid_placement",
+		"message": "`$derived(...)` can only be used as a variable declaration initializer or a class field",
+		"start": {
+			"line": 2,
+			"column": 15
+		},
+		"end": {
+			"line": 2,
+			"column": 26
+		}
+	}
+]

@@ -4,19 +4,23 @@ export interface Signal {
 	/** Flags bitmask */
 	f: number;
 	/** Write version */
-	version: number;
+	wv: number;
 }
 
 export interface Value<V = unknown> extends Signal {
-	/** Signals that read from this signal */
-	reactions: null | Reaction[];
 	/** Equality function */
 	equals: Equals;
+	/** Signals that read from this signal */
+	reactions: null | Reaction[];
+	/** Read version */
+	rv: number;
 	/** The latest value for this signal */
 	v: V;
 	/** Dev only */
 	created?: Error | null;
 	updated?: Error | null;
+	trace_need_increase?: boolean;
+	trace_v?: V;
 	debug?: null | (() => void);
 }
 
@@ -32,8 +36,8 @@ export interface Reaction extends Signal {
 export interface Derived<V = unknown> extends Value<V>, Reaction {
 	/** The derived function */
 	fn: () => V;
-	/** Reactions created inside this signal */
-	children: null | Reaction[];
+	/** Effects created inside this signal */
+	effects: null | Effect[];
 	/** Parent effect or derived */
 	parent: Effect | Derived | null;
 }
@@ -47,8 +51,6 @@ export interface Effect extends Reaction {
 	 */
 	nodes_start: null | TemplateNode;
 	nodes_end: null | TemplateNode;
-	/** Reactions created inside this signal */
-	deriveds: null | Derived[];
 	/** The effect function */
 	fn: null | (() => void | (() => void));
 	/** The teardown function returned from the effect function */

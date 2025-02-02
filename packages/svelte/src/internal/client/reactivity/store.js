@@ -1,7 +1,8 @@
 /** @import { StoreReferencesContainer } from '#client' */
 /** @import { Store } from '#shared' */
 import { subscribe_to_store } from '../../../store/utils.js';
-import { noop } from '../../shared/utils.js';
+import { get as get_store } from '../../../store/shared/index.js';
+import { define_property, noop } from '../../shared/utils.js';
 import { get } from '../runtime.js';
 import { teardown } from './effects.js';
 import { mutable_source, set } from './sources.js';
@@ -12,6 +13,8 @@ import { mutable_source, set } from './sources.js';
  * runes mode, and skip `binding_property_non_reactive` validation
  */
 let is_store_binding = false;
+
+let IS_UNMOUNTED = Symbol();
 
 /**
  * Gets the current value of a store. If the store isn't subscribed to yet, it will create a proxy
@@ -30,7 +33,8 @@ export function store_get(store, store_name, stores) {
 		unsubscribe: noop
 	});
 
-	if (entry.store !== store) {
+	// if the component that setup this is already unmounted we don't want to register a subscription
+	if (entry.store !== store && !(IS_UNMOUNTED in stores)) {
 		entry.unsubscribe();
 		entry.store = store ?? null;
 
@@ -52,6 +56,13 @@ export function store_get(store, store_name, stores) {
 
 			is_synchronous_callback = false;
 		}
+	}
+
+	// if the component that setup this stores is already unmounted the source will be out of sync
+	// so we just use the `get` for the stores, less performant but it avoids to create a memory leak
+	// and it will keep the value consistent
+	if (store && IS_UNMOUNTED in stores) {
+		return get_store(store);
 	}
 
 	return get(entry.source);
@@ -103,20 +114,26 @@ export function invalidate_store(stores, store_name) {
 
 /**
  * Unsubscribes from all auto-subscribed stores on destroy
- * @returns {StoreReferencesContainer}
+ * @returns {[StoreReferencesContainer, ()=>void]}
  */
 export function setup_stores() {
 	/** @type {StoreReferencesContainer} */
 	const stores = {};
 
-	teardown(() => {
-		for (var store_name in stores) {
-			const ref = stores[store_name];
-			ref.unsubscribe();
-		}
-	});
+	function cleanup() {
+		teardown(() => {
+			for (var store_name in stores) {
+				const ref = stores[store_name];
+				ref.unsubscribe();
+			}
+			define_property(stores, IS_UNMOUNTED, {
+				enumerable: false,
+				value: true
+			});
+		});
+	}
 
-	return stores;
+	return [stores, cleanup];
 }
 
 /**

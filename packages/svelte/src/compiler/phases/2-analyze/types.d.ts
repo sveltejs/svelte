@@ -19,8 +19,6 @@ export interface AnalysisState {
 	component_slots: Set<string>;
 	/** Information about the current expression/directive/block value */
 	expression: ExpressionMetadata | null;
-	/** The current {@render ...} tag, if any */
-	render_tag: null | AST.RenderTag;
 	private_derived_state: string[];
 	function_depth: number;
 

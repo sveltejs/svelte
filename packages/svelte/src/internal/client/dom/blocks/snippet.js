@@ -6,7 +6,7 @@ import { branch, block, destroy_effect, teardown } from '../../reactivity/effect
 import {
 	dev_current_component_function,
 	set_dev_current_component_function
-} from '../../runtime.js';
+} from '../../context.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { create_fragment_from_html } from '../reconciler.js';
 import { assign_nodes } from '../template.js';

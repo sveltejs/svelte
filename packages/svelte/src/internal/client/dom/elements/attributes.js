@@ -68,14 +68,14 @@ export function set_value(element, value) {
 				// treat null and undefined the same for the initial value
 				value ?? undefined) ||
 		// @ts-expect-error
-		// `progress` elements always need their value set when its `0`
+		// `progress` elements always need their value set when it's `0`
 		(element.value === value && (value !== 0 || element.nodeName !== 'PROGRESS'))
 	) {
 		return;
 	}
 
 	// @ts-expect-error
-	element.value = value;
+	element.value = value ?? '';
 }
 
 /**
@@ -221,7 +221,10 @@ export function set_custom_element_data(node, prop, value) {
 			// Don't compute setters for custom elements while they aren't registered yet,
 			// because during their upgrade/instantiation they might add more setters.
 			// Instead, fall back to a simple "an object, then set as property" heuristic.
-			setters_cache.has(node.nodeName) || customElements.get(node.tagName.toLowerCase())
+			setters_cache.has(node.nodeName) ||
+			// customElements may not be available in browser extension contexts
+			!customElements ||
+			customElements.get(node.tagName.toLowerCase())
 				? get_setters(node).includes(prop)
 				: value && typeof value === 'object'
 		) {

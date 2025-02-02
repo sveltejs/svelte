@@ -1,24 +1,22 @@
 /** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
-	component_context,
 	active_reaction,
-	new_deps,
 	active_effect,
 	untracked_writes,
 	get,
-	is_runes,
 	schedule_effect,
 	set_untracked_writes,
 	set_signal_status,
 	untrack,
-	increment_version,
+	increment_write_version,
 	update_effect,
 	derived_sources,
 	set_derived_sources,
 	check_dirtiness,
 	set_is_flushing_effect,
-	is_flushing_effect
+	is_flushing_effect,
+	untracking
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -29,11 +27,13 @@ import {
 	INSPECT_EFFECT,
 	UNOWNED,
 	MAYBE_DIRTY,
-	BLOCK_EFFECT
+	BLOCK_EFFECT,
+	ROOT_EFFECT
 } from '../constants.js';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
+import { component_context, is_runes } from '../context.js';
 
 export let inspect_effects = new Set();
 
@@ -57,7 +57,8 @@ export function source(v, stack) {
 		v,
 		reactions: null,
 		equals,
-		version: 0
+		rv: 0,
+		wv: 0
 	};
 
 	if (DEV && tracing_mode_flag) {
@@ -114,7 +115,7 @@ export function mutable_state(v, immutable = false) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 function push_derived_source(source) {
-	if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
+	if (active_reaction !== null && !untracking && (active_reaction.f & DERIVED) !== 0) {
 		if (derived_sources === null) {
 			set_derived_sources([source]);
 		} else {
@@ -147,6 +148,7 @@ export function mutate(source, value) {
 export function set(source, value) {
 	if (
 		active_reaction !== null &&
+		!untracking &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 &&
 		// If the source was created locally within the current derived, then
@@ -167,35 +169,34 @@ export function set(source, value) {
  */
 export function internal_set(source, value) {
 	if (!source.equals(value)) {
+		var old_value = source.v;
 		source.v = value;
-		source.version = increment_version();
+		source.wv = increment_write_version();
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
+			if (active_effect != null) {
+				source.trace_need_increase = true;
+				source.trace_v ??= old_value;
+			}
 		}
 
 		mark_reactions(source, DIRTY);
 
-		// If the current signal is running for the first time, it won't have any
-		// reactions as we only allocate and assign the reactions after the signal
-		// has fully executed. So in the case of ensuring it registers the reaction
+		// It's possible that the current reaction might not have up-to-date dependencies
+		// whilst it's actively running. So in the case of ensuring it registers the reaction
 		// properly for itself, we need to ensure the current effect actually gets
 		// scheduled. i.e: `$effect(() => x++)`
 		if (
 			is_runes() &&
 			active_effect !== null &&
 			(active_effect.f & CLEAN) !== 0 &&
-			(active_effect.f & BRANCH_EFFECT) === 0
+			(active_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0
 		) {
-			if (new_deps !== null && new_deps.includes(source)) {
-				set_signal_status(active_effect, DIRTY);
-				schedule_effect(active_effect);
+			if (untracked_writes === null) {
+				set_untracked_writes([source]);
 			} else {
-				if (untracked_writes === null) {
-					set_untracked_writes([source]);
-				} else {
-					untracked_writes.push(source);
-				}
+				untracked_writes.push(source);
 			}
 		}
 
@@ -222,6 +223,35 @@ export function internal_set(source, value) {
 	}
 
 	return value;
+}
+
+/**
+ * @template {number | bigint} T
+ * @param {Source<T>} source
+ * @param {1 | -1} [d]
+ * @returns {T}
+ */
+export function update(source, d = 1) {
+	var value = get(source);
+	var result = d === 1 ? value++ : value--;
+
+	set(source, value);
+
+	// @ts-expect-error
+	return result;
+}
+
+/**
+ * @template {number | bigint} T
+ * @param {Source<T>} source
+ * @param {1 | -1} [d]
+ * @returns {T}
+ */
+export function update_pre(source, d = 1) {
+	var value = get(source);
+
+	// @ts-expect-error
+	return set(source, d === 1 ? ++value : --value);
 }
 
 /**

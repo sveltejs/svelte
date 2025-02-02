@@ -222,3 +222,15 @@ Reactive `$state(...)` proxies and the values they proxy have different identiti
 ```
 
 To resolve this, ensure you're comparing values where both values were created with `$state(...)`, or neither were. Note that `$state.raw(...)` will _not_ create a state proxy.
+
+### transition_slide_display
+
+```
+The `slide` transition does not work correctly for elements with `display: %value%`
+```
+
+The [slide](/docs/svelte/svelte-transition#slide) transition works by animating the `height` of the element, which requires a `display` style like `block`, `flex` or `grid`. It does not work for:
+
+- `display: inline` (which is the default for elements like `<span>`), and its variants like `inline-block`, `inline-flex` and `inline-grid`
+- `display: table` and `table-[name]`, which are the defaults for elements like `<table>` and `<tr>`
+- `display: contents`
