@@ -42,7 +42,7 @@ import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
-import { derived, destroy_derived } from './deriveds.js';
+import { derived } from './deriveds.js';
 import { component_context, dev_current_component_function } from '../context.js';
 
 /**
