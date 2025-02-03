@@ -13,6 +13,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../../runtime.js';
+import { attach } from './attachments.js';
 import { clsx } from '../../../shared/attributes.js';
 
 /**
@@ -245,8 +246,8 @@ export function set_custom_element_data(node, prop, value) {
 /**
  * Spreads attributes onto a DOM element, taking into account the currently set attributes
  * @param {Element & ElementCSSInlineStyle} element
- * @param {Record<string, any> | undefined} prev
- * @param {Record<string, any>} next New attributes - this function mutates this object
+ * @param {Record<string | symbol, any> | undefined} prev
+ * @param {Record<string | symbol, any>} next New attributes - this function mutates this object
  * @param {string} [css_hash]
  * @param {boolean} [preserve_attribute_case]
  * @param {boolean} [is_custom_element]
@@ -413,6 +414,10 @@ export function set_attributes(
 			// reset styles to force style: directive to update
 			element.__styles = {};
 		}
+	}
+
+	for (let symbol of Object.getOwnPropertySymbols(next)) {
+		attach(element, () => next[symbol]);
 	}
 
 	return current;
