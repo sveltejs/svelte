@@ -85,7 +85,7 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
  */
 export let on_destroy = [];
 
-function create_uid_generator() {
+function props_id_generator() {
 	let uid = 100;
 	return () => 's' + uid++;
 }
@@ -104,7 +104,7 @@ export function render(component, options = {}) {
 		out: '',
 		css: new Set(),
 		head: { title: '', out: '' },
-		uid: options.uid ?? create_uid_generator()
+		uid: options.uid ?? props_id_generator()
 	};
 
 	const prev_on_destroy = on_destroy;
@@ -543,7 +543,7 @@ export function once(get_value) {
  * @param {Payload} payload
  * @returns {string}
  */
-export function create_uid(payload) {
+export function props_id(payload) {
 	const UID = payload.uid();
 	payload.out += '<!--#' + UID + '-->';
 	return UID;

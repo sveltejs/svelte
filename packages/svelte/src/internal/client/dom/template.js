@@ -255,7 +255,7 @@ let NEXT_UID = 100;
 /**
  * Create (or hydrate) an unique UID for the component instance.
  */
-export function create_uid() {
+export function props_id() {
 	let uid;
 	if (
 		hydrating &&
