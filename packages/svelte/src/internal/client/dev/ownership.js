@@ -6,7 +6,7 @@ import { render_effect, user_pre_effect } from '../reactivity/effects.js';
 import { dev_current_component_function } from '../context.js';
 import { get_prototype_of } from '../../shared/utils.js';
 import * as w from '../warnings.js';
-import { FILENAME } from '../../../constants.js';
+import { FILENAME, UNINITIALIZED } from '../../../constants.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
 const boundaries = {};
@@ -141,6 +141,25 @@ export function add_owner_effect(get_object, Component, skip_warning = false) {
 }
 
 /**
+ * @param {any} _this
+ * @param {Function} owner
+ * @param {Array<() => any>} getters
+ * @param {boolean} skip_warning
+ */
+export function add_owner_to_class(_this, owner, getters, skip_warning) {
+	_this[ADD_OWNER].current ||= getters.map(() => UNINITIALIZED);
+
+	for (let i = 0; i < getters.length; i += 1) {
+		const current = getters[i]();
+		// For performance reasons we only re-add the owner if the state has changed
+		if (current !== _this[ADD_OWNER][i]) {
+			_this[ADD_OWNER].current[i] = current;
+			add_owner(current, owner, false, skip_warning);
+		}
+	}
+}
+
+/**
  * @param {ProxyMetadata | null} from
  * @param {ProxyMetadata} to
  */
@@ -196,7 +215,19 @@ function add_owner_to_object(object, owner, seen) {
 			if (proto === Object.prototype) {
 				// recurse until we find a state proxy
 				for (const key in object) {
-					add_owner_to_object(object[key], owner, seen);
+					if (Object.getOwnPropertyDescriptor(object, key)?.get) {
+						// Similar to the class case; the getter could update with a new state
+						let current = UNINITIALIZED;
+						render_effect(() => {
+							const next = object[key];
+							if (current !== next) {
+								current = next;
+								add_owner_to_object(next, owner, seen);
+							}
+						});
+					} else {
+						add_owner_to_object(object[key], owner, seen);
+					}
 				}
 			} else if (proto === Array.prototype) {
 				// recurse until we find a state proxy
@@ -221,9 +252,10 @@ function has_owner(metadata, component) {
 	return (
 		metadata.owners.has(component) ||
 		// This helps avoid false positives when using HMR, where the component function is replaced
-		[...metadata.owners].some(
-			(owner) => /** @type {any} */ (owner)[FILENAME] === /** @type {any} */ (component)?.[FILENAME]
-		) ||
+		(FILENAME in component &&
+			[...metadata.owners].some(
+				(owner) => /** @type {any} */ (owner)[FILENAME] === component[FILENAME]
+			)) ||
 		(metadata.parent !== null && has_owner(metadata.parent, component))
 	);
 }
