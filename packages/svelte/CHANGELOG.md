@@ -1,5 +1,11 @@
 # svelte
 
+## 5.19.7
+
+### Patch Changes
+
+- fix: encounter svelte:element in blocks as sibling during pruning css ([#15165](https://github.com/sveltejs/svelte/pull/15165))
+
 ## 5.19.6
 
 ### Patch Changes
