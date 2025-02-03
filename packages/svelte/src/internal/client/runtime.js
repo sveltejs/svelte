@@ -966,8 +966,9 @@ export function get(signal) {
 			e.state_unsafe_local_read();
 		}
 
-		// if we're in an async derived, the parent effect could have
-		// already been destroyed
+		// if we're in a derived that is being read inside an _async_ derived,
+		// it's possible that the effect was already destroyed. In this case,
+		// we don't add the dependency, because that would create a memory leak
 		var destroyed = active_effect !== null && (active_effect.f & DESTROYED) !== 0;
 
 		if (!destroyed) {
