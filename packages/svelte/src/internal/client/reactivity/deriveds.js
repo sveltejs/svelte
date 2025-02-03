@@ -176,15 +176,3 @@ export function update_derived(derived) {
 		derived.wv = increment_write_version();
 	}
 }
-
-/**
- * @param {Derived} derived
- * @returns {void}
- */
-export function destroy_derived(derived) {
-	destroy_derived_effects(derived);
-	remove_reactions(derived, 0);
-	set_signal_status(derived, DESTROYED);
-
-	derived.v = derived.deps = derived.ctx = derived.reactions = null;
-}

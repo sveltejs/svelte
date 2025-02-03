@@ -27,12 +27,7 @@ import {
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set } from './reactivity/sources.js';
-import {
-	destroy_derived,
-	destroy_derived_effects,
-	execute_derived,
-	update_derived
-} from './reactivity/deriveds.js';
+import { destroy_derived_effects, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
 import { tracing_mode_flag } from '../flags/index.js';
@@ -918,15 +913,6 @@ export async function tick() {
 export function get(signal) {
 	var flags = signal.f;
 	var is_derived = (flags & DERIVED) !== 0;
-
-	// If the derived is destroyed, just execute it again without retaining
-	// its memoisation properties as the derived is stale
-	if (is_derived && (flags & DESTROYED) !== 0) {
-		var value = execute_derived(/** @type {Derived} */ (signal));
-		// Ensure the derived remains destroyed
-		destroy_derived(/** @type {Derived} */ (signal));
-		return value;
-	}
 
 	if (captured_signals !== null) {
 		captured_signals.add(signal);
