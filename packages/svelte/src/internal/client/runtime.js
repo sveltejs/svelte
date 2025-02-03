@@ -34,9 +34,7 @@ import {
 } from './dom/task.js';
 import { internal_set } from './reactivity/sources.js';
 import {
-	destroy_derived,
 	destroy_derived_effects,
-	execute_derived,
 	from_async_derived,
 	recent_async_deriveds,
 	update_derived
@@ -956,15 +954,6 @@ export async function tick() {
 export function get(signal) {
 	var flags = signal.f;
 	var is_derived = (flags & DERIVED) !== 0;
-
-	// If the derived is destroyed, just execute it again without retaining
-	// its memoisation properties as the derived is stale
-	if (is_derived && (flags & DESTROYED) !== 0) {
-		var value = execute_derived(/** @type {Derived} */ (signal));
-		// Ensure the derived remains destroyed
-		destroy_derived(/** @type {Derived} */ (signal));
-		return value;
-	}
 
 	if (captured_signals !== null) {
 		captured_signals.add(signal);
