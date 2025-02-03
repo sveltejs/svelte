@@ -529,6 +529,7 @@ function remove_reaction(signal, dependency) {
 			}
 		}
 	}
+
 	// If the derived has no reactions, then we can disconnect it from the graph,
 	// allowing it to either reconnect in the future, or be GC'd by the VM.
 	if (
@@ -965,35 +966,41 @@ export function get(signal) {
 			e.state_unsafe_local_read();
 		}
 
-		var deps = active_reaction.deps;
+		// if we're in an async derived, the parent effect could have
+		// already been destroyed
+		var destroyed = active_effect !== null && (active_effect.f & DESTROYED) !== 0;
 
-		if ((active_reaction.f & REACTION_IS_UPDATING) !== 0) {
-			// we're in the effect init/update cycle
-			if (signal.rv < read_version) {
-				signal.rv = read_version;
+		if (!destroyed) {
+			var deps = active_reaction.deps;
 
-				// If the signal is accessing the same dependencies in the same
-				// order as it did last time, increment `skipped_deps`
-				// rather than updating `new_deps`, which creates GC cost
-				if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
-					skipped_deps++;
-				} else if (new_deps === null) {
-					new_deps = [signal];
-				} else {
-					new_deps.push(signal);
+			if ((active_reaction.f & REACTION_IS_UPDATING) !== 0) {
+				// we're in the effect init/update cycle
+				if (signal.rv < read_version) {
+					signal.rv = read_version;
+
+					// If the signal is accessing the same dependencies in the same
+					// order as it did last time, increment `skipped_deps`
+					// rather than updating `new_deps`, which creates GC cost
+					if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
+						skipped_deps++;
+					} else if (new_deps === null) {
+						new_deps = [signal];
+					} else {
+						new_deps.push(signal);
+					}
 				}
-			}
-		} else {
-			// we're adding a dependency outside the init/update cycle
-			// (i.e. after an `await`)
-			(active_reaction.deps ??= []).push(signal);
+			} else {
+				// we're adding a dependency outside the init/update cycle
+				// (i.e. after an `await`)
+				(active_reaction.deps ??= []).push(signal);
 
-			var reactions = signal.reactions;
+				var reactions = signal.reactions;
 
-			if (reactions === null) {
-				signal.reactions = [active_reaction];
-			} else if (!reactions.includes(active_reaction)) {
-				reactions.push(active_reaction);
+				if (reactions === null) {
+					signal.reactions = [active_reaction];
+				} else if (!reactions.includes(active_reaction)) {
+					reactions.push(active_reaction);
+				}
 			}
 		}
 	} else if (
