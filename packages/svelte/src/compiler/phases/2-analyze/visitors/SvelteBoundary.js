@@ -2,7 +2,7 @@
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 
-const valid = ['onerror', 'failed', 'pending'];
+const valid = ['onerror', 'failed', 'pending', 'showPendingAfter', 'showPendingFor'];
 
 /**
  * @param {AST.SvelteBoundary} node

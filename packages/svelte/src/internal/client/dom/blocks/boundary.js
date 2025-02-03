@@ -4,6 +4,7 @@ import {
 	BOUNDARY_EFFECT,
 	BOUNDARY_SUSPENDED,
 	EFFECT_PRESERVED,
+	EFFECT_RAN,
 	EFFECT_TRANSPARENT,
 	RENDER_EFFECT
 } from '../../constants.js';
@@ -33,6 +34,8 @@ import { queue_boundary_micro_task } from '../task.js';
 import * as e from '../../../shared/errors.js';
 import { DEV } from 'esm-env';
 import { from_async_derived, set_from_async_derived } from '../../reactivity/deriveds.js';
+import { raf } from '../../timing.js';
+import { loop } from '../../loop.js';
 
 const ASYNC_INCREMENT = Symbol();
 const ASYNC_DECREMENT = Symbol();
@@ -69,15 +72,19 @@ var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED | BOUNDARY_EFFECT;
 /**
  * @param {TemplateNode} node
  * @param {{
- * 	 onerror?: (error: unknown, reset: () => void) => void,
- *   failed?: (anchor: Node, error: () => unknown, reset: () => () => void) => void
- *   pending?: (anchor: Node) => void
+ * 	 onerror?: (error: unknown, reset: () => void) => void;
+ *   failed?: (anchor: Node, error: () => unknown, reset: () => () => void) => void;
+ *   pending?: (anchor: Node) => void;
+ *   showPendingAfter?: number;
+ *   showPendingFor?: number;
  * }} props
  * @param {((anchor: Node) => void)} children
  * @returns {void}
  */
 export function boundary(node, props, children) {
 	var anchor = node;
+
+	var parent_boundary = find_boundary(active_effect);
 
 	block(() => {
 		/** @type {Effect | null} */
@@ -105,6 +112,8 @@ export function boundary(node, props, children) {
 
 		/** @type {Effect[]} */
 		var effects = [];
+
+		var keep_pending_snippet = false;
 
 		/**
 		 * @param {() => void} snippet_fn
@@ -145,6 +154,10 @@ export function boundary(node, props, children) {
 		}
 
 		function unsuspend() {
+			if (keep_pending_snippet || async_count > 0) {
+				return;
+			}
+
 			if ((boundary.f & BOUNDARY_SUSPENDED) !== 0) {
 				boundary.f ^= BOUNDARY_SUSPENDED;
 			}
@@ -184,19 +197,70 @@ export function boundary(node, props, children) {
 			}
 		}
 
+		/**
+		 * @param {boolean} initial
+		 */
+		function show_pending_snippet(initial) {
+			const pending = props.pending;
+
+			if (pending !== undefined) {
+				// TODO can this be false?
+				if (main_effect !== null) {
+					offscreen_fragment = document.createDocumentFragment();
+					move_effect(main_effect, offscreen_fragment);
+				}
+
+				if (pending_effect === null) {
+					pending_effect = branch(() => pending(anchor));
+				}
+
+				// TODO do we want to differentiate between initial render and updates here?
+				if (!initial) {
+					keep_pending_snippet = true;
+
+					var end = raf.now() + (props.showPendingFor ?? 300);
+
+					loop((now) => {
+						if (now >= end) {
+							keep_pending_snippet = false;
+							unsuspend();
+							return false;
+						}
+
+						return true;
+					});
+				}
+			} else if (parent_boundary) {
+				throw new Error('TODO show pending snippet on parent');
+			} else {
+				throw new Error('no pending snippet to show');
+			}
+		}
+
 		// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
 		boundary.fn = (/** @type {unknown} */ input, /** @type {any} */ payload) => {
 			if (input === ASYNC_INCREMENT) {
+				// post-init, show the pending snippet after a timeout
+				if ((boundary.f & BOUNDARY_SUSPENDED) === 0 && (boundary.f & EFFECT_RAN) !== 0) {
+					var start = raf.now();
+					var end = start + (props.showPendingAfter ?? 500);
+
+					loop((now) => {
+						if (async_count === 0) return false;
+						if (now < end) return true;
+
+						show_pending_snippet(false);
+					});
+				}
+
 				boundary.f |= BOUNDARY_SUSPENDED;
 				async_count++;
-
-				// TODO post-init, show the pending snippet after a timeout
 
 				return;
 			}
 
 			if (input === ASYNC_DECREMENT) {
-				if (--async_count === 0) {
+				if (--async_count === 0 && !keep_pending_snippet) {
 					unsuspend();
 
 					if (main_effect !== null) {
@@ -307,15 +371,7 @@ export function boundary(node, props, children) {
 
 			if (async_count > 0) {
 				boundary.f |= BOUNDARY_SUSPENDED;
-
-				if (pending) {
-					offscreen_fragment = document.createDocumentFragment();
-					move_effect(main_effect, offscreen_fragment);
-
-					pending_effect = branch(() => pending(anchor));
-				} else {
-					// TODO trigger pending boundary on parent
-				}
+				show_pending_snippet(true);
 			}
 		}
 
