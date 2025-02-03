@@ -29,6 +29,7 @@ import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
 import { capture, suspend } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
+import { noop } from '../../shared/utils.js';
 
 /** @type {Effect | null} */
 export let from_async_derived = null;
@@ -100,6 +101,9 @@ export function async_derived(fn, detect_waterfall = true) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var value = source(/** @type {V} */ (undefined));
 
+	// only suspend in async deriveds created on initialisation
+	var should_suspend = !active_reaction;
+
 	// TODO this isn't a block
 	block(async () => {
 		if (DEV) from_async_derived = active_effect;
@@ -107,7 +111,7 @@ export function async_derived(fn, detect_waterfall = true) {
 		if (DEV) from_async_derived = null;
 
 		var restore = capture();
-		var unsuspend = suspend();
+		var unsuspend = should_suspend ? suspend() : noop;
 
 		try {
 			var v = await promise;
