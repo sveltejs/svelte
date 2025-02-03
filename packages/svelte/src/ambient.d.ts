@@ -339,6 +339,8 @@ declare namespace $effect {
 declare function $props(): any;
 
 declare namespace $props {
+	export function id(): string;
+
 	// prevent intellisense from being unhelpful
 	/** @deprecated */
 	export const apply: never;
@@ -500,5 +502,3 @@ declare namespace $host {
 	/** @deprecated */
 	export const toString: never;
 }
-
-declare const $$uid: string;

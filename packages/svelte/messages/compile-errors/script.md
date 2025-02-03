@@ -120,7 +120,7 @@ This turned out to be buggy and unpredictable, particularly when working with de
 
 ## props_duplicate
 
-> Cannot use `$props()` more than once
+> Cannot use `%rune%` more than once
 
 ## props_illegal_name
 
@@ -136,7 +136,7 @@ This turned out to be buggy and unpredictable, particularly when working with de
 
 ## props_invalid_placement
 
-> `$props()` can only be used at the top level of components as a variable declaration initializer
+> `%rune%` can only be used at the top level of components as a variable declaration initializer
 
 ## reactive_declaration_cycle
 

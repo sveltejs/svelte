@@ -55,7 +55,7 @@ export function CallExpression(node, context) {
 
 		case '$props':
 			if (context.state.has_props_rune) {
-				e.props_duplicate(node);
+				e.props_duplicate(node, rune);
 			}
 
 			context.state.has_props_rune = true;
@@ -65,12 +65,34 @@ export function CallExpression(node, context) {
 				context.state.ast_type !== 'instance' ||
 				context.state.scope !== context.state.analysis.instance.scope
 			) {
-				e.props_invalid_placement(node);
+				e.props_invalid_placement(node, rune);
 			}
 
 			if (node.arguments.length > 0) {
 				e.rune_invalid_arguments(node, rune);
 			}
+
+			break;
+
+		case '$props.id':
+			if (context.state.analysis.props_id) {
+				e.props_duplicate(node, rune);
+			}
+
+			if (
+				parent.type !== 'VariableDeclarator' ||
+				parent.id.type !== 'Identifier' ||
+				context.state.ast_type !== 'instance' ||
+				context.state.scope !== context.state.analysis.instance.scope
+			) {
+				e.props_invalid_placement(node, rune);
+			}
+
+			if (node.arguments.length > 0) {
+				e.rune_invalid_arguments(node, rune);
+			}
+
+			context.state.analysis.props_id = parent.id;
 
 			break;
 

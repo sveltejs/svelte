@@ -562,8 +562,9 @@ export function client_component(analysis, options) {
 		component_block.body.unshift(b.stmt(b.call('$.check_target', b.id('new.target'))));
 	}
 
-	if (analysis.uses_uid) {
-		component_block.body.unshift(b.const('$$uid', b.call('$.create_uid')));
+	if (analysis.props_id) {
+		// need to be placed on first line of the component for hydration
+		component_block.body.unshift(b.const(analysis.props_id, b.call('$.create_uid')));
 	}
 
 	if (state.events.size > 0) {

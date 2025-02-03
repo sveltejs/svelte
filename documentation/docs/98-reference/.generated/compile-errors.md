@@ -573,7 +573,7 @@ Unrecognised compiler option %keypath%
 ### props_duplicate
 
 ```
-Cannot use `$props()` more than once
+Cannot use `%rune%` more than once
 ```
 
 ### props_illegal_name
@@ -597,7 +597,7 @@ Declaring or accessing a prop starting with `$$` is illegal (they are reserved f
 ### props_invalid_placement
 
 ```
-`$props()` can only be used at the top level of components as a variable declaration initializer
+`%rune%` can only be used at the top level of components as a variable declaration initializer
 ```
 
 ### reactive_declaration_cycle

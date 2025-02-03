@@ -244,8 +244,11 @@ export function server_component(analysis, options) {
 		.../** @type {Statement[]} */ (template.body)
 	]);
 
-	if (analysis.uses_uid) {
-		component_block.body.unshift(b.const('$$uid', b.call('$.create_uid', b.id('$$payload'))));
+	if (analysis.props_id) {
+		// need to be placed on first line of the component for hydration
+		component_block.body.unshift(
+			b.const(analysis.props_id, b.call('$.create_uid', b.id('$$payload')))
+		);
 	}
 
 	let should_inject_context = dev || analysis.needs_context;

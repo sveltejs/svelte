@@ -44,14 +44,14 @@ export interface ComponentAnalysis extends Analysis {
 	exports: Array<{ name: string; alias: string | null }>;
 	/** Whether the component uses `$$props` */
 	uses_props: boolean;
+	/** The component ID variable name, if any */
+	props_id: Identifier | null;
 	/** Whether the component uses `$$restProps` */
 	uses_rest_props: boolean;
 	/** Whether the component uses `$$slots` */
 	uses_slots: boolean;
 	uses_component_bindings: boolean;
 	uses_render_tags: boolean;
-	/** Whether the component uses `$$uid` */
-	uses_uid: boolean;
 	needs_context: boolean;
 	needs_props: boolean;
 	/** Set to the first event directive (on:x) found on a DOM element in the code */
