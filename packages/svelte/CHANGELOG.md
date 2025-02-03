@@ -1,5 +1,13 @@
 # svelte
 
+## 5.19.7
+
+### Patch Changes
+
+- chore: remove unused code from signal logic ([#15195](https://github.com/sveltejs/svelte/pull/15195))
+
+- fix: encounter svelte:element in blocks as sibling during pruning css ([#15165](https://github.com/sveltejs/svelte/pull/15165))
+
 ## 5.19.6
 
 ### Patch Changes
