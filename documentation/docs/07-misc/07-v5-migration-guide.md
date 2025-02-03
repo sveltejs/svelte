@@ -722,7 +722,39 @@ If a bindable property has a default value (e.g. `let { foo = $bindable('bar') }
 
 ### `accessors` option is ignored
 
-Setting the `accessors` option to `true` makes properties of a component directly accessible on the component instance. In runes mode, properties are never accessible on the component instance. You can use component exports instead if you need to expose them.
+Setting the `accessors` option to `true` makes properties of a component directly accessible on the component instance.
+
+```svelte
+<svelte:options accessors={true} />
+
+<script>
+	// available via componentInstance.name
+	export let name;
+</script>
+```
+
+In runes mode, properties are never accessible on the component instance. You can use component exports instead if you need to expose them.
+
+```svelte
+<script>
+	let { name } = $props();
+	// available via componentInstance.getName()
+	export const getName = () => name;
+</script>
+```
+
+Alternatively, if the place where they are instantiated is under your control, you can also make use of runes inside `.js/.ts` files by adjusting their ending to include `.svelte`, i.e. `.svelte.js` or `.svelte.ts`, and then use `$state`:
+
+```js
++++import { mount } from 'svelte';+++
+import App from './App.svelte'
+
+---const app = new App({ target: document.getElementById("app"), props: { foo: 'bar' } });
+app.foo = 'baz'---
++++const props = $state({ foo: 'bar' });
+const app = mount(App, { target: document.getElementById("app"), props });
+props.foo = 'baz';+++
+```
 
 ### `immutable` option is ignored
 
