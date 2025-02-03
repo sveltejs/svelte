@@ -279,13 +279,22 @@ export function module_illegal_default_export(node) {
 }
 
 /**
- * Cannot use `%rune%` more than once
+ * Cannot use `%rune%()` more than once
  * @param {null | number | NodeLike} node
  * @param {string} rune
  * @returns {never}
  */
 export function props_duplicate(node, rune) {
-	e(node, 'props_duplicate', `Cannot use \`${rune}\` more than once\nhttps://svelte.dev/e/props_duplicate`);
+	e(node, 'props_duplicate', `Cannot use \`${rune}()\` more than once\nhttps://svelte.dev/e/props_duplicate`);
+}
+
+/**
+ * `$props.id()` can only be affected at the top level of components as a const declaration initializer
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function props_id_invalid_placement(node) {
+	e(node, 'props_id_invalid_placement', `\`$props.id()\` can only be affected at the top level of components as a const declaration initializer\nhttps://svelte.dev/e/props_id_invalid_placement`);
 }
 
 /**
@@ -316,13 +325,12 @@ export function props_invalid_pattern(node) {
 }
 
 /**
- * `%rune%` can only be used at the top level of components as a variable declaration initializer
+ * `$props()` can only be used at the top level of components as a variable declaration initializer
  * @param {null | number | NodeLike} node
- * @param {string} rune
  * @returns {never}
  */
-export function props_invalid_placement(node, rune) {
-	e(node, 'props_invalid_placement', `\`${rune}\` can only be used at the top level of components as a variable declaration initializer\nhttps://svelte.dev/e/props_invalid_placement`);
+export function props_invalid_placement(node) {
+	e(node, 'props_invalid_placement', `\`$props()\` can only be used at the top level of components as a variable declaration initializer\nhttps://svelte.dev/e/props_invalid_placement`);
 }
 
 /**

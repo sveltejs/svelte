@@ -65,7 +65,7 @@ export function CallExpression(node, context) {
 				context.state.ast_type !== 'instance' ||
 				context.state.scope !== context.state.analysis.instance.scope
 			) {
-				e.props_invalid_placement(node, rune);
+				e.props_invalid_placement(node);
 			}
 
 			if (node.arguments.length > 0) {
@@ -74,7 +74,9 @@ export function CallExpression(node, context) {
 
 			break;
 
-		case '$props.id':
+		case '$props.id': {
+			const grand_parent = get_parent(context.path, -2);
+
 			if (context.state.analysis.props_id) {
 				e.props_duplicate(node, rune);
 			}
@@ -83,9 +85,11 @@ export function CallExpression(node, context) {
 				parent.type !== 'VariableDeclarator' ||
 				parent.id.type !== 'Identifier' ||
 				context.state.ast_type !== 'instance' ||
-				context.state.scope !== context.state.analysis.instance.scope
+				context.state.scope !== context.state.analysis.instance.scope ||
+				grand_parent.type !== 'VariableDeclaration' ||
+				grand_parent.kind !== 'const'
 			) {
-				e.props_invalid_placement(node, rune);
+				e.props_id_invalid_placement(node);
 			}
 
 			if (node.arguments.length > 0) {
@@ -95,6 +99,7 @@ export function CallExpression(node, context) {
 			context.state.analysis.props_id = parent.id;
 
 			break;
+		}
 
 		case '$state':
 		case '$state.raw':
