@@ -1,19 +1,19 @@
 import { DEV } from 'esm-env';
-import { hydrating } from '../hydration.js';
-import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
-import { create_event, delegate } from './events.js';
-import { add_form_reset_listener, autofocus } from './misc.js';
-import * as w from '../../warnings.js';
-import { LOADING_ATTR_SYMBOL } from '../../constants.js';
-import { queue_idle_task } from '../task.js';
 import { is_capture_event, is_delegated, normalize_attribute } from '../../../../utils.js';
+import { clsx } from '../../../shared/attributes.js';
+import { define_property, get_descriptors, get_prototype_of } from '../../../shared/utils.js';
+import { LOADING_ATTR_SYMBOL } from '../../constants.js';
 import {
 	active_effect,
 	active_reaction,
 	set_active_effect,
 	set_active_reaction
 } from '../../runtime.js';
-import { clsx } from '../../../shared/attributes.js';
+import * as w from '../../warnings.js';
+import { hydrating } from '../hydration.js';
+import { queue_idle_task } from '../task.js';
+import { create_event, delegate } from './events.js';
+import { add_form_reset_listener, autofocus } from './misc.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -515,11 +515,54 @@ export function handle_lazy_img(element) {
 	// templates.
 	if (!hydrating && element.loading === 'lazy') {
 		var src = element.src;
+		var loading = element.loading;
 		// @ts-expect-error
 		element[LOADING_ATTR_SYMBOL] = null;
 		element.loading = 'eager';
 		element.removeAttribute('src');
+
+		// since we are removing src before the first animation frame if someone
+		// access src or loading on mount or in an action they will have the wrong value
+		// so we define those two properties so that if accessed through JS it will
+		// return the correct value. Since we can't undo this we also mimic the behavior
+		// of setting the attribute in the setter
+		define_property(element, 'src', {
+			get() {
+				return src;
+			},
+			set(new_src) {
+				element.setAttribute('src', new_src);
+				src = new_src;
+			},
+			configurable: true,
+			enumerable: true
+		});
+		define_property(element, 'loading', {
+			get() {
+				return loading;
+			},
+			set(new_loading) {
+				element.setAttribute('loading', new_loading);
+				loading = new_loading;
+			},
+			configurable: true,
+			enumerable: true
+		});
+
+		// same story as above with getAttribute...we fake it until we restore the
+		// old `setAttribute` value after the first animation frame
+		const old_get_attribute = element.getAttribute;
+		element.getAttribute = (name) => {
+			if (name === 'src') {
+				return src;
+			}
+			if (name === 'loading') {
+				return loading;
+			}
+			return old_get_attribute.call(element, name);
+		};
 		requestAnimationFrame(() => {
+			element.getAttribute = old_get_attribute;
 			// @ts-expect-error
 			if (element[LOADING_ATTR_SYMBOL] !== 'eager') {
 				element.loading = 'lazy';
