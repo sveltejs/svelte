@@ -220,7 +220,7 @@ function get_component_name(filename) {
 	return name[0].toUpperCase() + name.slice(1);
 }
 
-const RESERVED = ['$$props', '$$restProps', '$$slots'];
+const RESERVED = ['$$props', '$$restProps', '$$slots', '$$uid'];
 
 /**
  * @param {Program} ast
@@ -420,6 +420,7 @@ export function analyze_component(root, source, options) {
 		uses_slots: false,
 		uses_component_bindings: false,
 		uses_render_tags: false,
+		uses_uid: false,
 		needs_context: false,
 		needs_props: false,
 		event_directive_node: null,

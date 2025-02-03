@@ -3157,4 +3157,6 @@ declare namespace $host {
 	export const toString: never;
 }
 
+declare const $$uid: string;
+
 //# sourceMappingURL=index.d.ts.map
