@@ -101,6 +101,7 @@ export {
 } from './dom/template.js';
 export { async_derived, derived, derived_safe_equal } from './reactivity/deriveds.js';
 export {
+	aborted,
 	effect_tracking,
 	effect_root,
 	legacy_pre_effect,

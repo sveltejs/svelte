@@ -659,3 +659,8 @@ function resume_children(effect, local) {
 		}
 	}
 }
+
+export function aborted() {
+	var effect = /** @type {Effect} */ (active_effect);
+	return (effect.f & DESTROYED) !== 0;
+}

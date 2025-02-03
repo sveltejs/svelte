@@ -363,8 +363,7 @@ export function client_component(analysis, options) {
 		.../** @type {ESTree.Statement[]} */ (instance.body),
 		analysis.runes || !analysis.needs_context
 			? b.empty
-			: b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)),
-		.../** @type {ESTree.Statement[]} */ (template.body)
+			: b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined))
 	]);
 
 	if (analysis.instance.is_async) {
@@ -374,6 +373,8 @@ export function client_component(analysis, options) {
 			b.block([
 				b.var('$$unsuspend', b.call('$.suspend')),
 				...component_block.body,
+				b.if(b.call('$.aborted'), b.return()),
+				.../** @type {ESTree.Statement[]} */ (template.body),
 				b.stmt(b.call('$$unsuspend'))
 			])
 		);
@@ -387,6 +388,8 @@ export function client_component(analysis, options) {
 			b.stmt(b.call(body.id, b.id('node'), b.id('$$props'))),
 			b.stmt(b.call('$.append', b.id('$$anchor'), b.id('fragment')))
 		]);
+	} else {
+		component_block.body.push(.../** @type {ESTree.Statement[]} */ (template.body));
 	}
 
 	if (!analysis.runes) {
