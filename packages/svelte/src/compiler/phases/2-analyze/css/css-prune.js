@@ -676,36 +676,29 @@ function get_descendant_elements(element, include_self) {
 
 	/**
 	 * @param {Compiler.AST.SvelteNode} node
-	 * @param {{ is_child: boolean }} state
 	 */
-	function walk_children(node, state) {
-		walk(node, state, {
-			_(node, context) {
-				if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
-					descendants.push(node);
+	function walk_children(node) {
+		walk(node, null, {
+			RegularElement(node, context) {
+				descendants.push(node);
+				context.next();
+			},
+			SvelteElement(node, context) {
+				descendants.push(node);
+				context.next();
+			},
+			RenderTag(node) {
+				for (const snippet of node.metadata.snippets) {
+					if (seen.has(snippet)) continue;
 
-					if (context.state.is_child) {
-						context.state.is_child = false;
-						context.next();
-						context.state.is_child = true;
-					} else {
-						context.next();
-					}
-				} else if (node.type === 'RenderTag') {
-					for (const snippet of node.metadata.snippets) {
-						if (seen.has(snippet)) continue;
-
-						seen.add(snippet);
-						walk_children(snippet.body, context.state);
-					}
-				} else {
-					context.next();
+					seen.add(snippet);
+					walk_children(snippet.body);
 				}
-			}
+			},
 		});
 	}
 
-	walk_children(element.fragment, { is_child: true });
+	walk_children(element.fragment);
 
 	return descendants;
 }
