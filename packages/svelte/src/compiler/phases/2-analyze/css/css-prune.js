@@ -158,7 +158,7 @@ function truncate(node) {
 }
 
 /**
- * @param {Compiler.AST.CSS.RelativeSelector[]} relative_selectors
+ * @param {ExtendedRelativeSelector[]} relative_selectors
  * @param {Compiler.AST.CSS.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
  * @returns {boolean}
@@ -173,7 +173,7 @@ function apply_selector(relative_selectors, rule, element) {
 		apply_combinator(relative_selector, parent_selectors, rule, element);
 
 	if (matched) {
-		if (!is_outer_global(relative_selector)) {
+		if (!is_outer_global(/** @type {Compiler.AST.CSS.RelativeSelector} */ (relative_selector))) {
 			relative_selector.metadata.scoped = true;
 		}
 
@@ -184,8 +184,8 @@ function apply_selector(relative_selectors, rule, element) {
 }
 
 /**
- * @param {Compiler.AST.CSS.RelativeSelector} relative_selector
- * @param {Compiler.AST.CSS.RelativeSelector[]} parent_selectors
+ * @param {ExtendedRelativeSelector} relative_selector
+ * @param {ExtendedRelativeSelector[]} parent_selectors
  * @param {Compiler.AST.CSS.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  * @returns {boolean}
@@ -269,7 +269,7 @@ function apply_combinator(relative_selector, parent_selectors, rule, node) {
  * it's a `:global(...)` or unscopeable selector, or
  * is an `:is(...)` or `:where(...)` selector that contains
  * a global selector
- * @param {Compiler.AST.CSS.RelativeSelector} selector
+ * @param {ExtendedRelativeSelector} selector
  * @param {Compiler.AST.CSS.Rule} rule
  */
 function is_global(selector, rule) {
@@ -403,11 +403,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 					if (
 						selectors.length === 0 /* is :global(...) */ ||
 						(element.metadata.scoped && selector_matched) ||
-						apply_selector(
-							/** @type {Compiler.AST.CSS.RelativeSelector[]} */ (selectors),
-							rule,
-							element
-						)
+						apply_selector(selectors, rule, element)
 					) {
 						complex_selector.metadata.used = true;
 						selector_matched = matched = true;
