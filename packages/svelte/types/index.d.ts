@@ -512,6 +512,15 @@ declare module 'svelte' {
 	 * ```
 	 * */
 	export function untrack<T>(fn: () => T): T;
+	export function isPending(fn: () => any): boolean;
+
+	export class Resource<T> {
+		
+		constructor(fn: () => Promise<T>);
+		get current(): T | Promise<Awaited<T>>;
+		get latest(): T | Promise<Awaited<T>>;
+		#private;
+	}
 	type Getters<T> = {
 		[K in keyof T]: () => T[K];
 	};

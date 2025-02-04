@@ -1092,7 +1092,7 @@ export function capture_signals(fn) {
 	var signal;
 
 	try {
-		untrack(fn);
+		fn();
 		if (previous_captured_signals !== null) {
 			for (signal of captured_signals) {
 				previous_captured_signals.add(signal);
