@@ -9,6 +9,14 @@
 	</y>
 </x>
 <c></c>
+<g>
+	<h>
+		<i></i>
+	</h>
+</g>
+<j>
+	<k></k>
+</j>
 
 <style>
 	x:has(y) {
@@ -154,5 +162,15 @@
 	}
 	:global(.foo):has(.unused) {
 		color: red;
+	}
+
+	g:has(> h > i) {
+		color: green;
+	}
+	h:has(> h > i) {
+		color: red;
+	}
+	g:has(+ j > k) {
+		color: green;
 	}
 </style>
