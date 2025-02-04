@@ -369,12 +369,14 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 			}
 
 			sibling_elements ??= get_following_sibling_elements(element, include_self);
-			if (selectors.some(s => s.combinator?.name === ' ' || s.combinator?.name === '>')) {
-				sibling_descendant_elements ??= sibling_elements.flatMap(el => get_descendant_elements(el, false));
+			if (selectors.some((s) => s.combinator?.name === ' ' || s.combinator?.name === '>')) {
+				sibling_descendant_elements ??= sibling_elements.flatMap((el) =>
+					get_descendant_elements(el, false)
+				);
 				return sibling_descendant_elements;
 			}
 			return sibling_elements;
-		}
+		};
 
 		// :has(...) is special in that it means "look downwards in the CSS tree". Since our matching algorithm goes
 		// upwards and back-to-front, we need to first check the selectors inside :has(...), then check the rest of the
@@ -401,7 +403,11 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 					if (
 						selectors.length === 0 /* is :global(...) */ ||
 						(element.metadata.scoped && selector_matched) ||
-						apply_selector(/** @type {Compiler.AST.CSS.RelativeSelector[]} */ (selectors), rule, element)
+						apply_selector(
+							/** @type {Compiler.AST.CSS.RelativeSelector[]} */ (selectors),
+							rule,
+							element
+						)
 					) {
 						complex_selector.metadata.used = true;
 						selector_matched = matched = true;
@@ -1097,19 +1103,21 @@ function is_block(node) {
 function make_element_selector(element) {
 	return {
 		type: 'RelativeSelector',
-		selectors: [{
-			type: 'ElementSelector',
-			element,
-			start: -1,
-			end: -1,
-		}],
+		selectors: [
+			{
+				type: 'ElementSelector',
+				element,
+				start: -1,
+				end: -1
+			}
+		],
 		combinator: null,
 		metadata: {
 			is_global: false,
 			is_global_like: false,
-			scoped: false,
+			scoped: false
 		},
 		start: -1,
-		end: -1,
+		end: -1
 	};
 }
