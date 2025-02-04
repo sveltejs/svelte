@@ -1,11 +1,11 @@
 /** @import { Derived, Effect, Source } from '#client' */
 
-import { UNINITIALIZED } from '../../../constants';
-import { EFFECT_PRESERVED, IS_PENDING } from '../constants';
-import { active_effect, captured_signals, get, handle_error } from '../runtime';
-import { derived } from './deriveds';
-import { block } from './effects';
-import { internal_set, source } from './sources';
+import { UNINITIALIZED } from '../../../constants.js';
+import { EFFECT_PRESERVED } from '../constants.js';
+import { active_effect, get, handle_error } from '../runtime.js';
+import { derived } from './deriveds.js';
+import { block } from './effects.js';
+import { internal_set, source } from './sources.js';
 
 /**
  * @template T
@@ -29,33 +29,29 @@ export class Resource {
 		/** @type {{}} */
 		var current_token;
 
-		this.#current.f ^= IS_PENDING;
 		this.#fn = derived(() => Promise.resolve(fn()));
 
 		block(() => {
-			var current = this.#current;
-			if ((current.f & IS_PENDING) === 0) {
-				current.f ^= IS_PENDING;
-			}
 			var token = (current_token = {});
 			internal_set(this.#pending, true);
 
-			get(this.#fn).then(
-				(value) => {
-					if (current_token !== token) return;
-					internal_set(this.#current, value);
-					internal_set(this.#pending, false);
-					this.#current.f ^= IS_PENDING;
-					return value;
-				},
-				(error) => {
-					if (current_token !== token) return;
-					internal_set(this.#pending, false);
-					throw error;
-				}
-			).catch((e) => {
-				handle_error(e, parent, null, parent.ctx);
-			});
+			get(this.#fn)
+				.then(
+					(value) => {
+						if (current_token !== token) return;
+						internal_set(this.#current, value);
+						internal_set(this.#pending, false);
+						return value;
+					},
+					(error) => {
+						if (current_token !== token) return;
+						internal_set(this.#pending, false);
+						throw error;
+					}
+				)
+				.catch((e) => {
+					handle_error(e, parent, null, parent.ctx);
+				});
 		}, EFFECT_PRESERVED);
 	}
 
@@ -66,10 +62,6 @@ export class Resource {
 	get current() {
 		var value = get(this.#current);
 
-		if (captured_signals !== null) {
-			get(this.#fn);
-		}
-
 		if (value === UNINITIALIZED) {
 			return this.#fn.v;
 		}
@@ -78,12 +70,10 @@ export class Resource {
 	}
 
 	get latest() {
-		var current = this.#current;
-		var value = get(current);
 		var promise = get(this.#fn);
 
-		if ((current.f & IS_PENDING) === 0) {
-			return value;
+		if (!this.#pending.v) {
+			return this.#current.v;
 		}
 
 		return promise;
