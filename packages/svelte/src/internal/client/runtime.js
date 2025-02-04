@@ -204,8 +204,12 @@ export function check_dirtiness(reaction) {
 			var length = dependencies.length;
 
 			// If we are working with a disconnected or an unowned signal that is now connected (due to an active effect)
-			// then we need to re-connect the reaction to the dependency
-			if (is_disconnected || is_unowned_connected) {
+			// then we need to re-connect the reaction to the dependency, unless the effect has already been destroyed
+			// (which can happen if the derived is read by an async derived)
+			if (
+				(is_disconnected || is_unowned_connected) &&
+				(active_effect === null || (active_effect.f & DESTROYED) === 0)
+			) {
 				for (i = 0; i < length; i++) {
 					dependency = dependencies[i];
 
