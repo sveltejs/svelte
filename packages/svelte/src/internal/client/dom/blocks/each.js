@@ -566,12 +566,6 @@ function reconcile(
 		});
 	}
 
-	// TODO this seems super weird... should be `each_effect`, but that doesn't seem to work?
-	// if (active_effect !== null) {
-	// 	active_effect.first = state.first && state.first.e;
-	// 	active_effect.last = prev && prev.e;
-	// }
-
 	each_effect.first = state.first && state.first.e;
 	each_effect.last = prev && prev.e;
 
