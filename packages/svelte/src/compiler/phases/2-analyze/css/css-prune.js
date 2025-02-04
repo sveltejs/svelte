@@ -694,7 +694,7 @@ function get_descendant_elements(element, include_self) {
 					seen.add(snippet);
 					walk_children(snippet.body);
 				}
-			},
+			}
 		});
 	}
 
