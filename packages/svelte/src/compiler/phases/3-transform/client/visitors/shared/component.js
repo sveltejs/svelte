@@ -180,7 +180,8 @@ export function build_component(node, component_name, context, anchor = context.
 						return (
 							n.type === 'ExpressionTag' &&
 							n.expression.type !== 'Identifier' &&
-							n.expression.type !== 'MemberExpression'
+							(n.expression.type !== 'MemberExpression' ||
+								n.expression.object.type !== 'ArrayExpression')
 						);
 					});
 
