@@ -181,7 +181,7 @@ export function build_component(node, component_name, context, anchor = context.
 							n.type === 'ExpressionTag' &&
 							n.expression.type !== 'Identifier' &&
 							(n.expression.type !== 'MemberExpression' ||
-								n.expression.object.type !== 'ArrayExpression')
+								n.expression.object.type === 'AwaitExpression')
 						);
 					});
 

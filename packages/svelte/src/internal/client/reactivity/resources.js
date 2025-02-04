@@ -63,19 +63,35 @@ export class Resource {
 		var value = get(this.#current);
 
 		if (value === UNINITIALIZED) {
-			return this.#fn.v;
+			throw new Error('Resource is not yet resolved, ensure it is awaited');
 		}
 
 		return value;
 	}
 
 	get latest() {
-		var promise = get(this.#fn);
+		var value = get(this.#current);
+		get(this.#pending);
 
-		if (!this.#pending.v) {
-			return this.#current.v;
+		if (value === UNINITIALIZED) {
+			throw new Error('Resource is not yet resolved, ensure it is awaited');
 		}
 
-		return promise;
+		return value;
+	}
+
+	/**
+	 * @param {(arg0: { readonly current: T; readonly pending: boolean; readonly latest: T; }) => void} onfulfilled
+	 * @param {((reason: any) => PromiseLike<never>) | null | undefined} onrejected
+	 */
+	then(onfulfilled, onrejected) {
+		return get(this.#fn).then(() => {
+			var self = this;
+			onfulfilled({
+				get current() { return self.current },
+				get pending() { return self.pending },
+				get latest() { return self.latest }
+			});
+		}, onrejected);
 	}
 }
