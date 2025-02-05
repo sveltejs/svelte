@@ -363,9 +363,10 @@ export function set_attributes(
 			element.style.cssText = value + '';
 		} else if (key === 'autofocus') {
 			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
-		} else if (key === '__value' || (key === 'value' && value != null)) {
-			// @ts-ignore
-			element.value = element[key] = element.__value = value;
+		} else if (!is_custom_element && (key === '__value' || (key === 'value' && value != null))) {
+			// @ts-ignore We're not running this for custom elements because __value is actually
+			// how Lit stores the current value on the element, and messing with that would break things.
+			element.value = element.__value = value;
 		} else if (key === 'selected' && is_option_element) {
 			set_selected(/** @type {HTMLOptionElement} */ (element), value);
 		} else {
