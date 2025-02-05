@@ -1,5 +1,5 @@
 import { DEV } from 'esm-env';
-import { hydrating } from '../hydration.js';
+import { hydrating, set_hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
 import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
@@ -213,6 +213,12 @@ export function set_custom_element_data(node, prop, value) {
 	// or effect
 	var previous_reaction = active_reaction;
 	var previous_effect = active_effect;
+	// If we're hydrating but the custom element is from Svelte, and it already scaffolded,
+	// then it might run block logic in hydration mode, which we have to prevent.
+	let was_hydrating = hydrating;
+	if (hydrating) {
+		set_hydrating(false);
+	}
 
 	set_active_reaction(null);
 	set_active_effect(null);
@@ -239,6 +245,9 @@ export function set_custom_element_data(node, prop, value) {
 	} finally {
 		set_active_reaction(previous_reaction);
 		set_active_effect(previous_effect);
+		if (was_hydrating) {
+			set_hydrating(true);
+		}
 	}
 }
 
@@ -262,6 +271,13 @@ export function set_attributes(
 	is_custom_element = false,
 	skip_warning = false
 ) {
+	// If we're hydrating but the custom element is from Svelte, and it already scaffolded,
+	// then it might run block logic in hydration mode, which we have to prevent.
+	let is_hydrating_custom_element = hydrating && is_custom_element;
+	if (is_hydrating_custom_element) {
+		set_hydrating(false);
+	}
+
 	var current = prev || {};
 	var is_option_element = element.tagName === 'OPTION';
 
@@ -413,6 +429,10 @@ export function set_attributes(
 			// reset styles to force style: directive to update
 			element.__styles = {};
 		}
+	}
+
+	if (is_hydrating_custom_element) {
+		set_hydrating(true);
 	}
 
 	return current;
