@@ -250,7 +250,7 @@ export function append(anchor, dom) {
 	anchor.before(/** @type {Node} */ (dom));
 }
 
-let NEXT_UID = 100;
+let uid = 100;
 
 /**
  * Create (or hydrate) an unique UID for the component instance.
@@ -267,5 +267,5 @@ export function props_id() {
 		return id;
 	}
 
-	return 'c' + NEXT_UID++;
+	return 'c' + uid++;
 }
