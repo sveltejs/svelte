@@ -170,7 +170,7 @@ export function effect_tracking() {
 
 	// If it's skipped, that's because we're inside an unowned
 	// that is not being tracked by another reaction
-	return !skip_reaction;
+	return true;
 }
 
 /**
