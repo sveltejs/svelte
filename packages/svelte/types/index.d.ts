@@ -2995,6 +2995,13 @@ declare namespace $effect {
 declare function $props(): any;
 
 declare namespace $props {
+	/**
+	 * Generates an ID that is unique to the current component instance. When hydrating a server-rendered a component,
+	 * the value will be consistent between server and client.
+	 *
+	 * This is useful for linking elements via attributes like `for` and `aria-labelledby`.
+	 * @since 5.20.0
+	 */
 	export function id(): string;
 
 	// prevent intellisense from being unhelpful
