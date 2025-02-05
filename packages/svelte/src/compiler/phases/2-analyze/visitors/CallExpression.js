@@ -1,5 +1,5 @@
 /** @import { ArrowFunctionExpression, CallExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, VariableDeclarator } from 'estree' */
-/** @import { AST } from '#compiler' */
+/** @import { AST, Binding } from '#compiler' */
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
@@ -86,8 +86,7 @@ export function CallExpression(node, context) {
 				parent.id.type !== 'Identifier' ||
 				context.state.ast_type !== 'instance' ||
 				context.state.scope !== context.state.analysis.instance.scope ||
-				grand_parent.type !== 'VariableDeclaration' ||
-				grand_parent.kind !== 'const'
+				grand_parent.type !== 'VariableDeclaration'
 			) {
 				e.props_id_invalid_placement(node);
 			}
