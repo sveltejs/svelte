@@ -256,17 +256,16 @@ let NEXT_UID = 100;
  * Create (or hydrate) an unique UID for the component instance.
  */
 export function props_id() {
-	let uid;
 	if (
 		hydrating &&
 		hydrate_node &&
-		hydrate_node.nodeType === Node.COMMENT_NODE &&
+		hydrate_node.nodeType === 8 &&
 		hydrate_node.textContent?.startsWith('#s')
 	) {
-		uid = hydrate_node.textContent.substring(1);
+		const id = hydrate_node.textContent.substring(1);
 		hydrate_next();
-	} else {
-		uid = 'c' + NEXT_UID++;
+		return id;
 	}
-	return uid;
+
+	return 'c' + NEXT_UID++;
 }
