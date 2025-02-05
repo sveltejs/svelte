@@ -29,8 +29,6 @@ if (url.hash.length > 1) {
 	const stream = new Blob([u8]).stream().pipeThrough(new DecompressionStream('gzip'));
 	const json = await new Response(stream).text();
 
-	console.log(JSON.parse(json));
-
 	files = JSON.parse(json).files;
 } else {
 	const id = url.pathname.split('/')[2];
