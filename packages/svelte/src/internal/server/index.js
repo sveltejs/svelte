@@ -544,9 +544,9 @@ export function once(get_value) {
  * @returns {string}
  */
 export function props_id(payload) {
-	const UID = payload.uid();
-	payload.out += '<!--#' + UID + '-->';
-	return UID;
+	const uid = payload.uid();
+	payload.out += '<!--#' + uid + '-->';
+	return uid;
 }
 
 export { attr, clsx };
