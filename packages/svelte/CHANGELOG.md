@@ -1,5 +1,15 @@
 # svelte
 
+## 5.19.8
+
+### Patch Changes
+
+- fix: properly set `value` property of custom elements ([#15206](https://github.com/sveltejs/svelte/pull/15206))
+
+- fix: ensure custom element updates don't run in hydration mode ([#15217](https://github.com/sveltejs/svelte/pull/15217))
+
+- fix: ensure tracking returns true, even if in unowned ([#15214](https://github.com/sveltejs/svelte/pull/15214))
+
 ## 5.19.7
 
 ### Patch Changes
