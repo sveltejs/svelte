@@ -250,7 +250,7 @@ export function append(anchor, dom) {
 	anchor.before(/** @type {Node} */ (dom));
 }
 
-let uid = 100;
+let uid = 1;
 
 /**
  * Create (or hydrate) an unique UID for the component instance.

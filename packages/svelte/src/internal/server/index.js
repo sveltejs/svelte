@@ -86,7 +86,7 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
 export let on_destroy = [];
 
 function props_id_generator() {
-	let uid = 100;
+	let uid = 1;
 	return () => 's' + uid++;
 }
 
