@@ -24,23 +24,12 @@ export class Resource {
 
 	/**
 	 * @param {() => Promise<T>} fn
-	 * @param {symbol} [symbol]
 	 */
-	constructor(fn, symbol) {
+	constructor(fn) {
 		let parent = /** @type {Effect | null} */ (active_effect);
 
 		if (parent === null) {
 			throw new Error('TODO cannot create resources outside of an effect');
-		}
-
-		if (typeof symbol === 'symbol') {
-			let resources = getContext(resource_symbol);
-
-			if (resources === undefined) {
-				resources = new Map();
-				setContext(resource_symbol, resources);
-			}
-			resources.set(symbol, this);
 		}
 
 		/** @type {{}} */
@@ -108,11 +97,30 @@ export class Resource {
 
 /**
  * @template T
- * @param {symbol} symbol
- * @returns {Resource<T> | null}
+ * @returns {[set_resource: (resource: Resource<T>) => void, get_resource: () => Resource<T>]}
  */
-export function getResource(symbol) {
-	return getContext(resource_symbol)?.get(symbol) ?? null;
+export function createResourceContext() {
+	const key = {};
+
+	const set_resource = (/** @type {Resource<T>} */ resource) => {
+		let resources = getContext(resource_symbol);
+
+		if (resources === undefined) {
+			resources = new Map();
+			setContext(resource_symbol, resources);
+		}
+		resources.set(key, resource);
+	};
+
+	const get_resource = () => {
+		var resource = getContext(resource_symbol)?.get(key);
+		if (resource === undefined) {
+			throw new Error('TODO: No resource found');
+		}
+		return resource;
+	};
+
+	return [set_resource, get_resource];
 }
 
 /**

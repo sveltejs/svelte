@@ -512,13 +512,13 @@ declare module 'svelte' {
 	 * ```
 	 * */
 	export function untrack<T>(fn: () => T): T;
-	export function getResource<T>(symbol: symbol): Resource<T> | null;
+	export function createResourceContext<T>(): [set_resource: (resource: Resource<T>) => void, get_resource: () => Resource<T>];
 
 	export function deferPending<T, V>(resources: Resource<T> | Resource<T>[], fn: () => V): V;
 
 	export class Resource<T> {
 		
-		constructor(fn: () => Promise<T>, symbol?: symbol | undefined);
+		constructor(fn: () => Promise<T>);
 		get pending(): boolean;
 		get current(): T;
 		
