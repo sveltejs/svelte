@@ -124,7 +124,7 @@ This turned out to be buggy and unpredictable, particularly when working with de
 
 ## props_id_invalid_placement
 
-> `$props.id()` can only be affected at the top level of components as a const declaration initializer
+> `$props.id()` can only be used at the top level of components as a variable declaration initializer
 
 ## props_illegal_name
 
