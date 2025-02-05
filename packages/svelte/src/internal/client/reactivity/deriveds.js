@@ -30,6 +30,7 @@ import { tracing_mode_flag } from '../../flags/index.js';
 import { capture, suspend } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { noop } from '../../shared/utils.js';
+import { UNINITIALIZED } from '../../../constants.js';
 
 /** @type {Effect | null} */
 export let from_async_derived = null;
@@ -99,55 +100,65 @@ export function async_derived(fn, detect_waterfall = true) {
 	}
 
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
-	var value = source(/** @type {V} */ (undefined));
+	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
+	/** @type {(() => void) | null} */
+	var unsuspend = null;
+
 	// TODO this isn't a block
-	block(async () => {
+	block(() => {
 		if (DEV) from_async_derived = active_effect;
 		var current = (promise = fn());
 		if (DEV) from_async_derived = null;
 
 		var restore = capture();
-		var unsuspend = should_suspend ? suspend() : noop;
+		if (should_suspend) unsuspend ??= suspend();
 
-		try {
-			var v = await promise;
-
-			if ((parent.f & DESTROYED) !== 0) {
-				return;
-			}
-
-			if (promise === current) {
-				restore();
-				from_async_derived = null;
-
-				internal_set(value, v);
-
-				if (DEV && detect_waterfall) {
-					recent_async_deriveds.add(value);
-
-					setTimeout(() => {
-						if (recent_async_deriveds.has(value)) {
-							w.await_waterfall();
-							recent_async_deriveds.delete(value);
-						}
-					});
+		promise.then(
+			(v) => {
+				if ((parent.f & DESTROYED) !== 0) {
+					return;
 				}
-			}
-		} catch (e) {
-			handle_error(e, parent, null, parent.ctx);
-		} finally {
-			unsuspend();
 
-			// TODO we should probably null out active effect here,
-			// rather than inside `restore()`
-		}
+				if (promise === current) {
+					restore();
+					from_async_derived = null;
+
+					internal_set(signal, v);
+
+					if (DEV && detect_waterfall) {
+						recent_async_deriveds.add(signal);
+
+						setTimeout(() => {
+							if (recent_async_deriveds.has(signal)) {
+								w.await_waterfall();
+								recent_async_deriveds.delete(signal);
+							}
+						});
+					}
+
+					// TODO we should probably null out active effect here,
+					// rather than inside `restore()`
+					unsuspend?.();
+					unsuspend = null;
+				}
+			},
+			(e) => {
+				handle_error(e, parent, null, parent.ctx);
+			}
+		);
 	}, EFFECT_PRESERVED);
 
-	return Promise.resolve(promise).then(() => value);
+	return new Promise(async (fulfil) => {
+		// if the effect re-runs before the initial promise
+		// resolves, delay resolution until we have a value
+		var p;
+		while (p !== (p = promise)) await p;
+		fulfil(signal);
+	});
 }
 
 /**
