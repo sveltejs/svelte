@@ -10,7 +10,6 @@ import { block } from './effects.js';
 import { internal_set, source } from './sources.js';
 
 const resource_symbol = Symbol('resource');
-const current_map = new WeakMap();
 
 /**
  * @template T
@@ -29,7 +28,6 @@ export class Resource {
 	 */
 	constructor(fn, symbol) {
 		let parent = /** @type {Effect | null} */ (active_effect);
-		current_map.set(this, this.#current);
 
 		if (parent === null) {
 			throw new Error('TODO cannot create resources outside of an effect');
@@ -78,6 +76,16 @@ export class Resource {
 		return get(this.#pending);
 	}
 
+	get current() {
+		var value = get(this.#current);
+
+		if (value === UNINITIALIZED) {
+			throw new Error('Resource is not yet resolved, ensure it is awaited');
+		}
+
+		return value;
+	}
+
 	/**
 	 * @param {(arg0: { readonly current: T; readonly latest: T; }) => void} onfulfilled
 	 * @param {((reason: any) => PromiseLike<never>) | null | undefined} onrejected
@@ -90,7 +98,7 @@ export class Resource {
 					return get(self.#current);
 				},
 				get latest() {
-					get(self.#pending);
+					get(self.#fn);
 					return get(self.#current);
 				}
 			});
@@ -119,7 +127,8 @@ export function deferPending(resources, fn) {
 	for (let i = 0; i < res.length; i += 1) {
 		const resource = res[i];
 		const pending = untrack(() => resource.pending);
-		get(/** @type {Source} */ (current_map.get(resource)));
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		resource.current;
 		if (pending) {
 			break;
 		}
