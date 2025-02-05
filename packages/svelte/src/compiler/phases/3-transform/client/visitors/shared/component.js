@@ -176,13 +176,15 @@ export function build_component(node, component_name, context, anchor = context.
 					// When we have a non-simple computation, anything other than an Identifier or Member expression,
 					// then there's a good chance it needs to be memoized to avoid over-firing when read within the
 					// child component (e.g. `active={i === index}`)
-					const should_wrap_in_derived = get_attribute_chunks(attribute.value).some((n) => {
-						return (
-							n.type === 'ExpressionTag' &&
-							n.expression.type !== 'Identifier' &&
-							n.expression.type !== 'MemberExpression'
-						);
-					});
+					const should_wrap_in_derived =
+						metadata.is_async ||
+						get_attribute_chunks(attribute.value).some((n) => {
+							return (
+								n.type === 'ExpressionTag' &&
+								n.expression.type !== 'Identifier' &&
+								n.expression.type !== 'MemberExpression'
+							);
+						});
 
 					return should_wrap_in_derived
 						? b.call(
