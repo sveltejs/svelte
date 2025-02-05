@@ -199,3 +199,10 @@ You can, of course, separate the type declaration from the annotation:
 > [!NOTE] Interfaces for native DOM elements are provided in the `svelte/elements` module (see [Typing wrapper components](typescript#Typing-wrapper-components))
 
 Adding types is recommended, as it ensures that people using your component can easily discover which props they should provide.
+
+
+## `$props.id()`
+
+This rune, added in version 5.20.0, generates an ID that is unique to the current component instance. When hydrating a server-rendered a component, the value will be consistent between server and client.
+
+This is useful for linking elements via attributes like `for` and `aria-labelledby`.
