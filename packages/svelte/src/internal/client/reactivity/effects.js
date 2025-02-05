@@ -164,13 +164,7 @@ function create_effect(type, fn, sync, push = true) {
  * @returns {boolean}
  */
 export function effect_tracking() {
-	if (active_reaction === null || untracking) {
-		return false;
-	}
-
-	// If it's skipped, that's because we're inside an unowned
-	// that is not being tracked by another reaction
-	return !skip_reaction;
+	return active_reaction !== null && !untracking;
 }
 
 /**
