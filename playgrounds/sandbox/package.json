@@ -9,7 +9,9 @@
     "ssr": "node --conditions=development ./ssr-dev.js",
     "build": "vite build --outDir dist/client && vite build --outDir dist/server --ssr ssr-prod.js",
     "prod": "npm run build && node dist/server/ssr-prod",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "download": "node scripts/download.js",
+    "hash": "node scripts/hash.js | pbcopy && echo \"copied URL to clipboard\""
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^4.0.0-next.6",

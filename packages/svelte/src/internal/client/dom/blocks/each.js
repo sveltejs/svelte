@@ -142,7 +142,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	var boundary = find_boundary(active_effect);
 
 	/** @type {Map<any, EachItem>} */
-	var pending_items = new Map();
+	var offscreen_items = new Map();
 
 	// TODO: ideally we could use derived for runes mode but because of the ability
 	// to use a store which can be mutated, we can't do that here as mutating a store
@@ -164,7 +164,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			each_effect,
 			array,
 			state,
-			pending_items,
+			offscreen_items,
 			anchor,
 			render_fn,
 			flags,
@@ -275,7 +275,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					value = array[i];
 					key = get_key(value, i);
 
-					var existing = state.items.get(key) ?? pending_items.get(key);
+					var existing = state.items.get(key) ?? offscreen_items.get(key);
 
 					if (existing) {
 						// update before reconciliation, to trigger any async updates
@@ -297,7 +297,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 							true
 						);
 
-						pending_items.set(key, item);
+						offscreen_items.set(key, item);
 					}
 				}
 
@@ -332,7 +332,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
  * @param {Effect} each_effect
  * @param {Array<V>} array
  * @param {EachState} state
- * @param {Map<any, EachItem>} pending_items
+ * @param {Map<any, EachItem>} offscreen_items
  * @param {Element | Comment | Text} anchor
  * @param {(anchor: Node, item: MaybeSource<V>, index: number | Source<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
@@ -344,7 +344,7 @@ function reconcile(
 	each_effect,
 	array,
 	state,
-	pending_items,
+	offscreen_items,
 	anchor,
 	render_fn,
 	flags,
@@ -406,10 +406,10 @@ function reconcile(
 		item = items.get(key);
 
 		if (item === undefined) {
-			var pending = pending_items.get(key);
+			var pending = offscreen_items.get(key);
 
 			if (pending !== undefined) {
-				pending_items.delete(key);
+				offscreen_items.delete(key);
 				items.set(key, pending);
 
 				var next = prev && prev.next;
@@ -566,18 +566,14 @@ function reconcile(
 		});
 	}
 
-	// TODO this seems super weird... should be `each_effect`, but that doesn't seem to work?
-	// if (active_effect !== null) {
-	// 	active_effect.first = state.first && state.first.e;
-	// 	active_effect.last = prev && prev.e;
-	// }
-
 	each_effect.first = state.first && state.first.e;
 	each_effect.last = prev && prev.e;
 
-	for (var unused of pending_items.values()) {
+	for (var unused of offscreen_items.values()) {
 		destroy_effect(unused.e);
 	}
+
+	offscreen_items.clear();
 }
 
 /**
