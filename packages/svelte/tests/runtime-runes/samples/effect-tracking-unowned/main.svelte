@@ -4,7 +4,7 @@
 	const store = writable("previous");
 	let text = $derived(fromStore(store).current + " message");
 
-	const textStore = toStore(() => text);
+	text; // read derived in a non-tracking context
 </script>
 
 <o>Store: {$store}</o>
