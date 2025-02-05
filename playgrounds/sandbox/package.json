@@ -11,7 +11,7 @@
     "prod": "npm run build && node dist/server/ssr-prod",
     "preview": "vite preview",
     "download": "node scripts/download.js",
-    "hash": "node scripts/hash.js | pbcopy && echo \"copied URL to clipboard\""
+    "hash": "node scripts/hash.js"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^4.0.0-next.6",
