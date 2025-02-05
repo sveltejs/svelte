@@ -115,7 +115,9 @@ function create_effect(type, fn, sync, push = true) {
 		prev: null,
 		teardown: null,
 		transitions: null,
-		wv: 0
+		wv: 0,
+		iv: 0,
+		ctrl: null
 	};
 
 	if (DEV) {

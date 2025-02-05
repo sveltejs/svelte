@@ -1,5 +1,5 @@
 import { describe, assert, it } from 'vitest';
-import { flushSync } from '../../src/index-client';
+import { flushSync, getAbortSignal } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
 import { push, pop } from '../../src/internal/client/context';
 import {
@@ -1008,6 +1008,44 @@ describe('signals', () => {
 			flushSync();
 
 			assert.deepEqual(log, [0, 1]);
+
+			destroy();
+		};
+	});
+
+	test('$effect can use getAbortSignal', () => {
+		return () => {
+			const n = state(0);
+			const abort_signals: AbortSignal[] = [];
+
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					$.get(n);
+					const signal = getAbortSignal();
+					abort_signals.push(signal);
+				});
+			});
+
+			assert.deepEqual(
+				abort_signals.map((s) => s.aborted),
+				[false]
+			);
+
+			set(n, 1);
+			flushSync();
+
+			assert.deepEqual(
+				abort_signals.map((s) => s.aborted),
+				[true, false]
+			);
+
+			set(n, 2);
+			flushSync();
+
+			assert.deepEqual(
+				abort_signals.map((s) => s.aborted),
+				[true, true, false]
+			);
 
 			destroy();
 		};

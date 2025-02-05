@@ -216,6 +216,7 @@ export function flushSync(fn) {
 }
 
 export { getContext, getAllContexts, hasContext, setContext } from './internal/client/context.js';
+export { getAbortSignal } from './internal/client/reactivity/abort-signal.js';
 export { hydrate, mount, unmount } from './internal/client/render.js';
 export { tick, untrack } from './internal/client/runtime.js';
 export { createRawSnippet } from './internal/client/dom/blocks/snippet.js';

@@ -109,6 +109,13 @@ export function set_active_effect(effect) {
 	active_effect = effect;
 }
 
+export let invocation_version = 0;
+
+/** @param {number} v */
+export function set_invocation_version(v) {
+	invocation_version = v;
+}
+
 // TODO remove this, once we're satisfied that we're not leaking context
 /* @__PURE__ */
 setInterval(() => {
@@ -444,9 +451,13 @@ export function update_reaction(reaction) {
 	set_component_context(reaction.ctx);
 	untracking = false;
 	read_version++;
+	invocation_version = ++reaction.iv;
 
 	try {
 		reaction.f |= REACTION_IS_UPDATING;
+		reaction.ctrl?.abort();
+		reaction.ctrl = null;
+
 		var result = /** @type {Function} */ (0, reaction.fn)();
 		var deps = reaction.deps;
 

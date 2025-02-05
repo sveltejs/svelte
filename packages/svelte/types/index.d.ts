@@ -412,6 +412,7 @@ declare module 'svelte' {
 	 * Synchronously flushes any pending state changes and those that result from it.
 	 * */
 	export function flushSync(fn?: (() => void) | undefined): void;
+	export function getAbortSignal(): AbortSignal;
 	/**
 	 * Create a snippet programmatically
 	 * */

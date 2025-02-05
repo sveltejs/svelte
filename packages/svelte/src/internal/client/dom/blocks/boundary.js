@@ -19,7 +19,9 @@ import {
 	reset_is_throwing_error,
 	schedule_effect,
 	check_dirtiness,
-	update_effect
+	update_effect,
+	invocation_version,
+	set_invocation_version
 } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -405,6 +407,7 @@ export function capture(track = true) {
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
+	var previous_invocation_version = invocation_version;
 
 	if (DEV && !track) {
 		var was_from_async_derived = from_async_derived;
@@ -415,6 +418,7 @@ export function capture(track = true) {
 			set_active_effect(previous_effect);
 			set_active_reaction(previous_reaction);
 			set_component_context(previous_component_context);
+			set_invocation_version(invocation_version);
 		} else if (DEV) {
 			set_from_async_derived(was_from_async_derived);
 		}

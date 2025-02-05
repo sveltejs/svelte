@@ -31,6 +31,10 @@ export interface Reaction extends Signal {
 	fn: null | Function;
 	/** Signals that this signal reads from */
 	deps: null | Value[];
+	/** Invocation version, so we can know if we're in a reaction that was already invalidated */
+	iv: number;
+	/** AbortController */
+	ctrl: AbortController | null;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {
