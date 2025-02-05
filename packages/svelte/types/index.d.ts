@@ -520,6 +520,7 @@ declare module 'svelte' {
 		
 		constructor(fn: () => Promise<T>, symbol?: symbol | undefined);
 		get pending(): boolean;
+		get current(): T;
 		
 		then(onfulfilled: (arg0: {
 			readonly current: T;

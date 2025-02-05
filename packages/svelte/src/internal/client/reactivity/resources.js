@@ -116,8 +116,7 @@ export function getResource(symbol) {
 }
 
 /**
- * @template T
- * @template V
+ * @template T, V
  * @param {Resource<T> | Resource<T>[]} resources
  * @param {() => V} fn
  */
