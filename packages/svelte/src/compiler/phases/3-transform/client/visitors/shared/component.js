@@ -266,6 +266,16 @@ export function build_component(node, component_name, context, anchor = context.
 					);
 				}
 			}
+		} else if (attribute.type === 'AttachTag') {
+			// TODO do we need to create a derived here?
+			push_prop(
+				b.prop(
+					'get',
+					b.call('Symbol'),
+					/** @type {Expression} */ (context.visit(attribute.expression)),
+					true
+				)
+			);
 		}
 	}
 
