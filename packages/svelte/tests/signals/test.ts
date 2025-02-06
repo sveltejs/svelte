@@ -818,7 +818,7 @@ describe('signals', () => {
 		};
 	});
 
-	test('unowned deriveds are correctly connected and disconnected from the graph #2', () => {
+	test('unowned deriveds dependencies are correctly de-duped', () => {
 		return () => {
 			let a = state(0);
 			let b = state(true);
