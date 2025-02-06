@@ -38,8 +38,12 @@ export function validate_assignment(node, argument, state) {
 	if (
 		argument.type === 'MemberExpression' &&
 		argument.object.type === 'ThisExpression' &&
-		argument.property.type === 'PrivateIdentifier' &&
-		state.private_derived_state.includes(argument.property.name)
+		(((argument.property.type === 'PrivateIdentifier' || argument.property.type === 'Identifier') &&
+			state.derived_state.includes(argument.property.name)) ||
+			(argument.property.type === 'Literal' &&
+				argument.property.value &&
+				typeof argument.property.value === 'string' &&
+				state.derived_state.includes(argument.property.value)))
 	) {
 		e.constant_assignment(node, 'derived state');
 	}
