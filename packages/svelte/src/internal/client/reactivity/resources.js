@@ -79,7 +79,7 @@ export class Resource {
 		var value = get(this.#current);
 
 		if (value === UNINITIALIZED) {
-			throw new Error('Resource is not yet resolved, ensure it is awaited');
+			throw new Error('Resource is not yet resolved. `await resource` at the top-level of your script, or with a derived`$derived((await city_resource).current)`');
 		}
 
 		return value;
