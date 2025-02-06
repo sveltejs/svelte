@@ -1,5 +1,6 @@
 /** @import { Derived, Effect, Source } from '#client' */
 
+import { DEV } from 'esm-env';
 import { UNINITIALIZED } from '../../../constants.js';
 import { is_array } from '../../shared/utils.js';
 import { EFFECT_PRESERVED } from '../constants.js';
@@ -91,11 +92,25 @@ export class Resource {
 	then(onfulfilled, onrejected) {
 		return this.#fn.v.then(() => {
 			var self = this;
-			onfulfilled({
-				get current() {
-					return self.current;
-				}
-			});
+
+			if (DEV) {
+				onfulfilled({
+					// @ts-ignore
+					get latest() {
+						throw new Error('Use `await resource.latest` instead of `(await resource).latest`');
+					},
+					get current() {
+						return self.current;
+					}
+				});
+			} else {
+				onfulfilled({
+					get current() {
+						return self.current;
+					}
+				});
+			}
+
 		}, onrejected);
 	}
 
