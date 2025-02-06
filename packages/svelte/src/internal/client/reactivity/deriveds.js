@@ -147,7 +147,9 @@ export function async_derived(fn, detect_waterfall = true) {
 				}
 			},
 			(e) => {
-				handle_error(e, parent, null, parent.ctx);
+				if (promise === current) {
+					handle_error(e, parent, null, parent.ctx);
+				}
 			}
 		);
 	}, EFFECT_PRESERVED);
