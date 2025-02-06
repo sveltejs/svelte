@@ -14,7 +14,7 @@ export function async(node, expressions, fn) {
 	var restore = capture();
 	var unsuspend = suspend();
 
-	Promise.all(expressions.map(async_derived)).then((result) => {
+	Promise.all(expressions.map((fn) => async_derived(fn))).then((result) => {
 		restore();
 		fn(node, ...result);
 		unsuspend();
