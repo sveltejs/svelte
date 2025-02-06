@@ -109,12 +109,8 @@ export class Resource {
 				const resource = res[i];
 				const pending = untrack(() => resource.pending);
 
-				try {
-					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-					resource.current;
-				} catch {
-					// NOOP
-				}
+				get(resource.#current);
+
 				if (pending) {
 					if (prev !== UNINITIALIZED) {
 						return prev;
