@@ -45,7 +45,7 @@ TODO
 ### await_waterfall
 
 ```
-Detected an unnecessary async waterfall
+An async value (%location%) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app.
 ```
 
 TODO

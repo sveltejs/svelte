@@ -88,11 +88,11 @@ export function derived(fn) {
 /**
  * @template V
  * @param {() => Promise<V>} fn
- * @param {boolean} detect_waterfall Whether to print a warning if the value is not read immediately after update
+ * @param {string} [location] If provided, print a warning if the value is not read immediately after update
  * @returns {Promise<Source<V>>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function async_derived(fn, detect_waterfall = true) {
+export function async_derived(fn, location) {
 	let parent = /** @type {Effect | null} */ (active_effect);
 
 	if (parent === null) {
@@ -129,12 +129,12 @@ export function async_derived(fn, detect_waterfall = true) {
 
 					internal_set(signal, v);
 
-					if (DEV && detect_waterfall) {
+					if (DEV && location !== undefined) {
 						recent_async_deriveds.add(signal);
 
 						setTimeout(() => {
 							if (recent_async_deriveds.has(signal)) {
-								w.await_waterfall();
+								w.await_waterfall(location);
 								recent_async_deriveds.delete(signal);
 							}
 						});
