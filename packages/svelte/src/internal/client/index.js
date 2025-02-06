@@ -96,7 +96,8 @@ export {
 	mathml_template,
 	template,
 	template_with_script,
-	text
+	text,
+	props_id
 } from './dom/template.js';
 export { derived, derived_safe_equal } from './reactivity/deriveds.js';
 export {

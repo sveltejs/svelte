@@ -28,14 +28,15 @@ const INVALID_ATTR_NAME_CHAR_REGEX =
  * @param {Payload} to_copy
  * @returns {Payload}
  */
-export function copy_payload({ out, css, head }) {
+export function copy_payload({ out, css, head, uid }) {
 	return {
 		out,
 		css: new Set(css),
 		head: {
 			title: head.title,
 			out: head.out
-		}
+		},
+		uid
 	};
 }
 
@@ -48,6 +49,7 @@ export function copy_payload({ out, css, head }) {
 export function assign_payload(p1, p2) {
 	p1.out = p2.out;
 	p1.head = p2.head;
+	p1.uid = p2.uid;
 }
 
 /**
@@ -83,17 +85,27 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
  */
 export let on_destroy = [];
 
+function props_id_generator() {
+	let uid = 1;
+	return () => 's' + uid++;
+}
+
 /**
  * Only available on the server and when compiling with the `server` option.
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
  * @param {import('svelte').Component<Props> | ComponentType<SvelteComponent<Props>>} component
- * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }} [options]
+ * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>, uid?: () => string }} [options]
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
 	/** @type {Payload} */
-	const payload = { out: '', css: new Set(), head: { title: '', out: '' } };
+	const payload = {
+		out: '',
+		css: new Set(),
+		head: { title: '', out: '' },
+		uid: options.uid ?? props_id_generator()
+	};
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
@@ -524,6 +536,17 @@ export function once(get_value) {
 		}
 		return value;
 	};
+}
+
+/**
+ * Create an unique ID
+ * @param {Payload} payload
+ * @returns {string}
+ */
+export function props_id(payload) {
+	const uid = payload.uid();
+	payload.out += '<!--#' + uid + '-->';
+	return uid;
 }
 
 export { attr, clsx };

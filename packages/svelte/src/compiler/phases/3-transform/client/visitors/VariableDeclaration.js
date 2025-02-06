@@ -42,6 +42,11 @@ export function VariableDeclaration(node, context) {
 				continue;
 			}
 
+			if (rune === '$props.id') {
+				// skip
+				continue;
+			}
+
 			if (rune === '$props') {
 				/** @type {string[]} */
 				const seen = ['$$slots', '$$events', '$$legacy'];
