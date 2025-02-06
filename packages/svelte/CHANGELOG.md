@@ -1,5 +1,13 @@
 # svelte
 
+## 5.19.9
+
+### Patch Changes
+
+- fix: ensure unowned derived dependencies are not duplicated when reactions are skipped ([#15232](https://github.com/sveltejs/svelte/pull/15232))
+
+- fix: hydrate `href` that is part of spread attributes ([#15226](https://github.com/sveltejs/svelte/pull/15226))
+
 ## 5.19.8
 
 ### Patch Changes
