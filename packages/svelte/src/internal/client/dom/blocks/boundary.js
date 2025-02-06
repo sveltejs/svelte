@@ -136,6 +136,12 @@ export function boundary(node, props, children) {
 		}
 
 		function reset() {
+			async_count = 0;
+
+			if ((boundary.f & BOUNDARY_SUSPENDED) !== 0) {
+				boundary.f ^= BOUNDARY_SUSPENDED;
+			}
+
 			if (failed_effect !== null) {
 				pause_effect(failed_effect, () => {
 					failed_effect = null;
@@ -151,6 +157,11 @@ export function boundary(node, props, children) {
 					reset_is_throwing_error();
 				}
 			});
+
+			if (async_count > 0) {
+				boundary.f |= BOUNDARY_SUSPENDED;
+				show_pending_snippet(true);
+			}
 		}
 
 		function unsuspend() {
@@ -367,12 +378,7 @@ export function boundary(node, props, children) {
 				});
 			});
 		} else {
-			main_effect = branch(() => children(anchor));
-
-			if (async_count > 0) {
-				boundary.f |= BOUNDARY_SUSPENDED;
-				show_pending_snippet(true);
-			}
+			reset();
 		}
 
 		reset_is_throwing_error();
