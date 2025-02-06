@@ -12,7 +12,6 @@ import {
 import {
 	active_reaction,
 	active_effect,
-	remove_reactions,
 	set_signal_status,
 	skip_reaction,
 	update_reaction,
@@ -29,7 +28,6 @@ import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
 import { capture, suspend } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
-import { noop } from '../../shared/utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 
 /** @type {Effect | null} */
@@ -73,7 +71,7 @@ export function derived(fn) {
 		fn,
 		reactions: null,
 		rv: 0,
-		v: /** @type {V} */ (null),
+		v: /** @type {V} */ (UNINITIALIZED),
 		wv: 0,
 		parent: parent_derived ?? active_effect
 	};

@@ -4,7 +4,7 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { is_array } from '../../shared/utils.js';
 import { EFFECT_PRESERVED } from '../constants.js';
 import { getContext, setContext } from '../context.js';
-import { active_effect, get, handle_error, untrack } from '../runtime.js';
+import { active_effect, active_reaction, get, handle_error, untrack } from '../runtime.js';
 import { derived } from './deriveds.js';
 import { block } from './effects.js';
 import { internal_set, source } from './sources.js';
@@ -44,7 +44,12 @@ export class Resource {
 			get(this.#fn)
 				.then(
 					(value) => {
-						if (current_token !== token) return;
+						if (current_token !== token) {
+							if (this.#current.v === UNINITIALIZED) {
+								internal_set(this.#current, value);
+							}
+							return;
+						}
 						internal_set(this.#current, value);
 						internal_set(this.#pending, false);
 						return value;
@@ -65,6 +70,10 @@ export class Resource {
 		return get(this.#pending);
 	}
 
+	get latest() {
+		return get(this.#fn);
+	}
+
 	get current() {
 		var value = get(this.#current);
 
@@ -76,22 +85,53 @@ export class Resource {
 	}
 
 	/**
-	 * @param {(arg0: { readonly current: T; readonly latest: T; }) => void} onfulfilled
+	 * @param {(arg0: boolean) => void} onfulfilled
 	 * @param {((reason: any) => PromiseLike<never>) | null | undefined} onrejected
 	 */
 	then(onfulfilled, onrejected) {
-		return get(this.#fn).then(() => {
-			var self = this;
-			onfulfilled({
-				get current() {
-					return get(self.#current);
-				},
-				get latest() {
-					get(self.#fn);
-					return get(self.#current);
-				}
-			});
+		return this.#fn.v.then(() => {
+			onfulfilled(true);
 		}, onrejected);
+	}
+
+	/**
+	 * @template T, V
+	 * @param {Resource<T> | Resource<T>[]} resources
+	 * @param {() => V} fn
+	 */
+	static deferred(resources, fn) {
+		const res = is_array(resources) ? resources : [resources];
+
+		var deferred = derived(() => {
+			var prev = /** @type {Derived} */ (active_reaction)?.v;
+
+			for (let i = 0; i < res.length; i += 1) {
+				const resource = res[i];
+				const pending = untrack(() => resource.pending);
+
+				try {
+					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+					resource.current;
+				} catch {
+					// NOOP
+				}
+				if (pending) {
+					if (prev !== UNINITIALIZED) {
+						return prev;
+					}
+					return untrack(fn);
+				}
+			}
+			return fn();
+		});
+
+		get(deferred);
+
+		return {
+			get current() {
+				return get(deferred);
+			}
+		};
 	}
 }
 
@@ -121,24 +161,4 @@ export function createResourceContext() {
 	};
 
 	return [set_resource, get_resource];
-}
-
-/**
- * @template T, V
- * @param {Resource<T> | Resource<T>[]} resources
- * @param {() => V} fn
- */
-export function deferPending(resources, fn) {
-	const res = is_array(resources) ? resources : [resources];
-
-	for (let i = 0; i < res.length; i += 1) {
-		const resource = res[i];
-		const pending = untrack(() => resource.pending);
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		resource.current;
-		if (pending) {
-			break;
-		}
-	}
-	return untrack(fn);
 }

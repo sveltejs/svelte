@@ -219,4 +219,4 @@ export { getContext, getAllContexts, hasContext, setContext } from './internal/c
 export { hydrate, mount, unmount } from './internal/client/render.js';
 export { tick, untrack } from './internal/client/runtime.js';
 export { createRawSnippet } from './internal/client/dom/blocks/snippet.js';
-export { Resource, createResourceContext, deferPending } from './internal/client/reactivity/resources.js';
+export { Resource, createResourceContext } from './internal/client/reactivity/resources.js';
