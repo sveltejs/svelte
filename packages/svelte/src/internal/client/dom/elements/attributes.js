@@ -419,11 +419,7 @@ export function set_attributes(
 				// @ts-ignore
 				element[name] = value;
 			} else if (typeof value !== 'function') {
-				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
-					if (!skip_warning) check_src_in_dev_hydration(element, name, value ?? '');
-				} else {
-					set_attribute(element, name, value);
-				}
+				set_attribute(element, name, value);
 			}
 		}
 		if (key === 'style' && '__styles' in element) {
