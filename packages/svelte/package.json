@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.19.7",
+  "version": "5.19.8",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -143,7 +143,7 @@
     "source-map": "^0.7.4",
     "tiny-glob": "^0.2.9",
     "typescript": "^5.5.4",
-    "vitest": "^2.0.5"
+    "vitest": "^2.1.9"
   },
   "dependencies": {
     "@ampproject/remapping": "^2.3.0",
