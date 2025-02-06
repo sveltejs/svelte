@@ -818,6 +818,28 @@ describe('signals', () => {
 		};
 	});
 
+	test('unowned deriveds dependencies are correctly de-duped', () => {
+		return () => {
+			let a = state(0);
+			let b = state(true);
+			let c = derived(() => $.get(a));
+			let d = derived(() => ($.get(b) ? 1 : $.get(a) + $.get(c) + $.get(a)));
+
+			$.get(d);
+
+			assert.equal(d.deps?.length, 1);
+
+			$.get(d);
+
+			set(a, 1);
+			set(b, false);
+
+			$.get(d);
+
+			assert.equal(d.deps?.length, 3);
+		};
+	});
+
 	test('unowned deriveds correctly update', () => {
 		return () => {
 			const arr1 = proxy<{ a: number }[]>([]);

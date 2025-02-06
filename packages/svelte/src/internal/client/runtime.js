@@ -188,7 +188,8 @@ export function check_dirtiness(reaction) {
 					dependency = dependencies[i];
 
 					// We always re-add all reactions (even duplicates) if the derived was
-					// previously disconnected
+					// previously disconnected, however we don't if it was unowned as we
+					// de-duplicate dependencies in that case
 					if (is_disconnected || !dependency?.reactions?.includes(reaction)) {
 						(dependency.reactions ??= []).push(reaction);
 					}
@@ -404,15 +405,9 @@ export function update_reaction(reaction) {
 	skipped_deps = 0;
 	untracked_writes = null;
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
-	// prettier-ignore
 	skip_reaction =
 		(flags & UNOWNED) !== 0 &&
-		(!is_flushing_effect ||
-			// If we were previously not in a reactive context and we're reading an unowned derived
-			// that was created inside another reaction, then we don't fully know the real owner and thus
-			// we need to skip adding any reactions for this unowned
-				((previous_reaction === null || previous_untracking) &&
-				/** @type {Derived} */ (reaction).parent !== null));
+		(!is_flushing_effect || previous_reaction === null || previous_untracking);
 
 	derived_sources = null;
 	set_component_context(reaction.ctx);
@@ -933,7 +928,10 @@ export function get(signal) {
 				skipped_deps++;
 			} else if (new_deps === null) {
 				new_deps = [signal];
-			} else {
+			} else if (!skip_reaction || !new_deps.includes(signal)) {
+				// Normally we can push duplicated dependencies to `new_deps`, but if we're inside
+				// an unowned derived because skip_reaction is true, then we need to ensure that
+				// we don't have duplicates
 				new_deps.push(signal);
 			}
 		}
