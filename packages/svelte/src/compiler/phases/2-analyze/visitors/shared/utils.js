@@ -35,20 +35,13 @@ export function validate_assignment(node, argument, state) {
 		}
 	}
 
-	let object = /** @type {Expression | Super} */ (argument);
-
-	/** @type {Expression | PrivateIdentifier | null} */
-	let property = null;
-
-	while (object.type === 'MemberExpression') {
-		property = object.property;
-		object = object.object;
-	}
-
-	if (object.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
-		if (state.private_derived_state.includes(property.name)) {
-			e.constant_assignment(node, 'derived state');
-		}
+	if (
+		argument.type === 'MemberExpression' &&
+		argument.object.type === 'ThisExpression' &&
+		argument.property.type === 'PrivateIdentifier' &&
+		state.private_derived_state.includes(argument.property.name)
+	) {
+		e.constant_assignment(node, 'derived state');
 	}
 }
 
