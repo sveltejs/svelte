@@ -514,17 +514,19 @@ declare module 'svelte' {
 	export function untrack<T>(fn: () => T): T;
 	export function createResourceContext<T>(): [set_resource: (resource: Resource<T>) => void, get_resource: () => Resource<T>];
 
-	export function deferPending<T, V>(resources: Resource<T> | Resource<T>[], fn: () => V): V;
-
 	export class Resource<T> {
+		
+		static deferred<T_1, V>(resources: Resource<T_1> | Resource<T_1>[], fn: () => V): {
+			readonly current: any;
+		};
 		
 		constructor(fn: () => Promise<T>);
 		get pending(): boolean;
+		get latest(): Promise<T>;
 		get current(): T;
 		
 		then(onfulfilled: (arg0: {
 			readonly current: T;
-			readonly latest: T;
 		}) => void, onrejected: ((reason: any) => PromiseLike<never>) | null | undefined): Promise<void>;
 		#private;
 	}

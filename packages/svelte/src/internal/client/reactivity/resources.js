@@ -85,12 +85,17 @@ export class Resource {
 	}
 
 	/**
-	 * @param {(arg0: boolean) => void} onfulfilled
+	 * @param {(arg0: { readonly current: T; }) => void} onfulfilled
 	 * @param {((reason: any) => PromiseLike<never>) | null | undefined} onrejected
 	 */
 	then(onfulfilled, onrejected) {
 		return this.#fn.v.then(() => {
-			onfulfilled(true);
+			var self = this;
+			onfulfilled({
+				get current() {
+					return self.current;
+				}
+			});
 		}, onrejected);
 	}
 
