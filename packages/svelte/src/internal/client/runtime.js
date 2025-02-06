@@ -188,7 +188,8 @@ export function check_dirtiness(reaction) {
 					dependency = dependencies[i];
 
 					// We always re-add all reactions (even duplicates) if the derived was
-					// previously disconnected
+					// previously disconnected, however we don't if it was unowned as we
+					// de-duplicate dependencies in that case
 					if (is_disconnected || !dependency?.reactions?.includes(reaction)) {
 						(dependency.reactions ??= []).push(reaction);
 					}
