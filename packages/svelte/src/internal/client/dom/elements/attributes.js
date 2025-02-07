@@ -382,19 +382,18 @@ export function set_attributes(
 				if (name === 'value' || name === 'checked') {
 					// removing value/checked also removes defaultValue/defaultChecked — preserve
 					let input = /** @type {HTMLInputElement} */ (element);
-
+					const use_default = prev === undefined;
 					if (name === 'value') {
-						let prev = input.defaultValue;
+						let previous = input.defaultValue;
 						input.removeAttribute(name);
-						input.defaultValue = prev;
-						input.value = '';
+						input.defaultValue = previous;
 						// @ts-ignore
-						input.__value = null;
+						input.value = input.__value = use_default ? previous : null;
 					} else {
-						let prev = input.defaultChecked;
+						let previous = input.defaultChecked;
 						input.removeAttribute(name);
-						input.defaultChecked = prev;
-						input.checked = false;
+						input.defaultChecked = previous;
+						input.checked = use_default ? previous : false;
 					}
 				} else {
 					element.removeAttribute(key);
