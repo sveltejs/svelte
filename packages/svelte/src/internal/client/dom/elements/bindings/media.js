@@ -1,6 +1,7 @@
 import { hydrating } from '../../hydration.js';
 import { render_effect, effect, teardown } from '../../../reactivity/effects.js';
 import { listen } from './shared.js';
+import { on } from '../events.js';
 
 /** @param {TimeRanges} ranges */
 function time_ranges_to_array(ranges) {
@@ -42,7 +43,7 @@ export function bind_current_time(media, get, set = get) {
 	};
 
 	raf_id = requestAnimationFrame(callback);
-	media.addEventListener('timeupdate', callback);
+	var destroy = on(media, 'timeupdate', callback);
 
 	render_effect(() => {
 		var next_value = Number(get());
@@ -54,7 +55,7 @@ export function bind_current_time(media, get, set = get) {
 
 	teardown(() => {
 		cancelAnimationFrame(raf_id);
-		media.removeEventListener('timeupdate', callback);
+		destroy();
 	});
 }
 

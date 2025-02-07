@@ -1,3 +1,4 @@
+import { run_all } from '../../../../shared/utils.js';
 import { teardown } from '../../../reactivity/effects.js';
 import {
 	active_effect,
@@ -5,6 +6,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../../../runtime.js';
+import { on } from '../events.js';
 import { add_form_reset_listener } from '../misc.js';
 
 /**
@@ -20,14 +22,15 @@ export function listen(target, events, handler, call_handler_immediately = true)
 		handler();
 	}
 
+	/** @type {(() => void)[]} */
+	var destroys = [];
+
 	for (var name of events) {
-		target.addEventListener(name, handler);
+		destroys.push(on(target, name, handler));
 	}
 
 	teardown(() => {
-		for (var name of events) {
-			target.removeEventListener(name, handler);
-		}
+		run_all(destroys);
 	});
 }
 
@@ -57,7 +60,7 @@ export function without_reactive_context(fn) {
  * @param {(is_reset?: true) => void} [on_reset]
  */
 export function listen_to_event_and_reset_event(element, event, handler, on_reset = handler) {
-	element.addEventListener(event, () => without_reactive_context(handler));
+	on(element, event, () => handler());
 	// @ts-expect-error
 	const prev = element.__on_r;
 	if (prev) {
