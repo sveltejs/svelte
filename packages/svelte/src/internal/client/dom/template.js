@@ -249,3 +249,23 @@ export function append(anchor, dom) {
 
 	anchor.before(/** @type {Node} */ (dom));
 }
+
+let uid = 1;
+
+/**
+ * Create (or hydrate) an unique UID for the component instance.
+ */
+export function props_id() {
+	if (
+		hydrating &&
+		hydrate_node &&
+		hydrate_node.nodeType === 8 &&
+		hydrate_node.textContent?.startsWith('#s')
+	) {
+		const id = hydrate_node.textContent.substring(1);
+		hydrate_next();
+		return id;
+	}
+
+	return 'c' + uid++;
+}

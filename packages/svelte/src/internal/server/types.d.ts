@@ -18,6 +18,8 @@ export interface Payload {
 		title: string;
 		out: string;
 	};
+	/** Function that generates a unique ID */
+	uid: () => string;
 }
 
 export interface RenderOutput {

@@ -416,6 +416,7 @@ export function analyze_component(root, source, options) {
 		immutable: runes || options.immutable,
 		exports: [],
 		uses_props: false,
+		props_id: null,
 		uses_rest_props: false,
 		uses_slots: false,
 		uses_component_bindings: false,
