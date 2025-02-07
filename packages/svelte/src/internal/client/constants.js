@@ -20,10 +20,11 @@ export const LEGACY_DERIVED_PROP = 1 << 18;
 export const INSPECT_EFFECT = 1 << 19;
 export const HEAD_EFFECT = 1 << 20;
 export const EFFECT_PRESERVED = 1 << 21; // effects with this flag should not be pruned
+export const ASYNC_DERIVED = 1 << 22;
 
 // Flags used for async
-export const REACTION_IS_UPDATING = 1 << 22;
-export const BOUNDARY_SUSPENDED = 1 << 23;
+export const REACTION_IS_UPDATING = 1 << 23;
+export const BOUNDARY_SUSPENDED = 1 << 24;
 
 export const STATE_SYMBOL = Symbol('$state');
 export const STATE_SYMBOL_METADATA = Symbol('$state metadata');

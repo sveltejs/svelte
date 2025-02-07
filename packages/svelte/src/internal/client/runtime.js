@@ -25,14 +25,15 @@ import {
 	DISCONNECTED,
 	BOUNDARY_EFFECT,
 	REACTION_IS_UPDATING,
-	BOUNDARY_SUSPENDED
+	BOUNDARY_SUSPENDED,
+	ASYNC_DERIVED
 } from './constants.js';
 import {
 	flush_idle_tasks,
 	flush_boundary_micro_tasks,
 	flush_post_micro_tasks
 } from './dom/task.js';
-import { internal_set } from './reactivity/sources.js';
+import { internal_set, set } from './reactivity/sources.js';
 import {
 	destroy_derived_effects,
 	from_async_derived,
@@ -50,7 +51,7 @@ import {
 	set_component_context,
 	set_dev_current_component_function
 } from './context.js';
-import { add_boundary_effect, commit_boundary } from './dom/blocks/boundary.js';
+import { add_boundary_effect, commit_boundary, get_boundary } from './dom/blocks/boundary.js';
 import * as w from './warnings.js';
 
 const FLUSH_MICROTASK = 0;
@@ -107,6 +108,14 @@ export let active_effect = null;
 /** @param {null | Effect} effect */
 export function set_active_effect(effect) {
 	active_effect = effect;
+}
+
+/** @type {null | Effect} */
+export let event_boundary_effect = null;
+
+/** @param {null | Effect} effect */
+export function set_event_boundary_effect(effect) {
+	event_boundary_effect = effect;
 }
 
 // TODO remove this, once we're satisfied that we're not leaking context
@@ -776,13 +785,25 @@ function flush_deferred() {
 
 /**
  * @param {Effect} signal
+ * @param {Source} [source]
  * @returns {void}
  */
-export function schedule_effect(signal) {
+export function schedule_effect(signal, source) {
 	if (scheduler_mode === FLUSH_MICROTASK) {
 		if (!is_micro_task_queued) {
 			is_micro_task_queued = true;
 			queueMicrotask(flush_deferred);
+		}
+	}
+
+	if (source && (signal.f & ASYNC_DERIVED) !== 0) {
+		var boundary = get_boundary(signal);
+		// @ts-ignore
+		var sources = boundary.fn.sources;
+		var entry = sources.get(source);
+		if (entry === undefined) {
+			entry = { v: source.v };
+			sources.set(source, entry);
 		}
 	}
 
@@ -812,10 +833,9 @@ export function schedule_effect(signal) {
  *
  * @param {Effect} effect
  * @param {Effect[]} collected_effects
- * @param {Effect} [boundary]
  * @returns {void}
  */
-function process_effects(effect, collected_effects, boundary) {
+function process_effects(effect, collected_effects) {
 	var current_effect = effect.first;
 	var effects = [];
 
@@ -826,17 +846,7 @@ function process_effects(effect, collected_effects, boundary) {
 		var sibling = current_effect.next;
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
-			if (boundary !== undefined && (flags & (BLOCK_EFFECT | BRANCH_EFFECT)) === 0) {
-				// Inside a boundary, defer everything except block/branch effects
-				add_boundary_effect(/** @type {Effect} */ (boundary), current_effect);
-			} else if ((flags & BOUNDARY_EFFECT) !== 0) {
-				process_effects(current_effect, collected_effects, current_effect);
-
-				if ((current_effect.f & BOUNDARY_SUSPENDED) === 0) {
-					// no more async work to happen
-					commit_boundary(current_effect);
-				}
-			} else if ((flags & RENDER_EFFECT) !== 0) {
+			if ((flags & RENDER_EFFECT) !== 0) {
 				if (is_branch) {
 					current_effect.f ^= CLEAN;
 				} else {
@@ -1024,11 +1034,27 @@ export function get(signal) {
 		}
 	}
 
+	var value = signal.v;
+
 	if (is_derived) {
 		derived = /** @type {Derived} */ (signal);
 
 		if (check_dirtiness(derived)) {
 			update_derived(derived);
+		}
+		value = signal.v;
+	} else {
+		var target_effect = event_boundary_effect ?? active_effect;
+
+		if (target_effect !== null && (target_effect.f & ASYNC_DERIVED) === 0) {
+			var boundary = get_boundary(target_effect);
+			if (boundary !== null) {
+				var sources = boundary.fn.sources;
+				var entry = sources.get(signal);
+				if (entry !== undefined) {
+					value = entry.v;
+				}
+			}
 		}
 	}
 
@@ -1052,7 +1078,7 @@ export function get(signal) {
 			if (signal.debug) {
 				signal.debug();
 			} else if (signal.created) {
-				var entry = tracing_expressions.entries.get(signal);
+				entry = tracing_expressions.entries.get(signal);
 
 				if (entry === undefined) {
 					entry = { read: [] };
@@ -1066,7 +1092,7 @@ export function get(signal) {
 		recent_async_deriveds.delete(signal);
 	}
 
-	return signal.v;
+	return value;
 }
 
 /**

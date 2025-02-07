@@ -173,6 +173,10 @@ export function boundary(node, props, children) {
 				boundary.f ^= BOUNDARY_SUSPENDED;
 			}
 
+			// @ts-ignore
+			var sources = boundary.fn.sources;
+			sources.clear();
+
 			for (const e of render_effects) {
 				try {
 					if (check_dirtiness(e)) {
@@ -350,6 +354,9 @@ export function boundary(node, props, children) {
 		};
 
 		// @ts-ignore
+		boundary.fn.sources = new Map();
+
+		// @ts-ignore
 		boundary.fn.is_pending = () => props.pending;
 
 		if (hydrating) {
@@ -438,16 +445,21 @@ export function is_pending_boundary(boundary) {
 	return boundary.fn.is_pending();
 }
 
-export function suspend() {
-	var boundary = active_effect;
+export function get_boundary(effect) {
+	var boundary = effect;
 
 	while (boundary !== null) {
 		if ((boundary.f & BOUNDARY_EFFECT) !== 0 && is_pending_boundary(boundary)) {
-			break;
+			return boundary;
 		}
 
 		boundary = boundary.parent;
 	}
+	return null;
+}
+
+export function suspend() {
+	var boundary = get_boundary(active_effect);
 
 	if (boundary === null) {
 		e.await_outside_boundary();

@@ -8,10 +8,13 @@ import * as w from '../../warnings.js';
 import {
 	active_effect,
 	active_reaction,
+	event_boundary_effect,
 	set_active_effect,
-	set_active_reaction
+	set_active_reaction,
+	set_event_boundary_effect
 } from '../../runtime.js';
 import { without_reactive_context } from './bindings/shared.js';
+import { get_boundary } from '../blocks/boundary.js';
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -239,8 +242,17 @@ export function handle_event_propagation(event) {
 
 				if (delegated !== undefined && !(/** @type {any} */ (current_target).disabled)) {
 					if (is_array(delegated)) {
-						var [fn, ...data] = delegated;
-						fn.apply(current_target, [event, ...data]);
+						var [fn, effect, ...data] = delegated;
+						var boundary_effect = (effect !== null && get_boundary(effect)) ?? null;
+						var previous_boundary_effect = event_boundary_effect;
+						try {
+							if (boundary_effect !== null) {
+								set_event_boundary_effect(boundary_effect);
+							}
+							fn.apply(current_target, [event, ...data]);
+						} finally {
+							set_event_boundary_effect(previous_boundary_effect);
+						}
 					} else {
 						delegated.call(current_target, event);
 					}

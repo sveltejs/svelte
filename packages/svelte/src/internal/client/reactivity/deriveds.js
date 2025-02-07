@@ -1,6 +1,7 @@
 /** @import { Derived, Effect, Source } from '#client' */
 import { DEV } from 'esm-env';
 import {
+	ASYNC_DERIVED,
 	CLEAN,
 	DERIVED,
 	DESTROYED,
@@ -29,7 +30,6 @@ import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
 import { capture, suspend } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
-import { noop } from '../../shared/utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
 
 /** @type {Effect | null} */
@@ -152,8 +152,9 @@ export function async_derived(fn, location) {
 				}
 			}
 		);
-	}, EFFECT_PRESERVED);
+	}, EFFECT_PRESERVED | ASYNC_DERIVED);
 
+	// eslint-disable-next-line no-async-promise-executor
 	return new Promise(async (fulfil) => {
 		// if the effect re-runs before the initial promise
 		// resolves, delay resolution until we have a value

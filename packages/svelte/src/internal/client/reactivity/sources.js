@@ -169,6 +169,9 @@ export function set(source, value) {
  */
 export function internal_set(source, value) {
 	if (!source.equals(value)) {
+
+		mark_reactions(source, DIRTY, source);
+
 		var old_value = source.v;
 		source.v = value;
 		source.wv = increment_write_version();
@@ -180,8 +183,6 @@ export function internal_set(source, value) {
 				source.trace_v ??= old_value;
 			}
 		}
-
-		mark_reactions(source, DIRTY);
 
 		// It's possible that the current reaction might not have up-to-date dependencies
 		// whilst it's actively running. So in the case of ensuring it registers the reaction
@@ -257,9 +258,10 @@ export function update_pre(source, d = 1) {
 /**
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
+ * @param {Source} [source]
  * @returns {void}
  */
-function mark_reactions(signal, status) {
+function mark_reactions(signal, status, source) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -289,7 +291,7 @@ function mark_reactions(signal, status) {
 			if ((flags & DERIVED) !== 0) {
 				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
 			} else {
-				schedule_effect(/** @type {Effect} */ (reaction));
+				schedule_effect(/** @type {Effect} */ (reaction), source);
 			}
 		}
 	}
