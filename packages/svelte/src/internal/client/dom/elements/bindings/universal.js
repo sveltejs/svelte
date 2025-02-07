@@ -1,4 +1,5 @@
 import { render_effect, teardown } from '../../../reactivity/effects.js';
+import { on } from '../events.js';
 import { listen } from './shared.js';
 
 /**
@@ -9,7 +10,7 @@ import { listen } from './shared.js';
  * @returns {void}
  */
 export function bind_content_editable(property, element, get, set = get) {
-	element.addEventListener('input', () => {
+	on(element, 'input', () => {
 		// @ts-ignore
 		set(element[property]);
 	});
@@ -44,7 +45,7 @@ export function bind_property(property, event_name, element, set, get) {
 		set(element[property]);
 	};
 
-	element.addEventListener(event_name, handler);
+	on(element, event_name, handler);
 
 	if (get) {
 		render_effect(() => {
