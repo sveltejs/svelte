@@ -179,7 +179,7 @@ export function boundary(node, props, children) {
 			var sources = boundary.fn.sources;
 			for (var [source, entry] of sources) {
 				if (source.v !== entry.v) {
-					mark_reactions(source, DIRTY);
+					mark_reactions(source, DIRTY, source);
 				}
 			}
 			sources.clear();

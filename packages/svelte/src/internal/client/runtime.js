@@ -789,14 +789,11 @@ function flush_deferred() {
  * @returns {void}
  */
 export function schedule_effect(signal, source) {
-	if (scheduler_mode === FLUSH_MICROTASK) {
-		if (!is_micro_task_queued) {
-			is_micro_task_queued = true;
-			queueMicrotask(flush_deferred);
-		}
-	}
-
 	if (source && (signal.f & ASYNC_DERIVED) !== 0) {
+		if (active_effect === signal) {
+			set_signal_status(signal, MAYBE_DIRTY);
+			return;
+		}
 		var boundary = get_boundary(signal);
 		// @ts-ignore
 		var sources = boundary.fn.sources;
@@ -804,6 +801,13 @@ export function schedule_effect(signal, source) {
 		if (entry === undefined) {
 			entry = { v: source.v };
 			sources.set(source, entry);
+		}
+	}
+
+	if (scheduler_mode === FLUSH_MICROTASK) {
+		if (!is_micro_task_queued) {
+			is_micro_task_queued = true;
+			queueMicrotask(flush_deferred);
 		}
 	}
 
