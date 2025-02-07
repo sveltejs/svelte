@@ -387,10 +387,14 @@ export function set_attributes(
 						let prev = input.defaultValue;
 						input.removeAttribute(name);
 						input.defaultValue = prev;
+						input.value = '';
+						// @ts-ignore
+						input.__value = null;
 					} else {
 						let prev = input.defaultChecked;
 						input.removeAttribute(name);
 						input.defaultChecked = prev;
+						input.checked = false;
 					}
 				} else {
 					element.removeAttribute(key);
