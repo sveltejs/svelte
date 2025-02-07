@@ -203,7 +203,7 @@ Adding types is recommended, as it ensures that people using your component can 
 
 ## `$props.id()`
 
-This rune, added in version 5.20.0, generates an ID that is unique to the current component instance. When hydrating a server-rendered a component, the value will be consistent between server and client.
+This rune, added in version 5.20.0, generates an ID that is unique to the current component instance. When hydrating a server-rendered component, the value will be consistent between server and client.
 
 This is useful for linking elements via attributes like `for` and `aria-labelledby`.
 
