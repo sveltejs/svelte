@@ -289,7 +289,7 @@ export function mark_reactions(signal, status, source) {
 		// If the signal a) was previously clean or b) is an unowned derived, then mark it
 		if ((flags & (CLEAN | UNOWNED)) !== 0) {
 			if ((flags & DERIVED) !== 0) {
-				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
+				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY, source);
 			} else {
 				schedule_effect(/** @type {Effect} */ (reaction), source);
 			}

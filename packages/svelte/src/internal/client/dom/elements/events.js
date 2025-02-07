@@ -56,18 +56,27 @@ export function replay_events(dom) {
  * @param {AddEventListenerOptions} [options]
  */
 export function create_event(event_name, dom, handler, options = {}) {
+	var boundary_effect = (active_effect !== null && get_boundary(active_effect)) ?? null;
 	/**
 	 * @this {EventTarget}
 	 */
 	function target_handler(/** @type {Event} */ event) {
-		if (!options.capture) {
-			// Only call in the bubble phase, else delegated events would be called before the capturing events
-			handle_event_propagation.call(dom, event);
-		}
-		if (!event.cancelBubble) {
-			return without_reactive_context(() => {
-				return handler?.call(this, event);
-			});
+		var previous_boundary_effect = event_boundary_effect;
+		try {
+			if (boundary_effect !== null) {
+				set_event_boundary_effect(boundary_effect);
+			}
+			if (!options.capture) {
+				// Only call in the bubble phase, else delegated events would be called before the capturing events
+				handle_event_propagation.call(dom, event);
+			}
+			if (!event.cancelBubble) {
+				return without_reactive_context(() => {
+					return handler?.call(this, event);
+				});
+			}
+		} finally {
+			set_event_boundary_effect(previous_boundary_effect)
 		}
 	}
 
