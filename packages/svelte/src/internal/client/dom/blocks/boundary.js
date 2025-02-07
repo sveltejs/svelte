@@ -3,6 +3,7 @@
 import {
 	BOUNDARY_EFFECT,
 	BOUNDARY_SUSPENDED,
+	DIRTY,
 	EFFECT_PRESERVED,
 	EFFECT_RAN,
 	EFFECT_TRANSPARENT,
@@ -36,6 +37,7 @@ import { DEV } from 'esm-env';
 import { from_async_derived, set_from_async_derived } from '../../reactivity/deriveds.js';
 import { raf } from '../../timing.js';
 import { loop } from '../../loop.js';
+import { mark_reactions } from '../../reactivity/sources.js';
 
 const ASYNC_INCREMENT = Symbol();
 const ASYNC_DECREMENT = Symbol();
@@ -175,6 +177,11 @@ export function boundary(node, props, children) {
 
 			// @ts-ignore
 			var sources = boundary.fn.sources;
+			for (var [source, entry] of sources) {
+				if (source.v !== entry.v) {
+					mark_reactions(source, DIRTY);
+				}
+			}
 			sources.clear();
 
 			for (const e of render_effects) {

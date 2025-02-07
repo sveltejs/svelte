@@ -261,7 +261,7 @@ export function update_pre(source, d = 1) {
  * @param {Source} [source]
  * @returns {void}
  */
-function mark_reactions(signal, status, source) {
+export function mark_reactions(signal, status, source) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
