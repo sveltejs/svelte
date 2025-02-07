@@ -25,7 +25,6 @@ import {
 	DISCONNECTED,
 	BOUNDARY_EFFECT,
 	REACTION_IS_UPDATING,
-	BOUNDARY_SUSPENDED,
 	ASYNC_DERIVED
 } from './constants.js';
 import {
@@ -51,7 +50,7 @@ import {
 	set_component_context,
 	set_dev_current_component_function
 } from './context.js';
-import { add_boundary_effect, commit_boundary, get_boundary } from './dom/blocks/boundary.js';
+import { get_boundary } from './dom/blocks/boundary.js';
 import * as w from './warnings.js';
 
 const FLUSH_MICROTASK = 0;
@@ -70,6 +69,7 @@ let is_micro_task_queued = false;
 let last_scheduled_effect = null;
 
 export let is_flushing_effect = false;
+export let is_flushing_async_derived = false;
 export let is_destroying_effect = false;
 
 /** @param {boolean} value */
@@ -858,8 +858,12 @@ function process_effects(effect, collected_effects) {
 					// to ensure that unowned deriveds are correctly tracked
 					// because we're flushing the current effect
 					var previous_active_reaction = active_reaction;
+					var previous_is_flushing_async_derived = is_flushing_async_derived;
 					try {
 						active_reaction = current_effect;
+						if ((current_effect.f & ASYNC_DERIVED) !== 0) {
+							is_flushing_async_derived = true;
+						}
 						if (check_dirtiness(current_effect)) {
 							update_effect(current_effect);
 						}
@@ -867,6 +871,7 @@ function process_effects(effect, collected_effects) {
 						handle_error(error, current_effect, null, current_effect.ctx);
 					} finally {
 						active_reaction = previous_active_reaction;
+						is_flushing_async_derived = previous_is_flushing_async_derived;
 					}
 				}
 
@@ -1050,7 +1055,7 @@ export function get(signal) {
 	} else {
 		var target_effect = event_boundary_effect ?? active_effect;
 
-		if (target_effect !== null && (target_effect.f & ASYNC_DERIVED) === 0) {
+		if (target_effect !== null && !is_flushing_async_derived) {
 			var boundary = get_boundary(target_effect);
 			if (boundary !== null) {
 				var sources = boundary.fn.sources;

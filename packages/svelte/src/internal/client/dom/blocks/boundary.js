@@ -6,8 +6,7 @@ import {
 	DIRTY,
 	EFFECT_PRESERVED,
 	EFFECT_RAN,
-	EFFECT_TRANSPARENT,
-	RENDER_EFFECT
+	EFFECT_TRANSPARENT
 } from '../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
@@ -18,9 +17,7 @@ import {
 	set_active_effect,
 	set_active_reaction,
 	reset_is_throwing_error,
-	schedule_effect,
-	check_dirtiness,
-	update_effect
+	schedule_effect
 } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -42,9 +39,6 @@ import { mark_reactions } from '../../reactivity/sources.js';
 const ASYNC_INCREMENT = Symbol();
 const ASYNC_DECREMENT = Symbol();
 const ADD_CALLBACK = Symbol();
-const ADD_RENDER_EFFECT = Symbol();
-const ADD_EFFECT = Symbol();
-const COMMIT = Symbol();
 
 /**
  * @param {Effect} boundary
@@ -108,12 +102,6 @@ export function boundary(node, props, children) {
 
 		/** @type {Set<() => void>} */
 		var callbacks = new Set();
-
-		/** @type {Effect[]} */
-		var render_effects = [];
-
-		/** @type {Effect[]} */
-		var effects = [];
 
 		var keep_pending_snippet = false;
 
@@ -184,16 +172,6 @@ export function boundary(node, props, children) {
 			}
 			sources.clear();
 
-			for (const e of render_effects) {
-				try {
-					if (check_dirtiness(e)) {
-						update_effect(e);
-					}
-				} catch (error) {
-					handle_error(error, e, null, e.ctx);
-				}
-			}
-
 			for (const fn of callbacks) fn();
 			callbacks.clear();
 
@@ -206,16 +184,6 @@ export function boundary(node, props, children) {
 			if (offscreen_fragment) {
 				anchor.before(offscreen_fragment);
 				offscreen_fragment = null;
-			}
-
-			for (const e of effects) {
-				try {
-					if (check_dirtiness(e)) {
-						update_effect(e);
-					}
-				} catch (error) {
-					handle_error(error, e, null, e.ctx);
-				}
 			}
 		}
 
@@ -296,21 +264,6 @@ export function boundary(node, props, children) {
 
 			if (input === ADD_CALLBACK) {
 				callbacks.add(payload);
-				return;
-			}
-
-			if (input === ADD_RENDER_EFFECT) {
-				render_effects.push(payload);
-				return;
-			}
-
-			if (input === ADD_EFFECT) {
-				effects.push(payload);
-				return;
-			}
-
-			if (input === COMMIT) {
-				unsuspend();
 				return;
 			}
 
@@ -452,6 +405,9 @@ export function is_pending_boundary(boundary) {
 	return boundary.fn.is_pending();
 }
 
+/**
+ * @param {Effect | null} effect
+ */
 export function get_boundary(effect) {
 	var boundary = effect;
 
@@ -525,21 +481,4 @@ export function add_boundary_callback(boundary, fn) {
 
 	// @ts-ignore
 	boundary.fn(ADD_CALLBACK, fn);
-}
-
-/**
- * @param {Effect} boundary
- * @param {Effect} effect
- */
-export function add_boundary_effect(boundary, effect) {
-	// @ts-ignore
-	boundary.fn((effect.f & RENDER_EFFECT) !== 0 ? ADD_RENDER_EFFECT : ADD_EFFECT, effect);
-}
-
-/**
- * @param {Effect} boundary
- */
-export function commit_boundary(boundary) {
-	// @ts-ignore
-	boundary.fn?.(COMMIT);
 }
