@@ -28,12 +28,14 @@ import {
 	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	ASYNC_DERIVED
 } from '../constants.js';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
+import { get_boundary } from '../dom/blocks/boundary.js';
 
 export let inspect_effects = new Set();
 
@@ -169,6 +171,7 @@ export function set(source, value) {
  */
 export function internal_set(source, value) {
 	if (!source.equals(value)) {
+		possibly_fork(source);
 
 		mark_reactions(source, DIRTY);
 
@@ -258,9 +261,10 @@ export function update_pre(source, d = 1) {
 /**
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
+ * @param {Value} [parent]
  * @returns {void}
  */
-export function mark_reactions(signal, status) {
+export function mark_reactions(signal, status, parent, only_boundary = false) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -277,6 +281,24 @@ export function mark_reactions(signal, status) {
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === active_effect) continue;
 
+		if (only_boundary) {
+			if ((flags & (DERIVED)) === 0) {
+				var boundary = get_boundary(/** @type {Effect} */ (reaction));
+				if (!boundary) {
+					continue;
+				}
+			}
+		} else if ((flags & (DERIVED | ASYNC_DERIVED)) === 0) {
+			boundary = get_boundary(/** @type {Effect} */ (reaction));
+			if (boundary) {
+				// @ts-ignore
+				var forks = boundary.fn.forks;
+				if (forks.has(signal) || forks.has(parent)) {
+					continue;
+				}
+			}
+		}
+
 		// Inspect effects need to run immediately, so that the stack trace makes sense
 		if (DEV && (flags & INSPECT_EFFECT) !== 0) {
 			inspect_effects.add(reaction);
@@ -288,9 +310,75 @@ export function mark_reactions(signal, status) {
 		// If the signal a) was previously clean or b) is an unowned derived, then mark it
 		if ((flags & (CLEAN | UNOWNED)) !== 0) {
 			if ((flags & DERIVED) !== 0) {
-				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
+				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY, signal, only_boundary);
 			} else {
 				schedule_effect(/** @type {Effect} */ (reaction));
+			}
+		}
+	}
+}
+
+/**
+ * @param {Source | Derived} signal
+ * @param {any} forks
+ */
+function fork_dependencies(signal, forks) {
+	var entry = forks.get(signal);
+	if (entry === undefined) {
+		entry = { v: signal.v };
+		forks.set(signal, entry);
+		if ((signal.f & DERIVED) !== 0) {
+			var deps = /** @type {Derived} */ (signal).deps;
+			if (deps !== null) {
+				for (var i = 0; i < deps.length; i++) {
+					fork_dependencies(deps[i], forks);
+				}
+			}
+		}
+	}
+}
+
+/**
+ * @param {Value} signal
+ * @returns {void}
+ */
+function possibly_fork(signal) {
+	var reactions = signal.reactions;
+	if (reactions === null) return;
+
+	var runes = is_runes();
+	var length = reactions.length;
+
+	for (var i = 0; i < length; i++) {
+		var reaction = reactions[i];
+		var flags = reaction.f;
+
+		// Skip any effects that are already dirty
+		if ((flags & DIRTY) !== 0) continue;
+
+		// In legacy mode, skip the current effect to prevent infinite loops
+		if (!runes && reaction === active_effect) continue;
+
+		// If the signal a) was previously clean or b) is an unowned derived, then mark it
+		if ((flags & (CLEAN | UNOWNED)) !== 0) {
+			if ((flags & DERIVED) !== 0) {
+				possibly_fork(/** @type {Derived} */ (reaction));
+			} else {
+				if ((reaction.f & ASYNC_DERIVED) !== 0) {
+					// if (active_effect === signal) {
+					// 	set_signal_status(signal, MAYBE_DIRTY);
+					// 	return;
+					// }
+					var boundary = get_boundary(/** @type {Effect} */ (reaction));
+					// @ts-ignore
+					var forks = boundary.fn.forks;
+					var deps = reaction.deps;
+					if (deps !== null) {
+						for (var s = 0; s < deps.length; s++) {
+							fork_dependencies(deps[s], forks);
+						}
+					}
+				}
 			}
 		}
 	}

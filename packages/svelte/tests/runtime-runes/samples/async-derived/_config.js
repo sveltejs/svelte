@@ -32,11 +32,7 @@ export default test({
 		await Promise.resolve();
 		await Promise.resolve();
 		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
 		await tick();
-		flushSync();
 		assert.htmlEqual(target.innerHTML, '<p>84</p>');
 
 		d = deferred();

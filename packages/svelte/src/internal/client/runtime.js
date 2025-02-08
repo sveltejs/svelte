@@ -784,46 +784,10 @@ function flush_deferred() {
 }
 
 /**
- * @param {Source | Derived} signal
- * @param {any} forks
- */
-function fork_dependencies(signal, forks) {
-	var entry = forks.get(signal);
-	if (entry === undefined) {
-		entry = { v: signal.v };
-		forks.set(signal, entry);
-		if ((signal.f & DERIVED) !== 0) {
-			var deps = /** @type {Derived} */ (signal).deps;
-			if (deps !== null) {
-				for (var i = 0; i < deps.length; i++) {
-					fork_dependencies(deps[i], forks);
-				}
-			}
-		}
-	}
-}
-
-/**
  * @param {Effect} signal
  * @returns {void}
  */
 export function schedule_effect(signal) {
-	if ((signal.f & ASYNC_DERIVED) !== 0) {
-		if (active_effect === signal) {
-			set_signal_status(signal, MAYBE_DIRTY);
-			return;
-		}
-		var boundary = get_boundary(signal);
-		// @ts-ignore
-		var forks = boundary.fn.forks;
-		var deps = signal.deps;
-		if (deps !== null) {
-			for (var i = 0; i < deps.length; i++) {
-				fork_dependencies(deps[i], forks);
-			}
-		}
-	}
-
 	if (scheduler_mode === FLUSH_MICROTASK) {
 		if (!is_micro_task_queued) {
 			is_micro_task_queued = true;
@@ -1067,7 +1031,11 @@ export function get(signal) {
 
 	var target_effect = event_boundary_effect ?? active_effect;
 
-	if (target_effect !== null && !is_flushing_async_derived) {
+	if (
+		target_effect !== null &&
+		!is_flushing_async_derived &&
+		(target_effect.f & ASYNC_DERIVED) === 0
+	) {
 		var boundary = get_boundary(target_effect);
 		if (boundary !== null) {
 			// @ts-ignore

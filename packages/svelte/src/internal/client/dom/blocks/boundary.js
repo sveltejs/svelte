@@ -18,7 +18,8 @@ import {
 	set_active_effect,
 	set_active_reaction,
 	reset_is_throwing_error,
-	schedule_effect
+	schedule_effect,
+	increment_write_version
 } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -170,11 +171,8 @@ export function boundary(node, props, children) {
 			for (var [signal, entry] of forks) {
 				if (signal.v !== entry.v) {
 					if ((signal.f & DERIVED) === 0) {
-						var val = signal.v;
-						signal.v = entry.v;
-						internal_set(signal, val);
-					} else {
-						mark_reactions(signal, DIRTY);
+						mark_reactions(signal, DIRTY, undefined, true);
+						signal.wv = increment_write_version();
 					}
 				}
 			}
