@@ -1058,6 +1058,7 @@ export function get(signal) {
 		if (target_effect !== null && !is_flushing_async_derived) {
 			var boundary = get_boundary(target_effect);
 			if (boundary !== null) {
+				// @ts-ignore
 				var sources = boundary.fn.sources;
 				var entry = sources.get(signal);
 				if (entry !== undefined) {
