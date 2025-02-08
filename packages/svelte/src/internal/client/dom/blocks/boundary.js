@@ -164,13 +164,13 @@ export function boundary(node, props, children) {
 			}
 
 			// @ts-ignore
-			var sources = boundary.fn.sources;
-			for (var [source, entry] of sources) {
-				if (source.v !== entry.v) {
-					mark_reactions(source, DIRTY, source);
+			var forks = boundary.fn.forks;
+			for (var [signal, entry] of forks) {
+				if (signal.v !== entry.v) {
+					mark_reactions(signal, DIRTY);
 				}
 			}
-			sources.clear();
+			forks.clear();
 
 			for (const fn of callbacks) fn();
 			callbacks.clear();
@@ -314,7 +314,7 @@ export function boundary(node, props, children) {
 		};
 
 		// @ts-ignore
-		boundary.fn.sources = new Map();
+		boundary.fn.forks = new Map();
 
 		// @ts-ignore
 		boundary.fn.is_pending = () => props.pending;

@@ -170,7 +170,7 @@ export function set(source, value) {
 export function internal_set(source, value) {
 	if (!source.equals(value)) {
 
-		mark_reactions(source, DIRTY, source);
+		mark_reactions(source, DIRTY);
 
 		var old_value = source.v;
 		source.v = value;
@@ -258,10 +258,9 @@ export function update_pre(source, d = 1) {
 /**
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
- * @param {Source} [source]
  * @returns {void}
  */
-export function mark_reactions(signal, status, source) {
+export function mark_reactions(signal, status) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -289,9 +288,9 @@ export function mark_reactions(signal, status, source) {
 		// If the signal a) was previously clean or b) is an unowned derived, then mark it
 		if ((flags & (CLEAN | UNOWNED)) !== 0) {
 			if ((flags & DERIVED) !== 0) {
-				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY, source);
+				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
 			} else {
-				schedule_effect(/** @type {Effect} */ (reaction), source);
+				schedule_effect(/** @type {Effect} */ (reaction));
 			}
 		}
 	}

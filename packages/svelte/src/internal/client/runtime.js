@@ -40,7 +40,7 @@ import {
 	update_derived
 } from './reactivity/deriveds.js';
 import * as e from './errors.js';
-import { FILENAME } from '../../constants.js';
+import { FILENAME, UNINITIALIZED } from '../../constants.js';
 import { tracing_mode_flag } from '../flags/index.js';
 import { tracing_expressions, get_stack } from './dev/tracing.js';
 import {
@@ -784,23 +784,43 @@ function flush_deferred() {
 }
 
 /**
+ * @param {Source | Derived} signal
+ * @param {any} forks
+ */
+function fork_dependencies(signal, forks) {
+	var entry = forks.get(signal);
+	if (entry === undefined) {
+		entry = { v: signal.v };
+		forks.set(signal, entry);
+		if ((signal.f & DERIVED) !== 0) {
+			var deps = /** @type {Derived} */ (signal).deps;
+			if (deps !== null) {
+				for (var i = 0; i < deps.length; i++) {
+					fork_dependencies(deps[i], forks);
+				}
+			}
+		}
+	}
+}
+
+/**
  * @param {Effect} signal
- * @param {Source} [source]
  * @returns {void}
  */
-export function schedule_effect(signal, source) {
-	if (source && (signal.f & ASYNC_DERIVED) !== 0) {
+export function schedule_effect(signal) {
+	if ((signal.f & ASYNC_DERIVED) !== 0) {
 		if (active_effect === signal) {
 			set_signal_status(signal, MAYBE_DIRTY);
 			return;
 		}
 		var boundary = get_boundary(signal);
 		// @ts-ignore
-		var sources = boundary.fn.sources;
-		var entry = sources.get(source);
-		if (entry === undefined) {
-			entry = { v: source.v };
-			sources.set(source, entry);
+		var forks = boundary.fn.forks;
+		var deps = signal.deps;
+		if (deps !== null) {
+			for (var i = 0; i < deps.length; i++) {
+				fork_dependencies(deps[i], forks);
+			}
 		}
 	}
 
@@ -1043,28 +1063,32 @@ export function get(signal) {
 		}
 	}
 
-	var value = signal.v;
+	var value = /** @type {V} */ (UNINITIALIZED);
 
-	if (is_derived) {
-		derived = /** @type {Derived} */ (signal);
+	var target_effect = event_boundary_effect ?? active_effect;
 
-		if (check_dirtiness(derived)) {
-			update_derived(derived);
-		}
-		value = signal.v;
-	} else {
-		var target_effect = event_boundary_effect ?? active_effect;
-
-		if (target_effect !== null && !is_flushing_async_derived) {
-			var boundary = get_boundary(target_effect);
-			if (boundary !== null) {
-				// @ts-ignore
-				var sources = boundary.fn.sources;
-				var entry = sources.get(signal);
-				if (entry !== undefined) {
-					value = entry.v;
-				}
+	if (target_effect !== null && !is_flushing_async_derived) {
+		var boundary = get_boundary(target_effect);
+		if (boundary !== null) {
+			// @ts-ignore
+			var forks = boundary.fn.forks;
+			var entry = forks.get(signal);
+			if (entry !== undefined) {
+				value = entry.v;
 			}
+		}
+	}
+
+	if (value === UNINITIALIZED) {
+		if (is_derived) {
+			derived = /** @type {Derived} */ (signal);
+
+			if (check_dirtiness(derived)) {
+				update_derived(derived);
+			}
+			value = signal.v;
+		} else {
+			value = signal.v;
 		}
 	}
 
