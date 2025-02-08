@@ -282,7 +282,7 @@ export function mark_reactions(signal, status, parent, only_boundary = false) {
 		if (!runes && reaction === active_effect) continue;
 
 		if (only_boundary) {
-			if ((flags & (DERIVED)) === 0) {
+			if ((flags & DERIVED) === 0) {
 				var boundary = get_boundary(/** @type {Effect} */ (reaction));
 				if (!boundary) {
 					continue;
