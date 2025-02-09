@@ -41,9 +41,9 @@ export default test({
 		await tick();
 		assert.htmlEqual(target.innerHTML, '<h1>hello</h1>');
 
-		// d.resolve(2);
-		// await tick();
-		// assert.htmlEqual(target.innerHTML, '<h1>hello</h1>');
-		// assert.notEqual(target.querySelector('h1'), h1);
+		d.resolve(2);
+		await tick();
+		assert.htmlEqual(target.innerHTML, '<h1>hello</h1>');
+		assert.notEqual(target.querySelector('h1'), h1);
 	}
 });
