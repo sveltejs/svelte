@@ -10,14 +10,13 @@ import { block_close, block_open } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function IfBlock(node, context) {
-	let index = 0;
-
 	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
 	consequent.body.unshift(b.stmt(b.assignment('+=', b.id('$$payload.out'), block_open)));
 	let if_statement = b.if(/** @type {Expression} */ (context.visit(node.test)), consequent);
 
 	context.state.template.push(if_statement, block_close);
 
+	let index = 1;
 	let alt = node.alternate;
 	while (alt && alt.nodes.length === 1 && alt.nodes[0].type === 'IfBlock' && alt.nodes[0].elseif) {
 		const elseif = alt.nodes[0];
