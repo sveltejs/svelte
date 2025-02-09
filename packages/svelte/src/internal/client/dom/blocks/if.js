@@ -13,12 +13,11 @@ import { HYDRATION_START, HYDRATION_START_ELSE, UNINITIALIZED } from '../../../.
 
 /**
  * @param {TemplateNode} node
- * @param {(branch: (fn: (anchor: Node, r_index?: number, h_index?: number) => void, flag?: boolean) => void) => void} fn
- * @param {number} [root_index]
- * @param {number} [hydrate_index]
+ * @param {(branch: (fn: (anchor: Node, elseif?: [number,number]) => void, flag?: boolean) => void) => void} fn
+ * @param {[number,number]} [elseif]
  * @returns {void}
  */
-export function if_block(node, fn, root_index = 0, hydrate_index) {
+export function if_block(node, fn, [root_index, hydrate_index] = [0, 0]) {
 	if (hydrating && root_index === 0) {
 		hydrate_next();
 	}
@@ -39,7 +38,7 @@ export function if_block(node, fn, root_index = 0, hydrate_index) {
 	var has_branch = false;
 
 	const set_branch = (
-		/** @type {(anchor: Node, r_index?: number, h_index?: number) => void} */ fn,
+		/** @type {(anchor: Node, elseif?: [number,number]) => void} */ fn,
 		flag = true
 	) => {
 		has_branch = true;
@@ -48,15 +47,15 @@ export function if_block(node, fn, root_index = 0, hydrate_index) {
 
 	const update_branch = (
 		/** @type {boolean | null} */ new_condition,
-		/** @type {null | ((anchor: Node, r_index?: number, h_index?: number) => void)} */ fn
+		/** @type {null | ((anchor: Node, elseif?: [number,number]) => void)} */ fn
 	) => {
 		if (condition === (condition = new_condition)) return;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
 
-		if (hydrating && hydrate_index != -1) {
-			if (hydrate_index === undefined) {
+		if (hydrating && hydrate_index !== -1) {
+			if (root_index === 0) {
 				const data = /** @type {Comment} */ (anchor).data;
 				if (data === HYDRATION_START) {
 					hydrate_index = 0;
@@ -96,7 +95,7 @@ export function if_block(node, fn, root_index = 0, hydrate_index) {
 			if (alternate_effect) {
 				resume_effect(alternate_effect);
 			} else if (fn) {
-				alternate_effect = branch(() => fn(anchor, root_index + 1, hydrate_index));
+				alternate_effect = branch(() => fn(anchor, [root_index + 1, hydrate_index]));
 			}
 
 			if (consequent_effect) {
