@@ -37,6 +37,8 @@ export default test({
 		assert.equal(target.querySelector('h1'), h1);
 
 		d = deferred();
+		// TODO context leaks without this?
+		await Promise.resolve();
 		component.promise = d.promise;
 		await tick();
 		assert.htmlEqual(target.innerHTML, '<h1>hello</h1>');
