@@ -153,6 +153,7 @@ export function set(source, value) {
 		!untracking &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 &&
+		(active_reaction.f & (ASYNC_DERIVED)) === 0 &&
 		// If the source was created locally within the current derived, then
 		// we allow the mutation.
 		(derived_sources === null || !derived_sources.includes(source))
