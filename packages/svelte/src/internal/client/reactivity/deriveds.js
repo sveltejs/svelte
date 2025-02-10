@@ -28,7 +28,7 @@ import { block, destroy_effect } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
-import { capture, suspend } from '../dom/blocks/boundary.js';
+import { capture, get_boundary, suspend } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 
@@ -127,6 +127,16 @@ export function async_derived(fn, location) {
 					restore();
 					from_async_derived = null;
 
+					if (signal.v !== UNINITIALIZED) {
+						var boundary = get_boundary(parent);
+						// @ts-ignore
+						var forks = boundary.fn.forks;
+						var entry = forks.get(signal);
+						if (entry === undefined) {
+							entry = { v: signal.v };
+							forks.set(signal, entry);
+						}
+					}
 					internal_set(signal, v);
 
 					if (DEV && location !== undefined) {

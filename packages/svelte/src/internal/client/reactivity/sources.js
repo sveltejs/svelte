@@ -171,7 +171,7 @@ export function set(source, value) {
  */
 export function internal_set(source, value) {
 	if (!source.equals(value)) {
-		possibly_fork(source);
+		possibly_fork_reactions(source);
 
 		var old_value = source.v;
 		source.v = value;
@@ -342,7 +342,7 @@ function fork_dependencies(signal, forks) {
  * @param {Value} signal
  * @returns {void}
  */
-function possibly_fork(signal) {
+function possibly_fork_reactions(signal) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -362,7 +362,7 @@ function possibly_fork(signal) {
 		// If the signal a) was previously clean or b) is an unowned derived, then mark it
 		if ((flags & (CLEAN | UNOWNED)) !== 0) {
 			if ((flags & DERIVED) !== 0) {
-				possibly_fork(/** @type {Derived} */ (reaction));
+				possibly_fork_reactions(/** @type {Derived} */ (reaction));
 			} else {
 				if ((reaction.f & ASYNC_DERIVED) !== 0) {
 					// if (active_effect === signal) {
