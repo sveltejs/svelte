@@ -10,7 +10,15 @@ import {
 import { get_descriptor, is_function } from '../../shared/utils.js';
 import { mutable_source, set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
-import { active_effect, get, captured_signals, set_active_effect, untrack } from '../runtime.js';
+import {
+	active_effect,
+	get,
+	captured_signals,
+	set_active_effect,
+	untrack,
+	active_reaction,
+	set_active_reaction
+} from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import {
@@ -242,6 +250,29 @@ export function spread_props(...props) {
 }
 
 /**
+ * @template T
+ * @param {() => T} fn
+ * @returns {T}
+ */
+function with_parent_branch(fn) {
+	var effect = active_effect;
+	var previous_effect = active_effect;
+	var previous_reaction = active_reaction;
+
+	while (effect !== null && (effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0) {
+		effect = effect.parent;
+	}
+	try {
+		set_active_effect(effect);
+		set_active_reaction(effect);
+		return fn();
+	} finally {
+		set_active_effect(previous_effect);
+		set_active_reaction(previous_reaction);
+	}
+}
+
+/**
  * This function is responsible for synchronizing a possibly bound prop with the inner component state.
  * It is used whenever the compiler sees that the component writes to the prop, or when it has a default prop_value.
  * @template V
@@ -259,11 +290,13 @@ export function prop(props, key, flags, fallback) {
 	var is_store_sub = false;
 	var prop_value;
 
-	if (bindable) {
-		[prop_value, is_store_sub] = capture_store_binding(() => /** @type {V} */ (props[key]));
-	} else {
-		prop_value = /** @type {V} */ (props[key]);
-	}
+	with_parent_branch(() => {
+		if (bindable) {
+			[prop_value, is_store_sub] = capture_store_binding(() => /** @type {V} */ (props[key]));
+		} else {
+			prop_value = /** @type {V} */ (props[key]);
+		}
+	});
 
 	// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
 	// or `createClassComponent(Component, props)`
