@@ -3,7 +3,6 @@ import { DEV } from 'esm-env';
 import {
 	CLEAN,
 	DERIVED,
-	DESTROYED,
 	DIRTY,
 	EFFECT_HAS_DERIVED,
 	MAYBE_DIRTY,
@@ -12,7 +11,6 @@ import {
 import {
 	active_reaction,
 	active_effect,
-	remove_reactions,
 	set_signal_status,
 	skip_reaction,
 	update_reaction,

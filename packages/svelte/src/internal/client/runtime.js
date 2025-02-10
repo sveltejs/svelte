@@ -206,7 +206,7 @@ export function check_dirtiness(reaction) {
 					// If the derived is owned by another derived then mark it as owned agaub
 					// as the derived value might have been referenced in a different context
 					// and now has a reacive context managing it
-					derived.f ^= UNOWNED;
+					// derived.f ^= UNOWNED;
 				}
 			}
 
