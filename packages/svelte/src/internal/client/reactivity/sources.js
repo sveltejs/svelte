@@ -173,11 +173,11 @@ export function internal_set(source, value) {
 	if (!source.equals(value)) {
 		possibly_fork(source);
 
-		mark_reactions(source, DIRTY);
-
 		var old_value = source.v;
 		source.v = value;
 		source.wv = increment_write_version();
+
+		mark_reactions(source, DIRTY);
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
@@ -288,7 +288,7 @@ export function mark_reactions(signal, status, parent, only_boundary = false) {
 					continue;
 				}
 			}
-		} else if ((flags & (DERIVED | ASYNC_DERIVED)) === 0) {
+		} else if ((flags & (DERIVED | BLOCK_EFFECT)) === 0) {
 			boundary = get_boundary(/** @type {Effect} */ (reaction));
 			if (boundary) {
 				// @ts-ignore

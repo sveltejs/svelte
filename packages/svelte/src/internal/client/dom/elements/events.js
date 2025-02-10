@@ -8,10 +8,8 @@ import * as w from '../../warnings.js';
 import {
 	active_effect,
 	active_reaction,
-	event_boundary_effect,
 	set_active_effect,
-	set_active_reaction,
-	set_event_boundary_effect
+	set_active_reaction
 } from '../../runtime.js';
 import { without_reactive_context } from './bindings/shared.js';
 import { get_boundary } from '../blocks/boundary.js';
@@ -56,27 +54,18 @@ export function replay_events(dom) {
  * @param {AddEventListenerOptions} [options]
  */
 export function create_event(event_name, dom, handler, options = {}) {
-	var boundary_effect = (active_effect !== null && get_boundary(active_effect)) ?? null;
 	/**
 	 * @this {EventTarget}
 	 */
 	function target_handler(/** @type {Event} */ event) {
-		var previous_boundary_effect = event_boundary_effect;
-		try {
-			if (boundary_effect !== null) {
-				set_event_boundary_effect(boundary_effect);
-			}
-			if (!options.capture) {
-				// Only call in the bubble phase, else delegated events would be called before the capturing events
-				handle_event_propagation.call(dom, event);
-			}
-			if (!event.cancelBubble) {
-				return without_reactive_context(() => {
-					return handler?.call(this, event);
-				});
-			}
-		} finally {
-			set_event_boundary_effect(previous_boundary_effect)
+		if (!options.capture) {
+			// Only call in the bubble phase, else delegated events would be called before the capturing events
+			handle_event_propagation.call(dom, event);
+		}
+		if (!event.cancelBubble) {
+			return without_reactive_context(() => {
+				return handler?.call(this, event);
+			});
 		}
 	}
 
@@ -251,17 +240,8 @@ export function handle_event_propagation(event) {
 
 				if (delegated !== undefined && !(/** @type {any} */ (current_target).disabled)) {
 					if (is_array(delegated)) {
-						var [fn, effect, ...data] = delegated;
-						var boundary_effect = (effect !== null && get_boundary(effect)) ?? null;
-						var previous_boundary_effect = event_boundary_effect;
-						try {
-							if (boundary_effect !== null) {
-								set_event_boundary_effect(boundary_effect);
-							}
-							fn.apply(current_target, [event, ...data]);
-						} finally {
-							set_event_boundary_effect(previous_boundary_effect);
-						}
+						var [fn, ...data] = delegated;
+						fn.apply(current_target, [event, ...data]);
 					} else {
 						delegated.call(current_target, event);
 					}

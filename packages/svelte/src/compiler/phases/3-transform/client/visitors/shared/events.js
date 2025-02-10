@@ -46,7 +46,7 @@ export function visit_event_attribute(node, context) {
 
 			// When we hoist a function we assign an array with the function and all
 			// hoisted closure params.
-			const args = [handler, b.id('$.active_effect'), ...hoisted_params];
+			const args = [handler, ...hoisted_params];
 			delegated_assignment = b.array(args);
 		} else {
 			delegated_assignment = handler;

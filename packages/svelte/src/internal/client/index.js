@@ -143,8 +143,7 @@ export {
 	untrack,
 	exclude_from_object,
 	deep_read,
-	deep_read_state,
-	active_effect
+	deep_read_state
 } from './runtime.js';
 export { validate_binding, validate_each_keys } from './validate.js';
 export { raf } from './timing.js';

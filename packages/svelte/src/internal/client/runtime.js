@@ -69,7 +69,10 @@ let is_micro_task_queued = false;
 let last_scheduled_effect = null;
 
 export let is_flushing_effect = false;
-export let is_flushing_async_derived = false;
+
+/** @type {Effect | null} */
+export let flushing_effect = null;
+
 export let is_destroying_effect = false;
 
 /** @param {boolean} value */
@@ -108,14 +111,6 @@ export let active_effect = null;
 /** @param {null | Effect} effect */
 export function set_active_effect(effect) {
 	active_effect = effect;
-}
-
-/** @type {null | Effect} */
-export let event_boundary_effect = null;
-
-/** @param {null | Effect} effect */
-export function set_event_boundary_effect(effect) {
-	event_boundary_effect = effect;
 }
 
 // TODO remove this, once we're satisfied that we're not leaking context
@@ -842,12 +837,10 @@ function process_effects(effect, collected_effects) {
 					// to ensure that unowned deriveds are correctly tracked
 					// because we're flushing the current effect
 					var previous_active_reaction = active_reaction;
-					var previous_is_flushing_async_derived = is_flushing_async_derived;
+					var previous_flushing_effect = flushing_effect;
 					try {
 						active_reaction = current_effect;
-						if ((current_effect.f & ASYNC_DERIVED) !== 0) {
-							is_flushing_async_derived = true;
-						}
+						flushing_effect = current_effect;
 						if (check_dirtiness(current_effect)) {
 							update_effect(current_effect);
 						}
@@ -855,7 +848,7 @@ function process_effects(effect, collected_effects) {
 						handle_error(error, current_effect, null, current_effect.ctx);
 					} finally {
 						active_reaction = previous_active_reaction;
-						is_flushing_async_derived = previous_is_flushing_async_derived;
+						flushing_effect = previous_flushing_effect;
 					}
 				}
 
@@ -1029,14 +1022,12 @@ export function get(signal) {
 
 	var value = /** @type {V} */ (UNINITIALIZED);
 
-	var target_effect = event_boundary_effect ?? active_effect;
-
 	if (
-		target_effect !== null &&
-		!is_flushing_async_derived &&
-		(target_effect.f & ASYNC_DERIVED) === 0
+		active_effect !== null &&
+		(flushing_effect === null || (flushing_effect.f & (BLOCK_EFFECT | BRANCH_EFFECT)) === 0) &&
+		(active_effect.f & ASYNC_DERIVED) === 0
 	) {
-		var boundary = get_boundary(target_effect);
+		var boundary = get_boundary(active_effect);
 		if (boundary !== null) {
 			// @ts-ignore
 			var forks = boundary.fn.forks;
