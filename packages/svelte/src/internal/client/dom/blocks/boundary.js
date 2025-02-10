@@ -75,8 +75,6 @@ var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED | BOUNDARY_EFFECT;
  * 	 onerror?: (error: unknown, reset: () => void) => void;
  *   failed?: (anchor: Node, error: () => unknown, reset: () => () => void) => void;
  *   pending?: (anchor: Node) => void;
- *   showPendingAfter?: number;
- *   showPendingFor?: number;
  * }} props
  * @param {((anchor: Node) => void)} children
  * @returns {void}
@@ -108,8 +106,6 @@ export function boundary(node, props, children) {
 
 		/** @type {Set<() => void>} */
 		var callbacks = new Set();
-
-		var keep_pending_snippet = false;
 
 		/**
 		 * @param {() => void} snippet_fn
@@ -161,7 +157,7 @@ export function boundary(node, props, children) {
 		}
 
 		function unsuspend() {
-			if (keep_pending_snippet || async_count > 0) {
+			if (async_count > 0) {
 				return;
 			}
 
@@ -215,22 +211,7 @@ export function boundary(node, props, children) {
 					pending_effect = branch(() => pending(anchor));
 				}
 
-				// TODO do we want to differentiate between initial render and updates here?
-				if (!initial) {
-					keep_pending_snippet = true;
-
-					var end = raf.now() + (props.showPendingFor ?? 300);
-
-					loop((now) => {
-						if (now >= end) {
-							keep_pending_snippet = false;
-							unsuspend();
-							return false;
-						}
-
-						return true;
-					});
-				}
+				unsuspend();
 			} else if (parent_boundary) {
 				throw new Error('TODO show pending snippet on parent');
 			} else {
@@ -241,19 +222,6 @@ export function boundary(node, props, children) {
 		// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
 		boundary.fn = (/** @type {unknown} */ input, /** @type {any} */ payload) => {
 			if (input === ASYNC_INCREMENT) {
-				// post-init, show the pending snippet after a timeout
-				if ((boundary.f & BOUNDARY_SUSPENDED) === 0 && (boundary.f & EFFECT_RAN) !== 0) {
-					var start = raf.now();
-					var end = start + (props.showPendingAfter ?? 500);
-
-					loop((now) => {
-						if (async_count === 0) return false;
-						if (now < end) return true;
-
-						show_pending_snippet(false);
-					});
-				}
-
 				boundary.f |= BOUNDARY_SUSPENDED;
 				async_count++;
 
@@ -263,7 +231,7 @@ export function boundary(node, props, children) {
 			}
 
 			if (input === ASYNC_DECREMENT) {
-				if (--async_count === 0 && !keep_pending_snippet) {
+				if (--async_count === 0) {
 					unsuspend();
 
 					if (main_effect !== null) {
