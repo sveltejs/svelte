@@ -72,6 +72,29 @@ When the attribute name and value match (`name={name}`), they can be replaced wi
 -->
 ```
 
+When passing null or undefined to an attribute, the attribute is omitted from the rendered HTML.
+
+```svelte
+<script>
+	let someId = undefined;
+	let someClass = null;
+</script>
+
+<div id={someId} class={someClass}>Attributes are not included.</div>
+<!-- The 'id' and 'class' attributes won't be included in the rendered HTML -->
+```
+
+If an empty string ("") is assigned to an attribute, the attribute remains in the HTML but with an empty value.
+
+```svelte
+<script>
+	let emptyClass = ""
+</script>
+
+<div class={emptyClass}>Hello</div>
+<!-- This will render as: <div class="">Hello</div> -->
+```
+
 ## Component props
 
 By convention, values passed to components are referred to as _properties_ or _props_ rather than _attributes_, which are a feature of the DOM.
@@ -152,6 +175,26 @@ A JavaScript expression can be included as text by surrounding it with curly bra
 
 ```svelte
 {expression}
+```
+
+When using {expression} inside markup, Svelte automatically converts the value to a string before rendering it. The conversion follows JavaScript's standard behavior:
+
+- Primitive values (number, boolean, string) are directly converted to strings.
+- Objects call their .toString() method (if not overridden, it defaults to [object Object]).
+- undefined and null are treated as empty strings ("").
+
+```svelte
+<script>
+	let num = 1;
+	let bool = false;
+	let obj = { key: "value" };
+	let empty = undefined;
+</script>
+
+<p>{num}</p>   <!-- Renders as: <p>1</p> -->
+<p>{bool}</p>  <!-- Renders as: <p>false</p> -->
+<p>{obj}</p>   <!-- Renders as: <p>[object Object]</p> -->
+<p>{empty}</p> <!-- Renders as: <p></p> (empty string) -->
 ```
 
 Curly braces can be included in a Svelte template by using their [HTML entity](https://developer.mozilla.org/docs/Glossary/Entity) strings: `&lbrace;`, `&lcub;`, or `&#123;` for `{` and `&rbrace;`, `&rcub;`, or `&#125;` for `}`.
