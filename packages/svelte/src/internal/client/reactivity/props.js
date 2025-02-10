@@ -254,7 +254,7 @@ export function spread_props(...props) {
  * @param {() => T} fn
  * @returns {T}
  */
-function with_parent_branch(fn) {
+function with_parent_tracking_context(fn) {
 	var effect = active_effect;
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
@@ -290,7 +290,7 @@ export function prop(props, key, flags, fallback) {
 	var is_store_sub = false;
 	var prop_value;
 
-	with_parent_branch(() => {
+	with_parent_tracking_context(() => {
 		if (bindable) {
 			[prop_value, is_store_sub] = capture_store_binding(() => /** @type {V} */ (props[key]));
 		} else {
@@ -331,7 +331,7 @@ export function prop(props, key, flags, fallback) {
 			e.props_invalid_value(key);
 		}
 
-		prop_value = get_fallback();
+		prop_value = with_parent_tracking_context(get_fallback);
 		if (setter) setter(prop_value);
 	}
 
