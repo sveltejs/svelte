@@ -440,7 +440,7 @@ describe('signals', () => {
 
 			assert.deepEqual(log, [[{}], [{}], [{}], [{}], [{}]]);
 
-			log.length = 0
+			log.length = 0;
 
 			const destroy3 = effect_root(() => {
 				render_effect(() => {
