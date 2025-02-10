@@ -284,7 +284,7 @@ export function mark_reactions(signal, status, parent, only_boundary = false) {
 		if (only_boundary) {
 			if ((flags & DERIVED) === 0) {
 				var boundary = get_boundary(/** @type {Effect} */ (reaction));
-				if (!boundary) {
+				if (!boundary || (reaction.f & ASYNC_DERIVED) !== 0) {
 					continue;
 				}
 			}
