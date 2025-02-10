@@ -19,7 +19,8 @@ import {
 	set_active_reaction,
 	reset_is_throwing_error,
 	schedule_effect,
-	increment_write_version
+	increment_write_version,
+	get
 } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -36,7 +37,7 @@ import { DEV } from 'esm-env';
 import { from_async_derived, set_from_async_derived } from '../../reactivity/deriveds.js';
 import { raf } from '../../timing.js';
 import { loop } from '../../loop.js';
-import { internal_set, mark_reactions } from '../../reactivity/sources.js';
+import { internal_set, mark_reactions, source } from '../../reactivity/sources.js';
 
 const ASYNC_INCREMENT = Symbol();
 const ASYNC_DECREMENT = Symbol();
@@ -83,6 +84,8 @@ export function boundary(node, props, children) {
 	var anchor = node;
 
 	var parent_boundary = find_boundary(active_effect);
+
+	var is_pending = source(false);
 
 	block(() => {
 		/** @type {Effect | null} */
@@ -177,6 +180,7 @@ export function boundary(node, props, children) {
 				}
 			}
 			forks.clear();
+			internal_set(is_pending, false);
 
 			for (const fn of callbacks) fn();
 			callbacks.clear();
@@ -252,6 +256,8 @@ export function boundary(node, props, children) {
 				boundary.f |= BOUNDARY_SUSPENDED;
 				async_count++;
 
+				internal_set(is_pending, true);
+
 				return;
 			}
 
@@ -323,7 +329,10 @@ export function boundary(node, props, children) {
 		boundary.fn.forks = new Map();
 
 		// @ts-ignore
-		boundary.fn.is_pending = () => props.pending;
+		boundary.fn.props = props;
+
+		// @ts-ignore
+		boundary.fn.is_pending = is_pending;
 
 		if (hydrating) {
 			hydrate_next();
@@ -408,7 +417,7 @@ export function capture(track = true) {
  */
 export function is_pending_boundary(boundary) {
 	// @ts-ignore
-	return boundary.fn.is_pending();
+	return boundary.fn.props.pending;
 }
 
 /**
@@ -487,4 +496,12 @@ export function add_boundary_callback(boundary, fn) {
 
 	// @ts-ignore
 	boundary.fn(ADD_CALLBACK, fn);
+}
+
+export function isPending() {
+	var effect = active_effect;
+	var boundary = get_boundary(effect);
+	// @ts-ignore
+	var is_pending = boundary.fn.is_pending;
+	return get(is_pending);
 }
