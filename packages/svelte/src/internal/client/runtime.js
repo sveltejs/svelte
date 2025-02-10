@@ -419,10 +419,6 @@ export function update_reaction(reaction) {
 		(flags & UNOWNED) !== 0 &&
 		(!is_flushing_effect || previous_reaction === null || previous_untracking);
 
-	if (skip_reaction) {
-		// debugger
-	}
-
 	derived_sources = null;
 	set_component_context(reaction.ctx);
 	untracking = false;
