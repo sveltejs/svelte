@@ -224,20 +224,75 @@ describe('signals', () => {
 		};
 	});
 
+	test('https://perf.js.hyoo.ru/#!bench=9h2as6_u0mfnn #2', () => {
+		let res: number[] = [];
+
+		const numbers = Array.from({ length: 2 }, (_, i) => i);
+		const fib = (n: number): number => (n < 2 ? 1 : fib(n - 1) + fib(n - 2));
+		const hard = (n: number, l: string) => n + fib(16);
+
+		const A = state(0);
+		const B = state(0);
+
+		return () => {
+			const C = derived(() => ($.get(A) % 2) + ($.get(B) % 2));
+			const D = derived(() => numbers.map((i) => i + ($.get(A) % 2) - ($.get(B) % 2)));
+			const E = derived(() => hard($.get(C) + $.get(A) + $.get(D)[0]!, 'E'));
+			const F = derived(() => hard($.get(D)[0]! && $.get(B), 'F'));
+			const G = derived(() => $.get(C) + ($.get(C) || $.get(E) % 2) + $.get(D)[0]! + $.get(F));
+
+			const destroy = effect_root(() => {
+				effect(() => {
+					res.push(hard($.get(G), 'H'));
+				});
+				effect(() => {
+					res.push($.get(G));
+				});
+				effect(() => {
+					res.push(hard($.get(F), 'J'));
+				});
+			});
+
+			flushSync();
+
+			let i = 2;
+			while (--i) {
+				res.length = 0;
+				set(B, 1);
+				set(A, 1 + i * 2);
+				flushSync();
+
+				set(A, 2 + i * 2);
+				set(B, 2);
+				flushSync();
+
+				assert.equal(res.length, 4);
+				assert.deepEqual(res, [3198, 1601, 3195, 1598]);
+			}
+
+			destroy();
+			assert(A.reactions === null);
+			assert(B.reactions === null);
+		};
+	});
+
 	test('effects correctly handle unowned derived values that do not change', () => {
 		const log: number[] = [];
 
-		let count = state(0);
-		const read = () => {
-			const x = derived(() => ({ count: $.get(count) }));
-			return $.get(x);
-		};
-		const derivedCount = derived(() => read().count);
-		user_effect(() => {
-			log.push($.get(derivedCount));
-		});
-
 		return () => {
+			let count = state(0);
+			const read = () => {
+				const x = derived(() => ({ count: $.get(count) }));
+				return $.get(x);
+			};
+			const derivedCount = derived(() => read().count);
+
+			const destroy = effect_root(() => {
+				user_effect(() => {
+					log.push($.get(derivedCount));
+				});
+			});
+
 			flushSync(() => set(count, 1));
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.reactions?.length, 1);
@@ -248,6 +303,8 @@ describe('signals', () => {
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.reactions?.length, 1);
 			assert.deepEqual(log, [0, 1, 2, 3]);
+
+			destroy();
 		};
 	});
 
@@ -343,25 +400,69 @@ describe('signals', () => {
 		};
 	});
 
-	let some_state = state({});
-	let some_deps = derived(() => {
-		return [$.get(some_state)];
-	});
-
 	test('two effects with an unowned derived that has some dependencies', () => {
 		const log: Array<Array<any>> = [];
 
-		render_effect(() => {
-			log.push($.get(some_deps));
-		});
-
-		render_effect(() => {
-			log.push($.get(some_deps));
-		});
-
 		return () => {
+			let some_state = state({});
+			let some_deps = derived(() => {
+				return [$.get(some_state)];
+			});
+			let destroy2: any;
+
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					$.untrack(() => {
+						log.push($.get(some_deps));
+					});
+				});
+
+				destroy2 = effect_root(() => {
+					render_effect(() => {
+						log.push($.get(some_deps));
+					});
+
+					render_effect(() => {
+						log.push($.get(some_deps));
+					});
+				});
+			});
+
+			set(some_state, {});
 			flushSync();
-			assert.deepEqual(log, [[{}], [{}]]);
+
+			assert.deepEqual(log, [[{}], [{}], [{}], [{}], [{}]]);
+
+			destroy2();
+
+			set(some_state, {});
+			flushSync();
+
+			assert.deepEqual(log, [[{}], [{}], [{}], [{}], [{}]]);
+
+			log.length = 0;
+
+			const destroy3 = effect_root(() => {
+				render_effect(() => {
+					$.untrack(() => {
+						log.push($.get(some_deps));
+					});
+					log.push($.get(some_deps));
+				});
+			});
+
+			set(some_state, {});
+			flushSync();
+
+			assert.deepEqual(log, [[{}], [{}], [{}], [{}]]);
+
+			destroy3();
+
+			assert(some_state.reactions === null);
+
+			destroy();
+
+			assert(some_state.reactions === null);
 		};
 	});
 
