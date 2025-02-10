@@ -177,24 +177,30 @@ A JavaScript expression can be included as text by surrounding it with curly bra
 {expression}
 ```
 
-When using {expression} inside markup, Svelte automatically converts the value to a string before rendering it. The conversion follows JavaScript's standard behavior:
+When using {expression} inside markup, Svelte automatically converts the value to a string before rendering it and makes the expression reactive (similar to wrapping it in $derived). The conversion follows JavaScript's standard behavior:
 
 - Primitive values (number, boolean, string) are directly converted to strings.
 - Objects call their .toString() method (if not overridden, it defaults to [object Object]).
-- undefined and null are treated as empty strings ("").
+- Undefined and null are treated as empty strings ("").
+- Expressions using runes ($state, $derived, etc.) maintain their specific reactive behavior.
 
 ```svelte
-<script>
+	let emptyStr = "";
 	let num = 1;
 	let bool = false;
 	let obj = { key: "value" };
+	let objToStr = obj.toString();
 	let empty = undefined;
-</script>
+	let nul = null;
 
+
+<p>{emptyStr}</p> <!-- Renders as: <p></p> -->
 <p>{num}</p>   <!-- Renders as: <p>1</p> -->
 <p>{bool}</p>  <!-- Renders as: <p>false</p> -->
 <p>{obj}</p>   <!-- Renders as: <p>[object Object]</p> -->
+<p>{objToStr}</p> <!-- Renders as: <p>[object Object]</p> -->
 <p>{empty}</p> <!-- Renders as: <p></p> (empty string) -->
+<p>{nul}</p> <!-- Renders as: <p></p> -->
 ```
 
 Curly braces can be included in a Svelte template by using their [HTML entity](https://developer.mozilla.org/docs/Glossary/Entity) strings: `&lbrace;`, `&lcub;`, or `&#123;` for `{` and `&rbrace;`, `&rcub;`, or `&#125;` for `}`.
