@@ -188,17 +188,16 @@ When using {expression} inside markup, Svelte automatically converts the value t
 	let emptyStr = "";
 	let num = 1;
 	let bool = false;
-	let obj = { key: "value" };
-	let objToStr = obj.toString();
+	let obj1 = { key: "value" };
+	let obj2 = { toString: () => "str" };
 	let empty = undefined;
 	let nul = null;
-
 
 <p>{emptyStr}</p> <!-- Renders as: <p></p> -->
 <p>{num}</p>   <!-- Renders as: <p>1</p> -->
 <p>{bool}</p>  <!-- Renders as: <p>false</p> -->
-<p>{obj}</p>   <!-- Renders as: <p>[object Object]</p> -->
-<p>{objToStr}</p> <!-- Renders as: <p>[object Object]</p> -->
+<p>{obj1}</p>   <!-- Renders as: <p>[object Object]</p> -->
+<p>{obj2}</p> <!-- Renders as: <p>str</p> -->
 <p>{empty}</p> <!-- Renders as: <p></p> (empty string) -->
 <p>{nul}</p> <!-- Renders as: <p></p> -->
 ```

@@ -43,49 +43,9 @@ You can specify a fallback value for a prop. It will be used if the component's 
 
 <Nested answer={42} /> <!-- answer is set to 42 -->
 <Nested answer={null} /> <!-- answer is set to null (default value is not used)-->
-<Nested /> <!-- answer is set 3 (default value) -->
-<Nested answer={undefined}/> <!-- answer is set 3 (default value) -->
+<Nested /> <!-- answer is set to 3 (default value) -->
+<Nested answer={undefined}/> <!-- answer is set to 3 (default value) -->
 
-```
-
-Deep nesting refers to having components nested within other components across multiple levels. In this setup, props can be passed from parent to child components through several layers.
-
-```svelte
-<script>
-	let count = 3;
-</script>
-
-<!-- App.svelte -->
-<First {count} />
-```
-
-```svelte
-<script>
-	export let count;
-</script>
-
-<!-- First.svelte -->
-<p>First: {count}</p>
-<Second {count} />
-```
-
-```svelte
-<script>
-	export let count;
-</script>
-
-<!-- Second.svelte -->
-<p>Second: {count}</p>
-<Third {count} />
-```
-
-```svelte
-<script>
-	export let count;
-</script>
-
-<!-- Third.svelte -->
-<p>Third: {count}</p>
 ```
 
 To get all properties, use rest syntax:
