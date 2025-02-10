@@ -26,6 +26,28 @@ You can specify a fallback value for a prop. It will be used if the component's 
 </script>
 ```
 
+> [!NOTE] If a prop is explicitly passed as null, the default value will not be used, and null will be assigned instead. However, if the prop is undefined or not provided at all, the default value will be used.
+
+```svelte
+<script>
+	let { answer = 3 } = $props();
+</script>
+
+<p>The answer is {answer}</p>
+```
+
+```svelte
+<script>
+	import Nested from './Nested.svelte';
+</script>
+
+<Nested answer={42} /> <!-- answer is set to 42 -->
+<Nested answer={null} /> <!-- answer is set to null (default value is not used)-->
+<Nested /> <!-- answer is set to default value -->
+<Nested answer={undefined}/> <!-- answer is set to default value -->
+
+```
+
 To get all properties, use rest syntax:
 
 ```svelte
