@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: alter heuristic for reading data eagerly in props handling
+fix: when re-connecting unowned deriveds, remove their unowned flag

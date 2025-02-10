@@ -185,6 +185,7 @@ export function check_dirtiness(reaction) {
 			// then we need to re-connect the reaction to the dependency
 			if (is_disconnected || is_unowned_connected) {
 				var derived = /** @type {Derived} */ (reaction);
+				var parent = derived.parent;
 
 				for (i = 0; i < length; i++) {
 					dependency = dependencies[i];
@@ -200,16 +201,10 @@ export function check_dirtiness(reaction) {
 				if (is_disconnected) {
 					derived.f ^= DISCONNECTED;
 				}
-				var parent = derived.parent;
-				// If the unowned derived is now fully connected to the graph again (it has reactions, has a parent and
-				// the parent is not unowned), then we can mark it as connected again, removing the need for the unowned
+				// If the unowned derived is now fully connected to the graph again (it unowned and reconnected, has a parent
+				// and the parent is not unowned), then we can mark it as connected again, removing the need for the unowned
 				// flag
-				if (
-					is_unowned_connected &&
-					derived.reactions !== null &&
-					parent !== null &&
-					(parent.f & UNOWNED) === 0
-				) {
+				if (is_unowned_connected && parent !== null && (parent.f & UNOWNED) === 0) {
 					derived.f ^= UNOWNED;
 				}
 			}

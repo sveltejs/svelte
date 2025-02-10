@@ -250,29 +250,6 @@ export function spread_props(...props) {
 }
 
 /**
- * @template T
- * @param {() => T} fn
- * @returns {T}
- */
-function with_parent_tracking_context(fn) {
-	var effect = active_effect;
-	var previous_effect = active_effect;
-	var previous_reaction = active_reaction;
-
-	while (effect !== null && (effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0) {
-		effect = effect.parent;
-	}
-	try {
-		set_active_effect(effect);
-		set_active_reaction(effect);
-		return fn();
-	} finally {
-		set_active_effect(previous_effect);
-		set_active_reaction(previous_reaction);
-	}
-}
-
-/**
  * This function is responsible for synchronizing a possibly bound prop with the inner component state.
  * It is used whenever the compiler sees that the component writes to the prop, or when it has a default prop_value.
  * @template V
@@ -290,13 +267,11 @@ export function prop(props, key, flags, fallback) {
 	var is_store_sub = false;
 	var prop_value;
 
-	with_parent_tracking_context(() => {
-		if (bindable) {
-			[prop_value, is_store_sub] = capture_store_binding(() => /** @type {V} */ (props[key]));
-		} else {
-			prop_value = /** @type {V} */ (props[key]);
-		}
-	});
+	if (bindable) {
+		[prop_value, is_store_sub] = capture_store_binding(() => /** @type {V} */ (props[key]));
+	} else {
+		prop_value = /** @type {V} */ (props[key]);
+	}
 
 	// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
 	// or `createClassComponent(Component, props)`
@@ -331,7 +306,7 @@ export function prop(props, key, flags, fallback) {
 			e.props_invalid_value(key);
 		}
 
-		prop_value = with_parent_tracking_context(get_fallback);
+		prop_value = get_fallback();
 		if (setter) setter(prop_value);
 	}
 
