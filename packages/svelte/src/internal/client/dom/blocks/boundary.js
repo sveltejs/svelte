@@ -498,6 +498,9 @@ export function add_boundary_callback(boundary, fn) {
 	boundary.fn(ADD_CALLBACK, fn);
 }
 
+/**
+ * @returns {boolean}
+ */
 export function isPending() {
 	var effect = active_effect;
 	var boundary = get_boundary(effect);
