@@ -826,8 +826,6 @@ function process_effects(effect, collected_effects, boundary) {
 			} else if ((flags & BOUNDARY_EFFECT) !== 0) {
 				var b = /** @type {Boundary} */ (current_effect.b);
 
-				console.log([...changeset].map((s) => s.v));
-
 				process_effects(current_effect, collected_effects, b);
 
 				if (!b.suspended) {
