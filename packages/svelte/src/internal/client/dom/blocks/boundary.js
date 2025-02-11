@@ -72,8 +72,6 @@ class Boundary {
 
 		active_boundary = this;
 
-		var parent_boundary = find_boundary(active_effect);
-
 		this.#effect = block(() => {
 			/** @type {Effect | null} */
 			var main_effect = null;
@@ -196,7 +194,7 @@ class Boundary {
 			/**
 			 * @param {boolean} initial
 			 */
-			function show_pending_snippet(initial) {
+			const show_pending_snippet = (initial) => {
 				const pending = props.pending;
 
 				if (pending !== undefined) {
@@ -226,12 +224,12 @@ class Boundary {
 							return true;
 						});
 					}
-				} else if (parent_boundary) {
+				} else if (this.#parent) {
 					throw new Error('TODO show pending snippet on parent');
 				} else {
 					throw new Error('no pending snippet to show');
 				}
-			}
+			};
 
 			// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
 			boundary_effect.fn = (/** @type {unknown} */ input, /** @type {any} */ payload) => {
@@ -526,17 +524,6 @@ function exit() {
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
-}
-
-/**
- * @param {Effect | null} effect
- */
-export function find_boundary(effect) {
-	while (effect !== null && (effect.f & BOUNDARY_EFFECT) === 0) {
-		effect = effect.parent;
-	}
-
-	return effect;
 }
 
 /**
