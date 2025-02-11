@@ -261,10 +261,9 @@ export function update_pre(source, d = 1) {
 /**
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
- * @param {Value} [parent]
  * @returns {void}
  */
-export function mark_reactions(signal, status, parent, only_boundary = false) {
+export function mark_reactions(signal, status, only_boundary = false) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -293,7 +292,7 @@ export function mark_reactions(signal, status, parent, only_boundary = false) {
 			if (boundary) {
 				// @ts-ignore
 				var forks = boundary.fn.forks;
-				if (forks.has(signal) || forks.has(parent)) {
+				if (reaction.deps?.every((d) => forks.has(d))) {
 					continue;
 				}
 			}
@@ -310,7 +309,7 @@ export function mark_reactions(signal, status, parent, only_boundary = false) {
 		// If the signal a) was previously clean or b) is an unowned derived, then mark it
 		if ((flags & (CLEAN | UNOWNED)) !== 0) {
 			if ((flags & DERIVED) !== 0) {
-				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY, signal, only_boundary);
+				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY, only_boundary);
 			} else {
 				schedule_effect(/** @type {Effect} */ (reaction));
 			}
