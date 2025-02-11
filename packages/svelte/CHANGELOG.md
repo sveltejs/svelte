@@ -1,5 +1,13 @@
 # svelte
 
+## 5.19.10
+
+### Patch Changes
+
+- fix: when re-connecting unowned deriveds, remove their unowned flag ([#15255](https://github.com/sveltejs/svelte/pull/15255))
+
+- fix: allow mutation of private derived state ([#15228](https://github.com/sveltejs/svelte/pull/15228))
+
 ## 5.19.9
 
 ### Patch Changes
