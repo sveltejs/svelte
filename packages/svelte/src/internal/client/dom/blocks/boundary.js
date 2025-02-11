@@ -198,9 +198,6 @@ export class Boundary {
 				}
 			};
 
-			// @ts-ignore
-			boundary_effect.fn.is_pending = () => this.#props.pending;
-
 			if (hydrating) {
 				hydrate_next();
 			}
