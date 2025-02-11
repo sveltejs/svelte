@@ -8,7 +8,7 @@
 		count;
 
 		untrack(() => state.current = count);
-	  return untrack(() => state);
+		return untrack(() => state);
 	});
 
 	linked.current++;

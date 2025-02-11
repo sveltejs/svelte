@@ -201,7 +201,7 @@ export function check_dirtiness(reaction) {
 				if (is_disconnected) {
 					derived.f ^= DISCONNECTED;
 				}
-				// If the unowned derived is now fully connected to the graph again (it unowned and reconnected, has a parent
+				// If the unowned derived is now fully connected to the graph again (it's unowned and reconnected, has a parent
 				// and the parent is not unowned), then we can mark it as connected again, removing the need for the unowned
 				// flag
 				if (is_unowned_connected && parent !== null && (parent.f & UNOWNED) === 0) {
