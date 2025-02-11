@@ -184,19 +184,28 @@ export function check_dirtiness(reaction) {
 			// If we are working with a disconnected or an unowned signal that is now connected (due to an active effect)
 			// then we need to re-connect the reaction to the dependency
 			if (is_disconnected || is_unowned_connected) {
+				var derived = /** @type {Derived} */ (reaction);
+				var parent = derived.parent;
+
 				for (i = 0; i < length; i++) {
 					dependency = dependencies[i];
 
 					// We always re-add all reactions (even duplicates) if the derived was
 					// previously disconnected, however we don't if it was unowned as we
 					// de-duplicate dependencies in that case
-					if (is_disconnected || !dependency?.reactions?.includes(reaction)) {
-						(dependency.reactions ??= []).push(reaction);
+					if (is_disconnected || !dependency?.reactions?.includes(derived)) {
+						(dependency.reactions ??= []).push(derived);
 					}
 				}
 
 				if (is_disconnected) {
-					reaction.f ^= DISCONNECTED;
+					derived.f ^= DISCONNECTED;
+				}
+				// If the unowned derived is now fully connected to the graph again (it's unowned and reconnected, has a parent
+				// and the parent is not unowned), then we can mark it as connected again, removing the need for the unowned
+				// flag
+				if (is_unowned_connected && parent !== null && (parent.f & UNOWNED) === 0) {
+					derived.f ^= UNOWNED;
 				}
 			}
 
