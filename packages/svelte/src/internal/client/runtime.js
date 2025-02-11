@@ -806,11 +806,13 @@ export function schedule_effect(signal) {
  * effects to be flushed.
  *
  * @param {Effect} effect
- * @param {Effect[]} effects
  * @param {Boundary} [boundary]
  * @returns {Effect[]}
  */
-function process_effects(effect, effects = [], boundary) {
+function process_effects(effect, boundary) {
+	/** @type {Effect[]} */
+	var effects = [];
+
 	var current_effect = effect.first;
 
 	main_loop: while (current_effect !== null) {
@@ -826,7 +828,7 @@ function process_effects(effect, effects = [], boundary) {
 			} else if ((flags & BOUNDARY_EFFECT) !== 0) {
 				var b = /** @type {Boundary} */ (current_effect.b);
 
-				process_effects(current_effect, effects, b);
+				process_effects(current_effect, b);
 
 				if (!b.suspended) {
 					// no more async work to happen
