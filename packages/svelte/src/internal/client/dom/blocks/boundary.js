@@ -45,6 +45,18 @@ import { loop } from '../../loop.js';
  * }} BoundaryProps
  */
 
+var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED | BOUNDARY_EFFECT;
+
+/**
+ * @param {TemplateNode} node
+ * @param {BoundaryProps} props
+ * @param {((anchor: Node) => void)} children
+ * @returns {void}
+ */
+export function boundary(node, props, children) {
+	new Boundary(node, props, children);
+}
+
 export class Boundary {
 	suspended = false;
 	inert = false;
@@ -383,24 +395,6 @@ export class Boundary {
 			});
 		}
 	}
-}
-
-var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED | BOUNDARY_EFFECT;
-
-/**
- * @param {TemplateNode} node
- * @param {{
- * 	 onerror?: (error: unknown, reset: () => void) => void;
- *   failed?: (anchor: Node, error: () => unknown, reset: () => () => void) => void;
- *   pending?: (anchor: Node) => void;
- *   showPendingAfter?: number;
- *   showPendingFor?: number;
- * }} props
- * @param {((anchor: Node) => void)} children
- * @returns {void}
- */
-export function boundary(node, props, children) {
-	new Boundary(node, props, children);
 }
 
 /**
