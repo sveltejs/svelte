@@ -109,26 +109,6 @@ export class Boundary {
 			var boundary_effect = /** @type {Effect} */ (active_effect);
 			var hydrate_open = hydrate_node;
 
-			/**
-			 * @param {() => void} snippet_fn
-			 * @returns {Effect | null}
-			 */
-			const render_snippet = (snippet_fn) => {
-				return this.#run(() => {
-					this.#is_creating_fallback = true;
-
-					try {
-						return branch(snippet_fn);
-					} catch (error) {
-						handle_error(error, boundary_effect, null, boundary_effect.ctx);
-						return null;
-					} finally {
-						reset_is_throwing_error();
-						this.#is_creating_fallback = false;
-					}
-				});
-			};
-
 			const reset = () => {
 				this.#pending_count = 0;
 
@@ -231,12 +211,24 @@ export class Boundary {
 
 				if (failed) {
 					queue_boundary_micro_task(() => {
-						this.#failed_effect = render_snippet(() => {
-							failed(
-								this.#anchor,
-								() => error,
-								() => reset
-							);
+						this.#failed_effect = this.#run(() => {
+							this.#is_creating_fallback = true;
+
+							try {
+								return branch(() => {
+									failed(
+										this.#anchor,
+										() => error,
+										() => reset
+									);
+								});
+							} catch (error) {
+								handle_error(error, boundary_effect, null, boundary_effect.ctx);
+								return null;
+							} finally {
+								reset_is_throwing_error();
+								this.#is_creating_fallback = false;
+							}
 						});
 					});
 				}
