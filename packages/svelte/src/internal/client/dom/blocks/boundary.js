@@ -154,47 +154,7 @@ export class Boundary {
 
 				if (this.#pending_count > 0) {
 					boundary_effect.f |= BOUNDARY_SUSPENDED;
-					show_pending_snippet(true);
-				}
-			};
-
-			/**
-			 * @param {boolean} initial
-			 */
-			const show_pending_snippet = (initial) => {
-				const pending = this.#props.pending;
-
-				if (pending !== undefined) {
-					// TODO can this be false?
-					if (this.#main_effect !== null) {
-						this.#offscreen_fragment = document.createDocumentFragment();
-						move_effect(this.#main_effect, this.#offscreen_fragment);
-					}
-
-					if (this.#pending_effect === null) {
-						this.#pending_effect = branch(() => pending(this.#anchor));
-					}
-
-					// TODO do we want to differentiate between initial render and updates here?
-					if (!initial) {
-						this.#keep_pending_snippet = true;
-
-						var end = raf.now() + (this.#props.showPendingFor ?? 300);
-
-						loop((now) => {
-							if (now >= end) {
-								this.#keep_pending_snippet = false;
-								this.commit();
-								return false;
-							}
-
-							return true;
-						});
-					}
-				} else if (this.#parent) {
-					throw new Error('TODO show pending snippet on parent');
-				} else {
-					throw new Error('no pending snippet to show');
+					this.#show_pending_snippet(true);
 				}
 			};
 
@@ -213,7 +173,7 @@ export class Boundary {
 							if (this.#pending_count === 0) return false;
 							if (now < end) return true;
 
-							show_pending_snippet(false);
+							this.#show_pending_snippet(false);
 						});
 					}
 
@@ -315,7 +275,7 @@ export class Boundary {
 
 				if (this.#pending_count > 0) {
 					boundary_effect.f |= BOUNDARY_SUSPENDED;
-					show_pending_snippet(true);
+					this.#show_pending_snippet(true);
 				}
 			}
 
@@ -353,6 +313,46 @@ export class Boundary {
 			set_active_effect(previous_effect);
 			set_active_reaction(previous_reaction);
 			set_component_context(previous_ctx);
+		}
+	}
+
+	/**
+	 * @param {boolean} initial
+	 */
+	#show_pending_snippet(initial) {
+		const pending = this.#props.pending;
+
+		if (pending !== undefined) {
+			// TODO can this be false?
+			if (this.#main_effect !== null) {
+				this.#offscreen_fragment = document.createDocumentFragment();
+				move_effect(this.#main_effect, this.#offscreen_fragment);
+			}
+
+			if (this.#pending_effect === null) {
+				this.#pending_effect = branch(() => pending(this.#anchor));
+			}
+
+			// TODO do we want to differentiate between initial render and updates here?
+			if (!initial) {
+				this.#keep_pending_snippet = true;
+
+				var end = raf.now() + (this.#props.showPendingFor ?? 300);
+
+				loop((now) => {
+					if (now >= end) {
+						this.#keep_pending_snippet = false;
+						this.commit();
+						return false;
+					}
+
+					return true;
+				});
+			}
+		} else if (this.#parent) {
+			throw new Error('TODO show pending snippet on parent');
+		} else {
+			throw new Error('no pending snippet to show');
 		}
 	}
 
