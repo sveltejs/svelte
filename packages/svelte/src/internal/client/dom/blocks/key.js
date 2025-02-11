@@ -4,8 +4,8 @@ import { block, branch, pause_effect } from '../../reactivity/effects.js';
 import { not_equal, safe_not_equal } from '../../reactivity/equality.js';
 import { is_runes } from '../../context.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
-import { active_boundary } from './boundary.js';
 import { create_text, should_defer_append } from '../operations.js';
+import { active_effect } from '../../runtime.js';
 
 /**
  * @template V
@@ -33,7 +33,7 @@ export function key_block(node, get_key, render_fn) {
 	/** @type {DocumentFragment | null} */
 	var offscreen_fragment = null;
 
-	var boundary = active_boundary;
+	var boundary = /** @type {Effect} */ (active_effect).b;
 
 	var changed = is_runes() ? not_equal : safe_not_equal;
 

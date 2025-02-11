@@ -1,9 +1,9 @@
 /** @import { TemplateNode, Dom, Effect } from '#client' */
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
+import { active_effect } from '../../runtime.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
-import { active_boundary } from './boundary.js';
 
 /**
  * @template P
@@ -32,7 +32,7 @@ export function component(node, get_component, render_fn) {
 	/** @type {Effect | null} */
 	var pending_effect = null;
 
-	var boundary = active_boundary;
+	var boundary = /** @type {Effect} */ (active_effect).b;
 
 	function commit() {
 		if (effect) {

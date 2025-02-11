@@ -39,7 +39,6 @@ import { queue_micro_task } from '../task.js';
 import { active_effect, get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
-import { active_boundary } from './boundary.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -139,7 +138,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 	var was_empty = false;
 
-	var boundary = active_boundary;
+	var boundary = /** @type {Effect} */ (active_effect).b;
 
 	/** @type {Map<any, EachItem>} */
 	var offscreen_items = new Map();

@@ -14,7 +14,6 @@ import {
 	set_is_flushing_effect,
 	set_signal_status,
 	untrack,
-	skip_reaction,
 	untracking
 } from '../runtime.js';
 import {
@@ -34,8 +33,7 @@ import {
 	INSPECT_EFFECT,
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
-	EFFECT_PRESERVED,
-	BOUNDARY_EFFECT
+	EFFECT_PRESERVED
 } from '../constants.js';
 import { set } from './sources.js';
 import * as e from '../errors.js';
@@ -43,7 +41,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { async_derived, derived } from './deriveds.js';
-import { active_boundary, capture, suspend } from '../dom/blocks/boundary.js';
+import { capture, suspend } from '../dom/blocks/boundary.js';
 import { component_context, dev_current_component_function } from '../context.js';
 
 /**

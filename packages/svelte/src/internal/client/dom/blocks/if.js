@@ -10,8 +10,8 @@ import {
 } from '../hydration.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
-import { active_boundary } from './boundary.js';
 import { create_text, should_defer_append } from '../operations.js';
+import { active_effect } from '../../runtime.js';
 
 /**
  * @param {TemplateNode} node
@@ -50,7 +50,7 @@ export function if_block(node, fn, elseif = false) {
 	/** @type {Effect | null} */
 	var pending_effect = null;
 
-	var boundary = active_boundary;
+	var boundary = /** @type {Effect} */ (active_effect).b;
 
 	function commit() {
 		if (offscreen_fragment !== null) {

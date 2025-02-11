@@ -36,14 +36,6 @@ import { from_async_derived, set_from_async_derived } from '../../reactivity/der
 import { raf } from '../../timing.js';
 import { loop } from '../../loop.js';
 
-/** @type {Boundary | null} */
-export let active_boundary = null;
-
-/** @param {Boundary | null} boundary */
-export function set_active_boundary(boundary) {
-	active_boundary = boundary;
-}
-
 /**
  * @typedef {{
  * 	 onerror?: (error: unknown, reset: () => void) => void;
@@ -107,9 +99,7 @@ export class Boundary {
 		this.#props = props;
 		this.#children = children;
 
-		this.parent = active_boundary;
-
-		active_boundary = this;
+		this.parent = /** @type {Effect} */ (active_effect).b;
 
 		this.#effect = block(() => {
 			var boundary_effect = /** @type {Effect} */ (active_effect);
@@ -245,8 +235,6 @@ export class Boundary {
 		if (hydrating) {
 			this.#anchor = hydrate_node;
 		}
-
-		active_boundary = this.parent;
 	}
 
 	has_pending_snippet() {
@@ -257,12 +245,10 @@ export class Boundary {
 	 * @param {() => Effect | null} fn
 	 */
 	#run(fn) {
-		var previous_boundary = active_boundary;
 		var previous_effect = active_effect;
 		var previous_reaction = active_reaction;
 		var previous_ctx = component_context;
 
-		active_boundary = this;
 		set_active_effect(this.#effect);
 		set_active_reaction(this.#effect);
 		set_component_context(this.#effect.ctx);
@@ -270,7 +256,6 @@ export class Boundary {
 		try {
 			return fn();
 		} finally {
-			active_boundary = previous_boundary;
 			set_active_effect(previous_effect);
 			set_active_reaction(previous_reaction);
 			set_component_context(previous_ctx);
