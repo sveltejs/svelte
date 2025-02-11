@@ -75,5 +75,5 @@ export function IfBlock(node, context) {
 
 	statements.push(b.stmt(b.call('$.if', ...args)));
 
-	context.state.init.push(...statements);
+	context.state.init.push(b.block(statements));
 }
