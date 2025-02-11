@@ -86,6 +86,10 @@ export class Boundary {
 	/** @type {Effect | null} */
 	#failed_effect = null;
 
+	/** @type {DocumentFragment | null} */
+	#offscreen_fragment = null;
+
+	#pending_count = 0;
 	#keep_pending_snippet = false; // TODO get rid of this
 	#is_creating_fallback = false;
 
@@ -102,10 +106,6 @@ export class Boundary {
 		active_boundary = this;
 
 		this.#effect = block(() => {
-			/** @type {DocumentFragment | null} */
-			var offscreen_fragment = null;
-
-			var async_count = 0;
 			var boundary_effect = /** @type {Effect} */ (active_effect);
 			var hydrate_open = hydrate_node;
 
@@ -130,7 +130,7 @@ export class Boundary {
 			};
 
 			const reset = () => {
-				async_count = 0;
+				this.#pending_count = 0;
 
 				if ((boundary_effect.f & BOUNDARY_SUSPENDED) !== 0) {
 					boundary_effect.f ^= BOUNDARY_SUSPENDED;
@@ -152,53 +152,9 @@ export class Boundary {
 					}
 				});
 
-				if (async_count > 0) {
+				if (this.#pending_count > 0) {
 					boundary_effect.f |= BOUNDARY_SUSPENDED;
 					show_pending_snippet(true);
-				}
-			};
-
-			const unsuspend = () => {
-				if (this.#keep_pending_snippet || async_count > 0) {
-					return;
-				}
-
-				if ((boundary_effect.f & BOUNDARY_SUSPENDED) !== 0) {
-					boundary_effect.f ^= BOUNDARY_SUSPENDED;
-				}
-
-				for (const e of this.#render_effects) {
-					try {
-						if (check_dirtiness(e)) {
-							update_effect(e);
-						}
-					} catch (error) {
-						handle_error(error, e, null, e.ctx);
-					}
-				}
-
-				for (const fn of this.#callbacks) fn();
-				this.#callbacks.clear();
-
-				if (this.#pending_effect) {
-					pause_effect(this.#pending_effect, () => {
-						this.#pending_effect = null;
-					});
-				}
-
-				if (offscreen_fragment) {
-					this.#anchor.before(offscreen_fragment);
-					offscreen_fragment = null;
-				}
-
-				for (const e of this.#effects) {
-					try {
-						if (check_dirtiness(e)) {
-							update_effect(e);
-						}
-					} catch (error) {
-						handle_error(error, e, null, e.ctx);
-					}
 				}
 			};
 
@@ -211,8 +167,8 @@ export class Boundary {
 				if (pending !== undefined) {
 					// TODO can this be false?
 					if (this.#main_effect !== null) {
-						offscreen_fragment = document.createDocumentFragment();
-						move_effect(this.#main_effect, offscreen_fragment);
+						this.#offscreen_fragment = document.createDocumentFragment();
+						move_effect(this.#main_effect, this.#offscreen_fragment);
 					}
 
 					if (this.#pending_effect === null) {
@@ -228,7 +184,7 @@ export class Boundary {
 						loop((now) => {
 							if (now >= end) {
 								this.#keep_pending_snippet = false;
-								unsuspend();
+								this.commit();
 								return false;
 							}
 
@@ -254,7 +210,7 @@ export class Boundary {
 						var end = start + (this.#props.showPendingAfter ?? 500);
 
 						loop((now) => {
-							if (async_count === 0) return false;
+							if (this.#pending_count === 0) return false;
 							if (now < end) return true;
 
 							show_pending_snippet(false);
@@ -262,14 +218,14 @@ export class Boundary {
 					}
 
 					boundary_effect.f |= BOUNDARY_SUSPENDED;
-					async_count++;
+					this.#pending_count++;
 
 					return;
 				}
 
 				if (input === ASYNC_DECREMENT) {
-					if (--async_count === 0 && !this.#keep_pending_snippet) {
-						unsuspend();
+					if (--this.#pending_count === 0 && !this.#keep_pending_snippet) {
+						this.commit();
 
 						if (this.#main_effect !== null) {
 							// TODO do we also need to `resume_effect` here?
@@ -281,7 +237,7 @@ export class Boundary {
 				}
 
 				if (input === COMMIT) {
-					unsuspend();
+					this.commit();
 					return;
 				}
 
@@ -362,7 +318,7 @@ export class Boundary {
 			} else {
 				this.#main_effect = branch(() => children(this.#anchor));
 
-				if (async_count > 0) {
+				if (this.#pending_count > 0) {
 					boundary_effect.f |= BOUNDARY_SUSPENDED;
 					show_pending_snippet(true);
 				}
@@ -413,6 +369,50 @@ export class Boundary {
 	/** @param {Effect} effect */
 	add_effect(effect) {
 		((effect.f & RENDER_EFFECT) !== 0 ? this.#render_effects : this.#effects).push(effect);
+	}
+
+	commit() {
+		if (this.#keep_pending_snippet || this.#pending_count > 0) {
+			return;
+		}
+
+		if ((this.#effect.f & BOUNDARY_SUSPENDED) !== 0) {
+			this.#effect.f ^= BOUNDARY_SUSPENDED;
+		}
+
+		for (const e of this.#render_effects) {
+			try {
+				if (check_dirtiness(e)) {
+					update_effect(e);
+				}
+			} catch (error) {
+				handle_error(error, e, null, e.ctx);
+			}
+		}
+
+		for (const fn of this.#callbacks) fn();
+		this.#callbacks.clear();
+
+		if (this.#pending_effect) {
+			pause_effect(this.#pending_effect, () => {
+				this.#pending_effect = null;
+			});
+		}
+
+		if (this.#offscreen_fragment) {
+			this.#anchor.before(this.#offscreen_fragment);
+			this.#offscreen_fragment = null;
+		}
+
+		for (const e of this.#effects) {
+			try {
+				if (check_dirtiness(e)) {
+					update_effect(e);
+				}
+			} catch (error) {
+				handle_error(error, e, null, e.ctx);
+			}
+		}
 	}
 }
 
