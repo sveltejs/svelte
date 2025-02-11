@@ -209,18 +209,28 @@ export function check_dirtiness(reaction) {
 				(is_disconnected || is_unowned_connected) &&
 				(active_effect === null || (active_effect.f & DESTROYED) === 0)
 			) {
+				var derived = /** @type {Derived} */ (reaction);
+				var parent = derived.parent;
+
 				for (i = 0; i < length; i++) {
 					dependency = dependencies[i];
 
 					// We always re-add all reactions (even duplicates) if the derived was
-					// previously disconnected
-					if (is_disconnected || !dependency?.reactions?.includes(reaction)) {
-						(dependency.reactions ??= []).push(reaction);
+					// previously disconnected, however we don't if it was unowned as we
+					// de-duplicate dependencies in that case
+					if (is_disconnected || !dependency?.reactions?.includes(derived)) {
+						(dependency.reactions ??= []).push(derived);
 					}
 				}
 
 				if (is_disconnected) {
-					reaction.f ^= DISCONNECTED;
+					derived.f ^= DISCONNECTED;
+				}
+				// If the unowned derived is now fully connected to the graph again (it's unowned and reconnected, has a parent
+				// and the parent is not unowned), then we can mark it as connected again, removing the need for the unowned
+				// flag
+				if (is_unowned_connected && parent !== null && (parent.f & UNOWNED) === 0) {
+					derived.f ^= UNOWNED;
 				}
 			}
 
@@ -423,15 +433,9 @@ export function update_reaction(reaction) {
 	skipped_deps = 0;
 	untracked_writes = null;
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
-	// prettier-ignore
 	skip_reaction =
 		(flags & UNOWNED) !== 0 &&
-		(!is_flushing_effect ||
-			// If we were previously not in a reactive context and we're reading an unowned derived
-			// that was created inside another reaction, then we don't fully know the real owner and thus
-			// we need to skip adding any reactions for this unowned
-				((previous_reaction === null || previous_untracking) &&
-				/** @type {Derived} */ (reaction).parent !== null));
+		(!is_flushing_effect || previous_reaction === null || previous_untracking);
 
 	derived_sources = null;
 	set_component_context(reaction.ctx);
@@ -697,10 +701,7 @@ function flush_queued_root_effects(root_effects) {
 				effect.f ^= CLEAN;
 			}
 
-			/** @type {Effect[]} */
-			var collected_effects = [];
-
-			process_effects(effect, collected_effects);
+			var collected_effects = process_effects(effect);
 			flush_queued_effects(collected_effects);
 		}
 	} finally {
@@ -805,11 +806,11 @@ export function schedule_effect(signal) {
  * effects to be flushed.
  *
  * @param {Effect} effect
- * @param {Effect[]} collected_effects
+ * @param {Effect[]} effects
  * @param {Boundary} [boundary]
- * @returns {void}
+ * @returns {Effect[]}
  */
-function process_effects(effect, collected_effects, boundary) {
+function process_effects(effect, effects = [], boundary) {
 	var current_effect = effect.first;
 
 	main_loop: while (current_effect !== null) {
@@ -825,14 +826,14 @@ function process_effects(effect, collected_effects, boundary) {
 			} else if ((flags & BOUNDARY_EFFECT) !== 0) {
 				var b = /** @type {Boundary} */ (current_effect.b);
 
-				process_effects(current_effect, collected_effects, b);
+				process_effects(current_effect, effects, b);
 
 				if (!b.suspended) {
 					// no more async work to happen
 					b.commit();
 				}
 			} else if ((flags & EFFECT) !== 0) {
-				collected_effects.push(current_effect);
+				effects.push(current_effect);
 			} else if (is_branch) {
 				current_effect.f ^= CLEAN;
 			} else {
@@ -879,6 +880,8 @@ function process_effects(effect, collected_effects, boundary) {
 
 		current_effect = sibling;
 	}
+
+	return effects;
 }
 
 /**
@@ -975,7 +978,10 @@ export function get(signal) {
 						skipped_deps++;
 					} else if (new_deps === null) {
 						new_deps = [signal];
-					} else {
+					} else if (!skip_reaction || !new_deps.includes(signal)) {
+						// Normally we can push duplicated dependencies to `new_deps`, but if we're inside
+						// an unowned derived because skip_reaction is true, then we need to ensure that
+						// we don't have duplicates
 						new_deps.push(signal);
 					}
 				}

@@ -1,0 +1,14 @@
+[
+	{
+		"code": "constant_assignment",
+		"message": "Cannot assign to derived state",
+		"start": {
+			"column": 3,
+			"line": 6
+		},
+		"end": {
+			"column": 27,
+			"line": 6
+		}
+	}
+]
