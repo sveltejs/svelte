@@ -3,7 +3,6 @@
 import {
 	BOUNDARY_EFFECT,
 	EFFECT_PRESERVED,
-	EFFECT_RAN,
 	EFFECT_TRANSPARENT,
 	RENDER_EFFECT
 } from '../../constants.js';
