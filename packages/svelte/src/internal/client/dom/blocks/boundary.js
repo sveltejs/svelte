@@ -37,35 +37,383 @@ import { from_async_derived, set_from_async_derived } from '../../reactivity/der
 import { raf } from '../../timing.js';
 import { loop } from '../../loop.js';
 
+/** @type {Boundary | null} */
+export let active_boundary = null;
+
+/** @param {Boundary | null} boundary */
+export function set_active_boundary(boundary) {
+	active_boundary = boundary;
+}
+class Boundary {
+	/** @type {Boundary | null} */
+	#parent;
+
+	/** @type {Effect} */
+	#effect;
+
+	/** @type {Set<() => void>} */
+	#callbacks = new Set();
+
+	/**
+	 * @param {TemplateNode} node
+	 * @param {{
+	 * 	 onerror?: (error: unknown, reset: () => void) => void;
+	 *   failed?: (anchor: Node, error: () => unknown, reset: () => () => void) => void;
+	 *   pending?: (anchor: Node) => void;
+	 *   showPendingAfter?: number;
+	 *   showPendingFor?: number;
+	 * }} props
+	 * @param {((anchor: Node) => void)} children
+	 */
+	constructor(node, props, children) {
+		var anchor = node;
+
+		this.#parent = active_boundary;
+
+		active_boundary = this;
+
+		var parent_boundary = find_boundary(active_effect);
+
+		this.#effect = block(() => {
+			/** @type {Effect | null} */
+			var main_effect = null;
+
+			/** @type {Effect | null} */
+			var pending_effect = null;
+
+			/** @type {Effect | null} */
+			var failed_effect = null;
+
+			/** @type {DocumentFragment | null} */
+			var offscreen_fragment = null;
+
+			var async_count = 0;
+			var boundary_effect = /** @type {Effect} */ (active_effect);
+			var hydrate_open = hydrate_node;
+			var is_creating_fallback = false;
+
+			/** @type {Effect[]} */
+			var render_effects = [];
+
+			/** @type {Effect[]} */
+			var effects = [];
+
+			var keep_pending_snippet = false;
+
+			/**
+			 * @param {() => void} snippet_fn
+			 * @returns {Effect | null}
+			 */
+			const render_snippet = (snippet_fn) => {
+				return this.#run(() => {
+					is_creating_fallback = true;
+
+					try {
+						return branch(snippet_fn);
+					} catch (error) {
+						handle_error(error, boundary_effect, null, boundary_effect.ctx);
+						return null;
+					} finally {
+						reset_is_throwing_error();
+						is_creating_fallback = false;
+					}
+				});
+			};
+
+			const reset = () => {
+				async_count = 0;
+
+				if ((boundary_effect.f & BOUNDARY_SUSPENDED) !== 0) {
+					boundary_effect.f ^= BOUNDARY_SUSPENDED;
+				}
+
+				if (failed_effect !== null) {
+					pause_effect(failed_effect, () => {
+						failed_effect = null;
+					});
+				}
+
+				main_effect = this.#run(() => {
+					is_creating_fallback = false;
+
+					try {
+						return branch(() => children(anchor));
+					} finally {
+						reset_is_throwing_error();
+					}
+				});
+
+				if (async_count > 0) {
+					boundary_effect.f |= BOUNDARY_SUSPENDED;
+					show_pending_snippet(true);
+				}
+			};
+
+			const unsuspend = () => {
+				if (keep_pending_snippet || async_count > 0) {
+					return;
+				}
+
+				if ((boundary_effect.f & BOUNDARY_SUSPENDED) !== 0) {
+					boundary_effect.f ^= BOUNDARY_SUSPENDED;
+				}
+
+				for (const e of render_effects) {
+					try {
+						if (check_dirtiness(e)) {
+							update_effect(e);
+						}
+					} catch (error) {
+						handle_error(error, e, null, e.ctx);
+					}
+				}
+
+				for (const fn of this.#callbacks) fn();
+				this.#callbacks.clear();
+
+				if (pending_effect) {
+					pause_effect(pending_effect, () => {
+						pending_effect = null;
+					});
+				}
+
+				if (offscreen_fragment) {
+					anchor.before(offscreen_fragment);
+					offscreen_fragment = null;
+				}
+
+				for (const e of effects) {
+					try {
+						if (check_dirtiness(e)) {
+							update_effect(e);
+						}
+					} catch (error) {
+						handle_error(error, e, null, e.ctx);
+					}
+				}
+			};
+
+			/**
+			 * @param {boolean} initial
+			 */
+			function show_pending_snippet(initial) {
+				const pending = props.pending;
+
+				if (pending !== undefined) {
+					// TODO can this be false?
+					if (main_effect !== null) {
+						offscreen_fragment = document.createDocumentFragment();
+						move_effect(main_effect, offscreen_fragment);
+					}
+
+					if (pending_effect === null) {
+						pending_effect = branch(() => pending(anchor));
+					}
+
+					// TODO do we want to differentiate between initial render and updates here?
+					if (!initial) {
+						keep_pending_snippet = true;
+
+						var end = raf.now() + (props.showPendingFor ?? 300);
+
+						loop((now) => {
+							if (now >= end) {
+								keep_pending_snippet = false;
+								unsuspend();
+								return false;
+							}
+
+							return true;
+						});
+					}
+				} else if (parent_boundary) {
+					throw new Error('TODO show pending snippet on parent');
+				} else {
+					throw new Error('no pending snippet to show');
+				}
+			}
+
+			// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
+			boundary_effect.fn = (/** @type {unknown} */ input, /** @type {any} */ payload) => {
+				if (input === ASYNC_INCREMENT) {
+					// post-init, show the pending snippet after a timeout
+					if (
+						(boundary_effect.f & BOUNDARY_SUSPENDED) === 0 &&
+						(boundary_effect.f & EFFECT_RAN) !== 0
+					) {
+						var start = raf.now();
+						var end = start + (props.showPendingAfter ?? 500);
+
+						loop((now) => {
+							if (async_count === 0) return false;
+							if (now < end) return true;
+
+							show_pending_snippet(false);
+						});
+					}
+
+					boundary_effect.f |= BOUNDARY_SUSPENDED;
+					async_count++;
+
+					return;
+				}
+
+				if (input === ASYNC_DECREMENT) {
+					if (--async_count === 0 && !keep_pending_snippet) {
+						unsuspend();
+
+						if (main_effect !== null) {
+							// TODO do we also need to `resume_effect` here?
+							schedule_effect(main_effect);
+						}
+					}
+
+					return;
+				}
+
+				if (input === ADD_RENDER_EFFECT) {
+					render_effects.push(payload);
+					return;
+				}
+
+				if (input === ADD_EFFECT) {
+					effects.push(payload);
+					return;
+				}
+
+				if (input === COMMIT) {
+					unsuspend();
+					return;
+				}
+
+				var error = input;
+				var onerror = props.onerror;
+				let failed = props.failed;
+
+				// If we have nothing to capture the error, or if we hit an error while
+				// rendering the fallback, re-throw for another boundary to handle
+				if (is_creating_fallback || (!onerror && !failed)) {
+					throw error;
+				}
+
+				onerror?.(error, reset);
+
+				if (main_effect) {
+					destroy_effect(main_effect);
+					main_effect = null;
+				}
+
+				if (pending_effect) {
+					destroy_effect(pending_effect);
+					pending_effect = null;
+				}
+
+				if (failed_effect) {
+					destroy_effect(failed_effect);
+					failed_effect = null;
+				}
+
+				if (hydrating) {
+					set_hydrate_node(hydrate_open);
+					next();
+					set_hydrate_node(remove_nodes());
+				}
+
+				if (failed) {
+					queue_boundary_micro_task(() => {
+						failed_effect = render_snippet(() => {
+							failed(
+								anchor,
+								() => error,
+								() => reset
+							);
+						});
+					});
+				}
+			};
+
+			// @ts-ignore
+			boundary_effect.fn.is_pending = () => props.pending;
+
+			if (hydrating) {
+				hydrate_next();
+			}
+
+			const pending = props.pending;
+
+			if (hydrating && pending) {
+				pending_effect = branch(() => pending(anchor));
+
+				// ...now what? we need to start rendering `boundary_fn` offscreen,
+				// and either insert the resulting fragment (if nothing suspends)
+				// or keep the pending effect alive until it unsuspends.
+				// not exactly sure how to do that.
+
+				// future work: when we have some form of async SSR, we will
+				// need to use hydration boundary comments to report whether
+				// the pending or main block was rendered for a given
+				// boundary, and hydrate accordingly
+				queueMicrotask(() => {
+					destroy_effect(/** @type {Effect} */ (pending_effect));
+
+					main_effect = this.#run(() => {
+						return branch(() => children(anchor));
+					});
+				});
+			} else {
+				main_effect = branch(() => children(anchor));
+
+				if (async_count > 0) {
+					boundary_effect.f |= BOUNDARY_SUSPENDED;
+					show_pending_snippet(true);
+				}
+			}
+
+			reset_is_throwing_error();
+		}, flags);
+
+		if (hydrating) {
+			anchor = hydrate_node;
+		}
+
+		active_boundary = this.#parent;
+	}
+
+	/**
+	 * @param {() => Effect | null} fn
+	 */
+	#run(fn) {
+		var previous_boundary = active_boundary;
+		var previous_effect = active_effect;
+		var previous_reaction = active_reaction;
+		var previous_ctx = component_context;
+
+		active_boundary = this;
+		set_active_effect(this.#effect);
+		set_active_reaction(this.#effect);
+		set_component_context(this.#effect.ctx);
+
+		try {
+			return fn();
+		} finally {
+			active_boundary = previous_boundary;
+			set_active_effect(previous_effect);
+			set_active_reaction(previous_reaction);
+			set_component_context(previous_ctx);
+		}
+	}
+
+	/** @param {() => void} fn */
+	add_callback(fn) {
+		this.#callbacks.add(fn);
+	}
+}
+
 const ASYNC_INCREMENT = Symbol();
 const ASYNC_DECREMENT = Symbol();
-const ADD_CALLBACK = Symbol();
 const ADD_RENDER_EFFECT = Symbol();
 const ADD_EFFECT = Symbol();
 const COMMIT = Symbol();
-
-/**
- * @param {Effect} boundary
- * @param {() => Effect | null} fn
- * @returns {Effect | null}
- */
-function with_boundary(boundary, fn) {
-	var previous_effect = active_effect;
-	var previous_reaction = active_reaction;
-	var previous_ctx = component_context;
-
-	set_active_effect(boundary);
-	set_active_reaction(boundary);
-	set_component_context(boundary.ctx);
-
-	try {
-		return fn();
-	} finally {
-		set_active_effect(previous_effect);
-		set_active_reaction(previous_reaction);
-		set_component_context(previous_ctx);
-	}
-}
 
 var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED | BOUNDARY_EFFECT;
 
@@ -82,316 +430,7 @@ var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED | BOUNDARY_EFFECT;
  * @returns {void}
  */
 export function boundary(node, props, children) {
-	var anchor = node;
-
-	var parent_boundary = find_boundary(active_effect);
-
-	block(() => {
-		/** @type {Effect | null} */
-		var main_effect = null;
-
-		/** @type {Effect | null} */
-		var pending_effect = null;
-
-		/** @type {Effect | null} */
-		var failed_effect = null;
-
-		/** @type {DocumentFragment | null} */
-		var offscreen_fragment = null;
-
-		var async_count = 0;
-		var boundary = /** @type {Effect} */ (active_effect);
-		var hydrate_open = hydrate_node;
-		var is_creating_fallback = false;
-
-		/** @type {Set<() => void>} */
-		var callbacks = new Set();
-
-		/** @type {Effect[]} */
-		var render_effects = [];
-
-		/** @type {Effect[]} */
-		var effects = [];
-
-		var keep_pending_snippet = false;
-
-		/**
-		 * @param {() => void} snippet_fn
-		 * @returns {Effect | null}
-		 */
-		function render_snippet(snippet_fn) {
-			return with_boundary(boundary, () => {
-				is_creating_fallback = true;
-
-				try {
-					return branch(snippet_fn);
-				} catch (error) {
-					handle_error(error, boundary, null, boundary.ctx);
-					return null;
-				} finally {
-					reset_is_throwing_error();
-					is_creating_fallback = false;
-				}
-			});
-		}
-
-		function reset() {
-			async_count = 0;
-
-			if ((boundary.f & BOUNDARY_SUSPENDED) !== 0) {
-				boundary.f ^= BOUNDARY_SUSPENDED;
-			}
-
-			if (failed_effect !== null) {
-				pause_effect(failed_effect, () => {
-					failed_effect = null;
-				});
-			}
-
-			main_effect = with_boundary(boundary, () => {
-				is_creating_fallback = false;
-
-				try {
-					return branch(() => children(anchor));
-				} finally {
-					reset_is_throwing_error();
-				}
-			});
-
-			if (async_count > 0) {
-				boundary.f |= BOUNDARY_SUSPENDED;
-				show_pending_snippet(true);
-			}
-		}
-
-		function unsuspend() {
-			if (keep_pending_snippet || async_count > 0) {
-				return;
-			}
-
-			if ((boundary.f & BOUNDARY_SUSPENDED) !== 0) {
-				boundary.f ^= BOUNDARY_SUSPENDED;
-			}
-
-			for (const e of render_effects) {
-				try {
-					if (check_dirtiness(e)) {
-						update_effect(e);
-					}
-				} catch (error) {
-					handle_error(error, e, null, e.ctx);
-				}
-			}
-
-			for (const fn of callbacks) fn();
-			callbacks.clear();
-
-			if (pending_effect) {
-				pause_effect(pending_effect, () => {
-					pending_effect = null;
-				});
-			}
-
-			if (offscreen_fragment) {
-				anchor.before(offscreen_fragment);
-				offscreen_fragment = null;
-			}
-
-			for (const e of effects) {
-				try {
-					if (check_dirtiness(e)) {
-						update_effect(e);
-					}
-				} catch (error) {
-					handle_error(error, e, null, e.ctx);
-				}
-			}
-		}
-
-		/**
-		 * @param {boolean} initial
-		 */
-		function show_pending_snippet(initial) {
-			const pending = props.pending;
-
-			if (pending !== undefined) {
-				// TODO can this be false?
-				if (main_effect !== null) {
-					offscreen_fragment = document.createDocumentFragment();
-					move_effect(main_effect, offscreen_fragment);
-				}
-
-				if (pending_effect === null) {
-					pending_effect = branch(() => pending(anchor));
-				}
-
-				// TODO do we want to differentiate between initial render and updates here?
-				if (!initial) {
-					keep_pending_snippet = true;
-
-					var end = raf.now() + (props.showPendingFor ?? 300);
-
-					loop((now) => {
-						if (now >= end) {
-							keep_pending_snippet = false;
-							unsuspend();
-							return false;
-						}
-
-						return true;
-					});
-				}
-			} else if (parent_boundary) {
-				throw new Error('TODO show pending snippet on parent');
-			} else {
-				throw new Error('no pending snippet to show');
-			}
-		}
-
-		// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
-		boundary.fn = (/** @type {unknown} */ input, /** @type {any} */ payload) => {
-			if (input === ASYNC_INCREMENT) {
-				// post-init, show the pending snippet after a timeout
-				if ((boundary.f & BOUNDARY_SUSPENDED) === 0 && (boundary.f & EFFECT_RAN) !== 0) {
-					var start = raf.now();
-					var end = start + (props.showPendingAfter ?? 500);
-
-					loop((now) => {
-						if (async_count === 0) return false;
-						if (now < end) return true;
-
-						show_pending_snippet(false);
-					});
-				}
-
-				boundary.f |= BOUNDARY_SUSPENDED;
-				async_count++;
-
-				return;
-			}
-
-			if (input === ASYNC_DECREMENT) {
-				if (--async_count === 0 && !keep_pending_snippet) {
-					unsuspend();
-
-					if (main_effect !== null) {
-						// TODO do we also need to `resume_effect` here?
-						schedule_effect(main_effect);
-					}
-				}
-
-				return;
-			}
-
-			if (input === ADD_CALLBACK) {
-				callbacks.add(payload);
-				return;
-			}
-
-			if (input === ADD_RENDER_EFFECT) {
-				render_effects.push(payload);
-				return;
-			}
-
-			if (input === ADD_EFFECT) {
-				effects.push(payload);
-				return;
-			}
-
-			if (input === COMMIT) {
-				unsuspend();
-				return;
-			}
-
-			var error = input;
-			var onerror = props.onerror;
-			let failed = props.failed;
-
-			// If we have nothing to capture the error, or if we hit an error while
-			// rendering the fallback, re-throw for another boundary to handle
-			if (is_creating_fallback || (!onerror && !failed)) {
-				throw error;
-			}
-
-			onerror?.(error, reset);
-
-			if (main_effect) {
-				destroy_effect(main_effect);
-				main_effect = null;
-			}
-
-			if (pending_effect) {
-				destroy_effect(pending_effect);
-				pending_effect = null;
-			}
-
-			if (failed_effect) {
-				destroy_effect(failed_effect);
-				failed_effect = null;
-			}
-
-			if (hydrating) {
-				set_hydrate_node(hydrate_open);
-				next();
-				set_hydrate_node(remove_nodes());
-			}
-
-			if (failed) {
-				queue_boundary_micro_task(() => {
-					failed_effect = render_snippet(() => {
-						failed(
-							anchor,
-							() => error,
-							() => reset
-						);
-					});
-				});
-			}
-		};
-
-		// @ts-ignore
-		boundary.fn.is_pending = () => props.pending;
-
-		if (hydrating) {
-			hydrate_next();
-		}
-
-		const pending = props.pending;
-
-		if (hydrating && pending) {
-			pending_effect = branch(() => pending(anchor));
-
-			// ...now what? we need to start rendering `boundary_fn` offscreen,
-			// and either insert the resulting fragment (if nothing suspends)
-			// or keep the pending effect alive until it unsuspends.
-			// not exactly sure how to do that.
-
-			// future work: when we have some form of async SSR, we will
-			// need to use hydration boundary comments to report whether
-			// the pending or main block was rendered for a given
-			// boundary, and hydrate accordingly
-			queueMicrotask(() => {
-				destroy_effect(/** @type {Effect} */ (pending_effect));
-
-				main_effect = with_boundary(boundary, () => {
-					return branch(() => children(anchor));
-				});
-			});
-		} else {
-			main_effect = branch(() => children(anchor));
-
-			if (async_count > 0) {
-				boundary.f |= BOUNDARY_SUSPENDED;
-				show_pending_snippet(true);
-			}
-		}
-
-		reset_is_throwing_error();
-	}, flags);
-
-	if (hydrating) {
-		anchor = hydrate_node;
-	}
+	new Boundary(node, props, children);
 }
 
 /**
@@ -498,19 +537,6 @@ export function find_boundary(effect) {
 	}
 
 	return effect;
-}
-
-/**
- * @param {Effect | null} boundary
- * @param {Function} fn
- */
-export function add_boundary_callback(boundary, fn) {
-	if (boundary === null) {
-		throw new Error('TODO');
-	}
-
-	// @ts-ignore
-	boundary.fn(ADD_CALLBACK, fn);
 }
 
 /**
