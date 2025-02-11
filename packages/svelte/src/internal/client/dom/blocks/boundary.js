@@ -66,6 +66,9 @@ export class Boundary {
 	/** @type {BoundaryProps} */
 	#props;
 
+	/** @type {((anchor: Node) => void)} */
+	#children;
+
 	/** @type {Effect} */
 	#effect;
 
@@ -102,6 +105,8 @@ export class Boundary {
 	constructor(node, props, children) {
 		this.#anchor = node;
 		this.#props = props;
+		this.#children = children;
+
 		this.parent = active_boundary;
 
 		active_boundary = this;
@@ -126,7 +131,7 @@ export class Boundary {
 					this.#is_creating_fallback = false;
 
 					try {
-						return branch(() => children(this.#anchor));
+						return branch(() => this.#children(this.#anchor));
 					} finally {
 						reset_is_throwing_error();
 					}
@@ -220,7 +225,7 @@ export class Boundary {
 					destroy_effect(/** @type {Effect} */ (this.#pending_effect));
 
 					this.#main_effect = this.#run(() => {
-						return branch(() => children(this.#anchor));
+						return branch(() => this.#children(this.#anchor));
 					});
 				});
 			} else {
