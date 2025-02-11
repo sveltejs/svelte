@@ -63,11 +63,16 @@ export function if_block(node, fn, [root_index, hydrate_index] = [0, 0]) {
 					hydrate_index = Infinity;
 				} else {
 					hydrate_index = parseInt(data.substring(1));
+					if (hydrate_index !== hydrate_index) {
+						// if hydrate_index is NaN
+						// we set an invalid index to force mismatch
+						hydrate_index = condition ? Infinity : -1;
+					}
 				}
 			}
 			const is_else = hydrate_index > root_index;
 
-			if (!!condition === is_else || isNaN(hydrate_index)) {
+			if (!!condition === is_else) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
 				// This could happen with `{#if browser}...{/if}`, for example
 				anchor = remove_nodes();
