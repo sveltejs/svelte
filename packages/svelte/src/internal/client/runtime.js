@@ -679,10 +679,7 @@ function flush_queued_root_effects(root_effects) {
 				effect.f ^= CLEAN;
 			}
 
-			/** @type {Effect[]} */
-			var collected_effects = [];
-
-			process_effects(effect, collected_effects);
+			var collected_effects = process_effects(effect);
 			flush_queued_effects(collected_effects);
 		}
 	} finally {
@@ -783,12 +780,13 @@ export function schedule_effect(signal) {
  * effects to be flushed.
  *
  * @param {Effect} effect
- * @param {Effect[]} collected_effects
- * @returns {void}
+ * @returns {Effect[]}
  */
-function process_effects(effect, collected_effects) {
-	var current_effect = effect.first;
+function process_effects(effect) {
+	/** @type {Effect[]} */
 	var effects = [];
+
+	var current_effect = effect.first;
 
 	main_loop: while (current_effect !== null) {
 		var flags = current_effect.f;
@@ -797,34 +795,32 @@ function process_effects(effect, collected_effects) {
 		var sibling = current_effect.next;
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
-			if ((flags & RENDER_EFFECT) !== 0) {
-				if (is_branch) {
-					current_effect.f ^= CLEAN;
-				} else {
-					// Ensure we set the effect to be the active reaction
-					// to ensure that unowned deriveds are correctly tracked
-					// because we're flushing the current effect
-					var previous_active_reaction = active_reaction;
-					try {
-						active_reaction = current_effect;
-						if (check_dirtiness(current_effect)) {
-							update_effect(current_effect);
-						}
-					} catch (error) {
-						handle_error(error, current_effect, null, current_effect.ctx);
-					} finally {
-						active_reaction = previous_active_reaction;
-					}
-				}
-
-				var child = current_effect.first;
-
-				if (child !== null) {
-					current_effect = child;
-					continue;
-				}
-			} else if ((flags & EFFECT) !== 0) {
+			if ((flags & EFFECT) !== 0) {
 				effects.push(current_effect);
+			} else if (is_branch) {
+				current_effect.f ^= CLEAN;
+			} else {
+				// Ensure we set the effect to be the active reaction
+				// to ensure that unowned deriveds are correctly tracked
+				// because we're flushing the current effect
+				var previous_active_reaction = active_reaction;
+				try {
+					active_reaction = current_effect;
+					if (check_dirtiness(current_effect)) {
+						update_effect(current_effect);
+					}
+				} catch (error) {
+					handle_error(error, current_effect, null, current_effect.ctx);
+				} finally {
+					active_reaction = previous_active_reaction;
+				}
+			}
+
+			var child = current_effect.first;
+
+			if (child !== null) {
+				current_effect = child;
+				continue;
 			}
 		}
 
@@ -847,13 +843,7 @@ function process_effects(effect, collected_effects) {
 		current_effect = sibling;
 	}
 
-	// We might be dealing with many effects here, far more than can be spread into
-	// an array push call (callstack overflow). So let's deal with each effect in a loop.
-	for (var i = 0; i < effects.length; i++) {
-		child = effects[i];
-		collected_effects.push(child);
-		process_effects(child, collected_effects);
-	}
+	return effects;
 }
 
 /**
