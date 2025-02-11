@@ -44,7 +44,24 @@ export let active_boundary = null;
 export function set_active_boundary(boundary) {
 	active_boundary = boundary;
 }
+
+/**
+ * @typedef {{
+ * 	 onerror?: (error: unknown, reset: () => void) => void;
+ *   failed?: (anchor: Node, error: () => unknown, reset: () => () => void) => void;
+ *   pending?: (anchor: Node) => void;
+ *   showPendingAfter?: number;
+ *   showPendingFor?: number;
+ * }} BoundaryProps
+ */
+
 export class Boundary {
+	/** @type {TemplateNode} */
+	#anchor;
+
+	/** @type {BoundaryProps} */
+	#props;
+
 	/** @type {Boundary | null} */
 	#parent;
 
@@ -62,18 +79,12 @@ export class Boundary {
 
 	/**
 	 * @param {TemplateNode} node
-	 * @param {{
-	 * 	 onerror?: (error: unknown, reset: () => void) => void;
-	 *   failed?: (anchor: Node, error: () => unknown, reset: () => () => void) => void;
-	 *   pending?: (anchor: Node) => void;
-	 *   showPendingAfter?: number;
-	 *   showPendingFor?: number;
-	 * }} props
+	 * @param {BoundaryProps} props
 	 * @param {((anchor: Node) => void)} children
 	 */
 	constructor(node, props, children) {
-		var anchor = node;
-
+		this.#anchor = node;
+		this.#props = props;
 		this.#parent = active_boundary;
 
 		active_boundary = this;
@@ -135,7 +146,7 @@ export class Boundary {
 					is_creating_fallback = false;
 
 					try {
-						return branch(() => children(anchor));
+						return branch(() => children(this.#anchor));
 					} finally {
 						reset_is_throwing_error();
 					}
@@ -176,7 +187,7 @@ export class Boundary {
 				}
 
 				if (offscreen_fragment) {
-					anchor.before(offscreen_fragment);
+					this.#anchor.before(offscreen_fragment);
 					offscreen_fragment = null;
 				}
 
@@ -195,7 +206,7 @@ export class Boundary {
 			 * @param {boolean} initial
 			 */
 			const show_pending_snippet = (initial) => {
-				const pending = props.pending;
+				const pending = this.#props.pending;
 
 				if (pending !== undefined) {
 					// TODO can this be false?
@@ -205,14 +216,14 @@ export class Boundary {
 					}
 
 					if (pending_effect === null) {
-						pending_effect = branch(() => pending(anchor));
+						pending_effect = branch(() => pending(this.#anchor));
 					}
 
 					// TODO do we want to differentiate between initial render and updates here?
 					if (!initial) {
 						keep_pending_snippet = true;
 
-						var end = raf.now() + (props.showPendingFor ?? 300);
+						var end = raf.now() + (this.#props.showPendingFor ?? 300);
 
 						loop((now) => {
 							if (now >= end) {
@@ -240,7 +251,7 @@ export class Boundary {
 						(boundary_effect.f & EFFECT_RAN) !== 0
 					) {
 						var start = raf.now();
-						var end = start + (props.showPendingAfter ?? 500);
+						var end = start + (this.#props.showPendingAfter ?? 500);
 
 						loop((now) => {
 							if (async_count === 0) return false;
@@ -275,8 +286,8 @@ export class Boundary {
 				}
 
 				var error = input;
-				var onerror = props.onerror;
-				let failed = props.failed;
+				var onerror = this.#props.onerror;
+				let failed = this.#props.failed;
 
 				// If we have nothing to capture the error, or if we hit an error while
 				// rendering the fallback, re-throw for another boundary to handle
@@ -311,7 +322,7 @@ export class Boundary {
 					queue_boundary_micro_task(() => {
 						failed_effect = render_snippet(() => {
 							failed(
-								anchor,
+								this.#anchor,
 								() => error,
 								() => reset
 							);
@@ -321,16 +332,16 @@ export class Boundary {
 			};
 
 			// @ts-ignore
-			boundary_effect.fn.is_pending = () => props.pending;
+			boundary_effect.fn.is_pending = () => this.#props.pending;
 
 			if (hydrating) {
 				hydrate_next();
 			}
 
-			const pending = props.pending;
+			const pending = this.#props.pending;
 
 			if (hydrating && pending) {
-				pending_effect = branch(() => pending(anchor));
+				pending_effect = branch(() => pending(this.#anchor));
 
 				// ...now what? we need to start rendering `boundary_fn` offscreen,
 				// and either insert the resulting fragment (if nothing suspends)
@@ -345,11 +356,11 @@ export class Boundary {
 					destroy_effect(/** @type {Effect} */ (pending_effect));
 
 					main_effect = this.#run(() => {
-						return branch(() => children(anchor));
+						return branch(() => children(this.#anchor));
 					});
 				});
 			} else {
-				main_effect = branch(() => children(anchor));
+				main_effect = branch(() => children(this.#anchor));
 
 				if (async_count > 0) {
 					boundary_effect.f |= BOUNDARY_SUSPENDED;
@@ -364,7 +375,7 @@ export class Boundary {
 		this.#effect.fn.boundary = this;
 
 		if (hydrating) {
-			anchor = hydrate_node;
+			this.#anchor = hydrate_node;
 		}
 
 		active_boundary = this.#parent;
