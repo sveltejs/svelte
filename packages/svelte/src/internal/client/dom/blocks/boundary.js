@@ -47,6 +47,7 @@ import { loop } from '../../loop.js';
 
 export class Boundary {
 	suspended = false;
+	inert = false;
 
 	/** @type {Boundary | null} */
 	parent;
@@ -106,13 +107,7 @@ export class Boundary {
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
 		this.#effect = block(() => {
-			var boundary_effect = /** @type {Effect} */ (active_effect);
-			boundary_effect.b = this;
-
-			// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
-			boundary_effect.fn = (/** @type {unknown} */ input) => {
-				this.error(input);
-			};
+			/** @type {Effect} */ (active_effect).b = this;
 
 			if (hydrating) {
 				hydrate_next();

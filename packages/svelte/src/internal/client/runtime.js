@@ -252,22 +252,19 @@ export function check_dirtiness(reaction) {
  * @param {Effect} effect
  */
 function propagate_error(error, effect) {
-	/** @type {Effect | null} */
-	var current = effect;
+	var boundary = effect.b;
 
-	while (current !== null) {
-		if ((current.f & BOUNDARY_EFFECT) !== 0) {
+	while (boundary !== null) {
+		if (!boundary.inert) {
 			try {
-				// @ts-expect-error
-				current.fn(error);
+				boundary.error(error);
 				return;
 			} catch {
-				// Remove boundary flag from effect
-				current.f ^= BOUNDARY_EFFECT;
+				boundary.inert = true;
 			}
 		}
 
-		current = current.parent;
+		boundary = boundary.parent;
 	}
 
 	is_throwing_error = false;
@@ -278,10 +275,7 @@ function propagate_error(error, effect) {
  * @param {Effect} effect
  */
 function should_rethrow_error(effect) {
-	return (
-		(effect.f & DESTROYED) === 0 &&
-		(effect.parent === null || (effect.parent.f & BOUNDARY_EFFECT) === 0)
-	);
+	return (effect.f & DESTROYED) === 0 && (effect.parent === null || !effect.b || effect.b.inert);
 }
 
 export function reset_is_throwing_error() {
