@@ -86,6 +86,9 @@ export class Boundary {
 	/** @type {Effect | null} */
 	#failed_effect = null;
 
+	#keep_pending_snippet = false; // TODO get rid of this
+	#is_creating_fallback = false;
+
 	/**
 	 * @param {TemplateNode} node
 	 * @param {BoundaryProps} props
@@ -105,9 +108,6 @@ export class Boundary {
 			var async_count = 0;
 			var boundary_effect = /** @type {Effect} */ (active_effect);
 			var hydrate_open = hydrate_node;
-			var is_creating_fallback = false;
-
-			var keep_pending_snippet = false;
 
 			/**
 			 * @param {() => void} snippet_fn
@@ -115,7 +115,7 @@ export class Boundary {
 			 */
 			const render_snippet = (snippet_fn) => {
 				return this.#run(() => {
-					is_creating_fallback = true;
+					this.#is_creating_fallback = true;
 
 					try {
 						return branch(snippet_fn);
@@ -124,7 +124,7 @@ export class Boundary {
 						return null;
 					} finally {
 						reset_is_throwing_error();
-						is_creating_fallback = false;
+						this.#is_creating_fallback = false;
 					}
 				});
 			};
@@ -143,7 +143,7 @@ export class Boundary {
 				}
 
 				this.#main_effect = this.#run(() => {
-					is_creating_fallback = false;
+					this.#is_creating_fallback = false;
 
 					try {
 						return branch(() => children(this.#anchor));
@@ -159,7 +159,7 @@ export class Boundary {
 			};
 
 			const unsuspend = () => {
-				if (keep_pending_snippet || async_count > 0) {
+				if (this.#keep_pending_snippet || async_count > 0) {
 					return;
 				}
 
@@ -221,13 +221,13 @@ export class Boundary {
 
 					// TODO do we want to differentiate between initial render and updates here?
 					if (!initial) {
-						keep_pending_snippet = true;
+						this.#keep_pending_snippet = true;
 
 						var end = raf.now() + (this.#props.showPendingFor ?? 300);
 
 						loop((now) => {
 							if (now >= end) {
-								keep_pending_snippet = false;
+								this.#keep_pending_snippet = false;
 								unsuspend();
 								return false;
 							}
@@ -268,7 +268,7 @@ export class Boundary {
 				}
 
 				if (input === ASYNC_DECREMENT) {
-					if (--async_count === 0 && !keep_pending_snippet) {
+					if (--async_count === 0 && !this.#keep_pending_snippet) {
 						unsuspend();
 
 						if (this.#main_effect !== null) {
@@ -291,7 +291,7 @@ export class Boundary {
 
 				// If we have nothing to capture the error, or if we hit an error while
 				// rendering the fallback, re-throw for another boundary to handle
-				if (is_creating_fallback || (!onerror && !failed)) {
+				if (this.#is_creating_fallback || (!onerror && !failed)) {
 					throw error;
 				}
 
