@@ -112,8 +112,8 @@ export class Boundary {
 			const reset = () => {
 				this.#pending_count = 0;
 
-				if ((boundary_effect.f & BOUNDARY_SUSPENDED) !== 0) {
-					boundary_effect.f ^= BOUNDARY_SUSPENDED;
+				if ((this.#effect.f & BOUNDARY_SUSPENDED) !== 0) {
+					this.#effect.f ^= BOUNDARY_SUSPENDED;
 				}
 
 				if (this.#failed_effect !== null) {
@@ -133,7 +133,7 @@ export class Boundary {
 				});
 
 				if (this.#pending_count > 0) {
-					boundary_effect.f |= BOUNDARY_SUSPENDED;
+					this.#effect.f |= BOUNDARY_SUSPENDED;
 					this.#show_pending_snippet(true);
 				}
 			};
